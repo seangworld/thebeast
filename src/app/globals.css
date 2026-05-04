@@ -1,0 +1,217 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =========================
+   BASE THEME
+========================= */
+
+body {
+  background: #11151c;
+  color: #ffffff;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.beast-page {
+  min-height: 100vh;
+  background: #11151c;
+  color: #ffffff;
+  padding: 32px 16px;
+}
+
+.beast-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* =========================
+   HEADERS
+========================= */
+
+.beast-page-header {
+  background: #1a1f2b;
+  border: 1px solid #2a3242;
+  border-radius: 16px;
+  padding: 24px;
+}
+
+.beast-kicker {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #7f8da3;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.beast-title {
+  margin-top: 8px;
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.beast-subtitle {
+  margin-top: 8px;
+  max-width: 720px;
+  font-size: 0.95rem;
+  color: #c7cfdb;
+}
+
+/* =========================
+   PANELS / CARDS
+========================= */
+
+.beast-panel {
+  background: #1a1f2b;
+  border-radius: 16px;
+  border: 1px solid #2a3242;
+}
+
+.beast-card {
+  background: #1a1f2b;
+  border-radius: 14px;
+  padding: 16px;
+  border: 1px solid #2a3242;
+  transition: border-color 0.15s ease, transform 0.15s ease, opacity 0.15s ease;
+}
+
+a.beast-card:hover {
+  opacity: 0.92;
+  border-color: #38bdf8;
+  transform: translateY(-1px);
+}
+
+/* =========================
+   FORMS
+========================= */
+
+.beast-input {
+  width: 100%;
+  background: #11151c;
+  border: 1px solid #2a3242;
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #ffffff;
+  outline: none;
+}
+
+.beast-input:focus {
+  border-color: #38bdf8;
+}
+
+/* =========================
+   BUTTONS
+========================= */
+
+.beast-button,
+.beast-button-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 700;
+  line-height: 1;
+  transition: opacity 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
+}
+
+.beast-button {
+  background: #38bdf8;
+  color: #000000;
+  border: 1px solid #38bdf8;
+}
+
+.beast-button:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.beast-button-secondary {
+  background: transparent;
+  color: #ffffff;
+  border: 1px solid #2a3242;
+}
+
+.beast-button-secondary:hover {
+  border-color: #38bdf8;
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+
+/* =========================
+   TABLE READABILITY
+========================= */
+
+.beast-table-wrap {
+  max-height: 70vh;
+  overflow: auto;
+}
+
+.beast-panel table,
+.beast-card table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.beast-panel thead,
+.beast-card thead {
+  position: sticky;
+  top: 0;
+  background: #11151c;
+  z-index: 10;
+}
+
+.beast-panel th,
+.beast-card th {
+  padding: 12px;
+  font-size: 12px;
+  color: #c7cfdb;
+  text-transform: uppercase;
+  border-bottom: 1px solid #2a3242;
+}
+
+.beast-panel td,
+.beast-card td {
+  padding: 12px;
+  border-bottom: 1px solid #2a3242;
+}
+
+.beast-panel tbody tr:nth-child(odd),
+.beast-card tbody tr:nth-child(odd) {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.beast-panel tbody tr:nth-child(even),
+.beast-card tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.beast-panel tbody tr:hover,
+.beast-card tbody tr:hover {
+  background: rgba(56, 189, 248, 0.15);
+}
+
+.text-right {
+  text-align: right;
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 640px) {
+  .beast-page {
+    padding: 20px 12px;
+  }
+
+  .beast-title {
+    font-size: 1.6rem;
+  }
+
+  .beast-button,
+  .beast-button-secondary {
+    width: 100%;
+  }
+}
