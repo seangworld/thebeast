@@ -11,7 +11,7 @@ export default function LoginPage() {
     setMessage("");
 
     if (!email) {
-      setMessage("Enter your email.");
+      setMessage("Enter your email to access your free account.");
       return;
     }
 
