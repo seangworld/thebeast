@@ -7,6 +7,17 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <script async src="https://www.googletagmanager.com/gtag/js?id=G-YFRV4QJK04"></script>
+<script
+  dangerouslySetInnerHTML={{
+    __html: `
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-XXXXXXX');
+    `,
+  }}
+/>
       <body>
         {/* TOP BANNER */}
         <div className="w-full bg-[#38bdf8] text-black text-center text-sm py-2 font-semibold">

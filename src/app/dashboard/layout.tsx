@@ -18,6 +18,14 @@ export default function DashboardLayout({
 
       if (!data.user) {
         router.push("/login");
+      } else {
+        // TRACK LOGIN SUCCESS
+        if (typeof window !== "undefined" && typeof (window as any).gtag === "function") {
+          (window as any).gtag("event", "beast_login", {
+            event_category: "engagement",
+            event_label: "User Logged In",
+          });
+        }
       }
     }
 
