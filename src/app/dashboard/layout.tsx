@@ -23,16 +23,20 @@ export default function DashboardLayout({
         return;
       }
 
+      const seenKey = `beast_seen_${data.user.id}`;
+      const hasSeenBefore = localStorage.getItem(seenKey) === "true";
+
       if (
         typeof window !== "undefined" &&
         typeof (window as any).gtag === "function"
       ) {
-        (window as any).gtag("event", "beast_session_start", {
+        (window as any).gtag("event", hasSeenBefore ? "beast_return" : "beast_signup", {
           event_category: "engagement",
-          event_label: "User Logged In",
+          event_label: hasSeenBefore ? "Returning Beast User" : "New Beast User",
         });
       }
 
+      localStorage.setItem(seenKey, "true");
       setChecking(false);
     }
 
@@ -54,6 +58,7 @@ export default function DashboardLayout({
       <div className="fixed right-4 top-12 z-50">
         <LogoutButton />
       </div>
+
       {children}
     </>
   );
