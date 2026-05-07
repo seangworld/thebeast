@@ -27,7 +27,7 @@ export default function DashboardLayout({
         typeof window !== "undefined" &&
         typeof (window as any).gtag === "function"
       ) {
-        (window as any).gtag("event", "beast_login", {
+        (window as any).gtag("event", "beast_session_start", {
           event_category: "engagement",
           event_label: "User Logged In",
         });
