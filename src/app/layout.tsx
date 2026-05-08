@@ -7,9 +7,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-     <head>
-  <link rel="icon" type="image/png" href="/beast-favicon.png" />
-</head>
+     
       <script async src="https://www.googletagmanager.com/gtag/js?id=G-YFRV4QJK04"></script>
 <script
   dangerouslySetInnerHTML={{
