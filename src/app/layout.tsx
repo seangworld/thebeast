@@ -7,7 +7,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <head>
+     <head>
   <link rel="icon" type="image/png" href="/beast-favicon.png" />
 </head>
       <script async src="https://www.googletagmanager.com/gtag/js?id=G-YFRV4QJK04"></script>
@@ -17,7 +17,7 @@ export default function RootLayout({
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-      gtag('config', 'G-XXXXXXX');
+      gtag('config', 'G-YFRV4QJK04');
     `,
   }}
 />
