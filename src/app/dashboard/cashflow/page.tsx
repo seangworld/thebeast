@@ -131,7 +131,7 @@ export default function CashFlowPage() {
             {
               id: "extra-debt-attack",
               user_id: userId,
-              name: `Scheduled Extra Debt Payment ${targetDebt.name}`,
+              name: `Planned Extra Debt Payment ${targetDebt.name}`,
               amount: activeExtraPayment,
               due_date: Number(targetDebt.due_date || 1),
               is_debt: true,
@@ -282,7 +282,7 @@ export default function CashFlowPage() {
           </div>
         </section>
 
-        <section className="grid gap-4 md:grid-cols-5">
+        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           <div className="beast-card">
             <div className="text-sm text-[#c7cfdb]">Starting Balance</div>
             <input
@@ -299,22 +299,22 @@ export default function CashFlowPage() {
 
           <div className="beast-card">
             <div className="text-sm text-[#c7cfdb]">Required Cash</div>
-            <div className="mt-2 text-3xl font-bold">${requiredCash.toFixed(2)}</div>
+            <div className="mt-2 break-words text-2xl font-bold">${requiredCash.toFixed(2)}</div>
           </div>
 
           <div className="beast-card">
             <div className="text-sm text-[#c7cfdb]">Bills + Debt Due</div>
-            <div className="mt-2 text-3xl font-bold">${billsDue.toFixed(2)}</div>
+            <div className="mt-2 break-words text-2xl font-bold">${billsDue.toFixed(2)}</div>
           </div>
 
           <div className="beast-card">
             <div className="text-sm text-[#c7cfdb]">Income Expected</div>
-            <div className="mt-2 text-3xl font-bold">${incomeExpected.toFixed(2)}</div>
+            <div className="mt-2 break-words text-2xl font-bold">${incomeExpected.toFixed(2)}</div>
           </div>
 
           <div className="beast-card">
             <div className="text-sm text-[#c7cfdb]">Net Position</div>
-            <div className={`mt-2 text-3xl font-bold ${netPosition < buffer ? "text-red-300" : "text-green-300"}`}>
+            <div className={`mt-2 break-words text-2xl font-bold ${netPosition < buffer ? "text-red-300" : "text-green-300"}`}>
               ${netPosition.toFixed(2)}
             </div>
           </div>
@@ -347,7 +347,7 @@ export default function CashFlowPage() {
 
           <div className="mt-4 grid gap-4 md:grid-cols-4">
             <div>
-              <label className="text-sm text-[#c7cfdb]">Starting Balance</label>
+              <label className="text-sm text-[#c7cfdb]">Current Checking Balance</label>
               <input
                 type="number"
                 value={startingBalance}
@@ -357,7 +357,7 @@ export default function CashFlowPage() {
             </div>
 
             <div>
-              <label className="text-sm text-[#c7cfdb]">Buffer</label>
+              <label className="text-sm text-[#c7cfdb]">Minimum Checking Buffer</label>
               <input
                 type="number"
                 value={buffer}
@@ -615,6 +615,9 @@ export default function CashFlowPage() {
           </div>
         </section>
       </div>
+      <footer className="pt-6 text-center text-sm text-[#7f8da3]">
+  The Beast v1.1.0
+</footer>
     </main>
   );
 }

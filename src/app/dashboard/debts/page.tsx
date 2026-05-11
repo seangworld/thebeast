@@ -171,7 +171,16 @@ export default function DebtsPage() {
   const [dueDate, setDueDate] = useState("1");
 
   const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(true);
+const [loading, setLoading] = useState(true);
+
+const [editingDebtId, setEditingDebtId] = useState<string | null>(null);
+
+const [editName, setEditName] = useState("");
+const [editBalance, setEditBalance] = useState("");
+const [editMinimumPayment, setEditMinimumPayment] = useState("");
+const [editInterestRate, setEditInterestRate] = useState("");
+const [editDueDate, setEditDueDate] = useState("");
+  const [projectionMonths, setProjectionMonths] = useState(24);
 
   const payoffPlan = useMemo(() => {
     return simulatePayoffPlan({
@@ -297,6 +306,51 @@ export default function DebtsPage() {
     await load();
   }
 
+  function startEditDebt(debt: Debt) {
+    setEditingDebtId(debt.id);
+  
+    setEditName(debt.name || "");
+    setEditBalance(String(debt.balance || ""));
+    setEditMinimumPayment(String(debt.minimum_payment || ""));
+    setEditInterestRate(String(debt.interest_rate || ""));
+    setEditDueDate(String(debt.due_date || 1));
+  }
+  
+  function cancelEditDebt() {
+    setEditingDebtId(null);
+  
+    setEditName("");
+    setEditBalance("");
+    setEditMinimumPayment("");
+    setEditInterestRate("");
+    setEditDueDate("");
+  }
+  
+  async function saveEditDebt(id: string) {
+    const supabase = createClient();
+  
+    const { error } = await supabase
+      .from("debts")
+      .update({
+        name: editName,
+        balance: Number(editBalance || 0),
+        minimum_payment: Number(editMinimumPayment || 0),
+        interest_rate: Number(editInterestRate || 0),
+        due_date: Number(editDueDate || 1),
+      })
+      .eq("id", id);
+  
+    if (error) {
+      setMessage(`Update error: ${error.message}`);
+      return;
+    }
+  
+    setMessage("Debt updated.");
+  
+    cancelEditDebt();
+  
+    await load();
+  }
   async function deleteDebt(id: string) {
     const supabase = createClient();
 
@@ -335,41 +389,57 @@ export default function DebtsPage() {
           </section>
         )}
 
-        <section className="grid gap-4 md:grid-cols-5">
+<section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           <div className="beast-card">
             <div className="text-sm text-[#c7cfdb]">Total Debt</div>
-            <div className="mt-2 text-3xl font-bold">
+            <div className="mt-2 break-words text-2xl font-bold">
               ${totalDebt.toFixed(2)}
             </div>
           </div>
 
           <div className="beast-card">
             <div className="text-sm text-[#c7cfdb]">Monthly Minimums</div>
-            <div className="mt-2 text-3xl font-bold">
+            <div className="mt-2 break-words text-2xl font-bold">
               ${totalMinimums.toFixed(2)}
             </div>
           </div>
 
           <div className="beast-card">
             <div className="text-sm text-[#c7cfdb]">Payoff Time</div>
-            <div className="mt-2 text-3xl font-bold">
+            <div className="mt-2 break-words text-2xl font-bold">
               {payoffPlan.months_to_payoff} months
             </div>
           </div>
 
           <div className="beast-card">
             <div className="text-sm text-[#c7cfdb]">First Target</div>
-            <div className="mt-2 text-3xl font-bold">
+            <div className="mt-2 break-words text-2xl font-bold">
               {payoffPlan.first_target}
             </div>
           </div>
 
           <div className="beast-card">
             <div className="text-sm text-[#c7cfdb]">Total Interest</div>
-            <div className="mt-2 text-3xl font-bold">
+            <div className="mt-2 break-words text-2xl font-bold">
               ${payoffPlan.total_interest.toFixed(2)}
             </div>
           </div>
+
+          <div className="beast-card">
+  <div className="text-sm text-[#c7cfdb]">
+    Recommended
+  </div>
+
+  <div className="mt-2 text-2xl font-bold capitalize">
+    {strategy}
+  </div>
+
+  <p className="mt-2 text-sm text-[#7f8da3]">
+    {strategy === "avalanche"
+      ? "Lowest projected interest paid."
+      : "Fastest emotional momentum and early wins."}
+  </p>
+</div>
         </section>
 
         <section className="beast-card">
@@ -409,49 +479,79 @@ export default function DebtsPage() {
           <h2 className="text-xl font-bold">Add Debt</h2>
 
           <div className="mt-4 grid gap-4 md:grid-cols-5">
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Debt name"
-              className="beast-input"
-            />
+  <div>
+    <label className="text-sm text-[#c7cfdb]">
+      Debt Name
+    </label>
 
-            <input
-              type="number"
-              value={balance}
-              onChange={(e) => setBalance(e.target.value)}
-              placeholder="Balance"
-              className="beast-input"
-            />
+    <input
+      value={name}
+      onChange={(e) => setName(e.target.value)}
+      placeholder="Debt name"
+      className="beast-input mt-2"
+    />
+  </div>
 
-            <input
-              type="number"
-              value={minimumPayment}
-              onChange={(e) => setMinimumPayment(e.target.value)}
-              placeholder="Minimum"
-              className="beast-input"
-            />
+  <div>
+    <label className="text-sm text-[#c7cfdb]">
+      Balance
+    </label>
 
-            <input
-              type="number"
-              value={interestRate}
-              onChange={(e) => setInterestRate(e.target.value)}
-              placeholder="APR %"
-              className="beast-input"
-            />
+    <input
+      type="number"
+      value={balance}
+      onChange={(e) => setBalance(e.target.value)}
+      placeholder="0"
+      className="beast-input mt-2"
+    />
+  </div>
 
-            <input
-              type="number"
-              min="1"
-              max="31"
-              value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
-              placeholder="Due day"
-              className="beast-input"
-            />
-          </div>
+  <div>
+    <label className="text-sm text-[#c7cfdb]">
+      Minimum Payment
+    </label>
 
-          <button onClick={addDebt} className="beast-button mt-4 w-full">
+    <input
+      type="number"
+      value={minimumPayment}
+      onChange={(e) => setMinimumPayment(e.target.value)}
+      placeholder="0"
+      className="beast-input mt-2"
+    />
+  </div>
+
+  <div>
+    <label className="text-sm text-[#c7cfdb]">
+      APR %
+    </label>
+
+    <input
+      type="number"
+      value={interestRate}
+      onChange={(e) => setInterestRate(e.target.value)}
+      placeholder="0"
+      className="beast-input mt-2"
+    />
+  </div>
+
+  <div>
+    <label className="text-sm text-[#c7cfdb]">
+      Payment Due Day
+    </label>
+
+    <input
+      type="number"
+      min="1"
+      max="31"
+      value={dueDate}
+      onChange={(e) => setDueDate(e.target.value)}
+      placeholder="Example: 15"
+      className="beast-input mt-2"
+    />
+  </div>
+</div>
+
+<button onClick={addDebt} className="beast-button mt-4 w-full">
             Add Debt
           </button>
         </section>
@@ -488,24 +588,105 @@ export default function DebtsPage() {
                   orderedDebts.map((debt, index) => (
                     <tr key={debt.id}>
                       <td>#{index + 1}</td>
-                      <td>{debt.name}</td>
-                      <td className="text-right">
-                        ${Number(debt.balance || 0).toFixed(2)}
+                  
+                      <td>
+                        {editingDebtId === debt.id ? (
+                          <input
+                            value={editName}
+                            onChange={(e) => setEditName(e.target.value)}
+                            className="beast-input"
+                          />
+                        ) : (
+                          debt.name
+                        )}
                       </td>
+                  
                       <td className="text-right">
-                        ${Number(debt.minimum_payment || 0).toFixed(2)}
+                        {editingDebtId === debt.id ? (
+                          <input
+                            type="number"
+                            value={editBalance}
+                            onChange={(e) => setEditBalance(e.target.value)}
+                            className="beast-input"
+                          />
+                        ) : (
+                          `$${Number(debt.balance || 0).toFixed(2)}`
+                        )}
                       </td>
+                  
                       <td className="text-right">
-                        {Number(debt.interest_rate || 0).toFixed(2)}%
+                        {editingDebtId === debt.id ? (
+                          <input
+                            type="number"
+                            value={editMinimumPayment}
+                            onChange={(e) => setEditMinimumPayment(e.target.value)}
+                            className="beast-input"
+                          />
+                        ) : (
+                          `$${Number(debt.minimum_payment || 0).toFixed(2)}`
+                        )}
                       </td>
-                      <td className="text-right">{debt.due_date || 1}</td>
+                  
                       <td className="text-right">
-                        <button
-                          onClick={() => deleteDebt(debt.id)}
-                          className="beast-button-secondary"
-                        >
-                          Delete
-                        </button>
+                        {editingDebtId === debt.id ? (
+                          <input
+                            type="number"
+                            value={editInterestRate}
+                            onChange={(e) => setEditInterestRate(e.target.value)}
+                            className="beast-input"
+                          />
+                        ) : (
+                          `${Number(debt.interest_rate || 0).toFixed(2)}%`
+                        )}
+                      </td>
+                  
+                      <td className="text-right">
+                        {editingDebtId === debt.id ? (
+                          <input
+                            type="number"
+                            value={editDueDate}
+                            onChange={(e) => setEditDueDate(e.target.value)}
+                            className="beast-input"
+                          />
+                        ) : (
+                          debt.due_date || 1
+                        )}
+                      </td>
+                  
+                      <td className="text-right">
+                        {editingDebtId === debt.id ? (
+                          <div className="flex justify-end gap-2">
+                            <button
+                              onClick={() => saveEditDebt(debt.id)}
+                              className="beast-button"
+                            >
+                              Save
+                            </button>
+                  
+                            <button
+                              onClick={cancelEditDebt}
+                              className="beast-button-secondary"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex justify-end gap-2">
+                            <button
+                              onClick={() => startEditDebt(debt)}
+                              className="beast-button-secondary"
+                            >
+                              Edit
+                            </button>
+                  
+                            <button
+                              onClick={() => deleteDebt(debt.id)}
+                              className="beast-button"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        )}
                       </td>
                     </tr>
                   ))
@@ -516,9 +697,27 @@ export default function DebtsPage() {
         </section>
 
         <section className="beast-panel overflow-hidden">
-          <div className="border-b border-[#2a3242] p-5">
-            <h2 className="text-xl font-bold">Payoff Plan</h2>
-          </div>
+        <div className="border-b border-[#2a3242] p-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+  <h2 className="text-xl font-bold">Payoff Plan</h2>
+
+  <div>
+    <label className="text-sm text-[#c7cfdb]">
+      Projection Length
+    </label>
+
+    <select
+      value={projectionMonths}
+      onChange={(e) => setProjectionMonths(Number(e.target.value))}
+      className="beast-input mt-2"
+    >
+      <option value={12}>12 Months</option>
+      <option value={24}>24 Months</option>
+      <option value={36}>36 Months</option>
+      <option value={60}>60 Months</option>
+      <option value={120}>120 Months</option>
+    </select>
+  </div>
+</div>
 
           <div className="beast-table-wrap">
             <table className="w-full min-w-[1150px] text-sm">
@@ -542,7 +741,9 @@ export default function DebtsPage() {
                     <td colSpan={9}>Add debts to generate payoff plan.</td>
                   </tr>
                 ) : (
-                  payoffPlan.payoff_months.map((row, index) => (
+                  payoffPlan.payoff_months
+  .slice(0, projectionMonths)
+  .map((row, index) => (
                     <tr key={`${row.month}-${row.target}-${index}`}>
                       <td>{row.month}</td>
                       <td>{row.target}</td>
@@ -585,6 +786,9 @@ export default function DebtsPage() {
           </div>
         </section>
       </div>
+      <footer className="pt-6 text-center text-sm text-[#7f8da3]">
+  The Beast v1.1.0
+</footer>
     </main>
   );
 }
