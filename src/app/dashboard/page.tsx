@@ -175,6 +175,9 @@ export default function DashboardPage() {
         </section>
 
       </div>
+      <footer className="pt-6 text-center text-sm text-[#7f8da3]">
+  The Beast v1.1.0
+</footer>
     </main>
   );
 }
