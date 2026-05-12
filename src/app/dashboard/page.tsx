@@ -85,7 +85,7 @@ export default function DashboardPage() {
   alt="The Beast banner"
   className="w-full rounded-2xl border border-[#2a3242]"
 />
-          <p className="beast-kicker">The Beast</p>
+<p className="beast-kicker">The Beast v1.2.0</p>
           <h1 className="beast-title">Dashboard</h1>
           <p className="beast-subtitle">
             Your debt payoff and cash flow command center.
@@ -175,9 +175,7 @@ export default function DashboardPage() {
         </section>
 
       </div>
-      <footer className="pt-6 text-center text-sm text-[#7f8da3]">
-  The Beast v1.1.0
-</footer>
+      
     </main>
   );
 }

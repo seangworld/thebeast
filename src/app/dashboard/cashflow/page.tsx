@@ -62,11 +62,61 @@ export default function CashFlowPage() {
   const [billAmount, setBillAmount] = useState("");
   const [billDueDate, setBillDueDate] = useState("");
 
+  const [nextPaycheckAmount, setNextPaycheckAmount] = useState("");
+  const [nextPaycheckDate, setNextPaycheckDate] = useState("");
+
   const [loading, setLoading] = useState(true);
+
+const [editingIncomeId, setEditingIncomeId] = useState<string | null>(null);
+const [editingBillId, setEditingBillId] = useState<string | null>(null);
+
+const [editIncomeName, setEditIncomeName] = useState("");
+const [editIncomeAmount, setEditIncomeAmount] = useState("");
+const [editIncomeFrequency, setEditIncomeFrequency] = useState("biweekly");
+const [editIncomeNextDate, setEditIncomeNextDate] = useState("");
+
+const [editBillName, setEditBillName] = useState("");
+const [editBillAmount, setEditBillAmount] = useState("");
+const [editBillDueDate, setEditBillDueDate] = useState("");
 
   const netPosition = useMemo(() => {
     return Number(startingBalance) + incomeExpected - billsDue;
   }, [startingBalance, incomeExpected, billsDue]);
+
+  const today = new Date();
+
+  const nextPayDate = nextPaycheckDate ? new Date(nextPaycheckDate) : null;
+
+  const upcomingBillsTotal = useMemo(() => {
+    if (!nextPayDate) return 0;
+
+    return bills
+      .filter((bill) => {
+        const dueDay = Number(bill.due_date || bill.due_day || 1);
+        return dueDay >= today.getDate() && dueDay <= nextPayDate.getDate();
+      })
+      .reduce((sum, bill) => sum + Number(bill.amount || 0), 0);
+  }, [bills, nextPayDate, today]);
+
+  const upcomingDebtMinimums = useMemo(() => {
+    if (!nextPayDate) return 0;
+
+    return debts
+      .filter((debt) => {
+        const dueDay = Number(debt.due_date || 1);
+        return dueDay >= today.getDate() && dueDay <= nextPayDate.getDate();
+      })
+      .reduce((sum, debt) => sum + Number(debt.minimum_payment || 0), 0);
+  }, [debts, nextPayDate, today]);
+
+  const requiredBeforePaycheck = upcomingBillsTotal + upcomingDebtMinimums;
+
+  const projectedAfterObligations =
+    Number(startingBalance || 0) +
+    Number(nextPaycheckAmount || 0) -
+    requiredBeforePaycheck;
+
+  const safeToSpend = projectedAfterObligations - Number(buffer || 0);
 
   async function getUserId() {
     const supabase = createClient();
@@ -250,7 +300,74 @@ export default function CashFlowPage() {
 
     await load();
   }
-
+  function startEditIncome(income: any) {
+    setEditingIncomeId(income.id);
+  
+    setEditIncomeName(income.name || "");
+    setEditIncomeAmount(String(income.amount || ""));
+    setEditIncomeFrequency(income.frequency || "biweekly");
+    setEditIncomeNextDate(income.next_date || "");
+  }
+  
+  function cancelEditIncome() {
+    setEditingIncomeId(null);
+  
+    setEditIncomeName("");
+    setEditIncomeAmount("");
+    setEditIncomeFrequency("biweekly");
+    setEditIncomeNextDate("");
+  }
+  
+  async function saveIncomeEdit(id: string) {
+    const supabase = createClient();
+  
+    await supabase
+      .from("income_events")
+      .update({
+        name: editIncomeName,
+        amount: Number(editIncomeAmount || 0),
+        frequency: editIncomeFrequency,
+        next_date: editIncomeNextDate,
+      })
+      .eq("id", id);
+  
+    cancelEditIncome();
+  
+    await load();
+  }
+  
+  function startEditBill(bill: any) {
+    setEditingBillId(bill.id);
+  
+    setEditBillName(bill.name || "");
+    setEditBillAmount(String(bill.amount || ""));
+    setEditBillDueDate(String(bill.due_date || 1));
+  }
+  
+  function cancelEditBill() {
+    setEditingBillId(null);
+  
+    setEditBillName("");
+    setEditBillAmount("");
+    setEditBillDueDate("");
+  }
+  
+  async function saveBillEdit(id: string) {
+    const supabase = createClient();
+  
+    await supabase
+      .from("bill_events")
+      .update({
+        name: editBillName,
+        amount: Number(editBillAmount || 0),
+        due_date: Number(editBillDueDate || 1),
+      })
+      .eq("id", id);
+  
+    cancelEditBill();
+  
+    await load();
+  }
   async function deleteIncome(id: string) {
     const supabase = createClient();
     await supabase.from("income_events").delete().eq("id", id);
@@ -269,7 +386,7 @@ export default function CashFlowPage() {
         <section className="beast-page-header">
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="beast-kicker">The Beast</p>
+              <p className="beast-kicker">The Beast v1.2.0</p>
               <h1 className="beast-title">Cash Flow</h1>
               <p className="beast-subtitle">
                 Manage paychecks, bills, debt minimums, extra attack payments, required cash, and buffer risk.
@@ -284,7 +401,7 @@ export default function CashFlowPage() {
 
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           <div className="beast-card">
-            <div className="text-sm text-[#c7cfdb]">Starting Balance</div>
+            <div className="text-sm text-[#c7cfdb]">Current Checking Balance</div>
             <input
               type="number"
               value={startingBalance}
@@ -299,23 +416,111 @@ export default function CashFlowPage() {
 
           <div className="beast-card">
             <div className="text-sm text-[#c7cfdb]">Required Cash</div>
-            <div className="mt-2 break-words text-2xl font-bold">${requiredCash.toFixed(2)}</div>
+            <div className="mt-2 break-words text-2xl font-bold">
+              ${requiredCash.toFixed(2)}
+            </div>
           </div>
 
           <div className="beast-card">
             <div className="text-sm text-[#c7cfdb]">Bills + Debt Due</div>
-            <div className="mt-2 break-words text-2xl font-bold">${billsDue.toFixed(2)}</div>
+            <div className="mt-2 break-words text-2xl font-bold">
+              ${billsDue.toFixed(2)}
+            </div>
           </div>
 
           <div className="beast-card">
             <div className="text-sm text-[#c7cfdb]">Income Expected</div>
-            <div className="mt-2 break-words text-2xl font-bold">${incomeExpected.toFixed(2)}</div>
+            <div className="mt-2 break-words text-2xl font-bold">
+              ${incomeExpected.toFixed(2)}
+            </div>
           </div>
 
           <div className="beast-card">
             <div className="text-sm text-[#c7cfdb]">Net Position</div>
-            <div className={`mt-2 break-words text-2xl font-bold ${netPosition < buffer ? "text-red-300" : "text-green-300"}`}>
+            <div
+              className={`mt-2 break-words text-2xl font-bold ${
+                netPosition < buffer ? "text-red-300" : "text-green-300"
+              }`}
+            >
               ${netPosition.toFixed(2)}
+            </div>
+          </div>
+        </section>
+
+        <section className="beast-card space-y-5">
+          <div>
+            <h2 className="text-xl font-bold">Paycheck Planning</h2>
+            <p className="mt-1 text-sm text-[#7f8da3]">
+              Determine what must be covered before your next paycheck.
+            </p>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <label className="text-sm text-[#c7cfdb]">
+                Next Paycheck Amount
+              </label>
+              <input
+                type="number"
+                value={nextPaycheckAmount}
+                onChange={(e) => setNextPaycheckAmount(e.target.value)}
+                placeholder="0"
+                className="beast-input mt-2"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm text-[#c7cfdb]">
+                Next Paycheck Date
+              </label>
+              <input
+                type="date"
+                value={nextPaycheckDate}
+                onChange={(e) => setNextPaycheckDate(e.target.value)}
+                className="beast-input mt-2"
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div className="beast-card">
+              <div className="text-sm text-[#c7cfdb]">
+                Required Before Paycheck
+              </div>
+              <div className="mt-2 break-words text-2xl font-bold">
+                ${requiredBeforePaycheck.toFixed(2)}
+              </div>
+            </div>
+
+            <div className="beast-card">
+              <div className="text-sm text-[#c7cfdb]">
+                Projected After Obligations
+              </div>
+              <div className="mt-2 break-words text-2xl font-bold">
+                ${projectedAfterObligations.toFixed(2)}
+              </div>
+            </div>
+
+            <div className="beast-card">
+              <div className="text-sm text-[#c7cfdb]">Safe To Spend</div>
+              <div
+                className={`mt-2 break-words text-2xl font-bold ${
+                  safeToSpend < 0 ? "text-red-300" : "text-green-300"
+                }`}
+              >
+                ${safeToSpend.toFixed(2)}
+              </div>
+            </div>
+
+            <div className="beast-card">
+              <div className="text-sm text-[#c7cfdb]">Status</div>
+              <div
+                className={`mt-2 break-words text-2xl font-bold ${
+                  safeToSpend < 0 ? "text-red-300" : "text-green-300"
+                }`}
+              >
+                {safeToSpend < 0 ? "Shortfall Risk" : "On Track"}
+              </div>
             </div>
           </div>
         </section>
@@ -323,12 +528,18 @@ export default function CashFlowPage() {
         <section className="grid gap-4 md:grid-cols-4">
           <div className="beast-card">
             <div className="text-sm text-[#c7cfdb]">Strategy</div>
-            <div className="mt-2 text-2xl font-bold capitalize">{strategy}</div>
+            <div className="mt-2 text-2xl font-bold capitalize">
+              {strategy}
+            </div>
           </div>
 
           <div className="beast-card">
-            <div className="text-sm text-[#c7cfdb]">Scheduled Extra Debt Payment</div>
-            <div className="mt-2 text-2xl font-bold">${extraPayment.toFixed(2)}</div>
+            <div className="text-sm text-[#c7cfdb]">
+              Planned Extra Debt Payment
+            </div>
+            <div className="mt-2 text-2xl font-bold">
+              ${extraPayment.toFixed(2)}
+            </div>
           </div>
 
           <div className="beast-card">
@@ -347,7 +558,9 @@ export default function CashFlowPage() {
 
           <div className="mt-4 grid gap-4 md:grid-cols-4">
             <div>
-              <label className="text-sm text-[#c7cfdb]">Current Checking Balance</label>
+              <label className="text-sm text-[#c7cfdb]">
+                Current Checking Balance
+              </label>
               <input
                 type="number"
                 value={startingBalance}
@@ -357,7 +570,9 @@ export default function CashFlowPage() {
             </div>
 
             <div>
-              <label className="text-sm text-[#c7cfdb]">Minimum Checking Buffer</label>
+              <label className="text-sm text-[#c7cfdb]">
+                Minimum Checking Buffer
+              </label>
               <input
                 type="number"
                 value={buffer}
@@ -492,7 +707,9 @@ export default function CashFlowPage() {
                   </tr>
                 ) : (
                   data.map((row, index) => {
-                    const runningBalance = Number(row.runningBalance || row.running_balance || 0);
+                    const runningBalance = Number(
+                      row.runningBalance || row.running_balance || 0
+                    );
 
                     return (
                       <tr key={`${formatDate(row.date)}-${row.name}-${index}`}>
@@ -547,19 +764,94 @@ export default function CashFlowPage() {
                   ) : (
                     incomes.map((income) => (
                       <tr key={income.id}>
-                        <td>{income.name}</td>
-                        <td className="text-right">
-                          ${Number(income.amount || 0).toFixed(2)}
+                        <td>
+                          {editingIncomeId === income.id ? (
+                            <input
+                              value={editIncomeName}
+                              onChange={(e) => setEditIncomeName(e.target.value)}
+                              className="beast-input"
+                            />
+                          ) : (
+                            income.name
+                          )}
                         </td>
-                        <td>{income.frequency}</td>
-                        <td>{income.next_date}</td>
+                    
                         <td className="text-right">
-                          <button
-                            onClick={() => deleteIncome(income.id)}
-                            className="beast-button-secondary"
-                          >
-                            Delete
-                          </button>
+                          {editingIncomeId === income.id ? (
+                            <input
+                              type="number"
+                              value={editIncomeAmount}
+                              onChange={(e) => setEditIncomeAmount(e.target.value)}
+                              className="beast-input"
+                            />
+                          ) : (
+                            `$${Number(income.amount || 0).toFixed(2)}`
+                          )}
+                        </td>
+                    
+                        <td>
+                          {editingIncomeId === income.id ? (
+                            <select
+                              value={editIncomeFrequency}
+                              onChange={(e) => setEditIncomeFrequency(e.target.value)}
+                              className="beast-input"
+                            >
+                              <option value="weekly">Weekly</option>
+                              <option value="biweekly">Biweekly</option>
+                              <option value="monthly">Monthly</option>
+                            </select>
+                          ) : (
+                            income.frequency
+                          )}
+                        </td>
+                    
+                        <td>
+                          {editingIncomeId === income.id ? (
+                            <input
+                              type="date"
+                              value={editIncomeNextDate}
+                              onChange={(e) => setEditIncomeNextDate(e.target.value)}
+                              className="beast-input"
+                            />
+                          ) : (
+                            income.next_date
+                          )}
+                        </td>
+                    
+                        <td className="text-right">
+                          {editingIncomeId === income.id ? (
+                            <div className="flex justify-end gap-2">
+                              <button
+                                onClick={() => saveIncomeEdit(income.id)}
+                                className="beast-button"
+                              >
+                                Save
+                              </button>
+                    
+                              <button
+                                onClick={cancelEditIncome}
+                                className="beast-button-secondary"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex justify-end gap-2">
+                              <button
+                                onClick={() => startEditIncome(income)}
+                                className="beast-button-secondary"
+                              >
+                                Edit
+                              </button>
+                    
+                              <button
+                                onClick={() => deleteIncome(income.id)}
+                                className="beast-button"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          )}
                         </td>
                       </tr>
                     ))
@@ -593,18 +885,78 @@ export default function CashFlowPage() {
                   ) : (
                     bills.map((bill) => (
                       <tr key={bill.id}>
-                        <td>{bill.name}</td>
-                        <td className="text-right">
-                          ${Number(bill.amount || 0).toFixed(2)}
+                        <td>
+                          {editingBillId === bill.id ? (
+                            <input
+                              value={editBillName}
+                              onChange={(e) => setEditBillName(e.target.value)}
+                              className="beast-input"
+                            />
+                          ) : (
+                            bill.name
+                          )}
                         </td>
-                        <td>{bill.due_date}</td>
+                    
                         <td className="text-right">
-                          <button
-                            onClick={() => deleteBill(bill.id)}
-                            className="beast-button-secondary"
-                          >
-                            Delete
-                          </button>
+                          {editingBillId === bill.id ? (
+                            <input
+                              type="number"
+                              value={editBillAmount}
+                              onChange={(e) => setEditBillAmount(e.target.value)}
+                              className="beast-input"
+                            />
+                          ) : (
+                            `$${Number(bill.amount || 0).toFixed(2)}`
+                          )}
+                        </td>
+                    
+                        <td>
+                          {editingBillId === bill.id ? (
+                            <input
+                              type="number"
+                              value={editBillDueDate}
+                              onChange={(e) => setEditBillDueDate(e.target.value)}
+                              className="beast-input"
+                            />
+                          ) : (
+                            bill.due_date
+                          )}
+                        </td>
+                    
+                        <td className="text-right">
+                          {editingBillId === bill.id ? (
+                            <div className="flex justify-end gap-2">
+                              <button
+                                onClick={() => saveBillEdit(bill.id)}
+                                className="beast-button"
+                              >
+                                Save
+                              </button>
+                    
+                              <button
+                                onClick={cancelEditBill}
+                                className="beast-button-secondary"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex justify-end gap-2">
+                              <button
+                                onClick={() => startEditBill(bill)}
+                                className="beast-button-secondary"
+                              >
+                                Edit
+                              </button>
+                    
+                              <button
+                                onClick={() => deleteBill(bill.id)}
+                                className="beast-button"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          )}
                         </td>
                       </tr>
                     ))
@@ -615,9 +967,6 @@ export default function CashFlowPage() {
           </div>
         </section>
       </div>
-      <footer className="pt-6 text-center text-sm text-[#7f8da3]">
-  The Beast v1.1.0
-</footer>
     </main>
   );
 }
