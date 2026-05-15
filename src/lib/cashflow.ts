@@ -12,6 +12,50 @@ export type SimulatedCashEvent = CashEvent & {
   belowBuffer: boolean;
 };
 
+function advanceByFrequency(date: Date, frequency?: string) {
+  const next = new Date(date);
+
+  if (frequency === "weekly") {
+    next.setDate(next.getDate() + 7);
+  } else if (frequency === "biweekly") {
+    next.setDate(next.getDate() + 14);
+  } else if (frequency === "every_2_months") {
+    next.setMonth(next.getMonth() + 2);
+  } else if (frequency === "every_3_months") {
+    next.setMonth(next.getMonth() + 3);
+  } else if (frequency === "every_6_months") {
+    next.setMonth(next.getMonth() + 6);
+  } else if (frequency === "yearly") {
+    next.setFullYear(next.getFullYear() + 1);
+  } else {
+    next.setMonth(next.getMonth() + 1);
+  }
+
+  return next;
+}
+
+function getFirstDueDateFromDay(startDate: Date, dueDay: number) {
+  const safeDueDay = Math.min(Math.max(Number(dueDay || 1), 1), 31);
+
+  let firstDue = new Date(
+    startDate.getFullYear(),
+    startDate.getMonth(),
+    safeDueDay
+  );
+
+  const startOnly = new Date(
+    startDate.getFullYear(),
+    startDate.getMonth(),
+    startDate.getDate()
+  );
+
+  if (firstDue < startOnly) {
+    firstDue.setMonth(firstDue.getMonth() + 1);
+  }
+
+  return firstDue;
+}
+
 export function buildCashTimeline({
   incomes,
   bills,
@@ -28,7 +72,6 @@ export function buildCashTimeline({
   const timeline: CashEvent[] = [];
   const endDate = addDays(startDate, days);
 
-  // INCOME
   incomes.forEach((inc) => {
     let current = new Date(inc.next_date);
 
@@ -42,43 +85,45 @@ export function buildCashTimeline({
         });
       }
 
-      if (inc.frequency === "weekly") {
-        current.setDate(current.getDate() + 7);
-      } else if (inc.frequency === "biweekly") {
-        current.setDate(current.getDate() + 14);
-      } else {
-        current.setMonth(current.getMonth() + 1);
-      }
+      current = advanceByFrequency(current, inc.frequency);
     }
   });
 
-  // BILLS
-  for (let i = 0; i <= days; i++) {
-    const currentDate = addDays(startDate, i);
+  bills.forEach((bill) => {
+    let current = getFirstDueDateFromDay(
+      startDate,
+      Number(bill.due_date || 1)
+    );
 
-    bills.forEach((bill) => {
-      if (currentDate.getDate() === Number(bill.due_date)) {
-        timeline.push({
-          date: currentDate,
-          type: "bill",
-          name: bill.name,
-          amount: -Number(bill.amount),
-        });
-      }
-    });
+    while (current <= endDate) {
+      timeline.push({
+        date: new Date(current),
+        type: "bill",
+        name: bill.name,
+        amount: -Number(bill.amount),
+      });
 
-    // DEBT MIN PAYMENTS
-    debts.forEach((debt) => {
-      if (currentDate.getDate() === Number(debt.due_date)) {
-        timeline.push({
-          date: currentDate,
-          type: "debt",
-          name: `${debt.name} (Min)`,
-          amount: -Number(debt.minimum_payment),
-        });
-      }
-    });
-  }
+      current = advanceByFrequency(current, bill.frequency || "monthly");
+    }
+  });
+
+  debts.forEach((debt) => {
+    let current = getFirstDueDateFromDay(
+      startDate,
+      Number(debt.due_date || 1)
+    );
+
+    while (current <= endDate) {
+      timeline.push({
+        date: new Date(current),
+        type: "debt",
+        name: `${debt.name} (Min)`,
+        amount: -Number(debt.minimum_payment),
+      });
+
+      current = advanceByFrequency(current, "monthly");
+    }
+  });
 
   return timeline.sort((a, b) => a.date.getTime() - b.date.getTime());
 }

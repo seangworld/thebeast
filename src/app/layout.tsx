@@ -1,5 +1,37 @@
+import type { Metadata } from "next";
 import Script from "next/script";
 import "./globals.css";
+
+export const metadata: Metadata = {
+  metadataBase: new URL("https://thebeast.seangworld.com"),
+  title: "The Beast",
+  description:
+    "A financial execution system for paycheck planning, debt payoff, bill tracking, and cashflow control.",
+  openGraph: {
+    title: "The Beast",
+    description:
+      "A financial execution system for paycheck planning, debt payoff, bill tracking, and cashflow control.",
+    url: "https://thebeast.seangworld.com",
+    siteName: "The Beast",
+    images: [
+      {
+        url: "/beast-logo-banner.png",
+        width: 1200,
+        height: 630,
+        alt: "The Beast financial execution system",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "The Beast",
+    description:
+      "A financial execution system for paycheck planning, debt payoff, bill tracking, and cashflow control.",
+    images: ["/beast-logo-banner.png"],
+  },
+};
 
 export default function RootLayout({
   children,
@@ -24,7 +56,7 @@ export default function RootLayout({
         </Script>
 
         <div className="w-full bg-[#38bdf8] text-black text-center text-sm py-2 font-semibold">
-          The Beast (Beta) — Free Financial Command System
+          The Beast v1.3.0 Beta — Free Financial Command System
         </div>
 
         {children}

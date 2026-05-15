@@ -55,9 +55,7 @@ export default function DashboardLayout({
 
   return (
     <>
-      <div className="fixed right-4 top-12 z-50">
-        <LogoutButton />
-      </div>
+      
 
       {children}
     </>
