@@ -377,10 +377,7 @@ const [editDueDate, setEditDueDate] = useState("");
               </p>
             </div>
 
-            <Link href="/dashboard" className="beast-button-secondary">
-              Back to Dashboard
-            </Link>
-          </div>
+            </div>
         </section>
 
         {message && (

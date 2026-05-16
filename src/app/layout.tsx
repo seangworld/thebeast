@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Script from "next/script";
+import { APP_VERSION_LABEL } from "@/lib/appVersion";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -55,24 +56,30 @@ export default function RootLayout({
           `}
         </Script>
 
-        <div className="w-full bg-[#38bdf8] text-black text-center text-sm py-2 font-semibold">
-          The Beast v1.3.0 Beta — Free Financial Command System
+        <div className="w-full bg-[#38bdf8] py-2 text-center text-sm font-semibold text-black">
+          {APP_VERSION_LABEL} — Free Financial Command System
         </div>
 
         {children}
 
-        <footer className="mt-12 border-t border-[#2a3242] text-center text-sm text-[#7f8da3] py-6 space-y-2">
+        <footer className="mt-12 space-y-2 border-t border-[#2a3242] py-6 text-center text-sm text-[#7f8da3]">
           <div>© 2026 seangworld.com</div>
           <div>
             <a href="https://seangworld.com" className="hover:underline">
               Main Site
             </a>{" "}
             •{" "}
-            <a href="https://seangworld.com/privacy.html" className="hover:underline">
+            <a
+              href="https://seangworld.com/privacy.html"
+              className="hover:underline"
+            >
               Privacy
             </a>{" "}
             •{" "}
-            <a href="https://seangworld.com/terms.html" className="hover:underline">
+            <a
+              href="https://seangworld.com/terms.html"
+              className="hover:underline"
+            >
               Terms
             </a>
           </div>

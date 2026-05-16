@@ -92,9 +92,6 @@ export default function SettingsPage() {
               </p>
             </div>
 
-            <Link href="/dashboard" className="beast-button-secondary">
-              Back to Dashboard
-            </Link>
           </div>
         </section>
 

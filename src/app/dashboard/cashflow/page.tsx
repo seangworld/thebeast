@@ -1038,22 +1038,7 @@ export default function CashFlowPage() {
               </p>
             </div>
 
-            <div className="flex w-full flex-col gap-2 md:w-auto md:min-w-[260px]">
-              <div className="grid grid-cols-2 gap-2">
-                <button onClick={saveAll} className="beast-button">
-                  Save All
-                </button>
-
-                <button onClick={logout} className="beast-button-secondary">
-                  Logout
-                </button>
-              </div>
-
-              <Link href="/dashboard" className="beast-button-secondary text-center">
-                Back to Dashboard
-              </Link>
             </div>
-          </div>
         </section>
 
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
