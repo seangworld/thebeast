@@ -108,7 +108,7 @@ function getNextDueDate(dueDay: number, frequency = "monthly") {
 }
 
 function formatShortDate(date: Date) {
-  return `${date.getMonth() + 1}/${date.getDate()}`;
+  return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
 }
 
 function parseDateOnly(value: string) {
@@ -143,10 +143,31 @@ function advanceIncomeDate(date: Date, frequency: string) {
   return addMonthsClamped(date, 1);
 }
 
+function getNextIncomeDateDisplay(nextDate: string, frequency: string) {
+  if (!nextDate) return "—";
+
+  const today = new Date();
+  const todayOnly = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate()
+  );
+
+  let date = parseDateOnly(nextDate);
+  let safety = 0;
+
+  while (date < todayOnly && safety < 120) {
+    date = advanceIncomeDate(date, frequency || "monthly");
+    safety += 1;
+  }
+
+  return formatShortDate(date);
+}
+
 function buildIncomeBuckets(incomes: any[], days: number) {
   const today = new Date();
   const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  const end = addDays(start, Math.max(days, 60));
+  const end = addDays(start, Math.max(Number(days || 30), 1));
   const rawBuckets: any[] = [];
 
   for (const income of incomes) {
@@ -302,7 +323,7 @@ export default function CashFlowPage() {
   const [editDebtMinimumPayment, setEditDebtMinimumPayment] = useState("");
   const [editDebtInterestRate, setEditDebtInterestRate] = useState("");
   const [editDebtDueDate, setEditDebtDueDate] = useState("");
-
+  const [debtPayments, setDebtPayments] = useState<Record<string, string>>({});
   const [partialPayments, setPartialPayments] = useState<Record<string, string>>(
     {}
   );
@@ -336,11 +357,20 @@ export default function CashFlowPage() {
     return bills.map((bill) => {
       const amount = Number(bill.amount || 0);
       const paid = Number(paymentsByBillId[bill.id] || 0);
-      const remaining = Math.max(amount - paid, 0);
-      const dueDay = Number(bill.due_date || 1);
-      const frequency = bill.frequency || "monthly";
-      const assignedPaycheck = bill.assigned_paycheck || "unassigned";
-      const nextDueDate = getNextDueDate(dueDay, frequency);
+      const currentCycleRemaining = Math.max(amount - paid, 0);
+const dueDay = Number(bill.due_date || 1);
+const frequency = bill.frequency || "monthly";
+const assignedPaycheck = bill.assigned_paycheck || "unassigned";
+let nextDueDate = getNextDueDate(dueDay, frequency);
+let remaining = currentCycleRemaining;
+
+if (currentCycleRemaining <= 0) {
+  if (frequency === "weekly") nextDueDate = addDays(nextDueDate, 7);
+  else if (frequency === "biweekly") nextDueDate = addDays(nextDueDate, 14);
+  else nextDueDate = addMonthsClamped(nextDueDate, getFrequencyMonthStep(frequency));
+
+  remaining = amount;
+}
 
       return {
         ...bill,
@@ -353,14 +383,24 @@ export default function CashFlowPage() {
         assigned_income_date: bill.assigned_income_date || "",
         nextDueDate,
         nextDueDateDisplay: formatShortDate(nextDueDate),
-        status: getBillStatus({ amount, paid, nextDueDate }),
+        status:
+  currentCycleRemaining <= 0
+    ? "Upcoming"
+    : getBillStatus({ amount, paid, nextDueDate }),
+    
         is_archived: Boolean(bill.is_archived),
       };
     });
   }, [bills, paymentsByBillId]);
 
   const activeBills = useMemo(() => {
-    return billsWithPaymentStatus.filter((bill) => !bill.is_archived);
+    return billsWithPaymentStatus
+      .filter((bill) => !bill.is_archived)
+      .sort(
+        (a, b) =>
+          new Date(a.nextDueDate).getTime() -
+          new Date(b.nextDueDate).getTime()
+      );
   }, [billsWithPaymentStatus]);
 
   const archivedBills = useMemo(() => {
@@ -368,7 +408,7 @@ export default function CashFlowPage() {
   }, [billsWithPaymentStatus]);
 
   const incomeBuckets = useMemo(() => {
-    return buildIncomeBuckets(incomes, Math.max(Number(lookaheadDays || 60), 60));
+    return buildIncomeBuckets(incomes, Number(lookaheadDays || 30));
   }, [incomes, lookaheadDays]);
 
   function getIncomeBucketLabel(value: string) {
@@ -443,13 +483,27 @@ export default function CashFlowPage() {
 
   const safeToSpend = projectedAfterObligations - Number(buffer || 0);
 
+  const planningWindowEnd = useMemo(() => {
+    const today = new Date();
+    const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    return addDays(start, Number(lookaheadDays || 30));
+  }, [lookaheadDays]);
+  
   const unassignedBills = useMemo(() => {
-    return activeBills.filter((bill) => !bill.assigned_income_date);
-  }, [activeBills]);
+    return activeBills.filter(
+      (bill) =>
+        !bill.assigned_income_date &&
+        bill.nextDueDate <= planningWindowEnd
+    );
+  }, [activeBills, planningWindowEnd]);
 
   const unassignedDebts = useMemo(() => {
-    return activeDebts.filter((debt) => !debt.assigned_income_date);
-  }, [activeDebts]);
+    return activeDebts.filter(
+      (debt) =>
+        !debt.assigned_income_date &&
+        debt.nextDueDate <= planningWindowEnd
+    );
+  }, [activeDebts, planningWindowEnd]);
 
   const unassignedObligationsTotal = useMemo(() => {
     const billTotal = unassignedBills.reduce(
@@ -943,7 +997,29 @@ export default function CashFlowPage() {
     cancelEditDebt();
     await load();
   }
-
+  async function applyDebtPayment(debt: any, amount: number) {
+    const supabase = createClient();
+  
+    if (!debt?.id) return;
+    if (amount <= 0) return;
+  
+    const currentBalance = Number(debt.balance || 0);
+    const newBalance = Math.max(currentBalance - amount, 0);
+  
+    await supabase
+      .from("debts")
+      .update({
+        balance: newBalance,
+      })
+      .eq("id", debt.id);
+  
+    setDebtPayments((prev) => ({
+      ...prev,
+      [debt.id]: "",
+    }));
+  
+    await load();
+  }
   async function deleteDebt(id: string) {
     const supabase = createClient();
     await supabase.from("debts").delete().eq("id", id);
@@ -1044,7 +1120,7 @@ export default function CashFlowPage() {
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           <div className="beast-card">
             <div className="text-sm text-[#c7cfdb]">
-              Current Checking Balance
+              Starting Checking Balance
             </div>
             <input
               type="number"
@@ -1260,7 +1336,7 @@ export default function CashFlowPage() {
             <div className="beast-card">
               <div className="text-sm text-[#c7cfdb]">Planning Window</div>
               <div className="mt-2 break-words text-2xl font-bold">
-                {Math.max(Number(lookaheadDays || 60), 60)} Days
+                {Number(lookaheadDays || 30)} Days
               </div>
               <p className="mt-2 text-sm text-[#7f8da3]">
                 Income buckets are generated from today forward.
@@ -1376,53 +1452,7 @@ export default function CashFlowPage() {
           </div>
         </section>
 
-        <section className="beast-card">
-          <h2 className="text-xl font-bold">Cash Settings</h2>
-
-          <div className="mt-4 grid gap-4 md:grid-cols-4">
-            <div>
-              <label className="text-sm text-[#c7cfdb]">
-                Current Checking Balance
-              </label>
-              <input
-                type="number"
-                value={startingBalance}
-                onChange={(e) => setStartingBalance(Number(e.target.value))}
-                className="beast-input mt-2"
-              />
-            </div>
-
-            <div>
-              <label className="text-sm text-[#c7cfdb]">
-                Minimum Checking Buffer
-              </label>
-              <input
-                type="number"
-                value={buffer}
-                onChange={(e) => setBuffer(Number(e.target.value))}
-                className="beast-input mt-2"
-              />
-            </div>
-
-            <div>
-              <label className="text-sm text-[#c7cfdb]">Lookahead Days</label>
-              <input
-                type="number"
-                value={lookaheadDays}
-                onChange={(e) => setLookaheadDays(Number(e.target.value))}
-                className="beast-input mt-2"
-              />
-            </div>
-
-            <div className="flex items-end">
-              <button onClick={saveSettings} className="beast-button w-full">
-                Save Settings
-              </button>
-            </div>
-          </div>
-        </section>
-
-        <section className="grid gap-4 md:grid-cols-2">
+                <section className="grid gap-4 md:grid-cols-2">
         <div className="beast-card">
   <div className="flex items-center justify-between gap-4">
     <div>
@@ -1785,7 +1815,7 @@ export default function CashFlowPage() {
                             }))
                           }
                           placeholder="Partial"
-                          className="beast-input"
+                          className="beast-input h-9 px-2 text-sm"
                         />
 
                         <button
@@ -1977,28 +2007,63 @@ export default function CashFlowPage() {
                       </button>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-3 gap-2">
-                      <button
-                        onClick={() => startEditDebt(debt)}
-                        className="beast-button-secondary"
-                      >
-                        Edit
-                      </button>
+                    <div className="grid gap-2">
+  <div className="grid grid-cols-[1fr_auto_auto] gap-2">
+    <input
+      type="number"
+      value={debtPayments[debt.id] || ""}
+      onChange={(e) =>
+        setDebtPayments((prev) => ({
+          ...prev,
+          [debt.id]: e.target.value,
+        }))
+      }
+      placeholder="Payment"
+      className="beast-input h-9 px-2 text-sm"
+    />
 
-                      <button
-                        onClick={() => archiveDebt(debt.id)}
-                        className="beast-button-secondary"
-                      >
-                        Archive
-                      </button>
+<button
+  onClick={() =>
+    applyDebtPayment(debt, Number(debtPayments[debt.id] || 0))
+  }
+  className="beast-button-secondary"
+>
+  Apply
+</button>
 
-                      <button
-                        onClick={() => deleteDebt(debt.id)}
-                        className="beast-button"
-                      >
-                        Delete
-                      </button>
-                    </div>
+<button
+  onClick={() =>
+    applyDebtPayment(debt, Number(debt.minimum_payment || 0))
+  }
+  className="beast-button"
+>
+  Min Paid
+</button>
+  </div>
+
+  <div className="grid grid-cols-3 gap-2">
+    <button
+      onClick={() => startEditDebt(debt)}
+      className="beast-button-secondary"
+    >
+      Edit
+    </button>
+
+    <button
+      onClick={() => archiveDebt(debt.id)}
+      className="beast-button-secondary"
+    >
+      Archive
+    </button>
+
+    <button
+      onClick={() => deleteDebt(debt.id)}
+      className="beast-button"
+    >
+      Delete
+    </button>
+  </div>
+</div>
                   )}
                 </td>
               </tr>
@@ -2013,9 +2078,9 @@ export default function CashFlowPage() {
 <section className="beast-panel overflow-hidden">
   <div className="flex items-center justify-between gap-4 border-b border-[#2a3242] p-5">
     <div>
-      <h2 className="text-xl font-bold">Income Events</h2>
+      <h2 className="text-xl font-bold">Income Sources / Schedule</h2>
       <p className="mt-1 text-sm text-[#7f8da3]">
-        Manage income sources that generate future cash pots.
+      Manage recurring income sources. Future income pots are generated in the Income Date Planning section above.
       </p>
     </div>
 
@@ -2098,7 +2163,7 @@ export default function CashFlowPage() {
                       className="beast-input"
                     />
                   ) : (
-                    income.next_date
+                    getNextIncomeDateDisplay(income.next_date, income.frequency)
                   )}
                 </td>
 

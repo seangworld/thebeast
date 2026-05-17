@@ -99,11 +99,7 @@ export default function DashboardPage() {
 
         {/* NEW HEADER */}
         <section className="beast-page-header space-y-4">
-  <img
-    src="/beast-logo-banner.png"
-    alt="The Beast banner"
-    className="h-44 w-full rounded-2xl border border-[#2a3242] object-cover object-center"
-  />
+ 
 
   <div>
     <h1 className="beast-title">Dashboard</h1>

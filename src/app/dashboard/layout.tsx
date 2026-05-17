@@ -11,7 +11,12 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-
+  const today = new Date().toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
   function navClass(href: string) {
     const active = pathname === href;
 
@@ -25,9 +30,9 @@ export default function DashboardLayout({
       <header className="sticky top-0 z-50 border-b border-[#2a3242] bg-[#11151c]/95 backdrop-blur">
         <div className="mx-auto flex w-full max-w-[1600px] items-center justify-between gap-4 px-4 py-4">
           <div className="flex items-center gap-6">
-            <Link href="/dashboard" className="text-lg font-bold">
-              The Beast
-            </Link>
+          <div className="text-lg font-bold">
+  The Beast
+</div>
 
             <nav className="flex items-center gap-2">
               <Link href="/dashboard" className={navClass("/dashboard")}>
@@ -58,14 +63,22 @@ export default function DashboardLayout({
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="hidden text-sm text-[#7f8da3] md:block">
-              {APP_VERSION_LABEL}
-            </div>
+          <div className="hidden text-right text-sm text-[#7f8da3] md:block">
+  <div>{today}</div>
+  <div>{APP_VERSION_LABEL}</div>
+</div>
 
             <LogoutButton />
           </div>
         </div>
       </header>
+      <div className="mx-auto w-full max-w-[1600px] px-4 pt-6">
+  <img
+    src="/beast-logo-banner.png"
+    alt="The Beast banner"
+    className="h-44 w-full rounded-2xl border border-[#2a3242] object-cover object-center"
+  />
+</div>
 
       {children}
     </div>

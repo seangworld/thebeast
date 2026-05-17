@@ -132,12 +132,16 @@ export default function SettingsPage() {
               <label className="text-sm text-[#c7cfdb]">
                 Lookahead Days
               </label>
-              <input
-                type="number"
-                value={lookaheadDays}
-                onChange={(e) => setLookaheadDays(Number(e.target.value))}
-                className="beast-input mt-2"
-              />
+              <select
+  value={lookaheadDays}
+  onChange={(e) => setLookaheadDays(Number(e.target.value))}
+  className="beast-input mt-2"
+>
+  <option value={30}>30 Days</option>
+  <option value={60}>60 Days</option>
+  <option value={90}>90 Days</option>
+  <option value={120}>120 Days</option>
+</select>
             </div>
           </div>
         </section>

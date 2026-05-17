@@ -13,6 +13,7 @@ type Debt = {
   minimum_payment: number;
   interest_rate: number;
   due_date?: number;
+  is_archived?: boolean;
 };
 
 function money(value: number) {
@@ -181,29 +182,46 @@ const [editMinimumPayment, setEditMinimumPayment] = useState("");
 const [editInterestRate, setEditInterestRate] = useState("");
 const [editDueDate, setEditDueDate] = useState("");
   const [projectionMonths, setProjectionMonths] = useState(24);
+  const [showArchivedDebts, setShowArchivedDebts] = useState(false);
+
+  const activeDebts = useMemo(() => {
+    return debts.filter(
+      (debt) => !Boolean(debt.is_archived) && Number(debt.balance || 0) > 0
+    );
+  }, [debts]);
+
+  const archivedDebts = useMemo(() => {
+    return debts.filter(
+      (debt) => Boolean(debt.is_archived) || Number(debt.balance || 0) <= 0
+    );
+  }, [debts]);
 
   const payoffPlan = useMemo(() => {
     return simulatePayoffPlan({
-      debts,
+      debts: activeDebts,
       strategy,
       extraPayment: Number(extraPayment || 0),
     });
-  }, [debts, strategy, extraPayment]);
+  }, [activeDebts, strategy, extraPayment]);
 
   const orderedDebts = useMemo(() => {
     if (strategy === "avalanche") {
-      return [...debts].sort(
+      return [...activeDebts].sort(
         (a, b) => Number(b.interest_rate || 0) - Number(a.interest_rate || 0)
       );
     }
 
-    return [...debts].sort(
+    return [...activeDebts].sort(
       (a, b) => Number(a.balance || 0) - Number(b.balance || 0)
     );
-  }, [debts, strategy]);
+  }, [activeDebts, strategy]);
 
-  const totalDebt = debts.reduce((sum, d) => sum + Number(d.balance || 0), 0);
-  const totalMinimums = debts.reduce(
+  const totalDebt = activeDebts.reduce(
+    (sum, d) => sum + Number(d.balance || 0),
+    0
+  );
+
+  const totalMinimums = activeDebts.reduce(
     (sum, d) => sum + Number(d.minimum_payment || 0),
     0
   );
@@ -290,6 +308,7 @@ const [editDueDate, setEditDueDate] = useState("");
       minimum_payment: Number(minimumPayment || 0),
       interest_rate: Number(interestRate || 0),
       due_date: Number(dueDate || 1),
+      is_archived: false,
     });
 
     if (error) {
@@ -351,6 +370,40 @@ const [editDueDate, setEditDueDate] = useState("");
   
     await load();
   }
+  async function archiveDebt(id: string) {
+    const supabase = createClient();
+
+    const { error } = await supabase
+      .from("debts")
+      .update({ is_archived: true })
+      .eq("id", id);
+
+    if (error) {
+      setMessage(`Archive error: ${error.message}`);
+      return;
+    }
+
+    setMessage("Debt archived.");
+    await load();
+  }
+
+  async function unarchiveDebt(id: string) {
+    const supabase = createClient();
+
+    const { error } = await supabase
+      .from("debts")
+      .update({ is_archived: false })
+      .eq("id", id);
+
+    if (error) {
+      setMessage(`Unarchive error: ${error.message}`);
+      return;
+    }
+
+    setMessage("Debt restored.");
+    await load();
+  }
+
   async function deleteDebt(id: string) {
     const supabase = createClient();
 
@@ -675,6 +728,13 @@ const [editDueDate, setEditDueDate] = useState("");
                             >
                               Edit
                             </button>
+
+                            <button
+                              onClick={() => archiveDebt(debt.id)}
+                              className="beast-button-secondary"
+                            >
+                              Archive
+                            </button>
                   
                             <button
                               onClick={() => deleteDebt(debt.id)}
@@ -691,6 +751,180 @@ const [editDueDate, setEditDueDate] = useState("");
               </tbody>
             </table>
           </div>
+        </section>
+
+        <section className="beast-panel overflow-hidden">
+          <div className="flex items-center justify-between gap-4 border-b border-[#2a3242] p-5">
+            <div>
+              <h2 className="text-xl font-bold">Paid Off / Archived Debts</h2>
+              <p className="mt-1 text-sm text-[#7f8da3]">
+                Debts with a $0 balance or archived status are removed from active payoff strategy calculations.
+              </p>
+            </div>
+
+            <button
+              onClick={() => setShowArchivedDebts(!showArchivedDebts)}
+              className="beast-button-secondary"
+            >
+              {showArchivedDebts ? "Hide" : `Show (${archivedDebts.length})`}
+            </button>
+          </div>
+
+          {showArchivedDebts && (
+            <div className="beast-table-wrap">
+              <table className="w-full min-w-[850px] text-sm">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th className="text-right">Balance</th>
+                    <th className="text-right">Minimum</th>
+                    <th className="text-right">APR</th>
+                    <th className="text-right">Due Day</th>
+                    <th className="text-right">Status</th>
+                    <th className="text-right">Action</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {archivedDebts.length === 0 ? (
+                    <tr>
+                      <td colSpan={7}>No paid off or archived debts.</td>
+                    </tr>
+                  ) : (
+                    archivedDebts.map((debt) => (
+                      <tr key={debt.id}>
+                        <td>
+                          {editingDebtId === debt.id ? (
+                            <input
+                              value={editName}
+                              onChange={(e) => setEditName(e.target.value)}
+                              className="beast-input"
+                            />
+                          ) : (
+                            debt.name
+                          )}
+                        </td>
+
+                        <td className="text-right">
+                          {editingDebtId === debt.id ? (
+                            <input
+                              type="number"
+                              value={editBalance}
+                              onChange={(e) => setEditBalance(e.target.value)}
+                              className="beast-input"
+                            />
+                          ) : (
+                            `$${Number(debt.balance || 0).toFixed(2)}`
+                          )}
+                        </td>
+
+                        <td className="text-right">
+                          {editingDebtId === debt.id ? (
+                            <input
+                              type="number"
+                              value={editMinimumPayment}
+                              onChange={(e) => setEditMinimumPayment(e.target.value)}
+                              className="beast-input"
+                            />
+                          ) : (
+                            `$${Number(debt.minimum_payment || 0).toFixed(2)}`
+                          )}
+                        </td>
+
+                        <td className="text-right">
+                          {editingDebtId === debt.id ? (
+                            <input
+                              type="number"
+                              value={editInterestRate}
+                              onChange={(e) => setEditInterestRate(e.target.value)}
+                              className="beast-input"
+                            />
+                          ) : (
+                            `${Number(debt.interest_rate || 0).toFixed(2)}%`
+                          )}
+                        </td>
+
+                        <td className="text-right">
+                          {editingDebtId === debt.id ? (
+                            <input
+                              type="number"
+                              value={editDueDate}
+                              onChange={(e) => setEditDueDate(e.target.value)}
+                              className="beast-input"
+                            />
+                          ) : (
+                            debt.due_date || 1
+                          )}
+                        </td>
+
+                        <td className="text-right">
+                          {Boolean(debt.is_archived) ? (
+                            <span className="text-[#7f8da3]">Archived</span>
+                          ) : Number(debt.balance || 0) <= 0 ? (
+                            <span className="font-semibold text-green-300">Paid Off</span>
+                          ) : (
+                            <span className="text-[#7f8da3]">Inactive</span>
+                          )}
+                        </td>
+
+                        <td className="text-right">
+                          {editingDebtId === debt.id ? (
+                            <div className="flex justify-end gap-2">
+                              <button
+                                onClick={() => saveEditDebt(debt.id)}
+                                className="beast-button"
+                              >
+                                Save
+                              </button>
+
+                              <button
+                                onClick={cancelEditDebt}
+                                className="beast-button-secondary"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex justify-end gap-2">
+                              <button
+                                onClick={() => startEditDebt(debt)}
+                                className="beast-button-secondary"
+                              >
+                                Edit
+                              </button>
+
+                              {Boolean(debt.is_archived) ? (
+                                <button
+                                  onClick={() => unarchiveDebt(debt.id)}
+                                  className="beast-button-secondary"
+                                >
+                                  Unarchive
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => archiveDebt(debt.id)}
+                                  className="beast-button-secondary"
+                                >
+                                  Archive
+                                </button>
+                              )}
+
+                              <button
+                                onClick={() => deleteDebt(debt.id)}
+                                className="beast-button"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
         </section>
 
         <section className="beast-panel overflow-hidden">
