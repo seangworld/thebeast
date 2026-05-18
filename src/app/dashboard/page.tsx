@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
+const BEAST_VERSION = "v1.5.0 Beta";
+
 export default function DashboardPage() {
   const [debts, setDebts] = useState<any[]>([]);
   const [incomes, setIncomes] = useState<any[]>([]);
@@ -97,17 +99,37 @@ export default function DashboardPage() {
     <main className="beast-page">
       <div className="beast-container space-y-8">
 
-        {/* NEW HEADER */}
         <section className="beast-page-header space-y-4">
- 
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div>
+              <p className="beast-kicker">The Beast {BEAST_VERSION}</p>
+              <h1 className="beast-title">Dashboard</h1>
+              <p className="beast-subtitle">
+                Your debt payoff and cash flow command center.
+              </p>
+            </div>
 
-  <div>
-    <h1 className="beast-title">Dashboard</h1>
-    <p className="beast-subtitle">
-      Your debt payoff and cash flow command center.
-    </p>
-  </div>
-</section>
+            <div className="flex flex-col gap-2 text-sm md:items-end">
+              <div className="inline-flex items-center gap-2 rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1 text-green-300">
+                <span className="h-2 w-2 rounded-full bg-green-300" />
+                <span className="font-semibold">Auto-Save Enabled</span>
+              </div>
+              <div className="text-xs text-[#7f8da3]">
+                Operational changes save automatically during use.
+              </div>
+              <Link href="/dashboard/releases" className="text-xs text-[#38bdf8] hover:underline">
+                View Release Notes
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        <section className="rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-4 text-sm text-yellow-100 md:hidden">
+          <div className="font-semibold">Desktop experience recommended during beta.</div>
+          <p className="mt-1 text-yellow-100/80">
+            The Beast is desktop-first during beta. Mobile optimization is planned for a future sprint.
+          </p>
+        </section>
 
         {/* SUMMARY */}
         <section className="grid gap-4 md:grid-cols-5">

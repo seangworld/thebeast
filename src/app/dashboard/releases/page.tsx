@@ -1,0 +1,128 @@
+import Link from "next/link";
+
+const releaseNotes = [
+  {
+    version: "v1.5.0 Beta",
+    date: "May 18, 2026",
+    title: "Cash Flow, Funding, and Debt Engine Stabilization",
+    items: [
+      "Added Income Date Planning with generated income pots.",
+      "Added Recommended Next Step guidance.",
+      "Added Funding Sources foundation.",
+      "Added funding-source assignment for bills and debts.",
+      "Added archived bills and archived debts workflows.",
+      "Improved partial bill payment tracking.",
+      "Improved due-date forecasting and cash timeline reliability.",
+      "Fixed payoff plan month sequencing so projections start correctly at Month 1.",
+      "Added recovered minimum visibility in the payoff plan.",
+      "Added monthly interest visibility.",
+      "Added recommended minimum payment guidance.",
+      "Added minimum-payment trap warnings for debts where the payment is too low.",
+      "Added Auto-Save indicator.",
+      "Added Mobile Beta warning.",
+      "Added Release Notes foundation.",
+      "Improved version and sprint communication.",
+    ],
+  },
+
+  {
+    version: "v1.4.6 Beta",
+    date: "May 2026",
+    title: "Cash Flow Expansion",
+    items: [
+      "Added Income Date Planning.",
+      "Added Income Pots/Buckets generated from recurring income dates.",
+      "Added Recommended Next Step Today guidance.",
+      "Added Funding Sources system foundation.",
+      "Added archived bills and archived debts.",
+      "Added bill partial-payment tracking.",
+      "Added debt minimum assignment workflow.",
+      "Improved due-date forecasting and assignment overload warnings.",
+    ],
+  },
+  {
+    version: "v1.0 Beta",
+    date: "Initial Beta",
+    title: "Core Beast System",
+    items: [
+      "Added authenticated dashboard experience.",
+      "Added debt tracking and payoff strategy foundation.",
+      "Added cash-flow projection foundation.",
+      "Added recurring income and recurring bill management.",
+      "Added dark tactical fintech interface direction.",
+    ],
+  },
+];
+
+export default function ReleasesPage() {
+  return (
+    <main className="beast-page">
+      <div className="beast-container space-y-8">
+        <section className="beast-page-header space-y-4">
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div>
+              <p className="beast-kicker">The Beast Release Notes</p>
+              <h1 className="beast-title">What Changed</h1>
+              <p className="beast-subtitle">
+                Sprint-based update history for The Beast beta. This page tracks
+                major operational changes, stabilization work, and feature releases.
+              </p>
+            </div>
+
+            <Link href="/dashboard" className="beast-button-secondary w-fit">
+              Back to Dashboard
+            </Link>
+          </div>
+        </section>
+
+        <section className="rounded-2xl border border-[#2a3242] bg-[#111827] p-4 text-sm text-[#c7cfdb]">
+          <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+            <div>
+              <div className="font-semibold text-white">Beta Development Rhythm</div>
+              <p className="mt-1 text-[#7f8da3]">
+                Build by sprint, test after each version, deploy stable end-of-session releases.
+              </p>
+            </div>
+
+            <div className="inline-flex w-fit items-center gap-2 rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1 text-green-300">
+              <span className="h-2 w-2 rounded-full bg-green-300" />
+              <span className="font-semibold">Active Beta</span>
+            </div>
+          </div>
+        </section>
+
+        <section className="space-y-5">
+          {releaseNotes.map((release) => (
+            <article key={release.version} className="beast-panel overflow-hidden">
+              <div className="border-b border-[#2a3242] p-5">
+                <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+                  <div>
+                    <div className="text-sm font-semibold text-[#38bdf8]">
+                      {release.version}
+                    </div>
+                    <h2 className="mt-1 text-xl font-bold text-white">
+                      {release.title}
+                    </h2>
+                  </div>
+
+                  <div className="text-sm text-[#7f8da3]">{release.date}</div>
+                </div>
+              </div>
+
+              <div className="p-5">
+                <ul className="space-y-2 text-sm text-[#c7cfdb]">
+                  {release.items.map((item) => (
+                    <li key={item} className="flex gap-2">
+                      <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-[#38bdf8]" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </article>
+          ))}
+        </section>
+      </div>
+    </main>
+  );
+}

@@ -68,7 +68,10 @@ function simulatePayoffPlan({
 
     const startingBalances: Record<string, number> = {};
     const interestByDebt: Record<string, number> = {};
+    const minimumPaidByDebt: Record<string, number> = {};
+    const attackPaidByDebt: Record<string, number> = {};
     let monthlyInterest = 0;
+    let paid = 0;
 
     for (const d of working) {
       if (Number(d.balance) <= 0) continue;
@@ -84,13 +87,13 @@ function simulatePayoffPlan({
       monthlyInterest = money(monthlyInterest + interest);
     }
 
+    const targetAtMonthStart = chooseTarget(working, strategy);
+
     const totalBalanceAfterInterest = money(
       working.reduce((sum, d) => sum + Number(d.balance || 0), 0)
     );
 
     let pool = Math.min(totalMonthlyPool, totalBalanceAfterInterest);
-    let paid = 0;
-
     const activeBeforePayments = working.filter((d) => Number(d.balance) > 0);
 
     for (const d of activeBeforePayments) {
@@ -103,19 +106,12 @@ function simulatePayoffPlan({
       d.balance = money(Number(d.balance) - payment);
       pool = money(pool - payment);
       paid = money(paid + payment);
+      minimumPaidByDebt[d.id] = money((minimumPaidByDebt[d.id] || 0) + payment);
     }
 
     while (pool > 0 && working.some((d) => Number(d.balance) > 0)) {
       const target = chooseTarget(working, strategy);
       if (!target) break;
-
-      const targetStartingBalance = money(
-        startingBalances[target.id] ?? Number(target.balance || 0)
-      );
-
-      const targetInterest = money(interestByDebt[target.id] || 0);
-      const targetMinimum = money(Number(target.minimum_payment || 0));
-      const minimumTooLow = targetMinimum > 0 && targetMinimum < targetInterest;
 
       const debtBalanceBeforeAttack = money(Number(target.balance || 0));
       const attackPayment = Math.min(pool, debtBalanceBeforeAttack);
@@ -123,30 +119,62 @@ function simulatePayoffPlan({
       target.balance = money(Number(target.balance) - attackPayment);
       pool = money(pool - attackPayment);
       paid = money(paid + attackPayment);
-
-      const targetEndingBalance = money(Number(target.balance || 0));
-      const paidOff = targetEndingBalance <= 0;
-
-      const remainingDebt = money(
-        working.reduce((sum, d) => sum + Number(d.balance || 0), 0)
+      attackPaidByDebt[target.id] = money(
+        (attackPaidByDebt[target.id] || 0) + attackPayment
       );
-
-      months.push({
-        month,
-        target: target.name,
-        debt_starting_balance: targetStartingBalance,
-        min_payment: targetMinimum,
-        extra_attack: money(attackPayment),
-        total_payment: money(targetMinimum + attackPayment),
-        debt_ending_balance: targetEndingBalance,
-        remaining_debt: remainingDebt,
-        paid_off: paidOff,
-        warning: minimumTooLow ? "Payment too low — balance may grow" : "",
-      });
     }
 
     totalInterest = money(totalInterest + monthlyInterest);
     totalPaid = money(totalPaid + paid);
+
+    const targetForRow = targetAtMonthStart || chooseTarget(working, strategy);
+
+    if (!targetForRow) break;
+
+    const targetStartingBalance = money(
+      startingBalances[targetForRow.id] ?? Number(targetForRow.balance || 0)
+    );
+
+    const targetInterest = money(interestByDebt[targetForRow.id] || 0);
+    const targetMinimum = money(Number(targetForRow.minimum_payment || 0));
+    const targetMinimumPaid = money(minimumPaidByDebt[targetForRow.id] || 0);
+    const targetAttackPaid = money(attackPaidByDebt[targetForRow.id] || 0);
+    const targetEndingBalance = money(Number(targetForRow.balance || 0));
+    const targetTotalPayment = money(targetMinimumPaid + targetAttackPaid);
+    const minimumTooLow =
+      targetMinimum > 0 && targetMinimumPaid > 0 && targetMinimumPaid < targetInterest;
+
+    const remainingDebt = money(
+      working.reduce((sum, d) => sum + Number(d.balance || 0), 0)
+    );
+
+    const paidOffThisMonth =
+      targetStartingBalance > 0 && targetEndingBalance <= 0;
+
+    const recoveredMinimum = paidOffThisMonth
+      ? money(Number(targetForRow.minimum_payment || 0))
+      : 0;
+
+    const recommendedMinimum =
+      targetInterest >= targetMinimum
+        ? money(targetInterest + 1)
+        : targetMinimum;
+
+    months.push({
+      month,
+      target: targetForRow.name,
+      debt_starting_balance: targetStartingBalance,
+      min_payment: targetMinimumPaid,
+      monthly_interest: targetInterest,
+      recommended_minimum: recommendedMinimum,
+      extra_attack: targetAttackPaid,
+      total_payment: targetTotalPayment,
+      debt_ending_balance: targetEndingBalance,
+      remaining_debt: remainingDebt,
+      recovered_minimum: recoveredMinimum,
+      paid_off: paidOffThisMonth,
+      warning: minimumTooLow ? "Payment too low" : "",
+    });
 
     if (paid <= 0) break;
   }
@@ -951,17 +979,20 @@ const [editDueDate, setEditDueDate] = useState("");
 </div>
 
           <div className="beast-table-wrap">
-            <table className="w-full min-w-[1150px] text-sm">
+            <table className="w-full min-w-[1450px] text-sm">
               <thead>
                 <tr>
                   <th>Month</th>
                   <th>Target</th>
                   <th className="text-right">Debt Start</th>
                   <th className="text-right">Min Payment</th>
+                  <th className="text-right">Monthly Interest</th>
+                  <th className="text-right">Recommended Min</th>
                   <th className="text-right">Extra Attack</th>
                   <th className="text-right">Total Payment</th>
                   <th className="text-right">Debt End</th>
                   <th className="text-right">Total Remaining</th>
+                  <th className="text-right">Recovered Min</th>
                   <th>Status</th>
                 </tr>
               </thead>
@@ -969,7 +1000,7 @@ const [editDueDate, setEditDueDate] = useState("");
               <tbody>
                 {payoffPlan.payoff_months.length === 0 ? (
                   <tr>
-                    <td colSpan={9}>Add debts to generate payoff plan.</td>
+                    <td colSpan={12}>Add debts to generate payoff plan.</td>
                   </tr>
                 ) : (
                   payoffPlan.payoff_months
@@ -985,6 +1016,16 @@ const [editDueDate, setEditDueDate] = useState("");
                         ${row.min_payment.toFixed(2)}
                       </td>
                       <td className="text-right">
+                        ${Number(row.monthly_interest || 0).toFixed(2)}
+                      </td>
+                      <td
+                        className={`text-right font-semibold ${
+                          row.warning ? "text-yellow-300" : "text-[#c7cfdb]"
+                        }`}
+                      >
+                        ${Number(row.recommended_minimum || 0).toFixed(2)}
+                      </td>
+                      <td className="text-right">
                         ${row.extra_attack.toFixed(2)}
                       </td>
                       <td className="text-right">
@@ -995,6 +1036,17 @@ const [editDueDate, setEditDueDate] = useState("");
                       </td>
                       <td className="text-right">
                         ${row.remaining_debt.toFixed(2)}
+                      </td>
+                      <td
+                        className={`text-right font-semibold ${
+                          Number(row.recovered_minimum || 0) > 0
+                            ? "text-green-300"
+                            : "text-[#7f8da3]"
+                        }`}
+                      >
+                        {Number(row.recovered_minimum || 0) > 0
+                          ? `+$${Number(row.recovered_minimum || 0).toFixed(2)}`
+                          : "—"}
                       </td>
                       <td>
                         {row.paid_off ? (

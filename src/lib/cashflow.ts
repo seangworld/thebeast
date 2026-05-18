@@ -9,6 +9,8 @@ export type CashEvent = {
 
 export type SimulatedCashEvent = CashEvent & {
   balance: number;
+  runningBalance: number;
+  running_balance: number;
   belowBuffer: boolean;
 };
 
@@ -70,62 +72,90 @@ export function buildCashTimeline({
   days: number;
 }) {
   const timeline: CashEvent[] = [];
-  const endDate = addDays(startDate, days);
+  const startOnly = new Date(
+    startDate.getFullYear(),
+    startDate.getMonth(),
+    startDate.getDate()
+  );
+  const endDate = addDays(startOnly, Number(days || 30));
 
   incomes.forEach((inc) => {
-    let current = new Date(inc.next_date);
+    if (!inc?.next_date) return;
 
-    while (current <= endDate) {
-      if (current >= startDate) {
-        timeline.push({
-          date: new Date(current),
-          type: "income",
-          name: inc.name,
-          amount: Number(inc.amount),
-        });
-      }
+    let current = new Date(`${inc.next_date}T00:00:00`);
+    let safety = 0;
+
+    while (current < startOnly && safety < 240) {
+      current = advanceByFrequency(current, inc.frequency);
+      safety += 1;
+    }
+
+    while (current <= endDate && safety < 480) {
+      timeline.push({
+        date: new Date(current),
+        type: "income",
+        name: inc.name || "Income",
+        amount: Number(inc.amount || 0),
+      });
 
       current = advanceByFrequency(current, inc.frequency);
+      safety += 1;
     }
   });
 
   bills.forEach((bill) => {
+    const billAmount = Number(bill.amount || 0);
+    if (billAmount <= 0) return;
+
     let current = getFirstDueDateFromDay(
-      startDate,
+      startOnly,
       Number(bill.due_date || 1)
     );
+    let safety = 0;
 
-    while (current <= endDate) {
+    while (current <= endDate && safety < 480) {
       timeline.push({
         date: new Date(current),
         type: "bill",
-        name: bill.name,
-        amount: -Number(bill.amount),
+        name: bill.name || "Bill",
+        amount: -billAmount,
       });
 
       current = advanceByFrequency(current, bill.frequency || "monthly");
+      safety += 1;
     }
   });
 
   debts.forEach((debt) => {
+    const minimumPayment = Number(debt.minimum_payment || 0);
+    if (minimumPayment <= 0) return;
+
     let current = getFirstDueDateFromDay(
-      startDate,
+      startOnly,
       Number(debt.due_date || 1)
     );
+    let safety = 0;
 
-    while (current <= endDate) {
+    while (current <= endDate && safety < 480) {
       timeline.push({
         date: new Date(current),
         type: "debt",
-        name: `${debt.name} (Min)`,
-        amount: -Number(debt.minimum_payment),
+        name: `${debt.name || "Debt"} (Min)`,
+        amount: -minimumPayment,
       });
 
       current = advanceByFrequency(current, "monthly");
+      safety += 1;
     }
   });
 
-  return timeline.sort((a, b) => a.date.getTime() - b.date.getTime());
+  return timeline.sort((a, b) => {
+    const dateSort = a.date.getTime() - b.date.getTime();
+    if (dateSort !== 0) return dateSort;
+
+    const typeOrder: Record<string, number> = { income: 0, bill: 1, debt: 2 };
+    return typeOrder[a.type] - typeOrder[b.type];
+  });
 }
 
 export function simulateCashFlow({
@@ -137,15 +167,17 @@ export function simulateCashFlow({
   startingBalance: number;
   buffer: number;
 }) {
-  let balance = Number(startingBalance);
+  let balance = Number(startingBalance || 0);
 
   return timeline.map((event) => {
-    balance += Number(event.amount);
+    balance += Number(event.amount || 0);
 
     return {
       ...event,
       balance,
-      belowBuffer: balance < Number(buffer),
+      runningBalance: balance,
+      running_balance: balance,
+      belowBuffer: balance < Number(buffer || 0),
     };
   });
 }
@@ -155,7 +187,7 @@ export function calculateRequiredCash(timeline: CashEvent[]) {
   let minBalance = 0;
 
   timeline.forEach((event) => {
-    running += Number(event.amount);
+    running += Number(event.amount || 0);
 
     if (running < minBalance) {
       minBalance = running;
@@ -168,11 +200,11 @@ export function calculateRequiredCash(timeline: CashEvent[]) {
 export function calculateBillsDue(timeline: CashEvent[]) {
   return timeline
     .filter((event) => event.type === "bill" || event.type === "debt")
-    .reduce((total, event) => total + Math.abs(Number(event.amount)), 0);
+    .reduce((total, event) => total + Math.abs(Number(event.amount || 0)), 0);
 }
 
 export function calculateIncomeExpected(timeline: CashEvent[]) {
   return timeline
     .filter((event) => event.type === "income")
-    .reduce((total, event) => total + Number(event.amount), 0);
+    .reduce((total, event) => total + Number(event.amount || 0), 0);
 }

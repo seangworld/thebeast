@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import {
   buildCashTimeline,
   simulateCashFlow,
@@ -23,6 +22,19 @@ type BillFrequency =
   | "yearly";
 
 type PaycheckAssignment = "unassigned" | "paycheck_1" | "paycheck_2";
+
+type FundingSource = {
+  id: string;
+  user_id: string;
+  name: string;
+  type: string;
+  current_balance: number;
+  credit_limit: number | null;
+  available_credit: number | null;
+  interest_rate: number | null;
+  is_active: boolean;
+  created_at: string;
+};
 
 const billFrequencyOptions: { value: BillFrequency; label: string }[] = [
   { value: "weekly", label: "Weekly" },
@@ -273,6 +285,16 @@ export default function CashFlowPage() {
   const [bills, setBills] = useState<any[]>([]);
   const [debts, setDebts] = useState<any[]>([]);
   const [billPayments, setBillPayments] = useState<any[]>([]);
+  const [fundingSources, setFundingSources] = useState<FundingSource[]>([]);
+
+  const [newFundingSource, setNewFundingSource] = useState({
+    name: "",
+    type: "checking",
+    current_balance: "",
+    credit_limit: "",
+    available_credit: "",
+    interest_rate: "",
+  });
 
   const [requiredCash, setRequiredCash] = useState(0);
   const [billsDue, setBillsDue] = useState(0);
@@ -305,6 +327,7 @@ export default function CashFlowPage() {
 
   const [editingIncomeId, setEditingIncomeId] = useState<string | null>(null);
   const [editingBillId, setEditingBillId] = useState<string | null>(null);
+  const [editingDebtId, setEditingDebtId] = useState<string | null>(null);
 
   const [editIncomeName, setEditIncomeName] = useState("");
   const [editIncomeAmount, setEditIncomeAmount] = useState("");
@@ -317,21 +340,23 @@ export default function CashFlowPage() {
   const [editBillFrequency, setEditBillFrequency] =
     useState<BillFrequency>("monthly");
 
-  const [editingDebtId, setEditingDebtId] = useState<string | null>(null);
   const [editDebtName, setEditDebtName] = useState("");
   const [editDebtBalance, setEditDebtBalance] = useState("");
   const [editDebtMinimumPayment, setEditDebtMinimumPayment] = useState("");
   const [editDebtInterestRate, setEditDebtInterestRate] = useState("");
   const [editDebtDueDate, setEditDebtDueDate] = useState("");
+
   const [debtPayments, setDebtPayments] = useState<Record<string, string>>({});
   const [partialPayments, setPartialPayments] = useState<Record<string, string>>(
     {}
   );
+
   const [showAddIncome, setShowAddIncome] = useState(false);
   const [showAddBill, setShowAddBill] = useState(false);
   const [showBills, setShowBills] = useState(true);
   const [showDebts, setShowDebts] = useState(true);
   const [showIncomeEvents, setShowIncomeEvents] = useState(true);
+  const [showFundingSources, setShowFundingSources] = useState(true);
   const [showCashTimeline, setShowCashTimeline] = useState(false);
   const [showArchivedBills, setShowArchivedBills] = useState(false);
   const [showArchivedDebts, setShowArchivedDebts] = useState(false);
@@ -358,19 +383,24 @@ export default function CashFlowPage() {
       const amount = Number(bill.amount || 0);
       const paid = Number(paymentsByBillId[bill.id] || 0);
       const currentCycleRemaining = Math.max(amount - paid, 0);
-const dueDay = Number(bill.due_date || 1);
-const frequency = bill.frequency || "monthly";
-const assignedPaycheck = bill.assigned_paycheck || "unassigned";
-let nextDueDate = getNextDueDate(dueDay, frequency);
-let remaining = currentCycleRemaining;
+      const dueDay = Number(bill.due_date || 1);
+      const frequency = bill.frequency || "monthly";
+      const assignedPaycheck = bill.assigned_paycheck || "unassigned";
+      let nextDueDate = getNextDueDate(dueDay, frequency);
+      let remaining = currentCycleRemaining;
 
-if (currentCycleRemaining <= 0) {
-  if (frequency === "weekly") nextDueDate = addDays(nextDueDate, 7);
-  else if (frequency === "biweekly") nextDueDate = addDays(nextDueDate, 14);
-  else nextDueDate = addMonthsClamped(nextDueDate, getFrequencyMonthStep(frequency));
+      if (currentCycleRemaining <= 0) {
+        if (frequency === "weekly") nextDueDate = addDays(nextDueDate, 7);
+        else if (frequency === "biweekly")
+          nextDueDate = addDays(nextDueDate, 14);
+        else
+          nextDueDate = addMonthsClamped(
+            nextDueDate,
+            getFrequencyMonthStep(frequency)
+          );
 
-  remaining = amount;
-}
+        remaining = amount;
+      }
 
       return {
         ...bill,
@@ -381,13 +411,13 @@ if (currentCycleRemaining <= 0) {
         frequency,
         assigned_paycheck: assignedPaycheck,
         assigned_income_date: bill.assigned_income_date || "",
+        funding_source_id: bill.funding_source_id || "",
         nextDueDate,
         nextDueDateDisplay: formatShortDate(nextDueDate),
         status:
-  currentCycleRemaining <= 0
-    ? "Upcoming"
-    : getBillStatus({ amount, paid, nextDueDate }),
-    
+          currentCycleRemaining <= 0
+            ? "Upcoming"
+            : getBillStatus({ amount, paid, nextDueDate }),
         is_archived: Boolean(bill.is_archived),
       };
     });
@@ -417,6 +447,29 @@ if (currentCycleRemaining <= 0) {
     const bucket = incomeBuckets.find((item) => item.date === value);
     return bucket?.label || value;
   }
+
+  function getFundingSourceLabel(value: string) {
+    if (!value) return "Unassigned";
+
+    const source = fundingSources.find((item) => item.id === value);
+    return source?.name || "Unknown Source";
+  }
+
+  const activeFundingSources = useMemo(() => {
+    return fundingSources.filter((source) => source.is_active);
+  }, [fundingSources]);
+
+  const liquidFundingTotal = useMemo(() => {
+    return activeFundingSources
+      .filter((source) => ["checking", "savings", "cash"].includes(source.type))
+      .reduce((sum, source) => sum + Number(source.current_balance || 0), 0);
+  }, [activeFundingSources]);
+
+  const creditAvailableTotal = useMemo(() => {
+    return activeFundingSources
+      .filter((source) => ["credit_card", "heloc", "ploc"].includes(source.type))
+      .reduce((sum, source) => sum + Number(source.available_credit || 0), 0);
+  }, [activeFundingSources]);
 
   const nextPayDate = nextPaycheckDate ? new Date(nextPaycheckDate) : null;
 
@@ -450,6 +503,7 @@ if (currentCycleRemaining <= 0) {
         minimum_payment: minimumPayment,
         assigned_paycheck: assignedPaycheck,
         assigned_income_date: debt.assigned_income_date || "",
+        funding_source_id: debt.funding_source_id || "",
         dueDay,
         nextDueDate,
         nextDueDateDisplay: formatShortDate(nextDueDate),
@@ -488,20 +542,18 @@ if (currentCycleRemaining <= 0) {
     const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     return addDays(start, Number(lookaheadDays || 30));
   }, [lookaheadDays]);
-  
+
   const unassignedBills = useMemo(() => {
     return activeBills.filter(
       (bill) =>
-        !bill.assigned_income_date &&
-        bill.nextDueDate <= planningWindowEnd
+        !bill.assigned_income_date && bill.nextDueDate <= planningWindowEnd
     );
   }, [activeBills, planningWindowEnd]);
 
   const unassignedDebts = useMemo(() => {
     return activeDebts.filter(
       (debt) =>
-        !debt.assigned_income_date &&
-        debt.nextDueDate <= planningWindowEnd
+        !debt.assigned_income_date && debt.nextDueDate <= planningWindowEnd
     );
   }, [activeDebts, planningWindowEnd]);
 
@@ -542,7 +594,9 @@ if (currentCycleRemaining <= 0) {
       const assignedTotal = billsTotal + debtMinimumsTotal;
       const availableToAssign = Number(bucket.amount || 0) - assignedTotal;
       const safeAfterBuffer = availableToAssign - Number(buffer || 0);
-      const dropdownLabel = `${bucket.label} ($${availableToAssign.toFixed(2)} left)`;
+      const dropdownLabel = `${bucket.label} ($${availableToAssign.toFixed(
+        2
+      )} left)`;
 
       return {
         ...bucket,
@@ -557,8 +611,6 @@ if (currentCycleRemaining <= 0) {
       };
     });
   }, [incomeBuckets, activeBills, activeDebts, buffer]);
-
-  const activeDebtCount = activeDebts.length;
 
   const recommendedNextSteps = useMemo(() => {
     const steps: string[] = [];
@@ -583,12 +635,25 @@ if (currentCycleRemaining <= 0) {
       );
     }
 
+    const unfundedBills = activeBills.filter((bill) => !bill.funding_source_id);
+    const unfundedDebts = activeDebts.filter((debt) => !debt.funding_source_id);
+
+    if (activeFundingSources.length > 0 && unfundedBills.length + unfundedDebts.length > 0) {
+      steps.push(
+        `Assign funding sources to ${unfundedBills.length + unfundedDebts.length} active obligation${
+          unfundedBills.length + unfundedDebts.length === 1 ? "" : "s"
+        }.`
+      );
+    }
+
     const zeroBalanceDebt = activeDebts.find(
       (debt) => Number(debt.balance || 0) <= 0
     );
 
     if (zeroBalanceDebt) {
-      steps.push(`${zeroBalanceDebt.name} has a $0 balance. Consider archiving it if it is inactive.`);
+      steps.push(
+        `${zeroBalanceDebt.name} has a $0 balance. Consider archiving it if it is inactive.`
+      );
     }
 
     const paidBill = activeBills.find(
@@ -596,11 +661,15 @@ if (currentCycleRemaining <= 0) {
     );
 
     if (paidBill) {
-      steps.push(`${paidBill.name} is paid for this cycle. Archive only if it is no longer active.`);
+      steps.push(
+        `${paidBill.name} is paid for this cycle. Archive only if it is no longer active.`
+      );
     }
 
     if (steps.length === 0) {
-      steps.push("No urgent cleanup found. Continue assigning obligations to the correct income pots.");
+      steps.push(
+        "No urgent cleanup found. Continue assigning obligations to the correct income pots."
+      );
     }
 
     return steps.slice(0, 4);
@@ -611,12 +680,81 @@ if (currentCycleRemaining <= 0) {
     unassignedBills,
     unassignedDebts,
     unassignedObligationsTotal,
+    activeFundingSources,
   ]);
 
   async function getUserId() {
     const supabase = createClient();
     const { data } = await supabase.auth.getUser();
     return data?.user?.id;
+  }
+
+  async function loadFundingSources() {
+    const supabase = createClient();
+    const userId = await getUserId();
+
+    if (!userId) return;
+
+    const { data } = await supabase
+      .from("funding_sources")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("is_active", true)
+      .order("created_at", { ascending: true });
+
+    setFundingSources(data || []);
+  }
+
+  async function addFundingSource() {
+    const supabase = createClient();
+    const userId = await getUserId();
+
+    if (!userId) return;
+    if (!newFundingSource.name) return;
+
+    await supabase.from("funding_sources").insert({
+      user_id: userId,
+      name: newFundingSource.name,
+      type: newFundingSource.type,
+      current_balance: Number(newFundingSource.current_balance || 0),
+      credit_limit:
+        newFundingSource.credit_limit === ""
+          ? null
+          : Number(newFundingSource.credit_limit),
+      available_credit:
+        newFundingSource.available_credit === ""
+          ? null
+          : Number(newFundingSource.available_credit),
+      interest_rate:
+        newFundingSource.interest_rate === ""
+          ? 0
+          : Number(newFundingSource.interest_rate),
+      is_active: true,
+    });
+
+    setNewFundingSource({
+      name: "",
+      type: "checking",
+      current_balance: "",
+      credit_limit: "",
+      available_credit: "",
+      interest_rate: "",
+    });
+
+    await loadFundingSources();
+  }
+
+  async function deleteFundingSource(id: string) {
+    const supabase = createClient();
+
+    await supabase
+      .from("funding_sources")
+      .update({
+        is_active: false,
+      })
+      .eq("id", id);
+
+    await loadFundingSources();
   }
 
   async function load() {
@@ -670,7 +808,8 @@ if (currentCycleRemaining <= 0) {
     const activeBuffer = Number(cashSettings?.checking_buffer ?? 500);
     const activeStartingBalance = Number(cashSettings?.starting_balance ?? 500);
 
-    const activeStrategy = (debtSettings?.strategy || "snowball") as PayoffStrategy;
+    const activeStrategy = (debtSettings?.strategy ||
+      "snowball") as PayoffStrategy;
     const activeExtraPayment = Number(debtSettings?.extra_payment || 0);
 
     const activeDebtRows = (debtRows || []).filter(
@@ -683,7 +822,8 @@ if (currentCycleRemaining <= 0) {
     const paymentTotals: Record<string, number> = {};
     for (const payment of activePayments) {
       paymentTotals[payment.bill_id] =
-        Number(paymentTotals[payment.bill_id] || 0) + Number(payment.amount_paid || 0);
+        Number(paymentTotals[payment.bill_id] || 0) +
+        Number(payment.amount_paid || 0);
     }
 
     const billsForTimeline = (billRows || [])
@@ -756,6 +896,7 @@ if (currentCycleRemaining <= 0) {
 
   useEffect(() => {
     load();
+    loadFundingSources();
   }, []);
 
   function recalc(balance: number) {
@@ -822,6 +963,7 @@ if (currentCycleRemaining <= 0) {
       frequency: billFrequency,
       assigned_paycheck: "unassigned",
       assigned_income_date: null,
+      funding_source_id: null,
       is_debt: false,
     });
 
@@ -890,6 +1032,38 @@ if (currentCycleRemaining <= 0) {
       .from("debts")
       .update({
         assigned_income_date: assignedIncomeDate || null,
+      })
+      .eq("id", debtId);
+
+    await load();
+  }
+
+  async function updateBillFundingSource(
+    billId: string,
+    fundingSourceId: string
+  ) {
+    const supabase = createClient();
+
+    await supabase
+      .from("bill_events")
+      .update({
+        funding_source_id: fundingSourceId || null,
+      })
+      .eq("id", billId);
+
+    await load();
+  }
+
+  async function updateDebtFundingSource(
+    debtId: string,
+    fundingSourceId: string
+  ) {
+    const supabase = createClient();
+
+    await supabase
+      .from("debts")
+      .update({
+        funding_source_id: fundingSourceId || null,
       })
       .eq("id", debtId);
 
@@ -997,29 +1171,31 @@ if (currentCycleRemaining <= 0) {
     cancelEditDebt();
     await load();
   }
+
   async function applyDebtPayment(debt: any, amount: number) {
     const supabase = createClient();
-  
+
     if (!debt?.id) return;
     if (amount <= 0) return;
-  
+
     const currentBalance = Number(debt.balance || 0);
     const newBalance = Math.max(currentBalance - amount, 0);
-  
+
     await supabase
       .from("debts")
       .update({
         balance: newBalance,
       })
       .eq("id", debt.id);
-  
+
     setDebtPayments((prev) => ({
       ...prev,
       [debt.id]: "",
     }));
-  
+
     await load();
   }
+
   async function deleteDebt(id: string) {
     const supabase = createClient();
     await supabase.from("debts").delete().eq("id", id);
@@ -1113,8 +1289,7 @@ if (currentCycleRemaining <= 0) {
                 required cash, and buffer risk.
               </p>
             </div>
-
-            </div>
+          </div>
         </section>
 
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -1171,7 +1346,8 @@ if (currentCycleRemaining <= 0) {
           <div>
             <h2 className="text-xl font-bold">Recommended Next Step Today</h2>
             <p className="mt-1 text-sm text-[#7f8da3]">
-              Rules-based guidance from current assignments, cash pots, and active obligations.
+              Rules-based guidance from current assignments, cash pots, and
+              active obligations.
             </p>
           </div>
 
@@ -1294,13 +1470,16 @@ if (currentCycleRemaining <= 0) {
           <div>
             <h2 className="text-xl font-bold">Income Date Planning</h2>
             <p className="mt-1 text-sm text-[#7f8da3]">
-              Assign bills and debt minimums to the real income date that should cover them.
+              Assign bills and debt minimums to the real income date that should
+              cover them.
             </p>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <div className="beast-card">
-              <div className="text-sm text-[#c7cfdb]">Upcoming Income Buckets</div>
+              <div className="text-sm text-[#c7cfdb]">
+                Upcoming Income Buckets
+              </div>
               <div className="mt-2 break-words text-2xl font-bold">
                 {incomeBucketPlans.length}
               </div>
@@ -1320,10 +1499,14 @@ if (currentCycleRemaining <= 0) {
             </div>
 
             <div className="beast-card">
-              <div className="text-sm text-[#c7cfdb]">Unassigned Obligations</div>
+              <div className="text-sm text-[#c7cfdb]">
+                Unassigned Obligations
+              </div>
               <div
                 className={`mt-2 break-words text-2xl font-bold ${
-                  unassignedObligationsTotal > 0 ? "text-yellow-300" : "text-green-300"
+                  unassignedObligationsTotal > 0
+                    ? "text-yellow-300"
+                    : "text-green-300"
                 }`}
               >
                 ${unassignedObligationsTotal.toFixed(2)}
@@ -1347,7 +1530,8 @@ if (currentCycleRemaining <= 0) {
           <div className="grid gap-4 lg:grid-cols-2">
             {incomeBucketPlans.length === 0 ? (
               <div className="beast-panel p-4 text-sm text-[#c7cfdb]">
-                No upcoming income buckets found. Add income events or update next pay dates.
+                No upcoming income buckets found. Add income events or update
+                next pay dates.
               </div>
             ) : (
               incomeBucketPlans.slice(0, 8).map((bucket) => (
@@ -1369,8 +1553,12 @@ if (currentCycleRemaining <= 0) {
                         }`}
                       >
                         {bucket.safeAfterBuffer < 0
-                          ? `$${Math.abs(bucket.safeAfterBuffer).toFixed(2)} short after buffer`
-                          : `$${bucket.safeAfterBuffer.toFixed(2)} safe after buffer`}
+                          ? `$${Math.abs(bucket.safeAfterBuffer).toFixed(
+                              2
+                            )} short after buffer`
+                          : `$${bucket.safeAfterBuffer.toFixed(
+                              2
+                            )} safe after buffer`}
                       </div>
                     </div>
                   </div>
@@ -1379,15 +1567,21 @@ if (currentCycleRemaining <= 0) {
                     <div className="mb-3 grid gap-2 sm:grid-cols-3">
                       <div>
                         <div className="text-[#7f8da3]">Assigned</div>
-                        <div className="font-bold">${bucket.assignedTotal.toFixed(2)}</div>
+                        <div className="font-bold">
+                          ${bucket.assignedTotal.toFixed(2)}
+                        </div>
                       </div>
                       <div>
                         <div className="text-[#7f8da3]">Available</div>
-                        <div className="font-bold">${bucket.availableToAssign.toFixed(2)}</div>
+                        <div className="font-bold">
+                          ${bucket.availableToAssign.toFixed(2)}
+                        </div>
                       </div>
                       <div>
                         <div className="text-[#7f8da3]">Debt Minimums</div>
-                        <div className="font-bold">${bucket.debtMinimumsTotal.toFixed(2)}</div>
+                        <div className="font-bold">
+                          ${bucket.debtMinimumsTotal.toFixed(2)}
+                        </div>
                       </div>
                     </div>
 
@@ -1402,7 +1596,9 @@ if (currentCycleRemaining <= 0) {
                             className="flex justify-between gap-4"
                           >
                             <span>{bill.name}</span>
-                            <span>${Number(bill.remaining || 0).toFixed(2)}</span>
+                            <span>
+                              ${Number(bill.remaining || 0).toFixed(2)}
+                            </span>
                           </li>
                         ))}
 
@@ -1412,7 +1608,9 @@ if (currentCycleRemaining <= 0) {
                             className="flex justify-between gap-4"
                           >
                             <span>{debt.name} minimum</span>
-                            <span>${Number(debt.minimum_payment || 0).toFixed(2)}</span>
+                            <span>
+                              ${Number(debt.minimum_payment || 0).toFixed(2)}
+                            </span>
                           </li>
                         ))}
                       </ul>
@@ -1452,764 +1650,1043 @@ if (currentCycleRemaining <= 0) {
           </div>
         </section>
 
-                <section className="grid gap-4 md:grid-cols-2">
-        <div className="beast-card">
-  <div className="flex items-center justify-between gap-4">
-    <div>
-      <h2 className="text-xl font-bold">Add Income</h2>
-      <p className="mt-1 text-sm text-[#7f8da3]">
-        Add or schedule a recurring income source.
-      </p>
-    </div>
+        <section className="grid gap-4 md:grid-cols-2">
+          <div className="beast-card">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-bold">Add Income</h2>
+                <p className="mt-1 text-sm text-[#7f8da3]">
+                  Add or schedule a recurring income source.
+                </p>
+              </div>
 
-    <button
-      onClick={() => setShowAddIncome(!showAddIncome)}
-      className="beast-button-secondary"
-    >
-      {showAddIncome ? "Hide" : "Show"}
-    </button>
-  </div>
+              <button
+                onClick={() => setShowAddIncome(!showAddIncome)}
+                className="beast-button-secondary"
+              >
+                {showAddIncome ? "Hide" : "Show"}
+              </button>
+            </div>
 
-  {showAddIncome && (
-    <div className="mt-4 grid gap-3">
-      <input
-        value={incomeName}
-        onChange={(e) => setIncomeName(e.target.value)}
-        placeholder="Income name"
-        className="beast-input"
-      />
+            {showAddIncome && (
+              <div className="mt-4 grid gap-3">
+                <input
+                  value={incomeName}
+                  onChange={(e) => setIncomeName(e.target.value)}
+                  placeholder="Income name"
+                  className="beast-input"
+                />
 
-      <input
-        type="number"
-        value={incomeAmount}
-        onChange={(e) => setIncomeAmount(e.target.value)}
-        placeholder="Amount"
-        className="beast-input"
-      />
+                <input
+                  type="number"
+                  value={incomeAmount}
+                  onChange={(e) => setIncomeAmount(e.target.value)}
+                  placeholder="Amount"
+                  className="beast-input"
+                />
 
-      <select
-        value={incomeFrequency}
-        onChange={(e) => setIncomeFrequency(e.target.value)}
-        className="beast-input"
-      >
-        <option value="weekly">Weekly</option>
-        <option value="biweekly">Biweekly</option>
-        <option value="monthly">Monthly</option>
-      </select>
+                <select
+                  value={incomeFrequency}
+                  onChange={(e) => setIncomeFrequency(e.target.value)}
+                  className="beast-input"
+                >
+                  <option value="weekly">Weekly</option>
+                  <option value="biweekly">Biweekly</option>
+                  <option value="monthly">Monthly</option>
+                </select>
 
-      <input
-        type="date"
-        value={incomeNextDate}
-        onChange={(e) => setIncomeNextDate(e.target.value)}
-        className="beast-input"
-      />
+                <input
+                  type="date"
+                  value={incomeNextDate}
+                  onChange={(e) => setIncomeNextDate(e.target.value)}
+                  className="beast-input"
+                />
 
-      <button onClick={addIncome} className="beast-button">
-        Add Income
-      </button>
-    </div>
-  )}
-</div>
-<div className="beast-card">
-  <div className="flex items-center justify-between gap-4">
-    <div>
-      <h2 className="text-xl font-bold">Add Bill</h2>
-      <p className="mt-1 text-sm text-[#7f8da3]">
-        Add a recurring bill or service-based obligation.
-      </p>
-    </div>
+                <button onClick={addIncome} className="beast-button">
+                  Add Income
+                </button>
+              </div>
+            )}
+          </div>
 
-    <button
-      onClick={() => setShowAddBill(!showAddBill)}
-      className="beast-button-secondary"
-    >
-      {showAddBill ? "Hide" : "Show"}
-    </button>
-  </div>
+          <div className="beast-card">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-bold">Add Bill</h2>
+                <p className="mt-1 text-sm text-[#7f8da3]">
+                  Add a recurring bill or service-based obligation.
+                </p>
+              </div>
 
-  {showAddBill && (
-    <div className="mt-4 grid gap-3">
-      <input
-        value={billName}
-        onChange={(e) => setBillName(e.target.value)}
-        placeholder="Bill name"
-        className="beast-input"
-      />
+              <button
+                onClick={() => setShowAddBill(!showAddBill)}
+                className="beast-button-secondary"
+              >
+                {showAddBill ? "Hide" : "Show"}
+              </button>
+            </div>
 
-      <input
-        type="number"
-        value={billAmount}
-        onChange={(e) => setBillAmount(e.target.value)}
-        placeholder="Amount"
-        className="beast-input"
-      />
+            {showAddBill && (
+              <div className="mt-4 grid gap-3">
+                <input
+                  value={billName}
+                  onChange={(e) => setBillName(e.target.value)}
+                  placeholder="Bill name"
+                  className="beast-input"
+                />
 
-      <input
-        type="number"
-        min="1"
-        max="31"
-        value={billDueDate}
-        onChange={(e) => setBillDueDate(e.target.value)}
-        placeholder="Due day"
-        className="beast-input"
-      />
+                <input
+                  type="number"
+                  value={billAmount}
+                  onChange={(e) => setBillAmount(e.target.value)}
+                  placeholder="Amount"
+                  className="beast-input"
+                />
 
-      <select
-        value={billFrequency}
-        onChange={(e) => setBillFrequency(e.target.value as BillFrequency)}
-        className="beast-input"
-      >
-        {billFrequencyOptions.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
+                <input
+                  type="number"
+                  min="1"
+                  max="31"
+                  value={billDueDate}
+                  onChange={(e) => setBillDueDate(e.target.value)}
+                  placeholder="Due day"
+                  className="beast-input"
+                />
 
-      <button onClick={addBill} className="beast-button">
-        Add Bill
-      </button>
-    </div>
-  )}
-</div>
+                <select
+                  value={billFrequency}
+                  onChange={(e) =>
+                    setBillFrequency(e.target.value as BillFrequency)
+                  }
+                  className="beast-input"
+                >
+                  {billFrequencyOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+
+                <button onClick={addBill} className="beast-button">
+                  Add Bill
+                </button>
+              </div>
+            )}
+          </div>
         </section>
 
         <section className="beast-panel overflow-hidden">
-  <div className="flex items-center justify-between gap-4 border-b border-[#2a3242] p-5">
-    <div>
-      <h2 className="text-xl font-bold">Cash Timeline</h2>
-      <p className="mt-1 text-sm text-[#7f8da3]">
-        Detailed projected cashflow events and running balance.
-      </p>
-    </div>
+          <div className="flex items-center justify-between gap-4 border-b border-[#2a3242] p-5">
+            <div>
+              <h2 className="text-xl font-bold">Cash Timeline</h2>
+              <p className="mt-1 text-sm text-[#7f8da3]">
+                Detailed projected cashflow events and running balance.
+              </p>
+            </div>
 
-    <button
-      onClick={() => setShowCashTimeline(!showCashTimeline)}
-      className="beast-button-secondary"
-    >
-      {showCashTimeline ? "Hide" : `Show (${data.length})`}
-    </button>
-  </div>
+            <button
+              onClick={() => setShowCashTimeline(!showCashTimeline)}
+              className="beast-button-secondary"
+            >
+              {showCashTimeline ? "Hide" : `Show (${data.length})`}
+            </button>
+          </div>
 
-  {showCashTimeline && (
-    <div className="beast-table-wrap">
-      <table className="w-full min-w-[900px] text-sm">
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Type</th>
-            <th>Name</th>
-            <th className="text-right">Amount</th>
-            <th className="text-right">Running Balance</th>
-            <th>Status</th>
-          </tr>
-        </thead>
+          {showCashTimeline && (
+            <div className="beast-table-wrap">
+              <table className="w-full min-w-[900px] text-sm">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Name</th>
+                    <th className="text-right">Amount</th>
+                    <th className="text-right">Running Balance</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
 
-        <tbody>
-          {loading ? (
-            <tr>
-              <td colSpan={6}>Loading cashflow...</td>
-            </tr>
-          ) : data.length === 0 ? (
-            <tr>
-              <td colSpan={6}>No cashflow events found.</td>
-            </tr>
-          ) : (
-            data.map((row, index) => {
-              const runningBalance = Number(
-                row.runningBalance || row.running_balance || 0
-              );
+                <tbody>
+                  {loading ? (
+                    <tr>
+                      <td colSpan={6}>Loading cashflow...</td>
+                    </tr>
+                  ) : data.length === 0 ? (
+                    <tr>
+                      <td colSpan={6}>No cashflow events found.</td>
+                    </tr>
+                  ) : (
+                    data.map((row, index) => {
+                      const runningBalance = Number(
+                        row.runningBalance || row.running_balance || 0
+                      );
 
-              return (
-                <tr key={`${formatDate(row.date)}-${row.name}-${index}`}>
-                  <td>{formatDate(row.date)}</td>
-                  <td>{row.type}</td>
-                  <td>{row.name}</td>
-                  <td className="text-right">
-                    ${Number(row.amount || 0).toFixed(2)}
-                  </td>
-                  <td className="text-right">
-                    ${runningBalance.toFixed(2)}
-                  </td>
-                  <td>
-                    {runningBalance < buffer ? (
-                      <span className="text-red-300">Risk</span>
-                    ) : (
-                      <span className="text-green-300">OK</span>
-                    )}
-                  </td>
-                </tr>
-              );
-            })
+                      return (
+                        <tr key={`${formatDate(row.date)}-${row.name}-${index}`}>
+                          <td>{formatDate(row.date)}</td>
+                          <td>{row.type}</td>
+                          <td>{row.name}</td>
+                          <td className="text-right">
+                            ${Number(row.amount || 0).toFixed(2)}
+                          </td>
+                          <td className="text-right">
+                            ${runningBalance.toFixed(2)}
+                          </td>
+                          <td>
+                            {runningBalance < buffer ? (
+                              <span className="text-red-300">Risk</span>
+                            ) : (
+                              <span className="text-green-300">OK</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
           )}
-        </tbody>
-      </table>
-    </div>
-  )}
-</section>
+        </section>
 
         <section className="beast-panel overflow-hidden">
-  <div className="flex items-center justify-between gap-4 border-b border-[#2a3242] p-5">
-    <div>
-      <h2 className="text-xl font-bold">Bills</h2>
-      <p className="mt-1 text-sm text-[#7f8da3]">
-        Compact operating view. Edit a bill to change amount, due day, or frequency.
-      </p>
-    </div>
+          <div className="flex items-center justify-between gap-4 border-b border-[#2a3242] p-5">
+            <div>
+              <h2 className="text-xl font-bold">Bills</h2>
+              <p className="mt-1 text-sm text-[#7f8da3]">
+                Compact operating view. Edit a bill to change amount, due day,
+                or frequency.
+              </p>
+            </div>
 
-    <button
-      onClick={() => setShowBills(!showBills)}
-      className="beast-button-secondary"
-    >
-      {showBills ? "Hide" : `Show (${activeBills.length})`}
-    </button>
-  </div>
+            <button
+              onClick={() => setShowBills(!showBills)}
+              className="beast-button-secondary"
+            >
+              {showBills ? "Hide" : `Show (${activeBills.length})`}
+            </button>
+          </div>
 
-  {showBills && (
-    <div className="beast-table-wrap">
-      <table className="w-full min-w-[980px] text-sm">
-        <thead>
-          <tr>
-            <th className="text-left">Bill</th>
-            <th className="text-right">Remaining</th>
-            <th className="text-center">Next Due</th>
-            <th className="text-center">Income Pot</th>
-            <th className="text-center">Status</th>
-            <th className="text-center">Actions</th>
-          </tr>
-        </thead>
+          {showBills && (
+            <div className="beast-table-wrap">
+              <table className="w-full min-w-[980px] text-sm">
+                <thead>
+                  <tr>
+                    <th className="text-left">Bill</th>
+                    <th className="text-right">Remaining</th>
+                    <th className="text-center">Next Due</th>
+                    <th className="text-center">Income Pot</th>
+                    <th className="text-center">Funding Source</th>
+                    <th className="text-center">Status</th>
+                    <th className="text-center">Actions</th>
+                  </tr>
+                </thead>
 
-        <tbody>
-          {activeBills.length === 0 ? (
-            <tr>
-              <td colSpan={6}>No bills added yet.</td>
-            </tr>
-          ) : (
-            activeBills.map((bill) => (
-              <tr key={bill.id}>
-                <td className="min-w-[220px] text-left align-top">
-                  {editingBillId === bill.id ? (
-                    <div className="grid gap-2">
-                      <input
-                        value={editBillName}
-                        onChange={(e) => setEditBillName(e.target.value)}
-                        placeholder="Bill name"
-                        className="beast-input"
-                      />
-
-                      <div className="grid gap-2 sm:grid-cols-3">
-                        <input
-                          type="number"
-                          value={editBillAmount}
-                          onChange={(e) => setEditBillAmount(e.target.value)}
-                          placeholder="Amount"
-                          className="beast-input"
-                        />
-
-                        <input
-                          type="number"
-                          min="1"
-                          max="31"
-                          value={editBillDueDate}
-                          onChange={(e) => setEditBillDueDate(e.target.value)}
-                          placeholder="Due day"
-                          className="beast-input"
-                        />
-
-                        <select
-                          value={editBillFrequency}
-                          onChange={(e) =>
-                            setEditBillFrequency(e.target.value as BillFrequency)
-                          }
-                          className="beast-input"
-                        >
-                          {billFrequencyOptions.map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
+                <tbody>
+                  {activeBills.length === 0 ? (
+                    <tr>
+                      <td colSpan={7}>No bills added yet.</td>
+                    </tr>
                   ) : (
-                    <div>
-                      <div className="font-semibold">{bill.name}</div>
-                      <div className="mt-1 text-xs text-[#7f8da3]">
-                        Due: ${Number(bill.amount || 0).toFixed(2)} | Paid: $
-                        {Number(bill.paid || 0).toFixed(2)} |{" "}
-                        {getFrequencyLabel(bill.frequency)}
-                      </div>
-                    </div>
+                    activeBills.map((bill) => (
+                      <tr key={bill.id}>
+                        <td className="min-w-[220px] text-left align-top">
+                          {editingBillId === bill.id ? (
+                            <div className="grid gap-2">
+                              <input
+                                value={editBillName}
+                                onChange={(e) =>
+                                  setEditBillName(e.target.value)
+                                }
+                                placeholder="Bill name"
+                                className="beast-input"
+                              />
+
+                              <div className="grid gap-2 sm:grid-cols-3">
+                                <input
+                                  type="number"
+                                  value={editBillAmount}
+                                  onChange={(e) =>
+                                    setEditBillAmount(e.target.value)
+                                  }
+                                  placeholder="Amount"
+                                  className="beast-input"
+                                />
+
+                                <input
+                                  type="number"
+                                  min="1"
+                                  max="31"
+                                  value={editBillDueDate}
+                                  onChange={(e) =>
+                                    setEditBillDueDate(e.target.value)
+                                  }
+                                  placeholder="Due day"
+                                  className="beast-input"
+                                />
+
+                                <select
+                                  value={editBillFrequency}
+                                  onChange={(e) =>
+                                    setEditBillFrequency(
+                                      e.target.value as BillFrequency
+                                    )
+                                  }
+                                  className="beast-input"
+                                >
+                                  {billFrequencyOptions.map((option) => (
+                                    <option
+                                      key={option.value}
+                                      value={option.value}
+                                    >
+                                      {option.label}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                            </div>
+                          ) : (
+                            <div>
+                              <div className="font-semibold">{bill.name}</div>
+                              <div className="mt-1 text-xs text-[#7f8da3]">
+                                Due: ${Number(bill.amount || 0).toFixed(2)} |
+                                Paid: ${Number(bill.paid || 0).toFixed(2)} |{" "}
+                                {getFrequencyLabel(bill.frequency)}
+                              </div>
+                            </div>
+                          )}
+                        </td>
+
+                        <td className="text-right align-top font-semibold">
+                          ${Number(bill.remaining || 0).toFixed(2)}
+                        </td>
+
+                        <td className="text-center align-top">
+                          {bill.nextDueDateDisplay}
+                        </td>
+
+                        <td className="min-w-[300px] text-center align-top">
+                          <select
+                            value={bill.assigned_income_date || ""}
+                            onChange={(e) =>
+                              updateBillIncomeDate(bill.id, e.target.value)
+                            }
+                            className="beast-input"
+                          >
+                            <option value="">Unassigned</option>
+                            {incomeBucketPlans.map((bucket) => (
+                              <option key={bucket.id} value={bucket.date}>
+                                {bucket.dropdownLabel}
+                              </option>
+                            ))}
+                          </select>
+                        </td>
+
+                        <td className="min-w-[240px] text-center align-top">
+                          <select
+                            value={bill.funding_source_id || ""}
+                            onChange={(e) =>
+                              updateBillFundingSource(bill.id, e.target.value)
+                            }
+                            className="beast-input"
+                          >
+                            <option value="">Unassigned</option>
+                            {activeFundingSources.map((source) => (
+                              <option key={source.id} value={source.id}>
+                                {source.name}
+                              </option>
+                            ))}
+                          </select>
+                        </td>
+
+                        <td className="text-center align-top">
+                          <span
+                            className={
+                              bill.status === "Paid"
+                                ? "text-green-300"
+                                : bill.status === "Partial" ||
+                                  bill.status === "Due Soon"
+                                ? "text-yellow-300"
+                                : bill.status === "Late"
+                                ? "text-red-300"
+                                : "text-[#c7cfdb]"
+                            }
+                          >
+                            {bill.status}
+                          </span>
+                        </td>
+
+                        <td className="min-w-[240px] align-top">
+                          {editingBillId === bill.id ? (
+                            <div className="grid gap-2 sm:grid-cols-2">
+                              <button
+                                onClick={() => saveBillEdit(bill.id)}
+                                className="beast-button"
+                              >
+                                Save
+                              </button>
+
+                              <button
+                                onClick={cancelEditBill}
+                                className="beast-button-secondary"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="grid gap-2">
+                              <div className="grid grid-cols-[1fr_auto] gap-2">
+                                <input
+                                  type="number"
+                                  value={partialPayments[bill.id] || ""}
+                                  onChange={(e) =>
+                                    setPartialPayments((prev) => ({
+                                      ...prev,
+                                      [bill.id]: e.target.value,
+                                    }))
+                                  }
+                                  placeholder="Partial"
+                                  className="beast-input h-9 px-2 text-sm"
+                                />
+
+                                <button
+                                  onClick={() =>
+                                    addBillPayment(
+                                      bill,
+                                      Number(partialPayments[bill.id] || 0)
+                                    )
+                                  }
+                                  className="beast-button-secondary"
+                                >
+                                  Add
+                                </button>
+                              </div>
+
+                              <div className="grid grid-cols-3 gap-2">
+                                <button
+                                  onClick={() => markBillPaid(bill)}
+                                  className="beast-button"
+                                >
+                                  Paid
+                                </button>
+
+                                <button
+                                  onClick={() => startEditBill(bill)}
+                                  className="beast-button-secondary"
+                                >
+                                  Edit
+                                </button>
+
+                                <button
+                                  onClick={() => archiveBill(bill.id)}
+                                  className="beast-button-secondary"
+                                >
+                                  Archive
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    ))
                   )}
-                </td>
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
 
-                <td className="text-right align-top font-semibold">
-                  ${Number(bill.remaining || 0).toFixed(2)}
-                </td>
+        <section className="beast-panel overflow-hidden">
+          <div className="flex items-center justify-between gap-4 border-b border-[#2a3242] p-5">
+            <div>
+              <h2 className="text-xl font-bold">Debts</h2>
+              <p className="mt-1 text-sm text-[#7f8da3]">
+                Assign each debt minimum payment to the income pot that should
+                cover it. Edit debts when APRs, balances, due days, or minimums
+                change.
+              </p>
+            </div>
 
-                <td className="text-center align-top">
-                  {bill.nextDueDateDisplay}
-                </td>
+            <button
+              onClick={() => setShowDebts(!showDebts)}
+              className="beast-button-secondary"
+            >
+              {showDebts ? "Hide" : `Show (${activeDebts.length})`}
+            </button>
+          </div>
 
-                <td className="min-w-[300px] text-center align-top">
-                  <select
-                    value={bill.assigned_income_date || ""}
-                    onChange={(e) =>
-                      updateBillIncomeDate(bill.id, e.target.value)
-                    }
-                    className="beast-input"
-                  >
-                    <option value="">Unassigned</option>
-                    {incomeBucketPlans.map((bucket) => (
-                      <option key={bucket.id} value={bucket.date}>
-                        {bucket.dropdownLabel}
-                      </option>
-                    ))}
-                  </select>
-                </td>
+          {showDebts && (
+            <div className="beast-table-wrap">
+              <table className="w-full min-w-[980px] text-sm">
+                <thead>
+                  <tr>
+                    <th className="text-left">Debt</th>
+                    <th className="text-right">Minimum</th>
+                    <th className="text-center">Next Due</th>
+                    <th className="text-center">Income Pot</th>
+                    <th className="text-center">Funding Source</th>
+                    <th className="text-center">Actions</th>
+                  </tr>
+                </thead>
 
-                <td className="text-center align-top">
-                  <span
-                    className={
-                      bill.status === "Paid"
-                        ? "text-green-300"
-                        : bill.status === "Partial" ||
-                          bill.status === "Due Soon"
-                        ? "text-yellow-300"
-                        : bill.status === "Late"
-                        ? "text-red-300"
-                        : "text-[#c7cfdb]"
-                    }
-                  >
-                    {bill.status}
-                  </span>
-                </td>
-
-                <td className="min-w-[240px] align-top">
-                  {editingBillId === bill.id ? (
-                    <div className="grid gap-2 sm:grid-cols-2">
-                      <button
-                        onClick={() => saveBillEdit(bill.id)}
-                        className="beast-button"
-                      >
-                        Save
-                      </button>
-
-                      <button
-                        onClick={cancelEditBill}
-                        className="beast-button-secondary"
-                      >
-                        Cancel
-                      </button>
-                    </div>
+                <tbody>
+                  {activeDebts.length === 0 ? (
+                    <tr>
+                      <td colSpan={6}>No debts added yet.</td>
+                    </tr>
                   ) : (
-                    <div className="grid gap-2">
-                      <div className="grid grid-cols-[1fr_auto] gap-2">
-                        <input
-                          type="number"
-                          value={partialPayments[bill.id] || ""}
-                          onChange={(e) =>
-                            setPartialPayments((prev) => ({
-                              ...prev,
-                              [bill.id]: e.target.value,
-                            }))
-                          }
-                          placeholder="Partial"
-                          className="beast-input h-9 px-2 text-sm"
-                        />
+                    activeDebts.map((debt) => (
+                      <tr key={debt.id}>
+                        <td className="min-w-[260px] text-left align-top">
+                          {editingDebtId === debt.id ? (
+                            <div className="grid gap-2">
+                              <input
+                                value={editDebtName}
+                                onChange={(e) =>
+                                  setEditDebtName(e.target.value)
+                                }
+                                placeholder="Debt name"
+                                className="beast-input"
+                              />
 
-                        <button
-                          onClick={() =>
-                            addBillPayment(
-                              bill,
-                              Number(partialPayments[bill.id] || 0)
+                              <div className="grid gap-2 sm:grid-cols-2">
+                                <input
+                                  type="number"
+                                  value={editDebtBalance}
+                                  onChange={(e) =>
+                                    setEditDebtBalance(e.target.value)
+                                  }
+                                  placeholder="Balance"
+                                  className="beast-input"
+                                />
+
+                                <input
+                                  type="number"
+                                  value={editDebtMinimumPayment}
+                                  onChange={(e) =>
+                                    setEditDebtMinimumPayment(e.target.value)
+                                  }
+                                  placeholder="Minimum"
+                                  className="beast-input"
+                                />
+
+                                <input
+                                  type="number"
+                                  value={editDebtInterestRate}
+                                  onChange={(e) =>
+                                    setEditDebtInterestRate(e.target.value)
+                                  }
+                                  placeholder="APR"
+                                  className="beast-input"
+                                />
+
+                                <input
+                                  type="number"
+                                  min="1"
+                                  max="31"
+                                  value={editDebtDueDate}
+                                  onChange={(e) =>
+                                    setEditDebtDueDate(e.target.value)
+                                  }
+                                  placeholder="Due day"
+                                  className="beast-input"
+                                />
+                              </div>
+                            </div>
+                          ) : (
+                            <div>
+                              <div className="font-semibold">{debt.name}</div>
+                              <div className="mt-1 text-xs text-[#7f8da3]">
+                                Balance: ${Number(debt.balance || 0).toFixed(2)}{" "}
+                                | APR:{" "}
+                                {Number(debt.interest_rate || 0).toFixed(2)}%
+                              </div>
+                            </div>
+                          )}
+                        </td>
+
+                        <td className="text-right align-top font-semibold">
+                          ${Number(debt.minimum_payment || 0).toFixed(2)}
+                        </td>
+
+                        <td className="text-center align-top">
+                          {debt.nextDueDateDisplay}
+                        </td>
+
+                        <td className="min-w-[300px] text-center align-top">
+                          <select
+                            value={debt.assigned_income_date || ""}
+                            onChange={(e) =>
+                              updateDebtIncomeDate(debt.id, e.target.value)
+                            }
+                            className="beast-input"
+                          >
+                            <option value="">Unassigned</option>
+                            {incomeBucketPlans.map((bucket) => (
+                              <option key={bucket.id} value={bucket.date}>
+                                {bucket.dropdownLabel}
+                              </option>
+                            ))}
+                          </select>
+                        </td>
+
+                        <td className="min-w-[240px] text-center align-top">
+                          <select
+                            value={debt.funding_source_id || ""}
+                            onChange={(e) =>
+                              updateDebtFundingSource(debt.id, e.target.value)
+                            }
+                            className="beast-input"
+                          >
+                            <option value="">Unassigned</option>
+                            {activeFundingSources.map((source) => (
+                              <option key={source.id} value={source.id}>
+                                {source.name}
+                              </option>
+                            ))}
+                          </select>
+                        </td>
+
+                        <td className="min-w-[220px] align-top">
+                          {editingDebtId === debt.id ? (
+                            <div className="grid gap-2 sm:grid-cols-2">
+                              <button
+                                onClick={() => saveDebtEdit(debt.id)}
+                                className="beast-button"
+                              >
+                                Save
+                              </button>
+
+                              <button
+                                onClick={cancelEditDebt}
+                                className="beast-button-secondary"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="grid gap-2">
+                              <div className="grid grid-cols-[1fr_auto_auto] gap-2">
+                                <input
+                                  type="number"
+                                  value={debtPayments[debt.id] || ""}
+                                  onChange={(e) =>
+                                    setDebtPayments((prev) => ({
+                                      ...prev,
+                                      [debt.id]: e.target.value,
+                                    }))
+                                  }
+                                  placeholder="Payment"
+                                  className="beast-input h-9 px-2 text-sm"
+                                />
+
+                                <button
+                                  onClick={() =>
+                                    applyDebtPayment(
+                                      debt,
+                                      Number(debtPayments[debt.id] || 0)
+                                    )
+                                  }
+                                  className="beast-button-secondary"
+                                >
+                                  Apply
+                                </button>
+
+                                <button
+                                  onClick={() =>
+                                    applyDebtPayment(
+                                      debt,
+                                      Number(debt.minimum_payment || 0)
+                                    )
+                                  }
+                                  className="beast-button"
+                                >
+                                  Min Paid
+                                </button>
+                              </div>
+
+                              <div className="grid grid-cols-3 gap-2">
+                                <button
+                                  onClick={() => startEditDebt(debt)}
+                                  className="beast-button-secondary"
+                                >
+                                  Edit
+                                </button>
+
+                                <button
+                                  onClick={() => archiveDebt(debt.id)}
+                                  className="beast-button-secondary"
+                                >
+                                  Archive
+                                </button>
+
+                                <button
+                                  onClick={() => deleteDebt(debt.id)}
+                                  className="beast-button"
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+
+        <section className="beast-panel overflow-hidden">
+          <div className="flex items-center justify-between gap-4 border-b border-[#2a3242] p-5">
+            <div>
+              <h2 className="text-xl font-bold">Income Sources / Schedule</h2>
+              <p className="mt-1 text-sm text-[#7f8da3]">
+                Manage recurring income sources. Future income pots are
+                generated in the Income Date Planning section above.
+              </p>
+            </div>
+
+            <button
+              onClick={() => setShowIncomeEvents(!showIncomeEvents)}
+              className="beast-button-secondary"
+            >
+              {showIncomeEvents ? "Hide" : `Show (${incomes.length})`}
+            </button>
+          </div>
+
+          {showIncomeEvents && (
+            <div className="beast-table-wrap">
+              <table className="w-full min-w-[850px] text-sm">
+                <thead>
+                  <tr>
+                    <th className="text-left">Name</th>
+                    <th className="text-right">Amount</th>
+                    <th className="text-center">Frequency</th>
+                    <th className="text-center">Next Pay Date</th>
+                    <th className="text-right"></th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {incomes.length === 0 ? (
+                    <tr>
+                      <td colSpan={5}>No income events added yet.</td>
+                    </tr>
+                  ) : (
+                    incomes.map((income) => (
+                      <tr key={income.id}>
+                        <td className="text-left">
+                          {editingIncomeId === income.id ? (
+                            <input
+                              value={editIncomeName}
+                              onChange={(e) =>
+                                setEditIncomeName(e.target.value)
+                              }
+                              className="beast-input"
+                            />
+                          ) : (
+                            income.name
+                          )}
+                        </td>
+
+                        <td className="text-right">
+                          {editingIncomeId === income.id ? (
+                            <input
+                              type="number"
+                              value={editIncomeAmount}
+                              onChange={(e) =>
+                                setEditIncomeAmount(e.target.value)
+                              }
+                              className="beast-input"
+                            />
+                          ) : (
+                            `$${Number(income.amount || 0).toFixed(2)}`
+                          )}
+                        </td>
+
+                        <td className="text-center">
+                          {editingIncomeId === income.id ? (
+                            <select
+                              value={editIncomeFrequency}
+                              onChange={(e) =>
+                                setEditIncomeFrequency(e.target.value)
+                              }
+                              className="beast-input"
+                            >
+                              <option value="weekly">Weekly</option>
+                              <option value="biweekly">Biweekly</option>
+                              <option value="monthly">Monthly</option>
+                            </select>
+                          ) : (
+                            income.frequency
+                          )}
+                        </td>
+
+                        <td className="text-center">
+                          {editingIncomeId === income.id ? (
+                            <input
+                              type="date"
+                              value={editIncomeNextDate}
+                              onChange={(e) =>
+                                setEditIncomeNextDate(e.target.value)
+                              }
+                              className="beast-input"
+                            />
+                          ) : (
+                            getNextIncomeDateDisplay(
+                              income.next_date,
+                              income.frequency
                             )
-                          }
-                          className="beast-button-secondary"
-                        >
-                          Add
-                        </button>
-                      </div>
+                          )}
+                        </td>
 
-                      <div className="grid grid-cols-3 gap-2">
-                        <button
-                          onClick={() => markBillPaid(bill)}
-                          className="beast-button"
-                        >
-                          Paid
-                        </button>
+                        <td className="text-right">
+                          {editingIncomeId === income.id ? (
+                            <div className="flex justify-end gap-2">
+                              <button
+                                onClick={() => saveIncomeEdit(income.id)}
+                                className="beast-button"
+                              >
+                                Save
+                              </button>
 
-                        <button
-                          onClick={() => startEditBill(bill)}
-                          className="beast-button-secondary"
-                        >
-                          Edit
-                        </button>
+                              <button
+                                onClick={cancelEditIncome}
+                                className="beast-button-secondary"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex justify-end gap-2">
+                              <button
+                                onClick={() => startEditIncome(income)}
+                                className="beast-button-secondary"
+                              >
+                                Edit
+                              </button>
 
-                        <button
-                          onClick={() => archiveBill(bill.id)}
-                          className="beast-button-secondary"
-                        >
-                          Archive
-                        </button>
-                      </div>
-                    </div>
+                              <button
+                                onClick={() => deleteIncome(income.id)}
+                                className="beast-button"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    ))
                   )}
-                </td>
-              </tr>
-            ))
+                </tbody>
+              </table>
+            </div>
           )}
-        </tbody>
-      </table>
-    </div>
-  )}
-</section>
+        </section>
 
-<section className="beast-panel overflow-hidden">
-  <div className="flex items-center justify-between gap-4 border-b border-[#2a3242] p-5">
-    <div>
-      <h2 className="text-xl font-bold">Debts</h2>
-      <p className="mt-1 text-sm text-[#7f8da3]">
-        Assign each debt minimum payment to the income pot that should cover it. Edit debts when APRs, balances, due days, or minimums change.
-      </p>
-    </div>
+        <section className="beast-panel overflow-hidden">
+          <div className="flex items-center justify-between gap-4 border-b border-[#2a3242] p-5">
+            <div>
+              <h2 className="text-xl font-bold">Funding Sources</h2>
+              <p className="mt-1 text-sm text-[#7f8da3]">
+                Accounts and liquidity sources used to fund bills, debt payments,
+                and future HELOC/PLOC planning.
+              </p>
+            </div>
 
-    <button
-      onClick={() => setShowDebts(!showDebts)}
-      className="beast-button-secondary"
-    >
-      {showDebts ? "Hide" : `Show (${activeDebts.length})`}
-    </button>
-  </div>
+            <button
+              onClick={() => setShowFundingSources(!showFundingSources)}
+              className="beast-button-secondary"
+            >
+              {showFundingSources
+                ? "Hide"
+                : `Show (${fundingSources.length})`}
+            </button>
+          </div>
 
-  {showDebts && (
-    <div className="beast-table-wrap">
-      <table className="w-full min-w-[980px] text-sm">
-        <thead>
-          <tr>
-            <th className="text-left">Debt</th>
-            <th className="text-right">Minimum</th>
-            <th className="text-center">Next Due</th>
-            <th className="text-center">Income Pot</th>
-            <th className="text-center">Actions</th>
-          </tr>
-        </thead>
+          {showFundingSources && (
+            <div className="space-y-5 p-5">
+              <div className="grid gap-4 md:grid-cols-3">
+                <div className="beast-card">
+                  <div className="text-sm text-[#c7cfdb]">Active Sources</div>
+                  <div className="mt-2 break-words text-2xl font-bold">
+                    {activeFundingSources.length}
+                  </div>
+                </div>
 
-        <tbody>
-          {activeDebts.length === 0 ? (
-            <tr>
-              <td colSpan={5}>No debts added yet.</td>
-            </tr>
-          ) : (
-            activeDebts.map((debt) => (
-              <tr key={debt.id}>
-                <td className="min-w-[260px] text-left align-top">
-                  {editingDebtId === debt.id ? (
-                    <div className="grid gap-2">
-                      <input
-                        value={editDebtName}
-                        onChange={(e) => setEditDebtName(e.target.value)}
-                        placeholder="Debt name"
-                        className="beast-input"
-                      />
+                <div className="beast-card">
+                  <div className="text-sm text-[#c7cfdb]">Liquid Cash</div>
+                  <div className="mt-2 break-words text-2xl font-bold text-green-300">
+                    ${liquidFundingTotal.toFixed(2)}
+                  </div>
+                </div>
 
-                      <div className="grid gap-2 sm:grid-cols-2">
-                        <input
-                          type="number"
-                          value={editDebtBalance}
-                          onChange={(e) => setEditDebtBalance(e.target.value)}
-                          placeholder="Balance"
-                          className="beast-input"
-                        />
+                <div className="beast-card">
+                  <div className="text-sm text-[#c7cfdb]">
+                    Available Credit
+                  </div>
+                  <div className="mt-2 break-words text-2xl font-bold text-yellow-300">
+                    ${creditAvailableTotal.toFixed(2)}
+                  </div>
+                </div>
+              </div>
 
-                        <input
-                          type="number"
-                          value={editDebtMinimumPayment}
-                          onChange={(e) =>
-                            setEditDebtMinimumPayment(e.target.value)
-                          }
-                          placeholder="Minimum"
-                          className="beast-input"
-                        />
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                <input
+                  value={newFundingSource.name}
+                  onChange={(e) =>
+                    setNewFundingSource({
+                      ...newFundingSource,
+                      name: e.target.value,
+                    })
+                  }
+                  placeholder="Funding source name"
+                  className="beast-input"
+                />
 
-                        <input
-                          type="number"
-                          value={editDebtInterestRate}
-                          onChange={(e) =>
-                            setEditDebtInterestRate(e.target.value)
-                          }
-                          placeholder="APR"
-                          className="beast-input"
-                        />
+                <select
+                  value={newFundingSource.type}
+                  onChange={(e) =>
+                    setNewFundingSource({
+                      ...newFundingSource,
+                      type: e.target.value,
+                    })
+                  }
+                  className="beast-input"
+                >
+                  <option value="checking">Checking</option>
+                  <option value="savings">Savings</option>
+                  <option value="credit_card">Credit Card</option>
+                  <option value="heloc">HELOC</option>
+                  <option value="ploc">PLOC</option>
+                  <option value="cash">Cash</option>
+                </select>
 
-                        <input
-                          type="number"
-                          min="1"
-                          max="31"
-                          value={editDebtDueDate}
-                          onChange={(e) => setEditDebtDueDate(e.target.value)}
-                          placeholder="Due day"
-                          className="beast-input"
-                        />
-                      </div>
-                    </div>
-                  ) : (
-                    <div>
-                      <div className="font-semibold">{debt.name}</div>
-                      <div className="mt-1 text-xs text-[#7f8da3]">
-                        Balance: ${Number(debt.balance || 0).toFixed(2)} | APR:{" "}
-                        {Number(debt.interest_rate || 0).toFixed(2)}%
-                      </div>
-                    </div>
-                  )}
-                </td>
+                <input
+                  type="number"
+                  value={newFundingSource.current_balance}
+                  onChange={(e) =>
+                    setNewFundingSource({
+                      ...newFundingSource,
+                      current_balance: e.target.value,
+                    })
+                  }
+                  placeholder="Current balance"
+                  className="beast-input"
+                />
 
-                <td className="text-right align-top font-semibold">
-                  ${Number(debt.minimum_payment || 0).toFixed(2)}
-                </td>
+                <input
+                  type="number"
+                  value={newFundingSource.credit_limit}
+                  onChange={(e) =>
+                    setNewFundingSource({
+                      ...newFundingSource,
+                      credit_limit: e.target.value,
+                    })
+                  }
+                  placeholder="Credit limit"
+                  className="beast-input"
+                />
 
-                <td className="text-center align-top">
-                  {debt.nextDueDateDisplay}
-                </td>
+                <input
+                  type="number"
+                  value={newFundingSource.available_credit}
+                  onChange={(e) =>
+                    setNewFundingSource({
+                      ...newFundingSource,
+                      available_credit: e.target.value,
+                    })
+                  }
+                  placeholder="Available credit"
+                  className="beast-input"
+                />
 
-                <td className="min-w-[300px] text-center align-top">
-                  <select
-                    value={debt.assigned_income_date || ""}
-                    onChange={(e) =>
-                      updateDebtIncomeDate(debt.id, e.target.value)
-                    }
-                    className="beast-input"
-                  >
-                    <option value="">Unassigned</option>
-                    {incomeBucketPlans.map((bucket) => (
-                      <option key={bucket.id} value={bucket.date}>
-                        {bucket.dropdownLabel}
-                      </option>
-                    ))}
-                  </select>
-                </td>
+                <input
+                  type="number"
+                  value={newFundingSource.interest_rate}
+                  onChange={(e) =>
+                    setNewFundingSource({
+                      ...newFundingSource,
+                      interest_rate: e.target.value,
+                    })
+                  }
+                  placeholder="Interest rate %"
+                  className="beast-input"
+                />
+              </div>
 
-                <td className="min-w-[220px] align-top">
-                  {editingDebtId === debt.id ? (
-                    <div className="grid gap-2 sm:grid-cols-2">
-                      <button
-                        onClick={() => saveDebtEdit(debt.id)}
-                        className="beast-button"
-                      >
-                        Save
-                      </button>
+              <button onClick={addFundingSource} className="beast-button">
+                Add Funding Source
+              </button>
 
-                      <button
-                        onClick={cancelEditDebt}
-                        className="beast-button-secondary"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="grid gap-2">
-  <div className="grid grid-cols-[1fr_auto_auto] gap-2">
-    <input
-      type="number"
-      value={debtPayments[debt.id] || ""}
-      onChange={(e) =>
-        setDebtPayments((prev) => ({
-          ...prev,
-          [debt.id]: e.target.value,
-        }))
-      }
-      placeholder="Payment"
-      className="beast-input h-9 px-2 text-sm"
-    />
+              <div className="beast-table-wrap">
+                <table className="w-full min-w-[900px] text-sm">
+                  <thead>
+                    <tr>
+                      <th className="text-left">Name</th>
+                      <th className="text-center">Type</th>
+                      <th className="text-right">Balance</th>
+                      <th className="text-right">Credit Limit</th>
+                      <th className="text-right">Available Credit</th>
+                      <th className="text-right">APR</th>
+                      <th className="text-center">Actions</th>
+                    </tr>
+                  </thead>
 
-<button
-  onClick={() =>
-    applyDebtPayment(debt, Number(debtPayments[debt.id] || 0))
-  }
-  className="beast-button-secondary"
->
-  Apply
-</button>
-
-<button
-  onClick={() =>
-    applyDebtPayment(debt, Number(debt.minimum_payment || 0))
-  }
-  className="beast-button"
->
-  Min Paid
-</button>
-  </div>
-
-  <div className="grid grid-cols-3 gap-2">
-    <button
-      onClick={() => startEditDebt(debt)}
-      className="beast-button-secondary"
-    >
-      Edit
-    </button>
-
-    <button
-      onClick={() => archiveDebt(debt.id)}
-      className="beast-button-secondary"
-    >
-      Archive
-    </button>
-
-    <button
-      onClick={() => deleteDebt(debt.id)}
-      className="beast-button"
-    >
-      Delete
-    </button>
-  </div>
-</div>
-                  )}
-                </td>
-              </tr>
-            ))
+                  <tbody>
+                    {fundingSources.length === 0 ? (
+                      <tr>
+                        <td colSpan={7}>No funding sources added yet.</td>
+                      </tr>
+                    ) : (
+                      fundingSources.map((source) => (
+                        <tr key={source.id}>
+                          <td className="text-left font-semibold">
+                            {source.name}
+                          </td>
+                          <td className="text-center capitalize">
+                            {source.type.replace("_", " ")}
+                          </td>
+                          <td className="text-right">
+                            ${Number(source.current_balance || 0).toFixed(2)}
+                          </td>
+                          <td className="text-right">
+                            {source.credit_limit === null
+                              ? "—"
+                              : `$${Number(source.credit_limit || 0).toFixed(
+                                  2
+                                )}`}
+                          </td>
+                          <td className="text-right">
+                            {source.available_credit === null
+                              ? "—"
+                              : `$${Number(
+                                  source.available_credit || 0
+                                ).toFixed(2)}`}
+                          </td>
+                          <td className="text-right">
+                            {Number(source.interest_rate || 0).toFixed(2)}%
+                          </td>
+                          <td className="text-center">
+                            <button
+                              onClick={() => deleteFundingSource(source.id)}
+                              className="beast-button-secondary"
+                            >
+                              Remove
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           )}
-        </tbody>
-      </table>
-    </div>
-  )}
-</section>
-
-<section className="beast-panel overflow-hidden">
-  <div className="flex items-center justify-between gap-4 border-b border-[#2a3242] p-5">
-    <div>
-      <h2 className="text-xl font-bold">Income Sources / Schedule</h2>
-      <p className="mt-1 text-sm text-[#7f8da3]">
-      Manage recurring income sources. Future income pots are generated in the Income Date Planning section above.
-      </p>
-    </div>
-
-    <button
-      onClick={() => setShowIncomeEvents(!showIncomeEvents)}
-      className="beast-button-secondary"
-    >
-      {showIncomeEvents ? "Hide" : `Show (${incomes.length})`}
-    </button>
-  </div>
-
-  {showIncomeEvents && (
-    <div className="beast-table-wrap">
-      <table className="w-full min-w-[850px] text-sm">
-        <thead>
-          <tr>
-            <th className="text-left">Name</th>
-            <th className="text-right">Amount</th>
-            <th className="text-center">Frequency</th>
-            <th className="text-center">Next Pay Date</th>
-            <th className="text-right"></th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {incomes.length === 0 ? (
-            <tr>
-              <td colSpan={5}>No income events added yet.</td>
-            </tr>
-          ) : (
-            incomes.map((income) => (
-              <tr key={income.id}>
-                <td className="text-left">
-                  {editingIncomeId === income.id ? (
-                    <input
-                      value={editIncomeName}
-                      onChange={(e) => setEditIncomeName(e.target.value)}
-                      className="beast-input"
-                    />
-                  ) : (
-                    income.name
-                  )}
-                </td>
-
-                <td className="text-right">
-                  {editingIncomeId === income.id ? (
-                    <input
-                      type="number"
-                      value={editIncomeAmount}
-                      onChange={(e) => setEditIncomeAmount(e.target.value)}
-                      className="beast-input"
-                    />
-                  ) : (
-                    `$${Number(income.amount || 0).toFixed(2)}`
-                  )}
-                </td>
-
-                <td className="text-center">
-                  {editingIncomeId === income.id ? (
-                    <select
-                      value={editIncomeFrequency}
-                      onChange={(e) => setEditIncomeFrequency(e.target.value)}
-                      className="beast-input"
-                    >
-                      <option value="weekly">Weekly</option>
-                      <option value="biweekly">Biweekly</option>
-                      <option value="monthly">Monthly</option>
-                    </select>
-                  ) : (
-                    income.frequency
-                  )}
-                </td>
-
-                <td className="text-center">
-                  {editingIncomeId === income.id ? (
-                    <input
-                      type="date"
-                      value={editIncomeNextDate}
-                      onChange={(e) => setEditIncomeNextDate(e.target.value)}
-                      className="beast-input"
-                    />
-                  ) : (
-                    getNextIncomeDateDisplay(income.next_date, income.frequency)
-                  )}
-                </td>
-
-                <td className="text-right">
-                  {editingIncomeId === income.id ? (
-                    <div className="flex justify-end gap-2">
-                      <button
-                        onClick={() => saveIncomeEdit(income.id)}
-                        className="beast-button"
-                      >
-                        Save
-                      </button>
-
-                      <button
-                        onClick={cancelEditIncome}
-                        className="beast-button-secondary"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex justify-end gap-2">
-                      <button
-                        onClick={() => startEditIncome(income)}
-                        className="beast-button-secondary"
-                      >
-                        Edit
-                      </button>
-
-                      <button
-                        onClick={() => deleteIncome(income.id)}
-                        className="beast-button"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  )}
-                </td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
-    </div>
-  )}
-</section>
+        </section>
 
         <section className="beast-panel overflow-hidden">
           <div className="flex items-center justify-between gap-4 border-b border-[#2a3242] p-5">
@@ -2237,6 +2714,7 @@ if (currentCycleRemaining <= 0) {
                     <th className="text-right">Amount</th>
                     <th className="text-center">Frequency</th>
                     <th className="text-center">Income Date</th>
+                    <th className="text-center">Funding Source</th>
                     <th className="text-center">Actions</th>
                   </tr>
                 </thead>
@@ -2244,7 +2722,7 @@ if (currentCycleRemaining <= 0) {
                 <tbody>
                   {archivedBills.length === 0 ? (
                     <tr>
-                      <td colSpan={5}>No archived bills.</td>
+                      <td colSpan={6}>No archived bills.</td>
                     </tr>
                   ) : (
                     archivedBills.map((bill) => (
@@ -2258,6 +2736,9 @@ if (currentCycleRemaining <= 0) {
                         </td>
                         <td className="text-center">
                           {getIncomeBucketLabel(bill.assigned_income_date)}
+                        </td>
+                        <td className="text-center">
+                          {getFundingSourceLabel(bill.funding_source_id)}
                         </td>
                         <td className="text-center">
                           <button
@@ -2302,6 +2783,7 @@ if (currentCycleRemaining <= 0) {
                     <th className="text-right">Balance</th>
                     <th className="text-right">Minimum</th>
                     <th className="text-center">Income Date</th>
+                    <th className="text-center">Funding Source</th>
                     <th className="text-center">Actions</th>
                   </tr>
                 </thead>
@@ -2309,7 +2791,7 @@ if (currentCycleRemaining <= 0) {
                 <tbody>
                   {archivedDebts.length === 0 ? (
                     <tr>
-                      <td colSpan={5}>No archived debts.</td>
+                      <td colSpan={6}>No archived debts.</td>
                     </tr>
                   ) : (
                     archivedDebts.map((debt) => (
@@ -2323,6 +2805,9 @@ if (currentCycleRemaining <= 0) {
                         </td>
                         <td className="text-center">
                           {getIncomeBucketLabel(debt.assigned_income_date)}
+                        </td>
+                        <td className="text-center">
+                          {getFundingSourceLabel(debt.funding_source_id)}
                         </td>
                         <td className="text-center">
                           <button
@@ -2340,7 +2825,6 @@ if (currentCycleRemaining <= 0) {
             </div>
           )}
         </section>
-
       </div>
     </main>
   );
