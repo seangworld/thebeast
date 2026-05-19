@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   buildCashTimeline,
   simulateCashFlow,
@@ -34,6 +34,13 @@ type FundingSource = {
   interest_rate: number | null;
   is_active: boolean;
   created_at: string;
+};
+
+type OperationalAlert = {
+  id: string;
+  severity: "info" | "warning" | "critical";
+  title: string;
+  message: string;
 };
 
 const billFrequencyOptions: { value: BillFrequency; label: string }[] = [
@@ -455,6 +462,17 @@ export default function CashFlowPage() {
     return source?.name || "Unknown Source";
   }
 
+  function getFundingSourceUtilization(source: FundingSource) {
+    const creditLimit = Number(source.credit_limit || 0);
+
+    if (creditLimit <= 0) return null;
+
+    const availableCredit = Number(source.available_credit || 0);
+    const usedCredit = Math.max(creditLimit - availableCredit, 0);
+
+    return (usedCredit / creditLimit) * 100;
+  }
+
   const activeFundingSources = useMemo(() => {
     return fundingSources.filter((source) => source.is_active);
   }, [fundingSources]);
@@ -471,7 +489,20 @@ export default function CashFlowPage() {
       .reduce((sum, source) => sum + Number(source.available_credit || 0), 0);
   }, [activeFundingSources]);
 
-  const nextPayDate = nextPaycheckDate ? new Date(nextPaycheckDate) : null;
+  const creditLimitTotal = useMemo(() => {
+    return activeFundingSources
+      .filter((source) => ["credit_card", "heloc", "ploc"].includes(source.type))
+      .reduce((sum, source) => sum + Number(source.credit_limit || 0), 0);
+  }, [activeFundingSources]);
+
+  const creditUsedTotal = Math.max(creditLimitTotal - creditAvailableTotal, 0);
+
+  const creditUtilizationPercent =
+    creditLimitTotal > 0 ? (creditUsedTotal / creditLimitTotal) * 100 : 0;
+
+  const nextPayDate = useMemo(() => {
+    return nextPaycheckDate ? new Date(nextPaycheckDate) : null;
+  }, [nextPaycheckDate]);
 
   const upcomingBillsTotal = useMemo(() => {
     if (!nextPayDate) return 0;
@@ -519,6 +550,60 @@ export default function CashFlowPage() {
   const archivedDebts = useMemo(() => {
     return debtsWithAssignmentStatus.filter((debt) => debt.is_archived);
   }, [debtsWithAssignmentStatus]);
+
+  const billsAhead = useMemo(() => {
+    const today = new Date();
+    const todayOnly = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate()
+    );
+    const windowEnd = addDays(todayOnly, 30);
+
+    const upcoming = activeBills
+      .filter((bill) => {
+        if (Number(bill.remaining || 0) <= 0) return false;
+        return bill.nextDueDate >= todayOnly && bill.nextDueDate <= windowEnd;
+      })
+      .sort((a, b) => a.nextDueDate.getTime() - b.nextDueDate.getTime());
+
+    return {
+      bills: upcoming,
+      total: upcoming.reduce(
+        (sum, bill) => sum + Number(bill.remaining || 0),
+        0
+      ),
+      unassignedIncomePots: upcoming.filter(
+        (bill) => !bill.assigned_income_date
+      ).length,
+      unassignedFundingSources: upcoming.filter(
+        (bill) => !bill.funding_source_id
+      ).length,
+    };
+  }, [activeBills]);
+
+  const billsDueNext7Days = useMemo(() => {
+    const today = new Date();
+    const todayOnly = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate()
+    );
+    const windowEnd = addDays(todayOnly, 7);
+
+    const billsDue = activeBills.filter((bill) => {
+      if (Number(bill.remaining || 0) <= 0) return false;
+      return bill.nextDueDate >= todayOnly && bill.nextDueDate <= windowEnd;
+    });
+
+    return {
+      bills: billsDue,
+      total: billsDue.reduce(
+        (sum, bill) => sum + Number(bill.remaining || 0),
+        0
+      ),
+    };
+  }, [activeBills]);
 
   const upcomingDebtMinimums = useMemo(() => {
     if (!nextPayDate) return 0;
@@ -571,6 +656,22 @@ export default function CashFlowPage() {
     return billTotal + debtTotal;
   }, [unassignedBills, unassignedDebts]);
 
+  const unassignedObligationsCount =
+    unassignedBills.length + unassignedDebts.length;
+
+  const fundingSourceRiskCount = useMemo(() => {
+    return activeFundingSources.filter((source) => {
+      const creditLimit = Number(source.credit_limit || 0);
+
+      if (creditLimit <= 0) return false;
+
+      const availableCredit = Number(source.available_credit || 0);
+      const usedCredit = Math.max(creditLimit - availableCredit, 0);
+
+      return (usedCredit / creditLimit) * 100 > 70;
+    }).length;
+  }, [activeFundingSources]);
+
   const incomeBucketPlans = useMemo(() => {
     return incomeBuckets.map((bucket) => {
       const assignedBills = activeBills.filter(
@@ -611,6 +712,104 @@ export default function CashFlowPage() {
       };
     });
   }, [incomeBuckets, activeBills, activeDebts, buffer]);
+
+  const operationalAlerts = useMemo(() => {
+    const alerts: OperationalAlert[] = [];
+
+    if (billsDueNext7Days.bills.length > 0) {
+      alerts.push({
+        id: "bills-due-soon",
+        severity: "warning",
+        title: "Bills due soon",
+        message: `${billsDueNext7Days.bills.length} bill${
+          billsDueNext7Days.bills.length === 1 ? "" : "s"
+        } due within 7 days: $${billsDueNext7Days.total.toFixed(2)}.`,
+      });
+    }
+
+    if (safeToSpend < 0) {
+      alerts.push({
+        id: "negative-safe-to-spend",
+        severity: "critical",
+        title: "Safe to spend is negative",
+        message: `$${Math.abs(safeToSpend).toFixed(2)} short after buffer.`,
+      });
+    }
+
+    if (creditUtilizationPercent > 90) {
+      alerts.push({
+        id: "credit-utilization-critical",
+        severity: "critical",
+        title: "Credit utilization critical",
+        message: `Total utilization is ${creditUtilizationPercent.toFixed(
+          1
+        )}%.`,
+      });
+    } else if (creditUtilizationPercent > 70) {
+      alerts.push({
+        id: "credit-utilization-high",
+        severity: "warning",
+        title: "Credit utilization high",
+        message: `Total utilization is ${creditUtilizationPercent.toFixed(
+          1
+        )}%.`,
+      });
+    }
+
+    if (unassignedBills.length > 0) {
+      alerts.push({
+        id: "unassigned-bills",
+        severity: "info",
+        title: "Bills need income pots",
+        message: `${unassignedBills.length} bill${
+          unassignedBills.length === 1 ? "" : "s"
+        } unassigned.`,
+      });
+    }
+
+    if (unassignedDebts.length > 0) {
+      alerts.push({
+        id: "unassigned-debts",
+        severity: "info",
+        title: "Debts need income pots",
+        message: `${unassignedDebts.length} debt minimum${
+          unassignedDebts.length === 1 ? "" : "s"
+        } unassigned.`,
+      });
+    }
+
+    const lowImpactDebtMinimums = activeDebts.filter((debt) => {
+      const balance = Number(debt.balance || 0);
+      const minimumPayment = Number(debt.minimum_payment || 0);
+      const monthlyInterest =
+        balance * (Number(debt.interest_rate || 0) / 100 / 12);
+      const principalReduction = minimumPayment - monthlyInterest;
+
+      if (balance <= 0 || minimumPayment <= 0) return false;
+
+      return principalReduction < balance * 0.005;
+    });
+
+    if (lowImpactDebtMinimums.length > 0) {
+      alerts.push({
+        id: "low-impact-debt-minimums",
+        severity: "warning",
+        title: "Debt minimums barely reduce balance",
+        message: `${lowImpactDebtMinimums.length} debt${
+          lowImpactDebtMinimums.length === 1 ? "" : "s"
+        } below 0.5% principal reduction.`,
+      });
+    }
+
+    return alerts;
+  }, [
+    activeDebts,
+    billsDueNext7Days,
+    creditUtilizationPercent,
+    safeToSpend,
+    unassignedBills,
+    unassignedDebts,
+  ]);
 
   const recommendedNextSteps = useMemo(() => {
     const steps: string[] = [];
@@ -683,13 +882,13 @@ export default function CashFlowPage() {
     activeFundingSources,
   ]);
 
-  async function getUserId() {
+  const getUserId = useCallback(async () => {
     const supabase = createClient();
     const { data } = await supabase.auth.getUser();
     return data?.user?.id;
-  }
+  }, []);
 
-  async function loadFundingSources() {
+  const loadFundingSources = useCallback(async () => {
     const supabase = createClient();
     const userId = await getUserId();
 
@@ -703,7 +902,7 @@ export default function CashFlowPage() {
       .order("created_at", { ascending: true });
 
     setFundingSources(data || []);
-  }
+  }, [getUserId]);
 
   async function addFundingSource() {
     const supabase = createClient();
@@ -757,7 +956,7 @@ export default function CashFlowPage() {
     await loadFundingSources();
   }
 
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
 
     const supabase = createClient();
@@ -892,12 +1091,12 @@ export default function CashFlowPage() {
     setIncomeExpected(calculateIncomeExpected(builtTimeline));
 
     setLoading(false);
-  }
+  }, [cycleMonth, getUserId]);
 
   useEffect(() => {
     load();
     loadFundingSources();
-  }, []);
+  }, [load, loadFundingSources]);
 
   function recalc(balance: number) {
     const simulated = simulateCashFlow({
@@ -1342,6 +1541,143 @@ export default function CashFlowPage() {
           </div>
         </section>
 
+
+        <section className="space-y-2">
+          <p className="beast-kicker">Command Zone</p>
+          <h2 className="text-2xl font-bold">Daily operating focus</h2>
+        </section>
+
+        {operationalAlerts.length > 0 && (
+          <section className="beast-card space-y-4">
+            <div>
+              <h2 className="text-xl font-bold">Operational Alerts</h2>
+              <p className="mt-1 text-sm text-[#7f8da3]">
+                Current cashflow items that need attention.
+              </p>
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {operationalAlerts.map((alert) => (
+                <div
+                  key={alert.id}
+                  className={`rounded-xl border p-3 text-sm ${
+                    alert.severity === "critical"
+                      ? "border-red-400/60 bg-red-950/30 text-red-100"
+                      : alert.severity === "warning"
+                      ? "border-yellow-300/60 bg-yellow-950/20 text-yellow-100"
+                      : "border-sky-300/60 bg-sky-950/20 text-sky-100"
+                  }`}
+                >
+                  <div className="font-bold">{alert.title}</div>
+                  <div className="mt-1 opacity-90">{alert.message}</div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        <section className="beast-card space-y-4">
+          <div>
+            <h2 className="text-xl font-bold">Daily Command Summary</h2>
+            <p className="mt-1 text-sm text-[#7f8da3]">
+              Quick operating numbers for today.
+            </p>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="beast-panel p-4">
+              <div className="text-sm text-[#c7cfdb]">Safe To Spend</div>
+              <div
+                className={`mt-2 break-words text-2xl font-bold ${
+                  safeToSpend < 0
+                    ? "text-red-300"
+                    : safeToSpend < Number(buffer || 0) * 0.25
+                    ? "text-yellow-300"
+                    : "text-green-300"
+                }`}
+              >
+                ${safeToSpend.toFixed(2)}
+              </div>
+            </div>
+
+            <div className="beast-panel p-4">
+              <div className="text-sm text-[#c7cfdb]">
+                Required Before Paycheck
+              </div>
+              <div
+                className={`mt-2 break-words text-2xl font-bold ${
+                  requiredBeforePaycheck > Number(startingBalance || 0)
+                    ? "text-red-300"
+                    : requiredBeforePaycheck >
+                      Number(startingBalance || 0) * 0.75
+                    ? "text-yellow-300"
+                    : "text-green-300"
+                }`}
+              >
+                ${requiredBeforePaycheck.toFixed(2)}
+              </div>
+            </div>
+
+            <div className="beast-panel p-4">
+              <div className="text-sm text-[#c7cfdb]">Bills Due 7 Days</div>
+              <div
+                className={`mt-2 break-words text-2xl font-bold ${
+                  billsDueNext7Days.total > Number(startingBalance || 0)
+                    ? "text-red-300"
+                    : billsDueNext7Days.bills.length > 0
+                    ? "text-yellow-300"
+                    : "text-green-300"
+                }`}
+              >
+                ${billsDueNext7Days.total.toFixed(2)}
+              </div>
+            </div>
+
+            <div className="beast-panel p-4">
+              <div className="text-sm text-[#c7cfdb]">Bills Due 30 Days</div>
+              <div
+                className={`mt-2 break-words text-2xl font-bold ${
+                  billsAhead.total > Number(startingBalance || 0)
+                    ? "text-red-300"
+                    : billsAhead.bills.length > 0
+                    ? "text-yellow-300"
+                    : "text-green-300"
+                }`}
+              >
+                ${billsAhead.total.toFixed(2)}
+              </div>
+            </div>
+
+            <div className="beast-panel p-4">
+              <div className="text-sm text-[#c7cfdb]">
+                Unassigned Obligations
+              </div>
+              <div
+                className={`mt-2 break-words text-2xl font-bold ${
+                  unassignedObligationsCount > 0
+                    ? "text-yellow-300"
+                    : "text-green-300"
+                }`}
+              >
+                {unassignedObligationsCount}
+              </div>
+            </div>
+
+            <div className="beast-panel p-4">
+              <div className="text-sm text-[#c7cfdb]">Funding Risk Count</div>
+              <div
+                className={`mt-2 break-words text-2xl font-bold ${
+                  fundingSourceRiskCount > 0
+                    ? "text-red-300"
+                    : "text-green-300"
+                }`}
+              >
+                {fundingSourceRiskCount}
+              </div>
+            </div>
+          </div>
+        </section>
+
         <section className="beast-card space-y-4">
           <div>
             <h2 className="text-xl font-bold">Recommended Next Step Today</h2>
@@ -1363,108 +1699,161 @@ export default function CashFlowPage() {
           </div>
         </section>
 
+        <section className="space-y-2">
+          <p className="beast-kicker">Execution Zone</p>
+          <h2 className="text-2xl font-bold">Active cashflow management</h2>
+        </section>
+
+
         <section className="beast-card space-y-5">
-          <div>
-            <h2 className="text-xl font-bold">Paycheck Planning</h2>
-            <p className="mt-1 text-sm text-[#7f8da3]">
-              Determine what must be covered before your next paycheck.
-            </p>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
-              <label className="text-sm text-[#c7cfdb]">
-                Next Paycheck Amount
-              </label>
-              <input
-                type="number"
-                value={nextPaycheckAmount}
-                onChange={(e) => setNextPaycheckAmount(e.target.value)}
-                placeholder="0"
-                className="beast-input mt-2"
-              />
+              <h2 className="text-xl font-bold">Bills Ahead</h2>
+              <p className="mt-1 text-sm text-[#7f8da3]">
+                Operational view of bills due in the next 30 days, including
+                funding source and income pot assignments.
+              </p>
             </div>
 
-            <div>
-              <label className="text-sm text-[#c7cfdb]">
-                Next Paycheck Date
-              </label>
-              <input
-                type="date"
-                value={nextPaycheckDate}
-                onChange={(e) => setNextPaycheckDate(e.target.value)}
-                className="beast-input mt-2"
-              />
-            </div>
+            <div className="grid gap-3 sm:grid-cols-2 lg:min-w-[360px]">
+              <div className="beast-panel p-4">
+                <div className="text-sm text-[#c7cfdb]">Bills Due</div>
+                <div className="mt-2 break-words text-2xl font-bold">
+                  {billsAhead.bills.length}
+                </div>
+              </div>
 
-            <div>
-              <label className="text-sm text-[#c7cfdb]">
-                Following Paycheck Amount
-              </label>
-              <input
-                type="number"
-                value={secondPaycheckAmount}
-                onChange={(e) => setSecondPaycheckAmount(e.target.value)}
-                placeholder="0"
-                className="beast-input mt-2"
-              />
-            </div>
-
-            <div>
-              <label className="text-sm text-[#c7cfdb]">
-                Following Paycheck Date
-              </label>
-              <input
-                type="date"
-                value={secondPaycheckDate}
-                onChange={(e) => setSecondPaycheckDate(e.target.value)}
-                className="beast-input mt-2"
-              />
+              <div className="beast-panel p-4">
+                <div className="text-sm text-[#c7cfdb]">
+                  Upcoming Bill Amount
+                </div>
+                <div className="mt-2 break-words text-2xl font-bold text-yellow-300">
+                  ${billsAhead.total.toFixed(2)}
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <div className="beast-card">
-              <div className="text-sm text-[#c7cfdb]">
-                Required Before Paycheck
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="beast-panel p-3">
+              <div className="text-xs text-[#7f8da3]">
+                Total Upcoming Bills
               </div>
-              <div className="mt-2 break-words text-2xl font-bold">
-                ${requiredBeforePaycheck.toFixed(2)}
-              </div>
-            </div>
-
-            <div className="beast-card">
-              <div className="text-sm text-[#c7cfdb]">
-                Projected After Obligations
-              </div>
-              <div className="mt-2 break-words text-2xl font-bold">
-                ${projectedAfterObligations.toFixed(2)}
+              <div className="mt-1 text-lg font-bold">
+                {billsAhead.bills.length}
               </div>
             </div>
 
-            <div className="beast-card">
-              <div className="text-sm text-[#c7cfdb]">Safe To Spend</div>
+            <div className="beast-panel p-3">
+              <div className="text-xs text-[#7f8da3]">Total Due Amount</div>
+              <div className="mt-1 text-lg font-bold">
+                ${billsAhead.total.toFixed(2)}
+              </div>
+            </div>
+
+            <div className="beast-panel p-3">
+              <div className="text-xs text-[#7f8da3]">
+                Unassigned Income Pots
+              </div>
               <div
-                className={`mt-2 break-words text-2xl font-bold ${
-                  safeToSpend < 0 ? "text-red-300" : "text-green-300"
+                className={`mt-1 text-lg font-bold ${
+                  billsAhead.unassignedIncomePots > 0
+                    ? "text-yellow-300"
+                    : "text-green-300"
                 }`}
               >
-                ${safeToSpend.toFixed(2)}
+                {billsAhead.unassignedIncomePots}
               </div>
             </div>
 
-            <div className="beast-card">
-              <div className="text-sm text-[#c7cfdb]">Status</div>
+            <div className="beast-panel p-3">
+              <div className="text-xs text-[#7f8da3]">
+                Unassigned Funding Sources
+              </div>
               <div
-                className={`mt-2 break-words text-2xl font-bold ${
-                  safeToSpend < 0 ? "text-red-300" : "text-green-300"
+                className={`mt-1 text-lg font-bold ${
+                  billsAhead.unassignedFundingSources > 0
+                    ? "text-yellow-300"
+                    : "text-green-300"
                 }`}
               >
-                {safeToSpend < 0 ? "Shortfall Risk" : "On Track"}
+                {billsAhead.unassignedFundingSources}
               </div>
             </div>
+          </div>
+
+          <div className="beast-table-wrap">
+            <table className="w-full min-w-[900px] text-sm">
+              <thead>
+                <tr>
+                  <th className="text-left">Bill</th>
+                  <th className="text-right">Remaining</th>
+                  <th className="text-center">Due Date</th>
+                  <th className="text-center">Income Pot</th>
+                  <th className="text-center">Funding Source</th>
+                  <th className="text-center">Status</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {billsAhead.bills.length === 0 ? (
+                  <tr>
+                    <td colSpan={6}>No bills due in the next 30 days.</td>
+                  </tr>
+                ) : (
+                  billsAhead.bills.map((bill) => (
+                    <tr
+                      key={`ahead-${bill.id}`}
+                      className={
+                        bill.status === "Late"
+                          ? "border-l-4 border-l-red-400"
+                          : bill.status === "Due Soon"
+                          ? "border-l-4 border-l-yellow-300"
+                          : undefined
+                      }
+                    >
+                      <td className="text-left">
+                        <div className="font-semibold">{bill.name}</div>
+                        <div className="mt-1 text-xs text-[#7f8da3]">
+                          {getFrequencyLabel(bill.frequency)}
+                        </div>
+                      </td>
+                      <td className="text-right font-semibold">
+                        ${Number(bill.remaining || 0).toFixed(2)}
+                      </td>
+                      <td className="text-center">
+                        {bill.nextDueDateDisplay}
+                      </td>
+                      <td className="text-center">
+                        {getIncomeBucketLabel(bill.assigned_income_date)}
+                      </td>
+                      <td className="text-center">
+                        {getFundingSourceLabel(bill.funding_source_id)}
+                      </td>
+                      <td className="text-center">
+                        <span
+                          className={
+                            bill.status === "Paid"
+                              ? "text-green-300"
+                              : bill.status === "Partial" ||
+                                bill.status === "Due Soon"
+                              ? "text-yellow-300"
+                              : bill.status === "Late"
+                              ? "text-red-300"
+                              : "text-[#c7cfdb]"
+                          }
+                        >
+                          {bill.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
         </section>
+
 
         <section className="beast-card space-y-5">
           <div>
@@ -1619,6 +2008,362 @@ export default function CashFlowPage() {
                 </div>
               ))
             )}
+          </div>
+        </section>
+
+
+        <section className="beast-panel overflow-hidden">
+          <div className="flex items-center justify-between gap-4 border-b border-[#2a3242] p-5">
+            <div>
+              <h2 className="text-xl font-bold">Funding Sources</h2>
+              <p className="mt-1 text-sm text-[#7f8da3]">
+                Accounts and liquidity sources used to fund bills, debt payments,
+                and future HELOC/PLOC planning.
+              </p>
+            </div>
+
+            <button
+              onClick={() => setShowFundingSources(!showFundingSources)}
+              className="beast-button-secondary"
+            >
+              {showFundingSources
+                ? "Hide"
+                : `Show (${fundingSources.length})`}
+            </button>
+          </div>
+
+          {showFundingSources && (
+            <div className="space-y-5 p-5">
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+                <div className="beast-card">
+                  <div className="text-sm text-[#c7cfdb]">Active Sources</div>
+                  <div className="mt-2 break-words text-2xl font-bold">
+                    {activeFundingSources.length}
+                  </div>
+                </div>
+
+                <div className="beast-card">
+                  <div className="text-sm text-[#c7cfdb]">Liquid Cash</div>
+                  <div className="mt-2 break-words text-2xl font-bold text-green-300">
+                    ${liquidFundingTotal.toFixed(2)}
+                  </div>
+                </div>
+
+                <div className="beast-card">
+                  <div className="text-sm text-[#c7cfdb]">
+                    Available Credit
+                  </div>
+                  <div className="mt-2 break-words text-2xl font-bold text-yellow-300">
+                    ${creditAvailableTotal.toFixed(2)}
+                  </div>
+                </div>
+
+                <div className="beast-card">
+                  <div className="text-sm text-[#c7cfdb]">Credit Limit</div>
+                  <div className="mt-2 break-words text-2xl font-bold">
+                    ${creditLimitTotal.toFixed(2)}
+                  </div>
+                </div>
+
+                <div className="beast-card">
+                  <div className="text-sm text-[#c7cfdb]">
+                    Credit Utilization
+                  </div>
+                  <div
+                    className={`mt-2 break-words text-2xl font-bold ${
+                      creditUtilizationPercent > 90
+                        ? "text-red-300"
+                        : creditUtilizationPercent > 70
+                        ? "text-yellow-300"
+                        : "text-green-300"
+                    }`}
+                  >
+                    {creditUtilizationPercent.toFixed(1)}%
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                <input
+                  value={newFundingSource.name}
+                  onChange={(e) =>
+                    setNewFundingSource({
+                      ...newFundingSource,
+                      name: e.target.value,
+                    })
+                  }
+                  placeholder="Funding source name"
+                  className="beast-input"
+                />
+
+                <select
+                  value={newFundingSource.type}
+                  onChange={(e) =>
+                    setNewFundingSource({
+                      ...newFundingSource,
+                      type: e.target.value,
+                    })
+                  }
+                  className="beast-input"
+                >
+                  <option value="checking">Checking</option>
+                  <option value="savings">Savings</option>
+                  <option value="credit_card">Credit Card</option>
+                  <option value="heloc">HELOC</option>
+                  <option value="ploc">PLOC</option>
+                  <option value="cash">Cash</option>
+                </select>
+
+                <input
+                  type="number"
+                  value={newFundingSource.current_balance}
+                  onChange={(e) =>
+                    setNewFundingSource({
+                      ...newFundingSource,
+                      current_balance: e.target.value,
+                    })
+                  }
+                  placeholder="Current balance"
+                  className="beast-input"
+                />
+
+                <input
+                  type="number"
+                  value={newFundingSource.credit_limit}
+                  onChange={(e) =>
+                    setNewFundingSource({
+                      ...newFundingSource,
+                      credit_limit: e.target.value,
+                    })
+                  }
+                  placeholder="Credit limit"
+                  className="beast-input"
+                />
+
+                <input
+                  type="number"
+                  value={newFundingSource.available_credit}
+                  onChange={(e) =>
+                    setNewFundingSource({
+                      ...newFundingSource,
+                      available_credit: e.target.value,
+                    })
+                  }
+                  placeholder="Available credit"
+                  className="beast-input"
+                />
+
+                <input
+                  type="number"
+                  value={newFundingSource.interest_rate}
+                  onChange={(e) =>
+                    setNewFundingSource({
+                      ...newFundingSource,
+                      interest_rate: e.target.value,
+                    })
+                  }
+                  placeholder="Interest rate %"
+                  className="beast-input"
+                />
+              </div>
+
+              <button onClick={addFundingSource} className="beast-button">
+                Add Funding Source
+              </button>
+
+              <div className="beast-table-wrap">
+                <table className="w-full min-w-[900px] text-sm">
+                  <thead>
+                    <tr>
+                      <th className="text-left">Name</th>
+                      <th className="text-center">Type</th>
+                      <th className="text-right">Balance</th>
+                      <th className="text-right">Credit Limit</th>
+                      <th className="text-right">Available Credit</th>
+                      <th className="text-right">Utilization</th>
+                      <th className="text-right">APR</th>
+                      <th className="text-center">Actions</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {fundingSources.length === 0 ? (
+                      <tr>
+                        <td colSpan={8}>No funding sources added yet.</td>
+                      </tr>
+                    ) : (
+                      fundingSources.map((source) => {
+                        const utilization =
+                          getFundingSourceUtilization(source);
+
+                        return (
+                          <tr key={source.id}>
+                            <td className="text-left font-semibold">
+                              {source.name}
+                            </td>
+                            <td className="text-center capitalize">
+                              {source.type.replace("_", " ")}
+                            </td>
+                            <td className="text-right">
+                              ${Number(source.current_balance || 0).toFixed(2)}
+                            </td>
+                            <td className="text-right">
+                              {source.credit_limit === null
+                                ? "—"
+                                : `$${Number(source.credit_limit || 0).toFixed(
+                                    2
+                                  )}`}
+                            </td>
+                            <td className="text-right">
+                              {source.available_credit === null
+                                ? "—"
+                                : `$${Number(
+                                    source.available_credit || 0
+                                  ).toFixed(2)}`}
+                            </td>
+                            <td
+                              className={`text-right font-semibold ${
+                                utilization === null
+                                  ? "text-[#c7cfdb]"
+                                  : utilization > 90
+                                  ? "text-red-300"
+                                  : utilization > 70
+                                  ? "text-yellow-300"
+                                  : "text-green-300"
+                              }`}
+                            >
+                              {utilization === null
+                                ? "—"
+                                : `${utilization.toFixed(1)}%`}
+                            </td>
+                            <td className="text-right">
+                              {Number(source.interest_rate || 0).toFixed(2)}%
+                            </td>
+                            <td className="text-center">
+                              <button
+                                onClick={() => deleteFundingSource(source.id)}
+                                className="beast-button-secondary"
+                              >
+                                Remove
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </section>
+        <section className="space-y-2">
+          <p className="beast-kicker">Reference / Management Zone</p>
+          <h2 className="text-2xl font-bold">
+            Configuration and detailed records
+          </h2>
+        </section>
+
+        <section className="beast-card space-y-5">
+          <div>
+            <h2 className="text-xl font-bold">Paycheck Planning</h2>
+            <p className="mt-1 text-sm text-[#7f8da3]">
+              Determine what must be covered before your next paycheck.
+            </p>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <label className="text-sm text-[#c7cfdb]">
+                Next Paycheck Amount
+              </label>
+              <input
+                type="number"
+                value={nextPaycheckAmount}
+                onChange={(e) => setNextPaycheckAmount(e.target.value)}
+                placeholder="0"
+                className="beast-input mt-2"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm text-[#c7cfdb]">
+                Next Paycheck Date
+              </label>
+              <input
+                type="date"
+                value={nextPaycheckDate}
+                onChange={(e) => setNextPaycheckDate(e.target.value)}
+                className="beast-input mt-2"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm text-[#c7cfdb]">
+                Following Paycheck Amount
+              </label>
+              <input
+                type="number"
+                value={secondPaycheckAmount}
+                onChange={(e) => setSecondPaycheckAmount(e.target.value)}
+                placeholder="0"
+                className="beast-input mt-2"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm text-[#c7cfdb]">
+                Following Paycheck Date
+              </label>
+              <input
+                type="date"
+                value={secondPaycheckDate}
+                onChange={(e) => setSecondPaycheckDate(e.target.value)}
+                className="beast-input mt-2"
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div className="beast-card">
+              <div className="text-sm text-[#c7cfdb]">
+                Required Before Paycheck
+              </div>
+              <div className="mt-2 break-words text-2xl font-bold">
+                ${requiredBeforePaycheck.toFixed(2)}
+              </div>
+            </div>
+
+            <div className="beast-card">
+              <div className="text-sm text-[#c7cfdb]">
+                Projected After Obligations
+              </div>
+              <div className="mt-2 break-words text-2xl font-bold">
+                ${projectedAfterObligations.toFixed(2)}
+              </div>
+            </div>
+
+            <div className="beast-card">
+              <div className="text-sm text-[#c7cfdb]">Safe To Spend</div>
+              <div
+                className={`mt-2 break-words text-2xl font-bold ${
+                  safeToSpend < 0 ? "text-red-300" : "text-green-300"
+                }`}
+              >
+                ${safeToSpend.toFixed(2)}
+              </div>
+            </div>
+
+            <div className="beast-card">
+              <div className="text-sm text-[#c7cfdb]">Status</div>
+              <div
+                className={`mt-2 break-words text-2xl font-bold ${
+                  safeToSpend < 0 ? "text-red-300" : "text-green-300"
+                }`}
+              >
+                {safeToSpend < 0 ? "Shortfall Risk" : "On Track"}
+              </div>
+            </div>
           </div>
         </section>
 
@@ -2487,206 +3232,6 @@ export default function CashFlowPage() {
           )}
         </section>
 
-        <section className="beast-panel overflow-hidden">
-          <div className="flex items-center justify-between gap-4 border-b border-[#2a3242] p-5">
-            <div>
-              <h2 className="text-xl font-bold">Funding Sources</h2>
-              <p className="mt-1 text-sm text-[#7f8da3]">
-                Accounts and liquidity sources used to fund bills, debt payments,
-                and future HELOC/PLOC planning.
-              </p>
-            </div>
-
-            <button
-              onClick={() => setShowFundingSources(!showFundingSources)}
-              className="beast-button-secondary"
-            >
-              {showFundingSources
-                ? "Hide"
-                : `Show (${fundingSources.length})`}
-            </button>
-          </div>
-
-          {showFundingSources && (
-            <div className="space-y-5 p-5">
-              <div className="grid gap-4 md:grid-cols-3">
-                <div className="beast-card">
-                  <div className="text-sm text-[#c7cfdb]">Active Sources</div>
-                  <div className="mt-2 break-words text-2xl font-bold">
-                    {activeFundingSources.length}
-                  </div>
-                </div>
-
-                <div className="beast-card">
-                  <div className="text-sm text-[#c7cfdb]">Liquid Cash</div>
-                  <div className="mt-2 break-words text-2xl font-bold text-green-300">
-                    ${liquidFundingTotal.toFixed(2)}
-                  </div>
-                </div>
-
-                <div className="beast-card">
-                  <div className="text-sm text-[#c7cfdb]">
-                    Available Credit
-                  </div>
-                  <div className="mt-2 break-words text-2xl font-bold text-yellow-300">
-                    ${creditAvailableTotal.toFixed(2)}
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                <input
-                  value={newFundingSource.name}
-                  onChange={(e) =>
-                    setNewFundingSource({
-                      ...newFundingSource,
-                      name: e.target.value,
-                    })
-                  }
-                  placeholder="Funding source name"
-                  className="beast-input"
-                />
-
-                <select
-                  value={newFundingSource.type}
-                  onChange={(e) =>
-                    setNewFundingSource({
-                      ...newFundingSource,
-                      type: e.target.value,
-                    })
-                  }
-                  className="beast-input"
-                >
-                  <option value="checking">Checking</option>
-                  <option value="savings">Savings</option>
-                  <option value="credit_card">Credit Card</option>
-                  <option value="heloc">HELOC</option>
-                  <option value="ploc">PLOC</option>
-                  <option value="cash">Cash</option>
-                </select>
-
-                <input
-                  type="number"
-                  value={newFundingSource.current_balance}
-                  onChange={(e) =>
-                    setNewFundingSource({
-                      ...newFundingSource,
-                      current_balance: e.target.value,
-                    })
-                  }
-                  placeholder="Current balance"
-                  className="beast-input"
-                />
-
-                <input
-                  type="number"
-                  value={newFundingSource.credit_limit}
-                  onChange={(e) =>
-                    setNewFundingSource({
-                      ...newFundingSource,
-                      credit_limit: e.target.value,
-                    })
-                  }
-                  placeholder="Credit limit"
-                  className="beast-input"
-                />
-
-                <input
-                  type="number"
-                  value={newFundingSource.available_credit}
-                  onChange={(e) =>
-                    setNewFundingSource({
-                      ...newFundingSource,
-                      available_credit: e.target.value,
-                    })
-                  }
-                  placeholder="Available credit"
-                  className="beast-input"
-                />
-
-                <input
-                  type="number"
-                  value={newFundingSource.interest_rate}
-                  onChange={(e) =>
-                    setNewFundingSource({
-                      ...newFundingSource,
-                      interest_rate: e.target.value,
-                    })
-                  }
-                  placeholder="Interest rate %"
-                  className="beast-input"
-                />
-              </div>
-
-              <button onClick={addFundingSource} className="beast-button">
-                Add Funding Source
-              </button>
-
-              <div className="beast-table-wrap">
-                <table className="w-full min-w-[900px] text-sm">
-                  <thead>
-                    <tr>
-                      <th className="text-left">Name</th>
-                      <th className="text-center">Type</th>
-                      <th className="text-right">Balance</th>
-                      <th className="text-right">Credit Limit</th>
-                      <th className="text-right">Available Credit</th>
-                      <th className="text-right">APR</th>
-                      <th className="text-center">Actions</th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {fundingSources.length === 0 ? (
-                      <tr>
-                        <td colSpan={7}>No funding sources added yet.</td>
-                      </tr>
-                    ) : (
-                      fundingSources.map((source) => (
-                        <tr key={source.id}>
-                          <td className="text-left font-semibold">
-                            {source.name}
-                          </td>
-                          <td className="text-center capitalize">
-                            {source.type.replace("_", " ")}
-                          </td>
-                          <td className="text-right">
-                            ${Number(source.current_balance || 0).toFixed(2)}
-                          </td>
-                          <td className="text-right">
-                            {source.credit_limit === null
-                              ? "—"
-                              : `$${Number(source.credit_limit || 0).toFixed(
-                                  2
-                                )}`}
-                          </td>
-                          <td className="text-right">
-                            {source.available_credit === null
-                              ? "—"
-                              : `$${Number(
-                                  source.available_credit || 0
-                                ).toFixed(2)}`}
-                          </td>
-                          <td className="text-right">
-                            {Number(source.interest_rate || 0).toFixed(2)}%
-                          </td>
-                          <td className="text-center">
-                            <button
-                              onClick={() => deleteFundingSource(source.id)}
-                              className="beast-button-secondary"
-                            >
-                              Remove
-                            </button>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-        </section>
 
         <section className="beast-panel overflow-hidden">
           <div className="flex items-center justify-between gap-4 border-b border-[#2a3242] p-5">

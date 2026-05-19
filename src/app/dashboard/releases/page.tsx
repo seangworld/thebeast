@@ -2,6 +2,24 @@ import Link from "next/link";
 
 const releaseNotes = [
   {
+    version: "v1.5.1 Beta",
+    date: "May 19, 2026",
+    title: "Operational Dashboard Refinement",
+    items: [
+      "Improved Cash Flow page stability and hook dependency handling.",
+      "Added Bills Ahead operational visibility.",
+      "Added upcoming bill totals and near-term obligation awareness.",
+      "Added funding-source health visibility.",
+      "Added operational alerts for cashflow pressure and assignment issues.",
+      "Added Daily Command Summary for faster financial decision-making.",
+      "Improved Cash Flow page layout hierarchy into command, execution, and reference zones.",
+      "Improved dashboard scanability and operational clarity.",
+      "Resolved Cash Flow page styling regression during development.",
+      "Verified Cash Flow page build stability after AI-assisted development workflow transition.",
+    ],
+  },
+  
+  {
     version: "v1.5.0 Beta",
     date: "May 18, 2026",
     title: "Cash Flow, Funding, and Debt Engine Stabilization",
