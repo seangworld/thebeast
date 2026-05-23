@@ -294,6 +294,17 @@ export default function CashFlowPage() {
   const [billPayments, setBillPayments] = useState<any[]>([]);
   const [fundingSources, setFundingSources] = useState<FundingSource[]>([]);
 
+  const [editingFundingSourceId, setEditingFundingSourceId] = useState<string | null>(null);
+
+  const [editingFundingSource, setEditingFundingSource] = useState({
+  name: "",
+  type: "checking",
+  current_balance: "",
+  credit_limit: "",
+  available_credit: "",
+  interest_rate: "",
+});
+
   const [newFundingSource, setNewFundingSource] = useState({
     name: "",
     type: "checking",
@@ -940,6 +951,58 @@ export default function CashFlowPage() {
       interest_rate: "",
     });
 
+    await loadFundingSources();
+  }
+
+  function startEditFundingSource(source: any) {
+    setEditingFundingSourceId(source.id);
+    setEditingFundingSource({
+      name: source.name || "",
+      type: source.type || "checking",
+      current_balance: String(source.current_balance ?? ""),
+      credit_limit: String(source.credit_limit ?? ""),
+      available_credit: String(source.available_credit ?? ""),
+      interest_rate: String(source.interest_rate ?? ""),
+    });
+  }
+  
+  function cancelEditFundingSource() {
+    setEditingFundingSourceId(null);
+    setEditingFundingSource({
+      name: "",
+      type: "checking",
+      current_balance: "",
+      credit_limit: "",
+      available_credit: "",
+      interest_rate: "",
+    });
+  }
+  
+  async function updateFundingSource(id: string) {
+    const supabase = createClient();
+  
+    await supabase
+      .from("funding_sources")
+      .update({
+        name: editingFundingSource.name,
+        type: editingFundingSource.type,
+        current_balance: Number(editingFundingSource.current_balance || 0),
+        credit_limit:
+          editingFundingSource.credit_limit === ""
+            ? null
+            : Number(editingFundingSource.credit_limit),
+        available_credit:
+          editingFundingSource.available_credit === ""
+            ? null
+            : Number(editingFundingSource.available_credit),
+        interest_rate:
+          editingFundingSource.interest_rate === ""
+            ? 0
+            : Number(editingFundingSource.interest_rate),
+      })
+      .eq("id", id);
+  
+    cancelEditFundingSource();
     await loadFundingSources();
   }
 
@@ -2187,71 +2250,186 @@ export default function CashFlowPage() {
                   </thead>
 
                   <tbody>
-                    {fundingSources.length === 0 ? (
-                      <tr>
-                        <td colSpan={8}>No funding sources added yet.</td>
-                      </tr>
-                    ) : (
-                      fundingSources.map((source) => {
-                        const utilization =
-                          getFundingSourceUtilization(source);
+  {fundingSources.length === 0 ? (
+    <tr>
+      <td colSpan={8}>No funding sources added yet.</td>
+    </tr>
+  ) : (
+    fundingSources.map((source) => {
+      const utilization = getFundingSourceUtilization(source);
+      const isEditing = editingFundingSourceId === source.id;
 
-                        return (
-                          <tr key={source.id}>
-                            <td className="text-left font-semibold">
-                              {source.name}
-                            </td>
-                            <td className="text-center capitalize">
-                              {source.type.replace("_", " ")}
-                            </td>
-                            <td className="text-right">
-                              ${Number(source.current_balance || 0).toFixed(2)}
-                            </td>
-                            <td className="text-right">
-                              {source.credit_limit === null
-                                ? "—"
-                                : `$${Number(source.credit_limit || 0).toFixed(
-                                    2
-                                  )}`}
-                            </td>
-                            <td className="text-right">
-                              {source.available_credit === null
-                                ? "—"
-                                : `$${Number(
-                                    source.available_credit || 0
-                                  ).toFixed(2)}`}
-                            </td>
-                            <td
-                              className={`text-right font-semibold ${
-                                utilization === null
-                                  ? "text-[#c7cfdb]"
-                                  : utilization > 90
-                                  ? "text-red-300"
-                                  : utilization > 70
-                                  ? "text-yellow-300"
-                                  : "text-green-300"
-                              }`}
-                            >
-                              {utilization === null
-                                ? "—"
-                                : `${utilization.toFixed(1)}%`}
-                            </td>
-                            <td className="text-right">
-                              {Number(source.interest_rate || 0).toFixed(2)}%
-                            </td>
-                            <td className="text-center">
-                              <button
-                                onClick={() => deleteFundingSource(source.id)}
-                                className="beast-button-secondary"
-                              >
-                                Remove
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
+      return (
+        <tr key={source.id}>
+          <td className="text-left font-semibold">
+            {isEditing ? (
+              <input
+                value={editingFundingSource.name}
+                onChange={(e) =>
+                  setEditingFundingSource({
+                    ...editingFundingSource,
+                    name: e.target.value,
+                  })
+                }
+                className="beast-input"
+              />
+            ) : (
+              source.name
+            )}
+          </td>
+
+          <td className="text-center capitalize">
+            {isEditing ? (
+              <select
+                value={editingFundingSource.type}
+                onChange={(e) =>
+                  setEditingFundingSource({
+                    ...editingFundingSource,
+                    type: e.target.value,
+                  })
+                }
+                className="beast-input"
+              >
+                <option value="checking">Checking</option>
+                <option value="savings">Savings</option>
+                <option value="credit_card">Credit Card</option>
+                <option value="heloc">HELOC</option>
+                <option value="ploc">PLOC</option>
+                <option value="cash">Cash</option>
+              </select>
+            ) : (
+              source.type.replace("_", " ")
+            )}
+          </td>
+
+          <td className="text-right">
+            {isEditing ? (
+              <input
+                type="number"
+                value={editingFundingSource.current_balance}
+                onChange={(e) =>
+                  setEditingFundingSource({
+                    ...editingFundingSource,
+                    current_balance: e.target.value,
+                  })
+                }
+                className="beast-input text-right"
+              />
+            ) : (
+              `$${Number(source.current_balance || 0).toFixed(2)}`
+            )}
+          </td>
+
+          <td className="text-right">
+            {isEditing ? (
+              <input
+                type="number"
+                value={editingFundingSource.credit_limit}
+                onChange={(e) =>
+                  setEditingFundingSource({
+                    ...editingFundingSource,
+                    credit_limit: e.target.value,
+                  })
+                }
+                className="beast-input text-right"
+              />
+            ) : source.credit_limit === null ? (
+              "—"
+            ) : (
+              `$${Number(source.credit_limit || 0).toFixed(2)}`
+            )}
+          </td>
+
+          <td className="text-right">
+            {isEditing ? (
+              <input
+                type="number"
+                value={editingFundingSource.available_credit}
+                onChange={(e) =>
+                  setEditingFundingSource({
+                    ...editingFundingSource,
+                    available_credit: e.target.value,
+                  })
+                }
+                className="beast-input text-right"
+              />
+            ) : source.available_credit === null ? (
+              "—"
+            ) : (
+              `$${Number(source.available_credit || 0).toFixed(2)}`
+            )}
+          </td>
+
+          <td
+            className={`text-right font-semibold ${
+              utilization === null
+                ? "text-[#c7cfdb]"
+                : utilization > 90
+                ? "text-red-300"
+                : utilization > 70
+                ? "text-yellow-300"
+                : "text-green-300"
+            }`}
+          >
+            {utilization === null ? "—" : `${utilization.toFixed(1)}%`}
+          </td>
+
+          <td className="text-right">
+            {isEditing ? (
+              <input
+                type="number"
+                value={editingFundingSource.interest_rate}
+                onChange={(e) =>
+                  setEditingFundingSource({
+                    ...editingFundingSource,
+                    interest_rate: e.target.value,
+                  })
+                }
+                className="beast-input text-right"
+              />
+            ) : (
+              `${Number(source.interest_rate || 0).toFixed(2)}%`
+            )}
+          </td>
+
+          <td className="text-center">
+            {isEditing ? (
+              <div className="flex justify-center gap-2">
+                <button
+                  onClick={() => updateFundingSource(source.id)}
+                  className="beast-button"
+                >
+                  Save
+                </button>
+                <button
+                  onClick={cancelEditFundingSource}
+                  className="beast-button-secondary"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <div className="flex justify-center gap-2">
+                <button
+                  onClick={() => startEditFundingSource(source)}
+                  className="beast-button-secondary"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => deleteFundingSource(source.id)}
+                  className="beast-button-secondary"
+                >
+                  Remove
+                </button>
+              </div>
+            )}
+          </td>
+        </tr>
+      );
+    })
+  )}
+</tbody>
                 </table>
               </div>
             </div>
