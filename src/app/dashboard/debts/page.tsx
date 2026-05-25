@@ -639,7 +639,7 @@ const [editDueDate, setEditDueDate] = useState("");
           </div>
 
           <div className="beast-table-wrap">
-            <table className="w-full min-w-[850px] text-sm">
+            <table className="w-full min-w-[760px] text-sm">
               <thead>
                 <tr>
                   <th>Priority</th>
@@ -799,7 +799,7 @@ const [editDueDate, setEditDueDate] = useState("");
 
           {showArchivedDebts && (
             <div className="beast-table-wrap">
-              <table className="w-full min-w-[850px] text-sm">
+              <table className="w-full min-w-[760px] text-sm">
                 <thead>
                   <tr>
                     <th>Name</th>
@@ -978,7 +978,7 @@ const [editDueDate, setEditDueDate] = useState("");
 </div>
 
           <div className="beast-table-wrap">
-            <table className="w-full min-w-[1450px] text-sm">
+            <table className="w-full min-w-[1100px] text-sm">
               <thead>
                 <tr>
                   <th>Month</th>

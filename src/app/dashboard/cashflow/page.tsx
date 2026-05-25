@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   buildCashTimeline,
   simulateCashFlow,
@@ -124,6 +124,18 @@ function getNextDueDate(dueDay: number, frequency = "monthly") {
   }
 
   return dueDate;
+}
+
+function getDebtCycleDueDate(dueDay: number) {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = today.getMonth();
+  const safeDueDay = Math.min(
+    Math.max(Number(dueDay || 1), 1),
+    new Date(year, month + 1, 0).getDate()
+  );
+
+  return new Date(year, month, safeDueDay);
 }
 
 function formatShortDate(date: Date) {
@@ -292,6 +304,7 @@ export default function CashFlowPage() {
   const [bills, setBills] = useState<any[]>([]);
   const [debts, setDebts] = useState<any[]>([]);
   const [billPayments, setBillPayments] = useState<any[]>([]);
+  const [debtPaymentRows, setDebtPaymentRows] = useState<any[]>([]);
   const [fundingSources, setFundingSources] = useState<FundingSource[]>([]);
 
   const [editingFundingSourceId, setEditingFundingSourceId] = useState<string | null>(null);
@@ -321,6 +334,13 @@ export default function CashFlowPage() {
   const [lookaheadDays, setLookaheadDays] = useState(30);
   const [buffer, setBuffer] = useState(500);
   const [startingBalance, setStartingBalance] = useState(500);
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">(
+    "idle"
+  );
+
+  const autosaveTimerRef = useRef<number | null>(null);
+  const saveStatusTimerRef = useRef<number | null>(null);
+  const isStartingBalanceInitialRender = useRef(true);
 
   const [strategy, setStrategy] = useState<PayoffStrategy>("snowball");
   const [extraPayment, setExtraPayment] = useState(0);
@@ -395,6 +415,17 @@ export default function CashFlowPage() {
 
     return totals;
   }, [billPayments]);
+
+  const debtPaymentsByDebtAndCycle = useMemo(() => {
+    const totals: Record<string, number> = {};
+
+    for (const payment of debtPaymentRows) {
+      const key = `${payment.debt_id}||${payment.cycle_due_date}`;
+      totals[key] = Number(totals[key] || 0) + Number(payment.amount || 0);
+    }
+
+    return totals;
+  }, [debtPaymentRows]);
 
   const billsWithPaymentStatus = useMemo(() => {
     return bills.map((bill) => {
@@ -538,7 +569,16 @@ export default function CashFlowPage() {
       const minimumPayment = Number(debt.minimum_payment || 0);
       const assignedPaycheck = debt.assigned_paycheck || "unassigned";
       const dueDay = Number(debt.due_date || 1);
-      const nextDueDate = getNextDueDate(dueDay, "monthly");
+      const currentCycleDueDate = getDebtCycleDueDate(dueDay);
+      const cycleKey = `${debt.id}||${currentCycleDueDate
+        .toISOString()
+        .slice(0, 10)}`;
+      const currentCyclePaid = Number(
+        debtPaymentsByDebtAndCycle[cycleKey] || 0
+      );
+      const nextDueDate = currentCyclePaid >= minimumPayment
+        ? addMonthsClamped(currentCycleDueDate, 1)
+        : currentCycleDueDate;
 
       return {
         ...debt,
@@ -552,7 +592,7 @@ export default function CashFlowPage() {
         is_archived: Boolean(debt.is_archived),
       };
     });
-  }, [debts]);
+  }, [debts, debtPaymentsByDebtAndCycle]);
 
   const activeDebts = useMemo(() => {
     return debtsWithAssignmentStatus.filter((debt) => !debt.is_archived);
@@ -1048,6 +1088,11 @@ export default function CashFlowPage() {
       .eq("user_id", userId)
       .eq("cycle_month", cycleMonth);
 
+    const { data: debtPaymentRows } = await supabase
+      .from("debt_payments")
+      .select("*")
+      .eq("user_id", userId);
+
     const { data: debtRows } = await supabase
       .from("debts")
       .select("*")
@@ -1080,6 +1125,7 @@ export default function CashFlowPage() {
     const targetDebt = getTargetDebt(activeDebtRows, activeStrategy);
 
     const activePayments = paymentRows || [];
+    const activeDebtPayments = debtPaymentRows || [];
 
     const paymentTotals: Record<string, number> = {};
     for (const payment of activePayments) {
@@ -1087,6 +1133,34 @@ export default function CashFlowPage() {
         Number(paymentTotals[payment.bill_id] || 0) +
         Number(payment.amount_paid || 0);
     }
+
+    const debtPaymentTotals: Record<string, number> = {};
+    for (const payment of activeDebtPayments) {
+      const key = `${payment.debt_id}||${payment.cycle_due_date}`;
+      debtPaymentTotals[key] =
+        Number(debtPaymentTotals[key] || 0) + Number(payment.amount || 0);
+    }
+
+    const debtsForTimeline = (activeDebtRows || []).map((debt) => {
+      const minimumPayment = Number(debt.minimum_payment || 0);
+      const dueDay = Number(debt.due_date || 1);
+      const currentCycleDueDate = getDebtCycleDueDate(dueDay);
+      const cycleKey = `${debt.id}||${currentCycleDueDate
+        .toISOString()
+        .slice(0, 10)}`;
+      const isCurrentCyclePaid =
+        Number(debtPaymentTotals[cycleKey] || 0) >= minimumPayment;
+
+      return {
+        ...debt,
+        minimum_payment: minimumPayment,
+        due_date: Number(debt.due_date || 1),
+        frequency: "monthly",
+        nextDueDateOverride: isCurrentCyclePaid
+          ? addMonthsClamped(currentCycleDueDate, 1)
+          : currentCycleDueDate,
+      };
+    });
 
     const billsForTimeline = (billRows || [])
       .filter((bill) => !Boolean(bill.is_archived))
@@ -1123,7 +1197,7 @@ export default function CashFlowPage() {
     const builtTimeline = buildCashTimeline({
       incomes: incomeRows || [],
       bills: combinedBills,
-      debts: activeDebtRows,
+      debts: debtsForTimeline,
       startDate: new Date(),
       days: activeLookahead,
     });
@@ -1137,6 +1211,7 @@ export default function CashFlowPage() {
     setIncomes(incomeRows || []);
     setBills(billRows || []);
     setBillPayments(activePayments);
+    setDebtPaymentRows(activeDebtPayments);
     setDebts(debtRows || []);
     setTimeline(builtTimeline);
     setData(simulated);
@@ -1171,7 +1246,7 @@ export default function CashFlowPage() {
     setData(simulated);
   }
 
-  async function saveSettings() {
+  const saveSettings = useCallback(async () => {
     const supabase = createClient();
     const userId = await getUserId();
 
@@ -1185,7 +1260,37 @@ export default function CashFlowPage() {
     });
 
     await load();
-  }
+  }, [buffer, getUserId, lookaheadDays, load, startingBalance]);
+
+  useEffect(() => {
+    if (isStartingBalanceInitialRender.current) {
+      isStartingBalanceInitialRender.current = false;
+      return;
+    }
+
+    setSaveStatus("saving");
+    if (autosaveTimerRef.current) {
+      window.clearTimeout(autosaveTimerRef.current);
+    }
+
+    autosaveTimerRef.current = window.setTimeout(async () => {
+      await saveSettings();
+      setSaveStatus("saved");
+
+      if (saveStatusTimerRef.current) {
+        window.clearTimeout(saveStatusTimerRef.current);
+      }
+      saveStatusTimerRef.current = window.setTimeout(() => {
+        setSaveStatus("idle");
+      }, 2000);
+    }, 600);
+
+    return () => {
+      if (autosaveTimerRef.current) {
+        window.clearTimeout(autosaveTimerRef.current);
+      }
+    };
+  }, [startingBalance, saveSettings]);
 
   async function addIncome() {
     const supabase = createClient();
@@ -1442,6 +1547,21 @@ export default function CashFlowPage() {
 
     const currentBalance = Number(debt.balance || 0);
     const newBalance = Math.max(currentBalance - amount, 0);
+    const userId = await getUserId();
+
+    if (!userId) return;
+
+    const cycleDueDate = getDebtCycleDueDate(Number(debt.due_date || 1))
+      .toISOString()
+      .slice(0, 10);
+
+    await supabase.from("debt_payments").insert({
+      user_id: userId,
+      debt_id: debt.id,
+      amount,
+      payment_date: new Date().toISOString().slice(0, 10),
+      cycle_due_date: cycleDueDate,
+    });
 
     await supabase
       .from("debts")
@@ -1569,6 +1689,13 @@ export default function CashFlowPage() {
               }}
               className="beast-input mt-3"
             />
+            <div className="mt-2 text-xs text-slate-400">
+              {saveStatus === "saving"
+                ? "Saving..."
+                : saveStatus === "saved"
+                ? "Saved"
+                : ""}
+            </div>
           </div>
 
           <div className="beast-card">
@@ -1846,7 +1973,7 @@ export default function CashFlowPage() {
           </div>
 
           <div className="beast-table-wrap">
-            <table className="w-full min-w-[900px] text-sm">
+            <table className="w-full min-w-[760px] text-sm">
               <thead>
                 <tr>
                   <th className="text-left">Bill</th>
@@ -2235,7 +2362,7 @@ export default function CashFlowPage() {
               </button>
 
               <div className="beast-table-wrap">
-                <table className="w-full min-w-[900px] text-sm">
+                <table className="w-full min-w-[840px] text-sm">
                   <thead>
                     <tr>
                       <th className="text-left">Name</th>
@@ -2717,7 +2844,7 @@ export default function CashFlowPage() {
 
           {showCashTimeline && (
             <div className="beast-table-wrap">
-              <table className="w-full min-w-[900px] text-sm">
+              <table className="w-full min-w-[760px] text-sm">
                 <thead>
                   <tr>
                     <th>Date</th>
@@ -2792,7 +2919,7 @@ export default function CashFlowPage() {
 
           {showBills && (
             <div className="beast-table-wrap">
-              <table className="w-full min-w-[980px] text-sm">
+              <table className="w-full min-w-[900px] text-sm">
                 <thead>
                   <tr>
                     <th className="text-left">Bill</th>
@@ -3040,7 +3167,7 @@ export default function CashFlowPage() {
 
           {showDebts && (
             <div className="beast-table-wrap">
-              <table className="w-full min-w-[980px] text-sm">
+              <table className="w-full min-w-[900px] text-sm">
                 <thead>
                   <tr>
                     <th className="text-left">Debt</th>
@@ -3282,7 +3409,7 @@ export default function CashFlowPage() {
 
           {showIncomeEvents && (
             <div className="beast-table-wrap">
-              <table className="w-full min-w-[850px] text-sm">
+              <table className="w-full min-w-[700px] text-sm">
                 <thead>
                   <tr>
                     <th className="text-left">Name</th>
@@ -3430,7 +3557,7 @@ export default function CashFlowPage() {
 
           {showArchivedBills && (
             <div className="beast-table-wrap">
-              <table className="w-full min-w-[900px] text-sm">
+              <table className="w-full min-w-[760px] text-sm">
                 <thead>
                   <tr>
                     <th className="text-left">Name</th>
@@ -3499,7 +3626,7 @@ export default function CashFlowPage() {
 
           {showArchivedDebts && (
             <div className="beast-table-wrap">
-              <table className="w-full min-w-[900px] text-sm">
+              <table className="w-full min-w-[820px] text-sm">
                 <thead>
                   <tr>
                     <th className="text-left">Debt</th>

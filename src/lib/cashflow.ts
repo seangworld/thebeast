@@ -130,10 +130,9 @@ export function buildCashTimeline({
     const minimumPayment = Number(debt.minimum_payment || 0);
     if (minimumPayment <= 0) return;
 
-    let current = getFirstDueDateFromDay(
-      startOnly,
-      Number(debt.due_date || 1)
-    );
+    let current = debt.nextDueDateOverride
+      ? new Date(debt.nextDueDateOverride)
+      : getFirstDueDateFromDay(startOnly, Number(debt.due_date || 1));
     let safety = 0;
 
     while (current <= endDate && safety < 480) {
