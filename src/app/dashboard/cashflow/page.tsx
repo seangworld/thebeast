@@ -685,6 +685,10 @@ export default function CashFlowPage() {
     return Math.max(0, safeToSpend);
   }, [nextPaycheckAmount, nextPaycheckDate, safeToSpend]);
 
+  const recommendedTargetDebt = useMemo(() => {
+    return getTargetDebt(activeDebts, strategy);
+  }, [activeDebts, strategy]);
+
   const planningWindowEnd = useMemo(() => {
     const today = new Date();
     const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
@@ -1789,6 +1793,24 @@ export default function CashFlowPage() {
                 ? "Based on current paycheck input, upcoming bills, debt minimums, and your checking buffer."
                 : "A Suggested Monthly Debt Attack requires paycheck, bill, and debt minimum details."}
             </p>
+          </div>
+
+          <div className="flex flex-col gap-2 rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
+            <div className="text-sm text-[#c7cfdb]">Recommended Target</div>
+            {recommendedTargetDebt ? (
+              <div className="flex flex-col gap-1">
+                <div className="text-base font-semibold text-white">
+                  {recommendedTargetDebt.name}
+                </div>
+                <div className="text-xs text-[#7f8da3]">
+                  Based on: {strategy === "avalanche" ? "Avalanche strategy" : "Snowball strategy"}
+                </div>
+              </div>
+            ) : (
+              <div className="text-sm text-[#7f8da3]">
+                No active debt target available.
+              </div>
+            )}
           </div>
 
           <div className="flex flex-col gap-2 items-start">
