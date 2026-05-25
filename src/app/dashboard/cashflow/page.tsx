@@ -1782,16 +1782,17 @@ export default function CashFlowPage() {
             <div className="text-3xl font-bold">
               {suggestedMonthlyDebtAttack !== null
                 ? `$${suggestedMonthlyDebtAttack.toFixed(2)}`
-                : "Enter paycheck details to calculate"}
+                : "Enter paycheck, bills, and debt minimums to calculate"}
             </div>
             <p className="text-sm text-[#7f8da3]">
-              Based on current paycheck input, upcoming bills, debt minimums,
-              and your checking buffer.
+              {suggestedMonthlyDebtAttack !== null
+                ? "Based on current paycheck input, upcoming bills, debt minimums, and your checking buffer."
+                : "A Suggested Monthly Debt Attack requires paycheck, bill, and debt minimum details."}
             </p>
           </div>
 
-          <div className="grid gap-2 sm:grid-cols-[1fr_auto] items-end">
-            <button className="beast-button disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+          <div className="flex flex-col gap-2 items-start">
+            <button className="beast-button w-fit disabled:opacity-50 disabled:cursor-not-allowed" disabled>
               Apply Suggested Attack
             </button>
             <div className="text-xs text-[#7f8da3]">
