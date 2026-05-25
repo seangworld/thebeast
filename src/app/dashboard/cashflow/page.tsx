@@ -341,6 +341,9 @@ export default function CashFlowPage() {
   const autosaveTimerRef = useRef<number | null>(null);
   const saveStatusTimerRef = useRef<number | null>(null);
   const isStartingBalanceInitialRender = useRef(true);
+  const pendingSaveRef = useRef(false);
+  const isStartingBalanceFocusedRef = useRef(false);
+  const AUTOSAVE_DEBOUNCE_MS = 1700;
 
   const [strategy, setStrategy] = useState<PayoffStrategy>("snowball");
   const [extraPayment, setExtraPayment] = useState(0);
@@ -1274,6 +1277,13 @@ export default function CashFlowPage() {
     }
 
     autosaveTimerRef.current = window.setTimeout(async () => {
+      // If the input is currently focused, defer saving until blur
+      if (isStartingBalanceFocusedRef.current) {
+        pendingSaveRef.current = true;
+        setSaveStatus("idle");
+        return;
+      }
+
       await saveSettings();
       setSaveStatus("saved");
 
@@ -1283,7 +1293,7 @@ export default function CashFlowPage() {
       saveStatusTimerRef.current = window.setTimeout(() => {
         setSaveStatus("idle");
       }, 2000);
-    }, 600);
+    }, AUTOSAVE_DEBOUNCE_MS);
 
     return () => {
       if (autosaveTimerRef.current) {
@@ -1291,6 +1301,24 @@ export default function CashFlowPage() {
       }
     };
   }, [startingBalance, saveSettings]);
+
+  async function handleStartingBalanceBlur() {
+    isStartingBalanceFocusedRef.current = false;
+
+    if (!pendingSaveRef.current) return;
+
+    pendingSaveRef.current = false;
+    setSaveStatus("saving");
+    await saveSettings();
+    setSaveStatus("saved");
+
+    if (saveStatusTimerRef.current) {
+      window.clearTimeout(saveStatusTimerRef.current);
+    }
+    saveStatusTimerRef.current = window.setTimeout(() => {
+      setSaveStatus("idle");
+    }, 2000);
+  }
 
   async function addIncome() {
     const supabase = createClient();
@@ -1682,6 +1710,12 @@ export default function CashFlowPage() {
             <input
               type="number"
               value={startingBalance}
+              onFocus={() => {
+                isStartingBalanceFocusedRef.current = true;
+              }}
+              onBlur={() => {
+                handleStartingBalanceBlur();
+              }}
               onChange={(e) => {
                 const val = Number(e.target.value);
                 setStartingBalance(val);
