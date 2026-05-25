@@ -680,6 +680,11 @@ export default function CashFlowPage() {
 
   const safeToSpend = projectedAfterObligations - Number(buffer || 0);
 
+  const suggestedMonthlyDebtAttack = useMemo(() => {
+    if (!nextPaycheckAmount || !nextPaycheckDate) return null;
+    return Math.max(0, safeToSpend);
+  }, [nextPaycheckAmount, nextPaycheckDate, safeToSpend]);
+
   const planningWindowEnd = useMemo(() => {
     const today = new Date();
     const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
@@ -1769,6 +1774,39 @@ export default function CashFlowPage() {
           </div>
         </section>
 
+        <section className="beast-card space-y-4">
+          <div className="flex flex-col gap-2">
+            <div className="text-sm text-[#c7cfdb]">
+              Suggested Monthly Debt Attack
+            </div>
+            <div className="text-3xl font-bold">
+              {suggestedMonthlyDebtAttack !== null
+                ? `$${suggestedMonthlyDebtAttack.toFixed(2)}`
+                : "Enter paycheck details to calculate"}
+            </div>
+            <p className="text-sm text-[#7f8da3]">
+              Based on current paycheck input, upcoming bills, debt minimums,
+              and your checking buffer.
+            </p>
+          </div>
+
+          <div className="grid gap-2 sm:grid-cols-[1fr_auto] items-end">
+            <button className="beast-button disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+              Apply Suggested Attack
+            </button>
+            <div className="text-xs text-[#7f8da3]">
+              Target selection coming soon.
+            </div>
+          </div>
+
+          <p className="text-xs text-slate-500">
+            The Beast does not connect to or transact with your financial
+            institutions. Applying payments, marking bills paid, or updating
+            balances inside The Beast does not move real money. Always verify and
+            complete transactions through your actual bank, lender, or payment
+            provider.
+          </p>
+        </section>
 
         <section className="space-y-2">
           <p className="beast-kicker">Command Zone</p>
