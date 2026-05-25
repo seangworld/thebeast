@@ -62,6 +62,12 @@ export function simulatePayoffPlan({
     interest_rate: Number(debt.interest_rate || 0),
   }));
 
+  // TODO: Currently `minimum_payment` is treated as a static per-debt value
+  // and applied every simulation cycle. In future we may want to support
+  // dynamic per-cycle minimums (e.g., varying due dates, promotional periods,
+  // or minimums calculated from account state). Any such change should
+  // preserve the current recovered-minimums and attack-pool logic.
+
   const baseMonthlyPayment = money(
     workingDebts.reduce((sum, debt) => sum + debt.minimum_payment, 0) +
       Number(extraPayment || 0)

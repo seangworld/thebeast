@@ -34,6 +34,10 @@ export function buildPayoffPlan(debts, strategy = "minimum", extraMonthlyPayment
     }))
     .filter((debt) => debt.balance > 0)
 
+  // TODO: `minimum_payment` is currently read as a static field per debt.
+  // Consider supporting dynamic, per-cycle minimums in the future
+  // (e.g., promotional rates or variable minimum calculations).
+
   const plan = []
   let month = 1
   let recoveredMinimums = 0

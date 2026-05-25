@@ -333,6 +333,10 @@ export default function CashFlowPage() {
 
   const [lookaheadDays, setLookaheadDays] = useState(30);
   const [buffer, setBuffer] = useState(500);
+  // TODO: `startingBalance` comes from `cash_settings.starting_balance` and
+  // may overlap with `funding_sources` entries of type 'checking' (their
+  // `current_balance`). Consider consolidating the single source-of-truth
+  // for displayed checking balance in a future cleanup.
   const [startingBalance, setStartingBalance] = useState(500);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">(
     "idle"
@@ -1723,7 +1727,7 @@ export default function CashFlowPage() {
               }}
               className="beast-input mt-3"
             />
-            <div className="mt-2 text-xs text-slate-400">
+            <div className="mt-2 text-xs text-slate-400 whitespace-nowrap">
               {saveStatus === "saving"
                 ? "Saving..."
                 : saveStatus === "saved"
