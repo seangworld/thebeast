@@ -500,6 +500,10 @@ export default function CashFlowPage() {
     return buildIncomeBuckets(incomes, Number(lookaheadDays || 30));
   }, [incomes, lookaheadDays]);
 
+  const firstIncomeBucket = useMemo(() => {
+    return incomeBuckets.length > 0 ? incomeBuckets[0] : null;
+  }, [incomeBuckets]);
+
   function getIncomeBucketLabel(value: string) {
     if (!value) return "Unassigned";
 
@@ -553,8 +557,14 @@ export default function CashFlowPage() {
     creditLimitTotal > 0 ? (creditUsedTotal / creditLimitTotal) * 100 : 0;
 
   const nextPayDate = useMemo(() => {
-    return nextPaycheckDate ? new Date(nextPaycheckDate) : null;
-  }, [nextPaycheckDate]);
+    if (nextPaycheckDate) {
+      return new Date(nextPaycheckDate);
+    }
+    if (firstIncomeBucket?.date) {
+      return new Date(firstIncomeBucket.date);
+    }
+    return null;
+  }, [nextPaycheckDate, firstIncomeBucket]);
 
   const upcomingBillsTotal = useMemo(() => {
     if (!nextPayDate) return 0;
@@ -674,19 +684,25 @@ export default function CashFlowPage() {
       .reduce((sum, debt) => sum + Number(debt.minimum_payment || 0), 0);
   }, [activeDebts, nextPayDate]);
 
+  const effectiveNextPaycheckAmount = useMemo(() => {
+    if (nextPaycheckAmount) return Number(nextPaycheckAmount);
+    if (firstIncomeBucket?.amount) return Number(firstIncomeBucket.amount);
+    return 0;
+  }, [nextPaycheckAmount, firstIncomeBucket]);
+
   const requiredBeforePaycheck = upcomingBillsTotal + upcomingDebtMinimums;
 
   const projectedAfterObligations =
     Number(startingBalance || 0) +
-    Number(nextPaycheckAmount || 0) -
+    effectiveNextPaycheckAmount -
     requiredBeforePaycheck;
 
   const safeToSpend = projectedAfterObligations - Number(buffer || 0);
 
   const suggestedMonthlyDebtAttack = useMemo(() => {
-    if (!nextPaycheckAmount || !nextPaycheckDate) return null;
+    if (!nextPayDate || effectiveNextPaycheckAmount <= 0) return null;
     return Math.max(0, safeToSpend);
-  }, [nextPaycheckAmount, nextPaycheckDate, safeToSpend]);
+  }, [nextPayDate, effectiveNextPaycheckAmount, safeToSpend]);
 
   const recommendedTargetDebt = useMemo(() => {
     return getTargetDebt(activeDebts, strategy);
@@ -1821,12 +1837,16 @@ export default function CashFlowPage() {
             <div className="text-3xl font-bold">
               {suggestedMonthlyDebtAttack !== null
                 ? `$${suggestedMonthlyDebtAttack.toFixed(2)}`
-                : "Enter paycheck, bills, and debt minimums to calculate"}
+                : incomes.length === 0 && !nextPaycheckAmount
+                ? "Add income entries or enter paycheck details"
+                : "Enter starting balance and buffer to calculate"}
             </div>
             <p className="text-sm text-[#7f8da3]">
               {suggestedMonthlyDebtAttack !== null
                 ? "Based on current paycheck input, upcoming bills, debt minimums, and your checking buffer."
-                : "A Suggested Monthly Debt Attack requires paycheck, bill, and debt minimum details."}
+                : incomes.length === 0 && !nextPaycheckAmount
+                ? "Set up recurring income in the Income section or enter next paycheck manually."
+                : "Configure your starting checking balance and buffer in settings."}
             </p>
           </div>
 
