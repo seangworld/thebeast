@@ -12,6 +12,16 @@ body {
   font-family: system-ui, -apple-system, sans-serif;
 }
 
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+* {
+  box-sizing: border-box;
+}
+
 .beast-page {
   min-height: 100vh;
   background: #11151c;
@@ -23,6 +33,7 @@ body {
   width: 100%;
   max-width: 1600px;
   margin: 0 auto;
+  min-width: 0;
 }
 
 /* =========================
@@ -34,6 +45,7 @@ body {
   border: 1px solid #2a3242;
   border-radius: 16px;
   padding: 24px;
+  min-width: 0;
 }
 
 .beast-kicker {
@@ -66,6 +78,7 @@ body {
   background: #1a1f2b;
   border-radius: 16px;
   border: 1px solid #2a3242;
+  min-width: 0;
 }
 
 .beast-card {
@@ -73,6 +86,8 @@ body {
   border-radius: 14px;
   padding: 16px;
   border: 1px solid #2a3242;
+  min-width: 0;
+  overflow-wrap: anywhere;
   transition: border-color 0.15s ease, transform 0.15s ease, opacity 0.15s ease;
 }
 
@@ -88,6 +103,7 @@ a.beast-card:hover {
 
 .beast-input {
   width: 100%;
+  min-width: 0;
   background: #11151c;
   border: 1px solid #2a3242;
   border-radius: 8px;
@@ -145,13 +161,19 @@ a.beast-card:hover {
 ========================= */
 
 .beast-table-wrap {
+  width: 100%;
+  max-width: 100%;
   max-height: 70vh;
-  overflow: auto;
+  overflow-x: auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-inline: contain;
 }
 
 .beast-panel table,
 .beast-card table {
-  width: 100%;
+  width: max-content;
+  min-width: 100%;
   border-collapse: collapse;
 }
 
@@ -204,15 +226,38 @@ a.beast-card:hover {
 
 @media (max-width: 640px) {
   .beast-page {
-    padding: 20px 12px;
+    padding: 16px 12px;
+  }
+
+  .beast-page-header,
+  .beast-card {
+    padding: 14px;
+  }
+
+  .beast-panel {
+    border-radius: 14px;
   }
 
   .beast-title {
-    font-size: 1.6rem;
+    font-size: 1.55rem;
+  }
+
+  .beast-subtitle {
+    font-size: 0.9rem;
   }
 
   .beast-button,
   .beast-button-secondary {
     width: 100%;
+    min-height: 44px;
+    white-space: normal;
+    text-align: center;
+  }
+
+  .beast-panel th,
+  .beast-card th,
+  .beast-panel td,
+  .beast-card td {
+    padding: 9px;
   }
 }

@@ -2076,7 +2076,7 @@ export default function CashFlowPage() {
 
 
         <section className="beast-panel overflow-hidden">
-          <div className="flex items-center justify-between gap-4 border-b border-[#2a3242] p-5">
+          <div className="flex flex-col items-start gap-4 border-b border-[#2a3242] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
             <div>
               <h2 className="text-xl font-bold">Funding Sources</h2>
               <p className="mt-1 text-sm text-[#7f8da3]">
@@ -2575,7 +2575,7 @@ export default function CashFlowPage() {
 
         <section className="grid gap-4 md:grid-cols-2">
           <div className="beast-card">
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="text-xl font-bold">Add Income</h2>
                 <p className="mt-1 text-sm text-[#7f8da3]">
@@ -2633,7 +2633,7 @@ export default function CashFlowPage() {
           </div>
 
           <div className="beast-card">
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="text-xl font-bold">Add Bill</h2>
                 <p className="mt-1 text-sm text-[#7f8da3]">
@@ -2699,7 +2699,7 @@ export default function CashFlowPage() {
         </section>
 
         <section className="beast-panel overflow-hidden">
-          <div className="flex items-center justify-between gap-4 border-b border-[#2a3242] p-5">
+          <div className="flex flex-col items-start gap-4 border-b border-[#2a3242] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
             <div>
               <h2 className="text-xl font-bold">Cash Timeline</h2>
               <p className="mt-1 text-sm text-[#7f8da3]">
@@ -2773,7 +2773,7 @@ export default function CashFlowPage() {
         </section>
 
         <section className="beast-panel overflow-hidden">
-          <div className="flex items-center justify-between gap-4 border-b border-[#2a3242] p-5">
+          <div className="flex flex-col items-start gap-4 border-b border-[#2a3242] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
             <div>
               <h2 className="text-xl font-bold">Bills</h2>
               <p className="mt-1 text-sm text-[#7f8da3]">
@@ -3020,7 +3020,7 @@ export default function CashFlowPage() {
         </section>
 
         <section className="beast-panel overflow-hidden">
-          <div className="flex items-center justify-between gap-4 border-b border-[#2a3242] p-5">
+          <div className="flex flex-col items-start gap-4 border-b border-[#2a3242] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
             <div>
               <h2 className="text-xl font-bold">Debts</h2>
               <p className="mt-1 text-sm text-[#7f8da3]">
@@ -3263,7 +3263,7 @@ export default function CashFlowPage() {
         </section>
 
         <section className="beast-panel overflow-hidden">
-          <div className="flex items-center justify-between gap-4 border-b border-[#2a3242] p-5">
+          <div className="flex flex-col items-start gap-4 border-b border-[#2a3242] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
             <div>
               <h2 className="text-xl font-bold">Income Sources / Schedule</h2>
               <p className="mt-1 text-sm text-[#7f8da3]">
@@ -3412,7 +3412,7 @@ export default function CashFlowPage() {
 
 
         <section className="beast-panel overflow-hidden">
-          <div className="flex items-center justify-between gap-4 border-b border-[#2a3242] p-5">
+          <div className="flex flex-col items-start gap-4 border-b border-[#2a3242] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
             <div>
               <h2 className="text-xl font-bold">Archived Bills</h2>
               <p className="mt-1 text-sm text-[#7f8da3]">
@@ -3481,7 +3481,7 @@ export default function CashFlowPage() {
         </section>
 
         <section className="beast-panel overflow-hidden">
-          <div className="flex items-center justify-between gap-4 border-b border-[#2a3242] p-5">
+          <div className="flex flex-col items-start gap-4 border-b border-[#2a3242] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
             <div>
               <h2 className="text-xl font-bold">Archived Debts</h2>
               <p className="mt-1 text-sm text-[#7f8da3]">

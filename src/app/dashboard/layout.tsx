@@ -22,20 +22,20 @@ export default function DashboardLayout({
     const active = pathname === href;
 
     return active
-      ? "rounded-lg border border-[#38bdf8] bg-[#38bdf8]/10 px-4 py-2 text-sm font-semibold text-[#38bdf8]"
-      : "rounded-lg border border-transparent px-4 py-2 text-sm font-semibold text-[#c7cfdb] transition hover:border-[#2a3242] hover:bg-[#1a1f2b]";
+      ? "shrink-0 whitespace-nowrap rounded-lg border border-[#38bdf8] bg-[#38bdf8]/10 px-3 py-2 text-sm font-semibold text-[#38bdf8] sm:px-4"
+      : "shrink-0 whitespace-nowrap rounded-lg border border-transparent px-3 py-2 text-sm font-semibold text-[#c7cfdb] transition hover:border-[#2a3242] hover:bg-[#1a1f2b] sm:px-4";
   }
 
   return (
     <div className="min-h-screen bg-[#11151c] text-white">
       <header className="sticky top-0 z-50 border-b border-[#2a3242] bg-[#11151c]/95 backdrop-blur">
-        <div className="mx-auto flex w-full max-w-[1600px] items-center justify-between gap-4 px-4 py-4">
-          <div className="flex items-center gap-6">
-          <div className="text-lg font-bold">
+        <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-3 px-3 py-3 sm:px-4 md:flex-row md:items-center md:justify-between md:gap-4 md:py-4">
+          <div className="flex min-w-0 flex-col gap-3 md:flex-row md:items-center md:gap-6">
+          <div className="shrink-0 text-lg font-bold">
   The Beast
 </div>
 
-            <nav className="flex items-center gap-2">
+            <nav className="flex max-w-full items-center gap-2 overflow-x-auto pb-1 md:pb-0">
               <Link href="/dashboard" className={navClass("/dashboard")}>
                 Dashboard
               </Link>
@@ -63,7 +63,7 @@ export default function DashboardLayout({
             </nav>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between gap-3 md:justify-end">
           <div className="hidden text-right text-sm text-[#7f8da3] md:block">
   <div>{today}</div>
   <div><a
@@ -78,13 +78,13 @@ export default function DashboardLayout({
           </div>
         </div>
       </header>
-      <div className="mx-auto w-full max-w-[1600px] px-4 pt-6">
+      <div className="mx-auto w-full max-w-[1600px] px-3 pt-4 sm:px-4 sm:pt-6">
         <Image
           src="/beast-logo-banner.png"
           alt="The Beast banner"
           width={1600}
           height={176}
-          className="h-44 w-full rounded-2xl border border-[#2a3242] object-cover object-center"
+          className="h-24 w-full rounded-xl border border-[#2a3242] object-cover object-center sm:h-36 sm:rounded-2xl lg:h-44"
         />
       </div>
 

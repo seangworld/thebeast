@@ -781,7 +781,7 @@ const [editDueDate, setEditDueDate] = useState("");
         </section>
 
         <section className="beast-panel overflow-hidden">
-          <div className="flex items-center justify-between gap-4 border-b border-[#2a3242] p-5">
+          <div className="flex flex-col items-start gap-4 border-b border-[#2a3242] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
             <div>
               <h2 className="text-xl font-bold">Paid Off / Archived Debts</h2>
               <p className="mt-1 text-sm text-[#7f8da3]">
@@ -955,7 +955,7 @@ const [editDueDate, setEditDueDate] = useState("");
         </section>
 
         <section className="beast-panel overflow-hidden">
-        <div className="border-b border-[#2a3242] p-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-4 border-b border-[#2a3242] p-4 sm:p-5 md:flex-row md:items-center md:justify-between">
   <h2 className="text-xl font-bold">Payoff Plan</h2>
 
   <div>
