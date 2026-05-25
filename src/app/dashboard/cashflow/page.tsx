@@ -396,6 +396,9 @@ export default function CashFlowPage() {
     {}
   );
 
+  const [isApplyingSuggestedAttack, setIsApplyingSuggestedAttack] = useState(false);
+  const [suggestedAttackMessage, setSuggestedAttackMessage] = useState<string | null>(null);
+
   const [showAddIncome, setShowAddIncome] = useState(false);
   const [showAddBill, setShowAddBill] = useState(false);
   const [showBills, setShowBills] = useState(true);
@@ -1619,6 +1622,38 @@ export default function CashFlowPage() {
     await load();
   }
 
+  async function applySuggestedAttack() {
+    if (isApplyingSuggestedAttack) return;
+    if (!recommendedTargetDebt) return;
+    if (suggestedMonthlyDebtAttack === null || suggestedMonthlyDebtAttack <= 0) return;
+
+    setIsApplyingSuggestedAttack(true);
+    setSuggestedAttackMessage(null);
+
+    try {
+      const targetBalance = Number(recommendedTargetDebt.balance || 0);
+      const attackAmount = Math.min(suggestedMonthlyDebtAttack, targetBalance);
+
+      if (attackAmount <= 0) {
+        setSuggestedAttackMessage("Target debt balance is already paid.");
+        setIsApplyingSuggestedAttack(false);
+        return;
+      }
+
+      await applyDebtPayment(recommendedTargetDebt, attackAmount);
+      setSuggestedAttackMessage("Suggested attack recorded.");
+
+      setTimeout(() => {
+        setSuggestedAttackMessage(null);
+      }, 3000);
+    } catch (error) {
+      console.error("Error applying suggested attack:", error);
+      setSuggestedAttackMessage("Error recording attack. Please try again.");
+    } finally {
+      setIsApplyingSuggestedAttack(false);
+    }
+  }
+
   async function deleteDebt(id: string) {
     const supabase = createClient();
     await supabase.from("debts").delete().eq("id", id);
@@ -1814,13 +1849,33 @@ export default function CashFlowPage() {
           </div>
 
           <div className="flex flex-col gap-2 items-start">
-            <button className="beast-button w-fit disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-              Apply Suggested Attack
+            <button 
+              className="beast-button w-fit disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={
+                isApplyingSuggestedAttack ||
+                suggestedMonthlyDebtAttack === null ||
+                suggestedMonthlyDebtAttack <= 0 ||
+                !recommendedTargetDebt ||
+                Number(recommendedTargetDebt.balance || 0) <= 0
+              }
+              onClick={applySuggestedAttack}
+            >
+              {isApplyingSuggestedAttack ? "Applying..." : "Apply Suggested Attack"}
             </button>
             <div className="text-xs text-[#7f8da3]">
-              Target selection coming soon.
+              This records the payment inside The Beast only. Complete the real payment through your lender.
             </div>
           </div>
+
+          {suggestedAttackMessage && (
+            <div className={`rounded-lg border p-3 text-sm ${
+              suggestedAttackMessage.includes("Error") || suggestedAttackMessage.includes("already")
+                ? "border-red-400/60 bg-red-950/30 text-red-100"
+                : "border-green-400/60 bg-green-950/30 text-green-100"
+            }`}>
+              {suggestedAttackMessage}
+            </div>
+          )}
 
           <p className="text-xs text-slate-500">
             The Beast does not connect to or transact with your financial
