@@ -161,7 +161,7 @@ export default function SettingsPage() {
 
             <div>
               <label className="text-sm text-[#c7cfdb]">
-                Extra Payment
+                Monthly Extra Attack
               </label>
               <input
                 type="number"

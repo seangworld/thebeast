@@ -534,7 +534,7 @@ const [editDueDate, setEditDueDate] = useState("");
             </div>
 
             <div>
-              <label className="text-sm text-[#c7cfdb]">Extra Payment</label>
+              <label className="text-sm text-[#c7cfdb]">Monthly Extra Attack</label>
               <input
                 type="number"
                 value={extraPayment}
@@ -546,7 +546,7 @@ const [editDueDate, setEditDueDate] = useState("");
 
             <div className="flex items-end">
               <button onClick={saveSettings} className="beast-button w-full">
-                Update Strategy / Extra Payment
+                Update Strategy / Monthly Extra Attack
               </button>
             </div>
           </div>

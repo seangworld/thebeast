@@ -1699,7 +1699,7 @@ export default function CashFlowPage() {
               <p className="beast-kicker">The Beast v1.4.6 Beta</p>
               <h1 className="beast-title">Cash Flow</h1>
               <p className="beast-subtitle">
-                Manage paychecks, bills, debt minimums, extra attack payments,
+                Manage paychecks, bills, debt minimums, Monthly Extra Attack payments,
                 required cash, and buffer risk.
               </p>
             </div>
