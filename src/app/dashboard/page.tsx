@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
@@ -21,13 +21,13 @@ export default function DashboardPage() {
     [debts]
   );
 
-  async function getUserId() {
+  const getUserId = useCallback(async () => {
     const supabase = createClient();
     const { data } = await supabase.auth.getUser();
     return data?.user?.id;
-  }
+  }, []);
 
-  async function load() {
+  const load = useCallback(async () => {
     const supabase = createClient();
     const userId = await getUserId();
     if (!userId) return;
@@ -57,15 +57,14 @@ export default function DashboardPage() {
     setIncomes(incomeRows || []);
     setBills(billRows || []);
     setExtraPayment(Number(debtSettings?.extra_payment || 0));
-  }
-
+    }, [getUserId]);
   useEffect(() => {
     load();
-  }, []);
+  }, [load]);
 
   const totalDebt = useMemo(
     () => activeDebts.reduce((sum, d) => sum + Number(d.balance || 0), 0),
-    [debts]
+    [activeDebts]
   );
 
   const totalMinimums = useMemo(
@@ -74,13 +73,13 @@ export default function DashboardPage() {
         (sum, d) => sum + Number(d.minimum_payment || 0),
         0
       ),
-    [debts]
+    [activeDebts]
   );
 
   const totalBills = useMemo(
     () =>
       activeBills.reduce((sum, b) => sum + Number(b.amount || 0), 0),
-    [bills]
+    [activeBills]
   );
 
   const monthlyOutflow = totalMinimums + totalBills + extraPayment;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
@@ -14,13 +14,13 @@ export default function SettingsPage() {
 
   const [message, setMessage] = useState("");
 
-  async function getUserId() {
+  const getUserId = useCallback(async () => {
     const supabase = createClient();
     const { data } = await supabase.auth.getUser();
     return data?.user?.id;
-  }
+  }, []);
 
-  async function load() {
+  const load = useCallback(async () => {
     const supabase = createClient();
     const userId = await getUserId();
 
@@ -48,11 +48,7 @@ export default function SettingsPage() {
         ? String(debtSettings.extra_payment)
         : ""
     );
-  }
-
-  useEffect(() => {
-    load();
-  }, []);
+  }, [getUserId]);
 
   async function saveAll() {
     const supabase = createClient();

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -35,11 +36,13 @@ export default function LoginPage() {
   return (
     <main className="beast-page flex min-h-screen items-center justify-center">
       <div className="beast-card w-full max-w-md">
-      <img
-  src="/beast-logo-square.png"
-  alt="The Beast logo"
-  className="mx-auto mb-4 h-24 w-24 rounded-2xl object-cover"
-/>
+        <Image
+          src="/beast-logo-square.png"
+          alt="The Beast logo"
+          width={96}
+          height={96}
+          className="mx-auto mb-4 h-24 w-24 rounded-2xl object-cover"
+        />
         <p className="beast-kicker">The Beast Beta</p>
         <h1 className="beast-title">Login / Signup</h1>
         <p className="beast-subtitle">

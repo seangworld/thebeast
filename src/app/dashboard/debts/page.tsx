@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
@@ -254,13 +254,13 @@ const [editDueDate, setEditDueDate] = useState("");
     0
   );
 
-  async function getUserId() {
+  const getUserId = useCallback(async () => {
     const supabase = createClient();
     const { data } = await supabase.auth.getUser();
     return data?.user?.id;
-  }
+  }, []);
 
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
 
     const supabase = createClient();
@@ -289,11 +289,10 @@ const [editDueDate, setEditDueDate] = useState("");
     );
 
     setLoading(false);
-  }
-
+    }, [getUserId]);
   useEffect(() => {
     load();
-  }, []);
+  }, [load]);
 
   async function saveSettings() {
     const supabase = createClient();

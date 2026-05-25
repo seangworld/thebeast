@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { APP_VERSION_LABEL } from "@/lib/appVersion";
@@ -78,12 +79,14 @@ export default function DashboardLayout({
         </div>
       </header>
       <div className="mx-auto w-full max-w-[1600px] px-4 pt-6">
-  <img
-    src="/beast-logo-banner.png"
-    alt="The Beast banner"
-    className="h-44 w-full rounded-2xl border border-[#2a3242] object-cover object-center"
-  />
-</div>
+        <Image
+          src="/beast-logo-banner.png"
+          alt="The Beast banner"
+          width={1600}
+          height={176}
+          className="h-44 w-full rounded-2xl border border-[#2a3242] object-cover object-center"
+        />
+      </div>
 
       {children}
     </div>
