@@ -16,3 +16,18 @@ export type FundingSource = {
   
     created_at: string
   }
+
+export type Debt = {
+    id: string
+    user_id: string
+    name: string
+    balance: number
+    minimum_payment: number
+    interest_rate: number
+    due_date?: number | null
+    is_archived?: boolean | null
+    payment_behavior?: "fixed" | "revolving"
+    minimum_payment_rate?: number | null
+    minimum_payment_floor?: number | null
+    created_at?: string
+  }

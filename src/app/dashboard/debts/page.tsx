@@ -14,6 +14,9 @@ type Debt = {
   interest_rate: number;
   due_date?: number;
   is_archived?: boolean;
+  payment_behavior?: "fixed" | "revolving";
+  minimum_payment_rate?: number;
+  minimum_payment_floor?: number;
 };
 
 function money(value: number) {
@@ -204,17 +207,23 @@ export default function DebtsPage() {
   const [minimumPayment, setMinimumPayment] = useState("");
   const [interestRate, setInterestRate] = useState("");
   const [dueDate, setDueDate] = useState("1");
+  const [paymentBehavior, setPaymentBehavior] = useState<"fixed" | "revolving">("fixed");
+  const [minimumPaymentRate, setMinimumPaymentRate] = useState("2");
+  const [minimumPaymentFloor, setMinimumPaymentFloor] = useState("25");
 
   const [message, setMessage] = useState("");
-const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
 
-const [editingDebtId, setEditingDebtId] = useState<string | null>(null);
+  const [editingDebtId, setEditingDebtId] = useState<string | null>(null);
 
-const [editName, setEditName] = useState("");
-const [editBalance, setEditBalance] = useState("");
-const [editMinimumPayment, setEditMinimumPayment] = useState("");
-const [editInterestRate, setEditInterestRate] = useState("");
-const [editDueDate, setEditDueDate] = useState("");
+  const [editName, setEditName] = useState("");
+  const [editBalance, setEditBalance] = useState("");
+  const [editMinimumPayment, setEditMinimumPayment] = useState("");
+  const [editInterestRate, setEditInterestRate] = useState("");
+  const [editDueDate, setEditDueDate] = useState("");
+  const [editPaymentBehavior, setEditPaymentBehavior] = useState<"fixed" | "revolving">("fixed");
+  const [editMinimumPaymentRate, setEditMinimumPaymentRate] = useState("2");
+  const [editMinimumPaymentFloor, setEditMinimumPaymentFloor] = useState("25");
   const [projectionMonths, setProjectionMonths] = useState(24);
   const [showArchivedDebts, setShowArchivedDebts] = useState(false);
 
@@ -352,6 +361,9 @@ const [editDueDate, setEditDueDate] = useState("");
       minimum_payment: Number(minimumPayment || 0),
       interest_rate: Number(interestRate || 0),
       due_date: Number(dueDate || 1),
+      payment_behavior: paymentBehavior,
+      minimum_payment_rate: Number(minimumPaymentRate || 2),
+      minimum_payment_floor: Number(minimumPaymentFloor || 25),
       is_archived: false,
     });
 
@@ -365,6 +377,9 @@ const [editDueDate, setEditDueDate] = useState("");
     setMinimumPayment("");
     setInterestRate("");
     setDueDate("1");
+    setPaymentBehavior("fixed");
+    setMinimumPaymentRate("2");
+    setMinimumPaymentFloor("25");
 
     await load();
   }
@@ -377,6 +392,13 @@ const [editDueDate, setEditDueDate] = useState("");
     setEditMinimumPayment(String(debt.minimum_payment || ""));
     setEditInterestRate(String(debt.interest_rate || ""));
     setEditDueDate(String(debt.due_date || 1));
+    setEditPaymentBehavior(debt.payment_behavior || "fixed");
+    setEditMinimumPaymentRate(
+      String(debt.minimum_payment_rate ?? 2)
+    );
+    setEditMinimumPaymentFloor(
+      String(debt.minimum_payment_floor ?? 25)
+    );
   }
   
   function cancelEditDebt() {
@@ -387,6 +409,9 @@ const [editDueDate, setEditDueDate] = useState("");
     setEditMinimumPayment("");
     setEditInterestRate("");
     setEditDueDate("");
+    setEditPaymentBehavior("fixed");
+    setEditMinimumPaymentRate("2");
+    setEditMinimumPaymentFloor("25");
   }
   
   async function saveEditDebt(id: string) {
@@ -400,6 +425,9 @@ const [editDueDate, setEditDueDate] = useState("");
         minimum_payment: Number(editMinimumPayment || 0),
         interest_rate: Number(editInterestRate || 0),
         due_date: Number(editDueDate || 1),
+        payment_behavior: editPaymentBehavior,
+        minimum_payment_rate: Number(editMinimumPaymentRate || 2),
+        minimum_payment_floor: Number(editMinimumPaymentFloor || 25),
       })
       .eq("id", id);
   
@@ -572,7 +600,7 @@ const [editDueDate, setEditDueDate] = useState("");
         <section className="beast-card">
           <h2 className="text-xl font-bold">Add Debt</h2>
 
-          <div className="mt-4 grid gap-4 md:grid-cols-5">
+          <div className="mt-4 grid gap-4 md:grid-cols-3">
   <div>
     <label className="text-sm text-[#c7cfdb]">
       Debt Name
@@ -643,6 +671,55 @@ const [editDueDate, setEditDueDate] = useState("");
       className="beast-input mt-2"
     />
   </div>
+
+  <div>
+    <label className="text-sm text-[#c7cfdb]">
+      Payment Behavior
+    </label>
+
+    <select
+      value={paymentBehavior}
+      onChange={(e) =>
+        setPaymentBehavior(e.target.value as "fixed" | "revolving")
+      }
+      className="beast-input mt-2"
+    >
+      <option value="fixed">Fixed Minimum</option>
+      <option value="revolving">Revolving / Credit Minimum</option>
+    </select>
+  </div>
+
+  {paymentBehavior === "revolving" ? (
+    <>
+      <div>
+        <label className="text-sm text-[#c7cfdb]">
+          Minimum % of Balance
+        </label>
+
+        <input
+          type="number"
+          value={minimumPaymentRate}
+          onChange={(e) => setMinimumPaymentRate(e.target.value)}
+          placeholder="2"
+          className="beast-input mt-2"
+        />
+      </div>
+
+      <div>
+        <label className="text-sm text-[#c7cfdb]">
+          Minimum Floor
+        </label>
+
+        <input
+          type="number"
+          value={minimumPaymentFloor}
+          onChange={(e) => setMinimumPaymentFloor(e.target.value)}
+          placeholder="25"
+          className="beast-input mt-2"
+        />
+      </div>
+    </>
+  ) : null}
 </div>
 
 <button onClick={addDebt} className="beast-button mt-4 w-full">

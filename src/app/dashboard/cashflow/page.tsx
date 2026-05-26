@@ -390,6 +390,9 @@ export default function CashFlowPage() {
   const [editDebtMinimumPayment, setEditDebtMinimumPayment] = useState("");
   const [editDebtInterestRate, setEditDebtInterestRate] = useState("");
   const [editDebtDueDate, setEditDebtDueDate] = useState("");
+  const [editDebtPaymentBehavior, setEditDebtPaymentBehavior] = useState<"fixed" | "revolving">("fixed");
+  const [editDebtMinimumPaymentRate, setEditDebtMinimumPaymentRate] = useState("2");
+  const [editDebtMinimumPaymentFloor, setEditDebtMinimumPaymentFloor] = useState("25");
 
   const [debtPayments, setDebtPayments] = useState<Record<string, string>>({});
   const [partialPayments, setPartialPayments] = useState<Record<string, string>>(
@@ -1570,6 +1573,13 @@ export default function CashFlowPage() {
     setEditDebtMinimumPayment(String(debt.minimum_payment || ""));
     setEditDebtInterestRate(String(debt.interest_rate || ""));
     setEditDebtDueDate(String(debt.due_date || 1));
+    setEditDebtPaymentBehavior(debt.payment_behavior || "fixed");
+    setEditDebtMinimumPaymentRate(
+      String(debt.minimum_payment_rate ?? 2)
+    );
+    setEditDebtMinimumPaymentFloor(
+      String(debt.minimum_payment_floor ?? 25)
+    );
   }
 
   function cancelEditDebt() {
@@ -1579,6 +1589,9 @@ export default function CashFlowPage() {
     setEditDebtMinimumPayment("");
     setEditDebtInterestRate("");
     setEditDebtDueDate("");
+    setEditDebtPaymentBehavior("fixed");
+    setEditDebtMinimumPaymentRate("2");
+    setEditDebtMinimumPaymentFloor("25");
   }
 
   async function saveDebtEdit(id: string) {
@@ -1592,6 +1605,9 @@ export default function CashFlowPage() {
         minimum_payment: Number(editDebtMinimumPayment || 0),
         interest_rate: Number(editDebtInterestRate || 0),
         due_date: Number(editDebtDueDate || 1),
+        payment_behavior: editDebtPaymentBehavior,
+        minimum_payment_rate: Number(editDebtMinimumPaymentRate || 2),
+        minimum_payment_floor: Number(editDebtMinimumPaymentFloor || 25),
       })
       .eq("id", id);
 
@@ -3394,6 +3410,21 @@ export default function CashFlowPage() {
                                   className="beast-input"
                                 />
 
+                                <select
+                                  value={editDebtPaymentBehavior}
+                                  onChange={(e) =>
+                                    setEditDebtPaymentBehavior(
+                                      e.target.value as "fixed" | "revolving"
+                                    )
+                                  }
+                                  className="beast-input"
+                                >
+                                  <option value="fixed">Fixed Minimum</option>
+                                  <option value="revolving">
+                                    Revolving / Credit Minimum
+                                  </option>
+                                </select>
+
                                 <input
                                   type="number"
                                   value={editDebtInterestRate}
@@ -3416,6 +3447,34 @@ export default function CashFlowPage() {
                                   className="beast-input"
                                 />
                               </div>
+
+                              {editDebtPaymentBehavior === "revolving" ? (
+                                <div className="grid gap-2 sm:grid-cols-2">
+                                  <input
+                                    type="number"
+                                    value={editDebtMinimumPaymentRate}
+                                    onChange={(e) =>
+                                      setEditDebtMinimumPaymentRate(
+                                        e.target.value
+                                      )
+                                    }
+                                    placeholder="Min %"
+                                    className="beast-input"
+                                  />
+
+                                  <input
+                                    type="number"
+                                    value={editDebtMinimumPaymentFloor}
+                                    onChange={(e) =>
+                                      setEditDebtMinimumPaymentFloor(
+                                        e.target.value
+                                      )
+                                    }
+                                    placeholder="Floor"
+                                    className="beast-input"
+                                  />
+                                </div>
+                              ) : null}
                             </div>
                           ) : (
                             <div>
