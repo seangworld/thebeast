@@ -38,10 +38,12 @@ function chooseTarget(debts: Debt[], strategy: PayoffStrategy) {
 
 function simulatePayoffPlan({
   debts,
+  recoveredMinimums,
   strategy,
   extraPayment,
 }: {
   debts: Debt[];
+  recoveredMinimums: number;
   strategy: PayoffStrategy;
   extraPayment: number;
 }) {
@@ -56,8 +58,12 @@ function simulatePayoffPlan({
     working.reduce((sum, d) => sum + Number(d.minimum_payment || 0), 0)
   );
 
-  const totalMonthlyPool = money(originalMinimums + Number(extraPayment || 0));
+  const totalMonthlyPool = money(
+    originalMinimums + Number(extraPayment || 0) + Number(recoveredMinimums || 0)
+  );
 
+  // Include already recovered minimums from archived or paid-off debts so
+  // their capacity is preserved in the attack pool instead of disappearing.
   const months: any[] = [];
   let totalInterest = 0;
   let totalPaid = 0;
@@ -218,6 +224,16 @@ const [editDueDate, setEditDueDate] = useState("");
     );
   }, [debts]);
 
+  // Debts that are archived or already paid off still contribute their
+  // minimum payments as recovered attack capacity instead of vanishing.
+  const recoveredMinimums = useMemo(() => {
+    return debts
+      .filter(
+        (debt) => Boolean(debt.is_archived) || Number(debt.balance || 0) <= 0
+      )
+      .reduce((sum, debt) => sum + Number(debt.minimum_payment || 0), 0);
+  }, [debts]);
+
   const archivedDebts = useMemo(() => {
     return debts.filter(
       (debt) => Boolean(debt.is_archived) || Number(debt.balance || 0) <= 0
@@ -227,10 +243,11 @@ const [editDueDate, setEditDueDate] = useState("");
   const payoffPlan = useMemo(() => {
     return simulatePayoffPlan({
       debts: activeDebts,
+      recoveredMinimums,
       strategy,
       extraPayment: Number(extraPayment || 0),
     });
-  }, [activeDebts, strategy, extraPayment]);
+  }, [activeDebts, recoveredMinimums, strategy, extraPayment]);
 
   const orderedDebts = useMemo(() => {
     if (strategy === "avalanche") {
