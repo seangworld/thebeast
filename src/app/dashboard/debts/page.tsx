@@ -39,6 +39,28 @@ function chooseTarget(debts: Debt[], strategy: PayoffStrategy) {
   )[0];
 }
 
+function getProjectedMinimumPayment(debt: Debt, balance: number): number {
+  // Helper function to calculate dynamic minimum payments.
+  // For revolving debts (credit cards), the minimum decreases as balance decreases.
+  // For fixed debts, the minimum is static.
+  
+  if (balance <= 0) {
+    return 0;
+  }
+
+  if (debt.payment_behavior === "revolving") {
+    const rate = Number(debt.minimum_payment_rate ?? 2) / 100;
+    const floor = Number(debt.minimum_payment_floor ?? 25);
+    // Calculate projected minimum as percentage of balance, with floor
+    const projectedMinimum = Math.max(balance * rate, floor);
+    // Cap at current balance
+    return Math.min(projectedMinimum, balance);
+  }
+
+  // Fixed debt: use static minimum payment capped at balance
+  return Math.min(Number(debt.minimum_payment || 0), balance);
+}
+
 function simulatePayoffPlan({
   debts,
   recoveredMinimums,
@@ -106,8 +128,11 @@ function simulatePayoffPlan({
     const activeBeforePayments = working.filter((d) => Number(d.balance) > 0);
 
     for (const d of activeBeforePayments) {
+      // Use dynamic minimum payment calculation: fixed debts stay static,
+      // revolving debts scale down as balance decreases.
+      const projectedMinimum = getProjectedMinimumPayment(d, Number(d.balance));
       const payment = Math.min(
-        Number(d.minimum_payment || 0),
+        projectedMinimum,
         Number(d.balance || 0),
         pool
       );
