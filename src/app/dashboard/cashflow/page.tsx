@@ -1426,6 +1426,7 @@ export default function CashFlowPage() {
       amount_paid: amount,
       payment_date: new Date().toISOString().slice(0, 10),
       cycle_month: cycleMonth,
+      funding_source_id: bill.funding_source_id || null,
     });
 
     setPartialPayments((prev) => ({
@@ -1644,6 +1645,7 @@ export default function CashFlowPage() {
       amount,
       payment_date: new Date().toISOString().slice(0, 10),
       cycle_due_date: cycleDueDate,
+      funding_source_id: debt.funding_source_id || null,
     });
 
     await supabase
