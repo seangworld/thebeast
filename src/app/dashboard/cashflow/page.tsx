@@ -2400,6 +2400,9 @@ export default function CashFlowPage() {
                 Accounts and liquidity sources used to fund bills, debt payments,
                 and future HELOC/PLOC planning.
               </p>
+              <p className="mt-2 text-xs text-[#5a6577]">
+                Funding Sources are accounts or credit lines money can come from. Some sources, like credit cards or HELOCs, may also appear below as debts if you owe a balance.
+              </p>
             </div>
 
             <button
@@ -3344,6 +3347,9 @@ export default function CashFlowPage() {
                 Assign each debt minimum payment to the income pot that should
                 cover it. Edit debts when APRs, balances, due days, or minimums
                 change.
+              </p>
+              <p className="mt-2 text-xs text-[#5a6577]">
+                Debts are balances you owe and plan to pay down. A debt may be linked to a funding source for tracking credit limits, available credit, or payment routing.
               </p>
             </div>
 
