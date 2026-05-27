@@ -526,10 +526,17 @@ export default function CashFlowPage() {
 
     if (creditLimit <= 0) return null;
 
+    const currentBalance = source.current_balance != null ? Number(source.current_balance) : NaN;
+
+    // Prefer current_balance for utilization because it directly reflects
+    // the outstanding amount owed on the credit line.
+    if (!Number.isNaN(currentBalance)) {
+      return Math.min(Math.max((currentBalance / creditLimit) * 100, 0), 100);
+    }
+
     const availableCredit = Number(source.available_credit || 0);
     const usedCredit = Math.max(creditLimit - availableCredit, 0);
-
-    return (usedCredit / creditLimit) * 100;
+    return Math.min(Math.max((usedCredit / creditLimit) * 100, 0), 100);
   }
 
   const activeFundingSources = useMemo(() => {
