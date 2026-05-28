@@ -67,7 +67,7 @@ export default function DashboardLayout({
           <div className="hidden text-right text-sm text-[#7f8da3] md:block">
   <div>{today}</div>
   <div><a
-  href="/dashboard/release"
+  href="/release-notes"
   className="text-xs text-[#7c8798] hover:text-white transition no-underline"
 >
   {APP_VERSION_LABEL}

@@ -566,6 +566,184 @@ export default function CashFlowPage() {
   const creditUtilizationPercent =
     creditLimitTotal > 0 ? (creditUsedTotal / creditLimitTotal) * 100 : 0;
 
+  const paymentSourceCoverage = useMemo(() => {
+    const coverage: Record<string, number> = {
+      checking: 0,
+      savings: 0,
+      credit_card: 0,
+      heloc: 0,
+      ploc: 0,
+      cash: 0,
+      unassigned: 0,
+    };
+
+    // Group billPayments by funding source type (current cycle bills only)
+    for (const payment of billPayments) {
+      if (!payment.funding_source_id) {
+        coverage.unassigned += Number(payment.amount_paid || 0);
+      } else {
+        const source = fundingSources.find((s) => s.id === payment.funding_source_id);
+        if (source && source.type in coverage) {
+          coverage[source.type] += Number(payment.amount_paid || 0);
+        } else if (source) {
+          coverage.unassigned += Number(payment.amount_paid || 0);
+        }
+      }
+    }
+
+    return coverage;
+  }, [billPayments, fundingSources]);
+
+  const fundingIntelligence = useMemo(() => {
+    const insights: Array<{ type: "warning" | "info"; message: string }> = [];
+
+    const totalCycleBills =
+      paymentSourceCoverage.checking +
+      paymentSourceCoverage.savings +
+      paymentSourceCoverage.credit_card +
+      paymentSourceCoverage.heloc +
+      paymentSourceCoverage.ploc +
+      paymentSourceCoverage.cash +
+      paymentSourceCoverage.unassigned;
+
+    if (totalCycleBills === 0) {
+      insights.push({
+        type: "info",
+        message: "No current-cycle bill payments are assigned yet.",
+      });
+      return insights;
+    }
+
+    // Check for unassigned payments
+    if (paymentSourceCoverage.unassigned > 0) {
+      insights.push({
+        type: "warning",
+        message: "Some current-cycle bills are not assigned to a funding source.",
+      });
+    }
+
+    // Calculate credit-funded vs liquid-funded
+    const creditFunded =
+      paymentSourceCoverage.credit_card +
+      paymentSourceCoverage.heloc +
+      paymentSourceCoverage.ploc;
+    const liquidFunded =
+      paymentSourceCoverage.checking +
+      paymentSourceCoverage.savings +
+      paymentSourceCoverage.cash;
+
+    if (creditFunded > liquidFunded && creditFunded > 0) {
+      insights.push({
+        type: "warning",
+        message: "This cycle relies more on credit than liquid cash.",
+      });
+    }
+
+    // Check credit utilization
+    if (creditUtilizationPercent > 50) {
+      insights.push({
+        type: "warning",
+        message:
+          "Credit utilization is elevated. Consider reducing credit-funded bills where possible.",
+      });
+    }
+
+    // Check if liquid cash can cover the cycle
+    if (liquidFundingTotal >= totalCycleBills) {
+      insights.push({
+        type: "info",
+        message: "Liquid cash can cover the current cycle.",
+      });
+    }
+
+    return insights;
+  }, [
+    paymentSourceCoverage,
+    creditUtilizationPercent,
+    liquidFundingTotal,
+  ]);
+
+  const fundingRecommendations = useMemo(() => {
+    const recommendations: Array<{ type: "primary" | "secondary"; message: string }> = [];
+
+    const totalCycleBills =
+      paymentSourceCoverage.checking +
+      paymentSourceCoverage.savings +
+      paymentSourceCoverage.credit_card +
+      paymentSourceCoverage.heloc +
+      paymentSourceCoverage.ploc +
+      paymentSourceCoverage.cash +
+      paymentSourceCoverage.unassigned;
+
+    // Rule 6: No payments
+    if (totalCycleBills === 0) {
+      recommendations.push({
+        type: "primary",
+        message: "Assign bill payments to funding sources to unlock stronger recommendations.",
+      });
+      return recommendations;
+    }
+
+    // Rule 1: Unassigned payments
+    if (paymentSourceCoverage.unassigned > 0) {
+      recommendations.push({
+        type: "primary",
+        message: "Assign funding sources to all current-cycle bills to improve forecasting accuracy.",
+      });
+    }
+
+    const creditFunded =
+      paymentSourceCoverage.credit_card +
+      paymentSourceCoverage.heloc +
+      paymentSourceCoverage.ploc;
+    const liquidFunded =
+      paymentSourceCoverage.checking +
+      paymentSourceCoverage.savings +
+      paymentSourceCoverage.cash;
+
+    // Rule 2: Liquid cash can cover
+    if (liquidFundingTotal >= totalCycleBills) {
+      recommendations.push({
+        type: "secondary",
+        message: "Liquid cash appears sufficient for this cycle. Consider using cash first to preserve credit flexibility.",
+      });
+    }
+
+    // Rule 3: Credit leans heavily
+    if (creditFunded > liquidFunded && creditFunded > 0) {
+      recommendations.push({
+        type: "primary",
+        message: "This cycle leans heavily on credit funding. Review whether any recurring bills can shift to cash.",
+      });
+    }
+
+    // Rule 4: Check for HELOC/PLOC with low utilization
+    const hasRevolvingCredit = fundingSources.some(
+      (source) => (source.type === "heloc" || source.type === "ploc") && source.is_active
+    );
+    if (hasRevolvingCredit && creditUtilizationPercent < 50) {
+      recommendations.push({
+        type: "secondary",
+        message: "Velocity may benefit from strategic revolving credit use, but only when repayment timing is clear.",
+      });
+    }
+
+    // Rule 5: High utilization
+    if (creditUtilizationPercent >= 75) {
+      recommendations.push({
+        type: "primary",
+        message: "High utilization reduces financial flexibility. Prioritize reducing revolving balances before adding more credit-funded bills.",
+      });
+    }
+
+    return recommendations;
+  }, [
+    paymentSourceCoverage,
+    creditUtilizationPercent,
+    liquidFundingTotal,
+    fundingSources,
+  ]);
+
   const nextPayDate = useMemo(() => {
     if (nextPaycheckDate) {
       return new Date(nextPaycheckDate);
@@ -2475,7 +2653,108 @@ export default function CashFlowPage() {
                 </div>
               </div>
 
-              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              <div className="mt-6 border-t border-[#2a3242] pt-6">
+                <h3 className="text-lg font-semibold mb-2">Payment Source Coverage (Current Cycle)</h3>
+                <p className="text-xs text-[#7f8da3] mb-4">Shows how current-cycle bills are being funded.</p>
+                
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
+                  <div className="beast-card">
+                    <div className="text-sm text-[#c7cfdb]">Checking Paid</div>
+                    <div className="mt-2 break-words text-2xl font-bold text-blue-300">
+                      ${paymentSourceCoverage.checking.toFixed(2)}
+                    </div>
+                  </div>
+
+                  <div className="beast-card">
+                    <div className="text-sm text-[#c7cfdb]">Savings Paid</div>
+                    <div className="mt-2 break-words text-2xl font-bold text-green-300">
+                      ${paymentSourceCoverage.savings.toFixed(2)}
+                    </div>
+                  </div>
+
+                  <div className="beast-card">
+                    <div className="text-sm text-[#c7cfdb]">Credit Cards Paid</div>
+                    <div className="mt-2 break-words text-2xl font-bold text-yellow-300">
+                      ${paymentSourceCoverage.credit_card.toFixed(2)}
+                    </div>
+                  </div>
+
+                  <div className="beast-card">
+                    <div className="text-sm text-[#c7cfdb]">HELOC Paid</div>
+                    <div className="mt-2 break-words text-2xl font-bold text-orange-300">
+                      ${paymentSourceCoverage.heloc.toFixed(2)}
+                    </div>
+                  </div>
+
+                  <div className="beast-card">
+                    <div className="text-sm text-[#c7cfdb]">Cash Paid</div>
+                    <div className="mt-2 break-words text-2xl font-bold text-gray-300">
+                      ${paymentSourceCoverage.cash.toFixed(2)}
+                    </div>
+                  </div>
+
+                  <div className="beast-card">
+                    <div className="text-sm text-[#c7cfdb]">Unassigned Paid</div>
+                    <div className="mt-2 break-words text-2xl font-bold text-[#7f8da3]">
+                      ${paymentSourceCoverage.unassigned.toFixed(2)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {fundingIntelligence.length > 0 && (
+                <div className="mt-6 border-t border-[#2a3242] pt-6">
+                  <h3 className="text-lg font-semibold mb-4">Funding Intelligence</h3>
+                  
+                  <div className="space-y-3">
+                    {fundingIntelligence.map((insight, idx) => (
+                      <div
+                        key={idx}
+                        className={`p-4 rounded border-l-4 ${
+                          insight.type === "warning"
+                            ? "bg-red-950 border-l-red-500 text-red-200"
+                            : "bg-blue-950 border-l-blue-500 text-blue-200"
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="mt-0.5 text-lg flex-shrink-0">
+                            {insight.type === "warning" ? "⚠️" : "ℹ️"}
+                          </div>
+                          <p className="text-sm leading-relaxed">{insight.message}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {fundingRecommendations.length > 0 && (
+                <div className="mt-6 border-t border-[#2a3242] pt-6">
+                  <h3 className="text-lg font-semibold mb-4">Funding Recommendations</h3>
+                  
+                  <div className="space-y-3">
+                    {fundingRecommendations.map((rec, idx) => (
+                      <div
+                        key={idx}
+                        className={`p-4 rounded border-l-4 ${
+                          rec.type === "primary"
+                            ? "bg-purple-950 border-l-purple-500 text-purple-200"
+                            : "bg-slate-900 border-l-slate-500 text-slate-200"
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="mt-0.5 text-lg flex-shrink-0">
+                            {rec.type === "primary" ? "💡" : "✨"}
+                          </div>
+                          <p className="text-sm leading-relaxed">{rec.message}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 mt-6">
                 <input
                   value={newFundingSource.name}
                   onChange={(e) =>
