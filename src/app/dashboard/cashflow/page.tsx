@@ -14,6 +14,7 @@ import PaymentSourceCoverage from "./components/PaymentSourceCoverage";
 import FundingIntelligence from "./components/FundingIntelligence";
 import FundingRecommendations from "./components/FundingRecommendations";
 import BillsSection from "./components/BillsSection";
+import DebtsSection from "./components/DebtsSection";
 
 type PayoffStrategy = "snowball" | "avalanche";
 
@@ -3467,310 +3468,42 @@ export default function CashFlowPage() {
           archiveBill={archiveBill}
         />
 
-        <section className="beast-panel overflow-hidden">
-          <div className="flex flex-col items-start gap-4 border-b border-[#2a3242] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
-            <div>
-              <h2 className="text-xl font-bold">Debts</h2>
-              <p className="mt-1 text-sm text-[#7f8da3]">
-                Assign each debt minimum payment to the income pot that should
-                cover it. Edit debts when APRs, balances, due days, or minimums
-                change.
-              </p>
-              <p className="mt-2 text-xs text-[#5a6577]">
-                Debts are balances you owe and plan to pay down. A debt may be linked to a funding source for tracking credit limits, available credit, or payment routing.
-              </p>
-            </div>
-
-            <button
-              onClick={() => setShowDebts(!showDebts)}
-              className="beast-button-secondary"
-            >
-              {showDebts ? "Hide" : `Show (${activeDebts.length})`}
-            </button>
-          </div>
-
-          {showDebts && (
-            <div className="beast-table-wrap">
-              <table className="w-full min-w-[900px] text-sm">
-                <thead>
-                  <tr>
-                    <th className="text-left">Debt</th>
-                    <th className="text-right">Minimum</th>
-                    <th className="text-center">Next Due</th>
-                    <th className="text-center">Income Pot</th>
-                    <th className="text-center">Funding Source</th>
-                    <th className="text-center">Actions</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {activeDebts.length === 0 ? (
-                    <tr>
-                      <td colSpan={6}>No debts added yet.</td>
-                    </tr>
-                  ) : (
-                    activeDebts.map((debt) => (
-                      <tr key={debt.id}>
-                        <td className="min-w-[260px] text-left align-top">
-                          {editingDebtId === debt.id ? (
-                            <div className="grid gap-2">
-                              <input
-                                value={editDebtName}
-                                onChange={(e) =>
-                                  setEditDebtName(e.target.value)
-                                }
-                                placeholder="Debt name"
-                                className="beast-input"
-                              />
-
-                              <div className="grid gap-2 sm:grid-cols-2">
-                                <input
-                                  type="number"
-                                  value={editDebtBalance}
-                                  onChange={(e) =>
-                                    setEditDebtBalance(e.target.value)
-                                  }
-                                  placeholder="Balance"
-                                  className="beast-input"
-                                />
-
-                                <input
-                                  type="number"
-                                  value={editDebtMinimumPayment}
-                                  onChange={(e) =>
-                                    setEditDebtMinimumPayment(e.target.value)
-                                  }
-                                  placeholder="Minimum"
-                                  className="beast-input"
-                                />
-
-                                <select
-                                  value={editDebtPaymentBehavior}
-                                  onChange={(e) =>
-                                    setEditDebtPaymentBehavior(
-                                      e.target.value as "fixed" | "revolving"
-                                    )
-                                  }
-                                  className="beast-input"
-                                >
-                                  <option value="fixed">Fixed Minimum</option>
-                                  <option value="revolving">
-                                    Revolving / Credit Minimum
-                                  </option>
-                                </select>
-
-                                <input
-                                  type="number"
-                                  value={editDebtInterestRate}
-                                  onChange={(e) =>
-                                    setEditDebtInterestRate(e.target.value)
-                                  }
-                                  placeholder="APR"
-                                  className="beast-input"
-                                />
-
-                                <input
-                                  type="number"
-                                  min="1"
-                                  max="31"
-                                  value={editDebtDueDate}
-                                  onChange={(e) =>
-                                    setEditDebtDueDate(e.target.value)
-                                  }
-                                  placeholder="Due day"
-                                  className="beast-input"
-                                />
-                              </div>
-
-                              {editDebtPaymentBehavior === "revolving" ? (
-                                <div className="grid gap-2 sm:grid-cols-2">
-                                  <input
-                                    type="number"
-                                    value={editDebtMinimumPaymentRate}
-                                    onChange={(e) =>
-                                      setEditDebtMinimumPaymentRate(
-                                        e.target.value
-                                      )
-                                    }
-                                    placeholder="Min %"
-                                    className="beast-input"
-                                  />
-
-                                  <input
-                                    type="number"
-                                    value={editDebtMinimumPaymentFloor}
-                                    onChange={(e) =>
-                                      setEditDebtMinimumPaymentFloor(
-                                        e.target.value
-                                      )
-                                    }
-                                    placeholder="Floor"
-                                    className="beast-input"
-                                  />
-                                </div>
-                              ) : null}
-                            </div>
-                          ) : (
-                            <div>
-                              <div className="font-semibold">{debt.name}</div>
-                              <div className="mt-1 text-xs text-[#7f8da3]">
-                                Balance: ${Number(debt.balance || 0).toFixed(2)}{" "}
-                                | APR:{" "}
-                                {Number(debt.interest_rate || 0).toFixed(2)}%
-                              </div>
-                            </div>
-                          )}
-                        </td>
-
-                        <td className="text-right align-top font-semibold">
-                          ${Number(debt.minimum_payment || 0).toFixed(2)}
-                        </td>
-
-                        <td className="text-center align-top">
-                          {debt.nextDueDateDisplay}
-                        </td>
-
-                        <td className="min-w-[300px] text-center align-top">
-                          <select
-                            value={debt.assigned_income_date || ""}
-                            onChange={(e) =>
-                              updateDebtIncomeDate(debt.id, e.target.value)
-                            }
-                            className="beast-input"
-                          >
-                            <option value="">Unassigned</option>
-                            {incomeBucketPlans.map((bucket) => (
-                              <option key={bucket.id} value={bucket.date}>
-                                {bucket.dropdownLabel}
-                              </option>
-                            ))}
-                          </select>
-                        </td>
-
-                        <td className="min-w-[240px] text-center align-top">
-                          <select
-                            value={debt.funding_source_id || ""}
-                            onChange={(e) =>
-                              updateDebtFundingSource(debt.id, e.target.value)
-                            }
-                            className="beast-input"
-                          >
-                            <option value="">Unassigned</option>
-                            {activeFundingSources.map((source) => (
-                              <option key={source.id} value={source.id}>
-                                {source.name}
-                              </option>
-                            ))}
-                          </select>
-                        </td>
-
-                        <td className="min-w-[220px] align-top">
-                          {editingDebtId === debt.id ? (
-                            <div className="grid gap-2 sm:grid-cols-2">
-                              <button
-                                onClick={() => saveDebtEdit(debt.id)}
-                                className="beast-button"
-                              >
-                                Save
-                              </button>
-
-                              <button
-                                onClick={cancelEditDebt}
-                                className="beast-button-secondary"
-                              >
-                                Cancel
-                              </button>
-                            </div>
-                          ) : (
-                            <div className="grid gap-2">
-                              <div className="grid grid-cols-[1fr_auto_auto] gap-2">
-                                <input
-                                  type="number"
-                                  value={debtPayments[debt.id] || ""}
-                                  onChange={(e) =>
-                                    setDebtPayments((prev) => ({
-                                      ...prev,
-                                      [debt.id]: e.target.value,
-                                    }))
-                                  }
-                                  placeholder="Payment"
-                                  className="beast-input h-9 px-2 text-sm"
-                                  disabled={applyingDebtPaymentId === debt.id}
-                                />
-
-                                <button
-                                  onClick={() =>
-                                    applyDebtPayment(
-                                      debt,
-                                      Number(debtPayments[debt.id] || 0)
-                                    )
-                                  }
-                                  disabled={applyingDebtPaymentId === debt.id}
-                                  className="beast-button-secondary"
-                                >
-                                  {applyingDebtPaymentId === debt.id ? "..." : "Apply"}
-                                </button>
-
-                                <button
-                                  onClick={() =>
-                                    applyDebtPayment(
-                                      debt,
-                                      Number(debt.minimum_payment || 0)
-                                    )
-                                  }
-                                  disabled={applyingDebtPaymentId === debt.id}
-                                  className="beast-button"
-                                >
-                                  {applyingDebtPaymentId === debt.id ? "..." : "Min Paid"}
-                                </button>
-                              </div>
-
-                              {debtPaymentStatus[debt.id]?.type && (
-                                <div
-                                  className={`rounded px-2 py-1 text-xs ${
-                                    debtPaymentStatus[debt.id]?.type === "error"
-                                      ? "bg-red-900 text-red-100"
-                                      : "bg-green-900 text-green-100"
-                                  }`}
-                                >
-                                  {debtPaymentStatus[debt.id]?.message}
-                                </div>
-                              )}
-
-                              <div className="grid grid-cols-3 gap-2">
-                                <button
-                                  onClick={() => startEditDebt(debt)}
-                                  className="beast-button-secondary"
-                                >
-                                  Edit
-                                </button>
-
-                                <button
-                                  onClick={() => archiveDebt(debt.id)}
-                                  className="beast-button-secondary"
-                                >
-                                  Archive
-                                </button>
-
-                                <button
-                                  onClick={() => deleteDebt(debt.id)}
-                                  className="beast-button"
-                                >
-                                  Delete
-                                </button>
-                              </div>
-                            </div>
-                          )}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
-
+        <DebtsSection
+          showDebts={showDebts}
+          setShowDebts={() => setShowDebts(!showDebts)}
+          activeDebts={activeDebts}
+          editingDebtId={editingDebtId}
+          editDebtName={editDebtName}
+          editDebtBalance={editDebtBalance}
+          editDebtMinimumPayment={editDebtMinimumPayment}
+          editDebtPaymentBehavior={editDebtPaymentBehavior}
+          editDebtInterestRate={editDebtInterestRate}
+          editDebtDueDate={editDebtDueDate}
+          editDebtMinimumPaymentRate={editDebtMinimumPaymentRate}
+          editDebtMinimumPaymentFloor={editDebtMinimumPaymentFloor}
+          setEditDebtName={setEditDebtName}
+          setEditDebtBalance={setEditDebtBalance}
+          setEditDebtMinimumPayment={setEditDebtMinimumPayment}
+          setEditDebtPaymentBehavior={setEditDebtPaymentBehavior}
+          setEditDebtInterestRate={setEditDebtInterestRate}
+          setEditDebtDueDate={setEditDebtDueDate}
+          setEditDebtMinimumPaymentRate={setEditDebtMinimumPaymentRate}
+          setEditDebtMinimumPaymentFloor={setEditDebtMinimumPaymentFloor}
+          incomeBucketPlans={incomeBucketPlans}
+          activeFundingSources={activeFundingSources}
+          updateDebtIncomeDate={updateDebtIncomeDate}
+          updateDebtFundingSource={updateDebtFundingSource}
+          debtPayments={debtPayments}
+          setDebtPayments={setDebtPayments}
+          applyDebtPayment={applyDebtPayment}
+          applyingDebtPaymentId={applyingDebtPaymentId}
+          debtPaymentStatus={debtPaymentStatus}
+          startEditDebt={startEditDebt}
+          saveDebtEdit={saveDebtEdit}
+          cancelEditDebt={cancelEditDebt}
+          archiveDebt={archiveDebt}
+          deleteDebt={deleteDebt}
+        />
         <section className="beast-panel overflow-hidden">
           <div className="flex flex-col items-start gap-4 border-b border-[#2a3242] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
             <div>
