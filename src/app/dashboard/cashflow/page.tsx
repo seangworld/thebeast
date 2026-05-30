@@ -9,6 +9,10 @@ import {
   calculateIncomeExpected,
 } from "@/lib/cashflow";
 import { createClient } from "@/lib/supabase/client";
+import FundingSourcesSummaryCards from "./components/FundingSourcesSummaryCards";
+import PaymentSourceCoverage from "./components/PaymentSourceCoverage";
+import FundingIntelligence from "./components/FundingIntelligence";
+import FundingRecommendations from "./components/FundingRecommendations";
 
 type PayoffStrategy = "snowball" | "avalanche";
 
@@ -34,6 +38,16 @@ type FundingSource = {
   interest_rate: number | null;
   is_active: boolean;
   created_at: string;
+};
+
+type PaymentSourceCoverageType = {
+  checking: number;
+  savings: number;
+  credit_card: number;
+  heloc: number;
+  ploc: number;
+  cash: number;
+  unassigned: number;
 };
 
 type OperationalAlert = {
@@ -610,7 +624,7 @@ export default function CashFlowPage() {
     creditLimitTotal > 0 ? (creditUsedTotal / creditLimitTotal) * 100 : 0;
 
   const paymentSourceCoverage = useMemo(() => {
-    const coverage: Record<string, number> = {
+    const coverage: PaymentSourceCoverageType = {
       checking: 0,
       savings: 0,
       credit_card: 0,
@@ -626,10 +640,13 @@ export default function CashFlowPage() {
         coverage.unassigned += Number(payment.amount_paid || 0);
       } else {
         const source = fundingSources.find((s) => s.id === payment.funding_source_id);
-        if (source && source.type in coverage) {
-          coverage[source.type] += Number(payment.amount_paid || 0);
-        } else if (source) {
-          coverage.unassigned += Number(payment.amount_paid || 0);
+        if (source) {
+          const sourceType = source.type as keyof PaymentSourceCoverageType;
+          if (sourceType in coverage) {
+            coverage[sourceType] += Number(payment.amount_paid || 0);
+          } else {
+            coverage.unassigned += Number(payment.amount_paid || 0);
+          }
         }
       }
     }
@@ -2774,154 +2791,24 @@ export default function CashFlowPage() {
 
           {showFundingSources && (
             <div className="space-y-5 p-5">
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-                <div className="beast-card">
-                  <div className="text-sm text-[#c7cfdb]">Active Sources</div>
-                  <div className="mt-2 break-words text-2xl font-bold">
-                    {activeFundingSources.length}
-                  </div>
-                </div>
+              <FundingSourcesSummaryCards
+                activeSourceCount={activeFundingSources.length}
+                liquidFundingTotal={liquidFundingTotal}
+                creditAvailableTotal={creditAvailableTotal}
+                creditLimitTotal={creditLimitTotal}
+                creditUtilizationPercent={creditUtilizationPercent}
+              />
 
-                <div className="beast-card">
-                  <div className="text-sm text-[#c7cfdb]">Liquid Cash</div>
-                  <div className="mt-2 break-words text-2xl font-bold text-green-300">
-                    ${liquidFundingTotal.toFixed(2)}
-                  </div>
-                </div>
-
-                <div className="beast-card">
-                  <div className="text-sm text-[#c7cfdb]">
-                    Available Credit
-                  </div>
-                  <div className="mt-2 break-words text-2xl font-bold text-yellow-300">
-                    ${creditAvailableTotal.toFixed(2)}
-                  </div>
-                </div>
-
-                <div className="beast-card">
-                  <div className="text-sm text-[#c7cfdb]">Credit Limit</div>
-                  <div className="mt-2 break-words text-2xl font-bold">
-                    ${creditLimitTotal.toFixed(2)}
-                  </div>
-                </div>
-
-                <div className="beast-card">
-                  <div className="text-sm text-[#c7cfdb]">
-                    Credit Utilization
-                  </div>
-                  <div
-                    className={`mt-2 break-words text-2xl font-bold ${
-                      creditUtilizationPercent > 90
-                        ? "text-red-300"
-                        : creditUtilizationPercent > 70
-                        ? "text-yellow-300"
-                        : "text-green-300"
-                    }`}
-                  >
-                    {creditUtilizationPercent.toFixed(1)}%
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-6 border-t border-[#2a3242] pt-6">
-                <h3 className="text-lg font-semibold mb-2">Payment Source Coverage (Current Cycle)</h3>
-                <p className="text-xs text-[#7f8da3] mb-4">Shows how current-cycle bills are being funded.</p>
-                
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
-                  <div className="beast-card">
-                    <div className="text-sm text-[#c7cfdb]">Checking Paid</div>
-                    <div className="mt-2 break-words text-2xl font-bold text-blue-300">
-                      ${paymentSourceCoverage.checking.toFixed(2)}
-                    </div>
-                  </div>
-
-                  <div className="beast-card">
-                    <div className="text-sm text-[#c7cfdb]">Savings Paid</div>
-                    <div className="mt-2 break-words text-2xl font-bold text-green-300">
-                      ${paymentSourceCoverage.savings.toFixed(2)}
-                    </div>
-                  </div>
-
-                  <div className="beast-card">
-                    <div className="text-sm text-[#c7cfdb]">Credit Cards Paid</div>
-                    <div className="mt-2 break-words text-2xl font-bold text-yellow-300">
-                      ${paymentSourceCoverage.credit_card.toFixed(2)}
-                    </div>
-                  </div>
-
-                  <div className="beast-card">
-                    <div className="text-sm text-[#c7cfdb]">HELOC Paid</div>
-                    <div className="mt-2 break-words text-2xl font-bold text-orange-300">
-                      ${paymentSourceCoverage.heloc.toFixed(2)}
-                    </div>
-                  </div>
-
-                  <div className="beast-card">
-                    <div className="text-sm text-[#c7cfdb]">Cash Paid</div>
-                    <div className="mt-2 break-words text-2xl font-bold text-gray-300">
-                      ${paymentSourceCoverage.cash.toFixed(2)}
-                    </div>
-                  </div>
-
-                  <div className="beast-card">
-                    <div className="text-sm text-[#c7cfdb]">Unassigned Paid</div>
-                    <div className="mt-2 break-words text-2xl font-bold text-[#7f8da3]">
-                      ${paymentSourceCoverage.unassigned.toFixed(2)}
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <PaymentSourceCoverage coverage={paymentSourceCoverage} />
 
               {fundingIntelligence.length > 0 && (
-                <div className="mt-6 border-t border-[#2a3242] pt-6">
-                  <h3 className="text-lg font-semibold mb-4">Funding Intelligence</h3>
-                  
-                  <div className="space-y-3">
-                    {fundingIntelligence.map((insight, idx) => (
-                      <div
-                        key={idx}
-                        className={`p-4 rounded border-l-4 ${
-                          insight.type === "warning"
-                            ? "bg-red-950 border-l-red-500 text-red-200"
-                            : "bg-blue-950 border-l-blue-500 text-blue-200"
-                        }`}
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className="mt-0.5 text-lg flex-shrink-0">
-                            {insight.type === "warning" ? "⚠️" : "ℹ️"}
-                          </div>
-                          <p className="text-sm leading-relaxed">{insight.message}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                <FundingIntelligence insights={fundingIntelligence} />
               )}
 
               {fundingRecommendations.length > 0 && (
-                <div className="mt-6 border-t border-[#2a3242] pt-6">
-                  <h3 className="text-lg font-semibold mb-4">Funding Recommendations</h3>
-                  
-                  <div className="space-y-3">
-                    {fundingRecommendations.map((rec, idx) => (
-                      <div
-                        key={idx}
-                        className={`p-4 rounded border-l-4 ${
-                          rec.type === "primary"
-                            ? "bg-purple-950 border-l-purple-500 text-purple-200"
-                            : "bg-slate-900 border-l-slate-500 text-slate-200"
-                        }`}
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className="mt-0.5 text-lg flex-shrink-0">
-                            {rec.type === "primary" ? "💡" : "✨"}
-                          </div>
-                          <p className="text-sm leading-relaxed">{rec.message}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                <FundingRecommendations
+                  recommendations={fundingRecommendations}
+                />
               )}
 
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 mt-6">
