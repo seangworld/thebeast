@@ -351,11 +351,14 @@ export default function DebtsPage() {
 
     if (!userId) return;
 
-    const { error } = await supabase.from("debt_settings").upsert({
-      user_id: userId,
-      strategy,
-      extra_payment: Number(extraPayment || 0),
-    });
+    const { error } = await supabase.from("debt_settings").upsert(
+      {
+        user_id: userId,
+        strategy,
+        extra_payment: Number(extraPayment || 0),
+      },
+      { onConflict: "user_id" }
+    );
 
     if (error) {
       setMessage(`Settings error: ${error.message}`);
@@ -601,6 +604,9 @@ export default function DebtsPage() {
                 <option value="snowball">Snowball</option>
                 <option value="avalanche">Avalanche</option>
               </select>
+              <p className="mt-2 text-xs text-[#7f8da3]">
+                This value is shared in debt settings and is the source of truth for the payoff strategy.
+              </p>
             </div>
 
             <div>

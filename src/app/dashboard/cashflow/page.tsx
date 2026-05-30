@@ -1543,12 +1543,15 @@ export default function CashFlowPage() {
 
     if (!userId) return;
 
-    await supabase.from("cash_settings").upsert({
-      user_id: userId,
-      checking_buffer: Number(buffer),
-      lookahead_days: Number(lookaheadDays),
-      starting_balance: Number(startingBalance),
-    });
+    await supabase.from("cash_settings").upsert(
+      {
+        user_id: userId,
+        checking_buffer: Number(buffer),
+        lookahead_days: Number(lookaheadDays),
+        starting_balance: Number(startingBalance),
+      },
+      { onConflict: "user_id" }
+    );
 
     await load();
   }, [buffer, getUserId, lookaheadDays, load, startingBalance]);
@@ -1943,7 +1946,8 @@ export default function CashFlowPage() {
       const cycleKey = `${debt.id}||${cycleDueDate}`;
       const currentCyclePaid = Number(debtPaymentsByDebtAndCycle[cycleKey] || 0);
       const totalCyclePaid = currentCyclePaid + amount;
-      const shouldAdvanceDueDate = totalCyclePaid >= minimumPayment;
+      const shouldAdvanceDueDate =
+        newBalance === 0 || totalCyclePaid >= minimumPayment;
       let nextDueDateAfterPayment: string | null = null;
 
       if (shouldAdvanceDueDate) {

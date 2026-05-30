@@ -50,26 +50,74 @@ export default function SettingsPage() {
     );
   }, [getUserId]);
 
+  useEffect(() => {
+    load();
+  }, [load]);
+
   async function saveAll() {
     const supabase = createClient();
     const userId = await getUserId();
 
     if (!userId) return;
 
-    await supabase.from("cash_settings").upsert({
-      user_id: userId,
-      starting_balance: Number(startingBalance),
-      checking_buffer: Number(buffer),
-      lookahead_days: Number(lookaheadDays),
-    });
+    await supabase.from("cash_settings").upsert(
+      {
+        user_id: userId,
+        starting_balance: Number(startingBalance),
+        checking_buffer: Number(buffer),
+        lookahead_days: Number(lookaheadDays),
+      },
+      { onConflict: "user_id" }
+    );
 
-    await supabase.from("debt_settings").upsert({
-      user_id: userId,
-      strategy,
-      extra_payment: Number(extraPayment || 0),
-    });
+    await supabase.from("debt_settings").upsert(
+      {
+        user_id: userId,
+        strategy,
+        extra_payment: Number(extraPayment || 0),
+      },
+      { onConflict: "user_id" }
+    );
 
     setMessage("Settings saved.");
+    await load();
+  }
+
+  async function resetTestDueDates() {
+    const supabase = createClient();
+    const userId = await getUserId();
+
+    if (!userId) return;
+
+    if (
+      !window.confirm(
+        "Reset Bill/Debt Test Due Dates? This will clear only next_due_date_after_payment values and will not delete any bills or debts."
+      )
+    ) {
+      return;
+    }
+
+    const { error: billError } = await supabase
+      .from("bill_events")
+      .update({ next_due_date_after_payment: null })
+      .eq("user_id", userId);
+
+    if (billError) {
+      setMessage(`Failed to reset bill due dates: ${billError.message}`);
+      return;
+    }
+
+    const { error: debtError } = await supabase
+      .from("debts")
+      .update({ next_due_date_after_payment: null })
+      .eq("user_id", userId);
+
+    if (debtError) {
+      setMessage(`Failed to reset debt due dates: ${debtError.message}`);
+      return;
+    }
+
+    setMessage("Bill and debt test due dates reset successfully.");
     await load();
   }
 
@@ -176,9 +224,15 @@ export default function SettingsPage() {
           </div>
         </section>
 
-        <section>
+        <section className="grid gap-3">
           <button onClick={saveAll} className="beast-button w-full">
             Save All Settings
+          </button>
+          <button
+            onClick={resetTestDueDates}
+            className="beast-button-secondary w-full"
+          >
+            Reset Bill/Debt Test Due Dates
           </button>
         </section>
 
