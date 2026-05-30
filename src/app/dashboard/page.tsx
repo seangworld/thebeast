@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
-const BEAST_VERSION = "v1.5.0 Beta";
+const BEAST_VERSION = "v1.9.0 Beta";
 
 export default function DashboardPage() {
   const [debts, setDebts] = useState<any[]>([]);
