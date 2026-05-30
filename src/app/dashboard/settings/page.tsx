@@ -133,6 +133,8 @@ export default function SettingsPage() {
   onChange={(e) => setLookaheadDays(Number(e.target.value))}
   className="beast-input mt-2"
 >
+  <option value={7}>7 Days</option>
+  <option value={14}>14 Days</option>
   <option value={30}>30 Days</option>
   <option value={60}>60 Days</option>
   <option value={90}>90 Days</option>

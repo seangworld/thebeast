@@ -138,6 +138,40 @@ function getDebtCycleDueDate(dueDay: number) {
   return new Date(year, month, safeDueDay);
 }
 
+function getCurrentDebtCycleDueDate(debt: any) {
+  if (debt?.next_due_date_after_payment) {
+    const parsed = parseDateOnly(debt.next_due_date_after_payment);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed;
+    }
+  }
+
+  return getDebtCycleDueDate(Number(debt.due_date || 1));
+}
+
+function getBillCycleDueDate(dueDay: number, cycleMonth: string) {
+  const [yearString, monthString] = cycleMonth.split("-");
+  const year = Number(yearString);
+  const month = Number(monthString) - 1;
+  const safeDueDay = Math.min(
+    Math.max(Number(dueDay || 1), 1),
+    new Date(year, month + 1, 0).getDate()
+  );
+
+  return new Date(year, month, safeDueDay);
+}
+
+function getCurrentBillCycleDueDate(bill: any, cycleMonth: string) {
+  if (bill?.next_due_date_after_payment) {
+    const parsed = parseDateOnly(bill.next_due_date_after_payment);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed;
+    }
+  }
+
+  return getBillCycleDueDate(Number(bill.due_date || 1), cycleMonth);
+}
+
 function formatShortDate(date: Date) {
   return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
 }
@@ -399,6 +433,14 @@ export default function CashFlowPage() {
     {}
   );
 
+  // Debt payment feedback: track errors and success messages per debt
+  const [debtPaymentStatus, setDebtPaymentStatus] = useState<
+    Record<string, { type: "error" | "success" | null; message: string }>
+  >({});
+  const [applyingDebtPaymentId, setApplyingDebtPaymentId] = useState<
+    string | null
+  >(null);
+
   const [isApplyingSuggestedAttack, setIsApplyingSuggestedAttack] = useState(false);
   const [suggestedAttackMessage, setSuggestedAttackMessage] = useState<string | null>(null);
 
@@ -448,16 +490,17 @@ export default function CashFlowPage() {
       const dueDay = Number(bill.due_date || 1);
       const frequency = bill.frequency || "monthly";
       const assignedPaycheck = bill.assigned_paycheck || "unassigned";
-      let nextDueDate = getNextDueDate(dueDay, frequency);
+      const currentCycleDueDate = getCurrentBillCycleDueDate(bill, cycleMonth);
+      let nextDueDate = currentCycleDueDate;
       let remaining = currentCycleRemaining;
 
       if (currentCycleRemaining <= 0) {
-        if (frequency === "weekly") nextDueDate = addDays(nextDueDate, 7);
+        if (frequency === "weekly") nextDueDate = addDays(currentCycleDueDate, 7);
         else if (frequency === "biweekly")
-          nextDueDate = addDays(nextDueDate, 14);
+          nextDueDate = addDays(currentCycleDueDate, 14);
         else
           nextDueDate = addMonthsClamped(
-            nextDueDate,
+            currentCycleDueDate,
             getFrequencyMonthStep(frequency)
           );
 
@@ -483,7 +526,7 @@ export default function CashFlowPage() {
         is_archived: Boolean(bill.is_archived),
       };
     });
-  }, [bills, paymentsByBillId]);
+  }, [bills, paymentsByBillId, cycleMonth]);
 
   const activeBills = useMemo(() => {
     return billsWithPaymentStatus
@@ -777,16 +820,22 @@ export default function CashFlowPage() {
       const minimumPayment = Number(debt.minimum_payment || 0);
       const assignedPaycheck = debt.assigned_paycheck || "unassigned";
       const dueDay = Number(debt.due_date || 1);
-      const currentCycleDueDate = getDebtCycleDueDate(dueDay);
+      const currentCycleDueDate = getCurrentDebtCycleDueDate(debt);
       const cycleKey = `${debt.id}||${currentCycleDueDate
         .toISOString()
         .slice(0, 10)}`;
       const currentCyclePaid = Number(
         debtPaymentsByDebtAndCycle[cycleKey] || 0
       );
-      const nextDueDate = currentCyclePaid >= minimumPayment
-        ? addMonthsClamped(currentCycleDueDate, 1)
-        : currentCycleDueDate;
+      
+      let nextDueDate: Date;
+      if (debt.next_due_date_after_payment) {
+        nextDueDate = parseDateOnly(debt.next_due_date_after_payment);
+      } else {
+        nextDueDate = currentCyclePaid >= minimumPayment
+          ? addMonthsClamped(currentCycleDueDate, 1)
+          : currentCycleDueDate;
+      }
 
       return {
         ...debt,
@@ -1607,6 +1656,44 @@ export default function CashFlowPage() {
       funding_source_id: bill.funding_source_id || null,
     });
 
+    const currentCycleDueDate = getCurrentBillCycleDueDate(bill, cycleMonth);
+    const frequency = bill.frequency || "monthly";
+    const currentCycleRemaining = Math.max(
+      Number(bill.remaining ?? 0),
+      Math.max(Number(bill.amount || 0) - Number(bill.paid || 0), 0)
+    );
+    const remainingAfterPayment = Math.max(currentCycleRemaining - amount, 0);
+    const shouldAdvanceNextDue = remainingAfterPayment <= 0;
+    let nextDueDateAfterPayment: string | null = null;
+
+    if (shouldAdvanceNextDue) {
+      const nextDueDate =
+        frequency === "weekly"
+          ? addDays(currentCycleDueDate, 7)
+          : frequency === "biweekly"
+          ? addDays(currentCycleDueDate, 14)
+          : addMonthsClamped(
+              currentCycleDueDate,
+              getFrequencyMonthStep(frequency)
+            );
+      nextDueDateAfterPayment = toDateInputValue(nextDueDate);
+    }
+
+    const updatePayload: Record<string, any> = {
+      assigned_income_date: null,
+    };
+    if (nextDueDateAfterPayment) {
+      updatePayload.next_due_date_after_payment = nextDueDateAfterPayment;
+    }
+
+    const { error: updateError } = await supabase
+      .from("bill_events")
+      .update(updatePayload)
+      .eq("id", bill.id);
+    if (updateError) {
+      console.warn("Warning: Could not persist bill next due date:", updateError);
+    }
+
     setPartialPayments((prev) => ({
       ...prev,
       [bill.id]: "",
@@ -1804,41 +1891,124 @@ export default function CashFlowPage() {
   async function applyDebtPayment(debt: any, amount: number) {
     const supabase = createClient();
 
-    if (!debt?.id) return;
-    if (amount <= 0) return;
+    if (!debt?.id) {
+      console.error("Invalid debt: missing id");
+      return;
+    }
 
-    const currentBalance = Number(debt.balance || 0);
-    const newBalance = Math.max(currentBalance - amount, 0);
-    const userId = await getUserId();
+    if (amount <= 0) {
+      setDebtPaymentStatus((prev) => ({
+        ...prev,
+        [debt.id]: {
+          type: "error",
+          message: "Payment amount must be greater than 0.",
+        },
+      }));
+      return;
+    }
 
-    if (!userId) return;
+    setApplyingDebtPaymentId(debt.id);
 
-    const cycleDueDate = getDebtCycleDueDate(Number(debt.due_date || 1))
-      .toISOString()
-      .slice(0, 10);
+    try {
+      const currentBalance = Number(debt.balance || 0);
+      const newBalance = Math.max(currentBalance - amount, 0);
+      const userId = await getUserId();
 
-    await supabase.from("debt_payments").insert({
-      user_id: userId,
-      debt_id: debt.id,
-      amount,
-      payment_date: new Date().toISOString().slice(0, 10),
-      cycle_due_date: cycleDueDate,
-      funding_source_id: debt.funding_source_id || null,
-    });
+      if (!userId) {
+        throw new Error("User not authenticated");
+      }
 
-    await supabase
-      .from("debts")
-      .update({
+      const currentCycleDueDate = getCurrentDebtCycleDueDate(debt);
+      const cycleDueDate = toDateInputValue(currentCycleDueDate);
+      const minimumPayment = Number(debt.minimum_payment || 0);
+      const cycleKey = `${debt.id}||${cycleDueDate}`;
+      const currentCyclePaid = Number(debtPaymentsByDebtAndCycle[cycleKey] || 0);
+      const totalCyclePaid = currentCyclePaid + amount;
+      const shouldAdvanceDueDate = totalCyclePaid >= minimumPayment;
+      let nextDueDateAfterPayment: string | null = null;
+
+      if (shouldAdvanceDueDate) {
+        const nextCycleDueDate = addMonthsClamped(currentCycleDueDate, 1);
+        nextDueDateAfterPayment = toDateInputValue(nextCycleDueDate);
+      }
+
+      // Insert debt payment record with proper error handling
+      const { error: insertError } = await supabase
+        .from("debt_payments")
+        .insert({
+          user_id: userId,
+          debt_id: debt.id,
+          amount,
+          payment_date: new Date().toISOString().slice(0, 10),
+          cycle_due_date: cycleDueDate,
+          funding_source_id: debt.funding_source_id || null,
+        });
+
+      if (insertError) {
+        throw new Error(`Failed to insert payment: ${insertError.message}`);
+      }
+
+      const updatePayload: Record<string, any> = {
         balance: newBalance,
-      })
-      .eq("id", debt.id);
+        assigned_income_date: null,
+      };
+      if (nextDueDateAfterPayment) {
+        updatePayload.next_due_date_after_payment = nextDueDateAfterPayment;
+      }
 
-    setDebtPayments((prev) => ({
-      ...prev,
-      [debt.id]: "",
-    }));
+      const { error: updateError } = await supabase
+        .from("debts")
+        .update(updatePayload)
+        .eq("id", debt.id);
 
-    await load();
+      if (updateError) {
+        throw new Error(`Failed to update debt: ${updateError.message}`);
+      }
+
+      setDebtPayments((prev) => ({
+        ...prev,
+        [debt.id]: "",
+      }));
+
+      // Set success message
+      setDebtPaymentStatus((prev) => ({
+        ...prev,
+        [debt.id]: {
+          type: "success",
+          message: `Payment of $${amount.toFixed(2)} applied successfully.`,
+        },
+      }));
+
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setDebtPaymentStatus((prev) => ({
+          ...prev,
+          [debt.id]: { type: null, message: "" },
+        }));
+      }, 3000);
+
+      // Reload debts from database
+      await load();
+    } catch (error) {
+      console.error("Error applying debt payment:", error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to apply payment. Please try again.";
+
+      setDebtPaymentStatus((prev) => ({
+        ...prev,
+        [debt.id]: {
+          type: "error",
+          message: errorMessage,
+        },
+      }));
+
+      // Keep the input value if persistence fails (do NOT clear it)
+      // This allows the user to retry or manually fix the issue
+    } finally {
+      setApplyingDebtPaymentId(null);
+    }
   }
 
   async function applySuggestedAttack() {
@@ -3855,6 +4025,7 @@ export default function CashFlowPage() {
                                   }
                                   placeholder="Payment"
                                   className="beast-input h-9 px-2 text-sm"
+                                  disabled={applyingDebtPaymentId === debt.id}
                                 />
 
                                 <button
@@ -3864,9 +4035,10 @@ export default function CashFlowPage() {
                                       Number(debtPayments[debt.id] || 0)
                                     )
                                   }
+                                  disabled={applyingDebtPaymentId === debt.id}
                                   className="beast-button-secondary"
                                 >
-                                  Apply
+                                  {applyingDebtPaymentId === debt.id ? "..." : "Apply"}
                                 </button>
 
                                 <button
@@ -3876,11 +4048,24 @@ export default function CashFlowPage() {
                                       Number(debt.minimum_payment || 0)
                                     )
                                   }
+                                  disabled={applyingDebtPaymentId === debt.id}
                                   className="beast-button"
                                 >
-                                  Min Paid
+                                  {applyingDebtPaymentId === debt.id ? "..." : "Min Paid"}
                                 </button>
                               </div>
+
+                              {debtPaymentStatus[debt.id]?.type && (
+                                <div
+                                  className={`rounded px-2 py-1 text-xs ${
+                                    debtPaymentStatus[debt.id]?.type === "error"
+                                      ? "bg-red-900 text-red-100"
+                                      : "bg-green-900 text-green-100"
+                                  }`}
+                                >
+                                  {debtPaymentStatus[debt.id]?.message}
+                                </div>
+                              )}
 
                               <div className="grid grid-cols-3 gap-2">
                                 <button
