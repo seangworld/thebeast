@@ -110,7 +110,7 @@ export function getFrequencyMonthStep(frequency: string) {
   return 1;
 }
 
-export function getNextDueDate(dueDay: number, frequency = "monthly") {
+function getNextDueDate(dueDay: number, frequency = "monthly") {
   const today = new Date();
   const year = today.getFullYear();
   const month = today.getMonth();

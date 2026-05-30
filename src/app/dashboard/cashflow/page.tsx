@@ -1,13 +1,6 @@
 "use client";
 
 import { useMemo } from "react";
-import {
-  buildCashTimeline,
-  simulateCashFlow,
-  calculateRequiredCash,
-  calculateBillsDue,
-  calculateIncomeExpected,
-} from "@/lib/cashflow";
 import FundingSourcesSummaryCards from "./components/FundingSourcesSummaryCards";
 import PaymentSourceCoverage from "./components/PaymentSourceCoverage";
 import FundingIntelligence from "./components/FundingIntelligence";
@@ -60,7 +53,6 @@ const paycheckAssignmentOptions: {
 
 export default function CashFlowPage() {
   const {
-    timeline,
     data,
     incomes,
     bills,
@@ -128,15 +120,9 @@ export default function CashFlowPage() {
     showCashTimeline,
     showArchivedBills,
     showArchivedDebts,
-    setEditingFundingSourceId,
     setEditingFundingSource,
     setNewFundingSource,
-    setLookaheadDays,
-    setBuffer,
     setStartingBalance,
-    setStrategy,
-    setExtraPayment,
-    setTargetDebtName,
     setIncomeName,
     setIncomeAmount,
     setIncomeFrequency,
@@ -149,9 +135,6 @@ export default function CashFlowPage() {
     setNextPaycheckDate,
     setSecondPaycheckAmount,
     setSecondPaycheckDate,
-    setEditingIncomeId,
-    setEditingBillId,
-    setEditingDebtId,
     setEditIncomeName,
     setEditIncomeAmount,
     setEditIncomeFrequency,
@@ -170,8 +153,6 @@ export default function CashFlowPage() {
     setEditDebtMinimumPaymentFloor,
     setDebtPayments,
     setPartialPayments,
-    setDebtPaymentStatus,
-    setApplyingDebtPaymentId,
     setIsApplyingSuggestedAttack,
     setSuggestedAttackMessage,
     setShowAddIncome,
@@ -184,14 +165,11 @@ export default function CashFlowPage() {
     setShowArchivedBills,
     setShowArchivedDebts,
     isStartingBalanceFocusedRef,
-    load,
-    loadFundingSources,
     addFundingSource,
     startEditFundingSource,
     cancelEditFundingSource,
     updateFundingSource,
     deleteFundingSource,
-    saveSettings,
     recalc,
     handleStartingBalanceBlur,
     addIncome,
@@ -218,9 +196,6 @@ export default function CashFlowPage() {
     archiveDebt,
     unarchiveDebt,
     deleteIncome,
-    deleteBill,
-    saveAll,
-    logout,
   } = useCashFlow();
 
   const cycleMonth = getCycleMonth();
