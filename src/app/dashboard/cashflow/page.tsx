@@ -13,6 +13,7 @@ import FundingSourcesSummaryCards from "./components/FundingSourcesSummaryCards"
 import PaymentSourceCoverage from "./components/PaymentSourceCoverage";
 import FundingIntelligence from "./components/FundingIntelligence";
 import FundingRecommendations from "./components/FundingRecommendations";
+import BillsSection from "./components/BillsSection";
 
 type PayoffStrategy = "snowball" | "avalanche";
 
@@ -3437,252 +3438,34 @@ export default function CashFlowPage() {
           )}
         </section>
 
-        <section className="beast-panel overflow-hidden">
-          <div className="flex flex-col items-start gap-4 border-b border-[#2a3242] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
-            <div>
-              <h2 className="text-xl font-bold">Bills</h2>
-              <p className="mt-1 text-sm text-[#7f8da3]">
-                Compact operating view. Edit a bill to change amount, due day,
-                or frequency.
-              </p>
-            </div>
-
-            <button
-              onClick={() => setShowBills(!showBills)}
-              className="beast-button-secondary"
-            >
-              {showBills ? "Hide" : `Show (${activeBills.length})`}
-            </button>
-          </div>
-
-          {showBills && (
-            <div className="beast-table-wrap">
-              <table className="w-full min-w-[900px] text-sm">
-                <thead>
-                  <tr>
-                    <th className="text-left">Bill</th>
-                    <th className="text-right">Remaining</th>
-                    <th className="text-center">Next Due</th>
-                    <th className="text-center">Income Pot</th>
-                    <th className="text-center">Funding Source</th>
-                    <th className="text-center">Status</th>
-                    <th className="text-center">Actions</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {activeBills.length === 0 ? (
-                    <tr>
-                      <td colSpan={7}>No bills added yet.</td>
-                    </tr>
-                  ) : (
-                    activeBills.map((bill) => (
-                      <tr key={bill.id}>
-                        <td className="min-w-[220px] text-left align-top">
-                          {editingBillId === bill.id ? (
-                            <div className="grid gap-2">
-                              <input
-                                value={editBillName}
-                                onChange={(e) =>
-                                  setEditBillName(e.target.value)
-                                }
-                                placeholder="Bill name"
-                                className="beast-input"
-                              />
-
-                              <div className="grid gap-2 sm:grid-cols-3">
-                                <input
-                                  type="number"
-                                  value={editBillAmount}
-                                  onChange={(e) =>
-                                    setEditBillAmount(e.target.value)
-                                  }
-                                  placeholder="Amount"
-                                  className="beast-input"
-                                />
-
-                                <input
-                                  type="number"
-                                  min="1"
-                                  max="31"
-                                  value={editBillDueDate}
-                                  onChange={(e) =>
-                                    setEditBillDueDate(e.target.value)
-                                  }
-                                  placeholder="Due day"
-                                  className="beast-input"
-                                />
-
-                                <select
-                                  value={editBillFrequency}
-                                  onChange={(e) =>
-                                    setEditBillFrequency(
-                                      e.target.value as BillFrequency
-                                    )
-                                  }
-                                  className="beast-input"
-                                >
-                                  {billFrequencyOptions.map((option) => (
-                                    <option
-                                      key={option.value}
-                                      value={option.value}
-                                    >
-                                      {option.label}
-                                    </option>
-                                  ))}
-                                </select>
-                              </div>
-                            </div>
-                          ) : (
-                            <div>
-                              <div className="font-semibold">{bill.name}</div>
-                              <div className="mt-1 text-xs text-[#7f8da3]">
-                                Due: ${Number(bill.amount || 0).toFixed(2)} |
-                                Paid: ${Number(bill.paid || 0).toFixed(2)} |{" "}
-                                {getFrequencyLabel(bill.frequency)}
-                              </div>
-                            </div>
-                          )}
-                        </td>
-
-                        <td className="text-right align-top font-semibold">
-                          ${Number(bill.remaining || 0).toFixed(2)}
-                        </td>
-
-                        <td className="text-center align-top">
-                          {bill.nextDueDateDisplay}
-                        </td>
-
-                        <td className="min-w-[300px] text-center align-top">
-                          <select
-                            value={bill.assigned_income_date || ""}
-                            onChange={(e) =>
-                              updateBillIncomeDate(bill.id, e.target.value)
-                            }
-                            className="beast-input"
-                          >
-                            <option value="">Unassigned</option>
-                            {incomeBucketPlans.map((bucket) => (
-                              <option key={bucket.id} value={bucket.date}>
-                                {bucket.dropdownLabel}
-                              </option>
-                            ))}
-                          </select>
-                        </td>
-
-                        <td className="min-w-[240px] text-center align-top">
-                          <select
-                            value={bill.funding_source_id || ""}
-                            onChange={(e) =>
-                              updateBillFundingSource(bill.id, e.target.value)
-                            }
-                            className="beast-input"
-                          >
-                            <option value="">Unassigned</option>
-                            {activeFundingSources.map((source) => (
-                              <option key={source.id} value={source.id}>
-                                {source.name}
-                              </option>
-                            ))}
-                          </select>
-                        </td>
-
-                        <td className="text-center align-top">
-                          <span
-                            className={
-                              bill.status === "Paid"
-                                ? "text-green-300"
-                                : bill.status === "Partial" ||
-                                  bill.status === "Due Soon"
-                                ? "text-yellow-300"
-                                : bill.status === "Late"
-                                ? "text-red-300"
-                                : "text-[#c7cfdb]"
-                            }
-                          >
-                            {bill.status}
-                          </span>
-                        </td>
-
-                        <td className="min-w-[240px] align-top">
-                          {editingBillId === bill.id ? (
-                            <div className="grid gap-2 sm:grid-cols-2">
-                              <button
-                                onClick={() => saveBillEdit(bill.id)}
-                                className="beast-button"
-                              >
-                                Save
-                              </button>
-
-                              <button
-                                onClick={cancelEditBill}
-                                className="beast-button-secondary"
-                              >
-                                Cancel
-                              </button>
-                            </div>
-                          ) : (
-                            <div className="grid gap-2">
-                              <div className="grid grid-cols-[1fr_auto] gap-2">
-                                <input
-                                  type="number"
-                                  value={partialPayments[bill.id] || ""}
-                                  onChange={(e) =>
-                                    setPartialPayments((prev) => ({
-                                      ...prev,
-                                      [bill.id]: e.target.value,
-                                    }))
-                                  }
-                                  placeholder="Partial"
-                                  className="beast-input h-9 px-2 text-sm"
-                                />
-
-                                <button
-                                  onClick={() =>
-                                    addBillPayment(
-                                      bill,
-                                      Number(partialPayments[bill.id] || 0)
-                                    )
-                                  }
-                                  className="beast-button-secondary"
-                                >
-                                  Add
-                                </button>
-                              </div>
-
-                              <div className="grid grid-cols-3 gap-2">
-                                <button
-                                  onClick={() => markBillPaid(bill)}
-                                  className="beast-button"
-                                >
-                                  Paid
-                                </button>
-
-                                <button
-                                  onClick={() => startEditBill(bill)}
-                                  className="beast-button-secondary"
-                                >
-                                  Edit
-                                </button>
-
-                                <button
-                                  onClick={() => archiveBill(bill.id)}
-                                  className="beast-button-secondary"
-                                >
-                                  Archive
-                                </button>
-                              </div>
-                            </div>
-                          )}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
+        <BillsSection
+          showBills={showBills}
+          setShowBills={() => setShowBills(!showBills)}
+          activeBills={activeBills}
+          editingBillId={editingBillId}
+          editBillName={editBillName}
+          editBillAmount={editBillAmount}
+          editBillDueDate={editBillDueDate}
+          editBillFrequency={editBillFrequency}
+          setEditBillName={setEditBillName}
+          setEditBillAmount={setEditBillAmount}
+          setEditBillDueDate={setEditBillDueDate}
+          setEditBillFrequency={setEditBillFrequency}
+          billFrequencyOptions={billFrequencyOptions}
+          getFrequencyLabel={getFrequencyLabel}
+          incomeBucketPlans={incomeBucketPlans}
+          activeFundingSources={activeFundingSources}
+          updateBillIncomeDate={updateBillIncomeDate}
+          updateBillFundingSource={updateBillFundingSource}
+          partialPayments={partialPayments}
+          setPartialPayments={setPartialPayments}
+          addBillPayment={addBillPayment}
+          markBillPaid={markBillPaid}
+          startEditBill={startEditBill}
+          saveBillEdit={saveBillEdit}
+          cancelEditBill={cancelEditBill}
+          archiveBill={archiveBill}
+        />
 
         <section className="beast-panel overflow-hidden">
           <div className="flex flex-col items-start gap-4 border-b border-[#2a3242] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
