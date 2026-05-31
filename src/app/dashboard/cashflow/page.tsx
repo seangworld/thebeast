@@ -30,6 +30,7 @@ import {
   formatShortDate,
   getNextIncomeDateDisplay,
   parseDateOnly,
+  getFundingSourceBalance,
 } from "./cashflowUtils";
 
 const billFrequencyOptions: { value: BillFrequency; label: string }[] = [
@@ -347,7 +348,14 @@ export default function CashFlowPage() {
 
     if (creditLimit <= 0) return null;
 
-    const currentBalance = source.current_balance != null ? Number(source.current_balance) : NaN;
+    // If this funding source is linked to a debt, get the balance from the debt
+    let currentBalance = Number(source.current_balance || 0);
+    if (source.linked_debt_id && debts.length > 0) {
+      const linkedDebt = debts.find((d) => d.id === source.linked_debt_id);
+      if (linkedDebt) {
+        currentBalance = Number(linkedDebt.balance || 0);
+      }
+    }
 
     // Prefer current_balance for utilization because it directly reflects
     // the outstanding amount owed on the credit line.
@@ -367,8 +375,11 @@ export default function CashFlowPage() {
   const liquidFundingTotal = useMemo(() => {
     return activeFundingSources
       .filter((source) => ["checking", "savings", "cash"].includes(source.type))
-      .reduce((sum, source) => sum + Number(source.current_balance || 0), 0);
-  }, [activeFundingSources]);
+      .reduce((sum, source) => {
+        const balance = getFundingSourceBalance(source, debts.find((d) => d.id === source.linked_debt_id));
+        return sum + balance;
+      }, 0);
+  }, [activeFundingSources, debts]);
 
   const creditAvailableTotal = useMemo(() => {
     return activeFundingSources

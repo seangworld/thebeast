@@ -21,6 +21,7 @@ export type FundingSource = {
   available_credit: number | null;
   interest_rate: number | null;
   is_active: boolean;
+  linked_debt_id?: string | null;
   created_at: string;
 };
 
@@ -204,6 +205,24 @@ export function advanceIncomeDate(date: Date, frequency: string) {
   if (frequency === "biweekly") return addDays(date, 14);
   if (frequency === "monthly") return addMonthsClamped(date, 1);
   return addMonthsClamped(date, 1);
+}
+
+/**
+ * Get the effective balance for a funding source.
+ * If the funding source is linked to a debt, returns the debt's balance.
+ * Otherwise returns the funding source's current_balance.
+ *
+ * This ensures that debt/account balance is the single source of truth,
+ * preventing balance drift between funding sources and their linked debts.
+ */
+export function getFundingSourceBalance(
+  source: FundingSource,
+  linkedDebt?: any
+): number {
+  if (source.linked_debt_id && linkedDebt) {
+    return Number(linkedDebt.balance || 0);
+  }
+  return Number(source.current_balance || 0);
 }
 
 export function getNextIncomeDateDisplay(nextDate: string, frequency: string) {

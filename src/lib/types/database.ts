@@ -13,6 +13,8 @@ export type FundingSource = {
     interest_rate?: number | null
   
     is_active: boolean
+    
+    linked_debt_id?: string | null
   
     created_at: string
   }
