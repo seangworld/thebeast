@@ -788,6 +788,8 @@ export default function CashFlowPage() {
   }, [activeFundingSources]);
 
   const incomeBucketPlans = useMemo(() => {
+    const creditFundingSourceTypes = ["credit_card", "heloc", "ploc"];
+    
     return incomeBuckets.map((bucket) => {
       const assignedBills = activeBills.filter(
         (bill) => bill.assigned_income_date === bucket.date
@@ -797,12 +799,34 @@ export default function CashFlowPage() {
         (debt) => debt.assigned_income_date === bucket.date
       );
 
-      const billsTotal = assignedBills.reduce(
+      // Only count bills funded by checking/cash/savings accounts toward paycheck balance
+      const paycheckFundedBills = assignedBills.filter((bill) => {
+        if (!bill.funding_source_id) {
+          // Unassigned defaults to paycheck-funded (checking account)
+          return true;
+        }
+        const source = fundingSources.find((s) => s.id === bill.funding_source_id);
+        if (!source) return true; // Default to counting if source not found
+        return !creditFundingSourceTypes.includes(source.type);
+      });
+
+      // Only count debts funded by checking/cash/savings accounts toward paycheck balance
+      const paycheckFundedDebts = assignedDebts.filter((debt) => {
+        if (!debt.funding_source_id) {
+          // Unassigned defaults to paycheck-funded (checking account)
+          return true;
+        }
+        const source = fundingSources.find((s) => s.id === debt.funding_source_id);
+        if (!source) return true; // Default to counting if source not found
+        return !creditFundingSourceTypes.includes(source.type);
+      });
+
+      const billsTotal = paycheckFundedBills.reduce(
         (sum, bill) => sum + Number(bill.remaining || 0),
         0
       );
 
-      const debtMinimumsTotal = assignedDebts.reduce(
+      const debtMinimumsTotal = paycheckFundedDebts.reduce(
         (sum, debt) => sum + Number(debt.minimum_payment || 0),
         0
       );
@@ -826,7 +850,7 @@ export default function CashFlowPage() {
         dropdownLabel,
       };
     });
-  }, [incomeBuckets, activeBills, activeDebts, buffer]);
+  }, [incomeBuckets, activeBills, activeDebts, fundingSources, buffer]);
 
   const operationalAlerts = useMemo(() => {
     const alerts: OperationalAlert[] = [];
