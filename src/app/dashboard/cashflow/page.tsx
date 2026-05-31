@@ -67,6 +67,7 @@ export default function CashFlowPage() {
     billsDue,
     incomeExpected,
     lookaheadDays,
+    assignmentHorizonMonths,
     buffer,
     startingBalance,
     saveStatus,
@@ -319,8 +320,9 @@ export default function CashFlowPage() {
   }, [billsWithPaymentStatus]);
 
   const incomeBuckets = useMemo(() => {
-    return buildIncomeBuckets(incomes, Number(lookaheadDays || 30));
-  }, [incomes, lookaheadDays]);
+    const assignmentHorizonDays = Number(assignmentHorizonMonths || 6) * 30;
+    return buildIncomeBuckets(incomes, assignmentHorizonDays);
+  }, [incomes, assignmentHorizonMonths]);
 
   const firstIncomeBucket = useMemo(() => {
     return incomeBuckets.length > 0 ? incomeBuckets[0] : null;

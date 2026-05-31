@@ -61,6 +61,7 @@ export function useCashFlow() {
   const [incomeExpected, setIncomeExpected] = useState(0);
 
   const [lookaheadDays, setLookaheadDays] = useState(30);
+  const [assignmentHorizonMonths, setAssignmentHorizonMonths] = useState(6);
   const [buffer, setBuffer] = useState(500);
   const [startingBalance, setStartingBalance] = useState(500);
   const [saveStatus, setSaveStatus] = useState<
@@ -336,6 +337,7 @@ export function useCashFlow() {
       .maybeSingle();
 
     const activeLookahead = Number(cashSettings?.lookahead_days ?? 30);
+    const activeAssignmentHorizon = Number(cashSettings?.assignment_horizon_months ?? 6);
     const activeBuffer = Number(cashSettings?.checking_buffer ?? 500);
     const activeStartingBalance = Number(cashSettings?.starting_balance ?? 500);
 
@@ -356,6 +358,9 @@ export function useCashFlow() {
         Number(paymentTotals[payment.bill_id] || 0) +
         Number(payment.amount_paid || 0);
     }
+
+    setLookaheadDays(activeLookahead);
+    setAssignmentHorizonMonths(activeAssignmentHorizon);
 
     const debtPaymentTotals: Record<string, number> = {};
     for (const payment of activeDebtPayments) {
@@ -480,13 +485,14 @@ export function useCashFlow() {
         user_id: userId,
         checking_buffer: Number(buffer),
         lookahead_days: Number(lookaheadDays),
+        assignment_horizon_months: Number(assignmentHorizonMonths),
         starting_balance: Number(startingBalance),
       },
       { onConflict: "user_id" }
     );
 
     await load();
-  }, [buffer, getUserId, lookaheadDays, load, startingBalance]);
+  }, [buffer, getUserId, lookaheadDays, assignmentHorizonMonths, load, startingBalance]);
 
   useEffect(() => {
     if (isStartingBalanceInitialRender.current) {
@@ -1061,6 +1067,7 @@ export function useCashFlow() {
     billsDue,
     incomeExpected,
     lookaheadDays,
+    assignmentHorizonMonths,
     buffer,
     startingBalance,
     saveStatus,

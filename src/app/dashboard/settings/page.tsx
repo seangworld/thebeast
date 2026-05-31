@@ -8,6 +8,7 @@ export default function SettingsPage() {
   const [startingBalance, setStartingBalance] = useState(500);
   const [buffer, setBuffer] = useState(500);
   const [lookaheadDays, setLookaheadDays] = useState(30);
+  const [assignmentHorizonMonths, setAssignmentHorizonMonths] = useState(6);
 
   const [strategy, setStrategy] = useState("snowball");
   const [extraPayment, setExtraPayment] = useState("");
@@ -41,6 +42,7 @@ export default function SettingsPage() {
     setStartingBalance(Number(cashSettings?.starting_balance ?? 500));
     setBuffer(Number(cashSettings?.checking_buffer ?? 500));
     setLookaheadDays(Number(cashSettings?.lookahead_days ?? 30));
+    setAssignmentHorizonMonths(Number(cashSettings?.assignment_horizon_months ?? 6));
 
     setStrategy(debtSettings?.strategy || "snowball");
     setExtraPayment(
@@ -66,6 +68,7 @@ export default function SettingsPage() {
         starting_balance: Number(startingBalance),
         checking_buffer: Number(buffer),
         lookahead_days: Number(lookaheadDays),
+        assignment_horizon_months: Number(assignmentHorizonMonths),
       },
       { onConflict: "user_id" }
     );
@@ -149,7 +152,7 @@ export default function SettingsPage() {
         <section className="beast-card">
           <h2 className="text-xl font-bold">Cash Settings</h2>
 
-          <div className="grid gap-4 md:grid-cols-3 mt-4">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 mt-4">
             <div>
               <label className="text-sm text-[#c7cfdb]">
                 Starting Balance
@@ -174,20 +177,35 @@ export default function SettingsPage() {
 
             <div>
               <label className="text-sm text-[#c7cfdb]">
-                Lookahead Days
+                Lookahead Days (Dashboard)
               </label>
               <select
-  value={lookaheadDays}
-  onChange={(e) => setLookaheadDays(Number(e.target.value))}
-  className="beast-input mt-2"
->
-  <option value={7}>7 Days</option>
-  <option value={14}>14 Days</option>
-  <option value={30}>30 Days</option>
-  <option value={60}>60 Days</option>
-  <option value={90}>90 Days</option>
-  <option value={120}>120 Days</option>
-</select>
+                value={lookaheadDays}
+                onChange={(e) => setLookaheadDays(Number(e.target.value))}
+                className="beast-input mt-2"
+              >
+                <option value={7}>7 Days</option>
+                <option value={14}>14 Days</option>
+                <option value={30}>30 Days</option>
+                <option value={60}>60 Days</option>
+                <option value={90}>90 Days</option>
+                <option value={120}>120 Days</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-sm text-[#c7cfdb]">
+                Assignment Horizon
+              </label>
+              <select
+                value={assignmentHorizonMonths}
+                onChange={(e) => setAssignmentHorizonMonths(Number(e.target.value))}
+                className="beast-input mt-2"
+              >
+                <option value={3}>3 Months</option>
+                <option value={6}>6 Months</option>
+                <option value={12}>12 Months</option>
+              </select>
             </div>
           </div>
         </section>
