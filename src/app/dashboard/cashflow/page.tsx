@@ -1750,13 +1750,16 @@ export default function CashFlowPage() {
                 />
 
                 <input
-                  type="number"
-                  value={newFundingSource.available_credit}
-                  onChange={(e) =>
-                    setNewFundingSource({
-                      ...newFundingSource,
-                      available_credit: e.target.value,
-                    })
+                  type="text"
+                  readOnly
+                  value={
+                    Number.isFinite(Number(newFundingSource.credit_limit)) &&
+                    Number.isFinite(Number(newFundingSource.current_balance))
+                      ? `$${(
+                          Number(newFundingSource.credit_limit) -
+                          Number(newFundingSource.current_balance)
+                        ).toFixed(2)}`
+                      : newFundingSource.available_credit || ""
                   }
                   placeholder="Available credit"
                   className="beast-input"
@@ -1889,13 +1892,16 @@ export default function CashFlowPage() {
           <td className="text-right">
             {isEditing ? (
               <input
-                type="number"
-                value={editingFundingSource.available_credit}
-                onChange={(e) =>
-                  setEditingFundingSource({
-                    ...editingFundingSource,
-                    available_credit: e.target.value,
-                  })
+                type="text"
+                readOnly
+                value={
+                  Number.isFinite(Number(editingFundingSource.credit_limit)) &&
+                  Number.isFinite(Number(editingFundingSource.current_balance))
+                    ? `$${(
+                        Number(editingFundingSource.credit_limit) -
+                        Number(editingFundingSource.current_balance)
+                      ).toFixed(2)}`
+                    : editingFundingSource.available_credit || ""
                 }
                 className="beast-input text-right"
               />
