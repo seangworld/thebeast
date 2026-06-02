@@ -44,6 +44,7 @@ export function useCashFlow() {
     current_balance: "",
     credit_limit: "",
     available_credit: "",
+    linked_debt_id: "",
     interest_rate: "",
   });
 
@@ -53,6 +54,7 @@ export function useCashFlow() {
     current_balance: "",
     credit_limit: "",
     available_credit: "",
+    linked_debt_id: "",
     interest_rate: "",
   });
 
@@ -65,8 +67,9 @@ export function useCashFlow() {
   const [buffer, setBuffer] = useState(500);
   const [startingBalance, setStartingBalance] = useState(500);
   const [saveStatus, setSaveStatus] = useState<
-    "idle" | "saving" | "saved"
+    "idle" | "saving" | "saved" | "error"
   >("idle");
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const autosaveTimerRef = useRef<number | null>(null);
   const saveStatusTimerRef = useRef<number | null>(null);
@@ -187,19 +190,22 @@ export function useCashFlow() {
     if (!userId) return;
     if (!newFundingSource.name) return;
 
-    await supabase.from("funding_sources").insert({
+    // Pre-calculate available_credit from credit_limit - current_balance
+    const creditLimit = newFundingSource.credit_limit === ""
+      ? null
+      : Number(newFundingSource.credit_limit);
+    const currentBalance = Number(newFundingSource.current_balance || 0);
+    const calculatedAvailableCredit = creditLimit != null && creditLimit > 0
+      ? Math.max(creditLimit - currentBalance, 0)
+      : null;
+
+    const { error } = await supabase.from("funding_sources").insert({
       user_id: userId,
       name: newFundingSource.name,
       type: newFundingSource.type,
-      current_balance: Number(newFundingSource.current_balance || 0),
-      credit_limit:
-        newFundingSource.credit_limit === ""
-          ? null
-          : Number(newFundingSource.credit_limit),
-      available_credit:
-        newFundingSource.available_credit === ""
-          ? null
-          : Number(newFundingSource.available_credit),
+      current_balance: currentBalance,
+      credit_limit: creditLimit,
+      available_credit: calculatedAvailableCredit,
       interest_rate:
         newFundingSource.interest_rate === ""
           ? 0
@@ -207,12 +213,20 @@ export function useCashFlow() {
       is_active: true,
     });
 
+    if (error) {
+      setSaveError(`Failed to add funding source: ${error.message}`);
+      console.error("Failed to add funding source:", error);
+      return;
+    }
+
+    setSaveError(null);
     setNewFundingSource({
       name: "",
       type: "checking",
       current_balance: "",
       credit_limit: "",
       available_credit: "",
+      linked_debt_id: "",
       interest_rate: "",
     });
 
@@ -227,6 +241,7 @@ export function useCashFlow() {
       current_balance: String(source.current_balance ?? ""),
       credit_limit: String(source.credit_limit ?? ""),
       available_credit: String(source.available_credit ?? ""),
+      linked_debt_id: source.linked_debt_id || "",
       interest_rate: String(source.interest_rate ?? ""),
     });
   }
@@ -239,6 +254,7 @@ export function useCashFlow() {
       current_balance: "",
       credit_limit: "",
       available_credit: "",
+      linked_debt_id: "",
       interest_rate: "",
     });
   }
@@ -246,26 +262,59 @@ export function useCashFlow() {
   async function updateFundingSource(id: string) {
     const supabase = createClient();
 
-    await supabase
+    // Recalculate available_credit before saving (credit_limit - current_balance)
+    const creditLimit = editingFundingSource.credit_limit === ""
+      ? null
+      : Number(editingFundingSource.credit_limit);
+    const currentBalance = Number(editingFundingSource.current_balance || 0);
+    const calculatedAvailableCredit = creditLimit != null && creditLimit > 0
+      ? Math.max(creditLimit - currentBalance, 0)
+      : null;
+
+    // Update funding source with recalculated available_credit
+    const { error: updateError } = await supabase
       .from("funding_sources")
       .update({
         name: editingFundingSource.name,
         type: editingFundingSource.type,
-        current_balance: Number(editingFundingSource.current_balance || 0),
-        credit_limit:
-          editingFundingSource.credit_limit === ""
-            ? null
-            : Number(editingFundingSource.credit_limit),
-        available_credit:
-          editingFundingSource.available_credit === ""
-            ? null
-            : Number(editingFundingSource.available_credit),
+        current_balance: currentBalance,
+        credit_limit: creditLimit,
+        available_credit: calculatedAvailableCredit,
         interest_rate:
           editingFundingSource.interest_rate === ""
             ? 0
             : Number(editingFundingSource.interest_rate),
+        linked_debt_id:
+          editingFundingSource.linked_debt_id === ""
+            ? null
+            : editingFundingSource.linked_debt_id,
       })
       .eq("id", id);
+
+    if (updateError) {
+      setSaveError(`Failed to save funding source: ${updateError.message}`);
+      console.error("Failed to save funding source:", updateError);
+      return;
+    }
+
+    setSaveError(null);
+
+    // If this funding source is linked to a debt, propagate the balance to the debt
+    try {
+      const linkedDebtId = editingFundingSource.linked_debt_id;
+      if (linkedDebtId) {
+        const { error: debtError } = await supabase
+          .from("debts")
+          .update({ balance: currentBalance })
+          .eq("id", linkedDebtId);
+        
+        if (debtError) {
+          console.warn("Failed to sync balance to linked debt:", debtError);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to sync funding source to linked debt:", err);
+    }
 
     cancelEditFundingSource();
     await loadFundingSources();
@@ -274,13 +323,20 @@ export function useCashFlow() {
   async function deleteFundingSource(id: string) {
     const supabase = createClient();
 
-    await supabase
+    const { error } = await supabase
       .from("funding_sources")
       .update({
         is_active: false,
       })
       .eq("id", id);
 
+    if (error) {
+      setSaveError(`Failed to delete funding source: ${error.message}`);
+      console.error("Failed to delete funding source:", error);
+      return;
+    }
+
+    setSaveError(null);
     await loadFundingSources();
   }
 
@@ -480,7 +536,7 @@ export function useCashFlow() {
 
     if (!userId) return;
 
-    await supabase.from("cash_settings").upsert(
+    const { data, error } = await supabase.from("cash_settings").upsert(
       {
         user_id: userId,
         checking_buffer: Number(buffer),
@@ -491,7 +547,13 @@ export function useCashFlow() {
       { onConflict: "user_id" }
     );
 
+    if (error) {
+      console.error("Failed to save cash settings:", error);
+      throw error;
+    }
+
     await load();
+    return data;
   }, [buffer, getUserId, lookaheadDays, assignmentHorizonMonths, load, startingBalance]);
 
   useEffect(() => {
@@ -512,8 +574,13 @@ export function useCashFlow() {
         return;
       }
 
-      await saveSettings();
-      setSaveStatus("saved");
+      try {
+        await saveSettings();
+        setSaveStatus("saved");
+      } catch (err) {
+        console.error("Autosave failed:", err);
+        setSaveStatus("error");
+      }
 
       if (saveStatusTimerRef.current) {
         window.clearTimeout(saveStatusTimerRef.current);
@@ -528,7 +595,7 @@ export function useCashFlow() {
         window.clearTimeout(autosaveTimerRef.current);
       }
     };
-  }, [startingBalance, saveSettings]);
+  }, [startingBalance, buffer, lookaheadDays, assignmentHorizonMonths, saveSettings]);
 
   async function handleStartingBalanceBlur() {
     isStartingBalanceFocusedRef.current = false;
@@ -537,8 +604,13 @@ export function useCashFlow() {
 
     pendingSaveRef.current = false;
     setSaveStatus("saving");
-    await saveSettings();
-    setSaveStatus("saved");
+    try {
+      await saveSettings();
+      setSaveStatus("saved");
+    } catch (err) {
+      console.error("Failed to save starting balance on blur:", err);
+      setSaveStatus("error");
+    }
 
     if (saveStatusTimerRef.current) {
       window.clearTimeout(saveStatusTimerRef.current);
@@ -844,6 +916,32 @@ export function useCashFlow() {
       .eq("id", id);
 
     cancelEditDebt();
+    // After updating debt, sync any linked funding sources so balances don't drift
+    try {
+      const newBalance = Number(editDebtBalance || 0);
+      await supabase
+        .from("funding_sources")
+        .update({ current_balance: newBalance })
+        .eq("linked_debt_id", id);
+    } catch (err) {
+      // Fallback: explicitly query linked sources and update
+      try {
+        const { data: linked } = await supabase
+          .from("funding_sources")
+          .select("id,credit_limit")
+          .eq("linked_debt_id", id);
+        for (const s of linked || []) {
+          const avail = s.credit_limit ? Math.max(Number(s.credit_limit) - Number(editDebtBalance || 0), 0) : null;
+          await supabase
+            .from("funding_sources")
+            .update({ current_balance: Number(editDebtBalance || 0), available_credit: avail })
+            .eq("id", s.id);
+        }
+      } catch (e) {
+        console.error("Failed to sync linked funding sources after debt edit", e);
+      }
+    }
+
     await load();
   }
 
@@ -953,6 +1051,23 @@ export function useCashFlow() {
       }, 3000);
 
       await load();
+      // Sync any funding sources linked to this debt so the funding source reflects the new debt balance
+      try {
+        const { data: linkedSources } = await supabase
+          .from("funding_sources")
+          .select("id,credit_limit")
+          .eq("linked_debt_id", debt.id);
+
+        for (const src of linkedSources || []) {
+          const avail = src.credit_limit ? Math.max(Number(src.credit_limit) - newBalance, 0) : null;
+          await supabase
+            .from("funding_sources")
+            .update({ current_balance: newBalance, available_credit: avail })
+            .eq("id", src.id);
+        }
+      } catch (err) {
+        console.error("Failed to sync funding sources after debt payment:", err);
+      }
     } catch (error) {
       console.error("Error applying debt payment:", error);
       const errorMessage =
@@ -1014,6 +1129,18 @@ export function useCashFlow() {
       })
       .eq("id", id);
 
+    await load();
+  }
+
+  async function resetDebtDueDate(id: string) {
+    const supabase = createClient();
+    await supabase.from("debts").update({ next_due_date_after_payment: null }).eq("id", id);
+    await load();
+  }
+
+  async function resetBillDueDate(id: string) {
+    const supabase = createClient();
+    await supabase.from("bill_events").update({ next_due_date_after_payment: null }).eq("id", id);
     await load();
   }
 
@@ -1193,8 +1320,10 @@ export function useCashFlow() {
     applyDebtPayment,
     deleteDebt,
     archiveBill,
+    resetBillDueDate,
     unarchiveBill,
     archiveDebt,
+    resetDebtDueDate,
     unarchiveDebt,
     deleteIncome,
   };

@@ -69,6 +69,7 @@ type BillsSectionProps = {
   saveBillEdit: (id: string) => Promise<void>;
   cancelEditBill: () => void;
   archiveBill: (id: string) => Promise<void>;
+  resetBillDueDate: (id: string) => Promise<void>;
 };
 
 export default function BillsSection({
@@ -98,6 +99,7 @@ export default function BillsSection({
   saveBillEdit,
   cancelEditBill,
   archiveBill,
+  resetBillDueDate,
 }: BillsSectionProps) {
   return (
     <section className="beast-panel overflow-hidden">
@@ -257,6 +259,7 @@ export default function BillsSection({
                         saveBillEdit={saveBillEdit}
                         cancelEditBill={cancelEditBill}
                         archiveBill={archiveBill}
+                        resetBillDueDate={resetBillDueDate}
                       />
                     </td>
                   </tr>

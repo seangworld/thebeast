@@ -31,5 +31,8 @@ export type Debt = {
     payment_behavior?: "fixed" | "revolving"
     minimum_payment_rate?: number | null
     minimum_payment_floor?: number | null
+    next_due_date_after_payment?: string | null
+    funding_source_id?: string | null
+    assigned_income_date?: string | null
     created_at?: string
   }

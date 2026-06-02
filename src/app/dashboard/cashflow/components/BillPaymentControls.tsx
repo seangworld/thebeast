@@ -14,6 +14,7 @@ type BillPaymentControlsProps = {
   saveBillEdit: (id: string) => Promise<void>;
   cancelEditBill: () => void;
   archiveBill: (id: string) => Promise<void>;
+  resetBillDueDate: (id: string) => Promise<void>;
 };
 
 export default function BillPaymentControls({
@@ -27,6 +28,7 @@ export default function BillPaymentControls({
   saveBillEdit,
   cancelEditBill,
   archiveBill,
+  resetBillDueDate,
 }: BillPaymentControlsProps) {
   return editingBillId === bill.id ? (
     <div className="grid gap-2 sm:grid-cols-2">
@@ -64,13 +66,17 @@ export default function BillPaymentControls({
         </button>
       </div>
 
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-4 gap-2">
         <button onClick={() => markBillPaid(bill)} className="beast-button">
           Paid
         </button>
 
         <button onClick={() => startEditBill(bill)} className="beast-button-secondary">
           Edit
+        </button>
+
+        <button onClick={() => resetBillDueDate(bill.id)} className="beast-button-secondary">
+          Reset Due
         </button>
 
         <button

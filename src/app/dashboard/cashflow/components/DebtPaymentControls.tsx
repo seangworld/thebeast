@@ -21,6 +21,7 @@ type DebtPaymentControlsProps = {
   cancelEditDebt: () => void;
   archiveDebt: (id: string) => Promise<void>;
   deleteDebt: (id: string) => Promise<void>;
+  resetDebtDueDate: (id: string) => Promise<void>;
 };
 
 export default function DebtPaymentControls({
@@ -36,6 +37,7 @@ export default function DebtPaymentControls({
   cancelEditDebt,
   archiveDebt,
   deleteDebt,
+  resetDebtDueDate,
 }: DebtPaymentControlsProps) {
   const isApplying = applyingDebtPaymentId === debt.id;
 
@@ -99,9 +101,13 @@ export default function DebtPaymentControls({
         </div>
       )}
 
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-4 gap-2">
         <button onClick={() => startEditDebt(debt)} className="beast-button-secondary">
           Edit
+        </button>
+
+        <button onClick={() => resetDebtDueDate(debt.id)} className="beast-button-secondary">
+          Reset Due
         </button>
 
         <button

@@ -63,6 +63,7 @@ type DebtsSectionProps = {
   cancelEditDebt: () => void;
   archiveDebt: (id: string) => Promise<void>;
   deleteDebt: (id: string) => Promise<void>;
+  resetDebtDueDate: (id: string) => Promise<void>;
 };
 
 export default function DebtsSection({
@@ -100,6 +101,7 @@ export default function DebtsSection({
   cancelEditDebt,
   archiveDebt,
   deleteDebt,
+  resetDebtDueDate,
 }: DebtsSectionProps) {
   return (
     <section className="beast-panel overflow-hidden">
@@ -285,6 +287,7 @@ export default function DebtsSection({
                         saveDebtEdit={saveDebtEdit}
                         cancelEditDebt={cancelEditDebt}
                         archiveDebt={archiveDebt}
+                        resetDebtDueDate={resetDebtDueDate}
                         deleteDebt={deleteDebt}
                       />
                     </td>

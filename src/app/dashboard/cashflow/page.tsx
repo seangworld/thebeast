@@ -194,8 +194,10 @@ export default function CashFlowPage() {
     applyDebtPayment,
     deleteDebt,
     archiveBill,
+    resetBillDueDate,
     unarchiveBill,
     archiveDebt,
+    resetDebtDueDate,
     unarchiveDebt,
     deleteIncome,
   } = useCashFlow();
@@ -2351,6 +2353,7 @@ export default function CashFlowPage() {
           saveBillEdit={saveBillEdit}
           cancelEditBill={cancelEditBill}
           archiveBill={archiveBill}
+          resetBillDueDate={resetBillDueDate}
         />
 
         <DebtsSection
@@ -2387,6 +2390,7 @@ export default function CashFlowPage() {
           saveDebtEdit={saveDebtEdit}
           cancelEditDebt={cancelEditDebt}
           archiveDebt={archiveDebt}
+          resetDebtDueDate={resetDebtDueDate}
           deleteDebt={deleteDebt}
         />
         <section className="beast-panel overflow-hidden">

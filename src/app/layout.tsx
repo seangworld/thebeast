@@ -60,6 +60,12 @@ export default function RootLayout({
           {APP_VERSION_LABEL} — Free Financial Command System
         </div>
 
+        {process.env.NODE_ENV !== "production" && (
+          <div className="mx-auto mt-2 max-w-full bg-[#fef3c7] px-3 py-1 text-center text-xs font-semibold text-[#92400e] sm:text-sm">
+            DEV MODE — Connected to: {process.env.NEXT_PUBLIC_SUPABASE_URL ?? "<not configured>"}
+          </div>
+        )}
+
         {children}
 
         <footer className="mt-12 space-y-2 border-t border-[#2a3242] py-6 text-center text-sm text-[#7f8da3]">

@@ -60,9 +60,12 @@ export default function SettingsPage() {
     const supabase = createClient();
     const userId = await getUserId();
 
-    if (!userId) return;
+    if (!userId) {
+      setMessage("Error: Unable to get user ID");
+      return;
+    }
 
-    await supabase.from("cash_settings").upsert(
+    const { error: cashError } = await supabase.from("cash_settings").upsert(
       {
         user_id: userId,
         starting_balance: Number(startingBalance),
@@ -73,7 +76,13 @@ export default function SettingsPage() {
       { onConflict: "user_id" }
     );
 
-    await supabase.from("debt_settings").upsert(
+    if (cashError) {
+      console.error("Failed to save cash settings:", cashError);
+      setMessage(`❌ Failed to save cash settings: ${cashError.message}`);
+      return;
+    }
+
+    const { error: debtError } = await supabase.from("debt_settings").upsert(
       {
         user_id: userId,
         strategy,
@@ -82,7 +91,13 @@ export default function SettingsPage() {
       { onConflict: "user_id" }
     );
 
-    setMessage("Settings saved.");
+    if (debtError) {
+      console.error("Failed to save debt settings:", debtError);
+      setMessage(`❌ Failed to save debt settings: ${debtError.message}`);
+      return;
+    }
+
+    setMessage("✓ Settings saved successfully.");
     await load();
   }
 
@@ -245,12 +260,6 @@ export default function SettingsPage() {
         <section className="grid gap-3">
           <button onClick={saveAll} className="beast-button w-full">
             Save All Settings
-          </button>
-          <button
-            onClick={resetTestDueDates}
-            className="beast-button-secondary w-full"
-          >
-            Reset Bill/Debt Test Due Dates
           </button>
         </section>
 
