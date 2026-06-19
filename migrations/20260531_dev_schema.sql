@@ -19,6 +19,8 @@ create table if not exists public.debts (
   payment_behavior text NOT NULL DEFAULT 'fixed',
   minimum_payment_rate numeric DEFAULT 2.00,
   minimum_payment_floor numeric DEFAULT 25.00,
+  credit_limit numeric NULL,
+  available_credit numeric NULL,
   next_due_date_after_payment date NULL,
   funding_source_id uuid NULL,
   assigned_income_date date NULL,

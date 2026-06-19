@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
@@ -17,6 +17,8 @@ type Debt = {
   payment_behavior?: "fixed" | "revolving";
   minimum_payment_rate?: number;
   minimum_payment_floor?: number;
+  credit_limit?: number;
+  available_credit?: number;
 };
 
 function money(value: number) {
@@ -39,28 +41,6 @@ function chooseTarget(debts: Debt[], strategy: PayoffStrategy) {
   )[0];
 }
 
-function getProjectedMinimumPayment(debt: Debt, balance: number): number {
-  // Helper function to calculate dynamic minimum payments.
-  // For revolving debts (credit cards), the minimum decreases as balance decreases.
-  // For fixed debts, the minimum is static.
-  
-  if (balance <= 0) {
-    return 0;
-  }
-
-  if (debt.payment_behavior === "revolving") {
-    const rate = Number(debt.minimum_payment_rate ?? 2) / 100;
-    const floor = Number(debt.minimum_payment_floor ?? 25);
-    // Calculate projected minimum as percentage of balance, with floor
-    const projectedMinimum = Math.max(balance * rate, floor);
-    // Cap at current balance
-    return Math.min(projectedMinimum, balance);
-  }
-
-  // Fixed debt: use static minimum payment capped at balance
-  return Math.min(Number(debt.minimum_payment || 0), balance);
-}
-
 function simulatePayoffPlan({
   debts,
   recoveredMinimums,
@@ -75,12 +55,14 @@ function simulatePayoffPlan({
   const working = debts.map((d) => ({
     ...d,
     balance: money(Number(d.balance || 0)),
-    minimum_payment: money(Number(d.minimum_payment || 0)),
+    // Use user-entered required minimum payment as the authoritative value
+    required_minimum: money(Number(d.minimum_payment || 0)),
     interest_rate: Number(d.interest_rate || 0),
   }));
 
+  // Total pool uses user-entered required minimums, not calculated/projected
   const originalMinimums = money(
-    working.reduce((sum, d) => sum + Number(d.minimum_payment || 0), 0)
+    working.reduce((sum, d) => sum + Number(d.required_minimum || 0), 0)
   );
 
   const totalMonthlyPool = money(
@@ -99,7 +81,7 @@ function simulatePayoffPlan({
 
     const startingBalances: Record<string, number> = {};
     const interestByDebt: Record<string, number> = {};
-    const minimumPaidByDebt: Record<string, number> = {};
+    const requiredMinimumPaidByDebt: Record<string, number> = {};
     const attackPaidByDebt: Record<string, number> = {};
     let monthlyInterest = 0;
     let paid = 0;
@@ -127,22 +109,22 @@ function simulatePayoffPlan({
     let pool = Math.min(totalMonthlyPool, totalBalanceAfterInterest);
     const activeBeforePayments = working.filter((d) => Number(d.balance) > 0);
 
+    // Pay required minimums first, then apply extra attack
     for (const d of activeBeforePayments) {
-      // Use dynamic minimum payment calculation: fixed debts stay static,
-      // revolving debts scale down as balance decreases.
-      const projectedMinimum = getProjectedMinimumPayment(d, Number(d.balance));
-      const payment = Math.min(
-        projectedMinimum,
+      // Use user-entered required minimum payment (capped at balance and available pool)
+      const requiredMinimum = Math.min(
+        Number(d.required_minimum || 0),
         Number(d.balance || 0),
         pool
       );
 
-      d.balance = money(Number(d.balance) - payment);
-      pool = money(pool - payment);
-      paid = money(paid + payment);
-      minimumPaidByDebt[d.id] = money((minimumPaidByDebt[d.id] || 0) + payment);
+      d.balance = money(Number(d.balance) - requiredMinimum);
+      pool = money(pool - requiredMinimum);
+      paid = money(paid + requiredMinimum);
+      requiredMinimumPaidByDebt[d.id] = money((requiredMinimumPaidByDebt[d.id] || 0) + requiredMinimum);
     }
 
+    // Apply extra attack to target debt
     while (pool > 0 && working.some((d) => Number(d.balance) > 0)) {
       const target = chooseTarget(working, strategy);
       if (!target) break;
@@ -170,13 +152,15 @@ function simulatePayoffPlan({
     );
 
     const targetInterest = money(interestByDebt[targetForRow.id] || 0);
-    const targetMinimum = money(Number(targetForRow.minimum_payment || 0));
-    const targetMinimumPaid = money(minimumPaidByDebt[targetForRow.id] || 0);
+    const workingTarget = working.find((d) => d.id === targetForRow.id);
+    const targetRequiredMinimum = money(
+      Number(workingTarget?.required_minimum || targetForRow.minimum_payment || 0)
+    );
     const targetAttackPaid = money(attackPaidByDebt[targetForRow.id] || 0);
     const targetEndingBalance = money(Number(targetForRow.balance || 0));
-    const targetTotalPayment = money(targetMinimumPaid + targetAttackPaid);
-    const minimumTooLow =
-      targetMinimum > 0 && targetMinimumPaid > 0 && targetMinimumPaid < targetInterest;
+    const targetTotalPayment = money(targetRequiredMinimum + targetAttackPaid);
+    const targetPrincipalReduction = money(targetTotalPayment - targetInterest);
+    const paymentTooLow = targetTotalPayment < targetInterest;
 
     const remainingDebt = money(
       working.reduce((sum, d) => sum + Number(d.balance || 0), 0)
@@ -186,20 +170,22 @@ function simulatePayoffPlan({
       targetStartingBalance > 0 && targetEndingBalance <= 0;
 
     const recoveredMinimum = paidOffThisMonth
-      ? money(Number(targetForRow.minimum_payment || 0))
+      ? targetRequiredMinimum
       : 0;
 
+    // Recommended minimum is shown separately - it's the interest + $1 if interest > required minimum
     const recommendedMinimum =
-      targetInterest >= targetMinimum
+      targetInterest >= targetRequiredMinimum
         ? money(targetInterest + 1)
-        : targetMinimum;
+        : targetRequiredMinimum;
 
     months.push({
       month,
       target: targetForRow.name,
       debt_starting_balance: targetStartingBalance,
-      min_payment: targetMinimumPaid,
+      required_minimum: targetRequiredMinimum,
       monthly_interest: targetInterest,
+      principal_reduction: targetPrincipalReduction,
       recommended_minimum: recommendedMinimum,
       extra_attack: targetAttackPaid,
       total_payment: targetTotalPayment,
@@ -207,7 +193,7 @@ function simulatePayoffPlan({
       remaining_debt: remainingDebt,
       recovered_minimum: recoveredMinimum,
       paid_off: paidOffThisMonth,
-      warning: minimumTooLow ? "Payment too low" : "",
+      warning: paymentTooLow ? "Payment too low" : "",
     });
 
     if (paid <= 0) break;
@@ -235,6 +221,7 @@ export default function DebtsPage() {
   const [paymentBehavior, setPaymentBehavior] = useState<"fixed" | "revolving">("fixed");
   const [minimumPaymentRate, setMinimumPaymentRate] = useState("2");
   const [minimumPaymentFloor, setMinimumPaymentFloor] = useState("25");
+  const [creditLimit, setCreditLimit] = useState("");
 
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
@@ -249,8 +236,11 @@ export default function DebtsPage() {
   const [editPaymentBehavior, setEditPaymentBehavior] = useState<"fixed" | "revolving">("fixed");
   const [editMinimumPaymentRate, setEditMinimumPaymentRate] = useState("2");
   const [editMinimumPaymentFloor, setEditMinimumPaymentFloor] = useState("25");
+  const [editCreditLimit, setEditCreditLimit] = useState("");
   const [projectionMonths, setProjectionMonths] = useState(24);
   const [showArchivedDebts, setShowArchivedDebts] = useState(false);
+  const focusReloadInFlightRef = useRef(false);
+  const lastFocusReloadAtRef = useRef(0);
 
   const activeDebts = useMemo(() => {
     return debts.filter(
@@ -345,6 +335,43 @@ export default function DebtsPage() {
     load();
   }, [load]);
 
+  const reloadDebtsOnFocus = useCallback(async () => {
+    if (focusReloadInFlightRef.current) return;
+    if (document.visibilityState === "hidden") return;
+
+    const now = Date.now();
+    if (now - lastFocusReloadAtRef.current < 1000) return;
+
+    focusReloadInFlightRef.current = true;
+    lastFocusReloadAtRef.current = now;
+
+    try {
+      await load();
+    } finally {
+      focusReloadInFlightRef.current = false;
+    }
+  }, [load]);
+
+  useEffect(() => {
+    function handleVisibilityChange() {
+      if (document.visibilityState === "visible") {
+        void reloadDebtsOnFocus();
+      }
+    }
+
+    function handleFocus() {
+      void reloadDebtsOnFocus();
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, [reloadDebtsOnFocus]);
+
   async function saveSettings() {
     const supabase = createClient();
     const userId = await getUserId();
@@ -382,16 +409,25 @@ export default function DebtsPage() {
       return;
     }
 
+    // Debt available credit is derived, not user-entered.
+    const creditLimitNum = creditLimit === "" ? null : Number(creditLimit);
+    const balanceNum = Number(balance);
+    const availableCredit = creditLimitNum !== null
+      ? money(creditLimitNum - balanceNum)
+      : null;
+
     const { error } = await supabase.from("debts").insert({
       user_id: userId,
       name,
-      balance: Number(balance),
+      balance: balanceNum,
       minimum_payment: Number(minimumPayment || 0),
       interest_rate: Number(interestRate || 0),
       due_date: Number(dueDate || 1),
       payment_behavior: paymentBehavior,
       minimum_payment_rate: Number(minimumPaymentRate || 2),
       minimum_payment_floor: Number(minimumPaymentFloor || 25),
+      credit_limit: creditLimitNum,
+      available_credit: availableCredit,
       is_archived: false,
     });
 
@@ -408,6 +444,7 @@ export default function DebtsPage() {
     setPaymentBehavior("fixed");
     setMinimumPaymentRate("2");
     setMinimumPaymentFloor("25");
+    setCreditLimit("");
 
     await load();
   }
@@ -427,6 +464,7 @@ export default function DebtsPage() {
     setEditMinimumPaymentFloor(
       String(debt.minimum_payment_floor ?? 25)
     );
+    setEditCreditLimit(String(debt.credit_limit ?? ""));
   }
   
   function cancelEditDebt() {
@@ -440,22 +478,32 @@ export default function DebtsPage() {
     setEditPaymentBehavior("fixed");
     setEditMinimumPaymentRate("2");
     setEditMinimumPaymentFloor("25");
+    setEditCreditLimit("");
   }
   
   async function saveEditDebt(id: string) {
     const supabase = createClient();
   
+    // Debt available credit is derived, not user-entered.
+    const creditLimitNum = editCreditLimit === "" ? null : Number(editCreditLimit);
+    const balanceNum = Number(editBalance || 0);
+    const availableCredit = creditLimitNum !== null
+      ? money(creditLimitNum - balanceNum)
+      : null;
+  
     const { error } = await supabase
       .from("debts")
       .update({
         name: editName,
-        balance: Number(editBalance || 0),
+        balance: balanceNum,
         minimum_payment: Number(editMinimumPayment || 0),
         interest_rate: Number(editInterestRate || 0),
         due_date: Number(editDueDate || 1),
         payment_behavior: editPaymentBehavior,
         minimum_payment_rate: Number(editMinimumPaymentRate || 2),
         minimum_payment_floor: Number(editMinimumPaymentFloor || 25),
+        credit_limit: creditLimitNum,
+        available_credit: availableCredit,
       })
       .eq("id", id);
   
@@ -531,6 +579,20 @@ export default function DebtsPage() {
             </div>
 
             </div>
+        </section>
+
+        <section className="beast-card">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-bold">Data Status</h2>
+              <p className="mt-1 text-sm text-[#7f8da3]">
+                Click Refresh to reload debts from the database.
+              </p>
+            </div>
+            <button onClick={() => load()} className="beast-button-secondary">
+              Refresh
+            </button>
+          </div>
         </section>
 
         {message && (
@@ -724,6 +786,20 @@ export default function DebtsPage() {
     <>
       <div>
         <label className="text-sm text-[#c7cfdb]">
+          Credit Limit
+        </label>
+
+        <input
+          type="number"
+          value={creditLimit}
+          onChange={(e) => setCreditLimit(e.target.value)}
+          placeholder="0"
+          className="beast-input mt-2"
+        />
+      </div>
+
+      <div>
+        <label className="text-sm text-[#c7cfdb]">
           Minimum % of Balance
         </label>
 
@@ -805,12 +881,37 @@ export default function DebtsPage() {
                   
                       <td className="text-right">
                         {editingDebtId === debt.id ? (
-                          <input
-                            type="number"
-                            value={editBalance}
-                            onChange={(e) => setEditBalance(e.target.value)}
-                            className="beast-input"
-                          />
+                          <div className="flex flex-col gap-2">
+                            <input
+                              type="number"
+                              value={editBalance}
+                              onChange={(e) => setEditBalance(e.target.value)}
+                              className="beast-input"
+                              placeholder="Balance"
+                            />
+                            <input
+                              type="number"
+                              value={editCreditLimit}
+                              onChange={(e) => setEditCreditLimit(e.target.value)}
+                              className="beast-input"
+                              placeholder="Credit Limit"
+                            />
+                            <input
+                              type="text"
+                              readOnly
+                              value={
+                                editCreditLimit !== "" &&
+                                Number.isFinite(Number(editCreditLimit)) &&
+                                Number.isFinite(Number(editBalance))
+                                  ? `$${(
+                                      Number(editCreditLimit) - Number(editBalance)
+                                    ).toFixed(2)}`
+                                  : ""
+                              }
+                              className="beast-input text-[#7f8da3]"
+                              placeholder="Available Credit"
+                            />
+                          </div>
                         ) : (
                           `$${Number(debt.balance || 0).toFixed(2)}`
                         )}
@@ -818,12 +919,47 @@ export default function DebtsPage() {
                   
                       <td className="text-right">
                         {editingDebtId === debt.id ? (
-                          <input
-                            type="number"
-                            value={editMinimumPayment}
-                            onChange={(e) => setEditMinimumPayment(e.target.value)}
-                            className="beast-input"
-                          />
+                          <div className="flex flex-col gap-2">
+                            <input
+                              type="number"
+                              value={editMinimumPayment}
+                              onChange={(e) => setEditMinimumPayment(e.target.value)}
+                              className="beast-input"
+                              placeholder="Min Payment"
+                            />
+                            <select
+                              value={editPaymentBehavior}
+                              onChange={(e) =>
+                                setEditPaymentBehavior(
+                                  e.target.value as "fixed" | "revolving"
+                                )
+                              }
+                              className="beast-input"
+                            >
+                              <option value="fixed">Fixed Minimum</option>
+                              <option value="revolving">
+                                Revolving / Credit Minimum
+                              </option>
+                            </select>
+                            {editPaymentBehavior === "revolving" && (
+                              <>
+                                <input
+                                  type="number"
+                                  value={editMinimumPaymentRate}
+                                  onChange={(e) => setEditMinimumPaymentRate(e.target.value)}
+                                  className="beast-input"
+                                  placeholder="Min %"
+                                />
+                                <input
+                                  type="number"
+                                  value={editMinimumPaymentFloor}
+                                  onChange={(e) => setEditMinimumPaymentFloor(e.target.value)}
+                                  className="beast-input"
+                                  placeholder="Min Floor"
+                                />
+                              </>
+                            )}
+                          </div>
                         ) : (
                           `$${Number(debt.minimum_payment || 0).toFixed(2)}`
                         )}
@@ -1109,8 +1245,9 @@ export default function DebtsPage() {
                   <th>Month</th>
                   <th>Target</th>
                   <th className="text-right">Debt Start</th>
-                  <th className="text-right">Min Payment</th>
+                  <th className="text-right">Required Min</th>
                   <th className="text-right">Monthly Interest</th>
+                  <th className="text-right">Principal Reduction</th>
                   <th className="text-right">Recommended Min</th>
                   <th className="text-right">Monthly Extra Attack</th>
                   <th className="text-right">Total Payment</th>
@@ -1124,7 +1261,7 @@ export default function DebtsPage() {
               <tbody>
                 {payoffPlan.payoff_months.length === 0 ? (
                   <tr>
-                    <td colSpan={12}>Add debts to generate payoff plan.</td>
+                    <td colSpan={13}>Add debts to generate payoff plan.</td>
                   </tr>
                 ) : (
                   payoffPlan.payoff_months
@@ -1137,10 +1274,19 @@ export default function DebtsPage() {
                         ${row.debt_starting_balance.toFixed(2)}
                       </td>
                       <td className="text-right">
-                        ${row.min_payment.toFixed(2)}
+                        ${Number(row.required_minimum || 0).toFixed(2)}
                       </td>
                       <td className="text-right">
                         ${Number(row.monthly_interest || 0).toFixed(2)}
+                      </td>
+                      <td
+                        className={`text-right font-semibold ${
+                          Number(row.principal_reduction || 0) < 0
+                            ? "text-red-300"
+                            : "text-green-300"
+                        }`}
+                      >
+                        ${Number(row.principal_reduction || 0).toFixed(2)}
                       </td>
                       <td
                         className={`text-right font-semibold ${
@@ -1152,7 +1298,7 @@ export default function DebtsPage() {
                       <td className="text-right">
                         ${row.extra_attack.toFixed(2)}
                       </td>
-                      <td className="text-right">
+                      <td className="text-right font-semibold">
                         ${row.total_payment.toFixed(2)}
                       </td>
                       <td className="text-right">

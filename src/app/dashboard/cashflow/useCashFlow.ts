@@ -76,6 +76,8 @@ export function useCashFlow() {
   const isStartingBalanceInitialRender = useRef(true);
   const pendingSaveRef = useRef(false);
   const isStartingBalanceFocusedRef = useRef(false);
+  const focusReloadInFlightRef = useRef(false);
+  const lastFocusReloadAtRef = useRef(0);
   const AUTOSAVE_DEBOUNCE_MS = 1700;
 
   const [strategy, setStrategy] = useState<PayoffStrategy>("snowball");
@@ -271,8 +273,21 @@ export function useCashFlow() {
       ? Math.max(creditLimit - currentBalance, 0)
       : null;
 
+    // DIAGNOSTIC: Log the exact payload being sent
+    console.log("=== FUNDING SOURCE SAVE DIAGNOSTICS ===");
+    console.log("Funding Source ID:", id);
+    console.log("Payload being sent to Supabase:", {
+      name: editingFundingSource.name,
+      type: editingFundingSource.type,
+      current_balance: currentBalance,
+      credit_limit: creditLimit,
+      available_credit: calculatedAvailableCredit,
+      interest_rate: editingFundingSource.interest_rate === "" ? 0 : Number(editingFundingSource.interest_rate),
+      linked_debt_id: editingFundingSource.linked_debt_id === "" ? null : editingFundingSource.linked_debt_id,
+    });
+
     // Update funding source with recalculated available_credit
-    const { error: updateError } = await supabase
+    const { data: updateData, error: updateError } = await supabase
       .from("funding_sources")
       .update({
         name: editingFundingSource.name,
@@ -291,12 +306,18 @@ export function useCashFlow() {
       })
       .eq("id", id);
 
+    // DIAGNOSTIC: Log the Supabase response
+    console.log("Supabase response data:", updateData);
+    console.log("Supabase response error:", updateError);
+
     if (updateError) {
       setSaveError(`Failed to save funding source: ${updateError.message}`);
       console.error("Failed to save funding source:", updateError);
+      console.log("=== END DIAGNOSTICS (ERROR CASE) ===");
       return;
     }
 
+    console.log("=== END DIAGNOSTICS (SUCCESS) ===");
     setSaveError(null);
 
     // If this funding source is linked to a debt, propagate the balance to the debt
@@ -519,6 +540,43 @@ export function useCashFlow() {
     load();
     loadFundingSources();
   }, [load, loadFundingSources]);
+
+  const reloadCashFlowOnFocus = useCallback(async () => {
+    if (focusReloadInFlightRef.current) return;
+    if (document.visibilityState === "hidden") return;
+
+    const now = Date.now();
+    if (now - lastFocusReloadAtRef.current < 1000) return;
+
+    focusReloadInFlightRef.current = true;
+    lastFocusReloadAtRef.current = now;
+
+    try {
+      await load();
+    } finally {
+      focusReloadInFlightRef.current = false;
+    }
+  }, [load]);
+
+  useEffect(() => {
+    function handleVisibilityChange() {
+      if (document.visibilityState === "visible") {
+        void reloadCashFlowOnFocus();
+      }
+    }
+
+    function handleFocus() {
+      void reloadCashFlowOnFocus();
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, [reloadCashFlowOnFocus]);
 
   function recalc(balance: number) {
     const simulated = simulateCashFlow({
@@ -1198,6 +1256,7 @@ export function useCashFlow() {
     buffer,
     startingBalance,
     saveStatus,
+    saveError,
     strategy,
     extraPayment,
     targetDebtName,

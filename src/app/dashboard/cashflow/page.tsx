@@ -72,6 +72,7 @@ export default function CashFlowPage() {
     buffer,
     startingBalance,
     saveStatus,
+    saveError,
     strategy,
     extraPayment,
     targetDebtName,
@@ -919,26 +920,38 @@ export default function CashFlowPage() {
       });
     }
 
-    const lowImpactDebtMinimums = activeDebts.filter((debt) => {
+    const lowImpactDebtMinimums = activeDebts.flatMap((debt) => {
       const balance = Number(debt.balance || 0);
       const minimumPayment = Number(debt.minimum_payment || 0);
       const monthlyInterest =
         balance * (Number(debt.interest_rate || 0) / 100 / 12);
       const principalReduction = minimumPayment - monthlyInterest;
 
-      if (balance <= 0 || minimumPayment <= 0) return false;
+      if (balance <= 0 || minimumPayment <= 0) return [];
 
-      return principalReduction < balance * 0.005;
+      if (principalReduction >= balance * 0.005) return [];
+
+      return [
+        {
+          name: debt.name || "Unnamed debt",
+          principalReductionPercent: (principalReduction / balance) * 100,
+        },
+      ];
     });
 
     if (lowImpactDebtMinimums.length > 0) {
+      const lowImpactDebtSummary = lowImpactDebtMinimums
+        .map(
+          (debt) =>
+            `${debt.name}: ${debt.principalReductionPercent.toFixed(2)}% principal reduction`
+        )
+        .join("; ");
+
       alerts.push({
         id: "low-impact-debt-minimums",
         severity: "warning",
         title: "Debt minimums barely reduce balance",
-        message: `${lowImpactDebtMinimums.length} debt${
-          lowImpactDebtMinimums.length === 1 ? "" : "s"
-        } below 0.5% principal reduction.`,
+        message: lowImpactDebtSummary,
       });
     }
 
@@ -1948,19 +1961,26 @@ export default function CashFlowPage() {
 
           <td className="text-center">
             {isEditing ? (
-              <div className="flex justify-center gap-2">
-                <button
-                  onClick={() => updateFundingSource(source.id)}
-                  className="beast-button"
-                >
-                  Save
-                </button>
-                <button
-                  onClick={cancelEditFundingSource}
-                  className="beast-button-secondary"
-                >
-                  Cancel
-                </button>
+              <div className="flex flex-col items-center gap-2">
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => updateFundingSource(source.id)}
+                    className="beast-button"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={cancelEditFundingSource}
+                    className="beast-button-secondary"
+                  >
+                    Cancel
+                  </button>
+                </div>
+                {saveError && (
+                  <div className="text-red-400 text-xs text-center max-w-xs">
+                    {saveError}
+                  </div>
+                )}
               </div>
             ) : (
               <div className="flex justify-center gap-2">
