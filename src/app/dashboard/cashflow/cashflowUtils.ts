@@ -219,10 +219,20 @@ export function getFundingSourceBalance(
   source: FundingSource,
   linkedDebt?: any
 ): number {
-  if (source.linked_debt_id && linkedDebt) {
-    return Number(linkedDebt.balance || 0);
+  if (source.linked_debt_id) {
+    return Number(linkedDebt?.balance || 0);
   }
   return Number(source.current_balance || 0);
+}
+
+export function getFundingSourceAvailableCredit(
+  source: FundingSource,
+  linkedDebt?: any
+): number | null {
+  if (source.credit_limit == null) return null;
+
+  const balance = getFundingSourceBalance(source, linkedDebt);
+  return Math.max(Number(source.credit_limit || 0) - balance, 0);
 }
 
 export function getNextIncomeDateDisplay(nextDate: string, frequency: string) {

@@ -25,12 +25,14 @@ import {
   getTargetDebt,
   addDays,
   addMonthsClamped,
+  advanceIncomeDate,
   buildIncomeBuckets,
   formatDate,
   formatShortDate,
   getNextIncomeDateDisplay,
   parseDateOnly,
   getFundingSourceBalance,
+  getFundingSourceAvailableCredit,
 } from "./cashflowUtils";
 
 const billFrequencyOptions: { value: BillFrequency; label: string }[] = [
@@ -351,23 +353,8 @@ export default function CashFlowPage() {
 
     if (creditLimit <= 0) return null;
 
-    // If this funding source is linked to a debt, get the balance from the debt
-    let currentBalance = Number(source.current_balance || 0);
-    if (source.linked_debt_id && debts.length > 0) {
-      const linkedDebt = debts.find((d) => d.id === source.linked_debt_id);
-      if (linkedDebt) {
-        currentBalance = Number(linkedDebt.balance || 0);
-      }
-    }
-
-    // Prefer current_balance for utilization because it directly reflects
-    // the outstanding amount owed on the credit line.
-    if (!Number.isNaN(currentBalance)) {
-      return Math.min(Math.max((currentBalance / creditLimit) * 100, 0), 100);
-    }
-
-    const availableCredit = Number(source.available_credit || 0);
-    const usedCredit = Math.max(creditLimit - availableCredit, 0);
+    const linkedDebt = debts.find((d) => d.id === source.linked_debt_id);
+    const usedCredit = getFundingSourceBalance(source, linkedDebt);
     return Math.min(Math.max((usedCredit / creditLimit) * 100, 0), 100);
   }
 
@@ -387,8 +374,14 @@ export default function CashFlowPage() {
   const creditAvailableTotal = useMemo(() => {
     return activeFundingSources
       .filter((source) => ["credit_card", "heloc", "ploc"].includes(source.type))
-      .reduce((sum, source) => sum + Number(source.available_credit || 0), 0);
-  }, [activeFundingSources]);
+      .reduce((sum, source) => {
+        const availableCredit = getFundingSourceAvailableCredit(
+          source,
+          debts.find((d) => d.id === source.linked_debt_id)
+        );
+        return sum + Number(availableCredit || 0);
+      }, 0);
+  }, [activeFundingSources, debts]);
 
   const creditLimitTotal = useMemo(() => {
     return activeFundingSources
@@ -783,17 +776,106 @@ export default function CashFlowPage() {
 
       if (creditLimit <= 0) return false;
 
-      const availableCredit = Number(source.available_credit || 0);
-      const usedCredit = Math.max(creditLimit - availableCredit, 0);
+      const usedCredit = getFundingSourceBalance(
+        source,
+        debts.find((d) => d.id === source.linked_debt_id)
+      );
 
       return (usedCredit / creditLimit) * 100 > 70;
     }).length;
-  }, [activeFundingSources]);
+  }, [activeFundingSources, debts]);
 
   const incomeBucketPlans = useMemo(() => {
     const creditFundingSourceTypes = ["credit_card", "heloc", "ploc"];
+    const today = new Date();
+    const todayOnly = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate()
+    );
+    const bucketsByDate: Record<string, any> = {};
+
+    for (const bucket of incomeBuckets) {
+      bucketsByDate[bucket.date] = { ...bucket };
+    }
+
+    const activeAssignedIncomeDates = new Set<string>();
+
+    for (const bill of activeBills) {
+      if (
+        bill.assigned_income_date &&
+        Number(bill.remaining || 0) > 0 &&
+        bill.nextDueDate >= todayOnly
+      ) {
+        activeAssignedIncomeDates.add(bill.assigned_income_date);
+      }
+    }
+
+    for (const debt of activeDebts) {
+      if (
+        debt.assigned_income_date &&
+        Number(debt.minimum_payment || 0) > 0 &&
+        debt.nextDueDate >= todayOnly
+      ) {
+        activeAssignedIncomeDates.add(debt.assigned_income_date);
+      }
+    }
+
+    for (const assignedDate of Array.from(activeAssignedIncomeDates)) {
+      if (bucketsByDate[assignedDate]) continue;
+
+      const assignedDateOnly = parseDateOnly(assignedDate);
+      const sources: string[] = [];
+      let amount = 0;
+
+      for (const income of incomes) {
+        if (!income?.next_date) continue;
+
+        let payDate = parseDateOnly(income.next_date);
+        const frequency = income.frequency || "monthly";
+        let safety = 0;
+
+        while (payDate > assignedDateOnly && safety < 120) {
+          if (frequency === "weekly") payDate = addDays(payDate, -7);
+          else if (frequency === "biweekly") payDate = addDays(payDate, -14);
+          else
+            payDate = addMonthsClamped(
+              payDate,
+              -getFrequencyMonthStep(frequency)
+            );
+          safety += 1;
+        }
+
+        while (payDate < assignedDateOnly && safety < 240) {
+          payDate = advanceIncomeDate(payDate, frequency);
+          safety += 1;
+        }
+
+        if (payDate.getTime() === assignedDateOnly.getTime()) {
+          amount += Number(income.amount || 0);
+          sources.push(income.name || "Income");
+        }
+      }
+
+      const sourceLabel =
+        sources.length === 0
+          ? "Assigned Income Pot"
+          : Array.from(new Set(sources)).join(" + ");
+
+      bucketsByDate[assignedDate] = {
+        id: `assigned-income-pot-${assignedDate}`,
+        date: assignedDate,
+        amount,
+        sources,
+        sourceName: sourceLabel,
+        frequency: "assigned",
+        label: `${formatShortDate(assignedDateOnly)} - ${sourceLabel}`,
+      };
+    }
     
-    return incomeBuckets.map((bucket) => {
+    return Object.values(bucketsByDate)
+      .sort((a: any, b: any) => String(a.date).localeCompare(String(b.date)))
+      .map((bucket) => {
       const assignedBills = activeBills.filter(
         (bill) => bill.assigned_income_date === bucket.date
       );
@@ -853,7 +935,7 @@ export default function CashFlowPage() {
         dropdownLabel,
       };
     });
-  }, [incomeBuckets, activeBills, activeDebts, fundingSources, buffer]);
+  }, [incomeBuckets, activeBills, activeDebts, incomes, fundingSources, buffer]);
 
   const operationalAlerts = useMemo(() => {
     const alerts: OperationalAlert[] = [];
@@ -1820,8 +1902,25 @@ export default function CashFlowPage() {
     </tr>
   ) : (
     fundingSources.map((source) => {
+      const linkedDebt = debts.find((debt) => debt.id === source.linked_debt_id);
+      const effectiveBalance = getFundingSourceBalance(source, linkedDebt);
+      const effectiveAvailableCredit = getFundingSourceAvailableCredit(
+        source,
+        linkedDebt
+      );
       const utilization = getFundingSourceUtilization(source);
       const isEditing = editingFundingSourceId === source.id;
+      const editingBalance = source.linked_debt_id
+        ? effectiveBalance
+        : Number(editingFundingSource.current_balance || 0);
+      const editingAvailableCredit =
+        editingFundingSource.credit_limit !== "" &&
+        Number.isFinite(Number(editingFundingSource.credit_limit))
+          ? Math.max(
+              Number(editingFundingSource.credit_limit) - editingBalance,
+              0
+            )
+          : null;
 
       return (
         <tr key={source.id}>
@@ -1870,17 +1969,22 @@ export default function CashFlowPage() {
             {isEditing ? (
               <input
                 type="number"
-                value={editingFundingSource.current_balance}
+                value={
+                  source.linked_debt_id
+                    ? String(effectiveBalance)
+                    : editingFundingSource.current_balance
+                }
                 onChange={(e) =>
                   setEditingFundingSource({
                     ...editingFundingSource,
                     current_balance: e.target.value,
                   })
                 }
+                readOnly={Boolean(source.linked_debt_id)}
                 className="beast-input text-right"
               />
             ) : (
-              `$${Number(source.current_balance || 0).toFixed(2)}`
+              `$${effectiveBalance.toFixed(2)}`
             )}
           </td>
 
@@ -1910,20 +2014,16 @@ export default function CashFlowPage() {
                 type="text"
                 readOnly
                 value={
-                  Number.isFinite(Number(editingFundingSource.credit_limit)) &&
-                  Number.isFinite(Number(editingFundingSource.current_balance))
-                    ? `$${(
-                        Number(editingFundingSource.credit_limit) -
-                        Number(editingFundingSource.current_balance)
-                      ).toFixed(2)}`
+                  editingAvailableCredit !== null
+                    ? `$${editingAvailableCredit.toFixed(2)}`
                     : editingFundingSource.available_credit || ""
                 }
                 className="beast-input text-right"
               />
-            ) : source.available_credit === null ? (
+            ) : effectiveAvailableCredit === null ? (
               "—"
             ) : (
-              `$${Number(source.available_credit || 0).toFixed(2)}`
+              `$${effectiveAvailableCredit.toFixed(2)}`
             )}
           </td>
 
