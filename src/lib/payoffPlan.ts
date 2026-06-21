@@ -1,4 +1,4 @@
-export type PayoffStrategy = "snowball" | "avalanche";
+export type PayoffStrategy = "minimum" | "snowball" | "avalanche";
 
 export type PayoffDebt = {
   id: string;
@@ -34,6 +34,8 @@ function chooseTarget(debts: PayoffDebt[], strategy: PayoffStrategy) {
   const active = debts.filter((d) => d.balance > 0);
 
   if (active.length === 0) return null;
+
+  if (strategy === "minimum") return null;
 
   if (strategy === "avalanche") {
     return [...active].sort(

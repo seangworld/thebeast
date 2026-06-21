@@ -10,7 +10,7 @@ import {
   sortObligationsByNextDueDate,
 } from "../cashflow/cashflowUtils";
 
-type PayoffStrategy = "snowball" | "avalanche";
+type PayoffStrategy = "minimum" | "snowball" | "avalanche";
 
 type Debt = {
   id: string;
@@ -39,6 +39,8 @@ function chooseTarget(debts: Debt[], strategy: PayoffStrategy) {
 
   if (active.length === 0) return null;
 
+  if (strategy === "minimum") return null;
+
   if (strategy === "avalanche") {
     return [...active].sort(
       (a, b) => Number(b.interest_rate || 0) - Number(a.interest_rate || 0)
@@ -48,6 +50,158 @@ function chooseTarget(debts: Debt[], strategy: PayoffStrategy) {
   return [...active].sort(
     (a, b) => Number(a.balance || 0) - Number(b.balance || 0)
   )[0];
+}
+
+type MinimumProjection = {
+  months_to_payoff: number | null;
+  total_interest: number;
+  total_paid: number;
+  debt_free_date: string;
+  first_target: string;
+  status: "projected" | "blocked";
+  notes: string;
+  payoff_months: any[];
+};
+
+function addMonthsClampedLocal(date: Date, months: number) {
+  const originalDay = date.getDate();
+  const next = new Date(date.getFullYear(), date.getMonth() + months, 1);
+  const lastDay = new Date(next.getFullYear(), next.getMonth() + 1, 0).getDate();
+  next.setDate(Math.min(originalDay, lastDay));
+  return next;
+}
+
+function formatMonthYear(date: Date) {
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function simulateMinimumProjection(debts: Debt[]): MinimumProjection {
+  const MAX_MONTHS = 1200;
+  const working = debts
+    .filter((debt) => Number(debt.balance || 0) > 0)
+    .map((debt) => ({
+      ...debt,
+      balance: money(Number(debt.balance || 0)),
+      minimum_payment: money(Number(debt.minimum_payment || 0)),
+      interest_rate: Number(debt.interest_rate || 0),
+    }));
+
+  if (working.length === 0) {
+    return {
+      months_to_payoff: 0,
+      total_interest: 0,
+      total_paid: 0,
+      debt_free_date: "Already debt-free",
+      first_target: "—",
+      status: "projected",
+      notes: "No active debt balance.",
+      payoff_months: [],
+    };
+  }
+
+  const blockedNames: string[] = [];
+  const projectable = working.filter((debt) => {
+    if (Number(debt.minimum_payment || 0) <= 0) {
+      blockedNames.push(`${debt.name}: missing minimum payment`);
+      return false;
+    }
+
+    const monthlyInterest = money(
+      (Number(debt.balance || 0) * Number(debt.interest_rate || 0)) / 100 / 12
+    );
+
+    if (monthlyInterest >= Number(debt.minimum_payment || 0)) {
+      blockedNames.push(`${debt.name}: minimum does not cover monthly interest`);
+      return false;
+    }
+
+    return true;
+  });
+
+  let month = 0;
+  let totalInterest = 0;
+  let totalPaid = 0;
+  const rows: any[] = [];
+
+  while (projectable.some((debt) => Number(debt.balance || 0) > 0) && month < MAX_MONTHS) {
+    month++;
+
+    let startingBalance = 0;
+    let monthlyInterest = 0;
+    let monthlyPaid = 0;
+    let monthlyPrincipal = 0;
+    let endingBalance = 0;
+
+    for (const debt of projectable) {
+      if (Number(debt.balance || 0) <= 0) continue;
+
+      const debtStartingBalance = money(Number(debt.balance || 0));
+      const interest = money(
+        (debtStartingBalance * Number(debt.interest_rate || 0)) / 100 / 12
+      );
+      const balanceAfterInterest = money(debtStartingBalance + interest);
+      const payment = money(
+        Math.min(Number(debt.minimum_payment || 0), balanceAfterInterest)
+      );
+      const principal = money(payment - interest);
+
+      debt.balance = money(balanceAfterInterest - payment);
+      startingBalance = money(startingBalance + debtStartingBalance);
+      monthlyInterest = money(monthlyInterest + interest);
+      monthlyPaid = money(monthlyPaid + payment);
+      monthlyPrincipal = money(monthlyPrincipal + principal);
+    }
+
+    endingBalance = money(
+      projectable.reduce((sum, debt) => sum + Number(debt.balance || 0), 0)
+    );
+    totalInterest = money(totalInterest + monthlyInterest);
+    totalPaid = money(totalPaid + monthlyPaid);
+
+    rows.push({
+      month,
+      target: "Minimum payments",
+      debt_starting_balance: startingBalance,
+      required_minimum: monthlyPaid,
+      monthly_interest: monthlyInterest,
+      principal_reduction: monthlyPrincipal,
+      recommended_minimum: monthlyPaid,
+      extra_attack: 0,
+      total_payment: monthlyPaid,
+      debt_ending_balance: endingBalance,
+      remaining_debt: endingBalance,
+      recovered_minimum: 0,
+      paid_off: endingBalance <= 0,
+      warning: "",
+    });
+  }
+
+  const timedOut = projectable.some((debt) => Number(debt.balance || 0) > 0);
+  const blocked = blockedNames.length > 0 || timedOut;
+  const debtFreeDate =
+    !blocked && month > 0
+      ? formatMonthYear(addMonthsClampedLocal(new Date(), month))
+      : "—";
+  const notes = [
+    blockedNames.join("; "),
+    timedOut ? `Projection exceeded ${MAX_MONTHS} months.` : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  return {
+    months_to_payoff: blocked ? null : month,
+    total_interest: money(totalInterest),
+    total_paid: money(totalPaid),
+    debt_free_date: debtFreeDate,
+    first_target: "Minimum payments",
+    status: blocked ? "blocked" : "projected",
+    notes: notes || "Minimum payments only. No extra attack or rollover.",
+    payoff_months: rows,
+  };
 }
 
 function simulatePayoffPlan({
@@ -297,14 +451,42 @@ export default function DebtsPage() {
     );
   }, [debtsWithNextDueDate]);
 
+  const minimumProjection = useMemo(() => {
+    return simulateMinimumProjection(activeDebts);
+  }, [activeDebts]);
+
   const payoffPlan = useMemo(() => {
+    if (strategy === "minimum") {
+      return minimumProjection;
+    }
+
     return simulatePayoffPlan({
       debts: activeDebts,
       recoveredMinimums,
       strategy,
       extraPayment: Number(extraPayment || 0),
     });
-  }, [activeDebts, recoveredMinimums, strategy, extraPayment]);
+  }, [activeDebts, recoveredMinimums, strategy, extraPayment, minimumProjection]);
+
+  const strategyComparisonRows = useMemo(() => {
+    return [
+      {
+        strategy: "Minimum",
+        debtFreeDate: minimumProjection.debt_free_date,
+        monthsToDebtFree:
+          minimumProjection.months_to_payoff === null
+            ? "—"
+            : String(minimumProjection.months_to_payoff),
+        totalInterest: minimumProjection.total_interest,
+        totalPaid: minimumProjection.total_paid,
+        notes: minimumProjection.notes,
+        status:
+          minimumProjection.status === "projected"
+            ? "Projected"
+            : "Needs attention",
+      },
+    ];
+  }, [minimumProjection]);
 
   const orderedDebts = useMemo(() => {
     return activeDebts;
@@ -407,7 +589,7 @@ export default function DebtsPage() {
       {
         user_id: userId,
         strategy,
-        extra_payment: Number(extraPayment || 0),
+        extra_payment: strategy === "minimum" ? 0 : Number(extraPayment || 0),
       },
       { onConflict: "user_id" }
     );
@@ -644,7 +826,9 @@ export default function DebtsPage() {
           <div className="beast-card">
             <div className="text-sm text-[#c7cfdb]">Payoff Time</div>
             <div className="mt-2 break-words text-2xl font-bold">
-              {payoffPlan.months_to_payoff} months
+              {payoffPlan.months_to_payoff === null
+                ? "Unable to project"
+                : `${payoffPlan.months_to_payoff} months`}
             </div>
           </div>
 
@@ -671,8 +855,10 @@ export default function DebtsPage() {
     {strategy}
   </div>
 
-  <p className="mt-2 text-sm text-[#7f8da3]">
-    {strategy === "avalanche"
+	  <p className="mt-2 text-sm text-[#7f8da3]">
+    {strategy === "minimum"
+      ? "Minimum payments only. No extra attack or rollover."
+      : strategy === "avalanche"
       ? "Lowest projected interest paid."
       : "Fastest emotional momentum and early wins."}
   </p>
@@ -688,6 +874,7 @@ export default function DebtsPage() {
                 onChange={(e) => setStrategy(e.target.value as PayoffStrategy)}
                 className="beast-input mt-2"
               >
+                <option value="minimum">Minimum</option>
                 <option value="snowball">Snowball</option>
                 <option value="avalanche">Avalanche</option>
               </select>
@@ -703,8 +890,14 @@ export default function DebtsPage() {
                 value={extraPayment}
                 onChange={(e) => setExtraPayment(e.target.value)}
                 placeholder="0"
+                disabled={strategy === "minimum"}
                 className="beast-input mt-2"
               />
+              {strategy === "minimum" ? (
+                <p className="mt-2 text-xs text-[#7f8da3]">
+                  Minimum strategy ignores extra attack payments.
+                </p>
+              ) : null}
             </div>
 
             <div className="flex items-end">
@@ -1238,6 +1431,56 @@ export default function DebtsPage() {
               </table>
             </div>
           )}
+        </section>
+
+        <section className="beast-panel overflow-hidden">
+          <div className="border-b border-[#2a3242] p-5">
+            <h2 className="text-xl font-bold">Strategy Comparison</h2>
+            <p className="mt-1 text-sm text-[#7f8da3]">
+              Baseline comparison for payoff strategies. Minimum uses only the
+              required payment on each active debt.
+            </p>
+          </div>
+
+          <div className="beast-table-wrap">
+            <table className="w-full min-w-[820px] text-sm">
+              <thead>
+                <tr>
+                  <th>Strategy</th>
+                  <th>Debt-Free Date</th>
+                  <th className="text-right">Months</th>
+                  <th className="text-right">Total Interest</th>
+                  <th className="text-right">Total Paid</th>
+                  <th>Status</th>
+                  <th>Notes</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {strategyComparisonRows.map((row) => (
+                  <tr key={row.strategy}>
+                    <td className="font-semibold">{row.strategy}</td>
+                    <td>{row.debtFreeDate}</td>
+                    <td className="text-right">{row.monthsToDebtFree}</td>
+                    <td className="text-right">
+                      ${row.totalInterest.toFixed(2)}
+                    </td>
+                    <td className="text-right">${row.totalPaid.toFixed(2)}</td>
+                    <td
+                      className={
+                        row.status === "Projected"
+                          ? "font-semibold text-green-300"
+                          : "font-semibold text-yellow-300"
+                      }
+                    >
+                      {row.status}
+                    </td>
+                    <td>{row.notes}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </section>
 
         <section className="beast-panel overflow-hidden">

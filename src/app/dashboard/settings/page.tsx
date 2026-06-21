@@ -86,7 +86,7 @@ export default function SettingsPage() {
       {
         user_id: userId,
         strategy,
-        extra_payment: Number(extraPayment || 0),
+        extra_payment: strategy === "minimum" ? 0 : Number(extraPayment || 0),
       },
       { onConflict: "user_id" }
     );
@@ -237,6 +237,7 @@ export default function SettingsPage() {
                 onChange={(e) => setStrategy(e.target.value)}
                 className="beast-input mt-2"
               >
+                <option value="minimum">Minimum</option>
                 <option value="snowball">Snowball</option>
                 <option value="avalanche">Avalanche</option>
               </select>
@@ -252,7 +253,13 @@ export default function SettingsPage() {
                 onChange={(e) => setExtraPayment(e.target.value)}
                 className="beast-input mt-2"
                 placeholder="0"
+                disabled={strategy === "minimum"}
               />
+              {strategy === "minimum" ? (
+                <p className="mt-2 text-xs text-[#7f8da3]">
+                  Minimum strategy ignores extra attack payments.
+                </p>
+              ) : null}
             </div>
           </div>
         </section>

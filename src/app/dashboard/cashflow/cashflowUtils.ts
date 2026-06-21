@@ -1,4 +1,4 @@
-export type PayoffStrategy = "snowball" | "avalanche";
+export type PayoffStrategy = "minimum" | "snowball" | "avalanche";
 
 export type BillFrequency =
   | "weekly"
@@ -79,6 +79,8 @@ export function getTargetDebt(debts: any[], strategy: PayoffStrategy) {
   const active = debts.filter((d) => Number(d.balance || 0) > 0);
 
   if (active.length === 0) return null;
+
+  if (strategy === "minimum") return null;
 
   if (strategy === "avalanche") {
     return [...active].sort(
