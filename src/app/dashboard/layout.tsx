@@ -55,6 +55,13 @@ export default function DashboardLayout({
               </Link>
 
               <Link
+                href="/dashboard/velocity"
+                className={navClass("/dashboard/velocity")}
+              >
+                Velocity Planner
+              </Link>
+
+              <Link
                 href="/dashboard/settings"
                 className={navClass("/dashboard/settings")}
               >
