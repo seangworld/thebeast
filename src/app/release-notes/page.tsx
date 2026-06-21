@@ -22,6 +22,55 @@ export default function ReleaseNotesPage() {
       </header>
 
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
+        {/* v1.9.1 Beta */}
+        <div className="mb-12 rounded-lg border border-[#2a3242] bg-[#0f1419] p-6">
+          <div className="mb-4">
+            <h2 className="text-2xl font-bold">v1.9.1 Beta</h2>
+            <p className="mt-1 text-sm text-[#7f8da3]">June 21, 2026</p>
+          </div>
+
+          <div className="space-y-4 text-sm">
+            <div>
+              <h3 className="font-semibold text-[#c7cfdb]">New</h3>
+              <ul className="space-y-2 pl-4">
+                <li className="text-[#a5b4c7]">
+                  <span className="text-blue-400">✓</span> Bills and debts now
+                  prioritize upcoming due dates.
+                </li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-[#c7cfdb]">Improved</h3>
+              <ul className="space-y-2 pl-4">
+                <li className="text-[#a5b4c7]">
+                  <span className="text-blue-400">✓</span> Cash Flow assignment
+                  validation reliability.
+                </li>
+                <li className="text-[#a5b4c7]">
+                  <span className="text-blue-400">✓</span> Obligation
+                  visibility and planning workflow.
+                </li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-[#c7cfdb]">Fixed</h3>
+              <ul className="space-y-2 pl-4">
+                <li className="text-[#a5b4c7]">
+                  <span className="text-blue-400">✓</span> Active obligations
+                  retain valid assignment buckets even after the assigned income
+                  date passes.
+                </li>
+                <li className="text-[#a5b4c7]">
+                  <span className="text-blue-400">✓</span> Additional Cash Flow
+                  stability improvements identified during regression testing.
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
         {/* v1.9.0 Beta */}
         <div className="mb-12 rounded-lg border border-[#2a3242] bg-[#0f1419] p-6">
           <div className="mb-4">

@@ -3,8 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-
-const BEAST_VERSION = "v1.9.0 Beta";
+import { APP_VERSION } from "@/lib/appVersion";
 
 export default function DashboardPage() {
   const [debts, setDebts] = useState<any[]>([]);
@@ -101,7 +100,7 @@ export default function DashboardPage() {
         <section className="beast-page-header space-y-4">
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div>
-              <p className="beast-kicker">The Beast {BEAST_VERSION}</p>
+              <p className="beast-kicker">The Beast {APP_VERSION}</p>
               <h1 className="beast-title">Dashboard</h1>
               <p className="beast-subtitle">
                 Your debt payoff and cash flow command center.

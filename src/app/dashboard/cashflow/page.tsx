@@ -8,6 +8,7 @@ import FundingRecommendations from "./components/FundingRecommendations";
 import BillsSection from "./components/BillsSection";
 import DebtsSection from "./components/DebtsSection";
 import { useCashFlow } from "./useCashFlow";
+import { APP_VERSION } from "@/lib/appVersion";
 import {
   BillFrequency,
   FundingSource,
@@ -33,6 +34,7 @@ import {
   parseDateOnly,
   getFundingSourceBalance,
   getFundingSourceAvailableCredit,
+  sortObligationsByNextDueDate,
 } from "./cashflowUtils";
 
 const billFrequencyOptions: { value: BillFrequency; label: string }[] = [
@@ -278,14 +280,16 @@ export default function CashFlowPage() {
       let remaining = currentCycleRemaining;
 
       if (currentCycleRemaining <= 0) {
-        if (frequency === "weekly") nextDueDate = addDays(currentCycleDueDate, 7);
-        else if (frequency === "biweekly")
-          nextDueDate = addDays(currentCycleDueDate, 14);
-        else
-          nextDueDate = addMonthsClamped(
-            currentCycleDueDate,
-            getFrequencyMonthStep(frequency)
-          );
+        if (!bill.next_due_date_after_payment) {
+          if (frequency === "weekly") nextDueDate = addDays(currentCycleDueDate, 7);
+          else if (frequency === "biweekly")
+            nextDueDate = addDays(currentCycleDueDate, 14);
+          else
+            nextDueDate = addMonthsClamped(
+              currentCycleDueDate,
+              getFrequencyMonthStep(frequency)
+            );
+        }
 
         remaining = amount;
       }
@@ -312,17 +316,15 @@ export default function CashFlowPage() {
   }, [bills, paymentsByBillId, cycleMonth]);
 
   const activeBills = useMemo(() => {
-    return billsWithPaymentStatus
-      .filter((bill) => !bill.is_archived)
-      .sort(
-        (a, b) =>
-          new Date(a.nextDueDate).getTime() -
-          new Date(b.nextDueDate).getTime()
-      );
+    return sortObligationsByNextDueDate(
+      billsWithPaymentStatus.filter((bill) => !bill.is_archived)
+    );
   }, [billsWithPaymentStatus]);
 
   const archivedBills = useMemo(() => {
-    return billsWithPaymentStatus.filter((bill) => bill.is_archived);
+    return sortObligationsByNextDueDate(
+      billsWithPaymentStatus.filter((bill) => bill.is_archived)
+    );
   }, [billsWithPaymentStatus]);
 
   const incomeBuckets = useMemo(() => {
@@ -405,25 +407,50 @@ export default function CashFlowPage() {
       unassigned: 0,
     };
 
-    // Group billPayments by funding source type (current cycle bills only)
-    for (const payment of billPayments) {
-      if (!payment.funding_source_id) {
-        coverage.unassigned += Number(payment.amount_paid || 0);
+    function addCoverageAmount(fundingSourceId: string | null, amount: number) {
+      if (!fundingSourceId) {
+        coverage.unassigned += amount;
+        return;
+      }
+
+      const source = fundingSources.find((s) => s.id === fundingSourceId);
+      if (!source) {
+        coverage.unassigned += amount;
+        return;
+      }
+
+      const sourceType = source.type as keyof PaymentSourceCoverageType;
+      if (sourceType in coverage) {
+        coverage[sourceType] += amount;
       } else {
-        const source = fundingSources.find((s) => s.id === payment.funding_source_id);
-        if (source) {
-          const sourceType = source.type as keyof PaymentSourceCoverageType;
-          if (sourceType in coverage) {
-            coverage[sourceType] += Number(payment.amount_paid || 0);
-          } else {
-            coverage.unassigned += Number(payment.amount_paid || 0);
-          }
-        }
+        coverage.unassigned += amount;
       }
     }
 
+    for (const payment of billPayments) {
+      addCoverageAmount(
+        payment.funding_source_id || null,
+        Number(payment.amount_paid || 0)
+      );
+    }
+
+    for (const payment of debtPaymentRows) {
+      if (!String(payment.cycle_due_date || "").startsWith(cycleMonth)) {
+        continue;
+      }
+
+      if (!payment.funding_source_id) {
+        continue;
+      }
+
+      addCoverageAmount(
+        payment.funding_source_id,
+        Number(payment.amount || 0)
+      );
+    }
+
     return coverage;
-  }, [billPayments, fundingSources]);
+  }, [billPayments, cycleMonth, debtPaymentRows, fundingSources]);
 
   const fundingIntelligence = useMemo(() => {
     const insights: Array<{ type: "warning" | "info"; message: string }> = [];
@@ -640,11 +667,15 @@ export default function CashFlowPage() {
   }, [debts, debtPaymentsByDebtAndCycle]);
 
   const activeDebts = useMemo(() => {
-    return debtsWithAssignmentStatus.filter((debt) => !debt.is_archived);
+    return sortObligationsByNextDueDate(
+      debtsWithAssignmentStatus.filter((debt) => !debt.is_archived)
+    );
   }, [debtsWithAssignmentStatus]);
 
   const archivedDebts = useMemo(() => {
-    return debtsWithAssignmentStatus.filter((debt) => debt.is_archived);
+    return sortObligationsByNextDueDate(
+      debtsWithAssignmentStatus.filter((debt) => debt.is_archived)
+    );
   }, [debtsWithAssignmentStatus]);
 
   const billsAhead = useMemo(() => {
@@ -660,8 +691,7 @@ export default function CashFlowPage() {
       .filter((bill) => {
         if (Number(bill.remaining || 0) <= 0) return false;
         return bill.nextDueDate >= todayOnly && bill.nextDueDate <= windowEnd;
-      })
-      .sort((a, b) => a.nextDueDate.getTime() - b.nextDueDate.getTime());
+      });
 
     return {
       bills: upcoming,
@@ -740,16 +770,20 @@ export default function CashFlowPage() {
   }, [lookaheadDays]);
 
   const unassignedBills = useMemo(() => {
-    return activeBills.filter(
-      (bill) =>
-        !bill.assigned_income_date && bill.nextDueDate <= planningWindowEnd
+    return sortObligationsByNextDueDate(
+      activeBills.filter(
+        (bill) =>
+          !bill.assigned_income_date && bill.nextDueDate <= planningWindowEnd
+      )
     );
   }, [activeBills, planningWindowEnd]);
 
   const unassignedDebts = useMemo(() => {
-    return activeDebts.filter(
-      (debt) =>
-        !debt.assigned_income_date && debt.nextDueDate <= planningWindowEnd
+    return sortObligationsByNextDueDate(
+      activeDebts.filter(
+        (debt) =>
+          !debt.assigned_income_date && debt.nextDueDate <= planningWindowEnd
+      )
     );
   }, [activeDebts, planningWindowEnd]);
 
@@ -876,12 +910,12 @@ export default function CashFlowPage() {
     return Object.values(bucketsByDate)
       .sort((a: any, b: any) => String(a.date).localeCompare(String(b.date)))
       .map((bucket) => {
-      const assignedBills = activeBills.filter(
-        (bill) => bill.assigned_income_date === bucket.date
+      const assignedBills = sortObligationsByNextDueDate(
+        activeBills.filter((bill) => bill.assigned_income_date === bucket.date)
       );
 
-      const assignedDebts = activeDebts.filter(
-        (debt) => debt.assigned_income_date === bucket.date
+      const assignedDebts = sortObligationsByNextDueDate(
+        activeDebts.filter((debt) => debt.assigned_income_date === bucket.date)
       );
 
       // Only count bills funded by checking/cash/savings accounts toward paycheck balance
@@ -1124,7 +1158,7 @@ export default function CashFlowPage() {
         <section className="beast-page-header">
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="beast-kicker">The Beast v1.4.6 Beta</p>
+              <p className="beast-kicker">The Beast {APP_VERSION}</p>
               <h1 className="beast-title">Cash Flow</h1>
               <p className="beast-subtitle">
                 Manage paychecks, bills, debt minimums, Monthly Extra Attack payments,

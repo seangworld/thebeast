@@ -175,6 +175,31 @@ export function formatShortDate(date: Date) {
   return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
 }
 
+export function compareObligationsByNextDueDate(a: any, b: any) {
+  const aTime =
+    a?.nextDueDate instanceof Date && !Number.isNaN(a.nextDueDate.getTime())
+      ? a.nextDueDate.getTime()
+      : Number.POSITIVE_INFINITY;
+  const bTime =
+    b?.nextDueDate instanceof Date && !Number.isNaN(b.nextDueDate.getTime())
+      ? b.nextDueDate.getTime()
+      : Number.POSITIVE_INFINITY;
+
+  if (aTime !== bTime) return aTime - bTime;
+
+  const aName = String(a?.name || "");
+  const bName = String(b?.name || "");
+  const nameCompare = aName.localeCompare(bName);
+
+  if (nameCompare !== 0) return nameCompare;
+
+  return String(a?.id || "").localeCompare(String(b?.id || ""));
+}
+
+export function sortObligationsByNextDueDate<T>(obligations: T[]) {
+  return [...obligations].sort(compareObligationsByNextDueDate);
+}
+
 export function parseDateOnly(value: string) {
   return new Date(`${value}T00:00:00`);
 }

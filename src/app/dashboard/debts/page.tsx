@@ -3,6 +3,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import {
+  formatShortDate,
+  getCurrentDebtCycleDueDate,
+  parseDateOnly,
+  sortObligationsByNextDueDate,
+} from "../cashflow/cashflowUtils";
 
 type PayoffStrategy = "snowball" | "avalanche";
 
@@ -19,6 +25,9 @@ type Debt = {
   minimum_payment_floor?: number;
   credit_limit?: number;
   available_credit?: number;
+  next_due_date_after_payment?: string | null;
+  nextDueDate?: Date;
+  nextDueDateDisplay?: string;
 };
 
 function money(value: number) {
@@ -242,27 +251,51 @@ export default function DebtsPage() {
   const focusReloadInFlightRef = useRef(false);
   const lastFocusReloadAtRef = useRef(0);
 
-  const activeDebts = useMemo(() => {
-    return debts.filter(
-      (debt) => !Boolean(debt.is_archived) && Number(debt.balance || 0) > 0
-    );
+  const debtsWithNextDueDate = useMemo(() => {
+    return debts.map((debt) => {
+      let nextDueDate = getCurrentDebtCycleDueDate(debt);
+
+      if (debt.next_due_date_after_payment) {
+        const parsed = parseDateOnly(debt.next_due_date_after_payment);
+
+        if (!Number.isNaN(parsed.getTime())) {
+          nextDueDate = parsed;
+        }
+      }
+
+      return {
+        ...debt,
+        nextDueDate,
+        nextDueDateDisplay: formatShortDate(nextDueDate),
+      };
+    });
   }, [debts]);
+
+  const activeDebts = useMemo(() => {
+    return sortObligationsByNextDueDate(
+      debtsWithNextDueDate.filter(
+        (debt) => !Boolean(debt.is_archived) && Number(debt.balance || 0) > 0
+      )
+    );
+  }, [debtsWithNextDueDate]);
 
   // Debts that are archived or already paid off still contribute their
   // minimum payments as recovered attack capacity instead of vanishing.
   const recoveredMinimums = useMemo(() => {
-    return debts
+    return debtsWithNextDueDate
       .filter(
         (debt) => Boolean(debt.is_archived) || Number(debt.balance || 0) <= 0
       )
       .reduce((sum, debt) => sum + Number(debt.minimum_payment || 0), 0);
-  }, [debts]);
+  }, [debtsWithNextDueDate]);
 
   const archivedDebts = useMemo(() => {
-    return debts.filter(
-      (debt) => Boolean(debt.is_archived) || Number(debt.balance || 0) <= 0
+    return sortObligationsByNextDueDate(
+      debtsWithNextDueDate.filter(
+        (debt) => Boolean(debt.is_archived) || Number(debt.balance || 0) <= 0
+      )
     );
-  }, [debts]);
+  }, [debtsWithNextDueDate]);
 
   const payoffPlan = useMemo(() => {
     return simulatePayoffPlan({
@@ -274,16 +307,8 @@ export default function DebtsPage() {
   }, [activeDebts, recoveredMinimums, strategy, extraPayment]);
 
   const orderedDebts = useMemo(() => {
-    if (strategy === "avalanche") {
-      return [...activeDebts].sort(
-        (a, b) => Number(b.interest_rate || 0) - Number(a.interest_rate || 0)
-      );
-    }
-
-    return [...activeDebts].sort(
-      (a, b) => Number(a.balance || 0) - Number(b.balance || 0)
-    );
-  }, [activeDebts, strategy]);
+    return activeDebts;
+  }, [activeDebts]);
 
   const totalDebt = activeDebts.reduce(
     (sum, d) => sum + Number(d.balance || 0),
@@ -848,7 +873,7 @@ export default function DebtsPage() {
                   <th className="text-right">Balance</th>
                   <th className="text-right">Minimum</th>
                   <th className="text-right">APR</th>
-                  <th className="text-right">Due Day</th>
+                  <th className="text-right">Next Due</th>
                   <th className="text-right">Action</th>
                 </tr>
               </thead>
@@ -987,7 +1012,7 @@ export default function DebtsPage() {
                             className="beast-input"
                           />
                         ) : (
-                          debt.due_date || 1
+                          debt.nextDueDateDisplay || debt.due_date || 1
                         )}
                       </td>
                   
@@ -1067,7 +1092,7 @@ export default function DebtsPage() {
                     <th className="text-right">Balance</th>
                     <th className="text-right">Minimum</th>
                     <th className="text-right">APR</th>
-                    <th className="text-right">Due Day</th>
+                    <th className="text-right">Next Due</th>
                     <th className="text-right">Status</th>
                     <th className="text-right">Action</th>
                   </tr>
@@ -1141,7 +1166,7 @@ export default function DebtsPage() {
                               className="beast-input"
                             />
                           ) : (
-                            debt.due_date || 1
+                            debt.nextDueDateDisplay || debt.due_date || 1
                           )}
                         </td>
 

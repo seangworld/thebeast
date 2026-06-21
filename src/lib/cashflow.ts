@@ -107,10 +107,9 @@ export function buildCashTimeline({
     const billAmount = Number(bill.amount || 0);
     if (billAmount <= 0) return;
 
-    let current = getFirstDueDateFromDay(
-      startOnly,
-      Number(bill.due_date || 1)
-    );
+    let current = bill.nextDueDateOverride
+      ? new Date(bill.nextDueDateOverride)
+      : getFirstDueDateFromDay(startOnly, Number(bill.due_date || 1));
     let safety = 0;
 
     while (current <= endDate && safety < 480) {

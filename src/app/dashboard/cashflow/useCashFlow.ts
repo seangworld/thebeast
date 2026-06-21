@@ -15,10 +15,8 @@ import {
   getCycleMonth,
   getCurrentBillCycleDueDate,
   getCurrentDebtCycleDueDate,
-  getDebtCycleDueDate,
   getFrequencyMonthStep,
   getTargetDebt,
-  parseDateOnly,
   toDateInputValue,
   PayoffStrategy,
   FundingSource,
@@ -440,8 +438,7 @@ export function useCashFlow() {
 
     const debtsForTimeline = (activeDebtRows || []).map((debt) => {
       const minimumPayment = Number(debt.minimum_payment || 0);
-      const dueDay = Number(debt.due_date || 1);
-      const currentCycleDueDate = getDebtCycleDueDate(dueDay);
+      const currentCycleDueDate = getCurrentDebtCycleDueDate(debt);
       const cycleKey = `${debt.id}||${currentCycleDueDate
         .toISOString()
         .slice(0, 10)}`;
@@ -465,11 +462,30 @@ export function useCashFlow() {
         const amount = Number(bill.amount || 0);
         const paid = Number(paymentTotals[bill.id] || 0);
         const remaining = Math.max(amount - paid, 0);
+        const frequency = bill.frequency || "monthly";
+        const currentCycleDueDate = getCurrentBillCycleDueDate(
+          bill,
+          cycleMonth
+        );
+        let nextDueDateOverride = currentCycleDueDate;
+
+        if (remaining <= 0 && !bill.next_due_date_after_payment) {
+          nextDueDateOverride =
+            frequency === "weekly"
+              ? addDays(currentCycleDueDate, 7)
+              : frequency === "biweekly"
+              ? addDays(currentCycleDueDate, 14)
+              : addMonthsClamped(
+                  currentCycleDueDate,
+                  getFrequencyMonthStep(frequency)
+                );
+        }
 
         return {
           ...bill,
-          amount: remaining,
-          frequency: bill.frequency || "monthly",
+          amount: remaining > 0 ? remaining : amount,
+          frequency,
+          nextDueDateOverride,
         };
       })
       .filter((bill) => Number(bill.amount || 0) > 0);
@@ -760,19 +776,20 @@ export function useCashFlow() {
       nextDueDateAfterPayment = toDateInputValue(nextDueDate);
     }
 
-    const updatePayload: Record<string, any> = {
-      assigned_income_date: null,
-    };
+    const updatePayload: Record<string, any> = {};
     if (nextDueDateAfterPayment) {
+      updatePayload.assigned_income_date = null;
       updatePayload.next_due_date_after_payment = nextDueDateAfterPayment;
     }
 
-    const { error: updateError } = await supabase
-      .from("bill_events")
-      .update(updatePayload)
-      .eq("id", bill.id);
-    if (updateError) {
-      console.warn("Warning: Could not persist bill next due date:", updateError);
+    if (Object.keys(updatePayload).length > 0) {
+      const { error: updateError } = await supabase
+        .from("bill_events")
+        .update(updatePayload)
+        .eq("id", bill.id);
+      if (updateError) {
+        console.warn("Warning: Could not persist bill next due date:", updateError);
+      }
     }
 
     setPartialPayments((prev) => ({
@@ -1039,9 +1056,9 @@ export function useCashFlow() {
 
       const updatePayload: Record<string, any> = {
         balance: newBalance,
-        assigned_income_date: null,
       };
       if (nextDueDateAfterPayment) {
+        updatePayload.assigned_income_date = null;
         updatePayload.next_due_date_after_payment = nextDueDateAfterPayment;
       }
 

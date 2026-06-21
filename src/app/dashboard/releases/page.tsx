@@ -2,6 +2,19 @@ import Link from "next/link";
 
 const releaseNotes = [
   {
+    version: "v1.9.1 Beta",
+    date: "June 21, 2026",
+    title: "Due Date Visibility & Cash Flow Stability Update",
+    items: [
+      "New: Bills and debts now prioritize upcoming due dates.",
+      "Improved: Cash Flow assignment validation reliability.",
+      "Improved: Obligation visibility and planning workflow.",
+      "Fixed: Active obligations retain valid assignment buckets even after the assigned income date passes.",
+      "Fixed: Additional Cash Flow stability improvements identified during regression testing.",
+    ],
+  },
+
+  {
     version: "v1.5.1 Beta",
     date: "May 19, 2026",
     title: "Operational Dashboard Refinement",
