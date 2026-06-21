@@ -63,6 +63,19 @@ type MinimumProjection = {
   payoff_months: any[];
 };
 
+type StrategyComparisonRow = {
+  strategy: "Minimum" | "Snowball" | "Avalanche";
+  debtFreeDate: string;
+  monthsToDebtFree: string;
+  monthsValue: number | null;
+  totalInterest: number;
+  totalPaid: number;
+  status: "Projected" | "Needs attention";
+  notes: string;
+  isBestInterest: boolean;
+  isFastest: boolean;
+};
+
 function addMonthsClampedLocal(date: Date, months: number) {
   const originalDay = date.getDate();
   const next = new Date(date.getFullYear(), date.getMonth() + months, 1);
@@ -201,6 +214,64 @@ function simulateMinimumProjection(debts: Debt[]): MinimumProjection {
     status: blocked ? "blocked" : "projected",
     notes: notes || "Minimum payments only. No extra attack or rollover.",
     payoff_months: rows,
+  };
+}
+
+function summarizePayoffProjection({
+  strategy,
+  result,
+  activeDebtCount,
+  notes,
+}: {
+  strategy: "Snowball" | "Avalanche";
+  result: {
+    months_to_payoff: number;
+    total_interest: number;
+    total_paid: number;
+    payoff_months: any[];
+  };
+  activeDebtCount: number;
+  notes: string;
+}): StrategyComparisonRow {
+  if (activeDebtCount === 0) {
+    return {
+      strategy,
+      debtFreeDate: "Already debt-free",
+      monthsToDebtFree: "0",
+      monthsValue: 0,
+      totalInterest: 0,
+      totalPaid: 0,
+      status: "Projected",
+      notes: "No active debt balance.",
+      isBestInterest: false,
+      isFastest: false,
+    };
+  }
+
+  const lastMonth = result.payoff_months[result.payoff_months.length - 1];
+  const remainingDebt = Number(lastMonth?.remaining_debt ?? Number.POSITIVE_INFINITY);
+  const projected =
+    result.payoff_months.length > 0 &&
+    remainingDebt <= 0 &&
+    Number(result.months_to_payoff || 0) < 600;
+  const monthsValue = projected ? Number(result.months_to_payoff || 0) : null;
+
+  return {
+    strategy,
+    debtFreeDate:
+      monthsValue === null
+        ? "—"
+        : formatMonthYear(addMonthsClampedLocal(new Date(), monthsValue)),
+    monthsToDebtFree: monthsValue === null ? "—" : String(monthsValue),
+    monthsValue,
+    totalInterest: money(Number(result.total_interest || 0)),
+    totalPaid: money(Number(result.total_paid || 0)),
+    status: projected ? "Projected" : "Needs attention",
+    notes: projected
+      ? notes
+      : lastMonth?.warning || "Projection did not reach debt-free within the guard limit.",
+    isBestInterest: false,
+    isFastest: false,
   };
 }
 
@@ -455,21 +526,38 @@ export default function DebtsPage() {
     return simulateMinimumProjection(activeDebts);
   }, [activeDebts]);
 
+  const snowballProjection = useMemo(() => {
+    return simulatePayoffPlan({
+      debts: activeDebts,
+      recoveredMinimums,
+      strategy: "snowball",
+      extraPayment: Number(extraPayment || 0),
+    });
+  }, [activeDebts, recoveredMinimums, extraPayment]);
+
+  const avalancheProjection = useMemo(() => {
+    return simulatePayoffPlan({
+      debts: activeDebts,
+      recoveredMinimums,
+      strategy: "avalanche",
+      extraPayment: Number(extraPayment || 0),
+    });
+  }, [activeDebts, recoveredMinimums, extraPayment]);
+
   const payoffPlan = useMemo(() => {
     if (strategy === "minimum") {
       return minimumProjection;
     }
 
-    return simulatePayoffPlan({
-      debts: activeDebts,
-      recoveredMinimums,
-      strategy,
-      extraPayment: Number(extraPayment || 0),
-    });
-  }, [activeDebts, recoveredMinimums, strategy, extraPayment, minimumProjection]);
+    if (strategy === "avalanche") {
+      return avalancheProjection;
+    }
+
+    return snowballProjection;
+  }, [avalancheProjection, minimumProjection, snowballProjection, strategy]);
 
   const strategyComparisonRows = useMemo(() => {
-    return [
+    const rows: StrategyComparisonRow[] = [
       {
         strategy: "Minimum",
         debtFreeDate: minimumProjection.debt_free_date,
@@ -480,13 +568,90 @@ export default function DebtsPage() {
         totalInterest: minimumProjection.total_interest,
         totalPaid: minimumProjection.total_paid,
         notes: minimumProjection.notes,
+        monthsValue: minimumProjection.months_to_payoff,
         status:
           minimumProjection.status === "projected"
             ? "Projected"
             : "Needs attention",
+        isBestInterest: false,
+        isFastest: false,
       },
+      summarizePayoffProjection({
+        strategy: "Snowball",
+        result: snowballProjection,
+        activeDebtCount: activeDebts.length,
+        notes: "Smallest balance first. Freed minimums and extra attack roll forward.",
+      }),
+      summarizePayoffProjection({
+        strategy: "Avalanche",
+        result: avalancheProjection,
+        activeDebtCount: activeDebts.length,
+        notes: "Highest APR first. Freed minimums and extra attack roll forward.",
+      }),
     ];
-  }, [minimumProjection]);
+
+    const projectedRows = rows.filter(
+      (row) => row.status === "Projected" && row.monthsValue !== null
+    );
+    const bestInterest =
+      projectedRows.length > 0
+        ? Math.min(...projectedRows.map((row) => row.totalInterest))
+        : null;
+    const fastestMonths =
+      projectedRows.length > 0
+        ? Math.min(...projectedRows.map((row) => Number(row.monthsValue)))
+        : null;
+    const minimumRow = rows.find(
+      (row) => row.strategy === "Minimum" && row.status === "Projected"
+    );
+
+    return rows.map((row) => {
+      const interestSavings =
+        minimumRow && row.strategy !== "Minimum" && row.status === "Projected"
+          ? money(minimumRow.totalInterest - row.totalInterest)
+          : null;
+      const monthSavings =
+        minimumRow &&
+        row.strategy !== "Minimum" &&
+        row.status === "Projected" &&
+        minimumRow.monthsValue !== null &&
+        row.monthsValue !== null
+          ? minimumRow.monthsValue - row.monthsValue
+          : null;
+      const comparisonNote =
+        interestSavings !== null && monthSavings !== null
+          ? ` ${
+              interestSavings >= 0
+                ? `Saves $${interestSavings.toFixed(2)} interest`
+                : `Costs $${Math.abs(interestSavings).toFixed(2)} more interest`
+            } and ${
+              monthSavings === 0
+                ? "matches Minimum payoff timing"
+                : `${Math.abs(monthSavings)} month${
+                    Math.abs(monthSavings) === 1 ? "" : "s"
+                  } ${monthSavings > 0 ? "faster" : "slower"}`
+            } vs Minimum.`
+          : "";
+
+      return {
+        ...row,
+        isBestInterest:
+          bestInterest !== null &&
+          row.status === "Projected" &&
+          row.totalInterest === bestInterest,
+        isFastest:
+          fastestMonths !== null &&
+          row.status === "Projected" &&
+          row.monthsValue === fastestMonths,
+        notes: `${row.notes}${comparisonNote}`,
+      };
+    });
+  }, [
+    activeDebts.length,
+    avalancheProjection,
+    minimumProjection,
+    snowballProjection,
+  ]);
 
   const orderedDebts = useMemo(() => {
     return activeDebts;
@@ -1459,7 +1624,21 @@ export default function DebtsPage() {
               <tbody>
                 {strategyComparisonRows.map((row) => (
                   <tr key={row.strategy}>
-                    <td className="font-semibold">{row.strategy}</td>
+                    <td className="font-semibold">
+                      <div>{row.strategy}</div>
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {row.isBestInterest ? (
+                          <span className="rounded border border-green-400/50 bg-green-950/30 px-2 py-1 text-xs text-green-200">
+                            Best Interest Savings
+                          </span>
+                        ) : null}
+                        {row.isFastest ? (
+                          <span className="rounded border border-sky-300/50 bg-sky-950/30 px-2 py-1 text-xs text-sky-200">
+                            Fastest Payoff
+                          </span>
+                        ) : null}
+                      </div>
+                    </td>
                     <td>{row.debtFreeDate}</td>
                     <td className="text-right">{row.monthsToDebtFree}</td>
                     <td className="text-right">
