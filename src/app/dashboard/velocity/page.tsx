@@ -50,6 +50,50 @@ const sourceTypes: { value: VelocitySourceType; label: string }[] = [
   { value: "other", label: "Other" },
 ];
 
+const strategyLabels: Record<string, string> = {
+  avalanche: "Avalanche",
+  snowball: "Snowball",
+  minimum: "Minimum",
+};
+
+const velocityRoadmap = [
+  {
+    phase: "Phase 1",
+    items: [
+      "Velocity Lite",
+      "Chunk Recommendations",
+      "Target Debt Recommendations",
+      "Recovery Timeline",
+    ],
+  },
+  {
+    phase: "Phase 2",
+    items: [
+      "Multiple Velocity Sources",
+      "Source Ranking Engine",
+      "Best Source Recommendation",
+      "Source Comparison",
+    ],
+  },
+  {
+    phase: "Phase 3",
+    items: [
+      "Cash Flow Timing Optimization",
+      "Due Date Optimization",
+      "Payment Timing Recommendations",
+    ],
+  },
+  {
+    phase: "Phase 4",
+    items: [
+      "Advanced Velocity Banking",
+      "Daily Interest Modeling",
+      "Average Daily Balance Analysis",
+      "Full Velocity Simulation Engine",
+    ],
+  },
+];
+
 function parseAmount(value: string) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : 0;
@@ -70,6 +114,10 @@ function formatMoney(value: number) {
 
 function formatPercent(value: number) {
   return `${value.toFixed(2)}%`;
+}
+
+function formatStrategyName(value: string) {
+  return strategyLabels[value] || value;
 }
 
 function formatRecoveryMonths(value: number | null) {
@@ -373,7 +421,7 @@ export default function VelocityPlannerPage() {
     },
     {
       label: "Current Strategy",
-      value: loading ? "Loading..." : strategy,
+      value: loading ? "Loading..." : formatStrategyName(strategy),
       detail:
         extraAttack == null ? undefined : `Extra attack: ${formatMoney(extraAttack)}`,
     },
@@ -600,7 +648,7 @@ export default function VelocityPlannerPage() {
         <section className="grid gap-4 lg:grid-cols-2">
           <div className="beast-card">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <h2 className="text-xl font-bold">Velocity Source</h2>
+              <h2 className="text-xl font-bold">Primary Velocity Source</h2>
               <span className="w-fit rounded border border-[#2a3242] px-3 py-1 text-xs font-semibold text-[#c7cfdb]">
                 Planning Settings
               </span>
@@ -668,6 +716,20 @@ export default function VelocityPlannerPage() {
                   placeholder="0.00"
                 />
               </div>
+            </div>
+
+            <div className="mt-5 rounded-lg border border-[#2a3242] bg-[#111827]/60 p-4 text-sm text-[#c7cfdb]">
+              <div className="font-semibold text-[#e5edf7]">
+                Current Version:
+              </div>
+              <p className="mt-1">
+                Velocity Lite uses a single Primary Velocity Source.
+              </p>
+              <p className="mt-3 text-[#9aa7b8]">
+                Future versions will support multiple Velocity Sources (HELOCs,
+                PLOCs, credit cards, and other revolving credit accounts) with
+                automatic source ranking and recommendations.
+              </p>
             </div>
           </div>
 
@@ -926,17 +988,19 @@ export default function VelocityPlannerPage() {
         <section className="beast-card">
           <h2 className="text-xl font-bold">Full Velocity Roadmap</h2>
           <div className="mt-4 grid gap-3 md:grid-cols-4">
-            {[
-              ["Phase 1", "Velocity Lite"],
-              ["Phase 2", "Velocity Source Modeling"],
-              ["Phase 3", "Cash Flow Timing Optimization"],
-              ["Phase 4", "Advanced Velocity Banking"],
-            ].map(([phase, title]) => (
-              <div key={phase} className="rounded-lg border border-[#2a3242] p-4">
+            {velocityRoadmap.map((phase) => (
+              <div
+                key={phase.phase}
+                className="rounded-lg border border-[#2a3242] p-4"
+              >
                 <div className="text-sm font-semibold text-[#38bdf8]">
-                  {phase}
+                  {phase.phase}
                 </div>
-                <div className="mt-2 font-bold">{title}</div>
+                <ul className="mt-3 space-y-2 text-sm text-[#c7cfdb]">
+                  {phase.items.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
               </div>
             ))}
           </div>
