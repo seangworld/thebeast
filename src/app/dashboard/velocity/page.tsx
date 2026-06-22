@@ -10,6 +10,13 @@ type SnapshotValue = {
   alert?: boolean;
 };
 
+type RecommendationValue = {
+  label: string;
+  value: string;
+  detail?: string;
+  alert?: boolean;
+};
+
 type VelocitySourceType = "heloc" | "ploc" | "credit_card" | "other";
 
 type VelocitySettings = {
@@ -46,6 +53,10 @@ const sourceTypes: { value: VelocitySourceType; label: string }[] = [
 function parseAmount(value: string) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function clampToZero(value: number) {
+  return Math.max(value, 0);
 }
 
 function formatMoney(value: number) {
@@ -169,10 +180,100 @@ export default function VelocityPlannerPage() {
   const emergencyReserveAmount = parseAmount(
     velocitySettings.emergency_reserve_amount
   );
-  const availableCredit = creditLimit - currentBalance;
+  const recoveryMonths = clampToZero(
+    parseAmount(velocitySettings.recovery_months)
+  );
+  const availableCredit = clampToZero(creditLimit - currentBalance);
   const velocityUtilizationLimit =
     creditLimit * (maxUtilizationPercent / 100);
-  const remainingSafeCredit = velocityUtilizationLimit - currentBalance;
+  const amountAboveSafeLimit = clampToZero(
+    currentBalance - velocityUtilizationLimit
+  );
+  const remainingSafeCredit = clampToZero(
+    velocityUtilizationLimit - currentBalance
+  );
+  const emergencyAdjustedSafeCredit = clampToZero(
+    remainingSafeCredit - emergencyReserveAmount
+  );
+  const superVelocityCapacity = clampToZero(
+    availableCredit - emergencyReserveAmount
+  );
+  const velocityHealthStatus =
+    amountAboveSafeLimit > 0 ? "Guardrail Exceeded" : "Within Guardrails";
+  const monthlyRecoveryCapacity =
+    currentMonthlySurplus != null && currentMonthlySurplus > 0
+      ? currentMonthlySurplus
+      : extraAttack != null && extraAttack > 0
+        ? extraAttack
+        : 0;
+  const monthlyRecoverySource =
+    currentMonthlySurplus != null && currentMonthlySurplus > 0
+      ? "Cash Flow monthly surplus"
+      : extraAttack != null && extraAttack > 0
+        ? "Debt extra attack setting"
+        : "No recovery capacity found";
+  const recoveryBasedLimit = clampToZero(
+    monthlyRecoveryCapacity * recoveryMonths
+  );
+  const recommendedChunk = clampToZero(
+    Math.min(emergencyAdjustedSafeCredit, recoveryBasedLimit, availableCredit)
+  );
+  const limitingFactor =
+    monthlyRecoveryCapacity <= 0
+      ? "No Recovery Capacity"
+      : emergencyAdjustedSafeCredit <= 0
+        ? "No Safe Credit"
+        : recoveryBasedLimit <= emergencyAdjustedSafeCredit &&
+            recoveryBasedLimit <= availableCredit
+          ? "Recovery Window"
+          : emergencyAdjustedSafeCredit <= availableCredit
+            ? "Safe Credit Guardrail"
+            : "Available Credit";
+  const riskStatus =
+    recommendedChunk <= 0
+      ? "Not Available"
+      : velocitySettings.allow_super_velocity ||
+          emergencyAdjustedSafeCredit <= monthlyRecoveryCapacity
+        ? "High Risk"
+        : recommendedChunk <= emergencyAdjustedSafeCredit * 0.5 &&
+            recoveryMonths <= 6
+          ? "Low Risk"
+          : "Moderate Risk";
+
+  const recommendationValues: RecommendationValue[] = [
+    {
+      label: "Recommended Chunk",
+      value: formatMoney(recommendedChunk),
+      detail: "Conservative value. Velocity simulations are not enabled yet.",
+      alert: recommendedChunk <= 0,
+    },
+    {
+      label: "Monthly Recovery Capacity",
+      value: formatMoney(monthlyRecoveryCapacity),
+      detail: `Source: ${monthlyRecoverySource}.`,
+      alert: monthlyRecoveryCapacity <= 0,
+    },
+    {
+      label: "Recovery Window",
+      value: `${recoveryMonths || 0} Months`,
+      detail: `Recovery-based limit: ${formatMoney(recoveryBasedLimit)}.`,
+    },
+    {
+      label: "Safe Credit Available",
+      value: formatMoney(emergencyAdjustedSafeCredit),
+      detail: `After ${formatMoney(emergencyReserveAmount)} emergency reserve.`,
+      alert: emergencyAdjustedSafeCredit <= 0,
+    },
+    {
+      label: "Limiting Factor",
+      value: limitingFactor,
+    },
+    {
+      label: "Risk Status",
+      value: riskStatus,
+      alert: riskStatus === "High Risk" || riskStatus === "Not Available",
+    },
+  ];
 
   const snapshotValues: SnapshotValue[] = [
     {
@@ -313,6 +414,118 @@ export default function VelocityPlannerPage() {
                 ) : null}
               </div>
             ))}
+          </div>
+        </section>
+
+        <section className="beast-panel overflow-hidden">
+          <div className="border-b border-[#2a3242] p-5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h2 className="text-xl font-bold">
+                  Velocity Health / Guardrail Status
+                </h2>
+                <p className="mt-1 text-sm text-[#7f8da3]">
+                  A plain-language breakdown of source credit, utilization
+                  guardrails, and emergency reserve protection.
+                </p>
+              </div>
+              <span
+                className={`w-fit rounded border px-3 py-1 text-xs font-semibold ${
+                  amountAboveSafeLimit > 0
+                    ? "border-red-300/50 bg-red-950/30 text-red-100"
+                    : "border-green-300/50 bg-green-950/30 text-green-100"
+                }`}
+              >
+                {velocityHealthStatus}
+              </span>
+            </div>
+          </div>
+
+          <div className="grid gap-4 p-5 lg:grid-cols-[1fr_2fr]">
+            <div className="beast-card">
+              <div className="text-sm text-[#c7cfdb]">Guardrail Position</div>
+              <div
+                className={`mt-2 text-2xl font-bold ${
+                  amountAboveSafeLimit > 0 ? "text-red-200" : "text-green-200"
+                }`}
+              >
+                {velocityHealthStatus}
+              </div>
+              <p className="mt-2 text-sm text-[#7f8da3]">
+                {amountAboveSafeLimit > 0
+                  ? `Current balance is ${formatMoney(amountAboveSafeLimit)} above the safe utilization limit.`
+                  : "Current balance is within the configured utilization guardrail."}
+              </p>
+            </div>
+
+            <div className="rounded-lg border border-[#2a3242] p-4">
+              <div className="grid gap-3 text-sm text-[#c7cfdb] sm:grid-cols-2 xl:grid-cols-3">
+                <div>
+                  <div className="text-[#7f8da3]">Credit Limit</div>
+                  <div className="mt-1 font-bold">{formatMoney(creditLimit)}</div>
+                </div>
+                <div>
+                  <div className="text-[#7f8da3]">Current Balance</div>
+                  <div className="mt-1 font-bold">
+                    {formatMoney(currentBalance)}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[#7f8da3]">
+                    Available Credit = Credit Limit - Current Balance
+                  </div>
+                  <div className="mt-1 font-bold">
+                    {formatMoney(availableCredit)}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[#7f8da3]">
+                    Safe Utilization Limit = Credit Limit x Max Utilization %
+                  </div>
+                  <div className="mt-1 font-bold">
+                    {formatMoney(velocityUtilizationLimit)}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[#7f8da3]">Remaining Safe Credit</div>
+                  <div className="mt-1 font-bold">
+                    {formatMoney(remainingSafeCredit)}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[#7f8da3]">Above Safe Limit</div>
+                  <div
+                    className={`mt-1 font-bold ${
+                      amountAboveSafeLimit > 0 ? "text-red-200" : ""
+                    }`}
+                  >
+                    {formatMoney(amountAboveSafeLimit)}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[#7f8da3]">Emergency Reserve</div>
+                  <div className="mt-1 font-bold">
+                    {formatMoney(emergencyReserveAmount)}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[#7f8da3]">
+                    Emergency-Protected Credit
+                  </div>
+                  <div className="mt-1 font-bold">
+                    {formatMoney(superVelocityCapacity)}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[#7f8da3]">
+                    Guardrail-Protected Credit
+                  </div>
+                  <div className="mt-1 font-bold">
+                    {formatMoney(emergencyAdjustedSafeCredit)}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -521,16 +734,43 @@ export default function VelocityPlannerPage() {
           <div className="border-b border-[#2a3242] p-5">
             <h2 className="text-xl font-bold">Velocity Lite Results</h2>
             <p className="mt-1 text-sm text-yellow-200">
-              Velocity Lite Engine Not Yet Enabled
+              Conservative recommendation only. Velocity Lite payoff simulation
+              is not enabled yet.
             </p>
           </div>
-          <div className="grid gap-4 p-5 sm:grid-cols-2 xl:grid-cols-5">
+          <div className="grid gap-4 p-5 sm:grid-cols-2 xl:grid-cols-3">
+            {recommendationValues.map((item) => (
+              <div key={item.label} className="beast-card">
+                <div className="text-sm text-[#c7cfdb]">{item.label}</div>
+                <div
+                  className={`mt-2 break-words text-2xl font-bold ${
+                    item.alert ? "text-red-200" : ""
+                  }`}
+                >
+                  {item.value}
+                </div>
+                {item.detail ? (
+                  <p className="mt-2 text-xs text-[#7f8da3]">{item.detail}</p>
+                ) : null}
+              </div>
+            ))}
+            {velocitySettings.allow_super_velocity ? (
+              <div className="beast-card border-red-300/40 bg-red-950/20">
+                <div className="text-sm text-red-100">
+                  Super Velocity Capacity
+                </div>
+                <div className="mt-2 break-words text-2xl font-bold text-red-100">
+                  {formatMoney(superVelocityCapacity)}
+                </div>
+                <p className="mt-2 text-xs text-red-100/80">
+                  Experimental capacity based on available credit after
+                  emergency reserve. This is not used for the recommended chunk.
+                </p>
+              </div>
+            ) : null}
             {[
-              "Recommended Chunk",
               "Recommended Target Debt",
-              "Recovery Time",
               "Interest Savings",
-              "Risk Level",
             ].map((label) => (
               <div key={label} className="beast-card">
                 <div className="text-sm text-[#c7cfdb]">{label}</div>
