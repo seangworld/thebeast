@@ -68,6 +68,10 @@ function formatMoney(value: number) {
   });
 }
 
+function formatPercent(value: number) {
+  return `${value.toFixed(2)}%`;
+}
+
 export default function VelocityPlannerPage() {
   const [debts, setDebts] = useState<any[]>([]);
   const [strategy, setStrategy] = useState("—");
@@ -239,6 +243,40 @@ export default function VelocityPlannerPage() {
             recoveryMonths <= 6
           ? "Low Risk"
           : "Moderate Risk";
+  const recommendedVelocityTarget = useMemo(() => {
+    return activeDebts
+      .map((debt) => {
+        const balance = Number(debt.balance || 0);
+        const apr = Number(debt.interest_rate || 0);
+        const monthlyInterestCost = (balance * apr) / 100 / 12;
+
+        return {
+          ...debt,
+          balance,
+          apr,
+          monthlyInterestCost,
+          opportunityScore:
+            apr >= 20 ? "High" : apr >= 10 ? "Moderate" : "Low",
+        };
+      })
+      .sort((a, b) => {
+        const aprCompare = b.apr - a.apr;
+        if (aprCompare !== 0) return aprCompare;
+
+        const interestCompare = b.monthlyInterestCost - a.monthlyInterestCost;
+        if (interestCompare !== 0) return interestCompare;
+
+        return a.balance - b.balance;
+      })[0];
+  }, [activeDebts]);
+  const velocityTargetReason =
+    recommendedChunk <= 0
+      ? amountAboveSafeLimit > 0
+        ? "Guardrail Exceeded"
+        : limitingFactor
+      : !recommendedVelocityTarget
+        ? "No active debt target"
+        : "Highest APR among active debts. Tie breakers favor higher monthly interest drag, then lower remaining balance.";
 
   const recommendationValues: RecommendationValue[] = [
     {
@@ -768,10 +806,54 @@ export default function VelocityPlannerPage() {
                 </p>
               </div>
             ) : null}
-            {[
-              "Recommended Target Debt",
-              "Interest Savings",
-            ].map((label) => (
+            {recommendedChunk > 0 && recommendedVelocityTarget ? (
+              <div className="beast-card">
+                <div className="text-sm text-[#c7cfdb]">
+                  Recommended Velocity Target
+                </div>
+                <div className="mt-2 break-words text-2xl font-bold">
+                  {recommendedVelocityTarget.name || "Unnamed Debt"}
+                </div>
+                <div className="mt-4 grid gap-2 text-sm text-[#c7cfdb]">
+                  <div>
+                    APR: {formatPercent(recommendedVelocityTarget.apr)}
+                  </div>
+                  <div>
+                    Balance: {formatMoney(recommendedVelocityTarget.balance)}
+                  </div>
+                  <div>
+                    Minimum Payment:{" "}
+                    {formatMoney(
+                      Number(recommendedVelocityTarget.minimum_payment || 0)
+                    )}
+                  </div>
+                  <div>
+                    Monthly Interest Cost: ~
+                    {formatMoney(recommendedVelocityTarget.monthlyInterestCost)}
+                  </div>
+                  <div>
+                    Opportunity Score:{" "}
+                    {recommendedVelocityTarget.opportunityScore}
+                  </div>
+                </div>
+                <p className="mt-3 text-xs text-[#7f8da3]">
+                  Reason: {velocityTargetReason}
+                </p>
+              </div>
+            ) : (
+              <div className="beast-card border-yellow-300/40 bg-yellow-950/20">
+                <div className="text-sm text-yellow-100">
+                  Recommended Velocity Target
+                </div>
+                <div className="mt-2 break-words text-2xl font-bold text-yellow-100">
+                  Velocity Action Not Recommended
+                </div>
+                <p className="mt-3 text-sm text-yellow-100/80">
+                  Reason: {velocityTargetReason}
+                </p>
+              </div>
+            )}
+            {["Interest Savings"].map((label) => (
               <div key={label} className="beast-card">
                 <div className="text-sm text-[#c7cfdb]">{label}</div>
                 <div className="mt-2 text-lg font-bold">Not Yet Available</div>
