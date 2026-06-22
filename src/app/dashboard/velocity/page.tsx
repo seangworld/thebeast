@@ -72,6 +72,24 @@ function formatPercent(value: number) {
   return `${value.toFixed(2)}%`;
 }
 
+function formatRecoveryMonths(value: number | null) {
+  if (value == null) return "Not Available";
+  const rounded = Math.ceil(value);
+  return `${rounded} ${rounded === 1 ? "Month" : "Months"}`;
+}
+
+function getRecoveryCompletionDate(monthsRequired: number | null) {
+  if (monthsRequired == null) return "Not Available";
+
+  const completionDate = new Date();
+  completionDate.setMonth(completionDate.getMonth() + Math.ceil(monthsRequired));
+
+  return completionDate.toLocaleString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
+}
+
 export default function VelocityPlannerPage() {
   const [debts, setDebts] = useState<any[]>([]);
   const [strategy, setStrategy] = useState("—");
@@ -277,6 +295,18 @@ export default function VelocityPlannerPage() {
       : !recommendedVelocityTarget
         ? "No active debt target"
         : "Highest APR among active debts. Tie breakers favor higher monthly interest drag, then lower remaining balance.";
+  const recoveryMonthsRequired =
+    recommendedChunk > 0 && monthlyRecoveryCapacity > 0
+      ? recommendedChunk / monthlyRecoveryCapacity
+      : null;
+  const recoveryTimelineStatus =
+    recoveryMonthsRequired == null
+      ? "Not Available"
+      : recoveryMonthsRequired <= recoveryMonths
+        ? "Within Guardrails"
+        : "Exceeds Guardrails";
+  const recoveryCompletionDate =
+    getRecoveryCompletionDate(recoveryMonthsRequired);
 
   const recommendationValues: RecommendationValue[] = [
     {
@@ -853,6 +883,37 @@ export default function VelocityPlannerPage() {
                 </p>
               </div>
             )}
+            <div className="beast-card">
+              <div className="text-sm text-[#c7cfdb]">Recovery Timeline</div>
+              <div
+                className={`mt-2 break-words text-2xl font-bold ${
+                  recoveryTimelineStatus === "Exceeds Guardrails"
+                    ? "text-red-200"
+                    : recoveryTimelineStatus === "Not Available"
+                      ? "text-yellow-100"
+                      : "text-green-200"
+                }`}
+              >
+                {formatRecoveryMonths(recoveryMonthsRequired)}
+              </div>
+              <div className="mt-4 grid gap-2 text-sm text-[#c7cfdb]">
+                <div>Recommended Chunk: {formatMoney(recommendedChunk)}</div>
+                <div>
+                  Monthly Recovery Capacity:{" "}
+                  {formatMoney(monthlyRecoveryCapacity)}
+                </div>
+                <div>
+                  Recovery Goal: {formatRecoveryMonths(recoveryMonths)}
+                </div>
+                <div>Recovery Complete: {recoveryCompletionDate}</div>
+                <div>Status: {recoveryTimelineStatus}</div>
+              </div>
+              <p className="mt-3 text-xs text-[#7f8da3]">
+                The recovery timeline estimates how long it will take to restore
+                the Velocity Source balance using current recovery capacity
+                assumptions.
+              </p>
+            </div>
             {["Interest Savings"].map((label) => (
               <div key={label} className="beast-card">
                 <div className="text-sm text-[#c7cfdb]">{label}</div>
