@@ -1,5 +1,7 @@
 -- Durable user/account foundation
 -- Adds per-user profiles for roles, onboarding state, and future billing metadata.
+-- The profiles table is the account foundation table for each Supabase auth user.
+-- The first admin must be seeded manually by trusted SQL after this migration runs.
 
 create extension if not exists pgcrypto;
 
@@ -17,7 +19,7 @@ create unique index if not exists profiles_stripe_customer_id_idx
   on public.profiles (stripe_customer_id)
   where stripe_customer_id is not null;
 
-create or replace function public.set_updated_at()
+create or replace function public.set_profiles_updated_at()
 returns trigger
 language plpgsql
 as $$
@@ -31,9 +33,9 @@ drop trigger if exists set_profiles_updated_at on public.profiles;
 create trigger set_profiles_updated_at
   before update on public.profiles
   for each row
-  execute function public.set_updated_at();
+  execute function public.set_profiles_updated_at();
 
-create or replace function public.is_admin()
+create or replace function public.is_profile_admin()
 returns boolean
 language sql
 stable
@@ -59,7 +61,7 @@ begin
     return new;
   end if;
 
-  if not public.is_admin() then
+  if not public.is_profile_admin() then
     if new.role is distinct from old.role then
       raise exception 'Only admins can change profile roles';
     end if;
@@ -98,14 +100,14 @@ drop policy if exists "Admins can read all profiles" on public.profiles;
 create policy "Admins can read all profiles"
   on public.profiles
   for select
-  using (public.is_admin());
+  using (public.is_profile_admin());
 
 drop policy if exists "Admins can update all profiles" on public.profiles;
 create policy "Admins can update all profiles"
   on public.profiles
   for update
-  using (public.is_admin())
-  with check (public.is_admin());
+  using (public.is_profile_admin())
+  with check (public.is_profile_admin());
 
 create or replace function public.handle_new_user_profile()
 returns trigger
