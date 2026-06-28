@@ -19,6 +19,17 @@ export type FundingSource = {
     created_at: string
   }
 
+export type UserRole = "user" | "admin"
+
+export type Profile = {
+    id: string
+    role: UserRole
+    onboarding_complete: boolean
+    stripe_customer_id?: string | null
+    created_at: string
+    updated_at: string
+  }
+
 export type Debt = {
     id: string
     user_id: string
