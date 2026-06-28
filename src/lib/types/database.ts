@@ -30,6 +30,22 @@ export type Profile = {
     updated_at: string
   }
 
+export type VelocitySourceType = "heloc" | "ploc" | "credit_card" | "other"
+
+export type VelocitySettings = {
+    user_id: string
+    velocity_source_type: VelocitySourceType
+    credit_limit?: number | null
+    current_balance?: number | null
+    source_apr?: number | null
+    max_utilization_percent: number
+    recovery_months: number
+    emergency_reserve_amount?: number | null
+    allow_super_velocity: boolean
+    created_at: string
+    updated_at: string
+  }
+
 export type Debt = {
     id: string
     user_id: string
