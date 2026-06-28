@@ -91,6 +91,12 @@ function optionalNumber(value: string) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+function logVelocitySettingsError(context: string, error: unknown) {
+  if (process.env.NODE_ENV !== "production") {
+    console.error(context, error);
+  }
+}
+
 const sourceTypes: { value: VelocitySourceType; label: string }[] = [
   { value: "heloc", label: "HELOC" },
   { value: "ploc", label: "PLOC" },
@@ -196,7 +202,7 @@ export default function VelocityPlannerPage() {
   const [velocitySettings, setVelocitySettings] =
     useState<VelocitySettings>(DEFAULT_VELOCITY_SETTINGS);
   const [settingsStatus, setSettingsStatus] = useState<
-    "idle" | "saved" | "error"
+    "idle" | "saved" | "load_error" | "save_error" | "missing_user"
   >("idle");
 
   const getUserId = useCallback(async () => {
@@ -269,7 +275,11 @@ export default function VelocityPlannerPage() {
         setVelocitySettings(storedSettings);
       }
     } else {
-      setSettingsStatus("error");
+      logVelocitySettingsError(
+        "Failed to load Velocity settings from Supabase:",
+        velocitySettingsError
+      );
+      setSettingsStatus("load_error");
     }
 
     setLoading(false);
@@ -508,7 +518,7 @@ export default function VelocityPlannerPage() {
     const userId = await getUserId();
 
     if (!userId) {
-      setSettingsStatus("error");
+      setSettingsStatus("missing_user");
       return;
     }
 
@@ -532,7 +542,11 @@ export default function VelocityPlannerPage() {
     );
 
     if (error) {
-      setSettingsStatus("error");
+      logVelocitySettingsError(
+        "Failed to save Velocity settings to Supabase:",
+        error
+      );
+      setSettingsStatus("save_error");
       return;
     }
 
@@ -937,9 +951,19 @@ export default function VelocityPlannerPage() {
               {settingsStatus === "saved" ? (
                 <span className="text-sm text-green-200">Settings saved.</span>
               ) : null}
-              {settingsStatus === "error" ? (
+              {settingsStatus === "load_error" ? (
                 <span className="text-sm text-red-200">
-                  Settings could not be loaded or saved in this browser.
+                  Settings could not be loaded from your account.
+                </span>
+              ) : null}
+              {settingsStatus === "save_error" ? (
+                <span className="text-sm text-red-200">
+                  Settings could not be saved to your account. Please try again.
+                </span>
+              ) : null}
+              {settingsStatus === "missing_user" ? (
+                <span className="text-sm text-red-200">
+                  Sign in again before saving Velocity settings.
                 </span>
               ) : null}
             </div>
