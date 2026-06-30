@@ -3,7 +3,9 @@ export { buildVelocityInputSnapshot } from "./adapter";
 export { buildVelocityAdvisorResult } from "./advisor";
 export type {
   BuildVelocityInputSnapshotInput,
+  VelocityPageBillInput,
   VelocityPageDebtInput,
+  VelocityPageIncomeInput,
   VelocityPageSettingsInput,
 } from "./adapter";
 export type {

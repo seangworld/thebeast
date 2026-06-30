@@ -207,6 +207,8 @@ function getRecoveryCompletionDate(monthsRequired: number | null) {
 
 export default function VelocityPlannerPage() {
   const [debts, setDebts] = useState<any[]>([]);
+  const [incomes, setIncomes] = useState<any[]>([]);
+  const [bills, setBills] = useState<any[]>([]);
   const [strategy, setStrategy] = useState("—");
   const [extraAttack, setExtraAttack] = useState<number | null>(null);
   const [startingBalance, setStartingBalance] = useState<number | null>(null);
@@ -240,6 +242,18 @@ export default function VelocityPlannerPage() {
       .select("*")
       .eq("user_id", userId);
 
+    const { data: incomeRows } = await supabase
+      .from("income_events")
+      .select("*")
+      .eq("user_id", userId)
+      .order("next_date", { ascending: true });
+
+    const { data: billRows } = await supabase
+      .from("bill_events")
+      .select("*")
+      .eq("user_id", userId)
+      .order("due_date", { ascending: true });
+
     const { data: debtSettings } = await supabase
       .from("debt_settings")
       .select("*")
@@ -262,6 +276,8 @@ export default function VelocityPlannerPage() {
       .maybeSingle();
 
     setDebts(debtRows || []);
+    setIncomes(incomeRows || []);
+    setBills(billRows || []);
     setStrategy(debtSettings?.strategy || "—");
     setExtraAttack(
       debtSettings?.extra_payment != null
@@ -416,12 +432,22 @@ export default function VelocityPlannerPage() {
   const velocityInputSnapshot = useMemo(() => {
     return buildVelocityInputSnapshot({
       debts: activeDebts,
+      incomes,
+      bills,
       velocity_settings: velocitySettings,
       starting_balance: startingBalance,
       cash_buffer: buffer,
       extra_attack: extraAttack,
     });
-  }, [activeDebts, buffer, extraAttack, startingBalance, velocitySettings]);
+  }, [
+    activeDebts,
+    bills,
+    buffer,
+    extraAttack,
+    incomes,
+    startingBalance,
+    velocitySettings,
+  ]);
   const velocityEngineResult = useMemo(() => {
     return runVelocityEngine(velocityInputSnapshot);
   }, [velocityInputSnapshot]);

@@ -1,6 +1,8 @@
 import type {
   VelocityAccountSnapshot,
+  VelocityBillSnapshot,
   VelocityDebtSnapshot,
+  VelocityIncomeSnapshot,
   VelocityInputSnapshot,
 } from "./types";
 
@@ -13,6 +15,24 @@ export type VelocityPageDebtInput = {
   minimum_payment: number | string | null;
   interest_rate: number | string | null;
   due_date?: number | string | null;
+  is_archived?: boolean | null;
+};
+
+export type VelocityPageIncomeInput = {
+  id?: string;
+  name: string;
+  amount: number | string | null;
+  next_date?: string | null;
+  frequency?: string | null;
+};
+
+export type VelocityPageBillInput = {
+  id?: string;
+  name: string;
+  amount: number | string | null;
+  due_date?: number | string | null;
+  next_due_date_after_payment?: string | null;
+  frequency?: string | null;
   is_archived?: boolean | null;
 };
 
@@ -30,6 +50,8 @@ export type VelocityPageSettingsInput = {
 export type BuildVelocityInputSnapshotInput = {
   as_of_date?: string;
   debts: VelocityPageDebtInput[];
+  incomes?: VelocityPageIncomeInput[];
+  bills?: VelocityPageBillInput[];
   velocity_settings: VelocityPageSettingsInput;
   starting_balance: number | string | null;
   cash_buffer: number | string | null;
@@ -94,6 +116,27 @@ function buildDebtSnapshot(debt: VelocityPageDebtInput): VelocityDebtSnapshot {
   };
 }
 
+function buildIncomeSnapshot(income: VelocityPageIncomeInput): VelocityIncomeSnapshot {
+  return {
+    id: income.id,
+    name: income.name,
+    amount: toNumber(income.amount),
+    next_date: income.next_date,
+    frequency: income.frequency,
+  };
+}
+
+function buildBillSnapshot(bill: VelocityPageBillInput): VelocityBillSnapshot {
+  return {
+    id: bill.id,
+    name: bill.name,
+    amount: toNumber(bill.amount),
+    due_date: toOptionalDueDay(bill.due_date),
+    next_due_date: bill.next_due_date_after_payment,
+    is_archived: bill.is_archived,
+  };
+}
+
 export function buildVelocityInputSnapshot(
   input: BuildVelocityInputSnapshotInput
 ): VelocityInputSnapshot {
@@ -133,8 +176,8 @@ export function buildVelocityInputSnapshot(
   return {
     as_of_date: input.as_of_date,
     accounts,
-    incomes: [],
-    bills: [],
+    incomes: (input.incomes || []).map(buildIncomeSnapshot),
+    bills: (input.bills || []).map(buildBillSnapshot),
     debts: input.debts.map(buildDebtSnapshot),
     settings: {
       cash_buffer: cashBuffer,
