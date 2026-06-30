@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { buildVelocityInputSnapshot, runVelocityEngine } from "@/lib/velocity";
 
 type SnapshotValue = {
   label: string;
@@ -372,7 +373,9 @@ export default function VelocityPlannerPage() {
             recoveryMonths <= 6
           ? "Low Risk"
           : "Moderate Risk";
-  const recommendedVelocityTarget = useMemo(() => {
+  // TEMP DEV COMPARISON: remove the legacy target sorter after the engine
+  // target has been validated against real Velocity page data.
+  const legacyRecommendedVelocityTarget = useMemo(() => {
     return activeDebts
       .map((debt) => {
         const balance = Number(debt.balance || 0);
@@ -398,6 +401,35 @@ export default function VelocityPlannerPage() {
         return a.balance - b.balance;
       })[0];
   }, [activeDebts]);
+  const velocityInputSnapshot = useMemo(() => {
+    return buildVelocityInputSnapshot({
+      debts: activeDebts,
+      velocity_settings: velocitySettings,
+      starting_balance: startingBalance,
+      cash_buffer: buffer,
+      extra_attack: extraAttack,
+    });
+  }, [activeDebts, buffer, extraAttack, startingBalance, velocitySettings]);
+  const velocityEngineResult = useMemo(() => {
+    return runVelocityEngine(velocityInputSnapshot);
+  }, [velocityInputSnapshot]);
+  const recommendedVelocityTarget = useMemo(() => {
+    const targetDebt = velocityEngineResult.target_debt;
+
+    if (!targetDebt) return undefined;
+
+    const balance = Number(targetDebt.balance || 0);
+    const apr = Number(targetDebt.interest_rate || 0);
+    const monthlyInterestCost = (balance * apr) / 100 / 12;
+
+    return {
+      ...targetDebt,
+      balance,
+      apr,
+      monthlyInterestCost,
+      opportunityScore: apr >= 20 ? "High" : apr >= 10 ? "Moderate" : "Low",
+    };
+  }, [velocityEngineResult.target_debt]);
   const velocityTargetReason =
     recommendedChunk <= 0
       ? amountAboveSafeLimit > 0
@@ -405,7 +437,20 @@ export default function VelocityPlannerPage() {
         : limitingFactor
       : !recommendedVelocityTarget
         ? "No active debt target"
-        : "Highest APR among active debts. Tie breakers favor higher monthly interest drag, then lower remaining balance.";
+        : "Velocity engine target_debt. Current engine tie breakers favor higher APR, then higher remaining balance.";
+  useEffect(() => {
+    if (process.env.NODE_ENV === "production") return;
+
+    console.debug("Velocity target comparison", {
+      engineTargetId: velocityEngineResult.target_debt?.id,
+      engineTargetName: velocityEngineResult.target_debt?.name,
+      legacyTargetId: legacyRecommendedVelocityTarget?.id,
+      legacyTargetName: legacyRecommendedVelocityTarget?.name,
+      matchesLegacy:
+        velocityEngineResult.target_debt?.id ===
+        legacyRecommendedVelocityTarget?.id,
+    });
+  }, [legacyRecommendedVelocityTarget, velocityEngineResult.target_debt]);
   const recoveryMonthsRequired =
     recommendedChunk > 0 && monthlyRecoveryCapacity > 0
       ? recommendedChunk / monthlyRecoveryCapacity

@@ -1,11 +1,15 @@
 import type {
   VelocityAlternative,
+  VelocityCandidateEvaluation,
+  VelocityCandidateKind,
   VelocityConfidence,
+  VelocityConstraintResult,
   VelocityDebtSnapshot,
   VelocityEngineResult,
   VelocityInputSnapshot,
   VelocityRecommendation,
   VelocityRiskLevel,
+  VelocityScoreBreakdown,
 } from "./types";
 
 function money(value: number) {
@@ -15,6 +19,10 @@ function money(value: number) {
 
 function positiveNumber(value: number) {
   return Number.isFinite(value) && value > 0;
+}
+
+function finiteNumber(value: number | null | undefined) {
+  return Number.isFinite(value) ? Number(value) : 0;
 }
 
 function validateInput(input: VelocityInputSnapshot) {
@@ -72,6 +80,360 @@ function getRiskLevel(paymentAmount: number, availableCash: number): VelocityRis
   return "high";
 }
 
+function getMonthlyAmount(amount: number, frequency?: string | null) {
+  const normalizedFrequency = (frequency || "monthly").toLowerCase();
+
+  if (normalizedFrequency.includes("weekly") && !normalizedFrequency.includes("bi")) {
+    return amount * 4.33;
+  }
+  if (normalizedFrequency.includes("biweekly") || normalizedFrequency.includes("bi-weekly")) {
+    return amount * 2.17;
+  }
+  if (
+    normalizedFrequency.includes("semi-monthly") ||
+    normalizedFrequency.includes("semimonthly") ||
+    normalizedFrequency.includes("twice")
+  ) {
+    return amount * 2;
+  }
+  if (normalizedFrequency.includes("annual") || normalizedFrequency.includes("year")) {
+    return amount / 12;
+  }
+  if (normalizedFrequency.includes("daily")) {
+    return amount * 30;
+  }
+
+  return amount;
+}
+
+function buildCashflowProjection(input: VelocityInputSnapshot, cashBalance: number) {
+  const projectedIncome = money(
+    input.incomes.reduce(
+      (sum, income) => sum + getMonthlyAmount(finiteNumber(income.amount), income.frequency),
+      0
+    )
+  );
+  const projectedBills = money(
+    input.bills
+      .filter((bill) => !bill.is_archived)
+      .reduce((sum, bill) => sum + finiteNumber(bill.amount), 0)
+  );
+  const projectedMinimumPayments = money(
+    getEligibleDebts(input.debts).reduce(
+      (sum, debt) => sum + finiteNumber(debt.minimum_payment),
+      0
+    )
+  );
+  const cashBuffer = finiteNumber(input.settings.cash_buffer);
+  const projectedCashBeforeVelocityPayment = money(
+    cashBalance + projectedIncome - projectedBills - projectedMinimumPayments
+  );
+
+  return {
+    period_days: 30,
+    starting_cash: cashBalance,
+    projected_income: projectedIncome,
+    projected_bills: projectedBills,
+    projected_minimum_payments: projectedMinimumPayments,
+    projected_cash_before_velocity_payment: projectedCashBeforeVelocityPayment,
+    available_cash_above_buffer: money(
+      Math.max(projectedCashBeforeVelocityPayment - cashBuffer, 0)
+    ),
+    assumptions: [
+      "Projection uses a 30-day planning window.",
+      "Income frequency is converted to a monthly estimate when provided.",
+      "Bills and eligible debt minimum payments are treated as due within the projection window.",
+    ],
+  };
+}
+
+function getSafePaymentCapacity(input: VelocityInputSnapshot, projectedCash: number) {
+  const cashBuffer = finiteNumber(input.settings.cash_buffer);
+  const minimumCashAfterPayment = finiteNumber(
+    input.settings.minimum_cash_after_payment ?? cashBuffer
+  );
+  const maxRecommendedPayment = input.settings.max_recommended_payment;
+  const bufferLimited = Math.max(projectedCash - cashBuffer, 0);
+  const minimumCashLimited = Math.max(projectedCash - minimumCashAfterPayment, 0);
+  const configuredMax =
+    maxRecommendedPayment != null && Number.isFinite(maxRecommendedPayment)
+      ? Math.max(Number(maxRecommendedPayment), 0)
+      : Number.POSITIVE_INFINITY;
+
+  return money(Math.min(bufferLimited, minimumCashLimited, configuredMax));
+}
+
+function buildConstraintResults(
+  input: VelocityInputSnapshot,
+  kind: VelocityCandidateKind,
+  debt: VelocityDebtSnapshot | undefined,
+  paymentAmount: number,
+  projectedCashBeforePayment: number
+): VelocityConstraintResult[] {
+  const cashBuffer = finiteNumber(input.settings.cash_buffer);
+  const minimumCashAfterPayment = finiteNumber(
+    input.settings.minimum_cash_after_payment ?? cashBuffer
+  );
+  const maxRecommendedPayment = input.settings.max_recommended_payment;
+  const projectedCashAfterPayment = money(projectedCashBeforePayment - paymentAmount);
+  const configuredMax =
+    maxRecommendedPayment != null && Number.isFinite(maxRecommendedPayment)
+      ? Number(maxRecommendedPayment)
+      : null;
+  const requiresDebt = kind === "highest_apr" || kind === "lowest_balance";
+  const hasEligibleDebt = Boolean(
+    debt && !debt.is_archived && positiveNumber(debt.balance)
+  );
+
+  return [
+    {
+      id: "eligible_debt",
+      label: "Eligible debt",
+      passed: requiresDebt ? hasEligibleDebt : !debt || hasEligibleDebt,
+      detail: !debt && !requiresDebt
+        ? "No debt target is required for this candidate."
+        : !debt
+          ? "No eligible debt target is available for this payment candidate."
+        : "Debt is active and has a positive balance.",
+    },
+    {
+      id: "cash_buffer",
+      label: "Cash buffer",
+      passed: projectedCashAfterPayment >= cashBuffer,
+      detail: `Projected cash after payment is ${money(projectedCashAfterPayment)} against a ${money(cashBuffer)} buffer.`,
+    },
+    {
+      id: "minimum_cash_after_payment",
+      label: "Minimum cash after payment",
+      passed: projectedCashAfterPayment >= minimumCashAfterPayment,
+      detail: `Projected cash after payment is ${money(projectedCashAfterPayment)} against a ${money(minimumCashAfterPayment)} minimum.`,
+    },
+    {
+      id: "max_recommended_payment",
+      label: "Maximum recommended payment",
+      passed: configuredMax == null || paymentAmount <= configuredMax,
+      detail:
+        configuredMax == null
+          ? "No max recommended payment is configured."
+          : `Candidate payment is ${money(paymentAmount)} against a ${money(configuredMax)} maximum.`,
+    },
+  ];
+}
+
+function getLowestBalanceDebt(debts: VelocityDebtSnapshot[]) {
+  return [...debts].sort((a, b) => {
+    const balanceCompare = finiteNumber(a.balance) - finiteNumber(b.balance);
+    if (balanceCompare !== 0) return balanceCompare;
+
+    return finiteNumber(b.interest_rate) - finiteNumber(a.interest_rate);
+  })[0];
+}
+
+function getStrategyAlignment(
+  kind: VelocityCandidateKind,
+  strategy: VelocityInputSnapshot["settings"]["strategy"],
+  paymentAmount: number,
+  safePaymentCapacity: number
+) {
+  const paymentRatio =
+    safePaymentCapacity > 0 ? Math.min(paymentAmount / safePaymentCapacity, 1) : 0;
+
+  if (strategy === "aggressive") {
+    if (kind === "highest_apr") return 25;
+    if (kind === "lowest_balance") return 18;
+    if (kind === "minimum_only") return 8;
+    return safePaymentCapacity > 0 ? 4 : 22;
+  }
+
+  if (strategy === "balanced") {
+    if (kind === "highest_apr") return 20;
+    if (kind === "lowest_balance") return 20;
+    if (kind === "minimum_only") return 14;
+    return safePaymentCapacity > 0 ? 10 : 24;
+  }
+
+  if (kind === "highest_apr") return paymentRatio <= 0.6 ? 18 : 12;
+  if (kind === "lowest_balance") return paymentRatio <= 0.6 ? 18 : 12;
+  if (kind === "minimum_only") return 21;
+  return safePaymentCapacity > 0 ? 15 : 25;
+}
+
+function scoreCandidate(
+  kind: VelocityCandidateKind,
+  debt: VelocityDebtSnapshot | undefined,
+  paymentAmount: number,
+  projectedCashAfterPayment: number,
+  input: VelocityInputSnapshot,
+  safePaymentCapacity: number
+): VelocityScoreBreakdown {
+  const cashBuffer = finiteNumber(input.settings.cash_buffer);
+  const minimumCashAfterPayment = finiteNumber(
+    input.settings.minimum_cash_after_payment ?? cashBuffer
+  );
+  const safetyFloor = Math.max(cashBuffer, minimumCashAfterPayment);
+  const liquidityMargin = Math.max(projectedCashAfterPayment - safetyFloor, 0);
+  const liquiditySafety = money(
+    Math.min(30, 10 + (safePaymentCapacity > 0 ? (liquidityMargin / safePaymentCapacity) * 20 : 20))
+  );
+  const interestPriority = debt
+    ? money(Math.min(25, (finiteNumber(debt.interest_rate) / 30) * 25))
+    : kind === "hold_cash"
+      ? 4
+      : 0;
+  const strategyAlignment = getStrategyAlignment(
+    kind,
+    input.settings.strategy || "balanced",
+    paymentAmount,
+    safePaymentCapacity
+  );
+  const riskReduction = debt
+    ? money(Math.min(20, (paymentAmount / Math.max(finiteNumber(debt.balance), 1)) * 100))
+    : kind === "hold_cash"
+      ? safePaymentCapacity <= 0
+        ? 18
+        : 5
+      : 8;
+  const holdCashPenalty = kind === "hold_cash" && safePaymentCapacity > 0 ? 12 : 0;
+  const total = money(
+    interestPriority + liquiditySafety + strategyAlignment + riskReduction - holdCashPenalty
+  );
+
+  return {
+    interest_priority: interestPriority,
+    liquidity_safety: liquiditySafety,
+    strategy_alignment: strategyAlignment,
+    risk_reduction: riskReduction,
+    total,
+  };
+}
+
+function buildCandidate(
+  input: VelocityInputSnapshot,
+  id: string,
+  label: string,
+  kind: VelocityCandidateKind,
+  debt: VelocityDebtSnapshot | undefined,
+  paymentAmount: number,
+  projectedCashBeforePayment: number,
+  safePaymentCapacity: number,
+  rationale: string[],
+  assumptions: string[]
+): VelocityCandidateEvaluation {
+  const cappedPayment = money(Math.min(paymentAmount, debt?.balance ?? paymentAmount));
+  const projectedCashAfterPayment = money(projectedCashBeforePayment - cappedPayment);
+  const constraints = buildConstraintResults(
+    input,
+    kind,
+    debt,
+    cappedPayment,
+    projectedCashBeforePayment
+  );
+  const isViable = constraints.every((constraint) => constraint.passed);
+  const scoreBreakdown = isViable
+    ? scoreCandidate(
+        kind,
+        debt,
+        cappedPayment,
+        projectedCashAfterPayment,
+        input,
+        safePaymentCapacity
+      )
+    : {
+        interest_priority: 0,
+        liquidity_safety: 0,
+        strategy_alignment: 0,
+        risk_reduction: 0,
+        total: 0,
+      };
+
+  return {
+    id,
+    label,
+    kind,
+    debt_id: debt?.id,
+    debt_name: debt?.name,
+    payment_amount: cappedPayment,
+    projected_cash_after_payment: projectedCashAfterPayment,
+    risk_level: getRiskLevel(cappedPayment, safePaymentCapacity),
+    is_viable: isViable,
+    constraints,
+    score: scoreBreakdown.total,
+    score_breakdown: scoreBreakdown,
+    rationale,
+    assumptions,
+  };
+}
+
+function generateCandidates(
+  input: VelocityInputSnapshot,
+  debts: VelocityDebtSnapshot[],
+  targetDebt: VelocityDebtSnapshot | undefined,
+  projectedCashBeforePayment: number,
+  safePaymentCapacity: number
+) {
+  const lowestBalanceDebt = getLowestBalanceDebt(debts);
+  const paymentAmount = safePaymentCapacity;
+  const sharedAssumptions = [
+    "Candidate payments are one-time velocity payments above scheduled minimums.",
+    "Candidates are generated only from active debts with positive balances.",
+  ];
+
+  return [
+    buildCandidate(
+      input,
+      "minimum-only",
+      "Pay scheduled minimums only",
+      "minimum_only",
+      undefined,
+      0,
+      projectedCashBeforePayment,
+      safePaymentCapacity,
+      ["Preserves cash after projected bills and minimum debt payments."],
+      sharedAssumptions
+    ),
+    buildCandidate(
+      input,
+      "highest-apr-payment",
+      "Pay highest APR eligible debt",
+      "highest_apr",
+      targetDebt,
+      paymentAmount,
+      projectedCashBeforePayment,
+      safePaymentCapacity,
+      ["Prioritizes the eligible debt with the highest interest rate."],
+      sharedAssumptions
+    ),
+    buildCandidate(
+      input,
+      "lowest-balance-payment",
+      "Pay lowest balance eligible debt",
+      "lowest_balance",
+      lowestBalanceDebt,
+      paymentAmount,
+      projectedCashBeforePayment,
+      safePaymentCapacity,
+      ["Prioritizes reducing account count by attacking the lowest balance."],
+      sharedAssumptions
+    ),
+    buildCandidate(
+      input,
+      "hold-cash",
+      "Hold cash",
+      "hold_cash",
+      undefined,
+      0,
+      projectedCashBeforePayment,
+      safePaymentCapacity,
+      [
+        safePaymentCapacity > 0
+          ? "Keeps liquidity available instead of making a velocity payment."
+          : "Avoids a velocity payment because cash constraints are not satisfied.",
+      ],
+      sharedAssumptions
+    ),
+  ];
+}
+
 function getConfidence(
   validationErrors: string[],
   targetDebt: VelocityDebtSnapshot | undefined,
@@ -103,87 +465,51 @@ function getRecommendedPayment(input: VelocityInputSnapshot, availableCash: numb
 }
 
 function buildRecommendation(
-  targetDebt: VelocityDebtSnapshot | undefined,
-  paymentAmount: number,
+  candidate: VelocityCandidateEvaluation | undefined,
   confidence: VelocityConfidence
 ): VelocityRecommendation | undefined {
-  if (!targetDebt || paymentAmount <= 0) return undefined;
+  if (!candidate) return undefined;
 
   return {
-    id: "highest-apr-payment",
-    label: "Pay highest APR eligible debt",
-    debt_id: targetDebt.id,
-    debt_name: targetDebt.name,
-    payment_amount: money(Math.min(paymentAmount, targetDebt.balance)),
-    reason: "Deterministic placeholder: targets the eligible debt with the highest APR.",
+    id: candidate.id,
+    label: candidate.label,
+    kind: candidate.kind,
+    debt_id: candidate.debt_id,
+    debt_name: candidate.debt_name,
+    payment_amount: candidate.payment_amount,
+    reason: candidate.rationale[0] || "Deterministic velocity candidate selected by score.",
     confidence,
+    score: candidate.score,
+    score_breakdown: candidate.score_breakdown,
+    rationale: candidate.rationale,
+    assumptions: candidate.assumptions,
+    projected_cash_after_payment: candidate.projected_cash_after_payment,
   };
 }
 
 function buildAlternatives(
-  debts: VelocityDebtSnapshot[],
-  targetDebt: VelocityDebtSnapshot | undefined,
-  paymentAmount: number,
-  availableCash: number
+  candidates: VelocityCandidateEvaluation[],
+  selectedCandidate: VelocityCandidateEvaluation | undefined
 ): VelocityAlternative[] {
-  if (paymentAmount <= 0 || debts.length === 0) return [];
-
-  const alternatives: VelocityAlternative[] = [];
-  const bySmallestBalance = [...debts].sort(
-    (a, b) => Number(a.balance || 0) - Number(b.balance || 0)
-  )[0];
-  const byLargestMinimum = [...debts].sort(
-    (a, b) => Number(b.minimum_payment || 0) - Number(a.minimum_payment || 0)
-  )[0];
-
-  const addAlternative = (
-    id: string,
-    label: string,
-    debt: VelocityDebtSnapshot | undefined,
-    amount: number,
-    reason: string
-  ) => {
-    if (!debt || alternatives.some((item) => item.debt_id === debt.id && item.id !== id)) {
-      return;
-    }
-
-    alternatives.push({
-      id,
-      label,
-      debt_id: debt.id,
-      debt_name: debt.name,
-      payment_amount: money(Math.min(amount, debt.balance)),
-      reason,
-      risk_level: getRiskLevel(amount, availableCash),
-    });
-  };
-
-  addAlternative(
-    "smallest-balance-payment",
-    "Pay smallest eligible balance",
-    bySmallestBalance,
-    paymentAmount,
-    "Placeholder alternative: favors faster account payoff momentum."
-  );
-  addAlternative(
-    "largest-minimum-payment",
-    "Pay largest minimum-payment debt",
-    byLargestMinimum,
-    paymentAmount,
-    "Placeholder alternative: favors freeing future monthly minimum-payment pressure."
-  );
-
-  if (targetDebt && paymentAmount > targetDebt.minimum_payment) {
-    addAlternative(
-      "minimum-plus-payment",
-      "Pay minimum plus safe extra",
-      targetDebt,
-      Math.max(targetDebt.minimum_payment, paymentAmount * 0.5),
-      "Placeholder alternative: reduces payment size while still attacking the recommended target."
-    );
-  }
-
-  return alternatives.slice(0, 3);
+  return candidates
+    .filter((candidate) => candidate.is_viable && candidate.id !== selectedCandidate?.id)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3)
+    .map((candidate) => ({
+      id: candidate.id,
+      label: candidate.label,
+      kind: candidate.kind,
+      debt_id: candidate.debt_id,
+      debt_name: candidate.debt_name,
+      payment_amount: candidate.payment_amount,
+      reason: candidate.rationale[0] || "Alternative deterministic velocity candidate.",
+      risk_level: candidate.risk_level,
+      score: candidate.score,
+      score_breakdown: candidate.score_breakdown,
+      rationale: candidate.rationale,
+      assumptions: candidate.assumptions,
+      projected_cash_after_payment: candidate.projected_cash_after_payment,
+    }));
 }
 
 export function runVelocityEngine(input: VelocityInputSnapshot): VelocityEngineResult {
@@ -191,28 +517,58 @@ export function runVelocityEngine(input: VelocityInputSnapshot): VelocityEngineR
   const isValid = validationErrors.length === 0;
 
   const cashBalance = isValid ? getCashBalance(input) : 0;
-  const cashBuffer = isValid ? Number(input.settings.cash_buffer || 0) : 0;
-  const availableCashAboveBuffer = money(Math.max(cashBalance - cashBuffer, 0));
+  const cashflowProjection = isValid
+    ? buildCashflowProjection(input, cashBalance)
+    : {
+        period_days: 30,
+        starting_cash: 0,
+        projected_income: 0,
+        projected_bills: 0,
+        projected_minimum_payments: 0,
+        projected_cash_before_velocity_payment: 0,
+        available_cash_above_buffer: 0,
+        assumptions: ["Projection was skipped because validation failed."],
+      };
+  const availableCashAboveBuffer = cashflowProjection.available_cash_above_buffer;
   const eligibleDebts = isValid ? getEligibleDebts(input.debts) : [];
-
-  // Future full calculation: cashflow projection will model income and bill timing.
-  // Future full calculation: constraint filtering will account for due dates, liquidity, and guardrails.
   const targetDebt = getHighestAprDebt(eligibleDebts);
-  const basePaymentAmount = targetDebt
-    ? Math.min(getRecommendedPayment(input, availableCashAboveBuffer), targetDebt.balance)
+  const safePaymentCapacity = isValid
+    ? getSafePaymentCapacity(
+        input,
+        cashflowProjection.projected_cash_before_velocity_payment
+      )
     : 0;
+  const legacyPaymentCap = isValid
+    ? getRecommendedPayment(input, availableCashAboveBuffer)
+    : 0;
+  const candidatePaymentCapacity = money(
+    Math.min(safePaymentCapacity, legacyPaymentCap || safePaymentCapacity)
+  );
+  const candidateEvaluations = isValid
+    ? generateCandidates(
+        input,
+        eligibleDebts,
+        targetDebt,
+        cashflowProjection.projected_cash_before_velocity_payment,
+        candidatePaymentCapacity
+      )
+    : [];
+  const viableCandidates = candidateEvaluations.filter((candidate) => candidate.is_viable);
+  const selectedCandidate = [...viableCandidates].sort((a, b) => {
+    const scoreCompare = b.score - a.score;
+    if (scoreCompare !== 0) return scoreCompare;
 
-  // Future full calculation: candidate generation will build richer debt/source scenarios.
-  const riskLevel = getRiskLevel(basePaymentAmount, availableCashAboveBuffer);
+    return a.payment_amount - b.payment_amount;
+  })[0];
+
+  const riskLevel = selectedCandidate
+    ? selectedCandidate.risk_level
+    : getRiskLevel(0, availableCashAboveBuffer);
   const confidence = getConfidence(validationErrors, targetDebt, availableCashAboveBuffer);
-  const recommendation = buildRecommendation(targetDebt, basePaymentAmount, confidence);
-
-  // Future full calculation: scoring model will rank candidates by payoff speed, cash safety, and interest saved.
-  const alternatives = buildAlternatives(
-    eligibleDebts,
-    targetDebt,
-    basePaymentAmount,
-    availableCashAboveBuffer
+  const recommendation = buildRecommendation(selectedCandidate, confidence);
+  const alternatives = buildAlternatives(candidateEvaluations, selectedCandidate);
+  const failedConstraints = candidateEvaluations.flatMap((candidate) =>
+    candidate.constraints.filter((constraint) => !constraint.passed)
   );
 
   const warnings: string[] = [];
@@ -222,24 +578,39 @@ export function runVelocityEngine(input: VelocityInputSnapshot): VelocityEngineR
   if (!targetDebt) {
     warnings.push("No eligible debt target was found.");
   }
-  if (riskLevel === "high" && basePaymentAmount > 0) {
+  if (riskLevel === "high" && selectedCandidate && selectedCandidate.payment_amount > 0) {
     warnings.push("Recommended payment uses a large share of available cash above buffer.");
   }
+  if (selectedCandidate?.kind === "hold_cash") {
+    warnings.push("Engine selected hold cash because payment candidates scored lower or were unsafe.");
+  }
 
-  // Future full calculation: AI advisor formatting can translate engine output into coaching copy.
+  const rationale = recommendation?.rationale || [
+    "No viable velocity recommendation was selected.",
+  ];
+  const assumptions = [
+    ...cashflowProjection.assumptions,
+    "Scoring is deterministic and does not call AI services.",
+    "Archived and paid debts are excluded from payment candidates.",
+  ];
+
   return {
     is_valid: isValid,
     available_cash_above_buffer: availableCashAboveBuffer,
     target_debt: targetDebt,
     recommendation,
     alternatives,
+    cashflow_projection: cashflowProjection,
+    constraints: failedConstraints,
+    candidate_evaluations: candidateEvaluations,
+    rationale,
+    assumptions,
     risk_summary: {
       risk_level: riskLevel,
       confidence,
-      reasons: recommendation
-        ? [recommendation.reason]
-        : ["No payment recommendation produced by placeholder engine."],
+      reasons: recommendation ? rationale : ["No viable velocity candidate was selected."],
       warnings,
+      assumptions,
     },
     validation_errors: validationErrors,
   };

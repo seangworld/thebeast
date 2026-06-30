@@ -2,6 +2,12 @@ export type VelocityRiskLevel = "low" | "medium" | "high";
 
 export type VelocityConfidence = "low" | "medium" | "high";
 
+export type VelocityCandidateKind =
+  | "minimum_only"
+  | "highest_apr"
+  | "lowest_balance"
+  | "hold_cash";
+
 export type VelocityAccountSnapshot = {
   id?: string;
   name?: string;
@@ -58,21 +64,76 @@ export type VelocityInputSnapshot = {
 export type VelocityAlternative = {
   id: string;
   label: string;
+  kind?: VelocityCandidateKind;
   debt_id?: string;
   debt_name?: string;
   payment_amount: number;
   reason: string;
   risk_level: VelocityRiskLevel;
+  score?: number;
+  score_breakdown?: VelocityScoreBreakdown;
+  rationale?: string[];
+  assumptions?: string[];
+  projected_cash_after_payment?: number;
 };
 
 export type VelocityRecommendation = {
   id: string;
   label: string;
+  kind?: VelocityCandidateKind;
   debt_id?: string;
   debt_name?: string;
   payment_amount: number;
   reason: string;
   confidence: VelocityConfidence;
+  score?: number;
+  score_breakdown?: VelocityScoreBreakdown;
+  rationale?: string[];
+  assumptions?: string[];
+  projected_cash_after_payment?: number;
+};
+
+export type VelocityScoreBreakdown = {
+  interest_priority: number;
+  liquidity_safety: number;
+  strategy_alignment: number;
+  risk_reduction: number;
+  total: number;
+};
+
+export type VelocityCashflowProjection = {
+  period_days: number;
+  starting_cash: number;
+  projected_income: number;
+  projected_bills: number;
+  projected_minimum_payments: number;
+  projected_cash_before_velocity_payment: number;
+  available_cash_above_buffer: number;
+  assumptions: string[];
+};
+
+export type VelocityConstraintResult = {
+  id: string;
+  label: string;
+  passed: boolean;
+  detail: string;
+};
+
+export type VelocityCandidateEvaluation = {
+  id: string;
+  label: string;
+  kind: VelocityCandidateKind;
+  debt_id?: string;
+  debt_name?: string;
+  payment_amount: number;
+  projected_cash_after_payment: number;
+  risk_level: VelocityRiskLevel;
+  is_viable: boolean;
+  constraints: VelocityConstraintResult[];
+  score: number;
+  score_breakdown: VelocityScoreBreakdown;
+  rationale: string[];
+  assumptions: string[];
 };
 
 export type VelocityRiskSummary = {
@@ -80,6 +141,7 @@ export type VelocityRiskSummary = {
   confidence: VelocityConfidence;
   reasons: string[];
   warnings: string[];
+  assumptions?: string[];
 };
 
 export type VelocityEngineResult = {
@@ -88,6 +150,11 @@ export type VelocityEngineResult = {
   target_debt?: VelocityDebtSnapshot;
   recommendation?: VelocityRecommendation;
   alternatives: VelocityAlternative[];
+  cashflow_projection?: VelocityCashflowProjection;
+  constraints?: VelocityConstraintResult[];
+  candidate_evaluations?: VelocityCandidateEvaluation[];
+  rationale?: string[];
+  assumptions?: string[];
   risk_summary: VelocityRiskSummary;
   validation_errors: string[];
 };
