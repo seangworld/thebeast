@@ -144,7 +144,8 @@ test("buildVelocityInputSnapshot maps debts, income, bills, and settings", () =>
   });
   assert.equal(snapshot.settings.cash_buffer, 500);
   assert.equal(snapshot.settings.minimum_cash_after_payment, 200);
-  assert.equal(snapshot.settings.max_recommended_payment, 450);
+  assert.equal(snapshot.settings.max_recommended_payment, 1300);
+  assert.equal(snapshot.settings.max_source_utilization_percent, 50);
   assert.equal(snapshot.settings.monthly_recovery_capacity, 1300);
   assert.equal(snapshot.settings.recovery_months, 6);
   assert.equal(snapshot.settings.strategy, "conservative");
@@ -158,6 +159,8 @@ test("runVelocityEngine recommends a safe highest APR payment", () => {
   assert.equal(result.recommendation?.kind, "highest_apr");
   assert.equal(result.recommendation?.debt_id, "card-a");
   assert.equal(result.recommendation?.payment_amount, 500);
+  assert.equal(result.chunk_recommendation?.recommended_chunk, 500);
+  assert.equal(result.chunk_recommendation?.limiting_constraint_id, "safe_source_capacity");
   assert.equal(result.cashflow_projection?.projected_income, 3000);
   assert.equal(result.cashflow_projection?.projected_bills, 1000);
   assert.equal(result.cashflow_projection?.projected_minimum_payments, 150);
@@ -231,7 +234,7 @@ test("runVelocityEngine subtracts low APR Velocity source cost from gross saving
   );
 });
 
-test("runVelocityEngine can show negative net savings when source APR cost is too high", () => {
+test("runVelocityEngine holds cash when projected net savings are negative", () => {
   const result = runVelocityEngine(
     baseInput({
       accounts: [
@@ -254,6 +257,7 @@ test("runVelocityEngine can show negative net savings when source APR cost is to
       settings: {
         cash_buffer: 500,
         max_recommended_payment: 500,
+        max_source_utilization_percent: 100,
         minimum_cash_after_payment: 500,
         monthly_recovery_capacity: 10,
         recovery_months: 6,
@@ -262,19 +266,163 @@ test("runVelocityEngine can show negative net savings when source APR cost is to
     })
   );
 
+  assert.equal(result.chunk_recommendation?.hold_reason, "positive_net_savings");
+  assert.equal(
+    Number(result.chunk_recommendation?.projected_net_savings || 0) < 0,
+    true
+  );
+  assert.equal(result.recommendation?.kind, "hold_cash");
+  assert.equal(result.recommendation?.payment_amount, 0);
   assert.equal(result.interest_savings?.source_apr, 120);
   assert.equal(
-    Number(result.interest_savings?.velocity_source_interest_cost || 0) >
-      Number(result.interest_savings?.gross_interest_saved || 0),
-    true
-  );
-  assert.equal(
-    Number(result.interest_savings?.net_interest_saved || 0) < 0,
-    true
-  );
-  assert.equal(
     result.interest_savings?.projected_interest_saved,
-    result.interest_savings?.net_interest_saved
+    0
+  );
+});
+
+test("runVelocityEngine limits the chunk by source utilization capacity", () => {
+  const result = runVelocityEngine(
+    baseInput({
+      accounts: [
+        {
+          id: "cash",
+          name: "Checking",
+          type: "checking",
+          current_balance: 2000,
+        },
+        {
+          id: "source",
+          name: "HELOC",
+          type: "heloc",
+          current_balance: 1000,
+          credit_limit: 3000,
+          available_credit: 2000,
+          interest_rate: 6,
+        },
+      ],
+      settings: {
+        cash_buffer: 500,
+        max_recommended_payment: null,
+        max_source_utilization_percent: 50,
+        minimum_cash_after_payment: 200,
+        monthly_recovery_capacity: 500,
+        recovery_months: 6,
+        strategy: "aggressive",
+      },
+    })
+  );
+
+  assert.equal(result.recommendation?.kind, "highest_apr");
+  assert.equal(result.recommendation?.payment_amount, 300);
+  assert.equal(result.chunk_recommendation?.recommended_chunk, 300);
+  assert.equal(
+    result.chunk_recommendation?.limiting_constraint_id,
+    "safe_source_capacity"
+  );
+});
+
+test("runVelocityEngine limits the chunk by recovery capacity", () => {
+  const result = runVelocityEngine(
+    baseInput({
+      accounts: [
+        {
+          id: "cash",
+          name: "Checking",
+          type: "checking",
+          current_balance: 2000,
+        },
+        {
+          id: "source",
+          name: "HELOC",
+          type: "heloc",
+          current_balance: 500,
+          credit_limit: 10000,
+          available_credit: 9500,
+          interest_rate: 0,
+        },
+      ],
+      settings: {
+        cash_buffer: 500,
+        max_recommended_payment: null,
+        max_source_utilization_percent: 90,
+        minimum_cash_after_payment: 500,
+        monthly_recovery_capacity: 100,
+        recovery_months: 3,
+        strategy: "aggressive",
+      },
+    })
+  );
+
+  assert.equal(result.recommendation?.kind, "highest_apr");
+  assert.equal(result.recommendation?.payment_amount, 300);
+  assert.equal(result.chunk_recommendation?.recommended_chunk, 300);
+  assert.equal(result.chunk_recommendation?.limiting_constraint_id, "recovery_window");
+  assert.equal(result.recovery_timeline?.months_required, 3);
+  assert.equal(result.recovery_timeline?.status, "Within Guardrails");
+});
+
+test("runVelocityEngine holds cash when upcoming bills consume liquidity", () => {
+  const result = runVelocityEngine(
+    baseInput({
+      accounts: [
+        {
+          id: "cash",
+          name: "Checking",
+          type: "checking",
+          current_balance: 1000,
+        },
+        {
+          id: "source",
+          name: "HELOC",
+          type: "heloc",
+          current_balance: 0,
+          credit_limit: 10000,
+          available_credit: 10000,
+          interest_rate: 6,
+        },
+      ],
+      incomes: [],
+      bills: [
+        {
+          id: "large-bill",
+          name: "Insurance",
+          amount: 900,
+          is_archived: false,
+        },
+      ],
+      settings: {
+        cash_buffer: 500,
+        max_recommended_payment: null,
+        max_source_utilization_percent: 90,
+        minimum_cash_after_payment: 500,
+        monthly_recovery_capacity: 300,
+        recovery_months: 6,
+        strategy: "aggressive",
+      },
+    })
+  );
+
+  assert.equal(result.cashflow_projection?.projected_cash_before_velocity_payment, -50);
+  assert.equal(result.chunk_recommendation?.recommended_chunk, 0);
+  assert.equal(result.chunk_recommendation?.hold_reason, "liquidity_floor");
+  assert.equal(result.recommendation?.kind, "hold_cash");
+  assert.equal(result.recommendation?.payment_amount, 0);
+});
+
+test("runVelocityEngine returns chunk rationale for the limiting constraint", () => {
+  const result = runVelocityEngine(baseInput());
+
+  assert.equal(
+    result.chunk_recommendation?.constraints.some(
+      (constraint) => constraint.id === "positive_net_savings"
+    ),
+    true
+  );
+  assert.equal(
+    result.chunk_recommendation?.rationale.some((line) =>
+      line.includes("limiting_constraint:safe_source_capacity")
+    ),
+    true
   );
 });
 
@@ -312,7 +460,7 @@ test("runVelocityEngine selects hold cash when no safe payment capacity remains"
   assert.equal(result.risk_summary.warnings.includes("No cash above buffer is available for a velocity payment."), true);
 });
 
-test("runVelocityEngine marks recovery timeline as exceeding guardrails when recovery is too slow", () => {
+test("runVelocityEngine keeps recovery timeline within guardrails by limiting the chunk", () => {
   const result = runVelocityEngine(
     baseInput({
       settings: {
@@ -326,9 +474,11 @@ test("runVelocityEngine marks recovery timeline as exceeding guardrails when rec
     })
   );
 
-  assert.equal(result.recovery_timeline?.months_required, 5);
-  assert.equal(result.recovery_timeline?.status, "Exceeds Guardrails");
-  assert.equal(result.recovery_timeline?.completion_date, "November 2026");
+  assert.equal(result.chunk_recommendation?.recommended_chunk, 300);
+  assert.equal(result.chunk_recommendation?.limiting_constraint_id, "recovery_window");
+  assert.equal(result.recovery_timeline?.months_required, 3);
+  assert.equal(result.recovery_timeline?.status, "Within Guardrails");
+  assert.equal(result.recovery_timeline?.completion_date, "September 2026");
 });
 
 test("runVelocityEngine excludes archived debts from targets and candidates", () => {

@@ -48,6 +48,7 @@ export type VelocityDebtSnapshot = {
 export type VelocitySettingsSnapshot = {
   cash_buffer: number;
   max_recommended_payment?: number | null;
+  max_source_utilization_percent?: number | null;
   minimum_cash_after_payment?: number | null;
   monthly_recovery_capacity?: number | null;
   recovery_months?: number | null;
@@ -146,6 +147,30 @@ export type VelocityRiskSummary = {
   assumptions?: string[];
 };
 
+export type VelocityChunkConstraint = {
+  id:
+    | "liquidity_floor"
+    | "safe_source_capacity"
+    | "recovery_window"
+    | "target_balance"
+    | "max_recommended_payment"
+    | "positive_net_savings";
+  label: string;
+  value: number;
+  passed: boolean;
+  detail: string;
+};
+
+export type VelocityChunkRecommendation = {
+  recommended_chunk: number;
+  limiting_constraint_id: VelocityChunkConstraint["id"];
+  limiting_constraint_label: string;
+  hold_reason?: string;
+  projected_net_savings: number;
+  constraints: VelocityChunkConstraint[];
+  rationale: string[];
+};
+
 export type VelocityRecoveryTimeline = {
   months_required: number | null;
   recovery_months: number;
@@ -183,6 +208,7 @@ export type VelocityEngineResult = {
   recommendation?: VelocityRecommendation;
   alternatives: VelocityAlternative[];
   cashflow_projection?: VelocityCashflowProjection;
+  chunk_recommendation?: VelocityChunkRecommendation;
   recovery_timeline?: VelocityRecoveryTimeline;
   interest_savings?: VelocityInterestSavings;
   constraints?: VelocityConstraintResult[];

@@ -3,8 +3,11 @@ import type {
   VelocityCandidateEvaluation,
   VelocityCandidateKind,
   VelocityConfidence,
+  VelocityChunkConstraint,
+  VelocityChunkRecommendation,
   VelocityConstraintResult,
   VelocityAccountSnapshot,
+  VelocityCashflowProjection,
   VelocityDebtSnapshot,
   VelocityEngineResult,
   VelocityInputSnapshot,
@@ -198,14 +201,21 @@ function simulateVelocitySourceCost(
   const monthlySourceRepayment = money(Math.max(monthlyRecoveryCapacity, 0));
 
   if (velocityPaymentAmount <= 0 || sourceApr <= 0 || monthlySourceRepayment <= 0) {
+    const repaymentMonths =
+      velocityPaymentAmount > 0 && monthlySourceRepayment > 0
+        ? Math.ceil(velocityPaymentAmount / monthlySourceRepayment)
+        : 0;
+
     return {
       source_apr: sourceApr,
       source_starting_balance: sourceStartingBalance,
       source_balance_after_velocity_payment: sourceBalanceAfterVelocityPayment,
       monthly_source_repayment: monthlySourceRepayment,
       source_interest_cost: 0,
-      source_repayment_months: 0,
-      source_repayment_completed: velocityPaymentAmount <= 0,
+      source_repayment_months: repaymentMonths,
+      source_repayment_completed:
+        velocityPaymentAmount <= 0 ||
+        (sourceApr <= 0 && monthlySourceRepayment > 0),
     };
   }
 
@@ -309,6 +319,275 @@ function buildInterestSavings(
   };
 }
 
+function buildInterestSavingsForChunk(
+  input: VelocityInputSnapshot,
+  debts: VelocityDebtSnapshot[],
+  targetDebt: VelocityDebtSnapshot,
+  paymentAmount: number
+) {
+  return buildInterestSavings(input, debts, {
+    id: "chunk-formula-preview",
+    label: "Chunk formula preview",
+    kind: "highest_apr",
+    debt_id: targetDebt.id,
+    debt_name: targetDebt.name,
+    payment_amount: paymentAmount,
+    reason: "Preview interest impact for deterministic chunk sizing.",
+    confidence: "high",
+  });
+}
+
+function getSourceCapacity(input: VelocityInputSnapshot) {
+  const sourceAccount = getVelocitySourceAccount(input);
+  const configuredMax = input.settings.max_recommended_payment;
+  const configuredLimit =
+    configuredMax != null && Number.isFinite(configuredMax)
+      ? Math.max(Number(configuredMax), 0)
+      : Number.POSITIVE_INFINITY;
+
+  if (!sourceAccount) {
+    return {
+      safe_source_capacity:
+        configuredLimit === Number.POSITIVE_INFINITY ? 0 : money(configuredLimit),
+      available_credit:
+        configuredLimit === Number.POSITIVE_INFINITY ? 0 : money(configuredLimit),
+      utilization_capacity:
+        configuredLimit === Number.POSITIVE_INFINITY ? 0 : money(configuredLimit),
+    };
+  }
+
+  const creditLimit = Math.max(finiteNumber(sourceAccount.credit_limit), 0);
+  const currentBalance = Math.max(finiteNumber(sourceAccount.current_balance), 0);
+  const availableCredit =
+    sourceAccount.available_credit != null &&
+    Number.isFinite(sourceAccount.available_credit)
+      ? Math.max(Number(sourceAccount.available_credit), 0)
+      : Math.max(creditLimit - currentBalance, 0);
+  const maxUtilizationPercent =
+    input.settings.max_source_utilization_percent != null &&
+    Number.isFinite(input.settings.max_source_utilization_percent)
+      ? Math.max(Number(input.settings.max_source_utilization_percent), 0)
+      : 100;
+  const emergencyReserve = Math.max(
+    finiteNumber(input.settings.minimum_cash_after_payment),
+    0
+  );
+  const utilizationLimit = money(creditLimit * (maxUtilizationPercent / 100));
+  const utilizationCapacity =
+    creditLimit > 0
+      ? Math.max(utilizationLimit - currentBalance - emergencyReserve, 0)
+      : availableCredit;
+
+  return {
+    safe_source_capacity: money(
+      Math.max(Math.min(availableCredit, utilizationCapacity, configuredLimit), 0)
+    ),
+    available_credit: money(availableCredit),
+    utilization_capacity: money(utilizationCapacity),
+  };
+}
+
+function makeChunkConstraint(
+  id: VelocityChunkConstraint["id"],
+  label: string,
+  value: number,
+  passed: boolean,
+  detail: string
+): VelocityChunkConstraint {
+  return {
+    id,
+    label,
+    value: money(value),
+    passed,
+    detail,
+  };
+}
+
+function buildChunkRecommendation(
+  input: VelocityInputSnapshot,
+  debts: VelocityDebtSnapshot[],
+  targetDebt: VelocityDebtSnapshot | undefined,
+  cashflowProjection: VelocityCashflowProjection
+): VelocityChunkRecommendation {
+  const cashBuffer = Math.max(finiteNumber(input.settings.cash_buffer), 0);
+  const emergencyReserve = Math.max(
+    finiteNumber(input.settings.minimum_cash_after_payment ?? cashBuffer),
+    0
+  );
+  const liquidityFloor = Math.max(cashBuffer, emergencyReserve);
+  const projectedCashBeforePayment =
+    cashflowProjection.projected_cash_before_velocity_payment;
+  const liquiditySurplus = money(
+    Math.max(projectedCashBeforePayment - liquidityFloor, 0)
+  );
+  const sourceCapacity = getSourceCapacity(input);
+  const monthlyRecoveryCapacity = money(
+    Math.max(finiteNumber(input.settings.monthly_recovery_capacity), 0)
+  );
+  const recoveryMonths = Math.max(finiteNumber(input.settings.recovery_months), 0);
+  const recoveryWindowCapacity = money(monthlyRecoveryCapacity * recoveryMonths);
+  const targetBalance = money(Math.max(finiteNumber(targetDebt?.balance), 0));
+  const configuredMax =
+    input.settings.max_recommended_payment != null &&
+    Number.isFinite(input.settings.max_recommended_payment)
+      ? Math.max(Number(input.settings.max_recommended_payment), 0)
+      : Number.POSITIVE_INFINITY;
+
+  const baseConstraints = [
+    makeChunkConstraint(
+      "liquidity_floor",
+      "Liquidity floor",
+      liquiditySurplus,
+      projectedCashBeforePayment >= liquidityFloor,
+      `Projected cash after income, bills, and minimum payments is ${money(projectedCashBeforePayment)} against a ${money(liquidityFloor)} liquidity floor.`
+    ),
+    makeChunkConstraint(
+      "safe_source_capacity",
+      "Safe source capacity",
+      sourceCapacity.safe_source_capacity,
+      sourceCapacity.safe_source_capacity > 0,
+      `Safe source capacity is ${sourceCapacity.safe_source_capacity} after available credit, utilization, source balance, and emergency reserve guardrails.`
+    ),
+    makeChunkConstraint(
+      "recovery_window",
+      "Recovery window",
+      recoveryWindowCapacity,
+      monthlyRecoveryCapacity > 0 && recoveryMonths > 0,
+      `Recovery capacity is ${monthlyRecoveryCapacity} per month over ${recoveryMonths} months.`
+    ),
+    makeChunkConstraint(
+      "target_balance",
+      "Target debt balance",
+      targetBalance,
+      Boolean(targetDebt) && targetBalance > 0,
+      targetDebt
+        ? `Target debt ${targetDebt.name} has ${targetBalance} remaining.`
+        : "No eligible target debt is available."
+    ),
+    makeChunkConstraint(
+      "max_recommended_payment",
+      "Maximum recommended payment",
+      configuredMax === Number.POSITIVE_INFINITY
+        ? sourceCapacity.safe_source_capacity
+        : configuredMax,
+      configuredMax === Number.POSITIVE_INFINITY || configuredMax > 0,
+      configuredMax === Number.POSITIVE_INFINITY
+        ? "No separate max recommended payment is configured."
+        : `Configured max recommended payment is ${money(configuredMax)}.`
+    ),
+  ];
+
+  const failedBaseConstraint = baseConstraints.find(
+    (constraint) => !constraint.passed
+  );
+  const candidateChunk = money(
+    Math.min(
+      sourceCapacity.safe_source_capacity,
+      recoveryWindowCapacity,
+      targetBalance,
+      configuredMax
+    )
+  );
+
+  let interestSavings: VelocityInterestSavings | null = null;
+  if (!failedBaseConstraint && targetDebt && candidateChunk > 0) {
+    interestSavings = buildInterestSavingsForChunk(
+      input,
+      debts,
+      targetDebt,
+      candidateChunk
+    );
+  }
+
+  const recoveryIsSafe =
+    !interestSavings ||
+    interestSavings.source_repayment_completed === true &&
+      interestSavings.source_repayment_months <= recoveryMonths;
+  const projectedNetSavings = money(interestSavings?.net_interest_saved || 0);
+  const positiveNetSavingsConstraint = makeChunkConstraint(
+    "positive_net_savings",
+    "Positive net savings",
+    projectedNetSavings,
+    projectedNetSavings > 0,
+    `Projected net savings after Velocity source cost is ${projectedNetSavings}.`
+  );
+  const constraints = [...baseConstraints, positiveNetSavingsConstraint];
+  const numericLimits = [
+    {
+      id: "safe_source_capacity" as const,
+      label: "Safe source capacity",
+      value: sourceCapacity.safe_source_capacity,
+    },
+    {
+      id: "recovery_window" as const,
+      label: "Recovery window",
+      value: recoveryWindowCapacity,
+    },
+    {
+      id: "target_balance" as const,
+      label: "Target debt balance",
+      value: targetBalance,
+    },
+    ...(configuredMax === Number.POSITIVE_INFINITY
+      ? []
+      : [
+          {
+            id: "max_recommended_payment" as const,
+            label: "Maximum recommended payment",
+            value: configuredMax,
+          },
+        ]),
+  ];
+  const limitingConstraint = numericLimits
+    .filter((limit) => Number.isFinite(limit.value))
+    .sort((a, b) => a.value - b.value)[0] || {
+    id: "safe_source_capacity" as const,
+    label: "Safe source capacity",
+    value: 0,
+  };
+  const recoveryUnsafeConstraint = !failedBaseConstraint && !recoveryIsSafe
+    ? baseConstraints.find((constraint) => constraint.id === "recovery_window")
+    : undefined;
+  const holdConstraint =
+    failedBaseConstraint ||
+    (candidateChunk <= 0
+      ? constraints.find((constraint) => constraint.id === limitingConstraint.id)
+      : undefined) ||
+    (!positiveNetSavingsConstraint.passed
+      ? positiveNetSavingsConstraint
+      : undefined) ||
+    recoveryUnsafeConstraint;
+
+  if (holdConstraint) {
+    return {
+      recommended_chunk: 0,
+      limiting_constraint_id: holdConstraint.id,
+      limiting_constraint_label: holdConstraint.label,
+      hold_reason: holdConstraint.id,
+      projected_net_savings: projectedNetSavings,
+      constraints,
+      rationale: [
+        `hold_reason:${holdConstraint.id}`,
+        holdConstraint.detail,
+        "Recommended chunk is 0 because the deterministic guardrails did not all pass.",
+      ],
+    };
+  }
+
+  return {
+    recommended_chunk: candidateChunk,
+    limiting_constraint_id: limitingConstraint.id,
+    limiting_constraint_label: limitingConstraint.label,
+    projected_net_savings: projectedNetSavings,
+    constraints,
+    rationale: [
+      `limiting_constraint:${limitingConstraint.id}`,
+      `Recommended chunk is ${candidateChunk}, limited by ${limitingConstraint.label}.`,
+      `Projected net savings after source cost is ${projectedNetSavings}.`,
+    ],
+  };
+}
+
 function getMonthlyAmount(amount: number, frequency?: string | null) {
   const normalizedFrequency = (frequency || "monthly").toLowerCase();
 
@@ -376,22 +655,6 @@ function buildCashflowProjection(input: VelocityInputSnapshot, cashBalance: numb
   };
 }
 
-function getSafePaymentCapacity(input: VelocityInputSnapshot, projectedCash: number) {
-  const cashBuffer = finiteNumber(input.settings.cash_buffer);
-  const minimumCashAfterPayment = finiteNumber(
-    input.settings.minimum_cash_after_payment ?? cashBuffer
-  );
-  const maxRecommendedPayment = input.settings.max_recommended_payment;
-  const bufferLimited = Math.max(projectedCash - cashBuffer, 0);
-  const minimumCashLimited = Math.max(projectedCash - minimumCashAfterPayment, 0);
-  const configuredMax =
-    maxRecommendedPayment != null && Number.isFinite(maxRecommendedPayment)
-      ? Math.max(Number(maxRecommendedPayment), 0)
-      : Number.POSITIVE_INFINITY;
-
-  return money(Math.min(bufferLimited, minimumCashLimited, configuredMax));
-}
-
 function buildConstraintResults(
   input: VelocityInputSnapshot,
   kind: VelocityCandidateKind,
@@ -426,15 +689,25 @@ function buildConstraintResults(
         : "Debt is active and has a positive balance.",
     },
     {
+      id: "positive_velocity_payment",
+      label: "Positive Velocity payment",
+      passed: requiresDebt ? paymentAmount > 0 : true,
+      detail: requiresDebt
+        ? `Candidate payment is ${money(paymentAmount)}.`
+        : "No positive velocity payment is required for this candidate.",
+    },
+    {
       id: "cash_buffer",
       label: "Cash buffer",
-      passed: projectedCashAfterPayment >= cashBuffer,
+      passed: kind === "hold_cash" || projectedCashAfterPayment >= cashBuffer,
       detail: `Projected cash after payment is ${money(projectedCashAfterPayment)} against a ${money(cashBuffer)} buffer.`,
     },
     {
       id: "minimum_cash_after_payment",
       label: "Minimum cash after payment",
-      passed: projectedCashAfterPayment >= minimumCashAfterPayment,
+      passed:
+        kind === "hold_cash" ||
+        projectedCashAfterPayment >= minimumCashAfterPayment,
       detail: `Projected cash after payment is ${money(projectedCashAfterPayment)} against a ${money(minimumCashAfterPayment)} minimum.`,
     },
     {
@@ -673,26 +946,6 @@ function getConfidence(
   return "medium";
 }
 
-function getStrategyPaymentLimit(input: VelocityInputSnapshot, availableCash: number) {
-  const configuredMax = input.settings.max_recommended_payment;
-  const minimumCashAfterPayment = input.settings.minimum_cash_after_payment ?? 0;
-  const cashLimitedAmount = Math.max(availableCash - minimumCashAfterPayment, 0);
-  const strategyMultiplier =
-    input.settings.strategy === "aggressive"
-      ? 0.75
-      : input.settings.strategy === "conservative"
-        ? 0.35
-        : 0.5;
-
-  const strategyLimitedAmount = availableCash * strategyMultiplier;
-  const maxAllowed =
-    configuredMax != null && Number.isFinite(configuredMax)
-      ? Math.min(configuredMax, cashLimitedAmount, strategyLimitedAmount)
-      : Math.min(cashLimitedAmount, strategyLimitedAmount);
-
-  return money(Math.max(maxAllowed, 0));
-}
-
 function buildRecommendation(
   candidate: VelocityCandidateEvaluation | undefined,
   confidence: VelocityConfidence
@@ -761,18 +1014,10 @@ export function runVelocityEngine(input: VelocityInputSnapshot): VelocityEngineR
   const availableCashAboveBuffer = cashflowProjection.available_cash_above_buffer;
   const eligibleDebts = isValid ? getEligibleDebts(input.debts) : [];
   const targetDebt = getHighestAprDebt(eligibleDebts);
-  const safePaymentCapacity = isValid
-    ? getSafePaymentCapacity(
-        input,
-        cashflowProjection.projected_cash_before_velocity_payment
-      )
-    : 0;
-  const strategyPaymentLimit = isValid
-    ? getStrategyPaymentLimit(input, availableCashAboveBuffer)
-    : 0;
-  const candidatePaymentCapacity = money(
-    Math.min(safePaymentCapacity, strategyPaymentLimit || safePaymentCapacity)
-  );
+  const chunkRecommendation = isValid
+    ? buildChunkRecommendation(input, eligibleDebts, targetDebt, cashflowProjection)
+    : undefined;
+  const candidatePaymentCapacity = chunkRecommendation?.recommended_chunk || 0;
   const candidateEvaluations = isValid
     ? generateCandidates(
         input,
@@ -836,6 +1081,7 @@ export function runVelocityEngine(input: VelocityInputSnapshot): VelocityEngineR
     recommendation,
     alternatives,
     cashflow_projection: cashflowProjection,
+    chunk_recommendation: chunkRecommendation,
     recovery_timeline: recoveryTimeline,
     interest_savings: interestSavings,
     constraints: failedConstraints,

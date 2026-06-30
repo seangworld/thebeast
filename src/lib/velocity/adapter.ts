@@ -145,6 +145,14 @@ export function buildVelocityInputSnapshot(
     input.velocity_settings.emergency_reserve_amount
   );
   const extraAttack = toNumber(input.extra_attack);
+  const startingBalance = toNumber(input.starting_balance);
+  const currentMonthlySurplus = startingBalance - cashBuffer;
+  const monthlyRecoveryCapacity =
+    currentMonthlySurplus > 0
+      ? currentMonthlySurplus
+      : extraAttack > 0
+        ? extraAttack
+        : 0;
 
   // UI mismatch: the current Velocity page has a single starting cash value,
   // not normalized cash accounts. Represent it as one checking account for now.
@@ -153,8 +161,6 @@ export function buildVelocityInputSnapshot(
     buildCreditSourceAccount(input.velocity_settings),
   ];
 
-  // UI mismatch: max utilization and recovery months are page-level guardrails,
-  // but the first engine skeleton only accepts generic payment constraints.
   const maxUtilizationPercent = toNumber(
     input.velocity_settings.max_utilization_percent
   );
@@ -166,12 +172,7 @@ export function buildVelocityInputSnapshot(
     0
   );
 
-  // UI mismatch: extra attack is recovery capacity, not cash on hand. For now,
-  // pass it as a conservative max payment cap rather than inventing income data.
-  const maxRecommendedPayment =
-    extraAttack > 0
-      ? Math.min(extraAttack, safeCreditAvailable || extraAttack)
-      : safeCreditAvailable || null;
+  const maxRecommendedPayment = safeCreditAvailable || null;
 
   return {
     as_of_date: input.as_of_date,
@@ -182,7 +183,10 @@ export function buildVelocityInputSnapshot(
     settings: {
       cash_buffer: cashBuffer,
       max_recommended_payment: maxRecommendedPayment,
+      max_source_utilization_percent: maxUtilizationPercent,
       minimum_cash_after_payment: emergencyReserve,
+      monthly_recovery_capacity: monthlyRecoveryCapacity,
+      recovery_months: toNumber(input.velocity_settings.recovery_months),
       strategy: input.velocity_settings.allow_super_velocity
         ? "aggressive"
         : "conservative",
