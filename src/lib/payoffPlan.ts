@@ -1,3 +1,6 @@
+import { runVelocityEngine } from "./velocity";
+import type { VelocityInputSnapshot } from "./velocity";
+
 export type PayoffStrategy = "minimum" | "snowball" | "avalanche" | "velocity";
 
 export type PayoffDebt = {
@@ -30,12 +33,29 @@ function money(value: number) {
   return Math.round((value + Number.EPSILON) * 100) / 100;
 }
 
-function chooseTarget(debts: PayoffDebt[], strategy: PayoffStrategy) {
+function chooseTarget(
+  debts: PayoffDebt[],
+  strategy: PayoffStrategy,
+  velocityTargetDebtId?: string
+) {
   const active = debts.filter((d) => d.balance > 0);
 
   if (active.length === 0) return null;
 
-  if (strategy === "minimum" || strategy === "velocity") return null;
+  if (strategy === "minimum") return null;
+
+  if (strategy === "velocity") {
+    const velocityTarget = active.find((debt) => debt.id === velocityTargetDebtId);
+
+    // Conservative first pass: Velocity influences payoff ordering through the
+    // engine-selected target only. Payment cadence remains the existing payoff
+    // simulator's monthly pool until the plan can model one-time Velocity chunks.
+    if (velocityTarget) return velocityTarget;
+
+    return [...active].sort(
+      (a, b) => Number(b.interest_rate || 0) - Number(a.interest_rate || 0)
+    )[0];
+  }
 
   if (strategy === "avalanche") {
     return [...active].sort(
@@ -52,10 +72,12 @@ export function simulatePayoffPlan({
   debts,
   strategy,
   extraPayment,
+  velocityInputSnapshot,
 }: {
   debts: PayoffDebt[];
   strategy: PayoffStrategy;
   extraPayment: number;
+  velocityInputSnapshot?: VelocityInputSnapshot;
 }): PayoffResult {
   const workingDebts: PayoffDebt[] = debts.map((debt) => ({
     ...debt,
@@ -75,7 +97,15 @@ export function simulatePayoffPlan({
       Number(extraPayment || 0)
   );
 
-  const firstTarget = chooseTarget(workingDebts, strategy);
+  const velocityEngineResult =
+    strategy === "velocity" && velocityInputSnapshot
+      ? runVelocityEngine(velocityInputSnapshot)
+      : null;
+  const velocityTargetDebtId =
+    velocityEngineResult?.recommendation?.debt_id ||
+    velocityEngineResult?.target_debt?.id;
+
+  const firstTarget = chooseTarget(workingDebts, strategy, velocityTargetDebtId);
 
   if (!firstTarget || baseMonthlyPayment <= 0) {
     return {
@@ -111,7 +141,7 @@ export function simulatePayoffPlan({
       monthlyInterest = money(monthlyInterest + interest);
     }
 
-    const target = chooseTarget(workingDebts, strategy);
+    const target = chooseTarget(workingDebts, strategy, velocityTargetDebtId);
     if (!target) break;
 
     let paymentPool = baseMonthlyPayment;

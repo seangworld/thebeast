@@ -5,6 +5,7 @@ import {
   buildVelocityInputSnapshot,
   runVelocityEngine,
 } from "../src/lib/velocity";
+import { simulatePayoffPlan } from "../src/lib/payoffPlan";
 import type { VelocityInputSnapshot } from "../src/lib/velocity";
 
 function baseInput(overrides: Partial<VelocityInputSnapshot> = {}): VelocityInputSnapshot {
@@ -414,4 +415,76 @@ test("buildVelocityAdvisorResult formats all advisor sections", () => {
     ]
   );
   assert.equal(advisorResult.validation_errors.length, 0);
+});
+
+test("simulatePayoffPlan preserves snowball and avalanche targeting", () => {
+  const debts = [
+    {
+      id: "small-low-apr",
+      name: "Small Low APR",
+      balance: 500,
+      minimum_payment: 25,
+      interest_rate: 5,
+    },
+    {
+      id: "large-high-apr",
+      name: "Large High APR",
+      balance: 2500,
+      minimum_payment: 75,
+      interest_rate: 24,
+    },
+  ];
+
+  const snowball = simulatePayoffPlan({
+    debts,
+    strategy: "snowball",
+    extraPayment: 100,
+  });
+  const avalanche = simulatePayoffPlan({
+    debts,
+    strategy: "avalanche",
+    extraPayment: 100,
+  });
+
+  assert.equal(snowball.first_target, "Small Low APR");
+  assert.equal(avalanche.first_target, "Large High APR");
+});
+
+test("simulatePayoffPlan uses Velocity engine target when strategy is velocity", () => {
+  const debts = [
+    {
+      id: "small-low-apr",
+      name: "Small Low APR",
+      balance: 500,
+      minimum_payment: 25,
+      interest_rate: 5,
+    },
+    {
+      id: "large-high-apr",
+      name: "Large High APR",
+      balance: 2500,
+      minimum_payment: 75,
+      interest_rate: 24,
+    },
+  ];
+  const velocityInputSnapshot = baseInput({
+    debts,
+    settings: {
+      cash_buffer: 500,
+      max_recommended_payment: 400,
+      minimum_cash_after_payment: 500,
+      monthly_recovery_capacity: 200,
+      recovery_months: 6,
+      strategy: "aggressive",
+    },
+  });
+
+  const result = simulatePayoffPlan({
+    debts,
+    strategy: "velocity",
+    extraPayment: 100,
+    velocityInputSnapshot,
+  });
+
+  assert.equal(result.first_target, "Large High APR");
 });

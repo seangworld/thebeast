@@ -9,8 +9,35 @@ import {
   parseDateOnly,
   sortObligationsByNextDueDate,
 } from "../cashflow/cashflowUtils";
+import {
+  buildVelocityInputSnapshot,
+  runVelocityEngine,
+} from "@/lib/velocity";
 
 type PayoffStrategy = "minimum" | "snowball" | "avalanche" | "velocity";
+type VelocitySourceType = "heloc" | "ploc" | "credit_card" | "other";
+
+type VelocitySettings = {
+  velocity_source_type: VelocitySourceType;
+  credit_limit: string;
+  current_balance: string;
+  source_apr: string;
+  max_utilization_percent: string;
+  recovery_months: string;
+  emergency_reserve_amount: string;
+  allow_super_velocity: boolean;
+};
+
+const DEFAULT_VELOCITY_SETTINGS: VelocitySettings = {
+  velocity_source_type: "heloc",
+  credit_limit: "",
+  current_balance: "",
+  source_apr: "",
+  max_utilization_percent: "66",
+  recovery_months: "6",
+  emergency_reserve_amount: "",
+  allow_super_velocity: false,
+};
 
 type Debt = {
   id: string;
@@ -34,12 +61,53 @@ function money(value: number) {
   return Math.round((value + Number.EPSILON) * 100) / 100;
 }
 
-function chooseTarget(debts: Debt[], strategy: PayoffStrategy) {
+function toInputString(value: unknown) {
+  if (value == null) return "";
+  return String(value);
+}
+
+function mapVelocitySettingsRow(row: any): VelocitySettings {
+  return {
+    velocity_source_type:
+      row?.velocity_source_type || DEFAULT_VELOCITY_SETTINGS.velocity_source_type,
+    credit_limit: toInputString(row?.credit_limit),
+    current_balance: toInputString(row?.current_balance),
+    source_apr: toInputString(row?.source_apr),
+    max_utilization_percent: toInputString(
+      row?.max_utilization_percent ??
+        DEFAULT_VELOCITY_SETTINGS.max_utilization_percent
+    ),
+    recovery_months: toInputString(
+      row?.recovery_months ?? DEFAULT_VELOCITY_SETTINGS.recovery_months
+    ),
+    emergency_reserve_amount: toInputString(row?.emergency_reserve_amount),
+    allow_super_velocity: Boolean(row?.allow_super_velocity),
+  };
+}
+
+function chooseTarget(
+  debts: Debt[],
+  strategy: PayoffStrategy,
+  velocityTargetDebtId?: string
+) {
   const active = debts.filter((d) => Number(d.balance) > 0);
 
   if (active.length === 0) return null;
 
-  if (strategy === "minimum" || strategy === "velocity") return null;
+  if (strategy === "minimum") return null;
+
+  if (strategy === "velocity") {
+    const velocityTarget = active.find((debt) => debt.id === velocityTargetDebtId);
+
+    // Conservative first pass: Velocity affects target ordering only. The
+    // existing monthly payment simulator remains intact until it can safely
+    // represent one-time Velocity chunks and source repayment timing.
+    if (velocityTarget) return velocityTarget;
+
+    return [...active].sort(
+      (a, b) => Number(b.interest_rate || 0) - Number(a.interest_rate || 0)
+    )[0];
+  }
 
   if (strategy === "avalanche") {
     return [...active].sort(
@@ -280,11 +348,13 @@ function simulatePayoffPlan({
   recoveredMinimums,
   strategy,
   extraPayment,
+  velocityTargetDebtId,
 }: {
   debts: Debt[];
   recoveredMinimums: number;
   strategy: PayoffStrategy;
   extraPayment: number;
+  velocityTargetDebtId?: string;
 }) {
   const working = debts.map((d) => ({
     ...d,
@@ -334,7 +404,11 @@ function simulatePayoffPlan({
       monthlyInterest = money(monthlyInterest + interest);
     }
 
-    const targetAtMonthStart = chooseTarget(working, strategy);
+    const targetAtMonthStart = chooseTarget(
+      working,
+      strategy,
+      velocityTargetDebtId
+    );
 
     const totalBalanceAfterInterest = money(
       working.reduce((sum, d) => sum + Number(d.balance || 0), 0)
@@ -360,7 +434,7 @@ function simulatePayoffPlan({
 
     // Apply extra attack to target debt
     while (pool > 0 && working.some((d) => Number(d.balance) > 0)) {
-      const target = chooseTarget(working, strategy);
+      const target = chooseTarget(working, strategy, velocityTargetDebtId);
       if (!target) break;
 
       const debtBalanceBeforeAttack = money(Number(target.balance || 0));
@@ -377,7 +451,8 @@ function simulatePayoffPlan({
     totalInterest = money(totalInterest + monthlyInterest);
     totalPaid = money(totalPaid + paid);
 
-    const targetForRow = targetAtMonthStart || chooseTarget(working, strategy);
+    const targetForRow =
+      targetAtMonthStart || chooseTarget(working, strategy, velocityTargetDebtId);
 
     if (!targetForRow) break;
 
@@ -446,6 +521,10 @@ export default function DebtsPage() {
   const [debts, setDebts] = useState<Debt[]>([]);
   const [strategy, setStrategy] = useState<PayoffStrategy>("snowball");
   const [extraPayment, setExtraPayment] = useState("");
+  const [startingBalance, setStartingBalance] = useState<number | null>(null);
+  const [buffer, setBuffer] = useState<number | null>(null);
+  const [velocitySettings, setVelocitySettings] =
+    useState<VelocitySettings>(DEFAULT_VELOCITY_SETTINGS);
 
   const [name, setName] = useState("");
   const [balance, setBalance] = useState("");
@@ -522,6 +601,27 @@ export default function DebtsPage() {
     );
   }, [debtsWithNextDueDate]);
 
+  const velocityInputSnapshot = useMemo(() => {
+    return buildVelocityInputSnapshot({
+      as_of_date: new Date().toISOString(),
+      debts: activeDebts,
+      incomes: [],
+      bills: [],
+      velocity_settings: velocitySettings,
+      starting_balance: startingBalance,
+      cash_buffer: buffer,
+      extra_attack: extraPayment,
+    });
+  }, [activeDebts, buffer, extraPayment, startingBalance, velocitySettings]);
+
+  const velocityEngineResult = useMemo(() => {
+    return runVelocityEngine(velocityInputSnapshot);
+  }, [velocityInputSnapshot]);
+
+  const velocityPayoffTargetDebtId =
+    velocityEngineResult.recommendation?.debt_id ||
+    velocityEngineResult.target_debt?.id;
+
   const minimumProjection = useMemo(() => {
     return simulateMinimumProjection(activeDebts);
   }, [activeDebts]);
@@ -550,7 +650,13 @@ export default function DebtsPage() {
     }
 
     if (strategy === "velocity") {
-      return minimumProjection;
+      return simulatePayoffPlan({
+        debts: activeDebts,
+        recoveredMinimums,
+        strategy: "velocity",
+        extraPayment: Number(extraPayment || 0),
+        velocityTargetDebtId: velocityPayoffTargetDebtId,
+      });
     }
 
     if (strategy === "avalanche") {
@@ -558,7 +664,16 @@ export default function DebtsPage() {
     }
 
     return snowballProjection;
-  }, [avalancheProjection, minimumProjection, snowballProjection, strategy]);
+  }, [
+    activeDebts,
+    avalancheProjection,
+    extraPayment,
+    minimumProjection,
+    recoveredMinimums,
+    snowballProjection,
+    strategy,
+    velocityPayoffTargetDebtId,
+  ]);
 
   const strategyComparisonRows = useMemo(() => {
     const rows: StrategyComparisonRow[] = [
@@ -693,8 +808,20 @@ export default function DebtsPage() {
       .select("*")
       .eq("user_id", userId);
 
+    const { data: cashSettings } = await supabase
+      .from("cash_settings")
+      .select("*")
+      .eq("user_id", userId)
+      .maybeSingle();
+
     const { data: settings } = await supabase
       .from("debt_settings")
+      .select("*")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    const { data: velocitySettingsRow } = await supabase
+      .from("velocity_settings")
       .select("*")
       .eq("user_id", userId)
       .maybeSingle();
@@ -703,6 +830,21 @@ export default function DebtsPage() {
     setStrategy((settings?.strategy || "snowball") as PayoffStrategy);
     setExtraPayment(
       settings?.extra_payment != null ? String(settings.extra_payment) : ""
+    );
+    setStartingBalance(
+      cashSettings?.starting_balance != null
+        ? Number(cashSettings.starting_balance)
+        : null
+    );
+    setBuffer(
+      cashSettings?.checking_buffer != null
+        ? Number(cashSettings.checking_buffer)
+        : null
+    );
+    setVelocitySettings(
+      velocitySettingsRow
+        ? mapVelocitySettingsRow(velocitySettingsRow)
+        : DEFAULT_VELOCITY_SETTINGS
     );
 
     setLoading(false);
