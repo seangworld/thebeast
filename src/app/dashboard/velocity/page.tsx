@@ -187,6 +187,10 @@ function formatStrategyName(value: string) {
   return strategyLabels[value] || value;
 }
 
+function formatVelocityRiskStatus(value: string) {
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
 function formatRecoveryMonths(value: number | null) {
   if (value == null) return "Not Available";
   const rounded = Math.ceil(value);
@@ -377,7 +381,7 @@ export default function VelocityPlannerPage() {
   const recoveryBasedLimit = clampToZero(
     monthlyRecoveryCapacity * recoveryMonths
   );
-  const recommendedChunk = clampToZero(
+  const legacyRecommendedChunk = clampToZero(
     Math.min(emergencyAdjustedSafeCredit, recoveryBasedLimit, availableCredit)
   );
   const limitingFactor =
@@ -391,16 +395,6 @@ export default function VelocityPlannerPage() {
           : emergencyAdjustedSafeCredit <= availableCredit
             ? "Safe Credit Guardrail"
             : "Available Credit";
-  const riskStatus =
-    recommendedChunk <= 0
-      ? "Not Available"
-      : velocitySettings.allow_super_velocity ||
-          emergencyAdjustedSafeCredit <= monthlyRecoveryCapacity
-        ? "High Risk"
-        : recommendedChunk <= emergencyAdjustedSafeCredit * 0.5 &&
-            recoveryMonths <= 6
-          ? "Low Risk"
-          : "Moderate Risk";
   // TEMP DEV COMPARISON: remove the legacy target sorter after the engine
   // target has been validated against real Velocity page data.
   const legacyRecommendedVelocityTarget = useMemo(() => {
@@ -454,6 +448,12 @@ export default function VelocityPlannerPage() {
   const velocityAdvisorResult = useMemo(() => {
     return buildVelocityAdvisorResult(velocityEngineResult);
   }, [velocityEngineResult]);
+  const recommendedChunk = clampToZero(
+    velocityEngineResult.recommendation?.payment_amount || 0
+  );
+  const riskStatus = formatVelocityRiskStatus(
+    velocityEngineResult.risk_summary.risk_level
+  );
   const recommendedVelocityTarget = useMemo(() => {
     const targetDebt = velocityEngineResult.target_debt;
 
@@ -487,11 +487,18 @@ export default function VelocityPlannerPage() {
       engineTargetName: velocityEngineResult.target_debt?.name,
       legacyTargetId: legacyRecommendedVelocityTarget?.id,
       legacyTargetName: legacyRecommendedVelocityTarget?.name,
+      engineRecommendedChunk: recommendedChunk,
+      legacyRecommendedChunk,
       matchesLegacy:
         velocityEngineResult.target_debt?.id ===
         legacyRecommendedVelocityTarget?.id,
     });
-  }, [legacyRecommendedVelocityTarget, velocityEngineResult.target_debt]);
+  }, [
+    legacyRecommendedChunk,
+    legacyRecommendedVelocityTarget,
+    recommendedChunk,
+    velocityEngineResult.target_debt,
+  ]);
   const recoveryMonthsRequired =
     recommendedChunk > 0 && monthlyRecoveryCapacity > 0
       ? recommendedChunk / monthlyRecoveryCapacity
@@ -509,7 +516,7 @@ export default function VelocityPlannerPage() {
     {
       label: "Recommended Chunk",
       value: formatMoney(recommendedChunk),
-      detail: "Conservative value. Velocity simulations are not enabled yet.",
+      detail: "Engine-selected payment amount from the current Velocity snapshot.",
       alert: recommendedChunk <= 0,
     },
     {
@@ -536,7 +543,7 @@ export default function VelocityPlannerPage() {
     {
       label: "Risk Status",
       value: riskStatus,
-      alert: riskStatus === "High Risk" || riskStatus === "Not Available",
+      alert: riskStatus === "High",
     },
   ];
 
@@ -695,7 +702,7 @@ export default function VelocityPlannerPage() {
         <section className="beast-panel overflow-hidden">
           <div className="border-b border-[#2a3242] p-5">
             <h2 className="text-xl font-bold">Velocity Snapshot</h2>
-            <p className="mt-1 text-sm text-[#7f8da3]">
+            <p className="mt-1 text-sm text-[#9aa7b8]">
               Live planning values using saved Velocity settings and existing
               Beast debt data.
             </p>
@@ -712,7 +719,7 @@ export default function VelocityPlannerPage() {
                   {item.value}
                 </div>
                 {item.detail ? (
-                  <p className="mt-2 text-xs text-[#7f8da3]">{item.detail}</p>
+                  <p className="mt-2 text-sm text-[#9aa7b8]">{item.detail}</p>
                 ) : null}
               </div>
             ))}
@@ -726,7 +733,7 @@ export default function VelocityPlannerPage() {
                 <h2 className="text-xl font-bold">
                   Velocity Health / Guardrail Status
                 </h2>
-                <p className="mt-1 text-sm text-[#7f8da3]">
+                <p className="mt-1 text-sm text-[#9aa7b8]">
                   A plain-language breakdown of source credit, utilization
                   guardrails, and emergency reserve protection.
                 </p>
@@ -753,7 +760,7 @@ export default function VelocityPlannerPage() {
               >
                 {velocityHealthStatus}
               </div>
-              <p className="mt-2 text-sm text-[#7f8da3]">
+              <p className="mt-2 text-sm text-[#9aa7b8]">
                 {amountAboveSafeLimit > 0
                   ? `Current balance is ${formatMoney(amountAboveSafeLimit)} above the safe utilization limit.`
                   : "Current balance is within the configured utilization guardrail."}
@@ -911,7 +918,7 @@ export default function VelocityPlannerPage() {
               <p className="mt-1">
                 Velocity Lite uses a single Primary Velocity Source.
               </p>
-              <p className="mt-3 text-[#9aa7b8]">
+              <p className="mt-3 text-[#c7cfdb]">
                 Future versions will support multiple Velocity Sources (HELOCs,
                 PLOCs, credit cards, and other revolving credit accounts) with
                 automatic source ranking and recommendations.
@@ -1076,7 +1083,7 @@ export default function VelocityPlannerPage() {
                   {item.value}
                 </div>
                 {item.detail ? (
-                  <p className="mt-2 text-xs text-[#7f8da3]">{item.detail}</p>
+                  <p className="mt-2 text-sm text-[#9aa7b8]">{item.detail}</p>
                 ) : null}
               </div>
             ))}
@@ -1124,7 +1131,7 @@ export default function VelocityPlannerPage() {
                     {recommendedVelocityTarget.opportunityScore}
                   </div>
                 </div>
-                <p className="mt-3 text-xs text-[#7f8da3]">
+                <p className="mt-3 text-sm text-[#9aa7b8]">
                   Reason: {velocityTargetReason}
                 </p>
               </div>
@@ -1166,7 +1173,7 @@ export default function VelocityPlannerPage() {
                 <div>Recovery Complete: {recoveryCompletionDate}</div>
                 <div>Status: {recoveryTimelineStatus}</div>
               </div>
-              <p className="mt-3 text-xs text-[#7f8da3]">
+              <p className="mt-3 text-sm text-[#9aa7b8]">
                 The recovery timeline estimates how long it will take to restore
                 the Velocity Source balance using current recovery capacity
                 assumptions.
@@ -1199,10 +1206,10 @@ export default function VelocityPlannerPage() {
                         {section.summary}
                       </p>
                       {section.facts.length > 0 ? (
-                        <div className="mt-3 grid gap-2 text-xs text-[#c7cfdb] sm:grid-cols-2">
+                        <div className="mt-3 grid gap-2 text-sm text-[#c7cfdb] sm:grid-cols-2">
                           {section.facts.map((fact) => (
                             <div key={`${section.id}-${fact.label}`}>
-                              <div className="text-[#7f8da3]">
+                              <div className="text-[#9aa7b8]">
                                 {fact.label}
                               </div>
                               <div className="mt-1 font-semibold text-[#e5e7eb]">
@@ -1213,7 +1220,7 @@ export default function VelocityPlannerPage() {
                         </div>
                       ) : null}
                       {section.items.length > 0 ? (
-                        <ul className="mt-3 space-y-2 text-xs text-[#7f8da3]">
+                        <ul className="mt-3 space-y-2 text-sm text-[#9aa7b8]">
                           {section.items.map((item, index) => (
                             <li key={`${section.id}-${index}`}>{item}</li>
                           ))}

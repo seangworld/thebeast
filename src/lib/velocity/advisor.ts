@@ -49,6 +49,13 @@ function formatNumber(value: number | null | undefined) {
   });
 }
 
+function formatStatus(value: string) {
+  return value
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
 function section(
   id: AdvisorSectionId,
   title: string,
@@ -100,7 +107,7 @@ export function buildVelocityAdvisorResult(
     recommendation?.score != null
       ? { label: "Score", value: formatNumber(recommendation.score) || "" }
       : null,
-    { label: "Confidence", value: engineResult.risk_summary.confidence },
+    { label: "Confidence", value: formatStatus(engineResult.risk_summary.confidence) },
   ]);
 
   const expectedResultFacts = compactFacts([
@@ -220,7 +227,7 @@ export function buildVelocityAdvisorResult(
     risks: section(
       "risks",
       "Risks",
-      `Risk level: ${engineResult.risk_summary.risk_level}`,
+      `Risk level: ${formatStatus(engineResult.risk_summary.risk_level)}`,
       compactItems([
         ...engineResult.risk_summary.warnings,
         ...(engineResult.constraints || []).map(
@@ -228,8 +235,8 @@ export function buildVelocityAdvisorResult(
         ),
       ]),
       compactFacts([
-        { label: "Risk level", value: engineResult.risk_summary.risk_level },
-        { label: "Confidence", value: engineResult.risk_summary.confidence },
+        { label: "Risk level", value: formatStatus(engineResult.risk_summary.risk_level) },
+        { label: "Confidence", value: formatStatus(engineResult.risk_summary.confidence) },
       ])
     ),
     alternatives: section(
