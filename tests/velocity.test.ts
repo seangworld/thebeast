@@ -450,7 +450,7 @@ test("simulatePayoffPlan preserves snowball and avalanche targeting", () => {
   assert.equal(avalanche.first_target, "Large High APR");
 });
 
-test("simulatePayoffPlan uses Velocity engine target when strategy is velocity", () => {
+test("simulatePayoffPlan uses Velocity engine target with income and bill snapshot data", () => {
   const debts = [
     {
       id: "small-low-apr",
@@ -469,6 +469,22 @@ test("simulatePayoffPlan uses Velocity engine target when strategy is velocity",
   ];
   const velocityInputSnapshot = baseInput({
     debts,
+    incomes: [
+      {
+        id: "paycheck",
+        name: "Paycheck",
+        amount: 3200,
+        frequency: "monthly",
+      },
+    ],
+    bills: [
+      {
+        id: "mortgage",
+        name: "Mortgage",
+        amount: 1200,
+        is_archived: false,
+      },
+    ],
     settings: {
       cash_buffer: 500,
       max_recommended_payment: 400,
@@ -478,6 +494,7 @@ test("simulatePayoffPlan uses Velocity engine target when strategy is velocity",
       strategy: "aggressive",
     },
   });
+  const engineResult = runVelocityEngine(velocityInputSnapshot);
 
   const result = simulatePayoffPlan({
     debts,
@@ -486,5 +503,7 @@ test("simulatePayoffPlan uses Velocity engine target when strategy is velocity",
     velocityInputSnapshot,
   });
 
+  assert.equal(engineResult.cashflow_projection?.projected_income, 3200);
+  assert.equal(engineResult.cashflow_projection?.projected_bills, 1200);
   assert.equal(result.first_target, "Large High APR");
 });
