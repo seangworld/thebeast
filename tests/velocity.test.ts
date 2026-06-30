@@ -558,6 +558,27 @@ test("buildVelocityAdvisorResult formats all advisor sections", () => {
   assert.ok(advisorResult.sections.recommendation.facts.length > 0);
   assert.ok(advisorResult.sections.expected_result.facts.length > 0);
   assert.deepEqual(
+    advisorResult.sections.recommendation.facts.slice(0, 4),
+    [
+      { label: "Recommended chunk", value: "$500.00" },
+      { label: "Limiting constraint", value: "Safe source capacity" },
+      { label: "Projected net savings", value: "$52,872.13" },
+      { label: "Candidate", value: "Pay highest APR eligible debt" },
+    ]
+  );
+  assert.equal(
+    advisorResult.sections.why.items.some((item) =>
+      item.includes("limiting_constraint:safe_source_capacity")
+    ),
+    true
+  );
+  assert.equal(
+    advisorResult.sections.risks.items.some((item) =>
+      item.includes("Safe source capacity: Pass")
+    ),
+    true
+  );
+  assert.deepEqual(
     advisorResult.sections.risks.facts,
     [
       { label: "Risk level", value: "High" },
@@ -565,6 +586,59 @@ test("buildVelocityAdvisorResult formats all advisor sections", () => {
     ]
   );
   assert.equal(advisorResult.validation_errors.length, 0);
+});
+
+test("buildVelocityAdvisorResult includes hold reason when chunk is not recommended", () => {
+  const engineResult = runVelocityEngine(
+    baseInput({
+      accounts: [
+        {
+          id: "cash",
+          name: "Checking",
+          type: "checking",
+          current_balance: 1000,
+        },
+        {
+          id: "source",
+          name: "HELOC",
+          type: "heloc",
+          current_balance: 0,
+          credit_limit: 10000,
+          available_credit: 10000,
+          interest_rate: 6,
+        },
+      ],
+      incomes: [],
+      bills: [
+        {
+          id: "large-bill",
+          name: "Insurance",
+          amount: 900,
+          is_archived: false,
+        },
+      ],
+      settings: {
+        cash_buffer: 500,
+        max_recommended_payment: null,
+        max_source_utilization_percent: 90,
+        minimum_cash_after_payment: 500,
+        monthly_recovery_capacity: 300,
+        recovery_months: 6,
+        strategy: "aggressive",
+      },
+    })
+  );
+  const advisorResult = buildVelocityAdvisorResult(engineResult);
+
+  assert.deepEqual(
+    advisorResult.sections.recommendation.facts.slice(0, 4),
+    [
+      { label: "Recommended chunk", value: "$0.00" },
+      { label: "Limiting constraint", value: "Liquidity floor" },
+      { label: "Hold reason", value: "Liquidity Floor" },
+      { label: "Projected net savings", value: "$0.00" },
+    ]
+  );
 });
 
 test("simulatePayoffPlan preserves snowball and avalanche targeting", () => {

@@ -410,8 +410,11 @@ export default function VelocityPlannerPage() {
   const velocityAdvisorResult = useMemo(() => {
     return buildVelocityAdvisorResult(velocityEngineResult);
   }, [velocityEngineResult]);
+  const chunkRecommendation = velocityEngineResult.chunk_recommendation;
   const recommendedChunk = clampToZero(
-    velocityEngineResult.recommendation?.payment_amount || 0
+    chunkRecommendation?.recommended_chunk ??
+      velocityEngineResult.recommendation?.payment_amount ??
+      0
   );
   const riskStatus = formatVelocityRiskStatus(
     velocityEngineResult.risk_summary.risk_level
@@ -435,19 +438,28 @@ export default function VelocityPlannerPage() {
       opportunityScore: apr >= 20 ? "High" : apr >= 10 ? "Moderate" : "Low",
     };
   }, [velocityEngineResult.target_debt]);
-  const velocityTargetReason =
-    recommendedChunk <= 0
-      ? amountAboveSafeLimit > 0
-        ? "Guardrail Exceeded"
-        : limitingFactor
-      : !recommendedVelocityTarget
-        ? "No active debt target"
-        : "Velocity engine target_debt. Current engine tie breakers favor higher APR, then higher remaining balance.";
+  const chunkLimitingConstraint = chunkRecommendation?.constraints.find(
+    (constraint) =>
+      constraint.id === chunkRecommendation.limiting_constraint_id
+  );
+  const velocityTargetReason = !recommendedVelocityTarget
+    ? "No active debt target"
+    : recommendedChunk <= 0
+      ? chunkRecommendation?.rationale?.[1] ||
+        chunkLimitingConstraint?.detail ||
+        "Velocity engine recommends holding cash."
+      : chunkRecommendation?.rationale?.[1] ||
+        `Limited by ${chunkRecommendation?.limiting_constraint_label || "engine guardrails"}.`;
   const recommendationValues: RecommendationValue[] = [
     {
       label: "Recommended Chunk",
       value: formatMoney(recommendedChunk),
-      detail: "Engine-selected payment amount from the current Velocity snapshot.",
+      detail:
+        chunkRecommendation?.hold_reason && recommendedChunk <= 0
+          ? `Hold reason: ${chunkRecommendation.limiting_constraint_label}.`
+          : chunkRecommendation?.limiting_constraint_label
+            ? `Limited by ${chunkRecommendation.limiting_constraint_label}.`
+            : "Engine-selected payment amount from the current Velocity snapshot.",
       alert: recommendedChunk <= 0,
     },
     {

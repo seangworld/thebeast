@@ -86,12 +86,37 @@ export function buildVelocityAdvisorResult(
   const recommendation = engineResult.recommendation;
   const projection = engineResult.cashflow_projection;
   const targetDebt = engineResult.target_debt;
+  const chunkRecommendation = engineResult.chunk_recommendation;
   const assumptions = [
     ...(engineResult.assumptions || []),
     ...(engineResult.risk_summary.assumptions || []),
   ].filter((item, index, list) => list.indexOf(item) === index);
 
   const recommendationFacts = compactFacts([
+    chunkRecommendation
+      ? {
+          label: "Recommended chunk",
+          value: formatMoney(chunkRecommendation.recommended_chunk) || "",
+        }
+      : null,
+    chunkRecommendation
+      ? {
+          label: "Limiting constraint",
+          value: chunkRecommendation.limiting_constraint_label,
+        }
+      : null,
+    chunkRecommendation?.hold_reason
+      ? {
+          label: "Hold reason",
+          value: formatStatus(chunkRecommendation.hold_reason),
+        }
+      : null,
+    chunkRecommendation
+      ? {
+          label: "Projected net savings",
+          value: formatMoney(chunkRecommendation.projected_net_savings) || "",
+        }
+      : null,
     recommendation
       ? { label: "Candidate", value: recommendation.label }
       : null,
@@ -147,6 +172,10 @@ export function buildVelocityAdvisorResult(
       alternative.reason,
     ]).join(" | ");
   });
+  const chunkConstraintItems = (chunkRecommendation?.constraints || []).map(
+    (constraint) =>
+      `${constraint.label}: ${constraint.passed ? "Pass" : "Hold"} | ${constraint.detail}`
+  );
 
   // Future AI language hook: replace these deterministic summaries with
   // model-generated copy after the product has a safe AI request boundary.
@@ -158,6 +187,7 @@ export function buildVelocityAdvisorResult(
         ? recommendation.reason
         : "No velocity recommendation was produced by the engine.",
       compactItems([
+        chunkRecommendation?.rationale?.[0],
         recommendation?.rationale?.[0],
         targetDebt?.name ? `Target debt: ${targetDebt.name}` : null,
       ]),
@@ -170,6 +200,7 @@ export function buildVelocityAdvisorResult(
         engineResult.risk_summary.reasons[0] ||
         "The engine did not provide a rationale.",
       compactItems([
+        ...(chunkRecommendation?.rationale || []),
         ...(engineResult.rationale || []),
         ...(recommendation?.rationale || []),
       ]),
@@ -221,6 +252,11 @@ export function buildVelocityAdvisorResult(
         recommendation?.projected_cash_after_payment != null
           ? "Projected cash after payment is provided by the selected candidate."
           : null,
+        chunkRecommendation
+          ? `Projected net savings: ${
+              formatMoney(chunkRecommendation.projected_net_savings) || "$0.00"
+            }`
+          : null,
       ]),
       expectedResultFacts
     ),
@@ -230,6 +266,7 @@ export function buildVelocityAdvisorResult(
       `Risk level: ${formatStatus(engineResult.risk_summary.risk_level)}`,
       compactItems([
         ...engineResult.risk_summary.warnings,
+        ...chunkConstraintItems,
         ...(engineResult.constraints || []).map(
           (constraint) => `${constraint.label}: ${constraint.detail}`
         ),
