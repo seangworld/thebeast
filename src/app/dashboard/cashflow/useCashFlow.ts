@@ -22,6 +22,8 @@ import {
   FundingSource,
 } from "./cashflowUtils";
 import { normalizeDebtStrategy } from "@/lib/debtStrategies";
+import { useCashFlowDisclosureState } from "./hooks/useCashFlowDisclosureState";
+import { useCashFlowPaymentState } from "./hooks/useCashFlowPaymentState";
 
 export function useCashFlow() {
   const [timeline, setTimeline] = useState<any[]>([]);
@@ -132,33 +134,41 @@ export function useCashFlow() {
   const [editDebtMinimumPaymentFloor, setEditDebtMinimumPaymentFloor] =
     useState("25");
 
-  const [debtPayments, setDebtPayments] = useState<Record<string, string>>({});
-  const [partialPayments, setPartialPayments] = useState<Record<string, string>>(
-    {}
-  );
+  const {
+    debtPayments,
+    setDebtPayments,
+    partialPayments,
+    setPartialPayments,
+    debtPaymentStatus,
+    setDebtPaymentStatus,
+    applyingDebtPaymentId,
+    setApplyingDebtPaymentId,
+    isApplyingSuggestedAttack,
+    setIsApplyingSuggestedAttack,
+    suggestedAttackMessage,
+    setSuggestedAttackMessage,
+  } = useCashFlowPaymentState();
 
-  const [debtPaymentStatus, setDebtPaymentStatus] = useState<
-    Record<string, { type: "error" | "success" | null; message: string }>
-  >({});
-  const [applyingDebtPaymentId, setApplyingDebtPaymentId] = useState<
-    string | null
-  >(null);
-
-  const [isApplyingSuggestedAttack, setIsApplyingSuggestedAttack] =
-    useState(false);
-  const [suggestedAttackMessage, setSuggestedAttackMessage] = useState<
-    string | null
-  >(null);
-
-  const [showAddIncome, setShowAddIncome] = useState(false);
-  const [showAddBill, setShowAddBill] = useState(false);
-  const [showBills, setShowBills] = useState(true);
-  const [showDebts, setShowDebts] = useState(true);
-  const [showIncomeEvents, setShowIncomeEvents] = useState(true);
-  const [showFundingSources, setShowFundingSources] = useState(true);
-  const [showCashTimeline, setShowCashTimeline] = useState(false);
-  const [showArchivedBills, setShowArchivedBills] = useState(false);
-  const [showArchivedDebts, setShowArchivedDebts] = useState(false);
+  const {
+    showAddIncome,
+    setShowAddIncome,
+    showAddBill,
+    setShowAddBill,
+    showBills,
+    setShowBills,
+    showDebts,
+    setShowDebts,
+    showIncomeEvents,
+    setShowIncomeEvents,
+    showFundingSources,
+    setShowFundingSources,
+    showCashTimeline,
+    setShowCashTimeline,
+    showArchivedBills,
+    setShowArchivedBills,
+    showArchivedDebts,
+    setShowArchivedDebts,
+  } = useCashFlowDisclosureState();
 
   const cycleMonth = getCycleMonth();
 

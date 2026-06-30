@@ -1,16 +1,22 @@
 "use client";
 
 import { useMemo } from "react";
-import Link from "next/link";
 import FundingSourcesSummaryCards from "./components/FundingSourcesSummaryCards";
 import PaymentSourceCoverage from "./components/PaymentSourceCoverage";
 import FundingIntelligence from "./components/FundingIntelligence";
 import FundingRecommendations from "./components/FundingRecommendations";
 import BillsSection from "./components/BillsSection";
 import DebtsSection from "./components/DebtsSection";
+import CashFlowOverview from "./components/CashFlowOverview";
+import DebtAttackRecommendation from "./components/DebtAttackRecommendation";
+import DailyOperatingFocus from "./components/DailyOperatingFocus";
+import BillsAheadSection from "./components/BillsAheadSection";
+import IncomeDatePlanningSection from "./components/IncomeDatePlanningSection";
+import PaycheckPlanningSection from "./components/PaycheckPlanningSection";
+import StrategySnapshot from "./components/StrategySnapshot";
+import AddIncomeBillSection from "./components/AddIncomeBillSection";
+import CashTimelineSection from "./components/CashTimelineSection";
 import { useCashFlow } from "./useCashFlow";
-import { APP_VERSION } from "@/lib/appVersion";
-import { getDebtStrategyLabel } from "@/lib/debtStrategies";
 import {
   BillFrequency,
   FundingSource,
@@ -1157,630 +1163,58 @@ export default function CashFlowPage() {
   return (
     <main className="beast-page">
       <div className="beast-container space-y-8">
-        <section className="beast-page-header">
-          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-            <div>
-              <p className="beast-kicker">The Beast {APP_VERSION}</p>
-              <h1 className="beast-title">Cash Flow</h1>
-              <p className="beast-subtitle">
-                Manage paychecks, bills, debt minimums, Monthly Extra Attack payments,
-                required cash, and buffer risk.
-              </p>
-            </div>
-          </div>
-        </section>
+        <CashFlowOverview
+          startingBalance={startingBalance}
+          setStartingBalance={setStartingBalance}
+          recalc={recalc}
+          handleStartingBalanceBlur={handleStartingBalanceBlur}
+          isStartingBalanceFocusedRef={isStartingBalanceFocusedRef}
+          saveStatus={saveStatus}
+          requiredCash={requiredCash}
+          billsDue={billsDue}
+          incomeExpected={incomeExpected}
+          netPosition={netPosition}
+          buffer={buffer}
+        />
 
-        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <div className="beast-card">
-            <div className="text-sm text-[#c7cfdb]">
-              Starting Checking Balance
-            </div>
-            <input
-              type="number"
-              value={startingBalance}
-              onFocus={() => {
-                isStartingBalanceFocusedRef.current = true;
-              }}
-              onBlur={() => {
-                handleStartingBalanceBlur();
-              }}
-              onChange={(e) => {
-                const val = Number(e.target.value);
-                setStartingBalance(val);
-                recalc(val);
-              }}
-              className="beast-input mt-3"
-            />
-            <div className="mt-2 text-xs text-slate-400 whitespace-nowrap">
-              {saveStatus === "saving"
-                ? "Saving..."
-                : saveStatus === "saved"
-                ? "Saved"
-                : ""}
-            </div>
-          </div>
+        <DebtAttackRecommendation
+          suggestedMonthlyDebtAttack={suggestedMonthlyDebtAttack}
+          incomes={incomes}
+          nextPaycheckAmount={nextPaycheckAmount}
+          recommendedTargetDebt={recommendedTargetDebt}
+          strategy={strategy}
+          isApplyingSuggestedAttack={isApplyingSuggestedAttack}
+          applySuggestedAttack={applySuggestedAttack}
+          suggestedAttackMessage={suggestedAttackMessage}
+        />
 
-          <div className="beast-card">
-            <div className="text-sm text-[#c7cfdb]">Required Cash</div>
-            <div className="mt-2 break-words text-2xl font-bold">
-              ${requiredCash.toFixed(2)}
-            </div>
-          </div>
+        <DailyOperatingFocus
+          operationalAlerts={operationalAlerts}
+          safeToSpend={safeToSpend}
+          requiredBeforePaycheck={requiredBeforePaycheck}
+          startingBalance={startingBalance}
+          billsDueNext7Days={billsDueNext7Days}
+          billsAhead={billsAhead}
+          unassignedObligationsCount={unassignedObligationsCount}
+          fundingSourceRiskCount={fundingSourceRiskCount}
+          recommendedNextSteps={recommendedNextSteps}
+          buffer={buffer}
+        />
 
-          <div className="beast-card">
-            <div className="text-sm text-[#c7cfdb]">Bills + Debt Due</div>
-            <div className="mt-2 break-words text-2xl font-bold">
-              ${billsDue.toFixed(2)}
-            </div>
-          </div>
+        <BillsAheadSection
+          billsAhead={billsAhead}
+          getFrequencyLabel={getFrequencyLabel}
+          getIncomeBucketLabel={getIncomeBucketLabel}
+          getFundingSourceLabel={getFundingSourceLabel}
+        />
 
-          <div className="beast-card">
-            <div className="text-sm text-[#c7cfdb]">Income Expected</div>
-            <div className="mt-2 break-words text-2xl font-bold">
-              ${incomeExpected.toFixed(2)}
-            </div>
-          </div>
-
-          <div className="beast-card">
-            <div className="text-sm text-[#c7cfdb]">Net Position</div>
-            <div
-              className={`mt-2 break-words text-2xl font-bold ${
-                netPosition < buffer ? "text-red-300" : "text-green-300"
-              }`}
-            >
-              ${netPosition.toFixed(2)}
-            </div>
-          </div>
-        </section>
-
-        <section className="beast-card space-y-4">
-          <div className="flex flex-col gap-2">
-            <div className="text-sm text-[#c7cfdb]">
-              Suggested Monthly Debt Attack
-            </div>
-            <div className="text-3xl font-bold">
-              {suggestedMonthlyDebtAttack !== null
-                ? `$${suggestedMonthlyDebtAttack.toFixed(2)}`
-                : incomes.length === 0 && !nextPaycheckAmount
-                ? "Add income entries or enter paycheck details"
-                : "Enter starting balance and buffer to calculate"}
-            </div>
-            <p className="text-sm text-[#7f8da3]">
-              {suggestedMonthlyDebtAttack !== null
-                ? "Based on current paycheck input, upcoming bills, debt minimums, and your checking buffer."
-                : incomes.length === 0 && !nextPaycheckAmount
-                ? "Set up recurring income in the Income section or enter next paycheck manually."
-                : "Configure your starting checking balance and buffer in settings."}
-            </p>
-          </div>
-
-          <div className="flex flex-col gap-2 rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
-            <div className="text-sm text-[#c7cfdb]">Recommended Target</div>
-            {recommendedTargetDebt ? (
-              <div className="flex flex-col gap-1">
-                <div className="text-base font-semibold text-white">
-                  {recommendedTargetDebt.name}
-                </div>
-                <div className="text-xs text-[#7f8da3]">
-                  Based on:{" "}
-                  {strategy === "velocity"
-                    ? "Velocity Planner"
-                    : `${getDebtStrategyLabel(strategy)} strategy`}
-                </div>
-              </div>
-            ) : (
-              <div className="text-sm text-[#7f8da3]">
-                No active debt target available.
-              </div>
-            )}
-          </div>
-
-          <div className="flex flex-col gap-2 items-start">
-            <button 
-              className="beast-button w-fit disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={
-                isApplyingSuggestedAttack ||
-                suggestedMonthlyDebtAttack === null ||
-                suggestedMonthlyDebtAttack <= 0 ||
-                !recommendedTargetDebt ||
-                Number(recommendedTargetDebt.balance || 0) <= 0
-              }
-              onClick={applySuggestedAttack}
-            >
-              {isApplyingSuggestedAttack ? "Applying..." : "Apply Suggested Attack"}
-            </button>
-            <div className="text-xs text-[#7f8da3]">
-              This records the payment inside The Beast only. Complete the real payment through your lender.
-            </div>
-          </div>
-
-          {suggestedAttackMessage && (
-            <div className={`rounded-lg border p-3 text-sm ${
-              suggestedAttackMessage.includes("Error") || suggestedAttackMessage.includes("already")
-                ? "border-red-400/60 bg-red-950/30 text-red-100"
-                : "border-green-400/60 bg-green-950/30 text-green-100"
-            }`}>
-              {suggestedAttackMessage}
-            </div>
-          )}
-
-          <p className="text-xs text-slate-500">
-            The Beast does not connect to or transact with your financial
-            institutions. Applying payments, marking bills paid, or updating
-            balances inside The Beast does not move real money. Always verify and
-            complete transactions through your actual bank, lender, or payment
-            provider.
-          </p>
-        </section>
-
-        <section className="space-y-2">
-          <p className="beast-kicker">Command Zone</p>
-          <h2 className="text-2xl font-bold">Daily operating focus</h2>
-        </section>
-
-        {operationalAlerts.length > 0 && (
-          <section className="beast-card space-y-4">
-            <div>
-              <h2 className="text-xl font-bold">Operational Alerts</h2>
-              <p className="mt-1 text-sm text-[#7f8da3]">
-                Current cashflow items that need attention.
-              </p>
-            </div>
-
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-              {operationalAlerts.map((alert) => (
-                <div
-                  key={alert.id}
-                  className={`rounded-xl border p-3 text-sm ${
-                    alert.severity === "critical"
-                      ? "border-red-400/60 bg-red-950/30 text-red-100"
-                      : alert.severity === "warning"
-                      ? "border-yellow-300/60 bg-yellow-950/20 text-yellow-100"
-                      : "border-sky-300/60 bg-sky-950/20 text-sky-100"
-                  }`}
-                >
-                  <div className="font-bold">{alert.title}</div>
-                  <div className="mt-1 opacity-90">{alert.message}</div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        <section className="beast-card space-y-4">
-          <div>
-            <h2 className="text-xl font-bold">Daily Command Summary</h2>
-            <p className="mt-1 text-sm text-[#7f8da3]">
-              Quick operating numbers for today.
-            </p>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            <div className="beast-panel p-4">
-              <div className="text-sm text-[#c7cfdb]">Safe To Spend</div>
-              <div
-                className={`mt-2 break-words text-2xl font-bold ${
-                  safeToSpend < 0
-                    ? "text-red-300"
-                    : safeToSpend < Number(buffer || 0) * 0.25
-                    ? "text-yellow-300"
-                    : "text-green-300"
-                }`}
-              >
-                ${safeToSpend.toFixed(2)}
-              </div>
-            </div>
-
-            <div className="beast-panel p-4">
-              <div className="text-sm text-[#c7cfdb]">
-                Required Before Paycheck
-              </div>
-              <div
-                className={`mt-2 break-words text-2xl font-bold ${
-                  requiredBeforePaycheck > Number(startingBalance || 0)
-                    ? "text-red-300"
-                    : requiredBeforePaycheck >
-                      Number(startingBalance || 0) * 0.75
-                    ? "text-yellow-300"
-                    : "text-green-300"
-                }`}
-              >
-                ${requiredBeforePaycheck.toFixed(2)}
-              </div>
-            </div>
-
-            <div className="beast-panel p-4">
-              <div className="text-sm text-[#c7cfdb]">Bills Due 7 Days</div>
-              <div
-                className={`mt-2 break-words text-2xl font-bold ${
-                  billsDueNext7Days.total > Number(startingBalance || 0)
-                    ? "text-red-300"
-                    : billsDueNext7Days.bills.length > 0
-                    ? "text-yellow-300"
-                    : "text-green-300"
-                }`}
-              >
-                ${billsDueNext7Days.total.toFixed(2)}
-              </div>
-            </div>
-
-            <div className="beast-panel p-4">
-              <div className="text-sm text-[#c7cfdb]">Bills Due 30 Days</div>
-              <div
-                className={`mt-2 break-words text-2xl font-bold ${
-                  billsAhead.total > Number(startingBalance || 0)
-                    ? "text-red-300"
-                    : billsAhead.bills.length > 0
-                    ? "text-yellow-300"
-                    : "text-green-300"
-                }`}
-              >
-                ${billsAhead.total.toFixed(2)}
-              </div>
-            </div>
-
-            <div className="beast-panel p-4">
-              <div className="text-sm text-[#c7cfdb]">
-                Unassigned Obligations
-              </div>
-              <div
-                className={`mt-2 break-words text-2xl font-bold ${
-                  unassignedObligationsCount > 0
-                    ? "text-yellow-300"
-                    : "text-green-300"
-                }`}
-              >
-                {unassignedObligationsCount}
-              </div>
-            </div>
-
-            <div className="beast-panel p-4">
-              <div className="text-sm text-[#c7cfdb]">Funding Risk Count</div>
-              <div
-                className={`mt-2 break-words text-2xl font-bold ${
-                  fundingSourceRiskCount > 0
-                    ? "text-red-300"
-                    : "text-green-300"
-                }`}
-              >
-                {fundingSourceRiskCount}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="beast-card space-y-4">
-          <div>
-            <h2 className="text-xl font-bold">Recommended Next Step Today</h2>
-            <p className="mt-1 text-sm text-[#7f8da3]">
-              Rules-based guidance from current assignments, cash pots, and
-              active obligations.
-            </p>
-          </div>
-
-          <div className="grid gap-3">
-            {recommendedNextSteps.map((step, index) => (
-              <div
-                key={`${step}-${index}`}
-                className="rounded-xl border border-[#2a3242] bg-[#111827] p-3 text-sm text-[#c7cfdb]"
-              >
-                {step}
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="space-y-2">
-          <p className="beast-kicker">Execution Zone</p>
-          <h2 className="text-2xl font-bold">Active cashflow management</h2>
-        </section>
-
-
-        <section className="beast-card space-y-5">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div>
-              <h2 className="text-xl font-bold">Bills Ahead</h2>
-              <p className="mt-1 text-sm text-[#7f8da3]">
-                Operational view of bills due in the next 30 days, including
-                funding source and income pot assignments.
-              </p>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2 lg:min-w-[360px]">
-              <div className="beast-panel p-4">
-                <div className="text-sm text-[#c7cfdb]">Bills Due</div>
-                <div className="mt-2 break-words text-2xl font-bold">
-                  {billsAhead.bills.length}
-                </div>
-              </div>
-
-              <div className="beast-panel p-4">
-                <div className="text-sm text-[#c7cfdb]">
-                  Upcoming Bill Amount
-                </div>
-                <div className="mt-2 break-words text-2xl font-bold text-yellow-300">
-                  ${billsAhead.total.toFixed(2)}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <div className="beast-panel p-3">
-              <div className="text-xs text-[#7f8da3]">
-                Total Upcoming Bills
-              </div>
-              <div className="mt-1 text-lg font-bold">
-                {billsAhead.bills.length}
-              </div>
-            </div>
-
-            <div className="beast-panel p-3">
-              <div className="text-xs text-[#7f8da3]">Total Due Amount</div>
-              <div className="mt-1 text-lg font-bold">
-                ${billsAhead.total.toFixed(2)}
-              </div>
-            </div>
-
-            <div className="beast-panel p-3">
-              <div className="text-xs text-[#7f8da3]">
-                Unassigned Income Pots
-              </div>
-              <div
-                className={`mt-1 text-lg font-bold ${
-                  billsAhead.unassignedIncomePots > 0
-                    ? "text-yellow-300"
-                    : "text-green-300"
-                }`}
-              >
-                {billsAhead.unassignedIncomePots}
-              </div>
-            </div>
-
-            <div className="beast-panel p-3">
-              <div className="text-xs text-[#7f8da3]">
-                Unassigned Funding Sources
-              </div>
-              <div
-                className={`mt-1 text-lg font-bold ${
-                  billsAhead.unassignedFundingSources > 0
-                    ? "text-yellow-300"
-                    : "text-green-300"
-                }`}
-              >
-                {billsAhead.unassignedFundingSources}
-              </div>
-            </div>
-          </div>
-
-          <div className="beast-table-wrap">
-            <table className="w-full min-w-[760px] text-sm">
-              <thead>
-                <tr>
-                  <th className="text-left">Bill</th>
-                  <th className="text-right">Remaining</th>
-                  <th className="text-center">Due Date</th>
-                  <th className="text-center">Income Pot</th>
-                  <th className="text-center">Funding Source</th>
-                  <th className="text-center">Status</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {billsAhead.bills.length === 0 ? (
-                  <tr>
-                    <td colSpan={6}>No bills due in the next 30 days.</td>
-                  </tr>
-                ) : (
-                  billsAhead.bills.map((bill) => (
-                    <tr
-                      key={`ahead-${bill.id}`}
-                      className={
-                        bill.status === "Late"
-                          ? "border-l-4 border-l-red-400"
-                          : bill.status === "Due Soon"
-                          ? "border-l-4 border-l-yellow-300"
-                          : undefined
-                      }
-                    >
-                      <td className="text-left">
-                        <div className="font-semibold">{bill.name}</div>
-                        <div className="mt-1 text-xs text-[#7f8da3]">
-                          {getFrequencyLabel(bill.frequency)}
-                        </div>
-                      </td>
-                      <td className="text-right font-semibold">
-                        ${Number(bill.remaining || 0).toFixed(2)}
-                      </td>
-                      <td className="text-center">
-                        {bill.nextDueDateDisplay}
-                      </td>
-                      <td className="text-center">
-                        {getIncomeBucketLabel(bill.assigned_income_date)}
-                      </td>
-                      <td className="text-center">
-                        {getFundingSourceLabel(bill.funding_source_id)}
-                      </td>
-                      <td className="text-center">
-                        <span
-                          className={
-                            bill.status === "Paid"
-                              ? "text-green-300"
-                              : bill.status === "Partial" ||
-                                bill.status === "Due Soon"
-                              ? "text-yellow-300"
-                              : bill.status === "Late"
-                              ? "text-red-300"
-                              : "text-[#c7cfdb]"
-                          }
-                        >
-                          {bill.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </section>
-
-
-        <section className="beast-card space-y-5">
-          <div>
-            <h2 className="text-xl font-bold">Income Date Planning</h2>
-            <p className="mt-1 text-sm text-[#7f8da3]">
-              Assign bills and debt minimums to the real income date that should
-              cover them.
-            </p>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <div className="beast-card">
-              <div className="text-sm text-[#c7cfdb]">
-                Upcoming Income Buckets
-              </div>
-              <div className="mt-2 break-words text-2xl font-bold">
-                {incomeBucketPlans.length}
-              </div>
-              <p className="mt-2 text-sm text-[#7f8da3]">
-                Generated from your income schedule.
-              </p>
-            </div>
-
-            <div className="beast-card">
-              <div className="text-sm text-[#c7cfdb]">Unassigned Items</div>
-              <div className="mt-2 break-words text-2xl font-bold">
-                {unassignedBills.length + unassignedDebts.length}
-              </div>
-              <p className="mt-2 text-sm text-[#7f8da3]">
-                Assign these in the Bills and Debt Minimums tables below.
-              </p>
-            </div>
-
-            <div className="beast-card">
-              <div className="text-sm text-[#c7cfdb]">
-                Unassigned Obligations
-              </div>
-              <div
-                className={`mt-2 break-words text-2xl font-bold ${
-                  unassignedObligationsTotal > 0
-                    ? "text-yellow-300"
-                    : "text-green-300"
-                }`}
-              >
-                ${unassignedObligationsTotal.toFixed(2)}
-              </div>
-              <p className="mt-2 text-sm text-[#7f8da3]">
-                Money not assigned to an income pot yet.
-              </p>
-            </div>
-
-            <div className="beast-card">
-              <div className="text-sm text-[#c7cfdb]">Planning Window</div>
-              <div className="mt-2 break-words text-2xl font-bold">
-                {Number(lookaheadDays || 30)} Days
-              </div>
-              <p className="mt-2 text-sm text-[#7f8da3]">
-                Income buckets are generated from today forward.
-              </p>
-            </div>
-          </div>
-
-          <div className="grid gap-4 lg:grid-cols-2">
-            {incomeBucketPlans.length === 0 ? (
-              <div className="beast-panel p-4 text-sm text-[#c7cfdb]">
-                No upcoming income buckets found. Add income events or update
-                next pay dates.
-              </div>
-            ) : (
-              incomeBucketPlans.slice(0, 8).map((bucket) => (
-                <div key={bucket.id} className="beast-panel overflow-hidden">
-                  <div className="border-b border-[#2a3242] p-4">
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                      <div>
-                        <h3 className="font-bold">{bucket.label}</h3>
-                        <p className="text-sm text-[#7f8da3]">
-                          Income pot: ${Number(bucket.amount || 0).toFixed(2)}
-                        </p>
-                      </div>
-
-                      <div
-                        className={`text-sm font-semibold ${
-                          bucket.safeAfterBuffer < 0
-                            ? "text-red-300"
-                            : "text-green-300"
-                        }`}
-                      >
-                        {bucket.safeAfterBuffer < 0
-                          ? `$${Math.abs(bucket.safeAfterBuffer).toFixed(
-                              2
-                            )} short after buffer`
-                          : `$${bucket.safeAfterBuffer.toFixed(
-                              2
-                            )} safe after buffer`}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="p-4 text-sm text-[#c7cfdb]">
-                    <div className="mb-3 grid gap-2 sm:grid-cols-3">
-                      <div>
-                        <div className="text-[#7f8da3]">Assigned</div>
-                        <div className="font-bold">
-                          ${bucket.assignedTotal.toFixed(2)}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-[#7f8da3]">Available</div>
-                        <div className="font-bold">
-                          ${bucket.availableToAssign.toFixed(2)}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-[#7f8da3]">Debt Minimums</div>
-                        <div className="font-bold">
-                          ${bucket.debtMinimumsTotal.toFixed(2)}
-                        </div>
-                      </div>
-                    </div>
-
-                    {bucket.assignedBills.length === 0 &&
-                    bucket.assignedDebts.length === 0 ? (
-                      <p>No obligations assigned yet.</p>
-                    ) : (
-                      <ul className="space-y-2">
-                        {bucket.assignedBills.map((bill: any) => (
-                          <li
-                            key={`bill-${bucket.id}-${bill.id}`}
-                            className="flex justify-between gap-4"
-                          >
-                            <span>{bill.name}</span>
-                            <span>
-                              ${Number(bill.remaining || 0).toFixed(2)}
-                            </span>
-                          </li>
-                        ))}
-
-                        {bucket.assignedDebts.map((debt: any) => (
-                          <li
-                            key={`debt-${bucket.id}-${debt.id}`}
-                            className="flex justify-between gap-4"
-                          >
-                            <span>{debt.name} minimum</span>
-                            <span>
-                              ${Number(debt.minimum_payment || 0).toFixed(2)}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </section>
+        <IncomeDatePlanningSection
+          incomeBucketPlans={incomeBucketPlans}
+          unassignedBills={unassignedBills}
+          unassignedDebts={unassignedDebts}
+          unassignedObligationsTotal={unassignedObligationsTotal}
+          lookaheadDays={lookaheadDays}
+        />
 
 
         <section className="beast-panel overflow-hidden">
@@ -2155,343 +1589,61 @@ export default function CashFlowPage() {
           </h2>
         </section>
 
-        <section className="beast-card space-y-5">
-          <div>
-            <h2 className="text-xl font-bold">Paycheck Planning</h2>
-            <p className="mt-1 text-sm text-[#7f8da3]">
-              Determine what must be covered before your next paycheck.
-            </p>
-          </div>
+        <PaycheckPlanningSection
+          nextPaycheckAmount={nextPaycheckAmount}
+          setNextPaycheckAmount={setNextPaycheckAmount}
+          nextPaycheckDate={nextPaycheckDate}
+          setNextPaycheckDate={setNextPaycheckDate}
+          secondPaycheckAmount={secondPaycheckAmount}
+          setSecondPaycheckAmount={setSecondPaycheckAmount}
+          secondPaycheckDate={secondPaycheckDate}
+          setSecondPaycheckDate={setSecondPaycheckDate}
+          requiredBeforePaycheck={requiredBeforePaycheck}
+          projectedAfterObligations={projectedAfterObligations}
+          safeToSpend={safeToSpend}
+        />
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <label className="text-sm text-[#c7cfdb]">
-                Next Paycheck Amount
-              </label>
-              <input
-                type="number"
-                value={nextPaycheckAmount}
-                onChange={(e) => setNextPaycheckAmount(e.target.value)}
-                placeholder="0"
-                className="beast-input mt-2"
-              />
-            </div>
+        <StrategySnapshot
+          strategy={strategy}
+          extraPayment={extraPayment}
+          targetDebtName={targetDebtName}
+          activeDebtCount={activeDebts.length}
+        />
 
-            <div>
-              <label className="text-sm text-[#c7cfdb]">
-                Next Paycheck Date
-              </label>
-              <input
-                type="date"
-                value={nextPaycheckDate}
-                onChange={(e) => setNextPaycheckDate(e.target.value)}
-                className="beast-input mt-2"
-              />
-            </div>
+        <AddIncomeBillSection
+          showAddIncome={showAddIncome}
+          setShowAddIncome={setShowAddIncome}
+          incomeName={incomeName}
+          setIncomeName={setIncomeName}
+          incomeAmount={incomeAmount}
+          setIncomeAmount={setIncomeAmount}
+          incomeFrequency={incomeFrequency}
+          setIncomeFrequency={setIncomeFrequency}
+          incomeNextDate={incomeNextDate}
+          setIncomeNextDate={setIncomeNextDate}
+          addIncome={addIncome}
+          showAddBill={showAddBill}
+          setShowAddBill={setShowAddBill}
+          billName={billName}
+          setBillName={setBillName}
+          billAmount={billAmount}
+          setBillAmount={setBillAmount}
+          billDueDate={billDueDate}
+          setBillDueDate={setBillDueDate}
+          billFrequency={billFrequency}
+          setBillFrequency={setBillFrequency}
+          billFrequencyOptions={billFrequencyOptions}
+          addBill={addBill}
+        />
 
-            <div>
-              <label className="text-sm text-[#c7cfdb]">
-                Following Paycheck Amount
-              </label>
-              <input
-                type="number"
-                value={secondPaycheckAmount}
-                onChange={(e) => setSecondPaycheckAmount(e.target.value)}
-                placeholder="0"
-                className="beast-input mt-2"
-              />
-            </div>
-
-            <div>
-              <label className="text-sm text-[#c7cfdb]">
-                Following Paycheck Date
-              </label>
-              <input
-                type="date"
-                value={secondPaycheckDate}
-                onChange={(e) => setSecondPaycheckDate(e.target.value)}
-                className="beast-input mt-2"
-              />
-            </div>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <div className="beast-card">
-              <div className="text-sm text-[#c7cfdb]">
-                Required Before Paycheck
-              </div>
-              <div className="mt-2 break-words text-2xl font-bold">
-                ${requiredBeforePaycheck.toFixed(2)}
-              </div>
-            </div>
-
-            <div className="beast-card">
-              <div className="text-sm text-[#c7cfdb]">
-                Projected After Obligations
-              </div>
-              <div className="mt-2 break-words text-2xl font-bold">
-                ${projectedAfterObligations.toFixed(2)}
-              </div>
-            </div>
-
-            <div className="beast-card">
-              <div className="text-sm text-[#c7cfdb]">Safe To Spend</div>
-              <div
-                className={`mt-2 break-words text-2xl font-bold ${
-                  safeToSpend < 0 ? "text-red-300" : "text-green-300"
-                }`}
-              >
-                ${safeToSpend.toFixed(2)}
-              </div>
-            </div>
-
-            <div className="beast-card">
-              <div className="text-sm text-[#c7cfdb]">Status</div>
-              <div
-                className={`mt-2 break-words text-2xl font-bold ${
-                  safeToSpend < 0 ? "text-red-300" : "text-green-300"
-                }`}
-              >
-                {safeToSpend < 0 ? "Shortfall Risk" : "On Track"}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="grid gap-4 md:grid-cols-4">
-          <div className="beast-card">
-            <div className="text-sm text-[#c7cfdb]">Strategy</div>
-            <div className="mt-2 text-2xl font-bold capitalize">
-              {strategy}
-            </div>
-            {strategy === "velocity" ? (
-              <Link
-                href="/dashboard/velocity"
-                className="mt-3 inline-block text-sm text-[#38bdf8] underline"
-              >
-                Open Velocity Planner
-              </Link>
-            ) : null}
-          </div>
-
-          <div className="beast-card">
-            <div className="text-sm text-[#c7cfdb]">
-              Planned Extra Debt Payment
-            </div>
-            <div className="mt-2 text-2xl font-bold">
-              ${extraPayment.toFixed(2)}
-            </div>
-          </div>
-
-          <div className="beast-card">
-            <div className="text-sm text-[#c7cfdb]">Attack Target</div>
-            <div className="mt-2 text-2xl font-bold">{targetDebtName}</div>
-          </div>
-
-          <div className="beast-card">
-            <div className="text-sm text-[#c7cfdb]">Active Debt Count</div>
-            <div className="mt-2 text-2xl font-bold">{activeDebts.length}</div>
-          </div>
-        </section>
-
-        <section className="grid gap-4 md:grid-cols-2">
-          <div className="beast-card">
-            <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h2 className="text-xl font-bold">Add Income</h2>
-                <p className="mt-1 text-sm text-[#7f8da3]">
-                  Add or schedule a recurring income source.
-                </p>
-              </div>
-
-              <button
-                onClick={() => setShowAddIncome(!showAddIncome)}
-                className="beast-button-secondary"
-              >
-                {showAddIncome ? "Hide" : "Show"}
-              </button>
-            </div>
-
-            {showAddIncome && (
-              <div className="mt-4 grid gap-3">
-                <input
-                  value={incomeName}
-                  onChange={(e) => setIncomeName(e.target.value)}
-                  placeholder="Income name"
-                  className="beast-input"
-                />
-
-                <input
-                  type="number"
-                  value={incomeAmount}
-                  onChange={(e) => setIncomeAmount(e.target.value)}
-                  placeholder="Amount"
-                  className="beast-input"
-                />
-
-                <select
-                  value={incomeFrequency}
-                  onChange={(e) => setIncomeFrequency(e.target.value)}
-                  className="beast-input"
-                >
-                  <option value="weekly">Weekly</option>
-                  <option value="biweekly">Biweekly</option>
-                  <option value="monthly">Monthly</option>
-                </select>
-
-                <input
-                  type="date"
-                  value={incomeNextDate}
-                  onChange={(e) => setIncomeNextDate(e.target.value)}
-                  className="beast-input"
-                />
-
-                <button onClick={addIncome} className="beast-button">
-                  Add Income
-                </button>
-              </div>
-            )}
-          </div>
-
-          <div className="beast-card">
-            <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h2 className="text-xl font-bold">Add Bill</h2>
-                <p className="mt-1 text-sm text-[#7f8da3]">
-                  Add a recurring bill or service-based obligation.
-                </p>
-              </div>
-
-              <button
-                onClick={() => setShowAddBill(!showAddBill)}
-                className="beast-button-secondary"
-              >
-                {showAddBill ? "Hide" : "Show"}
-              </button>
-            </div>
-
-            {showAddBill && (
-              <div className="mt-4 grid gap-3">
-                <input
-                  value={billName}
-                  onChange={(e) => setBillName(e.target.value)}
-                  placeholder="Bill name"
-                  className="beast-input"
-                />
-
-                <input
-                  type="number"
-                  value={billAmount}
-                  onChange={(e) => setBillAmount(e.target.value)}
-                  placeholder="Amount"
-                  className="beast-input"
-                />
-
-                <input
-                  type="number"
-                  min="1"
-                  max="31"
-                  value={billDueDate}
-                  onChange={(e) => setBillDueDate(e.target.value)}
-                  placeholder="Due day"
-                  className="beast-input"
-                />
-
-                <select
-                  value={billFrequency}
-                  onChange={(e) =>
-                    setBillFrequency(e.target.value as BillFrequency)
-                  }
-                  className="beast-input"
-                >
-                  {billFrequencyOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-
-                <button onClick={addBill} className="beast-button">
-                  Add Bill
-                </button>
-              </div>
-            )}
-          </div>
-        </section>
-
-        <section className="beast-panel overflow-hidden">
-          <div className="flex flex-col items-start gap-4 border-b border-[#2a3242] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
-            <div>
-              <h2 className="text-xl font-bold">Cash Timeline</h2>
-              <p className="mt-1 text-sm text-[#7f8da3]">
-                Detailed projected cashflow events and running balance.
-              </p>
-            </div>
-
-            <button
-              onClick={() => setShowCashTimeline(!showCashTimeline)}
-              className="beast-button-secondary"
-            >
-              {showCashTimeline ? "Hide" : `Show (${data.length})`}
-            </button>
-          </div>
-
-          {showCashTimeline && (
-            <div className="beast-table-wrap">
-              <table className="w-full min-w-[760px] text-sm">
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Type</th>
-                    <th>Name</th>
-                    <th className="text-right">Amount</th>
-                    <th className="text-right">Running Balance</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {loading ? (
-                    <tr>
-                      <td colSpan={6}>Loading cashflow...</td>
-                    </tr>
-                  ) : data.length === 0 ? (
-                    <tr>
-                      <td colSpan={6}>No cashflow events found.</td>
-                    </tr>
-                  ) : (
-                    data.map((row, index) => {
-                      const runningBalance = Number(
-                        row.runningBalance || row.running_balance || 0
-                      );
-
-                      return (
-                        <tr key={`${formatDate(row.date)}-${row.name}-${index}`}>
-                          <td>{formatDate(row.date)}</td>
-                          <td>{row.type}</td>
-                          <td>{row.name}</td>
-                          <td className="text-right">
-                            ${Number(row.amount || 0).toFixed(2)}
-                          </td>
-                          <td className="text-right">
-                            ${runningBalance.toFixed(2)}
-                          </td>
-                          <td>
-                            {runningBalance < buffer ? (
-                              <span className="text-red-300">Risk</span>
-                            ) : (
-                              <span className="text-green-300">OK</span>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
+        <CashTimelineSection
+          showCashTimeline={showCashTimeline}
+          setShowCashTimeline={setShowCashTimeline}
+          data={data}
+          loading={loading}
+          formatDate={formatDate}
+          buffer={buffer}
+        />
 
         <BillsSection
           showBills={showBills}
