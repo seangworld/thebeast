@@ -802,6 +802,8 @@ test("simulatePayoffPlan applies Velocity chunk and source recovery", () => {
   );
   assert.equal(Number(velocity.velocity_source_interest || 0) > 0, true);
   assert.equal(Number(velocity.velocity_source_paid || 0) > 0, true);
+  assert.equal(velocity.payoff_months[0].total_payment, 200);
+  assert.equal(velocity.payoff_months[0].velocity_source_payment, 100);
   assert.equal(
     Number(velocity.payoff_months[0].velocity_source_payment || 0) > 0,
     true
