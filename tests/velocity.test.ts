@@ -731,3 +731,79 @@ test("simulatePayoffPlan uses Velocity engine target with income and bill snapsh
   assert.equal(engineResult.cashflow_projection?.projected_bills, 1200);
   assert.equal(result.first_target, "Large High APR");
 });
+
+test("simulatePayoffPlan applies Velocity chunk and source recovery", () => {
+  const debts = [
+    {
+      id: "small-low-apr",
+      name: "Small Low APR",
+      balance: 500,
+      minimum_payment: 25,
+      interest_rate: 5,
+    },
+    {
+      id: "large-high-apr",
+      name: "Large High APR",
+      balance: 2500,
+      minimum_payment: 75,
+      interest_rate: 24,
+    },
+  ];
+  const velocityInputSnapshot = baseInput({
+    accounts: [
+      {
+        id: "cash",
+        name: "Checking",
+        type: "checking",
+        current_balance: 2000,
+      },
+      {
+        id: "source",
+        name: "HELOC",
+        type: "heloc",
+        current_balance: 1000,
+        credit_limit: 10000,
+        available_credit: 9000,
+        interest_rate: 12,
+      },
+    ],
+    debts,
+    settings: {
+      cash_buffer: 500,
+      max_recommended_payment: 400,
+      max_source_utilization_percent: 90,
+      minimum_cash_after_payment: 500,
+      monthly_recovery_capacity: 200,
+      recovery_months: 6,
+      strategy: "aggressive",
+    },
+  });
+  const engineResult = runVelocityEngine(velocityInputSnapshot);
+  const avalanche = simulatePayoffPlan({
+    debts,
+    strategy: "avalanche",
+    extraPayment: 100,
+  });
+  const velocity = simulatePayoffPlan({
+    debts,
+    strategy: "velocity",
+    extraPayment: 100,
+    velocityInputSnapshot,
+    velocityEngineResult: engineResult,
+  });
+
+  assert.equal(engineResult.chunk_recommendation?.recommended_chunk, 400);
+  assert.equal(velocity.velocity_chunk_applied, 400);
+  assert.equal(velocity.payoff_months[0].velocity_chunk_applied, 400);
+  assert.equal(
+    Number(velocity.payoff_months[0].remaining_debt) <
+      Number(avalanche.payoff_months[0].remaining_debt),
+    true
+  );
+  assert.equal(Number(velocity.velocity_source_interest || 0) > 0, true);
+  assert.equal(Number(velocity.velocity_source_paid || 0) > 0, true);
+  assert.equal(
+    Number(velocity.payoff_months[0].velocity_source_payment || 0) > 0,
+    true
+  );
+});

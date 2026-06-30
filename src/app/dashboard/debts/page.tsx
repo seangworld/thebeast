@@ -13,6 +13,7 @@ import {
   buildVelocityInputSnapshot,
   runVelocityEngine,
 } from "@/lib/velocity";
+import type { VelocityEngineResult } from "@/lib/velocity";
 
 type PayoffStrategy = "minimum" | "snowball" | "avalanche" | "velocity";
 type VelocitySourceType = "heloc" | "ploc" | "credit_card" | "other";
@@ -349,12 +350,14 @@ function simulatePayoffPlan({
   strategy,
   extraPayment,
   velocityTargetDebtId,
+  velocityEngineResult,
 }: {
   debts: Debt[];
   recoveredMinimums: number;
   strategy: PayoffStrategy;
   extraPayment: number;
   velocityTargetDebtId?: string;
+  velocityEngineResult?: VelocityEngineResult;
 }) {
   const working = debts.map((d) => ({
     ...d,
@@ -379,8 +382,50 @@ function simulatePayoffPlan({
   let totalInterest = 0;
   let totalPaid = 0;
   let month = 0;
+  const velocityChunk =
+    strategy === "velocity"
+      ? money(
+          Math.max(
+            velocityEngineResult?.chunk_recommendation?.recommended_chunk || 0,
+            0
+          )
+        )
+      : 0;
+  const sourceApr = Math.max(
+    Number(velocityEngineResult?.interest_savings?.source_apr || 0),
+    0
+  );
+  const monthlySourceRecovery = money(
+    Math.max(
+      Number(
+        velocityEngineResult?.recovery_timeline?.monthly_recovery_capacity || 0
+      ),
+      0
+    )
+  );
+  let sourceBalance = 0;
+  let velocityChunkApplied = 0;
+  let velocitySourceInterest = 0;
+  let velocitySourcePaid = 0;
 
-  while (working.some((d) => Number(d.balance) > 0) && month < 600) {
+  if (strategy === "velocity" && velocityChunk > 0 && velocityTargetDebtId) {
+    const velocityTarget = working.find((debt) => debt.id === velocityTargetDebtId);
+
+    if (velocityTarget) {
+      velocityChunkApplied = money(
+        Math.min(velocityChunk, Number(velocityTarget.balance || 0))
+      );
+      velocityTarget.balance = money(
+        Number(velocityTarget.balance || 0) - velocityChunkApplied
+      );
+      sourceBalance = velocityChunkApplied;
+    }
+  }
+
+  while (
+    (working.some((d) => Number(d.balance) > 0) || sourceBalance > 0) &&
+    month < 600
+  ) {
     month++;
 
     const startingBalances: Record<string, number> = {};
@@ -389,6 +434,20 @@ function simulatePayoffPlan({
     const attackPaidByDebt: Record<string, number> = {};
     let monthlyInterest = 0;
     let paid = 0;
+    let monthlySourceInterest = 0;
+    let monthlySourcePayment = 0;
+
+    if (sourceBalance > 0) {
+      monthlySourceInterest = money((sourceBalance * sourceApr) / 100 / 12);
+      sourceBalance = money(sourceBalance + monthlySourceInterest);
+      monthlySourcePayment = money(
+        Math.min(monthlySourceRecovery, sourceBalance)
+      );
+      sourceBalance = money(sourceBalance - monthlySourcePayment);
+      velocitySourceInterest = money(velocitySourceInterest + monthlySourceInterest);
+      velocitySourcePaid = money(velocitySourcePaid + monthlySourcePayment);
+      monthlyInterest = money(monthlyInterest + monthlySourceInterest);
+    }
 
     for (const d of working) {
       if (Number(d.balance) <= 0) continue;
@@ -454,21 +513,31 @@ function simulatePayoffPlan({
     const targetForRow =
       targetAtMonthStart || chooseTarget(working, strategy, velocityTargetDebtId);
 
-    if (!targetForRow) break;
+    if (!targetForRow && sourceBalance <= 0) break;
 
     const targetStartingBalance = money(
-      startingBalances[targetForRow.id] ?? Number(targetForRow.balance || 0)
+      targetForRow
+        ? startingBalances[targetForRow.id] ?? Number(targetForRow.balance || 0)
+        : 0
     );
 
-    const targetInterest = money(interestByDebt[targetForRow.id] || 0);
-    const workingTarget = working.find((d) => d.id === targetForRow.id);
+    const targetInterest = money(targetForRow ? interestByDebt[targetForRow.id] || 0 : 0);
+    const workingTarget = targetForRow
+      ? working.find((d) => d.id === targetForRow.id)
+      : undefined;
     const targetRequiredMinimum = money(
-      Number(workingTarget?.required_minimum || targetForRow.minimum_payment || 0)
+      Number(workingTarget?.required_minimum || targetForRow?.minimum_payment || 0)
     );
-    const targetAttackPaid = money(attackPaidByDebt[targetForRow.id] || 0);
-    const targetEndingBalance = money(Number(targetForRow.balance || 0));
-    const targetTotalPayment = money(targetRequiredMinimum + targetAttackPaid);
-    const targetPrincipalReduction = money(targetTotalPayment - targetInterest);
+    const targetAttackPaid = money(
+      targetForRow ? attackPaidByDebt[targetForRow.id] || 0 : 0
+    );
+    const targetEndingBalance = money(Number(targetForRow?.balance || 0));
+    const targetTotalPayment = money(
+      targetRequiredMinimum + targetAttackPaid + monthlySourcePayment
+    );
+    const targetPrincipalReduction = money(
+      targetTotalPayment - targetInterest - monthlySourceInterest
+    );
     const paymentTooLow = targetTotalPayment < targetInterest;
 
     const remainingDebt = money(
@@ -490,10 +559,10 @@ function simulatePayoffPlan({
 
     months.push({
       month,
-      target: targetForRow.name,
+      target: targetForRow?.name || "Velocity Source Recovery",
       debt_starting_balance: targetStartingBalance,
       required_minimum: targetRequiredMinimum,
-      monthly_interest: targetInterest,
+      monthly_interest: money(targetInterest + monthlySourceInterest),
       principal_reduction: targetPrincipalReduction,
       recommended_minimum: recommendedMinimum,
       extra_attack: targetAttackPaid,
@@ -502,18 +571,25 @@ function simulatePayoffPlan({
       remaining_debt: remainingDebt,
       recovered_minimum: recoveredMinimum,
       paid_off: paidOffThisMonth,
+      velocity_chunk_applied: month === 1 ? velocityChunkApplied : 0,
+      velocity_source_interest: monthlySourceInterest,
+      velocity_source_payment: monthlySourcePayment,
+      velocity_source_balance: sourceBalance,
       warning: paymentTooLow ? "Payment too low" : "",
     });
 
-    if (paid <= 0) break;
+    if (paid <= 0 && monthlySourcePayment <= 0) break;
   }
 
   return {
     months_to_payoff: month,
     total_interest: money(totalInterest),
-    total_paid: money(totalPaid),
+    total_paid: money(totalPaid + velocitySourcePaid),
     first_target: months[0]?.target || "—",
     payoff_months: months,
+    velocity_chunk_applied: velocityChunkApplied,
+    velocity_source_interest: velocitySourceInterest,
+    velocity_source_paid: velocitySourcePaid,
   };
 }
 
@@ -661,11 +737,13 @@ export default function DebtsPage() {
       strategy: "velocity",
       extraPayment: Number(extraPayment || 0),
       velocityTargetDebtId: velocityPayoffTargetDebtId,
+      velocityEngineResult,
     });
   }, [
     activeDebts,
     extraPayment,
     recoveredMinimums,
+    velocityEngineResult,
     velocityPayoffTargetDebtId,
   ]);
 
@@ -728,7 +806,7 @@ export default function DebtsPage() {
         result: velocityProjection,
         activeDebtCount: activeDebts.length,
         notes:
-          "Uses the Velocity engine target with the existing monthly payoff simulator. Does not yet model one-time Velocity chunks or source repayment timing.",
+          "Uses the Velocity engine chunk, target, estimated source APR cost, and recovery repayment timing.",
       }),
     ];
 
