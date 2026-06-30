@@ -114,6 +114,7 @@ const strategyLabels: Record<string, string> = {
   avalanche: "Avalanche",
   snowball: "Snowball",
   minimum: "Minimum",
+  velocity: "Velocity",
 };
 
 const velocityRoadmap = [

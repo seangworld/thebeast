@@ -240,7 +240,17 @@ export default function SettingsPage() {
                 <option value="minimum">Minimum</option>
                 <option value="snowball">Snowball</option>
                 <option value="avalanche">Avalanche</option>
+                <option value="velocity">Velocity</option>
               </select>
+              {strategy === "velocity" ? (
+                <p className="mt-2 text-xs text-[#7f8da3]">
+                  Configure Velocity recommendations in the{" "}
+                  <Link href="/dashboard/velocity" className="text-[#38bdf8] underline">
+                    Velocity Planner
+                  </Link>
+                  .
+                </p>
+              ) : null}
             </div>
 
             <div>

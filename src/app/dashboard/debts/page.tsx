@@ -10,7 +10,7 @@ import {
   sortObligationsByNextDueDate,
 } from "../cashflow/cashflowUtils";
 
-type PayoffStrategy = "minimum" | "snowball" | "avalanche";
+type PayoffStrategy = "minimum" | "snowball" | "avalanche" | "velocity";
 
 type Debt = {
   id: string;
@@ -39,7 +39,7 @@ function chooseTarget(debts: Debt[], strategy: PayoffStrategy) {
 
   if (active.length === 0) return null;
 
-  if (strategy === "minimum") return null;
+  if (strategy === "minimum" || strategy === "velocity") return null;
 
   if (strategy === "avalanche") {
     return [...active].sort(
@@ -549,6 +549,10 @@ export default function DebtsPage() {
       return minimumProjection;
     }
 
+    if (strategy === "velocity") {
+      return minimumProjection;
+    }
+
     if (strategy === "avalanche") {
       return avalancheProjection;
     }
@@ -1023,10 +1027,20 @@ export default function DebtsPage() {
 	  <p className="mt-2 text-sm text-[#7f8da3]">
     {strategy === "minimum"
       ? "Minimum payments only. No extra attack or rollover."
+      : strategy === "velocity"
+      ? "Velocity recommendations are configured in the Velocity Planner."
       : strategy === "avalanche"
       ? "Lowest projected interest paid."
       : "Fastest emotional momentum and early wins."}
   </p>
+  {strategy === "velocity" ? (
+    <Link
+      href="/dashboard/velocity"
+      className="mt-3 inline-block text-sm text-[#38bdf8] underline"
+    >
+      Open Velocity Planner
+    </Link>
+  ) : null}
 </div>
         </section>
 
@@ -1042,10 +1056,20 @@ export default function DebtsPage() {
                 <option value="minimum">Minimum</option>
                 <option value="snowball">Snowball</option>
                 <option value="avalanche">Avalanche</option>
+                <option value="velocity">Velocity</option>
               </select>
               <p className="mt-2 text-xs text-[#7f8da3]">
                 This value is shared in debt settings and is the source of truth for the payoff strategy.
               </p>
+              {strategy === "velocity" ? (
+                <p className="mt-2 text-xs text-[#7f8da3]">
+                  Configure targets, chunks, risk, and savings in the{" "}
+                  <Link href="/dashboard/velocity" className="text-[#38bdf8] underline">
+                    Velocity Planner
+                  </Link>
+                  .
+                </p>
+              ) : null}
             </div>
 
             <div>

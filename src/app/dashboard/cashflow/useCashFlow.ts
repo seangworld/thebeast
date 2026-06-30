@@ -535,7 +535,9 @@ export function useCashFlow() {
 
     setStrategy(activeStrategy);
     setExtraPayment(activeExtraPayment);
-    setTargetDebtName(targetDebt?.name || "—");
+    setTargetDebtName(
+      activeStrategy === "velocity" ? "Velocity Planner" : targetDebt?.name || "—"
+    );
 
     setRequiredCash(calculateRequiredCash(builtTimeline));
     setBillsDue(calculateBillsDue(builtTimeline));

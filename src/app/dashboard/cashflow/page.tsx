@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import Link from "next/link";
 import FundingSourcesSummaryCards from "./components/FundingSourcesSummaryCards";
 import PaymentSourceCoverage from "./components/PaymentSourceCoverage";
 import FundingIntelligence from "./components/FundingIntelligence";
@@ -1260,7 +1261,14 @@ export default function CashFlowPage() {
                   {recommendedTargetDebt.name}
                 </div>
                 <div className="text-xs text-[#7f8da3]">
-                  Based on: {strategy === "avalanche" ? "Avalanche strategy" : "Snowball strategy"}
+                  Based on:{" "}
+                  {strategy === "velocity"
+                    ? "Velocity Planner"
+                    : strategy === "avalanche"
+                      ? "Avalanche strategy"
+                      : strategy === "minimum"
+                        ? "Minimum strategy"
+                        : "Snowball strategy"}
                 </div>
               </div>
             ) : (
@@ -2259,6 +2267,14 @@ export default function CashFlowPage() {
             <div className="mt-2 text-2xl font-bold capitalize">
               {strategy}
             </div>
+            {strategy === "velocity" ? (
+              <Link
+                href="/dashboard/velocity"
+                className="mt-3 inline-block text-sm text-[#38bdf8] underline"
+              >
+                Open Velocity Planner
+              </Link>
+            ) : null}
           </div>
 
           <div className="beast-card">
