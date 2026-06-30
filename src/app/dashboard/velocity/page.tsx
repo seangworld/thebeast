@@ -197,18 +197,6 @@ function formatRecoveryMonths(value: number | null) {
   return `${rounded} ${rounded === 1 ? "Month" : "Months"}`;
 }
 
-function getRecoveryCompletionDate(monthsRequired: number | null) {
-  if (monthsRequired == null) return "Not Available";
-
-  const completionDate = new Date();
-  completionDate.setMonth(completionDate.getMonth() + Math.ceil(monthsRequired));
-
-  return completionDate.toLocaleString("en-US", {
-    month: "long",
-    year: "numeric",
-  });
-}
-
 export default function VelocityPlannerPage() {
   const [debts, setDebts] = useState<any[]>([]);
   const [incomes, setIncomes] = useState<any[]>([]);
@@ -223,6 +211,7 @@ export default function VelocityPlannerPage() {
   const [settingsStatus, setSettingsStatus] = useState<
     "idle" | "saved" | "load_error" | "save_error" | "missing_user"
   >("idle");
+  const velocitySnapshotAsOfDate = useMemo(() => new Date().toISOString(), []);
 
   const getUserId = useCallback(async () => {
     const supabase = createClient();
@@ -381,9 +370,6 @@ export default function VelocityPlannerPage() {
   const recoveryBasedLimit = clampToZero(
     monthlyRecoveryCapacity * recoveryMonths
   );
-  const legacyRecommendedChunk = clampToZero(
-    Math.min(emergencyAdjustedSafeCredit, recoveryBasedLimit, availableCredit)
-  );
   const limitingFactor =
     monthlyRecoveryCapacity <= 0
       ? "No Recovery Capacity"
@@ -395,36 +381,9 @@ export default function VelocityPlannerPage() {
           : emergencyAdjustedSafeCredit <= availableCredit
             ? "Safe Credit Guardrail"
             : "Available Credit";
-  // TEMP DEV COMPARISON: remove the legacy target sorter after the engine
-  // target has been validated against real Velocity page data.
-  const legacyRecommendedVelocityTarget = useMemo(() => {
-    return activeDebts
-      .map((debt) => {
-        const balance = Number(debt.balance || 0);
-        const apr = Number(debt.interest_rate || 0);
-        const monthlyInterestCost = (balance * apr) / 100 / 12;
-
-        return {
-          ...debt,
-          balance,
-          apr,
-          monthlyInterestCost,
-          opportunityScore:
-            apr >= 20 ? "High" : apr >= 10 ? "Moderate" : "Low",
-        };
-      })
-      .sort((a, b) => {
-        const aprCompare = b.apr - a.apr;
-        if (aprCompare !== 0) return aprCompare;
-
-        const interestCompare = b.monthlyInterestCost - a.monthlyInterestCost;
-        if (interestCompare !== 0) return interestCompare;
-
-        return a.balance - b.balance;
-      })[0];
-  }, [activeDebts]);
   const velocityInputSnapshot = useMemo(() => {
     return buildVelocityInputSnapshot({
+      as_of_date: velocitySnapshotAsOfDate,
       debts: activeDebts,
       incomes,
       bills,
@@ -441,6 +400,7 @@ export default function VelocityPlannerPage() {
     incomes,
     startingBalance,
     velocitySettings,
+    velocitySnapshotAsOfDate,
   ]);
   const velocityEngineResult = useMemo(() => {
     return runVelocityEngine(velocityInputSnapshot);
@@ -454,6 +414,8 @@ export default function VelocityPlannerPage() {
   const riskStatus = formatVelocityRiskStatus(
     velocityEngineResult.risk_summary.risk_level
   );
+  const recoveryTimeline = velocityEngineResult.recovery_timeline;
+  const interestSavings = velocityEngineResult.interest_savings;
   const recommendedVelocityTarget = useMemo(() => {
     const targetDebt = velocityEngineResult.target_debt;
 
@@ -479,39 +441,6 @@ export default function VelocityPlannerPage() {
       : !recommendedVelocityTarget
         ? "No active debt target"
         : "Velocity engine target_debt. Current engine tie breakers favor higher APR, then higher remaining balance.";
-  useEffect(() => {
-    if (process.env.NODE_ENV === "production") return;
-
-    console.debug("Velocity target comparison", {
-      engineTargetId: velocityEngineResult.target_debt?.id,
-      engineTargetName: velocityEngineResult.target_debt?.name,
-      legacyTargetId: legacyRecommendedVelocityTarget?.id,
-      legacyTargetName: legacyRecommendedVelocityTarget?.name,
-      engineRecommendedChunk: recommendedChunk,
-      legacyRecommendedChunk,
-      matchesLegacy:
-        velocityEngineResult.target_debt?.id ===
-        legacyRecommendedVelocityTarget?.id,
-    });
-  }, [
-    legacyRecommendedChunk,
-    legacyRecommendedVelocityTarget,
-    recommendedChunk,
-    velocityEngineResult.target_debt,
-  ]);
-  const recoveryMonthsRequired =
-    recommendedChunk > 0 && monthlyRecoveryCapacity > 0
-      ? recommendedChunk / monthlyRecoveryCapacity
-      : null;
-  const recoveryTimelineStatus =
-    recoveryMonthsRequired == null
-      ? "Not Available"
-      : recoveryMonthsRequired <= recoveryMonths
-        ? "Within Guardrails"
-        : "Exceeds Guardrails";
-  const recoveryCompletionDate =
-    getRecoveryCompletionDate(recoveryMonthsRequired);
-
   const recommendationValues: RecommendationValue[] = [
     {
       label: "Recommended Chunk",
@@ -662,8 +591,8 @@ export default function VelocityPlannerPage() {
           <p className="beast-kicker">The Beast v2.0 Foundation</p>
           <h1 className="beast-title">Velocity Planner</h1>
           <p className="beast-subtitle">
-            A planning workspace for future Velocity Lite and Full Velocity
-            Banking tools. Calculations are not enabled yet.
+            A planning workspace for Velocity Lite recommendations, recovery
+            timing, and deterministic interest savings.
           </p>
         </section>
 
@@ -1067,8 +996,8 @@ export default function VelocityPlannerPage() {
           <div className="border-b border-[#2a3242] p-5">
             <h2 className="text-xl font-bold">Velocity Lite Results</h2>
             <p className="mt-1 text-sm text-yellow-200">
-              Conservative recommendation only. Velocity Lite payoff simulation
-              is not enabled yet.
+              Deterministic recommendations using saved guardrails, cash flow,
+              debt details, and the current Velocity engine.
             </p>
           </div>
           <div className="grid gap-4 p-5 sm:grid-cols-2 xl:grid-cols-3">
@@ -1152,26 +1081,30 @@ export default function VelocityPlannerPage() {
               <div className="text-sm text-[#c7cfdb]">Recovery Timeline</div>
               <div
                 className={`mt-2 break-words text-2xl font-bold ${
-                  recoveryTimelineStatus === "Exceeds Guardrails"
+                  recoveryTimeline?.status === "Exceeds Guardrails"
                     ? "text-red-200"
-                    : recoveryTimelineStatus === "Not Available"
+                    : recoveryTimeline?.status === "Not Available"
                       ? "text-yellow-100"
                       : "text-green-200"
                 }`}
               >
-                {formatRecoveryMonths(recoveryMonthsRequired)}
+                {formatRecoveryMonths(recoveryTimeline?.months_required ?? null)}
               </div>
               <div className="mt-4 grid gap-2 text-sm text-[#c7cfdb]">
                 <div>Recommended Chunk: {formatMoney(recommendedChunk)}</div>
                 <div>
                   Monthly Recovery Capacity:{" "}
-                  {formatMoney(monthlyRecoveryCapacity)}
+                  {formatMoney(recoveryTimeline?.monthly_recovery_capacity ?? 0)}
                 </div>
                 <div>
-                  Recovery Goal: {formatRecoveryMonths(recoveryMonths)}
+                  Recovery Goal:{" "}
+                  {formatRecoveryMonths(recoveryTimeline?.recovery_months ?? 0)}
                 </div>
-                <div>Recovery Complete: {recoveryCompletionDate}</div>
-                <div>Status: {recoveryTimelineStatus}</div>
+                <div>
+                  Recovery Complete:{" "}
+                  {recoveryTimeline?.completion_date || "Not Available"}
+                </div>
+                <div>Status: {recoveryTimeline?.status || "Not Available"}</div>
               </div>
               <p className="mt-3 text-sm text-[#9aa7b8]">
                 The recovery timeline estimates how long it will take to restore
@@ -1179,12 +1112,28 @@ export default function VelocityPlannerPage() {
                 assumptions.
               </p>
             </div>
-            {["Interest Savings"].map((label) => (
-              <div key={label} className="beast-card">
-                <div className="text-sm text-[#c7cfdb]">{label}</div>
-                <div className="mt-2 text-lg font-bold">Not Yet Available</div>
+            <div className="beast-card">
+              <div className="text-sm text-[#c7cfdb]">Interest Savings</div>
+              <div className="mt-2 break-words text-2xl font-bold">
+                {formatMoney(interestSavings?.projected_interest_saved || 0)}
               </div>
-            ))}
+              <div className="mt-4 grid gap-2 text-sm text-[#c7cfdb]">
+                <div>
+                  Minimum-Only Interest:{" "}
+                  {formatMoney(interestSavings?.baseline_total_interest || 0)}
+                </div>
+                <div>
+                  Velocity Interest:{" "}
+                  {formatMoney(interestSavings?.velocity_total_interest || 0)}
+                </div>
+                <div>
+                  Months Compared: {interestSavings?.months_compared || 0}
+                </div>
+              </div>
+              <p className="mt-3 text-sm text-[#9aa7b8]">
+                Deterministic comparison against paying scheduled minimums only.
+              </p>
+            </div>
             <div className="beast-card sm:col-span-2 xl:col-span-3">
               <div className="flex flex-col gap-1 border-b border-[#2a3242] pb-4">
                 <div className="text-sm text-[#38bdf8]">Read-only</div>

@@ -7,7 +7,9 @@ import type {
   VelocityDebtSnapshot,
   VelocityEngineResult,
   VelocityInputSnapshot,
+  VelocityInterestSavings,
   VelocityRecommendation,
+  VelocityRecoveryTimeline,
   VelocityRiskLevel,
   VelocityScoreBreakdown,
 } from "./types";
@@ -78,6 +80,125 @@ function getRiskLevel(paymentAmount: number, availableCash: number): VelocityRis
   if (ratio <= 0.35) return "low";
   if (ratio <= 0.7) return "medium";
   return "high";
+}
+
+function formatRecoveryCompletionDate(asOfDate: string | undefined, monthsRequired: number | null) {
+  if (monthsRequired == null) return "Not Available";
+  if (!asOfDate) return "Not Available";
+
+  const baseDate = new Date(asOfDate);
+  if (Number.isNaN(baseDate.getTime())) return "Not Available";
+
+  const completionDate = new Date(baseDate);
+  completionDate.setMonth(completionDate.getMonth() + Math.ceil(monthsRequired));
+
+  return completionDate.toLocaleString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
+}
+
+function buildRecoveryTimeline(
+  input: VelocityInputSnapshot,
+  paymentAmount: number
+): VelocityRecoveryTimeline {
+  const monthlyRecoveryCapacity = money(
+    Math.max(finiteNumber(input.settings.monthly_recovery_capacity), 0)
+  );
+  const recoveryMonths = Math.max(finiteNumber(input.settings.recovery_months), 0);
+  const monthsRequired =
+    paymentAmount > 0 && monthlyRecoveryCapacity > 0
+      ? paymentAmount / monthlyRecoveryCapacity
+      : null;
+  const status =
+    monthsRequired == null
+      ? "Not Available"
+      : monthsRequired <= recoveryMonths
+        ? "Within Guardrails"
+        : "Exceeds Guardrails";
+
+  return {
+    months_required: monthsRequired == null ? null : money(monthsRequired),
+    recovery_months: recoveryMonths,
+    monthly_recovery_capacity: monthlyRecoveryCapacity,
+    status,
+    completion_date: formatRecoveryCompletionDate(
+      input.as_of_date,
+      monthsRequired
+    ),
+  };
+}
+
+function simulateMinimumPaymentInterest(debts: VelocityDebtSnapshot[]) {
+  const maxMonths = 600;
+  const workingDebts = debts.map((debt) => ({
+    balance: money(Math.max(finiteNumber(debt.balance), 0)),
+    minimum_payment: money(Math.max(finiteNumber(debt.minimum_payment), 0)),
+    interest_rate: Math.max(finiteNumber(debt.interest_rate), 0),
+  }));
+  let totalInterest = 0;
+  let months = 0;
+
+  while (months < maxMonths && workingDebts.some((debt) => debt.balance > 0)) {
+    months += 1;
+
+    workingDebts.forEach((debt) => {
+      if (debt.balance <= 0) return;
+
+      const monthlyInterest = money((debt.balance * debt.interest_rate) / 100 / 12);
+      totalInterest = money(totalInterest + monthlyInterest);
+      debt.balance = money(debt.balance + monthlyInterest);
+      debt.balance = money(Math.max(debt.balance - Math.min(debt.minimum_payment, debt.balance), 0));
+    });
+  }
+
+  return {
+    total_interest: money(totalInterest),
+    months,
+    payoff_completed: workingDebts.every((debt) => debt.balance <= 0),
+  };
+}
+
+function buildInterestSavings(
+  debts: VelocityDebtSnapshot[],
+  recommendation: VelocityRecommendation | undefined
+): VelocityInterestSavings {
+  const eligibleDebts = getEligibleDebts(debts);
+  const velocityPaymentAmount = money(Math.max(recommendation?.payment_amount || 0, 0));
+  const targetDebtId = recommendation?.debt_id;
+  const targetDebt = eligibleDebts.find((debt) => debt.id === targetDebtId);
+  const baseline = simulateMinimumPaymentInterest(eligibleDebts);
+  const velocityDebts = eligibleDebts.map((debt) => {
+    if (!targetDebtId || debt.id !== targetDebtId || velocityPaymentAmount <= 0) {
+      return debt;
+    }
+
+    return {
+      ...debt,
+      balance: money(Math.max(debt.balance - velocityPaymentAmount, 0)),
+    };
+  });
+  const velocity = simulateMinimumPaymentInterest(velocityDebts);
+
+  return {
+    baseline_total_interest: baseline.total_interest,
+    velocity_total_interest: velocity.total_interest,
+    projected_interest_saved: money(
+      Math.max(baseline.total_interest - velocity.total_interest, 0)
+    ),
+    months_compared: Math.max(baseline.months, velocity.months),
+    baseline_payoff_completed: baseline.payoff_completed,
+    velocity_payoff_completed: velocity.payoff_completed,
+    target_debt_id: targetDebt?.id,
+    target_debt_name: targetDebt?.name,
+    velocity_payment_amount: velocityPaymentAmount,
+    assumptions: [
+      "Baseline scenario pays scheduled minimum payments only.",
+      "Velocity scenario applies the selected Velocity payment before the first simulated interest cycle.",
+      "Both scenarios use the same minimum payments, APRs, and active debt balances.",
+      "Simulation stops after 600 months if payoff is not completed.",
+    ],
+  };
 }
 
 function getMonthlyAmount(amount: number, frequency?: string | null) {
@@ -444,7 +565,7 @@ function getConfidence(
   return "medium";
 }
 
-function getRecommendedPayment(input: VelocityInputSnapshot, availableCash: number) {
+function getStrategyPaymentLimit(input: VelocityInputSnapshot, availableCash: number) {
   const configuredMax = input.settings.max_recommended_payment;
   const minimumCashAfterPayment = input.settings.minimum_cash_after_payment ?? 0;
   const cashLimitedAmount = Math.max(availableCash - minimumCashAfterPayment, 0);
@@ -538,11 +659,11 @@ export function runVelocityEngine(input: VelocityInputSnapshot): VelocityEngineR
         cashflowProjection.projected_cash_before_velocity_payment
       )
     : 0;
-  const legacyPaymentCap = isValid
-    ? getRecommendedPayment(input, availableCashAboveBuffer)
+  const strategyPaymentLimit = isValid
+    ? getStrategyPaymentLimit(input, availableCashAboveBuffer)
     : 0;
   const candidatePaymentCapacity = money(
-    Math.min(safePaymentCapacity, legacyPaymentCap || safePaymentCapacity)
+    Math.min(safePaymentCapacity, strategyPaymentLimit || safePaymentCapacity)
   );
   const candidateEvaluations = isValid
     ? generateCandidates(
@@ -567,6 +688,12 @@ export function runVelocityEngine(input: VelocityInputSnapshot): VelocityEngineR
   const confidence = getConfidence(validationErrors, targetDebt, availableCashAboveBuffer);
   const recommendation = buildRecommendation(selectedCandidate, confidence);
   const alternatives = buildAlternatives(candidateEvaluations, selectedCandidate);
+  const recoveryTimeline = isValid
+    ? buildRecoveryTimeline(input, recommendation?.payment_amount || 0)
+    : undefined;
+  const interestSavings = isValid
+    ? buildInterestSavings(eligibleDebts, recommendation)
+    : undefined;
   const failedConstraints = candidateEvaluations.flatMap((candidate) =>
     candidate.constraints.filter((constraint) => !constraint.passed)
   );
@@ -601,6 +728,8 @@ export function runVelocityEngine(input: VelocityInputSnapshot): VelocityEngineR
     recommendation,
     alternatives,
     cashflow_projection: cashflowProjection,
+    recovery_timeline: recoveryTimeline,
+    interest_savings: interestSavings,
     constraints: failedConstraints,
     candidate_evaluations: candidateEvaluations,
     rationale,
