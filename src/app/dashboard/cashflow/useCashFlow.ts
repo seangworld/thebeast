@@ -1,29 +1,18 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  buildCashTimeline,
-  simulateCashFlow,
-  calculateRequiredCash,
-  calculateBillsDue,
-  calculateIncomeExpected,
-} from "@/lib/cashflow";
+import { simulateCashFlow } from "@/lib/cashflow";
 import { createClient } from "@/lib/supabase/client";
 import {
-  addDays,
-  addMonthsClamped,
   getCycleMonth,
-  getCurrentBillCycleDueDate,
-  getCurrentDebtCycleDueDate,
-  getFrequencyMonthStep,
-  getTargetDebt,
-  toDateInputValue,
   PayoffStrategy,
   FundingSource,
 } from "./cashflowUtils";
-import { normalizeDebtStrategy } from "@/lib/debtStrategies";
 import { useCashFlowDisclosureState } from "./hooks/useCashFlowDisclosureState";
 import { useCashFlowPaymentState } from "./hooks/useCashFlowPaymentState";
+import { useCashFlowProjection } from "./hooks/useCashFlowProjection";
+import { useCashFlowDataLoader } from "./hooks/useCashFlowDataLoader";
+import { useCashFlowPaymentActions } from "./hooks/useCashFlowPaymentActions";
 
 export function useCashFlow() {
   const [timeline, setTimeline] = useState<any[]>([]);
@@ -77,8 +66,6 @@ export function useCashFlow() {
   const isStartingBalanceInitialRender = useRef(true);
   const pendingSaveRef = useRef(false);
   const isStartingBalanceFocusedRef = useRef(false);
-  const focusReloadInFlightRef = useRef(false);
-  const lastFocusReloadAtRef = useRef(0);
   const AUTOSAVE_DEBOUNCE_MS = 1700;
 
   const [strategy, setStrategy] = useState<PayoffStrategy>("snowball");
@@ -171,28 +158,52 @@ export function useCashFlow() {
   } = useCashFlowDisclosureState();
 
   const cycleMonth = getCycleMonth();
-
-  const getUserId = useCallback(async () => {
-    const supabase = createClient();
-    const { data } = await supabase.auth.getUser();
-    return data?.user?.id;
-  }, []);
-
-  const loadFundingSources = useCallback(async () => {
-    const supabase = createClient();
-    const userId = await getUserId();
-
-    if (!userId) return;
-
-    const { data } = await supabase
-      .from("funding_sources")
-      .select("*")
-      .eq("user_id", userId)
-      .eq("is_active", true)
-      .order("created_at", { ascending: true });
-
-    setFundingSources(data || []);
-  }, [getUserId]);
+  const { buildProjection } = useCashFlowProjection();
+  const {
+    getUserId,
+    load,
+    loadFundingSources,
+  } = useCashFlowDataLoader({
+    cycleMonth,
+    buildProjection,
+    setLoading,
+    setFundingSources,
+    setIncomes,
+    setBills,
+    setBillPayments,
+    setDebtPaymentRows,
+    setDebts,
+    setTimeline,
+    setData,
+    setLookaheadDays,
+    setAssignmentHorizonMonths,
+    setBuffer,
+    setStartingBalance,
+    setStrategy,
+    setExtraPayment,
+    setTargetDebtName,
+    setRequiredCash,
+    setBillsDue,
+    setIncomeExpected,
+  });
+  const {
+    addBillPayment,
+    markBillPaid,
+    updateBillIncomeDate,
+    updateDebtIncomeDate,
+    updateBillFundingSource,
+    updateDebtFundingSource,
+    applyDebtPayment,
+  } = useCashFlowPaymentActions({
+    cycleMonth,
+    debtPaymentRows,
+    getUserId,
+    load,
+    setPartialPayments,
+    setDebtPayments,
+    setDebtPaymentStatus,
+    setApplyingDebtPaymentId,
+  });
 
   async function addFundingSource() {
     const supabase = createClient();
@@ -362,243 +373,6 @@ export function useCashFlow() {
     await loadFundingSources();
   }
 
-  const load = useCallback(async () => {
-    setLoading(true);
-
-    const supabase = createClient();
-    const userId = await getUserId();
-
-    if (!userId) {
-      setLoading(false);
-      return;
-    }
-
-    const { data: incomeRows } = await supabase
-      .from("income_events")
-      .select("*")
-      .eq("user_id", userId)
-      .order("next_date", { ascending: true });
-
-    const { data: billRows } = await supabase
-      .from("bill_events")
-      .select("*")
-      .eq("user_id", userId)
-      .order("due_date", { ascending: true });
-
-    const { data: paymentRows } = await supabase
-      .from("bill_payments")
-      .select("*")
-      .eq("user_id", userId)
-      .eq("cycle_month", cycleMonth);
-
-    const { data: debtPaymentRows } = await supabase
-      .from("debt_payments")
-      .select("*")
-      .eq("user_id", userId);
-
-    const { data: debtRows } = await supabase
-      .from("debts")
-      .select("*")
-      .eq("user_id", userId)
-      .order("due_date", { ascending: true });
-
-    const { data: cashSettings } = await supabase
-      .from("cash_settings")
-      .select("*")
-      .eq("user_id", userId)
-      .maybeSingle();
-
-    const { data: debtSettings } = await supabase
-      .from("debt_settings")
-      .select("*")
-      .eq("user_id", userId)
-      .maybeSingle();
-
-    const activeLookahead = Number(cashSettings?.lookahead_days ?? 30);
-    const activeAssignmentHorizon = Number(cashSettings?.assignment_horizon_months ?? 6);
-    const activeBuffer = Number(cashSettings?.checking_buffer ?? 500);
-    const activeStartingBalance = Number(cashSettings?.starting_balance ?? 500);
-
-    const activeStrategy = normalizeDebtStrategy(debtSettings?.strategy);
-    const activeExtraPayment = Number(debtSettings?.extra_payment || 0);
-
-    const activeDebtRows = (debtRows || []).filter(
-      (debt) => !Boolean(debt.is_archived)
-    );
-    const targetDebt = getTargetDebt(activeDebtRows, activeStrategy);
-
-    const activePayments = paymentRows || [];
-    const activeDebtPayments = debtPaymentRows || [];
-
-    const paymentTotals: Record<string, number> = {};
-    for (const payment of activePayments) {
-      paymentTotals[payment.bill_id] =
-        Number(paymentTotals[payment.bill_id] || 0) +
-        Number(payment.amount_paid || 0);
-    }
-
-    setLookaheadDays(activeLookahead);
-    setAssignmentHorizonMonths(activeAssignmentHorizon);
-
-    const debtPaymentTotals: Record<string, number> = {};
-    for (const payment of activeDebtPayments) {
-      const key = `${payment.debt_id}||${payment.cycle_due_date}`;
-      debtPaymentTotals[key] =
-        Number(debtPaymentTotals[key] || 0) + Number(payment.amount || 0);
-    }
-
-    const debtsForTimeline = (activeDebtRows || []).map((debt) => {
-      const minimumPayment = Number(debt.minimum_payment || 0);
-      const currentCycleDueDate = getCurrentDebtCycleDueDate(debt);
-      const cycleKey = `${debt.id}||${currentCycleDueDate
-        .toISOString()
-        .slice(0, 10)}`;
-      const isCurrentCyclePaid =
-        Number(debtPaymentTotals[cycleKey] || 0) >= minimumPayment;
-
-      return {
-        ...debt,
-        minimum_payment: minimumPayment,
-        due_date: Number(debt.due_date || 1),
-        frequency: "monthly",
-        nextDueDateOverride: isCurrentCyclePaid
-          ? addMonthsClamped(currentCycleDueDate, 1)
-          : currentCycleDueDate,
-      };
-    });
-
-    const billsForTimeline = (billRows || [])
-      .filter((bill) => !Boolean(bill.is_archived))
-      .map((bill) => {
-        const amount = Number(bill.amount || 0);
-        const paid = Number(paymentTotals[bill.id] || 0);
-        const remaining = Math.max(amount - paid, 0);
-        const frequency = bill.frequency || "monthly";
-        const currentCycleDueDate = getCurrentBillCycleDueDate(
-          bill,
-          cycleMonth
-        );
-        let nextDueDateOverride = currentCycleDueDate;
-
-        if (remaining <= 0 && !bill.next_due_date_after_payment) {
-          nextDueDateOverride =
-            frequency === "weekly"
-              ? addDays(currentCycleDueDate, 7)
-              : frequency === "biweekly"
-              ? addDays(currentCycleDueDate, 14)
-              : addMonthsClamped(
-                  currentCycleDueDate,
-                  getFrequencyMonthStep(frequency)
-                );
-        }
-
-        return {
-          ...bill,
-          amount: remaining > 0 ? remaining : amount,
-          frequency,
-          nextDueDateOverride,
-        };
-      })
-      .filter((bill) => Number(bill.amount || 0) > 0);
-
-    const extraAttackBill =
-      targetDebt && activeExtraPayment > 0
-        ? [
-            {
-              id: "extra-debt-attack",
-              user_id: userId,
-              name: `Planned Extra Debt Payment ${targetDebt.name}`,
-              amount: activeExtraPayment,
-              due_date: Number(targetDebt.due_date || 1),
-              frequency: "monthly",
-              is_debt: true,
-            },
-          ]
-        : [];
-
-    const combinedBills = [...billsForTimeline, ...extraAttackBill];
-
-    const builtTimeline = buildCashTimeline({
-      incomes: incomeRows || [],
-      bills: combinedBills,
-      debts: debtsForTimeline,
-      startDate: new Date(),
-      days: activeLookahead,
-    });
-
-    const simulated = simulateCashFlow({
-      timeline: builtTimeline,
-      startingBalance: activeStartingBalance,
-      buffer: activeBuffer,
-    });
-
-    setIncomes(incomeRows || []);
-    setBills(billRows || []);
-    setBillPayments(activePayments);
-    setDebtPaymentRows(activeDebtPayments);
-    setDebts(debtRows || []);
-    setTimeline(builtTimeline);
-    setData(simulated);
-
-    setLookaheadDays(activeLookahead);
-    setBuffer(activeBuffer);
-    setStartingBalance(activeStartingBalance);
-
-    setStrategy(activeStrategy);
-    setExtraPayment(activeExtraPayment);
-    setTargetDebtName(
-      activeStrategy === "velocity" ? "Velocity Planner" : targetDebt?.name || "—"
-    );
-
-    setRequiredCash(calculateRequiredCash(builtTimeline));
-    setBillsDue(calculateBillsDue(builtTimeline));
-    setIncomeExpected(calculateIncomeExpected(builtTimeline));
-
-    setLoading(false);
-  }, [cycleMonth, getUserId]);
-
-  useEffect(() => {
-    load();
-    loadFundingSources();
-  }, [load, loadFundingSources]);
-
-  const reloadCashFlowOnFocus = useCallback(async () => {
-    if (focusReloadInFlightRef.current) return;
-    if (document.visibilityState === "hidden") return;
-
-    const now = Date.now();
-    if (now - lastFocusReloadAtRef.current < 1000) return;
-
-    focusReloadInFlightRef.current = true;
-    lastFocusReloadAtRef.current = now;
-
-    try {
-      await load();
-    } finally {
-      focusReloadInFlightRef.current = false;
-    }
-  }, [load]);
-
-  useEffect(() => {
-    function handleVisibilityChange() {
-      if (document.visibilityState === "visible") {
-        void reloadCashFlowOnFocus();
-      }
-    }
-
-    function handleFocus() {
-      void reloadCashFlowOnFocus();
-    }
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    window.addEventListener("focus", handleFocus);
-
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-      window.removeEventListener("focus", handleFocus);
-    };
-  }, [reloadCashFlowOnFocus]);
-
   function recalc(balance: number) {
     const simulated = simulateCashFlow({
       timeline,
@@ -749,141 +523,6 @@ export function useCashFlow() {
     await load();
   }
 
-  async function addBillPayment(bill: any, amount: number) {
-    const supabase = createClient();
-    const userId = await getUserId();
-
-    if (!userId) return;
-    if (!bill?.id) return;
-    if (amount <= 0) return;
-
-    await supabase.from("bill_payments").insert({
-      user_id: userId,
-      bill_id: bill.id,
-      amount_paid: amount,
-      payment_date: new Date().toISOString().slice(0, 10),
-      cycle_month: cycleMonth,
-      funding_source_id: bill.funding_source_id || null,
-    });
-
-    const currentCycleDueDate = getCurrentBillCycleDueDate(bill, cycleMonth);
-    const frequency = bill.frequency || "monthly";
-    const currentCycleRemaining = Math.max(
-      Number(bill.remaining ?? 0),
-      Math.max(Number(bill.amount || 0) - Number(bill.paid || 0), 0)
-    );
-    const remainingAfterPayment = Math.max(currentCycleRemaining - amount, 0);
-    const shouldAdvanceNextDue = remainingAfterPayment <= 0;
-    let nextDueDateAfterPayment: string | null = null;
-
-    if (shouldAdvanceNextDue) {
-      const nextDueDate =
-        frequency === "weekly"
-          ? addDays(currentCycleDueDate, 7)
-          : frequency === "biweekly"
-          ? addDays(currentCycleDueDate, 14)
-          : addMonthsClamped(
-              currentCycleDueDate,
-              getFrequencyMonthStep(frequency)
-            );
-      nextDueDateAfterPayment = toDateInputValue(nextDueDate);
-    }
-
-    const updatePayload: Record<string, any> = {};
-    if (nextDueDateAfterPayment) {
-      updatePayload.assigned_income_date = null;
-      updatePayload.next_due_date_after_payment = nextDueDateAfterPayment;
-    }
-
-    if (Object.keys(updatePayload).length > 0) {
-      const { error: updateError } = await supabase
-        .from("bill_events")
-        .update(updatePayload)
-        .eq("id", bill.id);
-      if (updateError) {
-        console.warn("Warning: Could not persist bill next due date:", updateError);
-      }
-    }
-
-    setPartialPayments((prev) => ({
-      ...prev,
-      [bill.id]: "",
-    }));
-
-    await load();
-  }
-
-  async function markBillPaid(bill: any) {
-    const remaining = Number(bill.remaining || 0);
-    if (remaining <= 0) return;
-
-    await addBillPayment(bill, remaining);
-  }
-
-  async function updateBillIncomeDate(
-    billId: string,
-    assignedIncomeDate: string
-  ) {
-    const supabase = createClient();
-
-    await supabase
-      .from("bill_events")
-      .update({
-        assigned_income_date: assignedIncomeDate || null,
-      })
-      .eq("id", billId);
-
-    await load();
-  }
-
-  async function updateDebtIncomeDate(
-    debtId: string,
-    assignedIncomeDate: string
-  ) {
-    const supabase = createClient();
-
-    await supabase
-      .from("debts")
-      .update({
-        assigned_income_date: assignedIncomeDate || null,
-      })
-      .eq("id", debtId);
-
-    await load();
-  }
-
-  async function updateBillFundingSource(
-    billId: string,
-    fundingSourceId: string
-  ) {
-    const supabase = createClient();
-
-    await supabase
-      .from("bill_events")
-      .update({
-        funding_source_id: fundingSourceId || null,
-      })
-      .eq("id", billId);
-
-    await load();
-  }
-
-  async function updateDebtFundingSource(
-    debtId: string,
-    fundingSourceId: string
-  ) {
-    const supabase = createClient();
-
-    await supabase
-      .from("debts")
-      .update({
-        funding_source_id: fundingSourceId || null,
-      })
-      .eq("id", debtId);
-
-    await load();
-  }
-
   function startEditIncome(income: any) {
     setEditingIncomeId(income.id);
     setEditIncomeName(income.name || "");
@@ -997,131 +636,6 @@ export function useCashFlow() {
 
     cancelEditDebt();
     await load();
-  }
-
-  async function applyDebtPayment(debt: any, amount: number) {
-    const supabase = createClient();
-
-    if (!debt?.id) {
-      console.error("Invalid debt: missing id");
-      return;
-    }
-
-    if (amount <= 0) {
-      setDebtPaymentStatus((prev) => ({
-        ...prev,
-        [debt.id]: {
-          type: "error",
-          message: "Payment amount must be greater than 0.",
-        },
-      }));
-      return;
-    }
-
-    setApplyingDebtPaymentId(debt.id);
-
-    try {
-      const currentBalance = Number(debt.balance || 0);
-      const newBalance = Math.max(currentBalance - amount, 0);
-      const userId = await getUserId();
-
-      if (!userId) {
-        throw new Error("User not authenticated");
-      }
-
-      const currentCycleDueDate = getCurrentDebtCycleDueDate(debt);
-      const cycleDueDate = toDateInputValue(currentCycleDueDate);
-      const minimumPayment = Number(debt.minimum_payment || 0);
-      const cycleKey = `${debt.id}||${cycleDueDate}`;
-
-      const debtPaymentsByDebtAndCycle: Record<string, number> = {};
-      for (const payment of debtPaymentRows) {
-        const key = `${payment.debt_id}||${payment.cycle_due_date}`;
-        debtPaymentsByDebtAndCycle[key] =
-          Number(debtPaymentsByDebtAndCycle[key] || 0) + Number(payment.amount || 0);
-      }
-
-      const currentCyclePaid = Number(debtPaymentsByDebtAndCycle[cycleKey] || 0);
-      const totalCyclePaid = currentCyclePaid + amount;
-      const shouldAdvanceDueDate =
-        newBalance === 0 || totalCyclePaid >= minimumPayment;
-      let nextDueDateAfterPayment: string | null = null;
-
-      if (shouldAdvanceDueDate) {
-        const nextCycleDueDate = addMonthsClamped(currentCycleDueDate, 1);
-        nextDueDateAfterPayment = toDateInputValue(nextCycleDueDate);
-      }
-
-      const { error: insertError } = await supabase
-        .from("debt_payments")
-        .insert({
-          user_id: userId,
-          debt_id: debt.id,
-          amount,
-          payment_date: new Date().toISOString().slice(0, 10),
-          cycle_due_date: cycleDueDate,
-          funding_source_id: debt.funding_source_id || null,
-        });
-
-      if (insertError) {
-        throw new Error(`Failed to insert payment: ${insertError.message}`);
-      }
-
-      const updatePayload: Record<string, any> = {
-        balance: newBalance,
-      };
-      if (nextDueDateAfterPayment) {
-        updatePayload.assigned_income_date = null;
-        updatePayload.next_due_date_after_payment = nextDueDateAfterPayment;
-      }
-
-      const { error: updateError } = await supabase
-        .from("debts")
-        .update(updatePayload)
-        .eq("id", debt.id);
-
-      if (updateError) {
-        throw new Error(`Failed to update debt: ${updateError.message}`);
-      }
-
-      setDebtPayments((prev) => ({
-        ...prev,
-        [debt.id]: "",
-      }));
-
-      setDebtPaymentStatus((prev) => ({
-        ...prev,
-        [debt.id]: {
-          type: "success",
-          message: `Payment of $${amount.toFixed(2)} applied successfully.`,
-        },
-      }));
-
-      setTimeout(() => {
-        setDebtPaymentStatus((prev) => ({
-          ...prev,
-          [debt.id]: { type: null, message: "" },
-        }));
-      }, 3000);
-
-      await load();
-    } catch (error) {
-      console.error("Error applying debt payment:", error);
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "Failed to apply payment. Please try again.";
-
-      setDebtPaymentStatus((prev) => ({
-        ...prev,
-        [debt.id]: {
-          type: "error",
-          message: errorMessage,
-        },
-      }));
-    } finally {
-      setApplyingDebtPaymentId(null);
-    }
   }
 
   async function deleteDebt(id: string) {
