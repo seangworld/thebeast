@@ -561,22 +561,36 @@ test("buildVelocityAdvisorResult formats all advisor sections", () => {
     advisorResult.sections.recommendation.facts.slice(0, 4),
     [
       { label: "Recommended chunk", value: "$500.00" },
-      { label: "Limiting constraint", value: "Safe source capacity" },
+      { label: "Main guardrail", value: "Safe source capacity" },
       { label: "Projected net savings", value: "$52,872.13" },
       { label: "Candidate", value: "Pay highest APR eligible debt" },
     ]
   );
   assert.equal(
     advisorResult.sections.why.items.some((item) =>
-      item.includes("limiting_constraint:safe_source_capacity")
+      item.includes("Main guardrail: Your available credit source capacity is safe.")
     ),
     true
   );
   assert.equal(
     advisorResult.sections.risks.items.some((item) =>
-      item.includes("Safe source capacity: Pass")
+      item.includes("Available credit source: Your available credit source capacity is safe.")
     ),
     true
+  );
+  assert.equal(
+    advisorResult.sections.risks.items.some((item) =>
+      item.includes("Recovery window: Your recovery plan is within the selected timeframe.")
+    ),
+    true
+  );
+  assert.equal(
+    [
+      ...advisorResult.sections.recommendation.items,
+      ...advisorResult.sections.why.items,
+      ...advisorResult.sections.risks.items,
+    ].some((item) => item.includes("safe_source_capacity")),
+    false
   );
   assert.deepEqual(
     advisorResult.sections.risks.facts,
@@ -634,10 +648,16 @@ test("buildVelocityAdvisorResult includes hold reason when chunk is not recommen
     advisorResult.sections.recommendation.facts.slice(0, 4),
     [
       { label: "Recommended chunk", value: "$0.00" },
-      { label: "Limiting constraint", value: "Liquidity floor" },
-      { label: "Hold reason", value: "Liquidity Floor" },
+      { label: "Main guardrail", value: "Liquidity floor" },
+      { label: "Hold reason", value: "Cash cushion" },
       { label: "Projected net savings", value: "$0.00" },
     ]
+  );
+  assert.equal(
+    advisorResult.sections.recommendation.items.some((item) =>
+      item.includes("Recommended chunk: Hold cash for now because one or more guardrails did not pass.")
+    ),
+    true
   );
 });
 

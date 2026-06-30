@@ -1195,9 +1195,32 @@ export default function VelocityPlannerPage() {
                       ) : null}
                       {section.items.length > 0 ? (
                         <ul className="mt-3 space-y-2 text-sm text-[#9aa7b8]">
-                          {section.items.map((item, index) => (
-                            <li key={`${section.id}-${index}`}>{item}</li>
-                          ))}
+                          {section.items.map((item, index) => {
+                            const separatorIndex = item.indexOf(": ");
+                            const label =
+                              separatorIndex > 0
+                                ? item.slice(0, separatorIndex)
+                                : null;
+                            const value =
+                              separatorIndex > 0
+                                ? item.slice(separatorIndex + 2)
+                                : item;
+
+                            return (
+                              <li key={`${section.id}-${index}`}>
+                                {label ? (
+                                  <>
+                                    <span className="font-semibold text-[#e5e7eb]">
+                                      {label}:
+                                    </span>{" "}
+                                    <span>{value}</span>
+                                  </>
+                                ) : (
+                                  item
+                                )}
+                              </li>
+                            );
+                          })}
                         </ul>
                       ) : null}
                     </div>

@@ -1,4 +1,7 @@
-import type { VelocityEngineResult } from "./types";
+import type {
+  VelocityChunkConstraint,
+  VelocityEngineResult,
+} from "./types";
 
 type AdvisorSectionId =
   | "recommendation"
@@ -56,6 +59,63 @@ function formatStatus(value: string) {
     .join(" ");
 }
 
+function formatConstraintName(id: string, fallback: string) {
+  const labels: Record<string, string> = {
+    liquidity_floor: "Cash cushion",
+    safe_source_capacity: "Available credit source",
+    recovery_window: "Recovery window",
+    target_balance: "Target debt balance",
+    max_recommended_payment: "Maximum payment guardrail",
+    positive_net_savings: "Net savings",
+  };
+
+  return labels[id] || fallback;
+}
+
+function describeConstraint(constraint: VelocityChunkConstraint) {
+  if (constraint.id === "liquidity_floor") {
+    return constraint.passed
+      ? "Your cash cushion remains protected after bills and minimum payments."
+      : "Hold cash because upcoming bills and minimum payments would leave too little cash.";
+  }
+
+  if (constraint.id === "safe_source_capacity") {
+    return constraint.passed
+      ? "Your available credit source capacity is safe."
+      : "Hold cash because the credit source does not have enough safe capacity.";
+  }
+
+  if (constraint.id === "recovery_window") {
+    return constraint.passed
+      ? "Your recovery plan is within the selected timeframe."
+      : "Hold cash because repayment would take longer than your selected recovery window.";
+  }
+
+  if (constraint.id === "target_balance") {
+    return constraint.passed
+      ? "The target debt has enough remaining balance for this chunk."
+      : "No active target debt is available for a Velocity chunk.";
+  }
+
+  if (constraint.id === "max_recommended_payment") {
+    return constraint.passed
+      ? "The recommended chunk stays within your payment guardrail."
+      : "Hold cash because the chunk would exceed your payment guardrail.";
+  }
+
+  if (constraint.id === "positive_net_savings") {
+    return constraint.passed
+      ? "The projected savings are positive after source costs."
+      : "Hold cash because the projected savings are not positive after source costs.";
+  }
+
+  return constraint.detail;
+}
+
+function formatAdvisorLine(label: string, value: string) {
+  return `${label}: ${value}`;
+}
+
 function section(
   id: AdvisorSectionId,
   title: string,
@@ -73,11 +133,27 @@ function section(
 }
 
 function compactFacts(facts: Array<AdvisorFact | null>) {
-  return facts.filter((fact): fact is AdvisorFact => Boolean(fact));
+  const seen = new Set<string>();
+
+  return facts.filter((fact): fact is AdvisorFact => {
+    if (!fact) return false;
+
+    const key = `${fact.label}:${fact.value}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 function compactItems(items: Array<string | null | undefined>) {
-  return items.filter((item): item is string => Boolean(item));
+  const seen = new Set<string>();
+
+  return items.filter((item): item is string => {
+    if (!item) return false;
+    if (seen.has(item)) return false;
+    seen.add(item);
+    return true;
+  });
 }
 
 export function buildVelocityAdvisorResult(
@@ -101,14 +177,17 @@ export function buildVelocityAdvisorResult(
       : null,
     chunkRecommendation
       ? {
-          label: "Limiting constraint",
+          label: "Main guardrail",
           value: chunkRecommendation.limiting_constraint_label,
         }
       : null,
     chunkRecommendation?.hold_reason
       ? {
           label: "Hold reason",
-          value: formatStatus(chunkRecommendation.hold_reason),
+          value: formatConstraintName(
+            chunkRecommendation.hold_reason,
+            formatStatus(chunkRecommendation.hold_reason)
+          ),
         }
       : null,
     chunkRecommendation
@@ -174,8 +253,39 @@ export function buildVelocityAdvisorResult(
   });
   const chunkConstraintItems = (chunkRecommendation?.constraints || []).map(
     (constraint) =>
-      `${constraint.label}: ${constraint.passed ? "Pass" : "Hold"} | ${constraint.detail}`
+      formatAdvisorLine(
+        formatConstraintName(constraint.id, constraint.label),
+        describeConstraint(constraint)
+      )
   );
+  const chunkReasonItems = chunkRecommendation
+    ? compactItems([
+        chunkRecommendation.recommended_chunk > 0
+          ? formatAdvisorLine(
+              "Recommended chunk",
+              `${formatMoney(chunkRecommendation.recommended_chunk)} is the amount that fits your current guardrails.`
+            )
+          : formatAdvisorLine(
+              "Recommended chunk",
+              "Hold cash for now because one or more guardrails did not pass."
+            ),
+        formatAdvisorLine(
+          "Main guardrail",
+          describeConstraint(
+            chunkRecommendation.constraints.find(
+              (constraint) =>
+                constraint.id === chunkRecommendation.limiting_constraint_id
+            ) || {
+              id: chunkRecommendation.limiting_constraint_id,
+              label: chunkRecommendation.limiting_constraint_label,
+              value: 0,
+              passed: chunkRecommendation.recommended_chunk > 0,
+              detail: chunkRecommendation.limiting_constraint_label,
+            }
+          )
+        ),
+      ])
+    : [];
 
   // Future AI language hook: replace these deterministic summaries with
   // model-generated copy after the product has a safe AI request boundary.
@@ -187,7 +297,7 @@ export function buildVelocityAdvisorResult(
         ? recommendation.reason
         : "No velocity recommendation was produced by the engine.",
       compactItems([
-        chunkRecommendation?.rationale?.[0],
+        ...chunkReasonItems,
         recommendation?.rationale?.[0],
         targetDebt?.name ? `Target debt: ${targetDebt.name}` : null,
       ]),
@@ -200,8 +310,7 @@ export function buildVelocityAdvisorResult(
         engineResult.risk_summary.reasons[0] ||
         "The engine did not provide a rationale.",
       compactItems([
-        ...(chunkRecommendation?.rationale || []),
-        ...(engineResult.rationale || []),
+        ...chunkReasonItems,
         ...(recommendation?.rationale || []),
       ]),
       compactFacts([
