@@ -4,6 +4,7 @@ import type {
   VelocityCandidateKind,
   VelocityConfidence,
   VelocityConstraintResult,
+  VelocityAccountSnapshot,
   VelocityDebtSnapshot,
   VelocityEngineResult,
   VelocityInputSnapshot,
@@ -159,7 +160,94 @@ function simulateMinimumPaymentInterest(debts: VelocityDebtSnapshot[]) {
   };
 }
 
+function getVelocitySourceAccount(input: VelocityInputSnapshot) {
+  return input.accounts.find((account) => {
+    const accountType = account.type || "other";
+    return !["checking", "savings", "cash"].includes(accountType);
+  });
+}
+
+function getSourceInterestForMonths(
+  principal: number,
+  apr: number,
+  months: number
+) {
+  let totalInterest = 0;
+
+  for (let month = 0; month < months; month += 1) {
+    totalInterest = money(totalInterest + money((principal * apr) / 100 / 12));
+  }
+
+  return money(totalInterest);
+}
+
+function simulateVelocitySourceCost(
+  sourceAccount: VelocityAccountSnapshot | undefined,
+  velocityPaymentAmount: number,
+  monthlyRecoveryCapacity: number
+)
+ {
+  const maxMonths = 600;
+  const sourceApr = Math.max(finiteNumber(sourceAccount?.interest_rate), 0);
+  const sourceStartingBalance = money(
+    Math.max(finiteNumber(sourceAccount?.current_balance), 0)
+  );
+  const sourceBalanceAfterVelocityPayment = money(
+    sourceStartingBalance + Math.max(velocityPaymentAmount, 0)
+  );
+  const monthlySourceRepayment = money(Math.max(monthlyRecoveryCapacity, 0));
+
+  if (velocityPaymentAmount <= 0 || sourceApr <= 0 || monthlySourceRepayment <= 0) {
+    return {
+      source_apr: sourceApr,
+      source_starting_balance: sourceStartingBalance,
+      source_balance_after_velocity_payment: sourceBalanceAfterVelocityPayment,
+      monthly_source_repayment: monthlySourceRepayment,
+      source_interest_cost: 0,
+      source_repayment_months: 0,
+      source_repayment_completed: velocityPaymentAmount <= 0,
+    };
+  }
+
+  let sourceBalance = sourceBalanceAfterVelocityPayment;
+  let grossSourceInterest = 0;
+  let months = 0;
+
+  while (months < maxMonths && sourceBalance > sourceStartingBalance) {
+    months += 1;
+
+    const monthlyInterest = money((sourceBalance * sourceApr) / 100 / 12);
+    grossSourceInterest = money(grossSourceInterest + monthlyInterest);
+    sourceBalance = money(sourceBalance + monthlyInterest);
+
+    const repaymentAmount = Math.min(
+      monthlySourceRepayment,
+      Math.max(sourceBalance - sourceStartingBalance, 0)
+    );
+    sourceBalance = money(sourceBalance - repaymentAmount);
+  }
+
+  const baselineSourceInterest = getSourceInterestForMonths(
+    sourceStartingBalance,
+    sourceApr,
+    months
+  );
+
+  return {
+    source_apr: sourceApr,
+    source_starting_balance: sourceStartingBalance,
+    source_balance_after_velocity_payment: sourceBalanceAfterVelocityPayment,
+    monthly_source_repayment: monthlySourceRepayment,
+    source_interest_cost: money(
+      Math.max(grossSourceInterest - baselineSourceInterest, 0)
+    ),
+    source_repayment_months: months,
+    source_repayment_completed: sourceBalance <= sourceStartingBalance,
+  };
+}
+
 function buildInterestSavings(
+  input: VelocityInputSnapshot,
   debts: VelocityDebtSnapshot[],
   recommendation: VelocityRecommendation | undefined
 ): VelocityInterestSavings {
@@ -179,23 +267,43 @@ function buildInterestSavings(
     };
   });
   const velocity = simulateMinimumPaymentInterest(velocityDebts);
+  const grossInterestSaved = money(
+    Math.max(baseline.total_interest - velocity.total_interest, 0)
+  );
+  const sourceCost = simulateVelocitySourceCost(
+    getVelocitySourceAccount(input),
+    velocityPaymentAmount,
+    finiteNumber(input.settings.monthly_recovery_capacity)
+  );
+  const netInterestSaved = money(
+    grossInterestSaved - sourceCost.source_interest_cost
+  );
 
   return {
     baseline_total_interest: baseline.total_interest,
     velocity_total_interest: velocity.total_interest,
-    projected_interest_saved: money(
-      Math.max(baseline.total_interest - velocity.total_interest, 0)
-    ),
+    gross_interest_saved: grossInterestSaved,
+    velocity_source_interest_cost: sourceCost.source_interest_cost,
+    net_interest_saved: netInterestSaved,
+    projected_interest_saved: netInterestSaved,
     months_compared: Math.max(baseline.months, velocity.months),
     baseline_payoff_completed: baseline.payoff_completed,
     velocity_payoff_completed: velocity.payoff_completed,
     target_debt_id: targetDebt?.id,
     target_debt_name: targetDebt?.name,
     velocity_payment_amount: velocityPaymentAmount,
+    source_apr: sourceCost.source_apr,
+    source_starting_balance: sourceCost.source_starting_balance,
+    source_balance_after_velocity_payment:
+      sourceCost.source_balance_after_velocity_payment,
+    monthly_source_repayment: sourceCost.monthly_source_repayment,
+    source_repayment_months: sourceCost.source_repayment_months,
+    source_repayment_completed: sourceCost.source_repayment_completed,
     assumptions: [
       "Baseline scenario pays scheduled minimum payments only.",
       "Velocity scenario applies the selected Velocity payment before the first simulated interest cycle.",
       "Both scenarios use the same minimum payments, APRs, and active debt balances.",
+      "Velocity source cost models the recommended payment added to the source balance and repaid with monthly recovery capacity.",
       "Simulation stops after 600 months if payoff is not completed.",
     ],
   };
@@ -692,7 +800,7 @@ export function runVelocityEngine(input: VelocityInputSnapshot): VelocityEngineR
     ? buildRecoveryTimeline(input, recommendation?.payment_amount || 0)
     : undefined;
   const interestSavings = isValid
-    ? buildInterestSavings(eligibleDebts, recommendation)
+    ? buildInterestSavings(input, eligibleDebts, recommendation)
     : undefined;
   const failedConstraints = candidateEvaluations.flatMap((candidate) =>
     candidate.constraints.filter((constraint) => !constraint.passed)

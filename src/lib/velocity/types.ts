@@ -49,6 +49,8 @@ export type VelocitySettingsSnapshot = {
   cash_buffer: number;
   max_recommended_payment?: number | null;
   minimum_cash_after_payment?: number | null;
+  monthly_recovery_capacity?: number | null;
+  recovery_months?: number | null;
   strategy?: "conservative" | "balanced" | "aggressive";
 };
 
@@ -144,6 +146,36 @@ export type VelocityRiskSummary = {
   assumptions?: string[];
 };
 
+export type VelocityRecoveryTimeline = {
+  months_required: number | null;
+  recovery_months: number;
+  monthly_recovery_capacity: number;
+  status: "Not Available" | "Within Guardrails" | "Exceeds Guardrails";
+  completion_date: string;
+};
+
+export type VelocityInterestSavings = {
+  baseline_total_interest: number;
+  velocity_total_interest: number;
+  gross_interest_saved: number;
+  velocity_source_interest_cost: number;
+  net_interest_saved: number;
+  projected_interest_saved: number;
+  months_compared: number;
+  baseline_payoff_completed: boolean;
+  velocity_payoff_completed: boolean;
+  target_debt_id?: string;
+  target_debt_name?: string;
+  velocity_payment_amount: number;
+  source_apr: number;
+  source_starting_balance: number;
+  source_balance_after_velocity_payment: number;
+  monthly_source_repayment: number;
+  source_repayment_months: number;
+  source_repayment_completed: boolean;
+  assumptions: string[];
+};
+
 export type VelocityEngineResult = {
   is_valid: boolean;
   available_cash_above_buffer: number;
@@ -151,6 +183,8 @@ export type VelocityEngineResult = {
   recommendation?: VelocityRecommendation;
   alternatives: VelocityAlternative[];
   cashflow_projection?: VelocityCashflowProjection;
+  recovery_timeline?: VelocityRecoveryTimeline;
+  interest_savings?: VelocityInterestSavings;
   constraints?: VelocityConstraintResult[];
   candidate_evaluations?: VelocityCandidateEvaluation[];
   rationale?: string[];

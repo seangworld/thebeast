@@ -9,6 +9,7 @@ import type { VelocityInputSnapshot } from "../src/lib/velocity";
 
 function baseInput(overrides: Partial<VelocityInputSnapshot> = {}): VelocityInputSnapshot {
   return {
+    as_of_date: "2026-06-30",
     accounts: [
       {
         id: "cash",
@@ -55,6 +56,8 @@ function baseInput(overrides: Partial<VelocityInputSnapshot> = {}): VelocityInpu
       cash_buffer: 500,
       max_recommended_payment: 500,
       minimum_cash_after_payment: 500,
+      monthly_recovery_capacity: 250,
+      recovery_months: 6,
       strategy: "aggressive",
     },
     ...overrides,
@@ -141,6 +144,8 @@ test("buildVelocityInputSnapshot maps debts, income, bills, and settings", () =>
   assert.equal(snapshot.settings.cash_buffer, 500);
   assert.equal(snapshot.settings.minimum_cash_after_payment, 200);
   assert.equal(snapshot.settings.max_recommended_payment, 450);
+  assert.equal(snapshot.settings.monthly_recovery_capacity, 1300);
+  assert.equal(snapshot.settings.recovery_months, 6);
   assert.equal(snapshot.settings.strategy, "conservative");
 });
 
@@ -155,6 +160,121 @@ test("runVelocityEngine recommends a safe highest APR payment", () => {
   assert.equal(result.cashflow_projection?.projected_income, 3000);
   assert.equal(result.cashflow_projection?.projected_bills, 1000);
   assert.equal(result.cashflow_projection?.projected_minimum_payments, 150);
+  assert.deepEqual(result.recovery_timeline, {
+    months_required: 2,
+    recovery_months: 6,
+    monthly_recovery_capacity: 250,
+    status: "Within Guardrails",
+    completion_date: "August 2026",
+  });
+  assert.equal(result.interest_savings?.target_debt_id, "card-a");
+  assert.equal(result.interest_savings?.velocity_payment_amount, 500);
+  assert.equal(
+    Number(result.interest_savings?.projected_interest_saved || 0) > 0,
+    true
+  );
+  assert.equal(
+    Number(result.interest_savings?.baseline_total_interest || 0) >
+      Number(result.interest_savings?.velocity_total_interest || 0),
+    true
+  );
+  assert.equal(result.interest_savings?.gross_interest_saved, result.interest_savings?.net_interest_saved);
+  assert.equal(result.interest_savings?.velocity_source_interest_cost, 0);
+  assert.equal(result.interest_savings?.assumptions.length, 5);
+});
+
+test("runVelocityEngine subtracts low APR Velocity source cost from gross savings", () => {
+  const result = runVelocityEngine(
+    baseInput({
+      accounts: [
+        {
+          id: "cash",
+          name: "Checking",
+          type: "checking",
+          current_balance: 2000,
+        },
+        {
+          id: "source",
+          name: "HELOC",
+          type: "heloc",
+          current_balance: 1000,
+          credit_limit: 10000,
+          available_credit: 9000,
+          interest_rate: 6,
+        },
+      ],
+    })
+  );
+
+  assert.equal(result.interest_savings?.source_apr, 6);
+  assert.equal(result.interest_savings?.source_starting_balance, 1000);
+  assert.equal(result.interest_savings?.source_balance_after_velocity_payment, 1500);
+  assert.equal(result.interest_savings?.monthly_source_repayment, 250);
+  assert.equal(result.interest_savings?.source_repayment_completed, true);
+  assert.equal(
+    Number(result.interest_savings?.velocity_source_interest_cost || 0) > 0,
+    true
+  );
+  assert.equal(
+    Number(result.interest_savings?.gross_interest_saved || 0) >
+      Number(result.interest_savings?.net_interest_saved || 0),
+    true
+  );
+  assert.equal(
+    Number(result.interest_savings?.net_interest_saved || 0) > 0,
+    true
+  );
+  assert.equal(
+    result.interest_savings?.projected_interest_saved,
+    result.interest_savings?.net_interest_saved
+  );
+});
+
+test("runVelocityEngine can show negative net savings when source APR cost is too high", () => {
+  const result = runVelocityEngine(
+    baseInput({
+      accounts: [
+        {
+          id: "cash",
+          name: "Checking",
+          type: "checking",
+          current_balance: 2000,
+        },
+        {
+          id: "source",
+          name: "High APR Source",
+          type: "credit_card",
+          current_balance: 1000,
+          credit_limit: 10000,
+          available_credit: 9000,
+          interest_rate: 120,
+        },
+      ],
+      settings: {
+        cash_buffer: 500,
+        max_recommended_payment: 500,
+        minimum_cash_after_payment: 500,
+        monthly_recovery_capacity: 10,
+        recovery_months: 6,
+        strategy: "aggressive",
+      },
+    })
+  );
+
+  assert.equal(result.interest_savings?.source_apr, 120);
+  assert.equal(
+    Number(result.interest_savings?.velocity_source_interest_cost || 0) >
+      Number(result.interest_savings?.gross_interest_saved || 0),
+    true
+  );
+  assert.equal(
+    Number(result.interest_savings?.net_interest_saved || 0) < 0,
+    true
+  );
+  assert.equal(
+    result.interest_savings?.projected_interest_saved,
+    result.interest_savings?.net_interest_saved
+  );
 });
 
 test("runVelocityEngine selects hold cash when no safe payment capacity remains", () => {
@@ -175,6 +295,8 @@ test("runVelocityEngine selects hold cash when no safe payment capacity remains"
         cash_buffer: 600,
         max_recommended_payment: 500,
         minimum_cash_after_payment: 600,
+        monthly_recovery_capacity: 0,
+        recovery_months: 6,
         strategy: "conservative",
       },
     })
@@ -183,7 +305,29 @@ test("runVelocityEngine selects hold cash when no safe payment capacity remains"
   assert.equal(result.available_cash_above_buffer, 0);
   assert.equal(result.recommendation?.kind, "hold_cash");
   assert.equal(result.recommendation?.payment_amount, 0);
+  assert.equal(result.recovery_timeline?.status, "Not Available");
+  assert.equal(result.interest_savings?.projected_interest_saved, 0);
+  assert.equal(result.interest_savings?.velocity_payment_amount, 0);
   assert.equal(result.risk_summary.warnings.includes("No cash above buffer is available for a velocity payment."), true);
+});
+
+test("runVelocityEngine marks recovery timeline as exceeding guardrails when recovery is too slow", () => {
+  const result = runVelocityEngine(
+    baseInput({
+      settings: {
+        cash_buffer: 500,
+        max_recommended_payment: 500,
+        minimum_cash_after_payment: 500,
+        monthly_recovery_capacity: 100,
+        recovery_months: 3,
+        strategy: "aggressive",
+      },
+    })
+  );
+
+  assert.equal(result.recovery_timeline?.months_required, 5);
+  assert.equal(result.recovery_timeline?.status, "Exceeds Guardrails");
+  assert.equal(result.recovery_timeline?.completion_date, "November 2026");
 });
 
 test("runVelocityEngine excludes archived debts from targets and candidates", () => {
@@ -262,5 +406,12 @@ test("buildVelocityAdvisorResult formats all advisor sections", () => {
   assert.equal(advisorResult.sections.alternatives.title, "Alternatives");
   assert.ok(advisorResult.sections.recommendation.facts.length > 0);
   assert.ok(advisorResult.sections.expected_result.facts.length > 0);
+  assert.deepEqual(
+    advisorResult.sections.risks.facts,
+    [
+      { label: "Risk level", value: "High" },
+      { label: "Confidence", value: "High" },
+    ]
+  );
   assert.equal(advisorResult.validation_errors.length, 0);
 });

@@ -7,6 +7,7 @@ import {
   buildVelocityInputSnapshot,
   runVelocityEngine,
 } from "@/lib/velocity";
+import type { VelocityEngineResult } from "@/lib/velocity";
 
 type SnapshotValue = {
   label: string;
@@ -402,7 +403,7 @@ export default function VelocityPlannerPage() {
     velocitySettings,
     velocitySnapshotAsOfDate,
   ]);
-  const velocityEngineResult = useMemo(() => {
+  const velocityEngineResult = useMemo<VelocityEngineResult>(() => {
     return runVelocityEngine(velocityInputSnapshot);
   }, [velocityInputSnapshot]);
   const velocityAdvisorResult = useMemo(() => {
@@ -1115,9 +1116,19 @@ export default function VelocityPlannerPage() {
             <div className="beast-card">
               <div className="text-sm text-[#c7cfdb]">Interest Savings</div>
               <div className="mt-2 break-words text-2xl font-bold">
-                {formatMoney(interestSavings?.projected_interest_saved || 0)}
+                {formatMoney(interestSavings?.net_interest_saved || 0)}
               </div>
               <div className="mt-4 grid gap-2 text-sm text-[#c7cfdb]">
+                <div>
+                  Gross Debt Interest Saved:{" "}
+                  {formatMoney(interestSavings?.gross_interest_saved || 0)}
+                </div>
+                <div>
+                  Velocity Source Cost:{" "}
+                  {formatMoney(
+                    interestSavings?.velocity_source_interest_cost || 0
+                  )}
+                </div>
                 <div>
                   Minimum-Only Interest:{" "}
                   {formatMoney(interestSavings?.baseline_total_interest || 0)}
@@ -1131,7 +1142,8 @@ export default function VelocityPlannerPage() {
                 </div>
               </div>
               <p className="mt-3 text-sm text-[#9aa7b8]">
-                Deterministic comparison against paying scheduled minimums only.
+                Net savings compare minimum-only debt payoff against the
+                Velocity strategy after estimated source interest cost.
               </p>
             </div>
             <div className="beast-card sm:col-span-2 xl:col-span-3">
