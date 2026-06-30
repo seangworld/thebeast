@@ -2,7 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { buildVelocityInputSnapshot, runVelocityEngine } from "@/lib/velocity";
+import {
+  buildVelocityAdvisorResult,
+  buildVelocityInputSnapshot,
+  runVelocityEngine,
+} from "@/lib/velocity";
 
 type SnapshotValue = {
   label: string;
@@ -148,6 +152,14 @@ const velocityRoadmap = [
     ],
   },
 ];
+
+const advisorSectionOrder = [
+  "recommendation",
+  "why",
+  "expected_result",
+  "risks",
+  "alternatives",
+] as const;
 
 function parseAmount(value: string) {
   const parsed = Number(value);
@@ -413,6 +425,9 @@ export default function VelocityPlannerPage() {
   const velocityEngineResult = useMemo(() => {
     return runVelocityEngine(velocityInputSnapshot);
   }, [velocityInputSnapshot]);
+  const velocityAdvisorResult = useMemo(() => {
+    return buildVelocityAdvisorResult(velocityEngineResult);
+  }, [velocityEngineResult]);
   const recommendedVelocityTarget = useMemo(() => {
     const targetDebt = velocityEngineResult.target_debt;
 
@@ -1137,6 +1152,52 @@ export default function VelocityPlannerPage() {
                 <div className="mt-2 text-lg font-bold">Not Yet Available</div>
               </div>
             ))}
+            <div className="beast-card sm:col-span-2 xl:col-span-3">
+              <div className="flex flex-col gap-1 border-b border-[#2a3242] pb-4">
+                <div className="text-sm text-[#38bdf8]">Read-only</div>
+                <h3 className="text-xl font-bold">Beast Advisor</h3>
+              </div>
+              <div className="mt-5 grid gap-5 lg:grid-cols-2">
+                {advisorSectionOrder.map((sectionId) => {
+                  const section = velocityAdvisorResult.sections[sectionId];
+
+                  return (
+                    <div
+                      key={section.id}
+                      className="rounded-lg border border-[#2a3242] p-4"
+                    >
+                      <div className="text-sm font-semibold text-[#e5e7eb]">
+                        {section.title}
+                      </div>
+                      <p className="mt-2 text-sm text-[#c7cfdb]">
+                        {section.summary}
+                      </p>
+                      {section.facts.length > 0 ? (
+                        <div className="mt-3 grid gap-2 text-xs text-[#c7cfdb] sm:grid-cols-2">
+                          {section.facts.map((fact) => (
+                            <div key={`${section.id}-${fact.label}`}>
+                              <div className="text-[#7f8da3]">
+                                {fact.label}
+                              </div>
+                              <div className="mt-1 font-semibold text-[#e5e7eb]">
+                                {fact.value}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : null}
+                      {section.items.length > 0 ? (
+                        <ul className="mt-3 space-y-2 text-xs text-[#7f8da3]">
+                          {section.items.map((item, index) => (
+                            <li key={`${section.id}-${index}`}>{item}</li>
+                          ))}
+                        </ul>
+                      ) : null}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </section>
 
