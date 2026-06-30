@@ -123,9 +123,9 @@ export default function DashboardPage() {
         </section>
 
         <section className="rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-4 text-sm text-yellow-100 md:hidden">
-          <div className="font-semibold">Desktop experience recommended during beta.</div>
+          <div className="font-semibold">Desktop experience recommended.</div>
           <p className="mt-1 text-yellow-100/80">
-            The Beast is desktop-first during beta. Mobile optimization is planned for a future sprint.
+            The Beast is desktop-first today. Mobile optimization remains on the roadmap.
           </p>
         </section>
 
@@ -256,13 +256,13 @@ export default function DashboardPage() {
 
   <div className="beast-card">
     <div className="text-sm font-semibold text-[#7f8da3]">
-      Coming Soon
+      Roadmap
     </div>
 
     <ul className="mt-3 space-y-2 text-sm text-[#9aa7b8]">
-      <li>• Velocity banking tools</li>
-      <li>• Payoff visualizations</li>
-      <li>• Smarter recommendations</li>
+      <li>• Multi-source Velocity comparisons</li>
+      <li>• Advanced payoff visualizations</li>
+      <li>• Mobile optimization</li>
       <li>• Financial reporting</li>
     </ul>
   </div>

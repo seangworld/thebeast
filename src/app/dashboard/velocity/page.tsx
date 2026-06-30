@@ -8,6 +8,22 @@ import {
   runVelocityEngine,
 } from "@/lib/velocity";
 import type { VelocityEngineResult } from "@/lib/velocity";
+import {
+  DEFAULT_VELOCITY_SETTINGS,
+  VELOCITY_SETTINGS_STORAGE_KEY,
+  mapVelocitySettingsRow,
+  mergeStoredVelocitySettings,
+  velocitySettingsToUpsertPayload,
+  type VelocitySettings,
+  type VelocitySourceType,
+} from "@/lib/velocity/settings";
+import {
+  formatCurrency as formatMoney,
+  formatMonthCount as formatRecoveryMonths,
+  formatPercent,
+  parseNumber as parseAmount,
+} from "@/lib/formatters";
+import { getDebtStrategyLabel, isDebtStrategy } from "@/lib/debtStrategies";
 
 type SnapshotValue = {
   label: string;
@@ -23,78 +39,10 @@ type RecommendationValue = {
   alert?: boolean;
 };
 
-type VelocitySourceType = "heloc" | "ploc" | "credit_card" | "other";
-
-type VelocitySettings = {
-  velocity_source_type: VelocitySourceType;
-  credit_limit: string;
-  current_balance: string;
-  source_apr: string;
-  max_utilization_percent: string;
-  recovery_months: string;
-  emergency_reserve_amount: string;
-  allow_super_velocity: boolean;
-};
-
-const VELOCITY_SETTINGS_STORAGE_KEY = "beast_velocity_settings_v1";
-
-const DEFAULT_VELOCITY_SETTINGS: VelocitySettings = {
-  velocity_source_type: "heloc",
-  credit_limit: "",
-  current_balance: "",
-  source_apr: "",
-  max_utilization_percent: "66",
-  recovery_months: "6",
-  emergency_reserve_amount: "",
-  allow_super_velocity: false,
-};
-
-function toInputString(value: unknown) {
-  if (value == null) return "";
-  return String(value);
-}
-
 function loadStoredVelocitySettings() {
-  try {
-    const storedSettings = window.localStorage.getItem(
-      VELOCITY_SETTINGS_STORAGE_KEY
-    );
-
-    if (!storedSettings) return null;
-
-    return {
-      ...DEFAULT_VELOCITY_SETTINGS,
-      ...JSON.parse(storedSettings),
-    } as VelocitySettings;
-  } catch {
-    return null;
-  }
-}
-
-function mapVelocitySettingsRow(row: any): VelocitySettings {
-  return {
-    velocity_source_type:
-      row?.velocity_source_type || DEFAULT_VELOCITY_SETTINGS.velocity_source_type,
-    credit_limit: toInputString(row?.credit_limit),
-    current_balance: toInputString(row?.current_balance),
-    source_apr: toInputString(row?.source_apr),
-    max_utilization_percent: toInputString(
-      row?.max_utilization_percent ??
-        DEFAULT_VELOCITY_SETTINGS.max_utilization_percent
-    ),
-    recovery_months: toInputString(
-      row?.recovery_months ?? DEFAULT_VELOCITY_SETTINGS.recovery_months
-    ),
-    emergency_reserve_amount: toInputString(row?.emergency_reserve_amount),
-    allow_super_velocity: Boolean(row?.allow_super_velocity),
-  };
-}
-
-function optionalNumber(value: string) {
-  if (value === "") return null;
-
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : null;
+  return mergeStoredVelocitySettings(
+    window.localStorage.getItem(VELOCITY_SETTINGS_STORAGE_KEY)
+  );
 }
 
 function logVelocitySettingsError(context: string, error: unknown) {
@@ -110,18 +58,11 @@ const sourceTypes: { value: VelocitySourceType; label: string }[] = [
   { value: "other", label: "Other" },
 ];
 
-const strategyLabels: Record<string, string> = {
-  avalanche: "Avalanche",
-  snowball: "Snowball",
-  minimum: "Minimum",
-  velocity: "Velocity",
-};
-
 const velocityRoadmap = [
   {
     phase: "Phase 1",
     items: [
-      "Velocity Lite",
+      "Velocity Planner",
       "Chunk Recommendations",
       "Target Debt Recommendations",
       "Recovery Timeline",
@@ -163,40 +104,16 @@ const advisorSectionOrder = [
   "alternatives",
 ] as const;
 
-function parseAmount(value: string) {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : 0;
-}
-
 function clampToZero(value: number) {
   return Math.max(value, 0);
 }
 
-function formatMoney(value: number) {
-  return value.toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-}
-
-function formatPercent(value: number) {
-  return `${value.toFixed(2)}%`;
-}
-
 function formatStrategyName(value: string) {
-  return strategyLabels[value] || value;
+  return isDebtStrategy(value) ? getDebtStrategyLabel(value) : value;
 }
 
 function formatVelocityRiskStatus(value: string) {
   return value.charAt(0).toUpperCase() + value.slice(1);
-}
-
-function formatRecoveryMonths(value: number | null) {
-  if (value == null) return "Not Available";
-  const rounded = Math.ceil(value);
-  return `${rounded} ${rounded === 1 ? "Month" : "Months"}`;
 }
 
 export default function VelocityPlannerPage() {
@@ -561,18 +478,7 @@ export default function VelocityPlannerPage() {
     const { error } = await supabase.from("velocity_settings").upsert(
       {
         user_id: userId,
-        velocity_source_type: velocitySettings.velocity_source_type,
-        credit_limit: optionalNumber(velocitySettings.credit_limit),
-        current_balance: optionalNumber(velocitySettings.current_balance),
-        source_apr: optionalNumber(velocitySettings.source_apr),
-        max_utilization_percent:
-          optionalNumber(velocitySettings.max_utilization_percent) ?? 66,
-        recovery_months:
-          optionalNumber(velocitySettings.recovery_months) ?? 6,
-        emergency_reserve_amount: optionalNumber(
-          velocitySettings.emergency_reserve_amount
-        ),
-        allow_super_velocity: velocitySettings.allow_super_velocity,
+        ...velocitySettingsToUpsertPayload(velocitySettings),
       },
       { onConflict: "user_id" }
     );
@@ -602,19 +508,19 @@ export default function VelocityPlannerPage() {
     <main className="beast-page">
       <div className="beast-container space-y-8">
         <section className="beast-page-header">
-          <p className="beast-kicker">The Beast v2.0 Foundation</p>
+          <p className="beast-kicker">The Beast v2.0</p>
           <h1 className="beast-title">Velocity Planner</h1>
           <p className="beast-subtitle">
-            A planning workspace for Velocity Lite recommendations, recovery
+            A planning workspace for Velocity recommendations, recovery
             timing, and deterministic interest savings.
           </p>
         </section>
 
         <section className="grid gap-4 lg:grid-cols-2">
           <div className="beast-card">
-            <h2 className="text-xl font-bold">Velocity Lite</h2>
+            <h2 className="text-xl font-bold">Velocity v2</h2>
             <p className="mt-3 text-sm text-[#c7cfdb]">
-              Velocity Lite uses available monthly cash flow, debt information,
+              Velocity uses available monthly cash flow, debt information,
               and a revolving credit source to accelerate debt payoff while
               maintaining safety guardrails.
             </p>
@@ -628,13 +534,13 @@ export default function VelocityPlannerPage() {
 
           <div className="beast-card">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-              <h2 className="text-xl font-bold">Future Full Velocity Banking</h2>
+              <h2 className="text-xl font-bold">Advanced Velocity Roadmap</h2>
               <span className="w-fit rounded border border-yellow-300/50 bg-yellow-950/30 px-3 py-1 text-xs font-semibold text-yellow-100">
-                Coming In Future Version
+                Future Work
               </span>
             </div>
             <p className="mt-3 text-sm text-[#c7cfdb]">
-              Full Velocity Banking will explore HELOC strategies, PLOC
+              Future Velocity work will explore HELOC strategies, PLOC
               strategies, credit card velocity, income timing, bill timing
               optimization, daily interest modeling, and average daily balance
               calculations.
@@ -856,10 +762,10 @@ export default function VelocityPlannerPage() {
 
             <div className="mt-5 rounded-lg border border-[#2a3242] bg-[#111827]/60 p-4 text-sm text-[#c7cfdb]">
               <div className="font-semibold text-[#e5edf7]">
-                Current Version:
+                Current v2 Scope:
               </div>
               <p className="mt-1">
-                Velocity Lite uses a single Primary Velocity Source.
+                Velocity v2 uses a single Primary Velocity Source.
               </p>
               <p className="mt-3 text-[#c7cfdb]">
                 Future versions will support multiple Velocity Sources (HELOCs,
@@ -1008,7 +914,7 @@ export default function VelocityPlannerPage() {
 
         <section className="beast-panel overflow-hidden">
           <div className="border-b border-[#2a3242] p-5">
-            <h2 className="text-xl font-bold">Velocity Lite Results</h2>
+            <h2 className="text-xl font-bold">Velocity Results</h2>
             <p className="mt-1 text-sm text-yellow-200">
               Deterministic recommendations using saved guardrails, cash flow,
               debt details, and the current Velocity engine.

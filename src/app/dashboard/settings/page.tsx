@@ -3,6 +3,11 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import {
+  DEBT_STRATEGIES,
+  normalizeDebtStrategy,
+  type DebtStrategy,
+} from "@/lib/debtStrategies";
 
 export default function SettingsPage() {
   const [startingBalance, setStartingBalance] = useState(500);
@@ -10,7 +15,7 @@ export default function SettingsPage() {
   const [lookaheadDays, setLookaheadDays] = useState(30);
   const [assignmentHorizonMonths, setAssignmentHorizonMonths] = useState(6);
 
-  const [strategy, setStrategy] = useState("snowball");
+  const [strategy, setStrategy] = useState<DebtStrategy>("snowball");
   const [extraPayment, setExtraPayment] = useState("");
 
   const [message, setMessage] = useState("");
@@ -44,7 +49,7 @@ export default function SettingsPage() {
     setLookaheadDays(Number(cashSettings?.lookahead_days ?? 30));
     setAssignmentHorizonMonths(Number(cashSettings?.assignment_horizon_months ?? 6));
 
-    setStrategy(debtSettings?.strategy || "snowball");
+    setStrategy(normalizeDebtStrategy(debtSettings?.strategy));
     setExtraPayment(
       debtSettings?.extra_payment != null
         ? String(debtSettings.extra_payment)
@@ -234,13 +239,14 @@ export default function SettingsPage() {
               <label className="text-sm text-[#c7cfdb]">Strategy</label>
               <select
                 value={strategy}
-                onChange={(e) => setStrategy(e.target.value)}
+                onChange={(e) => setStrategy(normalizeDebtStrategy(e.target.value))}
                 className="beast-input mt-2"
               >
-                <option value="minimum">Minimum</option>
-                <option value="snowball">Snowball</option>
-                <option value="avalanche">Avalanche</option>
-                <option value="velocity">Velocity</option>
+                {DEBT_STRATEGIES.map((strategyOption) => (
+                  <option key={strategyOption.value} value={strategyOption.value}>
+                    {strategyOption.label}
+                  </option>
+                ))}
               </select>
               {strategy === "velocity" ? (
                 <p className="mt-2 text-xs text-[#7f8da3]">

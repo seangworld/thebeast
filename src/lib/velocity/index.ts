@@ -1,6 +1,14 @@
 export { runVelocityEngine } from "./engine";
 export { buildVelocityInputSnapshot } from "./adapter";
 export { buildVelocityAdvisorResult } from "./advisor";
+export {
+  DEFAULT_VELOCITY_SETTINGS,
+  VELOCITY_SETTINGS_STORAGE_KEY,
+  mapVelocitySettingsRow,
+  mergeStoredVelocitySettings,
+  toInputString,
+  velocitySettingsToUpsertPayload,
+} from "./settings";
 export type {
   BuildVelocityInputSnapshotInput,
   VelocityPageBillInput,
@@ -13,6 +21,10 @@ export type {
   VelocityAdvisorInput,
   VelocityAdvisorResult,
 } from "./advisor";
+export type {
+  VelocitySettings,
+  VelocitySourceType,
+} from "./settings";
 export type {
   VelocityAccountSnapshot,
   VelocityAlternative,

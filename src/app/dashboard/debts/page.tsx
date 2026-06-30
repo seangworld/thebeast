@@ -15,32 +15,23 @@ import {
 } from "@/lib/velocity";
 import {
   simulatePayoffPlan,
-  type PayoffStrategy,
 } from "@/lib/payoffPlan";
-
-type VelocitySourceType = "heloc" | "ploc" | "credit_card" | "other";
-
-type VelocitySettings = {
-  velocity_source_type: VelocitySourceType;
-  credit_limit: string;
-  current_balance: string;
-  source_apr: string;
-  max_utilization_percent: string;
-  recovery_months: string;
-  emergency_reserve_amount: string;
-  allow_super_velocity: boolean;
-};
-
-const DEFAULT_VELOCITY_SETTINGS: VelocitySettings = {
-  velocity_source_type: "heloc",
-  credit_limit: "",
-  current_balance: "",
-  source_apr: "",
-  max_utilization_percent: "66",
-  recovery_months: "6",
-  emergency_reserve_amount: "",
-  allow_super_velocity: false,
-};
+import {
+  DEBT_STRATEGIES,
+  getDebtStrategyDescription,
+  normalizeDebtStrategy,
+  type DebtStrategy,
+} from "@/lib/debtStrategies";
+import {
+  addMonthsClamped,
+  formatMonthYear,
+  roundMoney,
+} from "@/lib/formatters";
+import {
+  DEFAULT_VELOCITY_SETTINGS,
+  mapVelocitySettingsRow,
+  type VelocitySettings,
+} from "@/lib/velocity/settings";
 
 type Debt = {
   id: string;
@@ -61,31 +52,7 @@ type Debt = {
 };
 
 function money(value: number) {
-  return Math.round((value + Number.EPSILON) * 100) / 100;
-}
-
-function toInputString(value: unknown) {
-  if (value == null) return "";
-  return String(value);
-}
-
-function mapVelocitySettingsRow(row: any): VelocitySettings {
-  return {
-    velocity_source_type:
-      row?.velocity_source_type || DEFAULT_VELOCITY_SETTINGS.velocity_source_type,
-    credit_limit: toInputString(row?.credit_limit),
-    current_balance: toInputString(row?.current_balance),
-    source_apr: toInputString(row?.source_apr),
-    max_utilization_percent: toInputString(
-      row?.max_utilization_percent ??
-        DEFAULT_VELOCITY_SETTINGS.max_utilization_percent
-    ),
-    recovery_months: toInputString(
-      row?.recovery_months ?? DEFAULT_VELOCITY_SETTINGS.recovery_months
-    ),
-    emergency_reserve_amount: toInputString(row?.emergency_reserve_amount),
-    allow_super_velocity: Boolean(row?.allow_super_velocity),
-  };
+  return roundMoney(value);
 }
 
 type MinimumProjection = {
@@ -111,21 +78,6 @@ type StrategyComparisonRow = {
   isBestInterest: boolean;
   isFastest: boolean;
 };
-
-function addMonthsClampedLocal(date: Date, months: number) {
-  const originalDay = date.getDate();
-  const next = new Date(date.getFullYear(), date.getMonth() + months, 1);
-  const lastDay = new Date(next.getFullYear(), next.getMonth() + 1, 0).getDate();
-  next.setDate(Math.min(originalDay, lastDay));
-  return next;
-}
-
-function formatMonthYear(date: Date) {
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    year: "numeric",
-  });
-}
 
 function simulateMinimumProjection(debts: Debt[]): MinimumProjection {
   const MAX_MONTHS = 1200;
@@ -232,7 +184,7 @@ function simulateMinimumProjection(debts: Debt[]): MinimumProjection {
   const blocked = blockedNames.length > 0 || timedOut;
   const debtFreeDate =
     !blocked && month > 0
-      ? formatMonthYear(addMonthsClampedLocal(new Date(), month))
+      ? formatMonthYear(addMonthsClamped(new Date(), month))
       : "—";
   const notes = [
     blockedNames.join("; "),
@@ -297,7 +249,7 @@ function summarizePayoffProjection({
     debtFreeDate:
       monthsValue === null
         ? "—"
-        : formatMonthYear(addMonthsClampedLocal(new Date(), monthsValue)),
+        : formatMonthYear(addMonthsClamped(new Date(), monthsValue)),
     monthsToDebtFree: monthsValue === null ? "—" : String(monthsValue),
     monthsValue,
     totalInterest: money(Number(result.total_interest || 0)),
@@ -315,7 +267,7 @@ export default function DebtsPage() {
   const [debts, setDebts] = useState<Debt[]>([]);
   const [incomes, setIncomes] = useState<any[]>([]);
   const [bills, setBills] = useState<any[]>([]);
-  const [strategy, setStrategy] = useState<PayoffStrategy>("snowball");
+  const [strategy, setStrategy] = useState<DebtStrategy>("snowball");
   const [extraPayment, setExtraPayment] = useState("");
   const [startingBalance, setStartingBalance] = useState<number | null>(null);
   const [buffer, setBuffer] = useState<number | null>(null);
@@ -661,7 +613,7 @@ export default function DebtsPage() {
     setDebts(debtRows || []);
     setIncomes(incomeRows || []);
     setBills(billRows || []);
-    setStrategy((settings?.strategy || "snowball") as PayoffStrategy);
+    setStrategy(normalizeDebtStrategy(settings?.strategy));
     setExtraPayment(
       settings?.extra_payment != null ? String(settings.extra_payment) : ""
     );
@@ -1001,13 +953,7 @@ export default function DebtsPage() {
   </div>
 
 	  <p className="mt-2 text-sm text-[#7f8da3]">
-    {strategy === "minimum"
-      ? "Minimum payments only. No extra attack or rollover."
-      : strategy === "velocity"
-      ? "Velocity recommendations are configured in the Velocity Planner."
-      : strategy === "avalanche"
-      ? "Lowest projected interest paid."
-      : "Fastest emotional momentum and early wins."}
+    {getDebtStrategyDescription(strategy)}
   </p>
   {strategy === "velocity" ? (
     <Link
@@ -1026,13 +972,14 @@ export default function DebtsPage() {
               <label className="text-sm text-[#c7cfdb]">Strategy</label>
               <select
                 value={strategy}
-                onChange={(e) => setStrategy(e.target.value as PayoffStrategy)}
+                onChange={(e) => setStrategy(normalizeDebtStrategy(e.target.value))}
                 className="beast-input mt-2"
               >
-                <option value="minimum">Minimum</option>
-                <option value="snowball">Snowball</option>
-                <option value="avalanche">Avalanche</option>
-                <option value="velocity">Velocity</option>
+                {DEBT_STRATEGIES.map((strategyOption) => (
+                  <option key={strategyOption.value} value={strategyOption.value}>
+                    {strategyOption.label}
+                  </option>
+                ))}
               </select>
               <p className="mt-2 text-xs text-[#7f8da3]">
                 This value is shared in debt settings and is the source of truth for the payoff strategy.

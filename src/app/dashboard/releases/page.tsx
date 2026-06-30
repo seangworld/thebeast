@@ -2,6 +2,18 @@ import Link from "next/link";
 
 const releaseNotes = [
   {
+    version: "v2.0",
+    date: "June 30, 2026",
+    title: "Velocity v2 Completion",
+    items: [
+      "Completed the Velocity Planner with deterministic chunk recommendations, target debt selection, recovery timeline, and interest savings.",
+      "Added Beast Advisor explanations for recommendation, rationale, expected result, risks, and alternatives without external AI calls.",
+      "Integrated Velocity into Debt Strategy selection, payoff projections, and strategy comparison results.",
+      "Modeled Velocity source cost, recovery repayment, utilization guardrails, cash buffer, bills due soon, and projected net savings.",
+      "Expanded focused test coverage for the Velocity adapter, engine, advisor, and payoff-plan integration.",
+    ],
+  },
+  {
     version: "v1.9.1 Beta",
     date: "June 21, 2026",
     title: "Due Date Visibility & Cash Flow Stability Update",
@@ -95,7 +107,7 @@ export default function ReleasesPage() {
               <p className="beast-kicker">The Beast Release Notes</p>
               <h1 className="beast-title">What Changed</h1>
               <p className="beast-subtitle">
-                Sprint-based update history for The Beast beta. This page tracks
+                Sprint-based update history for The Beast. This page tracks
                 major operational changes, stabilization work, and feature releases.
               </p>
             </div>
@@ -109,15 +121,15 @@ export default function ReleasesPage() {
         <section className="rounded-2xl border border-[#2a3242] bg-[#111827] p-4 text-sm text-[#c7cfdb]">
           <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
             <div>
-              <div className="font-semibold text-white">Beta Development Rhythm</div>
+              <div className="font-semibold text-white">Development Rhythm</div>
               <p className="mt-1 text-[#7f8da3]">
-                Build by sprint, test after each version, deploy stable end-of-session releases.
+                Build by sprint, test after each version, and document stable releases.
               </p>
             </div>
 
             <div className="inline-flex w-fit items-center gap-2 rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1 text-green-300">
               <span className="h-2 w-2 rounded-full bg-green-300" />
-              <span className="font-semibold">Active Beta</span>
+              <span className="font-semibold">Active v2</span>
             </div>
           </div>
         </section>

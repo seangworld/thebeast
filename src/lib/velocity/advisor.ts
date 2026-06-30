@@ -2,6 +2,7 @@ import type {
   VelocityChunkConstraint,
   VelocityEngineResult,
 } from "./types";
+import { formatNullableCurrency } from "../formatters";
 
 type AdvisorSectionId =
   | "recommendation"
@@ -33,16 +34,7 @@ export type VelocityAdvisorResult = {
   validation_errors: string[];
 };
 
-function formatMoney(value: number | null | undefined) {
-  if (!Number.isFinite(value)) return null;
-
-  return Number(value).toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-}
+const formatMoney = formatNullableCurrency;
 
 function formatNumber(value: number | null | undefined) {
   if (!Number.isFinite(value)) return null;

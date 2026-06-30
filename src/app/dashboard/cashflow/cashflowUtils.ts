@@ -1,4 +1,7 @@
-export type PayoffStrategy = "minimum" | "snowball" | "avalanche" | "velocity";
+import type { DebtStrategy } from "@/lib/debtStrategies";
+import { formatDate as formatSharedDate } from "@/lib/formatters";
+
+export type PayoffStrategy = DebtStrategy;
 
 export type BillFrequency =
   | "weekly"
@@ -94,8 +97,7 @@ export function getTargetDebt(debts: any[], strategy: PayoffStrategy) {
 }
 
 export function formatDate(value: any) {
-  if (value instanceof Date) return value.toLocaleDateString();
-  return String(value || "");
+  return formatSharedDate(value);
 }
 
 export function getCycleMonth(date = new Date()) {

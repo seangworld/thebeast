@@ -5,8 +5,8 @@ import type {
   VelocityIncomeSnapshot,
   VelocityInputSnapshot,
 } from "./types";
-
-type VelocitySourceType = "heloc" | "ploc" | "credit_card" | "other";
+import { parseNumber } from "../formatters";
+import type { VelocitySourceType } from "./settings";
 
 export type VelocityPageDebtInput = {
   id?: string;
@@ -59,8 +59,7 @@ export type BuildVelocityInputSnapshotInput = {
 };
 
 function toNumber(value: number | string | null | undefined) {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : 0;
+  return parseNumber(value);
 }
 
 function toOptionalDueDay(value: number | string | null | undefined) {

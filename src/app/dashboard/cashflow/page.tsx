@@ -10,6 +10,7 @@ import BillsSection from "./components/BillsSection";
 import DebtsSection from "./components/DebtsSection";
 import { useCashFlow } from "./useCashFlow";
 import { APP_VERSION } from "@/lib/appVersion";
+import { getDebtStrategyLabel } from "@/lib/debtStrategies";
 import {
   BillFrequency,
   FundingSource,
@@ -1264,11 +1265,7 @@ export default function CashFlowPage() {
                   Based on:{" "}
                   {strategy === "velocity"
                     ? "Velocity Planner"
-                    : strategy === "avalanche"
-                      ? "Avalanche strategy"
-                      : strategy === "minimum"
-                        ? "Minimum strategy"
-                        : "Snowball strategy"}
+                    : `${getDebtStrategyLabel(strategy)} strategy`}
                 </div>
               </div>
             ) : (

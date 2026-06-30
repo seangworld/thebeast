@@ -21,6 +21,7 @@ import {
   PayoffStrategy,
   FundingSource,
 } from "./cashflowUtils";
+import { normalizeDebtStrategy } from "@/lib/debtStrategies";
 
 export function useCashFlow() {
   const [timeline, setTimeline] = useState<any[]>([]);
@@ -408,7 +409,7 @@ export function useCashFlow() {
     const activeBuffer = Number(cashSettings?.checking_buffer ?? 500);
     const activeStartingBalance = Number(cashSettings?.starting_balance ?? 500);
 
-    const activeStrategy = (debtSettings?.strategy || "snowball") as PayoffStrategy;
+    const activeStrategy = normalizeDebtStrategy(debtSettings?.strategy);
     const activeExtraPayment = Number(debtSettings?.extra_payment || 0);
 
     const activeDebtRows = (debtRows || []).filter(

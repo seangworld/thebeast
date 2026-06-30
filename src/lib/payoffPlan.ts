@@ -1,7 +1,9 @@
 import { runVelocityEngine } from "./velocity";
 import type { VelocityEngineResult, VelocityInputSnapshot } from "./velocity";
+import type { DebtStrategy } from "./debtStrategies";
+import { roundMoney } from "./formatters";
 
-export type PayoffStrategy = "minimum" | "snowball" | "avalanche" | "velocity";
+export type PayoffStrategy = DebtStrategy;
 
 export type PayoffDebt = {
   id: string;
@@ -47,7 +49,7 @@ export type PayoffResult = {
 };
 
 function money(value: number) {
-  return Math.round((value + Number.EPSILON) * 100) / 100;
+  return roundMoney(value);
 }
 
 function chooseTarget(

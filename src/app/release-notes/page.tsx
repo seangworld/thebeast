@@ -22,6 +22,53 @@ export default function ReleaseNotesPage() {
       </header>
 
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
+        {/* v2.0 */}
+        <div className="mb-12 rounded-lg border border-[#2a3242] bg-[#0f1419] p-6">
+          <div className="mb-4">
+            <h2 className="text-2xl font-bold">v2.0</h2>
+            <p className="mt-1 text-sm text-[#7f8da3]">June 30, 2026</p>
+          </div>
+
+          <div className="space-y-4 text-sm">
+            <div>
+              <h3 className="font-semibold text-[#c7cfdb]">Velocity v2</h3>
+              <ul className="space-y-2 pl-4">
+                <li className="text-[#a5b4c7]">
+                  <span className="text-blue-400">✓</span> Completed the
+                  Velocity Planner recommendation engine for target debt,
+                  recommended chunk, recovery timeline, and interest savings.
+                </li>
+                <li className="text-[#a5b4c7]">
+                  <span className="text-blue-400">✓</span> Added deterministic
+                  Beast Advisor sections for recommendation, rationale, expected
+                  result, risks, and alternatives.
+                </li>
+                <li className="text-[#a5b4c7]">
+                  <span className="text-blue-400">✓</span> Integrated Velocity
+                  into Debt Strategy selection, payoff projections, and strategy
+                  comparison results.
+                </li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-[#c7cfdb]">Improved</h3>
+              <ul className="space-y-2 pl-4">
+                <li className="text-[#a5b4c7]">
+                  <span className="text-blue-400">✓</span> Modeled source APR,
+                  source balance, recovery repayment, utilization guardrails,
+                  bills due soon, and projected net savings.
+                </li>
+                <li className="text-[#a5b4c7]">
+                  <span className="text-blue-400">✓</span> Expanded focused
+                  tests for the Velocity adapter, engine, advisor, and payoff
+                  plan integration.
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
         {/* v1.9.1 Beta */}
         <div className="mb-12 rounded-lg border border-[#2a3242] bg-[#0f1419] p-6">
           <div className="mb-4">
@@ -252,7 +299,7 @@ export default function ReleaseNotesPage() {
 
         <div className="mt-12 border-t border-[#2a3242] pt-8">
           <p className="text-xs text-[#7f8da3]">
-            The Beast is in active development. Features, calculations, and
+            The Beast continues to improve. Features, calculations, and
             recommendations are continuously improved based on real-world usage
             and user feedback.
           </p>
