@@ -1,10 +1,6 @@
 "use client";
 
 import { useMemo } from "react";
-import FundingSourcesSummaryCards from "./components/FundingSourcesSummaryCards";
-import PaymentSourceCoverage from "./components/PaymentSourceCoverage";
-import FundingIntelligence from "./components/FundingIntelligence";
-import FundingRecommendations from "./components/FundingRecommendations";
 import BillsSection from "./components/BillsSection";
 import DebtsSection from "./components/DebtsSection";
 import CashFlowOverview from "./components/CashFlowOverview";
@@ -16,15 +12,16 @@ import PaycheckPlanningSection from "./components/PaycheckPlanningSection";
 import StrategySnapshot from "./components/StrategySnapshot";
 import AddIncomeBillSection from "./components/AddIncomeBillSection";
 import CashTimelineSection from "./components/CashTimelineSection";
+import FundingSourcesSection from "./components/FundingSourcesSection";
+import IncomeSourcesSection from "./components/IncomeSourcesSection";
+import ArchivedItemsSection from "./components/ArchivedItemsSection";
 import { useCashFlow } from "./useCashFlow";
 import {
-  BillFrequency,
   FundingSource,
   OperationalAlert,
-  PaycheckAssignment,
   PayoffStrategy,
   PaymentSourceCoverageType,
-  getAssignmentLabel,
+  billFrequencyOptions,
   getBillStatus,
   getCycleMonth,
   getCurrentBillCycleDueDate,
@@ -44,25 +41,6 @@ import {
   getFundingSourceAvailableCredit,
   sortObligationsByNextDueDate,
 } from "./cashflowUtils";
-
-const billFrequencyOptions: { value: BillFrequency; label: string }[] = [
-  { value: "weekly", label: "Weekly" },
-  { value: "biweekly", label: "Biweekly" },
-  { value: "monthly", label: "Monthly" },
-  { value: "every_2_months", label: "Every 2 Months" },
-  { value: "every_3_months", label: "Every 3 Months" },
-  { value: "every_6_months", label: "Every 6 Months" },
-  { value: "yearly", label: "Yearly" },
-];
-
-const paycheckAssignmentOptions: {
-  value: PaycheckAssignment;
-  label: string;
-}[] = [
-  { value: "unassigned", label: "Unassigned" },
-  { value: "paycheck_1", label: "Paycheck 1" },
-  { value: "paycheck_2", label: "Paycheck 2" },
-];
 
 export default function CashFlowPage() {
   const {
@@ -1217,371 +1195,37 @@ export default function CashFlowPage() {
         />
 
 
-        <section className="beast-panel overflow-hidden">
-          <div className="flex flex-col items-start gap-4 border-b border-[#2a3242] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
-            <div>
-              <h2 className="text-xl font-bold">Funding Sources</h2>
-              <p className="mt-1 text-sm text-[#7f8da3]">
-                Accounts and liquidity sources used to fund bills, debt payments,
-                and future HELOC/PLOC planning.
-              </p>
-              <p className="mt-2 text-xs text-[#5a6577]">
-                Funding Sources are accounts or credit lines money can come from. Some sources, like credit cards or HELOCs, may also appear below as debts if you owe a balance.
-              </p>
-            </div>
-
-            <button
-              onClick={() => setShowFundingSources(!showFundingSources)}
-              className="beast-button-secondary"
-            >
-              {showFundingSources
-                ? "Hide"
-                : `Show (${fundingSources.length})`}
-            </button>
-          </div>
-
-          {showFundingSources && (
-            <div className="space-y-5 p-5">
-              <FundingSourcesSummaryCards
-                activeSourceCount={activeFundingSources.length}
-                liquidFundingTotal={liquidFundingTotal}
-                creditAvailableTotal={creditAvailableTotal}
-                creditLimitTotal={creditLimitTotal}
-                creditUtilizationPercent={creditUtilizationPercent}
-              />
-
-              <PaymentSourceCoverage coverage={paymentSourceCoverage} />
-
-              {fundingIntelligence.length > 0 && (
-                <FundingIntelligence insights={fundingIntelligence} />
-              )}
-
-              {fundingRecommendations.length > 0 && (
-                <FundingRecommendations
-                  recommendations={fundingRecommendations}
-                />
-              )}
-
-              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 mt-6">
-                <input
-                  value={newFundingSource.name}
-                  onChange={(e) =>
-                    setNewFundingSource({
-                      ...newFundingSource,
-                      name: e.target.value,
-                    })
-                  }
-                  placeholder="Funding source name"
-                  className="beast-input"
-                />
-
-                <select
-                  value={newFundingSource.type}
-                  onChange={(e) =>
-                    setNewFundingSource({
-                      ...newFundingSource,
-                      type: e.target.value,
-                    })
-                  }
-                  className="beast-input"
-                >
-                  <option value="checking">Checking</option>
-                  <option value="savings">Savings</option>
-                  <option value="credit_card">Credit Card</option>
-                  <option value="heloc">HELOC</option>
-                  <option value="ploc">PLOC</option>
-                  <option value="cash">Cash</option>
-                </select>
-
-                <input
-                  type="number"
-                  value={newFundingSource.current_balance}
-                  onChange={(e) =>
-                    setNewFundingSource({
-                      ...newFundingSource,
-                      current_balance: e.target.value,
-                    })
-                  }
-                  placeholder="Current balance"
-                  className="beast-input"
-                />
-
-                <input
-                  type="number"
-                  value={newFundingSource.credit_limit}
-                  onChange={(e) =>
-                    setNewFundingSource({
-                      ...newFundingSource,
-                      credit_limit: e.target.value,
-                    })
-                  }
-                  placeholder="Credit limit"
-                  className="beast-input"
-                />
-
-                <input
-                  type="text"
-                  readOnly
-                  value={
-                    Number.isFinite(Number(newFundingSource.credit_limit)) &&
-                    Number.isFinite(Number(newFundingSource.current_balance))
-                      ? `$${(
-                          Number(newFundingSource.credit_limit) -
-                          Number(newFundingSource.current_balance)
-                        ).toFixed(2)}`
-                      : newFundingSource.available_credit || ""
-                  }
-                  placeholder="Available credit"
-                  className="beast-input"
-                />
-
-                <input
-                  type="number"
-                  value={newFundingSource.interest_rate}
-                  onChange={(e) =>
-                    setNewFundingSource({
-                      ...newFundingSource,
-                      interest_rate: e.target.value,
-                    })
-                  }
-                  placeholder="Interest rate %"
-                  className="beast-input"
-                />
-              </div>
-
-              <button onClick={addFundingSource} className="beast-button">
-                Add Funding Source
-              </button>
-
-              <div className="beast-table-wrap">
-                <table className="w-full min-w-[840px] text-sm">
-                  <thead>
-                    <tr>
-                      <th className="text-left">Name</th>
-                      <th className="text-center">Type</th>
-                      <th className="text-right">Balance</th>
-                      <th className="text-right">Credit Limit</th>
-                      <th className="text-right">Available Credit</th>
-                      <th className="text-right">Utilization</th>
-                      <th className="text-right">APR</th>
-                      <th className="text-center">Actions</th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-  {fundingSources.length === 0 ? (
-    <tr>
-      <td colSpan={8}>No funding sources added yet.</td>
-    </tr>
-  ) : (
-    fundingSources.map((source) => {
-      const linkedDebt = debts.find((debt) => debt.id === source.linked_debt_id);
-      const effectiveBalance = getFundingSourceBalance(source, linkedDebt);
-      const effectiveAvailableCredit = getFundingSourceAvailableCredit(
-        source,
-        linkedDebt
-      );
-      const utilization = getFundingSourceUtilization(source);
-      const isEditing = editingFundingSourceId === source.id;
-      const editingBalance = source.linked_debt_id
-        ? effectiveBalance
-        : Number(editingFundingSource.current_balance || 0);
-      const editingAvailableCredit =
-        editingFundingSource.credit_limit !== "" &&
-        Number.isFinite(Number(editingFundingSource.credit_limit))
-          ? Math.max(
-              Number(editingFundingSource.credit_limit) - editingBalance,
-              0
-            )
-          : null;
-
-      return (
-        <tr key={source.id}>
-          <td className="text-left font-semibold">
-            {isEditing ? (
-              <input
-                value={editingFundingSource.name}
-                onChange={(e) =>
-                  setEditingFundingSource({
-                    ...editingFundingSource,
-                    name: e.target.value,
-                  })
-                }
-                className="beast-input"
-              />
-            ) : (
-              source.name
-            )}
-          </td>
-
-          <td className="text-center capitalize">
-            {isEditing ? (
-              <select
-                value={editingFundingSource.type}
-                onChange={(e) =>
-                  setEditingFundingSource({
-                    ...editingFundingSource,
-                    type: e.target.value,
-                  })
-                }
-                className="beast-input"
-              >
-                <option value="checking">Checking</option>
-                <option value="savings">Savings</option>
-                <option value="credit_card">Credit Card</option>
-                <option value="heloc">HELOC</option>
-                <option value="ploc">PLOC</option>
-                <option value="cash">Cash</option>
-              </select>
-            ) : (
-              source.type.replace("_", " ")
-            )}
-          </td>
-
-          <td className="text-right">
-            {isEditing ? (
-              <input
-                type="number"
-                value={
-                  source.linked_debt_id
-                    ? String(effectiveBalance)
-                    : editingFundingSource.current_balance
-                }
-                onChange={(e) =>
-                  setEditingFundingSource({
-                    ...editingFundingSource,
-                    current_balance: e.target.value,
-                  })
-                }
-                readOnly={Boolean(source.linked_debt_id)}
-                className="beast-input text-right"
-              />
-            ) : (
-              `$${effectiveBalance.toFixed(2)}`
-            )}
-          </td>
-
-          <td className="text-right">
-            {isEditing ? (
-              <input
-                type="number"
-                value={editingFundingSource.credit_limit}
-                onChange={(e) =>
-                  setEditingFundingSource({
-                    ...editingFundingSource,
-                    credit_limit: e.target.value,
-                  })
-                }
-                className="beast-input text-right"
-              />
-            ) : source.credit_limit === null ? (
-              "—"
-            ) : (
-              `$${Number(source.credit_limit || 0).toFixed(2)}`
-            )}
-          </td>
-
-          <td className="text-right">
-            {isEditing ? (
-              <input
-                type="text"
-                readOnly
-                value={
-                  editingAvailableCredit !== null
-                    ? `$${editingAvailableCredit.toFixed(2)}`
-                    : editingFundingSource.available_credit || ""
-                }
-                className="beast-input text-right"
-              />
-            ) : effectiveAvailableCredit === null ? (
-              "—"
-            ) : (
-              `$${effectiveAvailableCredit.toFixed(2)}`
-            )}
-          </td>
-
-          <td
-            className={`text-right font-semibold ${
-              utilization === null
-                ? "text-[#c7cfdb]"
-                : utilization > 90
-                ? "text-red-300"
-                : utilization > 70
-                ? "text-yellow-300"
-                : "text-green-300"
-            }`}
-          >
-            {utilization === null ? "—" : `${utilization.toFixed(1)}%`}
-          </td>
-
-          <td className="text-right">
-            {isEditing ? (
-              <input
-                type="number"
-                value={editingFundingSource.interest_rate}
-                onChange={(e) =>
-                  setEditingFundingSource({
-                    ...editingFundingSource,
-                    interest_rate: e.target.value,
-                  })
-                }
-                className="beast-input text-right"
-              />
-            ) : (
-              `${Number(source.interest_rate || 0).toFixed(2)}%`
-            )}
-          </td>
-
-          <td className="text-center">
-            {isEditing ? (
-              <div className="flex flex-col items-center gap-2">
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => updateFundingSource(source.id)}
-                    className="beast-button"
-                  >
-                    Save
-                  </button>
-                  <button
-                    onClick={cancelEditFundingSource}
-                    className="beast-button-secondary"
-                  >
-                    Cancel
-                  </button>
-                </div>
-                {saveError && (
-                  <div className="text-red-400 text-xs text-center max-w-xs">
-                    {saveError}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="flex justify-center gap-2">
-                <button
-                  onClick={() => startEditFundingSource(source)}
-                  className="beast-button-secondary"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => deleteFundingSource(source.id)}
-                  className="beast-button-secondary"
-                >
-                  Remove
-                </button>
-              </div>
-            )}
-          </td>
-        </tr>
-      );
-    })
-  )}
-</tbody>
-                </table>
-              </div>
-            </div>
-          )}
-        </section>
+        <FundingSourcesSection
+          showFundingSources={showFundingSources}
+          setShowFundingSources={setShowFundingSources}
+          fundingSources={fundingSources}
+          debts={debts}
+          activeFundingSources={activeFundingSources}
+          summary={{
+            activeSourceCount: activeFundingSources.length,
+            liquidFundingTotal,
+            creditAvailableTotal,
+            creditLimitTotal,
+            creditUtilizationPercent,
+          }}
+          paymentSourceCoverage={paymentSourceCoverage}
+          fundingIntelligence={fundingIntelligence}
+          fundingRecommendations={fundingRecommendations}
+          newFundingSource={newFundingSource}
+          setNewFundingSource={setNewFundingSource}
+          addFundingSource={addFundingSource}
+          editingFundingSourceId={editingFundingSourceId}
+          editingFundingSource={editingFundingSource}
+          setEditingFundingSource={setEditingFundingSource}
+          saveError={saveError}
+          getFundingSourceBalance={getFundingSourceBalance}
+          getFundingSourceAvailableCredit={getFundingSourceAvailableCredit}
+          getFundingSourceUtilization={getFundingSourceUtilization}
+          startEditFundingSource={startEditFundingSource}
+          cancelEditFundingSource={cancelEditFundingSource}
+          updateFundingSource={updateFundingSource}
+          deleteFundingSource={deleteFundingSource}
+        />
         <section className="space-y-2">
           <p className="beast-kicker">Reference / Management Zone</p>
           <h2 className="text-2xl font-bold">
@@ -1712,292 +1356,39 @@ export default function CashFlowPage() {
           resetDebtDueDate={resetDebtDueDate}
           deleteDebt={deleteDebt}
         />
-        <section className="beast-panel overflow-hidden">
-          <div className="flex flex-col items-start gap-4 border-b border-[#2a3242] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
-            <div>
-              <h2 className="text-xl font-bold">Income Sources / Schedule</h2>
-              <p className="mt-1 text-sm text-[#7f8da3]">
-                Manage recurring income sources. Future income pots are
-                generated in the Income Date Planning section above.
-              </p>
-            </div>
+        <IncomeSourcesSection
+          showIncomeEvents={showIncomeEvents}
+          setShowIncomeEvents={setShowIncomeEvents}
+          incomes={incomes}
+          editingIncomeId={editingIncomeId}
+          editIncomeName={editIncomeName}
+          editIncomeAmount={editIncomeAmount}
+          editIncomeFrequency={editIncomeFrequency}
+          editIncomeNextDate={editIncomeNextDate}
+          setEditIncomeName={setEditIncomeName}
+          setEditIncomeAmount={setEditIncomeAmount}
+          setEditIncomeFrequency={setEditIncomeFrequency}
+          setEditIncomeNextDate={setEditIncomeNextDate}
+          getNextIncomeDateDisplay={getNextIncomeDateDisplay}
+          startEditIncome={startEditIncome}
+          saveIncomeEdit={saveIncomeEdit}
+          cancelEditIncome={cancelEditIncome}
+          deleteIncome={deleteIncome}
+        />
 
-            <button
-              onClick={() => setShowIncomeEvents(!showIncomeEvents)}
-              className="beast-button-secondary"
-            >
-              {showIncomeEvents ? "Hide" : `Show (${incomes.length})`}
-            </button>
-          </div>
-
-          {showIncomeEvents && (
-            <div className="beast-table-wrap">
-              <table className="w-full min-w-[700px] text-sm">
-                <thead>
-                  <tr>
-                    <th className="text-left">Name</th>
-                    <th className="text-right">Amount</th>
-                    <th className="text-center">Frequency</th>
-                    <th className="text-center">Next Pay Date</th>
-                    <th className="text-right"></th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {incomes.length === 0 ? (
-                    <tr>
-                      <td colSpan={5}>No income events added yet.</td>
-                    </tr>
-                  ) : (
-                    incomes.map((income) => (
-                      <tr key={income.id}>
-                        <td className="text-left">
-                          {editingIncomeId === income.id ? (
-                            <input
-                              value={editIncomeName}
-                              onChange={(e) =>
-                                setEditIncomeName(e.target.value)
-                              }
-                              className="beast-input"
-                            />
-                          ) : (
-                            income.name
-                          )}
-                        </td>
-
-                        <td className="text-right">
-                          {editingIncomeId === income.id ? (
-                            <input
-                              type="number"
-                              value={editIncomeAmount}
-                              onChange={(e) =>
-                                setEditIncomeAmount(e.target.value)
-                              }
-                              className="beast-input"
-                            />
-                          ) : (
-                            `$${Number(income.amount || 0).toFixed(2)}`
-                          )}
-                        </td>
-
-                        <td className="text-center">
-                          {editingIncomeId === income.id ? (
-                            <select
-                              value={editIncomeFrequency}
-                              onChange={(e) =>
-                                setEditIncomeFrequency(e.target.value)
-                              }
-                              className="beast-input"
-                            >
-                              <option value="weekly">Weekly</option>
-                              <option value="biweekly">Biweekly</option>
-                              <option value="monthly">Monthly</option>
-                            </select>
-                          ) : (
-                            income.frequency
-                          )}
-                        </td>
-
-                        <td className="text-center">
-                          {editingIncomeId === income.id ? (
-                            <input
-                              type="date"
-                              value={editIncomeNextDate}
-                              onChange={(e) =>
-                                setEditIncomeNextDate(e.target.value)
-                              }
-                              className="beast-input"
-                            />
-                          ) : (
-                            getNextIncomeDateDisplay(
-                              income.next_date,
-                              income.frequency
-                            )
-                          )}
-                        </td>
-
-                        <td className="text-right">
-                          {editingIncomeId === income.id ? (
-                            <div className="flex justify-end gap-2">
-                              <button
-                                onClick={() => saveIncomeEdit(income.id)}
-                                className="beast-button"
-                              >
-                                Save
-                              </button>
-
-                              <button
-                                onClick={cancelEditIncome}
-                                className="beast-button-secondary"
-                              >
-                                Cancel
-                              </button>
-                            </div>
-                          ) : (
-                            <div className="flex justify-end gap-2">
-                              <button
-                                onClick={() => startEditIncome(income)}
-                                className="beast-button-secondary"
-                              >
-                                Edit
-                              </button>
-
-                              <button
-                                onClick={() => deleteIncome(income.id)}
-                                className="beast-button"
-                              >
-                                Delete
-                              </button>
-                            </div>
-                          )}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
-
-
-        <section className="beast-panel overflow-hidden">
-          <div className="flex flex-col items-start gap-4 border-b border-[#2a3242] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
-            <div>
-              <h2 className="text-xl font-bold">Archived Bills</h2>
-              <p className="mt-1 text-sm text-[#7f8da3]">
-                Hidden from planning and income-date calculations.
-              </p>
-            </div>
-
-            <button
-              onClick={() => setShowArchivedBills(!showArchivedBills)}
-              className="beast-button-secondary"
-            >
-              {showArchivedBills ? "Hide" : `Show (${archivedBills.length})`}
-            </button>
-          </div>
-
-          {showArchivedBills && (
-            <div className="beast-table-wrap">
-              <table className="w-full min-w-[760px] text-sm">
-                <thead>
-                  <tr>
-                    <th className="text-left">Name</th>
-                    <th className="text-right">Amount</th>
-                    <th className="text-center">Frequency</th>
-                    <th className="text-center">Income Date</th>
-                    <th className="text-center">Funding Source</th>
-                    <th className="text-center">Actions</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {archivedBills.length === 0 ? (
-                    <tr>
-                      <td colSpan={6}>No archived bills.</td>
-                    </tr>
-                  ) : (
-                    archivedBills.map((bill) => (
-                      <tr key={bill.id}>
-                        <td className="text-left">{bill.name}</td>
-                        <td className="text-right">
-                          ${Number(bill.remaining || 0).toFixed(2)}
-                        </td>
-                        <td className="text-center">
-                          {getFrequencyLabel(bill.frequency)}
-                        </td>
-                        <td className="text-center">
-                          {getIncomeBucketLabel(bill.assigned_income_date)}
-                        </td>
-                        <td className="text-center">
-                          {getFundingSourceLabel(bill.funding_source_id)}
-                        </td>
-                        <td className="text-center">
-                          <button
-                            onClick={() => unarchiveBill(bill.id)}
-                            className="beast-button"
-                          >
-                            Unarchive
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
-
-        <section className="beast-panel overflow-hidden">
-          <div className="flex flex-col items-start gap-4 border-b border-[#2a3242] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
-            <div>
-              <h2 className="text-xl font-bold">Archived Debts</h2>
-              <p className="mt-1 text-sm text-[#7f8da3]">
-                Hidden from planning and income-date calculations.
-              </p>
-            </div>
-
-            <button
-              onClick={() => setShowArchivedDebts(!showArchivedDebts)}
-              className="beast-button-secondary"
-            >
-              {showArchivedDebts ? "Hide" : `Show (${archivedDebts.length})`}
-            </button>
-          </div>
-
-          {showArchivedDebts && (
-            <div className="beast-table-wrap">
-              <table className="w-full min-w-[820px] text-sm">
-                <thead>
-                  <tr>
-                    <th className="text-left">Debt</th>
-                    <th className="text-right">Balance</th>
-                    <th className="text-right">Minimum</th>
-                    <th className="text-center">Income Date</th>
-                    <th className="text-center">Funding Source</th>
-                    <th className="text-center">Actions</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {archivedDebts.length === 0 ? (
-                    <tr>
-                      <td colSpan={6}>No archived debts.</td>
-                    </tr>
-                  ) : (
-                    archivedDebts.map((debt) => (
-                      <tr key={debt.id}>
-                        <td className="text-left">{debt.name}</td>
-                        <td className="text-right">
-                          ${Number(debt.balance || 0).toFixed(2)}
-                        </td>
-                        <td className="text-right">
-                          ${Number(debt.minimum_payment || 0).toFixed(2)}
-                        </td>
-                        <td className="text-center">
-                          {getIncomeBucketLabel(debt.assigned_income_date)}
-                        </td>
-                        <td className="text-center">
-                          {getFundingSourceLabel(debt.funding_source_id)}
-                        </td>
-                        <td className="text-center">
-                          <button
-                            onClick={() => unarchiveDebt(debt.id)}
-                            className="beast-button"
-                          >
-                            Unarchive
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
+        <ArchivedItemsSection
+          showArchivedBills={showArchivedBills}
+          setShowArchivedBills={setShowArchivedBills}
+          archivedBills={archivedBills}
+          showArchivedDebts={showArchivedDebts}
+          setShowArchivedDebts={setShowArchivedDebts}
+          archivedDebts={archivedDebts}
+          getFrequencyLabel={getFrequencyLabel}
+          getIncomeBucketLabel={getIncomeBucketLabel}
+          getFundingSourceLabel={getFundingSourceLabel}
+          unarchiveBill={unarchiveBill}
+          unarchiveDebt={unarchiveDebt}
+        />
       </div>
     </main>
   );

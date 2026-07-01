@@ -45,7 +45,7 @@ export type OperationalAlert = {
   message: string;
 };
 
-const billFrequencyOptions: { value: BillFrequency; label: string }[] = [
+export const billFrequencyOptions: { value: BillFrequency; label: string }[] = [
   { value: "weekly", label: "Weekly" },
   { value: "biweekly", label: "Biweekly" },
   { value: "monthly", label: "Monthly" },
