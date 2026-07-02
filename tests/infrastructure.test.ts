@@ -9,6 +9,8 @@ import {
 import {
   FEATURE_ENTITLEMENTS,
   hasEntitlement,
+  isAdminViewSimulationActive,
+  resolveEffectiveEntitlementContext,
   resolveEntitlementContext,
 } from "../src/lib/entitlements";
 import {
@@ -115,4 +117,37 @@ test("hasEntitlement gates pro features while keeping free features open", () =>
   );
   assert.equal(hasEntitlement({ role: "admin" }, "beast_advisor"), true);
   assert.equal(hasEntitlement({ role: "beta" }, "scenario_planning"), true);
+});
+
+test("admin view mode changes effective entitlements without changing real context", () => {
+  const adminProfile = { role: "admin" };
+
+  assert.deepEqual(resolveEntitlementContext(adminProfile), {
+    plan: "pro",
+    role: "admin",
+  });
+  assert.deepEqual(resolveEffectiveEntitlementContext(adminProfile, "admin"), {
+    plan: "pro",
+    role: "admin",
+  });
+  assert.deepEqual(resolveEffectiveEntitlementContext(adminProfile, "pro"), {
+    plan: "pro",
+    role: "user",
+  });
+  assert.deepEqual(resolveEffectiveEntitlementContext(adminProfile, "free"), {
+    plan: "free",
+    role: "user",
+  });
+  assert.equal(isAdminViewSimulationActive(adminProfile, "free"), true);
+  assert.equal(isAdminViewSimulationActive(adminProfile, "admin"), false);
+});
+
+test("admin view mode is ignored for non-admin users", () => {
+  const proUser = { role: "user", membership_plan: "pro" };
+
+  assert.deepEqual(resolveEffectiveEntitlementContext(proUser, "free"), {
+    plan: "pro",
+    role: "user",
+  });
+  assert.equal(isAdminViewSimulationActive(proUser, "free"), false);
 });

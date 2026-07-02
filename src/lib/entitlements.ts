@@ -4,6 +4,11 @@ export type MembershipPlan = (typeof MEMBERSHIP_PLANS)[number];
 export const USER_ROLES = ["user", "beta", "admin"] as const;
 export type UserRole = (typeof USER_ROLES)[number];
 
+export const ADMIN_VIEW_MODES = ["admin", "pro", "free"] as const;
+export type AdminViewMode = (typeof ADMIN_VIEW_MODES)[number];
+export const ADMIN_VIEW_MODE_STORAGE_KEY = "beast_admin_view_mode";
+export const ADMIN_VIEW_MODE_EVENT = "beast-admin-view-mode-change";
+
 export const FEATURE_ENTITLEMENTS = {
   dashboard: {
     label: "Dashboard",
@@ -54,6 +59,12 @@ export function normalizePlan(plan: unknown): MembershipPlan {
     : "free";
 }
 
+export function normalizeAdminViewMode(mode: unknown): AdminViewMode {
+  return ADMIN_VIEW_MODES.includes(mode as AdminViewMode)
+    ? (mode as AdminViewMode)
+    : "admin";
+}
+
 export function resolveEntitlementContext(
   profile: MembershipProfile
 ): EntitlementContext {
@@ -65,6 +76,35 @@ export function resolveEntitlementContext(
       : normalizePlan(explicitPlan);
 
   return { plan, role };
+}
+
+export function resolveEffectiveEntitlementContext(
+  profile: MembershipProfile,
+  adminViewMode: AdminViewMode = "admin"
+): EntitlementContext {
+  const realContext = resolveEntitlementContext(profile);
+
+  if (realContext.role !== "admin") {
+    return realContext;
+  }
+
+  if (adminViewMode === "free") {
+    return { plan: "free", role: "user" };
+  }
+
+  if (adminViewMode === "pro") {
+    return { plan: "pro", role: "user" };
+  }
+
+  return realContext;
+}
+
+export function isAdminViewSimulationActive(
+  profile: MembershipProfile,
+  adminViewMode: AdminViewMode
+) {
+  return resolveEntitlementContext(profile).role === "admin" &&
+    adminViewMode !== "admin";
 }
 
 export function hasEntitlement(

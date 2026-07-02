@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { APP_VERSION_LABEL } from "@/lib/appVersion";
 import LogoutButton from "@/app/components/LogoutButton";
+import AdminViewAsControl from "@/app/components/AdminViewAsControl";
 
 export default function DashboardLayout({
   children,
@@ -71,6 +72,7 @@ export default function DashboardLayout({
           </div>
 
           <div className="flex items-center justify-between gap-3 md:justify-end">
+            <AdminViewAsControl />
           <div className="hidden text-right text-sm text-[#7f8da3] md:block">
   <div>{today}</div>
   <div><a
