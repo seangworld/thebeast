@@ -7,6 +7,11 @@ import {
   normalizeDebtStrategy,
 } from "../src/lib/debtStrategies";
 import {
+  FEATURE_ENTITLEMENTS,
+  hasEntitlement,
+  resolveEntitlementContext,
+} from "../src/lib/entitlements";
+import {
   formatCurrency,
   formatMonthCount,
   formatPercent,
@@ -77,4 +82,37 @@ test("velocity settings helpers map persisted and stored values", () => {
     emergency_reserve_amount: null,
     allow_super_velocity: true,
   });
+});
+
+test("entitlement helpers resolve plans and roles", () => {
+  assert.equal(FEATURE_ENTITLEMENTS.velocity_planner.requiredPlan, "pro");
+  assert.deepEqual(resolveEntitlementContext(null), {
+    plan: "free",
+    role: "user",
+  });
+  assert.deepEqual(
+    resolveEntitlementContext({ role: "user", membership_plan: "pro" }),
+    {
+      plan: "pro",
+      role: "user",
+    }
+  );
+  assert.deepEqual(resolveEntitlementContext({ role: "beta" }), {
+    plan: "pro",
+    role: "beta",
+  });
+});
+
+test("hasEntitlement gates pro features while keeping free features open", () => {
+  assert.equal(hasEntitlement({ role: "user", membership_plan: "free" }, "cashflow"), true);
+  assert.equal(
+    hasEntitlement({ role: "user", membership_plan: "free" }, "velocity_planner"),
+    false
+  );
+  assert.equal(
+    hasEntitlement({ role: "user", membership_plan: "pro" }, "velocity_planner"),
+    true
+  );
+  assert.equal(hasEntitlement({ role: "admin" }, "beast_advisor"), true);
+  assert.equal(hasEntitlement({ role: "beta" }, "scenario_planning"), true);
 });
