@@ -51,6 +51,12 @@ import {
   normalizeRecurringAmountToMonthly,
 } from "../src/lib/financialMetrics";
 import {
+  buildBeastOSIntelligence,
+  buildMoneyIntelligence,
+  sortRecommendations,
+} from "../src/lib/platform/recommendationEngine";
+import type { PlatformRecommendation } from "../src/lib/platform/types";
+import {
   DEFAULT_VELOCITY_SETTINGS,
   mapVelocitySettingsRow,
   mergeStoredVelocitySettings,
@@ -116,6 +122,98 @@ test("financial metrics include active recurring income sources only", () => {
       { amount: 700, frequency: "monthly", is_archived: true },
     ]),
     3
+  );
+});
+
+test("recommendation engine sorts by priority", () => {
+  const recommendations = [
+    { id: "low", priority: "Low", title: "Low" },
+    { id: "critical", priority: "Critical", title: "Critical" },
+    { id: "medium", priority: "Medium", title: "Medium" },
+    { id: "high", priority: "High", title: "High" },
+  ].map(
+    (item) =>
+      ({
+        ...item,
+        module: "money",
+        severity: "info",
+        summary: item.title,
+        reason: item.title,
+        recommendedAction: item.title,
+        confidence: "reserved",
+        dismissible: true,
+        completed: false,
+      } as PlatformRecommendation)
+  );
+
+  assert.deepEqual(
+    sortRecommendations(recommendations).map((item) => item.priority),
+    ["Critical", "High", "Medium", "Low"]
+  );
+});
+
+test("money intelligence generates live structured recommendations", () => {
+  const result = buildMoneyIntelligence({
+    now: new Date("2026-07-03T12:00:00.000Z"),
+    startingCash: 100,
+    buffer: 500,
+    monthlyIncome: 3000,
+    monthlyBills: 3500,
+    debtMinimums: 200,
+    activeBills: [
+      {
+        id: "amex",
+        name: "AMEX",
+        amount: 250,
+        due_date: 5,
+      },
+    ],
+    activeDebts: [
+      {
+        id: "card",
+        name: "Credit Card",
+        balance: 1200,
+        minimum_payment: 75,
+        due_date: 12,
+      },
+    ],
+    billPayments: [{ id: "bill-payment", amount_paid: 50 }],
+    debtPayments: [{ id: "debt-payment", amount: 75 }],
+  });
+
+  assert.equal(result.recommendations[0].priority, "Critical");
+  assert.equal(
+    result.recommendations.some((item) => item.title.includes("AMEX")),
+    true
+  );
+  assert.equal(
+    result.notifications.some((item) => item.id === "money-buffer-alert"),
+    true
+  );
+  assert.equal(result.activities.length >= 2, true);
+  assert.equal(result.moduleSummaries[0].module, "money");
+});
+
+test("beastos intelligence has all-clear recommendations and module extension points", () => {
+  const result = buildBeastOSIntelligence({
+    now: new Date("2026-07-03T12:00:00.000Z"),
+    startingCash: 2000,
+    buffer: 500,
+    monthlyIncome: 5000,
+    monthlyBills: 1000,
+    debtMinimums: 0,
+    activeBills: [],
+    activeDebts: [],
+  });
+
+  assert.equal(result.recommendations.length, 0);
+  assert.equal(
+    result.moduleSummaries.some((summary) => summary.module === "money"),
+    true
+  );
+  assert.equal(
+    result.moduleSummaries.some((summary) => summary.module === "health"),
+    true
   );
 });
 

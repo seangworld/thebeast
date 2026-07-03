@@ -11,6 +11,12 @@ import {
   isActiveRecurringSource,
   numberValue,
 } from "@/lib/financialMetrics";
+import { buildBeastOSIntelligence } from "@/lib/platform/recommendationEngine";
+import type {
+  PlatformActivity,
+  PlatformRecommendation,
+  PlatformTimelineEvent,
+} from "@/lib/platform/types";
 import {
   AlertCard,
   DashboardCard,
@@ -18,7 +24,6 @@ import {
   ModuleBadge,
   SectionHeader,
   moduleAccents,
-  type DashboardAlertSeverity,
   type ModuleKey,
 } from "@/app/components/design/DashboardPrimitives";
 
@@ -30,6 +35,8 @@ type MoneyDebt = {
   interest_rate?: number | null;
   due_date?: number | null;
   is_archived?: boolean | null;
+  assigned_income_date?: string | null;
+  created_at?: string | null;
 };
 
 type MoneyBill = {
@@ -40,6 +47,8 @@ type MoneyBill = {
   due_date?: number | null;
   is_archived?: boolean | null;
   next_due_date_after_payment?: string | null;
+  assigned_income_date?: string | null;
+  created_at?: string | null;
 };
 
 type MoneyIncome = {
@@ -62,22 +71,23 @@ type MoneyState = {
   bills: MoneyBill[];
   incomes: MoneyIncome[];
   cashSettings: MoneySettings | null;
+  billPayments: MoneyPayment[];
+  debtPayments: MoneyPayment[];
 };
 
 type CurrentUser = {
   name: string;
 };
 
-type Recommendation = {
-  priority: string;
-  recommendation: string;
-  reason: string;
-  estimatedBenefit: string;
-  module: ModuleKey;
-  confidence: string;
+type MoneyPayment = {
+  id: string;
+  amount?: number | null;
+  amount_paid?: number | null;
+  payment_date?: string | null;
+  created_at?: string | null;
 };
 
-type TimelineItem = {
+type FutureTimelineItem = {
   id: string;
   date: Date;
   title: string;
@@ -86,7 +96,7 @@ type TimelineItem = {
   href?: string;
 };
 
-type ActivityItem = {
+type FutureActivityItem = {
   id: string;
   title: string;
   detail: string;
@@ -99,6 +109,8 @@ const initialMoneyState: MoneyState = {
   bills: [],
   incomes: [],
   cashSettings: null,
+  billPayments: [],
+  debtPayments: [],
 };
 
 const futureBriefingModules: {
@@ -125,60 +137,6 @@ const futureBriefingModules: {
     label: "Projects",
     module: "projects",
     detail: "Active project focus and blockers are queued for future data.",
-  },
-];
-
-const moduleStatusCards: {
-  label: string;
-  module: ModuleKey;
-  href?: string;
-  summary: string;
-}[] = [
-  {
-    label: "Money",
-    module: "money",
-    href: "/dashboard/money",
-    summary: "Live cashflow, debt, bills, income, and Velocity workspace.",
-  },
-  {
-    label: "Health",
-    module: "health",
-    summary: "Wellness signals, routines, and medical context will connect here.",
-  },
-  {
-    label: "Learning",
-    module: "beastos",
-    summary: "Courses, reading plans, and study momentum are reserved.",
-  },
-  {
-    label: "Home",
-    module: "home",
-    summary: "Maintenance, chores, spaces, and household inventory will appear here.",
-  },
-  {
-    label: "Projects",
-    module: "projects",
-    summary: "Workstreams, milestones, and blockers will become visible here.",
-  },
-  {
-    label: "Vehicles",
-    module: "vehicles",
-    summary: "Service dates, costs, registrations, and reminders are staged.",
-  },
-  {
-    label: "Family",
-    module: "family",
-    summary: "Family schedules, needs, and shared context are planned.",
-  },
-  {
-    label: "Goals",
-    module: "goals",
-    summary: "Personal objectives and progress checkpoints are reserved.",
-  },
-  {
-    label: "Documents",
-    module: "documents",
-    summary: "Uploads, records, policies, and searchable files will live here.",
   },
 ];
 
@@ -228,14 +186,6 @@ function nextDueDateFromDay(day: number | null | undefined) {
   return candidate;
 }
 
-function formatDateLabel(date: Date) {
-  return date.toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  });
-}
-
 function formatFullDate(date: Date) {
   return date.toLocaleDateString("en-US", {
     weekday: "long",
@@ -278,12 +228,14 @@ function ModuleStatusCard({
   href,
   summary,
   metric,
+  health,
 }: {
   label: string;
   module: ModuleKey;
   href?: string;
   summary: string;
   metric?: string;
+  health?: string;
 }) {
   const accent = moduleAccents[module];
   const content = (
@@ -311,6 +263,11 @@ function ModuleStatusCard({
             {metric}
           </span>
         ) : null}
+        {health ? (
+          <span className="rounded-full border border-[#2a3242] px-2.5 py-1 text-xs font-bold uppercase text-[#9aa7b8]">
+            {health}
+          </span>
+        ) : null}
       </div>
     </div>
   );
@@ -329,19 +286,25 @@ function ModuleStatusCard({
 function RecommendationRow({
   recommendation,
 }: {
-  recommendation: Recommendation;
+  recommendation: PlatformRecommendation;
 }) {
   return (
     <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
       <div className="flex flex-wrap items-center gap-2">
-        <ModuleBadge module={recommendation.module} />
+        <ModuleBadge module={recommendation.module as ModuleKey} />
         <span className="rounded-full border border-yellow-300/30 bg-yellow-300/10 px-2.5 py-1 text-xs font-bold text-yellow-100">
           {recommendation.priority}
         </span>
+        <span className="rounded-full border border-[#2a3242] px-2.5 py-1 text-xs font-bold uppercase text-[#9aa7b8]">
+          {recommendation.severity}
+        </span>
       </div>
       <h3 className="mt-3 text-lg font-black leading-tight text-white">
-        {recommendation.recommendation}
+        {recommendation.title}
       </h3>
+      <p className="mt-2 text-sm leading-5 text-[#c7cfdb]">
+        {recommendation.summary}
+      </p>
       <div className="mt-4 grid gap-3 text-sm md:grid-cols-3">
         <div>
           <div className="text-xs font-bold uppercase text-[#7f8da3]">Reason</div>
@@ -349,35 +312,44 @@ function RecommendationRow({
         </div>
         <div>
           <div className="text-xs font-bold uppercase text-[#7f8da3]">
-            Estimated Benefit
+            Recommended Action
           </div>
           <p className="mt-1 leading-5 text-[#dbe3ef]">
-            {recommendation.estimatedBenefit}
+            {recommendation.recommendedAction}
           </p>
         </div>
         <div>
           <div className="text-xs font-bold uppercase text-[#7f8da3]">
-            Confidence
+            Estimated Benefit
           </div>
           <p className="mt-1 leading-5 text-[#dbe3ef]">
-            {recommendation.confidence}
+            {recommendation.estimatedBenefit || "Reserved for future scoring."}
           </p>
         </div>
+      </div>
+      <div className="mt-4 flex flex-wrap gap-2 text-xs font-bold uppercase text-[#7f8da3]">
+        <span>Confidence: {recommendation.confidence}</span>
+        <span>{recommendation.dismissible ? "Dismissible" : "Persistent"}</span>
+        <span>{recommendation.completed ? "Completed" : "Open"}</span>
       </div>
     </div>
   );
 }
 
-function TimelineRow({ item }: { item: TimelineItem }) {
-  const accent = moduleAccents[item.module];
+function TimelineRow({ item }: { item: PlatformTimelineEvent | FutureTimelineItem }) {
+  const moduleKey = item.module as ModuleKey;
+  const date = "timestamp" in item ? new Date(item.timestamp) : item.date;
+  const detail = "summary" in item ? item.summary : item.detail;
+  const href = "actionUrl" in item ? item.actionUrl : (item as FutureTimelineItem).href;
+  const accent = moduleAccents[moduleKey];
   const content = (
     <div className="flex gap-3 rounded-xl border border-[#2a3242] bg-[#111827] p-4 transition duration-200 hover:border-[#38bdf8]/50 hover:bg-[#202634]">
       <div className="flex w-20 shrink-0 flex-col items-center rounded-lg border border-[#2a3242] bg-[#0f1419] px-2 py-2 text-center">
         <span className="text-[11px] font-bold uppercase text-[#7f8da3]">
-          {item.date.toLocaleDateString("en-US", { month: "short" })}
+          {date.toLocaleDateString("en-US", { month: "short" })}
         </span>
         <span className="text-2xl font-black leading-none text-white">
-          {item.date.getDate()}
+          {date.getDate()}
         </span>
       </div>
       <div className="min-w-0 flex-1">
@@ -386,17 +358,17 @@ function TimelineRow({ item }: { item: TimelineItem }) {
             className="h-2 w-2 rounded-full"
             style={{ background: accent.color }}
           />
-          <ModuleBadge module={item.module} />
+          <ModuleBadge module={moduleKey} />
         </div>
         <h3 className="mt-2 font-bold text-white">{item.title}</h3>
-        <p className="mt-1 text-sm leading-5 text-[#c7cfdb]">{item.detail}</p>
+        <p className="mt-1 text-sm leading-5 text-[#c7cfdb]">{detail}</p>
       </div>
     </div>
   );
 
-  if (item.href) {
+  if (href) {
     return (
-      <Link href={item.href} className="block">
+      <Link href={href} className="block">
         {content}
       </Link>
     );
@@ -405,8 +377,11 @@ function TimelineRow({ item }: { item: TimelineItem }) {
   return content;
 }
 
-function ActivityRow({ item }: { item: ActivityItem }) {
-  const accent = moduleAccents[item.module];
+function ActivityRow({ item }: { item: PlatformActivity | FutureActivityItem }) {
+  const moduleKey = item.module as ModuleKey;
+  const detail = "summary" in item ? item.summary : item.detail;
+  const href = "actionUrl" in item ? item.actionUrl : (item as FutureActivityItem).href;
+  const accent = moduleAccents[moduleKey];
   const content = (
     <div className="flex items-start gap-3 rounded-xl border border-[#2a3242] bg-[#111827] p-4 transition duration-200 hover:bg-[#202634]">
       <span
@@ -415,14 +390,14 @@ function ActivityRow({ item }: { item: ActivityItem }) {
       />
       <div className="min-w-0">
         <div className="font-bold text-white">{item.title}</div>
-        <p className="mt-1 text-sm leading-5 text-[#9aa7b8]">{item.detail}</p>
+        <p className="mt-1 text-sm leading-5 text-[#9aa7b8]">{detail}</p>
       </div>
     </div>
   );
 
-  if (item.href) {
+  if (href) {
     return (
-      <Link href={item.href} className="block">
+      <Link href={href} className="block">
         {content}
       </Link>
     );
@@ -466,6 +441,8 @@ export default function TodayPage() {
       billsResult,
       incomesResult,
       cashSettingsResult,
+      billPaymentsResult,
+      debtPaymentsResult,
     ] =
       await Promise.all([
         supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
@@ -481,6 +458,18 @@ export default function TodayPage() {
           .eq("user_id", userId)
           .order("next_date", { ascending: true }),
         supabase.from("cash_settings").select("*").eq("user_id", userId).maybeSingle(),
+        supabase
+          .from("bill_payments")
+          .select("*")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false })
+          .limit(8),
+        supabase
+          .from("debt_payments")
+          .select("*")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false })
+          .limit(8),
       ]);
 
     setUser({
@@ -491,6 +480,8 @@ export default function TodayPage() {
       bills: (billsResult.data || []) as MoneyBill[],
       incomes: (incomesResult.data || []) as MoneyIncome[],
       cashSettings: cashSettingsResult.data as MoneySettings | null,
+      billPayments: (billPaymentsResult.data || []) as MoneyPayment[],
+      debtPayments: (debtPaymentsResult.data || []) as MoneyPayment[],
     });
     setLoading(false);
   }, []);
@@ -541,143 +532,27 @@ export default function TodayPage() {
     };
   }, [state]);
 
-  const alerts = useMemo(() => {
-    const results: {
-      title: string;
-      message: string;
-      severity: DashboardAlertSeverity;
-      href?: string;
-    }[] = [];
+  const intelligence = useMemo(
+    () =>
+      buildBeastOSIntelligence({
+        activeBills: snapshot.activeBills,
+        activeDebts: snapshot.activeDebts,
+        monthlyIncome: snapshot.monthlyIncome,
+        monthlyBills: snapshot.monthlyBills,
+        debtMinimums: snapshot.debtMinimums,
+        startingCash: snapshot.startingCash,
+        buffer: snapshot.buffer,
+        billPayments: state.billPayments,
+        debtPayments: state.debtPayments,
+        now: today,
+      }),
+    [snapshot, state.billPayments, state.debtPayments, today]
+  );
 
-    if (snapshot.billsDueSoon.length > 0) {
-      results.push({
-        title: "Bills due soon",
-        message: `${snapshot.billsDueSoon.length} Money bill${
-          snapshot.billsDueSoon.length === 1 ? "" : "s"
-        } due in the next 7 days.`,
-        severity: "warning",
-        href: "/dashboard/money/cashflow#bills",
-      });
-    }
+  const primaryRecommendation = intelligence.recommendations[0] || null;
 
-    if (snapshot.startingCash < snapshot.buffer) {
-      results.push({
-        title: "Cash buffer below target",
-        message: "Tracked cash is below the configured Money buffer.",
-        severity: "critical",
-        href: "/dashboard/money/cashflow",
-      });
-    }
-
-    if (snapshot.monthlyIncome > 0 && snapshot.monthlyBills > snapshot.monthlyIncome) {
-      results.push({
-        title: "Bills exceed tracked income",
-        message: "Known monthly bills are higher than tracked monthly income.",
-        severity: "critical",
-        href: "/dashboard/money/cashflow",
-      });
-    }
-
-    if (results.length === 0) {
-      results.push({
-        title: "No urgent BeastOS alerts",
-        message:
-          "Money does not currently report an urgent alert. Future module signals are reserved.",
-        severity: "info",
-      });
-    }
-
-    return results;
-  }, [snapshot]);
-
-  const primaryRecommendation = useMemo<Recommendation>(() => {
-    if (snapshot.billsDueSoon.length > 0) {
-      return {
-        priority: "High",
-        recommendation: "Confirm funding for this week's bills.",
-        reason: "Money has bills due in the next 7 days.",
-        estimatedBenefit: "Avoid missed or rushed payments.",
-        module: "money",
-        confidence: "Reserved",
-      };
-    }
-
-    if (snapshot.startingCash < snapshot.buffer) {
-      return {
-        priority: "High",
-        recommendation: "Restore your checking buffer before optional spending.",
-        reason: "Tracked cash is below the configured Money buffer.",
-        estimatedBenefit: "Protect short-term operating cash.",
-        module: "money",
-        confidence: "Reserved",
-      };
-    }
-
-    if (snapshot.totalDebt > 0) {
-      return {
-        priority: "Medium",
-        recommendation: "Review your next debt or Velocity move.",
-        reason: "Active debt is present in Money.",
-        estimatedBenefit: "Keep payoff strategy visible today.",
-        module: "money",
-        confidence: "Reserved",
-      };
-    }
-
-    return {
-      priority: "Normal",
-      recommendation: "Keep Money records fresh and scan upcoming income timing.",
-      reason: "No urgent Money alert is visible from current records.",
-      estimatedBenefit: "Maintain a clean daily operating picture.",
-      module: "money",
-      confidence: "Reserved",
-    };
-  }, [snapshot]);
-
-  const timelineItems = useMemo<TimelineItem[]>(() => {
-    const billItems = snapshot.activeBills.slice(0, 4).map((bill) => {
-      const date = bill.next_due_date_after_payment
-        ? new Date(bill.next_due_date_after_payment)
-        : nextDueDateFromDay(bill.due_date);
-
-      return {
-        id: `bill-${bill.id}`,
-        date,
-        title: bill.name || "Upcoming bill",
-        detail: `${formatCurrency(numberValue(bill.amount))} due ${formatDateLabel(
-          date
-        )}`,
-        module: "money" as ModuleKey,
-        href: "/dashboard/money/cashflow",
-      };
-    });
-    const incomeItems = snapshot.activeIncomes.slice(0, 3).map((income) => {
-      const date = income.next_date ? new Date(income.next_date) : new Date();
-
-      return {
-        id: `income-${income.id}`,
-        date,
-        title: income.name || "Upcoming income",
-        detail: `${formatCurrency(numberValue(income.amount))} expected ${formatDateLabel(
-          date
-        )}`,
-        module: "money" as ModuleKey,
-        href: "/dashboard/money/cashflow",
-      };
-    });
-    const debtItems = snapshot.activeDebts.slice(0, 3).map((debt) => {
-      const date = nextDueDateFromDay(debt.due_date);
-
-      return {
-        id: `debt-${debt.id}`,
-        date,
-        title: `${debt.name || "Debt"} payment`,
-        detail: `${formatCurrency(numberValue(debt.minimum_payment))} minimum payment`,
-        module: "money" as ModuleKey,
-        href: "/dashboard/money/debts",
-      };
-    });
-    const futureItems: TimelineItem[] = [
+  const timelineItems = useMemo<(PlatformTimelineEvent | FutureTimelineItem)[]>(() => {
+    const futureItems: FutureTimelineItem[] = [
       {
         id: "calendar-future",
         date: today,
@@ -715,29 +590,17 @@ export default function TodayPage() {
       },
     ];
 
-    return [...billItems, ...incomeItems, ...debtItems, ...futureItems]
-      .sort((a, b) => a.date.getTime() - b.date.getTime())
+    return [...intelligence.timelineEvents, ...futureItems]
+      .sort((a, b) => {
+        const aDate = "timestamp" in a ? new Date(a.timestamp) : a.date;
+        const bDate = "timestamp" in b ? new Date(b.timestamp) : b.date;
+        return aDate.getTime() - bDate.getTime();
+      })
       .slice(0, 9);
-  }, [snapshot.activeBills, snapshot.activeDebts, snapshot.activeIncomes, today]);
+  }, [intelligence.timelineEvents, today]);
 
-  const activityItems = useMemo<ActivityItem[]>(() => {
-    const moneyActivities: ActivityItem[] = [
-      {
-        id: "money-cash",
-        title: "Money snapshot refreshed",
-        detail: `${snapshot.activeBills.length} bills, ${snapshot.activeIncomes.length} active income sources, and ${snapshot.activeDebts.length} debts are available.`,
-        module: "money",
-        href: "/dashboard/money",
-      },
-      {
-        id: "money-alerts",
-        title: "Alert scan completed",
-        detail: `${alerts.length} notification${alerts.length === 1 ? "" : "s"} ready for review.`,
-        module: "notifications",
-        href: "/dashboard/notifications",
-      },
-    ];
-    const futureActivities: ActivityItem[] = [
+  const activityItems = useMemo<(PlatformActivity | FutureActivityItem)[]>(() => {
+    const futureActivities: FutureActivityItem[] = [
       {
         id: "uploads-future",
         title: "Uploads",
@@ -764,8 +627,8 @@ export default function TodayPage() {
       },
     ];
 
-    return [...moneyActivities, ...futureActivities];
-  }, [alerts.length, snapshot]);
+    return [...intelligence.activities, ...futureActivities];
+  }, [intelligence.activities]);
 
   return (
     <main className="beast-page">
@@ -826,11 +689,15 @@ export default function TodayPage() {
                   </span>
                 </div>
                 <h2 className="mt-4 text-2xl font-black leading-tight text-white">
-                  {primaryRecommendation.recommendation}
+                  {primaryRecommendation
+                    ? primaryRecommendation.title
+                    : "Everything looks good."}
                 </h2>
                 <p className="mt-3 text-sm leading-6 text-[#dbe3ef]">
-                  {primaryRecommendation.reason} The rest of BeastOS is staged
-                  around this daily command pattern.
+                  {primaryRecommendation
+                    ? `${primaryRecommendation.summary} ${primaryRecommendation.reason}`
+                    : "No live Money recommendation needs attention right now."}{" "}
+                  The rest of BeastOS is staged around this daily command pattern.
                 </p>
                 <div className="mt-5 grid gap-3 sm:grid-cols-3">
                   <div>
@@ -876,11 +743,30 @@ export default function TodayPage() {
           <DashboardCard accent="purple">
             <SectionHeader
               eyebrow="Recommendation"
-              title="Next best move"
-              description="Structured for future AI guidance without changing financial logic."
+              title="Orchestration queue"
+              description="Live structured recommendations from the BeastOS engine. Future AI will populate the same contract."
             />
-            <div className="mt-5">
-              <RecommendationRow recommendation={primaryRecommendation} />
+            <div className="mt-5 space-y-3">
+              {intelligence.recommendations.length > 0 ? (
+                intelligence.recommendations
+                  .slice(0, 4)
+                  .map((recommendation) => (
+                    <RecommendationRow
+                      key={recommendation.id}
+                      recommendation={recommendation}
+                    />
+                  ))
+              ) : (
+                <div className="rounded-xl border border-green-400/30 bg-green-400/10 p-4">
+                  <div className="font-black text-green-100">
+                    Everything looks good
+                  </div>
+                  <p className="mt-2 text-sm leading-5 text-[#dbe3ef]">
+                    Money has no critical recommendations right now. BeastOS is
+                    ready for future module-aware intelligence.
+                  </p>
+                </div>
+              )}
             </div>
           </DashboardCard>
         </section>
@@ -892,18 +778,15 @@ export default function TodayPage() {
             description="Every major life module has a visible place in Today. Money is active; the rest are ready for their data feeds."
           />
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {moduleStatusCards.map((card) => (
+            {intelligence.moduleSummaries.map((card) => (
               <ModuleStatusCard
-                key={card.label}
+                key={`${card.module}-${card.label}`}
                 label={card.label}
-                module={card.module}
+                module={card.module as ModuleKey}
                 href={card.href}
                 summary={card.summary}
-                metric={
-                  card.module === "money"
-                    ? `${snapshot.activeBills.length} bills, ${snapshot.activeDebts.length} debts`
-                    : undefined
-                }
+                metric={`${card.recommendations} recs, ${card.alerts} alerts`}
+                health={card.health}
               />
             ))}
           </div>
@@ -949,15 +832,23 @@ export default function TodayPage() {
             />
             <DashboardCard accent="red">
               <div className="space-y-3">
-                {alerts.map((alert) => (
+                {intelligence.notifications.length > 0 ? (
+                  intelligence.notifications.map((notification) => (
                   <AlertCard
-                    key={alert.title}
-                    severity={alert.severity}
-                    title={alert.title}
-                    message={alert.message}
-                    href={alert.href}
+                    key={notification.id}
+                    severity={notification.severity}
+                    title={notification.title}
+                    message={notification.summary || "Notification reserved for future delivery."}
+                    href={notification.actionUrl}
                   />
-                ))}
+                  ))
+                ) : (
+                  <AlertCard
+                    severity="info"
+                    title="No live notifications"
+                    message="Money has no urgent shared notifications right now."
+                  />
+                )}
                 <AlertCard
                   severity="info"
                   title="Future module alerts reserved"
