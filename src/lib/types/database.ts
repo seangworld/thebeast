@@ -21,6 +21,13 @@ export type FundingSource = {
 
 export type UserRole = "user" | "beta" | "admin"
 export type MembershipPlan = "free" | "pro"
+export type SubscriptionStatus =
+  | "active"
+  | "trial"
+  | "canceled"
+  | "past_due"
+  | "incomplete"
+export type BillingProvider = "stripe"
 
 export type Profile = {
     id: string
@@ -28,6 +35,20 @@ export type Profile = {
     membership_plan?: MembershipPlan | null
     onboarding_complete: boolean
     stripe_customer_id?: string | null
+    created_at: string
+    updated_at: string
+  }
+
+export type Subscription = {
+    id: string
+    user_id: string
+    plan: MembershipPlan
+    status: SubscriptionStatus
+    billing_provider: BillingProvider
+    provider_customer_id?: string | null
+    provider_subscription_id?: string | null
+    current_period_end?: string | null
+    cancel_at_period_end: boolean
     created_at: string
     updated_at: string
   }

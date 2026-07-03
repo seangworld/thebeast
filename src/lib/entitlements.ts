@@ -1,5 +1,15 @@
-export const MEMBERSHIP_PLANS = ["free", "pro"] as const;
-export type MembershipPlan = (typeof MEMBERSHIP_PLANS)[number];
+import {
+  getMembershipEntitlementPlan,
+  type MembershipPlan,
+  type MembershipSnapshot,
+} from "./membership/types";
+
+export {
+  MEMBERSHIP_PLANS,
+  normalizeMembershipPlan as normalizePlan,
+  type MembershipPlan,
+  type MembershipSnapshot,
+} from "./membership/types";
 
 export const USER_ROLES = ["user", "beta", "admin"] as const;
 export type UserRole = (typeof USER_ROLES)[number];
@@ -38,10 +48,9 @@ export const FEATURE_ENTITLEMENTS = {
 
 export type EntitlementFeature = keyof typeof FEATURE_ENTITLEMENTS;
 
-export type MembershipProfile = {
+export type EntitlementSubject = {
   role?: UserRole | string | null;
-  membership_plan?: MembershipPlan | string | null;
-  plan?: MembershipPlan | string | null;
+  membership?: MembershipSnapshot | null;
 } | null | undefined;
 
 export type EntitlementContext = {
@@ -53,12 +62,6 @@ export function normalizeRole(role: unknown): UserRole {
   return USER_ROLES.includes(role as UserRole) ? (role as UserRole) : "user";
 }
 
-export function normalizePlan(plan: unknown): MembershipPlan {
-  return MEMBERSHIP_PLANS.includes(plan as MembershipPlan)
-    ? (plan as MembershipPlan)
-    : "free";
-}
-
 export function normalizeAdminViewMode(mode: unknown): AdminViewMode {
   return ADMIN_VIEW_MODES.includes(mode as AdminViewMode)
     ? (mode as AdminViewMode)
@@ -66,23 +69,22 @@ export function normalizeAdminViewMode(mode: unknown): AdminViewMode {
 }
 
 export function resolveEntitlementContext(
-  profile: MembershipProfile
+  subject: EntitlementSubject
 ): EntitlementContext {
-  const role = normalizeRole(profile?.role);
-  const explicitPlan = profile?.membership_plan ?? profile?.plan;
+  const role = normalizeRole(subject?.role);
   const plan =
     role === "admin" || role === "beta"
       ? "pro"
-      : normalizePlan(explicitPlan);
+      : getMembershipEntitlementPlan(subject?.membership);
 
   return { plan, role };
 }
 
 export function resolveEffectiveEntitlementContext(
-  profile: MembershipProfile,
+  subject: EntitlementSubject,
   adminViewMode: AdminViewMode = "admin"
 ): EntitlementContext {
-  const realContext = resolveEntitlementContext(profile);
+  const realContext = resolveEntitlementContext(subject);
 
   if (realContext.role !== "admin") {
     return realContext;
@@ -100,21 +102,21 @@ export function resolveEffectiveEntitlementContext(
 }
 
 export function isAdminViewSimulationActive(
-  profile: MembershipProfile,
+  subject: EntitlementSubject,
   adminViewMode: AdminViewMode
 ) {
-  return resolveEntitlementContext(profile).role === "admin" &&
+  return resolveEntitlementContext(subject).role === "admin" &&
     adminViewMode !== "admin";
 }
 
 export function hasEntitlement(
-  context: EntitlementContext | MembershipProfile,
+  context: EntitlementContext | EntitlementSubject,
   feature: EntitlementFeature
 ) {
   const entitlementContext =
     context && "plan" in context && "role" in context
       ? (context as EntitlementContext)
-      : resolveEntitlementContext(context as MembershipProfile);
+      : resolveEntitlementContext(context as EntitlementSubject);
 
   if (entitlementContext.role === "admin" || entitlementContext.role === "beta") {
     return true;

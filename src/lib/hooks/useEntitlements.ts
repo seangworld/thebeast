@@ -3,6 +3,11 @@
 import { useEffect, useState } from "react";
 import { getCurrentUserProfile } from "@/lib/profile";
 import {
+  DEFAULT_FREE_MEMBERSHIP,
+  getCurrentMembership,
+  type MembershipSnapshot,
+} from "@/lib/membership";
+import {
   ADMIN_VIEW_MODE_EVENT,
   ADMIN_VIEW_MODE_STORAGE_KEY,
   hasEntitlement,
@@ -26,6 +31,9 @@ function loadStoredAdminViewMode() {
 
 export function useEntitlements() {
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [membership, setMembership] = useState<MembershipSnapshot>(
+    DEFAULT_FREE_MEMBERSHIP
+  );
   const [loading, setLoading] = useState(true);
   const [adminViewMode, setAdminViewModeState] = useState<AdminViewMode>(
     loadStoredAdminViewMode
@@ -34,11 +42,15 @@ export function useEntitlements() {
   useEffect(() => {
     let isMounted = true;
 
-    async function loadProfile() {
+    async function loadEntitlementSources() {
       try {
-        const currentProfile = await getCurrentUserProfile();
+        const [currentProfile, currentMembership] = await Promise.all([
+          getCurrentUserProfile(),
+          getCurrentMembership(),
+        ]);
         if (isMounted) {
           setProfile(currentProfile);
+          setMembership(currentMembership);
         }
       } finally {
         if (isMounted) {
@@ -47,7 +59,7 @@ export function useEntitlements() {
       }
     }
 
-    loadProfile();
+    loadEntitlementSources();
 
     return () => {
       isMounted = false;
@@ -75,17 +87,26 @@ export function useEntitlements() {
     window.dispatchEvent(new Event(ADMIN_VIEW_MODE_EVENT));
   }
 
-  const realContext: EntitlementContext = resolveEntitlementContext(profile);
+  const entitlementSubject = {
+    role: profile?.role,
+    membership,
+  };
+  const realContext: EntitlementContext =
+    resolveEntitlementContext(entitlementSubject);
   const context: EntitlementContext = resolveEffectiveEntitlementContext(
-    profile,
+    entitlementSubject,
     adminViewMode
   );
   const isAdmin = realContext.role === "admin";
-  const isSimulating = isAdminViewSimulationActive(profile, adminViewMode);
+  const isSimulating = isAdminViewSimulationActive(
+    entitlementSubject,
+    adminViewMode
+  );
 
   return {
     loading,
     profile,
+    membership,
     realContext,
     context,
     adminViewMode,

@@ -14,6 +14,15 @@ import {
   resolveEntitlementContext,
 } from "../src/lib/entitlements";
 import {
+  DEFAULT_FREE_MEMBERSHIP,
+  createCheckoutSession,
+  customerPortal,
+  getMembershipEntitlementPlan,
+  syncSubscription,
+  webhook,
+  type MembershipSnapshot,
+} from "../src/lib/membership";
+import {
   formatCurrency,
   formatMonthCount,
   formatPercent,
@@ -87,13 +96,19 @@ test("velocity settings helpers map persisted and stored values", () => {
 });
 
 test("entitlement helpers resolve plans and roles", () => {
+  const proMembership: MembershipSnapshot = {
+    ...DEFAULT_FREE_MEMBERSHIP,
+    plan: "pro",
+    source: "database",
+  };
+
   assert.equal(FEATURE_ENTITLEMENTS.velocity_planner.requiredPlan, "pro");
   assert.deepEqual(resolveEntitlementContext(null), {
     plan: "free",
     role: "user",
   });
   assert.deepEqual(
-    resolveEntitlementContext({ role: "user", membership_plan: "pro" }),
+    resolveEntitlementContext({ role: "user", membership: proMembership }),
     {
       plan: "pro",
       role: "user",
@@ -106,13 +121,31 @@ test("entitlement helpers resolve plans and roles", () => {
 });
 
 test("hasEntitlement gates pro features while keeping free features open", () => {
-  assert.equal(hasEntitlement({ role: "user", membership_plan: "free" }, "cashflow"), true);
+  const proMembership: MembershipSnapshot = {
+    ...DEFAULT_FREE_MEMBERSHIP,
+    plan: "pro",
+    source: "database",
+  };
+
   assert.equal(
-    hasEntitlement({ role: "user", membership_plan: "free" }, "velocity_planner"),
+    hasEntitlement(
+      { role: "user", membership: DEFAULT_FREE_MEMBERSHIP },
+      "cashflow"
+    ),
+    true
+  );
+  assert.equal(
+    hasEntitlement(
+      { role: "user", membership: DEFAULT_FREE_MEMBERSHIP },
+      "velocity_planner"
+    ),
     false
   );
   assert.equal(
-    hasEntitlement({ role: "user", membership_plan: "pro" }, "velocity_planner"),
+    hasEntitlement(
+      { role: "user", membership: proMembership },
+      "velocity_planner"
+    ),
     true
   );
   assert.equal(hasEntitlement({ role: "admin" }, "beast_advisor"), true);
@@ -120,7 +153,7 @@ test("hasEntitlement gates pro features while keeping free features open", () =>
 });
 
 test("admin view mode changes effective entitlements without changing real context", () => {
-  const adminProfile = { role: "admin" };
+  const adminProfile = { role: "admin", membership: DEFAULT_FREE_MEMBERSHIP };
 
   assert.deepEqual(resolveEntitlementContext(adminProfile), {
     plan: "pro",
@@ -143,11 +176,58 @@ test("admin view mode changes effective entitlements without changing real conte
 });
 
 test("admin view mode is ignored for non-admin users", () => {
-  const proUser = { role: "user", membership_plan: "pro" };
+  const proMembership: MembershipSnapshot = {
+    ...DEFAULT_FREE_MEMBERSHIP,
+    plan: "pro",
+    source: "database",
+  };
+  const proUser = { role: "user", membership: proMembership };
 
   assert.deepEqual(resolveEffectiveEntitlementContext(proUser, "free"), {
     plan: "pro",
     role: "user",
   });
   assert.equal(isAdminViewSimulationActive(proUser, "free"), false);
+});
+
+test("membership entitlement plan falls back to Free for inactive subscriptions", () => {
+  assert.equal(getMembershipEntitlementPlan(DEFAULT_FREE_MEMBERSHIP), "free");
+  assert.equal(
+    getMembershipEntitlementPlan({
+      ...DEFAULT_FREE_MEMBERSHIP,
+      plan: "pro",
+      status: "trial",
+      isActive: true,
+    }),
+    "pro"
+  );
+  assert.equal(
+    getMembershipEntitlementPlan({
+      ...DEFAULT_FREE_MEMBERSHIP,
+      plan: "pro",
+      status: "canceled",
+      isActive: false,
+    }),
+    "free"
+  );
+});
+
+test("Stripe readiness placeholders are safe no-op interfaces", async () => {
+  assert.deepEqual(
+    await createCheckoutSession({ userId: "user-1", plan: "pro" }),
+    {
+      ok: false,
+      status: "not_configured",
+      message: "Stripe integration is not connected yet.",
+    }
+  );
+  assert.equal(
+    (await customerPortal({ userId: "user-1" })).status,
+    "not_configured"
+  );
+  assert.equal((await webhook({ payload: "{}" })).ok, false);
+  assert.equal(
+    (await syncSubscription({ userId: "user-1" })).message,
+    "Stripe integration is not connected yet."
+  );
 });
