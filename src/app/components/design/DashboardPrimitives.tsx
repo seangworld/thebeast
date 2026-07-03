@@ -164,6 +164,7 @@ type BeastBrandMarkProps = {
   workspaceName?: string;
   subtitle?: string;
   size?: "sm" | "md";
+  iconOnly?: boolean;
 };
 
 type ModuleBadgeProps = {
@@ -178,6 +179,7 @@ type ModuleNavItemProps = {
   module: ModuleKey;
   active?: boolean;
   comingSoon?: boolean;
+  compact?: boolean;
 };
 
 type QuickActionButtonProps = {
@@ -254,6 +256,7 @@ export function BeastBrandMark({
   workspaceName,
   subtitle,
   size = "md",
+  iconOnly = false,
 }: BeastBrandMarkProps) {
   const accent = moduleAccents[module];
   const imageSize = size === "sm" ? 34 : 42;
@@ -265,24 +268,26 @@ export function BeastBrandMark({
         style={{ width: imageSize, height: imageSize }}
       >
         <Image
-          src="/beast-logo-square.png"
+          src="/beast-head-icon.png"
           alt="Beast icon"
           fill
           sizes={`${imageSize}px`}
-          className="scale-[1.55] object-cover object-center"
+          className="object-cover object-center"
           priority
         />
       </div>
-      <div className="min-w-0">
-        <div className="truncate text-base font-black leading-tight text-white">
-          {workspaceName || accent.label}
-        </div>
-        {subtitle ? (
-          <div className="truncate text-xs font-semibold text-[#7f8da3]">
-            {subtitle}
+      {!iconOnly ? (
+        <div className="min-w-0">
+          <div className="truncate text-base font-black leading-tight text-white">
+            {workspaceName || accent.label}
           </div>
-        ) : null}
-      </div>
+          {subtitle ? (
+            <div className="truncate text-xs font-semibold text-[#7f8da3]">
+              {subtitle}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -310,10 +315,11 @@ export function ModuleNavItem({
   module,
   active = false,
   comingSoon = false,
+  compact = false,
 }: ModuleNavItemProps) {
   const accent = moduleAccents[module];
   const baseClass =
-    "group flex shrink-0 items-center gap-2 whitespace-nowrap rounded-xl border px-3 py-2 text-sm font-bold transition duration-200 sm:px-4";
+    "group flex w-full shrink-0 items-center gap-2 whitespace-nowrap rounded-xl border px-3 py-2 text-sm font-bold transition duration-200 sm:px-4";
   const activeClass = `${accent.border} ${accent.bg} ${accent.text}`;
   const inactiveClass = comingSoon
     ? "border-[#2a3242] bg-[#0f1419] text-[#7f8da3] opacity-75"
@@ -324,8 +330,8 @@ export function ModuleNavItem({
         className="h-2 w-2 rounded-full"
         style={{ background: active || comingSoon ? accent.color : "#596579" }}
       />
-      <span>{label}</span>
-      {comingSoon ? (
+      <span className={compact ? "sr-only lg:not-sr-only" : ""}>{label}</span>
+      {comingSoon && !compact ? (
         <span className="rounded border border-[#2a3242] px-1.5 py-0.5 text-[10px] uppercase text-[#7f8da3]">
           Soon
         </span>

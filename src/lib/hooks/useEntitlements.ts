@@ -43,19 +43,34 @@ export function useEntitlements() {
     let isMounted = true;
 
     async function loadEntitlementSources() {
-      try {
-        const [currentProfile, currentMembership] = await Promise.all([
-          getCurrentUserProfile(),
-          getCurrentMembership(),
-        ]);
-        if (isMounted) {
-          setProfile(currentProfile);
-          setMembership(currentMembership);
+      const [profileResult, membershipResult] = await Promise.allSettled([
+        getCurrentUserProfile(),
+        getCurrentMembership(),
+      ]);
+
+      if (isMounted) {
+        if (profileResult.status === "fulfilled") {
+          setProfile(profileResult.value);
         }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
+
+        if (membershipResult.status === "fulfilled") {
+          setMembership(membershipResult.value);
         }
+      }
+
+      if (
+        process.env.NODE_ENV !== "production" &&
+        (profileResult.status === "rejected" ||
+          membershipResult.status === "rejected")
+      ) {
+        console.warn("Failed to load entitlement sources.", {
+          profile: profileResult.status,
+          membership: membershipResult.status,
+        });
+      }
+
+      if (isMounted) {
+        setLoading(false);
       }
     }
 

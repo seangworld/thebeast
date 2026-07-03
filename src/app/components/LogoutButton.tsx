@@ -14,7 +14,7 @@ export default function LogoutButton() {
 
   return (
     <button onClick={logout} className="beast-button-secondary">
-      Logout
+      Sign Out
     </button>
   );
 }

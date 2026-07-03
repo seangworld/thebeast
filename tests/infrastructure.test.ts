@@ -7,6 +7,7 @@ import {
   normalizeDebtStrategy,
 } from "../src/lib/debtStrategies";
 import {
+  ADMIN_VIEW_MODES,
   FEATURE_ENTITLEMENTS,
   hasEntitlement,
   isAdminViewSimulationActive,
@@ -163,6 +164,8 @@ test("hasEntitlement gates pro features while keeping free features open", () =>
 });
 
 test("admin view mode changes effective entitlements without changing real context", () => {
+  assert.deepEqual([...ADMIN_VIEW_MODES], ["admin", "pro", "free"]);
+
   const adminProfile = { role: "admin", membership: DEFAULT_FREE_MEMBERSHIP };
 
   assert.deepEqual(resolveEntitlementContext(adminProfile), {
@@ -183,6 +186,29 @@ test("admin view mode changes effective entitlements without changing real conte
   });
   assert.equal(isAdminViewSimulationActive(adminProfile, "free"), true);
   assert.equal(isAdminViewSimulationActive(adminProfile, "admin"), false);
+});
+
+test("admin view mode has priority over database membership", () => {
+  const databaseProMembership: MembershipSnapshot = {
+    ...DEFAULT_FREE_MEMBERSHIP,
+    plan: "pro",
+    status: "active",
+    isActive: true,
+    source: "database",
+  };
+  const adminProfile = {
+    role: "admin",
+    membership: databaseProMembership,
+  };
+
+  assert.deepEqual(resolveEffectiveEntitlementContext(adminProfile, "free"), {
+    plan: "free",
+    role: "user",
+  });
+  assert.deepEqual(resolveEffectiveEntitlementContext(adminProfile, "pro"), {
+    plan: "pro",
+    role: "user",
+  });
 });
 
 test("admin view mode is ignored for non-admin users", () => {

@@ -16,9 +16,9 @@ export const metadata: Metadata = {
     siteName: "The Beast",
     images: [
       {
-        url: "/beast-logo-square.png",
-        width: 1200,
-        height: 1200,
+        url: "/beast-head-icon.png",
+        width: 512,
+        height: 512,
         alt: "BeastOS icon",
       },
     ],
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     title: "The Beast",
     description:
       "BeastOS is a platform shell for money, planning, and future life operations modules.",
-    images: ["/beast-logo-square.png"],
+    images: ["/beast-head-icon.png"],
   },
 };
 
