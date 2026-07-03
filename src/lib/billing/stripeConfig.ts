@@ -64,6 +64,20 @@ export function getCheckoutPriceId(
   return interval === "monthly" ? config.monthlyPriceId : config.annualPriceId;
 }
 
+export function getBillingReturnUrl(
+  config: Pick<StripeBillingConfig, "cancelUrl">
+) {
+  try {
+    const url = new URL(config.cancelUrl);
+    url.pathname = "/dashboard/billing";
+    url.search = "";
+    url.hash = "";
+    return url.toString();
+  } catch {
+    return "/dashboard/billing";
+  }
+}
+
 export function mapStripeStatusToMembershipStatus(
   stripeStatus: string | null | undefined
 ): SubscriptionStatus {

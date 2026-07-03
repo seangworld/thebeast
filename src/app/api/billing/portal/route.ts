@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { createRouteClient } from "@/lib/supabase/server";
 import { customerPortal, getMembershipForUserWithClient } from "@/lib/membership";
-import { getStripeBillingConfig } from "@/lib/billing/stripeConfig";
+import {
+  getBillingReturnUrl,
+  getStripeBillingConfig,
+} from "@/lib/billing/stripeConfig";
 import {
   requireBillingUser,
   requireStripeCustomer,
@@ -42,7 +45,7 @@ export async function POST() {
 
   const portal = await customerPortal({
     customerId: customer.customerId,
-    returnUrl: configResult.config.cancelUrl,
+    returnUrl: getBillingReturnUrl(configResult.config),
     config: configResult.config,
   });
 

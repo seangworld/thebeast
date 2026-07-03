@@ -78,7 +78,10 @@ export async function POST(request: Request) {
   });
 
   if (!verified.ok) {
-    return NextResponse.json({ error: verified.message }, { status: 400 });
+    return NextResponse.json(
+      { error: verified.message },
+      { status: verified.status === "not_configured" ? 503 : 400 }
+    );
   }
 
   const stripe = createStripeClient(configResult.config);

@@ -20,6 +20,10 @@ function BillingPageContent() {
   const entitlements = useEntitlements();
   const searchParams = useSearchParams();
   const billingResult = searchParams.get("billing");
+  const checkoutSucceeded =
+    searchParams.get("success") === "true" || billingResult === "success";
+  const checkoutCanceled =
+    searchParams.get("canceled") === "true" || billingResult === "canceled";
   const customerId = entitlements.membership.subscription?.provider_customer_id;
   const canManageSubscription =
     entitlements.context.plan === "pro" && Boolean(customerId);
@@ -37,16 +41,17 @@ function BillingPageContent() {
           </div>
         </section>
 
-        {billingResult === "success" ? (
+        {checkoutSucceeded ? (
           <section className="beast-card border-green-400/40 bg-green-400/10">
             <p className="text-sm font-semibold text-green-200">
-              Checkout completed. Your membership will update after Stripe
-              confirms the subscription.
+              {!entitlements.loading && entitlements.context.plan === "pro"
+                ? "Welcome to Pro. Your membership is active and Pro features are unlocked."
+                : "Checkout completed. Your membership will update after Stripe confirms the subscription."}
             </p>
           </section>
         ) : null}
 
-        {billingResult === "canceled" ? (
+        {checkoutCanceled ? (
           <section className="beast-card border-yellow-300/40 bg-yellow-300/10">
             <p className="text-sm font-semibold text-yellow-100">
               Checkout was canceled. Your current plan has not changed.

@@ -15,11 +15,13 @@ import {
 } from "../src/lib/entitlements";
 import {
   DEFAULT_FREE_MEMBERSHIP,
+  buildCheckoutSessionCreateParams,
   getMembershipEntitlementPlan,
   syncSubscription,
   type MembershipSnapshot,
 } from "../src/lib/membership";
 import {
+  getBillingReturnUrl,
   getCheckoutPriceId,
   getStripeBillingConfig,
   mapStripeStatusToMembershipPlan,
@@ -221,27 +223,29 @@ test("membership entitlement plan falls back to Free for inactive subscriptions"
 });
 
 test("Stripe billing config and price selection fail safely", () => {
+  const stripeConfig = {
+    secretKey: "sk_test_123",
+    publishableKey: "pk_test_123",
+    monthlyPriceId: "price_monthly",
+    annualPriceId: "price_annual",
+    successUrl: "http://localhost:3000/dashboard/billing?success=true",
+    cancelUrl: "http://localhost:3000/dashboard/billing?canceled=true",
+    webhookSecret: "whsec_123",
+  };
+
   assert.deepEqual(
     getStripeBillingConfig({
       STRIPE_SECRET_KEY: "sk_test_123",
       NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "pk_test_123",
       STRIPE_PRO_MONTHLY_PRICE_ID: "price_monthly",
       STRIPE_PRO_ANNUAL_PRICE_ID: "price_annual",
-      STRIPE_SUCCESS_URL: "http://localhost:3000/dashboard/billing?billing=success",
-      STRIPE_CANCEL_URL: "http://localhost:3000/dashboard/billing?billing=canceled",
+      STRIPE_SUCCESS_URL: "http://localhost:3000/dashboard/billing?success=true",
+      STRIPE_CANCEL_URL: "http://localhost:3000/dashboard/billing?canceled=true",
       STRIPE_WEBHOOK_SECRET: "whsec_123",
     }),
     {
       ok: true,
-      config: {
-        secretKey: "sk_test_123",
-        publishableKey: "pk_test_123",
-        monthlyPriceId: "price_monthly",
-        annualPriceId: "price_annual",
-        successUrl: "http://localhost:3000/dashboard/billing?billing=success",
-        cancelUrl: "http://localhost:3000/dashboard/billing?billing=canceled",
-        webhookSecret: "whsec_123",
-      },
+      config: stripeConfig,
     }
   );
 
@@ -251,12 +255,51 @@ test("Stripe billing config and price selection fail safely", () => {
   };
   assert.equal(getCheckoutPriceId("monthly", config), "price_monthly");
   assert.equal(getCheckoutPriceId("annual", config), "price_annual");
+  assert.equal(
+    getBillingReturnUrl(stripeConfig),
+    "http://localhost:3000/dashboard/billing"
+  );
 
   const missing = getStripeBillingConfig({});
   assert.equal(missing.ok, false);
   assert.ok(
     !missing.ok && missing.missing.includes("STRIPE_SECRET_KEY")
   );
+});
+
+test("Checkout session params use monthly and annual Stripe prices", () => {
+  const stripeConfig = {
+    secretKey: "sk_test_123",
+    publishableKey: "pk_test_123",
+    monthlyPriceId: "price_monthly",
+    annualPriceId: "price_annual",
+    successUrl: "http://localhost:3000/dashboard/billing?success=true",
+    cancelUrl: "http://localhost:3000/dashboard/billing?canceled=true",
+    webhookSecret: "whsec_123",
+  };
+
+  const monthly = buildCheckoutSessionCreateParams({
+    userId: "user-1",
+    interval: "monthly",
+    customerId: "cus_123",
+    config: stripeConfig,
+  });
+  const annual = buildCheckoutSessionCreateParams({
+    userId: "user-1",
+    interval: "annual",
+    customerId: "cus_123",
+    config: stripeConfig,
+  });
+
+  assert.equal(monthly.mode, "subscription");
+  assert.deepEqual(monthly.line_items, [
+    { price: "price_monthly", quantity: 1 },
+  ]);
+  assert.equal(monthly.metadata?.user_id, "user-1");
+  assert.equal(monthly.subscription_data?.metadata?.user_id, "user-1");
+  assert.deepEqual(annual.line_items, [
+    { price: "price_annual", quantity: 1 },
+  ]);
 });
 
 test("billing guards require authentication and customer ID", () => {
@@ -299,9 +342,15 @@ test("billing guards require authentication and customer ID", () => {
 test("Stripe subscription sync maps paid and unsafe statuses to membership", () => {
   assert.equal(mapStripeStatusToMembershipPlan("active"), "pro");
   assert.equal(mapStripeStatusToMembershipPlan("trialing"), "pro");
+  assert.equal(mapStripeStatusToMembershipPlan("canceled"), "free");
+  assert.equal(mapStripeStatusToMembershipPlan("incomplete_expired"), "free");
   assert.equal(mapStripeStatusToMembershipPlan("past_due"), "free");
   assert.equal(mapStripeStatusToMembershipStatus("trialing"), "trial");
   assert.equal(mapStripeStatusToMembershipStatus("unpaid"), "past_due");
+  assert.equal(
+    mapStripeStatusToMembershipStatus("incomplete_expired"),
+    "incomplete"
+  );
 
   assert.deepEqual(
     buildMembershipUpdateFromStripeSubscription({
@@ -331,6 +380,15 @@ test("Stripe subscription sync maps paid and unsafe statuses to membership", () 
       metadata: { user_id: "user-1" },
     })?.plan,
     "free"
+  );
+  assert.deepEqual(
+    buildMembershipUpdateFromStripeSubscription({
+      id: "sub_123",
+      customer: { id: "cus_123" },
+      status: "canceled",
+      metadata: { user_id: "user-1" },
+    })?.status,
+    "canceled"
   );
 });
 

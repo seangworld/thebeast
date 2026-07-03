@@ -1,5 +1,6 @@
 import Stripe from "stripe";
 import {
+  getBillingReturnUrl,
   getCheckoutPriceId,
   getStripeBillingConfig,
   type BillingInterval,
@@ -65,6 +66,34 @@ export function createStripeClient(config: StripeBillingConfig) {
   return new Stripe(config.secretKey);
 }
 
+export function buildCheckoutSessionCreateParams(input: {
+  userId: string;
+  interval: BillingInterval;
+  customerId: string;
+  config: StripeBillingConfig;
+}): Stripe.Checkout.SessionCreateParams {
+  const priceId = getCheckoutPriceId(input.interval, input.config);
+
+  return {
+    mode: "subscription",
+    customer: input.customerId,
+    client_reference_id: input.userId,
+    success_url: input.config.successUrl,
+    cancel_url: input.config.cancelUrl,
+    line_items: [{ price: priceId, quantity: 1 }],
+    metadata: {
+      user_id: input.userId,
+      interval: input.interval,
+    },
+    subscription_data: {
+      metadata: {
+        user_id: input.userId,
+        interval: input.interval,
+      },
+    },
+  };
+}
+
 export async function createCheckoutSession(
   input: CreateCheckoutSessionInput
 ): Promise<StripeCheckoutResult> {
@@ -79,7 +108,6 @@ export async function createCheckoutSession(
   }
 
   const stripe = createStripeClient(configResult.config);
-  const priceId = getCheckoutPriceId(input.interval, configResult.config);
 
   try {
     const customerId =
@@ -91,24 +119,14 @@ export async function createCheckoutSession(
         })
       ).id;
 
-    const session = await stripe.checkout.sessions.create({
-      mode: "subscription",
-      customer: customerId,
-      client_reference_id: input.userId,
-      success_url: configResult.config.successUrl,
-      cancel_url: configResult.config.cancelUrl,
-      line_items: [{ price: priceId, quantity: 1 }],
-      metadata: {
-        user_id: input.userId,
+    const session = await stripe.checkout.sessions.create(
+      buildCheckoutSessionCreateParams({
+        userId: input.userId,
         interval: input.interval,
-      },
-      subscription_data: {
-        metadata: {
-          user_id: input.userId,
-          interval: input.interval,
-        },
-      },
-    });
+        customerId,
+        config: configResult.config,
+      })
+    );
 
     return {
       ok: true,
@@ -146,7 +164,7 @@ export async function customerPortal(
   try {
     const session = await stripe.billingPortal.sessions.create({
       customer: input.customerId,
-      return_url: input.returnUrl ?? configResult.config.cancelUrl,
+      return_url: input.returnUrl ?? getBillingReturnUrl(configResult.config),
     });
 
     return { ok: true, url: session.url };
