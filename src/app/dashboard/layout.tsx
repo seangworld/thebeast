@@ -7,6 +7,25 @@ import { APP_VERSION_LABEL } from "@/lib/appVersion";
 import LogoutButton from "@/app/components/LogoutButton";
 import AdminViewAsControl from "@/app/components/AdminViewAsControl";
 
+const primaryNav = [
+  { label: "Today", href: "/dashboard" },
+  { label: "Money", href: "/dashboard/money" },
+  { label: "Calendar", href: "/dashboard/calendar" },
+  { label: "Notifications", href: "/dashboard/notifications" },
+  { label: "Timeline", href: "/dashboard/timeline" },
+  { label: "Search", href: "/dashboard/search" },
+];
+
+const futureModules = [
+  "Health",
+  "Home",
+  "Projects",
+  "Vehicles",
+  "Family",
+  "Goals",
+  "Documents",
+];
+
 export default function DashboardLayout({
   children,
 }: {
@@ -19,8 +38,16 @@ export default function DashboardLayout({
     day: "numeric",
     year: "numeric",
   });
+  function isActiveRoute(href: string) {
+    if (href === "/dashboard") {
+      return pathname === "/dashboard" || pathname === "/dashboard/today";
+    }
+
+    return pathname === href || pathname.startsWith(`${href}/`);
+  }
+
   function navClass(href: string) {
-    const active = pathname === href;
+    const active = isActiveRoute(href);
 
     return active
       ? "shrink-0 whitespace-nowrap rounded-lg border border-[#38bdf8] bg-[#38bdf8]/10 px-3 py-2 text-sm font-semibold text-[#38bdf8] sm:px-4"
@@ -31,50 +58,33 @@ export default function DashboardLayout({
     <div className="min-h-screen bg-[#11151c] text-white">
       <header className="sticky top-0 z-50 border-b border-[#2a3242] bg-[#11151c]/95 backdrop-blur">
         <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-3 px-3 py-3 sm:px-4 md:flex-row md:items-center md:justify-between md:gap-4 md:py-4">
-          <div className="flex min-w-0 flex-col gap-3 md:flex-row md:items-center md:gap-6">
-          <div className="shrink-0 text-lg font-bold">
-  The Beast
-</div>
+          <div className="flex min-w-0 flex-col gap-3">
+          <div className="flex items-center gap-3">
+            <div className="shrink-0 text-lg font-bold">BeastOS</div>
+            <div className="hidden rounded border border-[#2a3242] bg-[#0f1419] px-2 py-1 text-xs font-semibold text-[#7f8da3] sm:block">
+              Platform Shell
+            </div>
+          </div>
 
             <nav className="flex max-w-full items-center gap-2 overflow-x-auto pb-1 md:pb-0">
-              <Link href="/dashboard" className={navClass("/dashboard")}>
-                Dashboard
-              </Link>
+              {primaryNav.map((item) => (
+                <Link key={item.href} href={item.href} className={navClass(item.href)}>
+                  {item.label}
+                </Link>
+              ))}
 
-              <Link
-                href="/dashboard/cashflow"
-                className={navClass("/dashboard/cashflow")}
-              >
-                Cash Flow
-              </Link>
-
-              <Link
-                href="/dashboard/debts"
-                className={navClass("/dashboard/debts")}
-              >
-                Debt Strategy
-              </Link>
-
-              <Link
-                href="/dashboard/velocity"
-                className={navClass("/dashboard/velocity")}
-              >
-                Velocity Planner
-              </Link>
-
-              <Link
-                href="/dashboard/settings"
-                className={navClass("/dashboard/settings")}
-              >
-                Settings
-              </Link>
-
-              <Link
-                href="/dashboard/billing"
-                className={navClass("/dashboard/billing")}
-              >
-                Billing
-              </Link>
+              {futureModules.map((module) => (
+                <span
+                  key={module}
+                  className="shrink-0 whitespace-nowrap rounded-lg border border-[#2a3242] bg-[#0f1419] px-3 py-2 text-sm font-semibold text-[#7f8da3] opacity-70 sm:px-4"
+                  title={`${module} Coming Soon`}
+                >
+                  {module}
+                  <span className="ml-2 text-[10px] uppercase tracking-wide text-[#596579]">
+                    Soon
+                  </span>
+                </span>
+              ))}
             </nav>
           </div>
 

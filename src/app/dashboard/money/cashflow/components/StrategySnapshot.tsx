@@ -22,7 +22,7 @@ export default function StrategySnapshot({
         </div>
         {strategy === "velocity" ? (
           <Link
-            href="/dashboard/velocity"
+            href="/dashboard/money/velocity"
             className="mt-3 inline-block text-sm text-[#38bdf8] underline"
           >
             Open Velocity Planner

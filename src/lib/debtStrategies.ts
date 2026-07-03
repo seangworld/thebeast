@@ -22,7 +22,7 @@ export const DEBT_STRATEGIES = [
     label: "Velocity",
     description: "Velocity recommendations are configured in the Velocity Planner.",
     usesExtraPayment: true,
-    configurationPath: "/dashboard/velocity",
+    configurationPath: "/dashboard/money/velocity",
   },
 ] as const;
 

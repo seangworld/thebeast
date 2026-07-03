@@ -228,8 +228,8 @@ test("Stripe billing config and price selection fail safely", () => {
     publishableKey: "pk_test_123",
     monthlyPriceId: "price_monthly",
     annualPriceId: "price_annual",
-    successUrl: "http://localhost:3000/dashboard/billing?success=true",
-    cancelUrl: "http://localhost:3000/dashboard/billing?canceled=true",
+    successUrl: "http://localhost:3000/dashboard/money/billing?success=true",
+    cancelUrl: "http://localhost:3000/dashboard/money/billing?canceled=true",
     webhookSecret: "whsec_123",
   };
 
@@ -239,8 +239,8 @@ test("Stripe billing config and price selection fail safely", () => {
       NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "pk_test_123",
       STRIPE_PRO_MONTHLY_PRICE_ID: "price_monthly",
       STRIPE_PRO_ANNUAL_PRICE_ID: "price_annual",
-      STRIPE_SUCCESS_URL: "http://localhost:3000/dashboard/billing?success=true",
-      STRIPE_CANCEL_URL: "http://localhost:3000/dashboard/billing?canceled=true",
+      STRIPE_SUCCESS_URL: "http://localhost:3000/dashboard/money/billing?success=true",
+      STRIPE_CANCEL_URL: "http://localhost:3000/dashboard/money/billing?canceled=true",
       STRIPE_WEBHOOK_SECRET: "whsec_123",
     }),
     {
@@ -257,7 +257,7 @@ test("Stripe billing config and price selection fail safely", () => {
   assert.equal(getCheckoutPriceId("annual", config), "price_annual");
   assert.equal(
     getBillingReturnUrl(stripeConfig),
-    "http://localhost:3000/dashboard/billing"
+    "http://localhost:3000/dashboard/money/billing"
   );
 
   const missing = getStripeBillingConfig({});
@@ -273,8 +273,8 @@ test("Checkout session params use monthly and annual Stripe prices", () => {
     publishableKey: "pk_test_123",
     monthlyPriceId: "price_monthly",
     annualPriceId: "price_annual",
-    successUrl: "http://localhost:3000/dashboard/billing?success=true",
-    cancelUrl: "http://localhost:3000/dashboard/billing?canceled=true",
+    successUrl: "http://localhost:3000/dashboard/money/billing?success=true",
+    cancelUrl: "http://localhost:3000/dashboard/money/billing?canceled=true",
     webhookSecret: "whsec_123",
   };
 

@@ -48,7 +48,7 @@ export default function ProFeatureGate({
               "Preview what this feature unlocks, then upgrade when you are ready."}
           </p>
         </div>
-        <Link href="/dashboard/settings" className="beast-button-secondary w-fit">
+        <Link href="/dashboard/money/billing" className="beast-button-secondary w-fit">
           View Upgrade Options
         </Link>
       </div>

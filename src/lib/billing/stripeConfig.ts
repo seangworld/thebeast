@@ -69,12 +69,12 @@ export function getBillingReturnUrl(
 ) {
   try {
     const url = new URL(config.cancelUrl);
-    url.pathname = "/dashboard/billing";
+    url.pathname = "/dashboard/money/billing";
     url.search = "";
     url.hash = "";
     return url.toString();
   } catch {
-    return "/dashboard/billing";
+    return "/dashboard/money/billing";
   }
 }
 
