@@ -17,6 +17,7 @@ import type {
   VelocityRiskLevel,
   VelocityScoreBreakdown,
 } from "./types";
+import { normalizeRecurringAmountToMonthly } from "../financialMetrics";
 
 function money(value: number) {
   if (!Number.isFinite(value)) return 0;
@@ -588,36 +589,15 @@ function buildChunkRecommendation(
   };
 }
 
-function getMonthlyAmount(amount: number, frequency?: string | null) {
-  const normalizedFrequency = (frequency || "monthly").toLowerCase();
-
-  if (normalizedFrequency.includes("weekly") && !normalizedFrequency.includes("bi")) {
-    return amount * 4.33;
-  }
-  if (normalizedFrequency.includes("biweekly") || normalizedFrequency.includes("bi-weekly")) {
-    return amount * 2.17;
-  }
-  if (
-    normalizedFrequency.includes("semi-monthly") ||
-    normalizedFrequency.includes("semimonthly") ||
-    normalizedFrequency.includes("twice")
-  ) {
-    return amount * 2;
-  }
-  if (normalizedFrequency.includes("annual") || normalizedFrequency.includes("year")) {
-    return amount / 12;
-  }
-  if (normalizedFrequency.includes("daily")) {
-    return amount * 30;
-  }
-
-  return amount;
-}
-
 function buildCashflowProjection(input: VelocityInputSnapshot, cashBalance: number) {
   const projectedIncome = money(
     input.incomes.reduce(
-      (sum, income) => sum + getMonthlyAmount(finiteNumber(income.amount), income.frequency),
+      (sum, income) =>
+        sum +
+        normalizeRecurringAmountToMonthly(
+          finiteNumber(income.amount),
+          income.frequency
+        ),
       0
     )
   );

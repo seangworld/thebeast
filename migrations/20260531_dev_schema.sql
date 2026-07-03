@@ -201,6 +201,8 @@ create table if not exists public.income_events (
   amount numeric not null,
   frequency text,
   next_date date,
+  is_active boolean not null default true,
+  is_archived boolean not null default false,
   created_at timestamptz not null default now()
 );
 

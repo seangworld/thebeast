@@ -5,6 +5,11 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { formatCurrency } from "@/lib/formatters";
 import {
+  calculateMonthlyRecurringTotal,
+  isActiveRecurringSource,
+  numberValue,
+} from "@/lib/financialMetrics";
+import {
   CashFlowTrendChart,
   CreditUtilizationChart,
   DebtPayoffProgressChart,
@@ -41,6 +46,7 @@ type MoneyBill = {
   id: string;
   name?: string | null;
   amount?: number | null;
+  frequency?: string | null;
   due_date?: number | null;
   is_archived?: boolean | null;
   next_due_date_after_payment?: string | null;
@@ -50,7 +56,10 @@ type MoneyIncome = {
   id: string;
   name?: string | null;
   amount?: number | null;
+  frequency?: string | null;
   next_date?: string | null;
+  is_active?: boolean | null;
+  is_archived?: boolean | null;
 };
 
 type FundingSource = {
@@ -101,10 +110,6 @@ const quickActions = [
   { label: "Go to Debts", href: "/dashboard/money/debts", icon: "DB" },
   { label: "Go to Velocity", href: "/dashboard/money/velocity", icon: "V" },
 ];
-
-function numberValue(value: unknown) {
-  return Number(value || 0);
-}
 
 function nextDueDateFromDay(day: number | null | undefined) {
   const today = new Date();
@@ -188,16 +193,11 @@ export default function MoneyWorkspacePage() {
       (debt) => !debt.is_archived && numberValue(debt.balance) > 0
     );
     const activeBills = state.bills.filter((bill) => !bill.is_archived);
+    const activeIncomes = state.incomes.filter(isActiveRecurringSource);
     const startingCash = numberValue(state.cashSettings?.starting_balance);
     const buffer = numberValue(state.cashSettings?.checking_buffer);
-    const monthlyIncome = state.incomes.reduce(
-      (sum, income) => sum + numberValue(income.amount),
-      0
-    );
-    const monthlyBills = activeBills.reduce(
-      (sum, bill) => sum + numberValue(bill.amount),
-      0
-    );
+    const monthlyIncome = calculateMonthlyRecurringTotal(state.incomes);
+    const monthlyBills = calculateMonthlyRecurringTotal(activeBills);
     const debtMinimums = activeDebts.reduce(
       (sum, debt) => sum + numberValue(debt.minimum_payment),
       0
@@ -244,6 +244,7 @@ export default function MoneyWorkspacePage() {
     return {
       activeDebts,
       activeBills,
+      activeIncomes,
       startingCash,
       buffer,
       monthlyIncome,
@@ -335,7 +336,7 @@ export default function MoneyWorkspacePage() {
         href: "/dashboard/money/cashflow",
       };
     });
-    const incomeItems = state.incomes.slice(0, 4).map((income) => {
+    const incomeItems = snapshot.activeIncomes.slice(0, 4).map((income) => {
       const date = income.next_date ? new Date(income.next_date) : new Date();
 
       return {
@@ -359,7 +360,7 @@ export default function MoneyWorkspacePage() {
     }));
 
     return [...billItems, ...incomeItems, ...debtItems].slice(0, 9);
-  }, [snapshot.activeBills, snapshot.activeDebts, state.incomes]);
+  }, [snapshot.activeBills, snapshot.activeDebts, snapshot.activeIncomes]);
 
   const recommendedAction =
     snapshot.billsDueSoon.length > 0
@@ -439,16 +440,16 @@ export default function MoneyWorkspacePage() {
             <MetricTile
               icon="B"
               tone="yellow"
-              label="Upcoming Bills"
+              label="Monthly Bills"
               value={formatCurrency(snapshot.monthlyBills)}
-              detail={`${snapshot.activeBills.length} active bill records`}
+              detail={`${snapshot.activeBills.length} active recurring bill records`}
             />
             <MetricTile
               icon="I"
               tone="blue"
-              label="Upcoming Income"
+              label="Monthly Income"
               value={formatCurrency(snapshot.monthlyIncome)}
-              detail={`${state.incomes.length} tracked income sources`}
+              detail={`${snapshot.activeIncomes.length} active recurring income sources`}
             />
             <MetricTile
               icon="D"

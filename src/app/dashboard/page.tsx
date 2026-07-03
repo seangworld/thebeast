@@ -5,6 +5,12 @@ import Link from "next/link";
 import { APP_VERSION } from "@/lib/appVersion";
 import { createClient } from "@/lib/supabase/client";
 import { formatCurrency } from "@/lib/formatters";
+import { getProfileDisplayName } from "@/lib/profile";
+import {
+  calculateMonthlyRecurringTotal,
+  isActiveRecurringSource,
+  numberValue,
+} from "@/lib/financialMetrics";
 import {
   AlertCard,
   DashboardCard,
@@ -30,6 +36,7 @@ type MoneyBill = {
   id: string;
   name?: string | null;
   amount?: number | null;
+  frequency?: string | null;
   due_date?: number | null;
   is_archived?: boolean | null;
   next_due_date_after_payment?: string | null;
@@ -39,7 +46,10 @@ type MoneyIncome = {
   id: string;
   name?: string | null;
   amount?: number | null;
+  frequency?: string | null;
   next_date?: string | null;
+  is_active?: boolean | null;
+  is_archived?: boolean | null;
 };
 
 type MoneySettings = {
@@ -206,10 +216,6 @@ const quickLaunchModules: {
   },
 ];
 
-function numberValue(value: unknown) {
-  return Number(value || 0);
-}
-
 function nextDueDateFromDay(day: number | null | undefined) {
   const today = new Date();
   const safeDay = Math.min(Math.max(Number(day || 1), 1), 28);
@@ -244,18 +250,6 @@ function getGreeting(date: Date) {
   if (hour < 12) return "Good Morning";
   if (hour < 17) return "Good Afternoon";
   return "Good Evening";
-}
-
-function getDisplayName(user: unknown) {
-  const metadata = (user as { user_metadata?: Record<string, unknown> } | null)
-    ?.user_metadata;
-  const name =
-    metadata?.full_name ||
-    metadata?.name ||
-    metadata?.display_name ||
-    (user as { email?: string } | null)?.email?.split("@")[0];
-
-  return typeof name === "string" && name.trim() ? name.trim() : "Commander";
 }
 
 function SoonModuleRow({
@@ -445,20 +439,36 @@ export default function TodayPage() {
 
   const loadTodaySources = useCallback(async () => {
     setLoading(true);
-    const supabase = createClient();
+    let supabase: ReturnType<typeof createClient>;
+
+    try {
+      supabase = createClient();
+    } catch {
+      setUser({ name: getProfileDisplayName(null, null) });
+      setLoading(false);
+      return;
+    }
+
     const { data: userData } = await supabase.auth.getUser();
     const authUser = userData?.user;
     const userId = authUser?.id;
 
-    setUser({ name: getDisplayName(authUser || null) });
+    setUser({ name: getProfileDisplayName(null, authUser || null) });
 
     if (!userId) {
       setLoading(false);
       return;
     }
 
-    const [debtsResult, billsResult, incomesResult, cashSettingsResult] =
+    const [
+      profileResult,
+      debtsResult,
+      billsResult,
+      incomesResult,
+      cashSettingsResult,
+    ] =
       await Promise.all([
+        supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
         supabase.from("debts").select("*").eq("user_id", userId),
         supabase
           .from("bill_events")
@@ -473,6 +483,9 @@ export default function TodayPage() {
         supabase.from("cash_settings").select("*").eq("user_id", userId).maybeSingle(),
       ]);
 
+    setUser({
+      name: getProfileDisplayName(profileResult.data, authUser || null),
+    });
     setState({
       debts: (debtsResult.data || []) as MoneyDebt[],
       bills: (billsResult.data || []) as MoneyBill[],
@@ -491,16 +504,11 @@ export default function TodayPage() {
       (debt) => !debt.is_archived && numberValue(debt.balance) > 0
     );
     const activeBills = state.bills.filter((bill) => !bill.is_archived);
+    const activeIncomes = state.incomes.filter(isActiveRecurringSource);
     const startingCash = numberValue(state.cashSettings?.starting_balance);
     const buffer = numberValue(state.cashSettings?.checking_buffer);
-    const monthlyIncome = state.incomes.reduce(
-      (sum, income) => sum + numberValue(income.amount),
-      0
-    );
-    const monthlyBills = activeBills.reduce(
-      (sum, bill) => sum + numberValue(bill.amount),
-      0
-    );
+    const monthlyIncome = calculateMonthlyRecurringTotal(state.incomes);
+    const monthlyBills = calculateMonthlyRecurringTotal(activeBills);
     const totalDebt = activeDebts.reduce(
       (sum, debt) => sum + numberValue(debt.balance),
       0
@@ -522,6 +530,7 @@ export default function TodayPage() {
     return {
       activeDebts,
       activeBills,
+      activeIncomes,
       startingCash,
       buffer,
       monthlyIncome,
@@ -642,7 +651,7 @@ export default function TodayPage() {
         href: "/dashboard/money/cashflow",
       };
     });
-    const incomeItems = state.incomes.slice(0, 3).map((income) => {
+    const incomeItems = snapshot.activeIncomes.slice(0, 3).map((income) => {
       const date = income.next_date ? new Date(income.next_date) : new Date();
 
       return {
@@ -709,14 +718,14 @@ export default function TodayPage() {
     return [...billItems, ...incomeItems, ...debtItems, ...futureItems]
       .sort((a, b) => a.date.getTime() - b.date.getTime())
       .slice(0, 9);
-  }, [snapshot.activeBills, snapshot.activeDebts, state.incomes, today]);
+  }, [snapshot.activeBills, snapshot.activeDebts, snapshot.activeIncomes, today]);
 
   const activityItems = useMemo<ActivityItem[]>(() => {
     const moneyActivities: ActivityItem[] = [
       {
         id: "money-cash",
         title: "Money snapshot refreshed",
-        detail: `${snapshot.activeBills.length} bills, ${state.incomes.length} income sources, and ${snapshot.activeDebts.length} debts are available.`,
+        detail: `${snapshot.activeBills.length} bills, ${snapshot.activeIncomes.length} active income sources, and ${snapshot.activeDebts.length} debts are available.`,
         module: "money",
         href: "/dashboard/money",
       },
@@ -756,7 +765,7 @@ export default function TodayPage() {
     ];
 
     return [...moneyActivities, ...futureActivities];
-  }, [alerts.length, snapshot, state.incomes.length]);
+  }, [alerts.length, snapshot]);
 
   return (
     <main className="beast-page">
@@ -913,14 +922,14 @@ export default function TodayPage() {
             tone="yellow"
             label="Bills Due Soon"
             value={String(snapshot.billsDueSoon.length)}
-            detail={`${formatCurrency(snapshot.monthlyBills)} in tracked monthly bills`}
+            detail={`${formatCurrency(snapshot.monthlyBills)} in normalized monthly bills`}
           />
           <MetricTile
             icon="I"
             tone="blue"
-            label="Income Sources"
-            value={String(state.incomes.length)}
-            detail={`${formatCurrency(snapshot.monthlyIncome)} tracked monthly income`}
+            label="Monthly Income"
+            value={formatCurrency(snapshot.monthlyIncome)}
+            detail={`${snapshot.activeIncomes.length} active recurring income sources`}
           />
           <MetricTile
             icon="D"

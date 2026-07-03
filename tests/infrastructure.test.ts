@@ -46,6 +46,11 @@ import {
   parseOptionalNumber,
 } from "../src/lib/formatters";
 import {
+  calculateMonthlyRecurringTotal,
+  countActiveRecurringSources,
+  normalizeRecurringAmountToMonthly,
+} from "../src/lib/financialMetrics";
+import {
   DEFAULT_VELOCITY_SETTINGS,
   mapVelocitySettingsRow,
   mergeStoredVelocitySettings,
@@ -74,6 +79,44 @@ test("shared formatters preserve current formatting semantics", () => {
   assert.equal(parseNumber("12.5"), 12.5);
   assert.equal(parseOptionalNumber(""), null);
   assert.equal(parseOptionalNumber("12.5"), 12.5);
+});
+
+test("financial metrics normalize recurring income to monthly amounts", () => {
+  assert.equal(normalizeRecurringAmountToMonthly(1200, "monthly"), 1200);
+  assert.equal(normalizeRecurringAmountToMonthly(600, "semi-monthly"), 1200);
+  assert.equal(normalizeRecurringAmountToMonthly(12000, "annual"), 1000);
+  assert.equal(normalizeRecurringAmountToMonthly(12000, "yearly"), 1000);
+  assert.equal(normalizeRecurringAmountToMonthly(0, "weekly"), 0);
+  assert.ok(
+    Math.abs(normalizeRecurringAmountToMonthly(1000, "weekly") - 4333.3333) <
+      0.01
+  );
+  assert.ok(
+    Math.abs(normalizeRecurringAmountToMonthly(2000, "biweekly") - 4333.3333) <
+      0.01
+  );
+});
+
+test("financial metrics include active recurring income sources only", () => {
+  const monthlyIncome = calculateMonthlyRecurringTotal([
+    { amount: 2000, frequency: "biweekly" }, // Employment
+    { amount: 1200, frequency: "monthly" }, // VA
+    { amount: 300, frequency: "weekly" }, // Other recurring
+    { amount: 500, frequency: "monthly", is_active: false },
+    { amount: 700, frequency: "monthly", is_archived: true },
+  ]);
+
+  assert.ok(Math.abs(monthlyIncome - 6833.3333) < 0.01);
+  assert.equal(
+    countActiveRecurringSources([
+      { amount: 2000, frequency: "biweekly" },
+      { amount: 1200, frequency: "monthly" },
+      { amount: 300, frequency: "weekly" },
+      { amount: 500, frequency: "monthly", is_active: false },
+      { amount: 700, frequency: "monthly", is_archived: true },
+    ]),
+    3
+  );
 });
 
 test("velocity settings helpers map persisted and stored values", () => {

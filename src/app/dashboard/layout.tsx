@@ -272,14 +272,14 @@ export default function DashboardLayout({
         <div className="border-t border-[#2a3242] p-3">
           <div className="space-y-2">
             <Link
-              href="/dashboard/money/settings"
+              href="/dashboard/profile"
               onClick={onNavigate}
               className="flex min-h-10 items-center rounded-xl border border-[#2a3242] bg-[#0f1419] px-3 py-2 text-sm font-bold text-[#c7cfdb] transition hover:border-[#38bdf8]/50 hover:bg-[#1a1f2b]"
             >
               {compact ? "P" : "Profile"}
             </Link>
             <Link
-              href="/dashboard/money/settings"
+              href="/dashboard/settings"
               onClick={onNavigate}
               className="flex min-h-10 items-center rounded-xl border border-[#2a3242] bg-[#0f1419] px-3 py-2 text-sm font-bold text-[#c7cfdb] transition hover:border-[#38bdf8]/50 hover:bg-[#1a1f2b]"
             >

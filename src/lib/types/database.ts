@@ -35,6 +35,15 @@ export type Profile = {
     membership_plan?: MembershipPlan | null
     onboarding_complete: boolean
     stripe_customer_id?: string | null
+    preferred_name?: string | null
+    display_name?: string | null
+    full_name?: string | null
+    username?: string | null
+    birthday?: string | null
+    location?: string | null
+    timezone?: string | null
+    household_context?: string | null
+    bio?: string | null
     created_at: string
     updated_at: string
   }
