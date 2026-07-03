@@ -22,12 +22,17 @@ import {
   type MembershipSnapshot,
 } from "../src/lib/membership";
 import {
+  getCheckoutStartErrorMessage,
+} from "../src/lib/billing/checkoutErrors";
+import {
   getBillingReturnUrl,
   getCheckoutPriceId,
+  getStripeCheckoutConfigIssue,
   getStripeBillingConfig,
   mapStripeStatusToMembershipPlan,
   mapStripeStatusToMembershipStatus,
 } from "../src/lib/billing/stripeConfig";
+import { buildResetDueDatePayload } from "../src/app/dashboard/money/cashflow/dueDateReset";
 import {
   requireBillingUser,
   requireStripeCustomer,
@@ -293,6 +298,38 @@ test("Stripe billing config and price selection fail safely", () => {
   );
 });
 
+test("Stripe checkout config validation catches unsafe setup", () => {
+  const validConfig = {
+    secretKey: "sk_test_123",
+    publishableKey: "pk_test_123",
+    monthlyPriceId: "price_monthly",
+    annualPriceId: "price_annual",
+    successUrl: "http://localhost:3000/dashboard/money/billing?success=true",
+    cancelUrl: "http://localhost:3000/dashboard/money/billing?canceled=true",
+    webhookSecret: "whsec_123",
+  };
+
+  assert.equal(getStripeCheckoutConfigIssue(validConfig), null);
+  assert.equal(
+    getStripeCheckoutConfigIssue({
+      ...validConfig,
+      publishableKey: "pk_live_123",
+    }),
+    "Stripe secret and publishable keys must use the same test/live mode."
+  );
+  assert.equal(
+    getStripeCheckoutConfigIssue({
+      ...validConfig,
+      monthlyPriceId: "prod_123",
+    }),
+    "Stripe Pro price IDs must start with price_."
+  );
+  assert.match(
+    getCheckoutStartErrorMessage("invalid_price"),
+    /same Stripe test\/live mode/
+  );
+});
+
 test("Checkout session params use monthly and annual Stripe prices", () => {
   const stripeConfig = {
     secretKey: "sk_test_123",
@@ -423,4 +460,12 @@ test("legacy syncSubscription interface no longer performs direct Stripe writes"
     (await syncSubscription({ userId: "user-1" })).message,
     "Subscription sync is handled by the Stripe webhook endpoint."
   );
+});
+
+test("due date reset payload only clears projected override date", () => {
+  assert.deepEqual(buildResetDueDatePayload(), {
+    next_due_date_after_payment: null,
+  });
+  assert.equal("assigned_paycheck" in buildResetDueDatePayload(), false);
+  assert.equal("funding_source_id" in buildResetDueDatePayload(), false);
 });

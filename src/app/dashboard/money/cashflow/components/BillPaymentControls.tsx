@@ -1,6 +1,6 @@
 "use client";
 
-import { Dispatch, SetStateAction } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 import type { BillRow } from "./BillsSection";
 
 type BillPaymentControlsProps = {
@@ -30,6 +30,17 @@ export default function BillPaymentControls({
   archiveBill,
   resetBillDueDate,
 }: BillPaymentControlsProps) {
+  const [isResettingDueDate, setIsResettingDueDate] = useState(false);
+
+  async function handleResetDueDate() {
+    setIsResettingDueDate(true);
+    try {
+      await resetBillDueDate(bill.id);
+    } finally {
+      setIsResettingDueDate(false);
+    }
+  }
+
   return editingBillId === bill.id ? (
     <div className="grid gap-2 sm:grid-cols-2">
       <button onClick={() => saveBillEdit(bill.id)} className="beast-button">
@@ -66,7 +77,7 @@ export default function BillPaymentControls({
         </button>
       </div>
 
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         <button onClick={() => markBillPaid(bill)} className="beast-button">
           Paid
         </button>
@@ -75,8 +86,13 @@ export default function BillPaymentControls({
           Edit
         </button>
 
-        <button onClick={() => resetBillDueDate(bill.id)} className="beast-button-secondary">
-          Reset Due
+        <button
+          type="button"
+          onClick={handleResetDueDate}
+          disabled={isResettingDueDate}
+          className="beast-button-secondary"
+        >
+          {isResettingDueDate ? "Resetting..." : "Reset Due"}
         </button>
 
         <button

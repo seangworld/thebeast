@@ -153,6 +153,7 @@ type AlertCardProps = {
   severity: DashboardAlertSeverity;
   title: string;
   message: string;
+  href?: string;
 };
 
 type HealthGaugeProps = {
@@ -259,7 +260,7 @@ export function BeastBrandMark({
   iconOnly = false,
 }: BeastBrandMarkProps) {
   const accent = moduleAccents[module];
-  const imageSize = size === "sm" ? 34 : 42;
+  const imageSize = size === "sm" ? 40 : 48;
 
   return (
     <div className="flex min-w-0 items-center gap-3">
@@ -278,7 +279,7 @@ export function BeastBrandMark({
       </div>
       {!iconOnly ? (
         <div className="min-w-0">
-          <div className="truncate text-base font-black leading-tight text-white">
+          <div className="truncate text-lg font-black leading-tight text-white">
             {workspaceName || accent.label}
           </div>
           {subtitle ? (
@@ -406,33 +407,46 @@ export function MetricTile({
   );
 }
 
-export function AlertCard({ severity, title, message }: AlertCardProps) {
+export function AlertCard({ severity, title, message, href }: AlertCardProps) {
   const styles = alertStyles[severity];
-
-  return (
-    <div
-      className={`rounded-xl border p-4 transition duration-200 hover:translate-x-0.5 ${styles.card}`}
-    >
-      <div className="flex items-start gap-3">
-        <div
-          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-sm font-black ${styles.badge}`}
-          aria-hidden="true"
-        >
-          {styles.icon}
-        </div>
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="font-bold text-white">{title}</div>
-            <div
-              className={`rounded border px-2 py-0.5 text-[11px] font-bold uppercase ${styles.badge}`}
-            >
-              {styles.label}
-            </div>
+  const className = `rounded-xl border p-4 transition duration-200 hover:translate-x-0.5 ${styles.card}`;
+  const content = (
+    <div className="flex items-start gap-3">
+      <div
+        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-sm font-black ${styles.badge}`}
+        aria-hidden="true"
+      >
+        {styles.icon}
+      </div>
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="font-bold text-white">{title}</div>
+          <div
+            className={`rounded border px-2 py-0.5 text-[11px] font-bold uppercase ${styles.badge}`}
+          >
+            {styles.label}
           </div>
-          <p className="mt-1 text-sm leading-5 text-[#dbe3ef]">{message}</p>
         </div>
+        <p className="mt-1 text-sm leading-5 text-[#dbe3ef]">{message}</p>
+        {href ? (
+          <p className="mt-2 text-xs font-bold uppercase text-white/70">
+            Open related workspace
+          </p>
+        ) : null}
       </div>
     </div>
+  );
+
+  if (href) {
+    return (
+      <Link href={href} className={`block ${className}`}>
+        {content}
+      </Link>
+    );
+  }
+
+  return (
+    <div className={className}>{content}</div>
   );
 }
 

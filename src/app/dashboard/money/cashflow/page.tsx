@@ -1233,6 +1233,7 @@ export default function CashFlowPage() {
           </h2>
         </section>
 
+        <div id="paycheck-planning">
         <PaycheckPlanningSection
           nextPaycheckAmount={nextPaycheckAmount}
           setNextPaycheckAmount={setNextPaycheckAmount}
@@ -1246,6 +1247,7 @@ export default function CashFlowPage() {
           projectedAfterObligations={projectedAfterObligations}
           safeToSpend={safeToSpend}
         />
+        </div>
 
         <StrategySnapshot
           strategy={strategy}
@@ -1289,6 +1291,7 @@ export default function CashFlowPage() {
           buffer={buffer}
         />
 
+        <div id="bills">
         <BillsSection
           showBills={showBills}
           setShowBills={() => setShowBills(!showBills)}
@@ -1318,7 +1321,9 @@ export default function CashFlowPage() {
           archiveBill={archiveBill}
           resetBillDueDate={resetBillDueDate}
         />
+        </div>
 
+        <div id="debts">
         <DebtsSection
           showDebts={showDebts}
           setShowDebts={() => setShowDebts(!showDebts)}
@@ -1356,6 +1361,7 @@ export default function CashFlowPage() {
           resetDebtDueDate={resetDebtDueDate}
           deleteDebt={deleteDebt}
         />
+        </div>
         <IncomeSourcesSection
           showIncomeEvents={showIncomeEvents}
           setShowIncomeEvents={setShowIncomeEvents}

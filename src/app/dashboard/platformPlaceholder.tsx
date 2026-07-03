@@ -1,5 +1,4 @@
 import {
-  BeastBrandMark,
   DashboardCard,
   ModuleBadge,
   SectionHeader,
@@ -24,11 +23,6 @@ export function PlatformPlaceholderPage({
       <div className="beast-container space-y-8">
         <section className="beast-page-header">
           <div className="space-y-4">
-            <BeastBrandMark
-              module={module}
-              workspaceName={title}
-              subtitle="BeastOS Workspace"
-            />
             <p className="beast-kicker">BeastOS Shell</p>
             <h1 className="beast-title">{title}</h1>
             <p className="beast-subtitle">{description}</p>

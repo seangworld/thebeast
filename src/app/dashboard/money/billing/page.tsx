@@ -3,6 +3,10 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import {
+  getCheckoutStartErrorMessage,
+  type CheckoutStartErrorCode,
+} from "@/lib/billing/checkoutErrors";
 import { useEntitlements } from "@/lib/hooks/useEntitlements";
 
 function formatPlan(plan: string) {
@@ -24,6 +28,9 @@ function BillingPageContent() {
     searchParams.get("success") === "true" || billingResult === "success";
   const checkoutCanceled =
     searchParams.get("canceled") === "true" || billingResult === "canceled";
+  const checkoutError = searchParams.get(
+    "checkout_error"
+  ) as CheckoutStartErrorCode | null;
   const customerId = entitlements.membership.subscription?.provider_customer_id;
   const canManageSubscription =
     entitlements.context.plan === "pro" && Boolean(customerId);
@@ -55,6 +62,14 @@ function BillingPageContent() {
           <section className="beast-card border-yellow-300/40 bg-yellow-300/10">
             <p className="text-sm font-semibold text-yellow-100">
               Checkout was canceled. Your current plan has not changed.
+            </p>
+          </section>
+        ) : null}
+
+        {checkoutError ? (
+          <section className="beast-card border-red-400/40 bg-red-400/10">
+            <p className="text-sm font-semibold text-red-100">
+              {getCheckoutStartErrorMessage(checkoutError)}
             </p>
           </section>
         ) : null}

@@ -28,62 +28,10 @@ export default function PaycheckPlanningSection({
   return (
     <section className="beast-card space-y-5">
       <div>
-        <h2 className="text-xl font-bold">Paycheck Planning</h2>
+        <h2 className="text-xl font-bold">Paycheck Coverage</h2>
         <p className="mt-1 text-sm text-[#7f8da3]">
-          Determine what must be covered before your next paycheck.
+          Coverage is based on scheduled income timing. Manual overrides remain available for exceptions.
         </p>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <div>
-          <label className="text-sm text-[#c7cfdb]">
-            Next Paycheck Amount
-          </label>
-          <input
-            type="number"
-            value={nextPaycheckAmount}
-            onChange={(e) => setNextPaycheckAmount(e.target.value)}
-            placeholder="0"
-            className="beast-input mt-2"
-          />
-        </div>
-
-        <div>
-          <label className="text-sm text-[#c7cfdb]">
-            Next Paycheck Date
-          </label>
-          <input
-            type="date"
-            value={nextPaycheckDate}
-            onChange={(e) => setNextPaycheckDate(e.target.value)}
-            className="beast-input mt-2"
-          />
-        </div>
-
-        <div>
-          <label className="text-sm text-[#c7cfdb]">
-            Following Paycheck Amount
-          </label>
-          <input
-            type="number"
-            value={secondPaycheckAmount}
-            onChange={(e) => setSecondPaycheckAmount(e.target.value)}
-            placeholder="0"
-            className="beast-input mt-2"
-          />
-        </div>
-
-        <div>
-          <label className="text-sm text-[#c7cfdb]">
-            Following Paycheck Date
-          </label>
-          <input
-            type="date"
-            value={secondPaycheckDate}
-            onChange={(e) => setSecondPaycheckDate(e.target.value)}
-            className="beast-input mt-2"
-          />
-        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -127,6 +75,67 @@ export default function PaycheckPlanningSection({
           </div>
         </div>
       </div>
+
+      <details className="rounded-xl border border-[#2a3242] bg-[#11151c] p-4">
+        <summary className="cursor-pointer text-sm font-bold text-[#c7cfdb]">
+          Manual paycheck override
+        </summary>
+        <p className="mt-2 text-sm text-[#7f8da3]">
+          Use this only when the next paycheck differs from the saved income schedule.
+        </p>
+
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <div>
+            <label className="text-sm text-[#c7cfdb]">
+              Next Paycheck Amount
+            </label>
+            <input
+              type="number"
+              value={nextPaycheckAmount}
+              onChange={(e) => setNextPaycheckAmount(e.target.value)}
+              placeholder="0"
+              className="beast-input mt-2"
+            />
+          </div>
+
+          <div>
+            <label className="text-sm text-[#c7cfdb]">
+              Next Paycheck Date
+            </label>
+            <input
+              type="date"
+              value={nextPaycheckDate}
+              onChange={(e) => setNextPaycheckDate(e.target.value)}
+              className="beast-input mt-2"
+            />
+          </div>
+
+          <div>
+            <label className="text-sm text-[#c7cfdb]">
+              Following Paycheck Amount
+            </label>
+            <input
+              type="number"
+              value={secondPaycheckAmount}
+              onChange={(e) => setSecondPaycheckAmount(e.target.value)}
+              placeholder="0"
+              className="beast-input mt-2"
+            />
+          </div>
+
+          <div>
+            <label className="text-sm text-[#c7cfdb]">
+              Following Paycheck Date
+            </label>
+            <input
+              type="date"
+              value={secondPaycheckDate}
+              onChange={(e) => setSecondPaycheckDate(e.target.value)}
+              className="beast-input mt-2"
+            />
+          </div>
+        </div>
+      </details>
     </section>
   );
 }

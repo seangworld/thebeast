@@ -1,6 +1,6 @@
 "use client";
 
-import type { Dispatch, SetStateAction } from "react";
+import { useState, type Dispatch, type SetStateAction } from "react";
 import type { DebtRow } from "./DebtsSection";
 
 type DebtPaymentStatus = Record<
@@ -40,6 +40,16 @@ export default function DebtPaymentControls({
   resetDebtDueDate,
 }: DebtPaymentControlsProps) {
   const isApplying = applyingDebtPaymentId === debt.id;
+  const [isResettingDueDate, setIsResettingDueDate] = useState(false);
+
+  async function handleResetDueDate() {
+    setIsResettingDueDate(true);
+    try {
+      await resetDebtDueDate(debt.id);
+    } finally {
+      setIsResettingDueDate(false);
+    }
+  }
 
   return editingDebtId === debt.id ? (
     <div className="grid gap-2 sm:grid-cols-2">
@@ -101,13 +111,18 @@ export default function DebtPaymentControls({
         </div>
       )}
 
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         <button onClick={() => startEditDebt(debt)} className="beast-button-secondary">
           Edit
         </button>
 
-        <button onClick={() => resetDebtDueDate(debt.id)} className="beast-button-secondary">
-          Reset Due
+        <button
+          type="button"
+          onClick={handleResetDueDate}
+          disabled={isResettingDueDate}
+          className="beast-button-secondary"
+        >
+          {isResettingDueDate ? "Resetting..." : "Reset Due"}
         </button>
 
         <button

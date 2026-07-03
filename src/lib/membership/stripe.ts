@@ -2,10 +2,12 @@ import Stripe from "stripe";
 import {
   getBillingReturnUrl,
   getCheckoutPriceId,
+  getStripeCheckoutConfigIssue,
   getStripeBillingConfig,
   type BillingInterval,
   type StripeBillingConfig,
 } from "../billing/stripeConfig";
+import { getCheckoutStartErrorMessage } from "../billing/checkoutErrors";
 
 export type StripeFailureResult = {
   ok: false;
@@ -108,6 +110,18 @@ export async function createCheckoutSession(
   }
 
   const stripe = createStripeClient(configResult.config);
+  const configIssue = getStripeCheckoutConfigIssue(
+    configResult.config,
+    input.interval
+  );
+
+  if (configIssue) {
+    return {
+      ok: false,
+      status: "not_configured",
+      message: configIssue,
+    };
+  }
 
   try {
     const customerId =
@@ -135,13 +149,18 @@ export async function createCheckoutSession(
       customerId,
     };
   } catch (error) {
+    const rawMessage = error instanceof Error ? error.message : "";
+    const lowerMessage = rawMessage.toLowerCase();
+    const message =
+      lowerMessage.includes("price") ||
+      lowerMessage.includes("no such price")
+        ? getCheckoutStartErrorMessage("invalid_price")
+        : rawMessage || "Unable to create Stripe Checkout session.";
+
     return {
       ok: false,
       status: "stripe_error",
-      message:
-        error instanceof Error
-          ? error.message
-          : "Unable to create Stripe Checkout session.",
+      message,
     };
   }
 }

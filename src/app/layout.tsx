@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Script from "next/script";
-import { APP_VERSION_LABEL } from "@/lib/appVersion";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -55,10 +54,6 @@ export default function RootLayout({
             gtag('config', 'G-YFRV4QJK04');
           `}
         </Script>
-
-        <div className="w-full bg-[#38bdf8] py-2 text-center text-sm font-semibold text-black">
-          {APP_VERSION_LABEL} — Free Financial Command System
-        </div>
 
         {process.env.NODE_ENV !== "production" && (
           <div className="mx-auto mt-2 max-w-full bg-[#fef3c7] px-3 py-1 text-center text-xs font-semibold text-[#92400e] sm:text-sm">

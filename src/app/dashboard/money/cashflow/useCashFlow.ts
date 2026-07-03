@@ -13,6 +13,7 @@ import { useCashFlowPaymentState } from "./hooks/useCashFlowPaymentState";
 import { useCashFlowProjection } from "./hooks/useCashFlowProjection";
 import { useCashFlowDataLoader } from "./hooks/useCashFlowDataLoader";
 import { useCashFlowPaymentActions } from "./hooks/useCashFlowPaymentActions";
+import { buildResetDueDatePayload } from "./dueDateReset";
 
 export function useCashFlow() {
   const [timeline, setTimeline] = useState<any[]>([]);
@@ -685,13 +686,13 @@ export function useCashFlow() {
 
   async function resetDebtDueDate(id: string) {
     const supabase = createClient();
-    await supabase.from("debts").update({ next_due_date_after_payment: null }).eq("id", id);
+    await supabase.from("debts").update(buildResetDueDatePayload()).eq("id", id);
     await load();
   }
 
   async function resetBillDueDate(id: string) {
     const supabase = createClient();
-    await supabase.from("bill_events").update({ next_due_date_after_payment: null }).eq("id", id);
+    await supabase.from("bill_events").update(buildResetDueDatePayload()).eq("id", id);
     await load();
   }
 

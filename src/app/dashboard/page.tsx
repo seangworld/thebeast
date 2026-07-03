@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { APP_VERSION } from "@/lib/appVersion";
 import {
-  BeastBrandMark,
   DashboardCard,
   ModuleBadge,
   SectionHeader,
@@ -80,19 +79,12 @@ export default function TodayPage() {
         <section className="beast-page-header">
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div className="space-y-4">
-              <BeastBrandMark
-                module="beastos"
-                workspaceName="BeastOS"
-                subtitle={`Platform Shell ${APP_VERSION}`}
-              />
+              <p className="beast-kicker">BeastOS {APP_VERSION}</p>
               <h1 className="beast-title">Today</h1>
               <p className="beast-subtitle">
                 {greeting}. Your operating layer is ready.
               </p>
             </div>
-            <Link href="/dashboard/money" className="beast-button w-fit">
-              Open Money
-            </Link>
           </div>
         </section>
 

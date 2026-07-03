@@ -64,6 +64,39 @@ export function getCheckoutPriceId(
   return interval === "monthly" ? config.monthlyPriceId : config.annualPriceId;
 }
 
+export function getStripeCheckoutConfigIssue(
+  config: StripeBillingConfig,
+  interval?: BillingInterval
+) {
+  const priceIds = interval
+    ? [getCheckoutPriceId(interval, config)]
+    : [config.monthlyPriceId, config.annualPriceId];
+
+  if (!config.secretKey.startsWith("sk_test_") && !config.secretKey.startsWith("sk_live_")) {
+    return "Stripe secret key must be a valid test or live secret key.";
+  }
+
+  if (
+    !config.publishableKey.startsWith("pk_test_") &&
+    !config.publishableKey.startsWith("pk_live_")
+  ) {
+    return "Stripe publishable key must be a valid test or live publishable key.";
+  }
+
+  if (
+    (config.secretKey.startsWith("sk_test_") && !config.publishableKey.startsWith("pk_test_")) ||
+    (config.secretKey.startsWith("sk_live_") && !config.publishableKey.startsWith("pk_live_"))
+  ) {
+    return "Stripe secret and publishable keys must use the same test/live mode.";
+  }
+
+  if (priceIds.some((priceId) => !priceId.startsWith("price_"))) {
+    return "Stripe Pro price IDs must start with price_.";
+  }
+
+  return null;
+}
+
 export function getBillingReturnUrl(
   config: Pick<StripeBillingConfig, "cancelUrl">
 ) {

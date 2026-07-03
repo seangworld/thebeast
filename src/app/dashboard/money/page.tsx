@@ -17,7 +17,6 @@ import {
 } from "@/app/dashboard/money/components/MoneyTimeline";
 import {
   AlertCard,
-  BeastBrandMark,
   DashboardCard,
   HealthGauge,
   MetricTile,
@@ -268,6 +267,7 @@ export default function MoneyWorkspacePage() {
       title: string;
       message: string;
       severity: DashboardAlertSeverity;
+      href?: string;
     }[] = [];
 
     if (snapshot.billsDueSoon.length > 0) {
@@ -277,6 +277,7 @@ export default function MoneyWorkspacePage() {
           snapshot.billsDueSoon.length === 1 ? "" : "s"
         } due in the next 7 days.`,
         severity: "warning",
+        href: "/dashboard/money/cashflow#bills",
       });
     }
 
@@ -285,6 +286,7 @@ export default function MoneyWorkspacePage() {
         title: "Buffer warning",
         message: "Starting cash is below the configured checking buffer.",
         severity: "critical",
+        href: "/dashboard/money/cashflow",
       });
     }
 
@@ -293,6 +295,7 @@ export default function MoneyWorkspacePage() {
         title: "High utilization",
         message: "Tracked credit utilization is above 75%.",
         severity: "critical",
+        href: "/dashboard/money/debts",
       });
     }
 
@@ -301,6 +304,7 @@ export default function MoneyWorkspacePage() {
         title: "Low cash warning",
         message: "Known monthly outflow is higher than tracked monthly income.",
         severity: "critical",
+        href: "/dashboard/money/cashflow",
       });
     }
 
@@ -372,11 +376,6 @@ export default function MoneyWorkspacePage() {
         <section className="beast-page-header">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-4">
-              <BeastBrandMark
-                module="money"
-                workspaceName="BeastMoney"
-                subtitle="Money Workspace"
-              />
               <ModuleBadge module="money" label="Module #1" />
               <h1 className="beast-title">Money Cockpit</h1>
               <p className="beast-subtitle">
@@ -532,6 +531,7 @@ export default function MoneyWorkspacePage() {
                     severity={alert.severity}
                     title={alert.title}
                     message={alert.message}
+                    href={alert.href}
                   />
                 ))}
               </div>

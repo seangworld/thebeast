@@ -1164,7 +1164,7 @@ export default function DebtsPage() {
           </button>
         </section>
 
-        <section className="beast-panel overflow-hidden">
+        <section id="strategy-comparison" className="beast-panel overflow-hidden">
           <div className="border-b border-[#2a3242] p-5">
             <h2 className="text-xl font-bold">Debt List</h2>
           </div>
@@ -1371,7 +1371,7 @@ export default function DebtsPage() {
           </div>
         </section>
 
-        <section className="beast-panel overflow-hidden">
+        <section id="payoff-plan" className="beast-panel overflow-hidden">
           <div className="flex flex-col items-start gap-4 border-b border-[#2a3242] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
             <div>
               <h2 className="text-xl font-bold">Paid Off / Archived Debts</h2>
