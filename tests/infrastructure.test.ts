@@ -15,13 +15,21 @@ import {
 } from "../src/lib/entitlements";
 import {
   DEFAULT_FREE_MEMBERSHIP,
-  createCheckoutSession,
-  customerPortal,
   getMembershipEntitlementPlan,
   syncSubscription,
-  webhook,
   type MembershipSnapshot,
 } from "../src/lib/membership";
+import {
+  getCheckoutPriceId,
+  getStripeBillingConfig,
+  mapStripeStatusToMembershipPlan,
+  mapStripeStatusToMembershipStatus,
+} from "../src/lib/billing/stripeConfig";
+import {
+  requireBillingUser,
+  requireStripeCustomer,
+} from "../src/lib/billing/guards";
+import { buildMembershipUpdateFromStripeSubscription } from "../src/lib/billing/subscriptionSync";
 import {
   formatCurrency,
   formatMonthCount,
@@ -212,22 +220,123 @@ test("membership entitlement plan falls back to Free for inactive subscriptions"
   );
 });
 
-test("Stripe readiness placeholders are safe no-op interfaces", async () => {
+test("Stripe billing config and price selection fail safely", () => {
   assert.deepEqual(
-    await createCheckoutSession({ userId: "user-1", plan: "pro" }),
+    getStripeBillingConfig({
+      STRIPE_SECRET_KEY: "sk_test_123",
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "pk_test_123",
+      STRIPE_PRO_MONTHLY_PRICE_ID: "price_monthly",
+      STRIPE_PRO_ANNUAL_PRICE_ID: "price_annual",
+      STRIPE_SUCCESS_URL: "http://localhost:3000/dashboard/billing?billing=success",
+      STRIPE_CANCEL_URL: "http://localhost:3000/dashboard/billing?billing=canceled",
+      STRIPE_WEBHOOK_SECRET: "whsec_123",
+    }),
     {
-      ok: false,
-      status: "not_configured",
-      message: "Stripe integration is not connected yet.",
+      ok: true,
+      config: {
+        secretKey: "sk_test_123",
+        publishableKey: "pk_test_123",
+        monthlyPriceId: "price_monthly",
+        annualPriceId: "price_annual",
+        successUrl: "http://localhost:3000/dashboard/billing?billing=success",
+        cancelUrl: "http://localhost:3000/dashboard/billing?billing=canceled",
+        webhookSecret: "whsec_123",
+      },
     }
   );
-  assert.equal(
-    (await customerPortal({ userId: "user-1" })).status,
-    "not_configured"
+
+  const config = {
+    monthlyPriceId: "price_monthly",
+    annualPriceId: "price_annual",
+  };
+  assert.equal(getCheckoutPriceId("monthly", config), "price_monthly");
+  assert.equal(getCheckoutPriceId("annual", config), "price_annual");
+
+  const missing = getStripeBillingConfig({});
+  assert.equal(missing.ok, false);
+  assert.ok(
+    !missing.ok && missing.missing.includes("STRIPE_SECRET_KEY")
   );
-  assert.equal((await webhook({ payload: "{}" })).ok, false);
+});
+
+test("billing guards require authentication and customer ID", () => {
+  assert.deepEqual(requireBillingUser(null), {
+    ok: false,
+    status: 401,
+    message: "Authentication required.",
+  });
+  assert.deepEqual(requireBillingUser({ id: "user-1" }), {
+    ok: true,
+    user: { id: "user-1" },
+  });
+  assert.deepEqual(requireStripeCustomer(DEFAULT_FREE_MEMBERSHIP), {
+    ok: false,
+    status: 400,
+    message: "A Stripe customer is required to manage billing.",
+  });
+  assert.deepEqual(
+    requireStripeCustomer({
+      ...DEFAULT_FREE_MEMBERSHIP,
+      source: "database",
+      subscription: {
+        id: "sub-row-1",
+        user_id: "user-1",
+        plan: "pro",
+        status: "active",
+        billing_provider: "stripe",
+        provider_customer_id: "cus_123",
+        provider_subscription_id: "sub_123",
+        current_period_end: null,
+        cancel_at_period_end: false,
+        created_at: "2026-07-02T00:00:00.000Z",
+        updated_at: "2026-07-02T00:00:00.000Z",
+      },
+    }),
+    { ok: true, customerId: "cus_123" }
+  );
+});
+
+test("Stripe subscription sync maps paid and unsafe statuses to membership", () => {
+  assert.equal(mapStripeStatusToMembershipPlan("active"), "pro");
+  assert.equal(mapStripeStatusToMembershipPlan("trialing"), "pro");
+  assert.equal(mapStripeStatusToMembershipPlan("past_due"), "free");
+  assert.equal(mapStripeStatusToMembershipStatus("trialing"), "trial");
+  assert.equal(mapStripeStatusToMembershipStatus("unpaid"), "past_due");
+
+  assert.deepEqual(
+    buildMembershipUpdateFromStripeSubscription({
+      id: "sub_123",
+      customer: "cus_123",
+      status: "active",
+      current_period_end: 1782950400,
+      cancel_at_period_end: false,
+      metadata: { user_id: "user-1" },
+    }),
+    {
+      userId: "user-1",
+      plan: "pro",
+      status: "active",
+      providerCustomerId: "cus_123",
+      providerSubscriptionId: "sub_123",
+      currentPeriodEnd: "2026-07-02T00:00:00.000Z",
+      cancelAtPeriodEnd: false,
+    }
+  );
+
+  assert.deepEqual(
+    buildMembershipUpdateFromStripeSubscription({
+      id: "sub_123",
+      customer: "cus_123",
+      status: "past_due",
+      metadata: { user_id: "user-1" },
+    })?.plan,
+    "free"
+  );
+});
+
+test("legacy syncSubscription interface no longer performs direct Stripe writes", async () => {
   assert.equal(
     (await syncSubscription({ userId: "user-1" })).message,
-    "Stripe integration is not connected yet."
+    "Subscription sync is handled by the Stripe webhook endpoint."
   );
 });

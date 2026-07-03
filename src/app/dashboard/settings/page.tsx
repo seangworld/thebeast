@@ -189,8 +189,11 @@ export default function SettingsPage() {
           </div>
           {entitlements.context.plan === "free" ? (
             <div className="mt-4 rounded-lg border border-[#2a3242] bg-[#111827] p-4 text-sm text-[#c7cfdb]">
-              Upgrade checkout is not connected yet. For now, this area previews
-              what Pro will unlock without changing your current Free features.
+              Upgrade to Pro from the{" "}
+              <Link href="/dashboard/billing" className="text-[#38bdf8] underline">
+                Billing page
+              </Link>
+              . Free features remain available.
             </div>
           ) : null}
         </section>

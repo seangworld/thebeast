@@ -1,62 +1,224 @@
-import type { MembershipPlan, SubscriptionStatus } from "./types";
+import Stripe from "stripe";
+import {
+  getCheckoutPriceId,
+  getStripeBillingConfig,
+  type BillingInterval,
+  type StripeBillingConfig,
+} from "../billing/stripeConfig";
 
-export type StripeReadinessResult = {
+export type StripeFailureResult = {
   ok: false;
-  status: "not_configured";
+  status: "not_configured" | "stripe_error";
   message: string;
+  missing?: string[];
 };
+
+export type StripeCheckoutResult =
+  | {
+      ok: true;
+      sessionId: string;
+      url: string;
+      customerId: string | null;
+    }
+  | StripeFailureResult;
+
+export type StripePortalResult =
+  | {
+      ok: true;
+      url: string;
+    }
+  | StripeFailureResult;
 
 export type CreateCheckoutSessionInput = {
   userId: string;
-  plan: Extract<MembershipPlan, "pro">;
-  successUrl?: string;
-  cancelUrl?: string;
+  email?: string | null;
+  interval: BillingInterval;
+  customerId?: string | null;
+  config?: StripeBillingConfig;
 };
 
 export type CustomerPortalInput = {
-  userId: string;
+  customerId: string;
   returnUrl?: string;
+  config?: StripeBillingConfig;
 };
 
 export type WebhookInput = {
   payload: string;
   signature?: string;
+  config?: StripeBillingConfig;
 };
 
 export type SyncSubscriptionInput = {
   userId: string;
   providerCustomerId?: string | null;
   providerSubscriptionId?: string | null;
-  plan?: MembershipPlan;
-  status?: SubscriptionStatus;
 };
 
-const STRIPE_PLACEHOLDER_RESULT: StripeReadinessResult = {
-  ok: false,
-  status: "not_configured",
-  message: "Stripe integration is not connected yet.",
-};
+function getConfig(config?: StripeBillingConfig) {
+  if (config) return { ok: true as const, config };
+
+  return getStripeBillingConfig();
+}
+
+export function createStripeClient(config: StripeBillingConfig) {
+  return new Stripe(config.secretKey);
+}
 
 export async function createCheckoutSession(
-  _input: CreateCheckoutSessionInput
-): Promise<StripeReadinessResult> {
-  return STRIPE_PLACEHOLDER_RESULT;
+  input: CreateCheckoutSessionInput
+): Promise<StripeCheckoutResult> {
+  const configResult = getConfig(input.config);
+  if (!configResult.ok) {
+    return {
+      ok: false,
+      status: "not_configured",
+      message: "Stripe billing is not fully configured.",
+      missing: configResult.missing,
+    };
+  }
+
+  const stripe = createStripeClient(configResult.config);
+  const priceId = getCheckoutPriceId(input.interval, configResult.config);
+
+  try {
+    const customerId =
+      input.customerId ??
+      (
+        await stripe.customers.create({
+          email: input.email ?? undefined,
+          metadata: { user_id: input.userId },
+        })
+      ).id;
+
+    const session = await stripe.checkout.sessions.create({
+      mode: "subscription",
+      customer: customerId,
+      client_reference_id: input.userId,
+      success_url: configResult.config.successUrl,
+      cancel_url: configResult.config.cancelUrl,
+      line_items: [{ price: priceId, quantity: 1 }],
+      metadata: {
+        user_id: input.userId,
+        interval: input.interval,
+      },
+      subscription_data: {
+        metadata: {
+          user_id: input.userId,
+          interval: input.interval,
+        },
+      },
+    });
+
+    return {
+      ok: true,
+      sessionId: session.id,
+      url: session.url ?? configResult.config.cancelUrl,
+      customerId,
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      status: "stripe_error",
+      message:
+        error instanceof Error
+          ? error.message
+          : "Unable to create Stripe Checkout session.",
+    };
+  }
 }
 
 export async function customerPortal(
-  _input: CustomerPortalInput
-): Promise<StripeReadinessResult> {
-  return STRIPE_PLACEHOLDER_RESULT;
+  input: CustomerPortalInput
+): Promise<StripePortalResult> {
+  const configResult = getConfig(input.config);
+  if (!configResult.ok) {
+    return {
+      ok: false,
+      status: "not_configured",
+      message: "Stripe billing is not fully configured.",
+      missing: configResult.missing,
+    };
+  }
+
+  const stripe = createStripeClient(configResult.config);
+
+  try {
+    const session = await stripe.billingPortal.sessions.create({
+      customer: input.customerId,
+      return_url: input.returnUrl ?? configResult.config.cancelUrl,
+    });
+
+    return { ok: true, url: session.url };
+  } catch (error) {
+    return {
+      ok: false,
+      status: "stripe_error",
+      message:
+        error instanceof Error
+          ? error.message
+          : "Unable to create Stripe Customer Portal session.",
+    };
+  }
 }
 
-export async function webhook(
-  _input: WebhookInput
-): Promise<StripeReadinessResult> {
-  return STRIPE_PLACEHOLDER_RESULT;
+export function webhook(input: WebhookInput) {
+  const configResult = getConfig(input.config);
+  if (!configResult.ok) {
+    return {
+      ok: false as const,
+      status: "not_configured" as const,
+      message: "Stripe webhook signing secret is not configured.",
+      missing: configResult.missing,
+    };
+  }
+
+  if (!input.signature) {
+    return {
+      ok: false as const,
+      status: "stripe_error" as const,
+      message: "Missing Stripe signature.",
+    };
+  }
+
+  if (!configResult.config.webhookSecret) {
+    return {
+      ok: false as const,
+      status: "not_configured" as const,
+      message: "Stripe webhook signing secret is not configured.",
+      missing: ["STRIPE_WEBHOOK_SECRET"],
+    };
+  }
+
+  const stripe = createStripeClient(configResult.config);
+
+  try {
+    return {
+      ok: true as const,
+      event: stripe.webhooks.constructEvent(
+        input.payload,
+        input.signature,
+        configResult.config.webhookSecret
+      ),
+    };
+  } catch (error) {
+    return {
+      ok: false as const,
+      status: "stripe_error" as const,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Unable to verify Stripe webhook signature.",
+    };
+  }
 }
 
 export async function syncSubscription(
   _input: SyncSubscriptionInput
-): Promise<StripeReadinessResult> {
-  return STRIPE_PLACEHOLDER_RESULT;
+): Promise<StripeFailureResult> {
+  return {
+    ok: false,
+    status: "not_configured",
+    message: "Subscription sync is handled by the Stripe webhook endpoint.",
+  };
 }

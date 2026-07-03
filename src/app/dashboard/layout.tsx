@@ -68,6 +68,13 @@ export default function DashboardLayout({
               >
                 Settings
               </Link>
+
+              <Link
+                href="/dashboard/billing"
+                className={navClass("/dashboard/billing")}
+              >
+                Billing
+              </Link>
             </nav>
           </div>
 
