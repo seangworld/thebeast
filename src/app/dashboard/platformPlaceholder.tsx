@@ -1,50 +1,60 @@
+import {
+  BeastBrandMark,
+  DashboardCard,
+  ModuleBadge,
+  SectionHeader,
+  type ModuleKey,
+} from "@/app/components/design/DashboardPrimitives";
+
 type PlatformPlaceholderPageProps = {
   title: string;
   description: string;
   examples: string[];
+  module?: ModuleKey;
 };
 
 export function PlatformPlaceholderPage({
   title,
   description,
   examples,
+  module = "beastos",
 }: PlatformPlaceholderPageProps) {
   return (
     <main className="beast-page">
       <div className="beast-container space-y-8">
         <section className="beast-page-header">
-          <div>
+          <div className="space-y-4">
+            <BeastBrandMark
+              module={module}
+              workspaceName={title}
+              subtitle="BeastOS Workspace"
+            />
             <p className="beast-kicker">BeastOS Shell</p>
             <h1 className="beast-title">{title}</h1>
             <p className="beast-subtitle">{description}</p>
           </div>
         </section>
 
-        <section className="beast-card">
+        <DashboardCard accent={module}>
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-            <div>
-              <h2 className="text-xl font-bold">Coming Soon</h2>
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-[#c7cfdb]">
-                This workspace is part of the BeastOS platform shell. Engines,
-                persistence, and automation will be added in a future sprint.
-              </p>
-            </div>
-            <div className="w-fit rounded border border-[#38bdf8]/40 bg-[#38bdf8]/10 px-3 py-1 text-sm font-semibold text-[#38bdf8]">
-              Shell Ready
-            </div>
+            <SectionHeader
+              title="Coming Soon"
+              description="This workspace is part of the BeastOS platform shell. Engines, persistence, and automation will be added in a future sprint."
+            />
+            <ModuleBadge module={module} label="Shell Ready" />
           </div>
 
           <div className="mt-5 grid gap-3 md:grid-cols-3">
             {examples.map((example) => (
               <div
                 key={example}
-                className="rounded-lg border border-[#2a3242] bg-[#111827] p-3 text-sm text-[#c7cfdb]"
+                className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 text-sm text-[#c7cfdb]"
               >
                 {example}
               </div>
             ))}
           </div>
-        </section>
+        </DashboardCard>
       </div>
     </main>
   );

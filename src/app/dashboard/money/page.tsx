@@ -15,6 +15,17 @@ import {
   MoneyTimeline,
   type MoneyTimelineItem,
 } from "@/app/dashboard/money/components/MoneyTimeline";
+import {
+  AlertCard,
+  BeastBrandMark,
+  DashboardCard,
+  HealthGauge,
+  MetricTile,
+  ModuleBadge,
+  QuickActionButton,
+  SectionHeader,
+  type DashboardAlertSeverity,
+} from "@/app/dashboard/money/components/MoneyDashboardUI";
 
 type MoneyDebt = {
   id: string;
@@ -81,15 +92,15 @@ const initialMoneyState: MoneyState = {
 };
 
 const quickActions = [
-  { label: "Add Bill", href: "/dashboard/money/cashflow" },
-  { label: "Add Debt", href: "/dashboard/money/debts" },
-  { label: "Add Income", href: "/dashboard/money/cashflow" },
-  { label: "Transfer", href: "/dashboard/money/cashflow" },
-  { label: "Make Payment", href: "/dashboard/money/cashflow" },
-  { label: "Go to Cash Flow", href: "/dashboard/money/cashflow" },
-  { label: "Go to Bills", href: "/dashboard/money/cashflow" },
-  { label: "Go to Debts", href: "/dashboard/money/debts" },
-  { label: "Go to Velocity", href: "/dashboard/money/velocity" },
+  { label: "Add Bill", href: "/dashboard/money/cashflow", icon: "B" },
+  { label: "Add Debt", href: "/dashboard/money/debts", icon: "D" },
+  { label: "Add Income", href: "/dashboard/money/cashflow", icon: "I" },
+  { label: "Transfer", href: "/dashboard/money/cashflow", icon: "T" },
+  { label: "Make Payment", href: "/dashboard/money/cashflow", icon: "P" },
+  { label: "Go to Cash Flow", href: "/dashboard/money/cashflow", icon: "CF" },
+  { label: "Go to Bills", href: "/dashboard/money/cashflow", icon: "BL" },
+  { label: "Go to Debts", href: "/dashboard/money/debts", icon: "DB" },
+  { label: "Go to Velocity", href: "/dashboard/money/velocity", icon: "V" },
 ];
 
 function numberValue(value: unknown) {
@@ -113,52 +124,6 @@ function formatDateLabel(date: Date) {
     month: "short",
     day: "numeric",
   });
-}
-
-function StatCard({
-  label,
-  value,
-  detail,
-}: {
-  label: string;
-  value: string;
-  detail: string;
-}) {
-  return (
-    <section className="beast-card">
-      <div className="text-sm font-semibold text-[#7f8da3]">{label}</div>
-      <div className="mt-3 text-3xl font-bold">{value}</div>
-      <p className="mt-2 text-sm leading-5 text-[#c7cfdb]">{detail}</p>
-    </section>
-  );
-}
-
-function HealthScore({ score }: { score: number }) {
-  return (
-    <section className="beast-card">
-      <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
-        <div>
-          <p className="beast-kicker">Financial Health Score</p>
-          <h2 className="mt-2 text-2xl font-bold">{score}/100</h2>
-          <p className="mt-2 max-w-xl text-sm leading-6 text-[#c7cfdb]">
-            A dashboard readiness signal based on current cash buffer, debt
-            load, tracked obligations, and utilization data.
-          </p>
-        </div>
-        <div className="relative h-32 w-32 shrink-0 rounded-full bg-[#111827] p-3">
-          <div
-            className="h-full w-full rounded-full"
-            style={{
-              background: `conic-gradient(#38bdf8 ${score * 3.6}deg, #2a3242 0deg)`,
-            }}
-          />
-          <div className="absolute inset-6 flex items-center justify-center rounded-full bg-[#1a1f2b] text-xl font-bold">
-            {score}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
 }
 
 export default function MoneyWorkspacePage() {
@@ -299,7 +264,11 @@ export default function MoneyWorkspacePage() {
   }, [state]);
 
   const alerts = useMemo(() => {
-    const results: { title: string; message: string; tone: string }[] = [];
+    const results: {
+      title: string;
+      message: string;
+      severity: DashboardAlertSeverity;
+    }[] = [];
 
     if (snapshot.billsDueSoon.length > 0) {
       results.push({
@@ -307,7 +276,7 @@ export default function MoneyWorkspacePage() {
         message: `${snapshot.billsDueSoon.length} bill${
           snapshot.billsDueSoon.length === 1 ? "" : "s"
         } due in the next 7 days.`,
-        tone: "border-yellow-300/40 bg-yellow-300/10 text-yellow-100",
+        severity: "warning",
       });
     }
 
@@ -315,7 +284,7 @@ export default function MoneyWorkspacePage() {
       results.push({
         title: "Buffer warning",
         message: "Starting cash is below the configured checking buffer.",
-        tone: "border-red-400/40 bg-red-400/10 text-red-100",
+        severity: "critical",
       });
     }
 
@@ -323,7 +292,7 @@ export default function MoneyWorkspacePage() {
       results.push({
         title: "High utilization",
         message: "Tracked credit utilization is above 75%.",
-        tone: "border-red-400/40 bg-red-400/10 text-red-100",
+        severity: "critical",
       });
     }
 
@@ -331,7 +300,7 @@ export default function MoneyWorkspacePage() {
       results.push({
         title: "Low cash warning",
         message: "Known monthly outflow is higher than tracked monthly income.",
-        tone: "border-red-400/40 bg-red-400/10 text-red-100",
+        severity: "critical",
       });
     }
 
@@ -339,7 +308,7 @@ export default function MoneyWorkspacePage() {
       results.push({
         title: "No critical alerts",
         message: "Current Money records do not show an urgent dashboard alert.",
-        tone: "border-green-400/40 bg-green-400/10 text-green-100",
+        severity: "info",
       });
     }
 
@@ -354,6 +323,7 @@ export default function MoneyWorkspacePage() {
 
       return {
         id: `bill-${bill.id}`,
+        date: date.toISOString(),
         dateLabel: formatDateLabel(date),
         title: bill.name || "Upcoming bill",
         amountLabel: formatCurrency(numberValue(bill.amount)),
@@ -366,15 +336,17 @@ export default function MoneyWorkspacePage() {
 
       return {
         id: `income-${income.id}`,
+        date: date.toISOString(),
         dateLabel: formatDateLabel(date),
         title: income.name || "Upcoming income",
         amountLabel: formatCurrency(numberValue(income.amount)),
-        type: "income" as const,
+        type: "payday" as const,
         href: "/dashboard/money/cashflow",
       };
     });
     const debtItems = snapshot.activeDebts.slice(0, 4).map((debt) => ({
       id: `debt-${debt.id}`,
+      date: nextDueDateFromDay(debt.due_date).toISOString(),
       dateLabel: formatDateLabel(nextDueDateFromDay(debt.due_date)),
       title: `${debt.name || "Debt"} payment`,
       amountLabel: formatCurrency(numberValue(debt.minimum_payment)),
@@ -399,8 +371,13 @@ export default function MoneyWorkspacePage() {
       <div className="beast-container space-y-8">
         <section className="beast-page-header">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <p className="beast-kicker">BeastMoney</p>
+            <div className="space-y-4">
+              <BeastBrandMark
+                module="money"
+                workspaceName="BeastMoney"
+                subtitle="Money Workspace"
+              />
+              <ModuleBadge module="money" label="Module #1" />
               <h1 className="beast-title">Money Cockpit</h1>
               <p className="beast-subtitle">
                 A professional financial workspace for cash timing, debt payoff,
@@ -419,152 +396,223 @@ export default function MoneyWorkspacePage() {
         </section>
 
         {loading ? (
-          <section className="beast-card">
-            <p className="text-sm text-[#7f8da3]">Loading Money cockpit...</p>
-          </section>
+          <DashboardCard>
+            <div className="flex animate-pulse flex-col gap-3">
+              <div className="h-4 w-40 rounded bg-[#2a3242]" />
+              <div className="h-8 w-72 max-w-full rounded bg-[#2a3242]" />
+              <div className="h-4 w-full max-w-xl rounded bg-[#2a3242]" />
+            </div>
+          </DashboardCard>
         ) : null}
 
-        <section className="grid gap-4 xl:grid-cols-[1.3fr_0.7fr]">
-          <HealthScore score={snapshot.healthScore} />
-          <section className="beast-card">
-            <p className="beast-kicker">Recommended Next Action</p>
-            <h2 className="mt-2 text-2xl font-bold">{recommendedAction}</h2>
-            <p className="mt-3 text-sm leading-6 text-[#c7cfdb]">
-              This is a dashboard-level recommendation using current Money
-              records. Deeper AI guidance will plug into this panel in v2.2.
-            </p>
-          </section>
+        <section className="space-y-4">
+          <SectionHeader
+            eyebrow="Financial Snapshot"
+            title="Command view"
+            description="The high-signal summary of your current Money posture."
+          />
+          <div className="grid gap-4 xl:grid-cols-[1.25fr_0.75fr]">
+            <HealthGauge score={snapshot.healthScore} />
+            <DashboardCard accent="purple" className="min-h-[270px]">
+              <div className="flex h-full flex-col justify-between gap-5">
+                <div>
+                  <p className="beast-kicker">Recommended Next Action</p>
+                  <h2 className="mt-2 text-2xl font-black leading-tight">
+                    {recommendedAction}
+                  </h2>
+                </div>
+                <p className="text-sm leading-6 text-[#c7cfdb]">
+                  This dashboard-level recommendation uses current Money
+                  records. Deeper AI guidance will plug into this panel in v2.2.
+                </p>
+              </div>
+            </DashboardCard>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <MetricTile
+              icon="$"
+              tone="green"
+              label="Cash Position"
+              value={formatCurrency(snapshot.startingCash)}
+              detail={`Configured buffer: ${formatCurrency(snapshot.buffer)}`}
+            />
+            <MetricTile
+              icon="B"
+              tone="yellow"
+              label="Upcoming Bills"
+              value={formatCurrency(snapshot.monthlyBills)}
+              detail={`${snapshot.activeBills.length} active bill records`}
+            />
+            <MetricTile
+              icon="I"
+              tone="blue"
+              label="Upcoming Income"
+              value={formatCurrency(snapshot.monthlyIncome)}
+              detail={`${state.incomes.length} tracked income sources`}
+            />
+            <MetricTile
+              icon="D"
+              tone="red"
+              label="Active Debt Summary"
+              value={formatCurrency(snapshot.totalDebt)}
+              detail={`${snapshot.activeDebts.length} active debts, ${formatCurrency(
+                snapshot.debtMinimums
+              )} minimums`}
+            />
+          </div>
         </section>
 
-        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <StatCard
-            label="Cash Position"
-            value={formatCurrency(snapshot.startingCash)}
-            detail={`Configured buffer: ${formatCurrency(snapshot.buffer)}`}
+        <section className="space-y-4">
+          <SectionHeader
+            eyebrow="Trends"
+            title="Financial motion"
+            description="Current-value charts that are ready for historical trend data when it becomes available."
           />
-          <StatCard
-            label="Upcoming Bills"
-            value={formatCurrency(snapshot.monthlyBills)}
-            detail={`${snapshot.activeBills.length} active bill records`}
-          />
-          <StatCard
-            label="Upcoming Income"
-            value={formatCurrency(snapshot.monthlyIncome)}
-            detail={`${state.incomes.length} tracked income sources`}
-          />
-          <StatCard
-            label="Active Debt Summary"
-            value={formatCurrency(snapshot.totalDebt)}
-            detail={`${snapshot.activeDebts.length} active debts, ${formatCurrency(
-              snapshot.debtMinimums
-            )} minimums`}
-          />
-        </section>
+          <div className="grid gap-4 xl:grid-cols-5">
+            <div className="xl:col-span-3">
+              <CashFlowTrendChart
+                data={[
+                  { name: "Cash", value: snapshot.startingCash },
+                  { name: "Income", value: snapshot.monthlyIncome },
+                  { name: "Bills", value: snapshot.monthlyBills },
+                  { name: "Debt Min", value: snapshot.debtMinimums },
+                ]}
+              />
+            </div>
+            <div className="xl:col-span-2">
+              <DebtPayoffProgressChart remainingDebt={snapshot.totalDebt} />
+            </div>
+          </div>
 
-        <section className="grid gap-4 xl:grid-cols-5">
-          <div className="xl:col-span-3">
-            <CashFlowTrendChart
+          <div className="grid gap-4 lg:grid-cols-3">
+            <IncomeVsExpensesChart
               data={[
-                { name: "Cash", value: snapshot.startingCash },
                 { name: "Income", value: snapshot.monthlyIncome },
                 { name: "Bills", value: snapshot.monthlyBills },
-                { name: "Debt Min", value: snapshot.debtMinimums },
+                { name: "Debt", value: snapshot.debtMinimums },
+                { name: "Extra", value: snapshot.extraPayment },
+              ]}
+            />
+            <CreditUtilizationChart
+              used={snapshot.creditUsed}
+              available={snapshot.creditAvailable}
+            />
+            <MonthlySpendingOverviewChart
+              data={[
+                { name: "Bills", value: snapshot.monthlyBills },
+                { name: "Debt Minimums", value: snapshot.debtMinimums },
+                { name: "Extra Attack", value: snapshot.extraPayment },
               ]}
             />
           </div>
-          <div className="xl:col-span-2">
-            <DebtPayoffProgressChart remainingDebt={snapshot.totalDebt} />
-          </div>
-        </section>
-
-        <section className="grid gap-4 lg:grid-cols-3">
-          <IncomeVsExpensesChart
-            data={[
-              { name: "Income", value: snapshot.monthlyIncome },
-              { name: "Bills", value: snapshot.monthlyBills },
-              { name: "Debt", value: snapshot.debtMinimums },
-              { name: "Extra", value: snapshot.extraPayment },
-            ]}
-          />
-          <CreditUtilizationChart
-            used={snapshot.creditUsed}
-            available={snapshot.creditAvailable}
-          />
-          <MonthlySpendingOverviewChart
-            data={[
-              { name: "Bills", value: snapshot.monthlyBills },
-              { name: "Debt Minimums", value: snapshot.debtMinimums },
-              { name: "Extra Attack", value: snapshot.extraPayment },
-            ]}
-          />
         </section>
 
         <section className="grid gap-4 xl:grid-cols-[1fr_0.85fr]">
-          <MoneyTimeline items={timelineItems} />
+          <div className="space-y-4">
+            <SectionHeader
+              eyebrow="Timeline"
+              title="Money calendar"
+              description="A grouped view of near-term financial events."
+            />
+            <MoneyTimeline items={timelineItems} />
+          </div>
 
-          <section className="beast-card">
-            <h2 className="text-xl font-bold">Alerts</h2>
-            <p className="mt-1 text-sm text-[#7f8da3]">
-              Operational money alerts from current records.
-            </p>
-            <div className="mt-5 space-y-3">
-              {alerts.map((alert) => (
-                <div
-                  key={alert.title}
-                  className={`rounded-lg border p-4 ${alert.tone}`}
-                >
-                  <div className="font-semibold">{alert.title}</div>
-                  <p className="mt-1 text-sm opacity-90">{alert.message}</p>
-                </div>
-              ))}
-            </div>
-          </section>
+          <div className="space-y-4">
+            <SectionHeader
+              eyebrow="Alerts"
+              title="Risk signals"
+              description="Severity-coded signals from current records."
+            />
+            <DashboardCard accent="red">
+              <div className="space-y-3">
+                {alerts.map((alert) => (
+                  <AlertCard
+                    key={alert.title}
+                    severity={alert.severity}
+                    title={alert.title}
+                    message={alert.message}
+                  />
+                ))}
+              </div>
+            </DashboardCard>
+          </div>
         </section>
 
         <section className="grid gap-4 xl:grid-cols-[0.85fr_1fr]">
-          <section className="beast-card">
-            <p className="beast-kicker">AI Recommendations</p>
-            <h2 className="mt-2 text-xl font-bold">Placeholder Advisor Panel</h2>
-            <div className="mt-5 grid gap-3 text-sm">
-              <div className="rounded-lg border border-[#2a3242] bg-[#111827] p-3">
-                <span className="font-semibold text-[#7f8da3]">Recommended action: </span>
-                {recommendedAction}
+          <div className="space-y-4">
+            <SectionHeader
+              eyebrow="Recommendations"
+              title="Advisor preview"
+              description="Placeholder language reserved for future AI explanations."
+            />
+            <DashboardCard accent="purple">
+              <div className="grid gap-3 text-sm">
+                <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+                  <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                    Priority
+                  </div>
+                  <div className="mt-1 font-bold text-white">
+                    {alerts.some((alert) => alert.title !== "No critical alerts")
+                      ? "Review Today"
+                      : "Maintain"}
+                  </div>
+                </div>
+                <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+                  <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                    Recommendation
+                  </div>
+                  <div className="mt-1 text-[#dbe3ef]">{recommendedAction}</div>
+                </div>
+                <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+                  <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                    Estimated Benefit
+                  </div>
+                  <div className="mt-1 text-[#dbe3ef]">
+                    Reserved for future AI savings explanations.
+                  </div>
+                </div>
+                <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+                  <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                    Reason
+                  </div>
+                  <div className="mt-1 text-[#dbe3ef]">
+                    Uses current Money records without generating new financial
+                    projections.
+                  </div>
+                </div>
+                <div className="rounded-xl border border-dashed border-[#2a3242] bg-[#0f1419] p-4 text-[#7f8da3]">
+                  <div className="text-xs font-bold uppercase">
+                    AI Confidence
+                  </div>
+                  <div className="mt-1 text-sm">
+                    Reserved for the future recommendation engine.
+                  </div>
+                </div>
               </div>
-              <div className="rounded-lg border border-[#2a3242] bg-[#111827] p-3">
-                <span className="font-semibold text-[#7f8da3]">Estimated savings: </span>
-                Connects to future AI explanation layer.
-              </div>
-              <div className="rounded-lg border border-[#2a3242] bg-[#111827] p-3">
-                <span className="font-semibold text-[#7f8da3]">Priority: </span>
-                {alerts.some((alert) => alert.title !== "No critical alerts")
-                  ? "Review Today"
-                  : "Maintain"}
-              </div>
-              <div className="rounded-lg border border-[#2a3242] bg-[#111827] p-3">
-                <span className="font-semibold text-[#7f8da3]">Reason: </span>
-                Uses current Money records without generating new financial
-                projections.
-              </div>
-            </div>
-          </section>
+            </DashboardCard>
+          </div>
 
-          <section className="beast-card">
-            <h2 className="text-xl font-bold">Quick Actions</h2>
-            <p className="mt-1 text-sm text-[#7f8da3]">
-              Jump into the existing Money workflows.
-            </p>
-            <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {quickActions.map((action, index) => (
-                <Link
-                  key={action.label}
-                  href={action.href}
-                  className={index < 5 ? "beast-button" : "beast-button-secondary"}
-                >
-                  {action.label}
-                </Link>
-              ))}
-            </div>
-          </section>
+          <div className="space-y-4">
+            <SectionHeader
+              eyebrow="Quick Actions"
+              title="Launch pad"
+              description="Fast entry into existing Money workflows."
+            />
+            <DashboardCard>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {quickActions.map((action, index) => (
+                  <QuickActionButton
+                    key={action.label}
+                    href={action.href}
+                    label={action.label}
+                    icon={action.icon}
+                    primary={index < 5}
+                  />
+                ))}
+              </div>
+            </DashboardCard>
+          </div>
         </section>
       </div>
     </main>

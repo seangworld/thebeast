@@ -7,19 +7,19 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://thebeast.seangworld.com"),
   title: "The Beast",
   description:
-    "A financial execution system for paycheck planning, debt payoff, bill tracking, and cashflow control.",
+    "BeastOS is a platform shell for money, planning, and future life operations modules.",
   openGraph: {
     title: "The Beast",
     description:
-      "A financial execution system for paycheck planning, debt payoff, bill tracking, and cashflow control.",
+      "BeastOS is a platform shell for money, planning, and future life operations modules.",
     url: "https://thebeast.seangworld.com",
     siteName: "The Beast",
     images: [
       {
-        url: "/beast-logo-banner.png",
+        url: "/beast-logo-square.png",
         width: 1200,
-        height: 630,
-        alt: "The Beast financial execution system",
+        height: 1200,
+        alt: "BeastOS icon",
       },
     ],
     locale: "en_US",
@@ -29,8 +29,8 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "The Beast",
     description:
-      "A financial execution system for paycheck planning, debt payoff, bill tracking, and cashflow control.",
-    images: ["/beast-logo-banner.png"],
+      "BeastOS is a platform shell for money, planning, and future life operations modules.",
+    images: ["/beast-logo-square.png"],
   },
 };
 
