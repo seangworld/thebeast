@@ -10,6 +10,7 @@ import {
 } from "@/app/components/design/DashboardPrimitives";
 import { buildLearningAchievementUnlocks } from "@/lib/learning/achievements";
 import { mockLearningCertificates } from "@/lib/learning/certificates";
+import { buildLearningIntelligenceSnapshot } from "@/lib/learning/intelligenceEngine";
 import { buildLearnerPortfolio } from "@/lib/learning/portfolio";
 import { buildLearningFoundationIntelligence } from "@/lib/platform/recommendationEngine";
 import BetaFeedbackPanel from "./BetaFeedbackPanel";
@@ -24,6 +25,7 @@ import {
   UploadFoundationPanel,
 } from "./LearningFoundationPanels";
 import LearningGoalBuilder from "./LearningGoalBuilder";
+import LearningIntelligencePanel from "./LearningIntelligencePanel";
 import LearningPathTemplates from "./LearningPathTemplates";
 import StudySessionCommandCard from "./StudySessionCommandCard";
 import { mockParentDashboard } from "@/lib/learning/parentDashboard";
@@ -242,6 +244,10 @@ export default function LearningPage() {
       activeGoalsCount: progressSignals.activeGoalsCount,
       currentFocus: mockStudySessionCommand.currentFocus,
     });
+  const learningIntelligence = buildLearningIntelligenceSnapshot({
+    goals: mockLearningGoals,
+    weeklyStudyMinutes: progressSignals.estimatedWeeklyStudyMinutes,
+  });
   const achievementUnlocks = buildLearningAchievementUnlocks({
     progress: progressSignals,
     goalsCreated: mockLearningGoals.length,
@@ -354,6 +360,8 @@ export default function LearningPage() {
         </section>
 
         <StudySessionCommandCard session={mockStudySessionCommand} />
+
+        <LearningIntelligencePanel snapshot={learningIntelligence} />
 
         <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
           <DashboardCard accent="learning">

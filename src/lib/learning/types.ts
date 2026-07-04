@@ -349,3 +349,157 @@ export type LearningFeedbackItem = {
   context?: string;
   submittedAt: string;
 };
+
+export type MasteryLevel = "unseen" | "introduced" | "practicing" | "proficient" | "mastered";
+
+export type LearningSkill = {
+  id: string;
+  name: string;
+  relatedSkillIds: string[];
+};
+
+export type LearningConcept = {
+  id: string;
+  name: string;
+  skillId: string;
+  topicId: string;
+  prerequisiteIds: string[];
+};
+
+export type LearningTopic = {
+  id: string;
+  name: string;
+  description: string;
+};
+
+export type LearningObjective = {
+  id: string;
+  conceptId: string;
+  objective: string;
+};
+
+export type LearningDependency = {
+  fromConceptId: string;
+  toConceptId: string;
+  type: "prerequisite";
+};
+
+export type LearningResourceType =
+  | "video"
+  | "article"
+  | "book"
+  | "exercise"
+  | "project"
+  | "practice test"
+  | "external site";
+
+export type LearningResource = {
+  id: string;
+  title: string;
+  type: LearningResourceType;
+  conceptId: string;
+  level: MasteryLevel;
+  urlPlaceholder: string;
+};
+
+export type KnowledgeGraphNode = {
+  id: string;
+  label: string;
+  kind: "skill" | "concept" | "topic" | "objective";
+  prerequisiteIds: string[];
+};
+
+export type LearningKnowledgeModel = {
+  skills: LearningSkill[];
+  concepts: LearningConcept[];
+  topics: LearningTopic[];
+  objectives: LearningObjective[];
+  dependencies: LearningDependency[];
+  resources: LearningResource[];
+  nodes: KnowledgeGraphNode[];
+};
+
+export type ConceptMasteryInput = {
+  conceptId: string;
+  completedSessions: number;
+  completedGoals: number;
+  completedMilestones: number;
+  quizzesPlaceholder: number;
+  practicePlaceholder: number;
+  studyStreakDays: number;
+  lastStudiedDaysAgo: number;
+};
+
+export type ConceptMastery = {
+  conceptId: string;
+  masteryPercent: number;
+  confidence: "low" | "medium" | "high";
+};
+
+export type MasteryProfile = {
+  overallMasteryPercent: number;
+  confidence: "low" | "medium" | "high";
+  concepts: ConceptMastery[];
+  weakConcepts: string[];
+  strongestConcepts: string[];
+  suggestedReviewTopics: string[];
+};
+
+export type DependencyGraphResult = {
+  blockedConcepts: string[];
+  unlockedConcepts: string[];
+  suggestedSequence: string[];
+  visualizationNodes: { id: string; label: string; status: "completed" | "blocked" | "available" }[];
+  visualizationEdges: { from: string; to: string }[];
+};
+
+export type LearningMemory = {
+  recentlyStudied: string[];
+  recentlyMastered: string[];
+  frequentlyMissed: string[];
+  favoriteSubjects: string[];
+  preferredSessionLength: string;
+  learningPace: string;
+  studyHistory: { date: string; conceptId: string; minutes: number }[];
+};
+
+export type WeaknessAnalysis = {
+  neglectedTopics: string[];
+  repeatedReviewNeeds: string[];
+  lowMasteryConcepts: string[];
+  slowProgressConcepts: string[];
+  inconsistentStudyHabits: boolean;
+  improvementSuggestions: string[];
+};
+
+export type AdaptivePlan = {
+  updatedMilestones: string[];
+  reorderedSessions: string[];
+  reviewSessions: string[];
+  nextRecommendedLesson: string;
+  estimatedCompletion: string;
+};
+
+export type GeneratedStudySessionPlan = {
+  conceptId: string;
+  estimatedTime: string;
+  warmUp: string;
+  review: string;
+  newLearning: string;
+  practice: string;
+  reflection: string;
+  confidenceCheck: string;
+};
+
+export type ResourceRecommendationResult = {
+  conceptId: string;
+  resources: LearningResource[];
+};
+
+export type ProgressPrediction = {
+  estimatedCompletionDate: string;
+  likelihoodOfSuccess: number;
+  readiness: number;
+  scheduleHealth: "strong" | "steady" | "at-risk";
+  studyConsistency: number;
+};

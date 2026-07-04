@@ -54,10 +54,16 @@ import {
   buildLearningAchievementUnlocks,
   learningAchievementCatalog,
 } from "../src/lib/learning/achievements";
+import { buildAdaptiveLearningPlan } from "../src/lib/learning/adaptivePlanner";
 import {
   generateLearningCertificateId,
   mockLearningCertificates,
 } from "../src/lib/learning/certificates";
+import { buildDependencyGraphState } from "../src/lib/learning/dependencyGraph";
+import { buildLearningIntelligenceSnapshot } from "../src/lib/learning/intelligenceEngine";
+import { mockLearningKnowledgeModel } from "../src/lib/learning/knowledgeGraph";
+import { mockLearningMemory } from "../src/lib/learning/learningMemory";
+import { calculateMasteryProfile } from "../src/lib/learning/mastery";
 import {
   mockLearners,
   mockLearningAchievements,
@@ -73,12 +79,16 @@ import { buildGuidanceCounselorRoadmap } from "../src/lib/learning/guidanceCouns
 import { mockParentDashboard } from "../src/lib/learning/parentDashboard";
 import { generateLearningPlan } from "../src/lib/learning/planGenerator";
 import { buildLearnerPortfolio } from "../src/lib/learning/portfolio";
+import { predictLearningProgress } from "../src/lib/learning/prediction";
 import { buildLearningProgressSignals } from "../src/lib/learning/progressSignals";
 import { buildLearningRecommendations } from "../src/lib/learning/recommendations";
+import { recommendLearningResources } from "../src/lib/learning/resourceEngine";
+import { generateStudySession } from "../src/lib/learning/sessionGenerator";
 import { learningSpecialists, routeMockLearningSpecialist } from "../src/lib/learning/specialists";
 import { mockStudyPlanner } from "../src/lib/learning/studyPlanner";
 import { learningPathTemplates } from "../src/lib/learning/templates";
 import { mockLearningUploads } from "../src/lib/learning/uploads";
+import { analyzeLearningWeaknesses } from "../src/lib/learning/weaknessAnalysis";
 import {
   buildBeastOSIntelligence,
   buildLearningFoundationIntelligence,
@@ -481,6 +491,196 @@ test("learning foundation completion engines expose static platform data", () =>
     ]
   );
   assert.equal(routeMockLearningSpecialist("Tutor").status, "mocked-preview");
+});
+
+test("learning knowledge model includes a prerequisite graph", () => {
+  assert.equal(
+    mockLearningKnowledgeModel.concepts.some(
+      (concept) =>
+        concept.id === "calculus" &&
+        concept.prerequisiteIds.includes("functions")
+    ),
+    true
+  );
+  assert.equal(
+    mockLearningKnowledgeModel.dependencies.some(
+      (dependency) =>
+        dependency.fromConceptId === "linear-equations" &&
+        dependency.toConceptId === "quadratic-equations"
+    ),
+    true
+  );
+  assert.equal(mockLearningKnowledgeModel.nodes.length > 0, true);
+});
+
+test("learning mastery engine weights more than completion alone", () => {
+  const mastery = calculateMasteryProfile([
+    {
+      conceptId: "confident-topic",
+      completedSessions: 5,
+      completedGoals: 1,
+      completedMilestones: 2,
+      quizzesPlaceholder: 2,
+      practicePlaceholder: 4,
+      studyStreakDays: 7,
+      lastStudiedDaysAgo: 0,
+    },
+    {
+      conceptId: "stale-topic",
+      completedSessions: 1,
+      completedGoals: 0,
+      completedMilestones: 0,
+      quizzesPlaceholder: 0,
+      practicePlaceholder: 0,
+      studyStreakDays: 0,
+      lastStudiedDaysAgo: 10,
+    },
+  ]);
+
+  assert.equal(mastery.strongestConcepts.includes("confident-topic"), true);
+  assert.equal(mastery.weakConcepts.includes("stale-topic"), true);
+  assert.notEqual(
+    mastery.concepts.find((concept) => concept.conceptId === "confident-topic")
+      ?.masteryPercent,
+    mastery.concepts.find((concept) => concept.conceptId === "stale-topic")
+      ?.masteryPercent
+  );
+});
+
+test("learning dependency graph computes blocked and unlocked concepts", () => {
+  const graph = buildDependencyGraphState({
+    model: mockLearningKnowledgeModel,
+    completedConceptIds: ["linear-equations", "identity-verification"],
+  });
+
+  assert.equal(graph.unlockedConcepts.includes("quadratic-equations"), true);
+  assert.equal(graph.unlockedConcepts.includes("role-based-access"), true);
+  assert.equal(graph.blockedConcepts.includes("functions"), true);
+  assert.equal(graph.blockedConcepts.includes("calculus"), true);
+  assert.equal(graph.visualizationEdges.length, mockLearningKnowledgeModel.dependencies.length);
+});
+
+test("learning weakness analysis identifies review needs", () => {
+  const mastery = calculateMasteryProfile([
+    {
+      conceptId: "quadratic-equations",
+      completedSessions: 1,
+      completedGoals: 0,
+      completedMilestones: 0,
+      quizzesPlaceholder: 0,
+      practicePlaceholder: 1,
+      studyStreakDays: 2,
+      lastStudiedDaysAgo: 6,
+    },
+    {
+      conceptId: "identity-verification",
+      completedSessions: 4,
+      completedGoals: 1,
+      completedMilestones: 2,
+      quizzesPlaceholder: 1,
+      practicePlaceholder: 2,
+      studyStreakDays: 7,
+      lastStudiedDaysAgo: 1,
+    },
+  ]);
+  const weakness = analyzeLearningWeaknesses({
+    mastery,
+    memory: mockLearningMemory,
+  });
+
+  assert.equal(weakness.lowMasteryConcepts.includes("quadratic-equations"), true);
+  assert.equal(
+    weakness.repeatedReviewNeeds.includes(mockLearningMemory.frequentlyMissed[0]),
+    true
+  );
+  assert.equal(weakness.improvementSuggestions.length > 0, true);
+});
+
+test("learning adaptive planner prioritizes review before new work", () => {
+  const snapshot = buildLearningIntelligenceSnapshot({
+    goals: mockLearningGoals,
+    weeklyStudyMinutes: 80,
+  });
+
+  assert.equal(
+    snapshot.adaptivePlan.nextRecommendedLesson,
+    snapshot.weakness.lowMasteryConcepts[0]
+  );
+  assert.deepEqual(
+    snapshot.adaptivePlan.reviewSessions,
+    mockLearningMemory.frequentlyMissed.slice(0, 3)
+  );
+  assert.equal(snapshot.adaptivePlan.updatedMilestones.length, 3);
+
+  const customPlan = buildAdaptiveLearningPlan({
+    goals: mockLearningGoals,
+    mastery: snapshot.mastery,
+    memory: mockLearningMemory,
+    weakness: snapshot.weakness,
+    availableStudyMinutes: 120,
+    learningPace: mockLearningMemory.learningPace,
+    completedWorkCount: 4,
+  });
+
+  assert.equal(customPlan.estimatedCompletion, "4-6 weeks");
+});
+
+test("learning study session generator creates a six-stage session", () => {
+  const snapshot = buildLearningIntelligenceSnapshot({
+    goals: mockLearningGoals,
+    weeklyStudyMinutes: 80,
+  });
+  const session = generateStudySession({
+    mastery: snapshot.mastery,
+    weakness: snapshot.weakness,
+    availableMinutes: 45,
+  });
+
+  assert.equal(session.estimatedTime, "45 min");
+  assert.equal(Boolean(session.warmUp), true);
+  assert.equal(Boolean(session.review), true);
+  assert.equal(Boolean(session.newLearning), true);
+  assert.equal(Boolean(session.practice), true);
+  assert.equal(Boolean(session.reflection), true);
+  assert.equal(Boolean(session.confidenceCheck), true);
+});
+
+test("learning resource engine recommends resources from weak concepts", () => {
+  const snapshot = buildLearningIntelligenceSnapshot({
+    goals: mockLearningGoals,
+    weeklyStudyMinutes: 80,
+  });
+  const resources = recommendLearningResources({
+    model: mockLearningKnowledgeModel,
+    mastery: snapshot.mastery,
+    goals: mockLearningGoals,
+    currentTopicId: "security-foundations",
+  });
+
+  assert.equal(resources.conceptId, snapshot.mastery.weakConcepts[0]);
+  assert.equal(resources.resources.length > 0, true);
+  assert.equal(
+    resources.resources.some((resource) => resource.type === "external site"),
+    true
+  );
+});
+
+test("learning progress prediction estimates readiness and schedule health", () => {
+  const snapshot = buildLearningIntelligenceSnapshot({
+    goals: mockLearningGoals,
+    weeklyStudyMinutes: 80,
+  });
+  const prediction = predictLearningProgress({
+    mastery: snapshot.mastery,
+    memory: mockLearningMemory,
+    weeklyStudyMinutes: 100,
+    now: new Date("2026-07-03T12:00:00.000Z"),
+  });
+
+  assert.equal(prediction.scheduleHealth, "strong");
+  assert.equal(prediction.estimatedCompletionDate >= "2026-07-10", true);
+  assert.equal(prediction.readiness > 0, true);
+  assert.equal(prediction.likelihoodOfSuccess > 0, true);
 });
 
 test("learning plan generator creates deterministic starter plans", () => {
