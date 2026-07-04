@@ -8,6 +8,16 @@ const releaseNotes = [
   {
     version: `BeastLearning ${BEAST_LEARNING_VERSION}`,
     date: "July 4, 2026",
+    title: "Learning Experience",
+    items: [
+      "Added the BeastLearning LX layer with first-time onboarding, daily mission, focus mode, learning journeys, achievement polish, certificate experience, motivation, study habits, learner insights, gamification, accessibility placeholders, learner profile expansion, parent polish, and beta experience surfaces.",
+      "Redesigned the top of the Learning dashboard around the next best learning action so learners can immediately answer what to do next.",
+      "Kept v0.5 deterministic and client-side with no OpenAI, OCR, embeddings, vector search, document parsing, Supabase persistence, database schema changes, external APIs, finance changes, Stripe changes, membership changes, or entitlement changes.",
+    ],
+  },
+  {
+    version: "BeastLearning v0.4 Content & Study Intelligence",
+    date: "July 4, 2026",
     title: "Content & Study Intelligence",
     items: [
       "Added typed Learning Library, subject organization, course builder, lesson model, flashcard engine, quiz engine, practice exam framework, study guide engine, spaced repetition schedule, notes, bookmarks, collections, search, and dashboard content aggregation.",

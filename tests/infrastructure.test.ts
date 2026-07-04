@@ -70,13 +70,22 @@ import {
 } from "../src/lib/learning/courses";
 import { buildLearningDashboardContent } from "../src/lib/learning/dashboardContent";
 import { buildDependencyGraphState } from "../src/lib/learning/dependencyGraph";
+import { buildLearningExperienceDashboard } from "../src/lib/learning/experience";
 import { getDueFlashcards, learningFlashcards } from "../src/lib/learning/flashcards";
+import {
+  buildGamificationProfile,
+  calculateLearningLevel,
+  calculateNextLevelXp,
+} from "../src/lib/learning/gamification";
 import { buildLearningIntelligenceSnapshot } from "../src/lib/learning/intelligenceEngine";
+import { buildLearnerInsights } from "../src/lib/learning/insights";
+import { buildLearningJourneys } from "../src/lib/learning/journeys";
 import { mockLearningKnowledgeModel } from "../src/lib/learning/knowledgeGraph";
 import { mockLearningMemory } from "../src/lib/learning/learningMemory";
 import { learningLessons } from "../src/lib/learning/lessons";
 import { learningLibraryMaterials } from "../src/lib/learning/library";
 import { calculateMasteryProfile } from "../src/lib/learning/mastery";
+import { buildMotivationSnapshot } from "../src/lib/learning/motivation";
 import {
   mockLearners,
   mockLearningAchievements,
@@ -90,6 +99,7 @@ import {
 } from "../src/lib/learning/mockData";
 import { buildGuidanceCounselorRoadmap } from "../src/lib/learning/guidanceCounselor";
 import { learnerNotes } from "../src/lib/learning/notes";
+import { learningOnboardingSteps } from "../src/lib/learning/onboarding";
 import { mockParentDashboard } from "../src/lib/learning/parentDashboard";
 import { generateLearningPlan } from "../src/lib/learning/planGenerator";
 import { buildLearnerPortfolio } from "../src/lib/learning/portfolio";
@@ -109,6 +119,7 @@ import {
   buildSpacedRepetitionSchedule,
   getFlashcardsDueForReview,
 } from "../src/lib/learning/spacedRepetition";
+import { buildStudyHabitsSnapshot } from "../src/lib/learning/studyHabits";
 import { mockStudyPlanner } from "../src/lib/learning/studyPlanner";
 import { learningStudyGuides } from "../src/lib/learning/studyGuides";
 import { learningSubjects } from "../src/lib/learning/subjects";
@@ -850,6 +861,120 @@ test("learning dashboard content aggregates v0.4 study surfaces", () => {
   assert.equal(content.bookmarkedItems.length, 3);
   assert.equal(content.studyCollections.length, learningResourceCollections.length);
   assert.equal(content.courseProgress.length, builtLearningCourses.length);
+});
+
+test("learning onboarding models the full first-time experience", () => {
+  assert.deepEqual(
+    learningOnboardingSteps.map((step) => step.id),
+    [
+      "welcome",
+      "future-self",
+      "interests",
+      "education-level",
+      "learning-style",
+      "study-availability",
+      "preferred-pace",
+      "initial-goals",
+      "starter-dashboard",
+    ]
+  );
+  assert.equal(learningOnboardingSteps.every((step) => step.title && step.prompt), true);
+  assert.equal(learningOnboardingSteps.at(-1)?.skippable, false);
+});
+
+test("learning gamification calculates XP levels and goals", () => {
+  const progress = buildLearningProgressSignals({
+    goals: mockLearningGoals,
+    courses: mockLearningCourses,
+    plan: mockLearningPlan,
+    sessions: mockLearningSessions,
+    achievements: mockLearningAchievements,
+    studySession: mockStudySessionCommand,
+  });
+  const gamification = buildGamificationProfile({
+    progress,
+    masteredConcepts: 2,
+  });
+
+  assert.equal(calculateLearningLevel(0), 1);
+  assert.equal(calculateLearningLevel(500), 2);
+  assert.equal(calculateNextLevelXp(3), 1500);
+  assert.equal(gamification.xp > 0, true);
+  assert.equal(gamification.skillLevels.length, 3);
+  assert.equal(gamification.dailyGoal.includes("focused"), true);
+});
+
+test("learning motivation habits and insights are rule-based", () => {
+  const progress = buildLearningProgressSignals({
+    goals: mockLearningGoals,
+    courses: mockLearningCourses,
+    plan: mockLearningPlan,
+    sessions: mockLearningSessions,
+    achievements: mockLearningAchievements,
+    studySession: mockStudySessionCommand,
+  });
+  const habits = buildStudyHabitsSnapshot();
+  const gamification = buildGamificationProfile({
+    progress,
+    masteredConcepts: 1,
+  });
+  const motivation = buildMotivationSnapshot({ progress, habits });
+  const insights = buildLearnerInsights({ progress, habits, gamification });
+
+  assert.equal(habits.averageSessionLength.endsWith("min"), true);
+  assert.equal(habits.consistency, 60);
+  assert.equal(motivation.dailyEncouragement.includes(progress.weakArea), true);
+  assert.equal(insights.length, 4);
+  assert.equal(insights.some((insight) => insight.id === "review-skip"), true);
+});
+
+test("learning journeys model goal to completion roadmaps", () => {
+  const journeys = buildLearningJourneys(mockLearningGoals);
+  const activeJourney = journeys.find((journey) => journey.active);
+
+  assert.equal(Boolean(activeJourney), true);
+  assert.deepEqual(
+    activeJourney?.steps.map((step) => step.kind),
+    ["goal", "milestone", "course", "lesson", "mastery", "completion"]
+  );
+  assert.equal(
+    activeJourney?.steps.some((step) => step.status === "active"),
+    true
+  );
+});
+
+test("learning experience dashboard aggregates v0.5 LX surfaces", () => {
+  const progress = buildLearningProgressSignals({
+    goals: mockLearningGoals,
+    courses: mockLearningCourses,
+    plan: mockLearningPlan,
+    sessions: mockLearningSessions,
+    achievements: mockLearningAchievements,
+    studySession: mockStudySessionCommand,
+  });
+  const achievements = buildLearningAchievementUnlocks({
+    progress,
+    goalsCreated: mockLearningGoals.length,
+    goalsCompleted: 0,
+    masteredSkills: 1,
+    foundingStudent: true,
+  });
+  const experience = buildLearningExperienceDashboard({
+    learnerName: "Current learner",
+    progress,
+    goals: mockLearningGoals,
+    achievements,
+    parentDashboard: mockParentDashboard,
+  });
+
+  assert.equal(experience.daily.nextAction, progress.recommendedNextAction);
+  assert.equal(experience.focusMode.exitLabel, "Exit focus mode");
+  assert.equal(experience.achievements.some((item) => item.rarity === "Founding"), true);
+  assert.equal(experience.certificate.skillsEarned.length, 3);
+  assert.equal(experience.accessibility.largerTextOption, true);
+  assert.equal(experience.learnerProfile.level, experience.gamification.level);
+  assert.equal(experience.parentExperience.nextConversationSuggestions.length, 2);
+  assert.equal(experience.beta.badges.includes("Beta Tester"), true);
 });
 
 test("learning plan generator creates deterministic starter plans", () => {

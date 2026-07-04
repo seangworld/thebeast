@@ -26,11 +26,43 @@ export default function ReleaseNotesPage() {
       </header>
 
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
-        {/* BeastLearning v0.4 */}
+        {/* BeastLearning v0.5 */}
         <div className="mb-12 rounded-lg border border-[#2a3242] bg-[#0f1419] p-6">
           <div className="mb-4">
             <h2 className="text-2xl font-bold">
               BeastLearning {BEAST_LEARNING_VERSION}
+            </h2>
+            <p className="mt-1 text-sm text-[#7f8da3]">July 4, 2026</p>
+          </div>
+
+          <div className="space-y-4 text-sm">
+            <div>
+              <h3 className="font-semibold text-[#c7cfdb]">
+                Learning Experience
+              </h3>
+              <ul className="space-y-2 pl-4">
+                <li className="text-[#a5b4c7]">
+                  <span className="text-blue-400">✓</span> Added onboarding,
+                  daily mission, focus mode, journey roadmap, achievement
+                  polish, certificate experience, motivation, habits, insights,
+                  gamification, learner profile, parent polish, accessibility
+                  placeholders, and beta badges.
+                </li>
+                <li className="text-[#a5b4c7]">
+                  <span className="text-blue-400">✓</span> Refocused the
+                  Learning dashboard around the next best action for daily
+                  study.
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        {/* BeastLearning v0.4 */}
+        <div className="mb-12 rounded-lg border border-[#2a3242] bg-[#0f1419] p-6">
+          <div className="mb-4">
+            <h2 className="text-2xl font-bold">
+              BeastLearning v0.4 Content & Study Intelligence
             </h2>
             <p className="mt-1 text-sm text-[#7f8da3]">July 4, 2026</p>
           </div>

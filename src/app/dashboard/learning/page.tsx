@@ -26,6 +26,7 @@ import {
   UploadFoundationPanel,
 } from "./LearningFoundationPanels";
 import LearningContentIntelligencePanel from "./LearningContentIntelligencePanel";
+import LearningExperiencePanel from "./LearningExperiencePanel";
 import LearningGoalBuilder from "./LearningGoalBuilder";
 import LearningIntelligencePanel from "./LearningIntelligencePanel";
 import LearningPathTemplates from "./LearningPathTemplates";
@@ -50,6 +51,7 @@ import {
 import { buildLearningProgressSignals } from "@/lib/learning/progressSignals";
 import { buildLearningRecommendations } from "@/lib/learning/recommendations";
 import { buildLearningDashboardContent } from "@/lib/learning/dashboardContent";
+import { buildLearningExperienceDashboard } from "@/lib/learning/experience";
 import { learningSpecialists } from "@/lib/learning/specialists";
 import { mockStudyPlanner } from "@/lib/learning/studyPlanner";
 import { learningPathTemplates } from "@/lib/learning/templates";
@@ -268,6 +270,13 @@ export default function LearningPage() {
     achievementCount: achievementUnlocks.filter((achievement) => achievement.unlocked)
       .length,
   });
+  const learningExperience = buildLearningExperienceDashboard({
+    learnerName: learnerPortfolio.learnerName,
+    progress: progressSignals,
+    goals: mockLearningGoals,
+    achievements: achievementUnlocks,
+    parentDashboard: mockParentDashboard,
+  });
 
   return (
     <main className="beast-page">
@@ -303,6 +312,8 @@ export default function LearningPage() {
             />
           ))}
         </section>
+
+        <LearningExperiencePanel experience={learningExperience} />
 
         <section className="grid gap-4 xl:grid-cols-[0.85fr_1.15fr]">
           <DashboardCard accent="learning">

@@ -794,3 +794,180 @@ export type LearningDashboardContent = {
   studyCollections: ResourceCollection[];
   courseProgress: LearningBuiltCourse[];
 };
+
+export type OnboardingStepId =
+  | "welcome"
+  | "future-self"
+  | "interests"
+  | "education-level"
+  | "learning-style"
+  | "study-availability"
+  | "preferred-pace"
+  | "initial-goals"
+  | "starter-dashboard";
+
+export type LearningOnboardingStep = {
+  id: OnboardingStepId;
+  title: string;
+  prompt: string;
+  options: string[];
+  skippable: boolean;
+};
+
+export type DailyLearningExperience = {
+  todaysMission: string;
+  nextAction: string;
+  continueLearning: string;
+  flashcardsDue: number;
+  studyStreak: number;
+  achievements: string[];
+  recommendedSession: string;
+  upcomingMilestone: string;
+  celebration: string;
+};
+
+export type FocusModeSession = {
+  lessonTitle: string;
+  progressPercent: number;
+  timerPlaceholder: string;
+  notesPlaceholder: string;
+  bookmarked: boolean;
+  exitLabel: string;
+};
+
+export type LearningJourneyStepKind =
+  | "goal"
+  | "milestone"
+  | "course"
+  | "lesson"
+  | "mastery"
+  | "completion";
+
+export type LearningJourneyStep = {
+  id: string;
+  kind: LearningJourneyStepKind;
+  title: string;
+  status: "complete" | "active" | "upcoming";
+  progress: number;
+};
+
+export type LearningJourney = {
+  id: string;
+  title: string;
+  active: boolean;
+  steps: LearningJourneyStep[];
+};
+
+export type AchievementRarity = "Common" | "Uncommon" | "Rare" | "Founding";
+
+export type PolishedAchievement = {
+  id: string;
+  title: string;
+  description: string;
+  rarity: AchievementRarity;
+  earnedDate?: string;
+  progress: number;
+  locked: boolean;
+  foundingBadge: boolean;
+  celebrationMessage: string;
+};
+
+export type CertificateExperience = {
+  title: string;
+  learnerName: string;
+  completionSummary: string;
+  skillsEarned: string[];
+  sharePlaceholder: string;
+  downloadPlaceholder: string;
+  verificationPlaceholder: string;
+};
+
+export type MotivationSnapshot = {
+  dailyEncouragement: string;
+  nextMilestone: string;
+  celebrationMessage: string;
+  streakReminder: string;
+  goalReminder: string;
+};
+
+export type StudyHabitsSnapshot = {
+  preferredStudyTimes: string[];
+  averageSessionLength: string;
+  consistency: number;
+  weeklyMomentum: number;
+  monthlyMomentum: number;
+  bestLearningDay: string;
+  favoriteSubjects: string[];
+};
+
+export type LearnerInsight = {
+  id: string;
+  title: string;
+  detail: string;
+  tone: "positive" | "neutral" | "warning";
+};
+
+export type GamificationProfile = {
+  xp: number;
+  level: number;
+  nextLevelXp: number;
+  skillLevels: { skill: string; level: number; progress: number }[];
+  journeyCompletion: number;
+  milestoneCelebrations: string[];
+  dailyGoal: string;
+  weeklyGoal: string;
+};
+
+export type LearningAccessibilityPreferences = {
+  largerTextOption: boolean;
+  highContrastPlaceholder: boolean;
+  keyboardNavigation: string[];
+  reducedMotionPlaceholder: boolean;
+  screenReaderLabels: string[];
+};
+
+export type ExpandedLearnerProfile = {
+  learnerName: string;
+  bioPlaceholder: string;
+  favoriteSubjects: string[];
+  currentStreak: number;
+  xp: number;
+  level: number;
+  achievements: number;
+  certificates: number;
+  skills: string[];
+  currentJourney: string;
+  learningStatistics: string[];
+};
+
+export type ParentExperiencePolish = {
+  weeklyWins: string[];
+  areasNeedingEncouragement: string[];
+  recentAchievements: string[];
+  studyConsistency: string;
+  nextConversationSuggestions: string[];
+};
+
+export type BetaExperience = {
+  badges: string[];
+  versionHistory: string[];
+  feedbackShortcut: string;
+  whatsNew: string[];
+};
+
+export type LearningExperienceDashboard = {
+  onboarding: LearningOnboardingStep[];
+  daily: DailyLearningExperience;
+  focusMode: FocusModeSession;
+  journeys: LearningJourney[];
+  achievements: PolishedAchievement[];
+  certificate: CertificateExperience;
+  motivation: MotivationSnapshot;
+  habits: StudyHabitsSnapshot;
+  insights: LearnerInsight[];
+  gamification: GamificationProfile;
+  accessibility: LearningAccessibilityPreferences;
+  learnerProfile: ExpandedLearnerProfile;
+  parentExperience: ParentExperiencePolish;
+  beta: BetaExperience;
+};
