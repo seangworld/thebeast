@@ -391,15 +391,19 @@ export default async function LearningPage() {
           </DashboardCard>
         </section>
 
-        <StudySessionCommandCard session={mockStudySessionCommand} />
+        <div id="study-plan" className="scroll-mt-24">
+          <StudySessionCommandCard session={mockStudySessionCommand} />
+        </div>
 
         <LearningIntelligencePanel snapshot={learningIntelligence} />
 
         <LearningKnowledgePanel knowledge={knowledgeDashboard} />
 
-        <LearningContentIntelligencePanel content={learningDashboardContent} />
+        <div id="flashcards" className="scroll-mt-24">
+          <LearningContentIntelligencePanel content={learningDashboardContent} />
+        </div>
 
-        <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
+        <section id="courses" className="grid scroll-mt-24 gap-4 xl:grid-cols-[1.1fr_0.9fr]">
           <DashboardCard accent="learning">
             <SectionHeader
               eyebrow="Current Learning Plan"
@@ -441,7 +445,7 @@ export default async function LearningPage() {
           </DashboardCard>
         </section>
 
-        <section className="grid gap-4 xl:grid-cols-[1fr_0.9fr]">
+        <section id="goals" className="grid scroll-mt-24 gap-4 xl:grid-cols-[1fr_0.9fr]">
           <DashboardCard accent="learning">
             <SectionHeader
               eyebrow="Learning Goals"
@@ -494,14 +498,18 @@ export default async function LearningPage() {
 
         <LearningPathTemplates templates={learningPathTemplates} />
 
-        <AchievementEnginePanel achievements={achievementUnlocks} />
+        <div id="achievements" className="scroll-mt-24">
+          <AchievementEnginePanel achievements={achievementUnlocks} />
+        </div>
 
-        <section className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
+        <section id="certificates" className="grid scroll-mt-24 gap-4 xl:grid-cols-[0.9fr_1.1fr]">
           <CertificatePreviewPanel certificates={mockLearningCertificates} />
           <LearnerPortfolioPanel portfolio={learnerPortfolio} />
         </section>
 
-        <ParentDashboardPanel dashboard={mockParentDashboard} />
+        <div id="parent-view" className="scroll-mt-24">
+          <ParentDashboardPanel dashboard={mockParentDashboard} />
+        </div>
 
         <StudyPlannerPanel planner={mockStudyPlanner} />
 
@@ -509,7 +517,9 @@ export default async function LearningPage() {
 
         <AISpecialistsPanel specialists={learningSpecialists} />
 
-        <BetaFeedbackPanel />
+        <div id="feedback" className="scroll-mt-24">
+          <BetaFeedbackPanel />
+        </div>
 
         <section className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
           <DashboardCard accent="learning">

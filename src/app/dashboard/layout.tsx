@@ -9,48 +9,17 @@ import AdminViewAsControl from "@/app/components/AdminViewAsControl";
 import {
   BeastBrandMark,
   ModuleNavItem,
+  moduleAccents,
   type ModuleKey,
 } from "@/app/components/design/DashboardPrimitives";
-
-const primaryNav = [
-  { label: "Today", href: "/dashboard", module: "beastos" as ModuleKey },
-];
-
-const platformNav = [
-  { label: "Calendar", href: "/dashboard/calendar", module: "calendar" as ModuleKey },
-  { label: "Notifications", href: "/dashboard/notifications", module: "notifications" as ModuleKey },
-  { label: "Timeline", href: "/dashboard/timeline", module: "timeline" as ModuleKey },
-  { label: "Search", href: "/dashboard/search", module: "search" as ModuleKey },
-];
-
-const moneyNavItems = [
-  { label: "Dashboard", href: "/dashboard/money" },
-  { label: "Cash Flow", href: "/dashboard/money/cashflow" },
-  { label: "Bills", href: "/dashboard/money/cashflow#bills" },
-  { label: "Debts", href: "/dashboard/money/debts" },
-  { label: "Payoff Plan", href: "/dashboard/money/debts#payoff-plan" },
-  { label: "Velocity", href: "/dashboard/money/velocity" },
-  { label: "Billing", href: "/dashboard/money/billing" },
-  { label: "Settings", href: "/dashboard/money/settings" },
-];
-
-const futureMoneyActions = ["Add Bill", "Add Debt"];
-
-const moduleNav: {
-  label: string;
-  href?: string;
-  module: ModuleKey;
-  comingSoon: boolean;
-}[] = [
-  { label: "Learning", href: "/dashboard/learning", module: "learning" as ModuleKey, comingSoon: false },
-  { label: "Health", module: "health" as ModuleKey, comingSoon: true },
-  { label: "Home", module: "home" as ModuleKey, comingSoon: true },
-  { label: "Projects", module: "projects" as ModuleKey, comingSoon: true },
-  { label: "Vehicles", module: "vehicles" as ModuleKey, comingSoon: true },
-  { label: "Family", module: "family" as ModuleKey, comingSoon: true },
-  { label: "Goals", module: "goals" as ModuleKey, comingSoon: true },
-  { label: "Documents", module: "documents" as ModuleKey, comingSoon: true },
-];
+import {
+  beastModuleNavigation,
+  beastMoneyNavigation,
+  platformNavigation,
+  primaryNavigation,
+  type ModuleChildNavItem,
+  type ModuleNavSection,
+} from "@/lib/moduleNavigation";
 
 function getWorkspaceModule(pathname: string): ModuleKey {
   if (pathname.startsWith("/dashboard/money")) return "money";
@@ -69,16 +38,33 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [moneyNavOpen, setMoneyNavOpen] = useState(true);
+  const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({
+    money: true,
+    learning: true,
+  });
   const pathname = usePathname();
   const workspaceModule = getWorkspaceModule(pathname);
-  const isMoneyWorkspace = pathname.startsWith("/dashboard/money");
+
   function isActiveRoute(href: string) {
+    const [path] = href.split("#");
+
     if (href === "/dashboard") {
       return pathname === "/dashboard" || pathname === "/dashboard/today";
     }
 
-    return pathname === href || pathname.startsWith(`${href}/`);
+    return pathname === path || pathname.startsWith(`${path}/`);
+  }
+
+  function isModuleActive(item: ModuleNavSection) {
+    return item.href ? isActiveRoute(item.href) : workspaceModule === item.module;
+  }
+
+  function isChildActive(item: ModuleChildNavItem) {
+    const [path, hash] = item.href.split("#");
+
+    if (hash) return false;
+
+    return path === "/dashboard" ? isActiveRoute(path) : pathname === path || pathname.startsWith(`${path}/`);
   }
 
   function NavRail({
@@ -88,42 +74,109 @@ export default function DashboardLayout({
     compact?: boolean;
     onNavigate?: () => void;
   }) {
-    const showMoneyChildren = !compact && (moneyNavOpen || isMoneyWorkspace);
-    const moneyActive = isMoneyWorkspace;
-
-    function isMoneyChildActive(href: string) {
-      const [path, hash] = href.split("#");
-
-      if (hash) {
-        return false;
-      }
-
-      return href === "/dashboard/money"
-        ? pathname === "/dashboard/money"
-        : pathname === href || pathname.startsWith(`${href}/`);
-    }
-
-    function MoneyChildLink({
-      href,
-      label,
-      active,
+    function ChildLink({
+      item,
+      module,
     }: {
-      href: string;
-      label: string;
-      active: boolean;
+      item: ModuleChildNavItem;
+      module: ModuleKey;
     }) {
+      const accent = moduleAccents[module];
+      const active = isChildActive(item);
+
       return (
         <Link
-          href={href}
+          href={item.href}
           onClick={onNavigate}
           className={`block rounded-lg border px-3 py-1.5 text-sm font-semibold transition ${
             active
-              ? "border-green-400/40 bg-green-400/10 text-green-100"
+              ? `${accent.border} ${accent.bg} ${accent.text}`
               : "border-transparent text-[#9aa7b8] hover:border-[#2a3242] hover:bg-[#1a1f2b] hover:text-white"
           }`}
         >
-          {label}
+          {item.label}
         </Link>
+      );
+    }
+
+    function ExpandableModuleNavItem({ item }: { item: ModuleNavSection }) {
+      const hasChildren = Boolean(item.children?.length);
+      const active = isModuleActive(item);
+      const expanded = !compact && hasChildren && (expandedModules[item.module] || active);
+      const navGroupId = `${item.module}-nav-group`;
+
+      if (compact || !hasChildren) {
+        return (
+          <div onClick={item.comingSoon ? undefined : onNavigate}>
+            <ModuleNavItem
+              label={item.label}
+              href={item.href}
+              module={item.module}
+              active={active}
+              comingSoon={item.comingSoon}
+              compact={compact}
+            />
+          </div>
+        );
+      }
+
+      return (
+        <div>
+          <button
+            type="button"
+            onClick={() =>
+              setExpandedModules((current) => ({
+                ...current,
+                [item.module]: !expanded,
+              }))
+            }
+            className={`group flex w-full shrink-0 items-center gap-2 whitespace-nowrap rounded-xl border px-3 py-2 text-sm font-bold transition duration-200 sm:px-4 ${
+              active
+                ? `${moduleAccents[item.module].border} ${moduleAccents[item.module].bg} ${moduleAccents[item.module].text}`
+                : "border-transparent text-[#c7cfdb] hover:border-[#2a3242] hover:bg-[#1a1f2b]"
+            }`}
+            aria-expanded={expanded}
+            aria-controls={navGroupId}
+          >
+            <span
+              className="h-2 w-2 rounded-full"
+              style={{
+                background: active ? moduleAccents[item.module].color : "#596579",
+              }}
+            />
+            <span className="flex-1 text-left">{item.label}</span>
+            <span className="text-xs text-[#7f8da3]">
+              {expanded ? "−" : "+"}
+            </span>
+          </button>
+
+          {expanded ? (
+            <div id={navGroupId} className="mt-2 space-y-1 pl-4">
+              {item.children?.filter((child) => !child.future).map((child) => (
+                <ChildLink key={child.label} item={child} module={item.module} />
+              ))}
+              {item.children?.some((child) => child.future) ? (
+                <div className="pt-2">
+                  <div className="px-3 text-[10px] font-bold uppercase tracking-wide text-[#596579]">
+                    Future
+                  </div>
+                  <div className="mt-1 space-y-1">
+                    {item.children
+                      .filter((child) => child.future)
+                      .map((child) => (
+                        <span
+                          key={child.label}
+                          className="block rounded-lg border border-transparent px-3 py-1.5 text-sm font-semibold text-[#596579]"
+                        >
+                          {child.label}
+                        </span>
+                      ))}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
       );
     }
 
@@ -146,88 +199,27 @@ export default function DashboardLayout({
                   Primary
                 </div>
               ) : null}
-              {primaryNav.map((item) => (
-                <div key={item.href} onClick={onNavigate}>
+              {primaryNavigation.map((item) => (
+                <div key={item.label} onClick={onNavigate}>
                   <ModuleNavItem
                     label={item.label}
                     href={item.href}
                     module={item.module}
-                    active={isActiveRoute(item.href)}
+                    active={item.href ? isActiveRoute(item.href) : false}
                     compact={compact}
                   />
                 </div>
               ))}
 
-              <div>
-                {compact ? (
-                  <div onClick={onNavigate}>
-                    <ModuleNavItem
-                      label="Money"
-                      href="/dashboard/money"
-                      module="money"
-                      active={moneyActive}
-                      compact={compact}
-                    />
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setMoneyNavOpen((open) => !open)}
-                    className={`group flex w-full shrink-0 items-center gap-2 whitespace-nowrap rounded-xl border px-3 py-2 text-sm font-bold transition duration-200 sm:px-4 ${
-                      moneyActive
-                        ? "border-green-400/50 bg-green-400/15 text-green-100"
-                        : "border-transparent text-[#c7cfdb] hover:border-[#2a3242] hover:bg-[#1a1f2b]"
-                    }`}
-                    aria-expanded={showMoneyChildren}
-                    aria-controls="money-nav-group"
-                  >
-                    <span
-                      className="h-2 w-2 rounded-full"
-                      style={{ background: moneyActive ? "#22c55e" : "#596579" }}
-                    />
-                    <span className="flex-1 text-left">Money</span>
-                    <span className="text-xs text-[#7f8da3]">
-                      {showMoneyChildren ? "−" : "+"}
-                    </span>
-                  </button>
-                )}
+              <ExpandableModuleNavItem item={beastMoneyNavigation} />
 
-                {showMoneyChildren ? (
-                  <div id="money-nav-group" className="mt-2 space-y-1 pl-4">
-                    {moneyNavItems.map((item) => (
-                      <MoneyChildLink
-                        key={item.label}
-                        href={item.href}
-                        label={item.label}
-                        active={isMoneyChildActive(item.href)}
-                      />
-                    ))}
-                    <div className="pt-2">
-                      <div className="px-3 text-[10px] font-bold uppercase tracking-wide text-[#596579]">
-                        Future
-                      </div>
-                      <div className="mt-1 space-y-1">
-                        {futureMoneyActions.map((label) => (
-                          <span
-                            key={label}
-                            className="block rounded-lg border border-transparent px-3 py-1.5 text-sm font-semibold text-[#596579]"
-                          >
-                            {label}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-
-              {platformNav.map((item) => (
-                <div key={item.href} onClick={onNavigate}>
+              {platformNavigation.map((item) => (
+                <div key={item.label} onClick={onNavigate}>
                   <ModuleNavItem
                     label={item.label}
                     href={item.href}
                     module={item.module}
-                    active={isActiveRoute(item.href)}
+                    active={item.href ? isActiveRoute(item.href) : false}
                     compact={compact}
                   />
                 </div>
@@ -242,17 +234,8 @@ export default function DashboardLayout({
                   Modules
                 </div>
               ) : null}
-              {moduleNav.map((item) => (
-                <div key={item.label} onClick={item.comingSoon ? undefined : onNavigate}>
-                  <ModuleNavItem
-                    label={item.label}
-                    href={item.href}
-                    module={item.module}
-                    active={item.href ? isActiveRoute(item.href) : false}
-                    comingSoon={item.comingSoon}
-                    compact={compact}
-                  />
-                </div>
+              {beastModuleNavigation.map((item) => (
+                <ExpandableModuleNavItem key={item.label} item={item} />
               ))}
             </nav>
           </div>

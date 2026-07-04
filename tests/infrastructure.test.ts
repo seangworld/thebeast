@@ -169,6 +169,11 @@ import {
   mergeStoredVelocitySettings,
   velocitySettingsToUpsertPayload,
 } from "../src/lib/velocity/settings";
+import {
+  beastLearningNavigation,
+  beastMoneyNavigation,
+  getModuleChildren,
+} from "../src/lib/moduleNavigation";
 
 test("debt strategy registry includes existing strategy options", () => {
   assert.deepEqual(
@@ -192,6 +197,33 @@ test("shared formatters preserve current formatting semantics", () => {
   assert.equal(parseNumber("12.5"), 12.5);
   assert.equal(parseOptionalNumber(""), null);
   assert.equal(parseOptionalNumber("12.5"), 12.5);
+});
+
+test("module navigation centralizes expandable child items", () => {
+  assert.deepEqual(
+    beastLearningNavigation.children?.map((item) => item.label),
+    [
+      "Today",
+      "Goals",
+      "Study Plan",
+      "Courses",
+      "Flashcards",
+      "Achievements",
+      "Certificates",
+      "Parent View",
+      "Feedback",
+    ]
+  );
+  assert.equal(beastLearningNavigation.children?.[1].href, "/dashboard/learning#goals");
+  assert.equal(
+    beastMoneyNavigation.children?.map((item) => item.label).slice(0, 8).join(","),
+    "Dashboard,Cash Flow,Bills,Debts,Payoff Plan,Velocity,Billing,Settings"
+  );
+  assert.equal(getModuleChildren("learning").length, 9);
+  assert.equal(
+    getModuleChildren("money").some((item) => item.future && item.label === "Add Bill"),
+    true
+  );
 });
 
 test("financial metrics normalize recurring income to monthly amounts", () => {
