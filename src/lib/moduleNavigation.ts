@@ -16,21 +16,16 @@ export type ModuleNavSection = {
 };
 
 export const primaryNavigation: ModuleNavSection[] = [
-  { label: "Today", href: "/dashboard", module: "beastos" },
-];
-
-export const platformNavigation: ModuleNavSection[] = [
-  { label: "Calendar", href: "/dashboard/calendar", module: "calendar" },
-  { label: "Notifications", href: "/dashboard/notifications", module: "notifications" },
-  { label: "Timeline", href: "/dashboard/timeline", module: "timeline" },
+  { label: "Home", href: "/dashboard", module: "beastos" },
+  { label: "Today", href: "/dashboard/today", module: "beastos" },
   { label: "Search", href: "/dashboard/search", module: "search" },
+  { label: "Notifications", href: "/dashboard/notifications", module: "notifications" },
 ];
 
 export const beastMoneyNavigation: ModuleNavSection = {
-  label: "Money",
+  label: "BeastMoney",
   href: "/dashboard/money",
   module: "money",
-  defaultExpanded: true,
   children: [
     { label: "Dashboard", href: "/dashboard/money" },
     { label: "Cash Flow", href: "/dashboard/money/cashflow" },
@@ -46,10 +41,9 @@ export const beastMoneyNavigation: ModuleNavSection = {
 };
 
 export const beastLearningNavigation: ModuleNavSection = {
-  label: "Learning",
+  label: "BeastLearning",
   href: "/dashboard/learning",
   module: "learning",
-  defaultExpanded: true,
   children: [
     { label: "Today", href: "/dashboard/learning" },
     { label: "Goals", href: "/dashboard/learning#goals" },
@@ -64,21 +58,27 @@ export const beastLearningNavigation: ModuleNavSection = {
 };
 
 export const beastModuleNavigation: ModuleNavSection[] = [
+  beastMoneyNavigation,
   beastLearningNavigation,
-  { label: "Health", module: "health", comingSoon: true },
-  { label: "Home", module: "home", comingSoon: true },
-  { label: "Projects", module: "projects", comingSoon: true },
-  { label: "Vehicles", module: "vehicles", comingSoon: true },
-  { label: "Family", module: "family", comingSoon: true },
-  { label: "Goals", module: "goals", comingSoon: true },
-  { label: "Documents", module: "documents", comingSoon: true },
+  { label: "BeastHealth", module: "health", comingSoon: true },
+  { label: "BeastProjects", module: "projects", comingSoon: true },
+  { label: "BeastGoals", module: "goals", comingSoon: true },
+  { label: "BeastHome", module: "home", comingSoon: true },
+  { label: "BeastDocuments", module: "documents", comingSoon: true },
+];
+
+export const sharedNavigation: ModuleNavSection[] = [
+  { label: "Calendar", href: "/dashboard/calendar", module: "calendar" },
+  { label: "Timeline", href: "/dashboard/timeline", module: "timeline" },
+  { label: "Upload Center", href: "/dashboard/uploads", module: "documents" },
+  { label: "Profile", href: "/dashboard/profile", module: "beastos" },
+  { label: "Settings", href: "/dashboard/settings", module: "beastos" },
 ];
 
 export const allModuleNavigation: ModuleNavSection[] = [
   ...primaryNavigation,
-  beastMoneyNavigation,
-  ...platformNavigation,
   ...beastModuleNavigation,
+  ...sharedNavigation,
 ];
 
 export function getModuleChildren(module: ModuleKey) {

@@ -14,9 +14,8 @@ import {
 } from "@/app/components/design/DashboardPrimitives";
 import {
   beastModuleNavigation,
-  beastMoneyNavigation,
-  platformNavigation,
   primaryNavigation,
+  sharedNavigation,
   type ModuleChildNavItem,
   type ModuleNavSection,
 } from "@/lib/moduleNavigation";
@@ -28,6 +27,7 @@ function getWorkspaceModule(pathname: string): ModuleKey {
   if (pathname.startsWith("/dashboard/notifications")) return "notifications";
   if (pathname.startsWith("/dashboard/timeline")) return "timeline";
   if (pathname.startsWith("/dashboard/search")) return "search";
+  if (pathname.startsWith("/dashboard/uploads")) return "documents";
 
   return "beastos";
 }
@@ -38,10 +38,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({
-    money: true,
-    learning: true,
-  });
+  const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({});
   const pathname = usePathname();
   const workspaceModule = getWorkspaceModule(pathname);
 
@@ -49,7 +46,7 @@ export default function DashboardLayout({
     const [path] = href.split("#");
 
     if (href === "/dashboard") {
-      return pathname === "/dashboard" || pathname === "/dashboard/today";
+      return pathname === "/dashboard";
     }
 
     return pathname === path || pathname.startsWith(`${path}/`);
@@ -102,7 +99,10 @@ export default function DashboardLayout({
     function ExpandableModuleNavItem({ item }: { item: ModuleNavSection }) {
       const hasChildren = Boolean(item.children?.length);
       const active = isModuleActive(item);
-      const expanded = !compact && hasChildren && (expandedModules[item.module] || active);
+      const expanded =
+        !compact &&
+        hasChildren &&
+        (expandedModules[item.module] ?? active);
       const navGroupId = `${item.module}-nav-group`;
 
       if (compact || !hasChildren) {
@@ -196,24 +196,10 @@ export default function DashboardLayout({
             <nav className="space-y-2" aria-label="Primary navigation">
               {!compact ? (
                 <div className="px-2 text-xs font-bold uppercase tracking-wide text-[#596579]">
-                  Primary
+                  Navigation
                 </div>
               ) : null}
               {primaryNavigation.map((item) => (
-                <div key={item.label} onClick={onNavigate}>
-                  <ModuleNavItem
-                    label={item.label}
-                    href={item.href}
-                    module={item.module}
-                    active={item.href ? isActiveRoute(item.href) : false}
-                    compact={compact}
-                  />
-                </div>
-              ))}
-
-              <ExpandableModuleNavItem item={beastMoneyNavigation} />
-
-              {platformNavigation.map((item) => (
                 <div key={item.label} onClick={onNavigate}>
                   <ModuleNavItem
                     label={item.label}
@@ -231,11 +217,32 @@ export default function DashboardLayout({
             <nav className="space-y-2" aria-label="BeastOS modules">
               {!compact ? (
                 <div className="px-2 text-xs font-bold uppercase tracking-wide text-[#596579]">
-                  Modules
+                  Beast Modules
                 </div>
               ) : null}
               {beastModuleNavigation.map((item) => (
                 <ExpandableModuleNavItem key={item.label} item={item} />
+              ))}
+            </nav>
+
+            <div className="border-t border-[#2a3242]" />
+
+            <nav className="space-y-2" aria-label="Shared navigation">
+              {!compact ? (
+                <div className="px-2 text-xs font-bold uppercase tracking-wide text-[#596579]">
+                  Shared
+                </div>
+              ) : null}
+              {sharedNavigation.map((item) => (
+                <div key={item.label} onClick={onNavigate}>
+                  <ModuleNavItem
+                    label={item.label}
+                    href={item.href}
+                    module={item.module}
+                    active={item.href ? isActiveRoute(item.href) : false}
+                    compact={compact}
+                  />
+                </div>
               ))}
             </nav>
           </div>
@@ -245,20 +252,6 @@ export default function DashboardLayout({
 
         <div className="border-t border-[#2a3242] p-3">
           <div className="space-y-2">
-            <Link
-              href="/dashboard/profile"
-              onClick={onNavigate}
-              className="flex min-h-10 items-center rounded-xl border border-[#2a3242] bg-[#0f1419] px-3 py-2 text-sm font-bold text-[#c7cfdb] transition hover:border-[#38bdf8]/50 hover:bg-[#1a1f2b]"
-            >
-              {compact ? "P" : "Profile"}
-            </Link>
-            <Link
-              href="/dashboard/settings"
-              onClick={onNavigate}
-              className="flex min-h-10 items-center rounded-xl border border-[#2a3242] bg-[#0f1419] px-3 py-2 text-sm font-bold text-[#c7cfdb] transition hover:border-[#38bdf8]/50 hover:bg-[#1a1f2b]"
-            >
-              {compact ? "S" : "Settings"}
-            </Link>
             <div className={compact ? "[&>button]:w-full [&>button]:px-2" : "[&>button]:w-full"}>
               <LogoutButton />
             </div>

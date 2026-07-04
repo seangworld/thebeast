@@ -180,9 +180,12 @@ import {
   velocitySettingsToUpsertPayload,
 } from "../src/lib/velocity/settings";
 import {
+  beastModuleNavigation,
   beastLearningNavigation,
   beastMoneyNavigation,
   getModuleChildren,
+  primaryNavigation,
+  sharedNavigation,
 } from "../src/lib/moduleNavigation";
 
 test("debt strategy registry includes existing strategy options", () => {
@@ -217,6 +220,26 @@ test("app version constants reflect BeastOS and BeastLearning closeout", () => {
 
 test("module navigation centralizes expandable child items", () => {
   assert.deepEqual(
+    primaryNavigation.map((item) => item.label),
+    ["Home", "Today", "Search", "Notifications"]
+  );
+  assert.deepEqual(
+    beastModuleNavigation.map((item) => item.label),
+    [
+      "BeastMoney",
+      "BeastLearning",
+      "BeastHealth",
+      "BeastProjects",
+      "BeastGoals",
+      "BeastHome",
+      "BeastDocuments",
+    ]
+  );
+  assert.deepEqual(
+    sharedNavigation.map((item) => item.label),
+    ["Calendar", "Timeline", "Upload Center", "Profile", "Settings"]
+  );
+  assert.deepEqual(
     beastLearningNavigation.children?.map((item) => item.label),
     [
       "Today",
@@ -231,6 +254,7 @@ test("module navigation centralizes expandable child items", () => {
     ]
   );
   assert.equal(beastLearningNavigation.children?.[1].href, "/dashboard/learning#goals");
+  assert.equal(beastMoneyNavigation.label, "BeastMoney");
   assert.equal(
     beastMoneyNavigation.children?.map((item) => item.label).slice(0, 8).join(","),
     "Dashboard,Cash Flow,Bills,Debts,Payoff Plan,Velocity,Billing,Settings"
