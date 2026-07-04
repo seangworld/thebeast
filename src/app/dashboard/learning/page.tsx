@@ -9,6 +9,7 @@ import {
   moduleAccents,
 } from "@/app/components/design/DashboardPrimitives";
 import { buildLearningFoundationIntelligence } from "@/lib/platform/recommendationEngine";
+import LearningGoalBuilder from "./LearningGoalBuilder";
 import type {
   ModuleSummary,
   PlatformActivity,
@@ -389,6 +390,8 @@ export default function LearningPage() {
             </div>
           </DashboardCard>
         </section>
+
+        <LearningGoalBuilder />
 
         <section className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
           <DashboardCard accent="learning">

@@ -98,6 +98,17 @@ export type LearningSignal = {
   sourceId?: string;
 };
 
+export type LearningGoalBuilderDraft = {
+  learningObjective: string;
+  motivation: string;
+  targetOutcome: string;
+  timeline: string;
+  currentLevel: string;
+  studyPace: string;
+};
+
+export type LearningGoalBuilderStatus = "empty" | "active" | "completed";
+
 export type LearningQuickAction = {
   id: string;
   label: string;
