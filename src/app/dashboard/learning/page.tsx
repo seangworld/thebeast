@@ -32,6 +32,7 @@ import LearningGoalBuilder from "./LearningGoalBuilder";
 import LearningIntelligencePanel from "./LearningIntelligencePanel";
 import LearningKnowledgePanel from "./LearningKnowledgePanel";
 import LearningPathTemplates from "./LearningPathTemplates";
+import PrivateBetaPanels from "./PrivateBetaPanels";
 import StudySessionCommandCard from "./StudySessionCommandCard";
 import { mockParentDashboard } from "@/lib/learning/parentDashboard";
 import type {
@@ -60,6 +61,7 @@ import { mockStudyPlanner } from "@/lib/learning/studyPlanner";
 import { learningPathTemplates } from "@/lib/learning/templates";
 import { mockLearningUploads } from "@/lib/learning/uploads";
 import { buildAIOrchestrationDashboard } from "@/lib/learning/aiOrchestrationDashboard";
+import { loadLearningPrivateBetaData } from "@/lib/learning/persistence";
 import type {
   LearningCourse,
   LearningGoal,
@@ -231,9 +233,11 @@ function PlatformSignalCard({
   );
 }
 
-export default function LearningPage() {
+export default async function LearningPage() {
   const intelligence = buildLearningFoundationIntelligence();
   const learningAccent = moduleAccents.learning;
+  const activeLearner = mockLearners.find((learner) => learner.active) || mockLearners[0];
+  const privateBeta = await loadLearningPrivateBetaData({ learner: activeLearner });
   const summary = intelligence.moduleSummaries[0];
   const notification = intelligence.notifications[0];
   const activity = intelligence.activities[0];
@@ -258,7 +262,7 @@ export default function LearningPage() {
     weeklyStudyMinutes: progressSignals.estimatedWeeklyStudyMinutes,
   });
   const aiOrchestration = buildAIOrchestrationDashboard({
-    learnerName: mockLearners.find((learner) => learner.active)?.name || "Learner",
+    learnerName: activeLearner.name || "Learner",
     mastery: learningIntelligence.mastery,
   });
   const learningDashboardContent = buildLearningDashboardContent();
@@ -272,7 +276,7 @@ export default function LearningPage() {
     foundingStudent: true,
   });
   const learnerPortfolio = buildLearnerPortfolio({
-    learnerName: mockLearners.find((learner) => learner.active)?.name || "Learner",
+    learnerName: activeLearner.name || "Learner",
     goals: mockLearningGoals,
     progress: progressSignals,
     certificates: mockLearningCertificates,
@@ -321,6 +325,8 @@ export default function LearningPage() {
             />
           ))}
         </section>
+
+        <PrivateBetaPanels beta={privateBeta} />
 
         <LearningExperiencePanel experience={learningExperience} />
 

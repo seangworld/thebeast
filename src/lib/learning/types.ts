@@ -343,6 +343,11 @@ export type LearningSpecialist = {
 };
 
 export type LearningFeedbackCategory =
+  | "feature request"
+  | "bug"
+  | "like"
+  | "dislike"
+  | "suggestion"
   | "feature idea"
   | "bug report"
   | "confusing experience"
@@ -350,12 +355,21 @@ export type LearningFeedbackCategory =
   | "disliked something"
   | "general suggestion";
 
+export type LearningFeedbackStatus =
+  | "New"
+  | "Reviewing"
+  | "Planned"
+  | "In Progress"
+  | "Completed"
+  | "Declined";
+
 export type LearningFeedbackItem = {
   id: string;
   category: LearningFeedbackCategory;
   message: string;
   context?: string;
   submittedAt: string;
+  status?: LearningFeedbackStatus;
 };
 
 export type MasteryLevel = "unseen" | "introduced" | "practicing" | "proficient" | "mastered";
@@ -1206,7 +1220,7 @@ export type AISpecialistContract = {
   supportedLearnerAges: string[];
   supportedOutputTypes: AISpecialistOutputType[];
   requiredContext: string[];
-  futureAIStatus: "mocked" | "reserved";
+  futureAIStatus: "mocked" | "reserved" | "connected";
 };
 
 export type LearningConversationType =
@@ -1300,4 +1314,102 @@ export type AIOrchestrationDashboard = {
   availableSpecialists: AISpecialistContract[];
   requiredContext: string[];
   futureAIStatus: string;
+};
+
+export type LearningMissionStatus = "locked" | "available" | "active" | "complete";
+export type LearningDashboardStage = "New Learner" | "Active Learner" | "Power Learner";
+
+export type LearningOnboardingMission = {
+  id: string;
+  title: string;
+  summary: string;
+  status: LearningMissionStatus;
+  required: boolean;
+  unlocks: string[];
+};
+
+export type LearningPrivateBetaBadge = {
+  id: string;
+  label: "Founding Student" | "Private Beta" | "Founder";
+  earnedAt: string;
+  permanent: boolean;
+};
+
+export type LearningBetaReadiness = {
+  stage: LearningDashboardStage;
+  completionPercent: number;
+  nextBestAction: string;
+  unlockedCapabilities: string[];
+  missions: LearningOnboardingMission[];
+  badges: LearningPrivateBetaBadge[];
+};
+
+export type LearningTimelineEventType =
+  | "joined"
+  | "course"
+  | "achievement"
+  | "certificate"
+  | "streak"
+  | "goal"
+  | "career";
+
+export type LearningTimelineItem = {
+  id: string;
+  type: LearningTimelineEventType;
+  title: string;
+  summary: string;
+  occurredAt: string;
+};
+
+export type ParentLearnerRelationshipStatus =
+  | "invite pending"
+  | "accepted"
+  | "revoked";
+
+export type ParentLearnerRelationship = {
+  id: string;
+  parentUserId: string;
+  learnerUserId: string;
+  learnerName: string;
+  status: ParentLearnerRelationshipStatus;
+  invitedAt: string;
+  acceptedAt?: string;
+};
+
+export type LearningCertificateDocument = LearningCertificate & {
+  completionMetadata: string[];
+  downloadUrl: string;
+  generatedAt: string;
+};
+
+export type LearningPersistenceStatus = "supabase-ready" | "fallback-static";
+
+export type LearningPrivateBetaData = {
+  readiness: LearningBetaReadiness;
+  timeline: LearningTimelineItem[];
+  parentRelationships: ParentLearnerRelationship[];
+  certificateDocuments: LearningCertificateDocument[];
+  feedback: LearningFeedbackItem[];
+  persistenceStatus: LearningPersistenceStatus;
+};
+
+export type OpenAILearningMessage = {
+  role: "system" | "user" | "assistant";
+  content: string;
+};
+
+export type OpenAILearningRequest = {
+  specialistId: string;
+  specialistName: LearningSpecialistRole;
+  conversationType: LearningConversationType;
+  messages: OpenAILearningMessage[];
+  context: LearningAIContext;
+  homeworkPolicy: HomeworkPolicy;
+};
+
+export type OpenAILearningResponse = {
+  status: "ready" | "unconfigured" | "error";
+  specialistId: string;
+  content: string;
+  model: string;
 };

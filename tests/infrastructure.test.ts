@@ -97,6 +97,7 @@ import { learningLibraryMaterials } from "../src/lib/learning/library";
 import { calculateMasteryProfile } from "../src/lib/learning/mastery";
 import { buildMasteryMap } from "../src/lib/learning/masteryMap";
 import { buildMotivationSnapshot } from "../src/lib/learning/motivation";
+import { buildOpenAILearningMessages, isOpenAILearningConfigured } from "../src/lib/learning/openai";
 import { getHomeworkPolicyForRequest, homeworkPolicy } from "../src/lib/learning/homeworkPolicy";
 import { conversationTypeFromIntent, detectLearningIntent } from "../src/lib/learning/intentDetection";
 import {
@@ -114,9 +115,20 @@ import { buildGuidanceCounselorRoadmap } from "../src/lib/learning/guidanceCouns
 import { learnerNotes } from "../src/lib/learning/notes";
 import { learningOnboardingSteps } from "../src/lib/learning/onboarding";
 import { mockParentDashboard } from "../src/lib/learning/parentDashboard";
+import {
+  buildFeedbackInsertPayload,
+  learningTableNames,
+  mapFeedbackRow,
+} from "../src/lib/learning/persistence";
 import { generateLearningPlan } from "../src/lib/learning/planGenerator";
 import { buildLearnerPortfolio } from "../src/lib/learning/portfolio";
 import { predictLearningProgress } from "../src/lib/learning/prediction";
+import {
+  buildCertificateDocuments,
+  buildLearningBetaReadiness,
+  buildLearningTimeline,
+  buildStaticPrivateBetaData,
+} from "../src/lib/learning/privateBeta";
 import {
   getPracticeExamFrameworkSummary,
   learningPracticeExams,
@@ -1175,6 +1187,7 @@ test("learning AI specialist registry exposes v0.7 contracts", () => {
   );
   assert.equal(getAISpecialistByRole("Tutor")?.id, "tutor");
   assert.equal(getAISpecialistById("homework-coach")?.requiredContext.includes("currentLesson"), true);
+  assert.equal(getAISpecialistById("homework-coach")?.futureAIStatus, "connected");
   assert.equal(
     aiSpecialistRegistry.every(
       (specialist) =>
@@ -1286,7 +1299,94 @@ test("learning AI orchestration dashboard aggregates v0.7 platform state", () =>
   assert.equal(dashboard.routerResult.selectedSpecialistIds[0], "homework-coach");
   assert.equal(dashboard.context.currentLesson, "Access Control");
   assert.equal(dashboard.requiredContext.includes("currentLesson"), true);
-  assert.equal(dashboard.futureAIStatus.includes("No prompts"), true);
+  assert.equal(dashboard.futureAIStatus.includes("OpenAI adapter"), true);
+});
+
+test("learning private beta readiness drives mission stages", () => {
+  const readiness = buildLearningBetaReadiness({ completedMissionCount: 5 });
+
+  assert.equal(readiness.stage, "Active Learner");
+  assert.equal(readiness.completionPercent, 63);
+  assert.equal(readiness.nextBestAction, "Create first learning plan");
+  assert.equal(readiness.badges.some((badge) => badge.label === "Founding Student"), true);
+  assert.equal(readiness.missions[0].status, "complete");
+  assert.equal(readiness.missions[5].status, "active");
+});
+
+test("learning private beta timeline certificates and fallback data are structured", () => {
+  const timeline = buildLearningTimeline({
+    learnerName: "Current learner",
+    goals: mockLearningGoals,
+    sessions: mockLearningSessions,
+  });
+  const certificateDocuments = buildCertificateDocuments(mockLearningCertificates);
+  const privateBeta = buildStaticPrivateBetaData({
+    learnerName: "Current learner",
+    goals: mockLearningGoals,
+    sessions: mockLearningSessions,
+    certificates: mockLearningCertificates,
+  });
+
+  assert.equal(timeline[0].type, "joined");
+  assert.equal(timeline.some((item) => item.type === "goal"), true);
+  assert.equal(certificateDocuments[0].downloadUrl.includes("/api/learning/certificates/"), true);
+  assert.equal(privateBeta.persistenceStatus, "fallback-static");
+  assert.equal(privateBeta.feedback[0].status, "Reviewing");
+});
+
+test("learning OpenAI adapter builds centralized prompt messages without requiring configuration", () => {
+  const snapshot = buildLearningIntelligenceSnapshot({
+    goals: mockLearningGoals,
+    weeklyStudyMinutes: 80,
+  });
+  const context = buildLearningAIContext({
+    learnerName: "Current learner",
+    mastery: snapshot.mastery,
+    weakAreas: snapshot.mastery.weakConcepts,
+    currentLesson: "Access Control",
+  });
+  const messages = buildOpenAILearningMessages({
+    specialistId: "homework-coach",
+    specialistName: "Homework Coach",
+    conversationType: "Question",
+    messages: [{ role: "user", content: "Help me with homework." }],
+    context,
+    homeworkPolicy: getHomeworkPolicyForRequest("Help me with homework."),
+  });
+
+  assert.equal(isOpenAILearningConfigured(), Boolean(process.env.OPENAI_API_KEY));
+  assert.equal(messages[0].role, "system");
+  assert.equal(messages[0].content.includes("Homework Coach"), true);
+  assert.equal(messages[0].content.includes("Never immediately answer: yes"), true);
+  assert.equal(messages[1].content, "Help me with homework.");
+});
+
+test("learning persistence maps feedback and table names for Supabase", () => {
+  const payload = buildFeedbackInsertPayload({
+    userId: "user-1",
+    category: "feature request",
+    message: "Add calmer onboarding.",
+    context: "Private Beta",
+  });
+  const item = mapFeedbackRow({
+    id: "feedback-1",
+    category: "feature request",
+    message: "Add calmer onboarding.",
+    context: "Private Beta",
+    status: "New",
+    created_at: "2026-07-04T00:00:00.000Z",
+  });
+
+  assert.equal(learningTableNames.profiles, "learning_profiles");
+  assert.equal(learningTableNames.feedback, "learning_feedback");
+  assert.deepEqual(payload, {
+    user_id: "user-1",
+    category: "feature request",
+    message: "Add calmer onboarding.",
+    context: "Private Beta",
+    status: "New",
+  });
+  assert.equal(item.submittedAt, "2026-07-04T00:00:00.000Z");
 });
 
 test("learning plan generator creates deterministic starter plans", () => {

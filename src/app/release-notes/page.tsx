@@ -26,11 +26,43 @@ export default function ReleaseNotesPage() {
       </header>
 
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
-        {/* BeastLearning v0.7 */}
+        {/* BeastLearning v1.0 */}
         <div className="mb-12 rounded-lg border border-[#2a3242] bg-[#0f1419] p-6">
           <div className="mb-4">
             <h2 className="text-2xl font-bold">
               BeastLearning {BEAST_LEARNING_VERSION}
+            </h2>
+            <p className="mt-1 text-sm text-[#7f8da3]">July 4, 2026</p>
+          </div>
+
+          <div className="space-y-4 text-sm">
+            <div>
+              <h3 className="font-semibold text-[#c7cfdb]">
+                Private Beta
+              </h3>
+              <ul className="space-y-2 pl-4">
+                <li className="text-[#a5b4c7]">
+                  <span className="text-blue-400">✓</span> Added mission-based
+                  guided initialization, progressive dashboard stages, Founding
+                  Student badges, beta status, and a lifelong learning timeline.
+                </li>
+                <li className="text-[#a5b4c7]">
+                  <span className="text-blue-400">✓</span> Connected the
+                  specialist architecture to the OpenAI adapter, centralized
+                  prompt library, Supabase persistence foundation, beta
+                  feedback queue, parent linking model, and downloadable
+                  certificates.
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        {/* BeastLearning v0.7 */}
+        <div className="mb-12 rounded-lg border border-[#2a3242] bg-[#0f1419] p-6">
+          <div className="mb-4">
+            <h2 className="text-2xl font-bold">
+              BeastLearning v0.7 AI Orchestration Platform
             </h2>
             <p className="mt-1 text-sm text-[#7f8da3]">July 4, 2026</p>
           </div>

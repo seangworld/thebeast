@@ -8,6 +8,16 @@ const releaseNotes = [
   {
     version: `BeastLearning ${BEAST_LEARNING_VERSION}`,
     date: "July 4, 2026",
+    title: "Private Beta",
+    items: [
+      "Completed BeastLearning v1.0 Private Beta with guided initialization missions, progressive dashboard stages, Founding Student badges, student timeline, parent/learner relationship foundation, persisted feedback queue, and downloadable completion certificates.",
+      "Connected the AI architecture to a server-side OpenAI adapter with centralized prompts, deterministic specialist routing, reusable context, conversation memory, and the homework-first coaching philosophy.",
+      "Added Supabase persistence foundations for profiles, goals, plans, sessions, progress, mastery, achievements, certificates, study habits, feedback, learning history, and parent links while keeping local fallback behavior for unconfigured environments.",
+    ],
+  },
+  {
+    version: "BeastLearning v0.7 AI Orchestration Platform",
+    date: "July 4, 2026",
     title: "AI Orchestration Platform",
     items: [
       "Added the mocked AI orchestration architecture with specialist registry, specialist contracts, deterministic router, context builder, intent detection, conversation memory, homework policy, and AI session manager.",

@@ -48,6 +48,6 @@ export function buildAIOrchestrationDashboard({
     }),
     availableSpecialists: aiSpecialistRegistry,
     requiredContext: selectedSpecialist?.requiredContext || [],
-    futureAIStatus: "Mocked orchestration only. No prompts, model calls, streaming, or external APIs are active.",
+    futureAIStatus: "OpenAI adapter is available when credentials are configured. Specialist routing, context, memory, and homework policies remain deterministic.",
   };
 }

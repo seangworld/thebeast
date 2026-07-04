@@ -18,7 +18,7 @@ function specialist({
     supportedLearnerAges: ["middle school", "high school", "college", "adult"],
     supportedOutputTypes,
     requiredContext,
-    futureAIStatus: "mocked",
+    futureAIStatus: "connected",
   };
 }
 

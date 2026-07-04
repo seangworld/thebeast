@@ -88,13 +88,12 @@ export function CertificatePreviewPanel({
         <p className="mt-2 text-xs font-bold uppercase text-[#7f8da3]">
           {certificate.verificationPlaceholder}
         </p>
-        <button
-          type="button"
-          disabled
-          className="mt-5 rounded-xl border border-[#2a3242] bg-[#0f1419] px-4 py-3 text-sm font-black text-[#7f8da3]"
+        <a
+          href={`/api/learning/certificates/${certificate.certificateId}`}
+          className="mt-5 inline-flex rounded-xl border border-indigo-300/45 bg-indigo-300/15 px-4 py-3 text-sm font-black text-indigo-100"
         >
           Download certificate
-        </button>
+        </a>
       </div>
     </DashboardCard>
   );
@@ -233,9 +232,9 @@ export function AISpecialistsPanel({
     <DashboardCard accent="learning">
       <SectionHeader
         eyebrow="AI Experts"
-        title="Specialist foundation"
-        description="Mocked specialist registry only. No prompts, OpenAI calls, or external APIs are active."
-        action={<ModuleBadge module="learning" label="No AI Calls" />}
+        title="Specialist network"
+        description="Specialists use deterministic routing and connect through the OpenAI adapter when credentials are configured."
+        action={<ModuleBadge module="learning" label="AI Ready" />}
       />
       <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {specialists.map((specialist) => (
@@ -245,7 +244,7 @@ export function AISpecialistsPanel({
               {specialist.description}
             </p>
             <div className="mt-3 text-xs font-bold uppercase text-[#7f8da3]">
-              Mocked preview
+              {specialist.available ? "Private beta ready" : "Reserved"}
             </div>
           </div>
         ))}

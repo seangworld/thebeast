@@ -13,18 +13,19 @@ import type {
 
 const storageKey = "beastos.learning.betaFeedback.v1";
 const categories: LearningFeedbackCategory[] = [
-  "feature idea",
-  "bug report",
+  "feature request",
+  "bug",
   "confusing experience",
-  "liked something",
-  "disliked something",
-  "general suggestion",
+  "like",
+  "dislike",
+  "suggestion",
 ];
 
 export default function BetaFeedbackPanel() {
-  const [category, setCategory] = useState<LearningFeedbackCategory>("feature idea");
+  const [category, setCategory] = useState<LearningFeedbackCategory>("feature request");
   const [message, setMessage] = useState("");
   const [items, setItems] = useState<LearningFeedbackItem[]>([]);
+  const [submitState, setSubmitState] = useState<"idle" | "saving" | "saved">("idle");
 
   useEffect(() => {
     const stored = window.localStorage.getItem(storageKey);
@@ -41,22 +42,40 @@ export default function BetaFeedbackPanel() {
     window.localStorage.setItem(storageKey, JSON.stringify(items));
   }, [items]);
 
-  function submitFeedback(event: React.FormEvent<HTMLFormElement>) {
+  async function submitFeedback(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const trimmed = message.trim();
     if (!trimmed) return;
 
-    setItems((current) => [
-      {
-        id: `feedback-${Date.now()}`,
-        category,
-        message: trimmed,
-        context: "BeastLearning dashboard",
-        submittedAt: new Date().toISOString(),
-      },
-      ...current,
-    ]);
+    setSubmitState("saving");
+    const localItem: LearningFeedbackItem = {
+      id: `feedback-${Date.now()}`,
+      category,
+      message: trimmed,
+      context: "BeastLearning Private Beta",
+      submittedAt: new Date().toISOString(),
+      status: "New",
+    };
+
+    try {
+      const response = await fetch("/api/learning/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          category,
+          message: trimmed,
+          context: "BeastLearning Private Beta",
+        }),
+      });
+      const payload = (await response.json()) as { item?: LearningFeedbackItem };
+
+      setItems((current) => [payload.item || localItem, ...current]);
+    } catch {
+      setItems((current) => [localItem, ...current]);
+    }
+
     setMessage("");
+    setSubmitState("saved");
   }
 
   return (
@@ -64,7 +83,7 @@ export default function BetaFeedbackPanel() {
       <SectionHeader
         eyebrow="Beta Feedback"
         title="Founding Student feedback"
-        description="Client-side feedback capture for early BeastLearning testing. Feedback stays in this browser for now."
+        description="Feedback is submitted to the BeastLearning beta queue when Supabase is configured, with browser fallback for local testing."
         action={<ModuleBadge module="learning" label="Beta Tester" />}
       />
       <form className="mt-5 grid gap-4 lg:grid-cols-[0.35fr_1fr_auto]" onSubmit={submitFeedback}>
@@ -91,14 +110,14 @@ export default function BetaFeedbackPanel() {
           type="submit"
           className="rounded-xl border border-indigo-300/45 bg-indigo-300/15 px-4 py-3 text-sm font-black text-indigo-100"
         >
-          Save locally
+          {submitState === "saving" ? "Submitting" : "Submit"}
         </button>
       </form>
       <div className="mt-5 grid gap-3">
         {items.slice(0, 3).map((item) => (
           <div key={item.id} className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
             <div className="text-xs font-bold uppercase text-[#7f8da3]">
-              {item.category} · {item.context}
+              {item.category} · {item.status || "New"}
             </div>
             <p className="mt-2 text-sm leading-5 text-[#c7cfdb]">{item.message}</p>
           </div>
