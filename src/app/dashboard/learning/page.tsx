@@ -8,6 +8,7 @@ import {
   SectionHeader,
   moduleAccents,
 } from "@/app/components/design/DashboardPrimitives";
+import { BEAST_LEARNING_VERSION } from "@/lib/appVersion";
 import { buildLearningAchievementUnlocks } from "@/lib/learning/achievements";
 import { mockLearningCertificates } from "@/lib/learning/certificates";
 import { buildLearningIntelligenceSnapshot } from "@/lib/learning/intelligenceEngine";
@@ -271,7 +272,7 @@ export default function LearningPage() {
         <section className="beast-page-header">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-4">
-              <ModuleBadge module="learning" label="BeastLearning" />
+              <ModuleBadge module="learning" label={`BeastLearning ${BEAST_LEARNING_VERSION}`} />
               <h1 className="beast-title">Learning Command Center</h1>
               <p className="beast-subtitle">
                 Goals, courses, study rhythm, progress, and achievements now have

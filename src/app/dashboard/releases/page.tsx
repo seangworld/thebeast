@@ -1,6 +1,21 @@
 import Link from "next/link";
+import {
+  BEASTOS_UI_POLISH_NOTE,
+  BEAST_LEARNING_VERSION,
+} from "@/lib/appVersion";
 
 const releaseNotes = [
+  {
+    version: `BeastLearning ${BEAST_LEARNING_VERSION}`,
+    date: "July 3, 2026",
+    title: "BeastLearning Foundation Closeout",
+    items: [
+      "Completed the BeastLearning foundation with the Learning workspace, goal builder, plan generator stub, study session command card, progress signals, recommendations, templates, guidance counselor mode, and completion surfaces.",
+      "Added the deterministic BeastLearning intelligence engine for knowledge modeling, mastery, dependency graph state, learning memory, weakness analysis, adaptive planning, study session generation, resource recommendations, and progress prediction.",
+      `BeastOS UI: ${BEASTOS_UI_POLISH_NOTE}.`,
+      "Kept the release presentation-only and rule-based: no AI calls, external APIs, database schema changes, uploads, finance changes, Stripe changes, membership changes, or entitlement changes.",
+    ],
+  },
   {
     version: "v2.0",
     date: "June 30, 2026",
