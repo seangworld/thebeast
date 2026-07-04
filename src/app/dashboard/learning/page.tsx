@@ -28,6 +28,7 @@ import {
   mockStudySessionCommand,
 } from "@/lib/learning/mockData";
 import { buildLearningProgressSignals } from "@/lib/learning/progressSignals";
+import { buildLearningRecommendations } from "@/lib/learning/recommendations";
 import type {
   LearningCourse,
   LearningGoal,
@@ -202,11 +203,6 @@ function PlatformSignalCard({
 export default function LearningPage() {
   const intelligence = buildLearningFoundationIntelligence();
   const learningAccent = moduleAccents.learning;
-  const learningRecommendations: LearningRecommendation[] =
-    intelligence.recommendations.filter(
-      (recommendation): recommendation is LearningRecommendation =>
-        recommendation.module === "learning"
-    );
   const summary = intelligence.moduleSummaries[0];
   const notification = intelligence.notifications[0];
   const activity = intelligence.activities[0];
@@ -219,6 +215,13 @@ export default function LearningPage() {
     achievements: mockLearningAchievements,
     studySession: mockStudySessionCommand,
   });
+  const learningRecommendations: LearningRecommendation[] =
+    buildLearningRecommendations({
+      progress: progressSignals,
+      currentPlanTitle: mockLearningPlan.title,
+      activeGoalsCount: progressSignals.activeGoalsCount,
+      currentFocus: mockStudySessionCommand.currentFocus,
+    });
 
   return (
     <main className="beast-page">

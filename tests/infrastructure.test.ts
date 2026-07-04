@@ -63,6 +63,7 @@ import {
 } from "../src/lib/learning/mockData";
 import { generateLearningPlan } from "../src/lib/learning/planGenerator";
 import { buildLearningProgressSignals } from "../src/lib/learning/progressSignals";
+import { buildLearningRecommendations } from "../src/lib/learning/recommendations";
 import {
   buildBeastOSIntelligence,
   buildLearningFoundationIntelligence,
@@ -306,6 +307,50 @@ test("learning progress signals derive dashboard intelligence", () => {
     "Review Spanish Daily Practice after Authentication and access control."
   );
   assert.equal(signals.snapshotTiles.length, 5);
+});
+
+test("learning recommendations cover rule-based foundation actions", () => {
+  const progress = buildLearningProgressSignals({
+    goals: mockLearningGoals,
+    courses: mockLearningCourses,
+    plan: mockLearningPlan,
+    sessions: mockLearningSessions,
+    achievements: mockLearningAchievements,
+    studySession: mockStudySessionCommand,
+  });
+  const recommendations = buildLearningRecommendations({
+    progress,
+    currentPlanTitle: mockLearningPlan.title,
+    activeGoalsCount: progress.activeGoalsCount,
+    currentFocus: mockStudySessionCommand.currentFocus,
+  });
+
+  assert.deepEqual(
+    recommendations.map((recommendation) => recommendation.id),
+    [
+      "learning-continue-current-plan",
+      "learning-review-weak-area",
+      "learning-start-short-session",
+      "learning-add-goal",
+      "learning-upload-material-placeholder",
+      "learning-schedule-study-time-placeholder",
+      "learning-explore-related-path",
+    ]
+  );
+  assert.equal(
+    recommendations.every(
+      (recommendation) =>
+        recommendation.module === "learning" &&
+        recommendation.confidence === "reserved"
+    ),
+    true
+  );
+  assert.equal(
+    recommendations.some((recommendation) =>
+      recommendation.title.includes(progress.weakArea)
+    ),
+    true
+  );
 });
 
 test("learning plan generator creates deterministic starter plans", () => {
