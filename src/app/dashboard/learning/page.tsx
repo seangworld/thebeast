@@ -29,6 +29,7 @@ import LearningContentIntelligencePanel from "./LearningContentIntelligencePanel
 import LearningExperiencePanel from "./LearningExperiencePanel";
 import LearningGoalBuilder from "./LearningGoalBuilder";
 import LearningIntelligencePanel from "./LearningIntelligencePanel";
+import LearningKnowledgePanel from "./LearningKnowledgePanel";
 import LearningPathTemplates from "./LearningPathTemplates";
 import StudySessionCommandCard from "./StudySessionCommandCard";
 import { mockParentDashboard } from "@/lib/learning/parentDashboard";
@@ -52,6 +53,7 @@ import { buildLearningProgressSignals } from "@/lib/learning/progressSignals";
 import { buildLearningRecommendations } from "@/lib/learning/recommendations";
 import { buildLearningDashboardContent } from "@/lib/learning/dashboardContent";
 import { buildLearningExperienceDashboard } from "@/lib/learning/experience";
+import { buildKnowledgeIntelligenceDashboard } from "@/lib/learning/knowledgeDashboard";
 import { learningSpecialists } from "@/lib/learning/specialists";
 import { mockStudyPlanner } from "@/lib/learning/studyPlanner";
 import { learningPathTemplates } from "@/lib/learning/templates";
@@ -254,6 +256,7 @@ export default function LearningPage() {
     weeklyStudyMinutes: progressSignals.estimatedWeeklyStudyMinutes,
   });
   const learningDashboardContent = buildLearningDashboardContent();
+  const knowledgeDashboard = buildKnowledgeIntelligenceDashboard();
   const achievementUnlocks = buildLearningAchievementUnlocks({
     progress: progressSignals,
     goalsCreated: mockLearningGoals.length,
@@ -377,6 +380,8 @@ export default function LearningPage() {
         <StudySessionCommandCard session={mockStudySessionCommand} />
 
         <LearningIntelligencePanel snapshot={learningIntelligence} />
+
+        <LearningKnowledgePanel knowledge={knowledgeDashboard} />
 
         <LearningContentIntelligencePanel content={learningDashboardContent} />
 

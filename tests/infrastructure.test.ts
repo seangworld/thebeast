@@ -60,14 +60,18 @@ import {
   generateLearningCertificateId,
   mockLearningCertificates,
 } from "../src/lib/learning/certificates";
+import { careerKnowledgeCatalog } from "../src/lib/learning/careers";
+import { certificationCatalog } from "../src/lib/learning/certificationCatalog";
 import {
   getCollectionResourceCount,
   learningResourceCollections,
 } from "../src/lib/learning/collections";
+import { curriculumConceptLibrary } from "../src/lib/learning/concepts";
 import {
   builtLearningCourses,
   calculateBuiltCourseProgress,
 } from "../src/lib/learning/courses";
+import { curriculumSubjects } from "../src/lib/learning/curriculum";
 import { buildLearningDashboardContent } from "../src/lib/learning/dashboardContent";
 import { buildDependencyGraphState } from "../src/lib/learning/dependencyGraph";
 import { buildLearningExperienceDashboard } from "../src/lib/learning/experience";
@@ -80,11 +84,13 @@ import {
 import { buildLearningIntelligenceSnapshot } from "../src/lib/learning/intelligenceEngine";
 import { buildLearnerInsights } from "../src/lib/learning/insights";
 import { buildLearningJourneys } from "../src/lib/learning/journeys";
+import { buildKnowledgeIntelligenceDashboard } from "../src/lib/learning/knowledgeDashboard";
 import { mockLearningKnowledgeModel } from "../src/lib/learning/knowledgeGraph";
 import { mockLearningMemory } from "../src/lib/learning/learningMemory";
 import { learningLessons } from "../src/lib/learning/lessons";
 import { learningLibraryMaterials } from "../src/lib/learning/library";
 import { calculateMasteryProfile } from "../src/lib/learning/mastery";
+import { buildMasteryMap } from "../src/lib/learning/masteryMap";
 import { buildMotivationSnapshot } from "../src/lib/learning/motivation";
 import {
   mockLearners,
@@ -112,8 +118,10 @@ import { buildLearningProgressSignals } from "../src/lib/learning/progressSignal
 import { getQuizzesRequiringReview, learningQuizzes } from "../src/lib/learning/quizzes";
 import { buildLearningRecommendations } from "../src/lib/learning/recommendations";
 import { recommendLearningResources } from "../src/lib/learning/resourceEngine";
+import { getResourceLinksForConcept, resourceMapLinks } from "../src/lib/learning/resourceMapping";
 import { buildLearningSearchIndex, searchLearningContent } from "../src/lib/learning/search";
 import { generateStudySession } from "../src/lib/learning/sessionGenerator";
+import { buildSkillTree } from "../src/lib/learning/skills";
 import { learningSpecialists, routeMockLearningSpecialist } from "../src/lib/learning/specialists";
 import {
   buildSpacedRepetitionSchedule,
@@ -122,7 +130,9 @@ import {
 import { buildStudyHabitsSnapshot } from "../src/lib/learning/studyHabits";
 import { mockStudyPlanner } from "../src/lib/learning/studyPlanner";
 import { learningStudyGuides } from "../src/lib/learning/studyGuides";
-import { learningSubjects } from "../src/lib/learning/subjects";
+import { globalSubjectCatalog, learningSubjects } from "../src/lib/learning/subjects";
+import { learningStandards } from "../src/lib/learning/standards";
+import { generateCurriculumLearningPath } from "../src/lib/learning/learningPaths";
 import { learningPathTemplates } from "../src/lib/learning/templates";
 import { mockLearningUploads } from "../src/lib/learning/uploads";
 import { analyzeLearningWeaknesses } from "../src/lib/learning/weaknessAnalysis";
@@ -975,6 +985,153 @@ test("learning experience dashboard aggregates v0.5 LX surfaces", () => {
   assert.equal(experience.learnerProfile.level, experience.gamification.level);
   assert.equal(experience.parentExperience.nextConversationSuggestions.length, 2);
   assert.equal(experience.beta.badges.includes("Beta Tester"), true);
+});
+
+test("learning global subject catalog covers knowledge domains", () => {
+  assert.equal(globalSubjectCatalog.length >= 17, true);
+  assert.equal(
+    globalSubjectCatalog.some(
+      (subject) =>
+        subject.id === "cybersecurity" &&
+        subject.relatedSubjectIds.includes("programming") &&
+        subject.estimatedLearningHours > 0
+    ),
+    true
+  );
+  assert.equal(
+    globalSubjectCatalog.every(
+      (subject) =>
+        subject.name &&
+        subject.description &&
+        subject.iconPlaceholder &&
+        subject.color &&
+        subject.difficultyRange
+    ),
+    true
+  );
+});
+
+test("learning curriculum hierarchy reaches objectives", () => {
+  const curriculum = curriculumSubjects[0];
+  const objective =
+    curriculum.courses[0].modules[0].lessons[0].concepts[0].skills[0].objectives[0];
+
+  assert.equal(curriculum.id, "cybersecurity");
+  assert.equal(curriculum.courses[0].id, "security-plus-foundations-course");
+  assert.equal(curriculum.courses[0].modules[0].lessons.length >= 2, true);
+  assert.equal(objective.id, "objective-identity-proofing");
+  assert.equal(Boolean(objective.metadata), true);
+});
+
+test("learning concept library models prerequisites and dependents", () => {
+  const rbac = curriculumConceptLibrary.find(
+    (concept) => concept.id === "role-based-access-control"
+  );
+  const identity = curriculumConceptLibrary.find(
+    (concept) => concept.id === "identity-verification"
+  );
+
+  assert.equal(rbac?.prerequisiteIds.includes("authentication-factors"), true);
+  assert.equal(identity?.dependentConceptIds.includes("authentication-factors"), true);
+  assert.equal(rbac?.commonMistakes.length, 1);
+  assert.equal(rbac?.relatedConceptIds.includes("least-privilege"), true);
+});
+
+test("learning skill tree exposes visualization-ready status", () => {
+  const tree = buildSkillTree("cybersecurity");
+
+  assert.equal(tree.nodes.length, 4);
+  assert.equal(tree.edges.some((edge) => edge.to === "role-based-access-control"), true);
+  assert.equal(
+    tree.nodes.some(
+      (node) => node.id === "identity-verification" && node.status === "mastered"
+    ),
+    true
+  );
+  assert.equal(
+    tree.nodes.some((node) => node.status === "blocked"),
+    true
+  );
+  assert.equal(tree.nodes.every((node) => typeof node.x === "number" && typeof node.y === "number"), true);
+});
+
+test("learning standards careers and certifications remain mocked catalogs", () => {
+  assert.deepEqual(
+    learningStandards.map((standard) => standard.type),
+    [
+      "Common Core",
+      "State standards",
+      "National standards",
+      "Certification objectives",
+      "Trade competencies",
+    ]
+  );
+  assert.equal(careerKnowledgeCatalog[0].recommendedCertificationIds[0], "comptia-security-plus");
+  assert.equal(
+    certificationCatalog.some(
+      (certification) =>
+        certification.provider === "CompTIA" &&
+        certification.recommendedConceptIds.includes("role-based-access-control")
+    ),
+    true
+  );
+  assert.equal(
+    new Set(certificationCatalog.map((certification) => certification.provider)).size >= 10,
+    true
+  );
+});
+
+test("learning path generator produces curriculum sequence and milestones", () => {
+  const path = generateCurriculumLearningPath({
+    goal: "Become a security analyst",
+    careerId: "security-analyst",
+    certificationId: "comptia-security-plus",
+    subjectId: "cybersecurity",
+    interest: "security operations",
+  });
+
+  assert.equal(path.recommendedCurriculum[0], "security-plus-foundations-course");
+  assert.deepEqual(path.recommendedSequence, [
+    "identity-verification",
+    "authentication-factors",
+    "role-based-access-control",
+  ]);
+  assert.equal(path.estimatedTimeline, "8-12 weeks");
+  assert.equal(path.milestones.length, 4);
+});
+
+test("learning resource mapping connects resources across curriculum entities", () => {
+  const rbacLinks = getResourceLinksForConcept("role-based-access-control");
+
+  assert.equal(resourceMapLinks.length >= 4, true);
+  assert.equal(rbacLinks.some((link) => link.courseIds.includes("security-plus-foundations-course")), true);
+  assert.equal(rbacLinks.some((link) => link.certificationIds.includes("comptia-security-plus")), true);
+  assert.equal(rbacLinks.some((link) => link.careerIds.includes("security-analyst")), true);
+});
+
+test("learning mastery map recommends next concept", () => {
+  const masteryMap = buildMasteryMap("cybersecurity");
+
+  assert.deepEqual(
+    masteryMap.nodes.map((node) => node.status),
+    ["Known", "Learning", "Needs Review", "Not Started"]
+  );
+  assert.equal(masteryMap.recommendedNextConceptId, "role-based-access-control");
+});
+
+test("learning knowledge dashboard aggregates v0.6 curriculum intelligence", () => {
+  const dashboard = buildKnowledgeIntelligenceDashboard();
+
+  assert.equal(dashboard.subjects.length, globalSubjectCatalog.length);
+  assert.equal(dashboard.curriculum.length, curriculumSubjects.length);
+  assert.equal(dashboard.concepts.length, curriculumConceptLibrary.length);
+  assert.equal(dashboard.skillTree.nodes.length, 4);
+  assert.equal(dashboard.standards.length, learningStandards.length);
+  assert.equal(dashboard.careers.length, careerKnowledgeCatalog.length);
+  assert.equal(dashboard.certifications.length, certificationCatalog.length);
+  assert.equal(dashboard.generatedPath.certificationId, "comptia-security-plus");
+  assert.equal(dashboard.resourceLinks.length, resourceMapLinks.length);
+  assert.equal(dashboard.masteryMap.recommendedNextConceptId, "role-based-access-control");
 });
 
 test("learning plan generator creates deterministic starter plans", () => {

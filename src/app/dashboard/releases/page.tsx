@@ -8,6 +8,16 @@ const releaseNotes = [
   {
     version: `BeastLearning ${BEAST_LEARNING_VERSION}`,
     date: "July 4, 2026",
+    title: "Knowledge & Curriculum Intelligence",
+    items: [
+      "Added BeastLearning's educational knowledge layer with global subjects, curriculum hierarchy, concept library, visualization-ready skill trees, learning standards placeholders, career models, certification catalog, path generation, resource mapping, and mastery maps.",
+      "Exposed Skill Tree, Current Curriculum, Career Progress, Certification Progress, Mastery Map, and Recommended Next Concept on the Learning dashboard.",
+      "Kept v0.6 deterministic, typed, mocked where needed, and provider-independent with no OpenAI, OCR, embeddings, vector search, document parsing, Supabase persistence, database schema changes, external APIs, finance changes, Stripe changes, membership changes, or entitlement changes.",
+    ],
+  },
+  {
+    version: "BeastLearning v0.5 Learning Experience",
+    date: "July 4, 2026",
     title: "Learning Experience",
     items: [
       "Added the BeastLearning LX layer with first-time onboarding, daily mission, focus mode, learning journeys, achievement polish, certificate experience, motivation, study habits, learner insights, gamification, accessibility placeholders, learner profile expansion, parent polish, and beta experience surfaces.",

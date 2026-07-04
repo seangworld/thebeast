@@ -26,11 +26,43 @@ export default function ReleaseNotesPage() {
       </header>
 
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
-        {/* BeastLearning v0.5 */}
+        {/* BeastLearning v0.6 */}
         <div className="mb-12 rounded-lg border border-[#2a3242] bg-[#0f1419] p-6">
           <div className="mb-4">
             <h2 className="text-2xl font-bold">
               BeastLearning {BEAST_LEARNING_VERSION}
+            </h2>
+            <p className="mt-1 text-sm text-[#7f8da3]">July 4, 2026</p>
+          </div>
+
+          <div className="space-y-4 text-sm">
+            <div>
+              <h3 className="font-semibold text-[#c7cfdb]">
+                Knowledge & Curriculum Intelligence
+              </h3>
+              <ul className="space-y-2 pl-4">
+                <li className="text-[#a5b4c7]">
+                  <span className="text-blue-400">✓</span> Added global
+                  subjects, curriculum hierarchy, concept library, skill trees,
+                  standards placeholders, careers, certifications, learning path
+                  generation, resource mapping, and mastery maps.
+                </li>
+                <li className="text-[#a5b4c7]">
+                  <span className="text-blue-400">✓</span> Added dashboard
+                  surfaces for Skill Tree, Current Curriculum, Career Progress,
+                  Certification Progress, Mastery Map, and Recommended Next
+                  Concept.
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        {/* BeastLearning v0.5 */}
+        <div className="mb-12 rounded-lg border border-[#2a3242] bg-[#0f1419] p-6">
+          <div className="mb-4">
+            <h2 className="text-2xl font-bold">
+              BeastLearning v0.5 Learning Experience
             </h2>
             <p className="mt-1 text-sm text-[#7f8da3]">July 4, 2026</p>
           </div>

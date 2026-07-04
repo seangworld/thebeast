@@ -971,3 +971,208 @@ export type LearningExperienceDashboard = {
   parentExperience: ParentExperiencePolish;
   beta: BetaExperience;
 };
+
+export type GlobalSubject = {
+  id: string;
+  name: string;
+  description: string;
+  iconPlaceholder: string;
+  color: string;
+  difficultyRange: string;
+  estimatedLearningHours: number;
+  relatedSubjectIds: string[];
+};
+
+export type CurriculumObjective = {
+  id: string;
+  title: string;
+  metadata: string;
+};
+
+export type CurriculumSkill = {
+  id: string;
+  title: string;
+  objectives: CurriculumObjective[];
+  metadata: string;
+};
+
+export type CurriculumConcept = {
+  id: string;
+  title: string;
+  skills: CurriculumSkill[];
+  metadata: string;
+};
+
+export type CurriculumLesson = {
+  id: string;
+  title: string;
+  concepts: CurriculumConcept[];
+  metadata: string;
+};
+
+export type CurriculumModule = {
+  id: string;
+  title: string;
+  lessons: CurriculumLesson[];
+  metadata: string;
+};
+
+export type CurriculumCourse = {
+  id: string;
+  title: string;
+  modules: CurriculumModule[];
+  metadata: string;
+};
+
+export type CurriculumSubject = {
+  id: string;
+  title: string;
+  courses: CurriculumCourse[];
+  metadata: string;
+};
+
+export type CurriculumConceptLibraryItem = {
+  id: string;
+  title: string;
+  description: string;
+  difficulty: LearningDifficulty;
+  prerequisiteIds: string[];
+  dependentConceptIds: string[];
+  estimatedMasteryTime: string;
+  examplesPlaceholder: string[];
+  commonMistakes: string[];
+  relatedConceptIds: string[];
+};
+
+export type SkillTreeStatus =
+  | "locked"
+  | "available"
+  | "in progress"
+  | "mastered"
+  | "blocked"
+  | "future";
+
+export type SkillTreeNode = {
+  id: string;
+  title: string;
+  status: SkillTreeStatus;
+  parentId?: string;
+  prerequisiteIds: string[];
+  x: number;
+  y: number;
+};
+
+export type SkillTree = {
+  id: string;
+  title: string;
+  subjectId: string;
+  nodes: SkillTreeNode[];
+  edges: { from: string; to: string }[];
+};
+
+export type LearningStandardType =
+  | "State standards"
+  | "National standards"
+  | "Common Core"
+  | "Certification objectives"
+  | "Trade competencies";
+
+export type LearningStandardPlaceholder = {
+  id: string;
+  type: LearningStandardType;
+  subjectId: string;
+  title: string;
+  description: string;
+  mappedConceptIds: string[];
+};
+
+export type CareerKnowledgeModel = {
+  id: string;
+  title: string;
+  overview: string;
+  requiredEducation: string[];
+  recommendedCourseIds: string[];
+  recommendedSkillIds: string[];
+  recommendedCertificationIds: string[];
+  salaryPlaceholder: string;
+  growthPlaceholder: string;
+  relatedCareerIds: string[];
+};
+
+export type CertificationProvider =
+  | "CompTIA"
+  | "AWS"
+  | "Cisco"
+  | "Microsoft"
+  | "PMI"
+  | "FAA"
+  | "Medical"
+  | "Trades"
+  | "Finance"
+  | "Others";
+
+export type CertificationModel = {
+  id: string;
+  provider: CertificationProvider;
+  title: string;
+  description: string;
+  subjectIds: string[];
+  recommendedConceptIds: string[];
+  recommendedSkillIds: string[];
+  estimatedPrepTime: string;
+};
+
+export type GeneratedCurriculumPath = {
+  id: string;
+  goal: string;
+  careerId: string;
+  certificationId: string;
+  subjectId: string;
+  interest: string;
+  recommendedCurriculum: string[];
+  recommendedSequence: string[];
+  estimatedTimeline: string;
+  milestones: string[];
+};
+
+export type ResourceMapLink = {
+  resourceId: string;
+  conceptIds: string[];
+  skillIds: string[];
+  courseIds: string[];
+  careerIds: string[];
+  certificationIds: string[];
+};
+
+export type MasteryMapStatus =
+  | "Known"
+  | "Learning"
+  | "Needs Review"
+  | "Not Started"
+  | "Future";
+
+export type MasteryMapNode = {
+  id: string;
+  title: string;
+  status: MasteryMapStatus;
+  masteryPercent: number;
+};
+
+export type MasteryMap = {
+  subjectId: string;
+  nodes: MasteryMapNode[];
+  recommendedNextConceptId: string;
+};
+
+export type KnowledgeIntelligenceDashboard = {
+  subjects: GlobalSubject[];
+  curriculum: CurriculumSubject[];
+  concepts: CurriculumConceptLibraryItem[];
+  skillTree: SkillTree;
+  standards: LearningStandardPlaceholder[];
+  careers: CareerKnowledgeModel[];
+  certifications: CertificationModel[];
+  generatedPath: GeneratedCurriculumPath;
+  resourceLinks: ResourceMapLink[];
+  masteryMap: MasteryMap;
+};
