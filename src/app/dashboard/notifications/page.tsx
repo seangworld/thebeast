@@ -44,8 +44,8 @@ export default function NotificationsPage() {
           <SectionHeader
             eyebrow="Inbox Filters"
             title="Module channels"
-            description="Money is the first active channel. Learning, Health, Home, and Projects are reserved for future notification sources."
-            action={<ModuleBadge module="money" label="Money Active" />}
+            description="Money and Learning now have active channels. Health, Home, and Projects are reserved for future notification sources."
+            action={<ModuleBadge module="learning" label="Learning Active" />}
           />
           <div className="mt-5">
             <ModuleFilterRail

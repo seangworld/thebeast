@@ -4,6 +4,7 @@ import Image from "next/image";
 export type ModuleKey =
   | "beastos"
   | "money"
+  | "learning"
   | "health"
   | "home"
   | "projects"
@@ -35,6 +36,14 @@ export const moduleAccents: Record<
     bg: "bg-green-400/15",
     text: "text-green-100",
     soft: "before:bg-[#22c55e]",
+  },
+  learning: {
+    label: "BeastLearning",
+    color: "#818cf8",
+    border: "border-indigo-300/50",
+    bg: "bg-indigo-300/15",
+    text: "text-indigo-100",
+    soft: "before:bg-[#818cf8]",
   },
   health: {
     label: "BeastHealth",

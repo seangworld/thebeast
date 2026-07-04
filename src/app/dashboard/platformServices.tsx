@@ -35,7 +35,7 @@ export const serviceModules: {
   enabled: boolean;
 }[] = [
   { label: "Money", module: "money", enabled: true },
-  { label: "Learning", module: "beastos", enabled: false },
+  { label: "Learning", module: "learning", enabled: true },
   { label: "Health", module: "health", enabled: false },
   { label: "Home", module: "home", enabled: false },
   { label: "Projects", module: "projects", enabled: false },
@@ -79,10 +79,11 @@ export const serviceEvents: ServiceEvent[] = [
   {
     id: "learning-placeholder",
     title: "Learning block",
-    detail: "Courses, reading, and study sessions will join the shared timeline.",
+    detail: "Courses, reading, and study sessions are ready to join the shared timeline.",
     dateLabel: "Upcoming",
-    module: "beastos",
+    module: "learning",
     group: "Upcoming",
+    href: "/dashboard/learning",
   },
   {
     id: "health-placeholder",

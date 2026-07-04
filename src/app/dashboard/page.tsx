@@ -119,11 +119,6 @@ const futureBriefingModules: {
   detail: string;
 }[] = [
   {
-    label: "Learning",
-    module: "beastos",
-    detail: "Course progress and study blocks will land here.",
-  },
-  {
     label: "Health",
     module: "health",
     detail: "Vitals, habits, and recovery signals are staged.",
@@ -154,8 +149,9 @@ const quickLaunchModules: {
   },
   {
     label: "Learning",
-    module: "beastos",
-    description: "Study plans and knowledge tracking are coming soon.",
+    module: "learning",
+    href: "/dashboard/learning",
+    description: "Open goals, courses, study rhythm, and progress.",
   },
   {
     label: "Health",
@@ -564,8 +560,8 @@ export default function TodayPage() {
         id: "learning-future",
         date: today,
         title: "Learning sessions",
-        detail: "Study blocks and course milestones are reserved.",
-        module: "beastos",
+        detail: "Study blocks and course milestones are ready in BeastLearning.",
+        module: "learning",
       },
       {
         id: "health-future",
@@ -610,8 +606,8 @@ export default function TodayPage() {
       {
         id: "learning-future",
         title: "Learning sessions",
-        detail: "Completed lessons and study notes will appear here.",
-        module: "beastos",
+        detail: "Completed lessons and study notes will appear here as BeastLearning expands.",
+        module: "learning",
       },
       {
         id: "health-future",

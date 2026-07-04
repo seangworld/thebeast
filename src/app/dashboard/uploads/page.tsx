@@ -22,7 +22,7 @@ const uploadCategories: {
   },
   {
     label: "Learning",
-    module: "beastos",
+    module: "learning",
     description: "Notes, PDFs, course files, summaries, and references.",
   },
   {

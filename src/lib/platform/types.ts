@@ -1,6 +1,7 @@
 export type PlatformModule =
   | "beastos"
   | "money"
+  | "learning"
   | "health"
   | "home"
   | "projects"

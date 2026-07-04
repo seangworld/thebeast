@@ -42,6 +42,7 @@ const moduleNav: {
   module: ModuleKey;
   comingSoon: boolean;
 }[] = [
+  { label: "Learning", href: "/dashboard/learning", module: "learning" as ModuleKey, comingSoon: false },
   { label: "Health", module: "health" as ModuleKey, comingSoon: true },
   { label: "Home", module: "home" as ModuleKey, comingSoon: true },
   { label: "Projects", module: "projects" as ModuleKey, comingSoon: true },
@@ -53,6 +54,7 @@ const moduleNav: {
 
 function getWorkspaceModule(pathname: string): ModuleKey {
   if (pathname.startsWith("/dashboard/money")) return "money";
+  if (pathname.startsWith("/dashboard/learning")) return "learning";
   if (pathname.startsWith("/dashboard/calendar")) return "calendar";
   if (pathname.startsWith("/dashboard/notifications")) return "notifications";
   if (pathname.startsWith("/dashboard/timeline")) return "timeline";
@@ -63,6 +65,7 @@ function getWorkspaceModule(pathname: string): ModuleKey {
 
 function getWorkspaceName(module: ModuleKey) {
   if (module === "money") return "BeastMoney";
+  if (module === "learning") return "BeastLearning";
   if (module === "calendar") return "Calendar";
   if (module === "notifications") return "Notifications";
   if (module === "timeline") return "Timeline";

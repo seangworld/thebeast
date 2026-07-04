@@ -51,7 +51,19 @@ import {
   normalizeRecurringAmountToMonthly,
 } from "../src/lib/financialMetrics";
 import {
+  mockLearners,
+  mockLearningAchievements,
+  mockLearningCourses,
+  mockLearningGoals,
+  mockLearningPlan,
+  mockLearningProgress,
+  mockLearningQuickActions,
+  mockLearningSessions,
+  mockLearningSignals,
+} from "../src/lib/learning/mockData";
+import {
   buildBeastOSIntelligence,
+  buildLearningFoundationIntelligence,
   buildMoneyIntelligence,
   sortRecommendations,
 } from "../src/lib/platform/recommendationEngine";
@@ -213,6 +225,52 @@ test("beastos intelligence has all-clear recommendations and module extension po
   );
   assert.equal(
     result.moduleSummaries.some((summary) => summary.module === "health"),
+    true
+  );
+  assert.equal(
+    result.moduleSummaries.some(
+      (summary) =>
+        summary.module === "learning" &&
+        summary.status === "ready" &&
+        summary.href === "/dashboard/learning"
+    ),
+    true
+  );
+});
+
+test("learning foundation uses shared platform intelligence contracts", () => {
+  const result = buildLearningFoundationIntelligence(
+    new Date("2026-07-03T12:00:00.000Z")
+  );
+
+  assert.equal(result.moduleSummaries[0].module, "learning");
+  assert.equal(result.moduleSummaries[0].status, "ready");
+  assert.equal(result.recommendations[0].module, "learning");
+  assert.equal(result.recommendations[0].confidence, "reserved");
+  assert.equal(result.notifications[0].module, "learning");
+  assert.equal(result.activities[0].module, "learning");
+  assert.equal(result.timelineEvents[0].module, "learning");
+});
+
+test("learning mock data satisfies the domain model foundation", () => {
+  assert.equal(mockLearners.some((learner) => learner.active), true);
+  assert.equal(mockLearningGoals.every((goal) => goal.learnerId), true);
+  assert.equal(
+    mockLearningCourses.some(
+      (course) => course.id === mockLearningPlan.currentCourseId
+    ),
+    true
+  );
+  assert.equal(mockLearningPlan.weeklySessionTarget, 5);
+  assert.equal(mockLearningSessions.every((session) => session.status), true);
+  assert.equal(mockLearningProgress.some((progress) => progress.id === "mastery"), true);
+  assert.equal(
+    mockLearningAchievements.some((achievement) => achievement.earned),
+    true
+  );
+  assert.equal(mockLearningSignals[0].kind, "goal");
+  assert.equal(
+    mockLearningQuickActions.some((action) => action.label === "Continue Learning"),
     true
   );
 });

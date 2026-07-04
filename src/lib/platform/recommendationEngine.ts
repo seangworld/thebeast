@@ -66,16 +66,22 @@ const futureModules: {
   module: PlatformModule;
   label: string;
   summary: string;
+  status?: ModuleSummary["status"];
+  health?: ModuleSummary["health"];
+  href?: string;
 }[] = [
+  {
+    module: "learning",
+    label: "Learning",
+    status: "ready",
+    health: "stable",
+    href: "/dashboard/learning",
+    summary: "Learning goals, courses, study rhythm, and achievements have a foundation workspace.",
+  },
   {
     module: "health",
     label: "Health",
     summary: "Health signals will contribute recommendations when the module is live.",
-  },
-  {
-    module: "beastos",
-    label: "Learning",
-    summary: "Learning sessions and progress signals are reserved.",
   },
   {
     module: "home",
@@ -385,15 +391,16 @@ export function buildMoneyIntelligence(
 }
 
 export function buildPlaceholderModuleSummaries(): ModuleSummary[] {
-  return futureModules.map((module) => ({
-    module: module.module,
-    label: module.label,
-    status: "coming_soon",
-    health: "pending",
+  return futureModules.map((item) => ({
+    module: item.module,
+    label: item.label,
+    status: item.status || "coming_soon",
+    health: item.health || "pending",
     alerts: 0,
     recommendations: 0,
     activityCount: 0,
-    summary: module.summary,
+    summary: item.summary,
+    href: item.href,
   }));
 }
 
@@ -405,6 +412,73 @@ export function buildBeastOSIntelligence(input: MoneyIntelligenceInput) {
     moduleSummaries: [
       ...money.moduleSummaries,
       ...buildPlaceholderModuleSummaries(),
+    ],
+  };
+}
+
+export function buildLearningFoundationIntelligence(
+  now = new Date()
+): PlatformIntelligence {
+  const recommendation = createRecommendation({
+    id: "learning-select-primary-goal",
+    module: "learning",
+    priority: "Medium",
+    severity: "info",
+    title: "Choose a primary learning goal.",
+    summary: "BeastLearning is ready to organize goals, courses, study rhythm, and achievements.",
+    reason: "A focused goal gives future tutoring and recommendation layers a clear starting point.",
+    recommendedAction: "Open Learning Goals and pick the course or skill that matters most right now.",
+    estimatedBenefit: "Creates a durable learning context for future module intelligence.",
+    actionUrl: "/dashboard/learning",
+  });
+
+  return {
+    recommendations: sortRecommendations([recommendation]),
+    notifications: [
+      createNotification(
+        {
+          id: "learning-workspace-ready",
+          title: "BeastLearning workspace ready",
+          module: "learning",
+          severity: "info",
+          actionUrl: "/dashboard/learning",
+          summary: "Learning can now contribute goals, course progress, study sessions, and achievements.",
+        },
+        now
+      ),
+    ],
+    moduleSummaries: [
+      {
+        module: "learning",
+        label: "Learning",
+        status: "ready",
+        health: "stable",
+        alerts: 0,
+        recommendations: 1,
+        activityCount: 1,
+        summary: "Learning foundation is active with profile, goals, courses, progress, and achievement surfaces.",
+        href: "/dashboard/learning",
+      },
+    ],
+    activities: [
+      {
+        id: "learning-foundation-initialized",
+        module: "learning",
+        title: "Learning foundation initialized",
+        summary: "The first BeastLearning workspace is ready for future tutoring and course data.",
+        timestamp: now.toISOString(),
+        actionUrl: "/dashboard/learning",
+      },
+    ],
+    timelineEvents: [
+      {
+        id: "learning-session-foundation",
+        module: "learning",
+        title: "Today's learning session",
+        summary: "A reusable study block is reserved for the active learner.",
+        timestamp: now.toISOString(),
+        actionUrl: "/dashboard/learning",
+      },
     ],
   };
 }

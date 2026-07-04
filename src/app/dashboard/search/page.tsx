@@ -45,8 +45,8 @@ const resultSections: {
   },
   {
     label: "Learning",
-    module: "beastos",
-    description: "Future search for courses, notes, study sessions, and goals.",
+    module: "learning",
+    description: "Search foundation for courses, notes, study sessions, and goals.",
     examples: ["Courses", "Notes", "Reading", "Study blocks"],
   },
   {
