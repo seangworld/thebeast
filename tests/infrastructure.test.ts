@@ -61,6 +61,7 @@ import {
   mockLearningSessions,
   mockLearningSignals,
 } from "../src/lib/learning/mockData";
+import { generateLearningPlan } from "../src/lib/learning/planGenerator";
 import {
   buildBeastOSIntelligence,
   buildLearningFoundationIntelligence,
@@ -272,6 +273,34 @@ test("learning mock data satisfies the domain model foundation", () => {
   assert.equal(
     mockLearningQuickActions.some((action) => action.label === "Continue Learning"),
     true
+  );
+});
+
+test("learning plan generator creates deterministic starter plans", () => {
+  const plan = generateLearningPlan({
+    learningObjective: "Security+",
+    motivation: "Career growth",
+    targetOutcome: "Pass the exam",
+    timeline: "8 weeks",
+    currentLevel: "Beginner",
+    studyPace: "Focused: 5 sessions per week",
+  });
+
+  assert.equal(plan.title, "Security+ starter plan");
+  assert.equal(plan.recommendedSessions.length, 3);
+  assert.equal(plan.weeklyRhythm[0], "5 study sessions per week");
+  assert.equal(plan.recommendedSessions[0].duration, "35 min");
+  assert.equal(plan.readinessSignal.label, "Starter-ready");
+  assert.equal(plan.readinessSignal.confidence, "reserved");
+  assert.equal(
+    plan.skillCheckpoints.some((checkpoint) =>
+      checkpoint.includes("core vocabulary")
+    ),
+    true
+  );
+  assert.equal(
+    plan.suggestedNextAction,
+    "Schedule the first 35 min foundation scan for Security+."
   );
 });
 

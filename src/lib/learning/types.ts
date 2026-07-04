@@ -109,6 +109,28 @@ export type LearningGoalBuilderDraft = {
 
 export type LearningGoalBuilderStatus = "empty" | "active" | "completed";
 
+export type GeneratedLearningSession = {
+  id: string;
+  title: string;
+  focus: string;
+  duration: string;
+  cadence: string;
+};
+
+export type GeneratedLearningPlan = {
+  title: string;
+  milestones: string[];
+  recommendedSessions: GeneratedLearningSession[];
+  weeklyRhythm: string[];
+  skillCheckpoints: string[];
+  suggestedNextAction: string;
+  readinessSignal: {
+    label: string;
+    confidence: "reserved";
+    summary: string;
+  };
+};
+
 export type LearningQuickAction = {
   id: string;
   label: string;

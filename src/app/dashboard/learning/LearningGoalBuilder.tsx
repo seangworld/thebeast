@@ -6,6 +6,7 @@ import {
   ModuleBadge,
   SectionHeader,
 } from "@/app/components/design/DashboardPrimitives";
+import { generateLearningPlan } from "@/lib/learning/planGenerator";
 import type {
   LearningGoalBuilderDraft,
   LearningGoalBuilderStatus,
@@ -59,6 +60,10 @@ export default function LearningGoalBuilder() {
   const [draft, setDraft] = useState<LearningGoalBuilderDraft>(emptyDraft);
   const [completed, setCompleted] = useState(false);
   const status = useMemo(() => getDraftStatus(draft, completed), [draft, completed]);
+  const generatedPlan = useMemo(
+    () => (completed ? generateLearningPlan(draft) : null),
+    [completed, draft]
+  );
   const ready = isDraftComplete(draft);
 
   useEffect(() => {
@@ -220,7 +225,7 @@ export default function LearningGoalBuilder() {
               disabled={!ready}
               className="rounded-xl border border-indigo-300/45 bg-indigo-300/15 px-4 py-3 text-sm font-black text-indigo-100 transition hover:bg-indigo-300/20 disabled:cursor-not-allowed disabled:border-[#2a3242] disabled:bg-[#111827] disabled:text-[#7f8da3]"
             >
-              Complete Goal Draft
+              Generate Starter Plan
             </button>
             <button
               type="button"
@@ -274,6 +279,94 @@ export default function LearningGoalBuilder() {
             </p>
           </div>
         </div>
+
+        {generatedPlan ? (
+          <div className="rounded-xl border border-indigo-300/45 bg-[#111827] p-4 xl:col-start-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                Generated starter plan
+              </div>
+              <span className="rounded-full border border-green-400/35 bg-green-400/10 px-2 py-1 text-xs font-bold text-green-100">
+                {generatedPlan.readinessSignal.label}
+              </span>
+            </div>
+            <h3 className="mt-2 text-xl font-black text-white">
+              {generatedPlan.title}
+            </h3>
+            <p className="mt-2 text-sm leading-5 text-[#c7cfdb]">
+              {generatedPlan.readinessSignal.summary}
+            </p>
+
+            <div className="mt-4 grid gap-4">
+              <div>
+                <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                  Milestones
+                </div>
+                <ul className="mt-2 grid gap-2 text-sm leading-5 text-[#c7cfdb]">
+                  {generatedPlan.milestones.map((milestone) => (
+                    <li key={milestone}>{milestone}</li>
+                  ))}
+                </ul>
+              </div>
+
+              <div>
+                <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                  Recommended sessions
+                </div>
+                <div className="mt-2 grid gap-2">
+                  {generatedPlan.recommendedSessions.map((session) => (
+                    <div
+                      key={session.id}
+                      className="rounded-lg border border-[#2a3242] bg-[#0f1419] p-3"
+                    >
+                      <div className="flex flex-wrap justify-between gap-2 text-xs font-bold uppercase text-[#7f8da3]">
+                        <span>{session.cadence}</span>
+                        <span>{session.duration}</span>
+                      </div>
+                      <div className="mt-1 font-black text-white">
+                        {session.title}
+                      </div>
+                      <p className="mt-1 text-sm leading-5 text-[#c7cfdb]">
+                        {session.focus}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                  Weekly rhythm
+                </div>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {generatedPlan.weeklyRhythm.map((rhythm) => (
+                    <span
+                      key={rhythm}
+                      className="rounded-full border border-indigo-300/30 bg-indigo-300/10 px-3 py-1 text-xs font-bold text-indigo-100"
+                    >
+                      {rhythm}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                  Skill checkpoints
+                </div>
+                <ul className="mt-2 grid gap-2 text-sm leading-5 text-[#c7cfdb]">
+                  {generatedPlan.skillCheckpoints.map((checkpoint) => (
+                    <li key={checkpoint}>{checkpoint}</li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="rounded-lg border border-green-400/30 bg-green-400/10 p-3 text-sm font-bold leading-5 text-green-100">
+                {generatedPlan.suggestedNextAction}
+              </div>
+            </div>
+          </div>
+        ) : null}
       </div>
     </DashboardCard>
   );
