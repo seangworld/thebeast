@@ -207,7 +207,7 @@ export const mockLearningSessions: LearningSession[] = [
     courseTitle: "Spanish Daily Practice",
     when: "This week",
     duration: "20 min",
-    status: "Scheduled",
+    status: "Completed",
   },
 ];
 

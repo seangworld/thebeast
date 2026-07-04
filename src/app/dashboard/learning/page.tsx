@@ -23,11 +23,11 @@ import {
   mockLearningCourses,
   mockLearningGoals,
   mockLearningPlan,
-  mockLearningProgress,
   mockLearningQuickActions,
   mockLearningSessions,
   mockStudySessionCommand,
 } from "@/lib/learning/mockData";
+import { buildLearningProgressSignals } from "@/lib/learning/progressSignals";
 import type {
   LearningCourse,
   LearningGoal,
@@ -211,6 +211,14 @@ export default function LearningPage() {
   const notification = intelligence.notifications[0];
   const activity = intelligence.activities[0];
   const timelineEvent = intelligence.timelineEvents[0];
+  const progressSignals = buildLearningProgressSignals({
+    goals: mockLearningGoals,
+    courses: mockLearningCourses,
+    plan: mockLearningPlan,
+    sessions: mockLearningSessions,
+    achievements: mockLearningAchievements,
+    studySession: mockStudySessionCommand,
+  });
 
   return (
     <main className="beast-page">
@@ -235,7 +243,7 @@ export default function LearningPage() {
         </section>
 
         <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-          {mockLearningProgress.map((progress) => (
+          {progressSignals.snapshotTiles.map((progress) => (
             <MetricTile
               key={progress.id}
               label={progress.label}
@@ -267,9 +275,9 @@ export default function LearningPage() {
             />
             <div className="mt-5 grid gap-4 lg:grid-cols-[0.7fr_1fr]">
               <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
-                <HealthGauge score={72} />
+                <HealthGauge score={progressSignals.readinessScore} />
                 <div className="mt-4 text-center text-sm font-semibold text-[#c7cfdb]">
-                  Mastery placeholder
+                  Readiness placeholder
                 </div>
               </div>
               <div className="grid gap-3">
@@ -291,13 +299,15 @@ export default function LearningPage() {
                     background: `${learningAccent.color}1A`,
                   }}
                 >
-                  <div className="text-sm font-black text-white">
-                    Today&apos;s session
+                  <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                    Recommended next action
                   </div>
                   <p className="mt-2 text-sm leading-5 text-indigo-100">
-                    Review authentication, access control, and 20 minutes of
-                    flashcard reinforcement.
+                    {progressSignals.recommendedNextAction}
                   </p>
+                  <div className="mt-3 text-xs font-bold uppercase text-[#7f8da3]">
+                    Weak area: {progressSignals.weakArea}
+                  </div>
                 </div>
               </div>
             </div>

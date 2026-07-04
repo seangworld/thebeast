@@ -87,6 +87,27 @@ export type LearningProgress = {
   numericValue?: number;
 };
 
+export type LearningProgressTile = {
+  id: string;
+  label: string;
+  value: string;
+  detail: string;
+  icon: string;
+  tone: "blue" | "green" | "yellow" | "red" | "purple";
+};
+
+export type LearningProgressSignals = {
+  activeGoalsCount: number;
+  currentStreakDays: number;
+  sessionsCompleted: number;
+  estimatedWeeklyStudyMinutes: number;
+  progressPercentage: number;
+  readinessScore: number;
+  weakArea: string;
+  recommendedNextAction: string;
+  snapshotTiles: LearningProgressTile[];
+};
+
 export type LearningAchievement = {
   id: string;
   learnerId: string;

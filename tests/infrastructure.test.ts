@@ -56,13 +56,13 @@ import {
   mockLearningCourses,
   mockLearningGoals,
   mockLearningPlan,
-  mockLearningProgress,
   mockLearningQuickActions,
   mockLearningSessions,
   mockLearningSignals,
   mockStudySessionCommand,
 } from "../src/lib/learning/mockData";
 import { generateLearningPlan } from "../src/lib/learning/planGenerator";
+import { buildLearningProgressSignals } from "../src/lib/learning/progressSignals";
 import {
   buildBeastOSIntelligence,
   buildLearningFoundationIntelligence,
@@ -273,7 +273,6 @@ test("learning mock data satisfies the domain model foundation", () => {
   );
   assert.equal(mockStudySessionCommand.estimatedTime, "35 min");
   assert.equal(mockStudySessionCommand.progressFeedback.includes("Session complete"), true);
-  assert.equal(mockLearningProgress.some((progress) => progress.id === "mastery"), true);
   assert.equal(
     mockLearningAchievements.some((achievement) => achievement.earned),
     true
@@ -283,6 +282,30 @@ test("learning mock data satisfies the domain model foundation", () => {
     mockLearningQuickActions.some((action) => action.label === "Continue Learning"),
     true
   );
+});
+
+test("learning progress signals derive dashboard intelligence", () => {
+  const signals = buildLearningProgressSignals({
+    goals: mockLearningGoals,
+    courses: mockLearningCourses,
+    plan: mockLearningPlan,
+    sessions: mockLearningSessions,
+    achievements: mockLearningAchievements,
+    studySession: mockStudySessionCommand,
+  });
+
+  assert.equal(signals.activeGoalsCount, 1);
+  assert.equal(signals.currentStreakDays, 7);
+  assert.equal(signals.sessionsCompleted, 1);
+  assert.equal(signals.estimatedWeeklyStudyMinutes, 80);
+  assert.equal(signals.progressPercentage, 42);
+  assert.equal(signals.readinessScore, 72);
+  assert.equal(signals.weakArea, "Spanish Daily Practice");
+  assert.equal(
+    signals.recommendedNextAction,
+    "Review Spanish Daily Practice after Authentication and access control."
+  );
+  assert.equal(signals.snapshotTiles.length, 5);
 });
 
 test("learning plan generator creates deterministic starter plans", () => {
