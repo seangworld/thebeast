@@ -8,11 +8,25 @@ import {
   SectionHeader,
   moduleAccents,
 } from "@/app/components/design/DashboardPrimitives";
+import { buildLearningAchievementUnlocks } from "@/lib/learning/achievements";
+import { mockLearningCertificates } from "@/lib/learning/certificates";
+import { buildLearnerPortfolio } from "@/lib/learning/portfolio";
 import { buildLearningFoundationIntelligence } from "@/lib/platform/recommendationEngine";
+import BetaFeedbackPanel from "./BetaFeedbackPanel";
 import GuidanceCounselorMode from "./GuidanceCounselorMode";
+import {
+  AchievementEnginePanel,
+  AISpecialistsPanel,
+  CertificatePreviewPanel,
+  LearnerPortfolioPanel,
+  ParentDashboardPanel,
+  StudyPlannerPanel,
+  UploadFoundationPanel,
+} from "./LearningFoundationPanels";
 import LearningGoalBuilder from "./LearningGoalBuilder";
 import LearningPathTemplates from "./LearningPathTemplates";
 import StudySessionCommandCard from "./StudySessionCommandCard";
+import { mockParentDashboard } from "@/lib/learning/parentDashboard";
 import type {
   ModuleSummary,
   PlatformActivity,
@@ -31,7 +45,10 @@ import {
 } from "@/lib/learning/mockData";
 import { buildLearningProgressSignals } from "@/lib/learning/progressSignals";
 import { buildLearningRecommendations } from "@/lib/learning/recommendations";
+import { learningSpecialists } from "@/lib/learning/specialists";
+import { mockStudyPlanner } from "@/lib/learning/studyPlanner";
 import { learningPathTemplates } from "@/lib/learning/templates";
+import { mockLearningUploads } from "@/lib/learning/uploads";
 import type {
   LearningCourse,
   LearningGoal,
@@ -225,6 +242,22 @@ export default function LearningPage() {
       activeGoalsCount: progressSignals.activeGoalsCount,
       currentFocus: mockStudySessionCommand.currentFocus,
     });
+  const achievementUnlocks = buildLearningAchievementUnlocks({
+    progress: progressSignals,
+    goalsCreated: mockLearningGoals.length,
+    goalsCompleted: mockLearningGoals.filter((goal) => goal.status === "Completed")
+      .length,
+    masteredSkills: 0,
+    foundingStudent: true,
+  });
+  const learnerPortfolio = buildLearnerPortfolio({
+    learnerName: mockLearners.find((learner) => learner.active)?.name || "Learner",
+    goals: mockLearningGoals,
+    progress: progressSignals,
+    certificates: mockLearningCertificates,
+    achievementCount: achievementUnlocks.filter((achievement) => achievement.unlocked)
+      .length,
+  });
 
   return (
     <main className="beast-page">
@@ -416,6 +449,23 @@ export default function LearningPage() {
         <GuidanceCounselorMode />
 
         <LearningPathTemplates templates={learningPathTemplates} />
+
+        <AchievementEnginePanel achievements={achievementUnlocks} />
+
+        <section className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
+          <CertificatePreviewPanel certificates={mockLearningCertificates} />
+          <LearnerPortfolioPanel portfolio={learnerPortfolio} />
+        </section>
+
+        <ParentDashboardPanel dashboard={mockParentDashboard} />
+
+        <StudyPlannerPanel planner={mockStudyPlanner} />
+
+        <UploadFoundationPanel uploads={mockLearningUploads} />
+
+        <AISpecialistsPanel specialists={learningSpecialists} />
+
+        <BetaFeedbackPanel />
 
         <section className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
           <DashboardCard accent="learning">

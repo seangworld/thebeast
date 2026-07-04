@@ -51,6 +51,14 @@ import {
   normalizeRecurringAmountToMonthly,
 } from "../src/lib/financialMetrics";
 import {
+  buildLearningAchievementUnlocks,
+  learningAchievementCatalog,
+} from "../src/lib/learning/achievements";
+import {
+  generateLearningCertificateId,
+  mockLearningCertificates,
+} from "../src/lib/learning/certificates";
+import {
   mockLearners,
   mockLearningAchievements,
   mockLearningCourses,
@@ -62,10 +70,15 @@ import {
   mockStudySessionCommand,
 } from "../src/lib/learning/mockData";
 import { buildGuidanceCounselorRoadmap } from "../src/lib/learning/guidanceCounselor";
+import { mockParentDashboard } from "../src/lib/learning/parentDashboard";
 import { generateLearningPlan } from "../src/lib/learning/planGenerator";
+import { buildLearnerPortfolio } from "../src/lib/learning/portfolio";
 import { buildLearningProgressSignals } from "../src/lib/learning/progressSignals";
 import { buildLearningRecommendations } from "../src/lib/learning/recommendations";
+import { learningSpecialists, routeMockLearningSpecialist } from "../src/lib/learning/specialists";
+import { mockStudyPlanner } from "../src/lib/learning/studyPlanner";
 import { learningPathTemplates } from "../src/lib/learning/templates";
+import { mockLearningUploads } from "../src/lib/learning/uploads";
 import {
   buildBeastOSIntelligence,
   buildLearningFoundationIntelligence,
@@ -406,6 +419,68 @@ test("guidance counselor roadmap uses static goal-type rules", () => {
     roadmap.nextRecommendedAction,
     "Choose the exam domain with the lowest confidence."
   );
+});
+
+test("learning foundation completion engines expose static platform data", () => {
+  const progress = buildLearningProgressSignals({
+    goals: mockLearningGoals,
+    courses: mockLearningCourses,
+    plan: mockLearningPlan,
+    sessions: mockLearningSessions,
+    achievements: mockLearningAchievements,
+    studySession: mockStudySessionCommand,
+  });
+  const achievementUnlocks = buildLearningAchievementUnlocks({
+    progress,
+    goalsCreated: mockLearningGoals.length,
+    goalsCompleted: 0,
+    masteredSkills: 0,
+    foundingStudent: true,
+  });
+  const portfolio = buildLearnerPortfolio({
+    learnerName: "Current learner",
+    goals: mockLearningGoals,
+    progress,
+    certificates: mockLearningCertificates,
+    achievementCount: achievementUnlocks.filter((achievement) => achievement.unlocked).length,
+  });
+
+  assert.equal(learningAchievementCatalog.length, 8);
+  assert.equal(
+    achievementUnlocks.some(
+      (achievement) => achievement.id === "founding-student" && achievement.unlocked
+    ),
+    true
+  );
+  assert.equal(
+    generateLearningCertificateId({
+      learnerName: "Current learner",
+      pathName: "Security+ Foundations",
+      completionDate: "2026-07-03",
+    }),
+    mockLearningCertificates[0].certificateId
+  );
+  assert.equal(portfolio.certificates, 1);
+  assert.equal(mockParentDashboard.learners.length, 2);
+  assert.equal(mockStudyPlanner.placeholderActions.includes("Create reminder"), true);
+  assert.deepEqual(
+    mockLearningUploads.map((upload) => upload.category),
+    ["textbook", "PDF", "syllabus", "notes", "slides", "worksheet", "practice exam"]
+  );
+  assert.deepEqual(
+    learningSpecialists.map((specialist) => specialist.role),
+    [
+      "Tutor",
+      "Study Coach",
+      "Guidance Counselor",
+      "Parent Assistant",
+      "Certification Coach",
+      "Reading Coach",
+      "Writing Coach",
+      "Language Coach",
+    ]
+  );
+  assert.equal(routeMockLearningSpecialist("Tutor").status, "mocked-preview");
 });
 
 test("learning plan generator creates deterministic starter plans", () => {

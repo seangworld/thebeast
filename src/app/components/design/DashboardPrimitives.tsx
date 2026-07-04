@@ -47,11 +47,11 @@ export const moduleAccents: Record<
   },
   health: {
     label: "BeastHealth",
-    color: "#fb7185",
-    border: "border-rose-400/50",
-    bg: "bg-rose-400/15",
-    text: "text-rose-100",
-    soft: "before:bg-[#fb7185]",
+    color: "#dc2626",
+    border: "border-red-400/50",
+    bg: "bg-red-400/15",
+    text: "text-red-100",
+    soft: "before:bg-[#dc2626]",
   },
   home: {
     label: "BeastHome",
@@ -134,6 +134,10 @@ export const moduleAccents: Record<
     soft: "before:bg-[#38bdf8]",
   },
 };
+
+export function getModuleAccent(module: ModuleKey) {
+  return moduleAccents[module];
+}
 
 type DashboardCardProps = {
   children: React.ReactNode;

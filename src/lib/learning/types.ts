@@ -207,3 +207,145 @@ export type GuidanceCounselorRoadmap = {
   nextRecommendedAction: string;
   previewLabel: string;
 };
+
+export type LearningAchievementTrigger =
+  | "first_session"
+  | "study_streak"
+  | "sessions_completed"
+  | "goals_created"
+  | "goals_completed"
+  | "path_progress"
+  | "skills_mastered"
+  | "founding_student";
+
+export type LearningAchievementCatalogItem = {
+  id: string;
+  title: string;
+  description: string;
+  trigger: LearningAchievementTrigger;
+  threshold: number;
+};
+
+export type LearningAchievementUnlock = LearningAchievementCatalogItem & {
+  unlocked: boolean;
+  progress: number;
+};
+
+export type LearningCertificate = {
+  id: string;
+  learnerName: string;
+  pathName: string;
+  completionDate: string;
+  certificateId: string;
+  language: string;
+  verificationPlaceholder: string;
+};
+
+export type LearnerPortfolio = {
+  learnerName: string;
+  activeGoals: number;
+  completedGoals: number;
+  currentFocus: string;
+  studyStreak: string;
+  hoursStudied: string;
+  achievements: number;
+  certificates: number;
+  skillsPlaceholder: string[];
+  externalCertificationsPlaceholder: string[];
+  recommendedNextAction: string;
+};
+
+export type ParentLearnerOverview = {
+  learnerName: string;
+  weeklyStudyActivity: string;
+  activeGoals: string[];
+  achievements: string[];
+  suggestedEncouragement: string;
+  areasNeedingAttention: string[];
+  nextRecommendedParentAction: string;
+};
+
+export type ParentDashboard = {
+  householdName: string;
+  learners: ParentLearnerOverview[];
+};
+
+export type StudyPlannerBlock = {
+  id: string;
+  title: string;
+  when: string;
+  duration: string;
+  module: "Learning";
+};
+
+export type StudyPlannerMilestone = {
+  id: string;
+  title: string;
+  targetDate: string;
+  status: "planned" | "in-progress" | "placeholder";
+};
+
+export type StudyPlanner = {
+  weeklyRhythm: string[];
+  upcomingBlocks: StudyPlannerBlock[];
+  milestones: StudyPlannerMilestone[];
+  examsAndDeadlines: StudyPlannerMilestone[];
+  placeholderActions: string[];
+};
+
+export type LearningUploadCategory =
+  | "textbook"
+  | "PDF"
+  | "syllabus"
+  | "notes"
+  | "slides"
+  | "worksheet"
+  | "practice exam";
+
+export type LearningUploadStatus =
+  | "queued"
+  | "processing"
+  | "ready"
+  | "needs review"
+  | "failed";
+
+export type LearningUploadItem = {
+  id: string;
+  title: string;
+  category: LearningUploadCategory;
+  status: LearningUploadStatus;
+  detail: string;
+};
+
+export type LearningSpecialistRole =
+  | "Tutor"
+  | "Study Coach"
+  | "Guidance Counselor"
+  | "Parent Assistant"
+  | "Certification Coach"
+  | "Reading Coach"
+  | "Writing Coach"
+  | "Language Coach";
+
+export type LearningSpecialist = {
+  id: string;
+  role: LearningSpecialistRole;
+  description: string;
+  available: boolean;
+};
+
+export type LearningFeedbackCategory =
+  | "feature idea"
+  | "bug report"
+  | "confusing experience"
+  | "liked something"
+  | "disliked something"
+  | "general suggestion";
+
+export type LearningFeedbackItem = {
+  id: string;
+  category: LearningFeedbackCategory;
+  message: string;
+  context?: string;
+  submittedAt: string;
+};
