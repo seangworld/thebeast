@@ -63,17 +63,6 @@ function getWorkspaceModule(pathname: string): ModuleKey {
   return "beastos";
 }
 
-function getWorkspaceName(module: ModuleKey) {
-  if (module === "money") return "BeastMoney";
-  if (module === "learning") return "BeastLearning";
-  if (module === "calendar") return "Calendar";
-  if (module === "notifications") return "Notifications";
-  if (module === "timeline") return "Timeline";
-  if (module === "search") return "Search";
-
-  return "BeastOS";
-}
-
 export default function DashboardLayout({
   children,
 }: {
@@ -143,7 +132,6 @@ export default function DashboardLayout({
         <div className={compact ? "flex justify-center px-3 py-4" : "px-4 py-5"}>
           <BeastBrandMark
             module={workspaceModule}
-            workspaceName={compact ? "" : getWorkspaceName(workspaceModule)}
             subtitle={compact ? "" : "Platform Shell"}
             size="sm"
             iconOnly={compact}
@@ -328,7 +316,6 @@ export default function DashboardLayout({
         <div className="flex items-center justify-between gap-3">
           <BeastBrandMark
             module={workspaceModule}
-            workspaceName={getWorkspaceName(workspaceModule)}
             size="sm"
           />
           <button
@@ -354,7 +341,6 @@ export default function DashboardLayout({
             <div className="flex items-center justify-between border-b border-[#2a3242] px-4 py-3">
               <BeastBrandMark
                 module={workspaceModule}
-                workspaceName={getWorkspaceName(workspaceModule)}
                 size="sm"
               />
               <button

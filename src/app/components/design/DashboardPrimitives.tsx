@@ -181,6 +181,11 @@ type BeastBrandMarkProps = {
   iconOnly?: boolean;
 };
 
+type ModuleTitleProps = {
+  module: ModuleKey;
+  title?: string;
+};
+
 type ModuleBadgeProps = {
   module: ModuleKey;
   label?: string;
@@ -210,6 +215,8 @@ const accentClasses = {
   red: "before:bg-[#ef4444]",
   purple: "before:bg-[#a78bfa]",
 };
+
+const beastBrandColor = "#38bdf8";
 
 function getAccentClass(accent: DashboardCardProps["accent"]) {
   if (!accent) return accentClasses.blue;
@@ -292,9 +299,7 @@ export function BeastBrandMark({
       </div>
       {!iconOnly ? (
         <div className="min-w-0">
-          <div className="truncate text-lg font-black leading-tight text-white">
-            {workspaceName || accent.label}
-          </div>
+          <ModuleTitle module={module} title={workspaceName} />
           {subtitle ? (
             <div className="truncate text-xs font-semibold text-[#7f8da3]">
               {subtitle}
@@ -302,6 +307,24 @@ export function BeastBrandMark({
           ) : null}
         </div>
       ) : null}
+    </div>
+  );
+}
+
+export function ModuleTitle({ module, title }: ModuleTitleProps) {
+  const accent = moduleAccents[module];
+  const displayTitle = title || accent.label;
+  const moduleName = displayTitle.startsWith("Beast")
+    ? displayTitle.slice("Beast".length)
+    : displayTitle;
+
+  return (
+    <div
+      className="truncate text-lg font-black leading-tight"
+      aria-label={`Beast${moduleName}`}
+    >
+      <span style={{ color: beastBrandColor }}>Beast</span>
+      <span style={{ color: accent.color }}>{moduleName}</span>
     </div>
   );
 }
