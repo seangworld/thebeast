@@ -182,3 +182,28 @@ export type LearningPathTemplate = {
   recommendedPace: string;
   suggestedNextStep: string;
 };
+
+export type GuidanceGoalType =
+  | "Career"
+  | "College path"
+  | "Certification"
+  | "Trade"
+  | "Promotion"
+  | "Skill goal";
+
+export type GuidanceCounselorInput = {
+  goalType: GuidanceGoalType;
+  futureGoal: string;
+};
+
+export type GuidanceCounselorRoadmap = {
+  title: string;
+  startingPoint: string;
+  requiredEducationOrTraining: string[];
+  skillsToBuild: string[];
+  suggestedMilestones: string[];
+  estimatedTimeline: string;
+  questionsToConsider: string[];
+  nextRecommendedAction: string;
+  previewLabel: string;
+};

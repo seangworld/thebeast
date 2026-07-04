@@ -61,6 +61,7 @@ import {
   mockLearningSignals,
   mockStudySessionCommand,
 } from "../src/lib/learning/mockData";
+import { buildGuidanceCounselorRoadmap } from "../src/lib/learning/guidanceCounselor";
 import { generateLearningPlan } from "../src/lib/learning/planGenerator";
 import { buildLearningProgressSignals } from "../src/lib/learning/progressSignals";
 import { buildLearningRecommendations } from "../src/lib/learning/recommendations";
@@ -380,6 +381,30 @@ test("learning path templates cover required starter paths", () => {
         template.suggestedNextStep
     ),
     true
+  );
+});
+
+test("guidance counselor roadmap uses static goal-type rules", () => {
+  const roadmap = buildGuidanceCounselorRoadmap({
+    goalType: "Certification",
+    futureGoal: "Security+",
+  });
+
+  assert.equal(roadmap.title, "Certification: Security+");
+  assert.equal(roadmap.previewLabel, "Early planning preview");
+  assert.equal(roadmap.estimatedTimeline, "6-10 week prep placeholder");
+  assert.equal(
+    roadmap.requiredEducationOrTraining.some((item) =>
+      item.includes("exam objectives")
+    ),
+    true
+  );
+  assert.equal(roadmap.skillsToBuild.includes("Exam readiness"), true);
+  assert.equal(roadmap.suggestedMilestones.length >= 3, true);
+  assert.equal(roadmap.questionsToConsider.length >= 3, true);
+  assert.equal(
+    roadmap.nextRecommendedAction,
+    "Choose the exam domain with the lowest confidence."
   );
 });
 

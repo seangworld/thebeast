@@ -9,6 +9,7 @@ import {
   moduleAccents,
 } from "@/app/components/design/DashboardPrimitives";
 import { buildLearningFoundationIntelligence } from "@/lib/platform/recommendationEngine";
+import GuidanceCounselorMode from "./GuidanceCounselorMode";
 import LearningGoalBuilder from "./LearningGoalBuilder";
 import LearningPathTemplates from "./LearningPathTemplates";
 import StudySessionCommandCard from "./StudySessionCommandCard";
@@ -411,6 +412,8 @@ export default function LearningPage() {
         </section>
 
         <LearningGoalBuilder />
+
+        <GuidanceCounselorMode />
 
         <LearningPathTemplates templates={learningPathTemplates} />
 
