@@ -25,6 +25,11 @@ import {
   getCheckoutStartErrorMessage,
 } from "../src/lib/billing/checkoutErrors";
 import {
+  buildMonthGrid,
+  getLocalCalendarDate,
+  getMonthLength,
+} from "../src/lib/calendar";
+import {
   getBillingReturnUrl,
   getCheckoutPriceId,
   getStripeCheckoutConfigIssue,
@@ -224,6 +229,46 @@ test("module navigation centralizes expandable child items", () => {
     getModuleChildren("money").some((item) => item.future && item.label === "Add Bill"),
     true
   );
+});
+
+test("calendar date generation uses local-safe weekday alignment", () => {
+  const julyFirst = getLocalCalendarDate(2026, 6, 1);
+  const julyFourth = getLocalCalendarDate(2026, 6, 4);
+
+  assert.equal(julyFirst.getDay(), 3);
+  assert.equal(julyFourth.getDay(), 6);
+});
+
+test("calendar month grid aligns July 2026 with leading and trailing days", () => {
+  const grid = buildMonthGrid(2026, 6);
+  const currentMonthDays = grid.filter((day) => day.inCurrentMonth);
+  const julyFirstIndex = grid.findIndex(
+    (day) => day.inCurrentMonth && day.dayOfMonth === 1
+  );
+  const julyFourthIndex = grid.findIndex(
+    (day) => day.inCurrentMonth && day.dayOfMonth === 4
+  );
+
+  assert.equal(grid.length, 35);
+  assert.equal(julyFirstIndex, 3);
+  assert.equal(julyFourthIndex, 6);
+  assert.deepEqual(
+    grid.slice(0, 3).map((day) => [day.monthIndex, day.dayOfMonth]),
+    [
+      [5, 28],
+      [5, 29],
+      [5, 30],
+    ]
+  );
+  assert.deepEqual(grid.at(-1) && [grid.at(-1)?.monthIndex, grid.at(-1)?.dayOfMonth], [
+    7,
+    1,
+  ]);
+  assert.equal(currentMonthDays.length, 31);
+});
+
+test("calendar month length is correct for July 2026", () => {
+  assert.equal(getMonthLength(2026, 6), 31);
 });
 
 test("financial metrics normalize recurring income to monthly amounts", () => {

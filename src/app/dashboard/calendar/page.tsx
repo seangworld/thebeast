@@ -11,8 +11,11 @@ import {
   serviceEvents,
   serviceModules,
 } from "@/app/dashboard/platformServices";
+import { buildMonthGrid, weekdayLabels } from "@/lib/calendar";
 
-const calendarDays = Array.from({ length: 35 }, (_, index) => index + 1);
+const calendarYear = 2026;
+const calendarMonthIndex = 6;
+const calendarDays = buildMonthGrid(calendarYear, calendarMonthIndex);
 const moneyEventDays = new Set([3, 7, 14, 21, 28]);
 const futureEventDays = new Set([10, 16, 24, 31]);
 
@@ -55,27 +58,43 @@ export default function CalendarPage() {
             </div>
 
             <div className="mt-6 grid grid-cols-7 gap-2 text-center text-xs font-bold uppercase text-[#7f8da3]">
-              {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+              {weekdayLabels.map((day) => (
                 <div key={day} className="py-2">
                   {day}
                 </div>
               ))}
             </div>
             <div className="grid grid-cols-7 gap-2">
-              {calendarDays.map((day) => {
-                const hasMoneyEvent = moneyEventDays.has(day);
-                const hasFutureEvent = futureEventDays.has(day);
+              {calendarDays.map((calendarDay) => {
+                const hasMoneyEvent =
+                  calendarDay.inCurrentMonth && moneyEventDays.has(calendarDay.dayOfMonth);
+                const hasFutureEvent =
+                  calendarDay.inCurrentMonth && futureEventDays.has(calendarDay.dayOfMonth);
+                const isToday =
+                  calendarDay.year === 2026 &&
+                  calendarDay.monthIndex === 6 &&
+                  calendarDay.dayOfMonth === 4;
 
                 return (
                   <div
-                    key={day}
-                    className={`min-h-[92px] rounded-xl border bg-[#111827] p-2 text-left ${
-                      day === 3
+                    key={calendarDay.key}
+                    className={`min-h-[92px] rounded-xl border p-2 text-left ${
+                      calendarDay.inCurrentMonth
+                        ? "bg-[#111827]"
+                        : "bg-[#0f1419] opacity-55"
+                    } ${
+                      isToday
                         ? "border-[#38bdf8]/60"
                         : "border-[#2a3242]"
                     }`}
                   >
-                    <div className="text-sm font-black text-white">{day}</div>
+                    <div
+                      className={`text-sm font-black ${
+                        calendarDay.inCurrentMonth ? "text-white" : "text-[#596579]"
+                      }`}
+                    >
+                      {calendarDay.dayOfMonth}
+                    </div>
                     <div className="mt-3 flex flex-wrap gap-1">
                       {hasMoneyEvent ? (
                         <span
