@@ -8,6 +8,7 @@ import type {
   LearningQuickAction,
   LearningSession,
   LearningSignal,
+  StudySessionCommand,
 } from "./types";
 
 export const mockLearners: LearnerProfile[] = [
@@ -209,6 +210,21 @@ export const mockLearningSessions: LearningSession[] = [
     status: "Scheduled",
   },
 ];
+
+export const mockStudySessionCommand: StudySessionCommand = {
+  id: "today-auth-access-control-command",
+  sessionId: "auth-access-control",
+  currentFocus: "Authentication and access control",
+  estimatedTime: "35 min",
+  warmUpPrompt:
+    "List three ways a system can verify identity before granting access.",
+  guidedPracticeStep:
+    "Compare password, MFA, and role-based access examples against the Security+ objective.",
+  reflectionCheckpoint:
+    "Write one sentence on the difference between authentication and authorization.",
+  progressFeedback:
+    "Session complete. Today counts toward your study streak and strengthens the Security+ foundations path.",
+};
 
 export const mockLearningAchievements: LearningAchievement[] = [
   {

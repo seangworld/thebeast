@@ -63,6 +63,19 @@ export type LearningSession = {
   status: LearningSessionStatus;
 };
 
+export type StudySessionCommand = {
+  id: string;
+  sessionId: string;
+  currentFocus: string;
+  estimatedTime: string;
+  warmUpPrompt: string;
+  guidedPracticeStep: string;
+  reflectionCheckpoint: string;
+  progressFeedback: string;
+};
+
+export type StudySessionCommandStatus = "idle" | "started" | "completed";
+
 export type LearningProgress = {
   id: string;
   learnerId: string;

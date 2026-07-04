@@ -10,6 +10,7 @@ import {
 } from "@/app/components/design/DashboardPrimitives";
 import { buildLearningFoundationIntelligence } from "@/lib/platform/recommendationEngine";
 import LearningGoalBuilder from "./LearningGoalBuilder";
+import StudySessionCommandCard from "./StudySessionCommandCard";
 import type {
   ModuleSummary,
   PlatformActivity,
@@ -25,6 +26,7 @@ import {
   mockLearningProgress,
   mockLearningQuickActions,
   mockLearningSessions,
+  mockStudySessionCommand,
 } from "@/lib/learning/mockData";
 import type {
   LearningCourse,
@@ -301,6 +303,8 @@ export default function LearningPage() {
             </div>
           </DashboardCard>
         </section>
+
+        <StudySessionCommandCard session={mockStudySessionCommand} />
 
         <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
           <DashboardCard accent="learning">

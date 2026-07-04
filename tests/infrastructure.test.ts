@@ -60,6 +60,7 @@ import {
   mockLearningQuickActions,
   mockLearningSessions,
   mockLearningSignals,
+  mockStudySessionCommand,
 } from "../src/lib/learning/mockData";
 import { generateLearningPlan } from "../src/lib/learning/planGenerator";
 import {
@@ -264,6 +265,14 @@ test("learning mock data satisfies the domain model foundation", () => {
   );
   assert.equal(mockLearningPlan.weeklySessionTarget, 5);
   assert.equal(mockLearningSessions.every((session) => session.status), true);
+  assert.equal(
+    mockLearningSessions.some(
+      (session) => session.id === mockStudySessionCommand.sessionId
+    ),
+    true
+  );
+  assert.equal(mockStudySessionCommand.estimatedTime, "35 min");
+  assert.equal(mockStudySessionCommand.progressFeedback.includes("Session complete"), true);
   assert.equal(mockLearningProgress.some((progress) => progress.id === "mastery"), true);
   assert.equal(
     mockLearningAchievements.some((achievement) => achievement.earned),
