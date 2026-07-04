@@ -25,6 +25,7 @@ import {
   StudyPlannerPanel,
   UploadFoundationPanel,
 } from "./LearningFoundationPanels";
+import LearningAIOrchestrationPanel from "./LearningAIOrchestrationPanel";
 import LearningContentIntelligencePanel from "./LearningContentIntelligencePanel";
 import LearningExperiencePanel from "./LearningExperiencePanel";
 import LearningGoalBuilder from "./LearningGoalBuilder";
@@ -58,6 +59,7 @@ import { learningSpecialists } from "@/lib/learning/specialists";
 import { mockStudyPlanner } from "@/lib/learning/studyPlanner";
 import { learningPathTemplates } from "@/lib/learning/templates";
 import { mockLearningUploads } from "@/lib/learning/uploads";
+import { buildAIOrchestrationDashboard } from "@/lib/learning/aiOrchestrationDashboard";
 import type {
   LearningCourse,
   LearningGoal,
@@ -255,6 +257,10 @@ export default function LearningPage() {
     goals: mockLearningGoals,
     weeklyStudyMinutes: progressSignals.estimatedWeeklyStudyMinutes,
   });
+  const aiOrchestration = buildAIOrchestrationDashboard({
+    learnerName: mockLearners.find((learner) => learner.active)?.name || "Learner",
+    mastery: learningIntelligence.mastery,
+  });
   const learningDashboardContent = buildLearningDashboardContent();
   const knowledgeDashboard = buildKnowledgeIntelligenceDashboard();
   const achievementUnlocks = buildLearningAchievementUnlocks({
@@ -317,6 +323,8 @@ export default function LearningPage() {
         </section>
 
         <LearningExperiencePanel experience={learningExperience} />
+
+        <LearningAIOrchestrationPanel orchestration={aiOrchestration} />
 
         <section className="grid gap-4 xl:grid-cols-[0.85fr_1.15fr]">
           <DashboardCard accent="learning">

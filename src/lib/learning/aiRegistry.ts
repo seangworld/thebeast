@@ -1,0 +1,178 @@
+import type { AISpecialistContract, LearningSpecialistRole } from "./types";
+
+function specialist({
+  id,
+  name,
+  description,
+  supportedSubjects,
+  supportedGoals,
+  supportedOutputTypes,
+  requiredContext,
+}: Omit<AISpecialistContract, "supportedLearnerAges" | "futureAIStatus">): AISpecialistContract {
+  return {
+    id,
+    name,
+    description,
+    supportedSubjects,
+    supportedGoals,
+    supportedLearnerAges: ["middle school", "high school", "college", "adult"],
+    supportedOutputTypes,
+    requiredContext,
+    futureAIStatus: "mocked",
+  };
+}
+
+export const aiSpecialistRegistry: AISpecialistContract[] = [
+  specialist({
+    id: "tutor",
+    name: "Tutor",
+    description: "Teaches concepts step by step.",
+    supportedSubjects: ["Math", "Science", "Cybersecurity", "Programming", "Languages"],
+    supportedGoals: ["understand concept", "learn lesson"],
+    supportedOutputTypes: ["explanation", "lesson", "practice"],
+    requiredContext: ["profile", "currentLesson", "mastery", "weakAreas"],
+  }),
+  specialist({
+    id: "study-coach",
+    name: "Study Coach",
+    description: "Plans study rhythm and review strategy.",
+    supportedSubjects: ["All"],
+    supportedGoals: ["study plan", "review plan"],
+    supportedOutputTypes: ["plan", "review", "motivation"],
+    requiredContext: ["goals", "studyHistory", "recentSessions"],
+  }),
+  specialist({
+    id: "homework-coach",
+    name: "Homework Coach",
+    description: "Supports homework through hints and guided reasoning.",
+    supportedSubjects: ["Math", "Science", "Language Arts", "Programming"],
+    supportedGoals: ["homework help", "guided practice"],
+    supportedOutputTypes: ["practice", "explanation"],
+    requiredContext: ["currentLesson", "weakAreas", "mastery"],
+  }),
+  specialist({
+    id: "guidance-counselor",
+    name: "Guidance Counselor",
+    description: "Maps education paths and future choices.",
+    supportedSubjects: ["All"],
+    supportedGoals: ["college path", "career path"],
+    supportedOutputTypes: ["career roadmap", "plan"],
+    requiredContext: ["profile", "goals", "career"],
+  }),
+  specialist({
+    id: "career-mentor",
+    name: "Career Mentor",
+    description: "Connects learning choices to career outcomes.",
+    supportedSubjects: ["Business", "Cybersecurity", "Programming", "Trades"],
+    supportedGoals: ["career advice", "interview prep"],
+    supportedOutputTypes: ["career roadmap", "reflection"],
+    requiredContext: ["career", "goals", "courses"],
+  }),
+  specialist({
+    id: "certification-coach",
+    name: "Certification Coach",
+    description: "Organizes certification prep and objective review.",
+    supportedSubjects: ["Cybersecurity", "Programming", "Business", "Trades"],
+    supportedGoals: ["certification", "exam prep"],
+    supportedOutputTypes: ["plan", "review", "assessment"],
+    requiredContext: ["goals", "mastery", "weakAreas"],
+  }),
+  specialist({
+    id: "writing-coach",
+    name: "Writing Coach",
+    description: "Supports writing structure, revision, and clarity.",
+    supportedSubjects: ["Language Arts", "Business", "History"],
+    supportedGoals: ["writing", "reflection"],
+    supportedOutputTypes: ["reflection", "explanation"],
+    requiredContext: ["profile", "currentLesson"],
+  }),
+  specialist({
+    id: "reading-coach",
+    name: "Reading Coach",
+    description: "Supports comprehension and summaries.",
+    supportedSubjects: ["Language Arts", "History", "Science"],
+    supportedGoals: ["reading", "summarize"],
+    supportedOutputTypes: ["explanation", "review"],
+    requiredContext: ["currentLesson", "weakAreas"],
+  }),
+  specialist({
+    id: "language-coach",
+    name: "Language Coach",
+    description: "Supports vocabulary, listening, and speaking practice.",
+    supportedSubjects: ["Languages"],
+    supportedGoals: ["language practice"],
+    supportedOutputTypes: ["practice", "review"],
+    requiredContext: ["profile", "mastery"],
+  }),
+  specialist({
+    id: "math-coach",
+    name: "Math Coach",
+    description: "Guides math reasoning and practice.",
+    supportedSubjects: ["Math", "Mathematics"],
+    supportedGoals: ["math practice", "homework help"],
+    supportedOutputTypes: ["practice", "explanation", "assessment"],
+    requiredContext: ["currentLesson", "mastery", "weakAreas"],
+  }),
+  specialist({
+    id: "science-coach",
+    name: "Science Coach",
+    description: "Explains science concepts and lab thinking.",
+    supportedSubjects: ["Science"],
+    supportedGoals: ["science help", "lab prep"],
+    supportedOutputTypes: ["explanation", "lesson", "practice"],
+    requiredContext: ["currentLesson", "courses"],
+  }),
+  specialist({
+    id: "coding-coach",
+    name: "Coding Coach",
+    description: "Supports coding concepts and debugging practice.",
+    supportedSubjects: ["Programming"],
+    supportedGoals: ["coding practice", "project"],
+    supportedOutputTypes: ["practice", "lesson"],
+    requiredContext: ["currentLesson", "mastery"],
+  }),
+  specialist({
+    id: "trade-instructor",
+    name: "Trade Instructor",
+    description: "Guides trade skills with safety-first structure.",
+    supportedSubjects: ["Trades", "Woodworking", "Automotive"],
+    supportedGoals: ["trade skill", "project"],
+    supportedOutputTypes: ["lesson", "practice"],
+    requiredContext: ["currentLesson", "goals"],
+  }),
+  specialist({
+    id: "interview-coach",
+    name: "Interview Coach",
+    description: "Prepares answers, stories, and practice interviews.",
+    supportedSubjects: ["Business", "Cybersecurity", "Programming", "Trades"],
+    supportedGoals: ["interview prep"],
+    supportedOutputTypes: ["practice", "reflection"],
+    requiredContext: ["career", "goals"],
+  }),
+  specialist({
+    id: "parent-assistant",
+    name: "Parent Assistant",
+    description: "Helps parents support learning without adding pressure.",
+    supportedSubjects: ["All"],
+    supportedGoals: ["parent support"],
+    supportedOutputTypes: ["parent summary", "motivation"],
+    requiredContext: ["profile", "goals", "recentSessions"],
+  }),
+  specialist({
+    id: "motivation-coach",
+    name: "Motivation Coach",
+    description: "Keeps momentum humane and achievable.",
+    supportedSubjects: ["All"],
+    supportedGoals: ["motivation", "streak"],
+    supportedOutputTypes: ["motivation", "reflection"],
+    requiredContext: ["goals", "studyHistory"],
+  }),
+];
+
+export function getAISpecialistByRole(role: LearningSpecialistRole) {
+  return aiSpecialistRegistry.find((specialistItem) => specialistItem.name === role);
+}
+
+export function getAISpecialistById(id: string) {
+  return aiSpecialistRegistry.find((specialistItem) => specialistItem.id === id);
+}

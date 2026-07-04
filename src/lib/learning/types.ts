@@ -320,7 +320,15 @@ export type LearningUploadItem = {
 export type LearningSpecialistRole =
   | "Tutor"
   | "Study Coach"
+  | "Homework Coach"
   | "Guidance Counselor"
+  | "Career Mentor"
+  | "Math Coach"
+  | "Science Coach"
+  | "Coding Coach"
+  | "Trade Instructor"
+  | "Interview Coach"
+  | "Motivation Coach"
   | "Parent Assistant"
   | "Certification Coach"
   | "Reading Coach"
@@ -1175,4 +1183,121 @@ export type KnowledgeIntelligenceDashboard = {
   generatedPath: GeneratedCurriculumPath;
   resourceLinks: ResourceMapLink[];
   masteryMap: MasteryMap;
+};
+
+export type AISpecialistOutputType =
+  | "explanation"
+  | "lesson"
+  | "practice"
+  | "review"
+  | "plan"
+  | "assessment"
+  | "reflection"
+  | "career roadmap"
+  | "motivation"
+  | "parent summary";
+
+export type AISpecialistContract = {
+  id: string;
+  name: LearningSpecialistRole;
+  description: string;
+  supportedSubjects: string[];
+  supportedGoals: string[];
+  supportedLearnerAges: string[];
+  supportedOutputTypes: AISpecialistOutputType[];
+  requiredContext: string[];
+  futureAIStatus: "mocked" | "reserved";
+};
+
+export type LearningConversationType =
+  | "Question"
+  | "Explanation"
+  | "Lesson"
+  | "Practice"
+  | "Review"
+  | "Motivation"
+  | "Planning"
+  | "Assessment"
+  | "Reflection"
+  | "Career Advice";
+
+export type LearningIntent =
+  | "Teach me"
+  | "Help me understand"
+  | "Review"
+  | "Practice"
+  | "Quiz me"
+  | "Explain"
+  | "Career advice"
+  | "Certification"
+  | "Homework help"
+  | "Summarize"
+  | "Research";
+
+export type LearningAIContext = {
+  profile: string;
+  goals: string[];
+  courses: string[];
+  mastery: string[];
+  recentSessions: string[];
+  career: string;
+  learningStyle: string;
+  studyHistory: string[];
+  weakAreas: string[];
+  currentLesson: string;
+};
+
+export type AIRouterInput = {
+  userRequest: string;
+  context: LearningAIContext;
+  goal: string;
+  subject: string;
+  currentLesson: string;
+  mastery: string;
+  conversationType: LearningConversationType;
+};
+
+export type AIRouterResult = {
+  selectedSpecialistIds: string[];
+  selectedSpecialistNames: LearningSpecialistRole[];
+  reasonSelected: string;
+  confidence: "reserved";
+};
+
+export type LearningConversationMemory = {
+  activeTopic: string;
+  lastConcept: string;
+  currentLesson: string;
+  openQuestions: string[];
+  reviewRequests: string[];
+  conversationSummary: string;
+};
+
+export type HomeworkPolicy = {
+  policyName: string;
+  neverImmediatelyAnswer: boolean;
+  preferredApproaches: string[];
+  answerRevealRule: string;
+};
+
+export type AISessionState = {
+  conversationId: string;
+  specialistId: string;
+  durationPlaceholder: string;
+  topic: string;
+  learningObjective: string;
+  completed: boolean;
+};
+
+export type AIOrchestrationDashboard = {
+  registry: AISpecialistContract[];
+  context: LearningAIContext;
+  intent: LearningIntent;
+  routerResult: AIRouterResult;
+  memory: LearningConversationMemory;
+  homeworkPolicy: HomeworkPolicy;
+  session: AISessionState;
+  availableSpecialists: AISpecialistContract[];
+  requiredContext: string[];
+  futureAIStatus: string;
 };

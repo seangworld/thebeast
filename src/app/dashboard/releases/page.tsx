@@ -8,6 +8,16 @@ const releaseNotes = [
   {
     version: `BeastLearning ${BEAST_LEARNING_VERSION}`,
     date: "July 4, 2026",
+    title: "AI Orchestration Platform",
+    items: [
+      "Added the mocked AI orchestration architecture with specialist registry, specialist contracts, deterministic router, context builder, intent detection, conversation memory, homework policy, and AI session manager.",
+      "Exposed selected specialist, routing reason, available specialists, required context, conversation memory, homework philosophy, session state, and future AI status on the Learning dashboard.",
+      "Kept v0.7 architecture-only with no OpenAI, prompts, streaming, API calls, Supabase persistence, database schema changes, OCR, embeddings, vector search, finance changes, Stripe changes, membership changes, or entitlement changes.",
+    ],
+  },
+  {
+    version: "BeastLearning v0.6 Knowledge & Curriculum Intelligence",
+    date: "July 4, 2026",
     title: "Knowledge & Curriculum Intelligence",
     items: [
       "Added BeastLearning's educational knowledge layer with global subjects, curriculum hierarchy, concept library, visualization-ready skill trees, learning standards placeholders, career models, certification catalog, path generation, resource mapping, and mastery maps.",

@@ -55,6 +55,9 @@ import {
   learningAchievementCatalog,
 } from "../src/lib/learning/achievements";
 import { buildAdaptiveLearningPlan } from "../src/lib/learning/adaptivePlanner";
+import { buildAIOrchestrationDashboard } from "../src/lib/learning/aiOrchestrationDashboard";
+import { aiSpecialistRegistry, getAISpecialistById, getAISpecialistByRole } from "../src/lib/learning/aiRegistry";
+import { createMockAISession } from "../src/lib/learning/aiSessionManager";
 import { getFavoriteBookmarks, learningBookmarks } from "../src/lib/learning/bookmarks";
 import {
   generateLearningCertificateId,
@@ -75,6 +78,8 @@ import { curriculumSubjects } from "../src/lib/learning/curriculum";
 import { buildLearningDashboardContent } from "../src/lib/learning/dashboardContent";
 import { buildDependencyGraphState } from "../src/lib/learning/dependencyGraph";
 import { buildLearningExperienceDashboard } from "../src/lib/learning/experience";
+import { buildLearningAIContext } from "../src/lib/learning/contextBuilder";
+import { mockConversationMemory, updateMockConversationMemory } from "../src/lib/learning/conversationMemory";
 import { getDueFlashcards, learningFlashcards } from "../src/lib/learning/flashcards";
 import {
   buildGamificationProfile,
@@ -92,6 +97,8 @@ import { learningLibraryMaterials } from "../src/lib/learning/library";
 import { calculateMasteryProfile } from "../src/lib/learning/mastery";
 import { buildMasteryMap } from "../src/lib/learning/masteryMap";
 import { buildMotivationSnapshot } from "../src/lib/learning/motivation";
+import { getHomeworkPolicyForRequest, homeworkPolicy } from "../src/lib/learning/homeworkPolicy";
+import { conversationTypeFromIntent, detectLearningIntent } from "../src/lib/learning/intentDetection";
 import {
   mockLearners,
   mockLearningAchievements,
@@ -119,6 +126,7 @@ import { getQuizzesRequiringReview, learningQuizzes } from "../src/lib/learning/
 import { buildLearningRecommendations } from "../src/lib/learning/recommendations";
 import { recommendLearningResources } from "../src/lib/learning/resourceEngine";
 import { getResourceLinksForConcept, resourceMapLinks } from "../src/lib/learning/resourceMapping";
+import { routeLearningAI } from "../src/lib/learning/router";
 import { buildLearningSearchIndex, searchLearningContent } from "../src/lib/learning/search";
 import { generateStudySession } from "../src/lib/learning/sessionGenerator";
 import { buildSkillTree } from "../src/lib/learning/skills";
@@ -529,12 +537,20 @@ test("learning foundation completion engines expose static platform data", () =>
     [
       "Tutor",
       "Study Coach",
+      "Homework Coach",
       "Guidance Counselor",
+      "Career Mentor",
       "Parent Assistant",
       "Certification Coach",
       "Reading Coach",
       "Writing Coach",
       "Language Coach",
+      "Math Coach",
+      "Science Coach",
+      "Coding Coach",
+      "Trade Instructor",
+      "Interview Coach",
+      "Motivation Coach",
     ]
   );
   assert.equal(routeMockLearningSpecialist("Tutor").status, "mocked-preview");
@@ -1132,6 +1148,145 @@ test("learning knowledge dashboard aggregates v0.6 curriculum intelligence", () 
   assert.equal(dashboard.generatedPath.certificationId, "comptia-security-plus");
   assert.equal(dashboard.resourceLinks.length, resourceMapLinks.length);
   assert.equal(dashboard.masteryMap.recommendedNextConceptId, "role-based-access-control");
+});
+
+test("learning AI specialist registry exposes v0.7 contracts", () => {
+  assert.equal(aiSpecialistRegistry.length, 16);
+  assert.deepEqual(
+    aiSpecialistRegistry.map((specialist) => specialist.name),
+    [
+      "Tutor",
+      "Study Coach",
+      "Homework Coach",
+      "Guidance Counselor",
+      "Career Mentor",
+      "Certification Coach",
+      "Writing Coach",
+      "Reading Coach",
+      "Language Coach",
+      "Math Coach",
+      "Science Coach",
+      "Coding Coach",
+      "Trade Instructor",
+      "Interview Coach",
+      "Parent Assistant",
+      "Motivation Coach",
+    ]
+  );
+  assert.equal(getAISpecialistByRole("Tutor")?.id, "tutor");
+  assert.equal(getAISpecialistById("homework-coach")?.requiredContext.includes("currentLesson"), true);
+  assert.equal(
+    aiSpecialistRegistry.every(
+      (specialist) =>
+        specialist.description &&
+        specialist.supportedSubjects.length > 0 &&
+        specialist.supportedGoals.length > 0 &&
+        specialist.supportedLearnerAges.length > 0 &&
+        specialist.supportedOutputTypes.length > 0 &&
+        specialist.requiredContext.length > 0
+    ),
+    true
+  );
+});
+
+test("learning AI intent detection maps requests to conversation types", () => {
+  assert.equal(detectLearningIntent("Can you help with this homework?"), "Homework help");
+  assert.equal(detectLearningIntent("Quiz me on RBAC"), "Quiz me");
+  assert.equal(detectLearningIntent("I need career advice"), "Career advice");
+  assert.equal(conversationTypeFromIntent("Homework help"), "Question");
+  assert.equal(conversationTypeFromIntent("Quiz me"), "Assessment");
+});
+
+test("learning AI context builder gathers reusable learner context", () => {
+  const snapshot = buildLearningIntelligenceSnapshot({
+    goals: mockLearningGoals,
+    weeklyStudyMinutes: 80,
+  });
+  const context = buildLearningAIContext({
+    learnerName: "Current learner",
+    mastery: snapshot.mastery,
+    weakAreas: snapshot.mastery.weakConcepts,
+    currentLesson: "Access Control",
+  });
+
+  assert.equal(context.profile, "Current learner");
+  assert.equal(context.goals.includes("Security+"), true);
+  assert.equal(context.career, "Security Analyst");
+  assert.equal(context.currentLesson, "Access Control");
+  assert.equal(context.mastery.some((item) => item.includes("role-based-access")), true);
+});
+
+test("learning AI router selects deterministic specialists", () => {
+  const snapshot = buildLearningIntelligenceSnapshot({
+    goals: mockLearningGoals,
+    weeklyStudyMinutes: 80,
+  });
+  const context = buildLearningAIContext({
+    learnerName: "Current learner",
+    mastery: snapshot.mastery,
+    weakAreas: snapshot.mastery.weakConcepts,
+    currentLesson: "Access Control",
+  });
+  const homeworkRoute = routeLearningAI({
+    userRequest: "Help me with this homework without giving the answer",
+    context,
+    goal: "homework help",
+    subject: "Cybersecurity",
+    currentLesson: "Access Control",
+    mastery: "Needs Review",
+    conversationType: "Question",
+  });
+  const certificationRoute = routeLearningAI({
+    userRequest: "Build my Security+ certification plan",
+    context,
+    goal: "certification",
+    subject: "Cybersecurity",
+    currentLesson: "Access Control",
+    mastery: "Needs Review",
+    conversationType: "Planning",
+  });
+
+  assert.equal(homeworkRoute.selectedSpecialistIds[0], "homework-coach");
+  assert.equal(certificationRoute.selectedSpecialistIds[0], "certification-coach");
+  assert.equal(homeworkRoute.reasonSelected.includes("Homework help"), true);
+});
+
+test("learning AI memory homework policy and session manager remain mocked", () => {
+  const updatedMemory = updateMockConversationMemory({
+    topic: "RBAC",
+    question: "What hint should I try next?",
+  });
+  const answerPolicy = getHomeworkPolicyForRequest("What is the answer?");
+  const session = createMockAISession({
+    specialistId: "homework-coach",
+    topic: "Access Control",
+    learningObjective: "Reason through RBAC.",
+  });
+
+  assert.equal(mockConversationMemory.activeTopic, "Access Control");
+  assert.equal(updatedMemory.openQuestions.includes("What hint should I try next?"), true);
+  assert.equal(homeworkPolicy.neverImmediatelyAnswer, true);
+  assert.equal(answerPolicy.policyName, "Answer Check After Reasoning");
+  assert.equal(session.completed, false);
+  assert.equal(session.conversationId.includes("homework-coach"), true);
+});
+
+test("learning AI orchestration dashboard aggregates v0.7 platform state", () => {
+  const snapshot = buildLearningIntelligenceSnapshot({
+    goals: mockLearningGoals,
+    weeklyStudyMinutes: 80,
+  });
+  const dashboard = buildAIOrchestrationDashboard({
+    learnerName: "Current learner",
+    mastery: snapshot.mastery,
+  });
+
+  assert.equal(dashboard.registry.length, 16);
+  assert.equal(dashboard.intent, "Homework help");
+  assert.equal(dashboard.routerResult.selectedSpecialistIds[0], "homework-coach");
+  assert.equal(dashboard.context.currentLesson, "Access Control");
+  assert.equal(dashboard.requiredContext.includes("currentLesson"), true);
+  assert.equal(dashboard.futureAIStatus.includes("No prompts"), true);
 });
 
 test("learning plan generator creates deterministic starter plans", () => {
