@@ -1,39 +1,80 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# The Beast / BeastOS
 
-## Getting Started
+Current platform version: `BeastOS v2.1`
 
-First, run the development server:
+Current Learning version: `BeastLearning v1.0 Private Beta`
+
+## July 4, 2026 Closeout
+
+Today's development finalized BeastLearning for Private Beta and updated the BeastOS platform release state.
+
+Completed work includes:
+
+- Guided Initialization
+- Progressive Dashboard
+- Mission-based onboarding
+- AI Orchestration Platform
+- AI integration boundary
+- Prompt library
+- Learning intelligence
+- Knowledge graph
+- Curriculum intelligence
+- Learning library
+- Courses
+- Lessons
+- Flashcards
+- Quizzes
+- Practice exams
+- Study guides
+- Search
+- Collections
+- Parent/Learner model
+- Student timeline
+- Certificate generation
+- Founding Student program
+- Feedback platform
+- Two-tone BeastOS branding
+- Module sub-navigation
+- Calendar date alignment
+
+## BeastLearning Phase 2 Roadmap
+
+Planned next work:
+
+- AI refinement
+- Classroom support
+- Teacher portal
+- Real document ingestion
+- Advanced analytics
+- Collaboration
+- Mobile optimization
+
+## Development
+
+Run the local development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Run validation:
 
-> Note: this project currently defaults to a Supabase project URL hard-coded in `src/lib/supabase/client.ts`.
-> For safe local development, set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` to a separate test or dev Supabase project.
+```bash
+npm test
+npm run lint
+npx tsc --noEmit
+npm run build
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+Use local or test Supabase credentials for development:
 
-## Learn More
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
 
-To learn more about Next.js, take a look at the following resources:
+OpenAI-backed BeastLearning routes are available when configured:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+- `OPENAI_API_KEY`
+- `OPENAI_LEARNING_MODEL`

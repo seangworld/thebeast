@@ -156,9 +156,18 @@ export function buildLearningExperienceDashboard({
         "v0.3 Intelligence Foundation",
         "v0.4 Content & Study Intelligence",
         "v0.5 Learning Experience",
+        "v0.6 Knowledge & Curriculum",
+        "v0.7 AI Orchestration",
+        "v1.0 Private Beta",
       ],
       feedbackShortcut: "Open beta feedback",
-      whatsNew: ["Daily mission", "Focus mode", "Journey roadmap", "Motivation engine"],
+      whatsNew: [
+        "Guided initialization",
+        "AI orchestration",
+        "Learning library",
+        "Certificates",
+        "Founding Student program",
+      ],
     },
   };
 }

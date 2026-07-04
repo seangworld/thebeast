@@ -20,12 +20,59 @@ export default function ReleaseNotesPage() {
           </Link>
           <h1 className="text-3xl font-bold">Release Notes</h1>
           <p className="mt-2 text-sm text-[#7f8da3]">
-            The Beast: Your Velocity Strategy Engine
+            BeastOS platform and module release history
           </p>
         </div>
       </header>
 
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
+        {/* BeastOS v2.1 */}
+        <div className="mb-12 rounded-lg border border-[#2a3242] bg-[#0f1419] p-6">
+          <div className="mb-4">
+            <h2 className="text-2xl font-bold">BeastOS v2.1</h2>
+            <p className="mt-1 text-sm text-[#7f8da3]">July 4, 2026</p>
+          </div>
+
+          <div className="space-y-4 text-sm">
+            <div>
+              <h3 className="font-semibold text-[#c7cfdb]">
+                BeastLearning v1.0 Private Beta
+              </h3>
+              <ul className="space-y-2 pl-4">
+                <li className="text-[#a5b4c7]">
+                  <span className="text-blue-400">✓</span> Finalized guided
+                  initialization, progressive dashboard stages, mission-based
+                  onboarding, AI orchestration, AI integration boundary, prompt
+                  library, Learning intelligence, parent/learner model, student
+                  timeline, certificate generation, Founding Student program,
+                  and feedback platform.
+                </li>
+                <li className="text-[#a5b4c7]">
+                  <span className="text-blue-400">✓</span> Closed out the
+                  Learning content foundation with knowledge graph, curriculum
+                  intelligence, Learning library, courses, lessons, flashcards,
+                  quizzes, practice exams, study guides, search, and collections.
+                </li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-[#c7cfdb]">BeastOS Platform</h3>
+              <ul className="space-y-2 pl-4">
+                <li className="text-[#a5b4c7]">
+                  <span className="text-blue-400">✓</span>{" "}
+                  {BEASTOS_UI_POLISH_NOTE}.
+                </li>
+                <li className="text-[#a5b4c7]">
+                  <span className="text-blue-400">✓</span> Added reusable
+                  module sub-navigation and fixed shared Calendar date alignment
+                  for local-time month grids.
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
         {/* BeastLearning v1.0 */}
         <div className="mb-12 rounded-lg border border-[#2a3242] bg-[#0f1419] p-6">
           <div className="mb-4">
@@ -504,6 +551,16 @@ export default function ReleaseNotesPage() {
         </div>
 
         <div className="mt-12 border-t border-[#2a3242] pt-8">
+          <div className="mb-8 rounded-lg border border-[#2a3242] bg-[#0f1419] p-6">
+            <h2 className="text-xl font-bold text-white">
+              BeastLearning Phase 2 Roadmap
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-[#9aa7b8]">
+              Planned next work: AI refinement, classroom support, teacher
+              portal, real document ingestion, advanced analytics,
+              collaboration, and mobile optimization.
+            </p>
+          </div>
           <p className="text-xs text-[#7f8da3]">
             The Beast continues to improve. Features, calculations, and
             recommendations are continuously improved based on real-world usage

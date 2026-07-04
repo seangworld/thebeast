@@ -25,6 +25,11 @@ import {
   getCheckoutStartErrorMessage,
 } from "../src/lib/billing/checkoutErrors";
 import {
+  APP_VERSION,
+  BEASTOS_UI_POLISH_NOTE,
+  BEAST_LEARNING_VERSION,
+} from "../src/lib/appVersion";
+import {
   buildMonthGrid,
   getLocalCalendarDate,
   getMonthLength,
@@ -202,6 +207,12 @@ test("shared formatters preserve current formatting semantics", () => {
   assert.equal(parseNumber("12.5"), 12.5);
   assert.equal(parseOptionalNumber(""), null);
   assert.equal(parseOptionalNumber("12.5"), 12.5);
+});
+
+test("app version constants reflect BeastOS and BeastLearning closeout", () => {
+  assert.equal(APP_VERSION, "v2.1");
+  assert.equal(BEAST_LEARNING_VERSION, "v1.0 Private Beta");
+  assert.equal(BEASTOS_UI_POLISH_NOTE, "two-tone module branding restored");
 });
 
 test("module navigation centralizes expandable child items", () => {

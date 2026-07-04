@@ -23,6 +23,7 @@ import {
   formatPercent,
   parseNumber as parseAmount,
 } from "@/lib/formatters";
+import { APP_VERSION } from "@/lib/appVersion";
 import { getDebtStrategyLabel, isDebtStrategy } from "@/lib/debtStrategies";
 import { useEntitlements } from "@/lib/hooks/useEntitlements";
 import ProFeatureGate from "@/app/components/ProFeatureGate";
@@ -513,7 +514,7 @@ export default function VelocityPlannerPage() {
     <main className="beast-page">
       <div className="beast-container space-y-8">
         <section className="beast-page-header">
-          <p className="beast-kicker">The Beast v2.0</p>
+          <p className="beast-kicker">The Beast {APP_VERSION}</p>
           <h1 className="beast-title">Velocity Planner</h1>
           <p className="beast-subtitle">
             A planning workspace for Velocity recommendations, recovery

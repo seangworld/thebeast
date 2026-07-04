@@ -6,6 +6,16 @@ import {
 
 const releaseNotes = [
   {
+    version: "BeastOS v2.1",
+    date: "July 4, 2026",
+    title: "BeastLearning v1.0 Private Beta Closeout",
+    items: [
+      "Finalized BeastLearning v1.0 Private Beta with guided initialization, progressive dashboard stages, mission-based onboarding, Learning intelligence, AI orchestration, AI integration boundary, prompt library, parent/learner model, student timeline, certificate generation, Founding Student program, and beta feedback platform.",
+      "Closed out the Learning content foundation: knowledge graph, curriculum intelligence, Learning library, courses, lessons, flashcards, quizzes, practice exams, study guides, search, and collections.",
+      `Restored BeastOS UI polish with ${BEASTOS_UI_POLISH_NOTE}, added reusable module sub-navigation, and fixed shared Calendar date alignment for local-time month grids.`,
+    ],
+  },
+  {
     version: `BeastLearning ${BEAST_LEARNING_VERSION}`,
     date: "July 4, 2026",
     title: "Private Beta",
@@ -194,7 +204,7 @@ export default function ReleasesPage() {
 
             <div className="inline-flex w-fit items-center gap-2 rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1 text-green-300">
               <span className="h-2 w-2 rounded-full bg-green-300" />
-              <span className="font-semibold">Active v2</span>
+              <span className="font-semibold">Active v2.1</span>
             </div>
           </div>
         </section>
@@ -229,6 +239,41 @@ export default function ReleasesPage() {
               </div>
             </article>
           ))}
+        </section>
+
+        <section className="beast-panel p-5">
+          <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+            <div>
+              <p className="beast-kicker">Roadmap</p>
+              <h2 className="mt-1 text-xl font-bold text-white">
+                BeastLearning Phase 2
+              </h2>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-[#9aa7b8]">
+                Next planned work after the v1.0 Private Beta closeout.
+              </p>
+            </div>
+            <span className="rounded-full border border-indigo-300/40 bg-indigo-300/10 px-3 py-1 text-xs font-bold text-indigo-100">
+              Planned
+            </span>
+          </div>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {[
+              "AI refinement",
+              "Classroom support",
+              "Teacher portal",
+              "Real document ingestion",
+              "Advanced analytics",
+              "Collaboration",
+              "Mobile optimization",
+            ].map((item) => (
+              <div
+                key={item}
+                className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 text-sm font-bold text-[#dbe3ef]"
+              >
+                {item}
+              </div>
+            ))}
+          </div>
         </section>
       </div>
     </main>
