@@ -10,6 +10,7 @@ import {
 } from "@/app/components/design/DashboardPrimitives";
 import { buildLearningFoundationIntelligence } from "@/lib/platform/recommendationEngine";
 import LearningGoalBuilder from "./LearningGoalBuilder";
+import LearningPathTemplates from "./LearningPathTemplates";
 import StudySessionCommandCard from "./StudySessionCommandCard";
 import type {
   ModuleSummary,
@@ -29,6 +30,7 @@ import {
 } from "@/lib/learning/mockData";
 import { buildLearningProgressSignals } from "@/lib/learning/progressSignals";
 import { buildLearningRecommendations } from "@/lib/learning/recommendations";
+import { learningPathTemplates } from "@/lib/learning/templates";
 import type {
   LearningCourse,
   LearningGoal,
@@ -409,6 +411,8 @@ export default function LearningPage() {
         </section>
 
         <LearningGoalBuilder />
+
+        <LearningPathTemplates templates={learningPathTemplates} />
 
         <section className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
           <DashboardCard accent="learning">

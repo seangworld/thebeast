@@ -1,0 +1,148 @@
+import type { LearningPathTemplate } from "./types";
+
+export const learningPathTemplates: LearningPathTemplate[] = [
+  {
+    id: "school-subject-support",
+    templateName: "School Subject Support",
+    audience: "Students and families",
+    goalType: "Academic support",
+    milestones: [
+      "Identify the current class unit and grade-level standard.",
+      "Map missing foundations and homework blockers.",
+      "Set a weekly review rhythm before tests or projects.",
+    ],
+    exampleSessions: [
+      "Review today's class notes and define three unclear terms.",
+      "Work five practice problems and explain each step aloud.",
+      "Summarize the chapter into a one-page study sheet.",
+    ],
+    recommendedPace: "3 short sessions per week",
+    suggestedNextStep: "Pick the subject and upcoming assignment that needs support first.",
+  },
+  {
+    id: "certification-prep",
+    templateName: "Certification Prep",
+    audience: "Adult learners and career builders",
+    goalType: "Credential readiness",
+    milestones: [
+      "Review exam objectives and identify known weak areas.",
+      "Complete foundation modules with spaced review.",
+      "Run readiness checks before booking the exam.",
+    ],
+    exampleSessions: [
+      "Study one objective domain and write a short recall summary.",
+      "Review flashcards for missed terms.",
+      "Practice scenario questions and tag weak concepts.",
+    ],
+    recommendedPace: "4 focused sessions per week",
+    suggestedNextStep: "Choose the exam objective domain with the lowest confidence.",
+  },
+  {
+    id: "career-change",
+    templateName: "Career Change",
+    audience: "Professionals changing lanes",
+    goalType: "Career transition",
+    milestones: [
+      "Define target role and required skill gaps.",
+      "Build a portfolio-ready practice project.",
+      "Prepare resume evidence and interview stories.",
+    ],
+    exampleSessions: [
+      "Compare three job posts and extract repeated skills.",
+      "Practice one core skill through a small project task.",
+      "Translate learning progress into resume bullets.",
+    ],
+    recommendedPace: "5 sessions per week",
+    suggestedNextStep: "Pick one target role and map the top five required skills.",
+  },
+  {
+    id: "trade-skill",
+    templateName: "Trade Skill",
+    audience: "Hands-on learners",
+    goalType: "Practical skill building",
+    milestones: [
+      "Learn safety basics and tool vocabulary.",
+      "Practice a controlled beginner project.",
+      "Document technique, mistakes, and material needs.",
+    ],
+    exampleSessions: [
+      "Review safety rules before touching tools or materials.",
+      "Practice one technique in a low-risk setup.",
+      "Capture photos or notes of what improved and what failed.",
+    ],
+    recommendedPace: "2 practice blocks per week",
+    suggestedNextStep: "Choose one beginner project with clear safety requirements.",
+  },
+  {
+    id: "language-learning",
+    templateName: "Language Learning",
+    audience: "Language learners",
+    goalType: "Language fluency",
+    milestones: [
+      "Build a daily vocabulary and listening habit.",
+      "Practice common phrases for real situations.",
+      "Record progress through short speaking or writing checks.",
+    ],
+    exampleSessions: [
+      "Learn ten words and use each in a sentence.",
+      "Listen to a short clip and write what you understood.",
+      "Practice a two-minute conversation script.",
+    ],
+    recommendedPace: "Daily light practice",
+    suggestedNextStep: "Pick one real-life situation where the language will be useful.",
+  },
+  {
+    id: "hobby-learning",
+    templateName: "Hobby Learning",
+    audience: "Curious self-directed learners",
+    goalType: "Personal enrichment",
+    milestones: [
+      "Choose a small project or visible outcome.",
+      "Learn core vocabulary and starter techniques.",
+      "Share or review the finished beginner result.",
+    ],
+    exampleSessions: [
+      "Watch or read one beginner lesson and capture notes.",
+      "Practice one technique for 20 minutes.",
+      "Reflect on what was fun, hard, or worth repeating.",
+    ],
+    recommendedPace: "2 relaxed sessions per week",
+    suggestedNextStep: "Choose one beginner outcome that can be finished in a week.",
+  },
+  {
+    id: "parent-support",
+    templateName: "Parent Support",
+    audience: "Parents and guardians",
+    goalType: "Family learning support",
+    milestones: [
+      "Understand what the learner is expected to know.",
+      "Create a calm routine for support and review.",
+      "Track confidence, assignments, and upcoming deadlines.",
+    ],
+    exampleSessions: [
+      "Ask the learner to explain what they are working on.",
+      "Review assignment instructions together.",
+      "Practice one problem or concept, then pause before frustration rises.",
+    ],
+    recommendedPace: "3 family check-ins per week",
+    suggestedNextStep: "Identify the next assignment, test, or confusing topic.",
+  },
+  {
+    id: "guidance-counselor-planning",
+    templateName: "Guidance Counselor Planning",
+    audience: "Students, families, and advisors",
+    goalType: "Academic and career planning",
+    milestones: [
+      "Clarify student interests, strengths, and constraints.",
+      "Map academic requirements and planning deadlines.",
+      "Create next steps for courses, applications, or career exploration.",
+    ],
+    exampleSessions: [
+      "List interests, strengths, and questions for the next advisor meeting.",
+      "Review graduation or application requirements.",
+      "Compare two possible paths and define what to investigate next.",
+    ],
+    recommendedPace: "One planning session per week",
+    suggestedNextStep: "Pick the planning decision that needs the most clarity.",
+  },
+];

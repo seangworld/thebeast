@@ -64,6 +64,7 @@ import {
 import { generateLearningPlan } from "../src/lib/learning/planGenerator";
 import { buildLearningProgressSignals } from "../src/lib/learning/progressSignals";
 import { buildLearningRecommendations } from "../src/lib/learning/recommendations";
+import { learningPathTemplates } from "../src/lib/learning/templates";
 import {
   buildBeastOSIntelligence,
   buildLearningFoundationIntelligence,
@@ -348,6 +349,35 @@ test("learning recommendations cover rule-based foundation actions", () => {
   assert.equal(
     recommendations.some((recommendation) =>
       recommendation.title.includes(progress.weakArea)
+    ),
+    true
+  );
+});
+
+test("learning path templates cover required starter paths", () => {
+  assert.deepEqual(
+    learningPathTemplates.map((template) => template.id),
+    [
+      "school-subject-support",
+      "certification-prep",
+      "career-change",
+      "trade-skill",
+      "language-learning",
+      "hobby-learning",
+      "parent-support",
+      "guidance-counselor-planning",
+    ]
+  );
+  assert.equal(
+    learningPathTemplates.every(
+      (template) =>
+        template.templateName &&
+        template.audience &&
+        template.goalType &&
+        template.milestones.length >= 3 &&
+        template.exampleSessions.length >= 3 &&
+        template.recommendedPace &&
+        template.suggestedNextStep
     ),
     true
   );

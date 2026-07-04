@@ -171,3 +171,14 @@ export type LearningQuickAction = {
   detail: string;
   active: boolean;
 };
+
+export type LearningPathTemplate = {
+  id: string;
+  templateName: string;
+  audience: string;
+  goalType: string;
+  milestones: string[];
+  exampleSessions: string[];
+  recommendedPace: string;
+  suggestedNextStep: string;
+};
