@@ -503,3 +503,294 @@ export type ProgressPrediction = {
   scheduleHealth: "strong" | "steady" | "at-risk";
   studyConsistency: number;
 };
+
+export type LearningMaterialType =
+  | "Textbook"
+  | "PDF"
+  | "Notes"
+  | "Slides"
+  | "Video"
+  | "Audio"
+  | "Worksheet"
+  | "Practice Exam"
+  | "Lab"
+  | "Reference"
+  | "External Resource";
+
+export type LearningDifficulty = "Beginner" | "Intermediate" | "Advanced";
+export type LearningMaterialUploadStatus = "Not uploaded" | "Uploaded" | "Processing" | "Ready" | "Needs Review";
+export type LearningCompletionStatus = "Not started" | "In progress" | "Completed";
+
+export type LearningLibraryMaterial = {
+  id: string;
+  title: string;
+  type: LearningMaterialType;
+  subject: string;
+  topicIds: string[];
+  description: string;
+  author: string;
+  source: string;
+  difficulty: LearningDifficulty;
+  estimatedStudyTime: string;
+  tags: string[];
+  uploadStatus: LearningMaterialUploadStatus;
+  completionStatus: LearningCompletionStatus;
+  favorite: boolean;
+  archived: boolean;
+};
+
+export type LearningSubjectTopic = {
+  id: string;
+  title: string;
+  childTopics?: LearningSubjectTopic[];
+};
+
+export type LearningSubject = {
+  id: string;
+  title: string;
+  description: string;
+  topics: LearningSubjectTopic[];
+};
+
+export type CourseActivityType =
+  | "reading"
+  | "video"
+  | "exercise"
+  | "project"
+  | "discussion"
+  | "reflection"
+  | "assessment placeholder";
+
+export type CourseActivity = {
+  id: string;
+  type: CourseActivityType;
+  title: string;
+  estimatedMinutes: number;
+  completed: boolean;
+};
+
+export type CourseTopic = {
+  id: string;
+  title: string;
+  activities: CourseActivity[];
+  reviewPrompt: string;
+  completed: boolean;
+};
+
+export type CourseLesson = {
+  id: string;
+  title: string;
+  estimatedMinutes: number;
+  topics: CourseTopic[];
+  completed: boolean;
+};
+
+export type CourseModule = {
+  id: string;
+  title: string;
+  estimatedDuration: string;
+  lessons: CourseLesson[];
+  completed: boolean;
+};
+
+export type LearningBuiltCourse = {
+  id: string;
+  title: string;
+  subject: string;
+  estimatedDuration: string;
+  progress: number;
+  milestones: string[];
+  prerequisiteIds: string[];
+  modules: CourseModule[];
+  completed: boolean;
+};
+
+export type LearningLessonModel = {
+  id: string;
+  courseId: string;
+  title: string;
+  lessonType: CourseActivityType;
+  subject: string;
+  estimatedCompletionTime: string;
+  tags: string[];
+  completionStatus: LearningCompletionStatus;
+};
+
+export type FlashcardMastery = "new" | "learning" | "review" | "mastered";
+
+export type LearningFlashcard = {
+  id: string;
+  front: string;
+  back: string;
+  category: string;
+  difficulty: LearningDifficulty;
+  tags: string[];
+  mastery: FlashcardMastery;
+  reviewSchedulePlaceholder: string;
+};
+
+export type QuizQuestionType =
+  | "multiple choice"
+  | "true/false"
+  | "matching"
+  | "fill in blank"
+  | "short answer placeholder"
+  | "coding placeholder"
+  | "essay placeholder";
+
+export type LearningQuizQuestion = {
+  id: string;
+  type: QuizQuestionType;
+  prompt: string;
+  options?: string[];
+  answerPlaceholder: string;
+};
+
+export type LearningQuiz = {
+  id: string;
+  title: string;
+  subject: string;
+  questions: LearningQuizQuestion[];
+  attempts: number;
+  score: number;
+  reviewRequired: boolean;
+};
+
+export type PracticeExamSection = {
+  id: string;
+  title: string;
+  questionPoolIds: string[];
+  durationMinutes: number;
+};
+
+export type PracticeExamResult = {
+  attempts: number;
+  bestScore: number;
+  lastCompletedAt?: string;
+  reviewMode: boolean;
+};
+
+export type LearningPracticeExam = {
+  id: string;
+  title: string;
+  subject: string;
+  timed: boolean;
+  durationMinutes: number;
+  sections: PracticeExamSection[];
+  completed: boolean;
+  result: PracticeExamResult;
+};
+
+export type LearningStudyGuide = {
+  id: string;
+  title: string;
+  subject: string;
+  overview: string;
+  keyConcepts: string[];
+  vocabulary: string[];
+  importantFacts: string[];
+  commonMistakes: string[];
+  reviewChecklist: string[];
+  practiceTasks: string[];
+  resources: string[];
+  tags: string[];
+};
+
+export type SpacedRepetitionItem = {
+  id: string;
+  itemType: "flashcard" | "note" | "lesson" | "study guide";
+  itemId: string;
+  firstReview: string;
+  nextReview: string;
+  reviewIntervalDays: number;
+  mastery: FlashcardMastery;
+  priority: "High" | "Medium" | "Low";
+};
+
+export type SpacedRepetitionSchedule = {
+  today: string;
+  items: SpacedRepetitionItem[];
+  overdueItems: SpacedRepetitionItem[];
+  dueTodayItems: SpacedRepetitionItem[];
+};
+
+export type LearnerNote = {
+  id: string;
+  title: string;
+  subject: string;
+  richTextPlaceholder: string;
+  tags: string[];
+  attachmentPlaceholders: string[];
+  favorite: boolean;
+  pinned: boolean;
+  linkedTopicIds: string[];
+};
+
+export type LearningBookmarkTarget =
+  | "course"
+  | "lesson"
+  | "topic"
+  | "resource"
+  | "note"
+  | "study guide";
+
+export type LearningBookmark = {
+  id: string;
+  targetType: LearningBookmarkTarget;
+  targetId: string;
+  title: string;
+  subject: string;
+  favorite: boolean;
+  tags: string[];
+};
+
+export type ResourceCollection = {
+  id: string;
+  title: string;
+  subject: string;
+  description: string;
+  resourceIds: string[];
+  materialIds: string[];
+  courseIds: string[];
+  noteIds: string[];
+  studyGuideIds: string[];
+  tags: string[];
+};
+
+export type LearningSearchItemType =
+  | "course"
+  | "lesson"
+  | "library"
+  | "flashcard"
+  | "note"
+  | "study guide"
+  | "resource";
+
+export type LearningSearchItem = {
+  id: string;
+  type: LearningSearchItemType;
+  title: string;
+  subject: string;
+  tags: string[];
+  difficulty?: LearningDifficulty;
+  summary: string;
+};
+
+export type LearningSearchFilters = {
+  query?: string;
+  subject?: string;
+  tag?: string;
+  difficulty?: LearningDifficulty;
+};
+
+export type LearningDashboardContent = {
+  library: LearningLibraryMaterial[];
+  recentMaterials: LearningLibraryMaterial[];
+  continueStudying: LearningLessonModel[];
+  recommendedResources: LearningSearchItem[];
+  flashcardsDue: LearningFlashcard[];
+  upcomingReview: SpacedRepetitionItem[];
+  bookmarkedItems: LearningBookmark[];
+  studyCollections: ResourceCollection[];
+  courseProgress: LearningBuiltCourse[];
+};

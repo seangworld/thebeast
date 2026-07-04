@@ -25,6 +25,7 @@ import {
   StudyPlannerPanel,
   UploadFoundationPanel,
 } from "./LearningFoundationPanels";
+import LearningContentIntelligencePanel from "./LearningContentIntelligencePanel";
 import LearningGoalBuilder from "./LearningGoalBuilder";
 import LearningIntelligencePanel from "./LearningIntelligencePanel";
 import LearningPathTemplates from "./LearningPathTemplates";
@@ -48,6 +49,7 @@ import {
 } from "@/lib/learning/mockData";
 import { buildLearningProgressSignals } from "@/lib/learning/progressSignals";
 import { buildLearningRecommendations } from "@/lib/learning/recommendations";
+import { buildLearningDashboardContent } from "@/lib/learning/dashboardContent";
 import { learningSpecialists } from "@/lib/learning/specialists";
 import { mockStudyPlanner } from "@/lib/learning/studyPlanner";
 import { learningPathTemplates } from "@/lib/learning/templates";
@@ -249,6 +251,7 @@ export default function LearningPage() {
     goals: mockLearningGoals,
     weeklyStudyMinutes: progressSignals.estimatedWeeklyStudyMinutes,
   });
+  const learningDashboardContent = buildLearningDashboardContent();
   const achievementUnlocks = buildLearningAchievementUnlocks({
     progress: progressSignals,
     goalsCreated: mockLearningGoals.length,
@@ -363,6 +366,8 @@ export default function LearningPage() {
         <StudySessionCommandCard session={mockStudySessionCommand} />
 
         <LearningIntelligencePanel snapshot={learningIntelligence} />
+
+        <LearningContentIntelligencePanel content={learningDashboardContent} />
 
         <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
           <DashboardCard accent="learning">

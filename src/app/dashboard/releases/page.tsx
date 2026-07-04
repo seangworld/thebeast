@@ -7,6 +7,16 @@ import {
 const releaseNotes = [
   {
     version: `BeastLearning ${BEAST_LEARNING_VERSION}`,
+    date: "July 4, 2026",
+    title: "Content & Study Intelligence",
+    items: [
+      "Added typed Learning Library, subject organization, course builder, lesson model, flashcard engine, quiz engine, practice exam framework, study guide engine, spaced repetition schedule, notes, bookmarks, collections, search, and dashboard content aggregation.",
+      "Extended the Learning dashboard with content intelligence surfaces for recent materials, continue studying, recommended resources, flashcards due, upcoming review, bookmarked items, study collections, and course progress.",
+      "Kept v0.4 deterministic, mocked, modular, and AI-ready with no OpenAI, OCR, document parsing, embeddings, vector search, Supabase persistence, database schema changes, external APIs, finance changes, Stripe changes, membership changes, or entitlement changes.",
+    ],
+  },
+  {
+    version: "BeastLearning v0.3 Intelligence Foundation",
     date: "July 3, 2026",
     title: "BeastLearning Foundation Closeout",
     items: [

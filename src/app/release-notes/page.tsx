@@ -26,11 +26,44 @@ export default function ReleaseNotesPage() {
       </header>
 
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
-        {/* BeastLearning v0.3 */}
+        {/* BeastLearning v0.4 */}
         <div className="mb-12 rounded-lg border border-[#2a3242] bg-[#0f1419] p-6">
           <div className="mb-4">
             <h2 className="text-2xl font-bold">
               BeastLearning {BEAST_LEARNING_VERSION}
+            </h2>
+            <p className="mt-1 text-sm text-[#7f8da3]">July 4, 2026</p>
+          </div>
+
+          <div className="space-y-4 text-sm">
+            <div>
+              <h3 className="font-semibold text-[#c7cfdb]">
+                Content & Study Intelligence
+              </h3>
+              <ul className="space-y-2 pl-4">
+                <li className="text-[#a5b4c7]">
+                  <span className="text-blue-400">✓</span> Added typed
+                  foundations for the Learning Library, subjects, course
+                  builder, lessons, flashcards, quizzes, practice exams, study
+                  guides, spaced repetition, notes, bookmarks, collections, and
+                  Learning Search.
+                </li>
+                <li className="text-[#a5b4c7]">
+                  <span className="text-blue-400">✓</span> Extended the Learning
+                  dashboard with recent materials, continue studying,
+                  recommended resources, flashcards due, upcoming review,
+                  bookmarked items, study collections, and course progress.
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        {/* BeastLearning v0.3 */}
+        <div className="mb-12 rounded-lg border border-[#2a3242] bg-[#0f1419] p-6">
+          <div className="mb-4">
+            <h2 className="text-2xl font-bold">
+              BeastLearning v0.3 Intelligence Foundation
             </h2>
             <p className="mt-1 text-sm text-[#7f8da3]">July 3, 2026</p>
           </div>

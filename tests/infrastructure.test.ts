@@ -55,14 +55,27 @@ import {
   learningAchievementCatalog,
 } from "../src/lib/learning/achievements";
 import { buildAdaptiveLearningPlan } from "../src/lib/learning/adaptivePlanner";
+import { getFavoriteBookmarks, learningBookmarks } from "../src/lib/learning/bookmarks";
 import {
   generateLearningCertificateId,
   mockLearningCertificates,
 } from "../src/lib/learning/certificates";
+import {
+  getCollectionResourceCount,
+  learningResourceCollections,
+} from "../src/lib/learning/collections";
+import {
+  builtLearningCourses,
+  calculateBuiltCourseProgress,
+} from "../src/lib/learning/courses";
+import { buildLearningDashboardContent } from "../src/lib/learning/dashboardContent";
 import { buildDependencyGraphState } from "../src/lib/learning/dependencyGraph";
+import { getDueFlashcards, learningFlashcards } from "../src/lib/learning/flashcards";
 import { buildLearningIntelligenceSnapshot } from "../src/lib/learning/intelligenceEngine";
 import { mockLearningKnowledgeModel } from "../src/lib/learning/knowledgeGraph";
 import { mockLearningMemory } from "../src/lib/learning/learningMemory";
+import { learningLessons } from "../src/lib/learning/lessons";
+import { learningLibraryMaterials } from "../src/lib/learning/library";
 import { calculateMasteryProfile } from "../src/lib/learning/mastery";
 import {
   mockLearners,
@@ -76,16 +89,29 @@ import {
   mockStudySessionCommand,
 } from "../src/lib/learning/mockData";
 import { buildGuidanceCounselorRoadmap } from "../src/lib/learning/guidanceCounselor";
+import { learnerNotes } from "../src/lib/learning/notes";
 import { mockParentDashboard } from "../src/lib/learning/parentDashboard";
 import { generateLearningPlan } from "../src/lib/learning/planGenerator";
 import { buildLearnerPortfolio } from "../src/lib/learning/portfolio";
 import { predictLearningProgress } from "../src/lib/learning/prediction";
+import {
+  getPracticeExamFrameworkSummary,
+  learningPracticeExams,
+} from "../src/lib/learning/practiceExams";
 import { buildLearningProgressSignals } from "../src/lib/learning/progressSignals";
+import { getQuizzesRequiringReview, learningQuizzes } from "../src/lib/learning/quizzes";
 import { buildLearningRecommendations } from "../src/lib/learning/recommendations";
 import { recommendLearningResources } from "../src/lib/learning/resourceEngine";
+import { buildLearningSearchIndex, searchLearningContent } from "../src/lib/learning/search";
 import { generateStudySession } from "../src/lib/learning/sessionGenerator";
 import { learningSpecialists, routeMockLearningSpecialist } from "../src/lib/learning/specialists";
+import {
+  buildSpacedRepetitionSchedule,
+  getFlashcardsDueForReview,
+} from "../src/lib/learning/spacedRepetition";
 import { mockStudyPlanner } from "../src/lib/learning/studyPlanner";
+import { learningStudyGuides } from "../src/lib/learning/studyGuides";
+import { learningSubjects } from "../src/lib/learning/subjects";
 import { learningPathTemplates } from "../src/lib/learning/templates";
 import { mockLearningUploads } from "../src/lib/learning/uploads";
 import { analyzeLearningWeaknesses } from "../src/lib/learning/weaknessAnalysis";
@@ -681,6 +707,149 @@ test("learning progress prediction estimates readiness and schedule health", () 
   assert.equal(prediction.estimatedCompletionDate >= "2026-07-10", true);
   assert.equal(prediction.readiness > 0, true);
   assert.equal(prediction.likelihoodOfSuccess > 0, true);
+});
+
+test("learning content library and subjects expose organized material foundations", () => {
+  assert.equal(learningSubjects.length >= 12, true);
+  assert.equal(
+    learningSubjects.some(
+      (subject) =>
+        subject.id === "cybersecurity" &&
+        subject.topics.some((topic) => topic.id === "security-plus")
+    ),
+    true
+  );
+  assert.deepEqual(
+    learningLibraryMaterials.map((material) => material.type),
+    ["PDF", "Notes", "Audio", "Lab", "Practice Exam"]
+  );
+  assert.equal(
+    learningLibraryMaterials.every(
+      (material) =>
+        material.title &&
+        material.subject &&
+        material.description &&
+        material.estimatedStudyTime &&
+        Array.isArray(material.tags)
+    ),
+    true
+  );
+});
+
+test("learning course builder models modules lessons topics and activities", () => {
+  const course = builtLearningCourses[0];
+
+  assert.equal(course.title, "Security+ Foundations");
+  assert.equal(course.modules[0].lessons[0].topics[0].activities.length > 0, true);
+  assert.equal(course.milestones.length >= 3, true);
+  assert.equal(calculateBuiltCourseProgress(course), 40);
+  assert.equal(
+    course.modules.some((module) =>
+      module.lessons.some((lesson) =>
+        lesson.topics.some((topic) =>
+          topic.activities.some((activity) => activity.type === "assessment placeholder")
+        )
+      )
+    ),
+    true
+  );
+});
+
+test("learning lesson models expose estimated completion time", () => {
+  assert.equal(learningLessons.length >= 3, true);
+  assert.equal(
+    learningLessons.every(
+      (lesson) =>
+        lesson.courseId &&
+        lesson.lessonType &&
+        lesson.estimatedCompletionTime.endsWith("min")
+    ),
+    true
+  );
+  assert.equal(
+    learningLessons.some((lesson) => lesson.completionStatus === "In progress"),
+    true
+  );
+});
+
+test("learning flashcards and spaced repetition identify due review work", () => {
+  const schedule = buildSpacedRepetitionSchedule("2026-07-04");
+
+  assert.equal(learningFlashcards.length >= 3, true);
+  assert.equal(getDueFlashcards().length, 3);
+  assert.deepEqual(schedule.overdueItems.map((item) => item.id), ["review-quadratic"]);
+  assert.deepEqual(schedule.dueTodayItems.map((item) => item.id), ["review-rbac"]);
+  assert.deepEqual(
+    getFlashcardsDueForReview("2026-07-04").map((card) => card.id),
+    ["flashcard-rbac", "flashcard-quadratic"]
+  );
+});
+
+test("learning quiz and practice exam frameworks support review state", () => {
+  const quiz = learningQuizzes[0];
+  const exam = learningPracticeExams[0];
+  const examSummary = getPracticeExamFrameworkSummary();
+
+  assert.deepEqual(
+    quiz.questions.map((question) => question.type),
+    ["multiple choice", "true/false", "fill in blank"]
+  );
+  assert.equal(getQuizzesRequiringReview().map((item) => item.id)[0], quiz.id);
+  assert.equal(exam.timed, true);
+  assert.equal(exam.sections.length, 2);
+  assert.deepEqual(examSummary, { totalExams: 1, timedExams: 1, sectionCount: 2 });
+});
+
+test("learning study guides notes bookmarks and collections are reusable assets", () => {
+  const collection = learningResourceCollections.find(
+    (item) => item.id === "security-plus-collection"
+  );
+
+  assert.equal(learningStudyGuides[0].reviewChecklist.length >= 3, true);
+  assert.equal(learnerNotes.some((note) => note.pinned && note.favorite), true);
+  assert.equal(getFavoriteBookmarks().length, 2);
+  assert.equal(Boolean(collection), true);
+  assert.equal(collection ? getCollectionResourceCount(collection) : 0, 7);
+  assert.equal(
+    learningBookmarks.some((bookmark) => bookmark.targetType === "study guide"),
+    true
+  );
+});
+
+test("learning search covers courses lessons library cards notes guides and resources", () => {
+  const index = buildLearningSearchIndex();
+  const securityResults = searchLearningContent({
+    query: "security",
+    tag: "Security+",
+  });
+  const beginnerMaterials = searchLearningContent({ difficulty: "Beginner" });
+
+  assert.equal(index.some((item) => item.type === "course"), true);
+  assert.equal(index.some((item) => item.type === "lesson"), true);
+  assert.equal(index.some((item) => item.type === "library"), true);
+  assert.equal(index.some((item) => item.type === "flashcard"), true);
+  assert.equal(index.some((item) => item.type === "note"), true);
+  assert.equal(index.some((item) => item.type === "study guide"), true);
+  assert.equal(index.some((item) => item.type === "resource"), true);
+  assert.equal(securityResults.length > 0, true);
+  assert.equal(
+    beginnerMaterials.every((item) => !item.difficulty || item.difficulty === "Beginner"),
+    true
+  );
+});
+
+test("learning dashboard content aggregates v0.4 study surfaces", () => {
+  const content = buildLearningDashboardContent("2026-07-04");
+
+  assert.equal(content.library.length, learningLibraryMaterials.length);
+  assert.equal(content.recentMaterials.length, 4);
+  assert.equal(content.continueStudying.length > 0, true);
+  assert.equal(content.recommendedResources.length > 0, true);
+  assert.equal(content.flashcardsDue.length, 3);
+  assert.equal(content.upcomingReview.length, 2);
+  assert.equal(content.bookmarkedItems.length, 3);
+  assert.equal(content.studyCollections.length, learningResourceCollections.length);
+  assert.equal(content.courseProgress.length, builtLearningCourses.length);
 });
 
 test("learning plan generator creates deterministic starter plans", () => {
