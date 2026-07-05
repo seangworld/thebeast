@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import {
   AlertCard,
   DashboardCard,
@@ -9,6 +10,7 @@ import {
   moduleAccents,
 } from "@/app/components/design/DashboardPrimitives";
 import { BEAST_LEARNING_VERSION } from "@/lib/appVersion";
+import { getProfileDisplayName } from "@/lib/profile";
 import { buildLearningAchievementUnlocks } from "@/lib/learning/achievements";
 import { mockLearningCertificates } from "@/lib/learning/certificates";
 import { buildLearningIntelligenceSnapshot } from "@/lib/learning/intelligenceEngine";
@@ -62,11 +64,157 @@ import { learningPathTemplates } from "@/lib/learning/templates";
 import { mockLearningUploads } from "@/lib/learning/uploads";
 import { buildAIOrchestrationDashboard } from "@/lib/learning/aiOrchestrationDashboard";
 import { loadLearningPrivateBetaData } from "@/lib/learning/persistence";
+import { createRouteClient } from "@/lib/supabase/server";
 import type {
+  LearningAchievement,
+  LearningCertificate,
   LearningCourse,
   LearningGoal,
+  LearningPlan,
   LearningRecommendation,
+  LearningSession,
+  ParentDashboard,
+  StudySessionCommand,
 } from "@/lib/learning/types";
+
+const demoModeEnabled =
+  process.env.NODE_ENV !== "production" &&
+  process.env.BEASTLEARNING_DEMO_MODE === "true";
+
+export const dynamic = "force-dynamic";
+
+const emptyParentDashboard: ParentDashboard = {
+  householdName: "Parent support",
+  learners: [],
+};
+
+function normalizeStatus<T extends string>(value: unknown, allowed: readonly T[], fallback: T) {
+  return allowed.includes(value as T) ? (value as T) : fallback;
+}
+
+function formatScheduledSession(value: unknown) {
+  if (typeof value !== "string" || !value) return "Unscheduled";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Unscheduled";
+
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function formatDuration(value: unknown) {
+  const minutes = Number(value || 0);
+  return minutes > 0 ? `${minutes} min` : "0 min";
+}
+
+function mapGoalRow(row: Record<string, unknown>): LearningGoal {
+  return {
+    id: String(row.id),
+    learnerId: String(row.learner_profile_id || "current"),
+    title: String(row.title || "Learning goal"),
+    category: String(row.category || "Learning"),
+    target: String(row.target || "Build a clear learning path."),
+    progress: Number(row.progress || 0),
+    status: normalizeStatus(
+      row.status,
+      ["Active", "Planned", "Paused", "Completed"] as const,
+      "Active"
+    ),
+    priority: normalizeStatus(row.priority, ["High", "Medium", "Low"] as const, "Medium"),
+  };
+}
+
+function mapCourseRow(row: Record<string, unknown>): LearningCourse {
+  return {
+    id: String(row.id),
+    title: String(row.title || "Learning course"),
+    category: String(row.subject || "Learning"),
+    progress: Number(row.progress || 0),
+    estimatedCompletion: "Starter path",
+    status: normalizeStatus(
+      row.status,
+      ["In progress", "Planned", "Queued", "Completed"] as const,
+      "In progress"
+    ),
+    priority: "High",
+  };
+}
+
+function mapPlanRow(row: Record<string, unknown>, learnerId: string): LearningPlan {
+  return {
+    id: String(row.id),
+    learnerId,
+    title: String(row.title || "Starter learning path"),
+    summary: String(row.summary || "Your learning plan is ready for the next step."),
+    primaryGoalId: typeof row.goal_id === "string" ? row.goal_id : undefined,
+    weeklySessionTarget: Number(row.weekly_session_target || 0),
+  };
+}
+
+function mapSessionRow(row: Record<string, unknown>): LearningSession {
+  return {
+    id: String(row.id),
+    learnerId: String(row.learner_profile_id || "current"),
+    title: String(row.title || "Learning session"),
+    courseTitle: String(row.course_title || "BeastLearning"),
+    when: formatScheduledSession(row.scheduled_for),
+    duration: formatDuration(row.duration_minutes),
+    status: normalizeStatus(
+      row.status,
+      ["Scheduled", "In progress", "Completed", "Skipped"] as const,
+      "Scheduled"
+    ),
+  };
+}
+
+function mapAchievementRow(row: Record<string, unknown>): LearningAchievement {
+  return {
+    id: String(row.id),
+    learnerId: String(row.learner_profile_id || "current"),
+    title: String(row.title || "Learning achievement"),
+    detail: String(row.detail || "Achievement detail"),
+    earned: Boolean(row.earned),
+    earnedAt: typeof row.earned_at === "string" ? row.earned_at : undefined,
+  };
+}
+
+function mapCertificateRow(row: Record<string, unknown>): LearningCertificate {
+  return {
+    id: String(row.id),
+    learnerName: String(row.learner_name || "Learner"),
+    pathName: String(row.path_name || "Learning path"),
+    completionDate: String(row.completion_date || ""),
+    certificateId: String(row.certificate_id || ""),
+    language:
+      "Certificate of completion for an internal BeastLearning path. This is non-accredited and does not represent institutional credit.",
+    verificationPlaceholder: "Certificate ownership is verified before download.",
+  };
+}
+
+function buildStudySessionCommandFromSession(
+  session: LearningSession | undefined
+): StudySessionCommand {
+  return {
+    id: session ? `${session.id}-command` : "starter-learning-command",
+    sessionId: session?.id || "starter-learning-session",
+    currentFocus: session?.title || "No study session scheduled",
+    estimatedTime: session?.duration || "0 min",
+    warmUpPrompt: session
+      ? "Write down what you already know before starting this session."
+      : "Create your first learning goal to unlock a study session.",
+    guidedPracticeStep: session
+      ? "Work through the next focused practice step for this session."
+      : "Use the goal builder to define what you want to learn first.",
+    reflectionCheckpoint: session
+      ? "Capture one thing that clicked and one thing to review next."
+      : "Once a session exists, BeastLearning will track reflection here.",
+    progressFeedback: session
+      ? "Session complete. Your learning history is ready for the next step."
+      : "No session completion is available yet.",
+  };
+}
 
 function ProgressBar({ value }: { value: number }) {
   return (
@@ -79,10 +227,10 @@ function ProgressBar({ value }: { value: number }) {
   );
 }
 
-function LearnerSwitcher() {
+function LearnerSwitcher({ learners }: { learners: typeof mockLearners }) {
   return (
     <div className="grid gap-3">
-      {mockLearners.map((learner) => (
+      {learners.map((learner) => (
         <div
           key={learner.id}
           className={`rounded-xl border p-4 ${
@@ -234,31 +382,165 @@ function PlatformSignalCard({
 }
 
 export default async function LearningPage() {
+  const supabase = createRouteClient();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    redirect("/login");
+  }
+
+  const [
+    profileResult,
+    learnerProfilesResult,
+    goalsResult,
+    coursesResult,
+    plansResult,
+    sessionsResult,
+    achievementsResult,
+    certificatesResult,
+  ] = await Promise.all([
+    supabase.from("profiles").select("preferred_name, display_name, full_name").eq("id", user.id).maybeSingle(),
+    supabase
+      .from("learning_profiles")
+      .select("id, display_name, learner_role, focus")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("learning_goals")
+      .select("id, learner_profile_id, title, category, target, priority, status, progress")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("learning_courses")
+      .select("id, title, subject, status, progress")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("learning_plans")
+      .select("id, learner_profile_id, goal_id, title, summary, weekly_session_target")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("learning_sessions")
+      .select("id, learner_profile_id, title, course_title, scheduled_for, duration_minutes, status")
+      .eq("user_id", user.id)
+      .order("scheduled_for", { ascending: true }),
+    supabase
+      .from("learning_achievements")
+      .select("id, learner_profile_id, title, detail, earned, earned_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("learning_certificates")
+      .select("id, learner_name, path_name, completion_date, certificate_id")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false }),
+  ]);
+
+  const learnerProfileRows = (learnerProfilesResult.data || []) as Record<string, unknown>[];
+  const primaryLearnerRow = learnerProfileRows[0];
+  const fallbackName = getProfileDisplayName(
+    profileResult.data as Parameters<typeof getProfileDisplayName>[0],
+    user
+  );
+  const activeLearner = primaryLearnerRow
+    ? {
+        id: String(primaryLearnerRow.id),
+        name: String(primaryLearnerRow.display_name || fallbackName),
+        role: String(primaryLearnerRow.learner_role || "Learner"),
+        focus: String(primaryLearnerRow.focus || "Learning path"),
+        active: true,
+      }
+    : {
+        id: "current",
+        name: fallbackName,
+        role: "Learner",
+        focus: "Create a learning profile to personalize BeastLearning.",
+        active: true,
+      };
+  const userLearners = [
+    activeLearner,
+    ...learnerProfileRows.slice(1).map((learner) => ({
+      id: String(learner.id),
+      name: String(learner.display_name || "Learner"),
+      role: String(learner.learner_role || "Learner"),
+      focus: String(learner.focus || "Learning path"),
+      active: false,
+    })),
+  ];
+  const userGoals = ((goalsResult.data || []) as Record<string, unknown>[]).map(mapGoalRow);
+  const userCourses = ((coursesResult.data || []) as Record<string, unknown>[]).map(mapCourseRow);
+  const userSessions = ((sessionsResult.data || []) as Record<string, unknown>[]).map(mapSessionRow);
+  const userAchievements = ((achievementsResult.data || []) as Record<string, unknown>[]).map(mapAchievementRow);
+  const userCertificates = ((certificatesResult.data || []) as Record<string, unknown>[]).map(mapCertificateRow);
+  const firstPlanRow = ((plansResult.data || []) as Record<string, unknown>[])[0];
+  const userPlan = firstPlanRow
+    ? mapPlanRow(firstPlanRow, activeLearner.id)
+    : {
+        id: "starter-learning-path",
+        learnerId: activeLearner.id,
+        title: userGoals[0]?.title || "Starter learning path",
+        summary: userGoals[0]?.target || "Create your first learning goal to begin.",
+        primaryGoalId: userGoals[0]?.id,
+        weeklySessionTarget: 0,
+      };
+  const userStudySession = buildStudySessionCommandFromSession(
+    userSessions.find((session) => session.status !== "Completed") || userSessions[0]
+  );
+  const learnerList =
+    demoModeEnabled && userGoals.length === 0 ? mockLearners : userLearners;
+  const learningGoals =
+    demoModeEnabled && userGoals.length === 0 ? mockLearningGoals : userGoals;
+  const learningCourses =
+    demoModeEnabled && userGoals.length === 0 ? mockLearningCourses : userCourses;
+  const learningPlan =
+    demoModeEnabled && userGoals.length === 0 ? mockLearningPlan : userPlan;
+  const learningSessions =
+    demoModeEnabled && userGoals.length === 0 ? mockLearningSessions : userSessions;
+  const learningAchievements =
+    demoModeEnabled && userGoals.length === 0 ? mockLearningAchievements : userAchievements;
+  const learningCertificates =
+    demoModeEnabled && userGoals.length === 0 ? mockLearningCertificates : userCertificates;
+  const parentDashboard =
+    demoModeEnabled && userGoals.length === 0 ? mockParentDashboard : emptyParentDashboard;
+  const studySession =
+    demoModeEnabled && userGoals.length === 0 ? mockStudySessionCommand : userStudySession;
+  const learningQuickActions =
+    demoModeEnabled && userGoals.length === 0 ? mockLearningQuickActions : [];
   const intelligence = buildLearningFoundationIntelligence();
   const learningAccent = moduleAccents.learning;
-  const activeLearner = mockLearners.find((learner) => learner.active) || mockLearners[0];
-  const privateBeta = await loadLearningPrivateBetaData({ learner: activeLearner });
+  const privateBeta = await loadLearningPrivateBetaData({
+    supabase,
+    userId: user.id,
+    learnerName: activeLearner.name,
+    goals: learningGoals,
+    sessions: learningSessions,
+    certificates: learningCertificates,
+  });
   const summary = intelligence.moduleSummaries[0];
   const notification = intelligence.notifications[0];
   const activity = intelligence.activities[0];
   const timelineEvent = intelligence.timelineEvents[0];
   const progressSignals = buildLearningProgressSignals({
-    goals: mockLearningGoals,
-    courses: mockLearningCourses,
-    plan: mockLearningPlan,
-    sessions: mockLearningSessions,
-    achievements: mockLearningAchievements,
-    studySession: mockStudySessionCommand,
+    goals: learningGoals,
+    courses: learningCourses,
+    plan: learningPlan,
+    sessions: learningSessions,
+    achievements: learningAchievements,
+    studySession,
   });
   const learningRecommendations: LearningRecommendation[] =
     buildLearningRecommendations({
       progress: progressSignals,
-      currentPlanTitle: mockLearningPlan.title,
+      currentPlanTitle: learningPlan.title,
       activeGoalsCount: progressSignals.activeGoalsCount,
-      currentFocus: mockStudySessionCommand.currentFocus,
+      currentFocus: studySession.currentFocus,
     });
   const learningIntelligence = buildLearningIntelligenceSnapshot({
-    goals: mockLearningGoals,
+    goals: learningGoals,
     weeklyStudyMinutes: progressSignals.estimatedWeeklyStudyMinutes,
   });
   const aiOrchestration = buildAIOrchestrationDashboard({
@@ -269,26 +551,29 @@ export default async function LearningPage() {
   const knowledgeDashboard = buildKnowledgeIntelligenceDashboard();
   const achievementUnlocks = buildLearningAchievementUnlocks({
     progress: progressSignals,
-    goalsCreated: mockLearningGoals.length,
-    goalsCompleted: mockLearningGoals.filter((goal) => goal.status === "Completed")
+    goalsCreated: learningGoals.length,
+    goalsCompleted: learningGoals.filter((goal) => goal.status === "Completed")
       .length,
     masteredSkills: 0,
-    foundingStudent: true,
+    foundingStudent: learningGoals.length > 0,
   });
   const learnerPortfolio = buildLearnerPortfolio({
     learnerName: activeLearner.name || "Learner",
-    goals: mockLearningGoals,
+    goals: learningGoals,
     progress: progressSignals,
-    certificates: mockLearningCertificates,
+    certificates: learningCertificates,
     achievementCount: achievementUnlocks.filter((achievement) => achievement.unlocked)
       .length,
   });
   const learningExperience = buildLearningExperienceDashboard({
     learnerName: learnerPortfolio.learnerName,
     progress: progressSignals,
-    goals: mockLearningGoals,
+    goals: learningGoals,
     achievements: achievementUnlocks,
-    parentDashboard: mockParentDashboard,
+    parentDashboard,
+    certificateCount: learningCertificates.length,
+    certificateTitle: learningCertificates[0]?.pathName,
+    certificateVerification: learningCertificates[0]?.verificationPlaceholder,
   });
 
   return (
@@ -328,9 +613,13 @@ export default async function LearningPage() {
 
         <PrivateBetaPanels beta={privateBeta} />
 
-        <LearningExperiencePanel experience={learningExperience} />
+        <div id="progress" className="scroll-mt-24">
+          <LearningExperiencePanel experience={learningExperience} />
+        </div>
 
-        <LearningAIOrchestrationPanel orchestration={aiOrchestration} />
+        <div id="ai-tutor" className="scroll-mt-24">
+          <LearningAIOrchestrationPanel orchestration={aiOrchestration} />
+        </div>
 
         <section className="grid gap-4 xl:grid-cols-[0.85fr_1.15fr]">
           <DashboardCard accent="learning">
@@ -340,7 +629,7 @@ export default async function LearningPage() {
               description="One current learner is active now. Family learner switching has a permanent visual home for future support."
             />
             <div className="mt-5">
-              <LearnerSwitcher />
+              <LearnerSwitcher learners={learnerList} />
             </div>
           </DashboardCard>
 
@@ -363,10 +652,10 @@ export default async function LearningPage() {
                     Current plan
                   </div>
                   <h3 className="mt-2 text-xl font-black text-white">
-                    {mockLearningPlan.title}
+                    {learningPlan.title}
                   </h3>
                   <p className="mt-2 text-sm leading-5 text-[#c7cfdb]">
-                    {mockLearningPlan.summary}
+                    {learningPlan.summary}
                   </p>
                 </div>
                 <div
@@ -392,7 +681,7 @@ export default async function LearningPage() {
         </section>
 
         <div id="study-plan" className="scroll-mt-24">
-          <StudySessionCommandCard session={mockStudySessionCommand} />
+          <StudySessionCommandCard session={studySession} />
         </div>
 
         <LearningIntelligencePanel snapshot={learningIntelligence} />
@@ -411,9 +700,14 @@ export default async function LearningPage() {
               description="Course records support title, category, progress, estimated completion, status, and priority."
             />
             <div className="mt-5 grid gap-4 lg:grid-cols-3">
-              {mockLearningCourses.map((course) => (
+              {learningCourses.map((course) => (
                 <CourseCard key={course.id} course={course} />
               ))}
+              {learningCourses.length === 0 ? (
+                <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 text-sm font-semibold text-[#c7cfdb]">
+                  No courses have been created for this account yet.
+                </div>
+              ) : null}
             </div>
           </DashboardCard>
 
@@ -424,7 +718,7 @@ export default async function LearningPage() {
               description="Lesson scheduling is presentation-only for now and ready for future calendar integration."
             />
             <div className="mt-5 grid gap-3">
-              {mockLearningSessions.map((lesson) => (
+              {learningSessions.map((lesson) => (
                 <div
                   key={lesson.id}
                   className="rounded-xl border border-[#2a3242] bg-[#111827] p-4"
@@ -453,9 +747,14 @@ export default async function LearningPage() {
               description="These cards establish the future user-defined goal model without changing the database yet."
             />
             <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {mockLearningGoals.map((goal) => (
+              {learningGoals.map((goal) => (
                 <GoalCard key={goal.id} goal={goal} />
               ))}
+              {learningGoals.length === 0 ? (
+                <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 text-sm font-semibold text-[#c7cfdb]">
+                  No learning goals have been created for this account yet.
+                </div>
+              ) : null}
             </div>
           </DashboardCard>
 
@@ -466,7 +765,7 @@ export default async function LearningPage() {
               description="Achievement UI is ready for streaks, completions, mastery, and certifications."
             />
             <div className="mt-5 grid gap-3">
-              {mockLearningAchievements.map((achievement) => (
+              {learningAchievements.map((achievement) => (
                 <div
                   key={achievement.id}
                   className={`rounded-xl border p-4 ${
@@ -503,17 +802,19 @@ export default async function LearningPage() {
         </div>
 
         <section id="certificates" className="grid scroll-mt-24 gap-4 xl:grid-cols-[0.9fr_1.1fr]">
-          <CertificatePreviewPanel certificates={mockLearningCertificates} />
+          <CertificatePreviewPanel certificates={learningCertificates} />
           <LearnerPortfolioPanel portfolio={learnerPortfolio} />
         </section>
 
-        <div id="parent-view" className="scroll-mt-24">
-          <ParentDashboardPanel dashboard={mockParentDashboard} />
-        </div>
+        {parentDashboard.learners.length > 0 ? (
+          <div id="parent-view" className="scroll-mt-24">
+            <ParentDashboardPanel dashboard={parentDashboard} />
+          </div>
+        ) : null}
 
-        <StudyPlannerPanel planner={mockStudyPlanner} />
+        {demoModeEnabled ? <StudyPlannerPanel planner={mockStudyPlanner} /> : null}
 
-        <UploadFoundationPanel uploads={mockLearningUploads} />
+        {demoModeEnabled ? <UploadFoundationPanel uploads={mockLearningUploads} /> : null}
 
         <AISpecialistsPanel specialists={learningSpecialists} />
 
@@ -553,7 +854,7 @@ export default async function LearningPage() {
             description="Common learning actions are mapped now, with future engines clearly reserved."
           />
           <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {mockLearningQuickActions.map((action) => (
+            {learningQuickActions.map((action) => (
               <div
                 key={action.id}
                 className={`rounded-xl border p-4 transition ${
@@ -575,6 +876,11 @@ export default async function LearningPage() {
                 </p>
               </div>
             ))}
+            {learningQuickActions.length === 0 ? (
+              <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 text-sm font-semibold text-[#c7cfdb]">
+                Learning quick actions will appear after this account has a saved learning plan.
+              </div>
+            ) : null}
           </div>
         </DashboardCard>
       </div>

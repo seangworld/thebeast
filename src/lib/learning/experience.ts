@@ -1,5 +1,4 @@
 import { learningOnboardingSteps } from "./onboarding";
-import { mockLearningCertificates } from "./certificates";
 import { buildGamificationProfile } from "./gamification";
 import { buildLearnerInsights } from "./insights";
 import { buildLearningJourneys } from "./journeys";
@@ -36,12 +35,14 @@ function buildExpandedLearnerProfile({
   gamification,
   achievements,
   currentJourney,
+  certificateCount,
 }: {
   learnerName: string;
   progress: LearningProgressSignals;
   gamification: ReturnType<typeof buildGamificationProfile>;
   achievements: LearningAchievementUnlock[];
   currentJourney: string;
+  certificateCount: number;
 }): ExpandedLearnerProfile {
   return {
     learnerName,
@@ -51,7 +52,7 @@ function buildExpandedLearnerProfile({
     xp: gamification.xp,
     level: gamification.level,
     achievements: achievements.filter((achievement) => achievement.unlocked).length,
-    certificates: mockLearningCertificates.length,
+    certificates: certificateCount,
     skills: gamification.skillLevels.map((skill) => skill.skill),
     currentJourney,
     learningStatistics: [
@@ -68,12 +69,18 @@ export function buildLearningExperienceDashboard({
   goals,
   achievements,
   parentDashboard,
+  certificateCount = 0,
+  certificateTitle,
+  certificateVerification,
 }: {
   learnerName: string;
   progress: LearningProgressSignals;
   goals: LearningGoal[];
   achievements: LearningAchievementUnlock[];
   parentDashboard: ParentDashboard;
+  certificateCount?: number;
+  certificateTitle?: string;
+  certificateVerification?: string;
 }): LearningExperienceDashboard {
   const habits = buildStudyHabitsSnapshot();
   const gamification = buildGamificationProfile({
@@ -108,14 +115,13 @@ export function buildLearningExperienceDashboard({
     journeys,
     achievements: buildPolishedAchievements(achievements),
     certificate: {
-      title: mockLearningCertificates[0]?.pathName || "Completion Certificate",
+      title: certificateTitle || "Completion Certificate",
       learnerName,
       completionSummary: "Completed a structured BeastLearning foundation path.",
       skillsEarned: ["Security Foundations", "Study Rhythm", "Review Discipline"],
       sharePlaceholder: "Share certificate placeholder",
       downloadPlaceholder: "Download certificate placeholder",
-      verificationPlaceholder:
-        mockLearningCertificates[0]?.verificationPlaceholder || "Future verification placeholder.",
+      verificationPlaceholder: certificateVerification || "Future verification placeholder.",
     },
     motivation,
     habits,
@@ -134,6 +140,7 @@ export function buildLearningExperienceDashboard({
       gamification,
       achievements,
       currentJourney: activeJourney?.title || "Starter journey",
+      certificateCount,
     }),
     parentExperience: {
       weeklyWins: parentDashboard.learners[0]?.achievements || [],

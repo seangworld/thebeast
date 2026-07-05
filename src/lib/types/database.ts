@@ -44,6 +44,12 @@ export type Profile = {
     timezone?: string | null
     household_context?: string | null
     bio?: string | null
+    current_academic_level?: string | null
+    career_interests?: string | null
+    learning_preferences?: string | null
+    learning_availability?: string | null
+    learning_strengths?: string | null
+    learning_help_areas?: string | null
     created_at: string
     updated_at: string
   }

@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { APP_VERSION_LABEL } from "@/lib/appVersion";
 import LogoutButton from "@/app/components/LogoutButton";
 import AdminViewAsControl from "@/app/components/AdminViewAsControl";
+import { createClient } from "@/lib/supabase/client";
 import {
   BeastBrandMark,
   ModuleNavItem,
@@ -14,11 +15,42 @@ import {
 } from "@/app/components/design/DashboardPrimitives";
 import {
   beastModuleNavigation,
-  primaryNavigation,
-  sharedNavigation,
   type ModuleChildNavItem,
   type ModuleNavSection,
 } from "@/lib/moduleNavigation";
+import {
+  isRestrictedForLearningOnlyNavigation,
+  shouldUseLearningOnlyNavigation,
+} from "@/lib/learning/access";
+
+const learningPrimaryNavigation: ModuleNavSection[] = [
+  { label: "Profile", href: "/dashboard/profile", module: "beastos" },
+  { label: "Today", href: "/dashboard/today", module: "learning" },
+  { label: "Learning Path", href: "/dashboard/learning", module: "learning" },
+  { label: "Activities", href: "/dashboard/today#activities", module: "learning" },
+  { label: "AI Tutor", href: "/dashboard/learning#ai-tutor", module: "learning" },
+  { label: "Progress", href: "/dashboard/learning#progress", module: "learning" },
+  { label: "Achievements", href: "/dashboard/learning#achievements", module: "learning" },
+];
+
+const learningSettingsNavigation: ModuleNavSection[] = [
+  { label: "Settings", href: "/dashboard/settings", module: "beastos" },
+];
+
+const platformPrimaryNavigation: ModuleNavSection[] = [
+  { label: "Profile", href: "/dashboard/profile", module: "beastos" },
+  { label: "Home", href: "/dashboard", module: "beastos" },
+  { label: "Today", href: "/dashboard/today", module: "beastos" },
+  { label: "Search", href: "/dashboard/search", module: "search" },
+  { label: "Notifications", href: "/dashboard/notifications", module: "notifications" },
+];
+
+const platformSharedNavigation: ModuleNavSection[] = [
+  { label: "Calendar", href: "/dashboard/calendar", module: "calendar" },
+  { label: "Timeline", href: "/dashboard/timeline", module: "timeline" },
+  { label: "Upload Center", href: "/dashboard/uploads", module: "documents" },
+  { label: "Settings", href: "/dashboard/settings", module: "beastos" },
+];
 
 function getWorkspaceModule(pathname: string): ModuleKey {
   if (pathname.startsWith("/dashboard/money")) return "money";
@@ -39,8 +71,84 @@ export default function DashboardLayout({
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({});
+  const [learningOnlyNavigation, setLearningOnlyNavigation] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
   const workspaceModule = getWorkspaceModule(pathname);
+  const onboardingPath = "/dashboard/onboarding";
+
+  useEffect(() => {
+    let active = true;
+
+    async function routeFirstTimeUsers() {
+      let supabase: ReturnType<typeof createClient>;
+
+      try {
+        supabase = createClient();
+      } catch {
+        return;
+      }
+
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      const authUser = userData?.user;
+
+      if (!active) return;
+
+      if (userError || !authUser) {
+        router.replace("/login");
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role, birthday, onboarding_complete")
+        .eq("id", authUser.id)
+        .maybeSingle();
+
+      if (!active) return;
+
+      if (!profile?.onboarding_complete && pathname !== onboardingPath) {
+        router.replace(onboardingPath);
+        return;
+      }
+
+      if (profile?.onboarding_complete && pathname === onboardingPath) {
+        router.replace("/dashboard/today");
+      }
+
+      const { data: learningProfiles } = await supabase
+        .from("learning_profiles")
+        .select("id, learner_role, learning_style")
+        .eq("user_id", authUser.id)
+        .limit(1);
+
+      if (!active) return;
+
+      const primaryLearningProfile = learningProfiles?.[0];
+
+      const useLearningOnlyNavigation = shouldUseLearningOnlyNavigation({
+        role: profile?.role,
+        birthday: profile?.birthday,
+        learnerRole: primaryLearningProfile?.learner_role,
+        gradeLevel: primaryLearningProfile?.learning_style,
+      });
+
+      setLearningOnlyNavigation(useLearningOnlyNavigation);
+
+      if (
+        useLearningOnlyNavigation &&
+        isRestrictedForLearningOnlyNavigation(pathname)
+      ) {
+        router.replace("/dashboard/today");
+      }
+    }
+
+    routeFirstTimeUsers();
+
+    return () => {
+      active = false;
+    };
+  }, [pathname, router]);
 
   function isActiveRoute(href: string) {
     const [path] = href.split("#");
@@ -199,7 +307,7 @@ export default function DashboardLayout({
                   Navigation
                 </div>
               ) : null}
-              {primaryNavigation.map((item) => (
+              {(learningOnlyNavigation ? learningPrimaryNavigation : platformPrimaryNavigation).map((item) => (
                 <div key={item.label} onClick={onNavigate}>
                   <ModuleNavItem
                     label={item.label}
@@ -212,18 +320,22 @@ export default function DashboardLayout({
               ))}
             </nav>
 
-            <div className="border-t border-[#2a3242]" />
+            {!learningOnlyNavigation ? (
+              <>
+                <div className="border-t border-[#2a3242]" />
 
-            <nav className="space-y-2" aria-label="BeastOS modules">
-              {!compact ? (
-                <div className="px-2 text-xs font-bold uppercase tracking-wide text-[#596579]">
-                  Beast Modules
-                </div>
-              ) : null}
-              {beastModuleNavigation.map((item) => (
-                <ExpandableModuleNavItem key={item.label} item={item} />
-              ))}
-            </nav>
+                <nav className="space-y-2" aria-label="BeastOS modules">
+                  {!compact ? (
+                    <div className="px-2 text-xs font-bold uppercase tracking-wide text-[#596579]">
+                      Beast Modules
+                    </div>
+                  ) : null}
+                  {beastModuleNavigation.map((item) => (
+                    <ExpandableModuleNavItem key={item.label} item={item} />
+                  ))}
+                </nav>
+              </>
+            ) : null}
 
             <div className="border-t border-[#2a3242]" />
 
@@ -233,7 +345,7 @@ export default function DashboardLayout({
                   Shared
                 </div>
               ) : null}
-              {sharedNavigation.map((item) => (
+              {(learningOnlyNavigation ? learningSettingsNavigation : platformSharedNavigation).map((item) => (
                 <div key={item.label} onClick={onNavigate}>
                   <ModuleNavItem
                     label={item.label}

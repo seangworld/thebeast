@@ -13,7 +13,7 @@ export default function HomePage() {
       const { data } = await supabase.auth.getUser();
 
       if (data.user) {
-        router.replace("/dashboard");
+        router.replace("/dashboard/today");
       } else {
         router.replace("/login");
       }

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { mockLearningCertificates } from "@/lib/learning/certificates";
+import { createRouteClient } from "@/lib/supabase/server";
 
 function escapePdfText(value: string) {
   return value.replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
@@ -72,20 +72,42 @@ export async function GET(
   _request: Request,
   { params }: { params: { certificateId: string } }
 ) {
-  const certificate = mockLearningCertificates.find(
-    (item) => item.certificateId === params.certificateId
-  );
+  const supabase = createRouteClient();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+  }
+
+  const { data: certificate, error } = await supabase
+    .from("learning_certificates")
+    .select("certificate_id, learner_name, path_name, completion_date")
+    .eq("certificate_id", params.certificateId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 
   if (!certificate) {
     return NextResponse.json({ error: "Certificate not found." }, { status: 404 });
   }
 
-  const pdf = buildCertificatePdf(certificate);
+  const pdf = buildCertificatePdf({
+    certificateId: String(certificate.certificate_id),
+    learnerName: String(certificate.learner_name),
+    pathName: String(certificate.path_name),
+    completionDate: String(certificate.completion_date),
+  });
 
   return new Response(pdf, {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="${certificate.certificateId}.pdf"`,
+      "Content-Disposition": `attachment; filename="${certificate.certificate_id}.pdf"`,
     },
   });
 }

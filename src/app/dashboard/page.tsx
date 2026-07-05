@@ -135,41 +135,6 @@ const futureBriefingModules: {
   },
 ];
 
-const quickLaunchModules: {
-  label: string;
-  module: ModuleKey;
-  href?: string;
-  description: string;
-}[] = [
-  {
-    label: "Money",
-    module: "money",
-    href: "/dashboard/money",
-    description: "Open the active production workspace.",
-  },
-  {
-    label: "Learning",
-    module: "learning",
-    href: "/dashboard/learning",
-    description: "Open goals, courses, study rhythm, and progress.",
-  },
-  {
-    label: "Health",
-    module: "health",
-    description: "Health routines and signals are coming soon.",
-  },
-  {
-    label: "Home",
-    module: "home",
-    description: "Household command center is coming soon.",
-  },
-  {
-    label: "Projects",
-    module: "projects",
-    description: "Project command center is coming soon.",
-  },
-];
-
 function nextDueDateFromDay(day: number | null | undefined) {
   const today = new Date();
   const safeDay = Math.min(Math.max(Number(day || 1), 1), 28);
@@ -642,13 +607,13 @@ export default function TodayPage() {
                 </p>
               </div>
               <p className="beast-subtitle">
-                Your daily operating picture is assembled. Money is live today;
-                every future module already has a permanent home.
+                Today&apos;s Focus brings your learning, money, calendar, health,
+                home, and project signals into one daily plan.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Link href="/dashboard/money" className="beast-button">
-                Open Money
+              <Link href="/dashboard/today" className="beast-button">
+                View Today&apos;s Plan
               </Link>
               <Link href="/dashboard/timeline" className="beast-button-secondary">
                 View Timeline
@@ -670,54 +635,52 @@ export default function TodayPage() {
         <section className="grid gap-4 xl:grid-cols-[1.35fr_0.65fr]">
           <DashboardCard accent="beastos" className="min-h-[360px]">
             <SectionHeader
-              eyebrow="Today's Briefing"
-              title="Command center"
-              description="A cross-module briefing for the day ahead. Money is the active production signal while future modules reserve their operating lanes."
-              action={<ModuleBadge module="money" label="Live Signal" />}
+              eyebrow="Today&apos;s Focus"
+              title="Beast-wide plan"
+              description="A cross-module summary of what needs attention today, without locking the day to one module."
+              action={<ModuleBadge module="beastos" label="Daily Plan" />}
             />
 
             <div className="mt-6 grid gap-4 lg:grid-cols-[1fr_0.9fr]">
-              <div className="rounded-2xl border border-green-400/25 bg-green-400/10 p-5">
+              <div className="rounded-2xl border border-[#38bdf8]/25 bg-[#38bdf8]/10 p-5">
                 <div className="flex flex-wrap items-center gap-2">
-                  <ModuleBadge module="money" />
-                  <span className="rounded-full border border-green-400/30 px-2.5 py-1 text-xs font-bold text-green-100">
-                    Production Data
+                  <ModuleBadge module="beastos" />
+                  <span className="rounded-full border border-[#38bdf8]/30 px-2.5 py-1 text-xs font-bold text-[#bae6fd]">
+                    Today&apos;s Plan
                   </span>
                 </div>
                 <h2 className="mt-4 text-2xl font-black leading-tight text-white">
-                  {primaryRecommendation
-                    ? primaryRecommendation.title
-                    : "Everything looks good."}
+                  Start with the clearest next action.
                 </h2>
-                <p className="mt-3 text-sm leading-6 text-[#dbe3ef]">
-                  {primaryRecommendation
-                    ? `${primaryRecommendation.summary} ${primaryRecommendation.reason}`
-                    : "No live Money recommendation needs attention right now."}{" "}
-                  The rest of BeastOS is staged around this daily command pattern.
-                </p>
-                <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                <div className="mt-5 grid gap-3 sm:grid-cols-2">
                   <div>
-                    <div className="text-xs font-bold uppercase text-green-100/70">
-                      Cash
+                    <div className="text-xs font-bold uppercase text-[#bae6fd]/70">
+                      Learning
+                    </div>
+                    <div className="mt-1 text-xl font-black">2 activities</div>
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold uppercase text-[#bae6fd]/70">
+                      Money
                     </div>
                     <div className="mt-1 text-xl font-black">
-                      {formatCurrency(snapshot.startingCash)}
+                      {snapshot.billsDueSoon.length} bills due soon
                     </div>
                   </div>
                   <div>
-                    <div className="text-xs font-bold uppercase text-green-100/70">
-                      Bills
+                    <div className="text-xs font-bold uppercase text-[#bae6fd]/70">
+                      Wellness
                     </div>
                     <div className="mt-1 text-xl font-black">
-                      {snapshot.activeBills.length}
+                      Next routine pending
                     </div>
                   </div>
                   <div>
-                    <div className="text-xs font-bold uppercase text-green-100/70">
-                      Debt
+                    <div className="text-xs font-bold uppercase text-[#bae6fd]/70">
+                      Projects
                     </div>
                     <div className="mt-1 text-xl font-black">
-                      {formatCurrency(snapshot.totalDebt)}
+                      Check active tasks
                     </div>
                   </div>
                 </div>
@@ -888,50 +851,36 @@ export default function TodayPage() {
 
           <div className="space-y-4">
             <SectionHeader
-              eyebrow="Quick Launch"
-              title="Module launchpad"
-              description="Start in Money today, with future modules visible from the same command surface."
+              eyebrow="Guidance"
+              title="Where to go next"
+              description="Start with Today, then use Timeline when you need the wider sequence."
             />
             <DashboardCard accent="beastos">
               <div className="grid gap-3">
-                {quickLaunchModules.map((module) =>
-                  module.href ? (
-                    <Link
-                      key={module.label}
-                      href={module.href}
-                      className="group rounded-xl border border-green-400/35 bg-green-400/10 p-4 transition duration-200 hover:-translate-y-0.5 hover:bg-green-400/15"
-                    >
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="text-lg font-black text-white">
-                          {module.label}
-                        </div>
-                        <ModuleBadge module={module.module} label="Open" />
-                      </div>
-                      <p className="mt-2 text-sm leading-5 text-[#dbe3ef]">
-                        {module.description}
-                      </p>
-                    </Link>
-                  ) : (
-                    <div
-                      key={module.label}
-                      className="rounded-xl border border-[#2a3242] bg-[#111827] p-4"
-                    >
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="text-lg font-black text-white">
-                          {module.label}
-                        </div>
-                        <ModuleBadge
-                          module={module.module}
-                          label="Coming Soon"
-                          comingSoon
-                        />
-                      </div>
-                      <p className="mt-2 text-sm leading-5 text-[#9aa7b8]">
-                        {module.description}
-                      </p>
-                    </div>
-                  )
-                )}
+                <Link
+                  href="/dashboard/today"
+                  className="group rounded-xl border border-[#38bdf8]/35 bg-[#38bdf8]/10 p-4 transition duration-200 hover:-translate-y-0.5 hover:bg-[#38bdf8]/15"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="text-lg font-black text-white">Today&apos;s Plan</div>
+                    <ModuleBadge module="beastos" label="Open" />
+                  </div>
+                  <p className="mt-2 text-sm leading-5 text-[#dbe3ef]">
+                    See the next best action across BeastOS.
+                  </p>
+                </Link>
+                <Link
+                  href="/dashboard/timeline"
+                  className="group rounded-xl border border-[#2a3242] bg-[#111827] p-4 transition duration-200 hover:-translate-y-0.5 hover:bg-[#202634]"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="text-lg font-black text-white">Timeline</div>
+                    <ModuleBadge module="timeline" label="Open" />
+                  </div>
+                  <p className="mt-2 text-sm leading-5 text-[#9aa7b8]">
+                    Review what is coming next across modules.
+                  </p>
+                </Link>
               </div>
             </DashboardCard>
           </div>

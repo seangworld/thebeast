@@ -64,6 +64,11 @@ import {
   buildLearningAchievementUnlocks,
   learningAchievementCatalog,
 } from "../src/lib/learning/achievements";
+import {
+  getAgeFromBirthday,
+  isRestrictedForLearningOnlyNavigation,
+  shouldUseLearningOnlyNavigation,
+} from "../src/lib/learning/access";
 import { buildAdaptiveLearningPlan } from "../src/lib/learning/adaptivePlanner";
 import { buildAIOrchestrationDashboard } from "../src/lib/learning/aiOrchestrationDashboard";
 import { aiSpecialistRegistry, getAISpecialistById, getAISpecialistByRole } from "../src/lib/learning/aiRegistry";
@@ -487,6 +492,48 @@ test("learning mock data satisfies the domain model foundation", () => {
     mockLearningQuickActions.some((action) => action.label === "Continue Learning"),
     true
   );
+});
+
+test("learning account access keeps students focused without blocking adults", () => {
+  assert.equal(
+    getAgeFromBirthday("2011-07-06", new Date("2026-07-05T12:00:00.000Z")),
+    14
+  );
+  assert.equal(
+    shouldUseLearningOnlyNavigation({
+      role: "user",
+      birthday: "2012-03-10",
+      learnerRole: "Student",
+      gradeLevel: "Middle school",
+    }),
+    true
+  );
+  assert.equal(
+    shouldUseLearningOnlyNavigation({
+      role: "user",
+      birthday: "1990-03-10",
+      learnerRole: "Adult learner",
+      gradeLevel: "Certification prep",
+    }),
+    false
+  );
+  assert.equal(
+    shouldUseLearningOnlyNavigation({
+      role: "admin",
+      birthday: "2012-03-10",
+      learnerRole: "Student",
+      gradeLevel: "High school",
+    }),
+    false
+  );
+  assert.equal(isRestrictedForLearningOnlyNavigation("/dashboard/money"), true);
+  assert.equal(
+    isRestrictedForLearningOnlyNavigation("/dashboard/money/cashflow"),
+    true
+  );
+  assert.equal(isRestrictedForLearningOnlyNavigation("/dashboard/admin"), true);
+  assert.equal(isRestrictedForLearningOnlyNavigation("/dashboard/learning"), false);
+  assert.equal(isRestrictedForLearningOnlyNavigation("/dashboard/profile"), false);
 });
 
 test("learning progress signals derive dashboard intelligence", () => {
@@ -1332,10 +1379,14 @@ test("learning AI context builder gathers reusable learner context", () => {
     mastery: snapshot.mastery,
     weakAreas: snapshot.mastery.weakConcepts,
     currentLesson: "Access Control",
+    goals: mockLearningGoals.map((goal) => goal.title),
+    courses: mockLearningCourses.map((course) => course.title),
+    recentSessions: mockLearningSessions.map((session) => session.title),
   });
 
   assert.equal(context.profile, "Current learner");
   assert.equal(context.goals.includes("Security+"), true);
+  assert.equal(context.recentSessions.includes("Authentication and access control"), true);
   assert.equal(context.career, "Security Analyst");
   assert.equal(context.currentLesson, "Access Control");
   assert.equal(context.mastery.some((item) => item.includes("role-based-access")), true);

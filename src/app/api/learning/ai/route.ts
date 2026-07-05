@@ -5,6 +5,7 @@ import { getHomeworkPolicyForRequest } from "@/lib/learning/homeworkPolicy";
 import { conversationTypeFromIntent, detectLearningIntent } from "@/lib/learning/intentDetection";
 import { callOpenAILearningSpecialist } from "@/lib/learning/openai";
 import { routeLearningAI } from "@/lib/learning/router";
+import { createRouteClient } from "@/lib/supabase/server";
 import type { MasteryProfile, OpenAILearningMessage } from "@/lib/learning/types";
 
 export const dynamic = "force-dynamic";
@@ -19,6 +20,16 @@ const defaultMastery: MasteryProfile = {
 };
 
 export async function POST(request: Request) {
+  const supabase = createRouteClient();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+  }
+
   const body = (await request.json()) as {
     userRequest?: string;
     learnerName?: string;
@@ -37,7 +48,7 @@ export async function POST(request: Request) {
   const intent = detectLearningIntent(userRequest);
   const conversationType = conversationTypeFromIntent(intent);
   const context = buildLearningAIContext({
-    learnerName: body.learnerName || "Learner",
+    learnerName: user.email?.split("@")[0] || "Learner",
     mastery: body.mastery || defaultMastery,
     weakAreas: body.mastery?.weakConcepts || [],
     currentLesson: body.currentLesson || "Private beta learning session",

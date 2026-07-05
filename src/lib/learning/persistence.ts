@@ -1,13 +1,16 @@
-import { createAdminClient } from "../supabase/admin";
-import { mockLearningCertificates } from "./certificates";
-import { mockLearningGoals, mockLearningSessions } from "./mockData";
-import { buildStaticPrivateBetaData } from "./privateBeta";
+import {
+  buildCertificateDocuments,
+  buildLearningBetaReadiness,
+  buildLearningTimeline,
+} from "./privateBeta";
 import type {
-  LearnerProfile,
+  LearningCertificate,
   LearningFeedbackCategory,
   LearningFeedbackItem,
   LearningFeedbackStatus,
+  LearningGoal,
   LearningPrivateBetaData,
+  LearningSession,
 } from "./types";
 
 type LearningFeedbackRow = {
@@ -17,6 +20,10 @@ type LearningFeedbackRow = {
   context: string | null;
   status: LearningFeedbackStatus;
   created_at: string;
+};
+
+type LearningDataClient = {
+  from: (table: string) => any;
 };
 
 export const learningTableNames = {
@@ -66,35 +73,55 @@ export function buildFeedbackInsertPayload({
 }
 
 export async function loadLearningPrivateBetaData({
-  learner,
+  supabase,
+  userId,
+  learnerName,
+  goals,
+  sessions,
+  certificates,
 }: {
-  learner: LearnerProfile;
+  supabase: LearningDataClient;
+  userId: string;
+  learnerName: string;
+  goals: LearningGoal[];
+  sessions: LearningSession[];
+  certificates: LearningCertificate[];
 }): Promise<LearningPrivateBetaData> {
-  const fallback = buildStaticPrivateBetaData({
-    learnerName: learner.name,
-    goals: mockLearningGoals,
-    sessions: mockLearningSessions,
-    certificates: mockLearningCertificates,
-  });
-  const supabase = createAdminClient();
-
-  if (!supabase) return fallback;
+  const completedMissionCount = Math.min(
+    8,
+    [
+      Boolean(learnerName),
+      goals.length > 0,
+      goals.some((goal) => goal.status === "Active"),
+      sessions.length > 0,
+      sessions.some((session) => session.status === "Completed"),
+      certificates.length > 0,
+    ].filter(Boolean).length
+  );
+  const baseData: LearningPrivateBetaData = {
+    readiness: buildLearningBetaReadiness({ completedMissionCount }),
+    timeline: buildLearningTimeline({ learnerName, goals, sessions }),
+    parentRelationships: [],
+    certificateDocuments: buildCertificateDocuments(certificates),
+    feedback: [],
+    persistenceStatus: "supabase-ready",
+  };
 
   try {
     const { data, error } = await supabase
       .from(learningTableNames.feedback)
       .select("id, category, message, context, status, created_at")
+      .eq("user_id", userId)
       .order("created_at", { ascending: false })
       .limit(5);
 
-    if (error || !data) return fallback;
+    if (error || !data) return baseData;
 
     return {
-      ...fallback,
-      feedback: data.map((row) => mapFeedbackRow(row as LearningFeedbackRow)),
-      persistenceStatus: "supabase-ready",
+      ...baseData,
+      feedback: (data as LearningFeedbackRow[]).map((row) => mapFeedbackRow(row)),
     };
   } catch {
-    return fallback;
+    return baseData;
   }
 }

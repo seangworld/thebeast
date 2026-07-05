@@ -21,6 +21,12 @@ type ProfileForm = {
   timezone: string;
   household_context: string;
   bio: string;
+  current_academic_level: string;
+  career_interests: string;
+  learning_preferences: string;
+  learning_availability: string;
+  learning_strengths: string;
+  learning_help_areas: string;
 };
 
 const emptyForm: ProfileForm = {
@@ -33,6 +39,12 @@ const emptyForm: ProfileForm = {
   timezone: "",
   household_context: "",
   bio: "",
+  current_academic_level: "",
+  career_interests: "",
+  learning_preferences: "",
+  learning_availability: "",
+  learning_strengths: "",
+  learning_help_areas: "",
 };
 
 function toForm(profile: Profile | null): ProfileForm {
@@ -46,6 +58,12 @@ function toForm(profile: Profile | null): ProfileForm {
     timezone: profile?.timezone || "",
     household_context: profile?.household_context || "",
     bio: profile?.bio || "",
+    current_academic_level: profile?.current_academic_level || "",
+    career_interests: profile?.career_interests || "",
+    learning_preferences: profile?.learning_preferences || "",
+    learning_availability: profile?.learning_availability || "",
+    learning_strengths: profile?.learning_strengths || "",
+    learning_help_areas: profile?.learning_help_areas || "",
   };
 }
 
@@ -235,6 +253,12 @@ export default function ProfilePage() {
         timezone: form.timezone || null,
         household_context: form.household_context || null,
         bio: form.bio || null,
+        current_academic_level: form.current_academic_level || null,
+        career_interests: form.career_interests || null,
+        learning_preferences: form.learning_preferences || null,
+        learning_availability: form.learning_availability || null,
+        learning_strengths: form.learning_strengths || null,
+        learning_help_areas: form.learning_help_areas || null,
       })
       .eq("id", userId);
 
@@ -260,6 +284,9 @@ export default function ProfilePage() {
               <p className="beast-subtitle">
                 Your profile helps BeastOS personalize your experience across
                 Money, Learning, Health, Home, and future modules.
+              </p>
+              <p className="text-sm font-semibold text-indigo-100">
+                The more you tell Beast, the more personalized your AI learning experience becomes.
               </p>
             </div>
             <Link href="/dashboard/settings" className="beast-button-secondary">
@@ -289,30 +316,34 @@ export default function ProfilePage() {
                 <div className="h-10 rounded bg-[#2a3242]" />
               </div>
             ) : (
-              <div className="mt-6 grid gap-4 md:grid-cols-2">
+              <div className="mt-6 grid gap-6">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="md:col-span-2 text-sm font-black uppercase text-[#7f8da3]">
+                    About Me
+                  </div>
                 <TextField
                   label="Preferred name"
                   value={form.preferred_name}
                   onChange={(value) => updateField("preferred_name", value)}
-                  placeholder="Sean"
+                  placeholder="Preferred name"
                 />
                 <TextField
                   label="Display name"
                   value={form.display_name}
                   onChange={(value) => updateField("display_name", value)}
-                  placeholder="Sean"
+                  placeholder="Display name"
                 />
                 <TextField
                   label="Full name"
                   value={form.full_name}
                   onChange={(value) => updateField("full_name", value)}
-                  placeholder="Sean World"
+                  placeholder="Full name"
                 />
                 <TextField
                   label="Username / handle"
                   value={form.username}
                   onChange={(value) => updateField("username", value)}
-                  placeholder="sean_gizzle"
+                  placeholder="learning_handle"
                 />
                 <TextField
                   label="Birthday"
@@ -332,6 +363,90 @@ export default function ProfilePage() {
                   onChange={(value) => updateField("timezone", value)}
                   placeholder="America/New_York"
                 />
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="md:col-span-2 text-sm font-black uppercase text-[#7f8da3]">
+                    Current Academic Level
+                  </div>
+                  <TextField
+                    label="Current academic level"
+                    value={form.current_academic_level}
+                    onChange={(value) =>
+                      updateField("current_academic_level", value)
+                    }
+                    placeholder="High school, college, certification prep, professional"
+                  />
+                  <TextField
+                    label="Availability"
+                    value={form.learning_availability}
+                    onChange={(value) =>
+                      updateField("learning_availability", value)
+                    }
+                    placeholder="30 minutes most weekdays"
+                  />
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="md:col-span-2 text-sm font-black uppercase text-[#7f8da3]">
+                    Courses
+                  </div>
+                  <TextAreaField
+                    label="Courses"
+                    value={form.learning_preferences}
+                    onChange={(value) =>
+                      updateField("learning_preferences", value)
+                    }
+                    placeholder="List current courses or subjects Beast should keep close."
+                  />
+                  <TextAreaField
+                    label="Goals"
+                    value={form.bio}
+                    onChange={(value) => updateField("bio", value)}
+                    placeholder="Add learning goals, deadlines, or outcomes."
+                  />
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="md:col-span-2 text-sm font-black uppercase text-[#7f8da3]">
+                    Career Interests
+                  </div>
+                  <TextAreaField
+                    label="Career interests"
+                    value={form.career_interests}
+                    onChange={(value) =>
+                      updateField("career_interests", value)
+                    }
+                    placeholder="Careers, certifications, trades, or skills you are curious about."
+                  />
+                  <TextAreaField
+                    label="Learning preferences"
+                    value={form.household_context}
+                    onChange={(value) =>
+                      updateField("household_context", value)
+                    }
+                    placeholder="How do you learn best? Reading, practice, examples, projects?"
+                  />
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="md:col-span-2 text-sm font-black uppercase text-[#7f8da3]">
+                    Strengths and Areas I Need Help
+                  </div>
+                  <TextAreaField
+                    label="Strengths"
+                    value={form.learning_strengths}
+                    onChange={(value) =>
+                      updateField("learning_strengths", value)
+                    }
+                    placeholder="Topics or habits that already feel strong."
+                  />
+                  <TextAreaField
+                    label="Areas I need help"
+                    value={form.learning_help_areas}
+                    onChange={(value) =>
+                      updateField("learning_help_areas", value)
+                    }
+                    placeholder="Topics, habits, or study moments that feel hard."
+                  />
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
                 <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
                   <div className="text-sm font-semibold text-[#c7cfdb]">
                     Computed age
@@ -340,23 +455,6 @@ export default function ProfilePage() {
                     {age == null ? "Not set" : age}
                   </div>
                 </div>
-                <div className="md:col-span-2">
-                  <TextAreaField
-                    label="Household / family context"
-                    value={form.household_context}
-                    onChange={(value) =>
-                      updateField("household_context", value)
-                    }
-                    placeholder="Future BeastOS modules can use this for household, family, and shared-life context."
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <TextAreaField
-                    label="Basic bio / context notes"
-                    value={form.bio}
-                    onChange={(value) => updateField("bio", value)}
-                    placeholder="Add any context that helps BeastOS feel more personal and useful."
-                  />
                 </div>
               </div>
             )}

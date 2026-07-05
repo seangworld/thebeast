@@ -25,7 +25,7 @@ export default function BetaFeedbackPanel() {
   const [category, setCategory] = useState<LearningFeedbackCategory>("feature request");
   const [message, setMessage] = useState("");
   const [items, setItems] = useState<LearningFeedbackItem[]>([]);
-  const [submitState, setSubmitState] = useState<"idle" | "saving" | "saved">("idle");
+  const [submitState, setSubmitState] = useState<"idle" | "saving" | "saved" | "error">("idle");
 
   useEffect(() => {
     const stored = window.localStorage.getItem(storageKey);
@@ -48,15 +48,6 @@ export default function BetaFeedbackPanel() {
     if (!trimmed) return;
 
     setSubmitState("saving");
-    const localItem: LearningFeedbackItem = {
-      id: `feedback-${Date.now()}`,
-      category,
-      message: trimmed,
-      context: "BeastLearning Private Beta",
-      submittedAt: new Date().toISOString(),
-      status: "New",
-    };
-
     try {
       const response = await fetch("/api/learning/feedback", {
         method: "POST",
@@ -67,15 +58,21 @@ export default function BetaFeedbackPanel() {
           context: "BeastLearning Private Beta",
         }),
       });
+
+      if (!response.ok) {
+        throw new Error("Unable to submit feedback.");
+      }
+
       const payload = (await response.json()) as { item?: LearningFeedbackItem };
 
-      setItems((current) => [payload.item || localItem, ...current]);
+      if (payload.item) {
+        setItems((current) => [payload.item as LearningFeedbackItem, ...current]);
+      }
+      setMessage("");
+      setSubmitState("saved");
     } catch {
-      setItems((current) => [localItem, ...current]);
+      setSubmitState("error");
     }
-
-    setMessage("");
-    setSubmitState("saved");
   }
 
   return (
@@ -113,6 +110,11 @@ export default function BetaFeedbackPanel() {
           {submitState === "saving" ? "Submitting" : "Submit"}
         </button>
       </form>
+      {submitState === "error" ? (
+        <p className="mt-3 text-sm font-semibold text-red-200">
+          Sign in again to submit BeastLearning feedback.
+        </p>
+      ) : null}
       <div className="mt-5 grid gap-3">
         {items.slice(0, 3).map((item) => (
           <div key={item.id} className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">

@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { createRouteClient } from "@/lib/supabase/server";
 import {
   buildFeedbackInsertPayload,
@@ -21,7 +20,6 @@ const categories: LearningFeedbackCategory[] = [
 
 export async function POST(request: Request) {
   const body = (await request.json()) as {
-    userId?: string;
     category?: LearningFeedbackCategory;
     message?: string;
     context?: string;
@@ -36,41 +34,21 @@ export async function POST(request: Request) {
     );
   }
 
-  const supabase = createAdminClient();
-  let userId = body.userId;
+  const supabase = createRouteClient();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
 
-  if (!userId) {
-    try {
-      const routeClient = createRouteClient();
-      const {
-        data: { user },
-      } = await routeClient.auth.getUser();
-
-      userId = user?.id;
-    } catch {
-      userId = undefined;
-    }
-  }
-
-  if (!supabase || !userId) {
-    return NextResponse.json({
-      status: "fallback-static",
-      item: {
-        id: `feedback-${Date.now()}`,
-        category,
-        message,
-        context: body.context || "BeastLearning Private Beta",
-        submittedAt: new Date().toISOString(),
-        status: "New",
-      },
-    });
+  if (userError || !user) {
+    return NextResponse.json({ error: "Authentication required." }, { status: 401 });
   }
 
   const { data, error } = await supabase
     .from(learningTableNames.feedback)
     .insert(
       buildFeedbackInsertPayload({
-        userId,
+        userId: user.id,
         category,
         message,
         context: body.context || "BeastLearning Private Beta",
