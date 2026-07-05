@@ -10,6 +10,10 @@ import {
   SectionHeader,
 } from "@/app/components/design/DashboardPrimitives";
 import { createClient } from "@/lib/supabase/client";
+import {
+  hasCompleteLearningOnboardingData,
+  loadLearningOnboardingDataStatus,
+} from "@/lib/learning/onboardingCompletion";
 import { getProfileDisplayName } from "@/lib/profile";
 
 type CourseRow = {
@@ -197,13 +201,55 @@ export default function TodayPage() {
         return;
       }
 
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select("preferred_name, display_name, full_name, onboarding_complete")
+        .select("onboarding_complete")
         .eq("id", authUser.id)
         .maybeSingle();
 
-      if (!profile?.onboarding_complete) {
+      if (profileError) {
+        console.error("Unable to read Today onboarding completion profile.", {
+          userId: authUser.id,
+          message: profileError.message,
+          code: profileError.code,
+          details: profileError.details,
+        });
+      }
+
+      let onboardingComplete = Boolean(profile?.onboarding_complete);
+
+      if (!onboardingComplete) {
+        const { status, error: statusError } = await loadLearningOnboardingDataStatus(
+          supabase,
+          authUser.id
+        );
+
+        if (statusError) {
+          throw new Error(
+            "Could not verify your saved BeastLearning setup. Please try again."
+          );
+        }
+
+        if (hasCompleteLearningOnboardingData(status)) {
+          const repairResult = await supabase
+            .from("profiles")
+            .update({ onboarding_complete: true })
+            .eq("id", authUser.id)
+            .select("id")
+            .maybeSingle();
+
+          if (repairResult.error || !repairResult.data) {
+            throw new Error(
+              "Your learning setup exists, but BeastLearning could not mark onboarding complete."
+            );
+          }
+
+          onboardingComplete = true;
+          router.refresh();
+        }
+      }
+
+      if (!onboardingComplete) {
         router.replace("/dashboard/onboarding");
         return;
       }
@@ -260,7 +306,7 @@ export default function TodayPage() {
 
       setState({
         userId: authUser.id,
-        name: getProfileDisplayName(profile, authUser),
+        name: getProfileDisplayName(null, authUser),
         learnerProfileId,
         planId: ensured.planId,
         sessionId: ensured.sessionId,

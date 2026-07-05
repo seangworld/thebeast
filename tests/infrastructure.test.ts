@@ -129,6 +129,14 @@ import {
 import { buildGuidanceCounselorRoadmap } from "../src/lib/learning/guidanceCounselor";
 import { learnerNotes } from "../src/lib/learning/notes";
 import { learningOnboardingSteps } from "../src/lib/learning/onboarding";
+import {
+  buildOnboardingCompletionProfileUpdate,
+  getOnboardingRedirect,
+  getOnboardingSaveErrorMessage,
+  hasCompleteLearningOnboardingData,
+  isProtectedLearningOnboardingPath,
+  validateLearningOnboardingForm,
+} from "../src/lib/learning/onboardingCompletion";
 import { mockParentDashboard } from "../src/lib/learning/parentDashboard";
 import {
   buildFeedbackInsertPayload,
@@ -1077,6 +1085,125 @@ test("learning onboarding models the full first-time experience", () => {
   );
   assert.equal(learningOnboardingSteps.every((step) => step.title && step.prompt), true);
   assert.equal(learningOnboardingSteps.at(-1)?.skippable, false);
+});
+
+test("learning onboarding completion validates and builds the final profile update", () => {
+  const result = validateLearningOnboardingForm({
+    preferredName: "Taylor",
+    learnerType: "Student",
+    gradeLevel: "High school",
+    primaryGoal: "Build algebra confidence",
+    courses: ["Algebra I"],
+    courseDraft: "Biology",
+    pace: "Steady",
+    availability: "30 minutes",
+  });
+
+  assert.equal(result.valid, true);
+
+  if (result.valid) {
+    assert.deepEqual(result.value.courses, ["Algebra I", "Biology"]);
+    assert.deepEqual(buildOnboardingCompletionProfileUpdate(result.value), {
+      onboarding_complete: true,
+    });
+  }
+});
+
+test("learning onboarding validation names the exact missing required field", () => {
+  const result = validateLearningOnboardingForm({
+    preferredName: "Taylor",
+    learnerType: "Student",
+    gradeLevel: "",
+    primaryGoal: "Build algebra confidence",
+    courses: [],
+    courseDraft: "Algebra I",
+    pace: "Steady",
+    availability: "30 minutes",
+  });
+
+  assert.equal(result.valid, false);
+
+  if (!result.valid) {
+    assert.equal(result.missingField, "Grade / level");
+    assert.equal(
+      result.message,
+      "Grade / level is required before BeastLearning can finish setup."
+    );
+  }
+});
+
+test("learning onboarding routing keeps completed users out of setup", () => {
+  assert.equal(isProtectedLearningOnboardingPath("/dashboard/today"), true);
+  assert.equal(isProtectedLearningOnboardingPath("/dashboard/learning"), true);
+  assert.equal(isProtectedLearningOnboardingPath("/dashboard/profile"), false);
+  assert.equal(isProtectedLearningOnboardingPath("/dashboard/money"), false);
+  assert.equal(
+    getOnboardingRedirect({
+      isAuthenticated: true,
+      onboardingComplete: true,
+      pathname: "/dashboard/onboarding",
+    }),
+    "/dashboard/today"
+  );
+  assert.equal(
+    getOnboardingRedirect({
+      isAuthenticated: true,
+      onboardingComplete: false,
+      pathname: "/dashboard/today",
+    }),
+    "/dashboard/onboarding"
+  );
+  assert.equal(
+    getOnboardingRedirect({
+      isAuthenticated: true,
+      onboardingComplete: false,
+      pathname: "/dashboard/profile",
+    }),
+    null
+  );
+  assert.equal(
+    getOnboardingRedirect({
+      isAuthenticated: true,
+      onboardingComplete: true,
+      pathname: "/dashboard/today",
+    }),
+    null
+  );
+});
+
+test("learning onboarding completion can be repaired from saved user-owned setup data", () => {
+  assert.equal(
+    hasCompleteLearningOnboardingData({
+      profiles: 1,
+      goals: 1,
+      courses: 1,
+      plans: 1,
+      sessions: 1,
+      activities: 1,
+    }),
+    true
+  );
+  assert.equal(
+    hasCompleteLearningOnboardingData({
+      profiles: 1,
+      goals: 1,
+      courses: 1,
+      plans: 1,
+      sessions: 1,
+      activities: 0,
+    }),
+    false
+  );
+});
+
+test("learning onboarding backend failures include the failed save step", () => {
+  assert.equal(
+    getOnboardingSaveErrorMessage(
+      "your account completion status",
+      new Error("permission denied for table profiles")
+    ),
+    "Could not save your account completion status: permission denied for table profiles"
+  );
 });
 
 test("learning gamification calculates XP levels and goals", () => {

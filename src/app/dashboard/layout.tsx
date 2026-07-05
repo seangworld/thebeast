@@ -22,6 +22,11 @@ import {
   isRestrictedForLearningOnlyNavigation,
   shouldUseLearningOnlyNavigation,
 } from "@/lib/learning/access";
+import {
+  getOnboardingRedirect,
+  hasCompleteLearningOnboardingData,
+  loadLearningOnboardingDataStatus,
+} from "@/lib/learning/onboardingCompletion";
 
 const learningPrimaryNavigation: ModuleNavSection[] = [
   { label: "Profile", href: "/dashboard/profile", module: "beastos" },
@@ -94,26 +99,73 @@ export default function DashboardLayout({
 
       if (!active) return;
 
-      if (userError || !authUser) {
-        router.replace("/login");
+      const authRedirect = getOnboardingRedirect({
+        isAuthenticated: Boolean(authUser) && !userError,
+        pathname,
+        onboardingPath,
+      });
+
+      if (authRedirect) {
+        router.replace(authRedirect);
         return;
       }
 
-      const { data: profile } = await supabase
+      if (!authUser) return;
+
+      const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select("role, birthday, onboarding_complete")
+        .select("role, onboarding_complete")
         .eq("id", authUser.id)
         .maybeSingle();
 
       if (!active) return;
 
-      if (!profile?.onboarding_complete && pathname !== onboardingPath) {
-        router.replace(onboardingPath);
-        return;
+      if (profileError) {
+        console.error("Unable to read onboarding completion profile.", {
+          userId: authUser.id,
+          message: profileError.message,
+          code: profileError.code,
+          details: profileError.details,
+        });
       }
 
-      if (profile?.onboarding_complete && pathname === onboardingPath) {
-        router.replace("/dashboard/today");
+      let onboardingComplete = Boolean(profile?.onboarding_complete);
+
+      if (!onboardingComplete) {
+        const { status, error } = await loadLearningOnboardingDataStatus(
+          supabase,
+          authUser.id
+        );
+
+        if (!active) return;
+
+        if (!error && hasCompleteLearningOnboardingData(status)) {
+          const repairResult = await supabase
+            .from("profiles")
+            .update({ onboarding_complete: true })
+            .eq("id", authUser.id)
+            .select("id")
+            .maybeSingle();
+
+          if (!active) return;
+
+          onboardingComplete = !repairResult.error && Boolean(repairResult.data);
+          if (onboardingComplete) {
+            router.refresh();
+          }
+        }
+      }
+
+      const onboardingRedirect = getOnboardingRedirect({
+        isAuthenticated: true,
+        onboardingComplete,
+        pathname,
+        onboardingPath,
+      });
+
+      if (onboardingRedirect) {
+        router.replace(onboardingRedirect);
+        return;
       }
 
       const { data: learningProfiles } = await supabase
@@ -128,7 +180,6 @@ export default function DashboardLayout({
 
       const useLearningOnlyNavigation = shouldUseLearningOnlyNavigation({
         role: profile?.role,
-        birthday: profile?.birthday,
         learnerRole: primaryLearningProfile?.learner_role,
         gradeLevel: primaryLearningProfile?.learning_style,
       });

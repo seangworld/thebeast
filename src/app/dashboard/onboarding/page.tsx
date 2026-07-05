@@ -7,6 +7,13 @@ import {
   ModuleBadge,
   SectionHeader,
 } from "@/app/components/design/DashboardPrimitives";
+import {
+  buildOnboardingCompletionProfileUpdate,
+  getOnboardingSaveErrorMessage,
+  hasCompleteLearningOnboardingData,
+  loadLearningOnboardingDataStatus,
+  validateLearningOnboardingForm,
+} from "@/lib/learning/onboardingCompletion";
 import { createClient } from "@/lib/supabase/client";
 
 type OnboardingForm = {
@@ -83,17 +90,8 @@ export default function OnboardingPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
-  const ready = useMemo(
-    () =>
-      form.preferredName.trim().length > 0 &&
-      form.learnerType.trim().length > 0 &&
-      form.gradeLevel.trim().length > 0 &&
-      form.primaryGoal.trim().length > 0 &&
-      form.courses.length > 0 &&
-      form.pace.trim().length > 0 &&
-      form.availability.trim().length > 0,
-    [form]
-  );
+  const validation = useMemo(() => validateLearningOnboardingForm(form), [form]);
+  const ready = validation.valid;
 
   const updateField = useCallback(
     (field: keyof Omit<OnboardingForm, "courses">, value: string) => {
@@ -163,23 +161,76 @@ export default function OnboardingPage() {
 
       setUserId(authUser.id);
 
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select("preferred_name, onboarding_complete")
+        .select("onboarding_complete")
         .eq("id", authUser.id)
         .maybeSingle();
 
       if (!active) return;
+
+      if (profileError) {
+        console.error("Unable to read onboarding completion profile.", {
+          userId: authUser.id,
+          message: profileError.message,
+          code: profileError.code,
+          details: profileError.details,
+        });
+        setMessage(
+          getOnboardingSaveErrorMessage(
+            "your account completion status lookup",
+            profileError
+          )
+        );
+      }
 
       if (profile?.onboarding_complete) {
         router.replace("/dashboard/today");
         return;
       }
 
-      setForm((current) => ({
-        ...current,
-        preferredName: profile?.preferred_name || current.preferredName,
-      }));
+      const { status, error: statusError } = await loadLearningOnboardingDataStatus(
+        supabase,
+        authUser.id
+      );
+
+      if (!active) return;
+
+      if (statusError) {
+        setMessage(
+          getOnboardingSaveErrorMessage(
+            "your saved onboarding status check",
+            statusError
+          )
+        );
+      }
+
+      if (!statusError && hasCompleteLearningOnboardingData(status)) {
+        const repairResult = await supabase
+          .from("profiles")
+          .update({ onboarding_complete: true })
+          .eq("id", authUser.id)
+          .select("id")
+          .maybeSingle();
+
+        if (!active) return;
+
+        if (repairResult.error || !repairResult.data) {
+          setMessage(
+            repairResult.error
+              ? getOnboardingSaveErrorMessage(
+                  "your account completion status",
+                  repairResult.error
+                )
+              : "Your learning setup data exists, but BeastLearning could not find your account profile to mark onboarding complete."
+          );
+        } else {
+          router.replace("/dashboard/today");
+          router.refresh();
+          return;
+        }
+      }
+
       setLoading(false);
     }
 
@@ -192,7 +243,19 @@ export default function OnboardingPage() {
 
   async function completeOnboarding(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!ready || !userId || saving) return;
+    const validated = validateLearningOnboardingForm(form);
+
+    if (!validated.valid) {
+      setMessage(validated.message);
+      return;
+    }
+
+    if (!userId) {
+      setMessage("Sign in again to finish onboarding.");
+      return;
+    }
+
+    if (saving) return;
 
     setSaving(true);
     setMessage("");
@@ -206,11 +269,10 @@ export default function OnboardingPage() {
         throw new Error("Sign in again to finish onboarding.");
       }
 
-      const cleanCourses = Array.from(
-        new Set(form.courses.map((course) => course.trim()).filter(Boolean))
-      );
+      const onboarding = validated.value;
+      const cleanCourses = onboarding.courses;
       const primaryCourse = cleanCourses[0];
-      const learnerFocus = `${primaryCourse} - ${form.gradeLevel}`;
+      const learnerFocus = `${primaryCourse} - ${onboarding.gradeLevel}`;
       const existingProfiles = await supabase
         .from("learning_profiles")
         .select("id")
@@ -218,15 +280,22 @@ export default function OnboardingPage() {
         .order("created_at", { ascending: true })
         .limit(1);
 
-      if (existingProfiles.error) throw existingProfiles.error;
+      if (existingProfiles.error) {
+        throw new Error(
+          getOnboardingSaveErrorMessage(
+            "the existing learning profile lookup",
+            existingProfiles.error
+          )
+        );
+      }
 
       const existingLearnerProfileId = existingProfiles.data?.[0]?.id as string | undefined;
       const learnerProfilePayload = {
-        display_name: form.preferredName,
-        learner_role: form.learnerType,
+        display_name: onboarding.preferredName,
+        learner_role: onboarding.learnerType,
         focus: learnerFocus,
-        learning_style: form.gradeLevel,
-        preferred_pace: form.pace,
+        learning_style: onboarding.gradeLevel,
+        preferred_pace: onboarding.pace,
       };
 
       const learnerProfileResult = existingLearnerProfileId
@@ -246,32 +315,78 @@ export default function OnboardingPage() {
             .select("id")
             .single();
 
-      if (learnerProfileResult.error) throw learnerProfileResult.error;
+      if (learnerProfileResult.error) {
+        throw new Error(
+          getOnboardingSaveErrorMessage(
+            "your learning profile",
+            learnerProfileResult.error
+          )
+        );
+      }
 
       const learnerProfileId = learnerProfileResult.data.id as string;
-      const goalResult = await supabase
+      const goalTitle = onboarding.primaryGoal;
+      const existingGoalResult = await supabase
         .from("learning_goals")
-        .insert({
-          user_id: authUser.id,
-          learner_profile_id: learnerProfileId,
-          title: form.primaryGoal,
-          category: primaryCourse,
-          target: `${form.gradeLevel} goal with ${form.pace.toLowerCase()} pacing and ${form.availability.toLowerCase()} available.`,
-          priority: "High",
-          status: "Active",
-          progress: 0,
-        })
         .select("id")
-        .single();
+        .eq("user_id", authUser.id)
+        .eq("learner_profile_id", learnerProfileId)
+        .eq("title", goalTitle)
+        .limit(1);
 
-      if (goalResult.error) throw goalResult.error;
+      if (existingGoalResult.error) {
+        throw new Error(
+          getOnboardingSaveErrorMessage(
+            "the existing learning goal lookup",
+            existingGoalResult.error
+          )
+        );
+      }
+
+      const goalPayload = {
+        user_id: authUser.id,
+        learner_profile_id: learnerProfileId,
+        title: goalTitle,
+        category: primaryCourse,
+        target: `${onboarding.gradeLevel} goal with ${onboarding.pace.toLowerCase()} pacing and ${onboarding.availability.toLowerCase()} available.`,
+        priority: "High",
+        status: "Active",
+        progress: 0,
+      };
+      const existingGoalId = existingGoalResult.data?.[0]?.id as string | undefined;
+      const goalResult = existingGoalId
+        ? await supabase
+            .from("learning_goals")
+            .update(goalPayload)
+            .eq("id", existingGoalId)
+            .eq("user_id", authUser.id)
+            .select("id")
+            .single()
+        : await supabase
+            .from("learning_goals")
+            .insert(goalPayload)
+            .select("id")
+            .single();
+
+      if (goalResult.error) {
+        throw new Error(
+          getOnboardingSaveErrorMessage("your learning goal", goalResult.error)
+        );
+      }
 
       const existingCourses = await supabase
         .from("learning_courses")
         .select("id, title")
         .eq("user_id", authUser.id);
 
-      if (existingCourses.error) throw existingCourses.error;
+      if (existingCourses.error) {
+        throw new Error(
+          getOnboardingSaveErrorMessage(
+            "the existing course lookup",
+            existingCourses.error
+          )
+        );
+      }
 
       const existingCourseByTitle = new Map(
         (existingCourses.data || []).map((course) => [
@@ -297,7 +412,15 @@ export default function OnboardingPage() {
             .select("id")
             .single();
 
-          if (updateResult.error) throw updateResult.error;
+          if (updateResult.error) {
+            throw new Error(
+              getOnboardingSaveErrorMessage(
+                `the course "${courseTitle}"`,
+                updateResult.error
+              )
+            );
+          }
+
           courseIds.push(updateResult.data.id);
           continue;
         }
@@ -315,41 +438,114 @@ export default function OnboardingPage() {
           .select("id")
           .single();
 
-        if (insertResult.error) throw insertResult.error;
+        if (insertResult.error) {
+          throw new Error(
+            getOnboardingSaveErrorMessage(
+              `the course "${courseTitle}"`,
+              insertResult.error
+            )
+          );
+        }
+
         courseIds.push(insertResult.data.id);
       }
 
-      const planResult = await supabase
+      const planTitle = `${onboarding.primaryGoal} starter plan`;
+      const existingPlanResult = await supabase
         .from("learning_plans")
-        .insert({
-          user_id: authUser.id,
-          learner_profile_id: learnerProfileId,
-          goal_id: goalResult.data.id,
-          title: `${form.primaryGoal} starter plan`,
-          summary: `Start with ${primaryCourse.toLowerCase()} practice at a ${form.pace.toLowerCase()} pace. Protect ${form.availability.toLowerCase()} for the first session.`,
-          weekly_session_target: getWeeklySessionTarget(form.availability),
-        })
-        .select("id, title")
-        .single();
-
-      if (planResult.error) throw planResult.error;
-
-      const sessionResult = await supabase
-        .from("learning_sessions")
-        .insert({
-          user_id: authUser.id,
-          learner_profile_id: learnerProfileId,
-          plan_id: planResult.data.id,
-          title: `First ${primaryCourse} learning session`,
-          course_title: planResult.data.title,
-          scheduled_for: new Date().toISOString(),
-          duration_minutes: getDurationMinutes(form.availability),
-          status: "Scheduled",
-        })
         .select("id")
-        .single();
+        .eq("user_id", authUser.id)
+        .eq("learner_profile_id", learnerProfileId)
+        .eq("title", planTitle)
+        .limit(1);
 
-      if (sessionResult.error) throw sessionResult.error;
+      if (existingPlanResult.error) {
+        throw new Error(
+          getOnboardingSaveErrorMessage(
+            "the existing learning plan lookup",
+            existingPlanResult.error
+          )
+        );
+      }
+
+      const planPayload = {
+        user_id: authUser.id,
+        learner_profile_id: learnerProfileId,
+        goal_id: goalResult.data.id,
+        title: planTitle,
+        summary: `Start with ${primaryCourse.toLowerCase()} practice at a ${onboarding.pace.toLowerCase()} pace. Protect ${onboarding.availability.toLowerCase()} for the first session.`,
+        weekly_session_target: getWeeklySessionTarget(onboarding.availability),
+      };
+      const existingPlanId = existingPlanResult.data?.[0]?.id as string | undefined;
+      const planResult = existingPlanId
+        ? await supabase
+            .from("learning_plans")
+            .update(planPayload)
+            .eq("id", existingPlanId)
+            .eq("user_id", authUser.id)
+            .select("id, title")
+            .single()
+        : await supabase
+            .from("learning_plans")
+            .insert(planPayload)
+            .select("id, title")
+            .single();
+
+      if (planResult.error) {
+        throw new Error(
+          getOnboardingSaveErrorMessage("your starter learning plan", planResult.error)
+        );
+      }
+
+      const sessionTitle = `First ${primaryCourse} learning session`;
+      const existingSessionResult = await supabase
+        .from("learning_sessions")
+        .select("id")
+        .eq("user_id", authUser.id)
+        .eq("learner_profile_id", learnerProfileId)
+        .eq("plan_id", planResult.data.id)
+        .eq("title", sessionTitle)
+        .limit(1);
+
+      if (existingSessionResult.error) {
+        throw new Error(
+          getOnboardingSaveErrorMessage(
+            "the existing starter session lookup",
+            existingSessionResult.error
+          )
+        );
+      }
+
+      const sessionPayload = {
+        user_id: authUser.id,
+        learner_profile_id: learnerProfileId,
+        plan_id: planResult.data.id,
+        title: sessionTitle,
+        course_title: planResult.data.title,
+        scheduled_for: new Date().toISOString(),
+        duration_minutes: getDurationMinutes(onboarding.availability),
+        status: "Scheduled",
+      };
+      const existingSessionId = existingSessionResult.data?.[0]?.id as string | undefined;
+      const sessionResult = existingSessionId
+        ? await supabase
+            .from("learning_sessions")
+            .update(sessionPayload)
+            .eq("id", existingSessionId)
+            .eq("user_id", authUser.id)
+            .select("id")
+            .single()
+        : await supabase
+            .from("learning_sessions")
+            .insert(sessionPayload)
+            .select("id")
+            .single();
+
+      if (sessionResult.error) {
+        throw new Error(
+          getOnboardingSaveErrorMessage("your first learning session", sessionResult.error)
+        );
+      }
 
       const existingActivities = await supabase
         .from("learning_activities")
@@ -357,7 +553,14 @@ export default function OnboardingPage() {
         .eq("user_id", authUser.id)
         .limit(1);
 
-      if (existingActivities.error) throw existingActivities.error;
+      if (existingActivities.error) {
+        throw new Error(
+          getOnboardingSaveErrorMessage(
+            "the existing activity lookup",
+            existingActivities.error
+          )
+        );
+      }
 
       if ((existingActivities.data || []).length === 0) {
         const activityRows = activityTypes.map((activityType, index) => ({
@@ -372,7 +575,7 @@ export default function OnboardingPage() {
               ? `Start ${primaryCourse}`
               : `${activityType}: ${cleanCourses[index % cleanCourses.length]}`,
           difficulty: index < 2 ? "Beginner" : "Adaptive",
-          estimated_minutes: getDurationMinutes(form.availability),
+          estimated_minutes: getDurationMinutes(onboarding.availability),
           xp: 10 + index * 5,
           status: index === 0 ? "Ready" : "Queued",
           sort_order: index + 1,
@@ -382,30 +585,48 @@ export default function OnboardingPage() {
           .from("learning_activities")
           .insert(activityRows);
 
-        if (activitiesResult.error) throw activitiesResult.error;
+        if (activitiesResult.error) {
+          throw new Error(
+            getOnboardingSaveErrorMessage(
+              "your first learning activities",
+              activitiesResult.error
+            )
+          );
+        }
       }
 
       const profileResult = await supabase
         .from("profiles")
-        .update({
-          preferred_name: form.preferredName,
-          onboarding_complete: true,
-        })
+        .update(buildOnboardingCompletionProfileUpdate(onboarding))
         .eq("id", authUser.id)
         .select("id")
         .maybeSingle();
 
-      if (profileResult.error) throw profileResult.error;
+      if (profileResult.error) {
+        throw new Error(
+          getOnboardingSaveErrorMessage(
+            "your account completion status",
+            profileResult.error
+          )
+        );
+      }
       if (!profileResult.data) {
-        throw new Error("Unable to finish onboarding because the profile record was not found.");
+        throw new Error(
+          "Could not save your account completion status: your account profile was not found."
+        );
       }
 
       router.replace("/dashboard/today");
+      router.refresh();
     } catch (error) {
+      console.error("Unable to complete BeastLearning onboarding.", {
+        userId,
+        message: error instanceof Error ? error.message : String(error),
+      });
       setMessage(
         error instanceof Error
           ? error.message
-          : "Unable to complete onboarding."
+          : getOnboardingSaveErrorMessage("onboarding", error)
       );
       setSaving(false);
     }
@@ -598,10 +819,10 @@ export default function OnboardingPage() {
               <div className="flex flex-wrap items-center gap-3">
                 <button
                   type="submit"
-                  disabled={!ready || saving}
+                  disabled={saving}
                   className="beast-button disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {saving ? "Creating Setup..." : "Finish Setup"}
+                  {saving ? "Creating Setup..." : ready ? "Finish Setup" : "Review Missing Fields"}
                 </button>
                 <span className="text-sm font-semibold text-[#9aa7b8]">
                   Today unlocks after setup is saved.
