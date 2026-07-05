@@ -134,7 +134,9 @@ import {
   getOnboardingRedirect,
   getOnboardingSaveErrorMessage,
   hasCompleteLearningOnboardingData,
+  isLearningOnboardingComplete,
   isProtectedLearningOnboardingPath,
+  shouldAttemptLearningOnboardingRepair,
   validateLearningOnboardingForm,
 } from "../src/lib/learning/onboardingCompletion";
 import { mockParentDashboard } from "../src/lib/learning/parentDashboard";
@@ -1148,6 +1150,17 @@ test("learning onboarding routing keeps completed users out of setup", () => {
   assert.equal(
     getOnboardingRedirect({
       isAuthenticated: true,
+      onboardingComplete: true,
+      pathname: "/dashboard/today",
+    }),
+    null
+  );
+});
+
+test("learning onboarding routing sends incomplete users to setup once", () => {
+  assert.equal(
+    getOnboardingRedirect({
+      isAuthenticated: true,
       onboardingComplete: false,
       pathname: "/dashboard/today",
     }),
@@ -1157,9 +1170,27 @@ test("learning onboarding routing keeps completed users out of setup", () => {
     getOnboardingRedirect({
       isAuthenticated: true,
       onboardingComplete: false,
+      pathname: "/dashboard/onboarding",
+    }),
+    null
+  );
+  assert.equal(
+    getOnboardingRedirect({
+      isAuthenticated: true,
+      onboardingComplete: false,
       pathname: "/dashboard/profile",
     }),
     null
+  );
+});
+
+test("learning onboarding completion tolerates a stale profile read after confirmed save", () => {
+  assert.equal(
+    isLearningOnboardingComplete({
+      profileComplete: false,
+      sessionComplete: true,
+    }),
+    true
   );
   assert.equal(
     getOnboardingRedirect({
@@ -1171,26 +1202,55 @@ test("learning onboarding routing keeps completed users out of setup", () => {
   );
 });
 
-test("learning onboarding completion can be repaired from saved user-owned setup data", () => {
+test("learning onboarding repair path only runs once for complete saved setup data", () => {
+  const completeStatus = {
+    profiles: 1,
+    goals: 1,
+    courses: 1,
+    plans: 1,
+    sessions: 1,
+    activities: 1,
+  };
+  const incompleteStatus = {
+    profiles: 1,
+    goals: 1,
+    courses: 1,
+    plans: 1,
+    sessions: 1,
+    activities: 0,
+  };
+
+  assert.equal(hasCompleteLearningOnboardingData(completeStatus), true);
+  assert.equal(hasCompleteLearningOnboardingData(incompleteStatus), false);
   assert.equal(
-    hasCompleteLearningOnboardingData({
-      profiles: 1,
-      goals: 1,
-      courses: 1,
-      plans: 1,
-      sessions: 1,
-      activities: 1,
+    shouldAttemptLearningOnboardingRepair({
+      onboardingComplete: false,
+      status: completeStatus,
+      repairAlreadyAttempted: false,
     }),
     true
   );
   assert.equal(
-    hasCompleteLearningOnboardingData({
-      profiles: 1,
-      goals: 1,
-      courses: 1,
-      plans: 1,
-      sessions: 1,
-      activities: 0,
+    shouldAttemptLearningOnboardingRepair({
+      onboardingComplete: false,
+      status: completeStatus,
+      repairAlreadyAttempted: true,
+    }),
+    false
+  );
+  assert.equal(
+    shouldAttemptLearningOnboardingRepair({
+      onboardingComplete: true,
+      status: completeStatus,
+      repairAlreadyAttempted: false,
+    }),
+    false
+  );
+  assert.equal(
+    shouldAttemptLearningOnboardingRepair({
+      onboardingComplete: false,
+      status: incompleteStatus,
+      repairAlreadyAttempted: false,
     }),
     false
   );

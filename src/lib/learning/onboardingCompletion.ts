@@ -122,6 +122,16 @@ export function getOnboardingRedirect({
   return null;
 }
 
+export function isLearningOnboardingComplete({
+  profileComplete,
+  sessionComplete,
+}: {
+  profileComplete?: boolean | null;
+  sessionComplete?: boolean | null;
+}) {
+  return Boolean(profileComplete || sessionComplete);
+}
+
 export function isProtectedLearningOnboardingPath(
   pathname: string,
   onboardingPath = "/dashboard/onboarding"
@@ -143,6 +153,25 @@ export function hasCompleteLearningOnboardingData(
     status.plans > 0 &&
     status.sessions > 0 &&
     status.activities > 0
+  );
+}
+
+export function shouldAttemptLearningOnboardingRepair({
+  onboardingComplete,
+  status,
+  statusError,
+  repairAlreadyAttempted,
+}: {
+  onboardingComplete: boolean;
+  status: LearningOnboardingDataStatus;
+  statusError?: unknown;
+  repairAlreadyAttempted: boolean;
+}) {
+  return (
+    !onboardingComplete &&
+    !statusError &&
+    hasCompleteLearningOnboardingData(status) &&
+    !repairAlreadyAttempted
   );
 }
 

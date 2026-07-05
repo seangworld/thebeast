@@ -24,8 +24,9 @@ import {
 } from "@/lib/learning/access";
 import {
   getOnboardingRedirect,
-  hasCompleteLearningOnboardingData,
+  isLearningOnboardingComplete,
   loadLearningOnboardingDataStatus,
+  shouldAttemptLearningOnboardingRepair,
 } from "@/lib/learning/onboardingCompletion";
 
 const learningPrimaryNavigation: ModuleNavSection[] = [
@@ -77,6 +78,7 @@ export default function DashboardLayout({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({});
   const [learningOnlyNavigation, setLearningOnlyNavigation] = useState(false);
+  const [resolvingOnboarding, setResolvingOnboarding] = useState(true);
   const pathname = usePathname();
   const router = useRouter();
   const workspaceModule = getWorkspaceModule(pathname);
@@ -84,6 +86,7 @@ export default function DashboardLayout({
 
   useEffect(() => {
     let active = true;
+    setResolvingOnboarding(true);
 
     async function routeFirstTimeUsers() {
       let supabase: ReturnType<typeof createClient>;
@@ -91,6 +94,7 @@ export default function DashboardLayout({
       try {
         supabase = createClient();
       } catch {
+        if (active) setResolvingOnboarding(false);
         return;
       }
 
@@ -110,7 +114,10 @@ export default function DashboardLayout({
         return;
       }
 
-      if (!authUser) return;
+      if (!authUser) {
+        setResolvingOnboarding(false);
+        return;
+      }
 
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
@@ -129,9 +136,23 @@ export default function DashboardLayout({
         });
       }
 
-      let onboardingComplete = Boolean(profile?.onboarding_complete);
+      const completionKey = `beastlearning:onboarding-complete:${authUser.id}`;
+      let onboardingComplete = isLearningOnboardingComplete({
+        profileComplete: profile?.onboarding_complete,
+        sessionComplete:
+          typeof window !== "undefined" &&
+          window.sessionStorage.getItem(completionKey) === "complete",
+      });
+
+      if (profile?.onboarding_complete && typeof window !== "undefined") {
+        window.sessionStorage.setItem(completionKey, "complete");
+      }
 
       if (!onboardingComplete) {
+        const repairKey = `beastlearning:onboarding-repair:${authUser.id}`;
+        const repairAlreadyAttempted =
+          typeof window !== "undefined" &&
+          window.sessionStorage.getItem(repairKey) === "attempted";
         const { status, error } = await loadLearningOnboardingDataStatus(
           supabase,
           authUser.id
@@ -139,7 +160,18 @@ export default function DashboardLayout({
 
         if (!active) return;
 
-        if (!error && hasCompleteLearningOnboardingData(status)) {
+        if (
+          shouldAttemptLearningOnboardingRepair({
+            onboardingComplete,
+            status,
+            statusError: error,
+            repairAlreadyAttempted,
+          })
+        ) {
+          if (typeof window !== "undefined") {
+            window.sessionStorage.setItem(repairKey, "attempted");
+          }
+
           const repairResult = await supabase
             .from("profiles")
             .update({ onboarding_complete: true })
@@ -150,8 +182,16 @@ export default function DashboardLayout({
           if (!active) return;
 
           onboardingComplete = !repairResult.error && Boolean(repairResult.data);
-          if (onboardingComplete) {
-            router.refresh();
+          if (onboardingComplete && typeof window !== "undefined") {
+            window.sessionStorage.setItem(completionKey, "complete");
+          }
+          if (!onboardingComplete && repairResult.error) {
+            console.error("Unable to repair BeastLearning onboarding completion.", {
+              userId: authUser.id,
+              message: repairResult.error.message,
+              code: repairResult.error.code,
+              details: repairResult.error.details,
+            });
           }
         }
       }
@@ -191,7 +231,10 @@ export default function DashboardLayout({
         isRestrictedForLearningOnlyNavigation(pathname)
       ) {
         router.replace("/dashboard/today");
+        return;
       }
+
+      setResolvingOnboarding(false);
     }
 
     routeFirstTimeUsers();
@@ -200,6 +243,19 @@ export default function DashboardLayout({
       active = false;
     };
   }, [pathname, router]);
+
+  if (resolvingOnboarding) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#0f1419] px-6 text-center">
+        <div>
+          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-[#2a3242] border-t-indigo-300" />
+          <p className="mt-4 text-sm font-semibold text-[#9aa7b8]">
+            Opening BeastLearning...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   function isActiveRoute(href: string) {
     const [path] = href.split("#");

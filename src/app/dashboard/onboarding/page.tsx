@@ -10,8 +10,6 @@ import {
 import {
   buildOnboardingCompletionProfileUpdate,
   getOnboardingSaveErrorMessage,
-  hasCompleteLearningOnboardingData,
-  loadLearningOnboardingDataStatus,
   validateLearningOnboardingForm,
 } from "@/lib/learning/onboardingCompletion";
 import { createClient } from "@/lib/supabase/client";
@@ -160,77 +158,6 @@ export default function OnboardingPage() {
       }
 
       setUserId(authUser.id);
-
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("onboarding_complete")
-        .eq("id", authUser.id)
-        .maybeSingle();
-
-      if (!active) return;
-
-      if (profileError) {
-        console.error("Unable to read onboarding completion profile.", {
-          userId: authUser.id,
-          message: profileError.message,
-          code: profileError.code,
-          details: profileError.details,
-        });
-        setMessage(
-          getOnboardingSaveErrorMessage(
-            "your account completion status lookup",
-            profileError
-          )
-        );
-      }
-
-      if (profile?.onboarding_complete) {
-        router.replace("/dashboard/today");
-        return;
-      }
-
-      const { status, error: statusError } = await loadLearningOnboardingDataStatus(
-        supabase,
-        authUser.id
-      );
-
-      if (!active) return;
-
-      if (statusError) {
-        setMessage(
-          getOnboardingSaveErrorMessage(
-            "your saved onboarding status check",
-            statusError
-          )
-        );
-      }
-
-      if (!statusError && hasCompleteLearningOnboardingData(status)) {
-        const repairResult = await supabase
-          .from("profiles")
-          .update({ onboarding_complete: true })
-          .eq("id", authUser.id)
-          .select("id")
-          .maybeSingle();
-
-        if (!active) return;
-
-        if (repairResult.error || !repairResult.data) {
-          setMessage(
-            repairResult.error
-              ? getOnboardingSaveErrorMessage(
-                  "your account completion status",
-                  repairResult.error
-                )
-              : "Your learning setup data exists, but BeastLearning could not find your account profile to mark onboarding complete."
-          );
-        } else {
-          router.replace("/dashboard/today");
-          router.refresh();
-          return;
-        }
-      }
-
       setLoading(false);
     }
 
@@ -616,8 +543,14 @@ export default function OnboardingPage() {
         );
       }
 
+      if (typeof window !== "undefined") {
+        window.sessionStorage.setItem(
+          `beastlearning:onboarding-complete:${authUser.id}`,
+          "complete"
+        );
+      }
+
       router.replace("/dashboard/today");
-      router.refresh();
     } catch (error) {
       console.error("Unable to complete BeastLearning onboarding.", {
         userId,
