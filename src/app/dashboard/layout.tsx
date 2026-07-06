@@ -77,7 +77,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({});
+  const [expandedModule, setExpandedModule] = useState<ModuleKey | null>(null);
   const [learningOnlyNavigation, setLearningOnlyNavigation] = useState(false);
   const [resolvingOnboarding, setResolvingOnboarding] = useState(true);
   const [onboardingDiagnosticError, setOnboardingDiagnosticError] = useState("");
@@ -92,6 +92,14 @@ export default function DashboardLayout({
   const router = useRouter();
   const workspaceModule = getWorkspaceModule(pathname);
   const onboardingPath = "/dashboard/onboarding";
+  const activeExpandableModule =
+    beastModuleNavigation.find(
+      (item) => item.module === workspaceModule && item.children?.length
+    )?.module || null;
+
+  useEffect(() => {
+    setExpandedModule(activeExpandableModule);
+  }, [activeExpandableModule]);
 
   useEffect(() => {
     let active = true;
@@ -448,7 +456,7 @@ export default function DashboardLayout({
       const expanded =
         !compact &&
         hasChildren &&
-        (expandedModules[item.module] ?? active);
+        (expandedModule ? expandedModule === item.module : active);
       const navGroupId = `${item.module}-nav-group`;
 
       if (compact || !hasChildren) {
@@ -471,10 +479,9 @@ export default function DashboardLayout({
           <button
             type="button"
             onClick={() =>
-              setExpandedModules((current) => ({
-                ...current,
-                [item.module]: !expanded,
-              }))
+              setExpandedModule((current) =>
+                current === item.module && !active ? null : item.module
+              )
             }
             className={`group flex w-full shrink-0 items-center gap-2 whitespace-nowrap rounded-xl border px-3 py-2 text-sm font-bold transition duration-200 sm:px-4 ${
               active

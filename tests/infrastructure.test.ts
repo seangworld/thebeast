@@ -1256,6 +1256,19 @@ test("dashboard global loading copy stays module neutral", () => {
   assert.doesNotMatch(dashboardLayout, /Opening BeastLearning\.\.\./);
 });
 
+test("dashboard module accordion keeps a single expanded group", () => {
+  const dashboardLayout = readFileSync(
+    "src/app/dashboard/layout.tsx",
+    "utf8"
+  );
+
+  assert.match(dashboardLayout, /const \[expandedModule, setExpandedModule\]/);
+  assert.match(dashboardLayout, /setExpandedModule\(activeExpandableModule\)/);
+  assert.match(dashboardLayout, /expandedModule === item\.module/);
+  assert.doesNotMatch(dashboardLayout, /expandedModules/);
+  assert.doesNotMatch(dashboardLayout, /Record<string, boolean>/);
+});
+
 test("learning activities have a dedicated runner and next-activity unlock logic", () => {
   const activityRunner = readFileSync(
     "src/app/dashboard/learning/activities/[activityId]/page.tsx",
