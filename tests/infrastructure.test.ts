@@ -1166,6 +1166,19 @@ test("today and learning avoid fallback-name flash while profile resolves", () =
   );
 });
 
+test("home avoids fallback-name flash while profile resolves", () => {
+  const homeSource = readFileSync("src/app/dashboard/page.tsx", "utf8");
+
+  assert.match(homeSource, /name: ""/);
+  assert.match(homeSource, /Loading Home/);
+  assert.match(homeSource, /Getting your Beast-wide plan ready\./);
+  assert.doesNotMatch(homeSource, /name: "Commander"/);
+  assert.doesNotMatch(
+    homeSource,
+    /setUser\(\{ name: getProfileDisplayName\(null, authUser \|\| null\) \}\)/
+  );
+});
+
 test("learning onboarding validation names the exact missing required field", () => {
   const result = validateLearningOnboardingForm({
     preferredName: "Taylor",

@@ -369,7 +369,7 @@ function ActivityRow({ item }: { item: PlatformActivity | FutureActivityItem }) 
 
 export default function TodayPage() {
   const [state, setState] = useState<MoneyState>(initialMoneyState);
-  const [user, setUser] = useState<CurrentUser>({ name: "Commander" });
+  const [user, setUser] = useState<CurrentUser>({ name: "" });
   const [loading, setLoading] = useState(true);
   const today = useMemo(() => new Date(), []);
 
@@ -380,7 +380,6 @@ export default function TodayPage() {
     try {
       supabase = createClient();
     } catch {
-      setUser({ name: getProfileDisplayName(null, null) });
       setLoading(false);
       return;
     }
@@ -388,8 +387,6 @@ export default function TodayPage() {
     const { data: userData } = await supabase.auth.getUser();
     const authUser = userData?.user;
     const userId = authUser?.id;
-
-    setUser({ name: getProfileDisplayName(null, authUser || null) });
 
     if (!userId) {
       setLoading(false);
@@ -600,15 +597,18 @@ export default function TodayPage() {
               <ModuleBadge module="beastos" label={`BeastOS ${APP_VERSION}`} />
               <div>
                 <h1 className="beast-title">
-                  {getGreeting(today)}, {user.name}
+                  {loading || !user.name
+                    ? "Loading Home"
+                    : `${getGreeting(today)}, ${user.name}`}
                 </h1>
                 <p className="mt-3 text-lg font-semibold text-[#dbe3ef]">
                   {formatFullDate(today)}
                 </p>
               </div>
               <p className="beast-subtitle">
-                Today&apos;s Focus brings your learning, money, calendar, health,
-                home, and project signals into one daily plan.
+                {loading || !user.name
+                  ? "Getting your Beast-wide plan ready."
+                  : "Today&apos;s Focus brings your learning, money, calendar, health, home, and project signals into one daily plan."}
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
