@@ -14,6 +14,13 @@ function StatusPill({ label }: { label: string }) {
   );
 }
 
+const missionStatusLabels: Record<string, string> = {
+  complete: "Complete",
+  active: "In progress",
+  available: "Available",
+  locked: "Coming next",
+};
+
 export default function PrivateBetaPanels({
   beta,
 }: {
@@ -27,9 +34,9 @@ export default function PrivateBetaPanels({
     <section className="grid gap-4">
       <DashboardCard accent="learning">
         <SectionHeader
-          eyebrow="Private Beta"
-          title="Mission control"
-          description="BeastLearning now starts with guided missions, progressive unlocks, and a clear next action for Founding Student testing."
+          eyebrow="Learning Path"
+          title="Today’s learning missions"
+          description="Follow guided missions, unlock helpful learning tools, and keep a clear next action in front of you."
           action={<ModuleBadge module="learning" label={beta.readiness.stage} />}
         />
         <div className="mt-5 grid gap-4 lg:grid-cols-[0.65fr_1.35fr]">
@@ -62,7 +69,7 @@ export default function PrivateBetaPanels({
                 }`}
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <StatusPill label={mission.status} />
+                  <StatusPill label={missionStatusLabels[mission.status] || mission.status} />
                   {mission.required ? <StatusPill label="Required" /> : null}
                 </div>
                 <h3 className="mt-3 font-black text-white">{mission.title}</h3>
@@ -79,9 +86,9 @@ export default function PrivateBetaPanels({
         <DashboardCard accent="learning">
           <SectionHeader
             eyebrow="Founding Student"
-            title="Beta identity"
-            description="Permanent badges and join metadata establish the private beta learner record."
-            action={<ModuleBadge module="learning" label={beta.persistenceStatus} />}
+            title="Learner identity"
+            description="Your badges, join date, and unlocked learning tools stay attached to your BeastLearning record."
+            action={<ModuleBadge module="learning" label="Learner Record" />}
           />
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
             {beta.readiness.badges.map((badge) => (

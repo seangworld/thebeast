@@ -782,7 +782,7 @@ export default async function LearningPage() {
                       </p>
                     </div>
                     <span className="rounded-full border border-[#2a3242] bg-[#0f1419] px-2 py-1 text-xs font-bold text-[#dbe3ef]">
-                      {achievement.earned ? "Earned" : "Reserved"}
+                      {achievement.earned ? "Earned" : "Coming next"}
                     </span>
                   </div>
                 </div>

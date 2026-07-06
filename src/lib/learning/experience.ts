@@ -158,16 +158,16 @@ export function buildLearningExperienceDashboard({
       ],
     },
     beta: {
-      badges: ["Founding Student", "Founder", "Beta Tester"],
+      badges: ["Founding Student", "Founder", "Early Access"],
       versionHistory: [
         "v0.3 Intelligence Foundation",
         "v0.4 Content & Study Intelligence",
         "v0.5 Learning Experience",
         "v0.6 Knowledge & Curriculum",
         "v0.7 AI Orchestration",
-        "v1.0 Private Beta",
+        "v1.0 Early Access",
       ],
-      feedbackShortcut: "Open beta feedback",
+      feedbackShortcut: "Open feedback",
       whatsNew: [
         "Guided initialization",
         "AI orchestration",

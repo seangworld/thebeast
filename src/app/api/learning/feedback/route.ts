@@ -51,7 +51,7 @@ export async function POST(request: Request) {
         userId: user.id,
         category,
         message,
-        context: body.context || "BeastLearning Private Beta",
+        context: body.context || "BeastLearning feedback",
       })
     )
     .select("id, category, message, context, status, created_at")
@@ -61,5 +61,5 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ status: "supabase-ready", item: mapFeedbackRow(data) });
+  return NextResponse.json({ status: "saved", item: mapFeedbackRow(data) });
 }

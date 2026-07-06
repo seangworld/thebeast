@@ -17,7 +17,7 @@ export const mockParentDashboard: ParentDashboard = {
       learnerName: "Family member",
       weeklyStudyActivity: "Learning activity will appear after this learner starts a plan.",
       activeGoals: ["8th Grade Math"],
-      achievements: ["Reserved"],
+      achievements: ["Coming next"],
       suggestedEncouragement: "Keep the next check-in calm, short, and specific.",
       areasNeedingAttention: ["Algebra foundations"],
       nextRecommendedParentAction:

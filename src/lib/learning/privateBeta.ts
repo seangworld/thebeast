@@ -24,7 +24,7 @@ export const foundingStudentBadges: LearningPrivateBetaBadge[] = [
   },
   {
     id: "private-beta",
-    label: "Private Beta",
+    label: "Early Access",
     earnedAt: privateBetaDate,
     permanent: true,
   },
@@ -64,7 +64,7 @@ const missionTemplate: Omit<LearningOnboardingMission, "status">[] = [
     title: "Study schedule",
     summary: "Define a realistic rhythm for weekly progress.",
     required: true,
-    unlocks: ["Calendar-ready study blocks", "Streak tracking"],
+    unlocks: ["Study blocks", "Streak tracking"],
   },
   {
     id: "first-plan",
@@ -76,7 +76,7 @@ const missionTemplate: Omit<LearningOnboardingMission, "status">[] = [
   {
     id: "first-session",
     title: "Complete first study session",
-    summary: "Start the private beta with one focused learning win.",
+    summary: "Start with one focused learning win.",
     required: false,
     unlocks: ["Activity history", "Achievement progress"],
   },
@@ -145,7 +145,7 @@ export function buildLearningTimeline({
       id: "joined-beastlearning",
       type: "joined",
       title: `${learnerName} joined BeastLearning`,
-      summary: "Private Beta learning record started.",
+      summary: "Learning record started.",
       occurredAt: privateBetaDate,
     },
     ...goals.slice(0, 3).map((goal) => ({
@@ -221,6 +221,6 @@ export function buildStaticPrivateBetaData({
     parentRelationships: mockParentLearnerRelationships,
     certificateDocuments: buildCertificateDocuments(certificates),
     feedback: mockPersistedFeedback,
-    persistenceStatus: "fallback-static",
+    persistenceStatus: "limited",
   };
 }

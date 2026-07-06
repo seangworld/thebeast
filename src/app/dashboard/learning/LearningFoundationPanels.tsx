@@ -109,7 +109,7 @@ export function LearnerPortfolioPanel({
       <SectionHeader
         eyebrow="Portfolio"
         title="Learner record"
-        description="A static first version of the learner's lifelong learning record."
+        description="A living record of goals, study rhythm, achievements, certificates, and next steps."
       />
       <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {[
@@ -233,8 +233,8 @@ export function AISpecialistsPanel({
       <SectionHeader
         eyebrow="AI Experts"
         title="Specialist network"
-        description="Specialists use deterministic routing and connect through the OpenAI adapter when credentials are configured."
-        action={<ModuleBadge module="learning" label="AI Ready" />}
+        description="Specialists help route learning questions to the right kind of support."
+        action={<ModuleBadge module="learning" label="Learning Support" />}
       />
       <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {specialists.map((specialist) => (
@@ -244,7 +244,7 @@ export function AISpecialistsPanel({
               {specialist.description}
             </p>
             <div className="mt-3 text-xs font-bold uppercase text-[#7f8da3]">
-              {specialist.available ? "Private beta ready" : "Reserved"}
+              {specialist.available ? "Available" : "Coming next"}
             </div>
           </div>
         ))}

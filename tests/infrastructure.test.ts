@@ -263,9 +263,12 @@ function readSourceFiles(directory: string): string[] {
 
 test("source copy does not expose developer readiness labels", () => {
   const source = readSourceFiles("src").join("\n");
+  const lowerSource = source.toLowerCase();
 
   assert.equal(source.includes("Supabase-ready"), false);
   assert.equal(source.includes("API-ready"), false);
+  assert.equal(lowerSource.includes("supabase-ready"), false);
+  assert.equal(lowerSource.includes("api-ready"), false);
 });
 
 test("module navigation centralizes expandable child items", () => {
@@ -1642,7 +1645,7 @@ test("learning experience dashboard aggregates v0.5 LX surfaces", () => {
   assert.equal(experience.accessibility.largerTextOption, true);
   assert.equal(experience.learnerProfile.level, experience.gamification.level);
   assert.equal(experience.parentExperience.nextConversationSuggestions.length, 2);
-  assert.equal(experience.beta.badges.includes("Beta Tester"), true);
+  assert.equal(experience.beta.badges.includes("Early Access"), true);
 });
 
 test("learning global subject catalog covers knowledge domains", () => {
@@ -1943,6 +1946,7 @@ test("learning private beta readiness drives mission stages", () => {
   assert.equal(readiness.completionPercent, 63);
   assert.equal(readiness.nextBestAction, "Create first learning plan");
   assert.equal(readiness.badges.some((badge) => badge.label === "Founding Student"), true);
+  assert.equal(readiness.badges.some((badge) => badge.label === "Early Access"), true);
   assert.equal(readiness.missions[0].status, "complete");
   assert.equal(readiness.missions[5].status, "active");
 });
@@ -1964,8 +1968,20 @@ test("learning private beta timeline certificates and fallback data are structur
   assert.equal(timeline[0].type, "joined");
   assert.equal(timeline.some((item) => item.type === "goal"), true);
   assert.equal(certificateDocuments[0].downloadUrl.includes("/api/learning/certificates/"), true);
-  assert.equal(privateBeta.persistenceStatus, "fallback-static");
+  assert.equal(privateBeta.persistenceStatus, "limited");
   assert.equal(privateBeta.feedback[0].status, "Reviewing");
+});
+
+test("learning path identity panel does not render internal persistence status", () => {
+  const privateBetaPanel = readFileSync(
+    "src/app/dashboard/learning/PrivateBetaPanels.tsx",
+    "utf8"
+  );
+
+  assert.doesNotMatch(privateBetaPanel, /label=\{beta\.persistenceStatus\}/);
+  assert.match(privateBetaPanel, /title="Learner identity"/);
+  assert.match(privateBetaPanel, /label="Learner Record"/);
+  assert.doesNotMatch(privateBetaPanel, /Beta identity/i);
 });
 
 test("learning OpenAI adapter builds centralized prompt messages without requiring configuration", () => {
@@ -2000,13 +2016,13 @@ test("learning persistence maps feedback and table names for Supabase", () => {
     userId: "user-1",
     category: "feature request",
     message: "Add calmer onboarding.",
-    context: "Private Beta",
+    context: "BeastLearning feedback",
   });
   const item = mapFeedbackRow({
     id: "feedback-1",
     category: "feature request",
     message: "Add calmer onboarding.",
-    context: "Private Beta",
+    context: "BeastLearning feedback",
     status: "New",
     created_at: "2026-07-04T00:00:00.000Z",
   });
@@ -2017,7 +2033,7 @@ test("learning persistence maps feedback and table names for Supabase", () => {
     user_id: "user-1",
     category: "feature request",
     message: "Add calmer onboarding.",
-    context: "Private Beta",
+    context: "BeastLearning feedback",
     status: "New",
   });
   assert.equal(item.submittedAt, "2026-07-04T00:00:00.000Z");

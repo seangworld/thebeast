@@ -55,7 +55,7 @@ export default function BetaFeedbackPanel() {
         body: JSON.stringify({
           category,
           message: trimmed,
-          context: "BeastLearning Private Beta",
+          context: "BeastLearning feedback",
         }),
       });
 
@@ -78,10 +78,10 @@ export default function BetaFeedbackPanel() {
   return (
     <DashboardCard accent="learning">
       <SectionHeader
-        eyebrow="Beta Feedback"
+        eyebrow="Feedback"
         title="Founding Student feedback"
-        description="Feedback is submitted to the BeastLearning beta queue when Supabase is configured, with browser fallback for local testing."
-        action={<ModuleBadge module="learning" label="Beta Tester" />}
+        description="Share what felt clear, confusing, or helpful so BeastLearning can improve the student experience."
+        action={<ModuleBadge module="learning" label="Student Voice" />}
       />
       <form className="mt-5 grid gap-4 lg:grid-cols-[0.35fr_1fr_auto]" onSubmit={submitFeedback}>
         <select

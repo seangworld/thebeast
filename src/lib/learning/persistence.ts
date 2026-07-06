@@ -104,7 +104,7 @@ export async function loadLearningPrivateBetaData({
     parentRelationships: [],
     certificateDocuments: buildCertificateDocuments(certificates),
     feedback: [],
-    persistenceStatus: "supabase-ready",
+    persistenceStatus: "connected",
   };
 
   try {

@@ -1330,7 +1330,7 @@ export type LearningOnboardingMission = {
 
 export type LearningPrivateBetaBadge = {
   id: string;
-  label: "Founding Student" | "Private Beta" | "Founder";
+  label: "Founding Student" | "Early Access" | "Founder";
   earnedAt: string;
   permanent: boolean;
 };
@@ -1382,7 +1382,7 @@ export type LearningCertificateDocument = LearningCertificate & {
   generatedAt: string;
 };
 
-export type LearningPersistenceStatus = "supabase-ready" | "fallback-static";
+export type LearningPersistenceStatus = "connected" | "limited";
 
 export type LearningPrivateBetaData = {
   readiness: LearningBetaReadiness;
