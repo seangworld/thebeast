@@ -187,7 +187,9 @@ import {
 } from "../src/lib/learning/activityRunner";
 import {
   buildLessonEngineDefinition,
+  combiningLikeTermsLesson,
   getLessonEngineProgress,
+  getQuizScore,
 } from "../src/lib/learning/lessonEngine";
 import { learningStandards } from "../src/lib/learning/standards";
 import { generateCurriculumLearningPath } from "../src/lib/learning/learningPaths";
@@ -1378,13 +1380,15 @@ test("learning activities have a dedicated runner and next-activity unlock logic
   assert.match(activityRunner, /Return to Today/);
   assert.match(activityRunner, /View Activities/);
   assert.match(activityRunner, /<LessonEngine/);
-  assert.match(lessonEngine, /Learning Engine/);
+  assert.match(lessonEngine, /Adaptive Lesson/);
+  assert.match(lessonEngine, /Mastery and Recommendation/);
+  assert.match(activityRunner, /quizAnswers/);
 });
 
-test("lesson engine supports the full BeastLearning activity cycle", () => {
+test("lesson engine supports the adaptive BeastLearning teaching cycle", () => {
   const quizEngine = buildLessonEngineDefinition({
     activity_type: "Quiz",
-    title: "Check factoring",
+    title: "Pre-Algebra: Combining Like Terms",
     difficulty: "Beginner",
   });
   const coachEngine = buildLessonEngineDefinition({
@@ -1392,29 +1396,59 @@ test("lesson engine supports the full BeastLearning activity cycle", () => {
     title: "Explain a subnetting step",
     difficulty: "Adaptive",
   });
+  const quizAnswers = Object.fromEntries(
+    quizEngine.lesson.quizQuestions.map((question) => [question.id, question.answer])
+  );
   const progress = getLessonEngineProgress({
     checkedPhases: {
-      assess: true,
-      learn: true,
+      assessment: true,
+      lesson: true,
       practice: true,
+      quiz: true,
       coach: true,
-      reflect: true,
+      reflection: true,
+      mastery: true,
+      recommendation: true,
     },
     phaseCount: quizEngine.phases.length,
-    reflection: "I need one more review rep.",
+    reflection: "Like terms have the same variable part.",
+    confidence: "Ready for more",
+    quizAnswers,
+    lesson: quizEngine.lesson,
+  });
+  const quizScore = getQuizScore({
+    questions: quizEngine.lesson.quizQuestions,
+    quizAnswers,
   });
 
   assert.deepEqual(
     quizEngine.phases.map((phase) => phase.label),
-    ["Assess", "Lesson", "Practice", "AI Coach", "Reflect"]
+    [
+      "Assessment",
+      "Lesson",
+      "Guided Practice",
+      "Quiz",
+      "AI Coach",
+      "Reflection",
+      "Mastery",
+      "Recommendation",
+    ]
   );
-  assert.equal(quizEngine.completionLabel, "Complete quiz");
+  assert.equal(quizEngine.lesson.id, combiningLikeTermsLesson.id);
+  assert.equal(quizEngine.lesson.learningObjective.includes("same variable part"), true);
+  assert.equal(quizEngine.lesson.masteryThreshold, 80);
+  assert.equal(quizEngine.completionLabel, "Finish quiz");
+  assert.equal(quizScore.percent, 100);
   assert.equal(
-    coachEngine.summary.includes("BeastAI-style guidance"),
+    coachEngine.lesson.aiCoachingPrompts.some((prompt) => prompt.kind === "mistake"),
     true
   );
+  assert.equal(coachEngine.summary.includes("assessment, practice, quiz results"), true);
   assert.equal(progress.readyToComplete, true);
+  assert.equal(progress.mastered, true);
+  assert.equal(progress.recommendedReview, false);
   assert.equal(progress.percent, 100);
+  assert.equal(progress.nextRecommendation, "Solving one-step equations");
 });
 
 test("learning onboarding redirect has no duplicate direct redirect sources", () => {

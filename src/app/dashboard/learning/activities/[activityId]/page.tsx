@@ -13,6 +13,10 @@ import {
   getNextQueuedLearningActivity,
   type LearningActivityRunnerRow,
 } from "@/lib/learning/activityRunner";
+import {
+  buildLessonEngineDefinition,
+  getLessonEngineProgress,
+} from "@/lib/learning/lessonEngine";
 import { createClient } from "@/lib/supabase/client";
 import { LessonEngine } from "../LessonEngine";
 
@@ -40,6 +44,7 @@ export default function LearningActivityRunnerPage() {
   const [course, setCourse] = useState<CourseRow | null>(null);
   const [allActivities, setAllActivities] = useState<LearningActivityRunnerRow[]>([]);
   const [checkedPhases, setCheckedPhases] = useState<Record<string, boolean>>({});
+  const [quizAnswers, setQuizAnswers] = useState<Record<string, string>>({});
   const [reflection, setReflection] = useState("");
   const [confidence, setConfidence] = useState("Still building");
   const [loading, setLoading] = useState(true);
@@ -120,8 +125,20 @@ export default function LearningActivityRunnerPage() {
   async function completeActivity() {
     if (!activity || !userId || activity.status === "Completed") return;
 
-    if (reflection.trim().length === 0) {
-      setMessage("Add a short reflection before completing.");
+    const engine = buildLessonEngineDefinition(activity);
+    const progress = getLessonEngineProgress({
+      checkedPhases,
+      phaseCount: engine.phases.length,
+      reflection,
+      confidence,
+      quizAnswers,
+      lesson: engine.lesson,
+    });
+
+    if (!progress.readyToComplete) {
+      setMessage(
+        "Finish the teaching steps, answer the quiz, and add a reflection before completing."
+      );
       return;
     }
 
@@ -233,6 +250,7 @@ export default function LearningActivityRunnerPage() {
               activity={activity}
               courseTitle={course?.title || "Learning path"}
               checkedPhases={checkedPhases}
+              quizAnswers={quizAnswers}
               reflection={reflection}
               confidence={confidence}
               saving={saving}
@@ -241,6 +259,12 @@ export default function LearningActivityRunnerPage() {
                 setCheckedPhases((current) => ({
                   ...current,
                   [phaseId]: checked,
+                }))
+              }
+              onQuizAnswer={(questionId, answer) =>
+                setQuizAnswers((current) => ({
+                  ...current,
+                  [questionId]: answer,
                 }))
               }
               onReflectionChange={setReflection}
