@@ -51,7 +51,7 @@ type TodayState = {
 
 const emptyState: TodayState = {
   userId: "",
-  name: "Learner",
+  name: "",
   learnerProfileId: null,
   planId: null,
   sessionId: null,
@@ -323,10 +323,14 @@ export default function TodayPage() {
             <div className="space-y-4">
               <ModuleBadge module="learning" label="Student Today" />
               <h1 className="beast-title">
-                {getGreeting(today)}, {state.name}
+                {loading || !state.name
+                  ? "Loading Today"
+                  : `${getGreeting(today)}, ${state.name}`}
               </h1>
               <p className="beast-subtitle">
-                Your next learning step is ready. Start with the mission below.
+                {loading || !state.name
+                  ? "Getting your personalized plan ready."
+                  : "Your next learning step is ready. Start with the mission below."}
               </p>
             </div>
             <div className="flex flex-wrap gap-2">

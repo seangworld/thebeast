@@ -1149,6 +1149,23 @@ test("profile display name prefers profile names before username and email", () 
   );
 });
 
+test("today and learning avoid fallback-name flash while profile resolves", () => {
+  const todaySource = readFileSync("src/app/dashboard/today/page.tsx", "utf8");
+  const learningSource = readFileSync("src/app/dashboard/learning/page.tsx", "utf8");
+
+  assert.match(todaySource, /name: ""/);
+  assert.match(todaySource, /Loading Today/);
+  assert.doesNotMatch(todaySource, /name: "Learner"/);
+  assert.match(
+    learningSource,
+    /name: fallbackName,\s+role: String\(primaryLearnerRow\.learner_role/
+  );
+  assert.doesNotMatch(
+    learningSource,
+    /name: String\(primaryLearnerRow\.display_name \|\| fallbackName\)/
+  );
+});
+
 test("learning onboarding validation names the exact missing required field", () => {
   const result = validateLearningOnboardingForm({
     preferredName: "Taylor",

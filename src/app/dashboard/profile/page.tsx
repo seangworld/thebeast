@@ -155,10 +155,11 @@ export default function ProfilePage() {
           preferred_name: form.preferred_name,
           display_name: form.display_name,
           full_name: form.full_name,
+          username: form.username,
         },
         { email }
       ),
-    [email, form.display_name, form.full_name, form.preferred_name]
+    [email, form.display_name, form.full_name, form.preferred_name, form.username]
   );
 
   const updateField = useCallback(

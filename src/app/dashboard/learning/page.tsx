@@ -402,7 +402,7 @@ export default async function LearningPage() {
     achievementsResult,
     certificatesResult,
   ] = await Promise.all([
-    supabase.from("profiles").select("preferred_name, display_name, full_name").eq("id", user.id).maybeSingle(),
+    supabase.from("profiles").select("preferred_name, display_name, full_name, username").eq("id", user.id).maybeSingle(),
     supabase
       .from("learning_profiles")
       .select("id, display_name, learner_role, focus")
@@ -449,7 +449,7 @@ export default async function LearningPage() {
   const activeLearner = primaryLearnerRow
     ? {
         id: String(primaryLearnerRow.id),
-        name: String(primaryLearnerRow.display_name || fallbackName),
+        name: fallbackName,
         role: String(primaryLearnerRow.learner_role || "Learner"),
         focus: String(primaryLearnerRow.focus || "Learning path"),
         active: true,
