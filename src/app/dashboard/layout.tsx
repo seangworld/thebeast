@@ -381,7 +381,7 @@ export default function DashboardLayout({
         <div>
           <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-[#2a3242] border-t-indigo-300" />
           <p className="mt-4 text-sm font-semibold text-[#9aa7b8]">
-            Opening BeastLearning...
+            Opening your dashboard...
           </p>
         </div>
       </div>

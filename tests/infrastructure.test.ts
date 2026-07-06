@@ -1198,6 +1198,16 @@ test("learning onboarding routing sends incomplete users to setup once", () => {
   );
 });
 
+test("dashboard global loading copy stays module neutral", () => {
+  const dashboardLayout = readFileSync(
+    "src/app/dashboard/layout.tsx",
+    "utf8"
+  );
+
+  assert.match(dashboardLayout, /Opening your dashboard\.\.\./);
+  assert.doesNotMatch(dashboardLayout, /Opening BeastLearning\.\.\./);
+});
+
 test("learning onboarding redirect has no duplicate direct redirect sources", () => {
   const sourceFiles = [
     "src/app/dashboard/layout.tsx",

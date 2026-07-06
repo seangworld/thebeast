@@ -294,6 +294,22 @@ Security
 - Confirm Learning AI requires auth.
 ```
 
+## Recorded Smoke Test Results
+
+`the-beast-dev` smoke test on 2026-07-06:
+
+```text
+Login: passed
+Today page: passed
+Admin switcher: passed
+BeastMoney: passed
+BeastLearning setup save: passed
+BeastLearning setup redirect to Today: passed
+BeastLearning return after setup: passed
+Profile save with incomplete optional fields: passed
+Profile schema errors: none observed
+```
+
 ## Production Release Gate
 
 Do not deploy production until all are true:
