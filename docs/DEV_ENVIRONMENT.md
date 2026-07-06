@@ -1,23 +1,23 @@
 # BeastOS Dev Environment
 
-This runbook uses the existing `thebeast-dev` environment as the required
+This runbook uses the existing `the-beast-dev` environment as the required
 pre-production validation target. Do not create a separate Supabase staging
 project unless that is explicitly approved later.
 
 ## Purpose
 
-`thebeast-dev` must catch code/schema drift before production. Every release
+`the-beast-dev` must catch code/schema drift before production. Every release
 that changes database shape, RLS, auth, navigation, onboarding, or user-owned
-data flows must pass `thebeast-dev` before it is deployed to production.
+data flows must pass `the-beast-dev` before it is deployed to production.
 
 ## Access Required
 
 Codex cannot configure cloud resources without authenticated Supabase and Vercel
-access. A project owner must perform dashboard/API steps for `thebeast-dev`.
+access. A project owner must perform dashboard/API steps for `the-beast-dev`.
 
 Required access:
 
-- Supabase organization permission for the `thebeast-dev` project.
+- Supabase organization permission for the `the-beast-dev` project.
 - Vercel team permission for the dev/preview deployment environment.
 - Stripe test-mode access if billing flows are validated.
 - OpenAI key access if live Learning AI calls are validated.
@@ -26,7 +26,7 @@ Required access:
 
 Use the existing Supabase project:
 
-- Project name: `thebeast-dev`
+- Project name: `the-beast-dev`
 - Data policy: schema parity with production, no production user data copied.
 
 Do not duplicate production data into dev. If a production schema dump is used,
@@ -35,7 +35,7 @@ feedback, certificates, or other user data.
 
 ## Apply Schema
 
-Run local migrations in this order against `thebeast-dev`:
+Run local migrations in this order against `the-beast-dev`:
 
 ```text
 migrations/20260531_dev_schema.sql
@@ -57,7 +57,7 @@ exists and the placeholders are replaced with dev-only IDs.
 
 ## Required Profile Schema
 
-Verify `thebeast-dev` has every app-required `public.profiles` column:
+Verify `the-beast-dev` has every app-required `public.profiles` column:
 
 ```sql
 select column_name, data_type
@@ -213,7 +213,7 @@ Use the existing dev/preview deployment target for BeastOS.
 Rules:
 
 - Dev/preview environment variables must be separate from production.
-- Supabase URL/key must point to `thebeast-dev`.
+- Supabase URL/key must point to `the-beast-dev`.
 - Stripe keys must be test-mode keys.
 - Redirect URLs must point to the dev/preview domain.
 - `BEASTLEARNING_DEMO_MODE` must be `false`.
@@ -243,7 +243,7 @@ BEASTLEARNING_DEMO_MODE=false
 
 ## Local Dev Validation
 
-For local testing against `thebeast-dev`, copy `docs/dev.env.example` to a
+For local testing against `the-beast-dev`, copy `docs/dev.env.example` to a
 local gitignored file such as `.env.local` and fill it with dev values only.
 
 Then run:
@@ -298,8 +298,8 @@ Security
 
 Do not deploy production until all are true:
 
-- Code merged into `main` only after `thebeast-dev` passes.
-- Required migrations applied to `thebeast-dev`.
+- Code merged into `main` only after `the-beast-dev` passes.
+- Required migrations applied to `the-beast-dev`.
 - Dev smoke test passed.
 - Required migrations applied to production.
 - Production schema verification SQL passed.
@@ -332,4 +332,4 @@ Rollback plan:
 ```
 
 If `Migration required: yes`, production deploy must wait until the migration and
-smoke test pass in `thebeast-dev`.
+smoke test pass in `the-beast-dev`.
