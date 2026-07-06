@@ -29,6 +29,8 @@ type LearningOnboardingDataClient = {
   from: (table: string) => any;
 };
 
+export const profileOnboardingCompletionKeyColumn = "id";
+
 const protectedLearningOnboardingPaths = [
   "/dashboard/learning",
   "/dashboard/today",

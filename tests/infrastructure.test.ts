@@ -136,6 +136,7 @@ import {
   hasCompleteLearningOnboardingData,
   isLearningOnboardingComplete,
   isProtectedLearningOnboardingPath,
+  profileOnboardingCompletionKeyColumn,
   shouldAttemptLearningOnboardingRepair,
   validateLearningOnboardingForm,
 } from "../src/lib/learning/onboardingCompletion";
@@ -1109,6 +1110,11 @@ test("learning onboarding completion validates and builds the final profile upda
       onboarding_complete: true,
     });
   }
+});
+
+test("learning onboarding completion uses profiles.id as the auth user key", () => {
+  assert.equal(profileOnboardingCompletionKeyColumn, "id");
+  assert.notEqual(profileOnboardingCompletionKeyColumn, "user_id");
 });
 
 test("learning onboarding validation names the exact missing required field", () => {

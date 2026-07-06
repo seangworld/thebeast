@@ -26,6 +26,7 @@ import {
   getOnboardingRedirect,
   isLearningOnboardingComplete,
   loadLearningOnboardingDataStatus,
+  profileOnboardingCompletionKeyColumn,
   shouldAttemptLearningOnboardingRepair,
 } from "@/lib/learning/onboardingCompletion";
 
@@ -79,6 +80,7 @@ export default function DashboardLayout({
   const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({});
   const [learningOnlyNavigation, setLearningOnlyNavigation] = useState(false);
   const [resolvingOnboarding, setResolvingOnboarding] = useState(true);
+  const [onboardingDiagnosticError, setOnboardingDiagnosticError] = useState("");
   const pathname = usePathname();
   const router = useRouter();
   const workspaceModule = getWorkspaceModule(pathname);
@@ -87,6 +89,7 @@ export default function DashboardLayout({
   useEffect(() => {
     let active = true;
     setResolvingOnboarding(true);
+    setOnboardingDiagnosticError("");
 
     async function routeFirstTimeUsers() {
       let supabase: ReturnType<typeof createClient>;
@@ -122,10 +125,20 @@ export default function DashboardLayout({
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("role, onboarding_complete")
-        .eq("id", authUser.id)
+        .eq(profileOnboardingCompletionKeyColumn, authUser.id)
         .maybeSingle();
 
       if (!active) return;
+
+      console.info("BeastLearning onboarding profile completion read.", {
+        userId: authUser.id,
+        profileKeyColumn: profileOnboardingCompletionKeyColumn,
+        rowFound: Boolean(profile),
+        onboardingComplete: profile?.onboarding_complete ?? null,
+        errorMessage: profileError?.message ?? null,
+        errorCode: profileError?.code ?? null,
+        errorDetails: profileError?.details ?? null,
+      });
 
       if (profileError) {
         console.error("Unable to read onboarding completion profile.", {
@@ -134,6 +147,23 @@ export default function DashboardLayout({
           code: profileError.code,
           details: profileError.details,
         });
+        setOnboardingDiagnosticError(
+          `BeastLearning could not read your account completion status. User ${authUser.id}. Supabase: ${profileError.message}`
+        );
+        setResolvingOnboarding(false);
+        return;
+      }
+
+      if (!profile) {
+        console.error("BeastLearning profile row is missing.", {
+          userId: authUser.id,
+          profileKeyColumn: profileOnboardingCompletionKeyColumn,
+        });
+        setOnboardingDiagnosticError(
+          `BeastLearning could not find your account profile row. User ${authUser.id}. Expected public.profiles.${profileOnboardingCompletionKeyColumn} to match your authenticated user id.`
+        );
+        setResolvingOnboarding(false);
+        return;
       }
 
       const completionKey = `beastlearning:onboarding-complete:${authUser.id}`;
@@ -160,6 +190,18 @@ export default function DashboardLayout({
 
         if (!active) return;
 
+        console.info("BeastLearning onboarding saved data status.", {
+          userId: authUser.id,
+          status,
+          errorMessage:
+            error && typeof error === "object" && "message" in error
+              ? String(error.message)
+              : error
+                ? String(error)
+                : null,
+          repairAlreadyAttempted,
+        });
+
         if (
           shouldAttemptLearningOnboardingRepair({
             onboardingComplete,
@@ -175,13 +217,24 @@ export default function DashboardLayout({
           const repairResult = await supabase
             .from("profiles")
             .update({ onboarding_complete: true })
-            .eq("id", authUser.id)
-            .select("id")
+            .eq(profileOnboardingCompletionKeyColumn, authUser.id)
+            .select("id, onboarding_complete")
             .maybeSingle();
 
           if (!active) return;
 
           onboardingComplete = !repairResult.error && Boolean(repairResult.data);
+          console.info("BeastLearning onboarding repair result.", {
+            userId: authUser.id,
+            profileKeyColumn: profileOnboardingCompletionKeyColumn,
+            attempted: true,
+            rowFound: Boolean(repairResult.data),
+            onboardingComplete:
+              repairResult.data?.onboarding_complete ?? null,
+            errorMessage: repairResult.error?.message ?? null,
+            errorCode: repairResult.error?.code ?? null,
+            errorDetails: repairResult.error?.details ?? null,
+          });
           if (onboardingComplete && typeof window !== "undefined") {
             window.sessionStorage.setItem(completionKey, "complete");
           }
@@ -193,6 +246,22 @@ export default function DashboardLayout({
               details: repairResult.error.details,
             });
           }
+
+          if (!onboardingComplete) {
+            setOnboardingDiagnosticError(
+              repairResult.error
+                ? `BeastLearning could not repair your account completion status. User ${authUser.id}. Supabase: ${repairResult.error.message}`
+                : `BeastLearning found saved setup data but could not update public.profiles.${profileOnboardingCompletionKeyColumn} for user ${authUser.id}.`
+            );
+            setResolvingOnboarding(false);
+            return;
+          }
+        } else if (error) {
+          setOnboardingDiagnosticError(
+            `BeastLearning could not verify your saved setup data. User ${authUser.id}.`
+          );
+          setResolvingOnboarding(false);
+          return;
         }
       }
 
@@ -243,6 +312,28 @@ export default function DashboardLayout({
       active = false;
     };
   }, [pathname, router]);
+
+  if (onboardingDiagnosticError) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#0f1419] px-6">
+        <div className="max-w-xl rounded-xl border border-red-300/30 bg-red-400/10 p-6 text-left">
+          <p className="text-xs font-bold uppercase tracking-wide text-red-100">
+            BeastLearning setup needs attention
+          </p>
+          <h1 className="mt-3 text-2xl font-black text-white">
+            We stopped before redirecting.
+          </h1>
+          <p className="mt-3 text-sm font-semibold text-red-100">
+            {onboardingDiagnosticError}
+          </p>
+          <p className="mt-4 text-sm text-[#c7cfdb]">
+            This prevents the Today and Learning Setup pages from looping while
+            completion status is ambiguous.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (resolvingOnboarding) {
     return (

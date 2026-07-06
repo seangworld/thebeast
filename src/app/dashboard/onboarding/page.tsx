@@ -10,6 +10,7 @@ import {
 import {
   buildOnboardingCompletionProfileUpdate,
   getOnboardingSaveErrorMessage,
+  profileOnboardingCompletionKeyColumn,
   validateLearningOnboardingForm,
 } from "@/lib/learning/onboardingCompletion";
 import { createClient } from "@/lib/supabase/client";
@@ -525,9 +526,19 @@ export default function OnboardingPage() {
       const profileResult = await supabase
         .from("profiles")
         .update(buildOnboardingCompletionProfileUpdate(onboarding))
-        .eq("id", authUser.id)
-        .select("id")
+        .eq(profileOnboardingCompletionKeyColumn, authUser.id)
+        .select("id, onboarding_complete")
         .maybeSingle();
+
+      console.info("BeastLearning onboarding completion update result.", {
+        userId: authUser.id,
+        profileKeyColumn: profileOnboardingCompletionKeyColumn,
+        rowFound: Boolean(profileResult.data),
+        onboardingComplete: profileResult.data?.onboarding_complete ?? null,
+        errorMessage: profileResult.error?.message ?? null,
+        errorCode: profileResult.error?.code ?? null,
+        errorDetails: profileResult.error?.details ?? null,
+      });
 
       if (profileResult.error) {
         throw new Error(
