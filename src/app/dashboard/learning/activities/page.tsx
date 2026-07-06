@@ -12,6 +12,7 @@ import {
 import {
   getLearningActivityInstructions,
   getLearningActivityRoute,
+  getNewestReadyLearningActivity,
   type LearningActivityRunnerRow,
 } from "@/lib/learning/activityRunner";
 import { createClient } from "@/lib/supabase/client";
@@ -92,8 +93,7 @@ export default function LearningActivitiesPage() {
 
   const completed = activities.filter((activity) => activity.status === "Completed");
   const open = activities.filter((activity) => activity.status !== "Completed");
-  const readyActivity =
-    activities.find((activity) => activity.status === "Ready") || open[0] || null;
+  const readyActivity = getNewestReadyLearningActivity(activities);
   const totalXp = completed.reduce((sum, activity) => sum + Number(activity.xp || 0), 0);
   const remainingMinutes = open.reduce(
     (sum, activity) => sum + Number(activity.estimated_minutes || 0),

@@ -1,12 +1,20 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import {
   DashboardCard,
   ModuleBadge,
   SectionHeader,
 } from "@/app/components/design/DashboardPrimitives";
+import { getLearningActivityRoute } from "@/lib/learning/activityRunner";
+import {
+  buildGeneratedLearningActivityPayload,
+  getGeneratedActivityTitle,
+  getGeneratedLearningSubject,
+} from "@/lib/learning/generatedActivities";
 import { generateLearningPlan } from "@/lib/learning/planGenerator";
+import { createClient } from "@/lib/supabase/client";
 import type {
   LearningGoalBuilderDraft,
   LearningGoalBuilderStatus,
@@ -59,6 +67,9 @@ function FieldLabel({
 export default function LearningGoalBuilder() {
   const [draft, setDraft] = useState<LearningGoalBuilderDraft>(emptyDraft);
   const [completed, setCompleted] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState("");
+  const [savedActivity, setSavedActivity] = useState<{ id: string; title: string } | null>(null);
   const status = useMemo(() => getDraftStatus(draft, completed), [draft, completed]);
   const generatedPlan = useMemo(
     () => (completed ? generateLearningPlan(draft) : null),
@@ -98,6 +109,8 @@ export default function LearningGoalBuilder() {
 
   function updateDraft(field: keyof LearningGoalBuilderDraft, value: string) {
     setCompleted(false);
+    setSaveMessage("");
+    setSavedActivity(null);
     setDraft((current) => ({
       ...current,
       [field]: value,
@@ -107,13 +120,156 @@ export default function LearningGoalBuilder() {
   function resetDraft() {
     setDraft(emptyDraft);
     setCompleted(false);
+    setSaveMessage("");
+    setSavedActivity(null);
     window.localStorage.removeItem(STORAGE_KEY);
   }
 
-  function completeDraft(event: React.FormEvent<HTMLFormElement>) {
+  async function completeDraft(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!ready) return;
-    setCompleted(true);
+
+    setSaving(true);
+    setSaveMessage("");
+    setSavedActivity(null);
+
+    try {
+      const supabase = createClient();
+      const generated = generateLearningPlan(draft);
+      const subject = getGeneratedLearningSubject(draft);
+      const activityTitle = getGeneratedActivityTitle(draft);
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      const authUser = userData?.user;
+
+      if (userError || !authUser) {
+        throw new Error("Sign in again before saving this learning path.");
+      }
+
+      const learnerResult = await supabase
+        .from("learning_profiles")
+        .select("id")
+        .eq("user_id", authUser.id)
+        .order("created_at", { ascending: true })
+        .limit(1);
+
+      if (learnerResult.error) throw learnerResult.error;
+
+      const learnerProfileId = learnerResult.data?.[0]?.id;
+
+      if (!learnerProfileId) {
+        throw new Error("Complete Learning Setup before saving a generated activity.");
+      }
+
+      const goalResult = await supabase
+        .from("learning_goals")
+        .insert({
+          user_id: authUser.id,
+          learner_profile_id: learnerProfileId,
+          title: draft.learningObjective.trim(),
+          category: subject,
+          target: draft.targetOutcome.trim(),
+          priority: "High",
+          status: "Active",
+          progress: 0,
+        })
+        .select("id")
+        .single();
+
+      if (goalResult.error) throw goalResult.error;
+
+      const courseResult = await supabase
+        .from("learning_courses")
+        .upsert(
+          {
+            user_id: authUser.id,
+            learner_profile_id: learnerProfileId,
+            title: subject,
+            subject,
+            status: "In progress",
+            progress: 0,
+          },
+          { onConflict: "user_id,title" }
+        )
+        .select("id")
+        .single();
+
+      if (courseResult.error) throw courseResult.error;
+
+      const planResult = await supabase
+        .from("learning_plans")
+        .insert({
+          user_id: authUser.id,
+          learner_profile_id: learnerProfileId,
+          goal_id: goalResult.data.id,
+          title: generated.title,
+          summary: generated.readinessSignal.summary,
+          weekly_session_target: generated.weeklyRhythm.length,
+        })
+        .select("id")
+        .single();
+
+      if (planResult.error) throw planResult.error;
+
+      const sessionResult = await supabase
+        .from("learning_sessions")
+        .insert({
+          user_id: authUser.id,
+          learner_profile_id: learnerProfileId,
+          plan_id: planResult.data.id,
+          title: generated.recommendedSessions[0]?.title || `Start ${subject}`,
+          course_title: subject,
+          scheduled_for: new Date().toISOString(),
+          duration_minutes:
+            generated.recommendedSessions[0]?.duration.includes("45") ? 45 : 35,
+          status: "Scheduled",
+        })
+        .select("id")
+        .single();
+
+      if (sessionResult.error) throw sessionResult.error;
+
+      const sortResult = await supabase
+        .from("learning_activities")
+        .select("sort_order")
+        .eq("user_id", authUser.id)
+        .order("sort_order", { ascending: false })
+        .limit(1);
+
+      if (sortResult.error) throw sortResult.error;
+
+      const nextSortOrder = Number(sortResult.data?.[0]?.sort_order || 0) + 1;
+      const activityResult = await supabase
+        .from("learning_activities")
+        .insert(
+          buildGeneratedLearningActivityPayload({
+            userId: authUser.id,
+            learnerProfileId,
+            courseId: courseResult.data.id,
+            planId: planResult.data.id,
+            sessionId: sessionResult.data.id,
+            draft,
+            generatedPlan: generated,
+            sortOrder: nextSortOrder,
+          })
+        )
+        .select("id, title")
+        .single();
+
+      if (activityResult.error) throw activityResult.error;
+
+      setCompleted(true);
+      setSavedActivity(activityResult.data);
+      setSaveMessage(`${activityTitle} is saved and ready to start.`);
+    } catch (error) {
+      setCompleted(false);
+      setSaveMessage(
+        error instanceof Error
+          ? error.message
+          : "Unable to save this generated learning activity."
+      );
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -222,10 +378,10 @@ export default function LearningGoalBuilder() {
           <div className="flex flex-wrap gap-3">
             <button
               type="submit"
-              disabled={!ready}
+              disabled={!ready || saving}
               className="rounded-xl border border-indigo-300/45 bg-indigo-300/15 px-4 py-3 text-sm font-black text-indigo-100 transition hover:bg-indigo-300/20 disabled:cursor-not-allowed disabled:border-[#2a3242] disabled:bg-[#111827] disabled:text-[#7f8da3]"
             >
-              Generate Starter Plan
+              {saving ? "Saving..." : "Generate and Save Activity"}
             </button>
             <button
               type="button"
@@ -236,6 +392,34 @@ export default function LearningGoalBuilder() {
             </button>
           </div>
         </form>
+
+        {saveMessage ? (
+          <div
+            className={`rounded-xl border p-4 xl:col-span-2 ${
+              savedActivity
+                ? "border-green-400/35 bg-green-400/10 text-green-100"
+                : "border-red-400/35 bg-red-400/10 text-red-100"
+            }`}
+          >
+            <p className="text-sm font-bold">{saveMessage}</p>
+            {savedActivity ? (
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Link
+                  href={getLearningActivityRoute(savedActivity.id)}
+                  className="beast-button"
+                >
+                  Start Saved Activity
+                </Link>
+                <Link
+                  href="/dashboard/today"
+                  className="beast-button-secondary"
+                >
+                  View Today
+                </Link>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
 
         <div
           className={`rounded-xl border p-4 ${

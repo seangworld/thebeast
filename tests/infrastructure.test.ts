@@ -183,8 +183,14 @@ import {
   getLearningActivityCompletionPayload,
   getLearningActivityPrimaryActionLabel,
   getLearningActivityRoute,
+  getNewestReadyLearningActivity,
   getNextQueuedLearningActivity,
 } from "../src/lib/learning/activityRunner";
+import {
+  buildGeneratedLearningActivityPayload,
+  getGeneratedActivityTitle,
+  getGeneratedLearningSubject,
+} from "../src/lib/learning/generatedActivities";
 import {
   buildLessonEngineDefinition,
   combiningLikeTermsLesson,
@@ -1379,6 +1385,33 @@ test("learning activities have a dedicated runner and next-activity unlock logic
       .completed_at,
     "2026-07-06T12:00:00.000Z"
   );
+  assert.equal(
+    getNewestReadyLearningActivity([
+      {
+        id: "older-ready",
+        activity_type: "Lesson",
+        title: "Older Ready",
+        difficulty: "Beginner",
+        estimated_minutes: 15,
+        xp: 10,
+        status: "Ready",
+        sort_order: 1,
+        created_at: "2026-07-05T12:00:00.000Z",
+      },
+      {
+        id: "new-generated",
+        activity_type: "Lesson",
+        title: "Pre-Algebra: Combining Like Terms",
+        difficulty: "Beginner",
+        estimated_minutes: 35,
+        xp: 20,
+        status: "Ready",
+        sort_order: 9,
+        created_at: "2026-07-06T12:00:00.000Z",
+      },
+    ])?.id,
+    "new-generated"
+  );
   assert.match(activityRunner, /Activity Complete/);
   assert.match(activityRunner, /Return to Today/);
   assert.match(activityRunner, /View Activities/);
@@ -1386,6 +1419,70 @@ test("learning activities have a dedicated runner and next-activity unlock logic
   assert.match(lessonEngine, /Adaptive Lesson/);
   assert.match(lessonEngine, /Mastery and Recommendation/);
   assert.match(activityRunner, /quizAnswers/);
+});
+
+test("generated learning activities persist with required visibility fields", () => {
+  const draft = {
+    learningObjective: "Pre-Algebra",
+    motivation: "Build confidence",
+    targetOutcome: "Combine like terms",
+    timeline: "2 weeks",
+    currentLevel: "Beginner",
+    studyPace: "Steady: 3-4 sessions per week",
+  };
+  const generatedPlan = generateLearningPlan(draft);
+  const payload = buildGeneratedLearningActivityPayload({
+    userId: "user-1",
+    learnerProfileId: "learner-1",
+    courseId: "course-1",
+    planId: "plan-1",
+    sessionId: "session-1",
+    draft,
+    generatedPlan,
+    sortOrder: 7,
+  });
+  const goalBuilder = readFileSync(
+    "src/app/dashboard/learning/LearningGoalBuilder.tsx",
+    "utf8"
+  );
+  const learningPage = readFileSync("src/app/dashboard/learning/page.tsx", "utf8");
+  const todayPage = readFileSync("src/app/dashboard/today/page.tsx", "utf8");
+  const activitiesPage = readFileSync(
+    "src/app/dashboard/learning/activities/page.tsx",
+    "utf8"
+  );
+
+  assert.equal(getGeneratedLearningSubject(draft), "Pre-Algebra");
+  assert.equal(getGeneratedActivityTitle(draft), "Pre-Algebra: Combining Like Terms");
+  assert.deepEqual(
+    Object.keys(payload).sort(),
+    [
+      "activity_type",
+      "course_id",
+      "difficulty",
+      "estimated_minutes",
+      "learner_profile_id",
+      "plan_id",
+      "session_id",
+      "sort_order",
+      "status",
+      "title",
+      "user_id",
+      "xp",
+    ].sort()
+  );
+  assert.equal(payload.user_id, "user-1");
+  assert.equal(payload.learner_profile_id, "learner-1");
+  assert.equal(payload.course_id, "course-1");
+  assert.equal(payload.status, "Ready");
+  assert.equal(payload.activity_type, "Lesson");
+  assert.equal(goalBuilder.includes(".from(\"learning_activities\")"), true);
+  assert.equal(goalBuilder.includes("buildGeneratedLearningActivityPayload"), true);
+  assert.equal(goalBuilder.includes("Start Saved Activity"), true);
+  assert.equal(todayPage.includes("getNewestReadyLearningActivity"), true);
+  assert.equal(activitiesPage.includes("getNewestReadyLearningActivity"), true);
+  assert.equal(learningPage.includes("Start or Continue"), true);
+  assert.equal(learningPage.includes("learning_activities"), true);
 });
 
 test("lesson engine supports the adaptive BeastLearning teaching cycle", () => {

@@ -10,6 +10,11 @@ import {
   moduleAccents,
 } from "@/app/components/design/DashboardPrimitives";
 import { BEAST_LEARNING_VERSION } from "@/lib/appVersion";
+import {
+  getLearningActivityRoute,
+  getNewestReadyLearningActivity,
+  type LearningActivityRunnerRow,
+} from "@/lib/learning/activityRunner";
 import { getProfileDisplayName } from "@/lib/profile";
 import { buildLearningAchievementUnlocks } from "@/lib/learning/achievements";
 import { mockLearningCertificates } from "@/lib/learning/certificates";
@@ -152,6 +157,10 @@ function mapPlanRow(row: Record<string, unknown>, learnerId: string): LearningPl
     weeklySessionTarget: Number(row.weekly_session_target || 0),
   };
 }
+
+type LearningPathActivityRow = LearningActivityRunnerRow & {
+  course_id?: string | null;
+};
 
 function mapSessionRow(row: Record<string, unknown>): LearningSession {
   return {
@@ -399,6 +408,7 @@ export default async function LearningPage() {
     coursesResult,
     plansResult,
     sessionsResult,
+    activitiesResult,
     achievementsResult,
     certificatesResult,
   ] = await Promise.all([
@@ -428,6 +438,11 @@ export default async function LearningPage() {
       .select("id, learner_profile_id, title, course_title, scheduled_for, duration_minutes, status")
       .eq("user_id", user.id)
       .order("scheduled_for", { ascending: true }),
+    supabase
+      .from("learning_activities")
+      .select("id, course_id, activity_type, title, difficulty, estimated_minutes, xp, status, completed_at, sort_order, created_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false }),
     supabase
       .from("learning_achievements")
       .select("id, learner_profile_id, title, detail, earned, earned_at")
@@ -474,6 +489,7 @@ export default async function LearningPage() {
   const userGoals = ((goalsResult.data || []) as Record<string, unknown>[]).map(mapGoalRow);
   const userCourses = ((coursesResult.data || []) as Record<string, unknown>[]).map(mapCourseRow);
   const userSessions = ((sessionsResult.data || []) as Record<string, unknown>[]).map(mapSessionRow);
+  const userActivities = (activitiesResult.data || []) as LearningPathActivityRow[];
   const userAchievements = ((achievementsResult.data || []) as Record<string, unknown>[]).map(mapAchievementRow);
   const userCertificates = ((certificatesResult.data || []) as Record<string, unknown>[]).map(mapCertificateRow);
   const firstPlanRow = ((plansResult.data || []) as Record<string, unknown>[])[0];
@@ -510,6 +526,7 @@ export default async function LearningPage() {
     demoModeEnabled && userGoals.length === 0 ? mockStudySessionCommand : userStudySession;
   const learningQuickActions =
     demoModeEnabled && userGoals.length === 0 ? mockLearningQuickActions : [];
+  const learningPathReadyActivity = getNewestReadyLearningActivity(userActivities);
   const intelligence = buildLearningFoundationIntelligence();
   const learningAccent = moduleAccents.learning;
   const privateBeta = await loadLearningPrivateBetaData({
@@ -683,6 +700,40 @@ export default async function LearningPage() {
         <div id="study-plan" className="scroll-mt-24">
           <StudySessionCommandCard session={studySession} />
         </div>
+
+        <DashboardCard accent="learning">
+          <SectionHeader
+            eyebrow="Start or Continue"
+            title={learningPathReadyActivity?.title || "No activity is ready yet"}
+            description={
+              learningPathReadyActivity
+                ? `${learningPathReadyActivity.activity_type} - ${learningPathReadyActivity.difficulty} - ${learningPathReadyActivity.estimated_minutes} minutes`
+                : "Generate and save a learning activity below, then it will appear here and on Today."
+            }
+            action={
+              <ModuleBadge
+                module="learning"
+                label={learningPathReadyActivity?.status || "Waiting"}
+              />
+            }
+          />
+          <div className="mt-5 flex flex-wrap gap-3">
+            {learningPathReadyActivity ? (
+              <Link
+                href={getLearningActivityRoute(learningPathReadyActivity.id)}
+                className="beast-button"
+              >
+                Start Activity
+              </Link>
+            ) : null}
+            <Link
+              href="/dashboard/learning/activities"
+              className="beast-button-secondary"
+            >
+              View Activities
+            </Link>
+          </div>
+        </DashboardCard>
 
         <LearningIntelligencePanel snapshot={learningIntelligence} />
 

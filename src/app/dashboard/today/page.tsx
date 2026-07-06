@@ -9,7 +9,10 @@ import {
   ModuleBadge,
   SectionHeader,
 } from "@/app/components/design/DashboardPrimitives";
-import { getLearningActivityRoute } from "@/lib/learning/activityRunner";
+import {
+  getLearningActivityRoute,
+  getNewestReadyLearningActivity,
+} from "@/lib/learning/activityRunner";
 import { createClient } from "@/lib/supabase/client";
 import { getProfileDisplayName } from "@/lib/profile";
 
@@ -30,6 +33,7 @@ type ActivityRow = {
   status: string;
   completed_at?: string | null;
   sort_order?: number | null;
+  created_at?: string | null;
 };
 
 type ProfileNameRow = {
@@ -298,9 +302,7 @@ export default function TodayPage() {
   const openActivities = state.activities.filter(
     (activity) => activity.status !== "Completed"
   );
-  const readyActivity =
-    state.activities.find((activity) => activity.status === "Ready") ||
-    openActivities[0];
+  const readyActivity = getNewestReadyLearningActivity(state.activities);
   const totalXp = completedActivities.reduce(
     (sum, activity) => sum + Number(activity.xp || 0),
     0

@@ -17,6 +17,7 @@ export type LearningActivityRunnerRow = {
   status: LearningActivityStatus;
   completed_at?: string | null;
   sort_order?: number | null;
+  created_at?: string | null;
 };
 
 export const learningActivityTypes: LearningActivityType[] = [
@@ -109,6 +110,31 @@ export function getNextQueuedLearningActivity(
         activity.id !== completedActivityId && activity.status === "Queued"
     )
     .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0))[0];
+}
+
+function getActivityCreatedTime(activity: LearningActivityRunnerRow) {
+  return activity.created_at ? new Date(activity.created_at).getTime() : 0;
+}
+
+export function getNewestReadyLearningActivity(
+  activities: LearningActivityRunnerRow[]
+) {
+  const openActivities = activities.filter(
+    (activity) => activity.status !== "Completed"
+  );
+  const readyActivities = openActivities.filter(
+    (activity) => activity.status === "Ready"
+  );
+  const candidates = readyActivities.length > 0 ? readyActivities : openActivities;
+
+  return (
+    [...candidates].sort((a, b) => {
+      const createdDelta = getActivityCreatedTime(b) - getActivityCreatedTime(a);
+      if (createdDelta !== 0) return createdDelta;
+
+      return Number(a.sort_order || 0) - Number(b.sort_order || 0);
+    })[0] || null
+  );
 }
 
 export function getLearningActivityCompletionPayload(now = new Date()) {
