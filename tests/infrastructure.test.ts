@@ -185,6 +185,10 @@ import {
   getLearningActivityRoute,
   getNextQueuedLearningActivity,
 } from "../src/lib/learning/activityRunner";
+import {
+  buildLessonEngineDefinition,
+  getLessonEngineProgress,
+} from "../src/lib/learning/lessonEngine";
 import { learningStandards } from "../src/lib/learning/standards";
 import { generateCurriculumLearningPath } from "../src/lib/learning/learningPaths";
 import { learningPathTemplates } from "../src/lib/learning/templates";
@@ -1306,6 +1310,10 @@ test("learning activities have a dedicated runner and next-activity unlock logic
     "src/app/dashboard/learning/activities/[activityId]/page.tsx",
     "utf8"
   );
+  const lessonEngine = readFileSync(
+    "src/app/dashboard/learning/activities/LessonEngine.tsx",
+    "utf8"
+  );
 
   assert.equal(
     getLearningActivityRoute("activity-123"),
@@ -1349,6 +1357,44 @@ test("learning activities have a dedicated runner and next-activity unlock logic
   assert.match(activityRunner, /Activity Complete/);
   assert.match(activityRunner, /Return to Today/);
   assert.match(activityRunner, /View Activities/);
+  assert.match(activityRunner, /<LessonEngine/);
+  assert.match(lessonEngine, /Learning Engine/);
+});
+
+test("lesson engine supports the full BeastLearning activity cycle", () => {
+  const quizEngine = buildLessonEngineDefinition({
+    activity_type: "Quiz",
+    title: "Check factoring",
+    difficulty: "Beginner",
+  });
+  const coachEngine = buildLessonEngineDefinition({
+    activity_type: "AI Tutor Challenge",
+    title: "Explain a subnetting step",
+    difficulty: "Adaptive",
+  });
+  const progress = getLessonEngineProgress({
+    checkedPhases: {
+      assess: true,
+      learn: true,
+      practice: true,
+      coach: true,
+      reflect: true,
+    },
+    phaseCount: quizEngine.phases.length,
+    reflection: "I need one more review rep.",
+  });
+
+  assert.deepEqual(
+    quizEngine.phases.map((phase) => phase.label),
+    ["Assess", "Lesson", "Practice", "AI Coach", "Reflect"]
+  );
+  assert.equal(quizEngine.completionLabel, "Complete quiz");
+  assert.equal(
+    coachEngine.summary.includes("BeastAI-style guidance"),
+    true
+  );
+  assert.equal(progress.readyToComplete, true);
+  assert.equal(progress.percent, 100);
 });
 
 test("learning onboarding redirect has no duplicate direct redirect sources", () => {

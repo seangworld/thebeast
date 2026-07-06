@@ -1,23 +1,20 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import {
   DashboardCard,
-  MetricTile,
   ModuleBadge,
   SectionHeader,
 } from "@/app/components/design/DashboardPrimitives";
 import {
-  getLearningActivityChecklist,
   getLearningActivityCompletionPayload,
-  getLearningActivityInstructions,
-  getLearningActivityPrimaryActionLabel,
   getNextQueuedLearningActivity,
   type LearningActivityRunnerRow,
 } from "@/lib/learning/activityRunner";
 import { createClient } from "@/lib/supabase/client";
+import { LessonEngine } from "../LessonEngine";
 
 type ActivityRow = LearningActivityRunnerRow & {
   user_id: string;
@@ -42,21 +39,13 @@ export default function LearningActivityRunnerPage() {
   const [activity, setActivity] = useState<ActivityRow | null>(null);
   const [course, setCourse] = useState<CourseRow | null>(null);
   const [allActivities, setAllActivities] = useState<LearningActivityRunnerRow[]>([]);
-  const [checkedSteps, setCheckedSteps] = useState<Record<number, boolean>>({});
+  const [checkedPhases, setCheckedPhases] = useState<Record<string, boolean>>({});
   const [reflection, setReflection] = useState("");
   const [confidence, setConfidence] = useState("Still building");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
-  const checklist = useMemo(
-    () => getLearningActivityChecklist(activity?.activity_type || "Lesson"),
-    [activity?.activity_type]
-  );
-  const completedSteps = checklist.filter((_, index) => checkedSteps[index]).length;
-  const readyToComplete =
-    activity?.status === "Completed" ||
-    (completedSteps === checklist.length && reflection.trim().length > 0);
   const completedActivity = activity?.status === "Completed";
 
   const loadActivity = useCallback(async () => {
@@ -131,8 +120,8 @@ export default function LearningActivityRunnerPage() {
   async function completeActivity() {
     if (!activity || !userId || activity.status === "Completed") return;
 
-    if (!readyToComplete) {
-      setMessage("Finish each step and add a short reflection before completing.");
+    if (reflection.trim().length === 0) {
+      setMessage("Add a short reflection before completing.");
       return;
     }
 
@@ -240,130 +229,24 @@ export default function LearningActivityRunnerPage() {
               </DashboardCard>
             ) : null}
 
-            <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              <MetricTile
-                label="Type"
-                value={activity.activity_type}
-                detail={course?.title || "Learning path"}
-                icon="A"
-                tone="purple"
-              />
-              <MetricTile
-                label="Difficulty"
-                value={activity.difficulty}
-                detail="Current challenge level"
-                icon="D"
-                tone="green"
-              />
-              <MetricTile
-                label="Time"
-                value={`${activity.estimated_minutes} min`}
-                detail="Estimated focus block"
-                icon="T"
-                tone="blue"
-              />
-              <MetricTile
-                label="XP"
-                value={String(activity.xp)}
-                detail={activity.status}
-                icon="XP"
-                tone="yellow"
-              />
-            </section>
-
-            <DashboardCard accent="learning">
-              <SectionHeader
-                eyebrow={activity.activity_type}
-                title="What to do"
-                description={getLearningActivityInstructions(activity.activity_type)}
-                action={<ModuleBadge module="learning" label={activity.status} />}
-              />
-              <div className="mt-5 grid gap-3">
-                {checklist.map((step, index) => (
-                  <label
-                    key={step}
-                    className="flex items-start gap-3 rounded-xl border border-[#2a3242] bg-[#111827] p-4"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={completedActivity || Boolean(checkedSteps[index])}
-                      disabled={completedActivity}
-                      onChange={(event) =>
-                        setCheckedSteps((current) => ({
-                          ...current,
-                          [index]: event.target.checked,
-                        }))
-                      }
-                      className="mt-1 h-4 w-4 accent-indigo-300"
-                    />
-                    <span className="text-sm font-semibold leading-6 text-[#dbe3ef]">
-                      {step}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </DashboardCard>
-
-            <DashboardCard accent="purple">
-              <SectionHeader
-                eyebrow="Reflection"
-                title="Capture the takeaway"
-                description="A short reflection helps you leave knowing what changed and what to do next."
-              />
-              <div className="mt-5 grid gap-4">
-                <label className="block">
-                  <span className="text-sm font-semibold text-[#c7cfdb]">
-                    What did you learn or notice?
-                  </span>
-                  <textarea
-                    value={reflection}
-                    onChange={(event) => setReflection(event.target.value)}
-                    disabled={completedActivity}
-                    rows={5}
-                    className="beast-input mt-2 min-h-32 resize-y"
-                    placeholder="Write one sentence about what clicked, what was hard, or what you want to review."
-                  />
-                </label>
-                <label className="block">
-                  <span className="text-sm font-semibold text-[#c7cfdb]">
-                    Confidence
-                  </span>
-                  <select
-                    value={confidence}
-                    onChange={(event) => setConfidence(event.target.value)}
-                    disabled={completedActivity}
-                    className="beast-input mt-2"
-                  >
-                    <option>Still building</option>
-                    <option>Getting clearer</option>
-                    <option>Ready for more</option>
-                  </select>
-                </label>
-                <div className="flex flex-wrap items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={completeActivity}
-                    disabled={
-                      saving ||
-                      completedActivity ||
-                      !readyToComplete
-                    }
-                    className="beast-button disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {saving
-                      ? "Saving..."
-                      : completedActivity
-                        ? "Completed"
-                        : getLearningActivityPrimaryActionLabel(activity.activity_type)}
-                  </button>
-                  <p className="text-sm font-semibold text-[#9aa7b8]">
-                    {completedActivity
-                      ? "This activity is complete."
-                      : `${completedSteps} of ${checklist.length} steps checked - Confidence: ${confidence}`}
-                  </p>
-                </div>
-              </div>
-            </DashboardCard>
+            <LessonEngine
+              activity={activity}
+              courseTitle={course?.title || "Learning path"}
+              checkedPhases={checkedPhases}
+              reflection={reflection}
+              confidence={confidence}
+              saving={saving}
+              completed={Boolean(completedActivity)}
+              onPhaseChange={(phaseId, checked) =>
+                setCheckedPhases((current) => ({
+                  ...current,
+                  [phaseId]: checked,
+                }))
+              }
+              onReflectionChange={setReflection}
+              onConfidenceChange={setConfidence}
+              onComplete={completeActivity}
+            />
           </>
         ) : (
           <DashboardCard accent="learning">
