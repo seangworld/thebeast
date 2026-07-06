@@ -32,6 +32,13 @@ type ActivityRow = {
   sort_order?: number | null;
 };
 
+type ProfileNameRow = {
+  preferred_name?: string | null;
+  display_name?: string | null;
+  full_name?: string | null;
+  username?: string | null;
+};
+
 type TodayState = {
   userId: string;
   name: string;
@@ -197,8 +204,20 @@ export default function TodayPage() {
         return;
       }
 
-      const [learnerResult, coursesResult, plansResult, sessionsResult, activitiesResult] =
+      const [
+        profileResult,
+        learnerResult,
+        coursesResult,
+        plansResult,
+        sessionsResult,
+        activitiesResult,
+      ] =
         await Promise.all([
+          supabase
+            .from("profiles")
+            .select("preferred_name, display_name, full_name, username")
+            .eq("id", authUser.id)
+            .maybeSingle(),
           supabase
             .from("learning_profiles")
             .select("id")
@@ -229,6 +248,7 @@ export default function TodayPage() {
             .order("sort_order", { ascending: true }),
         ]);
 
+      if (profileResult.error) throw profileResult.error;
       if (learnerResult.error) throw learnerResult.error;
       if (coursesResult.error) throw coursesResult.error;
       if (plansResult.error) throw plansResult.error;
@@ -249,7 +269,10 @@ export default function TodayPage() {
 
       setState({
         userId: authUser.id,
-        name: getProfileDisplayName(null, authUser),
+        name: getProfileDisplayName(
+          (profileResult.data as ProfileNameRow | null) || null,
+          authUser
+        ),
         learnerProfileId,
         planId: ensured.planId,
         sessionId: ensured.sessionId,

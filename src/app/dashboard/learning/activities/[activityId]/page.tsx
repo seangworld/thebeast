@@ -57,6 +57,7 @@ export default function LearningActivityRunnerPage() {
   const readyToComplete =
     activity?.status === "Completed" ||
     (completedSteps === checklist.length && reflection.trim().length > 0);
+  const completedActivity = activity?.status === "Completed";
 
   const loadActivity = useCallback(async () => {
     setLoading(true);
@@ -217,6 +218,28 @@ export default function LearningActivityRunnerPage() {
           </DashboardCard>
         ) : activity ? (
           <>
+            {completedActivity ? (
+              <DashboardCard accent="green">
+                <SectionHeader
+                  eyebrow="Activity Complete"
+                  title="Nice work. Your progress is saved."
+                  description="Your activity is marked complete, your XP now counts on Today, and the next queued activity is ready when available."
+                  action={<ModuleBadge module="learning" label="Saved" />}
+                />
+                <div className="mt-5 flex flex-wrap gap-3">
+                  <Link href="/dashboard/today" className="beast-button">
+                    Return to Today
+                  </Link>
+                  <Link
+                    href="/dashboard/learning/activities"
+                    className="beast-button-secondary"
+                  >
+                    View Activities
+                  </Link>
+                </div>
+              </DashboardCard>
+            ) : null}
+
             <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               <MetricTile
                 label="Type"
@@ -263,8 +286,8 @@ export default function LearningActivityRunnerPage() {
                   >
                     <input
                       type="checkbox"
-                      checked={activity.status === "Completed" || Boolean(checkedSteps[index])}
-                      disabled={activity.status === "Completed"}
+                      checked={completedActivity || Boolean(checkedSteps[index])}
+                      disabled={completedActivity}
                       onChange={(event) =>
                         setCheckedSteps((current) => ({
                           ...current,
@@ -295,7 +318,7 @@ export default function LearningActivityRunnerPage() {
                   <textarea
                     value={reflection}
                     onChange={(event) => setReflection(event.target.value)}
-                    disabled={activity.status === "Completed"}
+                    disabled={completedActivity}
                     rows={5}
                     className="beast-input mt-2 min-h-32 resize-y"
                     placeholder="Write one sentence about what clicked, what was hard, or what you want to review."
@@ -308,7 +331,7 @@ export default function LearningActivityRunnerPage() {
                   <select
                     value={confidence}
                     onChange={(event) => setConfidence(event.target.value)}
-                    disabled={activity.status === "Completed"}
+                    disabled={completedActivity}
                     className="beast-input mt-2"
                   >
                     <option>Still building</option>
@@ -322,19 +345,19 @@ export default function LearningActivityRunnerPage() {
                     onClick={completeActivity}
                     disabled={
                       saving ||
-                      activity.status === "Completed" ||
+                      completedActivity ||
                       !readyToComplete
                     }
                     className="beast-button disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {saving
                       ? "Saving..."
-                      : activity.status === "Completed"
+                      : completedActivity
                         ? "Completed"
                         : getLearningActivityPrimaryActionLabel(activity.activity_type)}
                   </button>
                   <p className="text-sm font-semibold text-[#9aa7b8]">
-                    {activity.status === "Completed"
+                    {completedActivity
                       ? "This activity is complete."
                       : `${completedSteps} of ${checklist.length} steps checked - Confidence: ${confidence}`}
                   </p>

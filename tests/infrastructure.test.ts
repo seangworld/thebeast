@@ -1129,6 +1129,26 @@ test("learning onboarding completion uses profiles.id as the auth user key", () 
   assert.notEqual(profileOnboardingCompletionKeyColumn, "user_id");
 });
 
+test("profile display name prefers profile names before username and email", () => {
+  const profileSource = readFileSync("src/lib/profile.ts", "utf8");
+  const returnExpression = profileSource.slice(profileSource.indexOf("return ("));
+  const preferenceOrder = [
+    "profile?.preferred_name",
+    "profile?.display_name",
+    "profile?.full_name",
+    "profile?.username",
+    "metadata?.preferred_name",
+    "emailPrefix",
+  ];
+  const indexes = preferenceOrder.map((token) => returnExpression.indexOf(token));
+
+  assert.equal(indexes.every((index) => index >= 0), true);
+  assert.equal(
+    indexes.every((index, position) => position === 0 || index > indexes[position - 1]),
+    true
+  );
+});
+
 test("learning onboarding validation names the exact missing required field", () => {
   const result = validateLearningOnboardingForm({
     preferredName: "Taylor",
@@ -1220,6 +1240,11 @@ test("dashboard global loading copy stays module neutral", () => {
 });
 
 test("learning activities have a dedicated runner and next-activity unlock logic", () => {
+  const activityRunner = readFileSync(
+    "src/app/dashboard/learning/activities/[activityId]/page.tsx",
+    "utf8"
+  );
+
   assert.equal(
     getLearningActivityRoute("activity-123"),
     "/dashboard/learning/activities/activity-123"
@@ -1259,6 +1284,9 @@ test("learning activities have a dedicated runner and next-activity unlock logic
       .completed_at,
     "2026-07-06T12:00:00.000Z"
   );
+  assert.match(activityRunner, /Activity Complete/);
+  assert.match(activityRunner, /Return to Today/);
+  assert.match(activityRunner, /View Activities/);
 });
 
 test("learning onboarding redirect has no duplicate direct redirect sources", () => {

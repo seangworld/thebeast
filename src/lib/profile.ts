@@ -13,7 +13,7 @@ function cleanName(value: unknown) {
 export function getProfileDisplayName(
   profile?: Pick<
     Profile,
-    "preferred_name" | "display_name" | "full_name"
+    "preferred_name" | "display_name" | "full_name" | "username"
   > | null,
   user?: AuthUserIdentity
 ) {
@@ -24,6 +24,7 @@ export function getProfileDisplayName(
     cleanName(profile?.preferred_name) ||
     cleanName(profile?.display_name) ||
     cleanName(profile?.full_name) ||
+    cleanName(profile?.username) ||
     cleanName(metadata?.preferred_name) ||
     cleanName(metadata?.display_name) ||
     cleanName(metadata?.full_name) ||
