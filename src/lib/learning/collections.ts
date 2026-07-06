@@ -41,7 +41,7 @@ export const learningResourceCollections: ResourceCollection[] = [
     id: "financial-literacy-collection",
     title: "Financial Literacy",
     subject: "Finance",
-    description: "Reserved collection for future personal finance learning paths.",
+    description: "Collection for personal finance learning paths.",
     resourceIds: [],
     materialIds: [],
     courseIds: [],

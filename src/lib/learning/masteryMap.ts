@@ -15,7 +15,7 @@ function statusForMastery(value: number): MasteryMapStatus {
   if (value >= 50) return "Learning";
   if (value >= 25) return "Needs Review";
   if (value > 0) return "Not Started";
-  return "Future";
+  return "Upcoming";
 }
 
 export function buildMasteryMap(subjectId = "cybersecurity"): MasteryMap {

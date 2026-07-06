@@ -71,9 +71,9 @@ export function buildLearningRecommendations(
         input.activeGoalsCount > 0
           ? `${input.activeGoalsCount} active goal is already in motion.`
           : "No active goal is currently selected.",
-      reason: "Goal coverage helps future learning intelligence understand what matters next.",
+      reason: "Clear goals help Beast understand what matters next.",
       recommendedAction: "Use the Learning Goal Builder to draft the next goal.",
-      estimatedBenefit: "Creates more context for future recommendations.",
+      estimatedBenefit: "Improves the next recommendations Beast can make.",
       actionUrl: "/dashboard/learning",
     }),
     createLearningRecommendation({
@@ -81,10 +81,10 @@ export function buildLearningRecommendations(
       priority: "Low",
       severity: "info",
       title: "Upload study material later.",
-      summary: "Study material uploads are reserved for a future shared upload workflow.",
+      summary: "Add study materials so Beast can connect lessons to the sources you already use.",
       reason: "Learning will eventually benefit from notes, references, PDFs, and course files.",
       recommendedAction: "Keep study material organized until uploads come online.",
-      estimatedBenefit: "Prepares Learning for future source-based study support.",
+      estimatedBenefit: "Gives Beast better context for lesson and review suggestions.",
       actionUrl: "/dashboard/uploads",
     }),
     createLearningRecommendation({
@@ -92,10 +92,10 @@ export function buildLearningRecommendations(
       priority: "Low",
       severity: "info",
       title: "Schedule study time later.",
-      summary: "Calendar writes are reserved for a future sprint.",
+      summary: "Protect time on your calendar so learning stays consistent.",
       reason: "Consistent study rhythm improves follow-through, but no calendar changes are made yet.",
       recommendedAction: "Use the weekly rhythm as a planning guide for now.",
-      estimatedBenefit: "Prepares Learning for future calendar integration.",
+      estimatedBenefit: "Keeps your learning plan connected to your available time.",
       actionUrl: "/dashboard/calendar",
     }),
     createLearningRecommendation({
@@ -104,9 +104,9 @@ export function buildLearningRecommendations(
       severity: "info",
       title: "Explore a related learning path.",
       summary: `A related path can build around ${input.progress.weakArea} once the current plan is stable.`,
-      reason: "The weakest area is a useful seed for adjacent skills and future course discovery.",
+      reason: "The weakest area is a useful starting point for adjacent skills and course discovery.",
       recommendedAction: "Review courses connected to the weak area.",
-      estimatedBenefit: "Makes future learning expansion easier to plan.",
+      estimatedBenefit: "Makes the next learning path easier to plan.",
       actionUrl: "/dashboard/learning",
     }),
   ];

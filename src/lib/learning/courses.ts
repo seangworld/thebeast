@@ -49,7 +49,7 @@ export const builtLearningCourses: LearningBuiltCourse[] = [
                 activities: [
                   { id: "rbac-video", type: "video", title: "Watch RBAC walkthrough", estimatedMinutes: 12, completed: false },
                   { id: "rbac-reflection", type: "reflection", title: "Write one RBAC workplace example", estimatedMinutes: 8, completed: false },
-                  { id: "rbac-assessment", type: "assessment placeholder", title: "Check RBAC readiness", estimatedMinutes: 10, completed: false },
+                  { id: "rbac-assessment", type: "assessment", title: "Check RBAC readiness", estimatedMinutes: 10, completed: false },
                 ],
               },
             ],

@@ -34,7 +34,7 @@ export const curriculumSubjects: CurriculumSubject[] = [
                           {
                             id: "objective-identity-proofing",
                             title: "Differentiate identity proofing and authentication.",
-                            metadata: "Certification objective placeholder",
+                            metadata: "Certification objective",
                           },
                         ],
                       },
@@ -53,7 +53,7 @@ export const curriculumSubjects: CurriculumSubject[] = [
                           {
                             id: "objective-auth-factors",
                             title: "Classify knowledge, possession, and inherence factors.",
-                            metadata: "Certification objective placeholder",
+                            metadata: "Certification objective",
                           },
                         ],
                       },
@@ -79,7 +79,7 @@ export const curriculumSubjects: CurriculumSubject[] = [
                           {
                             id: "objective-rbac",
                             title: "Map users to roles and roles to permissions.",
-                            metadata: "Certification objective placeholder",
+                            metadata: "Certification objective",
                           },
                         ],
                       },
@@ -126,7 +126,7 @@ export const curriculumSubjects: CurriculumSubject[] = [
                           {
                             id: "objective-linear-equations",
                             title: "Solve one-variable linear equations.",
-                            metadata: "Common Core placeholder",
+                            metadata: "Common Core standard",
                           },
                         ],
                       },

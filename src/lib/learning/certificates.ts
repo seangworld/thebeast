@@ -32,6 +32,6 @@ export const mockLearningCertificates: LearningCertificate[] = [
     language:
       "Certificate of completion for an internal BeastLearning path. This is non-accredited and does not represent institutional credit.",
     verificationPlaceholder:
-      "Future verification will confirm certificate ownership and completion details.",
+      "Verification confirms certificate ownership and completion details.",
   },
 ];

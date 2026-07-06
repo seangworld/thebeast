@@ -28,8 +28,8 @@ export default function LearningAIOrchestrationPanel({
       <SectionHeader
         eyebrow="AI Orchestration"
         title="Specialist routing platform"
-        description="A mocked orchestration layer that selects future learning experts from structured context without prompts, streaming, model calls, or external APIs."
-        action={<ModuleBadge module="learning" label="v0.7 Mocked" />}
+        description="Beast routes each learning need to the right specialist using learner context, goals, and session history."
+        action={<ModuleBadge module="learning" label="Guided AI" />}
       />
 
       <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -124,7 +124,9 @@ export default function LearningAIOrchestrationPanel({
                 >
                   <span className="text-sm font-bold text-white">{specialist.name}</span>
                   <span className="text-xs font-bold uppercase text-[#7f8da3]">
-                    {specialist.futureAIStatus}
+                    {specialist.futureAIStatus === "connected"
+                      ? "Available"
+                      : "Coming next"}
                   </span>
                 </div>
               ))}
@@ -163,7 +165,7 @@ export default function LearningAIOrchestrationPanel({
 
           <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
             <div className="text-xs font-bold uppercase text-[#7f8da3]">
-              Future AI Status
+              AI Readiness
             </div>
             <p className="mt-2 text-sm leading-5 text-[#c7cfdb]">
               {orchestration.futureAIStatus}

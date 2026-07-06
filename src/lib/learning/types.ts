@@ -581,7 +581,7 @@ export type CourseActivityType =
   | "project"
   | "discussion"
   | "reflection"
-  | "assessment placeholder";
+  | "assessment";
 
 export type CourseActivity = {
   id: string;
@@ -656,9 +656,9 @@ export type QuizQuestionType =
   | "true/false"
   | "matching"
   | "fill in blank"
-  | "short answer placeholder"
-  | "coding placeholder"
-  | "essay placeholder";
+  | "short answer"
+  | "coding"
+  | "essay";
 
 export type LearningQuizQuestion = {
   id: string;
@@ -819,7 +819,7 @@ export type LearningDashboardContent = {
 
 export type OnboardingStepId =
   | "welcome"
-  | "future-self"
+  | "long-term-goal"
   | "interests"
   | "education-level"
   | "learning-style"
@@ -1171,7 +1171,7 @@ export type MasteryMapStatus =
   | "Learning"
   | "Needs Review"
   | "Not Started"
-  | "Future";
+  | "Upcoming";
 
 export type MasteryMapNode = {
   id: string;

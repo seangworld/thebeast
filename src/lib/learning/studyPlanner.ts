@@ -39,9 +39,9 @@ export const mockStudyPlanner: StudyPlanner = {
   examsAndDeadlines: [
     {
       id: "exam-date-placeholder",
-      title: "Exam date placeholder",
+      title: "Add exam date",
       targetDate: "Not scheduled",
-      status: "placeholder",
+      status: "planned",
     },
   ],
   placeholderActions: ["Schedule study time", "Add exam date", "Create reminder"],

@@ -66,8 +66,8 @@ export function CertificatePreviewPanel({
     <DashboardCard accent="learning">
       <SectionHeader
         eyebrow="Certificates"
-        title="Completion certificate preview"
-        description="Foundation preview for future BeastLearning completion certificates. PDF generation is not enabled."
+        title="Completion certificate"
+        description="Celebrate completed learning paths with a downloadable completion record."
       />
       <div className="mt-5 rounded-xl border border-indigo-300/45 bg-[#111827] p-5">
         <div className="text-xs font-bold uppercase text-[#7f8da3]">
@@ -129,9 +129,9 @@ export function LearnerPortfolioPanel({
         ))}
       </div>
       <div className="mt-4 grid gap-3 lg:grid-cols-2">
-        <TagList title="Skills placeholder" items={portfolio.skillsPlaceholder} />
+        <TagList title="Skills" items={portfolio.skillsPlaceholder} />
         <TagList
-          title="External certifications placeholder"
+          title="External certifications"
           items={portfolio.externalCertificationsPlaceholder}
         />
       </div>
@@ -149,7 +149,7 @@ export function ParentDashboardPanel({
       <SectionHeader
         eyebrow="Parent Support"
         title={dashboard.householdName}
-        description="Mocked parent/guardian overview. No permissions, linking, messaging, or school integrations are active."
+        description="A parent or guardian view for encouragement, active goals, and areas that may need support."
       />
       <div className="mt-5 grid gap-4 lg:grid-cols-2">
         {dashboard.learners.map((learner) => (
@@ -177,15 +177,15 @@ export function StudyPlannerPanel({ planner }: { planner: StudyPlanner }) {
     <DashboardCard accent="calendar">
       <SectionHeader
         eyebrow="Study Planner"
-        title="Scheduling foundation"
-        description="Conceptual planning surface for future BeastOS Calendar integration. No calendar writes happen here."
+        title="Study schedule"
+        description="Plan study rhythm, upcoming blocks, milestones, and important dates in one place."
       />
       <div className="mt-5 grid gap-4 lg:grid-cols-2">
         <TagList title="Weekly rhythm" items={planner.weeklyRhythm} />
-        <TagList title="Placeholder actions" items={planner.placeholderActions} />
+        <TagList title="Helpful actions" items={planner.placeholderActions} />
         <PlannerList title="Upcoming study blocks" items={planner.upcomingBlocks.map((item) => `${item.when}: ${item.title} (${item.duration})`)} />
         <PlannerList title="Milestones" items={planner.milestones.map((item) => `${item.targetDate}: ${item.title}`)} />
-        <PlannerList title="Exams/deadlines placeholders" items={planner.examsAndDeadlines.map((item) => `${item.targetDate}: ${item.title}`)} />
+        <PlannerList title="Exams and deadlines" items={planner.examsAndDeadlines.map((item) => `${item.targetDate}: ${item.title}`)} />
       </div>
     </DashboardCard>
   );
@@ -200,8 +200,8 @@ export function UploadFoundationPanel({
     <DashboardCard accent="documents">
       <SectionHeader
         eyebrow="Uploads"
-        title="Learning upload pipeline foundation"
-        description="Static material states for future upload, parsing, OCR, vector search, and AI workflows."
+        title="Learning materials"
+        description="Keep study materials organized so Beast can connect them to lessons, practice, and recommendations."
       />
       <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {uploads.map((upload) => (

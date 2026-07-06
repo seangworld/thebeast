@@ -10,7 +10,7 @@ export const careerKnowledgeCatalog: CareerKnowledgeModel[] = [
     recommendedSkillIds: ["explain-identity-proofing", "classify-auth-factors", "design-rbac"],
     recommendedCertificationIds: ["comptia-security-plus"],
     salaryPlaceholder: "Market salary varies by location and experience.",
-    growthPlaceholder: "Growth placeholder: strong demand for security operations skills.",
+    growthPlaceholder: "Strong demand for security operations skills.",
     relatedCareerIds: ["cloud-security-specialist", "network-technician"],
   },
   {
@@ -22,7 +22,7 @@ export const careerKnowledgeCatalog: CareerKnowledgeModel[] = [
     recommendedSkillIds: ["design-rbac"],
     recommendedCertificationIds: ["aws-cloud-practitioner"],
     salaryPlaceholder: "Market salary varies by cloud platform and experience.",
-    growthPlaceholder: "Growth placeholder: cloud governance and identity skills remain valuable.",
+    growthPlaceholder: "Cloud governance and identity skills remain valuable.",
     relatedCareerIds: ["security-analyst"],
   },
   {
@@ -34,7 +34,7 @@ export const careerKnowledgeCatalog: CareerKnowledgeModel[] = [
     recommendedSkillIds: ["classify-auth-factors"],
     recommendedCertificationIds: ["cisco-ccna"],
     salaryPlaceholder: "Market salary varies by region and employer.",
-    growthPlaceholder: "Growth placeholder: steady demand for infrastructure support.",
+    growthPlaceholder: "Steady demand for infrastructure support.",
     relatedCareerIds: ["security-analyst"],
   },
 ];

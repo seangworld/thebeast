@@ -46,7 +46,7 @@ function buildExpandedLearnerProfile({
 }): ExpandedLearnerProfile {
   return {
     learnerName,
-    bioPlaceholder: "Future learner bio and context notes will live here.",
+    bioPlaceholder: "Learner bio and context notes will appear here.",
     favoriteSubjects: ["Cybersecurity", "Math"],
     currentStreak: progress.currentStreakDays,
     xp: gamification.xp,
@@ -119,9 +119,9 @@ export function buildLearningExperienceDashboard({
       learnerName,
       completionSummary: "Completed a structured BeastLearning foundation path.",
       skillsEarned: ["Security Foundations", "Study Rhythm", "Review Discipline"],
-      sharePlaceholder: "Share certificate placeholder",
-      downloadPlaceholder: "Download certificate placeholder",
-      verificationPlaceholder: certificateVerification || "Future verification placeholder.",
+      sharePlaceholder: "Share certificate",
+      downloadPlaceholder: "Download certificate",
+      verificationPlaceholder: certificateVerification || "Verification details will appear here.",
     },
     motivation,
     habits,

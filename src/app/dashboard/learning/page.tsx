@@ -626,7 +626,7 @@ export default async function LearningPage() {
             <SectionHeader
               eyebrow="Student Profiles"
               title="Learner context"
-              description="One current learner is active now. Family learner switching has a permanent visual home for future support."
+              description="Keep the active learner context close so recommendations stay personal."
             />
             <div className="mt-5">
               <LearnerSwitcher learners={learnerList} />
@@ -637,13 +637,13 @@ export default async function LearningPage() {
             <SectionHeader
               eyebrow="Learning Snapshot"
               title="Readiness and direction"
-              description="The foundation tracks plan shape, progress signals, and future tutoring context without AI or quiz logic."
+              description="See your current plan, readiness, weak areas, and the next useful action."
             />
             <div className="mt-5 grid gap-4 lg:grid-cols-[0.7fr_1fr]">
               <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
                 <HealthGauge score={progressSignals.readinessScore} />
                 <div className="mt-4 text-center text-sm font-semibold text-[#c7cfdb]">
-                  Readiness placeholder
+                  Readiness score
                 </div>
               </div>
               <div className="grid gap-3">
@@ -715,7 +715,7 @@ export default async function LearningPage() {
             <SectionHeader
               eyebrow="Upcoming Lessons"
               title="Next study blocks"
-              description="Lesson scheduling is presentation-only for now and ready for future calendar integration."
+              description="Use these study blocks to keep momentum and know what is coming next."
             />
             <div className="mt-5 grid gap-3">
               {learningSessions.map((lesson) => (
@@ -744,7 +744,7 @@ export default async function LearningPage() {
             <SectionHeader
               eyebrow="Learning Goals"
               title="Editable goal cards"
-              description="These cards establish the future user-defined goal model without changing the database yet."
+              description="Track the outcomes Beast should personalize around."
             />
             <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {learningGoals.map((goal) => (
@@ -827,7 +827,7 @@ export default async function LearningPage() {
             <SectionHeader
               eyebrow="Recommendations"
               title="Learning guidance"
-              description="Recommendations use the shared BeastOS recommendation contract. Future AI can populate the same shape later."
+              description="Beast turns your progress signals into clear next steps."
             />
             <div className="mt-5 grid gap-3">
               {learningRecommendations.map((recommendation) => (
@@ -848,10 +848,10 @@ export default async function LearningPage() {
         </section>
 
         <DashboardCard accent="learning">
-          <SectionHeader
-            eyebrow="Quick Actions"
-            title="Learning launchpad"
-            description="Common learning actions are mapped now, with future engines clearly reserved."
+            <SectionHeader
+              eyebrow="Quick Actions"
+              title="Learning launchpad"
+              description="Jump into the actions most likely to keep learning moving."
           />
           <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {learningQuickActions.map((action) => (

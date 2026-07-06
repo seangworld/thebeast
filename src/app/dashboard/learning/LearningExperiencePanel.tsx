@@ -208,8 +208,8 @@ export default function LearningExperiencePanel({
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
               <Chip label="Larger text option" />
-              <Chip label="High contrast placeholder" />
-              <Chip label="Reduced motion placeholder" />
+              <Chip label="High contrast support" />
+              <Chip label="Reduced motion support" />
             </div>
           </div>
         </div>

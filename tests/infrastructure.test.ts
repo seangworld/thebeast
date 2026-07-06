@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync, statSync } from "node:fs";
 import {
   DEBT_STRATEGIES,
   getDebtStrategyDescription,
@@ -244,6 +244,26 @@ test("app version constants reflect BeastOS and BeastLearning closeout", () => {
   assert.equal(APP_VERSION, "v2.1");
   assert.equal(BEAST_LEARNING_VERSION, "v1.0 Private Beta");
   assert.equal(BEASTOS_UI_POLISH_NOTE, "two-tone module branding restored");
+});
+
+function readSourceFiles(directory: string): string[] {
+  return readdirSync(directory).flatMap((entry) => {
+    const path = `${directory}/${entry}`;
+    const stat = statSync(path);
+
+    if (stat.isDirectory()) {
+      return readSourceFiles(path);
+    }
+
+    return /\.(ts|tsx|js|jsx)$/.test(entry) ? [readFileSync(path, "utf8")] : [];
+  });
+}
+
+test("source copy does not expose developer readiness labels", () => {
+  const source = readSourceFiles("src").join("\n");
+
+  assert.equal(source.includes("Supabase-ready"), false);
+  assert.equal(source.includes("API-ready"), false);
 });
 
 test("module navigation centralizes expandable child items", () => {
@@ -667,8 +687,8 @@ test("guidance counselor roadmap uses static goal-type rules", () => {
   });
 
   assert.equal(roadmap.title, "Certification: Security+");
-  assert.equal(roadmap.previewLabel, "Early planning preview");
-  assert.equal(roadmap.estimatedTimeline, "6-10 week prep placeholder");
+  assert.equal(roadmap.previewLabel, "Planning Guide");
+  assert.equal(roadmap.estimatedTimeline, "6-10 week prep plan");
   assert.equal(
     roadmap.requiredEducationOrTraining.some((item) =>
       item.includes("exam objectives")
@@ -982,7 +1002,7 @@ test("learning course builder models modules lessons topics and activities", () 
     course.modules.some((module) =>
       module.lessons.some((lesson) =>
         lesson.topics.some((topic) =>
-          topic.activities.some((activity) => activity.type === "assessment placeholder")
+          topic.activities.some((activity) => activity.type === "assessment")
         )
       )
     ),
@@ -1092,7 +1112,7 @@ test("learning onboarding models the full first-time experience", () => {
     learningOnboardingSteps.map((step) => step.id),
     [
       "welcome",
-      "future-self",
+      "long-term-goal",
       "interests",
       "education-level",
       "learning-style",

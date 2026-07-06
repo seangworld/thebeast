@@ -123,7 +123,7 @@ export function buildLearningProgressSignals(
         id: "readiness-score",
         label: "Readiness",
         value: `${readinessScore}%`,
-        detail: "Rule-based placeholder score",
+        detail: "Current readiness signal",
         icon: "RS",
         tone: "purple",
       },

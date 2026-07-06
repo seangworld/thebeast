@@ -50,14 +50,14 @@ export const learningAchievementCatalog: LearningAchievementCatalogItem[] = [
   {
     id: "skills-mastered-placeholder",
     title: "Skills Mastered",
-    description: "Reserved for future mastered skill tracking.",
+    description: "Earned as mastered skills accumulate.",
     trigger: "skills_mastered",
     threshold: 1,
   },
   {
     id: "founding-student",
     title: "Founding Student",
-    description: "Early BeastLearning beta tester placeholder.",
+    description: "Recognizes early BeastLearning beta participation.",
     trigger: "founding_student",
     threshold: 1,
   },

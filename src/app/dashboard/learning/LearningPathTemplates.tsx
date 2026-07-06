@@ -27,8 +27,8 @@ export default function LearningPathTemplates({
       <SectionHeader
         eyebrow="Path Templates"
         title="Starter learning paths"
-        description="Reusable static templates for common learning scenarios. These are preview-only foundations for future personalized planning."
-        action={<ModuleBadge module="learning" label="Static Templates" />}
+        description="Choose from common starting points that Beast can shape into a personal learning path."
+        action={<ModuleBadge module="learning" label="Starter Paths" />}
       />
 
       <div className="mt-5 grid gap-4 xl:grid-cols-[0.85fr_1.15fr]">
@@ -65,7 +65,7 @@ export default function LearningPathTemplates({
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                Template preview
+                Path outline
               </div>
               <h3 className="mt-2 text-2xl font-black text-white">
                 {selectedTemplate.templateName}

@@ -30,8 +30,8 @@ export default function GuidanceCounselorMode() {
     <DashboardCard accent="learning">
       <SectionHeader
         eyebrow="Guidance Counselor"
-        title="Planning preview"
-        description="A non-AI counselor mode stub for exploring future goals with static rule-based roadmap logic."
+        title="Goal planning"
+        description="Explore a goal and turn it into a clear roadmap with milestones, skills, and next steps."
         action={<ModuleBadge module="learning" label={roadmap.previewLabel} />}
       />
 
@@ -39,7 +39,7 @@ export default function GuidanceCounselorMode() {
         <div className="grid gap-4 rounded-xl border border-[#2a3242] bg-[#111827] p-4">
           <label className="block">
             <span className="text-xs font-bold uppercase text-[#7f8da3]">
-              Future goal type
+              Goal type
             </span>
             <select
               className="mt-2 w-full rounded-xl border border-[#2a3242] bg-[#0f1419] px-3 py-3 text-sm font-semibold text-white outline-none transition focus:border-indigo-300/60"
@@ -58,7 +58,7 @@ export default function GuidanceCounselorMode() {
 
           <label className="block">
             <span className="text-xs font-bold uppercase text-[#7f8da3]">
-              Future goal
+              Goal
             </span>
             <input
               className="mt-2 w-full rounded-xl border border-[#2a3242] bg-[#0f1419] px-3 py-3 text-sm font-semibold text-white outline-none transition placeholder:text-[#596579] focus:border-indigo-300/60"

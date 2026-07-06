@@ -9,9 +9,9 @@ export const learningOnboardingSteps: LearningOnboardingStep[] = [
     skippable: true,
   },
   {
-    id: "future-self",
+    id: "long-term-goal",
     title: "What do you want to become?",
-    prompt: "Choose the future role or capability that matters most.",
+    prompt: "Choose the role or capability that matters most.",
     options: ["Certified professional", "Stronger student", "Career changer", "Skilled maker"],
     skippable: true,
   },

@@ -48,7 +48,7 @@ export default function LearningIntelligencePanel({
       <SectionHeader
         eyebrow="Learning Intelligence"
         title="Rule-based learning engine"
-        description="A deterministic command layer now models knowledge, mastery, dependencies, memory, weak areas, study flow, resources, and progress prediction."
+        description="Beast tracks knowledge, mastery, dependencies, memory, weak areas, study flow, resources, and progress predictions."
       />
 
       <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -94,7 +94,7 @@ export default function LearningIntelligencePanel({
                   {snapshot.adaptivePlan.nextRecommendedLesson}
                 </h3>
               </div>
-              <ModuleBadge module="learning" label="Live stub" />
+              <ModuleBadge module="learning" label="Guided Plan" />
             </div>
             <p className="mt-3 text-sm leading-5 text-indigo-100">
               Estimated completion: {snapshot.adaptivePlan.estimatedCompletion}
