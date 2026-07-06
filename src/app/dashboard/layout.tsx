@@ -80,6 +80,7 @@ export default function DashboardLayout({
   const [expandedModule, setExpandedModule] = useState<ModuleKey | null>(null);
   const [learningOnlyNavigation, setLearningOnlyNavigation] = useState(false);
   const [resolvingOnboarding, setResolvingOnboarding] = useState(true);
+  const [dashboardGuardResolved, setDashboardGuardResolved] = useState(false);
   const [onboardingDiagnosticError, setOnboardingDiagnosticError] = useState("");
   const [onboardingRedirectDiagnostic, setOnboardingRedirectDiagnostic] = useState<{
     source: string;
@@ -312,6 +313,7 @@ export default function DashboardLayout({
       });
 
       setLearningOnlyNavigation(useLearningOnlyNavigation);
+      setDashboardGuardResolved(true);
 
       if (
         useLearningOnlyNavigation &&
@@ -383,7 +385,12 @@ export default function DashboardLayout({
     );
   }
 
-  if (resolvingOnboarding) {
+  const shouldShowDashboardGuardFallback =
+    resolvingOnboarding &&
+    (!dashboardGuardResolved ||
+      (learningOnlyNavigation && isRestrictedForLearningOnlyNavigation(pathname)));
+
+  if (shouldShowDashboardGuardFallback) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#0f1419] px-6 text-center">
         <div>

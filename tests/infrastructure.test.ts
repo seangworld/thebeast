@@ -1256,6 +1256,25 @@ test("dashboard global loading copy stays module neutral", () => {
   assert.doesNotMatch(dashboardLayout, /Opening BeastLearning\.\.\./);
 });
 
+test("dashboard route changes do not force the full-page guard fallback after initial resolve", () => {
+  const dashboardLayout = readFileSync(
+    "src/app/dashboard/layout.tsx",
+    "utf8"
+  );
+
+  assert.match(
+    dashboardLayout,
+    /const \[dashboardGuardResolved, setDashboardGuardResolved\]/
+  );
+  assert.match(dashboardLayout, /setDashboardGuardResolved\(true\)/);
+  assert.match(dashboardLayout, /const shouldShowDashboardGuardFallback =/);
+  assert.match(dashboardLayout, /!dashboardGuardResolved/);
+  assert.match(
+    dashboardLayout,
+    /learningOnlyNavigation && isRestrictedForLearningOnlyNavigation\(pathname\)/
+  );
+});
+
 test("dashboard module accordion keeps a single expanded group", () => {
   const dashboardLayout = readFileSync(
     "src/app/dashboard/layout.tsx",
