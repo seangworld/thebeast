@@ -81,6 +81,13 @@ export default function DashboardLayout({
   const [learningOnlyNavigation, setLearningOnlyNavigation] = useState(false);
   const [resolvingOnboarding, setResolvingOnboarding] = useState(true);
   const [onboardingDiagnosticError, setOnboardingDiagnosticError] = useState("");
+  const [onboardingRedirectDiagnostic, setOnboardingRedirectDiagnostic] = useState<{
+    source: string;
+    userId: string;
+    reason: string;
+    onboardingComplete: boolean | null;
+    target: string;
+  } | null>(null);
   const pathname = usePathname();
   const router = useRouter();
   const workspaceModule = getWorkspaceModule(pathname);
@@ -90,6 +97,7 @@ export default function DashboardLayout({
     let active = true;
     setResolvingOnboarding(true);
     setOnboardingDiagnosticError("");
+    setOnboardingRedirectDiagnostic(null);
 
     async function routeFirstTimeUsers() {
       let supabase: ReturnType<typeof createClient>;
@@ -106,19 +114,8 @@ export default function DashboardLayout({
 
       if (!active) return;
 
-      const authRedirect = getOnboardingRedirect({
-        isAuthenticated: Boolean(authUser) && !userError,
-        pathname,
-        onboardingPath,
-      });
-
-      if (authRedirect) {
-        router.replace(authRedirect);
-        return;
-      }
-
-      if (!authUser) {
-        setResolvingOnboarding(false);
+      if (userError || !authUser) {
+        router.replace("/login");
         return;
       }
 
@@ -273,6 +270,19 @@ export default function DashboardLayout({
       });
 
       if (onboardingRedirect) {
+        if (onboardingRedirect === onboardingPath) {
+          setOnboardingRedirectDiagnostic({
+            source: "src/app/dashboard/layout.tsx",
+            userId: authUser.id,
+            reason:
+              "Authoritative layout guard read public.profiles.onboarding_complete as false for a protected BeastLearning route.",
+            onboardingComplete: profile.onboarding_complete ?? null,
+            target: onboardingRedirect,
+          });
+          setResolvingOnboarding(false);
+          return;
+        }
+
         router.replace(onboardingRedirect);
         return;
       }
@@ -330,6 +340,36 @@ export default function DashboardLayout({
             This prevents the Today and Learning Setup pages from looping while
             completion status is ambiguous.
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (onboardingRedirectDiagnostic) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#0f1419] px-6">
+        <div className="max-w-xl rounded-xl border border-amber-300/30 bg-amber-400/10 p-6 text-left">
+          <p className="text-xs font-bold uppercase tracking-wide text-amber-100">
+            BeastLearning setup redirect diagnostic
+          </p>
+          <h1 className="mt-3 text-2xl font-black text-white">
+            Setup is required before continuing.
+          </h1>
+          <div className="mt-4 space-y-2 text-sm font-semibold text-amber-50">
+            <p>Source: {onboardingRedirectDiagnostic.source}</p>
+            <p>User: {onboardingRedirectDiagnostic.userId}</p>
+            <p>Reason: {onboardingRedirectDiagnostic.reason}</p>
+            <p>
+              profiles.onboarding_complete:{" "}
+              {String(onboardingRedirectDiagnostic.onboardingComplete)}
+            </p>
+          </div>
+          <Link
+            href={onboardingRedirectDiagnostic.target}
+            className="mt-5 inline-flex rounded-lg bg-amber-200 px-4 py-2 text-sm font-black text-[#1b1300]"
+          >
+            Continue to Learning Setup
+          </Link>
         </div>
       </div>
     );

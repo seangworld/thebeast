@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import {
   DEBT_STRATEGIES,
   getDebtStrategyDescription,
@@ -1167,6 +1168,13 @@ test("learning onboarding routing sends incomplete users to setup once", () => {
   assert.equal(
     getOnboardingRedirect({
       isAuthenticated: true,
+      pathname: "/dashboard/today",
+    }),
+    null
+  );
+  assert.equal(
+    getOnboardingRedirect({
+      isAuthenticated: true,
       onboardingComplete: false,
       pathname: "/dashboard/today",
     }),
@@ -1188,6 +1196,23 @@ test("learning onboarding routing sends incomplete users to setup once", () => {
     }),
     null
   );
+});
+
+test("learning onboarding redirect has no duplicate direct redirect sources", () => {
+  const sourceFiles = [
+    "src/app/dashboard/layout.tsx",
+    "src/app/dashboard/onboarding/page.tsx",
+    "src/app/dashboard/today/page.tsx",
+    "src/lib/learning/onboardingCompletion.ts",
+  ];
+  const directRedirectSources = sourceFiles.flatMap((file) => {
+    const source = readFileSync(file, "utf8");
+    const matches = source.match(/router\.replace\("\/dashboard\/onboarding"\)/g) || [];
+
+    return matches.map(() => file);
+  });
+
+  assert.deepEqual(directRedirectSources, []);
 });
 
 test("learning onboarding completion tolerates a stale profile read after confirmed save", () => {

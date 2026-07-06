@@ -114,7 +114,7 @@ export function getOnboardingRedirect({
 }) {
   if (!isAuthenticated) return "/login";
   if (
-    !onboardingComplete &&
+    onboardingComplete === false &&
     isProtectedLearningOnboardingPath(pathname, onboardingPath)
   ) {
     return onboardingPath;
