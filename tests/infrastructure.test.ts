@@ -178,6 +178,13 @@ import { buildStudyHabitsSnapshot } from "../src/lib/learning/studyHabits";
 import { mockStudyPlanner } from "../src/lib/learning/studyPlanner";
 import { learningStudyGuides } from "../src/lib/learning/studyGuides";
 import { globalSubjectCatalog, learningSubjects } from "../src/lib/learning/subjects";
+import {
+  getLearningActivityChecklist,
+  getLearningActivityCompletionPayload,
+  getLearningActivityPrimaryActionLabel,
+  getLearningActivityRoute,
+  getNextQueuedLearningActivity,
+} from "../src/lib/learning/activityRunner";
 import { learningStandards } from "../src/lib/learning/standards";
 import { generateCurriculumLearningPath } from "../src/lib/learning/learningPaths";
 import { learningPathTemplates } from "../src/lib/learning/templates";
@@ -259,7 +266,8 @@ test("module navigation centralizes expandable child items", () => {
   assert.deepEqual(
     beastLearningNavigation.children?.map((item) => item.label),
     [
-      "Today",
+      "Learning Path",
+      "Activities",
       "Goals",
       "Study Plan",
       "Courses",
@@ -270,13 +278,16 @@ test("module navigation centralizes expandable child items", () => {
       "Feedback",
     ]
   );
-  assert.equal(beastLearningNavigation.children?.[1].href, "/dashboard/learning#goals");
+  assert.equal(
+    beastLearningNavigation.children?.[1].href,
+    "/dashboard/learning/activities"
+  );
   assert.equal(beastMoneyNavigation.label, "BeastMoney");
   assert.equal(
     beastMoneyNavigation.children?.map((item) => item.label).slice(0, 8).join(","),
     "Dashboard,Cash Flow,Bills,Debts,Payoff Plan,Velocity,Billing,Settings"
   );
-  assert.equal(getModuleChildren("learning").length, 9);
+  assert.equal(getModuleChildren("learning").length, 10);
   assert.equal(
     getModuleChildren("money").some((item) => item.future && item.label === "Add Bill"),
     true
@@ -1206,6 +1217,48 @@ test("dashboard global loading copy stays module neutral", () => {
 
   assert.match(dashboardLayout, /Opening your dashboard\.\.\./);
   assert.doesNotMatch(dashboardLayout, /Opening BeastLearning\.\.\./);
+});
+
+test("learning activities have a dedicated runner and next-activity unlock logic", () => {
+  assert.equal(
+    getLearningActivityRoute("activity-123"),
+    "/dashboard/learning/activities/activity-123"
+  );
+  assert.equal(getLearningActivityPrimaryActionLabel("Quiz"), "Complete quiz");
+  assert.equal(getLearningActivityChecklist("Reflection").length, 3);
+  assert.deepEqual(
+    getNextQueuedLearningActivity(
+      [
+        {
+          id: "done",
+          activity_type: "Lesson",
+          title: "Done",
+          difficulty: "Beginner",
+          estimated_minutes: 15,
+          xp: 10,
+          status: "Completed",
+          sort_order: 1,
+        },
+        {
+          id: "next",
+          activity_type: "Practice",
+          title: "Next",
+          difficulty: "Beginner",
+          estimated_minutes: 20,
+          xp: 15,
+          status: "Queued",
+          sort_order: 2,
+        },
+      ],
+      "done"
+    )?.id,
+    "next"
+  );
+  assert.equal(
+    getLearningActivityCompletionPayload(new Date("2026-07-06T12:00:00.000Z"))
+      .completed_at,
+    "2026-07-06T12:00:00.000Z"
+  );
 });
 
 test("learning onboarding redirect has no duplicate direct redirect sources", () => {

@@ -45,7 +45,8 @@ export const beastLearningNavigation: ModuleNavSection = {
   href: "/dashboard/learning",
   module: "learning",
   children: [
-    { label: "Today", href: "/dashboard/learning" },
+    { label: "Learning Path", href: "/dashboard/learning" },
+    { label: "Activities", href: "/dashboard/learning/activities" },
     { label: "Goals", href: "/dashboard/learning#goals" },
     { label: "Study Plan", href: "/dashboard/learning#study-plan" },
     { label: "Courses", href: "/dashboard/learning#courses" },

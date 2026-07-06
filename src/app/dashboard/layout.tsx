@@ -34,7 +34,7 @@ const learningPrimaryNavigation: ModuleNavSection[] = [
   { label: "Profile", href: "/dashboard/profile", module: "beastos" },
   { label: "Today", href: "/dashboard/today", module: "learning" },
   { label: "Learning Path", href: "/dashboard/learning", module: "learning" },
-  { label: "Activities", href: "/dashboard/today#activities", module: "learning" },
+  { label: "Activities", href: "/dashboard/learning/activities", module: "learning" },
   { label: "AI Tutor", href: "/dashboard/learning#ai-tutor", module: "learning" },
   { label: "Progress", href: "/dashboard/learning#progress", module: "learning" },
   { label: "Achievements", href: "/dashboard/learning#achievements", module: "learning" },

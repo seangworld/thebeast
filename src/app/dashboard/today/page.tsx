@@ -9,6 +9,7 @@ import {
   ModuleBadge,
   SectionHeader,
 } from "@/app/components/design/DashboardPrimitives";
+import { getLearningActivityRoute } from "@/lib/learning/activityRunner";
 import { createClient } from "@/lib/supabase/client";
 import { getProfileDisplayName } from "@/lib/profile";
 
@@ -70,7 +71,6 @@ export default function TodayPage() {
   const router = useRouter();
   const [state, setState] = useState<TodayState>(emptyState);
   const [loading, setLoading] = useState(true);
-  const [workingId, setWorkingId] = useState("");
   const [message, setMessage] = useState("");
   const today = useMemo(() => new Date(), []);
 
@@ -269,47 +269,6 @@ export default function TodayPage() {
     loadToday();
   }, [loadToday]);
 
-  async function completeActivity(activity: ActivityRow) {
-    if (activity.status === "Completed") return;
-
-    setWorkingId(activity.id);
-    setMessage("");
-
-    try {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from("learning_activities")
-        .update({
-          status: "Completed",
-          completed_at: new Date().toISOString(),
-        })
-        .eq("id", activity.id)
-        .eq("user_id", state.userId);
-
-      if (error) throw error;
-
-      const nextQueued = state.activities.find(
-        (item) => item.status === "Queued" && item.id !== activity.id
-      );
-
-      if (nextQueued) {
-        await supabase
-          .from("learning_activities")
-          .update({ status: "Ready" })
-          .eq("id", nextQueued.id)
-          .eq("user_id", state.userId);
-      }
-
-      await loadToday();
-    } catch (error) {
-      setMessage(
-        error instanceof Error ? error.message : "Unable to complete activity."
-      );
-    } finally {
-      setWorkingId("");
-    }
-  }
-
   const completedActivities = state.activities.filter(
     (activity) => activity.status === "Completed"
   );
@@ -418,14 +377,12 @@ export default function TodayPage() {
               />
               <div className="mt-5 flex flex-wrap items-center gap-3">
                 {readyActivity ? (
-                  <button
-                    type="button"
-                    onClick={() => completeActivity(readyActivity)}
-                    disabled={workingId === readyActivity.id}
-                    className="beast-button disabled:cursor-not-allowed disabled:opacity-60"
+                  <Link
+                    href={getLearningActivityRoute(readyActivity.id)}
+                    className="beast-button"
                   >
-                    {workingId === readyActivity.id ? "Saving..." : "Mark Complete"}
-                  </button>
+                    Start Activity
+                  </Link>
                 ) : (
                   <button type="button" onClick={loadToday} className="beast-button">
                     Generate Activity
@@ -467,6 +424,23 @@ export default function TodayPage() {
                       <div className="mt-3 flex flex-wrap gap-2 text-xs font-bold uppercase text-[#9aa7b8]">
                         <span>{activity.estimated_minutes} min</span>
                         <span>{activity.xp} XP</span>
+                      </div>
+                      <div className="mt-4">
+                        {activity.status === "Completed" ? (
+                          <Link
+                            href={getLearningActivityRoute(activity.id)}
+                            className="beast-button-secondary"
+                          >
+                            Review
+                          </Link>
+                        ) : (
+                          <Link
+                            href={getLearningActivityRoute(activity.id)}
+                            className="beast-button"
+                          >
+                            Start
+                          </Link>
+                        )}
                       </div>
                     </div>
                   ))}
