@@ -87,6 +87,40 @@ test("runVelocityBankingEngine produces a ready schedule and chunk calendar", ()
   assert.equal(result.readyRecommendation?.includes("Card A"), true);
 });
 
+test("runVelocityBankingEngine models both sides of a Velocity chunk", () => {
+  const result = runVelocityBankingEngine({
+    velocityInputSnapshot: baseVelocityInput(),
+  });
+
+  assert.equal(result.postChunkTargetDebtBalance, 4500);
+  assert.equal(result.postChunkFundingSourceBalance, 1500);
+  assert.equal(result.postChunkFundingSourceUtilization, 15);
+  assert.equal(result.postChunkNetDebt, 7000);
+  assert.equal(result.netWorthImpact, 0);
+  assert.equal(result.strategyResult.velocity_chunk_applied, 500);
+});
+
+test("runVelocityBankingEngine delays the next chunk until recovery completes", () => {
+  const result = runVelocityBankingEngine({
+    velocityInputSnapshot: baseVelocityInput(),
+  });
+
+  assert.equal(result.nextChunkEligibleMonth, 3);
+  assert.equal(result.recoveryDetected, true);
+  assert.equal(
+    result.nextChunkWaitReason?.includes("month 3 recovery completes"),
+    true
+  );
+  assert.equal(
+    result.paymentSchedule.some(
+      (row) =>
+        Number(row.velocity_source_payment || 0) > 0 &&
+        Number(row.velocity_source_balance || 0) > 0
+    ),
+    true
+  );
+});
+
 test("runVelocityBankingEngine recommends waiting when guardrails block the chunk", () => {
   const result = runVelocityBankingEngine({
     velocityInputSnapshot: baseVelocityInput({

@@ -90,3 +90,50 @@ test("buildFinancialForecast reports cash shortages and upcoming risks", () => {
     true
   );
 });
+
+test("buildFinancialForecast reserves recommended extra payments during recovery windows", () => {
+  const cashIntelligence = buildCashIntelligence({
+    asOfDate: new Date("2026-07-01T00:00:00"),
+    income: [{ amount: 3000, frequency: "monthly", next_date: "2026-07-03" }],
+    bills: [{ amount: 1000, frequency: "monthly", due_date: 5 }],
+    debtMinimums: debts,
+    settings: {
+      currentCash: 1000,
+      cashBuffer: 500,
+      lookaheadDays: 30,
+    },
+  });
+  const financialDecision = buildFinancialDecision({
+    cashIntelligence,
+    debts,
+    income: [{ amount: 3000 }],
+    bills: [{ amount: 1000 }],
+    strategy: "avalanche",
+  });
+  const constrainedForecast = buildFinancialForecast({
+    asOfDate: new Date("2026-07-01T00:00:00"),
+    cashIntelligence,
+    financialDecision,
+    debts,
+    income: [{ amount: 3000, frequency: "monthly", next_date: "2026-07-03" }],
+    bills: [{ amount: 1000, frequency: "monthly", due_date: 5 }],
+    currentCash: 1000,
+    cashBuffer: 500,
+  });
+  const unconstrainedForecast = buildFinancialForecast({
+    asOfDate: new Date("2026-07-01T00:00:00"),
+    cashIntelligence,
+    debts,
+    income: [{ amount: 3000, frequency: "monthly", next_date: "2026-07-03" }],
+    bills: [{ amount: 1000, frequency: "monthly", due_date: 5 }],
+    currentCash: 1000,
+    cashBuffer: 500,
+  });
+
+  assert.equal(financialDecision.suggestedExtraPayment > 0, true);
+  assert.equal(
+    constrainedForecast.periods[0].cash <
+      unconstrainedForecast.periods[0].cash,
+    true
+  );
+});

@@ -153,6 +153,17 @@ export function buildFinancialForecast(
       income: input.income || [],
       bills: input.bills || [],
       debtMinimums: debts,
+      scheduledTransfers:
+        input.financialDecision && input.financialDecision.suggestedExtraPayment > 0
+          ? [
+              {
+                id: "forecast-extra-payment",
+                name: "Recommended extra payment or recovery",
+                amount: input.financialDecision.suggestedExtraPayment,
+                frequency: "monthly",
+              },
+            ]
+          : [],
       fundingSources: input.fundingSources || [],
       settings: {
         currentCash: input.currentCash ?? baseCash,

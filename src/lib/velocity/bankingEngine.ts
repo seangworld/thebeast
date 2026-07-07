@@ -38,6 +38,13 @@ export type VelocityBankingResult = {
   status: VelocityBankingStatus;
   optimalChunkAmount: number;
   optimalChunkTiming: string;
+  postChunkTargetDebtBalance: number;
+  postChunkFundingSourceBalance: number;
+  postChunkFundingSourceUtilization: number;
+  postChunkNetDebt: number;
+  netWorthImpact: number;
+  nextChunkEligibleMonth: number | null;
+  nextChunkWaitReason: string | null;
   recoveryDetected: boolean;
   recoveryTimeline: VelocityEngineResult["recovery_timeline"];
   fundingSourceSelection: VelocityFundingSourceSelection | null;
@@ -115,6 +122,48 @@ function getNextIncomeDate(input: VelocityInputSnapshot) {
     .sort()[0];
 
   return nextIncome || input.as_of_date || new Date().toISOString();
+}
+
+function getAccountBalance(
+  input: VelocityInputSnapshot,
+  accountId: string | undefined
+) {
+  if (!accountId) return 0;
+
+  return Number(
+    input.accounts.find((account) => account.id === accountId)?.current_balance || 0
+  );
+}
+
+function getPostChunkFundingSourceUtilization({
+  input,
+  source,
+  postChunkBalance,
+}: {
+  input: VelocityInputSnapshot;
+  source: VelocityFundingSourceSelection | null;
+  postChunkBalance: number;
+}) {
+  if (!source?.id) return 0;
+
+  const creditLimit = Number(
+    input.accounts.find((account) => account.id === source.id)?.credit_limit || 0
+  );
+
+  return creditLimit > 0 ? money((postChunkBalance / creditLimit) * 100) : 0;
+}
+
+function getFirstRecoveryCompleteMonth(strategyResult: UnifiedStrategyResult) {
+  const recoveryRows = strategyResult.payment_schedule.filter(
+    (row) => Number(row.velocity_source_payment || 0) > 0
+  );
+
+  if (recoveryRows.length === 0) return null;
+
+  return (
+    recoveryRows.find((row) => Number(row.velocity_source_balance || 0) <= 0)
+      ?.month || null
+  );
 }
 
 function buildChunkCalendar({
@@ -213,17 +262,52 @@ export function runVelocityBankingEngine(
     input.velocityInputSnapshot,
     optimalChunkAmount
   );
+  const monthlyRecoveryCapacity = money(
+    Math.max(
+      Number(input.velocityInputSnapshot.settings.monthly_recovery_capacity || 0),
+      0
+    )
+  );
+  const recoveryPaymentPool =
+    input.financialDecision && input.financialDecision.suggestedExtraPayment > 0
+      ? money(Math.min(input.financialDecision.suggestedExtraPayment, monthlyRecoveryCapacity))
+      : monthlyRecoveryCapacity;
   const strategyResult = runUnifiedStrategyEngine({
     debts: input.velocityInputSnapshot.debts as UnifiedStrategyDebt[],
     strategy: "velocity",
     cashIntelligence: input.cashIntelligence || undefined,
     financialDecision: input.financialDecision || undefined,
+    extraPayment: recoveryPaymentPool,
     velocityInputSnapshot: input.velocityInputSnapshot,
     velocityEngineResult,
     velocityTargetDebtId:
       velocityEngineResult.recommendation?.debt_id ||
       velocityEngineResult.target_debt?.id,
   });
+  const sourceStartingBalance = getAccountBalance(
+    input.velocityInputSnapshot,
+    fundingSourceSelection?.id
+  );
+  const sourceChunkApplied = Number(strategyResult.velocity_chunk_applied || 0);
+  const postChunkFundingSourceBalance = money(sourceStartingBalance + sourceChunkApplied);
+  const postChunkTargetDebtBalance = money(
+    Math.max(
+      Number(velocityEngineResult.target_debt?.balance || 0) - sourceChunkApplied,
+      0
+    )
+  );
+  const nonTargetDebtBalance = input.velocityInputSnapshot.debts
+    .filter((debt) => debt.id !== velocityEngineResult.target_debt?.id)
+    .reduce((sum, debt) => sum + Number(debt.balance || 0), 0);
+  const postChunkNetDebt = money(
+    nonTargetDebtBalance + postChunkTargetDebtBalance + postChunkFundingSourceBalance
+  );
+  const preChunkNetDebt = money(
+    input.velocityInputSnapshot.debts.reduce(
+      (sum, debt) => sum + Number(debt.balance || 0),
+      0
+    ) + sourceStartingBalance
+  );
   const recoveryDetected =
     Number(strategyResult.velocity_source_paid || 0) >=
       Number(strategyResult.velocity_chunk_applied || 0) &&
@@ -240,11 +324,29 @@ export function runVelocityBankingEngine(
           velocityEngineResult.target_debt?.name || "the selected debt"
         }.`
       : null;
+  const nextChunkEligibleMonth = getFirstRecoveryCompleteMonth(strategyResult);
+  const nextChunkWaitReason =
+    sourceChunkApplied > 0 && nextChunkEligibleMonth == null
+      ? "Wait until the funding source is recovered before considering another Velocity chunk."
+      : sourceChunkApplied > 0
+      ? `Wait until month ${nextChunkEligibleMonth} recovery completes before considering another Velocity chunk.`
+      : waitRecommendation;
 
   return {
     status,
     optimalChunkAmount,
     optimalChunkTiming,
+    postChunkTargetDebtBalance,
+    postChunkFundingSourceBalance,
+    postChunkFundingSourceUtilization: getPostChunkFundingSourceUtilization({
+      input: input.velocityInputSnapshot,
+      source: fundingSourceSelection,
+      postChunkBalance: postChunkFundingSourceBalance,
+    }),
+    postChunkNetDebt,
+    netWorthImpact: money(preChunkNetDebt - postChunkNetDebt),
+    nextChunkEligibleMonth,
+    nextChunkWaitReason,
     recoveryDetected,
     recoveryTimeline: velocityEngineResult.recovery_timeline,
     fundingSourceSelection,
