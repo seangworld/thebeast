@@ -1,5 +1,6 @@
 import { learningFlashcards } from "./flashcards";
 import type { SpacedRepetitionItem, SpacedRepetitionSchedule } from "./types";
+import { getBeastDateKey } from "../runtimeDate";
 
 export const spacedRepetitionItems: SpacedRepetitionItem[] = [
   {
@@ -34,7 +35,9 @@ export const spacedRepetitionItems: SpacedRepetitionItem[] = [
   },
 ];
 
-export function buildSpacedRepetitionSchedule(today = "2026-07-04"): SpacedRepetitionSchedule {
+export function buildSpacedRepetitionSchedule(
+  today = getBeastDateKey()
+): SpacedRepetitionSchedule {
   return {
     today,
     items: spacedRepetitionItems,
@@ -43,7 +46,7 @@ export function buildSpacedRepetitionSchedule(today = "2026-07-04"): SpacedRepet
   };
 }
 
-export function getFlashcardsDueForReview(today = "2026-07-04") {
+export function getFlashcardsDueForReview(today = getBeastDateKey()) {
   const dueIds = new Set(
     spacedRepetitionItems
       .filter((item) => item.itemType === "flashcard" && item.nextReview <= today)

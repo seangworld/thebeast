@@ -7,9 +7,10 @@ import { getRecentLearningMaterials, learningLibraryMaterials } from "./library"
 import { searchLearningContent } from "./search";
 import { buildSpacedRepetitionSchedule } from "./spacedRepetition";
 import type { LearningDashboardContent } from "./types";
+import { getBeastDateKey } from "../runtimeDate";
 
 export function buildLearningDashboardContent(
-  today = "2026-07-04"
+  today = getBeastDateKey()
 ): LearningDashboardContent {
   const schedule = buildSpacedRepetitionSchedule(today);
   const recommendedResources = searchLearningContent({

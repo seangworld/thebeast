@@ -1,3 +1,6 @@
+"use client";
+
+import { useMemo } from "react";
 import {
   DashboardCard,
   ModuleBadge,
@@ -12,14 +15,19 @@ import {
   serviceModules,
 } from "@/app/dashboard/platformServices";
 import { buildMonthGrid, weekdayLabels } from "@/lib/calendar";
+import { useRuntimeToday } from "@/lib/hooks/useRuntimeToday";
+import { formatBeastMonthYear, getBeastRuntimeDateParts } from "@/lib/runtimeDate";
 
-const calendarYear = 2026;
-const calendarMonthIndex = 6;
-const calendarDays = buildMonthGrid(calendarYear, calendarMonthIndex);
 const moneyEventDays = new Set([3, 7, 14, 21, 28]);
 const futureEventDays = new Set([10, 16, 24, 31]);
 
 export default function CalendarPage() {
+  const { now } = useRuntimeToday();
+  const todayParts = getBeastRuntimeDateParts(now);
+  const calendarDays = useMemo(
+    () => buildMonthGrid(todayParts.year, todayParts.monthIndex),
+    [todayParts.monthIndex, todayParts.year]
+  );
   const agendaItems = serviceEvents.slice(0, 6);
 
   return (
@@ -48,7 +56,7 @@ export default function CalendarPage() {
             <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
               <SectionHeader
                 eyebrow="Monthly View"
-                title="July 2026"
+                title={formatBeastMonthYear(now)}
                 description="A shared month grid with module color indicators."
               />
               <div className="flex flex-wrap gap-2 text-xs font-bold">
@@ -71,9 +79,9 @@ export default function CalendarPage() {
                 const hasFutureEvent =
                   calendarDay.inCurrentMonth && futureEventDays.has(calendarDay.dayOfMonth);
                 const isToday =
-                  calendarDay.year === 2026 &&
-                  calendarDay.monthIndex === 6 &&
-                  calendarDay.dayOfMonth === 4;
+                  calendarDay.year === todayParts.year &&
+                  calendarDay.monthIndex === todayParts.monthIndex &&
+                  calendarDay.dayOfMonth === todayParts.dayOfMonth;
 
                 return (
                   <div

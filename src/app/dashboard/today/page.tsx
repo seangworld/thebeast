@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -13,6 +13,8 @@ import {
   getLearningActivityRoute,
   getNewestReadyLearningActivity,
 } from "@/lib/learning/activityRunner";
+import { useRuntimeToday } from "@/lib/hooks/useRuntimeToday";
+import { getBeastGreeting } from "@/lib/runtimeDate";
 import { createClient } from "@/lib/supabase/client";
 import { getProfileDisplayName } from "@/lib/profile";
 
@@ -65,13 +67,6 @@ const emptyState: TodayState = {
 
 const activityBlueprint = ["Lesson", "Practice", "Quiz", "AI Tutor Challenge", "Reflection"];
 
-function getGreeting(date: Date) {
-  const hour = date.getHours();
-  if (hour < 12) return "Good Morning";
-  if (hour < 17) return "Good Afternoon";
-  return "Good Evening";
-}
-
 function getActivityTone(status: string) {
   if (status === "Completed") return "border-green-400/35 bg-green-400/10";
   if (status === "Ready") return "border-indigo-300/40 bg-indigo-300/10";
@@ -83,7 +78,7 @@ export default function TodayPage() {
   const [state, setState] = useState<TodayState>(emptyState);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
-  const today = useMemo(() => new Date(), []);
+  const { now } = useRuntimeToday();
 
   const ensureLearningPlan = useCallback(
     async ({
@@ -327,7 +322,7 @@ export default function TodayPage() {
               <h1 className="beast-title">
                 {loading || !state.name
                   ? "Loading Today"
-                  : `${getGreeting(today)}, ${state.name}`}
+                  : `${getBeastGreeting(now)}, ${state.name}`}
               </h1>
               <p className="beast-subtitle">
                 {loading || !state.name

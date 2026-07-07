@@ -5,7 +5,13 @@ import Link from "next/link";
 import { APP_VERSION } from "@/lib/appVersion";
 import { createClient } from "@/lib/supabase/client";
 import { formatCurrency } from "@/lib/formatters";
+import { useRuntimeToday } from "@/lib/hooks/useRuntimeToday";
 import { getProfileDisplayName } from "@/lib/profile";
+import {
+  formatBeastFullDate,
+  getBeastGreeting,
+  getBeastRuntimeToday,
+} from "@/lib/runtimeDate";
 import {
   calculateMonthlyRecurringTotal,
   isActiveRecurringSource,
@@ -135,8 +141,7 @@ const futureBriefingModules: {
   },
 ];
 
-function nextDueDateFromDay(day: number | null | undefined) {
-  const today = new Date();
+function nextDueDateFromDay(day: number | null | undefined, today = getBeastRuntimeToday()) {
   const safeDay = Math.min(Math.max(Number(day || 1), 1), 28);
   const candidate = new Date(today.getFullYear(), today.getMonth(), safeDay);
 
@@ -145,22 +150,6 @@ function nextDueDateFromDay(day: number | null | undefined) {
   }
 
   return candidate;
-}
-
-function formatFullDate(date: Date) {
-  return date.toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-function getGreeting(date: Date) {
-  const hour = date.getHours();
-  if (hour < 12) return "Good Morning";
-  if (hour < 17) return "Good Afternoon";
-  return "Good Evening";
 }
 
 function SoonModuleRow({
@@ -371,7 +360,7 @@ export default function TodayPage() {
   const [state, setState] = useState<MoneyState>(initialMoneyState);
   const [user, setUser] = useState<CurrentUser>({ name: "" });
   const [loading, setLoading] = useState(true);
-  const today = useMemo(() => new Date(), []);
+  const { now, today } = useRuntimeToday();
 
   const loadTodaySources = useCallback(async () => {
     setLoading(true);
@@ -469,9 +458,9 @@ export default function TodayPage() {
     const billsDueSoon = activeBills.filter((bill) => {
       const dueDate = bill.next_due_date_after_payment
         ? new Date(bill.next_due_date_after_payment)
-        : nextDueDateFromDay(bill.due_date);
+        : nextDueDateFromDay(bill.due_date, today);
       const daysAway = Math.ceil(
-        (dueDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+        (dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
       );
       return daysAway <= 7;
     });
@@ -488,7 +477,7 @@ export default function TodayPage() {
       debtMinimums,
       billsDueSoon,
     };
-  }, [state]);
+  }, [state, today]);
 
   const intelligence = useMemo(
     () =>
@@ -502,9 +491,9 @@ export default function TodayPage() {
         buffer: snapshot.buffer,
         billPayments: state.billPayments,
         debtPayments: state.debtPayments,
-        now: today,
+        now,
       }),
-    [snapshot, state.billPayments, state.debtPayments, today]
+    [now, snapshot, state.billPayments, state.debtPayments]
   );
 
   const primaryRecommendation = intelligence.recommendations[0] || null;
@@ -599,10 +588,10 @@ export default function TodayPage() {
                 <h1 className="beast-title">
                   {loading || !user.name
                     ? "Loading Home"
-                    : `${getGreeting(today)}, ${user.name}`}
+                    : `${getBeastGreeting(now)}, ${user.name}`}
                 </h1>
                 <p className="mt-3 text-lg font-semibold text-[#dbe3ef]">
-                  {formatFullDate(today)}
+                  {formatBeastFullDate(now)}
                 </p>
               </div>
               <p className="beast-subtitle">
