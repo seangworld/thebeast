@@ -1,4 +1,5 @@
 export { runVelocityEngine } from "./engine";
+export { runVelocityBankingEngine } from "./bankingEngine";
 export { buildVelocityInputSnapshot } from "./adapter";
 export { buildVelocityAdvisorResult } from "./advisor";
 export {
@@ -9,6 +10,13 @@ export {
   toInputString,
   velocitySettingsToUpsertPayload,
 } from "./settings";
+export type {
+  VelocityBankingEngineInput,
+  VelocityBankingResult,
+  VelocityBankingStatus,
+  VelocityChunkCalendarItem,
+  VelocityFundingSourceSelection,
+} from "./bankingEngine";
 export type {
   BuildVelocityInputSnapshotInput,
   VelocityPageBillInput,

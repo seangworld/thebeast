@@ -7,8 +7,8 @@ import type {
   FinancialDecisionGuardrails,
   FinancialDecisionResult,
 } from "./financialDecisionEngine";
-import { runVelocityEngine } from "./velocity";
-import type { VelocityEngineResult, VelocityInputSnapshot } from "./velocity";
+import { runVelocityEngine } from "./velocity/engine";
+import type { VelocityEngineResult, VelocityInputSnapshot } from "./velocity/types";
 import type { DebtStrategy } from "./debtStrategies";
 import { roundMoney } from "./formatters";
 

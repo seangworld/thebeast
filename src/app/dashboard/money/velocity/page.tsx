@@ -5,9 +5,12 @@ import { createClient } from "@/lib/supabase/client";
 import {
   buildVelocityAdvisorResult,
   buildVelocityInputSnapshot,
+  runVelocityBankingEngine,
   runVelocityEngine,
 } from "@/lib/velocity";
 import type { VelocityEngineResult } from "@/lib/velocity";
+import { buildCashIntelligence } from "@/lib/cashIntelligence";
+import { buildFinancialDecision } from "@/lib/financialDecisionEngine";
 import {
   DEFAULT_VELOCITY_SETTINGS,
   VELOCITY_SETTINGS_STORAGE_KEY,
@@ -327,22 +330,97 @@ export default function VelocityPlannerPage() {
     velocitySettings,
     velocitySnapshotAsOfDate,
   ]);
+  const cashIntelligence = useMemo(() => {
+    return buildCashIntelligence({
+      income: incomes,
+      bills,
+      debtMinimums: activeDebts,
+      fundingSources: [
+        {
+          id: "velocity-ui-credit-source",
+          name: "Primary Velocity Source",
+          current_balance: currentBalance,
+          credit_limit: creditLimit,
+          max_utilization_percent: maxUtilizationPercent,
+          is_active: true,
+        },
+      ],
+      settings: {
+        currentCash: startingBalance ?? 0,
+        cashBuffer: buffer ?? 0,
+        emergencyReserveAmount,
+        lookaheadDays: 30,
+      },
+      guardrails: {
+        minimumCashAfterPayment: emergencyReserveAmount,
+        maxSourceUtilizationPercent: maxUtilizationPercent,
+      },
+    });
+  }, [
+    activeDebts,
+    bills,
+    buffer,
+    creditLimit,
+    currentBalance,
+    emergencyReserveAmount,
+    incomes,
+    maxUtilizationPercent,
+    startingBalance,
+  ]);
+  const financialDecision = useMemo(() => {
+    return buildFinancialDecision({
+      cashIntelligence,
+      debts: activeDebts,
+      income: incomes,
+      bills,
+      fundingSources: [
+        {
+          id: "velocity-ui-credit-source",
+          name: "Primary Velocity Source",
+          current_balance: currentBalance,
+          credit_limit: creditLimit,
+          max_utilization_percent: maxUtilizationPercent,
+          is_active: true,
+        },
+      ],
+      strategy: "velocity",
+    });
+  }, [
+    activeDebts,
+    bills,
+    cashIntelligence,
+    creditLimit,
+    currentBalance,
+    incomes,
+    maxUtilizationPercent,
+  ]);
   const velocityEngineResult = useMemo<VelocityEngineResult>(() => {
     return runVelocityEngine(velocityInputSnapshot);
   }, [velocityInputSnapshot]);
+  const velocityBankingResult = useMemo(() => {
+    return runVelocityBankingEngine({
+      velocityInputSnapshot,
+      cashIntelligence,
+      financialDecision,
+      velocityEngineResult,
+    });
+  }, [
+    cashIntelligence,
+    financialDecision,
+    velocityEngineResult,
+    velocityInputSnapshot,
+  ]);
   const velocityAdvisorResult = useMemo(() => {
     return buildVelocityAdvisorResult(velocityEngineResult);
   }, [velocityEngineResult]);
   const chunkRecommendation = velocityEngineResult.chunk_recommendation;
   const recommendedChunk = clampToZero(
-    chunkRecommendation?.recommended_chunk ??
-      velocityEngineResult.recommendation?.payment_amount ??
-      0
+    velocityBankingResult.optimalChunkAmount
   );
   const riskStatus = formatVelocityRiskStatus(
     velocityEngineResult.risk_summary.risk_level
   );
-  const recoveryTimeline = velocityEngineResult.recovery_timeline;
+  const recoveryTimeline = velocityBankingResult.recoveryTimeline;
   const interestSavings = velocityEngineResult.interest_savings;
   const recommendedVelocityTarget = useMemo(() => {
     const targetDebt = velocityEngineResult.target_debt;
@@ -375,6 +453,12 @@ export default function VelocityPlannerPage() {
         `Limited by ${chunkRecommendation?.limiting_constraint_label || "engine guardrails"}.`;
   const recommendationValues: RecommendationValue[] = [
     {
+      label: "Velocity Status",
+      value: velocityBankingResult.status === "ready" ? "Ready" : "Wait",
+      detail: velocityBankingResult.chunkAdvisor,
+      alert: velocityBankingResult.status === "wait",
+    },
+    {
       label: "Recommended Chunk",
       value: formatMoney(recommendedChunk),
       detail:
@@ -384,6 +468,25 @@ export default function VelocityPlannerPage() {
             ? `Limited by ${chunkRecommendation.limiting_constraint_label}.`
             : "Engine-selected payment amount from the current Velocity snapshot.",
       alert: recommendedChunk <= 0,
+    },
+    {
+      label: "Optimal Timing",
+      value:
+        velocityBankingResult.status === "ready"
+          ? "Now"
+          : "Next income window",
+      detail: velocityBankingResult.optimalChunkTiming,
+      alert: velocityBankingResult.status === "wait",
+    },
+    {
+      label: "Funding Source",
+      value: velocityBankingResult.fundingSourceSelection?.name || "Not Available",
+      detail: velocityBankingResult.fundingSourceSelection
+        ? `Safe capacity: ${formatMoney(
+            velocityBankingResult.fundingSourceSelection.safeCapacity
+          )}.`
+        : "No eligible Velocity source found.",
+      alert: !velocityBankingResult.fundingSourceSelection,
     },
     {
       label: "Monthly Recovery Capacity",
@@ -1081,6 +1184,66 @@ export default function VelocityPlannerPage() {
               <p className="mt-3 text-sm text-[#9aa7b8]">
                 Net savings compare minimum-only debt payoff against the
                 Velocity strategy after estimated source interest cost.
+              </p>
+            </div>
+            <div className="beast-card xl:col-span-2">
+              <div className="text-sm text-[#c7cfdb]">Chunk Calendar</div>
+              <div className="mt-4 grid gap-3">
+                {velocityBankingResult.chunkCalendar.map((item) => (
+                  <div
+                    key={`${item.type}-${item.month}-${item.label}`}
+                    className="rounded-lg border border-[#2a3242] bg-[#0f1419] p-3"
+                  >
+                    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <div className="text-sm font-semibold text-white">
+                          {item.label}
+                        </div>
+                        <div className="text-xs text-[#7f8da3]">
+                          {item.dateLabel}
+                        </div>
+                      </div>
+                      <div className="text-sm font-bold text-green-200">
+                        {formatMoney(item.amount)}
+                      </div>
+                    </div>
+                    <p className="mt-2 text-xs text-[#9aa7b8]">{item.detail}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="beast-card xl:col-span-3">
+              <div className="text-sm text-[#c7cfdb]">Velocity Payment Schedule</div>
+              <div className="mt-4 overflow-x-auto">
+                <table className="w-full min-w-[720px] text-left text-sm">
+                  <thead className="text-xs uppercase text-[#7f8da3]">
+                    <tr>
+                      <th className="py-2 pr-4">Month</th>
+                      <th className="py-2 pr-4">Target</th>
+                      <th className="py-2 pr-4">Payment</th>
+                      <th className="py-2 pr-4">Source Recovery</th>
+                      <th className="py-2 pr-4">Remaining Debt</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#2a3242]">
+                    {velocityBankingResult.paymentSchedule.slice(0, 6).map((row) => (
+                      <tr key={`${row.month}-${row.target}`}>
+                        <td className="py-3 pr-4">Month {row.month}</td>
+                        <td className="py-3 pr-4">{row.target}</td>
+                        <td className="py-3 pr-4">{formatMoney(row.total_payment)}</td>
+                        <td className="py-3 pr-4">
+                          {formatMoney(row.velocity_source_payment || 0)}
+                        </td>
+                        <td className="py-3 pr-4">
+                          {formatMoney(row.remaining_debt)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="mt-3 text-xs text-[#9aa7b8]">
+                Showing the first six projected months from the unified strategy schedule.
               </p>
             </div>
             <ProFeatureGate
