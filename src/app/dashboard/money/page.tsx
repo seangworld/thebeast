@@ -5,6 +5,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { buildCashIntelligence } from "@/lib/cashIntelligence";
 import { buildFinancialDecision } from "@/lib/financialDecisionEngine";
+import { buildFinancialForecast } from "@/lib/financialForecasting";
 import { formatCurrency } from "@/lib/formatters";
 import {
   isActiveRecurringSource,
@@ -193,6 +194,13 @@ export default function MoneyWorkspacePage() {
     const activeDebts = state.debts.filter(
       (debt) => !debt.is_archived && numberValue(debt.balance) > 0
     );
+    const forecastDebts = activeDebts.map((debt) => ({
+      id: debt.id,
+      name: debt.name || "Debt",
+      balance: numberValue(debt.balance),
+      minimum_payment: numberValue(debt.minimum_payment),
+      interest_rate: numberValue(debt.interest_rate),
+    }));
     const activeBills = state.bills.filter((bill) => !bill.is_archived);
     const activeIncomes = state.incomes.filter(isActiveRecurringSource);
     const startingCash = numberValue(state.cashSettings?.starting_balance);
@@ -232,11 +240,22 @@ export default function MoneyWorkspacePage() {
     const projectedSurplus = cashIntelligence.monthlyAvailableCash;
     const financialDecision = buildFinancialDecision({
       cashIntelligence,
-      debts: activeDebts,
+      debts: forecastDebts,
       income: activeIncomes,
       bills: activeBills,
       fundingSources: state.fundingSources,
       strategy: "avalanche",
+    });
+    const financialForecast = buildFinancialForecast({
+      cashIntelligence,
+      financialDecision,
+      debts: forecastDebts,
+      income: activeIncomes,
+      bills: activeBills,
+      fundingSources: state.fundingSources,
+      strategy: "avalanche",
+      currentCash: startingCash,
+      cashBuffer: buffer,
     });
     const creditLimit = [
       ...activeDebts.map((debt) => numberValue(debt.credit_limit)),
@@ -284,6 +303,7 @@ export default function MoneyWorkspacePage() {
       monthlyOutflow,
       projectedSurplus,
       financialDecision,
+      financialForecast,
       creditLimit,
       creditUsed,
       creditAvailable,
@@ -533,6 +553,59 @@ export default function MoneyWorkspacePage() {
                 { name: "Extra Attack", value: snapshot.extraPayment },
               ]}
             />
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <SectionHeader
+            eyebrow="Forecast"
+            title="Financial outlook"
+            description="Projected cash, debt, interest, net worth, and risks from current Money records."
+          />
+          <div className="grid gap-4 xl:grid-cols-3">
+            {snapshot.financialForecast.periods.map((period) => (
+              <DashboardCard key={period.key} accent="green">
+                <div className="flex h-full flex-col gap-4">
+                  <div>
+                    <p className="beast-kicker">{period.label}</p>
+                    <h2 className="mt-2 text-2xl font-black">
+                      {formatCurrency(period.netWorth)}
+                    </h2>
+                    <p className="mt-1 text-xs text-[#7f8da3]">
+                      Projected net worth
+                    </p>
+                  </div>
+                  <div className="grid gap-2 text-sm text-[#c7cfdb]">
+                    <div>Cash: {formatCurrency(period.cash)}</div>
+                    <div>Debt: {formatCurrency(period.debt)}</div>
+                    <div>Interest: {formatCurrency(period.interest)}</div>
+                    <div>Debt-Free: {period.debtFreeDate}</div>
+                    <div>
+                      Cash Shortages:{" "}
+                      <span
+                        className={
+                          period.cashShortages > 0
+                            ? "font-bold text-red-200"
+                            : "font-bold text-green-200"
+                        }
+                      >
+                        {period.cashShortages}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
+                    <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                      Upcoming Risks
+                    </div>
+                    <ul className="mt-2 space-y-1 text-xs text-[#dbe3ef]">
+                      {period.upcomingRisks.slice(0, 3).map((risk) => (
+                        <li key={risk}>{risk}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </DashboardCard>
+            ))}
           </div>
         </section>
 
