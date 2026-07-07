@@ -16,6 +16,8 @@ import {
 import {
   simulatePayoffPlan,
 } from "@/lib/payoffPlan";
+import { buildCashIntelligence } from "@/lib/cashIntelligence";
+import { buildFinancialDecision } from "@/lib/financialDecisionEngine";
 import {
   DEBT_STRATEGIES,
   getDebtStrategyDescription,
@@ -55,17 +57,6 @@ function money(value: number) {
   return roundMoney(value);
 }
 
-type MinimumProjection = {
-  months_to_payoff: number | null;
-  total_interest: number;
-  total_paid: number;
-  debt_free_date: string;
-  first_target: string;
-  status: "projected" | "blocked";
-  notes: string;
-  payoff_months: any[];
-};
-
 type StrategyComparisonRow = {
   strategy: "Minimum" | "Snowball" | "Avalanche" | "Velocity";
   debtFreeDate: string;
@@ -78,132 +69,6 @@ type StrategyComparisonRow = {
   isBestInterest: boolean;
   isFastest: boolean;
 };
-
-function simulateMinimumProjection(debts: Debt[]): MinimumProjection {
-  const MAX_MONTHS = 1200;
-  const working = debts
-    .filter((debt) => Number(debt.balance || 0) > 0)
-    .map((debt) => ({
-      ...debt,
-      balance: money(Number(debt.balance || 0)),
-      minimum_payment: money(Number(debt.minimum_payment || 0)),
-      interest_rate: Number(debt.interest_rate || 0),
-    }));
-
-  if (working.length === 0) {
-    return {
-      months_to_payoff: 0,
-      total_interest: 0,
-      total_paid: 0,
-      debt_free_date: "Already debt-free",
-      first_target: "—",
-      status: "projected",
-      notes: "No active debt balance.",
-      payoff_months: [],
-    };
-  }
-
-  const blockedNames: string[] = [];
-  const projectable = working.filter((debt) => {
-    if (Number(debt.minimum_payment || 0) <= 0) {
-      blockedNames.push(`${debt.name}: missing minimum payment`);
-      return false;
-    }
-
-    const monthlyInterest = money(
-      (Number(debt.balance || 0) * Number(debt.interest_rate || 0)) / 100 / 12
-    );
-
-    if (monthlyInterest >= Number(debt.minimum_payment || 0)) {
-      blockedNames.push(`${debt.name}: minimum does not cover monthly interest`);
-      return false;
-    }
-
-    return true;
-  });
-
-  let month = 0;
-  let totalInterest = 0;
-  let totalPaid = 0;
-  const rows: any[] = [];
-
-  while (projectable.some((debt) => Number(debt.balance || 0) > 0) && month < MAX_MONTHS) {
-    month++;
-
-    let startingBalance = 0;
-    let monthlyInterest = 0;
-    let monthlyPaid = 0;
-    let monthlyPrincipal = 0;
-    let endingBalance = 0;
-
-    for (const debt of projectable) {
-      if (Number(debt.balance || 0) <= 0) continue;
-
-      const debtStartingBalance = money(Number(debt.balance || 0));
-      const interest = money(
-        (debtStartingBalance * Number(debt.interest_rate || 0)) / 100 / 12
-      );
-      const balanceAfterInterest = money(debtStartingBalance + interest);
-      const payment = money(
-        Math.min(Number(debt.minimum_payment || 0), balanceAfterInterest)
-      );
-      const principal = money(payment - interest);
-
-      debt.balance = money(balanceAfterInterest - payment);
-      startingBalance = money(startingBalance + debtStartingBalance);
-      monthlyInterest = money(monthlyInterest + interest);
-      monthlyPaid = money(monthlyPaid + payment);
-      monthlyPrincipal = money(monthlyPrincipal + principal);
-    }
-
-    endingBalance = money(
-      projectable.reduce((sum, debt) => sum + Number(debt.balance || 0), 0)
-    );
-    totalInterest = money(totalInterest + monthlyInterest);
-    totalPaid = money(totalPaid + monthlyPaid);
-
-    rows.push({
-      month,
-      target: "Minimum payments",
-      debt_starting_balance: startingBalance,
-      required_minimum: monthlyPaid,
-      monthly_interest: monthlyInterest,
-      principal_reduction: monthlyPrincipal,
-      recommended_minimum: monthlyPaid,
-      extra_attack: 0,
-      total_payment: monthlyPaid,
-      debt_ending_balance: endingBalance,
-      remaining_debt: endingBalance,
-      recovered_minimum: 0,
-      paid_off: endingBalance <= 0,
-      warning: "",
-    });
-  }
-
-  const timedOut = projectable.some((debt) => Number(debt.balance || 0) > 0);
-  const blocked = blockedNames.length > 0 || timedOut;
-  const debtFreeDate =
-    !blocked && month > 0
-      ? formatMonthYear(addMonthsClamped(new Date(), month))
-      : "—";
-  const notes = [
-    blockedNames.join("; "),
-    timedOut ? `Projection exceeded ${MAX_MONTHS} months.` : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
-
-  return {
-    months_to_payoff: blocked ? null : month,
-    total_interest: money(totalInterest),
-    total_paid: money(totalPaid),
-    debt_free_date: debtFreeDate,
-    first_target: "Minimum payments",
-    status: blocked ? "blocked" : "projected",
-    notes: notes || "Minimum payments only. No extra attack or rollover.",
-    payoff_months: rows,
-  };
-}
 
 function summarizePayoffProjection({
   strategy,
@@ -267,6 +132,7 @@ export default function DebtsPage() {
   const [debts, setDebts] = useState<Debt[]>([]);
   const [incomes, setIncomes] = useState<any[]>([]);
   const [bills, setBills] = useState<any[]>([]);
+  const [fundingSources, setFundingSources] = useState<any[]>([]);
   const [strategy, setStrategy] = useState<DebtStrategy>("snowball");
   const [extraPayment, setExtraPayment] = useState("");
   const [startingBalance, setStartingBalance] = useState<number | null>(null);
@@ -378,9 +244,66 @@ export default function DebtsPage() {
     velocityEngineResult.recommendation?.debt_id ||
     velocityEngineResult.target_debt?.id;
 
+  const cashIntelligence = useMemo(() => {
+    return buildCashIntelligence({
+      income: incomes,
+      bills,
+      debtMinimums: activeDebts,
+      fundingSources,
+      settings: {
+        currentCash: startingBalance ?? 0,
+        cashBuffer: buffer ?? 0,
+        lookaheadDays: 30,
+      },
+    });
+  }, [activeDebts, bills, buffer, fundingSources, incomes, startingBalance]);
+
+  const financialDecision = useMemo(() => {
+    return buildFinancialDecision({
+      cashIntelligence,
+      debts: activeDebts,
+      income: incomes,
+      bills,
+      fundingSources,
+      strategy,
+    });
+  }, [activeDebts, bills, cashIntelligence, fundingSources, incomes, strategy]);
+
   const minimumProjection = useMemo(() => {
-    return simulateMinimumProjection(activeDebts);
-  }, [activeDebts]);
+    const result = simulatePayoffPlan({
+      debts: activeDebts,
+      recoveredMinimums: 0,
+      strategy: "minimum",
+      extraPayment: 0,
+      cashIntelligence,
+      financialDecision,
+      fundingSources,
+    });
+    const lastMonth = result.payoff_months[result.payoff_months.length - 1];
+    const projected =
+      activeDebts.length === 0 ||
+      (result.payoff_months.length > 0 &&
+        Number(lastMonth?.remaining_debt || 0) <= 0 &&
+        Number(result.months_to_payoff || 0) < 600);
+
+    return {
+      ...result,
+      months_to_payoff: projected ? result.months_to_payoff : null,
+      debt_free_date:
+        activeDebts.length === 0
+          ? "Already debt-free"
+          : projected
+          ? formatMonthYear(addMonthsClamped(new Date(), result.months_to_payoff))
+          : "—",
+      status: projected ? "projected" : "blocked",
+      notes:
+        activeDebts.length === 0
+          ? "No active debt balance."
+          : projected
+          ? "Minimum payments only. No extra attack or rollover."
+          : lastMonth?.warning || "Projection did not reach debt-free within the guard limit.",
+    };
+  }, [activeDebts, cashIntelligence, financialDecision, fundingSources]);
 
   const snowballProjection = useMemo(() => {
     return simulatePayoffPlan({
@@ -388,8 +311,11 @@ export default function DebtsPage() {
       recoveredMinimums,
       strategy: "snowball",
       extraPayment: Number(extraPayment || 0),
+      cashIntelligence,
+      financialDecision,
+      fundingSources,
     });
-  }, [activeDebts, recoveredMinimums, extraPayment]);
+  }, [activeDebts, recoveredMinimums, extraPayment, cashIntelligence, financialDecision, fundingSources]);
 
   const avalancheProjection = useMemo(() => {
     return simulatePayoffPlan({
@@ -397,8 +323,11 @@ export default function DebtsPage() {
       recoveredMinimums,
       strategy: "avalanche",
       extraPayment: Number(extraPayment || 0),
+      cashIntelligence,
+      financialDecision,
+      fundingSources,
     });
-  }, [activeDebts, recoveredMinimums, extraPayment]);
+  }, [activeDebts, recoveredMinimums, extraPayment, cashIntelligence, financialDecision, fundingSources]);
 
   const velocityProjection = useMemo(() => {
     return simulatePayoffPlan({
@@ -406,12 +335,18 @@ export default function DebtsPage() {
       recoveredMinimums,
       strategy: "velocity",
       extraPayment: Number(extraPayment || 0),
+      cashIntelligence,
+      financialDecision,
+      fundingSources,
       velocityTargetDebtId: velocityPayoffTargetDebtId,
       velocityEngineResult,
     });
   }, [
     activeDebts,
+    cashIntelligence,
     extraPayment,
+    financialDecision,
+    fundingSources,
     recoveredMinimums,
     velocityEngineResult,
     velocityPayoffTargetDebtId,
@@ -598,6 +533,12 @@ export default function DebtsPage() {
       .eq("user_id", userId)
       .maybeSingle();
 
+    const { data: fundingSourceRows } = await supabase
+      .from("funding_sources")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("is_active", true);
+
     const { data: settings } = await supabase
       .from("debt_settings")
       .select("*")
@@ -613,6 +554,7 @@ export default function DebtsPage() {
     setDebts(debtRows || []);
     setIncomes(incomeRows || []);
     setBills(billRows || []);
+    setFundingSources(fundingSourceRows || []);
     setStrategy(normalizeDebtStrategy(settings?.strategy));
     setExtraPayment(
       settings?.extra_payment != null ? String(settings.extra_payment) : ""
