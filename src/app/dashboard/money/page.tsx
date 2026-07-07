@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { buildCashIntelligence } from "@/lib/cashIntelligence";
+import { buildDailyFinancialAdvisor } from "@/lib/dailyFinancialAdvisor";
 import { buildFinancialDecision } from "@/lib/financialDecisionEngine";
 import { buildFinancialForecast } from "@/lib/financialForecasting";
 import { formatCurrency } from "@/lib/formatters";
@@ -257,6 +258,12 @@ export default function MoneyWorkspacePage() {
       currentCash: startingCash,
       cashBuffer: buffer,
     });
+    const dailyAdvisor = buildDailyFinancialAdvisor({
+      cashIntelligence,
+      financialDecision,
+      financialForecast,
+      debts: forecastDebts,
+    });
     const creditLimit = [
       ...activeDebts.map((debt) => numberValue(debt.credit_limit)),
       ...state.fundingSources.map((source) => numberValue(source.credit_limit)),
@@ -304,6 +311,7 @@ export default function MoneyWorkspacePage() {
       projectedSurplus,
       financialDecision,
       financialForecast,
+      dailyAdvisor,
       creditLimit,
       creditUsed,
       creditAvailable,
@@ -602,6 +610,60 @@ export default function MoneyWorkspacePage() {
                         <li key={risk}>{risk}</li>
                       ))}
                     </ul>
+                  </div>
+                </div>
+              </DashboardCard>
+            ))}
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <SectionHeader
+            eyebrow="Today"
+            title="Today's Recommendations"
+            description="Actionable Money guidance from the current cash, debt, forecast, and guardrail engines."
+          />
+          <div className="grid gap-4 lg:grid-cols-3">
+            {snapshot.dailyAdvisor.recommendations.slice(0, 3).map((recommendation) => (
+              <DashboardCard
+                key={recommendation.id}
+                accent={
+                  recommendation.risk === "high"
+                    ? "red"
+                    : recommendation.risk === "medium"
+                    ? "yellow"
+                    : "green"
+                }
+              >
+                <div className="flex h-full flex-col gap-4">
+                  <div>
+                    <p className="beast-kicker">{recommendation.risk} risk</p>
+                    <h2 className="mt-2 text-xl font-black">
+                      {recommendation.title}
+                    </h2>
+                    <p className="mt-2 text-sm text-[#dbe3ef]">
+                      {recommendation.action}
+                    </p>
+                  </div>
+                  <div className="grid gap-3 text-sm text-[#c7cfdb]">
+                    <div>
+                      <span className="font-bold text-white">Why:</span>{" "}
+                      {recommendation.why}
+                    </div>
+                    <div>
+                      <span className="font-bold text-white">Impact:</span>{" "}
+                      {recommendation.impact}
+                    </div>
+                    <div>
+                      <span className="font-bold text-white">Interest Saved:</span>{" "}
+                      {formatCurrency(recommendation.interestSaved)}
+                    </div>
+                    <div>
+                      <span className="font-bold text-white">
+                        Payoff Improvement:
+                      </span>{" "}
+                      {recommendation.payoffImprovement}
+                    </div>
                   </div>
                 </div>
               </DashboardCard>
