@@ -7,6 +7,7 @@ import { buildCashIntelligence } from "@/lib/cashIntelligence";
 import { buildDailyFinancialAdvisor } from "@/lib/dailyFinancialAdvisor";
 import { buildFinancialDecision } from "@/lib/financialDecisionEngine";
 import { buildFinancialForecast } from "@/lib/financialForecasting";
+import { buildFinancialInsights } from "@/lib/financialInsights";
 import { formatCurrency } from "@/lib/formatters";
 import {
   isActiveRecurringSource,
@@ -131,6 +132,17 @@ function formatDateLabel(date: Date) {
     month: "short",
     day: "numeric",
   });
+}
+
+function formatMonthsSaved(months: number) {
+  if (months <= 0) return "0 months";
+  if (months < 12) return `${months} month${months === 1 ? "" : "s"}`;
+
+  const years = Math.floor(months / 12);
+  const remainder = months % 12;
+  if (remainder === 0) return `${years} year${years === 1 ? "" : "s"}`;
+
+  return `${years}y ${remainder}m`;
 }
 
 export default function MoneyWorkspacePage() {
@@ -283,18 +295,17 @@ export default function MoneyWorkspacePage() {
       );
       return daysAway <= 7;
     });
-    const healthScore = Math.max(
-      0,
-      Math.min(
-        100,
-        55 +
-          (startingCash >= buffer ? 15 : -10) +
-          (projectedSurplus >= 0 ? 10 : -12) +
-          (utilization <= 50 ? 10 : utilization <= 75 ? 0 : -12) +
-          (billsDueSoon.length === 0 ? 5 : -5) +
-          (activeDebts.length === 0 ? 5 : 0)
-      )
-    );
+    const financialInsights = buildFinancialInsights({
+      cashIntelligence,
+      financialDecision,
+      financialForecast,
+      debts: forecastDebts,
+      strategy: "avalanche",
+      creditUtilization: utilization,
+      billsDueSoon: billsDueSoon.length,
+      currentCash: startingCash,
+      cashBuffer: buffer,
+    });
 
     return {
       activeDebts,
@@ -312,12 +323,12 @@ export default function MoneyWorkspacePage() {
       financialDecision,
       financialForecast,
       dailyAdvisor,
+      financialInsights,
       creditLimit,
       creditUsed,
       creditAvailable,
       utilization,
       billsDueSoon,
-      healthScore,
     };
   }, [state]);
 
@@ -463,7 +474,7 @@ export default function MoneyWorkspacePage() {
             description="The high-signal summary of your current Money posture."
           />
           <div className="grid gap-4 xl:grid-cols-[1.25fr_0.75fr]">
-            <HealthGauge score={snapshot.healthScore} />
+            <HealthGauge score={snapshot.financialInsights.financialHealthScore} />
             <DashboardCard accent="purple" className="min-h-[270px]">
               <div className="flex h-full flex-col justify-between gap-5">
                 <div>
@@ -516,6 +527,99 @@ export default function MoneyWorkspacePage() {
               )}
               detail={`Safety: ${snapshot.financialDecision.safetyRating}`}
             />
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <SectionHeader
+            eyebrow="Insights"
+            title="Financial health and payoff progress"
+            description="A shared-engine view of health, payoff acceleration, cash efficiency, and debt freedom timing."
+          />
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <MetricTile
+              icon="H"
+              tone={
+                snapshot.financialInsights.healthBand === "excellent" ||
+                snapshot.financialInsights.healthBand === "stable"
+                  ? "green"
+                  : snapshot.financialInsights.healthBand === "watch"
+                  ? "yellow"
+                  : "red"
+              }
+              label="Financial Health"
+              value={`${snapshot.financialInsights.financialHealthScore}`}
+              detail={snapshot.financialInsights.healthBand}
+            />
+            <MetricTile
+              icon="IS"
+              tone="green"
+              label="Interest Saved"
+              value={formatCurrency(snapshot.financialInsights.interestSaved)}
+              detail="Compared with minimum payments"
+            />
+            <MetricTile
+              icon="TS"
+              tone="blue"
+              label="Time Saved"
+              value={formatMonthsSaved(snapshot.financialInsights.timeSavedMonths)}
+              detail="Optimized plan improvement"
+            />
+            <MetricTile
+              icon="DF"
+              tone="purple"
+              label="Debt Freedom"
+              value={snapshot.financialInsights.debtFreedomCountdown}
+              detail="Current optimized countdown"
+            />
+          </div>
+
+          <div className="grid gap-4 xl:grid-cols-[0.8fr_1fr]">
+            <DashboardCard accent="green">
+              <div className="grid gap-5">
+                <div>
+                  <p className="beast-kicker">Cash Efficiency</p>
+                  <h2 className="mt-2 text-3xl font-black">
+                    {snapshot.financialInsights.cashEfficiency}%
+                  </h2>
+                  <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
+                    Percentage of monthly income remaining after bills, minimums,
+                    scheduled transfers, and reserve guardrails.
+                  </p>
+                </div>
+                <div className="rounded-xl border border-[#2a3242] bg-[#0f1419] p-4 text-sm text-[#dbe3ef]">
+                  {snapshot.financialInsights.summary}
+                </div>
+              </div>
+            </DashboardCard>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              {[
+                snapshot.financialInsights.monthlyProgress,
+                snapshot.financialInsights.yearlyProgress,
+              ].map((progress) => (
+                <DashboardCard key={progress.label} accent="blue">
+                  <div className="grid gap-4">
+                    <div>
+                      <p className="beast-kicker">{progress.label}</p>
+                      <h2 className="mt-2 text-2xl font-black">
+                        {progress.progressPercent}% progress
+                      </h2>
+                    </div>
+                    <div className="grid gap-2 text-sm text-[#c7cfdb]">
+                      <div>
+                        Debt Reduction: {formatCurrency(progress.debtReduction)}
+                      </div>
+                      <div>
+                        Interest Projected:{" "}
+                        {formatCurrency(progress.interestProjected)}
+                      </div>
+                      <div>Cash Change: {formatCurrency(progress.cashChange)}</div>
+                    </div>
+                  </div>
+                </DashboardCard>
+              ))}
+            </div>
           </div>
         </section>
 
