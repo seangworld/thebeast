@@ -34,6 +34,7 @@ export type CashIntelligenceDebt = {
   name?: string | null;
   balance?: number | string | null;
   minimum_payment?: number | string | null;
+  interest_rate?: number | string | null;
   due_date?: number | string | null;
   nextDueDateOverride?: Date | string | null;
   is_archived?: boolean | null;

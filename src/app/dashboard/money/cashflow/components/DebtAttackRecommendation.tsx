@@ -1,10 +1,12 @@
 import { getDebtStrategyLabel } from "@/lib/debtStrategies";
+import type { FinancialDecisionResult } from "@/lib/financialDecisionEngine";
 
 type DebtAttackRecommendationProps = {
   suggestedMonthlyDebtAttack: number | null;
   incomes: any[];
   nextPaycheckAmount: string;
   recommendedTargetDebt: any;
+  financialDecision: FinancialDecisionResult | null;
   strategy: string;
   isApplyingSuggestedAttack: boolean;
   applySuggestedAttack: () => void;
@@ -16,6 +18,7 @@ export default function DebtAttackRecommendation({
   incomes,
   nextPaycheckAmount,
   recommendedTargetDebt,
+  financialDecision,
   strategy,
   isApplyingSuggestedAttack,
   applySuggestedAttack,
@@ -35,13 +38,40 @@ export default function DebtAttackRecommendation({
             : "Enter starting balance and buffer to calculate"}
         </div>
         <p className="text-sm text-[#7f8da3]">
-          {suggestedMonthlyDebtAttack !== null
-            ? "Based on current paycheck input, upcoming bills, debt minimums, and your checking buffer."
+          {financialDecision
+            ? financialDecision.reason
+            : suggestedMonthlyDebtAttack !== null
+            ? "Based on current cash intelligence, upcoming bills, debt minimums, and guardrails."
             : incomes.length === 0 && !nextPaycheckAmount
             ? "Set up recurring income in the Income section or enter next paycheck manually."
             : "Configure your starting checking balance and buffer in settings."}
         </p>
       </div>
+
+      {financialDecision ? (
+        <div className="grid gap-3 md:grid-cols-2">
+          <div className="rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
+            <div className="text-sm text-[#c7cfdb]">Safety Rating</div>
+            <div
+              className={`mt-1 text-lg font-bold ${
+                financialDecision.safetyRating === "safe"
+                  ? "text-green-300"
+                  : financialDecision.safetyRating === "caution"
+                  ? "text-yellow-300"
+                  : "text-red-300"
+              }`}
+            >
+              {financialDecision.safetyRating}
+            </div>
+          </div>
+          <div className="rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
+            <div className="text-sm text-[#c7cfdb]">Confidence</div>
+            <div className="mt-1 text-lg font-bold text-white">
+              {financialDecision.confidenceScore}%
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <div className="flex flex-col gap-2 rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
         <div className="text-sm text-[#c7cfdb]">Recommended Target</div>

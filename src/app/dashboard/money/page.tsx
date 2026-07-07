@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { buildCashIntelligence } from "@/lib/cashIntelligence";
+import { buildFinancialDecision } from "@/lib/financialDecisionEngine";
 import { formatCurrency } from "@/lib/formatters";
 import {
   isActiveRecurringSource,
@@ -229,6 +230,14 @@ export default function MoneyWorkspacePage() {
     const monthlyOutflow =
       monthlyBills + debtMinimums + cashIntelligence.monthlyScheduledTransfers;
     const projectedSurplus = cashIntelligence.monthlyAvailableCash;
+    const financialDecision = buildFinancialDecision({
+      cashIntelligence,
+      debts: activeDebts,
+      income: activeIncomes,
+      bills: activeBills,
+      fundingSources: state.fundingSources,
+      strategy: "avalanche",
+    });
     const creditLimit = [
       ...activeDebts.map((debt) => numberValue(debt.credit_limit)),
       ...state.fundingSources.map((source) => numberValue(source.credit_limit)),
@@ -274,6 +283,7 @@ export default function MoneyWorkspacePage() {
       extraPayment,
       monthlyOutflow,
       projectedSurplus,
+      financialDecision,
       creditLimit,
       creditUsed,
       creditAvailable,
@@ -382,14 +392,7 @@ export default function MoneyWorkspacePage() {
     return [...billItems, ...incomeItems, ...debtItems].slice(0, 9);
   }, [snapshot.activeBills, snapshot.activeDebts, snapshot.activeIncomes]);
 
-  const recommendedAction =
-    snapshot.billsDueSoon.length > 0
-      ? "Review bills due this week and confirm their funding source."
-      : snapshot.startingCash < snapshot.buffer
-      ? "Restore your checking buffer before adding new discretionary payments."
-      : snapshot.totalDebt > 0
-      ? "Review Velocity or Debt Strategy for your next payoff move."
-      : "Keep Money records current and review upcoming income timing.";
+  const recommendedAction = snapshot.financialDecision.recommendedAction;
 
   return (
     <main className="beast-page">
@@ -442,8 +445,7 @@ export default function MoneyWorkspacePage() {
                   </h2>
                 </div>
                 <p className="text-sm leading-6 text-[#c7cfdb]">
-                  This dashboard-level recommendation uses current Money
-                  records. Deeper AI guidance will plug into this panel in v2.2.
+                  {snapshot.financialDecision.reason}
                 </p>
               </div>
             </DashboardCard>
@@ -472,13 +474,19 @@ export default function MoneyWorkspacePage() {
               detail={`${snapshot.activeIncomes.length} active recurring income sources`}
             />
             <MetricTile
-              icon="D"
-              tone="red"
-              label="Active Debt Summary"
-              value={formatCurrency(snapshot.totalDebt)}
-              detail={`${snapshot.activeDebts.length} active debts, ${formatCurrency(
-                snapshot.debtMinimums
-              )} minimums`}
+              icon="S"
+              tone={
+                snapshot.financialDecision.safetyRating === "safe"
+                  ? "green"
+                  : snapshot.financialDecision.safetyRating === "caution"
+                  ? "yellow"
+                  : "red"
+              }
+              label="Suggested Extra"
+              value={formatCurrency(
+                snapshot.financialDecision.suggestedExtraPayment
+              )}
+              detail={`Safety: ${snapshot.financialDecision.safetyRating}`}
             />
           </div>
         </section>
@@ -564,33 +572,33 @@ export default function MoneyWorkspacePage() {
           <div className="space-y-4">
             <SectionHeader
               eyebrow="Recommendations"
-              title="Advisor preview"
-              description="Placeholder language reserved for future AI explanations."
+              title="Financial decision"
+              description="A guardrail-based recommendation from current Money records."
             />
             <DashboardCard accent="purple">
               <div className="grid gap-3 text-sm">
                 <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
                   <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                    Priority
+                    Suggested Extra Payment
                   </div>
                   <div className="mt-1 font-bold text-white">
-                    {alerts.some((alert) => alert.title !== "No critical alerts")
-                      ? "Review Today"
-                      : "Maintain"}
+                    {formatCurrency(
+                      snapshot.financialDecision.suggestedExtraPayment
+                    )}
                   </div>
                 </div>
                 <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
                   <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                    Recommendation
+                    Recommended Next Action
                   </div>
                   <div className="mt-1 text-[#dbe3ef]">{recommendedAction}</div>
                 </div>
                 <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
                   <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                    Estimated Benefit
+                    Safety Indicator
                   </div>
                   <div className="mt-1 text-[#dbe3ef]">
-                    Reserved for future AI savings explanations.
+                    {snapshot.financialDecision.safetyRating}
                   </div>
                 </div>
                 <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
@@ -598,16 +606,15 @@ export default function MoneyWorkspacePage() {
                     Reason
                   </div>
                   <div className="mt-1 text-[#dbe3ef]">
-                    Uses current Money records without generating new financial
-                    projections.
+                    {snapshot.financialDecision.reason}
                   </div>
                 </div>
-                <div className="rounded-xl border border-dashed border-[#2a3242] bg-[#0f1419] p-4 text-[#7f8da3]">
+                <div className="rounded-xl border border-[#2a3242] bg-[#0f1419] p-4 text-[#dbe3ef]">
                   <div className="text-xs font-bold uppercase">
-                    AI Confidence
+                    Confidence
                   </div>
                   <div className="mt-1 text-sm">
-                    Reserved for the future recommendation engine.
+                    {snapshot.financialDecision.confidenceScore}%
                   </div>
                 </div>
               </div>

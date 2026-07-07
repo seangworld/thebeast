@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { buildFinancialDecision } from "@/lib/financialDecisionEngine";
 import BillsSection from "./components/BillsSection";
 import DebtsSection from "./components/DebtsSection";
 import CashFlowOverview from "./components/CashFlowOverview";
@@ -742,14 +743,24 @@ export default function CashFlowPage() {
   const safeToSpend =
     cashIntelligence?.nextPaydayCash ?? projectedAfterObligations - Number(buffer || 0);
 
-  const suggestedMonthlyDebtAttack = useMemo(() => {
-    if (!nextPayDate || effectiveNextPaycheckAmount <= 0) return null;
-    return Math.max(0, safeToSpend);
-  }, [nextPayDate, effectiveNextPaycheckAmount, safeToSpend]);
+  const financialDecision = useMemo(() => {
+    if (!cashIntelligence) return null;
+
+    return buildFinancialDecision({
+      cashIntelligence,
+      debts: activeDebts,
+      income: incomes,
+      bills: activeBills,
+      fundingSources,
+      strategy,
+    });
+  }, [cashIntelligence, activeDebts, incomes, activeBills, fundingSources, strategy]);
+
+  const suggestedMonthlyDebtAttack = financialDecision?.suggestedExtraPayment ?? null;
 
   const recommendedTargetDebt = useMemo(() => {
-    return getTargetDebt(activeDebts, strategy);
-  }, [activeDebts, strategy]);
+    return financialDecision?.targetDebt || getTargetDebt(activeDebts, strategy);
+  }, [financialDecision, activeDebts, strategy]);
 
   const planningWindowEnd = useMemo(() => {
     const today = new Date();
@@ -1162,6 +1173,7 @@ export default function CashFlowPage() {
           incomes={incomes}
           nextPaycheckAmount={nextPaycheckAmount}
           recommendedTargetDebt={recommendedTargetDebt}
+          financialDecision={financialDecision}
           strategy={strategy}
           isApplyingSuggestedAttack={isApplyingSuggestedAttack}
           applySuggestedAttack={applySuggestedAttack}
