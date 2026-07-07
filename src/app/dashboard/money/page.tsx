@@ -3,9 +3,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { buildCashIntelligence } from "@/lib/cashIntelligence";
 import { formatCurrency } from "@/lib/formatters";
 import {
-  calculateMonthlyRecurringTotal,
   isActiveRecurringSource,
   numberValue,
 } from "@/lib/financialMetrics";
@@ -196,19 +196,39 @@ export default function MoneyWorkspacePage() {
     const activeIncomes = state.incomes.filter(isActiveRecurringSource);
     const startingCash = numberValue(state.cashSettings?.starting_balance);
     const buffer = numberValue(state.cashSettings?.checking_buffer);
-    const monthlyIncome = calculateMonthlyRecurringTotal(state.incomes);
-    const monthlyBills = calculateMonthlyRecurringTotal(activeBills);
-    const debtMinimums = activeDebts.reduce(
-      (sum, debt) => sum + numberValue(debt.minimum_payment),
-      0
-    );
+    const extraPayment = numberValue(state.debtSettings?.extra_payment);
+    const cashIntelligence = buildCashIntelligence({
+      income: activeIncomes,
+      bills: activeBills,
+      debtMinimums: activeDebts,
+      scheduledTransfers:
+        extraPayment > 0
+          ? [
+              {
+                id: "planned-extra-debt-attack",
+                name: "Planned extra debt payment",
+                amount: extraPayment,
+                frequency: "monthly",
+              },
+            ]
+          : [],
+      fundingSources: state.fundingSources,
+      settings: {
+        currentCash: startingCash,
+        cashBuffer: buffer,
+        lookaheadDays: 30,
+      },
+    });
+    const monthlyIncome = cashIntelligence.monthlyIncome;
+    const monthlyBills = cashIntelligence.monthlyBills;
+    const debtMinimums = cashIntelligence.monthlyDebtMinimums;
     const totalDebt = activeDebts.reduce(
       (sum, debt) => sum + numberValue(debt.balance),
       0
     );
-    const extraPayment = numberValue(state.debtSettings?.extra_payment);
-    const monthlyOutflow = monthlyBills + debtMinimums + extraPayment;
-    const projectedSurplus = monthlyIncome - monthlyOutflow;
+    const monthlyOutflow =
+      monthlyBills + debtMinimums + cashIntelligence.monthlyScheduledTransfers;
+    const projectedSurplus = cashIntelligence.monthlyAvailableCash;
     const creditLimit = [
       ...activeDebts.map((debt) => numberValue(debt.credit_limit)),
       ...state.fundingSources.map((source) => numberValue(source.credit_limit)),

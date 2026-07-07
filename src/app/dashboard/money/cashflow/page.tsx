@@ -57,6 +57,7 @@ export default function CashFlowPage() {
     requiredCash,
     billsDue,
     incomeExpected,
+    cashIntelligence,
     lookaheadDays,
     assignmentHorizonMonths,
     buffer,
@@ -738,7 +739,8 @@ export default function CashFlowPage() {
     effectiveNextPaycheckAmount -
     requiredBeforePaycheck;
 
-  const safeToSpend = projectedAfterObligations - Number(buffer || 0);
+  const safeToSpend =
+    cashIntelligence?.nextPaydayCash ?? projectedAfterObligations - Number(buffer || 0);
 
   const suggestedMonthlyDebtAttack = useMemo(() => {
     if (!nextPayDate || effectiveNextPaycheckAmount <= 0) return null;

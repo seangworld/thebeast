@@ -1,10 +1,4 @@
-import {
-  buildCashTimeline,
-  calculateBillsDue,
-  calculateIncomeExpected,
-  calculateRequiredCash,
-  simulateCashFlow,
-} from "@/lib/cashflow";
+import { buildCashIntelligence } from "@/lib/cashIntelligence";
 import { useCallback } from "react";
 import { normalizeDebtStrategy } from "@/lib/debtStrategies";
 import {
@@ -141,18 +135,15 @@ export function useCashFlowProjection() {
           ]
         : [];
 
-    const builtTimeline = buildCashTimeline({
-      incomes: incomeRows || [],
+    const cashIntelligence = buildCashIntelligence({
+      income: incomeRows || [],
       bills: [...billsForTimeline, ...extraAttackBill],
-      debts: debtsForTimeline,
-      startDate: new Date(),
-      days: activeLookahead,
-    });
-
-    const simulated = simulateCashFlow({
-      timeline: builtTimeline,
-      startingBalance: activeStartingBalance,
-      buffer: activeBuffer,
+      debtMinimums: debtsForTimeline,
+      settings: {
+        currentCash: activeStartingBalance,
+        cashBuffer: activeBuffer,
+        lookaheadDays: activeLookahead,
+      },
     });
 
     return {
@@ -165,11 +156,12 @@ export function useCashFlowProjection() {
       targetDebt,
       activePayments,
       activeDebtPayments,
-      builtTimeline,
-      simulated,
-      requiredCash: calculateRequiredCash(builtTimeline),
-      billsDue: calculateBillsDue(builtTimeline),
-      incomeExpected: calculateIncomeExpected(builtTimeline),
+      cashIntelligence,
+      builtTimeline: cashIntelligence.timeline,
+      simulated: cashIntelligence.simulatedTimeline,
+      requiredCash: cashIntelligence.requiredCash,
+      billsDue: cashIntelligence.billsDue,
+      incomeExpected: cashIntelligence.incomeExpected,
     };
   }, []);
 

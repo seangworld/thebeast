@@ -17,7 +17,7 @@ import type {
   VelocityRiskLevel,
   VelocityScoreBreakdown,
 } from "./types";
-import { normalizeRecurringAmountToMonthly } from "../financialMetrics";
+import { buildCashIntelligence } from "../cashIntelligence";
 
 function money(value: number) {
   if (!Number.isFinite(value)) return 0;
@@ -590,42 +590,47 @@ function buildChunkRecommendation(
 }
 
 function buildCashflowProjection(input: VelocityInputSnapshot, cashBalance: number) {
-  const projectedIncome = money(
-    input.incomes.reduce(
-      (sum, income) =>
-        sum +
-        normalizeRecurringAmountToMonthly(
-          finiteNumber(income.amount),
-          income.frequency
-        ),
-      0
-    )
-  );
-  const projectedBills = money(
-    input.bills
-      .filter((bill) => !bill.is_archived)
-      .reduce((sum, bill) => sum + finiteNumber(bill.amount), 0)
-  );
-  const projectedMinimumPayments = money(
-    getEligibleDebts(input.debts).reduce(
-      (sum, debt) => sum + finiteNumber(debt.minimum_payment),
-      0
-    )
-  );
   const cashBuffer = finiteNumber(input.settings.cash_buffer);
-  const projectedCashBeforeVelocityPayment = money(
-    cashBalance + projectedIncome - projectedBills - projectedMinimumPayments
-  );
+  const projection = buildCashIntelligence({
+    asOfDate: input.as_of_date ? new Date(`${input.as_of_date}T00:00:00`) : undefined,
+    income: input.incomes,
+    bills: input.bills.map((bill) => ({
+      ...bill,
+      nextDueDateOverride: bill.next_due_date,
+    })),
+    debtMinimums: getEligibleDebts(input.debts),
+    settings: {
+      currentCash: cashBalance,
+      cashBuffer,
+      emergencyReserveAmount: input.settings.minimum_cash_after_payment,
+      lookaheadDays: 30,
+    },
+    guardrails: {
+      minimumCashAfterPayment: input.settings.minimum_cash_after_payment,
+    },
+  });
 
   return {
     period_days: 30,
     starting_cash: cashBalance,
-    projected_income: projectedIncome,
-    projected_bills: projectedBills,
-    projected_minimum_payments: projectedMinimumPayments,
-    projected_cash_before_velocity_payment: projectedCashBeforeVelocityPayment,
+    projected_income: projection.monthlyIncome,
+    projected_bills: projection.monthlyBills,
+    projected_minimum_payments: projection.monthlyDebtMinimums,
+    projected_cash_before_velocity_payment: money(
+      cashBalance +
+        projection.monthlyIncome -
+        projection.monthlyBills -
+        projection.monthlyDebtMinimums
+    ),
     available_cash_above_buffer: money(
-      Math.max(projectedCashBeforeVelocityPayment - cashBuffer, 0)
+      Math.max(
+        cashBalance +
+          projection.monthlyIncome -
+          projection.monthlyBills -
+          projection.monthlyDebtMinimums -
+          cashBuffer,
+        0
+      )
     ),
     assumptions: [
       "Projection uses a 30-day planning window.",

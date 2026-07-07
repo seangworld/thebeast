@@ -5,6 +5,7 @@ import type {
   VelocityIncomeSnapshot,
   VelocityInputSnapshot,
 } from "./types";
+import { buildCashIntelligence } from "../cashIntelligence";
 import { parseNumber } from "../formatters";
 import type { VelocitySourceType } from "./settings";
 
@@ -146,12 +147,6 @@ export function buildVelocityInputSnapshot(
   const extraAttack = toNumber(input.extra_attack);
   const startingBalance = toNumber(input.starting_balance);
   const currentMonthlySurplus = startingBalance - cashBuffer;
-  const monthlyRecoveryCapacity =
-    currentMonthlySurplus > 0
-      ? currentMonthlySurplus
-      : extraAttack > 0
-        ? extraAttack
-        : 0;
 
   // UI mismatch: the current Velocity page has a single starting cash value,
   // not normalized cash accounts. Represent it as one checking account for now.
@@ -165,13 +160,38 @@ export function buildVelocityInputSnapshot(
   );
   const creditLimit = toNumber(input.velocity_settings.credit_limit);
   const currentBalance = toNumber(input.velocity_settings.current_balance);
-  const utilizationLimit = creditLimit * (maxUtilizationPercent / 100);
-  const safeCreditAvailable = Math.max(
-    utilizationLimit - currentBalance - emergencyReserve,
-    0
-  );
-
-  const maxRecommendedPayment = safeCreditAvailable || null;
+  const cashIntelligence = buildCashIntelligence({
+    asOfDate: input.as_of_date ? new Date(`${input.as_of_date}T00:00:00`) : undefined,
+    income: input.incomes || [],
+    bills: input.bills || [],
+    debtMinimums: input.debts,
+    fundingSources: [
+      {
+        id: "velocity-ui-credit-source",
+        current_balance: currentBalance,
+        credit_limit: creditLimit,
+        max_utilization_percent: maxUtilizationPercent,
+        is_active: true,
+      },
+    ],
+    settings: {
+      currentCash: startingBalance,
+      cashBuffer,
+      emergencyReserveAmount: emergencyReserve,
+      lookaheadDays: 30,
+    },
+    guardrails: {
+      minimumCashAfterPayment: emergencyReserve,
+      maxSourceUtilizationPercent: maxUtilizationPercent,
+    },
+  });
+  const monthlyRecoveryCapacity =
+    currentMonthlySurplus > 0
+      ? currentMonthlySurplus
+      : extraAttack > 0
+        ? extraAttack
+        : 0;
+  const maxRecommendedPayment = cashIntelligence.safeFundingSourceCapacity || null;
 
   return {
     as_of_date: input.as_of_date,

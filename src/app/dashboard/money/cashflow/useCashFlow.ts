@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { simulateCashFlow } from "@/lib/cashflow";
+import type { CashIntelligenceResult } from "@/lib/cashIntelligence";
 import { createClient } from "@/lib/supabase/client";
 import {
   getCycleMonth,
@@ -52,6 +53,8 @@ export function useCashFlow() {
   const [requiredCash, setRequiredCash] = useState(0);
   const [billsDue, setBillsDue] = useState(0);
   const [incomeExpected, setIncomeExpected] = useState(0);
+  const [cashIntelligence, setCashIntelligence] =
+    useState<CashIntelligenceResult | null>(null);
 
   const [lookaheadDays, setLookaheadDays] = useState(30);
   const [assignmentHorizonMonths, setAssignmentHorizonMonths] = useState(6);
@@ -186,6 +189,7 @@ export function useCashFlow() {
     setRequiredCash,
     setBillsDue,
     setIncomeExpected,
+    setCashIntelligence,
   });
   const {
     addBillPayment,
@@ -745,6 +749,7 @@ export function useCashFlow() {
     requiredCash,
     billsDue,
     incomeExpected,
+    cashIntelligence,
     lookaheadDays,
     assignmentHorizonMonths,
     buffer,

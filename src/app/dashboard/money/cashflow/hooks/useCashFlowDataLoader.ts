@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef } from "react";
+import type { CashIntelligenceResult } from "@/lib/cashIntelligence";
 import { createClient } from "@/lib/supabase/client";
 import type { FundingSource, PayoffStrategy } from "../cashflowUtils";
 
@@ -24,6 +25,7 @@ type UseCashFlowDataLoaderInput = {
   setRequiredCash: (value: number) => void;
   setBillsDue: (value: number) => void;
   setIncomeExpected: (value: number) => void;
+  setCashIntelligence: (value: CashIntelligenceResult | null) => void;
 };
 
 export function useCashFlowDataLoader({
@@ -48,6 +50,7 @@ export function useCashFlowDataLoader({
   setRequiredCash,
   setBillsDue,
   setIncomeExpected,
+  setCashIntelligence,
 }: UseCashFlowDataLoaderInput) {
   const focusReloadInFlightRef = useRef(false);
   const lastFocusReloadAtRef = useRef(0);
@@ -162,6 +165,7 @@ export function useCashFlowDataLoader({
     setRequiredCash(projection.requiredCash);
     setBillsDue(projection.billsDue);
     setIncomeExpected(projection.incomeExpected);
+    setCashIntelligence(projection.cashIntelligence);
 
     setLoading(false);
   }, [
@@ -178,6 +182,7 @@ export function useCashFlowDataLoader({
     setDebts,
     setExtraPayment,
     setIncomeExpected,
+    setCashIntelligence,
     setIncomes,
     setLoading,
     setLookaheadDays,
