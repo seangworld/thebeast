@@ -45,6 +45,7 @@ export default function LearningActivityRunnerPage() {
   const [allActivities, setAllActivities] = useState<LearningActivityRunnerRow[]>([]);
   const [checkedPhases, setCheckedPhases] = useState<Record<string, boolean>>({});
   const [quizAnswers, setQuizAnswers] = useState<Record<string, string>>({});
+  const [practiceAnswers, setPracticeAnswers] = useState<Record<string, string>>({});
   const [reflection, setReflection] = useState("");
   const [confidence, setConfidence] = useState("Still building");
   const [loading, setLoading] = useState(true);
@@ -132,6 +133,7 @@ export default function LearningActivityRunnerPage() {
       reflection,
       confidence,
       quizAnswers,
+      practiceAnswers,
       lesson: engine.lesson,
     });
 
@@ -251,6 +253,7 @@ export default function LearningActivityRunnerPage() {
               courseTitle={course?.title || "Learning path"}
               checkedPhases={checkedPhases}
               quizAnswers={quizAnswers}
+              practiceAnswers={practiceAnswers}
               reflection={reflection}
               confidence={confidence}
               saving={saving}
@@ -265,6 +268,12 @@ export default function LearningActivityRunnerPage() {
                 setQuizAnswers((current) => ({
                   ...current,
                   [questionId]: answer,
+                }))
+              }
+              onPracticeAnswer={(practiceId, answer) =>
+                setPracticeAnswers((current) => ({
+                  ...current,
+                  [practiceId]: answer,
                 }))
               }
               onReflectionChange={setReflection}

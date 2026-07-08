@@ -34,6 +34,7 @@ export type AdaptivePracticeStep = {
   prompt: string;
   hint: string;
   expectedAnswer: string;
+  acceptedAnswers?: string[];
 };
 
 export type AdaptiveQuizQuestion = {
@@ -50,6 +51,28 @@ export type AdaptiveCoachPrompt = {
   prompt: string;
 };
 
+export type InteractiveLessonTerm = {
+  id: string;
+  label: string;
+  coefficient: number;
+  variable: string;
+  group: "x" | "constant" | "other";
+  color: "blue" | "green" | "yellow";
+};
+
+export type InteractiveLessonVisual = {
+  title: string;
+  prompt: string;
+  expression: string;
+  terms: InteractiveLessonTerm[];
+  targetGroups: Array<{
+    group: InteractiveLessonTerm["group"];
+    label: string;
+    combinedLabel: string;
+    explanation: string;
+  }>;
+};
+
 export type AdaptiveLesson = {
   id: string;
   title: string;
@@ -57,6 +80,7 @@ export type AdaptiveLesson = {
   learningObjective: string;
   prerequisiteConcepts: string[];
   explanation: string;
+  interactiveVisual: InteractiveLessonVisual;
   examples: AdaptiveLessonExample[];
   guidedPractice: AdaptivePracticeStep[];
   quizQuestions: AdaptiveQuizQuestion[];
@@ -83,6 +107,8 @@ export type LessonEngineProgress = {
   quizCorrect: number;
   quizTotal: number;
   quizPercent: number;
+  practiceCorrect: number;
+  practiceTotal: number;
   confidenceScore: number;
   masteryEstimate: number;
   mastered: boolean;
@@ -171,6 +197,32 @@ export const combiningLikeTermsLesson: AdaptiveLesson = {
   ],
   explanation:
     "Like terms have the same variable part. The term 3x can combine with 5x because both are x terms. The term 3x cannot combine with 5 because one has x and one is just a number. When terms are alike, keep the variable part and add or subtract the coefficients.",
+  interactiveVisual: {
+    title: "Sort the terms before combining",
+    prompt:
+      "Tap terms that belong together. Terms can combine only when their variable part matches.",
+    expression: "4x + 7 + 2x + 3",
+    terms: [
+      { id: "term-4x", label: "4x", coefficient: 4, variable: "x", group: "x", color: "blue" },
+      { id: "term-7", label: "7", coefficient: 7, variable: "", group: "constant", color: "green" },
+      { id: "term-2x", label: "2x", coefficient: 2, variable: "x", group: "x", color: "blue" },
+      { id: "term-3", label: "3", coefficient: 3, variable: "", group: "constant", color: "green" },
+    ],
+    targetGroups: [
+      {
+        group: "x",
+        label: "x terms",
+        combinedLabel: "4x + 2x = 6x",
+        explanation: "Both terms have x, so add 4 + 2 and keep x.",
+      },
+      {
+        group: "constant",
+        label: "plain numbers",
+        combinedLabel: "7 + 3 = 10",
+        explanation: "Constants have no variable, so they combine with other constants.",
+      },
+    ],
+  },
   examples: [
     {
       title: "Simple combine",
@@ -199,12 +251,14 @@ export const combiningLikeTermsLesson: AdaptiveLesson = {
       prompt: "Combine: 6x + 2x",
       hint: "Both terms have x, so add the coefficients and keep x.",
       expectedAnswer: "8x",
+      acceptedAnswers: ["8x"],
     },
     {
       id: "practice-combine-groups",
       prompt: "Combine: 5x + 4 + x + 6",
       hint: "Group the x terms together, then group the plain numbers.",
       expectedAnswer: "6x + 10",
+      acceptedAnswers: ["6x+10", "6x + 10", "10 + 6x"],
     },
   ],
   quizQuestions: [
@@ -273,6 +327,24 @@ function buildGenericAdaptiveLesson(activity: Pick<LearningActivityRunnerRow, "t
     ],
     explanation:
       "Beast teaches this activity in small steps: start with what you know, learn the core idea, practice once with support, check understanding, get coached, reflect, and choose the next move.",
+    interactiveVisual: {
+      title: "Build the idea",
+      prompt: "Use this space to identify what belongs together before answering.",
+      expression: activity.title,
+      terms: [
+        { id: "core-idea", label: "Core idea", coefficient: 1, variable: "", group: "other", color: "blue" },
+        { id: "example", label: "Example", coefficient: 1, variable: "", group: "other", color: "green" },
+        { id: "check", label: "Check", coefficient: 1, variable: "", group: "other", color: "yellow" },
+      ],
+      targetGroups: [
+        {
+          group: "other",
+          label: "Learning pieces",
+          combinedLabel: "Idea + Example + Check",
+          explanation: "A good learning attempt connects the idea, one example, and one check.",
+        },
+      ],
+    },
     examples: [
       {
         title: "Worked example",
@@ -291,6 +363,7 @@ function buildGenericAdaptiveLesson(activity: Pick<LearningActivityRunnerRow, "t
         prompt: "Write one attempt at the core skill for this activity.",
         hint: "Keep the attempt small. One clear step is better than guessing through the whole problem.",
         expectedAnswer: "A clear, supported attempt.",
+        acceptedAnswers: ["attempt", "clear attempt", "supported attempt"],
       },
     ],
     quizQuestions: [
@@ -389,6 +462,140 @@ export function getQuizScore({
   };
 }
 
+function normalizeAnswer(value: string) {
+  return value.toLowerCase().replace(/\s+/g, "").replace(/\*/g, "");
+}
+
+export function isPracticeAnswerCorrect(
+  practice: AdaptivePracticeStep,
+  answer: string
+) {
+  const normalized = normalizeAnswer(answer);
+  const accepted = practice.acceptedAnswers?.length
+    ? practice.acceptedAnswers
+    : [practice.expectedAnswer];
+
+  return accepted.map(normalizeAnswer).includes(normalized);
+}
+
+export function getGuidedPracticeScore({
+  practice,
+  practiceAnswers,
+}: {
+  practice: AdaptivePracticeStep[];
+  practiceAnswers: Record<string, string>;
+}) {
+  const answered = practice.filter((step) => practiceAnswers[step.id]?.trim());
+  const correct = practice.filter((step) =>
+    isPracticeAnswerCorrect(step, practiceAnswers[step.id] || "")
+  );
+
+  return {
+    answered: answered.length,
+    correct: correct.length,
+    total: practice.length,
+    percent:
+      practice.length === 0
+        ? 100
+        : Math.round((correct.length / practice.length) * 100),
+  };
+}
+
+export function getTeachingVisualSelectionFeedback({
+  lesson,
+  selectedTermIds,
+}: {
+  lesson: AdaptiveLesson;
+  selectedTermIds: string[];
+}) {
+  const selectedTerms = lesson.interactiveVisual.terms.filter((term) =>
+    selectedTermIds.includes(term.id)
+  );
+
+  if (selectedTerms.length === 0) {
+    return {
+      correct: false,
+      title: "Choose a group",
+      message: "Select terms that have the same variable part.",
+    };
+  }
+
+  const selectedGroups = new Set(selectedTerms.map((term) => term.group));
+  if (selectedGroups.size > 1) {
+    return {
+      correct: false,
+      title: "Not quite",
+      message:
+        "Those terms do not all match. Variables combine with matching variables, and plain numbers combine with plain numbers.",
+    };
+  }
+
+  const group = selectedTerms[0]?.group;
+  const target = lesson.interactiveVisual.targetGroups.find(
+    (candidate) => candidate.group === group
+  );
+  const expectedCount = lesson.interactiveVisual.terms.filter(
+    (term) => term.group === group
+  ).length;
+
+  if (selectedTerms.length < expectedCount) {
+    return {
+      correct: false,
+      title: "Almost",
+      message: `You found ${target?.label || "a group"}. Look for every matching term before combining.`,
+    };
+  }
+
+  return {
+    correct: true,
+    title: target?.combinedLabel || "Correct group",
+    message: target?.explanation || "These terms belong together.",
+  };
+}
+
+export function getLessonTeacherResponse({
+  lesson,
+  question,
+  quizPercent,
+  masteryEstimate,
+}: {
+  lesson: AdaptiveLesson;
+  question: string;
+  quizPercent: number;
+  masteryEstimate: number;
+}) {
+  const lowerQuestion = question.toLowerCase();
+
+  if (!question.trim()) {
+    return "Ask me about like terms, coefficients, grouping, a mistake, or what to do next.";
+  }
+
+  const inLessonContext =
+    /like|term|coefficient|variable|combine|group|simplify|mistake|confus|next|review|master/i.test(
+      question
+    );
+
+  if (!inLessonContext) {
+    return `I can help inside this lesson: ${lesson.title}. Ask me about like terms, coefficients, grouping, or the next practice step.`;
+  }
+
+  if (/coefficient/.test(lowerQuestion)) {
+    return "A coefficient is the number attached to a variable. In 4x, the coefficient is 4. When you combine 4x and 2x, add 4 + 2 and keep x.";
+  }
+
+  if (/why|mistake|wrong|confus/.test(lowerQuestion)) {
+    return "The most common mistake is combining unlike terms. 4x and 7 cannot become 11x because 7 has no x. First sort by variable part, then add only the matching groups.";
+  }
+
+  if (/next|master|review/.test(lowerQuestion)) {
+    return masteryEstimate >= lesson.masteryThreshold && quizPercent >= 70
+      ? `You are ready for the next lesson: ${lesson.recommendedNextLesson}.`
+      : `${lesson.reviewRecommendation} Then try one more practice problem and re-check your quiz answers.`;
+  }
+
+  return "Like terms have the same variable part. x terms combine with x terms, plain numbers combine with plain numbers, and the variable part stays the same.";
+}
+
 export function buildCoachMessage({
   mastered,
   recommendedReview,
@@ -417,6 +624,7 @@ export function getLessonEngineProgress({
   reflection,
   confidence,
   quizAnswers,
+  practiceAnswers,
   lesson,
 }: {
   checkedPhases: Record<string, boolean>;
@@ -424,22 +632,36 @@ export function getLessonEngineProgress({
   reflection: string;
   confidence: string;
   quizAnswers: Record<string, string>;
+  practiceAnswers?: Record<string, string>;
   lesson: AdaptiveLesson;
 }): LessonEngineProgress {
   const completedPhases = Object.values(checkedPhases).filter(Boolean).length;
   const reflectionComplete = reflection.trim().length > 0;
   const quiz = getQuizScore({ questions: lesson.quizQuestions, quizAnswers });
+  const practice = practiceAnswers
+    ? getGuidedPracticeScore({ practice: lesson.guidedPractice, practiceAnswers })
+    : {
+        answered: lesson.guidedPractice.length,
+        correct: lesson.guidedPractice.length,
+        total: lesson.guidedPractice.length,
+        percent: 100,
+      };
   const confidenceScore = confidenceScores[confidence] || 60;
   const phasePercent = phaseCount === 0 ? 0 : Math.round((completedPhases / phaseCount) * 100);
   const masteryEstimate = Math.round(
-    quiz.percent * 0.55 + confidenceScore * 0.25 + phasePercent * 0.2
+    quiz.percent * 0.45 +
+      practice.percent * 0.2 +
+      confidenceScore * 0.2 +
+      phasePercent * 0.15
   );
   const answeredQuizQuestions = lesson.quizQuestions.filter(
     (question) => Boolean(quizAnswers[question.id])
   ).length;
-  const requiredSteps = phaseCount + lesson.quizQuestions.length + 1;
+  const requiredSteps =
+    phaseCount + lesson.guidedPractice.length + lesson.quizQuestions.length + 1;
   const completedSteps =
     completedPhases +
+    practice.answered +
     answeredQuizQuestions +
     (reflectionComplete ? 1 : 0);
   const mastered = masteryEstimate >= lesson.masteryThreshold && quiz.percent >= 70;
@@ -452,12 +674,15 @@ export function getLessonEngineProgress({
     quizCorrect: quiz.correct,
     quizTotal: quiz.total,
     quizPercent: quiz.percent,
+    practiceCorrect: practice.correct,
+    practiceTotal: practice.total,
     confidenceScore,
     masteryEstimate,
     mastered,
     recommendedReview,
     readyToComplete:
       completedPhases === phaseCount &&
+      practice.answered === lesson.guidedPractice.length &&
       reflectionComplete &&
       answeredQuizQuestions === lesson.quizQuestions.length,
     percent:

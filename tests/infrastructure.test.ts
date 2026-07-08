@@ -196,8 +196,12 @@ import {
 import {
   buildLessonEngineDefinition,
   combiningLikeTermsLesson,
+  getGuidedPracticeScore,
   getLessonEngineProgress,
+  getLessonTeacherResponse,
   getQuizScore,
+  getTeachingVisualSelectionFeedback,
+  isPracticeAnswerCorrect,
 } from "../src/lib/learning/lessonEngine";
 import { learningStandards } from "../src/lib/learning/standards";
 import { generateCurriculumLearningPath } from "../src/lib/learning/learningPaths";
@@ -1443,8 +1447,13 @@ test("learning activities have a dedicated runner and next-activity unlock logic
   assert.match(activityRunner, /View Activities/);
   assert.match(activityRunner, /<LessonEngine/);
   assert.match(lessonEngine, /Adaptive Lesson/);
+  assert.match(lessonEngine, /Interactive Teaching Area/);
+  assert.match(lessonEngine, /AI Teacher/);
+  assert.match(lessonEngine, /Ask without leaving the lesson/);
+  assert.match(lessonEngine, /onPracticeAnswer/);
   assert.match(lessonEngine, /Mastery and Recommendation/);
   assert.match(activityRunner, /quizAnswers/);
+  assert.match(activityRunner, /practiceAnswers/);
 });
 
 test("generated learning activities persist with required visibility fields", () => {
@@ -1525,6 +1534,12 @@ test("lesson engine supports the adaptive BeastLearning teaching cycle", () => {
   const quizAnswers = Object.fromEntries(
     quizEngine.lesson.quizQuestions.map((question) => [question.id, question.answer])
   );
+  const practiceAnswers = Object.fromEntries(
+    quizEngine.lesson.guidedPractice.map((practice) => [
+      practice.id,
+      practice.expectedAnswer,
+    ])
+  );
   const progress = getLessonEngineProgress({
     checkedPhases: {
       assessment: true,
@@ -1540,11 +1555,36 @@ test("lesson engine supports the adaptive BeastLearning teaching cycle", () => {
     reflection: "Like terms have the same variable part.",
     confidence: "Ready for more",
     quizAnswers,
+    practiceAnswers,
     lesson: quizEngine.lesson,
   });
   const quizScore = getQuizScore({
     questions: quizEngine.lesson.quizQuestions,
     quizAnswers,
+  });
+  const practiceScore = getGuidedPracticeScore({
+    practice: quizEngine.lesson.guidedPractice,
+    practiceAnswers,
+  });
+  const correctVisual = getTeachingVisualSelectionFeedback({
+    lesson: quizEngine.lesson,
+    selectedTermIds: ["term-4x", "term-2x"],
+  });
+  const incorrectVisual = getTeachingVisualSelectionFeedback({
+    lesson: quizEngine.lesson,
+    selectedTermIds: ["term-4x", "term-7"],
+  });
+  const teacherResponse = getLessonTeacherResponse({
+    lesson: quizEngine.lesson,
+    question: "Why can't I combine 4x and 7?",
+    quizPercent: 50,
+    masteryEstimate: 60,
+  });
+  const scopedResponse = getLessonTeacherResponse({
+    lesson: quizEngine.lesson,
+    question: "Can you help with my budget?",
+    quizPercent: 100,
+    masteryEstimate: 100,
   });
 
   assert.deepEqual(
@@ -1561,10 +1601,17 @@ test("lesson engine supports the adaptive BeastLearning teaching cycle", () => {
     ]
   );
   assert.equal(quizEngine.lesson.id, combiningLikeTermsLesson.id);
+  assert.equal(quizEngine.lesson.interactiveVisual.expression, "4x + 7 + 2x + 3");
   assert.equal(quizEngine.lesson.learningObjective.includes("same variable part"), true);
   assert.equal(quizEngine.lesson.masteryThreshold, 80);
   assert.equal(quizEngine.completionLabel, "Finish quiz");
   assert.equal(quizScore.percent, 100);
+  assert.equal(practiceScore.percent, 100);
+  assert.equal(isPracticeAnswerCorrect(quizEngine.lesson.guidedPractice[0], "8x"), true);
+  assert.equal(correctVisual.correct, true);
+  assert.equal(incorrectVisual.correct, false);
+  assert.equal(teacherResponse.includes("4x and 7 cannot become 11x"), true);
+  assert.equal(scopedResponse.includes("I can help inside this lesson"), true);
   assert.equal(
     coachEngine.lesson.aiCoachingPrompts.some((prompt) => prompt.kind === "mistake"),
     true
@@ -1574,6 +1621,7 @@ test("lesson engine supports the adaptive BeastLearning teaching cycle", () => {
   assert.equal(progress.mastered, true);
   assert.equal(progress.recommendedReview, false);
   assert.equal(progress.percent, 100);
+  assert.equal(progress.practiceCorrect, quizEngine.lesson.guidedPractice.length);
   assert.equal(progress.nextRecommendation, "Solving one-step equations");
 });
 
