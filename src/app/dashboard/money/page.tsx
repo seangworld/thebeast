@@ -8,6 +8,7 @@ import { buildDailyFinancialAdvisor } from "@/lib/dailyFinancialAdvisor";
 import { buildFinancialDecision } from "@/lib/financialDecisionEngine";
 import { buildFinancialForecast } from "@/lib/financialForecasting";
 import { buildFinancialInsights } from "@/lib/financialInsights";
+import { buildFinancialReports } from "@/lib/financialReports";
 import { compareFinancialScenarios } from "@/lib/financialScenarios";
 import { buildFinancialSimulationState } from "@/lib/financialSimulation";
 import { buildFinancialCoach } from "@/lib/financialCoach";
@@ -347,6 +348,13 @@ export default function MoneyWorkspacePage() {
       insights: financialInsights,
       scenarios: scenarioComparison,
     });
+    const financialReports = buildFinancialReports({
+      cashIntelligence,
+      forecast: financialForecast,
+      insights: financialInsights,
+      advisor: dailyAdvisor,
+      scenarios: scenarioComparison,
+    });
 
     return {
       simulation,
@@ -368,6 +376,7 @@ export default function MoneyWorkspacePage() {
       financialInsights,
       scenarioComparison,
       financialCoach,
+      financialReports,
       creditLimit,
       creditUsed,
       creditAvailable,
@@ -714,6 +723,50 @@ export default function MoneyWorkspacePage() {
                     <div>Time Saved: {formatMonthsSaved(scenario.timeSavedMonths)}</div>
                     <div>Monthly Cash Strain: {formatCurrency(scenario.monthlyCashStrain)}</div>
                     <div>Risk: {scenario.riskLevel}</div>
+                  </div>
+                </div>
+              </DashboardCard>
+            ))}
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <SectionHeader
+            eyebrow="Reports"
+            title="Printable reports"
+            description="Monthly, debt progress, interest saved, net position, and Velocity reports from the shared Money engines."
+            action={
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="beast-button-secondary"
+                aria-label="Print BeastMoney reports"
+              >
+                Print Reports
+              </button>
+            }
+          />
+          <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+            {snapshot.financialReports.map((report) => (
+              <DashboardCard key={report.id} accent="blue">
+                <div className="flex h-full flex-col gap-4">
+                  <div>
+                    <p className="beast-kicker">{report.kind.replace(/_/g, " ")}</p>
+                    <h2 className="mt-2 text-xl font-black">{report.title}</h2>
+                    <p className="mt-2 text-sm text-[#c7cfdb]">
+                      {report.subtitle}
+                    </p>
+                  </div>
+                  <div className="grid gap-2 text-sm text-[#dbe3ef]">
+                    {report.sections[0]?.rows.slice(0, 3).map((row) => (
+                      <div
+                        key={`${report.id}-${row.label}`}
+                        className="flex items-center justify-between gap-4 rounded-lg border border-[#2a3242] bg-[#0f1419] px-3 py-2"
+                      >
+                        <span className="text-[#9aa7b8]">{row.label}</span>
+                        <span className="font-bold text-white">{row.value}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </DashboardCard>
