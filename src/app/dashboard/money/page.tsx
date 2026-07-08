@@ -149,56 +149,78 @@ function formatMonthsSaved(months: number) {
 export default function MoneyWorkspacePage() {
   const [state, setState] = useState<MoneyState>(initialMoneyState);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [simulationDate, setSimulationDate] = useState("");
 
   const loadMoneySnapshot = useCallback(async () => {
     setLoading(true);
-    const supabase = createClient();
-    const { data: userData } = await supabase.auth.getUser();
-    const userId = userData?.user?.id;
+    setLoadError("");
 
-    if (!userId) {
+    try {
+      const supabase = createClient();
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData?.user?.id;
+
+      if (!userId) {
+        setLoadError("Sign in again to load your Money workspace.");
+        setLoading(false);
+        return;
+      }
+
+      const [
+        debtsResult,
+        billsResult,
+        incomesResult,
+        fundingResult,
+        cashSettingsResult,
+        debtSettingsResult,
+      ] = await Promise.all([
+        supabase.from("debts").select("*").eq("user_id", userId),
+        supabase
+          .from("bill_events")
+          .select("*")
+          .eq("user_id", userId)
+          .order("due_date", { ascending: true }),
+        supabase
+          .from("income_events")
+          .select("*")
+          .eq("user_id", userId)
+          .order("next_date", { ascending: true }),
+        supabase
+          .from("funding_sources")
+          .select("*")
+          .eq("user_id", userId)
+          .eq("is_active", true),
+        supabase.from("cash_settings").select("*").eq("user_id", userId).maybeSingle(),
+        supabase.from("debt_settings").select("*").eq("user_id", userId).maybeSingle(),
+      ]);
+      const firstError =
+        debtsResult.error ||
+        billsResult.error ||
+        incomesResult.error ||
+        fundingResult.error ||
+        cashSettingsResult.error ||
+        debtSettingsResult.error;
+
+      if (firstError) throw firstError;
+
+      setState({
+        debts: (debtsResult.data || []) as MoneyDebt[],
+        bills: (billsResult.data || []) as MoneyBill[],
+        incomes: (incomesResult.data || []) as MoneyIncome[],
+        fundingSources: (fundingResult.data || []) as FundingSource[],
+        cashSettings: cashSettingsResult.data as MoneySettings | null,
+        debtSettings: debtSettingsResult.data as DebtSettings | null,
+      });
+    } catch (error) {
+      setLoadError(
+        error instanceof Error
+          ? error.message
+          : "Unable to load your Money workspace."
+      );
+    } finally {
       setLoading(false);
-      return;
     }
-
-    const [
-      debtsResult,
-      billsResult,
-      incomesResult,
-      fundingResult,
-      cashSettingsResult,
-      debtSettingsResult,
-    ] = await Promise.all([
-      supabase.from("debts").select("*").eq("user_id", userId),
-      supabase
-        .from("bill_events")
-        .select("*")
-        .eq("user_id", userId)
-        .order("due_date", { ascending: true }),
-      supabase
-        .from("income_events")
-        .select("*")
-        .eq("user_id", userId)
-        .order("next_date", { ascending: true }),
-      supabase
-        .from("funding_sources")
-        .select("*")
-        .eq("user_id", userId)
-        .eq("is_active", true),
-      supabase.from("cash_settings").select("*").eq("user_id", userId).maybeSingle(),
-      supabase.from("debt_settings").select("*").eq("user_id", userId).maybeSingle(),
-    ]);
-
-    setState({
-      debts: (debtsResult.data || []) as MoneyDebt[],
-      bills: (billsResult.data || []) as MoneyBill[],
-      incomes: (incomesResult.data || []) as MoneyIncome[],
-      fundingSources: (fundingResult.data || []) as FundingSource[],
-      cashSettings: cashSettingsResult.data as MoneySettings | null,
-      debtSettings: debtSettingsResult.data as DebtSettings | null,
-    });
-    setLoading(false);
   }, []);
 
   useEffect(() => {
@@ -487,6 +509,41 @@ export default function MoneyWorkspacePage() {
               <div className="h-8 w-72 max-w-full rounded bg-[#2a3242]" />
               <div className="h-4 w-full max-w-xl rounded bg-[#2a3242]" />
             </div>
+          </DashboardCard>
+        ) : null}
+
+        {loadError ? (
+          <DashboardCard accent="red">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="beast-kicker">Money could not load</p>
+                <p className="mt-2 text-sm font-semibold text-red-100">
+                  {loadError}
+                </p>
+              </div>
+              <button type="button" onClick={loadMoneySnapshot} className="beast-button">
+                Try Again
+              </button>
+            </div>
+          </DashboardCard>
+        ) : null}
+
+        {!loading &&
+        !loadError &&
+        snapshot.activeDebts.length === 0 &&
+        snapshot.activeBills.length === 0 &&
+        snapshot.activeIncomes.length === 0 ? (
+          <DashboardCard accent="money">
+            <SectionHeader
+              eyebrow="Start here"
+              title="Build your first Money plan"
+              description="Add income, bills, and debts so BeastMoney can calculate safe cash, payoff strategy, forecasts, and recommendations."
+              action={
+                <Link href="/dashboard/money/cashflow" className="beast-button">
+                  Add Money Records
+                </Link>
+              }
+            />
           </DashboardCard>
         ) : null}
 
