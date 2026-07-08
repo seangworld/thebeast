@@ -8,6 +8,7 @@ import { buildDailyFinancialAdvisor } from "@/lib/dailyFinancialAdvisor";
 import { buildFinancialDecision } from "@/lib/financialDecisionEngine";
 import { buildFinancialForecast } from "@/lib/financialForecasting";
 import { buildFinancialInsights } from "@/lib/financialInsights";
+import { compareFinancialScenarios } from "@/lib/financialScenarios";
 import { formatCurrency } from "@/lib/formatters";
 import {
   isActiveRecurringSource,
@@ -306,6 +307,12 @@ export default function MoneyWorkspacePage() {
       currentCash: startingCash,
       cashBuffer: buffer,
     });
+    const scenarioComparison = compareFinancialScenarios({
+      debts: forecastDebts,
+      cashIntelligence,
+      financialDecision,
+      asOfDate: new Date(),
+    });
 
     return {
       activeDebts,
@@ -324,6 +331,7 @@ export default function MoneyWorkspacePage() {
       financialForecast,
       dailyAdvisor,
       financialInsights,
+      scenarioComparison,
       creditLimit,
       creditUsed,
       creditAvailable,
@@ -527,6 +535,38 @@ export default function MoneyWorkspacePage() {
               )}
               detail={`Safety: ${snapshot.financialDecision.safetyRating}`}
             />
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <SectionHeader
+            eyebrow="Scenarios"
+            title="Compare payoff paths"
+            description="Minimum, Snowball, Avalanche, Velocity, Custom, and assumption-based paths using the shared strategy engine."
+          />
+          <div className="grid gap-4 lg:grid-cols-2">
+            {[snapshot.scenarioComparison.bestByInterest, snapshot.scenarioComparison.bestBySpeed].map((scenario) => (
+              <DashboardCard key={`${scenario.id}-${scenario.kind}`} accent="purple">
+                <div className="grid gap-3">
+                  <div>
+                    <p className="beast-kicker">
+                      {scenario.id === snapshot.scenarioComparison.bestByInterest.id
+                        ? "Best Interest Outcome"
+                        : "Fastest Payoff Outcome"}
+                    </p>
+                    <h2 className="mt-2 text-2xl font-black">{scenario.label}</h2>
+                  </div>
+                  <div className="grid gap-2 text-sm text-[#c7cfdb]">
+                    <div>Debt-Free: {scenario.debtFreeDate}</div>
+                    <div>Total Interest: {formatCurrency(scenario.totalInterest)}</div>
+                    <div>Interest Saved: {formatCurrency(scenario.interestSaved)}</div>
+                    <div>Time Saved: {formatMonthsSaved(scenario.timeSavedMonths)}</div>
+                    <div>Monthly Cash Strain: {formatCurrency(scenario.monthlyCashStrain)}</div>
+                    <div>Risk: {scenario.riskLevel}</div>
+                  </div>
+                </div>
+              </DashboardCard>
+            ))}
           </div>
         </section>
 
