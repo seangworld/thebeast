@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { BEAST_MONEY_VERSION_LABEL } from "@/lib/appVersion";
 import { createClient } from "@/lib/supabase/client";
 import { buildCashIntelligence } from "@/lib/cashIntelligence";
 import { buildDailyFinancialAdvisor } from "@/lib/dailyFinancialAdvisor";
@@ -501,7 +502,7 @@ export default function MoneyWorkspacePage() {
         <section className="beast-page-header">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-4">
-              <ModuleBadge module="money" label="Module #1" />
+              <ModuleBadge module="money" label={BEAST_MONEY_VERSION_LABEL} />
               <h1 className="beast-title">Money Cockpit</h1>
               <p className="beast-subtitle">
                 A professional financial workspace for cash timing, debt payoff,

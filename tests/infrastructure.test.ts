@@ -29,6 +29,8 @@ import {
   APP_VERSION,
   BEASTOS_UI_POLISH_NOTE,
   BEAST_LEARNING_VERSION,
+  BEAST_MONEY_VERSION,
+  BEAST_MONEY_VERSION_LABEL,
 } from "../src/lib/appVersion";
 import {
   buildMonthGrid,
@@ -248,10 +250,34 @@ test("shared formatters preserve current formatting semantics", () => {
   assert.equal(parseOptionalNumber("12.5"), 12.5);
 });
 
-test("app version constants reflect BeastOS and BeastLearning closeout", () => {
+test("app version constants reflect BeastOS and module releases", () => {
   assert.equal(APP_VERSION, "v2.1");
+  assert.equal(BEAST_MONEY_VERSION, "v2.1.0");
+  assert.equal(BEAST_MONEY_VERSION_LABEL, "BeastMoney v2.1.0");
   assert.equal(BEAST_LEARNING_VERSION, "v1.0 Private Beta");
   assert.equal(BEASTOS_UI_POLISH_NOTE, "two-tone module branding restored");
+});
+
+test("BeastMoney version is consistent across visible release surfaces", () => {
+  const files = [
+    "src/app/dashboard/money/page.tsx",
+    "src/app/dashboard/money/cashflow/components/CashFlowOverview.tsx",
+    "src/app/dashboard/money/velocity/page.tsx",
+    "src/app/dashboard/releases/page.tsx",
+    "src/app/release-notes/page.tsx",
+    "CHANGELOG.md",
+  ];
+
+  files.forEach((file) => {
+    const source = readFileSync(file, "utf8");
+    assert.equal(
+      source.includes(BEAST_MONEY_VERSION_LABEL) ||
+        source.includes("BEAST_MONEY_VERSION_LABEL") ||
+        source.includes(`BeastMoney ${BEAST_MONEY_VERSION}`),
+      true,
+      `${file} should reference ${BEAST_MONEY_VERSION_LABEL}`
+    );
+  });
 });
 
 function readSourceFiles(directory: string): string[] {

@@ -2,9 +2,23 @@ import Link from "next/link";
 import {
   BEASTOS_UI_POLISH_NOTE,
   BEAST_LEARNING_VERSION,
+  BEAST_MONEY_VERSION_LABEL,
 } from "@/lib/appVersion";
 
 const releaseNotes = [
+  {
+    version: BEAST_MONEY_VERSION_LABEL,
+    date: "July 8, 2026",
+    title: "Commercial Polish & Event Timeline",
+    items: [
+      "New features: added the Financial Event Timeline, scenario comparison, simulation mode, BeastMoney Coach, import preview foundation, and printable financial reports.",
+      "Improvements: upgraded the Money Cockpit with clearer first-run guidance, load-error recovery, shared recommendation explanations, and user-facing report summaries.",
+      "Performance enhancements: reused the shared Cash Intelligence, Financial Decision, Forecasting, Insights, Scenario, Coach, and Reports engines from a single dashboard snapshot instead of adding duplicate calculations.",
+      "Bug fixes: added regression coverage to keep the Money Cockpit from freezing the current date or bypassing shared v2.1 engine surfaces.",
+      "Breaking changes: none.",
+      "Migration notes: no database migration required.",
+    ],
+  },
   {
     version: "BeastOS v2.1",
     date: "July 4, 2026",

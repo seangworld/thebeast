@@ -4,6 +4,7 @@ import Link from "next/link";
 import {
   BEASTOS_UI_POLISH_NOTE,
   BEAST_LEARNING_VERSION,
+  BEAST_MONEY_VERSION_LABEL,
 } from "@/lib/appVersion";
 
 export default function ReleaseNotesPage() {
@@ -26,6 +27,50 @@ export default function ReleaseNotesPage() {
       </header>
 
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
+        {/* BeastMoney v2.1.0 */}
+        <div className="mb-12 rounded-lg border border-[#2a3242] bg-[#0f1419] p-6">
+          <div className="mb-4">
+            <h2 className="text-2xl font-bold">{BEAST_MONEY_VERSION_LABEL}</h2>
+            <p className="mt-1 text-sm text-[#7f8da3]">July 8, 2026</p>
+          </div>
+
+          <div className="space-y-4 text-sm">
+            <div>
+              <h3 className="font-semibold text-[#c7cfdb]">
+                Commercial Polish & Event Timeline
+              </h3>
+              <ul className="space-y-2 pl-4">
+                <li className="text-[#a5b4c7]">
+                  <span className="text-blue-400">✓</span> New features:
+                  Financial Event Timeline, scenario comparison, simulation
+                  mode, BeastMoney Coach, import preview foundation, and
+                  printable financial reports.
+                </li>
+                <li className="text-[#a5b4c7]">
+                  <span className="text-blue-400">✓</span> Improvements:
+                  clearer first-run guidance, load-error recovery, shared
+                  recommendation explanations, and student-friendly Money report
+                  summaries.
+                </li>
+                <li className="text-[#a5b4c7]">
+                  <span className="text-blue-400">✓</span> Performance:
+                  dashboard surfaces now reuse the shared BeastMoney engine
+                  snapshot instead of duplicating calculations.
+                </li>
+                <li className="text-[#a5b4c7]">
+                  <span className="text-blue-400">✓</span> Bug fixes: added
+                  regression coverage for date consistency, report printing,
+                  and shared engine integration.
+                </li>
+                <li className="text-[#a5b4c7]">
+                  <span className="text-blue-400">✓</span> Breaking changes:
+                  none. Migration notes: no database migration required.
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
         {/* BeastOS v2.1 */}
         <div className="mb-12 rounded-lg border border-[#2a3242] bg-[#0f1419] p-6">
           <div className="mb-4">

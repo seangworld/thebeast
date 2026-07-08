@@ -1,4 +1,4 @@
-import { APP_VERSION } from "@/lib/appVersion";
+import { BEAST_MONEY_VERSION_LABEL } from "@/lib/appVersion";
 
 type CashFlowOverviewProps = {
   startingBalance: number;
@@ -32,7 +32,7 @@ export default function CashFlowOverview({
       <section className="beast-page-header">
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <p className="beast-kicker">The Beast {APP_VERSION}</p>
+            <p className="beast-kicker">{BEAST_MONEY_VERSION_LABEL}</p>
             <h1 className="beast-title">Cash Flow</h1>
             <p className="beast-subtitle">
               Manage paychecks, bills, debt minimums, Monthly Extra Attack payments,
