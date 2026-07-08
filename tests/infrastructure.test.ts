@@ -1520,6 +1520,70 @@ test("generated learning activities persist with required visibility fields", ()
   assert.equal(learningPage.includes("learning_activities"), true);
 });
 
+test("Today learning mission generation avoids dead ends", () => {
+  const todayPage = readFileSync("src/app/dashboard/today/page.tsx", "utf8");
+  const completedOnly = [
+    {
+      id: "old-completed",
+      activity_type: "Lesson",
+      title: "Old completed activity",
+      difficulty: "Beginner",
+      estimated_minutes: 15,
+      xp: 10,
+      status: "Completed",
+      sort_order: 1,
+      completed_at: "2026-07-06T12:00:00.000Z",
+    },
+  ];
+  const newestReady = getNewestReadyLearningActivity([
+    {
+      id: "old-completed",
+      activity_type: "Lesson",
+      title: "Old completed activity",
+      difficulty: "Beginner",
+      estimated_minutes: 15,
+      xp: 10,
+      status: "Completed",
+      sort_order: 1,
+      completed_at: "2026-07-06T12:00:00.000Z",
+    },
+    {
+      id: "older-ready",
+      activity_type: "Lesson",
+      title: "Older ready",
+      difficulty: "Beginner",
+      estimated_minutes: 15,
+      xp: 10,
+      status: "Ready",
+      sort_order: 2,
+      created_at: "2026-07-06T12:00:00.000Z",
+    },
+    {
+      id: "new-ready",
+      activity_type: "Lesson",
+      title: "Pre-Algebra: Combining Like Terms",
+      difficulty: "Beginner",
+      estimated_minutes: 35,
+      xp: 20,
+      status: "Ready",
+      sort_order: 3,
+      created_at: "2026-07-07T12:00:00.000Z",
+    },
+  ]);
+
+  assert.equal(getNewestReadyLearningActivity(completedOnly), null);
+  assert.equal(newestReady?.id, "new-ready");
+  assert.equal(todayPage.includes("async function generateNextActivity"), true);
+  assert.equal(todayPage.includes(".from(\"learning_activities\")"), true);
+  assert.equal(todayPage.includes(".insert("), true);
+  assert.equal(todayPage.includes("onClick={generateNextActivity}"), true);
+  assert.equal(todayPage.includes("onClick={loadToday} className=\"beast-button\""), false);
+  assert.equal(todayPage.includes("Pre-Algebra: Combining Like Terms"), true);
+  assert.equal(todayPage.includes("You finished the current queue. Generate the next mission to keep learning."), true);
+  assert.equal(todayPage.includes("Generate your first mission above to start the Pre-Algebra teaching experience."), true);
+  assert.equal(todayPage.includes("activityList.map"), true);
+});
+
 test("lesson engine supports the adaptive BeastLearning teaching cycle", () => {
   const quizEngine = buildLessonEngineDefinition({
     activity_type: "Quiz",

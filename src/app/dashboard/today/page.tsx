@@ -73,10 +73,48 @@ function getActivityTone(status: string) {
   return "border-[#2a3242] bg-[#111827]";
 }
 
+function getStarterActivityTitle(courseTitle: string) {
+  return /pre[- ]?algebra|algebra/i.test(courseTitle)
+    ? "Pre-Algebra: Combining Like Terms"
+    : `Start ${courseTitle}`;
+}
+
+function buildStarterActivityRow({
+  userId,
+  learnerProfileId,
+  course,
+  planId,
+  sessionId,
+  sortOrder,
+}: {
+  userId: string;
+  learnerProfileId: string;
+  course: CourseRow;
+  planId: string;
+  sessionId: string | null;
+  sortOrder: number;
+}) {
+  return {
+    user_id: userId,
+    learner_profile_id: learnerProfileId,
+    course_id: course.id,
+    plan_id: planId,
+    session_id: sessionId,
+    activity_type: "Lesson",
+    title: getStarterActivityTitle(course.title),
+    difficulty: "Beginner",
+    estimated_minutes: 35,
+    xp: 20,
+    status: "Ready",
+    sort_order: sortOrder,
+  };
+}
+
 export default function TodayPage() {
   const router = useRouter();
   const [state, setState] = useState<TodayState>(emptyState);
   const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
   const [message, setMessage] = useState("");
   const { now } = useRuntimeToday();
 
@@ -147,30 +185,57 @@ export default function TodayPage() {
         sessionId = data.id;
       }
 
-      if (existingActivities.length > 0) {
+      const activePlanId = planId;
+      if (!activePlanId) {
+        throw new Error("Unable to create a learning plan for today's mission.");
+      }
+
+      const openExistingActivities = existingActivities.filter(
+        (activity) => activity.status !== "Completed"
+      );
+
+      if (openExistingActivities.length > 0) {
         return { planId, sessionId, activities: existingActivities };
       }
 
-      const activityRows = activityBlueprint.map((activityType, index) => {
-        const course = courses[index % courses.length];
-        return {
-          user_id: userId,
-          learner_profile_id: learnerProfileId,
-          course_id: course.id,
-          plan_id: planId,
-          session_id: index === 0 ? sessionId : null,
-          activity_type: activityType,
-          title:
-            index === 0
-              ? `Start ${course.title}`
-              : `${activityType}: ${course.title}`,
-          difficulty: index < 2 ? "Beginner" : "Adaptive",
-          estimated_minutes: 15 + index * 5,
-          xp: 10 + index * 5,
-          status: index === 0 ? "Ready" : "Queued",
-          sort_order: index + 1,
-        };
-      });
+      const nextSortOrder =
+        existingActivities.reduce(
+          (max, activity) => Math.max(max, Number(activity.sort_order || 0)),
+          0
+        ) + 1;
+
+      const activityRows =
+        existingActivities.length > 0
+          ? [
+              buildStarterActivityRow({
+                userId,
+                learnerProfileId,
+                course: primaryCourse,
+                planId: activePlanId,
+                sessionId,
+                sortOrder: nextSortOrder,
+              }),
+            ]
+          : activityBlueprint.map((activityType, index) => {
+              const course = courses[index % courses.length];
+              return {
+                user_id: userId,
+                learner_profile_id: learnerProfileId,
+                course_id: course.id,
+                plan_id: activePlanId,
+                session_id: index === 0 ? sessionId : null,
+                activity_type: activityType,
+                title:
+                  index === 0
+                    ? getStarterActivityTitle(course.title)
+                    : `${activityType}: ${course.title}`,
+                difficulty: index < 2 ? "Beginner" : "Adaptive",
+                estimated_minutes: 15 + index * 5,
+                xp: 10 + index * 5,
+                status: index === 0 ? "Ready" : "Queued",
+                sort_order: index + 1,
+              };
+            });
 
       const { data, error } = await supabase
         .from("learning_activities")
@@ -183,7 +248,10 @@ export default function TodayPage() {
       return {
         planId,
         sessionId,
-        activities: (data || []) as ActivityRow[],
+        activities:
+          existingActivities.length > 0
+            ? [...existingActivities, ...((data || []) as ActivityRow[])]
+            : ((data || []) as ActivityRow[]),
       };
     },
     []
@@ -291,6 +359,80 @@ export default function TodayPage() {
     loadToday();
   }, [loadToday]);
 
+  async function generateNextActivity() {
+    if (generating) return;
+
+    setGenerating(true);
+    setMessage("");
+
+    try {
+      const supabase = createClient();
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      const authUser = userData?.user;
+
+      if (userError || !authUser) {
+        router.replace("/login");
+        return;
+      }
+
+      const learnerProfileId = state.learnerProfileId;
+      const course = state.courses[0];
+      const planId = state.planId;
+
+      if (!learnerProfileId || !course || !planId) {
+        setMessage(
+          "Your learning path needs a course before Beast can create a mission. Open Learning Path to choose one."
+        );
+        return;
+      }
+
+      const existingReady = getNewestReadyLearningActivity(state.activities);
+      if (existingReady) {
+        router.push(getLearningActivityRoute(existingReady.id));
+        return;
+      }
+
+      const nextSortOrder =
+        state.activities.reduce(
+          (max, activity) => Math.max(max, Number(activity.sort_order || 0)),
+          0
+        ) + 1;
+
+      const { data, error } = await supabase
+        .from("learning_activities")
+        .insert(
+          buildStarterActivityRow({
+            userId: authUser.id,
+            learnerProfileId,
+            course,
+            planId,
+            sessionId: state.sessionId,
+            sortOrder: nextSortOrder,
+          })
+        )
+        .select("*")
+        .single();
+
+      if (error) throw error;
+
+      const createdActivity = data as ActivityRow;
+      setState((current) => ({
+        ...current,
+        activities: [...current.activities, createdActivity],
+      }));
+      setMessage(`${createdActivity.title} is ready. Starting your mission now.`);
+      router.push(getLearningActivityRoute(createdActivity.id));
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Unable to generate your next learning activity."
+      );
+    } finally {
+      setGenerating(false);
+    }
+  }
+
   const completedActivities = state.activities.filter(
     (activity) => activity.status === "Completed"
   );
@@ -298,6 +440,18 @@ export default function TodayPage() {
     (activity) => activity.status !== "Completed"
   );
   const readyActivity = getNewestReadyLearningActivity(state.activities);
+  const activityList = [
+    ...openActivities.sort(
+      (a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0)
+    ),
+    ...completedActivities
+      .slice()
+      .sort(
+        (a, b) =>
+          new Date(b.completed_at || b.created_at || 0).getTime() -
+          new Date(a.completed_at || a.created_at || 0).getTime()
+      ),
+  ];
   const totalXp = completedActivities.reduce(
     (sum, activity) => sum + Number(activity.xp || 0),
     0
@@ -395,7 +549,9 @@ export default function TodayPage() {
                 description={
                   readyActivity
                     ? `${readyActivity.activity_type} - ${readyActivity.difficulty} - ${readyActivity.estimated_minutes} minutes`
-                    : "Your activity queue is empty. Reload Today after onboarding to generate work."
+                    : state.activities.length > 0
+                      ? "You finished the current queue. Generate the next mission to keep learning."
+                      : "Your activity queue is empty. Generate a Pre-Algebra mission to begin."
                 }
                 action={<ModuleBadge module="learning" label="Next Step" />}
               />
@@ -408,15 +564,22 @@ export default function TodayPage() {
                     Start Activity
                   </Link>
                 ) : (
-                  <button type="button" onClick={loadToday} className="beast-button">
-                    Generate Activity
+                  <button
+                    type="button"
+                    onClick={generateNextActivity}
+                    className="beast-button"
+                    disabled={generating}
+                  >
+                    {generating ? "Generating..." : "Generate Activity"}
                   </button>
                 )}
                 <p className="text-sm font-semibold text-[#c7cfdb]">
                   Next recommended action:{" "}
                   {readyActivity
                     ? `Finish this ${readyActivity.activity_type.toLowerCase()} first.`
-                    : "Create a course or learning plan."}
+                    : state.activities.length > 0
+                      ? "Start the next generated activity."
+                      : "Generate your first activity."}
                 </p>
               </div>
             </DashboardCard>
@@ -429,7 +592,7 @@ export default function TodayPage() {
                   description="Complete the ready card, then the next activity unlocks."
                 />
                 <div className="mt-5 grid gap-3">
-                  {state.activities.map((activity) => (
+                  {activityList.map((activity) => (
                     <div
                       key={activity.id}
                       className={`rounded-xl border p-4 ${getActivityTone(activity.status)}`}
@@ -468,6 +631,14 @@ export default function TodayPage() {
                       </div>
                     </div>
                   ))}
+                  {activityList.length === 0 ? (
+                    <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+                      <h3 className="font-black text-white">No activities yet</h3>
+                      <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
+                        Generate your first mission above to start the Pre-Algebra teaching experience.
+                      </p>
+                    </div>
+                  ) : null}
                 </div>
               </DashboardCard>
 
