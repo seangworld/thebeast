@@ -10,6 +10,7 @@ import { buildFinancialForecast } from "@/lib/financialForecasting";
 import { buildFinancialInsights } from "@/lib/financialInsights";
 import { compareFinancialScenarios } from "@/lib/financialScenarios";
 import { buildFinancialSimulationState } from "@/lib/financialSimulation";
+import { buildFinancialCoach } from "@/lib/financialCoach";
 import { formatCurrency } from "@/lib/formatters";
 import {
   isActiveRecurringSource,
@@ -340,6 +341,12 @@ export default function MoneyWorkspacePage() {
       financialDecision,
       asOfDate,
     });
+    const financialCoach = buildFinancialCoach({
+      advisor: dailyAdvisor,
+      forecast: financialForecast,
+      insights: financialInsights,
+      scenarios: scenarioComparison,
+    });
 
     return {
       simulation,
@@ -360,6 +367,7 @@ export default function MoneyWorkspacePage() {
       dailyAdvisor,
       financialInsights,
       scenarioComparison,
+      financialCoach,
       creditLimit,
       creditUsed,
       creditAvailable,
@@ -579,6 +587,44 @@ export default function MoneyWorkspacePage() {
             </div>
           </div>
         </DashboardCard>
+
+        <section className="space-y-4">
+          <SectionHeader
+            eyebrow="Coach"
+            title={snapshot.financialCoach.title}
+            description="Plain-language planning guidance generated from the current Money engines."
+          />
+          <DashboardCard accent="blue">
+            <div className="grid gap-5 lg:grid-cols-[1fr_1fr]">
+              <div>
+                <p className="beast-kicker">What to do today</p>
+                <h2 className="mt-2 text-2xl font-black">
+                  {snapshot.financialCoach.whatToDoToday}
+                </h2>
+                <p className="mt-3 text-sm text-[#c7cfdb]">
+                  Best next action: {snapshot.financialCoach.bestNextAction}
+                </p>
+              </div>
+              <div className="grid gap-3 text-sm text-[#dbe3ef]">
+                <div>
+                  <span className="font-bold text-white">What changed:</span>{" "}
+                  {snapshot.financialCoach.whatChanged.join(" ")}
+                </div>
+                <div>
+                  <span className="font-bold text-white">Avoid:</span>{" "}
+                  {snapshot.financialCoach.whatToAvoid[0]}
+                </div>
+                <div>
+                  <span className="font-bold text-white">Risk:</span>{" "}
+                  {snapshot.financialCoach.upcomingRisks[0]}
+                </div>
+                <div className="rounded-lg border border-[#2a3242] bg-[#0f1419] p-3 text-xs text-[#9aa7b8]">
+                  {snapshot.financialCoach.disclaimer}
+                </div>
+              </div>
+            </div>
+          </DashboardCard>
+        </section>
 
         <section className="space-y-4">
           <SectionHeader
