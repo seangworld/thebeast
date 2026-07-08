@@ -9,6 +9,7 @@ import { buildFinancialDecision } from "@/lib/financialDecisionEngine";
 import { buildFinancialForecast } from "@/lib/financialForecasting";
 import { buildFinancialInsights } from "@/lib/financialInsights";
 import { compareFinancialScenarios } from "@/lib/financialScenarios";
+import { buildFinancialSimulationState } from "@/lib/financialSimulation";
 import { formatCurrency } from "@/lib/formatters";
 import {
   isActiveRecurringSource,
@@ -116,8 +117,7 @@ const quickActions = [
   { label: "Go to Velocity", href: "/dashboard/money/velocity", icon: "V" },
 ];
 
-function nextDueDateFromDay(day: number | null | undefined) {
-  const today = new Date();
+function nextDueDateFromDay(day: number | null | undefined, today = new Date()) {
   const safeDay = Math.min(Math.max(Number(day || 1), 1), 28);
   const candidate = new Date(today.getFullYear(), today.getMonth(), safeDay);
 
@@ -149,6 +149,7 @@ function formatMonthsSaved(months: number) {
 export default function MoneyWorkspacePage() {
   const [state, setState] = useState<MoneyState>(initialMoneyState);
   const [loading, setLoading] = useState(true);
+  const [simulationDate, setSimulationDate] = useState("");
 
   const loadMoneySnapshot = useCallback(async () => {
     setLoading(true);
@@ -205,6 +206,8 @@ export default function MoneyWorkspacePage() {
   }, [loadMoneySnapshot]);
 
   const snapshot = useMemo(() => {
+    const simulation = buildFinancialSimulationState(simulationDate);
+    const asOfDate = simulation.asOfDate;
     const activeDebts = state.debts.filter(
       (debt) => !debt.is_archived && numberValue(debt.balance) > 0
     );
@@ -221,6 +224,7 @@ export default function MoneyWorkspacePage() {
     const buffer = numberValue(state.cashSettings?.checking_buffer);
     const extraPayment = numberValue(state.debtSettings?.extra_payment);
     const cashIntelligence = buildCashIntelligence({
+      asOfDate,
       income: activeIncomes,
       bills: activeBills,
       debtMinimums: activeDebts,
@@ -261,6 +265,7 @@ export default function MoneyWorkspacePage() {
       strategy: "avalanche",
     });
     const financialForecast = buildFinancialForecast({
+      asOfDate,
       cashIntelligence,
       financialDecision,
       debts: forecastDebts,
@@ -290,9 +295,9 @@ export default function MoneyWorkspacePage() {
     const billsDueSoon = activeBills.filter((bill) => {
       const dueDate = bill.next_due_date_after_payment
         ? new Date(bill.next_due_date_after_payment)
-        : nextDueDateFromDay(bill.due_date);
+        : nextDueDateFromDay(bill.due_date, asOfDate);
       const daysAway = Math.ceil(
-        (dueDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+        (dueDate.getTime() - asOfDate.getTime()) / (1000 * 60 * 60 * 24)
       );
       return daysAway <= 7;
     });
@@ -311,10 +316,11 @@ export default function MoneyWorkspacePage() {
       debts: forecastDebts,
       cashIntelligence,
       financialDecision,
-      asOfDate: new Date(),
+      asOfDate,
     });
 
     return {
+      simulation,
       activeDebts,
       activeBills,
       activeIncomes,
@@ -338,7 +344,7 @@ export default function MoneyWorkspacePage() {
       utilization,
       billsDueSoon,
     };
-  }, [state]);
+  }, [simulationDate, state]);
 
   const alerts = useMemo(() => {
     const results: {
@@ -401,7 +407,7 @@ export default function MoneyWorkspacePage() {
     const billItems = snapshot.activeBills.slice(0, 5).map((bill) => {
       const date = bill.next_due_date_after_payment
         ? new Date(bill.next_due_date_after_payment)
-        : nextDueDateFromDay(bill.due_date);
+        : nextDueDateFromDay(bill.due_date, snapshot.simulation.asOfDate);
 
       return {
         id: `bill-${bill.id}`,
@@ -414,7 +420,9 @@ export default function MoneyWorkspacePage() {
       };
     });
     const incomeItems = snapshot.activeIncomes.slice(0, 4).map((income) => {
-      const date = income.next_date ? new Date(income.next_date) : new Date();
+      const date = income.next_date
+        ? new Date(income.next_date)
+        : snapshot.simulation.asOfDate;
 
       return {
         id: `income-${income.id}`,
@@ -428,8 +436,10 @@ export default function MoneyWorkspacePage() {
     });
     const debtItems = snapshot.activeDebts.slice(0, 4).map((debt) => ({
       id: `debt-${debt.id}`,
-      date: nextDueDateFromDay(debt.due_date).toISOString(),
-      dateLabel: formatDateLabel(nextDueDateFromDay(debt.due_date)),
+      date: nextDueDateFromDay(debt.due_date, snapshot.simulation.asOfDate).toISOString(),
+      dateLabel: formatDateLabel(
+        nextDueDateFromDay(debt.due_date, snapshot.simulation.asOfDate)
+      ),
       title: `${debt.name || "Debt"} payment`,
       amountLabel: formatCurrency(numberValue(debt.minimum_payment)),
       type: "debt" as const,
@@ -437,7 +447,12 @@ export default function MoneyWorkspacePage() {
     }));
 
     return [...billItems, ...incomeItems, ...debtItems].slice(0, 9);
-  }, [snapshot.activeBills, snapshot.activeDebts, snapshot.activeIncomes]);
+  }, [
+    snapshot.activeBills,
+    snapshot.activeDebts,
+    snapshot.activeIncomes,
+    snapshot.simulation.asOfDate,
+  ]);
 
   const recommendedAction = snapshot.financialDecision.recommendedAction;
 
@@ -474,6 +489,39 @@ export default function MoneyWorkspacePage() {
             </div>
           </DashboardCard>
         ) : null}
+
+        <DashboardCard accent={snapshot.simulation.enabled ? "yellow" : "money"}>
+          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="beast-kicker">Simulation Mode</p>
+              <h2 className="mt-2 text-xl font-black">
+                {snapshot.simulation.label}
+              </h2>
+              <p className="mt-2 text-sm text-[#c7cfdb]">
+                Recalculate the dashboard, forecasting, advisor, insights, and
+                Money calendar from a selected date without changing saved data.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <input
+                aria-label="Simulation date"
+                type="date"
+                value={simulationDate}
+                onChange={(event) => setSimulationDate(event.target.value)}
+                className="rounded-lg border border-[#2a3242] bg-[#0f1419] px-3 py-2 text-sm font-semibold text-white"
+              />
+              {simulationDate ? (
+                <button
+                  type="button"
+                  onClick={() => setSimulationDate("")}
+                  className="beast-button-secondary"
+                >
+                  Return Live
+                </button>
+              ) : null}
+            </div>
+          </div>
+        </DashboardCard>
 
         <section className="space-y-4">
           <SectionHeader
