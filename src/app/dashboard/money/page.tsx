@@ -590,6 +590,17 @@ export default function MoneyWorkspacePage() {
                 <div className="rounded-xl border border-[#2a3242] bg-[#0f1419] p-4 text-sm text-[#dbe3ef]">
                   {snapshot.financialInsights.summary}
                 </div>
+                <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 text-sm text-[#c7cfdb]">
+                  <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                    Why BeastMoney says this
+                  </div>
+                  <p className="mt-2 text-[#dbe3ef]">
+                    {snapshot.financialInsights.explanation.reason}
+                  </p>
+                  <p className="mt-2">
+                    {snapshot.financialInsights.explanation.impact}
+                  </p>
+                </div>
               </div>
             </DashboardCard>
 
@@ -767,6 +778,18 @@ export default function MoneyWorkspacePage() {
                         Payoff Improvement:
                       </span>{" "}
                       {recommendation.payoffImprovement}
+                    </div>
+                    <div className="rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
+                      <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                        Explanation
+                      </div>
+                      <p className="mt-2">{recommendation.explanation.reason}</p>
+                      <p className="mt-2">{recommendation.explanation.impact}</p>
+                      {recommendation.explanation.risks.length > 0 ? (
+                        <p className="mt-2 text-yellow-100">
+                          Risk: {recommendation.explanation.risks[0]}
+                        </p>
+                      ) : null}
                     </div>
                   </div>
                 </div>

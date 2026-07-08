@@ -1,6 +1,10 @@
 import type { CashIntelligenceResult } from "./cashIntelligence";
 import type { FinancialDecisionResult } from "./financialDecisionEngine";
 import type { FinancialForecastResult } from "./financialForecasting";
+import {
+  buildFinancialExplanation,
+  type FinancialExplanation,
+} from "./financialExplanations";
 import { roundMoney } from "./formatters";
 import {
   runUnifiedStrategyEngine,
@@ -32,6 +36,7 @@ export type FinancialInsightsResult = {
   yearlyProgress: FinancialProgressMetric;
   baselinePlan: UnifiedStrategyResult;
   optimizedPlan: UnifiedStrategyResult;
+  explanation: FinancialExplanation;
   summary: string;
 };
 
@@ -209,6 +214,23 @@ export function buildFinancialInsights(
     yearlyProgress,
     baselinePlan,
     optimizedPlan,
+    explanation: buildFinancialExplanation({
+      recommendation: "Follow the optimized payoff guidance.",
+      reason:
+        interestSaved > 0 || timeSavedMonths > 0
+          ? "The optimized plan improves payoff outcomes versus a no-extra-payment baseline."
+          : "Current guardrails favor protecting cash until more payoff capacity is available.",
+      impact: `Projected interest saved is ${interestSaved}; projected time saved is ${timeSavedMonths} month(s).`,
+      risks: input.financialForecast.upcomingRisks,
+      assumptions: [
+        "Health, progress, interest, and countdown metrics reuse cash intelligence, decision, forecast, and strategy outputs.",
+      ],
+      affectedEntities: [
+        { name: "Cash plan", type: "cash" },
+        { name: "Debt strategy", type: "strategy" },
+        { name: "Forecast", type: "forecast" },
+      ],
+    }),
     summary:
       interestSaved > 0 || timeSavedMonths > 0
         ? "The optimized plan improves payoff outcomes versus minimum payments."

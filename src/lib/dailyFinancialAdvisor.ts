@@ -4,6 +4,10 @@ import type {
   FinancialDecisionResult,
 } from "./financialDecisionEngine";
 import type { FinancialForecastResult } from "./financialForecasting";
+import {
+  buildFinancialExplanation,
+  type FinancialExplanation,
+} from "./financialExplanations";
 import { roundMoney } from "./formatters";
 import type { VelocityBankingResult } from "./velocity";
 
@@ -28,6 +32,7 @@ export type DailyFinancialRecommendation = {
   payoffImprovement: string;
   risk: DailyFinancialRecommendationRisk;
   priority: number;
+  explanation: FinancialExplanation;
 };
 
 export type DailyFinancialAdvisorInput = {
@@ -106,6 +111,30 @@ export function buildDailyFinancialAdvisor(
       payoffImprovement: `${input.velocityBanking.paymentSchedule.length} projected schedule month(s) generated.`,
       risk: "medium",
       priority: 95,
+      explanation: buildFinancialExplanation({
+        recommendation: "Execute the Velocity chunk.",
+        reason: input.velocityBanking.chunkAdvisor,
+        impact: `Moves ${money(input.velocityBanking.optimalChunkAmount)} from the funding source to ${input.velocityBanking.automaticTargetDebt?.name || targetName}.`,
+        risks: [
+          input.velocityBanking.nextChunkWaitReason ||
+            "Recovery must finish before another chunk is considered.",
+        ],
+        assumptions: [
+          "Velocity chunk, source draw, and recovery are modeled through the shared Velocity and strategy engines.",
+        ],
+        affectedEntities: [
+          {
+            id: input.velocityBanking.automaticTargetDebt?.id,
+            name: input.velocityBanking.automaticTargetDebt?.name || targetName,
+            type: "debt",
+          },
+          {
+            id: input.velocityBanking.fundingSourceSelection?.id,
+            name: input.velocityBanking.fundingSourceSelection?.name || "Funding source",
+            type: "funding_source",
+          },
+        ],
+      }),
     });
   }
 
@@ -121,6 +150,16 @@ export function buildDailyFinancialAdvisor(
       payoffImprovement: "Prevents a risky payoff move from weakening cash flow.",
       risk: getForecastRisk(input),
       priority: 90,
+      explanation: buildFinancialExplanation({
+        recommendation: "Wait before making an extra payment.",
+        reason: input.financialDecision.reason,
+        impact: "Protects the cash reserve and reduces the chance of a forecasted shortage.",
+        risks: input.financialDecision.guardrailViolations,
+        assumptions: [
+          "The recommendation is based on the current cash, bills, minimums, and forecast window.",
+        ],
+        affectedEntities: [{ name: "Cash reserve", type: "cash" }],
+      }),
     });
   }
 
@@ -136,6 +175,20 @@ export function buildDailyFinancialAdvisor(
       payoffImprovement: "Moves the payoff schedule forward using safe extra capacity.",
       risk: getForecastRisk(input),
       priority: 85,
+      explanation: buildFinancialExplanation({
+        recommendation: `Pay ${money(suggestedPayment)} toward ${targetName}.`,
+        reason: input.financialDecision.reason,
+        impact: `Reduces principal by ${money(suggestedPayment)} while preserving guardrails.`,
+        risks: input.financialDecision.guardrailViolations,
+        assumptions: input.financialDecision.reasoning,
+        affectedEntities: [
+          {
+            id: targetDebt?.id,
+            name: targetName,
+            type: "debt",
+          },
+        ],
+      }),
     });
   }
 
@@ -163,6 +216,22 @@ export function buildDailyFinancialAdvisor(
         payoffImprovement: "May shorten the payoff timeline if the extra cash remains stable.",
         risk: "medium",
         priority: 70,
+        explanation: buildFinancialExplanation({
+          recommendation: `Increase the payment by ${increaseAmount}.`,
+          reason: "Monthly available cash is above the current safe extra payment.",
+          impact: `Could reduce debt by an additional ${increaseAmount}.`,
+          risks: ["Only increase if the income and bill records are current."],
+          assumptions: [
+            "Increase guidance is capped at 25% of the current suggested payment.",
+          ],
+          affectedEntities: [
+            {
+              id: targetDebt?.id,
+              name: targetName,
+              type: "debt",
+            },
+          ],
+        }),
       });
     }
   }
@@ -179,6 +248,14 @@ export function buildDailyFinancialAdvisor(
       payoffImprovement: "No payoff acceleration is recommended today.",
       risk: getForecastRisk(input),
       priority: 50,
+      explanation: buildFinancialExplanation({
+        recommendation: "Maintain the current plan.",
+        reason: input.financialDecision.reason,
+        impact: "Keeps records accurate until a safer payoff action is available.",
+        risks: input.financialDecision.guardrailViolations,
+        assumptions: ["No extra payoff capacity was identified by the shared engines."],
+        affectedEntities: [{ name: "Money records", type: "strategy" }],
+      }),
     });
   }
 
