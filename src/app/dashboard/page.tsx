@@ -597,12 +597,12 @@ export default function TodayPage() {
               <p className="beast-subtitle">
                 {loading || !user.name
                   ? "Getting your Beast-wide plan ready."
-                  : "Today&apos;s Focus brings your learning, money, calendar, health, home, and project signals into one daily plan."}
+                  : "Today's Focus brings your learning, money, calendar, health, home, and project signals into one daily plan."}
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
               <Link href="/dashboard/today" className="beast-button">
-                View Today&apos;s Plan
+                {"View Today's Plan"}
               </Link>
               <Link href="/dashboard/timeline" className="beast-button-secondary">
                 View Timeline
@@ -624,7 +624,7 @@ export default function TodayPage() {
         <section className="grid gap-4 xl:grid-cols-[1.35fr_0.65fr]">
           <DashboardCard accent="beastos" className="min-h-[360px]">
             <SectionHeader
-              eyebrow="Today&apos;s Focus"
+              eyebrow="Today's Focus"
               title="Beast-wide plan"
               description="A cross-module summary of what needs attention today, without locking the day to one module."
               action={<ModuleBadge module="beastos" label="Daily Plan" />}
@@ -635,7 +635,7 @@ export default function TodayPage() {
                 <div className="flex flex-wrap items-center gap-2">
                   <ModuleBadge module="beastos" />
                   <span className="rounded-full border border-[#38bdf8]/30 px-2.5 py-1 text-xs font-bold text-[#bae6fd]">
-                    Today&apos;s Plan
+                    {"Today's Plan"}
                   </span>
                 </div>
                 <h2 className="mt-4 text-2xl font-black leading-tight text-white">
@@ -851,7 +851,7 @@ export default function TodayPage() {
                   className="group rounded-xl border border-[#38bdf8]/35 bg-[#38bdf8]/10 p-4 transition duration-200 hover:-translate-y-0.5 hover:bg-[#38bdf8]/15"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="text-lg font-black text-white">Today&apos;s Plan</div>
+                    <div className="text-lg font-black text-white">{"Today's Plan"}</div>
                     <ModuleBadge module="beastos" label="Open" />
                   </div>
                   <p className="mt-2 text-sm leading-5 text-[#dbe3ef]">
