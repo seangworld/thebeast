@@ -1,5 +1,30 @@
 # Changelog
 
+## BeastLearning v1.1 Private Beta - July 11, 2026
+
+Private beta stabilization milestone.
+
+### New Features
+
+- Added BeastLearning v1.1 private beta readiness evidence for entry points, lesson flow, AI tutor behavior, feedback surfaces, timeline, certificates, and beta review.
+- Added Personal Hub reference contracts for education goals, career goals, certification goals, learning preferences, accessibility preferences, and records/certificates without duplicate BeastLearning ownership.
+- Added guardian visibility boundaries for invitation, consent, private notes, and revoked access.
+
+### Improvements
+
+- Documented explicit lesson completion criteria across teaching phases, guided practice, quiz answers, reflection, and mastery review.
+- Hardened AI homework policy with safety, uncertainty, age-appropriate, and unsupported-claim guardrails.
+- Preserved mostly-free learner access while marking Pro packaging boundaries as requiring owner decision.
+
+### Breaking Changes
+
+- None.
+
+### Migration Notes
+
+- No database migration required.
+- No production deployment included.
+
 ## BeastMoney v2.2.0 - July 11, 2026
 
 Velocity Strategy Engine hardening milestone.

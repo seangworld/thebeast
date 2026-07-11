@@ -97,6 +97,7 @@ export type LessonEngineDefinition = {
   summary: string;
   lesson: AdaptiveLesson;
   phases: LessonEnginePhase[];
+  completionCriteria: LessonCompletionCriterion[];
   completionLabel: string;
 };
 
@@ -114,9 +115,21 @@ export type LessonEngineProgress = {
   mastered: boolean;
   recommendedReview: boolean;
   readyToComplete: boolean;
+  completionReviewReasons: string[];
   percent: number;
   nextRecommendation: string;
   coachingMessage: string;
+};
+
+export type LessonCompletionCriterion = {
+  id:
+    | "phases-reviewed"
+    | "guided-practice-attempted"
+    | "quiz-answered"
+    | "reflection-captured"
+    | "mastery-reviewed";
+  label: string;
+  required: boolean;
 };
 
 const confidenceScores: Record<string, number> = {
@@ -424,6 +437,34 @@ const completionLabels: Record<LearningActivityType, string> = {
   Reflection: "Save reflection",
 };
 
+const lessonCompletionCriteria: LessonCompletionCriterion[] = [
+  {
+    id: "phases-reviewed",
+    label: "Review every teaching phase.",
+    required: true,
+  },
+  {
+    id: "guided-practice-attempted",
+    label: "Attempt all guided practice before completion.",
+    required: true,
+  },
+  {
+    id: "quiz-answered",
+    label: "Answer every quiz question before completion.",
+    required: true,
+  },
+  {
+    id: "reflection-captured",
+    label: "Capture a learner reflection.",
+    required: true,
+  },
+  {
+    id: "mastery-reviewed",
+    label: "Review mastery estimate and recommendation before moving on.",
+    required: true,
+  },
+];
+
 export function buildLessonEngineDefinition(
   activity: Pick<LearningActivityRunnerRow, "activity_type" | "title" | "difficulty">
 ): LessonEngineDefinition {
@@ -440,6 +481,7 @@ export function buildLessonEngineDefinition(
     lesson,
     completionLabel: completionLabels[activityType],
     phases: teachingPhases,
+    completionCriteria: lessonCompletionCriteria,
   };
 }
 
@@ -666,6 +708,24 @@ export function getLessonEngineProgress({
     (reflectionComplete ? 1 : 0);
   const mastered = masteryEstimate >= lesson.masteryThreshold && quiz.percent >= 70;
   const recommendedReview = !mastered && (quiz.percent < 70 || confidenceScore < 70);
+  const completionReviewReasons = [
+    ...(completedPhases === phaseCount ? [] : ["Review every teaching phase."]),
+    ...(practice.answered === lesson.guidedPractice.length
+      ? []
+      : ["Attempt all guided practice steps."]),
+    ...(answeredQuizQuestions === lesson.quizQuestions.length
+      ? []
+      : ["Answer every quiz question."]),
+    ...(reflectionComplete ? [] : ["Capture a learner reflection."]),
+    ...(mastered || !recommendedReview
+      ? []
+      : ["Review is recommended before the next lesson."]),
+  ];
+  const readyToComplete =
+    completedPhases === phaseCount &&
+    practice.answered === lesson.guidedPractice.length &&
+    reflectionComplete &&
+    answeredQuizQuestions === lesson.quizQuestions.length;
 
   return {
     completedPhases,
@@ -680,11 +740,8 @@ export function getLessonEngineProgress({
     masteryEstimate,
     mastered,
     recommendedReview,
-    readyToComplete:
-      completedPhases === phaseCount &&
-      practice.answered === lesson.guidedPractice.length &&
-      reflectionComplete &&
-      answeredQuizQuestions === lesson.quizQuestions.length,
+    readyToComplete,
+    completionReviewReasons,
     percent:
       requiredSteps === 0
         ? 0

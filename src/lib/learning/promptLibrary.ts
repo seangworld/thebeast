@@ -41,5 +41,9 @@ export function buildHomeworkPrompt(policy: HomeworkPolicy) {
     `Never immediately answer: ${policy.neverImmediatelyAnswer ? "yes" : "no"}`,
     `Preferred approaches: ${policy.preferredApproaches.join(", ")}`,
     `Answer reveal rule: ${policy.answerRevealRule}`,
+    `Safety boundaries: ${policy.safetyBoundaries.join(", ")}`,
+    `Uncertainty rules: ${policy.uncertaintyRules.join(", ")}`,
+    `Age-appropriate rules: ${policy.ageAppropriateRules.join(", ")}`,
+    `Disallowed claims: ${policy.disallowedClaims.join(", ")}`,
   ].join("\n");
 }

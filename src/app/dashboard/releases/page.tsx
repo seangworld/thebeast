@@ -7,6 +7,19 @@ import {
 
 const releaseNotes = [
   {
+    version: `BeastLearning ${BEAST_LEARNING_VERSION}`,
+    date: "July 11, 2026",
+    title: "Private Beta Stabilization",
+    items: [
+      "New features: added private beta readiness evidence for entry points, lesson flow, AI tutor behavior, timeline, certificates, and feedback review.",
+      "Personal Hub: documented education, career, certification, preference, accessibility, record, and certificate references as permissioned Personal Hub context only.",
+      "Improvements: made lesson completion criteria explicit across phases, guided practice, quiz answers, reflection, and mastery review.",
+      "Guardrails: hardened AI homework policy with safety, uncertainty, age-appropriate, and unsupported-claim boundaries.",
+      "Access: core learner access remains mostly free; Pro packaging remains owner-decision pending.",
+      "Breaking changes: none. Migration notes: no database migration required. Deployment: not included.",
+    ],
+  },
+  {
     version: BEAST_MONEY_VERSION_LABEL,
     date: "July 11, 2026",
     title: "Velocity Strategy Engine Hardening",
@@ -31,7 +44,7 @@ const releaseNotes = [
     ],
   },
   {
-    version: `BeastLearning ${BEAST_LEARNING_VERSION}`,
+    version: "BeastLearning v1.0 Private Beta",
     date: "July 4, 2026",
     title: "Private Beta",
     items: [

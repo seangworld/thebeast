@@ -152,12 +152,14 @@ import {
 import { generateLearningPlan } from "../src/lib/learning/planGenerator";
 import { buildLearnerPortfolio } from "../src/lib/learning/portfolio";
 import { predictLearningProgress } from "../src/lib/learning/prediction";
+import { buildHomeworkPrompt } from "../src/lib/learning/promptLibrary";
 import {
   buildCertificateDocuments,
   buildLearningBetaReadiness,
   buildLearningTimeline,
   buildStaticPrivateBetaData,
 } from "../src/lib/learning/privateBeta";
+import { buildBeastLearningPrivateBetaReadiness } from "../src/lib/learning/privateBetaReadiness";
 import {
   getPracticeExamFrameworkSummary,
   learningPracticeExams,
@@ -258,7 +260,7 @@ test("app version constants reflect BeastOS and module releases", () => {
   assert.equal(APP_VERSION, "v2.1");
   assert.equal(BEAST_MONEY_VERSION, "v2.2.0");
   assert.equal(BEAST_MONEY_VERSION_LABEL, "BeastMoney v2.2.0");
-  assert.equal(BEAST_LEARNING_VERSION, "v1.0 Private Beta");
+  assert.equal(BEAST_LEARNING_VERSION, "v1.1 Private Beta");
   assert.equal(BEASTOS_UI_POLISH_NOTE, "two-tone module branding restored");
 });
 
@@ -1669,6 +1671,16 @@ test("lesson engine supports the adaptive BeastLearning teaching cycle", () => {
   assert.equal(quizEngine.lesson.learningObjective.includes("same variable part"), true);
   assert.equal(quizEngine.lesson.masteryThreshold, 80);
   assert.equal(quizEngine.completionLabel, "Finish quiz");
+  assert.deepEqual(
+    quizEngine.completionCriteria.map((criterion) => criterion.id),
+    [
+      "phases-reviewed",
+      "guided-practice-attempted",
+      "quiz-answered",
+      "reflection-captured",
+      "mastery-reviewed",
+    ]
+  );
   assert.equal(quizScore.percent, 100);
   assert.equal(practiceScore.percent, 100);
   assert.equal(isPracticeAnswerCorrect(quizEngine.lesson.guidedPractice[0], "8x"), true);
@@ -1682,11 +1694,33 @@ test("lesson engine supports the adaptive BeastLearning teaching cycle", () => {
   );
   assert.equal(coachEngine.summary.includes("assessment, practice, quiz results"), true);
   assert.equal(progress.readyToComplete, true);
+  assert.deepEqual(progress.completionReviewReasons, []);
   assert.equal(progress.mastered, true);
   assert.equal(progress.recommendedReview, false);
   assert.equal(progress.percent, 100);
   assert.equal(progress.practiceCorrect, quizEngine.lesson.guidedPractice.length);
   assert.equal(progress.nextRecommendation, "Solving one-step equations");
+
+  const incompleteProgress = getLessonEngineProgress({
+    checkedPhases: { assessment: true, lesson: true },
+    phaseCount: quizEngine.phases.length,
+    reflection: "",
+    confidence: "Still building",
+    quizAnswers: {},
+    practiceAnswers: {},
+    lesson: quizEngine.lesson,
+  });
+
+  assert.equal(incompleteProgress.readyToComplete, false);
+  assert.equal(incompleteProgress.recommendedReview, true);
+  assert.equal(
+    incompleteProgress.completionReviewReasons.includes("Attempt all guided practice steps."),
+    true
+  );
+  assert.equal(
+    incompleteProgress.completionReviewReasons.includes("Capture a learner reflection."),
+    true
+  );
 });
 
 test("learning onboarding redirect has no duplicate direct redirect sources", () => {
@@ -2151,9 +2185,42 @@ test("learning AI memory homework policy and session manager remain mocked", () 
   assert.equal(mockConversationMemory.activeTopic, "Access Control");
   assert.equal(updatedMemory.openQuestions.includes("What hint should I try next?"), true);
   assert.equal(homeworkPolicy.neverImmediatelyAnswer, true);
+  assert.equal(homeworkPolicy.safetyBoundaries.length > 0, true);
+  assert.equal(homeworkPolicy.disallowedClaims.includes("Full curriculum coverage"), true);
   assert.equal(answerPolicy.policyName, "Answer Check After Reasoning");
+  assert.equal(buildHomeworkPrompt(homeworkPolicy).includes("Disallowed claims"), true);
   assert.equal(session.completed, false);
   assert.equal(session.conversationId.includes("homework-coach"), true);
+});
+
+test("BeastLearning v1.1 private beta readiness protects Personal Hub boundaries", () => {
+  const readiness = buildBeastLearningPrivateBetaReadiness();
+
+  assert.equal(readiness.version, "v1.1 Private Beta");
+  assert.equal(
+    readiness.capabilitiesVerified.some((capability) =>
+      capability.includes("Lesson runner supports assessment")
+    ),
+    true
+  );
+  assert.equal(
+    readiness.personalHubReferences.every(
+      (reference) =>
+        reference.moduleAccess === "permissioned_reference" &&
+        reference.duplicateStorageAllowed === false
+    ),
+    true
+  );
+  assert.equal(
+    readiness.guardianBoundaries.some(
+      (boundary) => boundary.id === "consent-required" && boundary.required
+    ),
+    true
+  );
+  assert.equal(readiness.accessPolicy.essentialLearnerAccess, "free");
+  assert.equal(readiness.accessPolicy.proBoundaryStatus, "requires_decision");
+  assert.equal(readiness.seangworldPublishingGuardrails.includes("Do not claim school compliance."), true);
+  assert.equal(readiness.excludedClaims.includes("Teacher portal"), true);
 });
 
 test("learning AI orchestration dashboard aggregates v0.7 platform state", () => {

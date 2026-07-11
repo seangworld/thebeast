@@ -1292,6 +1292,44 @@ export type HomeworkPolicy = {
   neverImmediatelyAnswer: boolean;
   preferredApproaches: string[];
   answerRevealRule: string;
+  safetyBoundaries: string[];
+  uncertaintyRules: string[];
+  ageAppropriateRules: string[];
+  disallowedClaims: string[];
+};
+
+export type LearningPersonalHubReference = {
+  id: string;
+  label: string;
+  personalHubSource: string;
+  moduleAccess: "permissioned_reference";
+  duplicateStorageAllowed: false;
+  deletionBehavior: string;
+  aiAccessRule: string;
+};
+
+export type GuardianVisibilityBoundary = {
+  id: string;
+  rule: string;
+  required: boolean;
+};
+
+export type LearningAccessPolicy = {
+  essentialLearnerAccess: "free";
+  proBoundaryStatus: "requires_decision";
+  notes: string[];
+};
+
+export type LearningPrivateBetaReadiness = {
+  version: string;
+  milestone: string;
+  capabilitiesVerified: string[];
+  personalHubReferences: LearningPersonalHubReference[];
+  guardianBoundaries: GuardianVisibilityBoundary[];
+  accessPolicy: LearningAccessPolicy;
+  safetyPrivacyAccessibilityReview: string[];
+  seangworldPublishingGuardrails: string[];
+  excludedClaims: string[];
 };
 
 export type AISessionState = {
