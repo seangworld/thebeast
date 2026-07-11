@@ -9,6 +9,18 @@ const releaseNotes = [
   {
     version: `BeastLearning ${BEAST_LEARNING_VERSION}`,
     date: "July 11, 2026",
+    title: "Core Learning Loop",
+    items: [
+      "New features: added the first complete teach-practice-feedback-mastery loop for BeastLearning.",
+      "Learning path: added learner profile setup, diagnostic placement scoring, skill-gap detection, and Pre-Algebra path generation.",
+      "AI Tutor: added one-question-at-a-time teaching turns, response evaluation, hints without answer reveal, alternate explanations, mastery checks, remediation, and resume state.",
+      "Guardrails: progress reporting distinguishes completion from mastery, and weak placement routes learners to prerequisite review.",
+      "Breaking changes: none. Migration notes: no database migration required. Deployment: not included.",
+    ],
+  },
+  {
+    version: "BeastLearning v1.3 Private Beta",
+    date: "July 11, 2026",
     title: "Curriculum and Content Discipline",
     items: [
       "New features: added content status labels for courses, lessons, study guides, and recommendations.",

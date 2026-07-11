@@ -27,11 +27,51 @@ export default function ReleaseNotesPage() {
       </header>
 
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
+        {/* BeastLearning v1.4 */}
+        <div className="mb-12 rounded-lg border border-[#2a3242] bg-[#0f1419] p-6">
+          <div className="mb-4">
+            <h2 className="text-2xl font-bold">
+              BeastLearning v1.0 Private Beta
+            </h2>
+            <p className="mt-1 text-sm text-[#7f8da3]">July 11, 2026</p>
+          </div>
+
+          <div className="space-y-4 text-sm">
+            <div>
+              <h3 className="font-semibold text-[#c7cfdb]">
+                Core Learning Loop
+              </h3>
+              <ul className="space-y-2 pl-4">
+                <li className="text-[#a5b4c7]">
+                  <span className="text-blue-400">✓</span> Added the first
+                  complete BeastLearning teach-practice-feedback-mastery loop.
+                </li>
+                <li className="text-[#a5b4c7]">
+                  <span className="text-blue-400">✓</span> Added learner
+                  profile setup, diagnostic placement, skill-gap detection, and
+                  Pre-Algebra path generation.
+                </li>
+                <li className="text-[#a5b4c7]">
+                  <span className="text-blue-400">✓</span> Added tutor turns
+                  for response evaluation, hints without answer reveal,
+                  alternate explanations, mastery checks, remediation, and
+                  lesson resume state.
+                </li>
+                <li className="text-[#a5b4c7]">
+                  <span className="text-blue-400">✓</span> Progress reporting
+                  now distinguishes completion from mastery. Breaking changes:
+                  none. Migration notes: no database migration required.
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
         {/* BeastLearning v1.3 */}
         <div className="mb-12 rounded-lg border border-[#2a3242] bg-[#0f1419] p-6">
           <div className="mb-4">
             <h2 className="text-2xl font-bold">
-              BeastLearning {BEAST_LEARNING_VERSION}
+              BeastLearning v1.3 Private Beta
             </h2>
             <p className="mt-1 text-sm text-[#7f8da3]">July 11, 2026</p>
           </div>

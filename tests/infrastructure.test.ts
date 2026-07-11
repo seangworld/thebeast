@@ -96,6 +96,16 @@ import {
   learningStarterPathStandards,
   thirdPartyLearningSiteDirection,
 } from "../src/lib/learning/contentGovernance";
+import {
+  buildAlternativeExplanationTurn,
+  buildCoreLearnerProfile,
+  buildHintTurn,
+  buildTutorResponseTurn,
+  completeCoreLessonMasteryCheck,
+  generateCoreLearningPath,
+  scorePlacementAssessment,
+  startCoreLessonSession,
+} from "../src/lib/learning/coreLearningLoop";
 import { curriculumConceptLibrary } from "../src/lib/learning/concepts";
 import {
   builtLearningCourses,
@@ -270,7 +280,7 @@ test("app version constants reflect BeastOS and module releases", () => {
   assert.equal(APP_VERSION, "v2.1");
   assert.equal(BEAST_MONEY_VERSION, "v2.2.0");
   assert.equal(BEAST_MONEY_VERSION_LABEL, "BeastMoney v2.2.0");
-  assert.equal(BEAST_LEARNING_VERSION, "v1.3 Private Beta");
+  assert.equal(BEAST_LEARNING_VERSION, "v1.4 Private Beta");
   assert.equal(BEASTOS_UI_POLISH_NOTE, "two-tone module branding restored");
 });
 
@@ -1085,6 +1095,118 @@ test("learning content governance labels implemented planned and review states",
   );
   assert.equal(thirdPartyLearningSiteDirection.planningOnly, true);
   assert.equal(thirdPartyLearningSiteDirection.status, "planned");
+});
+
+test("learning core loop teaches practices checks mastery and resumes a lesson", () => {
+  const learner = buildCoreLearnerProfile({
+    preferredName: "Alex",
+    age: 14,
+    gradeLevel: "8th grade",
+    subject: "Pre-Algebra",
+    goals: ["Understand algebra foundations"],
+    interests: ["Robotics"],
+    learningPreferences: ["Guided examples", "Hints before answers"],
+  });
+  const placement = scorePlacementAssessment({
+    responses: [
+      { questionId: "placement-coefficient", answer: "6" },
+      { questionId: "placement-like-terms", answer: "2x" },
+      { questionId: "placement-combine", answer: "8x" },
+    ],
+  });
+  const path = generateCoreLearningPath({ learner, placement });
+  const session = startCoreLessonSession({ learner, path });
+  const correctTurn = buildTutorResponseTurn({
+    session,
+    learnerAnswer: "8x",
+  });
+  const hintTurn = buildHintTurn(session);
+  const alternateTurn = buildAlternativeExplanationTurn(session);
+  const mastery = completeCoreLessonMasteryCheck({
+    session,
+    practiceAnswers: {
+      "practice-combine-x": "8x",
+      "practice-combine-groups": "6x + 10",
+    },
+    quizAnswers: {
+      "quiz-like-terms-1": "2x",
+      "quiz-like-terms-2": "5x + 7",
+    },
+  });
+
+  assert.equal(learner.ageBand, "teen");
+  assert.equal(learner.safetyLevel, "student");
+  assert.equal(placement.readinessLevel, "ready-for-lesson");
+  assert.deepEqual(placement.gapConceptIds, []);
+  assert.equal(path.steps.find((step) => step.id === "combining-like-terms-lesson")?.status, "ready");
+  assert.equal(
+    path.progressReport.distinction.includes("Completion tracks finished steps"),
+    true
+  );
+  assert.equal(session.lesson.title, "Combining Like Terms");
+  assert.equal(session.resumeState.resumable, true);
+  assert.equal(session.resumeState.resumeAtPhase, "practice");
+  assert.equal(session.tutorTurns[0].waitsForLearner, true);
+  assert.equal(session.tutorTurns[0].revealsAnswer, false);
+  assert.equal(correctTurn.feedback, "correct");
+  assert.equal(correctTurn.waitsForLearner, true);
+  assert.equal(hintTurn.revealsAnswer, false);
+  assert.equal(alternateTurn.intent, "alternate-explanation");
+  assert.equal(mastery.progress.mastered, true);
+  assert.equal(mastery.tutorTurn.intent, "mastery-check");
+  assert.equal(mastery.tutorTurn.nextAction, "Solving one-step equations");
+});
+
+test("learning core loop routes weak placement and low mastery to remediation", () => {
+  const learner = buildCoreLearnerProfile({
+    preferredName: "Sam",
+    age: 11,
+    gradeLevel: "6th grade",
+    subject: "Pre-Algebra",
+    goals: ["Get ready for algebra"],
+    interests: ["Games"],
+    learningPreferences: ["Short sessions"],
+  });
+  const placement = scorePlacementAssessment({
+    responses: [
+      { questionId: "placement-coefficient", answer: "x" },
+      { questionId: "placement-like-terms", answer: "2" },
+      { questionId: "placement-combine", answer: "3x" },
+    ],
+  });
+  const path = generateCoreLearningPath({ learner, placement });
+  const session = startCoreLessonSession({ learner, path });
+  const incorrectTurn = buildTutorResponseTurn({
+    session,
+    learnerAnswer: "6",
+  });
+  const mastery = completeCoreLessonMasteryCheck({
+    session,
+    practiceAnswers: {
+      "practice-combine-x": "6",
+      "practice-combine-groups": "9x",
+    },
+    quizAnswers: {
+      "quiz-like-terms-1": "3",
+      "quiz-like-terms-2": "13x + 7",
+    },
+    confidenceLabel: "Still building",
+  });
+
+  assert.equal(learner.ageBand, "child");
+  assert.equal(learner.recommendedSessionMinutes, 15);
+  assert.equal(placement.readinessLevel, "start-here");
+  assert.equal(placement.gapConceptIds.includes("coefficients"), true);
+  assert.equal(path.steps.find((step) => step.id === "remediate-placement-gaps")?.status, "ready");
+  assert.equal(path.steps.find((step) => step.id === "combining-like-terms-lesson")?.status, "blocked");
+  assert.equal(incorrectTurn.feedback, "incorrect");
+  assert.equal(incorrectTurn.revealsAnswer, false);
+  assert.equal(mastery.progress.mastered, false);
+  assert.equal(mastery.tutorTurn.intent, "remediation");
+  assert.equal(
+    mastery.tutorTurn.nextAction,
+    "Review coefficients and variable parts before moving on."
+  );
 });
 
 test("learning course builder models modules lessons topics and activities", () => {

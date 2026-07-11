@@ -1,5 +1,29 @@
 # Changelog
 
+## BeastLearning v1.4 Private Beta - July 11, 2026
+
+Core learning-loop milestone.
+
+### New Features
+
+- Added the first complete BeastLearning core loop contract for onboarding, diagnostic placement, skill-gap detection, learning-path generation, teachable lesson state, learner response evaluation, hints, alternate explanations, mastery checks, remediation, and resume behavior.
+- Added Pre-Algebra placement questions and a Combining Like Terms teachable lesson proving ground.
+- Added tutor turns that ask one question at a time, wait for learner response, avoid answer reveal during hints, and route weak evidence to remediation.
+
+### Improvements
+
+- Progress reporting now distinguishes completed steps from mastery evidence.
+- Tests now cover successful mastery advancement and weak-placement remediation.
+
+### Breaking Changes
+
+- None.
+
+### Migration Notes
+
+- No database migration required.
+- No production deployment included.
+
 ## BeastLearning v1.3 Private Beta - July 11, 2026
 
 Curriculum and content discipline milestone.
