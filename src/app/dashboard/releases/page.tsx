@@ -9,6 +9,18 @@ const releaseNotes = [
   {
     version: `BeastLearning ${BEAST_LEARNING_VERSION}`,
     date: "July 11, 2026",
+    title: "Curriculum and Content Discipline",
+    items: [
+      "New features: added content status labels for courses, lessons, study guides, and recommendations.",
+      "Improvements: added review requirements for accuracy, age appropriateness, accessibility, and safety.",
+      "Guardrails: starter paths may claim only implemented source-backed content, and public copy must avoid full curriculum, compliance, teacher-portal, or integration claims.",
+      "Planning: third-party learning-site direction is planning context only; no integration was added.",
+      "Breaking changes: none. Migration notes: no database migration required. Deployment: not included.",
+    ],
+  },
+  {
+    version: "BeastLearning v1.2 Private Beta",
+    date: "July 11, 2026",
     title: "Assessment and Mastery Foundation",
     items: [
       "New features: added explicit assessment assumptions for quiz, guided practice, confidence, and teaching progress signals.",

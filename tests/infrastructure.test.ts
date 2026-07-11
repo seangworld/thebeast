@@ -87,6 +87,15 @@ import {
   getCollectionResourceCount,
   learningResourceCollections,
 } from "../src/lib/learning/collections";
+import {
+  getCourseContentStatus,
+  getLessonContentStatus,
+  getRecommendationContentStatus,
+  getStudyGuideContentStatus,
+  learningContentReviewRequirements,
+  learningStarterPathStandards,
+  thirdPartyLearningSiteDirection,
+} from "../src/lib/learning/contentGovernance";
 import { curriculumConceptLibrary } from "../src/lib/learning/concepts";
 import {
   builtLearningCourses,
@@ -261,7 +270,7 @@ test("app version constants reflect BeastOS and module releases", () => {
   assert.equal(APP_VERSION, "v2.1");
   assert.equal(BEAST_MONEY_VERSION, "v2.2.0");
   assert.equal(BEAST_MONEY_VERSION_LABEL, "BeastMoney v2.2.0");
-  assert.equal(BEAST_LEARNING_VERSION, "v1.2 Private Beta");
+  assert.equal(BEAST_LEARNING_VERSION, "v1.3 Private Beta");
   assert.equal(BEASTOS_UI_POLISH_NOTE, "two-tone module branding restored");
 });
 
@@ -1033,6 +1042,49 @@ test("learning content library and subjects expose organized material foundation
     ),
     true
   );
+});
+
+test("learning content governance labels implemented planned and review states", () => {
+  const courseStatus = getCourseContentStatus(builtLearningCourses[0]);
+  const completedLesson = learningLessons.find(
+    (lesson) => lesson.completionStatus === "Completed"
+  );
+  const openLesson = learningLessons.find(
+    (lesson) => lesson.completionStatus !== "Completed"
+  );
+  const guideStatus = getStudyGuideContentStatus(learningStudyGuides[0]);
+  const recommendations = buildLearningRecommendations({
+    progress: buildLearningProgressSignals({
+      goals: mockLearningGoals,
+      courses: mockLearningCourses,
+      plan: mockLearningPlan,
+      sessions: mockLearningSessions,
+      achievements: mockLearningAchievements,
+      studySession: mockStudySessionCommand,
+    }),
+    currentPlanTitle: mockLearningPlan.title,
+    activeGoalsCount: mockLearningGoals.length,
+    currentFocus: mockStudySessionCommand.currentFocus,
+  });
+  const recommendationStatus = getRecommendationContentStatus(recommendations[0]);
+
+  assert.equal(courseStatus.status, "requires-review");
+  assert.equal(getLessonContentStatus(completedLesson!).status, "implemented");
+  assert.equal(getLessonContentStatus(openLesson!).status, "requires-review");
+  assert.equal(guideStatus.status, "implemented");
+  assert.equal(recommendationStatus.status, "implemented");
+  assert.deepEqual(
+    learningContentReviewRequirements.map((requirement) => requirement.area),
+    ["accuracy", "age-appropriateness", "accessibility", "safety"]
+  );
+  assert.equal(
+    learningStarterPathStandards.some((standard) =>
+      standard.standard.includes("implemented data")
+    ),
+    true
+  );
+  assert.equal(thirdPartyLearningSiteDirection.planningOnly, true);
+  assert.equal(thirdPartyLearningSiteDirection.status, "planned");
 });
 
 test("learning course builder models modules lessons topics and activities", () => {

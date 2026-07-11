@@ -1,5 +1,29 @@
 # Changelog
 
+## BeastLearning v1.3 Private Beta - July 11, 2026
+
+Curriculum and content discipline milestone.
+
+### New Features
+
+- Added Learning content status labels for courses, lessons, study guides, and recommendations.
+- Added curriculum/content review requirements for accuracy, age appropriateness, accessibility, and safety.
+- Added starter-path standards that prevent claims beyond implemented source evidence.
+- Recorded third-party learning-site direction as planning context only.
+
+### Improvements
+
+- Public curriculum and content claims now have explicit guardrails against full-coverage, compliance, teacher-portal, and integration claims.
+
+### Breaking Changes
+
+- None.
+
+### Migration Notes
+
+- No database migration required.
+- No production deployment included.
+
 ## BeastLearning v1.2 Private Beta - July 11, 2026
 
 Assessment and mastery foundation milestone.
