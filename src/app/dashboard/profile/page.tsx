@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { getProfileDisplayName } from "@/lib/profile";
+import { useEntitlements } from "@/lib/hooks/useEntitlements";
 import {
   DashboardCard,
   ModuleBadge,
@@ -87,6 +88,37 @@ function computeAge(birthday: string) {
   return age >= 0 ? age : null;
 }
 
+function formatLabel(value: string) {
+  return value
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function formatConfigured(value: string) {
+  return value.trim() ? "Configured" : "Not set";
+}
+
+function FoundationStatus({
+  label,
+  value,
+  detail,
+}: {
+  label: string;
+  value: string;
+  detail: string;
+}) {
+  return (
+    <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+      <div className="text-sm font-black uppercase text-[#7f8da3]">
+        {label}
+      </div>
+      <div className="mt-2 text-lg font-black text-white">{value}</div>
+      <p className="mt-2 text-sm leading-6 text-[#aab6c7]">{detail}</p>
+    </div>
+  );
+}
+
 function TextField({
   label,
   value,
@@ -140,6 +172,7 @@ function TextAreaField({
 }
 
 export default function ProfilePage() {
+  const entitlements = useEntitlements();
   const [form, setForm] = useState<ProfileForm>(emptyForm);
   const [email, setEmail] = useState("");
   const [userId, setUserId] = useState("");
@@ -270,7 +303,9 @@ export default function ProfilePage() {
       return;
     }
 
-    setMessage("Profile saved. BeastOS will use your preferred name where it can.");
+    setMessage(
+      "Personal Hub saved. BeastOS will use your preferred name where it can."
+    );
     await loadProfile();
   }
 
@@ -280,14 +315,16 @@ export default function ProfilePage() {
         <section className="beast-page-header">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-4">
-              <ModuleBadge module="beastos" label="Identity Foundation" />
-              <h1 className="beast-title">Profile</h1>
+              <ModuleBadge module="beastos" label="Personal Hub Foundation" />
+              <h1 className="beast-title">Personal Hub</h1>
               <p className="beast-subtitle">
-                Your profile helps BeastOS personalize your experience across
-                Money, Learning, Health, Home, and future modules.
+                Personal Hub is the BeastOS foundation for identity, family,
+                membership, preferences, privacy, permissions, connected
+                accounts, AI context, and notifications.
               </p>
               <p className="text-sm font-semibold text-indigo-100">
-                The more you tell Beast, the more personalized your AI learning experience becomes.
+                Phase 1 keeps this shared foundation focused on account context
+                only.
               </p>
             </div>
             <Link href="/dashboard/settings" className="beast-button-secondary">
@@ -307,7 +344,7 @@ export default function ProfilePage() {
             <SectionHeader
               eyebrow="Identity"
               title="How BeastOS should know you"
-              description="Preferred name drives the Today greeting. Full name and context fields prepare BeastOS for future modules."
+              description="Preferred name drives the Today greeting. Identity and context fields prepare shared BeastOS services without adding later-phase features."
             />
 
             {loading ? (
@@ -320,54 +357,54 @@ export default function ProfilePage() {
               <div className="mt-6 grid gap-6">
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="md:col-span-2 text-sm font-black uppercase text-[#7f8da3]">
-                    About Me
+                    Identity
                   </div>
-                <TextField
-                  label="Preferred name"
-                  value={form.preferred_name}
-                  onChange={(value) => updateField("preferred_name", value)}
-                  placeholder="Preferred name"
-                />
-                <TextField
-                  label="Display name"
-                  value={form.display_name}
-                  onChange={(value) => updateField("display_name", value)}
-                  placeholder="Display name"
-                />
-                <TextField
-                  label="Full name"
-                  value={form.full_name}
-                  onChange={(value) => updateField("full_name", value)}
-                  placeholder="Full name"
-                />
-                <TextField
-                  label="Username / handle"
-                  value={form.username}
-                  onChange={(value) => updateField("username", value)}
-                  placeholder="learning_handle"
-                />
-                <TextField
-                  label="Birthday"
-                  type="date"
-                  value={form.birthday}
-                  onChange={(value) => updateField("birthday", value)}
-                />
-                <TextField
-                  label="Location"
-                  value={form.location}
-                  onChange={(value) => updateField("location", value)}
-                  placeholder="City, region"
-                />
-                <TextField
-                  label="Timezone"
-                  value={form.timezone}
-                  onChange={(value) => updateField("timezone", value)}
-                  placeholder="America/New_York"
-                />
+                  <TextField
+                    label="Preferred name"
+                    value={form.preferred_name}
+                    onChange={(value) => updateField("preferred_name", value)}
+                    placeholder="Preferred name"
+                  />
+                  <TextField
+                    label="Display name"
+                    value={form.display_name}
+                    onChange={(value) => updateField("display_name", value)}
+                    placeholder="Display name"
+                  />
+                  <TextField
+                    label="Full name"
+                    value={form.full_name}
+                    onChange={(value) => updateField("full_name", value)}
+                    placeholder="Full name"
+                  />
+                  <TextField
+                    label="Username / handle"
+                    value={form.username}
+                    onChange={(value) => updateField("username", value)}
+                    placeholder="learning_handle"
+                  />
+                  <TextField
+                    label="Birthday"
+                    type="date"
+                    value={form.birthday}
+                    onChange={(value) => updateField("birthday", value)}
+                  />
+                  <TextField
+                    label="Location"
+                    value={form.location}
+                    onChange={(value) => updateField("location", value)}
+                    placeholder="City, region"
+                  />
+                  <TextField
+                    label="Timezone"
+                    value={form.timezone}
+                    onChange={(value) => updateField("timezone", value)}
+                    placeholder="America/New_York"
+                  />
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="md:col-span-2 text-sm font-black uppercase text-[#7f8da3]">
-                    Current Academic Level
+                    Preferences
                   </div>
                   <TextField
                     label="Current academic level"
@@ -388,26 +425,26 @@ export default function ProfilePage() {
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="md:col-span-2 text-sm font-black uppercase text-[#7f8da3]">
-                    Courses
+                    AI Context
                   </div>
                   <TextAreaField
-                    label="Courses"
+                    label="Learning context"
                     value={form.learning_preferences}
                     onChange={(value) =>
                       updateField("learning_preferences", value)
                     }
-                    placeholder="List current courses or subjects Beast should keep close."
+                    placeholder="Subjects, formats, or context Beast should keep close."
                   />
                   <TextAreaField
-                    label="Goals"
+                    label="Personal context"
                     value={form.bio}
                     onChange={(value) => updateField("bio", value)}
-                    placeholder="Add learning goals, deadlines, or outcomes."
+                    placeholder="Add context BeastOS should remember when personalizing shared services."
                   />
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="md:col-span-2 text-sm font-black uppercase text-[#7f8da3]">
-                    Career Interests
+                    Family and Career
                   </div>
                   <TextAreaField
                     label="Career interests"
@@ -418,12 +455,12 @@ export default function ProfilePage() {
                     placeholder="Careers, certifications, trades, or skills you are curious about."
                   />
                   <TextAreaField
-                    label="Learning preferences"
+                    label="Family or household context"
                     value={form.household_context}
                     onChange={(value) =>
                       updateField("household_context", value)
                     }
-                    placeholder="How do you learn best? Reading, practice, examples, projects?"
+                    placeholder="Family, household, or support context BeastOS should account for."
                   />
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
@@ -448,14 +485,22 @@ export default function ProfilePage() {
                   />
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
-                <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
-                  <div className="text-sm font-semibold text-[#c7cfdb]">
-                    Computed age
+                  <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+                    <div className="text-sm font-semibold text-[#c7cfdb]">
+                      Computed age
+                    </div>
+                    <div className="mt-2 text-3xl font-black text-white">
+                      {age == null ? "Not set" : age}
+                    </div>
                   </div>
-                  <div className="mt-2 text-3xl font-black text-white">
-                    {age == null ? "Not set" : age}
+                  <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+                    <div className="text-sm font-semibold text-[#c7cfdb]">
+                      Notification preferences
+                    </div>
+                    <div className="mt-2 text-3xl font-black text-white">
+                      Account default
+                    </div>
                   </div>
-                </div>
                 </div>
               </div>
             )}
@@ -467,7 +512,7 @@ export default function ProfilePage() {
                 disabled={loading || saving}
                 className="beast-button disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {saving ? "Saving..." : "Save Profile"}
+                {saving ? "Saving..." : "Save Personal Hub"}
               </button>
               <button
                 type="button"
@@ -491,6 +536,24 @@ export default function ProfilePage() {
 
             <DashboardCard accent="purple">
               <SectionHeader
+                eyebrow="Membership"
+                title={
+                  entitlements.loading
+                    ? "Checking membership"
+                    : `${formatLabel(entitlements.context.plan)} plan`
+                }
+                description={
+                  entitlements.loading
+                    ? "Membership context is loading from BeastOS services."
+                    : `${formatLabel(
+                        entitlements.membership.status
+                      )} membership from ${entitlements.membership.source}.`
+                }
+              />
+            </DashboardCard>
+
+            <DashboardCard accent="documents">
+              <SectionHeader
                 eyebrow="Account Email"
                 title={email || "Not signed in"}
                 description="Authentication remains separate from editable profile context."
@@ -499,12 +562,42 @@ export default function ProfilePage() {
 
             <DashboardCard accent="documents">
               <SectionHeader
-                eyebrow="Ownership"
+                eyebrow="Protected Context"
                 title="You control this information"
-                description="Your profile helps BeastOS personalize your experience. You control this information."
+                description="Personal Hub separates editable account context from authentication and billing records."
               />
             </DashboardCard>
           </div>
+        </section>
+
+        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <FoundationStatus
+            label="Privacy"
+            value="Owner controlled"
+            detail="Personal context remains account-scoped and is not shared across modules without permission."
+          />
+          <FoundationStatus
+            label="Permissions"
+            value={formatLabel(entitlements.context.role)}
+            detail="Role and membership context provide the first shared permission foundation."
+          />
+          <FoundationStatus
+            label="Connected Accounts"
+            value={email ? "Email connected" : "Not signed in"}
+            detail="Authentication identity stays linked to Personal Hub without becoming editable profile text."
+          />
+          <FoundationStatus
+            label="AI Context"
+            value={formatConfigured(
+              [
+                form.bio,
+                form.learning_preferences,
+                form.learning_strengths,
+                form.learning_help_areas,
+              ].join(" ")
+            )}
+            detail="Shared AI can read owner-provided context without moving AI ownership into a single module."
+          />
         </section>
       </div>
     </main>
