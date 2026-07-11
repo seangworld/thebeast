@@ -58,6 +58,18 @@ const releaseNotes = [
   {
     version: BEAST_MONEY_VERSION_LABEL,
     date: "July 11, 2026",
+    title: "Debt and Funding Modeling",
+    items: [
+      "New features: hardened unified strategy payoff modeling for revolving minimums and excluded-debt behavior.",
+      "Funding sources: Velocity strategy output now states APR, utilization, recovery capacity, recovery window, and cash-buffer assumptions.",
+      "Custom order: excluded debts keep their minimum-payment obligations but are skipped for extra attack targeting.",
+      "Regression coverage: added tests for revolving minimums, custom order, debt exclusion, and Velocity source assumptions.",
+      "Breaking changes: none. Migration notes: no database migration required. Deployment: not included.",
+    ],
+  },
+  {
+    version: "BeastMoney v2.2.0",
+    date: "July 11, 2026",
     title: "Velocity Strategy Engine Hardening",
     items: [
       "New features: hardened Velocity minimum-payment modeling for fixed and revolving debts.",

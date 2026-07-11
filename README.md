@@ -2,7 +2,7 @@
 
 Current platform version: `BeastOS v2.1`
 
-Current Money version: `BeastMoney v2.2.0`
+Current Money version: `BeastMoney v2.3.0`
 
 Current Learning version: `BeastLearning v1.4 Private Beta`
 

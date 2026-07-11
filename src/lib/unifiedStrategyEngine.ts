@@ -22,6 +22,10 @@ export type UnifiedStrategyDebt = {
   balance: number;
   minimum_payment: number;
   interest_rate: number;
+  is_excluded?: boolean | null;
+  payment_behavior?: "fixed" | "revolving" | null;
+  minimum_payment_rate?: number | null;
+  minimum_payment_floor?: number | null;
 };
 
 export type PayoffDebt = UnifiedStrategyDebt;
@@ -65,6 +69,7 @@ export type UnifiedStrategyResult = {
   safety_rating: FinancialDecisionResult["safetyRating"] | "not_evaluated";
   confidence_score: number;
   guardrail_violations: string[];
+  funding_source_assumptions: string[];
   velocity_chunk_applied?: number;
   velocity_source_interest?: number;
   velocity_source_paid?: number;
@@ -91,6 +96,31 @@ function money(value: number) {
   return roundMoney(value);
 }
 
+function numberValue(value: number | null | undefined) {
+  return Number.isFinite(value) ? Number(value) : 0;
+}
+
+function getEffectiveMinimumPayment(debt: UnifiedStrategyDebt, balance = debt.balance) {
+  const currentBalance = Math.max(numberValue(balance), 0);
+  if (currentBalance <= 0) return 0;
+
+  if (debt.payment_behavior === "revolving") {
+    const configuredMinimum = Math.max(numberValue(debt.minimum_payment), 0);
+    const ratePayment = money(
+      currentBalance * (Math.max(numberValue(debt.minimum_payment_rate), 0) / 100)
+    );
+    const floorPayment = Math.max(numberValue(debt.minimum_payment_floor), 0);
+
+    return money(Math.min(Math.max(configuredMinimum, ratePayment, floorPayment), currentBalance));
+  }
+
+  return money(Math.min(Math.max(numberValue(debt.minimum_payment), 0), currentBalance));
+}
+
+function getEligibleTargetDebts(debts: UnifiedStrategyDebt[]) {
+  return debts.filter((debt) => debt.balance > 0 && debt.is_excluded !== true);
+}
+
 function getRecommendedExtraPayment(input: UnifiedStrategyEngineInput) {
   if (input.strategy === "minimum") return 0;
   if (input.financialDecision) {
@@ -111,7 +141,7 @@ function chooseTarget({
   velocityTargetDebtId?: string;
   customDebtOrder?: string[];
 }) {
-  const active = debts.filter((debt) => debt.balance > 0);
+  const active = getEligibleTargetDebts(debts);
 
   if (active.length === 0) return null;
   if (strategy === "minimum") return null;
@@ -157,6 +187,56 @@ function getDecisionSafety(input: UnifiedStrategyEngineInput) {
   >;
 }
 
+function buildFundingSourceAssumptions(
+  input: UnifiedStrategyEngineInput,
+  velocityEngineResult: VelocityEngineResult | null
+) {
+  if (input.strategy !== "velocity") return [];
+
+  const sourceAccount = input.velocityInputSnapshot?.accounts.find((account) => {
+    const accountType = account.type || "other";
+    return !["checking", "savings", "cash"].includes(accountType);
+  });
+  const cashBuffer = numberValue(input.velocityInputSnapshot?.settings.cash_buffer);
+  const recoveryCapacity = numberValue(
+    input.velocityInputSnapshot?.settings.monthly_recovery_capacity
+  );
+  const recoveryMonths = numberValue(input.velocityInputSnapshot?.settings.recovery_months);
+  const sourceApr =
+    velocityEngineResult?.interest_savings?.source_apr ??
+    numberValue(sourceAccount?.interest_rate);
+
+  if (!sourceAccount) {
+    return [
+      `Cash buffer assumption: preserve ${money(cashBuffer)} before recommending a Velocity payment.`,
+      "Funding source assumption: no HELOC, PLOC, credit-card, or other source account was provided.",
+    ];
+  }
+
+  const creditLimit = numberValue(sourceAccount.credit_limit);
+  const currentBalance = numberValue(sourceAccount.current_balance);
+  const availableCredit =
+    sourceAccount.available_credit != null
+      ? numberValue(sourceAccount.available_credit)
+      : Math.max(creditLimit - currentBalance, 0);
+  const utilization =
+    creditLimit > 0
+      ? money(
+          ((currentBalance +
+            (velocityEngineResult?.chunk_recommendation?.recommended_chunk || 0)) /
+            creditLimit) *
+            100
+        )
+      : 0;
+
+  return [
+    `Funding source assumption: ${sourceAccount.name || "Source"} is treated as ${sourceAccount.type || "other"} with ${money(sourceApr)}% APR.`,
+    `Utilization assumption: ${money(currentBalance)} balance against ${money(creditLimit)} limit, ${money(availableCredit)} available credit, and ${utilization}% projected utilization before source recovery.`,
+    `Recovery assumption: ${money(recoveryCapacity)} monthly recovery capacity over ${recoveryMonths} months.`,
+    `Cash buffer assumption: preserve ${money(cashBuffer)} before recommending a Velocity payment.`,
+  ];
+}
+
 export function runUnifiedStrategyEngine(
   input: UnifiedStrategyEngineInput
 ): UnifiedStrategyResult {
@@ -165,10 +245,14 @@ export function runUnifiedStrategyEngine(
     balance: money(Number(debt.balance || 0)),
     minimum_payment: money(Number(debt.minimum_payment || 0)),
     interest_rate: Number(debt.interest_rate || 0),
+    is_excluded: debt.is_excluded === true,
+    payment_behavior: debt.payment_behavior || "fixed",
+    minimum_payment_rate: debt.minimum_payment_rate ?? null,
+    minimum_payment_floor: debt.minimum_payment_floor ?? null,
   }));
   const recommendedExtraPayment = getRecommendedExtraPayment(input);
   const baseMonthlyPayment = money(
-    workingDebts.reduce((sum, debt) => sum + debt.minimum_payment, 0) +
+    workingDebts.reduce((sum, debt) => sum + getEffectiveMinimumPayment(debt), 0) +
       recommendedExtraPayment +
       Number(input.recoveredMinimums || 0)
   );
@@ -205,6 +289,10 @@ export function runUnifiedStrategyEngine(
     Math.max(velocityEngineResult?.recovery_timeline?.monthly_recovery_capacity || 0, 0)
   );
   const safety = getDecisionSafety(input);
+  const fundingSourceAssumptions = buildFundingSourceAssumptions(
+    input,
+    velocityEngineResult
+  );
   let sourceBalance = 0;
   let velocityChunkApplied = 0;
   let velocitySourceInterest = 0;
@@ -233,6 +321,7 @@ export function runUnifiedStrategyEngine(
       payment_schedule: [],
       recommended_extra_payment: recommendedExtraPayment,
       ...safety,
+      funding_source_assumptions: fundingSourceAssumptions,
       velocity_chunk_applied: velocityChunkApplied,
       velocity_source_interest: 0,
       velocity_source_paid: 0,
@@ -291,7 +380,7 @@ export function runUnifiedStrategyEngine(
     for (const debt of workingDebts) {
       if (debt.balance <= 0) continue;
 
-      const payment = Math.min(debt.minimum_payment, debt.balance);
+      const payment = Math.min(getEffectiveMinimumPayment(debt), debt.balance);
 
       debt.balance = money(debt.balance - payment);
       paymentPool = money(paymentPool - payment);
@@ -342,7 +431,7 @@ export function runUnifiedStrategyEngine(
       targetForRow ? interestByDebt[targetForRow.id] || 0 : 0
     );
     const targetRequiredMinimum = money(
-      targetForRow ? Number(targetForRow.minimum_payment || 0) : 0
+      targetForRow ? getEffectiveMinimumPayment(targetForRow, targetStartingBalance) : 0
     );
     const targetAttackPaid = money(
       targetForRow ? attackPaidByDebt[targetForRow.id] || 0 : 0
@@ -404,6 +493,7 @@ export function runUnifiedStrategyEngine(
     payment_schedule: payoffMonths,
     recommended_extra_payment: recommendedExtraPayment,
     ...safety,
+    funding_source_assumptions: fundingSourceAssumptions,
     velocity_chunk_applied: velocityChunkApplied,
     velocity_source_interest: velocitySourceInterest,
     velocity_source_paid: velocitySourcePaid,

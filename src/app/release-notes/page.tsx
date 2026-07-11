@@ -192,10 +192,52 @@ export default function ReleaseNotesPage() {
           </div>
         </div>
 
-        {/* BeastMoney v2.2.0 */}
+        {/* BeastMoney v2.3.0 */}
         <div className="mb-12 rounded-lg border border-[#2a3242] bg-[#0f1419] p-6">
           <div className="mb-4">
             <h2 className="text-2xl font-bold">{BEAST_MONEY_VERSION_LABEL}</h2>
+            <p className="mt-1 text-sm text-[#7f8da3]">July 11, 2026</p>
+          </div>
+
+          <div className="space-y-4 text-sm">
+            <div>
+              <h3 className="font-semibold text-[#c7cfdb]">
+                Debt and Funding Modeling
+              </h3>
+              <ul className="space-y-2 pl-4">
+                <li className="text-[#a5b4c7]">
+                  <span className="text-blue-400">✓</span> Hardened unified
+                  strategy payoff modeling for revolving minimums and
+                  excluded-debt behavior.
+                </li>
+                <li className="text-[#a5b4c7]">
+                  <span className="text-blue-400">✓</span> Velocity strategy
+                  output now states APR, utilization, recovery capacity,
+                  recovery window, and cash-buffer assumptions.
+                </li>
+                <li className="text-[#a5b4c7]">
+                  <span className="text-blue-400">✓</span> Excluded debts keep
+                  minimum-payment obligations but are skipped for extra attack
+                  targeting, including custom debt order.
+                </li>
+                <li className="text-[#a5b4c7]">
+                  <span className="text-blue-400">✓</span> Added regression
+                  coverage for revolving minimums, custom order, debt
+                  exclusion, and Velocity source assumptions.
+                </li>
+                <li className="text-[#a5b4c7]">
+                  <span className="text-blue-400">✓</span> Breaking changes:
+                  none. Migration notes: no database migration required.
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        {/* BeastMoney v2.2.0 */}
+        <div className="mb-12 rounded-lg border border-[#2a3242] bg-[#0f1419] p-6">
+          <div className="mb-4">
+            <h2 className="text-2xl font-bold">BeastMoney v2.2.0</h2>
             <p className="mt-1 text-sm text-[#7f8da3]">July 11, 2026</p>
           </div>
 

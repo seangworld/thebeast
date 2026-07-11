@@ -97,6 +97,30 @@ Private beta stabilization milestone.
 - No database migration required.
 - No production deployment included.
 
+## BeastMoney v2.3.0 - July 11, 2026
+
+Debt and funding-source modeling hardening milestone.
+
+### New Features
+
+- Hardened the unified strategy engine with revolving minimum-payment behavior.
+- Added excluded-debt handling so excluded debts keep minimum payments but are not selected for extra attack targeting.
+- Added explicit Velocity funding-source assumptions for APR, utilization, recovery capacity, recovery window, and cash buffer.
+
+### Improvements
+
+- Confirmed custom debt order skips excluded debts and falls through to the next eligible target.
+- Added regression coverage for revolving minimums, custom order, excluded debt behavior, and Velocity source assumptions.
+
+### Breaking Changes
+
+- None.
+
+### Migration Notes
+
+- No database migration required.
+- No live banking aggregation, legal advice, tax advice, investment advice, lending advice, or credit-repair advice was added.
+
 ## BeastMoney v2.2.0 - July 11, 2026
 
 Velocity Strategy Engine hardening milestone.
