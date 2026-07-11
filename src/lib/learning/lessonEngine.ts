@@ -98,7 +98,31 @@ export type LessonEngineDefinition = {
   lesson: AdaptiveLesson;
   phases: LessonEnginePhase[];
   completionCriteria: LessonCompletionCriterion[];
+  assessmentAssumptions: LessonAssessmentAssumption[];
+  masteryAssumptions: string[];
   completionLabel: string;
+};
+
+export type LessonAssessmentAssumption = {
+  id: "quiz" | "guided-practice" | "confidence" | "phase-progress";
+  label: string;
+  weight: number;
+  description: string;
+};
+
+export type LessonAssessmentSignal = {
+  id: LessonAssessmentAssumption["id"];
+  label: string;
+  score: number;
+  weight: number;
+  evidence: string;
+};
+
+export type LessonProgressContinuity = {
+  currentActivityStatus: "in_progress" | "ready_to_complete";
+  nextActivityBasis: "recommend_next_lesson" | "recommend_review";
+  preservedSignals: string[];
+  handoffSummary: string;
 };
 
 export type LessonEngineProgress = {
@@ -116,6 +140,9 @@ export type LessonEngineProgress = {
   recommendedReview: boolean;
   readyToComplete: boolean;
   completionReviewReasons: string[];
+  assessmentSignals: LessonAssessmentSignal[];
+  masteryAssumptions: string[];
+  continuity: LessonProgressContinuity;
   percent: number;
   nextRecommendation: string;
   coachingMessage: string;
@@ -465,6 +492,44 @@ const lessonCompletionCriteria: LessonCompletionCriterion[] = [
   },
 ];
 
+const lessonAssessmentAssumptions: LessonAssessmentAssumption[] = [
+  {
+    id: "quiz",
+    label: "Quiz signal",
+    weight: 0.45,
+    description:
+      "Quiz answers are a recall signal only; they do not prove durable mastery by themselves.",
+  },
+  {
+    id: "guided-practice",
+    label: "Guided practice signal",
+    weight: 0.2,
+    description:
+      "Guided practice shows supported skill use and should be reviewed with hints and attempts.",
+  },
+  {
+    id: "confidence",
+    label: "Confidence signal",
+    weight: 0.2,
+    description:
+      "Learner confidence is self-reported and may raise or lower review urgency without overriding evidence.",
+  },
+  {
+    id: "phase-progress",
+    label: "Teaching progress signal",
+    weight: 0.15,
+    description:
+      "Completed phases show lesson engagement, not independent mastery.",
+  },
+];
+
+const masteryAssumptions = [
+  "Mastery is a conservative readiness estimate, not an accredited assessment.",
+  "A low estimate should recommend review without shame or penalty language.",
+  "A high estimate means ready for the next lesson, not guaranteed long-term retention.",
+  "Missing quiz, practice, reflection, or confidence evidence lowers certainty.",
+];
+
 export function buildLessonEngineDefinition(
   activity: Pick<LearningActivityRunnerRow, "activity_type" | "title" | "difficulty">
 ): LessonEngineDefinition {
@@ -482,6 +547,8 @@ export function buildLessonEngineDefinition(
     completionLabel: completionLabels[activityType],
     phases: teachingPhases,
     completionCriteria: lessonCompletionCriteria,
+    assessmentAssumptions: lessonAssessmentAssumptions,
+    masteryAssumptions,
   };
 }
 
@@ -654,10 +721,37 @@ export function buildCoachMessage({
   }
 
   if (recommendedReview) {
-    return `${lesson.reviewRecommendation} Your quiz score was ${quizPercent}%, so Beast recommends one review pass before the next lesson.`;
+    return `${lesson.reviewRecommendation} Your quiz score was ${quizPercent}%, so Beast recommends one normal review pass before the next lesson.`;
   }
 
   return "You are close. Review the coaching notes, then finish with a reflection before moving forward.";
+}
+
+function buildAssessmentSignals({
+  quizPercent,
+  practicePercent,
+  confidenceScore,
+  phasePercent,
+}: {
+  quizPercent: number;
+  practicePercent: number;
+  confidenceScore: number;
+  phasePercent: number;
+}): LessonAssessmentSignal[] {
+  const scores: Record<LessonAssessmentAssumption["id"], number> = {
+    quiz: quizPercent,
+    "guided-practice": practicePercent,
+    confidence: confidenceScore,
+    "phase-progress": phasePercent,
+  };
+
+  return lessonAssessmentAssumptions.map((assumption) => ({
+    id: assumption.id,
+    label: assumption.label,
+    score: scores[assumption.id],
+    weight: assumption.weight,
+    evidence: assumption.description,
+  }));
 }
 
 export function getLessonEngineProgress({
@@ -726,6 +820,23 @@ export function getLessonEngineProgress({
     practice.answered === lesson.guidedPractice.length &&
     reflectionComplete &&
     answeredQuizQuestions === lesson.quizQuestions.length;
+  const nextRecommendation = mastered
+    ? lesson.recommendedNextLesson
+    : lesson.reviewRecommendation;
+  const assessmentSignals = buildAssessmentSignals({
+    quizPercent: quiz.percent,
+    practicePercent: practice.percent,
+    confidenceScore,
+    phasePercent,
+  });
+  const continuity: LessonProgressContinuity = {
+    currentActivityStatus: readyToComplete ? "ready_to_complete" : "in_progress",
+    nextActivityBasis: mastered ? "recommend_next_lesson" : "recommend_review",
+    preservedSignals: assessmentSignals.map(
+      (signal) => `${signal.id}:${signal.score}`
+    ),
+    handoffSummary: `Next: ${nextRecommendation}. Evidence: quiz ${quiz.percent}%, practice ${practice.percent}%, confidence ${confidenceScore}%, phases ${phasePercent}%.`,
+  };
 
   return {
     completedPhases,
@@ -742,13 +853,14 @@ export function getLessonEngineProgress({
     recommendedReview,
     readyToComplete,
     completionReviewReasons,
+    assessmentSignals,
+    masteryAssumptions,
+    continuity,
     percent:
       requiredSteps === 0
         ? 0
         : Math.min(100, Math.round((completedSteps / requiredSteps) * 100)),
-    nextRecommendation: mastered
-      ? lesson.recommendedNextLesson
-      : lesson.reviewRecommendation,
+    nextRecommendation,
     coachingMessage: buildCoachMessage({
       mastered,
       recommendedReview,

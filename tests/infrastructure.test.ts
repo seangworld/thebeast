@@ -189,6 +189,7 @@ import {
   getLearningActivityRoute,
   getNewestReadyLearningActivity,
   getNextQueuedLearningActivity,
+  buildLearningActivityContinuityState,
 } from "../src/lib/learning/activityRunner";
 import {
   buildGeneratedLearningActivityPayload,
@@ -260,7 +261,7 @@ test("app version constants reflect BeastOS and module releases", () => {
   assert.equal(APP_VERSION, "v2.1");
   assert.equal(BEAST_MONEY_VERSION, "v2.2.0");
   assert.equal(BEAST_MONEY_VERSION_LABEL, "BeastMoney v2.2.0");
-  assert.equal(BEAST_LEARNING_VERSION, "v1.1 Private Beta");
+  assert.equal(BEAST_LEARNING_VERSION, "v1.2 Private Beta");
   assert.equal(BEASTOS_UI_POLISH_NOTE, "two-tone module branding restored");
 });
 
@@ -1572,9 +1573,41 @@ test("Today learning mission generation avoids dead ends", () => {
       created_at: "2026-07-07T12:00:00.000Z",
     },
   ]);
+  const continuity = buildLearningActivityContinuityState({
+    completedActivityId: "old-ready",
+    now: new Date("2026-07-07T13:00:00.000Z"),
+    activities: [
+      {
+        id: "old-ready",
+        activity_type: "Lesson",
+        title: "Old ready",
+        difficulty: "Beginner",
+        estimated_minutes: 15,
+        xp: 10,
+        status: "Ready",
+        sort_order: 1,
+        created_at: "2026-07-06T12:00:00.000Z",
+      },
+      {
+        id: "next-queued",
+        activity_type: "Practice",
+        title: "Next queued",
+        difficulty: "Beginner",
+        estimated_minutes: 15,
+        xp: 10,
+        status: "Queued",
+        sort_order: 2,
+        created_at: "2026-07-07T12:00:00.000Z",
+      },
+    ],
+  });
 
   assert.equal(getNewestReadyLearningActivity(completedOnly), null);
   assert.equal(newestReady?.id, "new-ready");
+  assert.equal(continuity.completedActivityId, "old-ready");
+  assert.equal(continuity.nextQueuedActivityId, "next-queued");
+  assert.equal(continuity.queueExhausted, false);
+  assert.equal(continuity.continuityBasis.includes("preserves queue order"), true);
   assert.equal(todayPage.includes("async function generateNextActivity"), true);
   assert.equal(todayPage.includes(".from(\"learning_activities\")"), true);
   assert.equal(todayPage.includes(".insert("), true);
@@ -1695,6 +1728,15 @@ test("lesson engine supports the adaptive BeastLearning teaching cycle", () => {
   assert.equal(coachEngine.summary.includes("assessment, practice, quiz results"), true);
   assert.equal(progress.readyToComplete, true);
   assert.deepEqual(progress.completionReviewReasons, []);
+  assert.deepEqual(
+    progress.assessmentSignals.map((signal) => signal.id),
+    ["quiz", "guided-practice", "confidence", "phase-progress"]
+  );
+  assert.equal(progress.assessmentSignals[0].weight, 0.45);
+  assert.equal(progress.masteryAssumptions.some((assumption) => assumption.includes("not an accredited assessment")), true);
+  assert.equal(progress.continuity.currentActivityStatus, "ready_to_complete");
+  assert.equal(progress.continuity.nextActivityBasis, "recommend_next_lesson");
+  assert.equal(progress.continuity.handoffSummary.includes("quiz 100%"), true);
   assert.equal(progress.mastered, true);
   assert.equal(progress.recommendedReview, false);
   assert.equal(progress.percent, 100);
@@ -1713,6 +1755,8 @@ test("lesson engine supports the adaptive BeastLearning teaching cycle", () => {
 
   assert.equal(incompleteProgress.readyToComplete, false);
   assert.equal(incompleteProgress.recommendedReview, true);
+  assert.equal(incompleteProgress.continuity.currentActivityStatus, "in_progress");
+  assert.equal(incompleteProgress.continuity.nextActivityBasis, "recommend_review");
   assert.equal(
     incompleteProgress.completionReviewReasons.includes("Attempt all guided practice steps."),
     true

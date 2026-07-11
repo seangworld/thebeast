@@ -607,6 +607,28 @@ export function LessonEngine({
             </p>
           </div>
         </div>
+        <div className="mt-5 grid gap-4 lg:grid-cols-2">
+          <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+            <div className="text-xs font-bold uppercase text-[#7f8da3]">
+              Assessment assumptions
+            </div>
+            <ul className="mt-3 grid gap-2 text-sm leading-5 text-[#c7cfdb]">
+              {progress.assessmentSignals.map((signal) => (
+                <li key={signal.id}>
+                  {signal.label}: {signal.score}% signal, {Math.round(signal.weight * 100)}% weight.
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+            <div className="text-xs font-bold uppercase text-[#7f8da3]">
+              Continuity
+            </div>
+            <p className="mt-3 text-sm font-semibold leading-5 text-[#c7cfdb]">
+              {progress.continuity.handoffSummary}
+            </p>
+          </div>
+        </div>
       </DashboardCard>
     </div>
   );

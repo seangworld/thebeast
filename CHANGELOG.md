@@ -1,5 +1,29 @@
 # Changelog
 
+## BeastLearning v1.2 Private Beta - July 11, 2026
+
+Assessment and mastery foundation milestone.
+
+### New Features
+
+- Added explicit assessment signal assumptions for quiz, guided practice, confidence, and teaching progress.
+- Added progress continuity evidence that preserves completion handoff state, next queued activity, and newest ready activity behavior.
+
+### Improvements
+
+- Hardened mastery language so review recommendations remain conservative and non-shaming.
+- Added lesson progress continuity metadata for the next recommendation and preserved assessment signals.
+- Added release evidence for safety/privacy review of assessment and mastery data.
+
+### Breaking Changes
+
+- None.
+
+### Migration Notes
+
+- No database migration required.
+- No production deployment included.
+
 ## BeastLearning v1.1 Private Beta - July 11, 2026
 
 Private beta stabilization milestone.

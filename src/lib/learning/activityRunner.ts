@@ -20,6 +20,15 @@ export type LearningActivityRunnerRow = {
   created_at?: string | null;
 };
 
+export type LearningActivityContinuityState = {
+  completedActivityId: string;
+  completedAt: string;
+  nextQueuedActivityId: string | null;
+  newestReadyActivityId: string | null;
+  queueExhausted: boolean;
+  continuityBasis: string;
+};
+
 export const learningActivityTypes: LearningActivityType[] = [
   "Lesson",
   "Practice",
@@ -141,5 +150,37 @@ export function getLearningActivityCompletionPayload(now = new Date()) {
   return {
     status: "Completed",
     completed_at: now.toISOString(),
+  };
+}
+
+export function buildLearningActivityContinuityState({
+  activities,
+  completedActivityId,
+  now = new Date(),
+}: {
+  activities: LearningActivityRunnerRow[];
+  completedActivityId: string;
+  now?: Date;
+}): LearningActivityContinuityState {
+  const completion = getLearningActivityCompletionPayload(now);
+  const updatedActivities = activities.map((activity) =>
+    activity.id === completedActivityId
+      ? { ...activity, ...completion }
+      : activity
+  );
+  const nextQueued = getNextQueuedLearningActivity(
+    updatedActivities,
+    completedActivityId
+  );
+  const newestReady = getNewestReadyLearningActivity(updatedActivities);
+
+  return {
+    completedActivityId,
+    completedAt: completion.completed_at,
+    nextQueuedActivityId: nextQueued?.id || null,
+    newestReadyActivityId: newestReady?.id || null,
+    queueExhausted: !nextQueued && !newestReady,
+    continuityBasis:
+      "Completion preserves queue order first, then newest ready activity, without changing completed activity history.",
   };
 }

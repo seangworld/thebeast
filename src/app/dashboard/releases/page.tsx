@@ -9,6 +9,18 @@ const releaseNotes = [
   {
     version: `BeastLearning ${BEAST_LEARNING_VERSION}`,
     date: "July 11, 2026",
+    title: "Assessment and Mastery Foundation",
+    items: [
+      "New features: added explicit assessment assumptions for quiz, guided practice, confidence, and teaching progress signals.",
+      "Improvements: added progress continuity metadata for completion handoff, next recommendation, and preserved assessment signals.",
+      "Guardrails: mastery remains a conservative readiness estimate, not an accredited assessment or guaranteed retention claim.",
+      "Safety: review recommendations use normal next-step language and avoid shame or overconfidence.",
+      "Breaking changes: none. Migration notes: no database migration required. Deployment: not included.",
+    ],
+  },
+  {
+    version: "BeastLearning v1.1 Private Beta",
+    date: "July 11, 2026",
     title: "Private Beta Stabilization",
     items: [
       "New features: added private beta readiness evidence for entry points, lesson flow, AI tutor behavior, timeline, certificates, and feedback review.",
