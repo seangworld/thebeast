@@ -27,44 +27,42 @@ export default function ReleaseNotesPage() {
       </header>
 
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
-        {/* BeastMoney v2.1.0 */}
+        {/* BeastMoney v2.2.0 */}
         <div className="mb-12 rounded-lg border border-[#2a3242] bg-[#0f1419] p-6">
           <div className="mb-4">
             <h2 className="text-2xl font-bold">{BEAST_MONEY_VERSION_LABEL}</h2>
-            <p className="mt-1 text-sm text-[#7f8da3]">July 8, 2026</p>
+            <p className="mt-1 text-sm text-[#7f8da3]">July 11, 2026</p>
           </div>
 
           <div className="space-y-4 text-sm">
             <div>
               <h3 className="font-semibold text-[#c7cfdb]">
-                Commercial Polish & Event Timeline
+                Velocity Strategy Engine Hardening
               </h3>
               <ul className="space-y-2 pl-4">
                 <li className="text-[#a5b4c7]">
-                  <span className="text-blue-400">✓</span> New features:
-                  Financial Event Timeline, scenario comparison, simulation
-                  mode, BeastMoney Coach, import preview foundation, and
-                  printable financial reports.
+                  <span className="text-blue-400">✓</span> Hardened Velocity
+                  minimum-payment modeling for fixed and revolving debts.
                 </li>
                 <li className="text-[#a5b4c7]">
-                  <span className="text-blue-400">✓</span> Improvements:
-                  clearer first-run guidance, load-error recovery, shared
-                  recommendation explanations, and student-friendly Money report
-                  summaries.
+                  <span className="text-blue-400">✓</span> Clarified monthly
+                  interest, source-cost, recovery-window, utilization,
+                  cash-buffer, and positive net-savings assumptions.
                 </li>
                 <li className="text-[#a5b4c7]">
-                  <span className="text-blue-400">✓</span> Performance:
-                  dashboard surfaces now reuse the shared BeastMoney engine
-                  snapshot instead of duplicating calculations.
+                  <span className="text-blue-400">✓</span> Added warnings for
+                  missing APR and missing usable minimum-payment inputs.
                 </li>
                 <li className="text-[#a5b4c7]">
-                  <span className="text-blue-400">✓</span> Bug fixes: added
-                  regression coverage for date consistency, report printing,
-                  and shared engine integration.
+                  <span className="text-blue-400">✓</span> Kept Personal Hub
+                  goals and documents as permissioned references only, with no
+                  duplicate BeastMoney storage.
                 </li>
                 <li className="text-[#a5b4c7]">
-                  <span className="text-blue-400">✓</span> Breaking changes:
-                  none. Migration notes: no database migration required.
+                  <span className="text-blue-400">✓</span> Free / Pro
+                  boundaries remain aligned with Pro entitlement logic. Breaking
+                  changes: none. Migration notes: no database migration
+                  required.
                 </li>
               </ul>
             </div>

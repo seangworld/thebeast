@@ -77,6 +77,9 @@ test("buildVelocityInputSnapshot maps debts, income, bills, and settings", () =>
         interest_rate: "19.99",
         due_date: "15",
         is_archived: false,
+        payment_behavior: "revolving",
+        minimum_payment_rate: "3",
+        minimum_payment_floor: "35",
       },
     ],
     incomes: [
@@ -126,6 +129,9 @@ test("buildVelocityInputSnapshot maps debts, income, bills, and settings", () =>
     interest_rate: 19.99,
     due_date: 15,
     is_archived: false,
+    payment_behavior: "revolving",
+    minimum_payment_rate: 3,
+    minimum_payment_floor: 35,
   });
   assert.deepEqual(snapshot.incomes[0], {
     id: "income-1",
@@ -149,6 +155,72 @@ test("buildVelocityInputSnapshot maps debts, income, bills, and settings", () =>
   assert.equal(snapshot.settings.monthly_recovery_capacity, 1300);
   assert.equal(snapshot.settings.recovery_months, 6);
   assert.equal(snapshot.settings.strategy, "conservative");
+});
+
+test("runVelocityEngine applies revolving minimum behavior in projections and payoff simulations", () => {
+  const fixedResult = runVelocityEngine(
+    baseInput({
+      debts: [
+        {
+          id: "card-a",
+          name: "Card A",
+          balance: 5000,
+          minimum_payment: 50,
+          interest_rate: 24,
+          payment_behavior: "fixed",
+        },
+      ],
+      settings: {
+        cash_buffer: 500,
+        max_recommended_payment: 500,
+        minimum_cash_after_payment: 500,
+        monthly_recovery_capacity: 250,
+        recovery_months: 6,
+        strategy: "aggressive",
+      },
+    })
+  );
+  const revolvingResult = runVelocityEngine(
+    baseInput({
+      debts: [
+        {
+          id: "card-a",
+          name: "Card A",
+          balance: 5000,
+          minimum_payment: 50,
+          interest_rate: 24,
+          payment_behavior: "revolving",
+          minimum_payment_rate: 3,
+          minimum_payment_floor: 35,
+        },
+      ],
+      settings: {
+        cash_buffer: 500,
+        max_recommended_payment: 500,
+        minimum_cash_after_payment: 500,
+        monthly_recovery_capacity: 250,
+        recovery_months: 6,
+        strategy: "aggressive",
+      },
+    })
+  );
+
+  assert.equal(
+    revolvingResult.cashflow_projection?.projected_minimum_payments,
+    150
+  );
+  assert.equal(fixedResult.cashflow_projection?.projected_minimum_payments, 50);
+  assert.equal(
+    Number(revolvingResult.interest_savings?.baseline_total_interest || 0) <
+      Number(fixedResult.interest_savings?.baseline_total_interest || 0),
+    true
+  );
+  assert.equal(
+    revolvingResult.assumptions?.some((assumption) =>
+      assumption.includes("Revolving minimums use the greater")
+    ),
+    true
+  );
 });
 
 test("runVelocityEngine recommends a safe highest APR payment", () => {

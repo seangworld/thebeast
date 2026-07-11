@@ -2,6 +2,8 @@
 
 Current platform version: `BeastOS v2.1`
 
+Current Money version: `BeastMoney v2.2.0`
+
 Current Learning version: `BeastLearning v1.0 Private Beta`
 
 ## July 4, 2026 Closeout

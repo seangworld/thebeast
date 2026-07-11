@@ -78,6 +78,31 @@ function getHighestAprDebt(debts: VelocityDebtSnapshot[]) {
   })[0];
 }
 
+function getEffectiveMinimumPayment(debt: VelocityDebtSnapshot, balance = debt.balance) {
+  const currentBalance = Math.max(finiteNumber(balance), 0);
+  if (currentBalance <= 0) return 0;
+
+  if (debt.payment_behavior === "revolving") {
+    const ratePayment = money(
+      currentBalance * (Math.max(finiteNumber(debt.minimum_payment_rate), 0) / 100)
+    );
+    const floorPayment = money(Math.max(finiteNumber(debt.minimum_payment_floor), 0));
+    const configuredMinimum = money(Math.max(finiteNumber(debt.minimum_payment), 0));
+    const revolvingMinimum = Math.max(ratePayment, floorPayment, configuredMinimum);
+
+    return money(Math.min(revolvingMinimum, currentBalance));
+  }
+
+  return money(Math.min(Math.max(finiteNumber(debt.minimum_payment), 0), currentBalance));
+}
+
+function getProjectionDebtMinimums(debts: VelocityDebtSnapshot[]) {
+  return getEligibleDebts(debts).map((debt) => ({
+    ...debt,
+    minimum_payment: getEffectiveMinimumPayment(debt),
+  }));
+}
+
 function getRiskLevel(paymentAmount: number, availableCash: number): VelocityRiskLevel {
   if (!positiveNumber(paymentAmount) || !positiveNumber(availableCash)) return "high";
 
@@ -137,8 +162,8 @@ function buildRecoveryTimeline(
 function simulateMinimumPaymentInterest(debts: VelocityDebtSnapshot[]) {
   const maxMonths = 600;
   const workingDebts = debts.map((debt) => ({
+    ...debt,
     balance: money(Math.max(finiteNumber(debt.balance), 0)),
-    minimum_payment: money(Math.max(finiteNumber(debt.minimum_payment), 0)),
     interest_rate: Math.max(finiteNumber(debt.interest_rate), 0),
   }));
   let totalInterest = 0;
@@ -153,7 +178,9 @@ function simulateMinimumPaymentInterest(debts: VelocityDebtSnapshot[]) {
       const monthlyInterest = money((debt.balance * debt.interest_rate) / 100 / 12);
       totalInterest = money(totalInterest + monthlyInterest);
       debt.balance = money(debt.balance + monthlyInterest);
-      debt.balance = money(Math.max(debt.balance - Math.min(debt.minimum_payment, debt.balance), 0));
+      debt.balance = money(
+        Math.max(debt.balance - getEffectiveMinimumPayment(debt, debt.balance), 0)
+      );
     });
   }
 
@@ -598,7 +625,7 @@ function buildCashflowProjection(input: VelocityInputSnapshot, cashBalance: numb
       ...bill,
       nextDueDateOverride: bill.next_due_date,
     })),
-    debtMinimums: getEligibleDebts(input.debts),
+    debtMinimums: getProjectionDebtMinimums(input.debts),
     settings: {
       currentCash: cashBalance,
       cashBuffer,
@@ -1057,7 +1084,16 @@ export function runVelocityEngine(input: VelocityInputSnapshot): VelocityEngineR
     ...cashflowProjection.assumptions,
     "Scoring is deterministic and does not call AI services.",
     "Archived and paid debts are excluded from payment candidates.",
+    "Debt interest simulations use monthly APR accrual.",
+    "Revolving minimums use the greater of configured minimum, percentage of current balance, and floor where provided.",
   ];
+
+  if (eligibleDebts.some((debt) => finiteNumber(debt.interest_rate) <= 0)) {
+    warnings.push("One or more active debts has a missing or zero APR, so interest savings may be understated.");
+  }
+  if (eligibleDebts.some((debt) => getEffectiveMinimumPayment(debt) <= 0)) {
+    warnings.push("One or more active debts has no usable minimum payment, so payoff timing may be incomplete.");
+  }
 
   return {
     is_valid: isValid,

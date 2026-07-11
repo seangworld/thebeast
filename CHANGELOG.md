@@ -1,5 +1,34 @@
 # Changelog
 
+## BeastMoney v2.2.0 - July 11, 2026
+
+Velocity Strategy Engine hardening milestone.
+
+### New Features
+
+- Hardened Velocity minimum-payment modeling for fixed and revolving debts.
+- Added explicit monthly interest and Velocity source-cost assumptions to the engine output.
+- Added guardrail warnings for missing APR and missing usable minimum-payment inputs.
+
+### Improvements
+
+- Verified HELOC/PLOC/credit-card source capacity, recovery window, utilization, cash-buffer, and positive net-savings guardrails through focused regression coverage.
+- Confirmed BeastMoney Personal Hub references remain permissioned references only; no duplicate goal or document storage was added.
+- Confirmed Free / Pro boundaries keep Velocity Planner and Beast Advisor behind Pro entitlement logic.
+
+### Bug Fixes
+
+- Revolving debts now calculate effective minimum payments from the greater of configured minimum, percentage of current balance, and floor during Velocity projections and payoff simulations.
+
+### Breaking Changes
+
+- None.
+
+### Migration Notes
+
+- No database migration required.
+- No live banking aggregation, legal advice, tax advice, investment advice, lending advice, or credit-repair advice was added.
+
 ## BeastMoney v2.1.0 - July 8, 2026
 
 Commercial polish and event timeline milestone for BeastMoney v2.

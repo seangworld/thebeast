@@ -17,6 +17,9 @@ export type VelocityPageDebtInput = {
   interest_rate: number | string | null;
   due_date?: number | string | null;
   is_archived?: boolean | null;
+  payment_behavior?: "fixed" | "revolving";
+  minimum_payment_rate?: number | string | null;
+  minimum_payment_floor?: number | string | null;
 };
 
 export type VelocityPageIncomeInput = {
@@ -105,6 +108,11 @@ function buildCreditSourceAccount(
 }
 
 function buildDebtSnapshot(debt: VelocityPageDebtInput): VelocityDebtSnapshot {
+  const paymentBehavior =
+    debt.payment_behavior === "fixed" || debt.payment_behavior === "revolving"
+      ? debt.payment_behavior
+      : undefined;
+
   return {
     id: debt.id,
     name: debt.name,
@@ -113,6 +121,13 @@ function buildDebtSnapshot(debt: VelocityPageDebtInput): VelocityDebtSnapshot {
     interest_rate: toNumber(debt.interest_rate),
     due_date: toOptionalDueDay(debt.due_date),
     is_archived: debt.is_archived,
+    ...(paymentBehavior ? { payment_behavior: paymentBehavior } : {}),
+    ...(debt.minimum_payment_rate != null && debt.minimum_payment_rate !== ""
+      ? { minimum_payment_rate: toNumber(debt.minimum_payment_rate) }
+      : {}),
+    ...(debt.minimum_payment_floor != null && debt.minimum_payment_floor !== ""
+      ? { minimum_payment_floor: toNumber(debt.minimum_payment_floor) }
+      : {}),
   };
 }
 

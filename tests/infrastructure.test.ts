@@ -256,8 +256,8 @@ test("shared formatters preserve current formatting semantics", () => {
 
 test("app version constants reflect BeastOS and module releases", () => {
   assert.equal(APP_VERSION, "v2.1");
-  assert.equal(BEAST_MONEY_VERSION, "v2.1.0");
-  assert.equal(BEAST_MONEY_VERSION_LABEL, "BeastMoney v2.1.0");
+  assert.equal(BEAST_MONEY_VERSION, "v2.2.0");
+  assert.equal(BEAST_MONEY_VERSION_LABEL, "BeastMoney v2.2.0");
   assert.equal(BEAST_LEARNING_VERSION, "v1.0 Private Beta");
   assert.equal(BEASTOS_UI_POLISH_NOTE, "two-tone module branding restored");
 });
