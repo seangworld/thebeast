@@ -295,6 +295,7 @@ import {
   courseCurriculumLifecycleRecords,
   courseAuthorityMappings,
   courseCanBeProductionTeachable,
+  curriculumAuthorityDomains,
   curriculumLifecycleOrder,
   curriculumAuthorityObjectives,
   curriculumAuthoritySources,
@@ -2808,7 +2809,7 @@ test("learning curriculum hierarchy reaches objectives", () => {
   assert.equal(curriculum.id, "cybersecurity");
   assert.equal(curriculum.courses[0].id, "security-plus-foundations-course");
   assert.equal(curriculum.courses[0].modules[0].lessons.length >= 2, true);
-  assert.equal(objective.id, "objective-identity-proofing");
+  assert.equal(objective.id, "security-plus-4-6-iam");
   assert.equal(Boolean(objective.metadata), true);
 });
 
@@ -3350,6 +3351,18 @@ test("curriculum authority separates teachable objectives from AI teaching behav
 
   assert.equal(curriculumAuthoritySources.length >= 6, true);
   assert.equal(curriculumAuthorityObjectives.length >= 10, true);
+  assert.deepEqual(
+    curriculumAuthorityDomains
+      .filter((domain) => domain.authoritySourceId === "comptia-security-plus-sy0-701")
+      .map((domain) => [domain.domainCode, domain.weightPercent]),
+    [
+      ["1.0", 12],
+      ["2.0", 22],
+      ["3.0", 18],
+      ["4.0", 28],
+      ["5.0", 20],
+    ]
+  );
   assert.deepEqual(curriculumLifecycleOrder, [
     "Draft",
     "Generated",
@@ -3377,15 +3390,50 @@ test("curriculum authority separates teachable objectives from AI teaching behav
     { courseId: "algebra-expansion-course", issue: "not_production_teachable" },
     { courseId: "cybersecurity-certification-prep-course", issue: "not_production_teachable" },
     { courseId: "spanish-greeting-course", issue: "not_production_teachable" },
-    { courseId: "security-plus-foundations-course", issue: "not_production_teachable" },
     { courseId: "college-algebra-course", issue: "not_production_teachable" },
   ]);
   assert.equal(
     teachableCourseIds.every((courseId) => Boolean(getCourseAuthorityMapping(courseId))),
     true
   );
+  const securityPlusMapping = getCourseAuthorityMapping("security-plus-foundations-course");
+  assert.equal(securityPlusMapping?.authoritySourceId, "comptia-security-plus-sy0-701");
+  assert.equal(securityPlusMapping?.version, "SY0-701 / V7");
+  assert.equal(securityPlusMapping?.coverage.mappedObjectiveCount, 4);
+  assert.equal(securityPlusMapping?.coverage.totalObjectiveCount, 28);
+  assert.equal(securityPlusMapping?.coverage.status, "partial");
+  assert.deepEqual(securityPlusMapping?.objectiveIds, [
+    "security-plus-3-2-secure-infrastructure",
+    "security-plus-4-6-iam",
+    "security-plus-4-8-incident-response",
+    "security-plus-4-9-investigation-data",
+  ]);
+  assert.equal(courseCanBeProductionTeachable("security-plus-foundations-course"), true);
   assert.equal(courseCanBeProductionTeachable("pre-algebra-foundations-course"), false);
+  assert.deepEqual(
+    getLessonObjectiveAlignment("identity-verification-lesson"),
+    {
+      id: "alignment-identity-verification",
+      lessonId: "identity-verification-lesson",
+      courseId: "security-plus-foundations-course",
+      objectiveIds: ["security-plus-4-6-iam"],
+      knowledgeCheckIds: ["objective-identity-proofing", "objective-auth-factors"],
+      progressWeightPercent: 35,
+      coveragePercent: 25,
+      productionAligned: true,
+    }
+  );
+  assert.deepEqual(
+    getLessonObjectiveAlignment("rbac-lesson")?.objectiveIds,
+    [
+      "security-plus-3-2-secure-infrastructure",
+      "security-plus-4-6-iam",
+      "security-plus-4-8-incident-response",
+      "security-plus-4-9-investigation-data",
+    ]
+  );
   assert.equal(courseCanBeProductionTeachable("generated-biology-course"), false);
+  assert.equal(tutorCanTeachCourseByDefault("security-plus-foundations-course"), false);
   assert.equal(tutorCanTeachCourseByDefault("pre-algebra-foundations-course"), false);
   assert.deepEqual(
     resolveTutorCurriculumAccess({ courseId: "pre-algebra-foundations-course" }),
@@ -3429,7 +3477,15 @@ test("curriculum authority separates teachable objectives from AI teaching behav
     ["objective-identify-like-terms", "objective-combine-like-terms"]
   );
   assert.equal(
-    lessonObjectiveAlignments.every((alignment) => alignment.productionAligned === false),
+    lessonObjectiveAlignments
+      .filter((alignment) => alignment.courseId === "security-plus-foundations-course")
+      .every((alignment) => alignment.productionAligned === true),
+    true
+  );
+  assert.equal(
+    lessonObjectiveAlignments
+      .filter((alignment) => alignment.courseId !== "security-plus-foundations-course")
+      .every((alignment) => alignment.productionAligned === false),
     true
   );
 });
@@ -3466,7 +3522,7 @@ test("learning skill tree exposes visualization-ready status", () => {
   assert.equal(tree.nodes.every((node) => typeof node.x === "number" && typeof node.y === "number"), true);
 });
 
-test("learning standards careers and certifications remain mocked catalogs", () => {
+test("learning standards careers and certifications expose catalog alignments", () => {
   assert.deepEqual(
     learningStandards.map((standard) => standard.type),
     [

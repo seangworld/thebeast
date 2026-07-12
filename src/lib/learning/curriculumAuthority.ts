@@ -30,10 +30,20 @@ export type CurriculumAuthoritySource = {
 export type CurriculumObjective = {
   id: string;
   authoritySourceId: string;
+  domainId?: string;
   title: string;
   authorityObjectiveId: string;
   parentObjectiveId?: string;
   description: string;
+};
+
+export type CurriculumAuthorityDomain = {
+  id: string;
+  authoritySourceId: string;
+  domainCode: string;
+  title: string;
+  weightPercent: number;
+  objectiveIds: string[];
 };
 
 export type CourseAuthorityCoverage = {
@@ -62,6 +72,8 @@ export type LessonObjectiveAlignment = {
   lessonId: string;
   courseId: string;
   objectiveIds: string[];
+  knowledgeCheckIds: string[];
+  progressWeightPercent: number;
   coveragePercent: number;
   productionAligned: boolean;
 };
@@ -107,16 +119,16 @@ export const curriculumLifecycleOrder: CurriculumLifecycleState[] = [
 
 export const curriculumAuthoritySources: CurriculumAuthoritySource[] = [
   {
-    id: "beastlearning-security-plus-fixture",
-    authorityType: "fixture",
-    publisher: "BeastLearning",
-    title: "Security+ Foundations Fixture",
-    version: "2026.07.12-fixture",
-    effectiveDate: "2026-07-12",
-    canonicalSource: "fixture://beastlearning/security-plus-foundations",
-    approvalStatus: "approved_for_testing",
+    id: "comptia-security-plus-sy0-701",
+    authorityType: "certification_objectives",
+    publisher: "CompTIA",
+    title: "CompTIA Security+",
+    version: "SY0-701 / V7",
+    effectiveDate: "2023-11-07",
+    canonicalSource: "https://www.comptia.org/en-us/certifications/security/",
+    approvalStatus: "approved_for_production",
     notes:
-      "Internal fixture for architecture and test coverage. It is not an official CompTIA objective source.",
+      "Official CompTIA Security+ objective authority. BeastLearning stores objective IDs and short paraphrased labels only; it must not copy CompTIA objective text.",
   },
   {
     id: "beastlearning-certification-prep-fixture",
@@ -180,27 +192,89 @@ export const curriculumAuthoritySources: CurriculumAuthoritySource[] = [
   },
 ];
 
+export const curriculumAuthorityDomains: CurriculumAuthorityDomain[] = [
+  {
+    id: "security-plus-domain-1",
+    authoritySourceId: "comptia-security-plus-sy0-701",
+    domainCode: "1.0",
+    title: "Security foundations and core concepts",
+    weightPercent: 12,
+    objectiveIds: [],
+  },
+  {
+    id: "security-plus-domain-2",
+    authoritySourceId: "comptia-security-plus-sy0-701",
+    domainCode: "2.0",
+    title: "Threats, weaknesses, and mitigations",
+    weightPercent: 22,
+    objectiveIds: [],
+  },
+  {
+    id: "security-plus-domain-3",
+    authoritySourceId: "comptia-security-plus-sy0-701",
+    domainCode: "3.0",
+    title: "Security architecture",
+    weightPercent: 18,
+    objectiveIds: ["security-plus-3-2-secure-infrastructure"],
+  },
+  {
+    id: "security-plus-domain-4",
+    authoritySourceId: "comptia-security-plus-sy0-701",
+    domainCode: "4.0",
+    title: "Security operations",
+    weightPercent: 28,
+    objectiveIds: [
+      "security-plus-4-6-iam",
+      "security-plus-4-8-incident-response",
+      "security-plus-4-9-investigation-data",
+    ],
+  },
+  {
+    id: "security-plus-domain-5",
+    authoritySourceId: "comptia-security-plus-sy0-701",
+    domainCode: "5.0",
+    title: "Security governance, risk, and oversight",
+    weightPercent: 20,
+    objectiveIds: [],
+  },
+];
+
 export const curriculumAuthorityObjectives: CurriculumObjective[] = [
   {
-    id: "objective-identity-proofing",
-    authoritySourceId: "beastlearning-security-plus-fixture",
-    authorityObjectiveId: "fixture.security.identity-proofing",
-    title: "Differentiate identity proofing and authentication.",
-    description: "Fixture objective for identity and access teaching behavior.",
+    id: "security-plus-3-2-secure-infrastructure",
+    authoritySourceId: "comptia-security-plus-sy0-701",
+    domainId: "security-plus-domain-3",
+    authorityObjectiveId: "SY0-701-3.2",
+    title: "Apply secure infrastructure principles",
+    description:
+      "Paraphrased alignment for applying security principles to enterprise infrastructure.",
   },
   {
-    id: "objective-auth-factors",
-    authoritySourceId: "beastlearning-security-plus-fixture",
-    authorityObjectiveId: "fixture.security.auth-factors",
-    title: "Classify knowledge, possession, and inherence factors.",
-    description: "Fixture objective for authentication-factor classification.",
+    id: "security-plus-4-6-iam",
+    authoritySourceId: "comptia-security-plus-sy0-701",
+    domainId: "security-plus-domain-4",
+    authorityObjectiveId: "SY0-701-4.6",
+    title: "Implement and maintain identity and access management",
+    description:
+      "Paraphrased alignment for authentication, authorization, roles, and account access operations.",
   },
   {
-    id: "objective-rbac",
-    authoritySourceId: "beastlearning-security-plus-fixture",
-    authorityObjectiveId: "fixture.security.rbac",
-    title: "Map users to roles and roles to permissions.",
-    description: "Fixture objective for role-based access control.",
+    id: "security-plus-4-8-incident-response",
+    authoritySourceId: "comptia-security-plus-sy0-701",
+    domainId: "security-plus-domain-4",
+    authorityObjectiveId: "SY0-701-4.8",
+    title: "Use incident-response activities appropriately",
+    description:
+      "Paraphrased alignment for recognizing when access-control evidence supports response decisions.",
+  },
+  {
+    id: "security-plus-4-9-investigation-data",
+    authoritySourceId: "comptia-security-plus-sy0-701",
+    domainId: "security-plus-domain-4",
+    authorityObjectiveId: "SY0-701-4.9",
+    title: "Use investigation data sources",
+    description:
+      "Paraphrased alignment for using identity, access, and system evidence during investigation.",
   },
   {
     id: "objective-certification-baseline",
@@ -257,12 +331,14 @@ export const courseAuthorityMappings: CourseAuthorityMapping[] = [
   buildCourseAuthorityMapping({
     id: "authority-security-plus-foundations",
     courseId: "security-plus-foundations-course",
-    authoritySourceId: "beastlearning-security-plus-fixture",
+    authoritySourceId: "comptia-security-plus-sy0-701",
     objectiveIds: [
-      "objective-identity-proofing",
-      "objective-auth-factors",
-      "objective-rbac",
+      "security-plus-3-2-secure-infrastructure",
+      "security-plus-4-6-iam",
+      "security-plus-4-8-incident-response",
+      "security-plus-4-9-investigation-data",
     ],
+    totalObjectiveCount: 28,
   }),
   buildCourseAuthorityMapping({
     id: "authority-cybersecurity-certification-prep",
@@ -307,23 +383,34 @@ export const lessonObjectiveAlignments: LessonObjectiveAlignment[] = [
     id: "alignment-identity-verification",
     lessonId: "identity-verification-lesson",
     courseId: "security-plus-foundations-course",
-    objectiveIds: ["objective-identity-proofing", "objective-auth-factors"],
-    coveragePercent: 67,
-    productionAligned: false,
+    objectiveIds: ["security-plus-4-6-iam"],
+    knowledgeCheckIds: ["objective-identity-proofing", "objective-auth-factors"],
+    progressWeightPercent: 35,
+    coveragePercent: 25,
+    productionAligned: true,
   },
   {
     id: "alignment-rbac",
     lessonId: "rbac-lesson",
     courseId: "security-plus-foundations-course",
-    objectiveIds: ["objective-rbac"],
-    coveragePercent: 33,
-    productionAligned: false,
+    objectiveIds: [
+      "security-plus-3-2-secure-infrastructure",
+      "security-plus-4-6-iam",
+      "security-plus-4-8-incident-response",
+      "security-plus-4-9-investigation-data",
+    ],
+    knowledgeCheckIds: ["objective-rbac"],
+    progressWeightPercent: 65,
+    coveragePercent: 100,
+    productionAligned: true,
   },
   {
     id: "alignment-certification-foundation",
     lessonId: "sample-certification-foundation",
     courseId: "cybersecurity-certification-prep-course",
     objectiveIds: ["objective-certification-baseline"],
+    knowledgeCheckIds: ["quiz-cert-plan-1"],
+    progressWeightPercent: 100,
     coveragePercent: 100,
     productionAligned: false,
   },
@@ -335,6 +422,8 @@ export const lessonObjectiveAlignments: LessonObjectiveAlignment[] = [
       "objective-identify-like-terms",
       "objective-combine-like-terms",
     ],
+    knowledgeCheckIds: ["quiz-like-terms-1", "quiz-like-terms-2"],
+    progressWeightPercent: 100,
     coveragePercent: 100,
     productionAligned: false,
   },
@@ -346,6 +435,8 @@ export const lessonObjectiveAlignments: LessonObjectiveAlignment[] = [
       "objective-isolate-variable",
       "objective-check-equation-solution",
     ],
+    knowledgeCheckIds: ["quiz-linear-equations-1", "quiz-linear-equations-2"],
+    progressWeightPercent: 100,
     coveragePercent: 100,
     productionAligned: false,
   },
@@ -354,6 +445,8 @@ export const lessonObjectiveAlignments: LessonObjectiveAlignment[] = [
     lessonId: "sample-spanish-greetings",
     courseId: "spanish-greeting-course",
     objectiveIds: ["objective-spanish-greeting"],
+    knowledgeCheckIds: ["quiz-spanish-1"],
+    progressWeightPercent: 100,
     coveragePercent: 100,
     productionAligned: false,
   },
@@ -362,6 +455,8 @@ export const lessonObjectiveAlignments: LessonObjectiveAlignment[] = [
     lessonId: "linear-equations-lesson",
     courseId: "college-algebra-course",
     objectiveIds: ["objective-linear-equations"],
+    knowledgeCheckIds: ["linear-practice"],
+    progressWeightPercent: 100,
     coveragePercent: 100,
     productionAligned: false,
   },
@@ -600,17 +695,23 @@ function buildCourseAuthorityMapping({
   courseId,
   authoritySourceId,
   objectiveIds,
+  totalObjectiveCount,
 }: {
   id: string;
   courseId: string;
   authoritySourceId: string;
   objectiveIds: string[];
+  totalObjectiveCount?: number;
 }): CourseAuthorityMapping {
   const source = curriculumAuthoritySources.find(
     (candidate) => candidate.id === authoritySourceId
   );
   const mappedObjectiveCount = objectiveIds.length;
-  const totalObjectiveCount = Math.max(mappedObjectiveCount, 1);
+  const resolvedTotalObjectiveCount = Math.max(
+    totalObjectiveCount || mappedObjectiveCount,
+    mappedObjectiveCount,
+    1
+  );
   const productionTeachable = source?.approvalStatus === "approved_for_production";
 
   return {
@@ -625,9 +726,13 @@ function buildCourseAuthorityMapping({
     objectiveIds,
     coverage: {
       mappedObjectiveCount,
-      totalObjectiveCount,
-      percent: Math.round((mappedObjectiveCount / totalObjectiveCount) * 100),
-      status: productionTeachable ? "complete" : "fixture_only",
+      totalObjectiveCount: resolvedTotalObjectiveCount,
+      percent: Math.round((mappedObjectiveCount / resolvedTotalObjectiveCount) * 100),
+      status: productionTeachable
+        ? mappedObjectiveCount === resolvedTotalObjectiveCount
+          ? "complete"
+          : "partial"
+        : "fixture_only",
     },
     productionTeachable,
   };

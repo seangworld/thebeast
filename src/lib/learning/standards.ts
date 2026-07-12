@@ -26,11 +26,12 @@ export const learningStandards: LearningStandardPlaceholder[] = [
     mappedConceptIds: [],
   },
   {
-    id: "security-plus-objectives-placeholder",
+    id: "security-plus-sy0-701-objectives",
     type: "Certification objectives",
     subjectId: "cybersecurity",
-    title: "Security+ identity and access objective",
-    description: "Mock certification objective group for identity and access skills.",
+    title: "CompTIA Security+ SY0-701 objective alignment",
+    description:
+      "Official-objective alignment record using objective IDs and paraphrased coverage labels only.",
     mappedConceptIds: ["identity-verification", "authentication-factors", "role-based-access-control"],
   },
   {

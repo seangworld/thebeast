@@ -10,22 +10,22 @@ export const curriculumSubjects: CurriculumSubject[] = [
   {
     id: "cybersecurity",
     title: "Cybersecurity",
-    metadata: "Certification-aligned security foundations.",
+    metadata: "CompTIA Security+ SY0-701 aligned security foundations.",
     courses: [
       {
         id: "security-plus-foundations-course",
         title: "Security+ Foundations",
-        metadata: "Entry certification readiness path.",
+        metadata: "Partial official-objective alignment for the current Security+ SY0-701 path.",
         modules: [
           {
             id: "identity-access-module",
             title: "Identity and Access",
-            metadata: "Security identity, authentication, and access control.",
+            metadata: "Security+ identity, authentication, access control, and operations evidence.",
             lessons: [
               {
                 id: "identity-verification-lesson",
                 title: "Identity Verification",
-                metadata: "Beginner identity lesson.",
+                metadata: "Maps to Security+ SY0-701 identity and access operations objective coverage.",
                 concepts: [
                   {
                     id: "identity-verification",
@@ -38,9 +38,9 @@ export const curriculumSubjects: CurriculumSubject[] = [
                         metadata: "Conceptual explanation skill",
                         objectives: [
                           {
-                            id: "objective-identity-proofing",
-                            title: "Differentiate identity proofing and authentication.",
-                            metadata: "Certification objective",
+                            id: "security-plus-4-6-iam",
+                            title: "Identity and access operations",
+                            metadata: "Official Security+ objective alignment: SY0-701-4.6",
                           },
                         ],
                       },
@@ -57,9 +57,9 @@ export const curriculumSubjects: CurriculumSubject[] = [
                         metadata: "Applied classification skill",
                         objectives: [
                           {
-                            id: "objective-auth-factors",
-                            title: "Classify knowledge, possession, and inherence factors.",
-                            metadata: "Certification objective",
+                            id: "security-plus-4-6-iam",
+                            title: "Authentication factor operations",
+                            metadata: "Official Security+ objective alignment: SY0-701-4.6",
                           },
                         ],
                       },
@@ -70,7 +70,7 @@ export const curriculumSubjects: CurriculumSubject[] = [
               {
                 id: "rbac-lesson",
                 title: "Role-Based Access Control",
-                metadata: "Intermediate access-control lesson.",
+                metadata: "Maps RBAC to Security+ infrastructure, IAM, response, and investigation objectives.",
                 concepts: [
                   {
                     id: "role-based-access-control",
@@ -83,9 +83,24 @@ export const curriculumSubjects: CurriculumSubject[] = [
                         metadata: "Applied design skill",
                         objectives: [
                           {
-                            id: "objective-rbac",
-                            title: "Map users to roles and roles to permissions.",
-                            metadata: "Certification objective",
+                            id: "security-plus-3-2-secure-infrastructure",
+                            title: "Secure infrastructure access design",
+                            metadata: "Official Security+ objective alignment: SY0-701-3.2",
+                          },
+                          {
+                            id: "security-plus-4-6-iam",
+                            title: "Role-based access operations",
+                            metadata: "Official Security+ objective alignment: SY0-701-4.6",
+                          },
+                          {
+                            id: "security-plus-4-8-incident-response",
+                            title: "Access-control response decisions",
+                            metadata: "Official Security+ objective alignment: SY0-701-4.8",
+                          },
+                          {
+                            id: "security-plus-4-9-investigation-data",
+                            title: "Access evidence for investigation",
+                            metadata: "Official Security+ objective alignment: SY0-701-4.9",
                           },
                         ],
                       },
