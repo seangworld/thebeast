@@ -205,6 +205,7 @@ import { buildSkillTree } from "../src/lib/learning/skills";
 import { learningSpecialists, routeMockLearningSpecialist } from "../src/lib/learning/specialists";
 import {
   buildSpacedRepetitionSchedule,
+  generateMasteryDecayReviewSchedule,
   getFlashcardsDueForReview,
 } from "../src/lib/learning/spacedRepetition";
 import { buildStudyHabitsSnapshot } from "../src/lib/learning/studyHabits";
@@ -1559,6 +1560,42 @@ test("learning flashcards and spaced repetition identify due review work", () =>
   assert.deepEqual(
     getFlashcardsDueForReview("2026-07-04").map((card) => card.id),
     ["flashcard-rbac", "flashcard-quadratic"]
+  );
+});
+
+test("spaced review scheduler generates review dates from mastery decay", () => {
+  const schedule = generateMasteryDecayReviewSchedule({
+    today: "2026-07-12",
+    concepts: [
+      {
+        conceptId: "fresh-strong-skill",
+        masteryPercent: 92,
+        lastStudiedAt: "2026-07-11",
+      },
+      {
+        conceptId: "decayed-skill",
+        masteryPercent: 76,
+        lastStudiedAt: "2026-06-28",
+      },
+      {
+        conceptId: "fragile-skill",
+        masteryPercent: 38,
+        lastStudiedAt: "2026-07-12",
+      },
+    ],
+  });
+
+  assert.deepEqual(
+    schedule.items.map((item) => item.nextReview),
+    ["2026-07-19", "2026-07-13", "2026-07-12"]
+  );
+  assert.deepEqual(
+    schedule.items.map((item) => item.priority),
+    ["Low", "High", "High"]
+  );
+  assert.deepEqual(
+    schedule.dueTodayItems.map((item) => item.itemId),
+    ["fragile-skill"]
   );
 });
 
