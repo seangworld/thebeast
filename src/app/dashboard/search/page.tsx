@@ -20,9 +20,8 @@ const recentSearches = [
 const suggestedSearches = [
   "What needs attention today?",
   "Show all Money alerts",
-  "Find future health reminders",
-  "Search project blockers",
-  "Find uploaded files",
+  "Find my next learning step",
+  "Review upcoming bills",
 ];
 
 const resultSections: {
@@ -34,8 +33,8 @@ const resultSections: {
   {
     label: "Global",
     module: "search",
-    description: "Search across every connected BeastOS module.",
-    examples: ["Timeline entries", "Notifications", "Uploads", "Records"],
+    description: "Search across current BeastOS surfaces.",
+    examples: ["Timeline entries", "Notifications", "Money", "Learning"],
   },
   {
     label: "Money",
@@ -49,24 +48,6 @@ const resultSections: {
     description: "Search foundation for courses, notes, study sessions, and goals.",
     examples: ["Courses", "Notes", "Reading", "Study blocks"],
   },
-  {
-    label: "Health",
-    module: "health",
-    description: "Future search for routines, appointments, and health entries.",
-    examples: ["Habits", "Appointments", "Check-ins", "Vitals"],
-  },
-  {
-    label: "Projects",
-    module: "projects",
-    description: "Future search for tasks, milestones, decisions, and blockers.",
-    examples: ["Tasks", "Milestones", "Decisions", "Blockers"],
-  },
-  {
-    label: "Documents",
-    module: "documents",
-    description: "Future search across uploads, records, and extracted metadata.",
-    examples: ["Files", "Receipts", "Policies", "Statements"],
-  },
 ];
 
 export default function SearchPage() {
@@ -77,18 +58,18 @@ export default function SearchPage() {
           module="search"
           eyebrow="Shared Service"
           title="BeastOS Search"
-          description="A production-ready search surface for global queries, module results, uploads, and future knowledge retrieval."
+          description="A search surface for current BeastOS, BeastMoney, and BeastLearning paths."
         />
 
         <DashboardCard accent="search">
           <SectionHeader
             eyebrow="Search"
             title="Global command search"
-            description="The backend search engine arrives later. This layout establishes the shared result model and module filters now."
+            description="Use this as a focused starting point for active Money and Learning work."
           />
           <div className="mt-5 rounded-2xl border border-[#2a3242] bg-[#0f1419] p-4">
             <div className="flex min-h-14 items-center rounded-xl border border-[#38bdf8]/35 bg-[#111827] px-4 text-lg font-semibold text-[#7f8da3]">
-              Search BeastOS, Money, uploads, projects, health, and documents
+              Search BeastOS, Money, and Learning
             </div>
             <div className="mt-4">
               <ModuleFilterRail />

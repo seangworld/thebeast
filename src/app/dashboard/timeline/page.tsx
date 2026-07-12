@@ -20,7 +20,7 @@ export default function TimelinePage() {
           module="timeline"
           eyebrow="Shared Service"
           title="BeastOS Timeline"
-          description="One chronological stream for money events, future learning sessions, health entries, project work, documents, and home activity."
+          description="One chronological stream for current Money and Learning activity."
         />
 
         <DashboardCard accent="timeline">
@@ -45,7 +45,7 @@ export default function TimelinePage() {
                   title={group}
                   description={
                     group === "Upcoming"
-                      ? "Future modules reserve their place here before live data arrives."
+                      ? "Upcoming Money and Learning steps appear here when they are ready."
                       : "Money contributes the first timeline entries for this horizon."
                   }
                 />

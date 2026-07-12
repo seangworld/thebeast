@@ -74,7 +74,7 @@ export const memberBeastLearningNavigation: ModuleNavSection = {
 export const memberBeastMoneyNavigation: ModuleNavSection = {
   ...beastMoneyNavigation,
   children: beastMoneyNavigation.children?.filter(
-    (item) => item.label !== "Billing"
+    (item) => item.label !== "Billing" && !item.future
   ),
 };
 
@@ -91,11 +91,6 @@ export const beastModuleNavigation: ModuleNavSection[] = [
 export const memberBeastModuleNavigation: ModuleNavSection[] = [
   memberBeastMoneyNavigation,
   memberBeastLearningNavigation,
-  { label: "BeastHealth", module: "health", comingSoon: true },
-  { label: "BeastProjects", module: "projects", comingSoon: true },
-  { label: "BeastGoals", module: "goals", comingSoon: true },
-  { label: "BeastHome", module: "home", comingSoon: true },
-  { label: "BeastDocuments", module: "documents", comingSoon: true },
 ];
 
 export function getBeastModuleNavigationForPersona(isAdmin: boolean) {

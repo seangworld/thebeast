@@ -43,8 +43,8 @@ export default function IncomeSourcesSection({
         <div>
           <h2 className="text-xl font-bold">Income Sources / Schedule</h2>
           <p className="mt-1 text-sm text-[#7f8da3]">
-            Manage recurring income sources. Future income pots are generated in
-            the Income Date Planning section above.
+            Manage recurring income sources. Income timing appears in the Income
+            Date Planning section above.
           </p>
         </div>
 

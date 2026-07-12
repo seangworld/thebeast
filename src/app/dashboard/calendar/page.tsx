@@ -19,7 +19,6 @@ import { useRuntimeToday } from "@/lib/hooks/useRuntimeToday";
 import { formatBeastMonthYear, getBeastRuntimeDateParts } from "@/lib/runtimeDate";
 
 const moneyEventDays = new Set([3, 7, 14, 21, 28]);
-const futureEventDays = new Set([10, 16, 24, 31]);
 
 export default function CalendarPage() {
   const { now } = useRuntimeToday();
@@ -37,14 +36,14 @@ export default function CalendarPage() {
           module="calendar"
           eyebrow="Shared Service"
           title="BeastOS Calendar"
-          description="One calendar for the whole operating system. Money contributes the first events; Learning, Health, Home, Projects, Vehicles, Family, and Goals are ready to join."
+          description="One calendar for the current Money and Learning experience."
         />
 
         <DashboardCard accent="calendar">
           <SectionHeader
             eyebrow="Filters"
             title="Module event layers"
-            description="Every future module can contribute events without creating a separate calendar."
+            description="Use module layers to keep Money and Learning events organized in one place."
           />
           <div className="mt-5">
             <ModuleFilterRail modules={serviceModules} />
@@ -61,7 +60,6 @@ export default function CalendarPage() {
               />
               <div className="flex flex-wrap gap-2 text-xs font-bold">
                 <ModuleBadge module="money" label="Money" />
-                <ModuleBadge module="health" label="Future" comingSoon />
               </div>
             </div>
 
@@ -76,8 +74,6 @@ export default function CalendarPage() {
               {calendarDays.map((calendarDay) => {
                 const hasMoneyEvent =
                   calendarDay.inCurrentMonth && moneyEventDays.has(calendarDay.dayOfMonth);
-                const hasFutureEvent =
-                  calendarDay.inCurrentMonth && futureEventDays.has(calendarDay.dayOfMonth);
                 const isToday =
                   calendarDay.year === todayParts.year &&
                   calendarDay.monthIndex === todayParts.monthIndex &&
@@ -108,12 +104,6 @@ export default function CalendarPage() {
                         <span
                           className="h-2 w-2 rounded-full"
                           style={{ background: moduleAccents.money.color }}
-                        />
-                      ) : null}
-                      {hasFutureEvent ? (
-                        <span
-                          className="h-2 w-2 rounded-full"
-                          style={{ background: moduleAccents.projects.color }}
                         />
                       ) : null}
                     </div>

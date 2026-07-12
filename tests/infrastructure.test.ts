@@ -3754,11 +3754,27 @@ test("member navigation hides admin and monetization surfaces", () => {
     false
   );
   assert.equal(
+    memberBeastMoneyNavigation.children?.some((item) => item.future),
+    false
+  );
+  assert.deepEqual(
+    getBeastModuleNavigationForPersona(false).map((item) => item.label),
+    ["BeastMoney", "BeastLearning"]
+  );
+  assert.equal(
     getBeastModuleNavigationForPersona(true)
       .find((item) => item.label === "BeastMoney")
       ?.children?.some((item) => item.label === "Billing"),
     true
   );
+  assert.equal(
+    getBeastModuleNavigationForPersona(true).some((item) => item.comingSoon),
+    true
+  );
+
+  const dashboardLayout = readFileSync("src/app/dashboard/layout.tsx", "utf8");
+  assert.match(dashboardLayout, /memberPlatformSharedNavigation/);
+  assert.match(dashboardLayout, /item\.label !== "Upload Center"/);
 });
 
 test("membership entitlement plan falls back to Free for inactive subscriptions", () => {

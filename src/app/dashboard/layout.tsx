@@ -59,6 +59,10 @@ const platformSharedNavigation: ModuleNavSection[] = [
   { label: "Settings", href: "/dashboard/settings", module: "beastos" },
 ];
 
+const memberPlatformSharedNavigation: ModuleNavSection[] = platformSharedNavigation.filter(
+  (item) => item.label !== "Upload Center"
+);
+
 function getWorkspaceModule(pathname: string): ModuleKey {
   if (pathname.startsWith("/dashboard/money")) return "money";
   if (pathname.startsWith("/dashboard/learning")) return "learning";
@@ -600,7 +604,12 @@ export default function DashboardLayout({
                   Shared
                 </div>
               ) : null}
-              {(learningOnlyNavigation ? learningSettingsNavigation : platformSharedNavigation).map((item) => (
+              {(learningOnlyNavigation
+                ? learningSettingsNavigation
+                : isAdminPersona
+                  ? platformSharedNavigation
+                  : memberPlatformSharedNavigation
+              ).map((item) => (
                 <div key={item.label} onClick={onNavigate}>
                   <ModuleNavItem
                     label={item.label}

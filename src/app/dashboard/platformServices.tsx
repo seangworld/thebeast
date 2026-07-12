@@ -36,13 +36,6 @@ export const serviceModules: {
 }[] = [
   { label: "Money", module: "money", enabled: true },
   { label: "Learning", module: "learning", enabled: true },
-  { label: "Health", module: "health", enabled: false },
-  { label: "Home", module: "home", enabled: false },
-  { label: "Projects", module: "projects", enabled: false },
-  { label: "Vehicles", module: "vehicles", enabled: false },
-  { label: "Family", module: "family", enabled: false },
-  { label: "Goals", module: "goals", enabled: false },
-  { label: "Documents", module: "documents", enabled: false },
 ];
 
 export const serviceEvents: ServiceEvent[] = [
@@ -77,45 +70,13 @@ export const serviceEvents: ServiceEvent[] = [
     href: "/dashboard/money/debts",
   },
   {
-    id: "learning-placeholder",
-    title: "Learning block",
-    detail: "Courses, reading, and study sessions are ready to join the shared timeline.",
+    id: "learning-guidance",
+    title: "Continue learning",
+    detail: "Your Guide can bring you back to the next lesson, review, or study step.",
     dateLabel: "Upcoming",
     module: "learning",
     group: "Upcoming",
     href: "/dashboard/learning",
-  },
-  {
-    id: "health-placeholder",
-    title: "Health check-in",
-    detail: "Habits, routines, appointments, and recovery signals will appear here.",
-    dateLabel: "Upcoming",
-    module: "health",
-    group: "Upcoming",
-  },
-  {
-    id: "project-placeholder",
-    title: "Project milestone",
-    detail: "Future project deadlines, blockers, and decisions will share this stream.",
-    dateLabel: "Upcoming",
-    module: "projects",
-    group: "Upcoming",
-  },
-  {
-    id: "home-placeholder",
-    title: "Home maintenance",
-    detail: "Home tasks, service dates, and recurring household work will be scheduled.",
-    dateLabel: "Upcoming",
-    module: "home",
-    group: "Upcoming",
-  },
-  {
-    id: "documents-placeholder",
-    title: "Document activity",
-    detail: "Uploads, records, and document lifecycle events will be visible here.",
-    dateLabel: "Upcoming",
-    module: "documents",
-    group: "Upcoming",
   },
 ];
 
@@ -133,25 +94,9 @@ export const serviceNotifications: ServiceNotification[] = [
     id: "platform-ready",
     title: "Shared services are online",
     message:
-      "Calendar, Timeline, Search, Notifications, and Upload Center are ready for future module signals.",
+      "Calendar, Timeline, Search, and Notifications are focused on active Money and Learning signals.",
     severity: "info",
     module: "beastos",
-  },
-  {
-    id: "future-health",
-    title: "Health notifications reserved",
-    message:
-      "Health reminders, check-ins, and appointment signals will flow into this same inbox.",
-    severity: "info",
-    module: "health",
-  },
-  {
-    id: "future-projects",
-    title: "Project notifications reserved",
-    message:
-      "Milestones, blockers, and overdue project items will use the shared severity system.",
-    severity: "info",
-    module: "projects",
   },
 ];
 
@@ -209,7 +154,6 @@ export function ModuleFilterRail({
           }`}
         >
           {item.label}
-          {!item.enabled ? <span className="ml-2 uppercase">Soon</span> : null}
         </span>
       ))}
     </div>

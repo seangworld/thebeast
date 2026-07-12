@@ -638,16 +638,15 @@ export default function VelocityPlannerPage() {
 
           <div className="beast-card">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-              <h2 className="text-xl font-bold">Advanced Velocity Roadmap</h2>
+              <h2 className="text-xl font-bold">Velocity Planning Boundaries</h2>
               <span className="w-fit rounded border border-yellow-300/50 bg-yellow-950/30 px-3 py-1 text-xs font-semibold text-yellow-100">
-                Future Work
+                Current Scope
               </span>
             </div>
             <p className="mt-3 text-sm text-[#c7cfdb]">
-              Future Velocity work will explore HELOC strategies, PLOC
-              strategies, credit card velocity, income timing, bill timing
-              optimization, daily interest modeling, and average daily balance
-              calculations.
+              Use the current Velocity planner for one primary revolving source,
+              cash timing, debt reduction, and liquidity guardrails. Keep other
+              source ideas as planning notes until they are ready to model.
             </p>
           </div>
         </section>
@@ -872,9 +871,9 @@ export default function VelocityPlannerPage() {
                 Velocity v2 uses a single Primary Velocity Source.
               </p>
               <p className="mt-3 text-[#c7cfdb]">
-                Future versions will support multiple Velocity Sources (HELOCs,
-                PLOCs, credit cards, and other revolving credit accounts) with
-                automatic source ranking and recommendations.
+                Keep additional HELOCs, PLOCs, credit cards, and other revolving
+                sources in your planning notes until you are ready to choose one
+                primary source for the current model.
               </p>
             </div>
           </div>

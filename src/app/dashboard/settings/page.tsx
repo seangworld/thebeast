@@ -9,20 +9,20 @@ const settingsSections = [
   {
     title: "Theme & Display",
     description:
-      "Appearance, density, accessibility, and dashboard display preferences will live here.",
+      "Appearance, density, accessibility, and dashboard display preferences.",
     items: ["Theme mode", "Dashboard density", "Motion preferences"],
   },
   {
     title: "Notification Preferences",
     description:
-      "Shared alert channels, quiet hours, and module notification rules are reserved here.",
+      "Shared alert channels, quiet hours, and module notification rules.",
     items: ["Quiet hours", "Critical alerts", "Module summaries"],
   },
   {
     title: "Module Preferences",
     description:
-      "Choose active modules, default landing surfaces, and future workspace ordering.",
-    items: ["Money active", "Future modules", "Default workspace"],
+      "Choose active modules and default landing surfaces.",
+    items: ["Money active", "Learning active", "Default workspace"],
   },
 ];
 
@@ -81,9 +81,6 @@ export default function SettingsPage() {
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div className="font-bold text-white">{item}</div>
-                      <span className="rounded-full border border-[#2a3242] px-2.5 py-1 text-xs font-bold uppercase text-[#7f8da3]">
-                        Soon
-                      </span>
                     </div>
                   </div>
                 ))}

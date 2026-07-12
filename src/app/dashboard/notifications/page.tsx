@@ -24,7 +24,7 @@ const notificationGroups = [
   },
   {
     label: "Information",
-    description: "System context, future module messages, and non-urgent updates.",
+    description: "System context and non-urgent updates.",
     items: serviceNotifications.filter((item) => item.severity === "info"),
   },
 ];
@@ -44,17 +44,11 @@ export default function NotificationsPage() {
           <SectionHeader
             eyebrow="Inbox Filters"
             title="Module channels"
-            description="Money and Learning now have active channels. Health, Home, and Projects are reserved for future notification sources."
+            description="Money and Learning have active channels for the current Member experience."
             action={<ModuleBadge module="learning" label="Learning Active" />}
           />
           <div className="mt-5">
-            <ModuleFilterRail
-              modules={serviceModules.filter((module) =>
-                ["Money", "Learning", "Health", "Home", "Projects"].includes(
-                  module.label
-                )
-              )}
-            />
+            <ModuleFilterRail modules={serviceModules} />
           </div>
         </DashboardCard>
 
@@ -85,8 +79,6 @@ export default function NotificationsPage() {
                 ) : (
                   <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 text-sm leading-5 text-[#9aa7b8]">
                     No {group.label.toLowerCase()} notifications right now.
-                    Future modules will use this lane when their signals become
-                    active.
                   </div>
                 )}
               </div>

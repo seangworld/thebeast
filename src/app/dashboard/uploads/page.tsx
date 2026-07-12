@@ -25,26 +25,6 @@ const uploadCategories: {
     module: "learning",
     description: "Notes, PDFs, course files, summaries, and references.",
   },
-  {
-    label: "Health",
-    module: "health",
-    description: "Health records, visit notes, plans, and routine documents.",
-  },
-  {
-    label: "Home",
-    module: "home",
-    description: "Warranties, manuals, inspections, and maintenance records.",
-  },
-  {
-    label: "Projects",
-    module: "projects",
-    description: "Briefs, specs, assets, decisions, and milestone files.",
-  },
-  {
-    label: "Vehicles",
-    module: "vehicles",
-    description: "Service records, registrations, insurance, and receipts.",
-  },
 ];
 
 const supportedFileTypes = [
@@ -63,14 +43,9 @@ const recentUploads = [
     module: "money" as ModuleKey,
   },
   {
-    title: "Project brief",
-    detail: "Future project files will appear here after upload.",
-    module: "projects" as ModuleKey,
-  },
-  {
-    title: "Health record",
-    detail: "Future health uploads will stay attached to your account.",
-    module: "health" as ModuleKey,
+    title: "Learning notes",
+    detail: "Reserved for course notes and study references.",
+    module: "learning" as ModuleKey,
   },
 ];
 
@@ -82,7 +57,7 @@ export default function UploadsPage() {
           module="documents"
           eyebrow="Shared Service"
           title="Upload Center"
-          description="One upload foundation for every BeastOS module. Backend handling arrives later; the shared product surface starts here."
+          description="A protected place for future Money and Learning files. Members will see this when upload handling is ready."
         />
 
         <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
@@ -90,7 +65,7 @@ export default function UploadsPage() {
             <SectionHeader
               eyebrow="Upload"
               title="Add files to BeastOS"
-              description="Future uploads will be categorized by module and remain associated with your account."
+              description="File upload is not part of the current Member navigation."
             />
             <div className="mt-6 rounded-2xl border border-dashed border-[#94a3b8]/50 bg-[#0f1419] p-8 text-center">
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-[#94a3b8]/40 bg-slate-300/10 text-2xl font-black text-slate-100">
@@ -100,9 +75,9 @@ export default function UploadsPage() {
                 Upload foundation ready
               </h2>
               <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-[#c7cfdb]">
-                Drag-and-drop, file picking, processing, and storage are reserved
-                for a future backend sprint. This page establishes the shared
-                BeastOS upload experience.
+                File picking, processing, and storage are not exposed to Members
+                yet. Current documents should stay in the product workspace that
+                needs them.
               </p>
               <div className="mt-5 text-xs font-bold uppercase text-[#7f8da3]">
                 Supported file types
@@ -127,7 +102,7 @@ export default function UploadsPage() {
           <SectionHeader
             eyebrow="Categories"
             title="Module destinations"
-            description="One upload center can support every future module without fragmenting files across separate tools."
+            description="Money and Learning are the current destinations planned for this surface."
           />
           <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {uploadCategories.map((category) => {
@@ -155,8 +130,8 @@ export default function UploadsPage() {
                   <div className="mt-4">
                     <ModuleBadge
                       module={category.module}
-                      label={category.module === "money" ? "Ready" : "Coming Soon"}
-                      comingSoon={category.module !== "money"}
+                      label="Planned"
+                      comingSoon
                     />
                   </div>
                 </div>
@@ -170,7 +145,7 @@ export default function UploadsPage() {
             <SectionHeader
               eyebrow="Storage"
               title="Storage summary"
-              description="Storage accounting and export controls will connect when upload persistence is added."
+              description="Storage accounting will appear after Member upload handling is approved."
             />
             <div className="mt-6 space-y-4">
               <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
@@ -193,8 +168,8 @@ export default function UploadsPage() {
           <DashboardCard accent="documents">
             <SectionHeader
               eyebrow="Recent Uploads"
-              title="Activity foundation"
-              description="This feed is ready for uploaded files, processing status, module assignment, export, and deletion controls."
+              title="Document activity"
+              description="Uploaded files will appear here after the Member workflow is enabled."
             />
             <div className="mt-5 grid gap-3">
               {recentUploads.map((upload) => (

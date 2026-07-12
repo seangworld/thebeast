@@ -93,23 +93,6 @@ type MoneyPayment = {
   created_at?: string | null;
 };
 
-type FutureTimelineItem = {
-  id: string;
-  date: Date;
-  title: string;
-  detail: string;
-  module: ModuleKey;
-  href?: string;
-};
-
-type FutureActivityItem = {
-  id: string;
-  title: string;
-  detail: string;
-  module: ModuleKey;
-  href?: string;
-};
-
 const initialMoneyState: MoneyState = {
   debts: [],
   bills: [],
@@ -118,28 +101,6 @@ const initialMoneyState: MoneyState = {
   billPayments: [],
   debtPayments: [],
 };
-
-const futureBriefingModules: {
-  label: string;
-  module: ModuleKey;
-  detail: string;
-}[] = [
-  {
-    label: "Health",
-    module: "health",
-    detail: "Vitals, habits, and recovery signals are staged.",
-  },
-  {
-    label: "Home",
-    module: "home",
-    detail: "Household tasks and maintenance windows are reserved.",
-  },
-  {
-    label: "Projects",
-    module: "projects",
-    detail: "Active project focus and blockers are queued for future data.",
-  },
-];
 
 function nextDueDateFromDay(day: number | null | undefined, today = getBeastRuntimeToday()) {
   const safeDay = Math.min(Math.max(Number(day || 1), 1), 28);
@@ -286,11 +247,11 @@ function RecommendationRow({
   );
 }
 
-function TimelineRow({ item }: { item: PlatformTimelineEvent | FutureTimelineItem }) {
+function TimelineRow({ item }: { item: PlatformTimelineEvent }) {
   const moduleKey = item.module as ModuleKey;
-  const date = "timestamp" in item ? new Date(item.timestamp) : item.date;
-  const detail = "summary" in item ? item.summary : item.detail;
-  const href = "actionUrl" in item ? item.actionUrl : (item as FutureTimelineItem).href;
+  const date = new Date(item.timestamp);
+  const detail = item.summary;
+  const href = item.actionUrl;
   const accent = moduleAccents[moduleKey];
   const content = (
     <div className="flex gap-3 rounded-xl border border-[#2a3242] bg-[#111827] p-4 transition duration-200 hover:border-[#38bdf8]/50 hover:bg-[#202634]">
@@ -327,10 +288,10 @@ function TimelineRow({ item }: { item: PlatformTimelineEvent | FutureTimelineIte
   return content;
 }
 
-function ActivityRow({ item }: { item: PlatformActivity | FutureActivityItem }) {
+function ActivityRow({ item }: { item: PlatformActivity }) {
   const moduleKey = item.module as ModuleKey;
-  const detail = "summary" in item ? item.summary : item.detail;
-  const href = "actionUrl" in item ? item.actionUrl : (item as FutureActivityItem).href;
+  const detail = item.summary;
+  const href = item.actionUrl;
   const accent = moduleAccents[moduleKey];
   const content = (
     <div className="flex items-start gap-3 rounded-xl border border-[#2a3242] bg-[#111827] p-4 transition duration-200 hover:bg-[#202634]">
@@ -498,84 +459,23 @@ export default function TodayPage() {
 
   const primaryRecommendation = intelligence.recommendations[0] || null;
 
-  const timelineItems = useMemo<(PlatformTimelineEvent | FutureTimelineItem)[]>(() => {
-    const futureItems: FutureTimelineItem[] = [
-      {
-        id: "calendar-future",
-        date: today,
-        title: "Calendar events",
-        detail: "Shared schedule events will join the BeastOS timeline.",
-        module: "calendar",
-      },
-      {
-        id: "learning-future",
-        date: today,
-        title: "Learning sessions",
-        detail: "Study blocks and course milestones are ready in BeastLearning.",
-        module: "learning",
-      },
-      {
-        id: "health-future",
-        date: today,
-        title: "Health entries",
-        detail: "Routine, recovery, and wellness events are staged.",
-        module: "health",
-      },
-      {
-        id: "projects-future",
-        date: today,
-        title: "Project checkpoints",
-        detail: "Milestones and blockers will flow into this view.",
-        module: "projects",
-      },
-      {
-        id: "home-future",
-        date: today,
-        title: "Home tasks",
-        detail: "Maintenance and household reminders are reserved.",
-        module: "home",
-      },
-    ];
-
-    return [...intelligence.timelineEvents, ...futureItems]
+  const timelineItems = useMemo<PlatformTimelineEvent[]>(() => {
+    return intelligence.timelineEvents
       .sort((a, b) => {
-        const aDate = "timestamp" in a ? new Date(a.timestamp) : a.date;
-        const bDate = "timestamp" in b ? new Date(b.timestamp) : b.date;
+        const aDate = new Date(a.timestamp);
+        const bDate = new Date(b.timestamp);
         return aDate.getTime() - bDate.getTime();
       })
       .slice(0, 9);
-  }, [intelligence.timelineEvents, today]);
+  }, [intelligence.timelineEvents]);
 
-  const activityItems = useMemo<(PlatformActivity | FutureActivityItem)[]>(() => {
-    const futureActivities: FutureActivityItem[] = [
-      {
-        id: "uploads-future",
-        title: "Uploads",
-        detail: "Future document and media uploads will appear in this activity stream.",
-        module: "documents",
-      },
-      {
-        id: "learning-future",
-        title: "Learning sessions",
-        detail: "Completed lessons and study notes will appear here as BeastLearning expands.",
-        module: "learning",
-      },
-      {
-        id: "health-future",
-        title: "Health entries",
-        detail: "Check-ins, habits, and recovery logs will be listed here.",
-        module: "health",
-      },
-      {
-        id: "projects-future",
-        title: "Projects",
-        detail: "Project updates and completed actions will flow into Today.",
-        module: "projects",
-      },
-    ];
-
-    return [...intelligence.activities, ...futureActivities];
-  }, [intelligence.activities]);
+  const activityItems = useMemo<PlatformActivity[]>(
+    () => intelligence.activities,
+    [intelligence.activities]
+  );
+  const activeMemberModuleSummaries = intelligence.moduleSummaries.filter((card) =>
+    ["beastos", "money", "learning"].includes(card.module)
+  );
 
   return (
     <main className="beast-page">
@@ -593,8 +493,8 @@ export default function TodayPage() {
                 </p>
               </div>
               <p className="beast-subtitle">
-                {"Today's Focus"} brings your learning, money, calendar, health,
-                home, and project signals into one daily plan.
+                {"Today's Focus"} brings your learning, money, and calendar
+                signals into one daily plan.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -653,34 +553,23 @@ export default function TodayPage() {
                       {snapshot.billsDueSoon.length} bills due soon
                     </div>
                   </div>
-                  <div>
-                    <div className="text-xs font-bold uppercase text-[#bae6fd]/70">
-                      Wellness
-                    </div>
-                    <div className="mt-1 text-xl font-black">
-                      Next routine pending
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold uppercase text-[#bae6fd]/70">
-                      Projects
-                    </div>
-                    <div className="mt-1 text-xl font-black">
-                      Check active tasks
-                    </div>
-                  </div>
                 </div>
               </div>
 
               <div className="grid gap-3">
-                {futureBriefingModules.map((module) => (
-                  <SoonModuleRow
-                    key={module.label}
-                    label={module.label}
-                    module={module.module}
-                    detail={module.detail}
-                  />
-                ))}
+                {primaryRecommendation ? (
+                  <RecommendationRow recommendation={primaryRecommendation} />
+                ) : (
+                  <div className="rounded-xl border border-green-400/30 bg-green-400/10 p-4">
+                    <div className="font-black text-green-100">
+                      No urgent recommendation
+                    </div>
+                    <p className="mt-2 text-sm leading-5 text-[#dbe3ef]">
+                      Money and Learning are clear right now. Start with Today
+                      when you want the next step.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </DashboardCard>
@@ -688,8 +577,8 @@ export default function TodayPage() {
           <DashboardCard accent="purple">
             <SectionHeader
               eyebrow="Recommendation"
-              title="Orchestration queue"
-              description="Live structured recommendations from the BeastOS engine. Future AI will populate the same contract."
+              title="Next best action"
+              description="Current recommendations from active BeastOS modules."
             />
             <div className="mt-5 space-y-3">
               {intelligence.recommendations.length > 0 ? (
@@ -708,7 +597,7 @@ export default function TodayPage() {
                   </div>
                   <p className="mt-2 text-sm leading-5 text-[#dbe3ef]">
                     Money has no critical recommendations right now. BeastOS is
-                    ready for future module-aware intelligence.
+                    ready when Money or Learning needs attention.
                   </p>
                 </div>
               )}
@@ -720,10 +609,10 @@ export default function TodayPage() {
           <SectionHeader
             eyebrow="Module Status"
             title="Life operating map"
-            description="Every major life module has a visible place in Today. Money is active; the rest are ready for their data feeds."
+            description="Current active modules and their latest signals."
           />
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {intelligence.moduleSummaries.map((card) => (
+            {activeMemberModuleSummaries.map((card) => (
               <ModuleStatusCard
                 key={`${card.module}-${card.label}`}
                 label={card.label}
@@ -773,17 +662,17 @@ export default function TodayPage() {
             <SectionHeader
               eyebrow="Notifications"
               title="Signal center"
-              description="Severity-coded alerts from active modules, with reserved space for future domains."
+              description="Severity-coded alerts from active modules."
             />
             <DashboardCard accent="red">
               <div className="space-y-3">
                 {intelligence.notifications.length > 0 ? (
                   intelligence.notifications.map((notification) => (
                   <AlertCard
-                    key={notification.id}
-                    severity={notification.severity}
-                    title={notification.title}
-                    message={notification.summary || "Notification reserved for future delivery."}
+                   key={notification.id}
+                   severity={notification.severity}
+                   title={notification.title}
+                    message={notification.summary || "No extra details provided yet."}
                     href={notification.actionUrl}
                   />
                   ))
@@ -794,11 +683,6 @@ export default function TodayPage() {
                     message="Money has no urgent shared notifications right now."
                   />
                 )}
-                <AlertCard
-                  severity="info"
-                  title="Future module alerts reserved"
-                  message="Health, Learning, Home, and Projects alerts will join this center as those modules come online."
-                />
               </div>
             </DashboardCard>
           </div>
@@ -807,7 +691,7 @@ export default function TodayPage() {
             <SectionHeader
               eyebrow="Timeline"
               title="Unified day stream"
-              description="Money events appear now. Calendar, Learning, Health, Projects, and Home are already represented."
+              description="Money and Learning events appear here when they are available."
             />
             <DashboardCard accent="timeline">
               <div className="grid gap-3">
@@ -824,7 +708,7 @@ export default function TodayPage() {
             <SectionHeader
               eyebrow="Recent Activity"
               title="System activity"
-              description="A future cross-module feed for financial actions, uploads, learning, health, projects, and documents."
+              description="Recent activity from active modules."
             />
             <DashboardCard accent="notifications">
               <div className="grid gap-3">
