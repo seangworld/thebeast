@@ -280,7 +280,7 @@ test("app version constants reflect BeastOS and module releases", () => {
   assert.equal(APP_VERSION, "v2.1");
   assert.equal(BEAST_MONEY_VERSION, "v2.3.0");
   assert.equal(BEAST_MONEY_VERSION_LABEL, "BeastMoney v2.3.0");
-  assert.equal(BEAST_LEARNING_VERSION, "v1.4 Private Beta");
+  assert.equal(BEAST_LEARNING_VERSION, "v1.5 Private Beta");
   assert.equal(BEASTOS_UI_POLISH_NOTE, "two-tone module branding restored");
 });
 
@@ -764,6 +764,38 @@ test("guidance counselor roadmap uses static goal-type rules", () => {
   assert.equal(
     roadmap.nextRecommendedAction,
     "Choose the exam domain with the lowest confidence."
+  );
+  assert.equal(roadmap.assumptions.length >= 2, true);
+  assert.equal(
+    roadmap.planningBoundaries.some((boundary) =>
+      boundary.includes("not official school counseling")
+    ),
+    true
+  );
+  assert.equal(
+    roadmap.planningBoundaries.some((boundary) =>
+      boundary.includes("Student and minor safety requirements remain in force")
+    ),
+    true
+  );
+  assert.equal(
+    roadmap.learningReadinessSignals.includes("Learning Readiness"),
+    true
+  );
+  assert.equal(roadmap.learningReadinessSignals.includes("mastery"), true);
+  assert.equal(roadmap.curriculumFramework.model, "subject-agnostic");
+  assert.equal(
+    roadmap.curriculumFramework.hierarchy.includes("Objective"),
+    true
+  );
+  assert.equal(roadmap.curriculumFramework.newSubjectRequiresCodeChange, false);
+  assert.equal(
+    roadmap.curriculumFramework.exampleSubjects.includes("Security+"),
+    true
+  );
+  assert.equal(
+    JSON.stringify(roadmap).includes("Financial Health"),
+    false
   );
 });
 

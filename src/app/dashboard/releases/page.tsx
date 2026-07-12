@@ -9,6 +9,18 @@ const releaseNotes = [
   {
     version: `BeastLearning ${BEAST_LEARNING_VERSION}`,
     date: "July 11, 2026",
+    title: "Education-Path Guidance",
+    items: [
+      "New features: added guidance assumptions, planning boundaries, Learning Readiness signals, and next recommended actions for career, college path, certification, trade, promotion, and skill goals.",
+      "Curriculum model: added a subject-agnostic hierarchy from subject to objective so new teachable subjects can follow the same framework without code changes.",
+      "Adult certification: improved certification study planning while preserving student and minor safety requirements.",
+      "Guardrails: guidance-counselor mode is planning support, not official school counseling, credential authority, admissions advice, or employment guarantee.",
+      "Breaking changes: none. Migration notes: no database migration required. Deployment: not included.",
+    ],
+  },
+  {
+    version: "BeastLearning v1.4 Private Beta",
+    date: "July 11, 2026",
     title: "Core Learning Loop",
     items: [
       "New features: added the first complete teach-practice-feedback-mastery loop for BeastLearning.",

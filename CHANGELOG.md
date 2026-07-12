@@ -1,5 +1,30 @@
 # Changelog
 
+## BeastLearning v1.5 Private Beta - July 11, 2026
+
+Education-path guidance and curriculum architecture milestone.
+
+### New Features
+
+- Added explicit guidance assumptions, planning boundaries, Learning Readiness signals, and next recommended actions for career, college path, certification, trade, promotion, and skill goals.
+- Added a subject-agnostic curriculum hierarchy from subject to objective so new teachable subjects can follow the same framework without code changes.
+- Added adult certification study support that keeps student and minor safety requirements intact.
+
+### Improvements
+
+- Clarified guidance-counselor mode as planning support rather than official school counseling.
+- Replaced broad outcome language with Learning Readiness, confidence, mastery, knowledge retention, learning momentum, study consistency, and prerequisite completion signals.
+- Reinforced tutor-like flow by focusing guidance on one next step before adding more planning detail.
+
+### Breaking Changes
+
+- None.
+
+### Migration Notes
+
+- No database migration required.
+- No production deployment included.
+
 ## BeastLearning v1.4 Private Beta - July 11, 2026
 
 Core learning-loop milestone.

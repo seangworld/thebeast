@@ -196,6 +196,14 @@ export type GuidanceCounselorInput = {
   futureGoal: string;
 };
 
+export type GuidanceCurriculumFramework = {
+  model: "subject-agnostic";
+  hierarchy: string[];
+  objectivePattern: string[];
+  exampleSubjects: string[];
+  newSubjectRequiresCodeChange: boolean;
+};
+
 export type GuidanceCounselorRoadmap = {
   title: string;
   startingPoint: string;
@@ -206,6 +214,11 @@ export type GuidanceCounselorRoadmap = {
   questionsToConsider: string[];
   nextRecommendedAction: string;
   previewLabel: string;
+  assumptions: string[];
+  planningBoundaries: string[];
+  learningReadinessSignals: string[];
+  curriculumFramework: GuidanceCurriculumFramework;
+  tutorFlowPrinciple: string;
 };
 
 export type LearningAchievementTrigger =

@@ -14,6 +14,8 @@ const guidanceRules: Record<
     estimatedTimeline: string;
     questionsToConsider: string[];
     nextRecommendedAction: string;
+    assumptions: string[];
+    learningReadinessSignals: string[];
   }
 > = {
   Career: {
@@ -36,6 +38,16 @@ const guidanceRules: Record<
       "What proof would make you credible?",
     ],
     nextRecommendedAction: "Pick one target role and list its top five repeated requirements.",
+    assumptions: [
+      "The learner is exploring a direction and still needs current role requirements verified.",
+      "Job descriptions, mentors, and local requirements should be checked before committing to a plan.",
+    ],
+    learningReadinessSignals: [
+      "Learning Readiness",
+      "confidence",
+      "portfolio evidence",
+      "study consistency",
+    ],
   },
   "College path": {
     startingPoint: "Clarify intended major, school options, deadlines, and support needs.",
@@ -57,6 +69,16 @@ const guidanceRules: Record<
       "Which prerequisites need attention first?",
     ],
     nextRecommendedAction: "Write down the next deadline and the requirement attached to it.",
+    assumptions: [
+      "The learner is using BeastLearning for planning support, not official school counseling.",
+      "Program, admissions, financial aid, and graduation requirements must be confirmed with the school or official source.",
+    ],
+    learningReadinessSignals: [
+      "Learning Readiness",
+      "prerequisite completion",
+      "study consistency",
+      "learning momentum",
+    ],
   },
   Certification: {
     startingPoint: "Identify the certification, exam domains, current level, and exam window.",
@@ -78,6 +100,17 @@ const guidanceRules: Record<
       "What score or readiness signal is enough to schedule the exam?",
     ],
     nextRecommendedAction: "Choose the exam domain with the lowest confidence.",
+    assumptions: [
+      "The learner is preparing with adult certification study support and must verify current exam objectives with the issuing body.",
+      "Practice scores estimate readiness but do not guarantee a passing score or credential outcome.",
+    ],
+    learningReadinessSignals: [
+      "Learning Readiness",
+      "confidence",
+      "knowledge retention",
+      "mastery",
+      "study consistency",
+    ],
   },
   Trade: {
     startingPoint: "Identify the trade path, safety requirements, tools, and entry route.",
@@ -99,6 +132,16 @@ const guidanceRules: Record<
       "What beginner project proves progress?",
     ],
     nextRecommendedAction: "Choose one safe beginner project and identify required tools.",
+    assumptions: [
+      "The learner needs local licensing, safety, supervision, and apprenticeship requirements verified.",
+      "Hands-on activities should follow age-appropriate safety rules and qualified supervision when required.",
+    ],
+    learningReadinessSignals: [
+      "Learning Readiness",
+      "prerequisite completion",
+      "safe practice consistency",
+      "skill confidence",
+    ],
   },
   Promotion: {
     startingPoint: "Clarify the target role, current performance evidence, and leadership gaps.",
@@ -120,6 +163,16 @@ const guidanceRules: Record<
       "What outcome would prove readiness?",
     ],
     nextRecommendedAction: "Draft three examples that show next-level responsibility.",
+    assumptions: [
+      "The learner is planning a growth path and should confirm promotion criteria with their organization.",
+      "BeastLearning can organize preparation but cannot guarantee advancement or compensation changes.",
+    ],
+    learningReadinessSignals: [
+      "Learning Readiness",
+      "confidence",
+      "learning momentum",
+      "evidence quality",
+    ],
   },
   "Skill goal": {
     startingPoint: "Define the skill, current level, use case, and visible outcome.",
@@ -141,6 +194,16 @@ const guidanceRules: Record<
       "What practice rhythm is realistic?",
     ],
     nextRecommendedAction: "Write one small outcome you can complete this week.",
+    assumptions: [
+      "The learner can start with a small observable outcome and adjust once practice evidence exists.",
+      "Any specialized, regulated, or safety-sensitive skill needs qualified review before real-world use.",
+    ],
+    learningReadinessSignals: [
+      "Learning Readiness",
+      "confidence",
+      "knowledge retention",
+      "learning momentum",
+    ],
   },
 };
 
@@ -148,6 +211,45 @@ function cleanGoal(value: string) {
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : "Learning goal";
 }
+
+const curriculumFramework = {
+  model: "subject-agnostic" as const,
+  hierarchy: [
+    "Subject",
+    "Course",
+    "Unit",
+    "Lesson",
+    "Concept",
+    "Skill",
+    "Objective",
+    "Practice check",
+  ],
+  objectivePattern: [
+    "Name the learner outcome.",
+    "Identify prerequisites.",
+    "Teach one focused concept.",
+    "Practice with feedback.",
+    "Check mastery evidence.",
+    "Recommend the next step.",
+  ],
+  exampleSubjects: [
+    "Algebra",
+    "CompTIA",
+    "Security+",
+    "A+",
+    "Python",
+    "History",
+    "Science",
+  ],
+  newSubjectRequiresCodeChange: false,
+};
+
+const planningBoundaries = [
+  "BeastLearning provides planning support, not official school counseling.",
+  "Guidance is educational and does not guarantee admission, employment, promotion, licensing, certification, or credential outcomes.",
+  "Recommendations should be checked against current school, employer, licensing, exam, and safety requirements.",
+  "Student and minor safety requirements remain in force for every goal type, including adult certification examples.",
+];
 
 export function buildGuidanceCounselorRoadmap(
   input: GuidanceCounselorInput
@@ -165,5 +267,11 @@ export function buildGuidanceCounselorRoadmap(
     questionsToConsider: rule.questionsToConsider,
     nextRecommendedAction: rule.nextRecommendedAction,
     previewLabel: "Planning Guide",
+    assumptions: rule.assumptions,
+    planningBoundaries,
+    learningReadinessSignals: rule.learningReadinessSignals,
+    curriculumFramework,
+    tutorFlowPrinciple:
+      "Guide the learner through one tutor-like next step at a time before adding more planning detail.",
   };
 }

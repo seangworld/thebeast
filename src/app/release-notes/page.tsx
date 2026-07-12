@@ -27,11 +27,52 @@ export default function ReleaseNotesPage() {
       </header>
 
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
+        {/* BeastLearning v1.5 */}
+        <div className="mb-12 rounded-lg border border-[#2a3242] bg-[#0f1419] p-6">
+          <div className="mb-4">
+            <h2 className="text-2xl font-bold">
+              BeastLearning {BEAST_LEARNING_VERSION}
+            </h2>
+            <p className="mt-1 text-sm text-[#7f8da3]">July 11, 2026</p>
+          </div>
+
+          <div className="space-y-4 text-sm">
+            <div>
+              <h3 className="font-semibold text-[#c7cfdb]">
+                Education-Path Guidance
+              </h3>
+              <ul className="space-y-2 pl-4">
+                <li className="text-[#a5b4c7]">
+                  <span className="text-blue-400">✓</span> Added guidance
+                  assumptions, planning boundaries, Learning Readiness signals,
+                  and next recommended actions across supported goal types.
+                </li>
+                <li className="text-[#a5b4c7]">
+                  <span className="text-blue-400">✓</span> Added a
+                  subject-agnostic curriculum hierarchy from subject to
+                  objective for future teachable subjects.
+                </li>
+                <li className="text-[#a5b4c7]">
+                  <span className="text-blue-400">✓</span> Improved adult
+                  certification planning while preserving student and minor
+                  safety requirements.
+                </li>
+                <li className="text-[#a5b4c7]">
+                  <span className="text-blue-400">✓</span> Clarified that
+                  guidance-counselor mode is planning support, not official
+                  school counseling, credential authority, admissions advice, or
+                  employment guarantee.
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
         {/* BeastLearning v1.4 */}
         <div className="mb-12 rounded-lg border border-[#2a3242] bg-[#0f1419] p-6">
           <div className="mb-4">
             <h2 className="text-2xl font-bold">
-              BeastLearning v1.0 Private Beta
+              BeastLearning v1.4 Private Beta
             </h2>
             <p className="mt-1 text-sm text-[#7f8da3]">July 11, 2026</p>
           </div>

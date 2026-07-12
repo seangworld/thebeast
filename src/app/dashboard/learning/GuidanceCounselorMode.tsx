@@ -31,7 +31,7 @@ export default function GuidanceCounselorMode() {
       <SectionHeader
         eyebrow="Guidance Counselor"
         title="Goal planning"
-        description="Explore a goal and turn it into a clear roadmap with milestones, skills, and next steps."
+        description="Explore a goal with planning support, stated assumptions, learning-readiness signals, and one tutor-like next step."
         action={<ModuleBadge module="learning" label={roadmap.previewLabel} />}
       />
 
@@ -76,6 +76,22 @@ export default function GuidanceCounselorMode() {
               {roadmap.startingPoint}
             </p>
           </div>
+
+          <div className="rounded-xl border border-[#2a3242] bg-[#0f1419] p-4">
+            <div className="text-xs font-bold uppercase text-[#7f8da3]">
+              Learning readiness
+            </div>
+            <ul className="mt-2 flex flex-wrap gap-2">
+              {roadmap.learningReadinessSignals.map((signal) => (
+                <li
+                  className="rounded-full border border-[#2a3242] bg-[#111827] px-3 py-1 text-xs font-bold text-[#c7cfdb]"
+                  key={signal}
+                >
+                  {signal}
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
 
         <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
@@ -115,6 +131,31 @@ export default function GuidanceCounselorMode() {
             </div>
             <p className="mt-2 text-sm font-semibold leading-5 text-green-100">
               {roadmap.nextRecommendedAction}
+            </p>
+          </div>
+
+          <div className="mt-5 grid gap-4 lg:grid-cols-2">
+            <RoadmapList title="Assumptions" items={roadmap.assumptions} />
+            <RoadmapList
+              title="Planning boundaries"
+              items={roadmap.planningBoundaries}
+            />
+          </div>
+
+          <div className="mt-5 rounded-xl border border-[#2a3242] bg-[#0f1419] p-4">
+            <div className="text-xs font-bold uppercase text-[#7f8da3]">
+              Curriculum model
+            </div>
+            <p className="mt-2 text-sm leading-5 text-[#c7cfdb]">
+              {roadmap.curriculumFramework.hierarchy.join(" -> ")}
+            </p>
+            <p className="mt-3 text-sm leading-5 text-[#a5b4c7]">
+              New subjects use the same objective pattern without a code
+              change. Examples:{" "}
+              {roadmap.curriculumFramework.exampleSubjects.join(", ")}.
+            </p>
+            <p className="mt-3 text-sm font-semibold leading-5 text-indigo-100">
+              {roadmap.tutorFlowPrinciple}
             </p>
           </div>
         </div>
