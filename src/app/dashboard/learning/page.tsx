@@ -400,6 +400,7 @@ function GuidanceConversationCenter({
   todayRecommendation,
   estimatedTime,
   recommendationReason,
+  guideSignals,
   readyActivity,
 }: {
   learnerName: string;
@@ -408,6 +409,7 @@ function GuidanceConversationCenter({
   todayRecommendation: string;
   estimatedTime: string;
   recommendationReason: string;
+  guideSignals: { label: string; value: string }[];
   readyActivity?: LearningPathActivityRow;
 }) {
   const activityHref = readyActivity
@@ -437,6 +439,21 @@ function GuidanceConversationCenter({
           <p className="mt-5 text-sm leading-6 text-indigo-100">
             {"I'll keep the long-term roadmap, explain why each step matters, and bring in the Tutor when it is time for instruction."}
           </p>
+          <div className="mt-5 grid gap-3">
+            {guideSignals.map((signal) => (
+              <div
+                key={signal.label}
+                className="rounded-xl border border-indigo-200/25 bg-[#0f1419]/65 p-3"
+              >
+                <div className="text-xs font-bold uppercase text-indigo-100">
+                  {signal.label}
+                </div>
+                <p className="mt-1 text-sm leading-5 text-indigo-50">
+                  {signal.value}
+                </p>
+              </div>
+            ))}
+          </div>
           <div className="mt-5 flex flex-wrap gap-3">
             <Link href={activityHref} className="beast-button">
               Continue
@@ -740,6 +757,30 @@ export default async function LearningPage() {
   const recommendationReason =
     learningRecommendations[0]?.reason ||
     "It matches your current goal, readiness, and next available learning step.";
+  const guideSignals = [
+    {
+      label: "What I remember",
+      value:
+        learningIntelligence.memory.recentlyStudied[0]
+          ? `Last time, ${learningIntelligence.memory.recentlyStudied[0]} was part of your work. I will connect today back to that.`
+          : "I will remember what you tell me today so the next lesson starts closer to where you are.",
+    },
+    {
+      label: "Review I am watching",
+      value:
+        learningIntelligence.weakness.repeatedReviewNeeds[0] ||
+        learningIntelligence.weakness.lowMasteryConcepts[0]
+          ? `I may slow us down around ${
+              learningIntelligence.weakness.repeatedReviewNeeds[0] ||
+              learningIntelligence.weakness.lowMasteryConcepts[0]
+            } so it sticks.`
+          : "No urgent review is standing out, so we can keep building forward.",
+    },
+    {
+      label: "How I am adapting",
+      value: `Your current understanding is around ${learningIntelligence.mastery.overallMasteryPercent}%, so I am choosing ${learningIntelligence.adaptivePlan.nextRecommendedLesson} as the next useful step.`,
+    },
+  ];
 
   return (
     <main className="beast-page">
@@ -772,6 +813,7 @@ export default async function LearningPage() {
             todayRecommendation={todayRecommendationTitle}
             estimatedTime={estimatedTimeLabel}
             recommendationReason={recommendationReason}
+            guideSignals={guideSignals}
             readyActivity={learningPathReadyActivity}
           />
         </div>

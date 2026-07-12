@@ -83,6 +83,38 @@ function confidenceLabel(value: string) {
   return "still building";
 }
 
+function adaptiveTutorMessage({
+  progress,
+  practiceComplete,
+  quizComplete,
+  askedForHelp,
+}: {
+  progress: ReturnType<typeof getLessonEngineProgress>;
+  practiceComplete: boolean;
+  quizComplete: boolean;
+  askedForHelp: boolean;
+}) {
+  if (progress.mastered) {
+    return `You are showing enough understanding to keep moving. I will still use your reflection to help your Guide choose the next lesson.`;
+  }
+
+  if (!practiceComplete) {
+    return askedForHelp
+      ? "You asked for support, so I am keeping this at practice pace and giving you another chance to build the pattern."
+      : "I am keeping this at practice pace until you have tried the skill with support.";
+  }
+
+  if (!quizComplete) {
+    return "Your practice is in place. I am using the check-in question to see whether this is ready to become long-term understanding.";
+  }
+
+  if (progress.recommendedReview) {
+    return "Your work is close, but a careful review will help this stick before your Guide moves you forward.";
+  }
+
+  return "Your answers, practice, confidence, and reflection are all helping me adapt the next step.";
+}
+
 export function LessonEngine({
   activity,
   courseTitle,
@@ -169,6 +201,12 @@ export function LessonEngine({
     question: teacherQuestion,
     quizPercent: progress.quizPercent,
     masteryEstimate: progress.masteryEstimate,
+  });
+  const adaptiveMessage = adaptiveTutorMessage({
+    progress,
+    practiceComplete,
+    quizComplete,
+    askedForHelp,
   });
   const progressPercent = completed
     ? 100
@@ -301,6 +339,14 @@ export function LessonEngine({
                 {teacherResponse}
               </div>
             ) : null}
+            <div className="mt-4 rounded-xl border border-[#2a3242] bg-[#0f1419] p-4">
+              <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                How I&apos;m adapting
+              </div>
+              <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
+                {adaptiveMessage}
+              </p>
+            </div>
             <div className="mt-5 flex flex-wrap gap-2">
               <button
                 type="button"
@@ -609,6 +655,10 @@ export function LessonEngine({
                     {completed
                       ? `Nice work. You are ready for: ${engine.lesson.recommendedNextLesson}.`
                       : progress.nextRecommendation}
+                  </p>
+                  <p className="mt-3 text-sm leading-6 text-[#9aa7b8]">
+                    I used your practice, check-in answer, confidence, and reflection
+                    to decide whether this should become new learning or review.
                   </p>
                 </div>
                 <div className="grid gap-3 sm:grid-cols-3">

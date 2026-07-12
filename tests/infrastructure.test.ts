@@ -2033,6 +2033,9 @@ test("learning activities have a dedicated runner and next-activity unlock logic
   assert.match(lessonEngine, /What do you already know\?/);
   assert.match(lessonEngine, /Hint/);
   assert.match(lessonEngine, /Explain another way/);
+  assert.match(lessonEngine, /How I&apos;m adapting/);
+  assert.match(lessonEngine, /adaptiveTutorMessage/);
+  assert.match(lessonEngine, /practice, check-in answer, confidence, and reflection/);
   assert.match(lessonEngine, /onPracticeAnswer/);
   assert.match(lessonEngine, /Let's see what you've learned/);
   assert.doesNotMatch(lessonEngine, /type="checkbox"/);
@@ -2055,6 +2058,11 @@ test("BeastLearning member home starts with Guidance before dashboard support", 
   assert.match(learningPage, /I'm your BeastLearning Guide/);
   assert.match(learningPage, /I keep track of where you are/);
   assert.match(learningPage, /When we start learning/);
+  assert.match(learningPage, /What I remember/);
+  assert.match(learningPage, /Review I am watching/);
+  assert.match(learningPage, /How I am adapting/);
+  assert.match(learningPage, /learningIntelligence\.memory\.recentlyStudied/);
+  assert.match(learningPage, /learningIntelligence\.adaptivePlan\.nextRecommendedLesson/);
   assert.equal(
     learningPage.indexOf("<GuidanceConversationCenter") <
       learningPage.indexOf("progressSignals.snapshotTiles"),
