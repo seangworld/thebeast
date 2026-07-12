@@ -2027,6 +2027,9 @@ test("learning activities have a dedicated runner and next-activity unlock logic
   assert.match(activityRunner, /Return to Today/);
   assert.match(activityRunner, /See My Steps/);
   assert.match(activityRunner, /<LessonEngine/);
+  assert.match(activityRunner, /getProfileDisplayName/);
+  assert.match(activityRunner, /learnerName=\{learnerName\}/);
+  assert.match(activityRunner, /hand what\s+changed back to your Guide/);
   assert.match(lessonEngine, /Tutoring Together/);
   assert.match(lessonEngine, /Your BeastLearning Guide sent this/);
   assert.match(lessonEngine, /Teaching now/);
@@ -2044,6 +2047,7 @@ test("learning activities have a dedicated runner and next-activity unlock logic
   assert.match(lessonEngine, /progress\.coachingMessage/);
   assert.match(lessonEngine, /progress\.continuity\.handoffSummary/);
   assert.match(lessonEngine, /practice, check-in answer, confidence, and reflection/);
+  assert.match(lessonEngine, /hand that back to your Guide/);
   assert.match(lessonEngine, /onPracticeAnswer/);
   assert.match(lessonEngine, /Let's see what you've learned/);
   assert.doesNotMatch(lessonEngine, /type="checkbox"/);
@@ -2064,8 +2068,13 @@ test("BeastLearning member home starts with Guidance before dashboard support", 
 
   assert.match(learningPage, /GuidanceConversationCenter/);
   assert.match(learningPage, /I'm your BeastLearning Guide/);
-  assert.match(learningPage, /I keep track of where you are/);
-  assert.match(learningPage, /When we start learning/);
+  assert.match(learningPage, /I'm here for the long run/);
+  assert.match(learningPage, /What I own for you/);
+  assert.match(learningPage, /Goals, memory, recommendations, roadmap, next steps/);
+  assert.match(learningPage, /What the Tutor owns/);
+  assert.match(learningPage, /Teaching, practice, feedback, mastery checks/);
+  assert.match(learningPage, /When instruction starts/);
+  assert.match(learningPage, /adjust your roadmap/);
   assert.match(learningPage, /What I remember/);
   assert.match(learningPage, /Review I am watching/);
   assert.match(learningPage, /How I am adapting/);
@@ -2104,6 +2113,9 @@ test("BeastLearning member experience hides workflow mechanics behind Guide and 
   ].join("\n");
 
   assert.match(memberExperienceSource, /Continue with Tutor/);
+  assert.match(memberExperienceSource, /Let the Tutor teach this/);
+  assert.match(memberExperienceSource, /Your Guide's Next Step/);
+  assert.match(memberExperienceSource, /Your Guide remembers this/);
   assert.match(memberExperienceSource, /Your Guide/);
   assert.match(memberExperienceSource, /Ask My Guide/);
   assert.match(memberExperienceSource, /Let&apos;s see what I&apos;ve learned/);

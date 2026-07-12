@@ -30,6 +30,7 @@ type SupportMode = "hint" | "alternate" | "example" | "visual" | "practice" | nu
 type LessonEngineProps = {
   activity: LearningActivityRunnerRow;
   courseTitle: string;
+  learnerName: string;
   checkedPhases: Record<string, boolean>;
   quizAnswers: Record<string, string>;
   practiceAnswers: Record<string, string>;
@@ -138,6 +139,7 @@ function buildPracticeHintLadder({
 export function LessonEngine({
   activity,
   courseTitle,
+  learnerName,
   checkedPhases,
   quizAnswers,
   practiceAnswers,
@@ -206,7 +208,7 @@ export function LessonEngine({
   const reflectionComplete = Boolean(reflection.trim());
   const tutorReadyToComplete =
     completed || (practiceComplete && quizComplete && reflectionComplete);
-  const learnerName = "Sean";
+  const firstName = learnerName.trim().split(/\s+/)[0] || "there";
   const teacherQuestion =
     supportMode === "hint"
       ? "Give me a hint without revealing the answer."
@@ -434,7 +436,7 @@ export function LessonEngine({
         <SectionHeader
           eyebrow="Tutoring Together"
           title={tutorStepTitle(step)}
-          description={tutorStepMessage(step, learnerName, engine.lesson.subject)}
+          description={tutorStepMessage(step, firstName, engine.lesson.subject)}
           action={<ModuleBadge module="learning" label={engine.lesson.subject} />}
         />
 
@@ -444,7 +446,7 @@ export function LessonEngine({
               Tutor
             </div>
             <p className="mt-3 text-base font-semibold leading-7 text-indigo-50">
-              {tutorStepMessage(step, learnerName, engine.lesson.subject)}
+              {tutorStepMessage(step, firstName, engine.lesson.subject)}
             </p>
             {supportMode ? (
               <div className="mt-4 rounded-xl border border-blue-300/35 bg-blue-300/10 p-4 text-sm leading-6 text-blue-100">
@@ -801,6 +803,8 @@ export function LessonEngine({
                   <p className="mt-3 text-sm leading-6 text-[#9aa7b8]">
                     I used your practice, check-in answer, confidence, and reflection
                     to decide whether this should become new learning or review.
+                    I will hand that back to your Guide so your longer plan keeps
+                    fitting you.
                   </p>
                   <p className="mt-3 rounded-lg border border-indigo-300/30 bg-indigo-300/10 p-3 text-sm font-semibold leading-6 text-indigo-100">
                     {progress.continuity.handoffSummary}

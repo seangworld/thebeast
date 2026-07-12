@@ -105,9 +105,13 @@ export default function LearningActivitiesPage() {
     activities.length === 0 ? 0 : Math.round((completed.length / activities.length) * 100);
 
   const nextAction = useMemo(() => {
-    if (readyActivity) return `Your Guide recommends ${readyActivity.title} next.`;
-    if (activities.length > 0) return "You finished the current set. Return to Today and your Guide will choose what comes next.";
-    return "Return to Today and your Guide will prepare your first learning step.";
+    if (readyActivity) {
+      return `Your Guide chose ${readyActivity.title} because it is the next useful step in your plan.`;
+    }
+    if (activities.length > 0) {
+      return "You finished the current set. Return to Today and your Guide will decide whether to review, move ahead, or ask a new question.";
+    }
+    return "Return to Today and your Guide will learn your goal before preparing the first step.";
   }, [activities.length, readyActivity]);
 
   return (
@@ -117,10 +121,11 @@ export default function LearningActivitiesPage() {
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-4">
               <ModuleBadge module="learning" label="Continue" />
-              <h1 className="beast-title">Continue With Your Guide</h1>
+              <h1 className="beast-title">{"Your Guide's Next Step"}</h1>
               <p className="beast-subtitle">
-                Your Guide keeps the path simple: one next lesson, the right support,
-                and progress you can come back to later.
+                Your Guide keeps the relationship and the roadmap. The Tutor
+                joins when it is time to teach, practice, check understanding,
+                or repair a gap.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -154,28 +159,28 @@ export default function LearningActivitiesPage() {
               <MetricTile
                 label="Progress"
                 value={`${progressPercent}%`}
-                detail={`${completed.length} of ${activities.length} lessons saved`}
+                detail={`${completed.length} of ${activities.length} steps remembered`}
                 icon="P"
                 tone="purple"
               />
               <MetricTile
                 label="Practice Credit"
                 value={String(totalXp)}
-                detail="Earned from saved lessons"
+                detail="Effort your Guide can see"
                 icon="PC"
                 tone="yellow"
               />
               <MetricTile
                 label="Next"
                 value={String(open.length)}
-                detail="Learning steps prepared"
+                detail="Steps your Guide prepared"
                 icon="A"
                 tone="green"
               />
               <MetricTile
                 label="Time together"
                 value={`${remainingMinutes} min`}
-                detail="Estimated learning time"
+                detail="Estimated time with Guide and Tutor"
                 icon="T"
                 tone="blue"
               />
@@ -194,7 +199,7 @@ export default function LearningActivitiesPage() {
                     href={getLearningActivityRoute(readyActivity.id)}
                     className="beast-button"
                   >
-                    Continue with Tutor
+                    Let the Tutor teach this
                   </Link>
                 </div>
               ) : (
@@ -233,7 +238,7 @@ export default function LearningActivitiesPage() {
                           </span>
                           <span>{activity.estimated_minutes} min</span>
                           <span>{activity.xp} practice credit</span>
-                          <span>{activity.status === "Completed" ? "Saved" : "Ready when you are"}</span>
+                          <span>{activity.status === "Completed" ? "Your Guide remembers this" : "Ready when you are"}</span>
                         </div>
                       </div>
                       <Link
@@ -256,7 +261,7 @@ export default function LearningActivitiesPage() {
                   <SectionHeader
                     eyebrow="Getting Started"
                     title="Your Guide is ready to help"
-                    description="Open Today and your Guide will prepare the first step from your learning path."
+                    description="Open Today and your Guide will start with a conversation, learn your goal, and prepare the first step."
                     action={<Link href="/dashboard/today" className="beast-button">Meet My Guide</Link>}
                   />
                 </DashboardCard>

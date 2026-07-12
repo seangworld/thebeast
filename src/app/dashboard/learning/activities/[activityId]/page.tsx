@@ -17,6 +17,7 @@ import {
   buildLessonEngineDefinition,
   getLessonEngineProgress,
 } from "@/lib/learning/lessonEngine";
+import { getProfileDisplayName } from "@/lib/profile";
 import { createClient } from "@/lib/supabase/client";
 import { LessonEngine } from "../LessonEngine";
 
@@ -40,6 +41,7 @@ export default function LearningActivityRunnerPage() {
   const router = useRouter();
   const activityId = getActivityId(params?.activityId);
   const [userId, setUserId] = useState("");
+  const [learnerName, setLearnerName] = useState("there");
   const [activity, setActivity] = useState<ActivityRow | null>(null);
   const [course, setCourse] = useState<CourseRow | null>(null);
   const [allActivities, setAllActivities] = useState<LearningActivityRunnerRow[]>([]);
@@ -88,7 +90,7 @@ export default function LearningActivityRunnerPage() {
 
       const activityRow = activityResult.data as ActivityRow;
 
-      const [activitiesResult, courseResult] = await Promise.all([
+      const [activitiesResult, courseResult, profileResult] = await Promise.all([
         supabase
           .from("learning_activities")
           .select("id, activity_type, title, difficulty, estimated_minutes, xp, status, completed_at, sort_order")
@@ -102,14 +104,21 @@ export default function LearningActivityRunnerPage() {
               .eq("user_id", authUser.id)
               .maybeSingle()
           : Promise.resolve({ data: null, error: null }),
+        supabase
+          .from("profiles")
+          .select("preferred_name, display_name, full_name, username")
+          .eq("id", authUser.id)
+          .maybeSingle(),
       ]);
 
       if (activitiesResult.error) throw activitiesResult.error;
       if (courseResult.error) throw courseResult.error;
+      if (profileResult.error) throw profileResult.error;
 
       setActivity(activityRow);
       setAllActivities((activitiesResult.data || []) as LearningActivityRunnerRow[]);
       setCourse((courseResult.data as CourseRow | null) || null);
+      setLearnerName(getProfileDisplayName(profileResult.data, authUser));
     } catch (error) {
       setMessage(
         error instanceof Error
@@ -200,8 +209,9 @@ export default function LearningActivityRunnerPage() {
                 {activity?.title || "Time with your Tutor"}
               </h1>
               <p className="beast-subtitle">
-                Your Guide brought you here so the Tutor can teach, practice,
-                check understanding, and help you remember what changed.
+                Your Guide brought you here for instruction. The Tutor will
+                teach, practice, check understanding, repair gaps, and hand what
+                changed back to your Guide.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -235,7 +245,7 @@ export default function LearningActivityRunnerPage() {
                 <SectionHeader
                   eyebrow="Lesson Saved"
                   title="Nice work. Your progress is saved."
-                  description="Your Tutor saved the lesson, and your Guide will use this progress to choose the next helpful step."
+                  description="Your Tutor saved the lesson, and your Guide will remember what changed before choosing the next helpful step."
                   action={<ModuleBadge module="learning" label="Saved" />}
                 />
                 <div className="mt-5 flex flex-wrap gap-3">
@@ -255,6 +265,7 @@ export default function LearningActivityRunnerPage() {
             <LessonEngine
               activity={activity}
               courseTitle={course?.title || "Learning path"}
+              learnerName={learnerName}
               checkedPhases={checkedPhases}
               quizAnswers={quizAnswers}
               practiceAnswers={practiceAnswers}

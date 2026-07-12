@@ -420,9 +420,9 @@ function GuidanceConversationCenter({
     <DashboardCard accent="learning">
       <SectionHeader
         eyebrow="Your Guide"
-        title="I'm your BeastLearning Guide"
-        description="I keep track of where you are, where you want to go, and the best next step. When it is time to learn, I bring in your Tutor."
-        action={<ModuleBadge module="learning" label="Ready" />}
+        title="I'm here for the long run"
+        description="I remember your goals, watch your progress, explain the plan, and choose the next step. When instruction is needed, I bring in your Tutor."
+        action={<ModuleBadge module="learning" label="Guide" />}
       />
       <div className="mt-5 grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
         <div className="rounded-xl border border-indigo-300/45 bg-indigo-300/10 p-5">
@@ -432,13 +432,19 @@ function GuidanceConversationCenter({
           <div className="mt-3 space-y-3 text-base font-semibold leading-7 text-indigo-50">
             <p>Hi {getFirstName(learnerName)}.</p>
             <p>Good afternoon.</p>
-            <p>{"I'm your BeastLearning Guide."}</p>
-            <p>How are things going?</p>
-            <p>Ready to continue working toward {goal}?</p>
+            <p>{"I'm your BeastLearning Guide, and I remember what we are building together."}</p>
+            <p>How are things going today?</p>
+            <p>Ready to keep moving toward {goal}?</p>
           </div>
           <p className="mt-5 text-sm leading-6 text-indigo-100">
-            {"I'll keep the long-term roadmap, explain why each step matters, and bring in the Tutor when it is time for instruction."}
+            {"I'll hold the long-term roadmap, keep track of what changes, explain why each step matters, and bring in the Tutor when it is time for instruction."}
           </p>
+          <div className="mt-5 grid gap-2 rounded-xl border border-indigo-200/25 bg-[#0f1419]/65 p-4 text-sm leading-6 text-indigo-50">
+            <div className="font-black text-white">What I own for you</div>
+            <p>Goals, memory, recommendations, roadmap, next steps, and the reason behind the plan.</p>
+            <div className="font-black text-white">What the Tutor owns</div>
+            <p>Teaching, practice, feedback, mastery checks, hints, and remediation.</p>
+          </div>
           <div className="mt-5 grid gap-3">
             {guideSignals.map((signal) => (
               <div
@@ -496,12 +502,13 @@ function GuidanceConversationCenter({
           </div>
           <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 sm:col-span-2">
             <div className="text-xs font-bold uppercase text-[#7f8da3]">
-              When we start learning
+              When instruction starts
             </div>
             <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
               I will introduce your Tutor, who will teach one idea at a time,
               ask questions, give hints, explain it another way when needed,
-              and check that it really makes sense before we move on.
+              and check that it really makes sense. Then the Tutor hands the
+              result back to me so I can adjust your roadmap.
             </p>
           </div>
         </div>
@@ -791,9 +798,10 @@ export default async function LearningPage() {
               <ModuleBadge module="learning" label={`BeastLearning ${BEAST_LEARNING_VERSION}`} />
               <h1 className="beast-title">Your BeastLearning Guide</h1>
               <p className="beast-subtitle">
-                Start with guidance. When it is time to learn a concept, your
-                Guide brings in the Tutor for instruction, practice, feedback,
-                and mastery.
+                Start with the AI who knows your goal, remembers what changed,
+                and keeps the path moving. When it is time to learn, your Guide
+                brings in the Tutor for instruction, practice, feedback, and
+                mastery.
               </p>
             </div>
             <Link
@@ -838,9 +846,9 @@ export default async function LearningPage() {
         <section className="grid gap-4 xl:grid-cols-[0.85fr_1.15fr]">
           <DashboardCard accent="learning">
             <SectionHeader
-              eyebrow="Student Profiles"
+              eyebrow="Memory"
               title="What I remember about you"
-              description="This helps your Guide keep recommendations personal without asking you to repeat yourself."
+              description="This is the context your Guide uses to keep recommendations personal without asking you to repeat yourself."
             />
             <div className="mt-5">
               <LearnerSwitcher learners={learnerList} />
@@ -849,9 +857,9 @@ export default async function LearningPage() {
 
           <DashboardCard accent="learning">
             <SectionHeader
-              eyebrow="Learning Snapshot"
+              eyebrow="Guide Reasoning"
               title="How today was chosen"
-              description="Your Guide uses confidence, mastery, review needs, and momentum to choose the next useful step."
+              description="Your Guide weighs confidence, mastery, review needs, momentum, and goals before choosing what happens next."
             />
             <div className="mt-5 grid gap-4 lg:grid-cols-[0.7fr_1fr]">
               <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
@@ -880,7 +888,7 @@ export default async function LearningPage() {
               <div className="grid gap-3">
                 <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
                   <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                    Your path
+                    My roadmap for you
                   </div>
                   <h3 className="mt-2 text-xl font-black text-white">
                     {learningPlan.title}
@@ -952,9 +960,9 @@ export default async function LearningPage() {
         <section id="learning-path" className="grid scroll-mt-24 gap-4 xl:grid-cols-[1.1fr_0.9fr]">
           <DashboardCard accent="learning">
             <SectionHeader
-              eyebrow="Learning Path"
+              eyebrow="Roadmap"
               title="Where we're headed"
-              description="These are the learning areas your Guide is using to plan the next helpful step."
+              description="This is the roadmap your Guide keeps adjusting as you learn, struggle, recover, and grow."
             />
             <div className="mt-5 grid gap-4 lg:grid-cols-3">
               {learningCourses.map((course) => (
@@ -970,9 +978,9 @@ export default async function LearningPage() {
 
           <DashboardCard accent="purple">
             <SectionHeader
-              eyebrow="Coming Up"
+              eyebrow="Next Steps"
               title="What we may work on soon"
-              description="These are future learning moments your Guide may use to keep momentum."
+              description="These are possible next moves. Your Guide will choose the right one based on how today goes."
             />
             <div className="mt-5 grid gap-3">
               {learningSessions.map((lesson) => (
@@ -1001,7 +1009,7 @@ export default async function LearningPage() {
             <SectionHeader
               eyebrow="Goals"
               title="What we're working toward"
-              description="Your Guide uses these goals to explain why each lesson matters."
+              description="Your Guide uses these goals to explain why each lesson matters and when the plan should change."
             />
             <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {learningGoals.map((goal) => (
@@ -1019,7 +1027,7 @@ export default async function LearningPage() {
             <SectionHeader
               eyebrow="Achievements"
               title="Wins worth noticing"
-              description="These celebrate effort, consistency, mastery, and meaningful milestones."
+              description="Your Guide notices effort, consistency, mastery, and meaningful milestones along the way."
             />
             <div className="mt-5 grid gap-3">
               {learningAchievements.map((achievement) => (
@@ -1058,7 +1066,7 @@ export default async function LearningPage() {
             <SectionHeader
               eyebrow="Recommendations"
               title="Why your Guide is choosing these steps"
-              description="These recommendations explain the thinking behind your next lesson, review, or practice."
+              description="These are the reasons behind your next lesson, review, or practice."
             />
             <div className="mt-5 grid gap-3">
               {learningRecommendations.map((recommendation) => (
@@ -1082,7 +1090,7 @@ export default async function LearningPage() {
             <SectionHeader
               eyebrow="More Support"
               title="Helpful options when you need them"
-              description="Use these only when they help. Your Guide will keep the main path simple."
+              description="Use these only when they help. Your Guide keeps the main path simple."
           />
           <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {learningQuickActions.map((action) => (
@@ -1098,7 +1106,7 @@ export default async function LearningPage() {
                   <h3 className="font-black text-white">{action.label}</h3>
                   {!action.active ? (
                     <span className="rounded border border-[#2a3242] px-2 py-1 text-xs font-bold uppercase text-[#7f8da3]">
-                      Soon
+                      When useful
                     </span>
                   ) : null}
                 </div>
