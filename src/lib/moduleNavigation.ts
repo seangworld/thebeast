@@ -63,13 +63,11 @@ export const memberBeastLearningNavigation: ModuleNavSection = {
   href: "/dashboard/learning",
   module: "learning",
   children: [
-    { label: "Home", href: "/dashboard/learning" },
-    { label: "Today", href: "/dashboard/today" },
+    { label: "Guide", href: "/dashboard/learning" },
     { label: "Continue", href: "/dashboard/learning/activities" },
-    { label: "Learning Path", href: "/dashboard/learning#learning-path" },
-    { label: "Progress", href: "/dashboard/learning#progress" },
-    { label: "Achievements", href: "/dashboard/learning#achievements" },
-    { label: "Profile", href: "/dashboard/profile" },
+    { label: "My Plan", href: "/dashboard/learning#learning-path" },
+    { label: "How I'm Doing", href: "/dashboard/learning#progress" },
+    { label: "Wins", href: "/dashboard/learning#achievements" },
   ],
 };
 

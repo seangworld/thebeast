@@ -3716,13 +3716,21 @@ test("member navigation hides admin and monetization surfaces", () => {
   assert.deepEqual(
     memberBeastLearningNavigation.children?.map((item) => item.label),
     [
-      "Home",
-      "Today",
+      "Guide",
       "Continue",
-      "Learning Path",
-      "Progress",
-      "Achievements",
-      "Profile",
+      "My Plan",
+      "How I'm Doing",
+      "Wins",
+    ]
+  );
+  assert.deepEqual(
+    memberBeastLearningNavigation.children?.map((item) => item.href),
+    [
+      "/dashboard/learning",
+      "/dashboard/learning/activities",
+      "/dashboard/learning#learning-path",
+      "/dashboard/learning#progress",
+      "/dashboard/learning#achievements",
     ]
   );
   assert.equal(
