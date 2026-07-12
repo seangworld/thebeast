@@ -35,6 +35,36 @@ function BillingPageContent() {
   const canManageSubscription =
     entitlements.context.plan === "pro" && Boolean(customerId);
 
+  if (!entitlements.loading && !entitlements.isAdmin) {
+    return (
+      <main className="beast-page">
+        <div className="beast-container space-y-8">
+          <section className="beast-page-header">
+            <div>
+              <p className="beast-kicker">BeastMoney</p>
+              <h1 className="beast-title">Planning Experience</h1>
+              <p className="beast-subtitle">
+                BeastMoney planning tools are available from the product workspace.
+              </p>
+            </div>
+          </section>
+
+          <section className="beast-card">
+            <h2 className="text-xl font-bold">Member experience</h2>
+            <p className="mt-2 text-sm text-[#c7cfdb]">
+              Billing controls are not part of the current Member experience.
+              Continue with cash flow, debts, payoff planning, and Velocity
+              Banking from BeastMoney.
+            </p>
+            <Link href="/dashboard/money" className="beast-button mt-5 w-fit">
+              Open BeastMoney
+            </Link>
+          </section>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="beast-page">
       <div className="beast-container space-y-8">

@@ -5,8 +5,7 @@ import { useEntitlements } from "@/lib/hooks/useEntitlements";
 
 const adminViewModeLabels: Record<AdminViewMode, string> = {
   admin: "Admin",
-  pro: "Pro",
-  free: "Free",
+  member: "Member",
 };
 
 type AdminViewAsControlProps = {

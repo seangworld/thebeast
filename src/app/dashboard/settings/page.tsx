@@ -33,11 +33,6 @@ const accountLinks = [
     description: "Manage preferred name and personal context.",
   },
   {
-    label: "Billing",
-    href: "/dashboard/money/billing",
-    description: "Manage plan, subscription, and billing portal access.",
-  },
-  {
     label: "Privacy",
     href: "https://seangworld.com/privacy.html",
     description: "Review the privacy policy.",
@@ -125,7 +120,7 @@ export default function SettingsPage() {
             <SectionHeader
               eyebrow="Account"
               title="Management links"
-              description="Identity, billing, and policy destinations are separated from platform preferences."
+              description="Identity and policy destinations are separated from platform preferences."
             />
             <div className="mt-5 grid gap-3">
               {accountLinks.map((link) => (

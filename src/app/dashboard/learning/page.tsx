@@ -389,6 +389,77 @@ function PlatformSignalCard({
   );
 }
 
+function AITutorCenter({
+  readyActivity,
+  tutorFocus,
+}: {
+  readyActivity?: LearningPathActivityRow;
+  tutorFocus: string;
+}) {
+  return (
+    <DashboardCard accent="learning">
+      <SectionHeader
+        eyebrow="AI Tutor"
+        title="Continue with your tutor"
+        description="Start the next lesson, work one question at a time, and use help when you need another explanation."
+        action={<ModuleBadge module="learning" label="Tutor Center" />}
+      />
+      <div className="mt-5 grid gap-4 lg:grid-cols-[0.85fr_1.15fr]">
+        <div className="rounded-xl border border-indigo-300/45 bg-indigo-300/10 p-5">
+          <div className="text-xs font-bold uppercase text-[#7f8da3]">
+            Current focus
+          </div>
+          <h3 className="mt-2 text-2xl font-black text-white">
+            {readyActivity?.title || tutorFocus}
+          </h3>
+          <p className="mt-3 text-sm leading-5 text-indigo-100">
+            {readyActivity
+              ? `${readyActivity.activity_type} - ${readyActivity.difficulty} - ${readyActivity.estimated_minutes} minutes`
+              : "Create or save a learning activity to begin a tutor-led lesson."}
+          </p>
+          <div className="mt-5 flex flex-wrap gap-3">
+            {readyActivity ? (
+              <Link
+                href={getLearningActivityRoute(readyActivity.id)}
+                className="beast-button"
+              >
+                Open AI Tutor
+              </Link>
+            ) : null}
+            <Link
+              href="/dashboard/learning/activities"
+              className="beast-button-secondary"
+            >
+              Continue Learning
+            </Link>
+          </div>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          {[
+            "Instruction",
+            "One question at a time",
+            "Immediate feedback",
+            "Hints",
+            "Alternate explanations",
+            "Mastery checks",
+          ].map((item) => (
+            <div
+              key={item}
+              className="rounded-xl border border-[#2a3242] bg-[#111827] p-4"
+            >
+              <div className="text-sm font-black text-white">{item}</div>
+              <p className="mt-2 text-xs leading-5 text-[#9aa7b8]">
+                Available through the learner lesson workspace.
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </DashboardCard>
+  );
+}
+
 export default async function LearningPage() {
   const supabase = createRouteClient();
   const {
@@ -411,7 +482,7 @@ export default async function LearningPage() {
     achievementsResult,
     certificatesResult,
   ] = await Promise.all([
-    supabase.from("profiles").select("preferred_name, display_name, full_name, username").eq("id", user.id).maybeSingle(),
+    supabase.from("profiles").select("preferred_name, display_name, full_name, username, role").eq("id", user.id).maybeSingle(),
     supabase
       .from("learning_profiles")
       .select("id, display_name, learner_role, focus")
@@ -456,6 +527,8 @@ export default async function LearningPage() {
 
   const learnerProfileRows = (learnerProfilesResult.data || []) as Record<string, unknown>[];
   const primaryLearnerRow = learnerProfileRows[0];
+  const profileRow = (profileResult.data || {}) as Record<string, unknown>;
+  const isAdmin = profileRow.role === "admin";
   const fallbackName = getProfileDisplayName(
     profileResult.data as Parameters<typeof getProfileDisplayName>[0],
     user
@@ -655,14 +728,15 @@ export default async function LearningPage() {
           ))}
         </section>
 
-        <PrivateBetaPanels beta={privateBeta} />
-
         <div id="progress" className="scroll-mt-24">
           <LearningExperiencePanel experience={learningExperience} />
         </div>
 
         <div id="ai-tutor" className="scroll-mt-24">
-          <LearningAIOrchestrationPanel orchestration={aiOrchestration} />
+          <AITutorCenter
+            readyActivity={learningPathReadyActivity}
+            tutorFocus={studySession.currentFocus}
+          />
         </div>
 
         <section className="grid gap-4 xl:grid-cols-[0.85fr_1.15fr]">
@@ -741,7 +815,7 @@ export default async function LearningPage() {
           </DashboardCard>
         </section>
 
-        <div id="study-plan" className="scroll-mt-24">
+        <div id="continue-learning" className="scroll-mt-24">
           <StudySessionCommandCard session={studySession} />
         </div>
 
@@ -779,15 +853,7 @@ export default async function LearningPage() {
           </div>
         </DashboardCard>
 
-        <LearningIntelligencePanel snapshot={learningIntelligence} />
-
-        <LearningKnowledgePanel knowledge={knowledgeDashboard} />
-
-        <div id="flashcards" className="scroll-mt-24">
-          <LearningContentIntelligencePanel content={learningDashboardContent} />
-        </div>
-
-        <section id="courses" className="grid scroll-mt-24 gap-4 xl:grid-cols-[1.1fr_0.9fr]">
+        <section id="learning-path" className="grid scroll-mt-24 gap-4 xl:grid-cols-[1.1fr_0.9fr]">
           <DashboardCard accent="learning">
             <SectionHeader
               eyebrow="Current Learning Plan"
@@ -886,36 +952,10 @@ export default async function LearningPage() {
           </DashboardCard>
         </section>
 
-        <LearningGoalBuilder />
-
-        <GuidanceCounselorMode />
-
-        <LearningPathTemplates templates={learningPathTemplates} />
-
-        <div id="achievements" className="scroll-mt-24">
-          <AchievementEnginePanel achievements={achievementUnlocks} />
-        </div>
-
         <section id="certificates" className="grid scroll-mt-24 gap-4 xl:grid-cols-[0.9fr_1.1fr]">
           <CertificatePreviewPanel certificates={learningCertificates} />
           <LearnerPortfolioPanel portfolio={learnerPortfolio} />
         </section>
-
-        {parentDashboard.learners.length > 0 ? (
-          <div id="parent-view" className="scroll-mt-24">
-            <ParentDashboardPanel dashboard={parentDashboard} />
-          </div>
-        ) : null}
-
-        {demoModeEnabled ? <StudyPlannerPanel planner={mockStudyPlanner} /> : null}
-
-        {demoModeEnabled ? <UploadFoundationPanel uploads={mockLearningUploads} /> : null}
-
-        <AISpecialistsPanel specialists={learningSpecialists} />
-
-        <div id="feedback" className="scroll-mt-24">
-          <BetaFeedbackPanel />
-        </div>
 
         <section className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
           <DashboardCard accent="learning">
@@ -978,6 +1018,33 @@ export default async function LearningPage() {
             ) : null}
           </div>
         </DashboardCard>
+
+        {isAdmin ? (
+          <section className="grid gap-6 rounded-2xl border border-yellow-300/30 bg-yellow-300/5 p-4">
+            <SectionHeader
+              eyebrow="Admin"
+              title="Learning operations"
+              description="Protected administrator tooling for review, diagnostics, orchestration, content, and planning."
+            />
+
+            <PrivateBetaPanels beta={privateBeta} />
+            <LearningAIOrchestrationPanel orchestration={aiOrchestration} />
+            <LearningIntelligencePanel snapshot={learningIntelligence} />
+            <LearningKnowledgePanel knowledge={knowledgeDashboard} />
+            <LearningContentIntelligencePanel content={learningDashboardContent} />
+            <LearningGoalBuilder />
+            <GuidanceCounselorMode />
+            <LearningPathTemplates templates={learningPathTemplates} />
+            <AchievementEnginePanel achievements={achievementUnlocks} />
+            {parentDashboard.learners.length > 0 ? (
+              <ParentDashboardPanel dashboard={parentDashboard} />
+            ) : null}
+            {demoModeEnabled ? <StudyPlannerPanel planner={mockStudyPlanner} /> : null}
+            {demoModeEnabled ? <UploadFoundationPanel uploads={mockLearningUploads} /> : null}
+            <AISpecialistsPanel specialists={learningSpecialists} />
+            <BetaFeedbackPanel />
+          </section>
+        ) : null}
       </div>
     </main>
   );

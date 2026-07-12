@@ -39,17 +39,17 @@ export default function ProFeatureGate({
     <section className="beast-card border-[#38bdf8]/40 bg-[#0f172a]">
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div>
-          <div className="text-sm font-semibold text-[#38bdf8]">Pro Preview</div>
+          <div className="text-sm font-semibold text-[#38bdf8]">Feature Preview</div>
           <h2 className="mt-2 text-2xl font-bold">
             {previewTitle || `${featureLabel} is a Pro feature`}
           </h2>
           <p className="mt-2 max-w-3xl text-sm text-[#c7cfdb]">
             {previewDescription ||
-              "Preview what this feature unlocks, then upgrade when you are ready."}
+              "Preview the planned experience while the current Member product remains open."}
           </p>
         </div>
-        <Link href="/dashboard/money/billing" className="beast-button-secondary w-fit">
-          View Upgrade Options
+        <Link href="/dashboard/money" className="beast-button-secondary w-fit">
+          Open BeastMoney
         </Link>
       </div>
 

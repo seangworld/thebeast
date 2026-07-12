@@ -14,7 +14,7 @@ export {
 export const USER_ROLES = ["user", "beta", "admin"] as const;
 export type UserRole = (typeof USER_ROLES)[number];
 
-export const ADMIN_VIEW_MODES = ["admin", "pro", "free"] as const;
+export const ADMIN_VIEW_MODES = ["admin", "member"] as const;
 export type AdminViewMode = (typeof ADMIN_VIEW_MODES)[number];
 export const ADMIN_VIEW_MODE_STORAGE_KEY = "beast_admin_view_mode";
 export const ADMIN_VIEW_MODE_EVENT = "beast-admin-view-mode-change";
@@ -63,6 +63,8 @@ export function normalizeRole(role: unknown): UserRole {
 }
 
 export function normalizeAdminViewMode(mode: unknown): AdminViewMode {
+  if (mode === "pro" || mode === "free") return "member";
+
   return ADMIN_VIEW_MODES.includes(mode as AdminViewMode)
     ? (mode as AdminViewMode)
     : "admin";
@@ -90,12 +92,8 @@ export function resolveEffectiveEntitlementContext(
     return realContext;
   }
 
-  if (adminViewMode === "free") {
+  if (adminViewMode === "member") {
     return { plan: "free", role: "user" };
-  }
-
-  if (adminViewMode === "pro") {
-    return { plan: "pro", role: "user" };
   }
 
   return realContext;
@@ -122,8 +120,5 @@ export function hasEntitlement(
     return true;
   }
 
-  const requiredPlan = FEATURE_ENTITLEMENTS[feature].requiredPlan;
-  if (requiredPlan === "free") return true;
-
-  return entitlementContext.plan === "pro";
+  return Boolean(FEATURE_ENTITLEMENTS[feature]);
 }

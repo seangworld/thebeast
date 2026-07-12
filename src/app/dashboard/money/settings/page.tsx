@@ -8,10 +8,8 @@ import {
   normalizeDebtStrategy,
   type DebtStrategy,
 } from "@/lib/debtStrategies";
-import { useEntitlements } from "@/lib/hooks/useEntitlements";
 
 export default function SettingsPage() {
-  const entitlements = useEntitlements();
   const [startingBalance, setStartingBalance] = useState(500);
   const [buffer, setBuffer] = useState(500);
   const [lookaheadDays, setLookaheadDays] = useState(30);
@@ -169,34 +167,6 @@ export default function SettingsPage() {
             <p className="text-sm text-green-300">{message}</p>
           </div>
         )}
-
-        <section className="beast-card">
-          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-            <div>
-              <h2 className="text-xl font-bold">Membership</h2>
-              <p className="mt-1 text-sm text-[#7f8da3]">
-                Pro unlocks Velocity Planner, Beast Advisor, and future scenario
-                planning tools.
-              </p>
-            </div>
-            <div className="w-fit rounded border border-[#38bdf8]/40 bg-[#38bdf8]/10 px-3 py-1 text-sm font-semibold text-[#38bdf8]">
-              {entitlements.loading
-                ? "Checking membership..."
-                : entitlements.context.plan === "pro"
-                ? "Pro Access"
-                : "Free Access"}
-            </div>
-          </div>
-          {entitlements.context.plan === "free" ? (
-            <div className="mt-4 rounded-lg border border-[#2a3242] bg-[#111827] p-4 text-sm text-[#c7cfdb]">
-              Upgrade to Pro from the{" "}
-              <Link href="/dashboard/money/billing" className="text-[#38bdf8] underline">
-                Billing page
-              </Link>
-              . Free features remain available.
-            </div>
-          ) : null}
-        </section>
 
         {/* CASH SETTINGS */}
         <section className="beast-card">

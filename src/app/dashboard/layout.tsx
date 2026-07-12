@@ -14,7 +14,7 @@ import {
   type ModuleKey,
 } from "@/app/components/design/DashboardPrimitives";
 import {
-  beastModuleNavigation,
+  getBeastModuleNavigationForPersona,
   type ModuleChildNavItem,
   type ModuleNavSection,
 } from "@/lib/moduleNavigation";
@@ -31,13 +31,13 @@ import {
 } from "@/lib/learning/onboardingCompletion";
 
 const learningPrimaryNavigation: ModuleNavSection[] = [
-  { label: "Profile", href: "/dashboard/profile", module: "beastos" },
+  { label: "Home", href: "/dashboard/learning", module: "learning" },
   { label: "Today", href: "/dashboard/today", module: "learning" },
-  { label: "Learning Path", href: "/dashboard/learning", module: "learning" },
-  { label: "Activities", href: "/dashboard/learning/activities", module: "learning" },
-  { label: "AI Tutor", href: "/dashboard/learning#ai-tutor", module: "learning" },
+  { label: "Continue Learning", href: "/dashboard/learning/activities", module: "learning" },
+  { label: "Learning Path", href: "/dashboard/learning#learning-path", module: "learning" },
   { label: "Progress", href: "/dashboard/learning#progress", module: "learning" },
   { label: "Achievements", href: "/dashboard/learning#achievements", module: "learning" },
+  { label: "Profile", href: "/dashboard/profile", module: "beastos" },
 ];
 
 const learningSettingsNavigation: ModuleNavSection[] = [
@@ -79,6 +79,7 @@ export default function DashboardLayout({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [expandedModule, setExpandedModule] = useState<ModuleKey | null>(null);
   const [learningOnlyNavigation, setLearningOnlyNavigation] = useState(false);
+  const [isAdminPersona, setIsAdminPersona] = useState(false);
   const [resolvingOnboarding, setResolvingOnboarding] = useState(true);
   const [dashboardGuardResolved, setDashboardGuardResolved] = useState(false);
   const [onboardingDiagnosticError, setOnboardingDiagnosticError] = useState("");
@@ -92,9 +93,10 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const router = useRouter();
   const workspaceModule = getWorkspaceModule(pathname);
+  const personaModuleNavigation = getBeastModuleNavigationForPersona(isAdminPersona);
   const onboardingPath = "/dashboard/onboarding";
   const activeExpandableModule =
-    beastModuleNavigation.find(
+    personaModuleNavigation.find(
       (item) => item.module === workspaceModule && item.children?.length
     )?.module || null;
 
@@ -312,6 +314,7 @@ export default function DashboardLayout({
         gradeLevel: primaryLearningProfile?.learning_style,
       });
 
+      setIsAdminPersona(profile?.role === "admin");
       setLearningOnlyNavigation(useLearningOnlyNavigation);
       setDashboardGuardResolved(true);
 
@@ -582,7 +585,7 @@ export default function DashboardLayout({
                       Beast Modules
                     </div>
                   ) : null}
-                  {beastModuleNavigation.map((item) => (
+                  {personaModuleNavigation.map((item) => (
                     <ExpandableModuleNavItem key={item.label} item={item} />
                   ))}
                 </nav>

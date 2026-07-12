@@ -28,8 +28,6 @@ import {
 } from "@/lib/formatters";
 import { BEAST_MONEY_VERSION_LABEL } from "@/lib/appVersion";
 import { getDebtStrategyLabel, isDebtStrategy } from "@/lib/debtStrategies";
-import { useEntitlements } from "@/lib/hooks/useEntitlements";
-import ProFeatureGate from "@/app/components/ProFeatureGate";
 
 type SnapshotValue = {
   label: string;
@@ -123,9 +121,6 @@ function formatVelocityRiskStatus(value: string) {
 }
 
 export default function VelocityPlannerPage() {
-  const entitlements = useEntitlements();
-  const canUseVelocityPlanner = entitlements.hasEntitlement("velocity_planner");
-  const canUseBeastAdvisor = entitlements.hasEntitlement("beast_advisor");
   const [debts, setDebts] = useState<any[]>([]);
   const [incomes, setIncomes] = useState<any[]>([]);
   const [bills, setBills] = useState<any[]>([]);
@@ -625,18 +620,6 @@ export default function VelocityPlannerPage() {
           </p>
         </section>
 
-        <ProFeatureGate
-          feature="velocity_planner"
-          entitled={canUseVelocityPlanner}
-          loading={entitlements.loading}
-          previewTitle="Velocity Planner is available with Pro"
-          previewDescription="Preview the Pro planning workspace for debt acceleration, recovery timing, source guardrails, and deterministic interest savings."
-          previewItems={[
-            "Recommended Velocity chunks with safety guardrails.",
-            "Target debt selection, recovery timeline, and net savings.",
-            "Beast Advisor explanations for the recommendation.",
-          ]}
-        >
         <section className="grid gap-4 lg:grid-cols-2">
           <div className="beast-card">
             <h2 className="text-xl font-bold">Velocity v2</h2>
@@ -1246,17 +1229,6 @@ export default function VelocityPlannerPage() {
                 Showing the first six projected months from the unified strategy schedule.
               </p>
             </div>
-            <ProFeatureGate
-              feature="beast_advisor"
-              entitled={canUseBeastAdvisor}
-              previewTitle="Beast Advisor is available with Pro"
-              previewDescription="Pro unlocks the read-only advisor explanation layer for Velocity recommendations."
-              previewItems={[
-                "Recommendation summary.",
-                "Plain-English rationale and risks.",
-                "Alternatives based on the engine output.",
-              ]}
-            >
             <div className="beast-card sm:col-span-2 xl:col-span-3">
               <div className="flex flex-col gap-1 border-b border-[#2a3242] pb-4">
                 <div className="text-sm text-[#38bdf8]">Read-only</div>
@@ -1326,7 +1298,6 @@ export default function VelocityPlannerPage() {
                 })}
               </div>
             </div>
-            </ProFeatureGate>
           </div>
         </section>
 
@@ -1350,7 +1321,6 @@ export default function VelocityPlannerPage() {
             ))}
           </div>
         </section>
-        </ProFeatureGate>
       </div>
     </main>
   );

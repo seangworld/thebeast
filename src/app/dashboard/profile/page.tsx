@@ -319,7 +319,7 @@ export default function ProfilePage() {
               <h1 className="beast-title">Personal Hub</h1>
               <p className="beast-subtitle">
                 Personal Hub is the BeastOS foundation for identity, family,
-                membership, preferences, privacy, permissions, connected
+                preferences, privacy, permissions, connected
                 accounts, AI context, and notifications.
               </p>
               <p className="text-sm font-semibold text-indigo-100">
@@ -534,23 +534,21 @@ export default function ProfilePage() {
               />
             </DashboardCard>
 
-            <DashboardCard accent="purple">
-              <SectionHeader
-                eyebrow="Membership"
-                title={
-                  entitlements.loading
-                    ? "Checking membership"
-                    : `${formatLabel(entitlements.context.plan)} plan`
-                }
-                description={
-                  entitlements.loading
-                    ? "Membership context is loading from BeastOS services."
-                    : `${formatLabel(
-                        entitlements.membership.status
-                      )} membership from ${entitlements.membership.source}.`
-                }
-              />
-            </DashboardCard>
+            {entitlements.isAdmin ? (
+              <DashboardCard accent="purple">
+                <SectionHeader
+                  eyebrow="Admin"
+                  title="Membership context"
+                  description={
+                    entitlements.loading
+                      ? "Membership context is loading from BeastOS services."
+                      : `${formatLabel(
+                          entitlements.membership.status
+                        )} membership from ${entitlements.membership.source}.`
+                  }
+                />
+              </DashboardCard>
+            ) : null}
 
             <DashboardCard accent="documents">
               <SectionHeader
@@ -564,7 +562,7 @@ export default function ProfilePage() {
               <SectionHeader
                 eyebrow="Protected Context"
                 title="You control this information"
-                description="Personal Hub separates editable account context from authentication and billing records."
+                description="Personal Hub separates editable account context from authentication records."
               />
             </DashboardCard>
           </div>
@@ -579,7 +577,7 @@ export default function ProfilePage() {
           <FoundationStatus
             label="Permissions"
             value={formatLabel(entitlements.context.role)}
-            detail="Role and membership context provide the first shared permission foundation."
+            detail="Role context provides the first shared permission foundation."
           />
           <FoundationStatus
             label="Connected Accounts"

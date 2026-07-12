@@ -58,6 +58,28 @@ export const beastLearningNavigation: ModuleNavSection = {
   ],
 };
 
+export const memberBeastLearningNavigation: ModuleNavSection = {
+  label: "BeastLearning",
+  href: "/dashboard/learning",
+  module: "learning",
+  children: [
+    { label: "Home", href: "/dashboard/learning" },
+    { label: "Today", href: "/dashboard/today" },
+    { label: "Continue Learning", href: "/dashboard/learning/activities" },
+    { label: "Learning Path", href: "/dashboard/learning#learning-path" },
+    { label: "Progress", href: "/dashboard/learning#progress" },
+    { label: "Achievements", href: "/dashboard/learning#achievements" },
+    { label: "Profile", href: "/dashboard/profile" },
+  ],
+};
+
+export const memberBeastMoneyNavigation: ModuleNavSection = {
+  ...beastMoneyNavigation,
+  children: beastMoneyNavigation.children?.filter(
+    (item) => item.label !== "Billing"
+  ),
+};
+
 export const beastModuleNavigation: ModuleNavSection[] = [
   beastMoneyNavigation,
   beastLearningNavigation,
@@ -67,6 +89,20 @@ export const beastModuleNavigation: ModuleNavSection[] = [
   { label: "BeastHome", module: "home", comingSoon: true },
   { label: "BeastDocuments", module: "documents", comingSoon: true },
 ];
+
+export const memberBeastModuleNavigation: ModuleNavSection[] = [
+  memberBeastMoneyNavigation,
+  memberBeastLearningNavigation,
+  { label: "BeastHealth", module: "health", comingSoon: true },
+  { label: "BeastProjects", module: "projects", comingSoon: true },
+  { label: "BeastGoals", module: "goals", comingSoon: true },
+  { label: "BeastHome", module: "home", comingSoon: true },
+  { label: "BeastDocuments", module: "documents", comingSoon: true },
+];
+
+export function getBeastModuleNavigationForPersona(isAdmin: boolean) {
+  return isAdmin ? beastModuleNavigation : memberBeastModuleNavigation;
+}
 
 export const sharedNavigation: ModuleNavSection[] = [
   { label: "Calendar", href: "/dashboard/calendar", module: "calendar" },

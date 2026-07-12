@@ -16,6 +16,11 @@ import {
   resolveEntitlementContext,
 } from "../src/lib/entitlements";
 import {
+  getBeastModuleNavigationForPersona,
+  memberBeastLearningNavigation,
+  memberBeastMoneyNavigation,
+} from "../src/lib/moduleNavigation";
+import {
   DEFAULT_FREE_MEMBERSHIP,
   buildCheckoutSessionCreateParams,
   getMembershipEntitlementPlan,
@@ -3576,13 +3581,7 @@ test("entitlement helpers resolve plans and roles", () => {
   });
 });
 
-test("hasEntitlement gates pro features while keeping free features open", () => {
-  const proMembership: MembershipSnapshot = {
-    ...DEFAULT_FREE_MEMBERSHIP,
-    plan: "pro",
-    source: "database",
-  };
-
+test("current member experience keeps approved planning features open", () => {
   assert.equal(
     hasEntitlement(
       { role: "user", membership: DEFAULT_FREE_MEMBERSHIP },
@@ -3595,13 +3594,6 @@ test("hasEntitlement gates pro features while keeping free features open", () =>
       { role: "user", membership: DEFAULT_FREE_MEMBERSHIP },
       "velocity_planner"
     ),
-    false
-  );
-  assert.equal(
-    hasEntitlement(
-      { role: "user", membership: proMembership },
-      "velocity_planner"
-    ),
     true
   );
   assert.equal(hasEntitlement({ role: "admin" }, "beast_advisor"), true);
@@ -3609,7 +3601,7 @@ test("hasEntitlement gates pro features while keeping free features open", () =>
 });
 
 test("admin view mode changes effective entitlements without changing real context", () => {
-  assert.deepEqual([...ADMIN_VIEW_MODES], ["admin", "pro", "free"]);
+  assert.deepEqual([...ADMIN_VIEW_MODES], ["admin", "member"]);
 
   const adminProfile = { role: "admin", membership: DEFAULT_FREE_MEMBERSHIP };
 
@@ -3621,15 +3613,11 @@ test("admin view mode changes effective entitlements without changing real conte
     plan: "pro",
     role: "admin",
   });
-  assert.deepEqual(resolveEffectiveEntitlementContext(adminProfile, "pro"), {
-    plan: "pro",
-    role: "user",
-  });
-  assert.deepEqual(resolveEffectiveEntitlementContext(adminProfile, "free"), {
+  assert.deepEqual(resolveEffectiveEntitlementContext(adminProfile, "member"), {
     plan: "free",
     role: "user",
   });
-  assert.equal(isAdminViewSimulationActive(adminProfile, "free"), true);
+  assert.equal(isAdminViewSimulationActive(adminProfile, "member"), true);
   assert.equal(isAdminViewSimulationActive(adminProfile, "admin"), false);
 });
 
@@ -3646,12 +3634,8 @@ test("admin view mode has priority over database membership", () => {
     membership: databaseProMembership,
   };
 
-  assert.deepEqual(resolveEffectiveEntitlementContext(adminProfile, "free"), {
+  assert.deepEqual(resolveEffectiveEntitlementContext(adminProfile, "member"), {
     plan: "free",
-    role: "user",
-  });
-  assert.deepEqual(resolveEffectiveEntitlementContext(adminProfile, "pro"), {
-    plan: "pro",
     role: "user",
   });
 });
@@ -3664,11 +3648,36 @@ test("admin view mode is ignored for non-admin users", () => {
   };
   const proUser = { role: "user", membership: proMembership };
 
-  assert.deepEqual(resolveEffectiveEntitlementContext(proUser, "free"), {
+  assert.deepEqual(resolveEffectiveEntitlementContext(proUser, "member"), {
     plan: "pro",
     role: "user",
   });
-  assert.equal(isAdminViewSimulationActive(proUser, "free"), false);
+  assert.equal(isAdminViewSimulationActive(proUser, "member"), false);
+});
+
+test("member navigation hides admin and monetization surfaces", () => {
+  assert.deepEqual(
+    memberBeastLearningNavigation.children?.map((item) => item.label),
+    [
+      "Home",
+      "Today",
+      "Continue Learning",
+      "Learning Path",
+      "Progress",
+      "Achievements",
+      "Profile",
+    ]
+  );
+  assert.equal(
+    memberBeastMoneyNavigation.children?.some((item) => item.label === "Billing"),
+    false
+  );
+  assert.equal(
+    getBeastModuleNavigationForPersona(true)
+      .find((item) => item.label === "BeastMoney")
+      ?.children?.some((item) => item.label === "Billing"),
+    true
+  );
 });
 
 test("membership entitlement plan falls back to Free for inactive subscriptions", () => {
