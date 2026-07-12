@@ -1,4 +1,5 @@
 import type { ConceptMasteryInput, MasteryProfile } from "./types";
+import type { LearnerSkillEvidence } from "./learnerSkillModel";
 
 function clamp(value: number) {
   return Math.max(0, Math.min(100, Math.round(value)));
@@ -45,5 +46,76 @@ export function calculateMasteryProfile(inputs: ConceptMasteryInput[]): MasteryP
     weakConcepts,
     strongestConcepts,
     suggestedReviewTopics: weakConcepts.length ? weakConcepts : concepts.slice(0, 2).map((concept) => concept.conceptId),
+  };
+}
+
+export type MasteryScoringInput = {
+  conceptId: string;
+  evidence: LearnerSkillEvidence[];
+  currentDate: string;
+};
+
+export type MasteryScoringResult = {
+  conceptId: string;
+  checkScore: number;
+  practiceScore: number;
+  recencyScore: number;
+  masteryPercent: number;
+  confidence: "low" | "medium" | "high";
+};
+
+function averageScore(values: number[]) {
+  return values.length
+    ? clamp(values.reduce((sum, value) => sum + value, 0) / values.length)
+    : 0;
+}
+
+function daysBetween(currentDate: string, observedAt: string) {
+  const current = Date.parse(`${currentDate}T00:00:00Z`);
+  const observed = Date.parse(`${observedAt}T00:00:00Z`);
+  if (!Number.isFinite(current) || !Number.isFinite(observed)) return 30;
+  return Math.max(0, Math.round((current - observed) / 86400000));
+}
+
+export function calculateEvidenceMasteryScore({
+  conceptId,
+  evidence,
+  currentDate,
+}: MasteryScoringInput): MasteryScoringResult {
+  const checkKinds = new Set<LearnerSkillEvidence["kind"]>([
+    "placement",
+    "lesson-check",
+    "quiz",
+  ]);
+  const practiceKinds = new Set<LearnerSkillEvidence["kind"]>([
+    "guided-practice",
+    "reflection",
+    "review",
+  ]);
+  const checkScore = averageScore(
+    evidence
+      .filter((item) => checkKinds.has(item.kind))
+      .map((item) => item.scorePercent ?? 0)
+  );
+  const practiceScore = averageScore(
+    evidence
+      .filter((item) => practiceKinds.has(item.kind))
+      .map((item) => item.scorePercent ?? 0)
+  );
+  const newestEvidence = evidence
+    .slice()
+    .sort((a, b) => b.observedAt.localeCompare(a.observedAt))[0];
+  const recencyScore = newestEvidence
+    ? clamp(100 - daysBetween(currentDate, newestEvidence.observedAt) * 5)
+    : 0;
+  const masteryPercent = clamp(checkScore * 0.45 + practiceScore * 0.35 + recencyScore * 0.2);
+
+  return {
+    conceptId,
+    checkScore,
+    practiceScore,
+    recencyScore,
+    masteryPercent,
+    confidence: confidenceFrom(masteryPercent),
   };
 }

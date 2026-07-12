@@ -133,7 +133,10 @@ import { mockLearningKnowledgeModel } from "../src/lib/learning/knowledgeGraph";
 import { mockLearningMemory } from "../src/lib/learning/learningMemory";
 import { learningLessons } from "../src/lib/learning/lessons";
 import { learningLibraryMaterials } from "../src/lib/learning/library";
-import { calculateMasteryProfile } from "../src/lib/learning/mastery";
+import {
+  calculateEvidenceMasteryScore,
+  calculateMasteryProfile,
+} from "../src/lib/learning/mastery";
 import {
   buildLearnerSkillState,
   skillStateHasEvidence,
@@ -1031,6 +1034,77 @@ test("learner skill model records confidence and evidence state", () => {
   assert.equal(skillStateHasEvidence(state), true);
   assert.equal(noEvidenceState.state, "new");
   assert.equal(skillStateHasEvidence(noEvidenceState), false);
+});
+
+test("mastery scoring combines checks practice and recency", () => {
+  const current = calculateEvidenceMasteryScore({
+    conceptId: "evidence-backed-skill",
+    currentDate: "2026-07-12",
+    evidence: [
+      {
+        id: "lesson-check",
+        kind: "lesson-check",
+        sourceId: "check-1",
+        scorePercent: 90,
+        observedAt: "2026-07-12",
+        summary: "Passed a lesson check.",
+      },
+      {
+        id: "practice",
+        kind: "guided-practice",
+        sourceId: "practice-1",
+        scorePercent: 80,
+        observedAt: "2026-07-12",
+        summary: "Completed practice with support.",
+      },
+    ],
+  });
+  const stale = calculateEvidenceMasteryScore({
+    conceptId: "evidence-backed-skill",
+    currentDate: "2026-07-12",
+    evidence: [
+      {
+        id: "old-quiz",
+        kind: "quiz",
+        sourceId: "quiz-1",
+        scorePercent: 90,
+        observedAt: "2026-06-22",
+        summary: "Old quiz evidence.",
+      },
+      {
+        id: "old-practice",
+        kind: "guided-practice",
+        sourceId: "practice-1",
+        scorePercent: 80,
+        observedAt: "2026-06-22",
+        summary: "Old practice evidence.",
+      },
+    ],
+  });
+  const missingPractice = calculateEvidenceMasteryScore({
+    conceptId: "evidence-backed-skill",
+    currentDate: "2026-07-12",
+    evidence: [
+      {
+        id: "quiz-only",
+        kind: "quiz",
+        sourceId: "quiz-1",
+        scorePercent: 90,
+        observedAt: "2026-07-12",
+        summary: "Quiz-only check.",
+      },
+    ],
+  });
+
+  assert.equal(current.checkScore, 90);
+  assert.equal(current.practiceScore, 80);
+  assert.equal(current.recencyScore, 100);
+  assert.equal(current.masteryPercent, 89);
+  assert.equal(current.confidence, "high");
+  assert.equal(stale.recencyScore < current.recencyScore, true);
+  assert.equal(stale.masteryPercent < current.masteryPercent, true);
+  assert.equal(missingPractice.practiceScore, 0);
+  assert.equal(missingPractice.masteryPercent < current.masteryPercent, true);
 });
 
 test("learning dependency graph computes blocked and unlocked concepts", () => {
