@@ -39,11 +39,11 @@ export default function ReleaseNotesPage() {
           <div className="space-y-4 text-sm">
             <div>
               <h3 className="font-semibold text-[#c7cfdb]">
-                Education-Path Guidance
+                Education-Path Mentoring
               </h3>
               <ul className="space-y-2 pl-4">
                 <li className="text-[#a5b4c7]">
-                  <span className="text-blue-400">✓</span> Added guidance
+                  <span className="text-blue-400">✓</span> Added mentor
                   assumptions, planning boundaries, Learning Readiness signals,
                   and next recommended actions across supported goal types.
                 </li>
@@ -59,7 +59,7 @@ export default function ReleaseNotesPage() {
                 </li>
                 <li className="text-[#a5b4c7]">
                   <span className="text-blue-400">✓</span> Clarified that
-                  guidance-counselor mode is planning support, not official
+                  mentor mode is planning support, not official
                   school counseling, credential authority, admissions advice, or
                   employment guarantee.
                 </li>
@@ -543,7 +543,7 @@ export default function ReleaseNotesPage() {
                   <span className="text-blue-400">✓</span> Completed the
                   BeastLearning workspace, goal builder, starter plan stub,
                   study session command card, progress signals, recommendations,
-                  templates, guidance counselor mode, and completion surfaces.
+                  templates, mentor mode, and completion surfaces.
                 </li>
                 <li className="text-[#a5b4c7]">
                   <span className="text-blue-400">✓</span> Added deterministic

@@ -73,9 +73,9 @@ const instructionsByType: Record<LearningActivityType, string> = {
   Quiz:
     "Check recall. Uncertainty is useful here because it tells Beast what should be reviewed next.",
   "AI Tutor Challenge":
-    "Use your Tutor as a coach. Ask for guidance that helps you think, then capture the takeaway.",
+    "Use your Tutor as a coach. Ask for help that keeps you thinking, then capture the takeaway.",
   Reflection:
-    "Pause and make the learning visible. This helps your Guide choose the next step more carefully.",
+    "Pause and make the learning visible. This helps your Mentor choose the next step more carefully.",
 };
 
 export function normalizeLearningActivityType(

@@ -25,7 +25,7 @@ export default function LearningExperiencePanel({
     <DashboardCard accent="learning">
       <SectionHeader
         eyebrow="How I'm Doing"
-        title="What your Guide is noticing"
+        title="What your Mentor is noticing"
         description="A quick look at your effort, review needs, and momentum so you know what to focus on next."
         action={<ModuleBadge module="learning" label="Support" />}
       />
@@ -176,7 +176,7 @@ export default function LearningExperiencePanel({
 
           <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
             <div className="text-xs font-bold uppercase text-[#7f8da3]">
-              What your Guide remembers
+              What your Mentor remembers
             </div>
             <h3 className="mt-1 font-black text-white">
               {experience.learnerProfile.learnerName}

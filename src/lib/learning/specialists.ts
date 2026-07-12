@@ -4,7 +4,7 @@ export const learningSpecialists: LearningSpecialist[] = [
   { id: "tutor", role: "Tutor", description: "Explains concepts step by step.", available: false },
   { id: "study-coach", role: "Study Coach", description: "Helps plan study rhythm.", available: false },
   { id: "homework-coach", role: "Homework Coach", description: "Guides homework with hints and reasoning.", available: false },
-  { id: "guidance-counselor", role: "Guidance Counselor", description: "Supports path planning and long-term goals.", available: false },
+  { id: "mentor", role: "Mentor", description: "Supports path planning and long-term goals.", available: false },
   { id: "career-mentor", role: "Career Mentor", description: "Connects learning to career direction.", available: false },
   { id: "parent-assistant", role: "Parent Assistant", description: "Helps guardians support learners.", available: false },
   { id: "certification-coach", role: "Certification Coach", description: "Organizes exam prep.", available: false },

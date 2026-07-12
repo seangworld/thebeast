@@ -58,7 +58,7 @@ function tutorStepTitle(step: TutorStep) {
 
 function tutorStepMessage(step: TutorStep, learnerName: string, subject: string) {
   if (step === "warmup") {
-    return `Good morning ${learnerName}. Your BeastLearning Guide sent this ${subject} lesson to the Tutor because instruction is the next useful step. Before we continue, tell me what you already know about this idea.`;
+    return `Good morning ${learnerName}. Your BeastLearning Mentor sent this ${subject} lesson to the Tutor because instruction is the next useful step. Before we continue, tell me what you already know about this idea.`;
   }
   if (step === "teach") {
     return "Good. I’ll teach the next piece, then I’ll ask you one meaningful question.";
@@ -75,7 +75,7 @@ function tutorStepMessage(step: TutorStep, learnerName: string, subject: string)
   if (step === "reflect") {
     return "Tell me what clicked or what still feels uncertain. I’ll remember it so the next lesson fits you better.";
   }
-  return "Here is what your work shows. If you are ready, I’ll save this lesson and help your Guide choose what comes next.";
+  return "Here is what your work shows. If you are ready, I’ll save this lesson and help your Mentor choose what comes next.";
 }
 
 function confidenceLabel(value: string) {
@@ -96,7 +96,7 @@ function adaptiveTutorMessage({
   askedForHelp: boolean;
 }) {
   if (progress.mastered) {
-    return `You are showing enough understanding to keep moving. I will still use your reflection to help your Guide choose the next lesson.`;
+    return `You are showing enough understanding to keep moving. I will still use your reflection to help your Mentor choose the next lesson.`;
   }
 
   if (!practiceComplete) {
@@ -110,7 +110,7 @@ function adaptiveTutorMessage({
   }
 
   if (progress.recommendedReview) {
-    return "Your work is close, but a careful review will help this stick before your Guide moves you forward.";
+    return "Your work is close, but a careful review will help this stick before your Mentor moves you forward.";
   }
 
   return "Your answers, practice, confidence, and reflection are all helping me adapt the next step.";
@@ -676,7 +676,7 @@ export function LessonEngine({
                 {activePracticeAnswered && !activePracticeCorrect ? (
                   <div className="rounded-xl border border-blue-300/35 bg-blue-300/10 p-4 text-sm leading-6 text-blue-100">
                     <strong className="text-white">Tutor plan:</strong> I am
-                    slowing down here because this is the skill your Guide sent
+                    slowing down here because this is the skill your Mentor sent
                     us to strengthen. Ask for another hint, then try the same
                     idea again before we move to the check-in.
                   </div>
@@ -803,7 +803,7 @@ export function LessonEngine({
                   <p className="mt-3 text-sm leading-6 text-[#9aa7b8]">
                     I used your practice, check-in answer, confidence, and reflection
                     to decide whether this should become new learning or review.
-                    I will hand that back to your Guide so your longer plan keeps
+                    I will hand that back to your Mentor so your longer plan keeps
                     fitting you.
                   </p>
                   <p className="mt-3 rounded-lg border border-indigo-300/30 bg-indigo-300/10 p-3 text-sm font-semibold leading-6 text-indigo-100">

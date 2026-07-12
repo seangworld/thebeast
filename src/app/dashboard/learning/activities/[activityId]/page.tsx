@@ -82,7 +82,7 @@ export default function LearningActivityRunnerPage() {
       if (activityResult.error) throw activityResult.error;
 
       if (!activityResult.data) {
-        setMessage("Your Guide could not find that lesson for this account.");
+        setMessage("Your Mentor could not find that lesson for this account.");
         setActivity(null);
         setLoading(false);
         return;
@@ -184,8 +184,8 @@ export default function LearningActivityRunnerPage() {
       await loadActivity();
       setMessage(
         nextQueued
-          ? `Nice work. ${nextQueued.title} is ready when your Guide brings you back.`
-          : "Nice work. Return to Today and your Guide will recommend what comes next."
+          ? `Nice work. ${nextQueued.title} is ready when your Mentor brings you back.`
+          : "Nice work. Return to Today and your Mentor will recommend what comes next."
       );
     } catch (error) {
       setMessage(
@@ -209,9 +209,9 @@ export default function LearningActivityRunnerPage() {
                 {activity?.title || "Time with your Tutor"}
               </h1>
               <p className="beast-subtitle">
-                Your Guide brought you here for instruction. The Tutor will
+                Your Mentor brought you here for instruction. The Tutor will
                 teach, practice, check understanding, repair gaps, and hand what
-                changed back to your Guide.
+                changed back to your Mentor.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -245,7 +245,7 @@ export default function LearningActivityRunnerPage() {
                 <SectionHeader
                   eyebrow="Lesson Saved"
                   title="Nice work. Your progress is saved."
-                  description="Your Tutor saved the lesson, and your Guide will remember what changed before choosing the next helpful step."
+                  description="Your Tutor saved the lesson, and your Mentor will remember what changed before choosing the next helpful step."
                   action={<ModuleBadge module="learning" label="Saved" />}
                 />
                 <div className="mt-5 flex flex-wrap gap-3">
@@ -301,7 +301,7 @@ export default function LearningActivityRunnerPage() {
             <SectionHeader
               eyebrow="Let’s find the right lesson"
               title="This lesson is not available"
-              description="Your Guide could not open this lesson for this account. Go back to your learning steps and choose the one that is ready."
+              description="Your Mentor could not open this lesson for this account. Go back to your learning steps and choose the one that is ready."
               action={<Link href="/dashboard/learning/activities" className="beast-button">My Steps</Link>}
             />
           </DashboardCard>

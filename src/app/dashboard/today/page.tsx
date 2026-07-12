@@ -349,7 +349,7 @@ export default function TodayPage() {
       setMessage(
         error instanceof Error
           ? error.message
-          : "Your Guide had trouble opening today's learning plan. Try again in a moment."
+          : "Your Mentor had trouble opening today's learning plan. Try again in a moment."
       );
     } finally {
       setLoading(false);
@@ -427,7 +427,7 @@ export default function TodayPage() {
       setMessage(
         error instanceof Error
           ? error.message
-          : "Your Guide had trouble choosing the next lesson. Try again in a moment."
+          : "Your Mentor had trouble choosing the next lesson. Try again in a moment."
       );
     } finally {
       setGenerating(false);
@@ -478,12 +478,12 @@ export default function TodayPage() {
                 {state.name ? `${getBeastGreeting(now)}, ${state.name}` : "Today"}
               </h1>
               <p className="beast-subtitle">
-                Your Guide has one clear next step ready for you.
+                Your Mentor has one clear next step ready for you.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
               <Link href="/dashboard/learning" className="beast-button">
-                My Guide
+                My Mentor
               </Link>
               <Link href="/dashboard/timeline" className="beast-button-secondary">
                 View Timeline
@@ -540,14 +540,14 @@ export default function TodayPage() {
 
         <DashboardCard accent="learning">
           <SectionHeader
-            eyebrow="Your Guide Recommends"
-            title={readyActivity?.title || "Ask your Guide for the first step"}
+            eyebrow="Your Mentor Recommends"
+            title={readyActivity?.title || "Ask your Mentor for the first step"}
             description={
               readyActivity
                 ? `This is the best next step for today. It should take about ${readyActivity.estimated_minutes} minutes.`
                 : state.activities.length > 0
-                  ? "You finished the current set. Ask your Guide for the next learning step."
-                  : "Your Guide can prepare the first learning step from your path."
+                  ? "You finished the current set. Ask your Mentor for the next learning step."
+                  : "Your Mentor can prepare the first learning step from your path."
             }
             action={<ModuleBadge module="learning" label="Next Step" />}
           />
@@ -574,10 +574,10 @@ export default function TodayPage() {
               {readyActivity
                 ? "It matches where you are now and gives the Tutor the right starting point."
                 : state.activities.length > 0
-                  ? "Your Guide is ready to choose the next step."
+                  ? "Your Mentor is ready to choose the next step."
                   : loading
                     ? "Your learning context is loading."
-                    : "Start by asking your Guide to prepare a lesson."}
+                    : "Start by asking your Mentor to prepare a lesson."}
             </p>
           </div>
         </DashboardCard>
@@ -587,7 +587,7 @@ export default function TodayPage() {
             <SectionHeader
               eyebrow="Today"
               title="Your learning steps"
-              description="Focus on the step your Guide recommends. The rest is here only so you can review or return later."
+              description="Focus on the step your Mentor recommends. The rest is here only so you can review or return later."
             />
             <div className="mt-5 grid gap-3">
               {activityList.map((activity) => (
@@ -635,7 +635,7 @@ export default function TodayPage() {
                   <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
                     {loading
                       ? "Your learning context is loading."
-                      : "Ask your Guide above to prepare the first teaching moment."}
+                      : "Ask your Mentor above to prepare the first teaching moment."}
                   </p>
                 </div>
               ) : null}

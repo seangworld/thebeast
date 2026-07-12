@@ -128,8 +128,8 @@ export const learningPathTemplates: LearningPathTemplate[] = [
     suggestedNextStep: "Identify the next assignment, test, or confusing topic.",
   },
   {
-    id: "guidance-counselor-planning",
-    templateName: "Guidance Counselor Planning",
+    id: "mentor-planning",
+    templateName: "Mentor Planning",
     audience: "Students, families, and advisors",
     goalType: "Academic and career planning",
     milestones: [

@@ -82,7 +82,7 @@ export default function LearningActivitiesPage() {
       setMessage(
         error instanceof Error
           ? error.message
-          : "Your Guide had trouble finding your lessons. Try again in a moment."
+          : "Your Mentor had trouble finding your lessons. Try again in a moment."
       );
     } finally {
       setLoading(false);
@@ -106,12 +106,12 @@ export default function LearningActivitiesPage() {
 
   const nextAction = useMemo(() => {
     if (readyActivity) {
-      return `Your Guide chose ${readyActivity.title} because it is the next useful step in your plan.`;
+      return `Your Mentor chose ${readyActivity.title} because it is the next useful step in your plan.`;
     }
     if (activities.length > 0) {
-      return "You finished the current set. Return to Today and your Guide will decide whether to review, move ahead, or ask a new question.";
+      return "You finished the current set. Return to Today and your Mentor will decide whether to review, move ahead, or ask a new question.";
     }
-    return "Return to Today and your Guide will learn your goal before preparing the first step.";
+    return "Return to Today and your Mentor will learn your goal before preparing the first step.";
   }, [activities.length, readyActivity]);
 
   return (
@@ -121,9 +121,9 @@ export default function LearningActivitiesPage() {
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-4">
               <ModuleBadge module="learning" label="Continue" />
-              <h1 className="beast-title">{"Your Guide's Next Step"}</h1>
+              <h1 className="beast-title">{"Your Mentor's Next Step"}</h1>
               <p className="beast-subtitle">
-                Your Guide keeps the relationship and the roadmap. The Tutor
+                Your Mentor keeps the relationship and the roadmap. The Tutor
                 joins when it is time to teach, practice, check understanding,
                 or repair a gap.
               </p>
@@ -133,7 +133,7 @@ export default function LearningActivitiesPage() {
                 Today
               </Link>
               <Link href="/dashboard/learning" className="beast-button">
-                Your Guide
+                Your Mentor
               </Link>
             </div>
           </div>
@@ -166,21 +166,21 @@ export default function LearningActivitiesPage() {
               <MetricTile
                 label="Practice Credit"
                 value={String(totalXp)}
-                detail="Effort your Guide can see"
+                detail="Effort your Mentor can see"
                 icon="PC"
                 tone="yellow"
               />
               <MetricTile
                 label="Next"
                 value={String(open.length)}
-                detail="Steps your Guide prepared"
+                detail="Steps your Mentor prepared"
                 icon="A"
                 tone="green"
               />
               <MetricTile
                 label="Time together"
                 value={`${remainingMinutes} min`}
-                detail="Estimated time with Guide and Tutor"
+                detail="Estimated time with Mentor and Tutor"
                 icon="T"
                 tone="blue"
               />
@@ -191,7 +191,7 @@ export default function LearningActivitiesPage() {
                 eyebrow="Your next step"
                 title={readyActivity?.title || "Your next lesson is not ready yet"}
                 description={nextAction}
-                action={<ModuleBadge module="learning" label={readyActivity?.activity_type || "Guide"} />}
+                action={<ModuleBadge module="learning" label={readyActivity?.activity_type || "Mentor"} />}
               />
               {readyActivity ? (
                 <div className="mt-5">
@@ -205,7 +205,7 @@ export default function LearningActivitiesPage() {
               ) : (
                 <div className="mt-5">
                   <Link href="/dashboard/today" className="beast-button">
-                    Ask My Guide
+                    Ask My Mentor
                   </Link>
                 </div>
               )}
@@ -238,7 +238,7 @@ export default function LearningActivitiesPage() {
                           </span>
                           <span>{activity.estimated_minutes} min</span>
                           <span>{activity.xp} practice credit</span>
-                          <span>{activity.status === "Completed" ? "Your Guide remembers this" : "Ready when you are"}</span>
+                          <span>{activity.status === "Completed" ? "Your Mentor remembers this" : "Ready when you are"}</span>
                         </div>
                       </div>
                       <Link
@@ -260,9 +260,9 @@ export default function LearningActivitiesPage() {
                 <DashboardCard accent="learning">
                   <SectionHeader
                     eyebrow="Getting Started"
-                    title="Your Guide is ready to help"
-                    description="Open Today and your Guide will start with a conversation, learn your goal, and prepare the first step."
-                    action={<Link href="/dashboard/today" className="beast-button">Meet My Guide</Link>}
+                    title="Your Mentor is ready to help"
+                    description="Open Today and your Mentor will start with a conversation, learn your goal, and prepare the first step."
+                    action={<Link href="/dashboard/today" className="beast-button">Meet My Mentor</Link>}
                   />
                 </DashboardCard>
               ) : null}

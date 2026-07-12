@@ -246,7 +246,7 @@ const curriculumFramework = {
 
 const planningBoundaries = [
   "BeastLearning provides planning support, not official school counseling.",
-  "Guidance is educational and does not guarantee admission, employment, promotion, licensing, certification, or credential outcomes.",
+  "Mentoring is educational and does not guarantee admission, employment, promotion, licensing, certification, or credential outcomes.",
   "Recommendations should be checked against current school, employer, licensing, exam, and safety requirements.",
   "Student and minor safety requirements remain in force for every goal type, including adult certification examples.",
 ];
@@ -266,12 +266,12 @@ export function buildGuidanceCounselorRoadmap(
     estimatedTimeline: rule.estimatedTimeline,
     questionsToConsider: rule.questionsToConsider,
     nextRecommendedAction: rule.nextRecommendedAction,
-    previewLabel: "Planning Guide",
+    previewLabel: "Planning Mentor",
     assumptions: rule.assumptions,
     planningBoundaries,
     learningReadinessSignals: rule.learningReadinessSignals,
     curriculumFramework,
     tutorFlowPrinciple:
-      "Guide the learner through one tutor-like next step at a time before adding more planning detail.",
+      "Walk the learner through one tutor-like next step at a time before adding more planning detail.",
   };
 }

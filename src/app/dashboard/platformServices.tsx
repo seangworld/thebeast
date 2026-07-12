@@ -72,7 +72,7 @@ export const serviceEvents: ServiceEvent[] = [
   {
     id: "learning-guidance",
     title: "Continue learning",
-    detail: "Your Guide can bring you back to the next lesson, review, or study step.",
+    detail: "Your Mentor can bring you back to the next lesson, review, or study step.",
     dateLabel: "Upcoming",
     module: "learning",
     group: "Upcoming",

@@ -223,13 +223,13 @@ const teachingPhases: LessonEnginePhase[] = [
     label: "Tutor help",
     title: "Get coached, not just graded",
     prompt: "Ask for help to understand mistakes, try a different explanation, or decide what to review.",
-    check: "I used the Tutor's guidance.",
+    check: "I used the Tutor's help.",
   },
   {
     id: "reflection",
     label: "Reflection",
     title: "Make the learning stick",
-    prompt: "Capture what changed in your understanding and where your Guide should help next.",
+    prompt: "Capture what changed in your understanding and where your Mentor should help next.",
     check: "I wrote a reflection.",
   },
   {
@@ -358,7 +358,7 @@ function buildGenericAdaptiveLesson(activity: Pick<LearningActivityRunnerRow, "t
       "What should your Tutor explain differently next time?",
     ],
     masteryThreshold: activity.difficulty === "Advanced" ? 85 : 80,
-    recommendedNextLesson: "Continue with the next lesson your Guide chooses",
+    recommendedNextLesson: "Continue with the next lesson your Mentor chooses",
     reviewRecommendation: "Review the core idea once more before moving forward.",
   };
 }
@@ -389,7 +389,7 @@ const lessonCompletionCriteria: LessonCompletionCriterion[] = [
   },
   {
     id: "reflection-captured",
-    label: "Write one reflection so your Guide knows what changed.",
+    label: "Write one reflection so your Mentor knows what changed.",
     required: true,
   },
   {

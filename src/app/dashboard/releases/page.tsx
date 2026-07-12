@@ -9,12 +9,12 @@ const releaseNotes = [
   {
     version: `BeastLearning ${BEAST_LEARNING_VERSION}`,
     date: "July 11, 2026",
-    title: "Education-Path Guidance",
+    title: "Education-Path Mentoring",
     items: [
-      "New features: added guidance assumptions, planning boundaries, Learning Readiness signals, and next recommended actions for career, college path, certification, trade, promotion, and skill goals.",
+      "New features: added mentor assumptions, planning boundaries, Learning Readiness signals, and next recommended actions for career, college path, certification, trade, promotion, and skill goals.",
       "Curriculum model: added a subject-agnostic hierarchy from subject to objective so new teachable subjects can follow the same framework without code changes.",
       "Adult certification: improved certification study planning while preserving student and minor safety requirements.",
-      "Guardrails: guidance-counselor mode is planning support, not official school counseling, credential authority, admissions advice, or employment guarantee.",
+      "Guardrails: mentor mode is planning support, not official school counseling, credential authority, admissions advice, or employment guarantee.",
       "Breaking changes: none. Migration notes: no database migration required. Deployment: not included.",
     ],
   },
@@ -158,7 +158,7 @@ const releaseNotes = [
     date: "July 3, 2026",
     title: "BeastLearning Foundation Closeout",
     items: [
-      "Completed the BeastLearning foundation with the Learning workspace, goal builder, plan generator stub, study session command card, progress signals, recommendations, templates, guidance counselor mode, and completion surfaces.",
+      "Completed the BeastLearning foundation with the Learning workspace, goal builder, plan generator stub, study session command card, progress signals, recommendations, templates, mentor mode, and completion surfaces.",
       "Added the deterministic BeastLearning intelligence engine for knowledge modeling, mastery, dependency graph state, learning memory, weakness analysis, adaptive planning, study session generation, resource recommendations, and progress prediction.",
       `BeastOS UI: ${BEASTOS_UI_POLISH_NOTE}.`,
       "Kept the release presentation-only and rule-based: no AI calls, external APIs, database schema changes, uploads, finance changes, Stripe changes, membership changes, or entitlement changes.",

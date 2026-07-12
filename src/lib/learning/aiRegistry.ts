@@ -51,8 +51,8 @@ export const aiSpecialistRegistry: AISpecialistContract[] = [
     requiredContext: ["currentLesson", "weakAreas", "mastery"],
   }),
   specialist({
-    id: "guidance-counselor",
-    name: "Guidance Counselor",
+    id: "mentor",
+    name: "Mentor",
     description: "Maps education paths and long-term choices.",
     supportedSubjects: ["All"],
     supportedGoals: ["college path", "career path"],

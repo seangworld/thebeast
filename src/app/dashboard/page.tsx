@@ -721,7 +721,7 @@ export default function TodayPage() {
 
           <div className="space-y-4">
             <SectionHeader
-              eyebrow="Guidance"
+              eyebrow="Next Step"
               title="Where to go next"
               description="Start with Today, then use Timeline when you need the wider sequence."
             />

@@ -44,7 +44,7 @@ export default function StudySessionCommandCard({
       <SectionHeader
         eyebrow="Today"
         title="Your next learning moment"
-        description="Use this when you want a quick reminder of what your Guide is focusing on today."
+        description="Use this when you want a quick reminder of what your Mentor is focusing on today."
         action={<ModuleBadge module="learning" label={getStatusLabel(status)} />}
       />
 
@@ -123,7 +123,7 @@ export default function StudySessionCommandCard({
           {status === "completed" ? (
             <div className="rounded-xl border border-green-400/35 bg-green-400/10 p-4">
               <div className="text-xs font-bold uppercase text-green-100">
-                What your Guide noticed
+                What your Mentor noticed
               </div>
               <p className="mt-2 text-sm font-semibold leading-5 text-green-100">
                 {session.progressFeedback}

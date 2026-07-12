@@ -334,7 +334,7 @@ export type LearningSpecialistRole =
   | "Tutor"
   | "Study Coach"
   | "Homework Coach"
-  | "Guidance Counselor"
+  | "Mentor"
   | "Career Mentor"
   | "Math Coach"
   | "Science Coach"
