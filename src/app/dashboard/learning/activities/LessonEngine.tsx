@@ -57,7 +57,7 @@ function tutorStepTitle(step: TutorStep) {
 
 function tutorStepMessage(step: TutorStep, learnerName: string, subject: string) {
   if (step === "warmup") {
-    return `Good morning ${learnerName}. Today we're continuing your ${subject} journey. Before we continue, tell me what you already know about this idea.`;
+    return `Good morning ${learnerName}. Your BeastLearning Guide sent this ${subject} lesson to the Tutor because instruction is the next useful step. Before we continue, tell me what you already know about this idea.`;
   }
   if (step === "teach") {
     return "Good. I’ll teach the next piece, then I’ll ask you one meaningful question.";
@@ -230,7 +230,7 @@ export function LessonEngine({
       <DashboardCard accent="learning">
         <div className="grid gap-5 xl:grid-cols-[1fr_0.72fr] xl:items-center">
           <div>
-            <p className="beast-kicker">AI Tutor</p>
+            <p className="beast-kicker">Tutor Handoff</p>
             <h2 className="mt-2 text-3xl font-black text-white">
               {engine.lesson.title}
             </h2>
@@ -291,7 +291,7 @@ export function LessonEngine({
         <div className="mt-6 grid gap-5 xl:grid-cols-[0.76fr_1.24fr]">
           <div className="rounded-2xl border border-indigo-300/35 bg-indigo-300/10 p-5">
             <div className="text-xs font-bold uppercase text-[#9aa7b8]">
-              AI Tutor
+              Tutor
             </div>
             <p className="mt-3 text-base font-semibold leading-7 text-indigo-50">
               {tutorStepMessage(step, learnerName, engine.lesson.subject)}

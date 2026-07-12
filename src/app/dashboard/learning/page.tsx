@@ -389,71 +389,104 @@ function PlatformSignalCard({
   );
 }
 
-function AITutorCenter({
+function getFirstName(name: string) {
+  return name.trim().split(/\s+/)[0] || "there";
+}
+
+function GuidanceConversationCenter({
+  learnerName,
+  goal,
+  currentProgress,
+  todayRecommendation,
+  estimatedTime,
+  recommendationReason,
   readyActivity,
-  tutorFocus,
 }: {
+  learnerName: string;
+  goal: string;
+  currentProgress: string;
+  todayRecommendation: string;
+  estimatedTime: string;
+  recommendationReason: string;
   readyActivity?: LearningPathActivityRow;
-  tutorFocus: string;
 }) {
+  const activityHref = readyActivity
+    ? getLearningActivityRoute(readyActivity.id)
+    : "/dashboard/learning/activities";
+
   return (
     <DashboardCard accent="learning">
       <SectionHeader
-        eyebrow="AI Tutor"
-        title="Continue with your tutor"
-        description="Start the next lesson, work one question at a time, and use help when you need another explanation."
-        action={<ModuleBadge module="learning" label="Tutor Center" />}
+        eyebrow="Guidance Conversation"
+        title="I'm your BeastLearning Guide"
+        description="Guidance owns the learner relationship. The Tutor joins when instruction, practice, feedback, or mastery checks are needed."
+        action={<ModuleBadge module="learning" label="Guide first" />}
       />
-      <div className="mt-5 grid gap-4 lg:grid-cols-[0.85fr_1.15fr]">
+      <div className="mt-5 grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
         <div className="rounded-xl border border-indigo-300/45 bg-indigo-300/10 p-5">
           <div className="text-xs font-bold uppercase text-[#7f8da3]">
-            Current focus
+            Conversation
           </div>
-          <h3 className="mt-2 text-2xl font-black text-white">
-            {readyActivity?.title || tutorFocus}
-          </h3>
-          <p className="mt-3 text-sm leading-5 text-indigo-100">
-            {readyActivity
-              ? `${readyActivity.activity_type} - ${readyActivity.difficulty} - ${readyActivity.estimated_minutes} minutes`
-              : "Create or save a learning activity to begin a tutor-led lesson."}
+          <div className="mt-3 space-y-3 text-base font-semibold leading-7 text-indigo-50">
+            <p>Hi {getFirstName(learnerName)}.</p>
+            <p>Good afternoon.</p>
+            <p>{"I'm your BeastLearning Guide."}</p>
+            <p>How are things going?</p>
+            <p>Ready to continue working toward {goal}?</p>
+          </div>
+          <p className="mt-5 text-sm leading-6 text-indigo-100">
+            {"I'll keep the long-term roadmap, explain why each step matters, and bring in the Tutor when it is time for instruction."}
           </p>
           <div className="mt-5 flex flex-wrap gap-3">
-            {readyActivity ? (
-              <Link
-                href={getLearningActivityRoute(readyActivity.id)}
-                className="beast-button"
-              >
-                Open AI Tutor
-              </Link>
-            ) : null}
+            <Link href={activityHref} className="beast-button">
+              Continue
+            </Link>
             <Link
-              href="/dashboard/learning/activities"
+              href="#learning-path"
               className="beast-button-secondary"
             >
-              Continue Learning
+              Review Learning Path
             </Link>
           </div>
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
           {[
-            "Instruction",
-            "One question at a time",
-            "Immediate feedback",
-            "Hints",
-            "Alternate explanations",
-            "Mastery checks",
-          ].map((item) => (
+            ["Goal", goal],
+            ["Current Progress", currentProgress],
+            ["Today's Recommendation", todayRecommendation],
+            ["Estimated Time", estimatedTime],
+          ].map(([label, value]) => (
             <div
-              key={item}
+              key={label}
               className="rounded-xl border border-[#2a3242] bg-[#111827] p-4"
             >
-              <div className="text-sm font-black text-white">{item}</div>
-              <p className="mt-2 text-xs leading-5 text-[#9aa7b8]">
-                Available through the learner lesson workspace.
-              </p>
+              <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                {label}
+              </div>
+              <div className="mt-2 text-sm font-black leading-5 text-white">
+                {value}
+              </div>
             </div>
           ))}
+          <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 sm:col-span-2">
+            <div className="text-xs font-bold uppercase text-[#7f8da3]">
+              Why this step
+            </div>
+            <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
+              {recommendationReason}
+            </p>
+          </div>
+          <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 sm:col-span-2">
+            <div className="text-xs font-bold uppercase text-[#7f8da3]">
+              Tutor handoff
+            </div>
+            <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
+              When instruction is needed, your Guide sends you to the Tutor for
+              teaching, one question at a time, hints, alternate explanations,
+              remediation, and mastery checks.
+            </p>
+          </div>
         </div>
       </div>
     </DashboardCard>
@@ -692,6 +725,21 @@ export default async function LearningPage() {
       }`,
     },
   ];
+  const primaryGoalTitle = learningGoals[0]?.title || learningPlan.title || "your learning goal";
+  const currentProgressLabel =
+    learningCourses.find((course) => course.status === "In progress")?.title ||
+    studySession.currentFocus ||
+    "Learning path setup";
+  const todayRecommendationTitle =
+    learningPathReadyActivity?.title ||
+    learningRecommendations[0]?.title ||
+    progressSignals.recommendedNextAction;
+  const estimatedTimeLabel = learningPathReadyActivity?.estimated_minutes
+    ? `${learningPathReadyActivity.estimated_minutes} minutes`
+    : studySession.estimatedTime || "20 minutes";
+  const recommendationReason =
+    learningRecommendations[0]?.reason ||
+    "It matches your current goal, readiness, and next available learning step.";
 
   return (
     <main className="beast-page">
@@ -700,10 +748,11 @@ export default async function LearningPage() {
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-4">
               <ModuleBadge module="learning" label={`BeastLearning ${BEAST_LEARNING_VERSION}`} />
-              <h1 className="beast-title">Learning Command Center</h1>
+              <h1 className="beast-title">Your BeastLearning Guide</h1>
               <p className="beast-subtitle">
-                Goals, courses, study rhythm, progress, and achievements now have
-                a permanent home inside BeastOS.
+                Start with guidance. When it is time to learn a concept, your
+                Guide brings in the Tutor for instruction, practice, feedback,
+                and mastery.
               </p>
             </div>
             <Link
@@ -714,6 +763,18 @@ export default async function LearningPage() {
             </Link>
           </div>
         </section>
+
+        <div id="guidance" className="scroll-mt-24">
+          <GuidanceConversationCenter
+            learnerName={activeLearner.name}
+            goal={primaryGoalTitle}
+            currentProgress={currentProgressLabel}
+            todayRecommendation={todayRecommendationTitle}
+            estimatedTime={estimatedTimeLabel}
+            recommendationReason={recommendationReason}
+            readyActivity={learningPathReadyActivity}
+          />
+        </div>
 
         <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
           {progressSignals.snapshotTiles.map((progress) => (
@@ -730,13 +791,6 @@ export default async function LearningPage() {
 
         <div id="progress" className="scroll-mt-24">
           <LearningExperiencePanel experience={learningExperience} />
-        </div>
-
-        <div id="ai-tutor" className="scroll-mt-24">
-          <AITutorCenter
-            readyActivity={learningPathReadyActivity}
-            tutorFocus={studySession.currentFocus}
-          />
         </div>
 
         <section className="grid gap-4 xl:grid-cols-[0.85fr_1.15fr]">

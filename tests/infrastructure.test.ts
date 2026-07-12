@@ -2028,6 +2028,7 @@ test("learning activities have a dedicated runner and next-activity unlock logic
   assert.match(activityRunner, /View Activities/);
   assert.match(activityRunner, /<LessonEngine/);
   assert.match(lessonEngine, /Tutor Session/);
+  assert.match(lessonEngine, /Your BeastLearning Guide sent this/);
   assert.match(lessonEngine, /One active interaction/);
   assert.match(lessonEngine, /What do you already know\?/);
   assert.match(lessonEngine, /Hint/);
@@ -2041,6 +2042,26 @@ test("learning activities have a dedicated runner and next-activity unlock logic
   assert.doesNotMatch(lessonEngine, /Check understanding/);
   assert.match(activityRunner, /quizAnswers/);
   assert.match(activityRunner, /practiceAnswers/);
+});
+
+test("BeastLearning member home starts with Guidance before dashboard support", () => {
+  const learningPage = readFileSync("src/app/dashboard/learning/page.tsx", "utf8");
+  const lessonEngine = readFileSync(
+    "src/app/dashboard/learning/activities/LessonEngine.tsx",
+    "utf8"
+  );
+
+  assert.match(learningPage, /GuidanceConversationCenter/);
+  assert.match(learningPage, /I'm your BeastLearning Guide/);
+  assert.match(learningPage, /Guidance owns the learner relationship/);
+  assert.match(learningPage, /Tutor handoff/);
+  assert.equal(
+    learningPage.indexOf("<GuidanceConversationCenter") <
+      learningPage.indexOf("progressSignals.snapshotTiles"),
+    true
+  );
+  assert.doesNotMatch(learningPage, /function AITutorCenter/);
+  assert.match(lessonEngine, /Tutor Handoff/);
 });
 
 test("generated learning activities persist with required visibility fields", () => {
