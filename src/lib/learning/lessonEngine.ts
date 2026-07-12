@@ -47,6 +47,7 @@ export type AdaptivePracticeStep = {
 
 export type AdaptiveQuizQuestion = {
   id: string;
+  questionTypeId?: string;
   prompt: string;
   options: string[];
   answer: string;
@@ -294,6 +295,7 @@ function buildGenericAdaptiveLesson(activity: Pick<LearningActivityRunnerRow, "t
     quizQuestions: [
       {
         id: "generic-quiz-1",
+        questionTypeId: "multiple-choice",
         prompt: "What should you do first when a lesson feels unclear?",
         options: ["Guess quickly", "Name what is confusing", "Skip the lesson"],
         answer: "Name what is confusing",

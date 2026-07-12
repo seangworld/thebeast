@@ -669,6 +669,9 @@ export type QuizQuestionType =
   | "true/false"
   | "matching"
   | "fill in blank"
+  | "numeric"
+  | "written"
+  | "step response"
   | "short answer"
   | "coding"
   | "essay";

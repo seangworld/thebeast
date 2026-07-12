@@ -279,6 +279,7 @@ export const combiningLikeTermsLesson: AdaptiveLesson = {
   quizQuestions: [
     {
       id: "quiz-like-terms-1",
+      questionTypeId: "multiple-choice",
       prompt: "Which terms can be combined with 7x?",
       options: ["3", "2x", "4y"],
       answer: "2x",
@@ -286,6 +287,7 @@ export const combiningLikeTermsLesson: AdaptiveLesson = {
     },
     {
       id: "quiz-like-terms-2",
+      questionTypeId: "multiple-choice",
       prompt: "Simplify: 9x + 5 - 4x + 2",
       options: ["5x + 7", "13x + 7", "5x + 3"],
       answer: "5x + 7",
@@ -418,6 +420,7 @@ const linearEquationsLesson: AdaptiveLesson = {
   quizQuestions: [
     {
       id: "quiz-linear-equations-1",
+      questionTypeId: "multiple-choice",
       prompt: "What operation solves x + 6 = 14?",
       options: ["Subtract 6 from both sides", "Add 6 to both sides", "Multiply both sides by 6"],
       answer: "Subtract 6 from both sides",
@@ -425,6 +428,7 @@ const linearEquationsLesson: AdaptiveLesson = {
     },
     {
       id: "quiz-linear-equations-2",
+      questionTypeId: "multiple-choice",
       prompt: "Which value solves y - 2 = 9?",
       options: ["7", "9", "11"],
       answer: "11",
@@ -527,6 +531,7 @@ const certificationFoundationLesson: AdaptiveLesson = {
   quizQuestions: [
     {
       id: "quiz-cert-plan-1",
+      questionTypeId: "multiple-choice",
       prompt: "What should a starter certification plan verify first?",
       options: ["The current baseline", "A guaranteed passing score", "A final certificate"],
       answer: "The current baseline",
@@ -627,6 +632,7 @@ const spanishConversationLesson: AdaptiveLesson = {
   quizQuestions: [
     {
       id: "quiz-spanish-1",
+      questionTypeId: "multiple-choice",
       prompt: "What does Hola usually mean?",
       options: ["Hello", "Goodbye", "Thank you"],
       answer: "Hello",
@@ -897,6 +903,7 @@ export function createGeneratedLearningContentRecord(
       quizQuestions: [
         {
           id: "generated-readiness-check",
+          questionTypeId: "multiple-choice",
           prompt: "What should the coach use to choose the next lesson?",
           options: ["Learner evidence", "A fixed subject path", "A random topic"],
           answer: "Learner evidence",

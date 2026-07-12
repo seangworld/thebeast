@@ -245,6 +245,12 @@ import {
   lessonPracticeSatisfiesTemplates,
   practiceTemplateLibrary,
 } from "../src/lib/learning/practiceTemplates";
+import {
+  assessmentQuestionTypeRegistry,
+  getAssessmentQuestionTypeCoverage,
+  getAssessmentQuestionTypeForQuestion,
+  questionSatisfiesAssessmentType,
+} from "../src/lib/learning/assessmentQuestionTypes";
 import { learningStandards } from "../src/lib/learning/standards";
 import { generateCurriculumLearningPath } from "../src/lib/learning/learningPaths";
 import { learningPathTemplates } from "../src/lib/learning/templates";
@@ -2535,6 +2541,68 @@ test("practice template library varies difficulty and format without subject bra
     forbiddenBranching.some((pattern) => pattern.test(source)),
     false
   );
+});
+
+test("assessment question type registry models multiple choice numeric written and step responses", () => {
+  const generatedBiology = createGeneratedLearningContentRecord("Biology");
+  const lessons = [
+    ...sampleLearningContentRecords.map((record) => record.lesson),
+    generatedBiology.lesson,
+  ];
+  const lessonQuestions = lessons.flatMap((lesson) => lesson.quizQuestions);
+  const registryFixtures = [
+    {
+      id: "numeric-fixture",
+      questionTypeId: "numeric-response",
+      prompt: "Enter the numeric result.",
+      options: [],
+      answer: "42",
+      explanation: "Numeric responses compare against an answer key before BL-21 equivalence rules.",
+    },
+    {
+      id: "written-fixture",
+      questionTypeId: "written-response",
+      prompt: "Explain the idea in one sentence.",
+      options: [],
+      answer: "A clear explanation.",
+      explanation: "Written responses require feedback criteria and can support partial credit.",
+    },
+    {
+      id: "step-fixture",
+      questionTypeId: "step-response",
+      prompt: "List the ordered steps you used.",
+      options: [],
+      answer: "Step 1; Step 2",
+      explanation: "Step responses preserve ordered reasoning for later validation and rubrics.",
+    },
+  ];
+  const source = readFileSync("src/lib/learning/assessmentQuestionTypes.ts", "utf8");
+
+  assert.deepEqual(
+    assessmentQuestionTypeRegistry.map((type) => type.responseKind),
+    ["multiple-choice", "numeric", "written", "step-response"]
+  );
+  assert.equal(
+    assessmentQuestionTypeRegistry.every((type) =>
+      type.requiresAnswerKey && type.requiresFeedback
+    ),
+    true
+  );
+  assert.equal(
+    [...lessonQuestions, ...registryFixtures].every(questionSatisfiesAssessmentType),
+    true
+  );
+  assert.deepEqual(
+    getAssessmentQuestionTypeCoverage([...lessonQuestions, ...registryFixtures]).sort(),
+    ["multiple-choice", "numeric", "step-response", "written"]
+  );
+  assert.equal(
+    lessonQuestions.every(
+      (question) => getAssessmentQuestionTypeForQuestion(question)?.id === "multiple-choice"
+    ),
+    true
+  );
+  assert.equal(/Pre-Algebra|Algebra|CompTIA|Security\+|A\+|Spanish|Biology/i.test(source), false);
 });
 
 test("learning concept library models prerequisites and dependents", () => {
