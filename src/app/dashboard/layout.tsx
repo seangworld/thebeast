@@ -31,12 +31,12 @@ import {
 } from "@/lib/learning/onboardingCompletion";
 
 const learningPrimaryNavigation: ModuleNavSection[] = [
-  { label: "Home", href: "/dashboard/learning", module: "learning" },
+  { label: "Mentor", href: "/dashboard/learning", module: "learning" },
   { label: "Today", href: "/dashboard/today", module: "learning" },
-  { label: "Continue Learning", href: "/dashboard/learning#mentor-session", module: "learning" },
-  { label: "Learning Path", href: "/dashboard/learning#learning-path", module: "learning" },
-  { label: "Progress", href: "/dashboard/learning#progress", module: "learning" },
-  { label: "Achievements", href: "/dashboard/learning#achievements", module: "learning" },
+  { label: "Continue", href: "/dashboard/learning#mentor-session", module: "learning" },
+  { label: "My Plan", href: "/dashboard/learning#mentor-plan", module: "learning" },
+  { label: "How I'm Doing", href: "/dashboard/learning#mentor-progress", module: "learning" },
+  { label: "Wins", href: "/dashboard/learning#wins", module: "learning" },
   { label: "Profile", href: "/dashboard/profile", module: "beastos" },
 ];
 

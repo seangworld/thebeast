@@ -1,12 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
-  AlertCard,
   DashboardCard,
-  MetricTile,
   ModuleBadge,
   SectionHeader,
-  moduleAccents,
 } from "@/app/components/design/DashboardPrimitives";
 import { BEAST_LEARNING_VERSION } from "@/lib/appVersion";
 import {
@@ -19,7 +16,6 @@ import { buildLearningAchievementUnlocks } from "@/lib/learning/achievements";
 import { mockLearningCertificates } from "@/lib/learning/certificates";
 import { buildLearningIntelligenceSnapshot } from "@/lib/learning/intelligenceEngine";
 import { buildLearnerPortfolio } from "@/lib/learning/portfolio";
-import { buildLearningFoundationIntelligence } from "@/lib/platform/recommendationEngine";
 import BetaFeedbackPanel from "./BetaFeedbackPanel";
 import GuidanceCounselorMode from "./GuidanceCounselorMode";
 import {
@@ -33,34 +29,23 @@ import {
 } from "./LearningFoundationPanels";
 import LearningAIOrchestrationPanel from "./LearningAIOrchestrationPanel";
 import LearningContentIntelligencePanel from "./LearningContentIntelligencePanel";
-import LearningExperiencePanel from "./LearningExperiencePanel";
 import LearningGoalBuilder from "./LearningGoalBuilder";
 import LearningIntelligencePanel from "./LearningIntelligencePanel";
 import LearningKnowledgePanel from "./LearningKnowledgePanel";
 import LearningPathTemplates from "./LearningPathTemplates";
 import PrivateBetaPanels from "./PrivateBetaPanels";
-import StudySessionCommandCard from "./StudySessionCommandCard";
 import { mockParentDashboard } from "@/lib/learning/parentDashboard";
-import type {
-  ModuleSummary,
-  PlatformActivity,
-  PlatformNotification,
-  PlatformTimelineEvent,
-} from "@/lib/platform/types";
 import {
-  mockLearners,
   mockLearningAchievements,
   mockLearningCourses,
   mockLearningGoals,
   mockLearningPlan,
-  mockLearningQuickActions,
   mockLearningSessions,
   mockStudySessionCommand,
 } from "@/lib/learning/mockData";
 import { buildLearningProgressSignals } from "@/lib/learning/progressSignals";
 import { buildLearningRecommendations } from "@/lib/learning/recommendations";
 import { buildLearningDashboardContent } from "@/lib/learning/dashboardContent";
-import { buildLearningExperienceDashboard } from "@/lib/learning/experience";
 import { buildKnowledgeIntelligenceDashboard } from "@/lib/learning/knowledgeDashboard";
 import { learningSpecialists } from "@/lib/learning/specialists";
 import { mockStudyPlanner } from "@/lib/learning/studyPlanner";
@@ -250,160 +235,6 @@ function ProgressBar({ value }: { value: number }) {
   );
 }
 
-function LearnerSwitcher({ learners }: { learners: typeof mockLearners }) {
-  return (
-    <div className="grid gap-3">
-      {learners.map((learner) => (
-        <div
-          key={learner.id}
-          className={`rounded-xl border p-4 ${
-            learner.active
-              ? "border-indigo-300/45 bg-indigo-300/10"
-              : "border-[#2a3242] bg-[#111827]"
-          }`}
-        >
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <div className="font-black text-white">{learner.name}</div>
-              <div className="mt-1 text-xs font-bold uppercase text-[#7f8da3]">
-                {learner.role}
-              </div>
-            </div>
-            <ModuleBadge
-              module={learner.active ? "learning" : "family"}
-              label={learner.active ? "Active" : "Soon"}
-              comingSoon={!learner.active}
-            />
-          </div>
-          <p className="mt-3 text-sm leading-5 text-[#c7cfdb]">{learner.focus}</p>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function CourseCard({ course }: { course: LearningCourse }) {
-  return (
-    <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <div className="text-xs font-bold uppercase text-[#7f8da3]">
-            {course.category}
-          </div>
-          <h3 className="mt-1 text-lg font-black text-white">{course.title}</h3>
-        </div>
-        <span className="rounded-full border border-indigo-300/40 bg-indigo-300/10 px-3 py-1 text-xs font-bold text-indigo-100">
-          {course.priority}
-        </span>
-      </div>
-      <ProgressBar value={course.progress} />
-      <div className="mt-3 flex flex-wrap justify-between gap-2 text-sm text-[#c7cfdb]">
-        <span>{course.progress}% explored</span>
-        <span>{course.estimatedCompletion}</span>
-      </div>
-      <div className="mt-3 text-xs font-bold uppercase text-[#7f8da3]">
-        {course.status}
-      </div>
-    </div>
-  );
-}
-
-function GoalCard({ goal }: { goal: LearningGoal }) {
-  return (
-    <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h3 className="font-black text-white">{goal.title}</h3>
-          <div className="mt-1 text-xs font-bold uppercase text-[#7f8da3]">
-            {goal.category}
-          </div>
-        </div>
-        <span className="rounded border border-[#2a3242] bg-[#0f1419] px-2 py-1 text-xs font-bold text-[#dbe3ef]">
-          {goal.status}
-        </span>
-      </div>
-      <p className="mt-3 text-sm leading-5 text-[#c7cfdb]">{goal.target}</p>
-      <ProgressBar value={goal.progress} />
-      <div className="mt-2 text-sm font-bold text-indigo-100">
-        {goal.progress}% shaped with your Mentor
-      </div>
-    </div>
-  );
-}
-
-function RecommendationRow({
-  recommendation,
-}: {
-  recommendation: LearningRecommendation;
-}) {
-  return (
-    <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <ModuleBadge module={recommendation.module} />
-        <span className="rounded-full border border-[#2a3242] px-2 py-1 text-xs font-bold text-[#dbe3ef]">
-          {recommendation.priority}
-        </span>
-      </div>
-      <h3 className="mt-3 font-black text-white">{recommendation.title}</h3>
-      <p className="mt-2 text-sm leading-5 text-[#c7cfdb]">
-        {recommendation.summary}
-      </p>
-      <p className="mt-3 text-xs font-semibold uppercase text-[#7f8da3]">
-        {recommendation.recommendedAction}
-      </p>
-    </div>
-  );
-}
-
-function PlatformSignalCard({
-  summary,
-  notification,
-  activity,
-  timelineEvent,
-}: {
-  summary: ModuleSummary;
-  notification: PlatformNotification;
-  activity: PlatformActivity;
-  timelineEvent: PlatformTimelineEvent;
-}) {
-  return (
-    <DashboardCard accent="learning">
-      <SectionHeader
-        eyebrow="Shared Platform"
-        title="Learning service signals"
-        description="Learning uses the same module summary, notification, activity, timeline, and recommendation contracts as BeastOS Today."
-      />
-      <div className="mt-5 grid gap-3">
-        <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
-          <ModuleBadge module={summary.module} />
-          <div className="mt-3 font-black text-white">{summary.label}</div>
-          <p className="mt-2 text-sm leading-5 text-[#c7cfdb]">{summary.summary}</p>
-        </div>
-        <AlertCard
-          severity={notification.severity}
-          title={notification.title}
-          message={notification.summary || "Learning notification reserved."}
-          href={notification.actionUrl}
-        />
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
-            <div className="text-xs font-bold uppercase text-[#7f8da3]">Activity</div>
-            <div className="mt-2 font-black text-white">{activity.title}</div>
-            <p className="mt-1 text-sm leading-5 text-[#c7cfdb]">{activity.summary}</p>
-          </div>
-          <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
-            <div className="text-xs font-bold uppercase text-[#7f8da3]">Timeline</div>
-            <div className="mt-2 font-black text-white">{timelineEvent.title}</div>
-            <p className="mt-1 text-sm leading-5 text-[#c7cfdb]">
-              {timelineEvent.summary}
-            </p>
-          </div>
-        </div>
-      </div>
-    </DashboardCard>
-  );
-}
-
 function getFirstName(name: string) {
   return name.trim().split(/\s+/)[0] || "there";
 }
@@ -544,7 +375,7 @@ function MentorConversationCenter({
                   href={getLearningActivityRoute(readyActivity.id)}
                   className="beast-button mt-4 inline-flex"
                 >
-                  Open full Tutor workspace
+                  Let the Tutor teach this
                 </Link>
               </div>
             ) : null}
@@ -754,16 +585,6 @@ export default async function LearningPage() {
         focus: "Your Mentor will learn what helps you best.",
         active: true,
       };
-  const userLearners = [
-    activeLearner,
-    ...learnerProfileRows.slice(1).map((learner) => ({
-      id: String(learner.id),
-      name: String(learner.display_name || "Learner"),
-      role: String(learner.learner_role || "Learner"),
-      focus: String(learner.focus || "Learning path"),
-      active: false,
-    })),
-  ];
   const userGoals = ((goalsResult.data || []) as Record<string, unknown>[]).map(mapGoalRow);
   const userCourses = ((coursesResult.data || []) as Record<string, unknown>[]).map(mapCourseRow);
   const userSessions = ((sessionsResult.data || []) as Record<string, unknown>[]).map(mapSessionRow);
@@ -784,8 +605,6 @@ export default async function LearningPage() {
   const userStudySession = buildStudySessionCommandFromSession(
     userSessions.find((session) => session.status !== "Completed") || userSessions[0]
   );
-  const learnerList =
-    demoModeEnabled && userGoals.length === 0 ? mockLearners : userLearners;
   const learningGoals =
     demoModeEnabled && userGoals.length === 0 ? mockLearningGoals : userGoals;
   const learningCourses =
@@ -802,11 +621,7 @@ export default async function LearningPage() {
     demoModeEnabled && userGoals.length === 0 ? mockParentDashboard : emptyParentDashboard;
   const studySession =
     demoModeEnabled && userGoals.length === 0 ? mockStudySessionCommand : userStudySession;
-  const learningQuickActions =
-    demoModeEnabled && userGoals.length === 0 ? mockLearningQuickActions : [];
   const learningPathReadyActivity = getNewestReadyLearningActivity(userActivities);
-  const intelligence = buildLearningFoundationIntelligence();
-  const learningAccent = moduleAccents.learning;
   const privateBeta = await loadLearningPrivateBetaData({
     supabase,
     userId: user.id,
@@ -815,10 +630,6 @@ export default async function LearningPage() {
     sessions: learningSessions,
     certificates: learningCertificates,
   });
-  const summary = intelligence.moduleSummaries[0];
-  const notification = intelligence.notifications[0];
-  const activity = intelligence.activities[0];
-  const timelineEvent = intelligence.timelineEvents[0];
   const progressSignals = buildLearningProgressSignals({
     goals: learningGoals,
     courses: learningCourses,
@@ -859,16 +670,6 @@ export default async function LearningPage() {
     certificates: learningCertificates,
     achievementCount: achievementUnlocks.filter((achievement) => achievement.unlocked)
       .length,
-  });
-  const learningExperience = buildLearningExperienceDashboard({
-    learnerName: learnerPortfolio.learnerName,
-    progress: progressSignals,
-    goals: learningGoals,
-    achievements: achievementUnlocks,
-    parentDashboard,
-    certificateCount: learningCertificates.length,
-    certificateTitle: learningCertificates[0]?.pathName,
-    certificateVerification: learningCertificates[0]?.verificationPlaceholder,
   });
   const learningReadinessSignals = [
     {
@@ -980,203 +781,10 @@ export default async function LearningPage() {
           />
         </div>
 
-        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5" aria-label="Supporting progress details">
-          {progressSignals.snapshotTiles.map((progress) => (
-            <MetricTile
-              key={progress.id}
-              label={progress.label}
-              value={progress.value}
-              detail={progress.detail}
-              icon={progress.icon}
-              tone={progress.tone}
-            />
-          ))}
-        </section>
-
-        <div id="progress" className="scroll-mt-24">
-          <LearningExperiencePanel experience={learningExperience} />
-        </div>
-
-        <section className="grid gap-4 xl:grid-cols-[0.85fr_1.15fr]">
-          <DashboardCard accent="learning">
-            <SectionHeader
-              eyebrow="Memory"
-              title="What I remember about you"
-              description="This is the context your Mentor uses to keep recommendations personal without asking you to repeat yourself."
-            />
-            <div className="mt-5">
-              <LearnerSwitcher learners={learnerList} />
-            </div>
-          </DashboardCard>
-
-          <DashboardCard accent="learning">
-            <SectionHeader
-              eyebrow="Mentor Reasoning"
-              title="How today was chosen"
-              description="Your Mentor weighs confidence, mastery, review needs, momentum, and goals before choosing what happens next."
-            />
-            <div className="mt-5 grid gap-4 lg:grid-cols-[0.7fr_1fr]">
-              <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
-                <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                  Learning Readiness
-                </div>
-                <div className="mt-3 text-4xl font-black text-white">
-                  {progressSignals.readinessScore}%
-                </div>
-                <div className="mt-4 grid gap-2">
-                  {learningReadinessSignals.map((signal) => (
-                    <div
-                      key={signal.label}
-                      className="rounded-lg border border-[#2a3242] bg-[#0f1419] p-3"
-                    >
-                      <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                        {signal.label}
-                      </div>
-                      <div className="mt-1 text-sm font-semibold text-[#dbe3ef]">
-                        {signal.value}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="grid gap-3">
-                <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
-                  <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                    My roadmap for you
-                  </div>
-                  <h3 className="mt-2 text-xl font-black text-white">
-                    {learningPlan.title}
-                  </h3>
-                  <p className="mt-2 text-sm leading-5 text-[#c7cfdb]">
-                    {learningPlan.summary}
-                  </p>
-                </div>
-                <div
-                  className="rounded-xl border p-4"
-                  style={{
-                    borderColor: `${learningAccent.color}66`,
-                    background: `${learningAccent.color}1A`,
-                  }}
-                >
-                  <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                    Why this helps
-                  </div>
-                  <p className="mt-2 text-sm leading-5 text-indigo-100">
-                    {progressSignals.recommendedNextAction}
-                  </p>
-                  <div className="mt-3 text-xs font-bold uppercase text-[#7f8da3]">
-                    We may review: {progressSignals.weakArea}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </DashboardCard>
-        </section>
-
-        <div id="continue-learning" className="scroll-mt-24">
-          <StudySessionCommandCard session={studySession} />
-        </div>
-
-        <DashboardCard accent="learning">
-          <SectionHeader
-            eyebrow="Continue"
-            title={learningPathReadyActivity?.title || "Your Mentor is getting the next lesson ready"}
-            description={
-              learningPathReadyActivity
-                ? "Your Mentor has brought the Tutor into the conversation above. Stay there unless you want the full Tutor workspace."
-                : "Stay with your Mentor above. The first learning step will appear there when it is ready."
-            }
-            action={
-              <ModuleBadge
-                module="learning"
-                label={learningPathReadyActivity?.status || "Waiting"}
-              />
-            }
-          />
-          <div className="mt-5 flex flex-wrap gap-3">
-            <a href="#mentor-session" className="beast-button">
-              Continue with my Mentor
-            </a>
-            {learningPathReadyActivity ? (
-              <Link
-                href={getLearningActivityRoute(learningPathReadyActivity.id)}
-                className="beast-button-secondary"
-              >
-                Open full Tutor workspace
-              </Link>
-            ) : null}
-          </div>
-        </DashboardCard>
-
-        <section id="learning-path" className="grid scroll-mt-24 gap-4 xl:grid-cols-[1.1fr_0.9fr]">
-          <DashboardCard accent="learning">
-            <SectionHeader
-              eyebrow="Roadmap"
-              title="Where we're headed"
-              description="This is the roadmap your Mentor keeps adjusting as you learn, struggle, recover, and grow."
-            />
-            <div className="mt-5 grid gap-4 lg:grid-cols-3">
-              {learningCourses.map((course) => (
-                <CourseCard key={course.id} course={course} />
-              ))}
-              {learningCourses.length === 0 ? (
-                <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 text-sm font-semibold text-[#c7cfdb]">
-                  Your Mentor will build this path as it learns more about your goal.
-                </div>
-              ) : null}
-            </div>
-          </DashboardCard>
-
-          <DashboardCard accent="purple">
-            <SectionHeader
-              eyebrow="Next Steps"
-              title="What we may work on soon"
-              description="These are possible next moves. Your Mentor will choose the right one based on how today goes."
-            />
-            <div className="mt-5 grid gap-3">
-              {learningSessions.map((lesson) => (
-                <div
-                  key={lesson.id}
-                  className="rounded-xl border border-[#2a3242] bg-[#111827] p-4"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                      {lesson.when}
-                    </div>
-                    <span className="rounded-full border border-[#2a3242] px-2 py-1 text-xs font-bold text-[#dbe3ef]">
-                      {lesson.duration}
-                    </span>
-                  </div>
-                  <h3 className="mt-2 font-black text-white">{lesson.title}</h3>
-                  <p className="mt-1 text-sm text-[#c7cfdb]">{lesson.courseTitle}</p>
-                </div>
-              ))}
-            </div>
-          </DashboardCard>
-        </section>
-
-        <section id="goals" className="grid scroll-mt-24 gap-4 xl:grid-cols-[1fr_0.9fr]">
-          <DashboardCard accent="learning">
-            <SectionHeader
-              eyebrow="Goals"
-              title="What we're working toward"
-              description="Your Mentor uses these goals to explain why each lesson matters and when the plan should change."
-            />
-            <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {learningGoals.map((goal) => (
-                <GoalCard key={goal.id} goal={goal} />
-              ))}
-              {learningGoals.length === 0 ? (
-                <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 text-sm font-semibold text-[#c7cfdb]">
-                  Your Mentor will help you name your first goal in conversation.
-                </div>
-              ) : null}
-            </div>
-          </DashboardCard>
-
+        <section id="wins" className="grid scroll-mt-24 gap-4 xl:grid-cols-[1fr_0.9fr]">
           <DashboardCard accent="green">
             <SectionHeader
-              eyebrow="Achievements"
+              eyebrow="Wins"
               title="Wins worth noticing"
               description="Your Mentor notices effort, consistency, mastery, and meaningful milestones along the way."
             />
@@ -1211,68 +819,6 @@ export default async function LearningPage() {
           <CertificatePreviewPanel certificates={learningCertificates} />
           <LearnerPortfolioPanel portfolio={learnerPortfolio} />
         </section>
-
-        <section className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
-          <DashboardCard accent="learning">
-            <SectionHeader
-              eyebrow="Recommendations"
-              title="Why your Mentor is choosing these steps"
-              description="These are the reasons behind your next lesson, review, or practice."
-            />
-            <div className="mt-5 grid gap-3">
-              {learningRecommendations.map((recommendation) => (
-                <RecommendationRow
-                  key={recommendation.id}
-                  recommendation={recommendation}
-                />
-              ))}
-            </div>
-          </DashboardCard>
-
-          <PlatformSignalCard
-            summary={summary}
-            notification={notification}
-            activity={activity}
-            timelineEvent={timelineEvent}
-          />
-        </section>
-
-        <DashboardCard accent="learning">
-            <SectionHeader
-              eyebrow="More Support"
-              title="Helpful options when you need them"
-              description="Use these only when they help. Your Mentor keeps the main path simple."
-          />
-          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {learningQuickActions.map((action) => (
-              <div
-                key={action.id}
-                className={`rounded-xl border p-4 transition ${
-                  action.active
-                    ? "border-indigo-300/45 bg-indigo-300/10"
-                    : "border-[#2a3242] bg-[#111827] opacity-80"
-                }`}
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <h3 className="font-black text-white">{action.label}</h3>
-                  {!action.active ? (
-                    <span className="rounded border border-[#2a3242] px-2 py-1 text-xs font-bold uppercase text-[#7f8da3]">
-                      When useful
-                    </span>
-                  ) : null}
-                </div>
-                <p className="mt-2 text-sm leading-5 text-[#c7cfdb]">
-                  {action.detail}
-                </p>
-              </div>
-            ))}
-            {learningQuickActions.length === 0 ? (
-              <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 text-sm font-semibold text-[#c7cfdb]">
-                Your Mentor will offer more options after your learning path has enough context.
-              </div>
-            ) : null}
-          </div>
-        </DashboardCard>
 
         {isAdmin ? (
           <section className="grid gap-6 rounded-2xl border border-yellow-300/30 bg-yellow-300/5 p-4">
