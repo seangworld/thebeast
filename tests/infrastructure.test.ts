@@ -1961,7 +1961,7 @@ test("learning activities have a dedicated runner and next-activity unlock logic
     getLearningActivityRoute("activity-123"),
     "/dashboard/learning/activities/activity-123"
   );
-  assert.equal(getLearningActivityPrimaryActionLabel("Quiz"), "Complete quiz");
+  assert.equal(getLearningActivityPrimaryActionLabel("Quiz"), "Let's see what you remember");
   assert.equal(getLearningActivityChecklist("Reflection").length, 3);
   assert.deepEqual(
     getNextQueuedLearningActivity(
@@ -2027,14 +2027,14 @@ test("learning activities have a dedicated runner and next-activity unlock logic
   assert.match(activityRunner, /Return to Today/);
   assert.match(activityRunner, /See My Steps/);
   assert.match(activityRunner, /<LessonEngine/);
-  assert.match(lessonEngine, /Tutor Session/);
+  assert.match(lessonEngine, /Tutoring Together/);
   assert.match(lessonEngine, /Your BeastLearning Guide sent this/);
   assert.match(lessonEngine, /Teaching now/);
   assert.match(lessonEngine, /What do you already know\?/);
   assert.match(lessonEngine, /Hint/);
-  assert.match(lessonEngine, /Another explanation/);
+  assert.match(lessonEngine, /Explain another way/);
   assert.match(lessonEngine, /onPracticeAnswer/);
-  assert.match(lessonEngine, /Save this lesson/);
+  assert.match(lessonEngine, /Let's see what you've learned/);
   assert.doesNotMatch(lessonEngine, /type="checkbox"/);
   assert.doesNotMatch(lessonEngine, /Adaptive Lesson/);
   assert.doesNotMatch(lessonEngine, /Guided Practice/);
@@ -2090,7 +2090,7 @@ test("BeastLearning member experience hides workflow mechanics behind Guide and 
   assert.match(memberExperienceSource, /Continue with Tutor/);
   assert.match(memberExperienceSource, /Your Guide/);
   assert.match(memberExperienceSource, /Ask My Guide/);
-  assert.match(memberExperienceSource, /Save this lesson|Save progress/);
+  assert.match(memberExperienceSource, /Let&apos;s see what I&apos;ve learned/);
   assert.doesNotMatch(memberExperienceSource, /Activity Runner/);
   assert.doesNotMatch(memberExperienceSource, /Start Activity/);
   assert.doesNotMatch(memberExperienceSource, /Generate Activity/);
@@ -2332,19 +2332,19 @@ test("lesson engine supports the adaptive BeastLearning teaching cycle", () => {
     [
       "Assessment",
       "Lesson",
-      "Guided Practice",
-      "Quiz",
-      "AI Coach",
+      "Practice with support",
+      "Check-in",
+      "Tutor help",
       "Reflection",
-      "Mastery",
-      "Recommendation",
+      "Understanding",
+      "Next step",
     ]
   );
   assert.equal(quizEngine.lesson.id, combiningLikeTermsLesson.id);
   assert.equal(quizEngine.lesson.interactiveVisual.expression, "4x + 7 + 2x + 3");
   assert.equal(quizEngine.lesson.learningObjective.includes("same variable part"), true);
   assert.equal(quizEngine.lesson.masteryThreshold, 80);
-  assert.equal(quizEngine.completionLabel, "Finish quiz");
+  assert.equal(quizEngine.completionLabel, "Show what you remember");
   assert.deepEqual(
     quizEngine.completionCriteria.map((criterion) => criterion.id),
     [
@@ -2399,11 +2399,11 @@ test("lesson engine supports the adaptive BeastLearning teaching cycle", () => {
   assert.equal(incompleteProgress.continuity.currentActivityStatus, "in_progress");
   assert.equal(incompleteProgress.continuity.nextActivityBasis, "recommend_review");
   assert.equal(
-    incompleteProgress.completionReviewReasons.includes("Attempt all guided practice steps."),
+    incompleteProgress.completionReviewReasons.includes("Try each practice step."),
     true
   );
   assert.equal(
-    incompleteProgress.completionReviewReasons.includes("Capture a learner reflection."),
+    incompleteProgress.completionReviewReasons.includes("Write one reflection."),
     true
   );
 });

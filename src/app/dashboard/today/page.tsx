@@ -347,7 +347,9 @@ export default function TodayPage() {
       });
     } catch (error) {
       setMessage(
-        error instanceof Error ? error.message : "Unable to load today's plan."
+        error instanceof Error
+          ? error.message
+          : "Your Guide had trouble opening today's learning plan. Try again in a moment."
       );
     } finally {
       setLoading(false);
@@ -419,13 +421,13 @@ export default function TodayPage() {
         ...current,
         activities: [...current.activities, createdActivity],
       }));
-      setMessage(`${createdActivity.title} is ready. Starting your mission now.`);
+      setMessage(`${createdActivity.title} is ready. Your Tutor is opening it now.`);
       router.push(getLearningActivityRoute(createdActivity.id));
     } catch (error) {
       setMessage(
         error instanceof Error
           ? error.message
-          : "Unable to generate your next learning activity."
+          : "Your Guide had trouble choosing the next lesson. Try again in a moment."
       );
     } finally {
       setGenerating(false);
@@ -507,17 +509,17 @@ export default function TodayPage() {
         ) : null}
         <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <MetricTile
-            label="Progress"
+            label="Saved lessons"
             value={`${progressPercent}%`}
             detail={`${completedActivities.length} of ${state.activities.length} learning steps saved`}
             icon="P"
             tone="purple"
           />
           <MetricTile
-            label="XP"
+            label="Practice credit"
             value={String(totalXp)}
             detail="Earned from saved lessons"
-            icon="XP"
+            icon="PC"
             tone="yellow"
           />
           <MetricTile
@@ -528,9 +530,9 @@ export default function TodayPage() {
             tone="green"
           />
           <MetricTile
-            label="Estimated Time"
+            label="Time together"
             value={`${estimatedMinutes} min`}
-            detail="Remaining today"
+            detail="Estimated for today"
             icon="T"
             tone="blue"
           />
@@ -564,7 +566,7 @@ export default function TodayPage() {
                 className="beast-button"
                 disabled={generating || loading}
               >
-                {generating ? "Preparing..." : "Ask My Guide"}
+                {generating ? "Choosing..." : "Let's choose what to learn next"}
               </button>
             )}
             <p className="text-sm font-semibold text-[#c7cfdb]">
@@ -606,7 +608,7 @@ export default function TodayPage() {
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2 text-xs font-bold uppercase text-[#9aa7b8]">
                     <span>{activity.estimated_minutes} min</span>
-                    <span>{activity.xp} XP</span>
+                    <span>{activity.xp} practice credit</span>
                   </div>
                   <div className="mt-4">
                     {activity.status === "Completed" ? (
@@ -642,7 +644,7 @@ export default function TodayPage() {
 
           <DashboardCard accent="purple">
             <SectionHeader
-              eyebrow="Continue Learning"
+              eyebrow="My Plan"
               title={state.courses[0]?.title || "Your first course"}
               description={
                 state.courses.length > 0
@@ -664,7 +666,7 @@ export default function TodayPage() {
                     />
                   </div>
                   <div className="mt-2 text-xs font-bold uppercase text-[#7f8da3]">
-                    {Number(course.progress || 0)}% progress
+                    {Number(course.progress || 0)}% of this path explored
                   </div>
                 </div>
               ))}

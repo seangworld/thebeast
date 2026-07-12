@@ -194,7 +194,7 @@ const teachingPhases: LessonEnginePhase[] = [
     id: "assessment",
     label: "Assessment",
     title: "Start with what you already know",
-    prompt: "Make a quick prediction before the lesson begins. Beast uses that starting point to teach the next step.",
+    prompt: "Make a quick prediction before the lesson begins. Your Tutor uses that starting point to teach the next step.",
     check: "I named what I know and what feels uncertain.",
   },
   {
@@ -206,42 +206,42 @@ const teachingPhases: LessonEnginePhase[] = [
   },
   {
     id: "practice",
-    label: "Guided Practice",
+    label: "Practice with support",
     title: "Try it with support",
-    prompt: "Work the guided practice before the quiz. Use the hint if you get stuck.",
-    check: "I tried the guided practice.",
+    prompt: "Try the practice before the check-in question. Use the hint if you get stuck.",
+    check: "I tried the practice.",
   },
   {
     id: "quiz",
-    label: "Quiz",
+    label: "Check-in",
     title: "Check understanding",
-    prompt: "Answer the quick check from memory first. Mistakes are useful signals.",
-    check: "I answered the quiz.",
+    prompt: "Answer the quick check from memory first. Mistakes tell us what to strengthen.",
+    check: "I answered the check-in question.",
   },
   {
     id: "coach",
-    label: "AI Coach",
+    label: "Tutor help",
     title: "Get coached, not just graded",
-    prompt: "Use the coaching prompts to understand mistakes, try a different explanation, or decide what to review.",
-    check: "I used the coaching guidance.",
+    prompt: "Ask for help to understand mistakes, try a different explanation, or decide what to review.",
+    check: "I used the Tutor's guidance.",
   },
   {
     id: "reflection",
     label: "Reflection",
     title: "Make the learning stick",
-    prompt: "Capture what changed in your understanding and where Beast should guide you next.",
+    prompt: "Capture what changed in your understanding and where your Guide should help next.",
     check: "I wrote a reflection.",
   },
   {
     id: "mastery",
-    label: "Mastery",
-    title: "Evaluate readiness",
-    prompt: "Beast estimates mastery from your quiz, confidence, and completed teaching steps.",
-    check: "I reviewed my mastery estimate.",
+    label: "Understanding",
+    title: "See what you have learned",
+    prompt: "Your Tutor looks at your answer, practice, confidence, and reflection before recommending the next step.",
+    check: "I reviewed what my work shows.",
   },
   {
     id: "recommendation",
-    label: "Recommendation",
+    label: "Next step",
     title: "Know what to do next",
     prompt: "Use the recommendation to decide whether to move forward or review first.",
     check: "I know my next learning move.",
@@ -262,11 +262,11 @@ function buildGenericAdaptiveLesson(activity: Pick<LearningActivityRunnerRow, "t
     learningObjective: `Understand the core idea in ${activity.title} and use it in one guided attempt.`,
     prerequisiteConcepts: [
       "Know the goal of the current course.",
-      "Recall the last lesson or activity.",
+      "Recall the last lesson or practice moment.",
       "Be ready to explain your thinking in one sentence.",
     ],
     explanation:
-      "Beast teaches this activity in small steps: start with what you know, learn the core idea, practice once with support, check understanding, get coached, reflect, and choose the next move.",
+      "Your Tutor teaches in small steps: start with what you know, learn the core idea, practice once with support, check understanding, get help, reflect, and choose the next move.",
     interactiveVisual: {
       title: "Build the idea",
       prompt: "Use this space to identify what belongs together before answering.",
@@ -303,7 +303,7 @@ function buildGenericAdaptiveLesson(activity: Pick<LearningActivityRunnerRow, "t
         practiceTemplateId: "supported-recall",
         difficulty: "introductory",
         format: "short-response",
-        prompt: "Write one attempt at the core skill for this activity.",
+        prompt: "Write one attempt at the core skill for this lesson.",
         hint: "Keep the attempt small. One clear step is better than guessing through the whole problem.",
         expectedAnswer: "A clear, supported attempt.",
         acceptedAnswers: ["attempt", "clear attempt", "supported attempt"],
@@ -323,7 +323,7 @@ function buildGenericAdaptiveLesson(activity: Pick<LearningActivityRunnerRow, "t
         options: ["Guess quickly", "Name what is confusing", "Skip the lesson"],
         answer: "Name what is confusing",
         acceptedAnswers: ["Name what is confusing"],
-        explanation: "Naming the confusion gives Beast a better signal for coaching and review.",
+        explanation: "Naming the confusion gives your Tutor a better starting point for coaching and review.",
       },
     ],
     aiCoachingPrompts: [
@@ -355,41 +355,41 @@ function buildGenericAdaptiveLesson(activity: Pick<LearningActivityRunnerRow, "t
     ],
     reflectionPrompts: [
       "What changed in your understanding?",
-      "What should Beast explain differently next time?",
+      "What should your Tutor explain differently next time?",
     ],
     masteryThreshold: activity.difficulty === "Advanced" ? 85 : 80,
-    recommendedNextLesson: "Continue with the next ready activity",
+    recommendedNextLesson: "Continue with the next lesson your Guide chooses",
     reviewRecommendation: "Review the core idea once more before moving forward.",
   };
 }
 
 const completionLabels: Record<LearningActivityType, string> = {
-  Lesson: "Finish lesson",
-  Practice: "Finish guided practice",
-  Quiz: "Finish quiz",
-  "AI Tutor Challenge": "Finish coaching challenge",
+  Lesson: "Let's see what you've learned",
+  Practice: "Practice with support",
+  Quiz: "Show what you remember",
+  "AI Tutor Challenge": "Work with the Tutor",
   Reflection: "Save reflection",
 };
 
 const lessonCompletionCriteria: LessonCompletionCriterion[] = [
   {
     id: "phases-reviewed",
-    label: "Review every teaching phase.",
+    label: "Spend time with each teaching step.",
     required: true,
   },
   {
     id: "guided-practice-attempted",
-    label: "Attempt all guided practice before completion.",
+    label: "Try each practice step before saving the lesson.",
     required: true,
   },
   {
     id: "quiz-answered",
-    label: "Answer every quiz question before completion.",
+    label: "Answer each check-in question before saving the lesson.",
     required: true,
   },
   {
     id: "reflection-captured",
-    label: "Capture a learner reflection.",
+    label: "Write one reflection so your Guide knows what changed.",
     required: true,
   },
   {
@@ -402,17 +402,17 @@ const lessonCompletionCriteria: LessonCompletionCriterion[] = [
 const lessonAssessmentAssumptions: LessonAssessmentAssumption[] = [
   {
     id: "quiz",
-    label: "Quiz signal",
+    label: "Check-in signal",
     weight: 0.45,
     description:
-      "Quiz answers are a recall signal only; they do not prove durable mastery by themselves.",
+      "Check-in answers are a recall signal only; they do not prove durable mastery by themselves.",
   },
   {
     id: "guided-practice",
-    label: "Guided practice signal",
+    label: "Practice signal",
     weight: 0.2,
     description:
-      "Guided practice shows supported skill use and should be reviewed with hints and attempts.",
+      "Practice shows supported skill use and should be reviewed with hints and attempts.",
   },
   {
     id: "confidence",
@@ -426,7 +426,7 @@ const lessonAssessmentAssumptions: LessonAssessmentAssumption[] = [
     label: "Teaching progress signal",
     weight: 0.15,
     description:
-      "Completed phases show lesson engagement, not independent mastery.",
+      "Teaching steps show lesson engagement, not independent mastery.",
   },
 ];
 
@@ -434,7 +434,7 @@ const masteryAssumptions = [
   "Mastery is a conservative readiness estimate, not an accredited assessment.",
   "A low estimate should recommend review without shame or penalty language.",
   "A high estimate means ready for the next lesson, not guaranteed long-term retention.",
-  "Missing quiz, practice, reflection, or confidence evidence lowers certainty.",
+  "Missing check-in, practice, reflection, or confidence evidence lowers certainty.",
 ];
 
 export function buildLessonEngineDefinition(
@@ -584,7 +584,7 @@ export function getLessonTeacherResponse({
   const lowerQuestion = question.toLowerCase();
 
   if (!question.trim()) {
-    return `Ask me about ${lesson.title}, a mistake, a hint, review, or what to do next.`;
+    return `Ask me about ${lesson.title}, what feels confusing, a hint, or what we should try next.`;
   }
 
   if (/why|mistake|wrong|confus/.test(lowerQuestion)) {
@@ -599,7 +599,7 @@ export function getLessonTeacherResponse({
   if (/next|master|review/.test(lowerQuestion)) {
     return masteryEstimate >= lesson.masteryThreshold && quizPercent >= 70
       ? `You are ready for the next lesson: ${lesson.recommendedNextLesson}.`
-      : `${lesson.reviewRecommendation} Then try one more practice problem and re-check your quiz answers.`;
+      : `${lesson.reviewRecommendation} Then try one more practice question and revisit the check-in together.`;
   }
 
   if (/hint|help|practice/.test(lowerQuestion)) {
@@ -625,10 +625,10 @@ export function buildCoachMessage({
   }
 
   if (recommendedReview) {
-    return `${lesson.reviewRecommendation} Your quiz score was ${quizPercent}%, so Beast recommends one normal review pass before the next lesson.`;
+    return `${lesson.reviewRecommendation} Your check-in score was ${quizPercent}%, so your Tutor recommends one careful review before the next lesson.`;
   }
 
-  return "You are close. Review the coaching notes, then finish with a reflection before moving forward.";
+  return "You are close. Review the Tutor's notes, then write one reflection before moving forward.";
 }
 
 function buildAssessmentSignals({
@@ -707,17 +707,17 @@ export function getLessonEngineProgress({
   const mastered = masteryEstimate >= lesson.masteryThreshold && quiz.percent >= 70;
   const recommendedReview = !mastered && (quiz.percent < 70 || confidenceScore < 70);
   const completionReviewReasons = [
-    ...(completedPhases === phaseCount ? [] : ["Review every teaching phase."]),
+    ...(completedPhases === phaseCount ? [] : ["Spend time with each teaching step."]),
     ...(practice.answered === lesson.guidedPractice.length
       ? []
-      : ["Attempt all guided practice steps."]),
+      : ["Try each practice step."]),
     ...(answeredQuizQuestions === lesson.quizQuestions.length
       ? []
-      : ["Answer every quiz question."]),
-    ...(reflectionComplete ? [] : ["Capture a learner reflection."]),
+      : ["Answer each check-in question."]),
+    ...(reflectionComplete ? [] : ["Write one reflection."]),
     ...(mastered || !recommendedReview
       ? []
-      : ["Review is recommended before the next lesson."]),
+      : ["A careful review will help before the next lesson."]),
   ];
   const readyToComplete =
     completedPhases === phaseCount &&

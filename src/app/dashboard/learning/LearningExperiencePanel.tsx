@@ -24,18 +24,18 @@ export default function LearningExperiencePanel({
   return (
     <DashboardCard accent="learning">
       <SectionHeader
-        eyebrow="Learning Experience"
-        title="Today's learning mission"
-        description="A daily LX layer that keeps the next action obvious while preserving the deeper learning engines underneath."
-        action={<ModuleBadge module="learning" label="v0.5 LX" />}
+        eyebrow="How I'm Doing"
+        title="What your Guide is noticing"
+        description="A quick look at your effort, review needs, and momentum so you know what to focus on next."
+        action={<ModuleBadge module="learning" label="Support" />}
       />
 
       <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricTile
-          label="XP"
+          label="Practice credit"
           value={String(experience.gamification.xp)}
           detail={`Level ${experience.gamification.level}`}
-          icon="XP"
+          icon="PC"
           tone="purple"
         />
         <MetricTile
@@ -46,14 +46,14 @@ export default function LearningExperiencePanel({
           tone="green"
         />
         <MetricTile
-          label="Flashcards"
+          label="Review cards"
           value={String(experience.daily.flashcardsDue)}
           detail="Due for review"
           icon="F"
           tone="yellow"
         />
         <MetricTile
-          label="Journey"
+          label="Path"
           value={`${experience.gamification.journeyCompletion}%`}
           detail="Current path"
           icon="J"
@@ -65,7 +65,7 @@ export default function LearningExperiencePanel({
         <div className="grid gap-4">
           <div className="rounded-xl border border-indigo-300/35 bg-indigo-300/10 p-5">
             <div className="text-xs font-bold uppercase text-[#7f8da3]">
-              Today&apos;s Mission
+              Today&apos;s focus
             </div>
             <h3 className="mt-2 text-2xl font-black text-white">
               {experience.daily.nextAction}
@@ -84,7 +84,7 @@ export default function LearningExperiencePanel({
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                  Focus Mode
+                  Learning focus
                 </div>
                 <h3 className="mt-1 font-black text-white">
                   {experience.focusMode.lessonTitle}
@@ -103,7 +103,7 @@ export default function LearningExperiencePanel({
                 {experience.focusMode.notesPlaceholder}
               </div>
               <div className="rounded-lg bg-[#0f1419] p-3 text-sm text-[#c7cfdb]">
-                Bookmark: {experience.focusMode.bookmarked ? "Saved" : "Open"}
+                Saved note: {experience.focusMode.bookmarked ? "Yes" : "Not saved yet"}
               </div>
               <div className="rounded-lg bg-[#0f1419] p-3 text-sm text-[#c7cfdb]">
                 {experience.focusMode.exitLabel}
@@ -114,7 +114,7 @@ export default function LearningExperiencePanel({
           {activeJourney ? (
             <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
               <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                Learning Journey
+                My Plan
               </div>
               <h3 className="mt-1 font-black text-white">{activeJourney.title}</h3>
               <div className="mt-4 grid gap-2 md:grid-cols-3">
@@ -160,7 +160,7 @@ export default function LearningExperiencePanel({
 
           <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
             <div className="text-xs font-bold uppercase text-[#7f8da3]">
-              Learner Insights
+              What may help next
             </div>
             <div className="mt-3 grid gap-2">
               {experience.insights.map((insight) => (
@@ -176,7 +176,7 @@ export default function LearningExperiencePanel({
 
           <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
             <div className="text-xs font-bold uppercase text-[#7f8da3]">
-              Learner Profile
+              What your Guide remembers
             </div>
             <h3 className="mt-1 font-black text-white">
               {experience.learnerProfile.learnerName}
@@ -190,7 +190,7 @@ export default function LearningExperiencePanel({
 
           <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
             <div className="text-xs font-bold uppercase text-[#7f8da3]">
-              Founding Student
+              Early learner wins
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
               {experience.beta.badges.map((badge) => (

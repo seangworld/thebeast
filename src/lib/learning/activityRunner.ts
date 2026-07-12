@@ -41,7 +41,7 @@ const checklistByType: Record<LearningActivityType, string[]> = {
   Lesson: [
     "Read the objective and name what you already know.",
     "Study the main idea in your own words.",
-    "Write one question you want Beast to help with next.",
+    "Write one question you want your Tutor to help with next.",
   ],
   Practice: [
     "Try the first problem without looking anything up.",
@@ -51,7 +51,7 @@ const checklistByType: Record<LearningActivityType, string[]> = {
   Quiz: [
     "Answer from memory first.",
     "Mark any answer you are unsure about.",
-    "Review the unsure items before completing the quiz.",
+    "Review the unsure items before you decide what you learned.",
   ],
   "AI Tutor Challenge": [
     "Explain your current understanding.",
@@ -73,9 +73,9 @@ const instructionsByType: Record<LearningActivityType, string> = {
   Quiz:
     "Check recall. Uncertainty is useful here because it tells Beast what should be reviewed next.",
   "AI Tutor Challenge":
-    "Use Beast as a coach. Ask for guidance that helps you think, then capture the takeaway.",
+    "Use your Tutor as a coach. Ask for guidance that helps you think, then capture the takeaway.",
   Reflection:
-    "Pause and make the learning visible. This helps the next recommendation get sharper.",
+    "Pause and make the learning visible. This helps your Guide choose the next step more carefully.",
 };
 
 export function normalizeLearningActivityType(
@@ -97,12 +97,12 @@ export function getLearningActivityInstructions(activityType: string) {
 export function getLearningActivityPrimaryActionLabel(activityType: string) {
   const normalized = normalizeLearningActivityType(activityType);
 
-  if (normalized === "Quiz") return "Complete quiz";
-  if (normalized === "Practice") return "Finish practice";
+  if (normalized === "Quiz") return "Let's see what you remember";
+  if (normalized === "Practice") return "Practice with support";
   if (normalized === "Reflection") return "Save reflection";
-  if (normalized === "AI Tutor Challenge") return "Complete challenge";
+  if (normalized === "AI Tutor Challenge") return "Work with the Tutor";
 
-  return "Complete lesson";
+  return "Let's see what you've learned";
 }
 
 export function getLearningActivityRoute(activityId: string) {

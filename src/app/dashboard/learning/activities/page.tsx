@@ -80,7 +80,9 @@ export default function LearningActivitiesPage() {
       setCourses(courseMap);
     } catch (error) {
       setMessage(
-        error instanceof Error ? error.message : "Unable to load activities."
+        error instanceof Error
+          ? error.message
+          : "Your Guide had trouble finding your lessons. Try again in a moment."
       );
     } finally {
       setLoading(false);
@@ -152,15 +154,15 @@ export default function LearningActivitiesPage() {
               <MetricTile
                 label="Progress"
                 value={`${progressPercent}%`}
-                detail={`${completed.length} of ${activities.length} complete`}
+                detail={`${completed.length} of ${activities.length} lessons saved`}
                 icon="P"
                 tone="purple"
               />
               <MetricTile
-                label="XP"
+                label="Practice Credit"
                 value={String(totalXp)}
-                detail="Earned from completed activities"
-                icon="XP"
+                detail="Earned from saved lessons"
+                icon="PC"
                 tone="yellow"
               />
               <MetricTile
@@ -171,9 +173,9 @@ export default function LearningActivitiesPage() {
                 tone="green"
               />
               <MetricTile
-                label="Time"
+                label="Time together"
                 value={`${remainingMinutes} min`}
-                detail="Estimated remaining"
+                detail="Estimated learning time"
                 icon="T"
                 tone="blue"
               />
@@ -181,7 +183,7 @@ export default function LearningActivitiesPage() {
 
             <DashboardCard accent="learning">
               <SectionHeader
-                eyebrow="Recommended Next"
+                eyebrow="Your next step"
                 title={readyActivity?.title || "Your next lesson is not ready yet"}
                 description={nextAction}
                 action={<ModuleBadge module="learning" label={readyActivity?.activity_type || "Guide"} />}
@@ -198,7 +200,7 @@ export default function LearningActivitiesPage() {
               ) : (
                 <div className="mt-5">
                   <Link href="/dashboard/today" className="beast-button">
-                    Open Today
+                    Ask My Guide
                   </Link>
                 </div>
               )}
@@ -230,8 +232,8 @@ export default function LearningActivitiesPage() {
                               : "Course"}
                           </span>
                           <span>{activity.estimated_minutes} min</span>
-                          <span>{activity.xp} XP</span>
-                          <span>{activity.status === "Completed" ? "Reviewed" : "Ready when you are"}</span>
+                          <span>{activity.xp} practice credit</span>
+                          <span>{activity.status === "Completed" ? "Saved" : "Ready when you are"}</span>
                         </div>
                       </div>
                       <Link

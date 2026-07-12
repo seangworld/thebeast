@@ -53,7 +53,7 @@ export default function StudySessionCommandCard({
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                Current focus
+                What we&apos;re focusing on
               </div>
               <h3 className="mt-2 text-2xl font-black text-white">
                 {session.currentFocus}
@@ -71,7 +71,7 @@ export default function StudySessionCommandCard({
             />
           </div>
           <div className="mt-2 text-xs font-bold uppercase text-[#7f8da3]">
-            {progressPercent}% of this learning moment
+            {progressPercent}% of this learning moment saved
           </div>
 
           <div className="mt-5 flex flex-wrap gap-3">
@@ -89,7 +89,7 @@ export default function StudySessionCommandCard({
               disabled={status !== "started"}
               className="rounded-xl border border-green-400/40 bg-green-400/15 px-4 py-3 text-sm font-black text-green-100 transition hover:bg-green-400/20 disabled:cursor-not-allowed disabled:border-[#2a3242] disabled:bg-[#111827] disabled:text-[#7f8da3]"
             >
-              Save progress
+              Let&apos;s see what I&apos;ve learned
             </button>
           </div>
         </div>
@@ -97,7 +97,7 @@ export default function StudySessionCommandCard({
         <div className="grid gap-3">
           <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
             <div className="text-xs font-bold uppercase text-[#7f8da3]">
-              Warm-up prompt
+              Start here
             </div>
             <p className="mt-2 text-sm leading-5 text-[#c7cfdb]">
               {session.warmUpPrompt}
@@ -105,7 +105,7 @@ export default function StudySessionCommandCard({
           </div>
           <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
             <div className="text-xs font-bold uppercase text-[#7f8da3]">
-              Guided practice
+              Try this with support
             </div>
             <p className="mt-2 text-sm leading-5 text-[#c7cfdb]">
               {session.guidedPracticeStep}
@@ -113,7 +113,7 @@ export default function StudySessionCommandCard({
           </div>
           <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
             <div className="text-xs font-bold uppercase text-[#7f8da3]">
-              Reflection checkpoint
+              Before we move on
             </div>
             <p className="mt-2 text-sm leading-5 text-[#c7cfdb]">
               {session.reflectionCheckpoint}
@@ -123,7 +123,7 @@ export default function StudySessionCommandCard({
           {status === "completed" ? (
             <div className="rounded-xl border border-green-400/35 bg-green-400/10 p-4">
               <div className="text-xs font-bold uppercase text-green-100">
-                Progress feedback
+                What your Guide noticed
               </div>
               <p className="mt-2 text-sm font-semibold leading-5 text-green-100">
                 {session.progressFeedback}

@@ -51,8 +51,8 @@ function tutorStepTitle(step: TutorStep) {
   if (step === "visual") return "Show me the pattern.";
   if (step === "practice") return "Try one with me.";
   if (step === "question") return "One check before we continue.";
-  if (step === "reflect") return "Lock in what changed.";
-  return "Mastery check.";
+  if (step === "reflect") return "Tell me what changed for you.";
+  return "Let's see what you've learned.";
 }
 
 function tutorStepMessage(step: TutorStep, learnerName: string, subject: string) {
@@ -69,12 +69,12 @@ function tutorStepMessage(step: TutorStep, learnerName: string, subject: string)
     return "Your turn. Work this one step at a time. Ask for help if you need it.";
   }
   if (step === "question") {
-    return "Answer from memory. I’ll use your response to decide whether to move forward or remediate.";
+    return "Answer from memory. If it is not quite there yet, we will slow down and work through it together.";
   }
   if (step === "reflect") {
-    return "Tell me what clicked or what still feels uncertain. I’ll use that to preserve your lesson context.";
+    return "Tell me what clicked or what still feels uncertain. I’ll remember it so the next lesson fits you better.";
   }
-  return "Here is where you stand. If you are ready, I’ll save this lesson and recommend what comes next.";
+  return "Here is what your work shows. If you are ready, I’ll save this lesson and help your Guide choose what comes next.";
 }
 
 function confidenceLabel(value: string) {
@@ -259,7 +259,7 @@ export function LessonEngine({
       <section className="grid gap-4 sm:grid-cols-3">
         <MetricTile
           label="Tutor"
-          value={completed ? "Complete" : "Live"}
+          value={completed ? "Saved" : "Here"}
           detail="Teaching now"
           icon="AI"
           tone="purple"
@@ -274,7 +274,7 @@ export function LessonEngine({
         <MetricTile
           label="Confidence"
           value={confidenceLabel(confidence)}
-          detail={askedForHelp ? "Support used well" : "Help available anytime"}
+          detail={askedForHelp ? "You used support well" : "You can ask for help anytime"}
           icon="C"
           tone="green"
         />
@@ -282,7 +282,7 @@ export function LessonEngine({
 
       <DashboardCard accent="learning">
         <SectionHeader
-          eyebrow="Tutor Session"
+          eyebrow="Tutoring Together"
           title={tutorStepTitle(step)}
           description={tutorStepMessage(step, learnerName, engine.lesson.subject)}
           action={<ModuleBadge module="learning" label={engine.lesson.subject} />}
@@ -316,7 +316,7 @@ export function LessonEngine({
                 className="beast-button-secondary"
                 disabled={completed}
               >
-                Another explanation
+                Explain another way
               </button>
               <button
                 type="button"
@@ -495,7 +495,7 @@ export function LessonEngine({
                   >
                     {activePracticeCorrect
                       ? "Yes. That answer works. You saw the structure and applied it."
-                      : "Not yet. Check the relationship in the expression, then try again."}
+                      : "Good attempt. Let's work through the relationship in the expression together, then try again."}
                   </div>
                 ) : null}
                 <button
@@ -506,7 +506,7 @@ export function LessonEngine({
                   className="beast-button w-fit"
                   disabled={completed || !activePracticeCorrect}
                 >
-                  {practiceComplete ? "Ask me the check" : "Give me the next practice"}
+                  {practiceComplete ? "Ask me one check" : "Let's try another one"}
                 </button>
               </div>
             ) : null}
@@ -553,7 +553,7 @@ export function LessonEngine({
                   className="beast-button w-fit"
                   disabled={completed || !activeQuizAnswered}
                 >
-                  {quizComplete ? "Continue" : "Coach me through it"}
+                  {quizComplete ? "I'm ready to reflect" : "Coach me through it"}
                 </button>
               </div>
             ) : null}
@@ -603,7 +603,7 @@ export function LessonEngine({
               <div className="grid gap-4">
                 <div className="rounded-xl border border-[#2a3242] bg-[#0f1419] p-4">
                   <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                    Tutor recommendation
+                    What I noticed
                   </div>
                   <p className="mt-2 text-sm font-semibold leading-6 text-[#c7cfdb]">
                     {completed
@@ -614,7 +614,7 @@ export function LessonEngine({
                 <div className="grid gap-3 sm:grid-cols-3">
                   <div className="rounded-xl border border-[#2a3242] bg-[#0f1419] p-4">
                     <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                      Practice
+                      Practice tries
                     </div>
                     <p className="mt-2 text-lg font-black text-white">
                       {progress.practiceCorrect}/{progress.practiceTotal}
@@ -622,7 +622,7 @@ export function LessonEngine({
                   </div>
                   <div className="rounded-xl border border-[#2a3242] bg-[#0f1419] p-4">
                     <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                      Questions
+                      Check-in questions
                     </div>
                     <p className="mt-2 text-lg font-black text-white">
                       {progress.quizCorrect}/{progress.quizTotal}
@@ -630,7 +630,7 @@ export function LessonEngine({
                   </div>
                   <div className="rounded-xl border border-[#2a3242] bg-[#0f1419] p-4">
                     <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                      Mastery
+                      Understanding
                     </div>
                     <p className="mt-2 text-lg font-black text-white">
                       {completed ? 100 : progress.masteryEstimate}%
@@ -643,7 +643,7 @@ export function LessonEngine({
                   disabled={saving || completed || !tutorReadyToComplete}
                   className="beast-button w-fit disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {saving ? "Saving..." : completed ? "Lesson saved" : "Save this lesson"}
+                  {saving ? "Saving..." : completed ? "Lesson saved" : "Let's see what you've learned"}
                 </button>
               </div>
             ) : null}

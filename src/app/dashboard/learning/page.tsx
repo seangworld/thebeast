@@ -207,20 +207,20 @@ function buildStudySessionCommandFromSession(
   return {
     id: session ? `${session.id}-command` : "starter-learning-command",
     sessionId: session?.id || "starter-learning-session",
-    currentFocus: session?.title || "No study session scheduled",
+    currentFocus: session?.title || "Your Guide is choosing a starting point",
     estimatedTime: session?.duration || "0 min",
     warmUpPrompt: session
       ? "Write down what you already know before starting this session."
-      : "Create your first learning goal to unlock a study session.",
+      : "Tell your Guide what you want to learn first.",
     guidedPracticeStep: session
       ? "Work through the next focused practice step for this session."
-      : "Use the goal builder to define what you want to learn first.",
+      : "Your Guide will help turn that goal into a first lesson.",
     reflectionCheckpoint: session
       ? "Capture one thing that clicked and one thing to review next."
-      : "Once a session exists, BeastLearning will track reflection here.",
+      : "After your first lesson, your Tutor will ask what clicked and what still feels unclear.",
     progressFeedback: session
-      ? "Session complete. Your learning history is ready for the next step."
-      : "No session completion is available yet.",
+      ? "Nice work. Your Guide has what it needs to choose the next step."
+      : "Your first saved lesson will appear here.",
   };
 }
 
@@ -283,7 +283,7 @@ function CourseCard({ course }: { course: LearningCourse }) {
       </div>
       <ProgressBar value={course.progress} />
       <div className="mt-3 flex flex-wrap justify-between gap-2 text-sm text-[#c7cfdb]">
-        <span>{course.progress}% complete</span>
+        <span>{course.progress}% explored</span>
         <span>{course.estimatedCompletion}</span>
       </div>
       <div className="mt-3 text-xs font-bold uppercase text-[#7f8da3]">
@@ -310,7 +310,7 @@ function GoalCard({ goal }: { goal: LearningGoal }) {
       <p className="mt-3 text-sm leading-5 text-[#c7cfdb]">{goal.target}</p>
       <ProgressBar value={goal.progress} />
       <div className="mt-2 text-sm font-bold text-indigo-100">
-        {goal.progress}% mapped
+        {goal.progress}% shaped with your Guide
       </div>
     </div>
   );
@@ -445,7 +445,7 @@ function GuidanceConversationCenter({
               href="#learning-path"
               className="beast-button-secondary"
             >
-              Review Learning Path
+              Show me my plan
             </Link>
           </div>
         </div>
@@ -578,7 +578,7 @@ export default async function LearningPage() {
         id: "current",
         name: fallbackName,
         role: "Learner",
-        focus: "Create a learning profile to personalize BeastLearning.",
+        focus: "Your Guide will learn what helps you best.",
         active: true,
       };
   const userLearners = [
@@ -604,7 +604,7 @@ export default async function LearningPage() {
         id: "starter-learning-path",
         learnerId: activeLearner.id,
         title: userGoals[0]?.title || "Starter learning path",
-        summary: userGoals[0]?.target || "Create your first learning goal to begin.",
+        summary: userGoals[0]?.target || "Your Guide will help you choose a first goal.",
         primaryGoalId: userGoals[0]?.id,
         weeklySessionTarget: 0,
       };
@@ -708,7 +708,7 @@ export default async function LearningPage() {
     },
     {
       label: "Prerequisites",
-      value: `${learningIntelligence.dependencyGraph.unlockedConcepts.length} unlocked concepts`,
+      value: `${learningIntelligence.dependencyGraph.unlockedConcepts.length} ideas ready`,
     },
     {
       label: "Study consistency",
@@ -716,7 +716,7 @@ export default async function LearningPage() {
     },
     {
       label: "Learning momentum",
-      value: `${progressSignals.sessionsCompleted} completed sessions`,
+      value: `${progressSignals.sessionsCompleted} lessons saved`,
     },
     {
       label: "Knowledge retention",
@@ -861,7 +861,7 @@ export default async function LearningPage() {
                     {progressSignals.recommendedNextAction}
                   </p>
                   <div className="mt-3 text-xs font-bold uppercase text-[#7f8da3]">
-                    Weak area: {progressSignals.weakArea}
+                    We may review: {progressSignals.weakArea}
                   </div>
                 </div>
               </div>
@@ -928,9 +928,9 @@ export default async function LearningPage() {
 
           <DashboardCard accent="purple">
             <SectionHeader
-              eyebrow="Upcoming Lessons"
-              title="Next study blocks"
-              description="Use these study blocks to keep momentum and know what is coming next."
+              eyebrow="Coming Up"
+              title="What we may work on soon"
+              description="These are future learning moments your Guide may use to keep momentum."
             />
             <div className="mt-5 grid gap-3">
               {learningSessions.map((lesson) => (
@@ -976,7 +976,7 @@ export default async function LearningPage() {
           <DashboardCard accent="green">
             <SectionHeader
               eyebrow="Achievements"
-              title="Progress worth noticing"
+              title="Wins worth noticing"
               description="These celebrate effort, consistency, mastery, and meaningful milestones."
             />
             <div className="mt-5 grid gap-3">
@@ -997,7 +997,7 @@ export default async function LearningPage() {
                       </p>
                     </div>
                     <span className="rounded-full border border-[#2a3242] bg-[#0f1419] px-2 py-1 text-xs font-bold text-[#dbe3ef]">
-                      {achievement.earned ? "Earned" : "Coming next"}
+                      {achievement.earned ? "You earned this" : "Growing toward this"}
                     </span>
                   </div>
                 </div>

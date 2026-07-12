@@ -112,7 +112,9 @@ export default function LearningActivityRunnerPage() {
       setCourse((courseResult.data as CourseRow | null) || null);
     } catch (error) {
       setMessage(
-        error instanceof Error ? error.message : "Unable to load this lesson."
+        error instanceof Error
+          ? error.message
+          : "Your Tutor had trouble opening this lesson. Try again in a moment."
       );
     } finally {
       setLoading(false);
@@ -139,7 +141,7 @@ export default function LearningActivityRunnerPage() {
 
     if (!progress.readyToComplete) {
       setMessage(
-        "Stay with the Tutor a little longer. Answer the question, try the practice, and leave one reflection before we save this lesson."
+        "Stay with the Tutor a little longer. Try the practice, answer the check-in question, and leave one reflection before we save this lesson."
       );
       return;
     }
@@ -178,7 +180,9 @@ export default function LearningActivityRunnerPage() {
       );
     } catch (error) {
       setMessage(
-        error instanceof Error ? error.message : "Unable to save this lesson."
+        error instanceof Error
+          ? error.message
+          : "Your Tutor had trouble saving this lesson. Try again in a moment."
       );
     } finally {
       setSaving(false);
@@ -193,7 +197,7 @@ export default function LearningActivityRunnerPage() {
             <div className="space-y-4">
               <ModuleBadge module="learning" label="Tutor" />
               <h1 className="beast-title">
-                {activity?.title || "Tutor Session"}
+                {activity?.title || "Time with your Tutor"}
               </h1>
               <p className="beast-subtitle">
                 Your Guide brought you here so the Tutor can teach, practice,
@@ -212,7 +216,7 @@ export default function LearningActivityRunnerPage() {
         </section>
 
         {message ? (
-          <DashboardCard accent={message.startsWith("Activity complete") ? "green" : "red"}>
+          <DashboardCard accent={message.startsWith("Nice work.") ? "green" : "red"}>
             <p className="text-sm font-semibold text-white">{message}</p>
           </DashboardCard>
         ) : null}
@@ -284,7 +288,7 @@ export default function LearningActivityRunnerPage() {
         ) : (
           <DashboardCard accent="learning">
             <SectionHeader
-              eyebrow="Not Found"
+              eyebrow="Let’s find the right lesson"
               title="This lesson is not available"
               description="Your Guide could not open this lesson for this account. Go back to your learning steps and choose the one that is ready."
               action={<Link href="/dashboard/learning/activities" className="beast-button">My Steps</Link>}
