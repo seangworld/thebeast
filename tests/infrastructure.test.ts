@@ -134,6 +134,10 @@ import { mockLearningMemory } from "../src/lib/learning/learningMemory";
 import { learningLessons } from "../src/lib/learning/lessons";
 import { learningLibraryMaterials } from "../src/lib/learning/library";
 import { calculateMasteryProfile } from "../src/lib/learning/mastery";
+import {
+  buildLearnerSkillState,
+  skillStateHasEvidence,
+} from "../src/lib/learning/learnerSkillModel";
 import { buildMasteryMap } from "../src/lib/learning/masteryMap";
 import { buildMotivationSnapshot } from "../src/lib/learning/motivation";
 import { buildOpenAILearningMessages, isOpenAILearningConfigured } from "../src/lib/learning/openai";
@@ -966,6 +970,67 @@ test("learning mastery engine weights more than completion alone", () => {
     mastery.concepts.find((concept) => concept.conceptId === "stale-topic")
       ?.masteryPercent
   );
+});
+
+test("learner skill model records confidence and evidence state", () => {
+  const mastery = calculateMasteryProfile([
+    {
+      conceptId: "evidence-backed-skill",
+      completedSessions: 4,
+      completedGoals: 1,
+      completedMilestones: 2,
+      quizzesPlaceholder: 2,
+      practicePlaceholder: 3,
+      studyStreakDays: 5,
+      lastStudiedDaysAgo: 0,
+    },
+  ]);
+  const concept = mastery.concepts[0];
+  const state = buildLearnerSkillState({
+    learnerId: "learner-1",
+    skillId: "skill-evidence-backed",
+    concept,
+    evidence: [
+      {
+        id: "practice-evidence",
+        kind: "guided-practice",
+        sourceId: "practice-step",
+        scorePercent: 85,
+        observedAt: "2026-07-11",
+        summary: "Completed guided practice with a correct explanation.",
+      },
+      {
+        id: "quiz-evidence",
+        kind: "quiz",
+        sourceId: "quiz-check",
+        scorePercent: 90,
+        observedAt: "2026-07-12",
+        summary: "Answered the quiz check with supporting evidence.",
+      },
+    ],
+  });
+  const noEvidenceState = buildLearnerSkillState({
+    learnerId: "learner-1",
+    skillId: "skill-new",
+    concept: {
+      conceptId: "new-skill",
+      masteryPercent: 0,
+      confidence: "low",
+    },
+    evidence: [],
+  });
+
+  assert.equal(state.confidence, concept.confidence);
+  assert.equal(state.state, "ready");
+  assert.equal(state.evidence.length, 2);
+  assert.deepEqual(
+    state.evidence.map((item) => item.kind),
+    ["guided-practice", "quiz"]
+  );
+  assert.equal(state.lastEvidenceAt, "2026-07-12");
+  assert.equal(skillStateHasEvidence(state), true);
+  assert.equal(noEvidenceState.state, "new");
+  assert.equal(skillStateHasEvidence(noEvidenceState), false);
 });
 
 test("learning dependency graph computes blocked and unlocked concepts", () => {
