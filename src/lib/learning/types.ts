@@ -1222,6 +1222,9 @@ export type KnowledgeIntelligenceDashboard = {
   concepts: CurriculumConceptLibraryItem[];
   skillTree: SkillTree;
   standards: LearningStandardPlaceholder[];
+  curriculumAuthority: import("./curriculumAuthority").CurriculumAuthoritySource[];
+  courseAuthorityMappings: import("./curriculumAuthority").CourseAuthorityMapping[];
+  lessonObjectiveAlignments: import("./curriculumAuthority").LessonObjectiveAlignment[];
   careers: CareerKnowledgeModel[];
   certifications: CertificationModel[];
   generatedPath: GeneratedCurriculumPath;

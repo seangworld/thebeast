@@ -290,6 +290,19 @@ import {
   generatedContentHasReviewStatus,
   learningContentVersion,
 } from "../src/lib/learning/contentVersioning";
+import {
+  buildGeneratedContentProvenance,
+  courseAuthorityMappings,
+  courseCanBeProductionTeachable,
+  curriculumAuthorityObjectives,
+  curriculumAuthoritySources,
+  generatedContentCanBecomeProductionCurriculum,
+  getCourseAuthorityGaps,
+  getCourseAuthorityMapping,
+  getLessonObjectiveAlignment,
+  getObjectivesForCourse,
+  lessonObjectiveAlignments,
+} from "../src/lib/learning/curriculumAuthority";
 import { learningStandards } from "../src/lib/learning/standards";
 import { generateCurriculumLearningPath } from "../src/lib/learning/learningPaths";
 import { learningPathTemplates } from "../src/lib/learning/templates";
@@ -3318,6 +3331,66 @@ test("generated versus curated content controls require review status", () => {
   assert.equal(contentCanBePublished(curatedMetadata), true);
 });
 
+test("curriculum authority separates teachable objectives from AI teaching behavior", () => {
+  const teachableCourseIds = [
+    ...sampleLearningContentRecords.map((record) => record.courseId),
+    ...builtLearningCourses.map((course) => course.id),
+  ];
+  const generatedBiology = createGeneratedLearningContentRecord("Biology");
+  const generatedProvenance = buildGeneratedContentProvenance({
+    contentId: generatedBiology.lesson.id,
+    courseId: generatedBiology.courseId,
+    reviewStatus: generatedBiology.lesson.contentMetadata.reviewStatus,
+  });
+
+  assert.equal(curriculumAuthoritySources.length >= 6, true);
+  assert.equal(curriculumAuthorityObjectives.length >= 10, true);
+  assert.equal(
+    courseAuthorityMappings.every(
+      (mapping) =>
+        mapping.authorityType &&
+        mapping.publisher &&
+        mapping.version &&
+        mapping.effectiveDate &&
+        mapping.canonicalSource &&
+        mapping.objectiveIds.length > 0 &&
+        mapping.coverage.percent > 0
+    ),
+    true
+  );
+  assert.deepEqual(getCourseAuthorityGaps(teachableCourseIds), [
+    { courseId: "pre-algebra-foundations-course", issue: "not_production_teachable" },
+    { courseId: "algebra-expansion-course", issue: "not_production_teachable" },
+    { courseId: "cybersecurity-certification-prep-course", issue: "not_production_teachable" },
+    { courseId: "spanish-greeting-course", issue: "not_production_teachable" },
+    { courseId: "security-plus-foundations-course", issue: "not_production_teachable" },
+    { courseId: "college-algebra-course", issue: "not_production_teachable" },
+  ]);
+  assert.equal(
+    teachableCourseIds.every((courseId) => Boolean(getCourseAuthorityMapping(courseId))),
+    true
+  );
+  assert.equal(courseCanBeProductionTeachable("pre-algebra-foundations-course"), false);
+  assert.equal(courseCanBeProductionTeachable("generated-biology-course"), false);
+  assert.equal(generatedProvenance.authorityMappingId, undefined);
+  assert.equal(generatedProvenance.productionEligible, false);
+  assert.equal(generatedContentCanBecomeProductionCurriculum(generatedProvenance), false);
+  assert.equal(
+    getObjectivesForCourse("pre-algebra-foundations-course").some(
+      (objective) => objective.id === "objective-combine-like-terms"
+    ),
+    true
+  );
+  assert.deepEqual(
+    getLessonObjectiveAlignment("pre-algebra-combining-like-terms")?.objectiveIds,
+    ["objective-identify-like-terms", "objective-combine-like-terms"]
+  );
+  assert.equal(
+    lessonObjectiveAlignments.every((alignment) => alignment.productionAligned === false),
+    true
+  );
+});
+
 test("learning concept library models prerequisites and dependents", () => {
   const rbac = curriculumConceptLibrary.find(
     (concept) => concept.id === "role-based-access-control"
@@ -3427,6 +3500,9 @@ test("learning knowledge dashboard aggregates v0.6 curriculum intelligence", () 
   assert.equal(dashboard.generatedPath.certificationId, "comptia-security-plus");
   assert.equal(dashboard.resourceLinks.length, resourceMapLinks.length);
   assert.equal(dashboard.masteryMap.recommendedNextConceptId, "role-based-access-control");
+  assert.equal(dashboard.curriculumAuthority.length, curriculumAuthoritySources.length);
+  assert.equal(dashboard.courseAuthorityMappings.length, courseAuthorityMappings.length);
+  assert.equal(dashboard.lessonObjectiveAlignments.length, lessonObjectiveAlignments.length);
 });
 
 test("learning AI specialist registry exposes v0.7 contracts", () => {

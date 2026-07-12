@@ -2,6 +2,11 @@ import { careerKnowledgeCatalog } from "./careers";
 import { certificationCatalog } from "./certificationCatalog";
 import { curriculumConceptLibrary } from "./concepts";
 import { curriculumSubjects } from "./curriculum";
+import {
+  courseAuthorityMappings,
+  curriculumAuthoritySources,
+  lessonObjectiveAlignments,
+} from "./curriculumAuthority";
 import { generateCurriculumLearningPath } from "./learningPaths";
 import { buildMasteryMap } from "./masteryMap";
 import { resourceMapLinks } from "./resourceMapping";
@@ -17,6 +22,9 @@ export function buildKnowledgeIntelligenceDashboard(): KnowledgeIntelligenceDash
     concepts: curriculumConceptLibrary,
     skillTree: buildSkillTree("cybersecurity"),
     standards: learningStandards,
+    curriculumAuthority: curriculumAuthoritySources,
+    courseAuthorityMappings,
+    lessonObjectiveAlignments,
     careers: careerKnowledgeCatalog,
     certifications: certificationCatalog,
     generatedPath: generateCurriculumLearningPath({
