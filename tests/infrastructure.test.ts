@@ -292,13 +292,18 @@ import {
 } from "../src/lib/learning/contentVersioning";
 import {
   buildGeneratedContentProvenance,
+  courseCurriculumLifecycleRecords,
   courseAuthorityMappings,
   courseCanBeProductionTeachable,
+  curriculumLifecycleOrder,
   curriculumAuthorityObjectives,
   curriculumAuthoritySources,
+  createGeneratedCurriculumLifecycleRecord,
   generatedContentCanBecomeProductionCurriculum,
   getCourseAuthorityGaps,
   getCourseAuthorityMapping,
+  resolveTutorCurriculumAccess,
+  tutorCanTeachCourseByDefault,
   getLessonObjectiveAlignment,
   getObjectivesForCourse,
   lessonObjectiveAlignments,
@@ -3345,6 +3350,15 @@ test("curriculum authority separates teachable objectives from AI teaching behav
 
   assert.equal(curriculumAuthoritySources.length >= 6, true);
   assert.equal(curriculumAuthorityObjectives.length >= 10, true);
+  assert.deepEqual(curriculumLifecycleOrder, [
+    "Draft",
+    "Generated",
+    "Reviewed",
+    "Authority Mapped",
+    "Approved",
+    "Published",
+    "Retired",
+  ]);
   assert.equal(
     courseAuthorityMappings.every(
       (mapping) =>
@@ -3372,6 +3386,35 @@ test("curriculum authority separates teachable objectives from AI teaching behav
   );
   assert.equal(courseCanBeProductionTeachable("pre-algebra-foundations-course"), false);
   assert.equal(courseCanBeProductionTeachable("generated-biology-course"), false);
+  assert.equal(tutorCanTeachCourseByDefault("pre-algebra-foundations-course"), false);
+  assert.deepEqual(
+    resolveTutorCurriculumAccess({ courseId: "pre-algebra-foundations-course" }),
+    {
+      courseId: "pre-algebra-foundations-course",
+      lifecycleState: "Authority Mapped",
+      defaultAllowed: false,
+      adminOverrideAllowed: false,
+      canTeach: false,
+      reason: "Tutor default teaching requires Published curriculum.",
+    }
+  );
+  assert.deepEqual(
+    resolveTutorCurriculumAccess({
+      courseId: "pre-algebra-foundations-course",
+      adminOverride: true,
+    }),
+    {
+      courseId: "pre-algebra-foundations-course",
+      lifecycleState: "Authority Mapped",
+      defaultAllowed: false,
+      adminOverrideAllowed: true,
+      canTeach: true,
+      reason: "Admin testing override allows this non-published curriculum.",
+    }
+  );
+  assert.deepEqual(createGeneratedCurriculumLifecycleRecord({
+    courseId: generatedBiology.courseId,
+  }).state, "Generated");
   assert.equal(generatedProvenance.authorityMappingId, undefined);
   assert.equal(generatedProvenance.productionEligible, false);
   assert.equal(generatedContentCanBecomeProductionCurriculum(generatedProvenance), false);
@@ -3503,6 +3546,7 @@ test("learning knowledge dashboard aggregates v0.6 curriculum intelligence", () 
   assert.equal(dashboard.curriculumAuthority.length, curriculumAuthoritySources.length);
   assert.equal(dashboard.courseAuthorityMappings.length, courseAuthorityMappings.length);
   assert.equal(dashboard.lessonObjectiveAlignments.length, lessonObjectiveAlignments.length);
+  assert.equal(dashboard.courseCurriculumLifecycle.length, courseCurriculumLifecycleRecords.length);
 });
 
 test("learning AI specialist registry exposes v0.7 contracts", () => {

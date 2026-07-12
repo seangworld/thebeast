@@ -3,6 +3,7 @@ import { certificationCatalog } from "./certificationCatalog";
 import { curriculumConceptLibrary } from "./concepts";
 import { curriculumSubjects } from "./curriculum";
 import {
+  courseCurriculumLifecycleRecords,
   courseAuthorityMappings,
   curriculumAuthoritySources,
   lessonObjectiveAlignments,
@@ -25,6 +26,7 @@ export function buildKnowledgeIntelligenceDashboard(): KnowledgeIntelligenceDash
     curriculumAuthority: curriculumAuthoritySources,
     courseAuthorityMappings,
     lessonObjectiveAlignments,
+    courseCurriculumLifecycle: courseCurriculumLifecycleRecords,
     careers: careerKnowledgeCatalog,
     certifications: certificationCatalog,
     generatedPath: generateCurriculumLearningPath({

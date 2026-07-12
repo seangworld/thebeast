@@ -76,6 +76,35 @@ export type GeneratedContentProvenance = {
   productionEligible: boolean;
 };
 
+export type CurriculumLifecycleState =
+  | "Draft"
+  | "Generated"
+  | "Reviewed"
+  | "Authority Mapped"
+  | "Approved"
+  | "Published"
+  | "Retired";
+
+export type CourseCurriculumLifecycleRecord = {
+  id: string;
+  courseId: string;
+  state: CurriculumLifecycleState;
+  authorityMappingId?: string;
+  testingOnly: boolean;
+  updatedAt: string;
+  notes: string;
+};
+
+export const curriculumLifecycleOrder: CurriculumLifecycleState[] = [
+  "Draft",
+  "Generated",
+  "Reviewed",
+  "Authority Mapped",
+  "Approved",
+  "Published",
+  "Retired",
+];
+
 export const curriculumAuthoritySources: CurriculumAuthoritySource[] = [
   {
     id: "beastlearning-security-plus-fixture",
@@ -338,6 +367,69 @@ export const lessonObjectiveAlignments: LessonObjectiveAlignment[] = [
   },
 ];
 
+export const courseCurriculumLifecycleRecords: CourseCurriculumLifecycleRecord[] = [
+  {
+    id: "lifecycle-security-plus-foundations",
+    courseId: "security-plus-foundations-course",
+    state: "Authority Mapped",
+    authorityMappingId: "authority-security-plus-foundations",
+    testingOnly: true,
+    updatedAt: "2026-07-12",
+    notes:
+      "Fixture content has internal objective mapping but is not approved or published as production curriculum.",
+  },
+  {
+    id: "lifecycle-cybersecurity-certification-prep",
+    courseId: "cybersecurity-certification-prep-course",
+    state: "Authority Mapped",
+    authorityMappingId: "authority-cybersecurity-certification-prep",
+    testingOnly: true,
+    updatedAt: "2026-07-12",
+    notes:
+      "Generic certification fixture requires official provider objectives before publication.",
+  },
+  {
+    id: "lifecycle-pre-algebra-foundations",
+    courseId: "pre-algebra-foundations-course",
+    state: "Authority Mapped",
+    authorityMappingId: "authority-pre-algebra-foundations",
+    testingOnly: true,
+    updatedAt: "2026-07-12",
+    notes:
+      "Proving-ground lesson has fixture objective mapping but is not production curriculum.",
+  },
+  {
+    id: "lifecycle-algebra-expansion",
+    courseId: "algebra-expansion-course",
+    state: "Authority Mapped",
+    authorityMappingId: "authority-algebra-expansion",
+    testingOnly: true,
+    updatedAt: "2026-07-12",
+    notes:
+      "Algebra fixture follows the proving-ground pattern and remains testing-only.",
+  },
+  {
+    id: "lifecycle-spanish-greeting",
+    courseId: "spanish-greeting-course",
+    state: "Authority Mapped",
+    authorityMappingId: "authority-spanish-greeting",
+    testingOnly: true,
+    updatedAt: "2026-07-12",
+    notes:
+      "Spanish greeting fixture verifies engine behavior and is not a production language curriculum.",
+  },
+  {
+    id: "lifecycle-college-algebra",
+    courseId: "college-algebra-course",
+    state: "Authority Mapped",
+    authorityMappingId: "authority-college-algebra",
+    testingOnly: true,
+    updatedAt: "2026-07-12",
+    notes:
+      "Legacy college algebra fixture is mapped for testing and requires a real source before publication.",
+  },
+];
+
 export function buildGeneratedContentProvenance({
   contentId,
   courseId,
@@ -371,6 +463,24 @@ export function buildGeneratedContentProvenance({
   };
 }
 
+export function createGeneratedCurriculumLifecycleRecord({
+  courseId,
+  updatedAt = "2026-07-12",
+}: {
+  courseId: string;
+  updatedAt?: string;
+}): CourseCurriculumLifecycleRecord {
+  return {
+    id: `lifecycle-${courseId}`,
+    courseId,
+    state: "Generated",
+    testingOnly: true,
+    updatedAt,
+    notes:
+      "Generated curriculum must be reviewed, authority mapped, approved, and published before the Tutor may teach it by default.",
+  };
+}
+
 export function getCurriculumAuthoritySource(sourceId: string) {
   return curriculumAuthoritySources.find((source) => source.id === sourceId);
 }
@@ -381,6 +491,12 @@ export function getCourseAuthorityMapping(courseId: string) {
 
 export function getCourseAuthorityMappingById(mappingId: string) {
   return courseAuthorityMappings.find((mapping) => mapping.id === mappingId);
+}
+
+export function getCourseCurriculumLifecycle(courseId: string) {
+  return courseCurriculumLifecycleRecords.find(
+    (record) => record.courseId === courseId
+  );
 }
 
 export function getLessonObjectiveAlignment(lessonId: string) {
@@ -411,6 +527,51 @@ export function generatedContentCanBecomeProductionCurriculum(
   provenance: GeneratedContentProvenance
 ) {
   return provenance.productionEligible;
+}
+
+export function courseIsPublished(courseId: string) {
+  const lifecycle = getCourseCurriculumLifecycle(courseId);
+  return lifecycle?.state === "Published";
+}
+
+export function tutorCanTeachCourseByDefault(courseId: string) {
+  return courseIsPublished(courseId) && courseCanBeProductionTeachable(courseId);
+}
+
+export function adminCanOverrideCourseForTesting(courseId: string) {
+  const lifecycle =
+    getCourseCurriculumLifecycle(courseId) ||
+    createGeneratedCurriculumLifecycleRecord({ courseId });
+
+  return lifecycle.state !== "Retired" && lifecycle.testingOnly;
+}
+
+export function resolveTutorCurriculumAccess({
+  courseId,
+  adminOverride = false,
+}: {
+  courseId: string;
+  adminOverride?: boolean;
+}) {
+  const lifecycle =
+    getCourseCurriculumLifecycle(courseId) ||
+    createGeneratedCurriculumLifecycleRecord({ courseId });
+  const defaultAllowed = tutorCanTeachCourseByDefault(courseId);
+  const adminOverrideAllowed =
+    adminOverride && adminCanOverrideCourseForTesting(courseId);
+
+  return {
+    courseId,
+    lifecycleState: lifecycle.state,
+    defaultAllowed,
+    adminOverrideAllowed,
+    canTeach: defaultAllowed || adminOverrideAllowed,
+    reason: defaultAllowed
+      ? "Published curriculum is available for default Tutor teaching."
+      : adminOverrideAllowed
+      ? "Admin testing override allows this non-published curriculum."
+      : "Tutor default teaching requires Published curriculum.",
+  };
 }
 
 export function getCourseAuthorityGaps(courseIds: string[]) {
