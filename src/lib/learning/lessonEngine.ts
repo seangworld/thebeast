@@ -36,6 +36,9 @@ export type AdaptiveLessonExample = {
 
 export type AdaptivePracticeStep = {
   id: string;
+  practiceTemplateId?: string;
+  difficulty?: "introductory" | "developing" | "challenge";
+  format?: "short-response" | "worked-step" | "scenario" | "conversation";
   prompt: string;
   hint: string;
   expectedAnswer: string;
@@ -279,6 +282,9 @@ function buildGenericAdaptiveLesson(activity: Pick<LearningActivityRunnerRow, "t
     guidedPractice: [
       {
         id: "generic-practice",
+        practiceTemplateId: "supported-recall",
+        difficulty: "introductory",
+        format: "short-response",
         prompt: "Write one attempt at the core skill for this activity.",
         hint: "Keep the attempt small. One clear step is better than guessing through the whole problem.",
         expectedAnswer: "A clear, supported attempt.",

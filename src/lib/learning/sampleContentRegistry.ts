@@ -257,6 +257,9 @@ export const combiningLikeTermsLesson: AdaptiveLesson = {
   guidedPractice: [
     {
       id: "practice-combine-x",
+      practiceTemplateId: "worked-step",
+      difficulty: "introductory",
+      format: "worked-step",
       prompt: "Combine: 6x + 2x",
       hint: "Both terms have x, so add the coefficients and keep x.",
       expectedAnswer: "8x",
@@ -264,6 +267,9 @@ export const combiningLikeTermsLesson: AdaptiveLesson = {
     },
     {
       id: "practice-combine-groups",
+      practiceTemplateId: "worked-step",
+      difficulty: "developing",
+      format: "worked-step",
       prompt: "Combine: 5x + 4 + x + 6",
       hint: "Group the x terms together, then group the plain numbers.",
       expectedAnswer: "6x + 10",
@@ -390,6 +396,9 @@ const linearEquationsLesson: AdaptiveLesson = {
   guidedPractice: [
     {
       id: "practice-solve-addition",
+      practiceTemplateId: "worked-step",
+      difficulty: "introductory",
+      format: "worked-step",
       prompt: "Solve: x + 5 = 12",
       hint: "Undo + 5 by subtracting 5 from both sides.",
       expectedAnswer: "x = 7",
@@ -397,6 +406,9 @@ const linearEquationsLesson: AdaptiveLesson = {
     },
     {
       id: "practice-check-solution",
+      practiceTemplateId: "worked-step",
+      difficulty: "developing",
+      format: "worked-step",
       prompt: "Check whether x = 7 solves x + 5 = 12.",
       hint: "Replace x with 7 and simplify the left side.",
       expectedAnswer: "7 + 5 = 12",
@@ -503,6 +515,9 @@ const certificationFoundationLesson: AdaptiveLesson = {
   guidedPractice: [
     {
       id: "practice-cert-baseline",
+      practiceTemplateId: "applied-scenario",
+      difficulty: "introductory",
+      format: "scenario",
       prompt: "Name one known topic and one topic to verify.",
       hint: "Use plain language. The first answer can be small.",
       expectedAnswer: "Known topic and review topic",
@@ -600,6 +615,9 @@ const spanishConversationLesson: AdaptiveLesson = {
   guidedPractice: [
     {
       id: "practice-spanish-greeting",
+      practiceTemplateId: "conversation-turn",
+      difficulty: "introductory",
+      format: "conversation",
       prompt: "Write a greeting with your name.",
       hint: "Start with Hola, then add me llamo.",
       expectedAnswer: "Hola, me llamo Alex",
@@ -867,6 +885,9 @@ export function createGeneratedLearningContentRecord(
       guidedPractice: [
         {
           id: "generated-practice-step",
+          practiceTemplateId: "supported-recall",
+          difficulty: "introductory",
+          format: "short-response",
           prompt: "Write one small practice attempt for this goal.",
           hint: "Use the learner goal and current baseline to keep the first attempt narrow.",
           expectedAnswer: "A clear first attempt.",

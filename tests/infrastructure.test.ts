@@ -239,6 +239,12 @@ import {
   lessonSatisfiesTemplate,
   lessonTemplateLibrary,
 } from "../src/lib/learning/lessonTemplates";
+import {
+  getPracticeTemplateForStep,
+  getPracticeTemplateVariation,
+  lessonPracticeSatisfiesTemplates,
+  practiceTemplateLibrary,
+} from "../src/lib/learning/practiceTemplates";
 import { learningStandards } from "../src/lib/learning/standards";
 import { generateCurriculumLearningPath } from "../src/lib/learning/learningPaths";
 import { learningPathTemplates } from "../src/lib/learning/templates";
@@ -2475,6 +2481,59 @@ test("lesson template library separates instruction examples practice and checks
   assert.equal(
     getLessonTemplateForLesson(combiningLikeTermsLesson)?.id,
     "procedural-skill-lesson"
+  );
+});
+
+test("practice template library varies difficulty and format without subject branching", () => {
+  const generatedBiology = createGeneratedLearningContentRecord("Biology");
+  const lessons = [
+    combiningLikeTermsLesson,
+    resolveLearningContentRecordForSubject("Cybersecurity certification preparation")!.lesson,
+    resolveLearningContentRecordForSubject("Spanish")!.lesson,
+    generatedBiology.lesson,
+  ];
+  const allPractice = lessons.flatMap((lesson) => lesson.guidedPractice);
+  const variation = getPracticeTemplateVariation(allPractice);
+  const source = readFileSync("src/lib/learning/practiceTemplates.ts", "utf8");
+  const forbiddenBranching = [
+    /Pre-Algebra/i,
+    /Algebra/i,
+    /CompTIA/i,
+    /Security\+/i,
+    /A\+/i,
+    /Spanish/i,
+    /Biology/i,
+  ];
+
+  assert.deepEqual(
+    practiceTemplateLibrary.map((template) => template.id),
+    [
+      "supported-recall",
+      "worked-step",
+      "applied-scenario",
+      "conversation-turn",
+      "independent-challenge",
+    ]
+  );
+  assert.equal(lessons.every((lesson) => lessonPracticeSatisfiesTemplates(lesson.guidedPractice)), true);
+  assert.equal(allPractice.every((step) => Boolean(getPracticeTemplateForStep(step))), true);
+  assert.deepEqual(
+    variation.difficulties.sort(),
+    ["developing", "introductory"]
+  );
+  assert.deepEqual(
+    variation.formats.sort(),
+    ["conversation", "scenario", "short-response", "worked-step"]
+  );
+  assert.equal(
+    practiceTemplateLibrary.every((template) =>
+      template.requiresHint && template.requiresExpectedAnswer
+    ),
+    true
+  );
+  assert.equal(
+    forbiddenBranching.some((pattern) => pattern.test(source)),
+    false
   );
 });
 
