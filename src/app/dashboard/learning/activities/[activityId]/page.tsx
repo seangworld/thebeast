@@ -80,7 +80,7 @@ export default function LearningActivityRunnerPage() {
       if (activityResult.error) throw activityResult.error;
 
       if (!activityResult.data) {
-        setMessage("Activity not found for this account.");
+        setMessage("Your Guide could not find that lesson for this account.");
         setActivity(null);
         setLoading(false);
         return;
@@ -112,7 +112,7 @@ export default function LearningActivityRunnerPage() {
       setCourse((courseResult.data as CourseRow | null) || null);
     } catch (error) {
       setMessage(
-        error instanceof Error ? error.message : "Unable to load this activity."
+        error instanceof Error ? error.message : "Unable to load this lesson."
       );
     } finally {
       setLoading(false);
@@ -139,7 +139,7 @@ export default function LearningActivityRunnerPage() {
 
     if (!progress.readyToComplete) {
       setMessage(
-        "Finish the teaching steps, answer the quiz, and add a reflection before completing."
+        "Stay with the Tutor a little longer. Answer the question, try the practice, and leave one reflection before we save this lesson."
       );
       return;
     }
@@ -173,12 +173,12 @@ export default function LearningActivityRunnerPage() {
       await loadActivity();
       setMessage(
         nextQueued
-          ? `Activity complete. ${nextQueued.title} is ready next.`
-          : "Activity complete. Return to Today for your next recommendation."
+          ? `Nice work. ${nextQueued.title} is ready when your Guide brings you back.`
+          : "Nice work. Return to Today and your Guide will recommend what comes next."
       );
     } catch (error) {
       setMessage(
-        error instanceof Error ? error.message : "Unable to complete activity."
+        error instanceof Error ? error.message : "Unable to save this lesson."
       );
     } finally {
       setSaving(false);
@@ -191,18 +191,18 @@ export default function LearningActivityRunnerPage() {
         <section className="beast-page-header">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-4">
-              <ModuleBadge module="learning" label="Activity Runner" />
+              <ModuleBadge module="learning" label="Tutor" />
               <h1 className="beast-title">
-                {activity?.title || "Learning Activity"}
+                {activity?.title || "Tutor Session"}
               </h1>
               <p className="beast-subtitle">
-                Complete the guided steps, capture a reflection, and Beast will
-                unlock the next activity in your queue.
+                Your Guide brought you here so the Tutor can teach, practice,
+                check understanding, and help you remember what changed.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
               <Link href="/dashboard/learning/activities" className="beast-button-secondary">
-                Activities
+                My Steps
               </Link>
               <Link href="/dashboard/today" className="beast-button">
                 Today
@@ -229,9 +229,9 @@ export default function LearningActivityRunnerPage() {
             {completedActivity ? (
               <DashboardCard accent="green">
                 <SectionHeader
-                  eyebrow="Activity Complete"
+                  eyebrow="Lesson Saved"
                   title="Nice work. Your progress is saved."
-                  description="Your activity is marked complete, your XP now counts on Today, and the next queued activity is ready when available."
+                  description="Your Tutor saved the lesson, and your Guide will use this progress to choose the next helpful step."
                   action={<ModuleBadge module="learning" label="Saved" />}
                 />
                 <div className="mt-5 flex flex-wrap gap-3">
@@ -242,7 +242,7 @@ export default function LearningActivityRunnerPage() {
                     href="/dashboard/learning/activities"
                     className="beast-button-secondary"
                   >
-                    View Activities
+                    See My Steps
                   </Link>
                 </div>
               </DashboardCard>
@@ -285,9 +285,9 @@ export default function LearningActivityRunnerPage() {
           <DashboardCard accent="learning">
             <SectionHeader
               eyebrow="Not Found"
-              title="Activity unavailable"
-              description="This activity may have been completed elsewhere or does not belong to this account."
-              action={<Link href="/dashboard/learning/activities" className="beast-button">Activities</Link>}
+              title="This lesson is not available"
+              description="Your Guide could not open this lesson for this account. Go back to your learning steps and choose the one that is ready."
+              action={<Link href="/dashboard/learning/activities" className="beast-button">My Steps</Link>}
             />
           </DashboardCard>
         )}

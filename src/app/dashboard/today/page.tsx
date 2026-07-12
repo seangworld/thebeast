@@ -476,12 +476,12 @@ export default function TodayPage() {
                 {state.name ? `${getBeastGreeting(now)}, ${state.name}` : "Today"}
               </h1>
               <p className="beast-subtitle">
-                Your next learning step is ready. Start with the mission below.
+                Your Guide has one clear next step ready for you.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
               <Link href="/dashboard/learning" className="beast-button">
-                Learning Path
+                My Guide
               </Link>
               <Link href="/dashboard/timeline" className="beast-button-secondary">
                 View Timeline
@@ -509,21 +509,21 @@ export default function TodayPage() {
           <MetricTile
             label="Progress"
             value={`${progressPercent}%`}
-            detail={`${completedActivities.length} of ${state.activities.length} activities complete`}
+            detail={`${completedActivities.length} of ${state.activities.length} learning steps saved`}
             icon="P"
             tone="purple"
           />
           <MetricTile
             label="XP"
             value={String(totalXp)}
-            detail="Earned from completed activities"
+            detail="Earned from saved lessons"
             icon="XP"
             tone="yellow"
           />
           <MetricTile
             label="Streak"
             value={`${streak} day`}
-            detail={streak ? "Learning started today" : "Complete one activity to start"}
+            detail={streak ? "Learning started today" : "Save one lesson to start"}
             icon="S"
             tone="green"
           />
@@ -538,14 +538,14 @@ export default function TodayPage() {
 
         <DashboardCard accent="learning">
           <SectionHeader
-            eyebrow="Today's Mission"
-            title={readyActivity?.title || "Create your first activity"}
+            eyebrow="Your Guide Recommends"
+            title={readyActivity?.title || "Ask your Guide for the first step"}
             description={
               readyActivity
-                ? `${readyActivity.activity_type} - ${readyActivity.difficulty} - ${readyActivity.estimated_minutes} minutes`
+                ? `This is the best next step for today. It should take about ${readyActivity.estimated_minutes} minutes.`
                 : state.activities.length > 0
-                  ? "You finished the current queue. Generate the next mission to keep learning."
-                  : "Your activity queue is empty. Generate a learning mission to begin."
+                  ? "You finished the current set. Ask your Guide for the next learning step."
+                  : "Your Guide can prepare the first learning step from your path."
             }
             action={<ModuleBadge module="learning" label="Next Step" />}
           />
@@ -555,7 +555,7 @@ export default function TodayPage() {
                 href={getLearningActivityRoute(readyActivity.id)}
                 className="beast-button"
               >
-                Start Activity
+                Continue with Tutor
               </Link>
             ) : (
               <button
@@ -564,18 +564,18 @@ export default function TodayPage() {
                 className="beast-button"
                 disabled={generating || loading}
               >
-                {generating ? "Generating..." : "Generate Activity"}
+                {generating ? "Preparing..." : "Ask My Guide"}
               </button>
             )}
             <p className="text-sm font-semibold text-[#c7cfdb]">
-              Next recommended action:{" "}
+              Why this step:{" "}
               {readyActivity
-                ? `Finish this ${readyActivity.activity_type.toLowerCase()} first.`
+                ? "It matches where you are now and gives the Tutor the right starting point."
                 : state.activities.length > 0
-                  ? "Start the next generated activity."
+                  ? "Your Guide is ready to choose the next step."
                   : loading
-                    ? "Loading your learning activity queue."
-                    : "Generate your first activity."}
+                    ? "Your learning context is loading."
+                    : "Start by asking your Guide to prepare a lesson."}
             </p>
           </div>
         </DashboardCard>
@@ -583,9 +583,9 @@ export default function TodayPage() {
         <section id="activities" className="grid scroll-mt-24 gap-4 xl:grid-cols-[1.2fr_0.8fr]">
           <DashboardCard accent="learning">
             <SectionHeader
-              eyebrow="Today's Activities"
-              title="Work waiting for you"
-              description="Complete the ready card, then the next activity unlocks."
+              eyebrow="Today"
+              title="Your learning steps"
+              description="Focus on the step your Guide recommends. The rest is here only so you can review or return later."
             />
             <div className="mt-5 grid gap-3">
               {activityList.map((activity) => (
@@ -601,7 +601,7 @@ export default function TodayPage() {
                       <h3 className="mt-1 font-black text-white">{activity.title}</h3>
                     </div>
                     <span className="rounded-full border border-[#2a3242] bg-[#0f1419] px-3 py-1 text-xs font-bold text-[#dbe3ef]">
-                      {activity.status}
+                      {activity.status === "Completed" ? "Saved" : "Ready when you are"}
                     </span>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2 text-xs font-bold uppercase text-[#9aa7b8]">
@@ -614,14 +614,14 @@ export default function TodayPage() {
                         href={getLearningActivityRoute(activity.id)}
                         className="beast-button-secondary"
                       >
-                        Review
+                        Review with Tutor
                       </Link>
                     ) : (
                       <Link
                         href={getLearningActivityRoute(activity.id)}
                         className="beast-button"
                       >
-                        Start
+                        Continue
                       </Link>
                     )}
                   </div>
@@ -629,11 +629,11 @@ export default function TodayPage() {
               ))}
               {activityList.length === 0 ? (
                 <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
-                  <h3 className="font-black text-white">No activities yet</h3>
+                  <h3 className="font-black text-white">No learning steps yet</h3>
                   <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
                     {loading
-                      ? "Your learning activities are loading."
-                      : "Generate your first mission above to start the teaching experience."}
+                      ? "Your learning context is loading."
+                      : "Ask your Guide above to prepare the first teaching moment."}
                   </p>
                 </div>
               ) : null}

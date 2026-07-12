@@ -103,9 +103,9 @@ export default function LearningActivitiesPage() {
     activities.length === 0 ? 0 : Math.round((completed.length / activities.length) * 100);
 
   const nextAction = useMemo(() => {
-    if (readyActivity) return `Start ${readyActivity.title}.`;
-    if (activities.length > 0) return "All activities are complete. Return to Today for the next plan.";
-    return "Return to Today to generate your first activity queue.";
+    if (readyActivity) return `Your Guide recommends ${readyActivity.title} next.`;
+    if (activities.length > 0) return "You finished the current set. Return to Today and your Guide will choose what comes next.";
+    return "Return to Today and your Guide will prepare your first learning step.";
   }, [activities.length, readyActivity]);
 
   return (
@@ -114,11 +114,11 @@ export default function LearningActivitiesPage() {
         <section className="beast-page-header">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-4">
-              <ModuleBadge module="learning" label="Activities" />
-              <h1 className="beast-title">Learning Activities</h1>
+              <ModuleBadge module="learning" label="Continue" />
+              <h1 className="beast-title">Continue With Your Guide</h1>
               <p className="beast-subtitle">
-                Your work queue is organized by what is ready now, what is coming next,
-                and what you have already completed.
+                Your Guide keeps the path simple: one next lesson, the right support,
+                and progress you can come back to later.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -126,7 +126,7 @@ export default function LearningActivitiesPage() {
                 Today
               </Link>
               <Link href="/dashboard/learning" className="beast-button">
-                Learning Path
+                Your Guide
               </Link>
             </div>
           </div>
@@ -164,9 +164,9 @@ export default function LearningActivitiesPage() {
                 tone="yellow"
               />
               <MetricTile
-                label="Open"
+                label="Next"
                 value={String(open.length)}
-                detail="Activities waiting"
+                detail="Learning steps prepared"
                 icon="A"
                 tone="green"
               />
@@ -181,10 +181,10 @@ export default function LearningActivitiesPage() {
 
             <DashboardCard accent="learning">
               <SectionHeader
-                eyebrow="Next Recommended Action"
-                title={readyActivity?.title || "No ready activity"}
+                eyebrow="Recommended Next"
+                title={readyActivity?.title || "Your next lesson is not ready yet"}
                 description={nextAction}
-                action={<ModuleBadge module="learning" label={readyActivity?.activity_type || "Queue"} />}
+                action={<ModuleBadge module="learning" label={readyActivity?.activity_type || "Guide"} />}
               />
               {readyActivity ? (
                 <div className="mt-5">
@@ -192,7 +192,7 @@ export default function LearningActivitiesPage() {
                     href={getLearningActivityRoute(readyActivity.id)}
                     className="beast-button"
                   >
-                    Start Activity
+                    Continue with Tutor
                   </Link>
                 </div>
               ) : (
@@ -231,7 +231,7 @@ export default function LearningActivitiesPage() {
                           </span>
                           <span>{activity.estimated_minutes} min</span>
                           <span>{activity.xp} XP</span>
-                          <span>{activity.status}</span>
+                          <span>{activity.status === "Completed" ? "Reviewed" : "Ready when you are"}</span>
                         </div>
                       </div>
                       <Link
@@ -242,7 +242,7 @@ export default function LearningActivitiesPage() {
                             : "beast-button"
                         }
                       >
-                        {activity.status === "Completed" ? "Review" : "Start"}
+                        {activity.status === "Completed" ? "Review with Tutor" : "Continue"}
                       </Link>
                     </div>
                   </div>
@@ -252,10 +252,10 @@ export default function LearningActivitiesPage() {
               {activities.length === 0 ? (
                 <DashboardCard accent="learning">
                   <SectionHeader
-                    eyebrow="Empty Queue"
-                    title="No activities yet"
-                    description="Open Today to generate your first activity queue from your learning path."
-                    action={<Link href="/dashboard/today" className="beast-button">Open Today</Link>}
+                    eyebrow="Getting Started"
+                    title="Your Guide is ready to help"
+                    description="Open Today and your Guide will prepare the first step from your learning path."
+                    action={<Link href="/dashboard/today" className="beast-button">Meet My Guide</Link>}
                   />
                 </DashboardCard>
               ) : null}

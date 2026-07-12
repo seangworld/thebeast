@@ -230,7 +230,7 @@ export function LessonEngine({
       <DashboardCard accent="learning">
         <div className="grid gap-5 xl:grid-cols-[1fr_0.72fr] xl:items-center">
           <div>
-            <p className="beast-kicker">Tutor Handoff</p>
+            <p className="beast-kicker">Your Tutor</p>
             <h2 className="mt-2 text-3xl font-black text-white">
               {engine.lesson.title}
             </h2>
@@ -240,7 +240,7 @@ export function LessonEngine({
           </div>
           <div className="grid gap-3 rounded-xl border border-[#2a3242] bg-[#111827] p-4">
             <div className="flex items-center justify-between gap-4 text-sm">
-              <span className="font-semibold text-[#9aa7b8]">Session progress</span>
+              <span className="font-semibold text-[#9aa7b8]">How far we are</span>
               <span className="font-black text-white">{progressPercent}%</span>
             </div>
             <div className="h-3 overflow-hidden rounded-full bg-[#0f1419]">
@@ -260,14 +260,14 @@ export function LessonEngine({
         <MetricTile
           label="Tutor"
           value={completed ? "Complete" : "Live"}
-          detail="One active interaction"
+          detail="Teaching now"
           icon="AI"
           tone="purple"
         />
         <MetricTile
           label="Mastery"
           value={`${completed ? 100 : progress.masteryEstimate}%`}
-          detail={progress.mastered ? "Ready for more" : "Building evidence"}
+          detail={progress.mastered ? "Ready for more" : "Still practicing"}
           icon="M"
           tone="yellow"
         />
@@ -541,7 +541,7 @@ export function LessonEngine({
                         : "border-yellow-400/35 bg-yellow-400/10 text-yellow-100"
                     }`}
                   >
-                    {activeQuizCorrect ? "Correct. " : "Good try. Let’s repair this. "}
+                    {activeQuizCorrect ? "Yes. That makes sense. " : "Good try. Let's repair this together. "}
                     {activeQuestion.explanation}
                   </div>
                 ) : null}
@@ -643,7 +643,7 @@ export function LessonEngine({
                   disabled={saving || completed || !tutorReadyToComplete}
                   className="beast-button w-fit disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {saving ? "Saving..." : completed ? "Completed" : "Complete lesson"}
+                  {saving ? "Saving..." : completed ? "Lesson saved" : "Save this lesson"}
                 </button>
               </div>
             ) : null}

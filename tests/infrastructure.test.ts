@@ -1815,7 +1815,7 @@ test("home and today navigation render stable route shells during data loading",
   assert.match(todaySource, /const \[loading, setLoading\] = useState\(true\)/);
   assert.match(homeSource, /\{loading \? \(/);
   assert.match(todaySource, /\{loading \? \(/);
-  assert.match(todaySource, /title=\{readyActivity\?\.title \|\| "Create your first activity"\}/);
+  assert.match(todaySource, /title=\{readyActivity\?\.title \|\| "Ask your Guide for the first step"\}/);
   assert.match(todaySource, /disabled=\{generating \|\| loading\}/);
   assert.doesNotMatch(homeSource, /\{loading \|\| !user\.name\s+\?/);
   assert.doesNotMatch(todaySource, /\{loading \|\| !state\.name\s+\?/);
@@ -2023,18 +2023,18 @@ test("learning activities have a dedicated runner and next-activity unlock logic
     ])?.id,
     "new-generated"
   );
-  assert.match(activityRunner, /Activity Complete/);
+  assert.match(activityRunner, /Lesson Saved/);
   assert.match(activityRunner, /Return to Today/);
-  assert.match(activityRunner, /View Activities/);
+  assert.match(activityRunner, /See My Steps/);
   assert.match(activityRunner, /<LessonEngine/);
   assert.match(lessonEngine, /Tutor Session/);
   assert.match(lessonEngine, /Your BeastLearning Guide sent this/);
-  assert.match(lessonEngine, /One active interaction/);
+  assert.match(lessonEngine, /Teaching now/);
   assert.match(lessonEngine, /What do you already know\?/);
   assert.match(lessonEngine, /Hint/);
   assert.match(lessonEngine, /Another explanation/);
   assert.match(lessonEngine, /onPracticeAnswer/);
-  assert.match(lessonEngine, /Complete lesson/);
+  assert.match(lessonEngine, /Save this lesson/);
   assert.doesNotMatch(lessonEngine, /type="checkbox"/);
   assert.doesNotMatch(lessonEngine, /Adaptive Lesson/);
   assert.doesNotMatch(lessonEngine, /Guided Practice/);
@@ -2053,15 +2053,51 @@ test("BeastLearning member home starts with Guidance before dashboard support", 
 
   assert.match(learningPage, /GuidanceConversationCenter/);
   assert.match(learningPage, /I'm your BeastLearning Guide/);
-  assert.match(learningPage, /Guidance owns the learner relationship/);
-  assert.match(learningPage, /Tutor handoff/);
+  assert.match(learningPage, /I keep track of where you are/);
+  assert.match(learningPage, /When we start learning/);
   assert.equal(
     learningPage.indexOf("<GuidanceConversationCenter") <
       learningPage.indexOf("progressSignals.snapshotTiles"),
     true
   );
   assert.doesNotMatch(learningPage, /function AITutorCenter/);
-  assert.match(lessonEngine, /Tutor Handoff/);
+  assert.match(lessonEngine, /Your Tutor/);
+});
+
+test("BeastLearning member experience hides workflow mechanics behind Guide and Tutor language", () => {
+  const learningPage = readFileSync("src/app/dashboard/learning/page.tsx", "utf8");
+  const activitiesPage = readFileSync(
+    "src/app/dashboard/learning/activities/page.tsx",
+    "utf8"
+  );
+  const activityRunner = readFileSync(
+    "src/app/dashboard/learning/activities/[activityId]/page.tsx",
+    "utf8"
+  );
+  const todayPage = readFileSync("src/app/dashboard/today/page.tsx", "utf8");
+  const studySessionCard = readFileSync(
+    "src/app/dashboard/learning/StudySessionCommandCard.tsx",
+    "utf8"
+  );
+  const memberExperienceSource = [
+    learningPage,
+    activitiesPage,
+    activityRunner,
+    todayPage,
+    studySessionCard,
+  ].join("\n");
+
+  assert.match(memberExperienceSource, /Continue with Tutor/);
+  assert.match(memberExperienceSource, /Your Guide/);
+  assert.match(memberExperienceSource, /Ask My Guide/);
+  assert.match(memberExperienceSource, /Save this lesson|Save progress/);
+  assert.doesNotMatch(memberExperienceSource, /Activity Runner/);
+  assert.doesNotMatch(memberExperienceSource, /Start Activity/);
+  assert.doesNotMatch(memberExperienceSource, /Generate Activity/);
+  assert.doesNotMatch(memberExperienceSource, /Mark Started/);
+  assert.doesNotMatch(memberExperienceSource, /Mark Complete/);
+  assert.doesNotMatch(memberExperienceSource, /activity queue|work queue|Empty Queue/);
+  assert.doesNotMatch(memberExperienceSource, /Complete lesson/);
 });
 
 test("generated learning activities persist with required visibility fields", () => {
@@ -2124,7 +2160,7 @@ test("generated learning activities persist with required visibility fields", ()
   assert.equal(goalBuilder.includes("Start Saved Activity"), true);
   assert.equal(todayPage.includes("getNewestReadyLearningActivity"), true);
   assert.equal(activitiesPage.includes("getNewestReadyLearningActivity"), true);
-  assert.equal(learningPage.includes("Start or Continue"), true);
+  assert.equal(learningPage.includes("Continue"), true);
   assert.equal(learningPage.includes("learning_activities"), true);
 });
 
@@ -2219,8 +2255,8 @@ test("Today learning mission generation avoids dead ends", () => {
   assert.equal(todayPage.includes("onClick={generateNextActivity}"), true);
   assert.equal(todayPage.includes("onClick={loadToday} className=\"beast-button\""), false);
   assert.equal(todayPage.includes("getLearningActivityTitleForCourse"), true);
-  assert.equal(todayPage.includes("You finished the current queue. Generate the next mission to keep learning."), true);
-  assert.equal(todayPage.includes("Generate your first mission above to start the teaching experience."), true);
+  assert.equal(todayPage.includes("You finished the current set. Ask your Guide for the next learning step."), true);
+  assert.equal(todayPage.includes("Ask your Guide above to prepare the first teaching moment."), true);
   assert.equal(todayPage.includes("activityList.map"), true);
 });
 
@@ -3682,7 +3718,7 @@ test("member navigation hides admin and monetization surfaces", () => {
     [
       "Home",
       "Today",
-      "Continue Learning",
+      "Continue",
       "Learning Path",
       "Progress",
       "Achievements",

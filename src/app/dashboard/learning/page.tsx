@@ -417,10 +417,10 @@ function GuidanceConversationCenter({
   return (
     <DashboardCard accent="learning">
       <SectionHeader
-        eyebrow="Guidance Conversation"
+        eyebrow="Your Guide"
         title="I'm your BeastLearning Guide"
-        description="Guidance owns the learner relationship. The Tutor joins when instruction, practice, feedback, or mastery checks are needed."
-        action={<ModuleBadge module="learning" label="Guide first" />}
+        description="I keep track of where you are, where you want to go, and the best next step. When it is time to learn, I bring in your Tutor."
+        action={<ModuleBadge module="learning" label="Ready" />}
       />
       <div className="mt-5 grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
         <div className="rounded-xl border border-indigo-300/45 bg-indigo-300/10 p-5">
@@ -453,9 +453,9 @@ function GuidanceConversationCenter({
         <div className="grid gap-3 sm:grid-cols-2">
           {[
             ["Goal", goal],
-            ["Current Progress", currentProgress],
-            ["Today's Recommendation", todayRecommendation],
-            ["Estimated Time", estimatedTime],
+            ["Where we are now", currentProgress],
+            ["What I recommend today", todayRecommendation],
+            ["Time we'll need", estimatedTime],
           ].map(([label, value]) => (
             <div
               key={label}
@@ -479,12 +479,12 @@ function GuidanceConversationCenter({
           </div>
           <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 sm:col-span-2">
             <div className="text-xs font-bold uppercase text-[#7f8da3]">
-              Tutor handoff
+              When we start learning
             </div>
             <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
-              When instruction is needed, your Guide sends you to the Tutor for
-              teaching, one question at a time, hints, alternate explanations,
-              remediation, and mastery checks.
+              I will introduce your Tutor, who will teach one idea at a time,
+              ask questions, give hints, explain it another way when needed,
+              and check that it really makes sense before we move on.
             </p>
           </div>
         </div>
@@ -776,7 +776,7 @@ export default async function LearningPage() {
           />
         </div>
 
-        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5" aria-label="Supporting progress details">
           {progressSignals.snapshotTiles.map((progress) => (
             <MetricTile
               key={progress.id}
@@ -797,8 +797,8 @@ export default async function LearningPage() {
           <DashboardCard accent="learning">
             <SectionHeader
               eyebrow="Student Profiles"
-              title="Learner context"
-              description="Keep the active learner context close so recommendations stay personal."
+              title="What I remember about you"
+              description="This helps your Guide keep recommendations personal without asking you to repeat yourself."
             />
             <div className="mt-5">
               <LearnerSwitcher learners={learnerList} />
@@ -808,8 +808,8 @@ export default async function LearningPage() {
           <DashboardCard accent="learning">
             <SectionHeader
               eyebrow="Learning Snapshot"
-              title="Readiness and direction"
-              description="See your current plan, readiness, weak areas, and the next useful action."
+              title="How today was chosen"
+              description="Your Guide uses confidence, mastery, review needs, and momentum to choose the next useful step."
             />
             <div className="mt-5 grid gap-4 lg:grid-cols-[0.7fr_1fr]">
               <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
@@ -838,7 +838,7 @@ export default async function LearningPage() {
               <div className="grid gap-3">
                 <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
                   <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                    Current plan
+                    Your path
                   </div>
                   <h3 className="mt-2 text-xl font-black text-white">
                     {learningPlan.title}
@@ -855,7 +855,7 @@ export default async function LearningPage() {
                   }}
                 >
                   <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                    Recommended next action
+                    Why this helps
                   </div>
                   <p className="mt-2 text-sm leading-5 text-indigo-100">
                     {progressSignals.recommendedNextAction}
@@ -875,12 +875,12 @@ export default async function LearningPage() {
 
         <DashboardCard accent="learning">
           <SectionHeader
-            eyebrow="Start or Continue"
-            title={learningPathReadyActivity?.title || "No activity is ready yet"}
+            eyebrow="Continue"
+            title={learningPathReadyActivity?.title || "Your Guide is getting the next lesson ready"}
             description={
               learningPathReadyActivity
-                ? `${learningPathReadyActivity.activity_type} - ${learningPathReadyActivity.difficulty} - ${learningPathReadyActivity.estimated_minutes} minutes`
-                : "Generate and save a learning activity below, then it will appear here and on Today."
+                ? `This is the lesson your Guide recommends next. It should take about ${learningPathReadyActivity.estimated_minutes} minutes.`
+                : "Open Today and your Guide will prepare the next learning step from your path."
             }
             action={
               <ModuleBadge
@@ -895,14 +895,14 @@ export default async function LearningPage() {
                 href={getLearningActivityRoute(learningPathReadyActivity.id)}
                 className="beast-button"
               >
-                Start Activity
+                Continue with Tutor
               </Link>
             ) : null}
             <Link
               href="/dashboard/learning/activities"
               className="beast-button-secondary"
             >
-              View Activities
+              See My Learning Steps
             </Link>
           </div>
         </DashboardCard>
@@ -910,9 +910,9 @@ export default async function LearningPage() {
         <section id="learning-path" className="grid scroll-mt-24 gap-4 xl:grid-cols-[1.1fr_0.9fr]">
           <DashboardCard accent="learning">
             <SectionHeader
-              eyebrow="Current Learning Plan"
-              title="Courses"
-              description="Course records support title, category, progress, estimated completion, status, and priority."
+              eyebrow="Learning Path"
+              title="Where we're headed"
+              description="These are the learning areas your Guide is using to plan the next helpful step."
             />
             <div className="mt-5 grid gap-4 lg:grid-cols-3">
               {learningCourses.map((course) => (
@@ -920,7 +920,7 @@ export default async function LearningPage() {
               ))}
               {learningCourses.length === 0 ? (
                 <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 text-sm font-semibold text-[#c7cfdb]">
-                  No courses have been created for this account yet.
+                  Your Guide will build this path as it learns more about your goal.
                 </div>
               ) : null}
             </div>
@@ -957,9 +957,9 @@ export default async function LearningPage() {
         <section id="goals" className="grid scroll-mt-24 gap-4 xl:grid-cols-[1fr_0.9fr]">
           <DashboardCard accent="learning">
             <SectionHeader
-              eyebrow="Learning Goals"
-              title="Editable goal cards"
-              description="Track the outcomes Beast should personalize around."
+              eyebrow="Goals"
+              title="What we're working toward"
+              description="Your Guide uses these goals to explain why each lesson matters."
             />
             <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {learningGoals.map((goal) => (
@@ -967,7 +967,7 @@ export default async function LearningPage() {
               ))}
               {learningGoals.length === 0 ? (
                 <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 text-sm font-semibold text-[#c7cfdb]">
-                  No learning goals have been created for this account yet.
+                  Your Guide will help you name your first goal in conversation.
                 </div>
               ) : null}
             </div>
@@ -976,8 +976,8 @@ export default async function LearningPage() {
           <DashboardCard accent="green">
             <SectionHeader
               eyebrow="Achievements"
-              title="Progress markers"
-              description="Achievement UI is ready for streaks, completions, mastery, and certifications."
+              title="Progress worth noticing"
+              description="These celebrate effort, consistency, mastery, and meaningful milestones."
             />
             <div className="mt-5 grid gap-3">
               {learningAchievements.map((achievement) => (
@@ -1015,8 +1015,8 @@ export default async function LearningPage() {
           <DashboardCard accent="learning">
             <SectionHeader
               eyebrow="Recommendations"
-              title="Learning guidance"
-              description="Beast turns your progress signals into clear next steps."
+              title="Why your Guide is choosing these steps"
+              description="These recommendations explain the thinking behind your next lesson, review, or practice."
             />
             <div className="mt-5 grid gap-3">
               {learningRecommendations.map((recommendation) => (
@@ -1038,9 +1038,9 @@ export default async function LearningPage() {
 
         <DashboardCard accent="learning">
             <SectionHeader
-              eyebrow="Quick Actions"
-              title="Learning launchpad"
-              description="Jump into the actions most likely to keep learning moving."
+              eyebrow="More Support"
+              title="Helpful options when you need them"
+              description="Use these only when they help. Your Guide will keep the main path simple."
           />
           <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {learningQuickActions.map((action) => (
@@ -1067,7 +1067,7 @@ export default async function LearningPage() {
             ))}
             {learningQuickActions.length === 0 ? (
               <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 text-sm font-semibold text-[#c7cfdb]">
-                Learning quick actions will appear after this account has a saved learning plan.
+                Your Guide will offer more options after your learning path has enough context.
               </div>
             ) : null}
           </div>

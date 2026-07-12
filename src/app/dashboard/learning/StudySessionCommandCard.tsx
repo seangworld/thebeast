@@ -12,8 +12,8 @@ import type {
 } from "@/lib/learning/types";
 
 function getStatusLabel(status: StudySessionCommandStatus) {
-  if (status === "completed") return "Complete";
-  if (status === "started") return "Started";
+  if (status === "completed") return "Saved";
+  if (status === "started") return "Learning";
   return "Ready";
 }
 
@@ -43,8 +43,8 @@ export default function StudySessionCommandCard({
     <DashboardCard accent="learning">
       <SectionHeader
         eyebrow="Today"
-        title="Today's Study Session"
-        description="A focused command card for starting, completing, and reflecting on the next learning block."
+        title="Your next learning moment"
+        description="Use this when you want a quick reminder of what your Guide is focusing on today."
         action={<ModuleBadge module="learning" label={getStatusLabel(status)} />}
       />
 
@@ -71,7 +71,7 @@ export default function StudySessionCommandCard({
             />
           </div>
           <div className="mt-2 text-xs font-bold uppercase text-[#7f8da3]">
-            {progressPercent}% session progress
+            {progressPercent}% of this learning moment
           </div>
 
           <div className="mt-5 flex flex-wrap gap-3">
@@ -81,7 +81,7 @@ export default function StudySessionCommandCard({
               disabled={status !== "idle"}
               className="rounded-xl border border-indigo-300/45 bg-indigo-300/15 px-4 py-3 text-sm font-black text-indigo-100 transition hover:bg-indigo-300/20 disabled:cursor-not-allowed disabled:border-[#2a3242] disabled:bg-[#111827] disabled:text-[#7f8da3]"
             >
-              Mark Started
+              I&apos;m ready
             </button>
             <button
               type="button"
@@ -89,7 +89,7 @@ export default function StudySessionCommandCard({
               disabled={status !== "started"}
               className="rounded-xl border border-green-400/40 bg-green-400/15 px-4 py-3 text-sm font-black text-green-100 transition hover:bg-green-400/20 disabled:cursor-not-allowed disabled:border-[#2a3242] disabled:bg-[#111827] disabled:text-[#7f8da3]"
             >
-              Mark Complete
+              Save progress
             </button>
           </div>
         </div>
@@ -129,7 +129,7 @@ export default function StudySessionCommandCard({
                 {session.progressFeedback}
               </p>
               <div className="mt-3 text-xs font-bold uppercase text-[#7f8da3]">
-                Local completions this visit: {completedCount}
+                Saved moments this visit: {completedCount}
               </div>
             </div>
           ) : null}
