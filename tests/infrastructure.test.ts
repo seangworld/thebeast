@@ -310,6 +310,7 @@ import {
   getObjectivesForCourse,
   lessonObjectiveAlignments,
 } from "../src/lib/learning/curriculumAuthority";
+import { buildMentorCurriculumIntelligence } from "../src/lib/learning/mentorCurriculumIntelligence";
 import { learningStandards } from "../src/lib/learning/standards";
 import { generateCurriculumLearningPath } from "../src/lib/learning/learningPaths";
 import { learningPathTemplates } from "../src/lib/learning/templates";
@@ -3537,6 +3538,62 @@ test("curriculum authority separates teachable objectives from AI teaching behav
     lessonObjectiveAlignments
       .filter((alignment) => alignment.courseId !== "security-plus-foundations-course")
       .every((alignment) => alignment.productionAligned === false),
+    true
+  );
+});
+
+test("mentor curriculum intelligence translates objective state into learner language", () => {
+  const intelligence = buildMentorCurriculumIntelligence({
+    courseId: "security-plus-foundations-course",
+    demonstratedObjectiveIds: ["security-plus-4-6-iam"],
+    demonstratedObjectiveCount: 23,
+    targetDomainCode: "4.0",
+    reviewObjectiveIds: ["security-plus-4-8-incident-response"],
+  });
+
+  assert.equal(intelligence.officialCoveragePercent, 82);
+  assert.equal(intelligence.completedObjectiveCount, 23);
+  assert.equal(intelligence.totalObjectiveCount, 28);
+  assert.equal(
+    intelligence.coverageMessage,
+    "You've completed 82% of the official CompTIA Security+ objectives."
+  );
+  assert.equal(
+    intelligence.skippedLessonMessages.some((message) =>
+      message.includes("because you've already demonstrated")
+    ),
+    true
+  );
+  assert.equal(
+    intelligence.readinessMessages.some((message) =>
+      message.includes("Before we move into Security operations")
+    ),
+    true
+  );
+  assert.equal(
+    intelligence.reviewMessages[0],
+    "I recommend reviewing Use incident-response activities appropriately before taking the final assessment."
+  );
+  assert.equal(
+    [
+      ...intelligence.skippedLessonMessages,
+      ...intelligence.readinessMessages,
+      ...intelligence.reviewMessages,
+      intelligence.coverageMessage,
+    ].some((message) => /SY0-701|security-plus-/.test(message)),
+    false
+  );
+
+  const explicitIds = buildMentorCurriculumIntelligence({
+    courseId: "security-plus-foundations-course",
+    demonstratedObjectiveIds: [],
+    targetDomainCode: "4.0",
+    reviewObjectiveIds: ["security-plus-4-8-incident-response"],
+    includeObjectiveIds: true,
+  });
+
+  assert.equal(
+    explicitIds.reviewMessages[0].includes("SY0-701-4.8"),
     true
   );
 });
