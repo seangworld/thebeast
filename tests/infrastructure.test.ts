@@ -216,8 +216,11 @@ import {
   getGeneratedLearningSubject,
 } from "../src/lib/learning/generatedActivities";
 import {
+  createGeneratedLearningContentRecord,
+  getLearningActivityTitleForGoal,
   getSampleActivityTitleForGoal,
   getSampleCurriculumScope,
+  resolveLearningContentRecordForSubject,
   sampleLearningContentRecords,
 } from "../src/lib/learning/sampleContentRegistry";
 import {
@@ -1145,6 +1148,7 @@ test("learning core loop teaches practices checks mastery and resumes a lesson",
     learningPreferences: ["Guided examples", "Hints before answers"],
   });
   const placement = scorePlacementAssessment({
+    subject: learner.subject,
     responses: [
       { questionId: "placement-coefficient", answer: "6" },
       { questionId: "placement-like-terms", answer: "2x" },
@@ -1208,6 +1212,7 @@ test("learning core loop routes weak placement and low mastery to remediation", 
     learningPreferences: ["Short sessions"],
   });
   const placement = scorePlacementAssessment({
+    subject: learner.subject,
     responses: [
       { questionId: "placement-coefficient", answer: "x" },
       { questionId: "placement-like-terms", answer: "2" },
@@ -1848,7 +1853,7 @@ test("Today learning mission generation avoids dead ends", () => {
   assert.equal(todayPage.includes(".insert("), true);
   assert.equal(todayPage.includes("onClick={generateNextActivity}"), true);
   assert.equal(todayPage.includes("onClick={loadToday} className=\"beast-button\""), false);
-  assert.equal(todayPage.includes("getSampleActivityTitleForCourse"), true);
+  assert.equal(todayPage.includes("getLearningActivityTitleForCourse"), true);
   assert.equal(todayPage.includes("You finished the current queue. Generate the next mission to keep learning."), true);
   assert.equal(todayPage.includes("Generate your first mission above to start the teaching experience."), true);
   assert.equal(todayPage.includes("activityList.map"), true);
@@ -2320,6 +2325,49 @@ test("sample content records keep proving examples out of generic engine branchi
     getSampleActivityTitleForGoal("Pre-Algebra"),
     "Pre-Algebra: Combining Like Terms"
   );
+  assert.equal(getLearningActivityTitleForGoal("Algebra"), "Algebra: Linear Equations");
+  assert.equal(getLearningActivityTitleForGoal("Woodworking"), "Woodworking: Starter Lesson");
+  assert.equal(
+    resolveLearningContentRecordForSubject("Biology").lesson.id,
+    "generated-biology-starter"
+  );
+  assert.equal(
+    resolveLearningContentRecordForSubject("Biology").lesson.subject,
+    "Biology"
+  );
+  assert.notEqual(
+    resolveLearningContentRecordForSubject("Biology").lesson.id,
+    combiningLikeTermsLesson.id
+  );
+  const woodworkingFixture = createGeneratedLearningContentRecord("Woodworking");
+  const woodworkingPlacement = scorePlacementAssessment({
+    subject: woodworkingFixture.subject,
+    responses: woodworkingFixture.placementQuestions.map((question) => ({
+      questionId: question.id,
+      answer: question.acceptedAnswers[0],
+    })),
+  });
+  const woodworkingLearner = buildCoreLearnerProfile({
+    preferredName: "Fixture Woodworking",
+    age: 16,
+    gradeLevel: "test fixture",
+    subject: woodworkingFixture.subject,
+    goals: [woodworkingFixture.courseTitle],
+    interests: ["subject independence"],
+    learningPreferences: ["guided examples"],
+  });
+  const woodworkingPath = generateCoreLearningPath({
+    learner: woodworkingLearner,
+    placement: woodworkingPlacement,
+  });
+  const woodworkingSession = startCoreLessonSession({
+    learner: woodworkingLearner,
+    path: woodworkingPath,
+  });
+
+  assert.equal(woodworkingPlacement.readinessLevel, "ready-for-lesson");
+  assert.equal(woodworkingPath.subject, "Woodworking");
+  assert.equal(woodworkingSession.lesson.subject, "Woodworking");
   assert.equal(
     sampleLearningContentRecords.every(
       (record) =>

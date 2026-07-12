@@ -57,6 +57,10 @@ export type SampleLearningContentRecord = {
   curriculumScope?: SampleCurriculumScope;
 };
 
+function slugify(value: string) {
+  return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
 const preAlgebraScope: SampleCurriculumScope = {
   id: "pre-algebra-proving-ground-scope",
   subject: "Pre-Algebra",
@@ -796,11 +800,156 @@ export function getDefaultSampleLearningContentRecord() {
   return sampleLearningContentRecords[0];
 }
 
+export function createGeneratedLearningContentRecord(
+  subject: string
+): SampleLearningContentRecord {
+  const resolvedSubject = subject.trim() || "Learning Path";
+  const subjectSlug = slugify(resolvedSubject || "learning-path");
+  const lessonId = `generated-${subjectSlug}-starter`;
+
+  return {
+    id: `generated-${subjectSlug}`,
+    subject: resolvedSubject,
+    goalType: "subject",
+    intent: "Teach me",
+    courseId: `generated-${subjectSlug}-course`,
+    courseTitle: `${resolvedSubject} Generated Curriculum`,
+    matchPhrases: [normalize(resolvedSubject)],
+    activityTitle: `${resolvedSubject}: Starter Lesson`,
+    emptyStateLabel: "a generated learning mission",
+    lesson: {
+      id: lessonId,
+      title: "Starter Lesson",
+      subject: resolvedSubject,
+      learningObjective: `Build a first teachable step for ${resolvedSubject} from the learner goal, prerequisite check, and current confidence.`,
+      prerequisiteConcepts: [
+        "State the learner goal in plain language.",
+        "Identify what the learner already knows.",
+        "Name the first unknown or confusing concept.",
+      ],
+      explanation:
+        "Beast can begin with a generated starter lesson when no curated sample record exists. The coach should use the learner goal, prerequisite answers, and lesson evidence to create the next curriculum step.",
+      interactiveVisual: {
+        title: "Build the first learning loop",
+        prompt: "Connect the goal, baseline, first practice attempt, and review signal.",
+        expression: "Goal + Baseline + Practice + Review",
+        terms: [
+          { id: "generated-goal", label: "Goal", coefficient: 1, variable: "", group: "other", color: "blue" },
+          { id: "generated-baseline", label: "Baseline", coefficient: 1, variable: "", group: "other", color: "green" },
+          { id: "generated-practice", label: "Practice", coefficient: 1, variable: "", group: "other", color: "yellow" },
+        ],
+        targetGroups: [
+          {
+            group: "other",
+            label: "Learning loop",
+            combinedLabel: "Goal + Baseline + Practice",
+            explanation: "The first loop uses the learner goal and baseline evidence to choose one practice step.",
+          },
+        ],
+      },
+      examples: [
+        {
+          title: "Generated first step",
+          setup: resolvedSubject,
+          steps: [
+            "Clarify the goal.",
+            "Check prerequisite understanding.",
+            "Try one small practice step.",
+          ],
+          takeaway: "The next lesson should be generated from evidence, not a hardcoded subject path.",
+        },
+      ],
+      guidedPractice: [
+        {
+          id: "generated-practice-step",
+          prompt: "Write one small practice attempt for this goal.",
+          hint: "Use the learner goal and current baseline to keep the first attempt narrow.",
+          expectedAnswer: "A clear first attempt.",
+          acceptedAnswers: ["attempt", "first attempt", "clear attempt"],
+        },
+      ],
+      quizQuestions: [
+        {
+          id: "generated-readiness-check",
+          prompt: "What should the coach use to choose the next lesson?",
+          options: ["Learner evidence", "A fixed subject path", "A random topic"],
+          answer: "Learner evidence",
+          explanation: "A generated curriculum should use the goal, prerequisites, and learner evidence.",
+        },
+      ],
+      aiCoachingPrompts: [
+        {
+          kind: "mistake",
+          title: "Clarify the blocker",
+          prompt: "Identify the blocker and recommend one smaller prerequisite check.",
+        },
+        {
+          kind: "alternate",
+          title: "Explain another way",
+          prompt: "Explain the first step using a different example from the learner goal.",
+        },
+        {
+          kind: "encouragement",
+          title: "Keep momentum",
+          prompt: "Encourage the learner to complete one small practice attempt.",
+        },
+        {
+          kind: "review",
+          title: "Review signal",
+          prompt: "Recommend the prerequisite to review before generating the next step.",
+        },
+        {
+          kind: "mastery",
+          title: "Ready for generated next step",
+          prompt: "Celebrate the completed starter loop and generate the next lesson target.",
+        },
+      ],
+      reflectionPrompts: [
+        "What goal did you clarify?",
+        "What prerequisite should the coach check next?",
+      ],
+      masteryThreshold: 80,
+      recommendedNextLesson: `Next ${resolvedSubject} lesson`,
+      reviewRecommendation: "Review the learner goal and prerequisite answers before moving on.",
+    },
+    placementQuestions: [
+      {
+        id: "generated-goal-check",
+        conceptId: "learner-goal",
+        prompt: "What do you want to learn or improve?",
+        expectedAnswer: "Learner goal",
+        acceptedAnswers: ["goal", "learner goal", "improve"],
+      },
+      {
+        id: "generated-baseline-check",
+        conceptId: "current-baseline",
+        prompt: "What do you already know about this goal?",
+        expectedAnswer: "Current baseline",
+        acceptedAnswers: ["baseline", "current baseline", "something"],
+      },
+      {
+        id: "generated-blocker-check",
+        conceptId: "first-blocker",
+        prompt: "What feels unclear or should be checked first?",
+        expectedAnswer: "First blocker",
+        acceptedAnswers: ["blocker", "unclear", "check first"],
+      },
+    ],
+  };
+}
+
 export function getSampleLearningContentRecordForGoal(goal: string) {
   const normalizedGoal = normalize(goal);
 
   return sampleLearningContentRecords.find((record) =>
     record.matchPhrases.some((phrase) => normalizedGoal.includes(phrase))
+  );
+}
+
+export function resolveLearningContentRecordForGoal(goal: string) {
+  return (
+    getSampleLearningContentRecordForGoal(goal) ||
+    createGeneratedLearningContentRecord(goal)
   );
 }
 
@@ -815,6 +964,13 @@ export function getSampleLearningContentRecordForSubject(subject: string) {
   );
 }
 
+export function resolveLearningContentRecordForSubject(subject: string) {
+  return (
+    getSampleLearningContentRecordForSubject(subject) ||
+    createGeneratedLearningContentRecord(subject)
+  );
+}
+
 export function getSampleLearningContentRecordForActivityTitle(title: string) {
   const normalizedTitle = normalize(title);
 
@@ -826,12 +982,32 @@ export function getSampleLearningContentRecordForActivityTitle(title: string) {
   );
 }
 
+export function resolveLearningContentRecordForActivityTitle(title: string) {
+  const sampleRecord = getSampleLearningContentRecordForActivityTitle(title);
+  if (sampleRecord) return sampleRecord;
+
+  const starterTitleMatch = title.match(/^(.+): Starter Lesson$/);
+  if (starterTitleMatch?.[1]) {
+    return createGeneratedLearningContentRecord(starterTitleMatch[1]);
+  }
+
+  return undefined;
+}
+
 export function getSampleActivityTitleForGoal(goal: string) {
   return getSampleLearningContentRecordForGoal(goal)?.activityTitle;
 }
 
+export function getLearningActivityTitleForGoal(goal: string) {
+  return resolveLearningContentRecordForGoal(goal).activityTitle;
+}
+
 export function getSampleActivityTitleForCourse(courseTitle: string) {
   return getSampleLearningContentRecordForSubject(courseTitle)?.activityTitle;
+}
+
+export function getLearningActivityTitleForCourse(courseTitle: string) {
+  return resolveLearningContentRecordForSubject(courseTitle).activityTitle;
 }
 
 export function getSampleCurriculumScope(scopeId: string) {

@@ -13,7 +13,7 @@ import {
   getLearningActivityRoute,
   getNewestReadyLearningActivity,
 } from "@/lib/learning/activityRunner";
-import { getSampleActivityTitleForCourse } from "@/lib/learning/sampleContentRegistry";
+import { getLearningActivityTitleForCourse } from "@/lib/learning/sampleContentRegistry";
 import { useRuntimeToday } from "@/lib/hooks/useRuntimeToday";
 import { getBeastGreeting } from "@/lib/runtimeDate";
 import { createClient } from "@/lib/supabase/client";
@@ -75,7 +75,7 @@ function getActivityTone(status: string) {
 }
 
 function getStarterActivityTitle(courseTitle: string) {
-  return getSampleActivityTitleForCourse(courseTitle) || `Start ${courseTitle}`;
+  return getLearningActivityTitleForCourse(courseTitle);
 }
 
 function buildStarterActivityRow({

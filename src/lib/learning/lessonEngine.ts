@@ -4,7 +4,7 @@ import {
   type LearningActivityType,
 } from "./activityRunner";
 import {
-  getSampleLearningContentRecordForActivityTitle,
+  resolveLearningContentRecordForActivityTitle,
 } from "./sampleContentRegistry";
 
 export { combiningLikeTermsLesson } from "./sampleContentRegistry";
@@ -409,7 +409,7 @@ export function buildLessonEngineDefinition(
 ): LessonEngineDefinition {
   const activityType = normalizeLearningActivityType(activity.activity_type);
   const lesson =
-    getSampleLearningContentRecordForActivityTitle(activity.title)?.lesson ||
+    resolveLearningContentRecordForActivityTitle(activity.title)?.lesson ||
     buildGenericAdaptiveLesson(activity);
 
   return {

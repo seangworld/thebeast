@@ -8,8 +8,7 @@ import {
   type LessonEnginePhaseKind,
 } from "./lessonEngine";
 import {
-  getDefaultSampleLearningContentRecord,
-  getSampleLearningContentRecordForSubject,
+  resolveLearningContentRecordForSubject,
 } from "./sampleContentRegistry";
 
 export type CoreLearnerProfileInput = {
@@ -134,20 +133,17 @@ export function buildCoreLearnerProfile(input: CoreLearnerProfileInput): CoreLea
 }
 
 function getContentRecordForSubject(subject: string) {
-  return (
-    getSampleLearningContentRecordForSubject(subject) ||
-    getDefaultSampleLearningContentRecord()
-  );
+  return resolveLearningContentRecordForSubject(subject);
 }
 
 export function getCorePlacementQuestions(
-  subject = getDefaultSampleLearningContentRecord().subject
+  subject = "Learning Path"
 ) {
   return getContentRecordForSubject(subject).placementQuestions;
 }
 
 export function scorePlacementAssessment({
-  subject = getDefaultSampleLearningContentRecord().subject,
+  subject = "Learning Path",
   responses,
 }: {
   subject?: string;

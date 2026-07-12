@@ -2,7 +2,7 @@ import type {
   GeneratedLearningPlan,
   LearningGoalBuilderDraft,
 } from "./types";
-import { getSampleActivityTitleForGoal } from "./sampleContentRegistry";
+import { getLearningActivityTitleForGoal } from "./sampleContentRegistry";
 
 function clean(value: string, fallback: string) {
   const trimmed = value.trim();
@@ -17,7 +17,7 @@ export function getGeneratedActivityTitle(draft: LearningGoalBuilderDraft) {
   const subject = getGeneratedLearningSubject(draft);
   const objective = clean(draft.learningObjective, subject);
 
-  return getSampleActivityTitleForGoal(objective) || `Start ${objective}`;
+  return getLearningActivityTitleForGoal(objective);
 }
 
 export function buildGeneratedLearningActivityPayload({
