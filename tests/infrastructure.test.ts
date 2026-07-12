@@ -260,6 +260,11 @@ import {
   getWrittenResponseRubricById,
   writtenResponseRubrics,
 } from "../src/lib/learning/writtenResponseRubrics";
+import {
+  contentMetadataIsComplete,
+  createLearningContentMetadata,
+  learningContentVersion,
+} from "../src/lib/learning/contentVersioning";
 import { learningStandards } from "../src/lib/learning/standards";
 import { generateCurriculumLearningPath } from "../src/lib/learning/learningPaths";
 import { learningPathTemplates } from "../src/lib/learning/templates";
@@ -2563,6 +2568,12 @@ test("assessment question type registry models multiple choice numeric written a
     {
       id: "numeric-fixture",
       questionTypeId: "numeric-response",
+      contentMetadata: createLearningContentMetadata({
+        sourceKind: "fixture",
+        sourceId: "numeric-fixture",
+        sourceLabel: "Assessment type registry fixture",
+        authoredBy: "fixture",
+      }),
       prompt: "Enter the numeric result.",
       options: [],
       answer: "42",
@@ -2571,6 +2582,12 @@ test("assessment question type registry models multiple choice numeric written a
     {
       id: "written-fixture",
       questionTypeId: "written-response",
+      contentMetadata: createLearningContentMetadata({
+        sourceKind: "fixture",
+        sourceId: "written-fixture",
+        sourceLabel: "Assessment type registry fixture",
+        authoredBy: "fixture",
+      }),
       prompt: "Explain the idea in one sentence.",
       options: [],
       answer: "A clear explanation.",
@@ -2579,6 +2596,12 @@ test("assessment question type registry models multiple choice numeric written a
     {
       id: "step-fixture",
       questionTypeId: "step-response",
+      contentMetadata: createLearningContentMetadata({
+        sourceKind: "fixture",
+        sourceId: "step-fixture",
+        sourceLabel: "Assessment type registry fixture",
+        authoredBy: "fixture",
+      }),
       prompt: "List the ordered steps you used.",
       options: [],
       answer: "Step 1; Step 2",
@@ -2634,6 +2657,12 @@ test("answer validation rules handle equivalent answers where appropriate", () =
       {
         id: "equivalent-quiz",
         questionTypeId: "numeric-response",
+        contentMetadata: createLearningContentMetadata({
+          sourceKind: "fixture",
+          sourceId: "equivalent-quiz",
+          sourceLabel: "Answer validation fixture",
+          authoredBy: "fixture",
+        }),
         prompt: "Enter the equivalent value.",
         options: [],
         answer: "1000",
@@ -2701,6 +2730,40 @@ test("written response rubrics model partial credit and feedback criteria generi
   assert.equal(
     /Pre-Algebra|Algebra|CompTIA|Security\+|A\+|Spanish|Biology|woodworking/i.test(source),
     false
+  );
+});
+
+test("content versioning records version and source for lessons and assessments", () => {
+  const generatedBiology = createGeneratedLearningContentRecord("Biology");
+  const records = [...sampleLearningContentRecords, generatedBiology];
+  const lessons = records.map((record) => record.lesson);
+  const assessments = lessons.flatMap((lesson) => lesson.quizQuestions);
+
+  assert.equal(learningContentVersion, "2026.07.12-bl23");
+  assert.equal(lessons.every((lesson) => contentMetadataIsComplete(lesson.contentMetadata)), true);
+  assert.equal(
+    assessments.every((question) => contentMetadataIsComplete(question.contentMetadata)),
+    true
+  );
+  assert.equal(
+    lessons.some((lesson) => lesson.contentMetadata.sourceKind === "generated"),
+    true
+  );
+  assert.equal(
+    lessons.some((lesson) => lesson.contentMetadata.sourceKind === "fixture"),
+    true
+  );
+  assert.equal(
+    assessments.every(
+      (question) =>
+        question.contentMetadata.version === learningContentVersion &&
+        question.contentMetadata.sourceId !== question.id
+          ? question.contentMetadata.sourceId.includes(question.id) ||
+            question.contentMetadata.sourceLabel.includes("assessment") ||
+            question.contentMetadata.sourceLabel.includes("Assessment")
+          : true
+    ),
+    true
   );
 });
 

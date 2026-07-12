@@ -2,6 +2,7 @@ import type {
   AdaptiveLesson,
 } from "./lessonEngine";
 import type { PlacementQuestion } from "./coreLearningLoop";
+import { createLearningContentMetadata } from "./contentVersioning";
 import type { LearningIntent } from "./types";
 
 export type SampleScopePrerequisite = {
@@ -59,6 +60,24 @@ export type SampleLearningContentRecord = {
 
 function slugify(value: string) {
   return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
+function sampleLessonMetadata(sourceId: string, sourceLabel: string) {
+  return createLearningContentMetadata({
+    sourceKind: "fixture",
+    sourceId,
+    sourceLabel,
+    authoredBy: "fixture",
+  });
+}
+
+function generatedLessonMetadata(sourceId: string, sourceLabel: string) {
+  return createLearningContentMetadata({
+    sourceKind: "generated",
+    sourceId,
+    sourceLabel,
+    authoredBy: "ai-coach",
+  });
 }
 
 const preAlgebraScope: SampleCurriculumScope = {
@@ -194,6 +213,10 @@ export const combiningLikeTermsLesson: AdaptiveLesson = {
   templateId: "procedural-skill-lesson",
   title: "Combining Like Terms",
   subject: preAlgebraScope.subject,
+  contentMetadata: sampleLessonMetadata(
+    "pre-algebra-proving-ground-scope",
+    "Pre-Algebra proving-ground fixture"
+  ),
   scopeId: preAlgebraScope.id,
   objectiveIds: preAlgebraScope.lessons[0].objectiveIds,
   prerequisiteIds: preAlgebraScope.lessons[0].prerequisiteIds,
@@ -280,6 +303,10 @@ export const combiningLikeTermsLesson: AdaptiveLesson = {
     {
       id: "quiz-like-terms-1",
       questionTypeId: "multiple-choice",
+      contentMetadata: sampleLessonMetadata(
+        "quiz-like-terms-1",
+        "Pre-Algebra proving-ground assessment fixture"
+      ),
       prompt: "Which terms can be combined with 7x?",
       options: ["3", "2x", "4y"],
       answer: "2x",
@@ -288,6 +315,10 @@ export const combiningLikeTermsLesson: AdaptiveLesson = {
     {
       id: "quiz-like-terms-2",
       questionTypeId: "multiple-choice",
+      contentMetadata: sampleLessonMetadata(
+        "quiz-like-terms-2",
+        "Pre-Algebra proving-ground assessment fixture"
+      ),
       prompt: "Simplify: 9x + 5 - 4x + 2",
       options: ["5x + 7", "13x + 7", "5x + 3"],
       answer: "5x + 7",
@@ -336,6 +367,10 @@ const linearEquationsLesson: AdaptiveLesson = {
   templateId: "procedural-skill-lesson",
   title: "Linear Equations",
   subject: algebraExpansionScope.subject,
+  contentMetadata: sampleLessonMetadata(
+    "algebra-expansion-scope",
+    "Algebra expansion fixture"
+  ),
   scopeId: algebraExpansionScope.id,
   objectiveIds: algebraExpansionScope.lessons[0].objectiveIds,
   prerequisiteIds: algebraExpansionScope.lessons[0].prerequisiteIds,
@@ -421,6 +456,10 @@ const linearEquationsLesson: AdaptiveLesson = {
     {
       id: "quiz-linear-equations-1",
       questionTypeId: "multiple-choice",
+      contentMetadata: sampleLessonMetadata(
+        "quiz-linear-equations-1",
+        "Algebra expansion assessment fixture"
+      ),
       prompt: "What operation solves x + 6 = 14?",
       options: ["Subtract 6 from both sides", "Add 6 to both sides", "Multiply both sides by 6"],
       answer: "Subtract 6 from both sides",
@@ -429,6 +468,10 @@ const linearEquationsLesson: AdaptiveLesson = {
     {
       id: "quiz-linear-equations-2",
       questionTypeId: "multiple-choice",
+      contentMetadata: sampleLessonMetadata(
+        "quiz-linear-equations-2",
+        "Algebra expansion assessment fixture"
+      ),
       prompt: "Which value solves y - 2 = 9?",
       options: ["7", "9", "11"],
       answer: "11",
@@ -477,6 +520,10 @@ const certificationFoundationLesson: AdaptiveLesson = {
   templateId: "guided-concept-lesson",
   title: "Certification Foundation Scan",
   subject: "Cybersecurity Certification Preparation",
+  contentMetadata: sampleLessonMetadata(
+    "sample-certification-foundation",
+    "Certification preparation fixture"
+  ),
   learningObjective:
     "Identify the current exam goal, baseline vocabulary, and first readiness gap before building a study loop.",
   prerequisiteConcepts: [
@@ -532,6 +579,10 @@ const certificationFoundationLesson: AdaptiveLesson = {
     {
       id: "quiz-cert-plan-1",
       questionTypeId: "multiple-choice",
+      contentMetadata: sampleLessonMetadata(
+        "quiz-cert-plan-1",
+        "Certification preparation assessment fixture"
+      ),
       prompt: "What should a starter certification plan verify first?",
       options: ["The current baseline", "A guaranteed passing score", "A final certificate"],
       answer: "The current baseline",
@@ -579,6 +630,10 @@ const spanishConversationLesson: AdaptiveLesson = {
   templateId: "conversation-practice-lesson",
   title: "Spanish Greeting Practice",
   subject: "Spanish",
+  contentMetadata: sampleLessonMetadata(
+    "sample-spanish-greetings",
+    "Spanish conversation fixture"
+  ),
   learningObjective:
     "Practice a simple greeting exchange with pronunciation and meaning checks.",
   prerequisiteConcepts: [
@@ -633,6 +688,10 @@ const spanishConversationLesson: AdaptiveLesson = {
     {
       id: "quiz-spanish-1",
       questionTypeId: "multiple-choice",
+      contentMetadata: sampleLessonMetadata(
+        "quiz-spanish-1",
+        "Spanish conversation assessment fixture"
+      ),
       prompt: "What does Hola usually mean?",
       options: ["Hello", "Goodbye", "Thank you"],
       answer: "Hello",
@@ -850,6 +909,10 @@ export function createGeneratedLearningContentRecord(
       templateId: "generated-starter-lesson",
       title: "Starter Lesson",
       subject: resolvedSubject,
+      contentMetadata: generatedLessonMetadata(
+        lessonId,
+        "Generated starter lesson"
+      ),
       learningObjective: `Build a first teachable step for ${resolvedSubject} from the learner goal, prerequisite check, and current confidence.`,
       prerequisiteConcepts: [
         "State the learner goal in plain language.",
@@ -904,6 +967,10 @@ export function createGeneratedLearningContentRecord(
         {
           id: "generated-readiness-check",
           questionTypeId: "multiple-choice",
+          contentMetadata: generatedLessonMetadata(
+            `${lessonId}-readiness-check`,
+            "Generated starter assessment"
+          ),
           prompt: "What should the coach use to choose the next lesson?",
           options: ["Learner evidence", "A fixed subject path", "A random topic"],
           answer: "Learner evidence",

@@ -7,6 +7,10 @@ import {
   resolveLearningContentRecordForActivityTitle,
 } from "./sampleContentRegistry";
 import { validateAnswer, type AnswerValidationRule } from "./answerValidation";
+import {
+  createLearningContentMetadata,
+  type LearningContentMetadata,
+} from "./contentVersioning";
 
 export { combiningLikeTermsLesson } from "./sampleContentRegistry";
 
@@ -51,6 +55,7 @@ export type AdaptiveQuizQuestion = {
   id: string;
   questionTypeId?: string;
   rubricId?: string;
+  contentMetadata: LearningContentMetadata;
   prompt: string;
   options: string[];
   answer: string;
@@ -92,6 +97,7 @@ export type AdaptiveLesson = {
   templateId?: string;
   title: string;
   subject: string;
+  contentMetadata: LearningContentMetadata;
   scopeId?: string;
   objectiveIds?: string[];
   prerequisiteIds?: string[];
@@ -247,6 +253,12 @@ function buildGenericAdaptiveLesson(activity: Pick<LearningActivityRunnerRow, "t
     id: `adaptive-${activity.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
     title: activity.title,
     subject: "Learning Path",
+    contentMetadata: createLearningContentMetadata({
+      sourceKind: "generated",
+      sourceId: `adaptive-${activity.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+      sourceLabel: "Adaptive lesson builder",
+      authoredBy: "ai-coach",
+    }),
     learningObjective: `Understand the core idea in ${activity.title} and use it in one guided attempt.`,
     prerequisiteConcepts: [
       "Know the goal of the current course.",
@@ -301,6 +313,12 @@ function buildGenericAdaptiveLesson(activity: Pick<LearningActivityRunnerRow, "t
       {
         id: "generic-quiz-1",
         questionTypeId: "multiple-choice",
+        contentMetadata: createLearningContentMetadata({
+          sourceKind: "generated",
+          sourceId: "generic-quiz-1",
+          sourceLabel: "Adaptive lesson builder assessment",
+          authoredBy: "ai-coach",
+        }),
         prompt: "What should you do first when a lesson feels unclear?",
         options: ["Guess quickly", "Name what is confusing", "Skip the lesson"],
         answer: "Name what is confusing",
