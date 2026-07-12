@@ -2089,6 +2089,20 @@ test("BeastLearning member home starts with Guidance before dashboard support", 
   assert.match(lessonEngine, /Your Tutor/);
 });
 
+test("BeastLearning first impression starts with the Guide relationship", () => {
+  const loginPage = readFileSync("src/app/login/page.tsx", "utf8");
+
+  assert.match(loginPage, /Meet Your BeastLearning Guide/);
+  assert.match(loginPage, /Start with someone who learns where you want to go/);
+  assert.match(loginPage, /We start with a conversation, not a dashboard/);
+  assert.match(loginPage, /When it is time to learn, your Guide brings in the Tutor/);
+  assert.match(loginPage, /Send my private link/);
+  assert.match(loginPage, /Your Guide will meet you inside/);
+  assert.doesNotMatch(loginPage, /Login \/ Signup/);
+  assert.doesNotMatch(loginPage, /magic login link/);
+  assert.doesNotMatch(loginPage, /Send Login Link/);
+});
+
 test("BeastLearning member experience hides workflow mechanics behind Guide and Tutor language", () => {
   const learningPage = readFileSync("src/app/dashboard/learning/page.tsx", "utf8");
   const activitiesPage = readFileSync(
