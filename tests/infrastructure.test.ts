@@ -2234,12 +2234,19 @@ test("learning curriculum hierarchy reaches objectives", () => {
 
 test("sample content records keep proving examples out of generic engine branching", () => {
   const scope = getSampleCurriculumScope("pre-algebra-proving-ground-scope");
+  const algebraScope = getSampleCurriculumScope("algebra-expansion-scope");
   const mathematics = curriculumSubjects.find((subject) => subject.id === "mathematics");
   const preAlgebraCourse = mathematics?.courses.find(
     (course) => course.id === scope?.courseId
   );
+  const algebraCourse = mathematics?.courses.find(
+    (course) => course.id === algebraScope?.courseId
+  );
   const lesson = preAlgebraCourse?.modules[0]?.lessons.find(
     (item) => item.id === scope?.lessons[0].id
+  );
+  const algebraLesson = algebraCourse?.modules[0]?.lessons.find(
+    (item) => item.id === algebraScope?.lessons[0].id
   );
   const genericEngineFiles = [
     "src/lib/learning/coreLearningLoop.ts",
@@ -2273,6 +2280,16 @@ test("sample content records keep proving examples out of generic engine branchi
   );
   assert.equal(preAlgebraCourse?.title, "Pre-Algebra Foundations");
   assert.equal(lesson?.concepts.length, 2);
+  assert.equal(algebraScope?.subject, "Algebra");
+  assert.equal(algebraScope?.status, "fixture");
+  assert.equal(algebraScope?.lessons[0].id, "algebra-linear-equations");
+  assert.deepEqual(algebraScope?.lessons[0].prerequisiteIds, [
+    "combine-like-terms",
+    "inverse-operations",
+    "equation-balance",
+  ]);
+  assert.equal(algebraCourse?.title, "Algebra Expansion");
+  assert.equal(algebraLesson?.concepts[0].skills[0].objectives.length, 2);
   assert.equal(
     lesson?.concepts.some((concept) =>
       concept.skills.some((skill) =>
@@ -2293,9 +2310,15 @@ test("sample content records keep proving examples out of generic engine branchi
     sampleLearningContentRecords.map((record) => record.subject),
     [
       "Pre-Algebra",
+      "Algebra",
       "Cybersecurity Certification Preparation",
       "Spanish",
     ]
+  );
+  assert.equal(getSampleActivityTitleForGoal("Algebra"), "Algebra: Linear Equations");
+  assert.equal(
+    getSampleActivityTitleForGoal("Pre-Algebra"),
+    "Pre-Algebra: Combining Like Terms"
   );
   assert.equal(
     sampleLearningContentRecords.every(
@@ -2351,7 +2374,7 @@ test("sample content records keep proving examples out of generic engine branchi
   }
   assert.equal(
     mathematics?.courses.some((course) => course.id === "algebra-expansion-course"),
-    false
+    true
   );
 });
 

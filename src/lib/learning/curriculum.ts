@@ -4,6 +4,7 @@ import type { CurriculumSubject } from "./types";
 const preAlgebraProvingGroundScope = getSampleCurriculumScope(
   "pre-algebra-proving-ground-scope"
 );
+const algebraExpansionScope = getSampleCurriculumScope("algebra-expansion-scope");
 
 export const curriculumSubjects: CurriculumSubject[] = [
   {
@@ -165,9 +166,11 @@ export const curriculumSubjects: CurriculumSubject[] = [
         ],
       },
       {
-        id: "college-algebra-course",
-        title: "College Algebra Refresh",
-        metadata: "Foundational algebra path.",
+        id: algebraExpansionScope?.courseId || "algebra-expansion-course",
+        title: algebraExpansionScope?.courseTitle || "Algebra Expansion",
+        metadata:
+          algebraExpansionScope?.scopeBoundary ||
+          "Linear equations fixture that follows the Pre-Algebra proving-ground pattern.",
         modules: [
           {
             id: "equations-module",
@@ -175,9 +178,9 @@ export const curriculumSubjects: CurriculumSubject[] = [
             metadata: "Equation-solving sequence.",
             lessons: [
               {
-                id: "linear-equations-lesson",
-                title: "Linear Equations",
-                metadata: "Beginner algebra lesson.",
+                id: algebraExpansionScope?.lessons[0].id || "algebra-linear-equations",
+                title: algebraExpansionScope?.lessons[0].title || "Linear Equations",
+                metadata: "Algebra expansion lesson with explicit prerequisites and objectives.",
                 concepts: [
                   {
                     id: "linear-equations",
@@ -190,9 +193,22 @@ export const curriculumSubjects: CurriculumSubject[] = [
                         metadata: "Procedural algebra skill",
                         objectives: [
                           {
-                            id: "objective-linear-equations",
-                            title: "Solve one-variable linear equations.",
-                            metadata: "Common Core standard",
+                            id:
+                              algebraExpansionScope?.lessons[0].objectiveIds[0] ||
+                              "objective-isolate-variable",
+                            title:
+                              algebraExpansionScope?.objectives[0].title ||
+                              "Isolate a variable using one inverse operation.",
+                            metadata: "Algebra expansion objective",
+                          },
+                          {
+                            id:
+                              algebraExpansionScope?.lessons[0].objectiveIds[1] ||
+                              "objective-check-equation-solution",
+                            title:
+                              algebraExpansionScope?.objectives[1].title ||
+                              "Check a one-step equation solution by substitution.",
+                            metadata: "Algebra expansion objective",
                           },
                         ],
                       },

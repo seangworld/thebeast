@@ -119,6 +119,72 @@ const preAlgebraScope: SampleCurriculumScope = {
   ],
 };
 
+const algebraExpansionScope: SampleCurriculumScope = {
+  id: "algebra-expansion-scope",
+  subject: "Algebra",
+  courseId: "algebra-expansion-course",
+  courseTitle: "Algebra Expansion",
+  status: "fixture",
+  scopeBoundary:
+    "Algebra expansion is limited to a first linear equations fixture that depends on the Pre-Algebra proving-ground pattern.",
+  prerequisites: [
+    {
+      id: "combine-like-terms",
+      title: "Combine like terms",
+      requiredBeforeLessonId: "algebra-linear-equations",
+      evidenceSource: "placement",
+    },
+    {
+      id: "inverse-operations",
+      title: "Use inverse operations",
+      requiredBeforeLessonId: "algebra-linear-equations",
+      evidenceSource: "placement",
+    },
+    {
+      id: "equation-balance",
+      title: "Preserve equation balance",
+      requiredBeforeLessonId: "algebra-linear-equations",
+      evidenceSource: "guided-review",
+    },
+  ],
+  objectives: [
+    {
+      id: "objective-isolate-variable",
+      title: "Isolate a variable using one inverse operation.",
+      lessonId: "algebra-linear-equations",
+      conceptId: "linear-equations",
+      prerequisiteIds: ["inverse-operations", "equation-balance"],
+      masteryEvidence: ["guided-practice", "quiz"],
+    },
+    {
+      id: "objective-check-equation-solution",
+      title: "Check a one-step equation solution by substitution.",
+      lessonId: "algebra-linear-equations",
+      conceptId: "solution-checking",
+      prerequisiteIds: ["combine-like-terms", "equation-balance"],
+      masteryEvidence: ["guided-practice", "quiz", "confidence"],
+    },
+  ],
+  lessons: [
+    {
+      id: "algebra-linear-equations",
+      title: "Linear Equations",
+      conceptIds: ["inverse-operations", "linear-equations", "solution-checking"],
+      objectiveIds: [
+        "objective-isolate-variable",
+        "objective-check-equation-solution",
+      ],
+      prerequisiteIds: [
+        "combine-like-terms",
+        "inverse-operations",
+        "equation-balance",
+      ],
+      status: "fixture",
+      nextLessonId: "two-step-equations",
+    },
+  ],
+};
+
 export const combiningLikeTermsLesson: AdaptiveLesson = {
   id: "pre-algebra-combining-like-terms",
   title: "Combining Like Terms",
@@ -250,6 +316,138 @@ export const combiningLikeTermsLesson: AdaptiveLesson = {
   masteryThreshold: 80,
   recommendedNextLesson: "Solving one-step equations",
   reviewRecommendation: "Review coefficients and variable parts before moving on.",
+};
+
+const linearEquationsLesson: AdaptiveLesson = {
+  id: "algebra-linear-equations",
+  title: "Linear Equations",
+  subject: algebraExpansionScope.subject,
+  scopeId: algebraExpansionScope.id,
+  objectiveIds: algebraExpansionScope.lessons[0].objectiveIds,
+  prerequisiteIds: algebraExpansionScope.lessons[0].prerequisiteIds,
+  learningObjective:
+    "Solve a one-step equation by keeping both sides balanced while isolating the variable.",
+  prerequisiteConcepts: [
+    "Combine like terms before solving.",
+    "Use inverse operations to undo addition, subtraction, multiplication, or division.",
+    "Check that the final value makes the original equation true.",
+  ],
+  explanation:
+    "An equation is balanced when both sides have the same value. To solve x + 4 = 11, undo the + 4 by subtracting 4 from both sides. That leaves x = 7. A quick check replaces x with 7: 7 + 4 = 11.",
+  interactiveVisual: {
+    title: "Keep the equation balanced",
+    prompt:
+      "Match each operation with the balancing move that keeps both sides equal.",
+    expression: "x + 4 = 11",
+    terms: [
+      { id: "equation-variable", label: "x", coefficient: 1, variable: "x", group: "x", color: "blue" },
+      { id: "equation-plus-four", label: "+ 4", coefficient: 4, variable: "", group: "constant", color: "green" },
+      { id: "equation-eleven", label: "11", coefficient: 11, variable: "", group: "constant", color: "yellow" },
+    ],
+    targetGroups: [
+      {
+        group: "constant",
+        label: "constant move",
+        combinedLabel: "Subtract 4 from both sides",
+        explanation: "Undoing + 4 on both sides keeps the equation balanced.",
+      },
+      {
+        group: "x",
+        label: "variable result",
+        combinedLabel: "x = 7",
+        explanation: "After the constant move, the variable is isolated.",
+      },
+    ],
+  },
+  examples: [
+    {
+      title: "Undo addition",
+      setup: "x + 4 = 11",
+      steps: [
+        "The variable has + 4 attached.",
+        "Subtract 4 from both sides.",
+        "Check the result in the original equation.",
+      ],
+      takeaway: "x + 4 = 11 becomes x = 7",
+    },
+    {
+      title: "Undo subtraction",
+      setup: "y - 3 = 8",
+      steps: [
+        "The variable has - 3 attached.",
+        "Add 3 to both sides.",
+        "Check 11 - 3 = 8.",
+      ],
+      takeaway: "y - 3 = 8 becomes y = 11",
+    },
+  ],
+  guidedPractice: [
+    {
+      id: "practice-solve-addition",
+      prompt: "Solve: x + 5 = 12",
+      hint: "Undo + 5 by subtracting 5 from both sides.",
+      expectedAnswer: "x = 7",
+      acceptedAnswers: ["x=7", "x = 7", "7"],
+    },
+    {
+      id: "practice-check-solution",
+      prompt: "Check whether x = 7 solves x + 5 = 12.",
+      hint: "Replace x with 7 and simplify the left side.",
+      expectedAnswer: "7 + 5 = 12",
+      acceptedAnswers: ["7+5=12", "7 + 5 = 12", "yes"],
+    },
+  ],
+  quizQuestions: [
+    {
+      id: "quiz-linear-equations-1",
+      prompt: "What operation solves x + 6 = 14?",
+      options: ["Subtract 6 from both sides", "Add 6 to both sides", "Multiply both sides by 6"],
+      answer: "Subtract 6 from both sides",
+      explanation: "Subtracting 6 undoes the + 6 and keeps the equation balanced.",
+    },
+    {
+      id: "quiz-linear-equations-2",
+      prompt: "Which value solves y - 2 = 9?",
+      options: ["7", "9", "11"],
+      answer: "11",
+      explanation: "Add 2 to both sides, so y = 11.",
+    },
+  ],
+  aiCoachingPrompts: [
+    {
+      kind: "mistake",
+      title: "Explain a balancing mistake",
+      prompt: "Explain why changing only one side breaks the equation and show the balanced move.",
+    },
+    {
+      kind: "alternate",
+      title: "Try a scale explanation",
+      prompt: "Explain the equation as a balance scale where both sides must receive the same move.",
+    },
+    {
+      kind: "encouragement",
+      title: "Encourage a check",
+      prompt: "Encourage the learner to verify the answer in the original equation.",
+    },
+    {
+      kind: "review",
+      title: "Recommend review",
+      prompt: "Recommend the prerequisite to review when balancing or inverse operations are shaky.",
+    },
+    {
+      kind: "mastery",
+      title: "Celebrate mastery",
+      prompt: "Celebrate solving and checking a one-step equation, then name the next lesson.",
+    },
+  ],
+  reflectionPrompts: [
+    "Which inverse operation did you use?",
+    "How did checking the answer prove the equation still balanced?",
+    "What should Beast review before two-step equations?",
+  ],
+  masteryThreshold: 82,
+  recommendedNextLesson: "Two-step equations",
+  reviewRecommendation: "Review inverse operations and equation balance before moving on.",
 };
 
 const certificationFoundationLesson: AdaptiveLesson = {
@@ -453,7 +651,7 @@ export const sampleLearningContentRecords: SampleLearningContentRecord[] = [
     intent: "Teach me",
     courseId: preAlgebraScope.courseId,
     courseTitle: preAlgebraScope.courseTitle,
-    matchPhrases: ["pre-algebra", "pre algebra", "algebra", "combining like terms"],
+    matchPhrases: ["pre-algebra", "pre algebra", "combining like terms"],
     activityTitle: "Pre-Algebra: Combining Like Terms",
     emptyStateLabel: "a learning mission",
     lesson: combiningLikeTermsLesson,
@@ -481,6 +679,42 @@ export const sampleLearningContentRecords: SampleLearningContentRecord[] = [
       },
     ],
     curriculumScope: preAlgebraScope,
+  },
+  {
+    id: "algebra-expansion",
+    subject: algebraExpansionScope.subject,
+    goalType: "subject",
+    intent: "Teach me",
+    courseId: algebraExpansionScope.courseId,
+    courseTitle: algebraExpansionScope.courseTitle,
+    matchPhrases: ["algebra", "linear equations", "one-step equations"],
+    activityTitle: "Algebra: Linear Equations",
+    emptyStateLabel: "an algebra mission",
+    lesson: linearEquationsLesson,
+    placementQuestions: [
+      {
+        id: "placement-inverse-operation",
+        conceptId: "inverse-operations",
+        prompt: "What operation undoes + 5?",
+        expectedAnswer: "Subtract 5",
+        acceptedAnswers: ["subtract 5", "-5", "subtraction"],
+      },
+      {
+        id: "placement-equation-balance",
+        conceptId: "equation-balance",
+        prompt: "If you subtract 3 from one side of an equation, what must you do to the other side?",
+        expectedAnswer: "Subtract 3",
+        acceptedAnswers: ["subtract 3", "do the same thing", "same operation"],
+      },
+      {
+        id: "placement-solve-linear",
+        conceptId: "linear-equations",
+        prompt: "Solve x + 4 = 11.",
+        expectedAnswer: "x = 7",
+        acceptedAnswers: ["x=7", "x = 7", "7"],
+      },
+    ],
+    curriculumScope: algebraExpansionScope,
   },
   {
     id: "cybersecurity-certification-prep",
