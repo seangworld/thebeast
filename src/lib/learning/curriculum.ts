@@ -1,3 +1,4 @@
+import { preAlgebraProvingGroundScope } from "./preAlgebraScope";
 import type { CurriculumSubject } from "./types";
 
 export const curriculumSubjects: CurriculumSubject[] = [
@@ -98,6 +99,65 @@ export const curriculumSubjects: CurriculumSubject[] = [
     title: "Mathematics",
     metadata: "Algebra-to-functions progression.",
     courses: [
+      {
+        id: preAlgebraProvingGroundScope.courseId,
+        title: "Pre-Algebra Foundations",
+        metadata: "Implemented proving-ground scope for prerequisite checks and the first teachable lesson.",
+        modules: [
+          {
+            id: "expression-foundations-module",
+            title: "Expression Foundations",
+            metadata: "Initial Pre-Algebra module with explicit prerequisites and objectives.",
+            lessons: [
+              {
+                id: "pre-algebra-combining-like-terms",
+                title: "Combining Like Terms",
+                metadata: preAlgebraProvingGroundScope.scopeBoundary,
+                concepts: [
+                  {
+                    id: "like-terms",
+                    title: "Like Terms",
+                    metadata: "Requires coefficient recognition before combining expressions.",
+                    skills: [
+                      {
+                        id: "identify-like-terms",
+                        title: "Identify like terms",
+                        metadata: "Prerequisite-supported classification skill",
+                        objectives: [
+                          {
+                            id: "objective-identify-like-terms",
+                            title: "Identify terms with the same variable part.",
+                            metadata: "Pre-Algebra proving-ground objective",
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                  {
+                    id: "combine-like-terms",
+                    title: "Combine Like Terms",
+                    metadata: "Requires coefficients, like terms, and integer addition.",
+                    skills: [
+                      {
+                        id: "combine-coefficients",
+                        title: "Combine coefficients",
+                        metadata: "Guided expression simplification skill",
+                        objectives: [
+                          {
+                            id: "objective-combine-like-terms",
+                            title: "Combine coefficients while preserving the matching variable part.",
+                            metadata: "Pre-Algebra proving-ground objective",
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
       {
         id: "college-algebra-course",
         title: "College Algebra Refresh",

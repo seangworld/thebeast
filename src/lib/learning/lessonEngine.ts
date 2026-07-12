@@ -3,6 +3,7 @@ import {
   type LearningActivityRunnerRow,
   type LearningActivityType,
 } from "./activityRunner";
+import { preAlgebraProvingGroundScope } from "./preAlgebraScope";
 
 export type LessonEnginePhaseKind =
   | "assessment"
@@ -77,6 +78,9 @@ export type AdaptiveLesson = {
   id: string;
   title: string;
   subject: string;
+  scopeId?: string;
+  objectiveIds?: string[];
+  prerequisiteIds?: string[];
   learningObjective: string;
   prerequisiteConcepts: string[];
   explanation: string;
@@ -228,6 +232,9 @@ export const combiningLikeTermsLesson: AdaptiveLesson = {
   id: "pre-algebra-combining-like-terms",
   title: "Combining Like Terms",
   subject: "Pre-Algebra",
+  scopeId: preAlgebraProvingGroundScope.id,
+  objectiveIds: preAlgebraProvingGroundScope.lessons[0].objectiveIds,
+  prerequisiteIds: preAlgebraProvingGroundScope.lessons[0].prerequisiteIds,
   learningObjective:
     "Combine terms that have the same variable part so an expression is easier to read and solve.",
   prerequisiteConcepts: [

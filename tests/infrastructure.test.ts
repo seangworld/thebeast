@@ -215,6 +215,7 @@ import {
   getGeneratedActivityTitle,
   getGeneratedLearningSubject,
 } from "../src/lib/learning/generatedActivities";
+import { getPreAlgebraProvingGroundScope } from "../src/lib/learning/preAlgebraScope";
 import {
   buildLessonEngineDefinition,
   combiningLikeTermsLesson,
@@ -2219,6 +2220,57 @@ test("learning curriculum hierarchy reaches objectives", () => {
   assert.equal(curriculum.courses[0].modules[0].lessons.length >= 2, true);
   assert.equal(objective.id, "objective-identity-proofing");
   assert.equal(Boolean(objective.metadata), true);
+});
+
+test("Pre-Algebra proving-ground scope records explicit objectives and prerequisites", () => {
+  const scope = getPreAlgebraProvingGroundScope();
+  const mathematics = curriculumSubjects.find((subject) => subject.id === "mathematics");
+  const preAlgebraCourse = mathematics?.courses.find(
+    (course) => course.id === scope.courseId
+  );
+  const lesson = preAlgebraCourse?.modules[0]?.lessons.find(
+    (item) => item.id === scope.lessons[0].id
+  );
+
+  assert.equal(scope.subject, "Pre-Algebra");
+  assert.equal(scope.status, "implemented-proving-ground");
+  assert.equal(scope.scopeBoundary.includes("Combining Like Terms"), true);
+  assert.deepEqual(scope.lessons[0].objectiveIds, [
+    "objective-identify-like-terms",
+    "objective-combine-like-terms",
+  ]);
+  assert.deepEqual(scope.lessons[0].prerequisiteIds, [
+    "coefficients",
+    "like-terms",
+    "integer-addition",
+  ]);
+  assert.equal(scope.objectives.length, 2);
+  assert.equal(
+    scope.objectives.every((objective) => objective.prerequisiteIds.length > 0),
+    true
+  );
+  assert.equal(preAlgebraCourse?.title, "Pre-Algebra Foundations");
+  assert.equal(lesson?.concepts.length, 2);
+  assert.equal(
+    lesson?.concepts.some((concept) =>
+      concept.skills.some((skill) =>
+        skill.objectives.some(
+          (objective) => objective.id === "objective-combine-like-terms"
+        )
+      )
+    ),
+    true
+  );
+  assert.equal(combiningLikeTermsLesson.scopeId, scope.id);
+  assert.deepEqual(combiningLikeTermsLesson.objectiveIds, scope.lessons[0].objectiveIds);
+  assert.deepEqual(
+    combiningLikeTermsLesson.prerequisiteIds,
+    scope.lessons[0].prerequisiteIds
+  );
+  assert.equal(
+    mathematics?.courses.some((course) => course.id === "algebra-expansion-course"),
+    false
+  );
 });
 
 test("learning concept library models prerequisites and dependents", () => {
