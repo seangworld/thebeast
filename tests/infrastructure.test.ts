@@ -261,8 +261,11 @@ import {
   writtenResponseRubrics,
 } from "../src/lib/learning/writtenResponseRubrics";
 import {
+  contentCanBePublished,
   contentMetadataIsComplete,
+  contentRequiresReview,
   createLearningContentMetadata,
+  generatedContentHasReviewStatus,
   learningContentVersion,
 } from "../src/lib/learning/contentVersioning";
 import { learningStandards } from "../src/lib/learning/standards";
@@ -2765,6 +2768,32 @@ test("content versioning records version and source for lessons and assessments"
     ),
     true
   );
+});
+
+test("generated versus curated content controls require review status", () => {
+  const generatedBiology = createGeneratedLearningContentRecord("Biology");
+  const generatedContent = [
+    generatedBiology.lesson.contentMetadata,
+    ...generatedBiology.lesson.quizQuestions.map((question) => question.contentMetadata),
+  ];
+  const fixtureContent = sampleLearningContentRecords.flatMap((record) => [
+    record.lesson.contentMetadata,
+    ...record.lesson.quizQuestions.map((question) => question.contentMetadata),
+  ]);
+  const curatedMetadata = createLearningContentMetadata({
+    sourceKind: "curated",
+    sourceId: "curated-editorial-lesson",
+    sourceLabel: "Curated editorial lesson",
+    authoredBy: "beastlearning",
+  });
+
+  assert.equal(generatedContent.every(generatedContentHasReviewStatus), true);
+  assert.equal(generatedContent.every(contentRequiresReview), true);
+  assert.equal(generatedContent.some(contentCanBePublished), false);
+  assert.equal(fixtureContent.every((metadata) => metadata.reviewStatus === "approved"), true);
+  assert.equal(fixtureContent.every(contentCanBePublished), true);
+  assert.equal(curatedMetadata.reviewStatus, "approved");
+  assert.equal(contentCanBePublished(curatedMetadata), true);
 });
 
 test("learning concept library models prerequisites and dependents", () => {
