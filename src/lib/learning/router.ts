@@ -18,9 +18,11 @@ function scoreSpecialist(input: AIRouterInput, specialist: AISpecialistContract)
   if (specialist.supportedGoals.some((item) => goal.includes(item.toLowerCase()))) {
     score += 3;
   }
+  if (specialist.supportedGoals.some((item) => request.includes(item.toLowerCase()))) {
+    score += 2;
+  }
   if (request.includes("homework") && specialist.id === "homework-coach") score += 10;
   if (request.includes("career") && specialist.id === "career-mentor") score += 6;
-  if ((request.includes("certification") || request.includes("security+")) && specialist.id === "certification-coach") score += 6;
   if (request.includes("motivat") && specialist.id === "motivation-coach") score += 6;
   if (request.includes("math") && specialist.id === "math-coach") score += 6;
   if (request.includes("code") && specialist.id === "coding-coach") score += 6;

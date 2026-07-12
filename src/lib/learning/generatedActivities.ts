@@ -2,6 +2,7 @@ import type {
   GeneratedLearningPlan,
   LearningGoalBuilderDraft,
 } from "./types";
+import { getSampleActivityTitleForGoal } from "./sampleContentRegistry";
 
 function clean(value: string, fallback: string) {
   const trimmed = value.trim();
@@ -9,16 +10,6 @@ function clean(value: string, fallback: string) {
 }
 
 export function getGeneratedLearningSubject(draft: LearningGoalBuilderDraft) {
-  const objective = draft.learningObjective.toLowerCase();
-
-  if (objective.includes("pre-algebra") || objective.includes("pre algebra")) {
-    return "Pre-Algebra";
-  }
-
-  if (objective.includes("algebra")) {
-    return "Algebra";
-  }
-
   return clean(draft.learningObjective, "Learning Path");
 }
 
@@ -26,11 +17,7 @@ export function getGeneratedActivityTitle(draft: LearningGoalBuilderDraft) {
   const subject = getGeneratedLearningSubject(draft);
   const objective = clean(draft.learningObjective, subject);
 
-  if (subject === "Pre-Algebra" || subject === "Algebra") {
-    return `${subject}: Combining Like Terms`;
-  }
-
-  return `Start ${objective}`;
+  return getSampleActivityTitleForGoal(objective) || `Start ${objective}`;
 }
 
 export function buildGeneratedLearningActivityPayload({

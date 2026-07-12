@@ -1,14 +1,16 @@
 import type { LearningConversationType, LearningIntent } from "./types";
+import { getSampleLearningContentRecordForGoal } from "./sampleContentRegistry";
 
 export function detectLearningIntent(request: string): LearningIntent {
   const value = request.toLowerCase();
+  const sampleRecord = getSampleLearningContentRecordForGoal(value);
 
   if (value.includes("homework")) return "Homework help";
   if (value.includes("quiz")) return "Quiz me";
   if (value.includes("practice")) return "Practice";
   if (value.includes("review")) return "Review";
   if (value.includes("career") || value.includes("job")) return "Career advice";
-  if (value.includes("certification") || value.includes("security+")) return "Certification";
+  if (sampleRecord?.intent) return sampleRecord.intent;
   if (value.includes("summarize") || value.includes("summary")) return "Summarize";
   if (value.includes("research")) return "Research";
   if (value.includes("explain")) return "Explain";

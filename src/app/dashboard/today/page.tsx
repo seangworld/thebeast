@@ -13,6 +13,7 @@ import {
   getLearningActivityRoute,
   getNewestReadyLearningActivity,
 } from "@/lib/learning/activityRunner";
+import { getSampleActivityTitleForCourse } from "@/lib/learning/sampleContentRegistry";
 import { useRuntimeToday } from "@/lib/hooks/useRuntimeToday";
 import { getBeastGreeting } from "@/lib/runtimeDate";
 import { createClient } from "@/lib/supabase/client";
@@ -74,9 +75,7 @@ function getActivityTone(status: string) {
 }
 
 function getStarterActivityTitle(courseTitle: string) {
-  return /pre[- ]?algebra|algebra/i.test(courseTitle)
-    ? "Pre-Algebra: Combining Like Terms"
-    : `Start ${courseTitle}`;
+  return getSampleActivityTitleForCourse(courseTitle) || `Start ${courseTitle}`;
 }
 
 function buildStarterActivityRow({
@@ -547,7 +546,7 @@ export default function TodayPage() {
                     ? `${readyActivity.activity_type} - ${readyActivity.difficulty} - ${readyActivity.estimated_minutes} minutes`
                     : state.activities.length > 0
                       ? "You finished the current queue. Generate the next mission to keep learning."
-                      : "Your activity queue is empty. Generate a Pre-Algebra mission to begin."
+                      : "Your activity queue is empty. Generate a learning mission to begin."
                 }
                 action={<ModuleBadge module="learning" label="Next Step" />}
               />
@@ -631,7 +630,7 @@ export default function TodayPage() {
                     <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
                       <h3 className="font-black text-white">No activities yet</h3>
                       <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
-                        Generate your first mission above to start the Pre-Algebra teaching experience.
+                        Generate your first mission above to start the teaching experience.
                       </p>
                     </div>
                   ) : null}

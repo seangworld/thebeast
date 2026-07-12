@@ -7,6 +7,10 @@ import {
   type LessonEngineProgress,
   type LessonEnginePhaseKind,
 } from "./lessonEngine";
+import {
+  getDefaultSampleLearningContentRecord,
+  getSampleLearningContentRecordForSubject,
+} from "./sampleContentRegistry";
 
 export type CoreLearnerProfileInput = {
   preferredName: string;
@@ -105,30 +109,6 @@ export type CoreLessonSession = {
   };
 };
 
-const combiningLikeTermsPlacement: PlacementQuestion[] = [
-  {
-    id: "placement-coefficient",
-    conceptId: "coefficients",
-    prompt: "In 6x, what is the coefficient?",
-    expectedAnswer: "6",
-    acceptedAnswers: ["6", "six"],
-  },
-  {
-    id: "placement-like-terms",
-    conceptId: "like-terms",
-    prompt: "Which term can combine with 4x: 2x or 2?",
-    expectedAnswer: "2x",
-    acceptedAnswers: ["2x", "2 x"],
-  },
-  {
-    id: "placement-combine",
-    conceptId: "combine-like-terms",
-    prompt: "Simplify 3x + 5x.",
-    expectedAnswer: "8x",
-    acceptedAnswers: ["8x", "8 x"],
-  },
-];
-
 function slugify(value: string) {
   return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
@@ -153,12 +133,21 @@ export function buildCoreLearnerProfile(input: CoreLearnerProfileInput): CoreLea
   };
 }
 
-export function getCorePlacementQuestions(subject = "Pre-Algebra") {
-  return subject.toLowerCase().includes("algebra") ? combiningLikeTermsPlacement : combiningLikeTermsPlacement;
+function getContentRecordForSubject(subject: string) {
+  return (
+    getSampleLearningContentRecordForSubject(subject) ||
+    getDefaultSampleLearningContentRecord()
+  );
+}
+
+export function getCorePlacementQuestions(
+  subject = getDefaultSampleLearningContentRecord().subject
+) {
+  return getContentRecordForSubject(subject).placementQuestions;
 }
 
 export function scorePlacementAssessment({
-  subject = "Pre-Algebra",
+  subject = getDefaultSampleLearningContentRecord().subject,
   responses,
 }: {
   subject?: string;
@@ -200,8 +189,13 @@ export function generateCoreLearningPath({
   learner: CoreLearnerProfile;
   placement: PlacementResult;
 }): CoreLearningPath {
+  const contentRecord = getContentRecordForSubject(placement.subject);
+  const lesson = contentRecord.lesson;
   const needsRemediation = placement.gapConceptIds.length > 0;
   const lessonDependency = needsRemediation ? ["remediate-placement-gaps"] : ["placement"];
+  const lessonStepId = `${lesson.id}-lesson`;
+  const practiceStepId = `${lesson.id}-guided-practice`;
+  const masteryStepId = `${lesson.id}-mastery-check`;
   const steps: CoreLearningPathStep[] = [
     {
       id: "placement",
@@ -214,7 +208,7 @@ export function generateCoreLearningPath({
     },
     {
       id: "remediate-placement-gaps",
-      conceptId: placement.gapConceptIds[0] || "like-terms",
+      conceptId: placement.gapConceptIds[0] || lesson.prerequisiteIds?.[0] || lesson.id,
       title: "Review prerequisite gaps",
       kind: "remediation",
       status: needsRemediation ? "ready" : "complete",
@@ -224,9 +218,9 @@ export function generateCoreLearningPath({
         : "No prerequisite remediation required.",
     },
     {
-      id: "combining-like-terms-lesson",
-      conceptId: "combine-like-terms",
-      title: "Combining Like Terms",
+      id: lessonStepId,
+      conceptId: lesson.objectiveIds?.[0] || lesson.id,
+      title: lesson.title,
       kind: "lesson",
       status: needsRemediation ? "blocked" : "ready",
       dependsOn: lessonDependency,
@@ -235,39 +229,41 @@ export function generateCoreLearningPath({
         : "Placement supports starting the teachable lesson.",
     },
     {
-      id: "guided-practice",
-      conceptId: "combine-like-terms",
+      id: practiceStepId,
+      conceptId: lesson.objectiveIds?.[0] || lesson.id,
       title: "Guided practice",
       kind: "guided-practice",
       status: "blocked",
-      dependsOn: ["combining-like-terms-lesson"],
+      dependsOn: [lessonStepId],
       reason: "Practice follows instruction and examples.",
     },
     {
-      id: "mastery-check",
-      conceptId: "combine-like-terms",
+      id: masteryStepId,
+      conceptId: lesson.objectiveIds?.[0] || lesson.id,
       title: "Mastery check",
       kind: "mastery-check",
       status: "blocked",
-      dependsOn: ["guided-practice"],
+      dependsOn: [practiceStepId],
       reason: "Mastery check requires practice evidence.",
     },
     {
-      id: "one-step-equations",
-      conceptId: "one-step-equations",
-      title: "Solving one-step equations",
+      id: slugify(lesson.recommendedNextLesson),
+      conceptId: slugify(lesson.recommendedNextLesson),
+      title: lesson.recommendedNextLesson,
       kind: "next-concept",
       status: "blocked",
-      dependsOn: ["mastery-check"],
+      dependsOn: [masteryStepId],
       reason: "Advancement requires mastery evidence, not just completion.",
     },
   ];
 
   return {
-    id: `${learner.id}-pre-algebra-core-path`,
+    id: `${learner.id}-${slugify(contentRecord.subject)}-core-path`,
     learnerId: learner.id,
     subject: placement.subject,
-    currentConceptId: needsRemediation ? placement.gapConceptIds[0] : "combine-like-terms",
+    currentConceptId: needsRemediation
+      ? placement.gapConceptIds[0]
+      : lesson.objectiveIds?.[0] || lesson.id,
     steps,
     progressReport: {
       completionPercent: 10,
@@ -285,9 +281,10 @@ export function startCoreLessonSession({
   learner: CoreLearnerProfile;
   path: CoreLearningPath;
 }): CoreLessonSession {
+  const contentRecord = getContentRecordForSubject(path.subject);
   const engine = buildLessonEngineDefinition({
     activity_type: "Lesson",
-    title: "Pre-Algebra: Combining Like Terms",
+    title: contentRecord.activityTitle,
     difficulty: "Beginner",
   });
   const completedPhases: LessonEnginePhaseKind[] = ["assessment", "lesson"];
@@ -302,7 +299,7 @@ export function startCoreLessonSession({
   });
 
   return {
-    id: `${path.id}-combining-like-terms-session`,
+    id: `${path.id}-${slugify(engine.lesson.id)}-session`,
     learnerId: learner.id,
     pathId: path.id,
     lesson: engine.lesson,
@@ -316,7 +313,7 @@ export function startCoreLessonSession({
         ageAppropriate: true,
         revealsAnswer: false,
         feedback: "not-answered",
-        nextAction: "Ask the learner to identify which terms are alike.",
+        nextAction: `Ask the learner to try ${engine.lesson.guidedPractice[0]?.prompt || "the first guided step"}.`,
       },
     ],
     progress,
@@ -341,8 +338,8 @@ export function buildTutorResponseTurn({
   return {
     intent: "evaluate-response",
     prompt: correct
-      ? "Correct. You added the coefficients and kept the variable part."
-      : "Not yet. The terms both have x, so keep x and add only the coefficients.",
+      ? "Correct. That matches the expected guided-practice answer."
+      : `Not yet. ${firstPractice.hint}`,
     waitsForLearner: true,
     ageAppropriate: true,
     revealsAnswer: correct,
@@ -364,10 +361,13 @@ export function buildHintTurn(session: CoreLessonSession): TutorTurn {
 }
 
 export function buildAlternativeExplanationTurn(session: CoreLessonSession): TutorTurn {
+  const alternatePrompt =
+    session.lesson.aiCoachingPrompts.find((prompt) => prompt.kind === "alternate")
+      ?.prompt || session.lesson.explanation;
+
   return {
     intent: "alternate-explanation",
-    prompt:
-      "Think of like terms as matching labels. x terms go in one basket, plain numbers go in another basket, and only matching baskets combine.",
+    prompt: alternatePrompt,
     waitsForLearner: true,
     ageAppropriate: true,
     revealsAnswer: false,
@@ -400,7 +400,9 @@ export function completeCoreLessonMasteryCheck({
       "recommendation",
     ]),
     phaseCount: 8,
-    reflection: "I can identify like terms and explain what to review next.",
+    reflection:
+      session.lesson.reflectionPrompts[0] ||
+      "I can explain what changed and what to review next.",
     confidence: confidenceLabel,
     practiceAnswers,
     quizAnswers,

@@ -215,7 +215,11 @@ import {
   getGeneratedActivityTitle,
   getGeneratedLearningSubject,
 } from "../src/lib/learning/generatedActivities";
-import { getPreAlgebraProvingGroundScope } from "../src/lib/learning/preAlgebraScope";
+import {
+  getSampleActivityTitleForGoal,
+  getSampleCurriculumScope,
+  sampleLearningContentRecords,
+} from "../src/lib/learning/sampleContentRegistry";
 import {
   buildLessonEngineDefinition,
   combiningLikeTermsLesson,
@@ -1171,7 +1175,10 @@ test("learning core loop teaches practices checks mastery and resumes a lesson",
   assert.equal(learner.safetyLevel, "student");
   assert.equal(placement.readinessLevel, "ready-for-lesson");
   assert.deepEqual(placement.gapConceptIds, []);
-  assert.equal(path.steps.find((step) => step.id === "combining-like-terms-lesson")?.status, "ready");
+  assert.equal(
+    path.steps.find((step) => step.id === `${session.lesson.id}-lesson`)?.status,
+    "ready"
+  );
   assert.equal(
     path.progressReport.distinction.includes("Completion tracks finished steps"),
     true
@@ -1231,7 +1238,10 @@ test("learning core loop routes weak placement and low mastery to remediation", 
   assert.equal(placement.readinessLevel, "start-here");
   assert.equal(placement.gapConceptIds.includes("coefficients"), true);
   assert.equal(path.steps.find((step) => step.id === "remediate-placement-gaps")?.status, "ready");
-  assert.equal(path.steps.find((step) => step.id === "combining-like-terms-lesson")?.status, "blocked");
+  assert.equal(
+    path.steps.find((step) => step.id === `${session.lesson.id}-lesson`)?.status,
+    "blocked"
+  );
   assert.equal(incorrectTurn.feedback, "incorrect");
   assert.equal(incorrectTurn.revealsAnswer, false);
   assert.equal(mastery.progress.mastered, false);
@@ -1838,9 +1848,9 @@ test("Today learning mission generation avoids dead ends", () => {
   assert.equal(todayPage.includes(".insert("), true);
   assert.equal(todayPage.includes("onClick={generateNextActivity}"), true);
   assert.equal(todayPage.includes("onClick={loadToday} className=\"beast-button\""), false);
-  assert.equal(todayPage.includes("Pre-Algebra: Combining Like Terms"), true);
+  assert.equal(todayPage.includes("getSampleActivityTitleForCourse"), true);
   assert.equal(todayPage.includes("You finished the current queue. Generate the next mission to keep learning."), true);
-  assert.equal(todayPage.includes("Generate your first mission above to start the Pre-Algebra teaching experience."), true);
+  assert.equal(todayPage.includes("Generate your first mission above to start the teaching experience."), true);
   assert.equal(todayPage.includes("activityList.map"), true);
 });
 
@@ -1906,7 +1916,7 @@ test("lesson engine supports the adaptive BeastLearning teaching cycle", () => {
   });
   const scopedResponse = getLessonTeacherResponse({
     lesson: quizEngine.lesson,
-    question: "Can you help with my budget?",
+    question: "Can we discuss my budget?",
     quizPercent: 100,
     masteryEstimate: 100,
   });
@@ -1944,8 +1954,8 @@ test("lesson engine supports the adaptive BeastLearning teaching cycle", () => {
   assert.equal(isPracticeAnswerCorrect(quizEngine.lesson.guidedPractice[0], "8x"), true);
   assert.equal(correctVisual.correct, true);
   assert.equal(incorrectVisual.correct, false);
-  assert.equal(teacherResponse.includes("4x and 7 cannot become 11x"), true);
-  assert.equal(scopedResponse.includes("I can help inside this lesson"), true);
+  assert.equal(teacherResponse.includes("correct grouping"), true);
+  assert.equal(scopedResponse, quizEngine.lesson.explanation);
   assert.equal(
     coachEngine.lesson.aiCoachingPrompts.some((prompt) => prompt.kind === "mistake"),
     true
@@ -2222,31 +2232,43 @@ test("learning curriculum hierarchy reaches objectives", () => {
   assert.equal(Boolean(objective.metadata), true);
 });
 
-test("Pre-Algebra proving-ground scope records explicit objectives and prerequisites", () => {
-  const scope = getPreAlgebraProvingGroundScope();
+test("sample content records keep proving examples out of generic engine branching", () => {
+  const scope = getSampleCurriculumScope("pre-algebra-proving-ground-scope");
   const mathematics = curriculumSubjects.find((subject) => subject.id === "mathematics");
   const preAlgebraCourse = mathematics?.courses.find(
-    (course) => course.id === scope.courseId
+    (course) => course.id === scope?.courseId
   );
   const lesson = preAlgebraCourse?.modules[0]?.lessons.find(
-    (item) => item.id === scope.lessons[0].id
+    (item) => item.id === scope?.lessons[0].id
   );
+  const genericEngineFiles = [
+    "src/lib/learning/coreLearningLoop.ts",
+    "src/lib/learning/generatedActivities.ts",
+    "src/lib/learning/lessonEngine.ts",
+    "src/app/dashboard/today/page.tsx",
+  ];
+  const forbiddenBranching = [
+    /if\s*\([^)]*(Pre-Algebra|Algebra|Security\+|CompTIA|A\+|certification)/i,
+    /includes\(["'](pre-algebra|pre algebra|algebra|security\+|comptia|a\+|certification|cert)["']\)/i,
+    /pre\[- \]\?algebra/i,
+    /subject === ["'](Pre-Algebra|Algebra)["']/,
+  ];
 
-  assert.equal(scope.subject, "Pre-Algebra");
-  assert.equal(scope.status, "implemented-proving-ground");
-  assert.equal(scope.scopeBoundary.includes("Combining Like Terms"), true);
-  assert.deepEqual(scope.lessons[0].objectiveIds, [
+  assert.equal(scope?.subject, "Pre-Algebra");
+  assert.equal(scope?.status, "implemented-proving-ground");
+  assert.equal(scope?.scopeBoundary.includes("Combining Like Terms"), true);
+  assert.deepEqual(scope?.lessons[0].objectiveIds, [
     "objective-identify-like-terms",
     "objective-combine-like-terms",
   ]);
-  assert.deepEqual(scope.lessons[0].prerequisiteIds, [
+  assert.deepEqual(scope?.lessons[0].prerequisiteIds, [
     "coefficients",
     "like-terms",
     "integer-addition",
   ]);
-  assert.equal(scope.objectives.length, 2);
+  assert.equal(scope?.objectives.length, 2);
   assert.equal(
-    scope.objectives.every((objective) => objective.prerequisiteIds.length > 0),
+    scope?.objectives.every((objective) => objective.prerequisiteIds.length > 0),
     true
   );
   assert.equal(preAlgebraCourse?.title, "Pre-Algebra Foundations");
@@ -2261,12 +2283,72 @@ test("Pre-Algebra proving-ground scope records explicit objectives and prerequis
     ),
     true
   );
-  assert.equal(combiningLikeTermsLesson.scopeId, scope.id);
-  assert.deepEqual(combiningLikeTermsLesson.objectiveIds, scope.lessons[0].objectiveIds);
+  assert.equal(combiningLikeTermsLesson.scopeId, scope?.id);
+  assert.deepEqual(combiningLikeTermsLesson.objectiveIds, scope?.lessons[0].objectiveIds);
   assert.deepEqual(
     combiningLikeTermsLesson.prerequisiteIds,
-    scope.lessons[0].prerequisiteIds
+    scope?.lessons[0].prerequisiteIds
   );
+  assert.deepEqual(
+    sampleLearningContentRecords.map((record) => record.subject),
+    [
+      "Pre-Algebra",
+      "Cybersecurity Certification Preparation",
+      "Spanish",
+    ]
+  );
+  assert.equal(
+    sampleLearningContentRecords.every(
+      (record) =>
+        record.lesson.guidedPractice.length > 0 &&
+        record.lesson.quizQuestions.length > 0 &&
+        record.placementQuestions.length > 0
+    ),
+    true
+  );
+  assert.equal(
+    sampleLearningContentRecords.every(
+      (record) =>
+        buildLessonEngineDefinition({
+          activity_type: "Lesson",
+          title: record.activityTitle,
+          difficulty: "Beginner",
+        }).lesson.id === record.lesson.id
+    ),
+    true
+  );
+  for (const record of sampleLearningContentRecords) {
+    const learner = buildCoreLearnerProfile({
+      preferredName: `Fixture ${record.id}`,
+      age: 16,
+      gradeLevel: "test fixture",
+      subject: record.subject,
+      goals: [record.courseTitle],
+      interests: ["subject independence"],
+      learningPreferences: ["guided examples"],
+    });
+    const placement = scorePlacementAssessment({
+      subject: record.subject,
+      responses: record.placementQuestions.map((question) => ({
+        questionId: question.id,
+        answer: question.acceptedAnswers[0],
+      })),
+    });
+    const path = generateCoreLearningPath({ learner, placement });
+    const session = startCoreLessonSession({ learner, path });
+
+    assert.equal(placement.readinessLevel, "ready-for-lesson");
+    assert.equal(path.subject, record.subject);
+    assert.equal(session.lesson.id, record.lesson.id);
+  }
+  for (const file of genericEngineFiles) {
+    const source = readFileSync(file, "utf8");
+    assert.equal(
+      forbiddenBranching.some((pattern) => pattern.test(source)),
+      false,
+      `${file} must not branch on hardcoded example domains`
+    );
+  }
   assert.equal(
     mathematics?.courses.some((course) => course.id === "algebra-expansion-course"),
     false

@@ -1,5 +1,9 @@
-import { preAlgebraProvingGroundScope } from "./preAlgebraScope";
+import { getSampleCurriculumScope } from "./sampleContentRegistry";
 import type { CurriculumSubject } from "./types";
+
+const preAlgebraProvingGroundScope = getSampleCurriculumScope(
+  "pre-algebra-proving-ground-scope"
+);
 
 export const curriculumSubjects: CurriculumSubject[] = [
   {
@@ -100,8 +104,8 @@ export const curriculumSubjects: CurriculumSubject[] = [
     metadata: "Algebra-to-functions progression.",
     courses: [
       {
-        id: preAlgebraProvingGroundScope.courseId,
-        title: "Pre-Algebra Foundations",
+        id: preAlgebraProvingGroundScope?.courseId || "pre-algebra-foundations-course",
+        title: preAlgebraProvingGroundScope?.courseTitle || "Pre-Algebra Foundations",
         metadata: "Implemented proving-ground scope for prerequisite checks and the first teachable lesson.",
         modules: [
           {
@@ -112,7 +116,9 @@ export const curriculumSubjects: CurriculumSubject[] = [
               {
                 id: "pre-algebra-combining-like-terms",
                 title: "Combining Like Terms",
-                metadata: preAlgebraProvingGroundScope.scopeBoundary,
+                metadata:
+                  preAlgebraProvingGroundScope?.scopeBoundary ||
+                  "Implemented proving-ground lesson and prerequisite checks.",
                 concepts: [
                   {
                     id: "like-terms",

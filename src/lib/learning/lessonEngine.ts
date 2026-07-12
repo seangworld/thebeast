@@ -3,7 +3,11 @@ import {
   type LearningActivityRunnerRow,
   type LearningActivityType,
 } from "./activityRunner";
-import { preAlgebraProvingGroundScope } from "./preAlgebraScope";
+import {
+  getSampleLearningContentRecordForActivityTitle,
+} from "./sampleContentRegistry";
+
+export { combiningLikeTermsLesson } from "./sampleContentRegistry";
 
 export type LessonEnginePhaseKind =
   | "assessment"
@@ -228,139 +232,6 @@ const teachingPhases: LessonEnginePhase[] = [
   },
 ];
 
-export const combiningLikeTermsLesson: AdaptiveLesson = {
-  id: "pre-algebra-combining-like-terms",
-  title: "Combining Like Terms",
-  subject: "Pre-Algebra",
-  scopeId: preAlgebraProvingGroundScope.id,
-  objectiveIds: preAlgebraProvingGroundScope.lessons[0].objectiveIds,
-  prerequisiteIds: preAlgebraProvingGroundScope.lessons[0].prerequisiteIds,
-  learningObjective:
-    "Combine terms that have the same variable part so an expression is easier to read and solve.",
-  prerequisiteConcepts: [
-    "Know that a coefficient is the number in front of a variable.",
-    "Recognize that x, y, and plain numbers are different kinds of terms.",
-    "Add and subtract integers with confidence.",
-  ],
-  explanation:
-    "Like terms have the same variable part. The term 3x can combine with 5x because both are x terms. The term 3x cannot combine with 5 because one has x and one is just a number. When terms are alike, keep the variable part and add or subtract the coefficients.",
-  interactiveVisual: {
-    title: "Sort the terms before combining",
-    prompt:
-      "Tap terms that belong together. Terms can combine only when their variable part matches.",
-    expression: "4x + 7 + 2x + 3",
-    terms: [
-      { id: "term-4x", label: "4x", coefficient: 4, variable: "x", group: "x", color: "blue" },
-      { id: "term-7", label: "7", coefficient: 7, variable: "", group: "constant", color: "green" },
-      { id: "term-2x", label: "2x", coefficient: 2, variable: "x", group: "x", color: "blue" },
-      { id: "term-3", label: "3", coefficient: 3, variable: "", group: "constant", color: "green" },
-    ],
-    targetGroups: [
-      {
-        group: "x",
-        label: "x terms",
-        combinedLabel: "4x + 2x = 6x",
-        explanation: "Both terms have x, so add 4 + 2 and keep x.",
-      },
-      {
-        group: "constant",
-        label: "plain numbers",
-        combinedLabel: "7 + 3 = 10",
-        explanation: "Constants have no variable, so they combine with other constants.",
-      },
-    ],
-  },
-  examples: [
-    {
-      title: "Simple combine",
-      setup: "3x + 5x",
-      steps: [
-        "Both terms are x terms.",
-        "Add the coefficients: 3 + 5 = 8.",
-        "Keep the x because the variable part did not change.",
-      ],
-      takeaway: "3x + 5x = 8x",
-    },
-    {
-      title: "Separate groups",
-      setup: "4x + 7 + 2x + 3",
-      steps: [
-        "Group x terms: 4x + 2x.",
-        "Group number terms: 7 + 3.",
-        "Combine each group separately.",
-      ],
-      takeaway: "4x + 7 + 2x + 3 = 6x + 10",
-    },
-  ],
-  guidedPractice: [
-    {
-      id: "practice-combine-x",
-      prompt: "Combine: 6x + 2x",
-      hint: "Both terms have x, so add the coefficients and keep x.",
-      expectedAnswer: "8x",
-      acceptedAnswers: ["8x"],
-    },
-    {
-      id: "practice-combine-groups",
-      prompt: "Combine: 5x + 4 + x + 6",
-      hint: "Group the x terms together, then group the plain numbers.",
-      expectedAnswer: "6x + 10",
-      acceptedAnswers: ["6x+10", "6x + 10", "10 + 6x"],
-    },
-  ],
-  quizQuestions: [
-    {
-      id: "quiz-like-terms-1",
-      prompt: "Which terms can be combined with 7x?",
-      options: ["3", "2x", "4y"],
-      answer: "2x",
-      explanation: "2x can combine with 7x because both terms have the same variable part: x.",
-    },
-    {
-      id: "quiz-like-terms-2",
-      prompt: "Simplify: 9x + 5 - 4x + 2",
-      options: ["5x + 7", "13x + 7", "5x + 3"],
-      answer: "5x + 7",
-      explanation: "Combine 9x - 4x to get 5x, then combine 5 + 2 to get 7.",
-    },
-  ],
-  aiCoachingPrompts: [
-    {
-      kind: "mistake",
-      title: "Explain a mistake",
-      prompt: "If I combined unlike terms, explain why that does not work and show the correct grouping.",
-    },
-    {
-      kind: "alternate",
-      title: "Try a different explanation",
-      prompt: "Explain combining like terms using colored groups or matching labels.",
-    },
-    {
-      kind: "encouragement",
-      title: "Encourage the next attempt",
-      prompt: "Remind me that mistakes are information and give me one small next step.",
-    },
-    {
-      kind: "review",
-      title: "Recommend review",
-      prompt: "If my mastery is low, recommend the one concept I should review before moving on.",
-    },
-    {
-      kind: "mastery",
-      title: "Celebrate mastery",
-      prompt: "If I mastered this, celebrate clearly and tell me what lesson should come next.",
-    },
-  ],
-  reflectionPrompts: [
-    "What makes two terms like terms?",
-    "Which part felt easiest: grouping terms, adding coefficients, or checking the final expression?",
-    "What should Beast review with you before the next lesson?",
-  ],
-  masteryThreshold: 80,
-  recommendedNextLesson: "Solving one-step equations",
-  reviewRecommendation: "Review coefficients and variable parts before moving on.",
-};
-
 function buildGenericAdaptiveLesson(activity: Pick<LearningActivityRunnerRow, "title" | "difficulty">): AdaptiveLesson {
   return {
     id: `adaptive-${activity.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
@@ -459,10 +330,6 @@ function buildGenericAdaptiveLesson(activity: Pick<LearningActivityRunnerRow, "t
   };
 }
 
-function shouldUseCombiningLikeTermsDemo(activity: Pick<LearningActivityRunnerRow, "title">) {
-  return /pre[- ]?algebra|combining like terms|like terms/i.test(activity.title);
-}
-
 const completionLabels: Record<LearningActivityType, string> = {
   Lesson: "Finish lesson",
   Practice: "Finish guided practice",
@@ -541,9 +408,9 @@ export function buildLessonEngineDefinition(
   activity: Pick<LearningActivityRunnerRow, "activity_type" | "title" | "difficulty">
 ): LessonEngineDefinition {
   const activityType = normalizeLearningActivityType(activity.activity_type);
-  const lesson = shouldUseCombiningLikeTermsDemo(activity)
-    ? combiningLikeTermsLesson
-    : buildGenericAdaptiveLesson(activity);
+  const lesson =
+    getSampleLearningContentRecordForActivityTitle(activity.title)?.lesson ||
+    buildGenericAdaptiveLesson(activity);
 
   return {
     activityType,
@@ -632,7 +499,7 @@ export function getTeachingVisualSelectionFeedback({
     return {
       correct: false,
       title: "Choose a group",
-      message: "Select terms that have the same variable part.",
+      message: "Select matching items from the visual before checking the group.",
     };
   }
 
@@ -641,8 +508,7 @@ export function getTeachingVisualSelectionFeedback({
     return {
       correct: false,
       title: "Not quite",
-      message:
-        "Those terms do not all match. Variables combine with matching variables, and plain numbers combine with plain numbers.",
+      message: "Those items do not all belong to the same target group.",
     };
   }
 
@@ -658,7 +524,7 @@ export function getTeachingVisualSelectionFeedback({
     return {
       correct: false,
       title: "Almost",
-      message: `You found ${target?.label || "a group"}. Look for every matching term before combining.`,
+      message: `You found ${target?.label || "a group"}. Look for every matching item before moving on.`,
     };
   }
 
@@ -683,24 +549,16 @@ export function getLessonTeacherResponse({
   const lowerQuestion = question.toLowerCase();
 
   if (!question.trim()) {
-    return "Ask me about like terms, coefficients, grouping, a mistake, or what to do next.";
-  }
-
-  const inLessonContext =
-    /like|term|coefficient|variable|combine|group|simplify|mistake|confus|next|review|master/i.test(
-      question
-    );
-
-  if (!inLessonContext) {
-    return `I can help inside this lesson: ${lesson.title}. Ask me about like terms, coefficients, grouping, or the next practice step.`;
-  }
-
-  if (/coefficient/.test(lowerQuestion)) {
-    return "A coefficient is the number attached to a variable. In 4x, the coefficient is 4. When you combine 4x and 2x, add 4 + 2 and keep x.";
+    return `Ask me about ${lesson.title}, a mistake, a hint, review, or what to do next.`;
   }
 
   if (/why|mistake|wrong|confus/.test(lowerQuestion)) {
-    return "The most common mistake is combining unlike terms. 4x and 7 cannot become 11x because 7 has no x. First sort by variable part, then add only the matching groups.";
+    return (
+      lesson.aiCoachingPrompts.find((prompt) => prompt.kind === "mistake")
+        ?.prompt ||
+      lesson.quizQuestions[0]?.explanation ||
+      lesson.explanation
+    );
   }
 
   if (/next|master|review/.test(lowerQuestion)) {
@@ -709,7 +567,11 @@ export function getLessonTeacherResponse({
       : `${lesson.reviewRecommendation} Then try one more practice problem and re-check your quiz answers.`;
   }
 
-  return "Like terms have the same variable part. x terms combine with x terms, plain numbers combine with plain numbers, and the variable part stays the same.";
+  if (/hint|help|practice/.test(lowerQuestion)) {
+    return lesson.guidedPractice[0]?.hint || lesson.explanation;
+  }
+
+  return lesson.explanation;
 }
 
 export function buildCoachMessage({
