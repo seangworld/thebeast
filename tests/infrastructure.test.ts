@@ -2035,6 +2035,14 @@ test("learning activities have a dedicated runner and next-activity unlock logic
   assert.match(lessonEngine, /Explain another way/);
   assert.match(lessonEngine, /How I&apos;m adapting/);
   assert.match(lessonEngine, /adaptiveTutorMessage/);
+  assert.match(lessonEngine, /buildPracticeHintLadder/);
+  assert.match(lessonEngine, /I saved our place/);
+  assert.match(lessonEngine, /window\.localStorage\.setItem/);
+  assert.match(lessonEngine, /window\.localStorage\.removeItem/);
+  assert.match(lessonEngine, /Tutor plan:/);
+  assert.match(lessonEngine, /Before we move on:/);
+  assert.match(lessonEngine, /progress\.coachingMessage/);
+  assert.match(lessonEngine, /progress\.continuity\.handoffSummary/);
   assert.match(lessonEngine, /practice, check-in answer, confidence, and reflection/);
   assert.match(lessonEngine, /onPracticeAnswer/);
   assert.match(lessonEngine, /Let's see what you've learned/);

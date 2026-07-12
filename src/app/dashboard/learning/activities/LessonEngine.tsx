@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   DashboardCard,
   MetricTile,
@@ -115,6 +115,26 @@ function adaptiveTutorMessage({
   return "Your answers, practice, confidence, and reflection are all helping me adapt the next step.";
 }
 
+function buildPracticeHintLadder({
+  hint,
+  prompt,
+  level,
+}: {
+  hint: string;
+  prompt: string;
+  level: number;
+}) {
+  const gentleHint =
+    hint || "Start by naming what the question is asking you to find.";
+  const focusedHint =
+    "Now compare the important parts of the question. What belongs together, and what should stay separate?";
+  const coachedHint = `Try saying the first step out loud for: ${prompt}`;
+
+  if (level <= 1) return gentleHint;
+  if (level === 2) return focusedHint;
+  return `${gentleHint} ${focusedHint} ${coachedHint}`;
+}
+
 export function LessonEngine({
   activity,
   courseTitle,
@@ -137,7 +157,10 @@ export function LessonEngine({
   const [learnerWarmup, setLearnerWarmup] = useState("");
   const [supportMode, setSupportMode] = useState<SupportMode>(null);
   const [askedForHelp, setAskedForHelp] = useState(false);
+  const [hintLevel, setHintLevel] = useState(0);
+  const restoredDraft = useRef(false);
   const engine = buildLessonEngineDefinition(activity);
+  const draftKey = `beastlearning:tutor-draft:${activity.id}`;
   const progress = getLessonEngineProgress({
     checkedPhases,
     phaseCount: engine.phases.length,
@@ -223,6 +246,90 @@ export function LessonEngine({
           ].filter(Boolean).length * 16.7
         )
       );
+  const resumeSignals = [
+    Boolean(learnerWarmup.trim()),
+    Object.keys(practiceAnswers).length > 0,
+    Object.keys(quizAnswers).length > 0,
+    Boolean(reflection.trim()),
+  ].filter(Boolean).length;
+
+  useEffect(() => {
+    if (completed || restoredDraft.current || typeof window === "undefined") return;
+
+    try {
+      const storedDraft = window.localStorage.getItem(draftKey);
+      if (!storedDraft) {
+        restoredDraft.current = true;
+        return;
+      }
+
+      const parsedDraft = JSON.parse(storedDraft) as {
+        step?: TutorStep;
+        learnerWarmup?: string;
+        selectedTermIds?: string[];
+        practiceAnswers?: Record<string, string>;
+        quizAnswers?: Record<string, string>;
+        reflection?: string;
+        confidence?: string;
+      };
+
+      if (parsedDraft.step) setStep(parsedDraft.step);
+      if (parsedDraft.learnerWarmup) setLearnerWarmup(parsedDraft.learnerWarmup);
+      if (Array.isArray(parsedDraft.selectedTermIds)) {
+        setSelectedTermIds(parsedDraft.selectedTermIds);
+      }
+      Object.entries(parsedDraft.practiceAnswers || {}).forEach(([practiceId, answer]) =>
+        onPracticeAnswer(practiceId, answer)
+      );
+      Object.entries(parsedDraft.quizAnswers || {}).forEach(([questionId, answer]) =>
+        onQuizAnswer(questionId, answer)
+      );
+      if (typeof parsedDraft.reflection === "string") {
+        onReflectionChange(parsedDraft.reflection);
+      }
+      if (typeof parsedDraft.confidence === "string") {
+        onConfidenceChange(parsedDraft.confidence);
+      }
+      restoredDraft.current = true;
+    } catch {
+      window.localStorage.removeItem(draftKey);
+      restoredDraft.current = true;
+    }
+  }, [
+    completed,
+    draftKey,
+    onConfidenceChange,
+    onPracticeAnswer,
+    onQuizAnswer,
+    onReflectionChange,
+  ]);
+
+  useEffect(() => {
+    if (completed || typeof window === "undefined") return;
+
+    window.localStorage.setItem(
+      draftKey,
+      JSON.stringify({
+        step,
+        learnerWarmup,
+        selectedTermIds,
+        practiceAnswers,
+        quizAnswers,
+        reflection,
+        confidence,
+      })
+    );
+  }, [
+    completed,
+    confidence,
+    draftKey,
+    learnerWarmup,
+    practiceAnswers,
+    quizAnswers,
+    reflection,
+    selectedTermIds,
+    step,
+  ]);
 
   function markPhase(phaseId: string) {
     if (!checkedPhases[phaseId]) onPhaseChange(phaseId, true);
@@ -240,12 +347,16 @@ export function LessonEngine({
       markPhase("recommendation");
     }
     setSupportMode(null);
+    setHintLevel(0);
     setStep(nextStep);
   }
 
   function requestSupport(mode: Exclude<SupportMode, null>) {
     setAskedForHelp(true);
     markPhase("coach");
+    if (mode === "hint") {
+      setHintLevel((current) => Math.min(3, current + 1));
+    }
     setSupportMode(mode);
   }
 
@@ -260,6 +371,7 @@ export function LessonEngine({
       "mastery",
       "recommendation",
     ].forEach(markPhase);
+    if (typeof window !== "undefined") window.localStorage.removeItem(draftKey);
     onComplete();
   }
 
@@ -347,6 +459,17 @@ export function LessonEngine({
                 {adaptiveMessage}
               </p>
             </div>
+            {!completed && resumeSignals > 0 ? (
+              <div className="mt-4 rounded-xl border border-green-400/30 bg-green-400/10 p-4">
+                <div className="text-xs font-bold uppercase text-green-100">
+                  I saved our place
+                </div>
+                <p className="mt-2 text-sm leading-6 text-green-50">
+                  If you leave and come back on this device, I will bring you
+                  back to this part of the lesson instead of making you restart.
+                </p>
+              </div>
+            ) : null}
             <div className="mt-5 flex flex-wrap gap-2">
               <button
                 type="button"
@@ -514,7 +637,11 @@ export function LessonEngine({
                 </h3>
                 {supportMode === "hint" ? (
                   <p className="rounded-xl border border-yellow-400/35 bg-yellow-400/10 p-4 text-sm font-semibold leading-6 text-yellow-100">
-                    {activePractice.hint}
+                    {buildPracticeHintLadder({
+                      hint: activePractice.hint,
+                      prompt: activePractice.prompt,
+                      level: hintLevel,
+                    })}
                   </p>
                 ) : null}
                 <label className="block">
@@ -542,6 +669,14 @@ export function LessonEngine({
                     {activePracticeCorrect
                       ? "Yes. That answer works. You saw the structure and applied it."
                       : "Good attempt. Let's work through the relationship in the expression together, then try again."}
+                  </div>
+                ) : null}
+                {activePracticeAnswered && !activePracticeCorrect ? (
+                  <div className="rounded-xl border border-blue-300/35 bg-blue-300/10 p-4 text-sm leading-6 text-blue-100">
+                    <strong className="text-white">Tutor plan:</strong> I am
+                    slowing down here because this is the skill your Guide sent
+                    us to strengthen. Ask for another hint, then try the same
+                    idea again before we move to the check-in.
                   </div>
                 ) : null}
                 <button
@@ -589,6 +724,13 @@ export function LessonEngine({
                   >
                     {activeQuizCorrect ? "Yes. That makes sense. " : "Good try. Let's repair this together. "}
                     {activeQuestion.explanation}
+                  </div>
+                ) : null}
+                {activeQuizAnswered && !activeQuizCorrect ? (
+                  <div className="rounded-xl border border-yellow-400/35 bg-yellow-400/10 p-4 text-sm leading-6 text-yellow-100">
+                    <strong className="text-white">Before we move on:</strong>{" "}
+                    {engine.lesson.reviewRecommendation} I will keep this as
+                    review until the answer and your confidence line up.
                   </div>
                 ) : null}
                 <button
@@ -654,11 +796,14 @@ export function LessonEngine({
                   <p className="mt-2 text-sm font-semibold leading-6 text-[#c7cfdb]">
                     {completed
                       ? `Nice work. You are ready for: ${engine.lesson.recommendedNextLesson}.`
-                      : progress.nextRecommendation}
+                      : progress.coachingMessage}
                   </p>
                   <p className="mt-3 text-sm leading-6 text-[#9aa7b8]">
                     I used your practice, check-in answer, confidence, and reflection
                     to decide whether this should become new learning or review.
+                  </p>
+                  <p className="mt-3 rounded-lg border border-indigo-300/30 bg-indigo-300/10 p-3 text-sm font-semibold leading-6 text-indigo-100">
+                    {progress.continuity.handoffSummary}
                   </p>
                 </div>
                 <div className="grid gap-3 sm:grid-cols-3">
