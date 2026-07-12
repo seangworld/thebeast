@@ -1428,7 +1428,8 @@ test("today and learning avoid fallback-name flash while profile resolves", () =
   const learningSource = readFileSync("src/app/dashboard/learning/page.tsx", "utf8");
 
   assert.match(todaySource, /name: ""/);
-  assert.match(todaySource, /Loading Today/);
+  assert.match(todaySource, /state\.name \? `\$\{getBeastGreeting\(now\)\}, \$\{state\.name\}` : "Today"/);
+  assert.doesNotMatch(todaySource, /Loading Today/);
   assert.doesNotMatch(todaySource, /name: "Learner"/);
   assert.match(
     learningSource,
@@ -1444,13 +1445,30 @@ test("home avoids fallback-name flash while profile resolves", () => {
   const homeSource = readFileSync("src/app/dashboard/page.tsx", "utf8");
 
   assert.match(homeSource, /name: ""/);
-  assert.match(homeSource, /Loading Home/);
-  assert.match(homeSource, /Getting your Beast-wide plan ready\./);
+  assert.match(homeSource, /user\.name \? `\$\{getBeastGreeting\(now\)\}, \$\{user\.name\}` : "BeastOS Home"/);
+  assert.doesNotMatch(homeSource, /Loading Home/);
+  assert.doesNotMatch(homeSource, /Getting your Beast-wide plan ready\./);
   assert.doesNotMatch(homeSource, /name: "Commander"/);
   assert.doesNotMatch(
     homeSource,
     /setUser\(\{ name: getProfileDisplayName\(null, authUser \|\| null\) \}\)/
   );
+});
+
+test("home and today navigation render stable route shells during data loading", () => {
+  const homeSource = readFileSync("src/app/dashboard/page.tsx", "utf8");
+  const todaySource = readFileSync("src/app/dashboard/today/page.tsx", "utf8");
+  const calendarSource = readFileSync("src/app/dashboard/calendar/page.tsx", "utf8");
+
+  assert.match(homeSource, /const \[loading, setLoading\] = useState\(true\)/);
+  assert.match(todaySource, /const \[loading, setLoading\] = useState\(true\)/);
+  assert.match(homeSource, /\{loading \? \(/);
+  assert.match(todaySource, /\{loading \? \(/);
+  assert.doesNotMatch(homeSource, /\{loading \|\| !user\.name\s+\?/);
+  assert.doesNotMatch(todaySource, /\{loading \|\| !state\.name\s+\?/);
+  assert.doesNotMatch(homeSource, /Opening your dashboard/);
+  assert.doesNotMatch(todaySource, /Opening your dashboard/);
+  assert.doesNotMatch(calendarSource, /const \[loading, setLoading\]/);
 });
 
 test("learning onboarding validation names the exact missing required field", () => {

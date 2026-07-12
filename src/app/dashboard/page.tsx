@@ -586,18 +586,15 @@ export default function TodayPage() {
               <ModuleBadge module="beastos" label={`BeastOS ${APP_VERSION}`} />
               <div>
                 <h1 className="beast-title">
-                  {loading || !user.name
-                    ? "Loading Home"
-                    : `${getBeastGreeting(now)}, ${user.name}`}
+                  {user.name ? `${getBeastGreeting(now)}, ${user.name}` : "BeastOS Home"}
                 </h1>
                 <p className="mt-3 text-lg font-semibold text-[#dbe3ef]">
                   {formatBeastFullDate(now)}
                 </p>
               </div>
               <p className="beast-subtitle">
-                {loading || !user.name
-                  ? "Getting your Beast-wide plan ready."
-                  : "Today's Focus brings your learning, money, calendar, health, home, and project signals into one daily plan."}
+                {"Today's Focus"} brings your learning, money, calendar, health,
+                home, and project signals into one daily plan.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">

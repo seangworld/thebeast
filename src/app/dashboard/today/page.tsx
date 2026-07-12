@@ -474,14 +474,10 @@ export default function TodayPage() {
             <div className="space-y-4">
               <ModuleBadge module="learning" label="Student Today" />
               <h1 className="beast-title">
-                {loading || !state.name
-                  ? "Loading Today"
-                  : `${getBeastGreeting(now)}, ${state.name}`}
+                {state.name ? `${getBeastGreeting(now)}, ${state.name}` : "Today"}
               </h1>
               <p className="beast-subtitle">
-                {loading || !state.name
-                  ? "Getting your personalized plan ready."
-                  : "Your next learning step is ready. Start with the mission below."}
+                Your next learning step is ready. Start with the mission below.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
