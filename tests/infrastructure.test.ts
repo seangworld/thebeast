@@ -303,6 +303,7 @@ import {
   generatedContentCanBecomeProductionCurriculum,
   getCourseAuthorityGaps,
   getCourseAuthorityMapping,
+  getAuthorityTypesForCourse,
   resolveTutorCurriculumAccess,
   tutorCanTeachCourseByDefault,
   getLessonObjectiveAlignment,
@@ -3349,8 +3350,20 @@ test("curriculum authority separates teachable objectives from AI teaching behav
     reviewStatus: generatedBiology.lesson.contentMetadata.reviewStatus,
   });
 
-  assert.equal(curriculumAuthoritySources.length >= 6, true);
-  assert.equal(curriculumAuthorityObjectives.length >= 10, true);
+  assert.equal(curriculumAuthoritySources.length >= 11, true);
+  assert.equal(curriculumAuthorityObjectives.length >= 16, true);
+  assert.deepEqual(
+    [
+      "state_standard",
+      "common_core",
+      "college_curriculum",
+      "open_educational_resource",
+      "internal_proving_ground",
+    ].every((authorityType) =>
+      curriculumAuthoritySources.some((source) => source.authorityType === authorityType)
+    ),
+    true
+  );
   assert.deepEqual(
     curriculumAuthorityDomains
       .filter((domain) => domain.authoritySourceId === "comptia-security-plus-sy0-701")
@@ -3417,6 +3430,10 @@ test("curriculum authority separates teachable objectives from AI teaching behav
       lessonId: "identity-verification-lesson",
       courseId: "security-plus-foundations-course",
       objectiveIds: ["security-plus-4-6-iam"],
+      whyItExists:
+        "Learners need identity and access vocabulary before the Tutor asks them to reason about permissions, roles, or access evidence.",
+      prerequisiteObjectiveIds: [],
+      prerequisiteSummary: "No prior Security+ objective is required.",
       knowledgeCheckIds: ["objective-identity-proofing", "objective-auth-factors"],
       progressWeightPercent: 35,
       coveragePercent: 25,
@@ -3474,7 +3491,41 @@ test("curriculum authority separates teachable objectives from AI teaching behav
   );
   assert.deepEqual(
     getLessonObjectiveAlignment("pre-algebra-combining-like-terms")?.objectiveIds,
-    ["objective-identify-like-terms", "objective-combine-like-terms"]
+    [
+      "state-math-expression-equivalence",
+      "common-core-6-ee-a-3",
+      "common-core-6-ee-a-4",
+      "openstax-prealgebra-expressions",
+      "objective-identify-like-terms",
+      "objective-combine-like-terms",
+    ]
+  );
+  assert.deepEqual(
+    getAuthorityTypesForCourse("pre-algebra-foundations-course"),
+    [
+      "state_standard",
+      "common_core",
+      "open_educational_resource",
+      "fixture",
+    ]
+  );
+  assert.deepEqual(
+    getAuthorityTypesForCourse("algebra-expansion-course"),
+    ["college_curriculum", "fixture"]
+  );
+  assert.deepEqual(
+    getAuthorityTypesForCourse("spanish-greeting-course"),
+    ["internal_proving_ground", "fixture"]
+  );
+  assert.equal(
+    lessonObjectiveAlignments.every(
+      (alignment) =>
+        alignment.objectiveIds.length > 0 &&
+        alignment.whyItExists.length > 20 &&
+        Array.isArray(alignment.prerequisiteObjectiveIds) &&
+        alignment.prerequisiteSummary.length > 10
+    ),
+    true
   );
   assert.equal(
     lessonObjectiveAlignments

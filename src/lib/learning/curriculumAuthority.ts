@@ -3,9 +3,11 @@ import type { LearningContentMetadata } from "./contentVersioning";
 export type CurriculumAuthorityType =
   | "certification_objectives"
   | "state_standard"
+  | "common_core"
   | "college_curriculum"
   | "khan_academy_mapping"
   | "open_educational_resource"
+  | "internal_proving_ground"
   | "fixture"
   | "generated_provisional";
 
@@ -72,6 +74,9 @@ export type LessonObjectiveAlignment = {
   lessonId: string;
   courseId: string;
   objectiveIds: string[];
+  whyItExists: string;
+  prerequisiteObjectiveIds: string[];
+  prerequisiteSummary: string;
   knowledgeCheckIds: string[];
   progressWeightPercent: number;
   coveragePercent: number;
@@ -129,6 +134,66 @@ export const curriculumAuthoritySources: CurriculumAuthoritySource[] = [
     approvalStatus: "approved_for_production",
     notes:
       "Official CompTIA Security+ objective authority. BeastLearning stores objective IDs and short paraphrased labels only; it must not copy CompTIA objective text.",
+  },
+  {
+    id: "state-math-readiness-standard",
+    authorityType: "state_standard",
+    publisher: "State education authority",
+    title: "State Math Readiness Standard",
+    version: "state-selected",
+    effectiveDate: "state-selected",
+    canonicalSource: "state-standard://selected-state/math-readiness",
+    approvalStatus: "candidate",
+    notes:
+      "Template authority for state-specific standards. A selected state's official standards, version, and source URL must replace this before production use.",
+  },
+  {
+    id: "common-core-math-expressions",
+    authorityType: "common_core",
+    publisher: "Common Core State Standards Initiative",
+    title: "Common Core Math Expressions Alignment",
+    version: "CCSS.Math.Content.6.EE",
+    effectiveDate: "2010-06-02",
+    canonicalSource: "https://www.thecorestandards.org/Math/",
+    approvalStatus: "candidate",
+    notes:
+      "Common Core alignment stores standard identifiers and paraphrased labels only. Production use requires approved source review.",
+  },
+  {
+    id: "openstax-prealgebra-oer",
+    authorityType: "open_educational_resource",
+    publisher: "OpenStax",
+    title: "Prealgebra 2e",
+    version: "2e",
+    effectiveDate: "2020-03-25",
+    canonicalSource: "https://openstax.org/details/books/prealgebra-2e",
+    approvalStatus: "candidate",
+    notes:
+      "Open educational resource alignment for pre-algebra examples. Lesson text remains generated or curated separately from the source.",
+  },
+  {
+    id: "college-algebra-curriculum-reference",
+    authorityType: "college_curriculum",
+    publisher: "BeastLearning",
+    title: "College Algebra Curriculum Reference",
+    version: "2026.07.12-reference",
+    effectiveDate: "2026-07-12",
+    canonicalSource: "college-curriculum://approved-syllabus/college-algebra",
+    approvalStatus: "candidate",
+    notes:
+      "Reference slot for an approved institutional syllabus or department curriculum map. It is not production authority until a real source is attached.",
+  },
+  {
+    id: "beastlearning-internal-proving-ground",
+    authorityType: "internal_proving_ground",
+    publisher: "BeastLearning",
+    title: "Internal Proving-Ground Curriculum",
+    version: "2026.07.12",
+    effectiveDate: "2026-07-12",
+    canonicalSource: "internal://beastlearning/proving-ground",
+    approvalStatus: "approved_for_testing",
+    notes:
+      "Internal proving-ground records validate generic curriculum behavior without becoming production authority.",
   },
   {
     id: "beastlearning-certification-prep-fixture",
@@ -241,6 +306,54 @@ export const curriculumAuthorityDomains: CurriculumAuthorityDomain[] = [
 
 export const curriculumAuthorityObjectives: CurriculumObjective[] = [
   {
+    id: "state-math-expression-equivalence",
+    authoritySourceId: "state-math-readiness-standard",
+    authorityObjectiveId: "state.math.expression-equivalence",
+    title: "Use properties to recognize and create equivalent expressions.",
+    description:
+      "State-standard placeholder for expression-equivalence readiness. A selected state's exact standard code must replace this before production use.",
+  },
+  {
+    id: "common-core-6-ee-a-3",
+    authoritySourceId: "common-core-math-expressions",
+    authorityObjectiveId: "CCSS.Math.Content.6.EE.A.3",
+    title: "Use properties to generate equivalent expressions.",
+    description:
+      "Paraphrased Common Core alignment for building equivalent expressions with properties.",
+  },
+  {
+    id: "common-core-6-ee-a-4",
+    authoritySourceId: "common-core-math-expressions",
+    authorityObjectiveId: "CCSS.Math.Content.6.EE.A.4",
+    title: "Identify when expressions are equivalent.",
+    description:
+      "Paraphrased Common Core alignment for testing whether expressions stay equal for the same values.",
+  },
+  {
+    id: "openstax-prealgebra-expressions",
+    authoritySourceId: "openstax-prealgebra-oer",
+    authorityObjectiveId: "openstax.prealgebra.expressions",
+    title: "Simplify expressions by combining matching terms.",
+    description:
+      "OER alignment for simplifying expressions while keeping lesson content separately generated or curated.",
+  },
+  {
+    id: "college-algebra-linear-equations",
+    authoritySourceId: "college-algebra-curriculum-reference",
+    authorityObjectiveId: "college-algebra.linear-equations",
+    title: "Solve and justify one-variable linear equations.",
+    description:
+      "College-curriculum reference for linear-equation solving and explanation.",
+  },
+  {
+    id: "internal-proving-ground-learning-transfer",
+    authoritySourceId: "beastlearning-internal-proving-ground",
+    authorityObjectiveId: "internal.transfer.generic-lesson-engine",
+    title: "Validate that the lesson engine transfers across unrelated subjects.",
+    description:
+      "Internal proving-ground objective for subject-independent lesson, practice, and mastery behavior.",
+  },
+  {
     id: "security-plus-3-2-secure-infrastructure",
     authoritySourceId: "comptia-security-plus-sy0-701",
     domainId: "security-plus-domain-3",
@@ -351,6 +464,10 @@ export const courseAuthorityMappings: CourseAuthorityMapping[] = [
     courseId: "pre-algebra-foundations-course",
     authoritySourceId: "beastlearning-pre-algebra-fixture",
     objectiveIds: [
+      "state-math-expression-equivalence",
+      "common-core-6-ee-a-3",
+      "common-core-6-ee-a-4",
+      "openstax-prealgebra-expressions",
       "objective-identify-like-terms",
       "objective-combine-like-terms",
     ],
@@ -360,6 +477,7 @@ export const courseAuthorityMappings: CourseAuthorityMapping[] = [
     courseId: "algebra-expansion-course",
     authoritySourceId: "beastlearning-algebra-fixture",
     objectiveIds: [
+      "college-algebra-linear-equations",
       "objective-isolate-variable",
       "objective-check-equation-solution",
     ],
@@ -368,13 +486,19 @@ export const courseAuthorityMappings: CourseAuthorityMapping[] = [
     id: "authority-spanish-greeting",
     courseId: "spanish-greeting-course",
     authoritySourceId: "beastlearning-spanish-fixture",
-    objectiveIds: ["objective-spanish-greeting"],
+    objectiveIds: [
+      "internal-proving-ground-learning-transfer",
+      "objective-spanish-greeting",
+    ],
   }),
   buildCourseAuthorityMapping({
     id: "authority-college-algebra",
     courseId: "college-algebra-course",
     authoritySourceId: "beastlearning-college-algebra-fixture",
-    objectiveIds: ["objective-linear-equations"],
+    objectiveIds: [
+      "college-algebra-linear-equations",
+      "objective-linear-equations",
+    ],
   }),
 ];
 
@@ -384,6 +508,10 @@ export const lessonObjectiveAlignments: LessonObjectiveAlignment[] = [
     lessonId: "identity-verification-lesson",
     courseId: "security-plus-foundations-course",
     objectiveIds: ["security-plus-4-6-iam"],
+    whyItExists:
+      "Learners need identity and access vocabulary before the Tutor asks them to reason about permissions, roles, or access evidence.",
+    prerequisiteObjectiveIds: [],
+    prerequisiteSummary: "No prior Security+ objective is required.",
     knowledgeCheckIds: ["objective-identity-proofing", "objective-auth-factors"],
     progressWeightPercent: 35,
     coveragePercent: 25,
@@ -399,6 +527,11 @@ export const lessonObjectiveAlignments: LessonObjectiveAlignment[] = [
       "security-plus-4-8-incident-response",
       "security-plus-4-9-investigation-data",
     ],
+    whyItExists:
+      "Role-based access control connects identity management to secure operations, response, and investigation decisions.",
+    prerequisiteObjectiveIds: ["security-plus-4-6-iam"],
+    prerequisiteSummary:
+      "The learner should first understand identity, authentication, and authorization basics.",
     knowledgeCheckIds: ["objective-rbac"],
     progressWeightPercent: 65,
     coveragePercent: 100,
@@ -409,6 +542,10 @@ export const lessonObjectiveAlignments: LessonObjectiveAlignment[] = [
     lessonId: "sample-certification-foundation",
     courseId: "cybersecurity-certification-prep-course",
     objectiveIds: ["objective-certification-baseline"],
+    whyItExists:
+      "The Mentor needs a baseline before recommending a certification plan or first lesson.",
+    prerequisiteObjectiveIds: [],
+    prerequisiteSummary: "No prerequisite objective is required.",
     knowledgeCheckIds: ["quiz-cert-plan-1"],
     progressWeightPercent: 100,
     coveragePercent: 100,
@@ -419,9 +556,18 @@ export const lessonObjectiveAlignments: LessonObjectiveAlignment[] = [
     lessonId: "pre-algebra-combining-like-terms",
     courseId: "pre-algebra-foundations-course",
     objectiveIds: [
+      "state-math-expression-equivalence",
+      "common-core-6-ee-a-3",
+      "common-core-6-ee-a-4",
+      "openstax-prealgebra-expressions",
       "objective-identify-like-terms",
       "objective-combine-like-terms",
     ],
+    whyItExists:
+      "Combining like terms prepares learners to simplify expressions before solving equations.",
+    prerequisiteObjectiveIds: ["objective-identify-like-terms"],
+    prerequisiteSummary:
+      "The learner should recognize matching variable parts before combining coefficients.",
     knowledgeCheckIds: ["quiz-like-terms-1", "quiz-like-terms-2"],
     progressWeightPercent: 100,
     coveragePercent: 100,
@@ -432,9 +578,15 @@ export const lessonObjectiveAlignments: LessonObjectiveAlignment[] = [
     lessonId: "algebra-linear-equations",
     courseId: "algebra-expansion-course",
     objectiveIds: [
+      "college-algebra-linear-equations",
       "objective-isolate-variable",
       "objective-check-equation-solution",
     ],
+    whyItExists:
+      "Linear equations are a bridge from expression work into algebraic reasoning and verification.",
+    prerequisiteObjectiveIds: ["objective-combine-like-terms"],
+    prerequisiteSummary:
+      "The learner should simplify expressions and understand equality before solving equations.",
     knowledgeCheckIds: ["quiz-linear-equations-1", "quiz-linear-equations-2"],
     progressWeightPercent: 100,
     coveragePercent: 100,
@@ -444,7 +596,14 @@ export const lessonObjectiveAlignments: LessonObjectiveAlignment[] = [
     id: "alignment-spanish-greetings",
     lessonId: "sample-spanish-greetings",
     courseId: "spanish-greeting-course",
-    objectiveIds: ["objective-spanish-greeting"],
+    objectiveIds: [
+      "internal-proving-ground-learning-transfer",
+      "objective-spanish-greeting",
+    ],
+    whyItExists:
+      "The language fixture proves the same lesson engine can teach conversational practice outside math and certification prep.",
+    prerequisiteObjectiveIds: [],
+    prerequisiteSummary: "No prerequisite objective is required.",
     knowledgeCheckIds: ["quiz-spanish-1"],
     progressWeightPercent: 100,
     coveragePercent: 100,
@@ -454,7 +613,15 @@ export const lessonObjectiveAlignments: LessonObjectiveAlignment[] = [
     id: "alignment-college-algebra-linear-equations",
     lessonId: "linear-equations-lesson",
     courseId: "college-algebra-course",
-    objectiveIds: ["objective-linear-equations"],
+    objectiveIds: [
+      "college-algebra-linear-equations",
+      "objective-linear-equations",
+    ],
+    whyItExists:
+      "The college-algebra lesson gives the Tutor a standards-aware target for solving and explaining linear equations.",
+    prerequisiteObjectiveIds: ["objective-combine-like-terms"],
+    prerequisiteSummary:
+      "The learner should be comfortable simplifying expressions before solving college-algebra equations.",
     knowledgeCheckIds: ["linear-practice"],
     progressWeightPercent: 100,
     coveragePercent: 100,
@@ -604,6 +771,20 @@ export function getObjectivesForCourse(courseId: string) {
 
   return curriculumAuthorityObjectives.filter((objective) =>
     mapping.objectiveIds.includes(objective.id)
+  );
+}
+
+export function getAuthorityTypesForCourse(courseId: string) {
+  const objectiveSourceIds = new Set(
+    getObjectivesForCourse(courseId).map((objective) => objective.authoritySourceId)
+  );
+
+  return Array.from(
+    new Set(
+      curriculumAuthoritySources
+        .filter((source) => objectiveSourceIds.has(source.id))
+        .map((source) => source.authorityType)
+    )
   );
 }
 
