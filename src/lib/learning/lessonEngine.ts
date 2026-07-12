@@ -6,6 +6,7 @@ import {
 import {
   resolveLearningContentRecordForActivityTitle,
 } from "./sampleContentRegistry";
+import { validateAnswer, type AnswerValidationRule } from "./answerValidation";
 
 export { combiningLikeTermsLesson } from "./sampleContentRegistry";
 
@@ -43,6 +44,7 @@ export type AdaptivePracticeStep = {
   hint: string;
   expectedAnswer: string;
   acceptedAnswers?: string[];
+  validationRules?: AnswerValidationRule[];
 };
 
 export type AdaptiveQuizQuestion = {
@@ -51,6 +53,8 @@ export type AdaptiveQuizQuestion = {
   prompt: string;
   options: string[];
   answer: string;
+  acceptedAnswers?: string[];
+  validationRules?: AnswerValidationRule[];
   explanation: string;
 };
 
@@ -299,6 +303,7 @@ function buildGenericAdaptiveLesson(activity: Pick<LearningActivityRunnerRow, "t
         prompt: "What should you do first when a lesson feels unclear?",
         options: ["Guess quickly", "Name what is confusing", "Skip the lesson"],
         answer: "Name what is confusing",
+        acceptedAnswers: ["Name what is confusing"],
         explanation: "Naming the confusion gives Beast a better signal for coaching and review.",
       },
     ],
@@ -443,7 +448,13 @@ export function getQuizScore({
   quizAnswers: Record<string, string>;
 }) {
   const correct = questions.filter(
-    (question) => quizAnswers[question.id] === question.answer
+    (question) =>
+      validateAnswer({
+        learnerAnswer: quizAnswers[question.id] || "",
+        expectedAnswer: question.answer,
+        acceptedAnswers: question.acceptedAnswers,
+        rules: question.validationRules,
+      }).correct
   ).length;
   const total = questions.length;
 
@@ -454,20 +465,16 @@ export function getQuizScore({
   };
 }
 
-function normalizeAnswer(value: string) {
-  return value.toLowerCase().replace(/\s+/g, "").replace(/\*/g, "");
-}
-
 export function isPracticeAnswerCorrect(
   practice: AdaptivePracticeStep,
   answer: string
 ) {
-  const normalized = normalizeAnswer(answer);
-  const accepted = practice.acceptedAnswers?.length
-    ? practice.acceptedAnswers
-    : [practice.expectedAnswer];
-
-  return accepted.map(normalizeAnswer).includes(normalized);
+  return validateAnswer({
+    learnerAnswer: answer,
+    expectedAnswer: practice.expectedAnswer,
+    acceptedAnswers: practice.acceptedAnswers,
+    rules: practice.validationRules,
+  }).correct;
 }
 
 export function getGuidedPracticeScore({

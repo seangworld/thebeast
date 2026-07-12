@@ -251,6 +251,10 @@ import {
   getAssessmentQuestionTypeForQuestion,
   questionSatisfiesAssessmentType,
 } from "../src/lib/learning/assessmentQuestionTypes";
+import {
+  normalizeAnswerForValidation,
+  validateAnswer,
+} from "../src/lib/learning/answerValidation";
 import { learningStandards } from "../src/lib/learning/standards";
 import { generateCurriculumLearningPath } from "../src/lib/learning/learningPaths";
 import { learningPathTemplates } from "../src/lib/learning/templates";
@@ -2603,6 +2607,47 @@ test("assessment question type registry models multiple choice numeric written a
     true
   );
   assert.equal(/Pre-Algebra|Algebra|CompTIA|Security\+|A\+|Spanish|Biology/i.test(source), false);
+});
+
+test("answer validation rules handle equivalent answers where appropriate", () => {
+  const numeric = validateAnswer({
+    learnerAnswer: "1,000",
+    expectedAnswer: "1000",
+    rules: ["numeric-equivalence", "ignore-spacing"],
+  });
+  const spacing = validateAnswer({
+    learnerAnswer: "6 x",
+    expectedAnswer: "6x",
+  });
+  const accepted = validateAnswer({
+    learnerAnswer: "Topic and Gap",
+    expectedAnswer: "Known topic and review topic",
+    acceptedAnswers: ["known topic and review topic", "topic and gap", "baseline"],
+  });
+  const quizScore = getQuizScore({
+    questions: [
+      {
+        id: "equivalent-quiz",
+        questionTypeId: "numeric-response",
+        prompt: "Enter the equivalent value.",
+        options: [],
+        answer: "1000",
+        validationRules: ["numeric-equivalence", "ignore-spacing"],
+        explanation: "Numeric equivalence accepts formatting differences.",
+      },
+    ],
+    quizAnswers: {
+      "equivalent-quiz": "1,000",
+    },
+  });
+
+  assert.equal(numeric.correct, true);
+  assert.equal(numeric.matchedRule, "numeric-equivalence");
+  assert.equal(spacing.correct, true);
+  assert.equal(accepted.correct, true);
+  assert.equal(normalizeAnswerForValidation(" 6 X ", ["case-insensitive", "ignore-spacing"]), "6x");
+  assert.equal(isPracticeAnswerCorrect(combiningLikeTermsLesson.guidedPractice[1], "6x+10"), true);
+  assert.equal(quizScore.percent, 100);
 });
 
 test("learning concept library models prerequisites and dependents", () => {

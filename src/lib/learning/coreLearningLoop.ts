@@ -10,6 +10,7 @@ import {
 import {
   resolveLearningContentRecordForSubject,
 } from "./sampleContentRegistry";
+import { validateAnswer } from "./answerValidation";
 
 export type CoreLearnerProfileInput = {
   preferredName: string;
@@ -112,10 +113,6 @@ function slugify(value: string) {
   return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
-function normalizeAnswer(value: string) {
-  return value.trim().toLowerCase().replace(/\s+/g, "");
-}
-
 function checkedPhases(phases: LessonEnginePhaseKind[]) {
   return Object.fromEntries(phases.map((phase) => [phase, true]));
 }
@@ -151,11 +148,15 @@ export function scorePlacementAssessment({
 }): PlacementResult {
   const questions = getCorePlacementQuestions(subject);
   const responseByQuestion = new Map(
-    responses.map((response) => [response.questionId, normalizeAnswer(response.answer)])
+    responses.map((response) => [response.questionId, response.answer])
   );
   const correctConceptIds = questions
     .filter((question) =>
-      question.acceptedAnswers.map(normalizeAnswer).includes(responseByQuestion.get(question.id) || "")
+      validateAnswer({
+        learnerAnswer: responseByQuestion.get(question.id) || "",
+        expectedAnswer: question.expectedAnswer,
+        acceptedAnswers: question.acceptedAnswers,
+      }).correct
     )
     .map((question) => question.conceptId);
   const gapConceptIds = questions
