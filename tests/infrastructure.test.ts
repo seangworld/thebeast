@@ -1783,6 +1783,8 @@ test("today and learning avoid fallback-name flash while profile resolves", () =
     learningSource,
     /name: String\(primaryLearnerRow\.display_name \|\| fallbackName\)/
   );
+  assert.match(learningSource, /href="\/dashboard\/today"[\s\S]*Back to Today/);
+  assert.doesNotMatch(learningSource, /href="\/dashboard"[\s\S]*Back to Today/);
 });
 
 test("home avoids fallback-name flash while profile resolves", () => {
@@ -2020,12 +2022,18 @@ test("learning activities have a dedicated runner and next-activity unlock logic
   assert.match(activityRunner, /Return to Today/);
   assert.match(activityRunner, /View Activities/);
   assert.match(activityRunner, /<LessonEngine/);
-  assert.match(lessonEngine, /Adaptive Lesson/);
-  assert.match(lessonEngine, /Interactive Teaching Area/);
-  assert.match(lessonEngine, /AI Teacher/);
-  assert.match(lessonEngine, /Ask without leaving the lesson/);
+  assert.match(lessonEngine, /Tutor Session/);
+  assert.match(lessonEngine, /One active interaction/);
+  assert.match(lessonEngine, /What do you already know\?/);
+  assert.match(lessonEngine, /Hint/);
+  assert.match(lessonEngine, /Another explanation/);
   assert.match(lessonEngine, /onPracticeAnswer/);
-  assert.match(lessonEngine, /Mastery and Recommendation/);
+  assert.match(lessonEngine, /Complete lesson/);
+  assert.doesNotMatch(lessonEngine, /type="checkbox"/);
+  assert.doesNotMatch(lessonEngine, /Adaptive Lesson/);
+  assert.doesNotMatch(lessonEngine, /Guided Practice/);
+  assert.doesNotMatch(lessonEngine, /AI Coach/);
+  assert.doesNotMatch(lessonEngine, /Check understanding/);
   assert.match(activityRunner, /quizAnswers/);
   assert.match(activityRunner, /practiceAnswers/);
 });

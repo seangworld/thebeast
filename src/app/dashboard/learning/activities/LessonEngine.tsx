@@ -16,6 +16,17 @@ import {
 } from "@/lib/learning/lessonEngine";
 import type { LearningActivityRunnerRow } from "@/lib/learning/activityRunner";
 
+type TutorStep =
+  | "warmup"
+  | "teach"
+  | "visual"
+  | "practice"
+  | "question"
+  | "reflect"
+  | "mastery";
+
+type SupportMode = "hint" | "alternate" | "example" | "visual" | "practice" | null;
+
 type LessonEngineProps = {
   activity: LearningActivityRunnerRow;
   courseTitle: string;
@@ -34,6 +45,44 @@ type LessonEngineProps = {
   onComplete: () => void;
 };
 
+function tutorStepTitle(step: TutorStep) {
+  if (step === "warmup") return "Let's start with what you already know.";
+  if (step === "teach") return "Let's build the idea together.";
+  if (step === "visual") return "Show me the pattern.";
+  if (step === "practice") return "Try one with me.";
+  if (step === "question") return "One check before we continue.";
+  if (step === "reflect") return "Lock in what changed.";
+  return "Mastery check.";
+}
+
+function tutorStepMessage(step: TutorStep, learnerName: string, subject: string) {
+  if (step === "warmup") {
+    return `Good morning ${learnerName}. Today we're continuing your ${subject} journey. Before we continue, tell me what you already know about this idea.`;
+  }
+  if (step === "teach") {
+    return "Good. I’ll teach the next piece, then I’ll ask you one meaningful question.";
+  }
+  if (step === "visual") {
+    return "Now interact with the example. Choose the parts that belong together.";
+  }
+  if (step === "practice") {
+    return "Your turn. Work this one step at a time. Ask for help if you need it.";
+  }
+  if (step === "question") {
+    return "Answer from memory. I’ll use your response to decide whether to move forward or remediate.";
+  }
+  if (step === "reflect") {
+    return "Tell me what clicked or what still feels uncertain. I’ll use that to preserve your lesson context.";
+  }
+  return "Here is where you stand. If you are ready, I’ll save this lesson and recommend what comes next.";
+}
+
+function confidenceLabel(value: string) {
+  if (value === "Ready for more") return "ready for more";
+  if (value === "Getting clearer") return "getting clearer";
+  return "still building";
+}
+
 export function LessonEngine({
   activity,
   courseTitle,
@@ -51,8 +100,11 @@ export function LessonEngine({
   onConfidenceChange,
   onComplete,
 }: LessonEngineProps) {
+  const [step, setStep] = useState<TutorStep>(completed ? "mastery" : "warmup");
   const [selectedTermIds, setSelectedTermIds] = useState<string[]>([]);
-  const [teacherQuestion, setTeacherQuestion] = useState("");
+  const [learnerWarmup, setLearnerWarmup] = useState("");
+  const [supportMode, setSupportMode] = useState<SupportMode>(null);
+  const [askedForHelp, setAskedForHelp] = useState(false);
   const engine = buildLessonEngineDefinition(activity);
   const progress = getLessonEngineProgress({
     checkedPhases,
@@ -71,43 +123,116 @@ export function LessonEngine({
       }),
     [engine.lesson, selectedTermIds]
   );
+  const activePractice =
+    engine.lesson.guidedPractice.find(
+      (practice) => !isPracticeAnswerCorrect(practice, practiceAnswers[practice.id] || "")
+    ) || engine.lesson.guidedPractice[engine.lesson.guidedPractice.length - 1];
+  const activePracticeAnswer = activePractice
+    ? practiceAnswers[activePractice.id] || ""
+    : "";
+  const activePracticeAnswered = Boolean(activePracticeAnswer.trim());
+  const activePracticeCorrect = activePractice
+    ? isPracticeAnswerCorrect(activePractice, activePracticeAnswer)
+    : true;
+  const activeQuestion =
+    engine.lesson.quizQuestions.find((question) => !quizAnswers[question.id]) ||
+    engine.lesson.quizQuestions[engine.lesson.quizQuestions.length - 1];
+  const activeQuizAnswer = activeQuestion ? quizAnswers[activeQuestion.id] : "";
+  const activeQuizAnswered = Boolean(activeQuizAnswer);
+  const activeQuizCorrect = activeQuestion
+    ? activeQuizAnswer === activeQuestion.answer
+    : true;
+  const practiceComplete = engine.lesson.guidedPractice.every((practice) =>
+    isPracticeAnswerCorrect(practice, practiceAnswers[practice.id] || "")
+  );
+  const quizComplete = engine.lesson.quizQuestions.every(
+    (question) => quizAnswers[question.id] === question.answer
+  );
+  const reflectionComplete = Boolean(reflection.trim());
+  const tutorReadyToComplete =
+    completed || (practiceComplete && quizComplete && reflectionComplete);
+  const learnerName = "Sean";
+  const teacherQuestion =
+    supportMode === "hint"
+      ? "Give me a hint without revealing the answer."
+      : supportMode === "alternate"
+        ? "Explain this another way."
+        : supportMode === "example"
+          ? "Show me a worked example."
+          : supportMode === "visual"
+            ? "Help me understand the visual."
+            : supportMode === "practice"
+              ? "Help me practice without giving away the answer."
+              : learnerWarmup;
   const teacherResponse = getLessonTeacherResponse({
     lesson: engine.lesson,
     question: teacherQuestion,
     quizPercent: progress.quizPercent,
     masteryEstimate: progress.masteryEstimate,
   });
-  const readyToComplete = completed || progress.readyToComplete;
-  const displayedCompletedSteps = completed
-    ? progress.requiredSteps
-    : progress.completedSteps;
-  const effectiveMastered = completed || progress.mastered;
-  const effectiveMasteryEstimate = completed ? 100 : progress.masteryEstimate;
-  const effectiveRecommendation = completed
-    ? engine.lesson.recommendedNextLesson
-    : progress.nextRecommendation;
-  const effectiveCoachingMessage = completed
-    ? `Nice work. You are ready for: ${engine.lesson.recommendedNextLesson}.`
-    : progress.coachingMessage;
-  const masteryTone = effectiveMastered
-    ? "border-green-400/35 bg-green-400/10 text-green-100"
-    : progress.recommendedReview
-      ? "border-yellow-400/35 bg-yellow-400/10 text-yellow-100"
-      : "border-indigo-300/35 bg-indigo-300/10 text-indigo-100";
-  const termTone: Record<string, string> = {
-    blue: "border-blue-300/45 bg-blue-300/15 text-blue-100",
-    green: "border-green-300/45 bg-green-300/15 text-green-100",
-    yellow: "border-yellow-300/45 bg-yellow-300/15 text-yellow-100",
-  };
+  const progressPercent = completed
+    ? 100
+    : Math.min(
+        100,
+        Math.round(
+          [
+            Boolean(learnerWarmup.trim()),
+            checkedPhases.lesson,
+            visualFeedback.correct,
+            practiceComplete,
+            quizComplete,
+            reflectionComplete,
+          ].filter(Boolean).length * 16.7
+        )
+      );
+
+  function markPhase(phaseId: string) {
+    if (!checkedPhases[phaseId]) onPhaseChange(phaseId, true);
+  }
+
+  function goTo(nextStep: TutorStep) {
+    if (nextStep === "teach") markPhase("assessment");
+    if (nextStep === "visual") markPhase("lesson");
+    if (nextStep === "question" && practiceComplete) markPhase("practice");
+    if (nextStep === "reflect" && quizComplete) markPhase("quiz");
+    if (nextStep === "mastery") {
+      markPhase("coach");
+      markPhase("reflection");
+      markPhase("mastery");
+      markPhase("recommendation");
+    }
+    setSupportMode(null);
+    setStep(nextStep);
+  }
+
+  function requestSupport(mode: Exclude<SupportMode, null>) {
+    setAskedForHelp(true);
+    markPhase("coach");
+    setSupportMode(mode);
+  }
+
+  function finishLesson() {
+    [
+      "assessment",
+      "lesson",
+      "practice",
+      "quiz",
+      "coach",
+      "reflection",
+      "mastery",
+      "recommendation",
+    ].forEach(markPhase);
+    onComplete();
+  }
 
   return (
     <div className="space-y-8">
       <DashboardCard accent="learning">
-        <div className="grid gap-5 xl:grid-cols-[1fr_0.8fr] xl:items-center">
+        <div className="grid gap-5 xl:grid-cols-[1fr_0.72fr] xl:items-center">
           <div>
-            <p className="beast-kicker">Mission</p>
+            <p className="beast-kicker">AI Tutor</p>
             <h2 className="mt-2 text-3xl font-black text-white">
-              {engine.title}
+              {engine.lesson.title}
             </h2>
             <p className="mt-3 max-w-3xl text-sm leading-6 text-[#c7cfdb]">
               {engine.lesson.learningObjective}
@@ -115,336 +240,291 @@ export function LessonEngine({
           </div>
           <div className="grid gap-3 rounded-xl border border-[#2a3242] bg-[#111827] p-4">
             <div className="flex items-center justify-between gap-4 text-sm">
-              <span className="font-semibold text-[#9aa7b8]">Progress</span>
-              <span className="font-black text-white">
-                {completed ? 100 : progress.percent}%
-              </span>
+              <span className="font-semibold text-[#9aa7b8]">Session progress</span>
+              <span className="font-black text-white">{progressPercent}%</span>
             </div>
             <div className="h-3 overflow-hidden rounded-full bg-[#0f1419]">
               <div
                 className="h-full rounded-full bg-indigo-300"
-                style={{ width: `${completed ? 100 : progress.percent}%` }}
+                style={{ width: `${progressPercent}%` }}
               />
             </div>
-            <div className="flex flex-wrap gap-2 text-xs font-bold text-[#c7cfdb]">
-              <span>{activity.estimated_minutes} min</span>
-              <span>{activity.difficulty}</span>
-              <span>{displayedCompletedSteps} of {progress.requiredSteps} steps</span>
-            </div>
+            <p className="text-xs font-bold uppercase text-[#7f8da3]">
+              {activity.estimated_minutes} min · {courseTitle}
+            </p>
           </div>
         </div>
       </DashboardCard>
 
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="grid gap-4 sm:grid-cols-3">
         <MetricTile
-          label="Mode"
-          value={engine.activityType === "Practice" ? "Guided Practice" : engine.activityType}
-          detail={courseTitle}
-          icon="E"
+          label="Tutor"
+          value={completed ? "Complete" : "Live"}
+          detail="One active interaction"
+          icon="AI"
           tone="purple"
         />
         <MetricTile
-          label="Progress"
-          value={`${completed ? 100 : progress.percent}%`}
-          detail={`${displayedCompletedSteps} of ${progress.requiredSteps} steps`}
-          icon="P"
-          tone="green"
-        />
-        <MetricTile
-          label="Time"
-          value={`${activity.estimated_minutes} min`}
-          detail={activity.difficulty}
-          icon="T"
-          tone="blue"
-        />
-        <MetricTile
           label="Mastery"
-          value={`${effectiveMasteryEstimate}%`}
-          detail={effectiveMastered ? "Ready for next lesson" : "Review signal active"}
-          icon="XP"
+          value={`${completed ? 100 : progress.masteryEstimate}%`}
+          detail={progress.mastered ? "Ready for more" : "Building evidence"}
+          icon="M"
           tone="yellow"
         />
+        <MetricTile
+          label="Confidence"
+          value={confidenceLabel(confidence)}
+          detail={askedForHelp ? "Support used well" : "Help available anytime"}
+          icon="C"
+          tone="green"
+        />
       </section>
 
       <DashboardCard accent="learning">
         <SectionHeader
-          eyebrow="Adaptive Lesson"
-          title={engine.title}
-          description={engine.summary}
+          eyebrow="Tutor Session"
+          title={tutorStepTitle(step)}
+          description={tutorStepMessage(step, learnerName, engine.lesson.subject)}
           action={<ModuleBadge module="learning" label={engine.lesson.subject} />}
         />
-        <div className="mt-5 grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
-          <div className="rounded-xl border border-indigo-300/35 bg-indigo-300/10 p-4">
-            <div className="text-xs font-bold uppercase text-[#7f8da3]">
-              Learning objective
+
+        <div className="mt-6 grid gap-5 xl:grid-cols-[0.76fr_1.24fr]">
+          <div className="rounded-2xl border border-indigo-300/35 bg-indigo-300/10 p-5">
+            <div className="text-xs font-bold uppercase text-[#9aa7b8]">
+              AI Tutor
             </div>
-            <p className="mt-2 text-sm font-semibold leading-6 text-indigo-100">
-              {engine.lesson.learningObjective}
+            <p className="mt-3 text-base font-semibold leading-7 text-indigo-50">
+              {tutorStepMessage(step, learnerName, engine.lesson.subject)}
             </p>
-          </div>
-          <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
-            <div className="text-xs font-bold uppercase text-[#7f8da3]">
-              Prerequisites
-            </div>
-            <ul className="mt-2 grid gap-2 text-sm leading-5 text-[#c7cfdb]">
-              {engine.lesson.prerequisiteConcepts.map((concept) => (
-                <li key={concept}>{concept}</li>
-              ))}
-            </ul>
-          </div>
-        </div>
-        <div className="mt-5 grid gap-3">
-          {engine.phases.map((phase, index) => {
-            const checked = completed || Boolean(checkedPhases[phase.id]);
-
-            return (
-              <label
-                key={phase.id}
-                className={`flex items-start gap-3 rounded-xl border p-4 ${
-                  checked
-                    ? "border-green-400/35 bg-green-400/10"
-                    : "border-[#2a3242] bg-[#111827]"
-                }`}
+            {supportMode ? (
+              <div className="mt-4 rounded-xl border border-blue-300/35 bg-blue-300/10 p-4 text-sm leading-6 text-blue-100">
+                {teacherResponse}
+              </div>
+            ) : null}
+            <div className="mt-5 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => requestSupport("hint")}
+                className="beast-button-secondary"
+                disabled={completed}
               >
-                <input
-                  type="checkbox"
-                  checked={checked}
-                  disabled={completed}
-                  onChange={(event) =>
-                    onPhaseChange(phase.id, event.target.checked)
-                  }
-                  className="mt-1 h-4 w-4 accent-indigo-300"
-                />
-                <span>
-                  <span className="text-xs font-bold uppercase text-[#7f8da3]">
-                    {index + 1}. {phase.label}
-                  </span>
-                  <span className="mt-1 block font-black text-white">
-                    {phase.title}
-                  </span>
-                  <span className="mt-1 block text-sm leading-6 text-[#c7cfdb]">
-                    {phase.prompt}
-                  </span>
-                  <span className="mt-2 block text-xs font-bold uppercase text-indigo-100">
-                    Check: {phase.check}
-                  </span>
-                </span>
-              </label>
-            );
-          })}
-        </div>
-      </DashboardCard>
-
-      <DashboardCard accent="learning">
-        <SectionHeader
-          eyebrow="Interactive Teaching Area"
-          title={engine.lesson.interactiveVisual.title}
-          description={engine.lesson.interactiveVisual.prompt}
-        />
-        <div className="mt-5 grid gap-5 xl:grid-cols-[1fr_0.85fr]">
-          <div className="rounded-2xl border border-indigo-300/30 bg-[#111827] p-5">
-            <div className="text-xs font-bold uppercase text-[#7f8da3]">
-              Expression
+                Hint
+              </button>
+              <button
+                type="button"
+                onClick={() => requestSupport("alternate")}
+                className="beast-button-secondary"
+                disabled={completed}
+              >
+                Another explanation
+              </button>
+              <button
+                type="button"
+                onClick={() => requestSupport("example")}
+                className="beast-button-secondary"
+                disabled={completed}
+              >
+                Example
+              </button>
+              <button
+                type="button"
+                onClick={() => requestSupport("practice")}
+                className="beast-button-secondary"
+                disabled={completed}
+              >
+                Practice with me
+              </button>
             </div>
-            <div className="mt-3 flex min-h-28 flex-wrap items-center gap-3 rounded-xl border border-[#2a3242] bg-[#0f1419] p-4">
-              {engine.lesson.interactiveVisual.terms.map((term) => {
-                const selected = selectedTermIds.includes(term.id);
+          </div>
 
-                return (
-                  <button
-                    key={term.id}
-                    type="button"
+          <div className="rounded-2xl border border-[#2a3242] bg-[#111827] p-5">
+            {step === "warmup" ? (
+              <div className="grid gap-4">
+                <label className="block">
+                  <span className="text-sm font-semibold text-[#c7cfdb]">
+                    What do you already know?
+                  </span>
+                  <textarea
+                    value={learnerWarmup}
+                    onChange={(event) => setLearnerWarmup(event.target.value)}
+                    rows={5}
+                    className="beast-input mt-2 min-h-32 resize-y"
+                    placeholder="Type what you know, even if you are not sure yet."
                     disabled={completed}
-                    onClick={() =>
-                      setSelectedTermIds((current) =>
-                        current.includes(term.id)
-                          ? current.filter((id) => id !== term.id)
-                          : [...current, term.id]
-                      )
-                    }
-                    className={`min-w-16 rounded-xl border px-4 py-3 text-xl font-black transition ${
-                      selected
-                        ? termTone[term.color]
-                        : "border-[#2a3242] bg-[#111827] text-white hover:border-indigo-300/40"
+                  />
+                </label>
+                {learnerWarmup.trim() ? (
+                  <div className="rounded-xl border border-green-400/35 bg-green-400/10 p-4 text-sm leading-6 text-green-100">
+                    {teacherResponse}
+                  </div>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => goTo("teach")}
+                  className="beast-button w-fit"
+                  disabled={completed || !learnerWarmup.trim()}
+                >
+                  Let&apos;s continue
+                </button>
+              </div>
+            ) : null}
+
+            {step === "teach" ? (
+              <div className="grid gap-4">
+                <p className="text-sm leading-6 text-[#dbe3ef]">
+                  {engine.lesson.explanation}
+                </p>
+                <div className="rounded-xl border border-[#2a3242] bg-[#0f1419] p-4">
+                  <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                    Worked example
+                  </div>
+                  <h3 className="mt-2 text-lg font-black text-white">
+                    {engine.lesson.examples[0]?.setup}
+                  </h3>
+                  <ol className="mt-3 grid list-decimal gap-2 pl-5 text-sm leading-5 text-[#c7cfdb]">
+                    {engine.lesson.examples[0]?.steps.map((exampleStep) => (
+                      <li key={exampleStep}>{exampleStep}</li>
+                    ))}
+                  </ol>
+                  <p className="mt-3 rounded-lg border border-green-400/30 bg-green-400/10 p-3 text-sm font-bold text-green-100">
+                    {engine.lesson.examples[0]?.takeaway}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => goTo("visual")}
+                  className="beast-button w-fit"
+                  disabled={completed}
+                >
+                  I&apos;m ready to try one
+                </button>
+              </div>
+            ) : null}
+
+            {step === "visual" ? (
+              <div className="grid gap-4">
+                <div>
+                  <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                    {engine.lesson.interactiveVisual.title}
+                  </div>
+                  <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
+                    {engine.lesson.interactiveVisual.prompt}
+                  </p>
+                </div>
+                <div className="flex min-h-28 flex-wrap items-center gap-3 rounded-xl border border-[#2a3242] bg-[#0f1419] p-4">
+                  {engine.lesson.interactiveVisual.terms.map((term) => {
+                    const selected = selectedTermIds.includes(term.id);
+
+                    return (
+                      <button
+                        key={term.id}
+                        type="button"
+                        disabled={completed}
+                        onClick={() =>
+                          setSelectedTermIds((current) =>
+                            current.includes(term.id)
+                              ? current.filter((id) => id !== term.id)
+                              : [...current, term.id]
+                          )
+                        }
+                        className={`min-w-16 rounded-xl border px-4 py-3 text-xl font-black transition ${
+                          selected
+                            ? "border-indigo-300/50 bg-indigo-300/15 text-indigo-100"
+                            : "border-[#2a3242] bg-[#111827] text-white hover:border-indigo-300/40"
+                        }`}
+                      >
+                        {term.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                {selectedTermIds.length > 0 ? (
+                  <div
+                    className={`rounded-xl border p-4 ${
+                      visualFeedback.correct
+                        ? "border-green-400/35 bg-green-400/10 text-green-100"
+                        : "border-yellow-400/35 bg-yellow-400/10 text-yellow-100"
                     }`}
                   >
-                    {term.label}
-                  </button>
-                );
-              })}
-            </div>
-            <div
-              className={`mt-4 rounded-xl border p-4 ${
-                visualFeedback.correct
-                  ? "border-green-400/35 bg-green-400/10 text-green-100"
-                  : "border-yellow-400/35 bg-yellow-400/10 text-yellow-100"
-              }`}
-            >
-              <div className="text-sm font-black">{visualFeedback.title}</div>
-              <p className="mt-1 text-sm leading-5">{visualFeedback.message}</p>
-            </div>
-          </div>
-          <div className="grid gap-3">
-            {engine.lesson.interactiveVisual.targetGroups.map((group) => (
-              <div
-                key={group.group}
-                className="rounded-xl border border-[#2a3242] bg-[#111827] p-4"
-              >
-                <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                  {group.label}
-                </div>
-                <div className="mt-2 text-lg font-black text-white">
-                  {group.combinedLabel}
-                </div>
-                <p className="mt-2 text-sm leading-5 text-[#c7cfdb]">
-                  {group.explanation}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </DashboardCard>
-
-      <section className="grid gap-4 xl:grid-cols-[1fr_0.8fr]">
-        <DashboardCard accent="learning">
-          <SectionHeader
-            eyebrow="Lesson"
-            title="Understand the idea"
-            description={engine.lesson.explanation}
-          />
-          <div className="mt-5 grid gap-4 lg:grid-cols-2">
-          {engine.lesson.examples.map((example) => (
-            <div
-              key={example.title}
-              className="rounded-xl border border-[#2a3242] bg-[#111827] p-4"
-            >
-              <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                {example.title}
-              </div>
-              <h3 className="mt-2 text-lg font-black text-white">
-                {example.setup}
-              </h3>
-              <ol className="mt-3 grid list-decimal gap-2 pl-5 text-sm leading-5 text-[#c7cfdb]">
-                {example.steps.map((step) => (
-                  <li key={step}>{step}</li>
-                ))}
-              </ol>
-              <p className="mt-3 rounded-lg border border-green-400/30 bg-green-400/10 p-3 text-sm font-bold text-green-100">
-                {example.takeaway}
-              </p>
-            </div>
-          ))}
-          </div>
-        </DashboardCard>
-
-        <DashboardCard accent="blue">
-          <SectionHeader
-            eyebrow="AI Teacher"
-            title="Ask without leaving the lesson"
-            description="The teacher stays inside this concept and uses your current progress."
-          />
-          <div className="mt-5 grid gap-4">
-            <label className="block">
-              <span className="text-sm font-semibold text-[#c7cfdb]">
-                Ask about this lesson
-              </span>
-              <textarea
-                value={teacherQuestion}
-                onChange={(event) => setTeacherQuestion(event.target.value)}
-                rows={4}
-                className="beast-input mt-2 min-h-24 resize-y"
-                placeholder="Example: Why can't I combine 4x and 7?"
-              />
-            </label>
-            <div className="rounded-xl border border-blue-300/35 bg-blue-300/10 p-4 text-sm leading-6 text-blue-100">
-              {teacherResponse}
-            </div>
-            <div className="text-xs font-bold uppercase text-[#7f8da3]">
-              Context: {engine.lesson.subject} - {engine.lesson.title} - Quiz {progress.quizPercent}% - Mastery {progress.masteryEstimate}%
-            </div>
-          </div>
-        </DashboardCard>
-      </section>
-
-      <DashboardCard accent="purple">
-        <SectionHeader
-          eyebrow="Guided Practice"
-          title="Try it with support"
-          description="Work each practice prompt before the quiz. The hint is there to help you think, not to rush you."
-        />
-        <div className="mt-5 grid gap-4 lg:grid-cols-2">
-          {engine.lesson.guidedPractice.map((practice) => (
-            <div
-              key={practice.id}
-              className="rounded-xl border border-[#2a3242] bg-[#111827] p-4"
-            >
-              <h3 className="font-black text-white">{practice.prompt}</h3>
-              <p className="mt-2 text-sm leading-5 text-[#c7cfdb]">
-                Hint: {practice.hint}
-              </p>
-              <label className="mt-4 block">
-                <span className="text-sm font-semibold text-[#c7cfdb]">
-                  Your answer
-                </span>
-                <input
-                  value={practiceAnswers[practice.id] || ""}
-                  onChange={(event) =>
-                    onPracticeAnswer(practice.id, event.target.value)
-                  }
-                  disabled={completed}
-                  className="beast-input mt-2"
-                  placeholder="Type your simplified expression"
-                />
-              </label>
-              {practiceAnswers[practice.id]?.trim() ? (
-                <p
-                  className={`mt-3 rounded-lg border p-3 text-sm font-semibold ${
-                    isPracticeAnswerCorrect(practice, practiceAnswers[practice.id])
-                      ? "border-green-400/35 bg-green-400/10 text-green-100"
-                      : "border-yellow-400/35 bg-yellow-400/10 text-yellow-100"
-                  }`}
+                    <div className="text-sm font-black">{visualFeedback.title}</div>
+                    <p className="mt-1 text-sm leading-5">{visualFeedback.message}</p>
+                  </div>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => goTo("practice")}
+                  className="beast-button w-fit"
+                  disabled={completed || !visualFeedback.correct}
                 >
-                  {isPracticeAnswerCorrect(practice, practiceAnswers[practice.id])
-                    ? "Correct. "
-                    : "Try again. "}
-                  Expected: {practice.expectedAnswer}
-                </p>
-              ) : null}
-            </div>
-          ))}
-        </div>
-      </DashboardCard>
+                  Keep going
+                </button>
+              </div>
+            ) : null}
 
-      <DashboardCard accent="learning">
-        <SectionHeader
-          eyebrow="Quiz"
-          title="Check understanding"
-          description="Answer from memory first. Beast uses mistakes as a coaching signal."
-        />
-        <div className="mt-5 grid gap-4">
-          {engine.lesson.quizQuestions.map((question, index) => {
-            const selected = quizAnswers[question.id];
-            const answered = Boolean(selected);
-            const correct = selected === question.answer;
+            {step === "practice" && activePractice ? (
+              <div className="grid gap-4">
+                <h3 className="text-xl font-black text-white">
+                  {activePractice.prompt}
+                </h3>
+                {supportMode === "hint" ? (
+                  <p className="rounded-xl border border-yellow-400/35 bg-yellow-400/10 p-4 text-sm font-semibold leading-6 text-yellow-100">
+                    {activePractice.hint}
+                  </p>
+                ) : null}
+                <label className="block">
+                  <span className="text-sm font-semibold text-[#c7cfdb]">
+                    Your answer
+                  </span>
+                  <input
+                    value={activePracticeAnswer}
+                    onChange={(event) =>
+                      onPracticeAnswer(activePractice.id, event.target.value)
+                    }
+                    disabled={completed}
+                    className="beast-input mt-2"
+                    placeholder="Type your answer"
+                  />
+                </label>
+                {activePracticeAnswered ? (
+                  <div
+                    className={`rounded-xl border p-4 text-sm font-semibold leading-6 ${
+                      activePracticeCorrect
+                        ? "border-green-400/35 bg-green-400/10 text-green-100"
+                        : "border-yellow-400/35 bg-yellow-400/10 text-yellow-100"
+                    }`}
+                  >
+                    {activePracticeCorrect
+                      ? "Yes. That answer works. You saw the structure and applied it."
+                      : "Not yet. Check the relationship in the expression, then try again."}
+                  </div>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() =>
+                    practiceComplete ? goTo("question") : setSupportMode(null)
+                  }
+                  className="beast-button w-fit"
+                  disabled={completed || !activePracticeCorrect}
+                >
+                  {practiceComplete ? "Ask me the check" : "Give me the next practice"}
+                </button>
+              </div>
+            ) : null}
 
-            return (
-              <div
-                key={question.id}
-                className="rounded-xl border border-[#2a3242] bg-[#111827] p-4"
-              >
-                <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                  Question {index + 1}
-                </div>
-                <h3 className="mt-2 font-black text-white">{question.prompt}</h3>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {question.options.map((option) => (
+            {step === "question" && activeQuestion ? (
+              <div className="grid gap-4">
+                <h3 className="text-xl font-black text-white">
+                  {activeQuestion.prompt}
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {activeQuestion.options.map((option) => (
                     <button
                       key={option}
                       type="button"
                       disabled={completed}
-                      onClick={() => onQuizAnswer(question.id, option)}
+                      onClick={() => onQuizAnswer(activeQuestion.id, option)}
                       className={`rounded-xl border px-3 py-2 text-sm font-black transition ${
-                        selected === option
+                        activeQuizAnswer === option
                           ? "border-indigo-300/50 bg-indigo-300/15 text-indigo-100"
                           : "border-[#2a3242] bg-[#0f1419] text-[#dbe3ef] hover:border-indigo-300/35"
                       }`}
@@ -453,180 +533,120 @@ export function LessonEngine({
                     </button>
                   ))}
                 </div>
-                {answered ? (
-                  <p
-                    className={`mt-3 rounded-lg border p-3 text-sm font-semibold ${
-                      correct
+                {activeQuizAnswered ? (
+                  <div
+                    className={`rounded-xl border p-4 text-sm font-semibold leading-6 ${
+                      activeQuizCorrect
                         ? "border-green-400/35 bg-green-400/10 text-green-100"
                         : "border-yellow-400/35 bg-yellow-400/10 text-yellow-100"
                     }`}
                   >
-                    {correct ? "Correct. " : "Review this. "}
-                    {question.explanation}
-                  </p>
+                    {activeQuizCorrect ? "Correct. " : "Good try. Let’s repair this. "}
+                    {activeQuestion.explanation}
+                  </div>
                 ) : null}
+                <button
+                  type="button"
+                  onClick={() =>
+                    quizComplete ? goTo("reflect") : setSupportMode("alternate")
+                  }
+                  className="beast-button w-fit"
+                  disabled={completed || !activeQuizAnswered}
+                >
+                  {quizComplete ? "Continue" : "Coach me through it"}
+                </button>
               </div>
-            );
-          })}
-        </div>
-      </DashboardCard>
+            ) : null}
 
-      <DashboardCard accent="green">
-        <SectionHeader
-          eyebrow="AI Coach"
-          title="Get coached on the next best move"
-          description={effectiveCoachingMessage}
-        />
-        <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-          {engine.lesson.aiCoachingPrompts.map((coach) => (
-            <div
-              key={coach.kind}
-              className="rounded-xl border border-[#2a3242] bg-[#111827] p-4"
-            >
-              <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                {coach.title}
+            {step === "reflect" ? (
+              <div className="grid gap-4">
+                <label className="block">
+                  <span className="text-sm font-semibold text-[#c7cfdb]">
+                    What should I remember for next time?
+                  </span>
+                  <textarea
+                    value={reflection}
+                    onChange={(event) => onReflectionChange(event.target.value)}
+                    disabled={completed}
+                    rows={5}
+                    className="beast-input mt-2 min-h-32 resize-y"
+                    placeholder="Write one sentence about what clicked or what still needs review."
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-sm font-semibold text-[#c7cfdb]">
+                    How confident do you feel?
+                  </span>
+                  <select
+                    value={confidence}
+                    onChange={(event) => onConfidenceChange(event.target.value)}
+                    disabled={completed}
+                    className="beast-input mt-2"
+                  >
+                    <option>Still building</option>
+                    <option>Getting clearer</option>
+                    <option>Ready for more</option>
+                  </select>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => goTo("mastery")}
+                  className="beast-button w-fit"
+                  disabled={completed || !reflectionComplete}
+                >
+                  Show me where I stand
+                </button>
               </div>
-              <p className="mt-2 text-sm leading-5 text-[#c7cfdb]">
-                {coach.prompt}
-              </p>
-            </div>
-          ))}
-        </div>
-      </DashboardCard>
+            ) : null}
 
-      <DashboardCard accent="purple">
-        <SectionHeader
-          eyebrow="Reflection"
-          title="Teach Beast what changed"
-          description={engine.lesson.reflectionPrompts[0]}
-        />
-        <div className="mt-5 grid gap-4">
-          <div className="flex flex-wrap gap-2">
-            {engine.lesson.reflectionPrompts.slice(1).map((prompt) => (
-              <span
-                key={prompt}
-                className="rounded-full border border-[#2a3242] bg-[#0f1419] px-3 py-1 text-xs font-bold text-[#dbe3ef]"
-              >
-                {prompt}
-              </span>
-            ))}
-          </div>
-          <label className="block">
-            <span className="text-sm font-semibold text-[#c7cfdb]">
-              Reflection
-            </span>
-            <textarea
-              value={reflection}
-              onChange={(event) => onReflectionChange(event.target.value)}
-              disabled={completed}
-              rows={5}
-              className="beast-input mt-2 min-h-32 resize-y"
-              placeholder="Write one sentence about what clicked, what was hard, or what Beast should remember."
-            />
-          </label>
-          <label className="block">
-            <span className="text-sm font-semibold text-[#c7cfdb]">
-              Confidence
-            </span>
-            <select
-              value={confidence}
-              onChange={(event) => onConfidenceChange(event.target.value)}
-              disabled={completed}
-              className="beast-input mt-2"
-            >
-              <option>Still building</option>
-              <option>Getting clearer</option>
-              <option>Ready for more</option>
-            </select>
-          </label>
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={onComplete}
-              disabled={saving || completed || !readyToComplete}
-              className="beast-button disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {saving
-                ? "Saving..."
-                : completed
-                  ? "Completed"
-                  : engine.completionLabel}
-            </button>
-            <p className="text-sm font-semibold text-[#9aa7b8]">
-              {completed
-                ? "This activity is complete."
-                : `${displayedCompletedSteps} of ${progress.requiredSteps} engine steps complete - Practice: ${progress.practiceCorrect}/${progress.practiceTotal} - Confidence: ${confidence}`}
-            </p>
-          </div>
-        </div>
-      </DashboardCard>
-
-      <DashboardCard accent={effectiveMastered ? "green" : "yellow"}>
-        <SectionHeader
-          eyebrow="Mastery and Recommendation"
-          title={effectiveMastered ? "Ready for the next lesson" : "Review before moving on"}
-          description={effectiveCoachingMessage}
-          action={
-            <ModuleBadge
-              module="learning"
-              label={`${effectiveMasteryEstimate}% mastery`}
-            />
-          }
-        />
-        <div className="mt-5 grid gap-4 lg:grid-cols-3">
-          <div className={`rounded-xl border p-4 ${masteryTone}`}>
-            <div className="text-xs font-bold uppercase opacity-80">
-              Mastery estimate
-            </div>
-            <div className="mt-2 text-3xl font-black">
-              {effectiveMasteryEstimate}%
-            </div>
-          </div>
-          <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
-            <div className="text-xs font-bold uppercase text-[#7f8da3]">
-              Quiz signal
-            </div>
-            <p className="mt-2 text-lg font-black text-white">
-              {progress.quizCorrect} / {progress.quizTotal} correct
-            </p>
-          </div>
-          <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
-            <div className="text-xs font-bold uppercase text-[#7f8da3]">
-              Practice signal
-            </div>
-            <p className="mt-2 text-lg font-black text-white">
-              {progress.practiceCorrect} / {progress.practiceTotal} correct
-            </p>
-          </div>
-          <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
-            <div className="text-xs font-bold uppercase text-[#7f8da3]">
-              Next recommendation
-            </div>
-            <p className="mt-2 text-sm font-semibold leading-5 text-[#c7cfdb]">
-              {effectiveRecommendation}
-            </p>
-          </div>
-        </div>
-        <div className="mt-5 grid gap-4 lg:grid-cols-2">
-          <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
-            <div className="text-xs font-bold uppercase text-[#7f8da3]">
-              Assessment assumptions
-            </div>
-            <ul className="mt-3 grid gap-2 text-sm leading-5 text-[#c7cfdb]">
-              {progress.assessmentSignals.map((signal) => (
-                <li key={signal.id}>
-                  {signal.label}: {signal.score}% signal, {Math.round(signal.weight * 100)}% weight.
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
-            <div className="text-xs font-bold uppercase text-[#7f8da3]">
-              Continuity
-            </div>
-            <p className="mt-3 text-sm font-semibold leading-5 text-[#c7cfdb]">
-              {progress.continuity.handoffSummary}
-            </p>
+            {step === "mastery" ? (
+              <div className="grid gap-4">
+                <div className="rounded-xl border border-[#2a3242] bg-[#0f1419] p-4">
+                  <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                    Tutor recommendation
+                  </div>
+                  <p className="mt-2 text-sm font-semibold leading-6 text-[#c7cfdb]">
+                    {completed
+                      ? `Nice work. You are ready for: ${engine.lesson.recommendedNextLesson}.`
+                      : progress.nextRecommendation}
+                  </p>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div className="rounded-xl border border-[#2a3242] bg-[#0f1419] p-4">
+                    <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                      Practice
+                    </div>
+                    <p className="mt-2 text-lg font-black text-white">
+                      {progress.practiceCorrect}/{progress.practiceTotal}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-[#2a3242] bg-[#0f1419] p-4">
+                    <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                      Questions
+                    </div>
+                    <p className="mt-2 text-lg font-black text-white">
+                      {progress.quizCorrect}/{progress.quizTotal}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-[#2a3242] bg-[#0f1419] p-4">
+                    <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                      Mastery
+                    </div>
+                    <p className="mt-2 text-lg font-black text-white">
+                      {completed ? 100 : progress.masteryEstimate}%
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={finishLesson}
+                  disabled={saving || completed || !tutorReadyToComplete}
+                  className="beast-button w-fit disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {saving ? "Saving..." : completed ? "Completed" : "Complete lesson"}
+                </button>
+              </div>
+            ) : null}
           </div>
         </div>
       </DashboardCard>

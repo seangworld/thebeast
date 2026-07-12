@@ -634,7 +634,7 @@ export default async function LearningPage() {
               </p>
             </div>
             <Link
-              href="/dashboard"
+              href="/dashboard/today"
               className="w-fit rounded-xl border border-indigo-300/40 bg-indigo-300/10 px-4 py-3 text-sm font-black text-indigo-100 transition hover:bg-indigo-300/15"
             >
               Back to Today
