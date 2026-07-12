@@ -27,8 +27,20 @@ export function buildLearnerPortfolio({
     hoursStudied: `${(progress.estimatedWeeklyStudyMinutes / 60).toFixed(1)} this week`,
     achievements: achievementCount,
     certificates: certificates.length,
-    skillsPlaceholder: ["Study rhythm", "Self-review", "Foundational practice"],
+    skillsPlaceholder: Array.from(
+      new Set(
+        certificates.flatMap((certificate) => certificate.skillsDemonstrated)
+      )
+    ).concat(["Study rhythm", "Self-review", "Foundational practice"]),
     externalCertificationsPlaceholder: ["External certifications reserved"],
+    portfolioEntries: certificates.map((certificate) => ({
+      id: certificate.portfolioEntryId,
+      title: `${certificate.pathName} completion`,
+      summary: `Completed with demonstrated skills: ${certificate.skillsDemonstrated.join(", ")}.`,
+      completedAt: certificate.completionDate,
+      skillsDemonstrated: certificate.skillsDemonstrated,
+      certificateId: certificate.certificateId,
+    })),
     recommendedNextAction: progress.recommendedNextAction,
   };
 }

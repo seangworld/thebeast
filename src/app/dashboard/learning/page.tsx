@@ -189,15 +189,30 @@ function mapAchievementRow(row: Record<string, unknown>): LearningAchievement {
 }
 
 function mapCertificateRow(row: Record<string, unknown>): LearningCertificate {
+  const pathName = String(row.path_name || "Learning path");
+  const completionDate = String(row.completion_date || "");
+  const certificateId = String(row.certificate_id || "");
+
   return {
     id: String(row.id),
     learnerName: String(row.learner_name || "Learner"),
-    pathName: String(row.path_name || "Learning path"),
-    completionDate: String(row.completion_date || ""),
-    certificateId: String(row.certificate_id || ""),
+    pathName,
+    completionDate,
+    certificateId,
+    certificateTitle: "Beast Academy Certificate",
+    skillsDemonstrated: Array.isArray(row.skills_demonstrated)
+      ? row.skills_demonstrated.map(String)
+      : ["Learning path completion"],
+    completionRecordId: String(
+      row.completion_record_id || `completion-${certificateId || String(row.id)}`
+    ),
+    portfolioEntryId: String(
+      row.portfolio_entry_id || `portfolio-${certificateId || String(row.id)}`
+    ),
     language:
-      "Certificate of completion for an internal BeastLearning path. This is non-accredited and does not represent institutional credit.",
-    verificationPlaceholder: "Certificate ownership is verified before download.",
+      "Beast Academy Certificate of completion for an internal BeastLearning path. This is non-accredited and does not represent institutional credit.",
+    verificationPlaceholder:
+      "Certificate ownership, demonstrated skills, and completion details are verified before download.",
   };
 }
 

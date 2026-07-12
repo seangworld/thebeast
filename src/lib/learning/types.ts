@@ -250,8 +250,21 @@ export type LearningCertificate = {
   pathName: string;
   completionDate: string;
   certificateId: string;
+  certificateTitle: string;
+  skillsDemonstrated: string[];
+  completionRecordId: string;
+  portfolioEntryId: string;
   language: string;
   verificationPlaceholder: string;
+};
+
+export type LearnerPortfolioEntry = {
+  id: string;
+  title: string;
+  summary: string;
+  completedAt: string;
+  skillsDemonstrated: string[];
+  certificateId?: string;
 };
 
 export type LearnerPortfolio = {
@@ -265,6 +278,7 @@ export type LearnerPortfolio = {
   certificates: number;
   skillsPlaceholder: string[];
   externalCertificationsPlaceholder: string[];
+  portfolioEntries: LearnerPortfolioEntry[];
   recommendedNextAction: string;
 };
 

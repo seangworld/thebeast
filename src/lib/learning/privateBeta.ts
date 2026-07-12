@@ -171,10 +171,13 @@ export function buildCertificateDocuments(
   return certificates.map((certificate) => ({
     ...certificate,
     completionMetadata: [
+      `Award: ${certificate.certificateTitle}`,
       `Learner: ${certificate.learnerName}`,
       `Path: ${certificate.pathName}`,
       `Completed: ${certificate.completionDate}`,
+      `Skills: ${certificate.skillsDemonstrated.join(", ")}`,
       `Certificate ID: ${certificate.certificateId}`,
+      `Completion record: ${certificate.completionRecordId}`,
     ],
     downloadUrl: `/api/learning/certificates/${certificate.certificateId}`,
     generatedAt: privateBetaDate,

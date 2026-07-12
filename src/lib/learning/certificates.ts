@@ -29,9 +29,17 @@ export const mockLearningCertificates: LearningCertificate[] = [
       pathName: "Security+ Foundations",
       completionDate: "2026-07-03",
     }),
+    certificateTitle: "Beast Academy Certificate",
+    skillsDemonstrated: [
+      "Identity verification",
+      "Authentication factors",
+      "Role-based access control",
+    ],
+    completionRecordId: "completion-security-foundations-2026-07-03",
+    portfolioEntryId: "portfolio-security-foundations-2026-07-03",
     language:
-      "Certificate of completion for an internal BeastLearning path. This is non-accredited and does not represent institutional credit.",
+      "Beast Academy Certificate of completion for an internal BeastLearning path. This is non-accredited and does not represent institutional credit.",
     verificationPlaceholder:
-      "Verification confirms certificate ownership and completion details.",
+      "Verification confirms certificate ownership, demonstrated skills, and completion details.",
   },
 ];

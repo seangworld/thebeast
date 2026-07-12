@@ -73,6 +73,11 @@ import {
   learningAchievementCatalog,
 } from "../src/lib/learning/achievements";
 import {
+  beastAcademyAssessmentPolicy,
+  decideTutorLessonReadiness,
+  evaluateBeastAcademyCompletion,
+} from "../src/lib/learning/academyCompletion";
+import {
   getAgeFromBirthday,
   isRestrictedForLearningOnlyNavigation,
   shouldUseLearningOnlyNavigation,
@@ -899,6 +904,10 @@ test("learning foundation completion engines expose static platform data", () =>
     mockLearningCertificates[0].certificateId
   );
   assert.equal(portfolio.certificates, 1);
+  assert.equal(mockLearningCertificates[0].certificateTitle, "Beast Academy Certificate");
+  assert.equal(mockLearningCertificates[0].skillsDemonstrated.includes("Authentication factors"), true);
+  assert.equal(portfolio.portfolioEntries[0].certificateId, mockLearningCertificates[0].certificateId);
+  assert.equal(portfolio.skillsPlaceholder.includes("Role-based access control"), true);
   assert.equal(mockParentDashboard.learners.length, 2);
   assert.equal(mockStudyPlanner.placeholderActions.includes("Create reminder"), true);
   assert.deepEqual(
@@ -927,6 +936,79 @@ test("learning foundation completion engines expose static platform data", () =>
     ]
   );
   assert.equal(routeMockLearningSpecialist("Tutor").status, "mocked-preview");
+});
+
+test("Beast Academy completion awards certificates only after milestone or course assessment", () => {
+  const lessonDecision = decideTutorLessonReadiness({
+    masteryEstimate: 86,
+    masteryThreshold: 80,
+  });
+  const passed = evaluateBeastAcademyCompletion({
+    learnerName: "Alex",
+    pathName: "Security+ Foundations",
+    completedAt: "2026-07-12",
+    scope: "course_completion",
+    masteryPercent: 91,
+    requiredMasteryPercent: 85,
+    skillsDemonstrated: [
+      "Identity verification",
+      "Authentication factors",
+      "Role-based access control",
+    ],
+    evidence: [
+      "milestone assessment",
+      "Tutor mastery check",
+      "course completion review",
+    ],
+  });
+
+  assert.equal(beastAcademyAssessmentPolicy.knowledgeChecks, "natural_lesson_checks");
+  assert.deepEqual(beastAcademyAssessmentPolicy.formalAssessmentScopes, [
+    "major_milestone",
+    "course_completion",
+  ]);
+  assert.equal(beastAcademyAssessmentPolicy.artificialWaitingPeriods, false);
+  assert.equal(lessonDecision.checkType, "natural_lesson_check");
+  assert.equal(lessonDecision.formalAssessmentRequired, false);
+  assert.equal(lessonDecision.readyToContinue, true);
+  assert.equal(passed.status, "passed");
+  assert.equal(passed.certificate?.certificateTitle, "Beast Academy Certificate");
+  assert.deepEqual(passed.certificate?.skillsDemonstrated, [
+    "Identity verification",
+    "Authentication factors",
+    "Role-based access control",
+  ]);
+  assert.equal(passed.completionRecord.status, "passed");
+  assert.equal(passed.portfolioEntry?.certificateId, passed.certificate?.certificateId);
+  assert.equal(passed.retestPolicy.artificialWaitingPeriod, false);
+});
+
+test("Beast Academy failed completion routes to Mentor explanation Tutor remediation and immediate retest readiness", () => {
+  const lessonDecision = decideTutorLessonReadiness({
+    masteryEstimate: 58,
+    masteryThreshold: 80,
+  });
+  const failed = evaluateBeastAcademyCompletion({
+    learnerName: "Sam",
+    pathName: "Pre-Algebra Foundations",
+    completedAt: "2026-07-12",
+    scope: "major_milestone",
+    masteryPercent: 62,
+    requiredMasteryPercent: 80,
+    skillsDemonstrated: ["Identify like terms"],
+    evidence: ["milestone assessment", "missed combining coefficients"],
+  });
+
+  assert.equal(lessonDecision.nextAction, "remediate");
+  assert.equal(lessonDecision.artificialWaitingPeriod, false);
+  assert.equal(failed.status, "needs_remediation");
+  assert.equal(failed.certificate, undefined);
+  assert.equal(failed.portfolioEntry, undefined);
+  assert.equal(failed.completionRecord.status, "needs_remediation");
+  assert.match(failed.mentorMessage, /Mentor will explain the gap/);
+  assert.match(failed.tutorAction, /Remediate/);
+  assert.equal(failed.retestPolicy.retestWhenReady, true);
+  assert.equal(failed.retestPolicy.artificialWaitingPeriod, false);
 });
 
 test("learning knowledge model includes a prerequisite graph", () => {
@@ -1460,6 +1542,8 @@ test("learning core loop teaches practices checks mastery and resumes a lesson",
   assert.equal(hintTurn.revealsAnswer, false);
   assert.equal(alternateTurn.intent, "alternate-explanation");
   assert.equal(mastery.progress.mastered, true);
+  assert.equal(mastery.progress.tutorReadinessDecision.readyToContinue, true);
+  assert.equal(mastery.progress.tutorReadinessDecision.formalAssessmentRequired, false);
   assert.equal(mastery.tutorTurn.intent, "mastery-check");
   assert.equal(mastery.tutorTurn.nextAction, "Solving one-step equations");
 });
@@ -1513,6 +1597,8 @@ test("learning core loop routes weak placement and low mastery to remediation", 
   assert.equal(incorrectTurn.feedback, "incorrect");
   assert.equal(incorrectTurn.revealsAnswer, false);
   assert.equal(mastery.progress.mastered, false);
+  assert.equal(mastery.progress.tutorReadinessDecision.nextAction, "remediate");
+  assert.equal(mastery.progress.tutorReadinessDecision.artificialWaitingPeriod, false);
   assert.equal(mastery.tutorTurn.intent, "remediation");
   assert.equal(
     mastery.tutorTurn.nextAction,

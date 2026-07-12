@@ -11,6 +11,10 @@ import {
   createLearningContentMetadata,
   type LearningContentMetadata,
 } from "./contentVersioning";
+import {
+  decideTutorLessonReadiness,
+  type TutorLessonReadinessDecision,
+} from "./academyCompletion";
 
 export { combiningLikeTermsLesson } from "./sampleContentRegistry";
 
@@ -166,6 +170,7 @@ export type LessonEngineProgress = {
   completionReviewReasons: string[];
   assessmentSignals: LessonAssessmentSignal[];
   masteryAssumptions: string[];
+  tutorReadinessDecision: TutorLessonReadinessDecision;
   continuity: LessonProgressContinuity;
   percent: number;
   nextRecommendation: string;
@@ -432,6 +437,7 @@ const lessonAssessmentAssumptions: LessonAssessmentAssumption[] = [
 
 const masteryAssumptions = [
   "Mastery is a conservative readiness estimate, not an accredited assessment.",
+  "Knowledge checks happen naturally during lessons; formal assessments are reserved for major milestones and course completion.",
   "A low estimate should recommend review without shame or penalty language.",
   "A high estimate means ready for the next lesson, not guaranteed long-term retention.",
   "Missing check-in, practice, reflection, or confidence evidence lowers certainty.",
@@ -706,6 +712,13 @@ export function getLessonEngineProgress({
     (reflectionComplete ? 1 : 0);
   const mastered = masteryEstimate >= lesson.masteryThreshold && quiz.percent >= 70;
   const recommendedReview = !mastered && (quiz.percent < 70 || confidenceScore < 70);
+  const tutorReadinessDecision = decideTutorLessonReadiness({
+    masteryEstimate,
+    masteryThreshold: lesson.masteryThreshold,
+    tutorReason: mastered
+      ? `The Tutor has enough lesson evidence to continue toward ${lesson.recommendedNextLesson}.`
+      : `${lesson.reviewRecommendation} The Tutor should remediate before continuing.`,
+  });
   const completionReviewReasons = [
     ...(completedPhases === phaseCount ? [] : ["Spend time with each teaching step."]),
     ...(practice.answered === lesson.guidedPractice.length
@@ -759,6 +772,7 @@ export function getLessonEngineProgress({
     completionReviewReasons,
     assessmentSignals,
     masteryAssumptions,
+    tutorReadinessDecision,
     continuity,
     percent:
       requiredSteps === 0
