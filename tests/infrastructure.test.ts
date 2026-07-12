@@ -88,6 +88,8 @@ import {
   learningResourceCollections,
 } from "../src/lib/learning/collections";
 import {
+  buildRequiredContentQualityReview,
+  evaluateContentQualityReview,
   getCourseContentStatus,
   getLessonContentStatus,
   getRecommendationContentStatus,
@@ -1170,6 +1172,45 @@ test("learning content governance labels implemented planned and review states",
   );
   assert.equal(thirdPartyLearningSiteDirection.planningOnly, true);
   assert.equal(thirdPartyLearningSiteDirection.status, "planned");
+});
+
+test("content quality review workflow requires accuracy age accessibility and safety approval", () => {
+  const review = buildRequiredContentQualityReview({
+    contentId: "generated-biology-starter",
+    contentType: "lesson",
+  });
+  const blocked = evaluateContentQualityReview(review);
+  const approved = evaluateContentQualityReview({
+    ...review,
+    items: review.items.map((item) => ({
+      ...item,
+      status: "approved",
+      notes: `${item.area} reviewed and approved.`,
+    })),
+  });
+  const incomplete = evaluateContentQualityReview({
+    ...review,
+    items: review.items.filter((item) => item.area !== "safety"),
+  });
+
+  assert.deepEqual(
+    review.items.map((item) => item.area),
+    ["accuracy", "age-appropriateness", "accessibility", "safety"]
+  );
+  assert.equal(review.items.every((item) => item.status === "requires-changes"), true);
+  assert.equal(blocked.complete, true);
+  assert.equal(blocked.approved, false);
+  assert.deepEqual(blocked.blockedAreas, [
+    "accuracy",
+    "age-appropriateness",
+    "accessibility",
+    "safety",
+  ]);
+  assert.equal(approved.complete, true);
+  assert.equal(approved.approved, true);
+  assert.deepEqual(approved.blockedAreas, []);
+  assert.equal(incomplete.complete, false);
+  assert.deepEqual(incomplete.missingAreas, ["safety"]);
 });
 
 test("learning core loop teaches practices checks mastery and resumes a lesson", () => {

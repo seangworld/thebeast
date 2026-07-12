@@ -29,6 +29,28 @@ export type LearningContentReviewRequirement = {
   standard: string;
 };
 
+export type LearningContentQualityReviewItem = {
+  area: LearningContentReviewArea;
+  reviewer: "beastlearning" | "admin" | "owner";
+  status: "approved" | "requires-changes";
+  notes: string;
+  reviewedAt: string;
+};
+
+export type LearningContentQualityReview = {
+  contentId: string;
+  contentType: "lesson" | "assessment" | "study-guide" | "recommendation";
+  items: LearningContentQualityReviewItem[];
+};
+
+export type LearningContentQualityReviewResult = {
+  contentId: string;
+  complete: boolean;
+  approved: boolean;
+  missingAreas: LearningContentReviewArea[];
+  blockedAreas: LearningContentReviewArea[];
+};
+
 export type LearningStarterPathStandard = {
   id: string;
   standard: string;
@@ -89,6 +111,48 @@ export const thirdPartyLearningSiteDirection = {
   rule:
     "Third-party learning sites may be discussed as planning context only; no integration exists until owner-approved implementation scope is recorded.",
 };
+
+export function buildRequiredContentQualityReview({
+  contentId,
+  contentType,
+  reviewer = "beastlearning",
+}: {
+  contentId: string;
+  contentType: LearningContentQualityReview["contentType"];
+  reviewer?: LearningContentQualityReviewItem["reviewer"];
+}): LearningContentQualityReview {
+  return {
+    contentId,
+    contentType,
+    items: learningContentReviewRequirements.map((requirement) => ({
+      area: requirement.area,
+      reviewer,
+      status: "requires-changes",
+      notes: requirement.standard,
+      reviewedAt: "2026-07-12",
+    })),
+  };
+}
+
+export function evaluateContentQualityReview(
+  review: LearningContentQualityReview
+): LearningContentQualityReviewResult {
+  const reviewedAreas = new Set(review.items.map((item) => item.area));
+  const missingAreas = learningContentReviewRequirements
+    .map((requirement) => requirement.area)
+    .filter((area) => !reviewedAreas.has(area));
+  const blockedAreas = review.items
+    .filter((item) => item.status !== "approved")
+    .map((item) => item.area);
+
+  return {
+    contentId: review.contentId,
+    complete: missingAreas.length === 0,
+    approved: missingAreas.length === 0 && blockedAreas.length === 0,
+    missingAreas,
+    blockedAreas,
+  };
+}
 
 export function getCourseContentStatus(
   course: Pick<LearningBuiltCourse, "id" | "modules" | "completed">
@@ -159,4 +223,3 @@ export function getRecommendationContentStatus(
       : "Recommendation needs an explicit reason before surfaced claims.",
   };
 }
-
