@@ -116,6 +116,7 @@ import {
 import { curriculumSubjects } from "../src/lib/learning/curriculum";
 import { buildLearningDashboardContent } from "../src/lib/learning/dashboardContent";
 import { buildDependencyGraphState } from "../src/lib/learning/dependencyGraph";
+import { adjustLearningDifficulty } from "../src/lib/learning/difficultyAdjustment";
 import { buildLearningExperienceDashboard } from "../src/lib/learning/experience";
 import { buildLearningAIContext } from "../src/lib/learning/contextBuilder";
 import { mockConversationMemory, updateMockConversationMemory } from "../src/lib/learning/conversationMemory";
@@ -1105,6 +1106,46 @@ test("mastery scoring combines checks practice and recency", () => {
   assert.equal(stale.masteryPercent < current.masteryPercent, true);
   assert.equal(missingPractice.practiceScore, 0);
   assert.equal(missingPractice.masteryPercent < current.masteryPercent, true);
+});
+
+test("adaptive difficulty changes from success and struggle without subject branching", () => {
+  const strongSuccess = adjustLearningDifficulty({
+    conceptId: "fraction-fluency",
+    subject: "Pre-Algebra",
+    currentDifficulty: "developing",
+    checkScore: 94,
+    practiceScore: 90,
+    recencyScore: 100,
+    attempts: 4,
+    hintsUsed: 1,
+  });
+  const struggle = adjustLearningDifficulty({
+    conceptId: "incident-response-basics",
+    subject: "Cybersecurity certification preparation",
+    currentDifficulty: "developing",
+    checkScore: 52,
+    practiceScore: 58,
+    recencyScore: 80,
+    attempts: 4,
+    hintsUsed: 4,
+  });
+  const unrelatedSubject = adjustLearningDifficulty({
+    conceptId: "basic-joinery",
+    subject: "Woodworking",
+    currentDifficulty: "introductory",
+    checkScore: 88,
+    practiceScore: 86,
+    recencyScore: 95,
+    attempts: 3,
+    hintsUsed: 0,
+  });
+
+  assert.equal(strongSuccess.direction, "harder");
+  assert.equal(strongSuccess.recommendedDifficulty, "challenge");
+  assert.equal(struggle.direction, "easier");
+  assert.equal(struggle.recommendedDifficulty, "introductory");
+  assert.equal(unrelatedSubject.direction, "harder");
+  assert.equal(unrelatedSubject.recommendedDifficulty, "developing");
 });
 
 test("learning dependency graph computes blocked and unlocked concepts", () => {
