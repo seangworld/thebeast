@@ -255,6 +255,11 @@ import {
   normalizeAnswerForValidation,
   validateAnswer,
 } from "../src/lib/learning/answerValidation";
+import {
+  evaluateWrittenResponseRubric,
+  getWrittenResponseRubricById,
+  writtenResponseRubrics,
+} from "../src/lib/learning/writtenResponseRubrics";
 import { learningStandards } from "../src/lib/learning/standards";
 import { generateCurriculumLearningPath } from "../src/lib/learning/learningPaths";
 import { learningPathTemplates } from "../src/lib/learning/templates";
@@ -2648,6 +2653,55 @@ test("answer validation rules handle equivalent answers where appropriate", () =
   assert.equal(normalizeAnswerForValidation(" 6 X ", ["case-insensitive", "ignore-spacing"]), "6x");
   assert.equal(isPracticeAnswerCorrect(combiningLikeTermsLesson.guidedPractice[1], "6x+10"), true);
   assert.equal(quizScore.percent, 100);
+});
+
+test("written response rubrics model partial credit and feedback criteria generically", () => {
+  const rubric = getWrittenResponseRubricById("explain-support-reflect");
+  assert.ok(rubric);
+
+  const fixtures = [
+    {
+      prompt: "Explain why a biology observation supports a claim.",
+      response:
+        "The answer is supported because the observation shows a clear signal, so the next step is to check another sample.",
+    },
+    {
+      prompt: "Explain how to revise a short Spanish practice response.",
+      response:
+        "I would revise it because the detail shows the tense changed, therefore I should practice one more sentence next.",
+    },
+    {
+      prompt: "Explain how to improve a woodworking measurement.",
+      response:
+        "The step should be checked since the detail shows a mismatch, so I would try the measurement again next.",
+    },
+  ];
+  const partial = evaluateWrittenResponseRubric({
+    rubric,
+    response: "The answer is because the detail shows I should review it.",
+  });
+  const source = readFileSync("src/lib/learning/writtenResponseRubrics.ts", "utf8");
+
+  assert.equal(writtenResponseRubrics.length > 0, true);
+  assert.equal(rubric.criteria.every((criterion) => criterion.maxPoints > 0), true);
+  assert.deepEqual(
+    rubric.levels.map((level) => level.id),
+    ["complete", "partial", "needs-review"]
+  );
+  assert.equal(
+    fixtures.every((fixture) => {
+      const result = evaluateWrittenResponseRubric({ rubric, response: fixture.response });
+      return result.percent >= 85 && result.level.id === "complete" && result.feedback.length > 1;
+    }),
+    true
+  );
+  assert.equal(partial.level.id, "partial");
+  assert.equal(partial.percent > 0 && partial.percent < 85, true);
+  assert.equal(partial.criteria.some((criterion) => !criterion.met), true);
+  assert.equal(
+    /Pre-Algebra|Algebra|CompTIA|Security\+|A\+|Spanish|Biology|woodworking/i.test(source),
+    false
+  );
 });
 
 test("learning concept library models prerequisites and dependents", () => {

@@ -1,4 +1,8 @@
 import type { AdaptiveQuizQuestion } from "./lessonEngine";
+import {
+  getWrittenResponseRubricById,
+  rubricSupportsResponseKind,
+} from "./writtenResponseRubrics";
 
 export type AssessmentResponseKind =
   | "multiple-choice"
@@ -69,13 +73,15 @@ export function getAssessmentQuestionTypeForQuestion(
 
 export function questionSatisfiesAssessmentType(question: AdaptiveQuizQuestion) {
   const type = getAssessmentQuestionTypeForQuestion(question);
+  const rubric = question.rubricId ? getWrittenResponseRubricById(question.rubricId) : null;
 
   return Boolean(
     type &&
       question.prompt.trim().length > 0 &&
       question.answer.trim().length > 0 &&
       question.explanation.trim().length > 0 &&
-      (type.responseKind !== "multiple-choice" || question.options.length > 0)
+      (type.responseKind !== "multiple-choice" || question.options.length > 0) &&
+      (!rubric || rubricSupportsResponseKind({ rubric, responseKind: type.responseKind }))
   );
 }
 

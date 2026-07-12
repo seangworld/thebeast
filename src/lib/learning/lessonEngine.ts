@@ -50,6 +50,7 @@ export type AdaptivePracticeStep = {
 export type AdaptiveQuizQuestion = {
   id: string;
   questionTypeId?: string;
+  rubricId?: string;
   prompt: string;
   options: string[];
   answer: string;
