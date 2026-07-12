@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import {
   AlertCard,
   DashboardCard,
-  HealthGauge,
   MetricTile,
   ModuleBadge,
   SectionHeader,
@@ -592,6 +591,34 @@ export default async function LearningPage() {
     certificateTitle: learningCertificates[0]?.pathName,
     certificateVerification: learningCertificates[0]?.verificationPlaceholder,
   });
+  const learningReadinessSignals = [
+    {
+      label: "Confidence",
+      value: `${learningIntelligence.mastery.confidence} confidence`,
+    },
+    {
+      label: "Mastery",
+      value: `${learningIntelligence.mastery.overallMasteryPercent}% demonstrated`,
+    },
+    {
+      label: "Prerequisites",
+      value: `${learningIntelligence.dependencyGraph.unlockedConcepts.length} unlocked concepts`,
+    },
+    {
+      label: "Study consistency",
+      value: `${progressSignals.currentStreakDays} day streak`,
+    },
+    {
+      label: "Learning momentum",
+      value: `${progressSignals.sessionsCompleted} completed sessions`,
+    },
+    {
+      label: "Knowledge retention",
+      value: `${learningIntelligence.weakness.repeatedReviewNeeds.length} review need${
+        learningIntelligence.weakness.repeatedReviewNeeds.length === 1 ? "" : "s"
+      }`,
+    },
+  ];
 
   return (
     <main className="beast-page">
@@ -658,9 +685,26 @@ export default async function LearningPage() {
             />
             <div className="mt-5 grid gap-4 lg:grid-cols-[0.7fr_1fr]">
               <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
-                <HealthGauge score={progressSignals.readinessScore} />
-                <div className="mt-4 text-center text-sm font-semibold text-[#c7cfdb]">
-                  Readiness score
+                <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                  Learning Readiness
+                </div>
+                <div className="mt-3 text-4xl font-black text-white">
+                  {progressSignals.readinessScore}%
+                </div>
+                <div className="mt-4 grid gap-2">
+                  {learningReadinessSignals.map((signal) => (
+                    <div
+                      key={signal.label}
+                      className="rounded-lg border border-[#2a3242] bg-[#0f1419] p-3"
+                    >
+                      <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                        {signal.label}
+                      </div>
+                      <div className="mt-1 text-sm font-semibold text-[#dbe3ef]">
+                        {signal.value}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
               <div className="grid gap-3">

@@ -9,6 +9,16 @@ export type MasteryDecayReviewInput = {
   lastStudiedAt: string;
 };
 
+export type ForgottenSkillReviewInput = MasteryDecayReviewInput & {
+  previouslyMastered: boolean;
+  masteryFloorPercent?: number;
+};
+
+export type ForgottenSkillReview = SpacedRepetitionItem & {
+  reason: "mastery-decay" | "overdue-review";
+  decayedMasteryPercent: number;
+};
+
 export const spacedRepetitionItems: SpacedRepetitionItem[] = [
   {
     id: "review-rbac",
@@ -118,6 +128,50 @@ export function generateMasteryDecayReviewSchedule({
     overdueItems: items.filter((item) => item.nextReview < today),
     dueTodayItems: items.filter((item) => item.nextReview === today),
   };
+}
+
+export function detectForgottenSkillReviews({
+  concepts,
+  today = getBeastDateKey(),
+}: {
+  concepts: ForgottenSkillReviewInput[];
+  today?: string;
+}): ForgottenSkillReview[] {
+  return concepts
+    .filter((concept) => concept.previouslyMastered)
+    .map((concept) => {
+      const daysSinceStudy = daysBetween(today, concept.lastStudiedAt);
+      const decayedMastery = Math.max(
+        0,
+        Math.min(100, Math.round(concept.masteryPercent - daysSinceStudy * 2))
+      );
+      const masteryFloor = concept.masteryFloorPercent ?? 80;
+      const reviewIntervalDays = reviewIntervalFromMastery(decayedMastery);
+      const nextReview = addDays(concept.lastStudiedAt, reviewIntervalDays);
+      const reason: ForgottenSkillReview["reason"] =
+        decayedMastery < masteryFloor ? "mastery-decay" : "overdue-review";
+
+      return {
+        id: `forgotten-${concept.conceptId}`,
+        itemType: "lesson" as const,
+        itemId: concept.itemId || concept.conceptId,
+        firstReview: concept.lastStudiedAt,
+        nextReview,
+        reviewIntervalDays,
+        mastery: masteryLabelFromPercent(decayedMastery),
+        priority: priorityFromMastery(decayedMastery),
+        reason,
+        decayedMasteryPercent: decayedMastery,
+      };
+    })
+    .filter(
+      (review) =>
+        review.reason === "mastery-decay" || review.nextReview <= today
+    )
+    .sort((a, b) => {
+      const priorityOrder = { High: 0, Medium: 1, Low: 2 };
+      return priorityOrder[a.priority] - priorityOrder[b.priority];
+    });
 }
 
 export function getFlashcardsDueForReview(today = getBeastDateKey()) {

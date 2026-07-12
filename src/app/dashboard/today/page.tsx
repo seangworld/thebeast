@@ -504,172 +504,173 @@ export default function TodayPage() {
               <div className="h-20 rounded bg-[#2a3242]" />
             </div>
           </DashboardCard>
-        ) : (
-          <>
-            <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              <MetricTile
-                label="Progress"
-                value={`${progressPercent}%`}
-                detail={`${completedActivities.length} of ${state.activities.length} activities complete`}
-                icon="P"
-                tone="purple"
-              />
-              <MetricTile
-                label="XP"
-                value={String(totalXp)}
-                detail="Earned from completed activities"
-                icon="XP"
-                tone="yellow"
-              />
-              <MetricTile
-                label="Streak"
-                value={`${streak} day`}
-                detail={streak ? "Learning started today" : "Complete one activity to start"}
-                icon="S"
-                tone="green"
-              />
-              <MetricTile
-                label="Estimated Time"
-                value={`${estimatedMinutes} min`}
-                detail="Remaining today"
-                icon="T"
-                tone="blue"
-              />
-            </section>
+        ) : null}
+        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <MetricTile
+            label="Progress"
+            value={`${progressPercent}%`}
+            detail={`${completedActivities.length} of ${state.activities.length} activities complete`}
+            icon="P"
+            tone="purple"
+          />
+          <MetricTile
+            label="XP"
+            value={String(totalXp)}
+            detail="Earned from completed activities"
+            icon="XP"
+            tone="yellow"
+          />
+          <MetricTile
+            label="Streak"
+            value={`${streak} day`}
+            detail={streak ? "Learning started today" : "Complete one activity to start"}
+            icon="S"
+            tone="green"
+          />
+          <MetricTile
+            label="Estimated Time"
+            value={`${estimatedMinutes} min`}
+            detail="Remaining today"
+            icon="T"
+            tone="blue"
+          />
+        </section>
 
-            <DashboardCard accent="learning">
-              <SectionHeader
-                eyebrow="Today's Mission"
-                title={readyActivity?.title || "Create your first activity"}
-                description={
-                  readyActivity
-                    ? `${readyActivity.activity_type} - ${readyActivity.difficulty} - ${readyActivity.estimated_minutes} minutes`
-                    : state.activities.length > 0
-                      ? "You finished the current queue. Generate the next mission to keep learning."
-                      : "Your activity queue is empty. Generate a learning mission to begin."
-                }
-                action={<ModuleBadge module="learning" label="Next Step" />}
-              />
-              <div className="mt-5 flex flex-wrap items-center gap-3">
-                {readyActivity ? (
-                  <Link
-                    href={getLearningActivityRoute(readyActivity.id)}
-                    className="beast-button"
-                  >
-                    Start Activity
-                  </Link>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={generateNextActivity}
-                    className="beast-button"
-                    disabled={generating}
-                  >
-                    {generating ? "Generating..." : "Generate Activity"}
-                  </button>
-                )}
-                <p className="text-sm font-semibold text-[#c7cfdb]">
-                  Next recommended action:{" "}
-                  {readyActivity
-                    ? `Finish this ${readyActivity.activity_type.toLowerCase()} first.`
-                    : state.activities.length > 0
-                      ? "Start the next generated activity."
-                      : "Generate your first activity."}
-                </p>
-              </div>
-            </DashboardCard>
+        <DashboardCard accent="learning">
+          <SectionHeader
+            eyebrow="Today's Mission"
+            title={readyActivity?.title || "Create your first activity"}
+            description={
+              readyActivity
+                ? `${readyActivity.activity_type} - ${readyActivity.difficulty} - ${readyActivity.estimated_minutes} minutes`
+                : state.activities.length > 0
+                  ? "You finished the current queue. Generate the next mission to keep learning."
+                  : "Your activity queue is empty. Generate a learning mission to begin."
+            }
+            action={<ModuleBadge module="learning" label="Next Step" />}
+          />
+          <div className="mt-5 flex flex-wrap items-center gap-3">
+            {readyActivity ? (
+              <Link
+                href={getLearningActivityRoute(readyActivity.id)}
+                className="beast-button"
+              >
+                Start Activity
+              </Link>
+            ) : (
+              <button
+                type="button"
+                onClick={generateNextActivity}
+                className="beast-button"
+                disabled={generating || loading}
+              >
+                {generating ? "Generating..." : "Generate Activity"}
+              </button>
+            )}
+            <p className="text-sm font-semibold text-[#c7cfdb]">
+              Next recommended action:{" "}
+              {readyActivity
+                ? `Finish this ${readyActivity.activity_type.toLowerCase()} first.`
+                : state.activities.length > 0
+                  ? "Start the next generated activity."
+                  : loading
+                    ? "Loading your learning activity queue."
+                    : "Generate your first activity."}
+            </p>
+          </div>
+        </DashboardCard>
 
-            <section id="activities" className="grid scroll-mt-24 gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-              <DashboardCard accent="learning">
-                <SectionHeader
-                  eyebrow="Today's Activities"
-                  title="Work waiting for you"
-                  description="Complete the ready card, then the next activity unlocks."
-                />
-                <div className="mt-5 grid gap-3">
-                  {activityList.map((activity) => (
-                    <div
-                      key={activity.id}
-                      className={`rounded-xl border p-4 ${getActivityTone(activity.status)}`}
-                    >
-                      <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div>
-                          <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                            {activity.activity_type} - {activity.difficulty}
-                          </div>
-                          <h3 className="mt-1 font-black text-white">{activity.title}</h3>
-                        </div>
-                        <span className="rounded-full border border-[#2a3242] bg-[#0f1419] px-3 py-1 text-xs font-bold text-[#dbe3ef]">
-                          {activity.status}
-                        </span>
+        <section id="activities" className="grid scroll-mt-24 gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+          <DashboardCard accent="learning">
+            <SectionHeader
+              eyebrow="Today's Activities"
+              title="Work waiting for you"
+              description="Complete the ready card, then the next activity unlocks."
+            />
+            <div className="mt-5 grid gap-3">
+              {activityList.map((activity) => (
+                <div
+                  key={activity.id}
+                  className={`rounded-xl border p-4 ${getActivityTone(activity.status)}`}
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                        {activity.activity_type} - {activity.difficulty}
                       </div>
-                      <div className="mt-3 flex flex-wrap gap-2 text-xs font-bold uppercase text-[#9aa7b8]">
-                        <span>{activity.estimated_minutes} min</span>
-                        <span>{activity.xp} XP</span>
-                      </div>
-                      <div className="mt-4">
-                        {activity.status === "Completed" ? (
-                          <Link
-                            href={getLearningActivityRoute(activity.id)}
-                            className="beast-button-secondary"
-                          >
-                            Review
-                          </Link>
-                        ) : (
-                          <Link
-                            href={getLearningActivityRoute(activity.id)}
-                            className="beast-button"
-                          >
-                            Start
-                          </Link>
-                        )}
-                      </div>
+                      <h3 className="mt-1 font-black text-white">{activity.title}</h3>
                     </div>
-                  ))}
-                  {activityList.length === 0 ? (
-                    <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
-                      <h3 className="font-black text-white">No activities yet</h3>
-                      <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
-                        Generate your first mission above to start the teaching experience.
-                      </p>
-                    </div>
-                  ) : null}
+                    <span className="rounded-full border border-[#2a3242] bg-[#0f1419] px-3 py-1 text-xs font-bold text-[#dbe3ef]">
+                      {activity.status}
+                    </span>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2 text-xs font-bold uppercase text-[#9aa7b8]">
+                    <span>{activity.estimated_minutes} min</span>
+                    <span>{activity.xp} XP</span>
+                  </div>
+                  <div className="mt-4">
+                    {activity.status === "Completed" ? (
+                      <Link
+                        href={getLearningActivityRoute(activity.id)}
+                        className="beast-button-secondary"
+                      >
+                        Review
+                      </Link>
+                    ) : (
+                      <Link
+                        href={getLearningActivityRoute(activity.id)}
+                        className="beast-button"
+                      >
+                        Start
+                      </Link>
+                    )}
+                  </div>
                 </div>
-              </DashboardCard>
-
-              <DashboardCard accent="purple">
-                <SectionHeader
-                  eyebrow="Continue Learning"
-                  title={state.courses[0]?.title || "Your first course"}
-                  description={
-                    state.courses.length > 0
-                      ? `${state.courses.length} course${state.courses.length === 1 ? "" : "s"} in your path.`
-                      : "Add a course in onboarding to build your path."
-                  }
-                />
-                <div className="mt-5 grid gap-3">
-                  {state.courses.map((course) => (
-                    <div
-                      key={course.id}
-                      className="rounded-xl border border-[#2a3242] bg-[#111827] p-4"
-                    >
-                      <div className="font-black text-white">{course.title}</div>
-                      <div className="mt-2 h-2 rounded-full bg-[#0f1419]">
-                        <div
-                          className="h-full rounded-full bg-[#818cf8]"
-                          style={{ width: `${Number(course.progress || 0)}%` }}
-                        />
-                      </div>
-                      <div className="mt-2 text-xs font-bold uppercase text-[#7f8da3]">
-                        {Number(course.progress || 0)}% progress
-                      </div>
-                    </div>
-                  ))}
+              ))}
+              {activityList.length === 0 ? (
+                <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+                  <h3 className="font-black text-white">No activities yet</h3>
+                  <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
+                    {loading
+                      ? "Your learning activities are loading."
+                      : "Generate your first mission above to start the teaching experience."}
+                  </p>
                 </div>
-              </DashboardCard>
-            </section>
-          </>
-        )}
+              ) : null}
+            </div>
+          </DashboardCard>
+
+          <DashboardCard accent="purple">
+            <SectionHeader
+              eyebrow="Continue Learning"
+              title={state.courses[0]?.title || "Your first course"}
+              description={
+                state.courses.length > 0
+                  ? `${state.courses.length} course${state.courses.length === 1 ? "" : "s"} in your path.`
+                  : "Add a course in onboarding to build your path."
+              }
+            />
+            <div className="mt-5 grid gap-3">
+              {state.courses.map((course) => (
+                <div
+                  key={course.id}
+                  className="rounded-xl border border-[#2a3242] bg-[#111827] p-4"
+                >
+                  <div className="font-black text-white">{course.title}</div>
+                  <div className="mt-2 h-2 rounded-full bg-[#0f1419]">
+                    <div
+                      className="h-full rounded-full bg-[#818cf8]"
+                      style={{ width: `${Number(course.progress || 0)}%` }}
+                    />
+                  </div>
+                  <div className="mt-2 text-xs font-bold uppercase text-[#7f8da3]">
+                    {Number(course.progress || 0)}% progress
+                  </div>
+                </div>
+              ))}
+            </div>
+          </DashboardCard>
+        </section>
       </div>
     </main>
   );

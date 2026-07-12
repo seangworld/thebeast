@@ -204,6 +204,7 @@ import { generateStudySession } from "../src/lib/learning/sessionGenerator";
 import { buildSkillTree } from "../src/lib/learning/skills";
 import { learningSpecialists, routeMockLearningSpecialist } from "../src/lib/learning/specialists";
 import {
+  detectForgottenSkillReviews,
   buildSpacedRepetitionSchedule,
   generateMasteryDecayReviewSchedule,
   getFlashcardsDueForReview,
@@ -1599,6 +1600,40 @@ test("spaced review scheduler generates review dates from mastery decay", () => 
   );
 });
 
+test("spaced review detects forgotten mastered skills", () => {
+  const reviews = detectForgottenSkillReviews({
+    today: "2026-07-10",
+    concepts: [
+      {
+        conceptId: "fractions",
+        masteryPercent: 94,
+        lastStudiedAt: "2026-06-20",
+        previouslyMastered: true,
+      },
+      {
+        conceptId: "new-vocabulary",
+        masteryPercent: 30,
+        lastStudiedAt: "2026-07-09",
+        previouslyMastered: false,
+      },
+      {
+        conceptId: "wood-joints",
+        masteryPercent: 97,
+        lastStudiedAt: "2026-07-01",
+        previouslyMastered: true,
+      },
+    ],
+  });
+
+  assert.deepEqual(
+    reviews.map((review) => review.itemId),
+    ["fractions", "wood-joints"]
+  );
+  assert.equal(reviews[0].reason, "mastery-decay");
+  assert.equal(reviews[0].priority, "Medium");
+  assert.equal(reviews.every((review) => review.id.startsWith("forgotten-")), true);
+});
+
 test("learning quiz and practice exam frameworks support review state", () => {
   const quiz = learningQuizzes[0];
   const exam = learningPracticeExams[0];
@@ -1773,8 +1808,11 @@ test("home and today navigation render stable route shells during data loading",
   assert.match(todaySource, /const \[loading, setLoading\] = useState\(true\)/);
   assert.match(homeSource, /\{loading \? \(/);
   assert.match(todaySource, /\{loading \? \(/);
+  assert.match(todaySource, /title=\{readyActivity\?\.title \|\| "Create your first activity"\}/);
+  assert.match(todaySource, /disabled=\{generating \|\| loading\}/);
   assert.doesNotMatch(homeSource, /\{loading \|\| !user\.name\s+\?/);
   assert.doesNotMatch(todaySource, /\{loading \|\| !state\.name\s+\?/);
+  assert.doesNotMatch(todaySource, /\{loading \? \([\s\S]*?\) : \(\s*<>\s*<section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"/);
   assert.doesNotMatch(homeSource, /Opening your dashboard/);
   assert.doesNotMatch(todaySource, /Opening your dashboard/);
   assert.doesNotMatch(calendarSource, /const \[loading, setLoading\]/);
