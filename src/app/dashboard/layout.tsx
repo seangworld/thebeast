@@ -33,7 +33,7 @@ import {
 const learningPrimaryNavigation: ModuleNavSection[] = [
   { label: "Home", href: "/dashboard/learning", module: "learning" },
   { label: "Today", href: "/dashboard/today", module: "learning" },
-  { label: "Continue Learning", href: "/dashboard/learning/activities", module: "learning" },
+  { label: "Continue Learning", href: "/dashboard/learning#mentor-session", module: "learning" },
   { label: "Learning Path", href: "/dashboard/learning#learning-path", module: "learning" },
   { label: "Progress", href: "/dashboard/learning#progress", module: "learning" },
   { label: "Achievements", href: "/dashboard/learning#achievements", module: "learning" },

@@ -2067,17 +2067,18 @@ test("BeastLearning member home starts with Mentor before dashboard support", ()
   );
 
   assert.match(learningPage, /MentorConversationCenter/);
-  assert.match(learningPage, /I'm your BeastLearning Mentor/);
-  assert.match(learningPage, /I'm here for the long run/);
-  assert.match(learningPage, /What I own for you/);
-  assert.match(learningPage, /Goals, memory, recommendations, roadmap, next steps/);
-  assert.match(learningPage, /What the Tutor owns/);
-  assert.match(learningPage, /Teaching, practice, feedback, mastery checks/);
-  assert.match(learningPage, /When instruction starts/);
-  assert.match(learningPage, /adjust your roadmap/);
+  assert.match(learningPage, /Persistent Mentor Conversation/);
+  assert.match(learningPage, /Stay here\. I will move us through the learning\./);
+  assert.match(learningPage, /The conversation stays in one place/);
+  assert.match(learningPage, /I handle onboarding, goals, roadmap, memory, progress, recommendations, and next steps/);
+  assert.match(learningPage, /When teaching is needed, I bring the Tutor into this same flow/);
+  assert.match(learningPage, /I am bringing the Tutor in now/);
+  assert.match(learningPage, /I can teach this right here/);
   assert.match(learningPage, /What I remember/);
   assert.match(learningPage, /Review I am watching/);
   assert.match(learningPage, /How I am adapting/);
+  assert.match(learningPage, /Conversation Memory/);
+  assert.match(learningPage, /Progress I am watching/);
   assert.match(learningPage, /learningIntelligence\.memory\.recentlyStudied/);
   assert.match(learningPage, /learningIntelligence\.adaptivePlan\.nextRecommendedLesson/);
   assert.equal(
@@ -2087,6 +2088,26 @@ test("BeastLearning member home starts with Mentor before dashboard support", ()
   );
   assert.doesNotMatch(learningPage, /function AITutorCenter/);
   assert.match(lessonEngine, /Your Tutor/);
+});
+
+test("BeastLearning v2 keeps normal learning in the Mentor conversation", () => {
+  const learningPage = readFileSync("src/app/dashboard/learning/page.tsx", "utf8");
+  const todayPage = readFileSync("src/app/dashboard/today/page.tsx", "utf8");
+  const dashboardLayout = readFileSync("src/app/dashboard/layout.tsx", "utf8");
+  const moduleNavigation = readFileSync("src/lib/moduleNavigation.ts", "utf8");
+
+  assert.match(learningPage, /id="mentor-session"/);
+  assert.match(learningPage, /Continue here/);
+  assert.match(learningPage, /Continue with my Mentor/);
+  assert.match(learningPage, /Open full Tutor workspace/);
+  assert.match(learningPage, /getLearningActivityRoute\(readyActivity\.id\)/);
+  assert.match(learningPage, /getLearningActivityRoute\(learningPathReadyActivity\.id\)/);
+  assert.equal(learningPage.includes("Continue with my Mentor"), true);
+  assert.equal(learningPage.includes("Open full Tutor workspace"), true);
+  assert.match(todayPage, /href="\/dashboard\/learning#mentor-session"[\s\S]*Continue with Mentor/);
+  assert.match(dashboardLayout, /href: "\/dashboard\/learning#mentor-session"/);
+  assert.match(moduleNavigation, /label: "Continue", href: "\/dashboard\/learning#mentor-session"/);
+  assert.doesNotMatch(moduleNavigation, /label: "Continue", href: "\/dashboard\/learning\/activities"/);
 });
 
 test("BeastLearning first impression starts with the Mentor relationship", () => {
@@ -2126,7 +2147,8 @@ test("BeastLearning member experience hides workflow mechanics behind Mentor and
     studySessionCard,
   ].join("\n");
 
-  assert.match(memberExperienceSource, /Continue with Tutor/);
+  assert.match(memberExperienceSource, /Continue with Mentor/);
+  assert.match(memberExperienceSource, /Continue with my Mentor/);
   assert.match(memberExperienceSource, /Let the Tutor teach this/);
   assert.match(memberExperienceSource, /Your Mentor's Next Step/);
   assert.match(memberExperienceSource, /Your Mentor remembers this/);
@@ -3769,9 +3791,9 @@ test("member navigation hides admin and monetization surfaces", () => {
     memberBeastLearningNavigation.children?.map((item) => item.href),
     [
       "/dashboard/learning",
-      "/dashboard/learning/activities",
-      "/dashboard/learning#learning-path",
-      "/dashboard/learning#progress",
+      "/dashboard/learning#mentor-session",
+      "/dashboard/learning#mentor-plan",
+      "/dashboard/learning#mentor-progress",
       "/dashboard/learning#achievements",
     ]
   );

@@ -402,6 +402,11 @@ function MentorConversationCenter({
   recommendationReason,
   mentorSignals,
   readyActivity,
+  learningReadinessSignals,
+  learningPlan,
+  learningGoals,
+  learningCourses,
+  learningRecommendations,
 }: {
   learnerName: string;
   goal: string;
@@ -410,76 +415,165 @@ function MentorConversationCenter({
   estimatedTime: string;
   recommendationReason: string;
   mentorSignals: { label: string; value: string }[];
+  learningReadinessSignals: { label: string; value: string }[];
+  learningPlan: LearningPlan;
+  learningGoals: LearningGoal[];
+  learningCourses: LearningCourse[];
+  learningRecommendations: LearningRecommendation[];
   readyActivity?: LearningPathActivityRow;
 }) {
-  const activityHref = readyActivity
-    ? getLearningActivityRoute(readyActivity.id)
-    : "/dashboard/learning/activities";
+  const firstName = getFirstName(learnerName);
+  const activeRole = readyActivity ? "Mentor with Tutor ready" : "Mentor";
+  const roadmapPreview = learningCourses.slice(0, 3);
+  const visibleRecommendations = learningRecommendations.slice(0, 3);
 
   return (
     <DashboardCard accent="learning">
       <SectionHeader
-        eyebrow="Your Mentor"
-        title="I'm here for the long run"
-        description="I remember your goals, watch your progress, explain the plan, and choose the next step. When instruction is needed, I bring in your Tutor."
-        action={<ModuleBadge module="learning" label="Mentor" />}
+        eyebrow="Persistent Mentor Conversation"
+        title="Stay here. I will move us through the learning."
+        description="The conversation stays in one place. I handle onboarding, goals, roadmap, memory, progress, recommendations, and next steps. When teaching is needed, I bring the Tutor into this same flow."
+        action={<ModuleBadge module="learning" label={activeRole} />}
       />
-      <div className="mt-5 grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
-        <div className="rounded-xl border border-indigo-300/45 bg-indigo-300/10 p-5">
-          <div className="text-xs font-bold uppercase text-[#7f8da3]">
-            Conversation
-          </div>
-          <div className="mt-3 space-y-3 text-base font-semibold leading-7 text-indigo-50">
-            <p>Hi {getFirstName(learnerName)}.</p>
-            <p>Good afternoon.</p>
-            <p>{"I'm your BeastLearning Mentor, and I remember what we are building together."}</p>
-            <p>How are things going today?</p>
-            <p>Ready to keep moving toward {goal}?</p>
-          </div>
-          <p className="mt-5 text-sm leading-6 text-indigo-100">
-            {"I'll hold the long-term roadmap, keep track of what changes, explain why each step matters, and bring in the Tutor when it is time for instruction."}
-          </p>
-          <div className="mt-5 grid gap-2 rounded-xl border border-indigo-200/25 bg-[#0f1419]/65 p-4 text-sm leading-6 text-indigo-50">
-            <div className="font-black text-white">What I own for you</div>
-            <p>Goals, memory, recommendations, roadmap, next steps, and the reason behind the plan.</p>
-            <div className="font-black text-white">What the Tutor owns</div>
-            <p>Teaching, practice, feedback, mastery checks, hints, and remediation.</p>
-          </div>
-          <div className="mt-5 grid gap-3">
-            {mentorSignals.map((signal) => (
+
+      <div id="mentor-session" className="mt-6 grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]">
+        <section
+          className="grid min-h-[620px] content-between gap-5 rounded-2xl border border-indigo-300/35 bg-[#0b1020] p-4 sm:p-5"
+          aria-label="Persistent BeastLearning Mentor conversation"
+        >
+          <div className="grid gap-4">
+            {[
+              {
+                role: "Mentor",
+                title: `Hi ${firstName}. I am here with you.`,
+                body:
+                  "We will stay in this conversation. You do not need to hunt through pages to figure out what to do next.",
+              },
+              {
+                role: "Mentor",
+                title: "Here is what I am holding for you.",
+                body: `Your current goal is ${goal}. Right now we are focused on ${currentProgress}. I will keep the roadmap, memory, progress, and next steps together.`,
+              },
+              {
+                role: "Mentor",
+                title: "Here is why I am choosing today's step.",
+                body: recommendationReason,
+              },
+            ].map((message) => (
               <div
-                key={signal.label}
-                className="rounded-xl border border-indigo-200/25 bg-[#0f1419]/65 p-3"
+                key={message.title}
+                className="max-w-3xl rounded-2xl border border-indigo-300/30 bg-indigo-300/10 p-4"
               >
-                <div className="text-xs font-bold uppercase text-indigo-100">
-                  {signal.label}
+                <div className="text-xs font-black uppercase text-indigo-100">
+                  {message.role}
                 </div>
-                <p className="mt-1 text-sm leading-5 text-indigo-50">
-                  {signal.value}
-                </p>
+                <h3 className="mt-2 text-lg font-black text-white">{message.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-indigo-50">{message.body}</p>
               </div>
             ))}
-          </div>
-          <div className="mt-5 flex flex-wrap gap-3">
-            <Link href={activityHref} className="beast-button">
-              Continue
-            </Link>
-            <Link
-              href="#learning-path"
-              className="beast-button-secondary"
-            >
-              Show me my plan
-            </Link>
-          </div>
-        </div>
 
-        <div className="grid gap-3 sm:grid-cols-2">
-          {[
-            ["Goal", goal],
-            ["Where we are now", currentProgress],
-            ["What I recommend today", todayRecommendation],
-            ["Time we'll need", estimatedTime],
-          ].map(([label, value]) => (
+            <div className="max-w-3xl rounded-2xl border border-[#2a3242] bg-[#111827] p-4">
+              <div className="text-xs font-black uppercase text-[#7f8da3]">
+                Mentor
+              </div>
+              <h3 className="mt-2 text-lg font-black text-white">
+                {readyActivity ? "I am bringing the Tutor in now." : "I am still building the first teaching moment."}
+              </h3>
+              <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
+                {readyActivity
+                  ? `${readyActivity.title} is ready. I chose it because it fits where you are now and gives the Tutor a focused starting point.`
+                  : "Tell me your goal or return to Today, and I will prepare the first useful lesson without making you manage a workflow."}
+              </p>
+            </div>
+
+            {readyActivity ? (
+              <div className="ml-auto max-w-3xl rounded-2xl border border-cyan-300/35 bg-cyan-300/10 p-4">
+                <div className="text-xs font-black uppercase text-cyan-100">
+                  Tutor
+                </div>
+                <h3 className="mt-2 text-lg font-black text-white">
+                  I can teach this right here.
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-cyan-50">
+                  We will start with one idea, try one question, use hints if
+                  you need them, check mastery, and then I will hand the result
+                  back to your Mentor.
+                </p>
+                <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                  <div className="rounded-xl border border-cyan-200/25 bg-[#0f1419]/80 p-3">
+                    <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                      Lesson
+                    </div>
+                    <div className="mt-1 text-sm font-black text-white">
+                      {readyActivity.title}
+                    </div>
+                  </div>
+                  <div className="rounded-xl border border-cyan-200/25 bg-[#0f1419]/80 p-3">
+                    <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                      Time
+                    </div>
+                    <div className="mt-1 text-sm font-black text-white">
+                      {estimatedTime}
+                    </div>
+                  </div>
+                  <div className="rounded-xl border border-cyan-200/25 bg-[#0f1419]/80 p-3">
+                    <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                      Role
+                    </div>
+                    <div className="mt-1 text-sm font-black text-white">
+                      Tutor teaches
+                    </div>
+                  </div>
+                </div>
+                <Link
+                  href={getLearningActivityRoute(readyActivity.id)}
+                  className="beast-button mt-4 inline-flex"
+                >
+                  Open full Tutor workspace
+                </Link>
+              </div>
+            ) : null}
+          </div>
+
+          <div className="flex flex-wrap gap-3 border-t border-[#2a3242] pt-4">
+            <a href="#mentor-session" className="beast-button">
+              Continue here
+            </a>
+            <a href="#mentor-plan" className="beast-button-secondary">
+              Show me my plan
+            </a>
+            <a href="#mentor-progress" className="beast-button-secondary">
+              Show me how I am doing
+            </a>
+          </div>
+        </section>
+
+        <aside className="grid content-start gap-3">
+          <div className="rounded-2xl border border-[#2a3242] bg-[#111827] p-4">
+            <div className="text-xs font-black uppercase text-[#7f8da3]">
+              Conversation Memory
+            </div>
+            <div className="mt-3 grid gap-3">
+              {mentorSignals.map((signal) => (
+                <div key={signal.label} className="rounded-xl border border-[#2a3242] bg-[#0f1419] p-3">
+                  <div className="text-xs font-bold uppercase text-indigo-100">
+                    {signal.label}
+                  </div>
+                  <p className="mt-1 text-sm leading-5 text-[#c7cfdb]">
+                    {signal.value}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
+            {[
+              ["Goal", goal],
+              ["Now", currentProgress],
+              ["Recommendation", todayRecommendation],
+              ["Time", estimatedTime],
+            ].map(([label, value]) => (
             <div
               key={label}
               className="rounded-xl border border-[#2a3242] bg-[#111827] p-4"
@@ -492,26 +586,66 @@ function MentorConversationCenter({
               </div>
             </div>
           ))}
-          <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 sm:col-span-2">
-            <div className="text-xs font-bold uppercase text-[#7f8da3]">
-              Why this step
-            </div>
-            <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
-              {recommendationReason}
-            </p>
           </div>
-          <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 sm:col-span-2">
+
+          <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
             <div className="text-xs font-bold uppercase text-[#7f8da3]">
-              When instruction starts
+              Learning Readiness
             </div>
-            <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
-              I will introduce your Tutor, who will teach one idea at a time,
-              ask questions, give hints, explain it another way when needed,
-              and check that it really makes sense. Then the Tutor hands the
-              result back to me so I can adjust your roadmap.
-            </p>
+            <div className="mt-3 grid gap-2">
+              {learningReadinessSignals.slice(0, 4).map((signal) => (
+                <div key={signal.label} className="flex justify-between gap-3 text-sm">
+                  <span className="font-semibold text-[#9aa7b8]">{signal.label}</span>
+                  <span className="text-right font-black text-white">{signal.value}</span>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+
+          <div id="mentor-plan" className="scroll-mt-24 rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+            <div className="text-xs font-bold uppercase text-[#7f8da3]">
+              My Plan
+            </div>
+            <h3 className="mt-2 font-black text-white">{learningPlan.title}</h3>
+            <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
+              {learningPlan.summary}
+            </p>
+            <div className="mt-3 grid gap-2">
+              {roadmapPreview.map((course) => (
+                <div key={course.id} className="rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
+                  <div className="text-sm font-black text-white">{course.title}</div>
+                  <div className="mt-1 text-xs font-bold uppercase text-[#7f8da3]">
+                    {course.progress}% explored
+                  </div>
+                </div>
+              ))}
+              {roadmapPreview.length === 0 ? (
+                <p className="text-sm font-semibold text-[#c7cfdb]">
+                  I will build this with you as I learn your goal.
+                </p>
+              ) : null}
+            </div>
+          </div>
+
+          <div id="mentor-progress" className="scroll-mt-24 rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+            <div className="text-xs font-bold uppercase text-[#7f8da3]">
+              Progress I am watching
+            </div>
+            <div className="mt-3 grid gap-2">
+              {learningGoals.slice(0, 2).map((learningGoal) => (
+                <div key={learningGoal.id} className="rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
+                  <div className="text-sm font-black text-white">{learningGoal.title}</div>
+                  <ProgressBar value={learningGoal.progress} />
+                </div>
+              ))}
+              {visibleRecommendations.map((recommendation) => (
+                <p key={recommendation.id} className="rounded-lg border border-indigo-300/25 bg-indigo-300/10 p-3 text-sm font-semibold leading-5 text-indigo-100">
+                  {recommendation.title}
+                </p>
+              ))}
+            </div>
+          </div>
+        </aside>
       </div>
     </DashboardCard>
   );
@@ -822,6 +956,11 @@ export default async function LearningPage() {
             estimatedTime={estimatedTimeLabel}
             recommendationReason={recommendationReason}
             mentorSignals={mentorSignals}
+            learningReadinessSignals={learningReadinessSignals}
+            learningPlan={learningPlan}
+            learningGoals={learningGoals}
+            learningCourses={learningCourses}
+            learningRecommendations={learningRecommendations}
             readyActivity={learningPathReadyActivity}
           />
         </div>
@@ -929,8 +1068,8 @@ export default async function LearningPage() {
             title={learningPathReadyActivity?.title || "Your Mentor is getting the next lesson ready"}
             description={
               learningPathReadyActivity
-                ? `This is the lesson your Mentor recommends next. It should take about ${learningPathReadyActivity.estimated_minutes} minutes.`
-                : "Open Today and your Mentor will prepare the next learning step from your path."
+                ? "Your Mentor has brought the Tutor into the conversation above. Stay there unless you want the full Tutor workspace."
+                : "Stay with your Mentor above. The first learning step will appear there when it is ready."
             }
             action={
               <ModuleBadge
@@ -940,20 +1079,17 @@ export default async function LearningPage() {
             }
           />
           <div className="mt-5 flex flex-wrap gap-3">
+            <a href="#mentor-session" className="beast-button">
+              Continue with my Mentor
+            </a>
             {learningPathReadyActivity ? (
               <Link
                 href={getLearningActivityRoute(learningPathReadyActivity.id)}
-                className="beast-button"
+                className="beast-button-secondary"
               >
-                Continue with Tutor
+                Open full Tutor workspace
               </Link>
             ) : null}
-            <Link
-              href="/dashboard/learning/activities"
-              className="beast-button-secondary"
-            >
-              See My Learning Steps
-            </Link>
           </div>
         </DashboardCard>
 

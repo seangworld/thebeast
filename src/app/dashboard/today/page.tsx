@@ -554,10 +554,10 @@ export default function TodayPage() {
           <div className="mt-5 flex flex-wrap items-center gap-3">
             {readyActivity ? (
               <Link
-                href={getLearningActivityRoute(readyActivity.id)}
+                href="/dashboard/learning#mentor-session"
                 className="beast-button"
               >
-                Continue with Tutor
+                Continue with Mentor
               </Link>
             ) : (
               <button
