@@ -191,6 +191,7 @@ const algebraExpansionScope: SampleCurriculumScope = {
 
 export const combiningLikeTermsLesson: AdaptiveLesson = {
   id: "pre-algebra-combining-like-terms",
+  templateId: "procedural-skill-lesson",
   title: "Combining Like Terms",
   subject: preAlgebraScope.subject,
   scopeId: preAlgebraScope.id,
@@ -324,6 +325,7 @@ export const combiningLikeTermsLesson: AdaptiveLesson = {
 
 const linearEquationsLesson: AdaptiveLesson = {
   id: "algebra-linear-equations",
+  templateId: "procedural-skill-lesson",
   title: "Linear Equations",
   subject: algebraExpansionScope.subject,
   scopeId: algebraExpansionScope.id,
@@ -456,6 +458,7 @@ const linearEquationsLesson: AdaptiveLesson = {
 
 const certificationFoundationLesson: AdaptiveLesson = {
   id: "sample-certification-foundation",
+  templateId: "guided-concept-lesson",
   title: "Certification Foundation Scan",
   subject: "Cybersecurity Certification Preparation",
   learningObjective:
@@ -553,6 +556,7 @@ const certificationFoundationLesson: AdaptiveLesson = {
 
 const spanishConversationLesson: AdaptiveLesson = {
   id: "sample-spanish-greetings",
+  templateId: "conversation-practice-lesson",
   title: "Spanish Greeting Practice",
   subject: "Spanish",
   learningObjective:
@@ -819,6 +823,7 @@ export function createGeneratedLearningContentRecord(
     emptyStateLabel: "a generated learning mission",
     lesson: {
       id: lessonId,
+      templateId: "generated-starter-lesson",
       title: "Starter Lesson",
       subject: resolvedSubject,
       learningObjective: `Build a first teachable step for ${resolvedSubject} from the learner goal, prerequisite check, and current confidence.`,

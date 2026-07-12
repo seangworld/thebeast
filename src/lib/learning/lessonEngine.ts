@@ -80,6 +80,7 @@ export type InteractiveLessonVisual = {
 
 export type AdaptiveLesson = {
   id: string;
+  templateId?: string;
   title: string;
   subject: string;
   scopeId?: string;

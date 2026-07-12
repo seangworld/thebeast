@@ -233,6 +233,12 @@ import {
   getTeachingVisualSelectionFeedback,
   isPracticeAnswerCorrect,
 } from "../src/lib/learning/lessonEngine";
+import {
+  getLessonTemplateCoverage,
+  getLessonTemplateForLesson,
+  lessonSatisfiesTemplate,
+  lessonTemplateLibrary,
+} from "../src/lib/learning/lessonTemplates";
 import { learningStandards } from "../src/lib/learning/standards";
 import { generateCurriculumLearningPath } from "../src/lib/learning/learningPaths";
 import { learningPathTemplates } from "../src/lib/learning/templates";
@@ -2423,6 +2429,52 @@ test("sample content records keep proving examples out of generic engine branchi
   assert.equal(
     mathematics?.courses.some((course) => course.id === "algebra-expansion-course"),
     true
+  );
+});
+
+test("lesson template library separates instruction examples practice and checks", () => {
+  const requiredSections = ["instruction", "examples", "practice", "checks"];
+  const generatedBiology = createGeneratedLearningContentRecord("Biology");
+  const lessons = [
+    ...sampleLearningContentRecords.map((record) => record.lesson),
+    generatedBiology.lesson,
+  ];
+
+  assert.deepEqual(
+    lessonTemplateLibrary.map((template) => template.id),
+    [
+      "guided-concept-lesson",
+      "procedural-skill-lesson",
+      "conversation-practice-lesson",
+      "generated-starter-lesson",
+    ]
+  );
+  assert.equal(
+    lessonTemplateLibrary.every((template) =>
+      requiredSections.every((section) =>
+        template.sections.some((candidate) => candidate.kind === section)
+      )
+    ),
+    true
+  );
+  assert.equal(
+    lessons.every((lesson) => Boolean(getLessonTemplateForLesson(lesson))),
+    true
+  );
+  assert.equal(lessons.every(lessonSatisfiesTemplate), true);
+  assert.deepEqual(getLessonTemplateCoverage(generatedBiology.lesson), {
+    instruction: true,
+    examples: true,
+    practice: true,
+    checks: true,
+  });
+  assert.equal(
+    getLessonTemplateForLesson(generatedBiology.lesson)?.id,
+    "generated-starter-lesson"
+  );
+  assert.equal(
+    getLessonTemplateForLesson(combiningLikeTermsLesson)?.id,
+    "procedural-skill-lesson"
   );
 });
 
