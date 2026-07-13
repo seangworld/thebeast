@@ -79,9 +79,9 @@ export const lessonTemplateLibrary: LessonTemplate[] = [
   },
   {
     id: "generated-starter-lesson",
-    title: "Generated Starter Lesson",
+    title: "First Practice",
     description:
-      "A generated-curriculum lesson shape for unknown or newly supplied subjects where the coach starts from learner goal evidence.",
+      "A first-session lesson shape for newly supplied subjects where the coach starts with a natural question and a small practice step.",
     contentMode: "generated",
     sections: coreTemplateSections,
     masteryEvidence: ["guided-practice", "quiz", "confidence", "reflection"],

@@ -400,8 +400,8 @@ function MentorHome({
               </div>
               <p className="mt-1 text-sm leading-5 text-[#c7cfdb]">
                 {mission.hasSufficientLearnerData
-                  ? "This recommendation is based on existing BeastLearning goals, sessions, courses, or activities."
-                  : "This is a guided first-use state because no learning history is available yet."}
+                  ? "I chose this from the learning work you already have in progress."
+                  : "We are starting fresh, so I will use a simple first question to find the right level."}
               </p>
             </div>
           </div>

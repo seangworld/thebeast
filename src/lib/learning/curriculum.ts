@@ -122,7 +122,7 @@ export const curriculumSubjects: CurriculumSubject[] = [
       {
         id: preAlgebraProvingGroundScope?.courseId || "pre-algebra-foundations-course",
         title: preAlgebraProvingGroundScope?.courseTitle || "Pre-Algebra Foundations",
-        metadata: "Implemented proving-ground scope for prerequisite checks and the first teachable lesson.",
+        metadata: "Implemented scope for readiness questions and the first teachable lesson.",
         modules: [
           {
             id: "expression-foundations-module",
@@ -134,7 +134,7 @@ export const curriculumSubjects: CurriculumSubject[] = [
                 title: "Combining Like Terms",
                 metadata:
                   preAlgebraProvingGroundScope?.scopeBoundary ||
-                  "Implemented proving-ground lesson and prerequisite checks.",
+                  "Implemented lesson with readiness questions.",
                 concepts: [
                   {
                     id: "like-terms",

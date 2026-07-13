@@ -76,7 +76,7 @@ export function buildGuidedLearningSession(
   const strengths = [
     practicePercent >= 70 ? "Practice evidence is moving in the right direction." : "",
     input.progress.quizPercent >= 70 ? "Check-in answers show usable recall." : "",
-    input.progress.masteryEstimate >= 70 ? "Overall mastery signal is strengthening." : "",
+    input.progress.masteryEstimate >= 70 ? "Your understanding is getting stronger." : "",
   ].filter(Boolean);
   const nextStep =
     input.reflectionOutcome?.nextAction || input.progress.nextRecommendation;

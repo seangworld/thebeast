@@ -88,7 +88,7 @@ const preAlgebraScope: SampleCurriculumScope = {
   courseTitle: "Pre-Algebra Foundations",
   status: "implemented-proving-ground",
   scopeBoundary:
-    "Initial implemented content is limited to the Combining Like Terms proving-ground lesson and its prerequisite checks.",
+    "Initial implemented content is limited to the Combining Like Terms lesson and its readiness questions.",
   prerequisites: [
     {
       id: "coefficients",
@@ -888,6 +888,90 @@ export function getDefaultSampleLearningContentRecord() {
   return sampleLearningContentRecords[0];
 }
 
+function firstUsePlacementQuestions(subject: string): PlacementQuestion[] {
+  const lowerSubject = subject.toLowerCase();
+
+  if (
+    /math|algebra|geometry|fraction|equation|grade/.test(lowerSubject)
+  ) {
+    return [
+      {
+        id: "first-math-arithmetic",
+        conceptId: "arithmetic",
+        prompt: "Solve: 8 + 7.",
+        expectedAnswer: "15",
+        acceptedAnswers: ["15", "fifteen"],
+      },
+      {
+        id: "first-math-fractions",
+        conceptId: "fractions",
+        prompt: "Which is larger: 1/2 or 1/4?",
+        expectedAnswer: "1/2",
+        acceptedAnswers: ["1/2", "one half", "half"],
+      },
+      {
+        id: "first-math-variables",
+        conceptId: "variables",
+        prompt: "Solve: x + 3 = 10.",
+        expectedAnswer: "x = 7",
+        acceptedAnswers: ["x=7", "x = 7", "7"],
+      },
+    ];
+  }
+
+  if (
+    /technology|computer|network|security|cyber|python|programming/.test(lowerSubject)
+  ) {
+    return [
+      {
+        id: "first-tech-concepts",
+        conceptId: "basic-concepts",
+        prompt: "In one sentence, what does a computer network connect?",
+        expectedAnswer: "Devices",
+        acceptedAnswers: ["devices", "computers", "people and devices"],
+      },
+      {
+        id: "first-tech-security",
+        conceptId: "security-basics",
+        prompt: "Which is safer: using one password everywhere or using different passwords?",
+        expectedAnswer: "Different passwords",
+        acceptedAnswers: ["different passwords", "different", "unique passwords"],
+      },
+      {
+        id: "first-tech-practice",
+        conceptId: "applied-technology",
+        prompt: "Name one technology topic you want to practice first.",
+        expectedAnswer: "A technology topic",
+        acceptedAnswers: ["networking", "security", "python", "coding", "computers"],
+      },
+    ];
+  }
+
+  return [
+    {
+      id: "first-reading-vocabulary",
+      conceptId: "vocabulary",
+      prompt: `Write one word or idea you already know about ${subject}.`,
+      expectedAnswer: "Known idea",
+      acceptedAnswers: ["idea", "word", "known idea"],
+    },
+    {
+      id: "first-reading-comprehension",
+      conceptId: "comprehension",
+      prompt: `In one sentence, explain what you want to understand about ${subject}.`,
+      expectedAnswer: "Learning target",
+      acceptedAnswers: ["understand", "learn", "practice"],
+    },
+    {
+      id: "first-reading-grammar",
+      conceptId: "explanation",
+      prompt: "Write one complete sentence about the topic.",
+      expectedAnswer: "A complete sentence",
+      acceptedAnswers: ["sentence", "complete sentence"],
+    },
+  ];
+}
+
 export function createGeneratedLearningContentRecord(
   subject: string
 ): SampleLearningContentRecord {
@@ -897,7 +981,7 @@ export function createGeneratedLearningContentRecord(
   const generatedLesson = generateDynamicLearningLesson({
     goal: resolvedSubject,
     courseId: `generated-${subjectSlug}-course`,
-    courseTitle: `${resolvedSubject} Generated Curriculum`,
+    courseTitle: `${resolvedSubject} Learning Path`,
     learnerLevel: "Brand new",
     mode: "lesson",
   }).lesson;
@@ -908,54 +992,32 @@ export function createGeneratedLearningContentRecord(
     goalType: "subject",
     intent: "Teach me",
     courseId: `generated-${subjectSlug}-course`,
-    courseTitle: `${resolvedSubject} Generated Curriculum`,
+    courseTitle: `${resolvedSubject} Learning Path`,
     matchPhrases: [normalize(resolvedSubject)],
-    activityTitle: `${resolvedSubject}: Starter Lesson`,
-    emptyStateLabel: "a generated learning mission",
+    activityTitle: `${resolvedSubject}: First Practice`,
+    emptyStateLabel: "a learning mission",
     lesson: {
       ...generatedLesson,
       id: lessonId,
       templateId: "generated-starter-lesson",
-      title: "Starter Lesson",
+      title: "First Practice",
       subject: resolvedSubject,
       contentMetadata: generatedLessonMetadata(
         lessonId,
-        "Generated starter lesson"
+        "First practice"
       ),
-      learningObjective: `Build a first teachable step for ${resolvedSubject} from the learner goal, prerequisite check, and current confidence.`,
+      learningObjective: `Start ${resolvedSubject} with one clear question, one example, and one small practice step.`,
       explanation:
-        "Beast can begin with a generated starter lesson when no curated sample record exists. The Mentor must treat this as diagnostic until authority mapping proves curriculum alignment.",
+        `Let's begin ${resolvedSubject} with a quick question so I can teach from the right starting point.`,
       reflectionPrompts: [
-        "What goal did you clarify?",
-        "What prerequisite should the coach check next?",
+        "What felt clear?",
+        "What should we practice next?",
       ],
       masteryThreshold: 80,
       recommendedNextLesson: `Next ${resolvedSubject} lesson`,
-      reviewRecommendation: "Review the learner goal and prerequisite answers before moving on.",
+      reviewRecommendation: `Review the first ${resolvedSubject} question before moving on.`,
     },
-    placementQuestions: [
-      {
-        id: "generated-goal-check",
-        conceptId: "learner-goal",
-        prompt: "What do you want to learn or improve?",
-        expectedAnswer: "Learner goal",
-        acceptedAnswers: ["goal", "learner goal", "improve"],
-      },
-      {
-        id: "generated-baseline-check",
-        conceptId: "current-baseline",
-        prompt: "What do you already know about this goal?",
-        expectedAnswer: "Current baseline",
-        acceptedAnswers: ["baseline", "current baseline", "something"],
-      },
-      {
-        id: "generated-blocker-check",
-        conceptId: "first-blocker",
-        prompt: "What feels unclear or should be checked first?",
-        expectedAnswer: "First blocker",
-        acceptedAnswers: ["blocker", "unclear", "check first"],
-      },
-    ],
+    placementQuestions: firstUsePlacementQuestions(resolvedSubject),
   };
 }
 
@@ -1007,7 +1069,7 @@ export function resolveLearningContentRecordForActivityTitle(title: string) {
   const sampleRecord = getSampleLearningContentRecordForActivityTitle(title);
   if (sampleRecord) return sampleRecord;
 
-  const starterTitleMatch = title.match(/^(.+): Starter Lesson$/);
+  const starterTitleMatch = title.match(/^(.+): (?:Starter Lesson|First Practice)$/);
   if (starterTitleMatch?.[1]) {
     return createGeneratedLearningContentRecord(starterTitleMatch[1]);
   }

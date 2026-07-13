@@ -39,7 +39,7 @@ export function selectMentorTutor(input: TutorSelectionInput): TutorSelection {
   const lessonLabel = input.courseTitle || input.activityTitle || "this session";
   let role: LearningSpecialistRole = "General Academic Tutor";
   let reason =
-    "No narrower Tutor mapping was required, so the Mentor is using the general academic fallback.";
+    "A general academic Tutor is the best fit for this session.";
   let fallbackUsed = true;
 
   if (

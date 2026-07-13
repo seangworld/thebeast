@@ -468,7 +468,7 @@ export default function LearningGoalBuilder() {
           <div className="rounded-xl border border-indigo-300/45 bg-[#111827] p-4 xl:col-start-2">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                Generated starter plan
+                First learning plan
               </div>
               <span className="rounded-full border border-green-400/35 bg-green-400/10 px-2 py-1 text-xs font-bold text-green-100">
                 {generatedPlan.readinessSignal.label}

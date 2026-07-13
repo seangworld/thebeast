@@ -115,12 +115,15 @@ export function generateDynamicLearningLesson({
     createGeneratedCurriculumLifecycleRecord({ courseId });
   const aligned = selectedObjectiveIds.length > 0 && Boolean(mapping);
   const productionEligible = generatedContentCanBecomeProductionCurriculum(provenance);
-  const authorityTitle = source?.title || mapping?.publisher || "Learner goal starter";
+  const authorityTitle = source?.title || mapping?.publisher || "learning goal";
   const difficulty = normalizeLevel(learnerLevel);
   const title = `${modeLabel(mode)}: ${focus}`;
   const boundary = aligned
     ? `Generated from mapped ${authorityTitle} objective ${selectedObjectiveIds.join(", ")}.`
     : "Treat this as placement. Generated as a diagnostic starter from the learner goal; it must not claim official curriculum coverage until authority mapping exists.";
+  const learnerBoundary = aligned
+    ? `We will stay focused on ${focus}.`
+    : "Let's start with a quick, low-pressure question so I know where to begin.";
 
   return {
     alignment: {
@@ -145,20 +148,20 @@ export function generateDynamicLearningLesson({
       objectiveIds: selectedObjectiveIds,
       prerequisiteIds: [],
       learningObjective: aligned
-        ? `${modeInstruction(mode, focus)} Stay inside ${authorityTitle}.`
-        : `${modeInstruction(mode, focus)} Treat this as placement until curriculum authority is mapped.`,
+        ? `${modeInstruction(mode, focus)} Keep the teaching focused and concrete.`
+        : `${modeInstruction(mode, focus)} Begin with a natural warm-up question.`,
       prerequisiteConcepts: aligned
         ? [
-            `Stay inside ${authorityTitle}.`,
-            `Use objective ${selectedObjectiveIds[0]}.`,
-            "Check learner evidence before moving on.",
+            `Focus on ${focus}.`,
+            "Use one clear example.",
+            "Listen for the learner's thinking before moving on.",
           ]
-        : ["State the goal", "Name what feels familiar", "Name what feels unclear"],
-      explanation: `${modeInstruction(mode, focus)} ${boundary}`,
+        : ["Start with the subject", "Ask one natural question", "Listen for what feels unclear"],
+      explanation: `${modeInstruction(mode, focus)} ${learnerBoundary}`,
       interactiveVisual: {
-        title: "Dynamic learning loop",
-        prompt: "Connect the target, example, practice, and evidence before deciding what comes next.",
-        expression: "Target + Example + Practice + Evidence",
+        title: "Try it together",
+        prompt: `Use the example, then try one small step with ${focus}.`,
+        expression: "Example + Practice + Next Step",
         terms: [
           { id: "dynamic-target", label: "Target", coefficient: 1, variable: "", group: "other", color: "blue" },
           { id: "dynamic-example", label: "Example", coefficient: 1, variable: "", group: "other", color: "green" },
@@ -167,9 +170,9 @@ export function generateDynamicLearningLesson({
         targetGroups: [
           {
             group: "other",
-            label: "Lesson evidence",
-            combinedLabel: "Target + Practice + Evidence",
-            explanation: "The Mentor uses the learner response to decide whether to review, remediate, continue, or advance.",
+            label: "Learning pieces",
+            combinedLabel: "Example + Practice + Next Step",
+            explanation: "Your answer helps decide whether we should review, try another example, or move ahead.",
           },
         ],
       },
@@ -178,13 +181,13 @@ export function generateDynamicLearningLesson({
           title: `${modeLabel(mode)} example`,
           setup: focus,
           steps: [
-            `Start from the mapped target: ${focus}.`,
-            "Show one concrete example before asking for recall.",
+            `Start with ${focus}.`,
+            "Show one concrete example before asking the learner to try.",
             "Ask the learner to explain the step in their own words.",
           ],
           takeaway: aligned
-            ? "The example stays inside the mapped curriculum objective."
-            : "The example is diagnostic and should not be treated as official curriculum.",
+            ? "A clear example makes the next step easier to try."
+            : "This warm-up helps your Mentor choose the right starting point.",
         },
       ],
       guidedPractice: [
@@ -205,7 +208,7 @@ export function generateDynamicLearningLesson({
           difficulty: "introductory",
           format: "conversation",
           prompt: `If this felt hard, name the smallest part of ${focus} that needs repair.`,
-          hint: "Naming the blocker is valid evidence for the Mentor.",
+          hint: "It is okay to name the part that feels confusing.",
           expectedAnswer: "A specific blocker",
           acceptedAnswers: ["blocker", "unclear", "review"],
         },
@@ -216,23 +219,23 @@ export function generateDynamicLearningLesson({
           questionTypeId: "multiple-choice",
           contentMetadata: metadata(`${lessonId}-quiz`, `${title} check`),
           prompt: aligned
-            ? "What should this generated lesson stay aligned to?"
-            : "What is this generated starter lesson allowed to prove?",
+            ? `Which idea are we practicing right now?`
+            : `Let's start simply. Which answer best matches what you want to practice?`,
           options: aligned
-            ? [focus, "A random topic", "A dashboard metric"]
-            : ["Learner placement", "Official completion", "Certification credit"],
-          answer: aligned ? focus : "Learner placement",
-          acceptedAnswers: aligned ? [focus.toLowerCase()] : ["learner placement", "placement"],
+            ? [focus, "Something unrelated", "A progress chart"]
+            : [resolvedGoal, "A finished exam", "A certificate"],
+          answer: aligned ? focus : resolvedGoal,
+          acceptedAnswers: aligned ? [focus.toLowerCase()] : [resolvedGoal.toLowerCase()],
           explanation: aligned
-            ? "Dynamic generation must stay inside the mapped curriculum objective."
-            : "Without authority mapping, generation can support placement and practice but cannot claim curriculum completion.",
+            ? `We are practicing ${focus}, so the next question should stay there.`
+            : "This first question helps your Mentor choose the right starting point.",
         },
       ],
       aiCoachingPrompts: [
         {
           kind: "mistake",
           title: "Remediate",
-          prompt: `If the learner misses this, generate one smaller explanation for ${focus}.`,
+          prompt: `If the learner misses this, offer one smaller explanation for ${focus}.`,
         },
         {
           kind: "alternate",

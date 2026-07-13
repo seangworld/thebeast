@@ -124,7 +124,7 @@ export function buildWeeklyMentorReview({
     completedSessions.length === 0 && completedActivities.length === 0 && goals.length === 0;
   const confidenceSignal =
     confidence.dimensions.find((dimension) => dimension.id === "confidence")
-      ?.learnerLanguage || "No confidence signal is available yet.";
+      ?.learnerLanguage || "I need one more reflection before I can read your confidence clearly.";
   const nextWeekRecommendation = missingData
     ? "Complete one guided session so your Mentor has real evidence for next week."
     : weakAreas.length > 0

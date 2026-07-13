@@ -106,7 +106,8 @@ test("Mentor Home uses first-use state without fabricated history", () => {
   assert.equal(mission.state, "first_use");
   assert.equal(mission.hasSufficientLearnerData, false);
   assert.equal(mission.currentGoalLabel, "No active goal selected yet");
-  assert.match(mission.recommendationReason, /do not have enough learning history/i);
+  assert.equal(mission.greeting, "Hi Sean. I am your Mentor.");
+  assert.match(mission.recommendationReason, /starting point/i);
   assert.match(mission.recentProgressLabel, /No prior learning history/i);
 });
 

@@ -3293,7 +3293,7 @@ test("sample content records keep proving examples out of generic engine branchi
     "Pre-Algebra: Combining Like Terms"
   );
   assert.equal(getLearningActivityTitleForGoal("Algebra"), "Algebra: Linear Equations");
-  assert.equal(getLearningActivityTitleForGoal("Woodworking"), "Woodworking: Starter Lesson");
+  assert.equal(getLearningActivityTitleForGoal("Woodworking"), "Woodworking: First Practice");
   assert.equal(
     resolveLearningContentRecordForSubject("Biology").lesson.id,
     "generated-biology-starter"
@@ -3746,7 +3746,7 @@ test("dynamic lesson generation stays aligned to curriculum authority", () => {
   assert.equal(aligned.lesson.aiCoachingPrompts.some((prompt) => prompt.title === "Remediate"), true);
   assert.equal(aligned.lesson.aiCoachingPrompts.some((prompt) => prompt.title === "Review"), true);
   assert.equal(aligned.lesson.aiCoachingPrompts.some((prompt) => prompt.title === "Challenge"), true);
-  assert.match(aligned.lesson.quizQuestions[0].explanation, /mapped curriculum objective/);
+  assert.match(aligned.lesson.quizQuestions[0].explanation, /We are practicing/);
 
   const diagnostic = generateDynamicLearningLesson({
     goal: "Underwater basket weaving",
@@ -3760,7 +3760,7 @@ test("dynamic lesson generation stays aligned to curriculum authority", () => {
   assert.equal(diagnostic.alignment.aligned, false);
   assert.equal(diagnostic.alignment.productionEligible, false);
   assert.match(diagnostic.alignment.boundary, /must not claim official curriculum coverage/);
-  assert.match(diagnostic.lesson.explanation, /Treat this as placement/);
+  assert.match(diagnostic.lesson.explanation, /quick, low-pressure question/);
 
   const generatedRecord = createGeneratedLearningContentRecord("Python");
   assert.equal(generatedRecord.lesson.guidedPractice.length >= 2, true);
@@ -3773,6 +3773,62 @@ test("dynamic lesson generation stays aligned to curriculum authority", () => {
   assert.match(lessonEngine, /generateDynamicLearningLesson/);
   assert.match(lessonEngine, /learningDifficultyFromActivity/);
   assert.match(lessonEngine, /mode: learnerLevel === "Advanced" \? "challenge" : "lesson"/);
+});
+
+test("teaching intelligence keeps learner-facing diagnostics subject-first", () => {
+  const mathRecord = createGeneratedLearningContentRecord("7th Grade Math");
+  const techRecord = createGeneratedLearningContentRecord("Network+");
+  const learnerFacingText = [
+    mathRecord.activityTitle,
+    mathRecord.emptyStateLabel,
+    mathRecord.courseTitle,
+    mathRecord.lesson.title,
+    mathRecord.lesson.learningObjective,
+    mathRecord.lesson.explanation,
+    ...mathRecord.lesson.prerequisiteConcepts,
+    ...mathRecord.lesson.quizQuestions.map((question) =>
+      [
+        question.prompt,
+        question.answer,
+        question.explanation,
+        ...question.options,
+      ].join(" ")
+    ),
+    ...mathRecord.placementQuestions.map((question) => question.prompt),
+    ...techRecord.placementQuestions.map((question) => question.prompt),
+    readFileSync("src/lib/learning/mentorHome.ts", "utf8"),
+    readFileSync("src/lib/learning/guidedSession.ts", "utf8"),
+    readFileSync("src/app/dashboard/learning/LearningGoalBuilder.tsx", "utf8"),
+    readFileSync("src/app/dashboard/learning/page.tsx", "utf8"),
+  ].join("\n");
+
+  [
+    /generated lesson/i,
+    /generated course/i,
+    /curriculum mapping/i,
+    /mastery signal/i,
+    /recommendation generated/i,
+    /prerequisite check/i,
+    /lesson payload/i,
+    /starter lesson/i,
+    /confidence signal/i,
+    /allowed to prove/i,
+    /dashboard metric/i,
+    /objective ID/i,
+  ].forEach((pattern) => {
+    assert.doesNotMatch(learnerFacingText, pattern);
+  });
+  assert.equal(mathRecord.activityTitle, "7th Grade Math: First Practice");
+  assert.equal(mathRecord.placementQuestions[0].prompt, "Solve: 8 + 7.");
+  assert.equal(
+    mathRecord.placementQuestions.some((question) => question.prompt.includes("x + 3 = 10")),
+    true
+  );
+  assert.equal(
+    techRecord.placementQuestions.some((question) => question.prompt.includes("computer network")),
+    true
+  );
+  assert.match(mathRecord.lesson.explanation, /quick question/);
 });
 
 test("curriculum authority separates teachable objectives from AI teaching behavior", () => {

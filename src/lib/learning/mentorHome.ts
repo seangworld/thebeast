@@ -176,12 +176,12 @@ export function buildMentorHomeMission(
   if (!hasSufficientLearnerData) {
     return {
       state: "first_use",
-      greeting: `Hi ${learnerFirstName}. I am your BeastLearning Mentor.`,
+      greeting: `Hi ${learnerFirstName}. I am your Mentor.`,
       missionTitle: "Set your first learning direction",
       missionLabel: "First step",
       durationLabel: "10 minutes",
       recommendationReason:
-        "I do not have enough learning history yet, so I am starting by learning your goal instead of pretending there is progress to analyze.",
+        "I do not know your starting point yet, so we will begin with your goal and one simple first question.",
       currentGoalLabel,
       recentProgressLabel,
       weakAreaLabel,
@@ -190,7 +190,7 @@ export function buildMentorHomeMission(
       primaryAction: {
         label: "Set learning context",
         href: "/dashboard/profile",
-        detail: "Use BeastOS-owned profile context so BeastLearning does not duplicate your profile.",
+        detail: "Tell me what you want to learn so I can choose the right first step.",
       },
       secondaryActions: secondaryActions.filter(
         (action) => action.label === "Courses" || action.label === "Certificates"
