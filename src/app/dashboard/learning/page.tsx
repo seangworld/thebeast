@@ -361,6 +361,34 @@ function MentorHome({
                     {mission.nextAfterLabel}
                   </div>
                 </div>
+                <div className="rounded-xl border border-cyan-200/25 bg-[#0f1419]/80 p-3">
+                  <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                    Journey progress
+                  </div>
+                  <div className="mt-1 text-sm font-black text-white">
+                    {mission.journeyProgressLabel}
+                  </div>
+                </div>
+                <div className="rounded-xl border border-cyan-200/25 bg-[#0f1419]/80 p-3">
+                  <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                    Remaining work
+                  </div>
+                  <div className="mt-1 text-sm font-black text-white">
+                    {mission.journeyRemainingLabel}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 rounded-xl border border-cyan-200/25 bg-[#0f1419]/80 p-3">
+                <div className="text-xs font-bold uppercase text-cyan-100">
+                  Next milestone
+                </div>
+                <div className="mt-1 text-sm font-black text-white">
+                  {mission.journeyMilestoneLabel}
+                </div>
+                <p className="mt-1 text-sm font-semibold leading-5 text-cyan-50">
+                  {mission.journeyUnlockLabel}
+                </p>
               </div>
 
               <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:items-center">

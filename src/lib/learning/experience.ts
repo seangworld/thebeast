@@ -101,7 +101,10 @@ export function buildLearningExperienceDashboard({
       studyStreak: progress.currentStreakDays,
       achievements: achievements.filter((achievement) => achievement.unlocked).map((achievement) => achievement.title),
       recommendedSession: "35 min focused review",
-      upcomingMilestone: activeJourney?.steps.find((step) => step.status === "active")?.title || "First milestone",
+      upcomingMilestone:
+        activeJourney?.steps.find((step) =>
+          step.status === "current" || step.status === "active"
+        )?.title || "First milestone",
       celebration: motivation.celebrationMessage,
     },
     focusMode: {

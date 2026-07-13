@@ -3,6 +3,7 @@ import {
   getNewestReadyLearningActivity,
   type LearningActivityRunnerRow,
 } from "./activityRunner";
+import { buildLearningJourneys } from "./journeys";
 import type {
   AdaptiveProgressionDecision,
   LearningCourse,
@@ -36,6 +37,10 @@ export type MentorHomeMission = {
   recentProgressLabel: string;
   weakAreaLabel: string;
   nextAfterLabel: string;
+  journeyProgressLabel: string;
+  journeyRemainingLabel: string;
+  journeyMilestoneLabel: string;
+  journeyUnlockLabel: string;
   primaryAction: MentorHomeAction;
   secondaryActions: MentorHomeAction[];
   hasSufficientLearnerData: boolean;
@@ -138,6 +143,31 @@ function withAdaptiveReason(baseReason: string, decision?: AdaptiveProgressionDe
   return `${baseReason} ${decision.mentorLanguage} Reason: ${decision.explanation}`;
 }
 
+function getActiveJourneySummary(goals: LearningGoal[]) {
+  const journeys = buildLearningJourneys(goals);
+  const activeJourney = journeys.find((journey) => journey.active) || journeys[0];
+
+  if (!activeJourney) {
+    return {
+      progress: "Journey Progress will appear after you choose a learning goal.",
+      remaining: "No remaining-work estimate yet.",
+      milestone: "Choose a learning goal",
+      unlock: "No unlocks yet.",
+    };
+  }
+
+  return {
+    progress: activeJourney.progressLabel,
+    remaining: activeJourney.remainingWorkLabel,
+    milestone: activeJourney.nextMilestoneLabel,
+    unlock:
+      activeJourney.unlockMessage ||
+      (activeJourney.estimateIsHonest
+        ? "Checkpoint status will update after the next meaningful completion."
+        : "This path is still being built, so I cannot give you an honest finish estimate yet."),
+  };
+}
+
 export function buildMentorHomeMission(
   input: MentorHomeInput
 ): MentorHomeMission {
@@ -172,6 +202,7 @@ export function buildMentorHomeMission(
       : "Not enough course evidence yet";
   const secondaryActions = buildSecondaryActions();
   const adaptiveProgression = input.adaptiveProgression;
+  const journeySummary = getActiveJourneySummary(input.learningGoals);
 
   if (!hasSufficientLearnerData) {
     return {
@@ -187,6 +218,10 @@ export function buildMentorHomeMission(
       weakAreaLabel,
       nextAfterLabel:
         "After this, I can guide you into placement, goal setup, or the first focused lesson.",
+      journeyProgressLabel: journeySummary.progress,
+      journeyRemainingLabel: journeySummary.remaining,
+      journeyMilestoneLabel: journeySummary.milestone,
+      journeyUnlockLabel: journeySummary.unlock,
       primaryAction: {
         label: "Set learning context",
         href: "/dashboard/profile",
@@ -214,6 +249,10 @@ export function buildMentorHomeMission(
       nextAfterLabel:
         adaptiveProgression?.mentorLanguage ||
         "After you save this session, I will use the result to choose the next lesson or review.",
+      journeyProgressLabel: journeySummary.progress,
+      journeyRemainingLabel: journeySummary.remaining,
+      journeyMilestoneLabel: journeySummary.milestone,
+      journeyUnlockLabel: journeySummary.unlock,
       primaryAction: {
         label: "Resume session",
         href: openActivity ? getLearningActivityRoute(openActivity.id) : "#mentor-session",
@@ -250,6 +289,10 @@ export function buildMentorHomeMission(
             ? `After this, I will decide whether to continue, review, remediate, or advance around ${adaptiveProgression.nextFocus}.`
             : input.learningRecommendations[0]?.recommendedAction ||
               "After this, your Mentor will review the result and choose the next useful step.",
+      journeyProgressLabel: journeySummary.progress,
+      journeyRemainingLabel: journeySummary.remaining,
+      journeyMilestoneLabel: journeySummary.milestone,
+      journeyUnlockLabel: journeySummary.unlock,
       primaryAction: {
         label: "Start mission",
         href: getLearningActivityRoute(openActivity.id),
@@ -279,6 +322,10 @@ export function buildMentorHomeMission(
         lowestCourse && lowestCourse.progress < 100
           ? `Next, I will look for a focused review or lesson connected to ${lowestCourse.title}.`
           : "Next, I will help you select a new goal, course, or certification path.",
+      journeyProgressLabel: journeySummary.progress,
+      journeyRemainingLabel: journeySummary.remaining,
+      journeyMilestoneLabel: journeySummary.milestone,
+      journeyUnlockLabel: journeySummary.unlock,
       primaryAction: {
         label: "Review next step",
         href: "#mentor-plan",
@@ -311,6 +358,10 @@ export function buildMentorHomeMission(
         ? `Next decision point: ${adaptiveProgression.nextFocus}.`
         : input.learningRecommendations[0]?.recommendedAction ||
           "After review, I will help choose the next activity or course.",
+    journeyProgressLabel: journeySummary.progress,
+    journeyRemainingLabel: journeySummary.remaining,
+    journeyMilestoneLabel: journeySummary.milestone,
+    journeyUnlockLabel: journeySummary.unlock,
     primaryAction: {
       label: "Review with Mentor",
       href: "#mentor-session",

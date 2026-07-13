@@ -2479,6 +2479,13 @@ test("BeastLearning member home starts with Mentor before dashboard support", ()
   assert.match(learningPage, /Weak area/);
   assert.match(learningPage, /Last session/);
   assert.match(learningPage, /Comes after this/);
+  assert.match(learningPage, /Journey progress/);
+  assert.match(learningPage, /Remaining work/);
+  assert.match(learningPage, /Next milestone/);
+  assert.match(learningPage, /mission\.journeyProgressLabel/);
+  assert.match(learningPage, /mission\.journeyRemainingLabel/);
+  assert.match(learningPage, /mission\.journeyMilestoneLabel/);
+  assert.match(learningPage, /mission\.journeyUnlockLabel/);
   assert.match(learningPage, /Progress I am watching/);
   assert.doesNotMatch(learningPage, /learningIntelligence\.memory\.recentlyStudied/);
   assert.doesNotMatch(learningPage, /learningIntelligence\.adaptivePlan\.nextRecommendedLesson/);
@@ -2492,6 +2499,8 @@ test("BeastLearning member home starts with Mentor before dashboard support", ()
   const mentorHome = readFileSync("src/lib/learning/mentorHome.ts", "utf8");
   assert.match(mentorHome, /progressionLabel/);
   assert.match(mentorHome, /withAdaptiveReason/);
+  assert.match(mentorHome, /buildLearningJourneys/);
+  assert.match(mentorHome, /getActiveJourneySummary/);
   assert.match(mentorHome, /continue, review, remediate, or advance/);
   assert.match(mentorHome, /Skip familiar basics/);
   assert.match(lessonEngine, /Conversation-first learning session/);
@@ -3196,14 +3205,47 @@ test("learning motivation habits and insights are rule-based", () => {
 test("learning journeys model goal to completion roadmaps", () => {
   const journeys = buildLearningJourneys(mockLearningGoals);
   const activeJourney = journeys.find((journey) => journey.active);
+  const unmappedJourney = journeys.find((journey) => journey.title === "Woodworking");
 
   assert.equal(Boolean(activeJourney), true);
-  assert.deepEqual(
-    activeJourney?.steps.map((step) => step.kind),
-    ["goal", "milestone", "course", "lesson", "mastery", "completion"]
+  assert.equal(
+    activeJourney?.steps.some((step) => step.kind === "module"),
+    true
   );
   assert.equal(
-    activeJourney?.steps.some((step) => step.status === "active"),
+    activeJourney?.steps.some((step) => step.kind === "concept"),
+    true
+  );
+  assert.equal(
+    activeJourney?.steps.some((step) => step.kind === "skill"),
+    true
+  );
+  assert.equal(activeJourney?.steps.some((step) => step.kind === "milestone"), true);
+  assert.equal(activeJourney?.steps.some((step) => step.status === "completed"), true);
+  assert.equal(activeJourney?.steps.some((step) => step.status === "current"), true);
+  assert.equal(activeJourney?.steps.some((step) => step.status === "available"), true);
+  assert.equal(
+    activeJourney?.steps.some((step) => step.status === "locked_by_prerequisite"),
+    true
+  );
+  assert.equal(activeJourney?.steps.some((step) => step.status === "review_due"), true);
+  assert.match(activeJourney?.progressLabel || "", /You've completed/);
+  assert.match(activeJourney?.remainingWorkLabel || "", /remain/);
+  assert.match(activeJourney?.unlockMessage || "", /next mission|Review due/i);
+  assert.equal(activeJourney?.estimateIsHonest, true);
+  assert.equal(
+    activeJourney?.steps.some((step) =>
+      step.prerequisiteLabel?.includes("Complete")
+    ),
+    true
+  );
+  assert.equal(unmappedJourney?.estimateIsHonest, false);
+  assert.match(
+    unmappedJourney?.remainingWorkLabel || "",
+    /still being built/
+  );
+  assert.equal(
+    unmappedJourney?.steps.some((step) => step.detail?.includes("honest finish estimate")),
     true
   );
 });
@@ -3233,6 +3275,7 @@ test("learning experience dashboard aggregates v0.5 LX surfaces", () => {
   });
 
   assert.equal(experience.daily.nextAction, progress.recommendedNextAction);
+  assert.match(experience.daily.upcomingMilestone, /Security|Core|Access|Map/);
   assert.equal(experience.focusMode.exitLabel, "Exit focus mode");
   assert.equal(experience.achievements.some((item) => item.rarity === "Founding"), true);
   assert.equal(experience.certificate.skillsEarned.length, 3);

@@ -935,7 +935,10 @@ export type LearningJourneyStepKind =
   | "goal"
   | "milestone"
   | "course"
+  | "module"
   | "lesson"
+  | "concept"
+  | "skill"
   | "mastery"
   | "completion";
 
@@ -943,8 +946,19 @@ export type LearningJourneyStep = {
   id: string;
   kind: LearningJourneyStepKind;
   title: string;
-  status: "complete" | "active" | "upcoming";
+  status:
+    | "completed"
+    | "current"
+    | "available"
+    | "locked_by_prerequisite"
+    | "review_due"
+    | "remediation_required"
+    | "complete"
+    | "active"
+    | "upcoming";
   progress: number;
+  detail?: string;
+  prerequisiteLabel?: string;
 };
 
 export type LearningJourney = {
@@ -952,6 +966,14 @@ export type LearningJourney = {
   title: string;
   active: boolean;
   steps: LearningJourneyStep[];
+  progressPercent: number;
+  progressLabel: string;
+  currentUnitLabel: string;
+  nextUnitLabel: string;
+  remainingWorkLabel: string;
+  nextMilestoneLabel: string;
+  unlockMessage?: string;
+  estimateIsHonest: boolean;
 };
 
 export type AchievementRarity = "Common" | "Uncommon" | "Rare" | "Founding";

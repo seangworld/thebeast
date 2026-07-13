@@ -4,7 +4,10 @@ import {
   ModuleBadge,
   SectionHeader,
 } from "@/app/components/design/DashboardPrimitives";
-import type { LearningExperienceDashboard } from "@/lib/learning/types";
+import type {
+  LearningExperienceDashboard,
+  LearningJourneyStep,
+} from "@/lib/learning/types";
 
 function Chip({ label }: { label: string }) {
   return (
@@ -12,6 +15,35 @@ function Chip({ label }: { label: string }) {
       {label}
     </span>
   );
+}
+
+function journeyStatusLabel(status: LearningJourneyStep["status"]) {
+  if (status === "completed" || status === "complete") return "Mission Complete";
+  if (status === "current" || status === "active") return "Next Mission";
+  if (status === "available") return "Unlocked";
+  if (status === "locked_by_prerequisite") return "Locked by prerequisite";
+  if (status === "review_due") return "Review due";
+  if (status === "remediation_required") return "Remediation required";
+  return "Coming next";
+}
+
+function journeyStatusClasses(status: LearningJourneyStep["status"]) {
+  if (status === "completed" || status === "complete") {
+    return "border-green-400/35 bg-green-400/10";
+  }
+  if (status === "current" || status === "active") {
+    return "border-indigo-300/35 bg-indigo-300/10";
+  }
+  if (status === "available") {
+    return "border-cyan-300/35 bg-cyan-300/10";
+  }
+  if (status === "review_due") {
+    return "border-yellow-300/35 bg-yellow-300/10";
+  }
+  if (status === "remediation_required") {
+    return "border-orange-300/35 bg-orange-300/10";
+  }
+  return "border-[#2a3242] bg-[#0f1419]";
 }
 
 export default function LearningExperiencePanel({
@@ -114,27 +146,86 @@ export default function LearningExperiencePanel({
           {activeJourney ? (
             <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
               <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                My Plan
+                Journey Progress
               </div>
-              <h3 className="mt-1 font-black text-white">{activeJourney.title}</h3>
+              <div className="mt-1 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                <div>
+                  <h3 className="font-black text-white">{activeJourney.title}</h3>
+                  <p className="mt-1 text-sm leading-5 text-[#c7cfdb]">
+                    {activeJourney.progressLabel}
+                  </p>
+                </div>
+                <Chip label={`${activeJourney.progressPercent}% complete`} />
+              </div>
+              <div className="mt-4 h-2 rounded-full bg-[#0f1419]">
+                <div
+                  className="h-full rounded-full bg-[#818cf8]"
+                  style={{ width: `${Math.min(Math.max(activeJourney.progressPercent, 0), 100)}%` }}
+                />
+              </div>
+              <div className="mt-4 grid gap-3 md:grid-cols-3">
+                <div className="rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
+                  <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                    Current unit
+                  </div>
+                  <p className="mt-1 text-sm font-black text-white">
+                    {activeJourney.currentUnitLabel}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
+                  <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                    Next unit
+                  </div>
+                  <p className="mt-1 text-sm font-black text-white">
+                    {activeJourney.nextUnitLabel}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
+                  <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                    Remaining work
+                  </div>
+                  <p className="mt-1 text-sm font-black text-white">
+                    {activeJourney.remainingWorkLabel}
+                  </p>
+                </div>
+              </div>
+              {activeJourney.unlockMessage ? (
+                <div className="mt-4 rounded-lg border border-cyan-300/35 bg-cyan-300/10 p-3 text-sm font-bold leading-5 text-cyan-50">
+                  {activeJourney.unlockMessage}
+                </div>
+              ) : null}
+              {!activeJourney.estimateIsHonest ? (
+                <div className="mt-4 rounded-lg border border-yellow-300/35 bg-yellow-300/10 p-3 text-sm font-bold leading-5 text-yellow-50">
+                  {activeJourney.remainingWorkLabel}
+                </div>
+              ) : null}
               <div className="mt-4 grid gap-2 md:grid-cols-3">
                 {activeJourney.steps.map((step) => (
                   <div
                     key={step.id}
-                    className={`rounded-lg border p-3 ${
-                      step.status === "complete"
-                        ? "border-green-400/35 bg-green-400/10"
-                        : step.status === "active"
-                          ? "border-indigo-300/35 bg-indigo-300/10"
-                          : "border-[#2a3242] bg-[#0f1419]"
-                    }`}
+                    className={`rounded-lg border p-3 ${journeyStatusClasses(step.status)}`}
                   >
-                    <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                      {step.kind}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                        {step.kind}
+                      </div>
+                      <div className="text-right text-[11px] font-black uppercase text-[#dbe3ef]">
+                        {journeyStatusLabel(step.status)}
+                      </div>
                     </div>
                     <div className="mt-1 text-sm font-black text-white">
                       {step.title}
                     </div>
+                    {step.detail ? (
+                      <p className="mt-1 text-xs font-semibold leading-5 text-[#c7cfdb]">
+                        {step.detail}
+                      </p>
+                    ) : null}
+                    {step.prerequisiteLabel ? (
+                      <p className="mt-1 text-xs font-semibold leading-5 text-[#9aa7b8]">
+                        {step.prerequisiteLabel}
+                      </p>
+                    ) : null}
                     <div className="mt-2 text-xs font-bold text-[#c7cfdb]">
                       {step.progress}%
                     </div>

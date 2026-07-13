@@ -109,6 +109,8 @@ test("Mentor Home uses first-use state without fabricated history", () => {
   assert.equal(mission.greeting, "Hi Sean. I am your Mentor.");
   assert.match(mission.recommendationReason, /starting point/i);
   assert.match(mission.recentProgressLabel, /No prior learning history/i);
+  assert.match(mission.journeyProgressLabel, /choose a learning goal/i);
+  assert.match(mission.journeyRemainingLabel, /No remaining-work estimate yet/i);
 });
 
 test("Mentor Home resumes unfinished sessions before new recommendations", () => {
@@ -130,6 +132,8 @@ test("Mentor Home resumes unfinished sessions before new recommendations", () =>
   assert.equal(mission.missionTitle, "CIDR notation practice");
   assert.equal(mission.durationLabel, "20 min");
   assert.match(mission.recommendationReason, /still in progress/i);
+  assert.match(mission.journeyProgressLabel, /completed/i);
+  assert.match(mission.journeyRemainingLabel, /lesson/i);
 });
 
 test("Mentor Home chooses a ready activity and cites actual saved work", () => {
@@ -164,6 +168,8 @@ test("Mentor Home chooses a ready activity and cites actual saved work", () => {
   assert.equal(mission.durationLabel, "18 minutes");
   assert.equal(mission.primaryAction.href, "/dashboard/learning/activities/activity-1");
   assert.match(mission.recommendationReason, /Subnetting warmup/);
+  assert.match(mission.journeyMilestoneLabel, /Watch RBAC walkthrough/);
+  assert.match(mission.journeyUnlockLabel, /next mission|Review due|Checkpoint/i);
 });
 
 test("Mentor Home avoids dead ends when every activity is completed", () => {
