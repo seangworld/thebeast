@@ -2201,6 +2201,11 @@ test("BeastLearning member home starts with Mentor before dashboard support", ()
   assert.match(learningPage, /function MentorHome/);
   assert.match(learningPage, /buildMentorHomeMission/);
   assert.match(learningPage, /Mentor Home/);
+  assert.match(learningPage, /LearningGoalDiscovery/);
+  assert.match(learningPage, /Add Learning Goal/);
+  assert.match(learningPage, /Learning Goals/);
+  assert.match(learningPage, /Manage Goals/);
+  assert.match(learningPage, /planRows\.find\(\(plan\) => plan\.goal_id === activeGoal\?\.id\)/);
   assert.match(learningPage, /One mission, chosen by your Mentor/);
   assert.match(learningPage, /Start here for the next best action/);
   assert.match(learningPage, /Why this mission/);
@@ -2384,6 +2389,18 @@ test("generated learning activities persist with required visibility fields", ()
     "src/app/dashboard/learning/LearningGoalBuilder.tsx",
     "utf8"
   );
+  const goalDiscovery = readFileSync(
+    "src/app/dashboard/learning/LearningGoalDiscovery.tsx",
+    "utf8"
+  );
+  const goalsPage = readFileSync(
+    "src/app/dashboard/learning/goals/page.tsx",
+    "utf8"
+  );
+  const goalsManager = readFileSync(
+    "src/app/dashboard/learning/goals/LearningGoalsManager.tsx",
+    "utf8"
+  );
   const learningPage = readFileSync("src/app/dashboard/learning/page.tsx", "utf8");
   const todayPage = readFileSync("src/app/dashboard/today/page.tsx", "utf8");
   const activitiesPage = readFileSync(
@@ -2418,6 +2435,36 @@ test("generated learning activities persist with required visibility fields", ()
   assert.equal(goalBuilder.includes(".from(\"learning_activities\")"), true);
   assert.equal(goalBuilder.includes("buildGeneratedLearningActivityPayload"), true);
   assert.equal(goalBuilder.includes("Start Saved Activity"), true);
+  assert.equal(goalDiscovery.includes("What would you like to learn?"), true);
+  assert.equal(goalDiscovery.includes("suggestedCategories"), true);
+  assert.equal(goalDiscovery.includes("K-12"), true);
+  assert.equal(goalDiscovery.includes("Certifications"), true);
+  assert.equal(goalDiscovery.includes("Technology"), true);
+  assert.equal(goalDiscovery.includes("Business"), true);
+  assert.equal(goalDiscovery.includes("Languages"), true);
+  assert.equal(goalDiscovery.includes("Science"), true);
+  assert.equal(goalDiscovery.includes("History"), true);
+  assert.equal(goalDiscovery.includes("Arts"), true);
+  assert.equal(goalDiscovery.includes("Personal Development"), true);
+  assert.equal(goalDiscovery.includes("buildGoalDraft"), true);
+  assert.equal(goalDiscovery.includes("generateLearningPlan"), true);
+  assert.equal(goalDiscovery.includes("buildGeneratedLearningActivityPayload"), true);
+  assert.equal(goalDiscovery.includes(".from(\"learning_goals\")"), true);
+  assert.equal(goalDiscovery.includes(".from(\"learning_courses\")"), true);
+  assert.equal(goalDiscovery.includes(".from(\"learning_plans\")"), true);
+  assert.equal(goalDiscovery.includes(".from(\"learning_sessions\")"), true);
+  assert.equal(goalDiscovery.includes(".from(\"learning_activities\")"), true);
+  assert.equal(goalDiscovery.includes("Great choice. I will build your learning plan"), true);
+  assert.equal(goalDiscovery.includes("Start Placement"), true);
+  assert.equal(goalsPage.includes("Learning Goals"), true);
+  assert.equal(goalsPage.includes("LearningGoalDiscovery"), true);
+  assert.equal(goalsPage.includes("LearningGoalsManager"), true);
+  assert.equal(goalsManager.includes("Archive Goal"), true);
+  assert.equal(goalsManager.includes("Restore Goal"), true);
+  assert.equal(goalsManager.includes("Resume Goal"), true);
+  assert.equal(goalsManager.includes("Switch Active Goal"), true);
+  assert.equal(goalsManager.includes("Progress stays saved"), true);
+  assert.equal(goalsManager.includes('status: "Paused"'), true);
   assert.equal(todayPage.includes("getNewestReadyLearningActivity"), true);
   assert.equal(activitiesPage.includes("redirect(\"/dashboard/learning#mentor-session\")"), true);
   assert.equal(learningPage.includes("mission.primaryAction.label"), true);

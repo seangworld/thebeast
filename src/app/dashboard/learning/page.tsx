@@ -27,6 +27,7 @@ import {
 } from "./LearningFoundationPanels";
 import LearningAIOrchestrationPanel from "./LearningAIOrchestrationPanel";
 import LearningContentIntelligencePanel from "./LearningContentIntelligencePanel";
+import LearningGoalDiscovery from "./LearningGoalDiscovery";
 import LearningGoalBuilder from "./LearningGoalBuilder";
 import LearningIntelligencePanel from "./LearningIntelligencePanel";
 import LearningKnowledgePanel from "./LearningKnowledgePanel";
@@ -285,7 +286,12 @@ function MentorHome({
         eyebrow="Mentor Home"
         title="One mission, chosen by your Mentor"
         description="Start here for the next best action. Courses, certificates, and history stay available, but the Mentor leads the learning path."
-        action={<ModuleBadge module="learning" label={activeRole} />}
+        action={
+          <div className="flex flex-wrap gap-2">
+            <ModuleBadge module="learning" label={activeRole} />
+            <LearningGoalDiscovery recentGoals={learningGoals} />
+          </div>
+        }
       />
 
       <div id="mentor-session" className="mt-6 grid gap-4 xl:grid-cols-[minmax(0,1.18fr)_minmax(320px,0.82fr)]">
@@ -368,6 +374,9 @@ function MentorHome({
           </div>
 
           <div className="grid gap-3 border-t border-[#2a3242] pt-4 sm:grid-cols-2 lg:grid-cols-4">
+            <Link href="/dashboard/learning/goals" className="beast-button-secondary">
+              Learning Goals
+            </Link>
             {mission.secondaryActions.map((action) => (
               <Link key={action.label} href={action.href} className="beast-button-secondary">
                 {action.label}
@@ -696,15 +705,18 @@ export default async function LearningPage() {
   const userActivities = (activitiesResult.data || []) as LearningPathActivityRow[];
   const userAchievements = ((achievementsResult.data || []) as Record<string, unknown>[]).map(mapAchievementRow);
   const userCertificates = ((certificatesResult.data || []) as Record<string, unknown>[]).map(mapCertificateRow);
-  const firstPlanRow = ((plansResult.data || []) as Record<string, unknown>[])[0];
-  const userPlan = firstPlanRow
-    ? mapPlanRow(firstPlanRow, activeLearner.id)
+  const planRows = (plansResult.data || []) as Record<string, unknown>[];
+  const activeGoal = userGoals.find((goal) => goal.status === "Active") || userGoals[0];
+  const activePlanRow =
+    planRows.find((plan) => plan.goal_id === activeGoal?.id) || planRows[0];
+  const userPlan = activePlanRow
+    ? mapPlanRow(activePlanRow, activeLearner.id)
     : {
         id: "starter-learning-path",
         learnerId: activeLearner.id,
-        title: userGoals[0]?.title || "Starter learning path",
-        summary: userGoals[0]?.target || "Your Mentor will help you choose a first goal.",
-        primaryGoalId: userGoals[0]?.id,
+        title: activeGoal?.title || "Starter learning path",
+        summary: activeGoal?.target || "Your Mentor will help you choose a first goal.",
+        primaryGoalId: activeGoal?.id,
         weeklySessionTarget: 0,
       };
   const userStudySession = buildStudySessionCommandFromSession(
@@ -859,9 +871,9 @@ export default async function LearningPage() {
             />
             <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {[
-                ["goals", "Goals", learningGoals[0]?.title || "Goal setup is available through BeastOS profile context."],
+                ["goals", "Learning Goals", learningGoals[0]?.title || "Add a Learning Goal and your Mentor will build a first plan."],
                 ["study-plan", "Study Plan", learningPlan.summary],
-                ["courses", "Courses", learningCourses[0]?.title || "Course access appears here when assigned."],
+                ["courses", "Learning Paths", learningCourses[0]?.title || "Learning paths appear here when your Mentor creates them."],
                 ["flashcards", "Review", progressSignals.weakArea],
                 ["achievements", "Achievements", `${learningAchievements.length} learning achievement record${learningAchievements.length === 1 ? "" : "s"}.`],
                 ["certificate-access", "Certificates", `${learningCertificates.length} certificate record${learningCertificates.length === 1 ? "" : "s"}.`],
@@ -875,6 +887,17 @@ export default async function LearningPage() {
                   <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
                     {detail}
                   </p>
+                  {id === "goals" ? (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <LearningGoalDiscovery
+                        recentGoals={learningGoals}
+                        triggerLabel="Add Learning Goal"
+                      />
+                      <Link href="/dashboard/learning/goals" className="beast-button-secondary">
+                        Manage Goals
+                      </Link>
+                    </div>
+                  ) : null}
                 </div>
               ))}
             </div>
