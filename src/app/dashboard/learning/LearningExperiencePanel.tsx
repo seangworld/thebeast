@@ -160,7 +160,7 @@ export default function LearningExperiencePanel({
 
           <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
             <div className="text-xs font-bold uppercase text-[#7f8da3]">
-              What may help next
+              Learning insights
             </div>
             <div className="mt-3 grid gap-2">
               {experience.insights.map((insight) => (

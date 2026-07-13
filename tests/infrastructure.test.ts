@@ -3129,8 +3129,68 @@ test("learning motivation habits and insights are rule-based", () => {
   assert.equal(habits.averageSessionLength.endsWith("min"), true);
   assert.equal(habits.consistency, 60);
   assert.equal(motivation.dailyEncouragement.includes(progress.weakArea), true);
-  assert.equal(insights.length, 4);
-  assert.equal(insights.some((insight) => insight.id === "review-skip"), true);
+  assert.equal(insights.length, 6);
+  assert.deepEqual(
+    insights.map((insight) => insight.id),
+    [
+      "strongest-subjects",
+      "weakest-subject",
+      "improving-skill",
+      "declining-retention",
+      "study-recommendation",
+      "estimated-readiness",
+    ]
+  );
+  assert.equal(
+    insights.some((insight) => insight.title === "Strongest subjects"),
+    true
+  );
+  assert.equal(
+    insights.some(
+      (insight) =>
+        insight.id === "weakest-subject" &&
+        insight.detail.includes(progress.weakArea)
+    ),
+    true
+  );
+  assert.equal(
+    insights.some(
+      (insight) =>
+        insight.id === "improving-skill" &&
+        insight.detail.includes("Study Rhythm")
+    ),
+    true
+  );
+  assert.equal(
+    insights.some(
+      (insight) =>
+        insight.id === "declining-retention" &&
+        insight.detail.includes("short review")
+    ),
+    true
+  );
+  assert.equal(
+    insights.some(
+      (insight) =>
+        insight.id === "study-recommendation" &&
+        insight.detail.includes(habits.averageSessionLength)
+    ),
+    true
+  );
+  assert.equal(
+    insights.some(
+      (insight) =>
+        insight.id === "estimated-readiness" &&
+        insight.detail.includes(String(progress.estimatedWeeklyStudyMinutes))
+    ),
+    true
+  );
+  const experiencePanel = readFileSync(
+    "src/app/dashboard/learning/LearningExperiencePanel.tsx",
+    "utf8"
+  );
+  assert.match(experiencePanel, /Learning insights/);
+  assert.doesNotMatch(experiencePanel, /What may help next/);
 });
 
 test("learning journeys model goal to completion roadmaps", () => {
