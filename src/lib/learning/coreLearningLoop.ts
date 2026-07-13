@@ -364,20 +364,22 @@ export function buildTutorResponseTurn({
   return {
     intent: "evaluate-response",
     prompt: correct
-      ? "Correct. That matches the expected guided-practice answer."
-      : `Not yet. ${firstPractice.hint}`,
+      ? "Nice. That works. Walk me through how you knew, then we can try the next one."
+      : `Close. Let's try another way. ${firstPractice.hint} Walk me through what you're thinking, and we will fix the exact step together.`,
     waitsForLearner: true,
     ageAppropriate: true,
     revealsAnswer: correct,
     feedback: correct ? "correct" : "incorrect",
-    nextAction: correct ? "Continue to the next guided example." : "Offer a hint before another attempt.",
+    nextAction: correct
+      ? "Continue to the next guided example."
+      : "Use a smaller explanation before another attempt.",
   };
 }
 
 export function buildHintTurn(session: CoreLessonSession): TutorTurn {
   return {
     intent: "hint",
-    prompt: session.lesson.guidedPractice[0].hint,
+    prompt: `Don't worry about the formula yet. ${session.lesson.guidedPractice[0].hint} Try the smallest next step first.`,
     waitsForLearner: true,
     ageAppropriate: true,
     revealsAnswer: false,

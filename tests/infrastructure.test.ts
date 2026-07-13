@@ -1755,7 +1755,10 @@ test("learning core loop teaches practices checks mastery and resumes a lesson",
   assert.equal(session.tutorTurns[0].revealsAnswer, false);
   assert.equal(correctTurn.feedback, "correct");
   assert.equal(correctTurn.waitsForLearner, true);
+  assert.match(correctTurn.prompt, /Nice/);
+  assert.match(correctTurn.prompt, /Walk me through/);
   assert.equal(hintTurn.revealsAnswer, false);
+  assert.match(hintTurn.prompt, /Don't worry about the formula yet/);
   assert.equal(alternateTurn.intent, "alternate-explanation");
   assert.equal(mastery.progress.mastered, true);
   assert.equal(mastery.progress.tutorReadinessDecision.readyToContinue, true);
@@ -1812,6 +1815,10 @@ test("learning core loop routes weak placement and low mastery to remediation", 
   );
   assert.equal(incorrectTurn.feedback, "incorrect");
   assert.equal(incorrectTurn.revealsAnswer, false);
+  assert.match(incorrectTurn.prompt, /Close/);
+  assert.match(incorrectTurn.prompt, /try another way/i);
+  assert.match(incorrectTurn.prompt, /Walk me through what you're thinking/);
+  assert.doesNotMatch(incorrectTurn.prompt, /^Wrong\./);
   assert.equal(mastery.progress.mastered, false);
   assert.equal(mastery.progress.tutorReadinessDecision.nextAction, "remediate");
   assert.equal(mastery.progress.tutorReadinessDecision.artificialWaitingPeriod, false);
@@ -2418,6 +2425,9 @@ test("learning activities have a dedicated runner and next-activity unlock logic
   assert.match(lessonEngine, /Explain this another way/);
   assert.match(lessonEngine, /Check my understanding/);
   assert.match(lessonEngine, /Finish lesson/);
+  assert.match(lessonEngine, /Don't worry about the formula yet/);
+  assert.match(lessonEngine, /Walk me through what you're thinking/);
+  assert.match(lessonEngine, /Convince me/);
   assert.match(lessonEngine, /getLessonTeacherResponse/);
   assert.match(lessonEngine, /captureEvidence/);
   assert.match(lessonEngine, /sendLearnerMessage/);
@@ -2436,6 +2446,7 @@ test("learning activities have a dedicated runner and next-activity unlock logic
   assert.doesNotMatch(lessonEngine, /Guided Practice/);
   assert.doesNotMatch(lessonEngine, /AI Coach/);
   assert.doesNotMatch(lessonEngine, /Check understanding/);
+  assert.doesNotMatch(lessonEngine, /Wrong\./);
   assert.doesNotMatch(lessonEngine, /type TutorStep/);
   assert.doesNotMatch(lessonEngine, /tutorStepTitle/);
   assert.doesNotMatch(lessonEngine, /tutorStepMessage/);
@@ -2927,6 +2938,9 @@ test("lesson engine supports the adaptive BeastLearning teaching cycle", () => {
   assert.equal(correctVisual.correct, true);
   assert.equal(incorrectVisual.correct, false);
   assert.equal(teacherResponse.includes("correct grouping"), true);
+  assert.match(teacherResponse, /Close/);
+  assert.match(teacherResponse, /trips up almost everyone/);
+  assert.match(teacherResponse, /phone/);
   assert.equal(scopedResponse, quizEngine.lesson.explanation);
   assert.equal(
     coachEngine.lesson.aiCoachingPrompts.some((prompt) => prompt.kind === "mistake"),

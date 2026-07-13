@@ -172,7 +172,7 @@ export function generateDynamicLearningLesson({
             group: "other",
             label: "Learning pieces",
             combinedLabel: "Example + Practice + Next Step",
-            explanation: "Your answer helps decide whether we should review, try another example, or move ahead.",
+            explanation: "Your answer helps your Mentor decide whether to review, try another example, or move ahead.",
           },
         ],
       },
@@ -181,8 +181,8 @@ export function generateDynamicLearningLesson({
           title: `${modeLabel(mode)} example`,
           setup: focus,
           steps: [
-            `Start with ${focus}.`,
-            "Show one concrete example before asking the learner to try.",
+            `Start with a familiar example for ${focus}.`,
+            "Use a daily-life comparison before naming the rule.",
             "Ask the learner to explain the step in their own words.",
           ],
           takeaway: aligned
@@ -198,7 +198,7 @@ export function generateDynamicLearningLesson({
           difficulty: mode === "challenge" ? "challenge" : difficulty,
           format: mode === "challenge" ? "scenario" : "short-response",
           prompt: `Try one ${mode === "challenge" ? "applied" : "focused"} practice step for ${focus}.`,
-          hint: `Use the example and keep your answer tied to ${focus}.`,
+          hint: `Start with the example, like matching the next move in a game, and keep your answer tied to ${focus}.`,
           expectedAnswer: focus,
           acceptedAnswers: [focus.toLowerCase(), resolvedGoal.toLowerCase()],
         },
@@ -207,7 +207,7 @@ export function generateDynamicLearningLesson({
           practiceTemplateId: "conversation-turn",
           difficulty: "introductory",
           format: "conversation",
-          prompt: `If this felt hard, name the smallest part of ${focus} that needs repair.`,
+          prompt: `If this felt hard, name the smallest part of ${focus} that tripped you up.`,
           hint: "It is okay to name the part that feels confusing.",
           expectedAnswer: "A specific blocker",
           acceptedAnswers: ["blocker", "unclear", "review"],
@@ -235,12 +235,12 @@ export function generateDynamicLearningLesson({
         {
           kind: "mistake",
           title: "Remediate",
-          prompt: `If the learner misses this, offer one smaller explanation for ${focus}.`,
+          prompt: `Close. Let's make ${focus} smaller and try it another way.`,
         },
         {
           kind: "alternate",
           title: "Another example",
-          prompt: `Give a different example that stays inside ${focus}.`,
+          prompt: `Give a different everyday example that stays inside ${focus}.`,
         },
         {
           kind: "review",
@@ -250,12 +250,12 @@ export function generateDynamicLearningLesson({
         {
           kind: "mastery",
           title: "Challenge",
-          prompt: `If the learner is ready, generate one challenge question for ${focus}.`,
+          prompt: `Nice. Try one challenge question for ${focus}.`,
         },
         {
           kind: "encouragement",
           title: "Continue",
-          prompt: "Encourage the learner and explain the next adaptive step.",
+          prompt: "You're building it. Here is the next step I recommend.",
         },
       ],
       reflectionPrompts: [

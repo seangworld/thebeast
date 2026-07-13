@@ -283,7 +283,7 @@ export function LessonEngine({
     if (learnerAskedForHint(value) && activePractice) {
       setAskedForHelp(true);
       markPhase("coach");
-      return `${activePractice.hint} Try that idea on this: ${activePractice.prompt}`;
+      return `Don't worry about the formula yet. ${activePractice.hint} Try that idea on this: ${activePractice.prompt}. Walk me through what you're thinking.`;
     }
 
     if (learnerAskedForAlternateExplanation(value)) {
@@ -293,14 +293,14 @@ export function LessonEngine({
 
     if (learnerAskedForCheck(value) && activeQuestion) {
       markPhase("quiz");
-      return `Let me check the idea naturally. ${activeQuestion.prompt} Tell me your answer and why you chose it.`;
+      return `Convince me. ${activeQuestion.prompt} Tell me your answer and why you chose it.`;
     }
 
     if (learnerAskedToWrapUp(value)) {
       markPhase("reflection");
       markPhase("mastery");
       markPhase("recommendation");
-      return `You worked on ${currentConcept}. ${progressLanguage(progress.masteryEstimate, completed)} Next, I recommend: ${progress.nextRecommendation}`;
+      return `Nice work on ${currentConcept}. ${progressLanguage(progress.masteryEstimate, completed)} Here is what I recommend next: ${progress.nextRecommendation}`;
     }
 
     if (activePractice && !practiceAnswers[activePractice.id]) {
@@ -316,7 +316,7 @@ export function LessonEngine({
     }
 
     if (learnerMessageCount > 0 && learnerMessageCount % 2 === 0) {
-      return `${firstName}, I am watching for whether this is becoming easier to explain in your own words. ${progress.coachingMessage}`;
+      return `${firstName}, I am listening for whether this is starting to feel easier in your own words. ${progress.coachingMessage}`;
     }
 
     return null;

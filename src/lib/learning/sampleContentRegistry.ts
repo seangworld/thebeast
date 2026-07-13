@@ -229,7 +229,7 @@ export const combiningLikeTermsLesson: AdaptiveLesson = {
     "Add and subtract integers with confidence.",
   ],
   explanation:
-    "Like terms have the same variable part. The term 3x can combine with 5x because both are x terms. The term 3x cannot combine with 5 because one has x and one is just a number. When terms are alike, keep the variable part and add or subtract the coefficients.",
+    "Imagine a pizza order: slices go with slices, drinks go with drinks. In algebra, x terms go with x terms, and plain numbers go with plain numbers. The term 3x can combine with 5x because both are x terms. The term 3x cannot combine with 5 because one has x and one is just a number. When terms match, keep the variable part and add or subtract the numbers in front.",
   interactiveVisual: {
     title: "Sort the terms before combining",
     prompt:
@@ -261,9 +261,9 @@ export const combiningLikeTermsLesson: AdaptiveLesson = {
       title: "Simple combine",
       setup: "3x + 5x",
       steps: [
-        "Both terms are x terms.",
-        "Add the coefficients: 3 + 5 = 8.",
-        "Keep the x because the variable part did not change.",
+        "Think of 3x and 5x like two stacks of the same trading card.",
+        "Count the stacks together: 3 + 5 = 8.",
+        "Keep the x because the card type did not change.",
       ],
       takeaway: "3x + 5x = 8x",
     },
@@ -271,9 +271,9 @@ export const combiningLikeTermsLesson: AdaptiveLesson = {
       title: "Separate groups",
       setup: "4x + 7 + 2x + 3",
       steps: [
+        "Sort it like a phone screen: matching apps in one folder, plain numbers in another.",
         "Group x terms: 4x + 2x.",
-        "Group number terms: 7 + 3.",
-        "Combine each group separately.",
+        "Group number terms: 7 + 3, then combine each group separately.",
       ],
       takeaway: "4x + 7 + 2x + 3 = 6x + 10",
     },
@@ -330,12 +330,12 @@ export const combiningLikeTermsLesson: AdaptiveLesson = {
     {
       kind: "mistake",
       title: "Explain a mistake",
-      prompt: "If I combined unlike terms, explain why that does not work and show the correct grouping.",
+      prompt: "Those pieces do not belong together yet. Sort the matching parts first, then show the correct grouping.",
     },
     {
       kind: "alternate",
       title: "Try a different explanation",
-      prompt: "Explain combining like terms using colored groups or matching labels.",
+      prompt: "Explain combining like terms like sorting snacks, sports teams, or phone apps into matching groups.",
     },
     {
       kind: "encouragement",
@@ -345,18 +345,18 @@ export const combiningLikeTermsLesson: AdaptiveLesson = {
     {
       kind: "review",
       title: "Recommend review",
-      prompt: "If my mastery is low, recommend the one concept I should review before moving on.",
+      prompt: "Let's review the one idea that would make the next step easier.",
     },
     {
       kind: "mastery",
       title: "Celebrate mastery",
-      prompt: "If I mastered this, celebrate clearly and tell me what lesson should come next.",
+      prompt: "Nice work. You can explain this clearly, so the next lesson can build on it.",
     },
   ],
   reflectionPrompts: [
     "What makes two terms like terms?",
     "Which part felt easiest: grouping terms, adding coefficients, or checking the final expression?",
-    "What should Beast review with you before the next lesson?",
+    "What should your Mentor review with you before the next lesson?",
   ],
   masteryThreshold: 80,
   recommendedNextLesson: "Solving one-step equations",
@@ -493,7 +493,7 @@ const linearEquationsLesson: AdaptiveLesson = {
     {
       kind: "encouragement",
       title: "Encourage a check",
-      prompt: "Encourage the learner to verify the answer in the original equation.",
+      prompt: "Good. Now prove it by putting your answer back into the original equation.",
     },
     {
       kind: "review",
@@ -594,7 +594,7 @@ const certificationFoundationLesson: AdaptiveLesson = {
     {
       kind: "mistake",
       title: "Clarify the gap",
-      prompt: "Help the learner separate known topics from uncertain topics.",
+      prompt: "Close. Let's separate what already feels familiar from the part that still feels uncertain.",
     },
     {
       kind: "alternate",
@@ -703,7 +703,7 @@ const spanishConversationLesson: AdaptiveLesson = {
     {
       kind: "mistake",
       title: "Correct gently",
-      prompt: "Correct the phrase without overloading the learner.",
+      prompt: "Close. Say the greeting first, then add your name. Keep it short.",
     },
     {
       kind: "alternate",
@@ -713,7 +713,7 @@ const spanishConversationLesson: AdaptiveLesson = {
     {
       kind: "encouragement",
       title: "Encourage repetition",
-      prompt: "Encourage the learner to repeat the phrase out loud.",
+      prompt: "Nice. Say it out loud once, like you are greeting someone for real.",
     },
     {
       kind: "review",

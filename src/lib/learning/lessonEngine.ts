@@ -502,28 +502,32 @@ export function getLessonTeacherResponse({
   masteryEstimate: number;
 }) {
   const lowerQuestion = question.toLowerCase();
+  const firstPracticePrompt = lesson.guidedPractice[0]?.prompt || "one small practice step";
+  const mistakePrompt =
+    lesson.aiCoachingPrompts.find((prompt) => prompt.kind === "mistake")?.prompt ||
+    lesson.quizQuestions[0]?.explanation ||
+    lesson.explanation;
+  const alternatePrompt =
+    lesson.aiCoachingPrompts.find((prompt) => prompt.kind === "alternate")?.prompt ||
+    lesson.explanation;
 
   if (!question.trim()) {
-    return `Ask me about ${lesson.title}, what feels confusing, a hint, or what we should try next.`;
+    return `Tell me where you want to start with ${lesson.title}. We can try an example, slow down, or do one small practice together.`;
   }
 
   if (/why|mistake|wrong|confus/.test(lowerQuestion)) {
-    return (
-      lesson.aiCoachingPrompts.find((prompt) => prompt.kind === "mistake")
-        ?.prompt ||
-      lesson.quizQuestions[0]?.explanation ||
-      lesson.explanation
-    );
+    return `Close. This one trips up almost everyone at first. ${mistakePrompt} Let's try another way: imagine sorting apps on your phone before you move anything around. Put the matching pieces together first, then do the math.`;
   }
 
   if (/next|master|review/.test(lowerQuestion)) {
     return masteryEstimate >= lesson.masteryThreshold && quizPercent >= 70
-      ? `You are ready for the next lesson: ${lesson.recommendedNextLesson}.`
-      : `${lesson.reviewRecommendation} Then try one more practice question and revisit the check-in together.`;
+      ? `Nice. You are ready for ${lesson.recommendedNextLesson}. Convince me with one quick example, then we can move on.`
+      : `Close. ${lesson.reviewRecommendation} Let's do one careful example first, then try another check-in.`;
   }
 
   if (/hint|help|practice/.test(lowerQuestion)) {
-    return lesson.guidedPractice[0]?.hint || lesson.explanation;
+    const hint = lesson.guidedPractice[0]?.hint || alternatePrompt;
+    return `Don't worry about the formula yet. ${hint} Try it on ${firstPracticePrompt}, and walk me through what you're thinking.`;
   }
 
   return lesson.explanation;
@@ -541,14 +545,14 @@ export function buildCoachMessage({
   lesson: AdaptiveLesson;
 }) {
   if (mastered) {
-    return `You are ready to move on. Next lesson: ${lesson.recommendedNextLesson}.`;
+    return `Nice work. You can explain this well enough to move on to ${lesson.recommendedNextLesson}.`;
   }
 
   if (recommendedReview) {
-    return `${lesson.reviewRecommendation} Your check-in score was ${quizPercent}%, so your Tutor recommends one careful review before the next lesson.`;
+    return `${lesson.reviewRecommendation} You remembered ${quizPercent}% on the check-in, so let's tighten this up with one more clear example before adding something new.`;
   }
 
-  return "You are close. Review the Tutor's notes, then write one reflection before moving forward.";
+  return "You are close. Say the idea back in your own words, then we will decide the next step together.";
 }
 
 function buildAssessmentSignals({
