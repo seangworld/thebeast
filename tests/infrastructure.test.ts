@@ -2141,15 +2141,14 @@ test("learning activities have a dedicated runner and next-activity unlock logic
   assert.match(activityRunner, /getProfileDisplayName/);
   assert.match(activityRunner, /learnerName=\{learnerName\}/);
   assert.match(activityRunner, /receives the outcome back for recap/);
-  assert.match(lessonEngine, /Lesson-scoped Tutor/);
-  assert.match(lessonEngine, /Tutor Conversation/);
-  assert.match(lessonEngine, /Tutor context/);
-  assert.match(lessonEngine, /learnerProfile/);
-  assert.match(lessonEngine, /mentorContext/);
+  assert.match(lessonEngine, /Conversation-first learning session/);
+  assert.match(lessonEngine, /Active learning conversation/);
+  assert.match(lessonEngine, /Mentor Snapshot/);
+  assert.match(lessonEngine, /messageBubbleClasses/);
+  assert.match(lessonEngine, /speakerLabel/);
   assert.match(lessonEngine, /currentConcept/);
-  assert.match(lessonEngine, /masteryState/);
-  assert.match(lessonEngine, /lessonPlan/);
-  assert.match(lessonEngine, /Ask, answer, or think out loud/);
+  assert.match(lessonEngine, /sticky bottom-0/);
+  assert.match(lessonEngine, /Saved on this device/);
   assert.match(lessonEngine, /Hint/);
   assert.match(lessonEngine, /Explain this another way/);
   assert.match(lessonEngine, /Check my understanding/);
@@ -2157,12 +2156,11 @@ test("learning activities have a dedicated runner and next-activity unlock logic
   assert.match(lessonEngine, /getLessonTeacherResponse/);
   assert.match(lessonEngine, /captureEvidence/);
   assert.match(lessonEngine, /sendLearnerMessage/);
-  assert.match(lessonEngine, /How I am adapting/);
-  assert.match(lessonEngine, /I saved our place/);
+  assert.match(lessonEngine, /Ready to save when you are/);
   assert.match(lessonEngine, /window\.localStorage\.setItem/);
   assert.match(lessonEngine, /window\.localStorage\.removeItem/);
   assert.match(lessonEngine, /progress\.coachingMessage/);
-  assert.match(lessonEngine, /progress\.continuity\.handoffSummary/);
+  assert.doesNotMatch(lessonEngine, /Tutor context/);
   assert.match(lessonEngine, /onPracticeAnswer/);
   assert.doesNotMatch(lessonEngine, /type="checkbox"/);
   assert.doesNotMatch(lessonEngine, /Adaptive Lesson/);
@@ -2204,7 +2202,7 @@ test("BeastLearning member home starts with Mentor before dashboard support", ()
   );
   assert.doesNotMatch(learningPage, /progressSignals\.snapshotTiles/);
   assert.doesNotMatch(learningPage, /function AITutorCenter/);
-  assert.match(lessonEngine, /Lesson-scoped Tutor/);
+  assert.match(lessonEngine, /Conversation-first learning session/);
 });
 
 test("BeastLearning v2 keeps normal learning in the Mentor conversation", () => {

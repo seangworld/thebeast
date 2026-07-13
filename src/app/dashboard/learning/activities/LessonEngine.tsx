@@ -3,9 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   DashboardCard,
-  MetricTile,
   ModuleBadge,
-  SectionHeader,
 } from "@/app/components/design/DashboardPrimitives";
 import {
   buildLessonEngineDefinition,
@@ -90,6 +88,30 @@ function learnerAskedToWrapUp(value: string) {
   );
 }
 
+function speakerLabel(role: TutorMessage["role"], learnerName: string, tutorRole: string) {
+  if (role === "learner") return learnerName;
+  if (role === "mentor") return "Mentor";
+  return tutorRole;
+}
+
+function messageBubbleClasses(role: TutorMessage["role"]) {
+  if (role === "learner") {
+    return "ml-auto rounded-[1.35rem] rounded-br-md bg-cyan-300 px-4 py-3 text-[#06232b] shadow-sm";
+  }
+
+  if (role === "mentor") {
+    return "rounded-[1.35rem] rounded-bl-md bg-emerald-300/15 px-4 py-3 text-emerald-50 ring-1 ring-emerald-200/20";
+  }
+
+  return "rounded-[1.35rem] rounded-bl-md bg-indigo-300/15 px-4 py-3 text-indigo-50 ring-1 ring-indigo-200/20";
+}
+
+function speakerDotClasses(role: TutorMessage["role"]) {
+  if (role === "learner") return "bg-cyan-300";
+  if (role === "mentor") return "bg-emerald-300";
+  return "bg-indigo-300";
+}
+
 export function LessonEngine({
   activity,
   courseTitle,
@@ -137,17 +159,6 @@ export function LessonEngine({
     engine.lesson.scopeId ||
     engine.lesson.prerequisiteConcepts[0] ||
     engine.lesson.subject;
-  const tutorContext = {
-    learnerProfile: `${learnerName} is working in BeastLearning and reports ${confidenceLabel(confidence)} confidence.`,
-    mentorContext: `The Mentor selected ${activity.title}. ${tutorSelection.reason}`,
-    course: courseTitle,
-    lesson: engine.lesson.title,
-    currentConcept,
-    masteryState: `${progress.masteryEstimate}% estimated mastery`,
-    lessonPlan: engine.lesson.learningObjective,
-    tutorRole: tutorSelection.role,
-    sessionContext: tutorSelection.contextSummary,
-  };
   const tutorReadyToComplete =
     completed ||
     (messages.filter((message) => message.role === "learner").length >= 2 &&
@@ -334,139 +345,96 @@ export function LessonEngine({
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5">
       <DashboardCard accent="learning">
-        <div className="grid gap-5 xl:grid-cols-[1fr_0.72fr] xl:items-center">
-          <div>
-            <p className="beast-kicker">Lesson-scoped Tutor</p>
-            <h2 className="mt-2 text-3xl font-black text-white">
-              {engine.lesson.title}
-            </h2>
-            <p className="mt-3 max-w-3xl text-sm leading-6 text-[#c7cfdb]">
-              The Tutor behaves like a focused conversation: it can teach,
-              ask, hint, explain another way, and check mastery, but it stays
-              inside this lesson and hands progress back to the Mentor.
-            </p>
-          </div>
-          <div className="grid gap-3 rounded-xl border border-[#2a3242] bg-[#111827] p-4">
-            <div className="flex items-center justify-between gap-4 text-sm">
-              <span className="font-semibold text-[#9aa7b8]">Mastery signal</span>
-              <span className="font-black text-white">
-                {completed ? 100 : progress.masteryEstimate}%
-              </span>
-            </div>
-            <div className="h-3 overflow-hidden rounded-full bg-[#0f1419]">
-              <div
-                className="h-full rounded-full bg-indigo-300"
-                style={{ width: `${completed ? 100 : progress.masteryEstimate}%` }}
-              />
-            </div>
-            <p className="text-xs font-bold uppercase text-[#7f8da3]">
-              {activity.estimated_minutes} min - {courseTitle} - {tutorSelection.role}
-            </p>
-          </div>
-        </div>
-      </DashboardCard>
-
-      <section className="grid gap-4 sm:grid-cols-3">
-        <MetricTile
-          label="Scope"
-          value={currentConcept}
-          detail="Current concept"
-          icon="S"
-          tone="purple"
-        />
-        <MetricTile
-          label="Mastery"
-          value={`${completed ? 100 : progress.masteryEstimate}%`}
-          detail={progress.mastered ? "Ready for more" : "Still practicing"}
-          icon="M"
-          tone="yellow"
-        />
-        <MetricTile
-          label="Confidence"
-          value={confidenceLabel(confidence)}
-          detail={askedForHelp ? "Support used" : "Ask anytime"}
-          icon="C"
-          tone="green"
-        />
-      </section>
-
-      <DashboardCard accent="learning">
-        <SectionHeader
-          eyebrow="Tutor Conversation"
-          title="Ask, answer, or think out loud."
-          description="The Tutor uses Mentor-provided context, course, lesson, concept, mastery state, and lesson plan to respond inside this lesson scope."
-          action={<ModuleBadge module="learning" label={tutorSelection.role} />}
-        />
-
-        <div className="mt-6 grid gap-5 xl:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)]">
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px] xl:grid-cols-[minmax(0,1fr)_320px]">
           <section
-            className="grid min-h-[620px] content-between gap-5 rounded-2xl border border-indigo-300/35 bg-[#0b1020] p-4 sm:p-5"
-            aria-label="Lesson-scoped Tutor conversation"
+            className="flex min-h-[680px] flex-col overflow-hidden rounded-2xl bg-[#0b1020]"
+            aria-label="Conversation-first learning session"
           >
-            <div className="grid gap-4">
+            <header className="border-b border-white/10 px-4 py-3 sm:px-5">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-wide text-indigo-100">
+                    Active learning conversation
+                  </p>
+                  <h2 className="mt-1 text-xl font-black leading-tight text-white sm:text-2xl">
+                    {engine.lesson.title}
+                  </h2>
+                  <p className="mt-1 text-sm font-semibold text-[#9aa7b8]">
+                    {courseTitle} - {activity.estimated_minutes} min
+                  </p>
+                </div>
+                <ModuleBadge module="learning" label={tutorSelection.role} />
+              </div>
+            </header>
+
+            <div className="flex-1 space-y-4 overflow-y-auto px-4 py-5 sm:px-5">
               {messages.map((message) => (
                 <div
                   key={message.id}
-                  className={`max-w-3xl rounded-2xl border p-4 ${
-                    message.role === "learner"
-                      ? "ml-auto border-cyan-300/35 bg-cyan-300/10"
-                      : message.role === "mentor"
-                        ? "border-green-300/30 bg-green-300/10"
-                        : "border-indigo-300/30 bg-indigo-300/10"
-                  }`}
+                  className={`flex ${message.role === "learner" ? "justify-end" : "justify-start"}`}
                 >
-                  <div className="text-xs font-black uppercase text-[#c7cfdb]">
-                    {message.role === "learner" ? firstName : message.role}
+                  <div className={`max-w-[82%] sm:max-w-[72%] ${message.role === "learner" ? "text-right" : "text-left"}`}>
+                    <div className={`mb-1 flex items-center gap-2 text-xs font-black uppercase tracking-wide text-[#9aa7b8] ${message.role === "learner" ? "justify-end" : ""}`}>
+                      <span className={`h-2 w-2 rounded-full ${speakerDotClasses(message.role)}`} />
+                      <span>{speakerLabel(message.role, firstName, tutorSelection.role)}</span>
+                    </div>
+                    <div className={messageBubbleClasses(message.role)}>
+                      <p className="text-sm font-semibold leading-6">
+                        {message.body}
+                      </p>
+                    </div>
                   </div>
-                  <p className="mt-2 text-sm font-semibold leading-6 text-white">
-                    {message.body}
-                  </p>
                 </div>
               ))}
               {!completed && messages.length > initialMessages.length ? (
-                <div className="max-w-3xl rounded-2xl border border-green-400/30 bg-green-400/10 p-4">
-                  <div className="text-xs font-black uppercase text-green-100">
-                    I saved our place
-                  </div>
-                  <p className="mt-2 text-sm font-semibold leading-6 text-green-50">
-                    If you leave and come back on this device, I will restore
-                    this Tutor conversation instead of making you restart.
-                  </p>
+                <div className="mx-auto max-w-md rounded-full bg-white/5 px-4 py-2 text-center text-xs font-semibold text-[#9aa7b8]">
+                  Saved on this device. Returning here restores this conversation.
                 </div>
               ) : null}
             </div>
 
-            <div className="grid gap-3 border-t border-[#2a3242] pt-4">
-              <div className="flex flex-wrap gap-2">
+            <div className="sticky bottom-0 border-t border-white/10 bg-[#0b1020]/95 p-3 backdrop-blur sm:p-4">
+              <div className="mb-3 flex gap-2 overflow-x-auto pb-1">
                 {[
-                  "Teach this in a simple way.",
-                  "Check my understanding.",
-                  "Give me a hint.",
-                  "Explain this another way.",
-                  "Save this for my Mentor.",
+                  "Teach simply",
+                  "Check me",
+                  "Hint",
+                  "Another way",
+                  "Save for Mentor",
                 ].map((prompt) => (
                   <button
                     key={prompt}
                     type="button"
-                    className="beast-button-secondary"
+                    className="shrink-0 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-black text-[#dbe3ef] transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
                     disabled={completed}
-                    onClick={() => sendLearnerMessage(prompt)}
+                    onClick={() =>
+                      sendLearnerMessage(
+                        prompt === "Teach simply"
+                          ? "Teach this in a simple way."
+                          : prompt === "Check me"
+                            ? "Check my understanding."
+                            : prompt === "Hint"
+                              ? "Give me a hint."
+                              : prompt === "Another way"
+                                ? "Explain this another way."
+                                : "Save this for my Mentor."
+                      )
+                    }
                   >
                     {prompt}
                   </button>
                 ))}
               </div>
-              <label className="block">
-                <span className="text-sm font-semibold text-[#c7cfdb]">
-                  Message the Tutor
-                </span>
+              <label className="block" htmlFor={`lesson-reply-${activity.id}`}>
+                <span className="sr-only">Message the Tutor</span>
                 <textarea
+                  id={`lesson-reply-${activity.id}`}
                   value={learnerReply}
                   onChange={(event) => setLearnerReply(event.target.value)}
-                  rows={4}
-                  className="beast-input mt-2 min-h-28 resize-y"
+                  rows={3}
+                  className="beast-input min-h-20 resize-none rounded-2xl border-white/10 bg-[#111827]"
                   placeholder="Ask a question, try an answer, or explain what you think."
                   disabled={completed}
                   onKeyDown={(event) => {
@@ -476,7 +444,17 @@ export function LessonEngine({
                   }}
                 />
               </label>
-              <div className="flex flex-wrap gap-3">
+              <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-xs font-semibold text-[#7f8da3]">
+                  {saving
+                    ? "Saving for your Mentor..."
+                    : completed
+                      ? "Session saved."
+                      : tutorReadyToComplete
+                        ? "Ready to save when you are."
+                        : "Your place is saved as you go."}
+                </p>
+                <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
                   onClick={() => sendLearnerMessage()}
@@ -493,36 +471,51 @@ export function LessonEngine({
                 >
                   {saving ? "Saving..." : completed ? "Lesson saved" : "Save for Mentor"}
                 </button>
+                </div>
               </div>
             </div>
           </section>
 
-          <aside className="grid content-start gap-4">
-            <div className="rounded-2xl border border-[#2a3242] bg-[#111827] p-4">
-              <div className="text-xs font-black uppercase text-[#7f8da3]">
-                Tutor context
+          <aside className="grid content-start gap-3 rounded-2xl border border-white/10 bg-[#111827] p-4 lg:sticky lg:top-20">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="text-xs font-black uppercase text-[#7f8da3]">
+                  Mentor Snapshot
+                </div>
+                <h3 className="mt-1 font-black text-white">Current session</h3>
               </div>
-              <div className="mt-3 grid gap-3">
-                {Object.entries(tutorContext).map(([label, value]) => (
-                  <div key={label} className="rounded-xl border border-[#2a3242] bg-[#0f1419] p-3">
-                    <div className="text-xs font-bold uppercase text-indigo-100">
-                      {label.replace(/([A-Z])/g, " $1")}
-                    </div>
-                    <p className="mt-1 text-sm leading-5 text-[#c7cfdb]">{value}</p>
-                  </div>
-                ))}
-              </div>
+              <span className="rounded-full bg-indigo-300/15 px-3 py-1 text-xs font-black text-indigo-100">
+                {completed ? "Saved" : "Active"}
+              </span>
             </div>
 
-            <div className="rounded-2xl border border-[#2a3242] bg-[#111827] p-4">
-              <div className="text-xs font-black uppercase text-[#7f8da3]">
-                How I am adapting
+            {[
+              ["Goal", engine.lesson.learningObjective],
+              ["Tutor", tutorSelection.role],
+              ["Confidence", confidenceLabel(confidence)],
+              ["Confidence summary", progress.coachingMessage],
+              ["Recent progress", `${completed ? 100 : progress.masteryEstimate}% mastery signal`],
+              ["Next", progress.nextRecommendation],
+            ].map(([label, value]) => (
+              <div key={label} className="rounded-xl bg-[#0f1419] p-3">
+                <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                  {label}
+                </div>
+                <p className="mt-1 text-sm font-semibold leading-5 text-[#dbe3ef]">
+                  {value}
+                </p>
               </div>
-              <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
-                {progress.coachingMessage}
+            ))}
+
+            <div className="rounded-xl bg-[#0f1419] p-3">
+              <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                Current concept
+              </div>
+              <p className="mt-1 text-sm font-semibold leading-5 text-[#dbe3ef]">
+                {currentConcept}
               </p>
-              <p className="mt-3 text-sm leading-6 text-[#9aa7b8]">
-                {progress.continuity.handoffSummary}
+              <p className="mt-2 text-xs font-semibold leading-5 text-[#7f8da3]">
+                {askedForHelp ? "Support used in this session." : "Hints are available when needed."}
               </p>
             </div>
           </aside>
