@@ -6,7 +6,16 @@ import {
   buildLearnerReflectionOutcome,
   buildLearnerReflectionStorage,
 } from "../src/lib/learning/reflectionEngine";
+import { buildConfidenceIntelligenceSnapshot } from "../src/lib/learning/confidenceIntelligence";
+import {
+  buildLearningTimeline,
+  buildMentorLearningMemory,
+} from "../src/lib/learning/learningTimeline";
 import { selectMentorTutor } from "../src/lib/learning/tutorOrchestration";
+import {
+  buildMeaningfulLearningAchievements,
+  buildWeeklyMentorReview,
+} from "../src/lib/learning/weeklyMentorReview";
 import {
   buildLessonEngineDefinition,
   getLessonEngineProgress,
@@ -279,4 +288,123 @@ test("reflection outcome changes Mentor recommendations for guessing and frustra
   assert.equal(frustrated.confidenceAdjustment, "reduce-pressure");
   assert.match(frustrated.nextAction, /smaller/);
   assert.equal(storage.reflection_note.length, 500);
+});
+
+test("confidence intelligence handles missing data honestly", () => {
+  const snapshot = buildConfidenceIntelligenceSnapshot({
+    activities: [],
+    courses: [],
+    sessions: [],
+  });
+
+  assert.equal(snapshot.missingData, true);
+  assert.equal(
+    snapshot.dimensions.every((dimension) => dimension.level === "insufficient-data"),
+    true
+  );
+  assert.match(snapshot.mentorSummary, /completed learning session/);
+});
+
+test("confidence intelligence uses guessing and retention evidence", () => {
+  const snapshot = buildConfidenceIntelligenceSnapshot({
+    activities: [
+      {
+        id: "activity-1",
+        activity_type: "Lesson",
+        title: "CIDR notation",
+        difficulty: "Core",
+        estimated_minutes: 18,
+        xp: 20,
+        status: "Completed",
+        completed_at: "2026-07-01T12:00:00.000Z",
+        session_strengths: ["Check-in answers show usable recall."],
+        reflection_option: "I guessed",
+        reflection_confidence_adjustment: "lower-confidence",
+      },
+    ],
+    courses: [course],
+    sessions: [],
+    now: new Date("2026-07-13T12:00:00.000Z"),
+  });
+
+  assert.equal(
+    snapshot.dimensions.find((dimension) => dimension.id === "confidence")?.level,
+    "developing"
+  );
+  assert.equal(
+    snapshot.dimensions.find((dimension) => dimension.id === "retention")?.level,
+    "review-due"
+  );
+  assert.match(snapshot.recommendation, /retention review|smaller check/);
+});
+
+test("learning timeline and Mentor memory use real activity events", () => {
+  const activities: LearningActivityRunnerRow[] = [
+    {
+      id: "activity-1",
+      activity_type: "Lesson",
+      title: "CIDR notation",
+      difficulty: "Core",
+      estimated_minutes: 18,
+      xp: 20,
+      status: "Completed",
+      completed_at: "2026-07-13T12:00:00.000Z",
+      session_recap: "Evidence: quiz 80%",
+      session_weak_concepts: ["Review CIDR block sizing."],
+      session_state: "review_due",
+      reflection_option: "Hard",
+    },
+  ];
+  const timeline = buildLearningTimeline({
+    activities,
+    sessions: [],
+    goals: [activeGoal],
+    recommendations: [recommendation],
+  });
+  const memory = buildMentorLearningMemory({
+    activities,
+    sessions: [],
+    goals: [activeGoal],
+    recommendations: [recommendation],
+  });
+
+  assert.equal(timeline.some((event) => event.type === "difficulty_detected"), true);
+  assert.equal(timeline.some((event) => event.type === "reflection_recorded"), true);
+  assert.match(memory.lastDone, /CIDR notation/);
+  assert.match(memory.reviewDue, /CIDR notation/);
+});
+
+test("weekly review and meaningful achievements avoid fake trends", () => {
+  const confidence = buildConfidenceIntelligenceSnapshot({
+    activities: [],
+    courses: [],
+    sessions: [],
+  });
+  const emptyReview = buildWeeklyMentorReview({
+    activities: [],
+    sessions: [],
+    goals: [],
+    courses: [],
+    confidence,
+  });
+  const achievements = buildMeaningfulLearningAchievements({
+    activities: [
+      {
+        id: "activity-1",
+        activity_type: "Lesson",
+        title: "Subnetting remediation",
+        difficulty: "Core",
+        estimated_minutes: 18,
+        xp: 20,
+        status: "Completed",
+        session_strengths: ["Practice evidence is moving in the right direction."],
+      },
+    ],
+    courses: [{ ...course, progress: 100 }],
+  });
+
+  assert.equal(emptyReview.missingData, true);
+  assert.match(emptyReview.nextWeekRecommendation, /Complete one guided session/);
+  assert.equal(new Set(achievements.map((achievement) => achievement.id)).size, achievements.length);
+  assert.equal(achievements.length > 0, true);
 });

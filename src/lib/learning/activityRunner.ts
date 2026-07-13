@@ -18,6 +18,15 @@ export type LearningActivityRunnerRow = {
   completed_at?: string | null;
   sort_order?: number | null;
   created_at?: string | null;
+  session_state?: string | null;
+  session_recap?: string | null;
+  session_strengths?: string[] | null;
+  session_weak_concepts?: string[] | null;
+  session_next_recommendation?: string | null;
+  reflection_option?: string | null;
+  reflection_note?: string | null;
+  reflection_confidence_adjustment?: string | null;
+  reflection_next_action?: string | null;
 };
 
 export type LearningActivityContinuityState = {

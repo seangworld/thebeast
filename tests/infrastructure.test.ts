@@ -2318,6 +2318,33 @@ test("guided learning sessions keep Mentor lifecycle Tutor handoff and reflectio
   assert.match(migration, /session_next_recommendation/);
 });
 
+test("Mentor-first integration includes confidence timeline memory and weekly review", () => {
+  const learningPage = readFileSync("src/app/dashboard/learning/page.tsx", "utf8");
+  const confidence = readFileSync("src/lib/learning/confidenceIntelligence.ts", "utf8");
+  const timeline = readFileSync("src/lib/learning/learningTimeline.ts", "utf8");
+  const weeklyReview = readFileSync("src/lib/learning/weeklyMentorReview.ts", "utf8");
+
+  assert.match(learningPage, /buildConfidenceIntelligenceSnapshot/);
+  assert.match(learningPage, /buildLearningTimeline/);
+  assert.match(learningPage, /buildMentorLearningMemory/);
+  assert.match(learningPage, /WeeklyMentorReviewPanel/);
+  assert.match(learningPage, /Confidence intelligence/);
+  assert.match(learningPage, /Mentor memory/);
+  assert.match(learningPage, /Recent timeline/);
+  assert.match(confidence, /Knowledge/);
+  assert.match(confidence, /Confidence/);
+  assert.match(confidence, /Consistency/);
+  assert.match(confidence, /Speed/);
+  assert.match(confidence, /Retention/);
+  assert.match(confidence, /Speed is not being judged yet/);
+  assert.match(timeline, /lesson_completed/);
+  assert.match(timeline, /reflection_recorded/);
+  assert.match(timeline, /review_scheduled/);
+  assert.match(learningPage, /No meaningful achievement is being awarded/);
+  assert.match(weeklyReview, /Complete one guided session/);
+  assert.doesNotMatch(learningPage, /Leaderboard|leaderboard/);
+});
+
 test("generated learning activities persist with required visibility fields", () => {
   const draft = {
     learningObjective: "Pre-Algebra",

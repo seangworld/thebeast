@@ -47,6 +47,22 @@ import {
   buildMentorHomeMission,
   type MentorHomeMission,
 } from "@/lib/learning/mentorHome";
+import {
+  buildConfidenceIntelligenceSnapshot,
+  type ConfidenceIntelligenceSnapshot,
+} from "@/lib/learning/confidenceIntelligence";
+import {
+  buildLearningTimeline,
+  buildMentorLearningMemory,
+  type LearningTimelineEvent,
+  type MentorLearningMemory,
+} from "@/lib/learning/learningTimeline";
+import {
+  buildMeaningfulLearningAchievements,
+  buildWeeklyMentorReview,
+  type MeaningfulLearningAchievement,
+  type WeeklyMentorReview,
+} from "@/lib/learning/weeklyMentorReview";
 import { buildLearningDashboardContent } from "@/lib/learning/dashboardContent";
 import { buildKnowledgeIntelligenceDashboard } from "@/lib/learning/knowledgeDashboard";
 import { learningSpecialists } from "@/lib/learning/specialists";
@@ -239,14 +255,18 @@ function ProgressBar({ value }: { value: number }) {
 
 function MentorHome({
   mission,
-  learningReadinessSignals,
+  confidence,
+  memory,
+  timeline,
   learningPlan,
   learningGoals,
   learningCourses,
   learningRecommendations,
 }: {
   mission: MentorHomeMission;
-  learningReadinessSignals: { label: string; value: string }[];
+  confidence: ConfidenceIntelligenceSnapshot;
+  memory: MentorLearningMemory;
+  timeline: LearningTimelineEvent[];
   learningPlan: LearningPlan;
   learningGoals: LearningGoal[];
   learningCourses: LearningCourse[];
@@ -376,6 +396,17 @@ function MentorHome({
             </div>
           </div>
 
+          <div className="rounded-2xl border border-[#2a3242] bg-[#111827] p-4">
+            <div className="text-xs font-black uppercase text-[#7f8da3]">
+              Mentor memory
+            </div>
+            <div className="mt-3 grid gap-2 text-sm leading-6 text-[#c7cfdb]">
+              {[memory.lastDone, memory.struggledWith, memory.unfinished, memory.reviewDue].map((item) => (
+                <p key={item}>{item}</p>
+              ))}
+            </div>
+          </div>
+
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
             {[
               ["Goal", mission.currentGoalLabel],
@@ -399,15 +430,41 @@ function MentorHome({
 
           <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
             <div className="text-xs font-bold uppercase text-[#7f8da3]">
-              Learning Readiness
+              Confidence intelligence
             </div>
             <div className="mt-3 grid gap-2">
-              {learningReadinessSignals.slice(0, 4).map((signal) => (
-                <div key={signal.label} className="flex justify-between gap-3 text-sm">
-                  <span className="font-semibold text-[#9aa7b8]">{signal.label}</span>
-                  <span className="text-right font-black text-white">{signal.value}</span>
+              {confidence.dimensions.map((signal) => (
+                <div key={signal.id} className="rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
+                  <div className="flex justify-between gap-3 text-sm">
+                    <span className="font-semibold text-[#9aa7b8]">{signal.label}</span>
+                    <span className="text-right font-black text-white">{signal.level.replace(/-/g, " ")}</span>
+                  </div>
+                  <p className="mt-1 text-xs font-semibold leading-5 text-[#c7cfdb]">
+                    {signal.learnerLanguage}
+                  </p>
                 </div>
               ))}
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+            <div className="text-xs font-bold uppercase text-[#7f8da3]">
+              Recent timeline
+            </div>
+            <div className="mt-3 grid gap-2">
+              {timeline.slice(0, 4).map((event) => (
+                <div key={event.id} className="rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
+                  <div className="text-sm font-black text-white">{event.title}</div>
+                  <p className="mt-1 text-xs font-semibold leading-5 text-[#c7cfdb]">
+                    {event.detail}
+                  </p>
+                </div>
+              ))}
+              {timeline.length === 0 ? (
+                <p className="text-sm font-semibold text-[#c7cfdb]">
+                  Complete one session and your Mentor will build a real timeline.
+                </p>
+              ) : null}
             </div>
           </div>
 
@@ -455,6 +512,91 @@ function MentorHome({
             </div>
           </div>
         </aside>
+      </div>
+    </DashboardCard>
+  );
+}
+
+function WeeklyMentorReviewPanel({
+  review,
+  achievements,
+}: {
+  review: WeeklyMentorReview;
+  achievements: MeaningfulLearningAchievement[];
+}) {
+  return (
+    <DashboardCard accent="learning">
+      <SectionHeader
+        eyebrow="Weekly Mentor Review"
+        title={review.title}
+        description={review.summary}
+        action={<ModuleBadge module="learning" label={review.missingData ? "Needs evidence" : "Review ready"} />}
+      />
+      <div className="mt-5 grid gap-4 lg:grid-cols-[0.95fr_1.05fr]">
+        <section className="grid gap-3">
+          {[
+            ["Sessions", review.sessionsCompleted],
+            ["Study time", review.studyTime],
+            ["Goal progress", review.currentGoalProgress],
+            ["Confidence", review.confidenceDirection],
+          ].map(([label, value]) => (
+            <div key={label} className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+              <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                {label}
+              </div>
+              <p className="mt-2 text-sm font-semibold leading-6 text-white">
+                {value}
+              </p>
+            </div>
+          ))}
+        </section>
+        <section className="grid gap-3">
+          <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+            <h3 className="font-black text-white">Next week</h3>
+            <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
+              {review.nextWeekRecommendation}
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+              <h3 className="font-black text-white">Strengths</h3>
+              <ul className="mt-2 grid gap-2 text-sm leading-6 text-[#c7cfdb]">
+                {review.strengths.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </div>
+            <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+              <h3 className="font-black text-white">Weak areas</h3>
+              <ul className="mt-2 grid gap-2 text-sm leading-6 text-[#c7cfdb]">
+                {review.weakAreas.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </section>
+      </div>
+      <div className="mt-5 rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+        <h3 className="font-black text-white">Meaningful achievements</h3>
+        <div className="mt-3 grid gap-3 md:grid-cols-2">
+          {achievements.map((achievement) => (
+            <div key={achievement.id} className="rounded-lg border border-green-300/25 bg-green-300/10 p-3">
+              <div className="text-sm font-black text-white">{achievement.title}</div>
+              <p className="mt-1 text-sm leading-6 text-green-50">
+                {achievement.message}
+              </p>
+              <p className="mt-1 text-xs font-semibold uppercase text-green-100">
+                {achievement.basis}
+              </p>
+            </div>
+          ))}
+          {achievements.length === 0 ? (
+            <p className="text-sm font-semibold leading-6 text-[#c7cfdb]">
+              No meaningful achievement is being awarded yet. Your Mentor will wait for real outcomes, not clicks.
+            </p>
+          ) : null}
+        </div>
       </div>
     </DashboardCard>
   );
@@ -510,7 +652,7 @@ export default async function LearningPage() {
       .order("scheduled_for", { ascending: true }),
     supabase
       .from("learning_activities")
-      .select("id, course_id, activity_type, title, difficulty, estimated_minutes, xp, status, completed_at, sort_order, created_at")
+      .select("id, course_id, activity_type, title, difficulty, estimated_minutes, xp, status, completed_at, sort_order, created_at, session_state, session_recap, session_strengths, session_weak_concepts, session_next_recommendation, reflection_option, reflection_note, reflection_confidence_adjustment, reflection_next_action")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false }),
     supabase
@@ -633,34 +775,6 @@ export default async function LearningPage() {
     achievementCount: achievementUnlocks.filter((achievement) => achievement.unlocked)
       .length,
   });
-  const learningReadinessSignals = [
-    {
-      label: "Confidence",
-      value: `${learningIntelligence.mastery.confidence} confidence`,
-    },
-    {
-      label: "Mastery",
-      value: `${learningIntelligence.mastery.overallMasteryPercent}% demonstrated`,
-    },
-    {
-      label: "Prerequisites",
-      value: `${learningIntelligence.dependencyGraph.unlockedConcepts.length} ideas ready`,
-    },
-    {
-      label: "Study consistency",
-      value: `${progressSignals.currentStreakDays} day streak`,
-    },
-    {
-      label: "Learning momentum",
-      value: `${progressSignals.sessionsCompleted} lessons saved`,
-    },
-    {
-      label: "Knowledge retention",
-      value: `${learningIntelligence.weakness.repeatedReviewNeeds.length} review need${
-        learningIntelligence.weakness.repeatedReviewNeeds.length === 1 ? "" : "s"
-      }`,
-    },
-  ];
   const mentorHomeMission = buildMentorHomeMission({
     learnerName: activeLearner.name,
     learningGoals,
@@ -669,6 +783,34 @@ export default async function LearningPage() {
     learningActivities: userActivities,
     learningRecommendations,
     progressSignals,
+  });
+  const confidenceIntelligence = buildConfidenceIntelligenceSnapshot({
+    activities: userActivities,
+    courses: learningCourses,
+    sessions: learningSessions,
+  });
+  const learningTimeline = buildLearningTimeline({
+    activities: userActivities,
+    sessions: learningSessions,
+    goals: learningGoals,
+    recommendations: learningRecommendations,
+  });
+  const mentorLearningMemory = buildMentorLearningMemory({
+    activities: userActivities,
+    sessions: learningSessions,
+    goals: learningGoals,
+    recommendations: learningRecommendations,
+  });
+  const meaningfulAchievements = buildMeaningfulLearningAchievements({
+    activities: userActivities,
+    courses: learningCourses,
+  });
+  const weeklyMentorReview = buildWeeklyMentorReview({
+    activities: userActivities,
+    sessions: learningSessions,
+    goals: learningGoals,
+    courses: learningCourses,
+    confidence: confidenceIntelligence,
   });
 
   return (
@@ -698,7 +840,9 @@ export default async function LearningPage() {
         <div id="guidance" className="scroll-mt-24">
           <MentorHome
             mission={mentorHomeMission}
-            learningReadinessSignals={learningReadinessSignals}
+            confidence={confidenceIntelligence}
+            memory={mentorLearningMemory}
+            timeline={learningTimeline}
             learningPlan={learningPlan}
             learningGoals={learningGoals}
             learningCourses={learningCourses}
@@ -735,6 +879,13 @@ export default async function LearningPage() {
               ))}
             </div>
           </DashboardCard>
+        </section>
+
+        <section id="weekly-review" className="scroll-mt-24">
+          <WeeklyMentorReviewPanel
+            review={weeklyMentorReview}
+            achievements={meaningfulAchievements}
+          />
         </section>
 
         <section id="wins" className="grid scroll-mt-24 gap-4 xl:grid-cols-[1fr_0.9fr]">
