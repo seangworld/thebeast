@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { KeyboardEvent } from "react";
 import {
   DashboardCard,
   ModuleBadge,
@@ -148,9 +149,11 @@ export function LessonEngine({
   const [learnerReply, setLearnerReply] = useState("");
   const [messages, setMessages] = useState<TutorMessage[]>([]);
   const [askedForHelp, setAskedForHelp] = useState(false);
+  const [isResponding, setIsResponding] = useState(false);
   const restoredDraft = useRef(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const replyInputRef = useRef<HTMLTextAreaElement | null>(null);
+  const responsePendingRef = useRef(false);
   const engine = buildLessonEngineDefinition(activity);
   const draftKey = `beastlearning:tutor-chat:${activity.id}`;
   const firstName = firstNameFor(learnerName);
@@ -340,8 +343,10 @@ export function LessonEngine({
 
   function sendLearnerMessage(value = learnerReply) {
     const text = value.trim();
-    if (!text || completed) return;
+    if (!text || completed || responsePendingRef.current) return;
 
+    responsePendingRef.current = true;
+    setIsResponding(true);
     captureEvidence(text);
 
     setMessages((current) => {
@@ -370,7 +375,18 @@ export function LessonEngine({
       return [...current, learnerMessage, tutorMessage, mentorMessage];
     });
     setLearnerReply("");
-    requestAnimationFrame(() => replyInputRef.current?.focus());
+    requestAnimationFrame(() => {
+      responsePendingRef.current = false;
+      setIsResponding(false);
+      replyInputRef.current?.focus();
+    });
+  }
+
+  function handleReplyKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+    if (event.nativeEvent.isComposing || event.key !== "Enter" || event.shiftKey) return;
+
+    event.preventDefault();
+    sendLearnerMessage();
   }
 
   function finishLesson() {
@@ -447,7 +463,7 @@ export function LessonEngine({
                     key={prompt}
                     type="button"
                     className="shrink-0 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-black text-[#dbe3ef] transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
-                    disabled={completed}
+                    disabled={completed || isResponding}
                     onClick={() =>
                       sendLearnerMessage(
                         prompt === "Teach simply"
@@ -472,14 +488,11 @@ export function LessonEngine({
                   value={learnerReply}
                   onChange={(event) => setLearnerReply(event.target.value)}
                   rows={3}
+                  enterKeyHint="send"
                   className="beast-input min-h-20 resize-none rounded-2xl border-white/10 bg-[#111827]"
                   placeholder="Ask a question, try an answer, or explain what you think."
                   disabled={completed}
-                  onKeyDown={(event) => {
-                    if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
-                      sendLearnerMessage();
-                    }
-                  }}
+                  onKeyDown={handleReplyKeyDown}
                 />
               </label>
               <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -491,9 +504,9 @@ export function LessonEngine({
                     type="button"
                     onClick={() => sendLearnerMessage()}
                     className="beast-button"
-                    disabled={completed || !learnerReply.trim()}
+                    disabled={completed || isResponding || !learnerReply.trim()}
                   >
-                    Send
+                    {isResponding ? "Sending..." : "Send"}
                   </button>
                   <button
                     type="button"
