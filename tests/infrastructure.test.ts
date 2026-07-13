@@ -240,6 +240,7 @@ import {
   getGeneratedActivityTitle,
   getGeneratedLearningSubject,
 } from "../src/lib/learning/generatedActivities";
+import { generateDynamicLearningLesson } from "../src/lib/learning/dynamicLessonGenerator";
 import {
   createGeneratedLearningContentRecord,
   getLearningActivityTitleForGoal,
@@ -3624,6 +3625,53 @@ test("generated versus curated content controls require review status", () => {
   assert.equal(fixtureContent.every(contentCanBePublished), true);
   assert.equal(curatedMetadata.reviewStatus, "approved");
   assert.equal(contentCanBePublished(curatedMetadata), true);
+});
+
+test("dynamic lesson generation stays aligned to curriculum authority", () => {
+  const aligned = generateDynamicLearningLesson({
+    goal: "Security+ incident response",
+    courseId: "security-plus-foundations-course",
+    courseTitle: "Security+ Foundations",
+    learnerLevel: "Advanced",
+    mode: "challenge",
+    targetObjectiveId: "security-plus-4-8-incident-response",
+  });
+
+  assert.equal(aligned.generationPolicy, "curriculum-aligned");
+  assert.equal(aligned.alignment.aligned, true);
+  assert.equal(aligned.alignment.objectiveIds[0], "security-plus-4-8-incident-response");
+  assert.equal(aligned.lesson.objectiveIds?.[0], "security-plus-4-8-incident-response");
+  assert.equal(aligned.lesson.guidedPractice.some((step) => step.difficulty === "challenge"), true);
+  assert.equal(aligned.lesson.aiCoachingPrompts.some((prompt) => prompt.title === "Remediate"), true);
+  assert.equal(aligned.lesson.aiCoachingPrompts.some((prompt) => prompt.title === "Review"), true);
+  assert.equal(aligned.lesson.aiCoachingPrompts.some((prompt) => prompt.title === "Challenge"), true);
+  assert.match(aligned.lesson.quizQuestions[0].explanation, /mapped curriculum objective/);
+
+  const diagnostic = generateDynamicLearningLesson({
+    goal: "Underwater basket weaving",
+    courseId: "generated-underwater-basket-weaving-course",
+    courseTitle: "Underwater Basket Weaving",
+    learnerLevel: "Beginner",
+    mode: "review",
+  });
+
+  assert.equal(diagnostic.generationPolicy, "diagnostic-starter");
+  assert.equal(diagnostic.alignment.aligned, false);
+  assert.equal(diagnostic.alignment.productionEligible, false);
+  assert.match(diagnostic.alignment.boundary, /must not claim official curriculum coverage/);
+  assert.match(diagnostic.lesson.explanation, /Treat this as placement/);
+
+  const generatedRecord = createGeneratedLearningContentRecord("Python");
+  assert.equal(generatedRecord.lesson.guidedPractice.length >= 2, true);
+  assert.equal(
+    generatedRecord.lesson.aiCoachingPrompts.some((prompt) => prompt.title === "Challenge"),
+    true
+  );
+
+  const lessonEngine = readFileSync("src/lib/learning/lessonEngine.ts", "utf8");
+  assert.match(lessonEngine, /generateDynamicLearningLesson/);
+  assert.match(lessonEngine, /learningDifficultyFromActivity/);
+  assert.match(lessonEngine, /mode: learnerLevel === "Advanced" \? "challenge" : "lesson"/);
 });
 
 test("curriculum authority separates teachable objectives from AI teaching behavior", () => {

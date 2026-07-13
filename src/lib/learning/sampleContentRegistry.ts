@@ -3,6 +3,7 @@ import type {
 } from "./lessonEngine";
 import type { PlacementQuestion } from "./coreLearningLoop";
 import { createLearningContentMetadata } from "./contentVersioning";
+import { generateDynamicLearningLesson } from "./dynamicLessonGenerator";
 import type { LearningIntent } from "./types";
 
 export type SampleScopePrerequisite = {
@@ -893,6 +894,13 @@ export function createGeneratedLearningContentRecord(
   const resolvedSubject = subject.trim() || "Learning Path";
   const subjectSlug = slugify(resolvedSubject || "learning-path");
   const lessonId = `generated-${subjectSlug}-starter`;
+  const generatedLesson = generateDynamicLearningLesson({
+    goal: resolvedSubject,
+    courseId: `generated-${subjectSlug}-course`,
+    courseTitle: `${resolvedSubject} Generated Curriculum`,
+    learnerLevel: "Brand new",
+    mode: "lesson",
+  }).lesson;
 
   return {
     id: `generated-${subjectSlug}`,
@@ -905,6 +913,7 @@ export function createGeneratedLearningContentRecord(
     activityTitle: `${resolvedSubject}: Starter Lesson`,
     emptyStateLabel: "a generated learning mission",
     lesson: {
+      ...generatedLesson,
       id: lessonId,
       templateId: "generated-starter-lesson",
       title: "Starter Lesson",
@@ -914,96 +923,8 @@ export function createGeneratedLearningContentRecord(
         "Generated starter lesson"
       ),
       learningObjective: `Build a first teachable step for ${resolvedSubject} from the learner goal, prerequisite check, and current confidence.`,
-      prerequisiteConcepts: [
-        "State the learner goal in plain language.",
-        "Identify what the learner already knows.",
-        "Name the first unknown or confusing concept.",
-      ],
       explanation:
-        "Beast can begin with a generated starter lesson when no curated sample record exists. The coach should use the learner goal, prerequisite answers, and lesson evidence to create the next curriculum step.",
-      interactiveVisual: {
-        title: "Build the first learning loop",
-        prompt: "Connect the goal, baseline, first practice attempt, and review signal.",
-        expression: "Goal + Baseline + Practice + Review",
-        terms: [
-          { id: "generated-goal", label: "Goal", coefficient: 1, variable: "", group: "other", color: "blue" },
-          { id: "generated-baseline", label: "Baseline", coefficient: 1, variable: "", group: "other", color: "green" },
-          { id: "generated-practice", label: "Practice", coefficient: 1, variable: "", group: "other", color: "yellow" },
-        ],
-        targetGroups: [
-          {
-            group: "other",
-            label: "Learning loop",
-            combinedLabel: "Goal + Baseline + Practice",
-            explanation: "The first loop uses the learner goal and baseline evidence to choose one practice step.",
-          },
-        ],
-      },
-      examples: [
-        {
-          title: "Generated first step",
-          setup: resolvedSubject,
-          steps: [
-            "Clarify the goal.",
-            "Check prerequisite understanding.",
-            "Try one small practice step.",
-          ],
-          takeaway: "The next lesson should be generated from evidence, not a hardcoded subject path.",
-        },
-      ],
-      guidedPractice: [
-        {
-          id: "generated-practice-step",
-          practiceTemplateId: "supported-recall",
-          difficulty: "introductory",
-          format: "short-response",
-          prompt: "Write one small practice attempt for this goal.",
-          hint: "Use the learner goal and current baseline to keep the first attempt narrow.",
-          expectedAnswer: "A clear first attempt.",
-          acceptedAnswers: ["attempt", "first attempt", "clear attempt"],
-        },
-      ],
-      quizQuestions: [
-        {
-          id: "generated-readiness-check",
-          questionTypeId: "multiple-choice",
-          contentMetadata: generatedLessonMetadata(
-            `${lessonId}-readiness-check`,
-            "Generated starter assessment"
-          ),
-          prompt: "What should the coach use to choose the next lesson?",
-          options: ["Learner evidence", "A fixed subject path", "A random topic"],
-          answer: "Learner evidence",
-          explanation: "A generated curriculum should use the goal, prerequisites, and learner evidence.",
-        },
-      ],
-      aiCoachingPrompts: [
-        {
-          kind: "mistake",
-          title: "Clarify the blocker",
-          prompt: "Identify the blocker and recommend one smaller prerequisite check.",
-        },
-        {
-          kind: "alternate",
-          title: "Explain another way",
-          prompt: "Explain the first step using a different example from the learner goal.",
-        },
-        {
-          kind: "encouragement",
-          title: "Keep momentum",
-          prompt: "Encourage the learner to complete one small practice attempt.",
-        },
-        {
-          kind: "review",
-          title: "Review signal",
-          prompt: "Recommend the prerequisite to review before generating the next step.",
-        },
-        {
-          kind: "mastery",
-          title: "Ready for generated next step",
-          prompt: "Celebrate the completed starter loop and generate the next lesson target.",
-        },
-      ],
+        "Beast can begin with a generated starter lesson when no curated sample record exists. The Mentor must treat this as diagnostic until authority mapping proves curriculum alignment.",
       reflectionPrompts: [
         "What goal did you clarify?",
         "What prerequisite should the coach check next?",

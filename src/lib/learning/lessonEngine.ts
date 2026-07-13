@@ -11,6 +11,7 @@ import {
   createLearningContentMetadata,
   type LearningContentMetadata,
 } from "./contentVersioning";
+import { generateDynamicLearningLesson } from "./dynamicLessonGenerator";
 import {
   decideTutorLessonReadiness,
   type TutorLessonReadinessDecision,
@@ -253,115 +254,28 @@ const teachingPhases: LessonEnginePhase[] = [
   },
 ];
 
+function learningDifficultyFromActivity(value: string) {
+  if (value === "Advanced" || value === "Intermediate" || value === "Beginner") {
+    return value;
+  }
+
+  return "Beginner";
+}
+
 function buildGenericAdaptiveLesson(activity: Pick<LearningActivityRunnerRow, "title" | "difficulty">): AdaptiveLesson {
+  const learnerLevel = learningDifficultyFromActivity(activity.difficulty);
+  const generated = generateDynamicLearningLesson({
+    goal: activity.title,
+    courseId: "dynamic-learning-path",
+    courseTitle: "Learning Path",
+    learnerLevel,
+    mode: learnerLevel === "Advanced" ? "challenge" : "lesson",
+  }).lesson;
+
   return {
-    id: `adaptive-${activity.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+    ...generated,
     title: activity.title,
-    subject: "Learning Path",
-    contentMetadata: createLearningContentMetadata({
-      sourceKind: "generated",
-      sourceId: `adaptive-${activity.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
-      sourceLabel: "Adaptive lesson builder",
-      authoredBy: "ai-coach",
-    }),
     learningObjective: `Understand the core idea in ${activity.title} and use it in one guided attempt.`,
-    prerequisiteConcepts: [
-      "Know the goal of the current course.",
-      "Recall the last lesson or practice moment.",
-      "Be ready to explain your thinking in one sentence.",
-    ],
-    explanation:
-      "Your Tutor teaches in small steps: start with what you know, learn the core idea, practice once with support, check understanding, get help, reflect, and choose the next move.",
-    interactiveVisual: {
-      title: "Build the idea",
-      prompt: "Use this space to identify what belongs together before answering.",
-      expression: activity.title,
-      terms: [
-        { id: "core-idea", label: "Core idea", coefficient: 1, variable: "", group: "other", color: "blue" },
-        { id: "example", label: "Example", coefficient: 1, variable: "", group: "other", color: "green" },
-        { id: "check", label: "Check", coefficient: 1, variable: "", group: "other", color: "yellow" },
-      ],
-      targetGroups: [
-        {
-          group: "other",
-          label: "Learning pieces",
-          combinedLabel: "Idea + Example + Check",
-          explanation: "A good learning attempt connects the idea, one example, and one check.",
-        },
-      ],
-    },
-    examples: [
-      {
-        title: "Worked example",
-        setup: activity.title,
-        steps: [
-          "Identify the core concept.",
-          "Apply it once with support.",
-          "Check whether the result matches the goal.",
-        ],
-        takeaway: "A small, correct step is enough to build momentum.",
-      },
-    ],
-    guidedPractice: [
-      {
-        id: "generic-practice",
-        practiceTemplateId: "supported-recall",
-        difficulty: "introductory",
-        format: "short-response",
-        prompt: "Write one attempt at the core skill for this lesson.",
-        hint: "Keep the attempt small. One clear step is better than guessing through the whole problem.",
-        expectedAnswer: "A clear, supported attempt.",
-        acceptedAnswers: ["attempt", "clear attempt", "supported attempt"],
-      },
-    ],
-    quizQuestions: [
-      {
-        id: "generic-quiz-1",
-        questionTypeId: "multiple-choice",
-        contentMetadata: createLearningContentMetadata({
-          sourceKind: "generated",
-          sourceId: "generic-quiz-1",
-          sourceLabel: "Adaptive lesson builder assessment",
-          authoredBy: "ai-coach",
-        }),
-        prompt: "What should you do first when a lesson feels unclear?",
-        options: ["Guess quickly", "Name what is confusing", "Skip the lesson"],
-        answer: "Name what is confusing",
-        acceptedAnswers: ["Name what is confusing"],
-        explanation: "Naming the confusion gives your Tutor a better starting point for coaching and review.",
-      },
-    ],
-    aiCoachingPrompts: [
-      {
-        kind: "mistake",
-        title: "Explain the mistake",
-        prompt: "Explain the likely mistake and show the first corrected step.",
-      },
-      {
-        kind: "alternate",
-        title: "Alternate explanation",
-        prompt: "Explain this concept with a simpler analogy.",
-      },
-      {
-        kind: "encouragement",
-        title: "Encouragement",
-        prompt: "Encourage the learner and give one next action.",
-      },
-      {
-        kind: "review",
-        title: "Review signal",
-        prompt: "Recommend a review step if the learner is not ready.",
-      },
-      {
-        kind: "mastery",
-        title: "Mastery signal",
-        prompt: "Celebrate mastery and recommend the next lesson.",
-      },
-    ],
-    reflectionPrompts: [
-      "What changed in your understanding?",
-      "What should your Tutor explain differently next time?",
-    ],
     masteryThreshold: activity.difficulty === "Advanced" ? 85 : 80,
     recommendedNextLesson: "Continue with the next lesson your Mentor chooses",
     reviewRecommendation: "Review the core idea once more before moving forward.",
