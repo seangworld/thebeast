@@ -346,10 +346,14 @@ export type LearningUploadItem = {
 
 export type LearningSpecialistRole =
   | "Tutor"
+  | "General Academic Tutor"
   | "Study Coach"
   | "Homework Coach"
   | "Mentor"
   | "Career Mentor"
+  | "Math Tutor"
+  | "Science Tutor"
+  | "Certification Tutor"
   | "Math Coach"
   | "Science Coach"
   | "Coding Coach"

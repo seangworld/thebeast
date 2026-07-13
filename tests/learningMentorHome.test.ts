@@ -1,6 +1,16 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { buildMentorHomeMission } from "../src/lib/learning/mentorHome";
+import { buildGuidedLearningSession } from "../src/lib/learning/guidedSession";
+import {
+  buildLearnerReflectionOutcome,
+  buildLearnerReflectionStorage,
+} from "../src/lib/learning/reflectionEngine";
+import { selectMentorTutor } from "../src/lib/learning/tutorOrchestration";
+import {
+  buildLessonEngineDefinition,
+  getLessonEngineProgress,
+} from "../src/lib/learning/lessonEngine";
 import type { LearningActivityRunnerRow } from "../src/lib/learning/activityRunner";
 import type {
   LearningCourse,
@@ -165,4 +175,108 @@ test("Mentor Home avoids dead ends when every activity is completed", () => {
   assert.equal(mission.state, "completed_queue");
   assert.match(mission.recommendationReason, /not sending you back/i);
   assert.equal(mission.primaryAction.href, "#mentor-plan");
+});
+
+test("Mentor selects a certification Tutor from session context", () => {
+  const selection = selectMentorTutor({
+    activityType: "Lesson",
+    activityTitle: "CIDR notation",
+    courseTitle: "Security+ networking foundations",
+    goalTitle: "Security+ certification",
+    weakArea: "subnetting",
+  });
+
+  assert.equal(selection.role, "Certification Tutor");
+  assert.equal(selection.fallbackUsed, false);
+  assert.match(selection.handoff, /Certification Tutor/);
+});
+
+test("Mentor Tutor orchestration uses a safe fallback", () => {
+  const selection = selectMentorTutor({
+    activityType: "Lesson",
+    activityTitle: "General learning strategy",
+  });
+
+  assert.equal(selection.role, "General Academic Tutor");
+  assert.equal(selection.fallbackUsed, true);
+});
+
+test("guided learning session builds Mentor intro recap and state", () => {
+  const activity: LearningActivityRunnerRow = {
+    id: "activity-1",
+    activity_type: "Lesson",
+    title: "Pre-Algebra: Combining Like Terms",
+    difficulty: "Beginner",
+    estimated_minutes: 20,
+    xp: 20,
+    status: "Ready",
+  };
+  const engine = buildLessonEngineDefinition(activity);
+  const quizAnswers = Object.fromEntries(
+    engine.lesson.quizQuestions.map((question) => [question.id, question.answer])
+  );
+  const practiceAnswers = Object.fromEntries(
+    engine.lesson.guidedPractice.map((practice) => [
+      practice.id,
+      practice.expectedAnswer,
+    ])
+  );
+  const progress = getLessonEngineProgress({
+    checkedPhases: Object.fromEntries(engine.phases.map((phase) => [phase.id, true])),
+    phaseCount: engine.phases.length,
+    reflection: "Like terms share the same variable part.",
+    confidence: "Ready for more",
+    quizAnswers,
+    practiceAnswers,
+    lesson: engine.lesson,
+  });
+  const tutorSelection = selectMentorTutor({
+    activityType: activity.activity_type,
+    activityTitle: activity.title,
+    courseTitle: "Pre-Algebra",
+    goalTitle: "Build algebra confidence",
+  });
+  const session = buildGuidedLearningSession({
+    activity,
+    courseTitle: "Pre-Algebra",
+    goalTitle: "Build algebra confidence",
+    progress,
+    tutorSelection,
+    hasDraft: false,
+  });
+
+  assert.equal(session.state, "mastery_check_required");
+  assert.match(session.mentorIntroduction, /Today we are working on/);
+  assert.match(session.goalConnection, /Build algebra confidence/);
+  assert.match(session.tutorHandoff, /Math Tutor/);
+  assert.match(session.recap.meaning, /ready to continue/);
+});
+
+test("reflection outcome changes Mentor recommendations for guessing and frustration", () => {
+  const guessed = buildLearnerReflectionOutcome({
+    option: "I guessed",
+    mastered: true,
+    recommendedReview: false,
+    nextRecommendation: "Next lesson",
+  });
+  const frustrated = buildLearnerReflectionOutcome({
+    option: "I'm frustrated",
+    note: "This felt like too much.",
+    mastered: false,
+    recommendedReview: true,
+    nextRecommendation: "Review",
+  });
+  const storage = buildLearnerReflectionStorage({
+    option: "Hard",
+    note: "x".repeat(600),
+    mastered: false,
+    recommendedReview: true,
+    nextRecommendation: "Review",
+  });
+
+  assert.equal(guessed.confidenceAdjustment, "lower-confidence");
+  assert.match(guessed.recommendationReason, /correctness alone/);
+  assert.equal(frustrated.confidenceAdjustment, "reduce-pressure");
+  assert.match(frustrated.nextAction, /smaller/);
+  assert.equal(storage.reflection_note.length, 500);
 });

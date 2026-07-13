@@ -939,15 +939,19 @@ test("learning foundation completion engines expose static platform data", () =>
     learningSpecialists.map((specialist) => specialist.role),
     [
       "Tutor",
+      "General Academic Tutor",
       "Study Coach",
       "Homework Coach",
       "Mentor",
       "Career Mentor",
       "Parent Assistant",
       "Certification Coach",
+      "Certification Tutor",
       "Reading Coach",
       "Writing Coach",
       "Language Coach",
+      "Math Tutor",
+      "Science Tutor",
       "Math Coach",
       "Science Coach",
       "Coding Coach",
@@ -2130,13 +2134,13 @@ test("learning activities have a dedicated runner and next-activity unlock logic
     ])?.id,
     "new-generated"
   );
-  assert.match(activityRunner, /Lesson Saved/);
+  assert.match(activityRunner, /Mentor recap/);
   assert.match(activityRunner, /Return to Today/);
   assert.match(activityRunner, /Back to Mentor/);
   assert.match(activityRunner, /<LessonEngine/);
   assert.match(activityRunner, /getProfileDisplayName/);
   assert.match(activityRunner, /learnerName=\{learnerName\}/);
-  assert.match(activityRunner, /hand what\s+changed back to your Mentor/);
+  assert.match(activityRunner, /receives the outcome back for recap/);
   assert.match(lessonEngine, /Lesson-scoped Tutor/);
   assert.match(lessonEngine, /Tutor Conversation/);
   assert.match(lessonEngine, /Tutor context/);
@@ -2276,6 +2280,42 @@ test("BeastLearning member experience hides workflow mechanics behind Mentor and
   assert.doesNotMatch(memberExperienceSource, /Mark Complete/);
   assert.doesNotMatch(memberExperienceSource, /activity queue|work queue|Empty Queue/);
   assert.doesNotMatch(memberExperienceSource, /Complete lesson/);
+});
+
+test("guided learning sessions keep Mentor lifecycle Tutor handoff and reflection storage", () => {
+  const activityRunner = readFileSync(
+    "src/app/dashboard/learning/activities/[activityId]/page.tsx",
+    "utf8"
+  );
+  const lessonEngine = readFileSync(
+    "src/app/dashboard/learning/activities/LessonEngine.tsx",
+    "utf8"
+  );
+  const guidedSession = readFileSync("src/lib/learning/guidedSession.ts", "utf8");
+  const tutorOrchestration = readFileSync("src/lib/learning/tutorOrchestration.ts", "utf8");
+  const reflectionEngine = readFileSync("src/lib/learning/reflectionEngine.ts", "utf8");
+  const migration = readFileSync(
+    "migrations/20260713_add_learning_session_outcomes.sql",
+    "utf8"
+  );
+
+  assert.match(activityRunner, /buildGuidedLearningSession/);
+  assert.match(activityRunner, /selectMentorTutor/);
+  assert.match(activityRunner, /Start guided session/);
+  assert.match(activityRunner, /Mentor recap/);
+  assert.match(activityRunner, /Learner reflection/);
+  assert.match(activityRunner, /buildLearnerReflectionStorage/);
+  assert.match(lessonEngine, /tutorSelection\.handoff/);
+  assert.match(lessonEngine, /tutorSelection\.role/);
+  assert.match(guidedSession, /not_started/);
+  assert.match(guidedSession, /remediation_required/);
+  assert.match(guidedSession, /mastery_check_required/);
+  assert.match(tutorOrchestration, /General Academic Tutor/);
+  assert.match(tutorOrchestration, /Certification Tutor/);
+  assert.match(reflectionEngine, /I guessed/);
+  assert.match(reflectionEngine, /I'm frustrated/);
+  assert.match(migration, /reflection_option/);
+  assert.match(migration, /session_next_recommendation/);
 });
 
 test("generated learning activities persist with required visibility fields", () => {

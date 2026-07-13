@@ -13,10 +13,18 @@ import {
   getNextQueuedLearningActivity,
   type LearningActivityRunnerRow,
 } from "@/lib/learning/activityRunner";
+import { buildGuidedLearningSession } from "@/lib/learning/guidedSession";
 import {
   buildLessonEngineDefinition,
   getLessonEngineProgress,
 } from "@/lib/learning/lessonEngine";
+import {
+  buildLearnerReflectionOutcome,
+  buildLearnerReflectionStorage,
+  learnerReflectionOptions,
+  type LearnerReflectionOption,
+} from "@/lib/learning/reflectionEngine";
+import { selectMentorTutor } from "@/lib/learning/tutorOrchestration";
 import { getProfileDisplayName } from "@/lib/profile";
 import { createClient } from "@/lib/supabase/client";
 import { LessonEngine } from "../LessonEngine";
@@ -24,6 +32,7 @@ import { LessonEngine } from "../LessonEngine";
 type ActivityRow = LearningActivityRunnerRow & {
   user_id: string;
   course_id?: string | null;
+  session_id?: string | null;
 };
 
 type CourseRow = {
@@ -44,12 +53,17 @@ export default function LearningActivityRunnerPage() {
   const [learnerName, setLearnerName] = useState("there");
   const [activity, setActivity] = useState<ActivityRow | null>(null);
   const [course, setCourse] = useState<CourseRow | null>(null);
+  const [activeGoalTitle, setActiveGoalTitle] = useState("");
   const [allActivities, setAllActivities] = useState<LearningActivityRunnerRow[]>([]);
   const [checkedPhases, setCheckedPhases] = useState<Record<string, boolean>>({});
   const [quizAnswers, setQuizAnswers] = useState<Record<string, string>>({});
   const [practiceAnswers, setPracticeAnswers] = useState<Record<string, string>>({});
   const [reflection, setReflection] = useState("");
+  const [reflectionOption, setReflectionOption] = useState<LearnerReflectionOption | "">("");
+  const [reflectionNote, setReflectionNote] = useState("");
   const [confidence, setConfidence] = useState("Still building");
+  const [sessionStarted, setSessionStarted] = useState(false);
+  const [hasDraft, setHasDraft] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -119,6 +133,33 @@ export default function LearningActivityRunnerPage() {
       setAllActivities((activitiesResult.data || []) as LearningActivityRunnerRow[]);
       setCourse((courseResult.data as CourseRow | null) || null);
       setLearnerName(getProfileDisplayName(profileResult.data, authUser));
+
+      const goalsResult = await supabase
+        .from("learning_goals")
+        .select("title, status")
+        .eq("user_id", authUser.id)
+        .order("created_at", { ascending: true });
+
+      if (!goalsResult.error) {
+        const goals = (goalsResult.data || []) as { title?: string; status?: string }[];
+        setActiveGoalTitle(
+          goals.find((goal) => goal.status === "Active")?.title ||
+            goals[0]?.title ||
+            ""
+        );
+      }
+
+      if (typeof window !== "undefined") {
+        const storedDraft = window.localStorage.getItem(
+          `beastlearning:tutor-chat:${activityRow.id}`
+        );
+        setHasDraft(Boolean(storedDraft));
+        setSessionStarted(
+          Boolean(storedDraft) ||
+            activityRow.status === "In progress" ||
+            activityRow.status === "Completed"
+        );
+      }
     } catch (error) {
       setMessage(
         error instanceof Error
@@ -133,6 +174,31 @@ export default function LearningActivityRunnerPage() {
   useEffect(() => {
     loadActivity();
   }, [loadActivity]);
+
+  async function startSession() {
+    if (!activity || !userId || activity.status === "Completed") return;
+
+    setSessionStarted(true);
+    setMessage("");
+
+    if (activity.status === "Ready" || activity.status === "Queued") {
+      try {
+        const supabase = createClient();
+        const { error } = await supabase
+          .from("learning_activities")
+          .update({ status: "In progress" })
+          .eq("id", activity.id)
+          .eq("user_id", userId);
+
+        if (error) throw error;
+        setActivity({ ...activity, status: "In progress" });
+      } catch {
+        setMessage(
+          "I saved the session on this device. If the network is available, I will also mark it in progress for your account."
+        );
+      }
+    }
+  }
 
   async function completeActivity() {
     if (!activity || !userId || activity.status === "Completed") return;
@@ -161,13 +227,39 @@ export default function LearningActivityRunnerPage() {
     try {
       const supabase = createClient();
       const completionPayload = getLearningActivityCompletionPayload();
-      const { error } = await supabase
+      const reflectionStorage = buildLearnerReflectionStorage({
+        option: reflectionOption,
+        note: reflectionNote,
+        mastered: progress.mastered,
+        recommendedReview: progress.recommendedReview,
+        nextRecommendation: progress.nextRecommendation,
+      });
+      const sessionOutcomePayload = {
+        ...completionPayload,
+        session_state: progress.recommendedReview ? "review_due" : "completed",
+        session_recap: progress.continuity.handoffSummary,
+        session_strengths: progress.assessmentSignals
+          .filter((signal) => signal.score >= 70)
+          .map((signal) => signal.label),
+        session_weak_concepts: progress.completionReviewReasons,
+        session_next_recommendation: progress.nextRecommendation,
+        ...reflectionStorage,
+      };
+      const completionResult = await supabase
         .from("learning_activities")
-        .update(completionPayload)
+        .update(sessionOutcomePayload)
         .eq("id", activity.id)
         .eq("user_id", userId);
 
-      if (error) throw error;
+      if (completionResult.error) {
+        const fallbackResult = await supabase
+          .from("learning_activities")
+          .update(completionPayload)
+          .eq("id", activity.id)
+          .eq("user_id", userId);
+
+        if (fallbackResult.error) throw fallbackResult.error;
+      }
 
       const nextQueued = getNextQueuedLearningActivity(allActivities, activity.id);
 
@@ -198,20 +290,107 @@ export default function LearningActivityRunnerPage() {
     }
   }
 
+  async function saveCompletedReflection() {
+    if (!activity || !userId || activity.status !== "Completed") return;
+
+    setSaving(true);
+    setMessage("");
+
+    try {
+      const engine = buildLessonEngineDefinition(activity);
+      const progress = getLessonEngineProgress({
+        checkedPhases,
+        phaseCount: engine.phases.length,
+        reflection,
+        confidence,
+        quizAnswers,
+        practiceAnswers,
+        lesson: engine.lesson,
+      });
+      const supabase = createClient();
+      const { error } = await supabase
+        .from("learning_activities")
+        .update(
+          buildLearnerReflectionStorage({
+            option: reflectionOption,
+            note: reflectionNote,
+            mastered: progress.mastered,
+            recommendedReview: progress.recommendedReview,
+            nextRecommendation: progress.nextRecommendation,
+          })
+        )
+        .eq("id", activity.id)
+        .eq("user_id", userId);
+
+      if (error) throw error;
+      setMessage("Your reflection is saved for your Mentor.");
+    } catch {
+      setMessage("Reflection stayed private on this device because the saved reflection fields are not available yet.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const engine = activity ? buildLessonEngineDefinition(activity) : null;
+  const progress =
+    activity && engine
+      ? getLessonEngineProgress({
+          checkedPhases,
+          phaseCount: engine.phases.length,
+          reflection,
+          confidence,
+          quizAnswers,
+          practiceAnswers,
+          lesson: engine.lesson,
+        })
+      : null;
+  const tutorSelection =
+    activity && progress
+      ? selectMentorTutor({
+          activityType: activity.activity_type,
+          activityTitle: activity.title,
+          courseTitle: course?.title || "Learning path",
+          goalTitle: activeGoalTitle,
+          weakArea: progress.completionReviewReasons[0],
+        })
+      : null;
+  const reflectionOutcome =
+    progress
+      ? buildLearnerReflectionOutcome({
+          option: reflectionOption,
+          note: reflectionNote,
+          mastered: progress.mastered,
+          recommendedReview: progress.recommendedReview,
+          nextRecommendation: progress.nextRecommendation,
+        })
+      : null;
+  const guidedSession =
+    activity && progress && tutorSelection
+      ? buildGuidedLearningSession({
+          activity,
+          courseTitle: course?.title || "Learning path",
+          goalTitle: activeGoalTitle,
+          progress,
+          tutorSelection,
+          hasDraft,
+          reflectionOutcome: reflectionOption ? reflectionOutcome || undefined : undefined,
+        })
+      : null;
+
   return (
     <main className="beast-page">
       <div className="beast-container space-y-8">
         <section className="beast-page-header">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-4">
-              <ModuleBadge module="learning" label="Tutor" />
+              <ModuleBadge module="learning" label="Guided session" />
               <h1 className="beast-title">
-                {activity?.title || "Time with your Tutor"}
+                {activity?.title || "Time with your Mentor"}
               </h1>
               <p className="beast-subtitle">
-                Your Mentor brought you here for instruction. The Tutor will
-                teach, practice, check understanding, repair gaps, and hand what
-                changed back to your Mentor.
+                Your Mentor introduces the session, brings in the right Tutor
+                when teaching starts, and receives the outcome back for recap,
+                reflection, and the next recommendation.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -238,16 +417,74 @@ export default function LearningActivityRunnerPage() {
               <div className="h-32 rounded bg-[#2a3242]" />
             </div>
           </DashboardCard>
-        ) : activity ? (
+        ) : activity && guidedSession && tutorSelection ? (
           <>
+            <DashboardCard accent="learning">
+              <SectionHeader
+                eyebrow={`Session state: ${guidedSession.state.replace(/_/g, " ")}`}
+                title={guidedSession.objective}
+                description={guidedSession.mentorIntroduction}
+                action={<ModuleBadge module="learning" label="Mentor" />}
+              />
+              <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                {[
+                  ["Why this", tutorSelection.reason],
+                  ["Goal connection", guidedSession.goalConnection],
+                  ["Expected time", guidedSession.expectedTime],
+                  ["Tutor handoff", guidedSession.tutorHandoff],
+                ].map(([label, value]) => (
+                  <div key={label} className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+                    <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                      {label}
+                    </div>
+                    <p className="mt-2 text-sm font-semibold leading-6 text-white">
+                      {value}
+                    </p>
+                  </div>
+                ))}
+              </div>
+              {!completedActivity && !sessionStarted ? (
+                <button type="button" className="beast-button mt-5" onClick={startSession}>
+                  {hasDraft ? "Resume guided session" : "Start guided session"}
+                </button>
+              ) : null}
+              {sessionStarted && !completedActivity ? (
+                <p className="mt-5 text-sm font-semibold text-[#c7cfdb]">
+                  {guidedSession.mentorReturn}
+                </p>
+              ) : null}
+            </DashboardCard>
+
             {completedActivity ? (
               <DashboardCard accent="green">
                 <SectionHeader
-                  eyebrow="Lesson Saved"
-                  title="Nice work. Your progress is saved."
-                  description="Your Tutor saved the lesson, and your Mentor will remember what changed before choosing the next helpful step."
-                  action={<ModuleBadge module="learning" label="Saved" />}
+                  eyebrow="Mentor recap"
+                  title="Your session is saved."
+                  description={guidedSession.recap.meaning}
+                  action={<ModuleBadge module="learning" label="Completed" />}
                 />
+                <div className="mt-5 grid gap-3 md:grid-cols-3">
+                  <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+                    <h3 className="font-black text-white">Completed</h3>
+                    <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
+                      {guidedSession.recap.completed}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+                    <h3 className="font-black text-white">Strengths</h3>
+                    <ul className="mt-2 grid gap-2 text-sm leading-6 text-[#c7cfdb]">
+                      {guidedSession.recap.strengths.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+                    <h3 className="font-black text-white">Next step</h3>
+                    <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
+                      {guidedSession.recap.nextStep}
+                    </p>
+                  </div>
+                </div>
                 <div className="mt-5 flex flex-wrap gap-3">
                   <Link href="/dashboard/today" className="beast-button">
                     Return to Today
@@ -262,39 +499,98 @@ export default function LearningActivityRunnerPage() {
               </DashboardCard>
             ) : null}
 
-            <LessonEngine
-              activity={activity}
-              courseTitle={course?.title || "Learning path"}
-              learnerName={learnerName}
-              checkedPhases={checkedPhases}
-              quizAnswers={quizAnswers}
-              practiceAnswers={practiceAnswers}
-              reflection={reflection}
-              confidence={confidence}
-              saving={saving}
-              completed={Boolean(completedActivity)}
-              onPhaseChange={(phaseId, checked) =>
-                setCheckedPhases((current) => ({
-                  ...current,
-                  [phaseId]: checked,
-                }))
-              }
-              onQuizAnswer={(questionId, answer) =>
-                setQuizAnswers((current) => ({
-                  ...current,
-                  [questionId]: answer,
-                }))
-              }
-              onPracticeAnswer={(practiceId, answer) =>
-                setPracticeAnswers((current) => ({
-                  ...current,
-                  [practiceId]: answer,
-                }))
-              }
-              onReflectionChange={setReflection}
-              onConfidenceChange={setConfidence}
-              onComplete={completeActivity}
-            />
+            {sessionStarted || completedActivity ? (
+              <LessonEngine
+                activity={activity}
+                courseTitle={course?.title || "Learning path"}
+                learnerName={learnerName}
+                checkedPhases={checkedPhases}
+                quizAnswers={quizAnswers}
+                practiceAnswers={practiceAnswers}
+                reflection={reflection}
+                confidence={confidence}
+                tutorSelection={tutorSelection}
+                saving={saving}
+                completed={Boolean(completedActivity)}
+                onPhaseChange={(phaseId, checked) =>
+                  setCheckedPhases((current) => ({
+                    ...current,
+                    [phaseId]: checked,
+                  }))
+                }
+                onQuizAnswer={(questionId, answer) =>
+                  setQuizAnswers((current) => ({
+                    ...current,
+                    [questionId]: answer,
+                  }))
+                }
+                onPracticeAnswer={(practiceId, answer) =>
+                  setPracticeAnswers((current) => ({
+                    ...current,
+                    [practiceId]: answer,
+                  }))
+                }
+                onReflectionChange={setReflection}
+                onConfidenceChange={setConfidence}
+                onComplete={completeActivity}
+              />
+            ) : null}
+
+            {(sessionStarted || completedActivity) ? (
+              <DashboardCard accent="learning">
+                <SectionHeader
+                  eyebrow="Learner reflection"
+                  title="How did this session feel?"
+                  description="This is optional, quick, and used only as learning context for future Mentor recommendations."
+                />
+                <div className="mt-5 flex flex-wrap gap-2">
+                  {learnerReflectionOptions.map((option) => (
+                    <button
+                      key={option}
+                      type="button"
+                      className={
+                        reflectionOption === option ? "beast-button" : "beast-button-secondary"
+                      }
+                      onClick={() => setReflectionOption(option)}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+                <label className="mt-4 block">
+                  <span className="text-sm font-semibold text-[#c7cfdb]">
+                    Optional note
+                  </span>
+                  <textarea
+                    value={reflectionNote}
+                    onChange={(event) => setReflectionNote(event.target.value)}
+                    rows={3}
+                    className="beast-input mt-2 min-h-20 resize-y"
+                    placeholder="Anything your Mentor should know before choosing the next step?"
+                  />
+                </label>
+                {reflectionOutcome ? (
+                  <div className="mt-4 rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+                    <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                      Mentor response
+                    </div>
+                    <p className="mt-2 text-sm leading-6 text-white">
+                      {reflectionOutcome.mentorResponse}
+                    </p>
+                  </div>
+                ) : null}
+                {completedActivity ? (
+                  <button
+                    type="button"
+                    className="beast-button mt-4"
+                    disabled={saving || (!reflectionOption && !reflectionNote.trim())}
+                    onClick={saveCompletedReflection}
+                  >
+                    {saving ? "Saving..." : "Save reflection"}
+                  </button>
+                ) : null}
+              </DashboardCard>
+            ) : null}
           </>
         ) : (
           <DashboardCard accent="learning">

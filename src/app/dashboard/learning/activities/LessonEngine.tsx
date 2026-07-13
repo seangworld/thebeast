@@ -14,6 +14,7 @@ import {
   isPracticeAnswerCorrect,
 } from "@/lib/learning/lessonEngine";
 import type { LearningActivityRunnerRow } from "@/lib/learning/activityRunner";
+import type { TutorSelection } from "@/lib/learning/tutorOrchestration";
 
 type TutorMessage = {
   id: string;
@@ -30,6 +31,7 @@ type LessonEngineProps = {
   practiceAnswers: Record<string, string>;
   reflection: string;
   confidence: string;
+  tutorSelection: TutorSelection;
   saving: boolean;
   completed: boolean;
   onPhaseChange: (phaseId: string, checked: boolean) => void;
@@ -97,6 +99,7 @@ export function LessonEngine({
   practiceAnswers,
   reflection,
   confidence,
+  tutorSelection,
   saving,
   completed,
   onPhaseChange,
@@ -136,12 +139,14 @@ export function LessonEngine({
     engine.lesson.subject;
   const tutorContext = {
     learnerProfile: `${learnerName} is working in BeastLearning and reports ${confidenceLabel(confidence)} confidence.`,
-    mentorContext: `The Mentor sent this lesson because ${activity.title} is the next useful step.`,
+    mentorContext: `The Mentor selected ${activity.title}. ${tutorSelection.reason}`,
     course: courseTitle,
     lesson: engine.lesson.title,
     currentConcept,
     masteryState: `${progress.masteryEstimate}% estimated mastery`,
     lessonPlan: engine.lesson.learningObjective,
+    tutorRole: tutorSelection.role,
+    sessionContext: tutorSelection.contextSummary,
   };
   const tutorReadyToComplete =
     completed ||
@@ -153,15 +158,15 @@ export function LessonEngine({
       {
         id: "mentor-handoff",
         role: "mentor",
-        body: `I am handing you to the Tutor for ${engine.lesson.title}. Stay inside this lesson scope, then bring the result back to me.`,
+        body: `${tutorSelection.handoff} Stay inside this lesson scope, then bring the result back to me.`,
       },
       {
         id: "tutor-opening",
         role: "tutor",
-        body: `Hi ${firstName}. I can help with ${engine.lesson.title}. I will stay inside this lesson, teach conversationally, check understanding when it fits, and adapt from what you tell me.`,
+        body: `Hi ${firstName}. I am your ${tutorSelection.role} for ${engine.lesson.title}. I will teach conversationally, check understanding when it fits, and return structured outcomes to your Mentor.`,
       },
     ],
-    [engine.lesson.title, firstName]
+    [engine.lesson.title, firstName, tutorSelection.handoff, tutorSelection.role]
   );
 
   useEffect(() => {
@@ -357,7 +362,7 @@ export function LessonEngine({
               />
             </div>
             <p className="text-xs font-bold uppercase text-[#7f8da3]">
-              {activity.estimated_minutes} min - {courseTitle}
+              {activity.estimated_minutes} min - {courseTitle} - {tutorSelection.role}
             </p>
           </div>
         </div>
@@ -391,8 +396,8 @@ export function LessonEngine({
         <SectionHeader
           eyebrow="Tutor Conversation"
           title="Ask, answer, or think out loud."
-          description="The Tutor uses your profile, Mentor context, course, lesson, concept, mastery state, and lesson plan to respond inside this lesson scope."
-          action={<ModuleBadge module="learning" label="Tutor" />}
+          description="The Tutor uses Mentor-provided context, course, lesson, concept, mastery state, and lesson plan to respond inside this lesson scope."
+          action={<ModuleBadge module="learning" label={tutorSelection.role} />}
         />
 
         <div className="mt-6 grid gap-5 xl:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)]">
