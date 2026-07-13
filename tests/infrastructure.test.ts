@@ -1782,6 +1782,65 @@ test("learning core loop routes weak placement and low mastery to remediation", 
   );
 });
 
+test("diagnostic intelligence adapts placement from confidence prerequisites and dependencies", () => {
+  const shakyPlacement = scorePlacementAssessment({
+    subject: "Pre-Algebra",
+    responses: [
+      { questionId: "placement-coefficient", answer: "6", confidence: "Not sure" },
+      { questionId: "placement-like-terms", answer: "2x", confidence: "Not sure" },
+      { questionId: "placement-combine", answer: "8x", confidence: "Not sure" },
+    ],
+  });
+
+  assert.equal(shakyPlacement.scorePercent, 100);
+  assert.equal(shakyPlacement.readinessLevel, "guided-review");
+  assert.equal(shakyPlacement.diagnostic.partialMasteryConceptIds.includes("coefficients"), true);
+  assert.equal(shakyPlacement.gapConceptIds.includes("like-terms"), true);
+  assert.match(
+    shakyPlacement.diagnostic.mentorExplanation,
+    /correct, but confidence was not solid/
+  );
+  assert.equal(shakyPlacement.diagnostic.recommendedAction, "confirm-confidence");
+
+  const misconceptionPlacement = scorePlacementAssessment({
+    subject: "Pre-Algebra",
+    responses: [
+      { questionId: "placement-coefficient", answer: "x", confidence: "Very confident" },
+      { questionId: "placement-like-terms", answer: "2x", confidence: "Confident" },
+      { questionId: "placement-combine", answer: "8x", confidence: "Confident" },
+    ],
+  });
+  const learner = buildCoreLearnerProfile({
+    preferredName: "Riley",
+    age: 13,
+    gradeLevel: "7th grade",
+    subject: "Pre-Algebra",
+    goals: ["Find the real blocker"],
+    interests: ["Music"],
+    learningPreferences: ["Explain why"],
+  });
+  const path = generateCoreLearningPath({ learner, placement: misconceptionPlacement });
+
+  assert.equal(misconceptionPlacement.readinessLevel, "start-here");
+  assert.equal(misconceptionPlacement.diagnostic.misconceptionConceptIds[0], "coefficients");
+  assert.equal(
+    misconceptionPlacement.diagnostic.dependencyBlockedConceptIds.includes("combine-like-terms"),
+    true
+  );
+  assert.match(
+    misconceptionPlacement.diagnostic.rootCauses[0],
+    /likely misconception/
+  );
+  assert.equal(
+    path.steps.find((step) => step.id === "remediate-placement-gaps")?.conceptId,
+    "coefficients"
+  );
+  assert.match(
+    path.steps.find((step) => step.id === "remediate-placement-gaps")?.reason || "",
+    /misconception/
+  );
+});
+
 test("learning course builder models modules lessons topics and activities", () => {
   const course = builtLearningCourses[0];
 

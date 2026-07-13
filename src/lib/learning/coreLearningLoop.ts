@@ -11,6 +11,10 @@ import {
   resolveLearningContentRecordForSubject,
 } from "./sampleContentRegistry";
 import { validateAnswer } from "./answerValidation";
+import {
+  buildDiagnosticIntelligence,
+  type DiagnosticIntelligenceResult,
+} from "./diagnosticIntelligence";
 
 export type CoreLearnerProfileInput = {
   preferredName: string;
@@ -40,6 +44,7 @@ export type PlacementQuestion = {
 export type PlacementResponse = {
   questionId: string;
   answer: string;
+  confidence?: string;
 };
 
 export type PlacementResult = {
@@ -49,6 +54,7 @@ export type PlacementResult = {
   gapConceptIds: string[];
   readinessLevel: "start-here" | "guided-review" | "ready-for-lesson";
   explanation: string;
+  diagnostic: DiagnosticIntelligenceResult;
 };
 
 export type CoreLearningPathStep = {
@@ -146,7 +152,8 @@ export function scorePlacementAssessment({
   subject?: string;
   responses: PlacementResponse[];
 }): PlacementResult {
-  const questions = getCorePlacementQuestions(subject);
+  const contentRecord = getContentRecordForSubject(subject);
+  const questions = contentRecord.placementQuestions;
   const responseByQuestion = new Map(
     responses.map((response) => [response.questionId, response.answer])
   );
@@ -163,19 +170,41 @@ export function scorePlacementAssessment({
     .filter((question) => !correctConceptIds.includes(question.conceptId))
     .map((question) => question.conceptId);
   const scorePercent = Math.round((correctConceptIds.length / questions.length) * 100);
-  const readinessLevel =
+  const rawReadinessLevel =
     scorePercent >= 100 ? "ready-for-lesson" : scorePercent >= 67 ? "guided-review" : "start-here";
+  const diagnostic = buildDiagnosticIntelligence({
+    subject,
+    questions,
+    responses,
+    correctConceptIds,
+    scope: contentRecord.curriculumScope,
+  });
+  const readinessLevel =
+    rawReadinessLevel === "ready-for-lesson"
+      ? diagnostic.adaptiveReadinessLevel
+      : rawReadinessLevel === "guided-review" && diagnostic.adaptiveReadinessLevel === "start-here"
+        ? "start-here"
+        : rawReadinessLevel;
+  const adaptiveGapConceptIds = Array.from(
+    new Set([
+      ...gapConceptIds,
+      ...diagnostic.partialMasteryConceptIds,
+      ...diagnostic.prerequisiteGapConceptIds,
+      ...diagnostic.misconceptionConceptIds,
+    ])
+  );
 
   return {
     subject,
     scorePercent,
     correctConceptIds,
-    gapConceptIds,
+    gapConceptIds: adaptiveGapConceptIds,
     readinessLevel,
     explanation:
-      gapConceptIds.length === 0
+      adaptiveGapConceptIds.length === 0
         ? "Placement shows readiness for the first full lesson."
-        : `Placement found review needs in ${gapConceptIds.join(", ")} before independent mastery.`,
+        : diagnostic.mentorExplanation,
+    diagnostic,
   };
 }
 
@@ -205,13 +234,13 @@ export function generateCoreLearningPath({
     },
     {
       id: "remediate-placement-gaps",
-      conceptId: placement.gapConceptIds[0] || lesson.prerequisiteIds?.[0] || lesson.id,
+      conceptId: placement.diagnostic.primaryFocusConceptId || placement.gapConceptIds[0] || lesson.prerequisiteIds?.[0] || lesson.id,
       title: "Review prerequisite gaps",
       kind: "remediation",
       status: needsRemediation ? "ready" : "complete",
       dependsOn: ["placement"],
       reason: needsRemediation
-        ? "The learner needs a short review before the teachable lesson."
+        ? placement.diagnostic.rootCauses[0] || "The learner needs a short review before the teachable lesson."
         : "No prerequisite remediation required.",
     },
     {
