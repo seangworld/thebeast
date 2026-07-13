@@ -7,8 +7,6 @@ import {
 } from "@/app/components/design/DashboardPrimitives";
 import { BEAST_LEARNING_VERSION } from "@/lib/appVersion";
 import {
-  getLearningActivityRoute,
-  getNewestReadyLearningActivity,
   type LearningActivityRunnerRow,
 } from "@/lib/learning/activityRunner";
 import { getProfileDisplayName } from "@/lib/profile";
@@ -45,6 +43,10 @@ import {
 } from "@/lib/learning/mockData";
 import { buildLearningProgressSignals } from "@/lib/learning/progressSignals";
 import { buildLearningRecommendations } from "@/lib/learning/recommendations";
+import {
+  buildMentorHomeMission,
+  type MentorHomeMission,
+} from "@/lib/learning/mentorHome";
 import { buildLearningDashboardContent } from "@/lib/learning/dashboardContent";
 import { buildKnowledgeIntelligenceDashboard } from "@/lib/learning/knowledgeDashboard";
 import { learningSpecialists } from "@/lib/learning/specialists";
@@ -235,190 +237,151 @@ function ProgressBar({ value }: { value: number }) {
   );
 }
 
-function getFirstName(name: string) {
-  return name.trim().split(/\s+/)[0] || "there";
-}
-
-function MentorConversationCenter({
-  learnerName,
-  goal,
-  currentProgress,
-  todayRecommendation,
-  estimatedTime,
-  recommendationReason,
-  mentorSignals,
-  readyActivity,
+function MentorHome({
+  mission,
   learningReadinessSignals,
   learningPlan,
   learningGoals,
   learningCourses,
   learningRecommendations,
 }: {
-  learnerName: string;
-  goal: string;
-  currentProgress: string;
-  todayRecommendation: string;
-  estimatedTime: string;
-  recommendationReason: string;
-  mentorSignals: { label: string; value: string }[];
+  mission: MentorHomeMission;
   learningReadinessSignals: { label: string; value: string }[];
   learningPlan: LearningPlan;
   learningGoals: LearningGoal[];
   learningCourses: LearningCourse[];
   learningRecommendations: LearningRecommendation[];
-  readyActivity?: LearningPathActivityRow;
 }) {
-  const firstName = getFirstName(learnerName);
-  const activeRole = readyActivity ? "Mentor with Tutor ready" : "Mentor";
+  const activeRole =
+    mission.state === "next_activity" || mission.state === "resume"
+      ? "Mentor with Tutor ready"
+      : "Mentor";
   const roadmapPreview = learningCourses.slice(0, 3);
   const visibleRecommendations = learningRecommendations.slice(0, 3);
 
   return (
     <DashboardCard accent="learning">
       <SectionHeader
-        eyebrow="Persistent Mentor Conversation"
-        title="Stay here. I will move us through the learning."
-        description="The conversation stays in one place. I handle onboarding, goals, roadmap, memory, progress, recommendations, and next steps. When teaching is needed, I bring the Tutor into this same flow."
+        eyebrow="Mentor Home"
+        title="One mission, chosen by your Mentor"
+        description="Start here for the next best action. Courses, certificates, and history stay available, but the Mentor leads the learning path."
         action={<ModuleBadge module="learning" label={activeRole} />}
       />
 
-      <div id="mentor-session" className="mt-6 grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]">
+      <div id="mentor-session" className="mt-6 grid gap-4 xl:grid-cols-[minmax(0,1.18fr)_minmax(320px,0.82fr)]">
         <section
-          className="grid min-h-[620px] content-between gap-5 rounded-2xl border border-indigo-300/35 bg-[#0b1020] p-4 sm:p-5"
-          aria-label="Persistent BeastLearning Mentor conversation"
+          className="grid content-between gap-5 rounded-2xl border border-indigo-300/35 bg-[#0b1020] p-4 sm:p-6"
+          aria-label="BeastLearning Mentor home mission"
         >
           <div className="grid gap-4">
-            {[
-              {
-                role: "Mentor",
-                title: `Hi ${firstName}. I am here with you.`,
-                body:
-                  "We will stay in this conversation. You do not need to hunt through pages to figure out what to do next.",
-              },
-              {
-                role: "Mentor",
-                title: "Here is what I am holding for you.",
-                body: `Your current goal is ${goal}. Right now we are focused on ${currentProgress}. I will keep the roadmap, memory, progress, and next steps together.`,
-              },
-              {
-                role: "Mentor",
-                title: "Here is why I am choosing today's step.",
-                body: recommendationReason,
-              },
-            ].map((message) => (
-              <div
-                key={message.title}
-                className="max-w-3xl rounded-2xl border border-indigo-300/30 bg-indigo-300/10 p-4"
-              >
-                <div className="text-xs font-black uppercase text-indigo-100">
-                  {message.role}
-                </div>
-                <h3 className="mt-2 text-lg font-black text-white">{message.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-indigo-50">{message.body}</p>
-              </div>
-            ))}
-
-            <div className="max-w-3xl rounded-2xl border border-[#2a3242] bg-[#111827] p-4">
-              <div className="text-xs font-black uppercase text-[#7f8da3]">
+            <div className="rounded-2xl border border-indigo-300/30 bg-indigo-300/10 p-4 sm:p-5">
+              <div className="text-xs font-black uppercase text-indigo-100">
                 Mentor
               </div>
-              <h3 className="mt-2 text-lg font-black text-white">
-                {readyActivity ? "I am bringing the Tutor in now." : "I am still building the first teaching moment."}
+              <h3 className="mt-2 text-xl font-black text-white">
+                {mission.greeting}
               </h3>
-              <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
-                {readyActivity
-                  ? `${readyActivity.title} is ready. I chose it because it fits where you are now and gives the Tutor a focused starting point.`
-                  : "Tell me your goal or return to Today, and I will prepare the first useful lesson without making you manage a workflow."}
+              <p className="mt-2 text-sm leading-6 text-indigo-50">
+                {mission.recommendationReason}
               </p>
             </div>
 
-            {readyActivity ? (
-              <div className="ml-auto max-w-3xl rounded-2xl border border-cyan-300/35 bg-cyan-300/10 p-4">
-                <div className="text-xs font-black uppercase text-cyan-100">
-                  Tutor
+            <div className="rounded-2xl border border-cyan-300/35 bg-cyan-300/10 p-4 sm:p-5">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <div className="text-xs font-black uppercase text-cyan-100">
+                    {mission.missionLabel}
+                  </div>
+                  <h2 className="mt-2 text-2xl font-black leading-tight text-white sm:text-3xl">
+                    {mission.missionTitle}
+                  </h2>
                 </div>
-                <h3 className="mt-2 text-lg font-black text-white">
-                  I can teach this right here.
-                </h3>
-                <p className="mt-2 text-sm leading-6 text-cyan-50">
-                  We will start with one idea, try one question, use hints if
-                  you need them, check mastery, and then I will hand the result
-                  back to your Mentor.
-                </p>
-                <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                  <div className="rounded-xl border border-cyan-200/25 bg-[#0f1419]/80 p-3">
-                    <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                      Lesson
-                    </div>
-                    <div className="mt-1 text-sm font-black text-white">
-                      {readyActivity.title}
-                    </div>
-                  </div>
-                  <div className="rounded-xl border border-cyan-200/25 bg-[#0f1419]/80 p-3">
-                    <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                      Time
-                    </div>
-                    <div className="mt-1 text-sm font-black text-white">
-                      {estimatedTime}
-                    </div>
-                  </div>
-                  <div className="rounded-xl border border-cyan-200/25 bg-[#0f1419]/80 p-3">
-                    <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                      Role
-                    </div>
-                    <div className="mt-1 text-sm font-black text-white">
-                      Tutor teaches
-                    </div>
-                  </div>
+                <div className="w-fit rounded-xl border border-cyan-200/30 bg-[#0f1419]/80 px-3 py-2 text-sm font-black text-cyan-50">
+                  {mission.durationLabel}
                 </div>
-                <Link
-                  href={getLearningActivityRoute(readyActivity.id)}
-                  className="beast-button mt-4 inline-flex"
-                >
-                  Let the Tutor teach this
-                </Link>
               </div>
-            ) : null}
+
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-xl border border-cyan-200/25 bg-[#0f1419]/80 p-3">
+                  <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                    Current goal
+                  </div>
+                  <div className="mt-1 text-sm font-black text-white">
+                    {mission.currentGoalLabel}
+                  </div>
+                </div>
+                <div className="rounded-xl border border-cyan-200/25 bg-[#0f1419]/80 p-3">
+                  <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                    Weak area
+                  </div>
+                  <div className="mt-1 text-sm font-black text-white">
+                    {mission.weakAreaLabel}
+                  </div>
+                </div>
+                <div className="rounded-xl border border-cyan-200/25 bg-[#0f1419]/80 p-3">
+                  <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                    Last session
+                  </div>
+                  <div className="mt-1 text-sm font-black text-white">
+                    {mission.recentProgressLabel}
+                  </div>
+                </div>
+                <div className="rounded-xl border border-cyan-200/25 bg-[#0f1419]/80 p-3">
+                  <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                    Comes after this
+                  </div>
+                  <div className="mt-1 text-sm font-black text-white">
+                    {mission.nextAfterLabel}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:items-center">
+                <Link href={mission.primaryAction.href} className="beast-button w-fit">
+                  {mission.primaryAction.label}
+                </Link>
+                <p className="text-sm font-semibold leading-5 text-cyan-50">
+                  {mission.primaryAction.detail}
+                </p>
+              </div>
+            </div>
           </div>
 
-          <div className="flex flex-wrap gap-3 border-t border-[#2a3242] pt-4">
-            <a href="#mentor-session" className="beast-button">
-              Continue here
-            </a>
-            <a href="#mentor-plan" className="beast-button-secondary">
-              Show me my plan
-            </a>
-            <a href="#mentor-progress" className="beast-button-secondary">
-              Show me how I am doing
-            </a>
+          <div className="grid gap-3 border-t border-[#2a3242] pt-4 sm:grid-cols-2 lg:grid-cols-4">
+            {mission.secondaryActions.map((action) => (
+              <Link key={action.label} href={action.href} className="beast-button-secondary">
+                {action.label}
+              </Link>
+            ))}
           </div>
         </section>
 
         <aside className="grid content-start gap-3">
           <div className="rounded-2xl border border-[#2a3242] bg-[#111827] p-4">
             <div className="text-xs font-black uppercase text-[#7f8da3]">
-              Conversation Memory
+              Why this mission
             </div>
-            <div className="mt-3 grid gap-3">
-              {mentorSignals.map((signal) => (
-                <div key={signal.label} className="rounded-xl border border-[#2a3242] bg-[#0f1419] p-3">
-                  <div className="text-xs font-bold uppercase text-indigo-100">
-                    {signal.label}
-                  </div>
-                  <p className="mt-1 text-sm leading-5 text-[#c7cfdb]">
-                    {signal.value}
-                  </p>
-                </div>
-              ))}
+            <p className="mt-3 text-sm leading-6 text-[#c7cfdb]">
+              {mission.recommendationReason}
+            </p>
+            <div className="mt-3 rounded-xl border border-[#2a3242] bg-[#0f1419] p-3">
+              <div className="text-xs font-bold uppercase text-indigo-100">
+                Data boundary
+              </div>
+              <p className="mt-1 text-sm leading-5 text-[#c7cfdb]">
+                {mission.hasSufficientLearnerData
+                  ? "This recommendation is based on existing BeastLearning goals, sessions, courses, or activities."
+                  : "This is a guided first-use state because no learning history is available yet."}
+              </p>
             </div>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
             {[
-              ["Goal", goal],
-              ["Now", currentProgress],
-              ["Recommendation", todayRecommendation],
-              ["Time", estimatedTime],
+              ["Goal", mission.currentGoalLabel],
+              ["Mission", mission.missionTitle],
+              ["Time", mission.durationLabel],
+              ["Next", mission.nextAfterLabel],
             ].map(([label, value]) => (
             <div
               key={label}
@@ -621,7 +584,6 @@ export default async function LearningPage() {
     demoModeEnabled && userGoals.length === 0 ? mockParentDashboard : emptyParentDashboard;
   const studySession =
     demoModeEnabled && userGoals.length === 0 ? mockStudySessionCommand : userStudySession;
-  const learningPathReadyActivity = getNewestReadyLearningActivity(userActivities);
   const privateBeta = await loadLearningPrivateBetaData({
     supabase,
     userId: user.id,
@@ -699,45 +661,15 @@ export default async function LearningPage() {
       }`,
     },
   ];
-  const primaryGoalTitle = learningGoals[0]?.title || learningPlan.title || "your learning goal";
-  const currentProgressLabel =
-    learningCourses.find((course) => course.status === "In progress")?.title ||
-    studySession.currentFocus ||
-    "Learning path setup";
-  const todayRecommendationTitle =
-    learningPathReadyActivity?.title ||
-    learningRecommendations[0]?.title ||
-    progressSignals.recommendedNextAction;
-  const estimatedTimeLabel = learningPathReadyActivity?.estimated_minutes
-    ? `${learningPathReadyActivity.estimated_minutes} minutes`
-    : studySession.estimatedTime || "20 minutes";
-  const recommendationReason =
-    learningRecommendations[0]?.reason ||
-    "It matches your current goal, readiness, and next available learning step.";
-  const mentorSignals = [
-    {
-      label: "What I remember",
-      value:
-        learningIntelligence.memory.recentlyStudied[0]
-          ? `Last time, ${learningIntelligence.memory.recentlyStudied[0]} was part of your work. I will connect today back to that.`
-          : "I will remember what you tell me today so the next lesson starts closer to where you are.",
-    },
-    {
-      label: "Review I am watching",
-      value:
-        learningIntelligence.weakness.repeatedReviewNeeds[0] ||
-        learningIntelligence.weakness.lowMasteryConcepts[0]
-          ? `I may slow us down around ${
-              learningIntelligence.weakness.repeatedReviewNeeds[0] ||
-              learningIntelligence.weakness.lowMasteryConcepts[0]
-            } so it sticks.`
-          : "No urgent review is standing out, so we can keep building forward.",
-    },
-    {
-      label: "How I am adapting",
-      value: `Your current understanding is around ${learningIntelligence.mastery.overallMasteryPercent}%, so I am choosing ${learningIntelligence.adaptivePlan.nextRecommendedLesson} as the next useful step.`,
-    },
-  ];
+  const mentorHomeMission = buildMentorHomeMission({
+    learnerName: activeLearner.name,
+    learningGoals,
+    learningCourses,
+    learningSessions,
+    learningActivities: userActivities,
+    learningRecommendations,
+    progressSignals,
+  });
 
   return (
     <main className="beast-page">
@@ -764,22 +696,46 @@ export default async function LearningPage() {
         </section>
 
         <div id="guidance" className="scroll-mt-24">
-          <MentorConversationCenter
-            learnerName={activeLearner.name}
-            goal={primaryGoalTitle}
-            currentProgress={currentProgressLabel}
-            todayRecommendation={todayRecommendationTitle}
-            estimatedTime={estimatedTimeLabel}
-            recommendationReason={recommendationReason}
-            mentorSignals={mentorSignals}
+          <MentorHome
+            mission={mentorHomeMission}
             learningReadinessSignals={learningReadinessSignals}
             learningPlan={learningPlan}
             learningGoals={learningGoals}
             learningCourses={learningCourses}
             learningRecommendations={learningRecommendations}
-            readyActivity={learningPathReadyActivity}
           />
         </div>
+
+        <section id="learning-access" className="grid scroll-mt-24 gap-4 xl:grid-cols-[1fr_0.9fr]">
+          <DashboardCard accent="blue">
+            <SectionHeader
+              eyebrow="Learning access"
+              title="Everything else stays available"
+              description="The Mentor leads the next action, while courses, goals, study planning, review tools, and records remain close by."
+            />
+            <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {[
+                ["goals", "Goals", learningGoals[0]?.title || "Goal setup is available through BeastOS profile context."],
+                ["study-plan", "Study Plan", learningPlan.summary],
+                ["courses", "Courses", learningCourses[0]?.title || "Course access appears here when assigned."],
+                ["flashcards", "Review", progressSignals.weakArea],
+                ["achievements", "Achievements", `${learningAchievements.length} learning achievement record${learningAchievements.length === 1 ? "" : "s"}.`],
+                ["certificate-access", "Certificates", `${learningCertificates.length} certificate record${learningCertificates.length === 1 ? "" : "s"}.`],
+              ].map(([id, title, detail]) => (
+                <div
+                  key={id}
+                  id={id}
+                  className="scroll-mt-24 rounded-xl border border-[#2a3242] bg-[#111827] p-4"
+                >
+                  <h3 className="font-black text-white">{title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
+                    {detail}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </DashboardCard>
+        </section>
 
         <section id="wins" className="grid scroll-mt-24 gap-4 xl:grid-cols-[1fr_0.9fr]">
           <DashboardCard accent="green">

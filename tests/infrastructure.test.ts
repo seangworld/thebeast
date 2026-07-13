@@ -2179,23 +2179,22 @@ test("BeastLearning member home starts with Mentor before dashboard support", ()
     "utf8"
   );
 
-  assert.match(learningPage, /MentorConversationCenter/);
-  assert.match(learningPage, /Persistent Mentor Conversation/);
-  assert.match(learningPage, /Stay here\. I will move us through the learning\./);
-  assert.match(learningPage, /The conversation stays in one place/);
-  assert.match(learningPage, /I handle onboarding, goals, roadmap, memory, progress, recommendations, and next steps/);
-  assert.match(learningPage, /When teaching is needed, I bring the Tutor into this same flow/);
-  assert.match(learningPage, /I am bringing the Tutor in now/);
-  assert.match(learningPage, /I can teach this right here/);
-  assert.match(learningPage, /What I remember/);
-  assert.match(learningPage, /Review I am watching/);
-  assert.match(learningPage, /How I am adapting/);
-  assert.match(learningPage, /Conversation Memory/);
+  assert.match(learningPage, /function MentorHome/);
+  assert.match(learningPage, /buildMentorHomeMission/);
+  assert.match(learningPage, /Mentor Home/);
+  assert.match(learningPage, /One mission, chosen by your Mentor/);
+  assert.match(learningPage, /Start here for the next best action/);
+  assert.match(learningPage, /Why this mission/);
+  assert.match(learningPage, /Data boundary/);
+  assert.match(learningPage, /Current goal/);
+  assert.match(learningPage, /Weak area/);
+  assert.match(learningPage, /Last session/);
+  assert.match(learningPage, /Comes after this/);
   assert.match(learningPage, /Progress I am watching/);
-  assert.match(learningPage, /learningIntelligence\.memory\.recentlyStudied/);
-  assert.match(learningPage, /learningIntelligence\.adaptivePlan\.nextRecommendedLesson/);
+  assert.doesNotMatch(learningPage, /learningIntelligence\.memory\.recentlyStudied/);
+  assert.doesNotMatch(learningPage, /learningIntelligence\.adaptivePlan\.nextRecommendedLesson/);
   assert.equal(
-    learningPage.indexOf("<MentorConversationCenter") <
+    learningPage.indexOf("<MentorHome") <
       learningPage.indexOf('id="wins"'),
     true
   );
@@ -2209,11 +2208,13 @@ test("BeastLearning v2 keeps normal learning in the Mentor conversation", () => 
   const todayPage = readFileSync("src/app/dashboard/today/page.tsx", "utf8");
   const dashboardLayout = readFileSync("src/app/dashboard/layout.tsx", "utf8");
   const moduleNavigation = readFileSync("src/lib/moduleNavigation.ts", "utf8");
+  const mentorHome = readFileSync("src/lib/learning/mentorHome.ts", "utf8");
 
   assert.match(learningPage, /id="mentor-session"/);
-  assert.match(learningPage, /Continue here/);
-  assert.match(learningPage, /Let the Tutor teach this/);
-  assert.match(learningPage, /getLearningActivityRoute\(readyActivity\.id\)/);
+  assert.match(learningPage, /mission\.primaryAction\.href/);
+  assert.match(learningPage, /mission\.primaryAction\.label/);
+  assert.match(mentorHome, /Start mission/);
+  assert.match(learningPage, /Everything else stays available/);
   assert.doesNotMatch(learningPage, /getLearningActivityRoute\(learningPathReadyActivity\.id\)/);
   assert.equal(learningPage.includes("Open full Tutor workspace"), false);
   assert.match(todayPage, /href="\/dashboard\/learning#mentor-session"[\s\S]*Continue with Mentor/);
@@ -2263,7 +2264,7 @@ test("BeastLearning member experience hides workflow mechanics behind Mentor and
   ].join("\n");
 
   assert.match(memberExperienceSource, /Continue with Mentor/);
-  assert.match(memberExperienceSource, /Let the Tutor teach this/);
+  assert.match(memberExperienceSource, /mission\.primaryAction\.label/);
   assert.match(activitiesPage, /redirect\("\/dashboard\/learning#mentor-session"\)/);
   assert.match(memberExperienceSource, /Your Mentor/);
   assert.match(memberExperienceSource, /Let&apos;s see what I&apos;ve learned/);
@@ -2337,7 +2338,7 @@ test("generated learning activities persist with required visibility fields", ()
   assert.equal(goalBuilder.includes("Start Saved Activity"), true);
   assert.equal(todayPage.includes("getNewestReadyLearningActivity"), true);
   assert.equal(activitiesPage.includes("redirect(\"/dashboard/learning#mentor-session\")"), true);
-  assert.equal(learningPage.includes("Let the Tutor teach this"), true);
+  assert.equal(learningPage.includes("mission.primaryAction.label"), true);
   assert.equal(learningPage.includes("learning_activities"), true);
 });
 
