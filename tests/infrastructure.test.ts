@@ -82,7 +82,10 @@ import {
   isRestrictedForLearningOnlyNavigation,
   shouldUseLearningOnlyNavigation,
 } from "../src/lib/learning/access";
-import { buildAdaptiveLearningPlan } from "../src/lib/learning/adaptivePlanner";
+import {
+  buildAdaptiveLearningPlan,
+  decideAdaptiveProgression,
+} from "../src/lib/learning/adaptivePlanner";
 import { buildAIOrchestrationDashboard } from "../src/lib/learning/aiOrchestrationDashboard";
 import { aiSpecialistRegistry, getAISpecialistById, getAISpecialistByRole } from "../src/lib/learning/aiRegistry";
 import { createMockAISession } from "../src/lib/learning/aiSessionManager";
@@ -1338,6 +1341,153 @@ test("learning adaptive planner prioritizes review before new work", () => {
   });
 
   assert.equal(customPlan.estimatedCompletion, "4-6 weeks");
+  assert.equal(Boolean(customPlan.progressionDecision), true);
+  assert.equal(
+    ["continue", "review", "remediate", "accelerate", "skip_mastered_content"].includes(
+      customPlan.progressionDecision!.action
+    ),
+    true
+  );
+});
+
+test("adaptive progression explains continue review remediation acceleration and skips", () => {
+  const snapshot = buildLearningIntelligenceSnapshot({
+    goals: mockLearningGoals,
+    weeklyStudyMinutes: 80,
+  });
+  const reviewDecision = decideAdaptiveProgression({
+    goals: mockLearningGoals,
+    mastery: snapshot.mastery,
+    weakness: snapshot.weakness,
+    memory: mockLearningMemory,
+    confidence: {
+      dimensions: [
+        {
+          id: "retention",
+          label: "Retention",
+          level: "review-due",
+          evidence: "Last completed activity was 8 days ago.",
+          learnerLanguage: "This skill is due for a retention review.",
+        },
+      ],
+      mentorSummary: "Review is due.",
+      recommendation: "Schedule a short retention review.",
+      missingData: false,
+    },
+    timeline: [
+      {
+        id: "review-1",
+        type: "review_scheduled",
+        title: "Retention review",
+        detail: "Check the skill before moving on.",
+        priority: "high",
+      },
+    ],
+  });
+
+  assert.equal(reviewDecision.action, "review");
+  assert.match(reviewDecision.explanation, /follow-up/);
+  assert.equal(reviewDecision.shouldSkipMasteredContent, false);
+
+  const remediateDecision = decideAdaptiveProgression({
+    goals: mockLearningGoals,
+    mastery: snapshot.mastery,
+    weakness: {
+      ...snapshot.weakness,
+      lowMasteryConcepts: ["subnetting"],
+      slowProgressConcepts: ["subnetting"],
+    },
+    memory: mockLearningMemory,
+    activities: [
+      {
+        id: "activity-1",
+        activity_type: "Lesson",
+        title: "Subnetting practice",
+        difficulty: "Beginner",
+        estimated_minutes: 20,
+        xp: 20,
+        status: "Completed",
+        sort_order: 1,
+        session_weak_concepts: ["CIDR notation"],
+        reflection_option: "I guessed",
+        reflection_confidence_adjustment: "lower-confidence",
+      },
+    ],
+  });
+
+  assert.equal(remediateDecision.action, "remediate");
+  assert.equal(remediateDecision.learnerPace, "slow");
+  assert.match(remediateDecision.mentorLanguage, /reinforce/);
+
+  const advancedDecision = decideAdaptiveProgression({
+    goals: mockLearningGoals,
+    mastery: {
+      overallMasteryPercent: 88,
+      confidence: "high",
+      concepts: [
+        { conceptId: "known-topic", masteryPercent: 92, confidence: "high" },
+        { conceptId: "stretch-topic", masteryPercent: 64, confidence: "medium" },
+      ],
+      weakConcepts: ["stretch-topic"],
+      strongestConcepts: ["known-topic"],
+      suggestedReviewTopics: [],
+    },
+    weakness: {
+      neglectedTopics: [],
+      repeatedReviewNeeds: [],
+      lowMasteryConcepts: [],
+      slowProgressConcepts: [],
+      inconsistentStudyHabits: false,
+      improvementSuggestions: [],
+    },
+    memory: mockLearningMemory,
+    activities: [
+      {
+        id: "activity-2",
+        activity_type: "Lesson",
+        title: "Known topic check",
+        difficulty: "Intermediate",
+        estimated_minutes: 20,
+        xp: 30,
+        status: "Completed",
+        sort_order: 1,
+        session_strengths: ["Known topic"],
+      },
+      {
+        id: "activity-3",
+        activity_type: "Lesson",
+        title: "Known topic application",
+        difficulty: "Intermediate",
+        estimated_minutes: 20,
+        xp: 30,
+        status: "Completed",
+        sort_order: 2,
+        session_strengths: ["Application"],
+      },
+    ],
+  });
+
+  assert.equal(advancedDecision.action, "skip_mastered_content");
+  assert.equal(advancedDecision.learnerPace, "advanced");
+  assert.equal(advancedDecision.shouldSkipMasteredContent, true);
+  assert.match(advancedDecision.explanation, /skip repeated basics/);
+
+  const continueDecision = decideAdaptiveProgression({
+    goals: mockLearningGoals,
+    mastery: snapshot.mastery,
+    weakness: {
+      neglectedTopics: [],
+      repeatedReviewNeeds: [],
+      lowMasteryConcepts: [],
+      slowProgressConcepts: [],
+      inconsistentStudyHabits: false,
+      improvementSuggestions: [],
+    },
+    memory: mockLearningMemory,
+  });
+
+  assert.equal(continueDecision.action, "continue");
+  assert.match(continueDecision.explanation, /continuing/);
 });
 
 test("learning study session generator creates a six-stage session", () => {
@@ -2206,6 +2356,8 @@ test("BeastLearning member home starts with Mentor before dashboard support", ()
   assert.match(learningPage, /Learning Goals/);
   assert.match(learningPage, /Manage Goals/);
   assert.match(learningPage, /planRows\.find\(\(plan\) => plan\.goal_id === activeGoal\?\.id\)/);
+  assert.match(learningPage, /decideAdaptiveProgression/);
+  assert.match(learningPage, /adaptiveProgression/);
   assert.match(learningPage, /One mission, chosen by your Mentor/);
   assert.match(learningPage, /Start here for the next best action/);
   assert.match(learningPage, /Why this mission/);
@@ -2224,6 +2376,11 @@ test("BeastLearning member home starts with Mentor before dashboard support", ()
   );
   assert.doesNotMatch(learningPage, /progressSignals\.snapshotTiles/);
   assert.doesNotMatch(learningPage, /function AITutorCenter/);
+  const mentorHome = readFileSync("src/lib/learning/mentorHome.ts", "utf8");
+  assert.match(mentorHome, /progressionLabel/);
+  assert.match(mentorHome, /withAdaptiveReason/);
+  assert.match(mentorHome, /continue, review, remediate, or advance/);
+  assert.match(mentorHome, /Skip familiar basics/);
   assert.match(lessonEngine, /Conversation-first learning session/);
 });
 

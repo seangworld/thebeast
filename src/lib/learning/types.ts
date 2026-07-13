@@ -531,6 +531,26 @@ export type AdaptivePlan = {
   reviewSessions: string[];
   nextRecommendedLesson: string;
   estimatedCompletion: string;
+  progressionDecision?: AdaptiveProgressionDecision;
+};
+
+export type AdaptiveProgressionAction =
+  | "continue"
+  | "review"
+  | "remediate"
+  | "accelerate"
+  | "skip_mastered_content";
+
+export type AdaptiveLearnerPace = "slow" | "average" | "advanced";
+
+export type AdaptiveProgressionDecision = {
+  action: AdaptiveProgressionAction;
+  learnerPace: AdaptiveLearnerPace;
+  nextFocus: string;
+  explanation: string;
+  mentorLanguage: string;
+  shouldSkipMasteredContent: boolean;
+  evidence: string[];
 };
 
 export type GeneratedStudySessionPlan = {

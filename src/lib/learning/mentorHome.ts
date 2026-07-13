@@ -4,6 +4,7 @@ import {
   type LearningActivityRunnerRow,
 } from "./activityRunner";
 import type {
+  AdaptiveProgressionDecision,
   LearningCourse,
   LearningGoal,
   LearningProgressSignals,
@@ -48,6 +49,7 @@ type MentorHomeInput = {
   learningActivities: LearningActivityRunnerRow[];
   learningRecommendations: LearningRecommendation[];
   progressSignals: LearningProgressSignals;
+  adaptiveProgression?: AdaptiveProgressionDecision;
 };
 
 function firstName(name: string) {
@@ -121,6 +123,21 @@ function buildSecondaryActions(): MentorHomeAction[] {
   ];
 }
 
+function progressionLabel(decision?: AdaptiveProgressionDecision) {
+  if (!decision) return "Recommended";
+
+  if (decision.action === "review") return "Review first";
+  if (decision.action === "remediate") return "Reinforce";
+  if (decision.action === "accelerate") return "Move faster";
+  if (decision.action === "skip_mastered_content") return "Skip familiar basics";
+  return "Continue";
+}
+
+function withAdaptiveReason(baseReason: string, decision?: AdaptiveProgressionDecision) {
+  if (!decision) return baseReason;
+  return `${baseReason} ${decision.mentorLanguage} Reason: ${decision.explanation}`;
+}
+
 export function buildMentorHomeMission(
   input: MentorHomeInput
 ): MentorHomeMission {
@@ -154,6 +171,7 @@ export function buildMentorHomeMission(
       ? `${lowestCourse.title} (${lowestCourse.progress}% progress)`
       : "Not enough course evidence yet";
   const secondaryActions = buildSecondaryActions();
+  const adaptiveProgression = input.adaptiveProgression;
 
   if (!hasSufficientLearnerData) {
     return {
@@ -194,6 +212,7 @@ export function buildMentorHomeMission(
       recentProgressLabel,
       weakAreaLabel,
       nextAfterLabel:
+        adaptiveProgression?.mentorLanguage ||
         "After you save this session, I will use the result to choose the next lesson or review.",
       primaryAction: {
         label: "Resume session",
@@ -210,18 +229,27 @@ export function buildMentorHomeMission(
       state: "next_activity",
       greeting: `Hi ${learnerFirstName}. I picked one mission for today.`,
       missionTitle: openActivity.title,
-      missionLabel: openActivity.status === "Queued" ? "Next queued" : "Today's mission",
+      missionLabel:
+        openActivity.status === "Queued"
+          ? progressionLabel(adaptiveProgression)
+          : "Today's adaptive mission",
       durationLabel: formatActivityDuration(openActivity),
-      recommendationReason:
+      recommendationReason: withAdaptiveReason(
         lastCompletedActivity || lastCompletedSession
           ? `Your last saved work was ${recentProgressLabel}, so this is the next available activity in your learning path.`
           : `This is the next available activity for ${currentGoalLabel}. I am using assigned learning activity data, not invented history.`,
+        adaptiveProgression
+      ),
       currentGoalLabel,
       recentProgressLabel,
       weakAreaLabel,
       nextAfterLabel:
-        input.learningRecommendations[0]?.recommendedAction ||
-        "After this, your Mentor will review the result and choose the next useful step.",
+        adaptiveProgression?.shouldSkipMasteredContent
+          ? "After this, I will keep skipping familiar basics when your evidence supports it."
+          : adaptiveProgression?.nextFocus
+            ? `After this, I will decide whether to continue, review, remediate, or advance around ${adaptiveProgression.nextFocus}.`
+            : input.learningRecommendations[0]?.recommendedAction ||
+              "After this, your Mentor will review the result and choose the next useful step.",
       primaryAction: {
         label: "Start mission",
         href: getLearningActivityRoute(openActivity.id),
@@ -240,7 +268,10 @@ export function buildMentorHomeMission(
       missionLabel: "Next planning moment",
       durationLabel: "10 minutes",
       recommendationReason:
-        "All currently assigned activities are completed, so I am not sending you back into a finished queue.",
+        withAdaptiveReason(
+          "All currently assigned activities are completed, so I am not sending you back into a finished queue.",
+          adaptiveProgression
+        ),
       currentGoalLabel,
       recentProgressLabel,
       weakAreaLabel,
@@ -261,21 +292,25 @@ export function buildMentorHomeMission(
   return {
     state: "review",
     greeting: `Hi ${learnerFirstName}. I can see enough to recommend a review.`,
-    missionTitle: input.progressSignals.recommendedNextAction,
-    missionLabel: "Recommended review",
+      missionTitle: input.progressSignals.recommendedNextAction,
+    missionLabel: progressionLabel(adaptiveProgression),
     durationLabel:
       input.progressSignals.estimatedWeeklyStudyMinutes > 0 ? "20 minutes" : "15 minutes",
-    recommendationReason:
+    recommendationReason: withAdaptiveReason(
       lowestCourse && lowestCourse.progress < 100
         ? `${lowestCourse.title} has the lowest mapped progress in your current course data, so I am making that the next review focus.`
         : input.learningRecommendations[0]?.reason ||
           "Your current learning data suggests a short Mentor review before starting new work.",
+      adaptiveProgression
+    ),
     currentGoalLabel,
     recentProgressLabel,
     weakAreaLabel,
     nextAfterLabel:
-      input.learningRecommendations[0]?.recommendedAction ||
-      "After review, I will help choose the next activity or course.",
+      adaptiveProgression?.nextFocus
+        ? `Next decision point: ${adaptiveProgression.nextFocus}.`
+        : input.learningRecommendations[0]?.recommendedAction ||
+          "After review, I will help choose the next activity or course.",
     primaryAction: {
       label: "Review with Mentor",
       href: "#mentor-session",

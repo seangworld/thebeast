@@ -44,6 +44,7 @@ import {
 } from "@/lib/learning/mockData";
 import { buildLearningProgressSignals } from "@/lib/learning/progressSignals";
 import { buildLearningRecommendations } from "@/lib/learning/recommendations";
+import { decideAdaptiveProgression } from "@/lib/learning/adaptivePlanner";
 import {
   buildMentorHomeMission,
   type MentorHomeMission,
@@ -787,15 +788,6 @@ export default async function LearningPage() {
     achievementCount: achievementUnlocks.filter((achievement) => achievement.unlocked)
       .length,
   });
-  const mentorHomeMission = buildMentorHomeMission({
-    learnerName: activeLearner.name,
-    learningGoals,
-    learningCourses,
-    learningSessions,
-    learningActivities: userActivities,
-    learningRecommendations,
-    progressSignals,
-  });
   const confidenceIntelligence = buildConfidenceIntelligenceSnapshot({
     activities: userActivities,
     courses: learningCourses,
@@ -812,6 +804,29 @@ export default async function LearningPage() {
     sessions: learningSessions,
     goals: learningGoals,
     recommendations: learningRecommendations,
+  });
+  const adaptiveProgression = decideAdaptiveProgression({
+    goals: learningGoals,
+    mastery: learningIntelligence.mastery,
+    weakness: learningIntelligence.weakness,
+    memory: learningIntelligence.memory,
+    availableStudyMinutes: progressSignals.estimatedWeeklyStudyMinutes,
+    learningPace: learningIntelligence.memory.learningPace,
+    courses: learningCourses,
+    sessions: learningSessions,
+    activities: userActivities,
+    confidence: confidenceIntelligence,
+    timeline: learningTimeline,
+  });
+  const mentorHomeMission = buildMentorHomeMission({
+    learnerName: activeLearner.name,
+    learningGoals,
+    learningCourses,
+    learningSessions,
+    learningActivities: userActivities,
+    learningRecommendations,
+    progressSignals,
+    adaptiveProgression,
   });
   const meaningfulAchievements = buildMeaningfulLearningAchievements({
     activities: userActivities,
