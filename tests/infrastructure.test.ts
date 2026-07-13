@@ -96,6 +96,7 @@ import {
 } from "../src/lib/learning/certificates";
 import { careerKnowledgeCatalog } from "../src/lib/learning/careers";
 import { certificationCatalog } from "../src/lib/learning/certificationCatalog";
+import { buildCertificationIntelligence } from "../src/lib/learning/certificationIntelligence";
 import {
   getCollectionResourceCount,
   learningResourceCollections,
@@ -4089,6 +4090,70 @@ test("learning standards careers and certifications expose catalog alignments", 
     new Set(certificationCatalog.map((certification) => certification.provider)).size >= 10,
     true
   );
+});
+
+test("certification intelligence weights objectives and targets weak exam domains", () => {
+  const intelligence = buildCertificationIntelligence({
+    certificationId: "comptia-security-plus",
+    courseId: "security-plus-foundations-course",
+    objectiveEvidence: [
+      {
+        objectiveId: "security-plus-3-2-secure-infrastructure",
+        masteryPercent: 90,
+        confidencePercent: 86,
+        lastPracticeScorePercent: 92,
+      },
+      {
+        objectiveId: "security-plus-4-6-iam",
+        masteryPercent: 84,
+        confidencePercent: 78,
+        lastPracticeScorePercent: 80,
+      },
+      {
+        objectiveId: "security-plus-4-8-incident-response",
+        masteryPercent: 52,
+        confidencePercent: 48,
+        lastPracticeScorePercent: 58,
+      },
+      {
+        objectiveId: "security-plus-4-9-investigation-data",
+        masteryPercent: 70,
+        confidencePercent: 64,
+        lastPracticeScorePercent: 68,
+      },
+    ],
+  });
+  const operations = intelligence.domainReadiness.find(
+    (domain) => domain.domainCode === "4.0"
+  );
+
+  assert.equal(intelligence.certificationTitle, "Security+");
+  assert.equal(intelligence.authorityCoveragePercent, 14);
+  assert.equal(intelligence.examReady, false);
+  assert.equal(intelligence.readinessLabel, "not-ready");
+  assert.equal(operations?.weightPercent, 28);
+  assert.equal(operations?.weak, true);
+  assert.equal(
+    intelligence.weakDomains.some((domain) => domain.domainCode === "1.0"),
+    true
+  );
+  assert.equal(
+    intelligence.targetedReview.some((review) =>
+      review.includes("Security operations")
+    ),
+    true
+  );
+  assert.equal(intelligence.adaptivePracticeExam.timed, true);
+  assert.equal(
+    intelligence.adaptivePracticeExam.sections.some(
+      (section) =>
+        section.domainId === "security-plus-domain-4" &&
+        section.questionCount === 14 &&
+        section.targetObjectiveIds.includes("security-plus-4-8-incident-response")
+    ),
+    true
+  );
+  assert.match(intelligence.mentorSummary, /not exam-ready/);
 });
 
 test("learning path generator produces curriculum sequence and milestones", () => {
