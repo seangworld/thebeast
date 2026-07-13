@@ -10,7 +10,9 @@ import type {
   LearningExperienceDashboard,
   LearningGoal,
   LearningProgressSignals,
+  MasteryProfile,
   ParentDashboard,
+  ProgressPrediction,
 } from "./types";
 
 function buildPolishedAchievements(achievements: LearningAchievementUnlock[]) {
@@ -72,6 +74,8 @@ export function buildLearningExperienceDashboard({
   certificateCount = 0,
   certificateTitle,
   certificateVerification,
+  mastery,
+  prediction,
 }: {
   learnerName: string;
   progress: LearningProgressSignals;
@@ -81,6 +85,8 @@ export function buildLearningExperienceDashboard({
   certificateCount?: number;
   certificateTitle?: string;
   certificateVerification?: string;
+  mastery?: MasteryProfile;
+  prediction?: ProgressPrediction;
 }): LearningExperienceDashboard {
   const habits = buildStudyHabitsSnapshot();
   const gamification = buildGamificationProfile({
@@ -128,7 +134,7 @@ export function buildLearningExperienceDashboard({
     },
     motivation,
     habits,
-    insights: buildLearnerInsights({ progress, habits, gamification }),
+    insights: buildLearnerInsights({ progress, habits, gamification, mastery, prediction }),
     gamification,
     accessibility: {
       largerTextOption: true,

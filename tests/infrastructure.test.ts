@@ -3266,12 +3266,41 @@ test("learning experience dashboard aggregates v0.5 LX surfaces", () => {
     masteredSkills: 1,
     foundingStudent: true,
   });
+  const mastery = calculateMasteryProfile([
+    {
+      conceptId: "security-foundations",
+      completedSessions: 5,
+      completedGoals: 1,
+      completedMilestones: 2,
+      quizzesPlaceholder: 2,
+      practicePlaceholder: 4,
+      studyStreakDays: 7,
+      lastStudiedDaysAgo: 1,
+    },
+    {
+      conceptId: "subnetting",
+      completedSessions: 1,
+      completedGoals: 0,
+      completedMilestones: 0,
+      quizzesPlaceholder: 0,
+      practicePlaceholder: 1,
+      studyStreakDays: 1,
+      lastStudiedDaysAgo: 6,
+    },
+  ]);
+  const prediction = predictLearningProgress({
+    mastery,
+    memory: mockLearningMemory,
+    weeklyStudyMinutes: progress.estimatedWeeklyStudyMinutes,
+  });
   const experience = buildLearningExperienceDashboard({
     learnerName: "Current learner",
     progress,
     goals: mockLearningGoals,
     achievements,
     parentDashboard: mockParentDashboard,
+    mastery,
+    prediction,
   });
 
   assert.equal(experience.daily.nextAction, progress.recommendedNextAction);
@@ -3281,8 +3310,42 @@ test("learning experience dashboard aggregates v0.5 LX surfaces", () => {
   assert.equal(experience.certificate.skillsEarned.length, 3);
   assert.equal(experience.accessibility.largerTextOption, true);
   assert.equal(experience.learnerProfile.level, experience.gamification.level);
+  assert.equal(
+    experience.insights.some((insight) =>
+      insight.id === "weakest-subject" && insight.detail.includes("Subnetting")
+    ),
+    true
+  );
+  assert.equal(
+    experience.insights.some((insight) =>
+      insight.id === "estimated-readiness" &&
+      insight.detail.includes(String(prediction.readiness))
+    ),
+    true
+  );
   assert.equal(experience.parentExperience.nextConversationSuggestions.length, 2);
   assert.equal(experience.beta.badges.includes("Early Access"), true);
+});
+
+test("BeastLearning Sprint 3 reconciliation documents Sprint 4 roadmap", () => {
+  const doc = readFileSync("docs/BEASTLEARNING_SPRINT3_RECONCILIATION.md", "utf8");
+
+  [
+    "Adaptive Learning",
+    "Dynamic Lesson Generation",
+    "Diagnostic Intelligence",
+    "Remediation",
+    "Knowledge Graph",
+    "Certification Intelligence",
+    "Learning Insights",
+    "Learning Journey and Unlock Progression",
+    "Sprint 4 Remaining Work",
+  ].forEach((section) => {
+    assert.match(doc, new RegExp(section));
+  });
+  assert.match(doc, /Duplication Removed/);
+  assert.match(doc, /shared mastery and prediction/);
+  assert.match(doc, /Do not deploy|not a production deployment approval/i);
 });
 
 test("learning global subject catalog covers knowledge domains", () => {

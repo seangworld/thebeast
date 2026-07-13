@@ -100,7 +100,7 @@ export function buildLearnerInsights({
     {
       id: "estimated-readiness",
       title: "Estimated readiness",
-      detail: `You look ${readinessLabel(readinessScore)} right now. That estimate is based on completed work, study time, and recent practice, including ${studyTime} of study evidence.`,
+      detail: `You look ${readinessLabel(readinessScore)} right now at about ${readinessScore}% readiness. That estimate is based on completed work, study time, and recent practice, including ${studyTime} of study evidence.`,
       tone: readinessScore >= 60 ? "positive" : "neutral",
     },
   ];
