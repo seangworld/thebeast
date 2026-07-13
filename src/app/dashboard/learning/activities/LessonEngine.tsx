@@ -112,6 +112,20 @@ function speakerDotClasses(role: TutorMessage["role"]) {
   return "bg-indigo-300";
 }
 
+function progressLanguage(value: number, completed: boolean) {
+  if (completed) return "You wrapped this lesson. Your Mentor has the recap.";
+  if (value >= 80) return "You look ready to move forward after one quick reflection.";
+  if (value >= 55) return "You are getting there. One focused check should help this settle.";
+  return "You are still early with this topic. We will keep the next step short and clear.";
+}
+
+function saveStatusLabel(saving: boolean, completed: boolean, ready: boolean) {
+  if (saving) return "Saving...";
+  if (completed) return "Saved";
+  if (ready) return "Ready to finish";
+  return "Saved";
+}
+
 export function LessonEngine({
   activity,
   courseTitle,
@@ -135,6 +149,8 @@ export function LessonEngine({
   const [messages, setMessages] = useState<TutorMessage[]>([]);
   const [askedForHelp, setAskedForHelp] = useState(false);
   const restoredDraft = useRef(false);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const replyInputRef = useRef<HTMLTextAreaElement | null>(null);
   const engine = buildLessonEngineDefinition(activity);
   const draftKey = `beastlearning:tutor-chat:${activity.id}`;
   const firstName = firstNameFor(learnerName);
@@ -169,12 +185,12 @@ export function LessonEngine({
       {
         id: "mentor-handoff",
         role: "mentor",
-        body: `${tutorSelection.handoff} Stay inside this lesson scope, then bring the result back to me.`,
+        body: `${tutorSelection.handoff} I will stay with you while ${tutorSelection.role} helps with the focused practice.`,
       },
       {
         id: "tutor-opening",
         role: "tutor",
-        body: `Hi ${firstName}. I am your ${tutorSelection.role} for ${engine.lesson.title}. I will teach conversationally, check understanding when it fits, and return structured outcomes to your Mentor.`,
+        body: `Hi ${firstName}. I am your ${tutorSelection.role} for ${engine.lesson.title}. I will keep this practical, check understanding when it fits, and keep your Mentor in the loop as we go.`,
       },
     ],
     [engine.lesson.title, firstName, tutorSelection.handoff, tutorSelection.role]
@@ -240,6 +256,10 @@ export function LessonEngine({
     );
   }, [askedForHelp, completed, confidence, draftKey, messages, reflection]);
 
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [messages.length, saving, completed]);
+
   function markPhase(phaseId: string) {
     if (!checkedPhases[phaseId]) onPhaseChange(phaseId, true);
   }
@@ -274,7 +294,7 @@ export function LessonEngine({
       markPhase("reflection");
       markPhase("mastery");
       markPhase("recommendation");
-      return `Here is what I will hand back to your Mentor: you worked on ${currentConcept}, your current mastery signal is ${progress.masteryEstimate}%, and the next recommendation is ${progress.nextRecommendation}.`;
+      return `You worked on ${currentConcept}. ${progressLanguage(progress.masteryEstimate, completed)} Next, I recommend: ${progress.nextRecommendation}`;
     }
 
     if (activePractice && !practiceAnswers[activePractice.id]) {
@@ -282,6 +302,18 @@ export function LessonEngine({
     }
 
     return teacherResponse;
+  }
+
+  function buildMentorCheckpoint(value: string, learnerMessageCount: number) {
+    if (learnerAskedToWrapUp(value)) {
+      return `Nice work, ${firstName}. I have the thread from here. Add a quick reflection if you have not yet, then we will close this lesson and set up the next step.`;
+    }
+
+    if (learnerMessageCount > 0 && learnerMessageCount % 2 === 0) {
+      return `${firstName}, I am watching for whether this is becoming easier to explain in your own words. ${progress.coachingMessage}`;
+    }
+
+    return null;
   }
 
   function captureEvidence(value: string) {
@@ -323,10 +355,22 @@ export function LessonEngine({
         role: "tutor",
         body: buildTutorReply(text),
       };
+      const learnerMessageCount =
+        current.filter((message) => message.role === "learner").length + 1;
+      const mentorCheckpoint = buildMentorCheckpoint(text, learnerMessageCount);
 
-      return [...current, learnerMessage, tutorMessage];
+      if (!mentorCheckpoint) return [...current, learnerMessage, tutorMessage];
+
+      const mentorMessage: TutorMessage = {
+        id: messageId("mentor", current.length + 2),
+        role: "mentor",
+        body: mentorCheckpoint,
+      };
+
+      return [...current, learnerMessage, tutorMessage, mentorMessage];
     });
     setLearnerReply("");
+    requestAnimationFrame(() => replyInputRef.current?.focus());
   }
 
   function finishLesson() {
@@ -388,11 +432,7 @@ export function LessonEngine({
                   </div>
                 </div>
               ))}
-              {!completed && messages.length > initialMessages.length ? (
-                <div className="mx-auto max-w-md rounded-full bg-white/5 px-4 py-2 text-center text-xs font-semibold text-[#9aa7b8]">
-                  Saved on this device. Returning here restores this conversation.
-                </div>
-              ) : null}
+              <div ref={messagesEndRef} aria-hidden="true" />
             </div>
 
             <div className="sticky bottom-0 border-t border-white/10 bg-[#0b1020]/95 p-3 backdrop-blur sm:p-4">
@@ -402,7 +442,6 @@ export function LessonEngine({
                   "Check me",
                   "Hint",
                   "Another way",
-                  "Save for Mentor",
                 ].map((prompt) => (
                   <button
                     key={prompt}
@@ -417,9 +456,7 @@ export function LessonEngine({
                             ? "Check my understanding."
                             : prompt === "Hint"
                               ? "Give me a hint."
-                              : prompt === "Another way"
-                                ? "Explain this another way."
-                                : "Save this for my Mentor."
+                              : "Explain this another way."
                       )
                     }
                   >
@@ -428,9 +465,10 @@ export function LessonEngine({
                 ))}
               </div>
               <label className="block" htmlFor={`lesson-reply-${activity.id}`}>
-                <span className="sr-only">Message the Tutor</span>
+                <span className="sr-only">Message your specialist</span>
                 <textarea
                   id={`lesson-reply-${activity.id}`}
+                  ref={replyInputRef}
                   value={learnerReply}
                   onChange={(event) => setLearnerReply(event.target.value)}
                   rows={3}
@@ -446,31 +484,25 @@ export function LessonEngine({
               </label>
               <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-xs font-semibold text-[#7f8da3]">
-                  {saving
-                    ? "Saving for your Mentor..."
-                    : completed
-                      ? "Session saved."
-                      : tutorReadyToComplete
-                        ? "Ready to save when you are."
-                        : "Your place is saved as you go."}
+                  {saveStatusLabel(saving, completed, tutorReadyToComplete)}
                 </p>
                 <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => sendLearnerMessage()}
-                  className="beast-button"
-                  disabled={completed || !learnerReply.trim()}
-                >
-                  Send to Tutor
-                </button>
-                <button
-                  type="button"
-                  onClick={finishLesson}
-                  disabled={saving || completed || !tutorReadyToComplete}
-                  className="beast-button-secondary disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {saving ? "Saving..." : completed ? "Lesson saved" : "Save for Mentor"}
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => sendLearnerMessage()}
+                    className="beast-button"
+                    disabled={completed || !learnerReply.trim()}
+                  >
+                    Send
+                  </button>
+                  <button
+                    type="button"
+                    onClick={finishLesson}
+                    disabled={saving || completed || !tutorReadyToComplete}
+                    className="beast-button-secondary disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {saving ? "Saving..." : completed ? "Finished" : "Finish lesson"}
+                  </button>
                 </div>
               </div>
             </div>
@@ -491,11 +523,12 @@ export function LessonEngine({
 
             {[
               ["Goal", engine.lesson.learningObjective],
-              ["Tutor", tutorSelection.role],
+              ["Specialist", tutorSelection.role],
               ["Confidence", confidenceLabel(confidence)],
-              ["Confidence summary", progress.coachingMessage],
-              ["Recent progress", `${completed ? 100 : progress.masteryEstimate}% mastery signal`],
+              ["Mentor note", progress.coachingMessage],
+              ["Progress", progressLanguage(progress.masteryEstimate, completed)],
               ["Next", progress.nextRecommendation],
+              ["Save", saveStatusLabel(saving, completed, tutorReadyToComplete)],
             ].map(([label, value]) => (
               <div key={label} className="rounded-xl bg-[#0f1419] p-3">
                 <div className="text-xs font-bold uppercase text-[#7f8da3]">
