@@ -143,7 +143,11 @@ import { buildLearningIntelligenceSnapshot } from "../src/lib/learning/intellige
 import { buildLearnerInsights } from "../src/lib/learning/insights";
 import { buildLearningJourneys } from "../src/lib/learning/journeys";
 import { buildKnowledgeIntelligenceDashboard } from "../src/lib/learning/knowledgeDashboard";
-import { mockLearningKnowledgeModel } from "../src/lib/learning/knowledgeGraph";
+import {
+  buildCurriculumKnowledgeGraph,
+  mockLearningKnowledgeModel,
+  recommendFromKnowledgeGraph,
+} from "../src/lib/learning/knowledgeGraph";
 import { mockLearningMemory } from "../src/lib/learning/learningMemory";
 import { learningLessons } from "../src/lib/learning/lessons";
 import { learningLibraryMaterials } from "../src/lib/learning/library";
@@ -1041,6 +1045,16 @@ test("Beast Academy failed completion routes to Mentor explanation Tutor remedia
 });
 
 test("learning knowledge model includes a prerequisite graph", () => {
+  const curriculumGraph = buildCurriculumKnowledgeGraph();
+  const prerequisiteRecommendation = recommendFromKnowledgeGraph({
+    currentConceptId: "linear-equations",
+    masteredConceptIds: ["fraction-basics"],
+  });
+  const downstreamRecommendation = recommendFromKnowledgeGraph({
+    currentConceptId: "proportions",
+    masteredConceptIds: ["fraction-basics", "ratios", "proportions"],
+  });
+
   assert.equal(
     mockLearningKnowledgeModel.concepts.some(
       (concept) =>
@@ -1058,6 +1072,31 @@ test("learning knowledge model includes a prerequisite graph", () => {
     true
   );
   assert.equal(mockLearningKnowledgeModel.nodes.length > 0, true);
+  assert.equal(
+    mockLearningKnowledgeModel.graphLinks?.some(
+      (link) => link.from === "ratios" && link.to === "proportions" && link.relationship === "requires"
+    ),
+    true
+  );
+  assert.deepEqual(prerequisiteRecommendation.dependencyPath, [
+    "ratios",
+    "proportions",
+    "linear-equations",
+  ]);
+  assert.equal(prerequisiteRecommendation.action, "review-prerequisite");
+  assert.match(prerequisiteRecommendation.reason, /Ratios first/);
+  assert.equal(downstreamRecommendation.recommendedConceptId, "linear-equations");
+  assert.equal(downstreamRecommendation.action, "continue-downstream");
+  assert.equal(
+    curriculumGraph.nodes.some((node) => node.kind === "learning-goal" && node.id === "goal-mathematics"),
+    true
+  );
+  assert.equal(
+    curriculumGraph.links.some(
+      (link) => link.from === "pre-algebra-combining-like-terms" && link.relationship === "belongs-to"
+    ),
+    true
+  );
 });
 
 test("learning mastery engine weights more than completion alone", () => {

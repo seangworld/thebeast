@@ -458,8 +458,27 @@ export type LearningResource = {
 export type KnowledgeGraphNode = {
   id: string;
   label: string;
-  kind: "skill" | "concept" | "topic" | "objective";
+  kind:
+    | "learning-goal"
+    | "course"
+    | "module"
+    | "lesson"
+    | "skill"
+    | "concept"
+    | "topic"
+    | "objective";
   prerequisiteIds: string[];
+};
+
+export type KnowledgeGraphLink = {
+  from: string;
+  to: string;
+  relationship:
+    | "belongs-to"
+    | "supports-goal"
+    | "teaches"
+    | "builds-skill"
+    | "requires";
 };
 
 export type LearningKnowledgeModel = {
@@ -470,6 +489,7 @@ export type LearningKnowledgeModel = {
   dependencies: LearningDependency[];
   resources: LearningResource[];
   nodes: KnowledgeGraphNode[];
+  graphLinks?: KnowledgeGraphLink[];
 };
 
 export type ConceptMasteryInput = {
