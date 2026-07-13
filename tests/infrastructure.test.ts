@@ -2362,11 +2362,13 @@ test("learning activities have a dedicated runner and next-activity unlock logic
   assert.match(lessonEngine, /handleReplyKeyDown/);
   assert.match(lessonEngine, /currentConcept/);
   assert.match(lessonEngine, /sticky bottom-0/);
-  assert.match(lessonEngine, /messagesEndRef/);
+  assert.match(lessonEngine, /conversationScrollRef/);
   assert.match(lessonEngine, /replyInputRef/);
   assert.match(lessonEngine, /responsePendingRef/);
   assert.match(lessonEngine, /isResponding/);
-  assert.match(lessonEngine, /scrollIntoView/);
+  assert.match(lessonEngine, /container\.scrollTop = container\.scrollHeight/);
+  assert.match(lessonEngine, /focus\(\{ preventScroll: true \}\)/);
+  assert.doesNotMatch(lessonEngine, /scrollIntoView/);
   assert.match(lessonEngine, /requestAnimationFrame/);
   assert.match(lessonEngine, /nativeEvent\.isComposing/);
   assert.match(lessonEngine, /event\.shiftKey/);

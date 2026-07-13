@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import {
   DashboardCard,
@@ -151,7 +151,7 @@ export function LessonEngine({
   const [askedForHelp, setAskedForHelp] = useState(false);
   const [isResponding, setIsResponding] = useState(false);
   const restoredDraft = useRef(false);
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const conversationScrollRef = useRef<HTMLDivElement | null>(null);
   const replyInputRef = useRef<HTMLTextAreaElement | null>(null);
   const responsePendingRef = useRef(false);
   const engine = buildLessonEngineDefinition(activity);
@@ -259,9 +259,12 @@ export function LessonEngine({
     );
   }, [askedForHelp, completed, confidence, draftKey, messages, reflection]);
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messages.length, saving, completed]);
+  useLayoutEffect(() => {
+    const container = conversationScrollRef.current;
+    if (!container) return;
+
+    container.scrollTop = container.scrollHeight;
+  }, [messages.length]);
 
   function markPhase(phaseId: string) {
     if (!checkedPhases[phaseId]) onPhaseChange(phaseId, true);
@@ -378,7 +381,7 @@ export function LessonEngine({
     requestAnimationFrame(() => {
       responsePendingRef.current = false;
       setIsResponding(false);
-      replyInputRef.current?.focus();
+      replyInputRef.current?.focus({ preventScroll: true });
     });
   }
 
@@ -429,7 +432,10 @@ export function LessonEngine({
               </div>
             </header>
 
-            <div className="flex-1 space-y-4 overflow-y-auto px-4 py-5 sm:px-5">
+            <div
+              ref={conversationScrollRef}
+              className="flex-1 space-y-4 overflow-y-auto px-4 py-5 sm:px-5"
+            >
               {messages.map((message) => (
                 <div
                   key={message.id}
@@ -448,7 +454,6 @@ export function LessonEngine({
                   </div>
                 </div>
               ))}
-              <div ref={messagesEndRef} aria-hidden="true" />
             </div>
 
             <div className="sticky bottom-0 border-t border-white/10 bg-[#0b1020]/95 p-3 backdrop-blur sm:p-4">
