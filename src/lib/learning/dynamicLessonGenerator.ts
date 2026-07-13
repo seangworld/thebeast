@@ -65,15 +65,25 @@ function modeLabel(mode: DynamicLessonMode) {
 
 function modeInstruction(mode: DynamicLessonMode, focus: string) {
   if (mode === "remediation") {
-    return `Slow down and repair the prerequisite or misconception around ${focus}.`;
+    return `Let's slow down and rebuild ${focus} from a smaller step.`;
   }
   if (mode === "review") {
-    return `Check retention and rebuild recall for ${focus} before adding new material.`;
+    return `Let's warm up ${focus} before we add anything new.`;
   }
   if (mode === "challenge") {
-    return `Use a harder applied question for ${focus} because the learner appears ready.`;
+    return `You are ready for a harder ${focus} question.`;
   }
-  return `Teach the next focused step for ${focus}.`;
+  return `Today we will learn the next useful step in ${focus}.`;
+}
+
+function buildSubjectQuestion(focus: string, difficulty: "introductory" | "developing" | "challenge") {
+  if (difficulty === "challenge") {
+    return `Use ${focus} in a new situation. Write your answer, then explain the move that mattered most.`;
+  }
+  if (difficulty === "developing") {
+    return `Try a second ${focus} question on your own. Show the step that helped you decide.`;
+  }
+  return `Try one clear ${focus} question. Start with the example, then write your answer.`;
 }
 
 function metadata(id: string, label: string) {
@@ -119,11 +129,12 @@ export function generateDynamicLearningLesson({
   const difficulty = normalizeLevel(learnerLevel);
   const title = `${modeLabel(mode)}: ${focus}`;
   const boundary = aligned
-    ? `Generated from mapped ${authorityTitle} objective ${selectedObjectiveIds.join(", ")}.`
-    : "Treat this as placement. Generated as a diagnostic starter from the learner goal; it must not claim official curriculum coverage until authority mapping exists.";
+    ? `Aligned to ${authorityTitle} objective ${selectedObjectiveIds.join(", ")}.`
+    : "Treat this as placement from the learner goal; it must not claim official curriculum coverage until authority mapping exists.";
   const learnerBoundary = aligned
     ? `We will stay focused on ${focus}.`
     : "Let's start with a quick, low-pressure question so I know where to begin.";
+  const independentDifficulty = mode === "challenge" ? "challenge" : "developing";
 
   return {
     alignment: {
@@ -148,87 +159,86 @@ export function generateDynamicLearningLesson({
       objectiveIds: selectedObjectiveIds,
       prerequisiteIds: [],
       learningObjective: aligned
-        ? `${modeInstruction(mode, focus)} Keep the teaching focused and concrete.`
-        : `${modeInstruction(mode, focus)} Begin with a natural warm-up question.`,
+        ? `${modeInstruction(mode, focus)}`
+        : `${modeInstruction(mode, focus)} We will begin with one real question and build from there.`,
       prerequisiteConcepts: aligned
         ? [
-            `Focus on ${focus}.`,
-            "Use one clear example.",
-            "Listen for the learner's thinking before moving on.",
+            `Understand the basic idea behind ${focus}.`,
+            "Follow one worked example before practicing.",
+            "Explain the thinking before moving on.",
           ]
-        : ["Start with the subject", "Ask one natural question", "Listen for what feels unclear"],
-      explanation: `${modeInstruction(mode, focus)} ${learnerBoundary}`,
+        : [
+            `Start with a beginner-friendly ${focus} question.`,
+            "Use one worked example.",
+            "Name the part that feels unclear.",
+          ],
+      explanation: `Introduction: ${modeInstruction(mode, focus)} ${learnerBoundary} First, watch one worked example. Then you will try a supported question, an independent question, a quick checkpoint, a wrap-up, and a next step.`,
       interactiveVisual: {
-        title: "Try it together",
-        prompt: `Use the example, then try one small step with ${focus}.`,
-        expression: "Example + Practice + Next Step",
+        title: "Lesson path",
+        prompt: `Move from the worked example to guided practice, then try ${focus} on your own.`,
+        expression: "Intro -> Example -> Practice -> Checkpoint -> Next",
         terms: [
-          { id: "dynamic-target", label: "Target", coefficient: 1, variable: "", group: "other", color: "blue" },
-          { id: "dynamic-example", label: "Example", coefficient: 1, variable: "", group: "other", color: "green" },
+          { id: "dynamic-intro", label: "Intro", coefficient: 1, variable: "", group: "other", color: "blue" },
+          { id: "dynamic-example", label: "Worked example", coefficient: 1, variable: "", group: "other", color: "green" },
           { id: "dynamic-practice", label: "Practice", coefficient: 1, variable: "", group: "other", color: "yellow" },
         ],
         targetGroups: [
           {
             group: "other",
-            label: "Learning pieces",
-            combinedLabel: "Example + Practice + Next Step",
-            explanation: "Your answer helps your Mentor decide whether to review, try another example, or move ahead.",
+            label: "Lesson steps",
+            combinedLabel: "Example -> Practice -> Checkpoint",
+            explanation: "Each step gets a little harder so you can build confidence before moving on.",
           },
         ],
       },
       examples: [
         {
-          title: `${modeLabel(mode)} example`,
+          title: "Worked example",
           setup: focus,
           steps: [
-            `Start with a familiar example for ${focus}.`,
-            "Use a daily-life comparison before naming the rule.",
-            "Ask the learner to explain the step in their own words.",
+            `Start with a familiar situation connected to ${focus}.`,
+            "Show the first move before naming the rule.",
+            "Explain why that move works.",
+            "Try the same move on a new question.",
           ],
-          takeaway: aligned
-            ? "A clear example makes the next step easier to try."
-            : "This warm-up helps your Mentor choose the right starting point.",
+          takeaway: `A strong ${focus} answer shows both the answer and how you got there.`,
         },
       ],
       guidedPractice: [
         {
           id: `${lessonId}-practice`,
-          practiceTemplateId:
-            mode === "challenge" ? "independent-challenge" : "supported-recall",
-          difficulty: mode === "challenge" ? "challenge" : difficulty,
-          format: mode === "challenge" ? "scenario" : "short-response",
-          prompt: `Try one ${mode === "challenge" ? "applied" : "focused"} practice step for ${focus}.`,
+          practiceTemplateId: "supported-recall",
+          difficulty,
+          format: "worked-step",
+          prompt: `Guided practice: ${buildSubjectQuestion(focus, difficulty)}`,
           hint: `Start with the example, like matching the next move in a game, and keep your answer tied to ${focus}.`,
           expectedAnswer: focus,
           acceptedAnswers: [focus.toLowerCase(), resolvedGoal.toLowerCase()],
         },
         {
-          id: `${lessonId}-remediation`,
-          practiceTemplateId: "conversation-turn",
-          difficulty: "introductory",
-          format: "conversation",
-          prompt: `If this felt hard, name the smallest part of ${focus} that tripped you up.`,
-          hint: "It is okay to name the part that feels confusing.",
-          expectedAnswer: "A specific blocker",
-          acceptedAnswers: ["blocker", "unclear", "review"],
+          id: `${lessonId}-independent-practice`,
+          practiceTemplateId:
+            mode === "challenge" ? "independent-challenge" : "supported-recall",
+          difficulty: independentDifficulty,
+          format: mode === "challenge" ? "scenario" : "short-response",
+          prompt: `Independent practice: ${buildSubjectQuestion(focus, independentDifficulty)}`,
+          hint: "Use the same pattern from the worked example, but make the decision yourself.",
+          expectedAnswer: focus,
+          acceptedAnswers: [focus.toLowerCase(), resolvedGoal.toLowerCase()],
         },
       ],
       quizQuestions: [
         {
           id: `${lessonId}-quiz`,
-          questionTypeId: "multiple-choice",
+          questionTypeId: "written-response",
           contentMetadata: metadata(`${lessonId}-quiz`, `${title} check`),
-          prompt: aligned
-            ? `Which idea are we practicing right now?`
-            : `Let's start simply. Which answer best matches what you want to practice?`,
+          prompt: `Checkpoint: answer one ${focus} question, then explain how you solved it.`,
           options: aligned
-            ? [focus, "Something unrelated", "A progress chart"]
-            : [resolvedGoal, "A finished exam", "A certificate"],
+            ? [focus, `A partly finished ${focus} answer`, `A ${focus} answer with no explanation`]
+            : [resolvedGoal, `A partly finished ${resolvedGoal} answer`, `A ${resolvedGoal} answer with no explanation`],
           answer: aligned ? focus : resolvedGoal,
           acceptedAnswers: aligned ? [focus.toLowerCase()] : [resolvedGoal.toLowerCase()],
-          explanation: aligned
-            ? `We are practicing ${focus}, so the next question should stay there.`
-            : "This first question helps your Mentor choose the right starting point.",
+          explanation: `A strong checkpoint answer for ${focus} includes the answer and the thinking behind it.`,
         },
       ],
       aiCoachingPrompts: [
@@ -259,8 +269,8 @@ export function generateDynamicLearningLesson({
         },
       ],
       reflectionPrompts: [
-        `What part of ${focus} felt clear?`,
-        `What should your Mentor review or challenge next?`,
+        `Wrap-up: what part of ${focus} felt clear after the practice?`,
+        `Next step: what should we review or try next in ${focus}?`,
       ],
       masteryThreshold: mode === "challenge" ? 85 : 80,
       recommendedNextLesson:
@@ -270,7 +280,7 @@ export function generateDynamicLearningLesson({
       reviewRecommendation:
         mode === "remediation" || mode === "review"
           ? `Review ${focus} again before adding new material.`
-          : `Use evidence from ${focus} to decide whether to review, remediate, or advance.`,
+          : `Try one more ${focus} checkpoint, then decide whether to review or move ahead.`,
     },
   };
 }

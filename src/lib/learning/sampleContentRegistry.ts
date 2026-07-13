@@ -1006,12 +1006,12 @@ export function createGeneratedLearningContentRecord(
         lessonId,
         "First practice"
       ),
-      learningObjective: `Start ${resolvedSubject} with one clear question, one example, and one small practice step.`,
+      learningObjective: `Start ${resolvedSubject} with an introduction, a worked example, guided practice, independent practice, a checkpoint, a wrap-up, and a next step.`,
       explanation:
-        `Let's begin ${resolvedSubject} with a quick question so I can teach from the right starting point.`,
+        `Introduction: let's begin ${resolvedSubject} with one clear example. After that, you will try a guided practice question, an independent practice question, a checkpoint, a short wrap-up, and a next step.`,
       reflectionPrompts: [
-        "What felt clear?",
-        "What should we practice next?",
+        `Wrap-up: what felt clear about ${resolvedSubject}?`,
+        `Next step: what should we practice next in ${resolvedSubject}?`,
       ],
       masteryThreshold: 80,
       recommendedNextLesson: `Next ${resolvedSubject} lesson`,

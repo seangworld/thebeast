@@ -3579,7 +3579,10 @@ test("assessment question type registry models multiple choice numeric written a
   );
   assert.equal(
     lessonQuestions.every(
-      (question) => getAssessmentQuestionTypeForQuestion(question)?.id === "multiple-choice"
+      (question) =>
+        ["multiple-choice", "written-response"].includes(
+          getAssessmentQuestionTypeForQuestion(question)?.id || ""
+        )
     ),
     true
   );
@@ -3760,7 +3763,18 @@ test("dynamic lesson generation stays aligned to curriculum authority", () => {
   assert.equal(aligned.lesson.aiCoachingPrompts.some((prompt) => prompt.title === "Remediate"), true);
   assert.equal(aligned.lesson.aiCoachingPrompts.some((prompt) => prompt.title === "Review"), true);
   assert.equal(aligned.lesson.aiCoachingPrompts.some((prompt) => prompt.title === "Challenge"), true);
-  assert.match(aligned.lesson.quizQuestions[0].explanation, /We are practicing/);
+  assert.match(aligned.lesson.explanation, /Introduction/);
+  assert.match(aligned.lesson.examples[0].title, /Worked example/);
+  assert.match(aligned.lesson.guidedPractice[0].prompt, /Guided practice/);
+  assert.match(aligned.lesson.guidedPractice[1].prompt, /Independent practice/);
+  assert.match(aligned.lesson.quizQuestions[0].prompt, /Checkpoint/);
+  assert.match(aligned.lesson.quizQuestions[0].prompt, /explain how you solved it/);
+  assert.match(aligned.lesson.reflectionPrompts[0], /Wrap-up/);
+  assert.match(aligned.lesson.reflectionPrompts[1], /Next step/);
+  assert.equal(aligned.lesson.guidedPractice[0].difficulty, "challenge");
+  assert.equal(aligned.lesson.guidedPractice[1].difficulty, "challenge");
+  assert.match(aligned.lesson.quizQuestions[0].explanation, /thinking behind it/);
+  assert.doesNotMatch(aligned.lesson.quizQuestions[0].prompt, /Which idea are we practicing/);
 
   const diagnostic = generateDynamicLearningLesson({
     goal: "Underwater basket weaving",
@@ -3774,14 +3788,55 @@ test("dynamic lesson generation stays aligned to curriculum authority", () => {
   assert.equal(diagnostic.alignment.aligned, false);
   assert.equal(diagnostic.alignment.productionEligible, false);
   assert.match(diagnostic.alignment.boundary, /must not claim official curriculum coverage/);
-  assert.match(diagnostic.lesson.explanation, /quick, low-pressure question/);
+  assert.match(diagnostic.lesson.explanation, /Introduction/);
+  assert.match(diagnostic.lesson.explanation, /supported question/);
 
   const generatedRecord = createGeneratedLearningContentRecord("Python");
   assert.equal(generatedRecord.lesson.guidedPractice.length >= 2, true);
+  assert.match(generatedRecord.lesson.learningObjective, /worked example/);
+  assert.match(generatedRecord.lesson.guidedPractice[0].prompt, /Guided practice/);
+  assert.match(generatedRecord.lesson.guidedPractice[1].prompt, /Independent practice/);
+  assert.match(generatedRecord.lesson.quizQuestions[0].prompt, /Checkpoint/);
+  assert.match(generatedRecord.lesson.reflectionPrompts[0], /Wrap-up/);
+  assert.match(generatedRecord.lesson.reflectionPrompts[1], /Next step/);
   assert.equal(
     generatedRecord.lesson.aiCoachingPrompts.some((prompt) => prompt.title === "Challenge"),
     true
   );
+  const dynamicLessonText = [
+    aligned.lesson.learningObjective,
+    aligned.lesson.explanation,
+    aligned.lesson.interactiveVisual.title,
+    aligned.lesson.interactiveVisual.prompt,
+    aligned.lesson.interactiveVisual.expression,
+    ...aligned.lesson.interactiveVisual.targetGroups.map((group) =>
+      [group.label, group.combinedLabel, group.explanation].join(" ")
+    ),
+    ...aligned.lesson.guidedPractice.map((step) => [step.prompt, step.hint].join(" ")),
+    ...aligned.lesson.quizQuestions.map((question) =>
+      [question.prompt, question.explanation, ...question.options].join(" ")
+    ),
+    ...aligned.lesson.reflectionPrompts,
+    diagnostic.lesson.learningObjective,
+    diagnostic.lesson.explanation,
+    ...diagnostic.lesson.guidedPractice.map((step) => [step.prompt, step.hint].join(" ")),
+    ...generatedRecord.lesson.reflectionPrompts,
+  ].join("\n");
+
+  [
+    /AI generated/i,
+    /generated lesson/i,
+    /generated course/i,
+    /What does this lesson prove/i,
+    /Which idea are we practicing/i,
+    /Something unrelated/i,
+    /A progress chart/i,
+    /Learning pieces/i,
+    /lesson payload/i,
+    /curriculum implementation/i,
+  ].forEach((pattern) => {
+    assert.doesNotMatch(dynamicLessonText, pattern);
+  });
 
   const lessonEngine = readFileSync("src/lib/learning/lessonEngine.ts", "utf8");
   assert.match(lessonEngine, /generateDynamicLearningLesson/);
@@ -3842,7 +3897,7 @@ test("teaching intelligence keeps learner-facing diagnostics subject-first", () 
     techRecord.placementQuestions.some((question) => question.prompt.includes("computer network")),
     true
   );
-  assert.match(mathRecord.lesson.explanation, /quick question/);
+  assert.match(mathRecord.lesson.explanation, /guided practice question/);
 });
 
 test("curriculum authority separates teachable objectives from AI teaching behavior", () => {
