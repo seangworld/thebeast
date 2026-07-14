@@ -5,6 +5,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { getProfileDisplayName } from "@/lib/profile";
 import { useEntitlements } from "@/lib/hooks/useEntitlements";
+import { goalPlanOwnershipRules } from "@/lib/platform/goalsPlans";
 import {
   DashboardCard,
   ModuleBadge,
@@ -564,6 +565,22 @@ export default function ProfilePage() {
                 title="You control this information"
                 description="Personal Hub separates editable account context from authentication records."
               />
+            </DashboardCard>
+
+            <DashboardCard accent="goals">
+              <SectionHeader
+                eyebrow="Shared Goals and Plans"
+                title="Goals are outcomes. Plans are paths."
+                description="BeastOS owns the shared Goal and Plan records. Money and Learning can contribute progress or recommendations without duplicating ownership."
+              />
+              <ul className="mt-4 space-y-2 text-sm leading-6 text-[#dbe3ef]">
+                {goalPlanOwnershipRules.slice(0, 3).map((rule) => (
+                  <li key={rule} className="flex gap-2">
+                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-yellow-300" />
+                    <span>{rule}</span>
+                  </li>
+                ))}
+              </ul>
             </DashboardCard>
           </div>
         </section>
