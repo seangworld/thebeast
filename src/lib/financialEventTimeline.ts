@@ -64,6 +64,41 @@ export type FinancialTimelineResult = {
   events: FinancialTimelinePoint[];
 };
 
+export type FinancialTimelineConsistencyIssue = {
+  code:
+    | "running_cash_mismatch"
+    | "running_debt_mismatch"
+    | "running_funding_source_mismatch"
+    | "running_net_debt_mismatch"
+    | "running_net_worth_mismatch"
+    | "ending_cash_mismatch"
+    | "ending_debt_mismatch"
+    | "ending_funding_source_mismatch"
+    | "ending_net_debt_mismatch"
+    | "ending_net_worth_mismatch";
+  severity: "error";
+  message: string;
+  eventId?: string;
+  expected: number;
+  actual: number;
+};
+
+export type FinancialTimelineConsistencyAudit = {
+  isConsistent: boolean;
+  tolerance: number;
+  totals: {
+    cashDelta: number;
+    debtDelta: number;
+    fundingSourceDelta: number;
+    expectedEndingCash: number;
+    expectedEndingDebt: number;
+    expectedEndingFundingSourceDebt: number;
+    expectedEndingNetDebt: number;
+    expectedEndingNetWorth: number;
+  };
+  issues: FinancialTimelineConsistencyIssue[];
+};
+
 function money(value: number) {
   return roundMoney(value);
 }
@@ -191,6 +226,205 @@ export function buildFinancialEventTimeline(
     ),
     shortageEvents: timelineEvents.filter((event) => event.kind === "shortage_risk"),
     events: timelineEvents,
+  };
+}
+
+function isWithinTolerance(actual: number, expected: number, tolerance: number) {
+  return Math.abs(money(actual) - money(expected)) <= tolerance;
+}
+
+function addConsistencyIssue(
+  issues: FinancialTimelineConsistencyIssue[],
+  issue: FinancialTimelineConsistencyIssue,
+  tolerance: number
+) {
+  if (!isWithinTolerance(issue.actual, issue.expected, tolerance)) {
+    issues.push({
+      ...issue,
+      actual: money(issue.actual),
+      expected: money(issue.expected),
+    });
+  }
+}
+
+export function auditFinancialTimelineConsistency(
+  timeline: FinancialTimelineResult,
+  tolerance = 0.01
+): FinancialTimelineConsistencyAudit {
+  const issues: FinancialTimelineConsistencyIssue[] = [];
+  let expectedCash = money(timeline.startingCash);
+  let expectedDebt = money(timeline.startingDebt);
+  let expectedFundingSourceDebt = money(timeline.startingFundingSourceDebt);
+  let cashDelta = 0;
+  let debtDelta = 0;
+  let fundingSourceDelta = 0;
+
+  for (const event of timeline.events) {
+    const eventCashDelta = money(Number(event.cashDelta || 0));
+    const eventDebtDelta = money(Number(event.debtDelta || 0));
+    const eventFundingSourceDelta = money(Number(event.fundingSourceDelta || 0));
+
+    cashDelta = money(cashDelta + eventCashDelta);
+    debtDelta = money(debtDelta + eventDebtDelta);
+    fundingSourceDelta = money(fundingSourceDelta + eventFundingSourceDelta);
+
+    expectedCash = money(expectedCash + eventCashDelta);
+    expectedDebt = money(expectedDebt + eventDebtDelta);
+    expectedFundingSourceDebt = money(
+      expectedFundingSourceDebt + eventFundingSourceDelta
+    );
+    const expectedNetDebt = money(expectedDebt + expectedFundingSourceDebt);
+    const expectedNetWorth = money(
+      expectedCash - expectedDebt - expectedFundingSourceDebt
+    );
+
+    addConsistencyIssue(
+      issues,
+      {
+        code: "running_cash_mismatch",
+        severity: "error",
+        message: "Running cash does not match starting cash plus event cash deltas.",
+        eventId: event.id,
+        expected: expectedCash,
+        actual: event.runningCash,
+      },
+      tolerance
+    );
+    addConsistencyIssue(
+      issues,
+      {
+        code: "running_debt_mismatch",
+        severity: "error",
+        message: "Running debt does not match starting debt plus event debt deltas.",
+        eventId: event.id,
+        expected: expectedDebt,
+        actual: event.runningDebt,
+      },
+      tolerance
+    );
+    addConsistencyIssue(
+      issues,
+      {
+        code: "running_funding_source_mismatch",
+        severity: "error",
+        message:
+          "Running funding-source debt does not match starting funding-source debt plus event deltas.",
+        eventId: event.id,
+        expected: expectedFundingSourceDebt,
+        actual: event.runningFundingSourceDebt,
+      },
+      tolerance
+    );
+    addConsistencyIssue(
+      issues,
+      {
+        code: "running_net_debt_mismatch",
+        severity: "error",
+        message: "Running net debt does not match debt plus funding-source debt.",
+        eventId: event.id,
+        expected: expectedNetDebt,
+        actual: event.runningNetDebt,
+      },
+      tolerance
+    );
+    addConsistencyIssue(
+      issues,
+      {
+        code: "running_net_worth_mismatch",
+        severity: "error",
+        message:
+          "Running net worth does not match cash minus debt and funding-source debt.",
+        eventId: event.id,
+        expected: expectedNetWorth,
+        actual: event.runningNetWorth,
+      },
+      tolerance
+    );
+  }
+
+  const expectedEndingCash = money(timeline.startingCash + cashDelta);
+  const expectedEndingDebt = money(timeline.startingDebt + debtDelta);
+  const expectedEndingFundingSourceDebt = money(
+    timeline.startingFundingSourceDebt + fundingSourceDelta
+  );
+  const expectedEndingNetDebt = money(
+    expectedEndingDebt + expectedEndingFundingSourceDebt
+  );
+  const expectedEndingNetWorth = money(
+    expectedEndingCash - expectedEndingDebt - expectedEndingFundingSourceDebt
+  );
+
+  addConsistencyIssue(
+    issues,
+    {
+      code: "ending_cash_mismatch",
+      severity: "error",
+      message: "Ending cash does not match audited transaction cash deltas.",
+      expected: expectedEndingCash,
+      actual: timeline.endingCash,
+    },
+    tolerance
+  );
+  addConsistencyIssue(
+    issues,
+    {
+      code: "ending_debt_mismatch",
+      severity: "error",
+      message: "Ending debt does not match audited transaction debt deltas.",
+      expected: expectedEndingDebt,
+      actual: timeline.endingDebt,
+    },
+    tolerance
+  );
+  addConsistencyIssue(
+    issues,
+    {
+      code: "ending_funding_source_mismatch",
+      severity: "error",
+      message:
+        "Ending funding-source debt does not match audited funding-source deltas.",
+      expected: expectedEndingFundingSourceDebt,
+      actual: timeline.endingFundingSourceDebt,
+    },
+    tolerance
+  );
+  addConsistencyIssue(
+    issues,
+    {
+      code: "ending_net_debt_mismatch",
+      severity: "error",
+      message: "Ending net debt does not match audited debt totals.",
+      expected: expectedEndingNetDebt,
+      actual: timeline.endingNetDebt,
+    },
+    tolerance
+  );
+  addConsistencyIssue(
+    issues,
+    {
+      code: "ending_net_worth_mismatch",
+      severity: "error",
+      message: "Ending net worth does not match audited balance totals.",
+      expected: expectedEndingNetWorth,
+      actual: timeline.endingNetWorth,
+    },
+    tolerance
+  );
+
+  return {
+    isConsistent: issues.length === 0,
+    tolerance,
+    totals: {
+      cashDelta: money(cashDelta),
+      debtDelta: money(debtDelta),
+      fundingSourceDelta: money(fundingSourceDelta),
+      expectedEndingCash,
+      expectedEndingDebt,
+      expectedEndingFundingSourceDebt,
+      expectedEndingNetDebt,
+      expectedEndingNetWorth,
+    },
+    issues,
   };
 }
 
