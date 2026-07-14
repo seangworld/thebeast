@@ -5049,6 +5049,7 @@ test("BeastAdmin foundation registers modules and protects owner-only navigation
   assert.deepEqual(
     beastModuleRegistry.map((module) => [
       module.name,
+      module.id,
       module.version,
       module.status,
       module.visibility,
@@ -5057,14 +5058,14 @@ test("BeastAdmin foundation registers modules and protects owner-only navigation
       Boolean(module.ownerNotes),
     ]),
     [
-      ["BeastOS", "v2.1", "active", "released", true, false, true],
-      ["BeastMoney", "v2.3.0", "active", "released", true, false, true],
-      ["BeastLearning", "v1.5 Private Beta", "active", "beta", true, true, true],
-      ["BeastGoals", "shared", "foundation", "adminOnly", true, false, true],
-      ["BeastDocuments", "shared", "foundation", "adminOnly", true, false, true],
-      ["BeastHealth", "planned", "planned", "adminOnly", true, true, true],
-      ["BeastHome", "planned", "planned", "adminOnly", true, true, true],
-      ["BeastAdmin", "foundation", "foundation", "adminOnly", true, false, true],
+      ["BeastOS", "beastos", "v2.1", "active", "released", true, false, true],
+      ["BeastMoney", "money", "v2.3.0", "active", "released", true, false, true],
+      ["BeastLearning", "learning", "v1.5 Private Beta", "active", "beta", true, true, true],
+      ["BeastGoals", "goals", "shared", "foundation", "adminOnly", true, false, true],
+      ["BeastDocuments", "documents", "shared", "foundation", "adminOnly", true, false, true],
+      ["BeastHealth", "health", "planned", "planned", "adminOnly", true, true, true],
+      ["BeastHome", "home", "planned", "planned", "adminOnly", true, true, true],
+      ["BeastAdmin", "admin", "foundation", "foundation", "adminOnly", true, false, true],
     ]
   );
   assert.deepEqual(

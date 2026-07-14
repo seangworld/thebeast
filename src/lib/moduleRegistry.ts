@@ -15,6 +15,7 @@ export type BeastModuleStatus = "active" | "foundation" | "planned" | "disabled"
 
 export type BeastModuleRegistryEntry = {
   name: string;
+  id: BeastModuleIdentifier;
   identifier: BeastModuleIdentifier;
   module: ModuleKey;
   version: string;
@@ -29,6 +30,7 @@ export type BeastModuleRegistryEntry = {
 export const beastModuleRegistry: BeastModuleRegistryEntry[] = [
   {
     name: "BeastOS",
+    id: "beastos",
     identifier: "beastos",
     module: "beastos",
     version: "v2.1",
@@ -41,6 +43,7 @@ export const beastModuleRegistry: BeastModuleRegistryEntry[] = [
   },
   {
     name: "BeastMoney",
+    id: "money",
     identifier: "money",
     module: "money",
     version: "v2.3.0",
@@ -53,6 +56,7 @@ export const beastModuleRegistry: BeastModuleRegistryEntry[] = [
   },
   {
     name: "BeastLearning",
+    id: "learning",
     identifier: "learning",
     module: "learning",
     version: "v1.5 Private Beta",
@@ -65,6 +69,7 @@ export const beastModuleRegistry: BeastModuleRegistryEntry[] = [
   },
   {
     name: "BeastGoals",
+    id: "goals",
     identifier: "goals",
     module: "goals",
     version: "shared",
@@ -76,6 +81,7 @@ export const beastModuleRegistry: BeastModuleRegistryEntry[] = [
   },
   {
     name: "BeastDocuments",
+    id: "documents",
     identifier: "documents",
     module: "documents",
     version: "shared",
@@ -87,6 +93,7 @@ export const beastModuleRegistry: BeastModuleRegistryEntry[] = [
   },
   {
     name: "BeastHealth",
+    id: "health",
     identifier: "health",
     module: "health",
     version: "planned",
@@ -98,6 +105,7 @@ export const beastModuleRegistry: BeastModuleRegistryEntry[] = [
   },
   {
     name: "BeastHome",
+    id: "home",
     identifier: "home",
     module: "home",
     version: "planned",
@@ -109,6 +117,7 @@ export const beastModuleRegistry: BeastModuleRegistryEntry[] = [
   },
   {
     name: "BeastAdmin",
+    id: "admin",
     identifier: "admin",
     module: "admin",
     version: "foundation",
@@ -122,7 +131,7 @@ export const beastModuleRegistry: BeastModuleRegistryEntry[] = [
 ];
 
 export function getModuleRegistryEntry(identifier: BeastModuleIdentifier) {
-  return beastModuleRegistry.find((entry) => entry.identifier === identifier);
+  return beastModuleRegistry.find((entry) => entry.id === identifier);
 }
 
 export function isModuleVisibleForOwner(entry: BeastModuleRegistryEntry) {
@@ -151,7 +160,7 @@ export function updateModuleVisibility(
   visibility: BeastModuleVisibility
 ) {
   return registry.map((entry) =>
-    entry.identifier === identifier
+    entry.id === identifier
       ? {
           ...entry,
           visibility,
