@@ -5169,6 +5169,17 @@ test("BeastAdmin placeholders cover members analytics feedback ads and settings"
       ["Beta Member", "beta@beastos.local", "2026-07-10", "Invited", "Beta"],
     ]
   );
+  const membersPage = readFileSync(
+    "src/app/dashboard/admin/members/page.tsx",
+    "utf8"
+  );
+  assert.match(membersPage, /<span>Name<\/span>/);
+  assert.match(membersPage, /<span>Email<\/span>/);
+  assert.match(membersPage, /<span>Join Date<\/span>/);
+  assert.match(membersPage, /<span>Status<\/span>/);
+  assert.match(membersPage, /<span>Role<\/span>/);
+  assert.match(membersPage, /Edit Soon/);
+  assert.match(membersPage, /disabled/);
   assert.equal(beastAdminFeedbackItems.every((item) => item.date && item.module && item.user && item.status && item.summary), true);
 
   const analytics = buildBeastAdminAnalytics({
