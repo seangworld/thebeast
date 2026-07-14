@@ -9,11 +9,14 @@ import {
   documentOwnershipRules,
   documentStatuses,
   documentStorageBucketName,
+  loadUserDocuments,
+  type BeastDocumentDataClient,
   mockDocuments,
   summarizeDocuments,
   supportedDocumentFileTypes,
 } from "../src/lib/platform/documents";
 import { sharedNavigation } from "../src/lib/moduleNavigation";
+import type { BeastDocument } from "../src/lib/types/database";
 
 test("BD-001 creates a BeastOS-owned Document model and database contract", () => {
   assert.equal(documentDatabaseTableName, "beast_documents");
@@ -95,6 +98,9 @@ test("BD-001 Documents overview route stays BeastOS-owned", () => {
     documentsPage,
     /AI\s+extraction is intentionally not part/
   );
+  assert.doesNotMatch(documentsPage, /mockDocuments/);
+  assert.doesNotMatch(documentsPage, /statement\.pdf/);
+  assert.doesNotMatch(documentsPage, /notes\.txt/);
   assert.match(migration, /create table if not exists public\.beast_documents/);
   assert.match(migration, /enable row level security/);
   assert.match(migration, /auth\.uid\(\) = owner_id/);
@@ -109,4 +115,93 @@ test("BD-001 Documents overview route stays BeastOS-owned", () => {
       }),
     /Document size cannot be negative/
   );
+});
+
+function createDocumentClient(
+  rows: BeastDocument[] | null,
+  options: { userId?: string; authError?: boolean; queryError?: boolean } = {}
+): BeastDocumentDataClient {
+  return {
+    auth: {
+      async getUser() {
+        return {
+          data: { user: options.userId ? { id: options.userId } : null },
+          error: options.authError ? { message: "Auth unavailable" } : null,
+        };
+      },
+    },
+    from(table) {
+      assert.equal(table, documentDatabaseTableName);
+
+      return {
+        select() {
+          return {
+            eq(column, value) {
+              assert.equal(column, "owner_id");
+              assert.equal(value, options.userId);
+
+              return {
+                async order(columnName, orderOptions) {
+                  assert.equal(columnName, "created_at");
+                  assert.deepEqual(orderOptions, { ascending: false });
+
+                  return {
+                    data: rows,
+                    error: options.queryError
+                      ? { message: "Table unavailable" }
+                      : null,
+                  };
+                },
+              };
+            },
+          };
+        },
+      };
+    },
+  };
+}
+
+test("BD-001 Documents loader uses only signed-in user metadata", async () => {
+  const result = await loadUserDocuments(
+    createDocumentClient(
+      [
+        {
+          id: "real-document",
+          owner_id: "member-real",
+          title: "Real tax record",
+          category: "Tax",
+          status: "Uploaded",
+          storage_bucket: "beast-documents",
+          storage_path: "member-real/tax/record.pdf",
+          file_name: "record.pdf",
+          mime_type: "application/pdf",
+          size_bytes: 1000,
+          checksum: null,
+          source_module: null,
+          created_at: "2026-07-14T00:00:00.000Z",
+          updated_at: "2026-07-14T00:00:00.000Z",
+        },
+      ],
+      { userId: "member-real" }
+    )
+  );
+
+  assert.equal(result.status, "ready");
+  assert.equal(result.documents.length, 1);
+  assert.equal(result.documents[0].title, "Real tax record");
+  assert.equal(result.documents[0].storage.fileName, "record.pdf");
+  assert.notEqual(result.documents[0].storage.fileName, "statement.pdf");
+});
+
+test("BD-001 Documents loader fails safely without sample metadata", async () => {
+  const unavailable = await loadUserDocuments(
+    createDocumentClient(null, { userId: "member-real", queryError: true })
+  );
+  const signedOut = await loadUserDocuments(createDocumentClient(null));
+
+  assert.equal(unavailable.status, "unavailable");
+  assert.equal(unavailable.documents.length, 0);
+  assert.equal(signedOut.status, "signed-out");
+  assert.equal(signedOut.documents.length, 0);
+  assert.equal(summarizeDocuments(unavailable.documents).storageBytes, 0);
 });

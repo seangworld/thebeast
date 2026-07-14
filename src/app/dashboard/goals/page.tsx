@@ -4,15 +4,34 @@ import {
   SectionHeader,
 } from "@/app/components/design/DashboardPrimitives";
 import { PlatformServiceHero } from "@/app/dashboard/platformServices";
+import { createRouteClient } from "@/lib/supabase/server";
 import {
+  type BeastGoalDataClient,
+  type GoalLoadResult,
   goalDatabaseTableName,
   goalOwnershipRules,
-  mockGoals,
+  loadUserGoals,
   summarizeGoals,
 } from "@/lib/platform/goals";
 
-export default function GoalsOverviewPage() {
-  const summary = summarizeGoals(mockGoals);
+async function getGoalLoadResult(): Promise<GoalLoadResult> {
+  try {
+    return await loadUserGoals(
+      createRouteClient() as unknown as BeastGoalDataClient
+    );
+  } catch {
+    return {
+      goals: [],
+      status: "unavailable",
+      message: "Goals could not be loaded right now.",
+    };
+  }
+}
+
+export default async function GoalsOverviewPage() {
+  const goalLoadResult = await getGoalLoadResult();
+  const goals = goalLoadResult.goals;
+  const summary = summarizeGoals(goals);
 
   return (
     <main className="beast-page">
@@ -48,39 +67,49 @@ export default function GoalsOverviewPage() {
             description="This foundation is intentionally light: goals can be viewed now, while deeper create/edit workflows remain future BeastOS-owned work."
           />
           <div className="mt-5 grid gap-3">
-            {mockGoals.map((goal) => (
-              <div
-                key={goal.id}
-                className="rounded-xl border border-[#2a3242] bg-[#111827] p-4"
-              >
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <h2 className="text-lg font-black text-white">{goal.title}</h2>
-                    <p className="mt-2 text-sm leading-6 text-[#9aa7b8]">
-                      {goal.summary}
-                    </p>
+            {goals.length > 0 ? (
+              goals.map((goal) => (
+                <div
+                  key={goal.id}
+                  className="rounded-xl border border-[#2a3242] bg-[#111827] p-4"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <h2 className="text-lg font-black text-white">{goal.title}</h2>
+                      <p className="mt-2 text-sm leading-6 text-[#9aa7b8]">
+                        {goal.summary || "No summary has been added yet."}
+                      </p>
+                    </div>
+                    <span className="rounded-full border border-yellow-300/40 bg-yellow-300/10 px-3 py-1 text-xs font-black text-yellow-100">
+                      {goal.status}
+                    </span>
                   </div>
-                  <span className="rounded-full border border-yellow-300/40 bg-yellow-300/10 px-3 py-1 text-xs font-black text-yellow-100">
-                    {goal.status}
-                  </span>
-                </div>
-                <div className="mt-4 flex flex-wrap gap-2 text-xs font-bold text-[#c7cfdb]">
-                  <span className="rounded-full border border-[#2a3242] px-2.5 py-1">
-                    {goal.category}
-                  </span>
-                  {goal.sourceModule ? (
+                  <div className="mt-4 flex flex-wrap gap-2 text-xs font-bold text-[#c7cfdb]">
                     <span className="rounded-full border border-[#2a3242] px-2.5 py-1">
-                      Contributed by {goal.sourceModule}
+                      {goal.category}
                     </span>
-                  ) : null}
-                  {goal.targetDate ? (
-                    <span className="rounded-full border border-[#2a3242] px-2.5 py-1">
-                      Target {goal.targetDate}
-                    </span>
-                  ) : null}
+                    {goal.sourceModule ? (
+                      <span className="rounded-full border border-[#2a3242] px-2.5 py-1">
+                        Contributed by {goal.sourceModule}
+                      </span>
+                    ) : null}
+                    {goal.targetDate ? (
+                      <span className="rounded-full border border-[#2a3242] px-2.5 py-1">
+                        Target {goal.targetDate}
+                      </span>
+                    ) : null}
+                  </div>
                 </div>
+              ))
+            ) : (
+              <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-5">
+                <h2 className="text-lg font-black text-white">No goals yet</h2>
+                <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
+                  {goalLoadResult.message ||
+                    "Your BeastOS goals will appear here after real user-owned goal records exist."}
+                </p>
               </div>
-            ))}
+            )}
           </div>
         </DashboardCard>
 
@@ -92,14 +121,20 @@ export default function GoalsOverviewPage() {
               description="Goals expose next steps from BeastOS-owned records. Modules may suggest actions, but BeastOS owns the shared outcome."
             />
             <div className="mt-5 grid gap-3">
-              {summary.nextSteps.map((step) => (
-                <div
-                  key={step}
-                  className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 text-sm font-semibold text-[#dbe3ef]"
-                >
-                  {step}
+              {summary.nextSteps.length > 0 ? (
+                summary.nextSteps.map((step) => (
+                  <div
+                    key={step}
+                    className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 text-sm font-semibold text-[#dbe3ef]"
+                  >
+                    {step}
+                  </div>
+                ))
+              ) : (
+                <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 text-sm font-semibold text-[#dbe3ef]">
+                  No shared goal actions are available yet.
                 </div>
-              ))}
+              )}
             </div>
           </DashboardCard>
 

@@ -1,4 +1,5 @@
 import type { PlatformModule } from "./types";
+import type { BeastGoal as BeastGoalRow } from "@/lib/types/database";
 
 export type GoalStatus =
   | "Proposed"
@@ -45,6 +46,36 @@ export type GoalOverviewSummary = {
   blockedGoals: number;
   archivedGoals: number;
   nextSteps: string[];
+};
+
+export type GoalLoadStatus = "ready" | "signed-out" | "unavailable";
+
+export type GoalLoadResult = {
+  goals: Goal[];
+  status: GoalLoadStatus;
+  message?: string;
+};
+
+export type BeastGoalDataClient = {
+  auth: {
+    getUser: () => Promise<{
+      data: { user: { id: string } | null };
+      error: { message?: string } | null;
+    }>;
+  };
+  from: (table: string) => {
+    select: (columns: string) => {
+      eq: (column: string, value: string) => {
+        order: (
+          column: string,
+          options: { ascending: boolean }
+        ) => Promise<{
+          data: BeastGoalRow[] | null;
+          error: { message?: string } | null;
+        }>;
+      };
+    };
+  };
 };
 
 const activeGoalStatuses = new Set<GoalStatus>(["Proposed", "Active", "Blocked"]);
@@ -119,6 +150,80 @@ export const mockGoals: Goal[] = [
     updatedAt: "2026-07-14T00:00:00.000Z",
   },
 ];
+
+export const exampleGoals = mockGoals;
+
+function toPlatformModule(module: string | null | undefined) {
+  return module ? (module as PlatformModule) : undefined;
+}
+
+export function mapGoalRow(row: BeastGoalRow): Goal {
+  return buildGoal({
+    id: row.id,
+    ownerId: row.owner_id,
+    title: row.title,
+    category: row.category,
+    status: row.status,
+    summary: row.summary ?? undefined,
+    targetDate: row.target_date ?? undefined,
+    currentStep: row.current_step ?? undefined,
+    sourceModule: toPlatformModule(row.source_module),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  });
+}
+
+export async function loadUserGoals(
+  client: BeastGoalDataClient
+): Promise<GoalLoadResult> {
+  try {
+    const { data: userData, error: userError } = await client.auth.getUser();
+
+    if (userError) {
+      return {
+        goals: [],
+        status: "unavailable",
+        message: "Goals could not be loaded right now.",
+      };
+    }
+
+    if (!userData.user) {
+      return {
+        goals: [],
+        status: "signed-out",
+        message: "Sign in to view your goals.",
+      };
+    }
+
+    const { data, error } = await client
+      .from(goalDatabaseTableName)
+      .select(
+        "id, owner_id, title, category, status, summary, target_date, current_step, source_module, created_at, updated_at"
+      )
+      .eq("owner_id", userData.user.id)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      return {
+        goals: [],
+        status: "unavailable",
+        message:
+          "Goals are not available yet. The database may still need its foundation migration.",
+      };
+    }
+
+    return {
+      goals: (data ?? []).map(mapGoalRow),
+      status: "ready",
+    };
+  } catch {
+    return {
+      goals: [],
+      status: "unavailable",
+      message: "Goals could not be loaded right now.",
+    };
+  }
+}
 
 export function isGoalStatus(status: unknown): status is GoalStatus {
   return goalStatuses.includes(status as GoalStatus);

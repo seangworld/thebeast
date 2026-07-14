@@ -9,11 +9,14 @@ import {
   PlatformServiceHero,
   PrivacyMessageCard,
 } from "@/app/dashboard/platformServices";
+import { createRouteClient } from "@/lib/supabase/server";
 import {
+  type BeastDocumentDataClient,
+  type DocumentLoadResult,
   documentCategories,
   documentDatabaseTableName,
   documentOwnershipRules,
-  mockDocuments,
+  loadUserDocuments,
   summarizeDocuments,
   supportedDocumentFileTypes,
 } from "@/lib/platform/documents";
@@ -35,8 +38,24 @@ const uploadCategories: {
   },
 ];
 
-export default function UploadsPage() {
-  const summary = summarizeDocuments(mockDocuments);
+async function getDocumentLoadResult(): Promise<DocumentLoadResult> {
+  try {
+    return await loadUserDocuments(
+      createRouteClient() as unknown as BeastDocumentDataClient
+    );
+  } catch {
+    return {
+      documents: [],
+      status: "unavailable",
+      message: "Documents could not be loaded right now.",
+    };
+  }
+}
+
+export default async function UploadsPage() {
+  const documentLoadResult = await getDocumentLoadResult();
+  const documents = documentLoadResult.documents;
+  const summary = summarizeDocuments(documents);
 
   return (
     <main className="beast-page">
@@ -181,31 +200,43 @@ export default function UploadsPage() {
               description="Recent files show shared metadata only. Advanced previews, extraction, and summaries are later work."
             />
             <div className="mt-5 grid gap-3">
-              {mockDocuments.map((document) => (
-                <div
-                  key={document.id}
-                  className="rounded-xl border border-[#2a3242] bg-[#111827] p-4"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="font-black text-white">{document.title}</div>
-                    <ModuleBadge
-                      module={document.sourceModule || "documents"}
-                      label={document.status}
-                    />
+              {documents.length > 0 ? (
+                documents.map((document) => (
+                  <div
+                    key={document.id}
+                    className="rounded-xl border border-[#2a3242] bg-[#111827] p-4"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="font-black text-white">{document.title}</div>
+                      <ModuleBadge
+                        module={document.sourceModule || "documents"}
+                        label={document.status}
+                      />
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-2 text-xs font-bold text-[#c7cfdb]">
+                      <span className="rounded-full border border-[#2a3242] px-2.5 py-1">
+                        {document.category}
+                      </span>
+                      <span className="rounded-full border border-[#2a3242] px-2.5 py-1">
+                        {document.storage.fileName}
+                      </span>
+                      <span className="rounded-full border border-[#2a3242] px-2.5 py-1">
+                        {(document.storage.sizeBytes / 1000).toFixed(1)} KB
+                      </span>
+                    </div>
                   </div>
-                  <div className="mt-2 flex flex-wrap gap-2 text-xs font-bold text-[#c7cfdb]">
-                    <span className="rounded-full border border-[#2a3242] px-2.5 py-1">
-                      {document.category}
-                    </span>
-                    <span className="rounded-full border border-[#2a3242] px-2.5 py-1">
-                      {document.storage.fileName}
-                    </span>
-                    <span className="rounded-full border border-[#2a3242] px-2.5 py-1">
-                      {(document.storage.sizeBytes / 1000).toFixed(1)} KB
-                    </span>
-                  </div>
+                ))
+              ) : (
+                <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-5">
+                  <h2 className="text-lg font-black text-white">
+                    No documents yet
+                  </h2>
+                  <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
+                    {documentLoadResult.message ||
+                      "Your BeastOS document metadata will appear here after real user-owned uploads exist."}
+                  </p>
                 </div>
-              ))}
+              )}
             </div>
           </DashboardCard>
         </section>

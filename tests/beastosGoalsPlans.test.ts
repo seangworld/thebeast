@@ -15,9 +15,12 @@ import {
   goalDatabaseTableName,
   goalOwnershipRules,
   goalStatuses,
+  loadUserGoals,
+  type BeastGoalDataClient,
   mockGoals,
   summarizeGoals,
 } from "../src/lib/platform/goals";
+import type { BeastGoal } from "../src/lib/types/database";
 
 const model: GoalPlanModel = {
   goals: [
@@ -174,6 +177,9 @@ test("BG-001 Goals overview route stays BeastOS-owned", () => {
   assert.match(goalsPage, /BeastOS Shared Service/);
   assert.match(goalsPage, /BeastOS Owned/);
   assert.match(goalsPage, /goalDatabaseTableName/);
+  assert.doesNotMatch(goalsPage, /mockGoals/);
+  assert.doesNotMatch(goalsPage, /Earn Security\+/);
+  assert.doesNotMatch(goalsPage, /Become debt free/);
   assert.match(migration, /create table if not exists public\.beast_goals/);
   assert.match(migration, /enable row level security/);
   assert.match(migration, /auth\.uid\(\) = owner_id/);
@@ -185,4 +191,88 @@ test("BG-001 Goals overview route stays BeastOS-owned", () => {
       }),
     /Goal title is required/
   );
+});
+
+function createGoalClient(
+  rows: BeastGoal[] | null,
+  options: { userId?: string; authError?: boolean; queryError?: boolean } = {}
+): BeastGoalDataClient {
+  return {
+    auth: {
+      async getUser() {
+        return {
+          data: { user: options.userId ? { id: options.userId } : null },
+          error: options.authError ? { message: "Auth unavailable" } : null,
+        };
+      },
+    },
+    from(table) {
+      assert.equal(table, goalDatabaseTableName);
+
+      return {
+        select() {
+          return {
+            eq(column, value) {
+              assert.equal(column, "owner_id");
+              assert.equal(value, options.userId);
+
+              return {
+                async order(columnName, orderOptions) {
+                  assert.equal(columnName, "created_at");
+                  assert.deepEqual(orderOptions, { ascending: false });
+
+                  return {
+                    data: rows,
+                    error: options.queryError
+                      ? { message: "Table unavailable" }
+                      : null,
+                  };
+                },
+              };
+            },
+          };
+        },
+      };
+    },
+  };
+}
+
+test("BG-001 Goals loader uses only signed-in user records", async () => {
+  const result = await loadUserGoals(
+    createGoalClient(
+      [
+        {
+          id: "real-goal",
+          owner_id: "member-real",
+          title: "Read one real goal",
+          category: "Personal",
+          status: "Active",
+          summary: null,
+          target_date: null,
+          current_step: null,
+          source_module: null,
+          created_at: "2026-07-14T00:00:00.000Z",
+          updated_at: "2026-07-14T00:00:00.000Z",
+        },
+      ],
+      { userId: "member-real" }
+    )
+  );
+
+  assert.equal(result.status, "ready");
+  assert.equal(result.goals.length, 1);
+  assert.equal(result.goals[0].title, "Read one real goal");
+  assert.notEqual(result.goals[0].title, mockGoals[0].title);
+});
+
+test("BG-001 Goals loader fails safely without sample records", async () => {
+  const unavailable = await loadUserGoals(
+    createGoalClient(null, { userId: "member-real", queryError: true })
+  );
+  const signedOut = await loadUserGoals(createGoalClient(null));
+
+  assert.equal(unavailable.status, "unavailable");
+  assert.equal(unavailable.goals.length, 0);
+  assert.equal(signedOut.status, "signed-out");
+  assert.equal(signedOut.goals.length, 0);
 });

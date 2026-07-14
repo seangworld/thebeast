@@ -1,4 +1,5 @@
 import type { PlatformModule } from "./types";
+import type { BeastDocument as BeastDocumentRow } from "@/lib/types/database";
 
 export type DocumentCategory =
   | "Money"
@@ -47,6 +48,36 @@ export type DocumentOverviewSummary = {
   archivedDocuments: number;
   storageBytes: number;
   categoryCounts: Record<DocumentCategory, number>;
+};
+
+export type DocumentLoadStatus = "ready" | "signed-out" | "unavailable";
+
+export type DocumentLoadResult = {
+  documents: BeastDocument[];
+  status: DocumentLoadStatus;
+  message?: string;
+};
+
+export type BeastDocumentDataClient = {
+  auth: {
+    getUser: () => Promise<{
+      data: { user: { id: string } | null };
+      error: { message?: string } | null;
+    }>;
+  };
+  from: (table: string) => {
+    select: (columns: string) => {
+      eq: (column: string, value: string) => {
+        order: (
+          column: string,
+          options: { ascending: boolean }
+        ) => Promise<{
+          data: BeastDocumentRow[] | null;
+          error: { message?: string } | null;
+        }>;
+      };
+    };
+  };
 };
 
 export const documentDatabaseTableName = "beast_documents";
@@ -142,6 +173,85 @@ export const mockDocuments: BeastDocument[] = [
     updatedAt: "2026-07-14T00:00:00.000Z",
   },
 ];
+
+export const exampleDocuments = mockDocuments;
+
+function toPlatformModule(module: string | null | undefined) {
+  return module ? (module as PlatformModule) : undefined;
+}
+
+export function mapDocumentRow(row: BeastDocumentRow): BeastDocument {
+  return buildDocument({
+    id: row.id,
+    ownerId: row.owner_id,
+    title: row.title,
+    category: row.category,
+    status: row.status,
+    storage: {
+      bucket: row.storage_bucket,
+      path: row.storage_path,
+      fileName: row.file_name,
+      mimeType: row.mime_type,
+      sizeBytes: row.size_bytes,
+      checksum: row.checksum ?? undefined,
+    },
+    sourceModule: toPlatformModule(row.source_module),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  });
+}
+
+export async function loadUserDocuments(
+  client: BeastDocumentDataClient
+): Promise<DocumentLoadResult> {
+  try {
+    const { data: userData, error: userError } = await client.auth.getUser();
+
+    if (userError) {
+      return {
+        documents: [],
+        status: "unavailable",
+        message: "Documents could not be loaded right now.",
+      };
+    }
+
+    if (!userData.user) {
+      return {
+        documents: [],
+        status: "signed-out",
+        message: "Sign in to view your documents.",
+      };
+    }
+
+    const { data, error } = await client
+      .from(documentDatabaseTableName)
+      .select(
+        "id, owner_id, title, category, status, storage_bucket, storage_path, file_name, mime_type, size_bytes, checksum, source_module, created_at, updated_at"
+      )
+      .eq("owner_id", userData.user.id)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      return {
+        documents: [],
+        status: "unavailable",
+        message:
+          "Documents are not available yet. The database may still need its foundation migration.",
+      };
+    }
+
+    return {
+      documents: (data ?? []).map(mapDocumentRow),
+      status: "ready",
+    };
+  } catch {
+    return {
+      documents: [],
+      status: "unavailable",
+      message: "Documents could not be loaded right now.",
+    };
+  }
+}
 
 export function isDocumentCategory(
   category: unknown
