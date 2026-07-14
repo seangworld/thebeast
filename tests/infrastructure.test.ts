@@ -177,6 +177,10 @@ import {
   mockStudySessionCommand,
 } from "../src/lib/learning/mockData";
 import { buildGuidanceCounselorRoadmap } from "../src/lib/learning/guidanceCounselor";
+import {
+  buildStudentProfile,
+  studentProfileOwnershipRules,
+} from "../src/lib/learning/studentProfile";
 import { learnerNotes } from "../src/lib/learning/notes";
 import { learningOnboardingSteps } from "../src/lib/learning/onboarding";
 import {
@@ -927,6 +931,66 @@ test("mentor roadmap uses static goal-type rules", () => {
   assert.equal(
     JSON.stringify(roadmap).includes("Financial Health"),
     false
+  );
+});
+
+test("BL-201 student profile foundation supports Mentor and Guidance Counselor context", () => {
+  const firstUse = buildStudentProfile({
+    learnerId: "new-student",
+    displayName: "New Student",
+  });
+
+  assert.equal(firstUse.stage, "first_use");
+  assert.equal(firstUse.supportNeeds.includes("goal_clarity"), true);
+  assert.equal(firstUse.supportNeeds.includes("placement"), true);
+  assert.match(firstUse.mentorSummary, /Ask one goal question/);
+  assert.match(firstUse.guidanceCounselorSummary, /desired outcome/);
+  assert.equal(firstUse.activeGoalTitles.value.length, 0);
+
+  const activeStudent = buildStudentProfile({
+    learnerId: "current",
+    displayName: "Sean Learner",
+    academicLevel: "Adult learner",
+    interests: ["cybersecurity", "career growth", "cybersecurity"],
+    activeGoals: mockLearningGoals,
+    learningPreferences: ["short practice", "plain language"],
+    availableTime: "20 minutes most weekdays",
+    guidanceGoalType: "Certification",
+    progressSignals: {
+      activeGoalsCount: 2,
+      currentStreakDays: 4,
+      sessionsCompleted: 8,
+      estimatedWeeklyStudyMinutes: 120,
+      progressPercentage: 38,
+      readinessScore: 72,
+      weakArea: "Networking fundamentals",
+      recommendedNextAction: "review subnetting",
+      snapshotTiles: [],
+    },
+    recentSessions: mockLearningSessions,
+    profileReferences: ["BeastOS education history", "BeastOS learning preferences"],
+  });
+
+  assert.equal(activeStudent.stage, "planning");
+  assert.deepEqual(activeStudent.interests.value, ["cybersecurity", "career growth"]);
+  assert.equal(activeStudent.activeGoalTitles.value[0], "Security+");
+  assert.equal(activeStudent.supportNeeds.includes("certification_planning"), true);
+  assert.equal(activeStudent.supportNeeds.includes("study_rhythm"), true);
+  assert.match(activeStudent.mentorSummary, /Security\+/);
+  assert.match(activeStudent.guidanceCounselorSummary, /confirm requirements/);
+  assert.match(activeStudent.readinessSummary, /Steady readiness/);
+  assert.deepEqual(
+    studentProfileOwnershipRules.slice(0, 2),
+    [
+      "BeastOS owns identity, shared profile intelligence, permissions, and durable profile facts.",
+      "BeastLearning owns learning-session evidence, Mentor observations, guidance planning context, and student-learning intelligence.",
+    ]
+  );
+  assert.equal(
+    activeStudent.privacyBoundaries.some((rule) =>
+      rule.includes("not a duplicate Beast Profile")
+    ),
+    true
   );
 });
 
