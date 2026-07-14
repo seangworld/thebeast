@@ -1,4 +1,9 @@
 import type { ModuleKey } from "@/app/components/design/DashboardPrimitives";
+import {
+  beastModuleRegistry,
+  getVisibleModuleRegistryEntries,
+  type BeastModuleRegistryEntry,
+} from "./moduleRegistry";
 
 export type ModuleChildNavItem = {
   label: string;
@@ -78,20 +83,59 @@ export const memberBeastMoneyNavigation: ModuleNavSection = {
   ),
 };
 
+export const beastAdminNavigation: ModuleNavSection = {
+  label: "BeastAdmin",
+  href: "/dashboard/admin",
+  module: "admin",
+  defaultExpanded: true,
+  children: [
+    { label: "Dashboard", href: "/dashboard/admin" },
+    { label: "Members", href: "/dashboard/admin/members" },
+    { label: "Modules", href: "/dashboard/admin/modules" },
+    { label: "Analytics", href: "/dashboard/admin/analytics" },
+    { label: "Feedback", href: "/dashboard/admin/feedback" },
+    { label: "Ads", href: "/dashboard/admin/ads" },
+    { label: "Settings", href: "/dashboard/admin/settings" },
+  ],
+};
+
+const plannedModuleNavigation: Record<string, ModuleNavSection> = {
+  health: { label: "BeastHealth", module: "health", comingSoon: true },
+  goals: { label: "BeastGoals", module: "goals", comingSoon: true },
+  home: { label: "BeastHome", module: "home", comingSoon: true },
+  documents: { label: "BeastDocuments", module: "documents", comingSoon: true },
+  admin: beastAdminNavigation,
+};
+
+function navigationFromRegistryEntry(entry: BeastModuleRegistryEntry) {
+  if (entry.identifier === "money") return beastMoneyNavigation;
+  if (entry.identifier === "learning") return beastLearningNavigation;
+  if (entry.identifier === "beastos") return null;
+
+  return plannedModuleNavigation[entry.identifier] || null;
+}
+
+export function buildBeastModuleNavigationForPersona({
+  isOwner,
+  registry = beastModuleRegistry,
+}: {
+  isOwner: boolean;
+  registry?: BeastModuleRegistryEntry[];
+}) {
+  return getVisibleModuleRegistryEntries({ isOwner, registry })
+    .map(navigationFromRegistryEntry)
+    .filter(Boolean) as ModuleNavSection[];
+}
+
 export const beastModuleNavigation: ModuleNavSection[] = [
-  beastMoneyNavigation,
-  beastLearningNavigation,
-  { label: "BeastHealth", module: "health", comingSoon: true },
+  ...buildBeastModuleNavigationForPersona({ isOwner: true }),
   { label: "BeastProjects", module: "projects", comingSoon: true },
-  { label: "BeastGoals", module: "goals", comingSoon: true },
-  { label: "BeastHome", module: "home", comingSoon: true },
-  { label: "BeastDocuments", module: "documents", comingSoon: true },
 ];
 
-export const memberBeastModuleNavigation: ModuleNavSection[] = [
-  memberBeastMoneyNavigation,
-  memberBeastLearningNavigation,
-];
+export const memberBeastModuleNavigation: ModuleNavSection[] =
+  buildBeastModuleNavigationForPersona({ isOwner: false }).map((item) =>
+    item.module === "money" ? memberBeastMoneyNavigation : item
+  );
 
 export function getBeastModuleNavigationForPersona(isAdmin: boolean) {
   return isAdmin ? beastModuleNavigation : memberBeastModuleNavigation;

@@ -340,12 +340,28 @@ import {
 } from "../src/lib/velocity/settings";
 import {
   beastModuleNavigation,
+  beastAdminNavigation,
+  buildBeastModuleNavigationForPersona,
   beastLearningNavigation,
   beastMoneyNavigation,
   getModuleChildren,
   primaryNavigation,
   sharedNavigation,
 } from "../src/lib/moduleNavigation";
+import {
+  beastModuleRegistry,
+  getVisibleModuleRegistryEntries,
+  updateModuleVisibility,
+} from "../src/lib/moduleRegistry";
+import {
+  assignBetaModule,
+  beastAdminBetaAssignableModules,
+  beastAdminBetaAssignments,
+  beastAdminFeedbackItems,
+  beastAdminMembers,
+  buildBeastAdminAnalytics,
+  isBeastAdminOwnerRole,
+} from "../src/lib/beastAdmin";
 
 test("debt strategy registry includes existing strategy options", () => {
   assert.deepEqual(
@@ -434,11 +450,12 @@ test("module navigation centralizes expandable child items", () => {
     [
       "BeastMoney",
       "BeastLearning",
-      "BeastHealth",
-      "BeastProjects",
       "BeastGoals",
-      "BeastHome",
       "BeastDocuments",
+      "BeastHealth",
+      "BeastHome",
+      "BeastAdmin",
+      "BeastProjects",
     ]
   );
   assert.deepEqual(
@@ -5001,10 +5018,167 @@ test("member navigation hides admin and monetization surfaces", () => {
     getBeastModuleNavigationForPersona(true).some((item) => item.comingSoon),
     true
   );
+  assert.equal(
+    getBeastModuleNavigationForPersona(true).some((item) => item.label === "BeastAdmin"),
+    true
+  );
+  assert.equal(
+    getBeastModuleNavigationForPersona(false).some((item) => item.label === "BeastAdmin"),
+    false
+  );
 
   const dashboardLayout = readFileSync("src/app/dashboard/layout.tsx", "utf8");
   assert.match(dashboardLayout, /memberPlatformSharedNavigation/);
   assert.match(dashboardLayout, /item\.label !== "Upload Center"/);
+});
+
+test("BeastAdmin foundation registers modules and protects owner-only navigation", () => {
+  assert.deepEqual(
+    beastModuleRegistry.map((module) => module.name),
+    [
+      "BeastOS",
+      "BeastMoney",
+      "BeastLearning",
+      "BeastGoals",
+      "BeastDocuments",
+      "BeastHealth",
+      "BeastHome",
+      "BeastAdmin",
+    ]
+  );
+  assert.deepEqual(
+    beastModuleRegistry.map((module) => [
+      module.name,
+      module.version,
+      module.status,
+      module.visibility,
+      module.enabled,
+      module.beta,
+      Boolean(module.ownerNotes),
+    ]),
+    [
+      ["BeastOS", "v2.1", "active", "released", true, false, true],
+      ["BeastMoney", "v2.3.0", "active", "released", true, false, true],
+      ["BeastLearning", "v1.5 Private Beta", "active", "beta", true, true, true],
+      ["BeastGoals", "shared", "foundation", "adminOnly", true, false, true],
+      ["BeastDocuments", "shared", "foundation", "adminOnly", true, false, true],
+      ["BeastHealth", "planned", "planned", "adminOnly", true, true, true],
+      ["BeastHome", "planned", "planned", "adminOnly", true, true, true],
+      ["BeastAdmin", "foundation", "foundation", "adminOnly", true, false, true],
+    ]
+  );
+  assert.deepEqual(
+    beastAdminNavigation.children?.map((item) => item.label),
+    ["Dashboard", "Members", "Modules", "Analytics", "Feedback", "Ads", "Settings"]
+  );
+  assert.equal(isBeastAdminOwnerRole("admin"), true);
+  assert.equal(isBeastAdminOwnerRole("user"), false);
+
+  const memberVisible = getVisibleModuleRegistryEntries({ isOwner: false }).map(
+    (module) => module.name
+  );
+  assert.deepEqual(memberVisible, ["BeastOS", "BeastMoney", "BeastLearning"]);
+
+  const releasedGoalsRegistry = updateModuleVisibility(
+    beastModuleRegistry,
+    "goals",
+    "released"
+  );
+  assert.equal(
+    buildBeastModuleNavigationForPersona({
+      isOwner: false,
+      registry: releasedGoalsRegistry,
+    }).some((item) => item.label === "BeastGoals"),
+    true
+  );
+
+  const disabledMoneyRegistry = updateModuleVisibility(
+    beastModuleRegistry,
+    "money",
+    "disabled"
+  );
+  assert.equal(
+    buildBeastModuleNavigationForPersona({
+      isOwner: false,
+      registry: disabledMoneyRegistry,
+    }).some((item) => item.label === "BeastMoney"),
+    false
+  );
+});
+
+test("BeastAdmin placeholders cover members analytics feedback ads and settings", () => {
+  const adminFiles = [
+    "src/app/dashboard/admin/page.tsx",
+    "src/app/dashboard/admin/members/page.tsx",
+    "src/app/dashboard/admin/modules/page.tsx",
+    "src/app/dashboard/admin/analytics/page.tsx",
+    "src/app/dashboard/admin/feedback/page.tsx",
+    "src/app/dashboard/admin/ads/page.tsx",
+    "src/app/dashboard/admin/settings/page.tsx",
+    "src/app/dashboard/admin/BeastAdminShell.tsx",
+  ];
+
+  adminFiles.forEach((file) => {
+    assert.equal(readFileSync(file, "utf8").includes("BeastAdmin"), true, file);
+  });
+
+  const shell = readFileSync("src/app/dashboard/admin/BeastAdminShell.tsx", "utf8");
+  const layout = readFileSync("src/app/dashboard/layout.tsx", "utf8");
+  assert.match(shell, /isBeastAdminOwnerRole/);
+  assert.match(shell, /router\.replace\("\/dashboard"\)/);
+  assert.match(layout, /pathname\.startsWith\("\/dashboard\/admin"\)/);
+
+  assert.deepEqual(
+    beastAdminMembers.map((member) => [member.name, member.email, member.joinDate, member.status, member.role]),
+    [
+      ["Sean G.", "owner@beastos.local", "2026-07-01", "Active", "Owner"],
+      ["Beta Member", "beta@beastos.local", "2026-07-10", "Invited", "Beta"],
+    ]
+  );
+  assert.equal(beastAdminFeedbackItems.every((item) => item.date && item.module && item.user && item.status && item.summary), true);
+
+  const analytics = buildBeastAdminAnalytics({
+    members: beastAdminMembers,
+    moduleCount: beastModuleRegistry.length,
+    feedbackCount: beastAdminFeedbackItems.length,
+    betaAssignments: beastAdminBetaAssignments,
+  });
+  assert.deepEqual(analytics, {
+    totalMembers: 2,
+    activeMembers: 1,
+    moduleCount: 8,
+    feedbackCount: 2,
+    betaUsers: 1,
+  });
+});
+
+test("BeastAdmin beta assignments are independent of member role", () => {
+  assert.deepEqual(beastAdminBetaAssignableModules, [
+    "learning",
+    "health",
+    "home",
+    "goals",
+    "documents",
+  ]);
+  const nextAssignments = assignBetaModule(beastAdminBetaAssignments, {
+    id: "assignment-health-beta",
+    memberId: "member-owner",
+    moduleId: "health",
+    assignedAt: "2026-07-14T00:00:00.000Z",
+  });
+
+  assert.equal(nextAssignments.length, beastAdminBetaAssignments.length + 1);
+  assert.equal(
+    nextAssignments.some(
+      (assignment) =>
+        assignment.memberId === "member-owner" && assignment.moduleId === "health"
+    ),
+    true
+  );
+  assert.equal(
+    assignBetaModule(nextAssignments, nextAssignments[nextAssignments.length - 1]).length,
+    nextAssignments.length
+  );
 });
 
 test("membership entitlement plan falls back to Free for inactive subscriptions", () => {

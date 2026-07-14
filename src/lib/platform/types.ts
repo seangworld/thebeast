@@ -12,7 +12,8 @@ export type PlatformModule =
   | "calendar"
   | "notifications"
   | "timeline"
-  | "search";
+  | "search"
+  | "admin";
 
 export type RecommendationPriority = "Critical" | "High" | "Medium" | "Low";
 export type PlatformSeverity = "critical" | "warning" | "info";

@@ -18,6 +18,7 @@ import {
   type ModuleChildNavItem,
   type ModuleNavSection,
 } from "@/lib/moduleNavigation";
+import { isBeastAdminOwnerRole } from "@/lib/beastAdmin";
 import {
   isRestrictedForLearningOnlyNavigation,
   shouldUseLearningOnlyNavigation,
@@ -64,6 +65,7 @@ const memberPlatformSharedNavigation: ModuleNavSection[] = platformSharedNavigat
 );
 
 function getWorkspaceModule(pathname: string): ModuleKey {
+  if (pathname.startsWith("/dashboard/admin")) return "admin";
   if (pathname.startsWith("/dashboard/money")) return "money";
   if (pathname.startsWith("/dashboard/learning")) return "learning";
   if (pathname.startsWith("/dashboard/calendar")) return "calendar";
@@ -318,7 +320,14 @@ export default function DashboardLayout({
         gradeLevel: primaryLearningProfile?.learning_style,
       });
 
-      setIsAdminPersona(profile?.role === "admin");
+      const isOwner = isBeastAdminOwnerRole(profile?.role);
+
+      if (pathname.startsWith("/dashboard/admin") && !isOwner) {
+        router.replace("/dashboard");
+        return;
+      }
+
+      setIsAdminPersona(isOwner);
       setLearningOnlyNavigation(useLearningOnlyNavigation);
       setDashboardGuardResolved(true);
 

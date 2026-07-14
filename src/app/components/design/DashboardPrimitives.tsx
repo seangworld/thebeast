@@ -15,7 +15,8 @@ export type ModuleKey =
   | "calendar"
   | "notifications"
   | "timeline"
-  | "search";
+  | "search"
+  | "admin";
 
 export const moduleAccents: Record<
   ModuleKey,
@@ -132,6 +133,14 @@ export const moduleAccents: Record<
     bg: "bg-[#38bdf8]/15",
     text: "text-[#bae6fd]",
     soft: "before:bg-[#38bdf8]",
+  },
+  admin: {
+    label: "BeastAdmin",
+    color: "#f59e0b",
+    border: "border-amber-300/50",
+    bg: "bg-amber-300/15",
+    text: "text-amber-100",
+    soft: "before:bg-[#f59e0b]",
   },
 };
 
