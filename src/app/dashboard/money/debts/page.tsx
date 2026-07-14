@@ -908,7 +908,7 @@ export default function DebtsPage() {
 </div>
         </section>
 
-        <section className="beast-card">
+        <section id="add-debt" className="beast-card">
           <div className="grid gap-4 md:grid-cols-3">
             <div>
               <label className="text-sm text-[#c7cfdb]">Strategy</label>

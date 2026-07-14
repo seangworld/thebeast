@@ -35,8 +35,8 @@ export const beastMoneyNavigation: ModuleNavSection = {
     { label: "Velocity", href: "/dashboard/money/velocity" },
     { label: "Billing", href: "/dashboard/money/billing" },
     { label: "Settings", href: "/dashboard/money/settings" },
-    { label: "Add Bill", href: "/dashboard/money/cashflow#add-bill", future: true },
-    { label: "Add Debt", href: "/dashboard/money/debts#add-debt", future: true },
+    { label: "Add Bill", href: "/dashboard/money/cashflow#add-bill" },
+    { label: "Add Debt", href: "/dashboard/money/debts#add-debt" },
   ],
 };
 

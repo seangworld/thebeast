@@ -111,7 +111,7 @@ export default function AddIncomeBillSection({
         )}
       </div>
 
-      <div className="beast-card">
+      <div id="add-bill" className="beast-card">
         <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-xl font-bold">Add Bill</h2>

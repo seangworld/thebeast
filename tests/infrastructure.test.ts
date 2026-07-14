@@ -470,9 +470,24 @@ test("module navigation centralizes expandable child items", () => {
     "Dashboard,Cash Flow,Bills,Debts,Payoff Plan,Velocity,Billing,Settings"
   );
   assert.equal(getModuleChildren("learning").length, 10);
-  assert.equal(
-    getModuleChildren("money").some((item) => item.future && item.label === "Add Bill"),
-    true
+  const moneyChildren = getModuleChildren("money");
+  const addBill = moneyChildren.find((item) => item.label === "Add Bill");
+  const addDebt = moneyChildren.find((item) => item.label === "Add Debt");
+
+  assert.equal(addBill?.future, undefined);
+  assert.equal(addBill?.href, "/dashboard/money/cashflow#add-bill");
+  assert.equal(addDebt?.future, undefined);
+  assert.equal(addDebt?.href, "/dashboard/money/debts#add-debt");
+  assert.match(
+    readFileSync(
+      "src/app/dashboard/money/cashflow/components/AddIncomeBillSection.tsx",
+      "utf8"
+    ),
+    /<div id="add-bill" className="beast-card">[\s\S]*<h2 className="text-xl font-bold">Add Bill<\/h2>/
+  );
+  assert.match(
+    readFileSync("src/app/dashboard/money/debts/page.tsx", "utf8"),
+    /<section id="add-debt" className="beast-card">[\s\S]*<h2 className="text-xl font-bold">Add Debt<\/h2>/
   );
 });
 
