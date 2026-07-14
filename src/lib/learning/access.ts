@@ -23,6 +23,7 @@ const restrictedLearningOnlyPathPrefixes = [
   "/dashboard/cashflow",
   "/dashboard/debts",
   "/dashboard/health",
+  "/dashboard/home",
   "/dashboard/money",
   "/dashboard/projects",
   "/dashboard/velocity",

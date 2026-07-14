@@ -67,6 +67,7 @@ function getWorkspaceModule(pathname: string): ModuleKey {
   if (pathname.startsWith("/dashboard/money")) return "money";
   if (pathname.startsWith("/dashboard/learning")) return "learning";
   if (pathname.startsWith("/dashboard/health")) return "health";
+  if (pathname.startsWith("/dashboard/home")) return "home";
   if (pathname.startsWith("/dashboard/calendar")) return "calendar";
   if (pathname.startsWith("/dashboard/notifications")) return "notifications";
   if (pathname.startsWith("/dashboard/timeline")) return "timeline";

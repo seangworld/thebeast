@@ -5080,7 +5080,7 @@ test("BeastAdmin foundation registers modules and protects owner-only navigation
       ["BeastGoals", "goals", "shared", "foundation", "adminOnly", true, false, true],
       ["BeastDocuments", "documents", "shared", "foundation", "adminOnly", true, false, true],
       ["BeastHealth", "health", "foundation", "foundation", "adminOnly", true, true, true],
-      ["BeastHome", "home", "planned", "planned", "adminOnly", true, true, true],
+      ["BeastHome", "home", "foundation", "foundation", "adminOnly", true, true, true],
       ["BeastAdmin", "admin", "foundation", "foundation", "adminOnly", true, false, true],
     ]
   );
@@ -5117,6 +5117,22 @@ test("BeastAdmin foundation registers modules and protects owner-only navigation
     beastModuleRegistry.find((module) => module.id === "health")?.href,
     "/dashboard/health"
   );
+  assert.deepEqual(
+    getModuleChildren("home").map((item) => item.label),
+    [
+      "Overview",
+      "Home",
+      "Vehicles",
+      "Maintenance",
+      "Security",
+      "Documents",
+      "Settings",
+    ]
+  );
+  assert.equal(
+    beastModuleRegistry.find((module) => module.id === "home")?.href,
+    "/dashboard/home"
+  );
   assert.equal(isBeastAdminOwnerRole("admin"), true);
   assert.equal(isBeastAdminOwnerRole("user"), false);
 
@@ -5129,6 +5145,13 @@ test("BeastAdmin foundation registers modules and protects owner-only navigation
       isOwner: false,
       registry: beastModuleRegistry,
     }).some((item) => item.label === "BeastHealth"),
+    false
+  );
+  assert.equal(
+    buildBeastModuleNavigationForPersona({
+      isOwner: false,
+      registry: beastModuleRegistry,
+    }).some((item) => item.label === "BeastHome"),
     false
   );
 
@@ -5362,6 +5385,57 @@ test("BH-001 BeastHealth foundation is admin-only placeholder application", () =
     }).some(
       (item) =>
         item.label === "BeastHealth" && item.href === "/dashboard/health"
+    ),
+    true
+  );
+});
+
+test("BHM-001 BeastHome foundation is admin-only placeholder application", () => {
+  const shell = readFileSync(
+    "src/app/dashboard/home/BeastHomeShell.tsx",
+    "utf8"
+  );
+  const pages = readFileSync("src/app/dashboard/home/pages.ts", "utf8");
+  const layout = readFileSync("src/app/dashboard/layout.tsx", "utf8");
+  const access = readFileSync("src/lib/learning/access.ts", "utf8");
+
+  [
+    "Overview",
+    "Home",
+    "Vehicles",
+    "Maintenance",
+    "Security",
+    "Documents",
+    "Settings",
+  ].forEach((label) => assert.match(shell, new RegExp(label)));
+
+  [
+    "src/app/dashboard/home/page.tsx",
+    "src/app/dashboard/home/property/page.tsx",
+    "src/app/dashboard/home/vehicles/page.tsx",
+    "src/app/dashboard/home/maintenance/page.tsx",
+    "src/app/dashboard/home/security/page.tsx",
+    "src/app/dashboard/home/documents/page.tsx",
+    "src/app/dashboard/home/settings/page.tsx",
+  ].forEach((path) =>
+    assert.match(readFileSync(path, "utf8"), /BeastHomePlaceholderPage/)
+  );
+
+  assert.match(shell, /isBeastAdminOwnerRole/);
+  assert.match(shell, /router\.replace\("\/dashboard"\)/);
+  assert.match(
+    shell,
+    /No maintenance scheduling, security automation, vehicle workflow, or household sharing workflow is active/
+  );
+  assert.match(pages, /No scheduling automation in this package/);
+  assert.match(layout, /pathname\.startsWith\("\/dashboard\/home"\)/);
+  assert.match(access, /"\/dashboard\/home"/);
+  assert.equal(
+    buildBeastModuleNavigationForPersona({
+      isOwner: true,
+      registry: beastModuleRegistry,
+    }).some(
+      (item) => item.label === "BeastHome" && item.href === "/dashboard/home"
     ),
     true
   );

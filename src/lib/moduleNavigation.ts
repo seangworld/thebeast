@@ -118,7 +118,20 @@ const plannedModuleNavigation: Record<string, ModuleNavSection> = {
     ],
   },
   goals: { label: "BeastGoals", module: "goals", comingSoon: true },
-  home: { label: "BeastHome", module: "home", comingSoon: true },
+  home: {
+    label: "BeastHome",
+    href: "/dashboard/home",
+    module: "home",
+    children: [
+      { label: "Overview", href: "/dashboard/home" },
+      { label: "Home", href: "/dashboard/home/property" },
+      { label: "Vehicles", href: "/dashboard/home/vehicles" },
+      { label: "Maintenance", href: "/dashboard/home/maintenance" },
+      { label: "Security", href: "/dashboard/home/security" },
+      { label: "Documents", href: "/dashboard/home/documents" },
+      { label: "Settings", href: "/dashboard/home/settings" },
+    ],
+  },
   documents: { label: "BeastDocuments", module: "documents", comingSoon: true },
   admin: beastAdminNavigation,
 };
