@@ -100,7 +100,23 @@ export const beastAdminNavigation: ModuleNavSection = {
 };
 
 const plannedModuleNavigation: Record<string, ModuleNavSection> = {
-  health: { label: "BeastHealth", module: "health", comingSoon: true },
+  health: {
+    label: "BeastHealth",
+    href: "/dashboard/health",
+    module: "health",
+    children: [
+      { label: "Overview", href: "/dashboard/health" },
+      { label: "Health Profile", href: "/dashboard/health/profile" },
+      { label: "Conditions", href: "/dashboard/health/conditions" },
+      { label: "Medications", href: "/dashboard/health/medications" },
+      { label: "Procedures", href: "/dashboard/health/procedures" },
+      { label: "Family History", href: "/dashboard/health/family-history" },
+      { label: "Lifestyle", href: "/dashboard/health/lifestyle" },
+      { label: "Vitals", href: "/dashboard/health/vitals" },
+      { label: "Documents", href: "/dashboard/health/documents" },
+      { label: "AI Advisor", href: "/dashboard/health/ai-advisor" },
+    ],
+  },
   goals: { label: "BeastGoals", module: "goals", comingSoon: true },
   home: { label: "BeastHome", module: "home", comingSoon: true },
   documents: { label: "BeastDocuments", module: "documents", comingSoon: true },

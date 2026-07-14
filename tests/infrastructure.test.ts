@@ -5079,7 +5079,7 @@ test("BeastAdmin foundation registers modules and protects owner-only navigation
       ["BeastLearning", "learning", "v1.5 Private Beta", "active", "beta", true, true, true],
       ["BeastGoals", "goals", "shared", "foundation", "adminOnly", true, false, true],
       ["BeastDocuments", "documents", "shared", "foundation", "adminOnly", true, false, true],
-      ["BeastHealth", "health", "planned", "planned", "adminOnly", true, true, true],
+      ["BeastHealth", "health", "foundation", "foundation", "adminOnly", true, true, true],
       ["BeastHome", "home", "planned", "planned", "adminOnly", true, true, true],
       ["BeastAdmin", "admin", "foundation", "foundation", "adminOnly", true, false, true],
     ]
@@ -5098,6 +5098,25 @@ test("BeastAdmin foundation registers modules and protects owner-only navigation
     beastAdminNavigation.children?.map((item) => item.label),
     ["Dashboard", "Members", "Modules", "Analytics", "Feedback", "Ads", "Settings"]
   );
+  assert.deepEqual(
+    getModuleChildren("health").map((item) => item.label),
+    [
+      "Overview",
+      "Health Profile",
+      "Conditions",
+      "Medications",
+      "Procedures",
+      "Family History",
+      "Lifestyle",
+      "Vitals",
+      "Documents",
+      "AI Advisor",
+    ]
+  );
+  assert.equal(
+    beastModuleRegistry.find((module) => module.id === "health")?.href,
+    "/dashboard/health"
+  );
   assert.equal(isBeastAdminOwnerRole("admin"), true);
   assert.equal(isBeastAdminOwnerRole("user"), false);
 
@@ -5105,6 +5124,13 @@ test("BeastAdmin foundation registers modules and protects owner-only navigation
     (module) => module.name
   );
   assert.deepEqual(memberVisible, ["BeastOS", "BeastMoney", "BeastLearning"]);
+  assert.equal(
+    buildBeastModuleNavigationForPersona({
+      isOwner: false,
+      registry: beastModuleRegistry,
+    }).some((item) => item.label === "BeastHealth"),
+    false
+  );
 
   const releasedGoalsRegistry = updateModuleVisibility(
     beastModuleRegistry,
@@ -5283,6 +5309,62 @@ test("BeastAdmin beta assignments are independent of member role", () => {
   assert.match(settingsPage, /Current assignments/);
   assert.match(settingsPage, /Assign Beta Access Soon/);
   assert.match(settingsPage, /disabled/);
+});
+
+test("BH-001 BeastHealth foundation is admin-only placeholder application", () => {
+  const shell = readFileSync(
+    "src/app/dashboard/health/BeastHealthShell.tsx",
+    "utf8"
+  );
+  const pages = readFileSync("src/app/dashboard/health/pages.ts", "utf8");
+  const layout = readFileSync("src/app/dashboard/layout.tsx", "utf8");
+
+  [
+    "Overview",
+    "Health Profile",
+    "Conditions",
+    "Medications",
+    "Procedures",
+    "Family History",
+    "Lifestyle",
+    "Vitals",
+    "Documents",
+    "AI Advisor",
+  ].forEach((label) => assert.match(shell, new RegExp(label)));
+
+  [
+    "src/app/dashboard/health/page.tsx",
+    "src/app/dashboard/health/profile/page.tsx",
+    "src/app/dashboard/health/conditions/page.tsx",
+    "src/app/dashboard/health/medications/page.tsx",
+    "src/app/dashboard/health/procedures/page.tsx",
+    "src/app/dashboard/health/family-history/page.tsx",
+    "src/app/dashboard/health/lifestyle/page.tsx",
+    "src/app/dashboard/health/vitals/page.tsx",
+    "src/app/dashboard/health/documents/page.tsx",
+    "src/app/dashboard/health/ai-advisor/page.tsx",
+  ].forEach((path) =>
+    assert.match(readFileSync(path, "utf8"), /BeastHealthPlaceholderPage/)
+  );
+
+  assert.match(shell, /isBeastAdminOwnerRole/);
+  assert.match(shell, /router\.replace\("\/dashboard"\)/);
+  assert.match(
+    shell,
+    /No diagnosis, treatment, medication guidance, or clinical advice/
+  );
+  assert.match(pages, /No health AI advice is active in this foundation/);
+  assert.match(layout, /pathname\.startsWith\("\/dashboard\/health"\)/);
+  assert.equal(
+    buildBeastModuleNavigationForPersona({
+      isOwner: true,
+      registry: beastModuleRegistry,
+    }).some(
+      (item) =>
+        item.label === "BeastHealth" && item.href === "/dashboard/health"
+    ),
+    true
+  );
 });
 
 test("membership entitlement plan falls back to Free for inactive subscriptions", () => {
