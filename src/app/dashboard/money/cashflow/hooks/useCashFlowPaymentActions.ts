@@ -1,12 +1,12 @@
 import { createClient } from "@/lib/supabase/client";
+import {
+  applyBillPartialPayment,
+  applyDebtPaymentToCycle,
+} from "@/lib/financialPayments";
 import type { Dispatch, SetStateAction } from "react";
 import {
-  addDays,
-  addMonthsClamped,
   getCurrentBillCycleDueDate,
   getCurrentDebtCycleDueDate,
-  getFrequencyMonthStep,
-  toDateInputValue,
 } from "../cashflowUtils";
 
 type UseCashFlowPaymentActionsInput = {
@@ -53,26 +53,15 @@ export function useCashFlowPaymentActions({
 
     const currentCycleDueDate = getCurrentBillCycleDueDate(bill, cycleMonth);
     const frequency = bill.frequency || "monthly";
-    const currentCycleRemaining = Math.max(
-      Number(bill.remaining ?? 0),
-      Math.max(Number(bill.amount || 0) - Number(bill.paid || 0), 0)
-    );
-    const remainingAfterPayment = Math.max(currentCycleRemaining - amount, 0);
-    const shouldAdvanceNextDue = remainingAfterPayment <= 0;
-    let nextDueDateAfterPayment: string | null = null;
-
-    if (shouldAdvanceNextDue) {
-      const nextDueDate =
-        frequency === "weekly"
-          ? addDays(currentCycleDueDate, 7)
-          : frequency === "biweekly"
-          ? addDays(currentCycleDueDate, 14)
-          : addMonthsClamped(
-              currentCycleDueDate,
-              getFrequencyMonthStep(frequency)
-            );
-      nextDueDateAfterPayment = toDateInputValue(nextDueDate);
-    }
+    const paymentResult = applyBillPartialPayment({
+      amountDue: Number(bill.amount || 0),
+      alreadyPaid: Number(bill.paid || 0),
+      remaining: Number(bill.remaining ?? 0),
+      paymentAmount: amount,
+      currentCycleDueDate,
+      frequency,
+    });
+    const nextDueDateAfterPayment = paymentResult.nextDueDateAfterPayment;
 
     const updatePayload: Record<string, any> = {};
     if (nextDueDateAfterPayment) {
@@ -200,7 +189,12 @@ export function useCashFlowPaymentActions({
       }
 
       const currentCycleDueDate = getCurrentDebtCycleDueDate(debt);
-      const cycleDueDate = toDateInputValue(currentCycleDueDate);
+      const cycleDueDate = `${currentCycleDueDate.getFullYear()}-${String(
+        currentCycleDueDate.getMonth() + 1
+      ).padStart(2, "0")}-${String(currentCycleDueDate.getDate()).padStart(
+        2,
+        "0"
+      )}`;
       const minimumPayment = Number(debt.minimum_payment || 0);
       const cycleKey = `${debt.id}||${cycleDueDate}`;
 
@@ -211,16 +205,14 @@ export function useCashFlowPaymentActions({
           Number(debtPaymentsByDebtAndCycle[key] || 0) + Number(payment.amount || 0);
       }
 
-      const currentCyclePaid = Number(debtPaymentsByDebtAndCycle[cycleKey] || 0);
-      const totalCyclePaid = currentCyclePaid + amount;
-      const shouldAdvanceDueDate =
-        newBalance === 0 || totalCyclePaid >= minimumPayment;
-      let nextDueDateAfterPayment: string | null = null;
-
-      if (shouldAdvanceDueDate) {
-        const nextCycleDueDate = addMonthsClamped(currentCycleDueDate, 1);
-        nextDueDateAfterPayment = toDateInputValue(nextCycleDueDate);
-      }
+      const paymentResult = applyDebtPaymentToCycle({
+        balance: currentBalance,
+        currentCyclePaid: Number(debtPaymentsByDebtAndCycle[cycleKey] || 0),
+        paymentAmount: amount,
+        minimumPayment,
+        currentCycleDueDate,
+      });
+      const nextDueDateAfterPayment = paymentResult.nextDueDateAfterPayment;
 
       const { error: insertError } = await supabase
         .from("debt_payments")
