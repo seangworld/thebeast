@@ -5158,6 +5158,20 @@ test("BeastAdmin placeholders cover members analytics feedback ads and settings"
     assert.equal(readFileSync(file, "utf8").includes("BeastAdmin"), true, file);
   });
 
+  const adminDashboard = readFileSync("src/app/dashboard/admin/page.tsx", "utf8");
+  [
+    "Members",
+    "Active Modules",
+    "Beta Testers",
+    "Feedback",
+    "Recent Activity",
+    "Platform Status",
+  ].forEach((label) => {
+    assert.match(adminDashboard, new RegExp(label));
+  });
+  assert.match(adminDashboard, /BeastAdmin Phase A/);
+  assert.match(adminDashboard, /owner-only/);
+
   const shell = readFileSync("src/app/dashboard/admin/BeastAdminShell.tsx", "utf8");
   const layout = readFileSync("src/app/dashboard/layout.tsx", "utf8");
   assert.match(shell, /isBeastAdminOwnerRole/);
