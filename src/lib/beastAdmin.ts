@@ -1,4 +1,4 @@
-import type { BeastModuleIdentifier } from "./moduleRegistry";
+import { getModuleRegistryEntry, type BeastModuleIdentifier } from "./moduleRegistry";
 
 export type BeastAdminMemberStatus = "Active" | "Invited" | "Paused";
 export type BeastAdminMemberRole = "Owner" | "Admin" | "Member" | "Beta";
@@ -98,6 +98,34 @@ export function assignBetaModule(
   );
 
   return exists ? assignments : [...assignments, assignment];
+}
+
+export function getBetaAssignableModuleLabels(
+  moduleIds: BeastModuleIdentifier[] = beastAdminBetaAssignableModules
+) {
+  return moduleIds.map(
+    (moduleId) => getModuleRegistryEntry(moduleId)?.name || moduleId
+  );
+}
+
+export function buildBetaAssignmentRows({
+  members = beastAdminMembers,
+  assignments = beastAdminBetaAssignments,
+}: {
+  members?: BeastAdminMember[];
+  assignments?: BeastAdminBetaAssignment[];
+} = {}) {
+  return assignments.map((assignment) => {
+    const member = members.find((item) => item.id === assignment.memberId);
+    const registryModule = getModuleRegistryEntry(assignment.moduleId);
+
+    return {
+      ...assignment,
+      memberName: member?.name || "Unknown member",
+      memberRole: member?.role || "Member",
+      moduleName: registryModule?.name || assignment.moduleId,
+    };
+  });
 }
 
 export function buildBeastAdminAnalytics({

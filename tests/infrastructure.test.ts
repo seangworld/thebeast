@@ -362,6 +362,8 @@ import {
   beastAdminFeedbackItems,
   beastAdminMembers,
   buildBeastAdminAnalytics,
+  buildBetaAssignmentRows,
+  getBetaAssignableModuleLabels,
   isBeastAdminOwnerRole,
 } from "../src/lib/beastAdmin";
 
@@ -5205,6 +5207,23 @@ test("BeastAdmin beta assignments are independent of member role", () => {
     "goals",
     "documents",
   ]);
+  assert.deepEqual(getBetaAssignableModuleLabels(), [
+    "BeastLearning",
+    "BeastHealth",
+    "BeastHome",
+    "BeastGoals",
+    "BeastDocuments",
+  ]);
+
+  assert.deepEqual(
+    buildBetaAssignmentRows().map((assignment) => [
+      assignment.memberName,
+      assignment.memberRole,
+      assignment.moduleName,
+    ]),
+    [["Beta Member", "Beta", "BeastLearning"]]
+  );
+
   const nextAssignments = assignBetaModule(beastAdminBetaAssignments, {
     id: "assignment-health-beta",
     memberId: "member-owner",
@@ -5224,6 +5243,20 @@ test("BeastAdmin beta assignments are independent of member role", () => {
     assignBetaModule(nextAssignments, nextAssignments[nextAssignments.length - 1]).length,
     nextAssignments.length
   );
+
+  assert.equal(
+    beastAdminMembers.find((member) => member.id === "member-owner")?.role,
+    "Owner"
+  );
+
+  const settingsPage = readFileSync(
+    "src/app/dashboard/admin/settings/page.tsx",
+    "utf8"
+  );
+  assert.match(settingsPage, /Supported beta apps/);
+  assert.match(settingsPage, /Current assignments/);
+  assert.match(settingsPage, /Assign Beta Access Soon/);
+  assert.match(settingsPage, /disabled/);
 });
 
 test("membership entitlement plan falls back to Free for inactive subscriptions", () => {
