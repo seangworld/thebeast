@@ -21,10 +21,18 @@ export type ModuleNavSection = {
 };
 
 export const primaryNavigation: ModuleNavSection[] = [
-  { label: "Home", href: "/dashboard", module: "beastos" },
   { label: "Today", href: "/dashboard/today", module: "beastos" },
+  { label: "Personal Hub", href: "/dashboard/profile", module: "beastos" },
+  { label: "Goals", href: "/dashboard/goals", module: "goals" },
+  { label: "Documents", href: "/dashboard/uploads", module: "documents" },
+  { label: "Calendar", href: "/dashboard/calendar", module: "calendar" },
+  { label: "Timeline", href: "/dashboard/timeline", module: "timeline" },
+  {
+    label: "Notifications",
+    href: "/dashboard/notifications",
+    module: "notifications",
+  },
   { label: "Search", href: "/dashboard/search", module: "search" },
-  { label: "Notifications", href: "/dashboard/notifications", module: "notifications" },
 ];
 
 export const beastMoneyNavigation: ModuleNavSection = {
@@ -156,6 +164,34 @@ export function buildBeastModuleNavigationForPersona({
     .filter(Boolean) as ModuleNavSection[];
 }
 
+export function buildApplicationNavigationForPersona({
+  isOwner,
+  registry = beastModuleRegistry,
+}: {
+  isOwner: boolean;
+  registry?: BeastModuleRegistryEntry[];
+}) {
+  return buildBeastModuleNavigationForPersona({ isOwner, registry }).filter(
+    (item) =>
+      item.module === "money" ||
+      item.module === "learning" ||
+      item.module === "health" ||
+      item.module === "home"
+  );
+}
+
+export function buildOwnerNavigationForPersona({
+  isOwner,
+  registry = beastModuleRegistry,
+}: {
+  isOwner: boolean;
+  registry?: BeastModuleRegistryEntry[];
+}) {
+  return buildBeastModuleNavigationForPersona({ isOwner, registry }).filter(
+    (item) => item.module === "admin"
+  );
+}
+
 export const beastModuleNavigation: ModuleNavSection[] = [
   ...buildBeastModuleNavigationForPersona({ isOwner: true }),
   { label: "BeastProjects", module: "projects", comingSoon: true },
@@ -175,7 +211,7 @@ export const sharedNavigation: ModuleNavSection[] = [
   { label: "Calendar", href: "/dashboard/calendar", module: "calendar" },
   { label: "Timeline", href: "/dashboard/timeline", module: "timeline" },
   { label: "Documents", href: "/dashboard/uploads", module: "documents" },
-  { label: "Profile", href: "/dashboard/profile", module: "beastos" },
+  { label: "Personal Hub", href: "/dashboard/profile", module: "beastos" },
   { label: "Settings", href: "/dashboard/settings", module: "beastos" },
 ];
 

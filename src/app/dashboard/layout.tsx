@@ -14,7 +14,10 @@ import {
   type ModuleKey,
 } from "@/app/components/design/DashboardPrimitives";
 import {
+  buildApplicationNavigationForPersona,
+  buildOwnerNavigationForPersona,
   getBeastModuleNavigationForPersona,
+  primaryNavigation,
   type ModuleChildNavItem,
   type ModuleNavSection,
 } from "@/lib/moduleNavigation";
@@ -45,23 +48,6 @@ const learningSettingsNavigation: ModuleNavSection[] = [
   { label: "Settings", href: "/dashboard/settings", module: "beastos" },
 ];
 
-const platformPrimaryNavigation: ModuleNavSection[] = [
-  { label: "Profile", href: "/dashboard/profile", module: "beastos" },
-  { label: "Home", href: "/dashboard", module: "beastos" },
-  { label: "Today", href: "/dashboard/today", module: "beastos" },
-  { label: "Search", href: "/dashboard/search", module: "search" },
-  { label: "Notifications", href: "/dashboard/notifications", module: "notifications" },
-];
-
-const platformSharedNavigation: ModuleNavSection[] = [
-  { label: "Calendar", href: "/dashboard/calendar", module: "calendar" },
-  { label: "Timeline", href: "/dashboard/timeline", module: "timeline" },
-  { label: "Documents", href: "/dashboard/uploads", module: "documents" },
-  { label: "Settings", href: "/dashboard/settings", module: "beastos" },
-];
-
-const memberPlatformSharedNavigation: ModuleNavSection[] = platformSharedNavigation;
-
 function getWorkspaceModule(pathname: string): ModuleKey {
   if (pathname.startsWith("/dashboard/admin")) return "admin";
   if (pathname.startsWith("/dashboard/money")) return "money";
@@ -73,6 +59,7 @@ function getWorkspaceModule(pathname: string): ModuleKey {
   if (pathname.startsWith("/dashboard/timeline")) return "timeline";
   if (pathname.startsWith("/dashboard/search")) return "search";
   if (pathname.startsWith("/dashboard/uploads")) return "documents";
+  if (pathname.startsWith("/dashboard/goals")) return "goals";
 
   return "beastos";
 }
@@ -100,15 +87,27 @@ export default function DashboardLayout({
   const router = useRouter();
   const workspaceModule = getWorkspaceModule(pathname);
   const personaModuleNavigation = getBeastModuleNavigationForPersona(isAdminPersona);
+  const applicationNavigation = buildApplicationNavigationForPersona({
+    isOwner: isAdminPersona,
+  });
+  const ownerNavigation = buildOwnerNavigationForPersona({
+    isOwner: isAdminPersona,
+  });
   const onboardingPath = "/dashboard/onboarding";
   const activeExpandableModule =
     personaModuleNavigation.find(
       (item) => item.module === workspaceModule && item.children?.length
     )?.module || null;
 
+  const [previousActiveExpandableModule, setPreviousActiveExpandableModule] =
+    useState<ModuleKey | null>(null);
+
   useEffect(() => {
-    setExpandedModule(activeExpandableModule);
-  }, [activeExpandableModule]);
+    if (activeExpandableModule !== previousActiveExpandableModule) {
+      setExpandedModule(activeExpandableModule);
+      setPreviousActiveExpandableModule(activeExpandableModule);
+    }
+  }, [activeExpandableModule, previousActiveExpandableModule]);
 
   useEffect(() => {
     let active = true;
@@ -479,7 +478,7 @@ export default function DashboardLayout({
       const expanded =
         !compact &&
         hasChildren &&
-        (expandedModule ? expandedModule === item.module : active);
+        expandedModule === item.module;
       const navGroupId = `${item.module}-nav-group`;
 
       if (compact || !hasChildren) {
@@ -499,32 +498,43 @@ export default function DashboardLayout({
 
       return (
         <div>
-          <button
-            type="button"
-            onClick={() =>
-              setExpandedModule((current) =>
-                current === item.module && !active ? null : item.module
-              )
-            }
-            className={`group flex w-full shrink-0 items-center gap-2 whitespace-nowrap rounded-xl border px-3 py-2 text-sm font-bold transition duration-200 sm:px-4 ${
+          <div
+            className={`group flex w-full shrink-0 items-center gap-2 whitespace-nowrap rounded-xl border text-sm font-bold transition duration-200 ${
               active
                 ? `${moduleAccents[item.module].border} ${moduleAccents[item.module].bg} ${moduleAccents[item.module].text}`
                 : "border-transparent text-[#c7cfdb] hover:border-[#2a3242] hover:bg-[#1a1f2b]"
             }`}
-            aria-expanded={expanded}
-            aria-controls={navGroupId}
           >
-            <span
-              className="h-2 w-2 rounded-full"
-              style={{
-                background: active ? moduleAccents[item.module].color : "#596579",
-              }}
-            />
-            <span className="flex-1 text-left">{item.label}</span>
-            <span className="text-xs text-[#7f8da3]">
+            <Link
+              href={item.href || "#"}
+              onClick={onNavigate}
+              className="flex min-w-0 flex-1 items-center gap-2 px-3 py-2 sm:px-4"
+            >
+              <span
+                className="h-2 w-2 shrink-0 rounded-full"
+                style={{
+                  background: active
+                    ? moduleAccents[item.module].color
+                    : "#596579",
+                }}
+              />
+              <span className="truncate text-left">{item.label}</span>
+            </Link>
+            <button
+              type="button"
+              onClick={() =>
+                setExpandedModule((current) =>
+                  current === item.module ? null : item.module
+                )
+              }
+              className="mr-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs text-[#7f8da3] transition hover:bg-[#0f1419] hover:text-white"
+              aria-expanded={expanded}
+              aria-controls={navGroupId}
+              aria-label={`${expanded ? "Collapse" : "Expand"} ${item.label}`}
+            >
               {expanded ? "−" : "+"}
-            </span>
-          </button>
+            </button>
+          </div>
 
           {expanded ? (
             <div id={navGroupId} className="mt-2 space-y-1 pl-4">
@@ -572,10 +582,10 @@ export default function DashboardLayout({
             <nav className="space-y-2" aria-label="Primary navigation">
               {!compact ? (
                 <div className="px-2 text-xs font-bold uppercase tracking-wide text-[#596579]">
-                  Navigation
+                  BeastOS
                 </div>
               ) : null}
-              {(learningOnlyNavigation ? learningPrimaryNavigation : platformPrimaryNavigation).map((item) => (
+              {(learningOnlyNavigation ? learningPrimaryNavigation : primaryNavigation).map((item) => (
                 <div key={item.label} onClick={onNavigate}>
                   <ModuleNavItem
                     label={item.label}
@@ -592,44 +602,60 @@ export default function DashboardLayout({
               <>
                 <div className="border-t border-[#2a3242]" />
 
-                <nav className="space-y-2" aria-label="BeastOS modules">
+                <nav className="space-y-2" aria-label="Applications">
                   {!compact ? (
                     <div className="px-2 text-xs font-bold uppercase tracking-wide text-[#596579]">
-                      Beast Modules
+                      Applications
                     </div>
                   ) : null}
-                  {personaModuleNavigation.map((item) => (
+                  {applicationNavigation.map((item) => (
                     <ExpandableModuleNavItem key={item.label} item={item} />
                   ))}
                 </nav>
               </>
             ) : null}
 
-            <div className="border-t border-[#2a3242]" />
+            {ownerNavigation.length > 0 && !learningOnlyNavigation ? (
+              <>
+                <div className="border-t border-[#2a3242]" />
 
-            <nav className="space-y-2" aria-label="Shared navigation">
-              {!compact ? (
-                <div className="px-2 text-xs font-bold uppercase tracking-wide text-[#596579]">
-                  Shared
-                </div>
-              ) : null}
-              {(learningOnlyNavigation
-                ? learningSettingsNavigation
-                : isAdminPersona
-                  ? platformSharedNavigation
-                  : memberPlatformSharedNavigation
-              ).map((item) => (
-                <div key={item.label} onClick={onNavigate}>
-                  <ModuleNavItem
-                    label={item.label}
-                    href={item.href}
-                    module={item.module}
-                    active={item.href ? isActiveRoute(item.href) : false}
-                    compact={compact}
-                  />
-                </div>
-              ))}
-            </nav>
+                <nav className="space-y-2" aria-label="Owner">
+                  {!compact ? (
+                    <div className="px-2 text-xs font-bold uppercase tracking-wide text-[#596579]">
+                      Owner
+                    </div>
+                  ) : null}
+                  {ownerNavigation.map((item) => (
+                    <ExpandableModuleNavItem key={item.label} item={item} />
+                  ))}
+                </nav>
+              </>
+            ) : null}
+
+            {learningOnlyNavigation ? (
+              <>
+                <div className="border-t border-[#2a3242]" />
+
+                <nav className="space-y-2" aria-label="Shared navigation">
+                  {!compact ? (
+                    <div className="px-2 text-xs font-bold uppercase tracking-wide text-[#596579]">
+                      BeastOS
+                    </div>
+                  ) : null}
+                  {learningSettingsNavigation.map((item) => (
+                    <div key={item.label} onClick={onNavigate}>
+                      <ModuleNavItem
+                        label={item.label}
+                        href={item.href}
+                        module={item.module}
+                        active={item.href ? isActiveRoute(item.href) : false}
+                        compact={compact}
+                      />
+                    </div>
+                  ))}
+                </nav>
+              </>
+            ) : null}
           </div>
         </div>
 

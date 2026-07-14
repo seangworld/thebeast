@@ -345,7 +345,9 @@ import {
 import {
   beastModuleNavigation,
   beastAdminNavigation,
+  buildApplicationNavigationForPersona,
   buildBeastModuleNavigationForPersona,
+  buildOwnerNavigationForPersona,
   beastLearningNavigation,
   beastMoneyNavigation,
   getModuleChildren,
@@ -451,7 +453,16 @@ test("source copy does not expose developer readiness labels", () => {
 test("module navigation centralizes expandable child items", () => {
   assert.deepEqual(
     primaryNavigation.map((item) => item.label),
-    ["Home", "Today", "Search", "Notifications"]
+    [
+      "Today",
+      "Personal Hub",
+      "Goals",
+      "Documents",
+      "Calendar",
+      "Timeline",
+      "Notifications",
+      "Search",
+    ]
   );
   assert.deepEqual(
     beastModuleNavigation.map((item) => item.label),
@@ -468,8 +479,22 @@ test("module navigation centralizes expandable child items", () => {
   );
   assert.deepEqual(
     sharedNavigation.map((item) => item.label),
-    ["Goals", "Calendar", "Timeline", "Documents", "Profile", "Settings"]
+    ["Goals", "Calendar", "Timeline", "Documents", "Personal Hub", "Settings"]
   );
+  assert.deepEqual(
+    buildApplicationNavigationForPersona({ isOwner: true }).map(
+      (item) => item.label
+    ),
+    ["BeastMoney", "BeastLearning", "BeastHealth", "BeastHome"]
+  );
+  assert.deepEqual(
+    buildOwnerNavigationForPersona({ isOwner: true }).map((item) => item.label),
+    ["BeastAdmin"]
+  );
+  assert.deepEqual(buildOwnerNavigationForPersona({ isOwner: false }), []);
+  assert.equal(beastMoneyNavigation.href, "/dashboard/money");
+  assert.equal(beastLearningNavigation.href, "/dashboard/learning");
+  assert.equal(beastAdminNavigation.href, "/dashboard/admin");
   assert.deepEqual(
     beastLearningNavigation.children?.map((item) => item.label),
     [
@@ -2411,6 +2436,12 @@ test("dashboard module accordion keeps a single expanded group", () => {
   assert.match(dashboardLayout, /const \[expandedModule, setExpandedModule\]/);
   assert.match(dashboardLayout, /setExpandedModule\(activeExpandableModule\)/);
   assert.match(dashboardLayout, /expandedModule === item\.module/);
+  assert.match(dashboardLayout, /aria-label=\{`\$\{expanded \? "Collapse" : "Expand"\} \$\{item\.label\}`\}/);
+  assert.match(dashboardLayout, /href=\{item\.href \|\| "#"\}/);
+  assert.match(dashboardLayout, /BeastOS/);
+  assert.match(dashboardLayout, /aria-label="Applications"/);
+  assert.match(dashboardLayout, /aria-label="Owner"/);
+  assert.doesNotMatch(dashboardLayout, /aria-label="BeastOS modules"/);
   assert.doesNotMatch(dashboardLayout, /expandedModules/);
   assert.doesNotMatch(dashboardLayout, /Record<string, boolean>/);
 });
@@ -5076,6 +5107,13 @@ test("member navigation hides admin and monetization surfaces", () => {
     getBeastModuleNavigationForPersona(false).map((item) => item.label),
     ["BeastMoney", "BeastLearning"]
   );
+  assert.deepEqual(
+    buildApplicationNavigationForPersona({ isOwner: false }).map(
+      (item) => item.label
+    ),
+    ["BeastMoney", "BeastLearning"]
+  );
+  assert.deepEqual(buildOwnerNavigationForPersona({ isOwner: false }), []);
   assert.equal(
     getBeastModuleNavigationForPersona(true)
       .find((item) => item.label === "BeastMoney")
@@ -5090,14 +5128,25 @@ test("member navigation hides admin and monetization surfaces", () => {
     getBeastModuleNavigationForPersona(true).some((item) => item.label === "BeastAdmin"),
     true
   );
+  assert.deepEqual(
+    buildOwnerNavigationForPersona({ isOwner: true }).map((item) => item.label),
+    ["BeastAdmin"]
+  );
   assert.equal(
     getBeastModuleNavigationForPersona(false).some((item) => item.label === "BeastAdmin"),
     false
   );
 
   const dashboardLayout = readFileSync("src/app/dashboard/layout.tsx", "utf8");
-  assert.match(dashboardLayout, /memberPlatformSharedNavigation/);
-  assert.match(dashboardLayout, /label: "Documents"/);
+  assert.match(dashboardLayout, /primaryNavigation/);
+  assert.match(dashboardLayout, /buildApplicationNavigationForPersona/);
+  assert.match(dashboardLayout, /buildOwnerNavigationForPersona/);
+  assert.equal(
+    primaryNavigation.some(
+      (item) => item.label === "Documents" && item.href === "/dashboard/uploads"
+    ),
+    true
+  );
   assert.equal(
     sharedNavigation.some(
       (item) => item.label === "Goals" && item.href === "/dashboard/goals"
