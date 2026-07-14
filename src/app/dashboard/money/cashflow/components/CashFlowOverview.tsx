@@ -1,5 +1,3 @@
-import { BEAST_MONEY_VERSION_LABEL } from "@/lib/appVersion";
-
 type CashFlowOverviewProps = {
   startingBalance: number;
   setStartingBalance: (value: number) => void;
@@ -28,20 +26,6 @@ export default function CashFlowOverview({
   buffer,
 }: CashFlowOverviewProps) {
   return (
-    <>
-      <section className="beast-page-header">
-        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-          <div>
-            <p className="beast-kicker">{BEAST_MONEY_VERSION_LABEL}</p>
-            <h1 className="beast-title">Cash Flow</h1>
-            <p className="beast-subtitle">
-              Manage paychecks, bills, debt minimums, Monthly Extra Attack payments,
-              required cash, and buffer risk.
-            </p>
-          </div>
-        </div>
-      </section>
-
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <div className="beast-card">
           <div className="text-sm text-[#c7cfdb]">
@@ -104,6 +88,5 @@ export default function CashFlowOverview({
           </div>
         </div>
       </section>
-    </>
   );
 }

@@ -8,6 +8,7 @@ import {
   normalizeDebtStrategy,
   type DebtStrategy,
 } from "@/lib/debtStrategies";
+import { BeastMoneyShell } from "@/app/dashboard/money/BeastMoneyShell";
 
 export default function SettingsPage() {
   const [startingBalance, setStartingBalance] = useState(500);
@@ -145,22 +146,11 @@ export default function SettingsPage() {
   }
 
   return (
-    <main className="beast-page">
-      <div className="beast-container space-y-8">
-
-        {/* HEADER */}
-        <section className="beast-page-header">
-          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-            <div>
-              <p className="beast-kicker">The Beast</p>
-              <h1 className="beast-title">Settings</h1>
-              <p className="beast-subtitle">
-                Configure system-wide cashflow and debt behavior.
-              </p>
-            </div>
-
-          </div>
-        </section>
+    <BeastMoneyShell
+      title="Money Settings"
+      description="Configure system-wide cashflow and debt behavior."
+    >
+      <div className="space-y-8">
 
         {message && (
           <div className="beast-card">
@@ -287,6 +277,6 @@ export default function SettingsPage() {
         </section>
 
       </div>
-    </main>
+    </BeastMoneyShell>
   );
 }

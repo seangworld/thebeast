@@ -34,6 +34,7 @@ import {
   mapVelocitySettingsRow,
   type VelocitySettings,
 } from "@/lib/velocity/settings";
+import { BeastMoneyShell } from "@/app/dashboard/money/BeastMoneyShell";
 
 type Debt = {
   id: string;
@@ -812,20 +813,11 @@ export default function DebtsPage() {
   }
 
   return (
-    <main className="beast-page">
-      <div className="beast-container space-y-6">
-        <section className="beast-page-header">
-          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-            <div>
-              <p className="beast-kicker">The Beast</p>
-              <h1 className="beast-title">Debt Strategy</h1>
-              <p className="beast-subtitle">
-                Add debts, choose a payoff strategy, and generate your payoff plan.
-              </p>
-            </div>
-
-            </div>
-        </section>
+    <BeastMoneyShell
+      title="Debt Strategy"
+      description="Add debts, choose a payoff strategy, and generate your payoff plan."
+    >
+      <div className="space-y-6">
 
         <section className="beast-card">
           <div className="flex items-center justify-between">
@@ -1675,7 +1667,6 @@ export default function DebtsPage() {
           </div>
         </section>
       </div>
-      
-    </main>
+    </BeastMoneyShell>
   );
 }

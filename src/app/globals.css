@@ -104,6 +104,39 @@ a.beast-card:hover {
   transform: translateY(-1px);
 }
 
+.beast-surface {
+  background: #111827;
+  border: 1px solid #2a3242;
+  border-radius: 12px;
+  min-width: 0;
+}
+
+.beast-module-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.beast-module-tab {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  border-radius: 8px;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  background: rgba(34, 197, 94, 0.1);
+  color: #dcfce7;
+  padding: 8px 12px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.beast-module-tab:hover {
+  border-color: rgba(187, 247, 208, 0.8);
+  background: rgba(134, 239, 172, 0.18);
+  transform: translateY(-1px);
+}
+
 /* =========================
    FORMS
 ========================= */
@@ -121,6 +154,10 @@ a.beast-card:hover {
 
 .beast-input:focus {
   border-color: #38bdf8;
+}
+
+.beast-input::placeholder {
+  color: #7f8da3;
 }
 
 /* =========================
@@ -258,6 +295,13 @@ a.beast-card:hover {
     width: 100%;
     min-height: 44px;
     white-space: normal;
+    text-align: center;
+  }
+
+  .beast-module-tab {
+    flex: 1 1 calc(50% - 8px);
+    justify-content: center;
+    min-height: 44px;
     text-align: center;
   }
 

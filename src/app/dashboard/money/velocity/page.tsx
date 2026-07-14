@@ -26,8 +26,8 @@ import {
   formatPercent,
   parseNumber as parseAmount,
 } from "@/lib/formatters";
-import { BEAST_MONEY_VERSION_LABEL } from "@/lib/appVersion";
 import { getDebtStrategyLabel, isDebtStrategy } from "@/lib/debtStrategies";
+import { BeastMoneyShell } from "@/app/dashboard/money/BeastMoneyShell";
 
 type SnapshotValue = {
   label: string;
@@ -609,16 +609,11 @@ export default function VelocityPlannerPage() {
   }
 
   return (
-    <main className="beast-page">
-      <div className="beast-container space-y-8">
-        <section className="beast-page-header">
-          <p className="beast-kicker">{BEAST_MONEY_VERSION_LABEL}</p>
-          <h1 className="beast-title">Velocity Planner</h1>
-          <p className="beast-subtitle">
-            A planning workspace for Velocity recommendations, recovery
-            timing, and deterministic interest savings.
-          </p>
-        </section>
+    <BeastMoneyShell
+      title="Velocity Planner"
+      description="A planning workspace for Velocity recommendations, recovery timing, and deterministic interest savings."
+    >
+      <div className="space-y-8">
 
         <section className="grid gap-4 lg:grid-cols-2">
           <div className="beast-card">
@@ -719,7 +714,7 @@ export default function VelocityPlannerPage() {
               </p>
             </div>
 
-            <div className="rounded-lg border border-[#2a3242] p-4">
+            <div className="beast-surface p-4">
               <div className="grid gap-3 text-sm text-[#c7cfdb] sm:grid-cols-2 xl:grid-cols-3">
                 <div>
                   <div className="text-[#7f8da3]">Credit Limit</div>
@@ -1321,6 +1316,6 @@ export default function VelocityPlannerPage() {
           </div>
         </section>
       </div>
-    </main>
+    </BeastMoneyShell>
   );
 }

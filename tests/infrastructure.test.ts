@@ -407,9 +407,7 @@ test("app version constants reflect BeastOS and module releases", () => {
 
 test("BeastMoney version is consistent across visible release surfaces", () => {
   const files = [
-    "src/app/dashboard/money/page.tsx",
-    "src/app/dashboard/money/cashflow/components/CashFlowOverview.tsx",
-    "src/app/dashboard/money/velocity/page.tsx",
+    "src/app/dashboard/money/BeastMoneyShell.tsx",
     "src/app/dashboard/releases/page.tsx",
     "src/app/release-notes/page.tsx",
     "CHANGELOG.md",

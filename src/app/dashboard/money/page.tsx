@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { BEAST_MONEY_VERSION_LABEL } from "@/lib/appVersion";
 import { createClient } from "@/lib/supabase/client";
 import { buildCashIntelligence } from "@/lib/cashIntelligence";
 import { buildDailyFinancialAdvisor } from "@/lib/dailyFinancialAdvisor";
@@ -34,11 +33,11 @@ import {
   DashboardCard,
   HealthGauge,
   MetricTile,
-  ModuleBadge,
   QuickActionButton,
   SectionHeader,
   type DashboardAlertSeverity,
 } from "@/app/dashboard/money/components/MoneyDashboardUI";
+import { BeastMoneyShell } from "@/app/dashboard/money/BeastMoneyShell";
 
 type MoneyDebt = {
   id: string;
@@ -497,28 +496,20 @@ export default function MoneyWorkspacePage() {
   const recommendedAction = snapshot.financialDecision.recommendedAction;
 
   return (
-    <main className="beast-page">
-      <div className="beast-container space-y-8">
-        <section className="beast-page-header">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div className="space-y-4">
-              <ModuleBadge module="money" label={BEAST_MONEY_VERSION_LABEL} />
-              <h1 className="beast-title">Money Cockpit</h1>
-              <p className="beast-subtitle">
-                A professional financial workspace for cash timing, debt payoff,
-                credit visibility, and Velocity planning.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Link href="/dashboard/money/cashflow" className="beast-button">
-                Open Cash Flow
-              </Link>
-              <Link href="/dashboard/money/velocity" className="beast-button-secondary">
-                Open Velocity
-              </Link>
-            </div>
-          </div>
-        </section>
+    <BeastMoneyShell
+      title="Money Cockpit"
+      description="A professional financial workspace for cash timing, debt payoff, credit visibility, and Velocity planning."
+      actions={
+        <>
+          <Link href="/dashboard/money/cashflow" className="beast-button">
+            Open Cash Flow
+          </Link>
+          <Link href="/dashboard/money/velocity" className="beast-button-secondary">
+            Open Velocity
+          </Link>
+        </>
+      }
+    >
 
         {loading ? (
           <DashboardCard>
@@ -628,7 +619,7 @@ export default function MoneyWorkspacePage() {
                   <span className="font-bold text-white">Risk:</span>{" "}
                   {snapshot.financialCoach.upcomingRisks[0]}
                 </div>
-                <div className="rounded-lg border border-[#2a3242] bg-[#0f1419] p-3 text-xs text-[#9aa7b8]">
+                <div className="beast-surface p-3 text-xs text-[#9aa7b8]">
                   {snapshot.financialCoach.disclaimer}
                 </div>
               </div>
@@ -762,7 +753,7 @@ export default function MoneyWorkspacePage() {
                     {report.sections[0]?.rows.slice(0, 3).map((row) => (
                       <div
                         key={`${report.id}-${row.label}`}
-                        className="flex items-center justify-between gap-4 rounded-lg border border-[#2a3242] bg-[#0f1419] px-3 py-2"
+                        className="beast-surface flex items-center justify-between gap-4 px-3 py-2"
                       >
                         <span className="text-[#9aa7b8]">{row.label}</span>
                         <span className="font-bold text-white">{row.value}</span>
@@ -832,10 +823,10 @@ export default function MoneyWorkspacePage() {
                     scheduled transfers, and reserve guardrails.
                   </p>
                 </div>
-                <div className="rounded-xl border border-[#2a3242] bg-[#0f1419] p-4 text-sm text-[#dbe3ef]">
+                <div className="beast-surface p-4 text-sm text-[#dbe3ef]">
                   {snapshot.financialInsights.summary}
                 </div>
-                <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 text-sm text-[#c7cfdb]">
+                <div className="beast-surface p-4 text-sm text-[#c7cfdb]">
                   <div className="text-xs font-bold uppercase text-[#7f8da3]">
                     Why BeastMoney says this
                   </div>
@@ -961,7 +952,7 @@ export default function MoneyWorkspacePage() {
                       </span>
                     </div>
                   </div>
-                  <div className="rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
+                  <div className="beast-surface p-3">
                     <div className="text-xs font-bold uppercase text-[#7f8da3]">
                       Upcoming Risks
                     </div>
@@ -1024,7 +1015,7 @@ export default function MoneyWorkspacePage() {
                       </span>{" "}
                       {recommendation.payoffImprovement}
                     </div>
-                    <div className="rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
+                    <div className="beast-surface p-3">
                       <div className="text-xs font-bold uppercase text-[#7f8da3]">
                         Explanation
                       </div>
@@ -1084,7 +1075,7 @@ export default function MoneyWorkspacePage() {
             />
             <DashboardCard accent="purple">
               <div className="grid gap-3 text-sm">
-                <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+                <div className="beast-surface p-4">
                   <div className="text-xs font-bold uppercase text-[#7f8da3]">
                     Suggested Extra Payment
                   </div>
@@ -1094,13 +1085,13 @@ export default function MoneyWorkspacePage() {
                     )}
                   </div>
                 </div>
-                <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+                <div className="beast-surface p-4">
                   <div className="text-xs font-bold uppercase text-[#7f8da3]">
                     Recommended Next Action
                   </div>
                   <div className="mt-1 text-[#dbe3ef]">{recommendedAction}</div>
                 </div>
-                <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+                <div className="beast-surface p-4">
                   <div className="text-xs font-bold uppercase text-[#7f8da3]">
                     Safety Indicator
                   </div>
@@ -1108,7 +1099,7 @@ export default function MoneyWorkspacePage() {
                     {snapshot.financialDecision.safetyRating}
                   </div>
                 </div>
-                <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+                <div className="beast-surface p-4">
                   <div className="text-xs font-bold uppercase text-[#7f8da3]">
                     Reason
                   </div>
@@ -1116,7 +1107,7 @@ export default function MoneyWorkspacePage() {
                     {snapshot.financialDecision.reason}
                   </div>
                 </div>
-                <div className="rounded-xl border border-[#2a3242] bg-[#0f1419] p-4 text-[#dbe3ef]">
+                <div className="beast-surface p-4 text-[#dbe3ef]">
                   <div className="text-xs font-bold uppercase">
                     Confidence
                   </div>
@@ -1149,7 +1140,6 @@ export default function MoneyWorkspacePage() {
             </DashboardCard>
           </div>
         </section>
-      </div>
-    </main>
+    </BeastMoneyShell>
   );
 }

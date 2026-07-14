@@ -8,6 +8,7 @@ import {
   type CheckoutStartErrorCode,
 } from "@/lib/billing/checkoutErrors";
 import { useEntitlements } from "@/lib/hooks/useEntitlements";
+import { BeastMoneyShell } from "@/app/dashboard/money/BeastMoneyShell";
 
 function formatPlan(plan: string) {
   return plan === "pro" ? "Pro" : "Free";
@@ -37,18 +38,11 @@ function BillingPageContent() {
 
   if (!entitlements.loading && !entitlements.isAdmin) {
     return (
-      <main className="beast-page">
-        <div className="beast-container space-y-8">
-          <section className="beast-page-header">
-            <div>
-              <p className="beast-kicker">BeastMoney</p>
-              <h1 className="beast-title">Planning Experience</h1>
-              <p className="beast-subtitle">
-                BeastMoney planning tools are available from the product workspace.
-              </p>
-            </div>
-          </section>
-
+      <BeastMoneyShell
+        title="Planning Experience"
+        description="BeastMoney planning tools are available from the product workspace."
+      >
+        <div className="space-y-8">
           <section className="beast-card">
             <h2 className="text-xl font-bold">Member experience</h2>
             <p className="mt-2 text-sm text-[#c7cfdb]">
@@ -61,23 +55,16 @@ function BillingPageContent() {
             </Link>
           </section>
         </div>
-      </main>
+      </BeastMoneyShell>
     );
   }
 
   return (
-    <main className="beast-page">
-      <div className="beast-container space-y-8">
-        <section className="beast-page-header">
-          <div>
-            <p className="beast-kicker">The Beast</p>
-            <h1 className="beast-title">Billing</h1>
-            <p className="beast-subtitle">
-              Manage your Beast membership and Stripe subscription.
-            </p>
-          </div>
-        </section>
-
+    <BeastMoneyShell
+      title="Billing"
+      description="Manage your Beast membership and Stripe subscription."
+    >
+      <div className="space-y-8">
         {checkoutSucceeded ? (
           <section className="beast-card border-green-400/40 bg-green-400/10">
             <p className="text-sm font-semibold text-green-200">
@@ -187,7 +174,7 @@ function BillingPageContent() {
           </div>
         </section>
       </div>
-    </main>
+    </BeastMoneyShell>
   );
 }
 

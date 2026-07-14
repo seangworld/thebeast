@@ -16,6 +16,7 @@ import CashTimelineSection from "./components/CashTimelineSection";
 import FundingSourcesSection from "./components/FundingSourcesSection";
 import IncomeSourcesSection from "./components/IncomeSourcesSection";
 import ArchivedItemsSection from "./components/ArchivedItemsSection";
+import { BeastMoneyShell } from "@/app/dashboard/money/BeastMoneyShell";
 import { useCashFlow } from "./useCashFlow";
 import {
   FundingSource,
@@ -1152,8 +1153,11 @@ export default function CashFlowPage() {
   ]);
 
   return (
-    <main className="beast-page">
-      <div className="beast-container space-y-8">
+    <BeastMoneyShell
+      title="Cash Flow"
+      description="Manage paychecks, bills, debt minimums, Monthly Extra Attack payments, required cash, and buffer risk."
+    >
+      <div className="space-y-8">
         <CashFlowOverview
           startingBalance={startingBalance}
           setStartingBalance={setStartingBalance}
@@ -1410,6 +1414,6 @@ export default function CashFlowPage() {
           unarchiveDebt={unarchiveDebt}
         />
       </div>
-    </main>
+    </BeastMoneyShell>
   );
 }

@@ -10,3 +10,27 @@ test("Money cockpit includes first-run and load-failure guidance", () => {
   assert.match(source, /Add Money Records/);
   assert.match(source, /aria-label="Simulation date"/);
 });
+
+test("BeastMoney primary pages use the shared module shell", () => {
+  const shell = readFileSync("src/app/dashboard/money/BeastMoneyShell.tsx", "utf8");
+  const pages = [
+    "src/app/dashboard/money/page.tsx",
+    "src/app/dashboard/money/cashflow/page.tsx",
+    "src/app/dashboard/money/debts/page.tsx",
+    "src/app/dashboard/money/velocity/page.tsx",
+    "src/app/dashboard/money/billing/page.tsx",
+    "src/app/dashboard/money/settings/page.tsx",
+  ];
+
+  assert.match(shell, /beast-module-tabs/);
+  assert.match(shell, /ModuleBadge module="money"/);
+  assert.match(shell, /\/dashboard\/money\/cashflow/);
+  assert.match(shell, /\/dashboard\/money\/debts/);
+  assert.match(shell, /\/dashboard\/money\/velocity/);
+
+  for (const page of pages) {
+    const source = readFileSync(page, "utf8");
+
+    assert.match(source, /BeastMoneyShell/);
+  }
+});
