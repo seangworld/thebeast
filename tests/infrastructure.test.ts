@@ -350,7 +350,9 @@ import {
 } from "../src/lib/moduleNavigation";
 import {
   beastModuleRegistry,
+  getModuleVisibilityLabel,
   getVisibleModuleRegistryEntries,
+  MODULE_VISIBILITY_LABELS,
   updateModuleVisibility,
 } from "../src/lib/moduleRegistry";
 import {
@@ -5069,6 +5071,16 @@ test("BeastAdmin foundation registers modules and protects owner-only navigation
     ]
   );
   assert.deepEqual(
+    MODULE_VISIBILITY_LABELS,
+    {
+      adminOnly: "Admin Only",
+      beta: "Beta",
+      released: "Released",
+      disabled: "Disabled",
+    }
+  );
+  assert.equal(getModuleVisibilityLabel("adminOnly"), "Admin Only");
+  assert.deepEqual(
     beastAdminNavigation.children?.map((item) => item.label),
     ["Dashboard", "Members", "Modules", "Analytics", "Feedback", "Ads", "Settings"]
   );
@@ -5091,6 +5103,27 @@ test("BeastAdmin foundation registers modules and protects owner-only navigation
       registry: releasedGoalsRegistry,
     }).some((item) => item.label === "BeastGoals"),
     true
+  );
+
+  const betaHealthRegistry = updateModuleVisibility(
+    beastModuleRegistry,
+    "health",
+    "beta"
+  );
+  assert.equal(
+    buildBeastModuleNavigationForPersona({
+      isOwner: false,
+      registry: betaHealthRegistry,
+    }).some((item) => item.label === "BeastHealth"),
+    true
+  );
+
+  assert.equal(
+    buildBeastModuleNavigationForPersona({
+      isOwner: false,
+      registry: beastModuleRegistry,
+    }).some((item) => item.label === "BeastAdmin"),
+    false
   );
 
   const disabledMoneyRegistry = updateModuleVisibility(

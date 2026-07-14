@@ -1,5 +1,5 @@
 import { BeastAdminShell } from "../BeastAdminShell";
-import { beastModuleRegistry } from "@/lib/moduleRegistry";
+import { beastModuleRegistry, getModuleVisibilityLabel } from "@/lib/moduleRegistry";
 
 export default function BeastAdminModulesPage() {
   return (
@@ -16,7 +16,7 @@ export default function BeastAdminModulesPage() {
                 <p className="text-sm text-[#9aa7b8]">{module.identifier}</p>
               </div>
               <span className="rounded-full border border-amber-300/40 bg-amber-300/10 px-3 py-1 text-xs font-black text-amber-100">
-                {module.visibility}
+                {getModuleVisibilityLabel(module.visibility)}
               </span>
             </div>
             <dl className="mt-4 grid gap-3 text-sm text-[#dbe3ef] sm:grid-cols-2">

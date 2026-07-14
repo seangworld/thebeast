@@ -13,6 +13,13 @@ export type BeastModuleIdentifier =
 export type BeastModuleVisibility = "adminOnly" | "beta" | "released" | "disabled";
 export type BeastModuleStatus = "active" | "foundation" | "planned" | "disabled";
 
+export const MODULE_VISIBILITY_LABELS: Record<BeastModuleVisibility, string> = {
+  adminOnly: "Admin Only",
+  beta: "Beta",
+  released: "Released",
+  disabled: "Disabled",
+};
+
 export type BeastModuleRegistryEntry = {
   name: string;
   id: BeastModuleIdentifier;
@@ -169,4 +176,8 @@ export function updateModuleVisibility(
         }
       : entry
   );
+}
+
+export function getModuleVisibilityLabel(visibility: BeastModuleVisibility) {
+  return MODULE_VISIBILITY_LABELS[visibility];
 }
