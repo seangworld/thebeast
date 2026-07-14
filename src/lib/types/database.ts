@@ -86,6 +86,37 @@ export type BeastGoal = {
     updated_at: string
   }
 
+export type BeastDocumentStatus = "Uploaded" | "Ready" | "Archived" | "Deleted"
+
+export type BeastDocumentCategory =
+  | "Money"
+  | "Learning"
+  | "Identity"
+  | "Household"
+  | "Tax"
+  | "Legal"
+  | "Health"
+  | "Home"
+  | "Vehicle"
+  | "Other"
+
+export type BeastDocument = {
+    id: string
+    owner_id: string
+    title: string
+    category: BeastDocumentCategory
+    status: BeastDocumentStatus
+    storage_bucket: string
+    storage_path: string
+    file_name: string
+    mime_type: string
+    size_bytes: number
+    checksum?: string | null
+    source_module?: string | null
+    created_at: string
+    updated_at: string
+  }
+
 export type Subscription = {
     id: string
     user_id: string

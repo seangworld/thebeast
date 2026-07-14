@@ -56,13 +56,11 @@ const platformPrimaryNavigation: ModuleNavSection[] = [
 const platformSharedNavigation: ModuleNavSection[] = [
   { label: "Calendar", href: "/dashboard/calendar", module: "calendar" },
   { label: "Timeline", href: "/dashboard/timeline", module: "timeline" },
-  { label: "Upload Center", href: "/dashboard/uploads", module: "documents" },
+  { label: "Documents", href: "/dashboard/uploads", module: "documents" },
   { label: "Settings", href: "/dashboard/settings", module: "beastos" },
 ];
 
-const memberPlatformSharedNavigation: ModuleNavSection[] = platformSharedNavigation.filter(
-  (item) => item.label !== "Upload Center"
-);
+const memberPlatformSharedNavigation: ModuleNavSection[] = platformSharedNavigation;
 
 function getWorkspaceModule(pathname: string): ModuleKey {
   if (pathname.startsWith("/dashboard/admin")) return "admin";
