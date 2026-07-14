@@ -142,6 +142,7 @@ export function getBeastModuleNavigationForPersona(isAdmin: boolean) {
 }
 
 export const sharedNavigation: ModuleNavSection[] = [
+  { label: "Goals", href: "/dashboard/goals", module: "goals" },
   { label: "Calendar", href: "/dashboard/calendar", module: "calendar" },
   { label: "Timeline", href: "/dashboard/timeline", module: "timeline" },
   { label: "Upload Center", href: "/dashboard/uploads", module: "documents" },

@@ -54,6 +54,38 @@ export type Profile = {
     updated_at: string
   }
 
+export type BeastGoalStatus =
+  | "Proposed"
+  | "Active"
+  | "Paused"
+  | "Blocked"
+  | "Completed"
+  | "Archived"
+
+export type BeastGoalCategory =
+  | "Education"
+  | "Career"
+  | "Money"
+  | "Personal"
+  | "Project"
+  | "Home"
+  | "Health"
+  | "Other"
+
+export type BeastGoal = {
+    id: string
+    owner_id: string
+    title: string
+    category: BeastGoalCategory
+    status: BeastGoalStatus
+    summary?: string | null
+    target_date?: string | null
+    current_step?: string | null
+    source_module?: string | null
+    created_at: string
+    updated_at: string
+  }
+
 export type Subscription = {
     id: string
     user_id: string

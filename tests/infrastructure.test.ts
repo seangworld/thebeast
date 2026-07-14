@@ -464,7 +464,7 @@ test("module navigation centralizes expandable child items", () => {
   );
   assert.deepEqual(
     sharedNavigation.map((item) => item.label),
-    ["Calendar", "Timeline", "Upload Center", "Profile", "Settings"]
+    ["Goals", "Calendar", "Timeline", "Upload Center", "Profile", "Settings"]
   );
   assert.deepEqual(
     beastLearningNavigation.children?.map((item) => item.label),
@@ -5034,6 +5034,12 @@ test("member navigation hides admin and monetization surfaces", () => {
   const dashboardLayout = readFileSync("src/app/dashboard/layout.tsx", "utf8");
   assert.match(dashboardLayout, /memberPlatformSharedNavigation/);
   assert.match(dashboardLayout, /item\.label !== "Upload Center"/);
+  assert.equal(
+    sharedNavigation.some(
+      (item) => item.label === "Goals" && item.href === "/dashboard/goals"
+    ),
+    true
+  );
 });
 
 test("BeastAdmin foundation registers modules and protects owner-only navigation", () => {

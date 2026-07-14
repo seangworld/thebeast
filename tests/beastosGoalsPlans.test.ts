@@ -8,6 +8,16 @@ import {
   summarizeGoalPlanModel,
   type GoalPlanModel,
 } from "../src/lib/platform/goalsPlans";
+import {
+  buildGoal,
+  goalCategories,
+  goalDatabaseColumns,
+  goalDatabaseTableName,
+  goalOwnershipRules,
+  goalStatuses,
+  mockGoals,
+  summarizeGoals,
+} from "../src/lib/platform/goals";
 
 const model: GoalPlanModel = {
   goals: [
@@ -100,5 +110,79 @@ test("Personal Hub exposes goals and plans as shared BeastOS data", () => {
 
   assert.match(profilePage, /Shared Goals and Plans/);
   assert.match(profilePage, /Goals are outcomes\. Plans are paths\./);
-  assert.doesNotMatch(navigation, /href: "\/dashboard\/goals"/);
+  assert.match(navigation, /href: "\/dashboard\/goals"/);
+  assert.match(navigation, /label: "Goals"/);
+});
+
+test("BG-001 creates a BeastOS-owned Goal model and database contract", () => {
+  assert.equal(goalDatabaseTableName, "beast_goals");
+  assert.deepEqual(goalStatuses, [
+    "Proposed",
+    "Active",
+    "Paused",
+    "Blocked",
+    "Completed",
+    "Archived",
+  ]);
+  assert.deepEqual(goalCategories, [
+    "Education",
+    "Career",
+    "Money",
+    "Personal",
+    "Project",
+    "Home",
+    "Health",
+    "Other",
+  ]);
+  assert.deepEqual(
+    goalDatabaseColumns.map((column) => [column.name, column.required]),
+    [
+      ["id", true],
+      ["owner_id", true],
+      ["title", true],
+      ["category", true],
+      ["status", true],
+      ["summary", false],
+      ["target_date", false],
+      ["current_step", false],
+      ["source_module", false],
+      ["created_at", true],
+      ["updated_at", true],
+    ]
+  );
+  assert.equal(
+    goalOwnershipRules[0],
+    "Goals belong to BeastOS as shared Personal Hub data."
+  );
+  assert.match(goalOwnershipRules[3], /BeastGoals remains superseded/);
+});
+
+test("BG-001 Goals overview route stays BeastOS-owned", () => {
+  const goalsPage = readFileSync("src/app/dashboard/goals/page.tsx", "utf8");
+  const migration = readFileSync(
+    "migrations/20260714_add_beast_goals.sql",
+    "utf8"
+  );
+  const summary = summarizeGoals(mockGoals);
+
+  assert.equal(summary.totalGoals, 2);
+  assert.equal(summary.activeGoals, 2);
+  assert.deepEqual(summary.nextSteps, [
+    "Continue the next Mentor mission.",
+    "Review the next safe extra payment.",
+  ]);
+  assert.match(goalsPage, /BeastOS Shared Service/);
+  assert.match(goalsPage, /BeastOS Owned/);
+  assert.match(goalsPage, /goalDatabaseTableName/);
+  assert.match(migration, /create table if not exists public\.beast_goals/);
+  assert.match(migration, /enable row level security/);
+  assert.match(migration, /auth\.uid\(\) = owner_id/);
+  assert.throws(
+    () =>
+      buildGoal({
+        ...mockGoals[0],
+        title: "",
+      }),
+    /Goal title is required/
+  );
 });
