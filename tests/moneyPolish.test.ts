@@ -64,6 +64,11 @@ test("BeastMoney internal pages use dashboard-aligned Money surfaces", () => {
   assert.match(globalStyles, /\.money-section-card::before/);
   assert.match(globalStyles, /\.money-page-stack \.beast-card::before/);
   assert.match(globalStyles, /\.money-summary-grid > \.money-section-card/);
+  assert.match(globalStyles, /\.money-section-panel > \.beast-table-wrap/);
+  assert.match(globalStyles, /\.money-page-stack th/);
+  assert.match(globalStyles, /\.money-page-stack td/);
+  assert.match(globalStyles, /\.money-payoff-table tbody tr:nth-child\(odd\)/);
+  assert.match(globalStyles, /\.money-payoff-table tbody tr:nth-child\(even\)/);
 
   for (const sourcePath of standardizedSources) {
     const source = readFileSync(sourcePath, "utf8");
@@ -87,4 +92,5 @@ test("BeastMoney internal pages use dashboard-aligned Money surfaces", () => {
   assert.match(bills, /id="bills" className="money-section-panel"/);
   assert.match(debts, /id="add-debt" className="money-section-card"/);
   assert.match(debts, /id="payoff-plan" className="money-section-panel"/);
+  assert.match(debts, /className="money-payoff-table w-full min-w-\[1100px\] text-sm"/);
 });

@@ -354,6 +354,20 @@ a.beast-card:hover {
   overflow: hidden;
 }
 
+.money-section-panel > .beast-table-wrap {
+  margin: 18px;
+  width: calc(100% - 36px);
+}
+
+.money-section-panel > :not(.money-section-header):not(.beast-table-wrap) {
+  padding: 20px;
+}
+
+.money-section-panel > .p-5,
+.money-section-panel > .grid.p-5 {
+  padding: 20px;
+}
+
 .money-page-stack .beast-card {
   position: relative;
   overflow: hidden;
@@ -459,16 +473,56 @@ a.beast-card:hover {
 
 .money-page-stack table {
   font-size: 0.875rem;
+  width: max-content;
+  min-width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
 }
 
 .money-page-stack th {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.22);
+  background: #111827;
   color: #9aa7b8;
   font-weight: 800;
   letter-spacing: 0.04em;
+  padding: 12px 14px;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .money-page-stack td {
+  border-bottom: 1px solid rgba(148, 163, 184, 0.16);
   color: #dbe3ef;
+  padding: 12px 14px;
+  vertical-align: top;
+}
+
+.money-page-stack tbody tr:nth-child(odd) {
+  background: rgba(15, 23, 42, 0.54);
+}
+
+.money-page-stack tbody tr:nth-child(even) {
+  background: rgba(30, 41, 59, 0.44);
+}
+
+.money-page-stack tbody tr:hover {
+  background: rgba(34, 197, 94, 0.13);
+}
+
+.money-payoff-table tbody tr:nth-child(odd) {
+  background: rgba(20, 83, 45, 0.16);
+}
+
+.money-payoff-table tbody tr:nth-child(even) {
+  background: rgba(15, 23, 42, 0.72);
+}
+
+.money-payoff-table tbody tr:hover {
+  background: rgba(56, 189, 248, 0.16);
 }
 
 @media (min-width: 768px) {
@@ -513,6 +567,15 @@ a.beast-card:hover {
     padding: 14px;
   }
 
+  .money-section-panel > .beast-table-wrap {
+    margin: 12px;
+    width: calc(100% - 24px);
+  }
+
+  .money-section-panel > :not(.money-section-header):not(.beast-table-wrap) {
+    padding: 14px;
+  }
+
   .beast-title {
     font-size: 1.55rem;
   }
@@ -541,5 +604,10 @@ a.beast-card:hover {
   .beast-panel td,
   .beast-card td {
     padding: 9px;
+  }
+
+  .money-page-stack th,
+  .money-page-stack td {
+    padding: 10px 11px;
   }
 }

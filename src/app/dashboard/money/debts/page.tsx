@@ -1540,30 +1540,28 @@ export default function DebtsPage() {
         </section>
 
         <section id="payoff-plan" className="money-section-panel">
-        <div className="money-section-header">
-  <h2 className="money-section-title">Payoff Plan</h2>
+          <div className="money-section-header">
+            <h2 className="money-section-title">Payoff Plan</h2>
 
-  <div>
-    <label className="money-field-label">
-      Projection Length
-    </label>
+            <div>
+              <label className="money-field-label">Projection Length</label>
 
-    <select
-      value={projectionMonths}
-      onChange={(e) => setProjectionMonths(Number(e.target.value))}
-      className="beast-input mt-2"
-    >
-      <option value={12}>12 Months</option>
-      <option value={24}>24 Months</option>
-      <option value={36}>36 Months</option>
-      <option value={60}>60 Months</option>
-      <option value={120}>120 Months</option>
-    </select>
-  </div>
-</div>
+              <select
+                value={projectionMonths}
+                onChange={(e) => setProjectionMonths(Number(e.target.value))}
+                className="beast-input mt-2"
+              >
+                <option value={12}>12 Months</option>
+                <option value={24}>24 Months</option>
+                <option value={36}>36 Months</option>
+                <option value={60}>60 Months</option>
+                <option value={120}>120 Months</option>
+              </select>
+            </div>
+          </div>
 
           <div className="beast-table-wrap">
-            <table className="w-full min-w-[1100px] text-sm">
+            <table className="money-payoff-table w-full min-w-[1100px] text-sm">
               <thead>
                 <tr>
                   <th>Month</th>
@@ -1589,74 +1587,74 @@ export default function DebtsPage() {
                   </tr>
                 ) : (
                   payoffPlan.payoff_months
-  .slice(0, projectionMonths)
-  .map((row, index) => (
-                    <tr key={`${row.month}-${row.target}-${index}`}>
-                      <td>{row.month}</td>
-                      <td>{row.target}</td>
-                      <td className="text-right">
-                        ${row.debt_starting_balance.toFixed(2)}
-                      </td>
-                      <td className="text-right">
-                        ${Number(row.required_minimum || 0).toFixed(2)}
-                      </td>
-                      <td className="text-right">
-                        ${Number(row.monthly_interest || 0).toFixed(2)}
-                      </td>
-                      <td
-                        className={`text-right font-semibold ${
-                          Number(row.principal_reduction || 0) < 0
-                            ? "text-red-300"
-                            : "text-green-300"
-                        }`}
-                      >
-                        ${Number(row.principal_reduction || 0).toFixed(2)}
-                      </td>
-                      <td
-                        className={`text-right font-semibold ${
-                          row.warning ? "text-yellow-300" : "text-[#c7cfdb]"
-                        }`}
-                      >
-                        ${Number(row.recommended_minimum || 0).toFixed(2)}
-                      </td>
-                      <td className="text-right">
-                        ${row.extra_attack.toFixed(2)}
-                      </td>
-                      <td className="text-right font-semibold">
-                        ${row.total_payment.toFixed(2)}
-                      </td>
-                      <td className="text-right">
-                        ${row.debt_ending_balance.toFixed(2)}
-                      </td>
-                      <td className="text-right">
-                        ${row.remaining_debt.toFixed(2)}
-                      </td>
-                      <td
-                        className={`text-right font-semibold ${
-                          Number(row.recovered_minimum || 0) > 0
-                            ? "text-green-300"
-                            : "text-[#7f8da3]"
-                        }`}
-                      >
-                        {Number(row.recovered_minimum || 0) > 0
-                          ? `+$${Number(row.recovered_minimum || 0).toFixed(2)}`
-                          : "—"}
-                      </td>
-                      <td>
-                        {row.paid_off ? (
-                          <span className="text-green-300 font-bold">
-                            PAID OFF
-                          </span>
-                        ) : row.warning ? (
-                          <span className="text-red-300 font-semibold">
-                            {row.warning}
-                          </span>
-                        ) : (
-                          <span className="text-[#7f8da3]">—</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))
+                    .slice(0, projectionMonths)
+                    .map((row, index) => (
+                      <tr key={`${row.month}-${row.target}-${index}`}>
+                        <td>{row.month}</td>
+                        <td>{row.target}</td>
+                        <td className="text-right">
+                          ${row.debt_starting_balance.toFixed(2)}
+                        </td>
+                        <td className="text-right">
+                          ${Number(row.required_minimum || 0).toFixed(2)}
+                        </td>
+                        <td className="text-right">
+                          ${Number(row.monthly_interest || 0).toFixed(2)}
+                        </td>
+                        <td
+                          className={`text-right font-semibold ${
+                            Number(row.principal_reduction || 0) < 0
+                              ? "text-red-300"
+                              : "text-green-300"
+                          }`}
+                        >
+                          ${Number(row.principal_reduction || 0).toFixed(2)}
+                        </td>
+                        <td
+                          className={`text-right font-semibold ${
+                            row.warning ? "text-yellow-300" : "text-[#c7cfdb]"
+                          }`}
+                        >
+                          ${Number(row.recommended_minimum || 0).toFixed(2)}
+                        </td>
+                        <td className="text-right">
+                          ${row.extra_attack.toFixed(2)}
+                        </td>
+                        <td className="text-right font-semibold">
+                          ${row.total_payment.toFixed(2)}
+                        </td>
+                        <td className="text-right">
+                          ${row.debt_ending_balance.toFixed(2)}
+                        </td>
+                        <td className="text-right">
+                          ${row.remaining_debt.toFixed(2)}
+                        </td>
+                        <td
+                          className={`text-right font-semibold ${
+                            Number(row.recovered_minimum || 0) > 0
+                              ? "text-green-300"
+                              : "text-[#7f8da3]"
+                          }`}
+                        >
+                          {Number(row.recovered_minimum || 0) > 0
+                            ? `+$${Number(row.recovered_minimum || 0).toFixed(2)}`
+                            : "—"}
+                        </td>
+                        <td>
+                          {row.paid_off ? (
+                            <span className="text-green-300 font-bold">
+                              PAID OFF
+                            </span>
+                          ) : row.warning ? (
+                            <span className="text-red-300 font-semibold">
+                              {row.warning}
+                            </span>
+                          ) : (
+                            <span className="text-[#7f8da3]">—</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))
                 )}
               </tbody>
             </table>
