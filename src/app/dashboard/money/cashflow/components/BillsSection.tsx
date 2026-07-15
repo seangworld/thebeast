@@ -102,11 +102,11 @@ export default function BillsSection({
   resetBillDueDate,
 }: BillsSectionProps) {
   return (
-    <section className="beast-panel overflow-hidden">
-      <div className="flex flex-col items-start gap-4 border-b border-[#2a3242] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+    <section id="bills" className="money-section-panel">
+      <div className="money-section-header">
         <div>
-          <h2 className="text-xl font-bold">Bills</h2>
-          <p className="mt-1 text-sm text-[#7f8da3]">
+          <h2 className="money-section-title">Bills</h2>
+          <p className="money-section-description">
             Compact operating view. Edit a bill to change amount, due day,
             or frequency.
           </p>

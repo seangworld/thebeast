@@ -1157,7 +1157,7 @@ export default function CashFlowPage() {
       title="Cash Flow"
       description="Manage paychecks, bills, debt minimums, Monthly Extra Attack payments, required cash, and buffer risk."
     >
-      <div className="space-y-8">
+      <div className="money-page-stack">
         <CashFlowOverview
           startingBalance={startingBalance}
           setStartingBalance={setStartingBalance}
@@ -1309,7 +1309,6 @@ export default function CashFlowPage() {
           buffer={buffer}
         />
 
-        <div id="bills">
         <BillsSection
           showBills={showBills}
           setShowBills={() => setShowBills(!showBills)}
@@ -1339,7 +1338,6 @@ export default function CashFlowPage() {
           archiveBill={archiveBill}
           resetBillDueDate={resetBillDueDate}
         />
-        </div>
 
         <div id="debts">
         <DebtsSection

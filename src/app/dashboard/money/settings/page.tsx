@@ -150,21 +150,21 @@ export default function SettingsPage() {
       title="Money Settings"
       description="Configure system-wide cashflow and debt behavior."
     >
-      <div className="space-y-8">
+      <div className="money-page-stack">
 
         {message && (
-          <div className="beast-card">
+          <div className="money-section-card">
             <p className="text-sm text-green-300">{message}</p>
           </div>
         )}
 
         {/* CASH SETTINGS */}
-        <section className="beast-card">
-          <h2 className="text-xl font-bold">Cash Settings</h2>
+        <section className="money-section-card">
+          <h2 className="money-section-title">Cash Settings</h2>
 
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 mt-4">
+          <div className="money-field-grid md:grid-cols-2 xl:grid-cols-4">
             <div>
-              <label className="text-sm text-[#c7cfdb]">
+              <label className="money-field-label">
                 Starting Balance
               </label>
               <input
@@ -176,7 +176,7 @@ export default function SettingsPage() {
             </div>
 
             <div>
-              <label className="text-sm text-[#c7cfdb]">Buffer</label>
+              <label className="money-field-label">Buffer</label>
               <input
                 type="number"
                 value={buffer}
@@ -186,7 +186,7 @@ export default function SettingsPage() {
             </div>
 
             <div>
-              <label className="text-sm text-[#c7cfdb]">
+              <label className="money-field-label">
                 Lookahead Days (Dashboard)
               </label>
               <select
@@ -204,7 +204,7 @@ export default function SettingsPage() {
             </div>
 
             <div>
-              <label className="text-sm text-[#c7cfdb]">
+              <label className="money-field-label">
                 Assignment Horizon
               </label>
               <select
@@ -221,12 +221,12 @@ export default function SettingsPage() {
         </section>
 
         {/* DEBT SETTINGS */}
-        <section className="beast-card">
-          <h2 className="text-xl font-bold">Debt Settings</h2>
+        <section className="money-section-card">
+          <h2 className="money-section-title">Debt Settings</h2>
 
-          <div className="grid gap-4 md:grid-cols-2 mt-4">
+          <div className="money-field-grid md:grid-cols-2">
             <div>
-              <label className="text-sm text-[#c7cfdb]">Strategy</label>
+              <label className="money-field-label">Strategy</label>
               <select
                 value={strategy}
                 onChange={(e) => setStrategy(normalizeDebtStrategy(e.target.value))}
@@ -250,7 +250,7 @@ export default function SettingsPage() {
             </div>
 
             <div>
-              <label className="text-sm text-[#c7cfdb]">
+              <label className="money-field-label">
                 Monthly Extra Attack
               </label>
               <input

@@ -5,7 +5,9 @@ import { ModuleBadge } from "@/app/components/design/DashboardPrimitives";
 export const beastMoneySections = [
   { label: "Dashboard", href: "/dashboard/money" },
   { label: "Cash Flow", href: "/dashboard/money/cashflow" },
+  { label: "Bills", href: "/dashboard/money/cashflow#bills" },
   { label: "Debts", href: "/dashboard/money/debts" },
+  { label: "Payoff Plan", href: "/dashboard/money/debts#payoff-plan" },
   { label: "Velocity", href: "/dashboard/money/velocity" },
   { label: "Billing", href: "/dashboard/money/billing" },
   { label: "Settings", href: "/dashboard/money/settings" },
@@ -24,7 +26,7 @@ export function BeastMoneyShell({
 }) {
   return (
     <main className="beast-page">
-      <div className="beast-container space-y-6">
+      <div className="beast-container money-page-stack">
         <section className="beast-page-header">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-4">

@@ -613,11 +613,11 @@ export default function VelocityPlannerPage() {
       title="Velocity Planner"
       description="A planning workspace for Velocity recommendations, recovery timing, and deterministic interest savings."
     >
-      <div className="space-y-8">
+      <div className="money-page-stack">
 
         <section className="grid gap-4 lg:grid-cols-2">
-          <div className="beast-card">
-            <h2 className="text-xl font-bold">Velocity v2</h2>
+          <div className="money-section-card">
+            <h2 className="money-section-title">Velocity v2</h2>
             <p className="mt-3 text-sm text-[#c7cfdb]">
               Velocity uses available monthly cash flow, debt information,
               and a revolving credit source to accelerate debt payoff while
@@ -631,9 +631,9 @@ export default function VelocityPlannerPage() {
             </ul>
           </div>
 
-          <div className="beast-card">
+          <div className="money-section-card">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-              <h2 className="text-xl font-bold">Velocity Planning Boundaries</h2>
+              <h2 className="money-section-title">Velocity Planning Boundaries</h2>
               <span className="w-fit rounded border border-yellow-300/50 bg-yellow-950/30 px-3 py-1 text-xs font-semibold text-yellow-100">
                 Current Scope
               </span>
@@ -646,20 +646,22 @@ export default function VelocityPlannerPage() {
           </div>
         </section>
 
-        <section className="beast-panel overflow-hidden">
-          <div className="border-b border-[#2a3242] p-5">
-            <h2 className="text-xl font-bold">Velocity Snapshot</h2>
-            <p className="mt-1 text-sm text-[#9aa7b8]">
+        <section className="money-section-panel">
+          <div className="money-section-header">
+            <div>
+            <h2 className="money-section-title">Velocity Snapshot</h2>
+            <p className="money-section-description">
               Live planning values using saved Velocity settings and existing
               Beast debt data.
             </p>
+            </div>
           </div>
-          <div className="grid gap-4 p-5 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="money-summary-grid p-5">
             {snapshotValues.map((item) => (
-              <div key={item.label} className="beast-card">
-                <div className="text-sm text-[#c7cfdb]">{item.label}</div>
+              <div key={item.label} className="money-section-card">
+                <div className="money-metric-label">{item.label}</div>
                 <div
-                  className={`mt-2 break-words text-2xl font-bold ${
+                  className={`money-metric-value ${
                     item.alert ? "text-red-200" : ""
                   }`}
                 >
@@ -673,14 +675,14 @@ export default function VelocityPlannerPage() {
           </div>
         </section>
 
-        <section className="beast-panel overflow-hidden">
-          <div className="border-b border-[#2a3242] p-5">
+        <section className="money-section-panel">
+          <div className="money-section-header">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <h2 className="text-xl font-bold">
+                <h2 className="money-section-title">
                   Velocity Health / Guardrail Status
                 </h2>
-                <p className="mt-1 text-sm text-[#9aa7b8]">
+                <p className="money-section-description">
                   A plain-language breakdown of source credit, utilization
                   guardrails, and emergency reserve protection.
                 </p>
@@ -698,8 +700,8 @@ export default function VelocityPlannerPage() {
           </div>
 
           <div className="grid gap-4 p-5 lg:grid-cols-[1fr_2fr]">
-            <div className="beast-card">
-              <div className="text-sm text-[#c7cfdb]">Guardrail Position</div>
+            <div className="money-section-card">
+              <div className="money-metric-label">Guardrail Position</div>
               <div
                 className={`mt-2 text-2xl font-bold ${
                   amountAboveSafeLimit > 0 ? "text-red-200" : "text-green-200"
@@ -983,7 +985,7 @@ export default function VelocityPlannerPage() {
             <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
               <button
                 type="button"
-                className="beast-button-primary w-fit"
+                className="beast-button w-fit"
                 onClick={saveVelocitySettings}
               >
                 Save Velocity Settings
@@ -1010,20 +1012,22 @@ export default function VelocityPlannerPage() {
           </div>
         </section>
 
-        <section className="beast-panel overflow-hidden">
-          <div className="border-b border-[#2a3242] p-5">
-            <h2 className="text-xl font-bold">Velocity Results</h2>
+        <section className="money-section-panel">
+          <div className="money-section-header">
+            <div>
+            <h2 className="money-section-title">Velocity Results</h2>
             <p className="mt-1 text-sm text-yellow-200">
               Deterministic recommendations using saved guardrails, cash flow,
               debt details, and the current Velocity engine.
             </p>
+            </div>
           </div>
-          <div className="grid gap-4 p-5 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="money-summary-grid p-5">
             {recommendationValues.map((item) => (
-              <div key={item.label} className="beast-card">
-                <div className="text-sm text-[#c7cfdb]">{item.label}</div>
+              <div key={item.label} className="money-section-card">
+                <div className="money-metric-label">{item.label}</div>
                 <div
-                  className={`mt-2 break-words text-2xl font-bold ${
+                  className={`money-metric-value ${
                     item.alert ? "text-red-200" : ""
                   }`}
                 >

@@ -53,7 +53,7 @@ export default function AddIncomeBillSection({
 }: AddIncomeBillSectionProps) {
   return (
     <section className="grid gap-4 md:grid-cols-2">
-      <div className="beast-card">
+      <div className="money-section-card">
         <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-xl font-bold">Add Income</h2>
@@ -71,7 +71,7 @@ export default function AddIncomeBillSection({
         </div>
 
         {showAddIncome && (
-          <div className="mt-4 grid gap-3">
+          <div className="money-field-grid">
             <input
               value={incomeName}
               onChange={(e) => setIncomeName(e.target.value)}
@@ -111,7 +111,7 @@ export default function AddIncomeBillSection({
         )}
       </div>
 
-      <div id="add-bill" className="beast-card">
+      <div id="add-bill" className="money-section-card">
         <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-xl font-bold">Add Bill</h2>
@@ -129,7 +129,7 @@ export default function AddIncomeBillSection({
         </div>
 
         {showAddBill && (
-          <div className="mt-4 grid gap-3">
+          <div className="money-field-grid">
             <input
               value={billName}
               onChange={(e) => setBillName(e.target.value)}

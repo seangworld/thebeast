@@ -817,9 +817,9 @@ export default function DebtsPage() {
       title="Debt Strategy"
       description="Add debts, choose a payoff strategy, and generate your payoff plan."
     >
-      <div className="space-y-6">
+      <div className="money-page-stack">
 
-        <section className="beast-card">
+        <section className="money-section-card">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-bold">Data Status</h2>
@@ -834,76 +834,70 @@ export default function DebtsPage() {
         </section>
 
         {message && (
-          <section className="beast-card">
+          <section className="money-section-card">
             <p className="text-sm text-yellow-300">{message}</p>
           </section>
         )}
 
-<section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <div className="beast-card">
-            <div className="text-sm text-[#c7cfdb]">Total Debt</div>
-            <div className="mt-2 break-words text-2xl font-bold">
+        <section className="money-summary-grid">
+          <div className="money-section-card">
+            <div className="money-metric-label">Total Debt</div>
+            <div className="money-metric-value">
               ${totalDebt.toFixed(2)}
             </div>
           </div>
 
-          <div className="beast-card">
-            <div className="text-sm text-[#c7cfdb]">Monthly Minimums</div>
-            <div className="mt-2 break-words text-2xl font-bold">
+          <div className="money-section-card">
+            <div className="money-metric-label">Monthly Minimums</div>
+            <div className="money-metric-value">
               ${totalMinimums.toFixed(2)}
             </div>
           </div>
 
-          <div className="beast-card">
-            <div className="text-sm text-[#c7cfdb]">Payoff Time</div>
-            <div className="mt-2 break-words text-2xl font-bold">
+          <div className="money-section-card">
+            <div className="money-metric-label">Payoff Time</div>
+            <div className="money-metric-value">
               {payoffPlan.months_to_payoff === null
                 ? "Unable to project"
                 : `${payoffPlan.months_to_payoff} months`}
             </div>
           </div>
 
-          <div className="beast-card">
-            <div className="text-sm text-[#c7cfdb]">First Target</div>
-            <div className="mt-2 break-words text-2xl font-bold">
+          <div className="money-section-card">
+            <div className="money-metric-label">First Target</div>
+            <div className="money-metric-value">
               {payoffPlan.first_target}
             </div>
           </div>
 
-          <div className="beast-card">
-            <div className="text-sm text-[#c7cfdb]">Total Interest</div>
-            <div className="mt-2 break-words text-2xl font-bold">
+          <div className="money-section-card">
+            <div className="money-metric-label">Total Interest</div>
+            <div className="money-metric-value">
               ${payoffPlan.total_interest.toFixed(2)}
             </div>
           </div>
 
-          <div className="beast-card">
-  <div className="text-sm text-[#c7cfdb]">
-    Recommended
-  </div>
-
-  <div className="mt-2 text-2xl font-bold capitalize">
-    {strategy}
-  </div>
-
-	  <p className="mt-2 text-sm text-[#7f8da3]">
-    {getDebtStrategyDescription(strategy)}
-  </p>
-  {strategy === "velocity" ? (
-    <Link
-      href="/dashboard/money/velocity"
-      className="mt-3 inline-block text-sm text-[#38bdf8] underline"
-    >
-      Open Velocity Planner
-    </Link>
-  ) : null}
-</div>
+          <div className="money-section-card">
+            <div className="money-metric-label">Recommended</div>
+            <div className="money-metric-value capitalize">{strategy}</div>
+            <p className="money-muted-text mt-2">
+              {getDebtStrategyDescription(strategy)}
+            </p>
+            {strategy === "velocity" ? (
+              <Link
+                href="/dashboard/money/velocity"
+                className="mt-3 inline-block text-sm text-[#38bdf8] underline"
+              >
+                Open Velocity Planner
+              </Link>
+            ) : null}
+          </div>
         </section>
 
-        <section id="add-debt" className="beast-card">
+        <section id="add-debt" className="money-section-card">
           <div className="grid gap-4 md:grid-cols-3">
             <div>
-              <label className="text-sm text-[#c7cfdb]">Strategy</label>
+              <label className="money-field-label">Strategy</label>
               <select
                 value={strategy}
                 onChange={(e) => setStrategy(normalizeDebtStrategy(e.target.value))}
@@ -930,7 +924,7 @@ export default function DebtsPage() {
             </div>
 
             <div>
-              <label className="text-sm text-[#c7cfdb]">Monthly Extra Attack</label>
+              <label className="money-field-label">Monthly Extra Attack</label>
               <input
                 type="number"
                 value={extraPayment}
@@ -954,10 +948,10 @@ export default function DebtsPage() {
           </div>
         </section>
 
-        <section className="beast-card">
-          <h2 className="text-xl font-bold">Add Debt</h2>
+        <section className="money-section-card">
+          <h2 className="money-section-title">Add Debt</h2>
 
-          <div className="mt-4 grid gap-4 md:grid-cols-3">
+          <div className="money-field-grid md:grid-cols-3">
   <div>
     <label className="text-sm text-[#c7cfdb]">
       Debt Name
@@ -1098,9 +1092,9 @@ export default function DebtsPage() {
           </button>
         </section>
 
-        <section id="strategy-comparison" className="beast-panel overflow-hidden">
-          <div className="border-b border-[#2a3242] p-5">
-            <h2 className="text-xl font-bold">Debt List</h2>
+        <section className="money-section-panel">
+          <div className="money-section-header">
+            <h2 className="money-section-title">Debt List</h2>
           </div>
 
           <div className="beast-table-wrap">
@@ -1305,11 +1299,11 @@ export default function DebtsPage() {
           </div>
         </section>
 
-        <section id="payoff-plan" className="beast-panel overflow-hidden">
-          <div className="flex flex-col items-start gap-4 border-b border-[#2a3242] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+        <section className="money-section-panel">
+          <div className="money-section-header">
             <div>
-              <h2 className="text-xl font-bold">Paid Off / Archived Debts</h2>
-              <p className="mt-1 text-sm text-[#7f8da3]">
+              <h2 className="money-section-title">Paid Off / Archived Debts</h2>
+              <p className="money-section-description">
                 Debts with a $0 balance or archived status are removed from active payoff strategy calculations.
               </p>
             </div>
@@ -1479,13 +1473,15 @@ export default function DebtsPage() {
           )}
         </section>
 
-        <section className="beast-panel overflow-hidden">
-          <div className="border-b border-[#2a3242] p-5">
-            <h2 className="text-xl font-bold">Strategy Comparison</h2>
-            <p className="mt-1 text-sm text-[#7f8da3]">
+        <section id="strategy-comparison" className="money-section-panel">
+          <div className="money-section-header">
+            <div>
+              <h2 className="money-section-title">Strategy Comparison</h2>
+              <p className="money-section-description">
               Baseline comparison for payoff strategies. Minimum uses only the
               required payment on each active debt.
-            </p>
+              </p>
+            </div>
           </div>
 
           <div className="beast-table-wrap">
@@ -1543,12 +1539,12 @@ export default function DebtsPage() {
           </div>
         </section>
 
-        <section className="beast-panel overflow-hidden">
-        <div className="flex flex-col gap-4 border-b border-[#2a3242] p-4 sm:p-5 md:flex-row md:items-center md:justify-between">
-  <h2 className="text-xl font-bold">Payoff Plan</h2>
+        <section id="payoff-plan" className="money-section-panel">
+        <div className="money-section-header">
+  <h2 className="money-section-title">Payoff Plan</h2>
 
   <div>
-    <label className="text-sm text-[#c7cfdb]">
+    <label className="money-field-label">
       Projection Length
     </label>
 

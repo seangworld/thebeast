@@ -531,11 +531,11 @@ test("module navigation centralizes expandable child items", () => {
       "src/app/dashboard/money/cashflow/components/AddIncomeBillSection.tsx",
       "utf8"
     ),
-    /<div id="add-bill" className="beast-card">[\s\S]*<h2 className="text-xl font-bold">Add Bill<\/h2>/
+    /<div id="add-bill" className="money-section-card">[\s\S]*<h2 className="text-xl font-bold">Add Bill<\/h2>/
   );
   assert.match(
     readFileSync("src/app/dashboard/money/debts/page.tsx", "utf8"),
-    /<section id="add-debt" className="beast-card">[\s\S]*<h2 className="text-xl font-bold">Add Debt<\/h2>/
+    /<section id="add-debt" className="money-section-card">[\s\S]*<h2 className="money-section-title">Add Debt<\/h2>/
   );
 });
 

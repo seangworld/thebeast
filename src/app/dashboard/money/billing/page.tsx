@@ -42,9 +42,9 @@ function BillingPageContent() {
         title="Planning Experience"
         description="BeastMoney planning tools are available from the product workspace."
       >
-        <div className="space-y-8">
-          <section className="beast-card">
-            <h2 className="text-xl font-bold">Member experience</h2>
+        <div className="money-page-stack">
+          <section className="money-section-card">
+            <h2 className="money-section-title">Member experience</h2>
             <p className="mt-2 text-sm text-[#c7cfdb]">
               Billing controls are not part of the current Member experience.
               Continue with cash flow, debts, payoff planning, and Velocity
@@ -64,9 +64,9 @@ function BillingPageContent() {
       title="Billing"
       description="Manage your Beast membership and Stripe subscription."
     >
-      <div className="space-y-8">
+      <div className="money-page-stack">
         {checkoutSucceeded ? (
-          <section className="beast-card border-green-400/40 bg-green-400/10">
+          <section className="money-section-card border-green-400/40 bg-green-400/10">
             <p className="text-sm font-semibold text-green-200">
               {!entitlements.loading && entitlements.context.plan === "pro"
                 ? "Welcome to Pro. Your membership is active and Pro features are unlocked."
@@ -76,7 +76,7 @@ function BillingPageContent() {
         ) : null}
 
         {checkoutCanceled ? (
-          <section className="beast-card border-yellow-300/40 bg-yellow-300/10">
+          <section className="money-section-card border-yellow-300/40 bg-yellow-300/10">
             <p className="text-sm font-semibold text-yellow-100">
               Checkout was canceled. Your current plan has not changed.
             </p>
@@ -84,17 +84,17 @@ function BillingPageContent() {
         ) : null}
 
         {checkoutError ? (
-          <section className="beast-card border-red-400/40 bg-red-400/10">
+          <section className="money-section-card border-red-400/40 bg-red-400/10">
             <p className="text-sm font-semibold text-red-100">
               {getCheckoutStartErrorMessage(checkoutError)}
             </p>
           </section>
         ) : null}
 
-        <section className="beast-card">
+        <section className="money-section-card">
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div>
-              <h2 className="text-xl font-bold">Current Membership</h2>
+              <h2 className="money-section-title">Current Membership</h2>
               <p className="mt-1 text-sm text-[#c7cfdb]">
                 Database membership is the source of truth for access.
               </p>
@@ -121,8 +121,8 @@ function BillingPageContent() {
         </section>
 
         <section className="grid gap-4 md:grid-cols-2">
-          <div className="beast-card">
-            <h2 className="text-xl font-bold">Pro Monthly</h2>
+          <div className="money-section-card">
+            <h2 className="money-section-title">Pro Monthly</h2>
             <p className="mt-2 text-sm text-[#c7cfdb]">
               Unlock Velocity Planner, Beast Advisor, and Pro planning tools
               with monthly billing.
@@ -135,8 +135,8 @@ function BillingPageContent() {
             </form>
           </div>
 
-          <div className="beast-card">
-            <h2 className="text-xl font-bold">Pro Annual</h2>
+          <div className="money-section-card">
+            <h2 className="money-section-title">Pro Annual</h2>
             <p className="mt-2 text-sm text-[#c7cfdb]">
               Get the same Pro access with annual billing through Stripe
               Checkout.
@@ -150,10 +150,10 @@ function BillingPageContent() {
           </div>
         </section>
 
-        <section className="beast-card">
+        <section className="money-section-card">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <h2 className="text-xl font-bold">Manage Subscription</h2>
+              <h2 className="money-section-title">Manage Subscription</h2>
               <p className="mt-1 text-sm text-[#c7cfdb]">
                 Pro subscriptions are managed securely in the Stripe Customer
                 Portal.
@@ -184,7 +184,7 @@ export default function BillingPage() {
       fallback={
         <main className="beast-page">
           <div className="beast-container">
-            <section className="beast-card">
+            <section className="money-section-card">
               <p className="text-sm text-[#7f8da3]">Loading billing...</p>
             </section>
           </div>
