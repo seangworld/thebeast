@@ -7,14 +7,17 @@ import { PlatformServiceHero } from "@/app/dashboard/platformServices";
 import { createRouteClient } from "@/lib/supabase/server";
 import {
   type BeastGoalDataClient,
+  type GoalContribution,
   type GoalLoadResult,
   type GoalReference,
   type GoalSupportItem,
   getCurrentGoalMilestone,
+  getGoalContributionsByModule,
   getGoalProgressPercent,
   getGoalReferencesByType,
   getGoalSupportItemsByType,
   goalDatabaseTableName,
+  goalContributionDatabaseTableName,
   goalMilestoneDatabaseTableName,
   goalOwnershipRules,
   goalReferenceDatabaseTableName,
@@ -87,6 +90,35 @@ function GoalReferencePill({ reference }: { reference: GoalReference }) {
   );
 }
 
+function GoalContributionPill({
+  contribution,
+}: {
+  contribution: GoalContribution;
+}) {
+  return (
+    <div className="rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="text-sm font-black text-white">
+          {contribution.title}
+        </span>
+        <span className="rounded-full border border-[#2a3242] px-2.5 py-1 text-xs font-black text-[#c7cfdb]">
+          {contribution.sourceModule} - {contribution.type}
+        </span>
+      </div>
+      <p className="mt-2 text-xs leading-5 text-[#9aa7b8]">
+        {contribution.summary}
+      </p>
+      <div className="mt-2 text-xs font-bold text-[#7f8da3]">
+        {new Date(contribution.occurredAt).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        })}
+      </div>
+    </div>
+  );
+}
+
 async function getGoalLoadResult(): Promise<GoalLoadResult> {
   try {
     return await loadUserGoals(
@@ -132,6 +164,7 @@ export default async function GoalsOverviewPage() {
             ["Routines", String(summary.activeRecurringActions)],
             ["Requirements", String(summary.unsatisfiedRequirements)],
             ["Linked References", String(summary.linkedReferences)],
+            ["Contributions", String(summary.crossModuleContributions)],
           ].map(([label, value]) => (
             <DashboardCard key={label} accent="goals">
               <div className="text-xs font-black uppercase text-[#7f8da3]">
@@ -254,6 +287,26 @@ export default async function GoalsOverviewPage() {
                       </div>
                     )}
                   </div>
+                  <div className="mt-4 rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
+                    <div className="text-xs font-black uppercase text-[#7f8da3]">
+                      Module Contributions
+                    </div>
+                    {goal.contributions.length > 0 ? (
+                      <div className="mt-3 grid gap-3 md:grid-cols-2">
+                        {goal.contributions.map((contribution) => (
+                          <GoalContributionPill
+                            key={contribution.id}
+                            contribution={contribution}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="mt-2 text-sm font-semibold text-[#dbe3ef]">
+                        No module progress, evidence, recommendations,
+                        milestones, or reviews are attached yet.
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))
             ) : (
@@ -297,7 +350,7 @@ export default async function GoalsOverviewPage() {
             <SectionHeader
               eyebrow="Database"
               title={`${goalDatabaseTableName} + ${goalMilestoneDatabaseTableName}`}
-              description={`BeastOS stores user-owned goal outcomes, milestone progress, support items in ${goalSupportItemDatabaseTableName}, and references in ${goalReferenceDatabaseTableName} so modules can link records without duplicating ownership.`}
+              description={`BeastOS stores user-owned goal outcomes, milestone progress, support items in ${goalSupportItemDatabaseTableName}, references in ${goalReferenceDatabaseTableName}, and module contributions in ${goalContributionDatabaseTableName} without duplicating ownership.`}
             />
             <div className="mt-5 space-y-2 text-sm text-[#c7cfdb]">
               {goalOwnershipRules.map((rule) => (
@@ -313,7 +366,7 @@ export default async function GoalsOverviewPage() {
           <SectionHeader
             eyebrow="BO-12"
             title="Support items and linked references"
-            description="These counts come only from user-owned support and reference records attached to goals. They do not create module-owned goal copies."
+            description="These counts come only from user-owned support, reference, and contribution records attached to goals. They do not create module-owned goal copies."
           />
           <div className="mt-5 grid gap-3 md:grid-cols-4">
             {[
@@ -325,6 +378,10 @@ export default async function GoalsOverviewPage() {
               ["Events", goals.flatMap((goal) => getGoalReferencesByType(goal, "Event")).length],
               ["Today", goals.flatMap((goal) => getGoalReferencesByType(goal, "Today")).length],
               ["Calendar", goals.flatMap((goal) => getGoalReferencesByType(goal, "Calendar")).length],
+              ["Learning Contributions", goals.flatMap((goal) => getGoalContributionsByModule(goal, "learning")).length],
+              ["Money Contributions", goals.flatMap((goal) => getGoalContributionsByModule(goal, "money")).length],
+              ["Recommendations", String(summary.contributionRecommendations)],
+              ["Contributing Modules", summary.contributingModules.length],
             ].map(([label, value]) => (
               <div key={label} className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
                 <div className="text-xs font-black uppercase text-[#7f8da3]">

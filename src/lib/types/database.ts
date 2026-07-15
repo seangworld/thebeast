@@ -170,6 +170,30 @@ export type BeastGoalReference = {
     updated_at: string
   }
 
+export type BeastGoalContributionType =
+  | "Progress"
+  | "Recommendation"
+  | "Milestone"
+  | "Evidence"
+  | "Review"
+
+export type BeastGoalContributionStatus = "Active" | "Dismissed" | "Archived"
+
+export type BeastGoalContribution = {
+    id: string
+    owner_id: string
+    goal_id: string
+    source_module: string
+    contribution_type: BeastGoalContributionType
+    status: BeastGoalContributionStatus
+    title: string
+    summary: string
+    action_url?: string | null
+    occurred_at: string
+    created_at: string
+    updated_at: string
+  }
+
 export type BeastDocumentStatus = "Uploaded" | "Ready" | "Archived" | "Deleted"
 
 export type BeastDocumentCategory =

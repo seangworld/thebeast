@@ -1,6 +1,7 @@
 import type { PlatformModule } from "./types";
 import type {
   BeastGoal as BeastGoalRow,
+  BeastGoalContribution as BeastGoalContributionRow,
   BeastGoalMilestone as BeastGoalMilestoneRow,
   BeastGoalReference as BeastGoalReferenceRow,
   BeastGoalSupportItem as BeastGoalSupportItemRow,
@@ -63,6 +64,15 @@ export type GoalReferenceType =
 
 export type GoalReferenceStatus = "Active" | "Archived";
 
+export type GoalContributionType =
+  | "Progress"
+  | "Recommendation"
+  | "Milestone"
+  | "Evidence"
+  | "Review";
+
+export type GoalContributionStatus = "Active" | "Dismissed" | "Archived";
+
 export type GoalMilestone = {
   id: string;
   ownerId: string;
@@ -108,6 +118,21 @@ export type GoalReference = {
   updatedAt: string;
 };
 
+export type GoalContribution = {
+  id: string;
+  ownerId: string;
+  goalId: string;
+  sourceModule: PlatformModule;
+  type: GoalContributionType;
+  status: GoalContributionStatus;
+  title: string;
+  summary: string;
+  actionUrl?: string;
+  occurredAt: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type Goal = {
   id: string;
   ownerId: string;
@@ -121,6 +146,7 @@ export type Goal = {
   milestones: GoalMilestone[];
   supportItems: GoalSupportItem[];
   references: GoalReference[];
+  contributions: GoalContribution[];
   createdAt: string;
   updatedAt: string;
 };
@@ -148,6 +174,9 @@ export type GoalOverviewSummary = {
   todayReferences: number;
   calendarReferences: number;
   moduleRecordReferences: number;
+  crossModuleContributions: number;
+  contributingModules: PlatformModule[];
+  contributionRecommendations: number;
   overallProgressPercent: number | null;
   nextSteps: string[];
 };
@@ -179,6 +208,7 @@ export type BeastGoalDataClient = {
             | BeastGoalMilestoneRow[]
             | BeastGoalSupportItemRow[]
             | BeastGoalReferenceRow[]
+            | BeastGoalContributionRow[]
             | null;
           error: { message?: string } | null;
         }>;
@@ -220,6 +250,7 @@ export const goalDatabaseTableName = "beast_goals";
 export const goalMilestoneDatabaseTableName = "beast_goal_milestones";
 export const goalSupportItemDatabaseTableName = "beast_goal_support_items";
 export const goalReferenceDatabaseTableName = "beast_goal_references";
+export const goalContributionDatabaseTableName = "beast_goal_contributions";
 
 export const goalDatabaseColumns: GoalDatabaseColumn[] = [
   { name: "id", type: "uuid", required: true },
@@ -320,12 +351,42 @@ export const goalReferenceDatabaseColumns: GoalDatabaseColumn[] = [
   { name: "updated_at", type: "timestamptz", required: true },
 ];
 
+export const goalContributionTypes: GoalContributionType[] = [
+  "Progress",
+  "Recommendation",
+  "Milestone",
+  "Evidence",
+  "Review",
+];
+
+export const goalContributionStatuses: GoalContributionStatus[] = [
+  "Active",
+  "Dismissed",
+  "Archived",
+];
+
+export const goalContributionDatabaseColumns: GoalDatabaseColumn[] = [
+  { name: "id", type: "uuid", required: true },
+  { name: "owner_id", type: "uuid", required: true },
+  { name: "goal_id", type: "uuid", required: true },
+  { name: "source_module", type: "text", required: true },
+  { name: "contribution_type", type: "text", required: true },
+  { name: "status", type: "text", required: true },
+  { name: "title", type: "text", required: true },
+  { name: "summary", type: "text", required: true },
+  { name: "action_url", type: "text", required: false },
+  { name: "occurred_at", type: "timestamptz", required: true },
+  { name: "created_at", type: "timestamptz", required: true },
+  { name: "updated_at", type: "timestamptz", required: true },
+];
+
 export const goalOwnershipRules = [
   "Goals belong to BeastOS as shared Personal Hub data.",
   "Goals are outcomes, not module-owned task lists.",
   "Modules may suggest goals and contribute progress without owning shared goals.",
   "Dependencies, prerequisites, blockers, and recurring actions attach to BeastOS-owned goals and plans.",
   "Notes, documents, events, module records, Today items, and Calendar items link as references without duplicating goal ownership.",
+  "Modules may contribute evidence, progress, milestones, recommendations, and reviews without owning shared goals.",
   "BeastGoals remains superseded as a standalone customer-facing module.",
 ];
 
@@ -342,6 +403,7 @@ export const mockGoals: Goal[] = [
     sourceModule: "learning",
     supportItems: [],
     references: [],
+    contributions: [],
     milestones: [
       {
         id: "milestone-security-basics",
@@ -380,6 +442,7 @@ export const mockGoals: Goal[] = [
     milestones: [],
     supportItems: [],
     references: [],
+    contributions: [],
     createdAt: "2026-07-14T00:00:00.000Z",
     updatedAt: "2026-07-14T00:00:00.000Z",
   },
@@ -405,6 +468,7 @@ export function mapGoalRow(row: BeastGoalRow): Goal {
     milestones: [],
     supportItems: [],
     references: [],
+    contributions: [],
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   });
@@ -525,6 +589,47 @@ export function mapGoalReferenceRow(row: BeastGoalReferenceRow): GoalReference {
   };
 }
 
+export function isGoalContributionType(
+  type: unknown
+): type is GoalContributionType {
+  return goalContributionTypes.includes(type as GoalContributionType);
+}
+
+export function isGoalContributionStatus(
+  status: unknown
+): status is GoalContributionStatus {
+  return goalContributionStatuses.includes(status as GoalContributionStatus);
+}
+
+export function mapGoalContributionRow(
+  row: BeastGoalContributionRow
+): GoalContribution {
+  if (!isGoalContributionType(row.contribution_type)) {
+    throw new Error(
+      `Unsupported goal contribution type: ${row.contribution_type}`
+    );
+  }
+
+  if (!isGoalContributionStatus(row.status)) {
+    throw new Error(`Unsupported goal contribution status: ${row.status}`);
+  }
+
+  return {
+    id: row.id,
+    ownerId: row.owner_id,
+    goalId: row.goal_id,
+    sourceModule: toPlatformModule(row.source_module) || "beastos",
+    type: row.contribution_type,
+    status: row.status,
+    title: row.title,
+    summary: row.summary,
+    actionUrl: row.action_url ?? undefined,
+    occurredAt: row.occurred_at,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
 export async function loadUserGoals(
   client: BeastGoalDataClient
 ): Promise<GoalLoadResult> {
@@ -603,9 +708,23 @@ export async function loadUserGoals(
       : ((referenceResult.data ?? []) as BeastGoalReferenceRow[]).map(
           mapGoalReferenceRow
         );
+    const contributionResult = await client
+      .from(goalContributionDatabaseTableName)
+      .select(
+        "id, owner_id, goal_id, source_module, contribution_type, status, title, summary, action_url, occurred_at, created_at, updated_at"
+      )
+      .eq("owner_id", userData.user.id)
+      .order("occurred_at", { ascending: false });
+
+    const contributions = contributionResult.error
+      ? []
+      : ((contributionResult.data ?? []) as BeastGoalContributionRow[]).map(
+          mapGoalContributionRow
+        );
     const milestonesByGoal = new Map<string, GoalMilestone[]>();
     const supportItemsByGoal = new Map<string, GoalSupportItem[]>();
     const referencesByGoal = new Map<string, GoalReference[]>();
+    const contributionsByGoal = new Map<string, GoalContribution[]>();
 
     milestones.forEach((milestone) => {
       milestonesByGoal.set(milestone.goalId, [
@@ -625,6 +744,12 @@ export async function loadUserGoals(
         reference,
       ]);
     });
+    contributions.forEach((contribution) => {
+      contributionsByGoal.set(contribution.goalId, [
+        ...(contributionsByGoal.get(contribution.goalId) || []),
+        contribution,
+      ]);
+    });
 
     return {
       goals: ((data ?? []) as BeastGoalRow[]).map((row) => {
@@ -634,7 +759,12 @@ export async function loadUserGoals(
           ...goal,
           milestones: milestonesByGoal.get(goal.id) || [],
           supportItems: supportItemsByGoal.get(goal.id) || [],
-          references: referencesByGoal.get(goal.id) || [],
+          references: [...(referencesByGoal.get(goal.id) || [])].sort(
+            (left, right) => right.createdAt.localeCompare(left.createdAt)
+          ),
+          contributions: [...(contributionsByGoal.get(goal.id) || [])].sort(
+            (left, right) => right.occurredAt.localeCompare(left.occurredAt)
+          ),
         };
       }),
       status: "ready",
@@ -711,6 +841,28 @@ export function buildGoal(goal: Goal): Goal {
     }
   });
 
+  goal.contributions.forEach((contribution) => {
+    if (!contribution.title.trim()) {
+      throw new Error("Goal contribution title is required.");
+    }
+
+    if (!contribution.summary.trim()) {
+      throw new Error("Goal contribution summary is required.");
+    }
+
+    if (!isGoalContributionType(contribution.type)) {
+      throw new Error(
+        `Unsupported goal contribution type: ${contribution.type}`
+      );
+    }
+
+    if (!isGoalContributionStatus(contribution.status)) {
+      throw new Error(
+        `Unsupported goal contribution status: ${contribution.status}`
+      );
+    }
+  });
+
   return {
     ...goal,
     milestones: [...goal.milestones].sort(
@@ -721,6 +873,9 @@ export function buildGoal(goal: Goal): Goal {
     ),
     references: [...goal.references].sort((left, right) =>
       right.createdAt.localeCompare(left.createdAt)
+    ),
+    contributions: [...goal.contributions].sort((left, right) =>
+      right.occurredAt.localeCompare(left.occurredAt)
     ),
   };
 }
@@ -764,6 +919,12 @@ export function summarizeGoals(goals: Goal[]): GoalOverviewSummary {
   const references = normalized
     .flatMap((goal) => goal.references)
     .filter((reference) => reference.status === "Active");
+  const contributions = normalized
+    .flatMap((goal) => goal.contributions)
+    .filter((contribution) => contribution.status === "Active");
+  const contributingModules = Array.from(
+    new Set(contributions.map((contribution) => contribution.sourceModule))
+  ).sort();
   const openBlockers = supportItems.filter(
     (item) => item.type === "Blocker" && item.status !== "Resolved"
   ).length;
@@ -803,6 +964,11 @@ export function summarizeGoals(goals: Goal[]): GoalOverviewSummary {
     moduleRecordReferences: references.filter(
       (reference) => reference.type === "Module Record"
     ).length,
+    crossModuleContributions: contributions.length,
+    contributingModules,
+    contributionRecommendations: contributions.filter(
+      (contribution) => contribution.type === "Recommendation"
+    ).length,
     overallProgressPercent:
       measurableMilestones.length > 0
         ? Math.round((completedMilestones / measurableMilestones.length) * 100)
@@ -823,5 +989,15 @@ export function getGoalSupportItemsByType(
 export function getGoalReferencesByType(goal: Goal, type: GoalReferenceType) {
   return goal.references.filter(
     (reference) => reference.type === type && reference.status === "Active"
+  );
+}
+
+export function getGoalContributionsByModule(
+  goal: Goal,
+  module: PlatformModule
+) {
+  return goal.contributions.filter(
+    (contribution) =>
+      contribution.sourceModule === module && contribution.status === "Active"
   );
 }
