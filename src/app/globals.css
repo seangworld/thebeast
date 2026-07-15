@@ -525,6 +525,22 @@ a.beast-card:hover {
   background: rgba(56, 189, 248, 0.16);
 }
 
+.money-income-bucket {
+  border-color: rgba(42, 50, 66, 0.95);
+}
+
+.money-income-bucket-even {
+  background:
+    linear-gradient(90deg, rgba(34, 197, 94, 0.12), transparent 4px),
+    rgba(15, 23, 42, 0.62);
+}
+
+.money-income-bucket-odd {
+  background:
+    linear-gradient(90deg, rgba(34, 197, 94, 0.16), transparent 4px),
+    rgba(30, 41, 59, 0.5);
+}
+
 @media (min-width: 768px) {
   .money-summary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));

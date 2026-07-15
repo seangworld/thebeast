@@ -94,3 +94,25 @@ test("BeastMoney internal pages use dashboard-aligned Money surfaces", () => {
   assert.match(debts, /id="payoff-plan" className="money-section-panel"/);
   assert.match(debts, /className="money-payoff-table w-full min-w-\[1100px\] text-sm"/);
 });
+
+test("Income Date Planning is compact until the user expands details", () => {
+  const source = readFileSync(
+    "src/app/dashboard/money/cashflow/components/IncomeDatePlanningSection.tsx",
+    "utf8"
+  );
+  const globalStyles = readFileSync("src/app/globals.css", "utf8");
+
+  assert.match(source, /useState\(false\)/);
+  assert.match(source, /aria-expanded=\{showIncomeTimeline\}/);
+  assert.match(source, /aria-controls="income-date-planning-timeline"/);
+  assert.match(source, /Show Income Timeline/);
+  assert.match(source, /Expand and Review/);
+  assert.match(source, /Action Required/);
+  assert.match(source, /Healthy/);
+  assert.match(source, /Unassigned item count/);
+  assert.match(source, /Detailed income buckets are collapsed/);
+  assert.match(source, /money-income-bucket-even/);
+  assert.match(source, /money-income-bucket-odd/);
+  assert.match(globalStyles, /\.money-income-bucket-even/);
+  assert.match(globalStyles, /\.money-income-bucket-odd/);
+});
