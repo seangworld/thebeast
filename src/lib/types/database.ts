@@ -86,6 +86,25 @@ export type BeastGoal = {
     updated_at: string
   }
 
+export type BeastGoalMilestoneStatus =
+  | "Not Started"
+  | "In Progress"
+  | "Completed"
+  | "Skipped"
+
+export type BeastGoalMilestone = {
+    id: string
+    owner_id: string
+    goal_id: string
+    title: string
+    status: BeastGoalMilestoneStatus
+    target_date?: string | null
+    completed_at?: string | null
+    sort_order: number
+    created_at: string
+    updated_at: string
+  }
+
 export type BeastDocumentStatus = "Uploaded" | "Ready" | "Archived" | "Deleted"
 
 export type BeastDocumentCategory =

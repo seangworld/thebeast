@@ -1,5 +1,8 @@
 import type { PlatformModule } from "./types";
-import type { BeastGoal as BeastGoalRow } from "@/lib/types/database";
+import type {
+  BeastGoal as BeastGoalRow,
+  BeastGoalMilestone as BeastGoalMilestoneRow,
+} from "@/lib/types/database";
 
 export type GoalStatus =
   | "Proposed"
@@ -19,6 +22,25 @@ export type GoalCategory =
   | "Health"
   | "Other";
 
+export type GoalMilestoneStatus =
+  | "Not Started"
+  | "In Progress"
+  | "Completed"
+  | "Skipped";
+
+export type GoalMilestone = {
+  id: string;
+  ownerId: string;
+  goalId: string;
+  title: string;
+  status: GoalMilestoneStatus;
+  targetDate?: string;
+  completedAt?: string;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type Goal = {
   id: string;
   ownerId: string;
@@ -29,6 +51,7 @@ export type Goal = {
   targetDate?: string;
   currentStep?: string;
   sourceModule?: PlatformModule;
+  milestones: GoalMilestone[];
   createdAt: string;
   updatedAt: string;
 };
@@ -45,6 +68,9 @@ export type GoalOverviewSummary = {
   completedGoals: number;
   blockedGoals: number;
   archivedGoals: number;
+  totalMilestones: number;
+  completedMilestones: number;
+  overallProgressPercent: number | null;
   nextSteps: string[];
 };
 
@@ -70,7 +96,7 @@ export type BeastGoalDataClient = {
           column: string,
           options: { ascending: boolean }
         ) => Promise<{
-          data: BeastGoalRow[] | null;
+          data: BeastGoalRow[] | BeastGoalMilestoneRow[] | null;
           error: { message?: string } | null;
         }>;
       };
@@ -100,7 +126,15 @@ export const goalCategories: GoalCategory[] = [
   "Other",
 ];
 
+export const goalMilestoneStatuses: GoalMilestoneStatus[] = [
+  "Not Started",
+  "In Progress",
+  "Completed",
+  "Skipped",
+];
+
 export const goalDatabaseTableName = "beast_goals";
+export const goalMilestoneDatabaseTableName = "beast_goal_milestones";
 
 export const goalDatabaseColumns: GoalDatabaseColumn[] = [
   { name: "id", type: "uuid", required: true },
@@ -112,6 +146,19 @@ export const goalDatabaseColumns: GoalDatabaseColumn[] = [
   { name: "target_date", type: "date", required: false },
   { name: "current_step", type: "text", required: false },
   { name: "source_module", type: "text", required: false },
+  { name: "created_at", type: "timestamptz", required: true },
+  { name: "updated_at", type: "timestamptz", required: true },
+];
+
+export const goalMilestoneDatabaseColumns: GoalDatabaseColumn[] = [
+  { name: "id", type: "uuid", required: true },
+  { name: "owner_id", type: "uuid", required: true },
+  { name: "goal_id", type: "uuid", required: true },
+  { name: "title", type: "text", required: true },
+  { name: "status", type: "text", required: true },
+  { name: "target_date", type: "date", required: false },
+  { name: "completed_at", type: "timestamptz", required: false },
+  { name: "sort_order", type: "integer", required: true },
   { name: "created_at", type: "timestamptz", required: true },
   { name: "updated_at", type: "timestamptz", required: true },
 ];
@@ -134,6 +181,29 @@ export const mockGoals: Goal[] = [
     targetDate: "2026-10-01",
     currentStep: "Continue the next Mentor mission.",
     sourceModule: "learning",
+    milestones: [
+      {
+        id: "milestone-security-basics",
+        ownerId: "member-owner",
+        goalId: "goal-security-plus",
+        title: "Finish networking foundations",
+        status: "Completed",
+        sortOrder: 1,
+        createdAt: "2026-07-14T00:00:00.000Z",
+        updatedAt: "2026-07-14T00:00:00.000Z",
+      },
+      {
+        id: "milestone-security-practice",
+        ownerId: "member-owner",
+        goalId: "goal-security-plus",
+        title: "Complete first practice checkpoint",
+        status: "In Progress",
+        targetDate: "2026-08-01",
+        sortOrder: 2,
+        createdAt: "2026-07-14T00:00:00.000Z",
+        updatedAt: "2026-07-14T00:00:00.000Z",
+      },
+    ],
     createdAt: "2026-07-14T00:00:00.000Z",
     updatedAt: "2026-07-14T00:00:00.000Z",
   },
@@ -146,6 +216,7 @@ export const mockGoals: Goal[] = [
     summary: "Use BeastMoney planning to reduce debt safely.",
     currentStep: "Review the next safe extra payment.",
     sourceModule: "money",
+    milestones: [],
     createdAt: "2026-07-14T00:00:00.000Z",
     updatedAt: "2026-07-14T00:00:00.000Z",
   },
@@ -168,9 +239,37 @@ export function mapGoalRow(row: BeastGoalRow): Goal {
     targetDate: row.target_date ?? undefined,
     currentStep: row.current_step ?? undefined,
     sourceModule: toPlatformModule(row.source_module),
+    milestones: [],
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   });
+}
+
+export function isGoalMilestoneStatus(
+  status: unknown
+): status is GoalMilestoneStatus {
+  return goalMilestoneStatuses.includes(status as GoalMilestoneStatus);
+}
+
+export function mapGoalMilestoneRow(
+  row: BeastGoalMilestoneRow
+): GoalMilestone {
+  if (!isGoalMilestoneStatus(row.status)) {
+    throw new Error(`Unsupported goal milestone status: ${row.status}`);
+  }
+
+  return {
+    id: row.id,
+    ownerId: row.owner_id,
+    goalId: row.goal_id,
+    title: row.title,
+    status: row.status,
+    targetDate: row.target_date ?? undefined,
+    completedAt: row.completed_at ?? undefined,
+    sortOrder: row.sort_order,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
 }
 
 export async function loadUserGoals(
@@ -212,8 +311,37 @@ export async function loadUserGoals(
       };
     }
 
+    const milestoneResult = await client
+      .from(goalMilestoneDatabaseTableName)
+      .select(
+        "id, owner_id, goal_id, title, status, target_date, completed_at, sort_order, created_at, updated_at"
+      )
+      .eq("owner_id", userData.user.id)
+      .order("sort_order", { ascending: true });
+
+    const milestones = milestoneResult.error
+      ? []
+      : ((milestoneResult.data ?? []) as BeastGoalMilestoneRow[]).map(
+          mapGoalMilestoneRow
+        );
+    const milestonesByGoal = new Map<string, GoalMilestone[]>();
+
+    milestones.forEach((milestone) => {
+      milestonesByGoal.set(milestone.goalId, [
+        ...(milestonesByGoal.get(milestone.goalId) || []),
+        milestone,
+      ]);
+    });
+
     return {
-      goals: (data ?? []).map(mapGoalRow),
+      goals: ((data ?? []) as BeastGoalRow[]).map((row) => {
+        const goal = mapGoalRow(row);
+
+        return {
+          ...goal,
+          milestones: milestonesByGoal.get(goal.id) || [],
+        };
+      }),
       status: "ready",
     };
   } catch {
@@ -246,6 +374,16 @@ export function buildGoal(goal: Goal): Goal {
     throw new Error(`Unsupported goal category: ${goal.category}`);
   }
 
+  goal.milestones.forEach((milestone) => {
+    if (!milestone.title.trim()) {
+      throw new Error("Goal milestone title is required.");
+    }
+
+    if (!isGoalMilestoneStatus(milestone.status)) {
+      throw new Error(`Unsupported goal milestone status: ${milestone.status}`);
+    }
+  });
+
   return goal;
 }
 
@@ -253,8 +391,37 @@ export function buildGoalCollection(goals: Goal[]) {
   return goals.map(buildGoal);
 }
 
+export function getGoalProgressPercent(goal: Goal) {
+  const measurable = goal.milestones.filter(
+    (milestone) => milestone.status !== "Skipped"
+  );
+
+  if (measurable.length === 0) return null;
+
+  const completed = measurable.filter(
+    (milestone) => milestone.status === "Completed"
+  ).length;
+
+  return Math.round((completed / measurable.length) * 100);
+}
+
+export function getCurrentGoalMilestone(goal: Goal) {
+  return (
+    goal.milestones.find((milestone) => milestone.status === "In Progress") ||
+    goal.milestones.find((milestone) => milestone.status === "Not Started") ||
+    null
+  );
+}
+
 export function summarizeGoals(goals: Goal[]): GoalOverviewSummary {
   const normalized = buildGoalCollection(goals);
+  const milestones = normalized.flatMap((goal) => goal.milestones);
+  const measurableMilestones = milestones.filter(
+    (milestone) => milestone.status !== "Skipped"
+  );
+  const completedMilestones = measurableMilestones.filter(
+    (milestone) => milestone.status === "Completed"
+  ).length;
 
   return {
     totalGoals: normalized.length,
@@ -264,6 +431,12 @@ export function summarizeGoals(goals: Goal[]): GoalOverviewSummary {
       .length,
     blockedGoals: normalized.filter((goal) => goal.status === "Blocked").length,
     archivedGoals: normalized.filter((goal) => goal.status === "Archived").length,
+    totalMilestones: measurableMilestones.length,
+    completedMilestones,
+    overallProgressPercent:
+      measurableMilestones.length > 0
+        ? Math.round((completedMilestones / measurableMilestones.length) * 100)
+        : null,
     nextSteps: normalized
       .filter((goal) => activeGoalStatuses.has(goal.status) && goal.currentStep)
       .map((goal) => goal.currentStep as string),

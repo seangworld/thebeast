@@ -18,6 +18,12 @@ export type SharedPlanStatus =
   | "Archived"
   | "Superseded";
 
+export type SharedPlanMilestoneStatus =
+  | "Not Started"
+  | "In Progress"
+  | "Completed"
+  | "Skipped";
+
 export type SharedGoalCategory =
   | "Education"
   | "Career"
@@ -51,11 +57,22 @@ export type SharedPlan = {
   summary?: string;
   goalIds: string[];
   sourceModule?: PlatformModule;
+  targetDate?: string;
   currentStep?: string;
   nextAction?: string;
+  milestones: SharedPlanMilestone[];
   evidenceIds: string[];
   createdAt: string;
   updatedAt: string;
+};
+
+export type SharedPlanMilestone = {
+  id: string;
+  planId: string;
+  title: string;
+  status: SharedPlanMilestoneStatus;
+  targetDate?: string;
+  sortOrder: number;
 };
 
 export type GoalPlanContributionKind =
@@ -86,6 +103,9 @@ export type GoalPlanModel = {
 export type GoalPlanSummary = {
   activeGoals: number;
   activePlans: number;
+  totalPlanMilestones: number;
+  completedPlanMilestones: number;
+  planProgressPercent: number | null;
   orphanPlans: SharedPlan[];
   duplicateOwnershipWarnings: string[];
   nextActions: string[];
@@ -143,6 +163,12 @@ export function buildGoalPlanModel({
 export function summarizeGoalPlanModel(model: GoalPlanModel): GoalPlanSummary {
   const normalized = buildGoalPlanModel(model);
   const plansByGoal = new Map<string, SharedPlan[]>();
+  const measurablePlanMilestones = normalized.plans
+    .flatMap((plan) => plan.milestones)
+    .filter((milestone) => milestone.status !== "Skipped");
+  const completedPlanMilestones = measurablePlanMilestones.filter(
+    (milestone) => milestone.status === "Completed"
+  ).length;
 
   normalized.plans.forEach((plan) => {
     plan.goalIds.forEach((goalId) => {
@@ -171,6 +197,12 @@ export function summarizeGoalPlanModel(model: GoalPlanModel): GoalPlanSummary {
     activePlans: normalized.plans.filter((plan) =>
       activePlanStatuses.has(plan.status)
     ).length,
+    totalPlanMilestones: measurablePlanMilestones.length,
+    completedPlanMilestones,
+    planProgressPercent:
+      measurablePlanMilestones.length > 0
+        ? Math.round((completedPlanMilestones / measurablePlanMilestones.length) * 100)
+        : null,
     orphanPlans: normalized.plans.filter((plan) => plan.goalIds.length === 0),
     duplicateOwnershipWarnings,
     nextActions: normalized.plans

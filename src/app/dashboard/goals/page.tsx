@@ -8,11 +8,24 @@ import { createRouteClient } from "@/lib/supabase/server";
 import {
   type BeastGoalDataClient,
   type GoalLoadResult,
+  getCurrentGoalMilestone,
+  getGoalProgressPercent,
   goalDatabaseTableName,
+  goalMilestoneDatabaseTableName,
   goalOwnershipRules,
   loadUserGoals,
   summarizeGoals,
 } from "@/lib/platform/goals";
+
+function formatGoalDate(date?: string) {
+  if (!date) return "No target date";
+
+  return new Date(`${date}T00:00:00`).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
 
 async function getGoalLoadResult(): Promise<GoalLoadResult> {
   try {
@@ -49,7 +62,12 @@ export default async function GoalsOverviewPage() {
             ["Total Goals", String(summary.totalGoals)],
             ["Active Goals", String(summary.activeGoals)],
             ["Completed", String(summary.completedGoals)],
-            ["Blocked", String(summary.blockedGoals)],
+            [
+              "Milestone Progress",
+              summary.overallProgressPercent == null
+                ? "No milestones"
+                : `${summary.overallProgressPercent}%`,
+            ],
           ].map(([label, value]) => (
             <DashboardCard key={label} accent="goals">
               <div className="text-xs font-black uppercase text-[#7f8da3]">
@@ -64,15 +82,12 @@ export default async function GoalsOverviewPage() {
           <SectionHeader
             eyebrow="Overview"
             title="Current goals"
-            description="This foundation is intentionally light: goals can be viewed now, while deeper create/edit workflows remain future BeastOS-owned work."
+            description="Goals show their category, status, target date, current step, and milestone progress from BeastOS-owned records."
           />
           <div className="mt-5 grid gap-3">
             {goals.length > 0 ? (
               goals.map((goal) => (
-                <div
-                  key={goal.id}
-                  className="rounded-xl border border-[#2a3242] bg-[#111827] p-4"
-                >
+                <div key={goal.id} className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <h2 className="text-lg font-black text-white">{goal.title}</h2>
@@ -80,14 +95,44 @@ export default async function GoalsOverviewPage() {
                         {goal.summary || "No summary has been added yet."}
                       </p>
                     </div>
-                    <span className="rounded-full border border-yellow-300/40 bg-yellow-300/10 px-3 py-1 text-xs font-black text-yellow-100">
-                      {goal.status}
-                    </span>
+                    <div className="flex flex-wrap gap-2">
+                      <span className="rounded-full border border-yellow-300/40 bg-yellow-300/10 px-3 py-1 text-xs font-black text-yellow-100">
+                        {goal.status}
+                      </span>
+                      <span className="rounded-full border border-[#2a3242] px-3 py-1 text-xs font-black text-[#c7cfdb]">
+                        {goal.category}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="mt-4 grid gap-3 md:grid-cols-3">
+                    <div className="rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
+                      <div className="text-xs font-black uppercase text-[#7f8da3]">
+                        Target Date
+                      </div>
+                      <div className="mt-2 text-sm font-bold text-white">
+                        {formatGoalDate(goal.targetDate)}
+                      </div>
+                    </div>
+                    <div className="rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
+                      <div className="text-xs font-black uppercase text-[#7f8da3]">
+                        Current Step
+                      </div>
+                      <div className="mt-2 text-sm font-bold text-white">
+                        {goal.currentStep || "No current step yet"}
+                      </div>
+                    </div>
+                    <div className="rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
+                      <div className="text-xs font-black uppercase text-[#7f8da3]">
+                        Milestone Progress
+                      </div>
+                      <div className="mt-2 text-sm font-bold text-white">
+                        {getGoalProgressPercent(goal) == null
+                          ? "No milestones yet"
+                          : `${getGoalProgressPercent(goal)}% complete`}
+                      </div>
+                    </div>
                   </div>
                   <div className="mt-4 flex flex-wrap gap-2 text-xs font-bold text-[#c7cfdb]">
-                    <span className="rounded-full border border-[#2a3242] px-2.5 py-1">
-                      {goal.category}
-                    </span>
                     {goal.sourceModule ? (
                       <span className="rounded-full border border-[#2a3242] px-2.5 py-1">
                         Contributed by {goal.sourceModule}
@@ -98,6 +143,15 @@ export default async function GoalsOverviewPage() {
                         Target {goal.targetDate}
                       </span>
                     ) : null}
+                  </div>
+                  <div className="mt-4 rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
+                    <div className="text-xs font-black uppercase text-[#7f8da3]">
+                      Current Milestone
+                    </div>
+                    <div className="mt-2 text-sm font-semibold text-[#dbe3ef]">
+                      {getCurrentGoalMilestone(goal)?.title ||
+                        "No milestone is active yet."}
+                    </div>
                   </div>
                 </div>
               ))
@@ -141,8 +195,8 @@ export default async function GoalsOverviewPage() {
           <DashboardCard accent="goals">
             <SectionHeader
               eyebrow="Database"
-              title={goalDatabaseTableName}
-              description="The foundation database table stores user-owned BeastOS goals with minimal CRUD-ready fields."
+              title={`${goalDatabaseTableName} + ${goalMilestoneDatabaseTableName}`}
+              description="BeastOS stores user-owned goal outcomes and milestone progress separately so modules can contribute without duplicating ownership."
             />
             <div className="mt-5 space-y-2 text-sm text-[#c7cfdb]">
               {goalOwnershipRules.map((rule) => (
