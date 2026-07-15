@@ -8,11 +8,14 @@ import { createRouteClient } from "@/lib/supabase/server";
 import {
   type BeastGoalDataClient,
   type GoalLoadResult,
+  type GoalSupportItem,
   getCurrentGoalMilestone,
   getGoalProgressPercent,
+  getGoalSupportItemsByType,
   goalDatabaseTableName,
   goalMilestoneDatabaseTableName,
   goalOwnershipRules,
+  goalSupportItemDatabaseTableName,
   loadUserGoals,
   summarizeGoals,
 } from "@/lib/platform/goals";
@@ -25,6 +28,37 @@ function formatGoalDate(date?: string) {
     day: "numeric",
     year: "numeric",
   });
+}
+
+function formatSupportDueDate(date?: string) {
+  if (!date) return null;
+
+  return new Date(`${date}T00:00:00`).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function SupportItemPill({ item }: { item: GoalSupportItem }) {
+  const dueDate = formatSupportDueDate(item.nextDueDate);
+
+  return (
+    <div className="rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="text-sm font-black text-white">{item.title}</span>
+        <span className="rounded-full border border-[#2a3242] px-2.5 py-1 text-xs font-black text-[#c7cfdb]">
+          {item.status}
+        </span>
+      </div>
+      {item.summary ? (
+        <p className="mt-2 text-xs leading-5 text-[#9aa7b8]">{item.summary}</p>
+      ) : null}
+      <div className="mt-2 flex flex-wrap gap-2 text-xs font-bold text-[#7f8da3]">
+        {item.cadence ? <span>{item.cadence}</span> : null}
+        {dueDate ? <span>Next {dueDate}</span> : null}
+      </div>
+    </div>
+  );
 }
 
 async function getGoalLoadResult(): Promise<GoalLoadResult> {
@@ -68,6 +102,9 @@ export default async function GoalsOverviewPage() {
                 ? "No milestones"
                 : `${summary.overallProgressPercent}%`,
             ],
+            ["Open Blockers", String(summary.openBlockers)],
+            ["Routines", String(summary.activeRecurringActions)],
+            ["Requirements", String(summary.unsatisfiedRequirements)],
           ].map(([label, value]) => (
             <DashboardCard key={label} accent="goals">
               <div className="text-xs font-black uppercase text-[#7f8da3]">
@@ -153,6 +190,23 @@ export default async function GoalsOverviewPage() {
                         "No milestone is active yet."}
                     </div>
                   </div>
+                  <div className="mt-4 rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
+                    <div className="text-xs font-black uppercase text-[#7f8da3]">
+                      Requirements And Routines
+                    </div>
+                    {goal.supportItems.length > 0 ? (
+                      <div className="mt-3 grid gap-3 md:grid-cols-2">
+                        {goal.supportItems.map((item) => (
+                          <SupportItemPill key={item.id} item={item} />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="mt-2 text-sm font-semibold text-[#dbe3ef]">
+                        No dependencies, prerequisites, blockers, or recurring
+                        actions are attached yet.
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))
             ) : (
@@ -196,7 +250,7 @@ export default async function GoalsOverviewPage() {
             <SectionHeader
               eyebrow="Database"
               title={`${goalDatabaseTableName} + ${goalMilestoneDatabaseTableName}`}
-              description="BeastOS stores user-owned goal outcomes and milestone progress separately so modules can contribute without duplicating ownership."
+              description={`BeastOS stores user-owned goal outcomes, milestone progress, and support items in ${goalSupportItemDatabaseTableName} so modules can contribute without duplicating ownership.`}
             />
             <div className="mt-5 space-y-2 text-sm text-[#c7cfdb]">
               {goalOwnershipRules.map((rule) => (
@@ -207,6 +261,31 @@ export default async function GoalsOverviewPage() {
             </div>
           </DashboardCard>
         </section>
+
+        <DashboardCard accent="goals">
+          <SectionHeader
+            eyebrow="BO-11"
+            title="Blockers, prerequisites, dependencies, and routines"
+            description="These counts come only from user-owned support item records attached to goals. They do not create module-owned goal copies."
+          />
+          <div className="mt-5 grid gap-3 md:grid-cols-4">
+            {[
+              ["Dependencies", goals.flatMap((goal) => getGoalSupportItemsByType(goal, "Dependency")).length],
+              ["Prerequisites", goals.flatMap((goal) => getGoalSupportItemsByType(goal, "Prerequisite")).length],
+              ["Blockers", goals.flatMap((goal) => getGoalSupportItemsByType(goal, "Blocker")).length],
+              ["Recurring Actions", goals.flatMap((goal) => getGoalSupportItemsByType(goal, "Recurring Action")).length],
+            ].map(([label, value]) => (
+              <div key={label} className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+                <div className="text-xs font-black uppercase text-[#7f8da3]">
+                  {label}
+                </div>
+                <div className="mt-2 text-2xl font-black text-white">
+                  {value}
+                </div>
+              </div>
+            ))}
+          </div>
+        </DashboardCard>
       </div>
     </main>
   );

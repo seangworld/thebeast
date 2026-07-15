@@ -61,6 +61,9 @@ export type SharedPlan = {
   currentStep?: string;
   nextAction?: string;
   milestones: SharedPlanMilestone[];
+  dependencies: SharedPlanDependency[];
+  blockers: SharedPlanBlocker[];
+  recurringActions: SharedPlanRecurringAction[];
   evidenceIds: string[];
   createdAt: string;
   updatedAt: string;
@@ -73,6 +76,51 @@ export type SharedPlanMilestone = {
   status: SharedPlanMilestoneStatus;
   targetDate?: string;
   sortOrder: number;
+};
+
+export type SharedPlanDependencyStatus =
+  | "Needed"
+  | "In Progress"
+  | "Satisfied"
+  | "Blocked";
+
+export type SharedPlanDependencyKind = "dependency" | "prerequisite";
+
+export type SharedPlanDependency = {
+  id: string;
+  planId: string;
+  kind: SharedPlanDependencyKind;
+  title: string;
+  status: SharedPlanDependencyStatus;
+  summary?: string;
+  requiredBeforeAction?: string;
+};
+
+export type SharedPlanBlockerStatus = "Open" | "In Progress" | "Resolved";
+
+export type SharedPlanBlocker = {
+  id: string;
+  planId: string;
+  title: string;
+  status: SharedPlanBlockerStatus;
+  summary?: string;
+  resolution?: string;
+};
+
+export type SharedPlanRecurringActionCadence =
+  | "Daily"
+  | "Weekly"
+  | "Biweekly"
+  | "Monthly"
+  | "Custom";
+
+export type SharedPlanRecurringAction = {
+  id: string;
+  planId: string;
+  title: string;
+  cadence: SharedPlanRecurringActionCadence;
+  nextDueDate?: string;
+  active: boolean;
 };
 
 export type GoalPlanContributionKind =
@@ -109,6 +157,9 @@ export type GoalPlanSummary = {
   orphanPlans: SharedPlan[];
   duplicateOwnershipWarnings: string[];
   nextActions: string[];
+  openBlockers: SharedPlanBlocker[];
+  unsatisfiedDependencies: SharedPlanDependency[];
+  activeRecurringActions: SharedPlanRecurringAction[];
 };
 
 const activeGoalStatuses = new Set<SharedGoalStatus>(["Proposed", "Active", "Blocked"]);
@@ -149,6 +200,13 @@ export function buildGoalPlanModel({
     plans: plans.map((plan) => ({
       ...plan,
       goalIds: plan.goalIds.filter((goalId) => goalIds.has(goalId)),
+      dependencies: plan.dependencies.filter(
+        (dependency) => dependency.planId === plan.id
+      ),
+      blockers: plan.blockers.filter((blocker) => blocker.planId === plan.id),
+      recurringActions: plan.recurringActions.filter(
+        (action) => action.planId === plan.id
+      ),
       evidenceIds: plan.evidenceIds.filter((contributionId) =>
         contributions.some((contribution) => contribution.id === contributionId)
       ),
@@ -169,6 +227,15 @@ export function summarizeGoalPlanModel(model: GoalPlanModel): GoalPlanSummary {
   const completedPlanMilestones = measurablePlanMilestones.filter(
     (milestone) => milestone.status === "Completed"
   ).length;
+  const openBlockers = normalized.plans.flatMap((plan) =>
+    plan.blockers.filter((blocker) => blocker.status !== "Resolved")
+  );
+  const unsatisfiedDependencies = normalized.plans.flatMap((plan) =>
+    plan.dependencies.filter((dependency) => dependency.status !== "Satisfied")
+  );
+  const activeRecurringActions = normalized.plans.flatMap((plan) =>
+    plan.recurringActions.filter((action) => action.active)
+  );
 
   normalized.plans.forEach((plan) => {
     plan.goalIds.forEach((goalId) => {
@@ -208,6 +275,9 @@ export function summarizeGoalPlanModel(model: GoalPlanModel): GoalPlanSummary {
     nextActions: normalized.plans
       .filter((plan) => activePlanStatuses.has(plan.status) && plan.nextAction)
       .map((plan) => plan.nextAction as string),
+    openBlockers,
+    unsatisfiedDependencies,
+    activeRecurringActions,
   };
 }
 
@@ -215,6 +285,7 @@ export const goalPlanOwnershipRules = [
   "Goals describe outcomes and belong to BeastOS Personal Hub.",
   "Plans describe the executable path and belong to BeastOS as shared records.",
   "Modules may contribute progress, evidence, and recommendations without owning shared Goals or Plans.",
+  "Dependencies, prerequisites, blockers, and recurring actions belong to the shared Plan path, not a module-owned copy.",
   "Learning keeps curriculum, mastery, lessons, and Mentor behavior.",
   "Money keeps cash-flow, debt, forecasting, and financial decision logic.",
 ];

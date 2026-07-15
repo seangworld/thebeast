@@ -17,6 +17,10 @@ import {
   goalMilestoneDatabaseTableName,
   goalMilestoneStatuses,
   goalOwnershipRules,
+  goalSupportItemDatabaseColumns,
+  goalSupportItemDatabaseTableName,
+  goalSupportItemStatuses,
+  goalSupportItemTypes,
   goalStatuses,
   getCurrentGoalMilestone,
   getGoalProgressPercent,
@@ -25,7 +29,11 @@ import {
   mockGoals,
   summarizeGoals,
 } from "../src/lib/platform/goals";
-import type { BeastGoal, BeastGoalMilestone } from "../src/lib/types/database";
+import type {
+  BeastGoal,
+  BeastGoalMilestone,
+  BeastGoalSupportItem,
+} from "../src/lib/types/database";
 
 const model: GoalPlanModel = {
   goals: [
@@ -71,6 +79,35 @@ const model: GoalPlanModel = {
           sortOrder: 2,
         },
       ],
+      dependencies: [
+        {
+          id: "dependency-exam-registration",
+          planId: "plan-learning",
+          kind: "dependency",
+          title: "Register for exam window",
+          status: "Needed",
+          summary: "The study path needs a target date before the final review.",
+        },
+      ],
+      blockers: [
+        {
+          id: "blocker-practice-score",
+          planId: "plan-learning",
+          title: "Practice score below target",
+          status: "Open",
+          summary: "Review weak domains before scheduling the exam.",
+        },
+      ],
+      recurringActions: [
+        {
+          id: "routine-study",
+          planId: "plan-learning",
+          title: "Study three focused sessions",
+          cadence: "Weekly",
+          nextDueDate: "2026-07-20",
+          active: true,
+        },
+      ],
       evidenceIds: ["contribution-learning"],
       createdAt: "2026-07-13T00:00:00.000Z",
       updatedAt: "2026-07-13T00:00:00.000Z",
@@ -101,6 +138,17 @@ const model: GoalPlanModel = {
           sortOrder: 2,
         },
       ],
+      dependencies: [
+        {
+          id: "prerequisite-paycheck-plan",
+          planId: "plan-money",
+          kind: "prerequisite",
+          title: "Confirm next paycheck amount",
+          status: "In Progress",
+        },
+      ],
+      blockers: [],
+      recurringActions: [],
       evidenceIds: [],
       createdAt: "2026-07-13T00:00:00.000Z",
       updatedAt: "2026-07-13T00:00:00.000Z",
@@ -145,6 +193,10 @@ test("BeastOS goal and plan summary preserves module boundaries", () => {
     "Continue the next Mentor mission.",
     "Review next paycheck allocation.",
   ]);
+  assert.equal(summary.openBlockers.length, 1);
+  assert.equal(summary.unsatisfiedDependencies.length, 2);
+  assert.equal(summary.activeRecurringActions.length, 1);
+  assert.equal(summary.openBlockers[0].title, "Practice score below target");
   assert.equal(summary.duplicateOwnershipWarnings.length, 1);
   assert.match(
     summary.duplicateOwnershipWarnings[0],
@@ -205,6 +257,41 @@ test("BG-001 creates a BeastOS-owned Goal model and database contract", () => {
     "Completed",
     "Skipped",
   ]);
+  assert.equal(goalSupportItemDatabaseTableName, "beast_goal_support_items");
+  assert.deepEqual(goalSupportItemTypes, [
+    "Dependency",
+    "Prerequisite",
+    "Blocker",
+    "Recurring Action",
+  ]);
+  assert.deepEqual(goalSupportItemStatuses, [
+    "Needed",
+    "In Progress",
+    "Satisfied",
+    "Blocked",
+    "Open",
+    "Resolved",
+    "Active",
+    "Paused",
+  ]);
+  assert.deepEqual(
+    goalSupportItemDatabaseColumns.map((column) => [column.name, column.required]),
+    [
+      ["id", true],
+      ["owner_id", true],
+      ["goal_id", true],
+      ["item_type", true],
+      ["title", true],
+      ["status", true],
+      ["summary", false],
+      ["cadence", false],
+      ["next_due_date", false],
+      ["resolved_at", false],
+      ["sort_order", true],
+      ["created_at", true],
+      ["updated_at", true],
+    ]
+  );
   assert.deepEqual(
     goalMilestoneDatabaseColumns.map((column) => [column.name, column.required]),
     [
@@ -224,7 +311,9 @@ test("BG-001 creates a BeastOS-owned Goal model and database contract", () => {
     goalOwnershipRules[0],
     "Goals belong to BeastOS as shared Personal Hub data."
   );
-  assert.match(goalOwnershipRules[3], /BeastGoals remains superseded/);
+  assert.ok(
+    goalOwnershipRules.some((rule) => /BeastGoals remains superseded/.test(rule))
+  );
 });
 
 test("BG-001 Goals overview route stays BeastOS-owned", () => {
@@ -237,12 +326,19 @@ test("BG-001 Goals overview route stays BeastOS-owned", () => {
     "migrations/20260714_add_beast_goal_milestones.sql",
     "utf8"
   );
+  const supportMigration = readFileSync(
+    "migrations/20260715_add_beast_goal_support_items.sql",
+    "utf8"
+  );
   const summary = summarizeGoals(mockGoals);
 
   assert.equal(summary.totalGoals, 2);
   assert.equal(summary.activeGoals, 2);
   assert.equal(summary.totalMilestones, 2);
   assert.equal(summary.completedMilestones, 1);
+  assert.equal(summary.openBlockers, 0);
+  assert.equal(summary.activeRecurringActions, 0);
+  assert.equal(summary.unsatisfiedRequirements, 0);
   assert.equal(summary.overallProgressPercent, 50);
   assert.deepEqual(summary.nextSteps, [
     "Continue the next Mentor mission.",
@@ -255,7 +351,10 @@ test("BG-001 Goals overview route stays BeastOS-owned", () => {
   assert.match(goalsPage, /BeastOS Owned/);
   assert.match(goalsPage, /goalDatabaseTableName/);
   assert.match(goalsPage, /goalMilestoneDatabaseTableName/);
+  assert.match(goalsPage, /goalSupportItemDatabaseTableName/);
   assert.match(goalsPage, /Milestone Progress/);
+  assert.match(goalsPage, /Requirements And Routines/);
+  assert.match(goalsPage, /Blockers, prerequisites, dependencies, and routines/);
   assert.doesNotMatch(goalsPage, /mockGoals/);
   assert.doesNotMatch(goalsPage, /Earn Security\+/);
   assert.doesNotMatch(goalsPage, /Become debt free/);
@@ -270,6 +369,14 @@ test("BG-001 Goals overview route stays BeastOS-owned", () => {
   );
   assert.match(milestoneMigration, /enable row level security/);
   assert.match(milestoneMigration, /auth\.uid\(\) = owner_id/);
+  assert.match(supportMigration, /create table if not exists public\.beast_goal_support_items/);
+  assert.match(
+    supportMigration,
+    /foreign key \(goal_id, owner_id\)\s+references public\.beast_goals \(id, owner_id\) on delete cascade/
+  );
+  assert.match(supportMigration, /item_type in \('Dependency', 'Prerequisite', 'Blocker', 'Recurring Action'\)/);
+  assert.match(supportMigration, /enable row level security/);
+  assert.match(supportMigration, /auth\.uid\(\) = owner_id/);
   assert.throws(
     () =>
       buildGoal({
@@ -288,6 +395,8 @@ function createGoalClient(
     queryError?: boolean;
     milestoneRows?: BeastGoalMilestone[] | null;
     milestoneQueryError?: boolean;
+    supportRows?: BeastGoalSupportItem[] | null;
+    supportQueryError?: boolean;
   } = {}
 ): BeastGoalDataClient {
   return {
@@ -301,7 +410,9 @@ function createGoalClient(
     },
     from(table) {
       assert.ok(
-        table === goalDatabaseTableName || table === goalMilestoneDatabaseTableName
+        table === goalDatabaseTableName ||
+          table === goalMilestoneDatabaseTableName ||
+          table === goalSupportItemDatabaseTableName
       );
 
       return {
@@ -316,24 +427,35 @@ function createGoalClient(
                   if (table === goalDatabaseTableName) {
                     assert.equal(columnName, "created_at");
                     assert.deepEqual(orderOptions, { ascending: false });
+                  } else if (table === goalMilestoneDatabaseTableName) {
+                    assert.equal(columnName, "sort_order");
+                    assert.deepEqual(orderOptions, { ascending: true });
                   } else {
+                    assert.equal(table, goalSupportItemDatabaseTableName);
                     assert.equal(columnName, "sort_order");
                     assert.deepEqual(orderOptions, { ascending: true });
                   }
 
                   return {
-                    data:
-                      table === goalDatabaseTableName
-                        ? rows
-                        : options.milestoneRows ?? [],
+                    data: (() => {
+                      if (table === goalDatabaseTableName) return rows;
+                      if (table === goalMilestoneDatabaseTableName) {
+                        return options.milestoneRows ?? [];
+                      }
+                      return options.supportRows ?? [];
+                    })(),
                     error:
                       table === goalDatabaseTableName
                         ? options.queryError
                           ? { message: "Table unavailable" }
                           : null
-                        : options.milestoneQueryError
-                          ? { message: "Milestones unavailable" }
-                          : null,
+                        : table === goalMilestoneDatabaseTableName
+                          ? options.milestoneQueryError
+                            ? { message: "Milestones unavailable" }
+                            : null
+                          : options.supportQueryError
+                            ? { message: "Support unavailable" }
+                            : null,
                   };
                 },
               };
@@ -379,6 +501,38 @@ test("BG-001 Goals loader uses only signed-in user records", async () => {
             updated_at: "2026-07-14T00:00:00.000Z",
           },
         ],
+        supportRows: [
+          {
+            id: "real-support",
+            owner_id: "member-real",
+            goal_id: "real-goal",
+            item_type: "Blocker",
+            title: "Waiting on owner review",
+            status: "Open",
+            summary: "The next step needs review before the plan can continue.",
+            cadence: null,
+            next_due_date: null,
+            resolved_at: null,
+            sort_order: 1,
+            created_at: "2026-07-14T00:00:00.000Z",
+            updated_at: "2026-07-14T00:00:00.000Z",
+          },
+          {
+            id: "real-routine",
+            owner_id: "member-real",
+            goal_id: "real-goal",
+            item_type: "Recurring Action",
+            title: "Weekly check-in",
+            status: "Active",
+            summary: null,
+            cadence: "Weekly",
+            next_due_date: "2026-07-21",
+            resolved_at: null,
+            sort_order: 2,
+            created_at: "2026-07-14T00:00:00.000Z",
+            updated_at: "2026-07-14T00:00:00.000Z",
+          },
+        ],
       }
     )
   );
@@ -388,6 +542,10 @@ test("BG-001 Goals loader uses only signed-in user records", async () => {
   assert.equal(result.goals[0].title, "Read one real goal");
   assert.equal(result.goals[0].milestones.length, 1);
   assert.equal(result.goals[0].milestones[0].title, "Finish the first real step");
+  assert.equal(result.goals[0].supportItems.length, 2);
+  assert.equal(result.goals[0].supportItems[0].title, "Waiting on owner review");
+  assert.equal(summarizeGoals(result.goals).openBlockers, 1);
+  assert.equal(summarizeGoals(result.goals).activeRecurringActions, 1);
   assert.notEqual(result.goals[0].title, mockGoals[0].title);
 });
 
@@ -401,4 +559,32 @@ test("BG-001 Goals loader fails safely without sample records", async () => {
   assert.equal(unavailable.goals.length, 0);
   assert.equal(signedOut.status, "signed-out");
   assert.equal(signedOut.goals.length, 0);
+});
+
+test("BO-11 Goals loader tolerates unavailable support items", async () => {
+  const result = await loadUserGoals(
+    createGoalClient(
+      [
+        {
+          id: "real-goal",
+          owner_id: "member-real",
+          title: "Goal without support table",
+          category: "Personal",
+          status: "Active",
+          summary: null,
+          target_date: null,
+          current_step: null,
+          source_module: null,
+          created_at: "2026-07-14T00:00:00.000Z",
+          updated_at: "2026-07-14T00:00:00.000Z",
+        },
+      ],
+      { userId: "member-real", supportQueryError: true }
+    )
+  );
+
+  assert.equal(result.status, "ready");
+  assert.equal(result.goals.length, 1);
+  assert.equal(result.goals[0].supportItems.length, 0);
+  assert.equal(summarizeGoals(result.goals).openBlockers, 0);
 });

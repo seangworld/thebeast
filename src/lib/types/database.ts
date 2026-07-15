@@ -105,6 +105,45 @@ export type BeastGoalMilestone = {
     updated_at: string
   }
 
+export type BeastGoalSupportItemType =
+  | "Dependency"
+  | "Prerequisite"
+  | "Blocker"
+  | "Recurring Action"
+
+export type BeastGoalSupportItemStatus =
+  | "Needed"
+  | "In Progress"
+  | "Satisfied"
+  | "Blocked"
+  | "Open"
+  | "Resolved"
+  | "Active"
+  | "Paused"
+
+export type BeastGoalSupportItemCadence =
+  | "Daily"
+  | "Weekly"
+  | "Biweekly"
+  | "Monthly"
+  | "Custom"
+
+export type BeastGoalSupportItem = {
+    id: string
+    owner_id: string
+    goal_id: string
+    item_type: BeastGoalSupportItemType
+    title: string
+    status: BeastGoalSupportItemStatus
+    summary?: string | null
+    cadence?: BeastGoalSupportItemCadence | null
+    next_due_date?: string | null
+    resolved_at?: string | null
+    sort_order: number
+    created_at: string
+    updated_at: string
+  }
+
 export type BeastDocumentStatus = "Uploaded" | "Ready" | "Archived" | "Deleted"
 
 export type BeastDocumentCategory =

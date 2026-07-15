@@ -2,6 +2,7 @@ import type { PlatformModule } from "./types";
 import type {
   BeastGoal as BeastGoalRow,
   BeastGoalMilestone as BeastGoalMilestoneRow,
+  BeastGoalSupportItem as BeastGoalSupportItemRow,
 } from "@/lib/types/database";
 
 export type GoalStatus =
@@ -28,6 +29,29 @@ export type GoalMilestoneStatus =
   | "Completed"
   | "Skipped";
 
+export type GoalSupportItemType =
+  | "Dependency"
+  | "Prerequisite"
+  | "Blocker"
+  | "Recurring Action";
+
+export type GoalSupportItemStatus =
+  | "Needed"
+  | "In Progress"
+  | "Satisfied"
+  | "Blocked"
+  | "Open"
+  | "Resolved"
+  | "Active"
+  | "Paused";
+
+export type GoalSupportItemCadence =
+  | "Daily"
+  | "Weekly"
+  | "Biweekly"
+  | "Monthly"
+  | "Custom";
+
 export type GoalMilestone = {
   id: string;
   ownerId: string;
@@ -36,6 +60,22 @@ export type GoalMilestone = {
   status: GoalMilestoneStatus;
   targetDate?: string;
   completedAt?: string;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type GoalSupportItem = {
+  id: string;
+  ownerId: string;
+  goalId: string;
+  type: GoalSupportItemType;
+  title: string;
+  status: GoalSupportItemStatus;
+  summary?: string;
+  cadence?: GoalSupportItemCadence;
+  nextDueDate?: string;
+  resolvedAt?: string;
   sortOrder: number;
   createdAt: string;
   updatedAt: string;
@@ -52,6 +92,7 @@ export type Goal = {
   currentStep?: string;
   sourceModule?: PlatformModule;
   milestones: GoalMilestone[];
+  supportItems: GoalSupportItem[];
   createdAt: string;
   updatedAt: string;
 };
@@ -70,6 +111,9 @@ export type GoalOverviewSummary = {
   archivedGoals: number;
   totalMilestones: number;
   completedMilestones: number;
+  openBlockers: number;
+  activeRecurringActions: number;
+  unsatisfiedRequirements: number;
   overallProgressPercent: number | null;
   nextSteps: string[];
 };
@@ -96,7 +140,11 @@ export type BeastGoalDataClient = {
           column: string,
           options: { ascending: boolean }
         ) => Promise<{
-          data: BeastGoalRow[] | BeastGoalMilestoneRow[] | null;
+          data:
+            | BeastGoalRow[]
+            | BeastGoalMilestoneRow[]
+            | BeastGoalSupportItemRow[]
+            | null;
           error: { message?: string } | null;
         }>;
       };
@@ -135,6 +183,7 @@ export const goalMilestoneStatuses: GoalMilestoneStatus[] = [
 
 export const goalDatabaseTableName = "beast_goals";
 export const goalMilestoneDatabaseTableName = "beast_goal_milestones";
+export const goalSupportItemDatabaseTableName = "beast_goal_support_items";
 
 export const goalDatabaseColumns: GoalDatabaseColumn[] = [
   { name: "id", type: "uuid", required: true },
@@ -163,10 +212,53 @@ export const goalMilestoneDatabaseColumns: GoalDatabaseColumn[] = [
   { name: "updated_at", type: "timestamptz", required: true },
 ];
 
+export const goalSupportItemTypes: GoalSupportItemType[] = [
+  "Dependency",
+  "Prerequisite",
+  "Blocker",
+  "Recurring Action",
+];
+
+export const goalSupportItemStatuses: GoalSupportItemStatus[] = [
+  "Needed",
+  "In Progress",
+  "Satisfied",
+  "Blocked",
+  "Open",
+  "Resolved",
+  "Active",
+  "Paused",
+];
+
+export const goalSupportItemCadences: GoalSupportItemCadence[] = [
+  "Daily",
+  "Weekly",
+  "Biweekly",
+  "Monthly",
+  "Custom",
+];
+
+export const goalSupportItemDatabaseColumns: GoalDatabaseColumn[] = [
+  { name: "id", type: "uuid", required: true },
+  { name: "owner_id", type: "uuid", required: true },
+  { name: "goal_id", type: "uuid", required: true },
+  { name: "item_type", type: "text", required: true },
+  { name: "title", type: "text", required: true },
+  { name: "status", type: "text", required: true },
+  { name: "summary", type: "text", required: false },
+  { name: "cadence", type: "text", required: false },
+  { name: "next_due_date", type: "date", required: false },
+  { name: "resolved_at", type: "timestamptz", required: false },
+  { name: "sort_order", type: "integer", required: true },
+  { name: "created_at", type: "timestamptz", required: true },
+  { name: "updated_at", type: "timestamptz", required: true },
+];
+
 export const goalOwnershipRules = [
   "Goals belong to BeastOS as shared Personal Hub data.",
   "Goals are outcomes, not module-owned task lists.",
   "Modules may suggest goals and contribute progress without owning shared goals.",
+  "Dependencies, prerequisites, blockers, and recurring actions attach to BeastOS-owned goals and plans.",
   "BeastGoals remains superseded as a standalone customer-facing module.",
 ];
 
@@ -181,6 +273,7 @@ export const mockGoals: Goal[] = [
     targetDate: "2026-10-01",
     currentStep: "Continue the next Mentor mission.",
     sourceModule: "learning",
+    supportItems: [],
     milestones: [
       {
         id: "milestone-security-basics",
@@ -217,6 +310,7 @@ export const mockGoals: Goal[] = [
     currentStep: "Review the next safe extra payment.",
     sourceModule: "money",
     milestones: [],
+    supportItems: [],
     createdAt: "2026-07-14T00:00:00.000Z",
     updatedAt: "2026-07-14T00:00:00.000Z",
   },
@@ -240,6 +334,7 @@ export function mapGoalRow(row: BeastGoalRow): Goal {
     currentStep: row.current_step ?? undefined,
     sourceModule: toPlatformModule(row.source_module),
     milestones: [],
+    supportItems: [],
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   });
@@ -266,6 +361,56 @@ export function mapGoalMilestoneRow(
     status: row.status,
     targetDate: row.target_date ?? undefined,
     completedAt: row.completed_at ?? undefined,
+    sortOrder: row.sort_order,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+export function isGoalSupportItemType(
+  type: unknown
+): type is GoalSupportItemType {
+  return goalSupportItemTypes.includes(type as GoalSupportItemType);
+}
+
+export function isGoalSupportItemStatus(
+  status: unknown
+): status is GoalSupportItemStatus {
+  return goalSupportItemStatuses.includes(status as GoalSupportItemStatus);
+}
+
+export function isGoalSupportItemCadence(
+  cadence: unknown
+): cadence is GoalSupportItemCadence {
+  return goalSupportItemCadences.includes(cadence as GoalSupportItemCadence);
+}
+
+export function mapGoalSupportItemRow(
+  row: BeastGoalSupportItemRow
+): GoalSupportItem {
+  if (!isGoalSupportItemType(row.item_type)) {
+    throw new Error(`Unsupported goal support item type: ${row.item_type}`);
+  }
+
+  if (!isGoalSupportItemStatus(row.status)) {
+    throw new Error(`Unsupported goal support item status: ${row.status}`);
+  }
+
+  if (row.cadence && !isGoalSupportItemCadence(row.cadence)) {
+    throw new Error(`Unsupported goal support item cadence: ${row.cadence}`);
+  }
+
+  return {
+    id: row.id,
+    ownerId: row.owner_id,
+    goalId: row.goal_id,
+    type: row.item_type,
+    title: row.title,
+    status: row.status,
+    summary: row.summary ?? undefined,
+    cadence: row.cadence ?? undefined,
+    nextDueDate: row.next_due_date ?? undefined,
+    resolvedAt: row.resolved_at ?? undefined,
     sortOrder: row.sort_order,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -324,12 +469,32 @@ export async function loadUserGoals(
       : ((milestoneResult.data ?? []) as BeastGoalMilestoneRow[]).map(
           mapGoalMilestoneRow
         );
+    const supportResult = await client
+      .from(goalSupportItemDatabaseTableName)
+      .select(
+        "id, owner_id, goal_id, item_type, title, status, summary, cadence, next_due_date, resolved_at, sort_order, created_at, updated_at"
+      )
+      .eq("owner_id", userData.user.id)
+      .order("sort_order", { ascending: true });
+
+    const supportItems = supportResult.error
+      ? []
+      : ((supportResult.data ?? []) as BeastGoalSupportItemRow[]).map(
+          mapGoalSupportItemRow
+        );
     const milestonesByGoal = new Map<string, GoalMilestone[]>();
+    const supportItemsByGoal = new Map<string, GoalSupportItem[]>();
 
     milestones.forEach((milestone) => {
       milestonesByGoal.set(milestone.goalId, [
         ...(milestonesByGoal.get(milestone.goalId) || []),
         milestone,
+      ]);
+    });
+    supportItems.forEach((supportItem) => {
+      supportItemsByGoal.set(supportItem.goalId, [
+        ...(supportItemsByGoal.get(supportItem.goalId) || []),
+        supportItem,
       ]);
     });
 
@@ -340,6 +505,7 @@ export async function loadUserGoals(
         return {
           ...goal,
           milestones: milestonesByGoal.get(goal.id) || [],
+          supportItems: supportItemsByGoal.get(goal.id) || [],
         };
       }),
       status: "ready",
@@ -384,7 +550,31 @@ export function buildGoal(goal: Goal): Goal {
     }
   });
 
-  return goal;
+  goal.supportItems.forEach((supportItem) => {
+    if (!supportItem.title.trim()) {
+      throw new Error("Goal support item title is required.");
+    }
+
+    if (!isGoalSupportItemType(supportItem.type)) {
+      throw new Error(`Unsupported goal support item type: ${supportItem.type}`);
+    }
+
+    if (!isGoalSupportItemStatus(supportItem.status)) {
+      throw new Error(
+        `Unsupported goal support item status: ${supportItem.status}`
+      );
+    }
+  });
+
+  return {
+    ...goal,
+    milestones: [...goal.milestones].sort(
+      (left, right) => left.sortOrder - right.sortOrder
+    ),
+    supportItems: [...goal.supportItems].sort(
+      (left, right) => left.sortOrder - right.sortOrder
+    ),
+  };
 }
 
 export function buildGoalCollection(goals: Goal[]) {
@@ -422,6 +612,18 @@ export function summarizeGoals(goals: Goal[]): GoalOverviewSummary {
   const completedMilestones = measurableMilestones.filter(
     (milestone) => milestone.status === "Completed"
   ).length;
+  const supportItems = normalized.flatMap((goal) => goal.supportItems);
+  const openBlockers = supportItems.filter(
+    (item) => item.type === "Blocker" && item.status !== "Resolved"
+  ).length;
+  const activeRecurringActions = supportItems.filter(
+    (item) => item.type === "Recurring Action" && item.status === "Active"
+  ).length;
+  const unsatisfiedRequirements = supportItems.filter(
+    (item) =>
+      (item.type === "Dependency" || item.type === "Prerequisite") &&
+      item.status !== "Satisfied"
+  ).length;
 
   return {
     totalGoals: normalized.length,
@@ -433,6 +635,9 @@ export function summarizeGoals(goals: Goal[]): GoalOverviewSummary {
     archivedGoals: normalized.filter((goal) => goal.status === "Archived").length,
     totalMilestones: measurableMilestones.length,
     completedMilestones,
+    openBlockers,
+    activeRecurringActions,
+    unsatisfiedRequirements,
     overallProgressPercent:
       measurableMilestones.length > 0
         ? Math.round((completedMilestones / measurableMilestones.length) * 100)
@@ -441,4 +646,11 @@ export function summarizeGoals(goals: Goal[]): GoalOverviewSummary {
       .filter((goal) => activeGoalStatuses.has(goal.status) && goal.currentStep)
       .map((goal) => goal.currentStep as string),
   };
+}
+
+export function getGoalSupportItemsByType(
+  goal: Goal,
+  type: GoalSupportItemType
+) {
+  return goal.supportItems.filter((item) => item.type === type);
 }
