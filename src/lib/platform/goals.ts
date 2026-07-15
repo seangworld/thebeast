@@ -3,6 +3,7 @@ import type {
   BeastGoal as BeastGoalRow,
   BeastGoalContribution as BeastGoalContributionRow,
   BeastGoalMilestone as BeastGoalMilestoneRow,
+  BeastGoalRecommendation as BeastGoalRecommendationRow,
   BeastGoalReference as BeastGoalReferenceRow,
   BeastGoalSupportItem as BeastGoalSupportItemRow,
 } from "@/lib/types/database";
@@ -73,6 +74,20 @@ export type GoalContributionType =
 
 export type GoalContributionStatus = "Active" | "Dismissed" | "Archived";
 
+export type GoalRecommendationType =
+  | "Next Action"
+  | "Review"
+  | "Milestone"
+  | "Risk"
+  | "Opportunity";
+
+export type GoalRecommendationStatus =
+  | "Suggested"
+  | "Accepted"
+  | "Dismissed"
+  | "Completed"
+  | "Archived";
+
 export type GoalMilestone = {
   id: string;
   ownerId: string;
@@ -133,6 +148,23 @@ export type GoalContribution = {
   updatedAt: string;
 };
 
+export type GoalRecommendation = {
+  id: string;
+  ownerId: string;
+  goalId: string;
+  sourceModule?: PlatformModule;
+  type: GoalRecommendationType;
+  status: GoalRecommendationStatus;
+  title: string;
+  reason: string;
+  actionLabel?: string;
+  actionUrl?: string;
+  reviewDueDate?: string;
+  dismissedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type Goal = {
   id: string;
   ownerId: string;
@@ -147,6 +179,7 @@ export type Goal = {
   supportItems: GoalSupportItem[];
   references: GoalReference[];
   contributions: GoalContribution[];
+  recommendations: GoalRecommendation[];
   createdAt: string;
   updatedAt: string;
 };
@@ -177,6 +210,9 @@ export type GoalOverviewSummary = {
   crossModuleContributions: number;
   contributingModules: PlatformModule[];
   contributionRecommendations: number;
+  activeRecommendations: number;
+  dismissedRecommendations: number;
+  reviewDueRecommendations: number;
   overallProgressPercent: number | null;
   nextSteps: string[];
 };
@@ -209,6 +245,7 @@ export type BeastGoalDataClient = {
             | BeastGoalSupportItemRow[]
             | BeastGoalReferenceRow[]
             | BeastGoalContributionRow[]
+            | BeastGoalRecommendationRow[]
             | null;
           error: { message?: string } | null;
         }>;
@@ -251,6 +288,7 @@ export const goalMilestoneDatabaseTableName = "beast_goal_milestones";
 export const goalSupportItemDatabaseTableName = "beast_goal_support_items";
 export const goalReferenceDatabaseTableName = "beast_goal_references";
 export const goalContributionDatabaseTableName = "beast_goal_contributions";
+export const goalRecommendationDatabaseTableName = "beast_goal_recommendations";
 
 export const goalDatabaseColumns: GoalDatabaseColumn[] = [
   { name: "id", type: "uuid", required: true },
@@ -380,6 +418,39 @@ export const goalContributionDatabaseColumns: GoalDatabaseColumn[] = [
   { name: "updated_at", type: "timestamptz", required: true },
 ];
 
+export const goalRecommendationTypes: GoalRecommendationType[] = [
+  "Next Action",
+  "Review",
+  "Milestone",
+  "Risk",
+  "Opportunity",
+];
+
+export const goalRecommendationStatuses: GoalRecommendationStatus[] = [
+  "Suggested",
+  "Accepted",
+  "Dismissed",
+  "Completed",
+  "Archived",
+];
+
+export const goalRecommendationDatabaseColumns: GoalDatabaseColumn[] = [
+  { name: "id", type: "uuid", required: true },
+  { name: "owner_id", type: "uuid", required: true },
+  { name: "goal_id", type: "uuid", required: true },
+  { name: "source_module", type: "text", required: false },
+  { name: "recommendation_type", type: "text", required: true },
+  { name: "status", type: "text", required: true },
+  { name: "title", type: "text", required: true },
+  { name: "reason", type: "text", required: true },
+  { name: "action_label", type: "text", required: false },
+  { name: "action_url", type: "text", required: false },
+  { name: "review_due_date", type: "date", required: false },
+  { name: "dismissed_at", type: "timestamptz", required: false },
+  { name: "created_at", type: "timestamptz", required: true },
+  { name: "updated_at", type: "timestamptz", required: true },
+];
+
 export const goalOwnershipRules = [
   "Goals belong to BeastOS as shared Personal Hub data.",
   "Goals are outcomes, not module-owned task lists.",
@@ -387,6 +458,7 @@ export const goalOwnershipRules = [
   "Dependencies, prerequisites, blockers, and recurring actions attach to BeastOS-owned goals and plans.",
   "Notes, documents, events, module records, Today items, and Calendar items link as references without duplicating goal ownership.",
   "Modules may contribute evidence, progress, milestones, recommendations, and reviews without owning shared goals.",
+  "Recommendations must include a plain-language reason and can be dismissed without deleting history.",
   "BeastGoals remains superseded as a standalone customer-facing module.",
 ];
 
@@ -404,6 +476,7 @@ export const mockGoals: Goal[] = [
     supportItems: [],
     references: [],
     contributions: [],
+    recommendations: [],
     milestones: [
       {
         id: "milestone-security-basics",
@@ -443,6 +516,7 @@ export const mockGoals: Goal[] = [
     supportItems: [],
     references: [],
     contributions: [],
+    recommendations: [],
     createdAt: "2026-07-14T00:00:00.000Z",
     updatedAt: "2026-07-14T00:00:00.000Z",
   },
@@ -469,6 +543,7 @@ export function mapGoalRow(row: BeastGoalRow): Goal {
     supportItems: [],
     references: [],
     contributions: [],
+    recommendations: [],
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   });
@@ -630,6 +705,49 @@ export function mapGoalContributionRow(
   };
 }
 
+export function isGoalRecommendationType(
+  type: unknown
+): type is GoalRecommendationType {
+  return goalRecommendationTypes.includes(type as GoalRecommendationType);
+}
+
+export function isGoalRecommendationStatus(
+  status: unknown
+): status is GoalRecommendationStatus {
+  return goalRecommendationStatuses.includes(status as GoalRecommendationStatus);
+}
+
+export function mapGoalRecommendationRow(
+  row: BeastGoalRecommendationRow
+): GoalRecommendation {
+  if (!isGoalRecommendationType(row.recommendation_type)) {
+    throw new Error(
+      `Unsupported goal recommendation type: ${row.recommendation_type}`
+    );
+  }
+
+  if (!isGoalRecommendationStatus(row.status)) {
+    throw new Error(`Unsupported goal recommendation status: ${row.status}`);
+  }
+
+  return {
+    id: row.id,
+    ownerId: row.owner_id,
+    goalId: row.goal_id,
+    sourceModule: toPlatformModule(row.source_module),
+    type: row.recommendation_type,
+    status: row.status,
+    title: row.title,
+    reason: row.reason,
+    actionLabel: row.action_label ?? undefined,
+    actionUrl: row.action_url ?? undefined,
+    reviewDueDate: row.review_due_date ?? undefined,
+    dismissedAt: row.dismissed_at ?? undefined,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
 export async function loadUserGoals(
   client: BeastGoalDataClient
 ): Promise<GoalLoadResult> {
@@ -721,10 +839,24 @@ export async function loadUserGoals(
       : ((contributionResult.data ?? []) as BeastGoalContributionRow[]).map(
           mapGoalContributionRow
         );
+    const recommendationResult = await client
+      .from(goalRecommendationDatabaseTableName)
+      .select(
+        "id, owner_id, goal_id, source_module, recommendation_type, status, title, reason, action_label, action_url, review_due_date, dismissed_at, created_at, updated_at"
+      )
+      .eq("owner_id", userData.user.id)
+      .order("created_at", { ascending: false });
+
+    const recommendations = recommendationResult.error
+      ? []
+      : ((recommendationResult.data ?? []) as BeastGoalRecommendationRow[]).map(
+          mapGoalRecommendationRow
+        );
     const milestonesByGoal = new Map<string, GoalMilestone[]>();
     const supportItemsByGoal = new Map<string, GoalSupportItem[]>();
     const referencesByGoal = new Map<string, GoalReference[]>();
     const contributionsByGoal = new Map<string, GoalContribution[]>();
+    const recommendationsByGoal = new Map<string, GoalRecommendation[]>();
 
     milestones.forEach((milestone) => {
       milestonesByGoal.set(milestone.goalId, [
@@ -750,6 +882,12 @@ export async function loadUserGoals(
         contribution,
       ]);
     });
+    recommendations.forEach((recommendation) => {
+      recommendationsByGoal.set(recommendation.goalId, [
+        ...(recommendationsByGoal.get(recommendation.goalId) || []),
+        recommendation,
+      ]);
+    });
 
     return {
       goals: ((data ?? []) as BeastGoalRow[]).map((row) => {
@@ -765,6 +903,9 @@ export async function loadUserGoals(
           contributions: [...(contributionsByGoal.get(goal.id) || [])].sort(
             (left, right) => right.occurredAt.localeCompare(left.occurredAt)
           ),
+          recommendations: [
+            ...(recommendationsByGoal.get(goal.id) || []),
+          ].sort((left, right) => right.createdAt.localeCompare(left.createdAt)),
         };
       }),
       status: "ready",
@@ -863,6 +1004,28 @@ export function buildGoal(goal: Goal): Goal {
     }
   });
 
+  goal.recommendations.forEach((recommendation) => {
+    if (!recommendation.title.trim()) {
+      throw new Error("Goal recommendation title is required.");
+    }
+
+    if (!recommendation.reason.trim()) {
+      throw new Error("Goal recommendation reason is required.");
+    }
+
+    if (!isGoalRecommendationType(recommendation.type)) {
+      throw new Error(
+        `Unsupported goal recommendation type: ${recommendation.type}`
+      );
+    }
+
+    if (!isGoalRecommendationStatus(recommendation.status)) {
+      throw new Error(
+        `Unsupported goal recommendation status: ${recommendation.status}`
+      );
+    }
+  });
+
   return {
     ...goal,
     milestones: [...goal.milestones].sort(
@@ -876,6 +1039,9 @@ export function buildGoal(goal: Goal): Goal {
     ),
     contributions: [...goal.contributions].sort((left, right) =>
       right.occurredAt.localeCompare(left.occurredAt)
+    ),
+    recommendations: [...goal.recommendations].sort((left, right) =>
+      right.createdAt.localeCompare(left.createdAt)
     ),
   };
 }
@@ -925,6 +1091,12 @@ export function summarizeGoals(goals: Goal[]): GoalOverviewSummary {
   const contributingModules = Array.from(
     new Set(contributions.map((contribution) => contribution.sourceModule))
   ).sort();
+  const recommendations = normalized.flatMap((goal) => goal.recommendations);
+  const activeRecommendations = recommendations.filter(
+    (recommendation) =>
+      recommendation.status === "Suggested" ||
+      recommendation.status === "Accepted"
+  );
   const openBlockers = supportItems.filter(
     (item) => item.type === "Blocker" && item.status !== "Resolved"
   ).length;
@@ -969,6 +1141,13 @@ export function summarizeGoals(goals: Goal[]): GoalOverviewSummary {
     contributionRecommendations: contributions.filter(
       (contribution) => contribution.type === "Recommendation"
     ).length,
+    activeRecommendations: activeRecommendations.length,
+    dismissedRecommendations: recommendations.filter(
+      (recommendation) => recommendation.status === "Dismissed"
+    ).length,
+    reviewDueRecommendations: activeRecommendations.filter(
+      (recommendation) => recommendation.reviewDueDate
+    ).length,
     overallProgressPercent:
       measurableMilestones.length > 0
         ? Math.round((completedMilestones / measurableMilestones.length) * 100)
@@ -999,5 +1178,13 @@ export function getGoalContributionsByModule(
   return goal.contributions.filter(
     (contribution) =>
       contribution.sourceModule === module && contribution.status === "Active"
+  );
+}
+
+export function getActiveGoalRecommendations(goal: Goal) {
+  return goal.recommendations.filter(
+    (recommendation) =>
+      recommendation.status === "Suggested" ||
+      recommendation.status === "Accepted"
   );
 }

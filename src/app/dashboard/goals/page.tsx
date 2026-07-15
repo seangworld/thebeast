@@ -10,8 +10,10 @@ import {
   type GoalContribution,
   type GoalLoadResult,
   type GoalReference,
+  type GoalRecommendation,
   type GoalSupportItem,
   getCurrentGoalMilestone,
+  getActiveGoalRecommendations,
   getGoalContributionsByModule,
   getGoalProgressPercent,
   getGoalReferencesByType,
@@ -21,6 +23,7 @@ import {
   goalMilestoneDatabaseTableName,
   goalOwnershipRules,
   goalReferenceDatabaseTableName,
+  goalRecommendationDatabaseTableName,
   goalSupportItemDatabaseTableName,
   loadUserGoals,
   summarizeGoals,
@@ -119,6 +122,37 @@ function GoalContributionPill({
   );
 }
 
+function GoalRecommendationPill({
+  recommendation,
+}: {
+  recommendation: GoalRecommendation;
+}) {
+  return (
+    <div className="rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="text-sm font-black text-white">
+          {recommendation.title}
+        </span>
+        <span className="rounded-full border border-[#2a3242] px-2.5 py-1 text-xs font-black text-[#c7cfdb]">
+          {recommendation.status}
+        </span>
+      </div>
+      <p className="mt-2 text-xs leading-5 text-[#9aa7b8]">
+        {recommendation.reason}
+      </p>
+      <div className="mt-2 flex flex-wrap gap-2 text-xs font-bold text-[#7f8da3]">
+        <span>{recommendation.type}</span>
+        {recommendation.sourceModule ? (
+          <span>{recommendation.sourceModule}</span>
+        ) : null}
+        {recommendation.reviewDueDate ? (
+          <span>Review {recommendation.reviewDueDate}</span>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 async function getGoalLoadResult(): Promise<GoalLoadResult> {
   try {
     return await loadUserGoals(
@@ -165,6 +199,7 @@ export default async function GoalsOverviewPage() {
             ["Requirements", String(summary.unsatisfiedRequirements)],
             ["Linked References", String(summary.linkedReferences)],
             ["Contributions", String(summary.crossModuleContributions)],
+            ["Recommendations", String(summary.activeRecommendations)],
           ].map(([label, value]) => (
             <DashboardCard key={label} accent="goals">
               <div className="text-xs font-black uppercase text-[#7f8da3]">
@@ -307,6 +342,27 @@ export default async function GoalsOverviewPage() {
                       </div>
                     )}
                   </div>
+                  <div className="mt-4 rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
+                    <div className="text-xs font-black uppercase text-[#7f8da3]">
+                      Recommendations And Review
+                    </div>
+                    {getActiveGoalRecommendations(goal).length > 0 ? (
+                      <div className="mt-3 grid gap-3 md:grid-cols-2">
+                        {getActiveGoalRecommendations(goal).map(
+                          (recommendation) => (
+                            <GoalRecommendationPill
+                              key={recommendation.id}
+                              recommendation={recommendation}
+                            />
+                          )
+                        )}
+                      </div>
+                    ) : (
+                      <div className="mt-2 text-sm font-semibold text-[#dbe3ef]">
+                        No active recommendations are attached yet.
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))
             ) : (
@@ -350,7 +406,7 @@ export default async function GoalsOverviewPage() {
             <SectionHeader
               eyebrow="Database"
               title={`${goalDatabaseTableName} + ${goalMilestoneDatabaseTableName}`}
-              description={`BeastOS stores user-owned goal outcomes, milestone progress, support items in ${goalSupportItemDatabaseTableName}, references in ${goalReferenceDatabaseTableName}, and module contributions in ${goalContributionDatabaseTableName} without duplicating ownership.`}
+              description={`BeastOS stores user-owned goal outcomes, milestone progress, support items in ${goalSupportItemDatabaseTableName}, references in ${goalReferenceDatabaseTableName}, module contributions in ${goalContributionDatabaseTableName}, and recommendations in ${goalRecommendationDatabaseTableName} without duplicating ownership.`}
             />
             <div className="mt-5 space-y-2 text-sm text-[#c7cfdb]">
               {goalOwnershipRules.map((rule) => (
@@ -364,9 +420,9 @@ export default async function GoalsOverviewPage() {
 
         <DashboardCard accent="goals">
           <SectionHeader
-            eyebrow="BO-12"
-            title="Support items and linked references"
-            description="These counts come only from user-owned support, reference, and contribution records attached to goals. They do not create module-owned goal copies."
+            eyebrow="BO-14"
+            title="Support, references, contributions, and review"
+            description="These counts come only from user-owned support, reference, contribution, and recommendation records attached to goals. They do not create module-owned goal copies."
           />
           <div className="mt-5 grid gap-3 md:grid-cols-4">
             {[
@@ -382,6 +438,9 @@ export default async function GoalsOverviewPage() {
               ["Money Contributions", goals.flatMap((goal) => getGoalContributionsByModule(goal, "money")).length],
               ["Recommendations", String(summary.contributionRecommendations)],
               ["Contributing Modules", summary.contributingModules.length],
+              ["Active Reviews", String(summary.activeRecommendations)],
+              ["Dismissed", String(summary.dismissedRecommendations)],
+              ["Review Due", String(summary.reviewDueRecommendations)],
             ].map(([label, value]) => (
               <div key={label} className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
                 <div className="text-xs font-black uppercase text-[#7f8da3]">

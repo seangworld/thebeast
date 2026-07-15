@@ -25,6 +25,10 @@ import {
   goalReferenceDatabaseTableName,
   goalReferenceStatuses,
   goalReferenceTypes,
+  goalRecommendationDatabaseColumns,
+  goalRecommendationDatabaseTableName,
+  goalRecommendationStatuses,
+  goalRecommendationTypes,
   goalSupportItemDatabaseColumns,
   goalSupportItemDatabaseTableName,
   goalSupportItemStatuses,
@@ -41,6 +45,7 @@ import type {
   BeastGoal,
   BeastGoalContribution,
   BeastGoalMilestone,
+  BeastGoalRecommendation,
   BeastGoalReference,
   BeastGoalSupportItem,
 } from "../src/lib/types/database";
@@ -363,6 +368,43 @@ test("BG-001 creates a BeastOS-owned Goal model and database contract", () => {
       ["updated_at", true],
     ]
   );
+  assert.equal(goalRecommendationDatabaseTableName, "beast_goal_recommendations");
+  assert.deepEqual(goalRecommendationTypes, [
+    "Next Action",
+    "Review",
+    "Milestone",
+    "Risk",
+    "Opportunity",
+  ]);
+  assert.deepEqual(goalRecommendationStatuses, [
+    "Suggested",
+    "Accepted",
+    "Dismissed",
+    "Completed",
+    "Archived",
+  ]);
+  assert.deepEqual(
+    goalRecommendationDatabaseColumns.map((column) => [
+      column.name,
+      column.required,
+    ]),
+    [
+      ["id", true],
+      ["owner_id", true],
+      ["goal_id", true],
+      ["source_module", false],
+      ["recommendation_type", true],
+      ["status", true],
+      ["title", true],
+      ["reason", true],
+      ["action_label", false],
+      ["action_url", false],
+      ["review_due_date", false],
+      ["dismissed_at", false],
+      ["created_at", true],
+      ["updated_at", true],
+    ]
+  );
   assert.deepEqual(
     goalMilestoneDatabaseColumns.map((column) => [column.name, column.required]),
     [
@@ -409,6 +451,10 @@ test("BG-001 Goals overview route stays BeastOS-owned", () => {
     "migrations/20260715_add_beast_goal_contributions.sql",
     "utf8"
   );
+  const recommendationMigration = readFileSync(
+    "migrations/20260715_add_beast_goal_recommendations.sql",
+    "utf8"
+  );
   const summary = summarizeGoals(mockGoals);
 
   assert.equal(summary.totalGoals, 2);
@@ -420,6 +466,7 @@ test("BG-001 Goals overview route stays BeastOS-owned", () => {
   assert.equal(summary.unsatisfiedRequirements, 0);
   assert.equal(summary.linkedReferences, 0);
   assert.equal(summary.crossModuleContributions, 0);
+  assert.equal(summary.activeRecommendations, 0);
   assert.equal(summary.overallProgressPercent, 50);
   assert.deepEqual(summary.nextSteps, [
     "Continue the next Mentor mission.",
@@ -435,11 +482,16 @@ test("BG-001 Goals overview route stays BeastOS-owned", () => {
   assert.match(goalsPage, /goalSupportItemDatabaseTableName/);
   assert.match(goalsPage, /goalReferenceDatabaseTableName/);
   assert.match(goalsPage, /goalContributionDatabaseTableName/);
+  assert.match(goalsPage, /goalRecommendationDatabaseTableName/);
   assert.match(goalsPage, /Milestone Progress/);
   assert.match(goalsPage, /Requirements And Routines/);
-  assert.match(goalsPage, /Support items and linked references/);
+  assert.match(
+    goalsPage,
+    /Support, references, contributions, and review/
+  );
   assert.match(goalsPage, /Linked References/);
   assert.match(goalsPage, /Module Contributions/);
+  assert.match(goalsPage, /Recommendations And Review/);
   assert.doesNotMatch(goalsPage, /mockGoals/);
   assert.doesNotMatch(goalsPage, /Earn Security\+/);
   assert.doesNotMatch(goalsPage, /Become debt free/);
@@ -484,6 +536,18 @@ test("BG-001 Goals overview route stays BeastOS-owned", () => {
   );
   assert.match(contributionMigration, /enable row level security/);
   assert.match(contributionMigration, /auth\.uid\(\) = owner_id/);
+  assert.match(recommendationMigration, /create table if not exists public\.beast_goal_recommendations/);
+  assert.match(
+    recommendationMigration,
+    /foreign key \(goal_id, owner_id\)\s+references public\.beast_goals \(id, owner_id\) on delete cascade/
+  );
+  assert.match(
+    recommendationMigration,
+    /recommendation_type in \('Next Action', 'Review', 'Milestone', 'Risk', 'Opportunity'\)/
+  );
+  assert.match(recommendationMigration, /status = 'Dismissed' and dismissed_at is not null/);
+  assert.match(recommendationMigration, /enable row level security/);
+  assert.match(recommendationMigration, /auth\.uid\(\) = owner_id/);
   assert.throws(
     () =>
       buildGoal({
@@ -508,6 +572,8 @@ function createGoalClient(
     referenceQueryError?: boolean;
     contributionRows?: BeastGoalContribution[] | null;
     contributionQueryError?: boolean;
+    recommendationRows?: BeastGoalRecommendation[] | null;
+    recommendationQueryError?: boolean;
   } = {}
 ): BeastGoalDataClient {
   return {
@@ -525,7 +591,8 @@ function createGoalClient(
           table === goalMilestoneDatabaseTableName ||
           table === goalSupportItemDatabaseTableName ||
           table === goalReferenceDatabaseTableName ||
-          table === goalContributionDatabaseTableName
+          table === goalContributionDatabaseTableName ||
+          table === goalRecommendationDatabaseTableName
       );
 
       return {
@@ -550,6 +617,9 @@ function createGoalClient(
                   } else if (table === goalContributionDatabaseTableName) {
                     assert.equal(columnName, "occurred_at");
                     assert.deepEqual(orderOptions, { ascending: false });
+                  } else if (table === goalRecommendationDatabaseTableName) {
+                    assert.equal(columnName, "created_at");
+                    assert.deepEqual(orderOptions, { ascending: false });
                   } else {
                     assert.equal(table, goalReferenceDatabaseTableName);
                     assert.equal(columnName, "created_at");
@@ -567,6 +637,9 @@ function createGoalClient(
                       }
                       if (table === goalContributionDatabaseTableName) {
                         return options.contributionRows ?? [];
+                      }
+                      if (table === goalRecommendationDatabaseTableName) {
+                        return options.recommendationRows ?? [];
                       }
                       return options.referenceRows ?? [];
                     })(),
@@ -592,6 +665,12 @@ function createGoalClient(
                       if (table === goalContributionDatabaseTableName) {
                         return options.contributionQueryError
                           ? { message: "Contributions unavailable" }
+                          : null;
+                      }
+
+                      if (table === goalRecommendationDatabaseTableName) {
+                        return options.recommendationQueryError
+                          ? { message: "Recommendations unavailable" }
                           : null;
                       }
 
@@ -738,6 +817,40 @@ test("BG-001 Goals loader uses only signed-in user records", async () => {
             updated_at: "2026-07-15T03:00:00.000Z",
           },
         ],
+        recommendationRows: [
+          {
+            id: "real-recommendation-review",
+            owner_id: "member-real",
+            goal_id: "real-goal",
+            source_module: "beastos",
+            recommendation_type: "Review",
+            status: "Suggested",
+            title: "Review this goal this week",
+            reason: "This goal has new module evidence, so it is ready for review.",
+            action_label: "Review goal",
+            action_url: "/dashboard/goals",
+            review_due_date: "2026-07-20",
+            dismissed_at: null,
+            created_at: "2026-07-15T04:00:00.000Z",
+            updated_at: "2026-07-15T04:00:00.000Z",
+          },
+          {
+            id: "real-recommendation-dismissed",
+            owner_id: "member-real",
+            goal_id: "real-goal",
+            source_module: "money",
+            recommendation_type: "Opportunity",
+            status: "Dismissed",
+            title: "Consider a savings boost",
+            reason: "BeastMoney found extra capacity, but the user dismissed it.",
+            action_label: null,
+            action_url: null,
+            review_due_date: null,
+            dismissed_at: "2026-07-15T05:00:00.000Z",
+            created_at: "2026-07-15T03:30:00.000Z",
+            updated_at: "2026-07-15T05:00:00.000Z",
+          },
+        ],
       }
     )
   );
@@ -755,6 +868,9 @@ test("BG-001 Goals loader uses only signed-in user records", async () => {
   assert.equal(result.goals[0].contributions.length, 2);
   assert.equal(result.goals[0].contributions[0].title, "Review savings allocation");
   assert.equal(result.goals[0].contributions[1].title, "Completed a learning checkpoint");
+  assert.equal(result.goals[0].recommendations.length, 2);
+  assert.equal(result.goals[0].recommendations[0].title, "Review this goal this week");
+  assert.equal(result.goals[0].recommendations[1].title, "Consider a savings boost");
   assert.equal(summarizeGoals(result.goals).openBlockers, 1);
   assert.equal(summarizeGoals(result.goals).activeRecurringActions, 1);
   assert.equal(summarizeGoals(result.goals).linkedReferences, 2);
@@ -766,6 +882,9 @@ test("BG-001 Goals loader uses only signed-in user records", async () => {
     "money",
   ]);
   assert.equal(summarizeGoals(result.goals).contributionRecommendations, 1);
+  assert.equal(summarizeGoals(result.goals).activeRecommendations, 1);
+  assert.equal(summarizeGoals(result.goals).dismissedRecommendations, 1);
+  assert.equal(summarizeGoals(result.goals).reviewDueRecommendations, 1);
   assert.notEqual(result.goals[0].title, mockGoals[0].title);
 });
 
@@ -863,4 +982,32 @@ test("BO-13 Goals loader tolerates unavailable contribution records", async () =
   assert.equal(result.goals.length, 1);
   assert.equal(result.goals[0].contributions.length, 0);
   assert.equal(summarizeGoals(result.goals).crossModuleContributions, 0);
+});
+
+test("BO-14 Goals loader tolerates unavailable recommendation records", async () => {
+  const result = await loadUserGoals(
+    createGoalClient(
+      [
+        {
+          id: "real-goal",
+          owner_id: "member-real",
+          title: "Goal without recommendation table",
+          category: "Personal",
+          status: "Active",
+          summary: null,
+          target_date: null,
+          current_step: null,
+          source_module: null,
+          created_at: "2026-07-15T00:00:00.000Z",
+          updated_at: "2026-07-15T00:00:00.000Z",
+        },
+      ],
+      { userId: "member-real", recommendationQueryError: true }
+    )
+  );
+
+  assert.equal(result.status, "ready");
+  assert.equal(result.goals.length, 1);
+  assert.equal(result.goals[0].recommendations.length, 0);
+  assert.equal(summarizeGoals(result.goals).activeRecommendations, 0);
 });

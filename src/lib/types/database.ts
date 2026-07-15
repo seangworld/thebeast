@@ -194,6 +194,37 @@ export type BeastGoalContribution = {
     updated_at: string
   }
 
+export type BeastGoalRecommendationType =
+  | "Next Action"
+  | "Review"
+  | "Milestone"
+  | "Risk"
+  | "Opportunity"
+
+export type BeastGoalRecommendationStatus =
+  | "Suggested"
+  | "Accepted"
+  | "Dismissed"
+  | "Completed"
+  | "Archived"
+
+export type BeastGoalRecommendation = {
+    id: string
+    owner_id: string
+    goal_id: string
+    source_module?: string | null
+    recommendation_type: BeastGoalRecommendationType
+    status: BeastGoalRecommendationStatus
+    title: string
+    reason: string
+    action_label?: string | null
+    action_url?: string | null
+    review_due_date?: string | null
+    dismissed_at?: string | null
+    created_at: string
+    updated_at: string
+  }
+
 export type BeastDocumentStatus = "Uploaded" | "Ready" | "Archived" | "Deleted"
 
 export type BeastDocumentCategory =
