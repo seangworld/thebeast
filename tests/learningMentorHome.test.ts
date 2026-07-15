@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { buildMentorHomeMission } from "../src/lib/learning/mentorHome";
 import { buildGuidedLearningSession } from "../src/lib/learning/guidedSession";
 import {
@@ -414,4 +415,41 @@ test("weekly review and meaningful achievements avoid fake trends", () => {
   assert.match(emptyReview.nextWeekRecommendation, /Complete one guided session/);
   assert.equal(new Set(achievements.map((achievement) => achievement.id)).size, achievements.length);
   assert.equal(achievements.length > 0, true);
+});
+
+test("BL-46 keeps Mentor Home accessible on mobile and keyboard paths", () => {
+  const mentorHomeSource = readFileSync("src/app/dashboard/learning/page.tsx", "utf8");
+  const globalCss = readFileSync("src/app/globals.css", "utf8");
+
+  assert.match(mentorHomeSource, /className="beast-skip-link"/);
+  assert.match(mentorHomeSource, /href="#mentor-session"/);
+  assert.match(mentorHomeSource, /role="progressbar"/);
+  assert.match(mentorHomeSource, /aria-valuenow=\{clampedValue\}/);
+  assert.match(mentorHomeSource, /aria-label="Mentor supporting context"/);
+  assert.match(globalCss, /beast-skip-link/);
+  assert.match(globalCss, /focus-visible/);
+  assert.match(globalCss, /min-height: 44px/);
+});
+
+test("BL-46 keeps guided sessions accessible on mobile and keyboard paths", () => {
+  const sessionSource = readFileSync(
+    "src/app/dashboard/learning/activities/[activityId]/page.tsx",
+    "utf8"
+  );
+  const engineSource = readFileSync(
+    "src/app/dashboard/learning/activities/LessonEngine.tsx",
+    "utf8"
+  );
+
+  assert.match(sessionSource, /href="#active-learning-conversation"/);
+  assert.match(sessionSource, /role="status" aria-live="polite"/);
+  assert.match(sessionSource, /role="radiogroup"/);
+  assert.match(sessionSource, /role="radio"/);
+  assert.match(engineSource, /role="log"/);
+  assert.match(engineSource, /aria-relevant="additions text"/);
+  assert.match(engineSource, /onSubmit=\{\(event\) =>/);
+  assert.match(engineSource, /type="submit"/);
+  assert.match(engineSource, /Enter to send/);
+  assert.match(engineSource, /min-h-\[70svh\]/);
+  assert.match(engineSource, /aria-label="Mentor session snapshot"/);
 });

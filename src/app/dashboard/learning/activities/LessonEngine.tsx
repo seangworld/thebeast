@@ -412,8 +412,10 @@ export function LessonEngine({
       <DashboardCard accent="learning">
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px] xl:grid-cols-[minmax(0,1fr)_320px]">
           <section
-            className="flex min-h-[680px] flex-col overflow-hidden rounded-2xl bg-[#0b1020]"
+            id="active-learning-conversation"
+            className="flex min-h-[70svh] flex-col overflow-hidden rounded-2xl bg-[#0b1020] lg:min-h-[680px]"
             aria-label="Conversation-first learning session"
+            aria-labelledby={`lesson-conversation-title-${activity.id}`}
           >
             <header className="border-b border-white/10 px-4 py-3 sm:px-5">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -421,7 +423,7 @@ export function LessonEngine({
                   <p className="text-xs font-black uppercase tracking-wide text-indigo-100">
                     Active learning conversation
                   </p>
-                  <h2 className="mt-1 text-xl font-black leading-tight text-white sm:text-2xl">
+                  <h2 id={`lesson-conversation-title-${activity.id}`} className="mt-1 text-xl font-black leading-tight text-white sm:text-2xl">
                     {engine.lesson.title}
                   </h2>
                   <p className="mt-1 text-sm font-semibold text-[#9aa7b8]">
@@ -435,6 +437,10 @@ export function LessonEngine({
             <div
               ref={conversationScrollRef}
               className="flex-1 space-y-4 overflow-y-auto px-4 py-5 sm:px-5"
+              role="log"
+              aria-label="Mentor Tutor and learner messages"
+              aria-live="polite"
+              aria-relevant="additions text"
             >
               {messages.map((message) => (
                 <div
@@ -456,8 +462,14 @@ export function LessonEngine({
               ))}
             </div>
 
-            <div className="sticky bottom-0 border-t border-white/10 bg-[#0b1020]/95 p-3 backdrop-blur sm:p-4">
-              <div className="mb-3 flex gap-2 overflow-x-auto pb-1">
+            <form
+              className="sticky bottom-0 border-t border-white/10 bg-[#0b1020]/95 p-3 backdrop-blur sm:p-4"
+              onSubmit={(event) => {
+                event.preventDefault();
+                sendLearnerMessage();
+              }}
+            >
+              <div className="mb-3 flex gap-2 overflow-x-auto pb-1" aria-label="Quick learning prompts">
                 {[
                   "Teach simply",
                   "Check me",
@@ -467,8 +479,9 @@ export function LessonEngine({
                   <button
                     key={prompt}
                     type="button"
-                    className="shrink-0 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-black text-[#dbe3ef] transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="beast-touch-chip shrink-0 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-black text-[#dbe3ef] transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
                     disabled={completed || isResponding}
+                    aria-label={`${prompt} prompt`}
                     onClick={() =>
                       sendLearnerMessage(
                         prompt === "Teach simply"
@@ -498,16 +511,19 @@ export function LessonEngine({
                   placeholder="Ask a question, try an answer, or explain what you think."
                   disabled={completed}
                   onKeyDown={handleReplyKeyDown}
+                  aria-describedby={`lesson-input-help-${activity.id} lesson-save-status-${activity.id}`}
                 />
               </label>
               <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-xs font-semibold text-[#7f8da3]">
+                <p id={`lesson-save-status-${activity.id}`} className="text-xs font-semibold text-[#7f8da3]" role="status" aria-live="polite">
                   {saveStatusLabel(saving, completed, tutorReadyToComplete)}
+                </p>
+                <p id={`lesson-input-help-${activity.id}`} className="sr-only">
+                  Press Enter to send. Press Shift Enter for a new line.
                 </p>
                 <div className="flex flex-wrap gap-2">
                   <button
-                    type="button"
-                    onClick={() => sendLearnerMessage()}
+                    type="submit"
                     className="beast-button"
                     disabled={completed || isResponding || !learnerReply.trim()}
                   >
@@ -523,10 +539,10 @@ export function LessonEngine({
                   </button>
                 </div>
               </div>
-            </div>
+            </form>
           </section>
 
-          <aside className="grid content-start gap-3 rounded-2xl border border-white/10 bg-[#111827] p-4 lg:sticky lg:top-20">
+          <aside className="grid content-start gap-3 rounded-2xl border border-white/10 bg-[#111827] p-4 lg:sticky lg:top-20" aria-label="Mentor session snapshot">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <div className="text-xs font-black uppercase text-[#7f8da3]">

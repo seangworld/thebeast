@@ -245,11 +245,20 @@ function buildStudySessionCommandFromSession(
 }
 
 function ProgressBar({ value }: { value: number }) {
+  const clampedValue = Math.min(Math.max(value, 0), 100);
+
   return (
-    <div className="mt-3 h-2 rounded-full bg-[#0f1419]">
+    <div
+      className="mt-3 h-2 rounded-full bg-[#0f1419]"
+      role="progressbar"
+      aria-label={`Learning goal progress ${clampedValue}%`}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={clampedValue}
+    >
       <div
         className="h-full rounded-full bg-[#818cf8]"
-        style={{ width: `${Math.min(Math.max(value, 0), 100)}%` }}
+        style={{ width: `${clampedValue}%` }}
       />
     </div>
   );
@@ -299,6 +308,7 @@ function MentorHome({
         <section
           className="grid content-between gap-5 rounded-2xl border border-indigo-300/35 bg-[#0b1020] p-4 sm:p-6"
           aria-label="BeastLearning Mentor home mission"
+          aria-labelledby="mentor-home-mission-title"
         >
           <div className="grid gap-4">
             <div className="rounded-2xl border border-indigo-300/30 bg-indigo-300/10 p-4 sm:p-5">
@@ -319,7 +329,7 @@ function MentorHome({
                   <div className="text-xs font-black uppercase text-cyan-100">
                     {mission.missionLabel}
                   </div>
-                  <h2 className="mt-2 text-2xl font-black leading-tight text-white sm:text-3xl">
+                  <h2 id="mentor-home-mission-title" className="mt-2 text-2xl font-black leading-tight text-white sm:text-3xl">
                     {mission.missionTitle}
                   </h2>
                 </div>
@@ -414,7 +424,7 @@ function MentorHome({
           </div>
         </section>
 
-        <aside className="grid content-start gap-3">
+        <aside className="grid content-start gap-3" aria-label="Mentor supporting context">
           <div className="rounded-2xl border border-[#2a3242] bg-[#111827] p-4">
             <div className="text-xs font-black uppercase text-[#7f8da3]">
               Why this mission
@@ -869,7 +879,10 @@ export default async function LearningPage() {
   });
 
   return (
-    <main className="beast-page">
+    <main id="learning-main-content" className="beast-page">
+      <a href="#mentor-session" className="beast-skip-link">
+        Skip to Mentor mission
+      </a>
       <div className="beast-container space-y-8">
         <section className="beast-page-header">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">

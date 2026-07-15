@@ -378,7 +378,10 @@ export default function LearningActivityRunnerPage() {
       : null;
 
   return (
-    <main className="beast-page">
+    <main id="learning-session-main-content" className="beast-page">
+      <a href="#active-learning-conversation" className="beast-skip-link">
+        Skip to learning conversation
+      </a>
       <div className="beast-container space-y-8">
         <section className="beast-page-header">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
@@ -406,7 +409,9 @@ export default function LearningActivityRunnerPage() {
 
         {message ? (
           <DashboardCard accent={message.startsWith("Nice work.") ? "green" : "red"}>
-            <p className="text-sm font-semibold text-white">{message}</p>
+            <p className="text-sm font-semibold text-white" role="status" aria-live="polite">
+              {message}
+            </p>
           </DashboardCard>
         ) : null}
 
@@ -543,11 +548,17 @@ export default function LearningActivityRunnerPage() {
                   title="How did this session feel?"
                   description="This is optional, quick, and used only as learning context for future Mentor recommendations."
                 />
-                <div className="mt-5 flex flex-wrap gap-2">
+                <div
+                  className="mt-5 flex flex-wrap gap-2"
+                  role="radiogroup"
+                  aria-label="How this learning session felt"
+                >
                   {learnerReflectionOptions.map((option) => (
                     <button
                       key={option}
                       type="button"
+                      role="radio"
+                      aria-checked={reflectionOption === option}
                       className={
                         reflectionOption === option ? "beast-button" : "beast-button-secondary"
                       }
@@ -580,14 +591,20 @@ export default function LearningActivityRunnerPage() {
                   </div>
                 ) : null}
                 {completedActivity ? (
-                  <button
-                    type="button"
-                    className="beast-button mt-4"
-                    disabled={saving || (!reflectionOption && !reflectionNote.trim())}
-                    onClick={saveCompletedReflection}
-                  >
-                    {saving ? "Saving..." : "Save reflection"}
-                  </button>
+                  <div>
+                    <button
+                      type="button"
+                      className="beast-button mt-4"
+                      disabled={saving || (!reflectionOption && !reflectionNote.trim())}
+                      onClick={saveCompletedReflection}
+                      aria-describedby="reflection-save-help"
+                    >
+                      {saving ? "Saving..." : "Save reflection"}
+                    </button>
+                    <p id="reflection-save-help" className="mt-2 text-xs font-semibold text-[#7f8da3]">
+                      Saves only your reflection note and session-feeling choice for future Mentor recommendations.
+                    </p>
+                  </div>
                 ) : null}
               </DashboardCard>
             ) : null}

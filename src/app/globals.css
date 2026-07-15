@@ -43,6 +43,34 @@ video {
   min-width: 0;
 }
 
+.beast-skip-link {
+  position: absolute;
+  left: 16px;
+  top: 8px;
+  z-index: 100;
+  transform: translateY(-160%);
+  border-radius: 8px;
+  border: 1px solid #38bdf8;
+  background: #0f1419;
+  color: #ffffff;
+  padding: 10px 14px;
+  font-weight: 800;
+  transition: transform 0.15s ease;
+}
+
+.beast-skip-link:focus {
+  transform: translateY(0);
+}
+
+.beast-focus-ring:focus-visible,
+.beast-button:focus-visible,
+.beast-button-secondary:focus-visible,
+.beast-input:focus-visible,
+.beast-module-tab:focus-visible {
+  outline: 3px solid rgba(56, 189, 248, 0.9);
+  outline-offset: 3px;
+}
+
 /* =========================
    HEADERS
 ========================= */
@@ -150,6 +178,10 @@ a.beast-card:hover {
   padding: 9px 11px;
   color: #ffffff;
   outline: none;
+}
+
+.beast-touch-chip {
+  min-height: 44px;
 }
 
 .beast-input:focus {
