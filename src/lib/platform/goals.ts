@@ -2,6 +2,7 @@ import type { PlatformModule } from "./types";
 import type {
   BeastGoal as BeastGoalRow,
   BeastGoalMilestone as BeastGoalMilestoneRow,
+  BeastGoalReference as BeastGoalReferenceRow,
   BeastGoalSupportItem as BeastGoalSupportItemRow,
 } from "@/lib/types/database";
 
@@ -52,6 +53,16 @@ export type GoalSupportItemCadence =
   | "Monthly"
   | "Custom";
 
+export type GoalReferenceType =
+  | "Note"
+  | "Document"
+  | "Event"
+  | "Module Record"
+  | "Today"
+  | "Calendar";
+
+export type GoalReferenceStatus = "Active" | "Archived";
+
 export type GoalMilestone = {
   id: string;
   ownerId: string;
@@ -81,6 +92,22 @@ export type GoalSupportItem = {
   updatedAt: string;
 };
 
+export type GoalReference = {
+  id: string;
+  ownerId: string;
+  goalId: string;
+  type: GoalReferenceType;
+  title: string;
+  status: GoalReferenceStatus;
+  summary?: string;
+  url?: string;
+  referenceId?: string;
+  referenceDate?: string;
+  sourceModule?: PlatformModule;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type Goal = {
   id: string;
   ownerId: string;
@@ -93,6 +120,7 @@ export type Goal = {
   sourceModule?: PlatformModule;
   milestones: GoalMilestone[];
   supportItems: GoalSupportItem[];
+  references: GoalReference[];
   createdAt: string;
   updatedAt: string;
 };
@@ -114,6 +142,12 @@ export type GoalOverviewSummary = {
   openBlockers: number;
   activeRecurringActions: number;
   unsatisfiedRequirements: number;
+  linkedReferences: number;
+  documentReferences: number;
+  eventReferences: number;
+  todayReferences: number;
+  calendarReferences: number;
+  moduleRecordReferences: number;
   overallProgressPercent: number | null;
   nextSteps: string[];
 };
@@ -144,6 +178,7 @@ export type BeastGoalDataClient = {
             | BeastGoalRow[]
             | BeastGoalMilestoneRow[]
             | BeastGoalSupportItemRow[]
+            | BeastGoalReferenceRow[]
             | null;
           error: { message?: string } | null;
         }>;
@@ -184,6 +219,7 @@ export const goalMilestoneStatuses: GoalMilestoneStatus[] = [
 export const goalDatabaseTableName = "beast_goals";
 export const goalMilestoneDatabaseTableName = "beast_goal_milestones";
 export const goalSupportItemDatabaseTableName = "beast_goal_support_items";
+export const goalReferenceDatabaseTableName = "beast_goal_references";
 
 export const goalDatabaseColumns: GoalDatabaseColumn[] = [
   { name: "id", type: "uuid", required: true },
@@ -254,11 +290,42 @@ export const goalSupportItemDatabaseColumns: GoalDatabaseColumn[] = [
   { name: "updated_at", type: "timestamptz", required: true },
 ];
 
+export const goalReferenceTypes: GoalReferenceType[] = [
+  "Note",
+  "Document",
+  "Event",
+  "Module Record",
+  "Today",
+  "Calendar",
+];
+
+export const goalReferenceStatuses: GoalReferenceStatus[] = [
+  "Active",
+  "Archived",
+];
+
+export const goalReferenceDatabaseColumns: GoalDatabaseColumn[] = [
+  { name: "id", type: "uuid", required: true },
+  { name: "owner_id", type: "uuid", required: true },
+  { name: "goal_id", type: "uuid", required: true },
+  { name: "reference_type", type: "text", required: true },
+  { name: "title", type: "text", required: true },
+  { name: "status", type: "text", required: true },
+  { name: "summary", type: "text", required: false },
+  { name: "url", type: "text", required: false },
+  { name: "reference_id", type: "text", required: false },
+  { name: "reference_date", type: "date", required: false },
+  { name: "source_module", type: "text", required: false },
+  { name: "created_at", type: "timestamptz", required: true },
+  { name: "updated_at", type: "timestamptz", required: true },
+];
+
 export const goalOwnershipRules = [
   "Goals belong to BeastOS as shared Personal Hub data.",
   "Goals are outcomes, not module-owned task lists.",
   "Modules may suggest goals and contribute progress without owning shared goals.",
   "Dependencies, prerequisites, blockers, and recurring actions attach to BeastOS-owned goals and plans.",
+  "Notes, documents, events, module records, Today items, and Calendar items link as references without duplicating goal ownership.",
   "BeastGoals remains superseded as a standalone customer-facing module.",
 ];
 
@@ -274,6 +341,7 @@ export const mockGoals: Goal[] = [
     currentStep: "Continue the next Mentor mission.",
     sourceModule: "learning",
     supportItems: [],
+    references: [],
     milestones: [
       {
         id: "milestone-security-basics",
@@ -311,6 +379,7 @@ export const mockGoals: Goal[] = [
     sourceModule: "money",
     milestones: [],
     supportItems: [],
+    references: [],
     createdAt: "2026-07-14T00:00:00.000Z",
     updatedAt: "2026-07-14T00:00:00.000Z",
   },
@@ -335,6 +404,7 @@ export function mapGoalRow(row: BeastGoalRow): Goal {
     sourceModule: toPlatformModule(row.source_module),
     milestones: [],
     supportItems: [],
+    references: [],
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   });
@@ -417,6 +487,44 @@ export function mapGoalSupportItemRow(
   };
 }
 
+export function isGoalReferenceType(
+  type: unknown
+): type is GoalReferenceType {
+  return goalReferenceTypes.includes(type as GoalReferenceType);
+}
+
+export function isGoalReferenceStatus(
+  status: unknown
+): status is GoalReferenceStatus {
+  return goalReferenceStatuses.includes(status as GoalReferenceStatus);
+}
+
+export function mapGoalReferenceRow(row: BeastGoalReferenceRow): GoalReference {
+  if (!isGoalReferenceType(row.reference_type)) {
+    throw new Error(`Unsupported goal reference type: ${row.reference_type}`);
+  }
+
+  if (!isGoalReferenceStatus(row.status)) {
+    throw new Error(`Unsupported goal reference status: ${row.status}`);
+  }
+
+  return {
+    id: row.id,
+    ownerId: row.owner_id,
+    goalId: row.goal_id,
+    type: row.reference_type,
+    title: row.title,
+    status: row.status,
+    summary: row.summary ?? undefined,
+    url: row.url ?? undefined,
+    referenceId: row.reference_id ?? undefined,
+    referenceDate: row.reference_date ?? undefined,
+    sourceModule: toPlatformModule(row.source_module),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
 export async function loadUserGoals(
   client: BeastGoalDataClient
 ): Promise<GoalLoadResult> {
@@ -482,8 +590,22 @@ export async function loadUserGoals(
       : ((supportResult.data ?? []) as BeastGoalSupportItemRow[]).map(
           mapGoalSupportItemRow
         );
+    const referenceResult = await client
+      .from(goalReferenceDatabaseTableName)
+      .select(
+        "id, owner_id, goal_id, reference_type, title, status, summary, url, reference_id, reference_date, source_module, created_at, updated_at"
+      )
+      .eq("owner_id", userData.user.id)
+      .order("created_at", { ascending: false });
+
+    const references = referenceResult.error
+      ? []
+      : ((referenceResult.data ?? []) as BeastGoalReferenceRow[]).map(
+          mapGoalReferenceRow
+        );
     const milestonesByGoal = new Map<string, GoalMilestone[]>();
     const supportItemsByGoal = new Map<string, GoalSupportItem[]>();
+    const referencesByGoal = new Map<string, GoalReference[]>();
 
     milestones.forEach((milestone) => {
       milestonesByGoal.set(milestone.goalId, [
@@ -497,6 +619,12 @@ export async function loadUserGoals(
         supportItem,
       ]);
     });
+    references.forEach((reference) => {
+      referencesByGoal.set(reference.goalId, [
+        ...(referencesByGoal.get(reference.goalId) || []),
+        reference,
+      ]);
+    });
 
     return {
       goals: ((data ?? []) as BeastGoalRow[]).map((row) => {
@@ -506,6 +634,7 @@ export async function loadUserGoals(
           ...goal,
           milestones: milestonesByGoal.get(goal.id) || [],
           supportItems: supportItemsByGoal.get(goal.id) || [],
+          references: referencesByGoal.get(goal.id) || [],
         };
       }),
       status: "ready",
@@ -566,6 +695,22 @@ export function buildGoal(goal: Goal): Goal {
     }
   });
 
+  goal.references.forEach((reference) => {
+    if (!reference.title.trim()) {
+      throw new Error("Goal reference title is required.");
+    }
+
+    if (!isGoalReferenceType(reference.type)) {
+      throw new Error(`Unsupported goal reference type: ${reference.type}`);
+    }
+
+    if (!isGoalReferenceStatus(reference.status)) {
+      throw new Error(
+        `Unsupported goal reference status: ${reference.status}`
+      );
+    }
+  });
+
   return {
     ...goal,
     milestones: [...goal.milestones].sort(
@@ -573,6 +718,9 @@ export function buildGoal(goal: Goal): Goal {
     ),
     supportItems: [...goal.supportItems].sort(
       (left, right) => left.sortOrder - right.sortOrder
+    ),
+    references: [...goal.references].sort((left, right) =>
+      right.createdAt.localeCompare(left.createdAt)
     ),
   };
 }
@@ -613,6 +761,9 @@ export function summarizeGoals(goals: Goal[]): GoalOverviewSummary {
     (milestone) => milestone.status === "Completed"
   ).length;
   const supportItems = normalized.flatMap((goal) => goal.supportItems);
+  const references = normalized
+    .flatMap((goal) => goal.references)
+    .filter((reference) => reference.status === "Active");
   const openBlockers = supportItems.filter(
     (item) => item.type === "Blocker" && item.status !== "Resolved"
   ).length;
@@ -638,6 +789,20 @@ export function summarizeGoals(goals: Goal[]): GoalOverviewSummary {
     openBlockers,
     activeRecurringActions,
     unsatisfiedRequirements,
+    linkedReferences: references.length,
+    documentReferences: references.filter(
+      (reference) => reference.type === "Document"
+    ).length,
+    eventReferences: references.filter((reference) => reference.type === "Event")
+      .length,
+    todayReferences: references.filter((reference) => reference.type === "Today")
+      .length,
+    calendarReferences: references.filter(
+      (reference) => reference.type === "Calendar"
+    ).length,
+    moduleRecordReferences: references.filter(
+      (reference) => reference.type === "Module Record"
+    ).length,
     overallProgressPercent:
       measurableMilestones.length > 0
         ? Math.round((completedMilestones / measurableMilestones.length) * 100)
@@ -653,4 +818,10 @@ export function getGoalSupportItemsByType(
   type: GoalSupportItemType
 ) {
   return goal.supportItems.filter((item) => item.type === type);
+}
+
+export function getGoalReferencesByType(goal: Goal, type: GoalReferenceType) {
+  return goal.references.filter(
+    (reference) => reference.type === type && reference.status === "Active"
+  );
 }

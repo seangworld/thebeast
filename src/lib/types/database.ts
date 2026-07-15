@@ -144,6 +144,32 @@ export type BeastGoalSupportItem = {
     updated_at: string
   }
 
+export type BeastGoalReferenceType =
+  | "Note"
+  | "Document"
+  | "Event"
+  | "Module Record"
+  | "Today"
+  | "Calendar"
+
+export type BeastGoalReferenceStatus = "Active" | "Archived"
+
+export type BeastGoalReference = {
+    id: string
+    owner_id: string
+    goal_id: string
+    reference_type: BeastGoalReferenceType
+    title: string
+    status: BeastGoalReferenceStatus
+    summary?: string | null
+    url?: string | null
+    reference_id?: string | null
+    reference_date?: string | null
+    source_module?: string | null
+    created_at: string
+    updated_at: string
+  }
+
 export type BeastDocumentStatus = "Uploaded" | "Ready" | "Archived" | "Deleted"
 
 export type BeastDocumentCategory =

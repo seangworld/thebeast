@@ -17,6 +17,10 @@ import {
   goalMilestoneDatabaseTableName,
   goalMilestoneStatuses,
   goalOwnershipRules,
+  goalReferenceDatabaseColumns,
+  goalReferenceDatabaseTableName,
+  goalReferenceStatuses,
+  goalReferenceTypes,
   goalSupportItemDatabaseColumns,
   goalSupportItemDatabaseTableName,
   goalSupportItemStatuses,
@@ -32,6 +36,7 @@ import {
 import type {
   BeastGoal,
   BeastGoalMilestone,
+  BeastGoalReference,
   BeastGoalSupportItem,
 } from "../src/lib/types/database";
 
@@ -292,6 +297,34 @@ test("BG-001 creates a BeastOS-owned Goal model and database contract", () => {
       ["updated_at", true],
     ]
   );
+  assert.equal(goalReferenceDatabaseTableName, "beast_goal_references");
+  assert.deepEqual(goalReferenceTypes, [
+    "Note",
+    "Document",
+    "Event",
+    "Module Record",
+    "Today",
+    "Calendar",
+  ]);
+  assert.deepEqual(goalReferenceStatuses, ["Active", "Archived"]);
+  assert.deepEqual(
+    goalReferenceDatabaseColumns.map((column) => [column.name, column.required]),
+    [
+      ["id", true],
+      ["owner_id", true],
+      ["goal_id", true],
+      ["reference_type", true],
+      ["title", true],
+      ["status", true],
+      ["summary", false],
+      ["url", false],
+      ["reference_id", false],
+      ["reference_date", false],
+      ["source_module", false],
+      ["created_at", true],
+      ["updated_at", true],
+    ]
+  );
   assert.deepEqual(
     goalMilestoneDatabaseColumns.map((column) => [column.name, column.required]),
     [
@@ -330,6 +363,10 @@ test("BG-001 Goals overview route stays BeastOS-owned", () => {
     "migrations/20260715_add_beast_goal_support_items.sql",
     "utf8"
   );
+  const referenceMigration = readFileSync(
+    "migrations/20260715_add_beast_goal_references.sql",
+    "utf8"
+  );
   const summary = summarizeGoals(mockGoals);
 
   assert.equal(summary.totalGoals, 2);
@@ -339,6 +376,7 @@ test("BG-001 Goals overview route stays BeastOS-owned", () => {
   assert.equal(summary.openBlockers, 0);
   assert.equal(summary.activeRecurringActions, 0);
   assert.equal(summary.unsatisfiedRequirements, 0);
+  assert.equal(summary.linkedReferences, 0);
   assert.equal(summary.overallProgressPercent, 50);
   assert.deepEqual(summary.nextSteps, [
     "Continue the next Mentor mission.",
@@ -352,9 +390,11 @@ test("BG-001 Goals overview route stays BeastOS-owned", () => {
   assert.match(goalsPage, /goalDatabaseTableName/);
   assert.match(goalsPage, /goalMilestoneDatabaseTableName/);
   assert.match(goalsPage, /goalSupportItemDatabaseTableName/);
+  assert.match(goalsPage, /goalReferenceDatabaseTableName/);
   assert.match(goalsPage, /Milestone Progress/);
   assert.match(goalsPage, /Requirements And Routines/);
-  assert.match(goalsPage, /Blockers, prerequisites, dependencies, and routines/);
+  assert.match(goalsPage, /Support items and linked references/);
+  assert.match(goalsPage, /Linked References/);
   assert.doesNotMatch(goalsPage, /mockGoals/);
   assert.doesNotMatch(goalsPage, /Earn Security\+/);
   assert.doesNotMatch(goalsPage, /Become debt free/);
@@ -377,6 +417,17 @@ test("BG-001 Goals overview route stays BeastOS-owned", () => {
   assert.match(supportMigration, /item_type in \('Dependency', 'Prerequisite', 'Blocker', 'Recurring Action'\)/);
   assert.match(supportMigration, /enable row level security/);
   assert.match(supportMigration, /auth\.uid\(\) = owner_id/);
+  assert.match(referenceMigration, /create table if not exists public\.beast_goal_references/);
+  assert.match(
+    referenceMigration,
+    /foreign key \(goal_id, owner_id\)\s+references public\.beast_goals \(id, owner_id\) on delete cascade/
+  );
+  assert.match(
+    referenceMigration,
+    /reference_type in \('Note', 'Document', 'Event', 'Module Record', 'Today', 'Calendar'\)/
+  );
+  assert.match(referenceMigration, /enable row level security/);
+  assert.match(referenceMigration, /auth\.uid\(\) = owner_id/);
   assert.throws(
     () =>
       buildGoal({
@@ -397,6 +448,8 @@ function createGoalClient(
     milestoneQueryError?: boolean;
     supportRows?: BeastGoalSupportItem[] | null;
     supportQueryError?: boolean;
+    referenceRows?: BeastGoalReference[] | null;
+    referenceQueryError?: boolean;
   } = {}
 ): BeastGoalDataClient {
   return {
@@ -412,7 +465,8 @@ function createGoalClient(
       assert.ok(
         table === goalDatabaseTableName ||
           table === goalMilestoneDatabaseTableName ||
-          table === goalSupportItemDatabaseTableName
+          table === goalSupportItemDatabaseTableName ||
+          table === goalReferenceDatabaseTableName
       );
 
       return {
@@ -430,10 +484,14 @@ function createGoalClient(
                   } else if (table === goalMilestoneDatabaseTableName) {
                     assert.equal(columnName, "sort_order");
                     assert.deepEqual(orderOptions, { ascending: true });
-                  } else {
+                  } else if (table === goalSupportItemDatabaseTableName) {
                     assert.equal(table, goalSupportItemDatabaseTableName);
                     assert.equal(columnName, "sort_order");
                     assert.deepEqual(orderOptions, { ascending: true });
+                  } else {
+                    assert.equal(table, goalReferenceDatabaseTableName);
+                    assert.equal(columnName, "created_at");
+                    assert.deepEqual(orderOptions, { ascending: false });
                   }
 
                   return {
@@ -442,20 +500,34 @@ function createGoalClient(
                       if (table === goalMilestoneDatabaseTableName) {
                         return options.milestoneRows ?? [];
                       }
-                      return options.supportRows ?? [];
+                      if (table === goalSupportItemDatabaseTableName) {
+                        return options.supportRows ?? [];
+                      }
+                      return options.referenceRows ?? [];
                     })(),
-                    error:
-                      table === goalDatabaseTableName
-                        ? options.queryError
+                    error: (() => {
+                      if (table === goalDatabaseTableName) {
+                        return options.queryError
                           ? { message: "Table unavailable" }
-                          : null
-                        : table === goalMilestoneDatabaseTableName
-                          ? options.milestoneQueryError
-                            ? { message: "Milestones unavailable" }
-                            : null
-                          : options.supportQueryError
-                            ? { message: "Support unavailable" }
-                            : null,
+                          : null;
+                      }
+
+                      if (table === goalMilestoneDatabaseTableName) {
+                        return options.milestoneQueryError
+                          ? { message: "Milestones unavailable" }
+                          : null;
+                      }
+
+                      if (table === goalSupportItemDatabaseTableName) {
+                        return options.supportQueryError
+                          ? { message: "Support unavailable" }
+                          : null;
+                      }
+
+                      return options.referenceQueryError
+                        ? { message: "References unavailable" }
+                        : null;
+                    })(),
                   };
                 },
               };
@@ -533,6 +605,38 @@ test("BG-001 Goals loader uses only signed-in user records", async () => {
             updated_at: "2026-07-14T00:00:00.000Z",
           },
         ],
+        referenceRows: [
+          {
+            id: "real-reference-today",
+            owner_id: "member-real",
+            goal_id: "real-goal",
+            reference_type: "Today",
+            title: "Review today's goal action",
+            status: "Active",
+            summary: null,
+            url: "/dashboard/today",
+            reference_id: "today-1",
+            reference_date: "2026-07-15",
+            source_module: "beastos",
+            created_at: "2026-07-15T01:00:00.000Z",
+            updated_at: "2026-07-15T01:00:00.000Z",
+          },
+          {
+            id: "real-reference-document",
+            owner_id: "member-real",
+            goal_id: "real-goal",
+            reference_type: "Document",
+            title: "Certification outline",
+            status: "Active",
+            summary: "Linked from the shared Documents service.",
+            url: "/dashboard/documents",
+            reference_id: "document-1",
+            reference_date: null,
+            source_module: "beastos",
+            created_at: "2026-07-15T00:00:00.000Z",
+            updated_at: "2026-07-15T00:00:00.000Z",
+          },
+        ],
       }
     )
   );
@@ -544,8 +648,14 @@ test("BG-001 Goals loader uses only signed-in user records", async () => {
   assert.equal(result.goals[0].milestones[0].title, "Finish the first real step");
   assert.equal(result.goals[0].supportItems.length, 2);
   assert.equal(result.goals[0].supportItems[0].title, "Waiting on owner review");
+  assert.equal(result.goals[0].references.length, 2);
+  assert.equal(result.goals[0].references[0].title, "Review today's goal action");
+  assert.equal(result.goals[0].references[1].title, "Certification outline");
   assert.equal(summarizeGoals(result.goals).openBlockers, 1);
   assert.equal(summarizeGoals(result.goals).activeRecurringActions, 1);
+  assert.equal(summarizeGoals(result.goals).linkedReferences, 2);
+  assert.equal(summarizeGoals(result.goals).documentReferences, 1);
+  assert.equal(summarizeGoals(result.goals).todayReferences, 1);
   assert.notEqual(result.goals[0].title, mockGoals[0].title);
 });
 
@@ -587,4 +697,32 @@ test("BO-11 Goals loader tolerates unavailable support items", async () => {
   assert.equal(result.goals.length, 1);
   assert.equal(result.goals[0].supportItems.length, 0);
   assert.equal(summarizeGoals(result.goals).openBlockers, 0);
+});
+
+test("BO-12 Goals loader tolerates unavailable reference records", async () => {
+  const result = await loadUserGoals(
+    createGoalClient(
+      [
+        {
+          id: "real-goal",
+          owner_id: "member-real",
+          title: "Goal without reference table",
+          category: "Personal",
+          status: "Active",
+          summary: null,
+          target_date: null,
+          current_step: null,
+          source_module: null,
+          created_at: "2026-07-15T00:00:00.000Z",
+          updated_at: "2026-07-15T00:00:00.000Z",
+        },
+      ],
+      { userId: "member-real", referenceQueryError: true }
+    )
+  );
+
+  assert.equal(result.status, "ready");
+  assert.equal(result.goals.length, 1);
+  assert.equal(result.goals[0].references.length, 0);
+  assert.equal(summarizeGoals(result.goals).linkedReferences, 0);
 });
