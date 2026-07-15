@@ -15,7 +15,9 @@ import {
   type DocumentLoadResult,
   documentCategories,
   documentDatabaseTableName,
+  documentModuleLinkDatabaseTableName,
   documentOwnershipRules,
+  getActiveDocumentModuleLinks,
   loadUserDocuments,
   summarizeDocuments,
   supportedDocumentFileTypes,
@@ -190,6 +192,15 @@ export default async function UploadsPage() {
                   Files remain tied to the signed-in BeastOS account.
                 </div>
               </div>
+              <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+                <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                  Module Links
+                </div>
+                <div className="mt-2 text-sm font-semibold leading-5 text-[#dbe3ef]">
+                  {summary.moduleLinks} active links across{" "}
+                  {summary.linkedModules.length} modules.
+                </div>
+              </div>
             </div>
           </DashboardCard>
 
@@ -224,6 +235,27 @@ export default async function UploadsPage() {
                         {(document.storage.sizeBytes / 1000).toFixed(1)} KB
                       </span>
                     </div>
+                    <div className="mt-3 rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
+                      <div className="text-xs font-black uppercase text-[#7f8da3]">
+                        Reused By Modules
+                      </div>
+                      {getActiveDocumentModuleLinks(document).length > 0 ? (
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {getActiveDocumentModuleLinks(document).map((link) => (
+                            <span
+                              key={link.id}
+                              className="rounded-full border border-[#2a3242] px-2.5 py-1 text-xs font-bold text-[#c7cfdb]"
+                            >
+                              {link.sourceModule}: {link.title}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="mt-2 text-xs font-semibold text-[#9aa7b8]">
+                          No module records link to this document yet.
+                        </div>
+                      )}
+                    </div>
                   </div>
                 ))
               ) : (
@@ -245,7 +277,7 @@ export default async function UploadsPage() {
           <SectionHeader
             eyebrow="Database"
             title={documentDatabaseTableName}
-            description="The foundation stores document metadata and ownership. Document contents stay in storage and are not analyzed by this package."
+            description={`The foundation stores document metadata and ownership in ${documentDatabaseTableName}. Module reuse is tracked in ${documentModuleLinkDatabaseTableName}. Document contents stay in storage and are not analyzed by this package.`}
           />
           <div className="mt-5 grid gap-3 md:grid-cols-2">
             {documentOwnershipRules.map((rule) => (

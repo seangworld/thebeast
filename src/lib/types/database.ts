@@ -225,6 +225,29 @@ export type BeastGoalRecommendation = {
     updated_at: string
   }
 
+export type BeastGoalLifecycleEventType =
+  | "Completed"
+  | "Abandoned"
+  | "Revised"
+  | "Archived"
+  | "Superseded"
+
+export type BeastGoalLifecycleEvent = {
+    id: string
+    owner_id: string
+    goal_id: string
+    event_type: BeastGoalLifecycleEventType
+    title: string
+    reason?: string | null
+    previous_status?: BeastGoalStatus | null
+    next_status?: BeastGoalStatus | null
+    superseded_by_goal_id?: string | null
+    source_module?: string | null
+    occurred_at: string
+    created_at: string
+    updated_at: string
+  }
+
 export type BeastDocumentStatus = "Uploaded" | "Ready" | "Archived" | "Deleted"
 
 export type BeastDocumentCategory =
@@ -252,6 +275,21 @@ export type BeastDocument = {
     size_bytes: number
     checksum?: string | null
     source_module?: string | null
+    created_at: string
+    updated_at: string
+  }
+
+export type BeastDocumentModuleLinkStatus = "Active" | "Archived"
+
+export type BeastDocumentModuleLink = {
+    id: string
+    owner_id: string
+    document_id: string
+    source_module: string
+    module_record_id?: string | null
+    title: string
+    summary?: string | null
+    status: BeastDocumentModuleLinkStatus
     created_at: string
     updated_at: string
   }

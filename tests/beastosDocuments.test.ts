@@ -6,6 +6,9 @@ import {
   documentCategories,
   documentDatabaseColumns,
   documentDatabaseTableName,
+  documentModuleLinkDatabaseColumns,
+  documentModuleLinkDatabaseTableName,
+  documentModuleLinkStatuses,
   documentOwnershipRules,
   documentStatuses,
   documentStorageBucketName,
@@ -16,7 +19,10 @@ import {
   supportedDocumentFileTypes,
 } from "../src/lib/platform/documents";
 import { sharedNavigation } from "../src/lib/moduleNavigation";
-import type { BeastDocument } from "../src/lib/types/database";
+import type {
+  BeastDocument,
+  BeastDocumentModuleLink,
+} from "../src/lib/types/database";
 
 test("BD-001 creates a BeastOS-owned Document model and database contract", () => {
   assert.equal(documentDatabaseTableName, "beast_documents");
@@ -47,6 +53,11 @@ test("BD-001 creates a BeastOS-owned Document model and database contract", () =
     "Documents",
     "Text",
   ]);
+  assert.equal(
+    documentModuleLinkDatabaseTableName,
+    "beast_document_module_links"
+  );
+  assert.deepEqual(documentModuleLinkStatuses, ["Active", "Archived"]);
   assert.deepEqual(
     documentDatabaseColumns.map((column) => [column.name, column.required]),
     [
@@ -66,11 +77,33 @@ test("BD-001 creates a BeastOS-owned Document model and database contract", () =
       ["updated_at", true],
     ]
   );
+  assert.deepEqual(
+    documentModuleLinkDatabaseColumns.map((column) => [
+      column.name,
+      column.required,
+    ]),
+    [
+      ["id", true],
+      ["owner_id", true],
+      ["document_id", true],
+      ["source_module", true],
+      ["module_record_id", false],
+      ["title", true],
+      ["summary", false],
+      ["status", true],
+      ["created_at", true],
+      ["updated_at", true],
+    ]
+  );
   assert.equal(
     documentOwnershipRules[0],
     "Documents belong to BeastOS as shared Personal Hub data."
   );
-  assert.match(documentOwnershipRules[3], /BeastDocuments remains superseded/);
+  assert.match(
+    documentOwnershipRules[3],
+    /linked to multiple module records/
+  );
+  assert.match(documentOwnershipRules[4], /BeastDocuments remains superseded/);
 });
 
 test("BD-001 Documents overview route stays BeastOS-owned", () => {
@@ -79,10 +112,15 @@ test("BD-001 Documents overview route stays BeastOS-owned", () => {
     "migrations/20260714_add_beast_documents.sql",
     "utf8"
   );
+  const moduleLinkMigration = readFileSync(
+    "migrations/20260715_add_beast_document_module_links.sql",
+    "utf8"
+  );
   const summary = summarizeDocuments(mockDocuments);
 
   assert.equal(summary.totalDocuments, 2);
   assert.equal(summary.activeDocuments, 2);
+  assert.equal(summary.moduleLinks, 0);
   assert.equal(summary.categoryCounts.Money, 1);
   assert.equal(summary.categoryCounts.Learning, 1);
   assert.equal(
@@ -94,6 +132,8 @@ test("BD-001 Documents overview route stays BeastOS-owned", () => {
   assert.match(documentsPage, /BeastOS Shared Service/);
   assert.match(documentsPage, /BeastOS Owned/);
   assert.match(documentsPage, /documentDatabaseTableName/);
+  assert.match(documentsPage, /documentModuleLinkDatabaseTableName/);
+  assert.match(documentsPage, /Reused By Modules/);
   assert.match(
     documentsPage,
     /AI\s+extraction is intentionally not part/
@@ -104,6 +144,17 @@ test("BD-001 Documents overview route stays BeastOS-owned", () => {
   assert.match(migration, /create table if not exists public\.beast_documents/);
   assert.match(migration, /enable row level security/);
   assert.match(migration, /auth\.uid\(\) = owner_id/);
+  assert.match(
+    moduleLinkMigration,
+    /create table if not exists public\.beast_document_module_links/
+  );
+  assert.match(
+    moduleLinkMigration,
+    /foreign key \(document_id, owner_id\)\s+references public\.beast_documents \(id, owner_id\) on delete cascade/
+  );
+  assert.match(moduleLinkMigration, /status in \('Active', 'Archived'\)/);
+  assert.match(moduleLinkMigration, /enable row level security/);
+  assert.match(moduleLinkMigration, /auth\.uid\(\) = owner_id/);
   assert.throws(
     () =>
       buildDocument({
@@ -119,7 +170,13 @@ test("BD-001 Documents overview route stays BeastOS-owned", () => {
 
 function createDocumentClient(
   rows: BeastDocument[] | null,
-  options: { userId?: string; authError?: boolean; queryError?: boolean } = {}
+  options: {
+    userId?: string;
+    authError?: boolean;
+    queryError?: boolean;
+    moduleLinkRows?: BeastDocumentModuleLink[] | null;
+    moduleLinkQueryError?: boolean;
+  } = {}
 ): BeastDocumentDataClient {
   return {
     auth: {
@@ -131,7 +188,10 @@ function createDocumentClient(
       },
     },
     from(table) {
-      assert.equal(table, documentDatabaseTableName);
+      assert.ok(
+        table === documentDatabaseTableName ||
+          table === documentModuleLinkDatabaseTableName
+      );
 
       return {
         select() {
@@ -146,10 +206,18 @@ function createDocumentClient(
                   assert.deepEqual(orderOptions, { ascending: false });
 
                   return {
-                    data: rows,
-                    error: options.queryError
-                      ? { message: "Table unavailable" }
-                      : null,
+                    data:
+                      table === documentDatabaseTableName
+                        ? rows
+                        : options.moduleLinkRows ?? [],
+                    error:
+                      table === documentDatabaseTableName
+                        ? options.queryError
+                          ? { message: "Table unavailable" }
+                          : null
+                        : options.moduleLinkQueryError
+                          ? { message: "Links unavailable" }
+                          : null,
                   };
                 },
               };
@@ -182,7 +250,36 @@ test("BD-001 Documents loader uses only signed-in user metadata", async () => {
           updated_at: "2026-07-14T00:00:00.000Z",
         },
       ],
-      { userId: "member-real" }
+      {
+        userId: "member-real",
+        moduleLinkRows: [
+          {
+            id: "real-document-money-link",
+            owner_id: "member-real",
+            document_id: "real-document",
+            source_module: "money",
+            module_record_id: "bill-1",
+            title: "Linked to a bill",
+            summary: "BeastMoney can reuse this document without owning it.",
+            status: "Active",
+            created_at: "2026-07-15T01:00:00.000Z",
+            updated_at: "2026-07-15T01:00:00.000Z",
+          },
+          {
+            id: "real-document-learning-link",
+            owner_id: "member-real",
+            document_id: "real-document",
+            source_module: "learning",
+            module_record_id: "goal-1",
+            title: "Linked to a learning goal",
+            summary:
+              "BeastLearning can reference the same BeastOS document record.",
+            status: "Active",
+            created_at: "2026-07-15T00:30:00.000Z",
+            updated_at: "2026-07-15T00:30:00.000Z",
+          },
+        ],
+      }
     )
   );
 
@@ -190,6 +287,17 @@ test("BD-001 Documents loader uses only signed-in user metadata", async () => {
   assert.equal(result.documents.length, 1);
   assert.equal(result.documents[0].title, "Real tax record");
   assert.equal(result.documents[0].storage.fileName, "record.pdf");
+  assert.equal(result.documents[0].moduleLinks.length, 2);
+  assert.equal(result.documents[0].moduleLinks[0].title, "Linked to a bill");
+  assert.equal(
+    result.documents[0].moduleLinks[1].title,
+    "Linked to a learning goal"
+  );
+  assert.equal(summarizeDocuments(result.documents).moduleLinks, 2);
+  assert.deepEqual(summarizeDocuments(result.documents).linkedModules, [
+    "learning",
+    "money",
+  ]);
   assert.notEqual(result.documents[0].storage.fileName, "statement.pdf");
 });
 
@@ -204,4 +312,35 @@ test("BD-001 Documents loader fails safely without sample metadata", async () =>
   assert.equal(signedOut.status, "signed-out");
   assert.equal(signedOut.documents.length, 0);
   assert.equal(summarizeDocuments(unavailable.documents).storageBytes, 0);
+});
+
+test("BO-16 Documents loader tolerates unavailable module links", async () => {
+  const result = await loadUserDocuments(
+    createDocumentClient(
+      [
+        {
+          id: "real-document",
+          owner_id: "member-real",
+          title: "Document without link table",
+          category: "Other",
+          status: "Ready",
+          storage_bucket: "beast-documents",
+          storage_path: "member-real/other/record.pdf",
+          file_name: "record.pdf",
+          mime_type: "application/pdf",
+          size_bytes: 1000,
+          checksum: null,
+          source_module: null,
+          created_at: "2026-07-15T00:00:00.000Z",
+          updated_at: "2026-07-15T00:00:00.000Z",
+        },
+      ],
+      { userId: "member-real", moduleLinkQueryError: true }
+    )
+  );
+
+  assert.equal(result.status, "ready");
+  assert.equal(result.documents.length, 1);
+  assert.equal(result.documents[0].moduleLinks.length, 0);
+  assert.equal(summarizeDocuments(result.documents).moduleLinks, 0);
 });

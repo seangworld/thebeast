@@ -1,5 +1,8 @@
 import type { PlatformModule } from "./types";
-import type { BeastDocument as BeastDocumentRow } from "@/lib/types/database";
+import type {
+  BeastDocument as BeastDocumentRow,
+  BeastDocumentModuleLink as BeastDocumentModuleLinkRow,
+} from "@/lib/types/database";
 
 export type DocumentCategory =
   | "Money"
@@ -14,6 +17,7 @@ export type DocumentCategory =
   | "Other";
 
 export type DocumentStatus = "Uploaded" | "Ready" | "Archived" | "Deleted";
+export type DocumentModuleLinkStatus = "Active" | "Archived";
 
 export type DocumentStorageMetadata = {
   bucket: string;
@@ -32,6 +36,20 @@ export type BeastDocument = {
   status: DocumentStatus;
   storage: DocumentStorageMetadata;
   sourceModule?: PlatformModule;
+  moduleLinks: DocumentModuleLink[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type DocumentModuleLink = {
+  id: string;
+  ownerId: string;
+  documentId: string;
+  sourceModule: PlatformModule;
+  moduleRecordId?: string;
+  title: string;
+  summary?: string;
+  status: DocumentModuleLinkStatus;
   createdAt: string;
   updatedAt: string;
 };
@@ -47,6 +65,8 @@ export type DocumentOverviewSummary = {
   activeDocuments: number;
   archivedDocuments: number;
   storageBytes: number;
+  moduleLinks: number;
+  linkedModules: PlatformModule[];
   categoryCounts: Record<DocumentCategory, number>;
 };
 
@@ -72,7 +92,7 @@ export type BeastDocumentDataClient = {
           column: string,
           options: { ascending: boolean }
         ) => Promise<{
-          data: BeastDocumentRow[] | null;
+          data: BeastDocumentRow[] | BeastDocumentModuleLinkRow[] | null;
           error: { message?: string } | null;
         }>;
       };
@@ -81,6 +101,8 @@ export type BeastDocumentDataClient = {
 };
 
 export const documentDatabaseTableName = "beast_documents";
+export const documentModuleLinkDatabaseTableName =
+  "beast_document_module_links";
 
 export const documentStorageBucketName = "beast-documents";
 
@@ -102,6 +124,11 @@ export const documentStatuses: DocumentStatus[] = [
   "Ready",
   "Archived",
   "Deleted",
+];
+
+export const documentModuleLinkStatuses: DocumentModuleLinkStatus[] = [
+  "Active",
+  "Archived",
 ];
 
 export const supportedDocumentFileTypes = [
@@ -130,10 +157,24 @@ export const documentDatabaseColumns: DocumentDatabaseColumn[] = [
   { name: "updated_at", type: "timestamptz", required: true },
 ];
 
+export const documentModuleLinkDatabaseColumns: DocumentDatabaseColumn[] = [
+  { name: "id", type: "uuid", required: true },
+  { name: "owner_id", type: "uuid", required: true },
+  { name: "document_id", type: "uuid", required: true },
+  { name: "source_module", type: "text", required: true },
+  { name: "module_record_id", type: "text", required: false },
+  { name: "title", type: "text", required: true },
+  { name: "summary", type: "text", required: false },
+  { name: "status", type: "text", required: true },
+  { name: "created_at", type: "timestamptz", required: true },
+  { name: "updated_at", type: "timestamptz", required: true },
+];
+
 export const documentOwnershipRules = [
   "Documents belong to BeastOS as shared Personal Hub data.",
   "Document metadata is user-owned and scoped to the signed-in BeastOS account.",
   "Modules may reference documents only through permissioned BeastOS document records.",
+  "One BeastOS document record may be linked to multiple module records without duplicating the document.",
   "BeastDocuments remains superseded as a standalone customer-facing module.",
 ];
 
@@ -152,6 +193,7 @@ export const mockDocuments: BeastDocument[] = [
       sizeBytes: 248000,
     },
     sourceModule: "money",
+    moduleLinks: [],
     createdAt: "2026-07-14T00:00:00.000Z",
     updatedAt: "2026-07-14T00:00:00.000Z",
   },
@@ -169,6 +211,7 @@ export const mockDocuments: BeastDocument[] = [
       sizeBytes: 8200,
     },
     sourceModule: "learning",
+    moduleLinks: [],
     createdAt: "2026-07-14T00:00:00.000Z",
     updatedAt: "2026-07-14T00:00:00.000Z",
   },
@@ -196,9 +239,37 @@ export function mapDocumentRow(row: BeastDocumentRow): BeastDocument {
       checksum: row.checksum ?? undefined,
     },
     sourceModule: toPlatformModule(row.source_module),
+    moduleLinks: [],
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   });
+}
+
+export function isDocumentModuleLinkStatus(
+  status: unknown
+): status is DocumentModuleLinkStatus {
+  return documentModuleLinkStatuses.includes(status as DocumentModuleLinkStatus);
+}
+
+export function mapDocumentModuleLinkRow(
+  row: BeastDocumentModuleLinkRow
+): DocumentModuleLink {
+  if (!isDocumentModuleLinkStatus(row.status)) {
+    throw new Error(`Unsupported document module link status: ${row.status}`);
+  }
+
+  return {
+    id: row.id,
+    ownerId: row.owner_id,
+    documentId: row.document_id,
+    sourceModule: toPlatformModule(row.source_module) || "beastos",
+    moduleRecordId: row.module_record_id ?? undefined,
+    title: row.title,
+    summary: row.summary ?? undefined,
+    status: row.status,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
 }
 
 export async function loadUserDocuments(
@@ -240,8 +311,38 @@ export async function loadUserDocuments(
       };
     }
 
+    const moduleLinkResult = await client
+      .from(documentModuleLinkDatabaseTableName)
+      .select(
+        "id, owner_id, document_id, source_module, module_record_id, title, summary, status, created_at, updated_at"
+      )
+      .eq("owner_id", userData.user.id)
+      .order("created_at", { ascending: false });
+    const moduleLinks = moduleLinkResult.error
+      ? []
+      : ((moduleLinkResult.data ?? []) as BeastDocumentModuleLinkRow[]).map(
+          mapDocumentModuleLinkRow
+        );
+    const linksByDocument = new Map<string, DocumentModuleLink[]>();
+
+    moduleLinks.forEach((link) => {
+      linksByDocument.set(link.documentId, [
+        ...(linksByDocument.get(link.documentId) || []),
+        link,
+      ]);
+    });
+
     return {
-      documents: (data ?? []).map(mapDocumentRow),
+      documents: ((data ?? []) as BeastDocumentRow[]).map((row) => {
+        const document = mapDocumentRow(row);
+
+        return {
+          ...document,
+          moduleLinks: [...(linksByDocument.get(document.id) || [])].sort(
+            (left, right) => right.createdAt.localeCompare(left.createdAt)
+          ),
+        };
+      }),
       status: "ready",
     };
   } catch {
@@ -288,7 +389,22 @@ export function buildDocument(document: BeastDocument): BeastDocument {
     throw new Error("Document size cannot be negative.");
   }
 
-  return document;
+  document.moduleLinks.forEach((link) => {
+    if (!link.title.trim()) {
+      throw new Error("Document module link title is required.");
+    }
+
+    if (!isDocumentModuleLinkStatus(link.status)) {
+      throw new Error(`Unsupported document module link status: ${link.status}`);
+    }
+  });
+
+  return {
+    ...document,
+    moduleLinks: [...document.moduleLinks].sort((left, right) =>
+      right.createdAt.localeCompare(left.createdAt)
+    ),
+  };
 }
 
 export function buildDocumentCollection(documents: BeastDocument[]) {
@@ -307,6 +423,9 @@ export function summarizeDocuments(
     }),
     {} as Record<DocumentCategory, number>
   );
+  const activeModuleLinks = normalized
+    .flatMap((document) => document.moduleLinks)
+    .filter((link) => link.status === "Active");
 
   return {
     totalDocuments: normalized.length,
@@ -321,6 +440,14 @@ export function summarizeDocuments(
       (total, document) => total + document.storage.sizeBytes,
       0
     ),
+    moduleLinks: activeModuleLinks.length,
+    linkedModules: Array.from(
+      new Set(activeModuleLinks.map((link) => link.sourceModule))
+    ).sort(),
     categoryCounts,
   };
+}
+
+export function getActiveDocumentModuleLinks(document: BeastDocument) {
+  return document.moduleLinks.filter((link) => link.status === "Active");
 }

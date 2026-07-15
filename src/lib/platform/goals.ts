@@ -2,6 +2,7 @@ import type { PlatformModule } from "./types";
 import type {
   BeastGoal as BeastGoalRow,
   BeastGoalContribution as BeastGoalContributionRow,
+  BeastGoalLifecycleEvent as BeastGoalLifecycleEventRow,
   BeastGoalMilestone as BeastGoalMilestoneRow,
   BeastGoalRecommendation as BeastGoalRecommendationRow,
   BeastGoalReference as BeastGoalReferenceRow,
@@ -88,6 +89,13 @@ export type GoalRecommendationStatus =
   | "Completed"
   | "Archived";
 
+export type GoalLifecycleEventType =
+  | "Completed"
+  | "Abandoned"
+  | "Revised"
+  | "Archived"
+  | "Superseded";
+
 export type GoalMilestone = {
   id: string;
   ownerId: string;
@@ -165,6 +173,22 @@ export type GoalRecommendation = {
   updatedAt: string;
 };
 
+export type GoalLifecycleEvent = {
+  id: string;
+  ownerId: string;
+  goalId: string;
+  type: GoalLifecycleEventType;
+  title: string;
+  reason?: string;
+  previousStatus?: GoalStatus;
+  nextStatus?: GoalStatus;
+  supersededByGoalId?: string;
+  sourceModule?: PlatformModule;
+  occurredAt: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type Goal = {
   id: string;
   ownerId: string;
@@ -180,6 +204,7 @@ export type Goal = {
   references: GoalReference[];
   contributions: GoalContribution[];
   recommendations: GoalRecommendation[];
+  lifecycleEvents: GoalLifecycleEvent[];
   createdAt: string;
   updatedAt: string;
 };
@@ -213,6 +238,12 @@ export type GoalOverviewSummary = {
   activeRecommendations: number;
   dismissedRecommendations: number;
   reviewDueRecommendations: number;
+  lifecycleEvents: number;
+  completedLifecycleEvents: number;
+  abandonedLifecycleEvents: number;
+  revisedLifecycleEvents: number;
+  archivedLifecycleEvents: number;
+  supersededLifecycleEvents: number;
   overallProgressPercent: number | null;
   nextSteps: string[];
 };
@@ -246,6 +277,7 @@ export type BeastGoalDataClient = {
             | BeastGoalReferenceRow[]
             | BeastGoalContributionRow[]
             | BeastGoalRecommendationRow[]
+            | BeastGoalLifecycleEventRow[]
             | null;
           error: { message?: string } | null;
         }>;
@@ -289,6 +321,7 @@ export const goalSupportItemDatabaseTableName = "beast_goal_support_items";
 export const goalReferenceDatabaseTableName = "beast_goal_references";
 export const goalContributionDatabaseTableName = "beast_goal_contributions";
 export const goalRecommendationDatabaseTableName = "beast_goal_recommendations";
+export const goalLifecycleEventDatabaseTableName = "beast_goal_lifecycle_events";
 
 export const goalDatabaseColumns: GoalDatabaseColumn[] = [
   { name: "id", type: "uuid", required: true },
@@ -451,6 +484,30 @@ export const goalRecommendationDatabaseColumns: GoalDatabaseColumn[] = [
   { name: "updated_at", type: "timestamptz", required: true },
 ];
 
+export const goalLifecycleEventTypes: GoalLifecycleEventType[] = [
+  "Completed",
+  "Abandoned",
+  "Revised",
+  "Archived",
+  "Superseded",
+];
+
+export const goalLifecycleEventDatabaseColumns: GoalDatabaseColumn[] = [
+  { name: "id", type: "uuid", required: true },
+  { name: "owner_id", type: "uuid", required: true },
+  { name: "goal_id", type: "uuid", required: true },
+  { name: "event_type", type: "text", required: true },
+  { name: "title", type: "text", required: true },
+  { name: "reason", type: "text", required: false },
+  { name: "previous_status", type: "text", required: false },
+  { name: "next_status", type: "text", required: false },
+  { name: "superseded_by_goal_id", type: "uuid", required: false },
+  { name: "source_module", type: "text", required: false },
+  { name: "occurred_at", type: "timestamptz", required: true },
+  { name: "created_at", type: "timestamptz", required: true },
+  { name: "updated_at", type: "timestamptz", required: true },
+];
+
 export const goalOwnershipRules = [
   "Goals belong to BeastOS as shared Personal Hub data.",
   "Goals are outcomes, not module-owned task lists.",
@@ -459,6 +516,7 @@ export const goalOwnershipRules = [
   "Notes, documents, events, module records, Today items, and Calendar items link as references without duplicating goal ownership.",
   "Modules may contribute evidence, progress, milestones, recommendations, and reviews without owning shared goals.",
   "Recommendations must include a plain-language reason and can be dismissed without deleting history.",
+  "Goal and Plan lifecycle events preserve completion, abandonment, revision, archive, and superseded history.",
   "BeastGoals remains superseded as a standalone customer-facing module.",
 ];
 
@@ -477,6 +535,7 @@ export const mockGoals: Goal[] = [
     references: [],
     contributions: [],
     recommendations: [],
+    lifecycleEvents: [],
     milestones: [
       {
         id: "milestone-security-basics",
@@ -517,6 +576,7 @@ export const mockGoals: Goal[] = [
     references: [],
     contributions: [],
     recommendations: [],
+    lifecycleEvents: [],
     createdAt: "2026-07-14T00:00:00.000Z",
     updatedAt: "2026-07-14T00:00:00.000Z",
   },
@@ -544,6 +604,7 @@ export function mapGoalRow(row: BeastGoalRow): Goal {
     references: [],
     contributions: [],
     recommendations: [],
+    lifecycleEvents: [],
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   });
@@ -748,6 +809,46 @@ export function mapGoalRecommendationRow(
   };
 }
 
+export function isGoalLifecycleEventType(
+  type: unknown
+): type is GoalLifecycleEventType {
+  return goalLifecycleEventTypes.includes(type as GoalLifecycleEventType);
+}
+
+export function mapGoalLifecycleEventRow(
+  row: BeastGoalLifecycleEventRow
+): GoalLifecycleEvent {
+  if (!isGoalLifecycleEventType(row.event_type)) {
+    throw new Error(`Unsupported goal lifecycle event type: ${row.event_type}`);
+  }
+
+  if (row.previous_status && !isGoalStatus(row.previous_status)) {
+    throw new Error(
+      `Unsupported previous goal status: ${row.previous_status}`
+    );
+  }
+
+  if (row.next_status && !isGoalStatus(row.next_status)) {
+    throw new Error(`Unsupported next goal status: ${row.next_status}`);
+  }
+
+  return {
+    id: row.id,
+    ownerId: row.owner_id,
+    goalId: row.goal_id,
+    type: row.event_type,
+    title: row.title,
+    reason: row.reason ?? undefined,
+    previousStatus: row.previous_status ?? undefined,
+    nextStatus: row.next_status ?? undefined,
+    supersededByGoalId: row.superseded_by_goal_id ?? undefined,
+    sourceModule: toPlatformModule(row.source_module),
+    occurredAt: row.occurred_at,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
 export async function loadUserGoals(
   client: BeastGoalDataClient
 ): Promise<GoalLoadResult> {
@@ -852,11 +953,25 @@ export async function loadUserGoals(
       : ((recommendationResult.data ?? []) as BeastGoalRecommendationRow[]).map(
           mapGoalRecommendationRow
         );
+    const lifecycleResult = await client
+      .from(goalLifecycleEventDatabaseTableName)
+      .select(
+        "id, owner_id, goal_id, event_type, title, reason, previous_status, next_status, superseded_by_goal_id, source_module, occurred_at, created_at, updated_at"
+      )
+      .eq("owner_id", userData.user.id)
+      .order("occurred_at", { ascending: false });
+
+    const lifecycleEvents = lifecycleResult.error
+      ? []
+      : ((lifecycleResult.data ?? []) as BeastGoalLifecycleEventRow[]).map(
+          mapGoalLifecycleEventRow
+        );
     const milestonesByGoal = new Map<string, GoalMilestone[]>();
     const supportItemsByGoal = new Map<string, GoalSupportItem[]>();
     const referencesByGoal = new Map<string, GoalReference[]>();
     const contributionsByGoal = new Map<string, GoalContribution[]>();
     const recommendationsByGoal = new Map<string, GoalRecommendation[]>();
+    const lifecycleEventsByGoal = new Map<string, GoalLifecycleEvent[]>();
 
     milestones.forEach((milestone) => {
       milestonesByGoal.set(milestone.goalId, [
@@ -888,6 +1003,12 @@ export async function loadUserGoals(
         recommendation,
       ]);
     });
+    lifecycleEvents.forEach((event) => {
+      lifecycleEventsByGoal.set(event.goalId, [
+        ...(lifecycleEventsByGoal.get(event.goalId) || []),
+        event,
+      ]);
+    });
 
     return {
       goals: ((data ?? []) as BeastGoalRow[]).map((row) => {
@@ -906,6 +1027,9 @@ export async function loadUserGoals(
           recommendations: [
             ...(recommendationsByGoal.get(goal.id) || []),
           ].sort((left, right) => right.createdAt.localeCompare(left.createdAt)),
+          lifecycleEvents: [
+            ...(lifecycleEventsByGoal.get(goal.id) || []),
+          ].sort((left, right) => right.occurredAt.localeCompare(left.occurredAt)),
         };
       }),
       status: "ready",
@@ -1026,6 +1150,26 @@ export function buildGoal(goal: Goal): Goal {
     }
   });
 
+  goal.lifecycleEvents.forEach((event) => {
+    if (!event.title.trim()) {
+      throw new Error("Goal lifecycle event title is required.");
+    }
+
+    if (!isGoalLifecycleEventType(event.type)) {
+      throw new Error(`Unsupported goal lifecycle event type: ${event.type}`);
+    }
+
+    if (event.previousStatus && !isGoalStatus(event.previousStatus)) {
+      throw new Error(
+        `Unsupported previous goal status: ${event.previousStatus}`
+      );
+    }
+
+    if (event.nextStatus && !isGoalStatus(event.nextStatus)) {
+      throw new Error(`Unsupported next goal status: ${event.nextStatus}`);
+    }
+  });
+
   return {
     ...goal,
     milestones: [...goal.milestones].sort(
@@ -1042,6 +1186,9 @@ export function buildGoal(goal: Goal): Goal {
     ),
     recommendations: [...goal.recommendations].sort((left, right) =>
       right.createdAt.localeCompare(left.createdAt)
+    ),
+    lifecycleEvents: [...goal.lifecycleEvents].sort((left, right) =>
+      right.occurredAt.localeCompare(left.occurredAt)
     ),
   };
 }
@@ -1092,6 +1239,7 @@ export function summarizeGoals(goals: Goal[]): GoalOverviewSummary {
     new Set(contributions.map((contribution) => contribution.sourceModule))
   ).sort();
   const recommendations = normalized.flatMap((goal) => goal.recommendations);
+  const lifecycleEvents = normalized.flatMap((goal) => goal.lifecycleEvents);
   const activeRecommendations = recommendations.filter(
     (recommendation) =>
       recommendation.status === "Suggested" ||
@@ -1148,6 +1296,22 @@ export function summarizeGoals(goals: Goal[]): GoalOverviewSummary {
     reviewDueRecommendations: activeRecommendations.filter(
       (recommendation) => recommendation.reviewDueDate
     ).length,
+    lifecycleEvents: lifecycleEvents.length,
+    completedLifecycleEvents: lifecycleEvents.filter(
+      (event) => event.type === "Completed"
+    ).length,
+    abandonedLifecycleEvents: lifecycleEvents.filter(
+      (event) => event.type === "Abandoned"
+    ).length,
+    revisedLifecycleEvents: lifecycleEvents.filter(
+      (event) => event.type === "Revised"
+    ).length,
+    archivedLifecycleEvents: lifecycleEvents.filter(
+      (event) => event.type === "Archived"
+    ).length,
+    supersededLifecycleEvents: lifecycleEvents.filter(
+      (event) => event.type === "Superseded"
+    ).length,
     overallProgressPercent:
       measurableMilestones.length > 0
         ? Math.round((completedMilestones / measurableMilestones.length) * 100)
@@ -1186,5 +1350,11 @@ export function getActiveGoalRecommendations(goal: Goal) {
     (recommendation) =>
       recommendation.status === "Suggested" ||
       recommendation.status === "Accepted"
+  );
+}
+
+export function getGoalLifecycleEvents(goal: Goal) {
+  return [...goal.lifecycleEvents].sort((left, right) =>
+    right.occurredAt.localeCompare(left.occurredAt)
   );
 }

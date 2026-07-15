@@ -8,6 +8,7 @@ import { createRouteClient } from "@/lib/supabase/server";
 import {
   type BeastGoalDataClient,
   type GoalContribution,
+  type GoalLifecycleEvent,
   type GoalLoadResult,
   type GoalReference,
   type GoalRecommendation,
@@ -15,11 +16,13 @@ import {
   getCurrentGoalMilestone,
   getActiveGoalRecommendations,
   getGoalContributionsByModule,
+  getGoalLifecycleEvents,
   getGoalProgressPercent,
   getGoalReferencesByType,
   getGoalSupportItemsByType,
   goalDatabaseTableName,
   goalContributionDatabaseTableName,
+  goalLifecycleEventDatabaseTableName,
   goalMilestoneDatabaseTableName,
   goalOwnershipRules,
   goalReferenceDatabaseTableName,
@@ -153,6 +156,39 @@ function GoalRecommendationPill({
   );
 }
 
+function GoalLifecycleEventPill({ event }: { event: GoalLifecycleEvent }) {
+  return (
+    <div className="rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="text-sm font-black text-white">{event.title}</span>
+        <span className="rounded-full border border-[#2a3242] px-2.5 py-1 text-xs font-black text-[#c7cfdb]">
+          {event.type}
+        </span>
+      </div>
+      {event.reason ? (
+        <p className="mt-2 text-xs leading-5 text-[#9aa7b8]">
+          {event.reason}
+        </p>
+      ) : null}
+      <div className="mt-2 flex flex-wrap gap-2 text-xs font-bold text-[#7f8da3]">
+        {event.previousStatus && event.nextStatus ? (
+          <span>
+            {event.previousStatus} to {event.nextStatus}
+          </span>
+        ) : null}
+        {event.sourceModule ? <span>{event.sourceModule}</span> : null}
+        <span>
+          {new Date(event.occurredAt).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          })}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 async function getGoalLoadResult(): Promise<GoalLoadResult> {
   try {
     return await loadUserGoals(
@@ -200,6 +236,7 @@ export default async function GoalsOverviewPage() {
             ["Linked References", String(summary.linkedReferences)],
             ["Contributions", String(summary.crossModuleContributions)],
             ["Recommendations", String(summary.activeRecommendations)],
+            ["Lifecycle Events", String(summary.lifecycleEvents)],
           ].map(([label, value]) => (
             <DashboardCard key={label} accent="goals">
               <div className="text-xs font-black uppercase text-[#7f8da3]">
@@ -363,6 +400,26 @@ export default async function GoalsOverviewPage() {
                       </div>
                     )}
                   </div>
+                  <div className="mt-4 rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
+                    <div className="text-xs font-black uppercase text-[#7f8da3]">
+                      Lifecycle History
+                    </div>
+                    {getGoalLifecycleEvents(goal).length > 0 ? (
+                      <div className="mt-3 grid gap-3 md:grid-cols-2">
+                        {getGoalLifecycleEvents(goal).map((event) => (
+                          <GoalLifecycleEventPill
+                            key={event.id}
+                            event={event}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="mt-2 text-sm font-semibold text-[#dbe3ef]">
+                        No completion, abandonment, revision, archive, or
+                        superseded history is attached yet.
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))
             ) : (
@@ -406,7 +463,7 @@ export default async function GoalsOverviewPage() {
             <SectionHeader
               eyebrow="Database"
               title={`${goalDatabaseTableName} + ${goalMilestoneDatabaseTableName}`}
-              description={`BeastOS stores user-owned goal outcomes, milestone progress, support items in ${goalSupportItemDatabaseTableName}, references in ${goalReferenceDatabaseTableName}, module contributions in ${goalContributionDatabaseTableName}, and recommendations in ${goalRecommendationDatabaseTableName} without duplicating ownership.`}
+              description={`BeastOS stores user-owned goal outcomes, milestone progress, support items in ${goalSupportItemDatabaseTableName}, references in ${goalReferenceDatabaseTableName}, module contributions in ${goalContributionDatabaseTableName}, recommendations in ${goalRecommendationDatabaseTableName}, and lifecycle history in ${goalLifecycleEventDatabaseTableName} without duplicating ownership.`}
             />
             <div className="mt-5 space-y-2 text-sm text-[#c7cfdb]">
               {goalOwnershipRules.map((rule) => (
@@ -420,9 +477,9 @@ export default async function GoalsOverviewPage() {
 
         <DashboardCard accent="goals">
           <SectionHeader
-            eyebrow="BO-14"
-            title="Support, references, contributions, and review"
-            description="These counts come only from user-owned support, reference, contribution, and recommendation records attached to goals. They do not create module-owned goal copies."
+            eyebrow="BO-15"
+            title="Support, references, contributions, review, and lifecycle"
+            description="These counts come only from user-owned support, reference, contribution, recommendation, and lifecycle records attached to goals. They do not create module-owned goal copies."
           />
           <div className="mt-5 grid gap-3 md:grid-cols-4">
             {[
@@ -441,6 +498,10 @@ export default async function GoalsOverviewPage() {
               ["Active Reviews", String(summary.activeRecommendations)],
               ["Dismissed", String(summary.dismissedRecommendations)],
               ["Review Due", String(summary.reviewDueRecommendations)],
+              ["Lifecycle Events", String(summary.lifecycleEvents)],
+              ["Completed Events", String(summary.completedLifecycleEvents)],
+              ["Revisions", String(summary.revisedLifecycleEvents)],
+              ["Superseded", String(summary.supersededLifecycleEvents)],
             ].map(([label, value]) => (
               <div key={label} className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
                 <div className="text-xs font-black uppercase text-[#7f8da3]">

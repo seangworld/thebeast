@@ -17,6 +17,9 @@ import {
   goalContributionTypes,
   goalDatabaseColumns,
   goalDatabaseTableName,
+  goalLifecycleEventDatabaseColumns,
+  goalLifecycleEventDatabaseTableName,
+  goalLifecycleEventTypes,
   goalMilestoneDatabaseColumns,
   goalMilestoneDatabaseTableName,
   goalMilestoneStatuses,
@@ -44,6 +47,7 @@ import {
 import type {
   BeastGoal,
   BeastGoalContribution,
+  BeastGoalLifecycleEvent,
   BeastGoalMilestone,
   BeastGoalRecommendation,
   BeastGoalReference,
@@ -405,6 +409,38 @@ test("BG-001 creates a BeastOS-owned Goal model and database contract", () => {
       ["updated_at", true],
     ]
   );
+  assert.equal(
+    goalLifecycleEventDatabaseTableName,
+    "beast_goal_lifecycle_events"
+  );
+  assert.deepEqual(goalLifecycleEventTypes, [
+    "Completed",
+    "Abandoned",
+    "Revised",
+    "Archived",
+    "Superseded",
+  ]);
+  assert.deepEqual(
+    goalLifecycleEventDatabaseColumns.map((column) => [
+      column.name,
+      column.required,
+    ]),
+    [
+      ["id", true],
+      ["owner_id", true],
+      ["goal_id", true],
+      ["event_type", true],
+      ["title", true],
+      ["reason", false],
+      ["previous_status", false],
+      ["next_status", false],
+      ["superseded_by_goal_id", false],
+      ["source_module", false],
+      ["occurred_at", true],
+      ["created_at", true],
+      ["updated_at", true],
+    ]
+  );
   assert.deepEqual(
     goalMilestoneDatabaseColumns.map((column) => [column.name, column.required]),
     [
@@ -455,6 +491,10 @@ test("BG-001 Goals overview route stays BeastOS-owned", () => {
     "migrations/20260715_add_beast_goal_recommendations.sql",
     "utf8"
   );
+  const lifecycleMigration = readFileSync(
+    "migrations/20260715_add_beast_goal_lifecycle_events.sql",
+    "utf8"
+  );
   const summary = summarizeGoals(mockGoals);
 
   assert.equal(summary.totalGoals, 2);
@@ -467,6 +507,7 @@ test("BG-001 Goals overview route stays BeastOS-owned", () => {
   assert.equal(summary.linkedReferences, 0);
   assert.equal(summary.crossModuleContributions, 0);
   assert.equal(summary.activeRecommendations, 0);
+  assert.equal(summary.lifecycleEvents, 0);
   assert.equal(summary.overallProgressPercent, 50);
   assert.deepEqual(summary.nextSteps, [
     "Continue the next Mentor mission.",
@@ -483,15 +524,17 @@ test("BG-001 Goals overview route stays BeastOS-owned", () => {
   assert.match(goalsPage, /goalReferenceDatabaseTableName/);
   assert.match(goalsPage, /goalContributionDatabaseTableName/);
   assert.match(goalsPage, /goalRecommendationDatabaseTableName/);
+  assert.match(goalsPage, /goalLifecycleEventDatabaseTableName/);
   assert.match(goalsPage, /Milestone Progress/);
   assert.match(goalsPage, /Requirements And Routines/);
   assert.match(
     goalsPage,
-    /Support, references, contributions, and review/
+    /Support, references, contributions, review, and lifecycle/
   );
   assert.match(goalsPage, /Linked References/);
   assert.match(goalsPage, /Module Contributions/);
   assert.match(goalsPage, /Recommendations And Review/);
+  assert.match(goalsPage, /Lifecycle History/);
   assert.doesNotMatch(goalsPage, /mockGoals/);
   assert.doesNotMatch(goalsPage, /Earn Security\+/);
   assert.doesNotMatch(goalsPage, /Become debt free/);
@@ -548,6 +591,17 @@ test("BG-001 Goals overview route stays BeastOS-owned", () => {
   assert.match(recommendationMigration, /status = 'Dismissed' and dismissed_at is not null/);
   assert.match(recommendationMigration, /enable row level security/);
   assert.match(recommendationMigration, /auth\.uid\(\) = owner_id/);
+  assert.match(
+    lifecycleMigration,
+    /create table if not exists public\.beast_goal_lifecycle_events/
+  );
+  assert.match(
+    lifecycleMigration,
+    /event_type in \('Completed', 'Abandoned', 'Revised', 'Archived', 'Superseded'\)/
+  );
+  assert.match(lifecycleMigration, /superseded_by_goal_id is not null/);
+  assert.match(lifecycleMigration, /enable row level security/);
+  assert.match(lifecycleMigration, /auth\.uid\(\) = owner_id/);
   assert.throws(
     () =>
       buildGoal({
@@ -574,6 +628,8 @@ function createGoalClient(
     contributionQueryError?: boolean;
     recommendationRows?: BeastGoalRecommendation[] | null;
     recommendationQueryError?: boolean;
+    lifecycleRows?: BeastGoalLifecycleEvent[] | null;
+    lifecycleQueryError?: boolean;
   } = {}
 ): BeastGoalDataClient {
   return {
@@ -592,7 +648,8 @@ function createGoalClient(
           table === goalSupportItemDatabaseTableName ||
           table === goalReferenceDatabaseTableName ||
           table === goalContributionDatabaseTableName ||
-          table === goalRecommendationDatabaseTableName
+          table === goalRecommendationDatabaseTableName ||
+          table === goalLifecycleEventDatabaseTableName
       );
 
       return {
@@ -620,6 +677,9 @@ function createGoalClient(
                   } else if (table === goalRecommendationDatabaseTableName) {
                     assert.equal(columnName, "created_at");
                     assert.deepEqual(orderOptions, { ascending: false });
+                  } else if (table === goalLifecycleEventDatabaseTableName) {
+                    assert.equal(columnName, "occurred_at");
+                    assert.deepEqual(orderOptions, { ascending: false });
                   } else {
                     assert.equal(table, goalReferenceDatabaseTableName);
                     assert.equal(columnName, "created_at");
@@ -640,6 +700,9 @@ function createGoalClient(
                       }
                       if (table === goalRecommendationDatabaseTableName) {
                         return options.recommendationRows ?? [];
+                      }
+                      if (table === goalLifecycleEventDatabaseTableName) {
+                        return options.lifecycleRows ?? [];
                       }
                       return options.referenceRows ?? [];
                     })(),
@@ -671,6 +734,12 @@ function createGoalClient(
                       if (table === goalRecommendationDatabaseTableName) {
                         return options.recommendationQueryError
                           ? { message: "Recommendations unavailable" }
+                          : null;
+                      }
+
+                      if (table === goalLifecycleEventDatabaseTableName) {
+                        return options.lifecycleQueryError
+                          ? { message: "Lifecycle unavailable" }
                           : null;
                       }
 
@@ -851,6 +920,38 @@ test("BG-001 Goals loader uses only signed-in user records", async () => {
             updated_at: "2026-07-15T05:00:00.000Z",
           },
         ],
+        lifecycleRows: [
+          {
+            id: "real-lifecycle-revised",
+            owner_id: "member-real",
+            goal_id: "real-goal",
+            event_type: "Revised",
+            title: "Goal plan revised",
+            reason: "The target step changed after module evidence was reviewed.",
+            previous_status: "Active",
+            next_status: "Active",
+            superseded_by_goal_id: null,
+            source_module: "beastos",
+            occurred_at: "2026-07-15T06:00:00.000Z",
+            created_at: "2026-07-15T06:00:00.000Z",
+            updated_at: "2026-07-15T06:00:00.000Z",
+          },
+          {
+            id: "real-lifecycle-completed",
+            owner_id: "member-real",
+            goal_id: "real-goal",
+            event_type: "Completed",
+            title: "Goal completed",
+            reason: "The learner finished the shared outcome.",
+            previous_status: "Active",
+            next_status: "Completed",
+            superseded_by_goal_id: null,
+            source_module: "learning",
+            occurred_at: "2026-07-15T05:30:00.000Z",
+            created_at: "2026-07-15T05:30:00.000Z",
+            updated_at: "2026-07-15T05:30:00.000Z",
+          },
+        ],
       }
     )
   );
@@ -871,6 +972,9 @@ test("BG-001 Goals loader uses only signed-in user records", async () => {
   assert.equal(result.goals[0].recommendations.length, 2);
   assert.equal(result.goals[0].recommendations[0].title, "Review this goal this week");
   assert.equal(result.goals[0].recommendations[1].title, "Consider a savings boost");
+  assert.equal(result.goals[0].lifecycleEvents.length, 2);
+  assert.equal(result.goals[0].lifecycleEvents[0].title, "Goal plan revised");
+  assert.equal(result.goals[0].lifecycleEvents[1].title, "Goal completed");
   assert.equal(summarizeGoals(result.goals).openBlockers, 1);
   assert.equal(summarizeGoals(result.goals).activeRecurringActions, 1);
   assert.equal(summarizeGoals(result.goals).linkedReferences, 2);
@@ -885,6 +989,9 @@ test("BG-001 Goals loader uses only signed-in user records", async () => {
   assert.equal(summarizeGoals(result.goals).activeRecommendations, 1);
   assert.equal(summarizeGoals(result.goals).dismissedRecommendations, 1);
   assert.equal(summarizeGoals(result.goals).reviewDueRecommendations, 1);
+  assert.equal(summarizeGoals(result.goals).lifecycleEvents, 2);
+  assert.equal(summarizeGoals(result.goals).completedLifecycleEvents, 1);
+  assert.equal(summarizeGoals(result.goals).revisedLifecycleEvents, 1);
   assert.notEqual(result.goals[0].title, mockGoals[0].title);
 });
 
@@ -1010,4 +1117,32 @@ test("BO-14 Goals loader tolerates unavailable recommendation records", async ()
   assert.equal(result.goals.length, 1);
   assert.equal(result.goals[0].recommendations.length, 0);
   assert.equal(summarizeGoals(result.goals).activeRecommendations, 0);
+});
+
+test("BO-15 Goals loader tolerates unavailable lifecycle records", async () => {
+  const result = await loadUserGoals(
+    createGoalClient(
+      [
+        {
+          id: "real-goal",
+          owner_id: "member-real",
+          title: "Goal without lifecycle table",
+          category: "Personal",
+          status: "Active",
+          summary: null,
+          target_date: null,
+          current_step: null,
+          source_module: null,
+          created_at: "2026-07-15T00:00:00.000Z",
+          updated_at: "2026-07-15T00:00:00.000Z",
+        },
+      ],
+      { userId: "member-real", lifecycleQueryError: true }
+    )
+  );
+
+  assert.equal(result.status, "ready");
+  assert.equal(result.goals.length, 1);
+  assert.equal(result.goals[0].lifecycleEvents.length, 0);
+  assert.equal(summarizeGoals(result.goals).lifecycleEvents, 0);
 });
