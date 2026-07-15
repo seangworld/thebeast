@@ -59,7 +59,7 @@ export function MoneyTimeline({ items }: { items: MoneyTimelineItem[] }) {
     <section className="relative overflow-hidden rounded-2xl border border-[#2a3242] bg-[#1a1f2b] p-5 shadow-[0_18px_60px_rgba(0,0,0,0.22)]">
       <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
         <div>
-          <h2 className="text-xl font-bold">Financial Timeline</h2>
+          <h2 className="money-section-title">Financial Timeline</h2>
           <p className="mt-1 text-sm text-[#7f8da3]">
             Bills, paydays, planned debt payments, and upcoming money events.
           </p>

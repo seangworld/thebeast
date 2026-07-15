@@ -61,11 +61,16 @@ test("BeastMoney internal pages use dashboard-aligned Money surfaces", () => {
     assert.match(globalStyles, new RegExp(`\\.${className}`));
   }
 
+  assert.match(globalStyles, /\.money-section-card::before/);
+  assert.match(globalStyles, /\.money-page-stack \.beast-card::before/);
+  assert.match(globalStyles, /\.money-summary-grid > \.money-section-card/);
+
   for (const sourcePath of standardizedSources) {
     const source = readFileSync(sourcePath, "utf8");
 
     assert.match(source, /money-page-stack|money-section-card|money-section-panel/);
     assert.doesNotMatch(source, /beast-button-primary/);
+    assert.doesNotMatch(source, /text-xl font-bold/);
   }
 
   const addBill = readFileSync(

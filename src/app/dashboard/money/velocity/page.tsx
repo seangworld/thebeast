@@ -790,7 +790,7 @@ export default function VelocityPlannerPage() {
         <section className="grid gap-4 lg:grid-cols-2">
           <div className="beast-card">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <h2 className="text-xl font-bold">Primary Velocity Source</h2>
+              <h2 className="money-section-title">Primary Velocity Source</h2>
               <span className="w-fit rounded border border-[#2a3242] px-3 py-1 text-xs font-semibold text-[#c7cfdb]">
                 Planning Settings
               </span>
@@ -877,7 +877,7 @@ export default function VelocityPlannerPage() {
 
           <div className="beast-card">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <h2 className="text-xl font-bold">Velocity Guardrails</h2>
+              <h2 className="money-section-title">Velocity Guardrails</h2>
               <span className="w-fit rounded border border-[#2a3242] px-3 py-1 text-xs font-semibold text-[#c7cfdb]">
                 Active Inputs
               </span>
@@ -1230,7 +1230,7 @@ export default function VelocityPlannerPage() {
             <div className="beast-card sm:col-span-2 xl:col-span-3">
               <div className="flex flex-col gap-1 border-b border-[#2a3242] pb-4">
                 <div className="text-sm text-[#38bdf8]">Read-only</div>
-                <h3 className="text-xl font-bold">Beast Advisor</h3>
+                <h3 className="money-section-title">Beast Advisor</h3>
               </div>
               <div className="mt-5 grid gap-5 lg:grid-cols-2">
                 {advisorSectionOrder.map((sectionId) => {
@@ -1300,7 +1300,7 @@ export default function VelocityPlannerPage() {
         </section>
 
         <section className="beast-card">
-          <h2 className="text-xl font-bold">Full Velocity Roadmap</h2>
+          <h2 className="money-section-title">Full Velocity Roadmap</h2>
           <div className="mt-4 grid gap-3 md:grid-cols-4">
             {velocityRoadmap.map((phase) => (
               <div

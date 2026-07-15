@@ -56,7 +56,7 @@ export default function AddIncomeBillSection({
       <div className="money-section-card">
         <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-xl font-bold">Add Income</h2>
+            <h2 className="money-section-title">Add Income</h2>
             <p className="mt-1 text-sm text-[#7f8da3]">
               Add or schedule a recurring income source.
             </p>
@@ -114,7 +114,7 @@ export default function AddIncomeBillSection({
       <div id="add-bill" className="money-section-card">
         <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-xl font-bold">Add Bill</h2>
+            <h2 className="money-section-title">Add Bill</h2>
             <p className="mt-1 text-sm text-[#7f8da3]">
               Add a recurring bill or service-based obligation.
             </p>

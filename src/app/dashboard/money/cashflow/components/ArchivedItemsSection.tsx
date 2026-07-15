@@ -30,7 +30,7 @@ export default function ArchivedItemsSection({
       <section className="beast-panel overflow-hidden">
         <div className="flex flex-col items-start gap-4 border-b border-[#2a3242] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
           <div>
-            <h2 className="text-xl font-bold">Archived Bills</h2>
+            <h2 className="money-section-title">Archived Bills</h2>
             <p className="mt-1 text-sm text-[#7f8da3]">
               Hidden from planning and income-date calculations.
             </p>
@@ -99,7 +99,7 @@ export default function ArchivedItemsSection({
       <section className="beast-panel overflow-hidden">
         <div className="flex flex-col items-start gap-4 border-b border-[#2a3242] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
           <div>
-            <h2 className="text-xl font-bold">Archived Debts</h2>
+            <h2 className="money-section-title">Archived Debts</h2>
             <p className="mt-1 text-sm text-[#7f8da3]">
               Hidden from planning and income-date calculations.
             </p>

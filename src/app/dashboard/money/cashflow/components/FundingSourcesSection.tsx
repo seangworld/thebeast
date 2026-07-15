@@ -67,7 +67,7 @@ export default function FundingSourcesSection({
     <section className="beast-panel overflow-hidden">
       <div className="flex flex-col items-start gap-4 border-b border-[#2a3242] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
         <div>
-          <h2 className="text-xl font-bold">Funding Sources</h2>
+          <h2 className="money-section-title">Funding Sources</h2>
           <p className="mt-1 text-sm text-[#7f8da3]">
             Accounts and liquidity sources used to fund bills, debt payments,
             and future HELOC/PLOC planning.

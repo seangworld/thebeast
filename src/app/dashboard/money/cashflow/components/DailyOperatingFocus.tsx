@@ -33,7 +33,7 @@ export default function DailyOperatingFocus({
       {operationalAlerts.length > 0 && (
         <section className="beast-card space-y-4">
           <div>
-            <h2 className="text-xl font-bold">Operational Alerts</h2>
+            <h2 className="money-section-title">Operational Alerts</h2>
             <p className="mt-1 text-sm text-[#7f8da3]">
               Current cashflow items that need attention.
             </p>
@@ -61,7 +61,7 @@ export default function DailyOperatingFocus({
 
       <section className="beast-card space-y-4">
         <div>
-          <h2 className="text-xl font-bold">Daily Command Summary</h2>
+          <h2 className="money-section-title">Daily Command Summary</h2>
           <p className="mt-1 text-sm text-[#7f8da3]">
             Quick operating numbers for today.
           </p>
@@ -163,7 +163,7 @@ export default function DailyOperatingFocus({
 
       <section className="beast-card space-y-4">
         <div>
-          <h2 className="text-xl font-bold">Recommended Next Step Today</h2>
+          <h2 className="money-section-title">Recommended Next Step Today</h2>
           <p className="mt-1 text-sm text-[#7f8da3]">
             Rules-based guidance from current assignments, cash pots, and
             active obligations.

@@ -15,7 +15,7 @@ export default function BillsAheadSection({
     <section className="beast-card space-y-5">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h2 className="text-xl font-bold">Bills Ahead</h2>
+          <h2 className="money-section-title">Bills Ahead</h2>
           <p className="mt-1 text-sm text-[#7f8da3]">
             Operational view of bills due in the next 30 days, including
             funding source and income pot assignments.

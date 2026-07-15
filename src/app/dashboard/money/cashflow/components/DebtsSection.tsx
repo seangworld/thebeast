@@ -107,7 +107,7 @@ export default function DebtsSection({
     <section className="beast-panel overflow-hidden">
       <div className="flex flex-col items-start gap-4 border-b border-[#2a3242] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
         <div>
-          <h2 className="text-xl font-bold">Debts</h2>
+          <h2 className="money-section-title">Debts</h2>
           <p className="mt-1 text-sm text-[#7f8da3]">
             Assign each debt minimum payment to the income pot that should
             cover it. Edit debts when APRs, balances, due days, or minimums

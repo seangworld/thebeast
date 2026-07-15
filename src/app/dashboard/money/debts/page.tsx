@@ -822,7 +822,7 @@ export default function DebtsPage() {
         <section className="money-section-card">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-bold">Data Status</h2>
+              <h2 className="money-section-title">Data Status</h2>
               <p className="mt-1 text-sm text-[#7f8da3]">
                 Click Refresh to reload debts from the database.
               </p>

@@ -16,7 +16,7 @@ export default function IncomeDatePlanningSection({
   return (
     <section className="beast-card space-y-5">
       <div>
-        <h2 className="text-xl font-bold">Income Date Planning</h2>
+        <h2 className="money-section-title">Income Date Planning</h2>
         <p className="mt-1 text-sm text-[#7f8da3]">
           Assign bills and debt minimums to the real income date that should
           cover them.
