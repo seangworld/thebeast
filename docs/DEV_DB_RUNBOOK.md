@@ -2,6 +2,9 @@
 
 - **Purpose:** create a clean development schema equivalent to production structure used by the app, without copying any production data.
 - **Files referenced:** `migrations/20260531_dev_schema.sql`, `migrations/dev_seed_placeholders.sql`
+- **Current migration source of truth:** use `docs/SUPABASE_MIGRATIONS.md` and `supabase/migrations/` for Supabase CLI-managed migration history.
+
+This runbook is retained for legacy dev schema context and local seed guidance. Do not use it to bypass the Supabase CLI migration history once a project is linked and repaired.
 
 Quick steps to create the dev schema
 

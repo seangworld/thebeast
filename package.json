@@ -7,7 +7,21 @@
     "build": "next build",
     "test": "tsc -p tsconfig.test.json && node --test .test-dist/tests/*.test.js",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "supabase:current": "node scripts/supabase-migration-guard.mjs current",
+    "supabase:link:dev": "node scripts/supabase-migration-guard.mjs link dev",
+    "supabase:list:dev": "node scripts/supabase-migration-guard.mjs list dev --confirm-env dev",
+    "supabase:dry-run:dev": "node scripts/supabase-migration-guard.mjs dry-run dev --confirm-env dev",
+    "supabase:push:dev": "node scripts/supabase-migration-guard.mjs push dev --confirm-env dev",
+    "supabase:verify:dev": "node scripts/supabase-migration-guard.mjs verify dev --confirm-env dev",
+    "supabase:link:production": "node scripts/supabase-migration-guard.mjs link production",
+    "supabase:list:production": "node scripts/supabase-migration-guard.mjs list production --confirm-env production",
+    "supabase:dry-run:production": "node scripts/supabase-migration-guard.mjs dry-run production --confirm-env production",
+    "supabase:push:production": "node scripts/supabase-migration-guard.mjs push production --confirm-env production",
+    "supabase:bootstrap-dry-run:production": "node scripts/supabase-migration-guard.mjs bootstrap-dry-run production --confirm-env production",
+    "supabase:bootstrap-push:production": "node scripts/supabase-migration-guard.mjs bootstrap-push production --confirm-env production",
+    "supabase:verify:production": "node scripts/supabase-migration-guard.mjs verify production --confirm-env production",
+    "supabase:release-plan": "node scripts/supabase-migration-guard.mjs release-plan"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.2",
@@ -27,6 +41,7 @@
     "eslint": "^8",
     "eslint-config-next": "13.5.6",
     "postcss": "^8",
+    "supabase": "^2.109.1",
     "tailwindcss": "^3",
     "typescript": "^5"
   }
