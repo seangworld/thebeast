@@ -2,10 +2,12 @@ import type { PlatformModule } from "./types";
 import type {
   BeastDocument as BeastDocumentRow,
   BeastDocumentAccessGrant as BeastDocumentAccessGrantRow,
+  BeastDocumentCalendarLink as BeastDocumentCalendarLinkRow,
   BeastDocumentCollection as BeastDocumentCollectionRow,
   BeastDocumentCollectionItem as BeastDocumentCollectionItemRow,
   BeastDocumentFolder as BeastDocumentFolderRow,
   BeastDocumentModuleLink as BeastDocumentModuleLinkRow,
+  BeastGoalReference as BeastGoalReferenceRow,
 } from "@/lib/types/database";
 
 export type DocumentCategory =
@@ -27,6 +29,8 @@ export type DocumentCollectionItemStatus = "Active" | "Archived";
 export type DocumentAccessPermission = "None" | "View" | "Manage";
 export type DocumentAccessScope = "Member" | "Household";
 export type DocumentAccessStatus = "Active" | "Revoked";
+export type DocumentCalendarLinkStatus = "Active" | "Archived";
+export type DocumentAssociationType = "Module" | "Goal" | "Calendar";
 
 export type DocumentStorageMetadata = {
   bucket: string;
@@ -52,6 +56,8 @@ export type BeastDocument = {
   folder?: DocumentFolder;
   collections: DocumentCollection[];
   accessGrants: DocumentAccessGrant[];
+  goalReferences: DocumentGoalReference[];
+  calendarLinks: DocumentCalendarLink[];
   moduleLinks: DocumentModuleLink[];
   createdAt: string;
   updatedAt: string;
@@ -108,6 +114,47 @@ export type DocumentAccessGrant = {
   revokedAt?: string;
 };
 
+export type DocumentGoalReference = {
+  id: string;
+  ownerId: string;
+  documentId: string;
+  goalId: string;
+  title: string;
+  summary?: string;
+  url?: string;
+  referenceDate?: string;
+  sourceModule?: PlatformModule;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type DocumentCalendarLink = {
+  id: string;
+  ownerId: string;
+  documentId: string;
+  calendarItemId?: string;
+  title: string;
+  summary?: string;
+  status: DocumentCalendarLinkStatus;
+  referenceDate: string;
+  startTime?: string;
+  endTime?: string;
+  sourceModule?: PlatformModule;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type DocumentAssociation = {
+  id: string;
+  documentId: string;
+  type: DocumentAssociationType;
+  title: string;
+  summary?: string;
+  sourceModule?: PlatformModule;
+  referenceDate?: string;
+  href?: string;
+};
+
 export type DocumentModuleLink = {
   id: string;
   ownerId: string;
@@ -144,6 +191,9 @@ export type DocumentOverviewSummary = {
   householdSharedDocuments: number;
   directSharedDocuments: number;
   manageableSharedDocuments: number;
+  ecosystemAssociations: number;
+  goalAssociations: number;
+  calendarAssociations: number;
 };
 
 export type DocumentLoadStatus = "ready" | "signed-out" | "unavailable";
@@ -153,6 +203,8 @@ export type DocumentLoadResult = {
   folders: DocumentFolder[];
   collections: DocumentCollection[];
   accessGrants: DocumentAccessGrant[];
+  goalReferences: DocumentGoalReference[];
+  calendarLinks: DocumentCalendarLink[];
   status: DocumentLoadStatus;
   message?: string;
 };
@@ -174,10 +226,12 @@ export type BeastDocumentDataClient = {
           data:
             | BeastDocumentRow[]
             | BeastDocumentAccessGrantRow[]
+            | BeastDocumentCalendarLinkRow[]
             | BeastDocumentModuleLinkRow[]
             | BeastDocumentFolderRow[]
             | BeastDocumentCollectionRow[]
             | BeastDocumentCollectionItemRow[]
+            | BeastGoalReferenceRow[]
             | null;
           error: { message?: string } | null;
         }>;
@@ -196,6 +250,9 @@ export const documentCollectionItemDatabaseTableName =
   "beast_document_collection_items";
 export const documentAccessGrantDatabaseTableName =
   "beast_document_access_grants";
+export const documentCalendarLinkDatabaseTableName =
+  "beast_document_calendar_links";
+export const documentGoalReferenceDatabaseTableName = "beast_goal_references";
 
 export const documentStorageBucketName = "beast-documents";
 export const documentUploadMaxFileSizeBytes = 25 * 1000 * 1000;
@@ -249,6 +306,17 @@ export const documentAccessScopes: DocumentAccessScope[] = [
 export const documentAccessStatuses: DocumentAccessStatus[] = [
   "Active",
   "Revoked",
+];
+
+export const documentCalendarLinkStatuses: DocumentCalendarLinkStatus[] = [
+  "Active",
+  "Archived",
+];
+
+export const documentAssociationTypes: DocumentAssociationType[] = [
+  "Module",
+  "Goal",
+  "Calendar",
 ];
 
 export const supportedDocumentFileTypes = [
@@ -358,6 +426,22 @@ export const documentAccessGrantDatabaseColumns: DocumentDatabaseColumn[] = [
   { name: "revoked_at", type: "timestamptz", required: false },
 ];
 
+export const documentCalendarLinkDatabaseColumns: DocumentDatabaseColumn[] = [
+  { name: "id", type: "uuid", required: true },
+  { name: "owner_id", type: "uuid", required: true },
+  { name: "document_id", type: "uuid", required: true },
+  { name: "calendar_item_id", type: "text", required: false },
+  { name: "title", type: "text", required: true },
+  { name: "summary", type: "text", required: false },
+  { name: "status", type: "text", required: true },
+  { name: "reference_date", type: "date", required: true },
+  { name: "start_time", type: "timestamptz", required: false },
+  { name: "end_time", type: "timestamptz", required: false },
+  { name: "source_module", type: "text", required: false },
+  { name: "created_at", type: "timestamptz", required: true },
+  { name: "updated_at", type: "timestamptz", required: true },
+];
+
 export const documentModuleLinkDatabaseColumns: DocumentDatabaseColumn[] = [
   { name: "id", type: "uuid", required: true },
   { name: "owner_id", type: "uuid", required: true },
@@ -378,6 +462,8 @@ export const documentOwnershipRules = [
   "One BeastOS document record may be linked to multiple module records without duplicating the document.",
   "Folders, collections, tags, and metadata organize BeastOS records without changing module ownership.",
   "Household and member sharing must use explicit BeastOS document access grants.",
+  "Goal references reuse BeastOS goal reference records instead of creating duplicate goal ownership.",
+  "Calendar associations use BeastOS-owned document calendar links until the unified Calendar model is implemented.",
   "BeastDocuments remains superseded as a standalone customer-facing module.",
 ];
 
@@ -401,6 +487,8 @@ export const mockDocuments: BeastDocument[] = [
     sourceModule: "money",
     collections: [],
     accessGrants: [],
+    goalReferences: [],
+    calendarLinks: [],
     moduleLinks: [],
     createdAt: "2026-07-14T00:00:00.000Z",
     updatedAt: "2026-07-14T00:00:00.000Z",
@@ -424,6 +512,8 @@ export const mockDocuments: BeastDocument[] = [
     sourceModule: "learning",
     collections: [],
     accessGrants: [],
+    goalReferences: [],
+    calendarLinks: [],
     moduleLinks: [],
     createdAt: "2026-07-14T00:00:00.000Z",
     updatedAt: "2026-07-14T00:00:00.000Z",
@@ -470,6 +560,8 @@ export function mapDocumentRow(row: BeastDocumentRow): BeastDocument {
     sourceModule: toPlatformModule(row.source_module),
     collections: [],
     accessGrants: [],
+    goalReferences: [],
+    calendarLinks: [],
     moduleLinks: [],
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -535,6 +627,14 @@ export function isDocumentAccessStatus(
   status: unknown
 ): status is DocumentAccessStatus {
   return documentAccessStatuses.includes(status as DocumentAccessStatus);
+}
+
+export function isDocumentCalendarLinkStatus(
+  status: unknown
+): status is DocumentCalendarLinkStatus {
+  return documentCalendarLinkStatuses.includes(
+    status as DocumentCalendarLinkStatus
+  );
 }
 
 export function mapDocumentFolderRow(
@@ -626,6 +726,56 @@ export function mapDocumentAccessGrantRow(
   };
 }
 
+export function mapDocumentGoalReferenceRow(
+  row: BeastGoalReferenceRow
+): DocumentGoalReference | null {
+  if (row.reference_type !== "Document" || row.status !== "Active") {
+    return null;
+  }
+
+  if (!row.reference_id) {
+    return null;
+  }
+
+  return {
+    id: row.id,
+    ownerId: row.owner_id,
+    documentId: row.reference_id,
+    goalId: row.goal_id,
+    title: row.title,
+    summary: row.summary ?? undefined,
+    url: row.url ?? undefined,
+    referenceDate: row.reference_date ?? undefined,
+    sourceModule: toPlatformModule(row.source_module),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+export function mapDocumentCalendarLinkRow(
+  row: BeastDocumentCalendarLinkRow
+): DocumentCalendarLink {
+  if (!isDocumentCalendarLinkStatus(row.status)) {
+    throw new Error(`Unsupported document calendar link status: ${row.status}`);
+  }
+
+  return {
+    id: row.id,
+    ownerId: row.owner_id,
+    documentId: row.document_id,
+    calendarItemId: row.calendar_item_id ?? undefined,
+    title: row.title,
+    summary: row.summary ?? undefined,
+    status: row.status,
+    referenceDate: row.reference_date,
+    startTime: row.start_time ?? undefined,
+    endTime: row.end_time ?? undefined,
+    sourceModule: toPlatformModule(row.source_module),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
 export async function loadUserDocuments(
   client: BeastDocumentDataClient
 ): Promise<DocumentLoadResult> {
@@ -638,6 +788,8 @@ export async function loadUserDocuments(
         folders: [],
         collections: [],
         accessGrants: [],
+        goalReferences: [],
+        calendarLinks: [],
         status: "unavailable",
         message: "Documents could not be loaded right now.",
       };
@@ -649,6 +801,8 @@ export async function loadUserDocuments(
         folders: [],
         collections: [],
         accessGrants: [],
+        goalReferences: [],
+        calendarLinks: [],
         status: "signed-out",
         message: "Sign in to view your documents.",
       };
@@ -668,6 +822,8 @@ export async function loadUserDocuments(
         folders: [],
         collections: [],
         accessGrants: [],
+        goalReferences: [],
+        calendarLinks: [],
         status: "unavailable",
         message:
           "Documents are not available yet. The database may still need its foundation migration.",
@@ -737,6 +893,32 @@ export async function loadUserDocuments(
       : ((accessGrantResult.data ?? []) as BeastDocumentAccessGrantRow[]).map(
           mapDocumentAccessGrantRow
         );
+    const goalReferenceResult = await client
+      .from(documentGoalReferenceDatabaseTableName)
+      .select(
+        "id, owner_id, goal_id, reference_type, title, status, summary, url, reference_id, reference_date, source_module, created_at, updated_at"
+      )
+      .eq("owner_id", userData.user.id)
+      .order("created_at", { ascending: false });
+    const goalReferences = goalReferenceResult.error
+      ? []
+      : ((goalReferenceResult.data ?? []) as BeastGoalReferenceRow[])
+          .map(mapDocumentGoalReferenceRow)
+          .filter(
+            (reference): reference is DocumentGoalReference => reference !== null
+          );
+    const calendarLinkResult = await client
+      .from(documentCalendarLinkDatabaseTableName)
+      .select(
+        "id, owner_id, document_id, calendar_item_id, title, summary, status, reference_date, start_time, end_time, source_module, created_at, updated_at"
+      )
+      .eq("owner_id", userData.user.id)
+      .order("created_at", { ascending: false });
+    const calendarLinks = calendarLinkResult.error
+      ? []
+      : ((calendarLinkResult.data ?? []) as BeastDocumentCalendarLinkRow[]).map(
+          mapDocumentCalendarLinkRow
+        );
     const linksByDocument = new Map<string, DocumentModuleLink[]>();
     const foldersById = new Map(folders.map((folder) => [folder.id, folder]));
     const collectionsById = new Map(
@@ -744,6 +926,8 @@ export async function loadUserDocuments(
     );
     const collectionItemsByDocument = new Map<string, DocumentCollection[]>();
     const accessGrantsByDocument = new Map<string, DocumentAccessGrant[]>();
+    const goalReferencesByDocument = new Map<string, DocumentGoalReference[]>();
+    const calendarLinksByDocument = new Map<string, DocumentCalendarLink[]>();
 
     moduleLinks.forEach((link) => {
       linksByDocument.set(link.documentId, [
@@ -769,6 +953,20 @@ export async function loadUserDocuments(
       ]);
     });
 
+    goalReferences.forEach((reference) => {
+      goalReferencesByDocument.set(reference.documentId, [
+        ...(goalReferencesByDocument.get(reference.documentId) || []),
+        reference,
+      ]);
+    });
+
+    calendarLinks.forEach((link) => {
+      calendarLinksByDocument.set(link.documentId, [
+        ...(calendarLinksByDocument.get(link.documentId) || []),
+        link,
+      ]);
+    });
+
     const documents = ((data ?? []) as BeastDocumentRow[]).map((row) => {
       const document = mapDocumentRow(row);
 
@@ -782,6 +980,12 @@ export async function loadUserDocuments(
         ].sort((left, right) => left.name.localeCompare(right.name)),
         accessGrants: [
           ...(accessGrantsByDocument.get(document.id) || []),
+        ].sort((left, right) => right.createdAt.localeCompare(left.createdAt)),
+        goalReferences: [
+          ...(goalReferencesByDocument.get(document.id) || []),
+        ].sort((left, right) => right.createdAt.localeCompare(left.createdAt)),
+        calendarLinks: [
+          ...(calendarLinksByDocument.get(document.id) || []),
         ].sort((left, right) => right.createdAt.localeCompare(left.createdAt)),
         moduleLinks: [...(linksByDocument.get(document.id) || [])].sort(
           (left, right) => right.createdAt.localeCompare(left.createdAt)
@@ -814,6 +1018,8 @@ export async function loadUserDocuments(
         }))
         .sort((left, right) => left.name.localeCompare(right.name)),
       accessGrants,
+      goalReferences,
+      calendarLinks,
       status: "ready",
     };
   } catch {
@@ -822,6 +1028,8 @@ export async function loadUserDocuments(
       folders: [],
       collections: [],
       accessGrants: [],
+      goalReferences: [],
+      calendarLinks: [],
       status: "unavailable",
       message: "Documents could not be loaded right now.",
     };
@@ -895,6 +1103,22 @@ export function buildDocument(document: BeastDocument): BeastDocument {
     }
   });
 
+  document.goalReferences.forEach((reference) => {
+    if (!reference.title.trim()) {
+      throw new Error("Document goal reference title is required.");
+    }
+  });
+
+  document.calendarLinks.forEach((link) => {
+    if (!link.title.trim()) {
+      throw new Error("Document calendar link title is required.");
+    }
+
+    if (!isDocumentCalendarLinkStatus(link.status)) {
+      throw new Error(`Unsupported document calendar link status: ${link.status}`);
+    }
+  });
+
   return {
     ...document,
     tags: Array.from(new Set(document.tags.map((tag) => tag.trim()))).sort(),
@@ -902,6 +1126,12 @@ export function buildDocument(document: BeastDocument): BeastDocument {
       left.name.localeCompare(right.name)
     ),
     accessGrants: [...document.accessGrants].sort((left, right) =>
+      right.createdAt.localeCompare(left.createdAt)
+    ),
+    goalReferences: [...document.goalReferences].sort((left, right) =>
+      right.createdAt.localeCompare(left.createdAt)
+    ),
+    calendarLinks: [...document.calendarLinks].sort((left, right) =>
       right.createdAt.localeCompare(left.createdAt)
     ),
     moduleLinks: [...document.moduleLinks].sort((left, right) =>
@@ -1003,6 +1233,9 @@ export function summarizeDocuments(
     .filter(
       (grant) => grant.status === "Active" && grant.permission !== "None"
     );
+  const activeCalendarLinks = normalized
+    .flatMap((document) => document.calendarLinks)
+    .filter((link) => link.status === "Active");
   const sharedDocumentIds = new Set(
     activeAccessGrants.map((grant) => grant.documentId)
   );
@@ -1056,6 +1289,13 @@ export function summarizeDocuments(
         .filter((grant) => grant.permission === "Manage")
         .map((grant) => grant.documentId)
     ).size,
+    ecosystemAssociations:
+      activeModuleLinks.length +
+      normalized.flatMap((document) => document.goalReferences).length +
+      activeCalendarLinks.length,
+    goalAssociations: normalized.flatMap((document) => document.goalReferences)
+      .length,
+    calendarAssociations: activeCalendarLinks.length,
   };
 }
 
@@ -1067,6 +1307,51 @@ export function getActiveDocumentAccessGrants(document: BeastDocument) {
   return document.accessGrants.filter(
     (grant) => grant.status === "Active" && grant.permission !== "None"
   );
+}
+
+export function getActiveDocumentCalendarLinks(document: BeastDocument) {
+  return document.calendarLinks.filter((link) => link.status === "Active");
+}
+
+export function getDocumentAssociations(
+  document: BeastDocument
+): DocumentAssociation[] {
+  const associations: DocumentAssociation[] = [
+    ...getActiveDocumentModuleLinks(document).map((link) => ({
+      id: link.id,
+      documentId: link.documentId,
+      type: "Module" as const,
+      title: link.title,
+      summary: link.summary,
+      sourceModule: link.sourceModule,
+      referenceDate: undefined,
+    })),
+    ...document.goalReferences.map((reference) => ({
+      id: reference.id,
+      documentId: reference.documentId,
+      type: "Goal" as const,
+      title: reference.title,
+      summary: reference.summary,
+      sourceModule: reference.sourceModule || "goals",
+      referenceDate: reference.referenceDate,
+      href: reference.url,
+    })),
+    ...getActiveDocumentCalendarLinks(document).map((link) => ({
+      id: link.id,
+      documentId: link.documentId,
+      type: "Calendar" as const,
+      title: link.title,
+      summary: link.summary,
+      sourceModule: link.sourceModule || "calendar",
+      referenceDate: link.referenceDate,
+    })),
+  ];
+
+  return associations.sort((left, right) => {
+    const leftDate = left.referenceDate || "";
+    const rightDate = right.referenceDate || "";
+    return rightDate.localeCompare(leftDate) || left.title.localeCompare(right.title);
+  });
 }
 
 export function getDocumentVisibilityLabel(document: BeastDocument) {

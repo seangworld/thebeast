@@ -9,6 +9,10 @@ import {
   documentAccessPermissions,
   documentAccessScopes,
   documentAccessStatuses,
+  documentAssociationTypes,
+  documentCalendarLinkDatabaseColumns,
+  documentCalendarLinkDatabaseTableName,
+  documentCalendarLinkStatuses,
   documentCategories,
   documentCollectionDatabaseColumns,
   documentCollectionDatabaseTableName,
@@ -20,6 +24,7 @@ import {
   documentDatabaseTableName,
   documentFolderDatabaseColumns,
   documentFolderDatabaseTableName,
+  documentGoalReferenceDatabaseTableName,
   documentModuleLinkDatabaseColumns,
   documentModuleLinkDatabaseTableName,
   documentModuleLinkStatuses,
@@ -29,6 +34,8 @@ import {
   documentUploadMaxFileSizeBytes,
   formatDocumentFileSize,
   getActiveDocumentAccessGrants,
+  getActiveDocumentCalendarLinks,
+  getDocumentAssociations,
   getDocumentVisibilityLabel,
   getDocumentUploadAcceptValue,
   getDocumentUploadValidationError,
@@ -45,9 +52,11 @@ import { sharedNavigation } from "../src/lib/moduleNavigation";
 import type {
   BeastDocument,
   BeastDocumentAccessGrant,
+  BeastDocumentCalendarLink,
   BeastDocumentCollection,
   BeastDocumentCollectionItem,
   BeastDocumentFolder,
+  BeastGoalReference,
   BeastDocumentModuleLink,
 } from "../src/lib/types/database";
 
@@ -97,12 +106,18 @@ test("BD-001 creates a BeastOS-owned Document model and database contract", () =
     documentAccessGrantDatabaseTableName,
     "beast_document_access_grants"
   );
+  assert.equal(
+    documentCalendarLinkDatabaseTableName,
+    "beast_document_calendar_links"
+  );
   assert.deepEqual(documentModuleLinkStatuses, ["Active", "Archived"]);
   assert.deepEqual(documentCollectionStatuses, ["Active", "Archived"]);
   assert.deepEqual(documentCollectionItemStatuses, ["Active", "Archived"]);
   assert.deepEqual(documentAccessPermissions, ["None", "View", "Manage"]);
   assert.deepEqual(documentAccessScopes, ["Member", "Household"]);
   assert.deepEqual(documentAccessStatuses, ["Active", "Revoked"]);
+  assert.deepEqual(documentCalendarLinkStatuses, ["Active", "Archived"]);
+  assert.deepEqual(documentAssociationTypes, ["Module", "Goal", "Calendar"]);
   assert.deepEqual(
     documentDatabaseColumns.map((column) => [column.name, column.required]),
     [
@@ -213,6 +228,27 @@ test("BD-001 creates a BeastOS-owned Document model and database contract", () =
       ["revoked_at", false],
     ]
   );
+  assert.deepEqual(
+    documentCalendarLinkDatabaseColumns.map((column) => [
+      column.name,
+      column.required,
+    ]),
+    [
+      ["id", true],
+      ["owner_id", true],
+      ["document_id", true],
+      ["calendar_item_id", false],
+      ["title", true],
+      ["summary", false],
+      ["status", true],
+      ["reference_date", true],
+      ["start_time", false],
+      ["end_time", false],
+      ["source_module", false],
+      ["created_at", true],
+      ["updated_at", true],
+    ]
+  );
   assert.equal(
     documentOwnershipRules[0],
     "Documents belong to BeastOS as shared Personal Hub data."
@@ -223,7 +259,22 @@ test("BD-001 creates a BeastOS-owned Document model and database contract", () =
   );
   assert.match(documentOwnershipRules[4], /Folders, collections, tags/);
   assert.match(documentOwnershipRules[5], /access grants/);
-  assert.match(documentOwnershipRules[6], /BeastDocuments remains superseded/);
+  assert.equal(
+    documentOwnershipRules.some((rule) =>
+      /Goal references reuse BeastOS goal reference records/.test(rule)
+    ),
+    true
+  );
+  assert.equal(
+    documentOwnershipRules.some((rule) =>
+      /Calendar associations use BeastOS-owned document calendar links/.test(rule)
+    ),
+    true
+  );
+  assert.match(
+    documentOwnershipRules[documentOwnershipRules.length - 1],
+    /BeastDocuments remains superseded/
+  );
 });
 
 test("BD-001 Documents overview route stays BeastOS-owned", () => {
@@ -246,6 +297,9 @@ test("BD-001 Documents overview route stays BeastOS-owned", () => {
   assert.equal(summary.taggedDocuments, 2);
   assert.equal(summary.sharedDocuments, 0);
   assert.equal(summary.activeAccessGrants, 0);
+  assert.equal(summary.ecosystemAssociations, 0);
+  assert.equal(summary.goalAssociations, 0);
+  assert.equal(summary.calendarAssociations, 0);
   assert.deepEqual(summary.topTags[0], { tag: "monthly", count: 1 });
   assert.equal(
     sharedNavigation.some(
@@ -257,7 +311,7 @@ test("BD-001 Documents overview route stays BeastOS-owned", () => {
   assert.match(documentsPage, /BeastOS Owned/);
   assert.match(documentsPage, /documentDatabaseTableName/);
   assert.match(documentsPage, /documentModuleLinkDatabaseTableName/);
-  assert.match(documentsPage, /Reused By Modules/);
+  assert.match(documentsPage, /Ecosystem Associations/);
   assert.match(
     documentsPage,
     /AI\s+extraction is intentionally not part/
@@ -308,6 +362,10 @@ function createDocumentClient(
     collectionItemQueryError?: boolean;
     accessGrantRows?: BeastDocumentAccessGrant[] | null;
     accessGrantQueryError?: boolean;
+    goalReferenceRows?: BeastGoalReference[] | null;
+    goalReferenceQueryError?: boolean;
+    calendarLinkRows?: BeastDocumentCalendarLink[] | null;
+    calendarLinkQueryError?: boolean;
   } = {}
 ): BeastDocumentDataClient {
   return {
@@ -326,7 +384,9 @@ function createDocumentClient(
           table === documentFolderDatabaseTableName ||
           table === documentCollectionDatabaseTableName ||
           table === documentCollectionItemDatabaseTableName ||
-          table === documentAccessGrantDatabaseTableName
+          table === documentAccessGrantDatabaseTableName ||
+          table === documentGoalReferenceDatabaseTableName ||
+          table === documentCalendarLinkDatabaseTableName
       );
 
       return {
@@ -356,6 +416,12 @@ function createDocumentClient(
                       if (table === documentCollectionItemDatabaseTableName) {
                         return options.collectionItemRows ?? [];
                       }
+                      if (table === documentGoalReferenceDatabaseTableName) {
+                        return options.goalReferenceRows ?? [];
+                      }
+                      if (table === documentCalendarLinkDatabaseTableName) {
+                        return options.calendarLinkRows ?? [];
+                      }
                       return options.accessGrantRows ?? [];
                     })(),
                     error: (() => {
@@ -382,6 +448,16 @@ function createDocumentClient(
                       if (table === documentCollectionItemDatabaseTableName) {
                         return options.collectionItemQueryError
                           ? { message: "Collection items unavailable" }
+                          : null;
+                      }
+                      if (table === documentGoalReferenceDatabaseTableName) {
+                        return options.goalReferenceQueryError
+                          ? { message: "Goal references unavailable" }
+                          : null;
+                      }
+                      if (table === documentCalendarLinkDatabaseTableName) {
+                        return options.calendarLinkQueryError
+                          ? { message: "Calendar links unavailable" }
                           : null;
                       }
                       return options.accessGrantQueryError
@@ -521,6 +597,40 @@ test("BD-001 Documents loader uses only signed-in user metadata", async () => {
             revoked_at: "2026-07-15T01:40:00.000Z",
           },
         ],
+        goalReferenceRows: [
+          {
+            id: "goal-reference-document",
+            owner_id: "member-real",
+            goal_id: "goal-tax-ready",
+            reference_type: "Document",
+            title: "Tax readiness goal evidence",
+            status: "Active",
+            summary: "This document supports the tax readiness goal.",
+            url: "/dashboard/goals",
+            reference_id: "real-document",
+            reference_date: "2026-07-15",
+            source_module: "goals",
+            created_at: "2026-07-15T03:00:00.000Z",
+            updated_at: "2026-07-15T03:00:00.000Z",
+          },
+        ],
+        calendarLinkRows: [
+          {
+            id: "calendar-link-document",
+            owner_id: "member-real",
+            document_id: "real-document",
+            calendar_item_id: "calendar-tax-review",
+            title: "Tax document review",
+            summary: "Review this file before the appointment.",
+            status: "Active",
+            reference_date: "2026-07-20",
+            start_time: "2026-07-20T14:00:00.000Z",
+            end_time: "2026-07-20T14:30:00.000Z",
+            source_module: "calendar",
+            created_at: "2026-07-15T04:00:00.000Z",
+            updated_at: "2026-07-15T04:00:00.000Z",
+          },
+        ],
       }
     )
   );
@@ -538,12 +648,19 @@ test("BD-001 Documents loader uses only signed-in user metadata", async () => {
   assert.equal(result.folders[0].documentCount, 1);
   assert.equal(result.collections[0].documentCount, 1);
   assert.equal(result.documents[0].moduleLinks.length, 2);
+  assert.equal(result.documents[0].goalReferences.length, 1);
+  assert.equal(result.documents[0].calendarLinks.length, 1);
+  assert.equal(getActiveDocumentCalendarLinks(result.documents[0]).length, 1);
+  assert.equal(getDocumentAssociations(result.documents[0]).length, 4);
   assert.equal(result.documents[0].moduleLinks[0].title, "Linked to a bill");
   assert.equal(
     result.documents[0].moduleLinks[1].title,
     "Linked to a learning goal"
   );
   assert.equal(summarizeDocuments(result.documents).moduleLinks, 2);
+  assert.equal(summarizeDocuments(result.documents).goalAssociations, 1);
+  assert.equal(summarizeDocuments(result.documents).calendarAssociations, 1);
+  assert.equal(summarizeDocuments(result.documents).ecosystemAssociations, 4);
   assert.equal(summarizeDocuments(result.documents).sharedDocuments, 1);
   assert.equal(summarizeDocuments(result.documents).activeAccessGrants, 1);
   assert.equal(summarizeDocuments(result.documents).householdSharedDocuments, 1);
@@ -566,6 +683,8 @@ test("BD-001 Documents loader fails safely without sample metadata", async () =>
   assert.equal(unavailable.folders.length, 0);
   assert.equal(unavailable.collections.length, 0);
   assert.equal(unavailable.accessGrants.length, 0);
+  assert.equal(unavailable.goalReferences.length, 0);
+  assert.equal(unavailable.calendarLinks.length, 0);
   assert.equal(signedOut.status, "signed-out");
   assert.equal(signedOut.documents.length, 0);
   assert.equal(summarizeDocuments(unavailable.documents).storageBytes, 0);
@@ -604,6 +723,48 @@ test("BO-16 Documents loader tolerates unavailable module links", async () => {
   assert.equal(result.documents[0].moduleLinks.length, 0);
   assert.equal(summarizeDocuments(result.documents).moduleLinks, 0);
   assert.equal(summarizeDocuments(result.documents).sharedDocuments, 0);
+});
+
+test("BO-20 Documents loader tolerates unavailable ecosystem associations", async () => {
+  const result = await loadUserDocuments(
+    createDocumentClient(
+      [
+        {
+          id: "real-document",
+          owner_id: "member-real",
+          title: "Document without association tables",
+          category: "Other",
+          status: "Ready",
+          storage_bucket: "beast-documents",
+          storage_path: "member-real/other/record.pdf",
+          file_name: "record.pdf",
+          mime_type: "application/pdf",
+          size_bytes: 1000,
+          checksum: null,
+          tags: null,
+          folder_id: null,
+          metadata: null,
+          source_module: null,
+          created_at: "2026-07-15T00:00:00.000Z",
+          updated_at: "2026-07-15T00:00:00.000Z",
+        },
+      ],
+      {
+        userId: "member-real",
+        goalReferenceQueryError: true,
+        calendarLinkQueryError: true,
+      }
+    )
+  );
+
+  assert.equal(result.status, "ready");
+  assert.equal(result.documents.length, 1);
+  assert.equal(result.documents[0].goalReferences.length, 0);
+  assert.equal(result.documents[0].calendarLinks.length, 0);
+  assert.equal(getDocumentAssociations(result.documents[0]).length, 0);
+  assert.equal(summarizeDocuments(result.documents).goalAssociations, 0);
+  assert.equal(summarizeDocuments(result.documents).calendarAssociations, 0);
+  assert.equal(summarizeDocuments(result.documents).ecosystemAssociations, 0);
 });
 
 test("BO-18 Documents organization uses owner-scoped metadata without fake examples", () => {
@@ -679,6 +840,31 @@ test("BO-19 Documents access grants enforce explicit sharing boundaries", () => 
   assert.match(migration, /grantee_user_id = auth\.uid\(\)/);
   assert.doesNotMatch(documentsPage, /household-1/);
   assert.doesNotMatch(documentsPage, /member-other/);
+});
+
+test("BO-20 Documents link to module goal and calendar records", () => {
+  const documentsPage = readFileSync("src/app/dashboard/uploads/page.tsx", "utf8");
+  const migration = readFileSync(
+    "supabase/migrations/20260715001000_add_beast_document_calendar_links.sql",
+    "utf8"
+  );
+
+  assert.match(documentsPage, /Module, goal, and calendar links/);
+  assert.match(documentsPage, /Ecosystem Associations/);
+  assert.match(documentsPage, /No ecosystem associations yet/);
+  assert.match(documentsPage, /documentCalendarLinkDatabaseTableName/);
+  assert.match(documentsPage, /Goal associations reuse BeastOS goal references/);
+  assert.match(migration, /create table if not exists public\.beast_document_calendar_links/);
+  assert.match(migration, /beast_document_calendar_links_document_owner_fk/);
+  assert.match(
+    migration,
+    /references public\.beast_documents \(id, owner_id\)\s+on delete cascade/
+  );
+  assert.match(migration, /status in \('Active', 'Archived'\)/);
+  assert.match(migration, /alter table public\.beast_document_calendar_links enable row level security/);
+  assert.match(migration, /Users manage own BeastOS document calendar links/);
+  assert.match(migration, /using \(auth\.uid\(\) = owner_id\)/);
+  assert.match(migration, /with check \(auth\.uid\(\) = owner_id\)/);
 });
 
 test("BO-17 Upload Center supports drag-and-drop document intake", () => {

@@ -14,6 +14,7 @@ import {
   type BeastDocumentDataClient,
   type DocumentLoadResult,
   documentAccessGrantDatabaseTableName,
+  documentCalendarLinkDatabaseTableName,
   documentCollectionDatabaseTableName,
   documentCategories,
   documentDatabaseTableName,
@@ -21,7 +22,7 @@ import {
   documentModuleLinkDatabaseTableName,
   documentOwnershipRules,
   getActiveDocumentAccessGrants,
-  getActiveDocumentModuleLinks,
+  getDocumentAssociations,
   getDocumentVisibilityLabel,
   loadUserDocuments,
   summarizeDocuments,
@@ -57,6 +58,8 @@ async function getDocumentLoadResult(): Promise<DocumentLoadResult> {
       folders: [],
       collections: [],
       accessGrants: [],
+      goalReferences: [],
+      calendarLinks: [],
       status: "unavailable",
       message: "Documents could not be loaded right now.",
     };
@@ -202,6 +205,16 @@ export default async function UploadsPage() {
               </div>
               <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
                 <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                  Ecosystem Links
+                </div>
+                <div className="mt-2 text-sm font-semibold leading-5 text-[#dbe3ef]">
+                  {summary.ecosystemAssociations} links: {summary.moduleLinks}{" "}
+                  module, {summary.goalAssociations} goal, and{" "}
+                  {summary.calendarAssociations} calendar.
+                </div>
+              </div>
+              <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+                <div className="text-xs font-bold uppercase text-[#7f8da3]">
                   Organized
                 </div>
                 <div className="mt-2 text-sm font-semibold leading-5 text-[#dbe3ef]">
@@ -308,22 +321,25 @@ export default async function UploadsPage() {
                     </div>
                     <div className="mt-3 rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
                       <div className="text-xs font-black uppercase text-[#7f8da3]">
-                        Reused By Modules
+                        Ecosystem Associations
                       </div>
-                      {getActiveDocumentModuleLinks(document).length > 0 ? (
+                      {getDocumentAssociations(document).length > 0 ? (
                         <div className="mt-2 flex flex-wrap gap-2">
-                          {getActiveDocumentModuleLinks(document).map((link) => (
-                            <span
-                              key={link.id}
-                              className="rounded-full border border-[#2a3242] px-2.5 py-1 text-xs font-bold text-[#c7cfdb]"
-                            >
-                              {link.sourceModule}: {link.title}
-                            </span>
-                          ))}
+                          {getDocumentAssociations(document).map(
+                            (association) => (
+                              <span
+                                key={association.id}
+                                className="rounded-full border border-[#2a3242] px-2.5 py-1 text-xs font-bold text-[#c7cfdb]"
+                              >
+                                {association.type}: {association.title}
+                              </span>
+                            )
+                          )}
                         </div>
                       ) : (
                         <div className="mt-2 text-xs font-semibold text-[#9aa7b8]">
-                          No module records link to this document yet.
+                          No module, goal, or calendar records link to this
+                          document yet.
                         </div>
                       )}
                     </div>
@@ -488,11 +504,51 @@ export default async function UploadsPage() {
           ) : null}
         </DashboardCard>
 
+        <DashboardCard accent="calendar">
+          <SectionHeader
+            eyebrow="Associations"
+            title="Module, goal, and calendar links"
+            description="Documents link to ecosystem records through BeastOS-owned references instead of duplicating records inside modules."
+          />
+          <div className="mt-5 grid gap-4 sm:grid-cols-3">
+            <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+              <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                Module Links
+              </div>
+              <div className="mt-2 text-3xl font-black text-white">
+                {summary.moduleLinks}
+              </div>
+            </div>
+            <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+              <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                Goal Links
+              </div>
+              <div className="mt-2 text-3xl font-black text-white">
+                {summary.goalAssociations}
+              </div>
+            </div>
+            <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+              <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                Calendar Links
+              </div>
+              <div className="mt-2 text-3xl font-black text-white">
+                {summary.calendarAssociations}
+              </div>
+            </div>
+          </div>
+          {summary.ecosystemAssociations === 0 ? (
+            <div className="mt-5 rounded-xl border border-[#2a3242] bg-[#111827] p-4 text-sm font-semibold leading-6 text-[#c7cfdb]">
+              No ecosystem associations yet. Documents can stay standalone until
+              a module, goal, or calendar record needs to reference them.
+            </div>
+          ) : null}
+        </DashboardCard>
+
         <DashboardCard accent="documents">
           <SectionHeader
             eyebrow="Database"
             title={documentDatabaseTableName}
-            description={`The foundation stores document metadata and ownership in ${documentDatabaseTableName}. Organization uses ${documentFolderDatabaseTableName} and ${documentCollectionDatabaseTableName}. Access grants use ${documentAccessGrantDatabaseTableName}. Module reuse is tracked in ${documentModuleLinkDatabaseTableName}. Document contents stay in storage and are not analyzed by this package.`}
+            description={`The foundation stores document metadata and ownership in ${documentDatabaseTableName}. Organization uses ${documentFolderDatabaseTableName} and ${documentCollectionDatabaseTableName}. Access grants use ${documentAccessGrantDatabaseTableName}. Module reuse is tracked in ${documentModuleLinkDatabaseTableName}. Calendar associations use ${documentCalendarLinkDatabaseTableName}. Goal associations reuse BeastOS goal references. Document contents stay in storage and are not analyzed by this package.`}
           />
           <div className="mt-5 grid gap-3 md:grid-cols-2">
             {documentOwnershipRules.map((rule) => (

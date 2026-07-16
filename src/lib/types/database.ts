@@ -328,10 +328,12 @@ export type BeastDocumentAccessScope = "Member" | "Household"
 
 export type BeastDocumentAccessStatus = "Active" | "Revoked"
 
+export type BeastDocumentCalendarLinkStatus = "Active" | "Archived"
+
 export type BeastDocumentAccessGrant = {
-    id: string
-    owner_id: string
-    document_id: string
+  id: string
+  owner_id: string
+  document_id: string
     scope: BeastDocumentAccessScope
     permission: BeastDocumentAccessPermission
     status: BeastDocumentAccessStatus
@@ -341,8 +343,24 @@ export type BeastDocumentAccessGrant = {
     note?: string | null
     created_at: string
     updated_at: string
-    revoked_at?: string | null
-  }
+  revoked_at?: string | null
+}
+
+export type BeastDocumentCalendarLink = {
+  id: string
+  owner_id: string
+  document_id: string
+  calendar_item_id?: string | null
+  title: string
+  summary?: string | null
+  status: BeastDocumentCalendarLinkStatus
+  reference_date: string
+  start_time?: string | null
+  end_time?: string | null
+  source_module?: string | null
+  created_at: string
+  updated_at: string
+}
 
 export type BeastDocumentModuleLink = {
     id: string
