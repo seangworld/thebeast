@@ -26,8 +26,13 @@ import {
   documentFolderDatabaseColumns,
   documentFolderDatabaseTableName,
   documentGoalReferenceDatabaseTableName,
+  documentAuditEventTypes,
+  documentGovernanceRules,
   documentIntelligencePermissions,
   documentIntelligenceRules,
+  documentOwnerStorageLimitBytes,
+  documentRetentionStates,
+  documentSecurityClassifications,
   documentLifecycleActionTypes,
   documentModuleLinkDatabaseColumns,
   documentModuleLinkDatabaseTableName,
@@ -41,13 +46,17 @@ import {
   getActiveDocumentAccessGrants,
   getActiveDocumentCalendarLinks,
   getAvailableDocumentLifecycleActions,
+  getDocumentAuditEvents,
   getDocumentDeletionImpact,
   getDocumentAssociations,
   getDocumentAISummary,
   getDocumentExtractedFacts,
   getDocumentIntelligencePermission,
   getDocumentLifecycleActions,
+  getDocumentRetentionSummary,
   getDocumentSearchText,
+  getDocumentSecuritySummary,
+  getDocumentStorageLimitSummary,
   getDocumentVersionSummary,
   getDocumentVisibilityLabel,
   getDocumentUploadAcceptValue,
@@ -333,6 +342,13 @@ test("BD-001 Documents overview route stays BeastOS-owned", () => {
   assert.equal(summary.aiSummaryReadyDocuments, 0);
   assert.equal(summary.proposedExtractedFacts, 0);
   assert.equal(summary.confirmedExtractedFacts, 0);
+  assert.equal(summary.retentionReviewDocuments, 0);
+  assert.equal(summary.expiredRetentionDocuments, 0);
+  assert.equal(summary.sensitiveDocuments, 0);
+  assert.equal(summary.privacyReviewDocuments, 0);
+  assert.equal(summary.auditedDocuments, 0);
+  assert.equal(summary.auditEvents, 0);
+  assert.equal(summary.storageLimitPercent, 0);
   assert.deepEqual(summary.topTags[0], { tag: "monthly", count: 1 });
   assert.equal(
     sharedNavigation.some(
@@ -944,6 +960,77 @@ test("BO-23 Documents define permissioned AI summaries and extracted facts archi
   assert.match(documentsPage, /Permissioned summaries and extracted facts/);
   assert.match(documentsPage, /No permissioned summary stored/);
   assert.match(documentsPage, /documentIntelligenceRules/);
+});
+
+test("BO-24 Documents define retention storage privacy security and audit boundaries", () => {
+  const documentsPage = readFileSync("src/app/dashboard/uploads/page.tsx", "utf8");
+  const governed = buildDocument({
+    ...mockDocuments[0],
+    updatedAt: "2026-07-16T12:00:00.000Z",
+    metadata: {
+      legal_hold: true,
+      retention_until: "2026-08-01T00:00:00.000Z",
+      retention_review_at: "2026-07-15T00:00:00.000Z",
+      security_classification: "Restricted",
+      privacy_review_required: true,
+      audit_events: [
+        {
+          id: "audit-uploaded",
+          type: "Uploaded",
+          actor_id: "member-owner",
+          occurred_at: "2026-07-14T00:00:00.000Z",
+        },
+        {
+          type: "Permission Changed",
+          note: "Owner reviewed sharing.",
+        },
+      ],
+    },
+  });
+  const expired = buildDocument({
+    ...mockDocuments[1],
+    updatedAt: "2026-07-16T12:00:00.000Z",
+    metadata: {
+      retention_until: "2026-07-01T00:00:00.000Z",
+      security_classification: "Sensitive",
+      audit_events: [{ type: "Shared" }],
+    },
+  });
+
+  assert.deepEqual(documentRetentionStates, [
+    "Retain",
+    "Review Due",
+    "Expired",
+    "Legal Hold",
+  ]);
+  assert.deepEqual(documentSecurityClassifications, [
+    "Standard",
+    "Sensitive",
+    "Restricted",
+  ]);
+  assert.equal(documentAuditEventTypes.includes("Permission Changed"), true);
+  assert.equal(documentOwnerStorageLimitBytes, 5 * 1000 * 1000 * 1000);
+  assert.match(documentGovernanceRules[0], /Retention metadata/);
+  assert.equal(getDocumentRetentionSummary(governed).state, "Legal Hold");
+  assert.equal(getDocumentRetentionSummary(expired).state, "Expired");
+  assert.equal(getDocumentSecuritySummary(governed).classification, "Restricted");
+  assert.equal(getDocumentSecuritySummary(governed).privacyReviewRequired, true);
+  assert.equal(getDocumentAuditEvents(governed).length, 2);
+  assert.equal(getDocumentAuditEvents(expired)[0].type, "Shared");
+  assert.equal(
+    getDocumentStorageLimitSummary([governed], governed.storage.sizeBytes)
+      .usagePercent,
+    100
+  );
+  assert.equal(summarizeDocuments([governed, expired]).retentionReviewDocuments, 1);
+  assert.equal(summarizeDocuments([governed, expired]).expiredRetentionDocuments, 1);
+  assert.equal(summarizeDocuments([governed, expired]).sensitiveDocuments, 2);
+  assert.equal(summarizeDocuments([governed, expired]).privacyReviewDocuments, 1);
+  assert.equal(summarizeDocuments([governed, expired]).auditedDocuments, 2);
+  assert.equal(summarizeDocuments([governed, expired]).auditEvents, 3);
+  assert.match(documentsPage, /Retention, storage, privacy, and audit trail/);
+  assert.match(documentsPage, /documentGovernanceRules/);
+  assert.match(documentsPage, /Privacy review/);
 });
 
 test("BD-001 Documents loader fails safely without sample metadata", async () => {

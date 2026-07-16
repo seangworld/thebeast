@@ -218,6 +218,58 @@ export type DocumentExtractedFact = {
   proposedProfileField?: string;
 };
 
+export type DocumentRetentionState =
+  | "Retain"
+  | "Review Due"
+  | "Expired"
+  | "Legal Hold";
+export type DocumentSecurityClassification =
+  | "Standard"
+  | "Sensitive"
+  | "Restricted";
+export type DocumentAuditEventType =
+  | "Uploaded"
+  | "Viewed"
+  | "Downloaded"
+  | "Shared"
+  | "Permission Changed"
+  | "Archived"
+  | "Deleted"
+  | "Restored";
+
+export type DocumentRetentionSummary = {
+  documentId: string;
+  state: DocumentRetentionState;
+  retentionUntil?: string;
+  reviewAt?: string;
+  legalHold: boolean;
+};
+
+export type DocumentSecuritySummary = {
+  documentId: string;
+  classification: DocumentSecurityClassification;
+  privacyReviewRequired: boolean;
+  encryptedAtRest: boolean;
+  privateBucketRequired: boolean;
+};
+
+export type DocumentAuditEvent = {
+  id: string;
+  documentId: string;
+  type: DocumentAuditEventType;
+  actorId?: string;
+  occurredAt?: string;
+  note?: string;
+};
+
+export type DocumentStorageLimitSummary = {
+  usedBytes: number;
+  limitBytes: number;
+  remainingBytes: number;
+  usagePercent: number;
+  overLimit: boolean;
+};
+
 export type DocumentModuleLink = {
   id: string;
   ownerId: string;
@@ -267,6 +319,13 @@ export type DocumentOverviewSummary = {
   aiSummaryReadyDocuments: number;
   proposedExtractedFacts: number;
   confirmedExtractedFacts: number;
+  retentionReviewDocuments: number;
+  expiredRetentionDocuments: number;
+  sensitiveDocuments: number;
+  privacyReviewDocuments: number;
+  auditedDocuments: number;
+  auditEvents: number;
+  storageLimitPercent: number;
 };
 
 export type DocumentLoadStatus = "ready" | "signed-out" | "unavailable";
@@ -329,6 +388,7 @@ export const documentGoalReferenceDatabaseTableName = "beast_goal_references";
 
 export const documentStorageBucketName = "beast-documents";
 export const documentUploadMaxFileSizeBytes = 25 * 1000 * 1000;
+export const documentOwnerStorageLimitBytes = 5 * 1000 * 1000 * 1000;
 
 export const documentCategories: DocumentCategory[] = [
   "Money",
@@ -416,6 +476,34 @@ export const documentIntelligenceRules = [
   "Extracted facts must be labeled with the source document and remain proposed until the user confirms them.",
   "Rejected facts must not become Personal Hub profile facts.",
   "Modules may consume confirmed facts only through BeastOS-owned permissions and purpose limits.",
+];
+
+export const documentRetentionStates: DocumentRetentionState[] = [
+  "Retain",
+  "Review Due",
+  "Expired",
+  "Legal Hold",
+];
+
+export const documentSecurityClassifications: DocumentSecurityClassification[] =
+  ["Standard", "Sensitive", "Restricted"];
+
+export const documentAuditEventTypes: DocumentAuditEventType[] = [
+  "Uploaded",
+  "Viewed",
+  "Downloaded",
+  "Shared",
+  "Permission Changed",
+  "Archived",
+  "Deleted",
+  "Restored",
+];
+
+export const documentGovernanceRules = [
+  "Retention metadata must describe review, expiration, and legal-hold posture before destructive storage actions run.",
+  "Storage limits are surfaced as owner-scoped capacity signals and do not delete or compress files automatically.",
+  "Sensitive and restricted documents require private storage, least-privilege access, and explicit privacy review before broader module use.",
+  "Audit trail entries must remain append-only evidence for document access, sharing, lifecycle, and permission changes.",
 ];
 
 export const supportedDocumentFileTypes = [
@@ -565,6 +653,7 @@ export const documentOwnershipRules = [
   "Calendar associations use BeastOS-owned document calendar links until the unified Calendar model is implemented.",
   "Preview, download, rename, move, archive, delete, and restore actions must follow BeastOS lifecycle safeguards.",
   "AI summaries and extracted facts must be permissioned, labeled, and user-reviewable.",
+  "Retention, storage limit, security, privacy, and audit metadata must be visible before automated enforcement exists.",
   "BeastDocuments remains superseded as a standalone customer-facing module.",
 ];
 
@@ -1348,6 +1437,7 @@ export function summarizeDocuments(
     )
   );
   const extractedFacts = normalized.flatMap(getDocumentExtractedFacts);
+  const auditEvents = normalized.flatMap(getDocumentAuditEvents);
   const versionedDocumentIds = new Set(
     normalized
       .filter((document) => getDocumentVersionSummary(normalized, document).versionCount > 1)
@@ -1437,6 +1527,27 @@ export function summarizeDocuments(
     confirmedExtractedFacts: extractedFacts.filter(
       (fact) => fact.status === "Confirmed"
     ).length,
+    retentionReviewDocuments: normalized.filter((document) =>
+      ["Review Due", "Legal Hold"].includes(
+        getDocumentRetentionSummary(document).state
+      )
+    ).length,
+    expiredRetentionDocuments: normalized.filter(
+      (document) => getDocumentRetentionSummary(document).state === "Expired"
+    ).length,
+    sensitiveDocuments: normalized.filter((document) =>
+      ["Sensitive", "Restricted"].includes(
+        getDocumentSecuritySummary(document).classification
+      )
+    ).length,
+    privacyReviewDocuments: normalized.filter(
+      (document) => getDocumentSecuritySummary(document).privacyReviewRequired
+    ).length,
+    auditedDocuments: normalized.filter(
+      (document) => getDocumentAuditEvents(document).length > 0
+    ).length,
+    auditEvents: auditEvents.length,
+    storageLimitPercent: getDocumentStorageLimitSummary(normalized).usagePercent,
   };
 }
 
@@ -1872,4 +1983,130 @@ export function getReviewableDocumentExtractedFacts(document: BeastDocument) {
   return getDocumentExtractedFacts(document).filter(
     (fact) => fact.status === "Proposed"
   );
+}
+
+function getMetadataString(
+  metadata: Record<string, unknown>,
+  key: string
+): string | undefined {
+  const value = metadata[key];
+  return typeof value === "string" && value.trim() ? value : undefined;
+}
+
+function getMetadataBoolean(metadata: Record<string, unknown>, key: string) {
+  return metadata[key] === true;
+}
+
+export function getDocumentRetentionSummary(
+  document: BeastDocument,
+  asOf = document.updatedAt
+): DocumentRetentionSummary {
+  const retentionUntil = getMetadataString(document.metadata, "retention_until");
+  const reviewAt = getMetadataString(document.metadata, "retention_review_at");
+  const legalHold = getMetadataBoolean(document.metadata, "legal_hold");
+  const explicitState = document.metadata.retention_state;
+
+  if (
+    documentRetentionStates.includes(explicitState as DocumentRetentionState)
+  ) {
+    return {
+      documentId: document.id,
+      state: explicitState as DocumentRetentionState,
+      retentionUntil,
+      reviewAt,
+      legalHold,
+    };
+  }
+
+  if (legalHold) {
+    return { documentId: document.id, state: "Legal Hold", retentionUntil, reviewAt, legalHold };
+  }
+
+  if (retentionUntil && retentionUntil < asOf) {
+    return { documentId: document.id, state: "Expired", retentionUntil, reviewAt, legalHold };
+  }
+
+  if (reviewAt && reviewAt <= asOf) {
+    return { documentId: document.id, state: "Review Due", retentionUntil, reviewAt, legalHold };
+  }
+
+  return { documentId: document.id, state: "Retain", retentionUntil, reviewAt, legalHold };
+}
+
+export function getDocumentSecuritySummary(
+  document: BeastDocument
+): DocumentSecuritySummary {
+  const value = document.metadata.security_classification;
+  const classification = documentSecurityClassifications.includes(
+    value as DocumentSecurityClassification
+  )
+    ? (value as DocumentSecurityClassification)
+    : "Standard";
+
+  return {
+    documentId: document.id,
+    classification,
+    privacyReviewRequired:
+      getMetadataBoolean(document.metadata, "privacy_review_required") ||
+      classification === "Restricted",
+    encryptedAtRest: document.storage.bucket === documentStorageBucketName,
+    privateBucketRequired: true,
+  };
+}
+
+export function getDocumentAuditEvents(
+  document: BeastDocument
+): DocumentAuditEvent[] {
+  const events = document.metadata.audit_events;
+
+  if (!Array.isArray(events)) return [];
+
+  return events
+    .map((event, index): DocumentAuditEvent | null => {
+      if (!event || typeof event !== "object" || Array.isArray(event)) {
+        return null;
+      }
+
+      const record = event as Record<string, unknown>;
+      const type = documentAuditEventTypes.includes(
+        record.type as DocumentAuditEventType
+      )
+        ? (record.type as DocumentAuditEventType)
+        : null;
+
+      if (!type) return null;
+
+      return {
+        id:
+          typeof record.id === "string" && record.id.trim()
+            ? record.id
+            : `${document.id}-audit-${index + 1}`,
+        documentId: document.id,
+        type,
+        actorId: getMetadataString(record, "actor_id"),
+        occurredAt: getMetadataString(record, "occurred_at"),
+        note: getMetadataString(record, "note"),
+      };
+    })
+    .filter((event): event is DocumentAuditEvent => event !== null);
+}
+
+export function getDocumentStorageLimitSummary(
+  documents: BeastDocument[],
+  limitBytes = documentOwnerStorageLimitBytes
+): DocumentStorageLimitSummary {
+  const usedBytes = buildDocumentCollection(documents).reduce(
+    (sum, document) => sum + document.storage.sizeBytes,
+    0
+  );
+  const remainingBytes = Math.max(0, limitBytes - usedBytes);
+
+  return {
+    usedBytes,
+    limitBytes,
+    remainingBytes,
+    usagePercent:
+      limitBytes > 0 ? Math.min(100, Math.round((usedBytes / limitBytes) * 100)) : 100,
+    overLimit: usedBytes > limitBytes,
+  };
 }

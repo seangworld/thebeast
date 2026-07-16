@@ -18,6 +18,7 @@ import {
   documentCollectionDatabaseTableName,
   documentCategories,
   documentDatabaseTableName,
+  documentGovernanceRules,
   documentIntelligenceRules,
   documentFolderDatabaseTableName,
   findDuplicateDocuments,
@@ -25,10 +26,14 @@ import {
   documentOwnershipRules,
   getActiveDocumentAccessGrants,
   getAvailableDocumentLifecycleActions,
+  getDocumentAuditEvents,
   getDocumentDeletionImpact,
   getDocumentAssociations,
   getDocumentAISummary,
   getDocumentExtractedFacts,
+  getDocumentRetentionSummary,
+  getDocumentSecuritySummary,
+  getDocumentStorageLimitSummary,
   getDocumentVersionSummary,
   getDocumentVisibilityLabel,
   loadUserDocuments,
@@ -82,6 +87,7 @@ export default async function UploadsPage() {
   const summary = summarizeDocuments(documents);
   const duplicateGroups = findDuplicateDocuments(documents);
   const searchReadyDocuments = searchDocuments(documents, { status: "All" });
+  const storageLimit = getDocumentStorageLimitSummary(documents);
 
   return (
     <main className="beast-page">
@@ -410,6 +416,30 @@ export default async function UploadsPage() {
                       ) : null}
                     </div>
                     <div className="mt-3 rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="text-xs font-black uppercase text-[#7f8da3]">
+                          Retention And Audit
+                        </div>
+                        <span className="text-xs font-bold text-[#c7cfdb]">
+                          {getDocumentRetentionSummary(document).state}
+                        </span>
+                      </div>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <span className="rounded-full border border-[#2a3242] px-2.5 py-1 text-xs font-bold text-[#c7cfdb]">
+                          {getDocumentSecuritySummary(document).classification}
+                        </span>
+                        <span className="rounded-full border border-[#2a3242] px-2.5 py-1 text-xs font-bold text-[#c7cfdb]">
+                          {getDocumentAuditEvents(document).length} audit events
+                        </span>
+                        {getDocumentSecuritySummary(document)
+                          .privacyReviewRequired ? (
+                          <span className="rounded-full border border-[#4c2f34] bg-[#211116] px-2.5 py-1 text-xs font-bold text-[#f4b4bd]">
+                            Privacy review
+                          </span>
+                        ) : null}
+                      </div>
+                    </div>
+                    <div className="mt-3 rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
                       <div className="text-xs font-black uppercase text-[#7f8da3]">
                         Ecosystem Associations
                       </div>
@@ -628,6 +658,58 @@ export default async function UploadsPage() {
           </div>
           <div className="mt-5 grid gap-3 md:grid-cols-2">
             {documentIntelligenceRules.map((rule) => (
+              <div
+                key={rule}
+                className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 text-sm font-semibold leading-6 text-[#dbe3ef]"
+              >
+                {rule}
+              </div>
+            ))}
+          </div>
+        </DashboardCard>
+
+        <DashboardCard accent="documents">
+          <SectionHeader
+            eyebrow="Governance"
+            title="Retention, storage, privacy, and audit trail"
+            description="Document governance is visible before enforcement. Retention, storage limits, security classification, privacy review, and audit events remain BeastOS-owned metadata boundaries."
+          />
+          <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+              <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                Storage Used
+              </div>
+              <div className="mt-2 text-3xl font-black text-white">
+                {storageLimit.usagePercent}%
+              </div>
+            </div>
+            <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+              <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                Review Due
+              </div>
+              <div className="mt-2 text-3xl font-black text-white">
+                {summary.retentionReviewDocuments}
+              </div>
+            </div>
+            <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+              <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                Sensitive
+              </div>
+              <div className="mt-2 text-3xl font-black text-white">
+                {summary.sensitiveDocuments}
+              </div>
+            </div>
+            <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+              <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                Audit Events
+              </div>
+              <div className="mt-2 text-3xl font-black text-white">
+                {summary.auditEvents}
+              </div>
+            </div>
+          </div>
+          <div className="mt-5 grid gap-3 md:grid-cols-2">
+            {documentGovernanceRules.map((rule) => (
               <div
                 key={rule}
                 className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 text-sm font-semibold leading-6 text-[#dbe3ef]"
