@@ -5,8 +5,16 @@ import {
   buildDocument,
   buildDocumentStoragePath,
   documentCategories,
+  documentCollectionDatabaseColumns,
+  documentCollectionDatabaseTableName,
+  documentCollectionItemDatabaseColumns,
+  documentCollectionItemDatabaseTableName,
+  documentCollectionItemStatuses,
+  documentCollectionStatuses,
   documentDatabaseColumns,
   documentDatabaseTableName,
+  documentFolderDatabaseColumns,
+  documentFolderDatabaseTableName,
   documentModuleLinkDatabaseColumns,
   documentModuleLinkDatabaseTableName,
   documentModuleLinkStatuses,
@@ -29,6 +37,9 @@ import {
 import { sharedNavigation } from "../src/lib/moduleNavigation";
 import type {
   BeastDocument,
+  BeastDocumentCollection,
+  BeastDocumentCollectionItem,
+  BeastDocumentFolder,
   BeastDocumentModuleLink,
 } from "../src/lib/types/database";
 
@@ -65,13 +76,25 @@ test("BD-001 creates a BeastOS-owned Document model and database contract", () =
     documentModuleLinkDatabaseTableName,
     "beast_document_module_links"
   );
+  assert.equal(documentFolderDatabaseTableName, "beast_document_folders");
+  assert.equal(
+    documentCollectionDatabaseTableName,
+    "beast_document_collections"
+  );
+  assert.equal(
+    documentCollectionItemDatabaseTableName,
+    "beast_document_collection_items"
+  );
   assert.deepEqual(documentModuleLinkStatuses, ["Active", "Archived"]);
+  assert.deepEqual(documentCollectionStatuses, ["Active", "Archived"]);
+  assert.deepEqual(documentCollectionItemStatuses, ["Active", "Archived"]);
   assert.deepEqual(
     documentDatabaseColumns.map((column) => [column.name, column.required]),
     [
       ["id", true],
       ["owner_id", true],
       ["title", true],
+      ["description", false],
       ["category", true],
       ["status", true],
       ["storage_bucket", true],
@@ -80,6 +103,9 @@ test("BD-001 creates a BeastOS-owned Document model and database contract", () =
       ["mime_type", true],
       ["size_bytes", true],
       ["checksum", false],
+      ["tags", true],
+      ["folder_id", false],
+      ["metadata", true],
       ["source_module", false],
       ["created_at", true],
       ["updated_at", true],
@@ -103,6 +129,54 @@ test("BD-001 creates a BeastOS-owned Document model and database contract", () =
       ["updated_at", true],
     ]
   );
+  assert.deepEqual(
+    documentFolderDatabaseColumns.map((column) => [
+      column.name,
+      column.required,
+    ]),
+    [
+      ["id", true],
+      ["owner_id", true],
+      ["parent_folder_id", false],
+      ["name", true],
+      ["description", false],
+      ["sort_order", true],
+      ["created_at", true],
+      ["updated_at", true],
+    ]
+  );
+  assert.deepEqual(
+    documentCollectionDatabaseColumns.map((column) => [
+      column.name,
+      column.required,
+    ]),
+    [
+      ["id", true],
+      ["owner_id", true],
+      ["name", true],
+      ["description", false],
+      ["status", true],
+      ["sort_order", true],
+      ["created_at", true],
+      ["updated_at", true],
+    ]
+  );
+  assert.deepEqual(
+    documentCollectionItemDatabaseColumns.map((column) => [
+      column.name,
+      column.required,
+    ]),
+    [
+      ["id", true],
+      ["owner_id", true],
+      ["collection_id", true],
+      ["document_id", true],
+      ["status", true],
+      ["sort_order", true],
+      ["created_at", true],
+      ["updated_at", true],
+    ]
+  );
   assert.equal(
     documentOwnershipRules[0],
     "Documents belong to BeastOS as shared Personal Hub data."
@@ -111,7 +185,8 @@ test("BD-001 creates a BeastOS-owned Document model and database contract", () =
     documentOwnershipRules[3],
     /linked to multiple module records/
   );
-  assert.match(documentOwnershipRules[4], /BeastDocuments remains superseded/);
+  assert.match(documentOwnershipRules[4], /Folders, collections, tags/);
+  assert.match(documentOwnershipRules[5], /BeastDocuments remains superseded/);
 });
 
 test("BD-001 Documents overview route stays BeastOS-owned", () => {
@@ -131,6 +206,8 @@ test("BD-001 Documents overview route stays BeastOS-owned", () => {
   assert.equal(summary.moduleLinks, 0);
   assert.equal(summary.categoryCounts.Money, 1);
   assert.equal(summary.categoryCounts.Learning, 1);
+  assert.equal(summary.taggedDocuments, 2);
+  assert.deepEqual(summary.topTags[0], { tag: "monthly", count: 1 });
   assert.equal(
     sharedNavigation.some(
       (item) => item.label === "Documents" && item.href === "/dashboard/uploads"
@@ -184,6 +261,12 @@ function createDocumentClient(
     queryError?: boolean;
     moduleLinkRows?: BeastDocumentModuleLink[] | null;
     moduleLinkQueryError?: boolean;
+    folderRows?: BeastDocumentFolder[] | null;
+    folderQueryError?: boolean;
+    collectionRows?: BeastDocumentCollection[] | null;
+    collectionQueryError?: boolean;
+    collectionItemRows?: BeastDocumentCollectionItem[] | null;
+    collectionItemQueryError?: boolean;
   } = {}
 ): BeastDocumentDataClient {
   return {
@@ -198,7 +281,10 @@ function createDocumentClient(
     from(table) {
       assert.ok(
         table === documentDatabaseTableName ||
-          table === documentModuleLinkDatabaseTableName
+          table === documentModuleLinkDatabaseTableName ||
+          table === documentFolderDatabaseTableName ||
+          table === documentCollectionDatabaseTableName ||
+          table === documentCollectionItemDatabaseTableName
       );
 
       return {
@@ -214,18 +300,44 @@ function createDocumentClient(
                   assert.deepEqual(orderOptions, { ascending: false });
 
                   return {
-                    data:
-                      table === documentDatabaseTableName
-                        ? rows
-                        : options.moduleLinkRows ?? [],
-                    error:
-                      table === documentDatabaseTableName
-                        ? options.queryError
+                    data: (() => {
+                      if (table === documentDatabaseTableName) return rows;
+                      if (table === documentModuleLinkDatabaseTableName) {
+                        return options.moduleLinkRows ?? [];
+                      }
+                      if (table === documentFolderDatabaseTableName) {
+                        return options.folderRows ?? [];
+                      }
+                      if (table === documentCollectionDatabaseTableName) {
+                        return options.collectionRows ?? [];
+                      }
+                      return options.collectionItemRows ?? [];
+                    })(),
+                    error: (() => {
+                      if (table === documentDatabaseTableName) {
+                        return options.queryError
                           ? { message: "Table unavailable" }
-                          : null
-                        : options.moduleLinkQueryError
+                          : null;
+                      }
+                      if (table === documentModuleLinkDatabaseTableName) {
+                        return options.moduleLinkQueryError
                           ? { message: "Links unavailable" }
-                          : null,
+                          : null;
+                      }
+                      if (table === documentFolderDatabaseTableName) {
+                        return options.folderQueryError
+                          ? { message: "Folders unavailable" }
+                          : null;
+                      }
+                      if (table === documentCollectionDatabaseTableName) {
+                        return options.collectionQueryError
+                          ? { message: "Collections unavailable" }
+                          : null;
+                      }
+                      return options.collectionItemQueryError
+                        ? { message: "Collection items unavailable" }
+                        : null;
+                    })(),
                   };
                 },
               };
@@ -245,6 +357,7 @@ test("BD-001 Documents loader uses only signed-in user metadata", async () => {
           id: "real-document",
           owner_id: "member-real",
           title: "Real tax record",
+          description: "Real user-owned metadata",
           category: "Tax",
           status: "Uploaded",
           storage_bucket: "beast-documents",
@@ -253,6 +366,9 @@ test("BD-001 Documents loader uses only signed-in user metadata", async () => {
           mime_type: "application/pdf",
           size_bytes: 1000,
           checksum: null,
+          tags: ["tax", "2026", "tax"],
+          folder_id: "folder-tax",
+          metadata: { year: 2026 },
           source_module: null,
           created_at: "2026-07-14T00:00:00.000Z",
           updated_at: "2026-07-14T00:00:00.000Z",
@@ -287,6 +403,42 @@ test("BD-001 Documents loader uses only signed-in user metadata", async () => {
             updated_at: "2026-07-15T00:30:00.000Z",
           },
         ],
+        folderRows: [
+          {
+            id: "folder-tax",
+            owner_id: "member-real",
+            parent_folder_id: null,
+            name: "Taxes",
+            description: "Tax documents",
+            sort_order: 0,
+            created_at: "2026-07-14T00:00:00.000Z",
+            updated_at: "2026-07-14T00:00:00.000Z",
+          },
+        ],
+        collectionRows: [
+          {
+            id: "collection-annual",
+            owner_id: "member-real",
+            name: "Annual records",
+            description: "Records for this year",
+            status: "Active",
+            sort_order: 0,
+            created_at: "2026-07-14T00:00:00.000Z",
+            updated_at: "2026-07-14T00:00:00.000Z",
+          },
+        ],
+        collectionItemRows: [
+          {
+            id: "collection-item-1",
+            owner_id: "member-real",
+            collection_id: "collection-annual",
+            document_id: "real-document",
+            status: "Active",
+            sort_order: 0,
+            created_at: "2026-07-14T00:00:00.000Z",
+            updated_at: "2026-07-14T00:00:00.000Z",
+          },
+        ],
       }
     )
   );
@@ -295,6 +447,11 @@ test("BD-001 Documents loader uses only signed-in user metadata", async () => {
   assert.equal(result.documents.length, 1);
   assert.equal(result.documents[0].title, "Real tax record");
   assert.equal(result.documents[0].storage.fileName, "record.pdf");
+  assert.deepEqual(result.documents[0].tags, ["2026", "tax"]);
+  assert.equal(result.documents[0].folder?.name, "Taxes");
+  assert.equal(result.documents[0].collections[0].name, "Annual records");
+  assert.equal(result.folders[0].documentCount, 1);
+  assert.equal(result.collections[0].documentCount, 1);
   assert.equal(result.documents[0].moduleLinks.length, 2);
   assert.equal(result.documents[0].moduleLinks[0].title, "Linked to a bill");
   assert.equal(
@@ -317,6 +474,8 @@ test("BD-001 Documents loader fails safely without sample metadata", async () =>
 
   assert.equal(unavailable.status, "unavailable");
   assert.equal(unavailable.documents.length, 0);
+  assert.equal(unavailable.folders.length, 0);
+  assert.equal(unavailable.collections.length, 0);
   assert.equal(signedOut.status, "signed-out");
   assert.equal(signedOut.documents.length, 0);
   assert.equal(summarizeDocuments(unavailable.documents).storageBytes, 0);
@@ -338,6 +497,9 @@ test("BO-16 Documents loader tolerates unavailable module links", async () => {
           mime_type: "application/pdf",
           size_bytes: 1000,
           checksum: null,
+          tags: null,
+          folder_id: null,
+          metadata: null,
           source_module: null,
           created_at: "2026-07-15T00:00:00.000Z",
           updated_at: "2026-07-15T00:00:00.000Z",
@@ -351,6 +513,48 @@ test("BO-16 Documents loader tolerates unavailable module links", async () => {
   assert.equal(result.documents.length, 1);
   assert.equal(result.documents[0].moduleLinks.length, 0);
   assert.equal(summarizeDocuments(result.documents).moduleLinks, 0);
+});
+
+test("BO-18 Documents organization uses owner-scoped metadata without fake examples", () => {
+  const documentsPage = readFileSync("src/app/dashboard/uploads/page.tsx", "utf8");
+  const migration = readFileSync(
+    "supabase/migrations/20260715000800_add_beast_document_organization.sql",
+    "utf8"
+  );
+
+  assert.match(documentsPage, /Document folders/);
+  assert.match(documentsPage, /Document collections/);
+  assert.match(documentsPage, /Top document tags/);
+  assert.match(documentsPage, /No folders yet/);
+  assert.match(documentsPage, /No collections yet/);
+  assert.match(documentsPage, /No tags yet/);
+  assert.match(documentsPage, /documentFolderDatabaseTableName/);
+  assert.match(documentsPage, /documentCollectionDatabaseTableName/);
+  assert.match(
+    migration,
+    /create table if not exists public\.beast_document_folders/
+  );
+  assert.match(
+    migration,
+    /create table if not exists public\.beast_document_collections/
+  );
+  assert.match(
+    migration,
+    /create table if not exists public\.beast_document_collection_items/
+  );
+  assert.match(migration, /add column if not exists tags text\[\]/);
+  assert.match(migration, /add column if not exists folder_id uuid/);
+  assert.match(migration, /add column if not exists metadata jsonb/);
+  assert.match(migration, /beast_documents_tags_gin_idx/);
+  assert.match(migration, /enable row level security/);
+  assert.match(migration, /Users manage own BeastOS document folders/);
+  assert.match(migration, /Users manage own BeastOS document collections/);
+  assert.match(
+    migration,
+    /Users manage own BeastOS document collection items/
+  );
+  assert.doesNotMatch(documentsPage, /Annual records/);
+  assert.doesNotMatch(documentsPage, /Taxes/);
 });
 
 test("BO-17 Upload Center supports drag-and-drop document intake", () => {

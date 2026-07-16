@@ -13,8 +13,10 @@ import { createRouteClient } from "@/lib/supabase/server";
 import {
   type BeastDocumentDataClient,
   type DocumentLoadResult,
+  documentCollectionDatabaseTableName,
   documentCategories,
   documentDatabaseTableName,
+  documentFolderDatabaseTableName,
   documentModuleLinkDatabaseTableName,
   documentOwnershipRules,
   getActiveDocumentModuleLinks,
@@ -49,6 +51,8 @@ async function getDocumentLoadResult(): Promise<DocumentLoadResult> {
   } catch {
     return {
       documents: [],
+      folders: [],
+      collections: [],
       status: "unavailable",
       message: "Documents could not be loaded right now.",
     };
@@ -58,6 +62,8 @@ async function getDocumentLoadResult(): Promise<DocumentLoadResult> {
 export default async function UploadsPage() {
   const documentLoadResult = await getDocumentLoadResult();
   const documents = documentLoadResult.documents;
+  const folders = documentLoadResult.folders;
+  const collections = documentLoadResult.collections;
   const summary = summarizeDocuments(documents);
 
   return (
@@ -190,6 +196,15 @@ export default async function UploadsPage() {
                   {summary.linkedModules.length} modules.
                 </div>
               </div>
+              <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+                <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                  Organized
+                </div>
+                <div className="mt-2 text-sm font-semibold leading-5 text-[#dbe3ef]">
+                  {summary.folderCount} folders, {summary.collectionCount}{" "}
+                  collections, and {summary.taggedDocuments} tagged documents.
+                </div>
+              </div>
             </div>
           </DashboardCard>
 
@@ -223,7 +238,33 @@ export default async function UploadsPage() {
                       <span className="rounded-full border border-[#2a3242] px-2.5 py-1">
                         {(document.storage.sizeBytes / 1000).toFixed(1)} KB
                       </span>
+                      {document.folder ? (
+                        <span className="rounded-full border border-[#2a3242] px-2.5 py-1">
+                          Folder: {document.folder.name}
+                        </span>
+                      ) : null}
                     </div>
+                    {document.tags.length > 0 ||
+                    document.collections.length > 0 ? (
+                      <div className="mt-3 flex flex-wrap gap-2 text-xs font-bold text-[#c7cfdb]">
+                        {document.tags.map((tag) => (
+                          <span
+                            key={tag}
+                            className="rounded-full border border-[#2a3242] bg-[#0f1419] px-2.5 py-1"
+                          >
+                            #{tag}
+                          </span>
+                        ))}
+                        {document.collections.map((collection) => (
+                          <span
+                            key={collection.id}
+                            className="rounded-full border border-[#2a3242] bg-[#0f1419] px-2.5 py-1"
+                          >
+                            Collection: {collection.name}
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
                     <div className="mt-3 rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
                       <div className="text-xs font-black uppercase text-[#7f8da3]">
                         Reused By Modules
@@ -262,11 +303,107 @@ export default async function UploadsPage() {
           </DashboardCard>
         </section>
 
+        <section className="grid gap-4 xl:grid-cols-3">
+          <DashboardCard accent="documents">
+            <SectionHeader
+              eyebrow="Folders"
+              title="Document folders"
+              description="Folders organize your own BeastOS documents. Empty states stay empty until real folders exist."
+            />
+            <div className="mt-5 grid gap-3">
+              {folders.length > 0 ? (
+                folders.map((folder) => (
+                  <div
+                    key={folder.id}
+                    className="rounded-xl border border-[#2a3242] bg-[#111827] p-4"
+                  >
+                    <div className="font-black text-white">{folder.name}</div>
+                    <div className="mt-2 text-sm font-semibold leading-5 text-[#9aa7b8]">
+                      {folder.description || "No description added."}
+                    </div>
+                    <div className="mt-3 text-xs font-bold uppercase text-[#7f8da3]">
+                      {folder.documentCount} documents
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 text-sm font-semibold leading-6 text-[#c7cfdb]">
+                  No folders yet. Documents remain available by category and
+                  recent activity.
+                </div>
+              )}
+            </div>
+          </DashboardCard>
+
+          <DashboardCard accent="beastos">
+            <SectionHeader
+              eyebrow="Collections"
+              title="Document collections"
+              description="Collections group documents without moving ownership away from BeastOS."
+            />
+            <div className="mt-5 grid gap-3">
+              {collections.length > 0 ? (
+                collections.map((collection) => (
+                  <div
+                    key={collection.id}
+                    className="rounded-xl border border-[#2a3242] bg-[#111827] p-4"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="font-black text-white">
+                        {collection.name}
+                      </div>
+                      <ModuleBadge
+                        module="documents"
+                        label={collection.status}
+                      />
+                    </div>
+                    <div className="mt-2 text-sm font-semibold leading-5 text-[#9aa7b8]">
+                      {collection.description || "No description added."}
+                    </div>
+                    <div className="mt-3 text-xs font-bold uppercase text-[#7f8da3]">
+                      {collection.documentCount} documents
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 text-sm font-semibold leading-6 text-[#c7cfdb]">
+                  No collections yet. Collection membership will appear after
+                  real user-owned collection records exist.
+                </div>
+              )}
+            </div>
+          </DashboardCard>
+
+          <DashboardCard accent="blue">
+            <SectionHeader
+              eyebrow="Tags"
+              title="Top document tags"
+              description="Tags are counted only from real document metadata."
+            />
+            <div className="mt-5 flex flex-wrap gap-2">
+              {summary.topTags.length > 0 ? (
+                summary.topTags.map((tag) => (
+                  <span
+                    key={tag.tag}
+                    className="rounded-full border border-[#2a3242] bg-[#111827] px-3 py-1 text-xs font-bold text-[#dbe3ef]"
+                  >
+                    #{tag.tag} ({tag.count})
+                  </span>
+                ))
+              ) : (
+                <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 text-sm font-semibold leading-6 text-[#c7cfdb]">
+                  No tags yet.
+                </div>
+              )}
+            </div>
+          </DashboardCard>
+        </section>
+
         <DashboardCard accent="documents">
           <SectionHeader
             eyebrow="Database"
             title={documentDatabaseTableName}
-            description={`The foundation stores document metadata and ownership in ${documentDatabaseTableName}. Module reuse is tracked in ${documentModuleLinkDatabaseTableName}. Document contents stay in storage and are not analyzed by this package.`}
+            description={`The foundation stores document metadata and ownership in ${documentDatabaseTableName}. Organization uses ${documentFolderDatabaseTableName} and ${documentCollectionDatabaseTableName}. Module reuse is tracked in ${documentModuleLinkDatabaseTableName}. Document contents stay in storage and are not analyzed by this package.`}
           />
           <div className="mt-5 grid gap-3 md:grid-cols-2">
             {documentOwnershipRules.map((rule) => (

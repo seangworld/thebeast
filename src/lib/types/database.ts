@@ -266,6 +266,7 @@ export type BeastDocument = {
     id: string
     owner_id: string
     title: string
+    description?: string | null
     category: BeastDocumentCategory
     status: BeastDocumentStatus
     storage_bucket: string
@@ -274,12 +275,52 @@ export type BeastDocument = {
     mime_type: string
     size_bytes: number
     checksum?: string | null
+    tags?: string[] | null
+    folder_id?: string | null
+    metadata?: Record<string, unknown> | null
     source_module?: string | null
     created_at: string
     updated_at: string
   }
 
 export type BeastDocumentModuleLinkStatus = "Active" | "Archived"
+
+export type BeastDocumentFolder = {
+    id: string
+    owner_id: string
+    parent_folder_id?: string | null
+    name: string
+    description?: string | null
+    sort_order: number
+    created_at: string
+    updated_at: string
+  }
+
+export type BeastDocumentCollectionStatus = "Active" | "Archived"
+
+export type BeastDocumentCollection = {
+    id: string
+    owner_id: string
+    name: string
+    description?: string | null
+    status: BeastDocumentCollectionStatus
+    sort_order: number
+    created_at: string
+    updated_at: string
+  }
+
+export type BeastDocumentCollectionItemStatus = "Active" | "Archived"
+
+export type BeastDocumentCollectionItem = {
+    id: string
+    owner_id: string
+    collection_id: string
+    document_id: string
+    status: BeastDocumentCollectionItemStatus
+    sort_order: number
+    created_at: string
+    updated_at: string
+  }
 
 export type BeastDocumentModuleLink = {
     id: string

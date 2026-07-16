@@ -1,6 +1,9 @@
 import type { PlatformModule } from "./types";
 import type {
   BeastDocument as BeastDocumentRow,
+  BeastDocumentCollection as BeastDocumentCollectionRow,
+  BeastDocumentCollectionItem as BeastDocumentCollectionItemRow,
+  BeastDocumentFolder as BeastDocumentFolderRow,
   BeastDocumentModuleLink as BeastDocumentModuleLinkRow,
 } from "@/lib/types/database";
 
@@ -18,6 +21,8 @@ export type DocumentCategory =
 
 export type DocumentStatus = "Uploaded" | "Ready" | "Archived" | "Deleted";
 export type DocumentModuleLinkStatus = "Active" | "Archived";
+export type DocumentCollectionStatus = "Active" | "Archived";
+export type DocumentCollectionItemStatus = "Active" | "Archived";
 
 export type DocumentStorageMetadata = {
   bucket: string;
@@ -32,11 +37,52 @@ export type BeastDocument = {
   id: string;
   ownerId: string;
   title: string;
+  description?: string;
   category: DocumentCategory;
   status: DocumentStatus;
+  tags: string[];
+  folderId?: string;
+  metadata: Record<string, unknown>;
   storage: DocumentStorageMetadata;
   sourceModule?: PlatformModule;
+  folder?: DocumentFolder;
+  collections: DocumentCollection[];
   moduleLinks: DocumentModuleLink[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type DocumentFolder = {
+  id: string;
+  ownerId: string;
+  parentFolderId?: string;
+  name: string;
+  description?: string;
+  sortOrder: number;
+  documentCount: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type DocumentCollection = {
+  id: string;
+  ownerId: string;
+  name: string;
+  description?: string;
+  status: DocumentCollectionStatus;
+  sortOrder: number;
+  documentCount: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type DocumentCollectionItem = {
+  id: string;
+  ownerId: string;
+  collectionId: string;
+  documentId: string;
+  status: DocumentCollectionItemStatus;
+  sortOrder: number;
   createdAt: string;
   updatedAt: string;
 };
@@ -68,12 +114,18 @@ export type DocumentOverviewSummary = {
   moduleLinks: number;
   linkedModules: PlatformModule[];
   categoryCounts: Record<DocumentCategory, number>;
+  folderCount: number;
+  collectionCount: number;
+  taggedDocuments: number;
+  topTags: { tag: string; count: number }[];
 };
 
 export type DocumentLoadStatus = "ready" | "signed-out" | "unavailable";
 
 export type DocumentLoadResult = {
   documents: BeastDocument[];
+  folders: DocumentFolder[];
+  collections: DocumentCollection[];
   status: DocumentLoadStatus;
   message?: string;
 };
@@ -92,7 +144,13 @@ export type BeastDocumentDataClient = {
           column: string,
           options: { ascending: boolean }
         ) => Promise<{
-          data: BeastDocumentRow[] | BeastDocumentModuleLinkRow[] | null;
+          data:
+            | BeastDocumentRow[]
+            | BeastDocumentModuleLinkRow[]
+            | BeastDocumentFolderRow[]
+            | BeastDocumentCollectionRow[]
+            | BeastDocumentCollectionItemRow[]
+            | null;
           error: { message?: string } | null;
         }>;
       };
@@ -103,6 +161,11 @@ export type BeastDocumentDataClient = {
 export const documentDatabaseTableName = "beast_documents";
 export const documentModuleLinkDatabaseTableName =
   "beast_document_module_links";
+export const documentFolderDatabaseTableName = "beast_document_folders";
+export const documentCollectionDatabaseTableName =
+  "beast_document_collections";
+export const documentCollectionItemDatabaseTableName =
+  "beast_document_collection_items";
 
 export const documentStorageBucketName = "beast-documents";
 export const documentUploadMaxFileSizeBytes = 25 * 1000 * 1000;
@@ -128,6 +191,16 @@ export const documentStatuses: DocumentStatus[] = [
 ];
 
 export const documentModuleLinkStatuses: DocumentModuleLinkStatus[] = [
+  "Active",
+  "Archived",
+];
+
+export const documentCollectionStatuses: DocumentCollectionStatus[] = [
+  "Active",
+  "Archived",
+];
+
+export const documentCollectionItemStatuses: DocumentCollectionItemStatus[] = [
   "Active",
   "Archived",
 ];
@@ -173,6 +246,7 @@ export const documentDatabaseColumns: DocumentDatabaseColumn[] = [
   { name: "id", type: "uuid", required: true },
   { name: "owner_id", type: "uuid", required: true },
   { name: "title", type: "text", required: true },
+  { name: "description", type: "text", required: false },
   { name: "category", type: "text", required: true },
   { name: "status", type: "text", required: true },
   { name: "storage_bucket", type: "text", required: true },
@@ -181,7 +255,43 @@ export const documentDatabaseColumns: DocumentDatabaseColumn[] = [
   { name: "mime_type", type: "text", required: true },
   { name: "size_bytes", type: "bigint", required: true },
   { name: "checksum", type: "text", required: false },
+  { name: "tags", type: "text[]", required: true },
+  { name: "folder_id", type: "uuid", required: false },
+  { name: "metadata", type: "jsonb", required: true },
   { name: "source_module", type: "text", required: false },
+  { name: "created_at", type: "timestamptz", required: true },
+  { name: "updated_at", type: "timestamptz", required: true },
+];
+
+export const documentFolderDatabaseColumns: DocumentDatabaseColumn[] = [
+  { name: "id", type: "uuid", required: true },
+  { name: "owner_id", type: "uuid", required: true },
+  { name: "parent_folder_id", type: "uuid", required: false },
+  { name: "name", type: "text", required: true },
+  { name: "description", type: "text", required: false },
+  { name: "sort_order", type: "integer", required: true },
+  { name: "created_at", type: "timestamptz", required: true },
+  { name: "updated_at", type: "timestamptz", required: true },
+];
+
+export const documentCollectionDatabaseColumns: DocumentDatabaseColumn[] = [
+  { name: "id", type: "uuid", required: true },
+  { name: "owner_id", type: "uuid", required: true },
+  { name: "name", type: "text", required: true },
+  { name: "description", type: "text", required: false },
+  { name: "status", type: "text", required: true },
+  { name: "sort_order", type: "integer", required: true },
+  { name: "created_at", type: "timestamptz", required: true },
+  { name: "updated_at", type: "timestamptz", required: true },
+];
+
+export const documentCollectionItemDatabaseColumns: DocumentDatabaseColumn[] = [
+  { name: "id", type: "uuid", required: true },
+  { name: "owner_id", type: "uuid", required: true },
+  { name: "collection_id", type: "uuid", required: true },
+  { name: "document_id", type: "uuid", required: true },
+  { name: "status", type: "text", required: true },
+  { name: "sort_order", type: "integer", required: true },
   { name: "created_at", type: "timestamptz", required: true },
   { name: "updated_at", type: "timestamptz", required: true },
 ];
@@ -204,6 +314,7 @@ export const documentOwnershipRules = [
   "Document metadata is user-owned and scoped to the signed-in BeastOS account.",
   "Modules may reference documents only through permissioned BeastOS document records.",
   "One BeastOS document record may be linked to multiple module records without duplicating the document.",
+  "Folders, collections, tags, and metadata organize BeastOS records without changing module ownership.",
   "BeastDocuments remains superseded as a standalone customer-facing module.",
 ];
 
@@ -212,8 +323,11 @@ export const mockDocuments: BeastDocument[] = [
     id: "document-money-statement",
     ownerId: "member-owner",
     title: "Money statement",
+    description: "Example statement metadata.",
     category: "Money",
     status: "Ready",
+    tags: ["statement", "monthly"],
+    metadata: {},
     storage: {
       bucket: documentStorageBucketName,
       path: "member-owner/money/statement.pdf",
@@ -222,6 +336,7 @@ export const mockDocuments: BeastDocument[] = [
       sizeBytes: 248000,
     },
     sourceModule: "money",
+    collections: [],
     moduleLinks: [],
     createdAt: "2026-07-14T00:00:00.000Z",
     updatedAt: "2026-07-14T00:00:00.000Z",
@@ -230,8 +345,11 @@ export const mockDocuments: BeastDocument[] = [
     id: "document-learning-notes",
     ownerId: "member-owner",
     title: "Learning notes",
+    description: "Example learning notes metadata.",
     category: "Learning",
     status: "Uploaded",
+    tags: ["notes"],
+    metadata: {},
     storage: {
       bucket: documentStorageBucketName,
       path: "member-owner/learning/notes.txt",
@@ -240,6 +358,7 @@ export const mockDocuments: BeastDocument[] = [
       sizeBytes: 8200,
     },
     sourceModule: "learning",
+    collections: [],
     moduleLinks: [],
     createdAt: "2026-07-14T00:00:00.000Z",
     updatedAt: "2026-07-14T00:00:00.000Z",
@@ -252,13 +371,29 @@ function toPlatformModule(module: string | null | undefined) {
   return module ? (module as PlatformModule) : undefined;
 }
 
+function toTags(tags: unknown) {
+  return Array.isArray(tags)
+    ? tags.filter((tag): tag is string => typeof tag === "string" && !!tag.trim())
+    : [];
+}
+
+function toMetadata(metadata: unknown) {
+  return metadata && typeof metadata === "object" && !Array.isArray(metadata)
+    ? (metadata as Record<string, unknown>)
+    : {};
+}
+
 export function mapDocumentRow(row: BeastDocumentRow): BeastDocument {
   return buildDocument({
     id: row.id,
     ownerId: row.owner_id,
     title: row.title,
+    description: row.description ?? undefined,
     category: row.category,
     status: row.status,
+    tags: toTags(row.tags),
+    folderId: row.folder_id ?? undefined,
+    metadata: toMetadata(row.metadata),
     storage: {
       bucket: row.storage_bucket,
       path: row.storage_path,
@@ -268,6 +403,7 @@ export function mapDocumentRow(row: BeastDocumentRow): BeastDocument {
       checksum: row.checksum ?? undefined,
     },
     sourceModule: toPlatformModule(row.source_module),
+    collections: [],
     moduleLinks: [],
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -301,6 +437,77 @@ export function mapDocumentModuleLinkRow(
   };
 }
 
+export function isDocumentCollectionStatus(
+  status: unknown
+): status is DocumentCollectionStatus {
+  return documentCollectionStatuses.includes(status as DocumentCollectionStatus);
+}
+
+export function isDocumentCollectionItemStatus(
+  status: unknown
+): status is DocumentCollectionItemStatus {
+  return documentCollectionItemStatuses.includes(
+    status as DocumentCollectionItemStatus
+  );
+}
+
+export function mapDocumentFolderRow(
+  row: BeastDocumentFolderRow
+): DocumentFolder {
+  return {
+    id: row.id,
+    ownerId: row.owner_id,
+    parentFolderId: row.parent_folder_id ?? undefined,
+    name: row.name,
+    description: row.description ?? undefined,
+    sortOrder: row.sort_order,
+    documentCount: 0,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+export function mapDocumentCollectionRow(
+  row: BeastDocumentCollectionRow
+): DocumentCollection {
+  if (!isDocumentCollectionStatus(row.status)) {
+    throw new Error(`Unsupported document collection status: ${row.status}`);
+  }
+
+  return {
+    id: row.id,
+    ownerId: row.owner_id,
+    name: row.name,
+    description: row.description ?? undefined,
+    status: row.status,
+    sortOrder: row.sort_order,
+    documentCount: 0,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+export function mapDocumentCollectionItemRow(
+  row: BeastDocumentCollectionItemRow
+): DocumentCollectionItem {
+  if (!isDocumentCollectionItemStatus(row.status)) {
+    throw new Error(
+      `Unsupported document collection item status: ${row.status}`
+    );
+  }
+
+  return {
+    id: row.id,
+    ownerId: row.owner_id,
+    collectionId: row.collection_id,
+    documentId: row.document_id,
+    status: row.status,
+    sortOrder: row.sort_order,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
 export async function loadUserDocuments(
   client: BeastDocumentDataClient
 ): Promise<DocumentLoadResult> {
@@ -310,6 +517,8 @@ export async function loadUserDocuments(
     if (userError) {
       return {
         documents: [],
+        folders: [],
+        collections: [],
         status: "unavailable",
         message: "Documents could not be loaded right now.",
       };
@@ -318,6 +527,8 @@ export async function loadUserDocuments(
     if (!userData.user) {
       return {
         documents: [],
+        folders: [],
+        collections: [],
         status: "signed-out",
         message: "Sign in to view your documents.",
       };
@@ -326,7 +537,7 @@ export async function loadUserDocuments(
     const { data, error } = await client
       .from(documentDatabaseTableName)
       .select(
-        "id, owner_id, title, category, status, storage_bucket, storage_path, file_name, mime_type, size_bytes, checksum, source_module, created_at, updated_at"
+        "id, owner_id, title, description, category, status, storage_bucket, storage_path, file_name, mime_type, size_bytes, checksum, tags, folder_id, metadata, source_module, created_at, updated_at"
       )
       .eq("owner_id", userData.user.id)
       .order("created_at", { ascending: false });
@@ -334,6 +545,8 @@ export async function loadUserDocuments(
     if (error) {
       return {
         documents: [],
+        folders: [],
+        collections: [],
         status: "unavailable",
         message:
           "Documents are not available yet. The database may still need its foundation migration.",
@@ -352,7 +565,51 @@ export async function loadUserDocuments(
       : ((moduleLinkResult.data ?? []) as BeastDocumentModuleLinkRow[]).map(
           mapDocumentModuleLinkRow
         );
+
+    const folderResult = await client
+      .from(documentFolderDatabaseTableName)
+      .select(
+        "id, owner_id, parent_folder_id, name, description, sort_order, created_at, updated_at"
+      )
+      .eq("owner_id", userData.user.id)
+      .order("created_at", { ascending: false });
+    const folders = folderResult.error
+      ? []
+      : ((folderResult.data ?? []) as BeastDocumentFolderRow[]).map(
+          mapDocumentFolderRow
+        );
+
+    const collectionResult = await client
+      .from(documentCollectionDatabaseTableName)
+      .select(
+        "id, owner_id, name, description, status, sort_order, created_at, updated_at"
+      )
+      .eq("owner_id", userData.user.id)
+      .order("created_at", { ascending: false });
+    const collections = collectionResult.error
+      ? []
+      : ((collectionResult.data ?? []) as BeastDocumentCollectionRow[]).map(
+          mapDocumentCollectionRow
+        );
+
+    const collectionItemResult = await client
+      .from(documentCollectionItemDatabaseTableName)
+      .select(
+        "id, owner_id, collection_id, document_id, status, sort_order, created_at, updated_at"
+      )
+      .eq("owner_id", userData.user.id)
+      .order("created_at", { ascending: false });
+    const collectionItems = collectionItemResult.error
+      ? []
+      : ((collectionItemResult.data ?? []) as BeastDocumentCollectionItemRow[])
+          .map(mapDocumentCollectionItemRow)
+          .filter((item) => item.status === "Active");
     const linksByDocument = new Map<string, DocumentModuleLink[]>();
+    const foldersById = new Map(folders.map((folder) => [folder.id, folder]));
+    const collectionsById = new Map(
+      collections.map((collection) => [collection.id, collection])
+    );
+    const collectionItemsByDocument = new Map<string, DocumentCollection[]>();
 
     moduleLinks.forEach((link) => {
       linksByDocument.set(link.documentId, [
@@ -361,22 +618,64 @@ export async function loadUserDocuments(
       ]);
     });
 
-    return {
-      documents: ((data ?? []) as BeastDocumentRow[]).map((row) => {
-        const document = mapDocumentRow(row);
+    collectionItems.forEach((item) => {
+      const collection = collectionsById.get(item.collectionId);
+      if (!collection || collection.status !== "Active") return;
 
-        return {
-          ...document,
-          moduleLinks: [...(linksByDocument.get(document.id) || [])].sort(
-            (left, right) => right.createdAt.localeCompare(left.createdAt)
-          ),
-        };
-      }),
+      collectionItemsByDocument.set(item.documentId, [
+        ...(collectionItemsByDocument.get(item.documentId) || []),
+        collection,
+      ]);
+    });
+
+    const documents = ((data ?? []) as BeastDocumentRow[]).map((row) => {
+      const document = mapDocumentRow(row);
+
+      return {
+        ...document,
+        folder: document.folderId
+          ? foldersById.get(document.folderId)
+          : undefined,
+        collections: [
+          ...(collectionItemsByDocument.get(document.id) || []),
+        ].sort((left, right) => left.name.localeCompare(right.name)),
+        moduleLinks: [...(linksByDocument.get(document.id) || [])].sort(
+          (left, right) => right.createdAt.localeCompare(left.createdAt)
+        ),
+      };
+    });
+
+    const folderCounts = documents.reduce((counts, document) => {
+      if (!document.folderId) return counts;
+      counts.set(document.folderId, (counts.get(document.folderId) || 0) + 1);
+      return counts;
+    }, new Map<string, number>());
+    const collectionCounts = collectionItems.reduce((counts, item) => {
+      counts.set(item.collectionId, (counts.get(item.collectionId) || 0) + 1);
+      return counts;
+    }, new Map<string, number>());
+
+    return {
+      documents,
+      folders: folders
+        .map((folder) => ({
+          ...folder,
+          documentCount: folderCounts.get(folder.id) || 0,
+        }))
+        .sort((left, right) => left.name.localeCompare(right.name)),
+      collections: collections
+        .map((collection) => ({
+          ...collection,
+          documentCount: collectionCounts.get(collection.id) || 0,
+        }))
+        .sort((left, right) => left.name.localeCompare(right.name)),
       status: "ready",
     };
   } catch {
     return {
       documents: [],
+      folders: [],
+      collections: [],
       status: "unavailable",
       message: "Documents could not be loaded right now.",
     };
@@ -418,6 +717,12 @@ export function buildDocument(document: BeastDocument): BeastDocument {
     throw new Error("Document size cannot be negative.");
   }
 
+  document.tags.forEach((tag) => {
+    if (!tag.trim()) {
+      throw new Error("Document tags cannot be blank.");
+    }
+  });
+
   document.moduleLinks.forEach((link) => {
     if (!link.title.trim()) {
       throw new Error("Document module link title is required.");
@@ -430,6 +735,10 @@ export function buildDocument(document: BeastDocument): BeastDocument {
 
   return {
     ...document,
+    tags: Array.from(new Set(document.tags.map((tag) => tag.trim()))).sort(),
+    collections: [...document.collections].sort((left, right) =>
+      left.name.localeCompare(right.name)
+    ),
     moduleLinks: [...document.moduleLinks].sort((left, right) =>
       right.createdAt.localeCompare(left.createdAt)
     ),
@@ -518,6 +827,12 @@ export function summarizeDocuments(
   const activeModuleLinks = normalized
     .flatMap((document) => document.moduleLinks)
     .filter((link) => link.status === "Active");
+  const tagCounts = normalized
+    .flatMap((document) => document.tags)
+    .reduce((counts, tag) => {
+      counts.set(tag, (counts.get(tag) || 0) + 1);
+      return counts;
+    }, new Map<string, number>());
 
   return {
     totalDocuments: normalized.length,
@@ -537,6 +852,20 @@ export function summarizeDocuments(
       new Set(activeModuleLinks.map((link) => link.sourceModule))
     ).sort(),
     categoryCounts,
+    folderCount: new Set(
+      normalized.map((document) => document.folderId).filter(Boolean)
+    ).size,
+    collectionCount: new Set(
+      normalized.flatMap((document) =>
+        document.collections.map((collection) => collection.id)
+      )
+    ).size,
+    taggedDocuments: normalized.filter((document) => document.tags.length > 0)
+      .length,
+    topTags: Array.from(tagCounts.entries())
+      .map(([tag, count]) => ({ tag, count }))
+      .sort((left, right) => right.count - left.count || left.tag.localeCompare(right.tag))
+      .slice(0, 8),
   };
 }
 

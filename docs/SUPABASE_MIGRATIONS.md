@@ -120,15 +120,17 @@ The CLI stream preserves SQL contents from `migrations/` while using Supabase CL
 | `20260706000100_add_profile_learning_context.sql` | `migrations/20260706_add_profile_learning_context.sql` | Confirmed applied to dev and production |
 | `20260713000000_add_learning_session_outcomes.sql` | `migrations/20260713_add_learning_session_outcomes.sql` | Confirmed applied to dev and production |
 | `20260714000000_add_beast_goals.sql` | `migrations/20260714_add_beast_goals.sql` | Confirmed applied to dev and production |
-| `20260714000100_add_beast_goal_milestones.sql` | `migrations/20260714_add_beast_goal_milestones.sql` | Uncertain |
+| `20260714000100_add_beast_goal_milestones.sql` | `migrations/20260714_add_beast_goal_milestones.sql` | Confirmed applied to dev and production |
 | `20260714000200_add_beast_documents.sql` | `migrations/20260714_add_beast_documents.sql` | Confirmed applied to dev and production |
-| `20260715000000_add_beast_goal_support_items.sql` | `migrations/20260715_add_beast_goal_support_items.sql` | Uncertain |
-| `20260715000100_add_beast_goal_references.sql` | `migrations/20260715_add_beast_goal_references.sql` | Uncertain |
-| `20260715000200_add_beast_goal_contributions.sql` | `migrations/20260715_add_beast_goal_contributions.sql` | Uncertain |
-| `20260715000300_add_beast_goal_recommendations.sql` | `migrations/20260715_add_beast_goal_recommendations.sql` | Uncertain |
-| `20260715000400_add_beast_goal_lifecycle_events.sql` | `migrations/20260715_add_beast_goal_lifecycle_events.sql` | Pending unless manually applied after package completion |
-| `20260715000500_add_beast_document_module_links.sql` | `migrations/20260715_add_beast_document_module_links.sql` | Pending unless manually applied after package completion |
-| `20260715000600_reconcile_canonical_runtime_schema.sql` | forward-only canonical reconciliation | Pending until pushed by Supabase CLI |
+| `20260715000000_add_beast_goal_support_items.sql` | `migrations/20260715_add_beast_goal_support_items.sql` | Confirmed applied to dev and production |
+| `20260715000100_add_beast_goal_references.sql` | `migrations/20260715_add_beast_goal_references.sql` | Confirmed applied to dev and production |
+| `20260715000200_add_beast_goal_contributions.sql` | `migrations/20260715_add_beast_goal_contributions.sql` | Confirmed applied to dev and production |
+| `20260715000300_add_beast_goal_recommendations.sql` | `migrations/20260715_add_beast_goal_recommendations.sql` | Confirmed applied to dev and production |
+| `20260715000400_add_beast_goal_lifecycle_events.sql` | `migrations/20260715_add_beast_goal_lifecycle_events.sql` | Confirmed applied to dev and production |
+| `20260715000500_add_beast_document_module_links.sql` | `migrations/20260715_add_beast_document_module_links.sql` | Confirmed applied to dev and production |
+| `20260715000600_reconcile_canonical_runtime_schema.sql` | forward-only canonical reconciliation | Confirmed applied to dev and production |
+| `20260715000700_add_beast_document_storage_bucket.sql` | BeastOS document storage bucket and policies | Confirmed applied to dev and production |
+| `20260715000800_add_beast_document_organization.sql` | BeastOS document folders, collections, tags, and organization metadata | Pending until pushed by Supabase CLI |
 
 ## Legacy SQL Inventory
 
@@ -160,7 +162,7 @@ That migration:
 
 ### DEV Release Sequence
 
-DEV already records migrations through `20260715000500`. To apply only the new forward reconciliation migration:
+DEV normally records migrations through the latest released migration. To apply pending forward migrations:
 
 ```bash
 npm run supabase:link:dev -- --project-ref <DEV_PROJECT_REF>
@@ -242,7 +244,7 @@ npm run supabase:current
 Final desired state:
 
 - DEV and PRODUCTION keep the same active local migration files.
-- DEV and PRODUCTION record the same migration versions through `20260715000600`.
+- DEV and PRODUCTION record the same migration versions after each release.
 - `public.cache_settings` is absent.
 - production `public.user_settings` remains preserved.
 - future migrations are handled normally through Supabase CLI.
