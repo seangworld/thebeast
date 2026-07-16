@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
   buildDocument,
+  buildDocumentStoragePath,
   documentCategories,
   documentDatabaseColumns,
   documentDatabaseTableName,
@@ -12,11 +13,18 @@ import {
   documentOwnershipRules,
   documentStatuses,
   documentStorageBucketName,
+  documentUploadMaxFileSizeBytes,
+  formatDocumentFileSize,
+  getDocumentUploadAcceptValue,
+  getDocumentUploadValidationError,
   loadUserDocuments,
   type BeastDocumentDataClient,
   mockDocuments,
+  sanitizeDocumentFileName,
   summarizeDocuments,
   supportedDocumentFileTypes,
+  supportedDocumentUploadExtensions,
+  supportedDocumentUploadMimeTypes,
 } from "../src/lib/platform/documents";
 import { sharedNavigation } from "../src/lib/moduleNavigation";
 import type {
@@ -343,4 +351,80 @@ test("BO-16 Documents loader tolerates unavailable module links", async () => {
   assert.equal(result.documents.length, 1);
   assert.equal(result.documents[0].moduleLinks.length, 0);
   assert.equal(summarizeDocuments(result.documents).moduleLinks, 0);
+});
+
+test("BO-17 Upload Center supports drag-and-drop document intake", () => {
+  const documentsPage = readFileSync("src/app/dashboard/uploads/page.tsx", "utf8");
+  const dropzone = readFileSync(
+    "src/app/dashboard/uploads/DocumentUploadDropzone.tsx",
+    "utf8"
+  );
+  const storageMigration = readFileSync(
+    "supabase/migrations/20260715000700_add_beast_document_storage_bucket.sql",
+    "utf8"
+  );
+
+  assert.match(documentsPage, /DocumentUploadDropzone/);
+  assert.match(dropzone, /onDrop=\{handleDrop\}/);
+  assert.match(dropzone, /onDragOver=\{handleDragOver\}/);
+  assert.match(dropzone, /Choose File/);
+  assert.match(dropzone, /Upload Document/);
+  assert.match(dropzone, /beast_documents/);
+  assert.match(dropzone, /documentStorageBucketName/);
+  assert.match(dropzone, /role="status"/);
+  assert.match(dropzone, /window\.location\.reload\(\)/);
+  assert.match(storageMigration, /insert into storage\.buckets/);
+  assert.match(storageMigration, /'beast-documents'/);
+  assert.match(storageMigration, /file_size_limit/);
+  assert.match(storageMigration, /25000000/);
+  assert.match(storageMigration, /allowed_mime_types/);
+  assert.match(storageMigration, /storage\.foldername\(name\)\)\[1\]/);
+  assert.match(
+    storageMigration,
+    /Users upload own BeastOS document files/
+  );
+});
+
+test("BO-17 Upload Center validates supported file types and owner storage paths", () => {
+  assert.equal(documentUploadMaxFileSizeBytes, 25_000_000);
+  assert.equal(supportedDocumentUploadMimeTypes.includes("application/pdf"), true);
+  assert.equal(supportedDocumentUploadExtensions.includes(".pdf"), true);
+  assert.match(getDocumentUploadAcceptValue(), /application\/pdf/);
+  assert.match(getDocumentUploadAcceptValue(), /\.docx/);
+  assert.equal(formatDocumentFileSize(248000), "248.0 KB");
+  assert.equal(formatDocumentFileSize(2_500_000), "2.50 MB");
+  assert.equal(sanitizeDocumentFileName("My File!!.pdf"), "My-File.pdf");
+  assert.equal(
+    buildDocumentStoragePath({
+      ownerId: "member-real",
+      category: "Tax",
+      fileName: "2026 Tax Form.pdf",
+      documentId: "document-1",
+    }),
+    "member-real/tax/document-1-2026-Tax-Form.pdf"
+  );
+  assert.equal(
+    getDocumentUploadValidationError({
+      name: "statement.pdf",
+      type: "application/pdf",
+      size: 1000,
+    }),
+    null
+  );
+  assert.match(
+    getDocumentUploadValidationError({
+      name: "script.exe",
+      type: "application/x-msdownload",
+      size: 1000,
+    }) || "",
+    /supported/
+  );
+  assert.match(
+    getDocumentUploadValidationError({
+      name: "large.pdf",
+      type: "application/pdf",
+      size: documentUploadMaxFileSizeBytes + 1,
+    }) || "",
+    /25 MB/
+  );
 });

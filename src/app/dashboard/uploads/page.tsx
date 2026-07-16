@@ -22,6 +22,7 @@ import {
   summarizeDocuments,
   supportedDocumentFileTypes,
 } from "@/lib/platform/documents";
+import { DocumentUploadDropzone } from "./DocumentUploadDropzone";
 
 const uploadCategories: {
   label: string;
@@ -75,33 +76,21 @@ export default async function UploadsPage() {
             <SectionHeader
               eyebrow="Upload"
               title="Add a document"
-              description="The foundation captures file metadata, category, storage location, and account ownership before deeper document intelligence is added."
+              description="Add one file to the shared BeastOS Upload Center. The workflow stores the file and records owner-scoped document metadata. AI extraction is intentionally not part of this package."
             />
-            <div className="mt-6 rounded-2xl border border-dashed border-[#94a3b8]/50 bg-[#0f1419] p-8 text-center">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-[#94a3b8]/40 bg-slate-300/10 text-2xl font-black text-slate-100">
-                DOC
-              </div>
-              <h2 className="mt-5 text-2xl font-black text-white">
-                Upload foundation ready
-              </h2>
-              <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-[#c7cfdb]">
-                Files are recorded as BeastOS document metadata with category,
-                owner, storage bucket, storage path, file type, and size. AI
-                extraction is intentionally not part of this package.
-              </p>
-              <div className="mt-5 text-xs font-bold uppercase text-[#7f8da3]">
-                Supported file types
-              </div>
-              <div className="mt-5 flex flex-wrap justify-center gap-2">
-                {supportedDocumentFileTypes.map((type) => (
-                  <span
-                    key={type}
-                    className="rounded-full border border-[#2a3242] bg-[#111827] px-3 py-1 text-xs font-bold text-[#dbe3ef]"
-                  >
-                    {type}
-                  </span>
-                ))}
-              </div>
+            <DocumentUploadDropzone />
+            <div className="mt-5 text-xs font-bold uppercase text-[#7f8da3]">
+              Supported file types
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {supportedDocumentFileTypes.map((type) => (
+                <span
+                  key={type}
+                  className="rounded-full border border-[#2a3242] bg-[#111827] px-3 py-1 text-xs font-bold text-[#dbe3ef]"
+                >
+                  {type}
+                </span>
+              ))}
             </div>
           </DashboardCard>
 

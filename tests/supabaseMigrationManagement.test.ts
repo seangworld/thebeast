@@ -34,6 +34,7 @@ const expectedCliMigrations = [
   "20260715000400_add_beast_goal_lifecycle_events.sql",
   "20260715000500_add_beast_document_module_links.sql",
   "20260715000600_reconcile_canonical_runtime_schema.sql",
+  "20260715000700_add_beast_document_storage_bucket.sql",
 ];
 
 test("Supabase CLI migrations exist in dependency-safe order", () => {

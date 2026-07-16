@@ -105,6 +105,7 @@ export const documentModuleLinkDatabaseTableName =
   "beast_document_module_links";
 
 export const documentStorageBucketName = "beast-documents";
+export const documentUploadMaxFileSizeBytes = 25 * 1000 * 1000;
 
 export const documentCategories: DocumentCategory[] = [
   "Money",
@@ -138,6 +139,34 @@ export const supportedDocumentFileTypes = [
   "Spreadsheets",
   "Documents",
   "Text",
+];
+
+export const supportedDocumentUploadMimeTypes = [
+  "application/pdf",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "text/plain",
+  "text/csv",
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/heic",
+  "image/heif",
+];
+
+export const supportedDocumentUploadExtensions = [
+  ".pdf",
+  ".docx",
+  ".xlsx",
+  ".pptx",
+  ".txt",
+  ".csv",
+  ".jpg",
+  ".jpeg",
+  ".png",
+  ".webp",
+  ".heic",
 ];
 
 export const documentDatabaseColumns: DocumentDatabaseColumn[] = [
@@ -409,6 +438,69 @@ export function buildDocument(document: BeastDocument): BeastDocument {
 
 export function buildDocumentCollection(documents: BeastDocument[]) {
   return documents.map(buildDocument);
+}
+
+export function getDocumentUploadAcceptValue() {
+  return [
+    ...supportedDocumentUploadMimeTypes,
+    ...supportedDocumentUploadExtensions,
+  ].join(",");
+}
+
+export function formatDocumentFileSize(sizeBytes: number) {
+  if (sizeBytes >= 1000 * 1000) {
+    return `${(sizeBytes / 1000 / 1000).toFixed(2)} MB`;
+  }
+
+  return `${(sizeBytes / 1000).toFixed(1)} KB`;
+}
+
+export function getDocumentUploadValidationError(file: {
+  name: string;
+  type: string;
+  size: number;
+}) {
+  const fileName = file.name.toLowerCase();
+  const hasAllowedExtension = supportedDocumentUploadExtensions.some(
+    (extension) => fileName.endsWith(extension)
+  );
+  const hasAllowedMimeType = supportedDocumentUploadMimeTypes.includes(
+    file.type
+  );
+
+  if (!hasAllowedExtension || !hasAllowedMimeType) {
+    return "Choose a supported document, image, spreadsheet, presentation, text, or CSV file.";
+  }
+
+  if (file.size > documentUploadMaxFileSizeBytes) {
+    return "Choose a file that is 25 MB or smaller.";
+  }
+
+  return null;
+}
+
+export function sanitizeDocumentFileName(fileName: string) {
+  const sanitized = fileName
+    .trim()
+    .replace(/[^a-zA-Z0-9._-]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/-\./g, ".")
+    .replace(/^-|-$/g, "");
+
+  return sanitized || "document";
+}
+
+export function buildDocumentStoragePath(input: {
+  ownerId: string;
+  category: DocumentCategory;
+  fileName: string;
+  documentId: string;
+}) {
+  return [
+    input.ownerId,
+    input.category.toLowerCase(),
+    `${input.documentId}-${sanitizeDocumentFileName(input.fileName)}`,
+  ].join("/");
 }
 
 export function summarizeDocuments(
