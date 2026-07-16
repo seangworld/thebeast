@@ -49,6 +49,9 @@ export type TodayContribution = {
   dueTime?: string;
   timing: TodayContributionTiming;
   priority: TodayContributionPriority;
+  importance?: number;
+  urgency?: number;
+  preferenceWeight?: number;
   estimatedMinutes?: number;
   relatedGoalId?: string;
   relatedPlanId?: string;
@@ -66,6 +69,16 @@ export type TodayContributionSummary = {
   dueToday: number;
   overdue: number;
   sources: TodayContributionSource[];
+};
+
+export type TodayPriorityScore = {
+  contributionId: string;
+  urgency: number;
+  importance: number;
+  effort: number;
+  preference: number;
+  score: number;
+  explanation: string;
 };
 
 export const todayContributionSources: TodayContributionSource[] = [
@@ -133,6 +146,34 @@ const timingRank: Record<TodayContributionTiming, number> = {
   Informational: 4,
 };
 
+function clampScore(value: number | undefined, fallback: number) {
+  if (typeof value !== "number" || Number.isNaN(value)) return fallback;
+  return Math.max(0, Math.min(10, Math.round(value)));
+}
+
+function defaultUrgency(timing: TodayContributionTiming) {
+  if (timing === "Overdue") return 10;
+  if (timing === "Due Today") return 8;
+  if (timing === "Active") return 6;
+  if (timing === "Upcoming") return 3;
+  return 1;
+}
+
+function defaultImportance(priority: TodayContributionPriority) {
+  if (priority === "Critical") return 10;
+  if (priority === "High") return 8;
+  if (priority === "Medium") return 5;
+  return 2;
+}
+
+function effortScore(minutes?: number) {
+  if (typeof minutes !== "number" || Number.isNaN(minutes)) return 5;
+  if (minutes <= 10) return 10;
+  if (minutes <= 30) return 7;
+  if (minutes <= 60) return 4;
+  return 2;
+}
+
 export function buildTodayContribution(
   contribution: TodayContribution
 ): TodayContribution {
@@ -182,6 +223,10 @@ export function sortTodayContributions(
   return contributions
     .map(buildTodayContribution)
     .sort((left, right) => {
+      const scoreDelta =
+        getTodayPriorityScore(right).score - getTodayPriorityScore(left).score;
+      if (scoreDelta !== 0) return scoreDelta;
+
       const timingDelta = timingRank[left.timing] - timingRank[right.timing];
       if (timingDelta !== 0) return timingDelta;
 
@@ -190,6 +235,45 @@ export function sortTodayContributions(
 
       return (left.dueTime || "23:59").localeCompare(right.dueTime || "23:59");
     });
+}
+
+export function getTodayPriorityScore(
+  contribution: TodayContribution
+): TodayPriorityScore {
+  const normalized = buildTodayContribution(contribution);
+  const urgency = clampScore(
+    normalized.urgency,
+    defaultUrgency(normalized.timing)
+  );
+  const importance = clampScore(
+    normalized.importance,
+    defaultImportance(normalized.priority)
+  );
+  const effort = effortScore(normalized.estimatedMinutes);
+  const preference = clampScore(normalized.preferenceWeight, 5);
+  const score = Math.round(
+    urgency * 0.35 + importance * 0.35 + effort * 0.15 + preference * 0.15
+  );
+
+  return {
+    contributionId: normalized.id,
+    urgency,
+    importance,
+    effort,
+    preference,
+    score,
+    explanation: `${normalized.title} ranks from urgency ${urgency}, importance ${importance}, effort ${effort}, and preference ${preference}.`,
+  };
+}
+
+export function getRankedTodayContributions(
+  contributions: TodayContribution[]
+) {
+  return sortTodayContributions(contributions).map((contribution, index) => ({
+    rank: index + 1,
+    contribution,
+    priorityScore: getTodayPriorityScore(contribution),
+  }));
 }
 
 export function summarizeTodayContributions(

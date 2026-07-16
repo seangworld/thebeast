@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
   buildTodayContribution,
+  getRankedTodayContributions,
+  getTodayPriorityScore,
   getTodayContributionEmptyState,
   sortTodayContributions,
   summarizeTodayContributions,
@@ -120,4 +122,33 @@ test("BO-25 Today defines the shared cross-module contribution contract", () => 
     todayPage,
     /recompute learning mastery|recompute bill cycles|cash-flow risk/
   );
+});
+
+test("BO-26 Today ranks work by urgency importance effort and preference", () => {
+  const todayPage = readFileSync("src/app/dashboard/today/page.tsx", "utf8");
+  const quickCritical = {
+    ...moneyContribution,
+    id: "money-critical-quick",
+    urgency: 10,
+    importance: 10,
+    preferenceWeight: 6,
+    estimatedMinutes: 5,
+  };
+  const importantLong = {
+    ...learningContribution,
+    id: "learning-important-long",
+    urgency: 6,
+    importance: 8,
+    preferenceWeight: 7,
+    estimatedMinutes: 90,
+  };
+  const ranked = getRankedTodayContributions([importantLong, quickCritical]);
+
+  assert.equal(getTodayPriorityScore(quickCritical).score, 9);
+  assert.equal(getTodayPriorityScore(importantLong).effort, 2);
+  assert.equal(ranked[0].contribution.id, "money-critical-quick");
+  assert.equal(ranked[0].rank, 1);
+  assert.match(ranked[0].priorityScore.explanation, /urgency 10/);
+  assert.match(todayPage, /Priority Engine/);
+  assert.match(todayPage, /getTodayPriorityScore/);
 });

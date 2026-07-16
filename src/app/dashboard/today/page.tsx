@@ -19,6 +19,7 @@ import { getBeastGreeting } from "@/lib/runtimeDate";
 import { createClient } from "@/lib/supabase/client";
 import { getProfileDisplayName } from "@/lib/profile";
 import {
+  getTodayPriorityScore,
   todayContributionContractRules,
   todayContributionSources,
 } from "@/lib/platform/today";
@@ -470,6 +471,25 @@ export default function TodayPage() {
       ? 0
       : Math.round((completedActivities.length / state.activities.length) * 100);
   const streak = completedActivities.length > 0 ? 1 : 0;
+  const learningPriorityScore = getTodayPriorityScore({
+    id: "today-learning-priority",
+    source: "learning",
+    type: "Resume",
+    title: readyActivity?.title || "Ask your Mentor for the first step",
+    summary: "BeastLearning supplies the learning readiness and next activity.",
+    reason: "Today ranks the supplied contribution without recomputing learning mastery.",
+    recommendedAction: readyActivity ? "Continue with Mentor" : "Ask Mentor",
+    actionUrl: "/dashboard/learning#mentor-session",
+    timing: readyActivity ? "Active" : "Informational",
+    priority: readyActivity ? "Medium" : "Low",
+    importance: readyActivity ? 6 : 2,
+    urgency: readyActivity ? 6 : 1,
+    preferenceWeight: 5,
+    estimatedMinutes: readyActivity?.estimated_minutes || 20,
+    dismissible: false,
+    status: "Active",
+    sourceEvidenceIds: readyActivity ? [readyActivity.id] : [],
+  });
 
   return (
     <main className="beast-page">
@@ -557,6 +577,17 @@ export default function TodayPage() {
                 {source}
               </span>
             ))}
+          </div>
+          <div className="mt-5 rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+            <div className="text-xs font-bold uppercase text-[#7f8da3]">
+              Priority Engine
+            </div>
+            <div className="mt-2 text-3xl font-black text-white">
+              {learningPriorityScore.score}
+            </div>
+            <p className="mt-2 text-sm font-semibold leading-6 text-[#c7cfdb]">
+              {learningPriorityScore.explanation}
+            </p>
           </div>
           <div className="mt-5 grid gap-3 md:grid-cols-2">
             {todayContributionContractRules.map((rule) => (
