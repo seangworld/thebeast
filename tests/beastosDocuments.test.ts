@@ -4,6 +4,11 @@ import { readFileSync } from "node:fs";
 import {
   buildDocument,
   buildDocumentStoragePath,
+  documentAccessGrantDatabaseColumns,
+  documentAccessGrantDatabaseTableName,
+  documentAccessPermissions,
+  documentAccessScopes,
+  documentAccessStatuses,
   documentCategories,
   documentCollectionDatabaseColumns,
   documentCollectionDatabaseTableName,
@@ -23,6 +28,8 @@ import {
   documentStorageBucketName,
   documentUploadMaxFileSizeBytes,
   formatDocumentFileSize,
+  getActiveDocumentAccessGrants,
+  getDocumentVisibilityLabel,
   getDocumentUploadAcceptValue,
   getDocumentUploadValidationError,
   loadUserDocuments,
@@ -37,6 +44,7 @@ import {
 import { sharedNavigation } from "../src/lib/moduleNavigation";
 import type {
   BeastDocument,
+  BeastDocumentAccessGrant,
   BeastDocumentCollection,
   BeastDocumentCollectionItem,
   BeastDocumentFolder,
@@ -85,9 +93,16 @@ test("BD-001 creates a BeastOS-owned Document model and database contract", () =
     documentCollectionItemDatabaseTableName,
     "beast_document_collection_items"
   );
+  assert.equal(
+    documentAccessGrantDatabaseTableName,
+    "beast_document_access_grants"
+  );
   assert.deepEqual(documentModuleLinkStatuses, ["Active", "Archived"]);
   assert.deepEqual(documentCollectionStatuses, ["Active", "Archived"]);
   assert.deepEqual(documentCollectionItemStatuses, ["Active", "Archived"]);
+  assert.deepEqual(documentAccessPermissions, ["None", "View", "Manage"]);
+  assert.deepEqual(documentAccessScopes, ["Member", "Household"]);
+  assert.deepEqual(documentAccessStatuses, ["Active", "Revoked"]);
   assert.deepEqual(
     documentDatabaseColumns.map((column) => [column.name, column.required]),
     [
@@ -177,6 +192,27 @@ test("BD-001 creates a BeastOS-owned Document model and database contract", () =
       ["updated_at", true],
     ]
   );
+  assert.deepEqual(
+    documentAccessGrantDatabaseColumns.map((column) => [
+      column.name,
+      column.required,
+    ]),
+    [
+      ["id", true],
+      ["owner_id", true],
+      ["document_id", true],
+      ["scope", true],
+      ["permission", true],
+      ["status", true],
+      ["grantee_user_id", false],
+      ["household_id", false],
+      ["family_member_id", false],
+      ["note", false],
+      ["created_at", true],
+      ["updated_at", true],
+      ["revoked_at", false],
+    ]
+  );
   assert.equal(
     documentOwnershipRules[0],
     "Documents belong to BeastOS as shared Personal Hub data."
@@ -186,7 +222,8 @@ test("BD-001 creates a BeastOS-owned Document model and database contract", () =
     /linked to multiple module records/
   );
   assert.match(documentOwnershipRules[4], /Folders, collections, tags/);
-  assert.match(documentOwnershipRules[5], /BeastDocuments remains superseded/);
+  assert.match(documentOwnershipRules[5], /access grants/);
+  assert.match(documentOwnershipRules[6], /BeastDocuments remains superseded/);
 });
 
 test("BD-001 Documents overview route stays BeastOS-owned", () => {
@@ -207,6 +244,8 @@ test("BD-001 Documents overview route stays BeastOS-owned", () => {
   assert.equal(summary.categoryCounts.Money, 1);
   assert.equal(summary.categoryCounts.Learning, 1);
   assert.equal(summary.taggedDocuments, 2);
+  assert.equal(summary.sharedDocuments, 0);
+  assert.equal(summary.activeAccessGrants, 0);
   assert.deepEqual(summary.topTags[0], { tag: "monthly", count: 1 });
   assert.equal(
     sharedNavigation.some(
@@ -267,6 +306,8 @@ function createDocumentClient(
     collectionQueryError?: boolean;
     collectionItemRows?: BeastDocumentCollectionItem[] | null;
     collectionItemQueryError?: boolean;
+    accessGrantRows?: BeastDocumentAccessGrant[] | null;
+    accessGrantQueryError?: boolean;
   } = {}
 ): BeastDocumentDataClient {
   return {
@@ -284,7 +325,8 @@ function createDocumentClient(
           table === documentModuleLinkDatabaseTableName ||
           table === documentFolderDatabaseTableName ||
           table === documentCollectionDatabaseTableName ||
-          table === documentCollectionItemDatabaseTableName
+          table === documentCollectionItemDatabaseTableName ||
+          table === documentAccessGrantDatabaseTableName
       );
 
       return {
@@ -311,7 +353,10 @@ function createDocumentClient(
                       if (table === documentCollectionDatabaseTableName) {
                         return options.collectionRows ?? [];
                       }
-                      return options.collectionItemRows ?? [];
+                      if (table === documentCollectionItemDatabaseTableName) {
+                        return options.collectionItemRows ?? [];
+                      }
+                      return options.accessGrantRows ?? [];
                     })(),
                     error: (() => {
                       if (table === documentDatabaseTableName) {
@@ -334,8 +379,13 @@ function createDocumentClient(
                           ? { message: "Collections unavailable" }
                           : null;
                       }
-                      return options.collectionItemQueryError
-                        ? { message: "Collection items unavailable" }
+                      if (table === documentCollectionItemDatabaseTableName) {
+                        return options.collectionItemQueryError
+                          ? { message: "Collection items unavailable" }
+                          : null;
+                      }
+                      return options.accessGrantQueryError
+                        ? { message: "Access grants unavailable" }
                         : null;
                     })(),
                   };
@@ -439,6 +489,38 @@ test("BD-001 Documents loader uses only signed-in user metadata", async () => {
             updated_at: "2026-07-14T00:00:00.000Z",
           },
         ],
+        accessGrantRows: [
+          {
+            id: "grant-household-view",
+            owner_id: "member-real",
+            document_id: "real-document",
+            scope: "Household",
+            permission: "View",
+            status: "Active",
+            grantee_user_id: null,
+            household_id: "household-1",
+            family_member_id: null,
+            note: "Share tax record with household.",
+            created_at: "2026-07-15T02:00:00.000Z",
+            updated_at: "2026-07-15T02:00:00.000Z",
+            revoked_at: null,
+          },
+          {
+            id: "grant-revoked-member",
+            owner_id: "member-real",
+            document_id: "real-document",
+            scope: "Member",
+            permission: "View",
+            status: "Revoked",
+            grantee_user_id: "member-other",
+            household_id: null,
+            family_member_id: null,
+            note: "Old direct share.",
+            created_at: "2026-07-15T01:30:00.000Z",
+            updated_at: "2026-07-15T01:40:00.000Z",
+            revoked_at: "2026-07-15T01:40:00.000Z",
+          },
+        ],
       }
     )
   );
@@ -450,6 +532,9 @@ test("BD-001 Documents loader uses only signed-in user metadata", async () => {
   assert.deepEqual(result.documents[0].tags, ["2026", "tax"]);
   assert.equal(result.documents[0].folder?.name, "Taxes");
   assert.equal(result.documents[0].collections[0].name, "Annual records");
+  assert.equal(result.documents[0].accessGrants.length, 2);
+  assert.equal(getActiveDocumentAccessGrants(result.documents[0]).length, 1);
+  assert.equal(getDocumentVisibilityLabel(result.documents[0]), "Household View");
   assert.equal(result.folders[0].documentCount, 1);
   assert.equal(result.collections[0].documentCount, 1);
   assert.equal(result.documents[0].moduleLinks.length, 2);
@@ -459,6 +544,10 @@ test("BD-001 Documents loader uses only signed-in user metadata", async () => {
     "Linked to a learning goal"
   );
   assert.equal(summarizeDocuments(result.documents).moduleLinks, 2);
+  assert.equal(summarizeDocuments(result.documents).sharedDocuments, 1);
+  assert.equal(summarizeDocuments(result.documents).activeAccessGrants, 1);
+  assert.equal(summarizeDocuments(result.documents).householdSharedDocuments, 1);
+  assert.equal(summarizeDocuments(result.documents).directSharedDocuments, 0);
   assert.deepEqual(summarizeDocuments(result.documents).linkedModules, [
     "learning",
     "money",
@@ -476,6 +565,7 @@ test("BD-001 Documents loader fails safely without sample metadata", async () =>
   assert.equal(unavailable.documents.length, 0);
   assert.equal(unavailable.folders.length, 0);
   assert.equal(unavailable.collections.length, 0);
+  assert.equal(unavailable.accessGrants.length, 0);
   assert.equal(signedOut.status, "signed-out");
   assert.equal(signedOut.documents.length, 0);
   assert.equal(summarizeDocuments(unavailable.documents).storageBytes, 0);
@@ -513,6 +603,7 @@ test("BO-16 Documents loader tolerates unavailable module links", async () => {
   assert.equal(result.documents.length, 1);
   assert.equal(result.documents[0].moduleLinks.length, 0);
   assert.equal(summarizeDocuments(result.documents).moduleLinks, 0);
+  assert.equal(summarizeDocuments(result.documents).sharedDocuments, 0);
 });
 
 test("BO-18 Documents organization uses owner-scoped metadata without fake examples", () => {
@@ -555,6 +646,39 @@ test("BO-18 Documents organization uses owner-scoped metadata without fake examp
   );
   assert.doesNotMatch(documentsPage, /Annual records/);
   assert.doesNotMatch(documentsPage, /Taxes/);
+});
+
+test("BO-19 Documents access grants enforce explicit sharing boundaries", () => {
+  const documentsPage = readFileSync("src/app/dashboard/uploads/page.tsx", "utf8");
+  const migration = readFileSync(
+    "supabase/migrations/20260715000900_add_beast_document_access_grants.sql",
+    "utf8"
+  );
+
+  assert.match(documentsPage, /Ownership and sharing/);
+  assert.match(documentsPage, /Private to the owner account/);
+  assert.match(documentsPage, /No document sharing grants yet/);
+  assert.match(documentsPage, /documentAccessGrantDatabaseTableName/);
+  assert.match(
+    migration,
+    /create table if not exists public\.beast_document_access_grants/
+  );
+  assert.match(migration, /permission in \('None', 'View', 'Manage'\)/);
+  assert.match(migration, /scope in \('Member', 'Household'\)/);
+  assert.match(migration, /status in \('Active', 'Revoked'\)/);
+  assert.match(migration, /beast_document_access_grants_document_owner_fk/);
+  assert.match(migration, /enable row level security/);
+  assert.match(
+    migration,
+    /Users manage own BeastOS document access grants/
+  );
+  assert.match(
+    migration,
+    /Shared users read shared BeastOS document metadata/
+  );
+  assert.match(migration, /grantee_user_id = auth\.uid\(\)/);
+  assert.doesNotMatch(documentsPage, /household-1/);
+  assert.doesNotMatch(documentsPage, /member-other/);
 });
 
 test("BO-17 Upload Center supports drag-and-drop document intake", () => {

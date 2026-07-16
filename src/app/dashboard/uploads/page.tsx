@@ -13,13 +13,16 @@ import { createRouteClient } from "@/lib/supabase/server";
 import {
   type BeastDocumentDataClient,
   type DocumentLoadResult,
+  documentAccessGrantDatabaseTableName,
   documentCollectionDatabaseTableName,
   documentCategories,
   documentDatabaseTableName,
   documentFolderDatabaseTableName,
   documentModuleLinkDatabaseTableName,
   documentOwnershipRules,
+  getActiveDocumentAccessGrants,
   getActiveDocumentModuleLinks,
+  getDocumentVisibilityLabel,
   loadUserDocuments,
   summarizeDocuments,
   supportedDocumentFileTypes,
@@ -53,6 +56,7 @@ async function getDocumentLoadResult(): Promise<DocumentLoadResult> {
       documents: [],
       folders: [],
       collections: [],
+      accessGrants: [],
       status: "unavailable",
       message: "Documents could not be loaded right now.",
     };
@@ -205,6 +209,15 @@ export default async function UploadsPage() {
                   collections, and {summary.taggedDocuments} tagged documents.
                 </div>
               </div>
+              <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+                <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                  Sharing
+                </div>
+                <div className="mt-2 text-sm font-semibold leading-5 text-[#dbe3ef]">
+                  {summary.sharedDocuments} shared documents with{" "}
+                  {summary.activeAccessGrants} active access grants.
+                </div>
+              </div>
             </div>
           </DashboardCard>
 
@@ -225,7 +238,7 @@ export default async function UploadsPage() {
                       <div className="font-black text-white">{document.title}</div>
                       <ModuleBadge
                         module={document.sourceModule || "documents"}
-                        label={document.status}
+                        label={getDocumentVisibilityLabel(document)}
                       />
                     </div>
                     <div className="mt-2 flex flex-wrap gap-2 text-xs font-bold text-[#c7cfdb]">
@@ -265,6 +278,34 @@ export default async function UploadsPage() {
                         ))}
                       </div>
                     ) : null}
+                    <div className="mt-3 rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="text-xs font-black uppercase text-[#7f8da3]">
+                          Access
+                        </div>
+                        <span className="text-xs font-bold text-[#c7cfdb]">
+                          {document.status}
+                        </span>
+                      </div>
+                      {getActiveDocumentAccessGrants(document).length > 0 ? (
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {getActiveDocumentAccessGrants(document).map(
+                            (grant) => (
+                              <span
+                                key={grant.id}
+                                className="rounded-full border border-[#2a3242] px-2.5 py-1 text-xs font-bold text-[#c7cfdb]"
+                              >
+                                {grant.scope}: {grant.permission}
+                              </span>
+                            )
+                          )}
+                        </div>
+                      ) : (
+                        <div className="mt-2 text-xs font-semibold text-[#9aa7b8]">
+                          Private to the owner account.
+                        </div>
+                      )}
+                    </div>
                     <div className="mt-3 rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
                       <div className="text-xs font-black uppercase text-[#7f8da3]">
                         Reused By Modules
@@ -399,11 +440,59 @@ export default async function UploadsPage() {
           </DashboardCard>
         </section>
 
+        <DashboardCard accent="beastos">
+          <SectionHeader
+            eyebrow="Permissions"
+            title="Ownership and sharing"
+            description="Document sharing uses explicit BeastOS access grants. Household sharing is recorded only when real owner-scoped grant records exist."
+          />
+          <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+              <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                Private
+              </div>
+              <div className="mt-2 text-3xl font-black text-white">
+                {summary.totalDocuments - summary.sharedDocuments}
+              </div>
+            </div>
+            <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+              <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                Direct Sharing
+              </div>
+              <div className="mt-2 text-3xl font-black text-white">
+                {summary.directSharedDocuments}
+              </div>
+            </div>
+            <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+              <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                Household Sharing
+              </div>
+              <div className="mt-2 text-3xl font-black text-white">
+                {summary.householdSharedDocuments}
+              </div>
+            </div>
+            <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+              <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                Manage Grants
+              </div>
+              <div className="mt-2 text-3xl font-black text-white">
+                {summary.manageableSharedDocuments}
+              </div>
+            </div>
+          </div>
+          {summary.activeAccessGrants === 0 ? (
+            <div className="mt-5 rounded-xl border border-[#2a3242] bg-[#111827] p-4 text-sm font-semibold leading-6 text-[#c7cfdb]">
+              No document sharing grants yet. Uploaded documents remain private
+              until the owner explicitly grants access.
+            </div>
+          ) : null}
+        </DashboardCard>
+
         <DashboardCard accent="documents">
           <SectionHeader
             eyebrow="Database"
             title={documentDatabaseTableName}
-            description={`The foundation stores document metadata and ownership in ${documentDatabaseTableName}. Organization uses ${documentFolderDatabaseTableName} and ${documentCollectionDatabaseTableName}. Module reuse is tracked in ${documentModuleLinkDatabaseTableName}. Document contents stay in storage and are not analyzed by this package.`}
+            description={`The foundation stores document metadata and ownership in ${documentDatabaseTableName}. Organization uses ${documentFolderDatabaseTableName} and ${documentCollectionDatabaseTableName}. Access grants use ${documentAccessGrantDatabaseTableName}. Module reuse is tracked in ${documentModuleLinkDatabaseTableName}. Document contents stay in storage and are not analyzed by this package.`}
           />
           <div className="mt-5 grid gap-3 md:grid-cols-2">
             {documentOwnershipRules.map((rule) => (

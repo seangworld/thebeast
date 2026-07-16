@@ -130,7 +130,8 @@ The CLI stream preserves SQL contents from `migrations/` while using Supabase CL
 | `20260715000500_add_beast_document_module_links.sql` | `migrations/20260715_add_beast_document_module_links.sql` | Confirmed applied to dev and production |
 | `20260715000600_reconcile_canonical_runtime_schema.sql` | forward-only canonical reconciliation | Confirmed applied to dev and production |
 | `20260715000700_add_beast_document_storage_bucket.sql` | BeastOS document storage bucket and policies | Confirmed applied to dev and production |
-| `20260715000800_add_beast_document_organization.sql` | BeastOS document folders, collections, tags, and organization metadata | Pending until pushed by Supabase CLI |
+| `20260715000800_add_beast_document_organization.sql` | BeastOS document folders, collections, tags, and organization metadata | Confirmed applied to dev and production |
+| `20260715000900_add_beast_document_access_grants.sql` | BeastOS document ownership, household sharing, and access grants | Pending until pushed by Supabase CLI |
 
 ## Legacy SQL Inventory
 

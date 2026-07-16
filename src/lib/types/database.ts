@@ -322,6 +322,28 @@ export type BeastDocumentCollectionItem = {
     updated_at: string
   }
 
+export type BeastDocumentAccessPermission = "None" | "View" | "Manage"
+
+export type BeastDocumentAccessScope = "Member" | "Household"
+
+export type BeastDocumentAccessStatus = "Active" | "Revoked"
+
+export type BeastDocumentAccessGrant = {
+    id: string
+    owner_id: string
+    document_id: string
+    scope: BeastDocumentAccessScope
+    permission: BeastDocumentAccessPermission
+    status: BeastDocumentAccessStatus
+    grantee_user_id?: string | null
+    household_id?: string | null
+    family_member_id?: string | null
+    note?: string | null
+    created_at: string
+    updated_at: string
+    revoked_at?: string | null
+  }
+
 export type BeastDocumentModuleLink = {
     id: string
     owner_id: string

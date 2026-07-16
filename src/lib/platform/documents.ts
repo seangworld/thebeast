@@ -1,6 +1,7 @@
 import type { PlatformModule } from "./types";
 import type {
   BeastDocument as BeastDocumentRow,
+  BeastDocumentAccessGrant as BeastDocumentAccessGrantRow,
   BeastDocumentCollection as BeastDocumentCollectionRow,
   BeastDocumentCollectionItem as BeastDocumentCollectionItemRow,
   BeastDocumentFolder as BeastDocumentFolderRow,
@@ -23,6 +24,9 @@ export type DocumentStatus = "Uploaded" | "Ready" | "Archived" | "Deleted";
 export type DocumentModuleLinkStatus = "Active" | "Archived";
 export type DocumentCollectionStatus = "Active" | "Archived";
 export type DocumentCollectionItemStatus = "Active" | "Archived";
+export type DocumentAccessPermission = "None" | "View" | "Manage";
+export type DocumentAccessScope = "Member" | "Household";
+export type DocumentAccessStatus = "Active" | "Revoked";
 
 export type DocumentStorageMetadata = {
   bucket: string;
@@ -47,6 +51,7 @@ export type BeastDocument = {
   sourceModule?: PlatformModule;
   folder?: DocumentFolder;
   collections: DocumentCollection[];
+  accessGrants: DocumentAccessGrant[];
   moduleLinks: DocumentModuleLink[];
   createdAt: string;
   updatedAt: string;
@@ -87,6 +92,22 @@ export type DocumentCollectionItem = {
   updatedAt: string;
 };
 
+export type DocumentAccessGrant = {
+  id: string;
+  ownerId: string;
+  documentId: string;
+  scope: DocumentAccessScope;
+  permission: DocumentAccessPermission;
+  status: DocumentAccessStatus;
+  granteeUserId?: string;
+  householdId?: string;
+  familyMemberId?: string;
+  note?: string;
+  createdAt: string;
+  updatedAt: string;
+  revokedAt?: string;
+};
+
 export type DocumentModuleLink = {
   id: string;
   ownerId: string;
@@ -118,6 +139,11 @@ export type DocumentOverviewSummary = {
   collectionCount: number;
   taggedDocuments: number;
   topTags: { tag: string; count: number }[];
+  sharedDocuments: number;
+  activeAccessGrants: number;
+  householdSharedDocuments: number;
+  directSharedDocuments: number;
+  manageableSharedDocuments: number;
 };
 
 export type DocumentLoadStatus = "ready" | "signed-out" | "unavailable";
@@ -126,6 +152,7 @@ export type DocumentLoadResult = {
   documents: BeastDocument[];
   folders: DocumentFolder[];
   collections: DocumentCollection[];
+  accessGrants: DocumentAccessGrant[];
   status: DocumentLoadStatus;
   message?: string;
 };
@@ -146,6 +173,7 @@ export type BeastDocumentDataClient = {
         ) => Promise<{
           data:
             | BeastDocumentRow[]
+            | BeastDocumentAccessGrantRow[]
             | BeastDocumentModuleLinkRow[]
             | BeastDocumentFolderRow[]
             | BeastDocumentCollectionRow[]
@@ -166,6 +194,8 @@ export const documentCollectionDatabaseTableName =
   "beast_document_collections";
 export const documentCollectionItemDatabaseTableName =
   "beast_document_collection_items";
+export const documentAccessGrantDatabaseTableName =
+  "beast_document_access_grants";
 
 export const documentStorageBucketName = "beast-documents";
 export const documentUploadMaxFileSizeBytes = 25 * 1000 * 1000;
@@ -203,6 +233,22 @@ export const documentCollectionStatuses: DocumentCollectionStatus[] = [
 export const documentCollectionItemStatuses: DocumentCollectionItemStatus[] = [
   "Active",
   "Archived",
+];
+
+export const documentAccessPermissions: DocumentAccessPermission[] = [
+  "None",
+  "View",
+  "Manage",
+];
+
+export const documentAccessScopes: DocumentAccessScope[] = [
+  "Member",
+  "Household",
+];
+
+export const documentAccessStatuses: DocumentAccessStatus[] = [
+  "Active",
+  "Revoked",
 ];
 
 export const supportedDocumentFileTypes = [
@@ -296,6 +342,22 @@ export const documentCollectionItemDatabaseColumns: DocumentDatabaseColumn[] = [
   { name: "updated_at", type: "timestamptz", required: true },
 ];
 
+export const documentAccessGrantDatabaseColumns: DocumentDatabaseColumn[] = [
+  { name: "id", type: "uuid", required: true },
+  { name: "owner_id", type: "uuid", required: true },
+  { name: "document_id", type: "uuid", required: true },
+  { name: "scope", type: "text", required: true },
+  { name: "permission", type: "text", required: true },
+  { name: "status", type: "text", required: true },
+  { name: "grantee_user_id", type: "uuid", required: false },
+  { name: "household_id", type: "text", required: false },
+  { name: "family_member_id", type: "text", required: false },
+  { name: "note", type: "text", required: false },
+  { name: "created_at", type: "timestamptz", required: true },
+  { name: "updated_at", type: "timestamptz", required: true },
+  { name: "revoked_at", type: "timestamptz", required: false },
+];
+
 export const documentModuleLinkDatabaseColumns: DocumentDatabaseColumn[] = [
   { name: "id", type: "uuid", required: true },
   { name: "owner_id", type: "uuid", required: true },
@@ -315,6 +377,7 @@ export const documentOwnershipRules = [
   "Modules may reference documents only through permissioned BeastOS document records.",
   "One BeastOS document record may be linked to multiple module records without duplicating the document.",
   "Folders, collections, tags, and metadata organize BeastOS records without changing module ownership.",
+  "Household and member sharing must use explicit BeastOS document access grants.",
   "BeastDocuments remains superseded as a standalone customer-facing module.",
 ];
 
@@ -337,6 +400,7 @@ export const mockDocuments: BeastDocument[] = [
     },
     sourceModule: "money",
     collections: [],
+    accessGrants: [],
     moduleLinks: [],
     createdAt: "2026-07-14T00:00:00.000Z",
     updatedAt: "2026-07-14T00:00:00.000Z",
@@ -359,6 +423,7 @@ export const mockDocuments: BeastDocument[] = [
     },
     sourceModule: "learning",
     collections: [],
+    accessGrants: [],
     moduleLinks: [],
     createdAt: "2026-07-14T00:00:00.000Z",
     updatedAt: "2026-07-14T00:00:00.000Z",
@@ -404,6 +469,7 @@ export function mapDocumentRow(row: BeastDocumentRow): BeastDocument {
     },
     sourceModule: toPlatformModule(row.source_module),
     collections: [],
+    accessGrants: [],
     moduleLinks: [],
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -449,6 +515,26 @@ export function isDocumentCollectionItemStatus(
   return documentCollectionItemStatuses.includes(
     status as DocumentCollectionItemStatus
   );
+}
+
+export function isDocumentAccessPermission(
+  permission: unknown
+): permission is DocumentAccessPermission {
+  return documentAccessPermissions.includes(
+    permission as DocumentAccessPermission
+  );
+}
+
+export function isDocumentAccessScope(
+  scope: unknown
+): scope is DocumentAccessScope {
+  return documentAccessScopes.includes(scope as DocumentAccessScope);
+}
+
+export function isDocumentAccessStatus(
+  status: unknown
+): status is DocumentAccessStatus {
+  return documentAccessStatuses.includes(status as DocumentAccessStatus);
 }
 
 export function mapDocumentFolderRow(
@@ -508,6 +594,38 @@ export function mapDocumentCollectionItemRow(
   };
 }
 
+export function mapDocumentAccessGrantRow(
+  row: BeastDocumentAccessGrantRow
+): DocumentAccessGrant {
+  if (!isDocumentAccessScope(row.scope)) {
+    throw new Error(`Unsupported document access scope: ${row.scope}`);
+  }
+
+  if (!isDocumentAccessPermission(row.permission)) {
+    throw new Error(`Unsupported document access permission: ${row.permission}`);
+  }
+
+  if (!isDocumentAccessStatus(row.status)) {
+    throw new Error(`Unsupported document access status: ${row.status}`);
+  }
+
+  return {
+    id: row.id,
+    ownerId: row.owner_id,
+    documentId: row.document_id,
+    scope: row.scope,
+    permission: row.permission,
+    status: row.status,
+    granteeUserId: row.grantee_user_id ?? undefined,
+    householdId: row.household_id ?? undefined,
+    familyMemberId: row.family_member_id ?? undefined,
+    note: row.note ?? undefined,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    revokedAt: row.revoked_at ?? undefined,
+  };
+}
+
 export async function loadUserDocuments(
   client: BeastDocumentDataClient
 ): Promise<DocumentLoadResult> {
@@ -519,6 +637,7 @@ export async function loadUserDocuments(
         documents: [],
         folders: [],
         collections: [],
+        accessGrants: [],
         status: "unavailable",
         message: "Documents could not be loaded right now.",
       };
@@ -529,6 +648,7 @@ export async function loadUserDocuments(
         documents: [],
         folders: [],
         collections: [],
+        accessGrants: [],
         status: "signed-out",
         message: "Sign in to view your documents.",
       };
@@ -547,6 +667,7 @@ export async function loadUserDocuments(
         documents: [],
         folders: [],
         collections: [],
+        accessGrants: [],
         status: "unavailable",
         message:
           "Documents are not available yet. The database may still need its foundation migration.",
@@ -604,12 +725,25 @@ export async function loadUserDocuments(
       : ((collectionItemResult.data ?? []) as BeastDocumentCollectionItemRow[])
           .map(mapDocumentCollectionItemRow)
           .filter((item) => item.status === "Active");
+    const accessGrantResult = await client
+      .from(documentAccessGrantDatabaseTableName)
+      .select(
+        "id, owner_id, document_id, scope, permission, status, grantee_user_id, household_id, family_member_id, note, created_at, updated_at, revoked_at"
+      )
+      .eq("owner_id", userData.user.id)
+      .order("created_at", { ascending: false });
+    const accessGrants = accessGrantResult.error
+      ? []
+      : ((accessGrantResult.data ?? []) as BeastDocumentAccessGrantRow[]).map(
+          mapDocumentAccessGrantRow
+        );
     const linksByDocument = new Map<string, DocumentModuleLink[]>();
     const foldersById = new Map(folders.map((folder) => [folder.id, folder]));
     const collectionsById = new Map(
       collections.map((collection) => [collection.id, collection])
     );
     const collectionItemsByDocument = new Map<string, DocumentCollection[]>();
+    const accessGrantsByDocument = new Map<string, DocumentAccessGrant[]>();
 
     moduleLinks.forEach((link) => {
       linksByDocument.set(link.documentId, [
@@ -628,6 +762,13 @@ export async function loadUserDocuments(
       ]);
     });
 
+    accessGrants.forEach((grant) => {
+      accessGrantsByDocument.set(grant.documentId, [
+        ...(accessGrantsByDocument.get(grant.documentId) || []),
+        grant,
+      ]);
+    });
+
     const documents = ((data ?? []) as BeastDocumentRow[]).map((row) => {
       const document = mapDocumentRow(row);
 
@@ -639,6 +780,9 @@ export async function loadUserDocuments(
         collections: [
           ...(collectionItemsByDocument.get(document.id) || []),
         ].sort((left, right) => left.name.localeCompare(right.name)),
+        accessGrants: [
+          ...(accessGrantsByDocument.get(document.id) || []),
+        ].sort((left, right) => right.createdAt.localeCompare(left.createdAt)),
         moduleLinks: [...(linksByDocument.get(document.id) || [])].sort(
           (left, right) => right.createdAt.localeCompare(left.createdAt)
         ),
@@ -669,6 +813,7 @@ export async function loadUserDocuments(
           documentCount: collectionCounts.get(collection.id) || 0,
         }))
         .sort((left, right) => left.name.localeCompare(right.name)),
+      accessGrants,
       status: "ready",
     };
   } catch {
@@ -676,6 +821,7 @@ export async function loadUserDocuments(
       documents: [],
       folders: [],
       collections: [],
+      accessGrants: [],
       status: "unavailable",
       message: "Documents could not be loaded right now.",
     };
@@ -733,11 +879,30 @@ export function buildDocument(document: BeastDocument): BeastDocument {
     }
   });
 
+  document.accessGrants.forEach((grant) => {
+    if (!isDocumentAccessScope(grant.scope)) {
+      throw new Error(`Unsupported document access scope: ${grant.scope}`);
+    }
+
+    if (!isDocumentAccessPermission(grant.permission)) {
+      throw new Error(
+        `Unsupported document access permission: ${grant.permission}`
+      );
+    }
+
+    if (!isDocumentAccessStatus(grant.status)) {
+      throw new Error(`Unsupported document access status: ${grant.status}`);
+    }
+  });
+
   return {
     ...document,
     tags: Array.from(new Set(document.tags.map((tag) => tag.trim()))).sort(),
     collections: [...document.collections].sort((left, right) =>
       left.name.localeCompare(right.name)
+    ),
+    accessGrants: [...document.accessGrants].sort((left, right) =>
+      right.createdAt.localeCompare(left.createdAt)
     ),
     moduleLinks: [...document.moduleLinks].sort((left, right) =>
       right.createdAt.localeCompare(left.createdAt)
@@ -833,6 +998,14 @@ export function summarizeDocuments(
       counts.set(tag, (counts.get(tag) || 0) + 1);
       return counts;
     }, new Map<string, number>());
+  const activeAccessGrants = normalized
+    .flatMap((document) => document.accessGrants)
+    .filter(
+      (grant) => grant.status === "Active" && grant.permission !== "None"
+    );
+  const sharedDocumentIds = new Set(
+    activeAccessGrants.map((grant) => grant.documentId)
+  );
 
   return {
     totalDocuments: normalized.length,
@@ -866,9 +1039,55 @@ export function summarizeDocuments(
       .map(([tag, count]) => ({ tag, count }))
       .sort((left, right) => right.count - left.count || left.tag.localeCompare(right.tag))
       .slice(0, 8),
+    sharedDocuments: sharedDocumentIds.size,
+    activeAccessGrants: activeAccessGrants.length,
+    householdSharedDocuments: new Set(
+      activeAccessGrants
+        .filter((grant) => grant.scope === "Household")
+        .map((grant) => grant.documentId)
+    ).size,
+    directSharedDocuments: new Set(
+      activeAccessGrants
+        .filter((grant) => grant.scope === "Member")
+        .map((grant) => grant.documentId)
+    ).size,
+    manageableSharedDocuments: new Set(
+      activeAccessGrants
+        .filter((grant) => grant.permission === "Manage")
+        .map((grant) => grant.documentId)
+    ).size,
   };
 }
 
 export function getActiveDocumentModuleLinks(document: BeastDocument) {
   return document.moduleLinks.filter((link) => link.status === "Active");
+}
+
+export function getActiveDocumentAccessGrants(document: BeastDocument) {
+  return document.accessGrants.filter(
+    (grant) => grant.status === "Active" && grant.permission !== "None"
+  );
+}
+
+export function getDocumentVisibilityLabel(document: BeastDocument) {
+  const activeGrants = getActiveDocumentAccessGrants(document);
+
+  if (activeGrants.length === 0) {
+    return "Private";
+  }
+
+  const hasHousehold = activeGrants.some(
+    (grant) => grant.scope === "Household"
+  );
+  const hasManage = activeGrants.some((grant) => grant.permission === "Manage");
+
+  if (hasHousehold && hasManage) {
+    return "Household Manage";
+  }
+
+  if (hasHousehold) {
+    return "Household View";
+  }
+
+  return hasManage ? "Shared Manage" : "Shared View";
 }
