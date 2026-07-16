@@ -22,6 +22,8 @@ import {
   documentModuleLinkDatabaseTableName,
   documentOwnershipRules,
   getActiveDocumentAccessGrants,
+  getAvailableDocumentLifecycleActions,
+  getDocumentDeletionImpact,
   getDocumentAssociations,
   getDocumentVisibilityLabel,
   loadUserDocuments,
@@ -238,7 +240,7 @@ export default async function UploadsPage() {
             <SectionHeader
               eyebrow="Recent Uploads"
               title="Document activity"
-              description="Recent files show shared metadata only. Advanced previews, extraction, and summaries are later work."
+              description="Recent files show shared metadata, lifecycle state, and guarded document actions. AI extraction and summaries are later work."
             />
             <div className="mt-5 grid gap-3">
               {documents.length > 0 ? (
@@ -316,6 +318,35 @@ export default async function UploadsPage() {
                       ) : (
                         <div className="mt-2 text-xs font-semibold text-[#9aa7b8]">
                           Private to the owner account.
+                        </div>
+                      )}
+                    </div>
+                    <div className="mt-3 rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
+                      <div className="text-xs font-black uppercase text-[#7f8da3]">
+                        Lifecycle Safeguards
+                      </div>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {getAvailableDocumentLifecycleActions(document).map(
+                          (action) => (
+                            <span
+                              key={action.type}
+                              className="rounded-full border border-[#2a3242] px-2.5 py-1 text-xs font-bold text-[#c7cfdb]"
+                              title={action.reason}
+                            >
+                              {action.label}
+                            </span>
+                          )
+                        )}
+                      </div>
+                      {getDocumentDeletionImpact(document).length > 0 ? (
+                        <div className="mt-2 text-xs font-semibold leading-5 text-yellow-200">
+                          Delete warning:{" "}
+                          {getDocumentDeletionImpact(document).join(" ")}
+                        </div>
+                      ) : (
+                        <div className="mt-2 text-xs font-semibold leading-5 text-[#9aa7b8]">
+                          Delete warning appears when real module, goal,
+                          calendar, or sharing links exist.
                         </div>
                       )}
                     </div>
@@ -542,6 +573,48 @@ export default async function UploadsPage() {
               a module, goal, or calendar record needs to reference them.
             </div>
           ) : null}
+        </DashboardCard>
+
+        <DashboardCard accent="documents">
+          <SectionHeader
+            eyebrow="Lifecycle"
+            title="Preview, download, and recovery safeguards"
+            description="Document lifecycle actions are governed by BeastOS status rules. Rename, move, archive, delete, and restore preserve central document ownership and show impact warnings before destructive choices."
+          />
+          <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+              <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                Preview Ready
+              </div>
+              <div className="mt-2 text-3xl font-black text-white">
+                {summary.previewableDocuments}
+              </div>
+            </div>
+            <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+              <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                Download Ready
+              </div>
+              <div className="mt-2 text-3xl font-black text-white">
+                {summary.downloadableDocuments}
+              </div>
+            </div>
+            <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+              <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                Restorable
+              </div>
+              <div className="mt-2 text-3xl font-black text-white">
+                {summary.restorableDocuments}
+              </div>
+            </div>
+            <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+              <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                Delete Warnings
+              </div>
+              <div className="mt-2 text-3xl font-black text-white">
+                {summary.deletionRiskDocuments}
+              </div>
+            </div>
+          </div>
         </DashboardCard>
 
         <DashboardCard accent="documents">

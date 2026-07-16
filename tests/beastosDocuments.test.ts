@@ -25,6 +25,7 @@ import {
   documentFolderDatabaseColumns,
   documentFolderDatabaseTableName,
   documentGoalReferenceDatabaseTableName,
+  documentLifecycleActionTypes,
   documentModuleLinkDatabaseColumns,
   documentModuleLinkDatabaseTableName,
   documentModuleLinkStatuses,
@@ -35,7 +36,10 @@ import {
   formatDocumentFileSize,
   getActiveDocumentAccessGrants,
   getActiveDocumentCalendarLinks,
+  getAvailableDocumentLifecycleActions,
+  getDocumentDeletionImpact,
   getDocumentAssociations,
+  getDocumentLifecycleActions,
   getDocumentVisibilityLabel,
   getDocumentUploadAcceptValue,
   getDocumentUploadValidationError,
@@ -118,6 +122,15 @@ test("BD-001 creates a BeastOS-owned Document model and database contract", () =
   assert.deepEqual(documentAccessStatuses, ["Active", "Revoked"]);
   assert.deepEqual(documentCalendarLinkStatuses, ["Active", "Archived"]);
   assert.deepEqual(documentAssociationTypes, ["Module", "Goal", "Calendar"]);
+  assert.deepEqual(documentLifecycleActionTypes, [
+    "Preview",
+    "Download",
+    "Rename",
+    "Move",
+    "Archive",
+    "Delete",
+    "Restore",
+  ]);
   assert.deepEqual(
     documentDatabaseColumns.map((column) => [column.name, column.required]),
     [
@@ -300,6 +313,10 @@ test("BD-001 Documents overview route stays BeastOS-owned", () => {
   assert.equal(summary.ecosystemAssociations, 0);
   assert.equal(summary.goalAssociations, 0);
   assert.equal(summary.calendarAssociations, 0);
+  assert.equal(summary.previewableDocuments, 2);
+  assert.equal(summary.downloadableDocuments, 2);
+  assert.equal(summary.restorableDocuments, 0);
+  assert.equal(summary.deletionRiskDocuments, 0);
   assert.deepEqual(summary.topTags[0], { tag: "monthly", count: 1 });
   assert.equal(
     sharedNavigation.some(
@@ -661,6 +678,9 @@ test("BD-001 Documents loader uses only signed-in user metadata", async () => {
   assert.equal(summarizeDocuments(result.documents).goalAssociations, 1);
   assert.equal(summarizeDocuments(result.documents).calendarAssociations, 1);
   assert.equal(summarizeDocuments(result.documents).ecosystemAssociations, 4);
+  assert.equal(summarizeDocuments(result.documents).previewableDocuments, 1);
+  assert.equal(summarizeDocuments(result.documents).downloadableDocuments, 1);
+  assert.equal(summarizeDocuments(result.documents).deletionRiskDocuments, 1);
   assert.equal(summarizeDocuments(result.documents).sharedDocuments, 1);
   assert.equal(summarizeDocuments(result.documents).activeAccessGrants, 1);
   assert.equal(summarizeDocuments(result.documents).householdSharedDocuments, 1);
@@ -670,6 +690,103 @@ test("BD-001 Documents loader uses only signed-in user metadata", async () => {
     "money",
   ]);
   assert.notEqual(result.documents[0].storage.fileName, "statement.pdf");
+});
+
+test("BO-21 Documents lifecycle safeguards cover preview download rename move archive delete and restore", () => {
+  const documentsPage = readFileSync("src/app/dashboard/uploads/page.tsx", "utf8");
+  const activeDocument = buildDocument({
+    ...mockDocuments[0],
+    moduleLinks: [
+      {
+        id: "link-money",
+        ownerId: mockDocuments[0].ownerId,
+        documentId: mockDocuments[0].id,
+        sourceModule: "money",
+        title: "Money statement link",
+        status: "Active",
+        createdAt: "2026-07-16T00:00:00.000Z",
+        updatedAt: "2026-07-16T00:00:00.000Z",
+      },
+    ],
+    goalReferences: [
+      {
+        id: "goal-document",
+        ownerId: mockDocuments[0].ownerId,
+        documentId: mockDocuments[0].id,
+        goalId: "goal-1",
+        title: "Goal evidence",
+        createdAt: "2026-07-16T00:00:00.000Z",
+        updatedAt: "2026-07-16T00:00:00.000Z",
+      },
+    ],
+    calendarLinks: [
+      {
+        id: "calendar-document",
+        ownerId: mockDocuments[0].ownerId,
+        documentId: mockDocuments[0].id,
+        title: "Calendar evidence",
+        status: "Active",
+        referenceDate: "2026-07-20",
+        createdAt: "2026-07-16T00:00:00.000Z",
+        updatedAt: "2026-07-16T00:00:00.000Z",
+      },
+    ],
+    accessGrants: [
+      {
+        id: "grant-view",
+        ownerId: mockDocuments[0].ownerId,
+        documentId: mockDocuments[0].id,
+        scope: "Member",
+        permission: "View",
+        status: "Active",
+        granteeUserId: "member-2",
+        createdAt: "2026-07-16T00:00:00.000Z",
+        updatedAt: "2026-07-16T00:00:00.000Z",
+      },
+    ],
+  });
+  const archivedDocument = buildDocument({
+    ...mockDocuments[0],
+    id: "archived-document",
+    status: "Archived",
+  });
+  const deletedDocument = buildDocument({
+    ...mockDocuments[0],
+    id: "deleted-document",
+    status: "Deleted",
+  });
+
+  assert.deepEqual(
+    getAvailableDocumentLifecycleActions(activeDocument).map(
+      (action) => action.type
+    ),
+    ["Preview", "Download", "Rename", "Move", "Archive", "Delete"]
+  );
+  assert.deepEqual(
+    getAvailableDocumentLifecycleActions(archivedDocument).map(
+      (action) => action.type
+    ),
+    ["Preview", "Download", "Delete", "Restore"]
+  );
+  assert.deepEqual(
+    getAvailableDocumentLifecycleActions(deletedDocument).map(
+      (action) => action.type
+    ),
+    ["Restore"]
+  );
+  assert.match(
+    getDocumentLifecycleActions(activeDocument).find(
+      (action) => action.type === "Delete"
+    )?.warning || "",
+    /module link/
+  );
+  assert.equal(getDocumentDeletionImpact(activeDocument).length, 4);
+  assert.equal(summarizeDocuments([activeDocument]).deletionRiskDocuments, 1);
+  assert.equal(summarizeDocuments([archivedDocument]).restorableDocuments, 1);
+  assert.match(documentsPage, /Lifecycle Safeguards/);
+  assert.match(documentsPage, /Preview, download, and recovery safeguards/);
+  assert.match(documentsPage, /Delete warning/);
+  assert.match(documentsPage, /getAvailableDocumentLifecycleActions/);
 });
 
 test("BD-001 Documents loader fails safely without sample metadata", async () => {

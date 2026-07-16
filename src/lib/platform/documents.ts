@@ -31,6 +31,14 @@ export type DocumentAccessScope = "Member" | "Household";
 export type DocumentAccessStatus = "Active" | "Revoked";
 export type DocumentCalendarLinkStatus = "Active" | "Archived";
 export type DocumentAssociationType = "Module" | "Goal" | "Calendar";
+export type DocumentLifecycleActionType =
+  | "Preview"
+  | "Download"
+  | "Rename"
+  | "Move"
+  | "Archive"
+  | "Delete"
+  | "Restore";
 
 export type DocumentStorageMetadata = {
   bucket: string;
@@ -155,6 +163,15 @@ export type DocumentAssociation = {
   href?: string;
 };
 
+export type DocumentLifecycleAction = {
+  type: DocumentLifecycleActionType;
+  label: string;
+  available: boolean;
+  reason: string;
+  warning?: string;
+  nextStatus?: DocumentStatus;
+};
+
 export type DocumentModuleLink = {
   id: string;
   ownerId: string;
@@ -194,6 +211,10 @@ export type DocumentOverviewSummary = {
   ecosystemAssociations: number;
   goalAssociations: number;
   calendarAssociations: number;
+  previewableDocuments: number;
+  downloadableDocuments: number;
+  restorableDocuments: number;
+  deletionRiskDocuments: number;
 };
 
 export type DocumentLoadStatus = "ready" | "signed-out" | "unavailable";
@@ -317,6 +338,16 @@ export const documentAssociationTypes: DocumentAssociationType[] = [
   "Module",
   "Goal",
   "Calendar",
+];
+
+export const documentLifecycleActionTypes: DocumentLifecycleActionType[] = [
+  "Preview",
+  "Download",
+  "Rename",
+  "Move",
+  "Archive",
+  "Delete",
+  "Restore",
 ];
 
 export const supportedDocumentFileTypes = [
@@ -464,6 +495,7 @@ export const documentOwnershipRules = [
   "Household and member sharing must use explicit BeastOS document access grants.",
   "Goal references reuse BeastOS goal reference records instead of creating duplicate goal ownership.",
   "Calendar associations use BeastOS-owned document calendar links until the unified Calendar model is implemented.",
+  "Preview, download, rename, move, archive, delete, and restore actions must follow BeastOS lifecycle safeguards.",
   "BeastDocuments remains superseded as a standalone customer-facing module.",
 ];
 
@@ -1211,6 +1243,10 @@ export function summarizeDocuments(
   documents: BeastDocument[]
 ): DocumentOverviewSummary {
   const normalized = buildDocumentCollection(documents);
+  const lifecycleActionsByDocument = normalized.map((document) => ({
+    document,
+    actions: getDocumentLifecycleActions(document),
+  }));
   const categoryCounts = documentCategories.reduce(
     (counts, category) => ({
       ...counts,
@@ -1296,6 +1332,18 @@ export function summarizeDocuments(
     goalAssociations: normalized.flatMap((document) => document.goalReferences)
       .length,
     calendarAssociations: activeCalendarLinks.length,
+    previewableDocuments: lifecycleActionsByDocument.filter(({ actions }) =>
+      actions.some((action) => action.type === "Preview" && action.available)
+    ).length,
+    downloadableDocuments: lifecycleActionsByDocument.filter(({ actions }) =>
+      actions.some((action) => action.type === "Download" && action.available)
+    ).length,
+    restorableDocuments: lifecycleActionsByDocument.filter(({ actions }) =>
+      actions.some((action) => action.type === "Restore" && action.available)
+    ).length,
+    deletionRiskDocuments: lifecycleActionsByDocument.filter(({ document }) =>
+      getDocumentDeletionImpact(document).length > 0
+    ).length,
   };
 }
 
@@ -1375,4 +1423,137 @@ export function getDocumentVisibilityLabel(document: BeastDocument) {
   }
 
   return hasManage ? "Shared Manage" : "Shared View";
+}
+
+export function getDocumentDeletionImpact(document: BeastDocument) {
+  const impact: string[] = [];
+  const activeModuleLinks = getActiveDocumentModuleLinks(document);
+  const activeAccessGrants = getActiveDocumentAccessGrants(document);
+  const activeCalendarLinks = getActiveDocumentCalendarLinks(document);
+
+  if (activeModuleLinks.length > 0) {
+    impact.push(
+      `${activeModuleLinks.length} module link${
+        activeModuleLinks.length === 1 ? "" : "s"
+      } would lose this document reference.`
+    );
+  }
+
+  if (document.goalReferences.length > 0) {
+    impact.push(
+      `${document.goalReferences.length} goal reference${
+        document.goalReferences.length === 1 ? "" : "s"
+      } would lose linked evidence.`
+    );
+  }
+
+  if (activeCalendarLinks.length > 0) {
+    impact.push(
+      `${activeCalendarLinks.length} calendar link${
+        activeCalendarLinks.length === 1 ? "" : "s"
+      } would lose this document.`
+    );
+  }
+
+  if (activeAccessGrants.length > 0) {
+    impact.push(
+      `${activeAccessGrants.length} active access grant${
+        activeAccessGrants.length === 1 ? "" : "s"
+      } would stop sharing this document.`
+    );
+  }
+
+  return impact;
+}
+
+export function getDocumentLifecycleActions(
+  document: BeastDocument
+): DocumentLifecycleAction[] {
+  const hasStorage = Boolean(
+    document.storage.bucket.trim() && document.storage.path.trim()
+  );
+  const isUploadedOrReady =
+    document.status === "Uploaded" || document.status === "Ready";
+  const isArchived = document.status === "Archived";
+  const isDeleted = document.status === "Deleted";
+  const deletionImpact = getDocumentDeletionImpact(document);
+  const unavailableReason =
+    document.status === "Deleted"
+      ? "Deleted documents must be restored before other actions."
+      : "Action is unavailable for this lifecycle state.";
+
+  return [
+    {
+      type: "Preview",
+      label: "Preview",
+      available: hasStorage && !isDeleted,
+      reason:
+        hasStorage && !isDeleted
+          ? "Storage metadata is present for preview routing."
+          : unavailableReason,
+    },
+    {
+      type: "Download",
+      label: "Download",
+      available: hasStorage && !isDeleted,
+      reason:
+        hasStorage && !isDeleted
+          ? "Storage metadata is present for download routing."
+          : unavailableReason,
+    },
+    {
+      type: "Rename",
+      label: "Rename",
+      available: isUploadedOrReady,
+      reason: isUploadedOrReady
+        ? "Active documents can be renamed without changing ownership."
+        : unavailableReason,
+    },
+    {
+      type: "Move",
+      label: "Move",
+      available: isUploadedOrReady,
+      reason: isUploadedOrReady
+        ? "Active documents can move between folders while staying BeastOS-owned."
+        : unavailableReason,
+    },
+    {
+      type: "Archive",
+      label: "Archive",
+      available: isUploadedOrReady,
+      reason: isUploadedOrReady
+        ? "Archiving removes the document from active views without deleting storage metadata."
+        : unavailableReason,
+      nextStatus: "Archived",
+    },
+    {
+      type: "Delete",
+      label: "Delete",
+      available: !isDeleted,
+      reason: !isDeleted
+        ? "Deleting requires explicit confirmation and preserves user choice."
+        : "Document is already deleted.",
+      warning:
+        deletionImpact.length > 0
+          ? deletionImpact.join(" ")
+          : "Deleting removes this document from active document workflows.",
+      nextStatus: "Deleted",
+    },
+    {
+      type: "Restore",
+      label: "Restore",
+      available: isArchived || isDeleted,
+      reason:
+        isArchived || isDeleted
+          ? "Archived or deleted documents can be restored into active document workflows."
+          : "Only archived or deleted documents need restore.",
+      nextStatus: "Ready",
+    },
+  ];
+}
+
+export function getAvailableDocumentLifecycleActions(document: BeastDocument) {
+  return getDocumentLifecycleActions(document).filter(
+    (action) => action.available
+  );
 }
