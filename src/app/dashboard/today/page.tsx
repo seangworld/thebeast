@@ -18,6 +18,10 @@ import { useRuntimeToday } from "@/lib/hooks/useRuntimeToday";
 import { getBeastGreeting } from "@/lib/runtimeDate";
 import { createClient } from "@/lib/supabase/client";
 import { getProfileDisplayName } from "@/lib/profile";
+import {
+  todayContributionContractRules,
+  todayContributionSources,
+} from "@/lib/platform/today";
 
 type CourseRow = {
   id: string;
@@ -537,6 +541,34 @@ export default function TodayPage() {
             tone="blue"
           />
         </section>
+
+        <DashboardCard accent="beastos">
+          <SectionHeader
+            eyebrow="Shared Today"
+            title="Cross-module contribution contract"
+            description="Today accepts approved contributions from BeastOS services and active modules, then orders and routes them without replacing the source module engines."
+          />
+          <div className="mt-5 flex flex-wrap gap-2">
+            {todayContributionSources.map((source) => (
+              <span
+                key={source}
+                className="rounded-full border border-[#2a3242] bg-[#111827] px-3 py-1 text-xs font-black uppercase text-[#dbe3ef]"
+              >
+                {source}
+              </span>
+            ))}
+          </div>
+          <div className="mt-5 grid gap-3 md:grid-cols-2">
+            {todayContributionContractRules.map((rule) => (
+              <div
+                key={rule}
+                className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 text-sm font-semibold leading-6 text-[#dbe3ef]"
+              >
+                {rule}
+              </div>
+            ))}
+          </div>
+        </DashboardCard>
 
         <DashboardCard accent="learning">
           <SectionHeader
