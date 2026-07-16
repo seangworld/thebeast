@@ -34,12 +34,15 @@ import {
   documentStorageBucketName,
   documentUploadMaxFileSizeBytes,
   formatDocumentFileSize,
+  findDuplicateDocuments,
   getActiveDocumentAccessGrants,
   getActiveDocumentCalendarLinks,
   getAvailableDocumentLifecycleActions,
   getDocumentDeletionImpact,
   getDocumentAssociations,
   getDocumentLifecycleActions,
+  getDocumentSearchText,
+  getDocumentVersionSummary,
   getDocumentVisibilityLabel,
   getDocumentUploadAcceptValue,
   getDocumentUploadValidationError,
@@ -47,6 +50,7 @@ import {
   type BeastDocumentDataClient,
   mockDocuments,
   sanitizeDocumentFileName,
+  searchDocuments,
   summarizeDocuments,
   supportedDocumentFileTypes,
   supportedDocumentUploadExtensions,
@@ -317,6 +321,9 @@ test("BD-001 Documents overview route stays BeastOS-owned", () => {
   assert.equal(summary.downloadableDocuments, 2);
   assert.equal(summary.restorableDocuments, 0);
   assert.equal(summary.deletionRiskDocuments, 0);
+  assert.equal(summary.duplicateGroups, 0);
+  assert.equal(summary.duplicateDocuments, 0);
+  assert.equal(summary.versionedDocuments, 0);
   assert.deepEqual(summary.topTags[0], { tag: "monthly", count: 1 });
   assert.equal(
     sharedNavigation.some(
@@ -787,6 +794,74 @@ test("BO-21 Documents lifecycle safeguards cover preview download rename move ar
   assert.match(documentsPage, /Preview, download, and recovery safeguards/);
   assert.match(documentsPage, /Delete warning/);
   assert.match(documentsPage, /getAvailableDocumentLifecycleActions/);
+});
+
+test("BO-22 Documents support search duplicate detection and versioning", () => {
+  const documentsPage = readFileSync("src/app/dashboard/uploads/page.tsx", "utf8");
+  const rootDocument = buildDocument({
+    ...mockDocuments[0],
+    id: "tax-return-v1",
+    title: "2026 Tax Return Draft",
+    category: "Tax",
+    tags: ["tax", "draft"],
+    metadata: {
+      version_root_document_id: "tax-return-v1",
+      version_number: 1,
+      version_label: "Draft",
+    },
+    storage: {
+      ...mockDocuments[0].storage,
+      fileName: "tax-return.pdf",
+      checksum: "checksum-tax-return",
+    },
+  });
+  const currentDocument = buildDocument({
+    ...rootDocument,
+    id: "tax-return-v2",
+    title: "2026 Tax Return Final",
+    tags: ["tax", "final"],
+    metadata: {
+      version_root_document_id: "tax-return-v1",
+      version_number: 2,
+      version_label: "Final",
+      is_current_version: true,
+    },
+    createdAt: "2026-07-16T01:00:00.000Z",
+  });
+  const duplicateDocument = buildDocument({
+    ...mockDocuments[1],
+    id: "duplicate-tax-return",
+    title: "Duplicate tax file",
+    category: "Tax",
+    storage: {
+      ...mockDocuments[1].storage,
+      fileName: "tax-return.pdf",
+      sizeBytes: rootDocument.storage.sizeBytes,
+    },
+  });
+
+  const documents = [rootDocument, currentDocument, duplicateDocument];
+
+  assert.equal(searchDocuments(documents, { query: "final" }).length, 1);
+  assert.equal(searchDocuments(documents, { category: "Tax" }).length, 3);
+  assert.equal(searchDocuments(documents, { tag: "draft" })[0].id, "tax-return-v1");
+  assert.match(getDocumentSearchText(currentDocument), /tax return final/);
+  assert.equal(findDuplicateDocuments(documents).length, 1);
+  assert.equal(findDuplicateDocuments(documents)[0].reason, "Checksum");
+  assert.equal(
+    getDocumentVersionSummary(documents, rootDocument).currentDocumentId,
+    "tax-return-v2"
+  );
+  assert.deepEqual(
+    getDocumentVersionSummary(documents, rootDocument).versionLabels,
+    ["Draft", "Final"]
+  );
+  assert.equal(summarizeDocuments(documents).duplicateGroups, 1);
+  assert.equal(summarizeDocuments(documents).duplicateDocuments, 2);
+  assert.equal(summarizeDocuments(documents).versionedDocuments, 2);
+  assert.match(documentsPage, /Search, duplicates, and versions/);
+  assert.match(documentsPage, /No duplicate document groups detected/);
+  assert.match(documentsPage, /searchDocuments/);
 });
 
 test("BD-001 Documents loader fails safely without sample metadata", async () => {

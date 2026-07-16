@@ -19,14 +19,17 @@ import {
   documentCategories,
   documentDatabaseTableName,
   documentFolderDatabaseTableName,
+  findDuplicateDocuments,
   documentModuleLinkDatabaseTableName,
   documentOwnershipRules,
   getActiveDocumentAccessGrants,
   getAvailableDocumentLifecycleActions,
   getDocumentDeletionImpact,
   getDocumentAssociations,
+  getDocumentVersionSummary,
   getDocumentVisibilityLabel,
   loadUserDocuments,
+  searchDocuments,
   summarizeDocuments,
   supportedDocumentFileTypes,
 } from "@/lib/platform/documents";
@@ -74,6 +77,8 @@ export default async function UploadsPage() {
   const folders = documentLoadResult.folders;
   const collections = documentLoadResult.collections;
   const summary = summarizeDocuments(documents);
+  const duplicateGroups = findDuplicateDocuments(documents);
+  const searchReadyDocuments = searchDocuments(documents, { status: "All" });
 
   return (
     <main className="beast-page">
@@ -351,6 +356,26 @@ export default async function UploadsPage() {
                       )}
                     </div>
                     <div className="mt-3 rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="text-xs font-black uppercase text-[#7f8da3]">
+                          Search And Versions
+                        </div>
+                        <span className="text-xs font-bold text-[#c7cfdb]">
+                          {
+                            getDocumentVersionSummary(documents, document)
+                              .versionCount
+                          }{" "}
+                          versions
+                        </span>
+                      </div>
+                      <div className="mt-2 text-xs font-semibold leading-5 text-[#9aa7b8]">
+                        Search covers title, description, category, status,
+                        file name, tags, folder, collections, and ecosystem
+                        links. Duplicate detection uses checksum when present,
+                        otherwise file name and size.
+                      </div>
+                    </div>
+                    <div className="mt-3 rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
                       <div className="text-xs font-black uppercase text-[#7f8da3]">
                         Ecosystem Associations
                       </div>
@@ -573,6 +598,64 @@ export default async function UploadsPage() {
               a module, goal, or calendar record needs to reference them.
             </div>
           ) : null}
+        </DashboardCard>
+
+        <DashboardCard accent="blue">
+          <SectionHeader
+            eyebrow="Findability"
+            title="Search, duplicates, and versions"
+            description="Documents can be filtered by shared BeastOS metadata, checked for duplicate records, and grouped into version families without creating module-owned document copies."
+          />
+          <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+              <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                Searchable
+              </div>
+              <div className="mt-2 text-3xl font-black text-white">
+                {searchReadyDocuments.length}
+              </div>
+            </div>
+            <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+              <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                Duplicate Groups
+              </div>
+              <div className="mt-2 text-3xl font-black text-white">
+                {summary.duplicateGroups}
+              </div>
+            </div>
+            <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+              <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                Duplicate Documents
+              </div>
+              <div className="mt-2 text-3xl font-black text-white">
+                {summary.duplicateDocuments}
+              </div>
+            </div>
+            <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+              <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                Versioned
+              </div>
+              <div className="mt-2 text-3xl font-black text-white">
+                {summary.versionedDocuments}
+              </div>
+            </div>
+          </div>
+          {duplicateGroups.length > 0 ? (
+            <div className="mt-5 grid gap-3">
+              {duplicateGroups.map((group) => (
+                <div
+                  key={group.key}
+                  className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 text-sm font-semibold leading-6 text-[#c7cfdb]"
+                >
+                  {group.reason}: {group.documents.length} matching documents
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="mt-5 rounded-xl border border-[#2a3242] bg-[#111827] p-4 text-sm font-semibold leading-6 text-[#c7cfdb]">
+              No duplicate document groups detected from current metadata.
+            </div>
+          )}
         </DashboardCard>
 
         <DashboardCard accent="documents">

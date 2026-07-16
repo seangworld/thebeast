@@ -172,6 +172,28 @@ export type DocumentLifecycleAction = {
   nextStatus?: DocumentStatus;
 };
 
+export type DocumentSearchInput = {
+  query?: string;
+  category?: DocumentCategory | "All";
+  status?: DocumentStatus | "All";
+  tag?: string;
+  sourceModule?: PlatformModule | "All";
+};
+
+export type DocumentDuplicateGroup = {
+  key: string;
+  reason: "Checksum" | "File metadata";
+  documents: BeastDocument[];
+};
+
+export type DocumentVersionSummary = {
+  rootDocumentId: string;
+  currentDocumentId: string;
+  versionCount: number;
+  versionLabels: string[];
+  hasVersionMetadata: boolean;
+};
+
 export type DocumentModuleLink = {
   id: string;
   ownerId: string;
@@ -215,6 +237,9 @@ export type DocumentOverviewSummary = {
   downloadableDocuments: number;
   restorableDocuments: number;
   deletionRiskDocuments: number;
+  duplicateGroups: number;
+  duplicateDocuments: number;
+  versionedDocuments: number;
 };
 
 export type DocumentLoadStatus = "ready" | "signed-out" | "unavailable";
@@ -1272,6 +1297,17 @@ export function summarizeDocuments(
   const activeCalendarLinks = normalized
     .flatMap((document) => document.calendarLinks)
     .filter((link) => link.status === "Active");
+  const duplicateGroups = findDuplicateDocuments(normalized);
+  const duplicateDocumentIds = new Set(
+    duplicateGroups.flatMap((group) =>
+      group.documents.map((document) => document.id)
+    )
+  );
+  const versionedDocumentIds = new Set(
+    normalized
+      .filter((document) => getDocumentVersionSummary(normalized, document).versionCount > 1)
+      .map((document) => document.id)
+  );
   const sharedDocumentIds = new Set(
     activeAccessGrants.map((grant) => grant.documentId)
   );
@@ -1344,6 +1380,9 @@ export function summarizeDocuments(
     deletionRiskDocuments: lifecycleActionsByDocument.filter(({ document }) =>
       getDocumentDeletionImpact(document).length > 0
     ).length,
+    duplicateGroups: duplicateGroups.length,
+    duplicateDocuments: duplicateDocumentIds.size,
+    versionedDocuments: versionedDocumentIds.size,
   };
 }
 
@@ -1556,4 +1595,146 @@ export function getAvailableDocumentLifecycleActions(document: BeastDocument) {
   return getDocumentLifecycleActions(document).filter(
     (action) => action.available
   );
+}
+
+function normalizeSearchValue(value: unknown) {
+  return String(value ?? "").trim().toLowerCase();
+}
+
+export function getDocumentSearchText(document: BeastDocument) {
+  return [
+    document.title,
+    document.description,
+    document.category,
+    document.status,
+    document.storage.fileName,
+    document.storage.mimeType,
+    document.sourceModule,
+    document.folder?.name,
+    ...document.tags,
+    ...document.collections.map((collection) => collection.name),
+    ...document.moduleLinks.map((link) => link.title),
+    ...document.goalReferences.map((reference) => reference.title),
+    ...document.calendarLinks.map((link) => link.title),
+  ]
+    .map(normalizeSearchValue)
+    .filter(Boolean)
+    .join(" ");
+}
+
+export function searchDocuments(
+  documents: BeastDocument[],
+  input: DocumentSearchInput
+) {
+  const normalized = buildDocumentCollection(documents);
+  const query = normalizeSearchValue(input.query);
+  const tag = normalizeSearchValue(input.tag);
+
+  return normalized.filter((document) => {
+    if (input.category && input.category !== "All" && document.category !== input.category) {
+      return false;
+    }
+
+    if (input.status && input.status !== "All" && document.status !== input.status) {
+      return false;
+    }
+
+    if (
+      input.sourceModule &&
+      input.sourceModule !== "All" &&
+      document.sourceModule !== input.sourceModule
+    ) {
+      return false;
+    }
+
+    if (tag && !document.tags.some((documentTag) => normalizeSearchValue(documentTag) === tag)) {
+      return false;
+    }
+
+    if (query && !getDocumentSearchText(document).includes(query)) {
+      return false;
+    }
+
+    return true;
+  });
+}
+
+export function findDuplicateDocuments(
+  documents: BeastDocument[]
+): DocumentDuplicateGroup[] {
+  const normalized = buildDocumentCollection(documents).filter(
+    (document) => document.status !== "Deleted"
+  );
+  const groups = new Map<string, DocumentDuplicateGroup>();
+
+  normalized.forEach((document) => {
+    const checksum = normalizeSearchValue(document.storage.checksum);
+    const key = checksum
+      ? `checksum:${checksum}`
+      : `file:${normalizeSearchValue(document.storage.fileName)}:${document.storage.sizeBytes}`;
+    const reason: DocumentDuplicateGroup["reason"] = checksum
+      ? "Checksum"
+      : "File metadata";
+    const existing = groups.get(key);
+
+    groups.set(key, {
+      key,
+      reason,
+      documents: [...(existing?.documents || []), document],
+    });
+  });
+
+  return Array.from(groups.values())
+    .filter((group) => group.documents.length > 1)
+    .sort(
+      (left, right) =>
+        right.documents.length - left.documents.length ||
+        left.key.localeCompare(right.key)
+    );
+}
+
+function getVersionRootId(document: BeastDocument) {
+  const rootId = document.metadata.version_root_document_id;
+  return typeof rootId === "string" && rootId.trim() ? rootId : document.id;
+}
+
+function getVersionLabel(document: BeastDocument) {
+  const label = document.metadata.version_label;
+  if (typeof label === "string" && label.trim()) return label;
+
+  const versionNumber = document.metadata.version_number;
+  if (typeof versionNumber === "number" && Number.isFinite(versionNumber)) {
+    return `v${versionNumber}`;
+  }
+
+  return document.id;
+}
+
+export function getDocumentVersionSummary(
+  documents: BeastDocument[],
+  document: BeastDocument
+): DocumentVersionSummary {
+  const normalized = buildDocumentCollection(documents);
+  const rootDocumentId = getVersionRootId(document);
+  const versions = normalized
+    .filter((candidate) => getVersionRootId(candidate) === rootDocumentId)
+    .sort((left, right) => left.createdAt.localeCompare(right.createdAt));
+  const current =
+    versions.find((candidate) => candidate.metadata.is_current_version === true) ||
+    versions[versions.length - 1] ||
+    document;
+
+  return {
+    rootDocumentId,
+    currentDocumentId: current.id,
+    versionCount: versions.length || 1,
+    versionLabels: (versions.length ? versions : [document]).map(getVersionLabel),
+    hasVersionMetadata: versions.some(
+      (candidate) =>
+        typeof candidate.metadata.version_root_document_id === "string" ||
+        typeof candidate.metadata.version_number === "number" ||
+        typeof candidate.metadata.version_label === "string" ||
+        candidate.metadata.is_current_version === true
+    ),
+  };
 }
