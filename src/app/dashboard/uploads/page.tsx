@@ -18,6 +18,7 @@ import {
   documentCollectionDatabaseTableName,
   documentCategories,
   documentDatabaseTableName,
+  documentIntelligenceRules,
   documentFolderDatabaseTableName,
   findDuplicateDocuments,
   documentModuleLinkDatabaseTableName,
@@ -26,6 +27,8 @@ import {
   getAvailableDocumentLifecycleActions,
   getDocumentDeletionImpact,
   getDocumentAssociations,
+  getDocumentAISummary,
+  getDocumentExtractedFacts,
   getDocumentVersionSummary,
   getDocumentVisibilityLabel,
   loadUserDocuments,
@@ -376,6 +379,37 @@ export default async function UploadsPage() {
                       </div>
                     </div>
                     <div className="mt-3 rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="text-xs font-black uppercase text-[#7f8da3]">
+                          AI Summary And Facts
+                        </div>
+                        <span className="text-xs font-bold text-[#c7cfdb]">
+                          {getDocumentAISummary(document).permission}
+                        </span>
+                      </div>
+                      {getDocumentAISummary(document).summary ? (
+                        <div className="mt-2 text-xs font-semibold leading-5 text-[#c7cfdb]">
+                          {getDocumentAISummary(document).summary}
+                        </div>
+                      ) : (
+                        <div className="mt-2 text-xs font-semibold leading-5 text-[#9aa7b8]">
+                          No permissioned summary stored for this document.
+                        </div>
+                      )}
+                      {getDocumentExtractedFacts(document).length > 0 ? (
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {getDocumentExtractedFacts(document).map((fact) => (
+                            <span
+                              key={fact.id}
+                              className="rounded-full border border-[#2a3242] px-2.5 py-1 text-xs font-bold text-[#c7cfdb]"
+                            >
+                              {fact.label}: {fact.status}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                    <div className="mt-3 rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
                       <div className="text-xs font-black uppercase text-[#7f8da3]">
                         Ecosystem Associations
                       </div>
@@ -558,6 +592,50 @@ export default async function UploadsPage() {
               until the owner explicitly grants access.
             </div>
           ) : null}
+        </DashboardCard>
+
+        <DashboardCard accent="beastos">
+          <SectionHeader
+            eyebrow="Intelligence"
+            title="Permissioned summaries and extracted facts"
+            description="Document intelligence stays permissioned and labeled. Extracted facts remain proposed until the user confirms them, and rejected facts do not become Personal Hub profile data."
+          />
+          <div className="mt-5 grid gap-4 sm:grid-cols-3">
+            <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+              <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                Summary Allowed
+              </div>
+              <div className="mt-2 text-3xl font-black text-white">
+                {summary.aiSummaryReadyDocuments}
+              </div>
+            </div>
+            <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+              <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                Proposed Facts
+              </div>
+              <div className="mt-2 text-3xl font-black text-white">
+                {summary.proposedExtractedFacts}
+              </div>
+            </div>
+            <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+              <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                Confirmed Facts
+              </div>
+              <div className="mt-2 text-3xl font-black text-white">
+                {summary.confirmedExtractedFacts}
+              </div>
+            </div>
+          </div>
+          <div className="mt-5 grid gap-3 md:grid-cols-2">
+            {documentIntelligenceRules.map((rule) => (
+              <div
+                key={rule}
+                className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 text-sm font-semibold leading-6 text-[#dbe3ef]"
+              >
+                {rule}
+              </div>
+            ))}
+          </div>
         </DashboardCard>
 
         <DashboardCard accent="calendar">

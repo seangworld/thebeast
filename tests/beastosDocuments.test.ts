@@ -22,9 +22,12 @@ import {
   documentCollectionStatuses,
   documentDatabaseColumns,
   documentDatabaseTableName,
+  documentExtractedFactStatuses,
   documentFolderDatabaseColumns,
   documentFolderDatabaseTableName,
   documentGoalReferenceDatabaseTableName,
+  documentIntelligencePermissions,
+  documentIntelligenceRules,
   documentLifecycleActionTypes,
   documentModuleLinkDatabaseColumns,
   documentModuleLinkDatabaseTableName,
@@ -40,6 +43,9 @@ import {
   getAvailableDocumentLifecycleActions,
   getDocumentDeletionImpact,
   getDocumentAssociations,
+  getDocumentAISummary,
+  getDocumentExtractedFacts,
+  getDocumentIntelligencePermission,
   getDocumentLifecycleActions,
   getDocumentSearchText,
   getDocumentVersionSummary,
@@ -324,6 +330,9 @@ test("BD-001 Documents overview route stays BeastOS-owned", () => {
   assert.equal(summary.duplicateGroups, 0);
   assert.equal(summary.duplicateDocuments, 0);
   assert.equal(summary.versionedDocuments, 0);
+  assert.equal(summary.aiSummaryReadyDocuments, 0);
+  assert.equal(summary.proposedExtractedFacts, 0);
+  assert.equal(summary.confirmedExtractedFacts, 0);
   assert.deepEqual(summary.topTags[0], { tag: "monthly", count: 1 });
   assert.equal(
     sharedNavigation.some(
@@ -862,6 +871,79 @@ test("BO-22 Documents support search duplicate detection and versioning", () => 
   assert.match(documentsPage, /Search, duplicates, and versions/);
   assert.match(documentsPage, /No duplicate document groups detected/);
   assert.match(documentsPage, /searchDocuments/);
+});
+
+test("BO-23 Documents define permissioned AI summaries and extracted facts architecture", () => {
+  const documentsPage = readFileSync("src/app/dashboard/uploads/page.tsx", "utf8");
+  const document = buildDocument({
+    ...mockDocuments[0],
+    metadata: {
+      ai_summary_permission: "Allowed",
+      ai_summary: "Summarizes the uploaded tax statement.",
+      ai_summary_generated_at: "2026-07-16T12:00:00.000Z",
+      extracted_facts: [
+        {
+          id: "fact-tax-year",
+          label: "Tax year",
+          value: "2026",
+          status: "Proposed",
+          proposed_profile_field: "financial_profile.tax_year",
+        },
+        {
+          id: "fact-owner",
+          label: "Owner name",
+          value: "Member",
+          status: "Confirmed",
+        },
+        {
+          label: "Rejected field",
+          value: "Do not store",
+          status: "Rejected",
+        },
+      ],
+    },
+  });
+  const blocked = buildDocument({
+    ...mockDocuments[1],
+    metadata: {
+      ai_summary_permission: "Blocked",
+      ai_summary: "This should not show.",
+    },
+  });
+
+  assert.deepEqual(documentIntelligencePermissions, [
+    "Not Requested",
+    "Allowed",
+    "Blocked",
+  ]);
+  assert.deepEqual(documentExtractedFactStatuses, [
+    "Proposed",
+    "Confirmed",
+    "Rejected",
+  ]);
+  assert.match(
+    documentIntelligenceRules[0],
+    /explicit document intelligence permission/
+  );
+  assert.equal(getDocumentIntelligencePermission(document), "Allowed");
+  assert.equal(
+    getDocumentAISummary(document).summary,
+    "Summarizes the uploaded tax statement."
+  );
+  assert.equal(getDocumentAISummary(blocked).summary, undefined);
+  assert.equal(getDocumentExtractedFacts(document).length, 3);
+  assert.equal(
+    getDocumentExtractedFacts(document)[0].sourceLabel.includes(
+      document.storage.fileName
+    ),
+    true
+  );
+  assert.equal(summarizeDocuments([document, blocked]).aiSummaryReadyDocuments, 1);
+  assert.equal(summarizeDocuments([document, blocked]).proposedExtractedFacts, 1);
+  assert.equal(summarizeDocuments([document, blocked]).confirmedExtractedFacts, 1);
+  assert.match(documentsPage, /Permissioned summaries and extracted facts/);
+  assert.match(documentsPage, /No permissioned summary stored/);
+  assert.match(documentsPage, /documentIntelligenceRules/);
 });
 
 test("BD-001 Documents loader fails safely without sample metadata", async () => {

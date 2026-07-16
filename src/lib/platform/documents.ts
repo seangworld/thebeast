@@ -194,6 +194,30 @@ export type DocumentVersionSummary = {
   hasVersionMetadata: boolean;
 };
 
+export type DocumentIntelligencePermission = "Not Requested" | "Allowed" | "Blocked";
+export type DocumentExtractedFactStatus =
+  | "Proposed"
+  | "Confirmed"
+  | "Rejected";
+
+export type DocumentAISummary = {
+  documentId: string;
+  permission: DocumentIntelligencePermission;
+  summary?: string;
+  sourceLabel: string;
+  generatedAt?: string;
+};
+
+export type DocumentExtractedFact = {
+  id: string;
+  documentId: string;
+  label: string;
+  value: string;
+  sourceLabel: string;
+  status: DocumentExtractedFactStatus;
+  proposedProfileField?: string;
+};
+
 export type DocumentModuleLink = {
   id: string;
   ownerId: string;
@@ -240,6 +264,9 @@ export type DocumentOverviewSummary = {
   duplicateGroups: number;
   duplicateDocuments: number;
   versionedDocuments: number;
+  aiSummaryReadyDocuments: number;
+  proposedExtractedFacts: number;
+  confirmedExtractedFacts: number;
 };
 
 export type DocumentLoadStatus = "ready" | "signed-out" | "unavailable";
@@ -373,6 +400,22 @@ export const documentLifecycleActionTypes: DocumentLifecycleActionType[] = [
   "Archive",
   "Delete",
   "Restore",
+];
+
+export const documentIntelligencePermissions: DocumentIntelligencePermission[] =
+  ["Not Requested", "Allowed", "Blocked"];
+
+export const documentExtractedFactStatuses: DocumentExtractedFactStatus[] = [
+  "Proposed",
+  "Confirmed",
+  "Rejected",
+];
+
+export const documentIntelligenceRules = [
+  "AI summaries require explicit document intelligence permission.",
+  "Extracted facts must be labeled with the source document and remain proposed until the user confirms them.",
+  "Rejected facts must not become Personal Hub profile facts.",
+  "Modules may consume confirmed facts only through BeastOS-owned permissions and purpose limits.",
 ];
 
 export const supportedDocumentFileTypes = [
@@ -521,6 +564,7 @@ export const documentOwnershipRules = [
   "Goal references reuse BeastOS goal reference records instead of creating duplicate goal ownership.",
   "Calendar associations use BeastOS-owned document calendar links until the unified Calendar model is implemented.",
   "Preview, download, rename, move, archive, delete, and restore actions must follow BeastOS lifecycle safeguards.",
+  "AI summaries and extracted facts must be permissioned, labeled, and user-reviewable.",
   "BeastDocuments remains superseded as a standalone customer-facing module.",
 ];
 
@@ -1303,6 +1347,7 @@ export function summarizeDocuments(
       group.documents.map((document) => document.id)
     )
   );
+  const extractedFacts = normalized.flatMap(getDocumentExtractedFacts);
   const versionedDocumentIds = new Set(
     normalized
       .filter((document) => getDocumentVersionSummary(normalized, document).versionCount > 1)
@@ -1383,6 +1428,15 @@ export function summarizeDocuments(
     duplicateGroups: duplicateGroups.length,
     duplicateDocuments: duplicateDocumentIds.size,
     versionedDocuments: versionedDocumentIds.size,
+    aiSummaryReadyDocuments: normalized.filter(
+      (document) => getDocumentAISummary(document).permission === "Allowed"
+    ).length,
+    proposedExtractedFacts: extractedFacts.filter(
+      (fact) => fact.status === "Proposed"
+    ).length,
+    confirmedExtractedFacts: extractedFacts.filter(
+      (fact) => fact.status === "Confirmed"
+    ).length,
   };
 }
 
@@ -1737,4 +1791,85 @@ export function getDocumentVersionSummary(
         candidate.metadata.is_current_version === true
     ),
   };
+}
+
+export function getDocumentIntelligencePermission(
+  document: BeastDocument
+): DocumentIntelligencePermission {
+  const value = document.metadata.ai_summary_permission;
+  return documentIntelligencePermissions.includes(
+    value as DocumentIntelligencePermission
+  )
+    ? (value as DocumentIntelligencePermission)
+    : "Not Requested";
+}
+
+export function getDocumentAISummary(document: BeastDocument): DocumentAISummary {
+  const permission = getDocumentIntelligencePermission(document);
+  const summary = document.metadata.ai_summary;
+  const generatedAt = document.metadata.ai_summary_generated_at;
+
+  return {
+    documentId: document.id,
+    permission,
+    summary:
+      permission === "Allowed" && typeof summary === "string" && summary.trim()
+        ? summary
+        : undefined,
+    sourceLabel: `${document.title} (${document.storage.fileName})`,
+    generatedAt:
+      typeof generatedAt === "string" && generatedAt.trim()
+        ? generatedAt
+        : undefined,
+  };
+}
+
+export function getDocumentExtractedFacts(
+  document: BeastDocument
+): DocumentExtractedFact[] {
+  const facts = document.metadata.extracted_facts;
+
+  if (!Array.isArray(facts)) return [];
+
+  return facts
+    .map((fact, index): DocumentExtractedFact | null => {
+      if (!fact || typeof fact !== "object" || Array.isArray(fact)) {
+        return null;
+      }
+
+      const record = fact as Record<string, unknown>;
+      const label = typeof record.label === "string" ? record.label.trim() : "";
+      const value = typeof record.value === "string" ? record.value.trim() : "";
+      const status = documentExtractedFactStatuses.includes(
+        record.status as DocumentExtractedFactStatus
+      )
+        ? (record.status as DocumentExtractedFactStatus)
+        : "Proposed";
+
+      if (!label || !value) return null;
+
+      return {
+        id:
+          typeof record.id === "string" && record.id.trim()
+            ? record.id
+            : `${document.id}-fact-${index + 1}`,
+        documentId: document.id,
+        label,
+        value,
+        sourceLabel: `${document.title} (${document.storage.fileName})`,
+        status,
+        proposedProfileField:
+          typeof record.proposed_profile_field === "string" &&
+          record.proposed_profile_field.trim()
+            ? record.proposed_profile_field
+            : undefined,
+      };
+    })
+    .filter((fact): fact is DocumentExtractedFact => fact !== null);
+}
+
+export function getReviewableDocumentExtractedFacts(document: BeastDocument) {
+  return getDocumentExtractedFacts(document).filter(
+    (fact) => fact.status === "Proposed"
+  );
 }
