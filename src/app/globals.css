@@ -29,6 +29,14 @@ video {
   max-width: 100%;
 }
 
+a,
+button,
+input,
+select,
+textarea {
+  touch-action: manipulation;
+}
+
 .beast-page {
   min-height: 100vh;
   background: #11151c;
@@ -564,6 +572,13 @@ a.beast-card:hover {
 ========================= */
 
 @media (max-width: 767px) {
+  html,
+  body {
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: clip;
+  }
+
   .beast-page {
     width: 100%;
     max-width: 100vw;
@@ -579,6 +594,25 @@ a.beast-card:hover {
   :where(.beast-card, .beast-panel, .beast-surface, .beast-page-header) {
     max-width: 100%;
     overflow-wrap: anywhere;
+  }
+
+  :where(a, button, input, select, textarea) {
+    min-height: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+  }
+
+  :where(.beast-card, .beast-button, .beast-button-secondary, .beast-module-tab):hover {
+    transform: none !important;
   }
 }
 

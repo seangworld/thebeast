@@ -22,6 +22,7 @@ import {
   type ModuleNavSection,
 } from "@/lib/moduleNavigation";
 import { buildMobileNavigation } from "@/lib/mobileFoundation";
+import { buildMobileRuntimeState } from "@/lib/mobileHardening";
 import { canAccessBeastAdmin } from "@/lib/beastAdmin";
 import {
   ADMIN_VIEW_MODE_EVENT,
@@ -85,6 +86,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
+  const [mobileOnline, setMobileOnline] = useState(true);
   const [expandedModule, setExpandedModule] = useState<ModuleKey | null>(null);
   const [learningOnlyNavigation, setLearningOnlyNavigation] = useState(false);
   const [isAdminPersona, setIsAdminPersona] = useState(false);
@@ -115,6 +117,10 @@ export default function DashboardLayout({
     isOwner: isAdminPersona,
     learningOnly: learningOnlyNavigation,
   });
+  const mobileRuntimeState = buildMobileRuntimeState({
+    online: mobileOnline,
+    degraded: resolvingOnboarding && dashboardGuardResolved,
+  });
   const onboardingPath = "/dashboard/onboarding";
   const activeExpandableModule =
     personaModuleNavigation.find(
@@ -135,6 +141,21 @@ export default function DashboardLayout({
     return () => {
       window.removeEventListener("storage", syncAdminViewMode);
       window.removeEventListener(ADMIN_VIEW_MODE_EVENT, syncAdminViewMode);
+    };
+  }, []);
+
+  useEffect(() => {
+    function syncOnlineState() {
+      setMobileOnline(navigator.onLine);
+    }
+
+    syncOnlineState();
+    window.addEventListener("online", syncOnlineState);
+    window.addEventListener("offline", syncOnlineState);
+
+    return () => {
+      window.removeEventListener("online", syncOnlineState);
+      window.removeEventListener("offline", syncOnlineState);
     };
   }, []);
 
@@ -496,6 +517,7 @@ export default function DashboardLayout({
           onClick={() => setMobileMoreOpen(true)}
           aria-expanded={mobileMoreOpen}
           aria-controls="beast-mobile-more-sheet"
+          aria-label="Open more mobile destinations"
         >
           <span
             className="h-2 w-2 rounded-full"
@@ -507,7 +529,7 @@ export default function DashboardLayout({
     }
 
     return (
-      <Link href={item.href} className={className}>
+      <Link href={item.href} className={className} aria-current={active ? "page" : undefined}>
         <span
           className="h-2 w-2 rounded-full"
           style={{ background: active ? accent.color : "#596579" }}
@@ -776,7 +798,7 @@ export default function DashboardLayout({
         </div>
       </aside>
 
-      <header className="sticky top-0 z-50 border-b border-[#2a3242] bg-[#11151c]/95 px-3 py-3 backdrop-blur md:hidden">
+      <header className="sticky top-0 z-50 border-b border-[#2a3242] bg-[#11151c]/95 px-3 pb-3 pt-[calc(env(safe-area-inset-top)+12px)] backdrop-blur md:hidden">
         <div className="flex items-center justify-between gap-3">
           <BeastBrandMark
             module={workspaceModule}
@@ -790,10 +812,25 @@ export default function DashboardLayout({
             Search
           </Link>
         </div>
+        {mobileRuntimeState.banner ? (
+          <div
+            className="mt-3 rounded-xl border border-amber-300/30 bg-amber-300/10 p-3 text-left"
+            role="status"
+            aria-live="polite"
+            data-mobile-runtime-state={mobileRuntimeState.banner.kind.toLowerCase()}
+          >
+            <div className="text-xs font-black uppercase text-amber-100">
+              {mobileRuntimeState.banner.title}
+            </div>
+            <p className="mt-1 text-xs font-semibold leading-5 text-amber-50">
+              {mobileRuntimeState.banner.recoveryAction}
+            </p>
+          </div>
+        ) : null}
       </header>
 
       {mobileMoreOpen ? (
-        <div className="fixed inset-0 z-[60] md:hidden">
+        <div className="fixed inset-0 z-[60] md:hidden" role="presentation">
           <button
             type="button"
             className="absolute inset-0 bg-black/60"
@@ -802,13 +839,19 @@ export default function DashboardLayout({
           />
           <div
             id="beast-mobile-more-sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="beast-mobile-more-title"
             className="absolute inset-x-0 bottom-0 max-h-[82dvh] overflow-y-auto rounded-t-2xl border border-[#2a3242] bg-[#0f1419] px-4 pb-[calc(env(safe-area-inset-bottom)+16px)] pt-4 shadow-2xl"
+            data-mobile-hardening="more-sheet"
           >
             <div className="flex items-center justify-between border-b border-[#2a3242] px-4 py-3">
-              <BeastBrandMark
-                module={workspaceModule}
-                size="sm"
-              />
+              <div id="beast-mobile-more-title">
+                <BeastBrandMark
+                  module={workspaceModule}
+                  size="sm"
+                />
+              </div>
               <button
                 type="button"
                 onClick={() => setMobileMoreOpen(false)}
@@ -847,6 +890,7 @@ export default function DashboardLayout({
       <nav
         className="fixed inset-x-0 bottom-0 z-50 border-t border-[#2a3242] bg-[#0f1419]/98 px-2 pb-[calc(env(safe-area-inset-bottom)+8px)] pt-2 backdrop-blur md:hidden"
         aria-label="Mobile navigation"
+        data-mobile-hardening="bottom-navigation"
       >
         <div className="mx-auto flex max-w-md gap-1">
           {mobileNavigation.primary.map((item) => (
