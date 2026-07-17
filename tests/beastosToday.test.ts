@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import {
   buildTodayContribution,
   buildTodayItemActionRequest,
+  getTodayContributionExplanation,
   getRankedTodayContributions,
   getTodayPriorityScore,
   getTodayContributionEmptyState,
@@ -117,6 +118,10 @@ test("BO-25 Today defines the shared cross-module contribution contract", () => 
   assert.throws(
     () => buildTodayContribution({ ...learningContribution, actionUrl: "" }),
     /action URL is required/
+  );
+  assert.throws(
+    () => buildTodayContribution({ ...learningContribution, reason: " " }),
+    /reason is required/
   );
   assert.match(todayContributionContractRules[1], /Modules own source calculations/);
   assert.match(todayPage, /Cross-module contribution contract/);
@@ -252,4 +257,32 @@ test("BO-27 Today routes item actions through source-owned contracts", () => {
   assert.match(todayPage, /Tomorrow/);
   assert.match(todayPage, /module contract events/);
   assert.doesNotMatch(todayPage, /from\("learning_activities"\)\s*\.update/);
+});
+
+test("BO-28 Today explains why each recommendation is shown", () => {
+  const todayPage = readFileSync("src/app/dashboard/today/page.tsx", "utf8");
+  const explanation = getTodayContributionExplanation(moneyContribution);
+  const learningExplanation =
+    getTodayContributionExplanation(learningContribution);
+
+  assert.equal(explanation.contributionId, "money-bill-due");
+  assert.equal(explanation.source, "money");
+  assert.equal(
+    explanation.sourceReason,
+    "BeastMoney supplied the date and obligation status."
+  );
+  assert.match(explanation.timingReason, /due today/);
+  assert.match(explanation.priorityReason, /critical/);
+  assert.match(explanation.actionReason, /Open cash flow/);
+  assert.match(explanation.evidenceReason, /money supplied 1 source evidence item/);
+  assert.match(explanation.scoreExplanation, /urgency/);
+  assert.match(explanation.displayReason, /BeastMoney supplied/);
+  assert.match(learningExplanation.displayReason, /BeastLearning supplied/);
+  assert.match(todayContributionContractRules[5], /Explain why shown/);
+  assert.match(todayPage, /Explain why shown/);
+  assert.match(todayPage, /getTodayContributionExplanation/);
+  assert.doesNotMatch(
+    todayPage,
+    /recompute learning mastery|recompute bill cycles|cash-flow risk/
+  );
 });

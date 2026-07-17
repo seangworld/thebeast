@@ -20,6 +20,7 @@ import { createClient } from "@/lib/supabase/client";
 import { getProfileDisplayName } from "@/lib/profile";
 import {
   buildTodayItemActionRequest,
+  getTodayContributionExplanation,
   getTodayPriorityScore,
   getTodayItemActionAvailability,
   todayContributionContractRules,
@@ -502,6 +503,8 @@ export default function TodayPage() {
     [readyActivity]
   );
   const learningPriorityScore = getTodayPriorityScore(learningContribution);
+  const learningExplanation =
+    getTodayContributionExplanation(learningContribution);
   const learningActionAvailability =
     getTodayItemActionAvailability(learningContribution);
   const actionButtons: { action: TodayItemActionType; label: string }[] = [
@@ -630,6 +633,22 @@ export default function TodayPage() {
             <p className="mt-2 text-sm font-semibold leading-6 text-[#c7cfdb]">
               {learningPriorityScore.explanation}
             </p>
+          </div>
+          <div className="mt-5 rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+            <div className="text-xs font-bold uppercase text-[#7f8da3]">
+              Explain why shown
+            </div>
+            <p className="mt-2 text-sm font-semibold leading-6 text-[#dbe3ef]">
+              {learningExplanation.displayReason}
+            </p>
+            <div className="mt-4 grid gap-2 text-sm font-semibold leading-6 text-[#c7cfdb] md:grid-cols-2">
+              <p>{learningExplanation.sourceReason}</p>
+              <p>{learningExplanation.evidenceReason}</p>
+              <p>{learningExplanation.timingReason}</p>
+              <p>{learningExplanation.priorityReason}</p>
+              <p>{learningExplanation.actionReason}</p>
+              <p>{learningExplanation.scoreExplanation}</p>
+            </div>
           </div>
           <div className="mt-5 grid gap-3 md:grid-cols-2">
             {todayContributionContractRules.map((rule) => (

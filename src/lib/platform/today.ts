@@ -81,6 +81,19 @@ export type TodayPriorityScore = {
   explanation: string;
 };
 
+export type TodayContributionExplanation = {
+  contributionId: string;
+  source: TodayContributionSource;
+  title: string;
+  sourceReason: string;
+  timingReason: string;
+  priorityReason: string;
+  actionReason: string;
+  evidenceReason: string;
+  scoreExplanation: string;
+  displayReason: string;
+};
+
 export type TodayItemActionType =
   | "Dismiss"
   | "Snooze"
@@ -151,6 +164,7 @@ export const todayContributionContractRules = [
   "Completion must route back to the owning module or service before BeastOS marks a contribution completed.",
   "Today contributions must carry source evidence so BeastOS does not invent tasks, progress, or placeholder work.",
   "Dismiss, snooze, complete, and reschedule requests must dispatch through the owning module or service contract instead of mutating source records directly.",
+  "Explain why shown must combine the source-owned reason with BeastOS ranking signals without recalculating source module readiness.",
 ];
 
 export const todayItemActionTypes: TodayItemActionType[] = [
@@ -203,6 +217,21 @@ function effortScore(minutes?: number) {
   return 2;
 }
 
+function timingExplanation(timing: TodayContributionTiming) {
+  if (timing === "Overdue") return "The source marked this item overdue.";
+  if (timing === "Due Today") return "The source marked this item due today.";
+  if (timing === "Active") return "The source marked this item active now.";
+  if (timing === "Upcoming") return "The source marked this item upcoming.";
+  return "The source marked this item informational.";
+}
+
+function priorityExplanation(priority: TodayContributionPriority) {
+  if (priority === "Critical") return "The source marked this item critical.";
+  if (priority === "High") return "The source marked this item high priority.";
+  if (priority === "Medium") return "The source marked this item medium priority.";
+  return "The source marked this item low priority.";
+}
+
 function parseIsoTimestamp(value: string, label: string) {
   if (!value.trim()) {
     throw new Error(`Today item action ${label} timestamp is required.`);
@@ -253,8 +282,13 @@ export function buildTodayContribution(
     throw new Error("Today contribution action URL is required.");
   }
 
+  if (!contribution.reason.trim()) {
+    throw new Error("Today contribution reason is required.");
+  }
+
   return {
     ...contribution,
+    reason: contribution.reason.trim(),
     sourceEvidenceIds: [...contribution.sourceEvidenceIds],
   };
 }
@@ -343,6 +377,33 @@ export function buildTodayItemActionRequest({
     reason,
     snoozedUntil: action === "Snooze" ? snoozedUntil : undefined,
     rescheduledFor: action === "Reschedule" ? rescheduledFor : undefined,
+  };
+}
+
+export function getTodayContributionExplanation(
+  contribution: TodayContribution
+): TodayContributionExplanation {
+  const normalized = buildTodayContribution(contribution);
+  const priorityScore = getTodayPriorityScore(normalized);
+  const evidenceCount = normalized.sourceEvidenceIds.length;
+  const evidenceReason =
+    evidenceCount > 0
+      ? `${normalized.source} supplied ${evidenceCount} source evidence item${evidenceCount === 1 ? "" : "s"}.`
+      : `${normalized.source} did not supply source evidence, so Today can explain it but cannot route item actions.`;
+
+  return {
+    contributionId: normalized.id,
+    source: normalized.source,
+    title: normalized.title,
+    sourceReason: normalized.reason,
+    timingReason: timingExplanation(normalized.timing),
+    priorityReason: priorityExplanation(normalized.priority),
+    actionReason: `Today recommends: ${normalized.recommendedAction}.`,
+    evidenceReason,
+    scoreExplanation: priorityScore.explanation,
+    displayReason: `${normalized.reason} ${timingExplanation(
+      normalized.timing
+    )} ${priorityScore.explanation}`,
   };
 }
 
