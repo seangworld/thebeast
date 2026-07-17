@@ -33,7 +33,13 @@ import {
   type ModuleKey,
 } from "@/app/components/design/DashboardPrimitives";
 import { buildMobileModuleCards } from "@/lib/mobileFoundation";
+import {
+  buildMobileFutureModuleCards,
+  type MobileFutureModuleCard,
+} from "@/lib/mobileFutureModules";
 import { buildMobileHouseholdAlertCards } from "@/lib/mobilePersonalHub";
+import { beastHealthOverview, beastHealthPages } from "./health/pages";
+import { beastHomeOverview, beastHomePages } from "./home/pages";
 
 type MoneyDebt = {
   id: string;
@@ -358,6 +364,52 @@ function MobileLaunchCard({
   );
 }
 
+function MobileFutureModuleCard({ card }: { card: MobileFutureModuleCard }) {
+  const accent = moduleAccents[card.module];
+
+  return (
+    <Link
+      href={card.href}
+      className="block min-w-0 rounded-xl border bg-[#111827] p-4 transition hover:bg-[#202634]"
+      style={{ borderColor: `${accent.color}44` }}
+      data-mobile-future-module={card.module}
+      data-mobile-source-contract={card.dispatchMode}
+      data-mobile-read-only={card.readOnly}
+    >
+      <div className="flex min-w-0 items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-xs font-black uppercase text-[#9aa7b8]">
+            {card.metadata[0]} {card.metadata[1]}
+          </div>
+          <h2 className="mt-1 break-words text-lg font-black leading-snug text-white">
+            {card.title}
+          </h2>
+          <p className="mt-2 break-words text-sm font-semibold leading-6 text-[#c7cfdb]">
+            {card.summary}
+          </p>
+        </div>
+        <span
+          className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full"
+          style={{ background: accent.color }}
+        />
+      </div>
+      <div className="mt-3 flex min-w-0 flex-wrap gap-2">
+        {card.metadata.slice(2).map((item) => (
+          <span
+            key={item}
+            className="max-w-full break-words rounded-full border border-[#2a3242] bg-[#0f1419] px-3 py-1 text-xs font-bold text-[#dbe3ef]"
+          >
+            {item}
+          </span>
+        ))}
+      </div>
+      <div className="mt-4 flex min-h-[44px] items-center justify-center rounded-lg bg-[#38bdf8] px-3 py-2 text-sm font-black text-black">
+        {card.actionLabel}
+      </div>
+    </Link>
+  );
+}
+
 export default function TodayPage() {
   const [state, setState] = useState<MoneyState>(initialMoneyState);
   const [user, setUser] = useState<CurrentUser>({ name: "" });
@@ -530,6 +582,27 @@ export default function TodayPage() {
     (item) => item.module === "calendar"
   ) || timelineItems[0] || null;
   const mobileHouseholdAlerts = buildMobileHouseholdAlertCards();
+  const mobileFutureModules = buildMobileFutureModuleCards({
+    isOwner: user.role === "admin",
+    foundations: [
+      {
+        identifier: "health",
+        title: beastHealthOverview.title,
+        description: beastHealthOverview.description,
+        focus: beastHealthOverview.focus,
+        href: "/dashboard/health",
+        sections: Object.keys(beastHealthPages).length + 1,
+      },
+      {
+        identifier: "home",
+        title: beastHomeOverview.title,
+        description: beastHomeOverview.description,
+        focus: beastHomeOverview.focus,
+        href: "/dashboard/home",
+        sections: Object.keys(beastHomePages).length + 1,
+      },
+    ],
+  });
 
   return (
     <main className="beast-page">
@@ -650,6 +723,24 @@ export default function TodayPage() {
               </div>
             </div>
           </section>
+
+          {mobileFutureModules.length > 0 ? (
+            <section
+              className="space-y-3"
+              aria-label="Future module mobile surfaces"
+              data-mobile-future-modules="true"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-lg font-black text-white">Future modules</h2>
+                <ModuleBadge module="beastos" label="Owner only" />
+              </div>
+              <div className="grid min-w-0 gap-3">
+                {mobileFutureModules.map((card) => (
+                  <MobileFutureModuleCard key={card.id} card={card} />
+                ))}
+              </div>
+            </section>
+          ) : null}
         </section>
 
         <div className="hidden space-y-8 md:block">
