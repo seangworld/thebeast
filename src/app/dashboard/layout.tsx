@@ -21,7 +21,13 @@ import {
   type ModuleChildNavItem,
   type ModuleNavSection,
 } from "@/lib/moduleNavigation";
-import { isBeastAdminOwnerRole } from "@/lib/beastAdmin";
+import { canAccessBeastAdmin } from "@/lib/beastAdmin";
+import {
+  ADMIN_VIEW_MODE_EVENT,
+  ADMIN_VIEW_MODE_STORAGE_KEY,
+  normalizeAdminViewMode,
+  type AdminViewMode,
+} from "@/lib/entitlements";
 import {
   isRestrictedForLearningOnlyNavigation,
   shouldUseLearningOnlyNavigation,
@@ -48,6 +54,14 @@ const learningSettingsNavigation: ModuleNavSection[] = [
   { label: "Settings", href: "/dashboard/settings", module: "beastos" },
 ];
 
+function loadAdminViewMode() {
+  if (typeof window === "undefined") return "admin" as AdminViewMode;
+
+  return normalizeAdminViewMode(
+    window.localStorage.getItem(ADMIN_VIEW_MODE_STORAGE_KEY)
+  );
+}
+
 function getWorkspaceModule(pathname: string): ModuleKey {
   if (pathname.startsWith("/dashboard/admin")) return "admin";
   if (pathname.startsWith("/dashboard/money")) return "money";
@@ -73,6 +87,9 @@ export default function DashboardLayout({
   const [expandedModule, setExpandedModule] = useState<ModuleKey | null>(null);
   const [learningOnlyNavigation, setLearningOnlyNavigation] = useState(false);
   const [isAdminPersona, setIsAdminPersona] = useState(false);
+  const [adminViewMode, setAdminViewMode] = useState<AdminViewMode>(
+    loadAdminViewMode
+  );
   const [resolvingOnboarding, setResolvingOnboarding] = useState(true);
   const [dashboardGuardResolved, setDashboardGuardResolved] = useState(false);
   const [onboardingDiagnosticError, setOnboardingDiagnosticError] = useState("");
@@ -101,6 +118,20 @@ export default function DashboardLayout({
 
   const [previousActiveExpandableModule, setPreviousActiveExpandableModule] =
     useState<ModuleKey | null>(null);
+
+  useEffect(() => {
+    function syncAdminViewMode() {
+      setAdminViewMode(loadAdminViewMode());
+    }
+
+    window.addEventListener("storage", syncAdminViewMode);
+    window.addEventListener(ADMIN_VIEW_MODE_EVENT, syncAdminViewMode);
+
+    return () => {
+      window.removeEventListener("storage", syncAdminViewMode);
+      window.removeEventListener(ADMIN_VIEW_MODE_EVENT, syncAdminViewMode);
+    };
+  }, []);
 
   useEffect(() => {
     if (activeExpandableModule !== previousActiveExpandableModule) {
@@ -319,14 +350,17 @@ export default function DashboardLayout({
         gradeLevel: primaryLearningProfile?.learning_style,
       });
 
-      const isOwner = isBeastAdminOwnerRole(profile?.role);
+      const canUseBeastAdmin = canAccessBeastAdmin({
+        role: profile?.role,
+        adminViewMode,
+      });
 
-      if (pathname.startsWith("/dashboard/admin") && !isOwner) {
+      if (pathname.startsWith("/dashboard/admin") && !canUseBeastAdmin) {
         router.replace("/dashboard");
         return;
       }
 
-      setIsAdminPersona(isOwner);
+      setIsAdminPersona(canUseBeastAdmin);
       setLearningOnlyNavigation(useLearningOnlyNavigation);
       setDashboardGuardResolved(true);
 
@@ -346,7 +380,7 @@ export default function DashboardLayout({
     return () => {
       active = false;
     };
-  }, [pathname, router]);
+  }, [adminViewMode, pathname, router]);
 
   if (onboardingDiagnosticError) {
     return (

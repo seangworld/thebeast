@@ -10,7 +10,13 @@ import {
   SectionHeader,
 } from "@/app/components/design/DashboardPrimitives";
 import { createClient } from "@/lib/supabase/client";
-import { isBeastAdminOwnerRole } from "@/lib/beastAdmin";
+import { canAccessBeastAdmin } from "@/lib/beastAdmin";
+import {
+  ADMIN_VIEW_MODE_EVENT,
+  ADMIN_VIEW_MODE_STORAGE_KEY,
+  normalizeAdminViewMode,
+  type AdminViewMode,
+} from "@/lib/entitlements";
 
 const adminNavItems = [
   { label: "Dashboard", href: "/dashboard/admin" },
@@ -21,6 +27,14 @@ const adminNavItems = [
   { label: "Ads", href: "/dashboard/admin/ads" },
   { label: "Settings", href: "/dashboard/admin/settings" },
 ];
+
+function loadAdminViewMode() {
+  if (typeof window === "undefined") return "admin" as AdminViewMode;
+
+  return normalizeAdminViewMode(
+    window.localStorage.getItem(ADMIN_VIEW_MODE_STORAGE_KEY)
+  );
+}
 
 export function BeastAdminShell({
   title,
@@ -33,10 +47,29 @@ export function BeastAdminShell({
 }) {
   const [authorized, setAuthorized] = useState(false);
   const [checking, setChecking] = useState(true);
+  const [adminViewMode, setAdminViewMode] = useState<AdminViewMode>(
+    loadAdminViewMode
+  );
   const router = useRouter();
 
   useEffect(() => {
+    function syncAdminViewMode() {
+      setAdminViewMode(loadAdminViewMode());
+    }
+
+    window.addEventListener("storage", syncAdminViewMode);
+    window.addEventListener(ADMIN_VIEW_MODE_EVENT, syncAdminViewMode);
+
+    return () => {
+      window.removeEventListener("storage", syncAdminViewMode);
+      window.removeEventListener(ADMIN_VIEW_MODE_EVENT, syncAdminViewMode);
+    };
+  }, []);
+
+  useEffect(() => {
     let active = true;
+    setChecking(true);
+    setAuthorized(false);
 
     async function verifyOwner() {
       try {
@@ -57,7 +90,7 @@ export function BeastAdminShell({
 
         if (!active) return;
 
-        if (!isBeastAdminOwnerRole(profile?.role)) {
+        if (!canAccessBeastAdmin({ role: profile?.role, adminViewMode })) {
           router.replace("/dashboard");
           return;
         }
@@ -73,7 +106,7 @@ export function BeastAdminShell({
     return () => {
       active = false;
     };
-  }, [router]);
+  }, [adminViewMode, router]);
 
   if (checking || !authorized) {
     return (

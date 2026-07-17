@@ -1,4 +1,5 @@
 import { getModuleRegistryEntry, type BeastModuleIdentifier } from "./moduleRegistry";
+import type { AdminViewMode } from "./entitlements";
 
 export type BeastAdminMemberStatus = "Active" | "Invited" | "Paused";
 export type BeastAdminMemberRole = "Owner" | "Admin" | "Member" | "Beta";
@@ -31,6 +32,16 @@ export type BeastAdminFeedbackItem = {
 
 export function isBeastAdminOwnerRole(role: unknown) {
   return role === "admin";
+}
+
+export function canAccessBeastAdmin({
+  role,
+  adminViewMode = "admin",
+}: {
+  role: unknown;
+  adminViewMode?: AdminViewMode;
+}) {
+  return isBeastAdminOwnerRole(role) && adminViewMode === "admin";
 }
 
 export const beastAdminMembers: BeastAdminMember[] = [

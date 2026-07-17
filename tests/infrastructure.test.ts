@@ -369,6 +369,7 @@ import {
   beastAdminMembers,
   buildBeastAdminAnalytics,
   buildBetaAssignmentRows,
+  canAccessBeastAdmin,
   getBetaAssignableModuleLabels,
   isBeastAdminOwnerRole,
 } from "../src/lib/beastAdmin";
@@ -5036,6 +5037,10 @@ test("admin view mode changes effective entitlements without changing real conte
   });
   assert.equal(isAdminViewSimulationActive(adminProfile, "member"), true);
   assert.equal(isAdminViewSimulationActive(adminProfile, "admin"), false);
+  assert.equal(hasEntitlement(resolveEffectiveEntitlementContext(adminProfile, "admin"), "beast_admin"), true);
+  assert.equal(hasEntitlement(resolveEffectiveEntitlementContext(adminProfile, "member"), "beast_admin"), false);
+  assert.equal(canAccessBeastAdmin({ role: "admin", adminViewMode: "admin" }), true);
+  assert.equal(canAccessBeastAdmin({ role: "admin", adminViewMode: "member" }), false);
 });
 
 test("admin view mode has priority over database membership", () => {
@@ -5070,6 +5075,10 @@ test("admin view mode is ignored for non-admin users", () => {
     role: "user",
   });
   assert.equal(isAdminViewSimulationActive(proUser, "member"), false);
+  assert.equal(hasEntitlement({ role: "user", membership: proMembership }, "beast_admin"), false);
+  assert.equal(hasEntitlement({ role: "beta" }, "beast_admin"), false);
+  assert.equal(canAccessBeastAdmin({ role: "user", adminViewMode: "admin" }), false);
+  assert.equal(canAccessBeastAdmin({ role: "beta", adminViewMode: "admin" }), false);
 });
 
 test("member navigation hides admin and monetization surfaces", () => {
@@ -5127,8 +5136,16 @@ test("member navigation hides admin and monetization surfaces", () => {
     true
   );
   assert.deepEqual(
-    buildOwnerNavigationForPersona({ isOwner: true }).map((item) => item.label),
+    buildOwnerNavigationForPersona({
+      isOwner: canAccessBeastAdmin({ role: "admin", adminViewMode: "admin" }),
+    }).map((item) => item.label),
     ["BeastAdmin"]
+  );
+  assert.deepEqual(
+    buildOwnerNavigationForPersona({
+      isOwner: canAccessBeastAdmin({ role: "admin", adminViewMode: "member" }),
+    }),
+    []
   );
   assert.equal(
     getBeastModuleNavigationForPersona(false).some((item) => item.label === "BeastAdmin"),
@@ -5139,6 +5156,9 @@ test("member navigation hides admin and monetization surfaces", () => {
   assert.match(dashboardLayout, /primaryNavigation/);
   assert.match(dashboardLayout, /buildApplicationNavigationForPersona/);
   assert.match(dashboardLayout, /buildOwnerNavigationForPersona/);
+  assert.match(dashboardLayout, /ADMIN_VIEW_MODE_EVENT/);
+  assert.match(dashboardLayout, /canAccessBeastAdmin/);
+  assert.match(dashboardLayout, /pathname\.startsWith\("\/dashboard\/admin"\) && !canUseBeastAdmin/);
   assert.equal(
     primaryNavigation.some(
       (item) => item.label === "Documents" && item.href === "/dashboard/uploads"
@@ -5346,9 +5366,11 @@ test("BeastAdmin placeholders cover members analytics feedback ads and settings"
 
   const shell = readFileSync("src/app/dashboard/admin/BeastAdminShell.tsx", "utf8");
   const layout = readFileSync("src/app/dashboard/layout.tsx", "utf8");
-  assert.match(shell, /isBeastAdminOwnerRole/);
+  assert.match(shell, /canAccessBeastAdmin/);
+  assert.match(shell, /ADMIN_VIEW_MODE_EVENT/);
+  assert.match(shell, /adminViewMode/);
   assert.match(shell, /router\.replace\("\/dashboard"\)/);
-  assert.match(layout, /pathname\.startsWith\("\/dashboard\/admin"\)/);
+  assert.match(layout, /pathname\.startsWith\("\/dashboard\/admin"\) && !canUseBeastAdmin/);
 
   assert.deepEqual(
     beastAdminMembers.map((member) => [member.name, member.email, member.joinDate, member.status, member.role]),

@@ -44,6 +44,11 @@ export const FEATURE_ENTITLEMENTS = {
     label: "Scenario Planning",
     requiredPlan: "pro",
   },
+  beast_admin: {
+    label: "BeastAdmin",
+    requiredPlan: "pro",
+    ownerOnly: true,
+  },
 } as const;
 
 export type EntitlementFeature = keyof typeof FEATURE_ENTITLEMENTS;
@@ -107,6 +112,11 @@ export function isAdminViewSimulationActive(
     adminViewMode !== "admin";
 }
 
+function isOwnerOnlyFeature(feature: EntitlementFeature) {
+  return "ownerOnly" in FEATURE_ENTITLEMENTS[feature] &&
+    FEATURE_ENTITLEMENTS[feature].ownerOnly === true;
+}
+
 export function hasEntitlement(
   context: EntitlementContext | EntitlementSubject,
   feature: EntitlementFeature
@@ -115,6 +125,10 @@ export function hasEntitlement(
     context && "plan" in context && "role" in context
       ? (context as EntitlementContext)
       : resolveEntitlementContext(context as EntitlementSubject);
+
+  if (isOwnerOnlyFeature(feature)) {
+    return entitlementContext.role === "admin";
+  }
 
   if (entitlementContext.role === "admin" || entitlementContext.role === "beta") {
     return true;
