@@ -5041,6 +5041,14 @@ test("admin view mode changes effective entitlements without changing real conte
   assert.equal(hasEntitlement(resolveEffectiveEntitlementContext(adminProfile, "member"), "beast_admin"), false);
   assert.equal(canAccessBeastAdmin({ role: "admin", adminViewMode: "admin" }), true);
   assert.equal(canAccessBeastAdmin({ role: "admin", adminViewMode: "member" }), false);
+
+  const entitlementHook = readFileSync("src/lib/hooks/useEntitlements.ts", "utf8");
+  assert.match(entitlementHook, /window\.localStorage\.setItem\(ADMIN_VIEW_MODE_STORAGE_KEY, normalizedMode\)/);
+  assert.match(entitlementHook, /window\.location\.reload\(\)/);
+  assert.ok(
+    entitlementHook.indexOf("window.localStorage.setItem") <
+      entitlementHook.indexOf("window.location.reload()")
+  );
 });
 
 test("admin view mode has priority over database membership", () => {
@@ -5147,6 +5155,12 @@ test("member navigation hides admin and monetization surfaces", () => {
     }),
     []
   );
+  assert.deepEqual(
+    buildOwnerNavigationForPersona({
+      isOwner: canAccessBeastAdmin({ role: "admin", adminViewMode: "admin" }),
+    }).map((item) => item.label),
+    ["BeastAdmin"]
+  );
   assert.equal(
     getBeastModuleNavigationForPersona(false).some((item) => item.label === "BeastAdmin"),
     false
@@ -5159,6 +5173,8 @@ test("member navigation hides admin and monetization surfaces", () => {
   assert.match(dashboardLayout, /ADMIN_VIEW_MODE_EVENT/);
   assert.match(dashboardLayout, /canAccessBeastAdmin/);
   assert.match(dashboardLayout, /pathname\.startsWith\("\/dashboard\/admin"\) && !canUseBeastAdmin/);
+  const entitlementHook = readFileSync("src/lib/hooks/useEntitlements.ts", "utf8");
+  assert.match(entitlementHook, /window\.location\.reload\(\)/);
   assert.equal(
     primaryNavigation.some(
       (item) => item.label === "Documents" && item.href === "/dashboard/uploads"

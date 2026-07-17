@@ -100,6 +100,7 @@ export function useEntitlements() {
     setAdminViewModeState(normalizedMode);
     window.localStorage.setItem(ADMIN_VIEW_MODE_STORAGE_KEY, normalizedMode);
     window.dispatchEvent(new Event(ADMIN_VIEW_MODE_EVENT));
+    window.location.reload();
   }
 
   const entitlementSubject = {
