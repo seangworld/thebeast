@@ -7,6 +7,18 @@ import {
 
 const releaseNotes = [
   {
+    version: "BeastOS v2.2 Shared Services Progress",
+    date: "July 17, 2026",
+    title: "Shared Platform Services",
+    items: [
+      "New features: added shared contracts for Today actions, Calendar, Search, Timeline, Notifications, Shared AI, Household lifecycle, and Household visibility links.",
+      "Platform UX: added responsive/accessibility readiness tracking for core services and standard loading, empty, error, offline, and degraded state guidance.",
+      "Support: Settings now surfaces onboarding, help, feedback, and release-note destinations without duplicating module-owned support flows.",
+      "Guardrails: BeastOS preserves source-module ownership for money, learning, goals, documents, and other module-specific business logic.",
+      "Migration notes: no database migration required for the final Platform UX batch.",
+    ],
+  },
+  {
     version: `BeastLearning ${BEAST_LEARNING_VERSION}`,
     date: "July 11, 2026",
     title: "Education-Path Mentoring",

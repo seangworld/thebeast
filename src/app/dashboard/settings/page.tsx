@@ -19,6 +19,12 @@ import {
   householdOwnershipRules,
   type HouseholdModel,
 } from "@/lib/platform/household";
+import {
+  buildPlatformUXReadiness,
+  buildPlatformUXState,
+  getPlatformSupportLinks,
+  platformUXRules,
+} from "@/lib/platform/ux";
 
 const settingsSections = [
   {
@@ -116,6 +122,9 @@ export default function SettingsPage() {
       sharedLinks: [householdSharedLink],
     },
   });
+  const platformUXReadiness = buildPlatformUXReadiness();
+  const degradedState = buildPlatformUXState("Degraded");
+  const supportLinks = getPlatformSupportLinks();
   const sharedAIContext: SharedAIContextItem[] = [
     {
       id: "context-user-preferences",
@@ -312,6 +321,51 @@ export default function SettingsPage() {
           </div>
           <div className="mt-5 grid gap-3 md:grid-cols-2">
             {householdOwnershipRules.slice(0, 4).map((rule) => (
+              <div
+                key={rule}
+                className="rounded-xl border border-[#2a3242] bg-[#0f1419] p-4 text-sm font-semibold text-[#d8dee8]"
+              >
+                {rule}
+              </div>
+            ))}
+          </div>
+        </DashboardCard>
+
+        <DashboardCard accent="beastos">
+          <SectionHeader
+            eyebrow="Platform UX"
+            title="Responsive states and support"
+            description="BeastOS keeps shared service pages responsive, accessible, and clear when data is loading, empty, unavailable, or degraded."
+          />
+          <div className="mt-5 grid gap-4 md:grid-cols-4">
+            {[
+              ["Services", platformUXReadiness.totalServices],
+              ["Mobile ready", platformUXReadiness.mobileReadyServices],
+              ["Keyboard ready", platformUXReadiness.keyboardReadyServices],
+              ["Support links", supportLinks.length],
+            ].map(([label, value]) => (
+              <div
+                key={label}
+                className="rounded-xl border border-[#2a3242] bg-[#111827] p-4"
+              >
+                <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                  {label}
+                </div>
+                <div className="mt-2 text-sm font-black text-white">{value}</div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-5 rounded-xl border border-[#2a3242] bg-[#0f1419] p-4">
+            <div className="text-xs font-bold uppercase text-[#7f8da3]">
+              Degraded state
+            </div>
+            <div className="mt-2 font-black text-white">{degradedState.title}</div>
+            <p className="mt-1 text-sm leading-5 text-[#9aa7b8]">
+              {degradedState.recoveryAction}
+            </p>
+          </div>
+          <div className="mt-5 grid gap-3 md:grid-cols-2">
+            {platformUXRules.map((rule) => (
               <div
                 key={rule}
                 className="rounded-xl border border-[#2a3242] bg-[#0f1419] p-4 text-sm font-semibold text-[#d8dee8]"

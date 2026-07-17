@@ -296,6 +296,14 @@ import {
   sharedAIContractRules,
   type SharedAIContextItem,
 } from "../src/lib/platform/sharedAI";
+import {
+  buildPlatformUXReadiness,
+  buildPlatformUXState,
+  getPlatformSupportLinks,
+  platformUXCoreRoutes,
+  platformUXRules,
+  type PlatformUXStateKind,
+} from "../src/lib/platform/ux";
 import { generateDynamicLearningLesson } from "../src/lib/learning/dynamicLessonGenerator";
 import {
   createGeneratedLearningContentRecord,
@@ -1157,6 +1165,72 @@ test("BO-45 Shared AI routes specialist handoffs while preserving ownership", ()
   assert.equal(moneyHandoff.sourceOwnershipPreserved, true);
   assert.match(sharedAIContractRules[3], /Specialist handoffs/);
   assert.match(settingsPage, /buildSharedAISpecialistHandoff/);
+});
+
+test("BO-48 Platform UX tracks responsive accessible core services", () => {
+  const settingsPage = readFileSync("src/app/dashboard/settings/page.tsx", "utf8");
+  const readiness = buildPlatformUXReadiness(platformUXCoreRoutes);
+
+  assert.equal(readiness.totalServices, 8);
+  assert.equal(readiness.mobileReadyServices, 8);
+  assert.equal(readiness.keyboardReadyServices, 8);
+  assert.equal(readiness.responsive, true);
+  assert.equal(readiness.accessible, true);
+  assert.deepEqual(
+    platformUXCoreRoutes.map((route) => route.href),
+    [
+      "/dashboard/today",
+      "/dashboard/calendar",
+      "/dashboard/timeline",
+      "/dashboard/notifications",
+      "/dashboard/search",
+      "/dashboard/settings",
+      "/dashboard/uploads",
+      "/dashboard/goals",
+    ]
+  );
+  assert.match(platformUXRules[1], /mobile and desktop/);
+  assert.match(settingsPage, /buildPlatformUXReadiness/);
+});
+
+test("BO-49 Platform UX standardizes useful service fallback states", () => {
+  const settingsPage = readFileSync("src/app/dashboard/settings/page.tsx", "utf8");
+  const stateKinds: PlatformUXStateKind[] = [
+    "Loading",
+    "Empty",
+    "Error",
+    "Offline",
+    "Degraded",
+  ];
+  const states = stateKinds.map((kind) => buildPlatformUXState(kind));
+
+  assert.deepEqual(
+    states.map((state) => state.kind),
+    ["Loading", "Empty", "Error", "Offline", "Degraded"]
+  );
+  states.forEach((state) => {
+    assert.equal(state.message.length > 20, true);
+    assert.equal(state.recoveryAction.length > 20, true);
+  });
+  assert.match(platformUXRules[2], /what the user can do next/);
+  assert.match(settingsPage, /buildPlatformUXState/);
+  assert.match(settingsPage, /Degraded state/);
+});
+
+test("BO-50 Platform UX exposes onboarding help feedback and release notes", () => {
+  const settingsPage = readFileSync("src/app/dashboard/settings/page.tsx", "utf8");
+  const releasesPage = readFileSync("src/app/dashboard/releases/page.tsx", "utf8");
+  const supportLinks = getPlatformSupportLinks();
+
+  assert.deepEqual(
+    supportLinks.map((link) => link.id),
+    ["onboarding", "help", "feedback", "release-notes"]
+  );
+  assert.equal(supportLinks.find((link) => link.id === "release-notes")?.href, "/dashboard/releases");
+  assert.match(platformUXRules[3], /Onboarding help feedback and release notes/);
+  assert.match(settingsPage, /getPlatformSupportLinks/);
+  assert.match(releasesPage, /BeastOS v2\.2 Shared Services Progress/);
+  assert.match(releasesPage, /loading, empty, error, offline, and degraded/);
 });
 
 test("financial metrics normalize recurring income to monthly amounts", () => {
