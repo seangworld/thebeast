@@ -2,6 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
+  assembleTodayDayPlan,
+  buildManualTodayContribution,
   buildTodayContribution,
   buildTodayItemActionRequest,
   getTodayContributionExplanation,
@@ -285,4 +287,90 @@ test("BO-28 Today explains why each recommendation is shown", () => {
     todayPage,
     /recompute learning mastery|recompute bill cycles|cash-flow risk/
   );
+});
+
+test("BO-29 Today supports empty completed tomorrow and weekly outlook states", () => {
+  const todayPage = readFileSync("src/app/dashboard/today/page.tsx", "utf8");
+  const today = "2026-07-16";
+  const completedToday = {
+    ...learningContribution,
+    id: "learning-completed-today",
+    activeDate: today,
+    status: "Completed" as const,
+  };
+  const tomorrowContribution = {
+    ...moneyContribution,
+    id: "money-tomorrow",
+    dueDate: "2026-07-17",
+    timing: "Upcoming" as const,
+    status: "Active" as const,
+  };
+  const emptyPlan = assembleTodayDayPlan({ contributions: [], today });
+  const completedPlan = assembleTodayDayPlan({
+    contributions: [completedToday, tomorrowContribution],
+    today,
+  });
+  const tomorrowPlan = assembleTodayDayPlan({
+    contributions: [tomorrowContribution],
+    today,
+  });
+
+  assert.equal(emptyPlan.state, "Empty");
+  assert.match(emptyPlan.summary, /No urgent work/);
+  assert.equal(completedPlan.state, "Completed Day");
+  assert.equal(completedPlan.completed.length, 1);
+  assert.equal(completedPlan.tomorrow.length, 1);
+  assert.equal(tomorrowPlan.state, "Tomorrow Preview");
+  assert.equal(tomorrowPlan.weeklyOutlook[0].label, "Today");
+  assert.equal(tomorrowPlan.weeklyOutlook[1].label, "Tomorrow");
+  assert.equal(tomorrowPlan.weeklyOutlook[1].active, 1);
+  assert.match(todayContributionContractRules[7], /Completed-day/);
+  assert.match(todayPage, /weeklyOutlook/);
+  assert.match(todayPage, /Tomorrow Preview/);
+  assert.match(todayPage, /Completed Day/);
+});
+
+test("BO-30 Today assembles manual items with sourced contributions", () => {
+  const todayPage = readFileSync("src/app/dashboard/today/page.tsx", "utf8");
+  const manualContribution = buildManualTodayContribution({
+    id: "manual-read-doc",
+    title: "Read scholarship document",
+    summary: "Review the uploaded scholarship notes before planning.",
+    activeDate: "2026-07-16",
+    priority: "High",
+    estimatedMinutes: 15,
+  });
+  const plan = assembleTodayDayPlan({
+    contributions: [
+      manualContribution,
+      { ...learningContribution, activeDate: "2026-07-16" },
+      { ...moneyContribution, dueDate: "2026-07-16" },
+    ],
+    today: "2026-07-16",
+  });
+
+  assert.equal(manualContribution.source, "beastos");
+  assert.equal(manualContribution.type, "Plan Step");
+  assert.equal(manualContribution.dismissible, true);
+  assert.deepEqual(manualContribution.sourceEvidenceIds, ["manual:manual-read-doc"]);
+  assert.equal(plan.state, "Active");
+  assert.equal(plan.active.length, 3);
+  assert.equal(
+    plan.active.some((item) => item.id === "manual-read-doc"),
+    true
+  );
+  assert.throws(
+    () =>
+      buildManualTodayContribution({
+        id: "manual-invalid-date",
+        title: "Invalid date",
+        activeDate: "07/16/2026",
+      }),
+    /YYYY-MM-DD/
+  );
+  assert.match(todayContributionContractRules[6], /Manual Today items/);
+  assert.match(todayPage, /manualTodayItems/);
+  assert.match(todayPage, /assembleTodayDayPlan/);
+  assert.doesNotMatch(todayPage, /from\("learning_activities"\)\s*\.update/);
+  assert.doesNotMatch(todayPage, /from\("bills"\)\s*\.update/);
 });

@@ -19,6 +19,8 @@ import { getBeastGreeting } from "@/lib/runtimeDate";
 import { createClient } from "@/lib/supabase/client";
 import { getProfileDisplayName } from "@/lib/profile";
 import {
+  assembleTodayDayPlan,
+  buildManualTodayContribution,
   buildTodayItemActionRequest,
   getTodayContributionExplanation,
   getTodayPriorityScore,
@@ -128,7 +130,10 @@ export default function TodayPage() {
   const [message, setMessage] = useState("");
   const [actionRequest, setActionRequest] =
     useState<TodayItemActionRequest | null>(null);
+  const [manualItemTitle, setManualItemTitle] = useState("");
+  const [manualTodayItems, setManualTodayItems] = useState<TodayContribution[]>([]);
   const { now } = useRuntimeToday();
+  const todayDate = now.toISOString().slice(0, 10);
 
   const ensureLearningPlan = useCallback(
     async ({
@@ -490,6 +495,7 @@ export default function TodayPage() {
         "Today ranks the supplied contribution without recomputing learning mastery.",
       recommendedAction: readyActivity ? "Continue with Mentor" : "Ask Mentor",
       actionUrl: "/dashboard/learning#mentor-session",
+      activeDate: todayDate,
       timing: readyActivity ? "Active" : "Informational",
       priority: readyActivity ? "Medium" : "Low",
       importance: readyActivity ? 6 : 2,
@@ -500,7 +506,15 @@ export default function TodayPage() {
       status: "Active",
       sourceEvidenceIds: readyActivity ? [readyActivity.id] : [],
     }),
-    [readyActivity]
+    [readyActivity, todayDate]
+  );
+  const todayDayPlan = useMemo(
+    () =>
+      assembleTodayDayPlan({
+        contributions: [learningContribution, ...manualTodayItems],
+        today: todayDate,
+      }),
+    [learningContribution, manualTodayItems, todayDate]
   );
   const learningPriorityScore = getTodayPriorityScore(learningContribution);
   const learningExplanation =
@@ -534,6 +548,26 @@ export default function TodayPage() {
     setMessage(
       `${action} request queued for ${request.source}. BeastOS did not change source module records directly.`
     );
+  }
+
+  function addManualTodayItem() {
+    const title = manualItemTitle.trim();
+    if (!title) {
+      setMessage("Add a title before adding a manual Today item.");
+      return;
+    }
+
+    const manualContribution = buildManualTodayContribution({
+      id: `manual-${Date.now()}`,
+      title,
+      activeDate: todayDate,
+      priority: "Medium",
+      estimatedMinutes: 15,
+    });
+
+    setManualTodayItems((current) => [...current, manualContribution]);
+    setManualItemTitle("");
+    setMessage("Manual Today item added to the BeastOS daily plan.");
   }
 
   return (
@@ -613,6 +647,59 @@ export default function TodayPage() {
             title="Cross-module contribution contract"
             description="Today accepts approved contributions from BeastOS services and active modules, then orders and routes them without replacing the source module engines."
           />
+          <div className="mt-5 grid gap-3 lg:grid-cols-[1.2fr_0.8fr]">
+            <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+              <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                Day State
+              </div>
+              <div className="mt-2 text-2xl font-black text-white">
+                {todayDayPlan.state}
+              </div>
+              <p className="mt-2 text-sm font-semibold leading-6 text-[#c7cfdb]">
+                {todayDayPlan.headline}. {todayDayPlan.summary}
+              </p>
+              <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                <MetricTile
+                  label="Active"
+                  value={String(todayDayPlan.active.length)}
+                  detail="Ready in today's plan"
+                  icon="A"
+                  tone="blue"
+                />
+                <MetricTile
+                  label="Completed"
+                  value={String(todayDayPlan.completed.length)}
+                  detail="Completed Day progress"
+                  icon="CD"
+                  tone="green"
+                />
+                <MetricTile
+                  label="Tomorrow"
+                  value={String(todayDayPlan.tomorrow.length)}
+                  detail="Tomorrow Preview items"
+                  icon="TP"
+                  tone="purple"
+                />
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+              <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                Weekly Outlook
+              </div>
+              <div className="mt-3 grid gap-2">
+                {todayDayPlan.weeklyOutlook.map((item) => (
+                  <div
+                    key={item.label}
+                    className="flex items-center justify-between rounded-lg border border-[#2a3242] bg-[#0f1419] px-3 py-2 text-sm font-bold text-[#dbe3ef]"
+                  >
+                    <span>{item.label}</span>
+                    <span>{item.active} active</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
           <div className="mt-5 flex flex-wrap gap-2">
             {todayContributionSources.map((source) => (
               <span
@@ -672,6 +759,52 @@ export default function TodayPage() {
               </p>
             </div>
           ) : null}
+        </DashboardCard>
+
+        <DashboardCard accent="beastos">
+          <SectionHeader
+            eyebrow="Manual Today"
+            title="Daily plan assembly"
+            description="Manual items are BeastOS-owned plan steps. They sit beside sourced module contributions without changing module-owned records."
+          />
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+            <input
+              type="text"
+              value={manualItemTitle}
+              onChange={(event) => setManualItemTitle(event.target.value)}
+              placeholder="Add a manual Today item"
+              className="min-h-[44px] flex-1 rounded-lg border border-[#2a3242] bg-[#111827] px-3 py-2 text-sm font-semibold text-white outline-none transition placeholder:text-[#7f8da3] focus:border-indigo-300"
+            />
+            <button
+              type="button"
+              onClick={addManualTodayItem}
+              className="beast-button"
+            >
+              Add to Today
+            </button>
+          </div>
+          <div className="mt-5 grid gap-3">
+            {manualTodayItems.map((item) => (
+              <div
+                key={item.id}
+                className="rounded-xl border border-[#2a3242] bg-[#111827] p-4"
+              >
+                <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                  BeastOS manual item
+                </div>
+                <h3 className="mt-1 font-black text-white">{item.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
+                  {item.summary}
+                </p>
+              </div>
+            ))}
+            {manualTodayItems.length === 0 ? (
+              <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 text-sm font-semibold leading-6 text-[#c7cfdb]">
+                No manual items yet. Add one only when Today needs a user-owned
+                plan step outside a module-owned recommendation.
+              </div>
+            ) : null}
+          </div>
         </DashboardCard>
 
         <DashboardCard accent="learning">

@@ -115,6 +115,41 @@ export type TodayItemActionRequest = {
 
 export type TodayItemActionAvailability = Record<TodayItemActionType, boolean>;
 
+export type TodayDayState =
+  | "Empty"
+  | "Active"
+  | "Completed Day"
+  | "Tomorrow Preview";
+
+export type TodayOutlookItem = {
+  label: string;
+  contributionIds: string[];
+  total: number;
+  active: number;
+};
+
+export type TodayDayPlan = {
+  state: TodayDayState;
+  headline: string;
+  summary: string;
+  active: TodayContribution[];
+  completed: TodayContribution[];
+  tomorrow: TodayContribution[];
+  weeklyOutlook: TodayOutlookItem[];
+};
+
+export type ManualTodayItemInput = {
+  id: string;
+  title: string;
+  summary?: string;
+  reason?: string;
+  activeDate: string;
+  priority?: TodayContributionPriority;
+  estimatedMinutes?: number;
+  relatedGoalId?: string;
+  relatedPlanId?: string;
+};
+
 export const todayContributionSources: TodayContributionSource[] = [
   "learning",
   "money",
@@ -165,6 +200,8 @@ export const todayContributionContractRules = [
   "Today contributions must carry source evidence so BeastOS does not invent tasks, progress, or placeholder work.",
   "Dismiss, snooze, complete, and reschedule requests must dispatch through the owning module or service contract instead of mutating source records directly.",
   "Explain why shown must combine the source-owned reason with BeastOS ranking signals without recalculating source module readiness.",
+  "Manual Today items are BeastOS-owned plan steps and must coexist with sourced module contributions without mutating module records.",
+  "Completed-day, tomorrow, and weekly outlook states are display states only; source modules remain responsible for their own schedules and completion logic.",
 ];
 
 export const todayItemActionTypes: TodayItemActionType[] = [
@@ -243,6 +280,35 @@ function parseIsoTimestamp(value: string, label: string) {
   }
 
   return parsed;
+}
+
+function parseDateOnly(value: string, label: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    throw new Error(`Today ${label} must use YYYY-MM-DD format.`);
+  }
+
+  const parsed = Date.parse(`${value}T00:00:00.000Z`);
+  if (Number.isNaN(parsed)) {
+    throw new Error(`Today ${label} must be a valid date.`);
+  }
+
+  return value;
+}
+
+function addDays(date: string, days: number) {
+  const parsed = new Date(`${parseDateOnly(date, "date")}T00:00:00.000Z`);
+  parsed.setUTCDate(parsed.getUTCDate() + days);
+  return parsed.toISOString().slice(0, 10);
+}
+
+function dateForContribution(contribution: TodayContribution) {
+  return contribution.dueDate || contribution.activeDate || "";
+}
+
+function dayLabel(today: string, date: string) {
+  if (date === today) return "Today";
+  if (date === addDays(today, 1)) return "Tomorrow";
+  return date;
 }
 
 export function buildTodayContribution(
@@ -492,4 +558,112 @@ export function getTodayContributionEmptyState(
   return summary.active === 0
     ? "No urgent work is waiting in Today. Continue learning, review money, check Calendar, review Notifications, or confirm a Goal."
     : "";
+}
+
+export function buildManualTodayContribution(
+  input: ManualTodayItemInput
+): TodayContribution {
+  const activeDate = parseDateOnly(input.activeDate, "manual item activeDate");
+  const title = input.title.trim();
+
+  if (!input.id.trim()) {
+    throw new Error("Manual Today item id is required.");
+  }
+
+  if (!title) {
+    throw new Error("Manual Today item title is required.");
+  }
+
+  return buildTodayContribution({
+    id: input.id,
+    source: "beastos",
+    type: "Plan Step",
+    title,
+    summary: input.summary?.trim() || "Manually added to today's plan.",
+    reason:
+      input.reason?.trim() ||
+      "The user manually added this BeastOS-owned Today item.",
+    recommendedAction: "Work on manual item",
+    actionUrl: "/dashboard/today",
+    activeDate,
+    timing: "Active",
+    priority: input.priority || "Medium",
+    estimatedMinutes: input.estimatedMinutes,
+    relatedGoalId: input.relatedGoalId,
+    relatedPlanId: input.relatedPlanId,
+    dismissible: true,
+    status: "Active",
+    sourceEvidenceIds: [`manual:${input.id}`],
+  });
+}
+
+export function assembleTodayDayPlan({
+  contributions,
+  today,
+}: {
+  contributions: TodayContribution[];
+  today: string;
+}): TodayDayPlan {
+  const todayDate = parseDateOnly(today, "plan date");
+  const tomorrowDate = addDays(todayDate, 1);
+  const normalized = contributions.map(buildTodayContribution);
+  const todaysItems = normalized.filter(
+    (item) => dateForContribution(item) === todayDate || item.timing === "Overdue"
+  );
+  const active = sortTodayContributions(
+    todaysItems.filter((item) => item.status === "Active")
+  );
+  const completed = sortTodayContributions(
+    todaysItems.filter((item) => item.status === "Completed")
+  );
+  const tomorrow = sortTodayContributions(
+    normalized.filter(
+      (item) => dateForContribution(item) === tomorrowDate && item.status === "Active"
+    )
+  );
+  const weekDates = Array.from({ length: 7 }, (_, index) =>
+    addDays(todayDate, index)
+  );
+  const weeklyOutlook = weekDates.map((date) => {
+    const dayItems = normalized.filter((item) => dateForContribution(item) === date);
+    return {
+      label: dayLabel(todayDate, date),
+      contributionIds: dayItems.map((item) => item.id),
+      total: dayItems.length,
+      active: dayItems.filter((item) => item.status === "Active").length,
+    };
+  });
+  const state: TodayDayState =
+    active.length > 0
+      ? "Active"
+      : completed.length > 0
+        ? "Completed Day"
+        : tomorrow.length > 0
+          ? "Tomorrow Preview"
+          : "Empty";
+  const headline =
+    state === "Active"
+      ? `${active.length} item${active.length === 1 ? "" : "s"} ready today`
+      : state === "Completed Day"
+        ? "Today is complete"
+        : state === "Tomorrow Preview"
+          ? "Nothing left today. Tomorrow is ready."
+          : "No urgent work is waiting in Today";
+
+  return {
+    state,
+    headline,
+    summary:
+      state === "Active"
+        ? "Focus on the highest-ranked item first, then continue through the daily plan."
+        : state === "Completed Day"
+          ? "All scheduled Today items are complete. You can review tomorrow or add a manual item."
+          : state === "Tomorrow Preview"
+            ? "Today has no active items, so BeastOS is previewing tomorrow's plan."
+            : getTodayContributionEmptyState(normalized),
+    active,
+    completed,
+    tomorrow,
+    weeklyOutlook,
+  };
 }
