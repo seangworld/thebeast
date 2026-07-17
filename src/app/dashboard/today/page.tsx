@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -19,9 +19,14 @@ import { getBeastGreeting } from "@/lib/runtimeDate";
 import { createClient } from "@/lib/supabase/client";
 import { getProfileDisplayName } from "@/lib/profile";
 import {
+  buildTodayItemActionRequest,
   getTodayPriorityScore,
+  getTodayItemActionAvailability,
   todayContributionContractRules,
   todayContributionSources,
+  type TodayContribution,
+  type TodayItemActionRequest,
+  type TodayItemActionType,
 } from "@/lib/platform/today";
 
 type CourseRow = {
@@ -120,6 +125,8 @@ export default function TodayPage() {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [message, setMessage] = useState("");
+  const [actionRequest, setActionRequest] =
+    useState<TodayItemActionRequest | null>(null);
   const { now } = useRuntimeToday();
 
   const ensureLearningPlan = useCallback(
@@ -471,25 +478,60 @@ export default function TodayPage() {
       ? 0
       : Math.round((completedActivities.length / state.activities.length) * 100);
   const streak = completedActivities.length > 0 ? 1 : 0;
-  const learningPriorityScore = getTodayPriorityScore({
-    id: "today-learning-priority",
-    source: "learning",
-    type: "Resume",
-    title: readyActivity?.title || "Ask your Mentor for the first step",
-    summary: "BeastLearning supplies the learning readiness and next activity.",
-    reason: "Today ranks the supplied contribution without recomputing learning mastery.",
-    recommendedAction: readyActivity ? "Continue with Mentor" : "Ask Mentor",
-    actionUrl: "/dashboard/learning#mentor-session",
-    timing: readyActivity ? "Active" : "Informational",
-    priority: readyActivity ? "Medium" : "Low",
-    importance: readyActivity ? 6 : 2,
-    urgency: readyActivity ? 6 : 1,
-    preferenceWeight: 5,
-    estimatedMinutes: readyActivity?.estimated_minutes || 20,
-    dismissible: false,
-    status: "Active",
-    sourceEvidenceIds: readyActivity ? [readyActivity.id] : [],
-  });
+  const learningContribution: TodayContribution = useMemo(
+    () => ({
+      id: "today-learning-priority",
+      source: "learning",
+      type: "Resume",
+      title: readyActivity?.title || "Ask your Mentor for the first step",
+      summary: "BeastLearning supplies the learning readiness and next activity.",
+      reason:
+        "Today ranks the supplied contribution without recomputing learning mastery.",
+      recommendedAction: readyActivity ? "Continue with Mentor" : "Ask Mentor",
+      actionUrl: "/dashboard/learning#mentor-session",
+      timing: readyActivity ? "Active" : "Informational",
+      priority: readyActivity ? "Medium" : "Low",
+      importance: readyActivity ? 6 : 2,
+      urgency: readyActivity ? 6 : 1,
+      preferenceWeight: 5,
+      estimatedMinutes: readyActivity?.estimated_minutes || 20,
+      dismissible: true,
+      status: "Active",
+      sourceEvidenceIds: readyActivity ? [readyActivity.id] : [],
+    }),
+    [readyActivity]
+  );
+  const learningPriorityScore = getTodayPriorityScore(learningContribution);
+  const learningActionAvailability =
+    getTodayItemActionAvailability(learningContribution);
+  const actionButtons: { action: TodayItemActionType; label: string }[] = [
+    { action: "Dismiss", label: "Dismiss" },
+    { action: "Snooze", label: "Snooze 1h" },
+    { action: "Complete", label: "Complete" },
+    { action: "Reschedule", label: "Tomorrow" },
+  ];
+
+  function handleTodayAction(action: TodayItemActionType) {
+    const requestedAt = new Date().toISOString();
+    const snoozedUntil = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+    const rescheduledFor = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    rescheduledFor.setHours(9, 0, 0, 0);
+
+    const request = buildTodayItemActionRequest({
+      contribution: learningContribution,
+      action,
+      requestedAt,
+      reason: `${action} requested from BeastOS Today and routed to the ${learningContribution.source} owner contract.`,
+      snoozedUntil: action === "Snooze" ? snoozedUntil : undefined,
+      rescheduledFor:
+        action === "Reschedule" ? rescheduledFor.toISOString() : undefined,
+    });
+
+    setActionRequest(request);
+    setMessage(
+      `${action} request queued for ${request.source}. BeastOS did not change source module records directly.`
+    );
+  }
 
   return (
     <main className="beast-page">
@@ -599,6 +641,18 @@ export default function TodayPage() {
               </div>
             ))}
           </div>
+          {actionRequest ? (
+            <div className="mt-5 rounded-xl border border-[#2a3242] bg-[#0f1419] p-4">
+              <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                Latest Today action event
+              </div>
+              <p className="mt-2 text-sm font-semibold leading-6 text-[#dbe3ef]">
+                {actionRequest.action} is queued through the {actionRequest.source}{" "}
+                contract for contribution {actionRequest.contributionId}. Dispatch
+                mode: {actionRequest.dispatchMode}.
+              </p>
+            </div>
+          ) : null}
         </DashboardCard>
 
         <DashboardCard accent="learning">
@@ -643,6 +697,23 @@ export default function TodayPage() {
                     : "Start by asking your Mentor to prepare a lesson."}
             </p>
           </div>
+          <div className="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            {actionButtons.map(({ action, label }) => (
+              <button
+                key={action}
+                type="button"
+                onClick={() => handleTodayAction(action)}
+                disabled={!learningActionAvailability[action]}
+                className="rounded-lg border border-[#2a3242] bg-[#111827] px-3 py-2 text-sm font-black text-white transition hover:border-[#818cf8] hover:bg-[#182033] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <p className="mt-3 text-xs font-semibold uppercase text-[#7f8da3]">
+            Actions route through module contract events. BeastOS does not directly
+            mutate learning activity status, schedules, or mastery.
+          </p>
         </DashboardCard>
 
         <section id="activities" className="grid scroll-mt-24 gap-4 xl:grid-cols-[1.2fr_0.8fr]">

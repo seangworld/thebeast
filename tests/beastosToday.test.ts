@@ -3,9 +3,11 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
   buildTodayContribution,
+  buildTodayItemActionRequest,
   getRankedTodayContributions,
   getTodayPriorityScore,
   getTodayContributionEmptyState,
+  getTodayItemActionAvailability,
   sortTodayContributions,
   summarizeTodayContributions,
   todayContributionContractRules,
@@ -14,6 +16,7 @@ import {
   todayContributionStatuses,
   todayContributionTimings,
   todayContributionTypes,
+  todayItemActionTypes,
   type TodayContribution,
 } from "../src/lib/platform/today";
 
@@ -151,4 +154,102 @@ test("BO-26 Today ranks work by urgency importance effort and preference", () =>
   assert.match(ranked[0].priorityScore.explanation, /urgency 10/);
   assert.match(todayPage, /Priority Engine/);
   assert.match(todayPage, /getTodayPriorityScore/);
+});
+
+test("BO-27 Today routes item actions through source-owned contracts", () => {
+  const todayPage = readFileSync("src/app/dashboard/today/page.tsx", "utf8");
+  const availability = getTodayItemActionAvailability({
+    ...learningContribution,
+    dismissible: true,
+  });
+  const snoozeRequest = buildTodayItemActionRequest({
+    contribution: { ...learningContribution, dismissible: true },
+    action: "Snooze",
+    requestedAt: "2026-07-17T09:00:00.000Z",
+    reason: "User asked BeastOS Today to snooze the supplied item.",
+    snoozedUntil: "2026-07-17T10:00:00.000Z",
+  });
+  const rescheduleRequest = buildTodayItemActionRequest({
+    contribution: { ...learningContribution, dismissible: true },
+    action: "Reschedule",
+    requestedAt: "2026-07-17T09:00:00.000Z",
+    reason: "User asked BeastOS Today to reschedule the supplied item.",
+    rescheduledFor: "2026-07-18T13:00:00.000Z",
+  });
+
+  assert.deepEqual(todayItemActionTypes, [
+    "Dismiss",
+    "Snooze",
+    "Complete",
+    "Reschedule",
+  ]);
+  assert.equal(availability.Dismiss, true);
+  assert.equal(availability.Snooze, true);
+  assert.equal(availability.Complete, true);
+  assert.equal(availability.Reschedule, true);
+  assert.equal(snoozeRequest.dispatchMode, "module-contract-event");
+  assert.equal(snoozeRequest.source, "learning");
+  assert.equal(snoozeRequest.snoozedUntil, "2026-07-17T10:00:00.000Z");
+  assert.equal(rescheduleRequest.rescheduledFor, "2026-07-18T13:00:00.000Z");
+  assert.throws(
+    () =>
+      buildTodayItemActionRequest({
+        contribution: learningContribution,
+        action: "Snooze",
+        requestedAt: "2026-07-17T09:00:00.000Z",
+        reason: "Missing snooze target.",
+      }),
+    /snoozedUntil/
+  );
+  assert.deepEqual(
+    getTodayItemActionAvailability({
+      ...learningContribution,
+      sourceEvidenceIds: [],
+    }),
+    {
+      Dismiss: false,
+      Snooze: false,
+      Complete: false,
+      Reschedule: false,
+    }
+  );
+  assert.throws(
+    () =>
+      buildTodayItemActionRequest({
+        contribution: { ...learningContribution, dismissible: true },
+        action: "Complete",
+        requestedAt: "not-a-date",
+        reason: "Invalid request timestamp.",
+      }),
+    /requestedAt/
+  );
+  assert.throws(
+    () =>
+      buildTodayItemActionRequest({
+        contribution: { ...learningContribution, dismissible: true },
+        action: "Snooze",
+        requestedAt: "2026-07-17T09:00:00.000Z",
+        reason: "Snooze must move into the future.",
+        snoozedUntil: "2026-07-17T08:00:00.000Z",
+      }),
+    /future snoozedUntil/
+  );
+  assert.throws(
+    () =>
+      buildTodayItemActionRequest({
+        contribution: { ...learningContribution, dismissible: true },
+        action: "Reschedule",
+        requestedAt: "2026-07-17T09:00:00.000Z",
+        reason: "Reschedule must move into the future.",
+        rescheduledFor: "2026-07-17T08:00:00.000Z",
+      }),
+    /future rescheduledFor/
+  );
+  assert.match(todayContributionContractRules[4], /contract/);
+  assert.match(todayPage, /Dismiss/);
+  assert.match(todayPage, /Snooze 1h/);
+  assert.match(todayPage, /Complete/);
+  assert.match(todayPage, /Tomorrow/);
+  assert.match(todayPage, /module contract events/);
+  assert.doesNotMatch(todayPage, /from\("learning_activities"\)\s*\.update/);
 });

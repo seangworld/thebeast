@@ -81,6 +81,27 @@ export type TodayPriorityScore = {
   explanation: string;
 };
 
+export type TodayItemActionType =
+  | "Dismiss"
+  | "Snooze"
+  | "Complete"
+  | "Reschedule";
+
+export type TodayItemActionRequest = {
+  id: string;
+  contributionId: string;
+  source: TodayContributionSource;
+  action: TodayItemActionType;
+  requestedAt: string;
+  sourceEvidenceIds: string[];
+  dispatchMode: "module-contract-event";
+  reason: string;
+  snoozedUntil?: string;
+  rescheduledFor?: string;
+};
+
+export type TodayItemActionAvailability = Record<TodayItemActionType, boolean>;
+
 export const todayContributionSources: TodayContributionSource[] = [
   "learning",
   "money",
@@ -129,6 +150,14 @@ export const todayContributionContractRules = [
   "Modules own source calculations such as bill cycles, cash-flow risk, learning mastery, review schedules, and readiness.",
   "Completion must route back to the owning module or service before BeastOS marks a contribution completed.",
   "Today contributions must carry source evidence so BeastOS does not invent tasks, progress, or placeholder work.",
+  "Dismiss, snooze, complete, and reschedule requests must dispatch through the owning module or service contract instead of mutating source records directly.",
+];
+
+export const todayItemActionTypes: TodayItemActionType[] = [
+  "Dismiss",
+  "Snooze",
+  "Complete",
+  "Reschedule",
 ];
 
 const priorityRank: Record<TodayContributionPriority, number> = {
@@ -174,6 +203,19 @@ function effortScore(minutes?: number) {
   return 2;
 }
 
+function parseIsoTimestamp(value: string, label: string) {
+  if (!value.trim()) {
+    throw new Error(`Today item action ${label} timestamp is required.`);
+  }
+
+  const parsed = Date.parse(value);
+  if (Number.isNaN(parsed)) {
+    throw new Error(`Today item action ${label} timestamp must be valid.`);
+  }
+
+  return parsed;
+}
+
 export function buildTodayContribution(
   contribution: TodayContribution
 ): TodayContribution {
@@ -214,6 +256,93 @@ export function buildTodayContribution(
   return {
     ...contribution,
     sourceEvidenceIds: [...contribution.sourceEvidenceIds],
+  };
+}
+
+export function getTodayItemActionAvailability(
+  contribution: TodayContribution
+): TodayItemActionAvailability {
+  const normalized = buildTodayContribution(contribution);
+  const isActive = normalized.status === "Active";
+  const hasSourceEvidence = normalized.sourceEvidenceIds.length > 0;
+  const canRouteAction = isActive && hasSourceEvidence;
+
+  return {
+    Dismiss: canRouteAction && normalized.dismissible,
+    Snooze: canRouteAction,
+    Complete: canRouteAction,
+    Reschedule: canRouteAction,
+  };
+}
+
+export function buildTodayItemActionRequest({
+  contribution,
+  action,
+  requestedAt,
+  reason,
+  snoozedUntil,
+  rescheduledFor,
+}: {
+  contribution: TodayContribution;
+  action: TodayItemActionType;
+  requestedAt: string;
+  reason: string;
+  snoozedUntil?: string;
+  rescheduledFor?: string;
+}): TodayItemActionRequest {
+  const normalized = buildTodayContribution(contribution);
+
+  if (!todayItemActionTypes.includes(action)) {
+    throw new Error(`Unsupported Today item action: ${action}`);
+  }
+
+  if (!reason.trim()) {
+    throw new Error("Today item action reason is required.");
+  }
+
+  const requestedAtTime = parseIsoTimestamp(requestedAt, "requestedAt");
+
+  if (action === "Snooze" && !snoozedUntil) {
+    throw new Error("Snooze actions require a snoozedUntil timestamp.");
+  }
+
+  if (action === "Reschedule" && !rescheduledFor) {
+    throw new Error("Reschedule actions require a rescheduledFor timestamp.");
+  }
+
+  const snoozedUntilTime =
+    action === "Snooze" && snoozedUntil
+      ? parseIsoTimestamp(snoozedUntil, "snoozedUntil")
+      : null;
+  const rescheduledForTime =
+    action === "Reschedule" && rescheduledFor
+      ? parseIsoTimestamp(rescheduledFor, "rescheduledFor")
+      : null;
+
+  if (snoozedUntilTime !== null && snoozedUntilTime <= requestedAtTime) {
+    throw new Error("Snooze actions require a future snoozedUntil timestamp.");
+  }
+
+  if (rescheduledForTime !== null && rescheduledForTime <= requestedAtTime) {
+    throw new Error("Reschedule actions require a future rescheduledFor timestamp.");
+  }
+
+  const availability = getTodayItemActionAvailability(normalized);
+  if (!availability[action]) {
+    throw new Error(`${action} is not available for this Today contribution.`);
+  }
+
+  return {
+    id: `${normalized.id}:${action.toLowerCase()}:${requestedAt}`,
+    contributionId: normalized.id,
+    source: normalized.source,
+    action,
+    requestedAt,
+    sourceEvidenceIds: [...normalized.sourceEvidenceIds],
+    dispatchMode: "module-contract-event",
+    reason,
+    snoozedUntil: action === "Snooze" ? snoozedUntil : undefined,
+    rescheduledFor: action === "Reschedule" ? rescheduledFor : undefined,
   };
 }
 
