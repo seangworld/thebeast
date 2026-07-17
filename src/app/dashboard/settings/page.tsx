@@ -12,6 +12,13 @@ import {
   sharedAIContractRules,
   type SharedAIContextItem,
 } from "@/lib/platform/sharedAI";
+import {
+  buildHouseholdInvitationRequest,
+  buildHouseholdSharedLinkRequest,
+  getHouseholdSharedLinksForMember,
+  householdOwnershipRules,
+  type HouseholdModel,
+} from "@/lib/platform/household";
 
 const settingsSections = [
   {
@@ -53,6 +60,62 @@ const accountLinks = [
 ];
 
 export default function SettingsPage() {
+  const householdModel: HouseholdModel = {
+    households: [
+      {
+        id: "household-primary",
+        ownerId: "member-owner",
+        name: "Primary household",
+        createdAt: "2026-07-17T00:00:00.000Z",
+        updatedAt: "2026-07-17T00:00:00.000Z",
+      },
+    ],
+    members: [
+      {
+        id: "member-owner",
+        householdId: "household-primary",
+        userId: "member-owner",
+        displayName: "Owner",
+        isOwner: true,
+        joinedAt: "2026-07-17T00:00:00.000Z",
+        updatedAt: "2026-07-17T00:00:00.000Z",
+      },
+      {
+        id: "member-household",
+        householdId: "household-primary",
+        displayName: "Household member",
+        isOwner: false,
+        role: "Member",
+        joinedAt: "2026-07-17T00:00:00.000Z",
+        updatedAt: "2026-07-17T00:00:00.000Z",
+      },
+    ],
+  };
+  const householdInvitation = buildHouseholdInvitationRequest({
+    householdId: "household-primary",
+    invitedByMemberId: "member-owner",
+    email: "member@example.com",
+    role: "Member",
+    model: householdModel,
+  });
+  const householdSharedLink = buildHouseholdSharedLinkRequest({
+    householdId: "household-primary",
+    kind: "Document",
+    sourceRecordId: "document-1",
+    title: "Shared document",
+    permission: "View",
+    grantedByMemberId: "member-owner",
+    grantedToMemberIds: ["member-household"],
+    model: householdModel,
+  });
+  const householdVisibleLinks = getHouseholdSharedLinksForMember({
+    householdId: "household-primary",
+    memberId: "member-household",
+    model: {
+      ...householdModel,
+      sharedLinks: [householdSharedLink],
+    },
+  });
   const sharedAIContext: SharedAIContextItem[] = [
     {
       id: "context-user-preferences",
@@ -214,6 +277,41 @@ export default function SettingsPage() {
           </div>
           <div className="mt-5 grid gap-3 md:grid-cols-2">
             {sharedAIContractRules.map((rule) => (
+              <div
+                key={rule}
+                className="rounded-xl border border-[#2a3242] bg-[#0f1419] p-4 text-sm font-semibold text-[#d8dee8]"
+              >
+                {rule}
+              </div>
+            ))}
+          </div>
+        </DashboardCard>
+
+        <DashboardCard accent="family">
+          <SectionHeader
+            eyebrow="Household"
+            title="Lifecycle and shared visibility"
+            description="Household actions are routed as BeastOS contract events while source modules keep their own business logic."
+          />
+          <div className="mt-5 grid gap-4 md:grid-cols-3">
+            {[
+              ["Invitation", householdInvitation.dispatchMode],
+              ["Shared links", householdVisibleLinks.length],
+              ["Source owner", householdSharedLink.sourceModule],
+            ].map(([label, value]) => (
+              <div
+                key={label}
+                className="rounded-xl border border-[#2a3242] bg-[#111827] p-4"
+              >
+                <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                  {label}
+                </div>
+                <div className="mt-2 text-sm font-black text-white">{value}</div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-5 grid gap-3 md:grid-cols-2">
+            {householdOwnershipRules.slice(0, 4).map((rule) => (
               <div
                 key={rule}
                 className="rounded-xl border border-[#2a3242] bg-[#0f1419] p-4 text-sm font-semibold text-[#d8dee8]"

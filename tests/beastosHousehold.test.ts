@@ -2,8 +2,15 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   buildHouseholdModel,
+  buildHouseholdInvitationRequest,
+  buildHouseholdRemovalRequest,
+  buildHouseholdSharedLinkRequest,
+  getHouseholdMemberRole,
+  getHouseholdSharedLinksForMember,
+  householdMemberRoles,
   householdRelationshipTypes,
   householdOwnershipRules,
+  isHouseholdMemberRole,
   isHouseholdRelationshipType,
   mockHouseholdModel,
   summarizeHouseholdModel,
@@ -35,6 +42,7 @@ const householdModel: HouseholdModel = {
       householdId: "household-1",
       displayName: "Family member",
       isOwner: false,
+      role: "Member",
       joinedAt: "2026-07-14T00:00:00.000Z",
       updatedAt: "2026-07-14T00:00:00.000Z",
     },
@@ -181,11 +189,106 @@ test("BeastOS Household relationships support the initial relationship set", () 
   );
 });
 
-test("BeastOS Household foundation does not add advanced permissions", () => {
+test("BeastOS Household foundation keeps modules behind BeastOS boundaries", () => {
   const summary = summarizeHouseholdModel(mockHouseholdModel);
 
   assert.equal(summary.householdCount, 1);
   assert.equal(summary.memberCount, 1);
   assert.equal(summary.ownersByHousehold["household-sean"]?.isOwner, true);
-  assert.match(householdOwnershipRules[4], /permissions/);
+  assert.match(householdOwnershipRules[5], /BeastOS-owned boundaries/);
+});
+
+test("BO-46 Household supports invitations roles and safe removal events", () => {
+  assert.deepEqual(householdMemberRoles, ["Owner", "Admin", "Member", "Child"]);
+  assert.equal(isHouseholdMemberRole("Admin"), true);
+  assert.equal(isHouseholdMemberRole("Guest"), false);
+  assert.equal(
+    getHouseholdMemberRole(householdModel.members[0], householdModel.households[0]),
+    "Owner"
+  );
+
+  const invite = buildHouseholdInvitationRequest({
+    householdId: "household-1",
+    invitedByMemberId: "household-member-owner",
+    email: "member@example.com",
+    role: "Member",
+    model: householdModel,
+  });
+  const removal = buildHouseholdRemovalRequest({
+    householdId: "household-1",
+    requestedByMemberId: "household-member-owner",
+    targetMemberId: "household-member-family",
+    model: householdModel,
+  });
+
+  assert.equal(invite.dispatchMode, "household-contract-event");
+  assert.equal(invite.requiresOwnerOrAdmin, true);
+  assert.equal(invite.sourceOwnershipPreserved, true);
+  assert.equal(removal.action, "Remove");
+  assert.throws(
+    () =>
+      buildHouseholdRemovalRequest({
+        householdId: "household-1",
+        requestedByMemberId: "household-member-family",
+        targetMemberId: "household-member-owner",
+        model: householdModel,
+      }),
+    /Owner or Admin/
+  );
+  assert.throws(
+    () =>
+      buildHouseholdRemovalRequest({
+        householdId: "household-1",
+        requestedByMemberId: "household-member-owner",
+        targetMemberId: "household-member-owner",
+        model: householdModel,
+      }),
+    /Owner cannot be removed/
+  );
+  assert.match(householdOwnershipRules[4], /contract events/);
+});
+
+test("BO-47 Household shared links preserve source ownership and visibility", () => {
+  const goalLink = buildHouseholdSharedLinkRequest({
+    householdId: "household-1",
+    kind: "Goal",
+    sourceRecordId: "goal-1",
+    title: "Shared goal",
+    permission: "View",
+    grantedByMemberId: "household-member-owner",
+    grantedToMemberIds: ["household-member-family"],
+    model: householdModel,
+  });
+  const documentLink = buildHouseholdSharedLinkRequest({
+    householdId: "household-1",
+    kind: "Document",
+    sourceRecordId: "document-1",
+    title: "Shared document",
+    permission: "Manage",
+    grantedByMemberId: "household-member-owner",
+    grantedToMemberIds: ["household-member-family"],
+    model: householdModel,
+  });
+  const modelWithLinks: HouseholdModel = {
+    ...householdModel,
+    sharedLinks: [goalLink, documentLink],
+  };
+  const visibleToMember = getHouseholdSharedLinksForMember({
+    householdId: "household-1",
+    memberId: "household-member-family",
+    model: modelWithLinks,
+  });
+  const summary = summarizeHouseholdModel(modelWithLinks);
+
+  assert.equal(goalLink.sourceModule, "goals");
+  assert.equal(documentLink.sourceModule, "documents");
+  assert.equal(goalLink.dispatchMode, "household-visibility-contract");
+  assert.equal(goalLink.sourceOwnershipPreserved, true);
+  assert.deepEqual(
+    visibleToMember.map((link) => link.sourceRecordId),
+    ["goal-1", "document-1"]
+  );
+  assert.equal(summary.sharedLinkCount, 2);
+  assert.equal(summary.sharedLinksByHousehold["household-1"].length, 2);
+  assert.match(householdOwnershipRules[6], /source modules keep business logic/);
 });

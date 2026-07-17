@@ -8,6 +8,10 @@ import {
 } from "./family";
 import {
   buildHouseholdModel,
+  buildHouseholdInvitationRequest,
+  buildHouseholdRemovalRequest,
+  buildHouseholdSharedLinkRequest,
+  getHouseholdSharedLinksForMember,
   householdOwnershipRules,
   mockHouseholdModel,
   type Household,
@@ -39,7 +43,8 @@ export const beastOSFamilyServiceRules = [
   "Family and Household are BeastOS shared platform services.",
   "Future applications must consume Family and Household through BeastOS service interfaces.",
   "Modules must not implement duplicate family or household logic.",
-  "Invitations, sharing UI, family switching, module integrations, household assets, BeastHome integration, advanced permissions, and editing workflows are future roadmap work.",
+  "Household lifecycle and sharing actions must dispatch BeastOS contract events and preserve module source ownership.",
+  "Family switching, household assets, BeastHome integration, and editing workflows remain future roadmap work.",
 ];
 
 export const beastOSFamilySharedServices: BeastOSSharedServiceRegistration[] = [
@@ -66,7 +71,14 @@ export const beastOSFamilySharedServices: BeastOSSharedServiceRegistration[] = [
     status: "foundation",
     visibility: "shared-platform-service",
     sourcePackages: ["BO-302", "BO-303", "BO-305"],
-    publicFunctions: ["getCurrentHousehold", "getHouseholdMembers"],
+    publicFunctions: [
+      "getCurrentHousehold",
+      "getHouseholdMembers",
+      "buildHouseholdInvitationRequest",
+      "buildHouseholdRemovalRequest",
+      "buildHouseholdSharedLinkRequest",
+      "getHouseholdSharedLinksForMember",
+    ],
     boundaries: householdOwnershipRules,
   },
 ];
@@ -121,3 +133,10 @@ export function getRelationships(
     (relationship) => relationship.householdId === householdId
   );
 }
+
+export {
+  buildHouseholdInvitationRequest,
+  buildHouseholdRemovalRequest,
+  buildHouseholdSharedLinkRequest,
+  getHouseholdSharedLinksForMember,
+};

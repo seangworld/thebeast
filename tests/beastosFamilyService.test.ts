@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import {
   beastOSFamilyServiceRules,
   beastOSFamilySharedServices,
+  buildHouseholdInvitationRequest,
+  buildHouseholdSharedLinkRequest,
   canManageFamily,
   canViewFamily,
   getCurrentFamily,
@@ -10,6 +12,7 @@ import {
   getFamilyMembers,
   getFamilySharedServiceRegistration,
   getHouseholdMembers,
+  getHouseholdSharedLinksForMember,
   getRelationships,
 } from "../src/lib/platform/familyService";
 import { mockFamilyVisibilityPermissionModel } from "../src/lib/platform/familyVisibilityPermissions";
@@ -135,7 +138,7 @@ test("BO-305 exposes household relationships without adding module integrations"
   assert.equal(relationships.length, 1);
   assert.equal(relationships[0].relationship, "Husband");
   assert.equal(getRelationships("missing-household", householdModel).length, 0);
-  assert.match(beastOSFamilyServiceRules[3], /module integrations/);
+  assert.match(beastOSFamilyServiceRules[4], /future roadmap work/);
 });
 
 test("BO-305 reuses existing family visibility permission checks", () => {
@@ -147,4 +150,44 @@ test("BO-305 reuses existing family visibility permission checks", () => {
 
   assert.equal(canViewFamily(ownerInput), true);
   assert.equal(canManageFamily(ownerInput), true);
+});
+
+test("BO-46 and BO-47 expose Household lifecycle and sharing service contracts", () => {
+  const registration = getFamilySharedServiceRegistration("household");
+  const invite = buildHouseholdInvitationRequest({
+    householdId: "household-1",
+    invitedByMemberId: "household-member-owner",
+    email: "member@example.com",
+    role: "Member",
+    model: householdModel,
+  });
+  const learningLink = buildHouseholdSharedLinkRequest({
+    householdId: "household-1",
+    kind: "Learning",
+    sourceRecordId: "learning-plan-1",
+    title: "Shared learning plan",
+    permission: "View",
+    grantedByMemberId: "household-member-owner",
+    grantedToMemberIds: ["household-member-family"],
+    model: householdModel,
+  });
+  const visibleLinks = getHouseholdSharedLinksForMember({
+    householdId: "household-1",
+    memberId: "household-member-family",
+    model: { ...householdModel, sharedLinks: [learningLink] },
+  });
+
+  assert.equal(invite.dispatchMode, "household-contract-event");
+  assert.equal(learningLink.sourceModule, "learning");
+  assert.equal(learningLink.sourceOwnershipPreserved, true);
+  assert.deepEqual(visibleLinks.map((link) => link.sourceRecordId), ["learning-plan-1"]);
+  assert.equal(
+    registration?.publicFunctions.includes("buildHouseholdInvitationRequest"),
+    true
+  );
+  assert.equal(
+    registration?.publicFunctions.includes("buildHouseholdSharedLinkRequest"),
+    true
+  );
+  assert.match(beastOSFamilyServiceRules[3], /contract events/);
 });
