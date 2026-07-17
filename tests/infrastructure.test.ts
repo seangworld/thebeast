@@ -259,6 +259,17 @@ import {
   getGeneratedActivityTitle,
   getGeneratedLearningSubject,
 } from "../src/lib/learning/generatedActivities";
+import {
+  buildPlatformSearchItem,
+  buildRecentSearches,
+  buildSavedSearch,
+  buildSearchActionRequest,
+  buildUniversalSearchIndex,
+  interpretNaturalLanguageSearch,
+  searchContractRules,
+  searchPlatformIndex,
+  type PlatformSearchItem,
+} from "../src/lib/platform/search";
 import { generateDynamicLearningLesson } from "../src/lib/learning/dynamicLessonGenerator";
 import {
   createGeneratedLearningContentRecord,
@@ -746,6 +757,114 @@ test("BO-34 Calendar detects conflicts reminders and time zone issues", () => {
   assert.match(calendarPage, /detectCalendarConflicts/);
   assert.match(calendarPage, /buildCalendarReminders/);
   assert.match(calendarPage, /America\/New_York/);
+});
+
+function buildSearchFixtureItems(): PlatformSearchItem[] {
+  return [
+    {
+      id: "money-cashflow",
+      source: "money",
+      sourceRecordId: "cashflow-1",
+      domain: "Money",
+      title: "Cashflow buffer",
+      summary: "Review upcoming bills and safe operating cash.",
+      keywords: ["money", "bills", "cashflow", "buffer"],
+      href: "/dashboard/money/cashflow",
+      permissionScope: "Owner",
+      updatedAt: "2026-07-17T13:00:00.000Z",
+      actions: [{ type: "Open", label: "Open Cashflow", href: "/dashboard/money/cashflow" }],
+    },
+    {
+      id: "learning-next-step",
+      source: "learning",
+      sourceRecordId: "mentor-step-1",
+      domain: "Learning",
+      title: "Next learning step",
+      summary: "Resume the Mentor-guided lesson.",
+      keywords: ["learning", "mentor", "lesson"],
+      href: "/dashboard/learning",
+      permissionScope: "Owner",
+      updatedAt: "2026-07-17T12:00:00.000Z",
+      actions: [{ type: "Resume", label: "Resume Learning", href: "/dashboard/learning" }],
+    },
+    {
+      id: "household-document",
+      source: "documents",
+      sourceRecordId: "document-1",
+      domain: "Documents",
+      title: "Shared household document",
+      summary: "A household-visible uploaded document.",
+      keywords: ["document", "uploaded", "household"],
+      href: "/dashboard/uploads",
+      permissionScope: "Household",
+      updatedAt: "2026-07-17T11:00:00.000Z",
+      actions: [{ type: "Open", label: "Open Uploads", href: "/dashboard/uploads" }],
+    },
+  ];
+}
+
+test("BO-35 Search builds a universal index across platform and module records", () => {
+  const searchPage = readFileSync("src/app/dashboard/search/page.tsx", "utf8");
+  const index = buildUniversalSearchIndex(buildSearchFixtureItems());
+  const moneyResult = searchPlatformIndex({
+    items: index,
+    query: "upcoming bills",
+    allowedPermissionScopes: ["Owner"],
+  });
+
+  assert.equal(index.length, 3);
+  assert.equal(index[0].id, "money-cashflow");
+  assert.equal(moneyResult[0].source, "money");
+  assert.equal(moneyResult[0].sourceRecordId, "cashflow-1");
+  assert.match(searchContractRules[0], /indexing/);
+  assert.match(searchPage, /buildUniversalSearchIndex/);
+  assert.match(searchPage, /sourceRecordId/);
+});
+
+test("BO-36 Search respects permissions filters recent and saved searches", () => {
+  const searchPage = readFileSync("src/app/dashboard/search/page.tsx", "utf8");
+  const index = buildUniversalSearchIndex(buildSearchFixtureItems());
+  const ownerResults = searchPlatformIndex({
+    items: index,
+    query: "",
+    allowedPermissionScopes: ["Owner"],
+  });
+  const householdResults = searchPlatformIndex({
+    items: index,
+    query: "document",
+    allowedPermissionScopes: ["Owner", "Household"],
+    filters: { domain: "Documents" },
+  });
+  const recent = buildRecentSearches(["cashflow", "Cashflow", "learning"], 5);
+  const saved = buildSavedSearch({
+    id: "saved-money",
+    label: "Money alerts",
+    query: "money alerts",
+    filters: { module: "money" },
+  });
+
+  assert.equal(ownerResults.some((result) => result.permissionScope === "Household"), false);
+  assert.equal(householdResults[0].id, "household-document");
+  assert.deepEqual(recent, ["cashflow", "learning"]);
+  assert.equal(saved.filters.module, "money");
+  assert.match(searchPage, /buildRecentSearches/);
+  assert.match(searchPage, /buildSavedSearch/);
+});
+
+test("BO-37 Search interprets natural language and routes actions safely", () => {
+  const searchPage = readFileSync("src/app/dashboard/search/page.tsx", "utf8");
+  const item = buildPlatformSearchItem(buildSearchFixtureItems()[0]);
+  const intent = interpretNaturalLanguageSearch("Show all Money alerts");
+  const request = buildSearchActionRequest({ item, actionType: "Open" });
+
+  assert.equal(intent.suggestedFilters.module, "money");
+  assert.match(intent.interpretedQuery, /money alerts/);
+  assert.equal(request.dispatchMode, "route-or-source-contract");
+  assert.equal(request.sourceOwnershipPreserved, true);
+  assert.equal(request.source, "money");
+  assert.match(searchContractRules[3], /mutating module-owned records/);
+  assert.match(searchPage, /interpretNaturalLanguageSearch/);
+  assert.match(searchPage, /buildSearchActionRequest/);
 });
 
 test("financial metrics normalize recurring income to monthly amounts", () => {
