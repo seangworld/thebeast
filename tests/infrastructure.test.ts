@@ -279,6 +279,15 @@ import {
   timelineContractRules,
   type PlatformTimelineItem,
 } from "../src/lib/platform/timeline";
+import {
+  buildNotificationActionRequest,
+  buildNotificationDigest,
+  buildNotificationInbox,
+  buildNotificationItem,
+  groupNotificationsBySeverity,
+  notificationContractRules,
+  type PlatformNotificationItem,
+} from "../src/lib/platform/notifications";
 import { generateDynamicLearningLesson } from "../src/lib/learning/dynamicLessonGenerator";
 import {
   createGeneratedLearningContentRecord,
@@ -955,6 +964,94 @@ test("BO-39 Timeline supports filters date grouping and item details", () => {
   assert.equal(detail.details[0].value, "cashflow-1");
   assert.match(timelinePage, /groupTimelineByDate/);
   assert.match(timelinePage, /buildTimelineDetail/);
+});
+
+function buildNotificationFixtureItems(): PlatformNotificationItem[] {
+  return [
+    {
+      id: "money-buffer",
+      source: "money",
+      sourceRecordId: "cashflow-alert-1",
+      title: "Cashflow buffer needs review",
+      summary: "Money contributed a warning.",
+      priority: "High",
+      severity: "warning",
+      state: "Unread",
+      createdAt: "2026-07-17T13:00:00.000Z",
+      actionUrl: "/dashboard/money/cashflow",
+      actions: [
+        { type: "Open", label: "Open", href: "/dashboard/money/cashflow" },
+        { type: "Dismiss", label: "Dismiss" },
+      ],
+    },
+    {
+      id: "learning-ready",
+      source: "learning",
+      sourceRecordId: "mentor-step-1",
+      title: "Learning step ready",
+      summary: "Learning contributed an info notification.",
+      priority: "Medium",
+      severity: "info",
+      state: "Unread",
+      createdAt: "2026-07-17T12:00:00.000Z",
+      actionUrl: "/dashboard/learning",
+      actions: [{ type: "Complete", label: "Complete from source" }],
+    },
+    {
+      id: "dismissed-platform",
+      source: "beastos",
+      sourceRecordId: "platform-info",
+      title: "Dismissed info",
+      summary: "Already dismissed.",
+      priority: "Low",
+      severity: "info",
+      state: "Dismissed",
+      createdAt: "2026-07-17T11:00:00.000Z",
+      actionUrl: "/dashboard",
+      actions: [{ type: "Open", label: "Open" }],
+    },
+  ];
+}
+
+test("BO-40 Notifications centralize source priority severity and state", () => {
+  const notificationsPage = readFileSync("src/app/dashboard/notifications/page.tsx", "utf8");
+  const inbox = buildNotificationInbox({
+    items: buildNotificationFixtureItems(),
+    preferences: { enabled: true, digestFrequency: "Daily", mutedSources: [] },
+  });
+  const grouped = groupNotificationsBySeverity(inbox);
+
+  assert.equal(inbox.length, 2);
+  assert.equal(inbox[0].source, "money");
+  assert.equal(grouped.warning[0].sourceRecordId, "cashflow-alert-1");
+  assert.equal(grouped.info[0].source, "learning");
+  assert.match(notificationContractRules[0], /shared inbox/);
+  assert.match(notificationsPage, /buildNotificationInbox/);
+  assert.match(notificationsPage, /sourceRecordId/);
+});
+
+test("BO-41 Notifications route actions preferences and digests safely", () => {
+  const notificationsPage = readFileSync("src/app/dashboard/notifications/page.tsx", "utf8");
+  const item = buildNotificationItem(buildNotificationFixtureItems()[0]);
+  const request = buildNotificationActionRequest({ item, actionType: "Dismiss" });
+  const mutedInbox = buildNotificationInbox({
+    items: buildNotificationFixtureItems(),
+    preferences: { enabled: true, digestFrequency: "Daily", mutedSources: ["money"] },
+  });
+  const digest = buildNotificationDigest({
+    items: buildNotificationFixtureItems(),
+    preferences: { enabled: true, digestFrequency: "Daily", mutedSources: [] },
+  });
+
+  assert.equal(request.dispatchMode, "source-contract-event");
+  assert.equal(request.sourceOwnershipPreserved, true);
+  assert.equal(request.source, "money");
+  assert.equal(mutedInbox.some((notification) => notification.source === "money"), false);
+  assert.equal(digest.enabled, true);
+  assert.deepEqual(digest.sources, ["learning", "money"]);
+  assert.match(notificationContractRules[3], /source contract events/);
+  assert.match(notificationsPage, /buildNotificationActionRequest/);
+  assert.match(notificationsPage, /buildNotificationDigest/);
 });
 
 test("financial metrics normalize recurring income to monthly amounts", () => {
