@@ -65,6 +65,10 @@ import {
   type MeaningfulLearningAchievement,
   type WeeklyMentorReview,
 } from "@/lib/learning/weeklyMentorReview";
+import {
+  buildMobileLearningQuickActionCards,
+  type MobileLearningQuickActionCard,
+} from "@/lib/mobileLearning";
 import { buildLearningDashboardContent } from "@/lib/learning/dashboardContent";
 import { buildKnowledgeIntelligenceDashboard } from "@/lib/learning/knowledgeDashboard";
 import { learningSpecialists } from "@/lib/learning/specialists";
@@ -650,6 +654,55 @@ function WeeklyMentorReviewPanel({
   );
 }
 
+function MobileLearningQuickActions({
+  cards,
+}: {
+  cards: MobileLearningQuickActionCard[];
+}) {
+  return (
+    <section
+      className="grid min-w-0 gap-3 md:hidden"
+      aria-label="Mobile Learning quick actions"
+      data-mobile-learning-actions="true"
+    >
+      {cards.map((card) => (
+        <article
+          key={card.id}
+          className="min-w-0 rounded-xl border border-indigo-300/30 bg-[#111827] p-4"
+          data-mobile-learning-card={card.id}
+          data-mobile-learning-source={card.source}
+          data-mobile-source-contract={card.dispatchMode}
+        >
+          <div className="flex min-w-0 flex-col gap-2">
+            <div className="text-xs font-black uppercase text-indigo-100">
+              {card.metadata[0] || "Mentor"}
+            </div>
+            <h2 className="break-words text-lg font-black leading-snug text-white">
+              {card.title}
+            </h2>
+            <p className="break-words text-sm font-semibold leading-6 text-[#c7cfdb]">
+              {card.summary}
+            </p>
+          </div>
+          <div className="mt-3 flex min-w-0 flex-wrap gap-2">
+            {card.metadata.slice(1).map((item) => (
+              <span
+                key={item}
+                className="max-w-full break-words rounded-full border border-[#2a3242] bg-[#0f1419] px-3 py-1 text-xs font-bold text-[#dbe3ef]"
+              >
+                {item}
+              </span>
+            ))}
+          </div>
+          <Link href={card.href} className="beast-button mt-4 w-full justify-center">
+            {card.actionLabel}
+          </Link>
+        </article>
+      ))}
+    </section>
+  );
+}
+
 export default async function LearningPage() {
   const supabase = createRouteClient();
   const {
@@ -877,6 +930,12 @@ export default async function LearningPage() {
     courses: learningCourses,
     confidence: confidenceIntelligence,
   });
+  const mobileLearningCards = buildMobileLearningQuickActionCards({
+    mission: mentorHomeMission,
+    confidence: confidenceIntelligence,
+    review: weeklyMentorReview,
+    activities: userActivities,
+  });
 
   return (
     <main id="learning-main-content" className="beast-page">
@@ -904,6 +963,8 @@ export default async function LearningPage() {
             </Link>
           </div>
         </section>
+
+        <MobileLearningQuickActions cards={mobileLearningCards} />
 
         <div id="guidance" className="scroll-mt-24">
           <MentorHome
