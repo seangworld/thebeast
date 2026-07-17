@@ -38,9 +38,19 @@ import {
   BEAST_MONEY_VERSION_LABEL,
 } from "../src/lib/appVersion";
 import {
+  buildCalendarEvent,
+  buildCalendarReminders,
+  buildCalendarRescheduleRequest,
+  buildCalendarViews,
   buildMonthGrid,
+  buildRecurringCalendarEvents,
+  calendarContractRules,
+  calendarViewModes,
+  detectCalendarConflicts,
   getLocalCalendarDate,
   getMonthLength,
+  normalizeCalendarTimeZone,
+  type CalendarEvent,
 } from "../src/lib/calendar";
 import {
   getBillingReturnUrl,
@@ -578,6 +588,164 @@ test("calendar month grid aligns July 2026 with leading and trailing days", () =
 
 test("calendar month length is correct for July 2026", () => {
   assert.equal(getMonthLength(2026, 6), 31);
+});
+
+test("BO-31 Calendar models unified source events with permissions", () => {
+  const calendarPage = readFileSync("src/app/dashboard/calendar/page.tsx", "utf8");
+  const event: CalendarEvent = {
+    id: "money-bill-calendar",
+    source: "money",
+    sourceRecordId: "bill-1",
+    title: "Rent due",
+    summary: "BeastMoney owns the bill date.",
+    startsAt: "2026-07-16T13:00:00.000Z",
+    endsAt: "2026-07-16T13:30:00.000Z",
+    timeZone: "America/New_York",
+    permissionScope: "Owner",
+    actionUrl: "/dashboard/money/cashflow",
+    recurrence: "None",
+    reminderMinutesBefore: [60, 15],
+  };
+  const normalized = buildCalendarEvent(event);
+
+  assert.equal(normalized.source, "money");
+  assert.equal(normalized.sourceRecordId, "bill-1");
+  assert.equal(normalized.permissionScope, "Owner");
+  assert.deepEqual(normalized.reminderMinutesBefore, [15, 60]);
+  assert.equal(normalizeCalendarTimeZone("America/New_York"), "America/New_York");
+  assert.throws(
+    () => buildCalendarEvent({ ...event, sourceRecordId: "" }),
+    /source record id/
+  );
+  assert.match(calendarContractRules[2], /permission scope/);
+  assert.match(calendarPage, /calendarContractRules/);
+  assert.match(calendarPage, /permissionScope/);
+});
+
+test("BO-32 Calendar builds month week day and agenda views", () => {
+  const calendarPage = readFileSync("src/app/dashboard/calendar/page.tsx", "utf8");
+  const events: CalendarEvent[] = [
+    {
+      id: "today-learning",
+      source: "learning",
+      sourceRecordId: "activity-1",
+      title: "Mentor session",
+      summary: "BeastLearning owns learning readiness.",
+      startsAt: "2026-07-16T14:00:00.000Z",
+      endsAt: "2026-07-16T14:30:00.000Z",
+      timeZone: "America/New_York",
+      permissionScope: "Owner",
+      actionUrl: "/dashboard/learning",
+      recurrence: "None",
+      reminderMinutesBefore: [10],
+    },
+    {
+      id: "next-week-money",
+      source: "money",
+      sourceRecordId: "bill-2",
+      title: "Review bill",
+      summary: "BeastMoney owns the bill date.",
+      startsAt: "2026-07-23T14:00:00.000Z",
+      endsAt: "2026-07-23T14:30:00.000Z",
+      timeZone: "America/New_York",
+      permissionScope: "Owner",
+      actionUrl: "/dashboard/money/cashflow",
+      recurrence: "None",
+      reminderMinutesBefore: [10],
+    },
+  ];
+  const views = buildCalendarViews({
+    events,
+    today: "2026-07-16T12:00:00.000Z",
+  });
+
+  assert.deepEqual(calendarViewModes, ["Month", "Week", "Day", "Agenda"]);
+  assert.equal(views.month.length, 2);
+  assert.equal(views.week.length, 1);
+  assert.equal(views.day.length, 1);
+  assert.equal(views.agenda.length, 2);
+  assert.match(calendarPage, /buildCalendarViews/);
+  assert.match(calendarPage, /calendarViews\.agenda/);
+});
+
+test("BO-33 Calendar recurrence and drag rescheduling preserve source rules", () => {
+  const calendarPage = readFileSync("src/app/dashboard/calendar/page.tsx", "utf8");
+  const event: CalendarEvent = {
+    id: "weekly-review",
+    source: "learning",
+    sourceRecordId: "review-1",
+    title: "Weekly Mentor review",
+    summary: "BeastLearning owns the review cadence.",
+    startsAt: "2026-07-16T15:00:00.000Z",
+    endsAt: "2026-07-16T15:30:00.000Z",
+    timeZone: "America/New_York",
+    permissionScope: "Owner",
+    actionUrl: "/dashboard/learning#weekly-review",
+    recurrence: "Weekly",
+    reminderMinutesBefore: [30],
+  };
+  const recurring = buildRecurringCalendarEvents({ event, occurrences: 3 });
+  const request = buildCalendarRescheduleRequest({
+    event,
+    requestedAt: "2026-07-16T12:00:00.000Z",
+    newStartsAt: "2026-07-17T15:00:00.000Z",
+    newEndsAt: "2026-07-17T15:30:00.000Z",
+    reason: "User dragged the event to tomorrow.",
+  });
+
+  assert.deepEqual(
+    recurring.map((item) => item.startsAt.slice(0, 10)),
+    ["2026-07-16", "2026-07-23", "2026-07-30"]
+  );
+  assert.equal(request.dispatchMode, "source-contract-event");
+  assert.equal(request.sourceRulesPreserved, true);
+  assert.equal(request.source, "learning");
+  assert.match(calendarContractRules[3], /source contract event/);
+  assert.match(calendarPage, /buildRecurringCalendarEvents/);
+  assert.match(calendarPage, /buildCalendarRescheduleRequest/);
+  assert.match(calendarPage, /dispatchMode/);
+});
+
+test("BO-34 Calendar detects conflicts reminders and time zone issues", () => {
+  const calendarPage = readFileSync("src/app/dashboard/calendar/page.tsx", "utf8");
+  const first: CalendarEvent = {
+    id: "money-review",
+    source: "money",
+    sourceRecordId: "bill-1",
+    title: "Money review",
+    summary: "Review due bill.",
+    startsAt: "2026-07-16T14:00:00.000Z",
+    endsAt: "2026-07-16T15:00:00.000Z",
+    timeZone: "America/New_York",
+    permissionScope: "Owner",
+    actionUrl: "/dashboard/money/cashflow",
+    recurrence: "None",
+    reminderMinutesBefore: [60, 15],
+  };
+  const second: CalendarEvent = {
+    ...first,
+    id: "learning-review",
+    source: "learning",
+    sourceRecordId: "activity-1",
+    title: "Learning review",
+    startsAt: "2026-07-16T14:30:00.000Z",
+    endsAt: "2026-07-16T15:30:00.000Z",
+    actionUrl: "/dashboard/learning",
+  };
+  const conflicts = detectCalendarConflicts([first, second]);
+  const reminders = buildCalendarReminders(first);
+
+  assert.equal(conflicts.length, 1);
+  assert.deepEqual(conflicts[0].eventIds, ["money-review", "learning-review"]);
+  assert.equal(conflicts[0].severity, "Overlap");
+  assert.deepEqual(
+    reminders.map((reminder) => reminder.minutesBefore),
+    [15, 60]
+  );
+  assert.throws(() => normalizeCalendarTimeZone("Mars/Base"), /Unsupported/);
+  assert.match(calendarPage, /detectCalendarConflicts/);
+  assert.match(calendarPage, /buildCalendarReminders/);
+  assert.match(calendarPage, /America\/New_York/);
 });
 
 test("financial metrics normalize recurring income to monthly amounts", () => {

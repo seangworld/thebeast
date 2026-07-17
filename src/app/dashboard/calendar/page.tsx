@@ -14,11 +14,52 @@ import {
   serviceEvents,
   serviceModules,
 } from "@/app/dashboard/platformServices";
-import { buildMonthGrid, weekdayLabels } from "@/lib/calendar";
+import {
+  buildCalendarReminders,
+  buildCalendarRescheduleRequest,
+  buildCalendarViews,
+  buildMonthGrid,
+  buildRecurringCalendarEvents,
+  calendarContractRules,
+  detectCalendarConflicts,
+  weekdayLabels,
+  type CalendarEvent,
+} from "@/lib/calendar";
 import { useRuntimeToday } from "@/lib/hooks/useRuntimeToday";
 import { formatBeastMonthYear, getBeastRuntimeDateParts } from "@/lib/runtimeDate";
 
 const moneyEventDays = new Set([3, 7, 14, 21, 28]);
+
+const sharedCalendarEvents: CalendarEvent[] = [
+  {
+    id: "calendar-money-bill",
+    source: "money",
+    sourceRecordId: "bill-rent",
+    title: "Review rent payment",
+    summary: "BeastMoney owns the bill date and payment state.",
+    startsAt: "2026-07-16T13:00:00.000Z",
+    endsAt: "2026-07-16T13:30:00.000Z",
+    timeZone: "America/New_York",
+    permissionScope: "Owner",
+    actionUrl: "/dashboard/money/cashflow",
+    recurrence: "Monthly",
+    reminderMinutesBefore: [60, 15],
+  },
+  {
+    id: "calendar-learning-review",
+    source: "learning",
+    sourceRecordId: "mentor-review",
+    title: "Weekly Mentor review",
+    summary: "BeastLearning owns review readiness and learning cadence.",
+    startsAt: "2026-07-16T13:15:00.000Z",
+    endsAt: "2026-07-16T13:45:00.000Z",
+    timeZone: "America/New_York",
+    permissionScope: "Owner",
+    actionUrl: "/dashboard/learning#weekly-review",
+    recurrence: "Weekly",
+    reminderMinutesBefore: [30],
+  },
+];
 
 export default function CalendarPage() {
   const { now } = useRuntimeToday();
@@ -27,6 +68,23 @@ export default function CalendarPage() {
     () => buildMonthGrid(todayParts.year, todayParts.monthIndex),
     [todayParts.monthIndex, todayParts.year]
   );
+  const calendarViews = useMemo(
+    () => buildCalendarViews({ events: sharedCalendarEvents, today: now.toISOString() }),
+    [now]
+  );
+  const recurringPreview = buildRecurringCalendarEvents({
+    event: sharedCalendarEvents[1],
+    occurrences: 3,
+  });
+  const reschedulePreview = buildCalendarRescheduleRequest({
+    event: sharedCalendarEvents[0],
+    requestedAt: now.toISOString(),
+    newStartsAt: "2026-07-17T13:00:00.000Z",
+    newEndsAt: "2026-07-17T13:30:00.000Z",
+    reason: "Drag reschedule preview routes to the source contract.",
+  });
+  const reminders = buildCalendarReminders(sharedCalendarEvents[0]);
+  const conflicts = detectCalendarConflicts(sharedCalendarEvents);
   const agendaItems = serviceEvents.slice(0, 6);
 
   return (
@@ -47,6 +105,24 @@ export default function CalendarPage() {
           />
           <div className="mt-5">
             <ModuleFilterRail modules={serviceModules} />
+          </div>
+          <div className="mt-5 grid gap-3 md:grid-cols-4">
+            {([
+              ["Month", calendarViews.month.length],
+              ["Week", calendarViews.week.length],
+              ["Day", calendarViews.day.length],
+              ["Agenda", calendarViews.agenda.length],
+            ] as const).map(([label, count]) => (
+              <div
+                key={label}
+                className="rounded-xl border border-[#2a3242] bg-[#111827] p-4"
+              >
+                <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                  {label}
+                </div>
+                <div className="mt-2 text-2xl font-black text-white">{count}</div>
+              </div>
+            ))}
           </div>
         </DashboardCard>
 
@@ -131,6 +207,84 @@ export default function CalendarPage() {
             </div>
           </DashboardCard>
         </section>
+
+        <DashboardCard accent="calendar">
+          <SectionHeader
+            eyebrow="Calendar Contracts"
+            title="Ownership-safe scheduling"
+            description="BeastOS assembles shared calendar state while source modules keep their own scheduling rules."
+          />
+          <div className="mt-5 grid gap-4 lg:grid-cols-4">
+            <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+              <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                Recurrence
+              </div>
+              <div className="mt-3 space-y-2">
+                {recurringPreview.map((event) => (
+                  <div key={event.id} className="text-sm font-bold text-white">
+                    {new Date(event.startsAt).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+              <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                Reschedule
+              </div>
+              <div className="mt-3 text-sm font-bold text-white">
+                {reschedulePreview.dispatchMode}
+              </div>
+              <div className="mt-2 text-xs font-semibold text-[#9aa6b6]">
+                Source: {reschedulePreview.source}
+              </div>
+              <div className="mt-1 text-xs font-semibold text-[#9aa6b6]">
+                Rules preserved: {String(reschedulePreview.sourceRulesPreserved)}
+              </div>
+            </div>
+            <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+              <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                Reminders
+              </div>
+              <div className="mt-3 space-y-2">
+                {reminders.map((reminder) => (
+                  <div
+                    key={`${reminder.eventId}-${reminder.minutesBefore}`}
+                    className="text-sm font-bold text-white"
+                  >
+                    {reminder.minutesBefore} minutes before
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+              <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                Conflicts
+              </div>
+              <div className="mt-3 text-2xl font-black text-white">
+                {conflicts.length}
+              </div>
+              <div className="mt-2 text-xs font-semibold text-[#9aa6b6]">
+                Time zone: America/New_York
+              </div>
+              <div className="mt-1 text-xs font-semibold text-[#9aa6b6]">
+                Scope: Owner
+              </div>
+            </div>
+          </div>
+          <div className="mt-5 grid gap-3 md:grid-cols-2">
+            {calendarContractRules.map((rule) => (
+              <div
+                key={rule}
+                className="rounded-xl border border-[#2a3242] bg-[#0f1419] p-4 text-sm font-semibold text-[#d8dee8]"
+              >
+                {rule}
+              </div>
+            ))}
+          </div>
+        </DashboardCard>
       </div>
     </main>
   );
