@@ -270,6 +270,15 @@ import {
   searchPlatformIndex,
   type PlatformSearchItem,
 } from "../src/lib/platform/search";
+import {
+  buildTimelineDetail,
+  buildTimelineItem,
+  buildTimelineStream,
+  groupTimelineByDate,
+  summarizeTimeline,
+  timelineContractRules,
+  type PlatformTimelineItem,
+} from "../src/lib/platform/timeline";
 import { generateDynamicLearningLesson } from "../src/lib/learning/dynamicLessonGenerator";
 import {
   createGeneratedLearningContentRecord,
@@ -865,6 +874,87 @@ test("BO-37 Search interprets natural language and routes actions safely", () =>
   assert.match(searchContractRules[3], /mutating module-owned records/);
   assert.match(searchPage, /interpretNaturalLanguageSearch/);
   assert.match(searchPage, /buildSearchActionRequest/);
+});
+
+function buildTimelineFixtureItems(): PlatformTimelineItem[] {
+  return [
+    {
+      id: "money-reviewed",
+      source: "money",
+      sourceRecordId: "cashflow-1",
+      kind: "Reviewed",
+      title: "Cashflow reviewed",
+      summary: "Money contributed a meaningful cashflow review.",
+      occurredAt: "2026-07-17T13:00:00.000Z",
+      visibility: "Owner",
+      href: "/dashboard/money/cashflow",
+      meaningful: true,
+      details: [{ label: "Record", value: "cashflow-1" }],
+    },
+    {
+      id: "learning-scheduled",
+      source: "learning",
+      sourceRecordId: "mentor-step-1",
+      kind: "Scheduled",
+      title: "Mentor step scheduled",
+      summary: "Learning contributed the next Mentor step.",
+      occurredAt: "2026-07-16T13:00:00.000Z",
+      visibility: "Owner",
+      href: "/dashboard/learning",
+      meaningful: true,
+      details: [{ label: "Record", value: "mentor-step-1" }],
+    },
+    {
+      id: "system-refresh",
+      source: "beastos",
+      sourceRecordId: "refresh-1",
+      kind: "Updated",
+      title: "Background refresh",
+      summary: "Internal system churn.",
+      occurredAt: "2026-07-17T12:00:00.000Z",
+      visibility: "Owner",
+      href: "/dashboard/timeline",
+      meaningful: false,
+      details: [{ label: "Internal", value: "Refresh" }],
+    },
+  ];
+}
+
+test("BO-38 Timeline models meaningful cross-module activity only", () => {
+  const timelinePage = readFileSync("src/app/dashboard/timeline/page.tsx", "utf8");
+  const stream = buildTimelineStream({
+    items: buildTimelineFixtureItems(),
+    allowedVisibility: ["Owner"],
+  });
+  const summary = summarizeTimeline(buildTimelineFixtureItems());
+
+  assert.equal(stream.length, 2);
+  assert.equal(stream.some((item) => item.id === "system-refresh"), false);
+  assert.equal(stream[0].source, "money");
+  assert.deepEqual(summary.sources, ["learning", "money"]);
+  assert.match(timelineContractRules[0], /cross-module activity display/);
+  assert.match(timelinePage, /buildTimelineStream/);
+  assert.match(timelinePage, /meaningful/);
+});
+
+test("BO-39 Timeline supports filters date grouping and item details", () => {
+  const timelinePage = readFileSync("src/app/dashboard/timeline/page.tsx", "utf8");
+  const items = buildTimelineFixtureItems();
+  const filtered = buildTimelineStream({
+    items,
+    filters: { source: "learning" },
+    allowedVisibility: ["Owner"],
+  });
+  const groups = groupTimelineByDate(buildTimelineStream({ items }));
+  const detail = buildTimelineDetail(buildTimelineItem(items[0]));
+
+  assert.equal(filtered.length, 1);
+  assert.equal(filtered[0].sourceRecordId, "mentor-step-1");
+  assert.equal(groups.length, 2);
+  assert.equal(detail.sourceOwnershipPreserved, true);
+  assert.equal(detail.details[0].value, "cashflow-1");
+  assert.match(timelinePage, /groupTimelineByDate/);
+  assert.match(timelinePage, /buildTimelineDetail/);
 });
 
 test("financial metrics normalize recurring income to monthly amounts", () => {
