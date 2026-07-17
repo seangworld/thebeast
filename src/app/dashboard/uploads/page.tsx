@@ -10,6 +10,7 @@ import {
   PrivacyMessageCard,
 } from "@/app/dashboard/platformServices";
 import { createRouteClient } from "@/lib/supabase/server";
+import { buildMobileQuickUploadCards } from "@/lib/mobilePersonalHub";
 import {
   type BeastDocumentDataClient,
   type DocumentLoadResult,
@@ -88,6 +89,7 @@ export default async function UploadsPage() {
   const duplicateGroups = findDuplicateDocuments(documents);
   const searchReadyDocuments = searchDocuments(documents, { status: "All" });
   const storageLimit = getDocumentStorageLimitSummary(documents);
+  const mobileQuickUploadCards = buildMobileQuickUploadCards({ summary });
 
   return (
     <main className="beast-page">
@@ -100,8 +102,65 @@ export default async function UploadsPage() {
           action={<ModuleBadge module="beastos" label="BeastOS Owned" />}
         />
 
+        <section
+          id="mobile-quick-upload"
+          className="space-y-3 md:hidden"
+          data-mobile-personal-hub="quick-uploads"
+        >
+          {mobileQuickUploadCards.map((card) => (
+            <article
+              key={card.id}
+              className="min-w-0 rounded-xl border border-[#2a3242] bg-[#111827] p-4"
+              data-mobile-source-contract={card.dispatchMode}
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                <ModuleBadge module={card.source} />
+                {card.metadata.map((item) => (
+                  <span
+                    key={item}
+                    className="rounded-full border border-[#2a3242] px-2.5 py-1 text-[11px] font-bold text-[#c7cfdb]"
+                  >
+                    {item}
+                  </span>
+                ))}
+              </div>
+              <h2 className="mt-3 break-words text-lg font-black text-white">
+                {card.title}
+              </h2>
+              <p className="mt-2 break-words text-sm leading-6 text-[#c7cfdb]">
+                {card.summary}
+              </p>
+              <a
+                href="#upload-document"
+                className="mt-4 flex w-full justify-center beast-button"
+              >
+                {card.actionLabel}
+              </a>
+            </article>
+          ))}
+
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              ["Active", summary.activeDocuments],
+              ["Shared", summary.sharedDocuments],
+              ["Review", summary.privacyReviewDocuments],
+            ].map(([label, value]) => (
+              <div
+                key={label}
+                className="min-w-0 rounded-lg border border-[#2a3242] bg-[#111827] p-3"
+              >
+                <div className="truncate text-[10px] font-black uppercase text-[#7f8da3]">
+                  {label}
+                </div>
+                <div className="mt-1 text-xl font-black text-white">{value}</div>
+              </div>
+            ))}
+          </div>
+        </section>
+
         <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
           <DashboardCard accent="documents">
+            <div id="upload-document" className="scroll-mt-24" />
             <SectionHeader
               eyebrow="Upload"
               title="Add a document"

@@ -33,6 +33,7 @@ import {
   type ModuleKey,
 } from "@/app/components/design/DashboardPrimitives";
 import { buildMobileModuleCards } from "@/lib/mobileFoundation";
+import { buildMobileHouseholdAlertCards } from "@/lib/mobilePersonalHub";
 
 type MoneyDebt = {
   id: string;
@@ -528,6 +529,7 @@ export default function TodayPage() {
   const mobileCalendarItem = timelineItems.find(
     (item) => item.module === "calendar"
   ) || timelineItems[0] || null;
+  const mobileHouseholdAlerts = buildMobileHouseholdAlertCards();
 
   return (
     <main className="beast-page">
@@ -634,6 +636,18 @@ export default function TodayPage() {
                 module="goals"
                 action="Open goals"
               />
+              <div data-mobile-personal-hub="household-alerts">
+                {mobileHouseholdAlerts.map((alert) => (
+                  <MobileLaunchCard
+                    key={alert.id}
+                    title={alert.title}
+                    detail={`${alert.summary} ${alert.metadata.join(", ")}.`}
+                    href={alert.href}
+                    module="beastos"
+                    action={alert.actionLabel}
+                  />
+                ))}
+              </div>
             </div>
           </section>
         </section>
