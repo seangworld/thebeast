@@ -1097,7 +1097,154 @@ export default function DebtsPage() {
             <h2 className="money-section-title">Debt List</h2>
           </div>
 
-          <div className="beast-table-wrap">
+          <div
+            className="grid min-w-0 gap-3 p-3 md:hidden"
+            data-mobile-debt-list-cards="true"
+          >
+            {loading ? (
+              <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 text-sm text-[#c7cfdb]">
+                Loading debts...
+              </div>
+            ) : orderedDebts.length === 0 ? (
+              <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 text-sm text-[#c7cfdb]">
+                No debts added yet.
+              </div>
+            ) : (
+              orderedDebts.map((debt, index) => (
+                <article
+                  key={debt.id}
+                  className="min-w-0 overflow-hidden rounded-xl border border-[#2a3242] bg-[#111827] p-4"
+                >
+                  {editingDebtId === debt.id ? (
+                    <div className="grid min-w-0 gap-3">
+                      <input
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        className="beast-input"
+                      />
+
+                      <div className="grid min-w-0 gap-2">
+                        <input
+                          type="number"
+                          value={editBalance}
+                          onChange={(e) => setEditBalance(e.target.value)}
+                          className="beast-input"
+                          placeholder="Balance"
+                        />
+                        <input
+                          type="number"
+                          value={editMinimumPayment}
+                          onChange={(e) => setEditMinimumPayment(e.target.value)}
+                          className="beast-input"
+                          placeholder="Min Payment"
+                        />
+                        <input
+                          type="number"
+                          value={editInterestRate}
+                          onChange={(e) => setEditInterestRate(e.target.value)}
+                          className="beast-input"
+                          placeholder="APR"
+                        />
+                        <input
+                          type="number"
+                          value={editDueDate}
+                          onChange={(e) => setEditDueDate(e.target.value)}
+                          className="beast-input"
+                          placeholder="Due day"
+                        />
+                      </div>
+
+                      <div className="grid min-w-0 grid-cols-1 gap-2 min-[380px]:grid-cols-2">
+                        <button
+                          onClick={() => saveEditDebt(debt.id)}
+                          className="beast-button"
+                        >
+                          Save
+                        </button>
+
+                        <button
+                          onClick={cancelEditDebt}
+                          className="beast-button-secondary"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex min-w-0 items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                            Priority #{index + 1}
+                          </div>
+                          <h3 className="mt-1 break-words text-base font-black text-white">
+                            {debt.name}
+                          </h3>
+                          <p className="mt-1 text-xs text-[#7f8da3]">
+                            Due {debt.nextDueDateDisplay || debt.due_date || 1}
+                          </p>
+                        </div>
+
+                        <div className="shrink-0 text-right">
+                          <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                            Balance
+                          </div>
+                          <div className="font-black text-white">
+                            ${Number(debt.balance || 0).toFixed(2)}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 grid min-w-0 grid-cols-2 gap-2 text-sm">
+                        <div className="min-w-0 rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
+                          <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                            Minimum
+                          </div>
+                          <div className="mt-1 truncate font-semibold text-[#dbe3ef]">
+                            ${Number(debt.minimum_payment || 0).toFixed(2)}
+                          </div>
+                        </div>
+
+                        <div className="min-w-0 rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
+                          <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                            APR
+                          </div>
+                          <div className="mt-1 truncate font-semibold text-[#dbe3ef]">
+                            {Number(debt.interest_rate || 0).toFixed(2)}%
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 grid min-w-0 grid-cols-1 gap-2 min-[390px]:grid-cols-3">
+                        <button
+                          onClick={() => startEditDebt(debt)}
+                          className="beast-button-secondary"
+                        >
+                          Edit
+                        </button>
+
+                        <button
+                          onClick={() => archiveDebt(debt.id)}
+                          className="beast-button-secondary"
+                        >
+                          Archive
+                        </button>
+
+                        <button
+                          onClick={() => deleteDebt(debt.id)}
+                          className="beast-button"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </article>
+              ))
+            )}
+          </div>
+
+          <div className="beast-table-wrap hidden md:block">
             <table className="w-full min-w-[760px] text-sm">
               <thead>
                 <tr>

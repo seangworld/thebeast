@@ -116,3 +116,41 @@ test("Income Date Planning is compact until the user expands details", () => {
   assert.match(globalStyles, /\.money-income-bucket-even/);
   assert.match(globalStyles, /\.money-income-bucket-odd/);
 });
+
+test("Bills and Debts keep Pay actions reachable on mobile without replacing desktop tables", () => {
+  const bills = readFileSync(
+    "src/app/dashboard/money/cashflow/components/BillsSection.tsx",
+    "utf8"
+  );
+  const cashflowDebts = readFileSync(
+    "src/app/dashboard/money/cashflow/components/DebtsSection.tsx",
+    "utf8"
+  );
+  const billControls = readFileSync(
+    "src/app/dashboard/money/cashflow/components/BillPaymentControls.tsx",
+    "utf8"
+  );
+  const debtControls = readFileSync(
+    "src/app/dashboard/money/cashflow/components/DebtPaymentControls.tsx",
+    "utf8"
+  );
+  const debtsPage = readFileSync("src/app/dashboard/money/debts/page.tsx", "utf8");
+  const globalStyles = readFileSync("src/app/globals.css", "utf8");
+
+  assert.match(bills, /data-mobile-bill-cards="true"/);
+  assert.match(cashflowDebts, /data-mobile-debt-cards="true"/);
+  assert.match(debtsPage, /data-mobile-debt-list-cards="true"/);
+  assert.match(bills, /className="beast-table-wrap hidden md:block"/);
+  assert.match(cashflowDebts, /className="beast-table-wrap hidden md:block"/);
+  assert.match(debtsPage, /className="beast-table-wrap hidden md:block"/);
+  assert.match(bills, /break-words text-base font-black/);
+  assert.match(cashflowDebts, /break-words text-base font-black/);
+  assert.match(debtsPage, /break-words text-base font-black/);
+  assert.match(bills, /<BillPaymentControls/);
+  assert.match(cashflowDebts, /<DebtPaymentControls/);
+  assert.match(billControls, />\s*Pay\s*</);
+  assert.match(debtControls, /"Pay Min"/);
+  assert.match(billControls, /grid-cols-1 gap-2 min-\[380px\]:grid-cols-\[1fr_auto\]/);
+  assert.match(debtControls, /grid-cols-1 gap-2 min-\[390px\]:grid-cols-\[1fr_auto_auto\]/);
+  assert.match(globalStyles, /overflow-x: hidden/);
+});

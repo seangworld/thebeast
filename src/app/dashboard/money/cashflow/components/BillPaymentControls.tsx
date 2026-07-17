@@ -53,7 +53,7 @@ export default function BillPaymentControls({
     </div>
   ) : (
     <div className="grid gap-2">
-      <div className="grid grid-cols-[1fr_auto] gap-2">
+      <div className="grid min-w-0 grid-cols-1 gap-2 min-[380px]:grid-cols-[1fr_auto]">
         <input
           type="number"
           value={partialPayments[bill.id] || ""}
@@ -79,7 +79,7 @@ export default function BillPaymentControls({
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         <button onClick={() => markBillPaid(bill)} className="beast-button">
-          Paid
+          Pay
         </button>
 
         <button onClick={() => startEditBill(bill)} className="beast-button-secondary">

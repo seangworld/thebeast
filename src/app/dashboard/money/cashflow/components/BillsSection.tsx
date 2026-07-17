@@ -118,7 +118,194 @@ export default function BillsSection({
       </div>
 
       {showBills && (
-        <div className="beast-table-wrap">
+        <>
+          <div
+            className="grid min-w-0 gap-3 p-3 md:hidden"
+            data-mobile-bill-cards="true"
+          >
+            {activeBills.length === 0 ? (
+              <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 text-sm text-[#c7cfdb]">
+                No bills added yet.
+              </div>
+            ) : (
+              activeBills.map((bill) => (
+                <article
+                  key={bill.id}
+                  className="min-w-0 overflow-hidden rounded-xl border border-[#2a3242] bg-[#111827] p-4"
+                >
+                  {editingBillId === bill.id ? (
+                    <div className="grid min-w-0 gap-3">
+                      <input
+                        value={editBillName}
+                        onChange={(e) => setEditBillName(e.target.value)}
+                        placeholder="Bill name"
+                        className="beast-input"
+                      />
+
+                      <div className="grid min-w-0 gap-2">
+                        <input
+                          type="number"
+                          value={editBillAmount}
+                          onChange={(e) => setEditBillAmount(e.target.value)}
+                          placeholder="Amount"
+                          className="beast-input"
+                        />
+
+                        <input
+                          type="number"
+                          min="1"
+                          max="31"
+                          value={editBillDueDate}
+                          onChange={(e) => setEditBillDueDate(e.target.value)}
+                          placeholder="Due day"
+                          className="beast-input"
+                        />
+
+                        <select
+                          value={editBillFrequency}
+                          onChange={(e) =>
+                            setEditBillFrequency(e.target.value as BillFrequency)
+                          }
+                          className="beast-input"
+                        >
+                          {billFrequencyOptions.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="min-w-0">
+                      <div className="flex min-w-0 items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <h3 className="break-words text-base font-black text-white">
+                            {bill.name}
+                          </h3>
+                          <p className="mt-1 text-xs text-[#7f8da3]">
+                            Due {bill.nextDueDateDisplay}
+                          </p>
+                        </div>
+
+                        <div className="shrink-0 text-right">
+                          <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                            Remaining
+                          </div>
+                          <div className="font-black text-white">
+                            ${Number(bill.remaining || 0).toFixed(2)}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 grid min-w-0 grid-cols-2 gap-2 text-sm">
+                        <div className="min-w-0 rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
+                          <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                            Status
+                          </div>
+                          <div
+                            className={
+                              bill.status === "Paid"
+                                ? "mt-1 font-semibold text-green-300"
+                                : bill.status === "Partial" || bill.status === "Due Soon"
+                                ? "mt-1 font-semibold text-yellow-300"
+                                : bill.status === "Late"
+                                ? "mt-1 font-semibold text-red-300"
+                                : "mt-1 font-semibold text-[#c7cfdb]"
+                            }
+                          >
+                            {bill.status}
+                          </div>
+                        </div>
+
+                        <div className="min-w-0 rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
+                          <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                            Amount Due
+                          </div>
+                          <div className="mt-1 truncate font-semibold text-[#dbe3ef]">
+                            ${Number(bill.amount || 0).toFixed(2)}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="mt-4 min-w-0">
+                    <BillPaymentControls
+                      bill={bill}
+                      editingBillId={editingBillId}
+                      partialPayments={partialPayments}
+                      setPartialPayments={setPartialPayments}
+                      addBillPayment={addBillPayment}
+                      markBillPaid={markBillPaid}
+                      startEditBill={startEditBill}
+                      saveBillEdit={saveBillEdit}
+                      cancelEditBill={cancelEditBill}
+                      archiveBill={archiveBill}
+                      resetBillDueDate={resetBillDueDate}
+                    />
+                  </div>
+
+                  {editingBillId !== bill.id ? (
+                    <details className="mt-4 min-w-0 rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
+                      <summary className="cursor-pointer text-sm font-bold text-[#dbe3ef]">
+                        Details
+                      </summary>
+
+                      <div className="mt-3 grid min-w-0 gap-3 text-sm text-[#c7cfdb]">
+                        <div className="min-w-0">
+                          Paid: ${Number(bill.paid || 0).toFixed(2)} |{" "}
+                          {getFrequencyLabel(bill.frequency)}
+                        </div>
+
+                        <label className="grid min-w-0 gap-1">
+                          <span className="text-xs font-bold uppercase text-[#7f8da3]">
+                            Income Pot
+                          </span>
+                          <select
+                            value={bill.assigned_income_date || ""}
+                            onChange={(e) =>
+                              updateBillIncomeDate(bill.id, e.target.value)
+                            }
+                            className="beast-input"
+                          >
+                            <option value="">Unassigned</option>
+                            {incomeBucketPlans.map((bucket) => (
+                              <option key={bucket.id} value={bucket.date}>
+                                {bucket.dropdownLabel}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+
+                        <label className="grid min-w-0 gap-1">
+                          <span className="text-xs font-bold uppercase text-[#7f8da3]">
+                            Funding Source
+                          </span>
+                          <select
+                            value={bill.funding_source_id || ""}
+                            onChange={(e) =>
+                              updateBillFundingSource(bill.id, e.target.value)
+                            }
+                            className="beast-input"
+                          >
+                            <option value="">Unassigned</option>
+                            {activeFundingSources.map((source) => (
+                              <option key={source.id} value={source.id}>
+                                {source.name}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      </div>
+                    </details>
+                  ) : null}
+                </article>
+              ))
+            )}
+          </div>
+
+          <div className="beast-table-wrap hidden md:block">
           <table className="w-full min-w-[900px] text-sm">
             <thead>
               <tr>
@@ -267,7 +454,8 @@ export default function BillsSection({
               )}
             </tbody>
           </table>
-        </div>
+          </div>
+        </>
       )}
     </section>
   );

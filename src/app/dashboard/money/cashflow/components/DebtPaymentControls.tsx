@@ -63,7 +63,7 @@ export default function DebtPaymentControls({
     </div>
   ) : (
     <div className="grid gap-2">
-      <div className="grid grid-cols-[1fr_auto_auto] gap-2">
+      <div className="grid min-w-0 grid-cols-1 gap-2 min-[390px]:grid-cols-[1fr_auto_auto]">
         <input
           type="number"
           value={debtPayments[debt.id] || ""}
@@ -95,7 +95,7 @@ export default function DebtPaymentControls({
           disabled={isApplying}
           className="beast-button"
         >
-          {isApplying ? "..." : "Min Paid"}
+          {isApplying ? "..." : "Pay Min"}
         </button>
       </div>
 

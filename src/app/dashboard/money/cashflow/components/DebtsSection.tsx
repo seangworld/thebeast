@@ -124,7 +124,224 @@ export default function DebtsSection({
       </div>
 
       {showDebts && (
-        <div className="beast-table-wrap">
+        <>
+          <div
+            className="grid min-w-0 gap-3 p-3 md:hidden"
+            data-mobile-debt-cards="true"
+          >
+            {activeDebts.length === 0 ? (
+              <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 text-sm text-[#c7cfdb]">
+                No debts added yet.
+              </div>
+            ) : (
+              activeDebts.map((debt) => (
+                <article
+                  key={debt.id}
+                  className="min-w-0 overflow-hidden rounded-xl border border-[#2a3242] bg-[#111827] p-4"
+                >
+                  {editingDebtId === debt.id ? (
+                    <div className="grid min-w-0 gap-3">
+                      <input
+                        value={editDebtName}
+                        onChange={(e) => setEditDebtName(e.target.value)}
+                        placeholder="Debt name"
+                        className="beast-input"
+                      />
+
+                      <div className="grid min-w-0 gap-2">
+                        <input
+                          type="number"
+                          value={editDebtBalance}
+                          onChange={(e) => setEditDebtBalance(e.target.value)}
+                          placeholder="Balance"
+                          className="beast-input"
+                        />
+
+                        <input
+                          type="number"
+                          value={editDebtMinimumPayment}
+                          onChange={(e) => setEditDebtMinimumPayment(e.target.value)}
+                          placeholder="Minimum"
+                          className="beast-input"
+                        />
+
+                        <select
+                          value={editDebtPaymentBehavior}
+                          onChange={(e) =>
+                            setEditDebtPaymentBehavior(
+                              e.target.value as "fixed" | "revolving"
+                            )
+                          }
+                          className="beast-input"
+                        >
+                          <option value="fixed">Fixed Minimum</option>
+                          <option value="revolving">Revolving / Credit Minimum</option>
+                        </select>
+
+                        <input
+                          type="number"
+                          value={editDebtInterestRate}
+                          onChange={(e) => setEditDebtInterestRate(e.target.value)}
+                          placeholder="APR"
+                          className="beast-input"
+                        />
+
+                        <input
+                          type="number"
+                          min="1"
+                          max="31"
+                          value={editDebtDueDate}
+                          onChange={(e) => setEditDebtDueDate(e.target.value)}
+                          placeholder="Due day"
+                          className="beast-input"
+                        />
+                      </div>
+
+                      {editDebtPaymentBehavior === "revolving" ? (
+                        <div className="grid min-w-0 gap-2">
+                          <input
+                            type="number"
+                            value={editDebtMinimumPaymentRate}
+                            onChange={(e) =>
+                              setEditDebtMinimumPaymentRate(e.target.value)
+                            }
+                            placeholder="Min %"
+                            className="beast-input"
+                          />
+
+                          <input
+                            type="number"
+                            value={editDebtMinimumPaymentFloor}
+                            onChange={(e) =>
+                              setEditDebtMinimumPaymentFloor(e.target.value)
+                            }
+                            placeholder="Floor"
+                            className="beast-input"
+                          />
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : (
+                    <div className="min-w-0">
+                      <div className="flex min-w-0 items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <h3 className="break-words text-base font-black text-white">
+                            {debt.name}
+                          </h3>
+                          <p className="mt-1 text-xs text-[#7f8da3]">
+                            Due {debt.nextDueDateDisplay}
+                          </p>
+                        </div>
+
+                        <div className="shrink-0 text-right">
+                          <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                            Balance
+                          </div>
+                          <div className="font-black text-white">
+                            ${Number(debt.balance || 0).toFixed(2)}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 grid min-w-0 grid-cols-2 gap-2 text-sm">
+                        <div className="min-w-0 rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
+                          <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                            Minimum
+                          </div>
+                          <div className="mt-1 truncate font-semibold text-[#dbe3ef]">
+                            ${Number(debt.minimum_payment || 0).toFixed(2)}
+                          </div>
+                        </div>
+
+                        <div className="min-w-0 rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
+                          <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                            Status
+                          </div>
+                          <div className="mt-1 font-semibold text-yellow-300">
+                            Active
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="mt-4 min-w-0">
+                    <DebtPaymentControls
+                      debt={debt}
+                      editingDebtId={editingDebtId}
+                      debtPayments={debtPayments}
+                      setDebtPayments={setDebtPayments}
+                      applyDebtPayment={applyDebtPayment}
+                      applyingDebtPaymentId={applyingDebtPaymentId}
+                      debtPaymentStatus={debtPaymentStatus}
+                      startEditDebt={startEditDebt}
+                      saveDebtEdit={saveDebtEdit}
+                      cancelEditDebt={cancelEditDebt}
+                      archiveDebt={archiveDebt}
+                      resetDebtDueDate={resetDebtDueDate}
+                      deleteDebt={deleteDebt}
+                    />
+                  </div>
+
+                  {editingDebtId !== debt.id ? (
+                    <details className="mt-4 min-w-0 rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
+                      <summary className="cursor-pointer text-sm font-bold text-[#dbe3ef]">
+                        Details
+                      </summary>
+
+                      <div className="mt-3 grid min-w-0 gap-3 text-sm text-[#c7cfdb]">
+                        <div className="min-w-0">
+                          APR: {Number(debt.interest_rate || 0).toFixed(2)}%
+                        </div>
+
+                        <label className="grid min-w-0 gap-1">
+                          <span className="text-xs font-bold uppercase text-[#7f8da3]">
+                            Income Pot
+                          </span>
+                          <select
+                            value={debt.assigned_income_date || ""}
+                            onChange={(e) =>
+                              updateDebtIncomeDate(debt.id, e.target.value)
+                            }
+                            className="beast-input"
+                          >
+                            <option value="">Unassigned</option>
+                            {incomeBucketPlans.map((bucket) => (
+                              <option key={bucket.id} value={bucket.date}>
+                                {bucket.dropdownLabel}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+
+                        <label className="grid min-w-0 gap-1">
+                          <span className="text-xs font-bold uppercase text-[#7f8da3]">
+                            Funding Source
+                          </span>
+                          <select
+                            value={debt.funding_source_id || ""}
+                            onChange={(e) =>
+                              updateDebtFundingSource(debt.id, e.target.value)
+                            }
+                            className="beast-input"
+                          >
+                            <option value="">Unassigned</option>
+                            {activeFundingSources.map((source) => (
+                              <option key={source.id} value={source.id}>
+                                {source.name}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      </div>
+                    </details>
+                  ) : null}
+                </article>
+              ))
+            )}
+          </div>
+
+          <div className="beast-table-wrap hidden md:block">
           <table className="w-full min-w-[900px] text-sm">
             <thead>
               <tr>
@@ -296,7 +513,8 @@ export default function DebtsSection({
               )}
             </tbody>
           </table>
-        </div>
+          </div>
+        </>
       )}
     </section>
   );
