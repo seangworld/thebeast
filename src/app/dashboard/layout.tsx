@@ -817,6 +817,7 @@ export default function DashboardLayout({
             className="mt-3 rounded-xl border border-amber-300/30 bg-amber-300/10 p-3 text-left"
             role="status"
             aria-live="polite"
+            data-mobile-analytics-event="beast_mobile_runtime_state_visible"
             data-mobile-runtime-state={mobileRuntimeState.banner.kind.toLowerCase()}
           >
             <div className="text-xs font-black uppercase text-amber-100">
@@ -843,7 +844,9 @@ export default function DashboardLayout({
             aria-modal="true"
             aria-labelledby="beast-mobile-more-title"
             className="absolute inset-x-0 bottom-0 max-h-[82dvh] overflow-y-auto rounded-t-2xl border border-[#2a3242] bg-[#0f1419] px-4 pb-[calc(env(safe-area-inset-bottom)+16px)] pt-4 shadow-2xl"
+            data-mobile-analytics-event="beast_mobile_nav_open"
             data-mobile-hardening="more-sheet"
+            data-mobile-release-readiness="bf-mob-009"
           >
             <div className="flex items-center justify-between border-b border-[#2a3242] px-4 py-3">
               <div id="beast-mobile-more-title">
@@ -890,7 +893,9 @@ export default function DashboardLayout({
       <nav
         className="fixed inset-x-0 bottom-0 z-50 border-t border-[#2a3242] bg-[#0f1419]/98 px-2 pb-[calc(env(safe-area-inset-bottom)+8px)] pt-2 backdrop-blur md:hidden"
         aria-label="Mobile navigation"
+        data-mobile-analytics-event="beast_mobile_route_open"
         data-mobile-hardening="bottom-navigation"
+        data-mobile-release-readiness="bf-mob-009"
       >
         <div className="mx-auto flex max-w-md gap-1">
           {mobileNavigation.primary.map((item) => (

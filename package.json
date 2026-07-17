@@ -8,6 +8,7 @@
     "test": "tsc -p tsconfig.test.json && node --test .test-dist/tests/*.test.js",
     "start": "next start",
     "lint": "next lint",
+    "mobile:release-smoke": "node scripts/mobile-release-smoke.mjs",
     "supabase:current": "node scripts/supabase-migration-guard.mjs current",
     "supabase:link:dev": "node scripts/supabase-migration-guard.mjs link dev",
     "supabase:list:dev": "node scripts/supabase-migration-guard.mjs list dev --confirm-env dev",
