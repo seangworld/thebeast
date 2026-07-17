@@ -63,7 +63,10 @@ export default function DebtPaymentControls({
     </div>
   ) : (
     <div className="grid gap-2">
-      <div className="grid min-w-0 grid-cols-1 gap-2 min-[390px]:grid-cols-[1fr_auto_auto]">
+      <div
+        className="grid min-w-0 grid-cols-1 gap-2 min-[390px]:grid-cols-[1fr_auto_auto]"
+        data-mobile-money-payment-form="debt"
+      >
         <input
           type="number"
           value={debtPayments[debt.id] || ""}
@@ -111,7 +114,7 @@ export default function DebtPaymentControls({
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <div className="grid grid-cols-1 gap-2 min-[360px]:grid-cols-2 sm:grid-cols-4">
         <button onClick={() => startEditDebt(debt)} className="beast-button-secondary">
           Edit
         </button>

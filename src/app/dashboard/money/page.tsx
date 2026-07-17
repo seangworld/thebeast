@@ -18,6 +18,11 @@ import {
   numberValue,
 } from "@/lib/financialMetrics";
 import {
+  buildMobileMoneyBillCards,
+  buildMobileMoneyDebtCards,
+  buildRecentMoneyTransactions,
+} from "@/lib/mobileMoney";
+import {
   CashFlowTrendChart,
   CreditUtilizationChart,
   DebtPayoffProgressChart,
@@ -85,6 +90,14 @@ type MoneySettings = {
   checking_buffer?: number | null;
 };
 
+type MoneyPayment = {
+  id: string;
+  amount?: number | null;
+  amount_paid?: number | null;
+  payment_date?: string | null;
+  created_at?: string | null;
+};
+
 type DebtSettings = {
   extra_payment?: number | null;
 };
@@ -96,6 +109,8 @@ type MoneyState = {
   fundingSources: FundingSource[];
   cashSettings: MoneySettings | null;
   debtSettings: DebtSettings | null;
+  billPayments: MoneyPayment[];
+  debtPayments: MoneyPayment[];
 };
 
 const initialMoneyState: MoneyState = {
@@ -105,6 +120,8 @@ const initialMoneyState: MoneyState = {
   fundingSources: [],
   cashSettings: null,
   debtSettings: null,
+  billPayments: [],
+  debtPayments: [],
 };
 
 const quickActions = [
@@ -148,6 +165,49 @@ function formatMonthsSaved(months: number) {
   return `${years}y ${remainder}m`;
 }
 
+function MobileMoneyCard({
+  title,
+  children,
+  action,
+  id,
+}: {
+  title: string;
+  children: React.ReactNode;
+  action?: React.ReactNode;
+  id?: string;
+}) {
+  return (
+    <section
+      id={id}
+      className="rounded-2xl border border-[#2a3242] bg-[#1a1f2b] p-4"
+    >
+      <div className="flex min-w-0 items-start justify-between gap-3">
+        <h2 className="min-w-0 text-lg font-black text-white">{title}</h2>
+        {action ? <div className="shrink-0">{action}</div> : null}
+      </div>
+      <div className="mt-4 min-w-0">{children}</div>
+    </section>
+  );
+}
+
+function MobileMoneyMetric({
+  label,
+  value,
+  detail,
+}: {
+  label: string;
+  value: string;
+  detail: string;
+}) {
+  return (
+    <div className="min-w-0 rounded-xl border border-[#2a3242] bg-[#111827] p-3">
+      <div className="text-xs font-bold uppercase text-[#7f8da3]">{label}</div>
+      <div className="mt-1 break-words text-xl font-black text-white">{value}</div>
+      <p className="mt-1 text-xs leading-5 text-[#9aa7b8]">{detail}</p>
+    </div>
+  );
+}
+
 export default function MoneyWorkspacePage() {
   const [state, setState] = useState<MoneyState>(initialMoneyState);
   const [loading, setLoading] = useState(true);
@@ -176,6 +236,8 @@ export default function MoneyWorkspacePage() {
         fundingResult,
         cashSettingsResult,
         debtSettingsResult,
+        billPaymentsResult,
+        debtPaymentsResult,
       ] = await Promise.all([
         supabase.from("debts").select("*").eq("user_id", userId),
         supabase
@@ -195,6 +257,18 @@ export default function MoneyWorkspacePage() {
           .eq("is_active", true),
         supabase.from("cash_settings").select("*").eq("user_id", userId).maybeSingle(),
         supabase.from("debt_settings").select("*").eq("user_id", userId).maybeSingle(),
+        supabase
+          .from("bill_payments")
+          .select("*")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false })
+          .limit(8),
+        supabase
+          .from("debt_payments")
+          .select("*")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false })
+          .limit(8),
       ]);
       const firstError =
         debtsResult.error ||
@@ -202,7 +276,9 @@ export default function MoneyWorkspacePage() {
         incomesResult.error ||
         fundingResult.error ||
         cashSettingsResult.error ||
-        debtSettingsResult.error;
+        debtSettingsResult.error ||
+        billPaymentsResult.error ||
+        debtPaymentsResult.error;
 
       if (firstError) throw firstError;
 
@@ -213,6 +289,8 @@ export default function MoneyWorkspacePage() {
         fundingSources: (fundingResult.data || []) as FundingSource[],
         cashSettings: cashSettingsResult.data as MoneySettings | null,
         debtSettings: debtSettingsResult.data as DebtSettings | null,
+        billPayments: (billPaymentsResult.data || []) as MoneyPayment[],
+        debtPayments: (debtPaymentsResult.data || []) as MoneyPayment[],
       });
     } catch (error) {
       setLoadError(
@@ -494,6 +572,24 @@ export default function MoneyWorkspacePage() {
   ]);
 
   const recommendedAction = snapshot.financialDecision.recommendedAction;
+  const mobileBillCards = buildMobileMoneyBillCards({
+    bills: snapshot.activeBills,
+    asOfDate: snapshot.simulation.asOfDate,
+  });
+  const mobileDebtCards = buildMobileMoneyDebtCards({
+    debts: snapshot.activeDebts,
+    asOfDate: snapshot.simulation.asOfDate,
+  });
+  const mobileTransactions = buildRecentMoneyTransactions({
+    billPayments: state.billPayments,
+    debtPayments: state.debtPayments,
+  });
+  const overdueBills = mobileBillCards.filter(
+    (bill) => bill.status === "Overdue"
+  );
+  const upcomingObligations = mobileBillCards.filter((bill) =>
+    ["Overdue", "Due Today", "Due Soon"].includes(bill.status)
+  );
 
   return (
     <BeastMoneyShell
@@ -511,6 +607,235 @@ export default function MoneyWorkspacePage() {
       }
     >
 
+        <div className="space-y-4 md:hidden" data-mobile-money-experience="true">
+          <MobileMoneyCard id="mobile-money-home" title="Money Home">
+            <div className="grid gap-3">
+              <MobileMoneyMetric
+                label="Available Cash"
+                value={formatCurrency(snapshot.startingCash)}
+                detail={`Buffer target ${formatCurrency(snapshot.buffer)}`}
+              />
+              <MobileMoneyMetric
+                label="Upcoming Obligations"
+                value={String(upcomingObligations.length)}
+                detail={`${overdueBills.length} overdue, ${snapshot.billsDueSoon.length} due soon`}
+              />
+              <MobileMoneyMetric
+                label="Debt Summary"
+                value={formatCurrency(snapshot.totalDebt)}
+                detail={`${formatCurrency(snapshot.debtMinimums)} minimums`}
+              />
+            </div>
+
+            <div className="mt-4 rounded-xl border border-purple-300/30 bg-purple-300/10 p-3">
+              <div className="text-xs font-bold uppercase text-purple-100">
+                Current Recommendation
+              </div>
+              <p className="mt-2 text-base font-black leading-6 text-white">
+                {recommendedAction}
+              </p>
+              <p className="mt-2 text-sm leading-5 text-[#dbe3ef]">
+                {snapshot.financialDecision.reason}
+              </p>
+            </div>
+
+            <div className="mt-4 grid gap-2">
+              {alerts.slice(0, 2).map((alert) => (
+                <Link
+                  key={alert.title}
+                  href={alert.href || "/dashboard/money"}
+                  className="block rounded-xl border border-[#2a3242] bg-[#111827] p-3"
+                >
+                  <div className="text-sm font-black text-white">{alert.title}</div>
+                  <p className="mt-1 text-sm leading-5 text-[#c7cfdb]">
+                    {alert.message}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          </MobileMoneyCard>
+
+          <MobileMoneyCard
+            id="mobile-money-bills"
+            title="Bills"
+            action={
+              <Link href="/dashboard/money/cashflow#bills" className="text-sm font-black text-green-200">
+                View all
+              </Link>
+            }
+          >
+            <div className="grid gap-3" data-mobile-money-bill-cards="true">
+              {mobileBillCards.slice(0, 5).map((bill) => (
+                <article
+                  key={bill.id}
+                  className="min-w-0 rounded-xl border border-[#2a3242] bg-[#111827] p-3"
+                >
+                  <div className="flex min-w-0 items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h3 className="break-words text-base font-black text-white">
+                        {bill.name}
+                      </h3>
+                      <p className="mt-1 text-xs text-[#7f8da3]">
+                        Due {formatDateLabel(bill.dueDate)}
+                      </p>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                        Amount
+                      </div>
+                      <div className="break-words font-black text-white">
+                        {formatCurrency(bill.amountDue)}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-3 rounded-lg border border-[#2a3242] bg-[#0f1419] px-3 py-2 text-sm font-bold text-[#dbe3ef]">
+                    {bill.status}
+                  </div>
+                  <Link
+                    href={bill.actionHref}
+                    className="mt-3 flex min-h-[44px] items-center justify-center rounded-lg bg-[#22c55e] px-3 py-2 text-sm font-black text-black"
+                  >
+                    Pay or record payment
+                  </Link>
+                </article>
+              ))}
+              {mobileBillCards.length === 0 ? (
+                <p className="text-sm text-[#c7cfdb]">No active bills yet.</p>
+              ) : null}
+            </div>
+          </MobileMoneyCard>
+
+          <MobileMoneyCard
+            id="mobile-money-debts"
+            title="Debts"
+            action={
+              <Link href="/dashboard/money/debts" className="text-sm font-black text-green-200">
+                View all
+              </Link>
+            }
+          >
+            <div className="grid gap-3" data-mobile-money-debt-cards="true">
+              {mobileDebtCards.slice(0, 5).map((debt) => (
+                <article
+                  key={debt.id}
+                  className="min-w-0 rounded-xl border border-[#2a3242] bg-[#111827] p-3"
+                >
+                  <div className="min-w-0">
+                    <h3 className="break-words text-base font-black text-white">
+                      {debt.name}
+                    </h3>
+                    <p className="mt-1 text-xs text-[#7f8da3]">
+                      Due {formatDateLabel(debt.dueDate)}
+                    </p>
+                  </div>
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <MobileMoneyMetric
+                      label="Balance"
+                      value={formatCurrency(debt.balance)}
+                      detail={`${debt.interestRate.toFixed(2)}% APR`}
+                    />
+                    <MobileMoneyMetric
+                      label="Minimum"
+                      value={formatCurrency(debt.minimumPayment)}
+                      detail="Next required payment"
+                    />
+                  </div>
+                  <Link
+                    href={debt.actionHref}
+                    className="mt-3 flex min-h-[44px] items-center justify-center rounded-lg bg-[#22c55e] px-3 py-2 text-sm font-black text-black"
+                  >
+                    Pay or record payment
+                  </Link>
+                </article>
+              ))}
+              {mobileDebtCards.length === 0 ? (
+                <p className="text-sm text-[#c7cfdb]">No active debts yet.</p>
+              ) : null}
+            </div>
+          </MobileMoneyCard>
+
+          <MobileMoneyCard id="mobile-money-transactions" title="Transactions">
+            <form
+              className="grid gap-2"
+              data-mobile-money-quick-add-transaction="true"
+              onSubmit={(event) => event.preventDefault()}
+            >
+              <label className="grid gap-1">
+                <span className="text-xs font-bold uppercase text-[#7f8da3]">
+                  Quick-add type
+                </span>
+                <select className="beast-input">
+                  <option>Bill payment</option>
+                  <option>Debt payment</option>
+                  <option>New transaction note</option>
+                </select>
+              </label>
+              <input className="beast-input" inputMode="decimal" placeholder="Amount" />
+              <input className="beast-input" placeholder="Name or note" />
+              <div className="grid grid-cols-2 gap-2">
+                <Link href="/dashboard/money/cashflow#bills" className="beast-button">
+                  Add Bill Pay
+                </Link>
+                <Link href="/dashboard/money/debts" className="beast-button-secondary">
+                  Add Debt Pay
+                </Link>
+              </div>
+            </form>
+
+            <div className="mt-4 grid gap-2">
+              {mobileTransactions.map((transaction) => (
+                <div
+                  key={transaction.id}
+                  className="rounded-xl border border-[#2a3242] bg-[#111827] p-3"
+                >
+                  <div className="flex min-w-0 justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="break-words text-sm font-black text-white">
+                        {transaction.label}
+                      </div>
+                      <div className="mt-1 text-xs text-[#7f8da3]">
+                        {transaction.source} | {transaction.date}
+                      </div>
+                    </div>
+                    <div className="shrink-0 font-black text-white">
+                      {formatCurrency(transaction.amount)}
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {mobileTransactions.length === 0 ? (
+                <p className="text-sm text-[#c7cfdb]">
+                  Recent payments will appear here after Money records exist.
+                </p>
+              ) : null}
+            </div>
+          </MobileMoneyCard>
+
+          <MobileMoneyCard id="mobile-money-advisor" title="Advisor">
+            <div className="rounded-xl border border-purple-300/30 bg-purple-300/10 p-3">
+              <div className="text-xs font-bold uppercase text-purple-100">
+                Recommended action
+              </div>
+              <h3 className="mt-2 text-xl font-black leading-7 text-white">
+                {snapshot.dailyAdvisor.primaryRecommendation.title}
+              </h3>
+              <p className="mt-2 text-sm leading-5 text-[#dbe3ef]">
+                {snapshot.dailyAdvisor.primaryRecommendation.why}
+              </p>
+              <p className="mt-2 text-sm leading-5 text-[#c7cfdb]">
+                {snapshot.dailyAdvisor.primaryRecommendation.impact}
+              </p>
+              <Link
+                href="/dashboard/money/velocity"
+                className="mt-4 flex min-h-[44px] items-center justify-center rounded-lg border border-purple-300/40 px-3 py-2 text-sm font-black text-purple-100"
+              >
+                Open deeper analysis
+              </Link>
+            </div>
+          </MobileMoneyCard>
+        </div>
+
+        <div className="hidden space-y-8 md:block">
         {loading ? (
           <DashboardCard>
             <div className="flex animate-pulse flex-col gap-3">
@@ -1140,6 +1465,7 @@ export default function MoneyWorkspacePage() {
             </DashboardCard>
           </div>
         </section>
-    </BeastMoneyShell>
+        </div>
+      </BeastMoneyShell>
   );
 }
