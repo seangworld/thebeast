@@ -5,6 +5,7 @@ import {
   moduleAccents,
   type ModuleKey,
 } from "@/app/components/design/DashboardPrimitives";
+import Link from "next/link";
 import {
   ModuleFilterRail,
   PlatformServiceHero,
@@ -19,6 +20,12 @@ import {
   searchPlatformIndex,
   type PlatformSearchItem,
 } from "@/lib/platform/search";
+import type { SharedAIContextItem } from "@/lib/platform/sharedAI";
+import {
+  buildMobileSearchCards,
+  buildMobileSharedAICards,
+  buildMobileSharedServiceSummary,
+} from "@/lib/mobileSharedServices";
 
 const rawRecentSearches = [
   "upcoming bills",
@@ -95,6 +102,36 @@ const searchItems: PlatformSearchItem[] = [
   },
 ];
 
+const sharedAIContextItems: SharedAIContextItem[] = [
+  {
+    id: "shared-ai-money-context",
+    kind: "Module",
+    source: "money",
+    sourceRecordId: "cashflow-workspace",
+    summary: "Money alerts and upcoming obligations are available for daily guidance.",
+    permission: "Allowed",
+    retention: "Session",
+  },
+  {
+    id: "shared-ai-learning-context",
+    kind: "Module",
+    source: "learning",
+    sourceRecordId: "mentor-next-step",
+    summary: "The current Mentor step can be referenced by shared AI.",
+    permission: "Allowed",
+    retention: "Session",
+  },
+  {
+    id: "shared-ai-restricted-context",
+    kind: "Document",
+    source: "documents",
+    sourceRecordId: "restricted-upload",
+    summary: "Restricted uploads require explicit owner permission.",
+    permission: "Restricted",
+    retention: "Session",
+  },
+];
+
 export default function SearchPage() {
   const recentSearches = buildRecentSearches(rawRecentSearches);
   const savedSearches = [
@@ -123,6 +160,14 @@ export default function SearchPage() {
     item: results[0] ?? index[0],
     actionType: "Open",
   });
+  const mobileSearchCards = buildMobileSearchCards(results, 3);
+  const mobileSharedAICards = buildMobileSharedAICards(sharedAIContextItems);
+  const mobileSummary = buildMobileSharedServiceSummary({
+    todayCount: 0,
+    notificationCount: 0,
+    calendarCount: 0,
+    searchCount: results.length,
+  });
 
   return (
     <main className="beast-page">
@@ -133,6 +178,97 @@ export default function SearchPage() {
           title="BeastOS Search"
           description="A search surface for current BeastOS, BeastMoney, and BeastLearning paths."
         />
+
+        <section
+          className="space-y-3 md:hidden"
+          data-mobile-shared-service="search"
+        >
+          <div className="rounded-xl border border-[#38bdf8]/35 bg-[#111827] p-4">
+            <div className="text-xs font-black uppercase text-[#7f8da3]">
+              Quick search
+            </div>
+            <div className="mt-3 min-h-[48px] rounded-lg border border-[#2a3242] bg-[#0f1419] px-3 py-3 text-sm font-semibold text-[#c7cfdb]">
+              Search BeastOS, Money, Learning, uploads, and alerts
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            {mobileSummary.slice(2).map((item) => (
+              <div
+                key={item.label}
+                className="min-w-0 rounded-lg border border-[#2a3242] bg-[#111827] p-3"
+              >
+                <div className="truncate text-[10px] font-black uppercase text-[#7f8da3]">
+                  {item.label}
+                </div>
+                <div className="mt-1 text-xl font-black text-white">{item.value}</div>
+                <div className="mt-1 truncate text-[11px] font-semibold text-[#9aa7b8]">
+                  {item.detail}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {mobileSharedAICards.map((card) => (
+            <article
+              key={card.id}
+              id="shared-ai"
+              className="min-w-0 rounded-xl border border-[#818cf8]/35 bg-[#111827] p-4"
+              data-mobile-shared-ai-entry="true"
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                <ModuleBadge module={card.source} label="Shared AI" />
+                {card.metadata.map((item) => (
+                  <span
+                    key={item}
+                    className="rounded-full border border-[#2a3242] px-2.5 py-1 text-[11px] font-bold text-[#c7cfdb]"
+                  >
+                    {item}
+                  </span>
+                ))}
+              </div>
+              <h2 className="mt-3 break-words text-lg font-black text-white">
+                {card.title}
+              </h2>
+              <p className="mt-2 break-words text-sm leading-6 text-[#c7cfdb]">
+                {card.summary}
+              </p>
+              <Link href={card.href} className="mt-4 flex w-full justify-center beast-button">
+                {card.actionLabel}
+              </Link>
+            </article>
+          ))}
+
+          <div className="grid gap-3">
+            {mobileSearchCards.map((card) => (
+              <article
+                key={card.id}
+                className="min-w-0 rounded-xl border border-[#2a3242] bg-[#111827] p-4"
+              >
+                <div className="flex flex-wrap items-center gap-2">
+                  <ModuleBadge module={card.source} />
+                  {card.metadata.map((item) => (
+                    <span
+                      key={item}
+                      className="rounded-full border border-[#2a3242] px-2.5 py-1 text-[11px] font-bold text-[#c7cfdb]"
+                    >
+                      {item}
+                    </span>
+                  ))}
+                </div>
+                <h2 className="mt-3 break-words text-lg font-black text-white">
+                  {card.title}
+                </h2>
+                <p className="mt-2 break-words text-sm leading-6 text-[#c7cfdb]">
+                  {card.summary}
+                </p>
+                <Link href={card.href} className="mt-4 flex w-full justify-center beast-button">
+                  {card.actionLabel}
+                </Link>
+              </article>
+            ))}
+          </div>
+        </section>
 
         <DashboardCard accent="search">
           <SectionHeader

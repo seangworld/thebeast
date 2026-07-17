@@ -18,6 +18,7 @@ import { useRuntimeToday } from "@/lib/hooks/useRuntimeToday";
 import { getBeastGreeting } from "@/lib/runtimeDate";
 import { createClient } from "@/lib/supabase/client";
 import { getProfileDisplayName } from "@/lib/profile";
+import { buildMobileTodayCards } from "@/lib/mobileSharedServices";
 import {
   assembleTodayDayPlan,
   buildManualTodayContribution,
@@ -527,6 +528,10 @@ export default function TodayPage() {
     { action: "Complete", label: "Complete" },
     { action: "Reschedule", label: "Tomorrow" },
   ];
+  const mobileTodayCards = useMemo(
+    () => buildMobileTodayCards(todayDayPlan.active, 3),
+    [todayDayPlan.active]
+  );
 
   function handleTodayAction(action: TodayItemActionType) {
     const requestedAt = new Date().toISOString();
@@ -610,6 +615,75 @@ export default function TodayPage() {
             </div>
           </DashboardCard>
         ) : null}
+
+        <section
+          className="space-y-3 md:hidden"
+          data-mobile-shared-service="today"
+        >
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              ["Active", todayDayPlan.active.length],
+              ["Done", todayDayPlan.completed.length],
+              ["Next", todayDayPlan.tomorrow.length],
+            ].map(([label, value]) => (
+              <div
+                key={label}
+                className="min-w-0 rounded-lg border border-[#2a3242] bg-[#111827] p-3"
+              >
+                <div className="truncate text-[10px] font-black uppercase text-[#7f8da3]">
+                  {label}
+                </div>
+                <div className="mt-1 text-xl font-black text-white">{value}</div>
+              </div>
+            ))}
+          </div>
+
+          {mobileTodayCards.map((card) => (
+            <div
+              key={card.id}
+              className="min-w-0 rounded-xl border border-[#2a3242] bg-[#111827] p-4"
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                <ModuleBadge module={card.source} />
+                {card.metadata.slice(0, 3).map((item) => (
+                  <span
+                    key={item}
+                    className="rounded-full border border-[#2a3242] px-2.5 py-1 text-[11px] font-bold text-[#c7cfdb]"
+                  >
+                    {item}
+                  </span>
+                ))}
+              </div>
+              <h2 className="mt-3 break-words text-lg font-black text-white">
+                {card.title}
+              </h2>
+              <p className="mt-2 break-words text-sm leading-6 text-[#c7cfdb]">
+                {card.summary}
+              </p>
+              <Link href={card.href} className="mt-4 flex w-full justify-center beast-button">
+                {card.actionLabel}
+              </Link>
+            </div>
+          ))}
+
+          <div
+            className="grid grid-cols-2 gap-2"
+            data-mobile-today-source-actions="module-contract-event"
+          >
+            {actionButtons.map(({ action, label }) => (
+              <button
+                key={action}
+                type="button"
+                onClick={() => handleTodayAction(action)}
+                disabled={!learningActionAvailability[action]}
+                className="min-h-[44px] rounded-lg border border-[#2a3242] bg-[#111827] px-3 py-2 text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </section>
+
         <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <MetricTile
             label="Saved lessons"
