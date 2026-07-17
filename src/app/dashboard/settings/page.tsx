@@ -4,6 +4,14 @@ import {
   ModuleBadge,
   SectionHeader,
 } from "@/app/components/design/DashboardPrimitives";
+import {
+  buildSharedAIContext,
+  buildSharedAIMemoryBoundary,
+  buildSharedAIRecommendation,
+  buildSharedAISpecialistHandoff,
+  sharedAIContractRules,
+  type SharedAIContextItem,
+} from "@/lib/platform/sharedAI";
 
 const settingsSections = [
   {
@@ -45,6 +53,50 @@ const accountLinks = [
 ];
 
 export default function SettingsPage() {
+  const sharedAIContext: SharedAIContextItem[] = [
+    {
+      id: "context-user-preferences",
+      kind: "User",
+      source: "beastos",
+      sourceRecordId: "personal-hub-context",
+      summary: "Owner-provided preferences and AI context controls.",
+      permission: "Allowed",
+      retention: "Exportable",
+    },
+    {
+      id: "context-money-cashflow",
+      kind: "Module",
+      source: "money",
+      sourceRecordId: "cashflow-summary",
+      summary: "Money summary can be referenced but calculations stay with BeastMoney.",
+      permission: "Allowed",
+      retention: "Session",
+    },
+    {
+      id: "context-private-document",
+      kind: "Document",
+      source: "documents",
+      sourceRecordId: "restricted-document",
+      summary: "Restricted document context is withheld from Shared AI.",
+      permission: "Restricted",
+      retention: "Session",
+    },
+  ];
+  const allowedContext = buildSharedAIContext(sharedAIContext);
+  const recommendation = buildSharedAIRecommendation({
+    id: "shared-ai-recommendation-preview",
+    title: "Review the next useful step",
+    context: sharedAIContext,
+    ownerModule: "beastos",
+  });
+  const memoryBoundary = buildSharedAIMemoryBoundary({
+    context: sharedAIContext,
+    retentionDays: 30,
+  });
+  const handoff = buildSharedAISpecialistHandoff({
+    request: "Help me understand my money alert",
+  });
+
   return (
     <main className="beast-page">
       <div className="beast-container space-y-8">
@@ -135,6 +187,42 @@ export default function SettingsPage() {
             </div>
           </DashboardCard>
         </section>
+
+        <DashboardCard accent="beastos">
+          <SectionHeader
+            eyebrow="Shared AI"
+            title="Context and specialist boundaries"
+            description="Shared AI can assemble permissioned context and route handoffs without owning module-specific logic."
+          />
+          <div className="mt-5 grid gap-4 lg:grid-cols-4">
+            {[
+              ["Allowed context", allowedContext.length],
+              ["Recommendation facts", recommendation.sourceContextIds.length],
+              ["Retention days", memoryBoundary.retentionDays],
+              ["Handoff", handoff.specialist],
+            ].map(([label, value]) => (
+              <div
+                key={label}
+                className="rounded-xl border border-[#2a3242] bg-[#111827] p-4"
+              >
+                <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                  {label}
+                </div>
+                <div className="mt-2 text-lg font-black text-white">{value}</div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-5 grid gap-3 md:grid-cols-2">
+            {sharedAIContractRules.map((rule) => (
+              <div
+                key={rule}
+                className="rounded-xl border border-[#2a3242] bg-[#0f1419] p-4 text-sm font-semibold text-[#d8dee8]"
+              >
+                {rule}
+              </div>
+            ))}
+          </div>
+        </DashboardCard>
       </div>
     </main>
   );

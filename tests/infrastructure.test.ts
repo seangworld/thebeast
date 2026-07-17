@@ -288,6 +288,14 @@ import {
   notificationContractRules,
   type PlatformNotificationItem,
 } from "../src/lib/platform/notifications";
+import {
+  buildSharedAIContext,
+  buildSharedAIMemoryBoundary,
+  buildSharedAIRecommendation,
+  buildSharedAISpecialistHandoff,
+  sharedAIContractRules,
+  type SharedAIContextItem,
+} from "../src/lib/platform/sharedAI";
 import { generateDynamicLearningLesson } from "../src/lib/learning/dynamicLessonGenerator";
 import {
   createGeneratedLearningContentRecord,
@@ -1052,6 +1060,103 @@ test("BO-41 Notifications route actions preferences and digests safely", () => {
   assert.match(notificationContractRules[3], /source contract events/);
   assert.match(notificationsPage, /buildNotificationActionRequest/);
   assert.match(notificationsPage, /buildNotificationDigest/);
+});
+
+function buildSharedAIContextFixtureItems(): SharedAIContextItem[] {
+  return [
+    {
+      id: "owner-preferences",
+      kind: "User",
+      source: "beastos",
+      sourceRecordId: "profile-context",
+      summary: "Owner preference context for platform-level assistance.",
+      permission: "Allowed",
+      retention: "Exportable",
+    },
+    {
+      id: "money-cashflow",
+      kind: "Module",
+      source: "money",
+      sourceRecordId: "cashflow-summary",
+      summary: "Money can summarize cashflow while calculations stay with BeastMoney.",
+      permission: "Allowed",
+      retention: "Session",
+    },
+    {
+      id: "private-document",
+      kind: "Document",
+      source: "documents",
+      sourceRecordId: "restricted-upload",
+      summary: "Restricted upload context should not be used by Shared AI.",
+      permission: "Restricted",
+      retention: "Session",
+    },
+  ];
+}
+
+test("BO-42 Shared AI assembles permissioned context without owning sources", () => {
+  const settingsPage = readFileSync("src/app/dashboard/settings/page.tsx", "utf8");
+  const allowed = buildSharedAIContext(buildSharedAIContextFixtureItems());
+
+  assert.deepEqual(
+    allowed.map((item) => item.id),
+    ["owner-preferences", "money-cashflow"]
+  );
+  assert.equal(allowed[1].source, "money");
+  assert.equal(allowed[1].sourceRecordId, "cashflow-summary");
+  assert.match(sharedAIContractRules[0], /permissioned context assembly/);
+  assert.match(settingsPage, /buildSharedAIContext/);
+  assert.match(settingsPage, /sharedAIContractRules/);
+});
+
+test("BO-43 Shared AI frames recommendations from context metadata", () => {
+  const recommendation = buildSharedAIRecommendation({
+    id: "next-step",
+    title: "Review the next useful step",
+    context: buildSharedAIContextFixtureItems(),
+    ownerModule: "beastos",
+  });
+
+  assert.equal(recommendation.ownerModule, "beastos");
+  assert.deepEqual(recommendation.sourceContextIds, ["owner-preferences", "money-cashflow"]);
+  assert.equal(recommendation.assumptions.some((item) => item.includes("restricted")), false);
+  assert.match(recommendation.explanation, /leaves module logic with the source owner/);
+  assert.match(sharedAIContractRules[1], /business actions/);
+});
+
+test("BO-44 Shared AI memory boundaries expose correction export and deletion controls", () => {
+  const settingsPage = readFileSync("src/app/dashboard/settings/page.tsx", "utf8");
+  const boundary = buildSharedAIMemoryBoundary({
+    context: buildSharedAIContextFixtureItems(),
+    retentionDays: -5,
+  });
+
+  assert.equal(boundary.correctionsAllowed, true);
+  assert.equal(boundary.exportAllowed, true);
+  assert.equal(boundary.deletionAllowed, true);
+  assert.equal(boundary.retentionDays, 0);
+  assert.deepEqual(boundary.restrictedContextIds, ["private-document"]);
+  assert.match(sharedAIContractRules[2], /retention/);
+  assert.match(settingsPage, /buildSharedAIMemoryBoundary/);
+});
+
+test("BO-45 Shared AI routes specialist handoffs while preserving ownership", () => {
+  const settingsPage = readFileSync("src/app/dashboard/settings/page.tsx", "utf8");
+  const moneyHandoff = buildSharedAISpecialistHandoff({
+    request: "Help me understand this money bill",
+  });
+  const tutorHandoff = buildSharedAISpecialistHandoff({
+    request: "Ask the tutor to explain this lesson",
+  });
+
+  assert.equal(moneyHandoff.targetModule, "money");
+  assert.equal(moneyHandoff.specialist, "BeastMoney");
+  assert.equal(tutorHandoff.targetModule, "learning");
+  assert.equal(tutorHandoff.specialist, "BeastLearning Tutor");
+  assert.equal(moneyHandoff.dispatchMode, "specialist-handoff");
+  assert.equal(moneyHandoff.sourceOwnershipPreserved, true);
+  assert.match(sharedAIContractRules[3], /Specialist handoffs/);
+  assert.match(settingsPage, /buildSharedAISpecialistHandoff/);
 });
 
 test("financial metrics normalize recurring income to monthly amounts", () => {
