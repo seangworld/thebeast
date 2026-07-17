@@ -32,6 +32,7 @@ import {
   moduleAccents,
   type ModuleKey,
 } from "@/app/components/design/DashboardPrimitives";
+import { buildMobileModuleCards } from "@/lib/mobileFoundation";
 
 type MoneyDebt = {
   id: string;
@@ -83,6 +84,7 @@ type MoneyState = {
 
 type CurrentUser = {
   name: string;
+  role?: string | null;
 };
 
 type MoneyPayment = {
@@ -317,6 +319,44 @@ function ActivityRow({ item }: { item: PlatformActivity }) {
   return content;
 }
 
+function MobileLaunchCard({
+  title,
+  detail,
+  href,
+  module,
+  action,
+}: {
+  title: string;
+  detail: string;
+  href: string;
+  module: ModuleKey;
+  action: string;
+}) {
+  const accent = moduleAccents[module];
+
+  return (
+    <Link
+      href={href}
+      className="block rounded-xl border border-[#2a3242] bg-[#111827] p-4 transition hover:border-[#38bdf8]/60"
+      style={{ borderColor: `${accent.color}44` }}
+    >
+      <div className="flex min-w-0 items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="truncate text-base font-black text-white">{title}</div>
+          <p className="mt-1 text-sm leading-5 text-[#c7cfdb]">{detail}</p>
+        </div>
+        <span
+          className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full"
+          style={{ background: accent.color }}
+        />
+      </div>
+      <div className="mt-4 flex min-h-[44px] items-center justify-center rounded-lg bg-[#38bdf8] px-3 py-2 text-sm font-black text-black">
+        {action}
+      </div>
+    </Link>
+  );
+}
+
 export default function TodayPage() {
   const [state, setState] = useState<MoneyState>(initialMoneyState);
   const [user, setUser] = useState<CurrentUser>({ name: "" });
@@ -382,6 +422,10 @@ export default function TodayPage() {
 
     setUser({
       name: getProfileDisplayName(profileResult.data, authUser || null),
+      role:
+        profileResult.data && "role" in profileResult.data
+          ? String(profileResult.data.role)
+          : null,
     });
     setState({
       debts: (debtsResult.data || []) as MoneyDebt[],
@@ -476,10 +520,125 @@ export default function TodayPage() {
   const activeMemberModuleSummaries = intelligence.moduleSummaries.filter((card) =>
     ["beastos", "money", "learning"].includes(card.module)
   );
+  const mobileModuleCards = buildMobileModuleCards({
+    subject: { role: user.role },
+    intelligence,
+  });
+  const mobileNotification = intelligence.notifications[0] || null;
+  const mobileCalendarItem = timelineItems.find(
+    (item) => item.module === "calendar"
+  ) || timelineItems[0] || null;
 
   return (
     <main className="beast-page">
       <div className="beast-container space-y-8">
+        <section className="space-y-4 md:hidden" data-beast-mobile-shell="home">
+          <div className="rounded-2xl border border-[#2a3242] bg-[#1a1f2b] p-4">
+            <ModuleBadge module="beastos" label="Mobile Beast" />
+            <h1 className="mt-3 text-2xl font-black leading-tight text-white">
+              {user.name ? `${getBeastGreeting(now)}, ${user.name}` : "Today at a glance"}
+            </h1>
+            <p className="mt-2 text-sm font-semibold leading-5 text-[#c7cfdb]">
+              {formatBeastFullDate(now)}
+            </p>
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <Link href="/dashboard/today" className="beast-button min-h-[44px]">
+                Today
+              </Link>
+              <Link
+                href="/dashboard/search#shared-ai"
+                className="beast-button-secondary min-h-[44px]"
+              >
+                Ask AI
+              </Link>
+            </div>
+          </div>
+
+          {loading ? (
+            <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+              <div className="h-4 w-32 animate-pulse rounded bg-[#2a3242]" />
+              <div className="mt-3 h-8 w-full animate-pulse rounded bg-[#2a3242]" />
+            </div>
+          ) : null}
+
+          <div className="grid gap-3">
+            <MobileLaunchCard
+              title="Today summary"
+              detail={
+                primaryRecommendation
+                  ? primaryRecommendation.title
+                  : `${snapshot.billsDueSoon.length} bills due soon and ${activityItems.length} recent activity items.`
+              }
+              href="/dashboard/today"
+              module="beastos"
+              action="Open Today"
+            />
+            <MobileLaunchCard
+              title="Notifications"
+              detail={
+                mobileNotification
+                  ? mobileNotification.title
+                  : "No urgent shared notifications right now."
+              }
+              href="/dashboard/notifications"
+              module="notifications"
+              action="Review alerts"
+            />
+            <MobileLaunchCard
+              title="Calendar"
+              detail={
+                mobileCalendarItem
+                  ? mobileCalendarItem.title
+                  : "Open the shared calendar for today and tomorrow."
+              }
+              href="/dashboard/calendar"
+              module="calendar"
+              action="Open calendar"
+            />
+            <MobileLaunchCard
+              title="Search"
+              detail="Search across BeastOS, Money, Learning, documents, goals, and shared services."
+              href="/dashboard/search"
+              module="search"
+              action="Search Beast"
+            />
+          </div>
+
+          <section className="space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-lg font-black text-white">Quick access</h2>
+              <ModuleBadge module="beastos" label="Permission aware" />
+            </div>
+            <div className="grid gap-3">
+              {mobileModuleCards.map((card) => (
+                <MobileLaunchCard
+                  key={card.id}
+                  title={card.label}
+                  detail={`${card.summary} ${card.detail}.`}
+                  href={card.href}
+                  module={card.module}
+                  action={card.primaryAction}
+                />
+              ))}
+              <MobileLaunchCard
+                title="Quick uploads"
+                detail="Add documents to the shared BeastOS upload flow for later review."
+                href="/dashboard/uploads"
+                module="documents"
+                action="Upload"
+              />
+              <MobileLaunchCard
+                title="Goals"
+                detail="Check active goals and the next small step without opening dense planning views."
+                href="/dashboard/goals"
+                module="goals"
+                action="Open goals"
+              />
+            </div>
+          </section>
+        </section>
+
+        <div className="hidden space-y-8 md:block">
         <section className="beast-page-header">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-4">
@@ -755,6 +914,7 @@ export default function TodayPage() {
             </DashboardCard>
           </div>
         </section>
+        </div>
       </div>
     </main>
   );

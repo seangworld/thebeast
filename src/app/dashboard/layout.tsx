@@ -21,6 +21,7 @@ import {
   type ModuleChildNavItem,
   type ModuleNavSection,
 } from "@/lib/moduleNavigation";
+import { buildMobileNavigation } from "@/lib/mobileFoundation";
 import { canAccessBeastAdmin } from "@/lib/beastAdmin";
 import {
   ADMIN_VIEW_MODE_EVENT,
@@ -83,7 +84,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
   const [expandedModule, setExpandedModule] = useState<ModuleKey | null>(null);
   const [learningOnlyNavigation, setLearningOnlyNavigation] = useState(false);
   const [isAdminPersona, setIsAdminPersona] = useState(false);
@@ -109,6 +110,10 @@ export default function DashboardLayout({
   });
   const ownerNavigation = buildOwnerNavigationForPersona({
     isOwner: isAdminPersona,
+  });
+  const mobileNavigation = buildMobileNavigation({
+    isOwner: isAdminPersona,
+    learningOnly: learningOnlyNavigation,
   });
   const onboardingPath = "/dashboard/onboarding";
   const activeExpandableModule =
@@ -474,6 +479,44 @@ export default function DashboardLayout({
     return path === "/dashboard" ? isActiveRoute(path) : pathname === path || pathname.startsWith(`${path}/`);
   }
 
+  function MobileNavButton({ item }: { item: ReturnType<typeof buildMobileNavigation>["primary"][number] }) {
+    const active = item.href === "#mobile-more" ? mobileMoreOpen : isActiveRoute(item.href);
+    const accent = moduleAccents[item.module];
+    const className = `flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-xl border px-2 py-2 text-[11px] font-black transition ${
+      active
+        ? `${accent.border} ${accent.bg} ${accent.text}`
+        : "border-transparent text-[#9aa7b8] hover:border-[#2a3242] hover:bg-[#1a1f2b] hover:text-white"
+    }`;
+
+    if (item.href === "#mobile-more") {
+      return (
+        <button
+          type="button"
+          className={className}
+          onClick={() => setMobileMoreOpen(true)}
+          aria-expanded={mobileMoreOpen}
+          aria-controls="beast-mobile-more-sheet"
+        >
+          <span
+            className="h-2 w-2 rounded-full"
+            style={{ background: active ? accent.color : "#596579" }}
+          />
+          <span className="truncate">{item.label}</span>
+        </button>
+      );
+    }
+
+    return (
+      <Link href={item.href} className={className}>
+        <span
+          className="h-2 w-2 rounded-full"
+          style={{ background: active ? accent.color : "#596579" }}
+        />
+        <span className="truncate">{item.label}</span>
+      </Link>
+    );
+  }
+
   function NavRail({
     compact = false,
     onNavigate,
@@ -738,27 +781,29 @@ export default function DashboardLayout({
           <BeastBrandMark
             module={workspaceModule}
             size="sm"
+            subtitle="Mobile"
           />
-          <button
-            type="button"
-            onClick={() => setMobileMenuOpen(true)}
+          <Link
+            href="/dashboard/search"
             className="rounded-xl border border-[#2a3242] bg-[#0f1419] px-3 py-2 text-sm font-bold text-[#c7cfdb]"
-            aria-label="Open navigation menu"
           >
-            Menu
-          </button>
+            Search
+          </Link>
         </div>
       </header>
 
-      {mobileMenuOpen ? (
+      {mobileMoreOpen ? (
         <div className="fixed inset-0 z-[60] md:hidden">
           <button
             type="button"
             className="absolute inset-0 bg-black/60"
-            aria-label="Close navigation menu"
-            onClick={() => setMobileMenuOpen(false)}
+            aria-label="Close mobile navigation"
+            onClick={() => setMobileMoreOpen(false)}
           />
-          <div className="relative h-full w-[min(86vw,330px)] border-r border-[#2a3242] bg-[#0f1419] shadow-2xl">
+          <div
+            id="beast-mobile-more-sheet"
+            className="absolute inset-x-0 bottom-0 max-h-[82dvh] overflow-y-auto rounded-t-2xl border border-[#2a3242] bg-[#0f1419] px-4 pb-[calc(env(safe-area-inset-bottom)+16px)] pt-4 shadow-2xl"
+          >
             <div className="flex items-center justify-between border-b border-[#2a3242] px-4 py-3">
               <BeastBrandMark
                 module={workspaceModule}
@@ -766,20 +811,49 @@ export default function DashboardLayout({
               />
               <button
                 type="button"
-                onClick={() => setMobileMenuOpen(false)}
+                onClick={() => setMobileMoreOpen(false)}
                 className="rounded-lg border border-[#2a3242] px-3 py-2 text-sm font-bold text-[#c7cfdb]"
               >
                 Close
               </button>
             </div>
-            <NavRail onNavigate={() => setMobileMenuOpen(false)} />
+            <nav className="mt-4 grid gap-2" aria-label="More mobile destinations">
+              {mobileNavigation.more.map((item) => (
+                <Link
+                  key={`${item.label}-${item.href}`}
+                  href={item.href}
+                  onClick={() => setMobileMoreOpen(false)}
+                  className="flex min-h-[48px] items-center justify-between gap-3 rounded-xl border border-[#2a3242] bg-[#111827] px-4 py-3 text-sm font-bold text-white"
+                >
+                  <span className="min-w-0 truncate">{item.label}</span>
+                  <span
+                    className="h-2.5 w-2.5 shrink-0 rounded-full"
+                    style={{ background: moduleAccents[item.module].color }}
+                  />
+                </Link>
+              ))}
+            </nav>
+            <div className="mt-4 border-t border-[#2a3242] pt-4">
+              <AdminViewAsControl surface="sidebar" />
+            </div>
           </div>
         </div>
       ) : null}
 
-      <div className="min-h-screen md:pl-20 lg:pl-72">
+      <div className="min-h-screen pb-[calc(env(safe-area-inset-bottom)+76px)] md:pb-0 md:pl-20 lg:pl-72">
         {children}
       </div>
+
+      <nav
+        className="fixed inset-x-0 bottom-0 z-50 border-t border-[#2a3242] bg-[#0f1419]/98 px-2 pb-[calc(env(safe-area-inset-bottom)+8px)] pt-2 backdrop-blur md:hidden"
+        aria-label="Mobile navigation"
+      >
+        <div className="mx-auto flex max-w-md gap-1">
+          {mobileNavigation.primary.map((item) => (
+            <MobileNavButton key={item.label} item={item} />
+          ))}
+        </div>
+      </nav>
     </div>
   );
 }

@@ -563,6 +563,25 @@ a.beast-card:hover {
    MOBILE
 ========================= */
 
+@media (max-width: 767px) {
+  .beast-page {
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: clip;
+    padding-bottom: calc(env(safe-area-inset-bottom) + 96px);
+  }
+
+  .beast-container {
+    max-width: 100%;
+    overflow-x: clip;
+  }
+
+  :where(.beast-card, .beast-panel, .beast-surface, .beast-page-header) {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+}
+
 @media (max-width: 640px) {
   .beast-page {
     padding: 16px 12px;
