@@ -425,6 +425,7 @@ export default function MoneyWorkspacePage() {
       forecast: financialForecast,
       insights: financialInsights,
       scenarios: scenarioComparison,
+      creditUtilization: utilization,
     });
     const financialReports = buildFinancialReports({
       cashIntelligence,
@@ -957,6 +958,36 @@ export default function MoneyWorkspacePage() {
                 </div>
               </div>
             </div>
+            {snapshot.financialCoach.warnings.length > 0 ? (
+              <div className="mt-5 grid gap-3 border-t border-[#2a3242] pt-5 md:grid-cols-2">
+                {snapshot.financialCoach.warnings.map((warning) => (
+                  <div
+                    key={warning.id}
+                    className={`rounded-xl border p-4 ${
+                      warning.severity === "critical"
+                        ? "border-red-500/30 bg-red-500/10"
+                        : "border-amber-400/30 bg-amber-400/10"
+                    }`}
+                  >
+                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#9aa7b8]">
+                      {warning.category.replace("_", " ")} warning
+                    </p>
+                    <h3 className="mt-2 font-black text-white">{warning.title}</h3>
+                    <p className="mt-2 text-sm text-[#c7cfdb]">{warning.message}</p>
+                    <Link
+                      href={warning.href}
+                      className="mt-3 inline-flex text-sm font-bold text-blue-300 hover:text-blue-200"
+                    >
+                      {warning.action} <span aria-hidden="true">→</span>
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="mt-5 rounded-xl border border-emerald-400/20 bg-emerald-400/10 p-4 text-sm text-emerald-100">
+                No actionable Coach warnings in the current records.
+              </div>
+            )}
           </DashboardCard>
         </section>
 
