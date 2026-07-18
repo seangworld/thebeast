@@ -12,7 +12,9 @@ import { buildFinancialReports } from "@/lib/financialReports";
 import { compareFinancialScenarios } from "@/lib/financialScenarios";
 import { buildFinancialSimulationState } from "@/lib/financialSimulation";
 import {
+  appendFinancialCoachRecommendationHistory,
   buildFinancialCoach,
+  type FinancialCoachRecommendationRecord,
   type FinancialCoachScenarioInput,
 } from "@/lib/financialCoach";
 import { formatCurrency } from "@/lib/formatters";
@@ -176,6 +178,20 @@ function resolveCoachCorrection(value: string | undefined, fallback: number) {
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
 }
 
+function formatCoachTimestamp(value: string) {
+  const timestamp = new Date(value);
+  if (Number.isNaN(timestamp.valueOf())) return "Time unavailable";
+
+  return timestamp.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZoneName: "short",
+  });
+}
+
 function MobileMoneyCard({
   title,
   children,
@@ -225,6 +241,9 @@ export default function MoneyWorkspacePage() {
   const [loadError, setLoadError] = useState("");
   const [simulationDate, setSimulationDate] = useState("");
   const [coachCorrections, setCoachCorrections] = useState<CoachCorrections>({});
+  const [coachRecommendationHistory, setCoachRecommendationHistory] = useState<
+    FinancialCoachRecommendationRecord[]
+  >([]);
 
   const loadMoneySnapshot = useCallback(async () => {
     setLoading(true);
@@ -489,6 +508,17 @@ export default function MoneyWorkspacePage() {
       billsDueSoon,
     };
   }, [coachCorrections, simulationDate, state]);
+
+  useEffect(() => {
+    if (loading || loadError) return;
+
+    setCoachRecommendationHistory((current) =>
+      appendFinancialCoachRecommendationHistory(
+        current,
+        snapshot.financialCoach.currentRecommendation
+      )
+    );
+  }, [loadError, loading, snapshot.financialCoach.currentRecommendation]);
 
   const alerts = useMemo(() => {
     const results: {
@@ -1014,6 +1044,74 @@ export default function MoneyWorkspacePage() {
                 No actionable Coach warnings in the current records.
               </div>
             )}
+            <div className="mt-5 border-t border-[#2a3242] pt-5">
+              <p className="beast-kicker">Safety boundaries</p>
+              <h3 className="mt-2 text-xl font-black text-white">
+                Before acting on a recommendation
+              </h3>
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
+                {snapshot.financialCoach.safetyBoundaries.map((boundary) => (
+                  <div key={boundary.id} className="beast-surface p-4">
+                    <h4 className="font-black text-white">{boundary.title}</h4>
+                    <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
+                      {boundary.description}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="mt-5 border-t border-[#2a3242] pt-5">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="beast-kicker">Recommendation history</p>
+                  <h3 className="mt-2 text-xl font-black text-white">
+                    Changes during this session
+                  </h3>
+                  <p className="mt-2 max-w-2xl text-sm text-[#9aa7b8]">
+                    Coach records meaningful recommendation changes in this open dashboard session only. This history is not saved to your Money records.
+                  </p>
+                </div>
+                {coachRecommendationHistory.length > 1 ? (
+                  <button
+                    type="button"
+                    className="beast-button-secondary"
+                    onClick={() =>
+                      setCoachRecommendationHistory((current) => current.slice(0, 1))
+                    }
+                  >
+                    Clear older history
+                  </button>
+                ) : null}
+              </div>
+              {coachRecommendationHistory.length > 0 ? (
+                <ol className="mt-4 grid gap-3">
+                  {coachRecommendationHistory.map((recommendation, index) => (
+                    <li key={recommendation.id} className="beast-surface p-4">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="text-xs font-black uppercase tracking-[0.16em] text-blue-300">
+                          {index === 0 ? "Current" : "Earlier"} · {recommendation.risk} risk
+                        </span>
+                        <time
+                          dateTime={recommendation.recordedAt}
+                          className="text-xs text-[#9aa7b8]"
+                        >
+                          {formatCoachTimestamp(recommendation.recordedAt)}
+                        </time>
+                      </div>
+                      <h4 className="mt-2 font-black text-white">{recommendation.title}</h4>
+                      <p className="mt-2 text-sm text-[#dbe3ef]">{recommendation.action}</p>
+                      <p className="mt-2 text-xs leading-5 text-[#9aa7b8]">
+                        Why: {recommendation.why}
+                      </p>
+                    </li>
+                  ))}
+                </ol>
+              ) : (
+                <div className="mt-4 beast-surface p-4 text-sm text-[#9aa7b8]">
+                  The current recommendation will appear after Money records finish loading.
+                </div>
+              )}
+            </div>
             <div className="mt-5 border-t border-[#2a3242] pt-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>

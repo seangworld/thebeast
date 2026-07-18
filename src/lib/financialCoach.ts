@@ -1,4 +1,7 @@
-import type { DailyFinancialAdvisorResult } from "./dailyFinancialAdvisor";
+import type {
+  DailyFinancialAdvisorResult,
+  DailyFinancialRecommendationRisk,
+} from "./dailyFinancialAdvisor";
 import type { FinancialForecastResult } from "./financialForecasting";
 import type { FinancialInsightsResult } from "./financialInsights";
 import type { FinancialScenarioComparisonResult } from "./financialScenarios";
@@ -15,7 +18,27 @@ export type FinancialCoachResult = {
   assumptions: string[];
   warnings: FinancialCoachWarning[];
   scenarioQuestions: FinancialCoachScenarioQuestion[];
+  currentRecommendation: FinancialCoachRecommendationRecord;
+  safetyBoundaries: FinancialCoachSafetyBoundary[];
   disclaimer: string;
+};
+
+export type FinancialCoachRecommendationRecord = {
+  id: string;
+  recommendationId: string;
+  recordedAt: string;
+  title: string;
+  action: string;
+  why: string;
+  risk: DailyFinancialRecommendationRisk;
+  assumptions: string[];
+  risks: string[];
+};
+
+export type FinancialCoachSafetyBoundary = {
+  id: "planning_support" | "verify_records" | "protect_essentials" | "user_action_required";
+  title: string;
+  description: string;
 };
 
 export type FinancialCoachScenarioInput =
@@ -59,6 +82,62 @@ export type FinancialCoachInput = {
   currentCash?: number;
   cashBuffer?: number;
 };
+
+const safetyBoundaries: readonly FinancialCoachSafetyBoundary[] = [
+  {
+    id: "planning_support",
+    title: "Planning support only",
+    description:
+      "BeastMoney does not provide legal, tax, or investment advice, credit-repair or lending advice, or professional financial advice.",
+  },
+  {
+    id: "verify_records",
+    title: "Verify current information",
+    description:
+      "Confirm balances, rates, due dates, income, and lender terms before acting. Missing or stale records can change the recommendation.",
+  },
+  {
+    id: "protect_essentials",
+    title: "Protect essential cash",
+    description:
+      "Do not use money needed for essential expenses, required payments, or the protected cash buffer.",
+  },
+  {
+    id: "user_action_required",
+    title: "You remain in control",
+    description:
+      "Coach cannot move money, submit payments, open or close accounts, or apply for credit. You decide and execute every action.",
+  },
+];
+
+function recommendationSignature(record: FinancialCoachRecommendationRecord) {
+  return JSON.stringify([
+    record.recommendationId,
+    record.title,
+    record.action,
+    record.why,
+    record.risk,
+  ]);
+}
+
+export function appendFinancialCoachRecommendationHistory(
+  history: readonly FinancialCoachRecommendationRecord[],
+  recommendation: FinancialCoachRecommendationRecord,
+  limit = 5
+) {
+  if (
+    history[0] &&
+    recommendationSignature(history[0]) === recommendationSignature(recommendation)
+  ) {
+    return [...history];
+  }
+
+  const safeLimit = Math.max(
+    1,
+    Math.floor(Number.isFinite(limit) ? limit : 5)
+  );
+  return [recommendation, ...history].slice(0, safeLimit);
+}
 
 function safeNumber(value: number | undefined) {
   return Math.max(Number.isFinite(value) ? Number(value) : 0, 0);
@@ -163,6 +242,15 @@ export function buildFinancialCoach(input: FinancialCoachInput): FinancialCoachR
       ...primary.explanation.risks,
     ])
   ).slice(0, 4);
+  const assumptions = Array.from(
+    new Set([
+      ...primary.explanation.assumptions,
+      `Available cash assumption: ${safeNumber(input.currentCash)}.`,
+      `Protected cash buffer assumption: ${safeNumber(input.cashBuffer)}.`,
+      `Credit utilization assumption: ${Math.round(safeNumber(input.creditUtilization))}%.`,
+      "Income, bills, debts, and available cash reflect the current records.",
+    ])
+  ).slice(0, 6);
 
   return {
     title: "BeastMoney Coach",
@@ -184,18 +272,21 @@ export function buildFinancialCoach(input: FinancialCoachInput): FinancialCoachR
     ],
     bestNextAction: primary.title,
     whyThisAction: primary.why,
-    assumptions: Array.from(
-      new Set([
-        ...primary.explanation.assumptions,
-        `Available cash assumption: ${safeNumber(input.currentCash)}.`,
-        `Protected cash buffer assumption: ${safeNumber(input.cashBuffer)}.`,
-        `Credit utilization assumption: ${Math.round(safeNumber(input.creditUtilization))}%.`,
-        "Income, bills, debts, and available cash reflect the current records.",
-      ])
-    ).slice(0, 6),
+    assumptions,
     warnings: buildWarnings(input),
     scenarioQuestions: buildScenarioQuestions(input),
-    disclaimer:
-      "Planning guidance only. BeastMoney does not provide legal, tax, or investment advice.",
+    currentRecommendation: {
+      id: `${primary.id}-${input.advisor.generatedAt}`,
+      recommendationId: primary.id,
+      recordedAt: input.advisor.generatedAt,
+      title: primary.title,
+      action: primary.action,
+      why: primary.why,
+      risk: primary.risk,
+      assumptions: [...assumptions],
+      risks: [...primary.explanation.risks],
+    },
+    safetyBoundaries: safetyBoundaries.map((boundary) => ({ ...boundary })),
+    disclaimer: `Planning guidance only. ${safetyBoundaries[0].description}`,
   };
 }
