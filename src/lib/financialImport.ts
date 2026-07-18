@@ -10,6 +10,13 @@ export type MoneyImportMapping = {
   fields: Record<string, string>;
 };
 
+export type MoneyImportTemplate = {
+  id: string;
+  name: string;
+  target: MoneyImportTarget;
+  headerAliases: Record<string, string[]>;
+};
+
 export type MoneyImportMappingIssueCode =
   | "missing_header"
   | "duplicate_header"
@@ -32,6 +39,7 @@ export type MoneyImportPreviewRow = {
   values: Record<string, string | number>;
   duplicateKey: string;
   duplicate: boolean;
+  duplicateSource: "existing" | "file" | null;
   errors: string[];
 };
 
@@ -59,6 +67,64 @@ const supportedFields: Record<MoneyImportTarget, string[]> = {
   bill: ["name", "amount", "due_date", "frequency"],
   income: ["name", "amount", "frequency", "next_date"],
 };
+
+export const moneyImportTemplates: MoneyImportTemplate[] = [
+  {
+    id: "bank-transactions",
+    name: "Bank transactions",
+    target: "transaction",
+    headerAliases: {
+      date: ["Date", "Posted Date", "Transaction Date"],
+      description: ["Description", "Memo", "Name", "Transaction"],
+      amount: ["Amount", "Transaction Amount"],
+      category: ["Category", "Type"],
+    },
+  },
+  {
+    id: "credit-card-transactions",
+    name: "Credit card transactions",
+    target: "transaction",
+    headerAliases: {
+      date: ["Transaction Date", "Date", "Posted Date"],
+      description: ["Description", "Merchant", "Memo"],
+      amount: ["Amount", "Charge Amount"],
+      category: ["Category"],
+    },
+  },
+  {
+    id: "debt-balances",
+    name: "Debt balances",
+    target: "debt",
+    headerAliases: {
+      name: ["Name", "Account", "Creditor"],
+      balance: ["Balance", "Current Balance"],
+      minimum_payment: ["Minimum Payment", "Minimum", "Min Payment"],
+      interest_rate: ["Interest Rate", "APR", "Rate"],
+    },
+  },
+  {
+    id: "bill-list",
+    name: "Bills",
+    target: "bill",
+    headerAliases: {
+      name: ["Name", "Bill", "Payee"],
+      amount: ["Amount", "Payment", "Bill Amount"],
+      due_date: ["Due Date", "Due Day"],
+      frequency: ["Frequency", "Cadence"],
+    },
+  },
+  {
+    id: "income-list",
+    name: "Income",
+    target: "income",
+    headerAliases: {
+      name: ["Name", "Income", "Source", "Employer"],
+      amount: ["Amount", "Net Amount", "Income Amount"],
+      frequency: ["Frequency", "Cadence"],
+      next_date: ["Next Date", "Pay Date"],
+    },
+  },
+];
 
 function fieldLabel(field: string) {
   return field.replace(/_/g, " ");
@@ -188,6 +254,53 @@ export function validateMoneyImportMapping({
   return issues;
 }
 
+export function buildMoneyImportMappingFromTemplate({
+  headers,
+  template,
+}: {
+  headers: string[];
+  template: MoneyImportTemplate;
+}): MoneyImportMapping {
+  const normalizedHeaders = new Map(headers.map((header) => [header.toLowerCase(), header]));
+  const fields = Object.entries(template.headerAliases).reduce<Record<string, string>>(
+    (mapping, [targetField, aliases]) => {
+      const sourceHeader = aliases
+        .map((alias) => normalizedHeaders.get(alias.toLowerCase()))
+        .find(Boolean);
+      if (sourceHeader) mapping[targetField] = sourceHeader;
+      return mapping;
+    },
+    {}
+  );
+  return { target: template.target, fields };
+}
+
+export function suggestMoneyImportTemplate({
+  headers,
+  target,
+}: {
+  headers: string[];
+  target?: MoneyImportTarget;
+}) {
+  return moneyImportTemplates
+    .filter((template) => !target || template.target === target)
+    .map((template) => {
+      const mapping = buildMoneyImportMappingFromTemplate({ headers, template });
+      const requiredMatches = requiredFields[template.target].filter(
+        (field) => mapping.fields[field]
+      ).length;
+      const totalMatches = Object.keys(mapping.fields).length;
+      return { template, mapping, requiredMatches, totalMatches };
+    })
+    .filter(({ requiredMatches }) => requiredMatches > 0)
+    .sort(
+      (left, right) =>
+        right.requiredMatches - left.requiredMatches ||
+        right.totalMatches - left.totalMatches ||
+        left.template.name.localeCompare(right.template.name)
+    )[0] || null;
+}
+
 function numberField(value: string) {
   if (!value.trim()) return Number.NaN;
   const normalized = value.replace(/[$,]/g, "");
@@ -199,19 +312,25 @@ export function buildImportDuplicateKey(
   target: MoneyImportTarget,
   values: Record<string, string | number>
 ) {
+  const normalizedText = (value: string | number | undefined) =>
+    String(value ?? "").trim().replace(/\s+/g, " ").toLowerCase();
+  const normalizedMoney = (value: string | number | undefined) => {
+    const numeric = typeof value === "number" ? value : numberField(String(value ?? ""));
+    return Number.isFinite(numeric) ? numeric.toFixed(2) : normalizedText(value);
+  };
   if (target === "transaction") {
     return [
-      values.date || "",
-      values.description || "",
-      values.amount || "",
-    ].join("|").toLowerCase();
+      normalizedText(values.date),
+      normalizedText(values.description),
+      normalizedMoney(values.amount),
+    ].join("|");
   }
 
   return [
     target,
-    values.name || "",
-    values.amount || values.balance || "",
-  ].join("|").toLowerCase();
+    normalizedText(values.name),
+    normalizedMoney(values.amount ?? values.balance),
+  ].join("|");
 }
 
 export function buildMoneyImportPreview({
@@ -255,7 +374,12 @@ export function buildMoneyImportPreview({
       return [];
     });
     const duplicateKey = buildImportDuplicateKey(mapping.target, values);
-    const duplicate = existing.has(duplicateKey) || seen.has(duplicateKey);
+    const duplicateSource = existing.has(duplicateKey)
+      ? "existing" as const
+      : seen.has(duplicateKey)
+        ? "file" as const
+        : null;
+    const duplicate = duplicateSource !== null;
     seen.add(duplicateKey);
 
     return {
@@ -265,6 +389,7 @@ export function buildMoneyImportPreview({
       values,
       duplicateKey,
       duplicate,
+      duplicateSource,
       errors,
     };
   });

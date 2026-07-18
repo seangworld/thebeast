@@ -2,8 +2,11 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   buildImportDuplicateKey,
+  buildMoneyImportMappingFromTemplate,
   buildMoneyImportPreview,
+  moneyImportTemplates,
   parseMoneyCsv,
+  suggestMoneyImportTemplate,
   validateMoneyImportMapping,
 } from "../src/lib/financialImport";
 
@@ -91,4 +94,54 @@ test("buildMoneyImportPreview detects duplicates", () => {
 
   assert.equal(preview.duplicateRows.length, 2);
   assert.equal(preview.validRows.length, 0);
+  assert.deepEqual(preview.duplicateRows.map((row) => row.duplicateSource), ["existing", "existing"]);
+});
+
+test("institution templates map common transaction and balance headers", () => {
+  const transactionSuggestion = suggestMoneyImportTemplate({
+    headers: ["Posted Date", "Merchant", "Charge Amount", "Category"],
+    target: "transaction",
+  });
+  const debtTemplate = moneyImportTemplates.find((template) => template.id === "debt-balances");
+
+  assert.equal(transactionSuggestion?.template.id, "credit-card-transactions");
+  assert.deepEqual(transactionSuggestion?.mapping.fields, {
+    date: "Posted Date",
+    description: "Merchant",
+    amount: "Charge Amount",
+    category: "Category",
+  });
+  assert.deepEqual(
+    buildMoneyImportMappingFromTemplate({
+      headers: ["Creditor", "Current Balance", "APR", "Minimum"],
+      template: debtTemplate!,
+    }).fields,
+    {
+      name: "Creditor",
+      balance: "Current Balance",
+      minimum_payment: "Minimum",
+      interest_rate: "APR",
+    }
+  );
+});
+
+test("duplicate detection normalizes currency precision, case, and whitespace", () => {
+  const existingKey = buildImportDuplicateKey("transaction", {
+    date: "2026-07-01",
+    description: "Coffee Shop",
+    amount: -4.5,
+  });
+  const preview = buildMoneyImportPreview({
+    csv: 'Date,Description,Amount\n2026-07-01,"  COFFEE   SHOP  ",$-4.50\n2026-07-02,Gas,40\n2026-07-02, gas ,40.00',
+    mapping: {
+      target: "transaction",
+      fields: { date: "Date", description: "Description", amount: "Amount" },
+    },
+    existingDuplicateKeys: [existingKey],
+  });
+
+  assert.equal(preview.rows[0].duplicateSource, "existing");
+  assert.equal(preview.rows[1].duplicateSource, null);
+  assert.equal(preview.rows[2].duplicateSource, "file");
+  assert.equal(preview.duplicateRows.length, 2);
 });
