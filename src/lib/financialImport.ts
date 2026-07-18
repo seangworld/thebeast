@@ -10,8 +10,24 @@ export type MoneyImportMapping = {
   fields: Record<string, string>;
 };
 
+export type MoneyImportMappingIssueCode =
+  | "missing_header"
+  | "duplicate_header"
+  | "missing_required_mapping"
+  | "missing_source_header"
+  | "duplicate_source_mapping"
+  | "unsupported_target_field";
+
+export type MoneyImportMappingIssue = {
+  code: MoneyImportMappingIssueCode;
+  message: string;
+  targetField?: string;
+  sourceHeader?: string;
+};
+
 export type MoneyImportPreviewRow = {
   rowIndex: number;
+  sourceRowNumber: number;
   target: MoneyImportTarget;
   values: Record<string, string | number>;
   duplicateKey: string;
@@ -21,6 +37,8 @@ export type MoneyImportPreviewRow = {
 
 export type MoneyImportPreview = {
   target: MoneyImportTarget;
+  headers: string[];
+  mappingIssues: MoneyImportMappingIssue[];
   rows: MoneyImportPreviewRow[];
   validRows: MoneyImportPreviewRow[];
   invalidRows: MoneyImportPreviewRow[];
@@ -34,6 +52,17 @@ const requiredFields: Record<MoneyImportTarget, string[]> = {
   bill: ["name", "amount"],
   income: ["name", "amount"],
 };
+
+const supportedFields: Record<MoneyImportTarget, string[]> = {
+  transaction: ["date", "description", "amount", "category"],
+  debt: ["name", "balance", "minimum_payment", "interest_rate"],
+  bill: ["name", "amount", "due_date", "frequency"],
+  income: ["name", "amount", "frequency", "next_date"],
+};
+
+function fieldLabel(field: string) {
+  return field.replace(/_/g, " ");
+}
 
 function splitCsvLine(line: string) {
   const values: string[] = [];
@@ -78,6 +107,87 @@ export function parseMoneyCsv(csv: string): CsvParseResult {
   return { headers, rows };
 }
 
+export function validateMoneyImportMapping({
+  headers,
+  mapping,
+}: {
+  headers: string[];
+  mapping: MoneyImportMapping;
+}): MoneyImportMappingIssue[] {
+  const issues: MoneyImportMappingIssue[] = [];
+  const normalizedHeaders = headers.map((header) => header.toLowerCase());
+  const duplicateHeaders = headers.filter(
+    (header, index) => normalizedHeaders.indexOf(header.toLowerCase()) !== index
+  );
+
+  if (headers.length === 0) {
+    issues.push({
+      code: "missing_header",
+      message: "Add a CSV header row before previewing this import.",
+    });
+  }
+
+  for (const header of Array.from(new Set(duplicateHeaders))) {
+    issues.push({
+      code: "duplicate_header",
+      sourceHeader: header,
+      message: `CSV column "${header}" appears more than once. Rename duplicate columns before importing.`,
+    });
+  }
+
+  for (const requiredField of requiredFields[mapping.target]) {
+    if (!mapping.fields[requiredField]?.trim()) {
+      issues.push({
+        code: "missing_required_mapping",
+        targetField: requiredField,
+        message: `Map the required ${fieldLabel(requiredField)} field to a CSV column.`,
+      });
+    }
+  }
+
+  const mappedHeaders = new Map<string, string[]>();
+  for (const [targetField, sourceHeaderValue] of Object.entries(mapping.fields)) {
+    const sourceHeader = sourceHeaderValue.trim();
+    if (!supportedFields[mapping.target].includes(targetField)) {
+      issues.push({
+        code: "unsupported_target_field",
+        targetField,
+        sourceHeader,
+        message: `${fieldLabel(targetField)} is not supported for ${mapping.target} imports.`,
+      });
+    }
+    if (!sourceHeader) continue;
+
+    const matchedHeader = headers.find(
+      (header) => header.toLowerCase() === sourceHeader.toLowerCase()
+    );
+    if (!matchedHeader) {
+      issues.push({
+        code: "missing_source_header",
+        targetField,
+        sourceHeader,
+        message: `The mapped CSV column "${sourceHeader}" for ${fieldLabel(targetField)} was not found.`,
+      });
+      continue;
+    }
+
+    const normalized = matchedHeader.toLowerCase();
+    mappedHeaders.set(normalized, [...(mappedHeaders.get(normalized) || []), targetField]);
+  }
+
+  for (const [normalizedHeader, targetFields] of Array.from(mappedHeaders)) {
+    if (targetFields.length < 2) continue;
+    const sourceHeader = headers.find((header) => header.toLowerCase() === normalizedHeader) || normalizedHeader;
+    issues.push({
+      code: "duplicate_source_mapping",
+      sourceHeader,
+      message: `CSV column "${sourceHeader}" is mapped to multiple fields (${targetFields.map(fieldLabel).join(", ")}). Choose one destination per column.`,
+    });
+  }
+
+  return issues;
+}
+
 function numberField(value: string) {
   if (!value.trim()) return Number.NaN;
   const normalized = value.replace(/[$,]/g, "");
@@ -114,6 +224,7 @@ export function buildMoneyImportPreview({
   existingDuplicateKeys?: string[];
 }): MoneyImportPreview {
   const parsed = parseMoneyCsv(csv);
+  const mappingIssues = validateMoneyImportMapping({ headers: parsed.headers, mapping });
   const existing = new Set(existingDuplicateKeys.map((key) => key.toLowerCase()));
   const seen = new Set<string>();
   const rows = parsed.rows.map((row, index) => {
@@ -122,21 +233,24 @@ export function buildMoneyImportPreview({
         const raw = row[sourceHeader] || "";
         mapped[targetField] =
           ["amount", "balance", "minimum_payment", "interest_rate"].includes(targetField)
-            ? numberField(raw)
+            ? raw.trim()
+              ? numberField(raw)
+              : ""
             : raw;
         return mapped;
       },
       {}
     );
+    const sourceRowNumber = index + 2;
     const errors = requiredFields[mapping.target].flatMap((field) => {
       if (values[field] === "" || values[field] == null) {
-        return [`Missing ${field}.`];
+        return [`Row ${sourceRowNumber}: ${fieldLabel(field)} is required.`];
       }
       if (
         ["amount", "balance"].includes(field) &&
         !Number.isFinite(Number(values[field]))
       ) {
-        return [`Invalid ${field}.`];
+        return [`Row ${sourceRowNumber}: ${fieldLabel(field)} must be a valid number.`];
       }
       return [];
     });
@@ -146,6 +260,7 @@ export function buildMoneyImportPreview({
 
     return {
       rowIndex: index + 1,
+      sourceRowNumber,
       target: mapping.target,
       values,
       duplicateKey,
@@ -156,10 +271,15 @@ export function buildMoneyImportPreview({
 
   return {
     target: mapping.target,
+    headers: parsed.headers,
+    mappingIssues,
     rows,
     validRows: rows.filter((row) => row.errors.length === 0 && !row.duplicate),
     invalidRows: rows.filter((row) => row.errors.length > 0),
     duplicateRows: rows.filter((row) => row.duplicate),
-    readyToSave: rows.length > 0 && rows.every((row) => row.errors.length === 0),
+    readyToSave:
+      mappingIssues.length === 0 &&
+      rows.some((row) => row.errors.length === 0 && !row.duplicate) &&
+      rows.every((row) => row.errors.length === 0),
   };
 }

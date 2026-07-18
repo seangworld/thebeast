@@ -4,6 +4,7 @@ import {
   buildImportDuplicateKey,
   buildMoneyImportPreview,
   parseMoneyCsv,
+  validateMoneyImportMapping,
 } from "../src/lib/financialImport";
 
 test("parseMoneyCsv parses quoted CSV rows", () => {
@@ -27,6 +28,50 @@ test("buildMoneyImportPreview validates mapped rows before save", () => {
 
   assert.equal(preview.validRows.length, 1);
   assert.equal(preview.invalidRows.length, 1);
+  assert.equal(preview.invalidRows[0].sourceRowNumber, 3);
+  assert.deepEqual(preview.invalidRows[0].errors, ["Row 3: amount is required."]);
+  assert.equal(preview.readyToSave, false);
+});
+
+test("validateMoneyImportMapping explains required, missing, duplicate, and unsupported mappings", () => {
+  const issues = validateMoneyImportMapping({
+    headers: ["Name", "Amount", "Amount"],
+    mapping: {
+      target: "bill",
+      fields: {
+        name: "Missing Name",
+        amount: "Amount",
+        frequency: "Amount",
+        account_number: "Account",
+      },
+    },
+  });
+
+  assert.deepEqual(
+    issues.map((issue) => issue.code),
+    [
+      "duplicate_header",
+      "missing_source_header",
+      "unsupported_target_field",
+      "missing_source_header",
+      "duplicate_source_mapping",
+    ]
+  );
+  assert.equal(issues.every((issue) => issue.message.length > 20), true);
+});
+
+test("buildMoneyImportPreview blocks missing required column mappings with actionable errors", () => {
+  const preview = buildMoneyImportPreview({
+    csv: "Name,Total\nRent,1200",
+    mapping: { target: "bill", fields: { name: "Name", amount: "Amount" } },
+  });
+
+  assert.deepEqual(preview.headers, ["Name", "Total"]);
+  assert.deepEqual(
+    preview.mappingIssues.map((issue) => issue.message),
+    ['The mapped CSV column "Amount" for amount was not found.']
+  );
+  assert.deepEqual(preview.rows[0].errors, ["Row 2: amount is required."]);
   assert.equal(preview.readyToSave, false);
 });
 
