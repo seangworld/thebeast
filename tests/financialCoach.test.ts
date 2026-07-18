@@ -61,5 +61,17 @@ test("buildFinancialCoach summarizes existing engine outputs", () => {
   assert.equal(coach.progressMade.length >= 3, true);
   assert.equal(coach.upcomingRisks.length > 0, true);
   assert.equal(coach.bestNextAction.length > 0, true);
+  assert.equal(coach.whyThisAction, advisor.primaryRecommendation.why);
+  assert.equal(coach.assumptions.length > 0, true);
+  assert.equal(
+    coach.assumptions.some((assumption) => assumption.includes("current records")),
+    true
+  );
+  assert.deepEqual(coach.upcomingRisks, [
+    ...new Set([
+      ...forecast.upcomingRisks,
+      ...advisor.primaryRecommendation.explanation.risks,
+    ]),
+  ].slice(0, 4));
   assert.equal(coach.disclaimer.includes("legal, tax, or investment advice"), true);
 });

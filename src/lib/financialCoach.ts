@@ -11,6 +11,8 @@ export type FinancialCoachResult = {
   upcomingRisks: string[];
   progressMade: string[];
   bestNextAction: string;
+  whyThisAction: string;
+  assumptions: string[];
   disclaimer: string;
 };
 
@@ -50,6 +52,13 @@ export function buildFinancialCoach(input: FinancialCoachInput): FinancialCoachR
       `Projected cash in 30 days: ${forecast30?.cash ?? 0}.`,
     ],
     bestNextAction: primary.title,
+    whyThisAction: primary.why,
+    assumptions: Array.from(
+      new Set([
+        ...primary.explanation.assumptions,
+        "Income, bills, debts, and available cash reflect the current records.",
+      ])
+    ).slice(0, 4),
     disclaimer:
       "Planning guidance only. BeastMoney does not provide legal, tax, or investment advice.",
   };

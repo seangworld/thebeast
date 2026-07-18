@@ -944,6 +944,14 @@ export default function MoneyWorkspacePage() {
                   <span className="font-bold text-white">Risk:</span>{" "}
                   {snapshot.financialCoach.upcomingRisks[0]}
                 </div>
+                <div>
+                  <span className="font-bold text-white">Why this action:</span>{" "}
+                  {snapshot.financialCoach.whyThisAction}
+                </div>
+                <div>
+                  <span className="font-bold text-white">Assumption:</span>{" "}
+                  {snapshot.financialCoach.assumptions[0]}
+                </div>
                 <div className="beast-surface p-3 text-xs text-[#9aa7b8]">
                   {snapshot.financialCoach.disclaimer}
                 </div>
