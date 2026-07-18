@@ -54,7 +54,15 @@ test("buildFinancialCoach summarizes existing engine outputs", () => {
     cashIntelligence,
     financialDecision,
   });
-  const coach = buildFinancialCoach({ advisor, forecast, insights, scenarios });
+  const coach = buildFinancialCoach({
+    advisor,
+    forecast,
+    insights,
+    scenarios,
+    currentCash: 1200,
+    cashBuffer: 500,
+    creditUtilization: 24,
+  });
 
   assert.equal(coach.title, "BeastMoney Coach");
   assert.equal(coach.whatToDoToday.length > 0, true);
@@ -64,6 +72,14 @@ test("buildFinancialCoach summarizes existing engine outputs", () => {
   assert.equal(coach.whyThisAction, advisor.primaryRecommendation.why);
   assert.equal(coach.assumptions.length > 0, true);
   assert.ok(Array.isArray(coach.warnings));
+  assert.deepEqual(
+    coach.scenarioQuestions.map((question) => question.input),
+    ["current_cash", "cash_buffer", "credit_utilization"]
+  );
+  assert.equal(coach.scenarioQuestions[0].currentValue, 1200);
+  assert.equal(coach.scenarioQuestions[1].currentValue, 500);
+  assert.equal(coach.scenarioQuestions[2].currentValue, 24);
+  assert.equal(coach.assumptions.some((assumption) => assumption.includes("Available cash assumption: 1200")), true);
   assert.equal(
     coach.assumptions.some((assumption) => assumption.includes("current records")),
     true

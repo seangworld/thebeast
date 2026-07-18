@@ -14,7 +14,24 @@ export type FinancialCoachResult = {
   whyThisAction: string;
   assumptions: string[];
   warnings: FinancialCoachWarning[];
+  scenarioQuestions: FinancialCoachScenarioQuestion[];
   disclaimer: string;
+};
+
+export type FinancialCoachScenarioInput =
+  | "current_cash"
+  | "cash_buffer"
+  | "credit_utilization";
+
+export type FinancialCoachScenarioQuestion = {
+  id: string;
+  input: FinancialCoachScenarioInput;
+  prompt: string;
+  explanation: string;
+  currentValue: number;
+  unit: "currency" | "percent";
+  min: number;
+  max?: number;
 };
 
 export type FinancialCoachWarningCategory =
@@ -39,7 +56,46 @@ export type FinancialCoachInput = {
   insights: FinancialInsightsResult;
   scenarios: FinancialScenarioComparisonResult;
   creditUtilization?: number;
+  currentCash?: number;
+  cashBuffer?: number;
 };
+
+function safeNumber(value: number | undefined) {
+  return Math.max(Number.isFinite(value) ? Number(value) : 0, 0);
+}
+
+function buildScenarioQuestions(input: FinancialCoachInput): FinancialCoachScenarioQuestion[] {
+  return [
+    {
+      id: "confirm-current-cash",
+      input: "current_cash",
+      prompt: "How much cash is actually available right now?",
+      explanation: "Correct this to test the recommendation against today's available cash.",
+      currentValue: safeNumber(input.currentCash),
+      unit: "currency",
+      min: 0,
+    },
+    {
+      id: "confirm-cash-buffer",
+      input: "cash_buffer",
+      prompt: "How much cash should the plan protect?",
+      explanation: "Use the minimum reserve you do not want the scenario to spend.",
+      currentValue: safeNumber(input.cashBuffer),
+      unit: "currency",
+      min: 0,
+    },
+    {
+      id: "confirm-utilization",
+      input: "credit_utilization",
+      prompt: "Is the tracked credit utilization current?",
+      explanation: "Correct the percentage to test utilization warnings against current information.",
+      currentValue: safeNumber(input.creditUtilization),
+      unit: "percent",
+      min: 0,
+      max: 100,
+    },
+  ];
+}
 
 function buildWarnings(input: FinancialCoachInput): FinancialCoachWarning[] {
   const warnings: FinancialCoachWarning[] = [];
@@ -131,10 +187,14 @@ export function buildFinancialCoach(input: FinancialCoachInput): FinancialCoachR
     assumptions: Array.from(
       new Set([
         ...primary.explanation.assumptions,
+        `Available cash assumption: ${safeNumber(input.currentCash)}.`,
+        `Protected cash buffer assumption: ${safeNumber(input.cashBuffer)}.`,
+        `Credit utilization assumption: ${Math.round(safeNumber(input.creditUtilization))}%.`,
         "Income, bills, debts, and available cash reflect the current records.",
       ])
-    ).slice(0, 4),
+    ).slice(0, 6),
     warnings: buildWarnings(input),
+    scenarioQuestions: buildScenarioQuestions(input),
     disclaimer:
       "Planning guidance only. BeastMoney does not provide legal, tax, or investment advice.",
   };

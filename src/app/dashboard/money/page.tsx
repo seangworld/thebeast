@@ -11,7 +11,10 @@ import { buildFinancialInsights } from "@/lib/financialInsights";
 import { buildFinancialReports } from "@/lib/financialReports";
 import { compareFinancialScenarios } from "@/lib/financialScenarios";
 import { buildFinancialSimulationState } from "@/lib/financialSimulation";
-import { buildFinancialCoach } from "@/lib/financialCoach";
+import {
+  buildFinancialCoach,
+  type FinancialCoachScenarioInput,
+} from "@/lib/financialCoach";
 import { formatCurrency } from "@/lib/formatters";
 import {
   isActiveRecurringSource,
@@ -113,6 +116,8 @@ type MoneyState = {
   debtPayments: MoneyPayment[];
 };
 
+type CoachCorrections = Partial<Record<FinancialCoachScenarioInput, string>>;
+
 const initialMoneyState: MoneyState = {
   debts: [],
   bills: [],
@@ -165,6 +170,12 @@ function formatMonthsSaved(months: number) {
   return `${years}y ${remainder}m`;
 }
 
+function resolveCoachCorrection(value: string | undefined, fallback: number) {
+  if (value == null || value.trim() === "") return fallback;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
+}
+
 function MobileMoneyCard({
   title,
   children,
@@ -213,6 +224,7 @@ export default function MoneyWorkspacePage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [simulationDate, setSimulationDate] = useState("");
+  const [coachCorrections, setCoachCorrections] = useState<CoachCorrections>({});
 
   const loadMoneySnapshot = useCallback(async () => {
     setLoading(true);
@@ -322,8 +334,14 @@ export default function MoneyWorkspacePage() {
     }));
     const activeBills = state.bills.filter((bill) => !bill.is_archived);
     const activeIncomes = state.incomes.filter(isActiveRecurringSource);
-    const startingCash = numberValue(state.cashSettings?.starting_balance);
-    const buffer = numberValue(state.cashSettings?.checking_buffer);
+    const startingCash = resolveCoachCorrection(
+      coachCorrections.current_cash,
+      numberValue(state.cashSettings?.starting_balance)
+    );
+    const buffer = resolveCoachCorrection(
+      coachCorrections.cash_buffer,
+      numberValue(state.cashSettings?.checking_buffer)
+    );
     const extraPayment = numberValue(state.debtSettings?.extra_payment);
     const cashIntelligence = buildCashIntelligence({
       asOfDate,
@@ -393,7 +411,13 @@ export default function MoneyWorkspacePage() {
       ...state.fundingSources.map((source) => numberValue(source.current_balance)),
     ].reduce((sum, value) => sum + value, 0);
     const creditAvailable = Math.max(creditLimit - creditUsed, 0);
-    const utilization = creditLimit > 0 ? (creditUsed / creditLimit) * 100 : 0;
+    const utilization = Math.min(
+      resolveCoachCorrection(
+        coachCorrections.credit_utilization,
+        creditLimit > 0 ? (creditUsed / creditLimit) * 100 : 0
+      ),
+      100
+    );
     const billsDueSoon = activeBills.filter((bill) => {
       const dueDate = bill.next_due_date_after_payment
         ? new Date(bill.next_due_date_after_payment)
@@ -426,6 +450,8 @@ export default function MoneyWorkspacePage() {
       insights: financialInsights,
       scenarios: scenarioComparison,
       creditUtilization: utilization,
+      currentCash: startingCash,
+      cashBuffer: buffer,
     });
     const financialReports = buildFinancialReports({
       cashIntelligence,
@@ -462,7 +488,7 @@ export default function MoneyWorkspacePage() {
       utilization,
       billsDueSoon,
     };
-  }, [simulationDate, state]);
+  }, [coachCorrections, simulationDate, state]);
 
   const alerts = useMemo(() => {
     const results: {
@@ -988,6 +1014,60 @@ export default function MoneyWorkspacePage() {
                 No actionable Coach warnings in the current records.
               </div>
             )}
+            <div className="mt-5 border-t border-[#2a3242] pt-5">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="beast-kicker">Scenario questions</p>
+                  <h3 className="mt-2 text-xl font-black text-white">Correct the assumptions</h3>
+                  <p className="mt-2 max-w-2xl text-sm text-[#9aa7b8]">
+                    Changes recalculate this local scenario only. Saved Money records are not changed.
+                  </p>
+                </div>
+                {Object.keys(coachCorrections).length > 0 ? (
+                  <button
+                    type="button"
+                    className="beast-button-secondary"
+                    onClick={() => setCoachCorrections({})}
+                  >
+                    Reset corrections
+                  </button>
+                ) : null}
+              </div>
+              <div className="mt-4 grid gap-4 lg:grid-cols-3">
+                {snapshot.financialCoach.scenarioQuestions.map((question) => (
+                  <label key={question.id} className="beast-surface grid gap-2 p-4 text-sm">
+                    <span className="font-bold text-white">{question.prompt}</span>
+                    <span className="text-xs leading-5 text-[#9aa7b8]">{question.explanation}</span>
+                    <span className="relative mt-1">
+                      {question.unit === "currency" ? (
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9aa7b8]">$</span>
+                      ) : null}
+                      <input
+                        type="number"
+                        inputMode="decimal"
+                        min={question.min}
+                        max={question.max}
+                        step={question.unit === "currency" ? "0.01" : "1"}
+                        value={coachCorrections[question.input] ?? question.currentValue}
+                        onChange={(event) =>
+                          setCoachCorrections((current) => ({
+                            ...current,
+                            [question.input]: event.target.value,
+                          }))
+                        }
+                        className={`w-full rounded-lg border border-[#2a3242] bg-[#0f1419] py-2 pr-3 font-bold text-white ${
+                          question.unit === "currency" ? "pl-7" : "pl-3"
+                        }`}
+                        aria-label={`${question.prompt} (${question.unit})`}
+                      />
+                      {question.unit === "percent" ? (
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9aa7b8]">%</span>
+                      ) : null}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
           </DashboardCard>
         </section>
 
