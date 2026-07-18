@@ -1,4 +1,5 @@
 import type { ModuleKey } from "@/app/components/design/DashboardPrimitives";
+import { versionManifest } from "./appVersion";
 
 export type BeastModuleIdentifier =
   | "beastos"
@@ -40,7 +41,7 @@ export const beastModuleRegistry: BeastModuleRegistryEntry[] = [
     id: "beastos",
     identifier: "beastos",
     module: "beastos",
-    version: "v2.1",
+    version: `v${versionManifest.beastos.version}`,
     status: "active",
     visibility: "released",
     enabled: true,
@@ -53,7 +54,7 @@ export const beastModuleRegistry: BeastModuleRegistryEntry[] = [
     id: "money",
     identifier: "money",
     module: "money",
-    version: "v2.3.0",
+    version: `v${versionManifest.beastmoney.version}`,
     status: "active",
     visibility: "released",
     enabled: true,
@@ -66,7 +67,7 @@ export const beastModuleRegistry: BeastModuleRegistryEntry[] = [
     id: "learning",
     identifier: "learning",
     module: "learning",
-    version: "v1.5 Private Beta",
+    version: `v${versionManifest.beastlearning.version} ${versionManifest.beastlearning.channel}`,
     status: "active",
     visibility: "beta",
     enabled: true,
@@ -79,7 +80,7 @@ export const beastModuleRegistry: BeastModuleRegistryEntry[] = [
     id: "goals",
     identifier: "goals",
     module: "goals",
-    version: "shared",
+    version: `v${versionManifest.beastgoals.version}`,
     status: "foundation",
     visibility: "adminOnly",
     enabled: true,
@@ -91,7 +92,7 @@ export const beastModuleRegistry: BeastModuleRegistryEntry[] = [
     id: "documents",
     identifier: "documents",
     module: "documents",
-    version: "shared",
+    version: `v${versionManifest.beastdocuments.version}`,
     status: "foundation",
     visibility: "adminOnly",
     enabled: true,
@@ -103,7 +104,7 @@ export const beastModuleRegistry: BeastModuleRegistryEntry[] = [
     id: "health",
     identifier: "health",
     module: "health",
-    version: "foundation",
+    version: `v${versionManifest.beasthealth.version} ${versionManifest.beasthealth.channel}`,
     status: "foundation",
     visibility: "adminOnly",
     enabled: true,
@@ -116,7 +117,7 @@ export const beastModuleRegistry: BeastModuleRegistryEntry[] = [
     id: "home",
     identifier: "home",
     module: "home",
-    version: "foundation",
+    version: `v${versionManifest.beasthome.version} ${versionManifest.beasthome.channel}`,
     status: "foundation",
     visibility: "adminOnly",
     enabled: true,

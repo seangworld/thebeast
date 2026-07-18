@@ -6,6 +6,7 @@ import {
   buildBeastAdminAnalytics,
 } from "@/lib/beastAdmin";
 import { beastModuleRegistry } from "@/lib/moduleRegistry";
+import { formatVersionIdentity, versionManifest } from "@/lib/appVersion";
 import { DashboardCard, SectionHeader } from "@/app/components/design/DashboardPrimitives";
 
 export default function BeastAdminDashboardPage() {
@@ -37,6 +38,18 @@ export default function BeastAdminDashboardPage() {
           title="BeastAdmin Phase A"
           description="This foundation keeps operational controls owner-only while deeper editing, analytics integrations, and ads tooling remain deferred."
         />
+      </DashboardCard>
+      <DashboardCard accent="admin">
+        <SectionHeader
+          eyebrow="Versions"
+          title="Canonical product identities"
+          description="Generated from the BeastFusion central version registry. Release and deployment controls remain outside BeastAdmin."
+        />
+        <div className="mt-4 grid gap-2 text-sm text-[#c7cfdb]">
+          {Object.keys(versionManifest).map((identity) => (
+            <p key={identity}>{formatVersionIdentity(identity as keyof typeof versionManifest)}</p>
+          ))}
+        </div>
       </DashboardCard>
     </BeastAdminShell>
   );

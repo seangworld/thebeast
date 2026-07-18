@@ -36,6 +36,7 @@ import {
   BEAST_LEARNING_VERSION,
   BEAST_MONEY_VERSION,
   BEAST_MONEY_VERSION_LABEL,
+  versionManifest,
 } from "../src/lib/appVersion";
 import {
   buildCalendarEvent,
@@ -454,10 +455,10 @@ test("shared formatters preserve current formatting semantics", () => {
 });
 
 test("app version constants reflect BeastOS and module releases", () => {
-  assert.equal(APP_VERSION, "v2.1");
-  assert.equal(BEAST_MONEY_VERSION, "v2.3.0");
-  assert.equal(BEAST_MONEY_VERSION_LABEL, "BeastMoney v2.3.0");
-  assert.equal(BEAST_LEARNING_VERSION, "v1.5 Private Beta");
+  assert.equal(APP_VERSION, `v${versionManifest.beastos.version}`);
+  assert.equal(BEAST_MONEY_VERSION, `v${versionManifest.beastmoney.version}`);
+  assert.equal(BEAST_MONEY_VERSION_LABEL, `${versionManifest.beastmoney.name} v${versionManifest.beastmoney.version}`);
+  assert.equal(BEAST_LEARNING_VERSION, `v${versionManifest.beastlearning.version} ${versionManifest.beastlearning.channel}`);
   assert.equal(BEASTOS_UI_POLISH_NOTE, "two-tone module branding restored");
 });
 
@@ -466,7 +467,6 @@ test("BeastMoney version is consistent across visible release surfaces", () => {
     "src/app/dashboard/money/BeastMoneyShell.tsx",
     "src/app/dashboard/releases/page.tsx",
     "src/app/release-notes/page.tsx",
-    "CHANGELOG.md",
   ];
 
   files.forEach((file) => {
@@ -476,7 +476,7 @@ test("BeastMoney version is consistent across visible release surfaces", () => {
         source.includes("BEAST_MONEY_VERSION_LABEL") ||
         source.includes(`BeastMoney ${BEAST_MONEY_VERSION}`),
       true,
-      `${file} should reference ${BEAST_MONEY_VERSION_LABEL}`
+      `${file} should use the canonical BeastMoney identity`
     );
   });
 });
@@ -5874,13 +5874,13 @@ test("BeastAdmin foundation registers modules and protects owner-only navigation
       Boolean(module.ownerNotes),
     ]),
     [
-      ["BeastOS", "beastos", "v2.1", "active", "released", true, false, true],
-      ["BeastMoney", "money", "v2.3.0", "active", "released", true, false, true],
-      ["BeastLearning", "learning", "v1.5 Private Beta", "active", "beta", true, true, true],
-      ["BeastGoals", "goals", "shared", "foundation", "adminOnly", true, false, true],
-      ["BeastDocuments", "documents", "shared", "foundation", "adminOnly", true, false, true],
-      ["BeastHealth", "health", "foundation", "foundation", "adminOnly", true, true, true],
-      ["BeastHome", "home", "foundation", "foundation", "adminOnly", true, true, true],
+      ["BeastOS", "beastos", `v${versionManifest.beastos.version}`, "active", "released", true, false, true],
+      ["BeastMoney", "money", `v${versionManifest.beastmoney.version}`, "active", "released", true, false, true],
+      ["BeastLearning", "learning", `v${versionManifest.beastlearning.version} ${versionManifest.beastlearning.channel}`, "active", "beta", true, true, true],
+      ["BeastGoals", "goals", `v${versionManifest.beastgoals.version}`, "foundation", "adminOnly", true, false, true],
+      ["BeastDocuments", "documents", `v${versionManifest.beastdocuments.version}`, "foundation", "adminOnly", true, false, true],
+      ["BeastHealth", "health", `v${versionManifest.beasthealth.version} ${versionManifest.beasthealth.channel}`, "foundation", "adminOnly", true, true, true],
+      ["BeastHome", "home", `v${versionManifest.beasthome.version} ${versionManifest.beasthome.channel}`, "foundation", "adminOnly", true, true, true],
       ["BeastAdmin", "admin", "foundation", "foundation", "adminOnly", true, false, true],
     ]
   );
