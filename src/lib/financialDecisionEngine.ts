@@ -6,6 +6,7 @@ import type {
 } from "./cashIntelligence";
 import type { DebtStrategy } from "./debtStrategies";
 import { numberValue } from "./financialMetrics";
+import { fundingTrace } from "./fundingRules";
 
 export type FinancialDecisionDebt = {
   id?: string;
@@ -51,6 +52,7 @@ export type FinancialDecisionResult = {
   shouldWait: boolean;
   guardrailViolations: string[];
   targetDebt: FinancialDecisionDebt | null;
+  fundingTrace?: ReturnType<typeof fundingTrace>;
 };
 
 function money(value: number) {
@@ -171,16 +173,22 @@ export function buildFinancialDecision(
     };
   }
 
+  const cashOnlyCapacity = Math.min(
+    Math.max(cash.currentAvailableCash, 0),
+    Math.max(cash.projectedAvailableCash, 0),
+    Math.max(cash.safeAttackAmount - cash.safeFundingSourceCapacity, 0)
+  );
   const uncappedPayment = Math.min(
-    Math.max(cash.safeAttackAmount, 0),
+    cashOnlyCapacity,
     numberValue(targetDebt?.balance)
   );
   const suggestedExtraPayment = money(
     maxExtraPayment > 0 ? Math.min(uncappedPayment, maxExtraPayment) : uncappedPayment
   );
+  const trace = fundingTrace(fundingSources, numberValue(targetDebt?.interest_rate), suggestedExtraPayment);
 
   reasoning.push(
-    `Safe attack capacity is ${money(cash.safeAttackAmount)} after cash, reserve, projection, and funding-source guardrails.`
+    `Safe cash attack capacity is ${money(cashOnlyCapacity)} after cash, reserve, and projection guardrails. Borrowing is evaluated separately and is never combined into this recommendation.`
   );
 
   if (targetDebt) {
@@ -217,6 +225,7 @@ export function buildFinancialDecision(
       shouldWait: true,
       guardrailViolations,
       targetDebt,
+      fundingTrace: trace,
     };
   }
 
@@ -232,6 +241,7 @@ export function buildFinancialDecision(
       shouldWait: true,
       guardrailViolations,
       targetDebt,
+      fundingTrace: trace,
     };
   }
 
@@ -248,5 +258,6 @@ export function buildFinancialDecision(
     shouldWait: false,
     guardrailViolations,
     targetDebt,
+    fundingTrace: trace,
   };
 }

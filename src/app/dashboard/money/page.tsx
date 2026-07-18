@@ -1188,6 +1188,13 @@ export default function MoneyWorkspacePage() {
                 <p className="text-sm leading-6 text-[#c7cfdb]">
                   {snapshot.financialDecision.reason}
                 </p>
+                {snapshot.financialDecision.fundingTrace && (
+                  <div className="rounded-lg border border-[#2a3242] p-3 text-xs text-[#c7cfdb]">
+                    <strong className="text-white">Funding trace</strong>
+                    <p className="mt-1">Cash used: {formatCurrency(snapshot.financialDecision.fundingTrace.cashAmount)} · Eligible borrowing: {formatCurrency(snapshot.financialDecision.fundingTrace.borrowedAmount)}</p>
+                    <p className="mt-1">Borrowing is considered only when its rate is lower than the target debt and utilization limits permit it. Credit cards are never used to pay debt.</p>
+                  </div>
+                )}
               </div>
             </DashboardCard>
           </div>
