@@ -308,6 +308,25 @@ function numberField(value: string) {
   return Number.isFinite(parsed) ? parsed : Number.NaN;
 }
 
+function validateImportValues(
+  target: MoneyImportTarget,
+  values: Record<string, string | number>,
+  sourceRowNumber: number
+) {
+  return requiredFields[target].flatMap((field) => {
+    if (values[field] === "" || values[field] == null) {
+      return [`Row ${sourceRowNumber}: ${fieldLabel(field)} is required.`];
+    }
+    if (
+      ["amount", "balance"].includes(field) &&
+      !Number.isFinite(Number(values[field]))
+    ) {
+      return [`Row ${sourceRowNumber}: ${fieldLabel(field)} must be a valid number.`];
+    }
+    return [];
+  });
+}
+
 export function buildImportDuplicateKey(
   target: MoneyImportTarget,
   values: Record<string, string | number>
@@ -361,18 +380,7 @@ export function buildMoneyImportPreview({
       {}
     );
     const sourceRowNumber = index + 2;
-    const errors = requiredFields[mapping.target].flatMap((field) => {
-      if (values[field] === "" || values[field] == null) {
-        return [`Row ${sourceRowNumber}: ${fieldLabel(field)} is required.`];
-      }
-      if (
-        ["amount", "balance"].includes(field) &&
-        !Number.isFinite(Number(values[field]))
-      ) {
-        return [`Row ${sourceRowNumber}: ${fieldLabel(field)} must be a valid number.`];
-      }
-      return [];
-    });
+    const errors = validateImportValues(mapping.target, values, sourceRowNumber);
     const duplicateKey = buildImportDuplicateKey(mapping.target, values);
     const duplicateSource = existing.has(duplicateKey)
       ? "existing" as const
@@ -404,6 +412,55 @@ export function buildMoneyImportPreview({
     duplicateRows: rows.filter((row) => row.duplicate),
     readyToSave:
       mappingIssues.length === 0 &&
+      rows.some((row) => row.errors.length === 0 && !row.duplicate) &&
+      rows.every((row) => row.errors.length === 0),
+  };
+}
+
+export function correctMoneyImportPreviewRow({
+  preview,
+  rowIndex,
+  updates,
+  existingDuplicateKeys = [],
+}: {
+  preview: MoneyImportPreview;
+  rowIndex: number;
+  updates: Record<string, string | number>;
+  existingDuplicateKeys?: string[];
+}): MoneyImportPreview {
+  if (!preview.rows.some((row) => row.rowIndex === rowIndex)) {
+    throw new Error(`Import preview row ${rowIndex} was not found.`);
+  }
+
+  const existing = new Set(existingDuplicateKeys.map((key) => key.toLowerCase()));
+  const seen = new Set<string>();
+  const rows = preview.rows.map((row) => {
+    const values = row.rowIndex === rowIndex ? { ...row.values, ...updates } : { ...row.values };
+    const duplicateKey = buildImportDuplicateKey(row.target, values);
+    const duplicateSource = existing.has(duplicateKey)
+      ? "existing" as const
+      : seen.has(duplicateKey)
+        ? "file" as const
+        : null;
+    seen.add(duplicateKey);
+    return {
+      ...row,
+      values,
+      duplicateKey,
+      duplicate: duplicateSource !== null,
+      duplicateSource,
+      errors: validateImportValues(row.target, values, row.sourceRowNumber),
+    };
+  });
+
+  return {
+    ...preview,
+    rows,
+    validRows: rows.filter((row) => row.errors.length === 0 && !row.duplicate),
+    invalidRows: rows.filter((row) => row.errors.length > 0),
+    duplicateRows: rows.filter((row) => row.duplicate),
+    readyToSave:
+      preview.mappingIssues.length === 0 &&
       rows.some((row) => row.errors.length === 0 && !row.duplicate) &&
       rows.every((row) => row.errors.length === 0),
   };
