@@ -1,6 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildNetWorthModel, validateNetWorthModel } from "../src/lib/netWorth";
+import {
+  NET_WORTH_ASSET_CLASSES,
+  buildNetWorthModel,
+  createNetWorthAsset,
+  recordManualAssetValuation,
+  validateNetWorthModel,
+} from "../src/lib/netWorth";
 
 const categories = [
   { id: "owned", label: "Owned", kind: "asset" as const, sortOrder: 0 },
@@ -78,4 +84,72 @@ test("BM-29 rejects orphan history invalid values and mismatched category owners
   assert.equal(errors.some((error) => /missing entry/.test(error)), true);
   assert.equal(errors.some((error) => /invalid date/.test(error)), true);
   assert.equal(errors.some((error) => /non-negative finite value/.test(error)), true);
+});
+
+test("BM-30 defines the canonical home vehicle cash investment retirement and other asset classes", () => {
+  assert.deepEqual(NET_WORTH_ASSET_CLASSES, [
+    "home",
+    "vehicle",
+    "cash",
+    "investment",
+    "retirement",
+    "other",
+  ]);
+
+  const assets = NET_WORTH_ASSET_CLASSES.map((assetClass, index) => createNetWorthAsset({
+    id: `asset-${assetClass}`,
+    categoryId: "owned",
+    name: `Asset ${index + 1}`,
+    assetClass,
+  }));
+  assert.deepEqual(assets.map(({ assetClass }) => assetClass), NET_WORTH_ASSET_CLASSES);
+  assert.equal(assets.every(({ kind }) => kind === "asset"), true);
+});
+
+test("BM-30 tracks dated manual valuations on classified assets", () => {
+  const home = createNetWorthAsset({
+    id: "home-1",
+    categoryId: "owned",
+    name: "Primary home",
+    assetClass: "home",
+  });
+  const valuation = recordManualAssetValuation({
+    id: "home-value-july",
+    asset: home,
+    recordedOn: "2026-07-18",
+    value: 325_000,
+    note: "Owner-entered estimate",
+  });
+  const model = buildNetWorthModel({ categories, entries: [home], history: [valuation] });
+
+  assert.deepEqual(valuation, {
+    id: "home-value-july",
+    entryId: "home-1",
+    recordedOn: "2026-07-18",
+    value: 325_000,
+    valuationMethod: "manual",
+    note: "Owner-entered estimate",
+  });
+  assert.equal(model.current?.assetTotal, 325_000);
+});
+
+test("BM-30 rejects manual valuations without a classified asset or valid value date", () => {
+  assert.throws(
+    () => recordManualAssetValuation({
+      id: "bad-kind",
+      asset: entries[1],
+      recordedOn: "2026-07-18",
+      value: 1,
+    }),
+    /classified net-worth asset/
+  );
+  const cash = createNetWorthAsset({ id: "cash-1", categoryId: "owned", name: "Cash", assetClass: "cash" });
+  assert.throws(
+    () => recordManualAssetValuation({ id: "bad-date", asset: cash, recordedOn: "July", value: 1 }),
+    /invalid date/
+  );
+  assert.throws(
+    () => recordManualAssetValuation({ id: "bad-value", asset: cash, recordedOn: "2026-07-18", value: -1 }),
+    /non-negative finite value/
+  );
 });

@@ -1,5 +1,16 @@
 export type NetWorthEntryKind = "asset" | "liability";
 
+export const NET_WORTH_ASSET_CLASSES = [
+  "home",
+  "vehicle",
+  "cash",
+  "investment",
+  "retirement",
+  "other",
+] as const;
+
+export type NetWorthAssetClass = (typeof NET_WORTH_ASSET_CLASSES)[number];
+
 export type NetWorthCategory = {
   id: string;
   label: string;
@@ -12,6 +23,7 @@ export type NetWorthEntry = {
   categoryId: string;
   kind: NetWorthEntryKind;
   name: string;
+  assetClass?: NetWorthAssetClass;
 };
 
 export type NetWorthHistoryRecord = {
@@ -19,6 +31,8 @@ export type NetWorthHistoryRecord = {
   entryId: string;
   recordedOn: string;
   value: number;
+  valuationMethod?: "manual";
+  note?: string;
 };
 
 export type NetWorthTrendPoint = {
@@ -81,6 +95,12 @@ export function validateNetWorthModel({
     if (category && category.kind !== entry.kind) {
       errors.push(`Net-worth entry ${entry.id} kind ${entry.kind} does not match category ${category.id} kind ${category.kind}.`);
     }
+    if (entry.assetClass && entry.kind !== "asset") {
+      errors.push(`Net-worth liability ${entry.id} cannot declare asset class ${entry.assetClass}.`);
+    }
+    if (entry.assetClass && !NET_WORTH_ASSET_CLASSES.includes(entry.assetClass)) {
+      errors.push(`Net-worth entry ${entry.id} has unsupported asset class ${entry.assetClass}.`);
+    }
   }
 
   for (const record of history) {
@@ -90,6 +110,48 @@ export function validateNetWorthModel({
   }
 
   return errors;
+}
+
+export function createNetWorthAsset(input: {
+  id: string;
+  categoryId: string;
+  name: string;
+  assetClass: NetWorthAssetClass;
+}): NetWorthEntry {
+  return {
+    id: input.id.trim(),
+    categoryId: input.categoryId.trim(),
+    kind: "asset",
+    name: input.name.trim(),
+    assetClass: input.assetClass,
+  };
+}
+
+export function recordManualAssetValuation(input: {
+  id: string;
+  asset: NetWorthEntry;
+  recordedOn: string;
+  value: number;
+  note?: string;
+}): NetWorthHistoryRecord {
+  if (input.asset.kind !== "asset" || !input.asset.assetClass) {
+    throw new Error("Manual asset valuations require a classified net-worth asset.");
+  }
+  if (!validDate(input.recordedOn)) {
+    throw new Error(`Manual asset valuation has invalid date ${input.recordedOn}.`);
+  }
+  if (!Number.isFinite(input.value) || input.value < 0) {
+    throw new Error("Manual asset valuation requires a non-negative finite value.");
+  }
+
+  return {
+    id: input.id.trim(),
+    entryId: input.asset.id,
+    recordedOn: input.recordedOn,
+    value: input.value,
+    valuationMethod: "manual",
+    ...(input.note?.trim() ? { note: input.note.trim() } : {}),
+  };
 }
 
 function latestValuesOnDate(entries: NetWorthEntry[], history: NetWorthHistoryRecord[], recordedOn: string) {
