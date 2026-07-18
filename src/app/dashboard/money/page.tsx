@@ -141,6 +141,7 @@ const quickActions = [
   { label: "Go to Bills", href: "/dashboard/money/cashflow", icon: "BL" },
   { label: "Go to Debts", href: "/dashboard/money/debts", icon: "DB" },
   { label: "Go to Velocity", href: "/dashboard/money/velocity", icon: "V" },
+  { label: "Retirement Planning", href: "/dashboard/money/retirement", icon: "R" },
 ];
 
 function nextDueDateFromDay(day: number | null | undefined, today = new Date()) {

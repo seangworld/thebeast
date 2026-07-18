@@ -39,6 +39,7 @@ const expectedCliMigrations = [
   "20260715000900_add_beast_document_access_grants.sql",
   "20260715001000_add_beast_document_calendar_links.sql",
   "20260718000100_add_retirement_scenarios.sql",
+  "20260718000200_add_retirement_timeline_reports.sql",
 ];
 
 test("Supabase CLI migrations exist in dependency-safe order", () => {
@@ -55,6 +56,14 @@ test("legacy one-off SQL and dev seed files are excluded from CLI migrations", (
   assert.equal(actual.includes("dev_seed_placeholders.sql"), false);
   assert.equal(actual.includes("20260526_add_debt_payment_behavior.sql"), false);
   assert.equal(actual.includes("debt_payments_migration.sql"), false);
+});
+
+test("BM-35 timeline and report migration keeps records owner-scoped with RLS", () => {
+  const migration = readFileSync(join(migrationsDir, "20260718000200_add_retirement_timeline_reports.sql"), "utf8");
+  assert.match(migration, /retirement_timeline_runs/);
+  assert.match(migration, /retirement_report_exports/);
+  assert.match(migration, /enable row level security/);
+  assert.match(migration, /auth\.uid\(\) = owner_id/);
 });
 
 test("Supabase migration documentation records stop conditions and bootstrap commands", () => {

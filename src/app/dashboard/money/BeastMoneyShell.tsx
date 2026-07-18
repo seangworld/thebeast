@@ -9,6 +9,7 @@ export const beastMoneySections = [
   { label: "Debts", href: "/dashboard/money/debts" },
   { label: "Payoff Plan", href: "/dashboard/money/debts#payoff-plan" },
   { label: "Velocity", href: "/dashboard/money/velocity" },
+  { label: "Retirement", href: "/dashboard/money/retirement" },
   { label: "Billing", href: "/dashboard/money/billing" },
   { label: "Settings", href: "/dashboard/money/settings" },
 ];
