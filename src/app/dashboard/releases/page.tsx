@@ -7,6 +7,18 @@ import {
 
 const releaseNotes = [
   {
+    version: "BeastOS v2.1.1",
+    date: "July 20, 2026",
+    title: "Critical Horizontal Overflow Hotfix",
+    items: [
+      "Fixed site-wide horizontal overflow and off-screen content across the authenticated platform without globally clipping content.",
+      "Improved responsive reflow for the shared shell, navigation labels, Admin member data, and Learning lesson controls.",
+      "Kept genuinely wide financial datasets inside labeled, keyboard-focusable component scroll regions.",
+      "Regression coverage: added a 293-case authenticated route and viewport matrix; authenticated execution remains pending until a valid test state is available.",
+      "Release boundary: no calculations, learning progression, persistence, RLS, roles, navigation hierarchy, migrations, or BeastOS 2.2 roadmap features are included.",
+    ],
+  },
+  {
     version: "BeastOS v2.2 Shared Services Progress",
     date: "July 17, 2026",
     title: "Shared Platform Services",
@@ -304,7 +316,7 @@ export default function ReleasesPage() {
 
             <div className="inline-flex w-fit items-center gap-2 rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1 text-green-300">
               <span className="h-2 w-2 rounded-full bg-green-300" />
-              <span className="font-semibold">Active v2.1</span>
+              <span className="font-semibold">Active v2.1.1</span>
             </div>
           </div>
         </section>

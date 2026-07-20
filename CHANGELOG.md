@@ -1,5 +1,23 @@
 # Changelog
 
+## BeastOS v2.1.1 - July 20, 2026
+
+Critical usability hotfix for site-wide horizontal overflow and off-screen content.
+
+### Fixes
+
+- Replaced global horizontal-overflow clipping with shared shrink, reflow, and long-content wrapping rules.
+- Corrected dashboard-shell, navigation-label, BeastAdmin member-list, and BeastLearning lesson-control responsiveness.
+- Kept genuinely wide BeastMoney datasets inside labeled, keyboard-focusable component scroll regions.
+- Added responsive regressions and a 293-case authenticated Playwright route and viewport matrix.
+
+### Release Boundary
+
+- No calculations, educational progression, persistence, RLS, roles, navigation hierarchy, or unrelated product behavior changed.
+- No database migration required.
+- Authenticated Playwright execution remains pending because no valid `PLAYWRIGHT_AUTH_STATE` was available; no state was fabricated or bypassed.
+- BeastOS v2.2 remains the next planned feature release and is not included in this hotfix.
+
 ## BeastLearning v1.5 Private Beta - July 11, 2026
 
 Education-path guidance and curriculum architecture milestone.

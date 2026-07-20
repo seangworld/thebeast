@@ -27,6 +27,45 @@ export default function ReleaseNotesPage() {
       </header>
 
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
+        {/* BeastOS v2.1.1 */}
+        <div className="mb-12 rounded-lg border border-[#2a3242] bg-[#0f1419] p-6">
+          <div className="mb-4">
+            <h2 className="text-2xl font-bold">BeastOS v2.1.1</h2>
+            <p className="mt-1 text-sm text-[#7f8da3]">July 20, 2026</p>
+          </div>
+
+          <div className="space-y-4 text-sm">
+            <div>
+              <h3 className="font-semibold text-[#c7cfdb]">
+                Critical Horizontal Overflow Hotfix
+              </h3>
+              <ul className="space-y-2 pl-4">
+                <li className="text-[#a5b4c7]">
+                  <span className="text-blue-400">✓</span> Fixed site-wide
+                  horizontal overflow and off-screen content without globally
+                  clipping content.
+                </li>
+                <li className="text-[#a5b4c7]">
+                  <span className="text-blue-400">✓</span> Improved responsive
+                  reflow for the shared shell, navigation labels, Admin member
+                  data, and Learning lesson controls.
+                </li>
+                <li className="text-[#a5b4c7]">
+                  <span className="text-blue-400">✓</span> Kept wide financial
+                  datasets inside labeled, keyboard-focusable component scroll
+                  regions.
+                </li>
+                <li className="text-[#a5b4c7]">
+                  <span className="text-blue-400">✓</span> No calculations,
+                  learning progression, persistence, RLS, roles, navigation
+                  hierarchy, migrations, or BeastOS v2.2 roadmap features are
+                  included.
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
         {/* BeastLearning v1.5 */}
         <div className="mb-12 rounded-lg border border-[#2a3242] bg-[#0f1419] p-6">
           <div className="mb-4">

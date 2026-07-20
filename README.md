@@ -1,6 +1,8 @@
 # The Beast / BeastOS
 
-Current platform version: `BeastOS v2.1`
+Current platform version: `BeastOS v2.1.1`
+
+BeastOS v2.2 remains the next planned feature release. The v2.1.1 release is an isolated critical usability hotfix for horizontal overflow and off-screen content.
 
 Current Money version: `BeastMoney v2.3.0`
 
