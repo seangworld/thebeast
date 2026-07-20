@@ -45,7 +45,7 @@ export default function ArchivedItemsSection({
         </div>
 
         {showArchivedBills && (
-          <div className="beast-table-wrap">
+          <div className="beast-table-wrap" tabIndex={0} role="region" aria-label="Archived bills table">
             <table className="w-full min-w-[760px] text-sm">
               <thead>
                 <tr>
@@ -114,7 +114,7 @@ export default function ArchivedItemsSection({
         </div>
 
         {showArchivedDebts && (
-          <div className="beast-table-wrap">
+          <div className="beast-table-wrap" tabIndex={0} role="region" aria-label="Archived debts table">
             <table className="w-full min-w-[820px] text-sm">
               <thead>
                 <tr>

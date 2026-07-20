@@ -158,6 +158,7 @@ test("BF-MOB-003 keeps mobile shared surfaces narrow and desktop routes intact",
   assert.match(pages[1], /Notification Contracts/);
   assert.match(pages[2], /Calendar Contracts/);
   assert.match(pages[3], /Natural-language search and action routing/);
-  assert.match(globalStyles, /max-width: 100vw/);
-  assert.match(globalStyles, /overflow-x: clip/);
+  assert.match(globalStyles, /width: 100%;/);
+  assert.match(globalStyles, /min-width: 0;/);
+  assert.doesNotMatch(globalStyles, /overflow-x: (?:clip|hidden)/);
 });

@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "test": "tsc -p tsconfig.test.json && node --test .test-dist/tests/*.test.js",
+    "test:responsive": "playwright test",
     "start": "next start",
     "lint": "next lint",
     "mobile:release-smoke": "node scripts/mobile-release-smoke.mjs",
@@ -35,6 +36,7 @@
     "stripe": "^22.3.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",

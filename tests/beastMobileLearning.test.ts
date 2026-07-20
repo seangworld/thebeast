@@ -176,6 +176,7 @@ test("BF-MOB-006 keeps mobile Learning cards narrow and desktop Learning page in
   assert.match(learningPage, /<MentorHome/);
   assert.match(mobileLearning, /getLearningActivityRoute/);
   assert.match(mobileLearning, /sourceOwnershipPreserved: true/);
-  assert.match(globalStyles, /max-width: 100vw/);
-  assert.match(globalStyles, /overflow-x: clip/);
+  assert.match(globalStyles, /width: 100%;/);
+  assert.match(globalStyles, /min-width: 0;/);
+  assert.doesNotMatch(globalStyles, /overflow-x: (?:clip|hidden)/);
 });

@@ -78,8 +78,9 @@ test("BF-MOB-004 mobile Money prevents horizontal overflow and preserves desktop
   assert.match(page, /className="hidden space-y-8 md:block"/);
   assert.match(page, /Money Cockpit/);
   assert.match(shell, /beast-module-tabs/);
-  assert.match(globalStyles, /max-width: 100vw/);
-  assert.match(globalStyles, /overflow-x: clip/);
+  assert.match(globalStyles, /width: 100%;/);
+  assert.match(globalStyles, /min-width: 0;/);
+  assert.doesNotMatch(globalStyles, /overflow-x: (?:clip|hidden)/);
 });
 
 test("BF-MOB-004 payment forms fit mobile widths and shared business logic stays source-owned", () => {
@@ -111,4 +112,3 @@ test("BF-MOB-004 bill status handles overdue due today due soon and upcoming", (
   assert.equal(getMobileMoneyBillStatus(new Date("2026-07-20T12:00:00.000Z"), asOfDate), "Due Soon");
   assert.equal(getMobileMoneyBillStatus(new Date("2026-08-02T12:00:00.000Z"), asOfDate), "Upcoming");
 });
-

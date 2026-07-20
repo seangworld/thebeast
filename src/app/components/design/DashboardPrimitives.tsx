@@ -365,7 +365,7 @@ export function ModuleNavItem({
 }: ModuleNavItemProps) {
   const accent = moduleAccents[module];
   const baseClass =
-    "group flex w-full shrink-0 items-center gap-2 whitespace-nowrap rounded-xl border px-3 py-2 text-sm font-bold transition duration-200 sm:px-4";
+    "group flex w-full min-w-0 items-center gap-2 rounded-xl border px-3 py-2 text-sm font-bold transition duration-200 sm:px-4";
   const activeClass = `${accent.border} ${accent.bg} ${accent.text}`;
   const inactiveClass = comingSoon
     ? "border-[#2a3242] bg-[#0f1419] text-[#7f8da3] opacity-75"
@@ -376,7 +376,7 @@ export function ModuleNavItem({
         className="h-2 w-2 rounded-full"
         style={{ background: active || comingSoon ? accent.color : "#596579" }}
       />
-      <span className={compact ? "sr-only lg:not-sr-only" : ""}>{label}</span>
+      <span className={`${compact ? "sr-only lg:not-sr-only" : ""} min-w-0 break-words`}>{label}</span>
       {comingSoon && !compact ? (
         <span className="rounded border border-[#2a3242] px-1.5 py-0.5 text-[10px] uppercase text-[#7f8da3]">
           Soon

@@ -469,7 +469,7 @@ export function LessonEngine({
                 sendLearnerMessage();
               }}
             >
-              <div className="mb-3 flex gap-2 overflow-x-auto pb-1" aria-label="Quick learning prompts">
+              <div className="mb-3 flex flex-wrap gap-2 pb-1" aria-label="Quick learning prompts">
                 {[
                   "Teach simply",
                   "Check me",
@@ -479,7 +479,7 @@ export function LessonEngine({
                   <button
                     key={prompt}
                     type="button"
-                    className="beast-touch-chip shrink-0 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-black text-[#dbe3ef] transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="beast-touch-chip rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-black text-[#dbe3ef] transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
                     disabled={completed || isResponding}
                     aria-label={`${prompt} prompt`}
                     onClick={() =>

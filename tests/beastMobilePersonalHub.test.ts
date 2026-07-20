@@ -88,6 +88,7 @@ test("BF-MOB-005 keeps mobile Personal Hub surfaces narrow and desktop views int
   assert.match(dashboard, /data-beast-mobile-shell="home"/);
   assert.match(uploads, /DocumentUploadDropzone/);
   assert.match(goals, /Current goals/);
-  assert.match(globalStyles, /max-width: 100vw/);
-  assert.match(globalStyles, /overflow-x: clip/);
+  assert.match(globalStyles, /width: 100%;/);
+  assert.match(globalStyles, /min-width: 0;/);
+  assert.doesNotMatch(globalStyles, /overflow-x: (?:clip|hidden)/);
 });

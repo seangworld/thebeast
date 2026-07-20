@@ -86,8 +86,9 @@ test("BF-MOB-002 preserves desktop navigation while adding a mobile shell", () =
   assert.match(layout, /pb-\[calc\(env\(safe-area-inset-bottom\)\+8px\)\]/);
   assert.match(dashboard, /data-beast-mobile-shell="home"/);
   assert.match(dashboard, /className="hidden space-y-8 md:block"/);
-  assert.match(css, /max-width: 100vw/);
-  assert.match(css, /overflow-x: clip/);
+  assert.match(css, /width: 100%;/);
+  assert.match(css, /min-width: 0;/);
+  assert.doesNotMatch(css, /overflow-x: (?:clip|hidden)/);
 });
 
 test("BF-MOB-002 keeps module visibility permission-aware including View As Member", () => {
@@ -135,4 +136,3 @@ test("BF-MOB-002 defines core mobile routes and supported phone widths", () => {
   assert.ok(routes.some((route) => route.href === "/dashboard/goals"));
   assert.equal(routes.some((route) => route.href === "/dashboard/admin"), false);
 });
-

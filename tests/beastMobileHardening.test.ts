@@ -54,7 +54,8 @@ test("BF-MOB-008 hardens mobile shell accessibility safe areas and overflow", ()
   assert.match(layout, /env\(safe-area-inset-top\)/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
   assert.match(css, /touch-action: manipulation/);
-  assert.match(css, /overflow-x: clip/);
+  assert.match(css, /min-width: 0/);
+  assert.doesNotMatch(css, /overflow-x: (?:clip|hidden)/);
 
   for (const page of [dashboard, learning, money]) {
     assert.match(page, /md:hidden/);

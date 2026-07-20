@@ -788,7 +788,7 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-[#11151c] text-white">
+    <div className="min-h-screen min-w-0 bg-[#11151c] text-white">
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-20 border-r border-[#2a3242] bg-[#0f1419]/98 backdrop-blur md:block lg:w-72">
         <div className="hidden h-full lg:block">
           <NavRail />
@@ -886,7 +886,7 @@ export default function DashboardLayout({
         </div>
       ) : null}
 
-      <div className="min-h-screen pb-[calc(env(safe-area-inset-bottom)+76px)] md:pb-0 md:pl-20 lg:pl-72">
+      <div className="min-h-screen min-w-0 max-w-full pb-[calc(env(safe-area-inset-bottom)+76px)] md:pb-0 md:pl-20 lg:pl-72">
         {children}
       </div>
 

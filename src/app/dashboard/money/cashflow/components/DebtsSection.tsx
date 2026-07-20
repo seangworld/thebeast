@@ -341,7 +341,7 @@ export default function DebtsSection({
             )}
           </div>
 
-          <div className="beast-table-wrap hidden md:block">
+          <div className="beast-table-wrap hidden md:block" tabIndex={0} role="region" aria-label="Cash flow debts table">
           <table className="w-full min-w-[900px] text-sm">
             <thead>
               <tr>

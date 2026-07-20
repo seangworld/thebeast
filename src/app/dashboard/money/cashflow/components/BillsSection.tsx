@@ -305,7 +305,7 @@ export default function BillsSection({
             )}
           </div>
 
-          <div className="beast-table-wrap hidden md:block">
+          <div className="beast-table-wrap hidden md:block" tabIndex={0} role="region" aria-label="Bills table">
           <table className="w-full min-w-[900px] text-sm">
             <thead>
               <tr>

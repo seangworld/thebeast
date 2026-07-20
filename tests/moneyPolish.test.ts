@@ -152,5 +152,6 @@ test("Bills and Debts keep Pay actions reachable on mobile without replacing des
   assert.match(debtControls, /"Pay Min"/);
   assert.match(billControls, /grid-cols-1 gap-2 min-\[380px\]:grid-cols-\[1fr_auto\]/);
   assert.match(debtControls, /grid-cols-1 gap-2 min-\[390px\]:grid-cols-\[1fr_auto_auto\]/);
-  assert.match(globalStyles, /overflow-x: hidden/);
+  assert.match(globalStyles, /scrollbar-gutter: stable/);
+  assert.doesNotMatch(globalStyles, /overflow-x: (?:clip|hidden)/);
 });

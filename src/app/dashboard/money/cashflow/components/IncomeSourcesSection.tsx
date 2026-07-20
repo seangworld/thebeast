@@ -57,7 +57,7 @@ export default function IncomeSourcesSection({
       </div>
 
       {showIncomeEvents && (
-        <div className="beast-table-wrap">
+        <div className="beast-table-wrap" tabIndex={0} role="region" aria-label="Income sources table">
           <table className="w-full min-w-[700px] text-sm">
             <thead>
               <tr>

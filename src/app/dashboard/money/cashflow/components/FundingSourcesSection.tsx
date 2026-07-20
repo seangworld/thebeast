@@ -196,7 +196,7 @@ export default function FundingSourcesSection({
             Add Funding Source
           </button>
 
-          <div className="beast-table-wrap">
+          <div className="beast-table-wrap" tabIndex={0} role="region" aria-label="Funding sources table">
             <table className="w-full min-w-[840px] text-sm">
               <thead>
                 <tr>

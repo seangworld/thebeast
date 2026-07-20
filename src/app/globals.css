@@ -14,12 +14,20 @@ body {
 
 html,
 body {
+  width: 100%;
   max-width: 100%;
-  overflow-x: hidden;
 }
 
 * {
   box-sizing: border-box;
+}
+
+:where(main, section, article, aside, header, footer, nav, form, fieldset, div) {
+  min-width: 0;
+}
+
+:where(p, li, dd, dt, td, th, label, a, button, input, select, textarea) {
+  overflow-wrap: anywhere;
 }
 
 img,
@@ -254,6 +262,13 @@ a.beast-card:hover {
   overscroll-behavior-x: contain;
   overscroll-behavior-y: auto;
   touch-action: pan-x pan-y;
+  scrollbar-gutter: stable;
+  scrollbar-width: auto;
+}
+
+.beast-table-wrap:focus-visible {
+  outline: 3px solid rgba(56, 189, 248, 0.9);
+  outline-offset: 2px;
 }
 
 :where(.beast-panel, .beast-card) table {
@@ -572,23 +587,14 @@ a.beast-card:hover {
 ========================= */
 
 @media (max-width: 767px) {
-  html,
-  body {
-    width: 100%;
-    max-width: 100vw;
-    overflow-x: clip;
-  }
-
   .beast-page {
     width: 100%;
-    max-width: 100vw;
-    overflow-x: clip;
+    max-width: 100%;
     padding-bottom: calc(env(safe-area-inset-bottom) + 96px);
   }
 
   .beast-container {
     max-width: 100%;
-    overflow-x: clip;
   }
 
   :where(.beast-card, .beast-panel, .beast-surface, .beast-page-header) {

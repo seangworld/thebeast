@@ -34,7 +34,7 @@ export default function CashTimelineSection({
       </div>
 
       {showCashTimeline && (
-        <div className="beast-table-wrap">
+        <div className="beast-table-wrap" tabIndex={0} role="region" aria-label="Cash timeline table">
           <table className="w-full min-w-[760px] text-sm">
             <thead>
               <tr>

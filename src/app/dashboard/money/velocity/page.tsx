@@ -1195,7 +1195,7 @@ export default function VelocityPlannerPage() {
             </div>
             <div className="beast-card xl:col-span-3">
               <div className="text-sm text-[#c7cfdb]">Velocity Payment Schedule</div>
-              <div className="beast-table-wrap mt-4">
+              <div className="beast-table-wrap mt-4" tabIndex={0} role="region" aria-label="Velocity banking schedule table">
                 <table className="w-full min-w-[720px] text-left text-sm">
                   <thead className="text-xs uppercase text-[#7f8da3]">
                     <tr>

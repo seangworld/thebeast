@@ -1244,7 +1244,7 @@ export default function DebtsPage() {
             )}
           </div>
 
-          <div className="beast-table-wrap hidden md:block">
+          <div className="beast-table-wrap hidden md:block" tabIndex={0} role="region" aria-label="Debt accounts table">
             <table className="w-full min-w-[760px] text-sm">
               <thead>
                 <tr>
@@ -1464,7 +1464,7 @@ export default function DebtsPage() {
           </div>
 
           {showArchivedDebts && (
-            <div className="beast-table-wrap">
+            <div className="beast-table-wrap" tabIndex={0} role="region" aria-label="Debt strategy comparison table">
               <table className="w-full min-w-[760px] text-sm">
                 <thead>
                   <tr>
@@ -1631,7 +1631,7 @@ export default function DebtsPage() {
             </div>
           </div>
 
-          <div className="beast-table-wrap">
+          <div className="beast-table-wrap" tabIndex={0} role="region" aria-label="Debt forecast table">
             <table className="w-full min-w-[820px] text-sm">
               <thead>
                 <tr>
@@ -1707,7 +1707,7 @@ export default function DebtsPage() {
             </div>
           </div>
 
-          <div className="beast-table-wrap">
+          <div className="beast-table-wrap" tabIndex={0} role="region" aria-label="Debt payoff schedule table">
             <table className="money-payoff-table w-full min-w-[1100px] text-sm">
               <thead>
                 <tr>
