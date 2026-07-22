@@ -1,5 +1,6 @@
 import {
   DashboardCard,
+  GuidedEmptyState,
   ModuleBadge,
   SectionHeader,
   type ModuleKey,
@@ -31,10 +32,7 @@ export function PlatformPlaceholderPage({
 
         <DashboardCard accent={module}>
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-            <SectionHeader
-              title="Coming Soon"
-              description="This workspace is part of the BeastOS platform shell. Engines, persistence, and automation will be added in a future sprint."
-            />
+            <SectionHeader title="Guided foundation" description="Use the suggested next step now; deeper engines and persistence remain future work." />
             <ModuleBadge module={module} label="Shell Ready" />
           </div>
 
@@ -48,6 +46,7 @@ export function PlatformPlaceholderPage({
               </div>
             ))}
           </div>
+          <div className="mt-5"><GuidedEmptyState title={`${title} is ready for discovery`} description="This foundation is intentionally limited, but it is not a dead end." guidance="Start in Today so BeastOS can guide the next available source-owned action." nextAction={{ label: "Open Today", href: "/dashboard/today" }} secondaryAction={{ label: "Return to dashboard", href: "/dashboard" }} /></div>
         </DashboardCard>
       </div>
     </main>

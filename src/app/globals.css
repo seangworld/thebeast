@@ -266,6 +266,24 @@ a.beast-card:hover {
   scrollbar-width: auto;
 }
 
+/* Generation 2 interaction contract: pages reflow; only explicitly marked
+   dense regions may scroll internally as a fallback. */
+:where(.beast-page, .beast-container, .beast-card, .beast-panel, .beast-surface) {
+  min-width: 0;
+}
+
+:where(input, select, textarea, button, a) {
+  max-width: 100%;
+}
+
+:where(p, li, dd, td, th, code) {
+  overflow-wrap: anywhere;
+}
+
+details > summary::-webkit-details-marker {
+  display: none;
+}
+
 .beast-table-wrap:focus-visible {
   outline: 3px solid rgba(56, 189, 248, 0.9);
   outline-offset: 2px;

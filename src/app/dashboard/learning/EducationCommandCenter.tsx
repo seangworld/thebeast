@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { DashboardCard, ModuleBadge, SectionHeader } from "@/app/components/design/DashboardPrimitives";
+import { useCallback, useMemo, useState } from "react";
+import { DashboardCard, ModuleBadge, ProgressiveSaveStatus, SectionHeader } from "@/app/components/design/DashboardPrimitives";
 import { buildEducationGuidancePlan, educationDiscoveryQuestions, type EducationGoalKind, type EducationProfile, type EducationResourceProvider } from "@/lib/education";
+import { useProgressiveSave } from "@/lib/platform/useProgressiveSave";
 
 const goalKinds: { value: EducationGoalKind; label: string }[] = [
   { value: "career", label: "Career planning" },
@@ -40,6 +41,11 @@ export default function EducationCommandCenter() {
     goal,
     discoveryAnswers: Object.entries(answers).map(([questionId, answer]) => ({ questionId, answer })),
   }), [answers, goal, goalKind, profile]);
+  const draft = useMemo(() => ({ goalKind, goal, currentSituation, strengths, constraints, weeklyHours, answers, selectedProviders }), [answers, constraints, currentSituation, goal, goalKind, selectedProviders, strengths, weeklyHours]);
+  const saveDraft = useCallback(async (value: typeof draft) => {
+    window.localStorage.setItem("beast-education-progressive-draft", JSON.stringify(value));
+  }, []);
+  const saveState = useProgressiveSave({ value: draft, save: saveDraft });
 
   const toggleProvider = (provider: EducationResourceProvider) => setSelectedProviders((current) => current.includes(provider) ? current.filter((item) => item !== provider) : [...current, provider]);
 
@@ -57,6 +63,7 @@ export default function EducationCommandCenter() {
           <div>
             <div className="text-xs font-bold uppercase tracking-wide text-indigo-200">Education Profile</div>
             <p className="mt-2 text-sm leading-6 text-[#aeb9ca]">Tell the Counselor enough to guide well. You can start small and refine the profile over time.</p>
+            <div className="mt-2"><ProgressiveSaveStatus {...saveState} /></div>
           </div>
           <label className="grid gap-2 text-xs font-bold uppercase text-[#8d9aae]">What are you working toward?
             <input className="min-w-0 rounded-xl border border-[#2a3242] bg-[#0f1419] px-3 py-3 text-sm font-semibold normal-case text-white" value={goal} onChange={(event) => setGoal(event.target.value)} />

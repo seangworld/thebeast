@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   DashboardCard,
+  ExpandableDetailPanel,
+  GuidedEmptyState,
   ModuleBadge,
   SectionHeader,
 } from "@/app/components/design/DashboardPrimitives";
@@ -158,6 +160,8 @@ export function BeastHomePlaceholderPage({
             description="BeastHome is admin-only until product scope, privacy, permissions, household sharing, and automation policy are explicitly approved."
           />
           <div className="mt-5 space-y-3 text-sm font-semibold leading-6 text-[#dbe3ef]">
+            <GuidedEmptyState title="Build the household story progressively" description="The module is not collecting household records yet, but you can organize source documents and shared goals now." guidance="Begin with one verified property, vehicle, or maintenance document instead of filling an empty dashboard." nextAction={{ label: "Add a document", href: "/dashboard/uploads" }} secondaryAction={{ label: "Review goals", href: "/dashboard/goals" }} />
+            <ExpandableDetailPanel summary="Automation and privacy boundaries">
             <p className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
               No member-facing BeastHome experience is exposed by this package.
             </p>
@@ -167,6 +171,7 @@ export function BeastHomePlaceholderPage({
             <p className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
               Future home data must use BeastOS ownership, permissions, privacy, and audit boundaries.
             </p>
+            </ExpandableDetailPanel>
           </div>
         </DashboardCard>
       </section>

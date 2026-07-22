@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   DashboardCard,
+  ExpandableDetailPanel,
+  GuidedEmptyState,
   ModuleBadge,
   SectionHeader,
 } from "@/app/components/design/DashboardPrimitives";
@@ -164,6 +166,8 @@ export function BeastHealthPlaceholderPage({
             description="BeastHealth is admin-only until product scope, safety, privacy, permissions, and health AI policy are explicitly approved."
           />
           <div className="mt-5 space-y-3 text-sm font-semibold leading-6 text-[#dbe3ef]">
+            <GuidedEmptyState title="Define the safe health experience first" description="No health data is collected yet. Review the shared platform and documentation boundaries before enabling a member workflow." guidance="Start with permissions, provenance, and a qualified-care escalation path." nextAction={{ label: "Review settings", href: "/dashboard/settings" }} secondaryAction={{ label: "Open documents", href: "/dashboard/uploads" }} />
+            <ExpandableDetailPanel summary="Safety and data boundaries">
             <p className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
               No member-facing BeastHealth experience is exposed by this package.
             </p>
@@ -173,6 +177,7 @@ export function BeastHealthPlaceholderPage({
             <p className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
               Future health data must use BeastOS ownership, permissions, privacy, and audit boundaries.
             </p>
+            </ExpandableDetailPanel>
           </div>
         </DashboardCard>
       </section>

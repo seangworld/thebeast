@@ -217,6 +217,41 @@ type QuickActionButtonProps = {
   primary?: boolean;
 };
 
+type GuidedEmptyStateProps = {
+  title: string;
+  description: string;
+  nextAction: { label: string; href: string };
+  secondaryAction?: { label: string; href: string };
+  guidance?: string;
+};
+
+type ProgressiveSaveStatusProps = {
+  status: "idle" | "saving" | "saved" | "error";
+  savedAt?: string;
+  errorMessage?: string;
+};
+
+type ExpandableDetailPanelProps = {
+  summary: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+};
+
+export type AdaptiveTableColumn<Row> = {
+  key: string;
+  label: string;
+  render: (row: Row) => React.ReactNode;
+  priority?: "primary" | "secondary";
+};
+
+type AdaptiveTableProps<Row> = {
+  caption: string;
+  rows: readonly Row[];
+  columns: readonly AdaptiveTableColumn<Row>[];
+  rowKey: (row: Row) => string;
+  emptyState: React.ReactNode;
+};
+
 const accentClasses = {
   blue: "before:bg-[#38bdf8]",
   green: "before:bg-[#22c55e]",
@@ -560,5 +595,39 @@ export function QuickActionButton({
       </span>
       <span className="text-sm font-bold leading-5">{label}</span>
     </Link>
+  );
+}
+
+export function GuidedEmptyState({ title, description, nextAction, secondaryAction, guidance }: GuidedEmptyStateProps) {
+  return (
+    <div className="rounded-xl border border-dashed border-[#43506a] bg-[#111827] p-5" data-generation-two-guided-state="true">
+      <p className="beast-kicker">Your next step</p>
+      <h3 className="mt-2 text-lg font-black text-white">{title}</h3>
+      <p className="mt-2 max-w-2xl text-sm leading-6 text-[#c7cfdb]">{description}</p>
+      {guidance ? <p className="mt-3 rounded-lg border border-[#38bdf8]/25 bg-[#38bdf8]/10 p-3 text-sm font-semibold text-[#d8f2ff]">AI guidance: {guidance}</p> : null}
+      <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+        <Link href={nextAction.href} className="beast-button w-fit">{nextAction.label}</Link>
+        {secondaryAction ? <Link href={secondaryAction.href} className="beast-button-secondary w-fit">{secondaryAction.label}</Link> : null}
+      </div>
+    </div>
+  );
+}
+
+export function ProgressiveSaveStatus({ status, savedAt, errorMessage }: ProgressiveSaveStatusProps) {
+  const message = status === "saving" ? "Saving changes…" : status === "saved" ? `Saved${savedAt ? ` ${savedAt}` : ""}` : status === "error" ? errorMessage || "Changes are still on this device. Try saving again." : "Changes save as you go.";
+  return <p role="status" aria-live="polite" className={`text-xs font-bold ${status === "error" ? "text-red-200" : status === "saved" ? "text-green-200" : "text-[#9aa7b8]"}`} data-progressive-save-status={status}>{message}</p>;
+}
+
+export function ExpandableDetailPanel({ summary, children, defaultOpen = false }: ExpandableDetailPanelProps) {
+  return <details open={defaultOpen} className="rounded-xl border border-[#2a3242] bg-[#111827] p-4"><summary className="min-h-11 cursor-pointer list-none font-bold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#38bdf8]">{summary}<span aria-hidden="true" className="float-right text-[#7f8da3]">+</span></summary><div className="mt-3 min-w-0 border-t border-[#2a3242] pt-3 text-sm leading-6 text-[#c7cfdb]">{children}</div></details>;
+}
+
+export function AdaptiveTable<Row>({ caption, rows, columns, rowKey, emptyState }: AdaptiveTableProps<Row>) {
+  if (!rows.length) return <>{emptyState}</>;
+  return (
+    <div className="min-w-0" data-adaptive-table="true">
+      <div className="hidden md:block"><table className="w-full table-fixed text-left text-sm"><caption className="sr-only">{caption}</caption><thead><tr>{columns.map((column) => <th key={column.key} scope="col" className="break-words p-3">{column.label}</th>)}</tr></thead><tbody>{rows.map((row) => <tr key={rowKey(row)}>{columns.map((column) => <td key={column.key} data-label={column.label} className="break-words p-3 align-top">{column.render(row)}</td>)}</tr>)}</tbody></table></div>
+      <div className="grid gap-3 md:hidden" role="list" aria-label={caption}>{rows.map((row) => <article key={rowKey(row)} role="listitem" className="min-w-0 rounded-xl border border-[#2a3242] bg-[#111827] p-4">{columns.map((column) => <div key={column.key} className={column.priority === "primary" ? "mb-3" : "grid grid-cols-[minmax(0,0.42fr)_minmax(0,0.58fr)] gap-3 border-t border-[#2a3242] py-2"}><span className="text-xs font-bold uppercase text-[#7f8da3]">{column.label}</span><div className="min-w-0 break-words text-right text-sm text-white">{column.render(row)}</div></div>)}</article>)}</div>
+    </div>
   );
 }
