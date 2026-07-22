@@ -31,6 +31,7 @@ test("migration and responsive controls preserve owner-scoped RLS tables", () =>
   const controls = readFileSync("src/app/dashboard/money/components/PaymentAutomationControls.tsx", "utf8");
   const bills = readFileSync("src/app/dashboard/money/cashflow/components/BillsSection.tsx", "utf8");
   const debts = readFileSync("src/app/dashboard/money/cashflow/components/DebtsSection.tsx", "utf8");
+  const assignments = readFileSync("src/app/dashboard/money/cashflow/components/CompactAssignmentSelect.tsx", "utf8");
   for (const table of ["bill_events", "debts"]) assert.match(migration, new RegExp(`alter table public\\.${table}`));
   assert.match(migration, /auto_pay_enabled boolean not null default false/g);
   assert.match(migration, /reminder_enabled boolean not null default true/g);
@@ -42,6 +43,19 @@ test("migration and responsive controls preserve owner-scoped RLS tables", () =>
     assert.match(source, /lg:hidden/);
     assert.match(source, /hidden lg:block/);
     assert.doesNotMatch(source, /min-w-\[900px\]/);
+    assert.doesNotMatch(source, /<th[^>]*>Auto<\/th>/);
     assert.match(source, /PaymentAutomationControls/);
+    assert.match(source, /CompactAssignmentSelect/);
+    assert.match(source, /hidden text-center min-\[1440px\]:table-cell/);
+    assert.match(source, /<details/);
   }
+  assert.match(bills, /colSpan=\{6\}/);
+  assert.match(debts, /colSpan=\{6\}/);
+  assert.match(assignments, /aria-label=\{`\$\{label\}: \$\{selected\?\.detailLabel/);
+  assert.match(assignments, /title=\{selected\?\.detailLabel/);
+  assert.match(assignments, /type="radio"/);
+  assert.match(assignments, /min-h-11/);
+  assert.match(assignments, /detailsRef\.current\.open = false/);
+  assert.match(assignments, /compactIncomeLabel/);
+  assert.match(assignments, /withoutBalance/);
 });

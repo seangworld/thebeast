@@ -4,6 +4,7 @@ import { type Dispatch, type SetStateAction } from "react";
 import DebtPaymentControls from "./DebtPaymentControls";
 import { PaymentAutomationControls, type AutomationPatch } from "../../components/PaymentAutomationControls";
 import { normalizePaymentAutomation } from "@/lib/paymentAutomation";
+import { CompactAssignmentSelect, compactIncomeLabel } from "./CompactAssignmentSelect";
 
 type DebtRow = {
   id: string;
@@ -109,6 +110,16 @@ export default function DebtsSection({
   resetDebtDueDate,
   updatePaymentAutomation,
 }: DebtsSectionProps) {
+  const incomeOptions = incomeBucketPlans.map((bucket) => ({
+    value: bucket.date,
+    compactLabel: compactIncomeLabel(bucket.dropdownLabel),
+    detailLabel: bucket.dropdownLabel,
+  }));
+  const fundingOptions = activeFundingSources.map((source) => ({
+    value: source.id,
+    compactLabel: source.name,
+    detailLabel: source.name,
+  }));
   return (
     <section className="beast-panel overflow-hidden">
       <div className="flex flex-col items-start gap-4 border-b border-[#2a3242] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
@@ -303,45 +314,29 @@ export default function DebtsSection({
                           APR: {Number(debt.interest_rate || 0).toFixed(2)}%
                         </div>
 
-                        <label className="grid min-w-0 gap-1">
+                        <div className="grid min-w-0 gap-1">
                           <span className="text-xs font-bold uppercase text-[#7f8da3]">
                             Income Pot
                           </span>
-                          <select
+                          <CompactAssignmentSelect
+                            label={`${debt.name} income pot`}
                             value={debt.assigned_income_date || ""}
-                            onChange={(e) =>
-                              updateDebtIncomeDate(debt.id, e.target.value)
-                            }
-                            className="beast-input"
-                          >
-                            <option value="">Unassigned</option>
-                            {incomeBucketPlans.map((bucket) => (
-                              <option key={bucket.id} value={bucket.date}>
-                                {bucket.dropdownLabel}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
+                            options={incomeOptions}
+                            onChange={(value) => updateDebtIncomeDate(debt.id, value)}
+                          />
+                        </div>
 
-                        <label className="grid min-w-0 gap-1">
+                        <div className="grid min-w-0 gap-1">
                           <span className="text-xs font-bold uppercase text-[#7f8da3]">
                             Funding Source
                           </span>
-                          <select
+                          <CompactAssignmentSelect
+                            label={`${debt.name} funding source`}
                             value={debt.funding_source_id || ""}
-                            onChange={(e) =>
-                              updateDebtFundingSource(debt.id, e.target.value)
-                            }
-                            className="beast-input"
-                          >
-                            <option value="">Unassigned</option>
-                            {activeFundingSources.map((source) => (
-                              <option key={source.id} value={source.id}>
-                                {source.name}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
+                            options={fundingOptions}
+                            onChange={(value) => updateDebtFundingSource(debt.id, value)}
+                          />
+                        </div>
                       </div>
                     </details>
                   ) : null}
@@ -355,11 +350,10 @@ export default function DebtsSection({
             <thead>
               <tr>
                 <th className="text-left">Debt</th>
-                <th className="text-center">Auto</th>
                 <th className="text-right">Minimum</th>
                 <th className="text-center">Next Due</th>
                 <th className="text-center">Income Pot</th>
-                <th className="text-center">Funding Source</th>
+                <th className="hidden text-center min-[1440px]:table-cell">Funding Source</th>
                 <th className="text-center">Actions</th>
               </tr>
             </thead>
@@ -367,12 +361,12 @@ export default function DebtsSection({
             <tbody>
               {activeDebts.length === 0 ? (
                 <tr>
-                  <td colSpan={7}>No debts added yet.</td>
+                  <td colSpan={6}>No debts added yet.</td>
                 </tr>
               ) : (
                 activeDebts.map((debt) => (
                   <tr key={debt.id}>
-                    <td className="min-w-[260px] text-left align-top">
+                    <td className="w-[28%] text-left align-top">
                       {editingDebtId === debt.id ? (
                         <div className="grid gap-2">
                           <input
@@ -463,8 +457,18 @@ export default function DebtsSection({
                           </div>
                         </div>
                       )}
+                      <div className="mt-2">
+                        <PaymentAutomationControls compact name={debt.name} {...normalizePaymentAutomation(debt)} onSave={(patch) => updatePaymentAutomation(debt.id, patch)} />
+                      </div>
+                      <details className="mt-2 text-xs text-[#9aa7b8]">
+                        <summary className="cursor-pointer font-semibold text-cyan-200">Row details</summary>
+                        <div className="mt-2 grid gap-1">
+                          <span>Income pot: {incomeOptions.find((option) => option.value === debt.assigned_income_date)?.detailLabel || "Unassigned"}</span>
+                          <span>Funding source: {fundingOptions.find((option) => option.value === debt.funding_source_id)?.detailLabel || "Unassigned"}</span>
+                          <span>Payment behavior: {debt.payment_behavior === "revolving" ? "Revolving / credit minimum" : "Fixed minimum"}</span>
+                        </div>
+                      </details>
                     </td>
-                    <td className="align-top"><PaymentAutomationControls compact name={debt.name} {...normalizePaymentAutomation(debt)} onSave={(patch) => updatePaymentAutomation(debt.id, patch)} /></td>
 
                     <td className="text-right align-top font-semibold">
                       ${Number(debt.minimum_payment || 0).toFixed(2)}
@@ -472,37 +476,28 @@ export default function DebtsSection({
 
                     <td className="text-center align-top">{debt.nextDueDateDisplay}</td>
 
-                    <td className="min-w-[300px] text-center align-top">
-                      <select
+                    <td className="text-center align-top">
+                      <CompactAssignmentSelect
+                        label={`${debt.name} income pot`}
                         value={debt.assigned_income_date || ""}
-                        onChange={(e) => updateDebtIncomeDate(debt.id, e.target.value)}
-                        className="beast-input"
-                      >
-                        <option value="">Unassigned</option>
-                        {incomeBucketPlans.map((bucket) => (
-                          <option key={bucket.id} value={bucket.date}>
-                            {bucket.dropdownLabel}
-                          </option>
-                        ))}
-                      </select>
+                        options={incomeOptions}
+                        onChange={(value) => updateDebtIncomeDate(debt.id, value)}
+                      />
                     </td>
 
-                    <td className="min-w-[240px] text-center align-top">
-                      <select
+                    <td className="hidden text-center align-top min-[1440px]:table-cell">
+                      <CompactAssignmentSelect
+                        label={`${debt.name} funding source`}
                         value={debt.funding_source_id || ""}
-                        onChange={(e) => updateDebtFundingSource(debt.id, e.target.value)}
-                        className="beast-input"
-                      >
-                        <option value="">Unassigned</option>
-                        {activeFundingSources.map((source) => (
-                          <option key={source.id} value={source.id}>
-                            {source.name}
-                          </option>
-                        ))}
-                      </select>
+                        options={fundingOptions}
+                        onChange={(value) => updateDebtFundingSource(debt.id, value)}
+                      />
                     </td>
 
-                    <td className="min-w-[220px] align-top">
+                    <td className="w-[18%] align-top">
+                      <details>
+                        <summary className="beast-button-secondary cursor-pointer list-none text-center">Actions</summary>
+                        <div className="mt-2 min-w-0">
                       <DebtPaymentControls
                         debt={debt}
                         editingDebtId={editingDebtId}
@@ -518,6 +513,8 @@ export default function DebtsSection({
                         resetDebtDueDate={resetDebtDueDate}
                         deleteDebt={deleteDebt}
                       />
+                        </div>
+                      </details>
                     </td>
                   </tr>
                 ))

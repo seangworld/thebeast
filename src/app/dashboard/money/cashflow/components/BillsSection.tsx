@@ -4,6 +4,7 @@ import type { Dispatch, SetStateAction } from "react";
 import BillPaymentControls from "./BillPaymentControls";
 import { PaymentAutomationControls, type AutomationPatch } from "../../components/PaymentAutomationControls";
 import { normalizePaymentAutomation } from "@/lib/paymentAutomation";
+import { CompactAssignmentSelect, compactIncomeLabel } from "./CompactAssignmentSelect";
 
 type BillFrequency =
   | "weekly"
@@ -107,6 +108,8 @@ export default function BillsSection({
   resetBillDueDate,
   updatePaymentAutomation,
 }: BillsSectionProps) {
+  const incomeOptions = incomeBucketPlans.map((bucket) => ({ value: bucket.date, compactLabel: compactIncomeLabel(bucket.dropdownLabel), detailLabel: bucket.dropdownLabel }));
+  const fundingOptions = activeFundingSources.map((source) => ({ value: source.id, compactLabel: source.name, detailLabel: source.name }));
   return (
     <section id="bills" className="money-section-panel">
       <div className="money-section-header">
@@ -267,45 +270,29 @@ export default function BillsSection({
                           {getFrequencyLabel(bill.frequency)}
                         </div>
 
-                        <label className="grid min-w-0 gap-1">
+                        <div className="grid min-w-0 gap-1">
                           <span className="text-xs font-bold uppercase text-[#7f8da3]">
                             Income Pot
                           </span>
-                          <select
+                          <CompactAssignmentSelect
+                            label={`${bill.name} income pot`}
                             value={bill.assigned_income_date || ""}
-                            onChange={(e) =>
-                              updateBillIncomeDate(bill.id, e.target.value)
-                            }
-                            className="beast-input"
-                          >
-                            <option value="">Unassigned</option>
-                            {incomeBucketPlans.map((bucket) => (
-                              <option key={bucket.id} value={bucket.date}>
-                                {bucket.dropdownLabel}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
+                            options={incomeOptions}
+                            onChange={(value) => updateBillIncomeDate(bill.id, value)}
+                          />
+                        </div>
 
-                        <label className="grid min-w-0 gap-1">
+                        <div className="grid min-w-0 gap-1">
                           <span className="text-xs font-bold uppercase text-[#7f8da3]">
                             Funding Source
                           </span>
-                          <select
+                          <CompactAssignmentSelect
+                            label={`${bill.name} funding source`}
                             value={bill.funding_source_id || ""}
-                            onChange={(e) =>
-                              updateBillFundingSource(bill.id, e.target.value)
-                            }
-                            className="beast-input"
-                          >
-                            <option value="">Unassigned</option>
-                            {activeFundingSources.map((source) => (
-                              <option key={source.id} value={source.id}>
-                                {source.name}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
+                            options={fundingOptions}
+                            onChange={(value) => updateBillFundingSource(bill.id, value)}
+                          />
+                        </div>
                       </div>
                     </details>
                   ) : null}
@@ -319,12 +306,10 @@ export default function BillsSection({
             <thead>
               <tr>
                 <th className="text-left">Bill</th>
-                <th className="text-center">Auto</th>
                 <th className="text-right">Remaining</th>
                 <th className="text-center">Next Due</th>
                 <th className="text-center">Income Pot</th>
-                <th className="text-center">Funding Source</th>
-                <th className="text-center">Status</th>
+                <th className="hidden text-center min-[1440px]:table-cell">Funding Source</th>
                 <th className="text-center">Actions</th>
               </tr>
             </thead>
@@ -332,12 +317,12 @@ export default function BillsSection({
             <tbody>
               {activeBills.length === 0 ? (
                 <tr>
-                  <td colSpan={8}>No bills added yet.</td>
+                  <td colSpan={6}>No bills added yet.</td>
                 </tr>
               ) : (
                 activeBills.map((bill) => (
                   <tr key={bill.id}>
-                    <td className="min-w-[220px] text-left align-top">
+                    <td className="w-[28%] text-left align-top">
                       {editingBillId === bill.id ? (
                         <div className="grid gap-2">
                           <input
@@ -385,13 +370,13 @@ export default function BillsSection({
                         <div>
                           <div className="font-semibold">{bill.name}</div>
                           <div className="mt-1 text-xs text-[#7f8da3]">
-                            Due: ${Number(bill.amount || 0).toFixed(2)} |
-                            Paid: ${Number(bill.paid || 0).toFixed(2)} | {getFrequencyLabel(bill.frequency)}
+                            Due: ${Number(bill.amount || 0).toFixed(2)} | {getFrequencyLabel(bill.frequency)}
                           </div>
                         </div>
                       )}
+                      <div className="mt-2"><PaymentAutomationControls compact name={bill.name} {...normalizePaymentAutomation(bill)} onSave={(patch) => updatePaymentAutomation(bill.id, patch)} /></div>
+                      <details className="mt-2 text-xs text-[#9aa7b8]"><summary className="cursor-pointer font-semibold text-cyan-200">Row details</summary><div className="mt-2 grid gap-1"><span>Paid: ${Number(bill.paid || 0).toFixed(2)}</span><span>Income pot: {incomeOptions.find((option) => option.value === bill.assigned_income_date)?.detailLabel || "Unassigned"}</span><span>Funding source: {fundingOptions.find((option) => option.value === bill.funding_source_id)?.detailLabel || "Unassigned"}</span><span>Status: {bill.status}</span></div></details>
                     </td>
-                    <td className="align-top"><PaymentAutomationControls compact name={bill.name} {...normalizePaymentAutomation(bill)} onSave={(patch) => updatePaymentAutomation(bill.id, patch)} /></td>
 
                     <td className="text-right align-top font-semibold">
                       ${Number(bill.remaining || 0).toFixed(2)}
@@ -399,53 +384,16 @@ export default function BillsSection({
 
                     <td className="text-center align-top">{bill.nextDueDateDisplay}</td>
 
-                    <td className="min-w-[300px] text-center align-top">
-                      <select
-                        value={bill.assigned_income_date || ""}
-                        onChange={(e) => updateBillIncomeDate(bill.id, e.target.value)}
-                        className="beast-input"
-                      >
-                        <option value="">Unassigned</option>
-                        {incomeBucketPlans.map((bucket) => (
-                          <option key={bucket.id} value={bucket.date}>
-                            {bucket.dropdownLabel}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-
-                    <td className="min-w-[240px] text-center align-top">
-                      <select
-                        value={bill.funding_source_id || ""}
-                        onChange={(e) => updateBillFundingSource(bill.id, e.target.value)}
-                        className="beast-input"
-                      >
-                        <option value="">Unassigned</option>
-                        {activeFundingSources.map((source) => (
-                          <option key={source.id} value={source.id}>
-                            {source.name}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-
                     <td className="text-center align-top">
-                      <span
-                        className={
-                          bill.status === "Paid"
-                            ? "text-green-300"
-                            : bill.status === "Partial" || bill.status === "Due Soon"
-                            ? "text-yellow-300"
-                            : bill.status === "Late"
-                            ? "text-red-300"
-                            : "text-[#c7cfdb]"
-                        }
-                      >
-                        {bill.status}
-                      </span>
+                      <CompactAssignmentSelect label={`${bill.name} income pot`} value={bill.assigned_income_date || ""} options={incomeOptions} onChange={(value) => updateBillIncomeDate(bill.id, value)} />
                     </td>
 
-                    <td className="min-w-[240px] align-top">
+                    <td className="hidden text-center align-top min-[1440px]:table-cell">
+                      <CompactAssignmentSelect label={`${bill.name} funding source`} value={bill.funding_source_id || ""} options={fundingOptions} onChange={(value) => updateBillFundingSource(bill.id, value)} />
+                    </td>
+
+                    <td className="w-[18%] align-top">
+                      <details><summary className="beast-button-secondary cursor-pointer list-none text-center">Actions</summary><div className="mt-2 min-w-0">
                       <BillPaymentControls
                         bill={bill}
                         editingBillId={editingBillId}
@@ -459,6 +407,7 @@ export default function BillsSection({
                         archiveBill={archiveBill}
                         resetBillDueDate={resetBillDueDate}
                       />
+                      </div></details>
                     </td>
                   </tr>
                 ))
