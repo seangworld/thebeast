@@ -301,7 +301,7 @@ export default function DebtsSection({
                       archiveDebt={archiveDebt}
                       resetDebtDueDate={resetDebtDueDate}
                       deleteDebt={deleteDebt}
-                    /> : <OverlayPopover label="Actions" testId="debt-actions">{() => <DebtPaymentControls
+                    /> : <OverlayPopover label="Actions" width={192} testId="debt-actions">{() => <DebtPaymentControls
                       debt={debt}
                       editingDebtId={editingDebtId}
                       debtPayments={debtPayments}
@@ -510,7 +510,7 @@ export default function DebtsSection({
                     </td>
 
                     <td className="w-[18%] align-top">
-                      <OverlayPopover label="Actions" testId="debt-actions">{() => <div className="min-w-0 whitespace-normal">
+                      <OverlayPopover label="Actions" width={192} testId="debt-actions">{() => <div className="min-w-0 whitespace-normal">
                       <DebtPaymentControls
                         debt={debt}
                         editingDebtId={editingDebtId}

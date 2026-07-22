@@ -15,7 +15,7 @@ export function CompactAssignmentSelect({ label, value, options, onChange }: {
   const selected = options.find((option) => option.value === value);
   return (
     <div className="min-w-0" data-compact-assignment-select="true" aria-label={`${label}: ${selected?.detailLabel || "Unassigned"}`} title={selected?.detailLabel || "Unassigned"}>
-      <OverlayPopover label={selected?.compactLabel || "Unassigned"} width={420} testId="assignment">
+      <OverlayPopover label={selected?.compactLabel || "Unassigned"} width={420} testId="assignment" triggerClassName="w-40">
         {(close) => <fieldset className="grid min-w-0 gap-1" role="listbox" aria-label={label}>
         <legend className="sr-only">{label}</legend>
         {[{ value: "", compactLabel: "Unassigned", detailLabel: "Unassigned" }, ...options].map((option) => (

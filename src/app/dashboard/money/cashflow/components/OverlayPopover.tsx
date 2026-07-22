@@ -5,11 +5,12 @@ import { createPortal } from "react-dom";
 
 type Position = { left: number; top?: number; bottom?: number; width: number; maxHeight: number };
 
-export function OverlayPopover({ label, children, width = 240, testId }: {
+export function OverlayPopover({ label, children, width = 240, testId, triggerClassName = "" }: {
   label: string;
   children: (close: () => void) => ReactNode;
   width?: number;
   testId?: string;
+  triggerClassName?: string;
 }) {
   const id = useId();
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -76,8 +77,8 @@ export function OverlayPopover({ label, children, width = 240, testId }: {
 
   return (
     <div className="inline-block max-w-full" data-overlay-popover={testId || "true"}>
-      <button ref={buttonRef} type="button" className="beast-button-secondary inline-flex max-w-full items-center gap-2 whitespace-nowrap" aria-haspopup="menu" aria-expanded={open} aria-controls={`${id}-panel`} onClick={() => setOpen((current) => !current)}>
-        <span className="truncate">{label}</span><span aria-hidden="true">▾</span>
+      <button ref={buttonRef} type="button" className={`beast-button-secondary inline-flex max-w-full items-center gap-2 whitespace-nowrap ${triggerClassName}`} aria-haspopup="menu" aria-expanded={open} aria-controls={`${id}-panel`} onClick={() => setOpen((current) => !current)}>
+        <span className="min-w-0 flex-1 truncate">{label}</span><span className="shrink-0" aria-hidden="true">▾</span>
       </button>
       {open && position && createPortal(
         <div ref={panelRef} id={`${id}-panel`} role="menu" className="fixed z-[100] overflow-y-auto overflow-x-hidden rounded-lg border border-[#2a3242] bg-[#111827] p-2 text-left shadow-2xl" style={position} data-popover-overlay="true">

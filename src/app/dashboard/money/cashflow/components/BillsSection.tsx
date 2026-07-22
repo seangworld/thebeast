@@ -256,7 +256,7 @@ export default function BillsSection({
                       cancelEditBill={cancelEditBill}
                       archiveBill={archiveBill}
                       resetBillDueDate={resetBillDueDate}
-                    /> : <OverlayPopover label="Actions" testId="bill-actions">{() => <BillPaymentControls
+                    /> : <OverlayPopover label="Actions" width={192} testId="bill-actions">{() => <BillPaymentControls
                       bill={bill}
                       editingBillId={editingBillId}
                       partialPayments={partialPayments}
@@ -406,7 +406,7 @@ export default function BillsSection({
                     </td>
 
                     <td className="w-[18%] align-top">
-                      <OverlayPopover label="Actions" testId="bill-actions">{() => <div className="min-w-0 whitespace-normal">
+                      <OverlayPopover label="Actions" width={192} testId="bill-actions">{() => <div className="min-w-0 whitespace-normal">
                       <BillPaymentControls
                         bill={bill}
                         editingBillId={editingBillId}
