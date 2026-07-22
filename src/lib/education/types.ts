@@ -5,7 +5,10 @@ export type EducationResourceProvider =
   | "Khan Academy"
   | "Coursera"
   | "Microsoft Learn"
+  | "LinkedIn Learning"
+  | "edX"
   | "Books"
+  | "Professional organizations"
   | "Certifications"
   | "Schools"
   | "Future provider";
@@ -22,7 +25,15 @@ export type EducationProfile = {
   weeklyHours: number;
   targetDate?: string;
   educationHistory?: readonly string[];
+  certifications?: readonly string[];
+  employmentHistory?: readonly string[];
+  militaryExperience?: readonly string[];
+  skills?: readonly string[];
+  weaknesses?: readonly string[];
+  preferredLearningStyle?: string;
   careerInterests?: readonly string[];
+  careerAspirations?: readonly string[];
+  longTermGoals?: readonly string[];
   meaningfulProgress?: readonly string[];
 };
 

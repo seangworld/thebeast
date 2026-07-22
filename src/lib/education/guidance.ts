@@ -11,8 +11,10 @@ import type {
 } from "./types";
 
 export const educationDiscoveryQuestions = [
+  { id: "story", prompt: "Tell me about yourself and what is shaping your life right now." },
   { id: "destination", prompt: "What do you want to be able to do, become, or achieve?" },
   { id: "starting-point", prompt: "What experience, education, or skills do you already have?" },
+  { id: "interests", prompt: "What kinds of work, ideas, or activities hold your interest?" },
   { id: "motivation", prompt: "Why does this matter to you now?" },
   { id: "constraints", prompt: "What time, cost, location, accessibility, or family constraints should shape the plan?" },
 ] as const;
@@ -22,7 +24,10 @@ const providerCatalog: Record<Exclude<EducationResourceProvider, "Future provide
   "Khan Academy": { provider: "Khan Academy", title: "Strengthen academic and foundational skills", url: "https://www.khanacademy.org/search?page_search_query=", cost: "free", verificationNote: "Confirm the topic and level match the roadmap milestone." },
   Coursera: { provider: "Coursera", title: "Compare structured courses and professional certificates", url: "https://www.coursera.org/search?query=", cost: "free-or-paid", verificationNote: "Verify current price, instructor, institution, workload, and credential value with the provider." },
   "Microsoft Learn": { provider: "Microsoft Learn", title: "Use official Microsoft role and technology learning paths", url: "https://learn.microsoft.com/training/browse/?terms=", cost: "free", verificationNote: "Prefer current official paths and verify any exam objectives separately." },
+  "LinkedIn Learning": { provider: "LinkedIn Learning", title: "Compare professional and workplace skill courses", url: "https://www.linkedin.com/learning/search?keywords=", cost: "free-or-paid", verificationNote: "Verify instructor experience, course date, access terms, and whether the course supports the roadmap goal." },
+  edX: { provider: "edX", title: "Explore university and institution-backed programs", url: "https://www.edx.org/search?q=", cost: "free-or-paid", verificationNote: "Verify the current institution, workload, credential terms, price, and transfer or employer value directly with the provider." },
   Books: { provider: "Books", title: "Find durable books and reference material", url: "https://search.worldcat.org/search?q=", cost: "varies", verificationNote: "Check edition date, author expertise, library availability, and whether the field changes quickly." },
+  "Professional organizations": { provider: "Professional organizations", title: "Find authoritative communities, conferences, and career resources", url: "https://www.google.com/search?q=official+professional+organization+", cost: "varies", verificationNote: "Confirm nonprofit or professional standing, membership terms, event dates, and credential authority on the organization's official site." },
   Certifications: { provider: "Certifications", title: "Verify relevant credentials with issuing organizations", url: "https://www.google.com/search?q=official+certification+", cost: "varies", verificationNote: "Use the issuing body's current objectives, prerequisites, renewal rules, and exam policies as authority." },
   Schools: { provider: "Schools", title: "Compare schools and education programs", url: "https://collegescorecard.ed.gov/search/?search=", cost: "varies", verificationNote: "Verify accreditation, admissions requirements, total cost, outcomes, transfer rules, support, and program availability with authoritative sources." },
 };

@@ -63,6 +63,29 @@ test("Guidance Counselor owns lifelong guidance while specialists own teaching",
   assert.match(plan.resources[0].verificationNote, /accreditation/);
 });
 
+test("G2.3 discovery starts without a fabricated destination and supports the full provider ecosystem", () => {
+  const commandCenter = readFileSync("src/app/dashboard/learning/EducationCommandCenter.tsx", "utf8");
+  assert.match(commandCenter, /useState\(\"\"\)/);
+  assert.doesNotMatch(commandCenter, /useState\(\"Cybersecurity analyst\"\)/);
+  assert.match(educationDiscoveryQuestions[0].prompt, /Tell me about yourself/i);
+
+  const providerProfile: EducationProfile = {
+    ...profile,
+    certifications: ["Existing credential"],
+    employmentHistory: ["Operations specialist"],
+    militaryExperience: ["Prior service"],
+    skills: ["facilitation"],
+    weaknesses: ["technical portfolio evidence"],
+    preferredLearningStyle: "project based",
+    careerAspirations: ["security leadership"],
+    longTermGoals: ["mentor career changers"],
+    preferredFormats: ["LinkedIn Learning", "edX", "Professional organizations"],
+  };
+  const plan = buildEducationGuidancePlan({ profile: providerProfile, goalKind: "career", goal: "Security leader" });
+  assert.deepEqual(plan.resources.map((resource) => resource.provider), providerProfile.preferredFormats);
+  assert.ok(plan.resources.every((resource) => resource.verificationNote.length > 0));
+});
+
 test("BeastEducation tracks meaningful long-term roadmap progress", () => {
   const plan = buildEducationGuidancePlan({ profile, goalKind: "certification", goal: "Security certification" });
   const progress = summarizeEducationProgress(plan.roadmap, [{

@@ -6,11 +6,11 @@ The Guidance Counselor learns the user's story, goals, strengths, weaknesses, ed
 
 ## Product architecture
 
-- **Education Profile** records the user's situation, interests, strengths, goals, constraints, preferred sources, available time, and optional target date.
-- **Discovery onboarding** progressively asks only for missing destination, starting-point, motivation, and constraint context. An incomplete profile still produces a useful next step.
+- **Education Profile** records the user's situation, education, certifications, employment, military experience, skills, interests, strengths, weaknesses, learning preferences, available time, career aspirations, long-term goals, constraints, and preferred sources.
+- **Discovery onboarding** begins with the person's story and progressively asks only for missing destination, starting-point, interests, motivation, and constraint context. An incomplete profile still produces a useful next step.
 - **Guidance planning** assembles career, education, and certification considerations with a skill-gap analysis and a personalized now/next/later roadmap.
 - **Long-term progress** records meaningful roadmap events and evidence rather than treating content consumption as success.
-- **External recommendations** deep-link to YouTube, Khan Academy, Coursera, Microsoft Learn, books, schools, and official certification sources. Recommendations carry verification guidance and never guarantee outcomes, rank providers, resell content, or replace provider authority.
+- **External recommendations** deep-link to YouTube, Khan Academy, Coursera, Microsoft Learn, LinkedIn Learning, edX, books, professional organizations, schools, and official certification sources. Recommendations carry verification guidance and never guarantee outcomes, rank providers, resell content, or replace provider authority.
 - **Learning support** reuses the existing Tutor, lesson, activity, practice, and mastery capabilities behind the guidance relationship.
 
 ## Compatibility boundary

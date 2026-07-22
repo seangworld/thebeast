@@ -13,13 +13,15 @@ const goalKinds: { value: EducationGoalKind; label: string }[] = [
   { value: "personal-growth", label: "Personal growth" },
 ];
 
-const providers: EducationResourceProvider[] = ["YouTube", "Khan Academy", "Coursera", "Microsoft Learn", "Books", "Certifications", "Schools"];
+const providers: EducationResourceProvider[] = ["YouTube", "Khan Academy", "Coursera", "Microsoft Learn", "LinkedIn Learning", "edX", "Books", "Professional organizations", "Certifications", "Schools"];
 
 export default function EducationCommandCenter() {
   const [goalKind, setGoalKind] = useState<EducationGoalKind>("career");
-  const [goal, setGoal] = useState("Cybersecurity analyst");
+  const [goal, setGoal] = useState("");
   const [currentSituation, setCurrentSituation] = useState("");
+  const [background, setBackground] = useState("");
   const [strengths, setStrengths] = useState("");
+  const [growthAreas, setGrowthAreas] = useState("");
   const [constraints, setConstraints] = useState("");
   const [weeklyHours, setWeeklyHours] = useState(5);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -28,20 +30,22 @@ export default function EducationCommandCenter() {
     id: "education-profile-draft",
     ownerId: "current-user",
     currentSituation,
+    educationHistory: background ? [background] : [],
     interests: goal ? [goal] : [],
     strengths: strengths.split(",").map((value) => value.trim()).filter(Boolean),
+    weaknesses: growthAreas.split(",").map((value) => value.trim()).filter(Boolean),
     goals: goal ? [goal] : [],
     constraints: constraints.split(",").map((value) => value.trim()).filter(Boolean),
     preferredFormats: selectedProviders,
     weeklyHours,
-  }), [constraints, currentSituation, goal, selectedProviders, strengths, weeklyHours]);
+  }), [background, constraints, currentSituation, goal, growthAreas, selectedProviders, strengths, weeklyHours]);
   const plan = useMemo(() => buildEducationGuidancePlan({
     profile,
     goalKind,
     goal,
     discoveryAnswers: Object.entries(answers).map(([questionId, answer]) => ({ questionId, answer })),
   }), [answers, goal, goalKind, profile]);
-  const draft = useMemo(() => ({ goalKind, goal, currentSituation, strengths, constraints, weeklyHours, answers, selectedProviders }), [answers, constraints, currentSituation, goal, goalKind, selectedProviders, strengths, weeklyHours]);
+  const draft = useMemo(() => ({ goalKind, goal, currentSituation, background, strengths, growthAreas, constraints, weeklyHours, answers, selectedProviders }), [answers, background, constraints, currentSituation, goal, goalKind, growthAreas, selectedProviders, strengths, weeklyHours]);
   const saveDraft = useCallback(async (value: typeof draft) => {
     window.localStorage.setItem("beast-education-progressive-draft", JSON.stringify(value));
   }, []);
@@ -65,14 +69,17 @@ export default function EducationCommandCenter() {
             <p className="mt-2 text-sm leading-6 text-[#aeb9ca]">Tell the Counselor enough to guide well. You can start small and refine the profile over time.</p>
             <div className="mt-2"><ProgressiveSaveStatus {...saveState} /></div>
           </div>
-          <label className="grid gap-2 text-xs font-bold uppercase text-[#8d9aae]">What are you working toward?
-            <input className="min-w-0 rounded-xl border border-[#2a3242] bg-[#0f1419] px-3 py-3 text-sm font-semibold normal-case text-white" value={goal} onChange={(event) => setGoal(event.target.value)} />
+          <label className="grid gap-2 text-xs font-bold uppercase text-[#8d9aae]">Where would you like your life or career to go?
+            <input className="min-w-0 rounded-xl border border-[#2a3242] bg-[#0f1419] px-3 py-3 text-sm font-semibold normal-case text-white" value={goal} onChange={(event) => setGoal(event.target.value)} placeholder="It is okay if you are still figuring this out" />
           </label>
           <label className="grid gap-2 text-xs font-bold uppercase text-[#8d9aae]">Planning focus
             <select className="min-w-0 rounded-xl border border-[#2a3242] bg-[#0f1419] px-3 py-3 text-sm font-semibold normal-case text-white" value={goalKind} onChange={(event) => setGoalKind(event.target.value as EducationGoalKind)}>{goalKinds.map((kind) => <option key={kind.value} value={kind.value}>{kind.label}</option>)}</select>
           </label>
           <label className="grid gap-2 text-xs font-bold uppercase text-[#8d9aae]">Current situation
             <textarea className="min-h-20 min-w-0 rounded-xl border border-[#2a3242] bg-[#0f1419] px-3 py-3 text-sm font-medium normal-case text-white" value={currentSituation} onChange={(event) => setCurrentSituation(event.target.value)} placeholder="Work, education, responsibilities, and where you are starting" />
+          </label>
+          <label className="grid gap-2 text-xs font-bold uppercase text-[#8d9aae]">Education, certifications, work, or military experience
+            <textarea className="min-h-20 min-w-0 rounded-xl border border-[#2a3242] bg-[#0f1419] px-3 py-3 text-sm font-medium normal-case text-white" value={background} onChange={(event) => setBackground(event.target.value)} placeholder="Share only what would help shape your path" />
           </label>
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="grid min-w-0 gap-2 text-xs font-bold uppercase text-[#8d9aae]">Strengths
@@ -82,6 +89,9 @@ export default function EducationCommandCenter() {
               <input type="number" min="1" max="80" className="min-w-0 rounded-xl border border-[#2a3242] bg-[#0f1419] px-3 py-3 text-sm font-medium normal-case text-white" value={weeklyHours} onChange={(event) => setWeeklyHours(Number(event.target.value) || 1)} />
             </label>
           </div>
+          <label className="grid gap-2 text-xs font-bold uppercase text-[#8d9aae]">Skills or areas you want to strengthen
+            <input className="min-w-0 rounded-xl border border-[#2a3242] bg-[#0f1419] px-3 py-3 text-sm font-medium normal-case text-white" value={growthAreas} onChange={(event) => setGrowthAreas(event.target.value)} placeholder="Comma separated" />
+          </label>
           <label className="grid gap-2 text-xs font-bold uppercase text-[#8d9aae]">Constraints
             <input className="min-w-0 rounded-xl border border-[#2a3242] bg-[#0f1419] px-3 py-3 text-sm font-medium normal-case text-white" value={constraints} onChange={(event) => setConstraints(event.target.value)} placeholder="Time, cost, location, accessibility, family" />
           </label>
