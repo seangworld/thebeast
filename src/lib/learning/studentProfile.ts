@@ -70,8 +70,8 @@ export type StudentProfile = {
 
 export const studentProfileOwnershipRules = [
   "BeastOS owns identity, shared profile intelligence, permissions, and durable profile facts.",
-  "BeastEducation owns learning-session evidence, Mentor observations, guidance planning context, and student-learning intelligence.",
-  "Student Profile stores learning context for Mentor and Guidance Counselor behavior; it is not a duplicate Beast Profile.",
+  "BeastEducation owns learning-session evidence, Guidance Counselor observations, guidance planning context, and student-learning intelligence.",
+  "Student Profile stores learning context for Guidance Counselor and Guidance Counselor behavior; it is not a duplicate Beast Profile.",
   "Missing profile context should produce a first-use or insufficient-data state rather than fabricated history.",
 ];
 
@@ -162,7 +162,7 @@ export function buildStudentProfile(input: StudentProfileInput): StudentProfile 
   const learnerFirstName = firstName(displayName);
   const primaryGoal = goals[0] || "a first learning goal";
   const preferenceText =
-    preferences.length > 0 ? preferences.join(", ") : "a style your Mentor will learn over time";
+    preferences.length > 0 ? preferences.join(", ") : "a style your Guidance Counselor will learn over time";
 
   return {
     learnerId: input.learnerId,

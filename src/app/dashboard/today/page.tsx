@@ -368,7 +368,7 @@ export default function TodayPage() {
       setMessage(
         error instanceof Error
           ? error.message
-          : "Your Mentor had trouble opening today's learning plan. Try again in a moment."
+          : "Your Guidance Counselor had trouble opening today's learning plan. Try again in a moment."
       );
     } finally {
       setLoading(false);
@@ -446,7 +446,7 @@ export default function TodayPage() {
       setMessage(
         error instanceof Error
           ? error.message
-          : "Your Mentor had trouble choosing the next lesson. Try again in a moment."
+          : "Your Guidance Counselor had trouble choosing the next lesson. Try again in a moment."
       );
     } finally {
       setGenerating(false);
@@ -490,11 +490,11 @@ export default function TodayPage() {
       id: "today-learning-priority",
       source: "learning",
       type: "Resume",
-      title: readyActivity?.title || "Ask your Mentor for the first step",
+      title: readyActivity?.title || "Ask your Guidance Counselor for the first step",
       summary: "BeastEducation supplies the learning readiness and next activity.",
       reason:
         "Today ranks the supplied contribution without recomputing learning mastery.",
-      recommendedAction: readyActivity ? "Continue with Mentor" : "Ask Mentor",
+      recommendedAction: readyActivity ? "Continue with Guidance Counselor" : "Ask Guidance Counselor",
       actionUrl: "/dashboard/learning#mentor-session",
       activeDate: todayDate,
       timing: readyActivity ? "Active" : "Informational",
@@ -586,12 +586,12 @@ export default function TodayPage() {
                 {state.name ? `${getBeastGreeting(now)}, ${state.name}` : "Today"}
               </h1>
               <p className="beast-subtitle">
-                Your Mentor has one clear next step ready for you.
+                Your Guidance Counselor has one clear next step ready for you.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
               <Link href="/dashboard/learning" className="beast-button">
-                My Mentor
+                My Guidance Counselor
               </Link>
               <Link href="/dashboard/timeline" className="beast-button-secondary">
                 View Timeline
@@ -883,14 +883,14 @@ export default function TodayPage() {
 
         <DashboardCard accent="learning">
           <SectionHeader
-            eyebrow="Your Mentor Recommends"
-            title={readyActivity?.title || "Ask your Mentor for the first step"}
+            eyebrow="Your Guidance Counselor Recommends"
+            title={readyActivity?.title || "Ask your Guidance Counselor for the first step"}
             description={
               readyActivity
                 ? `This is the best next step for today. It should take about ${readyActivity.estimated_minutes} minutes.`
                 : state.activities.length > 0
-                  ? "You finished the current set. Ask your Mentor for the next learning step."
-                  : "Your Mentor can prepare the first learning step from your path."
+                  ? "You finished the current set. Ask your Guidance Counselor for the next learning step."
+                  : "Your Guidance Counselor can prepare the first learning step from your path."
             }
             action={<ModuleBadge module="learning" label="Next Step" />}
           />
@@ -900,7 +900,7 @@ export default function TodayPage() {
                 href="/dashboard/learning#mentor-session"
                 className="beast-button"
               >
-                Continue with Mentor
+                Continue with Guidance Counselor
               </Link>
             ) : (
               <button
@@ -917,10 +917,10 @@ export default function TodayPage() {
               {readyActivity
                 ? "It matches where you are now and gives the Tutor the right starting point."
                 : state.activities.length > 0
-                  ? "Your Mentor is ready to choose the next step."
+                  ? "Your Guidance Counselor is ready to choose the next step."
                   : loading
                     ? "Your learning context is loading."
-                    : "Start by asking your Mentor to prepare a lesson."}
+                    : "Start by asking your Guidance Counselor to prepare a lesson."}
             </p>
           </div>
           <div className="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
@@ -947,7 +947,7 @@ export default function TodayPage() {
             <SectionHeader
               eyebrow="Today"
               title="Your learning steps"
-              description="Focus on the step your Mentor recommends. The rest is here only so you can review or return later."
+              description="Focus on the step your Guidance Counselor recommends. The rest is here only so you can review or return later."
             />
             <div className="mt-5 grid gap-3">
               {activityList.map((activity) => (
@@ -995,7 +995,7 @@ export default function TodayPage() {
                   <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
                     {loading
                       ? "Your learning context is loading."
-                      : "Ask your Mentor above to prepare the first teaching moment."}
+                      : "Ask your Guidance Counselor above to prepare the first teaching moment."}
                   </p>
                 </div>
               ) : null}

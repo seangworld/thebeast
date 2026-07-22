@@ -35,7 +35,7 @@ const mobileIntelligence: PlatformIntelligence = {
       alerts: 0,
       recommendations: 1,
       activityCount: 1,
-      summary: "Mentor quick action is ready.",
+      summary: "Guidance Counselor quick action is ready.",
       href: "/dashboard/learning",
     },
     {

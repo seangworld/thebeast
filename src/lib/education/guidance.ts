@@ -24,6 +24,7 @@ const providerCatalog: Record<Exclude<EducationResourceProvider, "Future provide
   "Microsoft Learn": { provider: "Microsoft Learn", title: "Use official Microsoft role and technology learning paths", url: "https://learn.microsoft.com/training/browse/?terms=", cost: "free", verificationNote: "Prefer current official paths and verify any exam objectives separately." },
   Books: { provider: "Books", title: "Find durable books and reference material", url: "https://search.worldcat.org/search?q=", cost: "varies", verificationNote: "Check edition date, author expertise, library availability, and whether the field changes quickly." },
   Certifications: { provider: "Certifications", title: "Verify relevant credentials with issuing organizations", url: "https://www.google.com/search?q=official+certification+", cost: "varies", verificationNote: "Use the issuing body's current objectives, prerequisites, renewal rules, and exam policies as authority." },
+  Schools: { provider: "Schools", title: "Compare schools and education programs", url: "https://collegescorecard.ed.gov/search/?search=", cost: "varies", verificationNote: "Verify accreditation, admissions requirements, total cost, outcomes, transfer rules, support, and program availability with authoritative sources." },
 };
 
 const goalSkills: Record<EducationGoalKind, readonly string[]> = {
@@ -64,7 +65,7 @@ export function buildEducationGuidancePlan({
     { id: "close-gap", title: `Build ${skillsToBuild[0] || "the first verified skill gap"}`, reason: "Progress starts with the smallest useful evidence-producing step.", horizon: "next", status: "not-started" },
     { id: "prove", title: "Create evidence and review the direction", reason: "Projects, records, feedback, and official results are stronger than completion clicks.", horizon: "later", status: "not-started" },
   ];
-  const providers = profile.preferredFormats.length ? profile.preferredFormats : (["YouTube", "Khan Academy", "Coursera", "Microsoft Learn", "Books", "Certifications"] as const);
+  const providers = profile.preferredFormats.length ? profile.preferredFormats : (["YouTube", "Khan Academy", "Coursera", "Microsoft Learn", "Books", "Certifications", "Schools"] as const);
   const resources = providers.filter((provider): provider is Exclude<EducationResourceProvider, "Future provider"> => provider !== "Future provider").map((provider) => ({
     ...providerCatalog[provider],
     reason: `Compare this provider for the ${target} roadmap; BeastEducation does not rank or resell providers.`,
@@ -88,6 +89,7 @@ export function buildEducationGuidancePlan({
     careerPlan: ["Compare real role requirements", "Identify transferable strengths", "Build credible evidence before applying"],
     educationPlan: ["Verify prerequisites and program outcomes", "Compare time, cost, support, and format", "Track applications, deadlines, and decisions"],
     certificationPlan: ["Confirm credential relevance", "Use current official objectives", "Schedule only after evidence-based readiness review"],
+    schoolPlan: ["Compare accredited programs and verified outcomes", "Review admissions, transfer, cost, support, and location constraints", "Keep the final school choice with the user"],
     roadmap,
     resources,
     teachingSupport: "Teaching, Tutor sessions, courses, and practice are supporting tools used only when the roadmap identifies a specific knowledge gap.",

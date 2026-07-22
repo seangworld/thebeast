@@ -286,6 +286,6 @@ export const goalPlanOwnershipRules = [
   "Plans describe the executable path and belong to BeastOS as shared records.",
   "Modules may contribute progress, evidence, and recommendations without owning shared Goals or Plans.",
   "Dependencies, prerequisites, blockers, and recurring actions belong to the shared Plan path, not a module-owned copy.",
-  "Learning keeps curriculum, mastery, lessons, and Mentor behavior.",
+  "Learning keeps curriculum, mastery, lessons, and Guidance Counselor behavior.",
   "Money keeps cash-flow, debt, forecasting, and financial decision logic.",
 ];

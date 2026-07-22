@@ -91,7 +91,7 @@ function learnerAskedToWrapUp(value: string) {
 
 function speakerLabel(role: TutorMessage["role"], learnerName: string, tutorRole: string) {
   if (role === "learner") return learnerName;
-  if (role === "mentor") return "Mentor";
+  if (role === "mentor") return "Guidance Counselor";
   return tutorRole;
 }
 
@@ -114,7 +114,7 @@ function speakerDotClasses(role: TutorMessage["role"]) {
 }
 
 function progressLanguage(value: number, completed: boolean) {
-  if (completed) return "You wrapped this lesson. Your Mentor has the recap.";
+  if (completed) return "You wrapped this lesson. Your Guidance Counselor has the recap.";
   if (value >= 80) return "You look ready to move forward after one quick reflection.";
   if (value >= 55) return "You are getting there. One focused check should help this settle.";
   return "You are still early with this topic. We will keep the next step short and clear.";
@@ -193,7 +193,7 @@ export function LessonEngine({
       {
         id: "tutor-opening",
         role: "tutor",
-        body: `Hi ${firstName}. I am your ${tutorSelection.role} for ${engine.lesson.title}. I will keep this practical, check understanding when it fits, and keep your Mentor in the loop as we go.`,
+        body: `Hi ${firstName}. I am your ${tutorSelection.role} for ${engine.lesson.title}. I will keep this practical, check understanding when it fits, and keep your Guidance Counselor in the loop as we go.`,
       },
     ],
     [engine.lesson.title, firstName, tutorSelection.handoff, tutorSelection.role]
@@ -438,7 +438,7 @@ export function LessonEngine({
               ref={conversationScrollRef}
               className="flex-1 space-y-4 overflow-y-auto px-4 py-5 sm:px-5"
               role="log"
-              aria-label="Mentor Tutor and learner messages"
+              aria-label="Guidance Counselor Tutor and learner messages"
               aria-live="polite"
               aria-relevant="additions text"
             >
@@ -542,11 +542,11 @@ export function LessonEngine({
             </form>
           </section>
 
-          <aside className="grid content-start gap-3 rounded-2xl border border-white/10 bg-[#111827] p-4 lg:sticky lg:top-20" aria-label="Mentor session snapshot">
+          <aside className="grid content-start gap-3 rounded-2xl border border-white/10 bg-[#111827] p-4 lg:sticky lg:top-20" aria-label="Guidance Counselor session snapshot">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <div className="text-xs font-black uppercase text-[#7f8da3]">
-                  Mentor Snapshot
+                  Guidance Counselor Snapshot
                 </div>
                 <h3 className="mt-1 font-black text-white">Current session</h3>
               </div>
@@ -559,7 +559,7 @@ export function LessonEngine({
               ["Goal", engine.lesson.learningObjective],
               ["Specialist", tutorSelection.role],
               ["Confidence", confidenceLabel(confidence)],
-              ["Mentor note", progress.coachingMessage],
+              ["Guidance Counselor note", progress.coachingMessage],
               ["Progress", progressLanguage(progress.masteryEstimate, completed)],
               ["Next", progress.nextRecommendation],
               ["Save", saveStatusLabel(saving, completed, tutorReadyToComplete)],

@@ -673,7 +673,7 @@ test("BO-32 Calendar builds month week day and agenda views", () => {
       id: "today-learning",
       source: "learning",
       sourceRecordId: "activity-1",
-      title: "Mentor session",
+      title: "Guidance Counselor session",
       summary: "BeastEducation owns learning readiness.",
       startsAt: "2026-07-16T14:00:00.000Z",
       endsAt: "2026-07-16T14:30:00.000Z",
@@ -718,7 +718,7 @@ test("BO-33 Calendar recurrence and drag rescheduling preserve source rules", ()
     id: "weekly-review",
     source: "learning",
     sourceRecordId: "review-1",
-    title: "Weekly Mentor review",
+    title: "Weekly Guidance Counselor review",
     summary: "BeastEducation owns the review cadence.",
     startsAt: "2026-07-16T15:00:00.000Z",
     endsAt: "2026-07-16T15:30:00.000Z",
@@ -813,7 +813,7 @@ function buildSearchFixtureItems(): PlatformSearchItem[] {
       sourceRecordId: "mentor-step-1",
       domain: "Learning",
       title: "Next learning step",
-      summary: "Resume the Mentor-guided lesson.",
+      summary: "Resume the Guidance Counselor-guided lesson.",
       keywords: ["learning", "mentor", "lesson"],
       href: "/dashboard/learning",
       permissionScope: "Owner",
@@ -920,8 +920,8 @@ function buildTimelineFixtureItems(): PlatformTimelineItem[] {
       source: "learning",
       sourceRecordId: "mentor-step-1",
       kind: "Scheduled",
-      title: "Mentor step scheduled",
-      summary: "Learning contributed the next Mentor step.",
+      title: "Guidance Counselor step scheduled",
+      summary: "Learning contributed the next Guidance Counselor step.",
       occurredAt: "2026-07-16T13:00:00.000Z",
       visibility: "Owner",
       href: "/dashboard/learning",
@@ -1561,7 +1561,7 @@ test("mentor roadmap uses static goal-type rules", () => {
   });
 
   assert.equal(roadmap.title, "Certification: Security+");
-  assert.equal(roadmap.previewLabel, "Planning Mentor");
+  assert.equal(roadmap.previewLabel, "Planning Guidance Counselor");
   assert.equal(roadmap.estimatedTimeline, "6-10 week prep plan");
   assert.equal(
     roadmap.requiredEducationOrTraining.some((item) =>
@@ -1610,7 +1610,7 @@ test("mentor roadmap uses static goal-type rules", () => {
   );
 });
 
-test("BL-201 student profile foundation supports Mentor and Guidance Counselor context", () => {
+test("BL-201 student profile foundation supports Guidance Counselor and Guidance Counselor context", () => {
   const firstUse = buildStudentProfile({
     learnerId: "new-student",
     displayName: "New Student",
@@ -1659,7 +1659,7 @@ test("BL-201 student profile foundation supports Mentor and Guidance Counselor c
     studentProfileOwnershipRules.slice(0, 2),
     [
       "BeastOS owns identity, shared profile intelligence, permissions, and durable profile facts.",
-      "BeastEducation owns learning-session evidence, Mentor observations, guidance planning context, and student-learning intelligence.",
+      "BeastEducation owns learning-session evidence, Guidance Counselor observations, guidance planning context, and student-learning intelligence.",
     ]
   );
   assert.equal(
@@ -1727,8 +1727,8 @@ test("learning foundation completion engines expose static platform data", () =>
       "General Academic Tutor",
       "Study Coach",
       "Homework Coach",
-      "Mentor",
-      "Career Mentor",
+      "Guidance Counselor",
+      "Career Path Specialist",
       "Parent Assistant",
       "Certification Coach",
       "Certification Tutor",
@@ -1793,7 +1793,7 @@ test("Beast Academy completion awards certificates only after milestone or cours
   assert.equal(passed.retestPolicy.artificialWaitingPeriod, false);
 });
 
-test("Beast Academy failed completion routes to Mentor explanation Tutor remediation and immediate retest readiness", () => {
+test("Beast Academy failed completion routes to Guidance Counselor explanation Tutor remediation and immediate retest readiness", () => {
   const lessonDecision = decideTutorLessonReadiness({
     masteryEstimate: 58,
     masteryThreshold: 80,
@@ -1815,7 +1815,7 @@ test("Beast Academy failed completion routes to Mentor explanation Tutor remedia
   assert.equal(failed.certificate, undefined);
   assert.equal(failed.portfolioEntry, undefined);
   assert.equal(failed.completionRecord.status, "needs_remediation");
-  assert.match(failed.mentorMessage, /Mentor will explain the gap/);
+  assert.match(failed.mentorMessage, /Guidance Counselor will explain the gap/);
   assert.match(failed.tutorAction, /Remediate/);
   assert.equal(failed.retestPolicy.retestWhenReady, true);
   assert.equal(failed.retestPolicy.artificialWaitingPeriod, false);
@@ -2959,7 +2959,7 @@ test("home and today navigation render stable route shells during data loading",
   assert.match(todaySource, /const \[loading, setLoading\] = useState\(true\)/);
   assert.match(homeSource, /\{loading \? \(/);
   assert.match(todaySource, /\{loading \? \(/);
-  assert.match(todaySource, /title=\{readyActivity\?\.title \|\| "Ask your Mentor for the first step"\}/);
+  assert.match(todaySource, /title=\{readyActivity\?\.title \|\| "Ask your Guidance Counselor for the first step"\}/);
   assert.match(todaySource, /disabled=\{generating \|\| loading\}/);
   assert.doesNotMatch(homeSource, /\{loading \|\| !user\.name\s+\?/);
   assert.doesNotMatch(todaySource, /\{loading \|\| !state\.name\s+\?/);
@@ -3173,16 +3173,16 @@ test("learning activities have a dedicated runner and next-activity unlock logic
     ])?.id,
     "new-generated"
   );
-  assert.match(activityRunner, /Mentor recap/);
+  assert.match(activityRunner, /Guidance Counselor recap/);
   assert.match(activityRunner, /Return to Today/);
-  assert.match(activityRunner, /Back to Mentor/);
+  assert.match(activityRunner, /Back to Guidance Counselor/);
   assert.match(activityRunner, /<LessonEngine/);
   assert.match(activityRunner, /getProfileDisplayName/);
   assert.match(activityRunner, /learnerName=\{learnerName\}/);
   assert.match(activityRunner, /receives the outcome back for recap/);
   assert.match(lessonEngine, /Conversation-first learning session/);
   assert.match(lessonEngine, /Active learning conversation/);
-  assert.match(lessonEngine, /Mentor Snapshot/);
+  assert.match(lessonEngine, /Guidance Counselor Snapshot/);
   assert.match(lessonEngine, /messageBubbleClasses/);
   assert.match(lessonEngine, /speakerLabel/);
   assert.match(lessonEngine, /buildMentorCheckpoint/);
@@ -3219,8 +3219,8 @@ test("learning activities have a dedicated runner and next-activity unlock logic
   assert.match(lessonEngine, /progress\.coachingMessage/);
   assert.doesNotMatch(lessonEngine, /Tutor context/);
   assert.doesNotMatch(lessonEngine, /Saved on this device/);
-  assert.doesNotMatch(lessonEngine, /Save for Mentor/);
-  assert.doesNotMatch(lessonEngine, /Save this for my Mentor/);
+  assert.doesNotMatch(lessonEngine, /Save for Guidance Counselor/);
+  assert.doesNotMatch(lessonEngine, /Save this for my Guidance Counselor/);
   assert.doesNotMatch(lessonEngine, /mastery signal/);
   assert.match(lessonEngine, /onPracticeAnswer/);
   assert.doesNotMatch(lessonEngine, /type="checkbox"/);
@@ -3236,14 +3236,14 @@ test("learning activities have a dedicated runner and next-activity unlock logic
   assert.match(activityRunner, /practiceAnswers/);
 });
 
-test("BeastEducation member home starts with Mentor before dashboard support", () => {
+test("BeastEducation member home starts with Guidance Counselor before dashboard support", () => {
   const learningPage = readFileSync("src/app/dashboard/learning/page.tsx", "utf8");
   const lessonEngine = readFileSync(
     "src/app/dashboard/learning/activities/LessonEngine.tsx",
     "utf8"
   );
 
-  assert.match(learningPage, /function MentorHome/);
+  assert.match(learningPage, /function GuidanceCounselorHome/);
   assert.match(learningPage, /buildMentorHomeMission/);
   assert.match(learningPage, /Guidance Counselor/);
   assert.match(learningPage, /LearningGoalDiscovery/);
@@ -3272,7 +3272,7 @@ test("BeastEducation member home starts with Mentor before dashboard support", (
   assert.doesNotMatch(learningPage, /learningIntelligence\.memory\.recentlyStudied/);
   assert.doesNotMatch(learningPage, /learningIntelligence\.adaptivePlan\.nextRecommendedLesson/);
   assert.equal(
-    learningPage.indexOf("<MentorHome") <
+    learningPage.indexOf("<GuidanceCounselorHome") <
       learningPage.indexOf('id="wins"'),
     true
   );
@@ -3288,7 +3288,7 @@ test("BeastEducation member home starts with Mentor before dashboard support", (
   assert.match(lessonEngine, /Conversation-first learning session/);
 });
 
-test("BeastEducation v2 keeps normal learning in the Mentor conversation", () => {
+test("BeastEducation v2 keeps normal learning in the Guidance Counselor conversation", () => {
   const learningPage = readFileSync("src/app/dashboard/learning/page.tsx", "utf8");
   const todayPage = readFileSync("src/app/dashboard/today/page.tsx", "utf8");
   const dashboardLayout = readFileSync("src/app/dashboard/layout.tsx", "utf8");
@@ -3302,7 +3302,7 @@ test("BeastEducation v2 keeps normal learning in the Mentor conversation", () =>
   assert.match(learningPage, /Everything else stays available/);
   assert.doesNotMatch(learningPage, /getLearningActivityRoute\(learningPathReadyActivity\.id\)/);
   assert.equal(learningPage.includes("Open full Tutor workspace"), false);
-  assert.match(todayPage, /href="\/dashboard\/learning#mentor-session"[\s\S]*Continue with Mentor/);
+  assert.match(todayPage, /href="\/dashboard\/learning#mentor-session"[\s\S]*Continue with Guidance Counselor/);
   assert.match(dashboardLayout, /href: "\/dashboard\/education#mentor-session"/);
   assert.match(dashboardLayout, /label: "Guidance Counselor"/);
   assert.match(dashboardLayout, /label: "My Roadmap"/);
@@ -3311,21 +3311,21 @@ test("BeastEducation v2 keeps normal learning in the Mentor conversation", () =>
   assert.doesNotMatch(moduleNavigation, /label: "Continue", href: "\/dashboard\/learning\/activities"/);
 });
 
-test("BeastEducation first impression starts with the Mentor relationship", () => {
+test("BeastEducation first impression starts with the Guidance Counselor relationship", () => {
   const loginPage = readFileSync("src/app/login/page.tsx", "utf8");
 
   assert.match(loginPage, /Meet Your BeastEducation Guidance Counselor/);
-  assert.match(loginPage, /Start with someone who learns where you want to go/);
-  assert.match(loginPage, /We start with a conversation, not a dashboard/);
-  assert.match(loginPage, /When it is time to learn, your Mentor brings in the Tutor/);
+  assert.match(loginPage, /Build a lifelong education profile/);
+  assert.match(loginPage, /Your story, strengths, constraints, and goals shape the roadmap/);
+  assert.match(loginPage, /Guidance Counselor brings in a specialist resource/);
   assert.match(loginPage, /Send my private link/);
-  assert.match(loginPage, /Your Mentor will meet you inside/);
+  assert.match(loginPage, /Your Guidance Counselor will meet you inside/);
   assert.doesNotMatch(loginPage, /Login \/ Signup/);
   assert.doesNotMatch(loginPage, /magic login link/);
   assert.doesNotMatch(loginPage, /Send Login Link/);
 });
 
-test("BeastEducation member experience hides workflow mechanics behind Mentor and Tutor language", () => {
+test("BeastEducation member experience hides workflow mechanics behind Guidance Counselor and Tutor language", () => {
   const learningPage = readFileSync("src/app/dashboard/learning/page.tsx", "utf8");
   const activitiesPage = readFileSync(
     "src/app/dashboard/learning/activities/page.tsx",
@@ -3348,12 +3348,12 @@ test("BeastEducation member experience hides workflow mechanics behind Mentor an
     studySessionCard,
   ].join("\n");
 
-  assert.match(memberExperienceSource, /Continue with Mentor/);
+  assert.match(memberExperienceSource, /Continue with Guidance Counselor/);
   assert.match(memberExperienceSource, /mission\.primaryAction\.label/);
   assert.match(activitiesPage, /redirect\("\/dashboard\/learning#mentor-session"\)/);
-  assert.match(memberExperienceSource, /Your Mentor/);
+  assert.match(memberExperienceSource, /Your Guidance Counselor/);
   assert.match(memberExperienceSource, /Let&apos;s see what I&apos;ve learned/);
-  assert.doesNotMatch(memberExperienceSource, /Your Mentor's Next Step/);
+  assert.doesNotMatch(memberExperienceSource, /Your Guidance Counselor's Next Step/);
   assert.doesNotMatch(memberExperienceSource, /Activity Runner/);
   assert.doesNotMatch(memberExperienceSource, /Start Activity/);
   assert.doesNotMatch(memberExperienceSource, /Generate Activity/);
@@ -3363,7 +3363,7 @@ test("BeastEducation member experience hides workflow mechanics behind Mentor an
   assert.doesNotMatch(memberExperienceSource, /Complete lesson/);
 });
 
-test("guided learning sessions keep Mentor lifecycle Tutor handoff and reflection storage", () => {
+test("guided learning sessions keep Guidance Counselor lifecycle Tutor handoff and reflection storage", () => {
   const activityRunner = readFileSync(
     "src/app/dashboard/learning/activities/[activityId]/page.tsx",
     "utf8"
@@ -3383,7 +3383,7 @@ test("guided learning sessions keep Mentor lifecycle Tutor handoff and reflectio
   assert.match(activityRunner, /buildGuidedLearningSession/);
   assert.match(activityRunner, /selectMentorTutor/);
   assert.match(activityRunner, /Start guided session/);
-  assert.match(activityRunner, /Mentor recap/);
+  assert.match(activityRunner, /Guidance Counselor recap/);
   assert.match(activityRunner, /Learner reflection/);
   assert.match(activityRunner, /buildLearnerReflectionStorage/);
   assert.match(lessonEngine, /tutorSelection\.handoff/);
@@ -3399,7 +3399,7 @@ test("guided learning sessions keep Mentor lifecycle Tutor handoff and reflectio
   assert.match(migration, /session_next_recommendation/);
 });
 
-test("Mentor-first integration includes confidence timeline memory and weekly review", () => {
+test("Guidance Counselor-first integration includes confidence timeline memory and weekly review", () => {
   const learningPage = readFileSync("src/app/dashboard/learning/page.tsx", "utf8");
   const confidence = readFileSync("src/lib/learning/confidenceIntelligence.ts", "utf8");
   const timeline = readFileSync("src/lib/learning/learningTimeline.ts", "utf8");
@@ -3408,7 +3408,7 @@ test("Mentor-first integration includes confidence timeline memory and weekly re
   assert.match(learningPage, /buildConfidenceIntelligenceSnapshot/);
   assert.match(learningPage, /buildLearningTimeline/);
   assert.match(learningPage, /buildMentorLearningMemory/);
-  assert.match(learningPage, /WeeklyMentorReviewPanel/);
+  assert.match(learningPage, /WeeklyGuidanceReviewPanel/);
   assert.match(learningPage, /Confidence intelligence/);
   assert.match(learningPage, /Counselor context/);
   assert.match(learningPage, /Recent timeline/);
@@ -3623,8 +3623,8 @@ test("Today learning mission generation avoids dead ends", () => {
   assert.equal(todayPage.includes("onClick={generateNextActivity}"), true);
   assert.equal(todayPage.includes("onClick={loadToday} className=\"beast-button\""), false);
   assert.equal(todayPage.includes("getLearningActivityTitleForCourse"), true);
-  assert.equal(todayPage.includes("You finished the current set. Ask your Mentor for the next learning step."), true);
-  assert.equal(todayPage.includes("Ask your Mentor above to prepare the first teaching moment."), true);
+  assert.equal(todayPage.includes("You finished the current set. Ask your Guidance Counselor for the next learning step."), true);
+  assert.equal(todayPage.includes("Ask your Guidance Counselor above to prepare the first teaching moment."), true);
   assert.equal(todayPage.includes("activityList.map"), true);
 });
 
@@ -5294,8 +5294,8 @@ test("learning AI specialist registry exposes v0.7 contracts", () => {
       "Tutor",
       "Study Coach",
       "Homework Coach",
-      "Mentor",
-      "Career Mentor",
+      "Guidance Counselor",
+      "Career Path Specialist",
       "Certification Coach",
       "Writing Coach",
       "Reading Coach",

@@ -161,7 +161,7 @@ function buildWhy({
   }
 
   if (status === "misconception") {
-    return `The answer missed ${conceptId} while confidence was high, so the Mentor should repair a likely misconception before adding harder work.`;
+    return `The answer missed ${conceptId} while confidence was high, so the Guidance Counselor should repair a likely misconception before adding harder work.`;
   }
 
   if (status === "partial") {

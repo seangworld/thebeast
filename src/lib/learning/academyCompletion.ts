@@ -60,7 +60,7 @@ export const beastAcademyAssessmentPolicy = {
     "portfolio entry",
   ],
   failureFlow: [
-    "Mentor explains why",
+    "Guidance Counselor explains why",
     "Tutor remediates",
     "Retest when ready",
   ],
@@ -141,7 +141,7 @@ export function evaluateBeastAcademyCompletion({
       status: "needs_remediation",
       completionRecord,
       mentorMessage:
-        `You are not blocked. Your result shows ${masteryPercent}% readiness, and ${requiredMasteryPercent}% is needed for this ${scope.replace("_", " ")}. Your Mentor will explain the gap and your Tutor will help you practice the exact skills that need another pass.`,
+        `You are not blocked. Your result shows ${masteryPercent}% readiness, and ${requiredMasteryPercent}% is needed for this ${scope.replace("_", " ")}. Your Guidance Counselor will explain the gap and your Tutor will help you practice the exact skills that need another pass.`,
       tutorAction:
         "Remediate the missing skills, check understanding naturally during practice, and retest as soon as the learner is ready.",
       retestPolicy: {
@@ -187,9 +187,9 @@ export function evaluateBeastAcademyCompletion({
     certificate,
     portfolioEntry,
     mentorMessage:
-      "You earned this. Your Mentor will add the completion to your learning record and portfolio.",
+      "You earned this. Your Guidance Counselor will add the completion to your learning record and portfolio.",
     tutorAction:
-      "Celebrate the demonstrated skills and hand the learner back to the Mentor for the next goal.",
+      "Celebrate the demonstrated skills and hand the learner back to the Guidance Counselor for the next goal.",
     retestPolicy: {
       retestWhenReady: true,
       artificialWaitingPeriod: false,

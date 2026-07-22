@@ -18,7 +18,7 @@ const todayContribution: TodayContribution = {
   id: "today-learning",
   source: "learning",
   type: "Resume",
-  title: "Continue Mentor work",
+  title: "Continue Guidance Counselor work",
   summary: "Learning owns readiness and Today owns ranking.",
   reason: "Learning supplied this contribution.",
   recommendedAction: "Continue",
@@ -154,7 +154,7 @@ test("BF-MOB-003 keeps mobile shared surfaces narrow and desktop routes intact",
     assert.match(page, /beast-button/);
   }
 
-  assert.match(pages[0], /Your Mentor Recommends/);
+  assert.match(pages[0], /Your Guidance Counselor Recommends/);
   assert.match(pages[1], /Notification Contracts/);
   assert.match(pages[2], /Calendar Contracts/);
   assert.match(pages[3], /Natural-language search and action routing/);

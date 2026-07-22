@@ -127,7 +127,7 @@ export function buildConfidenceIntelligenceSnapshot({
             : "No completed learning evidence yet.",
       learnerLanguage:
         completed.length > 0
-          ? "Your Mentor can use completed session evidence to judge what you understand."
+          ? "Your Guidance Counselor can use completed session evidence to judge what you understand."
           : "I need one completed session before I can say much about knowledge.",
     }),
     buildDimension({
@@ -147,10 +147,10 @@ export function buildConfidenceIntelligenceSnapshot({
         guessedCount > 0
           ? "You may be getting some answers right before they feel secure."
           : frustratedCount > 0
-            ? "Your Mentor should lower pressure and use smaller next steps."
+            ? "Your Guidance Counselor should lower pressure and use smaller next steps."
             : reflectionEvidence.length > 0
               ? "Your confidence evidence is usable for the next recommendation."
-              : "Reflection will help your Mentor tell confidence apart from correctness.",
+              : "Reflection will help your Guidance Counselor tell confidence apart from correctness.",
     }),
     buildDimension({
       id: "consistency",
@@ -167,7 +167,7 @@ export function buildConfidenceIntelligenceSnapshot({
           : "Consistency needs more than one attempt.",
       learnerLanguage:
         completed.length >= 2
-          ? "Your Mentor can start comparing performance across attempts."
+          ? "Your Guidance Counselor can start comparing performance across attempts."
           : "One more completed session will make consistency easier to judge.",
     }),
     buildDimension({
@@ -230,7 +230,7 @@ export function buildConfidenceIntelligenceSnapshot({
         : priorityDimension?.id === "confidence"
           ? "Use a smaller check to separate understanding from guessing."
           : priorityDimension?.id === "consistency"
-            ? "Repeat the skill once more so the Mentor can compare attempts."
-            : "Continue the current Mentor mission.",
+            ? "Repeat the skill once more so the Guidance Counselor can compare attempts."
+            : "Continue the current Guidance Counselor mission.",
   };
 }

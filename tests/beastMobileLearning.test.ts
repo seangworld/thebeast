@@ -137,7 +137,7 @@ function buildCards(overrides: {
   });
 }
 
-test("BF-MOB-006 builds Mentor next step and resume actions through Learning contracts", () => {
+test("BF-MOB-006 builds Guidance Counselor next step and resume actions through Learning contracts", () => {
   const cards = buildCards();
   const nextStep = cards.find((card) => card.id === "mobile-learning-next-step");
   const resume = cards.find((card) => card.id === "mobile-learning-resume");
@@ -173,7 +173,7 @@ test("BF-MOB-006 keeps mobile Learning cards narrow and desktop Learning page in
   assert.match(learningPage, /min-w-0/);
   assert.match(learningPage, /break-words/);
   assert.match(learningPage, /data-mobile-source-contract=\{card.dispatchMode\}/);
-  assert.match(learningPage, /<MentorHome/);
+  assert.match(learningPage, /<GuidanceCounselorHome/);
   assert.match(mobileLearning, /getLearningActivityRoute/);
   assert.match(mobileLearning, /sourceOwnershipPreserved: true/);
   assert.match(globalStyles, /width: 100%;/);

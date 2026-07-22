@@ -80,7 +80,7 @@ const model: GoalPlanModel = {
       sourceModule: "learning",
       targetDate: "2026-09-01",
       currentStep: "Network security basics",
-      nextAction: "Continue the next Mentor mission.",
+      nextAction: "Continue the next Guidance Counselor mission.",
       milestones: [
         {
           id: "plan-learning-milestone-1",
@@ -209,7 +209,7 @@ test("BeastOS goal and plan summary preserves module boundaries", () => {
   assert.equal(summary.completedPlanMilestones, 2);
   assert.equal(summary.planProgressPercent, 50);
   assert.deepEqual(summary.nextActions, [
-    "Continue the next Mentor mission.",
+    "Continue the next Guidance Counselor mission.",
     "Review next paycheck allocation.",
   ]);
   assert.equal(summary.openBlockers.length, 1);
@@ -510,7 +510,7 @@ test("BG-001 Goals overview route stays BeastOS-owned", () => {
   assert.equal(summary.lifecycleEvents, 0);
   assert.equal(summary.overallProgressPercent, 50);
   assert.deepEqual(summary.nextSteps, [
-    "Continue the next Mentor mission.",
+    "Continue the next Guidance Counselor mission.",
     "Review the next safe extra payment.",
   ]);
   assert.equal(getGoalProgressPercent(mockGoals[0]), 50);

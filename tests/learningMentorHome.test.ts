@@ -96,7 +96,7 @@ function buildMission(overrides: {
   });
 }
 
-test("Mentor Home uses first-use state without fabricated history", () => {
+test("Guidance Counselor Home uses first-use state without fabricated history", () => {
   const mission = buildMission({
     goals: [],
     courses: [],
@@ -107,14 +107,14 @@ test("Mentor Home uses first-use state without fabricated history", () => {
   assert.equal(mission.state, "first_use");
   assert.equal(mission.hasSufficientLearnerData, false);
   assert.equal(mission.currentGoalLabel, "No active goal selected yet");
-  assert.equal(mission.greeting, "Hi Sean. I am your Mentor.");
+  assert.equal(mission.greeting, "Hi Sean. I am your Guidance Counselor.");
   assert.match(mission.recommendationReason, /starting point/i);
   assert.match(mission.recentProgressLabel, /No prior learning history/i);
   assert.match(mission.journeyProgressLabel, /choose a learning goal/i);
   assert.match(mission.journeyRemainingLabel, /No remaining-work estimate yet/i);
 });
 
-test("Mentor Home resumes unfinished sessions before new recommendations", () => {
+test("Guidance Counselor Home resumes unfinished sessions before new recommendations", () => {
   const mission = buildMission({
     sessions: [
       {
@@ -137,7 +137,7 @@ test("Mentor Home resumes unfinished sessions before new recommendations", () =>
   assert.match(mission.journeyRemainingLabel, /lesson/i);
 });
 
-test("Mentor Home chooses a ready activity and cites actual saved work", () => {
+test("Guidance Counselor Home chooses a ready activity and cites actual saved work", () => {
   const mission = buildMission({
     sessions: [
       {
@@ -173,7 +173,7 @@ test("Mentor Home chooses a ready activity and cites actual saved work", () => {
   assert.match(mission.journeyUnlockLabel, /next mission|Review due|Checkpoint/i);
 });
 
-test("Mentor Home avoids dead ends when every activity is completed", () => {
+test("Guidance Counselor Home avoids dead ends when every activity is completed", () => {
   const mission = buildMission({
     activities: [
       {
@@ -194,7 +194,7 @@ test("Mentor Home avoids dead ends when every activity is completed", () => {
   assert.equal(mission.primaryAction.href, "#mentor-plan");
 });
 
-test("Mentor selects a certification Tutor from session context", () => {
+test("Guidance Counselor selects a certification Tutor from session context", () => {
   const selection = selectMentorTutor({
     activityType: "Lesson",
     activityTitle: "CIDR notation",
@@ -208,7 +208,7 @@ test("Mentor selects a certification Tutor from session context", () => {
   assert.match(selection.handoff, /Certification Tutor/);
 });
 
-test("Mentor Tutor orchestration uses a safe fallback", () => {
+test("Guidance Counselor Tutor orchestration uses a safe fallback", () => {
   const selection = selectMentorTutor({
     activityType: "Lesson",
     activityTitle: "General learning strategy",
@@ -218,7 +218,7 @@ test("Mentor Tutor orchestration uses a safe fallback", () => {
   assert.equal(selection.fallbackUsed, true);
 });
 
-test("guided learning session builds Mentor intro recap and state", () => {
+test("guided learning session builds Guidance Counselor intro recap and state", () => {
   const activity: LearningActivityRunnerRow = {
     id: "activity-1",
     activity_type: "Lesson",
@@ -269,7 +269,7 @@ test("guided learning session builds Mentor intro recap and state", () => {
   assert.match(session.recap.meaning, /ready to continue/);
 });
 
-test("reflection outcome changes Mentor recommendations for guessing and frustration", () => {
+test("reflection outcome changes Guidance Counselor recommendations for guessing and frustration", () => {
   const guessed = buildLearnerReflectionOutcome({
     option: "I guessed",
     mastered: true,
@@ -346,7 +346,7 @@ test("confidence intelligence uses guessing and retention evidence", () => {
   assert.match(snapshot.recommendation, /retention review|smaller check/);
 });
 
-test("learning timeline and Mentor memory use real activity events", () => {
+test("learning timeline and Guidance Counselor memory use real activity events", () => {
   const activities: LearningActivityRunnerRow[] = [
     {
       id: "activity-1",
@@ -417,7 +417,7 @@ test("weekly review and meaningful achievements avoid fake trends", () => {
   assert.equal(achievements.length > 0, true);
 });
 
-test("BL-46 keeps Mentor Home accessible on mobile and keyboard paths", () => {
+test("BL-46 keeps Guidance Counselor Home accessible on mobile and keyboard paths", () => {
   const mentorHomeSource = readFileSync("src/app/dashboard/learning/page.tsx", "utf8");
   const globalCss = readFileSync("src/app/globals.css", "utf8");
 
@@ -451,5 +451,5 @@ test("BL-46 keeps guided sessions accessible on mobile and keyboard paths", () =
   assert.match(engineSource, /type="submit"/);
   assert.match(engineSource, /Enter to send/);
   assert.match(engineSource, /min-h-\[70svh\]/);
-  assert.match(engineSource, /aria-label="Mentor session snapshot"/);
+  assert.match(engineSource, /aria-label="Guidance Counselor session snapshot"/);
 });

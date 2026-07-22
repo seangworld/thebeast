@@ -41,7 +41,7 @@ export function buildLearnerReflectionOutcome(
         ? `Continue toward ${input.nextRecommendation}.`
         : "Do one quick confirmation check before advancing.",
       recommendationReason:
-        "The learner reported the session felt easy, so the Mentor can reduce repetition if mastery evidence agrees.",
+        "The learner reported the session felt easy, so the Guidance Counselor can reduce repetition if mastery evidence agrees.",
     };
   }
 
@@ -52,7 +52,7 @@ export function buildLearnerReflectionOutcome(
         "That took effort. I will reinforce the weak concept before stacking more on top.",
       nextAction: "Use a smaller review step before the next full lesson.",
       recommendationReason:
-        "The learner reported difficulty, so the Mentor should prioritize reinforcement or remediation.",
+        "The learner reported difficulty, so the Guidance Counselor should prioritize reinforcement or remediation.",
     };
   }
 
@@ -86,7 +86,7 @@ export function buildLearnerReflectionOutcome(
       ? "Review the current concept once more."
       : `Continue toward ${input.nextRecommendation}.`,
     recommendationReason:
-      "The learner reported an okay fit, so the Mentor can continue the current progression.",
+      "The learner reported an okay fit, so the Guidance Counselor can continue the current progression.",
   };
 }
 

@@ -13,7 +13,7 @@ const goalKinds: { value: EducationGoalKind; label: string }[] = [
   { value: "personal-growth", label: "Personal growth" },
 ];
 
-const providers: EducationResourceProvider[] = ["YouTube", "Khan Academy", "Coursera", "Microsoft Learn", "Books", "Certifications"];
+const providers: EducationResourceProvider[] = ["YouTube", "Khan Academy", "Coursera", "Microsoft Learn", "Books", "Certifications", "Schools"];
 
 export default function EducationCommandCenter() {
   const [goalKind, setGoalKind] = useState<EducationGoalKind>("career");

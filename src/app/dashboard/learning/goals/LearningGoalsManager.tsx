@@ -181,7 +181,7 @@ export default function LearningGoalsManager({
         <div className="rounded-2xl border border-[#2a3242] bg-[#111827] p-5">
           <h2 className="text-xl font-black text-white">No Learning Goals yet</h2>
           <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
-            Add a Learning Goal and your Mentor will create the first plan.
+            Add a Learning Goal and your Guidance Counselor will create the first plan.
           </p>
         </div>
       )}

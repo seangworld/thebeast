@@ -78,13 +78,13 @@ export default async function LearningGoalsPage() {
               <ModuleBadge module="learning" label="Learning Goals" />
               <h1 className="beast-title">Learning Goals</h1>
               <p className="beast-subtitle">
-                {learnerName}, manage what you want to learn. Your Mentor keeps one goal active while preserving progress across every goal.
+                {learnerName}, manage what you want to learn. Your Guidance Counselor keeps one goal active while preserving progress across every goal.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
               <LearningGoalDiscovery recentGoals={learningGoals} />
               <Link href="/dashboard/learning" className="beast-button-secondary">
-                Back to Mentor
+                Back to Guidance Counselor
               </Link>
             </div>
           </div>

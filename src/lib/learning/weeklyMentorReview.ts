@@ -126,13 +126,13 @@ export function buildWeeklyMentorReview({
     confidence.dimensions.find((dimension) => dimension.id === "confidence")
       ?.learnerLanguage || "I need one more reflection before I can read your confidence clearly.";
   const nextWeekRecommendation = missingData
-    ? "Complete one guided session so your Mentor has real evidence for next week."
+    ? "Complete one guided session so your Guidance Counselor has real evidence for next week."
     : weakAreas.length > 0
       ? `Start next week by reinforcing ${weakAreas[0]}.`
       : confidence.recommendation;
 
   return {
-    title: "Weekly Mentor Review",
+    title: "Weekly Guidance Counselor Review",
     summary: missingData
       ? "I do not have enough saved learning evidence for a real weekly trend yet."
       : `This week has ${completedActivities.length} completed learning activity record${completedActivities.length === 1 ? "" : "s"}.`,

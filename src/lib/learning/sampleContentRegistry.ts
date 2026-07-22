@@ -356,7 +356,7 @@ export const combiningLikeTermsLesson: AdaptiveLesson = {
   reflectionPrompts: [
     "What makes two terms like terms?",
     "Which part felt easiest: grouping terms, adding coefficients, or checking the final expression?",
-    "What should your Mentor review with you before the next lesson?",
+    "What should your Guidance Counselor review with you before the next lesson?",
   ],
   masteryThreshold: 80,
   recommendedNextLesson: "Solving one-step equations",

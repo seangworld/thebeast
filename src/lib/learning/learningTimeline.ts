@@ -93,7 +93,7 @@ export function buildLearningTimeline({
         id: `activity-review-${activity.id}`,
         type: "review_scheduled",
         title: `${activity.title} needs review`,
-        detail: activity.session_next_recommendation || "The Mentor should schedule review.",
+        detail: activity.session_next_recommendation || "The Guidance Counselor should schedule review.",
         occurredAt: activity.completed_at || activity.created_at || undefined,
         priority: "high",
       });
@@ -190,6 +190,6 @@ export function buildMentorLearningMemory(input: TimelineInput): MentorLearningM
     reviewDue: reviewDue
       ? `Review due: ${reviewDue.title}.`
       : "No review is currently due from saved session outcomes.",
-    nextReason: recommendation?.reason || "The next reason will appear after a Mentor recommendation is generated.",
+    nextReason: recommendation?.reason || "The next reason will appear after a Guidance Counselor recommendation is generated.",
   };
 }

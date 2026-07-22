@@ -84,7 +84,7 @@ const instructionsByType: Record<LearningActivityType, string> = {
   "AI Tutor Challenge":
     "Use your Tutor as a coach. Ask for help that keeps you thinking, then capture the takeaway.",
   Reflection:
-    "Pause and make the learning visible. This helps your Mentor choose the next step more carefully.",
+    "Pause and make the learning visible. This helps your Guidance Counselor choose the next step more carefully.",
 };
 
 export function normalizeLearningActivityType(

@@ -235,7 +235,7 @@ const teachingPhases: LessonEnginePhase[] = [
     id: "reflection",
     label: "Reflection",
     title: "Make the learning stick",
-    prompt: "Capture what changed in your understanding and where your Mentor should help next.",
+    prompt: "Capture what changed in your understanding and where your Guidance Counselor should help next.",
     check: "I wrote a reflection.",
   },
   {
@@ -277,7 +277,7 @@ function buildGenericAdaptiveLesson(activity: Pick<LearningActivityRunnerRow, "t
     title: activity.title,
     learningObjective: `Understand the core idea in ${activity.title} and use it in one guided attempt.`,
     masteryThreshold: activity.difficulty === "Advanced" ? 85 : 80,
-    recommendedNextLesson: "Continue with the next lesson your Mentor chooses",
+    recommendedNextLesson: "Continue with the next lesson your Guidance Counselor chooses",
     reviewRecommendation: "Review the core idea once more before moving forward.",
   };
 }
@@ -308,7 +308,7 @@ const lessonCompletionCriteria: LessonCompletionCriterion[] = [
   },
   {
     id: "reflection-captured",
-    label: "Write one reflection so your Mentor knows what changed.",
+    label: "Write one reflection so your Guidance Counselor knows what changed.",
     required: true,
   },
   {

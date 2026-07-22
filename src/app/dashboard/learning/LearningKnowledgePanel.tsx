@@ -53,7 +53,7 @@ export default function LearningKnowledgePanel({
         <MetricTile
           label="Careers"
           value={String(knowledge.careers.length)}
-          detail="Mentor models"
+          detail="Guidance Counselor models"
           icon="G"
           tone="green"
         />

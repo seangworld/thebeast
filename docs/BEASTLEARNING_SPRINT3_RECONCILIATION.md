@@ -4,7 +4,7 @@ Date: 2026-07-13
 
 ## Scope
 
-Sprint 3 moved BeastEducation from static lesson flow toward Mentor-led adaptive learning. BeastOS continues to own profile intelligence, identity, permissions, and personas. BeastEducation owns learning behavior, Tutor orchestration, learning plans, sessions, mastery, curriculum, certification alignment, and learner-specific learning intelligence.
+Sprint 3 moved BeastEducation from static lesson flow toward Guidance Counselor-led adaptive learning. BeastOS continues to own profile intelligence, identity, permissions, and personas. BeastEducation owns learning behavior, Tutor orchestration, learning plans, sessions, mastery, curriculum, certification alignment, and learner-specific learning intelligence.
 
 ## Integrated Sprint 3 Capabilities
 
@@ -19,8 +19,8 @@ Primary implementation:
 Current behavior:
 
 - Decides whether to continue, review, remediate, accelerate, or skip mastered content.
-- Explains recommendations in Mentor language.
-- Feeds Mentor Home mission selection without replacing existing course, session, or entitlement logic.
+- Explains recommendations in Guidance Counselor language.
+- Feeds Guidance Counselor Home mission selection without replacing existing course, session, or entitlement logic.
 
 ### Dynamic Lesson Generation
 
@@ -61,7 +61,7 @@ Current behavior:
 
 - Uses smaller explanations, hints, alternate explanations, prerequisite review, and retry logic.
 - Avoids repeating the same lesson as the only remediation path.
-- Records remediation-related outcomes for Mentor review.
+- Records remediation-related outcomes for Guidance Counselor review.
 
 ### Knowledge Graph
 
@@ -123,15 +123,15 @@ Current behavior:
 
 - Learning Insights now accepts the shared mastery and prediction objects instead of relying only on progress tiles when richer Sprint 3 intelligence is available.
 - Journey progress uses built course/module/lesson/topic/activity data instead of a separate goal-progress-only roadmap.
-- Mentor Home reads journey summaries from the shared journey builder rather than calculating separate progress language.
+- Guidance Counselor Home reads journey summaries from the shared journey builder rather than calculating separate progress language.
 
 ## Roadmap Reconciliation
 
 Sprint 3 is reconciled as the intelligence foundation for BeastEducation:
 
-- Mentor Home remains the primary landing experience.
+- Guidance Counselor Home remains the primary landing experience.
 - Conversation-first sessions remain the primary lesson experience.
-- Adaptive decisions are evidence-based and explained in natural Mentor language.
+- Adaptive decisions are evidence-based and explained in natural Guidance Counselor language.
 - Dynamic lessons are curriculum-aligned where authority exists and honest about missing mapping where it does not.
 - Diagnostics and remediation act on root causes and prerequisites.
 - Knowledge graph and certification intelligence support recommendations without exposing implementation.
@@ -147,7 +147,7 @@ Sprint 4 should focus on persistence, scale, and production readiness:
 4. Expand journey rendering into a dedicated Learning Journey page with filters for active, archived, review due, and completed goals.
 5. Connect certification readiness to real practice-exam attempts and objective-level evidence.
 6. Add learner-facing history for unlock events, checkpoint completion, and remediation completion.
-7. Add mobile visual QA for Mentor Home, conversation sessions, and journey progression.
+7. Add mobile visual QA for Guidance Counselor Home, conversation sessions, and journey progression.
 8. Add production-safe telemetry for lesson completion, review due, remediation outcomes, and readiness movement.
 9. Replace remaining mock learning memory and intelligence fixtures with learner-scoped persisted data.
 10. Define deployment gates for curriculum authority, generated lesson review, and certification-readiness claims.

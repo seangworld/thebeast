@@ -207,7 +207,7 @@ export function buildMentorHomeMission(
   if (!hasSufficientLearnerData) {
     return {
       state: "first_use",
-      greeting: `Hi ${learnerFirstName}. I am your Mentor.`,
+      greeting: `Hi ${learnerFirstName}. I am your Guidance Counselor.`,
       missionTitle: "Set your first learning direction",
       missionLabel: "First step",
       durationLabel: "10 minutes",
@@ -288,7 +288,7 @@ export function buildMentorHomeMission(
           : adaptiveProgression?.nextFocus
             ? `After this, I will decide whether to continue, review, remediate, or advance around ${adaptiveProgression.nextFocus}.`
             : input.learningRecommendations[0]?.recommendedAction ||
-              "After this, your Mentor will review the result and choose the next useful step.",
+              "After this, your Guidance Counselor will review the result and choose the next useful step.",
       journeyProgressLabel: journeySummary.progress,
       journeyRemainingLabel: journeySummary.remaining,
       journeyMilestoneLabel: journeySummary.milestone,
@@ -307,7 +307,7 @@ export function buildMentorHomeMission(
     return {
       state: "completed_queue",
       greeting: `Nice work, ${learnerFirstName}. Your assigned activity queue is complete.`,
-      missionTitle: "Choose the next useful step with your Mentor",
+      missionTitle: "Choose the next useful step with your Guidance Counselor",
       missionLabel: "Next planning moment",
       durationLabel: "10 minutes",
       recommendationReason:
@@ -329,7 +329,7 @@ export function buildMentorHomeMission(
       primaryAction: {
         label: "Review next step",
         href: "#mentor-plan",
-        detail: "Use the Mentor plan area to decide what should come after the completed queue.",
+        detail: "Use the Guidance Counselor plan area to decide what should come after the completed queue.",
       },
       secondaryActions,
       hasSufficientLearnerData,
@@ -347,7 +347,7 @@ export function buildMentorHomeMission(
       lowestCourse && lowestCourse.progress < 100
         ? `${lowestCourse.title} has the lowest mapped progress in your current course data, so I am making that the next review focus.`
         : input.learningRecommendations[0]?.reason ||
-          "Your current learning data suggests a short Mentor review before starting new work.",
+          "Your current learning data suggests a short Guidance Counselor review before starting new work.",
       adaptiveProgression
     ),
     currentGoalLabel,
@@ -363,9 +363,9 @@ export function buildMentorHomeMission(
     journeyMilestoneLabel: journeySummary.milestone,
     journeyUnlockLabel: journeySummary.unlock,
     primaryAction: {
-      label: "Review with Mentor",
+      label: "Review with Guidance Counselor",
       href: "#mentor-session",
-      detail: "Use the Mentor home to confirm the next focused step.",
+      detail: "Use the Guidance Counselor home to confirm the next focused step.",
     },
     secondaryActions,
     hasSufficientLearnerData,

@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   buildEducationGuidancePlan,
   educationDiscoveryQuestions,
+  guidanceCounselorPromptFramework,
   summarizeEducationProgress,
   type EducationProfile,
 } from "../src/lib/education";
@@ -41,6 +42,17 @@ test("BeastEducation discovery progressively assembles a guidance-first plan", (
   assert.ok(complete.educationPlan.length > 0);
   assert.ok(complete.certificationPlan.length > 0);
   assert.deepEqual(complete.resources.map((resource) => resource.provider), profile.preferredFormats);
+  assert.ok(complete.schoolPlan.length > 0);
+});
+
+test("Guidance Counselor owns lifelong guidance while specialists own teaching", () => {
+  assert.match(guidanceCounselorPromptFramework.role, /not primary teaching/i);
+  assert.match(guidanceCounselorPromptFramework.responsibilities.join(" "), /career, certification, school, book/);
+  assert.match(guidanceCounselorPromptFramework.boundaries.join(" "), /hand off/);
+  const schoolsProfile = { ...profile, preferredFormats: ["Schools"] as const };
+  const plan = buildEducationGuidancePlan({ profile: schoolsProfile, goalKind: "education", goal: "Computer science degree" });
+  assert.equal(plan.resources[0].provider, "Schools");
+  assert.match(plan.resources[0].verificationNote, /accreditation/);
 });
 
 test("BeastEducation tracks meaningful long-term roadmap progress", () => {

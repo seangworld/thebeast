@@ -529,7 +529,7 @@ export const mockGoals: Goal[] = [
     status: "Active",
     summary: "Prepare for the Security+ certification.",
     targetDate: "2026-10-01",
-    currentStep: "Continue the next Mentor mission.",
+    currentStep: "Continue the next Guidance Counselor mission.",
     sourceModule: "learning",
     supportItems: [],
     references: [],

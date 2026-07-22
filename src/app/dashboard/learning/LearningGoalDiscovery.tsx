@@ -329,7 +329,7 @@ export default function LearningGoalDiscovery({
 
               <div className="rounded-xl border border-indigo-300/25 bg-indigo-300/10 p-4">
                 <div className="text-xs font-bold uppercase text-indigo-100">
-                  Mentor
+                  Guidance Counselor
                 </div>
                 <p className="mt-2 text-sm font-semibold leading-6 text-indigo-50">
                   {message ||

@@ -8,10 +8,10 @@ import { createClient } from "@/lib/supabase/client";
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
-  const mentorPromises = [
-    "We start with a conversation, not a dashboard.",
-    "You can tell your Mentor your goal in plain words.",
-    "When it is time to learn, your Mentor brings in the Tutor.",
+  const counselorPromises = [
+    "Your story, strengths, constraints, and goals shape the roadmap.",
+    "Compare career, school, certification, book, and external resource paths.",
+    "When a knowledge gap needs teaching, your Guidance Counselor brings in a specialist resource.",
   ];
 
   async function sendMagicLink() {
@@ -54,19 +54,19 @@ export default function LoginPage() {
             <p className="beast-kicker">BeastEducation Guidance Counselor - The Beast {APP_VERSION}</p>
             <h1 className="beast-title">Meet Your BeastEducation Guidance Counselor</h1>
             <p className="beast-subtitle">
-              Start with someone who learns where you want to go, helps choose
-              the next step, and brings in the Tutor when you are ready to learn.
+              Build a lifelong education profile, explore credible paths, and
+              adapt your roadmap as your goals and progress change.
             </p>
           </div>
 
           <div className="mt-6 rounded-2xl border border-indigo-300/35 bg-indigo-300/10 p-4">
             <p className="text-sm font-semibold leading-6 text-indigo-100">
-              {"Hi. I'm your Mentor. Tell me what you want your future to look like, and I will help you build the path one step at a time."}
+              {"Hi. I'm your Guidance Counselor. Tell me what you want your future to look like, and I will help you build the path one step at a time."}
             </p>
           </div>
 
           <div className="mt-5 grid gap-3">
-            {mentorPromises.map((promise) => (
+            {counselorPromises.map((promise) => (
               <div
                 key={promise}
                 className="rounded-xl border border-[#2a3242] bg-[#111827] px-4 py-3 text-sm font-semibold text-[#c7cfdb]"
@@ -105,7 +105,7 @@ export default function LoginPage() {
           )}
 
           <p className="mt-5 text-xs leading-5 text-[#7f8da3]">
-            Your Mentor will meet you inside and help you decide what to do next.
+            Your Guidance Counselor will meet you inside and help you decide what to do next.
           </p>
         </section>
       </div>

@@ -100,7 +100,7 @@ export function buildGuidedLearningSession(
         weakConcepts.length > 0 ? weakConcepts : ["No urgent weak concept was identified from this session."],
       meaning: input.progress.mastered
         ? "This result suggests you are ready to continue."
-        : "This result suggests the Mentor should reinforce or review before moving too quickly.",
+        : "This result suggests the Guidance Counselor should reinforce or review before moving too quickly.",
       nextStep,
     },
   };

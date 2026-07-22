@@ -87,7 +87,7 @@ export const beastAdminFeedbackItems: BeastAdminFeedbackItem[] = [
     module: "BeastEducation",
     user: "Beta Member",
     status: "New",
-    summary: "Mentor Home made the next learning action clear.",
+    summary: "Guidance Counselor Home made the next learning action clear.",
   },
   {
     id: "feedback-money-nav",

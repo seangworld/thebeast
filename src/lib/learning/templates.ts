@@ -129,7 +129,7 @@ export const learningPathTemplates: LearningPathTemplate[] = [
   },
   {
     id: "mentor-planning",
-    templateName: "Mentor Planning",
+    templateName: "Guidance Counselor Planning",
     audience: "Students, families, and advisors",
     goalType: "Academic and career planning",
     milestones: [

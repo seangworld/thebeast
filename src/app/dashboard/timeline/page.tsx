@@ -39,7 +39,7 @@ const timelineItems: PlatformTimelineItem[] = [
     sourceRecordId: "mentor-next-step",
     kind: "Scheduled",
     title: "Learning step queued",
-    summary: "BeastEducation contributed the next Mentor-guided learning step.",
+    summary: "BeastEducation contributed the next Guidance Counselor-guided learning step.",
     occurredAt: "2026-07-17T11:00:00.000Z",
     visibility: "Owner",
     href: "/dashboard/learning",

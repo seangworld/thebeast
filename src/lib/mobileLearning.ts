@@ -75,17 +75,17 @@ export function buildMobileLearningQuickActionCards({
     source: "learning",
     title:
       mission.state === "resume"
-        ? "Resume Mentor session"
+        ? "Resume Guidance Counselor session"
         : openActivity
           ? "Continue ready activity"
-          : "Open Mentor home",
+          : "Open Guidance Counselor home",
     summary:
       mission.state === "resume"
         ? mission.primaryAction.detail
         : openActivity
           ? openActivity.session_recap ||
             "Continue the next assigned BeastEducation activity from its source route."
-          : "No unfinished activity is waiting. Mentor Home will choose the next useful step.",
+          : "No unfinished activity is waiting. Guidance Counselor Home will choose the next useful step.",
     href: openActivity ? getLearningActivityRoute(openActivity.id) : mission.primaryAction.href,
     actionLabel: openActivity
       ? getLearningActivityPrimaryActionLabel(openActivity.activity_type)

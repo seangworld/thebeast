@@ -7,6 +7,7 @@ export type EducationResourceProvider =
   | "Microsoft Learn"
   | "Books"
   | "Certifications"
+  | "Schools"
   | "Future provider";
 
 export type EducationProfile = {
@@ -20,6 +21,9 @@ export type EducationProfile = {
   preferredFormats: readonly EducationResourceProvider[];
   weeklyHours: number;
   targetDate?: string;
+  educationHistory?: readonly string[];
+  careerInterests?: readonly string[];
+  meaningfulProgress?: readonly string[];
 };
 
 export type EducationDiscoveryAnswer = {
@@ -63,6 +67,7 @@ export type EducationGuidancePlan = {
   careerPlan: readonly string[];
   educationPlan: readonly string[];
   certificationPlan: readonly string[];
+  schoolPlan: readonly string[];
   roadmap: readonly EducationRoadmapMilestone[];
   resources: readonly EducationResourceRecommendation[];
   teachingSupport: string;

@@ -96,7 +96,7 @@ export default function LearningActivityRunnerPage() {
       if (activityResult.error) throw activityResult.error;
 
       if (!activityResult.data) {
-        setMessage("Your Mentor could not find that lesson for this account.");
+        setMessage("Your Guidance Counselor could not find that lesson for this account.");
         setActivity(null);
         setLoading(false);
         return;
@@ -276,8 +276,8 @@ export default function LearningActivityRunnerPage() {
       await loadActivity();
       setMessage(
         nextQueued
-          ? `Nice work. ${nextQueued.title} is ready when your Mentor brings you back.`
-          : "Nice work. Return to Today and your Mentor will recommend what comes next."
+          ? `Nice work. ${nextQueued.title} is ready when your Guidance Counselor brings you back.`
+          : "Nice work. Return to Today and your Guidance Counselor will recommend what comes next."
       );
     } catch (error) {
       setMessage(
@@ -323,7 +323,7 @@ export default function LearningActivityRunnerPage() {
         .eq("user_id", userId);
 
       if (error) throw error;
-      setMessage("Your reflection is saved for your Mentor.");
+      setMessage("Your reflection is saved for your Guidance Counselor.");
     } catch {
       setMessage("Reflection stayed private on this device because the saved reflection fields are not available yet.");
     } finally {
@@ -388,17 +388,17 @@ export default function LearningActivityRunnerPage() {
             <div className="space-y-4">
               <ModuleBadge module="learning" label="Guided session" />
               <h1 className="beast-title">
-                {activity?.title || "Time with your Mentor"}
+                {activity?.title || "Time with your Guidance Counselor"}
               </h1>
               <p className="beast-subtitle">
-                Your Mentor introduces the session, brings in the right Tutor
+                Your Guidance Counselor introduces the session, brings in the right Tutor
                 when teaching starts, and receives the outcome back for recap,
                 reflection, and the next recommendation.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
               <Link href="/dashboard/learning#mentor-session" className="beast-button-secondary">
-                Back to Mentor
+                Back to Guidance Counselor
               </Link>
               <Link href="/dashboard/today" className="beast-button">
                 Today
@@ -429,7 +429,7 @@ export default function LearningActivityRunnerPage() {
                 eyebrow={`Session state: ${guidedSession.state.replace(/_/g, " ")}`}
                 title={guidedSession.objective}
                 description={guidedSession.mentorIntroduction}
-                action={<ModuleBadge module="learning" label="Mentor" />}
+                action={<ModuleBadge module="learning" label="Guidance Counselor" />}
               />
               <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                 {[
@@ -463,7 +463,7 @@ export default function LearningActivityRunnerPage() {
             {completedActivity ? (
               <DashboardCard accent="green">
                 <SectionHeader
-                  eyebrow="Mentor recap"
+                  eyebrow="Guidance Counselor recap"
                   title="Your session is saved."
                   description={guidedSession.recap.meaning}
                   action={<ModuleBadge module="learning" label="Completed" />}
@@ -498,7 +498,7 @@ export default function LearningActivityRunnerPage() {
                     href="/dashboard/learning#mentor-session"
                     className="beast-button-secondary"
                   >
-                    Back to Mentor
+                    Back to Guidance Counselor
                   </Link>
                 </div>
               </DashboardCard>
@@ -546,7 +546,7 @@ export default function LearningActivityRunnerPage() {
                 <SectionHeader
                   eyebrow="Learner reflection"
                   title="How did this session feel?"
-                  description="This is optional, quick, and used only as learning context for future Mentor recommendations."
+                  description="This is optional, quick, and used only as learning context for future Guidance Counselor recommendations."
                 />
                 <div
                   className="mt-5 flex flex-wrap gap-2"
@@ -577,13 +577,13 @@ export default function LearningActivityRunnerPage() {
                     onChange={(event) => setReflectionNote(event.target.value)}
                     rows={3}
                     className="beast-input mt-2 min-h-20 resize-y"
-                    placeholder="Anything your Mentor should know before choosing the next step?"
+                    placeholder="Anything your Guidance Counselor should know before choosing the next step?"
                   />
                 </label>
                 {reflectionOutcome ? (
                   <div className="mt-4 rounded-xl border border-[#2a3242] bg-[#111827] p-4">
                     <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                      Mentor response
+                      Guidance Counselor response
                     </div>
                     <p className="mt-2 text-sm leading-6 text-white">
                       {reflectionOutcome.mentorResponse}
@@ -602,7 +602,7 @@ export default function LearningActivityRunnerPage() {
                       {saving ? "Saving..." : "Save reflection"}
                     </button>
                     <p id="reflection-save-help" className="mt-2 text-xs font-semibold text-[#7f8da3]">
-                      Saves only your reflection note and session-feeling choice for future Mentor recommendations.
+                      Saves only your reflection note and session-feeling choice for future Guidance Counselor recommendations.
                     </p>
                   </div>
                 ) : null}
@@ -614,8 +614,8 @@ export default function LearningActivityRunnerPage() {
             <SectionHeader
               eyebrow="Let’s find the right lesson"
               title="This lesson is not available"
-              description="Your Mentor could not open this lesson for this account. Go back to the Mentor conversation and choose the next step from there."
-              action={<Link href="/dashboard/learning#mentor-session" className="beast-button">Back to Mentor</Link>}
+              description="Your Guidance Counselor could not open this lesson for this account. Go back to the Guidance Counselor conversation and choose the next step from there."
+              action={<Link href="/dashboard/learning#mentor-session" className="beast-button">Back to Guidance Counselor</Link>}
             />
           </DashboardCard>
         )}

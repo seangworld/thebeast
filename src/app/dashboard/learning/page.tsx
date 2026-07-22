@@ -232,19 +232,19 @@ function buildStudySessionCommandFromSession(
   return {
     id: session ? `${session.id}-command` : "starter-learning-command",
     sessionId: session?.id || "starter-learning-session",
-    currentFocus: session?.title || "Your Mentor is choosing a starting point",
+    currentFocus: session?.title || "Your Guidance Counselor is choosing a starting point",
     estimatedTime: session?.duration || "0 min",
     warmUpPrompt: session
       ? "Write down what you already know before starting this session."
-      : "Tell your Mentor what you want to learn first.",
+      : "Tell your Guidance Counselor what you want to learn first.",
     guidedPracticeStep: session
       ? "Work through the next focused practice step for this session."
-      : "Your Mentor will help turn that goal into a first lesson.",
+      : "Your Guidance Counselor will help turn that goal into a first lesson.",
     reflectionCheckpoint: session
       ? "Capture one thing that clicked and one thing to review next."
       : "After your first lesson, your Tutor will ask what clicked and what still feels unclear.",
     progressFeedback: session
-      ? "Nice work. Your Mentor has what it needs to choose the next step."
+      ? "Nice work. Your Guidance Counselor has what it needs to choose the next step."
       : "Your first saved lesson will appear here.",
   };
 }
@@ -269,7 +269,7 @@ function ProgressBar({ value }: { value: number }) {
   );
 }
 
-function MentorHome({
+function GuidanceCounselorHome({
   mission,
   confidence,
   memory,
@@ -570,7 +570,7 @@ function MentorHome({
   );
 }
 
-function WeeklyMentorReviewPanel({
+function WeeklyGuidanceReviewPanel({
   review,
   achievements,
 }: {
@@ -646,7 +646,7 @@ function WeeklyMentorReviewPanel({
           ))}
           {achievements.length === 0 ? (
             <p className="text-sm font-semibold leading-6 text-[#c7cfdb]">
-              No meaningful achievement is being awarded yet. Your Mentor will wait for real outcomes, not clicks.
+              No meaningful achievement is being awarded yet. Your Guidance Counselor will wait for real outcomes, not clicks.
             </p>
           ) : null}
         </div>
@@ -676,7 +676,7 @@ function MobileLearningQuickActions({
         >
           <div className="flex min-w-0 flex-col gap-2">
             <div className="text-xs font-black uppercase text-indigo-100">
-              {card.metadata[0] || "Mentor"}
+              {card.metadata[0] || "Guidance Counselor"}
             </div>
             <h2 className="break-words text-lg font-black leading-snug text-white">
               {card.title}
@@ -789,7 +789,7 @@ export default async function LearningPage() {
         id: "current",
         name: fallbackName,
         role: "Learner",
-        focus: "Your Mentor will learn what helps you best.",
+        focus: "Your Guidance Counselor will learn what helps you best.",
         active: true,
       };
   const userGoals = ((goalsResult.data || []) as Record<string, unknown>[]).map(mapGoalRow);
@@ -808,7 +808,7 @@ export default async function LearningPage() {
         id: "starter-learning-path",
         learnerId: activeLearner.id,
         title: activeGoal?.title || "Starter learning path",
-        summary: activeGoal?.target || "Your Mentor will help you choose a first goal.",
+        summary: activeGoal?.target || "Your Guidance Counselor will help you choose a first goal.",
         primaryGoalId: activeGoal?.id,
         weeklySessionTarget: 0,
       };
@@ -969,7 +969,7 @@ export default async function LearningPage() {
         <MobileLearningQuickActions cards={mobileLearningCards} />
 
         <div id="guidance" className="scroll-mt-24">
-          <MentorHome
+          <GuidanceCounselorHome
             mission={mentorHomeMission}
             confidence={confidenceIntelligence}
             memory={mentorLearningMemory}
@@ -986,13 +986,13 @@ export default async function LearningPage() {
             <SectionHeader
               eyebrow="Learning access"
               title="Everything else stays available"
-              description="The Mentor leads the next action, while courses, goals, study planning, review tools, and records remain close by."
+              description="The Guidance Counselor leads the next action, while courses, goals, study planning, review tools, and records remain close by."
             />
             <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {[
-                ["goals", "Learning Goals", learningGoals[0]?.title || "Add a Learning Goal and your Mentor will build a first plan."],
+                ["goals", "Learning Goals", learningGoals[0]?.title || "Add a Learning Goal and your Guidance Counselor will build a first plan."],
                 ["study-plan", "Study Plan", learningPlan.summary],
-                ["courses", "Learning Paths", learningCourses[0]?.title || "Learning paths appear here when your Mentor creates them."],
+                ["courses", "Learning Paths", learningCourses[0]?.title || "Learning paths appear here when your Guidance Counselor creates them."],
                 ["flashcards", "Review", progressSignals.weakArea],
                 ["achievements", "Achievements", `${learningAchievements.length} learning achievement record${learningAchievements.length === 1 ? "" : "s"}.`],
                 ["certificate-access", "Certificates", `${learningCertificates.length} certificate record${learningCertificates.length === 1 ? "" : "s"}.`],
@@ -1024,7 +1024,7 @@ export default async function LearningPage() {
         </section>
 
         <section id="weekly-review" className="scroll-mt-24">
-          <WeeklyMentorReviewPanel
+          <WeeklyGuidanceReviewPanel
             review={weeklyMentorReview}
             achievements={meaningfulAchievements}
           />
@@ -1035,7 +1035,7 @@ export default async function LearningPage() {
             <SectionHeader
               eyebrow="Wins"
               title="Wins worth noticing"
-              description="Your Mentor notices effort, consistency, mastery, and meaningful milestones along the way."
+              description="Your Guidance Counselor notices effort, consistency, mastery, and meaningful milestones along the way."
             />
             <div className="mt-5 grid gap-3">
               {learningAchievements.map((achievement) => (

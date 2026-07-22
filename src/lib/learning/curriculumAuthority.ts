@@ -543,7 +543,7 @@ export const lessonObjectiveAlignments: LessonObjectiveAlignment[] = [
     courseId: "cybersecurity-certification-prep-course",
     objectiveIds: ["objective-certification-baseline"],
     whyItExists:
-      "The Mentor needs a baseline before recommending a certification plan or first lesson.",
+      "The Guidance Counselor needs a baseline before recommending a certification plan or first lesson.",
     prerequisiteObjectiveIds: [],
     prerequisiteSummary: "No prerequisite objective is required.",
     knowledgeCheckIds: ["quiz-cert-plan-1"],
