@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildPayoffPlanDisplayRows, parsePayoffColumnPreference } from "../src/lib/payoffPlanView";
+import { buildPayoffPlanDisplayRows, parsePayoffColumnPreference, resolveSuggestedPayment } from "../src/lib/payoffPlanView";
 import type { UnifiedStrategyResult } from "../src/lib/unifiedStrategyEngine";
 
 const result: UnifiedStrategyResult = {
@@ -24,6 +24,23 @@ test("Payoff Plan display preserves engine calculations and derives progressive 
   assert.equal(rows[0].monthsRemaining, 1);
   assert.equal(rows[1].status, "Paid off");
   assert.equal(rows[0].payoffDate, "Sep 2026");
+  assert.equal(rows[0].suggestedPayment, 100);
+  assert.equal(rows[0].suggestedPaymentSource, "planned_fallback");
+  assert.match(rows[0].suggestedPaymentWhy, /No Money Coach recommendation/);
+});
+
+test("Suggested Payment accepts a future Money Coach recommendation without changing engine values", () => {
+  const rows = buildPayoffPlanDisplayRows(result, [{ id: "debt-1", name: "Card", interest_rate: 18 }], new Date(2026, 6, 1), [{ debtId: "debt-1", amount: 125, why: "Current cash flow supports an additional payment while preserving the emergency fund.", generatedAt: "2026-07-21T12:00:00Z", inputs: ["cash_flow", "emergency_fund", "financial_story"] }]);
+  assert.equal(rows[0].suggestedPayment, 125);
+  assert.equal(rows[0].suggestedPaymentSource, "money_coach");
+  assert.equal(rows[0].total_payment, 100);
+  assert.equal(rows[0].required_minimum, 50);
+  assert.match(rows[0].suggestedPaymentWhy, /preserving the emergency fund/);
+});
+
+test("Suggested Payment safely falls back to minimum when no plan or recommendation exists", () => {
+  const suggested = resolveSuggestedPayment({ ...result.payoff_months[0], total_payment: 0 }, "debt-1", []);
+  assert.deepEqual(suggested, { amount: 50, source: "minimum_fallback", label: "Minimum payment fallback", why: "No Money Coach recommendation or planned payment is available yet. Using the required minimum payment." });
 });
 
 test("Payoff Plan column preferences accept only supported optional columns", () => {
@@ -32,11 +49,14 @@ test("Payoff Plan column preferences accept only supported optional columns", ()
   assert.deepEqual(parsePayoffColumnPreference(null), []);
 });
 
-test("Payoff Plan uses six default columns, row details, local preferences, and phone cards", async () => {
+test("Payoff Plan uses a responsive Suggested Payment column, row details, local preferences, and phone cards", async () => {
   const { readFile } = await import("node:fs/promises");
   const source = await readFile("src/app/dashboard/money/debts/page.tsx", "utf8");
   const css = await readFile("src/app/globals.css", "utf8");
-  for (const column of ["Debt", "Balance", "APR", "Planned Payment", "Payoff Date", "Status"]) assert.match(source, new RegExp(`>${column}<`));
+  for (const column of ["Debt", "Balance", "APR", "Planned Payment", "Suggested Payment", "Payoff Date", "Status"]) assert.match(source, new RegExp(`>${column}<`));
+  assert.match(source, />Minimum Payment</);
+  assert.match(source, />Why\?</);
+  assert.match(source, /suggestedPaymentLabel/);
   for (const detail of ["Minimum payment", "Remaining interest", "Total projected interest", "Months remaining", "Funding source", "Velocity Banking details", "Scenario assumptions", "Notes"]) assert.match(source, new RegExp(detail));
   assert.match(source, /data-payoff-plan-cards/);
   assert.doesNotMatch(source, /money-payoff-table w-full min-w-/);
