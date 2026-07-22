@@ -33,6 +33,7 @@ const input = {
   recommendationHref: "/dashboard/money/cashflow",
   interestSaved: 900,
   timeSavedMonths: 4,
+  billsDueSoon: [{ name: "Electric", amount: 140, dueDate: "Jul 24" }],
 };
 
 test("MC-201 derives the Money Coach landing experience from current calculations", () => {
@@ -94,6 +95,20 @@ test("MC-201 answers with deterministic existing calculations and Explain Why", 
   assert.match(response.text, /Cash Intelligence/);
 });
 
+test("AGENT-211 responds naturally to testing, actual bills, affordability, and non-financial conversation", () => {
+  const model = buildMoneyCoachExperience(input);
+  assert.match(answerMoneyCoachQuestion("testing", model).text, /testing the conversation/i);
+  const bills = answerMoneyCoachQuestion("What bills need attention?", model);
+  assert.match(bills.text, /Electric/);
+  assert.match(bills.text, /\$140/);
+  assert.match(bills.text, /Jul 24/);
+  const affordability = answerMoneyCoachQuestion("Can I afford another payment?", model);
+  assert.match(affordability.text, /protected \$2,500\.00 reserve/);
+  assert.match(affordability.text, /\$1,800\.00/);
+  assert.match(affordability.text, /assumes your saved balances/i);
+  assert.match(answerMoneyCoachQuestion("What is your favorite movie?", model).text, /doesn’t appear to be a financial question/i);
+});
+
 test("MC-201 consumes the shared AgentExperience without replacing existing pages", () => {
   const component = readFileSync(
     "src/app/dashboard/money/components/MoneyCoachExperience.tsx",
@@ -103,17 +118,11 @@ test("MC-201 consumes the shared AgentExperience without replacing existing page
 
   assert.match(component, /from "@\/app\/components\/agents"/);
   assert.match(component, /<AgentExperience/);
-  assert.match(component, />Explain Why</);
   assert.match(component, /AgentMemoryRecord/);
-  assert.match(component, /Mark reviewed/);
-  assert.match(component, /Dismiss/);
   assert.match(component, /composerPlacement="before-cards"/);
-  assert.match(component, /cardsPlacement="after-conversation"/);
-  assert.match(component, /cardsLayout="stack"/);
-  assert.match(component, /Today&apos;s Financial Review/);
-  assert.match(component, /Needs Attention/);
-  assert.match(component, /Progress/);
-  assert.match(component, /Opportunities/);
+  assert.match(component, /Today&apos;s priorities/);
+  assert.doesNotMatch(component, /AgentSmartCard/);
+  assert.doesNotMatch(component, /Today&apos;s Financial Review/);
   assert.match(component, /buildMoneyCoachGreeting/);
   assert.match(component, /suggestion\.prompt/);
   assert.match(component, /ServerAgentConversationRepository/);
@@ -156,4 +165,9 @@ test("MC-201 consumes the shared AgentExperience without replacing existing page
     assert.match(landing, new RegExp(route));
   }
   assert.match(landing, /showPageHeader=\{false\}/);
+  assert.match(landing, /window\.location\.hash === "#money-dashboard"/);
+  assert.match(landing, /!showDashboard \? <MoneyCoachExperience/);
+  assert.match(landing, /Financial mission control/);
+  assert.match(landing, /BeastMoney Dashboard/);
+  assert.match(landing, /Explore current balances, obligations, forecasts, risks, trends, scenarios, and reports/);
 });

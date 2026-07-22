@@ -48,6 +48,14 @@ export type MoneyCoachExperienceModel = {
   behavior: ProfessionalBehaviorProfile;
   safetyNotice: string;
   userFirstName: string;
+  financialContext: {
+    currentCash: number;
+    cashBuffer: number;
+    projectedSurplus: number;
+    monthlyIncome: number;
+    monthlyOutflow: number;
+    billsDueSoon: readonly { name: string; amount: number; dueDate: string }[];
+  };
 };
 
 export type MoneyCoachExperienceInput = {
@@ -77,6 +85,7 @@ export type MoneyCoachExperienceInput = {
   recommendationHref: string;
   interestSaved: number;
   timeSavedMonths: number;
+  billsDueSoon?: readonly { name: string; amount: number; dueDate: string }[];
 };
 
 const priorityConfiguration = {
@@ -461,6 +470,14 @@ export function buildMoneyCoachExperience(
     behavior: specialistProfessionalProfiles.moneyCoach,
     safetyNotice: "Money Coach provides informational planning support, not financial, tax, investment, legal, credit, or lending advice. Verify current records and provider terms before acting; you remain in control.",
     userFirstName: firstName(input.userName),
+    financialContext: {
+      currentCash: input.currentCash,
+      cashBuffer: input.cashBuffer,
+      projectedSurplus: input.projectedSurplus,
+      monthlyIncome: input.monthlyIncome,
+      monthlyOutflow: input.monthlyOutflow,
+      billsDueSoon: input.billsDueSoon || [],
+    },
   };
 }
 
@@ -469,6 +486,39 @@ export function answerMoneyCoachQuestion(
   model: MoneyCoachExperienceModel
 ) {
   const normalized = question.toLowerCase();
+  const context = model.financialContext;
+
+  if (/\b(test|testing|test message)\b/.test(normalized)) {
+    return {
+      text: "It looks like you’re testing the conversation. Everything appears to be working. Whenever you’re ready, ask me anything about your finances.",
+      href: "/dashboard/money#money-dashboard",
+      action: "Open the financial dashboard",
+    };
+  }
+
+  if (/\b(afford|another payment|extra payment|pay extra)\b/.test(normalized)) {
+    const availableAboveReserve = Math.max(context.currentCash - context.cashBuffer, 0);
+    const cashPosition = context.currentCash >= context.cashBuffer
+      ? `${formatCurrency(availableAboveReserve)} is currently above your protected ${formatCurrency(context.cashBuffer)} reserve.`
+      : `Current cash is ${formatCurrency(context.cashBuffer - context.currentCash)} below your protected ${formatCurrency(context.cashBuffer)} reserve.`;
+    const projectedEffect = context.projectedSurplus >= 0
+      ? `Known monthly cash flow currently leaves ${formatCurrency(context.projectedSurplus)} after tracked obligations.`
+      : `Known monthly obligations currently exceed tracked income by ${formatCurrency(Math.abs(context.projectedSurplus))}.`;
+    return {
+      text: `${cashPosition} ${projectedEffect}\n\nMy current recommendation is: ${model.primaryRecommendation.action}\n\nExplain Why: ${model.primaryRecommendation.explainWhy}\n\nThis assumes your saved balances, income, and upcoming obligations are current. Would you like to compare a smaller payment or review the cash-flow forecast first?`,
+      href: "/dashboard/money#money-dashboard",
+      action: "Review the financial dashboard",
+    };
+  }
+
+  if (normalized.includes("bill") && context.billsDueSoon.length > 0) {
+    const bills = context.billsDueSoon.map((bill) => `• ${bill.name}: ${formatCurrency(bill.amount)}, due ${bill.dueDate}`).join("\n");
+    return {
+      text: `These bills need the closest attention based on their current due dates:\n\n${bills}\n\nThey matter because each is due within the next seven days. Would you like me to help you decide which income or cash source should cover them?`,
+      href: "/dashboard/money/cashflow#bills",
+      action: "Open Bills",
+    };
+  }
   const opportunity = normalized.includes("opportunit")
     ? model.insights.find((item) => item.category === "Opportunities")
     : undefined;
@@ -490,14 +540,23 @@ export function answerMoneyCoachQuestion(
 
   if (card) {
     return {
-      text: `${card.detail} Explain Why: ${card.explainWhy}`,
+      text: `${card.detail}\n\nExplain Why: ${card.explainWhy}\n\nWould you like to open the detailed workspace or explore a different option?`,
       href: card.href,
       action: `Open ${card.title}`,
     };
   }
 
+  const financialTerms = /\b(money|finance|bill|debt|cash|income|payment|retirement|forecast|velocity|funding|budget|spend|save|interest|credit)\b/;
+  if (!financialTerms.test(normalized)) {
+    return {
+      text: "That doesn’t appear to be a financial question. I’m here to help with your BeastMoney plan, including bills, debt, cash flow, funding sources, forecasts, and retirement. If you meant something financial, tell me a little more and I’ll help you work through it.",
+      href: "/dashboard/money#money-dashboard",
+      action: "Open the financial dashboard",
+    };
+  }
+
   return {
-    text: `${model.primaryRecommendation.action} Explain Why: ${model.primaryRecommendation.explainWhy}`,
+    text: `${model.primaryRecommendation.action}\n\nExplain Why: ${model.primaryRecommendation.explainWhy}\n\nWould you like me to explain the assumptions or open the detailed workspace?`,
     href: model.primaryRecommendation.href,
     action: "Review the current recommendation",
   };

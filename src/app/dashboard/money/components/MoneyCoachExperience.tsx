@@ -13,7 +13,6 @@ import {
   AgentGreeting,
   AgentHeader,
   AgentLoadingState,
-  AgentSmartCard,
   AgentStatus,
   AgentSuggestedActions,
   type AgentConversationMessage,
@@ -25,7 +24,6 @@ import {
   type AgentConversationThread,
   type AgentMemoryRecord,
   type AgentMessage,
-  type InsightStatus,
 } from "@/lib/platform/agents";
 import {
   answerMoneyCoachQuestion,
@@ -79,7 +77,6 @@ export function MoneyCoachExperience({
   const [input, setInput] = useState("");
   const [turns, setTurns] = useState<{ id: string; question: string; response: string; href: string; action: string }[]>([]);
   const [conversationTitle, setConversationTitle] = useState("Current financial review");
-  const [insightStatuses, setInsightStatuses] = useState<Record<string, InsightStatus>>({});
   const [localNow, setLocalNow] = useState<Date | null>(null);
   const [repository, setRepository] = useState<ServerAgentConversationRepository | null>(null);
   const [memoryStore, setMemoryStore] = useState<SupabaseAgentMemoryStore | null>(null);
@@ -237,7 +234,6 @@ export function MoneyCoachExperience({
     router.push(href);
   }
 
-  const visibleCards = model.cards.filter((card) => !["Dismissed", "Completed", "Archived"].includes(insightStatuses[card.insight.id] || card.insight.status));
   const localGreeting = localNow
     ? buildMoneyCoachGreeting(model.userFirstName, localNow)
     : model.userFirstName;
@@ -248,14 +244,7 @@ export function MoneyCoachExperience({
       : model.wins[0]
         ? `I reviewed today’s plan. Here’s the strongest positive signal: ${model.wins[0]}`
         : model.introduction;
-  const groupFor = (card: (typeof visibleCards)[number]) => {
-    if (["Needs Attention", "Upcoming"].includes(card.insight.category) || ["warning", "critical"].includes(card.insight.severity)) return "Needs Attention";
-    if (card.insight.category === "Opportunities" || ["funding-sources", "velocity-banking", "income-pots"].includes(card.id)) return "Opportunities";
-    return "Progress";
-  };
-  const reviewGroups = ["Needs Attention", "Progress", "Opportunities"]
-    .map((title) => ({ title, cards: visibleCards.filter((card) => groupFor(card) === title) }))
-    .filter((group) => group.cards.length > 0);
+  const todayPriorities = model.insights.slice(0, 3);
   const recentThreads = threads.slice(0, 10);
   const olderThreads = threads.slice(10);
   const historyThreads = [...recentThreads, ...olderThreads];
@@ -305,8 +294,6 @@ export function MoneyCoachExperience({
     <AgentExperience
       className="border-green-400/25"
       composerPlacement="before-cards"
-      cardsPlacement="after-conversation"
-      cardsLayout="stack"
       header={
         <AgentHeader
           title="Money Coach"
@@ -328,42 +315,14 @@ export function MoneyCoachExperience({
             message={error}
             retryAction={<button type="button" className="beast-button" onClick={onRetry}>Try Again</button>}
           />
+        ) : todayPriorities.length > 0 ? (
+          <section aria-labelledby="money-coach-priorities" className="mx-auto w-full max-w-3xl border-y border-white/[0.07] py-4">
+            <h2 id="money-coach-priorities" className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Today&apos;s priorities</h2>
+            <ul className="mt-3 grid gap-3">
+              {todayPriorities.map((insight) => <li key={insight.id} className="flex min-w-0 items-start justify-between gap-4 text-sm"><span className="leading-6 text-slate-200">{insight.summary}</span>{insight.navigationTarget ? <Link href={insight.navigationTarget} className="shrink-0 font-bold text-cyan-200">Review</Link> : null}</li>)}
+            </ul>
+          </section>
         ) : null}
-      smartCards={
-        !loading && !error ? (
-          <div id="money-coach-cards" className="grid gap-6">
-            <div>
-              <p className="text-xs font-black uppercase tracking-[0.14em] text-cyan-200">Supporting evidence</p>
-              <h2 className="mt-1 text-xl font-black text-white">Today&apos;s Financial Review</h2>
-              <p className="mt-2 text-sm leading-6 text-slate-400">Use these details to support the conversation or open a workspace when you need to go deeper.</p>
-            </div>
-            <AgentSmartCard
-              eyebrow="Recommended next step"
-              title={model.primaryRecommendation.title}
-              description={model.primaryRecommendation.action}
-              action={<Link className="beast-button" href={model.primaryRecommendation.href}>Review recommendation</Link>}
-            >
-              <details>
-                <summary className="cursor-pointer font-bold text-cyan-200">Explain Why</summary>
-                <p className="mt-2 leading-6 text-slate-300">{model.primaryRecommendation.explainWhy}</p>
-              </details>
-            </AgentSmartCard>
-            {reviewGroups.map((group) => (
-              <section key={group.title} aria-labelledby={`money-review-${group.title.toLowerCase().replace(/\s+/g, "-")}`}>
-                <h3 id={`money-review-${group.title.toLowerCase().replace(/\s+/g, "-")}`} className="mb-3 text-lg font-black text-white">{group.title}</h3>
-                <div className="grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                  {group.cards.map((card) => (
-                    <AgentSmartCard key={card.id} eyebrow={`${card.insight.priority} priority · ${card.summary}`} title={card.title} description={card.detail} action={<Link className="beast-button-secondary" href={card.href}>Review {card.title}</Link>}>
-                      <details><summary className="cursor-pointer font-bold text-cyan-200">Explain Why</summary><p className="mt-2 leading-6 text-slate-300">{card.explainWhy}</p><p className="mt-2 text-sm text-slate-400"><strong>Rule:</strong> {card.insight.provenance.calculationOrRule}</p><p className="mt-1 text-sm text-slate-400"><strong>Limitations:</strong> {card.insight.provenance.limitations.join(" ")}</p></details>
-                      <div className="mt-3 flex flex-wrap gap-2"><button type="button" className="beast-button-secondary min-h-11" onClick={() => setInsightStatuses((current) => ({ ...current, [card.insight.id]: "Reviewed" }))}>Mark reviewed</button><button type="button" className="beast-button-secondary min-h-11" onClick={() => setInsightStatuses((current) => ({ ...current, [card.insight.id]: "Dismissed" }))}>Dismiss</button></div>
-                    </AgentSmartCard>
-                  ))}
-                </div>
-              </section>
-            ))}
-          </div>
-        ) : null
-      }
       suggestedActions={
         !loading && !error ? (
           <AgentSuggestedActions

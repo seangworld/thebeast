@@ -253,6 +253,7 @@ export default function MoneyWorkspacePage() {
   const [userName, setUserName] = useState("there");
   const [ownerId, setOwnerId] = useState("authenticated-owner");
   const [simulationDate, setSimulationDate] = useState("");
+  const [showDashboard, setShowDashboard] = useState(false);
   const [coachCorrections, setCoachCorrections] = useState<CoachCorrections>({});
   const [coachRecommendationHistory, setCoachRecommendationHistory] = useState<
     FinancialCoachRecommendationRecord[]
@@ -363,6 +364,15 @@ export default function MoneyWorkspacePage() {
   useEffect(() => {
     loadMoneySnapshot();
   }, [loadMoneySnapshot]);
+
+  useEffect(() => {
+    function syncMoneyWorkspace() {
+      setShowDashboard(window.location.hash === "#money-dashboard");
+    }
+    syncMoneyWorkspace();
+    window.addEventListener("hashchange", syncMoneyWorkspace);
+    return () => window.removeEventListener("hashchange", syncMoneyWorkspace);
+  }, []);
 
   const snapshot = useMemo(() => {
     const simulation = buildFinancialSimulationState(simulationDate);
@@ -719,6 +729,12 @@ export default function MoneyWorkspacePage() {
         : "/dashboard/money/cashflow"),
     interestSaved: snapshot.financialInsights.interestSaved,
     timeSavedMonths: snapshot.financialInsights.timeSavedMonths,
+    billsDueSoon: snapshot.billsDueSoon.map((bill) => {
+      const dueDate = bill.next_due_date_after_payment
+        ? new Date(bill.next_due_date_after_payment)
+        : nextDueDateFromDay(bill.due_date, snapshot.simulation.asOfDate);
+      return { name: bill.name || "Upcoming bill", amount: numberValue(bill.amount), dueDate: formatDateLabel(dueDate) };
+    }),
   });
 
   return (
@@ -727,12 +743,17 @@ export default function MoneyWorkspacePage() {
       description="Money Coach leads your conversation-first experience, with the existing Money Cockpit grounded in current BeastMoney records and calculations below."
       showPageHeader={false}
     >
-      <MoneyCoachExperience
+      {!showDashboard ? <MoneyCoachExperience
         model={moneyCoachExperience}
         loading={loading}
         error={loadError}
         onRetry={loadMoneySnapshot}
-      />
+      /> : <>
+        <header id="money-dashboard" className="scroll-mt-6 border-b border-white/10 pb-6">
+          <p className="beast-kicker">Financial mission control</p>
+          <h1 className="mt-2 text-3xl font-black text-white">BeastMoney Dashboard</h1>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-[#c7cfdb]">Explore current balances, obligations, forecasts, risks, trends, scenarios, and reports. Money Coach remains available when you want help understanding why the numbers matter.</p>
+        </header>
 
         <div className="space-y-4 md:hidden" data-mobile-money-experience="true">
           <MobileMoneyCard id="mobile-money-home" title="Money Home">
@@ -962,7 +983,6 @@ export default function MoneyWorkspacePage() {
           </MobileMoneyCard>
         </div>
 
-        <span id="money-dashboard" className="block scroll-mt-6" aria-hidden="true" />
         <div className="hidden space-y-8 md:block">
         {loading ? (
           <DashboardCard>
@@ -1044,9 +1064,9 @@ export default function MoneyWorkspacePage() {
 
         <section className="space-y-4">
           <SectionHeader
-            eyebrow="Coach"
+            eyebrow="Decision Support"
             title={snapshot.financialCoach.title}
-            description="Plain-language planning guidance generated from the current Money engines."
+            description="Recommendations, risks, and assumptions generated from the current Money engines for analytical review."
           />
           <DashboardCard accent="blue">
             <div className="grid gap-5 lg:grid-cols-[1fr_1fr]">
@@ -1761,6 +1781,7 @@ export default function MoneyWorkspacePage() {
           </div>
         </section>
         </div>
+      </>}
       </BeastMoneyShell>
   );
 }
