@@ -41,6 +41,8 @@ export type VelocityPageBillInput = {
 };
 
 export type VelocityPageSettingsInput = {
+  source_debt_id?: string | null;
+  source_name?: string | null;
   velocity_source_type: VelocitySourceType;
   credit_limit: number | string | null;
   current_balance: number | string | null;
@@ -97,8 +99,8 @@ function buildCreditSourceAccount(
   const currentBalance = toNumber(settings.current_balance);
 
   return {
-    id: "velocity-ui-credit-source",
-    name: "Velocity credit source",
+    id: settings.source_debt_id || "velocity-source-unavailable",
+    name: settings.source_name || "Velocity credit source",
     type: mapVelocitySourceType(settings.velocity_source_type),
     current_balance: currentBalance,
     credit_limit: creditLimit,
@@ -182,7 +184,7 @@ export function buildVelocityInputSnapshot(
     debtMinimums: input.debts,
     fundingSources: [
       {
-        id: "velocity-ui-credit-source",
+        id: input.velocity_settings.source_debt_id || "velocity-source-unavailable",
         current_balance: currentBalance,
         credit_limit: creditLimit,
         max_utilization_percent: maxUtilizationPercent,

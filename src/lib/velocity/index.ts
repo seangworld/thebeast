@@ -1,6 +1,8 @@
 export { runVelocityEngine } from "./engine";
 export { runVelocityBankingEngine } from "./bankingEngine";
 export { buildVelocityInputSnapshot } from "./adapter";
+export { buildCanonicalVelocityChangeEvidence, canonicalDebtToVelocitySettings, deriveCanonicalAvailableCredit, isEligibleVelocityDebt, resolveCanonicalVelocitySource } from "./canonicalSource";
+export type { CanonicalVelocityDebt, VelocitySourceResolution } from "./canonicalSource";
 export { buildVelocityAdvisorResult } from "./advisor";
 export {
   DEFAULT_VELOCITY_SETTINGS,

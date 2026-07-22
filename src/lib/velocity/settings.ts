@@ -3,6 +3,7 @@ import { parseOptionalNumber } from "../formatters";
 export type VelocitySourceType = "heloc" | "ploc" | "credit_card" | "other";
 
 export type VelocitySettings = {
+  selected_debt_id: string;
   velocity_source_type: VelocitySourceType;
   credit_limit: string;
   current_balance: string;
@@ -16,6 +17,7 @@ export type VelocitySettings = {
 export const VELOCITY_SETTINGS_STORAGE_KEY = "beast_velocity_settings_v1";
 
 export const DEFAULT_VELOCITY_SETTINGS: VelocitySettings = {
+  selected_debt_id: "",
   velocity_source_type: "heloc",
   credit_limit: "",
   current_balance: "",
@@ -33,6 +35,7 @@ export function toInputString(value: unknown) {
 
 export function mapVelocitySettingsRow(row: any): VelocitySettings {
   return {
+    selected_debt_id: toInputString(row?.selected_debt_id),
     velocity_source_type:
       row?.velocity_source_type || DEFAULT_VELOCITY_SETTINGS.velocity_source_type,
     credit_limit: toInputString(row?.credit_limit),
@@ -67,10 +70,7 @@ export function velocitySettingsToUpsertPayload(
   velocitySettings: VelocitySettings
 ) {
   return {
-    velocity_source_type: velocitySettings.velocity_source_type,
-    credit_limit: parseOptionalNumber(velocitySettings.credit_limit),
-    current_balance: parseOptionalNumber(velocitySettings.current_balance),
-    source_apr: parseOptionalNumber(velocitySettings.source_apr),
+    selected_debt_id: velocitySettings.selected_debt_id || null,
     max_utilization_percent:
       parseOptionalNumber(velocitySettings.max_utilization_percent) ?? 66,
     recovery_months: parseOptionalNumber(velocitySettings.recovery_months) ?? 6,

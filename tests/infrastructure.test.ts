@@ -5615,10 +5615,7 @@ test("velocity settings helpers map persisted and stored values", () => {
   });
 
   assert.deepEqual(velocitySettingsToUpsertPayload(mapped), {
-    velocity_source_type: "ploc",
-    credit_limit: 10000,
-    current_balance: 2500,
-    source_apr: 8.5,
+    selected_debt_id: null,
     max_utilization_percent: 66,
     recovery_months: 6,
     emergency_reserve_amount: null,

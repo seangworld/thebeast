@@ -1,12 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import {
   buildVelocityAdvisorResult,
   buildVelocityInputSnapshot,
   runVelocityBankingEngine,
   runVelocityEngine,
+  canonicalDebtToVelocitySettings,
+  deriveCanonicalAvailableCredit,
+  isEligibleVelocityDebt,
+  resolveCanonicalVelocitySource,
 } from "@/lib/velocity";
 import type { VelocityEngineResult } from "@/lib/velocity";
 import { buildCashIntelligence } from "@/lib/cashIntelligence";
@@ -18,7 +23,6 @@ import {
   mergeStoredVelocitySettings,
   velocitySettingsToUpsertPayload,
   type VelocitySettings,
-  type VelocitySourceType,
 } from "@/lib/velocity/settings";
 import {
   formatCurrency as formatMoney,
@@ -54,13 +58,6 @@ function logVelocitySettingsError(context: string, error: unknown) {
     console.error(context, error);
   }
 }
-
-const sourceTypes: { value: VelocitySourceType; label: string }[] = [
-  { value: "heloc", label: "HELOC" },
-  { value: "ploc", label: "PLOC" },
-  { value: "credit_card", label: "Credit Card" },
-  { value: "other", label: "Other" },
-];
 
 const velocityRoadmap = [
   {
@@ -120,6 +117,10 @@ function formatVelocityRiskStatus(value: string) {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
+function formatConfirmedDate(value?: string | null) {
+  return value ? new Date(value).toLocaleString() : "Not recorded";
+}
+
 export default function VelocityPlannerPage() {
   const [debts, setDebts] = useState<any[]>([]);
   const [incomes, setIncomes] = useState<any[]>([]);
@@ -129,6 +130,7 @@ export default function VelocityPlannerPage() {
   const [startingBalance, setStartingBalance] = useState<number | null>(null);
   const [buffer, setBuffer] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [ownerId, setOwnerId] = useState("");
   const [velocitySettings, setVelocitySettings] =
     useState<VelocitySettings>(DEFAULT_VELOCITY_SETTINGS);
   const [settingsStatus, setSettingsStatus] = useState<
@@ -152,6 +154,7 @@ export default function VelocityPlannerPage() {
       setLoading(false);
       return;
     }
+    setOwnerId(userId);
 
     const { data: debtRows } = await supabase
       .from("debts")
@@ -240,6 +243,22 @@ export default function VelocityPlannerPage() {
     );
   }, [debts]);
 
+  const eligibleVelocityDebts = useMemo(
+    () => debts.filter(isEligibleVelocityDebt),
+    [debts]
+  );
+  const selectedSourceResolution = useMemo(
+    () => resolveCanonicalVelocitySource(velocitySettings.selected_debt_id, ownerId, debts),
+    [debts, ownerId, velocitySettings.selected_debt_id]
+  );
+  const selectedHeloc = selectedSourceResolution.status === "ready" ? selectedSourceResolution.source : null;
+  const effectiveVelocitySettings = useMemo(
+    () => selectedHeloc
+      ? canonicalDebtToVelocitySettings(selectedHeloc, velocitySettings)
+      : canonicalDebtToVelocitySettings({ id: "unavailable", name: "Unavailable", balance: 0, credit_limit: 0, interest_rate: 0, minimum_payment: 0 }, velocitySettings),
+    [selectedHeloc, velocitySettings]
+  );
+
   const totalDebtBalance = useMemo(() => {
     return activeDebts.reduce(
       (sum, debt) => sum + Number(debt.balance || 0),
@@ -250,8 +269,8 @@ export default function VelocityPlannerPage() {
   const currentMonthlySurplus =
     startingBalance == null || buffer == null ? null : startingBalance - buffer;
 
-  const creditLimit = parseAmount(velocitySettings.credit_limit);
-  const currentBalance = parseAmount(velocitySettings.current_balance);
+  const creditLimit = parseAmount(effectiveVelocitySettings.credit_limit);
+  const currentBalance = parseAmount(effectiveVelocitySettings.current_balance);
   const maxUtilizationPercent = parseAmount(
     velocitySettings.max_utilization_percent
   );
@@ -261,7 +280,7 @@ export default function VelocityPlannerPage() {
   const recoveryMonths = clampToZero(
     parseAmount(velocitySettings.recovery_months)
   );
-  const availableCredit = clampToZero(creditLimit - currentBalance);
+  const availableCredit = selectedHeloc ? deriveCanonicalAvailableCredit(selectedHeloc) : 0;
   const velocityUtilizationLimit =
     creditLimit * (maxUtilizationPercent / 100);
   const amountAboveSafeLimit = clampToZero(
@@ -310,7 +329,7 @@ export default function VelocityPlannerPage() {
       debts: activeDebts,
       incomes,
       bills,
-      velocity_settings: velocitySettings,
+      velocity_settings: effectiveVelocitySettings,
       starting_balance: startingBalance,
       cash_buffer: buffer,
       extra_attack: extraAttack,
@@ -322,7 +341,7 @@ export default function VelocityPlannerPage() {
     extraAttack,
     incomes,
     startingBalance,
-    velocitySettings,
+    effectiveVelocitySettings,
     velocitySnapshotAsOfDate,
   ]);
   const cashIntelligence = useMemo(() => {
@@ -332,8 +351,8 @@ export default function VelocityPlannerPage() {
       debtMinimums: activeDebts,
       fundingSources: [
         {
-          id: "velocity-ui-credit-source",
-          name: "Primary Velocity Source",
+          id: selectedHeloc?.id || "velocity-source-unavailable",
+          name: selectedHeloc?.name || "Velocity source unavailable",
           current_balance: currentBalance,
           credit_limit: creditLimit,
           max_utilization_percent: maxUtilizationPercent,
@@ -360,6 +379,7 @@ export default function VelocityPlannerPage() {
     emergencyReserveAmount,
     incomes,
     maxUtilizationPercent,
+    selectedHeloc,
     startingBalance,
   ]);
   const financialDecision = useMemo(() => {
@@ -370,8 +390,8 @@ export default function VelocityPlannerPage() {
       bills,
       fundingSources: [
         {
-          id: "velocity-ui-credit-source",
-          name: "Primary Velocity Source",
+          id: selectedHeloc?.id || "velocity-source-unavailable",
+          name: selectedHeloc?.name || "Velocity source unavailable",
           current_balance: currentBalance,
           credit_limit: creditLimit,
           max_utilization_percent: maxUtilizationPercent,
@@ -388,6 +408,7 @@ export default function VelocityPlannerPage() {
     currentBalance,
     incomes,
     maxUtilizationPercent,
+    selectedHeloc,
   ]);
   const velocityEngineResult = useMemo<VelocityEngineResult>(() => {
     return runVelocityEngine(velocityInputSnapshot);
@@ -790,88 +811,40 @@ export default function VelocityPlannerPage() {
         <section className="grid gap-4 lg:grid-cols-2">
           <div className="beast-card">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <h2 className="money-section-title">Primary Velocity Source</h2>
+              <h2 className="money-section-title">Selected HELOC</h2>
               <span className="w-fit rounded border border-[#2a3242] px-3 py-1 text-xs font-semibold text-[#c7cfdb]">
-                Planning Settings
+                BeastMoney Debts
               </span>
             </div>
 
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className="text-sm text-[#c7cfdb]">Source Type</label>
-                <select
-                  className="beast-input mt-2"
-                  value={velocitySettings.velocity_source_type}
-                  onChange={(event) =>
-                    updateVelocitySetting(
-                      "velocity_source_type",
-                      event.target.value as VelocitySourceType
-                    )
-                  }
-                >
-                  {sourceTypes.map((type) => (
-                    <option key={type.value} value={type.value}>
-                      {type.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="text-sm text-[#c7cfdb]">Credit Limit</label>
-                <input
-                  className="beast-input mt-2"
-                  inputMode="decimal"
-                  min="0"
-                  type="number"
-                  value={velocitySettings.credit_limit}
-                  onChange={(event) =>
-                    updateVelocitySetting("credit_limit", event.target.value)
-                  }
-                  placeholder="0.00"
-                />
-              </div>
-              <div>
-                <label className="text-sm text-[#c7cfdb]">Current Balance</label>
-                <input
-                  className="beast-input mt-2"
-                  inputMode="decimal"
-                  min="0"
-                  type="number"
-                  value={velocitySettings.current_balance}
-                  onChange={(event) =>
-                    updateVelocitySetting("current_balance", event.target.value)
-                  }
-                  placeholder="0.00"
-                />
-              </div>
-              <div>
-                <label className="text-sm text-[#c7cfdb]">APR</label>
-                <input
-                  className="beast-input mt-2"
-                  inputMode="decimal"
-                  min="0"
-                  type="number"
-                  value={velocitySettings.source_apr}
-                  onChange={(event) =>
-                    updateVelocitySetting("source_apr", event.target.value)
-                  }
-                  placeholder="0.00"
-                />
-              </div>
-            </div>
+            <label className="mt-4 block text-sm text-[#c7cfdb]" htmlFor="velocity-selected-debt">Change selected HELOC</label>
+            <select id="velocity-selected-debt" className="beast-input mt-2" value={velocitySettings.selected_debt_id} onChange={(event) => updateVelocitySetting("selected_debt_id", event.target.value)}>
+              <option value="">Select an eligible debt</option>
+              {eligibleVelocityDebts.map((debt) => <option key={debt.id} value={debt.id}>{debt.name}</option>)}
+            </select>
 
-            <div className="mt-5 rounded-lg border border-[#2a3242] bg-[#111827]/60 p-4 text-sm text-[#c7cfdb]">
-              <div className="font-semibold text-[#e5edf7]">
-                Current v2 Scope:
+            {selectedHeloc ? (
+              <dl className="mt-4 grid min-w-0 gap-3 rounded-lg border border-[#2a3242] bg-[#111827]/60 p-4 text-sm sm:grid-cols-2" data-selected-heloc-summary="true">
+                <div><dt className="text-[#7f8da3]">Name</dt><dd className="break-words font-bold">{selectedHeloc.name}</dd></div>
+                <div><dt className="text-[#7f8da3]">Current balance</dt><dd>{formatMoney(currentBalance)}</dd></div>
+                <div><dt className="text-[#7f8da3]">Credit limit</dt><dd>{formatMoney(creditLimit)}</dd></div>
+                <div><dt className="text-[#7f8da3]">Available credit</dt><dd>{formatMoney(availableCredit)}</dd></div>
+                <div><dt className="text-[#7f8da3]">APR</dt><dd>{formatPercent(Number(selectedHeloc.interest_rate || 0))}</dd></div>
+                <div><dt className="text-[#7f8da3]">Utilization</dt><dd>{formatPercent(creditLimit > 0 ? (currentBalance / creditLimit) * 100 : 0)}</dd></div>
+                <div><dt className="text-[#7f8da3]">Minimum / recurring payment</dt><dd>{formatMoney(Number(selectedHeloc.minimum_payment || 0))}</dd></div>
+                <div><dt className="text-[#7f8da3]">Due day</dt><dd>{selectedHeloc.due_date ? `Day ${selectedHeloc.due_date}` : "Not set"}</dd></div>
+                <div><dt className="text-[#7f8da3]">Auto Pay / reminder</dt><dd>{selectedHeloc.auto_pay_enabled ? "Auto Pay on" : "Manual payment"} · {selectedHeloc.reminder_enabled === false ? "Reminder off" : "Reminder on"}</dd></div>
+                <div><dt className="text-[#7f8da3]">Last confirmed update</dt><dd>{formatConfirmedDate(selectedHeloc.updated_at || selectedHeloc.created_at)}</dd></div>
+              </dl>
+            ) : (
+              <div className="mt-4 rounded-lg border border-yellow-300/40 bg-yellow-950/30 p-4 text-sm text-yellow-100" role="status">
+                <p className="font-bold">HELOC selection needs attention</p><p className="mt-1">{selectedSourceResolution.message}</p>
               </div>
-              <p className="mt-1">
-                Velocity v2 uses a single Primary Velocity Source.
-              </p>
-              <p className="mt-3 text-[#c7cfdb]">
-                Keep additional HELOCs, PLOCs, credit cards, and other revolving
-                sources in your planning notes until you are ready to choose one
-                primary source for the current model.
-              </p>
+            )}
+            <p className="mt-3 text-sm text-[#9aa7b8]">Shared account information comes from BeastMoney Debts. Legacy Velocity values are not used after linkage.</p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Link className="beast-button" href="/dashboard/money/debts">Edit account</Link>
+              <button className="beast-button-secondary" type="button" onClick={load}>Refresh / recalculate</button>
             </div>
           </div>
 
