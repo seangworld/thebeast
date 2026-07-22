@@ -12,3 +12,5 @@ export * from "./governance";
 export * from "./platform";
 export * from "./professionalBehavior";
 export * from "./insights";
+export * from "./conversationPersistence";
+export * from "./serverConversationPersistence";

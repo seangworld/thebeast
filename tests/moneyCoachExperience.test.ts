@@ -116,6 +116,37 @@ test("MC-201 consumes the shared AgentExperience without replacing existing page
   assert.match(component, /Opportunities/);
   assert.match(component, /buildMoneyCoachGreeting/);
   assert.match(component, /suggestion\.prompt/);
+  assert.match(component, /ServerAgentConversationRepository/);
+  assert.match(component, /SupabaseAgentConversationStore/);
+  assert.match(component, /SupabaseAgentMemoryStore/);
+  assert.match(component, /importLegacy/);
+  assert.match(component, /Chat History/);
+  assert.match(component, /Rename/);
+  assert.match(component, /Unpin/);
+  assert.match(component, /Archive/);
+  assert.match(component, /Delete/);
+  assert.match(component, /Review durable memories/);
+  assert.match(component, /lg:grid-cols-\[minmax\(0,1fr\)_18rem\]/);
+  assert.match(component, /h-\[32rem\]/);
+  assert.match(component, /data-money-coach-active-scroll="true"/);
+  assert.match(component, /data-money-coach-history-list="true"/);
+  assert.match(component, /overflow-y-auto/);
+  assert.match(component, /lg:hidden/);
+  assert.match(component, /role="dialog"/);
+  assert.match(component, /aria-modal="true"/);
+  assert.match(component, /New conversation/);
+  assert.match(component, /Active conversation/);
+  assert.match(component, /threads\.slice\(0, 10\)/);
+  assert.match(component, /threads\.slice\(10\)/);
+  assert.match(component, /MoneyCoachConversationTimeline/);
+  assert.match(component, /max-w-3xl/);
+  assert.match(component, /divide-y divide-white\/\[0\.07\]/);
+  assert.match(component, /data-message-role/);
+  assert.match(component, /scrollTo\(\{ top: region\.scrollHeight/);
+  assert.match(component, /\[&_table\]:w-full/);
+  assert.match(component, /\[&_ul\]:list-disc/);
+  assert.match(component, /\[&_ol\]:list-decimal/);
+  assert.doesNotMatch(component, /<AgentConversationTimeline/);
   for (const route of [
     "/dashboard/money/cashflow",
     "/dashboard/money/debts",

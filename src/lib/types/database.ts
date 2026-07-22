@@ -19,6 +19,48 @@ export type FundingSource = {
     created_at: string
   }
 
+export type AgentConversationRow = {
+  id: string
+  owner_id: string
+  agent_id: string
+  title: string
+  pinned: boolean
+  archived: boolean
+  tags: string[]
+  summary: unknown
+  related_insight_ids: string[]
+  related_action_ids: string[]
+  message_count: number
+  created_at: string
+  updated_at: string
+}
+
+export type AgentConversationMessageRow = {
+  id: string
+  owner_id: string
+  conversation_id: string
+  sender: unknown
+  recipient: unknown
+  content: unknown
+  created_at: string
+}
+
+export type AgentMemoryRow = {
+  id: string
+  owner_id: string
+  agent_id: string
+  scope: string
+  memory_key: string
+  value: unknown
+  purpose: string
+  evidence: unknown
+  source_conversation_id?: string | null
+  source_message_id?: string | null
+  expires_at?: string | null
+  created_at: string
+  updated_at: string
+}
+
 export type UserRole = "user" | "beta" | "admin"
 export type MembershipPlan = "free" | "pro"
 export type SubscriptionStatus =
