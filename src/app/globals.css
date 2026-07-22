@@ -566,6 +566,27 @@ details > summary::-webkit-details-marker {
   background: rgba(56, 189, 248, 0.16);
 }
 
+.money-payoff-table {
+  max-width: 100%;
+}
+
+.money-payoff-table th,
+.money-payoff-table td {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 1279px) {
+  .money-payoff-table .payoff-hide-laptop {
+    display: none;
+  }
+}
+
+@media (max-width: 1023px) {
+  .money-payoff-table .payoff-hide-tablet {
+    display: none;
+  }
+}
+
 .money-income-bucket {
   border-color: rgba(42, 50, 66, 0.95);
 }

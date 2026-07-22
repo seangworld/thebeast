@@ -92,7 +92,8 @@ test("BeastMoney internal pages use dashboard-aligned Money surfaces", () => {
   assert.match(bills, /id="bills" className="money-section-panel"/);
   assert.match(debts, /id="add-debt" className="money-section-card"/);
   assert.match(debts, /id="payoff-plan" className="money-section-panel"/);
-  assert.match(debts, /className="money-payoff-table w-full min-w-\[1100px\] text-sm"/);
+  assert.match(debts, /className="money-payoff-table w-full table-fixed text-sm"/);
+  assert.doesNotMatch(debts, /money-payoff-table w-full min-w-/);
 });
 
 test("Income Date Planning is compact until the user expands details", () => {
