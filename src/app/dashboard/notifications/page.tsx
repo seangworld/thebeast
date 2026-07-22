@@ -48,9 +48,9 @@ const notificationItems: PlatformNotificationItem[] = [
     severity: "info",
     state: "Unread",
     createdAt: "2026-07-17T12:00:00.000Z",
-    actionUrl: "/dashboard/learning",
+    actionUrl: "/dashboard/education",
     actions: [
-      { type: "Open", label: "Open Learning", href: "/dashboard/learning" },
+      { type: "Open", label: "Open Education", href: "/dashboard/education" },
       { type: "Complete", label: "Complete from source" },
     ],
   },

@@ -83,7 +83,7 @@ export default async function LearningGoalsPage() {
             </div>
             <div className="flex flex-wrap gap-2">
               <LearningGoalDiscovery recentGoals={learningGoals} />
-              <Link href="/dashboard/learning" className="beast-button-secondary">
+              <Link href="/dashboard/education" className="beast-button-secondary">
                 Back to Guidance Counselor
               </Link>
             </div>

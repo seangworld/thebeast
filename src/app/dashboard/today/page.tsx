@@ -495,7 +495,7 @@ export default function TodayPage() {
       reason:
         "Today ranks the supplied contribution without recomputing learning mastery.",
       recommendedAction: readyActivity ? "Continue with Guidance Counselor" : "Ask Guidance Counselor",
-      actionUrl: "/dashboard/learning#mentor-session",
+      actionUrl: "/dashboard/education#mentor-session",
       activeDate: todayDate,
       timing: readyActivity ? "Active" : "Informational",
       priority: readyActivity ? "Medium" : "Low",
@@ -590,7 +590,7 @@ export default function TodayPage() {
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Link href="/dashboard/learning" className="beast-button">
+              <Link href="/dashboard/education" className="beast-button">
                 My Guidance Counselor
               </Link>
               <Link href="/dashboard/timeline" className="beast-button-secondary">
@@ -897,7 +897,7 @@ export default function TodayPage() {
           <div className="mt-5 flex flex-wrap items-center gap-3">
             {readyActivity ? (
               <Link
-                href="/dashboard/learning#mentor-session"
+                href="/dashboard/education#mentor-session"
                 className="beast-button"
               >
                 Continue with Guidance Counselor

@@ -80,11 +80,11 @@ const searchItems: PlatformSearchItem[] = [
     title: "Next learning step",
     summary: "Resume the current Guidance Counselor-guided learning activity.",
     keywords: ["mentor", "lesson", "study", "learning"],
-    href: "/dashboard/learning",
+    href: "/dashboard/education",
     permissionScope: "Owner",
     updatedAt: "2026-07-17T11:30:00.000Z",
     actions: [
-      { type: "Resume", label: "Resume learning", href: "/dashboard/learning" },
+      { type: "Resume", label: "Resume education plan", href: "/dashboard/education" },
     ],
   },
   {

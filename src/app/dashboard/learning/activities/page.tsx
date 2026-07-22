@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
 export default function LearningActivitiesPage() {
-  redirect("/dashboard/learning#mentor-session");
+  redirect("/dashboard/education#mentor-session");
 }

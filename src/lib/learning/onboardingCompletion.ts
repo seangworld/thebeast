@@ -32,6 +32,7 @@ type LearningOnboardingDataClient = {
 export const profileOnboardingCompletionKeyColumn = "id";
 
 const protectedLearningOnboardingPaths = [
+  "/dashboard/education",
   "/dashboard/learning",
   "/dashboard/today",
 ];

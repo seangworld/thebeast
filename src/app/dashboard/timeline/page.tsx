@@ -42,7 +42,7 @@ const timelineItems: PlatformTimelineItem[] = [
     summary: "BeastEducation contributed the next Guidance Counselor-guided learning step.",
     occurredAt: "2026-07-17T11:00:00.000Z",
     visibility: "Owner",
-    href: "/dashboard/learning",
+    href: "/dashboard/education",
     meaningful: true,
     details: [
       { label: "Source", value: "BeastEducation" },

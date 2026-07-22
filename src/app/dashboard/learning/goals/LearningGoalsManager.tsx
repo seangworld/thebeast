@@ -143,7 +143,7 @@ export default function LearningGoalsManager({
               </div>
 
               <div className="flex flex-wrap gap-2">
-                <Link href="/dashboard/learning#mentor-session" className="beast-button">
+                <Link href="/dashboard/education#mentor-session" className="beast-button">
                   Resume Goal
                 </Link>
                 <button

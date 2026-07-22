@@ -418,7 +418,7 @@ function GuidanceCounselorHome({
           </div>
 
           <div className="grid gap-3 border-t border-[#2a3242] pt-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Link href="/dashboard/learning/goals" className="beast-button-secondary">
+            <Link href="/dashboard/education/goals" className="beast-button-secondary">
               Learning Goals
             </Link>
             {mission.secondaryActions.map((action) => (
@@ -1012,7 +1012,7 @@ export default async function LearningPage() {
                         recentGoals={learningGoals}
                         triggerLabel="Add Learning Goal"
                       />
-                      <Link href="/dashboard/learning/goals" className="beast-button-secondary">
+                      <Link href="/dashboard/education/goals" className="beast-button-secondary">
                         Manage Goals
                       </Link>
                     </div>

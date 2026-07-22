@@ -345,7 +345,7 @@ export default function LearningGoalDiscovery({
                     >
                       Start Placement
                     </Link>
-                    <Link href="/dashboard/learning/goals" className="beast-button-secondary">
+                    <Link href="/dashboard/education/goals" className="beast-button-secondary">
                       View Learning Goals
                     </Link>
                   </div>

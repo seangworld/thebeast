@@ -36,7 +36,7 @@ const mobileIntelligence: PlatformIntelligence = {
       recommendations: 1,
       activityCount: 1,
       summary: "Guidance Counselor quick action is ready.",
-      href: "/dashboard/learning",
+      href: "/dashboard/education",
     },
     {
       module: "health",

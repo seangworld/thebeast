@@ -57,7 +57,7 @@ const sharedCalendarEvents: CalendarEvent[] = [
     endsAt: "2026-07-16T13:45:00.000Z",
     timeZone: "America/New_York",
     permissionScope: "Owner",
-    actionUrl: "/dashboard/learning#weekly-review",
+    actionUrl: "/dashboard/education#weekly-review",
     recurrence: "Weekly",
     reminderMinutesBefore: [30],
   },

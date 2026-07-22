@@ -90,3 +90,38 @@ export type EducationProgressSummary = {
   latestMeaningfulUpdate?: EducationProgressEvent;
   nextMilestone?: EducationRoadmapMilestone;
 };
+
+export type EducationProfileSignal = {
+  id: string;
+  ownerId?: string;
+  source: "conversation" | "progress" | "goal" | "calendar" | "money" | "document" | "external";
+  occurredAt: string;
+  kind: "situation" | "goal" | "interest" | "strength" | "constraint" | "progress" | "opportunity";
+  value: string;
+  confidence: "stated" | "observed" | "inferred";
+};
+
+export type EducationRecommendation = {
+  id: string;
+  title: string;
+  action: string;
+  reason: string;
+  explanation: readonly string[];
+  priority: number;
+  confidence: "low" | "medium" | "high";
+  evidenceIds: readonly string[];
+  opportunity?: string;
+  verifyBeforeActing?: string;
+};
+
+export type EducationGuidanceSnapshot = {
+  whoTheUserIs: string;
+  whereTheyAre: string;
+  whereTheyWantToGo: string;
+  whatChanged: readonly string[];
+  bestNextStep: EducationRecommendation;
+  recommendations: readonly EducationRecommendation[];
+  interviewQuestions: readonly string[];
+  recognizedMilestones: readonly string[];
+  profileRefinements: readonly { field: keyof EducationProfile; value: string; evidenceId: string }[];
+};

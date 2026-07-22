@@ -31,7 +31,7 @@ const learningContribution: TodayContribution = {
   summary: "A ready learning activity is waiting.",
   reason: "BeastEducation supplied the ready activity from its own engine.",
   recommendedAction: "Continue with Guidance Counselor",
-  actionUrl: "/dashboard/learning#mentor-session",
+  actionUrl: "/dashboard/education#mentor-session",
   activeDate: "2026-07-16",
   timing: "Active",
   priority: "Medium",

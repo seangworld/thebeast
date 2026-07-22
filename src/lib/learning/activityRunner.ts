@@ -115,7 +115,7 @@ export function getLearningActivityPrimaryActionLabel(activityType: string) {
 }
 
 export function getLearningActivityRoute(activityId: string) {
-  return `/dashboard/learning/activities/${activityId}`;
+  return `/dashboard/education/activities/${activityId}`;
 }
 
 export function getNextQueuedLearningActivity(

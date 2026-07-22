@@ -22,7 +22,7 @@ const todayContribution: TodayContribution = {
   summary: "Learning owns readiness and Today owns ranking.",
   reason: "Learning supplied this contribution.",
   recommendedAction: "Continue",
-  actionUrl: "/dashboard/learning",
+  actionUrl: "/dashboard/education",
   activeDate: "2026-07-17",
   timing: "Active",
   priority: "High",
@@ -75,10 +75,10 @@ const searchItem: PlatformSearchItem = {
   title: "Next learning step",
   summary: "Learning owns the lesson.",
   keywords: ["learning", "mentor"],
-  href: "/dashboard/learning",
+  href: "/dashboard/education",
   permissionScope: "Owner",
   updatedAt: "2026-07-17T12:00:00.000Z",
-  actions: [{ type: "Resume", label: "Resume", href: "/dashboard/learning" }],
+  actions: [{ type: "Resume", label: "Resume", href: "/dashboard/education" }],
 };
 
 const sharedAIContext: SharedAIContextItem[] = [

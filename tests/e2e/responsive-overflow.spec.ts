@@ -13,9 +13,9 @@ const authenticatedRoutes = [
   "/dashboard/profile",
   "/dashboard/goals",
   "/dashboard/settings",
-  "/dashboard/learning",
-  "/dashboard/learning/goals",
-  "/dashboard/learning/activities",
+  "/dashboard/education",
+  "/dashboard/education/goals",
+  "/dashboard/education/activities",
   "/dashboard/money",
   "/dashboard/money/billing",
   "/dashboard/money/cashflow",
@@ -120,7 +120,7 @@ test("wide financial tables scroll only inside their keyboard-focusable region",
 
 test("Guidance Counselor and Tutor controls wrap and remain operable at narrow width", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 720 });
-  await page.goto("/dashboard/learning");
+  await page.goto("/dashboard/education");
   await expectNoDocumentOverflow(page);
   await expectVisibleControlsInsideViewport(page);
   await page.keyboard.press("Tab");

@@ -7,7 +7,7 @@ Critical usability hotfix for site-wide horizontal overflow and off-screen conte
 ### Fixes
 
 - Replaced global horizontal-overflow clipping with shared shrink, reflow, and long-content wrapping rules.
-- Corrected dashboard-shell, navigation-label, BeastAdmin member-list, and BeastLearning lesson-control responsiveness.
+- Corrected dashboard-shell, navigation-label, BeastAdmin member-list, and BeastEducation lesson-control responsiveness.
 - Kept genuinely wide BeastMoney datasets inside labeled, keyboard-focusable component scroll regions.
 - Added responsive regressions and a 293-case authenticated Playwright route and viewport matrix.
 

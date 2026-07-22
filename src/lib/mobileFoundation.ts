@@ -73,7 +73,7 @@ export function buildMobileNavigation({
   const primary = learningOnly
     ? [
         { label: "Today", href: "/dashboard/today", module: "learning" as ModuleKey, primary: true },
-        { label: "Guidance Counselor", href: "/dashboard/learning", module: "learning" as ModuleKey, primary: true },
+        { label: "Guidance Counselor", href: "/dashboard/education", module: "learning" as ModuleKey, primary: true },
         { label: "Calendar", href: "/dashboard/calendar", module: "calendar" as ModuleKey, primary: true },
         { label: "AI", href: "/dashboard/search#shared-ai", module: "search" as ModuleKey, primary: true },
         { label: "More", href: "#mobile-more", module: "beastos" as ModuleKey, primary: true },
@@ -158,4 +158,3 @@ export function buildMobileCoreRoutes({
     ...applications,
   ];
 }
-

@@ -76,7 +76,7 @@ export const serviceEvents: ServiceEvent[] = [
     dateLabel: "Upcoming",
     module: "learning",
     group: "Upcoming",
-    href: "/dashboard/learning",
+    href: "/dashboard/education",
   },
 ];
 

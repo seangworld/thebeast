@@ -6,11 +6,11 @@ BeastOS v2.2 remains the next planned feature release. The v2.1.1 release is an 
 
 Current Money version: `BeastMoney v2.3.0`
 
-Current Learning version: `BeastLearning v1.5 Private Beta`
+Current education version: `BeastEducation v1.6 Beta`
 
 ## July 4, 2026 Closeout
 
-Today's development finalized BeastLearning for Private Beta and updated the BeastOS platform release state.
+BeastEducation is the canonical education product identity. The former BeastLearning name remains only in compatibility identifiers and historical release evidence.
 
 Completed work includes:
 
@@ -41,7 +41,7 @@ Completed work includes:
 - Module sub-navigation
 - Calendar date alignment
 
-## BeastLearning Phase 2 Roadmap
+## BeastEducation Roadmap
 
 Planned next work:
 
@@ -78,7 +78,7 @@ Use local or test Supabase credentials for development:
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
 
-OpenAI-backed BeastLearning routes are available when configured:
+OpenAI-backed BeastEducation routes are available when configured:
 
 - `OPENAI_API_KEY`
 - `OPENAI_LEARNING_MODEL`

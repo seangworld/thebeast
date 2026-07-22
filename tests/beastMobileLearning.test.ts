@@ -95,7 +95,7 @@ const recommendation: LearningRecommendation = {
   reason: "A current plan exists and has measurable progress.",
   recommendedAction: "Review today's result before picking the next lesson.",
   estimatedBenefit: "Keeps momentum attached to the active learning path.",
-  actionUrl: "/dashboard/learning",
+  actionUrl: "/dashboard/education",
   confidence: "reserved",
   dismissible: true,
   completed: false,
@@ -145,7 +145,7 @@ test("BF-MOB-006 builds Guidance Counselor next step and resume actions through 
   assert.equal(cards.length, 4);
   assert.equal(nextStep?.source, "learning");
   assert.equal(nextStep?.sourceOwnershipPreserved, true);
-  assert.equal(resume?.href, "/dashboard/learning/activities/activity-1");
+  assert.equal(resume?.href, "/dashboard/education/activities/activity-1");
   assert.equal(resume?.dispatchMode, "learning-activity-route");
   assert.equal(resume?.actionLabel, "Save reflection");
 });

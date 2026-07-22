@@ -73,7 +73,7 @@ const recommendation: LearningRecommendation = {
   reason: "A current plan exists and has measurable progress.",
   recommendedAction: "Review today's result before picking the next lesson.",
   estimatedBenefit: "Keeps momentum attached to the active learning path.",
-  actionUrl: "/dashboard/learning",
+  actionUrl: "/dashboard/education",
   confidence: "reserved",
   dismissible: true,
   completed: false,
@@ -167,7 +167,7 @@ test("Guidance Counselor Home chooses a ready activity and cites actual saved wo
   assert.equal(mission.state, "next_activity");
   assert.equal(mission.missionTitle, "CIDR notation");
   assert.equal(mission.durationLabel, "18 minutes");
-  assert.equal(mission.primaryAction.href, "/dashboard/learning/activities/activity-1");
+  assert.equal(mission.primaryAction.href, "/dashboard/education/activities/activity-1");
   assert.match(mission.recommendationReason, /Subnetting warmup/);
   assert.match(mission.journeyMilestoneLabel, /Watch RBAC walkthrough/);
   assert.match(mission.journeyUnlockLabel, /next mission|Review due|Checkpoint/i);

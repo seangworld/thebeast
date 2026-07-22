@@ -38,7 +38,7 @@ export function buildLearningRecommendations(
       reason: "A current plan exists and has measurable progress.",
       recommendedAction: "Continue the next planned study block.",
       estimatedBenefit: "Keeps momentum attached to the active learning path.",
-      actionUrl: "/dashboard/learning",
+      actionUrl: "/dashboard/education",
     }),
     createLearningRecommendation({
       id: "learning-review-weak-area",
@@ -49,7 +49,7 @@ export function buildLearningRecommendations(
       reason: "The rule-based progress signal selects the course with the lowest mapped progress.",
       recommendedAction: `Spend one focused review block on ${input.progress.weakArea}.`,
       estimatedBenefit: "Reduces the most visible learning gap.",
-      actionUrl: "/dashboard/learning",
+      actionUrl: "/dashboard/education",
     }),
     createLearningRecommendation({
       id: "learning-start-short-session",
@@ -60,7 +60,7 @@ export function buildLearningRecommendations(
       reason: "A short session is available and can be completed locally.",
       recommendedAction: "Use the Today's Study Session card.",
       estimatedBenefit: "Turns planning into a concrete study action.",
-      actionUrl: "/dashboard/learning",
+      actionUrl: "/dashboard/education",
     }),
     createLearningRecommendation({
       id: "learning-add-goal",
@@ -74,7 +74,7 @@ export function buildLearningRecommendations(
       reason: "Clear goals help Beast understand what matters next.",
       recommendedAction: "Use the Learning Goal Builder to draft the next goal.",
       estimatedBenefit: "Improves the next recommendations Beast can make.",
-      actionUrl: "/dashboard/learning",
+      actionUrl: "/dashboard/education",
     }),
     createLearningRecommendation({
       id: "learning-upload-material-placeholder",
@@ -107,7 +107,7 @@ export function buildLearningRecommendations(
       reason: "The weakest area is a useful starting point for adjacent skills and course discovery.",
       recommendedAction: "Review courses connected to the weak area.",
       estimatedBenefit: "Makes the next learning path easier to plan.",
-      actionUrl: "/dashboard/learning",
+      actionUrl: "/dashboard/education",
     }),
   ];
 }

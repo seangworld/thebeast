@@ -397,7 +397,7 @@ export default function LearningActivityRunnerPage() {
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Link href="/dashboard/learning#mentor-session" className="beast-button-secondary">
+              <Link href="/dashboard/education#mentor-session" className="beast-button-secondary">
                 Back to Guidance Counselor
               </Link>
               <Link href="/dashboard/today" className="beast-button">
@@ -495,7 +495,7 @@ export default function LearningActivityRunnerPage() {
                     Return to Today
                   </Link>
                   <Link
-                    href="/dashboard/learning#mentor-session"
+                    href="/dashboard/education#mentor-session"
                     className="beast-button-secondary"
                   >
                     Back to Guidance Counselor
@@ -615,7 +615,7 @@ export default function LearningActivityRunnerPage() {
               eyebrow="Let’s find the right lesson"
               title="This lesson is not available"
               description="Your Guidance Counselor could not open this lesson for this account. Go back to the Guidance Counselor conversation and choose the next step from there."
-              action={<Link href="/dashboard/learning#mentor-session" className="beast-button">Back to Guidance Counselor</Link>}
+              action={<Link href="/dashboard/education#mentor-session" className="beast-button">Back to Guidance Counselor</Link>}
             />
           </DashboardCard>
         )}

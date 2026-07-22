@@ -104,7 +104,7 @@ export function buildMobileLearningQuickActionCards({
     source: "learning",
     title: review.title,
     summary: reviewNeedsAttention ? review.nextWeekRecommendation : review.summary,
-    href: "/dashboard/learning#weekly-review",
+    href: "/dashboard/education#weekly-review",
     actionLabel: review.missingData ? "Create review evidence" : "Review progress",
     metadata: compactMetadata([
       review.sessionsCompleted,
@@ -120,7 +120,7 @@ export function buildMobileLearningQuickActionCards({
     source: "learning",
     title: "Confidence reflection",
     summary: confidenceSignal?.learnerLanguage || confidence.mentorSummary,
-    href: "/dashboard/learning#mentor-progress",
+    href: "/dashboard/education#mentor-progress",
     actionLabel:
       confidenceSignal?.level === "insufficient-data"
         ? "Add reflection"

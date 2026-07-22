@@ -75,7 +75,7 @@ const futureModules: {
     label: "Learning",
     status: "ready",
     health: "stable",
-    href: "/dashboard/learning",
+    href: "/dashboard/education",
     summary: "Learning goals, courses, study rhythm, and achievements have a foundation workspace.",
   },
   {
@@ -429,7 +429,7 @@ export function buildLearningFoundationIntelligence(
     reason: "A focused goal gives future tutoring and recommendation layers a clear starting point.",
     recommendedAction: "Open Learning Goals and pick the course or skill that matters most right now.",
     estimatedBenefit: "Creates a durable learning context for future module intelligence.",
-    actionUrl: "/dashboard/learning",
+    actionUrl: "/dashboard/education",
   });
 
   return {
@@ -441,7 +441,7 @@ export function buildLearningFoundationIntelligence(
           title: "BeastEducation workspace ready",
           module: "learning",
           severity: "info",
-          actionUrl: "/dashboard/learning",
+          actionUrl: "/dashboard/education",
           summary: "Learning can now contribute goals, course progress, study sessions, and achievements.",
         },
         now
@@ -457,7 +457,7 @@ export function buildLearningFoundationIntelligence(
         recommendations: 1,
         activityCount: 1,
         summary: "Learning foundation is active with profile, goals, courses, progress, and achievement surfaces.",
-        href: "/dashboard/learning",
+        href: "/dashboard/education",
       },
     ],
     activities: [
@@ -467,7 +467,7 @@ export function buildLearningFoundationIntelligence(
         title: "Learning foundation initialized",
         summary: "The first BeastEducation workspace is ready for future tutoring and course data.",
         timestamp: now.toISOString(),
-        actionUrl: "/dashboard/learning",
+        actionUrl: "/dashboard/education",
       },
     ],
     timelineEvents: [
@@ -477,7 +477,7 @@ export function buildLearningFoundationIntelligence(
         title: "Today's learning session",
         summary: "A reusable study block is reserved for the active learner.",
         timestamp: now.toISOString(),
-        actionUrl: "/dashboard/learning",
+        actionUrl: "/dashboard/education",
       },
     ],
   };

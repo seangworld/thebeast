@@ -679,7 +679,7 @@ test("BO-32 Calendar builds month week day and agenda views", () => {
       endsAt: "2026-07-16T14:30:00.000Z",
       timeZone: "America/New_York",
       permissionScope: "Owner",
-      actionUrl: "/dashboard/learning",
+      actionUrl: "/dashboard/education",
       recurrence: "None",
       reminderMinutesBefore: [10],
     },
@@ -724,7 +724,7 @@ test("BO-33 Calendar recurrence and drag rescheduling preserve source rules", ()
     endsAt: "2026-07-16T15:30:00.000Z",
     timeZone: "America/New_York",
     permissionScope: "Owner",
-    actionUrl: "/dashboard/learning#weekly-review",
+    actionUrl: "/dashboard/education#weekly-review",
     recurrence: "Weekly",
     reminderMinutesBefore: [30],
   };
@@ -774,7 +774,7 @@ test("BO-34 Calendar detects conflicts reminders and time zone issues", () => {
     title: "Learning review",
     startsAt: "2026-07-16T14:30:00.000Z",
     endsAt: "2026-07-16T15:30:00.000Z",
-    actionUrl: "/dashboard/learning",
+    actionUrl: "/dashboard/education",
   };
   const conflicts = detectCalendarConflicts([first, second]);
   const reminders = buildCalendarReminders(first);
@@ -815,10 +815,10 @@ function buildSearchFixtureItems(): PlatformSearchItem[] {
       title: "Next learning step",
       summary: "Resume the Guidance Counselor-guided lesson.",
       keywords: ["learning", "mentor", "lesson"],
-      href: "/dashboard/learning",
+      href: "/dashboard/education",
       permissionScope: "Owner",
       updatedAt: "2026-07-17T12:00:00.000Z",
-      actions: [{ type: "Resume", label: "Resume Learning", href: "/dashboard/learning" }],
+      actions: [{ type: "Resume", label: "Resume Education", href: "/dashboard/education" }],
     },
     {
       id: "household-document",
@@ -924,7 +924,7 @@ function buildTimelineFixtureItems(): PlatformTimelineItem[] {
       summary: "Learning contributed the next Guidance Counselor step.",
       occurredAt: "2026-07-16T13:00:00.000Z",
       visibility: "Owner",
-      href: "/dashboard/learning",
+      href: "/dashboard/education",
       meaningful: true,
       details: [{ label: "Record", value: "mentor-step-1" }],
     },
@@ -1009,7 +1009,7 @@ function buildNotificationFixtureItems(): PlatformNotificationItem[] {
       severity: "info",
       state: "Unread",
       createdAt: "2026-07-17T12:00:00.000Z",
-      actionUrl: "/dashboard/learning",
+      actionUrl: "/dashboard/education",
       actions: [{ type: "Complete", label: "Complete from source" }],
     },
     {
@@ -1365,7 +1365,7 @@ test("beastos intelligence has all-clear recommendations and module extension po
       (summary) =>
         summary.module === "learning" &&
         summary.status === "ready" &&
-        summary.href === "/dashboard/learning"
+        summary.href === "/dashboard/education"
     ),
     true
   );
@@ -3109,7 +3109,7 @@ test("learning activities have a dedicated runner and next-activity unlock logic
 
   assert.equal(
     getLearningActivityRoute("activity-123"),
-    "/dashboard/learning/activities/activity-123"
+    "/dashboard/education/activities/activity-123"
   );
   assert.equal(getLearningActivityPrimaryActionLabel("Quiz"), "Let's see what you remember");
   assert.equal(getLearningActivityChecklist("Reflection").length, 3);
@@ -3302,7 +3302,7 @@ test("BeastEducation v2 keeps normal learning in the Guidance Counselor conversa
   assert.match(learningPage, /Everything else stays available/);
   assert.doesNotMatch(learningPage, /getLearningActivityRoute\(learningPathReadyActivity\.id\)/);
   assert.equal(learningPage.includes("Open full Tutor workspace"), false);
-  assert.match(todayPage, /href="\/dashboard\/learning#mentor-session"[\s\S]*Continue with Guidance Counselor/);
+  assert.match(todayPage, /href="\/dashboard\/education#mentor-session"[\s\S]*Continue with Guidance Counselor/);
   assert.match(dashboardLayout, /href: "\/dashboard\/education#mentor-session"/);
   assert.match(dashboardLayout, /label: "Guidance Counselor"/);
   assert.match(dashboardLayout, /label: "My Roadmap"/);
@@ -3350,7 +3350,7 @@ test("BeastEducation member experience hides workflow mechanics behind Guidance 
 
   assert.match(memberExperienceSource, /Continue with Guidance Counselor/);
   assert.match(memberExperienceSource, /mission\.primaryAction\.label/);
-  assert.match(activitiesPage, /redirect\("\/dashboard\/learning#mentor-session"\)/);
+  assert.match(activitiesPage, /redirect\("\/dashboard\/education#mentor-session"\)/);
   assert.match(memberExperienceSource, /Your Guidance Counselor/);
   assert.match(memberExperienceSource, /Let&apos;s see what I&apos;ve learned/);
   assert.doesNotMatch(memberExperienceSource, /Your Guidance Counselor's Next Step/);
@@ -3527,7 +3527,7 @@ test("generated learning activities persist with required visibility fields", ()
   assert.equal(goalsManager.includes("Progress stays saved"), true);
   assert.equal(goalsManager.includes('status: "Paused"'), true);
   assert.equal(todayPage.includes("getNewestReadyLearningActivity"), true);
-  assert.equal(activitiesPage.includes("redirect(\"/dashboard/learning#mentor-session\")"), true);
+  assert.equal(activitiesPage.includes("redirect(\"/dashboard/education#mentor-session\")"), true);
   assert.equal(learningPage.includes("mission.primaryAction.label"), true);
   assert.equal(learningPage.includes("learning_activities"), true);
 });

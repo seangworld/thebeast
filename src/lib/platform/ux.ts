@@ -137,7 +137,7 @@ export const platformUXSupportLinks: PlatformSupportLink[] = [
   {
     id: "feedback",
     label: "Feedback",
-    href: "/dashboard/learning#feedback",
+    href: "/dashboard/education#feedback",
     purpose: "Send product feedback through the implemented beta feedback path.",
   },
   {
