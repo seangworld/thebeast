@@ -8,4 +8,5 @@ export * from "./events";
 export * from "./lifecycle";
 export * from "./prompts";
 export * from "./communication";
+export * from "./governance";
 export * from "./platform";

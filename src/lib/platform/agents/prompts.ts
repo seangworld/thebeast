@@ -16,6 +16,12 @@ export class AgentPromptFramework {
     return this.templates.has(templateId);
   }
 
+  version(templateId: string) {
+    const template = this.templates.get(templateId);
+    if (!template) throw new Error(`Agent prompt ${templateId} is not registered.`);
+    return template.version;
+  }
+
   render(templateId: string, variables: Readonly<Record<string, string>>) {
     const template = this.templates.get(templateId);
     if (!template) throw new Error(`Agent prompt ${templateId} is not registered.`);

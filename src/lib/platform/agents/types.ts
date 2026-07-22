@@ -66,9 +66,77 @@ export type AgentMemoryRecord = {
   key: string;
   value: unknown;
   purpose: string;
+  evidence?: readonly AgentEvidenceReference[];
   createdAt: string;
   updatedAt: string;
   expiresAt?: string;
+};
+
+export type AgentEvidenceReference = { source: string; capturedAt: string; description?: string };
+
+export type AgentPlaybookStatus = "draft" | "pending_review" | "approved" | "retired";
+export type AgentPlaybook = {
+  agentId: AgentId;
+  version: string;
+  status: AgentPlaybookStatus;
+  effectiveDate?: string;
+  mission: string;
+  professionalRules: readonly string[];
+  recommendationHierarchy: readonly string[];
+  communicationRules: readonly string[];
+  safetyBoundaries: readonly string[];
+  prohibitions: readonly string[];
+  approval?: { approvedBy: string; approvedAt: string; decisionRef: string };
+  changeSummary: string;
+  supersedes?: string;
+};
+
+export type AgentUserPreferences = {
+  ownerId: string;
+  agentId: AgentId;
+  values: Readonly<Record<string, unknown>>;
+  updatedAt: string;
+};
+
+export type AgentCurrentContext = {
+  id: string;
+  ownerId: string;
+  agentId: AgentId;
+  content: unknown;
+  evidence: readonly AgentEvidenceReference[];
+  requiredPermission?: { resource: string; action: string };
+  capturedAt: string;
+  expiresAt?: string;
+};
+
+export type LearningJournalStatus = "proposed" | "under_review" | "accepted" | "rejected" | "deferred" | "implemented";
+export type AgentLearningProposal = {
+  id: string;
+  agentId: AgentId;
+  status: LearningJournalStatus;
+  observation: string;
+  proposedChange: string;
+  evidence: readonly AgentEvidenceReference[];
+  createdAt: string;
+  reviewedBy?: string;
+  reviewedAt?: string;
+  implementedInPlaybookVersion?: string;
+};
+
+export type AgentRunAudit = {
+  runId: string;
+  requestId: string;
+  agentId: AgentId;
+  ownerId: string;
+  playbookVersion: string;
+  promptVersion: string;
+  toolsAvailable: readonly string[];
+  toolsUsed: readonly string[];
+  memoryReferences: readonly string[];
+  trigger: string;
+  outcome: string;
+  rationale: string;
+  timestamp: string;
 };
 
 export type AgentContextFragment = {
@@ -149,4 +217,5 @@ export type AgentResponse = {
   nextAction: string;
   context: readonly AgentContextFragment[];
   availableToolIds: readonly AgentToolId[];
+  governance?: Omit<AgentRunAudit, "outcome" | "rationale" | "toolsUsed">;
 };

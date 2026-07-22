@@ -88,6 +88,17 @@ function foundationManifest(): AgentModuleManifest {
   };
 }
 
+function approveFoundationPlaybook(platform: BeastAgentsPlatform, version = "1.0.0") {
+  platform.registerPlaybook({
+    agentId: "foundation-guide", version, status: "approved", effectiveDate: "2026-07-21",
+    mission: "Provide safe domain-neutral guidance.", professionalRules: ["Be useful."],
+    recommendationHierarchy: ["Safety", "User benefit"], communicationRules: ["Be clear."],
+    safetyBoundaries: ["Respect permissions."], prohibitions: ["Do not self-modify."],
+    approval: { approvedBy: "Owner", approvedAt: "2026-07-21", decisionRef: "test-approval" },
+    changeSummary: "Initial approved test playbook.",
+  });
+}
+
 test("BeastAgents lets a module register through one manifest boundary", () => {
   const platform = new BeastAgentsPlatform();
   platform.registerModule(foundationManifest());
@@ -202,6 +213,7 @@ test("prompt framework renders versioned templates and requires variables", () =
 test("communication API rejects unavailable agents with a no-dead-end fallback", async () => {
   const platform = new BeastAgentsPlatform();
   platform.registerModule(foundationManifest());
+  approveFoundationPlaybook(platform);
   const rejected = await platform.accept({
     requestId: "request-1",
     threadId: "thread-1",
@@ -225,6 +237,43 @@ test("communication API rejects unavailable agents with a no-dead-end fallback",
   assert.deepEqual(accepted.availableToolIds, ["foundation.echo"]);
   assert.deepEqual(accepted.context.map((item) => item.id), ["story-1"]);
   assert.match(accepted.nextAction, /smallest useful guided step/);
+});
+
+test("governed runs require an approved immutable playbook and record bounded audit metadata", async () => {
+  const platform = new BeastAgentsPlatform();
+  platform.registerModule(foundationManifest());
+  await platform.lifecycle.transition("foundation-guide", "initializing");
+  await platform.lifecycle.transition("foundation-guide", "ready");
+  await assert.rejects(platform.accept({ requestId: "unapproved", threadId: "t", agentId: "foundation-guide", ownerId: "owner-1", input: "go" }), /no effective approved playbook/);
+  approveFoundationPlaybook(platform);
+  assert.throws(() => approveFoundationPlaybook(platform), /immutable/);
+  const response = await platform.accept({ requestId: "approved", threadId: "t", agentId: "foundation-guide", ownerId: "owner-1", input: "continue" });
+  assert.equal(response.governance?.playbookVersion, "1.0.0");
+  assert.deepEqual(response.governance?.toolsAvailable, ["foundation.echo"]);
+  assert.equal(platform.audits.list({ ownerId: "owner-1" })[0].rationale, "Approved playbook, permissions, and owner-scoped context were assembled.");
+  assert.equal("chainOfThought" in platform.audits.list()[0], false);
+});
+
+test("preferences memory and current context stay owner scoped and below safety and permissions", async () => {
+  const platform = new BeastAgentsPlatform(); platform.registerModule(foundationManifest()); approveFoundationPlaybook(platform);
+  platform.preferences.put({ ownerId: "owner-1", agentId: "foundation-guide", values: { bypassSafety: true, tone: "brief" }, updatedAt: "2026-07-21" });
+  platform.currentContext.put({ id: "ctx-1", ownerId: "owner-1", agentId: "foundation-guide", content: "private", capturedAt: "2026-07-21", evidence: [{ source: "provider", capturedAt: "2026-07-21" }], requiredPermission: { resource: "foundation.secret", action: "read" } });
+  platform.currentContext.put({ id: "ctx-2", ownerId: "owner-2", agentId: "foundation-guide", content: "other", capturedAt: "2026-07-21", evidence: [{ source: "provider", capturedAt: "2026-07-21" }] });
+  const assembled = await platform.governedRuns.assemble(foundationAgent(), "owner-1");
+  assert.equal(assembled.preferences?.values.tone, "brief");
+  assert.deepEqual(assembled.currentContext, []);
+  assert.equal(assembled.priority[0], "safety_and_legal");
+  assert.ok(assembled.priority.indexOf("approved_playbook") < assembled.priority.indexOf("user_preferences"));
+});
+
+test("learning journal proposals cannot become policy without review and a new playbook version", () => {
+  const platform = new BeastAgentsPlatform();
+  platform.learningJournal.propose({ id: "learn-1", agentId: "foundation-guide", status: "proposed", observation: "Users need shorter answers.", proposedChange: "Prefer concise responses.", evidence: [{ source: "run-1", capturedAt: "2026-07-21" }], createdAt: "2026-07-21" });
+  assert.throws(() => platform.learningJournal.transition("learn-1", "implemented", { reviewedBy: "Owner", reviewedAt: "2026-07-21" }), /Invalid/);
+  platform.learningJournal.transition("learn-1", "under_review", { reviewedBy: "Owner", reviewedAt: "2026-07-21" });
+  platform.learningJournal.transition("learn-1", "accepted", { reviewedBy: "Owner", reviewedAt: "2026-07-21" });
+  assert.throws(() => platform.learningJournal.transition("learn-1", "implemented", { reviewedBy: "Owner", reviewedAt: "2026-07-21" }), /new playbook version/);
+  assert.equal(platform.learningJournal.transition("learn-1", "implemented", { reviewedBy: "Owner", reviewedAt: "2026-07-21", implementedInPlaybookVersion: "1.1.0" }).status, "implemented");
 });
 
 test("Generation 2 principles are explicit and registration enforces relationship design", () => {

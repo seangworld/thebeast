@@ -8,6 +8,11 @@ import { AgentEventBus } from "./events";
 import { AgentLifecycleService } from "./lifecycle";
 import { AgentPromptFramework } from "./prompts";
 import { AgentCommunicationService } from "./communication";
+import {
+  AgentCurrentContextStore, AgentLearningJournal, AgentPlaybookRegistry, AgentPreferenceStore,
+  AgentRunAuditStore, GovernedRunAssembler,
+} from "./governance";
+import type { AgentPlaybook } from "./types";
 
 export class BeastAgentsPlatform {
   readonly registry = new AgentRegistry();
@@ -18,8 +23,18 @@ export class BeastAgentsPlatform {
   readonly lifecycle = new AgentLifecycleService(this.registry, this.events);
   readonly prompts = new AgentPromptFramework();
   readonly communication = new AgentCommunicationService(this.events);
+  readonly playbooks = new AgentPlaybookRegistry();
+  readonly preferences = new AgentPreferenceStore();
+  readonly currentContext = new AgentCurrentContextStore();
+  readonly learningJournal = new AgentLearningJournal();
+  readonly audits = new AgentRunAuditStore();
+  readonly governedRuns: GovernedRunAssembler;
 
-  constructor(readonly memory: AgentMemoryStore = new InMemoryAgentMemoryStore()) {}
+  constructor(readonly memory: AgentMemoryStore = new InMemoryAgentMemoryStore()) {
+    this.governedRuns = new GovernedRunAssembler(this.playbooks, this.preferences, memory, this.currentContext, this.permissions);
+  }
+
+  registerPlaybook(playbook: AgentPlaybook) { return this.playbooks.register(playbook); }
 
   registerModule(manifest: AgentModuleManifest) {
     this.preflightModule(manifest);
@@ -86,12 +101,28 @@ export class BeastAgentsPlatform {
         availableToolIds: [],
       };
     }
+    const governance = await this.governedRuns.assemble(agent, request.ownerId);
     const context = await this.context.assemble({
       agentId: agent.id,
       ownerId: request.ownerId,
       threadId: request.threadId,
       requestedProviderIds: request.contextProviderIds,
     });
+    const availableToolIds = this.tools.listForAgent(agent.id).map((tool) => tool.id);
+    const timestamp = new Date().toISOString();
+    const runMetadata = {
+      runId: request.requestId,
+      requestId: request.requestId,
+      agentId: agent.id,
+      ownerId: request.ownerId,
+      playbookVersion: governance.playbook.version,
+      promptVersion: this.prompts.version(agent.promptTemplateId),
+      toolsAvailable: availableToolIds,
+      memoryReferences: governance.memory.map((item) => item.id),
+      trigger: typeof request.input === "string" ? request.input.slice(0, 120) : "structured_request",
+      timestamp,
+    };
+    this.audits.append({ ...runMetadata, toolsUsed: [], outcome: "accepted", rationale: "Approved playbook, permissions, and owner-scoped context were assembled." });
     return {
       requestId: request.requestId,
       agentId: agent.id,
@@ -99,7 +130,8 @@ export class BeastAgentsPlatform {
       reason: "Agent is ready with permission-filtered context and tools.",
       nextAction: "Continue with the smallest useful guided step.",
       context,
-      availableToolIds: this.tools.listForAgent(agent.id).map((tool) => tool.id),
+      availableToolIds,
+      governance: runMetadata,
     };
   }
 }
@@ -111,6 +143,8 @@ export const beastAgentsFoundationRules = [
   "Memory is owner-scoped, purpose-limited, exportable through future approved adapters, and deletable.",
   "The foundation creates no background workers, credentials, database tables, network calls, or autonomous release authority.",
   "Every agent registration must identify user-story context, proactive guidance, relationship memory, progressive completion, and a no-dead-end fallback.",
+  "Every applicable run requires an effective owner-approved playbook; preferences, memory, and learning proposals cannot rewrite policy.",
+  "Run audits record decisions, evidence references, actions, and concise rationale—never hidden chain-of-thought.",
 ] as const;
 
 export const generationTwoDesignPrinciples = [
