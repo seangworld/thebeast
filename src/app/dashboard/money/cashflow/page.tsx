@@ -189,6 +189,7 @@ export default function CashFlowPage() {
     deleteDebt,
     archiveBill,
     resetBillDueDate,
+    updatePaymentAutomation,
     unarchiveBill,
     archiveDebt,
     resetDebtDueDate,
@@ -1337,6 +1338,7 @@ export default function CashFlowPage() {
           cancelEditBill={cancelEditBill}
           archiveBill={archiveBill}
           resetBillDueDate={resetBillDueDate}
+          updatePaymentAutomation={(id, patch) => updatePaymentAutomation("bill", id, patch)}
         />
 
         <div id="debts">
@@ -1376,6 +1378,7 @@ export default function CashFlowPage() {
           archiveDebt={archiveDebt}
           resetDebtDueDate={resetDebtDueDate}
           deleteDebt={deleteDebt}
+          updatePaymentAutomation={(id, patch) => updatePaymentAutomation("debt", id, patch)}
         />
         </div>
         <IncomeSourcesSection

@@ -2,6 +2,8 @@
 
 import type { Dispatch, SetStateAction } from "react";
 import BillPaymentControls from "./BillPaymentControls";
+import { PaymentAutomationControls, type AutomationPatch } from "../../components/PaymentAutomationControls";
+import { normalizePaymentAutomation } from "@/lib/paymentAutomation";
 
 type BillFrequency =
   | "weekly"
@@ -24,6 +26,8 @@ export type BillRow = {
   funding_source_id?: string | null;
   nextDueDateDisplay: string;
   status: string;
+  auto_pay_enabled?: boolean | null;
+  reminder_enabled?: boolean | null;
 };
 
 type OptionItem = {
@@ -70,6 +74,7 @@ type BillsSectionProps = {
   cancelEditBill: () => void;
   archiveBill: (id: string) => Promise<void>;
   resetBillDueDate: (id: string) => Promise<void>;
+  updatePaymentAutomation: (id: string, patch: AutomationPatch) => Promise<void>;
 };
 
 export default function BillsSection({
@@ -100,6 +105,7 @@ export default function BillsSection({
   cancelEditBill,
   archiveBill,
   resetBillDueDate,
+  updatePaymentAutomation,
 }: BillsSectionProps) {
   return (
     <section id="bills" className="money-section-panel">
@@ -120,7 +126,7 @@ export default function BillsSection({
       {showBills && (
         <>
           <div
-            className="grid min-w-0 gap-3 p-3 md:hidden"
+            className="grid min-w-0 gap-3 p-3 lg:hidden"
             data-mobile-bill-cards="true"
           >
             {activeBills.length === 0 ? (
@@ -231,6 +237,9 @@ export default function BillsSection({
                   )}
 
                   <div className="mt-4 min-w-0">
+                    <PaymentAutomationControls name={bill.name} {...normalizePaymentAutomation(bill)} onSave={(patch) => updatePaymentAutomation(bill.id, patch)} />
+                  </div>
+                  <div className="mt-4 min-w-0">
                     <BillPaymentControls
                       bill={bill}
                       editingBillId={editingBillId}
@@ -305,11 +314,12 @@ export default function BillsSection({
             )}
           </div>
 
-          <div className="beast-table-wrap hidden md:block" tabIndex={0} role="region" aria-label="Bills table">
-          <table className="w-full min-w-[900px] text-sm">
+          <div className="hidden lg:block" role="region" aria-label="Bills table">
+          <table className="w-full table-fixed text-sm">
             <thead>
               <tr>
                 <th className="text-left">Bill</th>
+                <th className="text-center">Auto</th>
                 <th className="text-right">Remaining</th>
                 <th className="text-center">Next Due</th>
                 <th className="text-center">Income Pot</th>
@@ -322,7 +332,7 @@ export default function BillsSection({
             <tbody>
               {activeBills.length === 0 ? (
                 <tr>
-                  <td colSpan={7}>No bills added yet.</td>
+                  <td colSpan={8}>No bills added yet.</td>
                 </tr>
               ) : (
                 activeBills.map((bill) => (
@@ -381,6 +391,7 @@ export default function BillsSection({
                         </div>
                       )}
                     </td>
+                    <td className="align-top"><PaymentAutomationControls compact name={bill.name} {...normalizePaymentAutomation(bill)} onSave={(patch) => updatePaymentAutomation(bill.id, patch)} /></td>
 
                     <td className="text-right align-top font-semibold">
                       ${Number(bill.remaining || 0).toFixed(2)}

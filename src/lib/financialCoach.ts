@@ -5,6 +5,7 @@ import type {
 import type { FinancialForecastResult } from "./financialForecasting";
 import type { FinancialInsightsResult } from "./financialInsights";
 import type { FinancialScenarioComparisonResult } from "./financialScenarios";
+import type { buildPaymentAutomationContext } from "./paymentAutomation";
 
 export type FinancialCoachResult = {
   title: string;
@@ -81,6 +82,7 @@ export type FinancialCoachInput = {
   creditUtilization?: number;
   currentCash?: number;
   cashBuffer?: number;
+  paymentAutomation?: ReturnType<typeof buildPaymentAutomationContext>;
 };
 
 const safetyBoundaries: readonly FinancialCoachSafetyBoundary[] = [
@@ -249,6 +251,9 @@ export function buildFinancialCoach(input: FinancialCoachInput): FinancialCoachR
       `Protected cash buffer assumption: ${safeNumber(input.cashBuffer)}.`,
       `Credit utilization assumption: ${Math.round(safeNumber(input.creditUtilization))}%.`,
       "Income, bills, debts, and available cash reflect the current records.",
+      input.paymentAutomation
+        ? `${input.paymentAutomation.autoPayCount} recurring payments are marked Auto Pay; this is not proof that they cleared.`
+        : "Payment automation preferences were not provided.",
     ])
   ).slice(0, 6);
 

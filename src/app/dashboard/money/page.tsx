@@ -17,6 +17,7 @@ import {
   type FinancialCoachRecommendationRecord,
   type FinancialCoachScenarioInput,
 } from "@/lib/financialCoach";
+import { buildPaymentAutomationContext } from "@/lib/paymentAutomation";
 import { formatCurrency } from "@/lib/formatters";
 import {
   isActiveRecurringSource,
@@ -58,6 +59,8 @@ type MoneyDebt = {
   due_date?: number | null;
   credit_limit?: number | null;
   is_archived?: boolean | null;
+  auto_pay_enabled?: boolean | null;
+  reminder_enabled?: boolean | null;
 };
 
 type MoneyBill = {
@@ -68,6 +71,8 @@ type MoneyBill = {
   due_date?: number | null;
   is_archived?: boolean | null;
   next_due_date_after_payment?: string | null;
+  auto_pay_enabled?: boolean | null;
+  reminder_enabled?: boolean | null;
 };
 
 type MoneyIncome = {
@@ -472,6 +477,12 @@ export default function MoneyWorkspacePage() {
       creditUtilization: utilization,
       currentCash: startingCash,
       cashBuffer: buffer,
+      paymentAutomation: buildPaymentAutomationContext([...activeBills, ...activeDebts].map((item) => ({
+        id: item.id,
+        name: item.name || "Unnamed payment",
+        auto_pay_enabled: item.auto_pay_enabled,
+        reminder_enabled: item.reminder_enabled,
+      }))),
     });
     const financialReports = buildFinancialReports({
       cashIntelligence,

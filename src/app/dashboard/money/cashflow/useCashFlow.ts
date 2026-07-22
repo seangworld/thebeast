@@ -15,6 +15,7 @@ import { useCashFlowProjection } from "./hooks/useCashFlowProjection";
 import { useCashFlowDataLoader } from "./hooks/useCashFlowDataLoader";
 import { useCashFlowPaymentActions } from "./hooks/useCashFlowPaymentActions";
 import { buildResetDueDatePayload } from "./dueDateReset";
+import type { AutomationPatch } from "@/app/dashboard/money/components/PaymentAutomationControls";
 
 export function useCashFlow() {
   const [timeline, setTimeline] = useState<any[]>([]);
@@ -518,6 +519,8 @@ export function useCashFlow() {
       assigned_income_date: null,
       funding_source_id: null,
       is_debt: false,
+      auto_pay_enabled: false,
+      reminder_enabled: true,
     });
 
     setBillName("");
@@ -700,6 +703,14 @@ export function useCashFlow() {
     await load();
   }
 
+  async function updatePaymentAutomation(kind: "bill" | "debt", id: string, patch: AutomationPatch) {
+    const supabase = createClient();
+    const { error } = await supabase.from(kind === "bill" ? "bill_events" : "debts").update(patch).eq("id", id);
+    if (error) throw error;
+    if (kind === "bill") setBills((current) => current.map((item) => item.id === id ? { ...item, ...patch } : item));
+    else setDebts((current) => current.map((item) => item.id === id ? { ...item, ...patch } : item));
+  }
+
   async function unarchiveDebt(id: string) {
     const supabase = createClient();
 
@@ -879,6 +890,7 @@ export function useCashFlow() {
     deleteDebt,
     archiveBill,
     resetBillDueDate,
+    updatePaymentAutomation,
     unarchiveBill,
     archiveDebt,
     resetDebtDueDate,

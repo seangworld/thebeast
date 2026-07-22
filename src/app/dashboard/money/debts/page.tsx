@@ -35,6 +35,8 @@ import {
   type VelocitySettings,
 } from "@/lib/velocity/settings";
 import { BeastMoneyShell } from "@/app/dashboard/money/BeastMoneyShell";
+import { PaymentAutomationControls, type AutomationPatch } from "@/app/dashboard/money/components/PaymentAutomationControls";
+import { normalizePaymentAutomation } from "@/lib/paymentAutomation";
 import {
   buildPayoffPlanDisplayRows,
   parsePayoffColumnPreference,
@@ -60,6 +62,7 @@ function PayoffRowDetails({ row, strategy, assumptions, debt, onEdit, onArchive,
   return (
     <div className="mt-3 min-w-0 rounded-xl border border-[#2a3242] bg-[#0f1419] p-4" data-payoff-row-details="true">
       <dl className="grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div><dt className="text-xs font-bold uppercase text-[#7f8da3]">Recurring payment automation</dt><dd>{debt ? (normalizePaymentAutomation(debt).autoPayEnabled ? "Auto Pay expected for the recurring payment only" : "Manual recurring payment") : "Not available"}{debt && normalizePaymentAutomation(debt).reminderEnabled ? " · Reminder on" : " · Reminder off"}</dd></div>
         <div><dt className="text-xs font-bold uppercase text-[#7f8da3]">Minimum payment</dt><dd>${row.required_minimum.toFixed(2)}</dd></div>
         <div><dt className="text-xs font-bold uppercase text-[#7f8da3]">Remaining interest</dt><dd>${row.remainingInterest.toFixed(2)}</dd></div>
         <div><dt className="text-xs font-bold uppercase text-[#7f8da3]">Total projected interest</dt><dd>${row.totalProjectedInterest.toFixed(2)}</dd></div>
@@ -90,6 +93,8 @@ type Debt = {
   next_due_date_after_payment?: string | null;
   nextDueDate?: Date;
   nextDueDateDisplay?: string;
+  auto_pay_enabled?: boolean | null;
+  reminder_enabled?: boolean | null;
 };
 
 function money(value: number) {
@@ -733,6 +738,8 @@ export default function DebtsPage() {
       credit_limit: creditLimitNum,
       available_credit: availableCredit,
       is_archived: false,
+      auto_pay_enabled: false,
+      reminder_enabled: true,
     });
 
     if (error) {
@@ -837,6 +844,13 @@ export default function DebtsPage() {
 
     setMessage("Debt archived.");
     await load();
+  }
+
+  async function updateDebtAutomation(id: string, patch: AutomationPatch) {
+    const supabase = createClient();
+    const { error } = await supabase.from("debts").update(patch).eq("id", id);
+    if (error) throw error;
+    setDebts((current) => current.map((debt) => debt.id === id ? { ...debt, ...patch } : debt));
   }
 
   async function unarchiveDebt(id: string) {
@@ -1271,6 +1285,7 @@ export default function DebtsPage() {
                           </div>
                         </div>
                       </div>
+                      <div className="mt-3"><PaymentAutomationControls name={debt.name} {...normalizePaymentAutomation(debt)} onSave={(patch) => updateDebtAutomation(debt.id, patch)} /></div>
 
                       <div className="mt-4 grid min-w-0 grid-cols-1 gap-2 min-[390px]:grid-cols-3">
                         <button
@@ -1301,12 +1316,13 @@ export default function DebtsPage() {
             )}
           </div>
 
-          <div className="beast-table-wrap hidden md:block" tabIndex={0} role="region" aria-label="Debt accounts table">
-            <table className="w-full min-w-[760px] text-sm">
+          <div className="hidden lg:block" role="region" aria-label="Debt accounts table">
+            <table className="w-full table-fixed text-sm">
               <thead>
                 <tr>
                   <th>Priority</th>
                   <th>Name</th>
+                  <th className="text-center">Auto</th>
                   <th className="text-right">Balance</th>
                   <th className="text-right">Minimum</th>
                   <th className="text-right">APR</th>
@@ -1318,16 +1334,16 @@ export default function DebtsPage() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={7}>Loading debts...</td>
+                    <td colSpan={8}>Loading debts...</td>
                   </tr>
                 ) : orderedDebts.length === 0 ? (
                   <tr>
-                    <td colSpan={7}>No debts added yet.</td>
+                    <td colSpan={8}>No debts added yet.</td>
                   </tr>
                 ) : (
                   orderedDebts.map((debt, index) => (
                     <tr key={debt.id}>
-                      <td>#{index + 1}</td>
+                    <td>#{index + 1}</td>
                   
                       <td>
                         {editingDebtId === debt.id ? (
@@ -1340,6 +1356,7 @@ export default function DebtsPage() {
                           debt.name
                         )}
                       </td>
+                      <td className="align-top"><PaymentAutomationControls compact name={debt.name} {...normalizePaymentAutomation(debt)} onSave={(patch) => updateDebtAutomation(debt.id, patch)} /></td>
                   
                       <td className="text-right">
                         {editingDebtId === debt.id ? (

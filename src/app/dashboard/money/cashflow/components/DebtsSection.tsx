@@ -2,6 +2,8 @@
 
 import { type Dispatch, type SetStateAction } from "react";
 import DebtPaymentControls from "./DebtPaymentControls";
+import { PaymentAutomationControls, type AutomationPatch } from "../../components/PaymentAutomationControls";
+import { normalizePaymentAutomation } from "@/lib/paymentAutomation";
 
 type DebtRow = {
   id: string;
@@ -13,6 +15,8 @@ type DebtRow = {
   nextDueDateDisplay: string;
   assigned_income_date?: string | null;
   funding_source_id?: string | null;
+  auto_pay_enabled?: boolean | null;
+  reminder_enabled?: boolean | null;
 };
 
 export type { DebtRow };
@@ -64,6 +68,7 @@ type DebtsSectionProps = {
   archiveDebt: (id: string) => Promise<void>;
   deleteDebt: (id: string) => Promise<void>;
   resetDebtDueDate: (id: string) => Promise<void>;
+  updatePaymentAutomation: (id: string, patch: AutomationPatch) => Promise<void>;
 };
 
 export default function DebtsSection({
@@ -102,6 +107,7 @@ export default function DebtsSection({
   archiveDebt,
   deleteDebt,
   resetDebtDueDate,
+  updatePaymentAutomation,
 }: DebtsSectionProps) {
   return (
     <section className="beast-panel overflow-hidden">
@@ -126,7 +132,7 @@ export default function DebtsSection({
       {showDebts && (
         <>
           <div
-            className="grid min-w-0 gap-3 p-3 md:hidden"
+            className="grid min-w-0 gap-3 p-3 lg:hidden"
             data-mobile-debt-cards="true"
           >
             {activeDebts.length === 0 ? (
@@ -266,6 +272,9 @@ export default function DebtsSection({
                   )}
 
                   <div className="mt-4 min-w-0">
+                    <PaymentAutomationControls name={debt.name} {...normalizePaymentAutomation(debt)} onSave={(patch) => updatePaymentAutomation(debt.id, patch)} />
+                  </div>
+                  <div className="mt-4 min-w-0">
                     <DebtPaymentControls
                       debt={debt}
                       editingDebtId={editingDebtId}
@@ -341,11 +350,12 @@ export default function DebtsSection({
             )}
           </div>
 
-          <div className="beast-table-wrap hidden md:block" tabIndex={0} role="region" aria-label="Cash flow debts table">
-          <table className="w-full min-w-[900px] text-sm">
+          <div className="hidden lg:block" role="region" aria-label="Cash flow debts table">
+          <table className="w-full table-fixed text-sm">
             <thead>
               <tr>
                 <th className="text-left">Debt</th>
+                <th className="text-center">Auto</th>
                 <th className="text-right">Minimum</th>
                 <th className="text-center">Next Due</th>
                 <th className="text-center">Income Pot</th>
@@ -357,7 +367,7 @@ export default function DebtsSection({
             <tbody>
               {activeDebts.length === 0 ? (
                 <tr>
-                  <td colSpan={6}>No debts added yet.</td>
+                  <td colSpan={7}>No debts added yet.</td>
                 </tr>
               ) : (
                 activeDebts.map((debt) => (
@@ -454,6 +464,7 @@ export default function DebtsSection({
                         </div>
                       )}
                     </td>
+                    <td className="align-top"><PaymentAutomationControls compact name={debt.name} {...normalizePaymentAutomation(debt)} onSave={(patch) => updatePaymentAutomation(debt.id, patch)} /></td>
 
                     <td className="text-right align-top font-semibold">
                       ${Number(debt.minimum_payment || 0).toFixed(2)}

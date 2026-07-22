@@ -141,9 +141,9 @@ test("Bills and Debts keep Pay actions reachable on mobile without replacing des
   assert.match(bills, /data-mobile-bill-cards="true"/);
   assert.match(cashflowDebts, /data-mobile-debt-cards="true"/);
   assert.match(debtsPage, /data-mobile-debt-list-cards="true"/);
-  assert.match(bills, /className="beast-table-wrap hidden md:block"/);
-  assert.match(cashflowDebts, /className="beast-table-wrap hidden md:block"/);
-  assert.match(debtsPage, /className="beast-table-wrap hidden md:block"/);
+  assert.match(bills, /className="hidden lg:block"/);
+  assert.match(cashflowDebts, /className="hidden lg:block"/);
+  assert.match(debtsPage, /className="hidden lg:block"/);
   assert.match(bills, /break-words text-base font-black/);
   assert.match(cashflowDebts, /break-words text-base font-black/);
   assert.match(debtsPage, /break-words text-base font-black/);
