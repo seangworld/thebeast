@@ -151,8 +151,8 @@ test("Bills and Debts keep Pay actions reachable on mobile without replacing des
   assert.match(cashflowDebts, /<DebtPaymentControls/);
   assert.match(billControls, />\s*Pay\s*</);
   assert.match(debtControls, /"Pay Minimum"/);
-  assert.match(billControls, /grid-cols-1 gap-2 min-\[380px\]:grid-cols-\[1fr_auto\]/);
-  assert.match(debtControls, /grid-cols-1 gap-2 min-\[390px\]:grid-cols-\[1fr_auto_auto\]/);
+  assert.match(billControls, /data-action-menu-list="bill"/);
+  assert.match(debtControls, /data-action-menu-list="debt"/);
   assert.match(globalStyles, /scrollbar-gutter: stable/);
   assert.doesNotMatch(globalStyles, /overflow-x: (?:clip|hidden)/);
 });
@@ -179,10 +179,17 @@ test("Bills and Debts use viewport-bound overlay menus without changing row widt
   assert.match(overlay, /maxHeight/);
   assert.match(overlay, /overflow-y-auto overflow-x-hidden/);
   assert.match(overlay, /whitespace-nowrap/);
+  assert.match(overlay, /width = 240/);
   assert.match(assignments, /selected\?\.compactLabel \|\| "Unassigned"/);
   assert.match(assignments, /option\.detailLabel/);
   assert.match(assignments, /width=\{420\}/);
   assert.match(assignments, /role="listbox"/);
   assert.match(billControls, /window\.confirm/);
   assert.match(debtControls, /window\.confirm/g);
+  for (const controls of [billControls, debtControls]) {
+    assert.match(controls, /w-full whitespace-nowrap px-4 text-sm/);
+    assert.match(controls, /className="grid grid-cols-1 gap-2"/);
+    assert.doesNotMatch(controls, /sm:grid-cols-4/);
+    assert.doesNotMatch(controls, /break-all|break-words|whitespace-normal/);
+  }
 });

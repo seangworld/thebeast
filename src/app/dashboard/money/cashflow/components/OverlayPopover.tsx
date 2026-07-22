@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 
 type Position = { left: number; top?: number; bottom?: number; width: number; maxHeight: number };
 
-export function OverlayPopover({ label, children, width = 352, testId }: {
+export function OverlayPopover({ label, children, width = 240, testId }: {
   label: string;
   children: (close: () => void) => ReactNode;
   width?: number;

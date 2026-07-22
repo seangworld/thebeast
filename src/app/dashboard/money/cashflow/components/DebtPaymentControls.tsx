@@ -39,6 +39,7 @@ export default function DebtPaymentControls({
   deleteDebt,
   resetDebtDueDate,
 }: DebtPaymentControlsProps) {
+  const actionClass = "w-full whitespace-nowrap px-4 text-sm";
   const isApplying = applyingDebtPaymentId === debt.id;
   const [isResettingDueDate, setIsResettingDueDate] = useState(false);
 
@@ -62,9 +63,9 @@ export default function DebtPaymentControls({
       </button>
     </div>
   ) : (
-    <div className="grid gap-2">
+    <div className="grid min-w-0 gap-2 text-sm" data-action-menu-list="debt">
       <div
-        className="grid min-w-0 grid-cols-1 gap-2 min-[390px]:grid-cols-[1fr_auto_auto]"
+        className="grid min-w-0 grid-cols-1 gap-2"
         data-mobile-money-payment-form="debt"
       >
         <input
@@ -86,7 +87,7 @@ export default function DebtPaymentControls({
             applyDebtPayment(debt, Number(debtPayments[debt.id] || 0))
           }
           disabled={isApplying}
-          className="beast-button-secondary"
+          className={`beast-button-secondary ${actionClass}`}
         >
           {isApplying ? "..." : "Apply Payment"}
         </button>
@@ -96,7 +97,7 @@ export default function DebtPaymentControls({
             applyDebtPayment(debt, Number(debt.minimum_payment || 0))
           }
           disabled={isApplying}
-          className="beast-button"
+          className={`beast-button ${actionClass}`}
         >
           {isApplying ? "..." : "Pay Minimum"}
         </button>
@@ -114,8 +115,8 @@ export default function DebtPaymentControls({
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-2 min-[360px]:grid-cols-2 sm:grid-cols-4">
-        <button onClick={() => startEditDebt(debt)} className="beast-button-secondary">
+      <div className="grid grid-cols-1 gap-2">
+        <button onClick={() => startEditDebt(debt)} className={`beast-button-secondary ${actionClass}`}>
           Edit
         </button>
 
@@ -123,19 +124,19 @@ export default function DebtPaymentControls({
           type="button"
           onClick={handleResetDueDate}
           disabled={isResettingDueDate}
-          className="beast-button-secondary"
+          className={`beast-button-secondary ${actionClass}`}
         >
           {isResettingDueDate ? "Resetting..." : "Reset Due"}
         </button>
 
         <button
           onClick={() => { if (window.confirm(`Archive ${debt.name}?`)) void archiveDebt(debt.id); }}
-          className="beast-button-secondary"
+          className={`beast-button-secondary ${actionClass}`}
         >
           Archive
         </button>
 
-        <button onClick={() => { if (window.confirm(`Delete ${debt.name}? This action cannot be undone.`)) void deleteDebt(debt.id); }} className="beast-button bg-red-700 hover:bg-red-600">
+        <button onClick={() => { if (window.confirm(`Delete ${debt.name}? This action cannot be undone.`)) void deleteDebt(debt.id); }} className={`beast-button bg-red-700 hover:bg-red-600 ${actionClass}`}>
           Delete
         </button>
       </div>
