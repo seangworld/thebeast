@@ -13,6 +13,8 @@ import {
   AgentRunAuditStore, GovernedRunAssembler,
 } from "./governance";
 import type { AgentPlaybook } from "./types";
+import { ProfessionalBehaviorRegistry } from "./professionalBehavior";
+import { SharedInsightEngine } from "./insights";
 
 export class BeastAgentsPlatform {
   readonly registry = new AgentRegistry();
@@ -23,6 +25,8 @@ export class BeastAgentsPlatform {
   readonly lifecycle = new AgentLifecycleService(this.registry, this.events);
   readonly prompts = new AgentPromptFramework();
   readonly communication = new AgentCommunicationService(this.events);
+  readonly professionalBehavior = new ProfessionalBehaviorRegistry();
+  readonly insights = new SharedInsightEngine();
   readonly playbooks = new AgentPlaybookRegistry();
   readonly preferences = new AgentPreferenceStore();
   readonly currentContext = new AgentCurrentContextStore();
@@ -39,6 +43,11 @@ export class BeastAgentsPlatform {
   registerModule(manifest: AgentModuleManifest) {
     this.preflightModule(manifest);
     this.registry.registerModule(manifest);
+    for (const agent of manifest.agents || []) {
+      if (agent.professionalBehavior && !this.professionalBehavior.get(agent.professionalBehavior.id)) {
+        this.professionalBehavior.register(agent.professionalBehavior);
+      }
+    }
     for (const tool of manifest.tools || []) this.tools.register(tool);
     for (const provider of manifest.contextProviders || []) this.context.register(provider);
     for (const prompt of manifest.promptTemplates || []) this.prompts.register(prompt);

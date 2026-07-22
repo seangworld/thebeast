@@ -10,3 +10,5 @@ export * from "./prompts";
 export * from "./communication";
 export * from "./governance";
 export * from "./platform";
+export * from "./professionalBehavior";
+export * from "./insights";

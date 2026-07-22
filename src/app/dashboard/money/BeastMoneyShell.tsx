@@ -3,7 +3,8 @@ import { BEAST_MONEY_VERSION_LABEL } from "@/lib/appVersion";
 import { ModuleBadge } from "@/app/components/design/DashboardPrimitives";
 
 export const beastMoneySections = [
-  { label: "Dashboard", href: "/dashboard/money" },
+  { label: "Money Coach", href: "/dashboard/money" },
+  { label: "Dashboard", href: "/dashboard/money#money-dashboard" },
   { label: "Cash Flow", href: "/dashboard/money/cashflow" },
   { label: "Bills", href: "/dashboard/money/cashflow#bills" },
   { label: "Debts", href: "/dashboard/money/debts" },

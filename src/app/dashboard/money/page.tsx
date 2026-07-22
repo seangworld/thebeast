@@ -19,6 +19,8 @@ import {
 } from "@/lib/financialCoach";
 import { buildPaymentAutomationContext } from "@/lib/paymentAutomation";
 import { formatCurrency } from "@/lib/formatters";
+import { getProfileDisplayName } from "@/lib/profile";
+import { buildMoneyCoachExperience } from "@/lib/moneyCoachExperience";
 import {
   isActiveRecurringSource,
   numberValue,
@@ -49,6 +51,7 @@ import {
   type DashboardAlertSeverity,
 } from "@/app/dashboard/money/components/MoneyDashboardUI";
 import { BeastMoneyShell } from "@/app/dashboard/money/BeastMoneyShell";
+import { MoneyCoachExperience } from "@/app/dashboard/money/components/MoneyCoachExperience";
 
 type MoneyDebt = {
   id: string;
@@ -61,6 +64,7 @@ type MoneyDebt = {
   is_archived?: boolean | null;
   auto_pay_enabled?: boolean | null;
   reminder_enabled?: boolean | null;
+  assigned_income_date?: string | null;
 };
 
 type MoneyBill = {
@@ -73,6 +77,7 @@ type MoneyBill = {
   next_due_date_after_payment?: string | null;
   auto_pay_enabled?: boolean | null;
   reminder_enabled?: boolean | null;
+  assigned_income_date?: string | null;
 };
 
 type MoneyIncome = {
@@ -245,6 +250,8 @@ export default function MoneyWorkspacePage() {
   const [state, setState] = useState<MoneyState>(initialMoneyState);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
+  const [userName, setUserName] = useState("there");
+  const [ownerId, setOwnerId] = useState("authenticated-owner");
   const [simulationDate, setSimulationDate] = useState("");
   const [coachCorrections, setCoachCorrections] = useState<CoachCorrections>({});
   const [coachRecommendationHistory, setCoachRecommendationHistory] = useState<
@@ -265,6 +272,19 @@ export default function MoneyWorkspacePage() {
         setLoading(false);
         return;
       }
+      setOwnerId(userId);
+
+      const profileResult = await supabase
+        .from("profiles")
+        .select("preferred_name, display_name, full_name, username")
+        .eq("id", userId)
+        .maybeSingle();
+      setUserName(
+        getProfileDisplayName(
+          profileResult.error ? null : profileResult.data,
+          userData.user
+        )
+      );
 
       const [
         debtsResult,
@@ -518,6 +538,7 @@ export default function MoneyWorkspacePage() {
       creditAvailable,
       utilization,
       billsDueSoon,
+      safeFundingSourceCapacity: cashIntelligence.safeFundingSourceCapacity,
     };
   }, [coachCorrections, simulationDate, state]);
 
@@ -659,11 +680,51 @@ export default function MoneyWorkspacePage() {
   const upcomingObligations = mobileBillCards.filter((bill) =>
     ["Overdue", "Due Today", "Due Soon"].includes(bill.status)
   );
+  const moneyCoachExperience = buildMoneyCoachExperience({
+    ownerId,
+    userName,
+    asOfDate: snapshot.simulation.asOfDate,
+    activeBillCount: snapshot.activeBills.length,
+    billsDueSoonCount: snapshot.billsDueSoon.length,
+    monthlyBills: snapshot.monthlyBills,
+    activeDebtCount: snapshot.activeDebts.length,
+    totalDebt: snapshot.totalDebt,
+    projectedDebtReduction:
+      snapshot.financialInsights.monthlyProgress.debtReduction,
+    debtProgressPercent:
+      snapshot.financialInsights.monthlyProgress.progressPercent,
+    monthlyIncome: snapshot.monthlyIncome,
+    monthlyOutflow: snapshot.monthlyOutflow,
+    projectedSurplus: snapshot.projectedSurplus,
+    currentCash: snapshot.startingCash,
+    cashBuffer: snapshot.buffer,
+    utilization: snapshot.utilization,
+    fundingSourceCount: state.fundingSources.filter(
+      (source) => source.is_active !== false
+    ).length,
+    safeFundingSourceCapacity: snapshot.safeFundingSourceCapacity,
+    assignedIncomePotCount: [
+      ...snapshot.activeBills,
+      ...snapshot.activeDebts,
+    ].filter((item) => Boolean(item.assigned_income_date)).length,
+    totalObligationCount:
+      snapshot.activeBills.length + snapshot.activeDebts.length,
+    recommendationTitle: snapshot.financialCoach.bestNextAction,
+    recommendationAction: snapshot.financialCoach.whatToDoToday,
+    recommendationWhy: snapshot.financialCoach.whyThisAction,
+    recommendationHref:
+      snapshot.financialCoach.warnings[0]?.href ||
+      (snapshot.activeDebts.length > 0
+        ? "/dashboard/money/debts"
+        : "/dashboard/money/cashflow"),
+    interestSaved: snapshot.financialInsights.interestSaved,
+    timeSavedMonths: snapshot.financialInsights.timeSavedMonths,
+  });
 
   return (
     <BeastMoneyShell
-      title="Money Cockpit"
-      description="A professional financial workspace for cash timing, debt payoff, credit visibility, and Velocity planning."
+      title="Money Coach"
+      description="Money Coach leads your conversation-first experience, with the existing Money Cockpit grounded in current BeastMoney records and calculations below."
       actions={
         <>
           <Link href="/dashboard/money/cashflow" className="beast-button">
@@ -675,6 +736,12 @@ export default function MoneyWorkspacePage() {
         </>
       }
     >
+      <MoneyCoachExperience
+        model={moneyCoachExperience}
+        loading={loading}
+        error={loadError}
+        onRetry={loadMoneySnapshot}
+      />
 
         <div className="space-y-4 md:hidden" data-mobile-money-experience="true">
           <MobileMoneyCard id="mobile-money-home" title="Money Home">
@@ -904,6 +971,7 @@ export default function MoneyWorkspacePage() {
           </MobileMoneyCard>
         </div>
 
+        <span id="money-dashboard" className="block scroll-mt-6" aria-hidden="true" />
         <div className="hidden space-y-8 md:block">
         {loading ? (
           <DashboardCard>

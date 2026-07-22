@@ -1,4 +1,5 @@
 import type { AgentDefinition, AgentId, AgentModuleId, AgentModuleManifest } from "./types";
+import { validateProfessionalBehaviorProfile } from "./professionalBehavior";
 
 function required(value: string, label: string) {
   if (!value.trim()) throw new Error(`${label} is required.`);
@@ -41,6 +42,9 @@ export class AgentRegistry {
     required(agent.promptTemplateId, "Agent prompt template id");
     required(agent.experience.userStoryProviderId, "Agent user-story provider id");
     required(agent.experience.fallbackAction, "Agent fallback action");
+    if (agent.professionalBehavior) {
+      validateProfessionalBehaviorProfile(agent.professionalBehavior);
+    }
   }
 
   hasModule(moduleId: AgentModuleId) {
