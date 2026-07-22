@@ -66,11 +66,11 @@ export default function ReleaseNotesPage() {
           </div>
         </div>
 
-        {/* BeastLearning v1.5 */}
+        {/* BeastEducation v1.5 */}
         <div className="mb-12 rounded-lg border border-[#2a3242] bg-[#0f1419] p-6">
           <div className="mb-4">
             <h2 className="text-2xl font-bold">
-              BeastLearning {BEAST_LEARNING_VERSION}
+              BeastEducation {BEAST_LEARNING_VERSION}
             </h2>
             <p className="mt-1 text-sm text-[#7f8da3]">July 11, 2026</p>
           </div>
@@ -107,11 +107,11 @@ export default function ReleaseNotesPage() {
           </div>
         </div>
 
-        {/* BeastLearning v1.4 */}
+        {/* BeastEducation v1.4 */}
         <div className="mb-12 rounded-lg border border-[#2a3242] bg-[#0f1419] p-6">
           <div className="mb-4">
             <h2 className="text-2xl font-bold">
-              BeastLearning v1.4 Private Beta
+              BeastEducation v1.4 Private Beta
             </h2>
             <p className="mt-1 text-sm text-[#7f8da3]">July 11, 2026</p>
           </div>
@@ -124,7 +124,7 @@ export default function ReleaseNotesPage() {
               <ul className="space-y-2 pl-4">
                 <li className="text-[#a5b4c7]">
                   <span className="text-blue-400">✓</span> Added the first
-                  complete BeastLearning teach-practice-feedback-mastery loop.
+                  complete BeastEducation teach-practice-feedback-mastery loop.
                 </li>
                 <li className="text-[#a5b4c7]">
                   <span className="text-blue-400">✓</span> Added learner
@@ -147,11 +147,11 @@ export default function ReleaseNotesPage() {
           </div>
         </div>
 
-        {/* BeastLearning v1.3 */}
+        {/* BeastEducation v1.3 */}
         <div className="mb-12 rounded-lg border border-[#2a3242] bg-[#0f1419] p-6">
           <div className="mb-4">
             <h2 className="text-2xl font-bold">
-              BeastLearning v1.3 Private Beta
+              BeastEducation v1.3 Private Beta
             </h2>
             <p className="mt-1 text-sm text-[#7f8da3]">July 11, 2026</p>
           </div>
@@ -189,11 +189,11 @@ export default function ReleaseNotesPage() {
           </div>
         </div>
 
-        {/* BeastLearning v1.2 */}
+        {/* BeastEducation v1.2 */}
         <div className="mb-12 rounded-lg border border-[#2a3242] bg-[#0f1419] p-6">
           <div className="mb-4">
             <h2 className="text-2xl font-bold">
-              BeastLearning v1.2 Private Beta
+              BeastEducation v1.2 Private Beta
             </h2>
             <p className="mt-1 text-sm text-[#7f8da3]">July 11, 2026</p>
           </div>
@@ -230,11 +230,11 @@ export default function ReleaseNotesPage() {
           </div>
         </div>
 
-        {/* BeastLearning v1.1 */}
+        {/* BeastEducation v1.1 */}
         <div className="mb-12 rounded-lg border border-[#2a3242] bg-[#0f1419] p-6">
           <div className="mb-4">
             <h2 className="text-2xl font-bold">
-              BeastLearning v1.1 Private Beta
+              BeastEducation v1.1 Private Beta
             </h2>
             <p className="mt-1 text-sm text-[#7f8da3]">July 11, 2026</p>
           </div>
@@ -366,7 +366,7 @@ export default function ReleaseNotesPage() {
           <div className="space-y-4 text-sm">
             <div>
               <h3 className="font-semibold text-[#c7cfdb]">
-                BeastLearning v1.0 Private Beta
+                BeastEducation v1.0 Private Beta
               </h3>
               <ul className="space-y-2 pl-4">
                 <li className="text-[#a5b4c7]">
@@ -403,11 +403,11 @@ export default function ReleaseNotesPage() {
           </div>
         </div>
 
-        {/* BeastLearning v1.0 */}
+        {/* BeastEducation v1.0 */}
         <div className="mb-12 rounded-lg border border-[#2a3242] bg-[#0f1419] p-6">
           <div className="mb-4">
             <h2 className="text-2xl font-bold">
-              BeastLearning {BEAST_LEARNING_VERSION}
+              BeastEducation {BEAST_LEARNING_VERSION}
             </h2>
             <p className="mt-1 text-sm text-[#7f8da3]">July 4, 2026</p>
           </div>
@@ -435,11 +435,11 @@ export default function ReleaseNotesPage() {
           </div>
         </div>
 
-        {/* BeastLearning v0.7 */}
+        {/* BeastEducation v0.7 */}
         <div className="mb-12 rounded-lg border border-[#2a3242] bg-[#0f1419] p-6">
           <div className="mb-4">
             <h2 className="text-2xl font-bold">
-              BeastLearning v0.7 AI Orchestration Platform
+              BeastEducation v0.7 AI Orchestration Platform
             </h2>
             <p className="mt-1 text-sm text-[#7f8da3]">July 4, 2026</p>
           </div>
@@ -466,11 +466,11 @@ export default function ReleaseNotesPage() {
           </div>
         </div>
 
-        {/* BeastLearning v0.6 */}
+        {/* BeastEducation v0.6 */}
         <div className="mb-12 rounded-lg border border-[#2a3242] bg-[#0f1419] p-6">
           <div className="mb-4">
             <h2 className="text-2xl font-bold">
-              BeastLearning v0.6 Knowledge & Curriculum Intelligence
+              BeastEducation v0.6 Knowledge & Curriculum Intelligence
             </h2>
             <p className="mt-1 text-sm text-[#7f8da3]">July 4, 2026</p>
           </div>
@@ -498,11 +498,11 @@ export default function ReleaseNotesPage() {
           </div>
         </div>
 
-        {/* BeastLearning v0.5 */}
+        {/* BeastEducation v0.5 */}
         <div className="mb-12 rounded-lg border border-[#2a3242] bg-[#0f1419] p-6">
           <div className="mb-4">
             <h2 className="text-2xl font-bold">
-              BeastLearning v0.5 Learning Experience
+              BeastEducation v0.5 Learning Experience
             </h2>
             <p className="mt-1 text-sm text-[#7f8da3]">July 4, 2026</p>
           </div>
@@ -530,11 +530,11 @@ export default function ReleaseNotesPage() {
           </div>
         </div>
 
-        {/* BeastLearning v0.4 */}
+        {/* BeastEducation v0.4 */}
         <div className="mb-12 rounded-lg border border-[#2a3242] bg-[#0f1419] p-6">
           <div className="mb-4">
             <h2 className="text-2xl font-bold">
-              BeastLearning v0.4 Content & Study Intelligence
+              BeastEducation v0.4 Content & Study Intelligence
             </h2>
             <p className="mt-1 text-sm text-[#7f8da3]">July 4, 2026</p>
           </div>
@@ -563,11 +563,11 @@ export default function ReleaseNotesPage() {
           </div>
         </div>
 
-        {/* BeastLearning v0.3 */}
+        {/* BeastEducation v0.3 */}
         <div className="mb-12 rounded-lg border border-[#2a3242] bg-[#0f1419] p-6">
           <div className="mb-4">
             <h2 className="text-2xl font-bold">
-              BeastLearning v0.3 Intelligence Foundation
+              BeastEducation v0.3 Intelligence Foundation
             </h2>
             <p className="mt-1 text-sm text-[#7f8da3]">July 3, 2026</p>
           </div>
@@ -580,7 +580,7 @@ export default function ReleaseNotesPage() {
               <ul className="space-y-2 pl-4">
                 <li className="text-[#a5b4c7]">
                   <span className="text-blue-400">✓</span> Completed the
-                  BeastLearning workspace, goal builder, starter plan stub,
+                  BeastEducation workspace, goal builder, starter plan stub,
                   study session command card, progress signals, recommendations,
                   templates, mentor mode, and completion surfaces.
                 </li>
@@ -883,7 +883,7 @@ export default function ReleaseNotesPage() {
         <div className="mt-12 border-t border-[#2a3242] pt-8">
           <div className="mb-8 rounded-lg border border-[#2a3242] bg-[#0f1419] p-6">
             <h2 className="text-xl font-bold text-white">
-              BeastLearning Phase 2 Roadmap
+              BeastEducation Phase 2 Roadmap
             </h2>
             <p className="mt-2 text-sm leading-6 text-[#9aa7b8]">
               Planned next work: AI refinement, classroom support, teacher

@@ -126,7 +126,7 @@ export function buildLearningExperienceDashboard({
     certificate: {
       title: certificateTitle || "Completion Certificate",
       learnerName,
-      completionSummary: "Completed a structured BeastLearning foundation path.",
+      completionSummary: "Completed a structured BeastEducation foundation path.",
       skillsEarned: ["Security Foundations", "Study Rhythm", "Review Discipline"],
       sharePlaceholder: "Share certificate",
       downloadPlaceholder: "Download certificate",

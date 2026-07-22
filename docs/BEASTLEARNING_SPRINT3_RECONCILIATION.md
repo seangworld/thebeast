@@ -1,10 +1,10 @@
-# BeastLearning Sprint 3 Reconciliation
+# BeastEducation Sprint 3 Reconciliation
 
 Date: 2026-07-13
 
 ## Scope
 
-Sprint 3 moved BeastLearning from static lesson flow toward Mentor-led adaptive learning. BeastOS continues to own profile intelligence, identity, permissions, and personas. BeastLearning owns learning behavior, Tutor orchestration, learning plans, sessions, mastery, curriculum, certification alignment, and learner-specific learning intelligence.
+Sprint 3 moved BeastEducation from static lesson flow toward Mentor-led adaptive learning. BeastOS continues to own profile intelligence, identity, permissions, and personas. BeastEducation owns learning behavior, Tutor orchestration, learning plans, sessions, mastery, curriculum, certification alignment, and learner-specific learning intelligence.
 
 ## Integrated Sprint 3 Capabilities
 
@@ -127,7 +127,7 @@ Current behavior:
 
 ## Roadmap Reconciliation
 
-Sprint 3 is reconciled as the intelligence foundation for BeastLearning:
+Sprint 3 is reconciled as the intelligence foundation for BeastEducation:
 
 - Mentor Home remains the primary landing experience.
 - Conversation-first sessions remain the primary lesson experience.

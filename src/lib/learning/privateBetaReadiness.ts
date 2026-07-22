@@ -1,6 +1,6 @@
 import type { LearningPrivateBetaReadiness } from "./types";
 
-export function buildBeastLearningPrivateBetaReadiness(): LearningPrivateBetaReadiness {
+export function buildBeastEducationPrivateBetaReadiness(): LearningPrivateBetaReadiness {
   return {
     version: "v1.1 Private Beta",
     milestone: "Private beta stabilization and Personal Hub alignment",

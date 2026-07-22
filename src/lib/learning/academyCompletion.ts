@@ -168,7 +168,7 @@ export function evaluateBeastAcademyCompletion({
     completionRecordId: completionRecord.id,
     portfolioEntryId,
     language:
-      "Beast Academy Certificate of completion for an internal BeastLearning path. This is non-accredited and does not represent institutional credit.",
+      "Beast Academy Certificate of completion for an internal BeastEducation path. This is non-accredited and does not represent institutional credit.",
     verificationPlaceholder:
       "Verification confirms certificate ownership, demonstrated skills, and completion details.",
   };

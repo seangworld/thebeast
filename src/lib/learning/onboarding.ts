@@ -3,7 +3,7 @@ import type { LearningOnboardingStep } from "./types";
 export const learningOnboardingSteps: LearningOnboardingStep[] = [
   {
     id: "welcome",
-    title: "Welcome to BeastLearning",
+    title: "Welcome to BeastEducation",
     prompt: "Set up a calm daily learning command center.",
     options: ["Start setup", "Skip for now"],
     skippable: true,
@@ -18,7 +18,7 @@ export const learningOnboardingSteps: LearningOnboardingStep[] = [
   {
     id: "interests",
     title: "Interests",
-    prompt: "Pick subjects BeastLearning should keep close.",
+    prompt: "Pick subjects BeastEducation should keep close.",
     options: ["Cybersecurity", "Math", "Languages", "Trades"],
     skippable: true,
   },

@@ -51,7 +51,7 @@ export async function POST(request: Request) {
         userId: user.id,
         category,
         message,
-        context: body.context || "BeastLearning feedback",
+        context: body.context || "BeastEducation feedback",
       })
     )
     .select("id, category, message, context, status, created_at")

@@ -39,7 +39,7 @@ export const moduleAccents: Record<
     soft: "before:bg-[#22c55e]",
   },
   learning: {
-    label: "BeastLearning",
+    label: "BeastEducation",
     color: "#818cf8",
     border: "border-indigo-300/50",
     bg: "bg-indigo-300/15",

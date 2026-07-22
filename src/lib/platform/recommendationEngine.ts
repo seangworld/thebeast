@@ -425,7 +425,7 @@ export function buildLearningFoundationIntelligence(
     priority: "Medium",
     severity: "info",
     title: "Choose a primary learning goal.",
-    summary: "BeastLearning is ready to organize goals, courses, study rhythm, and achievements.",
+    summary: "BeastEducation is ready to organize goals, courses, study rhythm, and achievements.",
     reason: "A focused goal gives future tutoring and recommendation layers a clear starting point.",
     recommendedAction: "Open Learning Goals and pick the course or skill that matters most right now.",
     estimatedBenefit: "Creates a durable learning context for future module intelligence.",
@@ -438,7 +438,7 @@ export function buildLearningFoundationIntelligence(
       createNotification(
         {
           id: "learning-workspace-ready",
-          title: "BeastLearning workspace ready",
+          title: "BeastEducation workspace ready",
           module: "learning",
           severity: "info",
           actionUrl: "/dashboard/learning",
@@ -465,7 +465,7 @@ export function buildLearningFoundationIntelligence(
         id: "learning-foundation-initialized",
         module: "learning",
         title: "Learning foundation initialized",
-        summary: "The first BeastLearning workspace is ready for future tutoring and course data.",
+        summary: "The first BeastEducation workspace is ready for future tutoring and course data.",
         timestamp: now.toISOString(),
         actionUrl: "/dashboard/learning",
       },

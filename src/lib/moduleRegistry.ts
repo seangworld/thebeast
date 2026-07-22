@@ -63,7 +63,7 @@ export const beastModuleRegistry: BeastModuleRegistryEntry[] = [
     href: "/dashboard/money",
   },
   {
-    name: "BeastLearning",
+    name: "BeastEducation",
     id: "learning",
     identifier: "learning",
     module: "learning",
@@ -72,8 +72,8 @@ export const beastModuleRegistry: BeastModuleRegistryEntry[] = [
     visibility: "beta",
     enabled: true,
     beta: true,
-    ownerNotes: "Mentor-first learning, Tutor sessions, curriculum, mastery, and diagnostics.",
-    href: "/dashboard/learning",
+    ownerNotes: "Guidance-first education, career and certification planning, skill analysis, roadmaps, and supporting teaching tools.",
+    href: "/dashboard/education",
   },
   {
     name: "BeastGoals",

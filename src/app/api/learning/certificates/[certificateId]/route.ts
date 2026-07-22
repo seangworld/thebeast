@@ -17,7 +17,7 @@ function buildCertificatePdf({
   completionDate: string;
 }) {
   const lines = [
-    "BeastLearning Certificate of Completion",
+    "BeastEducation Certificate of Completion",
     `Awarded to ${learnerName}`,
     pathName,
     `Completed ${completionDate}`,

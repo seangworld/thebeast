@@ -87,7 +87,7 @@ export default function PrivateBetaPanels({
           <SectionHeader
             eyebrow="Founding Student"
             title="Learner identity"
-            description="Your badges, join date, and unlocked learning tools stay attached to your BeastLearning record."
+            description="Your badges, join date, and unlocked learning tools stay attached to your BeastEducation record."
             action={<ModuleBadge module="learning" label="Learner Record" />}
           />
           <div className="mt-5 grid gap-3 sm:grid-cols-2">

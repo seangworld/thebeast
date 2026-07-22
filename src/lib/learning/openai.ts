@@ -59,7 +59,7 @@ export async function callOpenAILearningSpecialist(
       status: "unconfigured",
       specialistId: request.specialistId,
       content:
-        "OpenAI is not configured for this environment. BeastLearning will keep using the guided private beta experience until credentials are available.",
+        "OpenAI is not configured for this environment. BeastEducation will keep using the guided private beta experience until credentials are available.",
       model: defaultModel,
     };
   }

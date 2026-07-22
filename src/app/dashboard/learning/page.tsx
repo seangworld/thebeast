@@ -16,6 +16,7 @@ import { buildLearningIntelligenceSnapshot } from "@/lib/learning/intelligenceEn
 import { buildLearnerPortfolio } from "@/lib/learning/portfolio";
 import BetaFeedbackPanel from "./BetaFeedbackPanel";
 import GuidanceCounselorMode from "./GuidanceCounselorMode";
+import EducationCommandCenter from "./EducationCommandCenter";
 import {
   AchievementEnginePanel,
   AISpecialistsPanel,
@@ -175,7 +176,7 @@ function mapSessionRow(row: Record<string, unknown>): LearningSession {
     id: String(row.id),
     learnerId: String(row.learner_profile_id || "current"),
     title: String(row.title || "Learning session"),
-    courseTitle: String(row.course_title || "BeastLearning"),
+    courseTitle: String(row.course_title || "BeastEducation"),
     when: formatScheduledSession(row.scheduled_for),
     duration: formatDuration(row.duration_minutes),
     status: normalizeStatus(
@@ -219,7 +220,7 @@ function mapCertificateRow(row: Record<string, unknown>): LearningCertificate {
       row.portfolio_entry_id || `portfolio-${certificateId || String(row.id)}`
     ),
     language:
-      "Beast Academy Certificate of completion for an internal BeastLearning path. This is non-accredited and does not represent institutional credit.",
+      "Beast Academy Certificate of completion for an internal BeastEducation path. This is non-accredited and does not represent institutional credit.",
     verificationPlaceholder:
       "Certificate ownership, demonstrated skills, and completion details are verified before download.",
   };
@@ -289,17 +290,17 @@ function MentorHome({
 }) {
   const activeRole =
     mission.state === "next_activity" || mission.state === "resume"
-      ? "Mentor with Tutor ready"
-      : "Mentor";
+      ? "Counselor with learning support ready"
+      : "Guidance Counselor";
   const roadmapPreview = learningCourses.slice(0, 3);
   const visibleRecommendations = learningRecommendations.slice(0, 3);
 
   return (
     <DashboardCard accent="learning">
       <SectionHeader
-        eyebrow="Mentor Home"
-        title="One mission, chosen by your Mentor"
-        description="Start here for the next best action. Courses, certificates, and history stay available, but the Mentor leads the learning path."
+        eyebrow="Guidance Counselor"
+        title="Your next guided step"
+        description="Use this supporting workspace when your roadmap identifies a concrete action. Your Guidance Counselor keeps the wider education, career, certification, and growth plan in view."
         action={
           <div className="flex flex-wrap gap-2">
             <ModuleBadge module="learning" label={activeRole} />
@@ -311,13 +312,13 @@ function MentorHome({
       <div id="mentor-session" className="mt-6 grid gap-4 xl:grid-cols-[minmax(0,1.18fr)_minmax(320px,0.82fr)]">
         <section
           className="grid content-between gap-5 rounded-2xl border border-indigo-300/35 bg-[#0b1020] p-4 sm:p-6"
-          aria-label="BeastLearning Mentor home mission"
+          aria-label="BeastEducation guided next step"
           aria-labelledby="mentor-home-mission-title"
         >
           <div className="grid gap-4">
             <div className="rounded-2xl border border-indigo-300/30 bg-indigo-300/10 p-4 sm:p-5">
               <div className="text-xs font-black uppercase text-indigo-100">
-                Mentor
+                Guidance Counselor
               </div>
               <h3 className="mt-2 text-xl font-black text-white">
                 {mission.greeting}
@@ -428,7 +429,7 @@ function MentorHome({
           </div>
         </section>
 
-        <aside className="grid content-start gap-3" aria-label="Mentor supporting context">
+        <aside className="grid content-start gap-3" aria-label="Guidance Counselor supporting context">
           <div className="rounded-2xl border border-[#2a3242] bg-[#111827] p-4">
             <div className="text-xs font-black uppercase text-[#7f8da3]">
               Why this mission
@@ -450,7 +451,7 @@ function MentorHome({
 
           <div className="rounded-2xl border border-[#2a3242] bg-[#111827] p-4">
             <div className="text-xs font-black uppercase text-[#7f8da3]">
-              Mentor memory
+              Counselor context
             </div>
             <div className="mt-3 grid gap-2 text-sm leading-6 text-[#c7cfdb]">
               {[memory.lastDone, memory.struggledWith, memory.unfinished, memory.reviewDue].map((item) => (
@@ -514,7 +515,7 @@ function MentorHome({
               ))}
               {timeline.length === 0 ? (
                 <p className="text-sm font-semibold text-[#c7cfdb]">
-                  Complete one session and your Mentor will build a real timeline.
+                  Complete one meaningful step and your Guidance Counselor will build a real timeline.
                 </p>
               ) : null}
             </div>
@@ -579,7 +580,7 @@ function WeeklyMentorReviewPanel({
   return (
     <DashboardCard accent="learning">
       <SectionHeader
-        eyebrow="Weekly Mentor Review"
+        eyebrow="Guidance Review"
         title={review.title}
         description={review.summary}
         action={<ModuleBadge module="learning" label={review.missingData ? "Needs evidence" : "Review ready"} />}
@@ -940,19 +941,18 @@ export default async function LearningPage() {
   return (
     <main id="learning-main-content" className="beast-page">
       <a href="#mentor-session" className="beast-skip-link">
-        Skip to Mentor mission
+        Skip to Guidance Counselor
       </a>
       <div className="beast-container space-y-8">
         <section className="beast-page-header">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-4">
-              <ModuleBadge module="learning" label={`BeastLearning ${BEAST_LEARNING_VERSION}`} />
-              <h1 className="beast-title">Your BeastLearning Mentor</h1>
+              <ModuleBadge module="learning" label={`BeastEducation ${BEAST_LEARNING_VERSION}`} />
+              <h1 className="beast-title">Your BeastEducation Guidance Counselor</h1>
               <p className="beast-subtitle">
-                Start with the AI who knows your goal, remembers what changed,
-                and keeps the path moving. When it is time to learn, your Mentor
-                brings in the Tutor for instruction, practice, feedback, and
-                mastery.
+                Discover what fits, compare credible paths, build a realistic roadmap,
+                and keep long-term progress moving. Teaching and Tutor support appear
+                only when your plan identifies a specific learning need.
               </p>
             </div>
             <Link
@@ -963,6 +963,8 @@ export default async function LearningPage() {
             </Link>
           </div>
         </section>
+
+        <EducationCommandCenter />
 
         <MobileLearningQuickActions cards={mobileLearningCards} />
 

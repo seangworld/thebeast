@@ -572,7 +572,7 @@ test("BD-001 Documents loader uses only signed-in user metadata", async () => {
             module_record_id: "goal-1",
             title: "Linked to a learning goal",
             summary:
-              "BeastLearning can reference the same BeastOS document record.",
+              "BeastEducation can reference the same BeastOS document record.",
             status: "Active",
             created_at: "2026-07-15T00:30:00.000Z",
             updated_at: "2026-07-15T00:30:00.000Z",

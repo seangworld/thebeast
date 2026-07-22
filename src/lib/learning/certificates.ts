@@ -38,7 +38,7 @@ export const mockLearningCertificates: LearningCertificate[] = [
     completionRecordId: "completion-security-foundations-2026-07-03",
     portfolioEntryId: "portfolio-security-foundations-2026-07-03",
     language:
-      "Beast Academy Certificate of completion for an internal BeastLearning path. This is non-accredited and does not represent institutional credit.",
+      "Beast Academy Certificate of completion for an internal BeastEducation path. This is non-accredited and does not represent institutional credit.",
     verificationPlaceholder:
       "Verification confirms certificate ownership, demonstrated skills, and completion details.",
   },

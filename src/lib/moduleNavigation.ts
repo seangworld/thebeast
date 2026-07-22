@@ -54,33 +54,32 @@ export const beastMoneyNavigation: ModuleNavSection = {
 };
 
 export const beastLearningNavigation: ModuleNavSection = {
-  label: "BeastLearning",
-  href: "/dashboard/learning",
+  label: "BeastEducation",
+  href: "/dashboard/education",
   module: "learning",
   children: [
-    { label: "Learning Path", href: "/dashboard/learning" },
-    { label: "Activities", href: "/dashboard/learning/activities" },
-    { label: "Goals", href: "/dashboard/learning#goals" },
-    { label: "Study Plan", href: "/dashboard/learning#study-plan" },
-    { label: "Courses", href: "/dashboard/learning#courses" },
-    { label: "Flashcards", href: "/dashboard/learning#flashcards" },
-    { label: "Achievements", href: "/dashboard/learning#achievements" },
-    { label: "Certificates", href: "/dashboard/learning#certificates" },
-    { label: "Parent View", href: "/dashboard/learning#parent-view" },
-    { label: "Feedback", href: "/dashboard/learning#feedback" },
+    { label: "Guidance Counselor", href: "/dashboard/education" },
+    { label: "Activities", href: "/dashboard/education/activities" },
+    { label: "Goals", href: "/dashboard/education#goals" },
+    { label: "Education Plan", href: "/dashboard/education#mentor-plan" },
+    { label: "Learning Support", href: "/dashboard/education#mentor-session" },
+    { label: "Achievements", href: "/dashboard/education#achievements" },
+    { label: "Certificates", href: "/dashboard/education#certificates" },
+    { label: "Progress", href: "/dashboard/education#mentor-progress" },
+    { label: "Feedback", href: "/dashboard/education#feedback" },
   ],
 };
 
-export const memberBeastLearningNavigation: ModuleNavSection = {
-  label: "BeastLearning",
-  href: "/dashboard/learning",
+export const memberBeastEducationNavigation: ModuleNavSection = {
+  label: "BeastEducation",
+  href: "/dashboard/education",
   module: "learning",
   children: [
-    { label: "Mentor", href: "/dashboard/learning" },
-    { label: "Continue", href: "/dashboard/learning#mentor-session" },
-    { label: "My Plan", href: "/dashboard/learning#mentor-plan" },
-    { label: "How I'm Doing", href: "/dashboard/learning#mentor-progress" },
-    { label: "Wins", href: "/dashboard/learning#wins" },
+    { label: "Guidance Counselor", href: "/dashboard/education" },
+    { label: "My Roadmap", href: "/dashboard/education#mentor-plan" },
+    { label: "Progress", href: "/dashboard/education#mentor-progress" },
+    { label: "Learning Support", href: "/dashboard/education#mentor-session" },
+    { label: "Wins", href: "/dashboard/education#wins" },
   ],
 };
 
@@ -199,7 +198,11 @@ export const beastModuleNavigation: ModuleNavSection[] = [
 
 export const memberBeastModuleNavigation: ModuleNavSection[] =
   buildBeastModuleNavigationForPersona({ isOwner: false }).map((item) =>
-    item.module === "money" ? memberBeastMoneyNavigation : item
+    item.module === "money"
+      ? memberBeastMoneyNavigation
+      : item.module === "learning"
+        ? memberBeastEducationNavigation
+        : item
   );
 
 export function getBeastModuleNavigationForPersona(isAdmin: boolean) {

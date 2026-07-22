@@ -23,7 +23,7 @@ export function AchievementEnginePanel({
       <SectionHeader
         eyebrow="Achievements"
         title="Milestone engine"
-        description="Rule-based unlock logic for foundational BeastLearning achievements."
+        description="Rule-based unlock logic for foundational BeastEducation achievements."
         action={<ModuleBadge module="learning" label="Rule Based" />}
       />
       <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">

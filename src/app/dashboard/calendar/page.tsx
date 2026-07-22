@@ -52,7 +52,7 @@ const sharedCalendarEvents: CalendarEvent[] = [
     source: "learning",
     sourceRecordId: "mentor-review",
     title: "Weekly Mentor review",
-    summary: "BeastLearning owns review readiness and learning cadence.",
+    summary: "BeastEducation owns review readiness and learning cadence.",
     startsAt: "2026-07-16T13:15:00.000Z",
     endsAt: "2026-07-16T13:45:00.000Z",
     timeZone: "America/New_York",

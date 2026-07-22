@@ -25,7 +25,7 @@ export default function LearningContentIntelligencePanel({
       <SectionHeader
         eyebrow="Content Intelligence"
         title="Learning library and study assets"
-        description="BeastLearning now has typed foundations for materials, subjects, courses, lessons, flashcards, quizzes, exams, guides, notes, bookmarks, search, collections, and review scheduling."
+        description="BeastEducation now has typed foundations for materials, subjects, courses, lessons, flashcards, quizzes, exams, guides, notes, bookmarks, search, collections, and review scheduling."
         action={<ModuleBadge module="learning" label="v0.4 Content" />}
       />
 

@@ -55,7 +55,7 @@ export default function BetaFeedbackPanel() {
         body: JSON.stringify({
           category,
           message: trimmed,
-          context: "BeastLearning feedback",
+          context: "BeastEducation feedback",
         }),
       });
 
@@ -80,7 +80,7 @@ export default function BetaFeedbackPanel() {
       <SectionHeader
         eyebrow="Feedback"
         title="Founding Student feedback"
-        description="Share what felt clear, confusing, or helpful so BeastLearning can improve the student experience."
+        description="Share what felt clear, confusing, or helpful so BeastEducation can improve the student experience."
         action={<ModuleBadge module="learning" label="Student Voice" />}
       />
       <form className="mt-5 grid gap-4 lg:grid-cols-[0.35fr_1fr_auto]" onSubmit={submitFeedback}>
@@ -101,7 +101,7 @@ export default function BetaFeedbackPanel() {
           className="rounded-xl border border-[#2a3242] bg-[#0f1419] px-3 py-3 text-sm font-semibold text-white outline-none placeholder:text-[#596579] focus:border-indigo-300/60"
           value={message}
           onChange={(event) => setMessage(event.target.value)}
-          placeholder="What should BeastLearning improve?"
+          placeholder="What should BeastEducation improve?"
         />
         <button
           type="submit"
@@ -112,7 +112,7 @@ export default function BetaFeedbackPanel() {
       </form>
       {submitState === "error" ? (
         <p className="mt-3 text-sm font-semibold text-red-200">
-          Sign in again to submit BeastLearning feedback.
+          Sign in again to submit BeastEducation feedback.
         </p>
       ) : null}
       <div className="mt-5 grid gap-3">

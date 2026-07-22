@@ -491,7 +491,7 @@ export default function TodayPage() {
       source: "learning",
       type: "Resume",
       title: readyActivity?.title || "Ask your Mentor for the first step",
-      summary: "BeastLearning supplies the learning readiness and next activity.",
+      summary: "BeastEducation supplies the learning readiness and next activity.",
       reason:
         "Today ranks the supplied contribution without recomputing learning mastery.",
       recommendedAction: readyActivity ? "Continue with Mentor" : "Ask Mentor",

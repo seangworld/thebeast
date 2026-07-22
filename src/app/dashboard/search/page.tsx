@@ -176,7 +176,7 @@ export default function SearchPage() {
           module="search"
           eyebrow="Shared Service"
           title="BeastOS Search"
-          description="A search surface for current BeastOS, BeastMoney, and BeastLearning paths."
+          description="A search surface for current BeastOS, BeastMoney, and BeastEducation paths."
         />
 
         <section

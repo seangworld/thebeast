@@ -43,7 +43,7 @@ const notificationItems: PlatformNotificationItem[] = [
     source: "learning",
     sourceRecordId: "mentor-next-step",
     title: "Learning step is ready",
-    summary: "BeastLearning contributed a Mentor next-step notification.",
+    summary: "BeastEducation contributed a Mentor next-step notification.",
     priority: "Medium",
     severity: "info",
     state: "Unread",

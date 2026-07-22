@@ -29,9 +29,9 @@ export default function GuidanceCounselorMode() {
   return (
     <DashboardCard accent="learning">
       <SectionHeader
-        eyebrow="Mentor"
-        title="Goal planning"
-        description="Explore a goal with planning support, stated assumptions, learning-readiness signals, and one tutor-like next step."
+        eyebrow="Guidance Counselor"
+        title="Detailed planning workspace"
+        description="Explore a goal with transparent assumptions, readiness signals, verified requirements, and one useful next step."
         action={<ModuleBadge module="learning" label={roadmap.previewLabel} />}
       />
 

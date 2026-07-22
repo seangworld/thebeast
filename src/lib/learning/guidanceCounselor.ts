@@ -70,7 +70,7 @@ const guidanceRules: Record<
     ],
     nextRecommendedAction: "Write down the next deadline and the requirement attached to it.",
     assumptions: [
-      "The learner is using BeastLearning for planning support, not official school counseling.",
+      "The learner is using BeastEducation for planning support, not official school counseling.",
       "Program, admissions, financial aid, and graduation requirements must be confirmed with the school or official source.",
     ],
     learningReadinessSignals: [
@@ -165,7 +165,7 @@ const guidanceRules: Record<
     nextRecommendedAction: "Draft three examples that show next-level responsibility.",
     assumptions: [
       "The learner is planning a growth path and should confirm promotion criteria with their organization.",
-      "BeastLearning can organize preparation but cannot guarantee advancement or compensation changes.",
+      "BeastEducation can organize preparation but cannot guarantee advancement or compensation changes.",
     ],
     learningReadinessSignals: [
       "Learning Readiness",
@@ -245,7 +245,7 @@ const curriculumFramework = {
 };
 
 const planningBoundaries = [
-  "BeastLearning provides planning support, not official school counseling.",
+  "BeastEducation provides planning support, not official school counseling.",
   "Mentoring is educational and does not guarantee admission, employment, promotion, licensing, certification, or credential outcomes.",
   "Recommendations should be checked against current school, employer, licensing, exam, and safety requirements.",
   "Student and minor safety requirements remain in force for every goal type, including adult certification examples.",

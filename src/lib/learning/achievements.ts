@@ -8,7 +8,7 @@ export const learningAchievementCatalog: LearningAchievementCatalogItem[] = [
   {
     id: "first-study-session",
     title: "First Study Session",
-    description: "Complete your first BeastLearning study session.",
+    description: "Complete your first BeastEducation study session.",
     trigger: "first_session",
     threshold: 1,
   },
@@ -57,7 +57,7 @@ export const learningAchievementCatalog: LearningAchievementCatalogItem[] = [
   {
     id: "founding-student",
     title: "Founding Student",
-    description: "Recognizes early BeastLearning beta participation.",
+    description: "Recognizes early BeastEducation beta participation.",
     trigger: "founding_student",
     threshold: 1,
   },

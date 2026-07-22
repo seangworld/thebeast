@@ -73,7 +73,7 @@ export function validateLearningOnboardingForm(
     return {
       valid: false,
       missingField: missingField.label,
-      message: `${missingField.label} is required before BeastLearning can finish setup.`,
+      message: `${missingField.label} is required before BeastEducation can finish setup.`,
     };
   }
 
@@ -83,7 +83,7 @@ export function validateLearningOnboardingForm(
     return {
       valid: false,
       missingField: "Courses",
-      message: "Add at least one course before BeastLearning can finish setup.",
+      message: "Add at least one course before BeastEducation can finish setup.",
     };
   }
 
@@ -230,5 +230,5 @@ export function getOnboardingSaveErrorMessage(step: string, error: unknown) {
     return `Could not save ${step}: ${error.message}`;
   }
 
-  return `Could not save ${step}. Try again, and BeastLearning will reuse anything already created.`;
+  return `Could not save ${step}. Try again, and BeastEducation will reuse anything already created.`;
 }

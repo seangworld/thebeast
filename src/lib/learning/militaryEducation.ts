@@ -127,9 +127,9 @@ export const militaryEducationConcepts: readonly MilitaryEducationConcept[] = [
 ] as const;
 
 export const militaryEducationBoundaries = [
-  "BeastLearning organizes informational planning resources; it does not recruit, determine eligibility, approve benefits, or promise education, credential, career, or service outcomes.",
+  "BeastEducation organizes informational planning resources; it does not recruit, determine eligibility, approve benefits, or promise education, credential, career, or service outcomes.",
   "Program rules, benefits, deadlines, availability, and service requirements can change and must be confirmed with the linked official source and an authorized counselor or program representative.",
-  "Learners choose which options to investigate; BeastLearning does not rank programs or make a benefit recommendation.",
+  "Learners choose which options to investigate; BeastEducation does not rank programs or make a benefit recommendation.",
 ] as const;
 
 export function validateMilitaryEducationCatalog(

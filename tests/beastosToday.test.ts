@@ -29,7 +29,7 @@ const learningContribution: TodayContribution = {
   type: "Resume",
   title: "Continue your Mentor session",
   summary: "A ready learning activity is waiting.",
-  reason: "BeastLearning supplied the ready activity from its own engine.",
+  reason: "BeastEducation supplied the ready activity from its own engine.",
   recommendedAction: "Continue with Mentor",
   actionUrl: "/dashboard/learning#mentor-session",
   activeDate: "2026-07-16",
@@ -279,7 +279,7 @@ test("BO-28 Today explains why each recommendation is shown", () => {
   assert.match(explanation.evidenceReason, /money supplied 1 source evidence item/);
   assert.match(explanation.scoreExplanation, /urgency/);
   assert.match(explanation.displayReason, /BeastMoney supplied/);
-  assert.match(learningExplanation.displayReason, /BeastLearning supplied/);
+  assert.match(learningExplanation.displayReason, /BeastEducation supplied/);
   assert.match(todayContributionContractRules[5], /Explain why shown/);
   assert.match(todayPage, /Explain why shown/);
   assert.match(todayPage, /getTodayContributionExplanation/);

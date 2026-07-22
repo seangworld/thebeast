@@ -31,7 +31,7 @@ const releaseNotes = [
     ],
   },
   {
-    version: `BeastLearning ${BEAST_LEARNING_VERSION}`,
+    version: `BeastEducation ${BEAST_LEARNING_VERSION}`,
     date: "July 11, 2026",
     title: "Education-Path Mentoring",
     items: [
@@ -43,11 +43,11 @@ const releaseNotes = [
     ],
   },
   {
-    version: "BeastLearning v1.4 Private Beta",
+    version: "BeastEducation v1.4 Private Beta",
     date: "July 11, 2026",
     title: "Core Learning Loop",
     items: [
-      "New features: added the first complete teach-practice-feedback-mastery loop for BeastLearning.",
+      "New features: added the first complete teach-practice-feedback-mastery loop for BeastEducation.",
       "Learning path: added learner profile setup, diagnostic placement scoring, skill-gap detection, and Pre-Algebra path generation.",
       "AI Tutor: added one-question-at-a-time teaching turns, response evaluation, hints without answer reveal, alternate explanations, mastery checks, remediation, and resume state.",
       "Guardrails: progress reporting distinguishes completion from mastery, and weak placement routes learners to prerequisite review.",
@@ -55,7 +55,7 @@ const releaseNotes = [
     ],
   },
   {
-    version: "BeastLearning v1.3 Private Beta",
+    version: "BeastEducation v1.3 Private Beta",
     date: "July 11, 2026",
     title: "Curriculum and Content Discipline",
     items: [
@@ -67,7 +67,7 @@ const releaseNotes = [
     ],
   },
   {
-    version: "BeastLearning v1.2 Private Beta",
+    version: "BeastEducation v1.2 Private Beta",
     date: "July 11, 2026",
     title: "Assessment and Mastery Foundation",
     items: [
@@ -79,7 +79,7 @@ const releaseNotes = [
     ],
   },
   {
-    version: "BeastLearning v1.1 Private Beta",
+    version: "BeastEducation v1.1 Private Beta",
     date: "July 11, 2026",
     title: "Private Beta Stabilization",
     items: [
@@ -120,25 +120,25 @@ const releaseNotes = [
   {
     version: "BeastOS v2.1",
     date: "July 4, 2026",
-    title: "BeastLearning v1.0 Private Beta Closeout",
+    title: "BeastEducation v1.0 Private Beta Closeout",
     items: [
-      "Finalized BeastLearning v1.0 Private Beta with guided initialization, progressive dashboard stages, mission-based onboarding, Learning intelligence, AI orchestration, AI integration boundary, prompt library, parent/learner model, student timeline, certificate generation, Founding Student program, and beta feedback platform.",
+      "Finalized BeastEducation v1.0 Private Beta with guided initialization, progressive dashboard stages, mission-based onboarding, Learning intelligence, AI orchestration, AI integration boundary, prompt library, parent/learner model, student timeline, certificate generation, Founding Student program, and beta feedback platform.",
       "Closed out the Learning content foundation: knowledge graph, curriculum intelligence, Learning library, courses, lessons, flashcards, quizzes, practice exams, study guides, search, and collections.",
       `Restored BeastOS UI polish with ${BEASTOS_UI_POLISH_NOTE}, added reusable module sub-navigation, and fixed shared Calendar date alignment for local-time month grids.`,
     ],
   },
   {
-    version: "BeastLearning v1.0 Private Beta",
+    version: "BeastEducation v1.0 Private Beta",
     date: "July 4, 2026",
     title: "Private Beta",
     items: [
-      "Completed BeastLearning v1.0 Private Beta with guided initialization missions, progressive dashboard stages, Founding Student badges, student timeline, parent/learner relationship foundation, persisted feedback queue, and downloadable completion certificates.",
+      "Completed BeastEducation v1.0 Private Beta with guided initialization missions, progressive dashboard stages, Founding Student badges, student timeline, parent/learner relationship foundation, persisted feedback queue, and downloadable completion certificates.",
       "Connected the AI architecture to a server-side OpenAI adapter with centralized prompts, deterministic specialist routing, reusable context, conversation memory, and the homework-first coaching philosophy.",
       "Added Supabase persistence foundations for profiles, goals, plans, sessions, progress, mastery, achievements, certificates, study habits, feedback, learning history, and parent links while keeping local fallback behavior for unconfigured environments.",
     ],
   },
   {
-    version: "BeastLearning v0.7 AI Orchestration Platform",
+    version: "BeastEducation v0.7 AI Orchestration Platform",
     date: "July 4, 2026",
     title: "AI Orchestration Platform",
     items: [
@@ -148,27 +148,27 @@ const releaseNotes = [
     ],
   },
   {
-    version: "BeastLearning v0.6 Knowledge & Curriculum Intelligence",
+    version: "BeastEducation v0.6 Knowledge & Curriculum Intelligence",
     date: "July 4, 2026",
     title: "Knowledge & Curriculum Intelligence",
     items: [
-      "Added BeastLearning's educational knowledge layer with global subjects, curriculum hierarchy, concept library, visualization-ready skill trees, learning standards placeholders, career models, certification catalog, path generation, resource mapping, and mastery maps.",
+      "Added BeastEducation's educational knowledge layer with global subjects, curriculum hierarchy, concept library, visualization-ready skill trees, learning standards placeholders, career models, certification catalog, path generation, resource mapping, and mastery maps.",
       "Exposed Skill Tree, Current Curriculum, Career Progress, Certification Progress, Mastery Map, and Recommended Next Concept on the Learning dashboard.",
       "Kept v0.6 deterministic, typed, mocked where needed, and provider-independent with no OpenAI, OCR, embeddings, vector search, document parsing, Supabase persistence, database schema changes, external APIs, finance changes, Stripe changes, membership changes, or entitlement changes.",
     ],
   },
   {
-    version: "BeastLearning v0.5 Learning Experience",
+    version: "BeastEducation v0.5 Learning Experience",
     date: "July 4, 2026",
     title: "Learning Experience",
     items: [
-      "Added the BeastLearning LX layer with first-time onboarding, daily mission, focus mode, learning journeys, achievement polish, certificate experience, motivation, study habits, learner insights, gamification, accessibility placeholders, learner profile expansion, parent polish, and beta experience surfaces.",
+      "Added the BeastEducation LX layer with first-time onboarding, daily mission, focus mode, learning journeys, achievement polish, certificate experience, motivation, study habits, learner insights, gamification, accessibility placeholders, learner profile expansion, parent polish, and beta experience surfaces.",
       "Redesigned the top of the Learning dashboard around the next best learning action so learners can immediately answer what to do next.",
       "Kept v0.5 deterministic and client-side with no OpenAI, OCR, embeddings, vector search, document parsing, Supabase persistence, database schema changes, external APIs, finance changes, Stripe changes, membership changes, or entitlement changes.",
     ],
   },
   {
-    version: "BeastLearning v0.4 Content & Study Intelligence",
+    version: "BeastEducation v0.4 Content & Study Intelligence",
     date: "July 4, 2026",
     title: "Content & Study Intelligence",
     items: [
@@ -178,12 +178,12 @@ const releaseNotes = [
     ],
   },
   {
-    version: "BeastLearning v0.3 Intelligence Foundation",
+    version: "BeastEducation v0.3 Intelligence Foundation",
     date: "July 3, 2026",
-    title: "BeastLearning Foundation Closeout",
+    title: "BeastEducation Foundation Closeout",
     items: [
-      "Completed the BeastLearning foundation with the Learning workspace, goal builder, plan generator stub, study session command card, progress signals, recommendations, templates, mentor mode, and completion surfaces.",
-      "Added the deterministic BeastLearning intelligence engine for knowledge modeling, mastery, dependency graph state, learning memory, weakness analysis, adaptive planning, study session generation, resource recommendations, and progress prediction.",
+      "Completed the BeastEducation foundation with the Learning workspace, goal builder, plan generator stub, study session command card, progress signals, recommendations, templates, mentor mode, and completion surfaces.",
+      "Added the deterministic BeastEducation intelligence engine for knowledge modeling, mastery, dependency graph state, learning memory, weakness analysis, adaptive planning, study session generation, resource recommendations, and progress prediction.",
       `BeastOS UI: ${BEASTOS_UI_POLISH_NOTE}.`,
       "Kept the release presentation-only and rule-based: no AI calls, external APIs, database schema changes, uploads, finance changes, Stripe changes, membership changes, or entitlement changes.",
     ],
@@ -358,7 +358,7 @@ export default function ReleasesPage() {
             <div>
               <p className="beast-kicker">Roadmap</p>
               <h2 className="mt-1 text-xl font-bold text-white">
-                BeastLearning Phase 2
+                BeastEducation Phase 2
               </h2>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-[#9aa7b8]">
                 Next planned work after the v1.0 Private Beta closeout.

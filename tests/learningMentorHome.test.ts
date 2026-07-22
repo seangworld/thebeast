@@ -425,7 +425,7 @@ test("BL-46 keeps Mentor Home accessible on mobile and keyboard paths", () => {
   assert.match(mentorHomeSource, /href="#mentor-session"/);
   assert.match(mentorHomeSource, /role="progressbar"/);
   assert.match(mentorHomeSource, /aria-valuenow=\{clampedValue\}/);
-  assert.match(mentorHomeSource, /aria-label="Mentor supporting context"/);
+  assert.match(mentorHomeSource, /aria-label="Guidance Counselor supporting context"/);
   assert.match(globalCss, /beast-skip-link/);
   assert.match(globalCss, /focus-visible/);
   assert.match(globalCss, /min-height: 44px/);

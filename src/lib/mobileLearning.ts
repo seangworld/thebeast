@@ -84,7 +84,7 @@ export function buildMobileLearningQuickActionCards({
         ? mission.primaryAction.detail
         : openActivity
           ? openActivity.session_recap ||
-            "Continue the next assigned BeastLearning activity from its source route."
+            "Continue the next assigned BeastEducation activity from its source route."
           : "No unfinished activity is waiting. Mentor Home will choose the next useful step.",
     href: openActivity ? getLearningActivityRoute(openActivity.id) : mission.primaryAction.href,
     actionLabel: openActivity

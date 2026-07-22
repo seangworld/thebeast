@@ -52,7 +52,7 @@ test("BF-MOB-009 builds mobile smoke routes from permission-aware route inventor
   }).map((route) => route.href);
 
   assert.ok(ownerRoutes.includes("/dashboard/money"));
-  assert.ok(ownerRoutes.includes("/dashboard/learning"));
+  assert.ok(ownerRoutes.includes("/dashboard/education"));
   assert.ok(ownerRoutes.includes("/dashboard/health"));
   assert.ok(ownerRoutes.includes("/dashboard/home"));
   assert.equal(ownerRoutes.includes("/dashboard/admin"), false);

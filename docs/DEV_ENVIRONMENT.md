@@ -114,7 +114,7 @@ alter table public.profiles
   add column if not exists learning_help_areas text null;
 ```
 
-## Required BeastLearning Tables
+## Required BeastEducation Tables
 
 Verify these tables exist:
 
@@ -264,7 +264,7 @@ Auth
 - Sign up with a dev-only learner.
 - Log out and log back in with magic link.
 
-BeastLearning
+BeastEducation
 - Complete onboarding.
 - Confirm redirect lands on /dashboard/today.
 - Confirm no /dashboard/onboarding loop.
@@ -303,9 +303,9 @@ Login: passed
 Today page: passed
 Admin switcher: passed
 BeastMoney: passed
-BeastLearning setup save: passed
-BeastLearning setup redirect to Today: passed
-BeastLearning return after setup: passed
+BeastEducation setup save: passed
+BeastEducation setup redirect to Today: passed
+BeastEducation return after setup: passed
 Profile save with incomplete optional fields: passed
 Profile schema errors: none observed
 ```

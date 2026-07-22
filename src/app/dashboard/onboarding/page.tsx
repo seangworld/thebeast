@@ -530,7 +530,7 @@ export default function OnboardingPage() {
         .select("id, onboarding_complete")
         .maybeSingle();
 
-      console.info("BeastLearning onboarding completion update result.", {
+      console.info("BeastEducation onboarding completion update result.", {
         userId: authUser.id,
         profileKeyColumn: profileOnboardingCompletionKeyColumn,
         rowFound: Boolean(profileResult.data),
@@ -563,7 +563,7 @@ export default function OnboardingPage() {
 
       router.replace("/dashboard/today");
     } catch (error) {
-      console.error("Unable to complete BeastLearning onboarding.", {
+      console.error("Unable to complete BeastEducation onboarding.", {
         userId,
         message: error instanceof Error ? error.message : String(error),
       });
@@ -582,7 +582,7 @@ export default function OnboardingPage() {
         <section className="beast-page-header">
           <div className="space-y-4">
             <ModuleBadge module="learning" label="First setup" />
-            <h1 className="beast-title">Set Up BeastLearning</h1>
+            <h1 className="beast-title">Set Up BeastEducation</h1>
             <p className="beast-subtitle">
               Create your learning profile, starter goal, and first study session.
             </p>
@@ -743,7 +743,7 @@ export default function OnboardingPage() {
                     ))
                   ) : (
                     <p className="rounded-lg border border-[#2a3242] bg-[#0f1419] p-3 text-sm font-semibold text-[#9aa7b8]">
-                      Add at least one course so BeastLearning can create your first path.
+                      Add at least one course so BeastEducation can create your first path.
                     </p>
                   )}
                 </div>

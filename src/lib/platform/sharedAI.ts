@@ -38,7 +38,7 @@ export type SharedAIMemoryBoundary = {
 export type SharedAISpecialistHandoff = {
   id: string;
   targetModule: "money" | "learning";
-  specialist: "BeastMoney" | "BeastLearning Mentor" | "BeastLearning Tutor";
+  specialist: "BeastMoney" | "BeastEducation Guidance Counselor" | "BeastEducation Tutor";
   reason: string;
   dispatchMode: "specialist-handoff";
   sourceOwnershipPreserved: true;
@@ -48,7 +48,7 @@ export const sharedAIContractRules = [
   "BeastOS Shared AI owns permissioned context assembly, recommendation framing, explanation metadata, memory boundaries, and specialist handoff routing.",
   "Source modules own module-specific reasoning, calculations, teaching behavior, completion, transactions, mastery, and business actions.",
   "Shared AI context must identify kind, source module, source record, permission, retention, and export posture.",
-  "Specialist handoffs route to BeastMoney or BeastLearning without BeastOS taking ownership of specialist logic.",
+  "Specialist handoffs route to BeastMoney or BeastEducation without BeastOS taking ownership of specialist logic.",
 ];
 
 function assertNonEmpty(value: string, label: string) {
@@ -126,8 +126,8 @@ export function buildSharedAISpecialistHandoff({
       targetModule === "money"
         ? "BeastMoney"
         : normalized.includes("tutor")
-          ? "BeastLearning Tutor"
-          : "BeastLearning Mentor",
+          ? "BeastEducation Tutor"
+          : "BeastEducation Guidance Counselor",
     reason: "Route to the owning module specialist for domain-specific logic.",
     dispatchMode: "specialist-handoff",
     sourceOwnershipPreserved: true,

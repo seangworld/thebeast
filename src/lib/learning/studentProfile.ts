@@ -70,7 +70,7 @@ export type StudentProfile = {
 
 export const studentProfileOwnershipRules = [
   "BeastOS owns identity, shared profile intelligence, permissions, and durable profile facts.",
-  "BeastLearning owns learning-session evidence, Mentor observations, guidance planning context, and student-learning intelligence.",
+  "BeastEducation owns learning-session evidence, Mentor observations, guidance planning context, and student-learning intelligence.",
   "Student Profile stores learning context for Mentor and Guidance Counselor behavior; it is not a duplicate Beast Profile.",
   "Missing profile context should produce a first-use or insufficient-data state rather than fabricated history.",
 ];

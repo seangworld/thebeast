@@ -34,14 +34,14 @@ const missionTemplate: Omit<LearningOnboardingMission, "status">[] = [
   {
     id: "create-profile",
     title: "Create profile",
-    summary: "Tell BeastLearning who is studying and what context matters.",
+    summary: "Tell BeastEducation who is studying and what context matters.",
     required: true,
     unlocks: ["Personalized dashboard", "Founding Student badge"],
   },
   {
     id: "choose-goals",
     title: "Choose goals",
-    summary: "Pick the outcomes BeastLearning should organize around.",
+    summary: "Pick the outcomes BeastEducation should organize around.",
     required: true,
     unlocks: ["Goal recommendations", "Learning paths"],
   },
@@ -144,7 +144,7 @@ export function buildLearningTimeline({
     {
       id: "joined-beastlearning",
       type: "joined",
-      title: `${learnerName} joined BeastLearning`,
+      title: `${learnerName} joined BeastEducation`,
       summary: "Learning record started.",
       occurredAt: privateBetaDate,
     },

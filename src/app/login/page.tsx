@@ -51,8 +51,8 @@ export default function LoginPage() {
               height={96}
               className="mb-4 h-24 w-24 rounded-2xl object-cover"
             />
-            <p className="beast-kicker">BeastLearning Mentor - The Beast {APP_VERSION}</p>
-            <h1 className="beast-title">Meet Your BeastLearning Mentor</h1>
+            <p className="beast-kicker">BeastEducation Guidance Counselor - The Beast {APP_VERSION}</p>
+            <h1 className="beast-title">Meet Your BeastEducation Guidance Counselor</h1>
             <p className="beast-subtitle">
               Start with someone who learns where you want to go, helps choose
               the next step, and brings in the Tutor when you are ready to learn.

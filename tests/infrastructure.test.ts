@@ -17,7 +17,7 @@ import {
 } from "../src/lib/entitlements";
 import {
   getBeastModuleNavigationForPersona,
-  memberBeastLearningNavigation,
+  memberBeastEducationNavigation,
   memberBeastMoneyNavigation,
 } from "../src/lib/moduleNavigation";
 import {
@@ -221,7 +221,7 @@ import {
   buildLearningTimeline,
   buildStaticPrivateBetaData,
 } from "../src/lib/learning/privateBeta";
-import { buildBeastLearningPrivateBetaReadiness } from "../src/lib/learning/privateBetaReadiness";
+import { buildBeastEducationPrivateBetaReadiness } from "../src/lib/learning/privateBetaReadiness";
 import {
   getPracticeExamFrameworkSummary,
   learningPracticeExams,
@@ -522,7 +522,7 @@ test("module navigation centralizes expandable child items", () => {
     beastModuleNavigation.map((item) => item.label),
     [
       "BeastMoney",
-      "BeastLearning",
+      "BeastEducation",
       "BeastGoals",
       "BeastDocuments",
       "BeastHealth",
@@ -539,7 +539,7 @@ test("module navigation centralizes expandable child items", () => {
     buildApplicationNavigationForPersona({ isOwner: true }).map(
       (item) => item.label
     ),
-    ["BeastMoney", "BeastLearning", "BeastHealth", "BeastHome"]
+    ["BeastMoney", "BeastEducation", "BeastHealth", "BeastHome"]
   );
   assert.deepEqual(
     buildOwnerNavigationForPersona({ isOwner: true }).map((item) => item.label),
@@ -547,33 +547,32 @@ test("module navigation centralizes expandable child items", () => {
   );
   assert.deepEqual(buildOwnerNavigationForPersona({ isOwner: false }), []);
   assert.equal(beastMoneyNavigation.href, "/dashboard/money");
-  assert.equal(beastLearningNavigation.href, "/dashboard/learning");
+  assert.equal(beastLearningNavigation.href, "/dashboard/education");
   assert.equal(beastAdminNavigation.href, "/dashboard/admin");
   assert.deepEqual(
     beastLearningNavigation.children?.map((item) => item.label),
     [
-      "Learning Path",
+      "Guidance Counselor",
       "Activities",
       "Goals",
-      "Study Plan",
-      "Courses",
-      "Flashcards",
+      "Education Plan",
+      "Learning Support",
       "Achievements",
       "Certificates",
-      "Parent View",
+      "Progress",
       "Feedback",
     ]
   );
   assert.equal(
     beastLearningNavigation.children?.[1].href,
-    "/dashboard/learning/activities"
+    "/dashboard/education/activities"
   );
   assert.equal(beastMoneyNavigation.label, "BeastMoney");
   assert.equal(
     beastMoneyNavigation.children?.map((item) => item.label).slice(0, 8).join(","),
     "Dashboard,Cash Flow,Bills,Debts,Payoff Plan,Velocity,Billing,Settings"
   );
-  assert.equal(getModuleChildren("learning").length, 10);
+  assert.equal(getModuleChildren("learning").length, 9);
   const moneyChildren = getModuleChildren("money");
   const addBill = moneyChildren.find((item) => item.label === "Add Bill");
   const addDebt = moneyChildren.find((item) => item.label === "Add Debt");
@@ -675,7 +674,7 @@ test("BO-32 Calendar builds month week day and agenda views", () => {
       source: "learning",
       sourceRecordId: "activity-1",
       title: "Mentor session",
-      summary: "BeastLearning owns learning readiness.",
+      summary: "BeastEducation owns learning readiness.",
       startsAt: "2026-07-16T14:00:00.000Z",
       endsAt: "2026-07-16T14:30:00.000Z",
       timeZone: "America/New_York",
@@ -720,7 +719,7 @@ test("BO-33 Calendar recurrence and drag rescheduling preserve source rules", ()
     source: "learning",
     sourceRecordId: "review-1",
     title: "Weekly Mentor review",
-    summary: "BeastLearning owns the review cadence.",
+    summary: "BeastEducation owns the review cadence.",
     startsAt: "2026-07-16T15:00:00.000Z",
     endsAt: "2026-07-16T15:30:00.000Z",
     timeZone: "America/New_York",
@@ -1160,7 +1159,7 @@ test("BO-45 Shared AI routes specialist handoffs while preserving ownership", ()
   assert.equal(moneyHandoff.targetModule, "money");
   assert.equal(moneyHandoff.specialist, "BeastMoney");
   assert.equal(tutorHandoff.targetModule, "learning");
-  assert.equal(tutorHandoff.specialist, "BeastLearning Tutor");
+  assert.equal(tutorHandoff.specialist, "BeastEducation Tutor");
   assert.equal(moneyHandoff.dispatchMode, "specialist-handoff");
   assert.equal(moneyHandoff.sourceOwnershipPreserved, true);
   assert.match(sharedAIContractRules[3], /Specialist handoffs/);
@@ -1660,7 +1659,7 @@ test("BL-201 student profile foundation supports Mentor and Guidance Counselor c
     studentProfileOwnershipRules.slice(0, 2),
     [
       "BeastOS owns identity, shared profile intelligence, permissions, and durable profile facts.",
-      "BeastLearning owns learning-session evidence, Mentor observations, guidance planning context, and student-learning intelligence.",
+      "BeastEducation owns learning-session evidence, Mentor observations, guidance planning context, and student-learning intelligence.",
     ]
   );
   assert.equal(
@@ -2988,7 +2987,7 @@ test("learning onboarding validation names the exact missing required field", ()
     assert.equal(result.missingField, "Grade / level");
     assert.equal(
       result.message,
-      "Grade / level is required before BeastLearning can finish setup."
+      "Grade / level is required before BeastEducation can finish setup."
     );
   }
 });
@@ -3057,7 +3056,7 @@ test("dashboard global loading copy stays module neutral", () => {
   );
 
   assert.match(dashboardLayout, /Opening your dashboard\.\.\./);
-  assert.doesNotMatch(dashboardLayout, /Opening BeastLearning\.\.\./);
+  assert.doesNotMatch(dashboardLayout, /Opening BeastEducation\.\.\./);
 });
 
 test("dashboard route changes do not force the full-page guard fallback after initial resolve", () => {
@@ -3237,7 +3236,7 @@ test("learning activities have a dedicated runner and next-activity unlock logic
   assert.match(activityRunner, /practiceAnswers/);
 });
 
-test("BeastLearning member home starts with Mentor before dashboard support", () => {
+test("BeastEducation member home starts with Mentor before dashboard support", () => {
   const learningPage = readFileSync("src/app/dashboard/learning/page.tsx", "utf8");
   const lessonEngine = readFileSync(
     "src/app/dashboard/learning/activities/LessonEngine.tsx",
@@ -3246,7 +3245,7 @@ test("BeastLearning member home starts with Mentor before dashboard support", ()
 
   assert.match(learningPage, /function MentorHome/);
   assert.match(learningPage, /buildMentorHomeMission/);
-  assert.match(learningPage, /Mentor Home/);
+  assert.match(learningPage, /Guidance Counselor/);
   assert.match(learningPage, /LearningGoalDiscovery/);
   assert.match(learningPage, /Add Learning Goal/);
   assert.match(learningPage, /Learning Goals/);
@@ -3254,8 +3253,8 @@ test("BeastLearning member home starts with Mentor before dashboard support", ()
   assert.match(learningPage, /planRows\.find\(\(plan\) => plan\.goal_id === activeGoal\?\.id\)/);
   assert.match(learningPage, /decideAdaptiveProgression/);
   assert.match(learningPage, /adaptiveProgression/);
-  assert.match(learningPage, /One mission, chosen by your Mentor/);
-  assert.match(learningPage, /Start here for the next best action/);
+  assert.match(learningPage, /Your next guided step/);
+  assert.match(learningPage, /supporting workspace/);
   assert.match(learningPage, /Why this mission/);
   assert.match(learningPage, /Data boundary/);
   assert.match(learningPage, /Current goal/);
@@ -3289,7 +3288,7 @@ test("BeastLearning member home starts with Mentor before dashboard support", ()
   assert.match(lessonEngine, /Conversation-first learning session/);
 });
 
-test("BeastLearning v2 keeps normal learning in the Mentor conversation", () => {
+test("BeastEducation v2 keeps normal learning in the Mentor conversation", () => {
   const learningPage = readFileSync("src/app/dashboard/learning/page.tsx", "utf8");
   const todayPage = readFileSync("src/app/dashboard/today/page.tsx", "utf8");
   const dashboardLayout = readFileSync("src/app/dashboard/layout.tsx", "utf8");
@@ -3304,18 +3303,18 @@ test("BeastLearning v2 keeps normal learning in the Mentor conversation", () => 
   assert.doesNotMatch(learningPage, /getLearningActivityRoute\(learningPathReadyActivity\.id\)/);
   assert.equal(learningPage.includes("Open full Tutor workspace"), false);
   assert.match(todayPage, /href="\/dashboard\/learning#mentor-session"[\s\S]*Continue with Mentor/);
-  assert.match(dashboardLayout, /href: "\/dashboard\/learning#mentor-session"/);
-  assert.match(dashboardLayout, /label: "Mentor"/);
-  assert.match(dashboardLayout, /label: "My Plan"/);
-  assert.match(dashboardLayout, /label: "How I'm Doing"/);
-  assert.match(moduleNavigation, /label: "Continue", href: "\/dashboard\/learning#mentor-session"/);
+  assert.match(dashboardLayout, /href: "\/dashboard\/education#mentor-session"/);
+  assert.match(dashboardLayout, /label: "Guidance Counselor"/);
+  assert.match(dashboardLayout, /label: "My Roadmap"/);
+  assert.match(dashboardLayout, /label: "Progress"/);
+  assert.match(moduleNavigation, /label: "Learning Support", href: "\/dashboard\/education#mentor-session"/);
   assert.doesNotMatch(moduleNavigation, /label: "Continue", href: "\/dashboard\/learning\/activities"/);
 });
 
-test("BeastLearning first impression starts with the Mentor relationship", () => {
+test("BeastEducation first impression starts with the Mentor relationship", () => {
   const loginPage = readFileSync("src/app/login/page.tsx", "utf8");
 
-  assert.match(loginPage, /Meet Your BeastLearning Mentor/);
+  assert.match(loginPage, /Meet Your BeastEducation Guidance Counselor/);
   assert.match(loginPage, /Start with someone who learns where you want to go/);
   assert.match(loginPage, /We start with a conversation, not a dashboard/);
   assert.match(loginPage, /When it is time to learn, your Mentor brings in the Tutor/);
@@ -3326,7 +3325,7 @@ test("BeastLearning first impression starts with the Mentor relationship", () =>
   assert.doesNotMatch(loginPage, /Send Login Link/);
 });
 
-test("BeastLearning member experience hides workflow mechanics behind Mentor and Tutor language", () => {
+test("BeastEducation member experience hides workflow mechanics behind Mentor and Tutor language", () => {
   const learningPage = readFileSync("src/app/dashboard/learning/page.tsx", "utf8");
   const activitiesPage = readFileSync(
     "src/app/dashboard/learning/activities/page.tsx",
@@ -3411,7 +3410,7 @@ test("Mentor-first integration includes confidence timeline memory and weekly re
   assert.match(learningPage, /buildMentorLearningMemory/);
   assert.match(learningPage, /WeeklyMentorReviewPanel/);
   assert.match(learningPage, /Confidence intelligence/);
-  assert.match(learningPage, /Mentor memory/);
+  assert.match(learningPage, /Counselor context/);
   assert.match(learningPage, /Recent timeline/);
   assert.match(confidence, /Knowledge/);
   assert.match(confidence, /Confidence/);
@@ -3629,7 +3628,7 @@ test("Today learning mission generation avoids dead ends", () => {
   assert.equal(todayPage.includes("activityList.map"), true);
 });
 
-test("lesson engine supports the adaptive BeastLearning teaching cycle", () => {
+test("lesson engine supports the adaptive BeastEducation teaching cycle", () => {
   const quizEngine = buildLessonEngineDefinition({
     activity_type: "Quiz",
     title: "Pre-Algebra: Combining Like Terms",
@@ -4110,7 +4109,7 @@ test("learning experience dashboard aggregates v0.5 LX surfaces", () => {
   assert.equal(experience.beta.badges.includes("Early Access"), true);
 });
 
-test("BeastLearning Sprint 3 reconciliation documents Sprint 4 roadmap", () => {
+test("BeastEducation Sprint 3 reconciliation documents Sprint 4 roadmap", () => {
   const doc = readFileSync("docs/BEASTLEARNING_SPRINT3_RECONCILIATION.md", "utf8");
 
   [
@@ -5416,8 +5415,8 @@ test("learning AI memory homework policy and session manager remain mocked", () 
   assert.equal(session.conversationId.includes("homework-coach"), true);
 });
 
-test("BeastLearning v1.1 private beta readiness protects Personal Hub boundaries", () => {
-  const readiness = buildBeastLearningPrivateBetaReadiness();
+test("BeastEducation v1.1 private beta readiness protects Personal Hub boundaries", () => {
+  const readiness = buildBeastEducationPrivateBetaReadiness();
 
   assert.equal(readiness.version, "v1.1 Private Beta");
   assert.equal(
@@ -5541,13 +5540,13 @@ test("learning persistence maps feedback and table names for Supabase", () => {
     userId: "user-1",
     category: "feature request",
     message: "Add calmer onboarding.",
-    context: "BeastLearning feedback",
+    context: "BeastEducation feedback",
   });
   const item = mapFeedbackRow({
     id: "feedback-1",
     category: "feature request",
     message: "Add calmer onboarding.",
-    context: "BeastLearning feedback",
+    context: "BeastEducation feedback",
     status: "New",
     created_at: "2026-07-04T00:00:00.000Z",
   });
@@ -5558,7 +5557,7 @@ test("learning persistence maps feedback and table names for Supabase", () => {
     user_id: "user-1",
     category: "feature request",
     message: "Add calmer onboarding.",
-    context: "BeastLearning feedback",
+    context: "BeastEducation feedback",
     status: "New",
   });
   assert.equal(item.submittedAt, "2026-07-04T00:00:00.000Z");
@@ -5744,23 +5743,23 @@ test("admin view mode is ignored for non-admin users", () => {
 
 test("member navigation hides admin and monetization surfaces", () => {
   assert.deepEqual(
-    memberBeastLearningNavigation.children?.map((item) => item.label),
+    memberBeastEducationNavigation.children?.map((item) => item.label),
     [
-      "Mentor",
-      "Continue",
-      "My Plan",
-      "How I'm Doing",
+      "Guidance Counselor",
+      "My Roadmap",
+      "Progress",
+      "Learning Support",
       "Wins",
     ]
   );
   assert.deepEqual(
-    memberBeastLearningNavigation.children?.map((item) => item.href),
+    memberBeastEducationNavigation.children?.map((item) => item.href),
     [
-      "/dashboard/learning",
-      "/dashboard/learning#mentor-session",
-      "/dashboard/learning#mentor-plan",
-      "/dashboard/learning#mentor-progress",
-      "/dashboard/learning#wins",
+      "/dashboard/education",
+      "/dashboard/education#mentor-plan",
+      "/dashboard/education#mentor-progress",
+      "/dashboard/education#mentor-session",
+      "/dashboard/education#wins",
     ]
   );
   assert.equal(
@@ -5773,13 +5772,13 @@ test("member navigation hides admin and monetization surfaces", () => {
   );
   assert.deepEqual(
     getBeastModuleNavigationForPersona(false).map((item) => item.label),
-    ["BeastMoney", "BeastLearning"]
+    ["BeastMoney", "BeastEducation"]
   );
   assert.deepEqual(
     buildApplicationNavigationForPersona({ isOwner: false }).map(
       (item) => item.label
     ),
-    ["BeastMoney", "BeastLearning"]
+    ["BeastMoney", "BeastEducation"]
   );
   assert.deepEqual(buildOwnerNavigationForPersona({ isOwner: false }), []);
   assert.equal(
@@ -5854,7 +5853,7 @@ test("BeastAdmin foundation registers modules and protects owner-only navigation
     [
       "BeastOS",
       "BeastMoney",
-      "BeastLearning",
+      "BeastEducation",
       "BeastGoals",
       "BeastDocuments",
       "BeastHealth",
@@ -5876,7 +5875,7 @@ test("BeastAdmin foundation registers modules and protects owner-only navigation
     [
       ["BeastOS", "beastos", `v${versionManifest.beastos.version}`, "active", "released", true, false, true],
       ["BeastMoney", "money", `v${versionManifest.beastmoney.version}`, "active", "released", true, false, true],
-      ["BeastLearning", "learning", `v${versionManifest.beastlearning.version} ${versionManifest.beastlearning.channel}`, "active", "beta", true, true, true],
+      ["BeastEducation", "learning", `v${versionManifest.beastlearning.version} ${versionManifest.beastlearning.channel}`, "active", "beta", true, true, true],
       ["BeastGoals", "goals", `v${versionManifest.beastgoals.version}`, "foundation", "adminOnly", true, false, true],
       ["BeastDocuments", "documents", `v${versionManifest.beastdocuments.version}`, "foundation", "adminOnly", true, false, true],
       ["BeastHealth", "health", `v${versionManifest.beasthealth.version} ${versionManifest.beasthealth.channel}`, "foundation", "adminOnly", true, true, true],
@@ -5939,7 +5938,7 @@ test("BeastAdmin foundation registers modules and protects owner-only navigation
   const memberVisible = getVisibleModuleRegistryEntries({ isOwner: false }).map(
     (module) => module.name
   );
-  assert.deepEqual(memberVisible, ["BeastOS", "BeastMoney", "BeastLearning"]);
+  assert.deepEqual(memberVisible, ["BeastOS", "BeastMoney", "BeastEducation"]);
   assert.equal(
     buildBeastModuleNavigationForPersona({
       isOwner: false,
@@ -6085,7 +6084,7 @@ test("BeastAdmin beta assignments are independent of member role", () => {
     "documents",
   ]);
   assert.deepEqual(getBetaAssignableModuleLabels(), [
-    "BeastLearning",
+    "BeastEducation",
     "BeastHealth",
     "BeastHome",
     "BeastGoals",
@@ -6098,7 +6097,7 @@ test("BeastAdmin beta assignments are independent of member role", () => {
       assignment.memberRole,
       assignment.moduleName,
     ]),
-    [["Beta Member", "Beta", "BeastLearning"]]
+    [["Beta Member", "Beta", "BeastEducation"]]
   );
 
   const nextAssignments = assignBetaModule(beastAdminBetaAssignments, {

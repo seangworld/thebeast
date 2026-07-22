@@ -865,7 +865,7 @@ test("BG-001 Goals loader uses only signed-in user records", async () => {
             contribution_type: "Progress",
             status: "Active",
             title: "Completed a learning checkpoint",
-            summary: "BeastLearning contributed progress without owning the shared goal.",
+            summary: "BeastEducation contributed progress without owning the shared goal.",
             action_url: "/dashboard/learning",
             occurred_at: "2026-07-15T02:00:00.000Z",
             created_at: "2026-07-15T02:00:00.000Z",

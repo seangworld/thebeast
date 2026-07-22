@@ -84,7 +84,7 @@ export const beastAdminFeedbackItems: BeastAdminFeedbackItem[] = [
   {
     id: "feedback-learning-home",
     date: "2026-07-13",
-    module: "BeastLearning",
+    module: "BeastEducation",
     user: "Beta Member",
     status: "New",
     summary: "Mentor Home made the next learning action clear.",

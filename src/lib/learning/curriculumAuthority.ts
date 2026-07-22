@@ -133,7 +133,7 @@ export const curriculumAuthoritySources: CurriculumAuthoritySource[] = [
     canonicalSource: "https://www.comptia.org/en-us/certifications/security/",
     approvalStatus: "approved_for_production",
     notes:
-      "Official CompTIA Security+ objective authority. BeastLearning stores objective IDs and short paraphrased labels only; it must not copy CompTIA objective text.",
+      "Official CompTIA Security+ objective authority. BeastEducation stores objective IDs and short paraphrased labels only; it must not copy CompTIA objective text.",
   },
   {
     id: "state-math-readiness-standard",
@@ -174,7 +174,7 @@ export const curriculumAuthoritySources: CurriculumAuthoritySource[] = [
   {
     id: "college-algebra-curriculum-reference",
     authorityType: "college_curriculum",
-    publisher: "BeastLearning",
+    publisher: "BeastEducation",
     title: "College Algebra Curriculum Reference",
     version: "2026.07.12-reference",
     effectiveDate: "2026-07-12",
@@ -186,7 +186,7 @@ export const curriculumAuthoritySources: CurriculumAuthoritySource[] = [
   {
     id: "beastlearning-internal-proving-ground",
     authorityType: "internal_proving_ground",
-    publisher: "BeastLearning",
+    publisher: "BeastEducation",
     title: "Internal Proving-Ground Curriculum",
     version: "2026.07.12",
     effectiveDate: "2026-07-12",
@@ -198,7 +198,7 @@ export const curriculumAuthoritySources: CurriculumAuthoritySource[] = [
   {
     id: "beastlearning-certification-prep-fixture",
     authorityType: "fixture",
-    publisher: "BeastLearning",
+    publisher: "BeastEducation",
     title: "Certification Preparation Fixture",
     version: "2026.07.12-fixture",
     effectiveDate: "2026-07-12",
@@ -210,7 +210,7 @@ export const curriculumAuthoritySources: CurriculumAuthoritySource[] = [
   {
     id: "beastlearning-pre-algebra-fixture",
     authorityType: "fixture",
-    publisher: "BeastLearning",
+    publisher: "BeastEducation",
     title: "Pre-Algebra Proving-Ground Fixture",
     version: "2026.07.12-fixture",
     effectiveDate: "2026-07-12",
@@ -222,7 +222,7 @@ export const curriculumAuthoritySources: CurriculumAuthoritySource[] = [
   {
     id: "beastlearning-algebra-fixture",
     authorityType: "fixture",
-    publisher: "BeastLearning",
+    publisher: "BeastEducation",
     title: "Algebra Expansion Fixture",
     version: "2026.07.12-fixture",
     effectiveDate: "2026-07-12",
@@ -234,7 +234,7 @@ export const curriculumAuthoritySources: CurriculumAuthoritySource[] = [
   {
     id: "beastlearning-spanish-fixture",
     authorityType: "fixture",
-    publisher: "BeastLearning",
+    publisher: "BeastEducation",
     title: "Spanish Greeting Practice Fixture",
     version: "2026.07.12-fixture",
     effectiveDate: "2026-07-12",
@@ -246,7 +246,7 @@ export const curriculumAuthoritySources: CurriculumAuthoritySource[] = [
   {
     id: "beastlearning-college-algebra-fixture",
     authorityType: "fixture",
-    publisher: "BeastLearning",
+    publisher: "BeastEducation",
     title: "College Algebra Notes Fixture",
     version: "2026.07.12-fixture",
     effectiveDate: "2026-07-12",
