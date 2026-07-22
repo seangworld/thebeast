@@ -725,16 +725,7 @@ export default function MoneyWorkspacePage() {
     <BeastMoneyShell
       title="Money Coach"
       description="Money Coach leads your conversation-first experience, with the existing Money Cockpit grounded in current BeastMoney records and calculations below."
-      actions={
-        <>
-          <Link href="/dashboard/money/cashflow" className="beast-button">
-            Open Cash Flow
-          </Link>
-          <Link href="/dashboard/money/velocity" className="beast-button-secondary">
-            Open Velocity
-          </Link>
-        </>
-      }
+      showPageHeader={false}
     >
       <MoneyCoachExperience
         model={moneyCoachExperience}

@@ -20,16 +20,18 @@ export function BeastMoneyShell({
   description,
   actions,
   children,
+  showPageHeader = true,
 }: {
   title: string;
   description: string;
   actions?: React.ReactNode;
   children: React.ReactNode;
+  showPageHeader?: boolean;
 }) {
   return (
     <main className="beast-page">
       <div className="beast-container money-page-stack">
-        <section className="beast-page-header">
+        {showPageHeader ? <section className="beast-page-header">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-4">
               <ModuleBadge module="money" label={BEAST_MONEY_VERSION_LABEL} />
@@ -38,7 +40,7 @@ export function BeastMoneyShell({
             </div>
             {actions ? <div className="flex flex-wrap gap-2">{actions}</div> : null}
           </div>
-        </section>
+        </section> : null}
 
         <nav className="beast-module-tabs" aria-label="BeastMoney sections">
           {beastMoneySections.map((item) => (

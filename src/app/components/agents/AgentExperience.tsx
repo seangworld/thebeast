@@ -128,6 +128,9 @@ type AgentExperienceProps = {
   composer: ReactNode;
   statusArea?: ReactNode;
   className?: string;
+  composerPlacement?: "before-cards" | "after-conversation";
+  cardsPlacement?: "before-conversation" | "after-conversation";
+  cardsLayout?: "grid" | "stack";
 };
 
 const avatarSizes = {
@@ -483,7 +486,18 @@ export function AgentExperience({
   composer,
   statusArea,
   className = "",
+  composerPlacement = "after-conversation",
+  cardsPlacement = "before-conversation",
+  cardsLayout = "grid",
 }: AgentExperienceProps) {
+  const cards = smartCards ? (
+    <section
+      className={cardsLayout === "grid" ? "grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-3" : "grid min-w-0 gap-6"}
+      aria-label="Specialist cards"
+    >
+      {smartCards}
+    </section>
+  ) : null;
   return (
     <section
       className={`mx-auto grid w-full max-w-5xl min-w-0 gap-6 rounded-2xl border border-white/10 bg-[#1a1f2b] p-4 shadow-[0_18px_60px_rgba(0,0,0,0.22)] sm:p-6 ${className}`}
@@ -492,11 +506,14 @@ export function AgentExperience({
       {header}
       {greeting}
       {contextSummary}
-      {smartCards ? <section className="grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-3" aria-label="Specialist cards">{smartCards}</section> : null}
-      {suggestedActions}
+      {composerPlacement === "before-cards" ? composer : null}
+      {composerPlacement === "before-cards" ? suggestedActions : null}
+      {cardsPlacement === "before-conversation" ? cards : null}
+      {composerPlacement === "after-conversation" ? suggestedActions : null}
       <div className="border-t border-white/10 pt-6">{conversation}</div>
+      {cardsPlacement === "after-conversation" ? cards : null}
       {statusArea}
-      {composer}
+      {composerPlacement === "after-conversation" ? composer : null}
     </section>
   );
 }

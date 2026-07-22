@@ -39,7 +39,7 @@ test("MC-201 derives the Money Coach landing experience from current calculation
   const model = buildMoneyCoachExperience(input);
 
   assert.equal(model.greeting, "Good evening, Sean.");
-  assert.match(model.conversationOpening, /^I noticed /);
+  assert.match(model.conversationOpening, /reviewed|wanted to mention|opportunity|positive/i);
   assert.ok(model.cards.some((card) => card.id === "upcoming-bills"));
   assert.ok(model.cards.some((card) => card.id === "debt-progress"));
   assert.ok(model.cards.some((card) => card.id === "cash-flow"));
@@ -51,8 +51,8 @@ test("MC-201 derives the Money Coach landing experience from current calculation
   assert.ok(model.insights.every((insight) => insight.ownerId === "owner-1"));
   assert.ok(model.insights.every((insight) => insight.provenance.calculationOrRule.length > 0));
   assert.ok(model.insights.every((insight) => insight.explainWhy?.limitations.length));
-  assert.ok(model.suggestions.some((item) => item.label === "Review Bills"));
-  assert.ok(model.suggestions.some((item) => item.label === "Review Debt Strategy"));
+  assert.ok(model.suggestions.some((item) => item.prompt?.includes("bills")));
+  assert.ok(model.suggestions.some((item) => item.prompt?.includes("debt")));
 });
 
 test("MC-201 handles missing financial data without inventing facts", () => {
@@ -107,6 +107,15 @@ test("MC-201 consumes the shared AgentExperience without replacing existing page
   assert.match(component, /AgentMemoryRecord/);
   assert.match(component, /Mark reviewed/);
   assert.match(component, /Dismiss/);
+  assert.match(component, /composerPlacement="before-cards"/);
+  assert.match(component, /cardsPlacement="after-conversation"/);
+  assert.match(component, /cardsLayout="stack"/);
+  assert.match(component, /Today&apos;s Financial Review/);
+  assert.match(component, /Needs Attention/);
+  assert.match(component, /Progress/);
+  assert.match(component, /Opportunities/);
+  assert.match(component, /buildMoneyCoachGreeting/);
+  assert.match(component, /suggestion\.prompt/);
   for (const route of [
     "/dashboard/money/cashflow",
     "/dashboard/money/debts",
@@ -115,4 +124,5 @@ test("MC-201 consumes the shared AgentExperience without replacing existing page
   ]) {
     assert.match(landing, new RegExp(route));
   }
+  assert.match(landing, /showPageHeader=\{false\}/);
 });

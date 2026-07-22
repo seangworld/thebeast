@@ -5,7 +5,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   AgentAvatar,
-  AgentContextSummary,
   AgentConversationInput,
   AgentConversationTimeline,
   AgentEmptyState,
@@ -22,6 +21,7 @@ import {
 import type { AgentMemoryRecord, InsightStatus } from "@/lib/platform/agents";
 import {
   answerMoneyCoachQuestion,
+  buildMoneyCoachGreeting,
   type MoneyCoachExperienceModel,
 } from "@/lib/moneyCoachExperience";
 
@@ -44,8 +44,11 @@ export function MoneyCoachExperience({
   const [conversationTitle, setConversationTitle] = useState("Current financial review");
   const [insightStatuses, setInsightStatuses] = useState<Record<string, InsightStatus>>({});
   const [memoryHydrated, setMemoryHydrated] = useState(false);
+  const [localNow, setLocalNow] = useState<Date | null>(null);
   const ownerId = model.insights[0]?.ownerId || "authenticated-owner";
   const memoryKey = `beastagents:beastmoney.money-coach:${ownerId}`;
+
+  useEffect(() => setLocalNow(new Date()), []);
 
   useEffect(() => {
     try {
@@ -125,17 +128,32 @@ export function MoneyCoachExperience({
     router.push(href);
   }
 
-  const contextItems = [
-    ...model.importantItems.map((item) => `Important: ${item}`),
-    ...model.wins.map((item) => `Win: ${item}`),
-    ...model.potentialIssues.map((item) => `Potential issue: ${item}`),
-    ...model.opportunities.map((item) => `Opportunity: ${item}`),
-  ];
   const visibleCards = model.cards.filter((card) => !["Dismissed", "Completed", "Archived"].includes(insightStatuses[card.insight.id] || card.insight.status));
+  const localGreeting = localNow
+    ? buildMoneyCoachGreeting(model.userFirstName, localNow)
+    : model.userFirstName;
+  const reviewIntroduction = model.importantItems[0]
+    ? `I reviewed today’s plan. ${model.importantItems[0]}`
+    : model.potentialIssues[0]
+      ? `I reviewed today’s plan and found one item to discuss: ${model.potentialIssues[0]}`
+      : model.wins[0]
+        ? `I reviewed today’s plan. Here’s the strongest positive signal: ${model.wins[0]}`
+        : model.introduction;
+  const groupFor = (card: (typeof visibleCards)[number]) => {
+    if (["Needs Attention", "Upcoming"].includes(card.insight.category) || ["warning", "critical"].includes(card.insight.severity)) return "Needs Attention";
+    if (card.insight.category === "Opportunities" || ["funding-sources", "velocity-banking", "income-pots"].includes(card.id)) return "Opportunities";
+    return "Progress";
+  };
+  const reviewGroups = ["Needs Attention", "Progress", "Opportunities"]
+    .map((title) => ({ title, cards: visibleCards.filter((card) => groupFor(card) === title) }))
+    .filter((group) => group.cards.length > 0);
 
   return (
     <AgentExperience
       className="border-green-400/25"
+      composerPlacement="before-cards"
+      cardsPlacement="after-conversation"
+      cardsLayout="stack"
       header={
         <AgentHeader
           title="Money Coach"
@@ -145,31 +163,27 @@ export function MoneyCoachExperience({
         />
       }
       greeting={
-        <AgentGreeting greeting={model.greeting}>
-          <p>{model.introduction}</p>
-          <ul className="mt-3 grid gap-1">
-            {model.summary.map((item) => <li key={item}>• {item}</li>)}
-          </ul>
+        <AgentGreeting greeting={localGreeting}>
+          <p>{reviewIntroduction}</p>
         </AgentGreeting>
       }
-      contextSummary={
-        loading ? (
-          <AgentLoadingState label="Money Coach is reviewing current BeastMoney records" lines={4} />
+      contextSummary={loading ? (
+          <AgentLoadingState label="Money Coach is reviewing current BeastMoney records" lines={2} />
         ) : error ? (
           <AgentErrorState
             title="Money Coach could not review your records"
             message={error}
             retryAction={<button type="button" className="beast-button" onClick={onRetry}>Try Again</button>}
           />
-        ) : (
-          <div id="money-coach-opportunities">
-            <AgentContextSummary title="What I found" items={contextItems} />
-          </div>
-        )
-      }
+        ) : null}
       smartCards={
         !loading && !error ? (
-          <div id="money-coach-cards" className="contents">
+          <div id="money-coach-cards" className="grid gap-6">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.14em] text-cyan-200">Supporting evidence</p>
+              <h2 className="mt-1 text-xl font-black text-white">Today&apos;s Financial Review</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-400">Use these details to support the conversation or open a workspace when you need to go deeper.</p>
+            </div>
             <AgentSmartCard
               eyebrow="Recommended next step"
               title={model.primaryRecommendation.title}
@@ -181,25 +195,18 @@ export function MoneyCoachExperience({
                 <p className="mt-2 leading-6 text-slate-300">{model.primaryRecommendation.explainWhy}</p>
               </details>
             </AgentSmartCard>
-            {visibleCards.map((card) => (
-              <AgentSmartCard
-                key={card.id}
-                eyebrow={`${card.insight.priority} priority · ${card.summary}`}
-                title={card.title}
-                description={card.detail}
-                action={<Link className="beast-button-secondary" href={card.href}>Review {card.title}</Link>}
-              >
-                <details>
-                  <summary className="cursor-pointer font-bold text-cyan-200">Explain Why</summary>
-                  <p className="mt-2 leading-6 text-slate-300">{card.explainWhy}</p>
-                  <p className="mt-2 text-sm text-slate-400"><strong>Rule:</strong> {card.insight.provenance.calculationOrRule}</p>
-                  <p className="mt-1 text-sm text-slate-400"><strong>Limitations:</strong> {card.insight.provenance.limitations.join(" ")}</p>
-                </details>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <button type="button" className="beast-button-secondary min-h-11" onClick={() => setInsightStatuses((current) => ({ ...current, [card.insight.id]: "Reviewed" }))}>Mark reviewed</button>
-                  <button type="button" className="beast-button-secondary min-h-11" onClick={() => setInsightStatuses((current) => ({ ...current, [card.insight.id]: "Dismissed" }))}>Dismiss</button>
+            {reviewGroups.map((group) => (
+              <section key={group.title} aria-labelledby={`money-review-${group.title.toLowerCase().replace(/\s+/g, "-")}`}>
+                <h3 id={`money-review-${group.title.toLowerCase().replace(/\s+/g, "-")}`} className="mb-3 text-lg font-black text-white">{group.title}</h3>
+                <div className="grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                  {group.cards.map((card) => (
+                    <AgentSmartCard key={card.id} eyebrow={`${card.insight.priority} priority · ${card.summary}`} title={card.title} description={card.detail} action={<Link className="beast-button-secondary" href={card.href}>Review {card.title}</Link>}>
+                      <details><summary className="cursor-pointer font-bold text-cyan-200">Explain Why</summary><p className="mt-2 leading-6 text-slate-300">{card.explainWhy}</p><p className="mt-2 text-sm text-slate-400"><strong>Rule:</strong> {card.insight.provenance.calculationOrRule}</p><p className="mt-1 text-sm text-slate-400"><strong>Limitations:</strong> {card.insight.provenance.limitations.join(" ")}</p></details>
+                      <div className="mt-3 flex flex-wrap gap-2"><button type="button" className="beast-button-secondary min-h-11" onClick={() => setInsightStatuses((current) => ({ ...current, [card.insight.id]: "Reviewed" }))}>Mark reviewed</button><button type="button" className="beast-button-secondary min-h-11" onClick={() => setInsightStatuses((current) => ({ ...current, [card.insight.id]: "Dismissed" }))}>Dismiss</button></div>
+                    </AgentSmartCard>
+                  ))}
                 </div>
-              </AgentSmartCard>
+              </section>
             ))}
           </div>
         ) : null
@@ -212,7 +219,9 @@ export function MoneyCoachExperience({
               label: suggestion.label,
               onSelect: suggestion.intent === "ask"
                 ? focusQuestionInput
-                : () => followSuggestion(suggestion.href),
+                : suggestion.prompt
+                  ? () => askQuestion(suggestion.prompt || suggestion.label)
+                  : () => followSuggestion(suggestion.href),
             }))}
           />
         ) : null
@@ -233,13 +242,13 @@ export function MoneyCoachExperience({
         )
       }
       composer={
-        <div id="money-coach-question">
+        <div id="money-coach-question" className="rounded-2xl border border-cyan-300/30 bg-gradient-to-br from-cyan-300/10 to-violet-300/10 p-4 shadow-[0_12px_40px_rgba(34,211,238,0.08)] sm:p-5">
           <AgentConversationInput
             value={input}
             onChange={setInput}
             onSubmit={askQuestion}
             label="Ask Money Coach about the current BeastMoney plan"
-            placeholder="Ask about bills, debt, cash flow, income pots, Velocity, or funding sources…"
+            placeholder="Ask your Money Coach about bills, debt, retirement, cash flow, income, Velocity, or anything else…"
             disabled={loading || Boolean(error)}
           />
           <p className="mt-3 text-xs leading-5 text-slate-400">{model.safetyNotice}</p>

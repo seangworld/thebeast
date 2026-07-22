@@ -24,6 +24,7 @@ export type MoneyCoachExperienceSuggestion = {
   href?: string;
   intent?: "ask";
   action?: InsightAction;
+  prompt?: string;
 };
 
 export type MoneyCoachExperienceModel = {
@@ -46,6 +47,7 @@ export type MoneyCoachExperienceModel = {
   insights: Insight[];
   behavior: ProfessionalBehaviorProfile;
   safetyNotice: string;
+  userFirstName: string;
 };
 
 export type MoneyCoachExperienceInput = {
@@ -162,11 +164,10 @@ function firstName(value: string) {
   return value.trim().split(/\s+/)[0] || "there";
 }
 
-function timeGreeting(date: Date) {
+export function buildMoneyCoachGreeting(userName: string, date: Date) {
   const hour = date.getHours();
-  if (hour < 12) return "Good morning";
-  if (hour < 18) return "Good afternoon";
-  return "Good evening";
+  const period = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+  return `${period}, ${firstName(userName)}.`;
 }
 
 function plural(value: number, singular: string, pluralLabel = `${singular}s`) {
@@ -405,18 +406,18 @@ export function buildMoneyCoachExperience(
 
   const suggestions: MoneyCoachExperienceSuggestion[] = [];
   if (input.activeBillCount > 0) {
-    suggestions.push({ id: "review-bills", label: "Review Bills", href: "/dashboard/money/cashflow#bills" });
+    suggestions.push({ id: "review-bills", label: "What bills need my attention?", prompt: "What bills need my attention?", href: "/dashboard/money/cashflow#bills" });
   }
   if (opportunities.length > 0) {
-    suggestions.push({ id: "show-opportunities", label: "Show Opportunities", href: "#money-coach-opportunities" });
+    suggestions.push({ id: "show-opportunities", label: "Where are my opportunities?", prompt: "Where are my opportunities?", href: "#money-coach-opportunities" });
   }
   if (input.activeDebtCount > 0) {
-    suggestions.push({ id: "review-debt", label: "Review Debt Strategy", href: "/dashboard/money/debts" });
+    suggestions.push({ id: "review-debt", label: "How is my debt plan progressing?", prompt: "How is my debt plan progressing?", href: "/dashboard/money/debts" });
   }
   if (input.monthlyIncome > 0 || input.monthlyOutflow > 0) {
-    suggestions.push({ id: "explain-cash-flow", label: "Explain Cash Flow", href: "#money-coach-cards" });
+    suggestions.push({ id: "explain-cash-flow", label: "Can my income cover this month?", prompt: "Can my income cover this month?", href: "#money-coach-cards" });
   }
-  suggestions.push({ id: "ask-question", label: "Ask a Question", intent: "ask" });
+  suggestions.push({ id: "ask-question", label: "I have another question", intent: "ask" });
 
   const summary = [
     `${formatCurrency(input.currentCash)} available cash with a ${formatCurrency(input.cashBuffer)} protected buffer.`,
@@ -428,12 +429,21 @@ export function buildMoneyCoachExperience(
 
   const openingObservation =
     importantItems[0] || potentialIssues[0] || wins[0] || summary[0];
+  const conversationOpening = importantItems[0]
+    ? `I reviewed your current plan. ${importantItems[0]} Let’s make sure it is covered.`
+    : potentialIssues[0]
+      ? `One thing I wanted to mention: ${potentialIssues[0]}`
+      : opportunities[0]
+        ? `I found an opportunity worth reviewing: ${opportunities[0]}`
+        : wins[0]
+          ? `Your current records show something positive: ${wins[0]}`
+          : `I reviewed the information currently available. ${openingObservation}`;
 
   insights.sort((a, b) => b.priorityScore - a.priorityScore || a.id.localeCompare(b.id));
   return {
-    greeting: `${timeGreeting(input.asOfDate)}, ${firstName(input.userName)}.`,
+    greeting: buildMoneyCoachGreeting(input.userName, input.asOfDate),
     introduction: "I reviewed the BeastMoney records and calculations currently available.",
-    conversationOpening: `I noticed ${openingObservation.charAt(0).toLowerCase()}${openingObservation.slice(1)}`,
+    conversationOpening,
     summary,
     importantItems,
     wins,
@@ -450,6 +460,7 @@ export function buildMoneyCoachExperience(
     insights,
     behavior: specialistProfessionalProfiles.moneyCoach,
     safetyNotice: "Money Coach provides informational planning support, not financial, tax, investment, legal, credit, or lending advice. Verify current records and provider terms before acting; you remain in control.",
+    userFirstName: firstName(input.userName),
   };
 }
 
@@ -458,6 +469,9 @@ export function answerMoneyCoachQuestion(
   model: MoneyCoachExperienceModel
 ) {
   const normalized = question.toLowerCase();
+  const opportunity = normalized.includes("opportunit")
+    ? model.insights.find((item) => item.category === "Opportunities")
+    : undefined;
   const card =
     model.cards.find((item) => normalized.includes("bill") && item.id === "upcoming-bills") ||
     model.cards.find((item) => normalized.includes("debt") && item.id === "debt-progress") ||
@@ -465,6 +479,14 @@ export function answerMoneyCoachQuestion(
     model.cards.find((item) => normalized.includes("velocity") && item.id === "velocity-banking") ||
     model.cards.find((item) => normalized.includes("fund") && item.id === "funding-sources") ||
     model.cards.find((item) => normalized.includes("pot") && item.id === "income-pots");
+
+  if (opportunity) {
+    return {
+      text: `${opportunity.summary} Explain Why: ${opportunity.explainWhy?.reason || opportunity.detailedExplanation}`,
+      href: opportunity.navigationTarget || "/dashboard/money",
+      action: opportunity.action?.label || "Review this opportunity",
+    };
+  }
 
   if (card) {
     return {
