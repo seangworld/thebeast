@@ -49,7 +49,7 @@ test("BeastEducation discovery progressively assembles a guidance-first plan", (
   assert.ok(complete.careerPlan.length > 0);
   assert.ok(complete.educationPlan.length > 0);
   assert.ok(complete.certificationPlan.length > 0);
-  assert.deepEqual(complete.resources.map((resource) => resource.provider), profile.preferredFormats);
+  assert.deepEqual(complete.resources.map((resource) => resource.providerName), profile.preferredFormats.map((provider) => provider === "Certifications" ? "Certification providers" : provider));
   assert.ok(complete.schoolPlan.length > 0);
 });
 
@@ -59,8 +59,8 @@ test("Guidance Counselor owns lifelong guidance while specialists own teaching",
   assert.match(guidanceCounselorPromptFramework.boundaries.join(" "), /hand off/);
   const schoolsProfile = { ...profile, preferredFormats: ["Schools"] as const };
   const plan = buildEducationGuidancePlan({ profile: schoolsProfile, goalKind: "education", goal: "Computer science degree" });
-  assert.equal(plan.resources[0].provider, "Schools");
-  assert.match(plan.resources[0].verificationNote, /accreditation/);
+  assert.equal(plan.resources[0].providerName, "Schools");
+  assert.match(plan.resources[0].verificationNote || "", /accreditation/);
 });
 
 test("G2.3 discovery starts without a fabricated destination and supports the full provider ecosystem", () => {
@@ -82,8 +82,8 @@ test("G2.3 discovery starts without a fabricated destination and supports the fu
     preferredFormats: ["LinkedIn Learning", "edX", "Professional organizations"],
   };
   const plan = buildEducationGuidancePlan({ profile: providerProfile, goalKind: "career", goal: "Security leader" });
-  assert.deepEqual(plan.resources.map((resource) => resource.provider), providerProfile.preferredFormats);
-  assert.ok(plan.resources.every((resource) => resource.verificationNote.length > 0));
+  assert.deepEqual(plan.resources.map((resource) => resource.providerName), providerProfile.preferredFormats);
+  assert.ok(plan.resources.every((resource) => Boolean(resource.verificationNote?.length)));
 });
 
 test("BeastEducation tracks meaningful long-term roadmap progress", () => {

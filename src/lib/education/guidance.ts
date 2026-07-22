@@ -6,9 +6,9 @@ import type {
   EducationProgressEvent,
   EducationProgressSummary,
   EducationResourceProvider,
-  EducationResourceRecommendation,
   EducationRoadmapMilestone,
 } from "./types";
+import { createExternalResourceRecommendation, externalResourceProviders } from "../platform/externalResources";
 
 export const educationDiscoveryQuestions = [
   { id: "story", prompt: "Tell me about yourself and what is shaping your life right now." },
@@ -18,19 +18,6 @@ export const educationDiscoveryQuestions = [
   { id: "motivation", prompt: "Why does this matter to you now?" },
   { id: "constraints", prompt: "What time, cost, location, accessibility, or family constraints should shape the plan?" },
 ] as const;
-
-const providerCatalog: Record<Exclude<EducationResourceProvider, "Future provider">, Omit<EducationResourceRecommendation, "reason">> = {
-  YouTube: { provider: "YouTube", title: "Explore expert explanations and practitioner perspectives", url: "https://www.youtube.com/results?search_query=", cost: "free", verificationNote: "Review creator credentials, publication date, sources, and conflicts before relying on a video." },
-  "Khan Academy": { provider: "Khan Academy", title: "Strengthen academic and foundational skills", url: "https://www.khanacademy.org/search?page_search_query=", cost: "free", verificationNote: "Confirm the topic and level match the roadmap milestone." },
-  Coursera: { provider: "Coursera", title: "Compare structured courses and professional certificates", url: "https://www.coursera.org/search?query=", cost: "free-or-paid", verificationNote: "Verify current price, instructor, institution, workload, and credential value with the provider." },
-  "Microsoft Learn": { provider: "Microsoft Learn", title: "Use official Microsoft role and technology learning paths", url: "https://learn.microsoft.com/training/browse/?terms=", cost: "free", verificationNote: "Prefer current official paths and verify any exam objectives separately." },
-  "LinkedIn Learning": { provider: "LinkedIn Learning", title: "Compare professional and workplace skill courses", url: "https://www.linkedin.com/learning/search?keywords=", cost: "free-or-paid", verificationNote: "Verify instructor experience, course date, access terms, and whether the course supports the roadmap goal." },
-  edX: { provider: "edX", title: "Explore university and institution-backed programs", url: "https://www.edx.org/search?q=", cost: "free-or-paid", verificationNote: "Verify the current institution, workload, credential terms, price, and transfer or employer value directly with the provider." },
-  Books: { provider: "Books", title: "Find durable books and reference material", url: "https://search.worldcat.org/search?q=", cost: "varies", verificationNote: "Check edition date, author expertise, library availability, and whether the field changes quickly." },
-  "Professional organizations": { provider: "Professional organizations", title: "Find authoritative communities, conferences, and career resources", url: "https://www.google.com/search?q=official+professional+organization+", cost: "varies", verificationNote: "Confirm nonprofit or professional standing, membership terms, event dates, and credential authority on the organization's official site." },
-  Certifications: { provider: "Certifications", title: "Verify relevant credentials with issuing organizations", url: "https://www.google.com/search?q=official+certification+", cost: "varies", verificationNote: "Use the issuing body's current objectives, prerequisites, renewal rules, and exam policies as authority." },
-  Schools: { provider: "Schools", title: "Compare schools and education programs", url: "https://collegescorecard.ed.gov/search/?search=", cost: "varies", verificationNote: "Verify accreditation, admissions requirements, total cost, outcomes, transfer rules, support, and program availability with authoritative sources." },
-};
 
 const goalSkills: Record<EducationGoalKind, readonly string[]> = {
   career: ["role-specific fundamentals", "evidence of applied skill", "professional communication"],
@@ -42,10 +29,6 @@ const goalSkills: Record<EducationGoalKind, readonly string[]> = {
 
 function clean(value: string, fallback: string) {
   return value.trim() || fallback;
-}
-
-function queryUrl(base: string, goal: string) {
-  return `${base}${encodeURIComponent(goal)}`;
 }
 
 export function buildEducationGuidancePlan({
@@ -71,11 +54,20 @@ export function buildEducationGuidancePlan({
     { id: "prove", title: "Create evidence and review the direction", reason: "Projects, records, feedback, and official results are stronger than completion clicks.", horizon: "later", status: "not-started" },
   ];
   const providers = profile.preferredFormats.length ? profile.preferredFormats : (["YouTube", "Khan Academy", "Coursera", "Microsoft Learn", "Books", "Certifications", "Schools"] as const);
-  const resources = providers.filter((provider): provider is Exclude<EducationResourceProvider, "Future provider"> => provider !== "Future provider").map((provider) => ({
-    ...providerCatalog[provider],
-    reason: `Compare this provider for the ${target} roadmap; BeastEducation does not rank or resell providers.`,
-    url: queryUrl(providerCatalog[provider].url, target),
-  }));
+  const resources = providers.flatMap((providerName) => {
+    if (providerName === "Future provider") return [];
+    const registeredProvider = externalResourceProviders.findByName(providerName === "Certifications" ? "Certification providers" : providerName);
+    if (!registeredProvider) return [];
+    return [createExternalResourceRecommendation({
+      id: `beasteducation:${registeredProvider.id}:${target.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+      moduleId: "beasteducation",
+      agentId: "beasteducation.guidance-counselor",
+      providerId: registeredProvider.id,
+      title: registeredProvider.description,
+      whyRecommended: `Compare this provider for the ${target} roadmap; BeastEducation does not rank or resell providers.`,
+      query: target,
+    })];
+  });
 
   return {
     profileId: profile.id,

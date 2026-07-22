@@ -2,7 +2,9 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { DashboardCard, ModuleBadge, ProgressiveSaveStatus, SectionHeader } from "@/app/components/design/DashboardPrimitives";
+import { ExternalResourceCard } from "@/app/components/design/ExternalResourceCard";
 import { buildEducationGuidancePlan, educationDiscoveryQuestions, type EducationGoalKind, type EducationProfile, type EducationResourceProvider } from "@/lib/education";
+import { externalResourceProviders } from "@/lib/platform/externalResources";
 import { useProgressiveSave } from "@/lib/platform/useProgressiveSave";
 
 const goalKinds: { value: EducationGoalKind; label: string }[] = [
@@ -13,7 +15,7 @@ const goalKinds: { value: EducationGoalKind; label: string }[] = [
   { value: "personal-growth", label: "Personal growth" },
 ];
 
-const providers: EducationResourceProvider[] = ["YouTube", "Khan Academy", "Coursera", "Microsoft Learn", "LinkedIn Learning", "edX", "Books", "Professional organizations", "Certifications", "Schools"];
+const providers = externalResourceProviders.list().map((provider) => provider.name === "Certification providers" ? "Certifications" : provider.name) as EducationResourceProvider[];
 
 export default function EducationCommandCenter() {
   const [goalKind, setGoalKind] = useState<EducationGoalKind>("career");
@@ -114,7 +116,7 @@ export default function EducationCommandCenter() {
 
       <div className="mt-5 grid gap-4 xl:grid-cols-[0.85fr_1.15fr]">
         <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4"><div className="text-xs font-bold uppercase text-[#8d9aae]">Skill analysis</div><h3 className="mt-2 text-lg font-black text-white">Strengths, gaps, and evidence</h3><PlanList title="Current strengths" items={plan.skillAnalysis.currentStrengths} empty="Add strengths to the Education Profile." /><PlanList title="Skills to build" items={plan.skillAnalysis.skillsToBuild} /><PlanList title="Evidence to collect" items={plan.skillAnalysis.evidenceNeeded} /></div>
-        <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4"><div className="text-xs font-bold uppercase text-[#8d9aae]">External resource recommendations</div><p className="mt-2 text-sm text-[#aeb9ca]">Explore providers without turning BeastEducation into another course catalog.</p><div className="mt-4 grid gap-3 sm:grid-cols-2">{plan.resources.map((resource) => <a key={resource.provider} href={resource.url} target="_blank" rel="noreferrer" className="min-w-0 rounded-xl border border-[#2a3242] bg-[#0f1419] p-4 transition hover:border-indigo-300/40"><div className="text-xs font-bold uppercase text-indigo-200">{resource.provider} · {resource.cost}</div><h3 className="mt-2 font-black text-white">{resource.title}</h3><p className="mt-2 text-sm leading-5 text-[#aeb9ca]">{resource.reason}</p><p className="mt-2 text-xs leading-5 text-[#78869a]">{resource.verificationNote}</p></a>)}</div></div>
+        <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4"><div className="text-xs font-bold uppercase text-[#8d9aae]">External resource recommendations</div><p className="mt-2 text-sm text-[#aeb9ca]">Explore providers without turning BeastEducation into another course catalog.</p><div className="mt-4 grid gap-3 sm:grid-cols-2">{plan.resources.map((resource) => <ExternalResourceCard key={resource.id} recommendation={resource} />)}</div></div>
       </div>
       <div className="mt-5 rounded-xl border border-green-400/25 bg-green-400/10 p-4"><div className="text-xs font-bold uppercase text-green-100">Teaching supports the plan</div><p className="mt-2 text-sm leading-6 text-green-100">{plan.teachingSupport}</p></div>
     </DashboardCard>

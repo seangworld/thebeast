@@ -1,3 +1,5 @@
+import type { ExternalResourceRecommendation } from "../platform/externalResources";
+
 export type EducationGoalKind = "career" | "education" | "certification" | "skill" | "personal-growth";
 
 export type EducationResourceProvider =
@@ -7,6 +9,8 @@ export type EducationResourceProvider =
   | "Microsoft Learn"
   | "LinkedIn Learning"
   | "edX"
+  | "O'Reilly"
+  | "Udemy"
   | "Books"
   | "Professional organizations"
   | "Certifications"
@@ -57,14 +61,7 @@ export type EducationRoadmapMilestone = {
   status: "not-started" | "in-progress" | "complete";
 };
 
-export type EducationResourceRecommendation = {
-  provider: EducationResourceProvider;
-  title: string;
-  reason: string;
-  url: string;
-  cost: "free" | "free-or-paid" | "varies";
-  verificationNote: string;
-};
+export type EducationResourceRecommendation = ExternalResourceRecommendation;
 
 export type EducationGuidancePlan = {
   profileId: string;
