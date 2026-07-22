@@ -66,7 +66,7 @@ export default function BillPaymentControls({
               [bill.id]: e.target.value,
             }))
           }
-          placeholder="Partial"
+          placeholder="Partial payment"
           className="beast-input h-9 px-2 text-sm"
         />
 
@@ -76,7 +76,7 @@ export default function BillPaymentControls({
           }
           className="beast-button-secondary"
         >
-          Add
+          Partial Payment
         </button>
       </div>
 
@@ -99,7 +99,7 @@ export default function BillPaymentControls({
         </button>
 
         <button
-          onClick={() => archiveBill(bill.id)}
+          onClick={() => { if (window.confirm(`Archive ${bill.name}?`)) void archiveBill(bill.id); }}
           className="beast-button-secondary"
         >
           Archive

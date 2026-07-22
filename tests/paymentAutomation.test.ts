@@ -55,7 +55,7 @@ test("migration and responsive controls preserve owner-scoped RLS tables", () =>
   assert.match(assignments, /title=\{selected\?\.detailLabel/);
   assert.match(assignments, /type="radio"/);
   assert.match(assignments, /min-h-11/);
-  assert.match(assignments, /detailsRef\.current\.open = false/);
+  assert.match(assignments, /onChange\(option\.value\); close\(\);/);
   assert.match(assignments, /compactIncomeLabel/);
   assert.match(assignments, /withoutBalance/);
 });

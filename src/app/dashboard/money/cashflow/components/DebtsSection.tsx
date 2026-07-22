@@ -5,6 +5,7 @@ import DebtPaymentControls from "./DebtPaymentControls";
 import { PaymentAutomationControls, type AutomationPatch } from "../../components/PaymentAutomationControls";
 import { normalizePaymentAutomation } from "@/lib/paymentAutomation";
 import { CompactAssignmentSelect, compactIncomeLabel } from "./CompactAssignmentSelect";
+import { OverlayPopover } from "./OverlayPopover";
 
 type DebtRow = {
   id: string;
@@ -286,7 +287,7 @@ export default function DebtsSection({
                     <PaymentAutomationControls name={debt.name} {...normalizePaymentAutomation(debt)} onSave={(patch) => updatePaymentAutomation(debt.id, patch)} />
                   </div>
                   <div className="mt-4 min-w-0">
-                    <DebtPaymentControls
+                    {editingDebtId === debt.id ? <DebtPaymentControls
                       debt={debt}
                       editingDebtId={editingDebtId}
                       debtPayments={debtPayments}
@@ -300,7 +301,21 @@ export default function DebtsSection({
                       archiveDebt={archiveDebt}
                       resetDebtDueDate={resetDebtDueDate}
                       deleteDebt={deleteDebt}
-                    />
+                    /> : <OverlayPopover label="Actions" testId="debt-actions">{() => <DebtPaymentControls
+                      debt={debt}
+                      editingDebtId={editingDebtId}
+                      debtPayments={debtPayments}
+                      setDebtPayments={setDebtPayments}
+                      applyDebtPayment={applyDebtPayment}
+                      applyingDebtPaymentId={applyingDebtPaymentId}
+                      debtPaymentStatus={debtPaymentStatus}
+                      startEditDebt={startEditDebt}
+                      saveDebtEdit={saveDebtEdit}
+                      cancelEditDebt={cancelEditDebt}
+                      archiveDebt={archiveDebt}
+                      resetDebtDueDate={resetDebtDueDate}
+                      deleteDebt={deleteDebt}
+                    />}</OverlayPopover>}
                   </div>
 
                   {editingDebtId !== debt.id ? (
@@ -495,9 +510,7 @@ export default function DebtsSection({
                     </td>
 
                     <td className="w-[18%] align-top">
-                      <details>
-                        <summary className="beast-button-secondary cursor-pointer list-none text-center">Actions</summary>
-                        <div className="mt-2 min-w-0">
+                      <OverlayPopover label="Actions" testId="debt-actions">{() => <div className="min-w-0 whitespace-normal">
                       <DebtPaymentControls
                         debt={debt}
                         editingDebtId={editingDebtId}
@@ -513,8 +526,7 @@ export default function DebtsSection({
                         resetDebtDueDate={resetDebtDueDate}
                         deleteDebt={deleteDebt}
                       />
-                        </div>
-                      </details>
+                        </div>}</OverlayPopover>
                     </td>
                   </tr>
                 ))

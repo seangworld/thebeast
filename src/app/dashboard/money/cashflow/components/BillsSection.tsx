@@ -5,6 +5,7 @@ import BillPaymentControls from "./BillPaymentControls";
 import { PaymentAutomationControls, type AutomationPatch } from "../../components/PaymentAutomationControls";
 import { normalizePaymentAutomation } from "@/lib/paymentAutomation";
 import { CompactAssignmentSelect, compactIncomeLabel } from "./CompactAssignmentSelect";
+import { OverlayPopover } from "./OverlayPopover";
 
 type BillFrequency =
   | "weekly"
@@ -243,7 +244,7 @@ export default function BillsSection({
                     <PaymentAutomationControls name={bill.name} {...normalizePaymentAutomation(bill)} onSave={(patch) => updatePaymentAutomation(bill.id, patch)} />
                   </div>
                   <div className="mt-4 min-w-0">
-                    <BillPaymentControls
+                    {editingBillId === bill.id ? <BillPaymentControls
                       bill={bill}
                       editingBillId={editingBillId}
                       partialPayments={partialPayments}
@@ -255,7 +256,19 @@ export default function BillsSection({
                       cancelEditBill={cancelEditBill}
                       archiveBill={archiveBill}
                       resetBillDueDate={resetBillDueDate}
-                    />
+                    /> : <OverlayPopover label="Actions" testId="bill-actions">{() => <BillPaymentControls
+                      bill={bill}
+                      editingBillId={editingBillId}
+                      partialPayments={partialPayments}
+                      setPartialPayments={setPartialPayments}
+                      addBillPayment={addBillPayment}
+                      markBillPaid={markBillPaid}
+                      startEditBill={startEditBill}
+                      saveBillEdit={saveBillEdit}
+                      cancelEditBill={cancelEditBill}
+                      archiveBill={archiveBill}
+                      resetBillDueDate={resetBillDueDate}
+                    />}</OverlayPopover>}
                   </div>
 
                   {editingBillId !== bill.id ? (
@@ -393,7 +406,7 @@ export default function BillsSection({
                     </td>
 
                     <td className="w-[18%] align-top">
-                      <details><summary className="beast-button-secondary cursor-pointer list-none text-center">Actions</summary><div className="mt-2 min-w-0">
+                      <OverlayPopover label="Actions" testId="bill-actions">{() => <div className="min-w-0 whitespace-normal">
                       <BillPaymentControls
                         bill={bill}
                         editingBillId={editingBillId}
@@ -407,7 +420,7 @@ export default function BillsSection({
                         archiveBill={archiveBill}
                         resetBillDueDate={resetBillDueDate}
                       />
-                      </div></details>
+                      </div>}</OverlayPopover>
                     </td>
                   </tr>
                 ))

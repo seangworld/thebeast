@@ -88,7 +88,7 @@ export default function DebtPaymentControls({
           disabled={isApplying}
           className="beast-button-secondary"
         >
-          {isApplying ? "..." : "Apply"}
+          {isApplying ? "..." : "Apply Payment"}
         </button>
 
         <button
@@ -98,7 +98,7 @@ export default function DebtPaymentControls({
           disabled={isApplying}
           className="beast-button"
         >
-          {isApplying ? "..." : "Pay Min"}
+          {isApplying ? "..." : "Pay Minimum"}
         </button>
       </div>
 
@@ -129,13 +129,13 @@ export default function DebtPaymentControls({
         </button>
 
         <button
-          onClick={() => archiveDebt(debt.id)}
+          onClick={() => { if (window.confirm(`Archive ${debt.name}?`)) void archiveDebt(debt.id); }}
           className="beast-button-secondary"
         >
           Archive
         </button>
 
-        <button onClick={() => deleteDebt(debt.id)} className="beast-button">
+        <button onClick={() => { if (window.confirm(`Delete ${debt.name}? This action cannot be undone.`)) void deleteDebt(debt.id); }} className="beast-button bg-red-700 hover:bg-red-600">
           Delete
         </button>
       </div>

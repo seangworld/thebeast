@@ -150,9 +150,39 @@ test("Bills and Debts keep Pay actions reachable on mobile without replacing des
   assert.match(bills, /<BillPaymentControls/);
   assert.match(cashflowDebts, /<DebtPaymentControls/);
   assert.match(billControls, />\s*Pay\s*</);
-  assert.match(debtControls, /"Pay Min"/);
+  assert.match(debtControls, /"Pay Minimum"/);
   assert.match(billControls, /grid-cols-1 gap-2 min-\[380px\]:grid-cols-\[1fr_auto\]/);
   assert.match(debtControls, /grid-cols-1 gap-2 min-\[390px\]:grid-cols-\[1fr_auto_auto\]/);
   assert.match(globalStyles, /scrollbar-gutter: stable/);
   assert.doesNotMatch(globalStyles, /overflow-x: (?:clip|hidden)/);
+});
+
+test("Bills and Debts use viewport-bound overlay menus without changing row width", () => {
+  const bills = readFileSync("src/app/dashboard/money/cashflow/components/BillsSection.tsx", "utf8");
+  const debts = readFileSync("src/app/dashboard/money/cashflow/components/DebtsSection.tsx", "utf8");
+  const overlay = readFileSync("src/app/dashboard/money/cashflow/components/OverlayPopover.tsx", "utf8");
+  const assignments = readFileSync("src/app/dashboard/money/cashflow/components/CompactAssignmentSelect.tsx", "utf8");
+  const billControls = readFileSync("src/app/dashboard/money/cashflow/components/BillPaymentControls.tsx", "utf8");
+  const debtControls = readFileSync("src/app/dashboard/money/cashflow/components/DebtPaymentControls.tsx", "utf8");
+
+  for (const source of [bills, debts]) {
+    assert.match(source, /<OverlayPopover label="Actions"/);
+    assert.doesNotMatch(source, /<summary[^>]*>Actions<\/summary>/);
+    assert.doesNotMatch(source, /min-w-\[900px\]/);
+  }
+  assert.match(overlay, /createPortal/);
+  assert.match(overlay, /className="fixed z-\[100\]/);
+  assert.match(overlay, /money-popover-open/);
+  assert.match(overlay, /event\.key === "Escape"/);
+  assert.match(overlay, /document\.addEventListener\("pointerdown"/);
+  assert.match(overlay, /window\.innerWidth - panelWidth/);
+  assert.match(overlay, /maxHeight/);
+  assert.match(overlay, /overflow-y-auto overflow-x-hidden/);
+  assert.match(overlay, /whitespace-nowrap/);
+  assert.match(assignments, /selected\?\.compactLabel \|\| "Unassigned"/);
+  assert.match(assignments, /option\.detailLabel/);
+  assert.match(assignments, /width=\{420\}/);
+  assert.match(assignments, /role="listbox"/);
+  assert.match(billControls, /window\.confirm/);
+  assert.match(debtControls, /window\.confirm/g);
 });

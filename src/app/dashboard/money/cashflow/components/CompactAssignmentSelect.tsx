@@ -1,6 +1,7 @@
 "use client";
 
-import { useId, useRef } from "react";
+import { useId } from "react";
+import { OverlayPopover } from "./OverlayPopover";
 
 export type CompactAssignmentOption = { value: string; compactLabel: string; detailLabel: string };
 
@@ -11,23 +12,21 @@ export function CompactAssignmentSelect({ label, value, options, onChange }: {
   onChange: (value: string) => void;
 }) {
   const groupId = useId();
-  const detailsRef = useRef<HTMLDetailsElement>(null);
   const selected = options.find((option) => option.value === value);
   return (
-    <details ref={detailsRef} className="relative min-w-0" data-compact-assignment-select="true">
-      <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 rounded-lg border border-[#2a3242] bg-[#0b1118] px-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300" aria-label={`${label}: ${selected?.detailLabel || "Unassigned"}`} title={selected?.detailLabel || "Unassigned"}>
-        <span className="min-w-0 break-words">{selected?.compactLabel || "Unassigned"}</span><span aria-hidden="true">▾</span>
-      </summary>
-      <fieldset className="relative z-10 mt-2 grid min-w-0 gap-1 rounded-lg border border-[#2a3242] bg-[#111827] p-2 text-left shadow-xl">
+    <div className="min-w-0" data-compact-assignment-select="true" aria-label={`${label}: ${selected?.detailLabel || "Unassigned"}`} title={selected?.detailLabel || "Unassigned"}>
+      <OverlayPopover label={selected?.compactLabel || "Unassigned"} width={420} testId="assignment">
+        {(close) => <fieldset className="grid min-w-0 gap-1" role="listbox" aria-label={label}>
         <legend className="sr-only">{label}</legend>
         {[{ value: "", compactLabel: "Unassigned", detailLabel: "Unassigned" }, ...options].map((option) => (
-          <label key={`${groupId}-${option.value}`} className="flex min-h-11 cursor-pointer items-start gap-2 rounded px-2 py-2 hover:bg-[#1b2431] focus-within:ring-2 focus-within:ring-cyan-300">
-            <input type="radio" name={groupId} value={option.value} checked={value === option.value} onChange={() => { onChange(option.value); if (detailsRef.current) detailsRef.current.open = false; }} />
-            <span className="break-words">{option.detailLabel}</span>
+          <label key={`${groupId}-${option.value}`} className="flex min-h-11 cursor-pointer items-center gap-2 rounded px-2 py-2 whitespace-normal hover:bg-[#1b2431] focus-within:ring-2 focus-within:ring-cyan-300" role="option" aria-selected={value === option.value}>
+            <input type="radio" name={groupId} value={option.value} checked={value === option.value} onChange={() => { onChange(option.value); close(); }} />
+            <span>{option.detailLabel}</span>
           </label>
         ))}
-      </fieldset>
-    </details>
+        </fieldset>}
+      </OverlayPopover>
+    </div>
   );
 }
 
