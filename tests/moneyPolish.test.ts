@@ -168,6 +168,7 @@ test("Bills and Debts use viewport-bound overlay menus without changing row widt
   for (const source of [bills, debts]) {
     assert.match(source, /<OverlayPopover label="Actions"/);
     assert.equal(source.match(/<OverlayPopover label="Actions" width=\{192\}/g)?.length, 2);
+    assert.equal(source.match(/overlayWidth=\{220\}/g)?.length, 2);
     assert.doesNotMatch(source, /<summary[^>]*>Actions<\/summary>/);
     assert.doesNotMatch(source, /min-w-\[900px\]/);
   }
@@ -183,7 +184,8 @@ test("Bills and Debts use viewport-bound overlay menus without changing row widt
   assert.match(overlay, /width = 240/);
   assert.match(assignments, /selected\?\.compactLabel \|\| "Unassigned"/);
   assert.match(assignments, /option\.detailLabel/);
-  assert.match(assignments, /width=\{420\}/);
+  assert.match(assignments, /overlayWidth = 420/);
+  assert.match(assignments, /width=\{overlayWidth\}/);
   assert.match(assignments, /triggerClassName="w-40"/);
   assert.match(assignments, /role="listbox"/);
   assert.match(billControls, /window\.confirm/);

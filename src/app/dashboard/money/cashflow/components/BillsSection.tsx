@@ -303,6 +303,7 @@ export default function BillsSection({
                             label={`${bill.name} funding source`}
                             value={bill.funding_source_id || ""}
                             options={fundingOptions}
+                            overlayWidth={220}
                             onChange={(value) => updateBillFundingSource(bill.id, value)}
                           />
                         </div>
@@ -402,7 +403,7 @@ export default function BillsSection({
                     </td>
 
                     <td className="hidden text-center align-top min-[1440px]:table-cell">
-                      <CompactAssignmentSelect label={`${bill.name} funding source`} value={bill.funding_source_id || ""} options={fundingOptions} onChange={(value) => updateBillFundingSource(bill.id, value)} />
+                      <CompactAssignmentSelect label={`${bill.name} funding source`} value={bill.funding_source_id || ""} options={fundingOptions} overlayWidth={220} onChange={(value) => updateBillFundingSource(bill.id, value)} />
                     </td>
 
                     <td className="w-[18%] align-top">

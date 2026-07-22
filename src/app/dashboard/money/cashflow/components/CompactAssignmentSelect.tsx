@@ -5,17 +5,18 @@ import { OverlayPopover } from "./OverlayPopover";
 
 export type CompactAssignmentOption = { value: string; compactLabel: string; detailLabel: string };
 
-export function CompactAssignmentSelect({ label, value, options, onChange }: {
+export function CompactAssignmentSelect({ label, value, options, onChange, overlayWidth = 420 }: {
   label: string;
   value: string;
   options: readonly CompactAssignmentOption[];
   onChange: (value: string) => void;
+  overlayWidth?: number;
 }) {
   const groupId = useId();
   const selected = options.find((option) => option.value === value);
   return (
     <div className="min-w-0" data-compact-assignment-select="true" aria-label={`${label}: ${selected?.detailLabel || "Unassigned"}`} title={selected?.detailLabel || "Unassigned"}>
-      <OverlayPopover label={selected?.compactLabel || "Unassigned"} width={420} testId="assignment" triggerClassName="w-40">
+      <OverlayPopover label={selected?.compactLabel || "Unassigned"} width={overlayWidth} testId="assignment" triggerClassName="w-40">
         {(close) => <fieldset className="grid min-w-0 gap-1" role="listbox" aria-label={label}>
         <legend className="sr-only">{label}</legend>
         {[{ value: "", compactLabel: "Unassigned", detailLabel: "Unassigned" }, ...options].map((option) => (

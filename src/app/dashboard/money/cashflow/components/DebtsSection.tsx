@@ -349,6 +349,7 @@ export default function DebtsSection({
                             label={`${debt.name} funding source`}
                             value={debt.funding_source_id || ""}
                             options={fundingOptions}
+                            overlayWidth={220}
                             onChange={(value) => updateDebtFundingSource(debt.id, value)}
                           />
                         </div>
@@ -505,6 +506,7 @@ export default function DebtsSection({
                         label={`${debt.name} funding source`}
                         value={debt.funding_source_id || ""}
                         options={fundingOptions}
+                        overlayWidth={220}
                         onChange={(value) => updateDebtFundingSource(debt.id, value)}
                       />
                     </td>
