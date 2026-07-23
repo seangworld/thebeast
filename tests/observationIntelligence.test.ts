@@ -279,6 +279,7 @@ test("Money Coach uses observations as reasoning input without returning canned 
   const answer = answerMoneyCoachQuestion("What changed since last time?", model);
   assert.match(answer.text, /Why I noticed:/);
   assert.match(answer.text, /prior snapshot|personal-change threshold/i);
+  assert.match(answer.text, /Confidence is (high|moderate|low)/i);
   assert.equal(answer.toolAction?.status, "prepared");
 });
 

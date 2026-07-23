@@ -879,6 +879,7 @@ export function answerMoneyCoachQuestion(
             observation.presentation.whatChanged || observation.presentation.detail,
             `Why I noticed: ${observation.presentation.whyNoticed}`,
             ...(observation.presentation.whyItMayMatter ? [`Why it may matter: ${observation.presentation.whyItMayMatter}`] : []),
+            ...(observation.confidenceAnalysis?.reasons[0] ? [observation.confidenceAnalysis.reasons[0]] : []),
           ],
         })),
         assumptions: Array.from(new Set(observations.flatMap((observation) => observation.provenance.limitations))),
@@ -922,9 +923,12 @@ export function answerMoneyCoachQuestion(
       opening: `${model.benchmarks.length} supported comparison${model.benchmarks.length === 1 ? " is" : "s are"} available from your current records and applicable reference points.`,
       sections: Object.entries(grouped).map(([heading, comparisons]) => ({
         heading,
-        bullets: comparisons.map((benchmark) => `${benchmark.interpretation} This uses ${benchmark.source.name}.`),
+        bullets: comparisons.map((benchmark) => `${benchmark.interpretation} This uses ${benchmark.source.name}.${benchmark.confidenceAnalysis?.reasons[0] ? ` ${benchmark.confidenceAnalysis.reasons[0]}` : ""}`),
       })),
-      assumptions: Array.from(new Set(model.benchmarks.flatMap((benchmark) => benchmark.limitations))),
+      assumptions: Array.from(new Set(model.benchmarks.flatMap((benchmark) => [
+        ...benchmark.limitations,
+        ...(benchmark.confidenceAnalysis?.uncertaintyReasons || []),
+      ]))),
       followUp: "Which comparison would you like me to explain in detail?",
       ...dashboard,
     });

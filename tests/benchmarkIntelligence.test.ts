@@ -255,6 +255,7 @@ test("Money Coach integrates benchmarks into natural responses with clear labels
   assert.equal(response.intent, "benchmarks");
   assert.match(response.text, /Personal baseline:/);
   assert.match(response.text, /personal historical baseline|recent trend baseline/i);
+  assert.match(response.text, /Confidence is (high|moderate|low)/i);
   assert.match(response.text, /not a guarantee/i);
 });
 

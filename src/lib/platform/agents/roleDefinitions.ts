@@ -10,6 +10,7 @@ import {
   type AgentPlanningRequest,
   type SharedAgentPlanningEngine,
 } from "./planning";
+import type { ConfidenceAssessment } from "./probabilityConfidence";
 
 export type RoleConversationStyle = "conversation-first" | "educational" | "reassuring" | "efficient";
 export type RoleWorkspaceGuidance = "only-for-deeper-analysis" | "when-useful" | "never";
@@ -84,6 +85,7 @@ export type RoleDefinedExecution = {
   currentState: unknown;
   plan: AgentPlan;
   loadOrder: readonly ["role-definition", "professional-playbook", "member-context", "current-state", "relevant-knowledge", "reasoning-plan", "response-generation"];
+  confidenceAssessment?: ConfidenceAssessment;
 };
 
 export type RoleAwareResponseDraft<TIntent extends string> = ProfessionalResponseDraft<TIntent> & {
@@ -192,12 +194,14 @@ export function prepareRoleDefinedExecution(input: {
   currentState: unknown;
   planner: SharedAgentPlanningEngine;
   planningRequest: AgentPlanningRequest;
+  confidenceAssessment?: ConfidenceAssessment;
 }): RoleDefinedExecution {
   const roleDefinition = validateRoleDefinition(input.roleDefinition);
   if (roleDefinition.specialistId !== input.planningRequest.specialistId || roleDefinition.specialistId !== input.knowledgeSourcePolicy.specialistId) {
     throw new Error("Role Definition, Knowledge Sources, and planning request must belong to the same specialist.");
   }
-  const plan = input.planner.createPlan(input.planningRequest);
+  const confidenceAssessment = input.confidenceAssessment || input.planningRequest.confidenceAssessment;
+  const plan = input.planner.createPlan({ ...input.planningRequest, confidenceAssessment });
   return {
     roleDefinition,
     professionalProfile: input.professionalProfile,
@@ -205,6 +209,7 @@ export function prepareRoleDefinedExecution(input: {
     memberContext: input.memberContext,
     currentState: input.currentState,
     plan,
+    confidenceAssessment,
     loadOrder: ["role-definition", "professional-playbook", "member-context", "current-state", "relevant-knowledge", "reasoning-plan", "response-generation"],
   };
 }
@@ -215,6 +220,19 @@ export function composeRoleDefinedResponse<TIntent extends string>(
 ): ProfessionallyComposedResponse<TIntent> {
   const role = execution.roleDefinition;
   let sections = [...draft.sections];
+  const confidence = execution.confidenceAssessment;
+  if (confidence && confidence.confidence !== "high") {
+    sections.push({
+      heading: "Confidence and uncertainty",
+      paragraphs: [
+        ...confidence.reasons,
+        ...confidence.uncertaintyReasons,
+        ...(confidence.additionalInformationNeeded.length
+          ? [`Confidence would improve with: ${confidence.additionalInformationNeeded.join("; ")}.`]
+          : []),
+      ],
+    });
+  }
   if (role.execution.explainBeforeRecommending) {
     sections = sections.sort((left, right) => {
       const rank = (heading: string) => /recommend/i.test(heading) ? 1 : 0;

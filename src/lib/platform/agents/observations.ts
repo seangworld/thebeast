@@ -1,4 +1,8 @@
 import type { StructuredAgentAction } from "./tools";
+import {
+  SharedProbabilityConfidenceEngine,
+  type ConfidenceAssessment,
+} from "./probabilityConfidence";
 
 export type ObservationType =
   | "Change"
@@ -110,6 +114,7 @@ export type Observation = {
   updatedAt: string;
   revision: number;
   dismissal?: ObservationDismissal;
+  confidenceAnalysis?: ConfidenceAssessment;
 };
 
 export type ObservationDraft = Omit<
@@ -165,6 +170,7 @@ export type ObservationExplanation = {
   rule: string;
   limitations: readonly string[];
   confidence: number;
+  confidenceAnalysis?: ConfidenceAssessment;
 };
 
 export interface ObservationStore {
@@ -249,6 +255,7 @@ function validateDraft(draft: ObservationDraft) {
 
 export class SharedObservationIntelligence {
   private readonly detectors = new Map<string, ObservationDetector<unknown>>();
+  private readonly confidenceEngine = new SharedProbabilityConfidenceEngine();
 
   constructor(
     private readonly store: ObservationStore = new InMemoryObservationStore(),
@@ -292,6 +299,22 @@ export class SharedObservationIntelligence {
           updatedAt: timestamp,
           revision: (existing?.revision || 0) + 1,
           dismissal: undefined,
+          confidenceAnalysis: this.confidenceEngine.assess({
+            claim: draft.presentation.summary,
+            evidence: draft.evidence.map((item) => ({
+              id: item.id,
+              source: item.source,
+              relationship: item.kind === "correlation" ? "neutral" : "supports",
+              claimType: item.kind === "fact" ? "direct" : item.kind,
+              authority: 0.8,
+              reliability: 0.85,
+              freshness: draft.provenance.freshness === "current" ? 1 : draft.provenance.freshness === "recent" ? 0.8 : draft.provenance.freshness === "stale" ? 0.35 : 0.5,
+              completeness: draft.provenance.limitations.length ? 0.7 : 0.9,
+              directness: item.kind === "fact" ? 1 : item.kind === "inference" ? 0.6 : 0.45,
+              independent: false,
+            })),
+            missingInformation: draft.provenance.limitations,
+          }),
         };
         this.store.save(observation);
         detected.push(observation);
@@ -351,6 +374,7 @@ export class SharedObservationIntelligence {
       rule: observation.provenance.ruleDescription,
       limitations: observation.provenance.limitations,
       confidence: observation.assessment.confidence,
+      confidenceAnalysis: observation.confidenceAnalysis,
     };
   }
 

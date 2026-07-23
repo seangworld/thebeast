@@ -1,4 +1,8 @@
 import type { Observation } from "./observations";
+import {
+  SharedProbabilityConfidenceEngine,
+  type ConfidenceAssessment,
+} from "./probabilityConfidence";
 
 export type BenchmarkType =
   | "personal-historical-baseline"
@@ -93,6 +97,7 @@ export type BenchmarkResult = {
   relatedObservationIds: readonly string[];
   limitations: readonly string[];
   evaluatedAt: string;
+  confidenceAnalysis?: ConfidenceAssessment;
 };
 
 export type BenchmarkQuery = {
@@ -156,6 +161,7 @@ function requiredScope(type: BenchmarkType) {
 export class SharedBenchmarkIntelligence {
   private readonly definitions = new Map<string, Readonly<BenchmarkDefinition>>();
   private readonly results = new Map<string, BenchmarkResult>();
+  private readonly confidenceEngine = new SharedProbabilityConfidenceEngine();
 
   constructor(private readonly now: () => string = () => new Date().toISOString()) {}
 
@@ -222,6 +228,24 @@ export class SharedBenchmarkIntelligence {
         "A benchmark provides comparison context, not a guarantee, diagnosis, or promised outcome.",
       ],
       evaluatedAt: this.now(),
+      confidenceAnalysis: this.confidenceEngine.assess({
+        claim: `${input.current.label} compared with ${input.reference.label}`,
+        evidence: [
+          {
+            id: "benchmark-current",
+            source: definition.source.name,
+            relationship: "supports",
+            claimType: "direct",
+            authority: definition.source.authority === "professional-authority" ? 0.95 : definition.source.authority === "population-study" ? 0.85 : 0.9,
+            reliability: definition.strengthOfEvidence === "strong" ? 0.95 : definition.strengthOfEvidence === "moderate" ? 0.75 : 0.5,
+            freshness: definition.expiresAt ? 0.9 : 0.75,
+            completeness: 0.9,
+            directness: 1,
+            independent: false,
+          },
+        ],
+        missingInformation: definition.notes,
+      }),
     };
     this.results.set(result.id, result);
     return result;
@@ -252,6 +276,7 @@ export class SharedBenchmarkIntelligence {
       confidence: result.confidence,
       strengthOfEvidence: result.strengthOfEvidence,
       limitations: result.limitations,
+      confidenceAnalysis: result.confidenceAnalysis,
     };
   }
 }
