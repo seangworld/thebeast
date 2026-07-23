@@ -22,3 +22,4 @@ export * from "./roleDefinitions";
 export * from "./observations";
 export * from "./benchmarks";
 export * from "./probabilityConfidence";
+export * from "./professionalJournal";

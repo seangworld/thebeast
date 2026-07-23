@@ -11,6 +11,7 @@ import {
   type SharedAgentPlanningEngine,
 } from "./planning";
 import type { ConfidenceAssessment } from "./probabilityConfidence";
+import type { ProfessionalJournalReasoningContext } from "./professionalJournal";
 
 export type RoleConversationStyle = "conversation-first" | "educational" | "reassuring" | "efficient";
 export type RoleWorkspaceGuidance = "only-for-deeper-analysis" | "when-useful" | "never";
@@ -86,6 +87,7 @@ export type RoleDefinedExecution = {
   plan: AgentPlan;
   loadOrder: readonly ["role-definition", "professional-playbook", "member-context", "current-state", "relevant-knowledge", "reasoning-plan", "response-generation"];
   confidenceAssessment?: ConfidenceAssessment;
+  professionalJournalContext?: ProfessionalJournalReasoningContext;
 };
 
 export type RoleAwareResponseDraft<TIntent extends string> = ProfessionalResponseDraft<TIntent> & {
@@ -195,12 +197,16 @@ export function prepareRoleDefinedExecution(input: {
   planner: SharedAgentPlanningEngine;
   planningRequest: AgentPlanningRequest;
   confidenceAssessment?: ConfidenceAssessment;
+  professionalJournalContext?: ProfessionalJournalReasoningContext;
 }): RoleDefinedExecution {
   const roleDefinition = validateRoleDefinition(input.roleDefinition);
   if (roleDefinition.specialistId !== input.planningRequest.specialistId || roleDefinition.specialistId !== input.knowledgeSourcePolicy.specialistId) {
     throw new Error("Role Definition, Knowledge Sources, and planning request must belong to the same specialist.");
   }
   const confidenceAssessment = input.confidenceAssessment || input.planningRequest.confidenceAssessment;
+  if (input.professionalJournalContext && input.professionalJournalContext.specialistId !== roleDefinition.specialistId) {
+    throw new Error("Professional Journal context must belong to the same specialist as the Role Definition.");
+  }
   const plan = input.planner.createPlan({ ...input.planningRequest, confidenceAssessment });
   return {
     roleDefinition,
@@ -210,6 +216,7 @@ export function prepareRoleDefinedExecution(input: {
     currentState: input.currentState,
     plan,
     confidenceAssessment,
+    professionalJournalContext: input.professionalJournalContext,
     loadOrder: ["role-definition", "professional-playbook", "member-context", "current-state", "relevant-knowledge", "reasoning-plan", "response-generation"],
   };
 }
