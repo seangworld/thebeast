@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
   AgentAvatar,
@@ -21,6 +20,7 @@ import {
   ServerAgentConversationRepository,
   SupabaseAgentConversationStore,
   SupabaseAgentMemoryStore,
+  createDefaultConversationStarterEngine,
   type AgentConversationThread,
   type AgentMemoryRecord,
   type AgentMessage,
@@ -92,7 +92,6 @@ export function MoneyCoachExperience({
   error,
   onRetry,
 }: MoneyCoachExperienceProps) {
-  const router = useRouter();
   const [input, setInput] = useState("");
   const [turns, setTurns] = useState<{ id: string; question: string; response: MoneyCoachStructuredAnswer }[]>([]);
   const [conversationTitle, setConversationTitle] = useState("Current financial review");
@@ -184,32 +183,32 @@ export function MoneyCoachExperience({
     [model.conversationOpening, model.professional.identity.role, streamingTurnId, turns]
   );
 
-  async function askQuestion(value: string) {
-    const activeThread = repository && activeThreadId ? await repository.get(ownerId, activeThreadId).catch(() => undefined) : undefined;
+  async function askQuestion(value: string, targetThreadId = activeThreadId, replaceConversation = false) {
+    const activeThread = repository && targetThreadId ? await repository.get(ownerId, targetThreadId).catch(() => undefined) : undefined;
     const response = answerMoneyCoachQuestion(value, model, {
       recentMessages: activeThread?.messages.slice(-8).map((message) => typeof message.content === "string" ? message.content : JSON.stringify(message.content)),
       summary: activeThread?.summary?.overview,
-      priorSummaries: threads.filter((thread) => thread.id !== activeThreadId).slice(0, 3).map((thread) => thread.summary?.overview).filter((summary): summary is string => Boolean(summary)),
+      priorSummaries: threads.filter((thread) => thread.id !== targetThreadId).slice(0, 3).map((thread) => thread.summary?.overview).filter((summary): summary is string => Boolean(summary)),
       memories: memories.map((memory) => ({ key: memory.key, value: memory.value })),
     });
     const timestamp = Date.now();
     const turn = { id: `money-${timestamp}`, question: value, response };
     setStreamingTurnId(turn.id);
-    setTurns((current) => [...current, turn]);
-    if (repository && activeThreadId) {
+    setTurns((current) => replaceConversation ? [turn] : [...current, turn]);
+    if (repository && targetThreadId) {
       const now = new Date().toISOString();
       const messages: AgentMessage[] = [
-        { id: `${turn.id}-user`, threadId: activeThreadId, sender: { kind: "user", id: ownerId }, recipient: { kind: "agent", id: "beastmoney.money-coach" }, content: value, timestamp: now },
-        { id: `${turn.id}-coach`, threadId: activeThreadId, sender: { kind: "agent", id: "beastmoney.money-coach" }, recipient: { kind: "module", id: "beastmoney" }, content: { text: response.text, href: response.href, action: response.action, structured: response }, timestamp: now },
+        { id: `${turn.id}-user`, threadId: targetThreadId, sender: { kind: "user", id: ownerId }, recipient: { kind: "agent", id: "beastmoney.money-coach" }, content: value, timestamp: now },
+        { id: `${turn.id}-coach`, threadId: targetThreadId, sender: { kind: "agent", id: "beastmoney.money-coach" }, recipient: { kind: "module", id: "beastmoney" }, content: { text: response.text, href: response.href, action: response.action, structured: response }, timestamp: now },
       ];
-      void repository.append(ownerId, activeThreadId, messages, { insightIds: model.insights.map((item) => item.id), actionIds: [response.toolAction?.toolId || response.action] }).then(async (updated) => {
-        await repository.summarize(ownerId, activeThreadId, { overview: `Discussed ${value.slice(0, 100)}`, decisions: [], unresolvedFollowUps: [], updatedAt: now });
+      void repository.append(ownerId, targetThreadId, messages, { insightIds: model.insights.map((item) => item.id), actionIds: [response.toolAction?.toolId || response.action] }).then(async (updated) => {
+        await repository.summarize(ownerId, targetThreadId, { overview: `Discussed ${value.slice(0, 100)}`, decisions: [], unresolvedFollowUps: [], updatedAt: now });
         setConversationTitle(updated.title); await refreshThreads();
       }).catch(() => setHistoryError("This response is visible now but could not be saved. Please retry before leaving this page.")).finally(() => setStreamingTurnId(""));
       const durableType = /\b(i prefer|my goal|i decided|remember that|always|never)\b/i.exec(value)?.[1];
       if (memoryStore && durableType) {
         const memoryType = durableType === "my goal" ? "financial-goal" : durableType === "i decided" ? "confirmed-decision" : "preference-or-constraint";
-        const memory: AgentMemoryRecord = { id: `money-memory-${timestamp}`, agentId: "beastmoney.money-coach", ownerId, scope: "user", key: memoryType, value: { content: value, memoryType, confidence: "high", sourceConversationId: activeThreadId, sourceMessageId: messages[0].id, timestamp: now }, purpose: "Remember an explicit member preference, goal, decision, or recurring constraint.", evidence: [{ source: activeThreadId, capturedAt: now, description: messages[0].id }], createdAt: now, updatedAt: now };
+        const memory: AgentMemoryRecord = { id: `money-memory-${timestamp}`, agentId: "beastmoney.money-coach", ownerId, scope: "user", key: memoryType, value: { content: value, memoryType, confidence: "high", sourceConversationId: targetThreadId, sourceMessageId: messages[0].id, timestamp: now }, purpose: "Remember an explicit member preference, goal, decision, or recurring constraint.", evidence: [{ source: targetThreadId, capturedAt: now, description: messages[0].id }], createdAt: now, updatedAt: now };
         void memoryStore.put(memory).then(() => setMemories((current) => [...current, memory]));
       }
     } else setStreamingTurnId("");
@@ -217,8 +216,23 @@ export function MoneyCoachExperience({
   }
 
   async function startConversation() {
-    if (!repository) return; const thread = await repository.create({ ownerId, agentId: "beastmoney.money-coach" });
+    if (!repository) {
+      setActiveThreadId(""); setConversationTitle("New conversation"); setTurns([]);
+      return undefined;
+    }
+    const thread = await repository.create({ ownerId, agentId: "beastmoney.money-coach" });
     setActiveThreadId(thread.id); setConversationTitle(thread.title); setTurns([]); await refreshThreads();
+    return thread;
+  }
+
+  async function beginStarter(prompt: string) {
+    const thread = await startConversation();
+    await askQuestion(prompt, thread?.id || "", true);
+  }
+
+  async function beginAskAnything() {
+    await startConversation();
+    window.setTimeout(focusQuestionInput, 0);
   }
 
   function openThread(thread: AgentConversationThread) { setActiveThreadId(thread.id); setConversationTitle(thread.title); restoreThread(thread); setHistoryOpen(false); }
@@ -250,18 +264,6 @@ export function MoneyCoachExperience({
     region?.querySelector("textarea")?.focus();
   }
 
-  function followSuggestion(href?: string) {
-    if (!href) return;
-    if (href.startsWith("#")) {
-      document.getElementById(href.slice(1))?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-      return;
-    }
-    router.push(href);
-  }
-
   const localGreeting = localNow
     ? buildMoneyCoachGreeting(model.userFirstName, localNow)
     : model.userFirstName;
@@ -272,6 +274,32 @@ export function MoneyCoachExperience({
       : model.wins[0]
         ? `I reviewed today’s plan. Here’s the strongest positive signal: ${model.wins[0]}`
         : model.introduction;
+  const personalizedStarters = useMemo(
+    () => createDefaultConversationStarterEngine().generate({
+      ownerId,
+      specialistId: "beastmoney.money-coach",
+      asOf: (localNow || new Date(0)).toISOString(),
+      observations: model.observations,
+      conversationHistory: threads,
+      limit: 24,
+    }).map((starter) => ({
+      id: starter.id,
+      label: starter.title,
+      title: starter.title,
+      prompt: starter.prompt,
+      href: starter.action?.target,
+      intent: undefined,
+      category: starter.kind,
+      group: starter.group,
+    })),
+    [localNow, model.observations, ownerId, threads]
+  );
+  const workspaceSuggestions = useMemo(() => {
+    const suggestions = [...model.suggestions, ...personalizedStarters];
+    return suggestions.filter((suggestion, index) =>
+      suggestions.findIndex((candidate) => candidate.prompt === suggestion.prompt) === index
+    );
+  }, [model.suggestions, personalizedStarters]);
   const pinnedThreads = threads.filter((thread) => thread.pinned && !thread.archived);
   const recentThreads = threads.filter((thread) => !thread.pinned && !thread.archived).slice(0, 10);
   const archivedThreads = threads.filter((thread) => thread.archived);
@@ -331,17 +359,38 @@ export function MoneyCoachExperience({
       </details>
     </aside>
   );
-  const starterGroups = [
-    { label: "Recommended Today", categories: ["recommended-today"] },
-    { label: "Getting Started", categories: ["generic", "personalized"] },
-    { label: "Continue Previous Work", categories: ["continue-previous-work"] },
-    { label: "Observation Follow-up", categories: ["recent-observation", "suggested-follow-up"] },
-    { label: "Upcoming Events", categories: ["upcoming-event"] },
-    { label: "Ask Anything", categories: ["ask-anything"] },
-  ].map((group) => ({
-    ...group,
-    suggestions: model.suggestions.filter((suggestion) => suggestion.category && group.categories.includes(suggestion.category)),
+  const starterGroupOrder = [
+    "Recommended Today",
+    "Continue Previous Work",
+    "Getting Started",
+    "Planning",
+    "Debt",
+    "Savings",
+    "Retirement",
+    "Velocity Banking",
+    "Budgeting",
+    "Observation Follow-up",
+    "Upcoming Events",
+    "Ask Anything",
+  ];
+  const starterGroups = starterGroupOrder.map((label) => ({
+    label,
+    suggestions: workspaceSuggestions.filter((suggestion) => suggestion.group === label),
   })).filter((group) => group.suggestions.length > 0);
+  const starterExperience = !loading && !error && turns.length === 0 ? (
+    <section aria-labelledby="money-coach-starters-heading" data-agent-215-starter-groups="true" data-money-coach-new-conversation="true">
+      <div className="max-w-3xl">
+        <p className="text-sm leading-6 text-slate-300">{reviewIntroduction}</p>
+        <h2 id="money-coach-starters-heading" className="mt-6 text-xs font-black uppercase tracking-[0.16em] text-slate-500">Start a conversation</h2>
+      </div>
+      <div className="mt-4 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+        {starterGroups.map((group) => <section key={group.label} aria-label={group.label}>
+          <h3 className="text-[10px] font-black uppercase tracking-[0.14em] text-cyan-300">{group.label}</h3>
+          <div className="mt-2 grid gap-2">{group.suggestions.map((suggestion) => <button key={suggestion.id} type="button" className="min-h-12 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-left text-sm font-semibold leading-5 text-slate-200 transition hover:border-cyan-300/30 hover:bg-cyan-300/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300" onClick={suggestion.intent === "ask" ? () => { void beginAskAnything(); } : () => { void beginStarter(suggestion.prompt || suggestion.label); }}>{suggestion.label}</button>)}</div>
+        </section>)}
+      </div>
+    </section>
+  ) : null;
 
   return (
     <div className="mx-auto grid w-full max-w-[1600px] min-w-0 gap-4 lg:grid-cols-[18rem_minmax(0,1fr)]" data-money-coach-conversation-workspace="true">
@@ -359,7 +408,7 @@ export function MoneyCoachExperience({
       }
       greeting={
         <AgentGreeting greeting={localGreeting}>
-          <p>{reviewIntroduction}</p>
+          <p>{turns.length === 0 ? "I’m ready to help you decide what matters most today." : reviewIntroduction}</p>
         </AgentGreeting>
       }
       contextSummary={loading ? (
@@ -370,20 +419,8 @@ export function MoneyCoachExperience({
             message={error}
             retryAction={<button type="button" className="beast-button" onClick={onRetry}>Try Again</button>}
           />
-        ) : null}
-      suggestedActions={
-        !loading && !error ? (
-          <section aria-labelledby="money-coach-starters-heading" data-agent-215-starter-groups="true">
-            <h2 id="money-coach-starters-heading" className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Conversation starters</h2>
-            <div className="mt-3 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {starterGroups.map((group) => <section key={group.label} aria-label={group.label}>
-                <h3 className="text-[10px] font-black uppercase tracking-[0.14em] text-cyan-300">{group.label}</h3>
-                <div className="mt-2 flex flex-wrap gap-2">{group.suggestions.map((suggestion) => <button key={suggestion.id} type="button" className="min-h-11 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-left text-sm font-semibold text-slate-200 transition hover:border-cyan-300/30 hover:bg-cyan-300/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300" onClick={suggestion.intent === "ask" ? focusQuestionInput : suggestion.prompt ? () => { void askQuestion(suggestion.prompt || suggestion.label); } : () => followSuggestion(suggestion.href)}>{suggestion.label}</button>)}</div>
-              </section>)}
-            </div>
-          </section>
-        ) : null
-      }
+        ) : starterExperience}
+      suggestedActions={null}
       conversation={
         loading ? (
           <AgentLoadingState label="Loading Money Coach conversation" />

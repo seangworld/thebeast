@@ -58,6 +58,7 @@ export type MoneyCoachExperienceSuggestion = {
   id: string;
   label: string;
   category?: ConversationStarterKind | "ask-anything";
+  group?: string;
   href?: string;
   intent?: "ask";
   action?: InsightAction;
@@ -514,6 +515,7 @@ export function buildMoneyCoachExperience(
       title: "Review bills",
       prompt: "What bills need my attention?",
       reason: "Current BeastMoney records include active bills.",
+      group: "Recommended Today",
       priority: input.billsDueSoonCount > 0 ? 95 : 75,
       evidence: [{ sourceType: "current-context", sourceId: "active-bills", capturedAt: input.asOfDate.toISOString(), reason: `${input.activeBillCount} active bill records.` }],
     });
@@ -525,6 +527,7 @@ export function buildMoneyCoachExperience(
       title: "Review opportunities",
       prompt: "Where are my opportunities?",
       reason: "The current financial review contains evidence-backed opportunities.",
+      group: "Recommended Today",
       priority: 82,
       evidence: [{ sourceType: "current-context", sourceId: "current-opportunities", capturedAt: input.asOfDate.toISOString(), reason: opportunities[0] }],
     });
@@ -536,6 +539,7 @@ export function buildMoneyCoachExperience(
       title: "Review debt progress",
       prompt: "How is my debt plan progressing?",
       reason: "Current BeastMoney records include active debt.",
+      group: "Recommended Today",
       priority: 80,
       evidence: [{ sourceType: "current-context", sourceId: "active-debts", capturedAt: input.asOfDate.toISOString(), reason: `${input.activeDebtCount} active debt records.` }],
     });
@@ -547,6 +551,7 @@ export function buildMoneyCoachExperience(
       title: "Review cash flow",
       prompt: "Can my income cover this month?",
       reason: "Current income or outflow records support a cash-flow review.",
+      group: "Recommended Today",
       priority: 78,
       evidence: [{ sourceType: "current-context", sourceId: "cash-flow", capturedAt: input.asOfDate.toISOString(), reason: "Current monthly income and outflow context is available." }],
     });
@@ -568,10 +573,11 @@ export function buildMoneyCoachExperience(
     id: starter.id,
     label: starter.title,
     category: starter.kind,
+    group: starter.group,
     prompt: starter.prompt,
     href: starter.action?.target,
   }));
-  suggestions.push({ id: "ask-question", label: "Ask anything", category: "ask-anything", intent: "ask" });
+  suggestions.push({ id: "ask-question", label: "Ask anything", category: "ask-anything", group: "Ask Anything", intent: "ask" });
 
   const summary = [
     `${formatCurrency(input.currentCash)} available cash with a ${formatCurrency(input.cashBuffer)} protected buffer.`,

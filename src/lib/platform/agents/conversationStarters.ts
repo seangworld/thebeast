@@ -27,6 +27,7 @@ export type ConversationStarter = {
   kind: ConversationStarterKind;
   title: string;
   prompt: string;
+  group?: string;
   reason: string;
   priorityScore: number;
   personalized: boolean;
@@ -42,6 +43,7 @@ export type ConversationStarterTemplate = {
   title: string;
   prompt: string;
   priority?: number;
+  group?: string;
   matchingUnderstandingDimensions?: readonly MemberUnderstandingReasoningItem["dimension"][];
 };
 
@@ -52,6 +54,7 @@ export type StarterCandidate = {
   prompt: string;
   reason: string;
   priority?: number;
+  group?: string;
   evidence: readonly ConversationStarterEvidence[];
   action?: StructuredAgentAction;
   expiresAt?: string;
@@ -153,6 +156,7 @@ export class SharedPersonalizedConversationStarters {
         kind: matchingUnderstanding.length ? "personalized" : "generic",
         title: starter.title,
         prompt: starter.prompt,
+        group: starter.group,
         reason: matchingUnderstanding.length
           ? "Suggested using relevant member understanding."
           : "Available from this specialist's configured conversation playbook.",
@@ -184,6 +188,7 @@ export class SharedPersonalizedConversationStarters {
         kind: "continue-previous-work",
         title: `Continue ${latest.title}`,
         prompt: `Continue our previous work on ${latest.title}.`,
+        group: "Continue Previous Work",
         reason: "This is the most recently updated active conversation.",
         personalized: true,
         evidence: [{
@@ -199,6 +204,7 @@ export class SharedPersonalizedConversationStarters {
         kind: "suggested-follow-up",
         title: followUp,
         prompt: followUp,
+        group: "Observation Follow-up",
         reason: "This follow-up remains unresolved in the prior conversation summary.",
         personalized: true,
         evidence: [{
@@ -281,6 +287,7 @@ export class SharedPersonalizedConversationStarters {
         kind: "upcoming-event",
         title: event.title,
         prompt: event.prompt,
+        group: "Upcoming Events",
         reason: `Suggested because ${event.title} is upcoming.`,
         personalized: true,
         evidence: [{
@@ -310,12 +317,14 @@ export const specialistConversationStarterProfiles = {
   moneyCoach: {
     specialistId: "beastmoney.money-coach",
     genericStarters: [
-      { id: "financial-checkup", title: "Financial Checkup", prompt: "Give me a financial checkup.", priority: 55 },
-      { id: "latest-paycheck", title: "Review latest paycheck", prompt: "Help me review my latest paycheck.", priority: 50 },
-      { id: "retirement-plan", title: "Continue Retirement Plan", prompt: "Help me continue my retirement plan.", priority: 50, matchingUnderstandingDimensions: ["goal"] },
-      { id: "spending", title: "Review spending", prompt: "Help me review my recent spending.", priority: 50, matchingUnderstandingDimensions: ["habit", "behavior-pattern"] },
-      { id: "velocity", title: "Velocity Banking", prompt: "Explain how Velocity Banking fits my current plan.", priority: 45 },
-      { id: "emergency-fund", title: "Emergency Fund", prompt: "How is my emergency fund progressing?", priority: 50, matchingUnderstandingDimensions: ["goal"] },
+      { id: "financial-checkup", title: "Financial Checkup", prompt: "Give me a concise financial checkup and tell me what matters most today.", priority: 55, group: "Getting Started" },
+      { id: "next-move", title: "Plan my next move", prompt: "Help me plan the next practical move in my financial plan.", priority: 52, group: "Planning", matchingUnderstandingDimensions: ["goal", "decision-style"] },
+      { id: "debt-strategy", title: "Review debt strategy", prompt: "Review my current debt strategy and explain the most useful next step.", priority: 52, group: "Debt" },
+      { id: "latest-paycheck", title: "Review latest paycheck", prompt: "Help me review my latest paycheck and how it should be allocated.", priority: 50, group: "Budgeting" },
+      { id: "retirement-plan", title: "Continue Retirement Plan", prompt: "Help me continue my retirement plan.", priority: 50, group: "Retirement", matchingUnderstandingDimensions: ["goal"] },
+      { id: "spending", title: "Review spending", prompt: "Help me review my recent spending.", priority: 50, group: "Budgeting", matchingUnderstandingDimensions: ["habit", "behavior-pattern"] },
+      { id: "velocity", title: "Velocity Banking", prompt: "Explain how Velocity Banking fits my current plan.", priority: 45, group: "Velocity Banking" },
+      { id: "emergency-fund", title: "Emergency Fund", prompt: "How is my emergency fund progressing?", priority: 50, group: "Savings", matchingUnderstandingDimensions: ["goal"] },
     ],
     observationStarter: (observation: Observation) => ({
       id: `observation-${observation.id}`,
@@ -323,6 +332,7 @@ export const specialistConversationStarterProfiles = {
       prompt: observation.presentation.suggestedQuestion || `Explain what you noticed about ${observation.presentation.title}.`,
       reason: observation.presentation.whyNoticed,
       priority: 80,
+      group: "Observation Follow-up",
       action: observation.presentation.action,
     }),
   },

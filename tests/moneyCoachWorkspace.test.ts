@@ -49,12 +49,18 @@ test("BM-305 groups AGENT-215 starters into all supported workspace categories",
     "Recommended Today",
     "Getting Started",
     "Continue Previous Work",
+    "Planning",
+    "Debt",
+    "Savings",
+    "Retirement",
+    "Velocity Banking",
+    "Budgeting",
     "Observation Follow-up",
     "Upcoming Events",
     "Ask Anything",
   ]) assert.match(source, new RegExp(label));
   assert.match(source, /data-agent-215-starter-groups="true"/);
-  assert.match(source, /suggestion\.category/);
+  assert.match(source, /suggestion\.group/);
 });
 
 test("BM-305 carries AGENT-215 category metadata into Money Coach suggestions", () => {

@@ -71,7 +71,7 @@ test("AGENT-215 exposes shared starter generation through BeastAgents", () => {
 test("AGENT-215 provides configured Money, Health, and Guidance starter examples", () => {
   assert.deepEqual(
     specialistConversationStarterProfiles.moneyCoach.genericStarters.map((item) => item.title),
-    ["Financial Checkup", "Review latest paycheck", "Continue Retirement Plan", "Review spending", "Velocity Banking", "Emergency Fund"]
+    ["Financial Checkup", "Plan my next move", "Review debt strategy", "Review latest paycheck", "Continue Retirement Plan", "Review spending", "Velocity Banking", "Emergency Fund"]
   );
   assert.deepEqual(
     specialistConversationStarterProfiles.healthAdvisor.genericStarters.map((item) => item.title),

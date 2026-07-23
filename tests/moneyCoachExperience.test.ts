@@ -121,7 +121,7 @@ test("MC-201 consumes the shared AgentExperience without replacing existing page
   assert.match(component, /<AgentExperience/);
   assert.match(component, /AgentMemoryRecord/);
   assert.match(component, /composerPlacement="before-cards"/);
-  assert.match(component, /Conversation starters/);
+  assert.match(component, /Start a conversation/);
   assert.doesNotMatch(component, /AgentSmartCard/);
   assert.doesNotMatch(component, /Today&apos;s Financial Review/);
   assert.match(component, /buildMoneyCoachGreeting/);
