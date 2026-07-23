@@ -5,6 +5,7 @@ import {
   composeProfessionalResponse,
   recognizeConversationIntent,
   specialistProfessionalIdentityProfiles,
+  sharedAgentActionTools,
   type ConversationResponseSection,
   type DomainIntentCandidate,
   type DomainIntentRoute,
@@ -15,6 +16,7 @@ import {
   type ProfessionalBehaviorProfile,
   type ProfessionalIdentityProfile,
   type ProfessionalResponseExecution,
+  type StructuredAgentAction,
 } from "./platform/agents";
 
 export type MoneyCoachExperienceCard = {
@@ -533,6 +535,7 @@ export type MoneyCoachStructuredAnswer = {
   text: string;
   href: string;
   action: string;
+  toolAction?: StructuredAgentAction;
   intentType?: DomainResponseIntent;
   topics?: readonly MoneyCoachTopic[];
   confidence?: number;
@@ -601,20 +604,55 @@ export function classifyMoneyCoachIntent(question: string): MoneyCoachIntent {
   return "non-financial";
 }
 
+const moneyCoachIntentTools: Partial<Record<MoneyCoachIntent, string>> = {
+  bills: "open-bills",
+  "debt-strategy": "open-debt",
+  "cash-flow": "open-cash-flow",
+  forecast: "open-forecast",
+  retirement: "open-retirement",
+  velocity: "open-velocity",
+  incomplete: "continue-money-coach-conversation",
+};
+
+const moneyCoachTopicTools: Record<MoneyCoachTopic, string> = {
+  "velocity-banking": "open-velocity",
+  avalanche: "open-debt",
+  snowball: "open-debt",
+  "cash-flow": "open-cash-flow",
+  bills: "open-bills",
+  debts: "open-debt",
+  "income-pots": "open-income-pots",
+  "funding-sources": "open-funding-sources",
+  retirement: "open-retirement",
+  forecasting: "open-forecast",
+  "cash-buffer": "open-cash-flow",
+  heloc: "open-velocity",
+};
+
 function createMoneyCoachResponse(values: Omit<MoneyCoachStructuredAnswer, "text" | "professionalExecution">, professional: ProfessionalIdentityProfile): MoneyCoachStructuredAnswer {
+  const registeredToolId = values.topics?.length === 1 ? moneyCoachTopicTools[values.topics[0]] : moneyCoachIntentTools[values.intent];
+  const registeredTool = registeredToolId ? sharedAgentActionTools.get(registeredToolId) : undefined;
+  const tool = registeredTool?.target === values.href ? registeredTool : sharedAgentActionTools.findNavigationByTarget(values.href);
+  if (!tool) throw new Error(`Money Coach cannot prepare an unregistered navigation target: ${values.href}`);
+  const toolAction = sharedAgentActionTools.prepare({
+    toolId: tool.id,
+    specialistId: "beastmoney.money-coach",
+    grantedPermissions: [tool.permission],
+    actionId: `money-coach-${values.intent}-${tool.id}`,
+  });
   const shared = composeProfessionalResponse(professional, {
     intent: values.intent,
     shortAnswer: values.opening,
     sections: values.sections,
     assumptions: values.assumptions,
     nextStep: values.followUp,
-    actions: [{ id: `money-coach-${values.intent}`, label: values.action, type: "navigate", target: values.href }],
+    actions: [{ id: toolAction.id, label: values.action, type: "navigate", target: toolAction.target }],
     expertiseUsed: professional.identity.expertise,
     mode: values.intentType === "define" ? "teaching" : values.intentType === "clarify" ? "clarification" : values.intentType === "evaluate" ? "recommendation" : "answer",
     followUpRequired: values.intentType === "clarify",
     nextStepUseful: Boolean(values.followUp),
   });
-  return { ...values, sections: shared.sections, text: shared.text, professionalExecution: shared.professionalExecution };
+  return { ...values, href: toolAction.target || values.href, toolAction, sections: shared.sections, text: shared.text, professionalExecution: shared.professionalExecution };
 }
 
 const moneyTopicDetails: Record<MoneyCoachTopic, { label: string; definition: string; href: string }> = {

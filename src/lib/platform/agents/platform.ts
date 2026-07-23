@@ -1,7 +1,7 @@
 import type { AgentModuleManifest, AgentRequest, AgentResponse } from "./types";
 import { AgentRegistry } from "./registry";
 import { AgentPermissionService } from "./permissions";
-import { AgentToolRegistry } from "./tools";
+import { AgentToolRegistry, createDefaultAgentActionToolRegistry } from "./tools";
 import { InMemoryAgentMemoryStore, type AgentMemoryStore } from "./memory";
 import { AgentContextAssembler } from "./context";
 import { AgentEventBus } from "./events";
@@ -16,12 +16,15 @@ import type { AgentPlaybook } from "./types";
 import { ProfessionalBehaviorRegistry } from "./professionalBehavior";
 import { ProfessionalIdentityRegistry } from "./professionalIdentity";
 import { SharedInsightEngine } from "./insights";
+import { KnowledgeSourceFramework, specialistKnowledgeSourcePolicies } from "./knowledgeSources";
+import { SharedAgentPlanningEngine, specialistAgentPlanningPolicies } from "./planning";
 
 export class BeastAgentsPlatform {
   readonly registry = new AgentRegistry();
   readonly permissions = new AgentPermissionService();
   readonly events = new AgentEventBus();
   readonly tools = new AgentToolRegistry(this.registry, this.permissions);
+  readonly actionTools = createDefaultAgentActionToolRegistry();
   readonly context = new AgentContextAssembler(this.registry, this.permissions);
   readonly lifecycle = new AgentLifecycleService(this.registry, this.events);
   readonly prompts = new AgentPromptFramework();
@@ -29,6 +32,8 @@ export class BeastAgentsPlatform {
   readonly professionalBehavior = new ProfessionalBehaviorRegistry();
   readonly professionalIdentity = new ProfessionalIdentityRegistry();
   readonly insights = new SharedInsightEngine();
+  readonly knowledgeSources = new KnowledgeSourceFramework();
+  readonly planner = new SharedAgentPlanningEngine();
   readonly playbooks = new AgentPlaybookRegistry();
   readonly preferences = new AgentPreferenceStore();
   readonly currentContext = new AgentCurrentContextStore();
@@ -38,6 +43,8 @@ export class BeastAgentsPlatform {
 
   constructor(readonly memory: AgentMemoryStore = new InMemoryAgentMemoryStore()) {
     this.governedRuns = new GovernedRunAssembler(this.playbooks, this.preferences, memory, this.currentContext, this.permissions);
+    Object.values(specialistKnowledgeSourcePolicies).forEach((policy) => this.knowledgeSources.registerPolicy(policy));
+    Object.values(specialistAgentPlanningPolicies).forEach((policy) => this.planner.registerPolicy(policy));
   }
 
   registerPlaybook(playbook: AgentPlaybook) { return this.playbooks.register(playbook); }
@@ -51,6 +58,14 @@ export class BeastAgentsPlatform {
       }
       if (agent.professionalIdentity && !this.professionalIdentity.get(agent.professionalIdentity.id)) {
         this.professionalIdentity.register(agent.professionalIdentity);
+      }
+      if (agent.knowledgeSourcePolicy && !this.knowledgeSources.hasPolicy(agent.id)) {
+        if (agent.knowledgeSourcePolicy.specialistId !== agent.id) throw new Error(`Agent ${agent.id} knowledge source policy must use the same specialist id.`);
+        this.knowledgeSources.registerPolicy(agent.knowledgeSourcePolicy);
+      }
+      if (agent.planningPolicy && !this.planner.hasPolicy(agent.id)) {
+        if (agent.planningPolicy.specialistId !== agent.id) throw new Error(`Agent ${agent.id} planning policy must use the same specialist id.`);
+        this.planner.registerPolicy(agent.planningPolicy);
       }
     }
     for (const tool of manifest.tools || []) this.tools.register(tool);

@@ -69,6 +69,8 @@ function MoneyCoachConversationTimeline({ messages }: { messages: readonly Agent
 }
 
 function MoneyCoachResponseDocument({ response }: { response: MoneyCoachStructuredAnswer }) {
+  const actionTarget = response.toolAction?.target || response.href;
+  const actionTitle = response.toolAction?.title || response.action;
   return <div data-money-coach-structured-response="true">
     <p>{response.opening}</p>
     {response.sections.map((section) => <section key={section.heading} className="mt-5" aria-label={section.heading}>
@@ -80,7 +82,7 @@ function MoneyCoachResponseDocument({ response }: { response: MoneyCoachStructur
     </section>)}
     {response.assumptions?.length ? <details><summary className="cursor-pointer font-bold text-slate-300">Assumptions and limitations</summary><ul>{response.assumptions.map((item) => <li key={item}>{item}</li>)}</ul></details> : null}
     {response.followUp ? <p className="mt-5">{response.followUp}</p> : null}
-    <Link className="mt-4 inline-flex font-bold text-cyan-200" href={response.href}>{response.action} <span aria-hidden="true">→</span></Link>
+    <Link className="mt-4 inline-flex font-bold text-cyan-200" href={actionTarget}>{actionTitle} <span aria-hidden="true">→</span></Link>
   </div>;
 }
 
@@ -198,7 +200,7 @@ export function MoneyCoachExperience({
         { id: `${turn.id}-user`, threadId: activeThreadId, sender: { kind: "user", id: ownerId }, recipient: { kind: "agent", id: "beastmoney.money-coach" }, content: value, timestamp: now },
         { id: `${turn.id}-coach`, threadId: activeThreadId, sender: { kind: "agent", id: "beastmoney.money-coach" }, recipient: { kind: "module", id: "beastmoney" }, content: { text: response.text, href: response.href, action: response.action, structured: response }, timestamp: now },
       ];
-      void repository.append(ownerId, activeThreadId, messages, { insightIds: model.insights.map((item) => item.id), actionIds: [response.action] }).then(async (updated) => {
+      void repository.append(ownerId, activeThreadId, messages, { insightIds: model.insights.map((item) => item.id), actionIds: [response.toolAction?.toolId || response.action] }).then(async (updated) => {
         await repository.summarize(ownerId, activeThreadId, { overview: `Discussed ${value.slice(0, 100)}`, decisions: [], unresolvedFollowUps: [], updatedAt: now });
         setConversationTitle(updated.title); await refreshThreads();
       }).catch(() => setHistoryError("This response is visible now but could not be saved. Please retry before leaving this page."));

@@ -1,5 +1,7 @@
 import type { ProfessionalBehaviorProfile } from "./professionalBehavior";
 import type { ProfessionalIdentityProfile } from "./professionalIdentity";
+import type { SpecialistKnowledgeSourcePolicy } from "./knowledgeSources";
+import type { AgentPlanningPolicy } from "./planning";
 
 export type AgentId = string;
 export type AgentModuleId = string;
@@ -43,6 +45,8 @@ export type AgentDefinition = {
   experience: AgentExperienceContract;
   professionalBehavior?: ProfessionalBehaviorProfile;
   professionalIdentity?: ProfessionalIdentityProfile;
+  knowledgeSourcePolicy?: SpecialistKnowledgeSourcePolicy;
+  planningPolicy?: AgentPlanningPolicy;
   metadata?: Readonly<Record<string, string>>;
 };
 
