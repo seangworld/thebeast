@@ -5,6 +5,7 @@ import {
   SectionHeader,
 } from "@/app/components/design/DashboardPrimitives";
 import type { LearningMissionControlModel } from "@/lib/learning/missionControl";
+import type { Observation } from "@/lib/platform/agents";
 
 function ProgressBar({ value }: { value: number }) {
   return (
@@ -25,7 +26,13 @@ function EmptyLine({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function LearningMissionControl({ model }: { model: LearningMissionControlModel }) {
+export default function LearningMissionControl({
+  model,
+  insights,
+}: {
+  model: LearningMissionControlModel;
+  insights: readonly Observation[];
+}) {
   return (
     <section aria-labelledby="learning-mission-control-title" className="space-y-5">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -89,6 +96,62 @@ export default function LearningMissionControl({ model }: { model: LearningMissi
           </Link>
         </DashboardCard>
       </div>
+
+      {insights.length > 0 ? (
+        <DashboardCard accent="learning">
+          <SectionHeader
+            eyebrow="Mentor Insights"
+            title="What your learning evidence is showing"
+            description="Educational observations drawn from your saved work. Open Explain Why to see the records and rule behind each one."
+          />
+          <div className="mt-5 grid gap-3 lg:grid-cols-2">
+            {insights.slice(0, 4).map((insight) => (
+              <article
+                key={insight.id}
+                className="min-w-0 rounded-2xl border border-[#30394a] bg-[#111722] p-4"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="rounded-full border border-indigo-300/30 bg-indigo-300/10 px-2.5 py-1 text-xs font-black text-indigo-100">
+                    {insight.type}
+                  </span>
+                  <span className="text-xs font-bold text-[#8f9cad]">
+                    {Math.round(insight.assessment.confidence * 100)}% confidence
+                  </span>
+                </div>
+                <h3 className="mt-3 break-words text-lg font-black text-white">
+                  {insight.presentation.title}
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-[#b8c2d1]">
+                  {insight.presentation.summary}
+                </p>
+                <details className="mt-4 rounded-xl border border-[#343e50] bg-[#0c111b] p-3">
+                  <summary className="cursor-pointer text-sm font-black text-indigo-100">
+                    Explain Why
+                  </summary>
+                  <div className="mt-3 space-y-3 text-sm leading-6 text-[#aeb8c7]">
+                    <p>{insight.presentation.whyNoticed}</p>
+                    <p>{insight.presentation.whyItMayMatter}</p>
+                    <p className="text-xs text-[#7f8da3]">
+                      Evidence: {insight.evidence.map((item) => `${item.label}: ${String(item.value)}`).join(" · ")}
+                    </p>
+                    <p className="text-xs text-[#7f8da3]">
+                      Limitation: {insight.provenance.limitations[0]}
+                    </p>
+                  </div>
+                </details>
+                {insight.presentation.workspaceTarget ? (
+                  <Link
+                    href={insight.presentation.workspaceTarget}
+                    className="mt-4 inline-flex text-sm font-black text-indigo-200 transition hover:text-white"
+                  >
+                    Open related learning workspace
+                  </Link>
+                ) : null}
+              </article>
+            ))}
+          </div>
+        </DashboardCard>
+      ) : null}
 
       <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
         <DashboardCard accent="blue">

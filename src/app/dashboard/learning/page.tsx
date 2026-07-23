@@ -74,6 +74,7 @@ import {
 import { buildLearningDashboardContent } from "@/lib/learning/dashboardContent";
 import { buildKnowledgeIntelligenceDashboard } from "@/lib/learning/knowledgeDashboard";
 import { buildLearningMissionControl } from "@/lib/learning/missionControl";
+import { buildMentorInsights } from "@/lib/learning/mentorInsights";
 import { learningSpecialists } from "@/lib/learning/specialists";
 import { mockStudyPlanner } from "@/lib/learning/studyPlanner";
 import { learningPathTemplates } from "@/lib/learning/templates";
@@ -949,6 +950,24 @@ export default async function LearningPage() {
     achievements: meaningfulAchievements,
     confidence: confidenceIntelligence,
   });
+  const mentorInsights = buildMentorInsights(
+    {
+      attempts: userActivities
+        .filter((activity) => activity.status === "Completed")
+        .map((activity) => ({
+          id: activity.id,
+          title: activity.title,
+          completedAt:
+            activity.completed_at ||
+            activity.created_at ||
+            new Date().toISOString(),
+          strengths: activity.session_strengths || [],
+          weakConcepts: activity.session_weak_concepts || [],
+          reviewDue: activity.session_state === "review_due",
+        })),
+    },
+    user.id
+  );
 
   return (
     <main id="learning-main-content" className="beast-page">
@@ -956,7 +975,7 @@ export default async function LearningPage() {
         Skip to Guidance Counselor
       </a>
       <div className="beast-container space-y-8">
-        <LearningMissionControl model={missionControl} />
+        <LearningMissionControl model={missionControl} insights={mentorInsights} />
 
         <section className="beast-page-header">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
