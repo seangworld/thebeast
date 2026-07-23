@@ -14,7 +14,7 @@ import {
   AgentHeader,
   AgentLoadingState,
   AgentStatus,
-  AgentSuggestedActions,
+  AgentStreamingResponseArea,
   type AgentConversationMessage,
 } from "@/app/components/agents";
 import {
@@ -105,6 +105,7 @@ export function MoneyCoachExperience({
   const [historySearch, setHistorySearch] = useState("");
   const [memories, setMemories] = useState<AgentMemoryRecord[]>([]);
   const [historyError, setHistoryError] = useState("");
+  const [streamingTurnId, setStreamingTurnId] = useState("");
   const historyDialogRef = useRef<HTMLDivElement>(null);
   const ownerId = model.insights[0]?.ownerId || "authenticated-owner";
 
@@ -177,10 +178,10 @@ export function MoneyCoachExperience({
       },
       ...turns.flatMap<AgentConversationMessage>((turn) => [
         { id: `${turn.id}-user`, role: "user", author: "You", content: turn.question },
-        { id: `${turn.id}-coach`, role: "agent", author: model.professional.identity.role, content: <MoneyCoachResponseDocument response={turn.response} /> },
+        { id: `${turn.id}-coach`, role: "agent", author: model.professional.identity.role, streaming: streamingTurnId === turn.id, content: <AgentStreamingResponseArea isStreaming={streamingTurnId === turn.id} label="Money Coach response"><MoneyCoachResponseDocument response={turn.response} /></AgentStreamingResponseArea> },
       ]),
     ],
-    [model.conversationOpening, model.professional.identity.role, turns]
+    [model.conversationOpening, model.professional.identity.role, streamingTurnId, turns]
   );
 
   async function askQuestion(value: string) {
@@ -193,6 +194,7 @@ export function MoneyCoachExperience({
     });
     const timestamp = Date.now();
     const turn = { id: `money-${timestamp}`, question: value, response };
+    setStreamingTurnId(turn.id);
     setTurns((current) => [...current, turn]);
     if (repository && activeThreadId) {
       const now = new Date().toISOString();
@@ -203,14 +205,14 @@ export function MoneyCoachExperience({
       void repository.append(ownerId, activeThreadId, messages, { insightIds: model.insights.map((item) => item.id), actionIds: [response.toolAction?.toolId || response.action] }).then(async (updated) => {
         await repository.summarize(ownerId, activeThreadId, { overview: `Discussed ${value.slice(0, 100)}`, decisions: [], unresolvedFollowUps: [], updatedAt: now });
         setConversationTitle(updated.title); await refreshThreads();
-      }).catch(() => setHistoryError("This response is visible now but could not be saved. Please retry before leaving this page."));
+      }).catch(() => setHistoryError("This response is visible now but could not be saved. Please retry before leaving this page.")).finally(() => setStreamingTurnId(""));
       const durableType = /\b(i prefer|my goal|i decided|remember that|always|never)\b/i.exec(value)?.[1];
       if (memoryStore && durableType) {
         const memoryType = durableType === "my goal" ? "financial-goal" : durableType === "i decided" ? "confirmed-decision" : "preference-or-constraint";
         const memory: AgentMemoryRecord = { id: `money-memory-${timestamp}`, agentId: "beastmoney.money-coach", ownerId, scope: "user", key: memoryType, value: { content: value, memoryType, confidence: "high", sourceConversationId: activeThreadId, sourceMessageId: messages[0].id, timestamp: now }, purpose: "Remember an explicit member preference, goal, decision, or recurring constraint.", evidence: [{ source: activeThreadId, capturedAt: now, description: messages[0].id }], createdAt: now, updatedAt: now };
         void memoryStore.put(memory).then(() => setMemories((current) => [...current, memory]));
       }
-    }
+    } else setStreamingTurnId("");
     setInput("");
   }
 
@@ -270,41 +272,55 @@ export function MoneyCoachExperience({
       : model.wins[0]
         ? `I reviewed today’s plan. Here’s the strongest positive signal: ${model.wins[0]}`
         : model.introduction;
-  const todayPriorities = model.insights.slice(0, 3);
-  const recentThreads = threads.slice(0, 10);
-  const olderThreads = threads.slice(10);
-  const historyThreads = [...recentThreads, ...olderThreads];
+  const pinnedThreads = threads.filter((thread) => thread.pinned && !thread.archived);
+  const recentThreads = threads.filter((thread) => !thread.pinned && !thread.archived).slice(0, 10);
+  const archivedThreads = threads.filter((thread) => thread.archived);
+
+  function conversationGroup(label: string, items: readonly AgentConversationThread[]) {
+    if (!items.length) return null;
+    return <section aria-labelledby={`money-coach-${label.toLowerCase().replace(/\s+/g, "-")}`}>
+      <h3 id={`money-coach-${label.toLowerCase().replace(/\s+/g, "-")}`} className="px-2 text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">{label}</h3>
+      <div className="mt-2 grid gap-1">
+        {items.map((thread) => (
+          <article key={thread.id} className={`group rounded-xl border px-2 py-2.5 ${thread.id === activeThreadId ? "border-cyan-300/35 bg-cyan-300/10" : "border-transparent hover:border-white/10 hover:bg-white/[0.04]"}`} aria-current={thread.id === activeThreadId ? "page" : undefined}>
+            <button type="button" className="w-full rounded-md text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300" onClick={() => openThread(thread)}>
+              <span className="block truncate text-sm font-bold text-white">{thread.title}</span>
+              <span className="mt-1 block text-[11px] text-slate-500">{new Date(thread.updatedAt).toLocaleDateString()} · {thread.messageCount} messages</span>
+            </button>
+            <div className="mt-2 flex flex-wrap gap-x-3 gap-y-2 opacity-80 transition group-hover:opacity-100 group-focus-within:opacity-100">
+              <button type="button" className="text-[11px] font-bold text-cyan-200" onClick={() => { void renameThread(thread); }}>Rename</button>
+              <button type="button" className="text-[11px] font-bold text-cyan-200" onClick={() => { void repository?.pin(ownerId, thread.id, !thread.pinned).then(() => refreshThreads()); }}>{thread.pinned ? "Unpin" : "Pin"}</button>
+              <button type="button" className="text-[11px] font-bold text-cyan-200" onClick={() => { void archiveThread(thread); }}>{thread.archived ? "Restore" : "Archive"}</button>
+              <button type="button" className="text-[11px] font-bold text-red-200" onClick={() => { void deleteThread(thread); }}>Delete</button>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>;
+  }
 
   const historyPanel = (
-    <aside className="flex h-full min-h-0 flex-col" aria-label="Saved Money Coach conversations">
+    <aside className="flex h-full min-h-0 flex-col bg-[#0d131e]" aria-label="Money Coach conversation navigation" data-money-coach-left-navigation="true">
       <div className="flex items-center justify-between gap-3 border-b border-white/10 p-4">
-        <h2 className="text-base font-black text-white">Chat History</h2>
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.16em] text-cyan-300">Money Coach</p>
+          <h2 className="mt-1 text-base font-black text-white">Conversations <span aria-hidden="true">▼</span></h2>
+        </div>
         <button type="button" className="text-sm font-bold text-slate-300 lg:hidden" onClick={() => setHistoryOpen(false)} aria-label="Close chat history">Close</button>
       </div>
-      <div className="p-3 pb-0">
-        <button type="button" className="beast-button w-full min-h-11" onClick={() => { void startConversation(); setHistoryOpen(false); }}>New conversation</button>
+      <div className="p-3">
+        <button type="button" className="beast-button flex min-h-11 w-full items-center justify-center gap-2" onClick={() => { void startConversation(); setHistoryOpen(false); }}><span aria-hidden="true">＋</span> New Conversation</button>
         {historyError ? <p className="mt-3 rounded-lg border border-red-300/20 bg-red-300/10 p-2 text-xs leading-5 text-red-100" role="alert">{historyError}</p> : null}
-        <label className="mt-3 block text-xs font-bold text-slate-300">Search conversations
-          <input className="mt-1 min-h-11 w-full rounded-xl border border-white/15 bg-slate-950 px-3 text-sm text-white" value={historySearch} onChange={(event) => { setHistorySearch(event.target.value); void refreshThreads(event.target.value); }} placeholder="Search chat history" />
+        <label className="mt-3 block text-xs font-bold text-slate-300"><span className="sr-only">Search conversations</span>
+          <span className="relative block"><span className="pointer-events-none absolute left-3 top-3 text-slate-500" aria-hidden="true">⌕</span><input className="min-h-11 w-full rounded-xl border border-white/10 bg-slate-950 pl-9 pr-3 text-sm text-white outline-none placeholder:text-slate-600 focus:border-cyan-300 focus:ring-2 focus:ring-cyan-300/20" value={historySearch} onChange={(event) => { setHistorySearch(event.target.value); void refreshThreads(event.target.value); }} placeholder="Search" /></span>
         </label>
+        <p className="mt-2 px-1 text-[10px] leading-4 text-slate-600">Conversation titles update automatically from the discussion and can be renamed anytime.</p>
       </div>
-      <div className="mt-3 min-h-0 flex-1 overflow-y-auto px-3 pb-3" data-money-coach-history-list="true">
-        <div className="grid gap-2">
-          {historyThreads.map((thread) => (
-            <article key={thread.id} className={`rounded-xl border p-3 ${thread.id === activeThreadId ? "border-cyan-300/50 bg-cyan-300/10" : "border-white/10 bg-black/15"}`} aria-current={thread.id === activeThreadId ? "true" : undefined}>
-              <button type="button" className="w-full text-left" onClick={() => openThread(thread)}>
-                <span className="block truncate font-bold text-white">{thread.pinned ? "Pinned · " : ""}{thread.title}</span>
-                <span className="mt-1 block text-xs text-slate-400">{new Date(thread.updatedAt).toLocaleDateString()} · {thread.messageCount} messages{thread.archived ? " · Archived" : ""}</span>
-                {thread.id === activeThreadId ? <span className="mt-1 block text-xs font-bold text-cyan-200">Active conversation</span> : null}
-              </button>
-              <div className="mt-2 flex flex-wrap gap-x-3 gap-y-2">
-                <button type="button" className="text-xs font-bold text-cyan-200" onClick={() => { void renameThread(thread); }}>Rename</button>
-                <button type="button" className="text-xs font-bold text-cyan-200" onClick={() => { void repository?.pin(ownerId, thread.id, !thread.pinned).then(() => refreshThreads()); }}>{thread.pinned ? "Unpin" : "Pin"}</button>
-                <button type="button" className="text-xs font-bold text-cyan-200" onClick={() => { void archiveThread(thread); }}>{thread.archived ? "Restore" : "Archive"}</button>
-                <button type="button" className="text-xs font-bold text-red-200" onClick={() => { void deleteThread(thread); }}>Delete</button>
-              </div>
-            </article>
-          ))}
+      <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-3" data-money-coach-history-list="true">
+        <div className="grid gap-5">
+          {conversationGroup("Pinned Conversations", pinnedThreads)}
+          {conversationGroup("Recent Conversations", recentThreads)}
+          {conversationGroup("Archived", archivedThreads)}
           {threads.length === 0 ? <p className="py-4 text-sm text-slate-400">No matching conversations.</p> : null}
         </div>
       </div>
@@ -315,17 +331,30 @@ export function MoneyCoachExperience({
       </details>
     </aside>
   );
+  const starterGroups = [
+    { label: "Recommended Today", categories: ["recommended-today"] },
+    { label: "Getting Started", categories: ["generic", "personalized"] },
+    { label: "Continue Previous Work", categories: ["continue-previous-work"] },
+    { label: "Observation Follow-up", categories: ["recent-observation", "suggested-follow-up"] },
+    { label: "Upcoming Events", categories: ["upcoming-event"] },
+    { label: "Ask Anything", categories: ["ask-anything"] },
+  ].map((group) => ({
+    ...group,
+    suggestions: model.suggestions.filter((suggestion) => suggestion.category && group.categories.includes(suggestion.category)),
+  })).filter((group) => group.suggestions.length > 0);
 
   return (
-    <AgentExperience
-      className="border-green-400/25"
+    <div className="mx-auto grid w-full max-w-[1600px] min-w-0 gap-4 lg:grid-cols-[18rem_minmax(0,1fr)]" data-money-coach-conversation-workspace="true">
+      <div className="sticky top-4 hidden h-[calc(100vh-8rem)] min-h-[36rem] overflow-hidden rounded-2xl border border-white/10 shadow-[0_20px_70px_rgba(0,0,0,0.24)] lg:block">{historyPanel}</div>
+      <AgentExperience
+      className="max-w-none border-white/10 bg-[#141a24]"
       composerPlacement="before-cards"
       header={
         <AgentHeader
           title={model.professional.identity.role}
           subtitle={`${model.behavior.communication.tone} guidance · ${model.behavior.communication.verbosity} detail`}
           avatar={<AgentAvatar name={model.professional.identity.role} initials="MC" size="lg" />}
-          status={<AgentStatus state={loading ? "loading" : error ? "error" : "available"} />}
+          status={<div className="flex items-center gap-2"><AgentStatus state={loading ? "loading" : error ? "error" : streamingTurnId ? "streaming" : "available"} /><button type="button" className="beast-button-secondary min-h-11 lg:hidden" aria-expanded={historyOpen} aria-controls="money-coach-history-drawer" onClick={() => setHistoryOpen(true)}>Conversations</button></div>}
         />
       }
       greeting={
@@ -341,27 +370,18 @@ export function MoneyCoachExperience({
             message={error}
             retryAction={<button type="button" className="beast-button" onClick={onRetry}>Try Again</button>}
           />
-        ) : todayPriorities.length > 0 ? (
-          <section aria-labelledby="money-coach-priorities" className="mx-auto w-full max-w-3xl border-y border-white/[0.07] py-4">
-            <h2 id="money-coach-priorities" className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Today&apos;s priorities</h2>
-            <ul className="mt-3 grid gap-3">
-              {todayPriorities.map((insight) => <li key={insight.id} className="flex min-w-0 items-start justify-between gap-4 text-sm"><span className="leading-6 text-slate-200">{insight.summary}</span>{insight.navigationTarget ? <Link href={insight.navigationTarget} className="shrink-0 font-bold text-cyan-200">Review</Link> : null}</li>)}
-            </ul>
-          </section>
         ) : null}
       suggestedActions={
         !loading && !error ? (
-          <AgentSuggestedActions
-            actions={model.suggestions.map((suggestion) => ({
-              id: suggestion.id,
-              label: suggestion.label,
-              onSelect: suggestion.intent === "ask"
-                ? focusQuestionInput
-                : suggestion.prompt
-                  ? () => askQuestion(suggestion.prompt || suggestion.label)
-                  : () => followSuggestion(suggestion.href),
-            }))}
-          />
+          <section aria-labelledby="money-coach-starters-heading" data-agent-215-starter-groups="true">
+            <h2 id="money-coach-starters-heading" className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Conversation starters</h2>
+            <div className="mt-3 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {starterGroups.map((group) => <section key={group.label} aria-label={group.label}>
+                <h3 className="text-[10px] font-black uppercase tracking-[0.14em] text-cyan-300">{group.label}</h3>
+                <div className="mt-2 flex flex-wrap gap-2">{group.suggestions.map((suggestion) => <button key={suggestion.id} type="button" className="min-h-11 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-left text-sm font-semibold text-slate-200 transition hover:border-cyan-300/30 hover:bg-cyan-300/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300" onClick={suggestion.intent === "ask" ? focusQuestionInput : suggestion.prompt ? () => { void askQuestion(suggestion.prompt || suggestion.label); } : () => followSuggestion(suggestion.href)}>{suggestion.label}</button>)}</div>
+              </section>)}
+            </div>
+          </section>
         ) : null
       }
       conversation={
@@ -370,16 +390,14 @@ export function MoneyCoachExperience({
         ) : error ? (
           <AgentEmptyState title="Conversation unavailable" description="Reload your BeastMoney records to continue with Money Coach." />
         ) : (
-          <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
-            <section className="flex h-[32rem] min-w-0 flex-col" aria-label="Active Money Coach conversation">
+          <div className="min-w-0">
+            <section className="flex h-[36rem] min-w-0 flex-col" aria-label="Active Money Coach conversation">
             <div className="mb-1 flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.07] pb-3">
               <p className="truncate text-sm font-semibold text-slate-400">{conversationTitle}</p>
-              <button type="button" className="beast-button-secondary min-h-11 lg:hidden" aria-expanded={historyOpen} aria-controls="money-coach-history-drawer" onClick={() => setHistoryOpen(true)}>Chat History</button>
+              <button type="button" className="text-xs font-bold text-cyan-200" onClick={() => { const active = threads.find((thread) => thread.id === activeThreadId); if (active) void renameThread(active); }}>Rename</button>
             </div>
             <MoneyCoachConversationTimeline messages={messages} />
             </section>
-            <div className="hidden h-[32rem] overflow-hidden rounded-2xl border border-white/10 bg-black/20 lg:block">{historyPanel}</div>
-            {historyOpen ? <div className="fixed inset-0 z-50 bg-black/70 p-3 lg:hidden" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setHistoryOpen(false); }}><div ref={historyDialogRef} id="money-coach-history-drawer" className="ml-auto h-full max-h-[42rem] w-full max-w-sm overflow-hidden rounded-2xl border border-white/15 bg-slate-950 shadow-2xl" role="dialog" aria-modal="true" aria-label="Chat History">{historyPanel}</div></div> : null}
           </div>
         )
       }
@@ -396,6 +414,8 @@ export function MoneyCoachExperience({
           <p className="mt-2 px-2 text-xs leading-5 text-slate-500">{model.safetyNotice}</p>
         </div>
       }
-    />
+      />
+      {historyOpen ? <div className="fixed inset-0 z-50 bg-black/70 p-3 lg:hidden" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setHistoryOpen(false); }}><div ref={historyDialogRef} id="money-coach-history-drawer" className="ml-auto h-full max-h-[calc(100vh-1.5rem)] w-full max-w-sm overflow-hidden rounded-2xl border border-white/15 bg-slate-950 shadow-2xl" role="dialog" aria-modal="true" aria-label="Money Coach conversations">{historyPanel}</div></div> : null}
+    </div>
   );
 }

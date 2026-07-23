@@ -24,6 +24,7 @@ import {
   type MemberUnderstandingReasoningItem,
   type StarterCandidate,
   type UpcomingStarterEvent,
+  type ConversationStarterKind,
   type ProfessionalBehaviorProfile,
   type ProfessionalIdentityProfile,
   type ProfessionalResponseExecution,
@@ -56,6 +57,7 @@ export type MoneyCoachExperienceCard = {
 export type MoneyCoachExperienceSuggestion = {
   id: string;
   label: string;
+  category?: ConversationStarterKind | "ask-anything";
   href?: string;
   intent?: "ask";
   action?: InsightAction;
@@ -565,10 +567,11 @@ export function buildMoneyCoachExperience(
   const suggestions: MoneyCoachExperienceSuggestion[] = generatedStarters.map((starter) => ({
     id: starter.id,
     label: starter.title,
+    category: starter.kind,
     prompt: starter.prompt,
     href: starter.action?.target,
   }));
-  suggestions.push({ id: "ask-question", label: "I have another question", intent: "ask" });
+  suggestions.push({ id: "ask-question", label: "Ask anything", category: "ask-anything", intent: "ask" });
 
   const summary = [
     `${formatCurrency(input.currentCash)} available cash with a ${formatCurrency(input.cashBuffer)} protected buffer.`,
