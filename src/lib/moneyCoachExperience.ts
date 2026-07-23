@@ -101,6 +101,13 @@ export type MoneyCoachExperienceModel = {
     upcomingIncome: readonly { name: string; amount: number; date?: string }[];
     debts: readonly { name: string; balance: number; minimumPayment: number; interestRate: number }[];
     fundingSources: readonly { name: string; type: string; available: number }[];
+    paymentConfigurations: readonly {
+      obligationName: string;
+      paymentAccountName?: string;
+      fundingAccountName?: string;
+      strategyLabel: string;
+      explanation: string;
+    }[];
     helocReserve: number;
     activeDebtStrategy: "avalanche" | "snowball" | "velocity" | "custom";
     strategyScenarios: readonly { id: string; label: string; monthsToPayoff: number; totalInterest: number; monthlyCashStrain: number; riskLevel: string; debtFreeDate: string }[];
@@ -142,6 +149,13 @@ export type MoneyCoachExperienceInput = {
   upcomingIncome?: readonly { name: string; amount: number; date?: string }[];
   debts?: readonly { name: string; balance: number; minimumPayment: number; interestRate: number }[];
   fundingSources?: readonly { name: string; type: string; available: number }[];
+  paymentConfigurations?: readonly {
+    obligationName: string;
+    paymentAccountName?: string;
+    fundingAccountName?: string;
+    strategyLabel: string;
+    explanation: string;
+  }[];
   helocReserve?: number;
   activeDebtStrategy?: "avalanche" | "snowball" | "velocity" | "custom";
   strategyScenarios?: readonly { id: string; label: string; monthsToPayoff: number; totalInterest: number; monthlyCashStrain: number; riskLevel: string; debtFreeDate: string }[];
@@ -637,6 +651,7 @@ export function buildMoneyCoachExperience(
       upcomingIncome: input.upcomingIncome || [],
       debts: input.debts || [],
       fundingSources: input.fundingSources || [],
+      paymentConfigurations: input.paymentConfigurations || [],
       helocReserve: input.helocReserve || 0,
       activeDebtStrategy: input.activeDebtStrategy || "avalanche",
       strategyScenarios: input.strategyScenarios || [],
@@ -697,7 +712,7 @@ const moneyCoachConcepts = [
   { topic: "bills", label: "Bills", aliases: ["bill", "bills"] },
   { topic: "debts", label: "Debts", aliases: ["debt", "debts"] },
   { topic: "income-pots", label: "Income Pots", aliases: ["income pot", "income pots"] },
-  { topic: "funding-sources", label: "Funding Sources", aliases: ["funding source", "funding sources"] },
+  { topic: "funding-sources", label: "Payment Configuration", aliases: ["payment account", "funding account", "funding strategy", "payment setup", "payment configuration", "funding source", "funding sources"] },
   { topic: "retirement", label: "Retirement", aliases: ["retirement", "401k", "ira"] },
   { topic: "forecasting", label: "Forecasting", aliases: ["forecast", "forecasting", "projection"] },
   { topic: "cash-buffer", label: "Cash Buffer", aliases: ["cash buffer", "protected reserve"] },
@@ -718,7 +733,7 @@ function recognizeMoneyDomainIntent(value: string): DomainIntentCandidate<Exclud
     [/\b(cash flow|income|monthly surplus|monthly shortfall)\b/, "cash-flow", "cash-flow"],
     [/\b(forecast|projection|next month|future cash)\b/, "forecast", "forecast"],
     [/\b(retire|retirement|401k|ira)\b/, "retirement", "retirement"],
-    [/\b(funding source|credit line|available credit|heloc)\b/, "funding", "funding"],
+    [/\b(payment account|funding account|funding strategy|payment setup|payment configuration|funding source|credit line|available credit|heloc)\b/, "funding", "funding"],
     [/\bvelocity\b/, "velocity", "velocity"],
     [/\b(money|finance|debt|cash|payment|budget|spend|save|interest|credit|risk|recommend)\b/, "general-finance", "financial-topic"],
   ];
@@ -817,7 +832,7 @@ const moneyTopicDetails: Record<MoneyCoachTopic, { label: string; definition: st
   bills: { label: "Bills", definition: "Bills are scheduled obligations with an amount and due date that must be accounted for in the cash plan.", href: "/dashboard/money/cashflow#bills" },
   debts: { label: "Debts", definition: "Debts are outstanding balances owed to creditors, usually governed by rates, required payments, and payoff terms.", href: "/dashboard/money/debts" },
   "income-pots": { label: "Income Pots", definition: "Income Pots group obligations against a particular income date so the money has an explicit job before it is spent.", href: "/dashboard/money/cashflow#income-planning" },
-  "funding-sources": { label: "Funding Sources", definition: "Funding Sources identify the accounts or credit capacity available to support a planned obligation or strategy.", href: "/dashboard/money/cashflow#funding-sources" },
+  "funding-sources": { label: "Payment Configuration", definition: "Payment Configuration separates the account a payment drafts from, the account or income pot where its funds originated, and the strategy used to move those funds.", href: "/dashboard/money/cashflow#funding-sources" },
   retirement: { label: "Retirement", definition: "Retirement planning connects current savings and contributions with a future income goal and the assumptions used to project it.", href: "/dashboard/money/retirement" },
   forecasting: { label: "Forecasting", definition: "Forecasting projects current balances forward using known income, obligations, transfers, and strategy assumptions.", href: "/dashboard/money/dashboard" },
   "cash-buffer": { label: "Cash Buffer", definition: "A cash buffer is the protected amount kept available so normal obligations and unexpected costs do not immediately require new debt.", href: "/dashboard/money/cashflow" },
@@ -1047,7 +1062,26 @@ export function answerMoneyCoachQuestion(
   }
 
   if (intent === "non-financial") {
-    return structuredAnswer({ intent, opening: "That doesn’t appear to be a financial question, but no problem.", sections: [], followUp: "I can help with bills, debt, cash flow, forecasts, funding sources, or retirement whenever you’re ready.", ...dashboard });
+    return structuredAnswer({ intent, opening: "That doesn’t appear to be a financial question, but no problem.", sections: [], followUp: "I can help with bills, debt, cash flow, forecasts, payment configurations, or retirement whenever you’re ready.", ...dashboard });
+  }
+
+  if (intent === "funding" && context.paymentConfigurations.length > 0) {
+    return structuredAnswer({
+      intent,
+      opening: "Payment Account, Funding Account, and Funding Strategy describe different parts of how each obligation is paid.",
+      sections: [
+        {
+          heading: "Current payment workflows",
+          bullets: context.paymentConfigurations.map(
+            (configuration) =>
+              `${configuration.obligationName}: ${configuration.explanation}`
+          ),
+        },
+      ],
+      followUp: "Would you like to review or change one of these payment workflows?",
+      href: "/dashboard/money/cashflow",
+      action: "Open Cash Flow",
+    });
   }
 
   const intentCardIds: Partial<Record<MoneyCoachIntent, string>> = { "cash-flow": "cash-flow", velocity: "velocity-banking", funding: "funding-sources", retirement: "retirement", forecast: "cash-flow" };

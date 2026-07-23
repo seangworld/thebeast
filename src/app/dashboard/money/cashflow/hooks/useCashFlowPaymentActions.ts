@@ -8,6 +8,17 @@ import {
   getCurrentBillCycleDueDate,
   getCurrentDebtCycleDueDate,
 } from "../cashflowUtils";
+import type { PaymentConfigurationRecord } from "@/lib/paymentConfiguration";
+
+type PaymentConfigurationPatch = Partial<
+  Pick<
+    PaymentConfigurationRecord,
+    | "payment_account_id"
+    | "funding_account_type"
+    | "funding_account_id"
+    | "funding_strategy_id"
+  >
+>;
 
 type UseCashFlowPaymentActionsInput = {
   cycleMonth: string;
@@ -48,6 +59,12 @@ export function useCashFlowPaymentActions({
       amount_paid: amount,
       payment_date: new Date().toISOString().slice(0, 10),
       cycle_month: cycleMonth,
+      payment_account_id: bill.payment_account_id || bill.funding_source_id || null,
+      funding_account_type:
+        bill.funding_account_type || (bill.funding_source_id ? "account" : null),
+      funding_account_id:
+        bill.funding_account_id || bill.funding_source_id || null,
+      funding_strategy_id: bill.funding_strategy_id || "direct_payment",
       funding_source_id: bill.funding_source_id || null,
     });
 
@@ -126,33 +143,41 @@ export function useCashFlowPaymentActions({
     await load();
   }
 
-  async function updateBillFundingSource(
+  async function updateBillPaymentConfiguration(
     billId: string,
-    fundingSourceId: string
+    patch: PaymentConfigurationPatch
   ) {
     const supabase = createClient();
+    const legacyPatch =
+      patch.funding_account_type === "account" && patch.funding_account_id
+        ? { funding_source_id: patch.funding_account_id }
+        : "funding_account_type" in patch
+          ? { funding_source_id: null }
+          : {};
 
     await supabase
       .from("bill_events")
-      .update({
-        funding_source_id: fundingSourceId || null,
-      })
+      .update({ ...patch, ...legacyPatch })
       .eq("id", billId);
 
     await load();
   }
 
-  async function updateDebtFundingSource(
+  async function updateDebtPaymentConfiguration(
     debtId: string,
-    fundingSourceId: string
+    patch: PaymentConfigurationPatch
   ) {
     const supabase = createClient();
+    const legacyPatch =
+      patch.funding_account_type === "account" && patch.funding_account_id
+        ? { funding_source_id: patch.funding_account_id }
+        : "funding_account_type" in patch
+          ? { funding_source_id: null }
+          : {};
 
     await supabase
       .from("debts")
-      .update({
-        funding_source_id: fundingSourceId || null,
-      })
+      .update({ ...patch, ...legacyPatch })
       .eq("id", debtId);
 
     await load();
@@ -222,6 +247,12 @@ export function useCashFlowPaymentActions({
           amount,
           payment_date: new Date().toISOString().slice(0, 10),
           cycle_due_date: cycleDueDate,
+          payment_account_id: debt.payment_account_id || debt.funding_source_id || null,
+          funding_account_type:
+            debt.funding_account_type || (debt.funding_source_id ? "account" : null),
+          funding_account_id:
+            debt.funding_account_id || debt.funding_source_id || null,
+          funding_strategy_id: debt.funding_strategy_id || "direct_payment",
           funding_source_id: debt.funding_source_id || null,
         });
 
@@ -291,8 +322,8 @@ export function useCashFlowPaymentActions({
     markBillPaid,
     updateBillIncomeDate,
     updateDebtIncomeDate,
-    updateBillFundingSource,
-    updateDebtFundingSource,
+    updateBillPaymentConfiguration,
+    updateDebtPaymentConfiguration,
     applyDebtPayment,
   };
 }

@@ -461,6 +461,10 @@ export type Debt = {
     minimum_payment_floor?: number | null
     next_due_date_after_payment?: string | null
     funding_source_id?: string | null
+    payment_account_id?: string | null
+    funding_account_type?: "account" | "income_pot" | null
+    funding_account_id?: string | null
+    funding_strategy_id?: string | null
     assigned_income_date?: string | null
     created_at?: string
   }

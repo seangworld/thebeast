@@ -52,6 +52,11 @@ import {
 } from "@/app/dashboard/money/components/MoneyDashboardUI";
 import { BeastMoneyShell } from "@/app/dashboard/money/BeastMoneyShell";
 import { MoneyCoachExperience } from "@/app/dashboard/money/components/MoneyCoachExperience";
+import {
+  describePaymentConfiguration,
+  getPaymentFundingStrategy,
+  normalizePaymentConfiguration,
+} from "@/lib/paymentConfiguration";
 import { FinancialMissionControl } from "@/app/dashboard/money/components/FinancialMissionControl";
 import { buildFinancialMissionControl } from "@/lib/financialMissionControl";
 
@@ -67,12 +72,22 @@ type MoneyDebt = {
   auto_pay_enabled?: boolean | null;
   reminder_enabled?: boolean | null;
   assigned_income_date?: string | null;
+  funding_source_id?: string | null;
+  payment_account_id?: string | null;
+  funding_account_type?: "account" | "income_pot" | null;
+  funding_account_id?: string | null;
+  funding_strategy_id?: string | null;
 };
 
 type MoneyBill = {
   id: string;
   name?: string | null;
   amount?: number | null;
+  funding_source_id?: string | null;
+  payment_account_id?: string | null;
+  funding_account_type?: "account" | "income_pot" | null;
+  funding_account_id?: string | null;
+  funding_strategy_id?: string | null;
   frequency?: string | null;
   due_date?: number | null;
   is_archived?: boolean | null;
@@ -729,6 +744,36 @@ export function MoneyWorkspacePage({ view }: { view: "coach" | "dashboard" }) {
     upcomingIncome: snapshot.activeIncomes.map((income) => ({ name: income.name || "Income", amount: numberValue(income.amount), date: income.next_date ? formatDateLabel(new Date(income.next_date)) : undefined })),
     debts: snapshot.activeDebts.map((debt) => ({ name: debt.name || "Debt", balance: numberValue(debt.balance), minimumPayment: numberValue(debt.minimum_payment), interestRate: numberValue(debt.interest_rate) })),
     fundingSources: state.fundingSources.filter((source) => source.is_active !== false).map((source) => ({ name: source.name || "Funding source", type: source.type || "other", available: numberValue(source.available_credit) })),
+    paymentConfigurations: [...snapshot.activeBills, ...snapshot.activeDebts]
+      .map((obligation) => {
+        const configuration = normalizePaymentConfiguration(obligation);
+        const paymentAccountName = state.fundingSources.find(
+          (source) => source.id === configuration.paymentAccountId
+        )?.name || undefined;
+        const fundingAccountName =
+          configuration.fundingAccountType === "income_pot"
+            ? snapshot.activeIncomes.find(
+                (income) => income.next_date === configuration.fundingAccountId
+              )?.name || "Income Pot"
+            : state.fundingSources.find(
+                (source) => source.id === configuration.fundingAccountId
+              )?.name || undefined;
+        return {
+          obligationName: obligation.name || "Obligation",
+          paymentAccountName,
+          fundingAccountName,
+          strategyLabel: getPaymentFundingStrategy(configuration.strategyId).label,
+          explanation: describePaymentConfiguration({
+            paymentAccountName,
+            fundingAccountName,
+            strategyId: configuration.strategyId,
+          }),
+        };
+      })
+      .filter(
+        (configuration) =>
+          configuration.paymentAccountName || configuration.fundingAccountName
+      ),
     helocReserve: state.fundingSources.filter((source) => source.is_active !== false && source.type?.toLowerCase().includes("heloc")).reduce((sum, source) => sum + numberValue(source.available_credit), 0),
     activeDebtStrategy: "avalanche",
     strategyScenarios: snapshot.scenarioComparison.scenarios.filter((scenario) => ["avalanche", "snowball", "velocity"].includes(scenario.id)).map((scenario) => ({ id: scenario.id, label: scenario.label, monthsToPayoff: scenario.monthsToPayoff, totalInterest: scenario.totalInterest, monthlyCashStrain: scenario.monthlyCashStrain, riskLevel: scenario.riskLevel, debtFreeDate: scenario.debtFreeDate })),

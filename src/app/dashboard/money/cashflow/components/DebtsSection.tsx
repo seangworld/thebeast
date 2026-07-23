@@ -6,6 +6,8 @@ import { PaymentAutomationControls, type AutomationPatch } from "../../component
 import { normalizePaymentAutomation } from "@/lib/paymentAutomation";
 import { CompactAssignmentSelect, compactIncomeLabel } from "./CompactAssignmentSelect";
 import { OverlayPopover } from "./OverlayPopover";
+import { PaymentConfigurationControl } from "./PaymentConfigurationControl";
+import type { PaymentConfigurationRecord } from "@/lib/paymentConfiguration";
 
 type DebtRow = {
   id: string;
@@ -17,6 +19,10 @@ type DebtRow = {
   nextDueDateDisplay: string;
   assigned_income_date?: string | null;
   funding_source_id?: string | null;
+  payment_account_id?: string | null;
+  funding_account_type?: "account" | "income_pot" | null;
+  funding_account_id?: string | null;
+  funding_strategy_id?: string | null;
   auto_pay_enabled?: boolean | null;
   reminder_enabled?: boolean | null;
 };
@@ -58,7 +64,10 @@ type DebtsSectionProps = {
   incomeBucketPlans: IncomeBucket[];
   activeFundingSources: FundingSource[];
   updateDebtIncomeDate: (debtId: string, assignedIncomeDate: string) => void;
-  updateDebtFundingSource: (debtId: string, fundingSourceId: string) => void;
+  updateDebtPaymentConfiguration: (
+    debtId: string,
+    patch: Partial<PaymentConfigurationRecord>
+  ) => void;
   debtPayments: Record<string, string>;
   setDebtPayments: Dispatch<SetStateAction<Record<string, string>>>;
   applyDebtPayment: (debt: DebtRow, amount: number) => Promise<void>;
@@ -97,7 +106,7 @@ export default function DebtsSection({
   incomeBucketPlans,
   activeFundingSources,
   updateDebtIncomeDate,
-  updateDebtFundingSource,
+  updateDebtPaymentConfiguration,
   debtPayments,
   setDebtPayments,
   applyDebtPayment,
@@ -116,11 +125,6 @@ export default function DebtsSection({
     compactLabel: compactIncomeLabel(bucket.dropdownLabel),
     detailLabel: bucket.dropdownLabel,
   }));
-  const fundingOptions = activeFundingSources.map((source) => ({
-    value: source.id,
-    compactLabel: source.name,
-    detailLabel: source.name,
-  }));
   return (
     <section className="beast-panel overflow-hidden">
       <div className="flex flex-col items-start gap-4 border-b border-[#2a3242] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
@@ -132,7 +136,7 @@ export default function DebtsSection({
             change.
           </p>
           <p className="mt-2 text-xs text-[#5a6577]">
-            Debts are balances you owe and plan to pay down. A debt may be linked to a funding source for tracking credit limits, available credit, or payment routing.
+            Debts are balances you owe and plan to pay down. Payment Setup keeps the draft account, fund origin, and transfer strategy distinct.
           </p>
         </div>
 
@@ -343,14 +347,16 @@ export default function DebtsSection({
 
                         <div className="grid min-w-0 gap-1">
                           <span className="text-xs font-bold uppercase text-[#7f8da3]">
-                            Funding Source
+                            Payment Setup
                           </span>
-                          <CompactAssignmentSelect
-                            label={`${debt.name} funding source`}
-                            value={debt.funding_source_id || ""}
-                            options={fundingOptions}
-                            overlayWidth={220}
-                            onChange={(value) => updateDebtFundingSource(debt.id, value)}
+                          <PaymentConfigurationControl
+                            label={`${debt.name} payment configuration`}
+                            record={debt}
+                            accounts={activeFundingSources}
+                            incomePots={incomeBucketPlans}
+                            onChange={(patch) =>
+                              updateDebtPaymentConfiguration(debt.id, patch)
+                            }
                           />
                         </div>
                       </div>
@@ -369,7 +375,7 @@ export default function DebtsSection({
                 <th className="text-right">Minimum</th>
                 <th className="text-center">Next Due</th>
                 <th className="text-center">Income Pot</th>
-                <th className="hidden text-center min-[1440px]:table-cell">Funding Source</th>
+                <th className="hidden text-center min-[1440px]:table-cell">Payment Setup</th>
                 <th className="text-center">Actions</th>
               </tr>
             </thead>
@@ -480,7 +486,7 @@ export default function DebtsSection({
                         <summary className="cursor-pointer font-semibold text-cyan-200">Row details</summary>
                         <div className="mt-2 grid gap-1">
                           <span>Income pot: {incomeOptions.find((option) => option.value === debt.assigned_income_date)?.detailLabel || "Unassigned"}</span>
-                          <span>Funding source: {fundingOptions.find((option) => option.value === debt.funding_source_id)?.detailLabel || "Unassigned"}</span>
+                          <span>Payment setup is available in the Payment Setup control.</span>
                           <span>Payment behavior: {debt.payment_behavior === "revolving" ? "Revolving / credit minimum" : "Fixed minimum"}</span>
                         </div>
                       </details>
@@ -502,12 +508,14 @@ export default function DebtsSection({
                     </td>
 
                     <td className="hidden text-center align-top min-[1440px]:table-cell">
-                      <CompactAssignmentSelect
-                        label={`${debt.name} funding source`}
-                        value={debt.funding_source_id || ""}
-                        options={fundingOptions}
-                        overlayWidth={220}
-                        onChange={(value) => updateDebtFundingSource(debt.id, value)}
+                      <PaymentConfigurationControl
+                        label={`${debt.name} payment configuration`}
+                        record={debt}
+                        accounts={activeFundingSources}
+                        incomePots={incomeBucketPlans}
+                        onChange={(patch) =>
+                          updateDebtPaymentConfiguration(debt.id, patch)
+                        }
                       />
                     </td>
 

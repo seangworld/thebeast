@@ -164,13 +164,14 @@ test("Bills and Debts use viewport-bound overlay menus without changing row widt
   const debts = readFileSync("src/app/dashboard/money/cashflow/components/DebtsSection.tsx", "utf8");
   const overlay = readFileSync("src/app/dashboard/money/cashflow/components/OverlayPopover.tsx", "utf8");
   const assignments = readFileSync("src/app/dashboard/money/cashflow/components/CompactAssignmentSelect.tsx", "utf8");
+  const paymentConfiguration = readFileSync("src/app/dashboard/money/cashflow/components/PaymentConfigurationControl.tsx", "utf8");
   const billControls = readFileSync("src/app/dashboard/money/cashflow/components/BillPaymentControls.tsx", "utf8");
   const debtControls = readFileSync("src/app/dashboard/money/cashflow/components/DebtPaymentControls.tsx", "utf8");
 
   for (const source of [bills, debts]) {
     assert.match(source, /<OverlayPopover label="Actions"/);
     assert.equal(source.match(/<OverlayPopover label="Actions" width=\{192\}/g)?.length, 2);
-    assert.equal(source.match(/overlayWidth=\{220\}/g)?.length, 2);
+    assert.equal(source.match(/<PaymentConfigurationControl/g)?.length, 2);
     assert.doesNotMatch(source, /<summary[^>]*>Actions<\/summary>/);
     assert.doesNotMatch(source, /min-w-\[900px\]/);
   }
@@ -188,6 +189,7 @@ test("Bills and Debts use viewport-bound overlay menus without changing row widt
   assert.match(assignments, /option\.detailLabel/);
   assert.match(assignments, /overlayWidth = 420/);
   assert.match(assignments, /width=\{overlayWidth\}/);
+  assert.match(paymentConfiguration, /width=\{300\}/);
   assert.match(assignments, /triggerClassName="w-40"/);
   assert.match(assignments, /role="listbox"/);
   assert.match(billControls, /window\.confirm/);

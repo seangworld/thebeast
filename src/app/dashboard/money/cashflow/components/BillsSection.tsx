@@ -6,6 +6,8 @@ import { PaymentAutomationControls, type AutomationPatch } from "../../component
 import { normalizePaymentAutomation } from "@/lib/paymentAutomation";
 import { CompactAssignmentSelect, compactIncomeLabel } from "./CompactAssignmentSelect";
 import { OverlayPopover } from "./OverlayPopover";
+import { PaymentConfigurationControl } from "./PaymentConfigurationControl";
+import type { PaymentConfigurationRecord } from "@/lib/paymentConfiguration";
 
 type BillFrequency =
   | "weekly"
@@ -26,6 +28,10 @@ export type BillRow = {
   due_date?: number;
   assigned_income_date?: string | null;
   funding_source_id?: string | null;
+  payment_account_id?: string | null;
+  funding_account_type?: "account" | "income_pot" | null;
+  funding_account_id?: string | null;
+  funding_strategy_id?: string | null;
   nextDueDateDisplay: string;
   status: string;
   auto_pay_enabled?: boolean | null;
@@ -66,7 +72,10 @@ type BillsSectionProps = {
   incomeBucketPlans: IncomeBucket[];
   activeFundingSources: FundingSource[];
   updateBillIncomeDate: (billId: string, assignedIncomeDate: string) => void;
-  updateBillFundingSource: (billId: string, fundingSourceId: string) => void;
+  updateBillPaymentConfiguration: (
+    billId: string,
+    patch: Partial<PaymentConfigurationRecord>
+  ) => void;
   partialPayments: Record<string, string>;
   setPartialPayments: Dispatch<SetStateAction<Record<string, string>>>;
   addBillPayment: (bill: BillRow, amount: number) => Promise<void>;
@@ -97,7 +106,7 @@ export default function BillsSection({
   incomeBucketPlans,
   activeFundingSources,
   updateBillIncomeDate,
-  updateBillFundingSource,
+  updateBillPaymentConfiguration,
   partialPayments,
   setPartialPayments,
   addBillPayment,
@@ -110,7 +119,6 @@ export default function BillsSection({
   updatePaymentAutomation,
 }: BillsSectionProps) {
   const incomeOptions = incomeBucketPlans.map((bucket) => ({ value: bucket.date, compactLabel: compactIncomeLabel(bucket.dropdownLabel), detailLabel: bucket.dropdownLabel }));
-  const fundingOptions = activeFundingSources.map((source) => ({ value: source.id, compactLabel: source.name, detailLabel: source.name }));
   return (
     <section id="bills" className="money-section-panel">
       <div className="money-section-header">
@@ -297,14 +305,16 @@ export default function BillsSection({
 
                         <div className="grid min-w-0 gap-1">
                           <span className="text-xs font-bold uppercase text-[#7f8da3]">
-                            Funding Source
+                            Payment Setup
                           </span>
-                          <CompactAssignmentSelect
-                            label={`${bill.name} funding source`}
-                            value={bill.funding_source_id || ""}
-                            options={fundingOptions}
-                            overlayWidth={220}
-                            onChange={(value) => updateBillFundingSource(bill.id, value)}
+                          <PaymentConfigurationControl
+                            label={`${bill.name} payment configuration`}
+                            record={bill}
+                            accounts={activeFundingSources}
+                            incomePots={incomeBucketPlans}
+                            onChange={(patch) =>
+                              updateBillPaymentConfiguration(bill.id, patch)
+                            }
                           />
                         </div>
                       </div>
@@ -323,7 +333,7 @@ export default function BillsSection({
                 <th className="text-right">Remaining</th>
                 <th className="text-center">Next Due</th>
                 <th className="text-center">Income Pot</th>
-                <th className="hidden text-center min-[1440px]:table-cell">Funding Source</th>
+                <th className="hidden text-center min-[1440px]:table-cell">Payment Setup</th>
                 <th className="text-center">Actions</th>
               </tr>
             </thead>
@@ -389,7 +399,7 @@ export default function BillsSection({
                         </div>
                       )}
                       <div className="mt-2"><PaymentAutomationControls compact name={bill.name} {...normalizePaymentAutomation(bill)} onSave={(patch) => updatePaymentAutomation(bill.id, patch)} /></div>
-                      <details className="mt-2 text-xs text-[#9aa7b8]"><summary className="cursor-pointer font-semibold text-cyan-200">Row details</summary><div className="mt-2 grid gap-1"><span>Paid: ${Number(bill.paid || 0).toFixed(2)}</span><span>Income pot: {incomeOptions.find((option) => option.value === bill.assigned_income_date)?.detailLabel || "Unassigned"}</span><span>Funding source: {fundingOptions.find((option) => option.value === bill.funding_source_id)?.detailLabel || "Unassigned"}</span><span>Status: {bill.status}</span></div></details>
+                      <details className="mt-2 text-xs text-[#9aa7b8]"><summary className="cursor-pointer font-semibold text-cyan-200">Row details</summary><div className="mt-2 grid gap-1"><span>Paid: ${Number(bill.paid || 0).toFixed(2)}</span><span>Income pot: {incomeOptions.find((option) => option.value === bill.assigned_income_date)?.detailLabel || "Unassigned"}</span><span>Payment setup is available in the Payment Setup control.</span><span>Status: {bill.status}</span></div></details>
                     </td>
 
                     <td className="text-right align-top font-semibold">
@@ -403,7 +413,15 @@ export default function BillsSection({
                     </td>
 
                     <td className="hidden text-center align-top min-[1440px]:table-cell">
-                      <CompactAssignmentSelect label={`${bill.name} funding source`} value={bill.funding_source_id || ""} options={fundingOptions} overlayWidth={220} onChange={(value) => updateBillFundingSource(bill.id, value)} />
+                      <PaymentConfigurationControl
+                        label={`${bill.name} payment configuration`}
+                        record={bill}
+                        accounts={activeFundingSources}
+                        incomePots={incomeBucketPlans}
+                        onChange={(patch) =>
+                          updateBillPaymentConfiguration(bill.id, patch)
+                        }
+                      />
                     </td>
 
                     <td className="w-[18%] align-top">

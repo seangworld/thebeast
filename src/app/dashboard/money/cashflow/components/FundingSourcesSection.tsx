@@ -67,13 +67,13 @@ export default function FundingSourcesSection({
     <section className="beast-panel overflow-hidden">
       <div className="flex flex-col items-start gap-4 border-b border-[#2a3242] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
         <div>
-          <h2 className="money-section-title">Funding Sources</h2>
+          <h2 className="money-section-title">Payment &amp; Funding Accounts</h2>
           <p className="mt-1 text-sm text-[#7f8da3]">
             Accounts and liquidity sources used to fund bills, debt payments,
             and future HELOC/PLOC planning.
           </p>
           <p className="mt-2 text-xs text-[#5a6577]">
-            Funding Sources are accounts or credit lines money can come from. Some sources, like credit cards or HELOCs, may also appear below as debts if you owe a balance.
+            These accounts can be selected as the Payment Account a draft leaves from or the Funding Account where its money originated. Credit cards and HELOCs may also appear as debts when they carry a balance.
           </p>
         </div>
 
@@ -114,7 +114,7 @@ export default function FundingSourcesSection({
                   name: e.target.value,
                 })
               }
-              placeholder="Funding source name"
+              placeholder="Account name"
               className="beast-input"
             />
 
@@ -193,10 +193,10 @@ export default function FundingSourcesSection({
           </div>
 
           <button onClick={addFundingSource} className="beast-button">
-            Add Funding Source
+            Add Account
           </button>
 
-          <div className="beast-table-wrap" tabIndex={0} role="region" aria-label="Funding sources table">
+          <div className="beast-table-wrap" tabIndex={0} role="region" aria-label="Payment and funding accounts table">
             <table className="w-full min-w-[840px] text-sm">
               <thead>
                 <tr>
@@ -214,7 +214,7 @@ export default function FundingSourcesSection({
               <tbody>
                 {fundingSources.length === 0 ? (
                   <tr>
-                    <td colSpan={8}>No funding sources added yet.</td>
+                    <td colSpan={8}>No payment or funding accounts added yet.</td>
                   </tr>
                 ) : (
                   fundingSources.map((source) => {

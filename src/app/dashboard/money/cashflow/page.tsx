@@ -174,8 +174,8 @@ export default function CashFlowPage() {
     markBillPaid,
     updateBillIncomeDate,
     updateDebtIncomeDate,
-    updateBillFundingSource,
-    updateDebtFundingSource,
+    updateBillPaymentConfiguration,
+    updateDebtPaymentConfiguration,
     startEditIncome,
     cancelEditIncome,
     saveIncomeEdit,
@@ -1328,7 +1328,7 @@ export default function CashFlowPage() {
           incomeBucketPlans={incomeBucketPlans}
           activeFundingSources={activeFundingSources}
           updateBillIncomeDate={updateBillIncomeDate}
-          updateBillFundingSource={updateBillFundingSource}
+          updateBillPaymentConfiguration={updateBillPaymentConfiguration}
           partialPayments={partialPayments}
           setPartialPayments={setPartialPayments}
           addBillPayment={addBillPayment}
@@ -1366,7 +1366,7 @@ export default function CashFlowPage() {
           incomeBucketPlans={incomeBucketPlans}
           activeFundingSources={activeFundingSources}
           updateDebtIncomeDate={updateDebtIncomeDate}
-          updateDebtFundingSource={updateDebtFundingSource}
+          updateDebtPaymentConfiguration={updateDebtPaymentConfiguration}
           debtPayments={debtPayments}
           setDebtPayments={setDebtPayments}
           applyDebtPayment={applyDebtPayment}
