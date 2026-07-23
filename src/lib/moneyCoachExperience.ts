@@ -23,6 +23,7 @@ import {
   SharedAgentPlanningEngine,
   specialistRoleDefinitions,
   type RoleDefinedExecution,
+  type SpecialistRoleDefinition,
 } from "./platform/agents";
 
 export type MoneyCoachExperienceCard = {
@@ -64,6 +65,7 @@ export type MoneyCoachExperienceModel = {
   insights: Insight[];
   behavior: ProfessionalBehaviorProfile;
   professional: ProfessionalIdentityProfile;
+  roleDefinition: SpecialistRoleDefinition;
   safetyNotice: string;
   userFirstName: string;
   financialContext: {
@@ -222,6 +224,7 @@ function plural(value: number, singular: string, pluralLabel = `${singular}s`) {
 export function buildMoneyCoachExperience(
   input: MoneyCoachExperienceInput
 ): MoneyCoachExperienceModel {
+  const roleDefinition = specialistRoleDefinitions.moneyCoach;
   const importantItems: string[] = [];
   const wins: string[] = [];
   const potentialIssues: string[] = [];
@@ -505,6 +508,7 @@ export function buildMoneyCoachExperience(
     insights,
     behavior: specialistProfessionalIdentityProfiles.moneyCoach.behavior,
     professional: specialistProfessionalIdentityProfiles.moneyCoach,
+    roleDefinition,
     safetyNotice: specialistProfessionalIdentityProfiles.moneyCoach.identity.professionalBoundaries.join(". "),
     userFirstName: firstName(input.userName),
     financialContext: {
@@ -725,9 +729,11 @@ export function answerMoneyCoachQuestion(
   const planner = new SharedAgentPlanningEngine();
   planner.registerPolicy(specialistAgentPlanningPolicies.moneyCoach);
   const execution = prepareRoleDefinedExecution({
-    roleDefinition: specialistRoleDefinitions.moneyCoach,
+    roleDefinition: model.roleDefinition,
     professionalProfile: model.professional,
     knowledgeSourcePolicy: specialistKnowledgeSourcePolicies.moneyCoach,
+    memberContext: conversation,
+    currentState: model.financialContext,
     planner,
     planningRequest: {
       specialistId: "beastmoney.money-coach",

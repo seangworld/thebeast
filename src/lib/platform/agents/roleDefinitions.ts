@@ -18,8 +18,48 @@ export interface SpecialistRoleDefinition {
   id: string;
   specialistId: string;
   version: string;
+  extendsRoleId?: string;
   roleTitle: string;
+  professionalIdentity: string;
   mission: string;
+  corePurpose: string;
+  philosophy: {
+    teaching: readonly string[];
+    decision: readonly string[];
+    communication: readonly string[];
+    problemSolving: readonly string[];
+  };
+  responsibilities: {
+    primary: readonly string[];
+    secondary: readonly string[];
+    activelyLooksFor: readonly string[];
+  };
+  goals: {
+    desiredMemberOutcomes: readonly string[];
+    successMeasurements: readonly string[];
+  };
+  conversationStyle: {
+    tone: readonly string[];
+    vocabulary: "plain-language" | "professional" | "technical-when-needed";
+    explanationDepth: "concise" | "adaptive" | "detailed";
+    questionStyle: "focused" | "coaching" | "direct";
+    empathyLevel: "measured" | "supportive" | "high";
+    technicalDepth: "minimal" | "adaptive" | "advanced";
+  };
+  behavior: {
+    default: readonly string[];
+    proactive: readonly string[];
+    reactive: readonly string[];
+  };
+  boundaries: {
+    mayDo: readonly string[];
+    mustNeverDo: readonly string[];
+  };
+  escalation: {
+    recommendExpertWhen: readonly string[];
+    requestMoreInformationWhen: readonly string[];
+  };
+  /** Compatibility summaries retained for existing AGENT-209 consumers. */
   coreResponsibilities: readonly string[];
   successCriteria: readonly string[];
   communicationGoals: readonly string[];
@@ -40,8 +80,10 @@ export type RoleDefinedExecution = {
   roleDefinition: SpecialistRoleDefinition;
   professionalProfile: ProfessionalIdentityProfile;
   knowledgeSourcePolicy: SpecialistKnowledgeSourcePolicy;
+  memberContext: unknown;
+  currentState: unknown;
   plan: AgentPlan;
-  loadOrder: readonly ["role-definition", "professional-playbook", "knowledge-sources", "plan"];
+  loadOrder: readonly ["role-definition", "professional-playbook", "member-context", "current-state", "relevant-knowledge", "reasoning-plan", "response-generation"];
 };
 
 export type RoleAwareResponseDraft<TIntent extends string> = ProfessionalResponseDraft<TIntent> & {
@@ -63,11 +105,57 @@ export function validateRoleDefinition(definition: SpecialistRoleDefinition) {
   requireValues(definition.professionalBoundaries, "Role Definition professional boundaries");
   requireValues(definition.escalationPrinciples, "Role Definition escalation principles");
   requireValues(definition.behaviorsToAvoid, "Role Definition behaviors to avoid");
+  if (!definition.professionalIdentity.trim() || !definition.corePurpose.trim()) throw new Error("Role Definition professional identity and core purpose are required.");
+  requireValues(definition.philosophy.teaching, "Role Definition teaching philosophy");
+  requireValues(definition.philosophy.decision, "Role Definition decision philosophy");
+  requireValues(definition.philosophy.communication, "Role Definition communication philosophy");
+  requireValues(definition.philosophy.problemSolving, "Role Definition problem-solving philosophy");
+  requireValues(definition.responsibilities.primary, "Role Definition primary responsibilities");
+  requireValues(definition.responsibilities.secondary, "Role Definition secondary responsibilities");
+  requireValues(definition.responsibilities.activelyLooksFor, "Role Definition active observation responsibilities");
+  requireValues(definition.goals.desiredMemberOutcomes, "Role Definition desired member outcomes");
+  requireValues(definition.goals.successMeasurements, "Role Definition success measurements");
+  requireValues(definition.conversationStyle.tone, "Role Definition conversation tone");
+  requireValues(definition.behavior.default, "Role Definition default behavior");
+  requireValues(definition.behavior.proactive, "Role Definition proactive behavior");
+  requireValues(definition.behavior.reactive, "Role Definition reactive behavior");
+  requireValues(definition.boundaries.mayDo, "Role Definition permitted activities");
+  requireValues(definition.boundaries.mustNeverDo, "Role Definition prohibited activities");
+  requireValues(definition.escalation.recommendExpertWhen, "Role Definition expert escalation guidance");
+  requireValues(definition.escalation.requestMoreInformationWhen, "Role Definition information escalation guidance");
   return definition;
 }
 
 export function defineRoleDefinition(definition: SpecialistRoleDefinition) {
   return Object.freeze(validateRoleDefinition(definition));
+}
+
+export type InheritedRoleOverrides = Omit<Partial<SpecialistRoleDefinition>, "philosophy" | "responsibilities" | "goals" | "conversationStyle" | "behavior" | "boundaries" | "escalation" | "execution"> &
+  Pick<SpecialistRoleDefinition, "id" | "specialistId" | "version"> & {
+    philosophy?: Partial<SpecialistRoleDefinition["philosophy"]>;
+    responsibilities?: Partial<SpecialistRoleDefinition["responsibilities"]>;
+    goals?: Partial<SpecialistRoleDefinition["goals"]>;
+    conversationStyle?: Partial<SpecialistRoleDefinition["conversationStyle"]>;
+    behavior?: Partial<SpecialistRoleDefinition["behavior"]>;
+    boundaries?: Partial<SpecialistRoleDefinition["boundaries"]>;
+    escalation?: Partial<SpecialistRoleDefinition["escalation"]>;
+    execution?: Partial<SpecialistRoleDefinition["execution"]>;
+  };
+
+export function inheritRoleDefinition(base: SpecialistRoleDefinition, overrides: InheritedRoleOverrides) {
+  return defineRoleDefinition({
+    ...base,
+    ...overrides,
+    extendsRoleId: overrides.extendsRoleId || base.id,
+    philosophy: { ...base.philosophy, ...overrides.philosophy },
+    responsibilities: { ...base.responsibilities, ...overrides.responsibilities },
+    goals: { ...base.goals, ...overrides.goals },
+    conversationStyle: { ...base.conversationStyle, ...overrides.conversationStyle },
+    behavior: { ...base.behavior, ...overrides.behavior },
+    boundaries: { ...base.boundaries, ...overrides.boundaries },
+    escalation: { ...base.escalation, ...overrides.escalation },
+    execution: { ...base.execution, ...overrides.execution },
+  });
 }
 
 export class RoleDefinitionRegistry {
@@ -100,6 +188,8 @@ export function prepareRoleDefinedExecution(input: {
   roleDefinition: SpecialistRoleDefinition;
   professionalProfile: ProfessionalIdentityProfile;
   knowledgeSourcePolicy: SpecialistKnowledgeSourcePolicy;
+  memberContext: unknown;
+  currentState: unknown;
   planner: SharedAgentPlanningEngine;
   planningRequest: AgentPlanningRequest;
 }): RoleDefinedExecution {
@@ -112,8 +202,10 @@ export function prepareRoleDefinedExecution(input: {
     roleDefinition,
     professionalProfile: input.professionalProfile,
     knowledgeSourcePolicy: input.knowledgeSourcePolicy,
+    memberContext: input.memberContext,
+    currentState: input.currentState,
     plan,
-    loadOrder: ["role-definition", "professional-playbook", "knowledge-sources", "plan"],
+    loadOrder: ["role-definition", "professional-playbook", "member-context", "current-state", "relevant-knowledge", "reasoning-plan", "response-generation"],
   };
 }
 
@@ -140,18 +232,92 @@ export function composeRoleDefinedResponse<TIntent extends string>(
   });
 }
 
-const role = (values: Omit<SpecialistRoleDefinition, "version">) => defineRoleDefinition({ ...values, version: "1.0.0" });
+export const sharedProfessionalRoleFoundation = defineRoleDefinition({
+  id: "beastos.specialist.role-foundation", specialistId: "beastos.specialist-foundation", version: "1.0.0",
+  roleTitle: "Beast professional specialist", professionalIdentity: "Beast professional specialist", mission: "Help members understand their situation and make informed decisions.", corePurpose: "Provide trustworthy professional guidance within configured boundaries.",
+  philosophy: { teaching: ["explain clearly"], decision: ["use authoritative current evidence"], communication: ["answer directly and respectfully"], problemSolving: ["understand before acting"] },
+  responsibilities: { primary: ["understand the member's need"], secondary: ["offer a useful next step"], activelyLooksFor: ["missing information"] },
+  goals: { desiredMemberOutcomes: ["the member can make an informed decision"], successMeasurements: ["the response is understandable evidence-based and useful"] },
+  conversationStyle: { tone: ["professional"], vocabulary: "plain-language", explanationDepth: "adaptive", questionStyle: "focused", empathyLevel: "supportive", technicalDepth: "adaptive" },
+  behavior: { default: ["answer the actual question"], proactive: ["surface material issues"], reactive: ["respond to the member's stated need"] },
+  boundaries: { mayDo: ["explain approved information"], mustNeverDo: ["claim certainty unsupported by evidence"] },
+  escalation: { recommendExpertWhen: ["the request exceeds configured professional boundaries"], requestMoreInformationWhen: ["required evidence is missing or conflicting"] },
+  coreResponsibilities: ["understand the member's need"], successCriteria: ["the member can make an informed decision"], communicationGoals: ["clear respectful guidance"], decisionPriorities: ["current authoritative evidence"], teachingPhilosophy: ["explain clearly"], professionalBoundaries: ["operate only within configured authority"], defaultConversationStyle: "conversation-first", escalationPrinciples: ["escalate beyond role boundaries"], behaviorsToAvoid: ["unsupported certainty"],
+  execution: { explainBeforeRecommending: true, preferConversationOverDashboards: true, workspaceGuidance: "when-useful" },
+});
+
+type RoleSeed = Omit<SpecialistRoleDefinition, "version" | "extendsRoleId" | "professionalIdentity" | "corePurpose" | "philosophy" | "responsibilities" | "goals" | "conversationStyle" | "behavior" | "boundaries" | "escalation"> & {
+  professionalIdentity?: string;
+  corePurpose?: string;
+  philosophy?: Partial<SpecialistRoleDefinition["philosophy"]>;
+  responsibilities?: Partial<SpecialistRoleDefinition["responsibilities"]>;
+  goals?: Partial<SpecialistRoleDefinition["goals"]>;
+  conversationStyle?: Partial<SpecialistRoleDefinition["conversationStyle"]>;
+  behavior?: Partial<SpecialistRoleDefinition["behavior"]>;
+  boundaries?: Partial<SpecialistRoleDefinition["boundaries"]>;
+  escalation?: Partial<SpecialistRoleDefinition["escalation"]>;
+};
+
+const role = (values: RoleSeed) => inheritRoleDefinition(sharedProfessionalRoleFoundation, {
+  ...values,
+  id: values.id,
+  specialistId: values.specialistId,
+  version: "1.0.0",
+  professionalIdentity: values.professionalIdentity || values.roleTitle,
+  corePurpose: values.corePurpose || values.mission,
+  philosophy: {
+    teaching: values.philosophy?.teaching || values.teachingPhilosophy,
+    decision: values.philosophy?.decision || values.decisionPriorities,
+    communication: values.philosophy?.communication || values.communicationGoals,
+    problemSolving: values.philosophy?.problemSolving || values.coreResponsibilities,
+  },
+  responsibilities: {
+    primary: values.responsibilities?.primary || values.coreResponsibilities,
+    secondary: values.responsibilities?.secondary || values.communicationGoals,
+    activelyLooksFor: values.responsibilities?.activelyLooksFor || ["missing information", "risks", "opportunities"],
+  },
+  goals: {
+    desiredMemberOutcomes: values.goals?.desiredMemberOutcomes || values.successCriteria,
+    successMeasurements: values.goals?.successMeasurements || values.successCriteria,
+  },
+  conversationStyle: {
+    tone: values.conversationStyle?.tone || values.communicationGoals,
+    vocabulary: values.conversationStyle?.vocabulary || "plain-language",
+    explanationDepth: values.conversationStyle?.explanationDepth || "adaptive",
+    questionStyle: values.conversationStyle?.questionStyle || "focused",
+    empathyLevel: values.conversationStyle?.empathyLevel || "supportive",
+    technicalDepth: values.conversationStyle?.technicalDepth || "adaptive",
+  },
+  behavior: {
+    default: values.behavior?.default || values.coreResponsibilities,
+    proactive: values.behavior?.proactive || ["surface material observations"],
+    reactive: values.behavior?.reactive || ["answer the member's actual question first"],
+  },
+  boundaries: {
+    mayDo: values.boundaries?.mayDo || values.coreResponsibilities,
+    mustNeverDo: values.boundaries?.mustNeverDo || values.professionalBoundaries,
+  },
+  escalation: {
+    recommendExpertWhen: values.escalation?.recommendExpertWhen || values.escalationPrinciples,
+    requestMoreInformationWhen: values.escalation?.requestMoreInformationWhen || ["required information is missing or inconsistent"],
+  },
+});
 
 export const specialistRoleDefinitions = {
   moneyCoach: role({
-    id: "beastmoney.money-coach.role", specialistId: "beastmoney.money-coach", roleTitle: "Professional financial coach",
-    mission: "Reduce financial stress and help members make informed financial decisions through clear conversation and current evidence.",
+    id: "beastmoney.money-coach.role", specialistId: "beastmoney.money-coach", roleTitle: "Money Coach", professionalIdentity: "Certified Financial Planner and Financial Coach",
+    mission: "Help members build long-term financial confidence by understanding their finances and making informed decisions.", corePurpose: "Teach members how to understand their finances, reduce financial stress, and make informed decisions.",
     coreResponsibilities: ["understand what matters to the member", "explain financial context before recommending action", "guide members to deeper workspaces only when beneficial"],
     successCriteria: ["members understand the reason behind a recommendation", "members can make an informed next decision", "conversation remains the primary advisory experience"],
     communicationGoals: ["teacher before technician", "advisor before reporter", "calm and practical explanations"],
     decisionPriorities: ["member safety and current records", "understanding before action", "highest-impact useful next step"],
     teachingPhilosophy: ["explain before recommending", "connect concepts to current member context", "make calculations understandable"],
-    professionalBoundaries: ["provide educational planning support rather than regulated professional advice", "preserve member decision authority"],
+    responsibilities: { primary: ["teach before recommending", "explain before concluding", "observe before reacting", "guide before navigating"], secondary: ["reduce financial stress", "encourage informed decisions", "prefer conversation over forms"], activelyLooksFor: ["trends", "opportunities", "risks", "missing information", "inconsistencies", "progress", "improvements"] },
+    conversationStyle: { tone: ["calm", "professional", "encouraging", "practical", "educational", "never judgmental"], vocabulary: "plain-language", explanationDepth: "adaptive", questionStyle: "coaching", empathyLevel: "supportive", technicalDepth: "adaptive" },
+    behavior: { default: ["teach before recommending", "explain before concluding", "observe before reacting", "guide before navigating"], proactive: ["look for trends opportunities risks missing information inconsistencies progress and improvements"], reactive: ["answer the member's question before offering navigation"] },
+    boundaries: { mayDo: ["explain current financial records", "teach financial concepts", "compare transparent tradeoffs", "guide members to deeper analysis"], mustNeverDo: ["guarantee financial outcomes", "predict markets", "recommend specific investments", "recommend borrowing decisions without explaining tradeoffs"] },
+    escalation: { recommendExpertWhen: ["tax legal investment lending or regulated advice is required"], requestMoreInformationWhen: ["current records are missing stale inconsistent or insufficient for a responsible conclusion"] },
+    professionalBoundaries: ["never guarantee financial outcomes", "never predict markets", "never recommend specific investments", "never recommend borrowing decisions without explaining tradeoffs"],
     defaultConversationStyle: "conversation-first",
     escalationPrinciples: ["state when records are insufficient", "direct members to qualified professionals when the decision exceeds the role"],
     behaviorsToAvoid: ["leading with dashboards", "reporting numbers without meaning", "recommending before explaining", "using workspace links as the answer"],

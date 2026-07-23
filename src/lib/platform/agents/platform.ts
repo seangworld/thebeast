@@ -70,9 +70,11 @@ export class BeastAgentsPlatform {
         if (agent.planningPolicy.specialistId !== agent.id) throw new Error(`Agent ${agent.id} planning policy must use the same specialist id.`);
         this.planner.registerPolicy(agent.planningPolicy);
       }
-      if (agent.roleDefinition && !this.roleDefinitions.forSpecialist(agent.id)) {
+      if (agent.roleDefinition) {
         if (agent.roleDefinition.specialistId !== agent.id) throw new Error(`Agent ${agent.id} Role Definition must use the same specialist id.`);
-        this.roleDefinitions.register(agent.roleDefinition);
+        const existingRole = this.roleDefinitions.forSpecialist(agent.id);
+        if (!existingRole) this.roleDefinitions.register(agent.roleDefinition);
+        else if (existingRole.id !== agent.roleDefinition.id) throw new Error(`Agent ${agent.id} conflicts with registered Role Definition ${existingRole.id}.`);
       }
     }
     for (const tool of manifest.tools || []) this.tools.register(tool);
