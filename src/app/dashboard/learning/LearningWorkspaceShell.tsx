@@ -27,9 +27,9 @@ export function LearningWorkspaceShell({
               <h1 className="beast-title">{title}</h1>
               <p className="beast-subtitle">{description}</p>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
               {actions}
-              <Link href="/dashboard/education" className="beast-button-secondary">
+              <Link href="/dashboard/education" className="beast-button-secondary w-full justify-center sm:w-auto">
                 Back to Learning Mission Control
               </Link>
             </div>

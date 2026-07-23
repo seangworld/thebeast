@@ -23,10 +23,10 @@ export function LearningReports({ bundle }: { bundle: LearningReportsBundle }) {
         title="Professional learning reports"
         description="Printable, exportable summaries generated only from your authenticated BeastEducation records."
         action={
-          <div className="flex flex-wrap gap-2 print:hidden">
+          <div className="flex w-full flex-col gap-2 print:hidden sm:w-auto sm:flex-row sm:flex-wrap">
             <button
               type="button"
-              className="beast-button-secondary"
+              className="beast-button-secondary w-full justify-center sm:w-auto"
               onClick={() => window.print()}
               aria-label="Print Learning Reports"
             >
@@ -34,7 +34,7 @@ export function LearningReports({ bundle }: { bundle: LearningReportsBundle }) {
             </button>
             <button
               type="button"
-              className="beast-button"
+              className="beast-button w-full justify-center sm:w-auto"
               onClick={() => exportReports(bundle)}
               aria-label="Export Learning Reports"
             >
@@ -56,7 +56,7 @@ export function LearningReports({ bundle }: { bundle: LearningReportsBundle }) {
           <DashboardCard
             key={report.id}
             accent="learning"
-            className="min-w-0 print:mb-5 print:break-inside-avoid"
+            className="min-w-0 transition duration-300 motion-safe:hover:-translate-y-0.5 motion-safe:hover:shadow-[0_18px_48px_rgba(0,0,0,0.2)] motion-reduce:transition-none print:mb-5 print:break-inside-avoid"
           >
             <article aria-labelledby={`${report.id}-title`}>
               <p className="beast-kicker">{report.period}</p>

@@ -208,7 +208,10 @@ function LearningTimeline({ events }: { events: LearningChronologyEvent[] }) {
               className="relative z-10 mt-2 h-3 w-3 justify-self-center rounded-full border-2 border-[#111722] bg-indigo-300 shadow-[0_0_0_3px_rgba(165,180,252,0.14)]"
               aria-hidden="true"
             />
-            <DashboardCard accent="learning" className="min-w-0">
+            <DashboardCard
+              accent="learning"
+              className="min-w-0 transition duration-300 motion-safe:hover:-translate-y-0.5 motion-safe:hover:shadow-[0_18px_48px_rgba(0,0,0,0.2)] motion-reduce:transition-none"
+            >
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0">
                   <p className="text-xs font-black uppercase tracking-[0.16em] text-indigo-200">
@@ -275,10 +278,14 @@ export default async function LearningWorkspaceView({ slug }: { slug: string }) 
             title={`${items.length} ${items.length === 1 ? "record" : "records"}`}
             description="This workspace uses your authenticated BeastEducation records."
           />
-          <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div className="mt-6 grid items-stretch gap-5 md:grid-cols-2 xl:grid-cols-3">
             {items.map((item) => (
-              <DashboardCard key={item.id} accent="learning" className="min-w-0">
-                <div className="flex h-full min-h-[180px] flex-col">
+              <DashboardCard
+                key={item.id}
+                accent="learning"
+                className="min-w-0 transition duration-300 motion-safe:hover:-translate-y-0.5 motion-safe:hover:shadow-[0_18px_48px_rgba(0,0,0,0.2)] motion-reduce:transition-none"
+              >
+                <div className="flex h-full min-h-[190px] flex-col">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     {item.status ? (
                       <span className="rounded-full border border-indigo-300/30 bg-indigo-300/10 px-2.5 py-1 text-xs font-black text-indigo-100">
@@ -291,14 +298,21 @@ export default async function LearningWorkspaceView({ slug }: { slug: string }) 
                   <p className="mt-2 break-words text-sm leading-6 text-[#aeb8c7]">{item.detail}</p>
                   {typeof item.progress === "number" ? (
                     <div className="mt-4">
-                      <div className="h-2 overflow-hidden rounded-full bg-[#0b1018]">
-                        <div className="h-full rounded-full bg-indigo-300" style={{ width: `${Math.max(0, Math.min(100, item.progress))}%` }} />
+                      <div
+                        className="h-2.5 overflow-hidden rounded-full bg-[#0b1018]"
+                        role="progressbar"
+                        aria-label={`${item.title} progress`}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-valuenow={Math.max(0, Math.min(100, item.progress))}
+                      >
+                        <div className="h-full rounded-full bg-gradient-to-r from-indigo-400 to-cyan-300 transition-[width] duration-700 motion-reduce:transition-none" style={{ width: `${Math.max(0, Math.min(100, item.progress))}%` }} />
                       </div>
                       <p className="mt-2 text-xs font-bold text-[#8f9cad]">{item.progress}% complete</p>
                     </div>
                   ) : null}
                   {item.href ? (
-                    <Link href={item.href} className="beast-button-secondary mt-auto inline-flex w-fit pt-3">
+                    <Link href={item.href} className="beast-button-secondary mt-auto inline-flex w-full justify-center sm:w-fit">
                       {slug === "certificates" ? "Open certificate" : "Open learning activity"}
                     </Link>
                   ) : null}

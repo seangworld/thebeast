@@ -974,7 +974,7 @@ export default async function LearningPage() {
       <a href="#mentor-session" className="beast-skip-link">
         Skip to Guidance Counselor
       </a>
-      <div className="beast-container space-y-8">
+      <div className="beast-container space-y-6 sm:space-y-8">
         <LearningMissionControl model={missionControl} insights={mentorInsights} />
 
         <section className="beast-page-header">
@@ -990,7 +990,7 @@ export default async function LearningPage() {
             </div>
             <Link
               href="/dashboard/today"
-              className="w-fit rounded-xl border border-indigo-300/40 bg-indigo-300/10 px-4 py-3 text-sm font-black text-indigo-100 transition hover:bg-indigo-300/15"
+              className="w-full rounded-xl border border-indigo-300/40 bg-indigo-300/10 px-4 py-3 text-center text-sm font-black text-indigo-100 transition hover:bg-indigo-300/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300 motion-reduce:transition-none sm:w-fit"
             >
               Back to Today
             </Link>
@@ -1033,7 +1033,7 @@ export default async function LearningPage() {
                 <div
                   key={id}
                   id={id}
-                  className="scroll-mt-24 rounded-xl border border-[#2a3242] bg-[#111827] p-4"
+                  className="scroll-mt-24 rounded-2xl border border-[#2a3242] bg-gradient-to-br from-[#111827] to-[#0e141e] p-4 transition duration-300 motion-safe:hover:-translate-y-0.5 motion-safe:hover:border-indigo-300/25 motion-reduce:transition-none"
                 >
                   <h3 className="font-black text-white">{title}</h3>
                   <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">

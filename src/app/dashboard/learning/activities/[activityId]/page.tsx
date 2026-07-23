@@ -382,7 +382,7 @@ export default function LearningActivityRunnerPage() {
       <a href="#active-learning-conversation" className="beast-skip-link">
         Skip to learning conversation
       </a>
-      <div className="beast-container space-y-8">
+      <div className="beast-container space-y-6 sm:space-y-8">
         <section className="beast-page-header">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-4">
@@ -396,11 +396,11 @@ export default function LearningActivityRunnerPage() {
                 reflection, and the next recommendation.
               </p>
             </div>
-            <div className="flex flex-wrap gap-2">
-              <Link href="/dashboard/education#mentor-session" className="beast-button-secondary">
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+              <Link href="/dashboard/education#mentor-session" className="beast-button-secondary w-full justify-center sm:w-auto">
                 Back to Guidance Counselor
               </Link>
-              <Link href="/dashboard/today" className="beast-button">
+              <Link href="/dashboard/today" className="beast-button w-full justify-center sm:w-auto">
                 Today
               </Link>
             </div>
@@ -417,9 +417,10 @@ export default function LearningActivityRunnerPage() {
 
         {loading ? (
           <DashboardCard accent="learning">
-            <div className="grid animate-pulse gap-3">
+            <div className="grid gap-3 motion-safe:animate-pulse" aria-busy="true">
               <div className="h-6 w-40 rounded bg-[#2a3242]" />
               <div className="h-32 rounded bg-[#2a3242]" />
+              <span className="sr-only" role="status">Loading your guided learning session.</span>
             </div>
           </DashboardCard>
         ) : activity && guidedSession && tutorSelection ? (
@@ -438,7 +439,7 @@ export default function LearningActivityRunnerPage() {
                   ["Expected time", guidedSession.expectedTime],
                   ["Tutor handoff", guidedSession.tutorHandoff],
                 ].map(([label, value]) => (
-                  <div key={label} className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+                  <div key={label} className="rounded-2xl border border-[#2a3242] bg-[#111827] p-4 transition-colors hover:border-indigo-300/25 motion-reduce:transition-none">
                     <div className="text-xs font-bold uppercase text-[#7f8da3]">
                       {label}
                     </div>
@@ -559,9 +560,7 @@ export default function LearningActivityRunnerPage() {
                       type="button"
                       role="radio"
                       aria-checked={reflectionOption === option}
-                      className={
-                        reflectionOption === option ? "beast-button" : "beast-button-secondary"
-                      }
+                      className={`${reflectionOption === option ? "beast-button" : "beast-button-secondary"} min-h-11 transition duration-200 motion-reduce:transition-none`}
                       onClick={() => setReflectionOption(option)}
                     >
                       {option}

@@ -108,7 +108,7 @@ export default function LearningGoalsManager({
   return (
     <div className="grid gap-4">
       {message ? (
-        <div className="rounded-xl border border-indigo-300/30 bg-indigo-300/10 p-4 text-sm font-bold text-indigo-50">
+        <div className="rounded-2xl border border-indigo-300/30 bg-indigo-300/10 p-4 text-sm font-bold text-indigo-50 shadow-[0_12px_32px_rgba(0,0,0,0.16)]" role="status" aria-live="polite">
           {message}
         </div>
       ) : null}
@@ -117,10 +117,10 @@ export default function LearningGoalsManager({
         goals.map((goal) => (
           <article
             key={goal.id}
-            className="rounded-2xl border border-[#2a3242] bg-[#111827] p-4"
+            className="rounded-2xl border border-[#2a3242] bg-gradient-to-br from-[#111827] to-[#0e141e] p-4 transition duration-300 motion-safe:hover:-translate-y-0.5 motion-safe:hover:border-indigo-300/25 motion-safe:hover:shadow-[0_18px_48px_rgba(0,0,0,0.2)] motion-reduce:transition-none sm:p-5"
           >
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-              <div>
+              <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="rounded-full border border-indigo-300/30 bg-indigo-300/10 px-3 py-1 text-xs font-black text-indigo-100">
                     {statusLabel(goal.status)}
@@ -131,9 +131,16 @@ export default function LearningGoalsManager({
                 </div>
                 <h2 className="mt-3 text-xl font-black text-white">{goal.title}</h2>
                 <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">{goal.target}</p>
-                <div className="mt-4 h-2 max-w-md rounded-full bg-[#0f1419]">
+                <div
+                  className="mt-5 h-2.5 max-w-md overflow-hidden rounded-full bg-[#0f1419]"
+                  role="progressbar"
+                  aria-label={`${goal.title} progress`}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={Math.min(Math.max(goal.progress, 0), 100)}
+                >
                   <div
-                    className="h-full rounded-full bg-indigo-300"
+                    className="h-full rounded-full bg-gradient-to-r from-indigo-400 to-cyan-300 transition-[width] duration-700 motion-reduce:transition-none"
                     style={{ width: `${Math.min(Math.max(goal.progress, 0), 100)}%` }}
                   />
                 </div>
@@ -142,15 +149,15 @@ export default function LearningGoalsManager({
                 </p>
               </div>
 
-              <div className="flex flex-wrap gap-2">
-                <Link href="/dashboard/education#mentor-session" className="beast-button">
+              <div className="grid w-full gap-2 sm:flex sm:w-auto sm:flex-wrap lg:max-w-xs lg:justify-end">
+                <Link href="/dashboard/education#mentor-session" className="beast-button w-full justify-center sm:w-auto">
                   Resume Goal
                 </Link>
                 <button
                   type="button"
                   onClick={() => switchActiveGoal(goal)}
                   disabled={busyGoalId === goal.id || goal.status === "Active"}
-                  className="beast-button-secondary disabled:cursor-not-allowed disabled:opacity-60"
+                  className="beast-button-secondary w-full justify-center disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                 >
                   Switch Active Goal
                 </button>
@@ -159,7 +166,7 @@ export default function LearningGoalsManager({
                     type="button"
                     onClick={() => resumeGoal(goal)}
                     disabled={busyGoalId === goal.id}
-                    className="beast-button-secondary disabled:cursor-not-allowed disabled:opacity-60"
+                    className="beast-button-secondary w-full justify-center disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                   >
                     Restore Goal
                   </button>
@@ -168,7 +175,7 @@ export default function LearningGoalsManager({
                     type="button"
                     onClick={() => archiveGoal(goal)}
                     disabled={busyGoalId === goal.id}
-                    className="beast-button-secondary disabled:cursor-not-allowed disabled:opacity-60"
+                    className="beast-button-secondary w-full justify-center disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                   >
                     Archive Goal
                   </button>
@@ -178,9 +185,10 @@ export default function LearningGoalsManager({
           </article>
         ))
       ) : (
-        <div className="rounded-2xl border border-[#2a3242] bg-[#111827] p-5">
-          <h2 className="text-xl font-black text-white">No Learning Goals yet</h2>
-          <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
+        <div className="rounded-3xl border border-dashed border-[#343e50] bg-gradient-to-br from-[#111827] to-[#0e141e] p-6 text-center sm:p-10">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border border-indigo-300/25 bg-indigo-300/10 font-black text-indigo-100" aria-hidden="true">G</div>
+          <h2 className="mt-5 text-xl font-black text-white sm:text-2xl">No Learning Goals yet</h2>
+          <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-[#c7cfdb]">
             Add a Learning Goal and your Guidance Counselor will create the first plan.
           </p>
         </div>
