@@ -150,10 +150,12 @@ export function LessonEngine({
   const [messages, setMessages] = useState<TutorMessage[]>([]);
   const [askedForHelp, setAskedForHelp] = useState(false);
   const [isResponding, setIsResponding] = useState(false);
+  const [followingLatest, setFollowingLatest] = useState(true);
   const restoredDraft = useRef(false);
   const conversationScrollRef = useRef<HTMLDivElement | null>(null);
   const replyInputRef = useRef<HTMLTextAreaElement | null>(null);
   const responsePendingRef = useRef(false);
+  const followingLatestRef = useRef(true);
   const engine = buildLessonEngineDefinition(activity);
   const draftKey = `beastlearning:tutor-chat:${activity.id}`;
   const firstName = firstNameFor(learnerName);
@@ -182,6 +184,9 @@ export function LessonEngine({
     completed ||
     (messages.filter((message) => message.role === "learner").length >= 2 &&
       Boolean(reflection.trim()));
+  const learnerMessageCount = messages.filter(
+    (message) => message.role === "learner"
+  ).length;
 
   const initialMessages = useMemo<TutorMessage[]>(
     () => [
@@ -261,10 +266,43 @@ export function LessonEngine({
 
   useLayoutEffect(() => {
     const container = conversationScrollRef.current;
+    if (!container || !followingLatest) return;
+
+    const reduceMotion =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    container.scrollTo({
+      top: container.scrollHeight,
+      behavior: reduceMotion ? "auto" : "smooth",
+    });
+  }, [followingLatest, messages.length]);
+
+  function handleConversationScroll() {
+    const container = conversationScrollRef.current;
     if (!container) return;
 
-    container.scrollTop = container.scrollHeight;
-  }, [messages.length]);
+    const distanceFromLatest =
+      container.scrollHeight - container.scrollTop - container.clientHeight;
+    const nextFollowingLatest = distanceFromLatest <= 56;
+    if (nextFollowingLatest === followingLatestRef.current) return;
+    followingLatestRef.current = nextFollowingLatest;
+    setFollowingLatest(nextFollowingLatest);
+  }
+
+  function jumpToLatest() {
+    const container = conversationScrollRef.current;
+    if (!container) return;
+    followingLatestRef.current = true;
+    setFollowingLatest(true);
+    container.scrollTo({
+      top: container.scrollHeight,
+      behavior:
+        typeof window !== "undefined" &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "auto"
+          : "smooth",
+    });
+  }
 
   function markPhase(phaseId: string) {
     if (!checkedPhases[phaseId]) onPhaseChange(phaseId, true);
@@ -349,6 +387,8 @@ export function LessonEngine({
     if (!text || completed || responsePendingRef.current) return;
 
     responsePendingRef.current = true;
+    followingLatestRef.current = true;
+    setFollowingLatest(true);
     setIsResponding(true);
     captureEvidence(text);
 
@@ -434,42 +474,68 @@ export function LessonEngine({
               </div>
             </header>
 
-            <div
-              ref={conversationScrollRef}
-              className="flex-1 space-y-4 overflow-y-auto px-4 py-5 sm:px-5"
-              role="log"
-              aria-label="Guidance Counselor Tutor and learner messages"
-              aria-live="polite"
-              aria-relevant="additions text"
-            >
-              {messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`flex ${message.role === "learner" ? "justify-end" : "justify-start"}`}
-                >
-                  <div className={`max-w-[82%] sm:max-w-[72%] ${message.role === "learner" ? "text-right" : "text-left"}`}>
-                    <div className={`mb-1 flex items-center gap-2 text-xs font-black uppercase tracking-wide text-[#9aa7b8] ${message.role === "learner" ? "justify-end" : ""}`}>
-                      <span className={`h-2 w-2 rounded-full ${speakerDotClasses(message.role)}`} />
-                      <span>{speakerLabel(message.role, firstName, tutorSelection.role)}</span>
+            <div className="relative min-h-0 flex-1">
+              <div
+                ref={conversationScrollRef}
+                onScroll={handleConversationScroll}
+                className="h-full space-y-5 overflow-y-auto overscroll-contain px-4 py-6 scroll-smooth motion-reduce:scroll-auto sm:px-6 sm:py-8"
+                role="log"
+                aria-label="Guidance Counselor Tutor and learner messages"
+                aria-live="polite"
+                aria-relevant="additions text"
+              >
+                <div className="mx-auto max-w-3xl space-y-5">
+                  {messages.map((message, index) => {
+                    const groupedWithPrevious =
+                      index > 0 && messages[index - 1]?.role === message.role;
+                    return (
+                      <div
+                        key={message.id}
+                        className={`flex transition-opacity duration-300 motion-reduce:transition-none ${message.role === "learner" ? "justify-end" : "justify-start"} ${groupedWithPrevious ? "-mt-3" : ""}`}
+                      >
+                        <div className={`max-w-[92%] sm:max-w-[78%] ${message.role === "learner" ? "text-right" : "text-left"}`}>
+                          {!groupedWithPrevious ? (
+                            <div className={`mb-2 flex items-center gap-2 text-xs font-black uppercase tracking-[0.12em] text-[#9aa7b8] ${message.role === "learner" ? "justify-end" : ""}`}>
+                              <span className={`h-2 w-2 rounded-full ${speakerDotClasses(message.role)}`} aria-hidden="true" />
+                              <span>{speakerLabel(message.role, firstName, tutorSelection.role)}</span>
+                            </div>
+                          ) : null}
+                          <div className={`${messageBubbleClasses(message.role)} transition duration-200 motion-safe:hover:shadow-md motion-reduce:transition-none`}>
+                            <p className="text-sm font-semibold leading-6 sm:text-[0.9375rem] sm:leading-7">
+                              {message.body}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {isResponding ? (
+                    <div className="flex items-center gap-2 text-xs font-bold text-indigo-200" role="status">
+                      <span className="h-2 w-2 animate-pulse rounded-full bg-indigo-300 motion-reduce:animate-none" aria-hidden="true" />
+                      Your learning specialist is responding
                     </div>
-                    <div className={messageBubbleClasses(message.role)}>
-                      <p className="text-sm font-semibold leading-6">
-                        {message.body}
-                      </p>
-                    </div>
-                  </div>
+                  ) : null}
                 </div>
-              ))}
+              </div>
+              {!followingLatest ? (
+                <button
+                  type="button"
+                  onClick={jumpToLatest}
+                  className="absolute bottom-4 left-1/2 z-10 -translate-x-1/2 rounded-full border border-indigo-200/25 bg-[#151c2b]/95 px-4 py-2 text-xs font-black text-indigo-100 shadow-xl backdrop-blur transition hover:border-indigo-200/50 hover:bg-[#1a2334] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300 motion-reduce:transition-none"
+                >
+                  Jump to latest
+                </button>
+              ) : null}
             </div>
 
             <form
-              className="sticky bottom-0 border-t border-white/10 bg-[#0b1020]/95 p-3 backdrop-blur sm:p-4"
+              className="sticky bottom-0 border-t border-white/10 bg-[#0b1020]/95 p-3 shadow-[0_-18px_45px_rgba(5,8,16,0.24)] backdrop-blur-xl sm:p-4"
               onSubmit={(event) => {
                 event.preventDefault();
                 sendLearnerMessage();
               }}
             >
-              <div className="mb-3 flex flex-wrap gap-2 pb-1" aria-label="Quick learning prompts">
+              <div className="mb-3 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Suggested learning prompts">
                 {[
                   "Teach simply",
                   "Check me",
@@ -479,7 +545,7 @@ export function LessonEngine({
                   <button
                     key={prompt}
                     type="button"
-                    className="beast-touch-chip rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-black text-[#dbe3ef] transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="beast-touch-chip shrink-0 rounded-full border border-white/10 bg-white/5 px-3.5 py-2 text-xs font-black text-[#dbe3ef] transition duration-200 hover:-translate-y-px hover:border-indigo-200/25 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300 disabled:cursor-not-allowed disabled:opacity-60 motion-reduce:transform-none motion-reduce:transition-none"
                     disabled={completed || isResponding}
                     aria-label={`${prompt} prompt`}
                     onClick={() =>
@@ -498,42 +564,57 @@ export function LessonEngine({
                   </button>
                 ))}
               </div>
-              <label className="block" htmlFor={`lesson-reply-${activity.id}`}>
-                <span className="sr-only">Message your specialist</span>
-                <textarea
-                  id={`lesson-reply-${activity.id}`}
-                  ref={replyInputRef}
-                  value={learnerReply}
-                  onChange={(event) => setLearnerReply(event.target.value)}
-                  rows={3}
-                  enterKeyHint="send"
-                  className="beast-input min-h-20 resize-none rounded-2xl border-white/10 bg-[#111827]"
-                  placeholder="Ask a question, try an answer, or explain what you think."
-                  disabled={completed}
-                  onKeyDown={handleReplyKeyDown}
-                  aria-describedby={`lesson-input-help-${activity.id} lesson-save-status-${activity.id}`}
-                />
-              </label>
-              <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div className="rounded-2xl border border-white/10 bg-[#111827] p-2 shadow-[0_12px_36px_rgba(0,0,0,0.2)] transition focus-within:border-indigo-300/45 focus-within:ring-2 focus-within:ring-indigo-300/10 motion-reduce:transition-none">
+                <label className="block" htmlFor={`lesson-reply-${activity.id}`}>
+                  <span className="sr-only">Message your specialist</span>
+                  <textarea
+                    id={`lesson-reply-${activity.id}`}
+                    ref={replyInputRef}
+                    value={learnerReply}
+                    onChange={(event) => setLearnerReply(event.target.value)}
+                    rows={2}
+                    enterKeyHint="send"
+                    className="min-h-16 w-full resize-none bg-transparent px-2 py-2 text-sm font-semibold leading-6 text-white outline-none placeholder:text-[#657187]"
+                    placeholder="Ask a question, try an answer, or explain what you think."
+                    disabled={completed}
+                    onKeyDown={handleReplyKeyDown}
+                    aria-describedby={`lesson-input-help-${activity.id} lesson-save-status-${activity.id}`}
+                  />
+                </label>
+                <div className="flex items-center justify-between gap-3 border-t border-white/[0.07] px-1 pt-2">
+                  <span className="text-xs font-semibold text-[#7f8da3]">
+                    Enter to send · Shift + Enter for a new line
+                  </span>
+                  <button
+                    type="submit"
+                    className="flex min-h-10 min-w-10 items-center justify-center rounded-xl bg-indigo-300 px-3 text-sm font-black text-[#111827] transition hover:bg-indigo-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300 disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:transition-none"
+                    disabled={completed || isResponding || !learnerReply.trim()}
+                    aria-label={isResponding ? "Sending message" : "Send message"}
+                  >
+                    <span aria-hidden="true">{isResponding ? "…" : "↑"}</span>
+                  </button>
+                </div>
+              </div>
+              <div className="mt-3 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
                 <p id={`lesson-save-status-${activity.id}`} className="text-xs font-semibold text-[#7f8da3]" role="status" aria-live="polite">
                   {saveStatusLabel(saving, completed, tutorReadyToComplete)}
                 </p>
                 <p id={`lesson-input-help-${activity.id}`} className="sr-only">
                   Press Enter to send. Press Shift Enter for a new line.
                 </p>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    type="submit"
-                    className="beast-button"
-                    disabled={completed || isResponding || !learnerReply.trim()}
-                  >
-                    {isResponding ? "Sending..." : "Send"}
-                  </button>
+                <div className="flex items-center justify-between gap-3 sm:justify-end">
+                  <span className="text-xs font-semibold text-[#7f8da3]">
+                    {learnerMessageCount < 2
+                      ? "Keep exploring"
+                      : reflection.trim()
+                        ? "Reflection captured"
+                        : "Add a reflection to finish"}
+                  </span>
                   <button
                     type="button"
                     onClick={finishLesson}
                     disabled={saving || completed || !tutorReadyToComplete}
-                    className="beast-button-secondary disabled:cursor-not-allowed disabled:opacity-60"
+                    className="beast-button-secondary shrink-0 transition duration-200 disabled:cursor-not-allowed disabled:opacity-60 motion-reduce:transition-none"
                   >
                     {saving ? "Saving..." : completed ? "Finished" : "Finish lesson"}
                   </button>

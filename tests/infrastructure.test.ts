@@ -3195,7 +3195,9 @@ test("learning activities have a dedicated runner and next-activity unlock logic
   assert.match(lessonEngine, /replyInputRef/);
   assert.match(lessonEngine, /responsePendingRef/);
   assert.match(lessonEngine, /isResponding/);
-  assert.match(lessonEngine, /container\.scrollTop = container\.scrollHeight/);
+  assert.match(lessonEngine, /container\.scrollTo\(\{/);
+  assert.match(lessonEngine, /distanceFromLatest <= 56/);
+  assert.match(lessonEngine, /Jump to latest/);
   assert.match(lessonEngine, /focus\(\{ preventScroll: true \}\)/);
   assert.doesNotMatch(lessonEngine, /scrollIntoView/);
   assert.match(lessonEngine, /requestAnimationFrame/);
