@@ -32,6 +32,7 @@ import LearningGoalDiscovery from "./LearningGoalDiscovery";
 import LearningGoalBuilder from "./LearningGoalBuilder";
 import LearningIntelligencePanel from "./LearningIntelligencePanel";
 import LearningKnowledgePanel from "./LearningKnowledgePanel";
+import LearningMissionControl from "./LearningMissionControl";
 import LearningPathTemplates from "./LearningPathTemplates";
 import PrivateBetaPanels from "./PrivateBetaPanels";
 import { mockParentDashboard } from "@/lib/learning/parentDashboard";
@@ -72,6 +73,7 @@ import {
 } from "@/lib/mobileLearning";
 import { buildLearningDashboardContent } from "@/lib/learning/dashboardContent";
 import { buildKnowledgeIntelligenceDashboard } from "@/lib/learning/knowledgeDashboard";
+import { buildLearningMissionControl } from "@/lib/learning/missionControl";
 import { learningSpecialists } from "@/lib/learning/specialists";
 import { mockStudyPlanner } from "@/lib/learning/studyPlanner";
 import { learningPathTemplates } from "@/lib/learning/templates";
@@ -937,6 +939,16 @@ export default async function LearningPage() {
     review: weeklyMentorReview,
     activities: userActivities,
   });
+  const missionControl = buildLearningMissionControl({
+    mission: mentorHomeMission,
+    progress: progressSignals,
+    weekly: weeklyMentorReview,
+    courses: learningCourses,
+    activities: userActivities,
+    timeline: learningTimeline,
+    achievements: meaningfulAchievements,
+    confidence: confidenceIntelligence,
+  });
 
   return (
     <main id="learning-main-content" className="beast-page">
@@ -944,6 +956,8 @@ export default async function LearningPage() {
         Skip to Guidance Counselor
       </a>
       <div className="beast-container space-y-8">
+        <LearningMissionControl model={missionControl} />
+
         <section className="beast-page-header">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-4">
