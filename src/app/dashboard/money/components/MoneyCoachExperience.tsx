@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -51,17 +51,126 @@ function persistenceErrorMessage(error: unknown) {
     : "Conversation history could not load. Please try again.";
 }
 
-function MoneyCoachConversationTimeline({ messages }: { messages: readonly AgentConversationMessage[] }) {
+type MoneyCoachConversationTimelineProps = {
+  messages: readonly AgentConversationMessage[];
+  conversationId: string;
+  streaming: boolean;
+  scrollPositions: React.MutableRefObject<Map<string, number>>;
+};
+
+function MoneyCoachConversationTimeline({
+  messages,
+  conversationId,
+  streaming,
+  scrollPositions,
+}: MoneyCoachConversationTimelineProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLElement>(null);
+  const followingLatestRef = useRef(true);
+  const programmaticScrollRef = useRef(false);
+  const scrollFrameRef = useRef<number>();
+  const touchStartYRef = useRef<number>();
+  const [showJumpToLatest, setShowJumpToLatest] = useState(false);
+
+  function isAtLatest(region: HTMLDivElement) {
+    return region.scrollHeight - region.clientHeight - region.scrollTop <= 48;
+  }
+
+  function scrollToLatest(behavior: ScrollBehavior) {
+    const region = scrollRef.current;
+    if (!region) return;
+    followingLatestRef.current = true;
+    setShowJumpToLatest(false);
+    programmaticScrollRef.current = true;
+    region.scrollTo({ top: region.scrollHeight, behavior });
+    scrollPositions.current.set(conversationId, region.scrollTop);
+  }
+
+  useLayoutEffect(() => {
+    const region = scrollRef.current;
+    if (!region) return;
+    const restoredPosition = scrollPositions.current.get(conversationId);
+    programmaticScrollRef.current = true;
+    region.scrollTop = restoredPosition ?? region.scrollHeight;
+    followingLatestRef.current = restoredPosition === undefined || isAtLatest(region);
+    setShowJumpToLatest(!followingLatestRef.current);
+    window.requestAnimationFrame(() => {
+      programmaticScrollRef.current = false;
+    });
+  }, [conversationId, scrollPositions]);
 
   useEffect(() => {
-    const region = scrollRef.current;
-    if (region) region.scrollTo({ top: region.scrollHeight, behavior: "smooth" });
+    if (followingLatestRef.current) scrollToLatest("smooth");
+  // The newest turn should be followed only while the member remains at the bottom.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages.length]);
 
+  useEffect(() => {
+    const content = contentRef.current;
+    if (!content || !streaming || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(() => {
+      if (followingLatestRef.current) scrollToLatest("auto");
+    });
+    observer.observe(content);
+    return () => observer.disconnect();
+  // Streaming content growth is observed without measuring on every render.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversationId, streaming]);
+
+  useEffect(() => () => {
+    if (scrollFrameRef.current) window.cancelAnimationFrame(scrollFrameRef.current);
+  }, []);
+
+  function handleScroll() {
+    if (scrollFrameRef.current) return;
+    scrollFrameRef.current = window.requestAnimationFrame(() => {
+      scrollFrameRef.current = undefined;
+      const region = scrollRef.current;
+      if (!region) return;
+      const atLatest = isAtLatest(region);
+      if (programmaticScrollRef.current) {
+        if (atLatest) programmaticScrollRef.current = false;
+        scrollPositions.current.set(conversationId, region.scrollTop);
+        return;
+      }
+      followingLatestRef.current = atLatest;
+      setShowJumpToLatest(!atLatest);
+      scrollPositions.current.set(conversationId, region.scrollTop);
+    });
+  }
+
+  function pauseFollowingLatest() {
+    programmaticScrollRef.current = false;
+    followingLatestRef.current = false;
+    setShowJumpToLatest(true);
+  }
+
   return (
-    <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto scroll-smooth" data-money-coach-active-scroll="true">
-      <section className="mx-auto w-full max-w-3xl px-1 pb-8 sm:px-4" aria-labelledby="money-coach-conversation-heading">
+    <div className="relative min-h-0 flex-1">
+      <div
+        ref={scrollRef}
+        className="h-full overflow-y-auto overscroll-contain"
+        data-money-coach-active-scroll="true"
+        onScroll={handleScroll}
+        onWheel={(event) => {
+          if (event.deltaY < 0) pauseFollowingLatest();
+        }}
+        onTouchStart={(event) => {
+          touchStartYRef.current = event.touches[0]?.clientY;
+        }}
+        onTouchMove={(event) => {
+          const currentY = event.touches[0]?.clientY;
+          if (
+            currentY !== undefined &&
+            touchStartYRef.current !== undefined &&
+            currentY > touchStartYRef.current
+          ) {
+            pauseFollowingLatest();
+          }
+          touchStartYRef.current = currentY;
+        }}
+      >
+      <section ref={contentRef} className="mx-auto w-full max-w-3xl px-1 pb-8 sm:px-4" aria-labelledby="money-coach-conversation-heading">
         <h2 id="money-coach-conversation-heading" className="mb-2 text-lg font-black text-white">Conversation</h2>
         <ol className="divide-y divide-white/[0.07]" role="log" aria-live="polite" aria-relevant="additions text" data-agent-conversation-timeline="true">
           {messages.map((message) => (
@@ -76,6 +185,17 @@ function MoneyCoachConversationTimeline({ messages }: { messages: readonly Agent
           ))}
         </ol>
       </section>
+      </div>
+      {showJumpToLatest ? (
+        <button
+          type="button"
+          className="absolute bottom-3 left-1/2 min-h-11 -translate-x-1/2 rounded-full border border-cyan-300/30 bg-slate-950/95 px-4 py-2 text-xs font-black text-cyan-100 shadow-xl backdrop-blur transition hover:border-cyan-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300"
+          onClick={() => scrollToLatest("smooth")}
+          aria-label="Jump to latest Money Coach response"
+        >
+          Jump to Latest <span aria-hidden="true">↓</span>
+        </button>
+      ) : null}
     </div>
   );
 }
@@ -120,6 +240,7 @@ export function MoneyCoachExperience({
   const [streamingTurnId, setStreamingTurnId] = useState("");
   const historyDialogRef = useRef<HTMLDivElement>(null);
   const requestedStarterRef = useRef("");
+  const conversationScrollPositionsRef = useRef(new Map<string, number>());
   const ownerId = model.ownerId;
 
   useEffect(() => setLocalNow(new Date()), []);
@@ -239,24 +360,34 @@ export function MoneyCoachExperience({
       void repository.append(ownerId, targetThreadId, messages, { insightIds: model.insights.map((item) => item.id), actionIds: [response.toolAction?.toolId || response.action] }).then(async (updated) => {
         await repository.summarize(ownerId, targetThreadId, { overview: `Discussed ${value.slice(0, 100)}`, decisions: [], unresolvedFollowUps: [], updatedAt: now });
         setConversationTitle(updated.title); await refreshThreads();
-      }).catch(() => setHistoryError("This response is visible now but could not be saved. Please retry before leaving this page.")).finally(() => setStreamingTurnId(""));
+      }).catch(() => setHistoryError("This response is visible now but could not be saved. Please retry before leaving this page.")).finally(() => {
+        setStreamingTurnId("");
+        window.requestAnimationFrame(focusQuestionInput);
+      });
       const durableType = /\b(i prefer|my goal|i decided|remember that|always|never)\b/i.exec(value)?.[1];
       if (memoryStore && durableType) {
         const memoryType = durableType === "my goal" ? "financial-goal" : durableType === "i decided" ? "confirmed-decision" : "preference-or-constraint";
         const memory: AgentMemoryRecord = { id: `money-memory-${timestamp}`, agentId: "beastmoney.money-coach", ownerId, scope: "user", key: memoryType, value: { content: value, memoryType, confidence: "high", sourceConversationId: targetThreadId, sourceMessageId: messages[0].id, timestamp: now }, purpose: "Remember an explicit member preference, goal, decision, or recurring constraint.", evidence: [{ source: targetThreadId, capturedAt: now, description: messages[0].id }], createdAt: now, updatedAt: now };
         void memoryStore.put(memory).then(() => setMemories((current) => [...current, memory]));
       }
-    } else setStreamingTurnId("");
+    } else {
+      setStreamingTurnId("");
+      window.requestAnimationFrame(focusQuestionInput);
+    }
     setInput("");
   }
 
   async function startConversation() {
     if (!repository) {
+      conversationScrollPositionsRef.current.delete("new-conversation");
       setActiveThreadId(""); setConversationTitle("New conversation"); setTurns([]);
+      window.requestAnimationFrame(focusQuestionInput);
       return undefined;
     }
     const thread = await repository.create({ ownerId, agentId: "beastmoney.money-coach" });
-    setActiveThreadId(thread.id); setConversationTitle(thread.title); setTurns([]); await refreshThreads();
+    setActiveThreadId(thread.id); setConversationTitle(thread.title); setTurns([]);
+    window.requestAnimationFrame(focusQuestionInput);
+    await refreshThreads();
     return thread;
   }
 
@@ -295,8 +426,7 @@ export function MoneyCoachExperience({
 
   function focusQuestionInput() {
     const region = document.getElementById("money-coach-question");
-    region?.scrollIntoView({ behavior: "smooth", block: "center" });
-    region?.querySelector("textarea")?.focus();
+    region?.querySelector("textarea")?.focus({ preventScroll: true });
   }
 
   const localGreeting = localNow
@@ -468,7 +598,12 @@ export function MoneyCoachExperience({
               <p className="truncate text-sm font-semibold text-slate-400">{conversationTitle}</p>
               <button type="button" className="text-xs font-bold text-cyan-200" onClick={() => { const active = threads.find((thread) => thread.id === activeThreadId); if (active) void renameThread(active); }}>Rename</button>
             </div>
-            <MoneyCoachConversationTimeline messages={messages} />
+            <MoneyCoachConversationTimeline
+              messages={messages}
+              conversationId={activeThreadId || "new-conversation"}
+              streaming={Boolean(streamingTurnId)}
+              scrollPositions={conversationScrollPositionsRef}
+            />
             </section>
           </div>
         )
