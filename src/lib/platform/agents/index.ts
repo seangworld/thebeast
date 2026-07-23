@@ -26,3 +26,4 @@ export * from "./professionalJournal";
 export * from "./memberUnderstanding";
 export * from "./conversationStarters";
 export * from "./consultationIntelligence";
+export * from "./reflectionIntelligence";
