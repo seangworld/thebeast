@@ -71,9 +71,9 @@ export const learningWorkspaceDefinitions: Record<
   },
   history: {
     slug: "history",
-    title: "History",
-    eyebrow: "Learning record",
-    description: "Review completed activities, reflections, and the evidence behind your progress.",
+    title: "Learning Timeline",
+    eyebrow: "Chronological history",
+    description: "Follow lessons, courses, reviews, achievements, knowledge milestones, certificates, and completed missions in one chronological record.",
     emptyTitle: "No learning history is saved yet",
     emptyDescription: "Completed lessons and reflections will build a durable record here.",
     emptyAction: { label: "Start a lesson", href: "/dashboard/education/lessons" },

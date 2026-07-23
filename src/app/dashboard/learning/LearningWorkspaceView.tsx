@@ -11,6 +11,10 @@ import {
   LearningEmptyState,
   LearningWorkspaceShell,
 } from "./LearningWorkspaceShell";
+import {
+  buildLearningChronology,
+  type LearningChronologyEvent,
+} from "@/lib/learning/learningChronology";
 
 type WorkspaceItem = {
   id: string;
@@ -100,6 +104,112 @@ async function loadWorkspaceItems(slug: LearningWorkspaceSlug, userId: string) {
   });
 }
 
+async function loadLearningChronology(userId: string) {
+  const supabase = createRouteClient();
+  const [
+    history,
+    activities,
+    sessions,
+    courses,
+    achievements,
+    mastery,
+    certificates,
+    goals,
+  ] = await Promise.all([
+    supabase.from("learning_history").select("*").eq("user_id", userId),
+    supabase.from("learning_activities").select("*").eq("user_id", userId),
+    supabase.from("learning_sessions").select("*").eq("user_id", userId),
+    supabase.from("learning_courses").select("*").eq("user_id", userId),
+    supabase.from("learning_achievements").select("*").eq("user_id", userId),
+    supabase.from("learning_mastery").select("*").eq("user_id", userId),
+    supabase.from("learning_certificates").select("*").eq("user_id", userId),
+    supabase.from("learning_goals").select("*").eq("user_id", userId),
+  ]);
+
+  const results = [
+    history,
+    activities,
+    sessions,
+    courses,
+    achievements,
+    mastery,
+    certificates,
+    goals,
+  ];
+  const failure = results.find((result) => result.error)?.error;
+  if (failure) throw new Error(`Unable to load Learning Timeline: ${failure.message}`);
+
+  return buildLearningChronology({
+    history: history.data || [],
+    activities: activities.data || [],
+    sessions: sessions.data || [],
+    courses: courses.data || [],
+    achievements: achievements.data || [],
+    mastery: mastery.data || [],
+    certificates: certificates.data || [],
+    goals: goals.data || [],
+  });
+}
+
+function formatTimelineDate(value: string) {
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(new Date(value));
+}
+
+function LearningTimeline({ events }: { events: LearningChronologyEvent[] }) {
+  return (
+    <section aria-label="Learning Timeline">
+      <SectionHeader
+        eyebrow="Chronological record"
+        title="Learning Timeline"
+        description={`${events.length} saved ${events.length === 1 ? "event" : "events"}, newest first.`}
+      />
+      <ol
+        className="relative mt-6 space-y-0 before:absolute before:bottom-3 before:left-[0.6875rem] before:top-3 before:w-px before:bg-indigo-300/20 sm:before:left-[0.8125rem]"
+        aria-label="Chronological learning history"
+      >
+        {events.map((event) => (
+          <li key={event.id} className="relative grid grid-cols-[1.5rem_minmax(0,1fr)] gap-3 pb-6 sm:grid-cols-[1.75rem_minmax(0,1fr)] sm:gap-4">
+            <span
+              className="relative z-10 mt-2 h-3 w-3 justify-self-center rounded-full border-2 border-[#111722] bg-indigo-300 shadow-[0_0_0_3px_rgba(165,180,252,0.14)]"
+              aria-hidden="true"
+            />
+            <DashboardCard accent="learning" className="min-w-0">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
+                  <p className="text-xs font-black uppercase tracking-[0.16em] text-indigo-200">
+                    {event.label}
+                  </p>
+                  <h2 className="mt-2 break-words text-lg font-black text-white">
+                    {event.title}
+                  </h2>
+                  <p className="mt-2 break-words text-sm leading-6 text-[#aeb8c7]">
+                    {event.detail}
+                  </p>
+                  {event.href ? (
+                    <Link href={event.href} className="mt-3 inline-flex text-sm font-black text-indigo-200 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-indigo-300">
+                      View related learning
+                    </Link>
+                  ) : null}
+                </div>
+                <time
+                  dateTime={event.occurredAt}
+                  className="shrink-0 text-xs font-bold text-[#8f9cad]"
+                >
+                  {formatTimelineDate(event.occurredAt)}
+                </time>
+              </div>
+            </DashboardCard>
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
+}
+
 export default async function LearningWorkspaceView({ slug }: { slug: string }) {
   if (!isLearningWorkspaceSlug(slug)) notFound();
   const supabase = createRouteClient();
@@ -107,7 +217,8 @@ export default async function LearningWorkspaceView({ slug }: { slug: string }) 
   if (error || !user) redirect("/login");
 
   const definition = learningWorkspaceDefinitions[slug];
-  const items = await loadWorkspaceItems(slug, user.id);
+  const timeline = slug === "history" ? await loadLearningChronology(user.id) : null;
+  const items = timeline ? [] : await loadWorkspaceItems(slug, user.id);
 
   return (
     <LearningWorkspaceShell
@@ -115,7 +226,9 @@ export default async function LearningWorkspaceView({ slug }: { slug: string }) 
       description={definition.description}
       eyebrow={definition.eyebrow}
     >
-      {items.length === 0 ? (
+      {timeline && timeline.length > 0 ? (
+        <LearningTimeline events={timeline} />
+      ) : items.length === 0 ? (
         <LearningEmptyState
           title={definition.emptyTitle}
           description={definition.emptyDescription}
