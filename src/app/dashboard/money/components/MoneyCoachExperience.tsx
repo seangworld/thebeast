@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
   AgentAvatar,
@@ -103,6 +104,7 @@ export function MoneyCoachExperience({
   error,
   onRetry,
 }: MoneyCoachExperienceProps) {
+  const searchParams = useSearchParams();
   const [input, setInput] = useState("");
   const [turns, setTurns] = useState<{ id: string; question: string; response: MoneyCoachStructuredAnswer }[]>([]);
   const [conversationTitle, setConversationTitle] = useState("Current financial review");
@@ -117,6 +119,7 @@ export function MoneyCoachExperience({
   const [historyError, setHistoryError] = useState("");
   const [streamingTurnId, setStreamingTurnId] = useState("");
   const historyDialogRef = useRef<HTMLDivElement>(null);
+  const requestedStarterRef = useRef("");
   const ownerId = model.ownerId;
 
   useEffect(() => setLocalNow(new Date()), []);
@@ -167,6 +170,15 @@ export function MoneyCoachExperience({
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ownerId]);
+
+  useEffect(() => {
+    const requestedStarter = searchParams.get("starter")?.trim();
+    if (!repository || !requestedStarter || requestedStarterRef.current === requestedStarter) return;
+    requestedStarterRef.current = requestedStarter;
+    void beginStarter(requestedStarter);
+  // beginStarter intentionally runs once after the repository resolves.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [repository, searchParams]);
 
   function restoreThread(thread: AgentConversationThread) {
     const restored: typeof turns = [];
