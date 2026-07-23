@@ -733,8 +733,17 @@ export default function MoneyWorkspacePage() {
       const dueDate = bill.next_due_date_after_payment
         ? new Date(bill.next_due_date_after_payment)
         : nextDueDateFromDay(bill.due_date, snapshot.simulation.asOfDate);
-      return { name: bill.name || "Upcoming bill", amount: numberValue(bill.amount), dueDate: formatDateLabel(dueDate) };
+      const daysAway = Math.ceil((dueDate.getTime() - snapshot.simulation.asOfDate.getTime()) / 86400000);
+      return { name: bill.name || "Upcoming bill", amount: numberValue(bill.amount), dueDate: formatDateLabel(dueDate), status: daysAway < 0 ? "Overdue" : daysAway === 0 ? "Due today" : `Due in ${daysAway} days`, incomePot: bill.assigned_income_date || undefined };
     }),
+    upcomingIncome: snapshot.activeIncomes.map((income) => ({ name: income.name || "Income", amount: numberValue(income.amount), date: income.next_date ? formatDateLabel(new Date(income.next_date)) : undefined })),
+    debts: snapshot.activeDebts.map((debt) => ({ name: debt.name || "Debt", balance: numberValue(debt.balance), minimumPayment: numberValue(debt.minimum_payment), interestRate: numberValue(debt.interest_rate) })),
+    fundingSources: state.fundingSources.filter((source) => source.is_active !== false).map((source) => ({ name: source.name || "Funding source", type: source.type || "other", available: numberValue(source.available_credit) })),
+    helocReserve: state.fundingSources.filter((source) => source.is_active !== false && source.type?.toLowerCase().includes("heloc")).reduce((sum, source) => sum + numberValue(source.available_credit), 0),
+    activeDebtStrategy: "avalanche",
+    strategyScenarios: snapshot.scenarioComparison.scenarios.filter((scenario) => ["avalanche", "snowball", "velocity"].includes(scenario.id)).map((scenario) => ({ id: scenario.id, label: scenario.label, monthsToPayoff: scenario.monthsToPayoff, totalInterest: scenario.totalInterest, monthlyCashStrain: scenario.monthlyCashStrain, riskLevel: scenario.riskLevel, debtFreeDate: scenario.debtFreeDate })),
+    forecast: snapshot.financialForecast.periods.map((period) => ({ label: period.label, cash: period.cash, debt: period.debt, cashShortages: period.cashShortages })),
+    retirementDataAvailable: false,
   });
 
   return (

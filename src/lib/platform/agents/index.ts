@@ -14,3 +14,4 @@ export * from "./professionalBehavior";
 export * from "./insights";
 export * from "./conversationPersistence";
 export * from "./serverConversationPersistence";
+export * from "./conversationIntelligence";

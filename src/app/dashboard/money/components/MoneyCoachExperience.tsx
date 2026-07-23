@@ -29,6 +29,7 @@ import {
   answerMoneyCoachQuestion,
   buildMoneyCoachGreeting,
   type MoneyCoachExperienceModel,
+  type MoneyCoachStructuredAnswer,
 } from "@/lib/moneyCoachExperience";
 
 type MoneyCoachExperienceProps = {
@@ -67,6 +68,22 @@ function MoneyCoachConversationTimeline({ messages }: { messages: readonly Agent
   );
 }
 
+function MoneyCoachResponseDocument({ response }: { response: MoneyCoachStructuredAnswer }) {
+  return <div data-money-coach-structured-response="true">
+    <p>{response.opening}</p>
+    {response.sections.map((section) => <section key={section.heading} className="mt-5" aria-label={section.heading}>
+      <h4 className="text-sm font-black text-white">{section.heading}</h4>
+      {section.paragraphs?.map((paragraph) => <p key={paragraph} className="mt-2">{paragraph}</p>)}
+      {section.bullets?.length ? <ul>{section.bullets.map((item) => <li key={item}>{item}</li>)}</ul> : null}
+      {section.numberedItems?.length ? <ol>{section.numberedItems.map((item) => <li key={item}>{item}</li>)}</ol> : null}
+      {section.table ? <div className="overflow-x-auto"><table><thead><tr>{section.table.columns.map((column) => <th key={column} scope="col">{column}</th>)}</tr></thead><tbody>{section.table.rows.map((row, rowIndex) => <tr key={rowIndex}>{row.map((cell, cellIndex) => <td key={`${cellIndex}-${cell}`}>{cell}</td>)}</tr>)}</tbody></table></div> : null}
+    </section>)}
+    {response.assumptions?.length ? <details><summary className="cursor-pointer font-bold text-slate-300">Assumptions and limitations</summary><ul>{response.assumptions.map((item) => <li key={item}>{item}</li>)}</ul></details> : null}
+    {response.followUp ? <p className="mt-5">{response.followUp}</p> : null}
+    <Link className="mt-4 inline-flex font-bold text-cyan-200" href={response.href}>{response.action} <span aria-hidden="true">→</span></Link>
+  </div>;
+}
+
 export function MoneyCoachExperience({
   model,
   loading,
@@ -75,7 +92,7 @@ export function MoneyCoachExperience({
 }: MoneyCoachExperienceProps) {
   const router = useRouter();
   const [input, setInput] = useState("");
-  const [turns, setTurns] = useState<{ id: string; question: string; response: string; href: string; action: string }[]>([]);
+  const [turns, setTurns] = useState<{ id: string; question: string; response: MoneyCoachStructuredAnswer }[]>([]);
   const [conversationTitle, setConversationTitle] = useState("Current financial review");
   const [localNow, setLocalNow] = useState<Date | null>(null);
   const [repository, setRepository] = useState<ServerAgentConversationRepository | null>(null);
@@ -131,8 +148,9 @@ export function MoneyCoachExperience({
     for (let index = 0; index < thread.messages.length; index += 2) {
       const user = thread.messages[index]; const agent = thread.messages[index + 1];
       if (!user || !agent) continue;
-      const content = agent.content as { text: string; href: string; action: string };
-      restored.push({ id: user.id, question: String(user.content), response: content.text, href: content.href, action: content.action });
+      const content = agent.content as { text: string; href: string; action: string; structured?: MoneyCoachStructuredAnswer };
+      const response = content.structured || { intent: "general-finance", opening: content.text, sections: [], text: content.text, href: content.href, action: content.action } satisfies MoneyCoachStructuredAnswer;
+      restored.push({ id: user.id, question: String(user.content), response });
     }
     setTurns(restored);
   }
@@ -157,22 +175,28 @@ export function MoneyCoachExperience({
       },
       ...turns.flatMap<AgentConversationMessage>((turn) => [
         { id: `${turn.id}-user`, role: "user", author: "You", content: turn.question },
-        { id: `${turn.id}-coach`, role: "agent", author: "Money Coach", content: <><p>{turn.response}</p><Link className="mt-3 inline-flex font-bold text-cyan-200" href={turn.href}>{turn.action} <span aria-hidden="true">→</span></Link></> },
+        { id: `${turn.id}-coach`, role: "agent", author: "Money Coach", content: <MoneyCoachResponseDocument response={turn.response} /> },
       ]),
     ],
     [model.conversationOpening, turns]
   );
 
-  function askQuestion(value: string) {
-    const response = answerMoneyCoachQuestion(value, model);
+  async function askQuestion(value: string) {
+    const activeThread = repository && activeThreadId ? await repository.get(ownerId, activeThreadId).catch(() => undefined) : undefined;
+    const response = answerMoneyCoachQuestion(value, model, {
+      recentMessages: activeThread?.messages.slice(-8).map((message) => typeof message.content === "string" ? message.content : JSON.stringify(message.content)),
+      summary: activeThread?.summary?.overview,
+      priorSummaries: threads.filter((thread) => thread.id !== activeThreadId).slice(0, 3).map((thread) => thread.summary?.overview).filter((summary): summary is string => Boolean(summary)),
+      memories: memories.map((memory) => ({ key: memory.key, value: memory.value })),
+    });
     const timestamp = Date.now();
-    const turn = { id: `money-${timestamp}`, question: value, response: response.text, href: response.href, action: response.action };
+    const turn = { id: `money-${timestamp}`, question: value, response };
     setTurns((current) => [...current, turn]);
     if (repository && activeThreadId) {
       const now = new Date().toISOString();
       const messages: AgentMessage[] = [
         { id: `${turn.id}-user`, threadId: activeThreadId, sender: { kind: "user", id: ownerId }, recipient: { kind: "agent", id: "beastmoney.money-coach" }, content: value, timestamp: now },
-        { id: `${turn.id}-coach`, threadId: activeThreadId, sender: { kind: "agent", id: "beastmoney.money-coach" }, recipient: { kind: "module", id: "beastmoney" }, content: { text: response.text, href: response.href, action: response.action }, timestamp: now },
+        { id: `${turn.id}-coach`, threadId: activeThreadId, sender: { kind: "agent", id: "beastmoney.money-coach" }, recipient: { kind: "module", id: "beastmoney" }, content: { text: response.text, href: response.href, action: response.action, structured: response }, timestamp: now },
       ];
       void repository.append(ownerId, activeThreadId, messages, { insightIds: model.insights.map((item) => item.id), actionIds: [response.action] }).then(async (updated) => {
         await repository.summarize(ownerId, activeThreadId, { overview: `Discussed ${value.slice(0, 100)}`, decisions: [], unresolvedFollowUps: [], updatedAt: now });

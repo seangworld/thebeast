@@ -1,7 +1,11 @@
 import { formatCurrency } from "./formatters";
 import {
   calculateInsightPriority,
+  createConversationResponse,
+  recognizeConversationIntent,
   specialistProfessionalProfiles,
+  type ConversationResponseSection,
+  type DomainIntentCandidate,
   type Insight,
   type InsightAction,
   type InsightPriorityFactor,
@@ -54,7 +58,17 @@ export type MoneyCoachExperienceModel = {
     projectedSurplus: number;
     monthlyIncome: number;
     monthlyOutflow: number;
-    billsDueSoon: readonly { name: string; amount: number; dueDate: string }[];
+    billsDueSoon: readonly { name: string; amount: number; dueDate: string; status?: string; incomePot?: string }[];
+    upcomingIncome: readonly { name: string; amount: number; date?: string }[];
+    debts: readonly { name: string; balance: number; minimumPayment: number; interestRate: number }[];
+    fundingSources: readonly { name: string; type: string; available: number }[];
+    helocReserve: number;
+    activeDebtStrategy: "avalanche" | "snowball" | "velocity" | "custom";
+    strategyScenarios: readonly { id: string; label: string; monthsToPayoff: number; totalInterest: number; monthlyCashStrain: number; riskLevel: string; debtFreeDate: string }[];
+    forecast: readonly { label: string; cash: number; debt: number; cashShortages: number }[];
+    incomePotAssignedCount: number;
+    totalObligationCount: number;
+    retirementDataAvailable: boolean;
   };
 };
 
@@ -85,7 +99,15 @@ export type MoneyCoachExperienceInput = {
   recommendationHref: string;
   interestSaved: number;
   timeSavedMonths: number;
-  billsDueSoon?: readonly { name: string; amount: number; dueDate: string }[];
+  billsDueSoon?: readonly { name: string; amount: number; dueDate: string; status?: string; incomePot?: string }[];
+  upcomingIncome?: readonly { name: string; amount: number; date?: string }[];
+  debts?: readonly { name: string; balance: number; minimumPayment: number; interestRate: number }[];
+  fundingSources?: readonly { name: string; type: string; available: number }[];
+  helocReserve?: number;
+  activeDebtStrategy?: "avalanche" | "snowball" | "velocity" | "custom";
+  strategyScenarios?: readonly { id: string; label: string; monthsToPayoff: number; totalInterest: number; monthlyCashStrain: number; riskLevel: string; debtFreeDate: string }[];
+  forecast?: readonly { label: string; cash: number; debt: number; cashShortages: number }[];
+  retirementDataAvailable?: boolean;
 };
 
 const priorityConfiguration = {
@@ -477,87 +499,153 @@ export function buildMoneyCoachExperience(
       monthlyIncome: input.monthlyIncome,
       monthlyOutflow: input.monthlyOutflow,
       billsDueSoon: input.billsDueSoon || [],
+      upcomingIncome: input.upcomingIncome || [],
+      debts: input.debts || [],
+      fundingSources: input.fundingSources || [],
+      helocReserve: input.helocReserve || 0,
+      activeDebtStrategy: input.activeDebtStrategy || "avalanche",
+      strategyScenarios: input.strategyScenarios || [],
+      forecast: input.forecast || [],
+      incomePotAssignedCount: input.assignedIncomePotCount,
+      totalObligationCount: input.totalObligationCount,
+      retirementDataAvailable: Boolean(input.retirementDataAvailable),
     },
   };
 }
 
+export type MoneyCoachIntent = "test" | "social" | "incomplete" | "bills" | "debt-strategy" | "payment-affordability" | "changes" | "cash-flow" | "forecast" | "retirement" | "funding" | "velocity" | "general-finance" | "non-financial";
+
+export type MoneyCoachResponseSection = ConversationResponseSection;
+
+export type MoneyCoachStructuredAnswer = {
+  intent: MoneyCoachIntent;
+  opening: string;
+  sections: readonly MoneyCoachResponseSection[];
+  assumptions?: readonly string[];
+  followUp?: string;
+  text: string;
+  href: string;
+  action: string;
+};
+
+export type MoneyCoachConversationContext = {
+  recentMessages?: readonly string[];
+  summary?: string;
+  priorSummaries?: readonly string[];
+  memories?: readonly { key: string; value: unknown }[];
+};
+
+function recognizeMoneyDomainIntent(value: string): DomainIntentCandidate<Exclude<MoneyCoachIntent, "test" | "social" | "incomplete" | "non-financial">> | undefined {
+  if (/\b(stay with|switch (to|from)|avalanche|snowball|payoff (method|strategy)|debt strategy)\b/.test(value)) return { intent: "debt-strategy", confidence: 0.95, signals: ["strategy-comparison"] };
+  const candidates: readonly [RegExp, Exclude<MoneyCoachIntent, "test" | "social" | "incomplete" | "non-financial">, string][] = [
+    [/\b(can i afford|safe to (pay|make)|another payment|extra payment|pay more)\b/, "payment-affordability", "payment-capacity"],
+    [/\b(what changed|what is different|since (my )?last|recent changes?)\b/, "changes", "change-comparison"],
+    [/\b(bills?|due|upcoming expenses?|needs? attention)\b/, "bills", "obligation-attention"],
+    [/\b(cash flow|income|monthly surplus|monthly shortfall)\b/, "cash-flow", "cash-flow"],
+    [/\b(forecast|projection|next month|future cash)\b/, "forecast", "forecast"],
+    [/\b(retire|retirement|401k|ira)\b/, "retirement", "retirement"],
+    [/\b(funding source|credit line|available credit|heloc)\b/, "funding", "funding"],
+    [/\bvelocity\b/, "velocity", "velocity"],
+    [/\b(money|finance|debt|cash|payment|budget|spend|save|interest|credit|risk|recommend)\b/, "general-finance", "financial-topic"],
+  ];
+  const match = candidates.find(([pattern]) => pattern.test(value));
+  return match ? { intent: match[1], confidence: 0.9, signals: [match[2]] } : undefined;
+}
+
+export function classifyMoneyCoachIntent(question: string): MoneyCoachIntent {
+  const result = recognizeConversationIntent(question, {
+    recognizeDomainIntent: ({ normalized }) => {
+      const strategy = /\b(stay with|switch (to|from)|avalanche|snowball|payoff (method|strategy)|debt strategy)\b/.test(normalized);
+      if (strategy) return { intent: "debt-strategy" as const, confidence: 0.95, signals: ["strategy-comparison"] };
+      return recognizeMoneyDomainIntent(normalized);
+    },
+    domainVocabulary: ["money", "finance", "bill", "debt", "cash", "income", "payment", "retirement", "forecast", "velocity", "funding", "budget", "interest", "credit"],
+  });
+  if (result.kind === "testing") return "test";
+  if (["greeting", "thanks", "acknowledgement"].includes(result.kind)) return "social";
+  if (result.kind === "incomplete") return "incomplete";
+  if (result.kind === "domain") return result.domainIntent || "general-finance";
+  return "non-financial";
+}
+
+function structuredAnswer(values: Omit<MoneyCoachStructuredAnswer, "text">): MoneyCoachStructuredAnswer {
+  const shared = createConversationResponse({
+    intent: values.intent,
+    shortAnswer: values.opening,
+    sections: values.sections,
+    assumptions: values.assumptions,
+    nextStep: values.followUp,
+    actions: [{ id: `money-coach-${values.intent}`, label: values.action, type: "navigate", target: values.href }],
+  });
+  return { ...values, sections: shared.sections, text: shared.text };
+}
+
 export function answerMoneyCoachQuestion(
   question: string,
-  model: MoneyCoachExperienceModel
-) {
-  const normalized = question.toLowerCase();
+  model: MoneyCoachExperienceModel,
+  conversation: MoneyCoachConversationContext = {}
+): MoneyCoachStructuredAnswer {
+  const intent = classifyMoneyCoachIntent(question);
   const context = model.financialContext;
+  const dashboard = { href: "/dashboard/money#money-dashboard", action: "Open the financial dashboard" };
 
-  if (/\b(test|testing|test message)\b/.test(normalized)) {
-    return {
-      text: "It looks like you’re testing the conversation. Everything appears to be working. Whenever you’re ready, ask me anything about your finances.",
-      href: "/dashboard/money#money-dashboard",
-      action: "Open the financial dashboard",
-    };
+  if (intent === "test" || intent === "social") {
+    const opening = intent === "test" ? "It looks like you’re testing the conversation. Everything appears to be working." : "I’m here and ready when you are.";
+    return structuredAnswer({ intent, opening, sections: [], followUp: "Whenever you’re ready, ask me anything about your finances.", ...dashboard });
   }
 
-  if (/\b(afford|another payment|extra payment|pay extra)\b/.test(normalized)) {
+  if (intent === "incomplete") {
+    return structuredAnswer({ intent, opening: "I’m not quite sure what you want me to evaluate yet.", sections: [{ heading: "Clarification", classification: "uncertainty", paragraphs: ["Add the financial topic or decision you want help with, and I’ll use the relevant current records."] }], followUp: "For example: which bills need attention, whether another payment is safe, or how two debt strategies compare.", href: "#money-coach-question", action: "Continue your question" });
+  }
+
+  if (intent === "payment-affordability") {
     const availableAboveReserve = Math.max(context.currentCash - context.cashBuffer, 0);
-    const cashPosition = context.currentCash >= context.cashBuffer
-      ? `${formatCurrency(availableAboveReserve)} is currently above your protected ${formatCurrency(context.cashBuffer)} reserve.`
-      : `Current cash is ${formatCurrency(context.cashBuffer - context.currentCash)} below your protected ${formatCurrency(context.cashBuffer)} reserve.`;
-    const projectedEffect = context.projectedSurplus >= 0
-      ? `Known monthly cash flow currently leaves ${formatCurrency(context.projectedSurplus)} after tracked obligations.`
-      : `Known monthly obligations currently exceed tracked income by ${formatCurrency(Math.abs(context.projectedSurplus))}.`;
-    return {
-      text: `${cashPosition} ${projectedEffect}\n\nMy current recommendation is: ${model.primaryRecommendation.action}\n\nExplain Why: ${model.primaryRecommendation.explainWhy}\n\nThis assumes your saved balances, income, and upcoming obligations are current. Would you like to compare a smaller payment or review the cash-flow forecast first?`,
-      href: "/dashboard/money#money-dashboard",
-      action: "Review the financial dashboard",
-    };
+    const nextForecast = context.forecast[0];
+    const obligations = context.billsDueSoon.reduce((sum, item) => sum + item.amount, 0) + context.debts.reduce((sum, item) => sum + item.minimumPayment, 0);
+    const recommendation = context.currentCash < context.cashBuffer || context.projectedSurplus < 0 ? "I would wait before making another payment." : `A payment up to ${formatCurrency(availableAboveReserve)} stays above your protected ${formatCurrency(context.cashBuffer)} reserve, but I would check timing before committing it.`;
+    return structuredAnswer({ intent, opening: recommendation, sections: [
+      { heading: "Current position", table: { columns: ["Measure", "Current value"], rows: [["Available cash", formatCurrency(context.currentCash)], ["Protected reserve", formatCurrency(context.cashBuffer)], ["Above reserve", formatCurrency(availableAboveReserve)], ["Known near-term obligations", formatCurrency(obligations)], ["HELOC availability", formatCurrency(context.helocReserve)]] } },
+      { heading: "Projected effect", paragraphs: [`Tracked monthly cash flow is ${context.projectedSurplus >= 0 ? `${formatCurrency(context.projectedSurplus)} positive` : `${formatCurrency(Math.abs(context.projectedSurplus))} short`}.${nextForecast ? ` The next forecast period ends at ${formatCurrency(nextForecast.cash)} with ${nextForecast.cashShortages} projected cash shortage${nextForecast.cashShortages === 1 ? "" : "s"}.` : ""}`] },
+      { heading: "Explain Why", paragraphs: [model.primaryRecommendation.explainWhy] },
+    ], assumptions: ["This assumes your saved balances, income, due dates, and reserve settings are current.", "This is planning guidance, not a guarantee of account availability."], followUp: "What payment amount are you considering? I can compare it with the reserve and upcoming bills.", ...dashboard });
   }
 
-  if (normalized.includes("bill") && context.billsDueSoon.length > 0) {
-    const bills = context.billsDueSoon.map((bill) => `• ${bill.name}: ${formatCurrency(bill.amount)}, due ${bill.dueDate}`).join("\n");
-    return {
-      text: `These bills need the closest attention based on their current due dates:\n\n${bills}\n\nThey matter because each is due within the next seven days. Would you like me to help you decide which income or cash source should cover them?`,
-      href: "/dashboard/money/cashflow#bills",
-      action: "Open Bills",
-    };
-  }
-  const opportunity = normalized.includes("opportunit")
-    ? model.insights.find((item) => item.category === "Opportunities")
-    : undefined;
-  const card =
-    model.cards.find((item) => normalized.includes("bill") && item.id === "upcoming-bills") ||
-    model.cards.find((item) => normalized.includes("debt") && item.id === "debt-progress") ||
-    model.cards.find((item) => (normalized.includes("cash") || normalized.includes("income")) && item.id === "cash-flow") ||
-    model.cards.find((item) => normalized.includes("velocity") && item.id === "velocity-banking") ||
-    model.cards.find((item) => normalized.includes("fund") && item.id === "funding-sources") ||
-    model.cards.find((item) => normalized.includes("pot") && item.id === "income-pots");
-
-  if (opportunity) {
-    return {
-      text: `${opportunity.summary} Explain Why: ${opportunity.explainWhy?.reason || opportunity.detailedExplanation}`,
-      href: opportunity.navigationTarget || "/dashboard/money",
-      action: opportunity.action?.label || "Review this opportunity",
-    };
+  if (intent === "bills") {
+    if (!context.billsDueSoon.length) return structuredAnswer({ intent, opening: "I don’t see any bill records due in the current seven-day review window.", sections: [{ heading: "What I need", paragraphs: ["If you expected a bill here, confirm its due date and active status in Bills so I can evaluate it without guessing."] }], followUp: "Would you like to review all saved bills?", href: "/dashboard/money/cashflow#bills", action: "Open Bills" });
+    const total = context.billsDueSoon.reduce((sum, bill) => sum + bill.amount, 0);
+    return structuredAnswer({ intent, opening: `${context.billsDueSoon.length} bill${context.billsDueSoon.length === 1 ? "" : "s"} need the closest attention, totaling ${formatCurrency(total)}.`, sections: [
+      { heading: "Bills to review", table: { columns: ["Due", "Bill", "Amount", "Status", "Income Pot"], rows: context.billsDueSoon.map((bill) => [bill.dueDate, bill.name, formatCurrency(bill.amount), bill.status || "Upcoming", bill.incomePot || "Not assigned"]) } },
+      { heading: "Explain Why", paragraphs: ["These are active bills whose saved due dates fall inside the current seven-day review window. Overdue and due-today items should be handled before later items."] },
+    ], followUp: "Would you like me to help match these bills to upcoming income?", href: "/dashboard/money/cashflow#bills", action: "Open Bills" });
   }
 
-  if (card) {
-    return {
-      text: `${card.detail}\n\nExplain Why: ${card.explainWhy}\n\nWould you like to open the detailed workspace or explore a different option?`,
-      href: card.href,
-      action: `Open ${card.title}`,
-    };
+  if (intent === "debt-strategy") {
+    const scenarios = context.strategyScenarios.filter((item) => item.id === "avalanche" || item.id === "snowball");
+    if (!context.debts.length || scenarios.length < 2) return structuredAnswer({ intent, opening: "I can’t make a reliable avalanche-versus-snowball comparison from the records currently available.", sections: [{ heading: "What’s missing", paragraphs: ["I need current debt balances, interest rates, minimum payments, and both payoff scenarios before recommending a switch."] }], followUp: "Would you like to review the debt records that feed the comparison?", href: "/dashboard/money/debts", action: "Open Debts" });
+    const avalanche = scenarios.find((item) => item.id === "avalanche")!;
+    const snowball = scenarios.find((item) => item.id === "snowball")!;
+    const preference = conversation.memories?.map((item) => JSON.stringify(item.value)).find((value) => /minimi[sz]e interest|quick wins|motivation/i.test(value));
+    const betterInterest = avalanche.totalInterest <= snowball.totalInterest ? avalanche : snowball;
+    return structuredAnswer({ intent, opening: `Based on the current payoff scenarios, I would ${context.activeDebtStrategy === betterInterest.id ? "stay with" : "consider switching to"} ${betterInterest.label}.`, sections: [
+      { heading: "Strategy comparison", table: { columns: ["Strategy", "Payoff time", "Total interest", "Monthly strain", "Risk"], rows: scenarios.map((item) => [item.label, `${item.monthsToPayoff} months`, formatCurrency(item.totalInterest), formatCurrency(item.monthlyCashStrain), item.riskLevel]) } },
+      { heading: "Observation", paragraphs: [`${betterInterest.label} has the lower modeled interest cost. The current strategy is ${context.activeDebtStrategy}.`] },
+      { heading: "Recommendation", paragraphs: [preference ? `I also considered your saved preference: ${preference}. Current balances and scenario calculations still control the recommendation.` : "If minimizing interest is your priority, use the lower-interest scenario. If early account wins matter more, snowball may still be the better behavioral fit."] },
+      { heading: "Explain Why", paragraphs: [`The comparison uses current balances, rates, minimum payments, and modeled payoff schedules across ${context.debts.length} debt account${context.debts.length === 1 ? "" : "s"}.`] },
+    ], assumptions: ["Debt records and modeled extra-payment capacity are current.", "Payoff dates can change with rates, fees, or new charges."], followUp: "Is your higher priority minimizing total interest or getting faster account wins?", href: "/dashboard/money/debts", action: "Review debt strategy" });
   }
 
-  const financialTerms = /\b(money|finance|bill|debt|cash|income|payment|retirement|forecast|velocity|funding|budget|spend|save|interest|credit)\b/;
-  if (!financialTerms.test(normalized)) {
-    return {
-      text: "That doesn’t appear to be a financial question. I’m here to help with your BeastMoney plan, including bills, debt, cash flow, funding sources, forecasts, and retirement. If you meant something financial, tell me a little more and I’ll help you work through it.",
-      href: "/dashboard/money#money-dashboard",
-      action: "Open the financial dashboard",
-    };
+  if (intent === "changes") {
+    const prior = conversation.priorSummaries?.[0] || conversation.summary;
+    return structuredAnswer({ intent, opening: "I can describe the current position, but I don’t have a versioned financial snapshot that proves which account values changed since your last visit.", sections: [{ heading: "Current position", bullets: [`Cash: ${formatCurrency(context.currentCash)}`, `Debt: ${formatCurrency(context.debts.reduce((sum, item) => sum + item.balance, 0))}`, `Monthly cash flow: ${formatCurrency(context.projectedSurplus)}`] }, ...(prior ? [{ heading: "Prior conversation context", paragraphs: [`The prior discussion was summarized as: ${prior}. That summary is context, not authoritative financial data.`] }] : [])], followUp: "Would you like to open the dashboard to compare the current records in detail?", ...dashboard });
   }
 
-  return {
-    text: `${model.primaryRecommendation.action}\n\nExplain Why: ${model.primaryRecommendation.explainWhy}\n\nWould you like me to explain the assumptions or open the detailed workspace?`,
-    href: model.primaryRecommendation.href,
-    action: "Review the current recommendation",
-  };
+  if (intent === "non-financial") {
+    return structuredAnswer({ intent, opening: "That doesn’t appear to be a financial question, but no problem.", sections: [], followUp: "I can help with bills, debt, cash flow, forecasts, funding sources, or retirement whenever you’re ready.", ...dashboard });
+  }
+
+  const intentCardIds: Partial<Record<MoneyCoachIntent, string>> = { "cash-flow": "cash-flow", velocity: "velocity-banking", funding: "funding-sources", retirement: "retirement", forecast: "cash-flow" };
+  if (intent === "retirement" && !context.retirementDataAvailable) return structuredAnswer({ intent, opening: "I don’t have retirement records in this review, so I can’t give you a responsible retirement assessment yet.", sections: [{ heading: "What I need", paragraphs: ["Current retirement balances, contributions, target date, and assumptions are needed before I calculate or recommend anything."] }], followUp: "Would you like to open Retirement and review those inputs?", href: "/dashboard/money/retirement", action: "Open Retirement" });
+  const card = model.cards.find((item) => item.id === intentCardIds[intent]);
+  if (card) return structuredAnswer({ intent, opening: card.detail, sections: [{ heading: "Explain Why", paragraphs: [card.explainWhy] }], followUp: "Would you like me to explain the assumptions or open the detailed workspace?", href: card.href, action: `Open ${card.title}` });
+  return structuredAnswer({ intent, opening: model.primaryRecommendation.action, sections: [{ heading: "Explain Why", paragraphs: [model.primaryRecommendation.explainWhy] }], followUp: "Would you like me to explain the assumptions or open the detailed workspace?", href: model.primaryRecommendation.href, action: "Review the current recommendation" });
 }
