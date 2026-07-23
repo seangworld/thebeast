@@ -52,6 +52,8 @@ import {
 } from "@/app/dashboard/money/components/MoneyDashboardUI";
 import { BeastMoneyShell } from "@/app/dashboard/money/BeastMoneyShell";
 import { MoneyCoachExperience } from "@/app/dashboard/money/components/MoneyCoachExperience";
+import { FinancialMissionControl } from "@/app/dashboard/money/components/FinancialMissionControl";
+import { buildFinancialMissionControl } from "@/lib/financialMissionControl";
 
 type MoneyDebt = {
   id: string;
@@ -733,6 +735,50 @@ export function MoneyWorkspacePage({ view }: { view: "coach" | "dashboard" }) {
     forecast: snapshot.financialForecast.periods.map((period) => ({ label: period.label, cash: period.cash, debt: period.debt, cashShortages: period.cashShortages })),
     retirementDataAvailable: false,
   });
+  const financialMissionControl = buildFinancialMissionControl({
+    ownerId,
+    asOf: snapshot.simulation.asOfDate.toISOString(),
+    financialHealthScore: snapshot.financialInsights.financialHealthScore,
+    healthBand: snapshot.financialInsights.healthBand,
+    healthSummary: snapshot.financialInsights.summary,
+    monthlyIncome: snapshot.monthlyIncome,
+    monthlyOutflow: snapshot.monthlyOutflow,
+    monthlyBills: snapshot.monthlyBills,
+    debtMinimums: snapshot.debtMinimums,
+    projectedSurplus: snapshot.projectedSurplus,
+    startingCash: snapshot.startingCash,
+    cashBuffer: snapshot.buffer,
+    totalDebt: snapshot.totalDebt,
+    debtProgressPercent: snapshot.financialInsights.monthlyProgress.progressPercent,
+    monthlyDebtReduction: snapshot.financialInsights.monthlyProgress.debtReduction,
+    debtFreedomCountdown: snapshot.financialInsights.debtFreedomCountdown,
+    cashEfficiency: snapshot.financialInsights.cashEfficiency,
+    retirementDataAvailable: false,
+    scenarios: snapshot.scenarioComparison.scenarios
+      .filter((scenario) => ["avalanche", "snowball", "velocity"].includes(scenario.id))
+      .map((scenario) => ({ id: scenario.id, label: scenario.label, monthsToPayoff: scenario.monthsToPayoff, totalInterest: scenario.totalInterest, monthlyCashStrain: scenario.monthlyCashStrain, riskLevel: scenario.riskLevel })),
+    upcomingObligations: snapshot.billsDueSoon.map((bill) => {
+      const dueDate = bill.next_due_date_after_payment
+        ? new Date(bill.next_due_date_after_payment)
+        : nextDueDateFromDay(bill.due_date, snapshot.simulation.asOfDate);
+      return { id: bill.id, name: bill.name || "Upcoming bill", amount: numberValue(bill.amount), dueLabel: formatDateLabel(dueDate) };
+    }),
+    observations: moneyCoachExperience.observations,
+    benchmarks: moneyCoachExperience.benchmarks,
+    recommendedFocus: {
+      title: snapshot.financialCoach.bestNextAction,
+      action: snapshot.financialCoach.whatToDoToday,
+      why: snapshot.financialCoach.whyThisAction,
+      href: snapshot.financialCoach.warnings[0]?.href || (snapshot.activeDebts.length ? "/dashboard/money/debts" : "/dashboard/money/cashflow"),
+    },
+  });
+  const dashboardExperience = view === "dashboard" ? (
+    <BeastMoneyShell title="Dashboard" description="Financial Mission Control" showPageHeader={false}>
+      <FinancialMissionControl model={financialMissionControl} />
+    </BeastMoneyShell>
+  ) : null;
+
+  if (dashboardExperience) return dashboardExperience;
 
   return (
     <BeastMoneyShell
