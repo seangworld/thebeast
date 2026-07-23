@@ -8,6 +8,7 @@ import {
   reflectionPrompt,
   teachingPrompt,
 } from "./promptLibrary";
+import { buildMentorConversationPresentationPrompt } from "./mentorConversationPresentation";
 import type {
   LearningConversationType,
   OpenAILearningMessage,
@@ -39,6 +40,10 @@ export function buildOpenAILearningMessages(
         learningSystemPrompt,
         specialistPrompt,
         promptForConversationType(request.conversationType),
+        buildMentorConversationPresentationPrompt({
+          context: request.context,
+          conversationType: request.conversationType,
+        }),
         buildHomeworkPrompt(request.homeworkPolicy),
         buildContextPrompt(request.context),
       ].join("\n\n"),
