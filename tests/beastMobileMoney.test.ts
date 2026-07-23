@@ -77,7 +77,8 @@ test("BF-MOB-004 mobile Money prevents horizontal overflow and preserves desktop
   assert.match(page, /data-mobile-money-experience="true"/);
   assert.match(page, /className="hidden space-y-8 md:block"/);
   assert.match(page, /Money Cockpit/);
-  assert.match(shell, /beast-module-tabs/);
+  assert.doesNotMatch(shell, /beast-module-tabs/);
+  assert.doesNotMatch(shell, /aria-label="BeastMoney sections"/);
   assert.match(globalStyles, /width: 100%;/);
   assert.match(globalStyles, /min-width: 0;/);
   assert.doesNotMatch(globalStyles, /overflow-x: (?:clip|hidden)/);

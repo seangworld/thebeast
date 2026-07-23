@@ -52,12 +52,34 @@ test("BM-303 active state follows direct links refresh and history location chan
 test("BM-303 desktop and mobile navigation preserve active and history behavior", () => {
   const shell = source("src/app/dashboard/money/BeastMoneyShell.tsx");
   const layout = source("src/app/dashboard/layout.tsx");
-  assert.match(shell, /aria-current=\{active \? "page"/);
-  assert.match(shell, /addEventListener\("hashchange"/);
-  assert.match(shell, /addEventListener\("popstate"/);
+  assert.doesNotMatch(shell, /beast-module-tabs|BeastMoney sections/);
+  assert.doesNotMatch(shell, /usePathname|hashchange|popstate/);
   assert.match(layout, /isBeastMoneyNavigationActive\(item, pathname, locationHash\)/);
+  assert.match(layout, /aria-current=\{active \? "page"/);
+  assert.match(layout, /addEventListener\("hashchange"/);
   assert.match(layout, /addEventListener\("popstate"/);
   assert.equal(buildMobileNavigation({ isOwner: false }).primary.find((item) => item.label === "Money")?.href, "/dashboard/money");
+});
+
+test("BM-313 keeps the global left navigation as the single BeastMoney navigation source", () => {
+  const shell = source("src/app/dashboard/money/BeastMoneyShell.tsx");
+  const workspace = source("src/app/dashboard/money/components/MoneyWorkspacePage.tsx");
+  const layout = source("src/app/dashboard/layout.tsx");
+
+  assert.doesNotMatch(shell, /<nav|beast-module-tab|beastMoneyCoreNavigation/);
+  assert.match(layout, /getBeastModuleNavigationForPersona/);
+  assert.match(layout, /personaModuleNavigation/);
+  assert.match(layout, /isBeastMoneyNavigationActive/);
+  assert.match(workspace, /title="Dashboard"[\s\S]*showPageHeader=\{false\}/);
+  assert.match(workspace, /title="Money Coach"[\s\S]*showPageHeader=\{false\}/);
+  assert.match(shell, /\{children\}/);
+
+  const dashboard = source("src/app/dashboard/money/components/FinancialMissionControl.tsx");
+  assert.ok(
+    dashboard.indexOf('id="financial-health"') <
+      dashboard.indexOf("<MorningFinancialBriefingPanel"),
+    "Dashboard should begin with the Financial Health Score summary"
+  );
 });
 
 test("BM-303 keeps add controls inside Bills and Debts workspaces", () => {

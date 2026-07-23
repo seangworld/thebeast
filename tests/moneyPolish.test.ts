@@ -23,9 +23,10 @@ test("BeastMoney primary pages use the shared module shell", () => {
     "src/app/dashboard/money/settings/page.tsx",
   ];
 
-  assert.match(shell, /beast-module-tabs/);
+  assert.doesNotMatch(shell, /beast-module-tabs/);
+  assert.doesNotMatch(shell, /aria-label="BeastMoney sections"/);
   assert.match(shell, /ModuleBadge module="money"/);
-  assert.match(shell, /beastMoneyCoreNavigation/);
+  assert.doesNotMatch(shell, /beastMoneyCoreNavigation/);
   assert.match(navigation, /\/dashboard\/money\/cashflow/);
   assert.match(navigation, /\/dashboard\/money\/cashflow#bills/);
   assert.match(navigation, /\/dashboard\/money\/debts/);

@@ -83,26 +83,14 @@ export function FinancialMissionControl({ model }: { model: FinancialMissionCont
   const maxScenarioInterest = Math.max(1, ...model.scenarios.map((scenario) => scenario.totalInterest));
   return (
     <div className="mx-auto w-full max-w-[1600px] space-y-6 pb-12" data-financial-mission-control="true">
-      <header className="relative overflow-hidden rounded-3xl border border-cyan-300/15 bg-[radial-gradient(circle_at_top_right,rgba(34,211,238,0.16),transparent_36%),linear-gradient(135deg,#111827,#0b111c)] p-6 shadow-[0_30px_90px_rgba(0,0,0,0.3)] sm:p-8">
-        <div className="relative z-10 max-w-3xl">
-          <p className="text-xs font-black uppercase tracking-[0.2em] text-cyan-300">Financial Mission Control</p>
-          <h1 className="mt-3 text-3xl font-black tracking-tight text-white sm:text-4xl lg:text-5xl">Your financial position, at a glance.</h1>
-          <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base">Current health, cash, debt, progress, and priorities—summarized from your existing BeastMoney records and calculation engines.</p>
-        </div>
-        <div className="relative z-10 mt-6 flex flex-wrap gap-3 text-xs text-slate-400">
-          <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2">Updated {new Date(model.generatedAt).toLocaleString()}</span>
-          <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2">Current records remain authoritative</span>
-        </div>
-      </header>
-
-      <MorningFinancialBriefingPanel briefing={model.morningBriefing} />
-
       <section id="financial-health" className="scroll-mt-6" aria-labelledby="mission-control-overview">
-        <h2 id="mission-control-overview" className="sr-only">Financial overview</h2>
+        <h1 id="mission-control-overview" className="sr-only">Financial Mission Control</h1>
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
           {model.heroCards.map((card) => <HeroCard key={card.id} card={card} />)}
         </div>
       </section>
+
+      <MorningFinancialBriefingPanel briefing={model.morningBriefing} />
 
       <section
         id="financial-health-score"
