@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useMemo, useState } from "react";
 import type { MoneyObservationCenterModel } from "@/lib/moneyObservationCenter";
 
 export function ObservationCenter({
@@ -6,6 +9,45 @@ export function ObservationCenter({
 }: {
   model: MoneyObservationCenterModel;
 }) {
+  const [sort, setSort] = useState<"newest" | "priority">("newest");
+  const [status, setStatus] = useState<"current" | "resolved" | "dismissed">("current");
+  const [category, setCategory] = useState("all");
+  const categories = useMemo(
+    () =>
+      Array.from(
+        new Set(model.groups.flatMap((group) => group.items.map((item) => item.category)))
+      ).sort(),
+    [model.groups]
+  );
+  const groups = useMemo(
+    () =>
+      model.groups
+        .map((group) => ({
+          ...group,
+          items: group.items
+            .filter((item) =>
+              status === "resolved"
+                ? item.status === "Resolved"
+                : status === "dismissed"
+                  ? item.status === "Dismissed"
+                  : !["Resolved", "Dismissed"].includes(item.status)
+            )
+            .filter((item) => category === "all" || item.category === category)
+            .sort((left, right) =>
+              sort === "priority"
+                ? right.priorityScore - left.priorityScore ||
+                  Date.parse(right.observedAt) - Date.parse(left.observedAt)
+                : Date.parse(right.observedAt) - Date.parse(left.observedAt) ||
+                  right.priorityScore - left.priorityScore
+            ),
+        }))
+        .filter((group) => group.items.length > 0),
+    [category, model.groups, sort, status]
+  );
+  const visibleTotal = groups.reduce((total, group) => total + group.items.length, 0);
+  const moneyCoachHref = (question: string) =>
+    `/dashboard/money?starter=${encodeURIComponent(question)}`;
+
   return (
     <div
       className="mx-auto w-full max-w-[1400px] space-y-6 pb-12"
@@ -24,12 +66,59 @@ export function ObservationCenter({
           BeastMoney evidence.
         </p>
         <p className="mt-4 text-xs text-slate-500">
-          {model.total} active observation{model.total === 1 ? "" : "s"} ·
+          {model.total} retained observation{model.total === 1 ? "" : "s"} ·
           Updated {new Date(model.generatedAt).toLocaleString()}
         </p>
       </header>
 
-      {model.groups.map((group) => (
+      <section
+        className="rounded-2xl border border-white/10 bg-[#111827]/80 p-4"
+        aria-label="Observation filters"
+      >
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]">
+          <label className="grid gap-2 text-xs font-bold text-slate-300">
+            Sort observations
+            <select
+              className="min-h-11 rounded-xl border border-white/10 bg-slate-950 px-3 text-sm text-white"
+              value={sort}
+              onChange={(event) => setSort(event.target.value as typeof sort)}
+            >
+              <option value="newest">Newest</option>
+              <option value="priority">Highest Priority</option>
+            </select>
+          </label>
+          <label className="grid gap-2 text-xs font-bold text-slate-300">
+            Observation status
+            <select
+              className="min-h-11 rounded-xl border border-white/10 bg-slate-950 px-3 text-sm text-white"
+              value={status}
+              onChange={(event) => setStatus(event.target.value as typeof status)}
+            >
+              <option value="current">Current</option>
+              <option value="resolved">Resolved</option>
+              <option value="dismissed">Dismissed</option>
+            </select>
+          </label>
+          <label className="grid gap-2 text-xs font-bold text-slate-300">
+            By Category
+            <select
+              className="min-h-11 rounded-xl border border-white/10 bg-slate-950 px-3 text-sm text-white"
+              value={category}
+              onChange={(event) => setCategory(event.target.value)}
+            >
+              <option value="all">All categories</option>
+              {categories.map((value) => (
+                <option key={value} value={value}>{value}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <p className="mt-3 text-xs text-slate-500" aria-live="polite">
+          Showing {visibleTotal} observation{visibleTotal === 1 ? "" : "s"}.
+        </p>
+      </section>
+
+      {groups.map((group) => (
         <section
           key={group.id}
           id={group.id}
@@ -102,16 +191,18 @@ export function ObservationCenter({
                   </div>
                 </details>
 
-                {item.suggestedQuestion ? (
-                  <p className="mt-4 text-sm italic text-slate-400">
-                    Ask Money Coach: “{item.suggestedQuestion}”
-                  </p>
-                ) : null}
-
                 <div className="mt-5 flex flex-wrap gap-3">
-                  {item.suggestedAction ? (
+                  {item.suggestedQuestion ? (
                     <Link
                       className="beast-button inline-flex min-h-11 items-center"
+                      href={moneyCoachHref(item.suggestedQuestion)}
+                    >
+                      Discuss with Money Coach
+                    </Link>
+                  ) : null}
+                  {item.suggestedAction ? (
+                    <Link
+                      className="beast-button-secondary inline-flex min-h-11 items-center"
                       href={item.suggestedAction.href}
                     >
                       {item.suggestedAction.label}
@@ -133,14 +224,14 @@ export function ObservationCenter({
         </section>
       ))}
 
-      {!model.groups.length ? (
+      {!groups.length ? (
         <section className="rounded-2xl border border-dashed border-white/15 p-8 text-center">
           <h2 className="text-xl font-black text-white">
-            No active observations
+            No matching observations
           </h2>
           <p className="mt-2 text-sm text-slate-400">
-            Money Coach did not find an evidence-backed change that needs
-            attention right now.
+            Adjust the status or category filter to review other
+            evidence-backed observations.
           </p>
         </section>
       ) : null}

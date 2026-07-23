@@ -79,7 +79,7 @@ test("BM-311 groups active observations into every Observation Center section", 
     ["Follow-up item", "Questions"],
     ["Missing information", "Missing Information"],
     ["Inconsistency", "Data Quality"],
-    ["Milestone", "Completed Milestones"],
+    ["Milestone", "Milestones"],
   ];
   const model = buildMoneyObservationCenter(
     fixtures.map(([type], index) => observation(`item-${index}`, type)),
@@ -99,9 +99,11 @@ test("BM-311 exposes evidence, confidence, workspace, and action without duplica
     observation("dismissed", "Opportunity", { status: "Dismissed" }),
     observation("expired", "Improvement", { status: "Expired" }),
   ], now);
-  const item = model.groups[0]?.items[0];
+  const item = model.groups
+    .flatMap((group) => group.items)
+    .find((candidate) => candidate.id === "risk");
 
-  assert.equal(model.total, 1);
+  assert.equal(model.total, 2);
   assert.equal(item?.summary, "risk summary");
   assert.match(item?.whyItMatters || "", /member's plan/);
   assert.equal(item?.confidence, 82);
@@ -109,6 +111,10 @@ test("BM-311 exposes evidence, confidence, workspace, and action without duplica
   assert.deepEqual(item?.explainWhy.evidence, ["Current value: 42"]);
   assert.deepEqual(item?.workspace, { label: "Debts", href: "/dashboard/money/debts" });
   assert.deepEqual(item?.suggestedAction, { label: "Review Debts", href: "/dashboard/money/debts" });
+  assert.equal(
+    model.groups.flatMap((group) => group.items).find((candidate) => candidate.id === "dismissed")?.status,
+    "Dismissed"
+  );
 });
 
 test("BM-311 provides a dedicated accessible route and integration surfaces", () => {
@@ -127,6 +133,16 @@ test("BM-311 provides a dedicated accessible route and integration surfaces", ()
   assert.match(center, /item\.confidenceLabel/);
   assert.match(center, /<details[\s\S]*Explain Why/);
   assert.match(center, /Open \{item\.workspace\.label\}/);
+  assert.match(center, /Discuss with Money Coach/);
+  assert.match(center, /\\?starter=/);
+  assert.match(center, /Newest/);
+  assert.match(center, /Highest Priority/);
+  assert.match(center, /Resolved/);
+  assert.match(center, /Dismissed/);
+  assert.match(center, /By Category/);
+  assert.match(center, /priorityScore/);
+  assert.match(center, /observedAt/);
+  assert.match(center, /sm:grid-cols-2/);
   assert.match(center, /grid gap-4 lg:grid-cols-2/);
   assert.match(missionControl, /Observation Center/);
   assert.match(missionControl, /\/dashboard\/money\/observations/);

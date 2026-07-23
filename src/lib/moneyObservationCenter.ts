@@ -7,7 +7,7 @@ export type ObservationCenterGroup =
   | "Questions"
   | "Missing Information"
   | "Data Quality"
-  | "Completed Milestones";
+  | "Milestones";
 
 export const observationCenterGroupOrder: readonly ObservationCenterGroup[] = [
   "Improvements",
@@ -16,7 +16,7 @@ export const observationCenterGroupOrder: readonly ObservationCenterGroup[] = [
   "Questions",
   "Missing Information",
   "Data Quality",
-  "Completed Milestones",
+  "Milestones",
 ] as const;
 
 export type ObservationCenterItem = {
@@ -38,6 +38,9 @@ export type ObservationCenterItem = {
   suggestedQuestion?: string;
   status: Observation["status"];
   priority: Observation["assessment"]["priority"];
+  priorityScore: number;
+  category: string;
+  observedAt: string;
 };
 
 export type MoneyObservationCenterModel = {
@@ -53,12 +56,7 @@ export type MoneyObservationCenterModel = {
 function groupObservation(
   observation: Observation
 ): ObservationCenterGroup {
-  if (
-    observation.type === "Milestone" ||
-    observation.status === "Resolved"
-  ) {
-    return "Completed Milestones";
-  }
+  if (observation.type === "Milestone") return "Milestones";
   if (observation.type === "Improvement") return "Improvements";
   if (observation.type === "Opportunity") return "Opportunities";
   if (observation.type === "Missing information") {
@@ -102,7 +100,6 @@ export function buildMoneyObservationCenter(
   const items = observations
     .filter(
       (observation) =>
-        observation.status !== "Dismissed" &&
         observation.status !== "Expired" &&
         observation.status !== "Superseded"
     )
@@ -148,9 +145,14 @@ export function buildMoneyObservationCenter(
                 href: workspaceTarget,
               }
             : undefined,
-        suggestedQuestion: observation.presentation.suggestedQuestion,
+        suggestedQuestion:
+          observation.presentation.suggestedQuestion ||
+          `Help me understand the ${observation.presentation.title.toLowerCase()} observation.`,
         status: observation.status,
         priority: observation.assessment.priority,
+        priorityScore: observation.assessment.priorityScore,
+        category: observation.category,
+        observedAt: observation.time.observedAt,
       };
     });
 
