@@ -19,6 +19,8 @@ import { SharedInsightEngine } from "./insights";
 import { KnowledgeSourceFramework, specialistKnowledgeSourcePolicies } from "./knowledgeSources";
 import { SharedAgentPlanningEngine, specialistAgentPlanningPolicies } from "./planning";
 import { RoleDefinitionRegistry, specialistRoleDefinitions } from "./roleDefinitions";
+import { SharedObservationIntelligence } from "./observations";
+import { SharedBenchmarkIntelligence } from "./benchmarks";
 
 export class BeastAgentsPlatform {
   readonly registry = new AgentRegistry();
@@ -33,6 +35,8 @@ export class BeastAgentsPlatform {
   readonly professionalBehavior = new ProfessionalBehaviorRegistry();
   readonly professionalIdentity = new ProfessionalIdentityRegistry();
   readonly insights = new SharedInsightEngine();
+  readonly observations = new SharedObservationIntelligence();
+  readonly benchmarks = new SharedBenchmarkIntelligence();
   readonly knowledgeSources = new KnowledgeSourceFramework();
   readonly planner = new SharedAgentPlanningEngine();
   readonly roleDefinitions = new RoleDefinitionRegistry();

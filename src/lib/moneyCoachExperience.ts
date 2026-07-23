@@ -16,6 +16,8 @@ import {
   type Insight,
   type InsightAction,
   type InsightPriorityFactor,
+  type Observation,
+  type BenchmarkResult,
   type ProfessionalBehaviorProfile,
   type ProfessionalIdentityProfile,
   type ProfessionalResponseExecution,
@@ -25,6 +27,15 @@ import {
   type RoleDefinedExecution,
   type SpecialistRoleDefinition,
 } from "./platform/agents";
+import {
+  buildMoneyCoachObservations,
+  type MoneyObservationData,
+  type MoneyObservationSnapshot,
+} from "./moneyCoachObservations";
+import {
+  buildMoneyCoachBenchmarks,
+  type MoneyBenchmarkConfiguration,
+} from "./moneyCoachBenchmarks";
 
 export type MoneyCoachExperienceCard = {
   id: string;
@@ -63,6 +74,8 @@ export type MoneyCoachExperienceModel = {
     href: string;
   };
   insights: Insight[];
+  observations: Observation[];
+  benchmarks: BenchmarkResult[];
   behavior: ProfessionalBehaviorProfile;
   professional: ProfessionalIdentityProfile;
   roleDefinition: SpecialistRoleDefinition;
@@ -124,6 +137,10 @@ export type MoneyCoachExperienceInput = {
   strategyScenarios?: readonly { id: string; label: string; monthsToPayoff: number; totalInterest: number; monthlyCashStrain: number; riskLevel: string; debtFreeDate: string }[];
   forecast?: readonly { label: string; cash: number; debt: number; cashShortages: number }[];
   retirementDataAvailable?: boolean;
+  observationHistory?: readonly MoneyObservationSnapshot[];
+  observationVelocity?: MoneyObservationSnapshot["velocity"];
+  observationRetirement?: MoneyObservationSnapshot["retirement"];
+  benchmarkConfiguration?: MoneyBenchmarkConfiguration;
 };
 
 const priorityConfiguration = {
@@ -231,6 +248,31 @@ export function buildMoneyCoachExperience(
   const opportunities: string[] = [];
   const cards: MoneyCoachExperienceCard[] = [];
   const insights: Insight[] = [];
+  const observationData: MoneyObservationData = {
+    current: {
+      capturedAt: input.asOfDate.toISOString(),
+      monthlyIncome: input.monthlyIncome,
+      monthlyOutflow: input.monthlyOutflow,
+      projectedSurplus: input.projectedSurplus,
+      currentCash: input.currentCash,
+      cashBuffer: input.cashBuffer,
+      totalDebt: input.totalDebt,
+      utilization: input.utilization,
+      bills: input.billsDueSoon,
+      debts: input.debts,
+      velocity: input.observationVelocity,
+      retirement: input.observationRetirement,
+    },
+    history: input.observationHistory || [],
+  };
+  const observations = buildMoneyCoachObservations(observationData, input.ownerId, input.asOfDate.toISOString());
+  const benchmarks = buildMoneyCoachBenchmarks(
+    observationData,
+    input.ownerId,
+    input.asOfDate.toISOString(),
+    observations,
+    input.benchmarkConfiguration
+  );
 
   if (input.billsDueSoonCount > 0) {
     importantItems.push(
@@ -506,6 +548,8 @@ export function buildMoneyCoachExperience(
       href: input.recommendationHref,
     },
     insights,
+    observations,
+    benchmarks,
     behavior: specialistProfessionalIdentityProfiles.moneyCoach.behavior,
     professional: specialistProfessionalIdentityProfiles.moneyCoach,
     roleDefinition,
@@ -532,7 +576,7 @@ export function buildMoneyCoachExperience(
   };
 }
 
-export type MoneyCoachIntent = "test" | "social" | "incomplete" | "bills" | "debt-strategy" | "payment-affordability" | "changes" | "cash-flow" | "forecast" | "retirement" | "funding" | "velocity" | "general-finance" | "non-financial";
+export type MoneyCoachIntent = "test" | "social" | "incomplete" | "bills" | "debt-strategy" | "payment-affordability" | "changes" | "benchmarks" | "cash-flow" | "forecast" | "retirement" | "funding" | "velocity" | "general-finance" | "non-financial";
 
 export type MoneyCoachResponseSection = ConversationResponseSection;
 
@@ -591,6 +635,7 @@ function recognizeMoneyDomainIntent(value: string): DomainIntentCandidate<Exclud
   const candidates: readonly [RegExp, Exclude<MoneyCoachIntent, "test" | "social" | "incomplete" | "non-financial">, string][] = [
     [/\b(can i afford|safe to (pay|make)|another payment|extra payment|pay more)\b/, "payment-affordability", "payment-capacity"],
     [/\b(what changed|what is different|since (my )?last|recent changes?)\b/, "changes", "change-comparison"],
+    [/\b(how (do|does|am|are) (i|my|this)|compare(d)? (with|to)|benchmark|against my (goal|average)|versus my (goal|average))\b/, "benchmarks", "benchmark-comparison"],
     [/\b(bills?|due|upcoming expenses?|needs? attention)\b/, "bills", "obligation-attention"],
     [/\b(cash flow|income|monthly surplus|monthly shortfall)\b/, "cash-flow", "cash-flow"],
     [/\b(forecast|projection|next month|future cash)\b/, "forecast", "forecast"],
@@ -623,6 +668,7 @@ const moneyCoachIntentTools: Partial<Record<MoneyCoachIntent, string>> = {
   bills: "open-bills",
   "debt-strategy": "open-debt",
   "cash-flow": "open-cash-flow",
+  benchmarks: "open-money-dashboard",
   forecast: "open-forecast",
   retirement: "open-retirement",
   velocity: "open-velocity",
@@ -744,6 +790,8 @@ export function answerMoneyCoachQuestion(
       ambiguous: domainRoute.ambiguous,
       requirements: [
         { id: "current-money-records", kind: "information", description: "Load current authenticated BeastMoney records", required: true, alreadyAvailable: true },
+        { id: "current-observations", kind: "information", description: "Load ranked evidence-backed observations", required: false, alreadyAvailable: model.observations.length > 0 },
+        { id: "current-benchmarks", kind: "information", description: "Load applicable benchmark comparisons", required: false, alreadyAvailable: model.benchmarks.length > 0 },
         { id: "money-knowledge", kind: "specialist-knowledge", description: "Load approved Money Coach domain knowledge", required: true, alreadyAvailable: true },
       ],
     },
@@ -817,8 +865,69 @@ export function answerMoneyCoachQuestion(
   }
 
   if (intent === "changes") {
+    const changeObservations = model.observations.filter((observation) =>
+      ["Change", "Trend", "Improvement", "Regression", "Milestone"].includes(observation.type)
+    );
+    if (changeObservations.length) {
+      const observations = changeObservations.slice(0, 5);
+      return structuredAnswer({
+        intent,
+        opening: observations[0].presentation.summary,
+        sections: observations.map((observation) => ({
+          heading: observation.presentation.title,
+          paragraphs: [
+            observation.presentation.whatChanged || observation.presentation.detail,
+            `Why I noticed: ${observation.presentation.whyNoticed}`,
+            ...(observation.presentation.whyItMayMatter ? [`Why it may matter: ${observation.presentation.whyItMayMatter}`] : []),
+          ],
+        })),
+        assumptions: Array.from(new Set(observations.flatMap((observation) => observation.provenance.limitations))),
+        followUp: "Would you like me to explain the evidence behind the highest-priority observation?",
+        ...dashboard,
+      });
+    }
     const prior = conversation.priorSummaries?.[0] || conversation.summary;
     return structuredAnswer({ intent, opening: "I can describe the current position, but I don’t have a versioned financial snapshot that proves which account values changed since your last visit.", sections: [{ heading: "Current position", bullets: [`Cash: ${formatCurrency(context.currentCash)}`, `Debt: ${formatCurrency(context.debts.reduce((sum, item) => sum + item.balance, 0))}`, `Monthly cash flow: ${formatCurrency(context.projectedSurplus)}`] }, ...(prior ? [{ heading: "Prior conversation context", paragraphs: [`The prior discussion was summarized as: ${prior}. That summary is context, not authoritative financial data.`] }] : [])], followUp: "Would you like to open the dashboard to compare the current records in detail?", ...dashboard });
+  }
+
+  if (intent === "benchmarks") {
+    if (!model.benchmarks.length) {
+      return structuredAnswer({
+        intent,
+        opening: "I don’t have enough applicable reference data to make a responsible comparison yet.",
+        sections: [{
+          heading: "What is needed",
+          paragraphs: ["A comparison needs a supported personal history, stated goal, authorized household baseline, configured threshold, or citable professional or population source. I won’t invent one."],
+        }],
+        followUp: "You can add a goal or build more financial history before we compare.",
+        ...dashboard,
+      });
+    }
+    const grouped = model.benchmarks.reduce<Record<string, BenchmarkResult[]>>((groups, benchmark) => {
+      const label =
+        benchmark.benchmarkType === "personal-historical-baseline" || benchmark.benchmarkType === "recent-trend-baseline"
+          ? "Personal baseline"
+          : benchmark.benchmarkType === "professional-guideline"
+            ? "Professional guideline"
+            : ["population-benchmark", "age-benchmark", "peer-benchmark"].includes(benchmark.benchmarkType)
+              ? "Population or peer benchmark"
+              : benchmark.benchmarkType === "goal-baseline"
+                ? "Stated goals"
+                : "Configured thresholds";
+      (groups[label] ||= []).push(benchmark);
+      return groups;
+    }, {});
+    return structuredAnswer({
+      intent,
+      opening: `${model.benchmarks.length} supported comparison${model.benchmarks.length === 1 ? " is" : "s are"} available from your current records and applicable reference points.`,
+      sections: Object.entries(grouped).map(([heading, comparisons]) => ({
+        heading,
+        bullets: comparisons.map((benchmark) => `${benchmark.interpretation} This uses ${benchmark.source.name}.`),
+      })),
+      assumptions: Array.from(new Set(model.benchmarks.flatMap((benchmark) => benchmark.limitations))),
+      followUp: "Which comparison would you like me to explain in detail?",
+      ...dashboard,
+    });
   }
 
   if (intent === "non-financial") {

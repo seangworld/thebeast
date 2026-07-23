@@ -19,3 +19,5 @@ export * from "./professionalIdentity";
 export * from "./knowledgeSources";
 export * from "./planning";
 export * from "./roleDefinitions";
+export * from "./observations";
+export * from "./benchmarks";
