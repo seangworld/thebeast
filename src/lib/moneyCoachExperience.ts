@@ -47,6 +47,7 @@ import {
   buildMorningFinancialBriefing,
   type MorningFinancialBriefing,
 } from "./moneyMorningBriefing";
+import type { FinancialHealthScoreResult } from "./financialHealthScore";
 
 export type MoneyCoachExperienceCard = {
   id: string;
@@ -120,6 +121,7 @@ export type MoneyCoachExperienceModel = {
     incomePotAssignedCount: number;
     totalObligationCount: number;
     retirementDataAvailable: boolean;
+    financialHealth?: FinancialHealthScoreResult;
   };
 };
 
@@ -166,6 +168,7 @@ export type MoneyCoachExperienceInput = {
   strategyScenarios?: readonly { id: string; label: string; monthsToPayoff: number; totalInterest: number; monthlyCashStrain: number; riskLevel: string; debtFreeDate: string }[];
   forecast?: readonly { label: string; cash: number; debt: number; cashShortages: number }[];
   retirementDataAvailable?: boolean;
+  financialHealth?: FinancialHealthScoreResult;
   observationHistory?: readonly MoneyObservationSnapshot[];
   observationVelocity?: MoneyObservationSnapshot["velocity"];
   observationRetirement?: MoneyObservationSnapshot["retirement"];
@@ -715,11 +718,12 @@ export function buildMoneyCoachExperience(
       incomePotAssignedCount: input.assignedIncomePotCount,
       totalObligationCount: input.totalObligationCount,
       retirementDataAvailable: Boolean(input.retirementDataAvailable),
+      financialHealth: input.financialHealth,
     },
   };
 }
 
-export type MoneyCoachIntent = "test" | "social" | "incomplete" | "bills" | "debt-strategy" | "payment-affordability" | "changes" | "benchmarks" | "cash-flow" | "forecast" | "retirement" | "funding" | "velocity" | "general-finance" | "non-financial";
+export type MoneyCoachIntent = "test" | "social" | "incomplete" | "bills" | "debt-strategy" | "payment-affordability" | "changes" | "benchmarks" | "financial-health" | "cash-flow" | "forecast" | "retirement" | "funding" | "velocity" | "general-finance" | "non-financial";
 
 export type MoneyCoachResponseSection = ConversationResponseSection;
 
@@ -758,12 +762,13 @@ export type MoneyCoachConversationContext = {
   activeTopics?: readonly MoneyCoachTopic[];
 };
 
-export type MoneyCoachTopic = "velocity-banking" | "avalanche" | "snowball" | "cash-flow" | "bills" | "debts" | "income-pots" | "funding-sources" | "retirement" | "forecasting" | "cash-buffer" | "heloc";
+export type MoneyCoachTopic = "velocity-banking" | "avalanche" | "snowball" | "financial-health" | "cash-flow" | "bills" | "debts" | "income-pots" | "funding-sources" | "retirement" | "forecasting" | "cash-buffer" | "heloc";
 
 const moneyCoachConcepts = [
   { topic: "velocity-banking", label: "Velocity Banking", aliases: ["velocity", "velocity banking"] },
   { topic: "avalanche", label: "Avalanche", aliases: ["avalanche", "debt avalanche"] },
   { topic: "snowball", label: "Snowball", aliases: ["snowball", "debt snowball"] },
+  { topic: "financial-health", label: "Financial Health Score", aliases: ["financial health", "financial health score", "health score", "wellness score"] },
   { topic: "cash-flow", label: "Cash Flow", aliases: ["cash flow", "cashflow"] },
   { topic: "bills", label: "Bills", aliases: ["bill", "bills"] },
   { topic: "debts", label: "Debts", aliases: ["debt", "debts"] },
@@ -784,6 +789,7 @@ function recognizeMoneyDomainIntent(value: string): DomainIntentCandidate<Exclud
   const candidates: readonly [RegExp, Exclude<MoneyCoachIntent, "test" | "social" | "incomplete" | "non-financial">, string][] = [
     [/\b(can i afford|safe to (pay|make)|another payment|extra payment|pay more)\b/, "payment-affordability", "payment-capacity"],
     [/\b(what changed|what is different|since (my )?last|recent changes?)\b/, "changes", "change-comparison"],
+    [/\b(financial health|health score|wellness score)\b/, "financial-health", "financial-health"],
     [/\b(how (do|does|am|are) (i|my|this)|compare(d)? (with|to)|benchmark|against my (goal|average)|versus my (goal|average))\b/, "benchmarks", "benchmark-comparison"],
     [/\b(bills?|due|upcoming expenses?|needs? attention)\b/, "bills", "obligation-attention"],
     [/\b(cash flow|income|monthly surplus|monthly shortfall)\b/, "cash-flow", "cash-flow"],
@@ -804,7 +810,7 @@ export function classifyMoneyCoachIntent(question: string): MoneyCoachIntent {
       if (strategy) return { intent: "debt-strategy" as const, confidence: 0.95, signals: ["strategy-comparison"] };
       return recognizeMoneyDomainIntent(normalized);
     },
-    domainVocabulary: ["money", "finance", "bill", "debt", "cash", "income", "payment", "retirement", "forecast", "velocity", "funding", "budget", "interest", "credit"],
+    domainVocabulary: ["money", "finance", "financial health", "health score", "bill", "debt", "cash", "income", "payment", "retirement", "forecast", "velocity", "funding", "budget", "interest", "credit"],
   });
   if (result.kind === "testing") return "test";
   if (["greeting", "thanks", "acknowledgement"].includes(result.kind)) return "social";
@@ -817,6 +823,7 @@ const moneyCoachIntentTools: Partial<Record<MoneyCoachIntent, string>> = {
   bills: "open-bills",
   "debt-strategy": "open-debt",
   "cash-flow": "open-cash-flow",
+  "financial-health": "open-financial-health-score",
   benchmarks: "open-money-dashboard",
   forecast: "open-forecast",
   retirement: "open-retirement",
@@ -828,6 +835,7 @@ const moneyCoachTopicTools: Record<MoneyCoachTopic, string> = {
   "velocity-banking": "open-velocity",
   avalanche: "open-debt",
   snowball: "open-debt",
+  "financial-health": "open-financial-health-score",
   "cash-flow": "open-cash-flow",
   bills: "open-bills",
   debts: "open-debt",
@@ -884,6 +892,7 @@ const moneyTopicDetails: Record<MoneyCoachTopic, { label: string; definition: st
   "velocity-banking": { label: "Velocity Banking", definition: "Velocity Banking is a debt-paydown method that uses available revolving credit as a temporary cash-flow tool, then directs income back toward restoring that credit line.", href: "/dashboard/money/velocity" },
   avalanche: { label: "Avalanche", definition: "The debt avalanche directs extra payments to the highest-interest debt first while maintaining required payments on the others.", href: "/dashboard/money/debts" },
   snowball: { label: "Snowball", definition: "The debt snowball directs extra payments to the smallest balance first to create earlier account wins.", href: "/dashboard/money/debts" },
+  "financial-health": { label: "Financial Health Score", definition: "The Financial Health Score is a transparent BeastMoney financial-wellness measure. It is not a credit score.", href: "/dashboard/money/dashboard#financial-health-score" },
   "cash-flow": { label: "Cash Flow", definition: "Cash flow is the movement of income into and obligations or spending out of your plan over time.", href: "/dashboard/money/cashflow" },
   bills: { label: "Bills", definition: "Bills are scheduled obligations with an amount and due date that must be accounted for in the cash plan.", href: "/dashboard/money/cashflow#bills" },
   debts: { label: "Debts", definition: "Debts are outstanding balances owed to creditors, usually governed by rates, required payments, and payoff terms.", href: "/dashboard/money/debts" },
@@ -992,7 +1001,11 @@ export function answerMoneyCoachQuestion(
     return structuredAnswer({ intent, opening: "I’m not quite sure what you want me to evaluate yet.", sections: [{ heading: "Clarification", classification: "uncertainty", paragraphs: ["Add the financial topic or decision you want help with, and I’ll use the relevant current records."] }], followUp: "For example: which bills need attention, whether another payment is safe, or how two debt strategies compare.", href: "#money-coach-question", action: "Continue your question" });
   }
 
-  if (domainRoute.ambiguous && execution.plan.requiresClarification && intent !== "payment-affordability") {
+  if (
+    domainRoute.ambiguous &&
+    execution.plan.requiresClarification &&
+    !["payment-affordability", "financial-health"].includes(intent)
+  ) {
     return structuredAnswer({ intent: "incomplete", intentType: "clarify", topics: domainRoute.topics, confidence: domainRoute.confidence, opening: "I want to make sure I answer the right question.", sections: [{ heading: "Clarification", classification: "uncertainty", paragraphs: [execution.plan.clarificationQuestion || domainRoute.clarification || "Please tell me whether you want a definition, current status, evaluation, comparison, calculation, or workspace.", execution.plan.clarificationReason || "This distinction materially changes the financial analysis I should use."] }], href: "#money-coach-question", action: "Clarify your question" });
   }
 
@@ -1000,6 +1013,68 @@ export function answerMoneyCoachQuestion(
     const topic = domainRoute.topics[0];
     const details = moneyTopicDetails[topic];
     return structuredAnswer({ intent: topic === "velocity-banking" ? "velocity" : "general-finance", intentType: "navigate", topics: domainRoute.topics, confidence: domainRoute.confidence, opening: `Opening ${details.label}.`, sections: [], href: details.href, action: `Open ${details.label}` });
+  }
+
+  if (intent === "financial-health" || domainRoute.topics.includes("financial-health")) {
+    const health = context.financialHealth;
+    if (!health) {
+      return structuredAnswer({
+        intent: "financial-health",
+        intentType: domainRoute.intentType,
+        topics: domainRoute.topics,
+        confidence: domainRoute.confidence,
+        opening: "I can explain the Financial Health Score, but I cannot report a current score because the component calculation is unavailable.",
+        sections: [{
+          heading: "What it measures",
+          paragraphs: ["It is a transparent financial-wellness measure across cash flow, debt, savings, emergency reserves, retirement progress, goal progress, consistency, and planning completeness. It is not a credit score."],
+        }],
+        followUp: "Open the dashboard after the current BeastMoney records finish loading.",
+        href: "/dashboard/money/dashboard#financial-health-score",
+        action: "Review Financial Health Score",
+      });
+    }
+    const unavailable = health.components.filter((component) => !component.available);
+    return structuredAnswer({
+      intent: "financial-health",
+      intentType: domainRoute.intentType,
+      topics: domainRoute.topics,
+      confidence: domainRoute.confidence,
+      opening: `Your current Financial Health Score is ${health.score} out of 100, in the ${health.band} range. This is a financial-wellness measure, not a credit score.`,
+      sections: [
+        {
+          heading: "How it is calculated",
+          paragraphs: [health.formula],
+          table: {
+            columns: ["Dimension", "Score", "Weight", "Weighted points"],
+            rows: health.components.map((component) => [
+              component.label,
+              component.available ? `${component.score}/100` : "Unavailable",
+              `${component.weight}%`,
+              component.available ? component.weightedPoints.toFixed(1) : "Excluded",
+            ]),
+          },
+        },
+        {
+          heading: "Why it changed",
+          paragraphs: [health.change.explanation],
+          bullets: health.change.drivers,
+        },
+        {
+          heading: "How to improve it",
+          paragraphs: [`The clearest current opportunity is ${health.improvementPriority.label}. ${health.improvementPriority.improvement}`],
+          ...(unavailable.length
+            ? { bullets: unavailable.map((component) => `${component.label}: ${component.evidence[0]}`) }
+            : {}),
+        },
+        {
+          heading: "Professional boundary",
+          paragraphs: [health.disclaimer],
+        },
+      ],
+      followUp: `Would you like to work through the ${health.improvementPriority.label.toLowerCase()} inputs or options?`,
+      href: "/dashboard/money/dashboard#financial-health-score",
+      action: "Review Financial Health Score",
+    });
   }
 
   const velocity = velocityResponse(domainRoute, model, execution);

@@ -524,6 +524,7 @@ export function MoneyWorkspacePage({
       billsDueSoon: billsDueSoon.length,
       currentCash: startingCash,
       cashBuffer: buffer,
+      debtMinimums,
     });
     const scenarioComparison = compareFinancialScenarios({
       debts: forecastDebts,
@@ -806,6 +807,7 @@ export function MoneyWorkspacePage({
     strategyScenarios: snapshot.scenarioComparison.scenarios.filter((scenario) => ["avalanche", "snowball", "velocity"].includes(scenario.id)).map((scenario) => ({ id: scenario.id, label: scenario.label, monthsToPayoff: scenario.monthsToPayoff, totalInterest: scenario.totalInterest, monthlyCashStrain: scenario.monthlyCashStrain, riskLevel: scenario.riskLevel, debtFreeDate: scenario.debtFreeDate })),
     forecast: snapshot.financialForecast.periods.map((period) => ({ label: period.label, cash: period.cash, debt: period.debt, cashShortages: period.cashShortages })),
     retirementDataAvailable: false,
+    financialHealth: snapshot.financialInsights.financialHealth,
     lastVisitedAt,
     recentPayments: [
       ...state.billPayments.map((payment) => ({
@@ -832,6 +834,7 @@ export function MoneyWorkspacePage({
     ownerId,
     asOf: snapshot.simulation.asOfDate.toISOString(),
     financialHealthScore: snapshot.financialInsights.financialHealthScore,
+    financialHealth: snapshot.financialInsights.financialHealth,
     healthBand: snapshot.financialInsights.healthBand,
     healthSummary: snapshot.financialInsights.summary,
     monthlyIncome: snapshot.monthlyIncome,

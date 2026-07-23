@@ -6,6 +6,10 @@ import {
   type Observation,
 } from "./platform/agents";
 import type { MorningFinancialBriefing } from "./moneyMorningBriefing";
+import {
+  buildFinancialHealthScore,
+  type FinancialHealthScoreResult,
+} from "./financialHealthScore";
 
 export type MissionControlTone = "positive" | "caution" | "critical" | "neutral" | "accent";
 
@@ -32,7 +36,7 @@ export type MissionControlScenario = {
 export type FinancialMissionControlModel = {
   generatedAt: string;
   heroCards: readonly MissionControlHeroCard[];
-  financialHealth: { score: number; band: string; summary: string };
+  financialHealth: FinancialHealthScoreResult;
   cashFlow: { income: number; outflow: number; surplus: number };
   spending: { bills: number; debtMinimums: number; total: number };
   savings: { monthlySurplus: number; cashEfficiency: number };
@@ -53,6 +57,7 @@ export type BuildFinancialMissionControlInput = {
   financialHealthScore: number;
   healthBand: string;
   healthSummary: string;
+  financialHealth?: FinancialHealthScoreResult;
   monthlyIncome: number;
   monthlyOutflow: number;
   monthlyBills: number;
@@ -112,22 +117,50 @@ function heroExplanation(input: {
 }
 
 export function buildFinancialMissionControl(input: BuildFinancialMissionControlInput): FinancialMissionControlModel {
+  const financialHealth = input.financialHealth || buildFinancialHealthScore({
+    monthlyIncome: input.monthlyIncome,
+    monthlyOutflow: input.monthlyOutflow,
+    projectedSurplus: input.projectedSurplus,
+    currentCash: input.startingCash,
+    cashBuffer: input.cashBuffer,
+    totalDebt: input.totalDebt,
+    debtMinimums: input.debtMinimums,
+  });
   const aboveBuffer = input.startingCash - input.cashBuffer;
   const emergencyMonths = input.monthlyOutflow > 0 ? input.startingCash / input.monthlyOutflow : 0;
   const velocity = input.scenarios.find((scenario) => scenario.id === "velocity");
-  const healthTone: MissionControlTone = input.financialHealthScore >= 75 ? "positive" : input.financialHealthScore >= 50 ? "caution" : "critical";
+  const healthTone: MissionControlTone = financialHealth.score >= 75 ? "positive" : financialHealth.score >= 50 ? "caution" : "critical";
   const surplusTone: MissionControlTone = input.projectedSurplus > 0 ? "positive" : input.projectedSurplus < 0 ? "critical" : "neutral";
   const cashTone: MissionControlTone = aboveBuffer >= 0 ? "positive" : "critical";
   const heroCards: MissionControlHeroCard[] = [
     {
       id: "financial-health",
       label: "Financial Health Score",
-      value: String(input.financialHealthScore),
-      detail: input.healthBand,
-      trend: input.healthSummary,
+      value: String(financialHealth.score),
+      detail: financialHealth.band,
+      trend: `Strongest: ${financialHealth.strongest.label} · Focus: ${financialHealth.improvementPriority.label}`,
       tone: healthTone,
-      href: "/dashboard/money/dashboard#financial-health",
-      explanation: heroExplanation({ ownerId: input.ownerId, asOf: input.asOf, id: "financial-health", conclusion: `${input.financialHealthScore} (${input.healthBand})`, why: "The existing Financial Insights engine combines current cash-flow, reserve, debt, and progress signals.", evidence: [{ id: "health-score", statement: `Financial health score: ${input.financialHealthScore}` }], toolId: "open-money-dashboard" }),
+      href: "/dashboard/money/dashboard#financial-health-score",
+      explanation: heroExplanation({
+        ownerId: input.ownerId,
+        asOf: input.asOf,
+        id: "financial-health",
+        conclusion: `${financialHealth.score} (${financialHealth.band})`,
+        why: financialHealth.formula,
+        evidence: financialHealth.components.map((component) => ({
+          id: `health-${component.id}`,
+          statement: component.available
+            ? `${component.label}: ${component.score}/100 × ${component.weight}% = ${component.weightedPoints.toFixed(1)} weighted points`
+            : `${component.label}: unavailable and excluded from the denominator`,
+        })),
+        toolId: "open-money-dashboard",
+        limitations: [
+          financialHealth.disclaimer,
+          ...financialHealth.components
+            .filter((component) => !component.available)
+            .map((component) => `${component.label} is unavailable from current records.`),
+        ],
+      }),
     },
     {
       id: "monthly-surplus",
@@ -183,7 +216,7 @@ export function buildFinancialMissionControl(input: BuildFinancialMissionControl
   return {
     generatedAt: input.asOf,
     heroCards,
-    financialHealth: { score: input.financialHealthScore, band: input.healthBand, summary: input.healthSummary },
+    financialHealth,
     cashFlow: { income: input.monthlyIncome, outflow: input.monthlyOutflow, surplus: input.projectedSurplus },
     spending: { bills: input.monthlyBills, debtMinimums: input.debtMinimums, total: input.monthlyOutflow },
     savings: { monthlySurplus: Math.max(input.projectedSurplus, 0), cashEfficiency: input.cashEfficiency },

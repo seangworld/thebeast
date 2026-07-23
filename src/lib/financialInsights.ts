@@ -12,6 +12,10 @@ import {
   type UnifiedStrategyDebt,
   type UnifiedStrategyResult,
 } from "./unifiedStrategyEngine";
+import {
+  buildFinancialHealthScore,
+  type FinancialHealthScoreResult,
+} from "./financialHealthScore";
 
 export type FinancialHealthScoreBand = "excellent" | "stable" | "watch" | "risk";
 
@@ -26,6 +30,7 @@ export type FinancialProgressMetric = {
 export type FinancialInsightsResult = {
   generatedAt: string;
   financialHealthScore: number;
+  financialHealth: FinancialHealthScoreResult;
   healthBand: FinancialHealthScoreBand;
   interestSaved: number;
   timeSavedMonths: number;
@@ -50,6 +55,12 @@ export type FinancialInsightsInput = {
   billsDueSoon?: number;
   currentCash?: number;
   cashBuffer?: number;
+  debtMinimums?: number;
+  retirementProgressPercent?: number;
+  goalProgressPercent?: number;
+  consistencyPercent?: number;
+  planningCompletenessPercent?: number;
+  previousFinancialHealth?: Pick<FinancialHealthScoreResult, "score" | "components">;
 };
 
 function money(value: number) {
@@ -62,36 +73,6 @@ function percent(value: number) {
 
 function getTotalDebt(debts: UnifiedStrategyDebt[]) {
   return money(debts.reduce((sum, debt) => sum + Number(debt.balance || 0), 0));
-}
-
-function getHealthBand(score: number): FinancialHealthScoreBand {
-  if (score >= 85) return "excellent";
-  if (score >= 70) return "stable";
-  if (score >= 50) return "watch";
-  return "risk";
-}
-
-function buildHealthScore(input: FinancialInsightsInput) {
-  const cash = input.cashIntelligence;
-  const decision = input.financialDecision;
-  const utilization = Number(input.creditUtilization || 0);
-  const billsDueSoon = Number(input.billsDueSoon || 0);
-  const currentCash = Number(input.currentCash ?? cash.currentAvailableCash ?? 0);
-  const cashBuffer = Number(input.cashBuffer ?? 0);
-  const hasDebt = getTotalDebt(input.debts) > 0;
-
-  let score = 50;
-
-  score += currentCash >= cashBuffer ? 12 : -12;
-  score += cash.monthlyAvailableCash >= 0 ? 12 : -18;
-  score += cash.projectedAvailableCash >= 0 ? 10 : -16;
-  score += decision.safetyRating === "safe" ? 12 : decision.safetyRating === "caution" ? 0 : -18;
-  score += decision.confidenceScore >= 75 ? 8 : decision.confidenceScore >= 50 ? 4 : -6;
-  score += utilization <= 30 ? 10 : utilization <= 50 ? 6 : utilization <= 75 ? -4 : -14;
-  score += billsDueSoon === 0 ? 6 : billsDueSoon <= 2 ? 0 : -8;
-  score += hasDebt ? 0 : 10;
-
-  return percent(score);
 }
 
 function findForecastPeriod(
@@ -171,7 +152,26 @@ export function buildFinancialInsights(
   const forecast30 = findForecastPeriod(input.financialForecast, "30d");
   const forecast1y = findForecastPeriod(input.financialForecast, "1y");
   const startingCash = Number(input.currentCash ?? input.cashIntelligence.currentAvailableCash ?? 0);
-  const healthScore = buildHealthScore(input);
+  const financialHealth = buildFinancialHealthScore({
+    monthlyIncome: input.cashIntelligence.monthlyIncome,
+    monthlyOutflow:
+      input.cashIntelligence.monthlyBills +
+      input.cashIntelligence.monthlyDebtMinimums +
+      input.cashIntelligence.monthlyScheduledTransfers +
+      input.cashIntelligence.monthlySavingsContributions,
+    projectedSurplus: input.cashIntelligence.monthlyAvailableCash,
+    currentCash: startingCash,
+    cashBuffer: Number(input.cashBuffer || 0),
+    totalDebt,
+    debtMinimums: input.debtMinimums,
+    creditUtilization: input.creditUtilization,
+    retirementProgressPercent: input.retirementProgressPercent,
+    goalProgressPercent: input.goalProgressPercent,
+    consistencyPercent: input.consistencyPercent,
+    planningCompletenessPercent: input.planningCompletenessPercent,
+    previous: input.previousFinancialHealth,
+  });
+  const healthScore = financialHealth.score;
   const interestSaved = money(
     Math.max(baselinePlan.total_interest - optimizedPlan.total_interest, 0)
   );
@@ -204,7 +204,8 @@ export function buildFinancialInsights(
   return {
     generatedAt: input.financialForecast.generatedAt,
     financialHealthScore: healthScore,
-    healthBand: getHealthBand(healthScore),
+    financialHealth,
+    healthBand: financialHealth.band,
     interestSaved,
     timeSavedMonths,
     debtReduction,

@@ -100,6 +100,80 @@ export function FinancialMissionControl({ model }: { model: FinancialMissionCont
         </div>
       </section>
 
+      <section
+        id="financial-health-score"
+        className="scroll-mt-6 rounded-3xl border border-white/10 bg-[#111827]/85 p-5 shadow-[0_24px_70px_rgba(0,0,0,0.2)] sm:p-6"
+        aria-labelledby="financial-health-score-heading"
+      >
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <p className="text-[11px] font-black uppercase tracking-[0.16em] text-cyan-300">
+              Transparent wellness measure
+            </p>
+            <h2 id="financial-health-score-heading" className="mt-2 text-2xl font-black text-white">
+              How your Financial Health Score is calculated
+            </h2>
+            <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-300">
+              {model.financialHealth.formula}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-cyan-300/20 bg-cyan-300/[0.06] px-5 py-4">
+            <p className="text-xs font-bold uppercase text-slate-400">Current score</p>
+            <p className="mt-1 text-4xl font-black text-white">{model.financialHealth.score}</p>
+            <p className="text-sm capitalize text-cyan-200">{model.financialHealth.band}</p>
+          </div>
+        </div>
+
+        <p className="mt-5 rounded-xl border border-amber-300/15 bg-amber-300/[0.05] p-4 text-sm text-amber-100">
+          {model.financialHealth.disclaimer}
+        </p>
+
+        <div className="mt-6 overflow-x-auto">
+          <table className="w-full min-w-[720px] text-left text-sm">
+            <thead className="text-xs uppercase tracking-wide text-slate-500">
+              <tr>
+                <th className="pb-3 pr-4">Dimension</th>
+                <th className="pb-3 pr-4">Score</th>
+                <th className="pb-3 pr-4">Weight</th>
+                <th className="pb-3 pr-4">Weighted points</th>
+                <th className="pb-3">Calculation</th>
+              </tr>
+            </thead>
+            <tbody>
+              {model.financialHealth.components.map((component) => (
+                <tr key={component.id} className="border-t border-white/10 align-top">
+                  <th scope="row" className="py-4 pr-4 font-bold text-white">{component.label}</th>
+                  <td className="py-4 pr-4 text-slate-300">{component.available ? `${component.score}/100` : "Unavailable"}</td>
+                  <td className="py-4 pr-4 text-slate-300">{component.weight}%</td>
+                  <td className="py-4 pr-4 text-slate-300">{component.available ? component.weightedPoints.toFixed(1) : "Excluded"}</td>
+                  <td className="py-4 text-slate-400">
+                    <p>{component.calculation}</p>
+                    <p className="mt-2 text-xs">{component.evidence.join(" · ")}</p>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="mt-6 grid gap-4 md:grid-cols-2">
+          <div className="rounded-2xl bg-white/[0.04] p-4">
+            <h3 className="font-black text-white">Why it changed</h3>
+            <p className="mt-2 text-sm leading-6 text-slate-300">{model.financialHealth.change.explanation}</p>
+            {model.financialHealth.change.drivers.length ? (
+              <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-slate-400">
+                {model.financialHealth.change.drivers.map((driver) => <li key={driver}>{driver}</li>)}
+              </ul>
+            ) : null}
+          </div>
+          <div className="rounded-2xl bg-white/[0.04] p-4">
+            <h3 className="font-black text-white">Best improvement opportunity</h3>
+            <p className="mt-2 text-sm font-bold text-cyan-200">{model.financialHealth.improvementPriority.label}</p>
+            <p className="mt-2 text-sm leading-6 text-slate-300">{model.financialHealth.improvementPriority.improvement}</p>
+          </div>
+        </div>
+      </section>
+
       <section aria-labelledby="financial-motion-heading" className="space-y-4">
         <div>
           <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-300">Financial motion</p>
