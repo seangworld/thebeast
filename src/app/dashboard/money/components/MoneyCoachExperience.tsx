@@ -149,7 +149,7 @@ export function MoneyCoachExperience({
       const user = thread.messages[index]; const agent = thread.messages[index + 1];
       if (!user || !agent) continue;
       const content = agent.content as { text: string; href: string; action: string; structured?: MoneyCoachStructuredAnswer };
-      const response = content.structured || { intent: "general-finance", opening: content.text, sections: [], text: content.text, href: content.href, action: content.action } satisfies MoneyCoachStructuredAnswer;
+      const response = content.structured || { intent: "general-finance", opening: content.text, sections: [], text: content.text, href: content.href, action: content.action, professionalExecution: { profileId: model.professional.id, role: model.professional.identity.role, mission: model.professional.identity.mission, expertiseApplied: model.professional.identity.expertise, communicationStyle: model.professional.identity.communicationStyle, professionalBoundaries: model.professional.identity.professionalBoundaries, teachingMethod: model.professional.playbook.teaching.method, investigationOrder: model.professional.playbook.investigation.evidenceOrder, uncertaintyRulesApplied: [], closingRule: model.professional.playbook.closing.style } } satisfies MoneyCoachStructuredAnswer;
       restored.push({ id: user.id, question: String(user.content), response });
     }
     setTurns(restored);

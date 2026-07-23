@@ -67,6 +67,96 @@ export function recognizeConversationIntent<TDomainIntent extends string = strin
   return { kind: "non-domain", confidence: 0.75, complete: true, normalizedInput, signals: ["no-domain-signal"] };
 }
 
+export type DomainResponseIntent = "define" | "explain-current-status" | "evaluate" | "compare" | "navigate" | "calculate" | "clarify" | "general-conversation" | "non-domain-conversation";
+
+export type DomainConceptDefinition<TTopic extends string> = {
+  topic: TTopic;
+  label: string;
+  aliases: readonly string[];
+};
+
+export type DomainIntentRoute<TTopic extends string> = {
+  intentType: DomainResponseIntent;
+  topics: readonly TTopic[];
+  confidence: number;
+  ambiguous: boolean;
+  normalizedInput: string;
+  signals: readonly string[];
+  clarification?: string;
+};
+
+export type DomainRoutingContext<TTopic extends string> = { activeTopics?: readonly TTopic[]; previousIntent?: DomainResponseIntent };
+export type DomainResponseHandler<TTopic extends string, TContext, TResult> = (input: { route: DomainIntentRoute<TTopic>; context: TContext }) => TResult;
+
+export class SpecialistConceptRegistry<TTopic extends string, TContext = unknown, TResult = unknown> {
+  private readonly concepts = new Map<TTopic, DomainConceptDefinition<TTopic>>();
+  private readonly handlers = new Map<string, DomainResponseHandler<TTopic, TContext, TResult>>();
+
+  registerConcept(concept: DomainConceptDefinition<TTopic>) {
+    if (this.concepts.has(concept.topic)) throw new Error(`Domain concept ${concept.topic} is already registered.`);
+    if (!concept.label.trim() || !concept.aliases.length || concept.aliases.some((alias) => !normalizeInput(alias))) throw new Error("Domain concepts require a label and aliases.");
+    this.concepts.set(concept.topic, Object.freeze({ ...concept, aliases: [...concept.aliases] }));
+    return concept;
+  }
+
+  registerHandler(topic: TTopic, intent: DomainResponseIntent, handler: DomainResponseHandler<TTopic, TContext, TResult>) {
+    if (!this.concepts.has(topic)) throw new Error(`Domain concept ${topic} is not registered.`);
+    const key = `${topic}:${intent}`;
+    if (this.handlers.has(key)) throw new Error(`Domain response handler ${key} is already registered.`);
+    this.handlers.set(key, handler);
+    return handler;
+  }
+
+  listConcepts() { return Array.from(this.concepts.values()); }
+  handler(topic: TTopic, intent: DomainResponseIntent) { return this.handlers.get(`${topic}:${intent}`); }
+  route(input: string, context: DomainRoutingContext<TTopic> = {}) { return classifyDomainResponseIntent(input, this.listConcepts(), context); }
+  respond(route: DomainIntentRoute<TTopic>, context: TContext) {
+    if (route.ambiguous || !route.topics.length) return undefined;
+    return this.handler(route.topics[0], route.intentType)?.({ route, context });
+  }
+}
+
+function containsAlias(value: string, alias: string) {
+  const normalizedAlias = normalizeInput(alias);
+  return new RegExp(`(^|\\s)${normalizedAlias.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s+")}($|\\s|[?.])`).test(value);
+}
+
+function detectResponseIntent(value: string, topicCount: number): { intent: DomainResponseIntent; confidence: number; signals: string[] } {
+  if (/^(open|go to|show me|take me to|navigate to|launch)\b/.test(value)) return { intent: "navigate", confidence: 0.99, signals: ["navigation-imperative"] };
+  if (/\b(how much|how many|calculate|compute|estimate|what would .* (save|cost)|interest .* save)\b/.test(value)) return { intent: "calculate", confidence: 0.96, signals: ["quantitative-question"] };
+  if (topicCount > 1 && (/\b(vs|versus|compare|difference between|better than)\b/.test(value) || /\bor\b/.test(value))) return { intent: "compare", confidence: 0.97, signals: ["multi-concept-comparison"] };
+  if (/^(what is|what's|define|explain the concept of|how does)\b/.test(value)) return { intent: "define", confidence: 0.96, signals: ["definition-structure"] };
+  if (/\b(how is my|how are my|current status|progress|doing|where do i stand|what is my current|explain my|needs? attention|what .* (is|are) due|which .* (is|are) due)\b/.test(value)) return { intent: "explain-current-status", confidence: 0.94, signals: ["current-status-structure"] };
+  if (/\b(should i|is .* right for me|would .* work for me|is .* worth|do you recommend|can i use)\b/.test(value)) return { intent: "evaluate", confidence: 0.95, signals: ["evaluation-structure"] };
+  if (/\b(which .* do you mean|what do you mean|clarify|which one)\b/.test(value)) return { intent: "clarify", confidence: 0.94, signals: ["clarification-structure"] };
+  return { intent: "general-conversation", confidence: topicCount ? 0.58 : 0.72, signals: [topicCount ? "topic-without-clear-act" : "no-domain-concept"] };
+}
+
+export function classifyDomainResponseIntent<TTopic extends string>(
+  input: string,
+  concepts: readonly DomainConceptDefinition<TTopic>[],
+  context: DomainRoutingContext<TTopic> = {}
+): DomainIntentRoute<TTopic> {
+  const common = recognizeConversationIntent(input);
+  const normalizedInput = common.normalizedInput;
+  if (["greeting", "testing", "thanks", "acknowledgement"].includes(common.kind)) return { intentType: "general-conversation", topics: [], confidence: common.confidence, ambiguous: false, normalizedInput, signals: common.signals };
+  if (common.kind === "incomplete") return { intentType: "clarify", topics: context.activeTopics || [], confidence: common.confidence, ambiguous: true, normalizedInput, signals: common.signals, clarification: "What would you like to know or decide?" };
+  let topics = concepts.filter((concept) => concept.aliases.some((alias) => containsAlias(normalizedInput, alias))).map((concept) => concept.topic);
+  if (!topics.length && context.activeTopics?.length && /\b(it|that|this|they|them|strategy|concept)\b/.test(normalizedInput)) topics = [...context.activeTopics];
+  const detected = detectResponseIntent(normalizedInput, topics.length);
+  if (!topics.length) return { intentType: "non-domain-conversation", topics: [], confidence: detected.confidence, ambiguous: false, normalizedInput, signals: detected.signals };
+  const ambiguous = detected.confidence < 0.7 || (topics.length > 1 && detected.intent !== "compare");
+  return {
+    intentType: ambiguous ? "clarify" : detected.intent,
+    topics,
+    confidence: detected.confidence,
+    ambiguous,
+    normalizedInput,
+    signals: detected.signals,
+    clarification: ambiguous ? `Are you asking for a definition, your current status, an evaluation, a comparison, a calculation, or the workspace for ${topics.map((topic) => concepts.find((concept) => concept.topic === topic)?.label || topic).join(" and ")}?` : undefined,
+  };
+}
+
 export type ConversationTable = { columns: readonly string[]; rows: readonly (readonly string[])[] };
 export type ConversationResponseSection = {
   heading: string;

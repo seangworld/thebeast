@@ -2,6 +2,7 @@ import {
   specialistProfessionalProfiles,
   type ProfessionalBehaviorProfile,
 } from "./professionalBehavior";
+import { createConversationResponse, type ConversationAction, type ConversationResponse, type ConversationResponseSection } from "./conversationIntelligence";
 
 export interface ProfessionalIdentity {
   role: string;
@@ -62,6 +63,87 @@ export interface ProfessionalIdentityProfile {
 export interface SpecialistProfessional<TDomainKnowledge> {
   professional: ProfessionalIdentityProfile;
   domainKnowledge: TDomainKnowledge;
+}
+
+export type ProfessionalResponseExecution = {
+  profileId: string;
+  role: string;
+  mission: string;
+  expertiseApplied: readonly string[];
+  communicationStyle: readonly string[];
+  professionalBoundaries: readonly string[];
+  teachingMethod: ProfessionalPlaybook["teaching"]["method"];
+  investigationOrder: ProfessionalPlaybook["investigation"]["evidenceOrder"];
+  uncertaintyRulesApplied: readonly string[];
+  closingRule: ProfessionalPlaybook["closing"]["style"];
+};
+
+export type ProfessionalResponseDraft<TIntent extends string> = {
+  intent: TIntent;
+  shortAnswer: string;
+  sections: readonly ConversationResponseSection[];
+  assumptions?: readonly string[];
+  nextStep?: string;
+  actions?: readonly ConversationAction[];
+  sourceText?: readonly string[];
+  expertiseUsed?: readonly string[];
+  mode?: "answer" | "teaching" | "investigation" | "recommendation" | "clarification";
+  followUpRequired?: boolean;
+  nextStepUseful?: boolean;
+};
+
+export type ProfessionallyComposedResponse<TIntent extends string> = ConversationResponse<TIntent> & { professionalExecution: ProfessionalResponseExecution };
+
+export function composeProfessionalResponse<TIntent extends string>(
+  profile: ProfessionalIdentityProfile,
+  draft: ProfessionalResponseDraft<TIntent>
+): ProfessionallyComposedResponse<TIntent> {
+  validateProfessionalIdentityProfile(profile);
+  const sectionLimit = profile.behavior.communication.verbosity === "brief" ? 2 : profile.behavior.communication.verbosity === "balanced" ? 5 : Number.POSITIVE_INFINITY;
+  const itemLimit = profile.playbook.prioritization.maximumInitialItems;
+  let sections = draft.sections.slice(0, sectionLimit).map((section) => ({
+    ...section,
+    bullets: section.bullets?.slice(0, itemLimit),
+    numberedItems: section.numberedItems?.slice(0, itemLimit),
+    table: section.table ? { ...section.table, rows: section.table.rows.slice(0, Math.max(itemLimit, 10)) } : undefined,
+  }));
+  if (draft.mode === "teaching" && profile.playbook.teaching.method === "step-by-step") {
+    sections = sections.map((section) => section.bullets?.length ? { ...section, bullets: undefined, numberedItems: section.bullets } : section);
+  }
+  const uncertaintyRulesApplied = [
+    profile.playbook.uncertainty.stateMissingInformation ? "state-missing-information" : "",
+    profile.playbook.uncertainty.stateAssumptions ? "state-assumptions" : "",
+    profile.playbook.uncertainty.avoidUnsupportedClaims ? "avoid-unsupported-claims" : "",
+  ].filter(Boolean);
+  const boundaryRelevant = draft.mode === "recommendation" || draft.intent === "evaluate" || draft.intent === "calculate";
+  const assumptions = profile.playbook.uncertainty.stateAssumptions
+    ? [...(draft.assumptions || []), ...(boundaryRelevant ? [profile.identity.professionalBoundaries[0]] : [])]
+    : undefined;
+  const shouldClose = draft.followUpRequired || draft.nextStepUseful !== false;
+  const response = createConversationResponse({
+    intent: draft.intent,
+    shortAnswer: draft.shortAnswer,
+    sections,
+    assumptions,
+    nextStep: shouldClose ? draft.nextStep : undefined,
+    actions: draft.actions,
+    sourceText: draft.sourceText,
+  });
+  return {
+    ...response,
+    professionalExecution: {
+      profileId: profile.id,
+      role: profile.identity.role,
+      mission: profile.identity.mission,
+      expertiseApplied: draft.expertiseUsed?.length ? draft.expertiseUsed : profile.identity.expertise,
+      communicationStyle: profile.identity.communicationStyle,
+      professionalBoundaries: profile.identity.professionalBoundaries,
+      teachingMethod: profile.playbook.teaching.method,
+      investigationOrder: profile.playbook.investigation.evidenceOrder,
+      uncertaintyRulesApplied,
+      closingRule: profile.playbook.closing.style,
+    },
+  };
 }
 
 export const defaultProfessionalPlaybook: ProfessionalPlaybook = {

@@ -1,16 +1,20 @@
 import { formatCurrency } from "./formatters";
 import {
   calculateInsightPriority,
-  createConversationResponse,
+  classifyDomainResponseIntent,
+  composeProfessionalResponse,
   recognizeConversationIntent,
   specialistProfessionalIdentityProfiles,
   type ConversationResponseSection,
   type DomainIntentCandidate,
+  type DomainIntentRoute,
+  type DomainResponseIntent,
   type Insight,
   type InsightAction,
   type InsightPriorityFactor,
   type ProfessionalBehaviorProfile,
   type ProfessionalIdentityProfile,
+  type ProfessionalResponseExecution,
 } from "./platform/agents";
 
 export type MoneyCoachExperienceCard = {
@@ -529,6 +533,10 @@ export type MoneyCoachStructuredAnswer = {
   text: string;
   href: string;
   action: string;
+  intentType?: DomainResponseIntent;
+  topics?: readonly MoneyCoachTopic[];
+  confidence?: number;
+  professionalExecution: ProfessionalResponseExecution;
 };
 
 export type MoneyCoachConversationContext = {
@@ -536,7 +544,29 @@ export type MoneyCoachConversationContext = {
   summary?: string;
   priorSummaries?: readonly string[];
   memories?: readonly { key: string; value: unknown }[];
+  activeTopics?: readonly MoneyCoachTopic[];
 };
+
+export type MoneyCoachTopic = "velocity-banking" | "avalanche" | "snowball" | "cash-flow" | "bills" | "debts" | "income-pots" | "funding-sources" | "retirement" | "forecasting" | "cash-buffer" | "heloc";
+
+const moneyCoachConcepts = [
+  { topic: "velocity-banking", label: "Velocity Banking", aliases: ["velocity", "velocity banking"] },
+  { topic: "avalanche", label: "Avalanche", aliases: ["avalanche", "debt avalanche"] },
+  { topic: "snowball", label: "Snowball", aliases: ["snowball", "debt snowball"] },
+  { topic: "cash-flow", label: "Cash Flow", aliases: ["cash flow", "cashflow"] },
+  { topic: "bills", label: "Bills", aliases: ["bill", "bills"] },
+  { topic: "debts", label: "Debts", aliases: ["debt", "debts"] },
+  { topic: "income-pots", label: "Income Pots", aliases: ["income pot", "income pots"] },
+  { topic: "funding-sources", label: "Funding Sources", aliases: ["funding source", "funding sources"] },
+  { topic: "retirement", label: "Retirement", aliases: ["retirement", "401k", "ira"] },
+  { topic: "forecasting", label: "Forecasting", aliases: ["forecast", "forecasting", "projection"] },
+  { topic: "cash-buffer", label: "Cash Buffer", aliases: ["cash buffer", "protected reserve"] },
+  { topic: "heloc", label: "HELOC", aliases: ["heloc", "home equity line of credit"] },
+] as const;
+
+export function classifyMoneyCoachRequest(question: string, conversation: MoneyCoachConversationContext = {}): DomainIntentRoute<MoneyCoachTopic> {
+  return classifyDomainResponseIntent(question, moneyCoachConcepts, { activeTopics: conversation.activeTopics });
+}
 
 function recognizeMoneyDomainIntent(value: string): DomainIntentCandidate<Exclude<MoneyCoachIntent, "test" | "social" | "incomplete" | "non-financial">> | undefined {
   if (/\b(stay with|switch (to|from)|avalanche|snowball|payoff (method|strategy)|debt strategy)\b/.test(value)) return { intent: "debt-strategy", confidence: 0.95, signals: ["strategy-comparison"] };
@@ -571,16 +601,68 @@ export function classifyMoneyCoachIntent(question: string): MoneyCoachIntent {
   return "non-financial";
 }
 
-function structuredAnswer(values: Omit<MoneyCoachStructuredAnswer, "text">): MoneyCoachStructuredAnswer {
-  const shared = createConversationResponse({
+function createMoneyCoachResponse(values: Omit<MoneyCoachStructuredAnswer, "text" | "professionalExecution">, professional: ProfessionalIdentityProfile): MoneyCoachStructuredAnswer {
+  const shared = composeProfessionalResponse(professional, {
     intent: values.intent,
     shortAnswer: values.opening,
     sections: values.sections,
     assumptions: values.assumptions,
     nextStep: values.followUp,
     actions: [{ id: `money-coach-${values.intent}`, label: values.action, type: "navigate", target: values.href }],
+    expertiseUsed: professional.identity.expertise,
+    mode: values.intentType === "define" ? "teaching" : values.intentType === "clarify" ? "clarification" : values.intentType === "evaluate" ? "recommendation" : "answer",
+    followUpRequired: values.intentType === "clarify",
+    nextStepUseful: Boolean(values.followUp),
   });
-  return { ...values, sections: shared.sections, text: shared.text };
+  return { ...values, sections: shared.sections, text: shared.text, professionalExecution: shared.professionalExecution };
+}
+
+const moneyTopicDetails: Record<MoneyCoachTopic, { label: string; definition: string; href: string }> = {
+  "velocity-banking": { label: "Velocity Banking", definition: "Velocity Banking is a debt-paydown method that uses available revolving credit as a temporary cash-flow tool, then directs income back toward restoring that credit line.", href: "/dashboard/money/velocity" },
+  avalanche: { label: "Avalanche", definition: "The debt avalanche directs extra payments to the highest-interest debt first while maintaining required payments on the others.", href: "/dashboard/money/debts" },
+  snowball: { label: "Snowball", definition: "The debt snowball directs extra payments to the smallest balance first to create earlier account wins.", href: "/dashboard/money/debts" },
+  "cash-flow": { label: "Cash Flow", definition: "Cash flow is the movement of income into and obligations or spending out of your plan over time.", href: "/dashboard/money/cashflow" },
+  bills: { label: "Bills", definition: "Bills are scheduled obligations with an amount and due date that must be accounted for in the cash plan.", href: "/dashboard/money/cashflow#bills" },
+  debts: { label: "Debts", definition: "Debts are outstanding balances owed to creditors, usually governed by rates, required payments, and payoff terms.", href: "/dashboard/money/debts" },
+  "income-pots": { label: "Income Pots", definition: "Income Pots group obligations against a particular income date so the money has an explicit job before it is spent.", href: "/dashboard/money/cashflow#income-planning" },
+  "funding-sources": { label: "Funding Sources", definition: "Funding Sources identify the accounts or credit capacity available to support a planned obligation or strategy.", href: "/dashboard/money/cashflow#funding-sources" },
+  retirement: { label: "Retirement", definition: "Retirement planning connects current savings and contributions with a future income goal and the assumptions used to project it.", href: "/dashboard/money/retirement" },
+  forecasting: { label: "Forecasting", definition: "Forecasting projects current balances forward using known income, obligations, transfers, and strategy assumptions.", href: "/dashboard/money#money-dashboard" },
+  "cash-buffer": { label: "Cash Buffer", definition: "A cash buffer is the protected amount kept available so normal obligations and unexpected costs do not immediately require new debt.", href: "/dashboard/money/cashflow" },
+  heloc: { label: "HELOC", definition: "A HELOC is a revolving credit line secured by home equity, with borrowing costs and terms that can change over time.", href: "/dashboard/money/velocity" },
+};
+
+function velocityResponse(route: DomainIntentRoute<MoneyCoachTopic>, model: MoneyCoachExperienceModel): MoneyCoachStructuredAnswer | undefined {
+  const structuredAnswer = (values: Omit<MoneyCoachStructuredAnswer, "text" | "professionalExecution">) => createMoneyCoachResponse(values, model.professional);
+  if (!route.topics.includes("velocity-banking")) return undefined;
+  const context = model.financialContext;
+  const details = moneyTopicDetails["velocity-banking"];
+  const velocity = context.strategyScenarios.find((scenario) => scenario.id === "velocity");
+  const avalanche = context.strategyScenarios.find((scenario) => scenario.id === "avalanche");
+  const highestDebtRate = Math.max(0, ...context.debts.map((debt) => debt.interestRate));
+  if (route.intentType === "define") return structuredAnswer({ intent: "velocity", intentType: route.intentType, topics: route.topics, confidence: route.confidence, opening: details.definition, sections: [
+    { heading: "How it generally works", numberedItems: ["Use an eligible credit line for a carefully sized payment against a higher-cost debt.", "Direct recurring income through the cash plan while required obligations continue.", "Restore the credit line before considering another payment cycle."] },
+    { heading: "Main requirements", bullets: ["Stable positive cash flow", "A suitable credit line with known rates, fees, and draw terms", "Enough protected cash for upcoming obligations", "A disciplined recovery plan that does not add new spending"] },
+    { heading: "Main risks", bullets: ["Variable borrowing costs can erase projected savings", "A cash interruption can delay recovery", "Using secured home equity can increase consequences", "New charges or incomplete records can invalidate the model"] },
+    { heading: "Your current setup", paragraphs: [context.helocReserve > 0 ? `BeastMoney currently tracks ${formatCurrency(context.helocReserve)} of HELOC availability. That is context, not by itself a recommendation to use it.` : "I don’t currently see usable HELOC availability in this review, so I would not assume the strategy is available to you."] },
+  ], followUp: "If you want, I can evaluate whether the current records satisfy those requirements.", href: details.href, action: "Open Velocity" });
+  if (route.intentType === "explain-current-status") return structuredAnswer({ intent: "velocity", intentType: route.intentType, topics: route.topics, confidence: route.confidence, opening: context.helocReserve > 0 && context.projectedSurplus > 0 ? "Your current records show capacity to model Velocity, but the guardrails still need to hold before another cycle." : "Your current records do not yet show a complete, safely recoverable Velocity setup.", sections: [
+    { heading: "Current status", table: { columns: ["Guardrail", "Current value"], rows: [["Cash", formatCurrency(context.currentCash)], ["Protected buffer", formatCurrency(context.cashBuffer)], ["Monthly cash flow", formatCurrency(context.projectedSurplus)], ["HELOC availability", formatCurrency(context.helocReserve)], ["Highest tracked debt rate", `${highestDebtRate}%`]] } },
+    { heading: "Capacity and next review", paragraphs: [velocity ? `The current Velocity scenario models ${velocity.monthsToPayoff} months to payoff, ${formatCurrency(velocity.totalInterest)} of interest, and ${formatCurrency(velocity.monthlyCashStrain)} of monthly strain.` : "A current Velocity scenario is not available, so I cannot report modeled payoff performance.", context.upcomingIncome[0] ? `Review again around the next tracked income event: ${context.upcomingIncome[0].name}${context.upcomingIncome[0].date ? ` on ${context.upcomingIncome[0].date}` : ""}.` : "Review again after income timing and upcoming obligations are current."] },
+  ], href: details.href, action: "Review Velocity workspace" });
+  if (route.intentType === "evaluate") {
+    const hasBasicCapacity = context.currentCash >= context.cashBuffer && context.projectedSurplus > 0 && context.helocReserve > 0 && context.debts.length > 0;
+    return structuredAnswer({ intent: "velocity", intentType: route.intentType, topics: route.topics, confidence: route.confidence, opening: hasBasicCapacity ? "Velocity may be worth comparing, but I would not choose it until the HELOC cost and recovery schedule beat the safer alternatives." : "I would not use Velocity from the current record set because one or more basic safety conditions are missing.", sections: [
+      { heading: "Evaluation", table: { columns: ["Factor", "Current evidence"], rows: [["Cash above buffer", formatCurrency(Math.max(context.currentCash - context.cashBuffer, 0))], ["Monthly surplus", formatCurrency(context.projectedSurplus)], ["HELOC availability", formatCurrency(context.helocReserve)], ["Highest debt rate", `${highestDebtRate}%`], ["Tracked income", formatCurrency(context.monthlyIncome)]] } },
+      { heading: "Uncertainty", paragraphs: ["This review does not include verified HELOC APR, fees, variable-rate terms, draw restrictions, or lender conditions. Without those terms, apparent capacity is not proof of savings or suitability."] },
+    ], assumptions: ["Current balances, income, obligations, debt rates, and reserve settings are accurate.", "No new revolving spending is added during recovery."], followUp: "The next useful step is to compare the verified HELOC cost with the current Avalanche scenario.", href: details.href, action: "Review Velocity assumptions" });
+  }
+  if (route.intentType === "compare") {
+    if (!velocity || !avalanche) return structuredAnswer({ intent: "debt-strategy", intentType: route.intentType, topics: route.topics, confidence: route.confidence, opening: "I can explain the difference, but I cannot make a current numerical comparison because both modeled scenarios are not available.", sections: [{ heading: "General difference", table: { columns: ["Strategy", "Primary mechanism", "Key risk"], rows: [["Velocity", "Temporary credit-line cycling", "Credit-line cost and recovery risk"], ["Avalanche", "Highest-rate debt first", "Fewer early account wins"]] } }], followUp: "Is your priority minimizing modeled interest or preserving the simplest, lowest-risk process?", href: "/dashboard/money/debts", action: "Review debt strategies" });
+    return structuredAnswer({ intent: "debt-strategy", intentType: route.intentType, topics: route.topics, confidence: route.confidence, opening: `${velocity.totalInterest < avalanche.totalInterest ? "Velocity" : "Avalanche"} has the lower modeled interest in the current scenarios, but cost is not the only decision factor.`, sections: [{ heading: "Current comparison", table: { columns: ["Strategy", "Payoff time", "Total interest", "Monthly strain", "Risk"], rows: [velocity, avalanche].map((scenario) => [scenario.label, `${scenario.monthsToPayoff} months`, formatCurrency(scenario.totalInterest), formatCurrency(scenario.monthlyCashStrain), scenario.riskLevel]) } }, { heading: "Tradeoff", paragraphs: ["Avalanche is operationally simpler. Velocity depends on suitable credit terms, reliable cash flow, and disciplined recovery."] }], followUp: "Which matters more to you: the lowest modeled interest or the simpler strategy with less credit-line exposure?", href: "/dashboard/money/debts", action: "Compare strategies" });
+  }
+  if (route.intentType === "calculate") return structuredAnswer({ intent: "velocity", intentType: route.intentType, topics: route.topics, confidence: route.confidence, opening: velocity && avalanche ? `The current Velocity scenario models ${formatCurrency(Math.max(avalanche.totalInterest - velocity.totalInterest, 0))} less interest than Avalanche.` : "I cannot calculate current Velocity interest savings because comparable Velocity and Avalanche scenarios are not both available.", sections: velocity && avalanche ? [{ heading: "Calculation", table: { columns: ["Scenario", "Modeled interest"], rows: [["Avalanche", formatCurrency(avalanche.totalInterest)], ["Velocity", formatCurrency(velocity.totalInterest)], ["Difference", formatCurrency(avalanche.totalInterest - velocity.totalInterest)]] } }] : [{ heading: "Required inputs", bullets: ["Current balances and rates", "Verified HELOC rate and fees", "Payment capacity and recovery timing", "Comparable strategy scenarios"] }], assumptions: ["Scenario inputs remain unchanged and HELOC terms are fully represented."], href: details.href, action: "Review Velocity calculation" });
+  return undefined;
 }
 
 export function answerMoneyCoachQuestion(
@@ -588,7 +670,9 @@ export function answerMoneyCoachQuestion(
   model: MoneyCoachExperienceModel,
   conversation: MoneyCoachConversationContext = {}
 ): MoneyCoachStructuredAnswer {
+  const structuredAnswer = (values: Omit<MoneyCoachStructuredAnswer, "text" | "professionalExecution">) => createMoneyCoachResponse(values, model.professional);
   const intent = classifyMoneyCoachIntent(question);
+  const domainRoute = classifyMoneyCoachRequest(question, conversation);
   const context = model.financialContext;
   const dashboard = { href: "/dashboard/money#money-dashboard", action: "Open the financial dashboard" };
 
@@ -599,6 +683,25 @@ export function answerMoneyCoachQuestion(
 
   if (intent === "incomplete") {
     return structuredAnswer({ intent, opening: "I’m not quite sure what you want me to evaluate yet.", sections: [{ heading: "Clarification", classification: "uncertainty", paragraphs: ["Add the financial topic or decision you want help with, and I’ll use the relevant current records."] }], followUp: "For example: which bills need attention, whether another payment is safe, or how two debt strategies compare.", href: "#money-coach-question", action: "Continue your question" });
+  }
+
+  if (domainRoute.ambiguous) {
+    return structuredAnswer({ intent: "incomplete", intentType: "clarify", topics: domainRoute.topics, confidence: domainRoute.confidence, opening: "I want to make sure I answer the right question.", sections: [{ heading: "Clarification", classification: "uncertainty", paragraphs: [domainRoute.clarification || "Please tell me whether you want a definition, current status, evaluation, comparison, calculation, or workspace."] }], href: "#money-coach-question", action: "Clarify your question" });
+  }
+
+  if (domainRoute.topics.length && domainRoute.intentType === "navigate") {
+    const topic = domainRoute.topics[0];
+    const details = moneyTopicDetails[topic];
+    return structuredAnswer({ intent: topic === "velocity-banking" ? "velocity" : "general-finance", intentType: "navigate", topics: domainRoute.topics, confidence: domainRoute.confidence, opening: `Opening ${details.label}.`, sections: [], href: details.href, action: `Open ${details.label}` });
+  }
+
+  const velocity = velocityResponse(domainRoute, model);
+  if (velocity) return velocity;
+
+  if (domainRoute.topics.length === 1 && domainRoute.intentType === "define") {
+    const topic = domainRoute.topics[0];
+    const details = moneyTopicDetails[topic];
+    return structuredAnswer({ intent: topic === "bills" ? "bills" : topic === "cash-flow" ? "cash-flow" : "general-finance", intentType: "define", topics: domainRoute.topics, confidence: domainRoute.confidence, opening: details.definition, sections: [{ heading: "In BeastMoney", paragraphs: ["The related workspace holds the current records and calculations; the definition itself does not depend on your current status."] }], followUp: "If helpful, I can explain how your current records relate to this concept.", href: details.href, action: `Open ${details.label}` });
   }
 
   if (intent === "payment-affordability") {
