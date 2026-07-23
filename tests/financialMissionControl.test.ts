@@ -84,7 +84,7 @@ test("BM-304 dashboard view is dedicated responsive and accessible", () => {
     "Retirement progress",
     "Velocity progress",
     "Upcoming obligations",
-    "Observation summary",
+    "Observation Center",
     "Recommended focus",
     "Strategy comparison",
   ].forEach((title) => assert.match(source, new RegExp(title)));

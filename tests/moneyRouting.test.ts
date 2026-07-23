@@ -25,7 +25,7 @@ test("BM-303 gives Money Coach and Dashboard explicit distinct routes", () => {
 
 test("BM-303 navigation has one ordered core destination list without add shortcuts", () => {
   assert.deepEqual(beastMoneyCoreNavigation.map((item) => item.label), [
-    "Money Coach", "Dashboard", "Cash Flow", "Income", "Bills", "Debts",
+    "Money Coach", "Dashboard", "Observation Center", "Cash Flow", "Income", "Bills", "Debts",
     "Payoff Plan", "Velocity", "Retirement", "Reports", "Settings",
   ]);
   assert.deepEqual(beastMoneyNavigation.children, [...beastMoneyCoreNavigation]);
@@ -38,6 +38,7 @@ test("BM-303 active state follows direct links refresh and history location chan
   const history = [
     ["/dashboard/money", "", "Money Coach"],
     ["/dashboard/money/dashboard", "", "Dashboard"],
+    ["/dashboard/money/observations", "", "Observation Center"],
     ["/dashboard/money/dashboard", "#reports", "Reports"],
     ["/dashboard/money/cashflow", "#bills", "Bills"],
     ["/dashboard/money/debts", "#payoff-plan", "Payoff Plan"],

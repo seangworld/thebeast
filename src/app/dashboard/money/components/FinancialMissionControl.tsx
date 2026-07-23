@@ -193,7 +193,7 @@ export function FinancialMissionControl({ model }: { model: FinancialMissionCont
             {!model.upcomingObligations.length ? <p className="text-sm text-slate-400">No obligations are due in the current review window.</p> : null}
           </div>
         </Surface>
-        <Surface id="observations" title="Observation summary" eyebrow="Intelligence" href="/dashboard/money/dashboard#observations">
+        <Surface id="observations" title="Observation Center" eyebrow="Intelligence" href="/dashboard/money/observations">
           <div className="space-y-3">
             {model.observations.map((item) => <div key={item.id} className="rounded-xl border border-white/10 p-3"><div className="flex justify-between gap-3"><p className="font-bold text-white">{item.title}</p><span className="text-[10px] font-black uppercase text-cyan-300">{item.priority}</span></div><p className="mt-2 text-xs leading-5 text-slate-400">{item.summary}</p>{item.confidence ? <p className="mt-2 text-[10px] uppercase text-slate-500">{item.confidence} confidence</p> : null}</div>)}
             {!model.observations.length ? <p className="text-sm text-slate-400">No evidence-backed observations require attention right now.</p> : null}

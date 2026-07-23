@@ -59,6 +59,8 @@ import {
 } from "@/lib/paymentConfiguration";
 import { FinancialMissionControl } from "@/app/dashboard/money/components/FinancialMissionControl";
 import { buildFinancialMissionControl } from "@/lib/financialMissionControl";
+import { buildMoneyObservationCenter } from "@/lib/moneyObservationCenter";
+import { ObservationCenter } from "./ObservationCenter";
 
 type MoneyDebt = {
   id: string;
@@ -263,7 +265,11 @@ function MobileMoneyMetric({
   );
 }
 
-export function MoneyWorkspacePage({ view }: { view: "coach" | "dashboard" }) {
+export function MoneyWorkspacePage({
+  view,
+}: {
+  view: "coach" | "dashboard" | "observations";
+}) {
   const [state, setState] = useState<MoneyState>(initialMoneyState);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
@@ -860,6 +866,21 @@ export function MoneyWorkspacePage({ view }: { view: "coach" | "dashboard" }) {
       href: snapshot.financialCoach.warnings[0]?.href || (snapshot.activeDebts.length ? "/dashboard/money/debts" : "/dashboard/money/cashflow"),
     },
   });
+  const observationCenter = buildMoneyObservationCenter(
+    moneyCoachExperience.observations,
+    snapshot.simulation.asOfDate.toISOString()
+  );
+  if (view === "observations") {
+    return (
+      <BeastMoneyShell
+        title="Observation Center"
+        description="Evidence-backed financial observations"
+        showPageHeader={false}
+      >
+        <ObservationCenter model={observationCenter} />
+      </BeastMoneyShell>
+    );
+  }
   const dashboardExperience = view === "dashboard" ? (
     <BeastMoneyShell title="Dashboard" description="Financial Mission Control" showPageHeader={false}>
       <FinancialMissionControl model={financialMissionControl} />

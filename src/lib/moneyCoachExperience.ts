@@ -1067,11 +1067,12 @@ export function answerMoneyCoachQuestion(
         })),
         assumptions: Array.from(new Set(observations.flatMap((observation) => observation.provenance.limitations))),
         followUp: "Would you like me to explain the evidence behind the highest-priority observation?",
-        ...dashboard,
+        href: "/dashboard/money/observations",
+        action: "Open Observation Center",
       });
     }
     const prior = conversation.priorSummaries?.[0] || conversation.summary;
-    return structuredAnswer({ intent, opening: "I can describe the current position, but I don’t have a versioned financial snapshot that proves which account values changed since your last visit.", sections: [{ heading: "Current position", bullets: [`Cash: ${formatCurrency(context.currentCash)}`, `Debt: ${formatCurrency(context.debts.reduce((sum, item) => sum + item.balance, 0))}`, `Monthly cash flow: ${formatCurrency(context.projectedSurplus)}`] }, ...(prior ? [{ heading: "Prior conversation context", paragraphs: [`The prior discussion was summarized as: ${prior}. That summary is context, not authoritative financial data.`] }] : [])], followUp: "Would you like to open the dashboard to compare the current records in detail?", ...dashboard });
+    return structuredAnswer({ intent, opening: "I can describe the current position, but I don’t have a versioned financial snapshot that proves which account values changed since your last visit.", sections: [{ heading: "Current position", bullets: [`Cash: ${formatCurrency(context.currentCash)}`, `Debt: ${formatCurrency(context.debts.reduce((sum, item) => sum + item.balance, 0))}`, `Monthly cash flow: ${formatCurrency(context.projectedSurplus)}`] }, ...(prior ? [{ heading: "Prior conversation context", paragraphs: [`The prior discussion was summarized as: ${prior}. That summary is context, not authoritative financial data.`] }] : [])], followUp: "Would you like to review the observations supported by your current records?", href: "/dashboard/money/observations", action: "Open Observation Center" });
   }
 
   if (intent === "benchmarks") {
