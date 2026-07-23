@@ -248,7 +248,7 @@ test("recommendation history records meaningful changes, ignores duplicates, and
 });
 
 test("Money Coach exposes timestamped history and visible safety boundaries", () => {
-  const page = readFileSync("src/app/dashboard/money/page.tsx", "utf8");
+  const page = readFileSync("src/app/dashboard/money/components/MoneyWorkspacePage.tsx", "utf8");
   assert.match(page, /Recommendation history/);
   assert.match(page, /Safety boundaries/);
   assert.match(page, /dateTime=\{recommendation\.recordedAt\}/);

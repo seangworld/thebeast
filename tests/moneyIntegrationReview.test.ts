@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const moneyPageSource = readFileSync(
-  "src/app/dashboard/money/page.tsx",
+  "src/app/dashboard/money/components/MoneyWorkspacePage.tsx",
   "utf8"
 );
 

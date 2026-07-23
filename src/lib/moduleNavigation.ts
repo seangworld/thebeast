@@ -4,6 +4,7 @@ import {
   getVisibleModuleRegistryEntries,
   type BeastModuleRegistryEntry,
 } from "./moduleRegistry";
+import { beastMoneyCoreNavigation } from "./moneyNavigation";
 
 export type ModuleChildNavItem = {
   label: string;
@@ -39,18 +40,7 @@ export const beastMoneyNavigation: ModuleNavSection = {
   label: "BeastMoney",
   href: "/dashboard/money",
   module: "money",
-  children: [
-    { label: "Dashboard", href: "/dashboard/money" },
-    { label: "Cash Flow", href: "/dashboard/money/cashflow" },
-    { label: "Bills", href: "/dashboard/money/cashflow#bills" },
-    { label: "Debts", href: "/dashboard/money/debts" },
-    { label: "Payoff Plan", href: "/dashboard/money/debts#payoff-plan" },
-    { label: "Velocity", href: "/dashboard/money/velocity" },
-    { label: "Billing", href: "/dashboard/money/billing" },
-    { label: "Settings", href: "/dashboard/money/settings" },
-    { label: "Add Bill", href: "/dashboard/money/cashflow#add-bill" },
-    { label: "Add Debt", href: "/dashboard/money/debts#add-debt" },
-  ],
+  children: [...beastMoneyCoreNavigation],
 };
 
 export const beastLearningNavigation: ModuleNavSection = {
@@ -85,9 +75,7 @@ export const memberBeastEducationNavigation: ModuleNavSection = {
 
 export const memberBeastMoneyNavigation: ModuleNavSection = {
   ...beastMoneyNavigation,
-  children: beastMoneyNavigation.children?.filter(
-    (item) => item.label !== "Billing" && !item.future
-  ),
+  children: beastMoneyNavigation.children?.filter((item) => !item.future),
 };
 
 export const beastAdminNavigation: ModuleNavSection = {

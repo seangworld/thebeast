@@ -9,7 +9,7 @@ import {
 } from "../src/lib/mobileMoney";
 
 test("BF-MOB-004 mobile Money builds bill cards with visible payment actions", () => {
-  const page = readFileSync("src/app/dashboard/money/page.tsx", "utf8");
+  const page = readFileSync("src/app/dashboard/money/components/MoneyWorkspacePage.tsx", "utf8");
   const cards = buildMobileMoneyBillCards({
     asOfDate: new Date("2026-07-17T12:00:00.000Z"),
     bills: [
@@ -26,7 +26,7 @@ test("BF-MOB-004 mobile Money builds bill cards with visible payment actions", (
 });
 
 test("BF-MOB-004 mobile Money builds debt cards with visible minimum payment actions", () => {
-  const page = readFileSync("src/app/dashboard/money/page.tsx", "utf8");
+  const page = readFileSync("src/app/dashboard/money/components/MoneyWorkspacePage.tsx", "utf8");
   const cards = buildMobileMoneyDebtCards({
     asOfDate: new Date("2026-07-17T12:00:00.000Z"),
     debts: [
@@ -49,7 +49,7 @@ test("BF-MOB-004 mobile Money builds debt cards with visible minimum payment act
 });
 
 test("BF-MOB-004 mobile Money includes transaction quick-add without a desktop table dependency", () => {
-  const page = readFileSync("src/app/dashboard/money/page.tsx", "utf8");
+  const page = readFileSync("src/app/dashboard/money/components/MoneyWorkspacePage.tsx", "utf8");
   const transactions = buildRecentMoneyTransactions({
     billPayments: [
       { id: "bill-1", amount_paid: 75, payment_date: "2026-07-16" },
@@ -70,7 +70,7 @@ test("BF-MOB-004 mobile Money includes transaction quick-add without a desktop t
 });
 
 test("BF-MOB-004 mobile Money prevents horizontal overflow and preserves desktop Money", () => {
-  const page = readFileSync("src/app/dashboard/money/page.tsx", "utf8");
+  const page = readFileSync("src/app/dashboard/money/components/MoneyWorkspacePage.tsx", "utf8");
   const shell = readFileSync("src/app/dashboard/money/BeastMoneyShell.tsx", "utf8");
   const globalStyles = readFileSync("src/app/globals.css", "utf8");
 
@@ -92,7 +92,7 @@ test("BF-MOB-004 payment forms fit mobile widths and shared business logic stays
     "src/app/dashboard/money/cashflow/components/DebtPaymentControls.tsx",
     "utf8"
   );
-  const page = readFileSync("src/app/dashboard/money/page.tsx", "utf8");
+  const page = readFileSync("src/app/dashboard/money/components/MoneyWorkspacePage.tsx", "utf8");
 
   assert.match(billControls, /data-mobile-money-payment-form="bill"/);
   assert.match(debtControls, /data-mobile-money-payment-form="debt"/);

@@ -114,7 +114,8 @@ test("MC-201 consumes the shared AgentExperience without replacing existing page
     "src/app/dashboard/money/components/MoneyCoachExperience.tsx",
     "utf8"
   );
-  const landing = readFileSync("src/app/dashboard/money/page.tsx", "utf8");
+  const landing = readFileSync("src/app/dashboard/money/components/MoneyWorkspacePage.tsx", "utf8");
+  const landingRoute = readFileSync("src/app/dashboard/money/page.tsx", "utf8");
 
   assert.match(component, /from "@\/app\/components\/agents"/);
   assert.match(component, /<AgentExperience/);
@@ -165,8 +166,9 @@ test("MC-201 consumes the shared AgentExperience without replacing existing page
     assert.match(landing, new RegExp(route));
   }
   assert.match(landing, /showPageHeader=\{false\}/);
-  assert.match(landing, /window\.location\.hash === "#money-dashboard"/);
-  assert.match(landing, /!showDashboard \? <MoneyCoachExperience/);
+  assert.doesNotMatch(landing, /window\.location\.hash|showDashboard/);
+  assert.match(landing, /view === "coach" \? <MoneyCoachExperience/);
+  assert.match(landingRoute, /MoneyWorkspacePage view="coach"/);
   assert.match(landing, /Financial mission control/);
   assert.match(landing, /BeastMoney Dashboard/);
   assert.match(landing, /Explore current balances, obligations, forecasts, risks, trends, scenarios, and reports/);

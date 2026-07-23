@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 test("Money cockpit includes first-run and load-failure guidance", () => {
-  const source = readFileSync("src/app/dashboard/money/page.tsx", "utf8");
+  const source = readFileSync("src/app/dashboard/money/components/MoneyWorkspacePage.tsx", "utf8");
 
   assert.match(source, /Money could not load/);
   assert.match(source, /Build your first Money plan/);
@@ -13,8 +13,9 @@ test("Money cockpit includes first-run and load-failure guidance", () => {
 
 test("BeastMoney primary pages use the shared module shell", () => {
   const shell = readFileSync("src/app/dashboard/money/BeastMoneyShell.tsx", "utf8");
+  const navigation = readFileSync("src/lib/moneyNavigation.ts", "utf8");
   const pages = [
-    "src/app/dashboard/money/page.tsx",
+    "src/app/dashboard/money/components/MoneyWorkspacePage.tsx",
     "src/app/dashboard/money/cashflow/page.tsx",
     "src/app/dashboard/money/debts/page.tsx",
     "src/app/dashboard/money/velocity/page.tsx",
@@ -24,11 +25,12 @@ test("BeastMoney primary pages use the shared module shell", () => {
 
   assert.match(shell, /beast-module-tabs/);
   assert.match(shell, /ModuleBadge module="money"/);
-  assert.match(shell, /\/dashboard\/money\/cashflow/);
-  assert.match(shell, /\/dashboard\/money\/cashflow#bills/);
-  assert.match(shell, /\/dashboard\/money\/debts/);
-  assert.match(shell, /\/dashboard\/money\/debts#payoff-plan/);
-  assert.match(shell, /\/dashboard\/money\/velocity/);
+  assert.match(shell, /beastMoneyCoreNavigation/);
+  assert.match(navigation, /\/dashboard\/money\/cashflow/);
+  assert.match(navigation, /\/dashboard\/money\/cashflow#bills/);
+  assert.match(navigation, /\/dashboard\/money\/debts/);
+  assert.match(navigation, /\/dashboard\/money\/debts#payoff-plan/);
+  assert.match(navigation, /\/dashboard\/money\/velocity/);
   assert.match(shell, /money-page-stack/);
 
   for (const page of pages) {

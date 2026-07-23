@@ -569,18 +569,16 @@ test("module navigation centralizes expandable child items", () => {
   );
   assert.equal(beastMoneyNavigation.label, "BeastMoney");
   assert.equal(
-    beastMoneyNavigation.children?.map((item) => item.label).slice(0, 8).join(","),
-    "Dashboard,Cash Flow,Bills,Debts,Payoff Plan,Velocity,Billing,Settings"
+    beastMoneyNavigation.children?.map((item) => item.label).join(","),
+    "Money Coach,Dashboard,Cash Flow,Bills,Debts,Payoff Plan,Velocity,Retirement,Reports,Settings"
   );
   assert.equal(getModuleChildren("learning").length, 9);
   const moneyChildren = getModuleChildren("money");
   const addBill = moneyChildren.find((item) => item.label === "Add Bill");
   const addDebt = moneyChildren.find((item) => item.label === "Add Debt");
 
-  assert.equal(addBill?.future, undefined);
-  assert.equal(addBill?.href, "/dashboard/money/cashflow#add-bill");
-  assert.equal(addDebt?.future, undefined);
-  assert.equal(addDebt?.href, "/dashboard/money/debts#add-debt");
+  assert.equal(addBill, undefined);
+  assert.equal(addDebt, undefined);
   assert.match(
     readFileSync(
       "src/app/dashboard/money/cashflow/components/AddIncomeBillSection.tsx",
@@ -5782,7 +5780,7 @@ test("member navigation hides admin and monetization surfaces", () => {
     getBeastModuleNavigationForPersona(true)
       .find((item) => item.label === "BeastMoney")
       ?.children?.some((item) => item.label === "Billing"),
-    true
+    false
   );
   assert.equal(
     getBeastModuleNavigationForPersona(true).some((item) => item.comingSoon),

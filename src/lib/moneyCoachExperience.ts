@@ -665,7 +665,7 @@ const moneyTopicDetails: Record<MoneyCoachTopic, { label: string; definition: st
   "income-pots": { label: "Income Pots", definition: "Income Pots group obligations against a particular income date so the money has an explicit job before it is spent.", href: "/dashboard/money/cashflow#income-planning" },
   "funding-sources": { label: "Funding Sources", definition: "Funding Sources identify the accounts or credit capacity available to support a planned obligation or strategy.", href: "/dashboard/money/cashflow#funding-sources" },
   retirement: { label: "Retirement", definition: "Retirement planning connects current savings and contributions with a future income goal and the assumptions used to project it.", href: "/dashboard/money/retirement" },
-  forecasting: { label: "Forecasting", definition: "Forecasting projects current balances forward using known income, obligations, transfers, and strategy assumptions.", href: "/dashboard/money#money-dashboard" },
+  forecasting: { label: "Forecasting", definition: "Forecasting projects current balances forward using known income, obligations, transfers, and strategy assumptions.", href: "/dashboard/money/dashboard" },
   "cash-buffer": { label: "Cash Buffer", definition: "A cash buffer is the protected amount kept available so normal obligations and unexpected costs do not immediately require new debt.", href: "/dashboard/money/cashflow" },
   heloc: { label: "HELOC", definition: "A HELOC is a revolving credit line secured by home equity, with borrowing costs and terms that can change over time.", href: "/dashboard/money/velocity" },
 };
@@ -712,7 +712,7 @@ export function answerMoneyCoachQuestion(
   const intent = classifyMoneyCoachIntent(question);
   const domainRoute = classifyMoneyCoachRequest(question, conversation);
   const context = model.financialContext;
-  const dashboard = { href: "/dashboard/money#money-dashboard", action: "Open the financial dashboard" };
+  const dashboard = { href: "/dashboard/money/dashboard", action: "Open the financial dashboard" };
 
   if (intent === "test" || intent === "social") {
     const opening = intent === "test" ? "It looks like you’re testing the conversation. Everything appears to be working." : "I’m here and ready when you are.";

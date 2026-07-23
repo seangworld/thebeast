@@ -23,6 +23,7 @@ import {
 } from "@/lib/moduleNavigation";
 import { buildMobileNavigation } from "@/lib/mobileFoundation";
 import { buildMobileRuntimeState } from "@/lib/mobileHardening";
+import { isBeastMoneyNavigationActive } from "@/lib/moneyNavigation";
 import { canAccessBeastAdmin } from "@/lib/beastAdmin";
 import {
   ADMIN_VIEW_MODE_EVENT,
@@ -87,6 +88,7 @@ export default function DashboardLayout({
 }) {
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
   const [mobileOnline, setMobileOnline] = useState(true);
+  const [locationHash, setLocationHash] = useState("");
   const [expandedModule, setExpandedModule] = useState<ModuleKey | null>(null);
   const [learningOnlyNavigation, setLearningOnlyNavigation] = useState(false);
   const [isAdminPersona, setIsAdminPersona] = useState(false);
@@ -129,6 +131,17 @@ export default function DashboardLayout({
 
   const [previousActiveExpandableModule, setPreviousActiveExpandableModule] =
     useState<ModuleKey | null>(null);
+
+  useEffect(() => {
+    const syncLocationHash = () => setLocationHash(window.location.hash);
+    syncLocationHash();
+    window.addEventListener("hashchange", syncLocationHash);
+    window.addEventListener("popstate", syncLocationHash);
+    return () => {
+      window.removeEventListener("hashchange", syncLocationHash);
+      window.removeEventListener("popstate", syncLocationHash);
+    };
+  }, [pathname]);
 
   useEffect(() => {
     function syncAdminViewMode() {
@@ -493,6 +506,9 @@ export default function DashboardLayout({
   }
 
   function isChildActive(item: ModuleChildNavItem) {
+    if (item.href.startsWith("/dashboard/money")) {
+      return isBeastMoneyNavigationActive(item, pathname, locationHash);
+    }
     const [path, hash] = item.href.split("#");
 
     if (hash) return false;
