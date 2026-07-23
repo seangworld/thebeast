@@ -59,7 +59,10 @@ import {
   getPaymentFundingStrategy,
   normalizePaymentConfiguration,
 } from "@/lib/paymentConfiguration";
-import { FinancialMissionControl } from "@/app/dashboard/money/components/FinancialMissionControl";
+import {
+  FinancialMissionControl,
+  FinancialMissionControlLoading,
+} from "@/app/dashboard/money/components/FinancialMissionControl";
 import { buildFinancialMissionControl } from "@/lib/financialMissionControl";
 import { buildMoneyObservationCenter } from "@/lib/moneyObservationCenter";
 import { ObservationCenter } from "./ObservationCenter";
@@ -918,7 +921,22 @@ export function MoneyWorkspacePage({
   }
   const dashboardExperience = view === "dashboard" ? (
     <BeastMoneyShell title="Dashboard" description="Financial Mission Control" showPageHeader={false}>
-      <FinancialMissionControl model={financialMissionControl} />
+      {loading ? (
+        <FinancialMissionControlLoading />
+      ) : loadError ? (
+        <section
+          className="mx-auto w-full max-w-3xl rounded-3xl border border-rose-400/20 bg-rose-400/[0.05] p-6 sm:p-8"
+          role="alert"
+          data-financial-mission-control-error="true"
+        >
+          <p className="text-xs font-black uppercase tracking-[0.16em] text-rose-200">Dashboard unavailable</p>
+          <h1 className="mt-3 text-2xl font-black text-white">Your financial records could not be loaded.</h1>
+          <p className="mt-3 text-sm leading-6 text-slate-300">{loadError}</p>
+          <button type="button" className="beast-button mt-6 min-h-11" onClick={loadMoneySnapshot}>Try again</button>
+        </section>
+      ) : (
+        <FinancialMissionControl model={financialMissionControl} />
+      )}
     </BeastMoneyShell>
   ) : null;
 

@@ -47,7 +47,7 @@ function HeroCard({ card }: { card: MissionControlHeroCard }) {
   const isFinancialHealth = card.id === "financial-health";
   return (
     <article
-      className={`group min-w-0 rounded-2xl border bg-gradient-to-br p-4 shadow-[0_18px_50px_rgba(0,0,0,0.16)] transition hover:-translate-y-0.5 hover:border-white/25 sm:p-5 ${isFinancialHealth ? "sm:col-span-2 xl:col-span-1 2xl:col-span-2" : ""} ${tones[card.tone]}`}
+      className={`group flex min-h-[13rem] min-w-0 flex-col rounded-3xl border bg-gradient-to-br p-5 shadow-[0_18px_50px_rgba(0,0,0,0.14)] transition duration-300 hover:-translate-y-1 hover:border-white/25 hover:shadow-[0_24px_60px_rgba(0,0,0,0.22)] sm:p-6 ${isFinancialHealth ? "sm:col-span-2 xl:col-span-1 2xl:col-span-2" : ""} ${tones[card.tone]}`}
       data-financial-health-hero={isFinancialHealth ? "true" : undefined}
     >
       <Link href={card.href} className="block rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-300" aria-label={`Open ${card.label}`}>
@@ -59,14 +59,14 @@ function HeroCard({ card }: { card: MissionControlHeroCard }) {
         <p className="mt-2 text-sm font-semibold text-slate-200">{card.detail}</p>
         <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-400">{card.trend}</p>
       </Link>
-      <Explainability card={card} />
+      <div className="mt-auto"><Explainability card={card} /></div>
     </article>
   );
 }
 
 function Surface({ id, title, eyebrow, href, children, className = "" }: { id?: string; title: string; eyebrow: string; href: string; children: React.ReactNode; className?: string }) {
   return (
-    <article id={id} className={`min-w-0 scroll-mt-6 rounded-3xl border border-white/10 bg-[#111827]/85 p-5 shadow-[0_24px_70px_rgba(0,0,0,0.2)] backdrop-blur sm:p-6 ${className}`}>
+    <article id={id} className={`min-w-0 scroll-mt-6 rounded-3xl border border-white/10 bg-[#111827]/80 p-5 shadow-[0_20px_60px_rgba(0,0,0,0.16)] backdrop-blur transition duration-300 hover:border-white/15 hover:shadow-[0_24px_70px_rgba(0,0,0,0.2)] sm:p-7 ${className}`}>
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-[11px] font-black uppercase tracking-[0.16em] text-cyan-300">{eyebrow}</p>
@@ -74,21 +74,66 @@ function Surface({ id, title, eyebrow, href, children, className = "" }: { id?: 
         </div>
         <Link href={href} className="flex min-h-[44px] shrink-0 items-center rounded-xl border border-white/10 px-3 text-sm font-bold text-slate-300 transition hover:border-cyan-300/40 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300">Open <span className="sr-only">{title}</span><span aria-hidden="true" className="ml-2">↗</span></Link>
       </div>
-      <div className="mt-6">{children}</div>
+      <div className="mt-7">{children}</div>
     </article>
+  );
+}
+
+export function FinancialMissionControlLoading() {
+  return (
+    <div
+      className="mx-auto w-full max-w-[1600px] animate-pulse space-y-8 pb-12"
+      aria-busy="true"
+      aria-label="Loading Financial Mission Control"
+      data-financial-mission-control-loading="true"
+    >
+      <span className="sr-only">Loading current BeastMoney records.</span>
+      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="h-52 rounded-3xl bg-white/[0.07] sm:col-span-2 xl:col-span-1" />
+        {Array.from({ length: 5 }, (_, index) => (
+          <div key={index} className="h-52 rounded-3xl bg-white/[0.05]" />
+        ))}
+      </div>
+      <div className="h-36 rounded-3xl bg-white/[0.05]" />
+      <div className="grid gap-5 lg:grid-cols-2">
+        <div className="h-80 rounded-3xl bg-white/[0.05]" />
+        <div className="h-80 rounded-3xl bg-white/[0.05]" />
+      </div>
+    </div>
   );
 }
 
 export function FinancialMissionControl({ model }: { model: FinancialMissionControlModel }) {
   const maxScenarioInterest = Math.max(1, ...model.scenarios.map((scenario) => scenario.totalInterest));
+  const hasCurrentRecords =
+    model.cashFlow.income > 0 ||
+    model.cashFlow.outflow > 0 ||
+    model.debt.remaining > 0 ||
+    model.upcomingObligations.length > 0;
   return (
-    <div className="mx-auto w-full max-w-[1600px] space-y-6 pb-12" data-financial-mission-control="true">
+    <div className="mx-auto w-full max-w-[1600px] space-y-8 pb-12 sm:space-y-10" data-financial-mission-control="true">
       <section id="financial-health" className="scroll-mt-6" aria-labelledby="mission-control-overview">
         <h1 id="mission-control-overview" className="sr-only">Financial Mission Control</h1>
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+        <div className="grid items-stretch gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
           {model.heroCards.map((card) => <HeroCard key={card.id} card={card} />)}
         </div>
       </section>
+
+      {!hasCurrentRecords ? (
+        <section
+          className="rounded-3xl border border-dashed border-cyan-300/20 bg-cyan-300/[0.04] p-6 sm:p-8"
+          data-financial-mission-control-empty="true"
+        >
+          <h2 className="text-xl font-black text-white">Build your financial picture</h2>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
+            Add or import current income, bills, debts, and cash records to turn these transparent placeholders into a useful financial baseline.
+          </p>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <Link href="/dashboard/money/import" className="beast-button inline-flex min-h-11 items-center">Import financial data</Link>
+            <Link href="/dashboard/money/income" className="beast-button-secondary inline-flex min-h-11 items-center">Add income</Link>
+          </div>
+        </section>
+      ) : null}
 
       <MorningFinancialBriefingPanel briefing={model.morningBriefing} />
 
@@ -97,8 +142,8 @@ export function FinancialMissionControl({ model }: { model: FinancialMissionCont
         className="scroll-mt-6 rounded-3xl border border-white/10 bg-[#111827]/85 p-5 shadow-[0_24px_70px_rgba(0,0,0,0.2)] sm:p-6"
         aria-labelledby="financial-health-score-heading"
       >
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div>
+        <div>
+          <div className="max-w-4xl">
             <p className="text-[11px] font-black uppercase tracking-[0.16em] text-cyan-300">
               Transparent wellness measure
             </p>
@@ -108,11 +153,6 @@ export function FinancialMissionControl({ model }: { model: FinancialMissionCont
             <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-300">
               {model.financialHealth.formula}
             </p>
-          </div>
-          <div className="rounded-2xl border border-cyan-300/20 bg-cyan-300/[0.06] px-5 py-4">
-            <p className="text-xs font-bold uppercase text-slate-400">Current score</p>
-            <p className="mt-1 text-4xl font-black text-white">{model.financialHealth.score}</p>
-            <p className="text-sm capitalize text-cyan-200">{model.financialHealth.band}</p>
           </div>
         </div>
 
@@ -205,9 +245,9 @@ export function FinancialMissionControl({ model }: { model: FinancialMissionCont
           <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-300">Financial motion</p>
           <h2 id="financial-motion-heading" className="mt-2 text-2xl font-black text-white">Where your money is moving</h2>
         </div>
-        <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-12">
+        <div className="grid items-stretch gap-5 lg:grid-cols-2 xl:grid-cols-12">
           <Surface title="Cash-flow trend" eyebrow="Cash Flow" href="/dashboard/money/cashflow" className="xl:col-span-7">
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid gap-3 sm:grid-cols-3">
               {[["Income", model.cashFlow.income, "text-emerald-300"], ["Outflow", model.cashFlow.outflow, "text-amber-200"], ["Surplus", model.cashFlow.surplus, model.cashFlow.surplus >= 0 ? "text-cyan-300" : "text-rose-300"]].map(([label, value, tone]) => (
                 <Link href={label === "Income" ? "/dashboard/money/income" : "/dashboard/money/cashflow"} key={String(label)} className="rounded-2xl bg-white/[0.04] p-3 transition hover:bg-white/[0.07] focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300 sm:p-4">
                   <p className="text-xs text-slate-400">{label}</p>
@@ -273,7 +313,7 @@ export function FinancialMissionControl({ model }: { model: FinancialMissionCont
         </div>
       </section>
 
-      <section aria-labelledby="strategy-heading" className="grid gap-4 xl:grid-cols-12">
+      <section aria-labelledby="strategy-heading" className="grid items-stretch gap-5 xl:grid-cols-12">
         <div className="xl:col-span-7">
           <Surface title="Strategy comparison" eyebrow="Scenarios" href="/dashboard/money/debts">
             {model.scenarios.length ? <div className="space-y-4">
@@ -300,7 +340,7 @@ export function FinancialMissionControl({ model }: { model: FinancialMissionCont
         </div>
       </section>
 
-      <section aria-labelledby="focus-heading" className="grid gap-4 xl:grid-cols-3">
+      <section aria-labelledby="focus-heading" className="grid items-stretch gap-5 xl:grid-cols-3">
         <Surface title="Recommended focus" eyebrow="Today" href={model.recommendedFocus.href}>
           <h3 id="focus-heading" className="text-xl font-black text-white">{model.recommendedFocus.title}</h3>
           <p className="mt-3 text-sm leading-6 text-slate-300">{model.recommendedFocus.action}</p>

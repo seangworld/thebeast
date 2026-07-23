@@ -99,3 +99,23 @@ test("BM-304 Dashboard and Money Coach retain separate render paths", () => {
   assert.match(dashboardRoute, /view="dashboard"/);
   assert.match(coachRoute, /view="coach"/);
 });
+
+test("BM-315 gives Mission Control polished responsive loading and empty states", () => {
+  const source = readFileSync("src/app/dashboard/money/components/FinancialMissionControl.tsx", "utf8");
+  const workspace = readFileSync("src/app/dashboard/money/components/MoneyWorkspacePage.tsx", "utf8");
+
+  assert.match(source, /data-financial-mission-control-loading="true"/);
+  assert.match(source, /aria-busy="true"/);
+  assert.match(source, /animate-pulse/);
+  assert.match(source, /data-financial-mission-control-empty="true"/);
+  assert.match(source, /Build your financial picture/);
+  assert.match(source, /space-y-8[\s\S]*sm:space-y-10/);
+  assert.match(source, /grid items-stretch gap-5/);
+  assert.match(source, /transition duration-300/);
+  assert.match(source, /hover:-translate-y-1/);
+  assert.match(source, /sm:grid-cols-3/);
+  assert.doesNotMatch(source, />Current score</);
+  assert.match(workspace, /<FinancialMissionControlLoading/);
+  assert.match(workspace, /data-financial-mission-control-error="true"/);
+  assert.match(workspace, /role="alert"/);
+});
