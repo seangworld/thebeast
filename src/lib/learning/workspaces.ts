@@ -6,6 +6,7 @@ export const learningWorkspaceSlugs = [
   "achievements",
   "history",
   "certificates",
+  "reports",
 ] as const;
 
 export type LearningWorkspaceSlug = (typeof learningWorkspaceSlugs)[number];
@@ -86,6 +87,15 @@ export const learningWorkspaceDefinitions: Record<
     emptyTitle: "No certificates have been earned yet",
     emptyDescription: "Certificates appear only after the required learning milestone is completed.",
     emptyAction: { label: "View your learning path", href: "/dashboard/education/learning-path" },
+  },
+  reports: {
+    slug: "reports",
+    title: "Learning Reports",
+    eyebrow: "Professional reporting",
+    description: "Review, print, and export progress, course, knowledge, achievement, weekly, and monthly summaries.",
+    emptyTitle: "No report evidence is available yet",
+    emptyDescription: "Reports will summarize your authenticated learning records after you begin learning.",
+    emptyAction: { label: "Start a lesson", href: "/dashboard/education/lessons" },
   },
 };
 

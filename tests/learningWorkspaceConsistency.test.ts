@@ -18,6 +18,7 @@ const expected = [
   "achievements",
   "history",
   "certificates",
+  "reports",
 ] as const;
 
 test("BL-403 defines every Learning workspace through one configuration", () => {

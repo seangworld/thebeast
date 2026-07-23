@@ -15,6 +15,8 @@ import {
   buildLearningChronology,
   type LearningChronologyEvent,
 } from "@/lib/learning/learningChronology";
+import { buildLearningReports } from "@/lib/learning/learningReports";
+import { LearningReports } from "./LearningReports";
 
 type WorkspaceItem = {
   id: string;
@@ -151,6 +153,35 @@ async function loadLearningChronology(userId: string) {
   });
 }
 
+async function loadLearningReports(userId: string) {
+  const supabase = createRouteClient();
+  const [history, activities, sessions, courses, achievements, mastery, certificates, goals] =
+    await Promise.all([
+      supabase.from("learning_history").select("*").eq("user_id", userId),
+      supabase.from("learning_activities").select("*").eq("user_id", userId),
+      supabase.from("learning_sessions").select("*").eq("user_id", userId),
+      supabase.from("learning_courses").select("*").eq("user_id", userId),
+      supabase.from("learning_achievements").select("*").eq("user_id", userId),
+      supabase.from("learning_mastery").select("*").eq("user_id", userId),
+      supabase.from("learning_certificates").select("*").eq("user_id", userId),
+      supabase.from("learning_goals").select("*").eq("user_id", userId),
+    ]);
+  const results = [history, activities, sessions, courses, achievements, mastery, certificates, goals];
+  const failure = results.find((result) => result.error)?.error;
+  if (failure) throw new Error(`Unable to load Learning Reports: ${failure.message}`);
+
+  return buildLearningReports({
+    history: history.data || [],
+    activities: activities.data || [],
+    sessions: sessions.data || [],
+    courses: courses.data || [],
+    achievements: achievements.data || [],
+    mastery: mastery.data || [],
+    certificates: certificates.data || [],
+    goals: goals.data || [],
+  });
+}
+
 function formatTimelineDate(value: string) {
   return new Intl.DateTimeFormat("en-US", {
     month: "short",
@@ -218,7 +249,8 @@ export default async function LearningWorkspaceView({ slug }: { slug: string }) 
 
   const definition = learningWorkspaceDefinitions[slug];
   const timeline = slug === "history" ? await loadLearningChronology(user.id) : null;
-  const items = timeline ? [] : await loadWorkspaceItems(slug, user.id);
+  const reports = slug === "reports" ? await loadLearningReports(user.id) : null;
+  const items = timeline || reports ? [] : await loadWorkspaceItems(slug, user.id);
 
   return (
     <LearningWorkspaceShell
@@ -226,7 +258,9 @@ export default async function LearningWorkspaceView({ slug }: { slug: string }) 
       description={definition.description}
       eyebrow={definition.eyebrow}
     >
-      {timeline && timeline.length > 0 ? (
+      {reports ? (
+        <LearningReports bundle={reports} />
+      ) : timeline && timeline.length > 0 ? (
         <LearningTimeline events={timeline} />
       ) : items.length === 0 ? (
         <LearningEmptyState

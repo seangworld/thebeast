@@ -56,6 +56,7 @@ export const beastLearningNavigation: ModuleNavSection = {
     { label: "Achievements", href: "/dashboard/education/achievements" },
     { label: "History", href: "/dashboard/education/history" },
     { label: "Certificates", href: "/dashboard/education/certificates" },
+    { label: "Reports", href: "/dashboard/education/reports" },
     { label: "Goals", href: "/dashboard/education/goals" },
     { label: "Feedback", href: "/dashboard/education#feedback" },
   ],
@@ -74,6 +75,7 @@ export const memberBeastEducationNavigation: ModuleNavSection = {
     { label: "Achievements", href: "/dashboard/education/achievements" },
     { label: "History", href: "/dashboard/education/history" },
     { label: "Certificates", href: "/dashboard/education/certificates" },
+    { label: "Reports", href: "/dashboard/education/reports" },
     { label: "Goals", href: "/dashboard/education/goals" },
   ],
 };

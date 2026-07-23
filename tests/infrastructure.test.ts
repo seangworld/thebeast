@@ -560,6 +560,7 @@ test("module navigation centralizes expandable child items", () => {
       "Achievements",
       "History",
       "Certificates",
+      "Reports",
       "Goals",
       "Feedback",
     ]
@@ -573,7 +574,7 @@ test("module navigation centralizes expandable child items", () => {
     beastMoneyNavigation.children?.map((item) => item.label).join(","),
     "Money Coach,Dashboard,Observation Center,Cash Flow,Income,Bills,Debts,Payoff Plan,Velocity,Retirement,Reports,Settings"
   );
-  assert.equal(getModuleChildren("learning").length, 10);
+  assert.equal(getModuleChildren("learning").length, 11);
   const moneyChildren = getModuleChildren("money");
   const addBill = moneyChildren.find((item) => item.label === "Add Bill");
   const addDebt = moneyChildren.find((item) => item.label === "Add Debt");
@@ -5749,6 +5750,7 @@ test("member navigation hides admin and monetization surfaces", () => {
       "Achievements",
       "History",
       "Certificates",
+      "Reports",
       "Goals",
     ]
   );
@@ -5763,6 +5765,7 @@ test("member navigation hides admin and monetization surfaces", () => {
       "/dashboard/education/achievements",
       "/dashboard/education/history",
       "/dashboard/education/certificates",
+      "/dashboard/education/reports",
       "/dashboard/education/goals",
     ]
   );
