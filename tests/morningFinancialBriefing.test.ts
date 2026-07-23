@@ -32,6 +32,7 @@ const benchmark = {
   benchmarkName: "Debt payoff goal",
   interpretation: "Current debt progress remains ahead of the stated goal.",
   confidence: "high",
+  evaluatedAt: "2026-07-23T10:30:00.000Z",
 } as BenchmarkResult;
 
 const journalEntry = {
@@ -52,6 +53,16 @@ test("BM-310 produces a short prioritized briefing from shared intelligence", ()
     observations: [observation],
     benchmarks: [benchmark],
     journalEntries: [journalEntry],
+    memberUnderstanding: [
+      {
+        understandingId: "understanding-1",
+        dimension: "communication-style",
+        understanding: "Prefers concise financial reviews.",
+        confidence: "high",
+        evidenceSourceTypes: ["conversation"],
+        updatedAt: "2026-07-23T09:30:00.000Z",
+      },
+    ],
     recentPayments: [
       {
         id: "payment-1",
@@ -92,6 +103,43 @@ test("BM-310 produces a short prioritized briefing from shared intelligence", ()
   );
   assert.equal(briefing.recommendedFocus.title, "Review Velocity strategy");
   assert.equal(briefing.freshness.label, "current");
+  assert.ok(briefing.items.every((item) => item.conversationPrompt.length > 0));
+  assert.equal(
+    briefing.items.some((item) => item.id.startsWith("journal:")),
+    false,
+    "internal journal entries must influence prioritization without becoming member-visible"
+  );
+  assert.ok(briefing.sourcesConsulted.includes("professional-journal"));
+  assert.ok(briefing.sourcesConsulted.includes("member-understanding"));
+});
+
+test("BM-310 surfaces a current financial goal as a concise upcoming item", () => {
+  const briefing = buildMorningFinancialBriefing({
+    ownerId: "owner-1",
+    asOf,
+    since,
+    observations: [],
+    benchmarks: [],
+    currentGoals: [
+      {
+        id: "goal-1",
+        title: "Emergency fund",
+        status: "Active",
+        targetDate: "2026-08-01T12:00:00.000Z",
+        updatedAt: "2026-07-23T08:00:00.000Z",
+      },
+    ],
+    recommendedFocus: {
+      title: "Keep building the reserve",
+      detail: "Review the next contribution.",
+      href: "/dashboard/goals",
+    },
+  });
+
+  assert.equal(briefing.items[0]?.source, "goal");
+  assert.match(briefing.items[0]?.title || "", /Emergency fund/);
+  assert.match(briefing.items[0]?.conversationPrompt || "", /most useful next step/);
+  assert.ok(briefing.sourcesConsulted.includes("goals"));
 });
 
 test("BM-310 honestly handles a quiet review period", () => {
@@ -146,10 +194,16 @@ test("BM-310 briefing is expandable accessible and freshness-aware", () => {
   assert.match(panel, /<summary/);
   assert.match(panel, /data-money-morning-briefing="true"/);
   assert.match(panel, /Recommended focus/);
+  assert.match(panel, /Discuss with Money Coach/);
+  assert.match(panel, /\\?starter=/);
+  assert.match(panel, /min-h-11/);
   assert.match(panel, /Data freshness/);
   assert.match(builder, /SharedTrustDataFreshnessEngine/);
   assert.match(builder, /slice\(0, 4\)/);
   assert.match(builder, /journalEntries/);
+  assert.doesNotMatch(builder, /source: "professional-journal"/);
+  assert.match(builder, /memberUnderstanding/);
+  assert.match(builder, /currentGoals/);
   assert.match(builder, /benchmarks/);
   assert.match(builder, /observations/);
 });

@@ -8,6 +8,9 @@ export function MorningFinancialBriefingPanel({
   briefing: MorningFinancialBriefing;
   defaultOpen?: boolean;
 }) {
+  const conversationHref = (prompt: string) =>
+    `/dashboard/money?starter=${encodeURIComponent(prompt)}`;
+
   return (
     <details
       open={defaultOpen}
@@ -40,14 +43,17 @@ export function MorningFinancialBriefingPanel({
         {briefing.items.length ? (
           <ul className="grid gap-3">
             {briefing.items.map((item) => (
-              <li key={item.id} className="text-sm leading-6 text-slate-300">
-                <span className="font-bold text-white">{item.title}.</span>{" "}
-                {item.detail}
-                {item.href ? (
-                  <Link className="ml-2 font-bold text-cyan-200" href={item.href}>
-                    Review
-                  </Link>
-                ) : null}
+              <li key={item.id}>
+                <Link
+                  className="block min-h-11 rounded-xl px-3 py-2 text-sm leading-6 text-slate-300 transition hover:bg-white/[0.05] focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300"
+                  href={conversationHref(item.conversationPrompt)}
+                >
+                  <span className="font-bold text-white">{item.title}.</span>{" "}
+                  {item.detail}
+                  <span className="ml-2 font-bold text-cyan-200">
+                    Discuss <span aria-hidden="true">→</span>
+                  </span>
+                </Link>
               </li>
             ))}
           </ul>
@@ -68,10 +74,10 @@ export function MorningFinancialBriefingPanel({
             {briefing.recommendedFocus.detail}
           </p>
           <Link
-            href={briefing.recommendedFocus.href}
+            href={conversationHref(briefing.recommendedFocus.conversationPrompt)}
             className="mt-3 inline-flex min-h-11 items-center font-bold text-cyan-200"
           >
-            Review focus <span aria-hidden="true" className="ml-2">→</span>
+            Discuss with Money Coach <span aria-hidden="true" className="ml-2">→</span>
           </Link>
         </div>
 

@@ -140,6 +140,14 @@ type DebtSettings = {
   extra_payment?: number | null;
 };
 
+type MoneyGoal = {
+  id: string;
+  title: string;
+  status?: string | null;
+  target_date?: string | null;
+  updated_at?: string | null;
+};
+
 type MoneyState = {
   debts: MoneyDebt[];
   bills: MoneyBill[];
@@ -149,6 +157,7 @@ type MoneyState = {
   debtSettings: DebtSettings | null;
   billPayments: MoneyPayment[];
   debtPayments: MoneyPayment[];
+  goals: MoneyGoal[];
 };
 
 type CoachCorrections = Partial<Record<FinancialCoachScenarioInput, string>>;
@@ -162,6 +171,7 @@ const initialMoneyState: MoneyState = {
   debtSettings: null,
   billPayments: [],
   debtPayments: [],
+  goals: [],
 };
 
 const quickActions = [
@@ -339,6 +349,7 @@ export function MoneyWorkspacePage({
         debtSettingsResult,
         billPaymentsResult,
         debtPaymentsResult,
+        goalsResult,
       ] = await Promise.all([
         supabase.from("debts").select("*").eq("user_id", userId),
         supabase
@@ -370,6 +381,11 @@ export function MoneyWorkspacePage({
           .eq("user_id", userId)
           .order("created_at", { ascending: false })
           .limit(8),
+        supabase
+          .from("beast_goals")
+          .select("id, title, status, target_date, updated_at")
+          .eq("owner_id", userId)
+          .eq("category", "Money"),
       ]);
       const firstError =
         debtsResult.error ||
@@ -392,6 +408,7 @@ export function MoneyWorkspacePage({
         debtSettings: debtSettingsResult.data as DebtSettings | null,
         billPayments: (billPaymentsResult.data || []) as MoneyPayment[],
         debtPayments: (debtPaymentsResult.data || []) as MoneyPayment[],
+        goals: goalsResult.error ? [] : (goalsResult.data || []) as MoneyGoal[],
       });
     } catch (error) {
       setLoadError(
@@ -815,6 +832,13 @@ export function MoneyWorkspacePage({
     retirementDataAvailable: false,
     financialHealth: snapshot.financialInsights.financialHealth,
     lastVisitedAt,
+    currentGoals: state.goals.map((goal) => ({
+      id: goal.id,
+      title: goal.title,
+      status: goal.status || undefined,
+      targetDate: goal.target_date || undefined,
+      updatedAt: goal.updated_at || undefined,
+    })),
     recentPayments: [
       ...state.billPayments.map((payment) => ({
         id: payment.id,

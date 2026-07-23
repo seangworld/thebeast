@@ -191,6 +191,13 @@ export type MoneyCoachExperienceInput = {
   }[];
   memberUnderstandingEntries?: readonly MemberUnderstandingReasoningItem[];
   upcomingConversationEvents?: readonly UpcomingStarterEvent[];
+  currentGoals?: readonly {
+    id: string;
+    title: string;
+    status?: string;
+    targetDate?: string;
+    updatedAt?: string;
+  }[];
 };
 
 const priorityConfiguration = {
@@ -603,6 +610,8 @@ export function buildMoneyCoachExperience(
     observations,
     benchmarks,
     journalEntries: input.professionalJournalEntries,
+    memberUnderstanding: input.memberUnderstandingEntries,
+    currentGoals: input.currentGoals,
     recentPayments: input.recentPayments,
     upcomingBills: (input.billsDueSoon || []).map((bill, index) => ({
       id: `bill-${index}-${bill.name}`,
@@ -626,7 +635,7 @@ export function buildMoneyCoachExperience(
     priority: 96,
     evidence: morningBriefing.items.map((item) => ({
       sourceType:
-        item.source === "current-data"
+        item.source === "current-data" || item.source === "goal"
           ? "current-context"
           : item.source === "benchmark"
             ? "configuration"

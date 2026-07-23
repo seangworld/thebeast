@@ -259,11 +259,13 @@ export function buildFinancialMissionControl(input: BuildFinancialMissionControl
           title: input.recommendedFocus.title,
           detail: input.recommendedFocus.action,
           href: input.recommendedFocus.href,
+          conversationPrompt: `Help me review today’s recommended focus: ${input.recommendedFocus.title}.`,
         },
         freshness: {
           label: "unknown",
           confidenceNote: "No freshness assessment was supplied.",
         },
+        sourcesConsulted: ["current-records", "trust-and-freshness"],
       },
   };
 }
