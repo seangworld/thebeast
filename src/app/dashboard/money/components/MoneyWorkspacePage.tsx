@@ -124,6 +124,8 @@ type MoneySettings = {
 
 type MoneyPayment = {
   id: string;
+  bill_id?: string | null;
+  debt_id?: string | null;
   amount?: number | null;
   amount_paid?: number | null;
   payment_date?: string | null;
@@ -267,11 +269,30 @@ export function MoneyWorkspacePage({ view }: { view: "coach" | "dashboard" }) {
   const [loadError, setLoadError] = useState("");
   const [userName, setUserName] = useState("there");
   const [ownerId, setOwnerId] = useState("authenticated-owner");
+  const [lastVisitedAt, setLastVisitedAt] = useState<string>();
   const [simulationDate, setSimulationDate] = useState("");
   const [coachCorrections, setCoachCorrections] = useState<CoachCorrections>({});
   const [coachRecommendationHistory, setCoachRecommendationHistory] = useState<
     FinancialCoachRecommendationRecord[]
   >([]);
+
+  useEffect(() => {
+    if (ownerId === "authenticated-owner") return;
+    const visitKey = `beastmoney:last-visit:${ownerId}`;
+    const sessionKey = `beastmoney:session-prior-visit:${ownerId}`;
+    const existingSessionVisit = window.sessionStorage.getItem(sessionKey);
+    if (existingSessionVisit) {
+      setLastVisitedAt(existingSessionVisit);
+      return;
+    }
+    const now = new Date().toISOString();
+    const previousVisit =
+      window.localStorage.getItem(visitKey) ||
+      new Date(new Date().getTime() - 24 * 60 * 60 * 1000).toISOString();
+    window.sessionStorage.setItem(sessionKey, previousVisit);
+    window.localStorage.setItem(visitKey, now);
+    setLastVisitedAt(previousVisit);
+  }, [ownerId]);
 
   const loadMoneySnapshot = useCallback(async () => {
     setLoading(true);
@@ -779,6 +800,27 @@ export function MoneyWorkspacePage({ view }: { view: "coach" | "dashboard" }) {
     strategyScenarios: snapshot.scenarioComparison.scenarios.filter((scenario) => ["avalanche", "snowball", "velocity"].includes(scenario.id)).map((scenario) => ({ id: scenario.id, label: scenario.label, monthsToPayoff: scenario.monthsToPayoff, totalInterest: scenario.totalInterest, monthlyCashStrain: scenario.monthlyCashStrain, riskLevel: scenario.riskLevel, debtFreeDate: scenario.debtFreeDate })),
     forecast: snapshot.financialForecast.periods.map((period) => ({ label: period.label, cash: period.cash, debt: period.debt, cashShortages: period.cashShortages })),
     retirementDataAvailable: false,
+    lastVisitedAt,
+    recentPayments: [
+      ...state.billPayments.map((payment) => ({
+        id: payment.id,
+        name:
+          state.bills.find((bill) => bill.id === payment.bill_id)?.name ||
+          "Bill",
+        amount: numberValue(payment.amount_paid),
+        date: payment.payment_date || payment.created_at || "",
+        kind: "bill" as const,
+      })),
+      ...state.debtPayments.map((payment) => ({
+        id: payment.id,
+        name:
+          state.debts.find((debt) => debt.id === payment.debt_id)?.name ||
+          "Debt",
+        amount: numberValue(payment.amount),
+        date: payment.payment_date || payment.created_at || "",
+        kind: "debt" as const,
+      })),
+    ],
   });
   const financialMissionControl = buildFinancialMissionControl({
     ownerId,
@@ -810,6 +852,7 @@ export function MoneyWorkspacePage({ view }: { view: "coach" | "dashboard" }) {
     }),
     observations: moneyCoachExperience.observations,
     benchmarks: moneyCoachExperience.benchmarks,
+    morningBriefing: moneyCoachExperience.morningBriefing,
     recommendedFocus: {
       title: snapshot.financialCoach.bestNextAction,
       action: snapshot.financialCoach.whatToDoToday,

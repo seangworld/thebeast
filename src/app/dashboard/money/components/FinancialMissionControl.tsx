@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { formatCurrency } from "@/lib/formatters";
 import type { FinancialMissionControlModel, MissionControlHeroCard, MissionControlTone } from "@/lib/financialMissionControl";
+import { MorningFinancialBriefingPanel } from "./MorningFinancialBriefing";
 
 const tones: Record<MissionControlTone, string> = {
   positive: "border-emerald-400/25 from-emerald-400/15 to-emerald-400/[0.02]",
@@ -89,6 +90,8 @@ export function FinancialMissionControl({ model }: { model: FinancialMissionCont
           <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2">Current records remain authoritative</span>
         </div>
       </header>
+
+      <MorningFinancialBriefingPanel briefing={model.morningBriefing} />
 
       <section id="financial-health" className="scroll-mt-6" aria-labelledby="mission-control-overview">
         <h2 id="mission-control-overview" className="sr-only">Financial overview</h2>

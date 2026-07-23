@@ -43,6 +43,10 @@ import {
   buildMoneyCoachBenchmarks,
   type MoneyBenchmarkConfiguration,
 } from "./moneyCoachBenchmarks";
+import {
+  buildMorningFinancialBriefing,
+  type MorningFinancialBriefing,
+} from "./moneyMorningBriefing";
 
 export type MoneyCoachExperienceCard = {
   id: string;
@@ -86,6 +90,7 @@ export type MoneyCoachExperienceModel = {
   insights: Insight[];
   observations: Observation[];
   benchmarks: BenchmarkResult[];
+  morningBriefing: MorningFinancialBriefing;
   behavior: ProfessionalBehaviorProfile;
   professional: ProfessionalIdentityProfile;
   roleDefinition: SpecialistRoleDefinition;
@@ -167,6 +172,14 @@ export type MoneyCoachExperienceInput = {
   benchmarkConfiguration?: MoneyBenchmarkConfiguration;
   conversationHistory?: readonly AgentConversationThread[];
   professionalJournalEntries?: readonly ProfessionalJournalReasoningItem[];
+  lastVisitedAt?: string;
+  recentPayments?: readonly {
+    id: string;
+    name: string;
+    amount: number;
+    date: string;
+    kind: "bill" | "debt";
+  }[];
   memberUnderstandingEntries?: readonly MemberUnderstandingReasoningItem[];
   upcomingConversationEvents?: readonly UpcomingStarterEvent[];
 };
@@ -571,6 +584,48 @@ export function buildMoneyCoachExperience(
       evidence: [{ sourceType: "current-context", sourceId: "cash-flow", capturedAt: input.asOfDate.toISOString(), reason: "Current monthly income and outflow context is available." }],
     });
   }
+  const morningBriefing = buildMorningFinancialBriefing({
+    ownerId: input.ownerId,
+    asOf: input.asOfDate.toISOString(),
+    since:
+      input.lastVisitedAt ||
+      new Date(input.asOfDate.getTime() - 24 * 60 * 60 * 1000).toISOString(),
+    observations,
+    benchmarks,
+    journalEntries: input.professionalJournalEntries,
+    recentPayments: input.recentPayments,
+    upcomingBills: (input.billsDueSoon || []).map((bill, index) => ({
+      id: `bill-${index}-${bill.name}`,
+      name: bill.name,
+      amount: bill.amount,
+      dueDate: bill.dueDate,
+    })),
+    recommendedFocus: {
+      title: input.recommendationTitle,
+      detail: input.recommendationAction,
+      href: input.recommendationHref,
+    },
+  });
+  recommendedToday.unshift({
+    id: "morning-financial-briefing",
+    kind: "recommended-today",
+    title: "Review today’s financial briefing",
+    prompt: "Walk me through my morning financial briefing.",
+    reason: morningBriefing.summary,
+    group: "Recommended Today",
+    priority: 96,
+    evidence: morningBriefing.items.map((item) => ({
+      sourceType:
+        item.source === "current-data"
+          ? "current-context"
+          : item.source === "benchmark"
+            ? "configuration"
+            : item.source,
+      sourceId: item.id,
+      capturedAt: input.asOfDate.toISOString(),
+      reason: item.detail,
+    })),
+  });
   const starterEngine = createDefaultConversationStarterEngine();
   const generatedStarters = starterEngine.generate({
     ownerId: input.ownerId,
@@ -636,6 +691,7 @@ export function buildMoneyCoachExperience(
     insights,
     observations,
     benchmarks,
+    morningBriefing,
     behavior: specialistProfessionalIdentityProfiles.moneyCoach.behavior,
     professional: specialistProfessionalIdentityProfiles.moneyCoach,
     roleDefinition,

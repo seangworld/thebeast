@@ -5,6 +5,7 @@ import {
   type ExplainabilityReport,
   type Observation,
 } from "./platform/agents";
+import type { MorningFinancialBriefing } from "./moneyMorningBriefing";
 
 export type MissionControlTone = "positive" | "caution" | "critical" | "neutral" | "accent";
 
@@ -43,6 +44,7 @@ export type FinancialMissionControlModel = {
   recommendedFocus: { title: string; action: string; why: string; href: string };
   scenarios: readonly MissionControlScenario[];
   benchmarks: readonly { id: string; interpretation: string; confidence: string }[];
+  morningBriefing: MorningFinancialBriefing;
 };
 
 export type BuildFinancialMissionControlInput = {
@@ -68,6 +70,7 @@ export type BuildFinancialMissionControlInput = {
   upcomingObligations: readonly { id: string; name: string; amount: number; dueLabel: string }[];
   observations: readonly Observation[];
   benchmarks: readonly BenchmarkResult[];
+  morningBriefing?: MorningFinancialBriefing;
   recommendedFocus: { title: string; action: string; why: string; href: string };
 };
 
@@ -192,6 +195,25 @@ export function buildFinancialMissionControl(input: BuildFinancialMissionControl
     recommendedFocus: input.recommendedFocus,
     scenarios: input.scenarios,
     benchmarks: input.benchmarks.slice(0, 4).map((benchmark) => ({ id: benchmark.id, interpretation: benchmark.interpretation, confidence: benchmark.confidenceAnalysis?.confidence || benchmark.confidence })),
+    morningBriefing:
+      input.morningBriefing || {
+        id: `morning-briefing:${input.ownerId}:${input.asOf.slice(0, 10)}`,
+        ownerId: input.ownerId,
+        generatedAt: input.asOf,
+        since: input.asOf,
+        greeting: "Financial briefing",
+        summary: "Current dashboard records are ready for review.",
+        items: [],
+        recommendedFocus: {
+          title: input.recommendedFocus.title,
+          detail: input.recommendedFocus.action,
+          href: input.recommendedFocus.href,
+        },
+        freshness: {
+          label: "unknown",
+          confidenceNote: "No freshness assessment was supplied.",
+        },
+      },
   };
 }
 

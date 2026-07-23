@@ -32,6 +32,7 @@ import {
   type MoneyCoachExperienceModel,
   type MoneyCoachStructuredAnswer,
 } from "@/lib/moneyCoachExperience";
+import { MorningFinancialBriefingPanel } from "./MorningFinancialBriefing";
 
 type MoneyCoachExperienceProps = {
   model: MoneyCoachExperienceModel;
@@ -584,7 +585,15 @@ export function MoneyCoachExperience({
             message={error}
             retryAction={<button type="button" className="beast-button" onClick={onRetry}>Try Again</button>}
           />
-        ) : starterExperience}
+        ) : (
+          <div className="grid gap-5">
+            <MorningFinancialBriefingPanel
+              briefing={model.morningBriefing}
+              defaultOpen={turns.length === 0}
+            />
+            {starterExperience}
+          </div>
+        )}
       suggestedActions={null}
       conversation={
         loading ? (
