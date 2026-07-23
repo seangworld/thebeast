@@ -39,6 +39,17 @@ type MoneyCoachExperienceProps = {
   onRetry: () => void;
 };
 
+function persistenceErrorMessage(error: unknown) {
+  const detail = typeof error === "object" && error && "message" in error
+    ? String(error.message)
+    : error instanceof Error
+      ? error.message
+      : String(error);
+  return process.env.NODE_ENV === "development"
+    ? `Conversation history could not load: ${detail}`
+    : "Conversation history could not load. Please try again.";
+}
+
 function MoneyCoachConversationTimeline({ messages }: { messages: readonly AgentConversationMessage[] }) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -106,7 +117,7 @@ export function MoneyCoachExperience({
   const [historyError, setHistoryError] = useState("");
   const [streamingTurnId, setStreamingTurnId] = useState("");
   const historyDialogRef = useRef<HTMLDivElement>(null);
-  const ownerId = model.insights[0]?.ownerId || "authenticated-owner";
+  const ownerId = model.ownerId;
 
   useEffect(() => setLocalNow(new Date()), []);
 
@@ -121,25 +132,37 @@ export function MoneyCoachExperience({
   }, [historyOpen]);
 
   useEffect(() => {
+    if (!ownerId || ownerId === "authenticated-owner") return;
     let cancelled = false;
     async function loadServerHistory() {
       const client = createClient();
       const { data: { user }, error: authError } = await client.auth.getUser();
-      if (authError || !user || user.id !== ownerId) throw authError || new Error("Money Coach history is not available for this owner.");
+      if (authError) throw authError;
+      if (!user) throw new Error("No authenticated member was available for conversation history.");
+      if (user.id !== ownerId) throw new Error(`Conversation owner mismatch for authenticated member ${user.id}.`);
       const nextRepository = new ServerAgentConversationRepository(new SupabaseAgentConversationStore(client));
       const nextMemoryStore = new SupabaseAgentMemoryStore(client);
-      await nextRepository.importLegacy({ ownerId, agentId: "beastmoney.money-coach", storage: window.localStorage });
-      await nextMemoryStore.importLegacy({ ownerId, agentId: "beastmoney.money-coach", storage: window.localStorage });
       let available = await nextRepository.list({ ownerId, agentId: "beastmoney.money-coach", includeArchived: true });
       if (available.length === 0) available = [await nextRepository.create({ ownerId, agentId: "beastmoney.money-coach" })];
       if (cancelled) return;
       const active = available.find((thread) => !thread.archived) || available[0];
       setRepository(nextRepository); setMemoryStore(nextMemoryStore); setThreads(available); setActiveThreadId(active.id);
-      setConversationTitle(active.title); restoreThread(active);
-      setMemories(await nextMemoryStore.query({ ownerId, agentId: "beastmoney.money-coach" }));
+      setConversationTitle(active.title); restoreThread(active); setHistoryError("");
+
+      void nextMemoryStore.query({ ownerId, agentId: "beastmoney.money-coach" })
+        .then((records) => { if (!cancelled) setMemories(records); })
+        .catch(() => undefined);
+
+      void Promise.allSettled([
+        nextRepository.importLegacy({ ownerId, agentId: "beastmoney.money-coach", storage: window.localStorage }),
+        nextMemoryStore.importLegacy({ ownerId, agentId: "beastmoney.money-coach", storage: window.localStorage }),
+      ]).then(async () => {
+        const refreshed = await nextRepository.list({ ownerId, agentId: "beastmoney.money-coach", includeArchived: true });
+        if (!cancelled) setThreads(refreshed);
+      }).catch(() => undefined);
     }
-    void loadServerHistory().catch(() => {
-      if (!cancelled) setHistoryError("Saved conversations are temporarily unavailable. Your current financial records are unaffected.");
+    void loadServerHistory().catch((cause: unknown) => {
+      if (!cancelled) setHistoryError(persistenceErrorMessage(cause));
     });
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps

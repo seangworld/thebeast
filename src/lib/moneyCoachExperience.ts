@@ -66,6 +66,7 @@ export type MoneyCoachExperienceSuggestion = {
 };
 
 export type MoneyCoachExperienceModel = {
+  ownerId: string;
   greeting: string;
   introduction: string;
   conversationOpening: string;
@@ -601,6 +602,7 @@ export function buildMoneyCoachExperience(
 
   insights.sort((a, b) => b.priorityScore - a.priorityScore || a.id.localeCompare(b.id));
   return {
+    ownerId: input.ownerId,
     greeting: buildMoneyCoachGreeting(input.userName, input.asOfDate),
     introduction: "I reviewed the BeastMoney records and calculations currently available.",
     conversationOpening,
