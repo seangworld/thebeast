@@ -27,6 +27,7 @@ import { SharedMemberUnderstandingModel } from "./memberUnderstanding";
 import { createDefaultConversationStarterEngine } from "./conversationStarters";
 import { SharedConsultationIntelligence } from "./consultationIntelligence";
 import { SharedReflectionIntelligence } from "./reflectionIntelligence";
+import { SharedOutcomeLearning } from "./outcomeLearning";
 
 export class BeastAgentsPlatform {
   readonly registry = new AgentRegistry();
@@ -49,6 +50,7 @@ export class BeastAgentsPlatform {
   readonly conversationStarters = createDefaultConversationStarterEngine();
   readonly consultationIntelligence = new SharedConsultationIntelligence();
   readonly reflectionIntelligence = new SharedReflectionIntelligence();
+  readonly outcomeLearning = new SharedOutcomeLearning();
   readonly knowledgeSources = new KnowledgeSourceFramework();
   readonly planner = new SharedAgentPlanningEngine();
   readonly roleDefinitions = new RoleDefinitionRegistry();

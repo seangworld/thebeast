@@ -27,3 +27,4 @@ export * from "./memberUnderstanding";
 export * from "./conversationStarters";
 export * from "./consultationIntelligence";
 export * from "./reflectionIntelligence";
+export * from "./outcomeLearning";
