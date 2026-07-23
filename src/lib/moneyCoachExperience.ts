@@ -2,10 +2,13 @@ import { formatCurrency } from "./formatters";
 import {
   calculateInsightPriority,
   classifyDomainResponseIntent,
-  composeProfessionalResponse,
+  composeRoleDefinedResponse,
+  prepareRoleDefinedExecution,
   recognizeConversationIntent,
   specialistProfessionalIdentityProfiles,
   sharedAgentActionTools,
+  specialistAgentPlanningPolicies,
+  specialistKnowledgeSourcePolicies,
   type ConversationResponseSection,
   type DomainIntentCandidate,
   type DomainIntentRoute,
@@ -17,6 +20,9 @@ import {
   type ProfessionalIdentityProfile,
   type ProfessionalResponseExecution,
   type StructuredAgentAction,
+  SharedAgentPlanningEngine,
+  specialistRoleDefinitions,
+  type RoleDefinedExecution,
 } from "./platform/agents";
 
 export type MoneyCoachExperienceCard = {
@@ -540,6 +546,11 @@ export type MoneyCoachStructuredAnswer = {
   topics?: readonly MoneyCoachTopic[];
   confidence?: number;
   professionalExecution: ProfessionalResponseExecution;
+  roleExecution?: {
+    roleDefinitionId: string;
+    loadOrder: RoleDefinedExecution["loadOrder"];
+    planId: string;
+  };
 };
 
 export type MoneyCoachConversationContext = {
@@ -629,7 +640,7 @@ const moneyCoachTopicTools: Record<MoneyCoachTopic, string> = {
   heloc: "open-velocity",
 };
 
-function createMoneyCoachResponse(values: Omit<MoneyCoachStructuredAnswer, "text" | "professionalExecution">, professional: ProfessionalIdentityProfile): MoneyCoachStructuredAnswer {
+function createMoneyCoachResponse(values: Omit<MoneyCoachStructuredAnswer, "text" | "professionalExecution">, professional: ProfessionalIdentityProfile, execution: RoleDefinedExecution): MoneyCoachStructuredAnswer {
   const registeredToolId = values.topics?.length === 1 ? moneyCoachTopicTools[values.topics[0]] : moneyCoachIntentTools[values.intent];
   const registeredTool = registeredToolId ? sharedAgentActionTools.get(registeredToolId) : undefined;
   const tool = registeredTool?.target === values.href ? registeredTool : sharedAgentActionTools.findNavigationByTarget(values.href);
@@ -640,7 +651,7 @@ function createMoneyCoachResponse(values: Omit<MoneyCoachStructuredAnswer, "text
     grantedPermissions: [tool.permission],
     actionId: `money-coach-${values.intent}-${tool.id}`,
   });
-  const shared = composeProfessionalResponse(professional, {
+  const shared = composeRoleDefinedResponse(execution, {
     intent: values.intent,
     shortAnswer: values.opening,
     sections: values.sections,
@@ -651,8 +662,9 @@ function createMoneyCoachResponse(values: Omit<MoneyCoachStructuredAnswer, "text
     mode: values.intentType === "define" ? "teaching" : values.intentType === "clarify" ? "clarification" : values.intentType === "evaluate" ? "recommendation" : "answer",
     followUpRequired: values.intentType === "clarify",
     nextStepUseful: Boolean(values.followUp),
+    workspaceBenefit: "deeper-analysis",
   });
-  return { ...values, href: toolAction.target || values.href, toolAction, sections: shared.sections, text: shared.text, professionalExecution: shared.professionalExecution };
+  return { ...values, href: toolAction.target || values.href, toolAction, sections: shared.sections, text: shared.text, professionalExecution: shared.professionalExecution, roleExecution: { roleDefinitionId: execution.roleDefinition.id, loadOrder: execution.loadOrder, planId: execution.plan.id } };
 }
 
 const moneyTopicDetails: Record<MoneyCoachTopic, { label: string; definition: string; href: string }> = {
@@ -670,8 +682,8 @@ const moneyTopicDetails: Record<MoneyCoachTopic, { label: string; definition: st
   heloc: { label: "HELOC", definition: "A HELOC is a revolving credit line secured by home equity, with borrowing costs and terms that can change over time.", href: "/dashboard/money/velocity" },
 };
 
-function velocityResponse(route: DomainIntentRoute<MoneyCoachTopic>, model: MoneyCoachExperienceModel): MoneyCoachStructuredAnswer | undefined {
-  const structuredAnswer = (values: Omit<MoneyCoachStructuredAnswer, "text" | "professionalExecution">) => createMoneyCoachResponse(values, model.professional);
+function velocityResponse(route: DomainIntentRoute<MoneyCoachTopic>, model: MoneyCoachExperienceModel, execution: RoleDefinedExecution): MoneyCoachStructuredAnswer | undefined {
+  const structuredAnswer = (values: Omit<MoneyCoachStructuredAnswer, "text" | "professionalExecution">) => createMoneyCoachResponse(values, model.professional, execution);
   if (!route.topics.includes("velocity-banking")) return undefined;
   const context = model.financialContext;
   const details = moneyTopicDetails["velocity-banking"];
@@ -708,9 +720,29 @@ export function answerMoneyCoachQuestion(
   model: MoneyCoachExperienceModel,
   conversation: MoneyCoachConversationContext = {}
 ): MoneyCoachStructuredAnswer {
-  const structuredAnswer = (values: Omit<MoneyCoachStructuredAnswer, "text" | "professionalExecution">) => createMoneyCoachResponse(values, model.professional);
   const intent = classifyMoneyCoachIntent(question);
   const domainRoute = classifyMoneyCoachRequest(question, conversation);
+  const planner = new SharedAgentPlanningEngine();
+  planner.registerPolicy(specialistAgentPlanningPolicies.moneyCoach);
+  const execution = prepareRoleDefinedExecution({
+    roleDefinition: specialistRoleDefinitions.moneyCoach,
+    professionalProfile: model.professional,
+    knowledgeSourcePolicy: specialistKnowledgeSourcePolicies.moneyCoach,
+    planner,
+    planningRequest: {
+      specialistId: "beastmoney.money-coach",
+      input: question,
+      intent: domainRoute.intentType,
+      topics: domainRoute.topics,
+      confidence: ["test", "social", "non-financial"].includes(intent) ? 1 : domainRoute.confidence,
+      ambiguous: domainRoute.ambiguous,
+      requirements: [
+        { id: "current-money-records", kind: "information", description: "Load current authenticated BeastMoney records", required: true, alreadyAvailable: true },
+        { id: "money-knowledge", kind: "specialist-knowledge", description: "Load approved Money Coach domain knowledge", required: true, alreadyAvailable: true },
+      ],
+    },
+  });
+  const structuredAnswer = (values: Omit<MoneyCoachStructuredAnswer, "text" | "professionalExecution">) => createMoneyCoachResponse(values, model.professional, execution);
   const context = model.financialContext;
   const dashboard = { href: "/dashboard/money/dashboard", action: "Open the financial dashboard" };
 
@@ -733,7 +765,7 @@ export function answerMoneyCoachQuestion(
     return structuredAnswer({ intent: topic === "velocity-banking" ? "velocity" : "general-finance", intentType: "navigate", topics: domainRoute.topics, confidence: domainRoute.confidence, opening: `Opening ${details.label}.`, sections: [], href: details.href, action: `Open ${details.label}` });
   }
 
-  const velocity = velocityResponse(domainRoute, model);
+  const velocity = velocityResponse(domainRoute, model, execution);
   if (velocity) return velocity;
 
   if (domainRoute.topics.length === 1 && domainRoute.intentType === "define") {

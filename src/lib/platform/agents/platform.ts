@@ -18,6 +18,7 @@ import { ProfessionalIdentityRegistry } from "./professionalIdentity";
 import { SharedInsightEngine } from "./insights";
 import { KnowledgeSourceFramework, specialistKnowledgeSourcePolicies } from "./knowledgeSources";
 import { SharedAgentPlanningEngine, specialistAgentPlanningPolicies } from "./planning";
+import { RoleDefinitionRegistry, specialistRoleDefinitions } from "./roleDefinitions";
 
 export class BeastAgentsPlatform {
   readonly registry = new AgentRegistry();
@@ -34,6 +35,7 @@ export class BeastAgentsPlatform {
   readonly insights = new SharedInsightEngine();
   readonly knowledgeSources = new KnowledgeSourceFramework();
   readonly planner = new SharedAgentPlanningEngine();
+  readonly roleDefinitions = new RoleDefinitionRegistry();
   readonly playbooks = new AgentPlaybookRegistry();
   readonly preferences = new AgentPreferenceStore();
   readonly currentContext = new AgentCurrentContextStore();
@@ -45,6 +47,7 @@ export class BeastAgentsPlatform {
     this.governedRuns = new GovernedRunAssembler(this.playbooks, this.preferences, memory, this.currentContext, this.permissions);
     Object.values(specialistKnowledgeSourcePolicies).forEach((policy) => this.knowledgeSources.registerPolicy(policy));
     Object.values(specialistAgentPlanningPolicies).forEach((policy) => this.planner.registerPolicy(policy));
+    Object.values(specialistRoleDefinitions).forEach((definition) => this.roleDefinitions.register(definition));
   }
 
   registerPlaybook(playbook: AgentPlaybook) { return this.playbooks.register(playbook); }
@@ -66,6 +69,10 @@ export class BeastAgentsPlatform {
       if (agent.planningPolicy && !this.planner.hasPolicy(agent.id)) {
         if (agent.planningPolicy.specialistId !== agent.id) throw new Error(`Agent ${agent.id} planning policy must use the same specialist id.`);
         this.planner.registerPolicy(agent.planningPolicy);
+      }
+      if (agent.roleDefinition && !this.roleDefinitions.forSpecialist(agent.id)) {
+        if (agent.roleDefinition.specialistId !== agent.id) throw new Error(`Agent ${agent.id} Role Definition must use the same specialist id.`);
+        this.roleDefinitions.register(agent.roleDefinition);
       }
     }
     for (const tool of manifest.tools || []) this.tools.register(tool);

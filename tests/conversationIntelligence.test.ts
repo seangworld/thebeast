@@ -77,6 +77,7 @@ test("AGENT-204 is exported once and Money Coach consumes it without shared doma
   const money = readFileSync("src/lib/moneyCoachExperience.ts", "utf8");
   assert.match(index, /conversationIntelligence/);
   assert.match(money, /recognizeConversationIntent/);
-  assert.match(money, /composeProfessionalResponse/);
+  assert.match(money, /composeRoleDefinedResponse/);
+  assert.match(readFileSync("src/lib/platform/agents/roleDefinitions.ts", "utf8"), /composeProfessionalResponse/);
   assert.doesNotMatch(shared, /Money Coach|Guidance Counselor|Health Advisor|financial|medical|education/i);
 });

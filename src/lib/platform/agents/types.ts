@@ -2,6 +2,7 @@ import type { ProfessionalBehaviorProfile } from "./professionalBehavior";
 import type { ProfessionalIdentityProfile } from "./professionalIdentity";
 import type { SpecialistKnowledgeSourcePolicy } from "./knowledgeSources";
 import type { AgentPlanningPolicy } from "./planning";
+import type { SpecialistRoleDefinition } from "./roleDefinitions";
 
 export type AgentId = string;
 export type AgentModuleId = string;
@@ -47,6 +48,7 @@ export type AgentDefinition = {
   professionalIdentity?: ProfessionalIdentityProfile;
   knowledgeSourcePolicy?: SpecialistKnowledgeSourcePolicy;
   planningPolicy?: AgentPlanningPolicy;
+  roleDefinition?: SpecialistRoleDefinition;
   metadata?: Readonly<Record<string, string>>;
 };
 

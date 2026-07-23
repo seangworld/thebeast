@@ -18,3 +18,4 @@ export * from "./conversationIntelligence";
 export * from "./professionalIdentity";
 export * from "./knowledgeSources";
 export * from "./planning";
+export * from "./roleDefinitions";
