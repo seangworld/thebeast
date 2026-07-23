@@ -570,7 +570,7 @@ test("module navigation centralizes expandable child items", () => {
   assert.equal(beastMoneyNavigation.label, "BeastMoney");
   assert.equal(
     beastMoneyNavigation.children?.map((item) => item.label).join(","),
-    "Money Coach,Dashboard,Cash Flow,Bills,Debts,Payoff Plan,Velocity,Retirement,Reports,Settings"
+    "Money Coach,Dashboard,Cash Flow,Income,Bills,Debts,Payoff Plan,Velocity,Retirement,Reports,Settings"
   );
   assert.equal(getModuleChildren("learning").length, 9);
   const moneyChildren = getModuleChildren("money");

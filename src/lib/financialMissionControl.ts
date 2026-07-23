@@ -133,8 +133,8 @@ export function buildFinancialMissionControl(input: BuildFinancialMissionControl
       detail: input.projectedSurplus >= 0 ? "Income exceeds tracked outflow" : "Tracked outflow exceeds income",
       trend: `${currency(input.monthlyIncome)} income · ${currency(input.monthlyOutflow)} outflow`,
       tone: surplusTone,
-      href: "/dashboard/money/cashflow",
-      explanation: heroExplanation({ ownerId: input.ownerId, asOf: input.asOf, id: "monthly-surplus", conclusion: currency(input.projectedSurplus), why: "Monthly surplus is current normalized income minus known monthly outflow.", evidence: [{ id: "income", statement: `Monthly income: ${input.monthlyIncome}` }, { id: "outflow", statement: `Monthly outflow: ${input.monthlyOutflow}` }], toolId: "open-cash-flow" }),
+      href: "/dashboard/money/income",
+      explanation: heroExplanation({ ownerId: input.ownerId, asOf: input.asOf, id: "monthly-surplus", conclusion: currency(input.projectedSurplus), why: "Monthly surplus is current normalized income minus known monthly outflow.", evidence: [{ id: "income", statement: `Monthly income: ${input.monthlyIncome}` }, { id: "outflow", statement: `Monthly outflow: ${input.monthlyOutflow}` }], toolId: "open-income" }),
     },
     {
       id: "cash-available",

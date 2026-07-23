@@ -7,6 +7,7 @@ export const beastMoneyCoreNavigation: readonly BeastMoneyNavigationItem[] = [
   { label: "Money Coach", href: "/dashboard/money" },
   { label: "Dashboard", href: "/dashboard/money/dashboard" },
   { label: "Cash Flow", href: "/dashboard/money/cashflow" },
+  { label: "Income", href: "/dashboard/money/income" },
   { label: "Bills", href: "/dashboard/money/cashflow#bills" },
   { label: "Debts", href: "/dashboard/money/debts" },
   { label: "Payoff Plan", href: "/dashboard/money/debts#payoff-plan" },

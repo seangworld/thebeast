@@ -106,10 +106,10 @@ export function FinancialMissionControl({ model }: { model: FinancialMissionCont
           <Surface title="Cash-flow trend" eyebrow="Cash Flow" href="/dashboard/money/cashflow" className="xl:col-span-7">
             <div className="grid grid-cols-3 gap-3">
               {[["Income", model.cashFlow.income, "text-emerald-300"], ["Outflow", model.cashFlow.outflow, "text-amber-200"], ["Surplus", model.cashFlow.surplus, model.cashFlow.surplus >= 0 ? "text-cyan-300" : "text-rose-300"]].map(([label, value, tone]) => (
-                <div key={String(label)} className="rounded-2xl bg-white/[0.04] p-3 sm:p-4">
+                <Link href={label === "Income" ? "/dashboard/money/income" : "/dashboard/money/cashflow"} key={String(label)} className="rounded-2xl bg-white/[0.04] p-3 transition hover:bg-white/[0.07] focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300 sm:p-4">
                   <p className="text-xs text-slate-400">{label}</p>
                   <p className={`mt-2 break-words text-lg font-black sm:text-2xl ${tone}`}>{formatCurrency(Number(value))}</p>
-                </div>
+                </Link>
               ))}
             </div>
             <div className="mt-5 grid h-28 grid-cols-3 items-end gap-3" aria-label="Cash flow current-period bar chart">
