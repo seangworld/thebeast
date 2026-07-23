@@ -105,7 +105,7 @@ export type MoneyCoachExperienceModel = {
     monthlyOutflow: number;
     billsDueSoon: readonly { name: string; amount: number; dueDate: string; status?: string; incomePot?: string }[];
     upcomingIncome: readonly { name: string; amount: number; date?: string }[];
-    debts: readonly { name: string; balance: number; minimumPayment: number; interestRate: number }[];
+    debts: readonly { name: string; balance: number; minimumPayment: number; interestRate: number; minimumPaymentKnown?: boolean; interestRateKnown?: boolean }[];
     fundingSources: readonly { name: string; type: string; available: number }[];
     paymentConfigurations: readonly {
       obligationName: string;
@@ -157,7 +157,7 @@ export type MoneyCoachExperienceInput = {
   timeSavedMonths: number;
   billsDueSoon?: readonly { name: string; amount: number; dueDate: string; status?: string; incomePot?: string }[];
   upcomingIncome?: readonly { name: string; amount: number; date?: string }[];
-  debts?: readonly { name: string; balance: number; minimumPayment: number; interestRate: number }[];
+  debts?: readonly { name: string; balance: number; minimumPayment: number; interestRate: number; minimumPaymentKnown?: boolean; interestRateKnown?: boolean }[];
   fundingSources?: readonly { name: string; type: string; available: number }[];
   paymentConfigurations?: readonly {
     obligationName: string;

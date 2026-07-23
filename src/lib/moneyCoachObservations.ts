@@ -30,6 +30,8 @@ export type MoneyObservationDebt = {
   balance: number;
   minimumPayment: number;
   interestRate: number;
+  minimumPaymentKnown?: boolean;
+  interestRateKnown?: boolean;
   utilization?: number;
 };
 
@@ -307,22 +309,41 @@ const debtDetector: ObservationDetector<MoneyObservationData> = {
     const observations: ObservationDraft[] = [];
     for (const debt of debts || []) {
       const missing = [
-        ...(debt.interestRate > 0 ? [] : ["interest rate"]),
-        ...(debt.minimumPayment > 0 ? [] : ["minimum payment"]),
+        ...(debt.interestRateKnown === false ? ["interest rate"] : []),
+        ...(debt.minimumPaymentKnown === false ? ["minimum payment"] : []),
       ];
       if (!missing.length) continue;
-      const evidence = missing.map((field) => fact(`missing-${field}`, `${field} present`, false, "beastmoney.debts", current.capturedAt, debt.id || debt.name));
+      const missingLabel =
+        missing.length === 2
+          ? "interest rate and minimum payment"
+          : missing[0];
+      const impact =
+        missing.length === 2
+          ? "Without an APR, interest cost cannot be modeled; without a minimum payment, required monthly cash and payoff timing may be incomplete."
+          : missing[0] === "interest rate"
+            ? "Without an APR, interest cost and rate-based payoff comparisons cannot be modeled reliably."
+            : "Without a minimum payment, required monthly cash and baseline payoff timing may be incomplete.";
+      const evidence = missing.map((field) =>
+        fact(
+          `missing-${field}`,
+          `${field} recorded`,
+          null,
+          "beastmoney.debts",
+          current.capturedAt,
+          debt.id || debt.name
+        )
+      );
       observations.push(draft(context, {
         fingerprintParts: ["debt", debt.id || debt.name, "missing-fields"],
         category: "Debts",
         type: "Missing information",
-        title: `${debt.name} is missing planning data`,
-        summary: `Missing ${missing.join(" and ")}.`,
-        detail: "The saved debt record does not contain all inputs required for a reliable payoff comparison.",
-        whyNoticed: "A required debt-planning value is empty or zero.",
-        whyItMayMatter: "Payoff costs and strategy comparisons may be incomplete.",
+        title: `${debt.name} needs ${missingLabel} for planning`,
+        summary: `${debt.name} does not have a recorded ${missingLabel}.`,
+        detail: impact,
+        whyNoticed: `The ${missingLabel} field ${missing.length === 1 ? "is" : "are"} null, undefined, or blank. Numeric zero is treated as known information.`,
+        whyItMayMatter: impact,
         ruleId: "money.debts.missing-planning-fields",
-        ruleDescription: "Check debt records for rate and minimum-payment inputs.",
+        ruleDescription: "Check whether debt rate and minimum-payment fields are known; numeric zero is valid.",
         evidence,
         severity: "important",
         urgency: 60,

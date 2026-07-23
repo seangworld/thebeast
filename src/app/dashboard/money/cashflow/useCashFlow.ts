@@ -534,7 +534,7 @@ export function useCashFlow() {
   function startEditIncome(income: any) {
     setEditingIncomeId(income.id);
     setEditIncomeName(income.name || "");
-    setEditIncomeAmount(String(income.amount || ""));
+    setEditIncomeAmount(String(income.amount ?? ""));
     setEditIncomeFrequency(income.frequency || "biweekly");
     setEditIncomeNextDate(income.next_date || "");
   }
@@ -567,7 +567,7 @@ export function useCashFlow() {
   function startEditBill(bill: any) {
     setEditingBillId(bill.id);
     setEditBillName(bill.name || "");
-    setEditBillAmount(String(bill.amount || ""));
+    setEditBillAmount(String(bill.amount ?? ""));
     setEditBillDueDate(String(bill.due_date || 1));
     setEditBillFrequency((bill.frequency || "monthly") as any);
   }
@@ -600,9 +600,9 @@ export function useCashFlow() {
   function startEditDebt(debt: any) {
     setEditingDebtId(debt.id);
     setEditDebtName(debt.name || "");
-    setEditDebtBalance(String(debt.balance || ""));
-    setEditDebtMinimumPayment(String(debt.minimum_payment || ""));
-    setEditDebtInterestRate(String(debt.interest_rate || ""));
+    setEditDebtBalance(String(debt.balance ?? ""));
+    setEditDebtMinimumPayment(String(debt.minimum_payment ?? ""));
+    setEditDebtInterestRate(String(debt.interest_rate ?? ""));
     setEditDebtDueDate(String(debt.due_date || 1));
     setEditDebtPaymentBehavior(debt.payment_behavior || "fixed");
     setEditDebtMinimumPaymentRate(

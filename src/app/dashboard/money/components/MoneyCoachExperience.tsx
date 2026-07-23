@@ -433,13 +433,6 @@ export function MoneyCoachExperience({
   const localGreeting = localNow
     ? buildMoneyCoachGreeting(model.userFirstName, localNow)
     : model.userFirstName;
-  const reviewIntroduction = model.importantItems[0]
-    ? `I reviewed today’s plan. ${model.importantItems[0]}`
-    : model.potentialIssues[0]
-      ? `I reviewed today’s plan and found one item to discuss: ${model.potentialIssues[0]}`
-      : model.wins[0]
-        ? `I reviewed today’s plan. Here’s the strongest positive signal: ${model.wins[0]}`
-        : model.introduction;
   const personalizedStarters = useMemo(
     () => createDefaultConversationStarterEngine().generate({
       ownerId,
@@ -546,8 +539,7 @@ export function MoneyCoachExperience({
   const starterExperience = !loading && !error && turns.length === 0 ? (
     <section aria-labelledby="money-coach-starters-heading" data-agent-215-starter-groups="true" data-money-coach-new-conversation="true">
       <div className="max-w-3xl">
-        <p className="text-sm leading-6 text-slate-300">{reviewIntroduction}</p>
-        <h2 id="money-coach-starters-heading" className="mt-6 text-xs font-black uppercase tracking-[0.16em] text-slate-500">Start a conversation</h2>
+        <h2 id="money-coach-starters-heading" className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Start a conversation</h2>
       </div>
       <div className="mt-4 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
         {starterGroups.map((group) => <section key={group.label} aria-label={group.label}>
@@ -574,7 +566,7 @@ export function MoneyCoachExperience({
       }
       greeting={
         <AgentGreeting greeting={localGreeting}>
-          <p>{turns.length === 0 ? "I’m ready to help you decide what matters most today." : reviewIntroduction}</p>
+          <p>I’m ready to help you decide what matters most today.</p>
         </AgentGreeting>
       }
       contextSummary={loading ? (

@@ -25,7 +25,6 @@ export type MorningFinancialBriefing = {
   ownerId: string;
   generatedAt: string;
   since: string;
-  greeting: string;
   summary: string;
   items: readonly MorningFinancialBriefingItem[];
   recommendedFocus: {
@@ -100,13 +99,6 @@ function after(value: string, since: string, asOf: string) {
     timestamp >= Date.parse(since) &&
     timestamp <= Date.parse(asOf)
   );
-}
-
-function timeGreeting(asOf: string) {
-  const hour = new Date(asOf).getHours();
-  if (hour < 12) return "Good morning.";
-  if (hour < 18) return "Good afternoon.";
-  return "Good evening.";
 }
 
 function conversationalPrompt(title: string, detail: string) {
@@ -257,7 +249,6 @@ export function buildMorningFinancialBriefing(
     ownerId: input.ownerId,
     generatedAt: input.asOf,
     since: input.since,
-    greeting: timeGreeting(input.asOf),
     summary: items.length
       ? `I found ${items.length} meaningful update${items.length === 1 ? "" : "s"} since your last review.`
       : "I did not find a material financial change since your last review.",

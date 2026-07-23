@@ -104,6 +104,12 @@ type MoneyBill = {
   assigned_income_date?: string | null;
 };
 
+function isKnownNumericInput(value: unknown) {
+  if (value === null || value === undefined) return false;
+  if (typeof value === "string" && value.trim() === "") return false;
+  return Number.isFinite(Number(value));
+}
+
 type MoneyIncome = {
   id: string;
   name?: string | null;
@@ -792,7 +798,14 @@ export function MoneyWorkspacePage({
       return { name: bill.name || "Upcoming bill", amount: numberValue(bill.amount), dueDate: formatDateLabel(dueDate), status: daysAway < 0 ? "Overdue" : daysAway === 0 ? "Due today" : `Due in ${daysAway} days`, incomePot: bill.assigned_income_date || undefined };
     }),
     upcomingIncome: snapshot.activeIncomes.map((income) => ({ name: income.name || "Income", amount: numberValue(income.amount), date: income.next_date ? formatDateLabel(new Date(income.next_date)) : undefined })),
-    debts: snapshot.activeDebts.map((debt) => ({ name: debt.name || "Debt", balance: numberValue(debt.balance), minimumPayment: numberValue(debt.minimum_payment), interestRate: numberValue(debt.interest_rate) })),
+    debts: snapshot.activeDebts.map((debt) => ({
+      name: debt.name || "Debt",
+      balance: numberValue(debt.balance),
+      minimumPayment: numberValue(debt.minimum_payment),
+      interestRate: numberValue(debt.interest_rate),
+      minimumPaymentKnown: isKnownNumericInput(debt.minimum_payment),
+      interestRateKnown: isKnownNumericInput(debt.interest_rate),
+    })),
     fundingSources: state.fundingSources.filter((source) => source.is_active !== false).map((source) => ({ name: source.name || "Funding source", type: source.type || "other", available: numberValue(source.available_credit) })),
     paymentConfigurations: [...snapshot.activeBills, ...snapshot.activeDebts]
       .map((obligation) => {

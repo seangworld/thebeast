@@ -9,7 +9,8 @@ test("BM-306 presents a bounded personalized start state instead of a blank conv
   assert.match(workspaceSource, /data-money-coach-new-conversation="true"/);
   assert.match(workspaceSource, /turns\.length === 0/);
   assert.match(workspaceSource, /Start a conversation/);
-  assert.match(workspaceSource, /reviewIntroduction/);
+  assert.match(workspaceSource, /MorningFinancialBriefingPanel/);
+  assert.doesNotMatch(workspaceSource, /reviewIntroduction/);
   assert.match(workspaceSource, /min-h-12/);
   assert.match(workspaceSource, /sm:grid-cols-2/);
   assert.match(workspaceSource, /xl:grid-cols-3/);

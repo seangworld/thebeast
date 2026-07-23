@@ -252,7 +252,6 @@ export function buildFinancialMissionControl(input: BuildFinancialMissionControl
         ownerId: input.ownerId,
         generatedAt: input.asOf,
         since: input.asOf,
-        greeting: "Financial briefing",
         summary: "Current dashboard records are ready for review.",
         items: [],
         recommendedFocus: {

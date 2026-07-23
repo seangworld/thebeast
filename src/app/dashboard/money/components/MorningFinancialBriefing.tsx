@@ -21,10 +21,10 @@ export function MorningFinancialBriefingPanel({
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-300">
-              Daily briefing
+              Since your last review
             </p>
             <h2 className="mt-2 text-lg font-black text-white">
-              {briefing.greeting}
+              Daily Briefing
             </h2>
             <p className="mt-1 text-sm leading-6 text-slate-300">
               {briefing.summary}

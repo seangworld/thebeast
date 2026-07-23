@@ -765,9 +765,9 @@ export default function DebtsPage() {
     setEditingDebtId(debt.id);
   
     setEditName(debt.name || "");
-    setEditBalance(String(debt.balance || ""));
-    setEditMinimumPayment(String(debt.minimum_payment || ""));
-    setEditInterestRate(String(debt.interest_rate || ""));
+    setEditBalance(String(debt.balance ?? ""));
+    setEditMinimumPayment(String(debt.minimum_payment ?? ""));
+    setEditInterestRate(String(debt.interest_rate ?? ""));
     setEditDueDate(String(debt.due_date || 1));
     setEditPaymentBehavior(debt.payment_behavior || "fixed");
     setEditMinimumPaymentRate(
