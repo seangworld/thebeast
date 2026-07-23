@@ -84,3 +84,28 @@ test("MC-213 handles casual input through shared intelligence and has no questio
   assert.doesNotMatch(source, /new Map\(\[\s*\[\s*["']What is Velocity/i);
   assert.doesNotMatch(source, /questionAnswer|answerLookup/i);
 });
+
+test("BM-314 adds consultation transitions without changing reasoning or calculations", () => {
+  const definition = answerMoneyCoachQuestion("What is Velocity?", model);
+  const status = answerMoneyCoachQuestion("How is my Velocity strategy doing?", model);
+  const evaluation = answerMoneyCoachQuestion("Should I use Velocity?", model);
+  const comparison = answerMoneyCoachQuestion("Velocity or Avalanche?", model);
+  const calculation = answerMoneyCoachQuestion("How much interest could Velocity save?", model);
+  const navigation = answerMoneyCoachQuestion("Open Velocity", model);
+
+  assert.match(definition.opening, /Here’s how I think about it/);
+  assert.match(status.opening, /Based on your current setup/);
+  assert.match(evaluation.opening, /In your situation/);
+  assert.match(comparison.opening, /The important distinction is/);
+  assert.match(calculation.opening, /Here’s how the numbers come together/);
+  assert.doesNotMatch(navigation.opening, /Here’s|current setup|important distinction/);
+  assert.match(calculation.text, /\$600\.00/);
+  assert.deepEqual(
+    [definition, status, evaluation, comparison, calculation, navigation].map(
+      (response) => response.intentType
+    ),
+    ["define", "explain-current-status", "evaluate", "compare", "calculate", "navigate"]
+  );
+  assert.match(comparison.followUp || "", /matters more/i);
+  assert.doesNotMatch(comparison.followUp || "", /anything else/i);
+});

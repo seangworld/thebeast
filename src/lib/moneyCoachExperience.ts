@@ -863,6 +863,27 @@ const moneyCoachTopicTools: Record<MoneyCoachTopic, string> = {
   heloc: "open-velocity",
 };
 
+function consultationTransition(
+  intentType: DomainResponseIntent | undefined,
+  sections: readonly MoneyCoachResponseSection[]
+) {
+  if (!sections.length || intentType === "navigate" || intentType === "clarify") {
+    return "";
+  }
+  if (intentType === "define") return "Here’s how I think about it.";
+  if (intentType === "explain-current-status") {
+    return "Based on your current setup, here’s what matters.";
+  }
+  if (intentType === "evaluate") {
+    return "In your situation, the tradeoffs matter as much as the headline result.";
+  }
+  if (intentType === "compare") {
+    return "The important distinction is how each option affects your plan.";
+  }
+  if (intentType === "calculate") return "Here’s how the numbers come together.";
+  return "Let me walk you through the useful detail.";
+}
+
 function createMoneyCoachResponse(values: Omit<MoneyCoachStructuredAnswer, "text" | "professionalExecution">, professional: ProfessionalIdentityProfile, execution: RoleDefinedExecution): MoneyCoachStructuredAnswer {
   const registeredToolId = values.topics?.length === 1 ? moneyCoachTopicTools[values.topics[0]] : moneyCoachIntentTools[values.intent];
   const registeredTool = registeredToolId ? sharedAgentActionTools.get(registeredToolId) : undefined;
@@ -874,9 +895,13 @@ function createMoneyCoachResponse(values: Omit<MoneyCoachStructuredAnswer, "text
     grantedPermissions: [tool.permission],
     actionId: `money-coach-${values.intent}-${tool.id}`,
   });
+  const transition = consultationTransition(values.intentType, values.sections);
+  const conversationalOpening = transition
+    ? `${values.opening} ${transition}`
+    : values.opening;
   const shared = composeRoleDefinedResponse(execution, {
     intent: values.intent,
-    shortAnswer: values.opening,
+    shortAnswer: conversationalOpening,
     sections: values.sections,
     assumptions: values.assumptions,
     nextStep: values.followUp,
@@ -889,6 +914,7 @@ function createMoneyCoachResponse(values: Omit<MoneyCoachStructuredAnswer, "text
   });
   return {
     ...values,
+    opening: conversationalOpening,
     href: toolAction.target || values.href,
     toolAction,
     sections: shared.sections,
