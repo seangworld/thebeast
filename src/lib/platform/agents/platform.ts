@@ -29,6 +29,7 @@ import { SharedConsultationIntelligence } from "./consultationIntelligence";
 import { SharedReflectionIntelligence } from "./reflectionIntelligence";
 import { SharedOutcomeLearning } from "./outcomeLearning";
 import { SharedExplainabilityEngine } from "./explainability";
+import { SharedTrustDataFreshnessEngine } from "./trustDataFreshness";
 
 export class BeastAgentsPlatform {
   readonly registry = new AgentRegistry();
@@ -53,6 +54,7 @@ export class BeastAgentsPlatform {
   readonly reflectionIntelligence = new SharedReflectionIntelligence();
   readonly outcomeLearning = new SharedOutcomeLearning();
   readonly explainability = new SharedExplainabilityEngine();
+  readonly trustDataFreshness = new SharedTrustDataFreshnessEngine();
   readonly knowledgeSources = new KnowledgeSourceFramework();
   readonly planner = new SharedAgentPlanningEngine();
   readonly roleDefinitions = new RoleDefinitionRegistry();

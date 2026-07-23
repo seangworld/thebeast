@@ -29,3 +29,4 @@ export * from "./consultationIntelligence";
 export * from "./reflectionIntelligence";
 export * from "./outcomeLearning";
 export * from "./explainability";
+export * from "./trustDataFreshness";
