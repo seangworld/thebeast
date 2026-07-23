@@ -50,7 +50,7 @@ test("BL-403 uses one responsive shell with consistent loading empty and error s
   );
 
   assert.match(shell, /beast-page/);
-  assert.match(shell, /beast-container space-y-8/);
+  assert.match(shell, /beast-container space-y-6 sm:space-y-8/);
   assert.match(shell, /beast-page-header/);
   assert.match(shell, /LearningEmptyState/);
   assert.match(shell, /LearningWorkspaceLoading/);
