@@ -1,3 +1,6 @@
+import { SharedConsultationIntelligence, type ConsultationContext, type ConsultationQuestionDecision, type ConsultationStory } from "./consultationIntelligence";
+import type { ConfidenceAssessment } from "./probabilityConfidence";
+
 export type AgentPlanStepKind = "understand" | "clarify" | "retrieve-information" | "retrieve-memory" | "retrieve-specialist-knowledge" | "retrieve-external-knowledge" | "use-tool" | "reason" | "answer";
 export type AgentPlanStepStatus = "pending" | "in-progress" | "completed" | "skipped" | "blocked";
 export type PlanningRequirementKind = "information" | "tool" | "memory" | "specialist-knowledge" | "external-knowledge";
@@ -32,6 +35,8 @@ export type AgentPlanningRequest = {
   requirements?: readonly PlanningRequirement[];
   contextSummary?: string;
   confidenceAssessment?: ConfidenceAssessment;
+  consultationContext?: ConsultationContext;
+  proposedClarificationQuestion?: string;
 };
 
 export type AgentPlanStep = {
@@ -55,9 +60,12 @@ export type AgentPlan = {
   topics: readonly string[];
   requiresClarification: boolean;
   clarificationQuestion?: string;
+  clarificationReason?: string;
   steps: readonly AgentPlanStep[];
   createdAt: string;
   confidenceAssessment?: ConfidenceAssessment;
+  consultationStory: ConsultationStory;
+  consultationQuestionDecision?: ConsultationQuestionDecision;
 };
 
 export type PlanningArtifact = {
@@ -114,17 +122,27 @@ export class SharedAgentPlanningEngine {
 
   createPlan(request: AgentPlanningRequest, now = new Date()): AgentPlan {
     const policy = this.policy(request.specialistId);
-    const understand = step({ id: "understand", kind: "understand", label: "Understand the request", purpose: "Identify the requested outcome, intent, topics, and missing context.", required: true, dependsOn: [] });
+    const consultation = new SharedConsultationIntelligence();
+    const consultationStory = consultation.understand(request.input, request.consultationContext);
+    const understand = step({ id: "understand", kind: "understand", label: "Understand the member's story", purpose: "Extract supplied facts, implications, timeline, sequence, intent, constraints, goals, decisions, and referenced context before deciding whether anything is missing.", required: true, dependsOn: [] });
     const effectiveConfidence = request.confidenceAssessment?.confidenceScore ?? request.confidence;
-    const needsClarification =
+    const clarificationTrigger =
       Boolean(request.ambiguous) ||
       effectiveConfidence < policy.clarificationConfidenceThreshold ||
       Boolean(request.confidenceAssessment?.insufficientEvidence) ||
       Boolean(request.confidenceAssessment?.contradictoryEvidence) ||
       !request.input.trim();
-    if (needsClarification) {
-      const evidenceQuestion = request.confidenceAssessment?.additionalInformationNeeded[0];
-      return { id: `${request.specialistId}:${now.getTime()}`, specialistId: request.specialistId, input: request.input, intent: request.intent, topics: request.topics || [], requiresClarification: true, clarificationQuestion: evidenceQuestion ? `Could you provide ${evidenceQuestion}?` : request.topics?.length ? `What would you like to know or decide about ${request.topics.join(" and ")}?` : "What would you like help understanding or deciding?", steps: [understand, step({ id: "clarify", kind: "clarify", label: "Ask a focused clarification", purpose: "Resolve ambiguity or insufficient evidence before producing an answer.", required: true, dependsOn: [understand.id] })], createdAt: now.toISOString(), confidenceAssessment: request.confidenceAssessment };
+    const evidenceQuestion = request.confidenceAssessment?.additionalInformationNeeded[0];
+    const proposedQuestion = request.proposedClarificationQuestion || (evidenceQuestion
+      ? `Could you provide ${evidenceQuestion}?`
+      : request.topics?.length
+        ? `What would you like to know or decide about ${request.topics.join(" and ")}?`
+        : "What would you like help understanding or deciding?");
+    const consultationQuestionDecision = clarificationTrigger
+      ? consultation.assessQuestion(consultationStory, proposedQuestion)
+      : undefined;
+    if (clarificationTrigger && consultationQuestionDecision?.shouldAsk) {
+      return { id: `${request.specialistId}:${now.getTime()}`, specialistId: request.specialistId, input: request.input, intent: request.intent, topics: request.topics || [], requiresClarification: true, clarificationQuestion: consultationQuestionDecision.question, clarificationReason: consultationQuestionDecision.reason, steps: [understand, step({ id: "clarify", kind: "clarify", label: "Ask one focused clarification", purpose: `${consultationQuestionDecision.reason} ${consultationQuestionDecision.continueWith}`, required: true, dependsOn: [understand.id] })], createdAt: now.toISOString(), confidenceAssessment: request.confidenceAssessment, consultationStory, consultationQuestionDecision };
     }
     const requirements = (request.requirements || []).filter((requirement) => !requirement.alreadyAvailable);
     const retrievalSteps = requirements.flatMap((requirement): AgentPlanStep[] => {
@@ -138,7 +156,7 @@ export class SharedAgentPlanningEngine {
     const answer = step({ id: "answer", kind: "answer", label: "Compose the response", purpose: "Answer directly using the specialist identity, playbook, evidence, uncertainty, and useful next action.", required: true, dependsOn: [reason.id] });
     const steps = [understand, ...retrievalSteps, reason, answer];
     if (steps.length > policy.maximumSteps) throw new Error(`Agent plan requires ${steps.length} steps but policy allows ${policy.maximumSteps}.`);
-    return { id: `${request.specialistId}:${now.getTime()}`, specialistId: request.specialistId, input: request.input, intent: request.intent, topics: request.topics || [], requiresClarification: false, steps, createdAt: now.toISOString(), confidenceAssessment: request.confidenceAssessment };
+    return { id: `${request.specialistId}:${now.getTime()}`, specialistId: request.specialistId, input: request.input, intent: request.intent, topics: request.topics || [], requiresClarification: false, steps, createdAt: now.toISOString(), confidenceAssessment: request.confidenceAssessment, consultationStory, consultationQuestionDecision };
   }
 
   async execute(plan: AgentPlan, executor: AgentPlanExecutor): Promise<AgentPlanExecution> {
@@ -175,4 +193,3 @@ export const specialistAgentPlanningPolicies = {
   moneyCoach: sharedPolicy("beastmoney.money-coach"), guidanceCounselor: sharedPolicy("beasteducation.guidance-counselor"),
   healthAdvisor: sharedPolicy("beasthealth.health-advisor"), personalAssistant: sharedPolicy("beastos.personal-assistant"),
 } as const;
-import type { ConfidenceAssessment } from "./probabilityConfidence";

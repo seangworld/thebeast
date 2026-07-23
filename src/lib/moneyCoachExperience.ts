@@ -660,6 +660,12 @@ export type MoneyCoachStructuredAnswer = {
     loadOrder: RoleDefinedExecution["loadOrder"];
     planId: string;
   };
+  consultation?: {
+    explicitFactCount: number;
+    implicitFactCount: number;
+    referencedContextCount: number;
+    clarificationSuppressed: boolean;
+  };
 };
 
 export type MoneyCoachConversationContext = {
@@ -775,7 +781,21 @@ function createMoneyCoachResponse(values: Omit<MoneyCoachStructuredAnswer, "text
     nextStepUseful: Boolean(values.followUp),
     workspaceBenefit: "deeper-analysis",
   });
-  return { ...values, href: toolAction.target || values.href, toolAction, sections: shared.sections, text: shared.text, professionalExecution: shared.professionalExecution, roleExecution: { roleDefinitionId: execution.roleDefinition.id, loadOrder: execution.loadOrder, planId: execution.plan.id } };
+  return {
+    ...values,
+    href: toolAction.target || values.href,
+    toolAction,
+    sections: shared.sections,
+    text: shared.text,
+    professionalExecution: shared.professionalExecution,
+    roleExecution: { roleDefinitionId: execution.roleDefinition.id, loadOrder: execution.loadOrder, planId: execution.plan.id },
+    consultation: {
+      explicitFactCount: execution.plan.consultationStory.explicitFacts.length,
+      implicitFactCount: execution.plan.consultationStory.implicitFacts.length,
+      referencedContextCount: execution.plan.consultationStory.references.length,
+      clarificationSuppressed: execution.plan.consultationQuestionDecision?.shouldAsk === false,
+    },
+  };
 }
 
 const moneyTopicDetails: Record<MoneyCoachTopic, { label: string; definition: string; href: string }> = {
@@ -833,6 +853,20 @@ export function answerMoneyCoachQuestion(
 ): MoneyCoachStructuredAnswer {
   const intent = classifyMoneyCoachIntent(question);
   const domainRoute = classifyMoneyCoachRequest(question, conversation);
+  const knownConversationContext = [
+    ...(conversation.recentMessages || []).map((value, index) => ({ id: `recent-message-${index}`, label: "recent conversation", value, source: "conversation-context" as const })),
+    ...(conversation.priorSummaries || []).map((value, index) => ({ id: `prior-summary-${index}`, label: "prior conversation", value, source: "conversation-context" as const })),
+    ...(conversation.summary ? [{ id: "active-summary", label: "conversation summary", value: conversation.summary, source: "conversation-context" as const }] : []),
+    ...(conversation.memories || []).map((item, index) => ({ id: `memory-${index}`, label: item.key, value: JSON.stringify(item.value), source: "member-understanding" as const, aliases: [item.key.replace(/[-_]/g, " ")] })),
+  ];
+  const knownModuleData = [
+    { id: "current-cash", label: "current cash", value: formatCurrency(model.financialContext.currentCash), source: "module-data" as const, aliases: ["cash balance", "available cash"] },
+    { id: "cash-buffer", label: "cash buffer", value: formatCurrency(model.financialContext.cashBuffer), source: "module-data" as const, aliases: ["protected reserve"] },
+    { id: "active-strategy", label: "debt strategy", value: model.financialContext.activeDebtStrategy, source: "module-data" as const, aliases: ["strategy"] },
+    ...model.financialContext.billsDueSoon.map((bill, index) => ({ id: `bill-${index}`, label: bill.name, value: `${bill.amount} due ${bill.dueDate}`, source: "module-data" as const, aliases: ["bill"] })),
+    ...model.financialContext.debts.map((debt, index) => ({ id: `debt-${index}`, label: debt.name, value: `${debt.balance} at ${debt.interestRate}%`, source: "module-data" as const, aliases: ["debt"] })),
+    ...model.financialContext.fundingSources.map((source, index) => ({ id: `funding-${index}`, label: source.name, value: `${source.available} available`, source: "module-data" as const, aliases: ["funding source", source.type] })),
+  ];
   const planner = new SharedAgentPlanningEngine();
   planner.registerPolicy(specialistAgentPlanningPolicies.moneyCoach);
   const execution = prepareRoleDefinedExecution({
@@ -855,6 +889,12 @@ export function answerMoneyCoachQuestion(
         { id: "current-benchmarks", kind: "information", description: "Load applicable benchmark comparisons", required: false, alreadyAvailable: model.benchmarks.length > 0 },
         { id: "money-knowledge", kind: "specialist-knowledge", description: "Load approved Money Coach domain knowledge", required: true, alreadyAvailable: true },
       ],
+      consultationContext: {
+        conversationContext: knownConversationContext.filter((item) => item.source === "conversation-context"),
+        memberUnderstanding: knownConversationContext.filter((item) => item.source === "member-understanding"),
+        moduleData: knownModuleData,
+      },
+      proposedClarificationQuestion: domainRoute.clarification,
     },
   });
   const structuredAnswer = (values: Omit<MoneyCoachStructuredAnswer, "text" | "professionalExecution">) => createMoneyCoachResponse(values, model.professional, execution);
@@ -870,8 +910,8 @@ export function answerMoneyCoachQuestion(
     return structuredAnswer({ intent, opening: "I’m not quite sure what you want me to evaluate yet.", sections: [{ heading: "Clarification", classification: "uncertainty", paragraphs: ["Add the financial topic or decision you want help with, and I’ll use the relevant current records."] }], followUp: "For example: which bills need attention, whether another payment is safe, or how two debt strategies compare.", href: "#money-coach-question", action: "Continue your question" });
   }
 
-  if (domainRoute.ambiguous) {
-    return structuredAnswer({ intent: "incomplete", intentType: "clarify", topics: domainRoute.topics, confidence: domainRoute.confidence, opening: "I want to make sure I answer the right question.", sections: [{ heading: "Clarification", classification: "uncertainty", paragraphs: [domainRoute.clarification || "Please tell me whether you want a definition, current status, evaluation, comparison, calculation, or workspace."] }], href: "#money-coach-question", action: "Clarify your question" });
+  if (domainRoute.ambiguous && execution.plan.requiresClarification && intent !== "payment-affordability") {
+    return structuredAnswer({ intent: "incomplete", intentType: "clarify", topics: domainRoute.topics, confidence: domainRoute.confidence, opening: "I want to make sure I answer the right question.", sections: [{ heading: "Clarification", classification: "uncertainty", paragraphs: [execution.plan.clarificationQuestion || domainRoute.clarification || "Please tell me whether you want a definition, current status, evaluation, comparison, calculation, or workspace.", execution.plan.clarificationReason || "This distinction materially changes the financial analysis I should use."] }], href: "#money-coach-question", action: "Clarify your question" });
   }
 
   if (domainRoute.topics.length && domainRoute.intentType === "navigate") {

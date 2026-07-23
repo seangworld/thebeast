@@ -25,3 +25,4 @@ export * from "./probabilityConfidence";
 export * from "./professionalJournal";
 export * from "./memberUnderstanding";
 export * from "./conversationStarters";
+export * from "./consultationIntelligence";

@@ -25,6 +25,7 @@ import { SharedProbabilityConfidenceEngine } from "./probabilityConfidence";
 import { SharedProfessionalJournal } from "./professionalJournal";
 import { SharedMemberUnderstandingModel } from "./memberUnderstanding";
 import { createDefaultConversationStarterEngine } from "./conversationStarters";
+import { SharedConsultationIntelligence } from "./consultationIntelligence";
 
 export class BeastAgentsPlatform {
   readonly registry = new AgentRegistry();
@@ -45,6 +46,7 @@ export class BeastAgentsPlatform {
   readonly professionalJournal = new SharedProfessionalJournal();
   readonly memberUnderstanding = new SharedMemberUnderstandingModel();
   readonly conversationStarters = createDefaultConversationStarterEngine();
+  readonly consultationIntelligence = new SharedConsultationIntelligence();
   readonly knowledgeSources = new KnowledgeSourceFramework();
   readonly planner = new SharedAgentPlanningEngine();
   readonly roleDefinitions = new RoleDefinitionRegistry();
