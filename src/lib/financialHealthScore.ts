@@ -244,7 +244,8 @@ export function buildFinancialHealthScore(
         .map((item) => {
           const prior = previous.components.find((candidate) => candidate.id === item.id);
           if (!item.available || !prior?.available || item.score === prior.score) return undefined;
-          return `${item.label} ${Number(item.score) > Number(prior.score) ? "rose" : "fell"} from ${prior.score} to ${item.score}.`;
+          const weightedChange = item.weightedPoints - prior.weightedPoints;
+          return `${item.label} ${Number(item.score) > Number(prior.score) ? "rose" : "fell"} from ${prior.score} to ${item.score}, ${weightedChange >= 0 ? "adding" : "subtracting"} ${Math.abs(weightedChange).toFixed(1)} weighted point${Math.abs(weightedChange) === 1 ? "" : "s"}.`;
         })
         .filter((value): value is string => Boolean(value))
     : [];
@@ -264,7 +265,9 @@ export function buildFinancialHealthScore(
       explanation:
         direction === "unavailable"
           ? "No prior versioned Financial Health Score is available, so BeastMoney will not claim that the score changed."
-          : `The score ${direction} by ${Math.abs(points || 0)} point${Math.abs(points || 0) === 1 ? "" : "s"} because the weighted component values changed.`,
+          : direction === "unchanged"
+            ? "The score is unchanged because no available weighted component changed enough to move the rounded total."
+            : `The score ${direction} by ${Math.abs(points || 0)} point${Math.abs(points || 0) === 1 ? "" : "s"}. The factor changes below show exactly which weighted components moved the total.`,
       drivers,
     },
   };

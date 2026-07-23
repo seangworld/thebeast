@@ -76,6 +76,8 @@ test("BM-312 explains score direction from versioned component changes", () => {
   assert.ok(Number(current.change.points) < 0);
   assert.ok(current.change.drivers.some((driver) => /Cash Flow fell/));
   assert.ok(current.change.drivers.some((driver) => /Savings fell/));
+  assert.ok(current.change.drivers.every((driver) => /weighted point/));
+  assert.match(current.change.explanation, /exactly which weighted components/i);
 });
 
 test("BM-312 Money Coach explains the current score, change evidence, and improvement", () => {
@@ -134,4 +136,9 @@ test("BM-312 Mission Control renders the transparent calculation accessibly", ()
   assert.match(source, /<th scope="row"/);
   assert.match(source, /Why it changed/);
   assert.match(source, /Best improvement opportunity/);
+  assert.match(source, /data-financial-health-hero/);
+  assert.match(source, /text-5xl sm:text-6xl/);
+  assert.match(source, /Financial Health Score components/);
+  assert.match(source, /md:hidden/);
+  assert.match(source, /Calculation and evidence/);
 });

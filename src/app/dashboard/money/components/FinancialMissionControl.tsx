@@ -44,14 +44,18 @@ function Explainability({ card }: { card: MissionControlHeroCard }) {
 }
 
 function HeroCard({ card }: { card: MissionControlHeroCard }) {
+  const isFinancialHealth = card.id === "financial-health";
   return (
-    <article className={`group min-w-0 rounded-2xl border bg-gradient-to-br p-4 shadow-[0_18px_50px_rgba(0,0,0,0.16)] transition hover:-translate-y-0.5 hover:border-white/25 sm:p-5 ${tones[card.tone]}`}>
+    <article
+      className={`group min-w-0 rounded-2xl border bg-gradient-to-br p-4 shadow-[0_18px_50px_rgba(0,0,0,0.16)] transition hover:-translate-y-0.5 hover:border-white/25 sm:p-5 ${isFinancialHealth ? "sm:col-span-2 xl:col-span-1 2xl:col-span-2" : ""} ${tones[card.tone]}`}
+      data-financial-health-hero={isFinancialHealth ? "true" : undefined}
+    >
       <Link href={card.href} className="block rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-300" aria-label={`Open ${card.label}`}>
         <div className="flex items-start justify-between gap-3">
           <p className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-400">{card.label}</p>
           <span aria-hidden="true" className="text-slate-500 transition group-hover:translate-x-0.5 group-hover:text-white">↗</span>
         </div>
-        <p className="mt-3 break-words text-2xl font-black tracking-tight text-white sm:text-3xl">{card.value}</p>
+        <p className={`mt-3 break-words font-black tracking-tight text-white ${isFinancialHealth ? "text-5xl sm:text-6xl" : "text-2xl sm:text-3xl"}`}>{card.value}</p>
         <p className="mt-2 text-sm font-semibold text-slate-200">{card.detail}</p>
         <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-400">{card.trend}</p>
       </Link>
@@ -128,7 +132,7 @@ export function FinancialMissionControl({ model }: { model: FinancialMissionCont
           {model.financialHealth.disclaimer}
         </p>
 
-        <div className="mt-6 overflow-x-auto">
+        <div className="mt-6 hidden overflow-x-auto md:block">
           <table className="w-full min-w-[720px] text-left text-sm">
             <thead className="text-xs uppercase tracking-wide text-slate-500">
               <tr>
@@ -154,6 +158,40 @@ export function FinancialMissionControl({ model }: { model: FinancialMissionCont
               ))}
             </tbody>
           </table>
+        </div>
+
+        <div className="mt-6 grid gap-3 md:hidden" aria-label="Financial Health Score components">
+          {model.financialHealth.components.map((component) => (
+            <article key={component.id} className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+              <div className="flex items-start justify-between gap-4">
+                <h3 className="font-black text-white">{component.label}</h3>
+                <span className="shrink-0 text-sm font-bold text-cyan-200">
+                  {component.available ? `${component.score}/100` : "Unavailable"}
+                </span>
+              </div>
+              <dl className="mt-3 grid grid-cols-2 gap-3 text-xs">
+                <div>
+                  <dt className="text-slate-500">Weight</dt>
+                  <dd className="mt-1 font-bold text-slate-300">{component.weight}%</dd>
+                </div>
+                <div>
+                  <dt className="text-slate-500">Weighted points</dt>
+                  <dd className="mt-1 font-bold text-slate-300">
+                    {component.available ? component.weightedPoints.toFixed(1) : "Excluded"}
+                  </dd>
+                </div>
+              </dl>
+              <details className="mt-3 border-t border-white/10 pt-3">
+                <summary className="cursor-pointer text-sm font-bold text-cyan-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300">
+                  Calculation and evidence
+                </summary>
+                <p className="mt-3 text-xs leading-5 text-slate-400">{component.calculation}</p>
+                <ul className="mt-2 list-disc space-y-1 pl-5 text-xs leading-5 text-slate-400">
+                  {component.evidence.map((evidence) => <li key={evidence}>{evidence}</li>)}
+                </ul>
+              </details>
+            </article>
+          ))}
         </div>
 
         <div className="mt-6 grid gap-4 md:grid-cols-2">
