@@ -14,6 +14,7 @@ import {
 } from "./governance";
 import type { AgentPlaybook } from "./types";
 import { ProfessionalBehaviorRegistry } from "./professionalBehavior";
+import { ProfessionalIdentityRegistry } from "./professionalIdentity";
 import { SharedInsightEngine } from "./insights";
 
 export class BeastAgentsPlatform {
@@ -26,6 +27,7 @@ export class BeastAgentsPlatform {
   readonly prompts = new AgentPromptFramework();
   readonly communication = new AgentCommunicationService(this.events);
   readonly professionalBehavior = new ProfessionalBehaviorRegistry();
+  readonly professionalIdentity = new ProfessionalIdentityRegistry();
   readonly insights = new SharedInsightEngine();
   readonly playbooks = new AgentPlaybookRegistry();
   readonly preferences = new AgentPreferenceStore();
@@ -46,6 +48,9 @@ export class BeastAgentsPlatform {
     for (const agent of manifest.agents || []) {
       if (agent.professionalBehavior && !this.professionalBehavior.get(agent.professionalBehavior.id)) {
         this.professionalBehavior.register(agent.professionalBehavior);
+      }
+      if (agent.professionalIdentity && !this.professionalIdentity.get(agent.professionalIdentity.id)) {
+        this.professionalIdentity.register(agent.professionalIdentity);
       }
     }
     for (const tool of manifest.tools || []) this.tools.register(tool);

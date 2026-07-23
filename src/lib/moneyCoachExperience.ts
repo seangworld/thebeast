@@ -3,13 +3,14 @@ import {
   calculateInsightPriority,
   createConversationResponse,
   recognizeConversationIntent,
-  specialistProfessionalProfiles,
+  specialistProfessionalIdentityProfiles,
   type ConversationResponseSection,
   type DomainIntentCandidate,
   type Insight,
   type InsightAction,
   type InsightPriorityFactor,
   type ProfessionalBehaviorProfile,
+  type ProfessionalIdentityProfile,
 } from "./platform/agents";
 
 export type MoneyCoachExperienceCard = {
@@ -50,6 +51,7 @@ export type MoneyCoachExperienceModel = {
   };
   insights: Insight[];
   behavior: ProfessionalBehaviorProfile;
+  professional: ProfessionalIdentityProfile;
   safetyNotice: string;
   userFirstName: string;
   financialContext: {
@@ -489,8 +491,9 @@ export function buildMoneyCoachExperience(
       href: input.recommendationHref,
     },
     insights,
-    behavior: specialistProfessionalProfiles.moneyCoach,
-    safetyNotice: "Money Coach provides informational planning support, not financial, tax, investment, legal, credit, or lending advice. Verify current records and provider terms before acting; you remain in control.",
+    behavior: specialistProfessionalIdentityProfiles.moneyCoach.behavior,
+    professional: specialistProfessionalIdentityProfiles.moneyCoach,
+    safetyNotice: specialistProfessionalIdentityProfiles.moneyCoach.identity.professionalBoundaries.join(". "),
     userFirstName: firstName(input.userName),
     financialContext: {
       currentCash: input.currentCash,

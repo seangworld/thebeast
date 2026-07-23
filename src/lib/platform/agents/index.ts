@@ -15,3 +15,4 @@ export * from "./insights";
 export * from "./conversationPersistence";
 export * from "./serverConversationPersistence";
 export * from "./conversationIntelligence";
+export * from "./professionalIdentity";

@@ -170,15 +170,15 @@ export function MoneyCoachExperience({
       {
         id: "money-coach-opening",
         role: "agent",
-        author: "Money Coach",
+        author: model.professional.identity.role,
         content: model.conversationOpening,
       },
       ...turns.flatMap<AgentConversationMessage>((turn) => [
         { id: `${turn.id}-user`, role: "user", author: "You", content: turn.question },
-        { id: `${turn.id}-coach`, role: "agent", author: "Money Coach", content: <MoneyCoachResponseDocument response={turn.response} /> },
+        { id: `${turn.id}-coach`, role: "agent", author: model.professional.identity.role, content: <MoneyCoachResponseDocument response={turn.response} /> },
       ]),
     ],
-    [model.conversationOpening, turns]
+    [model.conversationOpening, model.professional.identity.role, turns]
   );
 
   async function askQuestion(value: string) {
@@ -320,9 +320,9 @@ export function MoneyCoachExperience({
       composerPlacement="before-cards"
       header={
         <AgentHeader
-          title="Money Coach"
+          title={model.professional.identity.role}
           subtitle={`${model.behavior.communication.tone} guidance · ${model.behavior.communication.verbosity} detail`}
-          avatar={<AgentAvatar name="Money Coach" initials="MC" size="lg" />}
+          avatar={<AgentAvatar name={model.professional.identity.role} initials="MC" size="lg" />}
           status={<AgentStatus state={loading ? "loading" : error ? "error" : "available"} />}
         />
       }
