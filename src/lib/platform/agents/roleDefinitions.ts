@@ -12,6 +12,10 @@ import {
 } from "./planning";
 import type { ConfidenceAssessment } from "./probabilityConfidence";
 import type { ProfessionalJournalReasoningContext } from "./professionalJournal";
+import {
+  emptyMemberUnderstandingContext,
+  type MemberUnderstandingContext,
+} from "./memberUnderstanding";
 
 export type RoleConversationStyle = "conversation-first" | "educational" | "reassuring" | "efficient";
 export type RoleWorkspaceGuidance = "only-for-deeper-analysis" | "when-useful" | "never";
@@ -88,6 +92,7 @@ export type RoleDefinedExecution = {
   loadOrder: readonly ["role-definition", "professional-playbook", "member-context", "current-state", "relevant-knowledge", "reasoning-plan", "response-generation"];
   confidenceAssessment?: ConfidenceAssessment;
   professionalJournalContext?: ProfessionalJournalReasoningContext;
+  memberUnderstandingContext: MemberUnderstandingContext;
 };
 
 export type RoleAwareResponseDraft<TIntent extends string> = ProfessionalResponseDraft<TIntent> & {
@@ -198,6 +203,7 @@ export function prepareRoleDefinedExecution(input: {
   planningRequest: AgentPlanningRequest;
   confidenceAssessment?: ConfidenceAssessment;
   professionalJournalContext?: ProfessionalJournalReasoningContext;
+  memberUnderstandingContext?: MemberUnderstandingContext;
 }): RoleDefinedExecution {
   const roleDefinition = validateRoleDefinition(input.roleDefinition);
   if (roleDefinition.specialistId !== input.planningRequest.specialistId || roleDefinition.specialistId !== input.knowledgeSourcePolicy.specialistId) {
@@ -206,6 +212,10 @@ export function prepareRoleDefinedExecution(input: {
   const confidenceAssessment = input.confidenceAssessment || input.planningRequest.confidenceAssessment;
   if (input.professionalJournalContext && input.professionalJournalContext.specialistId !== roleDefinition.specialistId) {
     throw new Error("Professional Journal context must belong to the same specialist as the Role Definition.");
+  }
+  const memberUnderstandingContext = input.memberUnderstandingContext || emptyMemberUnderstandingContext(roleDefinition.specialistId);
+  if (memberUnderstandingContext.specialistId !== roleDefinition.specialistId) {
+    throw new Error("Member Understanding context must belong to the same specialist as the Role Definition.");
   }
   const plan = input.planner.createPlan({ ...input.planningRequest, confidenceAssessment });
   return {
@@ -217,6 +227,7 @@ export function prepareRoleDefinedExecution(input: {
     plan,
     confidenceAssessment,
     professionalJournalContext: input.professionalJournalContext,
+    memberUnderstandingContext,
     loadOrder: ["role-definition", "professional-playbook", "member-context", "current-state", "relevant-knowledge", "reasoning-plan", "response-generation"],
   };
 }

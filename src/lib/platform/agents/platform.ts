@@ -23,6 +23,7 @@ import { SharedObservationIntelligence } from "./observations";
 import { SharedBenchmarkIntelligence } from "./benchmarks";
 import { SharedProbabilityConfidenceEngine } from "./probabilityConfidence";
 import { SharedProfessionalJournal } from "./professionalJournal";
+import { SharedMemberUnderstandingModel } from "./memberUnderstanding";
 
 export class BeastAgentsPlatform {
   readonly registry = new AgentRegistry();
@@ -41,6 +42,7 @@ export class BeastAgentsPlatform {
   readonly benchmarks = new SharedBenchmarkIntelligence();
   readonly probabilityConfidence = new SharedProbabilityConfidenceEngine();
   readonly professionalJournal = new SharedProfessionalJournal();
+  readonly memberUnderstanding = new SharedMemberUnderstandingModel();
   readonly knowledgeSources = new KnowledgeSourceFramework();
   readonly planner = new SharedAgentPlanningEngine();
   readonly roleDefinitions = new RoleDefinitionRegistry();
