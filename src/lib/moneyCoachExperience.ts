@@ -18,6 +18,12 @@ import {
   type InsightPriorityFactor,
   type Observation,
   type BenchmarkResult,
+  createDefaultConversationStarterEngine,
+  type AgentConversationThread,
+  type ProfessionalJournalReasoningItem,
+  type MemberUnderstandingReasoningItem,
+  type StarterCandidate,
+  type UpcomingStarterEvent,
   type ProfessionalBehaviorProfile,
   type ProfessionalIdentityProfile,
   type ProfessionalResponseExecution,
@@ -141,6 +147,10 @@ export type MoneyCoachExperienceInput = {
   observationVelocity?: MoneyObservationSnapshot["velocity"];
   observationRetirement?: MoneyObservationSnapshot["retirement"];
   benchmarkConfiguration?: MoneyBenchmarkConfiguration;
+  conversationHistory?: readonly AgentConversationThread[];
+  professionalJournalEntries?: readonly ProfessionalJournalReasoningItem[];
+  memberUnderstandingEntries?: readonly MemberUnderstandingReasoningItem[];
+  upcomingConversationEvents?: readonly UpcomingStarterEvent[];
 };
 
 const priorityConfiguration = {
@@ -494,19 +504,70 @@ export function buildMoneyCoachExperience(
     potentialIssues.push("Add income, bills, or debts so Money Coach can evaluate the current plan without guessing.");
   }
 
-  const suggestions: MoneyCoachExperienceSuggestion[] = [];
+  const recommendedToday: StarterCandidate[] = [];
   if (input.activeBillCount > 0) {
-    suggestions.push({ id: "review-bills", label: "What bills need my attention?", prompt: "What bills need my attention?", href: "/dashboard/money/cashflow#bills" });
+    recommendedToday.push({
+      id: "review-bills",
+      kind: "recommended-today",
+      title: "Review bills",
+      prompt: "What bills need my attention?",
+      reason: "Current BeastMoney records include active bills.",
+      priority: input.billsDueSoonCount > 0 ? 95 : 75,
+      evidence: [{ sourceType: "current-context", sourceId: "active-bills", capturedAt: input.asOfDate.toISOString(), reason: `${input.activeBillCount} active bill records.` }],
+    });
   }
   if (opportunities.length > 0) {
-    suggestions.push({ id: "show-opportunities", label: "Where are my opportunities?", prompt: "Where are my opportunities?", href: "#money-coach-opportunities" });
+    recommendedToday.push({
+      id: "show-opportunities",
+      kind: "recommended-today",
+      title: "Review opportunities",
+      prompt: "Where are my opportunities?",
+      reason: "The current financial review contains evidence-backed opportunities.",
+      priority: 82,
+      evidence: [{ sourceType: "current-context", sourceId: "current-opportunities", capturedAt: input.asOfDate.toISOString(), reason: opportunities[0] }],
+    });
   }
   if (input.activeDebtCount > 0) {
-    suggestions.push({ id: "review-debt", label: "How is my debt plan progressing?", prompt: "How is my debt plan progressing?", href: "/dashboard/money/debts" });
+    recommendedToday.push({
+      id: "review-debt",
+      kind: "recommended-today",
+      title: "Review debt progress",
+      prompt: "How is my debt plan progressing?",
+      reason: "Current BeastMoney records include active debt.",
+      priority: 80,
+      evidence: [{ sourceType: "current-context", sourceId: "active-debts", capturedAt: input.asOfDate.toISOString(), reason: `${input.activeDebtCount} active debt records.` }],
+    });
   }
   if (input.monthlyIncome > 0 || input.monthlyOutflow > 0) {
-    suggestions.push({ id: "explain-cash-flow", label: "Can my income cover this month?", prompt: "Can my income cover this month?", href: "#money-coach-cards" });
+    recommendedToday.push({
+      id: "explain-cash-flow",
+      kind: "recommended-today",
+      title: "Review cash flow",
+      prompt: "Can my income cover this month?",
+      reason: "Current income or outflow records support a cash-flow review.",
+      priority: 78,
+      evidence: [{ sourceType: "current-context", sourceId: "cash-flow", capturedAt: input.asOfDate.toISOString(), reason: "Current monthly income and outflow context is available." }],
+    });
   }
+  const starterEngine = createDefaultConversationStarterEngine();
+  const generatedStarters = starterEngine.generate({
+    ownerId: input.ownerId,
+    specialistId: "beastmoney.money-coach",
+    asOf: input.asOfDate.toISOString(),
+    observations,
+    journalEntries: input.professionalJournalEntries,
+    memberUnderstanding: input.memberUnderstandingEntries,
+    conversationHistory: input.conversationHistory,
+    recommendedToday,
+    upcomingEvents: input.upcomingConversationEvents,
+    limit: 8,
+  });
+  const suggestions: MoneyCoachExperienceSuggestion[] = generatedStarters.map((starter) => ({
+    id: starter.id,
+    label: starter.title,
+    prompt: starter.prompt,
+    href: starter.action?.target,
+  }));
   suggestions.push({ id: "ask-question", label: "I have another question", intent: "ask" });
 
   const summary = [
