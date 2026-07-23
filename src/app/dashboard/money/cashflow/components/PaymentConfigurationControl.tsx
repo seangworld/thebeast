@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  assessPaymentConfiguration,
   normalizePaymentConfiguration,
   parseFundingAccount,
   paymentFundingStrategies,
@@ -12,7 +13,7 @@ import { OverlayPopover } from "./OverlayPopover";
 type PaymentConfigurationControlProps = {
   label: string;
   record: PaymentConfigurationRecord;
-  accounts: readonly { id: string; name: string }[];
+  accounts: readonly { id: string; name: string; type?: string }[];
   incomePots: readonly { date: string; dropdownLabel: string }[];
   onChange: (patch: {
     payment_account_id?: string | null;
@@ -37,6 +38,10 @@ export function PaymentConfigurationControl({
     paymentFundingStrategies.find(
       (item) => item.id === configuration.strategyId
     )?.label || "Payment setup";
+  const accountTypes = Object.fromEntries(
+    accounts.map((account) => [account.id, account.type || ""])
+  );
+  const issues = assessPaymentConfiguration(record, accountTypes);
 
   return (
     <OverlayPopover
@@ -47,6 +52,10 @@ export function PaymentConfigurationControl({
       {() => (
         <fieldset className="grid min-w-0 gap-3 text-left">
           <legend className="sr-only">{label}</legend>
+          <p className="text-xs leading-5 text-slate-400">
+            Choose where the draft leaves, where its money originated, and how
+            that money reached the draft account.
+          </p>
           <label className="grid gap-1 text-xs font-bold text-slate-300">
             Payment Account
             <select
@@ -118,6 +127,21 @@ export function PaymentConfigurationControl({
               ))}
             </select>
           </label>
+
+          {issues.length ? (
+            <div className="rounded-xl border border-amber-300/20 bg-amber-300/[0.05] p-3">
+              <p className="text-xs font-bold text-amber-100">Configuration review</p>
+              <ul className="mt-2 list-disc space-y-1 pl-4 text-xs leading-5 text-slate-300">
+                {issues.map((issue) => (
+                  <li key={issue.code}>{issue.message}</li>
+                ))}
+              </ul>
+            </div>
+          ) : (
+            <p className="text-xs text-emerald-300">
+              Payment workflow is fully identified.
+            </p>
+          )}
         </fieldset>
       )}
     </OverlayPopover>

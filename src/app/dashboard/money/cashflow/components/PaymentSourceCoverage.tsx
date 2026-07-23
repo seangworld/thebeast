@@ -7,6 +7,7 @@ type PaymentSourceCoverageData = {
   heloc: number;
   ploc: number;
   cash: number;
+  income_pot: number;
   unassigned: number;
 };
 
@@ -19,9 +20,9 @@ export default function PaymentSourceCoverage({
 }: PaymentSourceCoverageProps) {
   return (
     <div className="mt-6 border-t border-[#2a3242] pt-6">
-      <h3 className="text-lg font-semibold mb-2">Payment Source Coverage (Current Cycle)</h3>
+      <h3 className="text-lg font-semibold mb-2">Funding Origin Coverage (Current Cycle)</h3>
       <p className="text-xs text-[#7f8da3] mb-4">
-        Shows how current-cycle bills are being funded.
+        Shows where the money for current-cycle payments originated.
       </p>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
@@ -57,6 +58,13 @@ export default function PaymentSourceCoverage({
           <div className="text-sm text-[#c7cfdb]">Cash Paid</div>
           <div className="mt-2 break-words text-2xl font-bold text-gray-300">
             ${coverage.cash.toFixed(2)}
+          </div>
+        </div>
+
+        <div className="beast-card">
+          <div className="text-sm text-[#c7cfdb]">Income Pots Paid</div>
+          <div className="mt-2 break-words text-2xl font-bold text-cyan-300">
+            ${coverage.income_pot.toFixed(2)}
           </div>
         </div>
 

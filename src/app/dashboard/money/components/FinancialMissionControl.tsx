@@ -225,6 +225,25 @@ export function FinancialMissionControl({ model }: { model: FinancialMissionCont
             <p className="mt-3 text-sm leading-6 text-slate-300">{model.retirement.detail}</p>
             {!model.retirement.available ? <p className="mt-5 rounded-2xl border border-dashed border-white/15 p-4 text-xs leading-5 text-slate-400">No readiness percentage is shown until current retirement inputs exist.</p> : null}
           </Surface>
+
+          <Surface title="Payment workflows" eyebrow="Configuration" href="/dashboard/money/cashflow#funding-sources" className="xl:col-span-12">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {[
+                ["Active obligations", model.paymentConfigurations.total],
+                ["Fully configured", model.paymentConfigurations.complete],
+                ["Velocity workflows", model.paymentConfigurations.velocity],
+                ["Needs review", model.paymentConfigurations.needsReview],
+              ].map(([label, value]) => (
+                <div key={String(label)} className="rounded-2xl bg-white/[0.04] p-4">
+                  <p className="text-xs text-slate-400">{label}</p>
+                  <p className="mt-2 text-2xl font-black text-white">{value}</p>
+                </div>
+              ))}
+            </div>
+            <p className="mt-4 text-sm leading-6 text-slate-400">
+              Payment Account identifies where a draft leaves, Funding Account identifies where its money originated, and Funding Strategy explains how it moved.
+            </p>
+          </Surface>
         </div>
       </section>
 

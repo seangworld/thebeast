@@ -112,6 +112,9 @@ export type MoneyCoachExperienceModel = {
       paymentAccountName?: string;
       fundingAccountName?: string;
       strategyLabel: string;
+      strategyId: string;
+      complete: boolean;
+      reviewMessages: readonly string[];
       explanation: string;
     }[];
     helocReserve: number;
@@ -161,6 +164,9 @@ export type MoneyCoachExperienceInput = {
     paymentAccountName?: string;
     fundingAccountName?: string;
     strategyLabel: string;
+    strategyId: string;
+    complete: boolean;
+    reviewMessages: readonly string[];
     explanation: string;
   }[];
   helocReserve?: number;
@@ -306,6 +312,7 @@ export function buildMoneyCoachExperience(
       debts: input.debts,
       velocity: input.observationVelocity,
       retirement: input.observationRetirement,
+      paymentConfigurations: input.paymentConfigurations,
     },
     history: input.observationHistory || [],
   };
@@ -1198,6 +1205,12 @@ export function answerMoneyCoachQuestion(
   }
 
   if (intent === "funding" && context.paymentConfigurations.length > 0) {
+    const incomplete = context.paymentConfigurations.filter(
+      (configuration) => !configuration.complete
+    );
+    const reviews = context.paymentConfigurations.filter(
+      (configuration) => configuration.reviewMessages.length > 0
+    );
     return structuredAnswer({
       intent,
       opening: "Payment Account, Funding Account, and Funding Strategy describe different parts of how each obligation is paid.",
@@ -1209,6 +1222,24 @@ export function answerMoneyCoachQuestion(
               `${configuration.obligationName}: ${configuration.explanation}`
           ),
         },
+        ...(incomplete.length
+          ? [{
+              heading: "Missing setup",
+              bullets: incomplete.map(
+                (configuration) =>
+                  `${configuration.obligationName}: ${configuration.reviewMessages.join(" ")}`
+              ),
+            }]
+          : []),
+        ...(reviews.length
+          ? [{
+              heading: "Recommended improvements",
+              bullets: reviews.map(
+                (configuration) =>
+                  `${configuration.obligationName}: ${configuration.reviewMessages.join(" ")}`
+              ),
+            }]
+          : []),
       ],
       followUp: "Would you like to review or change one of these payment workflows?",
       href: "/dashboard/money/cashflow",

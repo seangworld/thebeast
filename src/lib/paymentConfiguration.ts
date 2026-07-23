@@ -55,6 +55,17 @@ export type PaymentConfiguration = {
   migratedFromLegacy: boolean;
 };
 
+export type PaymentConfigurationIssue = {
+  code:
+    | "missing_payment_account"
+    | "missing_funding_account"
+    | "direct_account_mismatch"
+    | "velocity_requires_credit_origin"
+    | "split_funding_requires_details";
+  severity: "missing" | "warning";
+  message: string;
+};
+
 export function normalizePaymentConfiguration(
   record: PaymentConfigurationRecord
 ): PaymentConfiguration {
@@ -87,6 +98,83 @@ export function getPaymentFundingStrategy(strategyId: string) {
       description: "A configured payment funding workflow.",
     }
   );
+}
+
+export function resolveFundingAccountId(
+  record: PaymentConfigurationRecord
+) {
+  const configuration = normalizePaymentConfiguration(record);
+  return configuration.fundingAccountType === "account"
+    ? configuration.fundingAccountId
+    : null;
+}
+
+export function isPaymentConfigurationComplete(
+  record: PaymentConfigurationRecord
+) {
+  const configuration = normalizePaymentConfiguration(record);
+  return Boolean(
+    configuration.paymentAccountId &&
+      configuration.fundingAccountType &&
+      configuration.fundingAccountId &&
+      configuration.strategyId
+  );
+}
+
+export function assessPaymentConfiguration(
+  record: PaymentConfigurationRecord,
+  accountTypes: Readonly<Record<string, string>> = {}
+): readonly PaymentConfigurationIssue[] {
+  const configuration = normalizePaymentConfiguration(record);
+  const issues: PaymentConfigurationIssue[] = [];
+  if (!configuration.paymentAccountId) {
+    issues.push({
+      code: "missing_payment_account",
+      severity: "missing",
+      message: "Select the account from which the payment actually drafts.",
+    });
+  }
+  if (!configuration.fundingAccountType || !configuration.fundingAccountId) {
+    issues.push({
+      code: "missing_funding_account",
+      severity: "missing",
+      message: "Select where the payment money originates.",
+    });
+  }
+  if (
+    configuration.strategyId === "direct_payment" &&
+    configuration.paymentAccountId &&
+    configuration.fundingAccountType === "account" &&
+    configuration.fundingAccountId &&
+    configuration.paymentAccountId !== configuration.fundingAccountId
+  ) {
+    issues.push({
+      code: "direct_account_mismatch",
+      severity: "warning",
+      message: "Different payment and funding accounts usually require a transfer strategy.",
+    });
+  }
+  if (
+    configuration.strategyId === "velocity_banking" &&
+    configuration.fundingAccountId &&
+    !["heloc", "ploc", "credit_line"].includes(
+      accountTypes[configuration.fundingAccountId] || ""
+    )
+  ) {
+    issues.push({
+      code: "velocity_requires_credit_origin",
+      severity: "warning",
+      message: "Velocity Banking should identify the eligible credit line where funds originate.",
+    });
+  }
+  if (configuration.strategyId === "split_funding") {
+    issues.push({
+      code: "split_funding_requires_details",
+      severity: "warning",
+      message: "Confirm the additional funding allocations before relying on this workflow.",
+    });
+  }
+  return issues;
 }
 
 export function describePaymentConfiguration({

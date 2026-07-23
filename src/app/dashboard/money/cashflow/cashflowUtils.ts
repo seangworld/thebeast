@@ -35,6 +35,7 @@ export type PaymentSourceCoverageType = {
   heloc: number;
   ploc: number;
   cash: number;
+  income_pot: number;
   unassigned: number;
 };
 

@@ -42,6 +42,12 @@ export type FinancialMissionControlModel = {
   savings: { monthlySurplus: number; cashEfficiency: number };
   debt: { remaining: number; progressPercent: number; monthlyReduction: number; countdown: string };
   retirement: { available: boolean; readiness: string; detail: string };
+  paymentConfigurations: {
+    total: number;
+    complete: number;
+    velocity: number;
+    needsReview: number;
+  };
   velocity: { available: boolean; monthsToPayoff?: number; totalInterest?: number; riskLevel?: string };
   upcomingObligations: readonly { id: string; name: string; amount: number; dueLabel: string }[];
   observations: readonly { id: string; title: string; summary: string; priority: string; confidence?: string }[];
@@ -71,6 +77,11 @@ export type BuildFinancialMissionControlInput = {
   debtFreedomCountdown: string;
   cashEfficiency: number;
   retirementDataAvailable: boolean;
+  paymentConfigurations?: readonly {
+    complete: boolean;
+    strategyId: string;
+    reviewMessages: readonly string[];
+  }[];
   scenarios: readonly MissionControlScenario[];
   upcomingObligations: readonly { id: string; name: string; amount: number; dueLabel: string }[];
   observations: readonly Observation[];
@@ -129,6 +140,7 @@ export function buildFinancialMissionControl(input: BuildFinancialMissionControl
   const aboveBuffer = input.startingCash - input.cashBuffer;
   const emergencyMonths = input.monthlyOutflow > 0 ? input.startingCash / input.monthlyOutflow : 0;
   const velocity = input.scenarios.find((scenario) => scenario.id === "velocity");
+  const paymentConfigurations = input.paymentConfigurations || [];
   const healthTone: MissionControlTone = financialHealth.score >= 75 ? "positive" : financialHealth.score >= 50 ? "caution" : "critical";
   const surplusTone: MissionControlTone = input.projectedSurplus > 0 ? "positive" : input.projectedSurplus < 0 ? "critical" : "neutral";
   const cashTone: MissionControlTone = aboveBuffer >= 0 ? "positive" : "critical";
@@ -222,6 +234,12 @@ export function buildFinancialMissionControl(input: BuildFinancialMissionControl
     savings: { monthlySurplus: Math.max(input.projectedSurplus, 0), cashEfficiency: input.cashEfficiency },
     debt: { remaining: input.totalDebt, progressPercent: input.debtProgressPercent, monthlyReduction: input.monthlyDebtReduction, countdown: input.debtFreedomCountdown },
     retirement: { available: input.retirementDataAvailable, readiness: input.retirementDataAvailable ? "Ready for review" : "Not configured", detail: input.retirementDataAvailable ? "Open the retirement projection for full assumptions." : "Add retirement records before evaluating readiness." },
+    paymentConfigurations: {
+      total: paymentConfigurations.length,
+      complete: paymentConfigurations.filter((configuration) => configuration.complete).length,
+      velocity: paymentConfigurations.filter((configuration) => configuration.strategyId === "velocity_banking").length,
+      needsReview: paymentConfigurations.filter((configuration) => configuration.reviewMessages.length > 0).length,
+    },
     velocity: { available: Boolean(velocity), monthsToPayoff: velocity?.monthsToPayoff, totalInterest: velocity?.totalInterest, riskLevel: velocity?.riskLevel },
     upcomingObligations: input.upcomingObligations,
     observations: input.observations.slice(0, 5).map((observation) => ({ id: observation.id, title: observation.presentation.title, summary: observation.presentation.summary, priority: observation.assessment.priority, confidence: observation.confidenceAnalysis?.confidence })),

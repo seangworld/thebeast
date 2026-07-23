@@ -19,6 +19,13 @@ import ArchivedItemsSection from "./components/ArchivedItemsSection";
 import { BeastMoneyShell } from "@/app/dashboard/money/BeastMoneyShell";
 import { useCashFlow } from "./useCashFlow";
 import {
+  getPaymentFundingStrategy,
+  isPaymentConfigurationComplete,
+  normalizePaymentConfiguration,
+  resolveFundingAccountId,
+  type PaymentConfigurationRecord,
+} from "@/lib/paymentConfiguration";
+import {
   FundingSource,
   OperationalAlert,
   PayoffStrategy,
@@ -333,11 +340,20 @@ export default function CashFlowPage() {
     return bucket?.label || value;
   }
 
-  function getFundingSourceLabel(value: string) {
-    if (!value) return "Unassigned";
-
-    const source = fundingSources.find((item) => item.id === value);
-    return source?.name || "Unknown Source";
+  function getPaymentConfigurationLabel(record: PaymentConfigurationRecord) {
+    const configuration = normalizePaymentConfiguration(record);
+    const paymentAccount = fundingSources.find(
+      (item) => item.id === configuration.paymentAccountId
+    )?.name;
+    const fundingAccount =
+      configuration.fundingAccountType === "income_pot"
+        ? getIncomeBucketLabel(configuration.fundingAccountId || "")
+        : fundingSources.find(
+            (item) => item.id === configuration.fundingAccountId
+          )?.name;
+    const strategy = getPaymentFundingStrategy(configuration.strategyId);
+    if (!paymentAccount && !fundingAccount) return "Not configured";
+    return `${paymentAccount || "Draft account needed"} ← ${fundingAccount || "Origin needed"} · ${strategy.label}`;
   }
 
   function getFundingSourceUtilization(source: FundingSource) {
@@ -394,10 +410,17 @@ export default function CashFlowPage() {
       heloc: 0,
       ploc: 0,
       cash: 0,
+      income_pot: 0,
       unassigned: 0,
     };
 
-    function addCoverageAmount(fundingSourceId: string | null, amount: number) {
+    function addCoverageAmount(record: PaymentConfigurationRecord, amount: number) {
+      const configuration = normalizePaymentConfiguration(record);
+      if (configuration.fundingAccountType === "income_pot" && configuration.fundingAccountId) {
+        coverage.income_pot += amount;
+        return;
+      }
+      const fundingSourceId = resolveFundingAccountId(record);
       if (!fundingSourceId) {
         coverage.unassigned += amount;
         return;
@@ -419,7 +442,7 @@ export default function CashFlowPage() {
 
     for (const payment of billPayments) {
       addCoverageAmount(
-        payment.funding_source_id || null,
+        payment,
         Number(payment.amount_paid || 0)
       );
     }
@@ -429,12 +452,8 @@ export default function CashFlowPage() {
         continue;
       }
 
-      if (!payment.funding_source_id) {
-        continue;
-      }
-
       addCoverageAmount(
-        payment.funding_source_id,
+        payment,
         Number(payment.amount || 0)
       );
     }
@@ -452,6 +471,7 @@ export default function CashFlowPage() {
       paymentSourceCoverage.heloc +
       paymentSourceCoverage.ploc +
       paymentSourceCoverage.cash +
+      paymentSourceCoverage.income_pot +
       paymentSourceCoverage.unassigned;
 
     if (totalCycleBills === 0) {
@@ -478,7 +498,8 @@ export default function CashFlowPage() {
     const liquidFunded =
       paymentSourceCoverage.checking +
       paymentSourceCoverage.savings +
-      paymentSourceCoverage.cash;
+      paymentSourceCoverage.cash +
+      paymentSourceCoverage.income_pot;
 
     if (creditFunded > liquidFunded && creditFunded > 0) {
       insights.push({
@@ -521,6 +542,7 @@ export default function CashFlowPage() {
       paymentSourceCoverage.heloc +
       paymentSourceCoverage.ploc +
       paymentSourceCoverage.cash +
+      paymentSourceCoverage.income_pot +
       paymentSourceCoverage.unassigned;
 
     // Rule 6: No payments
@@ -547,7 +569,8 @@ export default function CashFlowPage() {
     const liquidFunded =
       paymentSourceCoverage.checking +
       paymentSourceCoverage.savings +
-      paymentSourceCoverage.cash;
+      paymentSourceCoverage.cash +
+      paymentSourceCoverage.income_pot;
 
     // Rule 2: Liquid cash can cover
     if (liquidFundingTotal >= totalCycleBills) {
@@ -693,7 +716,7 @@ export default function CashFlowPage() {
         (bill) => !bill.assigned_income_date
       ).length,
       unassignedFundingSources: upcoming.filter(
-        (bill) => !bill.funding_source_id
+        (bill) => !isPaymentConfigurationComplete(bill)
       ).length,
     };
   }, [activeBills]);
@@ -921,22 +944,26 @@ export default function CashFlowPage() {
 
       // Only count bills funded by checking/cash/savings accounts toward paycheck balance
       const paycheckFundedBills = assignedBills.filter((bill) => {
-        if (!bill.funding_source_id) {
+        const configuration = normalizePaymentConfiguration(bill);
+        if (!configuration.fundingAccountId) {
           // Unassigned defaults to paycheck-funded (checking account)
           return true;
         }
-        const source = fundingSources.find((s) => s.id === bill.funding_source_id);
+        if (configuration.fundingAccountType === "income_pot") return true;
+        const source = fundingSources.find((s) => s.id === configuration.fundingAccountId);
         if (!source) return true; // Default to counting if source not found
         return !creditFundingSourceTypes.includes(source.type);
       });
 
       // Only count debts funded by checking/cash/savings accounts toward paycheck balance
       const paycheckFundedDebts = assignedDebts.filter((debt) => {
-        if (!debt.funding_source_id) {
+        const configuration = normalizePaymentConfiguration(debt);
+        if (!configuration.fundingAccountId) {
           // Unassigned defaults to paycheck-funded (checking account)
           return true;
         }
-        const source = fundingSources.find((s) => s.id === debt.funding_source_id);
+        if (configuration.fundingAccountType === "income_pot") return true;
+        const source = fundingSources.find((s) => s.id === configuration.fundingAccountId);
         if (!source) return true; // Default to counting if source not found
         return !creditFundingSourceTypes.includes(source.type);
       });
@@ -1105,12 +1132,12 @@ export default function CashFlowPage() {
       );
     }
 
-    const unfundedBills = activeBills.filter((bill) => !bill.funding_source_id);
-    const unfundedDebts = activeDebts.filter((debt) => !debt.funding_source_id);
+    const unfundedBills = activeBills.filter((bill) => !isPaymentConfigurationComplete(bill));
+    const unfundedDebts = activeDebts.filter((debt) => !isPaymentConfigurationComplete(debt));
 
     if (activeFundingSources.length > 0 && unfundedBills.length + unfundedDebts.length > 0) {
       steps.push(
-        `Assign funding sources to ${unfundedBills.length + unfundedDebts.length} active obligation${
+        `Complete payment configurations for ${unfundedBills.length + unfundedDebts.length} active obligation${
           unfundedBills.length + unfundedDebts.length === 1 ? "" : "s"
         }.`
       );
@@ -1202,7 +1229,7 @@ export default function CashFlowPage() {
           billsAhead={billsAhead}
           getFrequencyLabel={getFrequencyLabel}
           getIncomeBucketLabel={getIncomeBucketLabel}
-          getFundingSourceLabel={getFundingSourceLabel}
+          getPaymentConfigurationLabel={getPaymentConfigurationLabel}
         />
 
         <IncomeDatePlanningSection
@@ -1410,7 +1437,7 @@ export default function CashFlowPage() {
           archivedDebts={archivedDebts}
           getFrequencyLabel={getFrequencyLabel}
           getIncomeBucketLabel={getIncomeBucketLabel}
-          getFundingSourceLabel={getFundingSourceLabel}
+          getPaymentConfigurationLabel={getPaymentConfigurationLabel}
           unarchiveBill={unarchiveBill}
           unarchiveDebt={unarchiveDebt}
         />

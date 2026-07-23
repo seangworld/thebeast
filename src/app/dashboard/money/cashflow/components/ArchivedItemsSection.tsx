@@ -7,7 +7,7 @@ type ArchivedItemsSectionProps = {
   archivedDebts: any[];
   getFrequencyLabel: (value: string) => string;
   getIncomeBucketLabel: (value: string) => string;
-  getFundingSourceLabel: (value: string) => string;
+  getPaymentConfigurationLabel: (record: any) => string;
   unarchiveBill: (id: string) => void;
   unarchiveDebt: (id: string) => void;
 };
@@ -21,7 +21,7 @@ export default function ArchivedItemsSection({
   archivedDebts,
   getFrequencyLabel,
   getIncomeBucketLabel,
-  getFundingSourceLabel,
+  getPaymentConfigurationLabel,
   unarchiveBill,
   unarchiveDebt,
 }: ArchivedItemsSectionProps) {
@@ -53,7 +53,7 @@ export default function ArchivedItemsSection({
                   <th className="text-right">Amount</th>
                   <th className="text-center">Frequency</th>
                   <th className="text-center">Income Date</th>
-                  <th className="text-center">Funding Source</th>
+                  <th className="text-center">Payment Configuration</th>
                   <th className="text-center">Actions</th>
                 </tr>
               </thead>
@@ -77,7 +77,7 @@ export default function ArchivedItemsSection({
                         {getIncomeBucketLabel(bill.assigned_income_date)}
                       </td>
                       <td className="text-center">
-                        {getFundingSourceLabel(bill.funding_source_id)}
+                        {getPaymentConfigurationLabel(bill)}
                       </td>
                       <td className="text-center">
                         <button
@@ -122,7 +122,7 @@ export default function ArchivedItemsSection({
                   <th className="text-right">Balance</th>
                   <th className="text-right">Minimum</th>
                   <th className="text-center">Income Date</th>
-                  <th className="text-center">Funding Source</th>
+                  <th className="text-center">Payment Configuration</th>
                   <th className="text-center">Actions</th>
                 </tr>
               </thead>
@@ -146,7 +146,7 @@ export default function ArchivedItemsSection({
                         {getIncomeBucketLabel(debt.assigned_income_date)}
                       </td>
                       <td className="text-center">
-                        {getFundingSourceLabel(debt.funding_source_id)}
+                        {getPaymentConfigurationLabel(debt)}
                       </td>
                       <td className="text-center">
                         <button

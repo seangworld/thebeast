@@ -57,6 +57,12 @@ export type MoneyObservationSnapshot = {
     targetDate?: string;
     updatedAt?: string;
   };
+  paymentConfigurations?: readonly {
+    obligationName: string;
+    strategyId: string;
+    complete: boolean;
+    reviewMessages: readonly string[];
+  }[];
 };
 
 export type MoneyObservationData = {
@@ -417,6 +423,75 @@ const strategyAndDataDetector: ObservationDetector<MoneyObservationData> = {
           workspaceTarget: "/dashboard/money/retirement",
         }));
       }
+    }
+    const incompletePaymentConfigurations =
+      current.paymentConfigurations?.filter(
+        (configuration) => !configuration.complete
+      ) || [];
+    if (incompletePaymentConfigurations.length) {
+      const evidence = incompletePaymentConfigurations.map(
+        (configuration, index) =>
+          fact(
+            `payment-configuration-${index}`,
+            "Incomplete payment configuration",
+            configuration.obligationName,
+            "beastmoney.payment-configuration",
+            current.capturedAt
+          )
+      );
+      observations.push(draft(context, {
+        fingerprintParts: ["payment-configuration", "missing-inputs"],
+        category: "Payment configuration",
+        type: "Missing information",
+        title: "Payment workflows need configuration",
+        summary: `${incompletePaymentConfigurations.length} active obligation${incompletePaymentConfigurations.length === 1 ? "" : "s"} do not identify the payment account, funding account, and strategy.`,
+        detail: "Each obligation needs all three fields before BeastMoney can explain the complete movement of funds.",
+        whyNoticed: "One or more current obligation records have an incomplete normalized payment configuration.",
+        whyItMayMatter: "Incomplete payment paths can make cash-flow and Velocity reviews less reliable.",
+        ruleId: "money.payment-configuration.missing-inputs",
+        ruleDescription: "Check every active obligation for a payment account, funding account, and funding strategy.",
+        evidence,
+        severity: "caution",
+        urgency: 45,
+        materiality: 65,
+        relevance: 85,
+        actionability: 95,
+        workspaceTarget: "/dashboard/money/cashflow#funding-sources",
+      }));
+    }
+    const workflowReviews =
+      current.paymentConfigurations?.filter(
+        (configuration) => configuration.reviewMessages.length > 0
+      ) || [];
+    if (workflowReviews.length) {
+      const evidence = workflowReviews.map((configuration, index) =>
+        fact(
+          `payment-workflow-review-${index}`,
+          configuration.obligationName,
+          configuration.reviewMessages.join(" "),
+          "beastmoney.payment-configuration",
+          current.capturedAt
+        )
+      );
+      observations.push(draft(context, {
+        fingerprintParts: ["payment-configuration", "workflow-review"],
+        category: "Payment configuration",
+        type: "Opportunity",
+        title: "Payment workflows have review opportunities",
+        summary: `${workflowReviews.length} payment workflow${workflowReviews.length === 1 ? "" : "s"} may need a clearer transfer or Velocity setup.`,
+        detail: "The configured account relationship and selected strategy should describe the same movement of funds.",
+        whyNoticed: "The deterministic payment-configuration review found a strategy or account mismatch.",
+        whyItMayMatter: "Correct configuration helps Cash Flow and Money Coach distinguish draft accounts from funding origins.",
+        ruleId: "money.payment-configuration.workflow-review",
+        ruleDescription: "Compare normalized payment and funding accounts with the selected configuration-driven strategy.",
+        evidence,
+        severity: "informational",
+        urgency: 30,
+        materiality: 55,
+        relevance: 80,
+        actionability: 90,
+        workspaceTarget: "/dashboard/money/cashflow#funding-sources",
+      }));
     }
     const duplicateBillNames = current.bills
       ? Array.from(new Set(current.bills.map((item) => item.name.trim().toLowerCase()).filter((name, index, all) => all.indexOf(name) !== index)))

@@ -2,14 +2,14 @@ type BillsAheadSectionProps = {
   billsAhead: any;
   getFrequencyLabel: (value: string) => string;
   getIncomeBucketLabel: (value: string) => string;
-  getFundingSourceLabel: (value: string) => string;
+  getPaymentConfigurationLabel: (record: any) => string;
 };
 
 export default function BillsAheadSection({
   billsAhead,
   getFrequencyLabel,
   getIncomeBucketLabel,
-  getFundingSourceLabel,
+  getPaymentConfigurationLabel,
 }: BillsAheadSectionProps) {
   return (
     <section className="beast-card space-y-5">
@@ -18,7 +18,7 @@ export default function BillsAheadSection({
           <h2 className="money-section-title">Bills Ahead</h2>
           <p className="mt-1 text-sm text-[#7f8da3]">
             Operational view of bills due in the next 30 days, including
-            funding source and income pot assignments.
+            payment configuration and income pot assignments.
           </p>
         </div>
 
@@ -75,7 +75,7 @@ export default function BillsAheadSection({
 
         <div className="beast-panel p-3">
           <div className="text-xs text-[#7f8da3]">
-            Unassigned Funding Sources
+            Incomplete Payment Setups
           </div>
           <div
             className={`mt-1 text-lg font-bold ${
@@ -97,7 +97,7 @@ export default function BillsAheadSection({
               <th className="text-right">Remaining</th>
               <th className="text-center">Due Date</th>
               <th className="text-center">Income Pot</th>
-              <th className="text-center">Funding Source</th>
+              <th className="text-center">Payment Configuration</th>
               <th className="text-center">Status</th>
             </tr>
           </thead>
@@ -135,7 +135,7 @@ export default function BillsAheadSection({
                     {getIncomeBucketLabel(bill.assigned_income_date)}
                   </td>
                   <td className="text-center">
-                    {getFundingSourceLabel(bill.funding_source_id)}
+                    {getPaymentConfigurationLabel(bill)}
                   </td>
                   <td className="text-center">
                     <span

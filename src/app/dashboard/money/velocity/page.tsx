@@ -495,13 +495,13 @@ export default function VelocityPlannerPage() {
       alert: velocityBankingResult.status === "wait",
     },
     {
-      label: "Funding Source",
+      label: "Velocity Funding Account",
       value: velocityBankingResult.fundingSourceSelection?.name || "Not Available",
       detail: velocityBankingResult.fundingSourceSelection
         ? `Safe capacity: ${formatMoney(
             velocityBankingResult.fundingSourceSelection.safeCapacity
           )}.`
-        : "No eligible Velocity source found.",
+        : "No eligible Velocity funding account found.",
       alert: !velocityBankingResult.fundingSourceSelection,
     },
     {

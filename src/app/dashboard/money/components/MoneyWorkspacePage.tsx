@@ -53,7 +53,9 @@ import {
 import { BeastMoneyShell } from "@/app/dashboard/money/BeastMoneyShell";
 import { MoneyCoachExperience } from "@/app/dashboard/money/components/MoneyCoachExperience";
 import {
+  assessPaymentConfiguration,
   describePaymentConfiguration,
+  isPaymentConfigurationComplete,
   getPaymentFundingStrategy,
   normalizePaymentConfiguration,
 } from "@/lib/paymentConfiguration";
@@ -786,22 +788,26 @@ export function MoneyWorkspacePage({
             : state.fundingSources.find(
                 (source) => source.id === configuration.fundingAccountId
               )?.name || undefined;
+        const accountTypes = Object.fromEntries(
+          state.fundingSources.map((source) => [source.id, source.type || ""])
+        );
         return {
           obligationName: obligation.name || "Obligation",
           paymentAccountName,
           fundingAccountName,
           strategyLabel: getPaymentFundingStrategy(configuration.strategyId).label,
+          strategyId: configuration.strategyId,
+          complete: isPaymentConfigurationComplete(obligation),
+          reviewMessages: assessPaymentConfiguration(obligation, accountTypes).map(
+            (issue) => issue.message
+          ),
           explanation: describePaymentConfiguration({
             paymentAccountName,
             fundingAccountName,
             strategyId: configuration.strategyId,
           }),
         };
-      })
-      .filter(
-        (configuration) =>
-          configuration.paymentAccountName || configuration.fundingAccountName
-      ),
+      }),
     helocReserve: state.fundingSources.filter((source) => source.is_active !== false && source.type?.toLowerCase().includes("heloc")).reduce((sum, source) => sum + numberValue(source.available_credit), 0),
     activeDebtStrategy: "avalanche",
     strategyScenarios: snapshot.scenarioComparison.scenarios.filter((scenario) => ["avalanche", "snowball", "velocity"].includes(scenario.id)).map((scenario) => ({ id: scenario.id, label: scenario.label, monthsToPayoff: scenario.monthsToPayoff, totalInterest: scenario.totalInterest, monthlyCashStrain: scenario.monthlyCashStrain, riskLevel: scenario.riskLevel, debtFreeDate: scenario.debtFreeDate })),
@@ -850,6 +856,8 @@ export function MoneyWorkspacePage({
     debtFreedomCountdown: snapshot.financialInsights.debtFreedomCountdown,
     cashEfficiency: snapshot.financialInsights.cashEfficiency,
     retirementDataAvailable: false,
+    paymentConfigurations:
+      moneyCoachExperience.financialContext.paymentConfigurations,
     scenarios: snapshot.scenarioComparison.scenarios
       .filter((scenario) => ["avalanche", "snowball", "velocity"].includes(scenario.id))
       .map((scenario) => ({ id: scenario.id, label: scenario.label, monthsToPayoff: scenario.monthsToPayoff, totalInterest: scenario.totalInterest, monthlyCashStrain: scenario.monthlyCashStrain, riskLevel: scenario.riskLevel })),
