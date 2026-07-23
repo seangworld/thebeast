@@ -1,8 +1,6 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
   DashboardCard,
-  ModuleBadge,
   SectionHeader,
 } from "@/app/components/design/DashboardPrimitives";
 import { getProfileDisplayName } from "@/lib/profile";
@@ -10,6 +8,7 @@ import { createRouteClient } from "@/lib/supabase/server";
 import type { LearningGoal } from "@/lib/learning/types";
 import LearningGoalDiscovery from "../LearningGoalDiscovery";
 import LearningGoalsManager from "./LearningGoalsManager";
+import { LearningWorkspaceShell } from "../LearningWorkspaceShell";
 
 export const dynamic = "force-dynamic";
 
@@ -70,26 +69,12 @@ export default async function LearningGoalsPage() {
   const activeGoal = learningGoals.find((goal) => goal.status === "Active");
 
   return (
-    <main className="beast-page">
-      <div className="beast-container space-y-8">
-        <section className="beast-page-header">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-            <div className="space-y-4">
-              <ModuleBadge module="learning" label="Learning Goals" />
-              <h1 className="beast-title">Learning Goals</h1>
-              <p className="beast-subtitle">
-                {learnerName}, manage what you want to learn. Your Guidance Counselor keeps one goal active while preserving progress across every goal.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <LearningGoalDiscovery recentGoals={learningGoals} />
-              <Link href="/dashboard/education" className="beast-button-secondary">
-                Back to Guidance Counselor
-              </Link>
-            </div>
-          </div>
-        </section>
-
+    <LearningWorkspaceShell
+      title="Goals"
+      eyebrow="Learning goals"
+      description={`${learnerName}, manage what you want to learn. Your Mentor keeps one goal active while preserving progress across every goal.`}
+      actions={<LearningGoalDiscovery recentGoals={learningGoals} />}
+    >
         <DashboardCard accent="learning">
           <SectionHeader
             eyebrow="Goal Management"
@@ -100,7 +85,6 @@ export default async function LearningGoalsPage() {
             <LearningGoalsManager initialGoals={learningGoals} />
           </div>
         </DashboardCard>
-      </div>
-    </main>
+    </LearningWorkspaceShell>
   );
 }

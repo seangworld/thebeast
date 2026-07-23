@@ -553,26 +553,27 @@ test("module navigation centralizes expandable child items", () => {
     beastLearningNavigation.children?.map((item) => item.label),
     [
       "Guidance Counselor",
-      "Activities",
-      "Goals",
-      "Education Plan",
-      "Learning Support",
+      "Learning Path",
+      "Courses",
+      "Lessons",
+      "Reviews",
       "Achievements",
+      "History",
       "Certificates",
-      "Progress",
+      "Goals",
       "Feedback",
     ]
   );
   assert.equal(
     beastLearningNavigation.children?.[1].href,
-    "/dashboard/education/activities"
+    "/dashboard/education/learning-path"
   );
   assert.equal(beastMoneyNavigation.label, "BeastMoney");
   assert.equal(
     beastMoneyNavigation.children?.map((item) => item.label).join(","),
     "Money Coach,Dashboard,Observation Center,Cash Flow,Income,Bills,Debts,Payoff Plan,Velocity,Retirement,Reports,Settings"
   );
-  assert.equal(getModuleChildren("learning").length, 9);
+  assert.equal(getModuleChildren("learning").length, 10);
   const moneyChildren = getModuleChildren("money");
   const addBill = moneyChildren.find((item) => item.label === "Add Bill");
   const addDebt = moneyChildren.find((item) => item.label === "Add Debt");
@@ -3305,7 +3306,7 @@ test("BeastEducation v2 keeps normal learning in the Guidance Counselor conversa
   assert.match(dashboardLayout, /label: "Guidance Counselor"/);
   assert.match(dashboardLayout, /label: "My Roadmap"/);
   assert.match(dashboardLayout, /label: "Progress"/);
-  assert.match(moduleNavigation, /label: "Learning Support", href: "\/dashboard\/education#mentor-session"/);
+  assert.match(moduleNavigation, /label: "Lessons", href: "\/dashboard\/education\/lessons"/);
   assert.doesNotMatch(moduleNavigation, /label: "Continue", href: "\/dashboard\/learning\/activities"/);
 });
 
@@ -3348,7 +3349,7 @@ test("BeastEducation member experience hides workflow mechanics behind Guidance 
 
   assert.match(memberExperienceSource, /Continue with Guidance Counselor/);
   assert.match(memberExperienceSource, /mission\.primaryAction\.label/);
-  assert.match(activitiesPage, /redirect\("\/dashboard\/education#mentor-session"\)/);
+  assert.match(activitiesPage, /redirect\("\/dashboard\/education\/lessons"\)/);
   assert.match(memberExperienceSource, /Your Guidance Counselor/);
   assert.match(memberExperienceSource, /Let&apos;s see what I&apos;ve learned/);
   assert.doesNotMatch(memberExperienceSource, /Your Guidance Counselor's Next Step/);
@@ -3515,7 +3516,7 @@ test("generated learning activities persist with required visibility fields", ()
   assert.equal(goalDiscovery.includes(".from(\"learning_activities\")"), true);
   assert.equal(goalDiscovery.includes("Great choice. I will build your learning plan"), true);
   assert.equal(goalDiscovery.includes("Start Placement"), true);
-  assert.equal(goalsPage.includes("Learning Goals"), true);
+  assert.equal(goalsPage.includes('title="Goals"'), true);
   assert.equal(goalsPage.includes("LearningGoalDiscovery"), true);
   assert.equal(goalsPage.includes("LearningGoalsManager"), true);
   assert.equal(goalsManager.includes("Archive Goal"), true);
@@ -3525,7 +3526,7 @@ test("generated learning activities persist with required visibility fields", ()
   assert.equal(goalsManager.includes("Progress stays saved"), true);
   assert.equal(goalsManager.includes('status: "Paused"'), true);
   assert.equal(todayPage.includes("getNewestReadyLearningActivity"), true);
-  assert.equal(activitiesPage.includes("redirect(\"/dashboard/education#mentor-session\")"), true);
+  assert.equal(activitiesPage.includes("redirect(\"/dashboard/education/lessons\")"), true);
   assert.equal(learningPage.includes("mission.primaryAction.label"), true);
   assert.equal(learningPage.includes("learning_activities"), true);
 });
@@ -5741,20 +5742,28 @@ test("member navigation hides admin and monetization surfaces", () => {
     memberBeastEducationNavigation.children?.map((item) => item.label),
     [
       "Guidance Counselor",
-      "My Roadmap",
-      "Progress",
-      "Learning Support",
-      "Wins",
+      "Learning Path",
+      "Courses",
+      "Lessons",
+      "Reviews",
+      "Achievements",
+      "History",
+      "Certificates",
+      "Goals",
     ]
   );
   assert.deepEqual(
     memberBeastEducationNavigation.children?.map((item) => item.href),
     [
       "/dashboard/education",
-      "/dashboard/education#mentor-plan",
-      "/dashboard/education#mentor-progress",
-      "/dashboard/education#mentor-session",
-      "/dashboard/education#wins",
+      "/dashboard/education/learning-path",
+      "/dashboard/education/courses",
+      "/dashboard/education/lessons",
+      "/dashboard/education/reviews",
+      "/dashboard/education/achievements",
+      "/dashboard/education/history",
+      "/dashboard/education/certificates",
+      "/dashboard/education/goals",
     ]
   );
   assert.equal(
