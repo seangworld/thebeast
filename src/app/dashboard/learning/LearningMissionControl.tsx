@@ -57,26 +57,61 @@ export default function LearningMissionControl({
               <div>
                 <p className="beast-kicker">Learning Health Score</p>
                 <p className="mt-3 text-6xl font-black tracking-tight text-white">
-                  {model.healthScore}<span className="text-2xl text-[#7f8da3]">/100</span>
+                  {model.health.score ?? "—"}<span className="text-2xl text-[#7f8da3]">/100</span>
                 </p>
-                <p className="mt-2 font-bold text-indigo-200">{model.healthLabel}</p>
+                <p className="mt-2 font-bold text-indigo-200">{model.health.label}</p>
               </div>
-              <div className="rounded-2xl border border-indigo-300/30 bg-indigo-300/10 px-4 py-3 text-right">
-                <p className="text-xs font-black uppercase tracking-[0.14em] text-indigo-200">This week</p>
-                <p className="mt-1 text-sm font-semibold text-white">{model.weekly.sessionsCompleted}</p>
+              <div className="grid gap-2 text-right">
+                <div className="rounded-2xl border border-indigo-300/30 bg-indigo-300/10 px-4 py-3">
+                  <p className="text-xs font-black uppercase tracking-[0.14em] text-indigo-200">Previous score</p>
+                  <p className="mt-1 text-sm font-semibold text-white">
+                    {model.health.previousScore ?? "Not available"}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-[#343e50] bg-[#111722] px-4 py-3">
+                  <p className="text-xs font-black uppercase tracking-[0.14em] text-[#8f9cad]">Trend</p>
+                  <p className="mt-1 text-sm font-semibold capitalize text-white">
+                    {model.health.trend}
+                    {model.health.change === null ? "" : ` (${model.health.change > 0 ? "+" : ""}${model.health.change})`}
+                  </p>
+                </div>
               </div>
             </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {model.healthFactors.map((factor) => (
-                <div key={factor.label} className="rounded-xl border border-[#2b3445] bg-[#111722] p-3">
+            <details className="rounded-2xl border border-[#30394a] bg-[#0c111b] p-4" open>
+              <summary className="cursor-pointer font-black text-indigo-100">
+                How the score is calculated
+              </summary>
+              <p className="mt-3 text-xs leading-5 text-[#8f9cad]">
+                {model.health.formula}
+              </p>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              {model.health.factors.map((factor) => (
+                <div key={factor.id} className="rounded-xl border border-[#2b3445] bg-[#111722] p-3">
                   <div className="flex items-center justify-between gap-3 text-sm">
                     <span className="font-bold text-white">{factor.label}</span>
-                    <span className="text-[#aeb8c7]">{factor.value}/{factor.maximum}</span>
+                    <span className="text-[#aeb8c7]">
+                      {factor.score === null ? "Not scored" : `${factor.score}/100`} · {factor.weight}%
+                    </span>
                   </div>
-                  <p className="mt-1 text-xs leading-5 text-[#7f8da3]">{factor.detail}</p>
+                  <p className="mt-2 text-xs leading-5 text-[#aeb8c7]">{factor.explanation}</p>
+                  <p className="mt-1 text-xs leading-5 text-[#7f8da3]">{factor.evidence}</p>
                 </div>
               ))}
-            </div>
+              </div>
+              <div className="mt-4 rounded-xl border border-indigo-300/20 bg-indigo-300/5 p-3">
+                <p className="text-xs font-black uppercase tracking-[0.12em] text-indigo-200">
+                  Ways to improve
+                </p>
+                <ul className="mt-2 space-y-1 text-sm leading-6 text-[#b8c2d1]">
+                  {model.health.waysToImprove.map((item) => (
+                    <li key={item}>• {item}</li>
+                  ))}
+                </ul>
+                <p className="mt-3 text-xs leading-5 text-[#7f8da3]">
+                  {model.health.limitations[0]}
+                </p>
+              </div>
+            </details>
           </div>
         </DashboardCard>
 

@@ -3,22 +3,17 @@ import type { ConfidenceIntelligenceSnapshot } from "./confidenceIntelligence";
 import type { LearningTimelineEvent } from "./learningTimeline";
 import type { MentorHomeMission } from "./mentorHome";
 import type { LearningCourse, LearningProgressSignals } from "./types";
+import {
+  buildLearningHealthScore,
+  type LearningHealthScoreSnapshot,
+} from "./learningHealthScore";
 import type {
   MeaningfulLearningAchievement,
   WeeklyMentorReview,
 } from "./weeklyMentorReview";
 
-export type LearningHealthFactor = {
-  label: string;
-  value: number;
-  maximum: number;
-  detail: string;
-};
-
 export type LearningMissionControlModel = {
-  healthScore: number;
-  healthLabel: string;
-  healthFactors: LearningHealthFactor[];
+  health: LearningHealthScoreSnapshot;
   mission: MentorHomeMission;
   weekly: WeeklyMentorReview;
   courses: LearningCourse[];
@@ -43,51 +38,16 @@ type Input = {
   confidence: ConfidenceIntelligenceSnapshot;
 };
 
-function clamp(value: number, maximum: number) {
-  return Math.max(0, Math.min(maximum, Math.round(value)));
-}
-
 export function buildLearningMissionControl(input: Input): LearningMissionControlModel {
-  const factors: LearningHealthFactor[] = [
-    {
-      label: "Course progress",
-      value: clamp(input.progress.progressPercentage * 0.5, 50),
-      maximum: 50,
-      detail: `${input.progress.progressPercentage}% progress in the current course`,
-    },
-    {
-      label: "Active goals",
-      value: clamp(input.progress.activeGoalsCount * 10, 20),
-      maximum: 20,
-      detail: `${input.progress.activeGoalsCount} active learning goal${input.progress.activeGoalsCount === 1 ? "" : "s"}`,
-    },
-    {
-      label: "Completed sessions",
-      value: clamp(input.progress.sessionsCompleted * 5, 20),
-      maximum: 20,
-      detail: `${input.progress.sessionsCompleted} completed session${input.progress.sessionsCompleted === 1 ? "" : "s"}`,
-    },
-    {
-      label: "Consistency",
-      value: clamp(input.progress.currentStreakDays * 2, 10),
-      maximum: 10,
-      detail: `${input.progress.currentStreakDays}-day recorded streak`,
-    },
-  ];
-  const healthScore = factors.reduce((sum, factor) => sum + factor.value, 0);
   const knowledge = input.confidence.dimensions.find(({ id }) => id === "knowledge");
 
   return {
-    healthScore,
-    healthLabel:
-      healthScore >= 80
-        ? "Strong momentum"
-        : healthScore >= 55
-          ? "Building steadily"
-          : healthScore > 0
-            ? "Early momentum"
-            : "Baseline needed",
-    healthFactors: factors,
+    health: buildLearningHealthScore({
+      confidence: input.confidence,
+      courses: input.courses,
+      activities: input.activities,
+      progress: input.progress,
+    }),
     mission: input.mission,
     weekly: input.weekly,
     courses: input.courses

@@ -59,12 +59,15 @@ test("BL-401 builds a transparent health score from saved learning signals", () 
     },
   });
 
-  assert.equal(model.healthScore, 56);
-  assert.deepEqual(model.healthFactors.map(({ label }) => label), [
-    "Course progress",
-    "Active goals",
-    "Completed sessions",
+  assert.equal(model.health.score, 60);
+  assert.deepEqual(model.health.factors.map(({ label }) => label), [
+    "Knowledge",
+    "Confidence",
+    "Retention",
     "Consistency",
+    "Course completion",
+    "Review completion",
+    "Mission progress",
   ]);
 });
 
