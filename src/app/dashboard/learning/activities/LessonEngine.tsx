@@ -21,6 +21,11 @@ import {
 } from "@/lib/learning/lessonEngine";
 import type { LearningActivityRunnerRow } from "@/lib/learning/activityRunner";
 import type { TutorSelection } from "@/lib/learning/tutorOrchestration";
+import {
+  buildTutorContextualResponse,
+  understandTutorMemberIntent,
+  type TutorMemberIntentContext,
+} from "@/lib/learning/tutorContextAwareness";
 
 // ProfessionalConversationTimeline now owns the former useConversationScroll,
 // conversationScrollRef, onScroll={handleConversationScroll}, showJumpToLatest,
@@ -147,6 +152,9 @@ export function LessonEngine({
   const [messages, setMessages] = useState<TutorMessage[]>([]);
   const [askedForHelp, setAskedForHelp] = useState(false);
   const [isResponding, setIsResponding] = useState(false);
+  const [memberIntentContext, setMemberIntentContext] =
+    useState<TutorMemberIntentContext>("learning");
+  const [learningTurnCount, setLearningTurnCount] = useState(0);
   const restoredDraft = useRef(false);
   const responsePendingRef = useRef(false);
   const conversationScrollPositionsRef = useRef(new Map<string, number>());
@@ -176,7 +184,8 @@ export function LessonEngine({
     engine.lesson.subject;
   const tutorReadyToComplete =
     completed ||
-    (messages.filter((message) => message.role === "learner").length >= 2 &&
+    (memberIntentContext === "learning" &&
+      learningTurnCount >= 2 &&
       Boolean(reflection.trim()));
   const learnerMessageCount = messages.filter(
     (message) => message.role === "learner"
@@ -242,6 +251,8 @@ export function LessonEngine({
         askedForHelp?: boolean;
         reflection?: string;
         confidence?: string;
+        memberIntentContext?: TutorMemberIntentContext;
+        learningTurnCount?: number;
       };
 
       setMessages(
@@ -257,6 +268,24 @@ export function LessonEngine({
       }
       if (typeof parsedDraft.confidence === "string") {
         onConfidenceChange(parsedDraft.confidence);
+      }
+      if (
+        parsedDraft.memberIntentContext &&
+        [
+          "learning",
+          "platform-test",
+          "product-evaluation",
+          "demonstration",
+          "product-development",
+        ].includes(parsedDraft.memberIntentContext)
+      ) {
+        setMemberIntentContext(parsedDraft.memberIntentContext);
+      }
+      if (
+        typeof parsedDraft.learningTurnCount === "number" &&
+        parsedDraft.learningTurnCount >= 0
+      ) {
+        setLearningTurnCount(parsedDraft.learningTurnCount);
       }
       restoredDraft.current = true;
     } catch {
@@ -282,9 +311,20 @@ export function LessonEngine({
         askedForHelp,
         reflection,
         confidence,
+        memberIntentContext,
+        learningTurnCount,
       })
     );
-  }, [askedForHelp, completed, confidence, draftKey, messages, reflection]);
+  }, [
+    askedForHelp,
+    completed,
+    confidence,
+    draftKey,
+    memberIntentContext,
+    learningTurnCount,
+    messages,
+    reflection,
+  ]);
 
   function markPhase(phaseId: string) {
     if (!checkedPhases[phaseId]) onPhaseChange(phaseId, true);
@@ -370,7 +410,27 @@ export function LessonEngine({
 
     responsePendingRef.current = true;
     setIsResponding(true);
-    captureEvidence(text);
+    const intentUnderstanding = understandTutorMemberIntent(
+      text,
+      memberIntentContext
+    );
+    setMemberIntentContext(intentUnderstanding.context);
+    if (intentUnderstanding.context === "learning") {
+      captureEvidence(text);
+      setLearningTurnCount((current) => current + 1);
+    }
+    const contextAcknowledgement =
+      buildTutorContextualResponse(intentUnderstanding);
+    const contextualResponse =
+      intentUnderstanding.context !== "learning" &&
+      learnerAskedForHint(text) &&
+      activePractice
+        ? `${contextAcknowledgement} Here is the hint behavior using this lesson’s real content: ${activePractice.hint}`
+        : intentUnderstanding.context !== "learning" &&
+            learnerAskedForCheck(text) &&
+            activeQuestion
+          ? `${contextAcknowledgement} Here is the knowledge-check behavior using this lesson’s real content: ${activeQuestion.prompt}`
+          : contextAcknowledgement;
 
     setMessages((current) => {
       const learnerMessage: TutorMessage = {
@@ -381,11 +441,14 @@ export function LessonEngine({
       const tutorMessage: TutorMessage = {
         id: messageId("tutor", current.length + 1),
         role: "tutor",
-        body: buildTutorReply(text),
+        body: contextualResponse || buildTutorReply(text),
       };
       const learnerMessageCount =
-        current.filter((message) => message.role === "learner").length + 1;
-      const mentorCheckpoint = buildMentorCheckpoint(text, learnerMessageCount);
+        learningTurnCount + 1;
+      const mentorCheckpoint =
+        intentUnderstanding.context === "learning"
+          ? buildMentorCheckpoint(text, learnerMessageCount)
+          : null;
 
       if (!mentorCheckpoint) return [...current, learnerMessage, tutorMessage];
 
