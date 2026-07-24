@@ -9,6 +9,7 @@ import {
   AgentExperience,
   AgentGreeting,
   AgentHeader,
+  AgentLoadingState,
   AgentStatus,
   AgentSuggestedActions,
   type AgentConversationMessage,
@@ -110,9 +111,14 @@ export default function GuidanceCounselorConversation({
   }
 
   return (
-    <div id="guidance-counselor-conversation" className="scroll-mt-24">
+    <div
+      id="guidance-counselor-conversation"
+      className="scroll-mt-24"
+      aria-busy={!historyReady}
+      data-guidance-home-primary="true"
+    >
       <AgentExperience
-        className="max-w-none border-indigo-300/20 bg-gradient-to-b from-[#171c2a] to-[#121722]"
+        className="max-w-none gap-5 rounded-3xl border-indigo-300/25 bg-gradient-to-b from-[#181e2e] via-[#151b29] to-[#111722] shadow-[0_26px_90px_rgba(0,0,0,0.32)] ring-1 ring-indigo-300/[0.06] transition-[border-color,box-shadow] duration-300 focus-within:border-indigo-300/40 focus-within:shadow-[0_30px_100px_rgba(49,46,129,0.2)] sm:gap-6 sm:p-7"
         suggestedActionsPlacement="after-conversation"
         header={
           <AgentHeader
@@ -167,6 +173,14 @@ export default function GuidanceCounselorConversation({
             placeholder="Tell your Guidance Counselor what you want to explore or update…"
             submitLabel="Send"
           />
+        }
+        statusArea={
+          !historyReady ? (
+            <AgentLoadingState
+              label="Restoring your Guidance Counselor conversation"
+              lines={2}
+            />
+          ) : null
         }
       />
     </div>

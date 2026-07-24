@@ -19,6 +19,7 @@ import GuidanceCounselorMode from "./GuidanceCounselorMode";
 import GuidanceCounselorConversation from "./GuidanceCounselorConversation";
 import EducationalCareerRoadmap from "./EducationalCareerRoadmap";
 import GuidanceCounselorRecommendation from "./GuidanceCounselorRecommendation";
+import GuidanceCounselorOrientation from "./GuidanceCounselorOrientation";
 import EducationCommandCenter from "./EducationCommandCenter";
 import {
   AchievementEnginePanel,
@@ -794,12 +795,12 @@ export default async function LearningPage() {
       <a href="#mentor-session" className="beast-skip-link">
         Skip to Guidance Counselor
       </a>
-      <div className="beast-container space-y-6 sm:space-y-8">
-        <section className="beast-page-header">
+      <div className="beast-container space-y-8 sm:space-y-10">
+        <section className="beast-page-header overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-indigo-300/[0.08] via-[#111722] to-[#0e141e] p-5 shadow-[0_18px_55px_rgba(0,0,0,0.18)] sm:p-7">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-            <div className="space-y-4">
+            <div className="max-w-4xl space-y-4">
               <ModuleBadge module="learning" label={`BeastEducation ${BEAST_LEARNING_VERSION}`} />
-              <h1 className="beast-title">Your BeastEducation Guidance Counselor</h1>
+              <h1 className="beast-title">Your Guidance Counselor knows the path we’re building</h1>
               <p className="beast-subtitle">
                 Discover what fits, compare credible paths, build a realistic roadmap,
                 and keep long-term progress moving. Teaching and Tutor support appear
@@ -815,26 +816,42 @@ export default async function LearningPage() {
           </div>
         </section>
 
-        <GuidanceCounselorConversation
-          memberId={user.id}
-          memberName={fallbackName || "there"}
-          context={{
-            educationalGoal:
-              learningGoals[0]?.title || "Define a long-term educational goal together.",
-            interests:
-              activeLearner.focus ||
-              "Explore the subjects, problems, and environments that fit you.",
-            careerDirection:
-              learningGoals[0]?.category || "No career direction has been confirmed yet.",
-            roadmap: learningPlan.summary,
-          }}
-        />
+        <section
+          aria-label="Your Guidance Counselor relationship"
+          className="space-y-6 sm:space-y-8"
+          data-guidance-primary-flow="true"
+        >
+          <GuidanceCounselorOrientation
+            memberName={fallbackName || "Member"}
+            memberFocus={activeLearner.focus}
+            direction={
+              learningGoals[0]?.title ||
+              "We’ll define your educational direction together."
+            }
+            nextStep={missionControl.mission.missionTitle}
+          />
 
-        <GuidanceCounselorRecommendation
-          mission={missionControl.mission}
-          roadmap={lifelongRoadmap}
-          learnerName={fallbackName || "there"}
-        />
+          <GuidanceCounselorConversation
+            memberId={user.id}
+            memberName={fallbackName || "there"}
+            context={{
+              educationalGoal:
+                learningGoals[0]?.title || "Define a long-term educational goal together.",
+              interests:
+                activeLearner.focus ||
+                "Explore the subjects, problems, and environments that fit you.",
+              careerDirection:
+                learningGoals[0]?.category || "No career direction has been confirmed yet.",
+              roadmap: learningPlan.summary,
+            }}
+          />
+
+          <GuidanceCounselorRecommendation
+            mission={missionControl.mission}
+            roadmap={lifelongRoadmap}
+            learnerName={fallbackName || "there"}
+          />
+        </section>
 
         <EducationalCareerRoadmap roadmap={lifelongRoadmap} />
 

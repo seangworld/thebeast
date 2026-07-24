@@ -35,9 +35,9 @@ export default function GuidanceCounselorRecommendation({
       aria-labelledby="guidance-counselor-recommendation-title"
       data-adaptive-reason={mission.recommendationReason}
       data-roadmap-progress={mission.journeyProgressLabel}
-      className="grid scroll-mt-24 gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(20rem,0.9fr)]"
+      className="grid scroll-mt-24 items-stretch gap-4 lg:grid-cols-[minmax(0,1.12fr)_minmax(18rem,0.88fr)] lg:gap-5"
     >
-      <DashboardCard accent="purple">
+      <DashboardCard accent="purple" className="h-full transition-[border-color,box-shadow] duration-300 hover:border-indigo-300/30 hover:shadow-[0_20px_55px_rgba(0,0,0,0.2)]">
         <SectionHeader
           eyebrow="Current recommendation · Today’s assignment from your Guidance Counselor"
           title={mission.missionTitle}
@@ -79,7 +79,7 @@ export default function GuidanceCounselorRecommendation({
         </Link>
       </DashboardCard>
 
-      <DashboardCard accent="learning">
+      <DashboardCard accent="learning" className="h-full transition-[border-color,box-shadow] duration-300 hover:border-cyan-300/25 hover:shadow-[0_20px_55px_rgba(0,0,0,0.2)]">
         <SectionHeader
           eyebrow="Educational Roadmap summary"
           title="Where we are heading"
