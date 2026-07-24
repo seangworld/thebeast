@@ -6,6 +6,10 @@ import { ExternalResourceCard } from "@/app/components/design/ExternalResourceCa
 import { buildEducationGuidancePlan, educationDiscoveryQuestions, type EducationGoalKind, type EducationProfile, type EducationResourceProvider } from "@/lib/education";
 import { externalResourceProviders } from "@/lib/platform/externalResources";
 import { useProgressiveSave } from "@/lib/platform/useProgressiveSave";
+import {
+  beastEducationGen2ArchitectureRules,
+  beastEducationGen2Vision,
+} from "@/lib/education/gen2Vision";
 
 const goalKinds: { value: EducationGoalKind; label: string }[] = [
   { value: "career", label: "Career planning" },
@@ -64,6 +68,42 @@ export default function EducationCommandCenter() {
         action={<ModuleBadge module="learning" label="Guidance first" />}
       />
 
+      <section
+        className="mt-5 rounded-xl border border-indigo-300/25 bg-indigo-300/5 p-4"
+        aria-labelledby="beasteducation-gen2-focus"
+      >
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <div className="text-xs font-black uppercase tracking-wide text-indigo-200">
+              BE-201 · Gen2 vision
+            </div>
+            <h2 id="beasteducation-gen2-focus" className="mt-2 text-xl font-black text-white">
+              Guidance for the whole educational journey
+            </h2>
+          </div>
+          <span className="w-fit rounded-full border border-indigo-300/30 bg-indigo-300/10 px-3 py-1 text-xs font-black text-indigo-100">
+            {beastEducationGen2Vision.primaryProfessional}
+          </span>
+        </div>
+        <p className="mt-3 max-w-4xl text-sm leading-6 text-[#c7cfdb]">
+          {beastEducationGen2Vision.productPromise}
+        </p>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          {beastEducationGen2Vision.focus.map((focus) => (
+            <article
+              key={focus.id}
+              id={focus.id}
+              className="scroll-mt-24 rounded-xl border border-[#2a3242] bg-[#111827] p-4"
+            >
+              <h3 className="font-black text-white">{focus.title}</h3>
+              <p className="mt-2 text-sm leading-5 text-[#aeb9ca]">
+                {focus.description}
+              </p>
+            </article>
+          ))}
+        </div>
+      </section>
+
       <div className="mt-5 grid gap-5 xl:grid-cols-[0.82fr_1.18fr]">
         <div className="grid content-start gap-4 rounded-xl border border-[#2a3242] bg-[#111827] p-4">
           <div>
@@ -118,7 +158,30 @@ export default function EducationCommandCenter() {
         <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4"><div className="text-xs font-bold uppercase text-[#8d9aae]">Skill analysis</div><h3 className="mt-2 text-lg font-black text-white">Strengths, gaps, and evidence</h3><PlanList title="Current strengths" items={plan.skillAnalysis.currentStrengths} empty="Add strengths to the Education Profile." /><PlanList title="Skills to build" items={plan.skillAnalysis.skillsToBuild} /><PlanList title="Evidence to collect" items={plan.skillAnalysis.evidenceNeeded} /></div>
         <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4"><div className="text-xs font-bold uppercase text-[#8d9aae]">External resource recommendations</div><p className="mt-2 text-sm text-[#aeb9ca]">Explore providers without turning BeastEducation into another course catalog.</p><div className="mt-4 grid gap-3 sm:grid-cols-2">{plan.resources.map((resource) => <ExternalResourceCard key={resource.id} recommendation={resource} />)}</div></div>
       </div>
-      <div className="mt-5 rounded-xl border border-green-400/25 bg-green-400/10 p-4"><div className="text-xs font-bold uppercase text-green-100">Teaching supports the plan</div><p className="mt-2 text-sm leading-6 text-green-100">{plan.teachingSupport}</p></div>
+      <div className="mt-5 rounded-xl border border-green-400/25 bg-green-400/10 p-4">
+        <div className="text-xs font-bold uppercase text-green-100">
+          Supporting capabilities stay available
+        </div>
+        <p className="mt-2 text-sm leading-6 text-green-100">
+          {plan.teachingSupport}
+        </p>
+        <div className="mt-4 grid gap-2 sm:grid-cols-2">
+          {beastEducationGen2Vision.supportingCapabilities.map((capability) => (
+            <div
+              key={capability.id}
+              className="rounded-lg border border-green-200/20 bg-[#0f1419]/60 p-3"
+            >
+              <div className="text-sm font-black text-white">{capability.title}</div>
+              <p className="mt-1 text-xs leading-5 text-green-100">
+                {capability.positioning}
+              </p>
+            </div>
+          ))}
+        </div>
+        <p className="mt-4 text-xs font-semibold leading-5 text-green-100">
+          {beastEducationGen2ArchitectureRules[1]}
+        </p>
+      </div>
     </DashboardCard>
   );
 }
