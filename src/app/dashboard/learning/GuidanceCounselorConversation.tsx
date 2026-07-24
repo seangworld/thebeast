@@ -20,7 +20,9 @@ import {
 } from "@/app/components/agents";
 import {
   buildGuidanceCounselorConversationTurn,
+  buildGuidanceCounselorUnderstanding,
   type GuidanceCounselorConversationContext,
+  type GuidanceUnderstandingItem,
 } from "@/lib/education";
 import {
   discoveryProfileUpdate,
@@ -377,18 +379,18 @@ export default function GuidanceCounselorConversation({
     [memberName, streamingTurnId, turns]
   );
 
-  const knownContext = [
-    discoveryProfile.goal ? `Goal: ${discoveryProfile.goal}` : "",
-    discoveryProfile.currentEmployment
-      ? `Current work: ${discoveryProfile.currentEmployment}`
-      : "",
-    discoveryProfile.strengths
-      ? `Strengths: ${discoveryProfile.strengths}`
-      : "",
-    discoveryProfile.availableStudyTimeKnown
-      ? `Study time: ${discoveryProfile.weeklyHours} hours per week`
-      : "",
-  ].filter(Boolean);
+  const understanding = buildGuidanceCounselorUnderstanding(discoveryProfile);
+  const understandingItems = (items: readonly GuidanceUnderstandingItem[]) =>
+    items.map((item) => (
+      <span key={item.area}>
+        <strong className="text-white">{item.label}</strong>
+        {" · "}
+        <span className="capitalize text-cyan-200">
+          {item.confidence} confidence
+        </span>
+        {item.value ? ` · ${item.value}` : ""}
+      </span>
+    ));
   const pinnedThreads = threads.filter(
     (thread) => thread.pinned && !thread.archived
   );
@@ -633,12 +635,38 @@ export default function GuidanceCounselorConversation({
           }
           contextSummary={
             <div className="grid gap-5">
-              {knownContext.length ? (
+              <div
+                className="grid gap-3 lg:grid-cols-3"
+                data-guidance-understanding-model="true"
+              >
                 <AgentContextSummary
-                  title="What I’ve learned about you"
-                  items={knownContext}
+                  title="What I Know"
+                  items={understandingItems(understanding.whatIKnow)}
+                  emptyState={
+                    <p className="mt-3 text-sm text-slate-400">
+                      Nothing is confirmed yet.
+                    </p>
+                  }
                 />
-              ) : null}
+                <AgentContextSummary
+                  title="What I Think"
+                  items={understandingItems(understanding.whatIThink)}
+                  emptyState={
+                    <p className="mt-3 text-sm text-slate-400">
+                      I don’t have a useful working hypothesis yet.
+                    </p>
+                  }
+                />
+                <AgentContextSummary
+                  title="What I Still Need"
+                  items={understandingItems(understanding.whatIStillNeed)}
+                  emptyState={
+                    <p className="mt-3 text-sm text-slate-400">
+                      I have enough context for the current plan.
+                    </p>
+                  }
+                />
+              </div>
               {starterExperience}
             </div>
           }

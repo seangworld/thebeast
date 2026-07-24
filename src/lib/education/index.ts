@@ -4,4 +4,5 @@ export * from "./prompt";
 export * from "./intelligence";
 export * from "./guidanceCounselorReasoning";
 export * from "./discoveryConversation";
+export * from "./guidanceUnderstanding";
 export * from "./agentManifest";

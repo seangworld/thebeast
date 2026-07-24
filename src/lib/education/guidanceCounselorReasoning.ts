@@ -253,52 +253,10 @@ function qualifyingQuestion(
   topics: readonly GuidancePlanningTopic[],
   profile: GuidanceDiscoveryProfile
 ) {
-  if (
-    topics.includes("time-estimate") &&
-    !profile.availableStudyTimeKnown
-  ) {
-    return "How many hours could you realistically protect for this in a typical week?";
-  }
-  if (
-    (topics.includes("prerequisites") || topics.includes("certification")) &&
-    !profile.otherEducationalContext &&
-    profile.certifications.length === 0
-  ) {
-    return "What relevant education, training, or credentials are you already bringing to this?";
-  }
-  if (
-    (topics.includes("college-pathway") || topics.includes("tradeoffs")) &&
-    !profile.constraints
-  ) {
-    return "Which constraint should carry the most weight in this decision: cost, time, schedule, location, or flexibility?";
-  }
-  if (
-    topics.includes("career-progression") &&
-    !profile.currentEmployment &&
-    !profile.militaryExperience
-  ) {
-    return "What does your current work, school, or military situation look like?";
-  }
-  if (
-    topics.includes("interests") &&
-    !profile.strengths
-  ) {
-    return "What kind of problem or task tends to hold your attention longer than you expect?";
-  }
-  if (
-    (topics.includes("learning-order") || topics.includes("foundations")) &&
-    !profile.growthAreas
-  ) {
-    return "Where do you feel least prepared right now?";
-  }
-  if (
-    topics.length === 0 &&
-    !profile.goal &&
-    profile.careerInterests.length === 0
-  ) {
-    return "What would you most like education or career guidance to help you change?";
-  }
-  return undefined;
+  return nextGuidanceUnderstandingQuestion(
+    buildGuidanceCounselorUnderstanding(profile),
+    topics
+  )?.question;
 }
 
 function withoutEmbeddedQuestions(text: string) {
@@ -385,3 +343,7 @@ export function buildGuidanceCounselorConversationTurn({
   };
 }
 import type { GuidanceDiscoveryProfile } from "./discoveryConversation";
+import {
+  buildGuidanceCounselorUnderstanding,
+  nextGuidanceUnderstandingQuestion,
+} from "./guidanceUnderstanding";

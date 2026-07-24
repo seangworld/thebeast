@@ -91,7 +91,9 @@ test("BE-216 persists discovery behind the conversation with owner isolation", (
 test("BE-216 reuses saved discovery context in conversation and guidance", () => {
   assert.match(page, /guidanceDiscoveryProfileFromRow/);
   assert.match(page, /initialProfile=\{guidanceDiscoveryProfile\}/);
-  assert.match(conversation, /What I’ve learned about you/);
+  assert.match(conversation, /What I Know/);
+  assert.match(conversation, /What I Think/);
+  assert.match(conversation, /What I Still Need/);
   assert.match(conversation, /router\.refresh\(\)/);
   assert.match(conversation, /I’ll remember this for future guidance/);
 });
