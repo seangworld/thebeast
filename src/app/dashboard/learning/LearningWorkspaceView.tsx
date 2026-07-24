@@ -4,7 +4,10 @@ import { DashboardCard, SectionHeader } from "@/app/components/design/DashboardP
 import { createRouteClient } from "@/lib/supabase/server";
 import {
   isLearningWorkspaceSlug,
+  isPlanningWorkspaceSlug,
   learningWorkspaceDefinitions,
+  planningWorkspaceDefinitions,
+  type PlanningWorkspaceSlug,
   type LearningWorkspaceSlug,
 } from "@/lib/learning/workspaces";
 import {
@@ -61,6 +64,20 @@ async function loadWorkspaceItems(slug: LearningWorkspaceSlug, userId: string) {
 
   return rows.map((row): WorkspaceItem => {
     const id = String(row.id);
+    if (isPlanningWorkspaceSlug(slug)) {
+      return {
+        id,
+        title: String(row.title || "Saved education goal"),
+        detail: String(
+          row.target ||
+            "No outcome detail has been saved for this goal yet."
+        ),
+        status: String(row.status || "Saved"),
+        progress:
+          typeof row.progress === "number" ? Number(row.progress) : undefined,
+        meta: row.category ? String(row.category) : undefined,
+      };
+    }
     if (slug === "learning-path" || slug === "educational-roadmap") {
       return {
         id,
@@ -110,6 +127,208 @@ async function loadWorkspaceItems(slug: LearningWorkspaceSlug, userId: string) {
       href: `/dashboard/education/activities/${id}`,
     };
   });
+}
+
+function GoalContextCards({
+  items,
+  progressLabel,
+}: {
+  items: WorkspaceItem[];
+  progressLabel: string;
+}) {
+  return (
+    <div className="mt-5 grid gap-4 md:grid-cols-2">
+      {items.map((item) => (
+        <DashboardCard key={item.id} accent="learning" className="min-w-0">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            {item.status ? (
+              <span className="rounded-full border border-indigo-300/30 bg-indigo-300/10 px-2.5 py-1 text-xs font-black text-indigo-100">
+                {item.status}
+              </span>
+            ) : null}
+            {item.meta ? (
+              <span className="text-xs font-bold text-[#8f9cad]">
+                {item.meta}
+              </span>
+            ) : null}
+          </div>
+          <h3 className="mt-4 text-lg font-black text-white">{item.title}</h3>
+          <p className="mt-2 text-sm leading-6 text-[#aeb8c7]">{item.detail}</p>
+          {typeof item.progress === "number" ? (
+            <p className="mt-4 text-xs font-bold uppercase tracking-wide text-indigo-200">
+              {progressLabel}: {item.progress}%
+            </p>
+          ) : null}
+        </DashboardCard>
+      ))}
+    </div>
+  );
+}
+
+function CareerPlanningWorkspace({ items }: { items: WorkspaceItem[] }) {
+  const definition = planningWorkspaceDefinitions["career-planning"];
+  return (
+    <div className="space-y-6">
+      <section className="rounded-2xl border border-violet-300/25 bg-gradient-to-br from-violet-300/10 to-transparent p-5 sm:p-6">
+        <p className="text-xs font-black uppercase tracking-[0.16em] text-violet-200">
+          Career question
+        </p>
+        <h2 className="mt-2 text-3xl font-black text-white">
+          {definition.guidingQuestion}
+        </h2>
+        <p className="mt-3 max-w-3xl text-sm leading-6 text-[#c7cfdb]">
+          Explore identity, role fit, and progression before choosing education
+          or training.
+        </p>
+      </section>
+      <section aria-label="Career planning framework">
+        <SectionHeader
+          eyebrow="Explore"
+          title="From possibilities to credible next roles"
+          description="Use these lenses to investigate a direction without treating it as a predetermined answer."
+        />
+        <div className="mt-5 grid gap-4 lg:grid-cols-3">
+          {definition.focusAreas.map((area, index) => (
+            <DashboardCard key={area.title} accent="purple">
+              <span className="text-xs font-black text-violet-200">
+                0{index + 1}
+              </span>
+              <h3 className="mt-3 text-lg font-black text-white">{area.title}</h3>
+              <p className="mt-2 text-sm leading-6 text-[#aeb8c7]">
+                {area.description}
+              </p>
+            </DashboardCard>
+          ))}
+        </div>
+      </section>
+      <section aria-label="Saved career goal context">
+        <SectionHeader
+          eyebrow="Your context"
+          title={definition.contextTitle}
+          description={definition.contextDescription}
+        />
+        <GoalContextCards items={items} progressLabel="Goal progress" />
+      </section>
+      <p className="rounded-xl border border-white/10 bg-white/5 p-4 text-sm leading-6 text-[#aeb8c7]">
+        {definition.verificationNote}
+      </p>
+    </div>
+  );
+}
+
+function SchoolsWorkspace({ items }: { items: WorkspaceItem[] }) {
+  const definition = planningWorkspaceDefinitions.schools;
+  return (
+    <div className="space-y-6">
+      <section className="rounded-2xl border border-cyan-300/25 bg-gradient-to-r from-cyan-300/10 to-transparent p-5 sm:p-6">
+        <p className="text-xs font-black uppercase tracking-[0.16em] text-cyan-200">
+          School question
+        </p>
+        <h2 className="mt-2 text-3xl font-black text-white">
+          {definition.guidingQuestion}
+        </h2>
+        <p className="mt-3 max-w-3xl text-sm leading-6 text-[#c7cfdb]">
+          Compare places and programs only after the outcome and decision
+          criteria are clear.
+        </p>
+      </section>
+      <section aria-label="School comparison framework">
+        <SectionHeader
+          eyebrow="Compare"
+          title="A school earns consideration by meeting your criteria"
+          description="No institution appears as a recommendation until a real candidate and current source evidence are available."
+        />
+        <ol className="mt-5 divide-y divide-white/10 rounded-2xl border border-white/10 bg-[#111827]">
+          {definition.focusAreas.map((area, index) => (
+            <li key={area.title} className="grid gap-3 p-4 sm:grid-cols-[3rem_1fr] sm:p-5">
+              <span className="text-2xl font-black text-cyan-200">
+                {index + 1}
+              </span>
+              <div>
+                <h3 className="font-black text-white">{area.title}</h3>
+                <p className="mt-1 text-sm leading-6 text-[#aeb8c7]">
+                  {area.description}
+                </p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </section>
+      <section aria-label="Saved school planning context">
+        <SectionHeader
+          eyebrow="Search criteria"
+          title={definition.contextTitle}
+          description={definition.contextDescription}
+        />
+        <GoalContextCards items={items} progressLabel="Goal progress" />
+      </section>
+      <p className="rounded-xl border border-cyan-300/20 bg-cyan-300/5 p-4 text-sm leading-6 text-cyan-50">
+        {definition.verificationNote}
+      </p>
+    </div>
+  );
+}
+
+function ScholarshipsWorkspace({ items }: { items: WorkspaceItem[] }) {
+  const definition = planningWorkspaceDefinitions.scholarships;
+  return (
+    <div className="space-y-6">
+      <section className="rounded-2xl border border-green-300/25 bg-gradient-to-br from-green-300/10 to-transparent p-5 sm:p-6">
+        <p className="text-xs font-black uppercase tracking-[0.16em] text-green-200">
+          Funding question
+        </p>
+        <h2 className="mt-2 text-3xl font-black text-white">
+          {definition.guidingQuestion}
+        </h2>
+        <p className="mt-3 max-w-3xl text-sm leading-6 text-[#c7cfdb]">
+          Build a verified funding plan around real costs, confirmed eligibility,
+          and deadlines.
+        </p>
+      </section>
+      <section aria-label="Scholarship funding framework">
+        <SectionHeader
+          eyebrow="Fund"
+          title="A funding pipeline, not a list of promises"
+          description="Keep possible opportunities, submitted applications, and confirmed awards clearly separated."
+        />
+        <div className="mt-5 grid gap-4 md:grid-cols-3">
+          {definition.focusAreas.map((area) => (
+            <DashboardCard key={area.title} accent="green">
+              <h3 className="text-lg font-black text-white">{area.title}</h3>
+              <p className="mt-2 text-sm leading-6 text-[#aeb8c7]">
+                {area.description}
+              </p>
+            </DashboardCard>
+          ))}
+        </div>
+      </section>
+      <section aria-label="Saved scholarship planning context">
+        <SectionHeader
+          eyebrow="Funding purpose"
+          title={definition.contextTitle}
+          description={definition.contextDescription}
+        />
+        <GoalContextCards items={items} progressLabel="Goal progress" />
+      </section>
+      <p className="rounded-xl border border-green-300/20 bg-green-300/5 p-4 text-sm leading-6 text-green-50">
+        {definition.verificationNote}
+      </p>
+    </div>
+  );
+}
+
+function PlanningWorkspace({
+  slug,
+  items,
+}: {
+  slug: PlanningWorkspaceSlug;
+  items: WorkspaceItem[];
+}) {
+  if (slug === "career-planning") {
+    return <CareerPlanningWorkspace items={items} />;
+  }
+  if (slug === "schools") return <SchoolsWorkspace items={items} />;
+  return <ScholarshipsWorkspace items={items} />;
 }
 
 async function loadLearningChronology(userId: string) {
@@ -269,7 +488,9 @@ export default async function LearningWorkspaceView({ slug }: { slug: string }) 
       description={definition.description}
       eyebrow={definition.eyebrow}
     >
-      {reports ? (
+      {isPlanningWorkspaceSlug(slug) && items.length > 0 ? (
+        <PlanningWorkspace slug={slug} items={items} />
+      ) : reports ? (
         <LearningReports bundle={reports} />
       ) : timeline && timeline.length > 0 ? (
         <LearningTimeline events={timeline} />

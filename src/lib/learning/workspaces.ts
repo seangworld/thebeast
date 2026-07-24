@@ -29,6 +29,113 @@ export type LearningWorkspaceDefinition = {
   emptyAction: { label: string; href: string };
 };
 
+export type PlanningWorkspaceSlug =
+  | "career-planning"
+  | "schools"
+  | "scholarships";
+
+export type PlanningWorkspaceDefinition = {
+  slug: PlanningWorkspaceSlug;
+  guidingQuestion: string;
+  contextTitle: string;
+  contextDescription: string;
+  focusAreas: readonly {
+    title: string;
+    description: string;
+  }[];
+  verificationNote: string;
+};
+
+export const planningWorkspaceDefinitions: Record<
+  PlanningWorkspaceSlug,
+  PlanningWorkspaceDefinition
+> = {
+  "career-planning": {
+    slug: "career-planning",
+    guidingQuestion: "Who could I become?",
+    contextTitle: "Directions grounded in your goals",
+    contextDescription:
+      "Saved goals are starting points for exploration—not career assignments or proof that a role fits.",
+    focusAreas: [
+      {
+        title: "Possible directions",
+        description:
+          "Connect interests, strengths, preferred environments, and constraints to roles worth investigating.",
+      },
+      {
+        title: "Role reality",
+        description:
+          "Separate required qualifications from preferences using current role and occupational evidence.",
+      },
+      {
+        title: "Progression and proof",
+        description:
+          "Map foundational roles, transferable experience, skill gaps, and credible evidence for the next step.",
+      },
+    ],
+    verificationNote:
+      "Verify role requirements with current employer postings, government occupational sources, and applicable professional or licensing bodies.",
+  },
+  schools: {
+    slug: "schools",
+    guidingQuestion: "Where could I learn?",
+    contextTitle: "What your goals need from a school",
+    contextDescription:
+      "Saved goals shape comparison criteria. They are not school recommendations, admissions decisions, or verified program matches.",
+    focusAreas: [
+      {
+        title: "Program fit",
+        description:
+          "Compare curriculum, learning format, location, schedule, support, and alignment with the intended outcome.",
+      },
+      {
+        title: "Entry and transfer",
+        description:
+          "Check admissions, prerequisites, transfer credit, articulation agreements, and application deadlines.",
+      },
+      {
+        title: "Credibility and total cost",
+        description:
+          "Verify accreditation, total price, completion outcomes, aid terms, and what happens if plans change.",
+      },
+    ],
+    verificationNote:
+      "Use official admissions pages, current academic catalogs, transfer agreements, program departments, and recognized accreditor directories.",
+  },
+  scholarships: {
+    slug: "scholarships",
+    guidingQuestion: "How could I fund it?",
+    contextTitle: "What the funding plan needs to support",
+    contextDescription:
+      "Saved goals clarify the purpose of funding. They do not establish scholarship eligibility, award amounts, or deadlines.",
+    focusAreas: [
+      {
+        title: "Find credible funding",
+        description:
+          "Start with schools, government aid sources, recognized foundations, employers, and verified community organizations.",
+      },
+      {
+        title: "Check fit and timing",
+        description:
+          "Confirm eligibility, covered costs, deadlines, required materials, renewal terms, and award restrictions.",
+      },
+      {
+        title: "Plan the remaining gap",
+        description:
+          "Track confirmed aid separately from pending applications and compare it with the verified total cost.",
+      },
+    ],
+    verificationNote:
+      "Confirm every opportunity on the sponsor’s official page and the school’s financial-aid office; never rely on an aggregator alone.",
+  },
+};
+
+export function isPlanningWorkspaceSlug(
+  value: LearningWorkspaceSlug
+): value is PlanningWorkspaceSlug {
+  return value in planningWorkspaceDefinitions;
+}
+
 export const learningWorkspaceDefinitions: Record<
   LearningWorkspaceSlug,
   LearningWorkspaceDefinition
