@@ -3313,18 +3313,27 @@ test("BeastEducation v2 keeps normal learning in the Guidance Counselor conversa
   assert.doesNotMatch(moduleNavigation, /label: "Continue", href: "\/dashboard\/learning\/activities"/);
 });
 
-test("BeastEducation first impression starts with the Guidance Counselor relationship", () => {
+test("authentication presents one permission-aware Beast platform entry point", () => {
   const loginPage = readFileSync("src/app/login/page.tsx", "utf8");
+  const dashboardLayout = readFileSync("src/app/dashboard/layout.tsx", "utf8");
 
-  assert.match(loginPage, /Meet Your BeastEducation Guidance Counselor/);
-  assert.match(loginPage, /Build a lifelong education profile/);
-  assert.match(loginPage, /Your story, strengths, constraints, and goals shape the roadmap/);
-  assert.match(loginPage, /Guidance Counselor brings in a specialist resource/);
-  assert.match(loginPage, /Send my private link/);
-  assert.match(loginPage, /Your Guidance Counselor will meet you inside/);
-  assert.doesNotMatch(loginPage, /Login \/ Signup/);
-  assert.doesNotMatch(loginPage, /magic login link/);
-  assert.doesNotMatch(loginPage, /Send Login Link/);
+  assert.match(loginPage, />\s*Beast\s*</);
+  assert.match(loginPage, /AI that helps you improve your life\./);
+  assert.match(loginPage, />\s*Log In\s*</);
+  assert.match(loginPage, />\s*Create Account\s*</);
+  assert.match(loginPage, /signInWithOtp/);
+  assert.match(loginPage, /shouldCreateUser: intent === "create-account"/);
+  assert.match(
+    loginPage,
+    /emailRedirectTo: `\$\{window\.location\.origin\}\/dashboard\/today`/
+  );
+  assert.doesNotMatch(loginPage, /BeastEducation|Guidance Counselor/);
+  assert.match(dashboardLayout, /select\("role, onboarding_complete"\)/);
+  assert.match(dashboardLayout, /const isLearningRoute =/);
+  assert.match(
+    dashboardLayout,
+    /getBeastModuleNavigationForPersona\(isAdminPersona\)/
+  );
 });
 
 test("BeastEducation member experience hides workflow mechanics behind Guidance Counselor and Tutor language", () => {

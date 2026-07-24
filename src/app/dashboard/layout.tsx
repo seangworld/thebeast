@@ -348,12 +348,18 @@ export default function DashboardLayout({
         }
       }
 
-      const onboardingRedirect = getOnboardingRedirect({
-        isAuthenticated: true,
-        onboardingComplete,
-        pathname,
-        onboardingPath,
-      });
+      const isLearningRoute =
+        pathname.startsWith("/dashboard/education") ||
+        pathname.startsWith("/dashboard/learning") ||
+        pathname === onboardingPath;
+      const onboardingRedirect = isLearningRoute
+        ? getOnboardingRedirect({
+            isAuthenticated: true,
+            onboardingComplete,
+            pathname,
+            onboardingPath,
+          })
+        : null;
 
       if (onboardingRedirect) {
         if (onboardingRedirect === onboardingPath) {
