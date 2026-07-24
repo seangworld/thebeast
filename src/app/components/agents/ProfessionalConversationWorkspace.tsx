@@ -60,6 +60,7 @@ type ProfessionalConversationTimelineProps = {
   messages: readonly AgentConversationMessage[];
   conversationId: string;
   streaming: boolean;
+  followLatestSignal?: number;
   scrollPositions: MutableRefObject<Map<string, number>>;
   professionalName: string;
 };
@@ -68,6 +69,7 @@ export function ProfessionalConversationTimeline({
   messages,
   conversationId,
   streaming,
+  followLatestSignal,
   scrollPositions,
   professionalName,
 }: ProfessionalConversationTimelineProps) {
@@ -84,6 +86,7 @@ export function ProfessionalConversationTimeline({
     conversationId,
     messageCount: messages.length,
     streaming,
+    followLatestSignal,
     scrollPositions,
   });
   const headingId = `${professionalName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-conversation-heading`;

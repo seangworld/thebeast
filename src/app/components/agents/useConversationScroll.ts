@@ -7,6 +7,7 @@ type UseConversationScrollOptions = {
   conversationId: string;
   messageCount: number;
   streaming: boolean;
+  followLatestSignal?: number;
   scrollPositions?: MutableRefObject<Map<string, number>>;
 };
 
@@ -16,6 +17,7 @@ export function useConversationScroll({
   conversationId,
   messageCount,
   streaming,
+  followLatestSignal,
   scrollPositions,
 }: UseConversationScrollOptions) {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -62,6 +64,11 @@ export function useConversationScroll({
   useEffect(() => {
     if (followingLatestRef.current) scrollToLatest("smooth");
   }, [messageCount, scrollToLatest]);
+
+  useEffect(() => {
+    if (followLatestSignal === undefined) return;
+    scrollToLatest("smooth");
+  }, [followLatestSignal, scrollToLatest]);
 
   useEffect(() => {
     const content = contentRef.current;

@@ -444,16 +444,24 @@ test("BL-46 keeps guided sessions accessible on mobile and keyboard paths", () =
     "src/app/dashboard/learning/activities/LessonEngine.tsx",
     "utf8"
   );
+  const workspaceSource = readFileSync(
+    "src/app/components/agents/ProfessionalConversationWorkspace.tsx",
+    "utf8"
+  );
+  const composerSource = readFileSync(
+    "src/app/components/agents/AgentExperience.tsx",
+    "utf8"
+  );
 
   assert.match(sessionSource, /href="#active-learning-conversation"/);
   assert.match(sessionSource, /role="status" aria-live="polite"/);
   assert.match(sessionSource, /role="radiogroup"/);
   assert.match(sessionSource, /role="radio"/);
-  assert.match(engineSource, /role="log"/);
-  assert.match(engineSource, /aria-relevant="additions text"/);
-  assert.match(engineSource, /onSubmit=\{\(event\) =>/);
-  assert.match(engineSource, /type="submit"/);
-  assert.match(engineSource, /Enter to send/);
+  assert.match(workspaceSource, /role="log"/);
+  assert.match(workspaceSource, /aria-relevant="additions text"/);
+  assert.match(composerSource, /onSubmit=\{submit\}/);
+  assert.match(composerSource, /type="submit"/);
+  assert.match(composerSource, /event\.nativeEvent\.isComposing/);
   assert.match(engineSource, /min-h-\[70svh\]/);
   assert.match(engineSource, /aria-label="Guidance Counselor session snapshot"/);
 });

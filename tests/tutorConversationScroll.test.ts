@@ -20,7 +20,7 @@ const sharedScroll = readFileSync(
 );
 
 test("BE-213 Tutor and Money Coach reuse one conversation scroll behavior", () => {
-  assert.match(tutor, /useConversationScroll/);
+  assert.match(tutor, /ProfessionalConversationTimeline/);
   assert.match(moneyCoach, /ProfessionalConversationTimeline/);
   assert.match(professionalWorkspace, /useConversationScroll/);
   assert.doesNotMatch(tutor, /useLayoutEffect/);
@@ -38,14 +38,18 @@ test("BE-213 preserves manual position during messages and streaming", () => {
 });
 
 test("BE-213 follows a member send and offers an accessible return to latest", () => {
-  assert.match(tutor, /scrollToLatest\("smooth"\)/);
-  assert.match(tutor, /showJumpToLatest/);
-  assert.match(tutor, /aria-label="Jump to latest Tutor response"/);
-  assert.match(tutor, /overscroll-contain/);
+  assert.match(tutor, /followLatestSignal=\{learnerMessageCount\}/);
+  assert.match(professionalWorkspace, /showJumpToLatest/);
+  assert.match(professionalWorkspace, /Jump to latest \$\{professionalName\} response/);
+  assert.match(professionalWorkspace, /overscroll-contain/);
 });
 
 test("BE-213 preserves composer focus and IME input behavior", () => {
-  assert.match(tutor, /event\.nativeEvent\.isComposing/);
+  const agentExperience = readFileSync(
+    "src/app/components/agents/AgentExperience.tsx",
+    "utf8"
+  );
+  assert.match(agentExperience, /event\.nativeEvent\.isComposing/);
   assert.match(tutor, /\.focus\(\{ preventScroll: true \}\)/);
   assert.match(tutor, /requestAnimationFrame/);
 });
