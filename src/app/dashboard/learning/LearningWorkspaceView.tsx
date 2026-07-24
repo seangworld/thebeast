@@ -31,14 +31,20 @@ type WorkspaceItem = {
 async function loadWorkspaceItems(slug: LearningWorkspaceSlug, userId: string) {
   const supabase = createRouteClient();
   const table =
-    slug === "learning-path"
+    slug === "learning-path" || slug === "educational-roadmap"
       ? "learning_plans"
       : slug === "courses"
         ? "learning_courses"
+        : slug === "career-planning" || slug === "schools" || slug === "scholarships"
+          ? "learning_goals"
         : slug === "achievements"
           ? "learning_achievements"
-          : slug === "certificates"
+          : slug === "certificates" || slug === "certifications"
             ? "learning_certificates"
+            : slug === "skills"
+              ? "learning_mastery"
+              : slug === "tutor"
+                ? "learning_sessions"
             : "learning_activities";
   const result = await supabase.from(table).select("*").eq("user_id", userId);
   if (result.error) throw new Error(`Unable to load ${learningWorkspaceDefinitions[slug].title}: ${result.error.message}`);
@@ -47,7 +53,7 @@ async function loadWorkspaceItems(slug: LearningWorkspaceSlug, userId: string) {
   if (slug === "reviews") {
     rows = rows.filter(({ session_state }) => session_state === "review_due");
   }
-  if (slug === "history") {
+    if (slug === "history" || slug === "lesson-history") {
     rows = rows
       .filter(({ status }) => status === "Completed")
       .sort((a, b) => String(b.completed_at || b.created_at || "").localeCompare(String(a.completed_at || a.created_at || "")));
@@ -55,7 +61,7 @@ async function loadWorkspaceItems(slug: LearningWorkspaceSlug, userId: string) {
 
   return rows.map((row): WorkspaceItem => {
     const id = String(row.id);
-    if (slug === "learning-path") {
+    if (slug === "learning-path" || slug === "educational-roadmap") {
       return {
         id,
         title: String(row.title || "Learning path"),
@@ -82,7 +88,7 @@ async function loadWorkspaceItems(slug: LearningWorkspaceSlug, userId: string) {
         meta: row.earned_at ? new Date(String(row.earned_at)).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : undefined,
       };
     }
-    if (slug === "certificates") {
+    if (slug === "certificates" || slug === "certifications") {
       return {
         id,
         title: String(row.path_name || "Learning certificate"),
@@ -251,7 +257,9 @@ export default async function LearningWorkspaceView({ slug }: { slug: string }) 
   if (error || !user) redirect("/login");
 
   const definition = learningWorkspaceDefinitions[slug];
-  const timeline = slug === "history" ? await loadLearningChronology(user.id) : null;
+  const timeline = slug === "history" || slug === "lesson-history"
+    ? await loadLearningChronology(user.id)
+    : null;
   const reports = slug === "reports" ? await loadLearningReports(user.id) : null;
   const items = timeline || reports ? [] : await loadWorkspaceItems(slug, user.id);
 
@@ -313,7 +321,7 @@ export default async function LearningWorkspaceView({ slug }: { slug: string }) 
                   ) : null}
                   {item.href ? (
                     <Link href={item.href} className="beast-button-secondary mt-auto inline-flex w-full justify-center sm:w-fit">
-                      {slug === "certificates" ? "Open certificate" : "Open learning activity"}
+                      {slug === "certificates" || slug === "certifications" ? "Open certificate" : "Open learning activity"}
                     </Link>
                   ) : null}
                 </div>

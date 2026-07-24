@@ -729,9 +729,23 @@ export default function DashboardLayout({
           >
             <div className="min-h-0 overflow-hidden">
               <div className="mt-2 space-y-1 pl-4">
-                {item.children?.filter((child) => !child.future).map((child) => (
+                {item.children?.filter((child) => !child.future && !child.secondary).map((child) => (
                   <ChildLink key={child.label} item={child} module={item.module} />
                 ))}
+                {item.children?.some((child) => child.secondary) ? (
+                  <div className="pt-2">
+                    <div className="px-3 text-[10px] font-bold uppercase tracking-wide text-[#596579]">
+                      Supporting learning
+                    </div>
+                    <div className="mt-1 space-y-1">
+                      {item.children
+                        .filter((child) => child.secondary)
+                        .map((child) => (
+                          <ChildLink key={child.label} item={child} module={item.module} />
+                        ))}
+                    </div>
+                  </div>
+                ) : null}
                 {item.children?.some((child) => child.future) ? (
                   <div className="pt-2">
                     <div className="px-3 text-[10px] font-bold uppercase tracking-wide text-[#596579]">

@@ -552,28 +552,29 @@ test("module navigation centralizes expandable child items", () => {
     beastLearningNavigation.children?.map((item) => item.label),
     [
       "Guidance Counselor",
-      "Learning Path",
-      "Courses",
-      "Lessons",
-      "Reviews",
+      "Educational Roadmap",
+      "Career Planning",
+      "Schools",
+      "Scholarships",
+      "Certifications",
+      "Skills",
       "Achievements",
-      "History",
-      "Certificates",
       "Reports",
-      "Goals",
-      "Feedback",
+      "Courses",
+      "Tutor",
+      "Lesson History",
     ]
   );
   assert.equal(
     beastLearningNavigation.children?.[1].href,
-    "/dashboard/education/learning-path"
+    "/dashboard/education/educational-roadmap"
   );
   assert.equal(beastMoneyNavigation.label, "BeastMoney");
   assert.equal(
     beastMoneyNavigation.children?.map((item) => item.label).join(","),
     "Money Coach,Dashboard,Observation Center,Cash Flow,Income,Bills,Debts,Payoff Plan,Velocity,Retirement,Reports,Settings"
   );
-  assert.equal(getModuleChildren("learning").length, 11);
+  assert.equal(getModuleChildren("learning").length, 12);
   const moneyChildren = getModuleChildren("money");
   const addBill = moneyChildren.find((item) => item.label === "Add Bill");
   const addDebt = moneyChildren.find((item) => item.label === "Add Debt");
@@ -3359,7 +3360,7 @@ test("BeastEducation v2 keeps normal learning in the Guidance Counselor conversa
   assert.match(dashboardLayout, /label: "Guidance Counselor"/);
   assert.match(dashboardLayout, /label: "My Roadmap"/);
   assert.match(dashboardLayout, /label: "Progress"/);
-  assert.match(moduleNavigation, /label: "Lessons", href: "\/dashboard\/education\/lessons"/);
+  assert.match(moduleNavigation, /label: "Tutor", href: "\/dashboard\/education\/tutor", secondary: true/);
   assert.doesNotMatch(moduleNavigation, /label: "Continue", href: "\/dashboard\/learning\/activities"/);
 });
 
@@ -5804,30 +5805,34 @@ test("member navigation hides admin and monetization surfaces", () => {
     memberBeastEducationNavigation.children?.map((item) => item.label),
     [
       "Guidance Counselor",
-      "Learning Path",
-      "Courses",
-      "Lessons",
-      "Reviews",
+      "Educational Roadmap",
+      "Career Planning",
+      "Schools",
+      "Scholarships",
+      "Certifications",
+      "Skills",
       "Achievements",
-      "History",
-      "Certificates",
       "Reports",
-      "Goals",
+      "Courses",
+      "Tutor",
+      "Lesson History",
     ]
   );
   assert.deepEqual(
     memberBeastEducationNavigation.children?.map((item) => item.href),
     [
       "/dashboard/education",
-      "/dashboard/education/learning-path",
-      "/dashboard/education/courses",
-      "/dashboard/education/lessons",
-      "/dashboard/education/reviews",
+      "/dashboard/education/educational-roadmap",
+      "/dashboard/education/career-planning",
+      "/dashboard/education/schools",
+      "/dashboard/education/scholarships",
+      "/dashboard/education/certifications",
+      "/dashboard/education/skills",
       "/dashboard/education/achievements",
-      "/dashboard/education/history",
-      "/dashboard/education/certificates",
       "/dashboard/education/reports",
-      "/dashboard/education/goals",
+      "/dashboard/education/courses",
+      "/dashboard/education/tutor",
+      "/dashboard/education/lesson-history",
     ]
   );
   assert.equal(

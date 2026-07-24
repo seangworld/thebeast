@@ -54,11 +54,13 @@ test("BE-201 makes the vision visible without removing existing education routes
     "utf8"
   );
   const moduleNavigation = readFileSync("src/lib/moduleNavigation.ts", "utf8");
+  const workspaces = readFileSync("src/lib/learning/workspaces.ts", "utf8");
 
   assert.match(commandCenter, /BE-201 · Gen2 vision/);
   assert.match(commandCenter, /Guidance for the whole educational journey/);
   assert.match(commandCenter, /supportingCapabilities\.map/);
   assert.match(moduleNavigation, /\/dashboard\/education\/courses/);
-  assert.match(moduleNavigation, /\/dashboard\/education\/lessons/);
-  assert.match(moduleNavigation, /\/dashboard\/education\/reviews/);
+  assert.match(moduleNavigation, /\/dashboard\/education\/tutor/);
+  assert.match(workspaces, /slug: "lessons"/);
+  assert.match(workspaces, /slug: "reviews"/);
 });

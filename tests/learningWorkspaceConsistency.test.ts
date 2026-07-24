@@ -11,6 +11,14 @@ import {
 } from "../src/lib/moduleNavigation";
 
 const expected = [
+  "educational-roadmap",
+  "career-planning",
+  "schools",
+  "scholarships",
+  "certifications",
+  "skills",
+  "tutor",
+  "lesson-history",
   "learning-path",
   "courses",
   "lessons",
@@ -62,15 +70,27 @@ test("BL-403 uses one responsive shell with consistent loading empty and error s
 });
 
 test("BL-403 navigation exposes canonical workspaces without hash substitutes", () => {
+  const visibleNavigationSlugs = [
+    "educational-roadmap",
+    "career-planning",
+    "schools",
+    "scholarships",
+    "certifications",
+    "skills",
+    "achievements",
+    "reports",
+    "courses",
+    "tutor",
+    "lesson-history",
+  ];
   for (const navigation of [
     beastLearningNavigation,
     memberBeastEducationNavigation,
   ]) {
     const hrefs = navigation.children?.map(({ href }) => href) || [];
-    for (const slug of expected) {
+    for (const slug of visibleNavigationSlugs) {
       assert.ok(hrefs.includes(`/dashboard/education/${slug}`));
     }
-    assert.ok(hrefs.includes("/dashboard/education/goals"));
   }
 });
 
