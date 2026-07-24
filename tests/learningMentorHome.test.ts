@@ -419,12 +419,16 @@ test("weekly review and meaningful achievements avoid fake trends", () => {
 
 test("BL-46 keeps Guidance Counselor Home accessible on mobile and keyboard paths", () => {
   const mentorHomeSource = readFileSync("src/app/dashboard/learning/page.tsx", "utf8");
+  const missionControlSource = readFileSync(
+    "src/app/dashboard/learning/LearningMissionControl.tsx",
+    "utf8"
+  );
   const globalCss = readFileSync("src/app/globals.css", "utf8");
 
   assert.match(mentorHomeSource, /className="beast-skip-link"/);
   assert.match(mentorHomeSource, /href="#mentor-session"/);
-  assert.match(mentorHomeSource, /role="progressbar"/);
-  assert.match(mentorHomeSource, /aria-valuenow=\{clampedValue\}/);
+  assert.match(missionControlSource, /role="progressbar"/);
+  assert.match(missionControlSource, /aria-valuenow=\{clampedValue\}/);
   assert.match(mentorHomeSource, /aria-label="Guidance Counselor supporting context"/);
   assert.match(globalCss, /beast-skip-link/);
   assert.match(globalCss, /focus-visible/);

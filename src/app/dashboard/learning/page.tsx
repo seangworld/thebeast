@@ -256,58 +256,31 @@ function buildStudySessionCommandFromSession(
   };
 }
 
-function ProgressBar({ value }: { value: number }) {
-  const clampedValue = Math.min(Math.max(value, 0), 100);
-
-  return (
-    <div
-      className="mt-3 h-2 rounded-full bg-[#0f1419]"
-      role="progressbar"
-      aria-label={`Learning goal progress ${clampedValue}%`}
-      aria-valuemin={0}
-      aria-valuemax={100}
-      aria-valuenow={clampedValue}
-    >
-      <div
-        className="h-full rounded-full bg-[#818cf8]"
-        style={{ width: `${clampedValue}%` }}
-      />
-    </div>
-  );
-}
-
 function GuidanceCounselorHome({
   mission,
   confidence,
   memory,
-  timeline,
-  learningPlan,
   learningGoals,
-  learningCourses,
   learningRecommendations,
 }: {
   mission: MentorHomeMission;
   confidence: ConfidenceIntelligenceSnapshot;
   memory: MentorLearningMemory;
-  timeline: LearningTimelineEvent[];
-  learningPlan: LearningPlan;
   learningGoals: LearningGoal[];
-  learningCourses: LearningCourse[];
   learningRecommendations: LearningRecommendation[];
 }) {
   const activeRole =
     mission.state === "next_activity" || mission.state === "resume"
       ? "Counselor with learning support ready"
       : "Guidance Counselor";
-  const roadmapPreview = learningCourses.slice(0, 3);
   const visibleRecommendations = learningRecommendations.slice(0, 3);
 
   return (
     <DashboardCard accent="learning">
       <SectionHeader
-        eyebrow="Guidance Counselor"
-        title="Your next guided step"
-        description="Use this supporting workspace when your roadmap identifies a concrete action. Your Guidance Counselor keeps the wider education, career, certification, and growth plan in view."
+        eyebrow="Counselor context"
+        title="What is shaping your guidance"
+        description="Supporting context appears here only when it adds something beyond your recommendation, roadmap, or progress view."
         action={
           <div className="flex flex-wrap gap-2">
             <ModuleBadge module="learning" label={activeRole} />
@@ -316,127 +289,8 @@ function GuidanceCounselorHome({
         }
       />
 
-      <div id="mentor-session" className="mt-6 grid gap-4 xl:grid-cols-[minmax(0,1.18fr)_minmax(320px,0.82fr)]">
-        <section
-          className="grid content-between gap-5 rounded-2xl border border-indigo-300/35 bg-[#0b1020] p-4 sm:p-6"
-          aria-label="BeastEducation guided next step"
-          aria-labelledby="mentor-home-mission-title"
-        >
-          <div className="grid gap-4">
-            <div className="rounded-2xl border border-indigo-300/30 bg-indigo-300/10 p-4 sm:p-5">
-              <div className="text-xs font-black uppercase text-indigo-100">
-                Guidance Counselor
-              </div>
-              <h3 className="mt-2 text-xl font-black text-white">
-                {mission.greeting}
-              </h3>
-              <p className="mt-2 text-sm leading-6 text-indigo-50">
-                {mission.recommendationReason}
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-cyan-300/35 bg-cyan-300/10 p-4 sm:p-5">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <div className="text-xs font-black uppercase text-cyan-100">
-                    {mission.missionLabel}
-                  </div>
-                  <h2 id="mentor-home-mission-title" className="mt-2 text-2xl font-black leading-tight text-white sm:text-3xl">
-                    {mission.missionTitle}
-                  </h2>
-                </div>
-                <div className="w-fit rounded-xl border border-cyan-200/30 bg-[#0f1419]/80 px-3 py-2 text-sm font-black text-cyan-50">
-                  {mission.durationLabel}
-                </div>
-              </div>
-
-              <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-xl border border-cyan-200/25 bg-[#0f1419]/80 p-3">
-                  <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                    Current goal
-                  </div>
-                  <div className="mt-1 text-sm font-black text-white">
-                    {mission.currentGoalLabel}
-                  </div>
-                </div>
-                <div className="rounded-xl border border-cyan-200/25 bg-[#0f1419]/80 p-3">
-                  <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                    Weak area
-                  </div>
-                  <div className="mt-1 text-sm font-black text-white">
-                    {mission.weakAreaLabel}
-                  </div>
-                </div>
-                <div className="rounded-xl border border-cyan-200/25 bg-[#0f1419]/80 p-3">
-                  <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                    Last session
-                  </div>
-                  <div className="mt-1 text-sm font-black text-white">
-                    {mission.recentProgressLabel}
-                  </div>
-                </div>
-                <div className="rounded-xl border border-cyan-200/25 bg-[#0f1419]/80 p-3">
-                  <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                    Comes after this
-                  </div>
-                  <div className="mt-1 text-sm font-black text-white">
-                    {mission.nextAfterLabel}
-                  </div>
-                </div>
-                <div className="rounded-xl border border-cyan-200/25 bg-[#0f1419]/80 p-3">
-                  <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                    Journey progress
-                  </div>
-                  <div className="mt-1 text-sm font-black text-white">
-                    {mission.journeyProgressLabel}
-                  </div>
-                </div>
-                <div className="rounded-xl border border-cyan-200/25 bg-[#0f1419]/80 p-3">
-                  <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                    Remaining work
-                  </div>
-                  <div className="mt-1 text-sm font-black text-white">
-                    {mission.journeyRemainingLabel}
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-4 rounded-xl border border-cyan-200/25 bg-[#0f1419]/80 p-3">
-                <div className="text-xs font-bold uppercase text-cyan-100">
-                  Next milestone
-                </div>
-                <div className="mt-1 text-sm font-black text-white">
-                  {mission.journeyMilestoneLabel}
-                </div>
-                <p className="mt-1 text-sm font-semibold leading-5 text-cyan-50">
-                  {mission.journeyUnlockLabel}
-                </p>
-              </div>
-
-              <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:items-center">
-                <Link href={mission.primaryAction.href} className="beast-button w-fit">
-                  {mission.primaryAction.label}
-                </Link>
-                <p className="text-sm font-semibold leading-5 text-cyan-50">
-                  {mission.primaryAction.detail}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid gap-3 border-t border-[#2a3242] pt-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Link href="/dashboard/education/goals" className="beast-button-secondary">
-              Learning Goals
-            </Link>
-            {mission.secondaryActions.map((action) => (
-              <Link key={action.label} href={action.href} className="beast-button-secondary">
-                {action.label}
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        <aside className="grid content-start gap-3" aria-label="Guidance Counselor supporting context">
+      <div className="mt-6 grid gap-4 lg:grid-cols-2">
+        <section className="grid content-start gap-3" aria-label="Guidance Counselor supporting context">
           <div className="rounded-2xl border border-[#2a3242] bg-[#111827] p-4">
             <div className="text-xs font-black uppercase text-[#7f8da3]">
               Why this mission
@@ -467,27 +321,6 @@ function GuidanceCounselorHome({
             </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
-            {[
-              ["Goal", mission.currentGoalLabel],
-              ["Mission", mission.missionTitle],
-              ["Time", mission.durationLabel],
-              ["Next", mission.nextAfterLabel],
-            ].map(([label, value]) => (
-            <div
-              key={label}
-              className="rounded-xl border border-[#2a3242] bg-[#111827] p-4"
-            >
-              <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                {label}
-              </div>
-              <div className="mt-2 text-sm font-black leading-5 text-white">
-                {value}
-              </div>
-            </div>
-          ))}
-          </div>
-
           <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
             <div className="text-xs font-bold uppercase text-[#7f8da3]">
               Confidence intelligence
@@ -507,71 +340,41 @@ function GuidanceCounselorHome({
             </div>
           </div>
 
+        </section>
+        <section className="grid content-start gap-3">
           <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
             <div className="text-xs font-bold uppercase text-[#7f8da3]">
-              Recent timeline
+              Other useful recommendations
             </div>
             <div className="mt-3 grid gap-2">
-              {timeline.slice(0, 4).map((event) => (
-                <div key={event.id} className="rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
-                  <div className="text-sm font-black text-white">{event.title}</div>
-                  <p className="mt-1 text-xs font-semibold leading-5 text-[#c7cfdb]">
-                    {event.detail}
-                  </p>
-                </div>
-              ))}
-              {timeline.length === 0 ? (
-                <p className="text-sm font-semibold text-[#c7cfdb]">
-                  Complete one meaningful step and your Guidance Counselor will build a real timeline.
-                </p>
-              ) : null}
-            </div>
-          </div>
-
-          <div id="mentor-plan" className="scroll-mt-24 rounded-xl border border-[#2a3242] bg-[#111827] p-4">
-            <div className="text-xs font-bold uppercase text-[#7f8da3]">
-              My Plan
-            </div>
-            <h3 className="mt-2 font-black text-white">{learningPlan.title}</h3>
-            <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
-              {learningPlan.summary}
-            </p>
-            <div className="mt-3 grid gap-2">
-              {roadmapPreview.map((course) => (
-                <div key={course.id} className="rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
-                  <div className="text-sm font-black text-white">{course.title}</div>
-                  <div className="mt-1 text-xs font-bold uppercase text-[#7f8da3]">
-                    {course.progress}% explored
-                  </div>
-                </div>
-              ))}
-              {roadmapPreview.length === 0 ? (
-                <p className="text-sm font-semibold text-[#c7cfdb]">
-                  I will build this with you as I learn your goal.
-                </p>
-              ) : null}
-            </div>
-          </div>
-
-          <div id="mentor-progress" className="scroll-mt-24 rounded-xl border border-[#2a3242] bg-[#111827] p-4">
-            <div className="text-xs font-bold uppercase text-[#7f8da3]">
-              Progress I am watching
-            </div>
-            <div className="mt-3 grid gap-2">
-              {learningGoals.slice(0, 2).map((learningGoal) => (
-                <div key={learningGoal.id} className="rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
-                  <div className="text-sm font-black text-white">{learningGoal.title}</div>
-                  <ProgressBar value={learningGoal.progress} />
-                </div>
-              ))}
               {visibleRecommendations.map((recommendation) => (
                 <p key={recommendation.id} className="rounded-lg border border-indigo-300/25 bg-indigo-300/10 p-3 text-sm font-semibold leading-5 text-indigo-100">
                   {recommendation.title}
                 </p>
               ))}
+              {visibleRecommendations.length === 0 ? (
+                <p className="text-sm leading-6 text-[#c7cfdb]">
+                  No additional recommendation needs your attention right now.
+                </p>
+              ) : null}
             </div>
           </div>
-        </aside>
+          <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+            <div className="text-xs font-bold uppercase text-[#7f8da3]">
+              Related actions
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Link href="/dashboard/education/goals" className="beast-button-secondary">
+                Learning Goals
+              </Link>
+              {mission.secondaryActions.map((action) => (
+                <Link key={action.label} href={action.href} className="beast-button-secondary">
+                  {action.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
       </div>
     </DashboardCard>
   );
@@ -1034,7 +837,13 @@ export default async function LearningPage() {
 
         <EducationalCareerRoadmap roadmap={lifelongRoadmap} />
 
-        <LearningMissionControl model={missionControl} insights={mentorInsights} />
+        <LearningMissionControl
+          model={missionControl}
+          insights={mentorInsights}
+          showCurrentMission={false}
+          showWeeklyProgress={false}
+          showAchievements={false}
+        />
         <EducationCommandCenter />
 
         <MobileLearningQuickActions cards={mobileLearningCards} />
@@ -1044,10 +853,7 @@ export default async function LearningPage() {
             mission={mentorHomeMission}
             confidence={confidenceIntelligence}
             memory={mentorLearningMemory}
-            timeline={learningTimeline}
-            learningPlan={learningPlan}
             learningGoals={learningGoals}
-            learningCourses={learningCourses}
             learningRecommendations={learningRecommendations}
           />
         </div>
@@ -1061,12 +867,12 @@ export default async function LearningPage() {
             />
             <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {[
-                ["goals", "Learning Goals", learningGoals[0]?.title || "Add a Learning Goal and your Guidance Counselor will build a first plan."],
-                ["study-plan", "Study Plan", learningPlan.summary],
-                ["courses", "Learning Paths", learningCourses[0]?.title || "Learning paths appear here when your Guidance Counselor creates them."],
-                ["flashcards", "Review", progressSignals.weakArea],
-                ["achievements", "Achievements", `${learningAchievements.length} learning achievement record${learningAchievements.length === 1 ? "" : "s"}.`],
-                ["certificate-access", "Certificates", `${learningCertificates.length} certificate record${learningCertificates.length === 1 ? "" : "s"}.`],
+                ["goals", "Learning Goals", "Create, update, and organize your education goals."],
+                ["study-plan", "Study Plan", "Open your detailed study plan and schedule."],
+                ["courses", "Learning Paths", "Review courses and learning paths connected to your roadmap."],
+                ["flashcards", "Review", "Open focused review and practice tools."],
+                ["achievements", "Achievements", "Review the milestones and wins you have earned."],
+                ["certificate-access", "Certificates", "Open certificate records and available downloads."],
               ].map(([id, title, detail]) => (
                 <div
                   key={id}

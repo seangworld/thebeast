@@ -18,6 +18,7 @@ export default function EducationalCareerRoadmap({
 }) {
   return (
     <section id="educational-career-roadmap" className="scroll-mt-24">
+      <span id="mentor-plan" className="block scroll-mt-24" aria-hidden="true" />
       <DashboardCard accent="learning">
         <SectionHeader
           eyebrow="Central artifact"

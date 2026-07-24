@@ -8,11 +8,19 @@ import type { LearningMissionControlModel } from "@/lib/learning/missionControl"
 import type { Observation } from "@/lib/platform/agents";
 
 function ProgressBar({ value }: { value: number }) {
+  const clampedValue = Math.max(0, Math.min(100, value));
   return (
-    <div className="h-2.5 overflow-hidden rounded-full border border-white/[0.04] bg-[#090d14]" aria-hidden="true">
+    <div
+      className="h-2.5 overflow-hidden rounded-full border border-white/[0.04] bg-[#090d14]"
+      role="progressbar"
+      aria-label={`Learning progress ${clampedValue}%`}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={clampedValue}
+    >
       <div
         className="h-full rounded-full bg-gradient-to-r from-indigo-500 via-indigo-300 to-cyan-300 transition-[width] duration-700 ease-out motion-reduce:transition-none"
-        style={{ width: `${Math.max(0, Math.min(100, value))}%` }}
+        style={{ width: `${clampedValue}%` }}
       />
     </div>
   );
@@ -35,12 +43,18 @@ const polishedCard =
 export default function LearningMissionControl({
   model,
   insights,
+  showCurrentMission = true,
+  showWeeklyProgress = true,
+  showAchievements = true,
 }: {
   model: LearningMissionControlModel;
   insights: readonly Observation[];
+  showCurrentMission?: boolean;
+  showWeeklyProgress?: boolean;
+  showAchievements?: boolean;
 }) {
   return (
-    <section aria-labelledby="learning-mission-control-title" className="space-y-6 sm:space-y-8">
+    <section id="mentor-progress" aria-labelledby="learning-mission-control-title" className="scroll-mt-24 space-y-6 sm:space-y-8">
       <div className="flex flex-col gap-5 border-b border-white/[0.07] pb-6 sm:pb-8 lg:flex-row lg:items-end lg:justify-between">
         <div className="min-w-0">
           <ModuleBadge module="learning" label="Learning Mission Control" />
@@ -56,7 +70,7 @@ export default function LearningMissionControl({
         </Link>
       </div>
 
-      <div className="grid items-stretch gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(20rem,0.8fr)]">
+      <div className={`grid items-stretch gap-5 ${showCurrentMission ? "xl:grid-cols-[minmax(0,1.2fr)_minmax(20rem,0.8fr)]" : ""}`}>
         <DashboardCard accent="learning" className={`min-h-[300px] ${polishedCard}`}>
           <div className="flex h-full flex-col justify-between gap-6">
             <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
@@ -121,7 +135,7 @@ export default function LearningMissionControl({
           </div>
         </DashboardCard>
 
-        <DashboardCard accent="purple" className={`min-h-[300px] ${polishedCard}`}>
+        {showCurrentMission ? <DashboardCard accent="purple" className={`min-h-[300px] ${polishedCard}`}>
           <div className="flex h-full flex-col">
             <p className="beast-kicker">Current Mission</p>
             <h2 className="mt-4 text-2xl font-black tracking-tight text-white sm:text-3xl">{model.mission.missionTitle}</h2>
@@ -137,7 +151,7 @@ export default function LearningMissionControl({
               {model.mission.primaryAction.label}
             </Link>
           </div>
-        </DashboardCard>
+        </DashboardCard> : null}
       </div>
 
       {insights.length > 0 ? (
@@ -197,14 +211,14 @@ export default function LearningMissionControl({
       ) : null}
 
       <div className="grid items-stretch gap-5 md:grid-cols-2 2xl:grid-cols-3">
-        <DashboardCard accent="blue" className={polishedCard}>
+        {showWeeklyProgress ? <DashboardCard accent="blue" className={polishedCard}>
           <SectionHeader eyebrow="Weekly Progress" title={model.weekly.currentGoalProgress} />
           <div className="mt-5 space-y-3 text-sm text-[#b8c2d1]">
             <p>{model.weekly.summary}</p>
             <p>{model.weekly.studyTime}</p>
             <p className="font-semibold text-white">{model.weekly.nextWeekRecommendation}</p>
           </div>
-        </DashboardCard>
+        </DashboardCard> : null}
 
         <DashboardCard accent="learning" className={polishedCard}>
           <SectionHeader eyebrow="Current Courses" title={model.courses.length ? `${model.courses.length} in progress` : "Ready when you are"} />
@@ -233,7 +247,7 @@ export default function LearningMissionControl({
           </div>
         </DashboardCard>
 
-        <DashboardCard accent="green" className={polishedCard}>
+        {showAchievements ? <DashboardCard accent="green" className={polishedCard}>
           <SectionHeader eyebrow="Achievements" title={model.achievements.length ? "Progress worth recognizing" : "Your milestones will be earned"} />
           <div className="mt-5 space-y-3">
             {model.achievements.length ? model.achievements.map((achievement) => (
@@ -243,7 +257,7 @@ export default function LearningMissionControl({
               </div>
             )) : <EmptyLine>Complete real learning work to unlock meaningful achievements.</EmptyLine>}
           </div>
-        </DashboardCard>
+        </DashboardCard> : null}
 
         <DashboardCard accent="purple" className={polishedCard}>
           <SectionHeader eyebrow="Knowledge Growth" title={model.knowledgeGrowth.headline} />

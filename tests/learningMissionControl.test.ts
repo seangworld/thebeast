@@ -96,6 +96,6 @@ test("BL-401 renders every requested responsive mission-control surface", () => 
   assert.match(source, /xl:grid-cols-3/);
   assert.match(
     page,
-    /<LearningMissionControl model=\{missionControl\} insights=\{mentorInsights\} \/>/
+    /<LearningMissionControl[\s\S]*model=\{missionControl\}[\s\S]*showCurrentMission=\{false\}[\s\S]*showWeeklyProgress=\{false\}[\s\S]*showAchievements=\{false\}/
   );
 });

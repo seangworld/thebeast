@@ -14,14 +14,19 @@ export default function GuidanceCounselorRecommendation({
   mission: LearningMissionControlModel["mission"];
   roadmap: LifelongEducationRoadmap;
 }) {
-  const roadmapItems = roadmap.sections
-    .filter((section) => section.status !== "known")
-    .slice(0, 3);
+  const roadmapStatus = roadmap.sections.reduce(
+    (summary, section) => ({
+      ...summary,
+      [section.status]: summary[section.status] + 1,
+    }),
+    { known: 0, exploring: 0, "needs-context": 0 }
+  );
 
   return (
     <section
+      id="mentor-session"
       aria-labelledby="guidance-counselor-recommendation-title"
-      className="grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(20rem,0.9fr)]"
+      className="grid scroll-mt-24 gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(20rem,0.9fr)]"
     >
       <DashboardCard accent="purple">
         <SectionHeader
@@ -48,25 +53,27 @@ export default function GuidanceCounselorRecommendation({
         <SectionHeader
           eyebrow="Educational Roadmap summary"
           title="Where we are heading"
-          description="A quick view of the roadmap your Guidance Counselor is maintaining with you."
+          description="A status overview of the roadmap below, without repeating every roadmap item."
         />
-        <ul className="mt-5 grid gap-3">
-          {(roadmapItems.length > 0 ? roadmapItems : roadmap.sections.slice(0, 3)).map(
-            (section) => (
-              <li
-                key={section.id}
-                className="rounded-xl border border-[#2a3242] bg-[#111827] p-3"
-              >
-                <p className="text-sm font-black text-white">{section.title}</p>
-                <p className="mt-1 text-sm leading-6 text-[#aeb9ca]">
-                  {section.summary}
-                </p>
-              </li>
-            )
-          )}
-        </ul>
+        <dl className="mt-5 grid grid-cols-3 gap-3">
+          {[
+            ["Current", roadmapStatus.known],
+            ["Exploring", roadmapStatus.exploring],
+            ["Discuss next", roadmapStatus["needs-context"]],
+          ].map(([label, value]) => (
+            <div
+              key={label}
+              className="rounded-xl border border-[#2a3242] bg-[#111827] p-3 text-center"
+            >
+              <dt className="text-xs font-bold uppercase tracking-wide text-[#8f9cad]">
+                {label}
+              </dt>
+              <dd className="mt-2 text-2xl font-black text-white">{value}</dd>
+            </div>
+          ))}
+        </dl>
         <Link
-          href="#educational-career-roadmap"
+          href="#mentor-plan"
           className="beast-button-secondary mt-5 inline-flex w-full justify-center sm:w-fit"
         >
           View full roadmap

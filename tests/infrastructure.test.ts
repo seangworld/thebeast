@@ -3291,6 +3291,10 @@ test("learning activities have a dedicated runner and next-activity unlock logic
 
 test("BeastEducation member home starts with Guidance Counselor before dashboard support", () => {
   const learningPage = readFileSync("src/app/dashboard/learning/page.tsx", "utf8");
+  const recommendation = readFileSync(
+    "src/app/dashboard/learning/GuidanceCounselorRecommendation.tsx",
+    "utf8"
+  );
   const lessonEngine = readFileSync(
     "src/app/dashboard/learning/activities/LessonEngine.tsx",
     "utf8"
@@ -3306,22 +3310,15 @@ test("BeastEducation member home starts with Guidance Counselor before dashboard
   assert.match(learningPage, /planRows\.find\(\(plan\) => plan\.goal_id === activeGoal\?\.id\)/);
   assert.match(learningPage, /decideAdaptiveProgression/);
   assert.match(learningPage, /adaptiveProgression/);
-  assert.match(learningPage, /Your next guided step/);
-  assert.match(learningPage, /supporting workspace/);
+  assert.match(recommendation, /Current recommendation/);
+  assert.match(recommendation, /mission\.missionTitle/);
+  assert.match(recommendation, /mission\.recommendationReason/);
+  assert.match(recommendation, /mission\.journeyProgressLabel/);
   assert.match(learningPage, /Why this mission/);
   assert.match(learningPage, /Data boundary/);
-  assert.match(learningPage, /Current goal/);
-  assert.match(learningPage, /Weak area/);
-  assert.match(learningPage, /Last session/);
-  assert.match(learningPage, /Comes after this/);
-  assert.match(learningPage, /Journey progress/);
-  assert.match(learningPage, /Remaining work/);
-  assert.match(learningPage, /Next milestone/);
-  assert.match(learningPage, /mission\.journeyProgressLabel/);
-  assert.match(learningPage, /mission\.journeyRemainingLabel/);
-  assert.match(learningPage, /mission\.journeyMilestoneLabel/);
-  assert.match(learningPage, /mission\.journeyUnlockLabel/);
-  assert.match(learningPage, /Progress I am watching/);
+  assert.match(learningPage, /Other useful recommendations/);
+  assert.match(learningPage, /Related actions/);
+  assert.doesNotMatch(learningPage, /Progress I am watching/);
   assert.doesNotMatch(learningPage, /learningIntelligence\.memory\.recentlyStudied/);
   assert.doesNotMatch(learningPage, /learningIntelligence\.adaptivePlan\.nextRecommendedLesson/);
   assert.equal(
@@ -3343,14 +3340,18 @@ test("BeastEducation member home starts with Guidance Counselor before dashboard
 
 test("BeastEducation v2 keeps normal learning in the Guidance Counselor conversation", () => {
   const learningPage = readFileSync("src/app/dashboard/learning/page.tsx", "utf8");
+  const recommendation = readFileSync(
+    "src/app/dashboard/learning/GuidanceCounselorRecommendation.tsx",
+    "utf8"
+  );
   const todayPage = readFileSync("src/app/dashboard/today/page.tsx", "utf8");
   const dashboardLayout = readFileSync("src/app/dashboard/layout.tsx", "utf8");
   const moduleNavigation = readFileSync("src/lib/moduleNavigation.ts", "utf8");
   const mentorHome = readFileSync("src/lib/learning/mentorHome.ts", "utf8");
 
-  assert.match(learningPage, /id="mentor-session"/);
-  assert.match(learningPage, /mission\.primaryAction\.href/);
-  assert.match(learningPage, /mission\.primaryAction\.label/);
+  assert.match(recommendation, /id="mentor-session"/);
+  assert.match(recommendation, /mission\.primaryAction\.href/);
+  assert.match(recommendation, /mission\.primaryAction\.label/);
   assert.match(mentorHome, /Start mission/);
   assert.match(learningPage, /Everything else stays available/);
   assert.doesNotMatch(learningPage, /getLearningActivityRoute\(learningPathReadyActivity\.id\)/);
@@ -3404,6 +3405,10 @@ test("BeastEducation member experience hides workflow mechanics behind Guidance 
   );
   const memberExperienceSource = [
     learningPage,
+    readFileSync(
+      "src/app/dashboard/learning/GuidanceCounselorRecommendation.tsx",
+      "utf8"
+    ),
     activitiesPage,
     activityRunner,
     todayPage,
@@ -3466,6 +3471,10 @@ test("Guidance Counselor-first integration includes confidence timeline memory a
   const confidence = readFileSync("src/lib/learning/confidenceIntelligence.ts", "utf8");
   const timeline = readFileSync("src/lib/learning/learningTimeline.ts", "utf8");
   const weeklyReview = readFileSync("src/lib/learning/weeklyMentorReview.ts", "utf8");
+  const missionControl = readFileSync(
+    "src/app/dashboard/learning/LearningMissionControl.tsx",
+    "utf8"
+  );
 
   assert.match(learningPage, /buildConfidenceIntelligenceSnapshot/);
   assert.match(learningPage, /buildLearningTimeline/);
@@ -3473,7 +3482,7 @@ test("Guidance Counselor-first integration includes confidence timeline memory a
   assert.match(learningPage, /WeeklyGuidanceReviewPanel/);
   assert.match(learningPage, /Confidence intelligence/);
   assert.match(learningPage, /Counselor context/);
-  assert.match(learningPage, /Recent timeline/);
+  assert.match(missionControl, /Recent Activity/);
   assert.match(confidence, /Knowledge/);
   assert.match(confidence, /Confidence/);
   assert.match(confidence, /Consistency/);
@@ -3525,6 +3534,10 @@ test("generated learning activities persist with required visibility fields", ()
     "utf8"
   );
   const learningPage = readFileSync("src/app/dashboard/learning/page.tsx", "utf8");
+  const recommendation = readFileSync(
+    "src/app/dashboard/learning/GuidanceCounselorRecommendation.tsx",
+    "utf8"
+  );
   const todayPage = readFileSync("src/app/dashboard/today/page.tsx", "utf8");
   const activitiesPage = readFileSync(
     "src/app/dashboard/learning/activities/page.tsx",
@@ -3590,7 +3603,7 @@ test("generated learning activities persist with required visibility fields", ()
   assert.equal(goalsManager.includes('status: "Paused"'), true);
   assert.equal(todayPage.includes("getNewestReadyLearningActivity"), true);
   assert.equal(activitiesPage.includes("redirect(\"/dashboard/education/lessons\")"), true);
-  assert.equal(learningPage.includes("mission.primaryAction.label"), true);
+  assert.equal(recommendation.includes("mission.primaryAction.label"), true);
   assert.equal(learningPage.includes("learning_activities"), true);
 });
 
