@@ -47,6 +47,7 @@ const expectedCliMigrations = [
   "20260724000000_add_learning_course_lifecycle.sql",
   "20260724000100_fix_learning_course_lifecycle_schema.sql",
   "20260724000200_add_education_profiles.sql",
+  "20260724000300_add_guidance_discovery_profile_fields.sql",
 ];
 
 test("Supabase CLI migrations exist in dependency-safe order", () => {

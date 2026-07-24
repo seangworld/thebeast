@@ -95,6 +95,16 @@ export type EducationProfileRow = {
   weekly_hours: number
   discovery_answers: Record<string, string>
   selected_providers: string[]
+  career_interests: string[]
+  educational_goals: string[]
+  learning_preferences: string[]
+  certifications: string[]
+  available_study_time_known: boolean
+  college_interest?: boolean | null
+  trade_interest?: boolean | null
+  current_employment: string
+  military_experience: string
+  other_educational_context: string
   created_at: string
   updated_at: string
 }

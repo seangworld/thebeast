@@ -135,6 +135,7 @@ The CLI stream preserves SQL contents from `migrations/` while using Supabase CL
 | `20260715001000_add_beast_document_calendar_links.sql` | BeastOS document calendar associations | Confirmed applied to dev and production |
 | `20260724000100_fix_learning_course_lifecycle_schema.sql` | BE-214 explicit course lifecycle, soft removal, RLS, and schema-cache reload | Pending manual CLI apply in each Supabase environment |
 | `20260724000200_add_education_profiles.sql` | BE-215 owner-scoped Education Profile persistence and timestamps | Pending manual CLI apply in each Supabase environment |
+| `20260724000300_add_guidance_discovery_profile_fields.sql` | BE-216 conversational discovery profile fields | Pending manual CLI apply in each Supabase environment |
 
 ## BE-214 Course Lifecycle Release
 
@@ -158,6 +159,11 @@ alone does not create `public.education_profiles`.
 Use the same explicit link, list, dry-run, push, and verify sequence for
 `20260724000200_add_education_profiles.sql`. Confirm the table, owner-scoped RLS
 policy, timestamp trigger, and PostgREST schema reload in each environment.
+
+BE-216 additionally requires
+`20260724000300_add_guidance_discovery_profile_fields.sql` before conversational
+discovery can persist career, education, employment, military, learning-style,
+time, college, trade, and certification context.
 
 ## Legacy SQL Inventory
 

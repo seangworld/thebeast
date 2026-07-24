@@ -60,7 +60,7 @@ test("BE-215 reload restores every saved value including selections", () => {
   assert.deepEqual(restored.answers, { direction: "Security engineering" });
   assert.deepEqual(restored.selectedProviders, ["Microsoft Learn", "Books"]);
   assert.match(page, /educationProfileDraftFromRow/);
-  assert.match(page, /initialProfile=\{educationProfile\}/);
+  assert.match(page, /initialProfile=\{guidanceDiscoveryProfile\}/);
 });
 
 test("BE-215 persistence payload includes all rendered profile fields", () => {

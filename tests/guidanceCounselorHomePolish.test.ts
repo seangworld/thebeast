@@ -64,6 +64,6 @@ test("BE-212 provides honest homepage and conversation loading states", () => {
 test("BE-212 keeps empty planning context honest without adding features", () => {
   assert.match(page, /We’ll define your educational direction together/);
   assert.match(page, /No career direction has been confirmed yet/);
-  assert.match(conversation, /Courses and Tutor support remain available/);
+  assert.match(conversation, /How can I help you today/);
   assert.doesNotMatch(orientation, /mock|sample|placeholder/i);
 });

@@ -221,5 +221,5 @@ test("BeastEducation is canonical while legacy learning routes remain compatible
   assert.match(readFileSync("src/app/dashboard/education/page.tsx", "utf8"), /learning\/page/);
   assert.match(readFileSync("src/app/dashboard/education/goals/page.tsx", "utf8"), /learning\/goals\/page/);
   assert.match(readFileSync("src/app/dashboard/education/activities\/[activityId]\/page.tsx", "utf8"), /learning\/activities\/\[activityId\]\/page/);
-  assert.match(readFileSync("src/app/dashboard/learning/page.tsx", "utf8"), /EducationCommandCenter/);
+  assert.match(readFileSync("src/app/dashboard/learning/page.tsx", "utf8"), /guidanceDiscoveryProfileFromRow/);
 });

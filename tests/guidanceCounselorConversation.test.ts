@@ -17,7 +17,7 @@ test("BE-202 opens BeastEducation with the Guidance Counselor conversation", () 
   );
   assert.ok(
     page.indexOf("<GuidanceCounselorConversation") <
-      page.indexOf("<EducationCommandCenter"),
+      page.indexOf("<GuidanceCounselorRecommendation"),
     "planning dashboards should follow the primary relationship"
   );
 });
@@ -44,7 +44,8 @@ test("BE-202 keeps a member-scoped relationship across navigation", () => {
   assert.match(source, /window\.localStorage\.getItem\(storageKey\)/);
   assert.match(source, /window\.localStorage\.setItem\(storageKey/);
   assert.match(source, /Your primary BeastEducation professional/);
-  assert.match(source, /Courses and Tutor support remain available/);
+  assert.match(source, /I&apos;m your Guidance Counselor/);
+  assert.match(source, /How can I help you today/);
 });
 
 test("BE-205 presents the relationship before its supporting dashboard", () => {

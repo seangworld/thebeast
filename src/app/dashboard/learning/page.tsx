@@ -20,7 +20,6 @@ import GuidanceCounselorConversation from "./GuidanceCounselorConversation";
 import EducationalCareerRoadmap from "./EducationalCareerRoadmap";
 import GuidanceCounselorRecommendation from "./GuidanceCounselorRecommendation";
 import GuidanceCounselorOrientation from "./GuidanceCounselorOrientation";
-import EducationCommandCenter from "./EducationCommandCenter";
 import {
   AchievementEnginePanel,
   AISpecialistsPanel,
@@ -87,6 +86,7 @@ import { buildAIOrchestrationDashboard } from "@/lib/learning/aiOrchestrationDas
 import { loadLearningPrivateBetaData } from "@/lib/learning/persistence";
 import { buildLifelongEducationRoadmap } from "@/lib/education/lifelongRoadmap";
 import { educationProfileDraftFromRow } from "@/lib/education/profilePersistence";
+import { guidanceDiscoveryProfileFromRow } from "@/lib/education/discoveryConversation";
 import { createRouteClient } from "@/lib/supabase/server";
 import type {
   LearningAchievement,
@@ -582,7 +582,7 @@ export default async function LearningPage() {
       .order("created_at", { ascending: false }),
     supabase
       .from("education_profiles")
-      .select("owner_id, goal_kind, goal, current_situation, background, strengths, growth_areas, constraints, weekly_hours, discovery_answers, selected_providers, updated_at")
+      .select("owner_id, goal_kind, goal, current_situation, background, strengths, growth_areas, constraints, weekly_hours, discovery_answers, selected_providers, career_interests, educational_goals, learning_preferences, certifications, available_study_time_known, college_interest, trade_interest, current_employment, military_experience, other_educational_context, updated_at")
       .eq("owner_id", user.id)
       .maybeSingle(),
   ]);
@@ -616,6 +616,9 @@ export default async function LearningPage() {
   const userActivities = (activitiesResult.data || []) as LearningPathActivityRow[];
   const userAchievements = ((achievementsResult.data || []) as Record<string, unknown>[]).map(mapAchievementRow);
   const educationProfile = educationProfileDraftFromRow(
+    educationProfileResult.data as Record<string, unknown> | null
+  );
+  const guidanceDiscoveryProfile = guidanceDiscoveryProfileFromRow(
     educationProfileResult.data as Record<string, unknown> | null
   );
   const userCertificates = ((certificatesResult.data || []) as Record<string, unknown>[]).map(mapCertificateRow);
@@ -845,6 +848,7 @@ export default async function LearningPage() {
           <GuidanceCounselorConversation
             memberId={user.id}
             memberName={fallbackName || "there"}
+            initialProfile={guidanceDiscoveryProfile}
             context={{
               educationalGoal:
                 learningGoals[0]?.title ||
@@ -879,12 +883,6 @@ export default async function LearningPage() {
           showWeeklyProgress={false}
           showAchievements={false}
         />
-        <EducationCommandCenter
-          ownerId={user.id}
-          initialProfile={educationProfile}
-          loadError={Boolean(educationProfileResult.error)}
-        />
-
         <MobileLearningQuickActions cards={mobileLearningCards} />
 
         <div id="guidance" className="scroll-mt-24">

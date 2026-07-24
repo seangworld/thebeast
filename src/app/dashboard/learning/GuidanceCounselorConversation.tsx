@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   AgentAvatar,
   AgentContextSummary,
@@ -18,6 +19,14 @@ import {
   buildGuidanceCounselorResponse,
   type GuidanceCounselorConversationContext,
 } from "@/lib/education";
+import { createClient } from "@/lib/supabase/client";
+import {
+  discoveryProfileUpdate,
+  guidanceDiscoveryProfileFromRow,
+  learnFromDiscoveryTurn,
+  nextDiscoveryQuestion,
+  type GuidanceDiscoveryProfile,
+} from "@/lib/education/discoveryConversation";
 
 export const guidanceCounselorSuggestedQuestions = [
   "Let's review your educational goals.",
@@ -37,25 +46,25 @@ type GuidanceCounselorConversationProps = {
   memberId: string;
   memberName: string;
   context: GuidanceCounselorConversationContext;
-};
-
-const welcomeMessage: StoredMessage = {
-  id: "guidance-counselor-welcome",
-  role: "agent",
-  author: "Guidance Counselor",
-  content:
-    "I’m your Guidance Counselor. I’ll keep the big picture in view, help you explore credible options, and maintain your educational roadmap as your goals change.",
+  initialProfile: GuidanceDiscoveryProfile;
 };
 
 export default function GuidanceCounselorConversation({
   memberId,
   memberName,
   context,
+  initialProfile,
 }: GuidanceCounselorConversationProps) {
+  const router = useRouter();
   const storageKey = `beasteducation:guidance-counselor:${memberId}`;
   const [input, setInput] = useState("");
-  const [messages, setMessages] = useState<StoredMessage[]>([welcomeMessage]);
+  const [messages, setMessages] = useState<StoredMessage[]>([]);
   const [historyReady, setHistoryReady] = useState(false);
+  const [discoveryProfile, setDiscoveryProfile] =
+    useState<GuidanceDiscoveryProfile>(initialProfile);
+  const [profileSaveStatus, setProfileSaveStatus] = useState<
+    "idle" | "saving" | "saved" | "error"
+  >("idle");
 
   useEffect(() => {
     try {
@@ -85,10 +94,53 @@ export default function GuidanceCounselorConversation({
     [messages]
   );
 
+  async function saveDiscoveryProfile(profile: GuidanceDiscoveryProfile) {
+    setProfileSaveStatus("saving");
+    const supabase = createClient();
+    const result = await supabase
+      .from("education_profiles")
+      .upsert(
+        {
+          owner_id: memberId,
+          ...discoveryProfileUpdate(profile),
+        },
+        { onConflict: "owner_id" }
+      )
+      .select("owner_id")
+      .single();
+    if (result.error) {
+      setProfileSaveStatus("error");
+      return;
+    }
+    setProfileSaveStatus("saved");
+    router.refresh();
+  }
+
   function sendMessage(question: string) {
     const cleanQuestion = question.trim();
     if (!cleanQuestion) return;
     const turnId = `${Date.now()}-${messages.length}`;
+    const learnedProfile = learnFromDiscoveryTurn(
+      cleanQuestion,
+      discoveryProfile
+    );
+    const followUp = nextDiscoveryQuestion(learnedProfile);
+    const discoveryComplete =
+      followUp === "What would you like us to work on first?";
+    const response = discoveryComplete
+      ? buildGuidanceCounselorResponse({
+          question: cleanQuestion,
+          context: {
+            ...context,
+            educationalGoal:
+              learnedProfile.goal || context.educationalGoal,
+            interests:
+              learnedProfile.careerInterests.join(", ") || context.interests,
+            careerDirection:
+              learnedProfile.goal || context.careerDirection,
+          },
+        }).text
+      : `Thank you—that helps me understand where you’re starting. ${followUp}`;
     setMessages((current) => [
       ...current,
       {
@@ -101,14 +153,28 @@ export default function GuidanceCounselorConversation({
         id: `${turnId}-counselor`,
         role: "agent",
         author: "Guidance Counselor",
-        content: buildGuidanceCounselorResponse({
-          question: cleanQuestion,
-          context,
-        }).text,
+        content: response,
       },
     ]);
+    setDiscoveryProfile(learnedProfile);
+    void saveDiscoveryProfile(learnedProfile);
     setInput("");
   }
+
+  const knownContext = [
+    discoveryProfile.goal
+      ? `Goal: ${discoveryProfile.goal}`
+      : "",
+    discoveryProfile.currentEmployment
+      ? `Current work: ${discoveryProfile.currentEmployment}`
+      : "",
+    discoveryProfile.strengths
+      ? `Strengths: ${discoveryProfile.strengths}`
+      : "",
+    discoveryProfile.availableStudyTimeKnown
+      ? `Study time: ${discoveryProfile.weeklyHours} hours per week`
+      : "",
+  ].filter(Boolean);
 
   return (
     <div
@@ -129,34 +195,36 @@ export default function GuidanceCounselorConversation({
           />
         }
         greeting={
-          <AgentGreeting greeting={`Welcome${memberName ? `, ${memberName}` : ""}.`}>
+          <AgentGreeting greeting={`Hi${memberName ? ` ${memberName}` : ""}.`}>
             <p>
-              This relationship starts with your goals, interests, options, and
-              long-term direction. Courses and Tutor support remain available when
-              your roadmap calls for them.
+              I&apos;m your Guidance Counselor.
+            </p>
+            <p>
+              How can I help you today?
             </p>
           </AgentGreeting>
         }
         contextSummary={
-          <AgentContextSummary
-            title="Context I’m keeping in view"
-            items={[
-              <span key="goal"><strong className="text-white">Educational goal:</strong> {context.educationalGoal}</span>,
-              <span key="interests"><strong className="text-white">Interests:</strong> {context.interests}</span>,
-              <span key="career"><strong className="text-white">Career direction:</strong> {context.careerDirection}</span>,
-              <span key="roadmap"><strong className="text-white">Roadmap:</strong> {context.roadmap}</span>,
-            ]}
-          />
+          knownContext.length ? (
+            <AgentContextSummary
+              title="What I’ve learned about you"
+              items={knownContext.map((item) => (
+                <span key={item}>{item}</span>
+              ))}
+            />
+          ) : null
         }
         suggestedActions={
-          <AgentSuggestedActions
-            label="Suggested questions"
-            actions={guidanceCounselorSuggestedQuestions.map((question, index) => ({
-              id: `guidance-question-${index}`,
-              label: question,
-              onSelect: () => sendMessage(question),
-            }))}
-          />
+          messages.length ? (
+            <AgentSuggestedActions
+              label="Suggested questions"
+              actions={guidanceCounselorSuggestedQuestions.map((question, index) => ({
+                id: `guidance-question-${index}`,
+                label: question,
+                onSelect: () => sendMessage(question),
+              }))}
+            />
+          ) : null
         }
         conversation={
           <AgentConversationTimeline
@@ -180,6 +248,18 @@ export default function GuidanceCounselorConversation({
               label="Restoring your Guidance Counselor conversation"
               lines={2}
             />
+          ) : profileSaveStatus === "saving" ? (
+            <p className="text-xs font-bold text-indigo-100" role="status">
+              Remembering what you shared…
+            </p>
+          ) : profileSaveStatus === "saved" ? (
+            <p className="text-xs font-bold text-emerald-200" role="status">
+              I’ll remember this for future guidance.
+            </p>
+          ) : profileSaveStatus === "error" ? (
+            <p className="text-xs font-bold text-red-200" role="alert">
+              I couldn’t save that profile update. Your conversation is still here.
+            </p>
           ) : null
         }
       />
