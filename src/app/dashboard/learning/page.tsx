@@ -88,6 +88,7 @@ import { buildLifelongEducationRoadmap } from "@/lib/education/lifelongRoadmap";
 import { educationProfileDraftFromRow } from "@/lib/education/profilePersistence";
 import { guidanceDiscoveryProfileFromRow } from "@/lib/education/discoveryConversation";
 import { buildGuidanceWorkflowRecommendation } from "@/lib/education/guidanceWorkflow";
+import { learningAccessActions } from "@/lib/education/contextualActions";
 import { createRouteClient } from "@/lib/supabase/server";
 import type {
   LearningAchievement,
@@ -351,9 +352,15 @@ function GuidanceCounselorHome({
             </div>
             <div className="mt-3 grid gap-2">
               {visibleRecommendations.map((recommendation) => (
-                <p key={recommendation.id} className="rounded-lg border border-indigo-300/25 bg-indigo-300/10 p-3 text-sm font-semibold leading-5 text-indigo-100">
-                  {recommendation.title}
-                </p>
+                <div key={recommendation.id} className="rounded-lg border border-indigo-300/25 bg-indigo-300/10 p-3 text-sm font-semibold leading-5 text-indigo-100">
+                  <p>{recommendation.title}</p>
+                  <Link
+                    href="#mentor-session"
+                    className="mt-2 inline-flex text-xs font-black uppercase tracking-wide text-white"
+                  >
+                    Discuss next step
+                  </Link>
+                </div>
               ))}
               {visibleRecommendations.length === 0 ? (
                 <p className="text-sm leading-6 text-[#c7cfdb]">
@@ -422,6 +429,12 @@ function WeeklyGuidanceReviewPanel({
             <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
               {review.nextWeekRecommendation}
             </p>
+            <Link
+              href="#mentor-session"
+              className="beast-button-secondary mt-4 inline-flex w-full justify-center sm:w-fit"
+            >
+              Plan next week
+            </Link>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
@@ -439,6 +452,12 @@ function WeeklyGuidanceReviewPanel({
                   <li key={item}>{item}</li>
                 ))}
               </ul>
+              <Link
+                href="/dashboard/education/reviews"
+                className="mt-3 inline-flex text-sm font-black text-indigo-200 hover:text-white"
+              >
+                Review weak areas
+              </Link>
             </div>
           </div>
         </section>
@@ -924,29 +943,46 @@ export default async function LearningPage() {
                 ["flashcards", "Review", "Open focused review and practice tools."],
                 ["achievements", "Achievements", "Review the milestones and wins you have earned."],
                 ["certificate-access", "Certificates", "Open certificate records and available downloads."],
-              ].map(([id, title, detail]) => (
-                <div
-                  key={id}
-                  id={id}
-                  className="scroll-mt-24 rounded-2xl border border-[#2a3242] bg-gradient-to-br from-[#111827] to-[#0e141e] p-4 transition duration-300 motion-safe:hover:-translate-y-0.5 motion-safe:hover:border-indigo-300/25 motion-reduce:transition-none"
-                >
-                  <h3 className="font-black text-white">{title}</h3>
-                  <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
-                    {detail}
-                  </p>
-                  {id === "goals" ? (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <LearningGoalDiscovery
-                        recentGoals={learningGoals}
-                        triggerLabel="Add Learning Goal"
-                      />
-                      <Link href="/dashboard/education/goals" className="beast-button-secondary">
-                        Manage Goals
+              ].map(([id, title, detail]) => {
+                const action =
+                  learningAccessActions[
+                    id as keyof typeof learningAccessActions
+                  ];
+                return (
+                  <div
+                    key={id}
+                    id={id}
+                    className="scroll-mt-24 rounded-2xl border border-[#2a3242] bg-gradient-to-br from-[#111827] to-[#0e141e] p-4 transition duration-300 motion-safe:hover:-translate-y-0.5 motion-safe:hover:border-indigo-300/25 motion-reduce:transition-none"
+                  >
+                    <h3 className="font-black text-white">{title}</h3>
+                    <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
+                      {detail}
+                    </p>
+                    {id === "goals" ? (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <LearningGoalDiscovery
+                          recentGoals={learningGoals}
+                          triggerLabel="Add Learning Goal"
+                        />
+                        <Link
+                          href="/dashboard/education/goals"
+                          className="beast-button-secondary"
+                        >
+                          Manage Goals
+                        </Link>
+                      </div>
+                    ) : null}
+                    {id !== "goals" ? (
+                      <Link
+                        href={action.href}
+                        className="beast-button-secondary mt-3 inline-flex w-full justify-center sm:w-fit"
+                      >
+                        {action.label}
                       </Link>
-                    </div>
-                  ) : null}
-                </div>
-              ))}
+                    ) : null}
+                  </div>
+                );
+              })}
             </div>
           </DashboardCard>
         </section>

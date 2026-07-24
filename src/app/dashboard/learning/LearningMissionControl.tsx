@@ -224,12 +224,22 @@ export default function LearningMissionControl({
           <SectionHeader eyebrow="Current Courses" title={model.courses.length ? `${model.courses.length} in progress` : "Ready when you are"} />
           <div className="mt-5 space-y-4">
             {model.courses.length ? model.courses.map((course) => (
-              <div key={course.id}>
+              <div key={course.id} className="rounded-xl border border-[#30394a] bg-[#111722] p-3">
                 <div className="mb-2 flex justify-between gap-3 text-sm">
                   <span className="truncate font-bold text-white">{course.title}</span>
                   <span className="text-indigo-200">{course.progress}%</span>
                 </div>
                 <ProgressBar value={course.progress} />
+                <Link
+                  href={
+                    model.mission.state === "resume"
+                      ? model.mission.primaryAction.href
+                      : "/dashboard/education/courses"
+                  }
+                  className="mt-3 inline-flex text-sm font-black text-indigo-200 hover:text-white"
+                >
+                  {model.mission.state === "resume" ? "Resume" : "Open course"}
+                </Link>
               </div>
             )) : <EmptyLine>Your Mentor will place active courses here after your first goal is set.</EmptyLine>}
           </div>
@@ -269,6 +279,12 @@ export default function LearningMissionControl({
               </span>
             ))}
           </div>
+          <Link
+            href="/dashboard/education/reviews"
+            className="beast-button-secondary mt-5 inline-flex w-full justify-center sm:w-fit"
+          >
+            Review learning evidence
+          </Link>
         </DashboardCard>
 
         <DashboardCard accent="blue" className={polishedCard}>
@@ -281,6 +297,12 @@ export default function LearningMissionControl({
               </div>
             )) : <EmptyLine>Your completed sessions, reflections, and goal changes will appear here.</EmptyLine>}
           </div>
+          <Link
+            href="/dashboard/education/lesson-history"
+            className="beast-button-secondary mt-5 inline-flex w-full justify-center sm:w-fit"
+          >
+            Open learning history
+          </Link>
         </DashboardCard>
       </div>
     </section>

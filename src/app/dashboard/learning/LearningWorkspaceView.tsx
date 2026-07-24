@@ -26,6 +26,7 @@ import {
   normalizeCourseLifecycleStatus,
   type CourseLifecycleStatus,
 } from "@/lib/learning/courseLifecycle";
+import { getWorkspaceRecordAction } from "@/lib/education/contextualActions";
 
 type WorkspaceItem = {
   id: string;
@@ -179,6 +180,12 @@ function GoalContextCards({
               {progressLabel}: {item.progress}%
             </p>
           ) : null}
+          <Link
+            href="/dashboard/education/goals"
+            className="beast-button-secondary mt-4 inline-flex w-full justify-center sm:w-fit"
+          >
+            Open goal
+          </Link>
         </DashboardCard>
       ))}
     </div>
@@ -537,62 +544,87 @@ export default async function LearningWorkspaceView({ slug }: { slug: string }) 
             description="This workspace uses your authenticated BeastEducation records."
           />
           <div className="mt-6 grid items-stretch gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {items.map((item) =>
-              slug === "courses" && item.lifecycleStatus && item.ownerId ? (
-                <CourseLifecycleCard
+            {items.map((item) => {
+              if (slug === "courses" && item.lifecycleStatus && item.ownerId) {
+                return (
+                  <CourseLifecycleCard
+                    key={item.id}
+                    courseId={item.id}
+                    courseTitle={item.title}
+                    detail={item.detail}
+                    progress={item.progress || 0}
+                    status={item.lifecycleStatus}
+                    canRemove={canRemoveCourse({
+                      actorId: user.id,
+                      courseOwnerId: item.ownerId,
+                      actorRole,
+                    })}
+                  />
+                );
+              }
+
+              const contextualAction = getWorkspaceRecordAction(slug);
+              return (
+                <DashboardCard
                   key={item.id}
-                  courseId={item.id}
-                  courseTitle={item.title}
-                  detail={item.detail}
-                  progress={item.progress || 0}
-                  status={item.lifecycleStatus}
-                  canRemove={canRemoveCourse({
-                    actorId: user.id,
-                    courseOwnerId: item.ownerId,
-                    actorRole,
-                  })}
-                />
-              ) : (
-              <DashboardCard
-                key={item.id}
-                accent="learning"
-                className="min-w-0 transition duration-300 motion-safe:hover:-translate-y-0.5 motion-safe:hover:shadow-[0_18px_48px_rgba(0,0,0,0.2)] motion-reduce:transition-none"
-              >
-                <div className="flex h-full min-h-[190px] flex-col">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    {item.status ? (
-                      <span className="rounded-full border border-indigo-300/30 bg-indigo-300/10 px-2.5 py-1 text-xs font-black text-indigo-100">
-                        {item.status}
-                      </span>
-                    ) : null}
-                    {item.meta ? <span className="text-xs font-bold text-[#7f8da3]">{item.meta}</span> : null}
-                  </div>
-                  <h2 className="mt-4 break-words text-xl font-black text-white">{item.title}</h2>
-                  <p className="mt-2 break-words text-sm leading-6 text-[#aeb8c7]">{item.detail}</p>
-                  {typeof item.progress === "number" ? (
-                    <div className="mt-4">
-                      <div
-                        className="h-2.5 overflow-hidden rounded-full bg-[#0b1018]"
-                        role="progressbar"
-                        aria-label={`${item.title} progress`}
-                        aria-valuemin={0}
-                        aria-valuemax={100}
-                        aria-valuenow={Math.max(0, Math.min(100, item.progress))}
-                      >
-                        <div className="h-full rounded-full bg-gradient-to-r from-indigo-400 to-cyan-300 transition-[width] duration-700 motion-reduce:transition-none" style={{ width: `${Math.max(0, Math.min(100, item.progress))}%` }} />
-                      </div>
-                      <p className="mt-2 text-xs font-bold text-[#8f9cad]">{item.progress}% complete</p>
+                  accent="learning"
+                  className="min-w-0 transition duration-300 motion-safe:hover:-translate-y-0.5 motion-safe:hover:shadow-[0_18px_48px_rgba(0,0,0,0.2)] motion-reduce:transition-none"
+                >
+                  <div className="flex h-full min-h-[190px] flex-col">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      {item.status ? (
+                        <span className="rounded-full border border-indigo-300/30 bg-indigo-300/10 px-2.5 py-1 text-xs font-black text-indigo-100">
+                          {item.status}
+                        </span>
+                      ) : null}
+                      {item.meta ? (
+                        <span className="text-xs font-bold text-[#7f8da3]">
+                          {item.meta}
+                        </span>
+                      ) : null}
                     </div>
-                  ) : null}
-                  {item.href ? (
-                    <Link href={item.href} className="beast-button-secondary mt-auto inline-flex w-full justify-center sm:w-fit">
-                      {slug === "certificates" || slug === "certifications" ? "Open certificate" : "Open learning activity"}
+                    <h2 className="mt-4 break-words text-xl font-black text-white">
+                      {item.title}
+                    </h2>
+                    <p className="mt-2 break-words text-sm leading-6 text-[#aeb8c7]">
+                      {item.detail}
+                    </p>
+                    {typeof item.progress === "number" ? (
+                      <div className="mt-4">
+                        <div
+                          className="h-2.5 overflow-hidden rounded-full bg-[#0b1018]"
+                          role="progressbar"
+                          aria-label={`${item.title} progress`}
+                          aria-valuemin={0}
+                          aria-valuemax={100}
+                          aria-valuenow={Math.max(0, Math.min(100, item.progress))}
+                        >
+                          <div
+                            className="h-full rounded-full bg-gradient-to-r from-indigo-400 to-cyan-300 transition-[width] duration-700 motion-reduce:transition-none"
+                            style={{
+                              width: `${Math.max(0, Math.min(100, item.progress))}%`,
+                            }}
+                          />
+                        </div>
+                        <p className="mt-2 text-xs font-bold text-[#8f9cad]">
+                          {item.progress}% complete
+                        </p>
+                      </div>
+                    ) : null}
+                    <Link
+                      href={item.href || contextualAction.href}
+                      className="beast-button-secondary mt-auto inline-flex w-full justify-center sm:w-fit"
+                    >
+                      {item.href
+                        ? slug === "certificates" || slug === "certifications"
+                          ? "Open certificate"
+                          : "Open learning activity"
+                        : contextualAction.label}
                     </Link>
-                  ) : null}
-                </div>
-              </DashboardCard>
-              )
-            )}
+                  </div>
+                </DashboardCard>
+              );
+            })}
           </div>
         </section>
       )}
