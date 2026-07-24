@@ -19,13 +19,12 @@ import {
   type AgentConversationMessage,
 } from "@/app/components/agents";
 import {
-  buildGuidanceCounselorResponse,
+  buildGuidanceCounselorConversationTurn,
   type GuidanceCounselorConversationContext,
 } from "@/lib/education";
 import {
   discoveryProfileUpdate,
   learnFromDiscoveryTurn,
-  nextDiscoveryQuestion,
   type GuidanceDiscoveryProfile,
 } from "@/lib/education/discoveryConversation";
 import {
@@ -219,21 +218,17 @@ export default function GuidanceCounselorConversation({
       cleanQuestion,
       discoveryProfile
     );
-    const followUp = nextDiscoveryQuestion(learnedProfile);
-    const discoveryComplete =
-      followUp === "What would you like us to work on first?";
-    const response = discoveryComplete
-      ? buildGuidanceCounselorResponse({
-          question: cleanQuestion,
-          context: {
-            ...context,
-            educationalGoal: learnedProfile.goal || context.educationalGoal,
-            interests:
-              learnedProfile.careerInterests.join(", ") || context.interests,
-            careerDirection: learnedProfile.goal || context.careerDirection,
-          },
-        }).text
-      : `Thank you—that helps me understand where you’re starting. ${followUp}`;
+    const response = buildGuidanceCounselorConversationTurn({
+      question: cleanQuestion,
+      context: {
+        ...context,
+        educationalGoal: learnedProfile.goal || context.educationalGoal,
+        interests:
+          learnedProfile.careerInterests.join(", ") || context.interests,
+        careerDirection: learnedProfile.goal || context.careerDirection,
+      },
+      profile: learnedProfile,
+    }).text;
 
     setStreamingTurnId(turnId);
     setTurns((current) => [

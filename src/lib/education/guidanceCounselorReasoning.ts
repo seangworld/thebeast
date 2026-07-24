@@ -12,6 +12,12 @@ export type GuidanceCounselorReasoningResult = {
   authoritativeSources: readonly string[];
 };
 
+export type GuidanceCounselorConversationTurn =
+  GuidanceCounselorReasoningResult & {
+    followUp?: string;
+    referencedContext: readonly string[];
+  };
+
 type GuidancePlanningTopic =
   | "prerequisites"
   | "college-pathway"
@@ -190,6 +196,119 @@ function relationshipResponse(
   return "Tell me the outcome you are considering, where you are starting, and what constraints matter most—time, cost, location, schedule, or flexibility. I’ll help you separate verified requirements from assumptions, compare realistic routes, and choose a next step that keeps your options open.";
 }
 
+function conversationalRecommendation(
+  topics: readonly GuidancePlanningTopic[]
+) {
+  if (topics.includes("prerequisites") || topics.includes("certification")) {
+    return "I recommend that we verify the governing requirements first, then build only the preparation you actually need. That protects your time and keeps a recommended course from being mistaken for a mandatory one.";
+  }
+  if (topics.includes("college-pathway") || topics.includes("tradeoffs")) {
+    return "I recommend comparing two realistic routes side by side before committing. That makes the decision about fit, cost, time, and future options—not about which route sounds more impressive.";
+  }
+  if (
+    topics.includes("learning-order") ||
+    topics.includes("foundations") ||
+    topics.includes("time-estimate")
+  ) {
+    return "I recommend building from the first true dependency toward applied proof. That gives us a useful sequence and lets us estimate time from your actual starting point instead of a generic course calendar.";
+  }
+  if (topics.includes("career-progression")) {
+    return "I recommend working backward from the target role and identifying the smallest next step that builds both skill and credible evidence. That is usually more useful than collecting credentials without a clear purpose.";
+  }
+  if (topics.includes("interests")) {
+    return "I recommend testing a few directions through small, realistic experiences before choosing one. That lets your decision come from evidence about fit, not pressure to name a permanent career immediately.";
+  }
+  if (topics.includes("goals") || topics.includes("roadmap")) {
+    return "I recommend turning the direction into one near-term decision and one observable checkpoint. That keeps the roadmap useful without making it feel fixed.";
+  }
+  return "I recommend that we clarify the outcome enough to choose one useful next step, then learn from that step before overbuilding the plan.";
+}
+
+function relevantKnownContext(
+  profile: GuidanceDiscoveryProfile,
+  context: GuidanceCounselorConversationContext
+) {
+  const references: string[] = [];
+  if (profile.goal || isConfirmed(context.educationalGoal)) {
+    references.push(`your goal of ${profile.goal || context.educationalGoal}`);
+  }
+  if (profile.currentEmployment) {
+    references.push(`your current work as ${profile.currentEmployment}`);
+  } else if (profile.militaryExperience) {
+    references.push("the military experience you shared");
+  }
+  if (profile.availableStudyTimeKnown) {
+    references.push(`${profile.weeklyHours} study hours per week`);
+  }
+  if (profile.learningPreferences.length) {
+    references.push(
+      `your preference for ${profile.learningPreferences.slice(0, 2).join(" and ")} learning`
+    );
+  }
+  if (profile.constraints) references.push("the constraints you already identified");
+  return references.slice(0, 3);
+}
+
+function qualifyingQuestion(
+  topics: readonly GuidancePlanningTopic[],
+  profile: GuidanceDiscoveryProfile
+) {
+  if (
+    topics.includes("time-estimate") &&
+    !profile.availableStudyTimeKnown
+  ) {
+    return "How many hours could you realistically protect for this in a typical week?";
+  }
+  if (
+    (topics.includes("prerequisites") || topics.includes("certification")) &&
+    !profile.otherEducationalContext &&
+    profile.certifications.length === 0
+  ) {
+    return "What relevant education, training, or credentials are you already bringing to this?";
+  }
+  if (
+    (topics.includes("college-pathway") || topics.includes("tradeoffs")) &&
+    !profile.constraints
+  ) {
+    return "Which constraint should carry the most weight in this decision: cost, time, schedule, location, or flexibility?";
+  }
+  if (
+    topics.includes("career-progression") &&
+    !profile.currentEmployment &&
+    !profile.militaryExperience
+  ) {
+    return "What does your current work, school, or military situation look like?";
+  }
+  if (
+    topics.includes("interests") &&
+    !profile.strengths
+  ) {
+    return "What kind of problem or task tends to hold your attention longer than you expect?";
+  }
+  if (
+    (topics.includes("learning-order") || topics.includes("foundations")) &&
+    !profile.growthAreas
+  ) {
+    return "Where do you feel least prepared right now?";
+  }
+  if (
+    topics.length === 0 &&
+    !profile.goal &&
+    profile.careerInterests.length === 0
+  ) {
+    return "What would you most like education or career guidance to help you change?";
+  }
+  return undefined;
+}
+
+function withoutEmbeddedQuestions(text: string) {
+  return text
+    .split(/(?<=[.!?])\s+/)
+    .filter((sentence) => !sentence.trim().endsWith("?"))
+    .join(" ")
+    .trim();
+}
+
 export function buildGuidanceCounselorResponse({
   question,
   context,
@@ -234,3 +353,35 @@ export function buildGuidanceCounselorResponse({
     authoritativeSources,
   };
 }
+
+export function buildGuidanceCounselorConversationTurn({
+  question,
+  context,
+  profile,
+}: {
+  question: string;
+  context: GuidanceCounselorConversationContext;
+  profile: GuidanceDiscoveryProfile;
+}): GuidanceCounselorConversationTurn {
+  const reasoning = buildGuidanceCounselorResponse({ question, context });
+  const referencedContext = relevantKnownContext(profile, context);
+  const followUp = qualifyingQuestion(reasoning.planningTopics, profile);
+  const contextLead = referencedContext.length
+    ? `I’m keeping ${referencedContext.join(", ")} in view as we work through this.`
+    : "Let’s make this useful to your actual situation, not a generic education plan.";
+  const explanation = conversationalRecommendation(reasoning.planningTopics);
+  const guidance =
+    reasoning.planningTopics.length === 0
+      ? "We can start with the change you want, then connect it to realistic education and career options. I’ll help you separate what must be verified from what we can explore, and we’ll keep the first step small enough to teach us something useful."
+      : withoutEmbeddedQuestions(reasoning.text);
+
+  return {
+    ...reasoning,
+    followUp,
+    referencedContext,
+    text: [contextLead, explanation, guidance, followUp]
+      .filter(Boolean)
+      .join("\n\n"),
+  };
+}
+import type { GuidanceDiscoveryProfile } from "./discoveryConversation";
