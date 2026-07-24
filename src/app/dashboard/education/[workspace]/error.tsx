@@ -1,7 +1,5 @@
 "use client";
 
-import Link from "next/link";
-
 export default function ErrorState({
   error,
   reset,
@@ -21,7 +19,6 @@ export default function ErrorState({
           </p>
           <div className="mt-7 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
             <button type="button" onClick={reset} className="beast-button justify-center">Try again</button>
-            <Link href="/dashboard/education" className="beast-button-secondary justify-center">Back to Learning Mission Control</Link>
           </div>
         </section>
       </div>
