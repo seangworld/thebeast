@@ -660,6 +660,31 @@ export default function DashboardLayout({
         expandedModules.includes(item.module);
       const navGroupId = `${item.module}-nav-group`;
 
+      if (item.external && item.href) {
+        return (
+          <a
+            href={item.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={onNavigate}
+            title={compact ? `${item.label} (opens in a new tab)` : undefined}
+            aria-label={compact ? `${item.label} (opens in a new tab)` : undefined}
+            className="group flex w-full min-w-0 items-center gap-2 rounded-xl border border-transparent px-3 py-2 text-sm font-bold text-[#c7cfdb] transition duration-200 hover:border-[#2a3242] hover:bg-[#1a1f2b] sm:px-4"
+          >
+            <span
+              aria-hidden="true"
+              className="flex h-4 w-4 shrink-0 items-center justify-center text-sm text-amber-300"
+            >
+              {item.icon || "▦"}
+            </span>
+            <span className={compact ? "sr-only lg:not-sr-only" : ""}>
+              {item.label}
+            </span>
+            {!compact ? <span className="sr-only"> (opens in a new tab)</span> : null}
+          </a>
+        );
+      }
+
       if (compact || !hasChildren) {
         return (
           <div onClick={item.comingSoon ? undefined : onNavigate}>

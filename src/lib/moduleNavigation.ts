@@ -17,6 +17,8 @@ export type ModuleNavSection = {
   label: string;
   href?: string;
   module: ModuleKey;
+  external?: boolean;
+  icon?: string;
   comingSoon?: boolean;
   defaultExpanded?: boolean;
   children?: ModuleChildNavItem[];
@@ -114,6 +116,16 @@ export const beastAdminNavigation: ModuleNavSection = {
   ],
 };
 
+export const BF_DASH_CANONICAL_URL = "http://127.0.0.1:4173/";
+
+export const bfDashNavigation: ModuleNavSection = {
+  label: "BF-Dash",
+  href: BF_DASH_CANONICAL_URL,
+  module: "admin",
+  external: true,
+  icon: "▦",
+};
+
 const plannedModuleNavigation: Record<string, ModuleNavSection> = {
   health: {
     label: "BeastHealth",
@@ -194,8 +206,15 @@ export function buildOwnerNavigationForPersona({
   isOwner: boolean;
   registry?: BeastModuleRegistryEntry[];
 }) {
-  return buildBeastModuleNavigationForPersona({ isOwner, registry }).filter(
+  if (!isOwner) return [];
+
+  const ownerModules = buildBeastModuleNavigationForPersona({ isOwner, registry }).filter(
     (item) => item.module === "admin"
+  );
+
+  return [...ownerModules, bfDashNavigation].filter(
+    (item, index, items) =>
+      items.findIndex((candidate) => candidate.label === item.label) === index
   );
 }
 

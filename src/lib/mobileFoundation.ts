@@ -5,6 +5,7 @@ import {
 } from "./entitlements";
 import {
   buildApplicationNavigationForPersona,
+  buildOwnerNavigationForPersona,
   primaryNavigation,
   type ModuleNavSection,
 } from "./moduleNavigation";
@@ -18,6 +19,7 @@ export type BeastMobileNavItem = {
   href: string;
   module: ModuleKey;
   primary?: boolean;
+  external?: boolean;
 };
 
 export type BeastMobileCard = {
@@ -64,6 +66,13 @@ export function buildMobileNavigation({
       href: item.href || "/dashboard",
       module: item.module,
     }));
+  const ownerItems = buildOwnerNavigationForPersona({ isOwner }).map((item) => ({
+    label: item.label,
+    href: item.href || "/dashboard",
+    module: item.module,
+    external: item.external,
+  }));
+
   const primary = learningOnly
     ? [
         { label: "Today", href: "/dashboard/today", module: "learning" as ModuleKey, primary: true },
@@ -84,6 +93,7 @@ export function buildMobileNavigation({
     ...sharedItems,
     ...applicationItems,
     { label: "Shared AI", href: "/dashboard/search#shared-ai", module: "search" as ModuleKey },
+    ...ownerItems,
   ].filter((item, index, items) =>
     items.findIndex((candidate) => candidate.href === item.href && candidate.label === item.label) === index
   );
