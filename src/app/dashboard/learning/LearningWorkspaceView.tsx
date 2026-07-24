@@ -20,6 +20,12 @@ import {
 } from "@/lib/learning/learningChronology";
 import { buildLearningReports } from "@/lib/learning/learningReports";
 import { LearningReports } from "./LearningReports";
+import { CourseLifecycleManager } from "./CourseLifecycleManager";
+import {
+  canRemoveCourse,
+  normalizeCourseLifecycleStatus,
+  type CourseLifecycleStatus,
+} from "@/lib/learning/courseLifecycle";
 
 type WorkspaceItem = {
   id: string;
@@ -29,6 +35,8 @@ type WorkspaceItem = {
   progress?: number;
   meta?: string;
   href?: string;
+  ownerId?: string;
+  lifecycleStatus?: CourseLifecycleStatus;
 };
 
 async function loadWorkspaceItems(slug: LearningWorkspaceSlug, userId: string) {
@@ -88,11 +96,14 @@ async function loadWorkspaceItems(slug: LearningWorkspaceSlug, userId: string) {
       };
     }
     if (slug === "courses") {
+      const lifecycleStatus = normalizeCourseLifecycleStatus(row.status);
       return {
         id,
         title: String(row.title || "Learning course"),
         detail: String(row.subject || "Learning"),
-        status: String(row.status || "Planned"),
+        status: lifecycleStatus,
+        lifecycleStatus,
+        ownerId: String(row.user_id || userId),
         progress: Number(row.progress || 0),
       };
     }
@@ -476,6 +487,15 @@ export default async function LearningWorkspaceView({ slug }: { slug: string }) 
   if (error || !user) redirect("/login");
 
   const definition = learningWorkspaceDefinitions[slug];
+  const profileResult =
+    slug === "courses"
+      ? await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", user.id)
+          .maybeSingle()
+      : null;
+  const actorRole = String(profileResult?.data?.role || "user");
   const timeline = slug === "history" || slug === "lesson-history"
     ? await loadLearningChronology(user.id)
     : null;
@@ -544,6 +564,18 @@ export default async function LearningWorkspaceView({ slug }: { slug: string }) 
                     <Link href={item.href} className="beast-button-secondary mt-auto inline-flex w-full justify-center sm:w-fit">
                       {slug === "certificates" || slug === "certifications" ? "Open certificate" : "Open learning activity"}
                     </Link>
+                  ) : null}
+                  {slug === "courses" && item.lifecycleStatus && item.ownerId ? (
+                    <CourseLifecycleManager
+                      courseId={item.id}
+                      courseTitle={item.title}
+                      status={item.lifecycleStatus}
+                      canRemove={canRemoveCourse({
+                        actorId: user.id,
+                        courseOwnerId: item.ownerId,
+                        actorRole,
+                      })}
+                    />
                   ) : null}
                 </div>
               </DashboardCard>
