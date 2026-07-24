@@ -83,6 +83,22 @@ export type LearningCourseLifecycleRow = {
   updated_at: string
 }
 
+export type EducationProfileRow = {
+  owner_id: string
+  goal_kind: "career" | "education" | "certification" | "skill" | "personal-growth"
+  goal: string
+  current_situation: string
+  background: string
+  strengths: string
+  growth_areas: string
+  constraints: string
+  weekly_hours: number
+  discovery_answers: Record<string, string>
+  selected_providers: string[]
+  created_at: string
+  updated_at: string
+}
+
 export type UserRole = "user" | "beta" | "admin"
 export type MembershipPlan = "free" | "pro"
 export type SubscriptionStatus =

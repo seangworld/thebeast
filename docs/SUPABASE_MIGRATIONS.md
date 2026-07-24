@@ -134,6 +134,7 @@ The CLI stream preserves SQL contents from `migrations/` while using Supabase CL
 | `20260715000900_add_beast_document_access_grants.sql` | BeastOS document ownership, household sharing, and access grants | Confirmed applied to dev and production |
 | `20260715001000_add_beast_document_calendar_links.sql` | BeastOS document calendar associations | Confirmed applied to dev and production |
 | `20260724000100_fix_learning_course_lifecycle_schema.sql` | BE-214 explicit course lifecycle, soft removal, RLS, and schema-cache reload | Pending manual CLI apply in each Supabase environment |
+| `20260724000200_add_education_profiles.sql` | BE-215 owner-scoped Education Profile persistence and timestamps | Pending manual CLI apply in each Supabase environment |
 
 ## BE-214 Course Lifecycle Release
 
@@ -147,6 +148,16 @@ For each environment, explicitly link the intended project, review
 `20260724000100_fix_learning_course_lifecycle_schema.sql` applied until the
 `learning_courses` lifecycle columns, constraint, RPC, and RLS policy are
 confirmed in that environment.
+
+## BE-215 Education Profile Release
+
+The BE-215 migration must be applied to every Supabase environment before the
+Education Profile can persist or restore member answers. Application deployment
+alone does not create `public.education_profiles`.
+
+Use the same explicit link, list, dry-run, push, and verify sequence for
+`20260724000200_add_education_profiles.sql`. Confirm the table, owner-scoped RLS
+policy, timestamp trigger, and PostgREST schema reload in each environment.
 
 ## Legacy SQL Inventory
 

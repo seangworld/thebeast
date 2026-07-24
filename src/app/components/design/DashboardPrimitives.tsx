@@ -226,7 +226,7 @@ type GuidedEmptyStateProps = {
 };
 
 type ProgressiveSaveStatusProps = {
-  status: "idle" | "saving" | "saved" | "error";
+  status: "idle" | "dirty" | "saving" | "saved" | "error";
   savedAt?: string;
   errorMessage?: string;
 };
@@ -614,7 +614,7 @@ export function GuidedEmptyState({ title, description, nextAction, secondaryActi
 }
 
 export function ProgressiveSaveStatus({ status, savedAt, errorMessage }: ProgressiveSaveStatusProps) {
-  const message = status === "saving" ? "Saving changes…" : status === "saved" ? `Saved${savedAt ? ` ${savedAt}` : ""}` : status === "error" ? errorMessage || "Changes are still on this device. Try saving again." : "Changes save as you go.";
+  const message = status === "dirty" ? "Unsaved changes" : status === "saving" ? "Saving…" : status === "saved" ? `Saved${savedAt ? ` ${savedAt}` : ""}` : status === "error" ? errorMessage || "Save failed — retry." : "Changes save as you go.";
   return <p role="status" aria-live="polite" className={`text-xs font-bold ${status === "error" ? "text-red-200" : status === "saved" ? "text-green-200" : "text-[#9aa7b8]"}`} data-progressive-save-status={status}>{message}</p>;
 }
 

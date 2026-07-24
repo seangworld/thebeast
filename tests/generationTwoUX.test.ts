@@ -48,9 +48,10 @@ test("responsive contract uses structural reflow and retains focusable dense-reg
   assert.match(css, /prefers-reduced-motion/);
 });
 
-test("Education Profile demonstrates progressive saving without a blocking submit", () => {
+test("Education Profile demonstrates progressive saving with an explicit recovery action", () => {
   const source = readFileSync("src/app/dashboard/learning/EducationCommandCenter.tsx", "utf8");
   assert.match(source, /useProgressiveSave/);
   assert.match(source, /ProgressiveSaveStatus/);
-  assert.match(source, /localStorage\.setItem/);
+  assert.match(source, /\.from\("education_profiles"\)/);
+  assert.match(source, /Save profile/);
 });

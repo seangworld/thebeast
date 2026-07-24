@@ -1,11 +1,17 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { DashboardCard, ModuleBadge, ProgressiveSaveStatus, SectionHeader } from "@/app/components/design/DashboardPrimitives";
 import { ExternalResourceCard } from "@/app/components/design/ExternalResourceCard";
 import { buildEducationGuidancePlan, educationDiscoveryQuestions, type EducationGoalKind, type EducationProfile, type EducationResourceProvider } from "@/lib/education";
-import { externalResourceProviders } from "@/lib/platform/externalResources";
 import { useProgressiveSave } from "@/lib/platform/useProgressiveSave";
+import { createClient } from "@/lib/supabase/client";
+import {
+  defaultEducationResourceProviders,
+  educationProfileUpsert,
+  type EducationProfileDraft,
+} from "@/lib/education/profilePersistence";
 import {
   beastEducationGen2ArchitectureRules,
   beastEducationGen2Vision,
@@ -19,19 +25,32 @@ const goalKinds: { value: EducationGoalKind; label: string }[] = [
   { value: "personal-growth", label: "Personal growth" },
 ];
 
-const providers = externalResourceProviders.list().map((provider) => provider.name === "Certification providers" ? "Certifications" : provider.name) as EducationResourceProvider[];
+const providers = defaultEducationResourceProviders;
 
-export default function EducationCommandCenter() {
-  const [goalKind, setGoalKind] = useState<EducationGoalKind>("career");
-  const [goal, setGoal] = useState("");
-  const [currentSituation, setCurrentSituation] = useState("");
-  const [background, setBackground] = useState("");
-  const [strengths, setStrengths] = useState("");
-  const [growthAreas, setGrowthAreas] = useState("");
-  const [constraints, setConstraints] = useState("");
-  const [weeklyHours, setWeeklyHours] = useState(5);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [selectedProviders, setSelectedProviders] = useState<EducationResourceProvider[]>(providers);
+type EducationCommandCenterProps = {
+  ownerId: string;
+  initialProfile: EducationProfileDraft;
+  loadError?: boolean;
+};
+
+export default function EducationCommandCenter({
+  ownerId,
+  initialProfile,
+  loadError = false,
+}: EducationCommandCenterProps) {
+  const router = useRouter();
+  const [hydrated, setHydrated] = useState(false);
+  const [goalKind, setGoalKind] = useState<EducationGoalKind>(initialProfile.goalKind);
+  const [goal, setGoal] = useState(initialProfile.goal);
+  const [currentSituation, setCurrentSituation] = useState(initialProfile.currentSituation);
+  const [background, setBackground] = useState(initialProfile.background);
+  const [strengths, setStrengths] = useState(initialProfile.strengths);
+  const [growthAreas, setGrowthAreas] = useState(initialProfile.growthAreas);
+  const [constraints, setConstraints] = useState(initialProfile.constraints);
+  const [weeklyHours, setWeeklyHours] = useState(initialProfile.weeklyHours);
+  const [answers, setAnswers] = useState<Record<string, string>>(initialProfile.answers);
+  const [selectedProviders, setSelectedProviders] = useState<EducationResourceProvider[]>(initialProfile.selectedProviders);
+  useEffect(() => setHydrated(true), []);
   const profile: EducationProfile = useMemo(() => ({
     id: "education-profile-draft",
     ownerId: "current-user",
@@ -53,11 +72,59 @@ export default function EducationCommandCenter() {
   }), [answers, goal, goalKind, profile]);
   const draft = useMemo(() => ({ goalKind, goal, currentSituation, background, strengths, growthAreas, constraints, weeklyHours, answers, selectedProviders }), [answers, background, constraints, currentSituation, goal, goalKind, growthAreas, selectedProviders, strengths, weeklyHours]);
   const saveDraft = useCallback(async (value: typeof draft) => {
-    window.localStorage.setItem("beast-education-progressive-draft", JSON.stringify(value));
-  }, []);
-  const saveState = useProgressiveSave({ value: draft, save: saveDraft });
+    const supabase = createClient();
+    const result = await supabase
+      .from("education_profiles")
+      .upsert(educationProfileUpsert(ownerId, value), { onConflict: "owner_id" })
+      .select("owner_id")
+      .single();
+    if (result.error) {
+      throw new Error("Save failed — retry. Your answers are still visible.");
+    }
+    router.refresh();
+  }, [ownerId, router]);
+  const saveState = useProgressiveSave({
+    value: draft,
+    save: saveDraft,
+    delayMs: 800,
+    enabled: hydrated,
+  });
 
   const toggleProvider = (provider: EducationResourceProvider) => setSelectedProviders((current) => current.includes(provider) ? current.filter((item) => item !== provider) : [...current, provider]);
+
+  if (!hydrated) {
+    return (
+      <DashboardCard accent="learning" className="overflow-hidden">
+        <div className="grid gap-4" role="status" aria-busy="true">
+          <p className="font-black text-white">Loading your Education Profile…</p>
+          <div className="h-12 animate-pulse rounded-xl bg-white/[0.07]" />
+          <div className="h-24 animate-pulse rounded-xl bg-white/[0.05]" />
+        </div>
+      </DashboardCard>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <DashboardCard accent="learning" className="overflow-hidden">
+        <div role="alert">
+          <p className="font-black text-white">
+            We couldn’t load your saved Education Profile.
+          </p>
+          <p className="mt-2 text-sm text-[#aeb9ca]">
+            Your saved answers were not replaced. Retry before making changes.
+          </p>
+          <button
+            type="button"
+            className="beast-button-secondary mt-4"
+            onClick={() => router.refresh()}
+          >
+            Retry profile load
+          </button>
+        </div>
+      </DashboardCard>
+    );
+  }
 
   return (
     <DashboardCard accent="learning" className="overflow-hidden">
@@ -109,7 +176,17 @@ export default function EducationCommandCenter() {
           <div>
             <div className="text-xs font-bold uppercase tracking-wide text-indigo-200">Education Profile</div>
             <p className="mt-2 text-sm leading-6 text-[#aeb9ca]">Tell the Counselor enough to guide well. You can start small and refine the profile over time.</p>
-            <div className="mt-2"><ProgressiveSaveStatus {...saveState} /></div>
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+              <ProgressiveSaveStatus {...saveState} />
+              <button
+                type="button"
+                className="beast-button-secondary min-h-10 px-4 py-2 text-xs"
+                disabled={saveState.status === "saving"}
+                onClick={() => void saveState.saveNow()}
+              >
+                {saveState.status === "error" ? "Retry save" : "Save profile"}
+              </button>
+            </div>
           </div>
           <label className="grid gap-2 text-xs font-bold uppercase text-[#8d9aae]">Where would you like your life or career to go?
             <input className="min-w-0 rounded-xl border border-[#2a3242] bg-[#0f1419] px-3 py-3 text-sm font-semibold normal-case text-white" value={goal} onChange={(event) => setGoal(event.target.value)} placeholder="It is okay if you are still figuring this out" />
@@ -128,7 +205,7 @@ export default function EducationCommandCenter() {
               <input className="min-w-0 rounded-xl border border-[#2a3242] bg-[#0f1419] px-3 py-3 text-sm font-medium normal-case text-white" value={strengths} onChange={(event) => setStrengths(event.target.value)} placeholder="Comma separated" />
             </label>
             <label className="grid min-w-0 gap-2 text-xs font-bold uppercase text-[#8d9aae]">Weekly hours
-              <input type="number" min="1" max="80" className="min-w-0 rounded-xl border border-[#2a3242] bg-[#0f1419] px-3 py-3 text-sm font-medium normal-case text-white" value={weeklyHours} onChange={(event) => setWeeklyHours(Number(event.target.value) || 1)} />
+              <input type="number" min="0" max="168" className="min-w-0 rounded-xl border border-[#2a3242] bg-[#0f1419] px-3 py-3 text-sm font-medium normal-case text-white" value={weeklyHours} onChange={(event) => setWeeklyHours(Math.max(0, Math.min(168, Number(event.target.value) || 0)))} />
             </label>
           </div>
           <label className="grid gap-2 text-xs font-bold uppercase text-[#8d9aae]">Skills or areas you want to strengthen

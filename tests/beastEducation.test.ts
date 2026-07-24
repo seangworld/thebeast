@@ -65,7 +65,8 @@ test("Guidance Counselor owns lifelong guidance while specialists own teaching",
 
 test("G2.3 discovery starts without a fabricated destination and supports the full provider ecosystem", () => {
   const commandCenter = readFileSync("src/app/dashboard/learning/EducationCommandCenter.tsx", "utf8");
-  assert.match(commandCenter, /useState\(\"\"\)/);
+  assert.match(commandCenter, /useState\(initialProfile\.goal\)/);
+  assert.match(commandCenter, /initialProfile/);
   assert.doesNotMatch(commandCenter, /useState\(\"Cybersecurity analyst\"\)/);
   assert.match(educationDiscoveryQuestions[0].prompt, /Tell me about yourself/i);
 

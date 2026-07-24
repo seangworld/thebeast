@@ -86,6 +86,7 @@ import { mockLearningUploads } from "@/lib/learning/uploads";
 import { buildAIOrchestrationDashboard } from "@/lib/learning/aiOrchestrationDashboard";
 import { loadLearningPrivateBetaData } from "@/lib/learning/persistence";
 import { buildLifelongEducationRoadmap } from "@/lib/education/lifelongRoadmap";
+import { educationProfileDraftFromRow } from "@/lib/education/profilePersistence";
 import { createRouteClient } from "@/lib/supabase/server";
 import type {
   LearningAchievement,
@@ -536,6 +537,7 @@ export default async function LearningPage() {
     activitiesResult,
     achievementsResult,
     certificatesResult,
+    educationProfileResult,
   ] = await Promise.all([
     supabase.from("profiles").select("preferred_name, display_name, full_name, username, role").eq("id", user.id).maybeSingle(),
     supabase
@@ -578,6 +580,11 @@ export default async function LearningPage() {
       .select("id, learner_name, path_name, completion_date, certificate_id")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false }),
+    supabase
+      .from("education_profiles")
+      .select("owner_id, goal_kind, goal, current_situation, background, strengths, growth_areas, constraints, weekly_hours, discovery_answers, selected_providers, updated_at")
+      .eq("owner_id", user.id)
+      .maybeSingle(),
   ]);
 
   const learnerProfileRows = (learnerProfilesResult.data || []) as Record<string, unknown>[];
@@ -608,6 +615,9 @@ export default async function LearningPage() {
   const userSessions = ((sessionsResult.data || []) as Record<string, unknown>[]).map(mapSessionRow);
   const userActivities = (activitiesResult.data || []) as LearningPathActivityRow[];
   const userAchievements = ((achievementsResult.data || []) as Record<string, unknown>[]).map(mapAchievementRow);
+  const educationProfile = educationProfileDraftFromRow(
+    educationProfileResult.data as Record<string, unknown> | null
+  );
   const userCertificates = ((certificatesResult.data || []) as Record<string, unknown>[]).map(mapCertificateRow);
   const planRows = (plansResult.data || []) as Record<string, unknown>[];
   const activeGoal = userGoals.find((goal) => goal.status === "Active") || userGoals[0];
@@ -780,8 +790,8 @@ export default async function LearningPage() {
     currentGrade: undefined,
     academicProgressPercent: progressSignals.progressPercentage,
     completedSessions: progressSignals.sessionsCompleted,
-    careerInterests: [activeLearner.focus].filter(Boolean),
-    activeGoal: learningGoals[0]?.title,
+    careerInterests: [activeLearner.focus, educationProfile.goal].filter(Boolean),
+    activeGoal: learningGoals[0]?.title || educationProfile.goal,
     goalCategory: learningGoals[0]?.category,
     planSummary: learningPlan.summary,
     currentCourses: learningCourses.map((course) => course.title),
@@ -826,6 +836,7 @@ export default async function LearningPage() {
             memberFocus={activeLearner.focus}
             direction={
               learningGoals[0]?.title ||
+              educationProfile.goal ||
               "We’ll define your educational direction together."
             }
             nextStep={missionControl.mission.missionTitle}
@@ -836,13 +847,19 @@ export default async function LearningPage() {
             memberName={fallbackName || "there"}
             context={{
               educationalGoal:
-                learningGoals[0]?.title || "Define a long-term educational goal together.",
+                learningGoals[0]?.title ||
+                educationProfile.goal ||
+                "Define a long-term educational goal together.",
               interests:
+                educationProfile.strengths ||
                 activeLearner.focus ||
                 "Explore the subjects, problems, and environments that fit you.",
               careerDirection:
-                learningGoals[0]?.category || "No career direction has been confirmed yet.",
-              roadmap: learningPlan.summary,
+                educationProfile.goal ||
+                learningGoals[0]?.category ||
+                "No career direction has been confirmed yet.",
+              roadmap:
+                educationProfile.currentSituation || learningPlan.summary,
             }}
           />
 
@@ -862,7 +879,11 @@ export default async function LearningPage() {
           showWeeklyProgress={false}
           showAchievements={false}
         />
-        <EducationCommandCenter />
+        <EducationCommandCenter
+          ownerId={user.id}
+          initialProfile={educationProfile}
+          loadError={Boolean(educationProfileResult.error)}
+        />
 
         <MobileLearningQuickActions cards={mobileLearningCards} />
 
