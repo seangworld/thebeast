@@ -16,6 +16,7 @@ import { buildLearningIntelligenceSnapshot } from "@/lib/learning/intelligenceEn
 import { buildLearnerPortfolio } from "@/lib/learning/portfolio";
 import BetaFeedbackPanel from "./BetaFeedbackPanel";
 import GuidanceCounselorMode from "./GuidanceCounselorMode";
+import GuidanceCounselorConversation from "./GuidanceCounselorConversation";
 import EducationCommandCenter from "./EducationCommandCenter";
 import {
   AchievementEnginePanel,
@@ -975,8 +976,6 @@ export default async function LearningPage() {
         Skip to Guidance Counselor
       </a>
       <div className="beast-container space-y-6 sm:space-y-8">
-        <LearningMissionControl model={missionControl} insights={mentorInsights} />
-
         <section className="beast-page-header">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-4">
@@ -996,6 +995,23 @@ export default async function LearningPage() {
             </Link>
           </div>
         </section>
+
+        <GuidanceCounselorConversation
+          memberId={user.id}
+          memberName={fallbackName || "there"}
+          context={{
+            educationalGoal:
+              learningGoals[0]?.title || "Define a long-term educational goal together.",
+            interests:
+              activeLearner.focus ||
+              "Explore the subjects, problems, and environments that fit you.",
+            careerDirection:
+              learningGoals[0]?.category || "No career direction has been confirmed yet.",
+            roadmap: learningPlan.summary,
+          }}
+        />
+
+        <LearningMissionControl model={missionControl} insights={mentorInsights} />
 
         <EducationCommandCenter />
 

@@ -1,0 +1,190 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import {
+  AgentAvatar,
+  AgentContextSummary,
+  AgentConversationInput,
+  AgentConversationTimeline,
+  AgentExperience,
+  AgentGreeting,
+  AgentHeader,
+  AgentStatus,
+  AgentSuggestedActions,
+  type AgentConversationMessage,
+} from "@/app/components/agents";
+
+export const guidanceCounselorSuggestedQuestions = [
+  "Let's review your educational goals.",
+  "Let's talk about your interests.",
+  "Have your career goals changed?",
+  "Let's update your roadmap.",
+] as const;
+
+type GuidanceCounselorContext = {
+  educationalGoal: string;
+  interests: string;
+  careerDirection: string;
+  roadmap: string;
+};
+
+type StoredMessage = {
+  id: string;
+  role: "user" | "agent";
+  author: string;
+  content: string;
+};
+
+type GuidanceCounselorConversationProps = {
+  memberId: string;
+  memberName: string;
+  context: GuidanceCounselorContext;
+};
+
+const welcomeMessage: StoredMessage = {
+  id: "guidance-counselor-welcome",
+  role: "agent",
+  author: "Guidance Counselor",
+  content:
+    "I’m your Guidance Counselor. I’ll keep the big picture in view, help you explore credible options, and maintain your educational roadmap as your goals change.",
+};
+
+function counselorResponse(question: string) {
+  const normalized = question.toLowerCase();
+  if (normalized.includes("interest")) {
+    return "Let’s start with what holds your attention, what you enjoy solving, and the environments where you do your best work. Your interests can help us identify directions worth exploring without locking you into one path.";
+  }
+  if (normalized.includes("career")) {
+    return "We can revisit your career direction together. Tell me what has changed, what still feels true, and any new constraints or opportunities. I’ll use that to update the education options we should investigate.";
+  }
+  if (normalized.includes("roadmap")) {
+    return "Let’s update your roadmap from now to next to later. We’ll confirm the destination, verify any school or certification requirements, and choose the smallest useful next step.";
+  }
+  if (normalized.includes("goal")) {
+    return "Let’s review each goal for fit, priority, timing, and the evidence that will show progress. We can keep, revise, pause, or replace a goal based on what matters to you now.";
+  }
+  return "I’m listening. Share what you’re considering, what feels uncertain, or what has changed. I’ll connect it to your goals and roadmap, then help you decide on a practical next step.";
+}
+
+export default function GuidanceCounselorConversation({
+  memberId,
+  memberName,
+  context,
+}: GuidanceCounselorConversationProps) {
+  const storageKey = `beasteducation:guidance-counselor:${memberId}`;
+  const [input, setInput] = useState("");
+  const [messages, setMessages] = useState<StoredMessage[]>([welcomeMessage]);
+  const [historyReady, setHistoryReady] = useState(false);
+
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(storageKey);
+      if (stored) {
+        const parsed = JSON.parse(stored) as StoredMessage[];
+        if (Array.isArray(parsed) && parsed.length > 0) setMessages(parsed);
+      }
+    } catch {
+      // A private or restricted browser can still use the current conversation.
+    } finally {
+      setHistoryReady(true);
+    }
+  }, [storageKey]);
+
+  useEffect(() => {
+    if (!historyReady) return;
+    try {
+      window.localStorage.setItem(storageKey, JSON.stringify(messages));
+    } catch {
+      // Conversation remains available for the current page session.
+    }
+  }, [historyReady, messages, storageKey]);
+
+  const timelineMessages = useMemo<AgentConversationMessage[]>(
+    () => messages.map((message) => ({ ...message })),
+    [messages]
+  );
+
+  function sendMessage(question: string) {
+    const cleanQuestion = question.trim();
+    if (!cleanQuestion) return;
+    const turnId = `${Date.now()}-${messages.length}`;
+    setMessages((current) => [
+      ...current,
+      {
+        id: `${turnId}-member`,
+        role: "user",
+        author: memberName,
+        content: cleanQuestion,
+      },
+      {
+        id: `${turnId}-counselor`,
+        role: "agent",
+        author: "Guidance Counselor",
+        content: counselorResponse(cleanQuestion),
+      },
+    ]);
+    setInput("");
+  }
+
+  return (
+    <div id="guidance-counselor-conversation" className="scroll-mt-24">
+      <AgentExperience
+        className="max-w-none border-indigo-300/20 bg-gradient-to-b from-[#171c2a] to-[#121722]"
+        header={
+          <AgentHeader
+            title="Guidance Counselor"
+            subtitle="Your primary BeastEducation professional"
+            avatar={<AgentAvatar name="Guidance Counselor" initials="GC" size="lg" />}
+            status={<AgentStatus state="available" label="Ready to plan with you" />}
+          />
+        }
+        greeting={
+          <AgentGreeting greeting={`Welcome${memberName ? `, ${memberName}` : ""}.`}>
+            <p>
+              This relationship starts with your goals, interests, options, and
+              long-term direction. Courses and Tutor support remain available when
+              your roadmap calls for them.
+            </p>
+          </AgentGreeting>
+        }
+        contextSummary={
+          <AgentContextSummary
+            title="Context I’m keeping in view"
+            items={[
+              <span key="goal"><strong className="text-white">Educational goal:</strong> {context.educationalGoal}</span>,
+              <span key="interests"><strong className="text-white">Interests:</strong> {context.interests}</span>,
+              <span key="career"><strong className="text-white">Career direction:</strong> {context.careerDirection}</span>,
+              <span key="roadmap"><strong className="text-white">Roadmap:</strong> {context.roadmap}</span>,
+            ]}
+          />
+        }
+        suggestedActions={
+          <AgentSuggestedActions
+            label="Suggested questions"
+            actions={guidanceCounselorSuggestedQuestions.map((question, index) => ({
+              id: `guidance-question-${index}`,
+              label: question,
+              onSelect: () => sendMessage(question),
+            }))}
+          />
+        }
+        conversation={
+          <AgentConversationTimeline
+            title="Conversation history"
+            messages={timelineMessages}
+          />
+        }
+        composer={
+          <AgentConversationInput
+            value={input}
+            onChange={setInput}
+            onSubmit={sendMessage}
+            label="Message your Guidance Counselor"
+            placeholder="Tell your Guidance Counselor what you want to explore or update…"
+            submitLabel="Send"
+          />
+        }
+      />
+    </div>
+  );
+}
