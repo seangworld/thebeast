@@ -833,6 +833,7 @@ export default async function LearningPage() {
         <GuidanceCounselorRecommendation
           mission={missionControl.mission}
           roadmap={lifelongRoadmap}
+          learnerName={fallbackName || "there"}
         />
 
         <EducationalCareerRoadmap roadmap={lifelongRoadmap} />

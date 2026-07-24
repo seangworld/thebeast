@@ -6,14 +6,21 @@ import {
 } from "@/app/components/design/DashboardPrimitives";
 import type { LifelongEducationRoadmap } from "@/lib/education/lifelongRoadmap";
 import type { LearningMissionControlModel } from "@/lib/learning/missionControl";
+import { buildGuidanceCounselorMissionAssignment } from "@/lib/learning/missionAssignment";
 
 export default function GuidanceCounselorRecommendation({
   mission,
   roadmap,
+  learnerName,
 }: {
   mission: LearningMissionControlModel["mission"];
   roadmap: LifelongEducationRoadmap;
+  learnerName: string;
 }) {
+  const assignment = buildGuidanceCounselorMissionAssignment(
+    learnerName,
+    mission
+  );
   const roadmapStatus = roadmap.sections.reduce(
     (summary, section) => ({
       ...summary,
@@ -26,26 +33,49 @@ export default function GuidanceCounselorRecommendation({
     <section
       id="mentor-session"
       aria-labelledby="guidance-counselor-recommendation-title"
+      data-adaptive-reason={mission.recommendationReason}
+      data-roadmap-progress={mission.journeyProgressLabel}
       className="grid scroll-mt-24 gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(20rem,0.9fr)]"
     >
       <DashboardCard accent="purple">
         <SectionHeader
-          eyebrow="Current recommendation"
+          eyebrow="Current recommendation · Today’s assignment from your Guidance Counselor"
           title={mission.missionTitle}
-          description={mission.recommendationReason}
+          description={assignment.introduction}
           action={<ModuleBadge module="learning" label={mission.durationLabel} />}
         />
-        <div className="mt-5 rounded-2xl border border-indigo-300/20 bg-indigo-300/[0.07] p-4">
-          <p className="text-sm font-black text-white">{mission.missionLabel}</p>
-          <p className="mt-2 text-sm leading-6 text-indigo-100">
-            {mission.journeyProgressLabel}
-          </p>
+        <dl className="mt-5 grid gap-3 sm:grid-cols-2">
+          {[
+            ["Why I chose this", assignment.why],
+            ["Expected outcome", assignment.expectedOutcome],
+            ["Roadmap connection", assignment.roadmapConnection],
+            ["What happens after", assignment.afterCompletion],
+          ].map(([label, detail]) => (
+            <div
+              key={label}
+              className="rounded-2xl border border-indigo-300/20 bg-indigo-300/[0.07] p-4"
+            >
+              <dt className="text-xs font-black uppercase tracking-[0.12em] text-indigo-200">
+                {label}
+              </dt>
+              <dd className="mt-2 text-sm leading-6 text-indigo-50">
+                {detail}
+              </dd>
+            </div>
+          ))}
+        </dl>
+        <div className="mt-4 flex flex-wrap items-center gap-2 text-xs font-bold text-[#aeb8c7]">
+          <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5">
+            {mission.missionLabel}
+          </span>
+          <span>{mission.journeyRemainingLabel}</span>
         </div>
         <Link
           href={mission.primaryAction.href}
+          data-adaptive-action={mission.primaryAction.label}
           className="beast-button-primary mt-5 inline-flex w-full justify-center sm:w-fit"
         >
-          {mission.primaryAction.label}
+          {assignment.actionLabel}
         </Link>
       </DashboardCard>
 
