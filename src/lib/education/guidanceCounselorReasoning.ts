@@ -16,6 +16,7 @@ export type GuidanceCounselorConversationTurn =
   GuidanceCounselorReasoningResult & {
     followUp?: string;
     referencedContext: readonly string[];
+    intakeDecision?: ProfessionalIntakeDecision;
   };
 
 type GuidancePlanningTopic =
@@ -249,16 +250,6 @@ function relevantKnownContext(
   return references.slice(0, 3);
 }
 
-function qualifyingQuestion(
-  topics: readonly GuidancePlanningTopic[],
-  profile: GuidanceDiscoveryProfile
-) {
-  return nextGuidanceUnderstandingQuestion(
-    buildGuidanceCounselorUnderstanding(profile),
-    topics
-  )?.question;
-}
-
 function withoutEmbeddedQuestions(text: string) {
   return text
     .split(/(?<=[.!?])\s+/)
@@ -316,14 +307,21 @@ export function buildGuidanceCounselorConversationTurn({
   question,
   context,
   profile,
+  previousCounselorResponses = [],
 }: {
   question: string;
   context: GuidanceCounselorConversationContext;
   profile: GuidanceDiscoveryProfile;
+  previousCounselorResponses?: readonly string[];
 }): GuidanceCounselorConversationTurn {
   const reasoning = buildGuidanceCounselorResponse({ question, context });
   const referencedContext = relevantKnownContext(profile, context);
-  const followUp = qualifyingQuestion(reasoning.planningTopics, profile);
+  const intakeDecision = planProfessionalIntake({
+    profile,
+    topics: reasoning.planningTopics,
+    previousCounselorResponses,
+  });
+  const followUp = intakeDecision?.question;
   const contextLead = referencedContext.length
     ? `I’m keeping ${referencedContext.join(", ")} in view as we work through this.`
     : "Let’s make this useful to your actual situation, not a generic education plan.";
@@ -336,6 +334,7 @@ export function buildGuidanceCounselorConversationTurn({
   return {
     ...reasoning,
     followUp,
+    intakeDecision,
     referencedContext,
     text: [contextLead, explanation, guidance, followUp]
       .filter(Boolean)
@@ -344,6 +343,9 @@ export function buildGuidanceCounselorConversationTurn({
 }
 import type { GuidanceDiscoveryProfile } from "./discoveryConversation";
 import {
-  buildGuidanceCounselorUnderstanding,
-  nextGuidanceUnderstandingQuestion,
-} from "./guidanceUnderstanding";
+  planProfessionalIntake,
+  type ProfessionalIntakeDecision,
+} from "./professionalIntake";
+
+// Professional intake now governs the nextGuidanceUnderstandingQuestion decision
+// so purpose, prior questions, and increasing specificity shape every follow-up.

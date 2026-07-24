@@ -230,6 +230,7 @@ export default function GuidanceCounselorConversation({
         careerDirection: learnedProfile.goal || context.careerDirection,
       },
       profile: learnedProfile,
+      previousCounselorResponses: turns.map((turn) => turn.response),
     }).text;
 
     setStreamingTurnId(turnId);

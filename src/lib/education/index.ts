@@ -5,4 +5,5 @@ export * from "./intelligence";
 export * from "./guidanceCounselorReasoning";
 export * from "./discoveryConversation";
 export * from "./guidanceUnderstanding";
+export * from "./professionalIntake";
 export * from "./agentManifest";
