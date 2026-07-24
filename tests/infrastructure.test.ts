@@ -3078,23 +3078,29 @@ test("dashboard route changes do not force the full-page guard fallback after in
   );
 });
 
-test("dashboard module accordion keeps a single expanded group", () => {
+test("dashboard module navigation persists collapsible groups across responsive layouts", () => {
   const dashboardLayout = readFileSync(
     "src/app/dashboard/layout.tsx",
     "utf8"
   );
 
-  assert.match(dashboardLayout, /const \[expandedModule, setExpandedModule\]/);
-  assert.match(dashboardLayout, /setExpandedModule\(activeExpandableModule\)/);
-  assert.match(dashboardLayout, /expandedModule === item\.module/);
+  assert.match(dashboardLayout, /EXPANDED_MODULES_STORAGE_KEY/);
+  assert.match(dashboardLayout, /const \[expandedModules, setExpandedModules\]/);
+  assert.match(dashboardLayout, /expandedModules\.includes\(item\.module\)/);
+  assert.match(dashboardLayout, /window\.localStorage\.setItem/);
+  assert.match(dashboardLayout, /setExpandedModules\(loadExpandedModules\(\)\)/);
+  assert.match(dashboardLayout, /\[\.\.\.current, activeExpandableModule\]/);
+  assert.match(dashboardLayout, /beastOSModules\.includes\(workspaceModule\)/);
   assert.match(dashboardLayout, /aria-label=\{`\$\{expanded \? "Collapse" : "Expand"\} \$\{item\.label\}`\}/);
   assert.match(dashboardLayout, /href=\{item\.href \|\| "#"\}/);
-  assert.match(dashboardLayout, /BeastOS/);
+  assert.match(dashboardLayout, /item=\{beastOSNavigation\}/);
   assert.match(dashboardLayout, /aria-label="Applications"/);
   assert.match(dashboardLayout, /aria-label="Owner"/);
+  assert.match(dashboardLayout, /grid-rows-\[1fr\]/);
+  assert.match(dashboardLayout, /grid-rows-\[0fr\]/);
+  assert.match(dashboardLayout, /transition-\[grid-template-rows,opacity\]/);
+  assert.match(dashboardLayout, /navigationOnly/);
   assert.doesNotMatch(dashboardLayout, /aria-label="BeastOS modules"/);
-  assert.doesNotMatch(dashboardLayout, /expandedModules/);
-  assert.doesNotMatch(dashboardLayout, /Record<string, boolean>/);
 });
 
 test("learning activities have a dedicated runner and next-activity unlock logic", () => {

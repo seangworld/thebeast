@@ -14,10 +14,10 @@ import {
   type ModuleKey,
 } from "@/app/components/design/DashboardPrimitives";
 import {
+  beastOSNavigation,
   buildApplicationNavigationForPersona,
   buildOwnerNavigationForPersona,
   getBeastModuleNavigationForPersona,
-  primaryNavigation,
   type ModuleChildNavItem,
   type ModuleNavSection,
 } from "@/lib/moduleNavigation";
@@ -65,6 +65,28 @@ function loadAdminViewMode() {
   );
 }
 
+const EXPANDED_MODULES_STORAGE_KEY = "beast:navigation:expanded-modules";
+
+function loadExpandedModules() {
+  if (typeof window === "undefined") {
+    return ["beastos"] as ModuleKey[];
+  }
+
+  try {
+    const stored = JSON.parse(
+      window.localStorage.getItem(EXPANDED_MODULES_STORAGE_KEY) || "[]"
+    );
+
+    return Array.isArray(stored) && stored.length > 0
+      ? (stored.filter((module): module is ModuleKey =>
+          Object.prototype.hasOwnProperty.call(moduleAccents, module)
+        ) as ModuleKey[])
+      : (["beastos"] as ModuleKey[]);
+  } catch {
+    return ["beastos"] as ModuleKey[];
+  }
+}
+
 function getWorkspaceModule(pathname: string): ModuleKey {
   if (pathname.startsWith("/dashboard/admin")) return "admin";
   if (pathname.startsWith("/dashboard/money")) return "money";
@@ -89,7 +111,9 @@ export default function DashboardLayout({
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
   const [mobileOnline, setMobileOnline] = useState(true);
   const [locationHash, setLocationHash] = useState("");
-  const [expandedModule, setExpandedModule] = useState<ModuleKey | null>(null);
+  const [expandedModules, setExpandedModules] = useState<ModuleKey[]>([
+    "beastos",
+  ]);
   const [learningOnlyNavigation, setLearningOnlyNavigation] = useState(false);
   const [isAdminPersona, setIsAdminPersona] = useState(false);
   const [adminViewMode, setAdminViewMode] = useState<AdminViewMode>(
@@ -124,13 +148,24 @@ export default function DashboardLayout({
     degraded: resolvingOnboarding && dashboardGuardResolved,
   });
   const onboardingPath = "/dashboard/onboarding";
-  const activeExpandableModule =
-    personaModuleNavigation.find(
-      (item) => item.module === workspaceModule && item.children?.length
-    )?.module || null;
+  const beastOSModules: ModuleKey[] = [
+    "beastos",
+    "calendar",
+    "documents",
+    "goals",
+    "notifications",
+    "search",
+    "timeline",
+  ];
+  const activeExpandableModule = beastOSModules.includes(workspaceModule)
+    ? "beastos"
+    : [beastOSNavigation, ...personaModuleNavigation].find(
+        (item) => item.module === workspaceModule && item.children?.length
+      )?.module || null;
 
-  const [previousActiveExpandableModule, setPreviousActiveExpandableModule] =
-    useState<ModuleKey | null>(null);
+  useEffect(() => {
+    setExpandedModules(loadExpandedModules());
+  }, []);
 
   useEffect(() => {
     const syncLocationHash = () => setLocationHash(window.location.hash);
@@ -173,11 +208,32 @@ export default function DashboardLayout({
   }, []);
 
   useEffect(() => {
-    if (activeExpandableModule !== previousActiveExpandableModule) {
-      setExpandedModule(activeExpandableModule);
-      setPreviousActiveExpandableModule(activeExpandableModule);
-    }
-  }, [activeExpandableModule, previousActiveExpandableModule]);
+    if (!activeExpandableModule) return;
+
+    setExpandedModules((current) => {
+      if (current.includes(activeExpandableModule)) return current;
+
+      const next = [...current, activeExpandableModule];
+      window.localStorage.setItem(
+        EXPANDED_MODULES_STORAGE_KEY,
+        JSON.stringify(next)
+      );
+      return next;
+    });
+  }, [activeExpandableModule]);
+
+  function toggleExpandedModule(module: ModuleKey) {
+    setExpandedModules((current) => {
+      const next = current.includes(module)
+        ? current.filter((item) => item !== module)
+        : [...current, module];
+      window.localStorage.setItem(
+        EXPANDED_MODULES_STORAGE_KEY,
+        JSON.stringify(next)
+      );
+      return next;
+    });
+  }
 
   useEffect(() => {
     let active = true;
@@ -563,9 +619,11 @@ export default function DashboardLayout({
 
   function NavRail({
     compact = false,
+    navigationOnly = false,
     onNavigate,
   }: {
     compact?: boolean;
+    navigationOnly?: boolean;
     onNavigate?: () => void;
   }) {
     function ChildLink({
@@ -599,7 +657,7 @@ export default function DashboardLayout({
       const expanded =
         !compact &&
         hasChildren &&
-        expandedModule === item.module;
+        expandedModules.includes(item.module);
       const navGroupId = `${item.module}-nav-group`;
 
       if (compact || !hasChildren) {
@@ -643,80 +701,94 @@ export default function DashboardLayout({
             </Link>
             <button
               type="button"
-              onClick={() =>
-                setExpandedModule((current) =>
-                  current === item.module ? null : item.module
-                )
-              }
+              onClick={() => toggleExpandedModule(item.module)}
               className="mr-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs text-[#7f8da3] transition hover:bg-[#0f1419] hover:text-white"
               aria-expanded={expanded}
               aria-controls={navGroupId}
               aria-label={`${expanded ? "Collapse" : "Expand"} ${item.label}`}
             >
-              {expanded ? "−" : "+"}
+              <span
+                aria-hidden="true"
+                className={`transition-transform duration-200 motion-reduce:transition-none ${
+                  expanded ? "rotate-90" : ""
+                }`}
+              >
+                ▶
+              </span>
             </button>
           </div>
 
-          {expanded ? (
-            <div id={navGroupId} className="mt-2 space-y-1 pl-4">
-              {item.children?.filter((child) => !child.future).map((child) => (
-                <ChildLink key={child.label} item={child} module={item.module} />
-              ))}
-              {item.children?.some((child) => child.future) ? (
-                <div className="pt-2">
-                  <div className="px-3 text-[10px] font-bold uppercase tracking-wide text-[#596579]">
-                    Future
+          <div
+            id={navGroupId}
+            aria-hidden={!expanded}
+            className={`grid transition-[grid-template-rows,opacity] duration-200 ease-out motion-reduce:transition-none ${
+              expanded
+                ? "grid-rows-[1fr] opacity-100"
+                : "pointer-events-none grid-rows-[0fr] opacity-0"
+            }`}
+          >
+            <div className="min-h-0 overflow-hidden">
+              <div className="mt-2 space-y-1 pl-4">
+                {item.children?.filter((child) => !child.future).map((child) => (
+                  <ChildLink key={child.label} item={child} module={item.module} />
+                ))}
+                {item.children?.some((child) => child.future) ? (
+                  <div className="pt-2">
+                    <div className="px-3 text-[10px] font-bold uppercase tracking-wide text-[#596579]">
+                      Future
+                    </div>
+                    <div className="mt-1 space-y-1">
+                      {item.children
+                        .filter((child) => child.future)
+                        .map((child) => (
+                          <span
+                            key={child.label}
+                            className="block rounded-lg border border-transparent px-3 py-1.5 text-sm font-semibold text-[#596579]"
+                          >
+                            {child.label}
+                          </span>
+                        ))}
+                    </div>
                   </div>
-                  <div className="mt-1 space-y-1">
-                    {item.children
-                      .filter((child) => child.future)
-                      .map((child) => (
-                        <span
-                          key={child.label}
-                          className="block rounded-lg border border-transparent px-3 py-1.5 text-sm font-semibold text-[#596579]"
-                        >
-                          {child.label}
-                        </span>
-                      ))}
-                  </div>
-                </div>
-              ) : null}
+                ) : null}
+              </div>
             </div>
-          ) : null}
+          </div>
         </div>
       );
     }
 
     return (
       <div className="flex h-full min-h-0 flex-col">
-        <div className={compact ? "flex justify-center px-3 py-4" : "px-4 py-5"}>
-          <BeastBrandMark
-            module={workspaceModule}
-            subtitle={compact ? "" : "Platform Shell"}
-            size="sm"
-            iconOnly={compact}
-          />
-        </div>
+        {!navigationOnly ? (
+          <div className={compact ? "flex justify-center px-3 py-4" : "px-4 py-5"}>
+            <BeastBrandMark
+              module={workspaceModule}
+              subtitle={compact ? "" : "Platform Shell"}
+              size="sm"
+              iconOnly={compact}
+            />
+          </div>
+        ) : null}
 
         <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-4">
           <div className="space-y-6">
             <nav className="space-y-2" aria-label="Primary navigation">
-              {!compact ? (
-                <div className="px-2 text-xs font-bold uppercase tracking-wide text-[#596579]">
-                  BeastOS
-                </div>
-              ) : null}
-              {(learningOnlyNavigation ? learningPrimaryNavigation : primaryNavigation).map((item) => (
-                <div key={item.label} onClick={onNavigate}>
-                  <ModuleNavItem
-                    label={item.label}
-                    href={item.href}
-                    module={item.module}
-                    active={item.href ? isActiveRoute(item.href) : false}
-                    compact={compact}
-                  />
-                </div>
-              ))}
+              {learningOnlyNavigation ? (
+                learningPrimaryNavigation.map((item) => (
+                  <div key={item.label} onClick={onNavigate}>
+                    <ModuleNavItem
+                      label={item.label}
+                      href={item.href}
+                      module={item.module}
+                      active={item.href ? isActiveRoute(item.href) : false}
+                      compact={compact}
+                    />
+                  </div>
+                ))
+              ) : (
+                <ExpandableModuleNavItem item={beastOSNavigation} />
+              )}
             </nav>
 
             {!learningOnlyNavigation ? (
@@ -780,31 +852,34 @@ export default function DashboardLayout({
           </div>
         </div>
 
-        <AdminViewAsControl compact={compact} surface="sidebar" />
-
-        <div className="border-t border-[#2a3242] p-3">
-          <div className="space-y-2">
-            <div className={compact ? "[&>button]:w-full [&>button]:px-2" : "[&>button]:w-full"}>
-              <LogoutButton />
+        {!navigationOnly ? (
+          <>
+            <AdminViewAsControl compact={compact} surface="sidebar" />
+            <div className="border-t border-[#2a3242] p-3">
+              <div className="space-y-2">
+                <div className={compact ? "[&>button]:w-full [&>button]:px-2" : "[&>button]:w-full"}>
+                  <LogoutButton />
+                </div>
+                {!compact ? (
+                  <a
+                    href="/release-notes"
+                    className="block px-1 text-xs font-semibold text-[#7c8798] transition hover:text-white"
+                  >
+                    {APP_VERSION_LABEL}
+                  </a>
+                ) : (
+                  <a
+                    href="/release-notes"
+                    className="block text-center text-[10px] font-bold text-[#7c8798]"
+                    aria-label={APP_VERSION_LABEL}
+                  >
+                    v
+                  </a>
+                )}
+              </div>
             </div>
-            {!compact ? (
-              <a
-                href="/release-notes"
-                className="block px-1 text-xs font-semibold text-[#7c8798] transition hover:text-white"
-              >
-                {APP_VERSION_LABEL}
-              </a>
-            ) : (
-              <a
-                href="/release-notes"
-                className="block text-center text-[10px] font-bold text-[#7c8798]"
-                aria-label={APP_VERSION_LABEL}
-              >
-                v
-              </a>
-            )}
-          </div>
-        </div>
+          </>
+        ) : null}
       </div>
     );
   }
@@ -885,22 +960,12 @@ export default function DashboardLayout({
                 Close
               </button>
             </div>
-            <nav className="mt-4 grid gap-2" aria-label="More mobile destinations">
-              {mobileNavigation.more.map((item) => (
-                <Link
-                  key={`${item.label}-${item.href}`}
-                  href={item.href}
-                  onClick={() => setMobileMoreOpen(false)}
-                  className="flex min-h-[48px] items-center justify-between gap-3 rounded-xl border border-[#2a3242] bg-[#111827] px-4 py-3 text-sm font-bold text-white"
-                >
-                  <span className="min-w-0 truncate">{item.label}</span>
-                  <span
-                    className="h-2.5 w-2.5 shrink-0 rounded-full"
-                    style={{ background: moduleAccents[item.module].color }}
-                  />
-                </Link>
-              ))}
-            </nav>
+            <div className="mt-4 h-[min(60dvh,36rem)]">
+              <NavRail
+                navigationOnly
+                onNavigate={() => setMobileMoreOpen(false)}
+              />
+            </div>
             <div className="mt-4 border-t border-[#2a3242] pt-4">
               <AdminViewAsControl surface="sidebar" />
             </div>

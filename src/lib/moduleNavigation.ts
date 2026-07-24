@@ -36,6 +36,17 @@ export const primaryNavigation: ModuleNavSection[] = [
   { label: "Search", href: "/dashboard/search", module: "search" },
 ];
 
+export const beastOSNavigation: ModuleNavSection = {
+  label: "BeastOS",
+  href: "/dashboard/today",
+  module: "beastos",
+  defaultExpanded: true,
+  children: primaryNavigation.map(({ label, href }) => ({
+    label,
+    href: href || "/dashboard/today",
+  })),
+};
+
 export const beastMoneyNavigation: ModuleNavSection = {
   label: "BeastMoney",
   href: "/dashboard/money",
@@ -214,7 +225,7 @@ export const sharedNavigation: ModuleNavSection[] = [
 ];
 
 export const allModuleNavigation: ModuleNavSection[] = [
-  ...primaryNavigation,
+  beastOSNavigation,
   ...beastModuleNavigation,
   ...sharedNavigation,
 ];
