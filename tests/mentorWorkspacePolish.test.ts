@@ -6,6 +6,10 @@ const source = readFileSync(
   "src/app/dashboard/learning/activities/LessonEngine.tsx",
   "utf8"
 );
+const sharedScroll = readFileSync(
+  "src/app/components/agents/useConversationScroll.ts",
+  "utf8"
+);
 
 test("BL-409 polishes Mentor message grouping and conversation rhythm", () => {
   assert.match(source, /groupedWithPrevious/);
@@ -17,11 +21,12 @@ test("BL-409 polishes Mentor message grouping and conversation rhythm", () => {
 });
 
 test("BL-409 preserves learner-controlled scrolling with a latest-message affordance", () => {
-  assert.match(source, /distanceFromLatest <= 56/);
+  assert.match(source, /useConversationScroll/);
+  assert.match(sharedScroll, /latestThreshold = 48/);
   assert.match(source, /onScroll=\{handleConversationScroll\}/);
-  assert.match(source, /!followingLatest/);
+  assert.match(source, /showJumpToLatest/);
   assert.match(source, /Jump to latest/);
-  assert.match(source, /prefers-reduced-motion: reduce/);
+  assert.match(sharedScroll, /followingLatestRef/);
   assert.match(source, /overscroll-contain/);
 });
 

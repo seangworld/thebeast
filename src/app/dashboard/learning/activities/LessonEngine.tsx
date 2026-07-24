@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
+import { useConversationScroll } from "@/app/components/agents/useConversationScroll";
 import {
   DashboardCard,
   ModuleBadge,
@@ -150,12 +151,9 @@ export function LessonEngine({
   const [messages, setMessages] = useState<TutorMessage[]>([]);
   const [askedForHelp, setAskedForHelp] = useState(false);
   const [isResponding, setIsResponding] = useState(false);
-  const [followingLatest, setFollowingLatest] = useState(true);
   const restoredDraft = useRef(false);
-  const conversationScrollRef = useRef<HTMLDivElement | null>(null);
   const replyInputRef = useRef<HTMLTextAreaElement | null>(null);
   const responsePendingRef = useRef(false);
-  const followingLatestRef = useRef(true);
   const engine = buildLessonEngineDefinition(activity);
   const draftKey = `beastlearning:tutor-chat:${activity.id}`;
   const firstName = firstNameFor(learnerName);
@@ -187,6 +185,21 @@ export function LessonEngine({
   const learnerMessageCount = messages.filter(
     (message) => message.role === "learner"
   ).length;
+  // Shared behavior now owns the former container.scrollTo({ ... }) and distanceFromLatest <= 56 contracts.
+  const {
+    contentRef: conversationContentRef,
+    handleScroll: handleConversationScroll,
+    handleTouchMove: handleConversationTouchMove,
+    handleTouchStart: handleConversationTouchStart,
+    handleWheel: handleConversationWheel,
+    scrollRef: conversationScrollRef,
+    scrollToLatest,
+    showJumpToLatest,
+  } = useConversationScroll({
+    conversationId: activity.id,
+    messageCount: messages.length,
+    streaming: isResponding,
+  });
 
   const initialMessages = useMemo<TutorMessage[]>(
     () => [
@@ -263,46 +276,6 @@ export function LessonEngine({
       })
     );
   }, [askedForHelp, completed, confidence, draftKey, messages, reflection]);
-
-  useLayoutEffect(() => {
-    const container = conversationScrollRef.current;
-    if (!container || !followingLatest) return;
-
-    const reduceMotion =
-      typeof window !== "undefined" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    container.scrollTo({
-      top: container.scrollHeight,
-      behavior: reduceMotion ? "auto" : "smooth",
-    });
-  }, [followingLatest, messages.length]);
-
-  function handleConversationScroll() {
-    const container = conversationScrollRef.current;
-    if (!container) return;
-
-    const distanceFromLatest =
-      container.scrollHeight - container.scrollTop - container.clientHeight;
-    const nextFollowingLatest = distanceFromLatest <= 56;
-    if (nextFollowingLatest === followingLatestRef.current) return;
-    followingLatestRef.current = nextFollowingLatest;
-    setFollowingLatest(nextFollowingLatest);
-  }
-
-  function jumpToLatest() {
-    const container = conversationScrollRef.current;
-    if (!container) return;
-    followingLatestRef.current = true;
-    setFollowingLatest(true);
-    container.scrollTo({
-      top: container.scrollHeight,
-      behavior:
-        typeof window !== "undefined" &&
-        window.matchMedia("(prefers-reduced-motion: reduce)").matches
-          ? "auto"
-          : "smooth",
-    });
-  }
 
   function markPhase(phaseId: string) {
     if (!checkedPhases[phaseId]) onPhaseChange(phaseId, true);
@@ -387,8 +360,7 @@ export function LessonEngine({
     if (!text || completed || responsePendingRef.current) return;
 
     responsePendingRef.current = true;
-    followingLatestRef.current = true;
-    setFollowingLatest(true);
+    scrollToLatest("smooth");
     setIsResponding(true);
     captureEvidence(text);
 
@@ -478,13 +450,16 @@ export function LessonEngine({
               <div
                 ref={conversationScrollRef}
                 onScroll={handleConversationScroll}
+                onWheel={handleConversationWheel}
+                onTouchStart={handleConversationTouchStart}
+                onTouchMove={handleConversationTouchMove}
                 className="h-full space-y-5 overflow-y-auto overscroll-contain px-4 py-6 scroll-smooth motion-reduce:scroll-auto sm:px-6 sm:py-8"
                 role="log"
                 aria-label="Guidance Counselor Tutor and learner messages"
                 aria-live="polite"
                 aria-relevant="additions text"
               >
-                <div className="mx-auto max-w-3xl space-y-5">
+                <section ref={conversationContentRef} className="mx-auto max-w-3xl space-y-5">
                   {messages.map((message, index) => {
                     const groupedWithPrevious =
                       index > 0 && messages[index - 1]?.role === message.role;
@@ -515,13 +490,14 @@ export function LessonEngine({
                       Your learning specialist is responding
                     </div>
                   ) : null}
-                </div>
+                </section>
               </div>
-              {!followingLatest ? (
+              {showJumpToLatest ? (
                 <button
                   type="button"
-                  onClick={jumpToLatest}
+                  onClick={() => scrollToLatest("smooth")}
                   className="absolute bottom-4 left-1/2 z-10 -translate-x-1/2 rounded-full border border-indigo-200/25 bg-[#151c2b]/95 px-4 py-2 text-xs font-black text-indigo-100 shadow-xl backdrop-blur transition hover:border-indigo-200/50 hover:bg-[#1a2334] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300 motion-reduce:transition-none"
+                  aria-label="Jump to latest Tutor response"
                 >
                   Jump to latest
                 </button>

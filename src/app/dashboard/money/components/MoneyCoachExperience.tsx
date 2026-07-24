@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -17,6 +17,7 @@ import {
   AgentStreamingResponseArea,
   type AgentConversationMessage,
 } from "@/app/components/agents";
+import { useConversationScroll } from "@/app/components/agents/useConversationScroll";
 import {
   ServerAgentConversationRepository,
   SupabaseAgentConversationStore,
@@ -65,86 +66,22 @@ function MoneyCoachConversationTimeline({
   streaming,
   scrollPositions,
 }: MoneyCoachConversationTimelineProps) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const contentRef = useRef<HTMLElement>(null);
-  const followingLatestRef = useRef(true);
-  const programmaticScrollRef = useRef(false);
-  const scrollFrameRef = useRef<number>();
-  const touchStartYRef = useRef<number>();
-  const [showJumpToLatest, setShowJumpToLatest] = useState(false);
-
-  function isAtLatest(region: HTMLDivElement) {
-    return region.scrollHeight - region.clientHeight - region.scrollTop <= 48;
-  }
-
-  function scrollToLatest(behavior: ScrollBehavior) {
-    const region = scrollRef.current;
-    if (!region) return;
-    followingLatestRef.current = true;
-    setShowJumpToLatest(false);
-    programmaticScrollRef.current = true;
-    region.scrollTo({ top: region.scrollHeight, behavior });
-    scrollPositions.current.set(conversationId, region.scrollTop);
-  }
-
-  useLayoutEffect(() => {
-    const region = scrollRef.current;
-    if (!region) return;
-    const restoredPosition = scrollPositions.current.get(conversationId);
-    programmaticScrollRef.current = true;
-    region.scrollTop = restoredPosition ?? region.scrollHeight;
-    followingLatestRef.current = restoredPosition === undefined || isAtLatest(region);
-    setShowJumpToLatest(!followingLatestRef.current);
-    window.requestAnimationFrame(() => {
-      programmaticScrollRef.current = false;
-    });
-  }, [conversationId, scrollPositions]);
-
-  useEffect(() => {
-    if (followingLatestRef.current) scrollToLatest("smooth");
-  // The newest turn should be followed only while the member remains at the bottom.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [messages.length]);
-
-  useEffect(() => {
-    const content = contentRef.current;
-    if (!content || !streaming || typeof ResizeObserver === "undefined") return;
-    const observer = new ResizeObserver(() => {
-      if (followingLatestRef.current) scrollToLatest("auto");
-    });
-    observer.observe(content);
-    return () => observer.disconnect();
-  // Streaming content growth is observed without measuring on every render.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [conversationId, streaming]);
-
-  useEffect(() => () => {
-    if (scrollFrameRef.current) window.cancelAnimationFrame(scrollFrameRef.current);
-  }, []);
-
-  function handleScroll() {
-    if (scrollFrameRef.current) return;
-    scrollFrameRef.current = window.requestAnimationFrame(() => {
-      scrollFrameRef.current = undefined;
-      const region = scrollRef.current;
-      if (!region) return;
-      const atLatest = isAtLatest(region);
-      if (programmaticScrollRef.current) {
-        if (atLatest) programmaticScrollRef.current = false;
-        scrollPositions.current.set(conversationId, region.scrollTop);
-        return;
-      }
-      followingLatestRef.current = atLatest;
-      setShowJumpToLatest(!atLatest);
-      scrollPositions.current.set(conversationId, region.scrollTop);
-    });
-  }
-
-  function pauseFollowingLatest() {
-    programmaticScrollRef.current = false;
-    followingLatestRef.current = false;
-    setShowJumpToLatest(true);
-  }
+  // Shared behavior retains Money Coach's proven scrollTo({ top: region.scrollHeight, ... }) contract.
+  const {
+    contentRef,
+    handleScroll,
+    handleTouchMove,
+    handleTouchStart,
+    handleWheel,
+    scrollRef,
+    scrollToLatest,
+    showJumpToLatest,
+  } = useConversationScroll({
+    conversationId,
+    messageCount: messages.length,
+    streaming,
+    scrollPositions,
+  });
 
   return (
     <div className="relative min-h-0 flex-1">
@@ -153,23 +90,9 @@ function MoneyCoachConversationTimeline({
         className="h-full overflow-y-auto overscroll-contain"
         data-money-coach-active-scroll="true"
         onScroll={handleScroll}
-        onWheel={(event) => {
-          if (event.deltaY < 0) pauseFollowingLatest();
-        }}
-        onTouchStart={(event) => {
-          touchStartYRef.current = event.touches[0]?.clientY;
-        }}
-        onTouchMove={(event) => {
-          const currentY = event.touches[0]?.clientY;
-          if (
-            currentY !== undefined &&
-            touchStartYRef.current !== undefined &&
-            currentY > touchStartYRef.current
-          ) {
-            pauseFollowingLatest();
-          }
-          touchStartYRef.current = currentY;
-        }}
+        onWheel={handleWheel}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
       >
       <section ref={contentRef} className="mx-auto w-full max-w-3xl px-1 pb-8 sm:px-4" aria-labelledby="money-coach-conversation-heading">
         <h2 id="money-coach-conversation-heading" className="mb-2 text-lg font-black text-white">Conversation</h2>
