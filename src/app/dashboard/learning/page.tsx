@@ -17,6 +17,7 @@ import { buildLearnerPortfolio } from "@/lib/learning/portfolio";
 import BetaFeedbackPanel from "./BetaFeedbackPanel";
 import GuidanceCounselorMode from "./GuidanceCounselorMode";
 import GuidanceCounselorConversation from "./GuidanceCounselorConversation";
+import EducationalCareerRoadmap from "./EducationalCareerRoadmap";
 import EducationCommandCenter from "./EducationCommandCenter";
 import {
   AchievementEnginePanel,
@@ -82,6 +83,7 @@ import { learningPathTemplates } from "@/lib/learning/templates";
 import { mockLearningUploads } from "@/lib/learning/uploads";
 import { buildAIOrchestrationDashboard } from "@/lib/learning/aiOrchestrationDashboard";
 import { loadLearningPrivateBetaData } from "@/lib/learning/persistence";
+import { buildLifelongEducationRoadmap } from "@/lib/education/lifelongRoadmap";
 import { createRouteClient } from "@/lib/supabase/server";
 import type {
   LearningAchievement,
@@ -969,6 +971,19 @@ export default async function LearningPage() {
     },
     user.id
   );
+  const lifelongRoadmap = buildLifelongEducationRoadmap({
+    currentGrade: undefined,
+    academicProgressPercent: progressSignals.progressPercentage,
+    completedSessions: progressSignals.sessionsCompleted,
+    careerInterests: [activeLearner.focus].filter(Boolean),
+    activeGoal: learningGoals[0]?.title,
+    goalCategory: learningGoals[0]?.category,
+    planSummary: learningPlan.summary,
+    currentCourses: learningCourses.map((course) => course.title),
+    earnedCertifications: learningCertificates.map(
+      (certificate) => certificate.pathName
+    ),
+  });
 
   return (
     <main id="learning-main-content" className="beast-page">
@@ -1010,6 +1025,8 @@ export default async function LearningPage() {
             roadmap: learningPlan.summary,
           }}
         />
+
+        <EducationalCareerRoadmap roadmap={lifelongRoadmap} />
 
         <LearningMissionControl model={missionControl} insights={mentorInsights} />
 
