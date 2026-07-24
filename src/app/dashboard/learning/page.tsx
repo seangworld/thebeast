@@ -273,118 +273,82 @@ function GuidanceCounselorHome({
   learningGoals: LearningGoal[];
   learningRecommendations: LearningRecommendation[];
 }) {
-  const activeRole =
-    mission.state === "next_activity" || mission.state === "resume"
-      ? "Counselor with learning support ready"
-      : "Guidance Counselor";
-  const visibleRecommendations = learningRecommendations.slice(0, 3);
-
   return (
     <DashboardCard accent="learning">
       <SectionHeader
         eyebrow="Counselor context"
         title="What is shaping your guidance"
-        description="Supporting context appears here only when it adds something beyond your recommendation, roadmap, or progress view."
-        action={
-          <div className="flex flex-wrap gap-2">
-            <ModuleBadge module="learning" label={activeRole} />
-            <LearningGoalDiscovery recentGoals={learningGoals} />
-          </div>
-        }
+        description="Open this supporting evidence only when you want to understand the context behind the Counselor’s direction."
+        action={<LearningGoalDiscovery recentGoals={learningGoals} />}
       />
-
-      <div className="mt-6 grid gap-4 lg:grid-cols-2">
-        <section className="grid content-start gap-3" aria-label="Guidance Counselor supporting context">
-          <div className="rounded-2xl border border-[#2a3242] bg-[#111827] p-4">
-            <div className="text-xs font-black uppercase text-[#7f8da3]">
-              Why this mission
-            </div>
-            <p className="mt-3 text-sm leading-6 text-[#c7cfdb]">
-              {mission.recommendationReason}
-            </p>
-            <div className="mt-3 rounded-xl border border-[#2a3242] bg-[#0f1419] p-3">
-              <div className="text-xs font-bold uppercase text-indigo-100">
-                Data boundary
-              </div>
-              <p className="mt-1 text-sm leading-5 text-[#c7cfdb]">
-                {mission.hasSufficientLearnerData
-                  ? "I chose this from the learning work you already have in progress."
-                  : "We are starting fresh, so I will use a simple first question to find the right level."}
-              </p>
-            </div>
+      <div
+        className="mt-5 grid gap-4 lg:grid-cols-2"
+        aria-label="Guidance Counselor supporting context"
+      >
+        <div className="rounded-2xl border border-[#2a3242] bg-[#111827] p-4">
+          <p className="text-xs font-black uppercase text-[#7f8da3]">
+            Why this mission
+          </p>
+          <p className="mt-3 text-sm leading-6 text-[#c7cfdb]">
+            {mission.recommendationReason}
+          </p>
+          <p className="mt-3 text-xs font-bold uppercase text-indigo-100">
+            Data boundary
+          </p>
+          <p className="mt-1 text-sm leading-5 text-[#c7cfdb]">
+            {mission.hasSufficientLearnerData
+              ? "This direction comes from learning work already in progress."
+              : "We are starting fresh, so the Counselor will use conversation to find the right level."}
+          </p>
+          <div className="mt-4 grid gap-2 text-sm text-[#aeb8c7]">
+            <p>{memory.lastDone}</p>
+            <p>{memory.struggledWith}</p>
+            <p>{memory.unfinished}</p>
+            <p>{memory.reviewDue}</p>
           </div>
-
+        </div>
+        <div className="grid gap-4">
           <div className="rounded-2xl border border-[#2a3242] bg-[#111827] p-4">
-            <div className="text-xs font-black uppercase text-[#7f8da3]">
-              Counselor context
-            </div>
-            <div className="mt-3 grid gap-2 text-sm leading-6 text-[#c7cfdb]">
-              {[memory.lastDone, memory.struggledWith, memory.unfinished, memory.reviewDue].map((item) => (
-                <p key={item}>{item}</p>
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
-            <div className="text-xs font-bold uppercase text-[#7f8da3]">
+            <p className="text-xs font-black uppercase text-[#7f8da3]">
               Confidence intelligence
-            </div>
+            </p>
             <div className="mt-3 grid gap-2">
               {confidence.dimensions.map((signal) => (
-                <div key={signal.id} className="rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
-                  <div className="flex justify-between gap-3 text-sm">
-                    <span className="font-semibold text-[#9aa7b8]">{signal.label}</span>
-                    <span className="text-right font-black text-white">{signal.level.replace(/-/g, " ")}</span>
-                  </div>
-                  <p className="mt-1 text-xs font-semibold leading-5 text-[#c7cfdb]">
-                    {signal.learnerLanguage}
-                  </p>
-                </div>
+                <p key={signal.id} className="text-sm text-[#c7cfdb]">
+                  <span className="font-black text-white">{signal.label}:</span>{" "}
+                  {signal.learnerLanguage}
+                </p>
               ))}
             </div>
           </div>
-
-        </section>
-        <section className="grid content-start gap-3">
-          <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
-            <div className="text-xs font-bold uppercase text-[#7f8da3]">
+          <div className="rounded-2xl border border-[#2a3242] bg-[#111827] p-4">
+            <p className="text-xs font-black uppercase text-[#7f8da3]">
               Other useful recommendations
-            </div>
-            <div className="mt-3 grid gap-2">
-              {visibleRecommendations.map((recommendation) => (
-                <div key={recommendation.id} className="rounded-lg border border-indigo-300/25 bg-indigo-300/10 p-3 text-sm font-semibold leading-5 text-indigo-100">
+            </p>
+            <div className="mt-3 grid gap-2 text-sm text-[#c7cfdb]">
+              {learningRecommendations.slice(0, 3).map((recommendation) => (
+                <div key={recommendation.id}>
                   <p>{recommendation.title}</p>
                   <Link
                     href="#mentor-session"
-                    className="mt-2 inline-flex text-xs font-black uppercase tracking-wide text-white"
+                    className="mt-1 inline-flex text-xs font-black uppercase tracking-wide text-indigo-200"
                   >
                     Discuss next step
                   </Link>
                 </div>
               ))}
-              {visibleRecommendations.length === 0 ? (
-                <p className="text-sm leading-6 text-[#c7cfdb]">
-                  No additional recommendation needs your attention right now.
-                </p>
-              ) : null}
             </div>
-          </div>
-          <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
-            <div className="text-xs font-bold uppercase text-[#7f8da3]">
+            <p className="mt-4 text-xs font-black uppercase text-[#7f8da3]">
               Related actions
-            </div>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Link href="/dashboard/education/goals" className="beast-button-secondary">
-                Learning Goals
-              </Link>
-              {mission.secondaryActions.map((action) => (
-                <Link key={action.label} href={action.href} className="beast-button-secondary">
-                  {action.label}
-                </Link>
-              ))}
-            </div>
+            </p>
+            <Link
+              href="/dashboard/education/goals"
+              className="beast-button-secondary mt-3 inline-flex"
+            >
+              Learning Goals
+            </Link>
           </div>
-        </section>
+        </div>
       </div>
     </DashboardCard>
   );
@@ -845,11 +809,12 @@ export default async function LearningPage() {
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-4xl space-y-4">
               <ModuleBadge module="learning" label={`BeastEducation ${BEAST_LEARNING_VERSION}`} />
-              <h1 className="beast-title">Your Guidance Counselor knows the path we’re building</h1>
+              <h1 className="beast-title">
+                Hi {fallbackName || "there"}. Welcome to your Guidance Counselor’s office.
+              </h1>
               <p className="beast-subtitle">
-                Discover what fits, compare credible paths, build a realistic roadmap,
-                and keep long-term progress moving. Teaching and Tutor support appear
-                only when your plan identifies a specific learning need.
+                We’ll begin with what matters to you, keep your goals and roadmap
+                connected, and leave you with one clear next step.
               </p>
             </div>
             <Link
@@ -907,26 +872,58 @@ export default async function LearningPage() {
           />
         </section>
 
-        <EducationalCareerRoadmap roadmap={lifelongRoadmap} />
+        <section
+          aria-labelledby="education-supporting-workspace-title"
+          className="space-y-8 border-t border-white/10 pt-10 sm:space-y-10 sm:pt-14"
+          data-guidance-supporting-workspace="true"
+        >
+          <div className="max-w-3xl">
+            <p className="beast-kicker">Everything else</p>
+            <h2
+              id="education-supporting-workspace-title"
+              className="mt-3 text-2xl font-black tracking-tight text-white sm:text-3xl"
+            >
+              Your planning workspace, when you need it
+            </h2>
+            <p className="mt-3 text-sm leading-6 text-[#aeb8c7] sm:text-base">
+              The conversation sets the direction. Your detailed roadmap, goals,
+              courses, reviews, records, and progress tools support that work below.
+            </p>
+          </div>
 
-        <LearningMissionControl
-          model={missionControl}
-          insights={mentorInsights}
-          showCurrentMission={false}
-          showWeeklyProgress={false}
-          showAchievements={false}
-        />
-        <MobileLearningQuickActions cards={mobileLearningCards} />
-
-        <div id="guidance" className="scroll-mt-24">
-          <GuidanceCounselorHome
-            mission={mentorHomeMission}
-            confidence={confidenceIntelligence}
-            memory={mentorLearningMemory}
-            learningGoals={learningGoals}
-            learningRecommendations={learningRecommendations}
-          />
-        </div>
+          <EducationalCareerRoadmap roadmap={lifelongRoadmap} />
+          <MobileLearningQuickActions cards={mobileLearningCards} />
+          <details className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 sm:p-5">
+            <summary className="cursor-pointer text-sm font-black text-indigo-100 sm:text-base">
+              Open detailed learning progress
+            </summary>
+            <div className="mt-6">
+              <LearningMissionControl
+                model={missionControl}
+                insights={mentorInsights}
+                showCurrentMission={false}
+                showWeeklyProgress={false}
+                showAchievements={false}
+              />
+            </div>
+          </details>
+          <details
+            id="guidance"
+            className="scroll-mt-24 rounded-2xl border border-white/10 bg-white/[0.03] p-4 sm:p-5"
+          >
+            <summary className="cursor-pointer text-sm font-black text-indigo-100 sm:text-base">
+              Open the context behind your guidance
+            </summary>
+            <div className="mt-6">
+              <GuidanceCounselorHome
+                mission={mentorHomeMission}
+                confidence={confidenceIntelligence}
+                memory={mentorLearningMemory}
+                learningGoals={learningGoals}
+                learningRecommendations={learningRecommendations}
+              />
+            </div>
+          </details>
 
         <section id="learning-access" className="grid scroll-mt-24 gap-4 xl:grid-cols-[1fr_0.9fr]">
           <DashboardCard accent="blue">
@@ -1059,6 +1056,7 @@ export default async function LearningPage() {
             <BetaFeedbackPanel />
           </section>
         ) : null}
+        </section>
       </div>
     </main>
   );
