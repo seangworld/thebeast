@@ -19,7 +19,7 @@ const migration = readFileSync(
 
 test("BE-216 begins with the Guidance Counselor instead of a profile form", () => {
   assert.match(conversation, /greeting=\{`Hi\$\{memberName/);
-  assert.match(conversation, /I&apos;m your Guidance Counselor/);
+  assert.match(conversation, /I’m your Guidance Counselor/);
   assert.match(conversation, /How can I help you today/);
   assert.doesNotMatch(page, /<EducationCommandCenter/);
 });

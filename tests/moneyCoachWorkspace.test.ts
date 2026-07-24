@@ -4,6 +4,10 @@ import test from "node:test";
 import { buildMoneyCoachExperience } from "../src/lib/moneyCoachExperience";
 
 const source = readFileSync("src/app/dashboard/money/components/MoneyCoachExperience.tsx", "utf8");
+const workspace = readFileSync(
+  "src/app/components/agents/ProfessionalConversationWorkspace.tsx",
+  "utf8"
+);
 
 test("BM-305 provides a ChatGPT-style left conversation navigation", () => {
   assert.match(source, /data-money-coach-left-navigation="true"/);
@@ -17,7 +21,7 @@ test("BM-305 provides a ChatGPT-style left conversation navigation", () => {
   assert.match(source, /Unpin/);
   assert.match(source, /Archive/);
   assert.match(source, /Delete/);
-  assert.match(source, /lg:grid-cols-\[18rem_minmax\(0,1fr\)\]/);
+  assert.match(workspace, /lg:grid-cols-\[18rem_minmax\(0,1fr\)\]/);
 });
 
 test("BM-305 keeps persistence resume and automatic title behavior", () => {
@@ -33,14 +37,14 @@ test("BM-305 keeps persistence resume and automatic title behavior", () => {
 });
 
 test("BM-305 keeps conversation primary with streaming and a modern composer", () => {
-  assert.match(source, /data-money-coach-conversation-workspace="true"/);
+  assert.match(workspace, /data-professional-conversation-workspace="true"/);
   assert.match(source, /composerPlacement="before-cards"/);
   assert.match(source, /AgentStreamingResponseArea/);
   assert.match(source, /streamingTurnId/);
-  assert.match(source, /role="log"/);
-  assert.match(source, /aria-live="polite"/);
-  assert.match(source, /min-h-\[44px\]/);
-  assert.match(source, /focus-visible:outline/);
+  assert.match(workspace, /role="log"/);
+  assert.match(workspace, /aria-live="polite"/);
+  assert.match(workspace, /min-h-\[44px\]/);
+  assert.match(workspace, /focus-visible:outline/);
   assert.doesNotMatch(source, /FinancialMissionControl|MoneyDashboardCharts|BeastMoney Dashboard/);
 });
 

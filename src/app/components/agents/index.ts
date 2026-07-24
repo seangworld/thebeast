@@ -18,3 +18,8 @@ export {
   type AgentStatusState,
   type AgentSuggestion,
 } from "./AgentExperience";
+export {
+  ProfessionalConversationComposer,
+  ProfessionalConversationTimeline,
+  ProfessionalConversationWorkspace,
+} from "./ProfessionalConversationWorkspace";

@@ -10,6 +10,10 @@ const moneyCoach = readFileSync(
   "src/app/dashboard/money/components/MoneyCoachExperience.tsx",
   "utf8"
 );
+const professionalWorkspace = readFileSync(
+  "src/app/components/agents/ProfessionalConversationWorkspace.tsx",
+  "utf8"
+);
 const sharedScroll = readFileSync(
   "src/app/components/agents/useConversationScroll.ts",
   "utf8"
@@ -17,7 +21,8 @@ const sharedScroll = readFileSync(
 
 test("BE-213 Tutor and Money Coach reuse one conversation scroll behavior", () => {
   assert.match(tutor, /useConversationScroll/);
-  assert.match(moneyCoach, /useConversationScroll/);
+  assert.match(moneyCoach, /ProfessionalConversationTimeline/);
+  assert.match(professionalWorkspace, /useConversationScroll/);
   assert.doesNotMatch(tutor, /useLayoutEffect/);
   assert.doesNotMatch(tutor, /const distanceFromLatest/);
 });

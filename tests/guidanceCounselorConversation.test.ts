@@ -26,25 +26,26 @@ test("BE-202 provides history, input, context, and the required suggested questi
   const source = readFileSync(conversationPath, "utf8");
 
   assert.match(source, /AgentExperience/);
-  assert.match(source, /AgentConversationTimeline/);
-  assert.match(source, /title="Conversation history"/);
+  assert.match(source, /ProfessionalConversationTimeline/);
+  assert.match(source, /ProfessionalConversationWorkspace/);
   assert.match(source, /AgentConversationInput/);
   assert.match(source, /AgentContextSummary/);
-  assert.match(source, /label="Suggested questions"/);
-  assert.match(source, /Let's review your educational goals\./);
-  assert.match(source, /Let's talk about your interests\./);
-  assert.match(source, /Have your career goals changed\?/);
-  assert.match(source, /Let's update your roadmap\./);
+  assert.match(source, /Start a conversation/);
+  assert.match(source, /Let’s review my educational goals\./);
+  assert.match(source, /Help me explore career paths that fit me\./);
+  assert.match(source, /What should I learn next\?/);
+  assert.match(source, /Let’s update my roadmap\./);
 });
 
 test("BE-202 keeps a member-scoped relationship across navigation", () => {
   const source = readFileSync(conversationPath, "utf8");
 
-  assert.match(source, /beasteducation:guidance-counselor:\$\{memberId\}/);
-  assert.match(source, /window\.localStorage\.getItem\(storageKey\)/);
-  assert.match(source, /window\.localStorage\.setItem\(storageKey/);
+  assert.match(source, /ServerAgentConversationRepository/);
+  assert.match(source, /SupabaseAgentConversationStore/);
+  assert.match(source, /beasteducation\.guidance-counselor/);
+  assert.match(source, /ownerId: memberId/);
   assert.match(source, /Your primary BeastEducation professional/);
-  assert.match(source, /I&apos;m your Guidance Counselor/);
+  assert.match(source, /I’m your Guidance Counselor/);
   assert.match(source, /How can I help you today/);
 });
 
@@ -56,7 +57,7 @@ test("BE-205 presents the relationship before its supporting dashboard", () => {
     "utf8"
   );
 
-  assert.match(source, /suggestedActionsPlacement="after-conversation"/);
+  assert.match(source, /ProfessionalConversationWorkspace/);
   assert.ok(
     page.indexOf("<GuidanceCounselorConversation") <
       page.indexOf("<GuidanceCounselorRecommendation"),

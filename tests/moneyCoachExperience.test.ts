@@ -116,6 +116,14 @@ test("MC-201 consumes the shared AgentExperience without replacing existing page
   );
   const landing = readFileSync("src/app/dashboard/money/components/MoneyWorkspacePage.tsx", "utf8");
   const landingRoute = readFileSync("src/app/dashboard/money/page.tsx", "utf8");
+  const workspace = readFileSync(
+    "src/app/components/agents/ProfessionalConversationWorkspace.tsx",
+    "utf8"
+  );
+  const scroll = readFileSync(
+    "src/app/components/agents/useConversationScroll.ts",
+    "utf8"
+  );
 
   assert.match(component, /from "@\/app\/components\/agents"/);
   assert.match(component, /<AgentExperience/);
@@ -136,30 +144,30 @@ test("MC-201 consumes the shared AgentExperience without replacing existing page
   assert.match(component, /Archive/);
   assert.match(component, /Delete/);
   assert.match(component, /Review durable memories/);
-  assert.match(component, /lg:grid-cols-\[18rem_minmax\(0,1fr\)\]/);
+  assert.match(workspace, /lg:grid-cols-\[18rem_minmax\(0,1fr\)\]/);
   assert.match(component, /h-\[36rem\]/);
-  assert.match(component, /data-money-coach-active-scroll="true"/);
+  assert.match(workspace, /data-professional-active-scroll="true"/);
   assert.match(component, /data-money-coach-history-list="true"/);
-  assert.match(component, /overflow-y-auto/);
-  assert.match(component, /lg:hidden/);
-  assert.match(component, /role="dialog"/);
-  assert.match(component, /aria-modal="true"/);
+  assert.match(workspace, /overflow-y-auto/);
+  assert.match(workspace, /lg:hidden/);
+  assert.match(workspace, /role="dialog"/);
+  assert.match(workspace, /aria-modal="true"/);
   assert.match(component, /New Conversation/);
   assert.match(component, /Active Money Coach conversation/);
   assert.match(component, /Pinned Conversations/);
   assert.match(component, /Recent Conversations/);
   assert.match(component, /archivedThreads/);
   assert.match(component, /AgentStreamingResponseArea/);
-  assert.match(component, /MoneyCoachConversationTimeline/);
-  assert.match(component, /max-w-3xl/);
-  assert.match(component, /divide-y divide-white\/\[0\.07\]/);
-  assert.match(component, /data-message-role/);
-  assert.match(component, /scrollTo\(\{ top: region\.scrollHeight/);
-  assert.match(component, /Jump to Latest/);
+  assert.match(component, /ProfessionalConversationTimeline/);
+  assert.match(workspace, /max-w-3xl/);
+  assert.match(workspace, /divide-y divide-white\/\[0\.07\]/);
+  assert.match(workspace, /data-message-role/);
+  assert.match(scroll, /scrollTo\(\{ top: region\.scrollHeight/);
+  assert.match(workspace, /Jump to Latest/);
   assert.match(component, /preventScroll: true/);
-  assert.match(component, /\[&_table\]:w-full/);
-  assert.match(component, /\[&_ul\]:list-disc/);
-  assert.match(component, /\[&_ol\]:list-decimal/);
+  assert.match(workspace, /\[&_table\]:w-full/);
+  assert.match(workspace, /\[&_ul\]:list-disc/);
+  assert.match(workspace, /\[&_ol\]:list-decimal/);
   assert.doesNotMatch(component, /<AgentConversationTimeline/);
   for (const route of [
     "/dashboard/money/cashflow",

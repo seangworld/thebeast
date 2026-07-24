@@ -11,6 +11,10 @@ const conversation = readFileSync(
   "src/app/dashboard/learning/GuidanceCounselorConversation.tsx",
   "utf8"
 );
+const workspace = readFileSync(
+  "src/app/components/agents/ProfessionalConversationWorkspace.tsx",
+  "utf8"
+);
 const recommendation = readFileSync(
   "src/app/dashboard/learning/GuidanceCounselorRecommendation.tsx",
   "utf8"
@@ -39,22 +43,22 @@ test("BE-212 makes the conversation the primary organized flow", () => {
   assert.equal(recommendationIndex < roadmapIndex, true);
   assert.match(page, /data-guidance-primary-flow="true"/);
   assert.match(conversation, /data-guidance-home-primary="true"/);
-  assert.match(conversation, /shadow-\[0_26px_90px/);
+  assert.match(workspace, /shadow-\[0_20px_70px/);
 });
 
 test("BE-212 improves responsive hierarchy and restrained transitions", () => {
   assert.match(orientation, /sm:grid-cols-3/);
   assert.match(recommendation, /lg:grid-cols-/);
   assert.match(recommendation, /transition-\[border-color,box-shadow\]/);
-  assert.match(conversation, /focus-within:border-indigo-300\/40/);
+  assert.match(workspace, /focus-visible:outline/);
   assert.match(page, /space-y-8 sm:space-y-10/);
 });
 
 test("BE-212 provides honest homepage and conversation loading states", () => {
   assert.match(loading, /data-guidance-home-loading="true"/);
   assert.match(loading, /Preparing your relationship, direction, and next step/);
-  assert.match(conversation, /aria-busy=\{!historyReady\}/);
-  assert.match(conversation, /Restoring your Guidance Counselor conversation/);
+  assert.match(conversation, /historyLoading/);
+  assert.match(conversation, /Loading Guidance Counselor conversation/);
   assert.match(
     readFileSync("src/app/dashboard/education/loading.tsx", "utf8"),
     /GuidanceCounselorHomeLoading/
