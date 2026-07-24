@@ -87,6 +87,7 @@ import { loadLearningPrivateBetaData } from "@/lib/learning/persistence";
 import { buildLifelongEducationRoadmap } from "@/lib/education/lifelongRoadmap";
 import { educationProfileDraftFromRow } from "@/lib/education/profilePersistence";
 import { guidanceDiscoveryProfileFromRow } from "@/lib/education/discoveryConversation";
+import { buildGuidanceWorkflowRecommendation } from "@/lib/education/guidanceWorkflow";
 import { createRouteClient } from "@/lib/supabase/server";
 import type {
   LearningAchievement,
@@ -802,6 +803,18 @@ export default async function LearningPage() {
       (certificate) => certificate.pathName
     ),
   });
+  const guidanceWorkflowRecommendation = buildGuidanceWorkflowRecommendation({
+    memberName: fallbackName || "there",
+    profile: guidanceDiscoveryProfile,
+    hasSavedGoal: userGoals.length > 0,
+    hasSavedPlan: planRows.length > 0,
+    activeCourseCount: learningCourses.filter(
+      (course) => course.status !== "Completed"
+    ).length,
+    openSessionCount: learningSessions.filter(
+      (session) => session.status !== "Completed"
+    ).length,
+  });
 
   return (
     <main id="learning-main-content" className="beast-page">
@@ -871,6 +884,7 @@ export default async function LearningPage() {
             mission={missionControl.mission}
             roadmap={lifelongRoadmap}
             learnerName={fallbackName || "there"}
+            nextAction={guidanceWorkflowRecommendation}
           />
         </section>
 
