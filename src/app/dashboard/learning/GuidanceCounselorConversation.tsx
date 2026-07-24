@@ -21,6 +21,9 @@ import {
 import {
   buildGuidanceCounselorConversationTurn,
   buildGuidanceCounselorUnderstanding,
+  explicitGuidanceGoalChange,
+  guidanceRelationshipMemoryRecord,
+  guidanceRelationshipReference,
   type GuidanceCounselorConversationContext,
   type GuidanceUnderstandingItem,
 } from "@/lib/education";
@@ -32,6 +35,8 @@ import {
 import {
   ServerAgentConversationRepository,
   SupabaseAgentConversationStore,
+  SupabaseAgentMemoryStore,
+  type AgentMemoryRecord,
   type AgentConversationThread,
   type AgentMessage,
 } from "@/lib/platform/agents";
@@ -82,6 +87,11 @@ export default function GuidanceCounselorConversation({
   const [turns, setTurns] = useState<GuidanceTurn[]>([]);
   const [repository, setRepository] =
     useState<ServerAgentConversationRepository | null>(null);
+  const [memoryStore, setMemoryStore] =
+    useState<SupabaseAgentMemoryStore | null>(null);
+  const [relationshipMemories, setRelationshipMemories] = useState<
+    AgentMemoryRecord[]
+  >([]);
   const [threads, setThreads] = useState<AgentConversationThread[]>([]);
   const [activeThreadId, setActiveThreadId] = useState("");
   const [conversationTitle, setConversationTitle] = useState("New conversation");
@@ -123,6 +133,12 @@ export default function GuidanceCounselorConversation({
       const nextRepository = new ServerAgentConversationRepository(
         new SupabaseAgentConversationStore(client)
       );
+      const nextMemoryStore = new SupabaseAgentMemoryStore(client);
+      const memories = await nextMemoryStore.query({
+        ownerId: memberId,
+        agentId: professionalId,
+        scope: "user",
+      });
       let available = await nextRepository.list({
         ownerId: memberId,
         agentId: professionalId,
@@ -139,6 +155,8 @@ export default function GuidanceCounselorConversation({
       if (cancelled) return;
       const active = available.find((thread) => !thread.archived) || available[0];
       setRepository(nextRepository);
+      setMemoryStore(nextMemoryStore);
+      setRelationshipMemories([...memories]);
       setThreads(available);
       setActiveThreadId(active.id);
       setConversationTitle(active.title);
@@ -220,6 +238,17 @@ export default function GuidanceCounselorConversation({
       cleanQuestion,
       discoveryProfile
     );
+    const changedGoal = explicitGuidanceGoalChange(
+      cleanQuestion,
+      discoveryProfile.goal
+    );
+    if (changedGoal) learnedProfile.goal = changedGoal;
+    const relationshipMemory = guidanceRelationshipReference({
+      memories: relationshipMemories,
+      previousProfile: discoveryProfile,
+      currentProfile: learnedProfile,
+      currentConversationId: activeThreadId,
+    });
     const response = buildGuidanceCounselorConversationTurn({
       question: cleanQuestion,
       context: {
@@ -231,6 +260,7 @@ export default function GuidanceCounselorConversation({
       },
       profile: learnedProfile,
       previousCounselorResponses: turns.map((turn) => turn.response),
+      relationshipMemory,
     }).text;
 
     setStreamingTurnId(turnId);
@@ -275,6 +305,20 @@ export default function GuidanceCounselorConversation({
           updatedAt: now,
         });
         setConversationTitle(updated.title);
+        const memory = guidanceRelationshipMemoryRecord({
+          ownerId: memberId,
+          profile: learnedProfile,
+          conversationId: activeThreadId,
+          messageId: messages[0].id,
+          capturedAt: now,
+        });
+        if (memoryStore && memory) {
+          await memoryStore.put(memory);
+          setRelationshipMemories((current) => [
+            memory,
+            ...current.filter((item) => item.id !== memory.id),
+          ]);
+        }
         await refreshThreads();
       } catch {
         setHistoryError(

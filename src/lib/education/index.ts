@@ -6,4 +6,5 @@ export * from "./guidanceCounselorReasoning";
 export * from "./discoveryConversation";
 export * from "./guidanceUnderstanding";
 export * from "./professionalIntake";
+export * from "./guidanceRelationshipMemory";
 export * from "./agentManifest";

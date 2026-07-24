@@ -17,6 +17,7 @@ export type GuidanceCounselorConversationTurn =
     followUp?: string;
     referencedContext: readonly string[];
     intakeDecision?: ProfessionalIntakeDecision;
+    relationshipMemory?: GuidanceRelationshipReference;
   };
 
 type GuidancePlanningTopic =
@@ -308,11 +309,13 @@ export function buildGuidanceCounselorConversationTurn({
   context,
   profile,
   previousCounselorResponses = [],
+  relationshipMemory,
 }: {
   question: string;
   context: GuidanceCounselorConversationContext;
   profile: GuidanceDiscoveryProfile;
   previousCounselorResponses?: readonly string[];
+  relationshipMemory?: GuidanceRelationshipReference;
 }): GuidanceCounselorConversationTurn {
   const reasoning = buildGuidanceCounselorResponse({ question, context });
   const referencedContext = relevantKnownContext(profile, context);
@@ -322,9 +325,9 @@ export function buildGuidanceCounselorConversationTurn({
     previousCounselorResponses,
   });
   const followUp = intakeDecision?.question;
-  const contextLead = referencedContext.length
+  const contextLead = relationshipMemory?.text || (referencedContext.length
     ? `I’m keeping ${referencedContext.join(", ")} in view as we work through this.`
-    : "Let’s make this useful to your actual situation, not a generic education plan.";
+    : "Let’s make this useful to your actual situation, not a generic education plan.");
   const explanation = conversationalRecommendation(reasoning.planningTopics);
   const guidance =
     reasoning.planningTopics.length === 0
@@ -335,6 +338,7 @@ export function buildGuidanceCounselorConversationTurn({
     ...reasoning,
     followUp,
     intakeDecision,
+    relationshipMemory,
     referencedContext,
     text: [contextLead, explanation, guidance, followUp]
       .filter(Boolean)
@@ -342,6 +346,7 @@ export function buildGuidanceCounselorConversationTurn({
   };
 }
 import type { GuidanceDiscoveryProfile } from "./discoveryConversation";
+import type { GuidanceRelationshipReference } from "./guidanceRelationshipMemory";
 import {
   planProfessionalIntake,
   type ProfessionalIntakeDecision,
