@@ -18,6 +18,7 @@ import BetaFeedbackPanel from "./BetaFeedbackPanel";
 import GuidanceCounselorMode from "./GuidanceCounselorMode";
 import GuidanceCounselorConversation from "./GuidanceCounselorConversation";
 import EducationalCareerRoadmap from "./EducationalCareerRoadmap";
+import GuidanceCounselorRecommendation from "./GuidanceCounselorRecommendation";
 import EducationCommandCenter from "./EducationCommandCenter";
 import {
   AchievementEnginePanel,
@@ -1026,10 +1027,14 @@ export default async function LearningPage() {
           }}
         />
 
+        <GuidanceCounselorRecommendation
+          mission={missionControl.mission}
+          roadmap={lifelongRoadmap}
+        />
+
         <EducationalCareerRoadmap roadmap={lifelongRoadmap} />
 
         <LearningMissionControl model={missionControl} insights={mentorInsights} />
-
         <EducationCommandCenter />
 
         <MobileLearningQuickActions cards={mobileLearningCards} />

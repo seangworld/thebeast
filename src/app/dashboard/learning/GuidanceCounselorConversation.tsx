@@ -130,6 +130,7 @@ export default function GuidanceCounselorConversation({
     <div id="guidance-counselor-conversation" className="scroll-mt-24">
       <AgentExperience
         className="max-w-none border-indigo-300/20 bg-gradient-to-b from-[#171c2a] to-[#121722]"
+        suggestedActionsPlacement="after-conversation"
         header={
           <AgentHeader
             title="Guidance Counselor"

@@ -129,6 +129,7 @@ type AgentExperienceProps = {
   statusArea?: ReactNode;
   className?: string;
   composerPlacement?: "before-cards" | "after-conversation";
+  suggestedActionsPlacement?: "before-conversation" | "after-conversation";
   cardsPlacement?: "before-conversation" | "after-conversation";
   cardsLayout?: "grid" | "stack";
 };
@@ -487,6 +488,7 @@ export function AgentExperience({
   statusArea,
   className = "",
   composerPlacement = "after-conversation",
+  suggestedActionsPlacement = "before-conversation",
   cardsPlacement = "before-conversation",
   cardsLayout = "grid",
 }: AgentExperienceProps) {
@@ -507,10 +509,19 @@ export function AgentExperience({
       {greeting}
       {contextSummary}
       {composerPlacement === "before-cards" ? composer : null}
-      {composerPlacement === "before-cards" ? suggestedActions : null}
+      {composerPlacement === "before-cards" &&
+      suggestedActionsPlacement === "before-conversation"
+        ? suggestedActions
+        : null}
       {cardsPlacement === "before-conversation" ? cards : null}
-      {composerPlacement === "after-conversation" ? suggestedActions : null}
+      {composerPlacement === "after-conversation" &&
+      suggestedActionsPlacement === "before-conversation"
+        ? suggestedActions
+        : null}
       <div className="border-t border-white/10 pt-6">{conversation}</div>
+      {suggestedActionsPlacement === "after-conversation"
+        ? suggestedActions
+        : null}
       {cardsPlacement === "after-conversation" ? cards : null}
       {statusArea}
       {composerPlacement === "after-conversation" ? composer : null}

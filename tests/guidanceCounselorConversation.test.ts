@@ -46,3 +46,27 @@ test("BE-202 keeps a member-scoped relationship across navigation", () => {
   assert.match(source, /Your primary BeastEducation professional/);
   assert.match(source, /Courses and Tutor support remain available/);
 });
+
+test("BE-205 presents the relationship before its supporting dashboard", () => {
+  const page = readFileSync(pagePath, "utf8");
+  const source = readFileSync(conversationPath, "utf8");
+  const recommendation = readFileSync(
+    "src/app/dashboard/learning/GuidanceCounselorRecommendation.tsx",
+    "utf8"
+  );
+
+  assert.match(source, /suggestedActionsPlacement="after-conversation"/);
+  assert.ok(
+    page.indexOf("<GuidanceCounselorConversation") <
+      page.indexOf("<GuidanceCounselorRecommendation"),
+    "the conversation should precede the current recommendation"
+  );
+  assert.ok(
+    page.indexOf("<GuidanceCounselorRecommendation") <
+      page.indexOf("<EducationalCareerRoadmap"),
+    "the current recommendation and roadmap summary should precede the full roadmap"
+  );
+  assert.match(recommendation, /Current recommendation/);
+  assert.match(recommendation, /Educational Roadmap summary/);
+  assert.match(recommendation, /View full roadmap/);
+});
