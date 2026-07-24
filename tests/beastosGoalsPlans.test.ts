@@ -223,14 +223,18 @@ test("BeastOS goal and plan summary preserves module boundaries", () => {
   );
 });
 
-test("Personal Hub exposes goals and plans as shared BeastOS data", () => {
+test("Settings profile preserves goals and plans as shared BeastOS data", () => {
   const profilePage = readFileSync("src/app/dashboard/profile/page.tsx", "utf8");
+  const settingsProfilePage = readFileSync(
+    "src/app/dashboard/settings/profile/page.tsx",
+    "utf8"
+  );
   const navigation = readFileSync("src/lib/moduleNavigation.ts", "utf8");
 
   assert.match(profilePage, /Shared Goals and Plans/);
   assert.match(profilePage, /Goals are outcomes\. Plans are paths\./);
-  assert.match(navigation, /href: "\/dashboard\/goals"/);
-  assert.match(navigation, /label: "Goals"/);
+  assert.match(settingsProfilePage, /\.\.\/\.\.\/profile\/page/);
+  assert.doesNotMatch(navigation, /label: "Personal Hub"/);
 });
 
 test("BG-001 creates a BeastOS-owned Goal model and database contract", () => {

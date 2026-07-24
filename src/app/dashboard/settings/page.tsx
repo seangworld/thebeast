@@ -25,6 +25,44 @@ import {
   getPlatformSupportLinks,
   platformUXRules,
 } from "@/lib/platform/ux";
+import {
+  familyOwnershipRules,
+  mockFamilyModel,
+  summarizeFamilyModel,
+} from "@/lib/platform/family";
+
+const settingsDestinations = [
+  {
+    label: "Profile",
+    href: "/dashboard/settings/profile",
+    description: "Identity, personal context, and AI context.",
+  },
+  {
+    label: "Family",
+    href: "#family",
+    description: "Family relationships managed by BeastOS.",
+  },
+  {
+    label: "Household",
+    href: "#household",
+    description: "Household membership and shared visibility.",
+  },
+  {
+    label: "Preferences",
+    href: "#preferences",
+    description: "Display, notification, and module preferences.",
+  },
+  {
+    label: "Connected Accounts",
+    href: "#connected-accounts",
+    description: "Account connections and authentication identity.",
+  },
+  {
+    label: "Privacy",
+    href: "#privacy",
+    description: "Account privacy controls and policy placeholder.",
+  },
+] as const;
 
 const settingsSections = [
   {
@@ -50,7 +88,7 @@ const settingsSections = [
 const accountLinks = [
   {
     label: "Profile",
-    href: "/dashboard/profile",
+    href: "/dashboard/settings/profile",
     description: "Manage preferred name and personal context.",
   },
   {
@@ -66,6 +104,7 @@ const accountLinks = [
 ];
 
 export default function SettingsPage() {
+  const familySummary = summarizeFamilyModel(mockFamilyModel);
   const householdModel: HouseholdModel = {
     households: [
       {
@@ -183,7 +222,7 @@ export default function SettingsPage() {
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Link href="/dashboard/profile" className="beast-button">
+              <Link href="/dashboard/settings/profile" className="beast-button">
                 Open Profile
               </Link>
               <Link href="/dashboard/money/settings" className="beast-button-secondary">
@@ -193,7 +232,25 @@ export default function SettingsPage() {
           </div>
         </section>
 
-        <section className="grid gap-4 xl:grid-cols-3">
+        <nav
+          aria-label="Settings sections"
+          className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3"
+        >
+          {settingsDestinations.map((destination) => (
+            <Link
+              key={destination.label}
+              href={destination.href}
+              className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 transition duration-200 hover:-translate-y-0.5 hover:border-[#38bdf8]/50 hover:bg-[#202634]"
+            >
+              <div className="font-black text-white">{destination.label}</div>
+              <p className="mt-1 text-sm leading-5 text-[#9aa7b8]">
+                {destination.description}
+              </p>
+            </Link>
+          ))}
+        </nav>
+
+        <section id="preferences" className="grid scroll-mt-24 gap-4 xl:grid-cols-3">
           {settingsSections.map((section) => (
             <DashboardCard key={section.title} accent="beastos">
               <SectionHeader title={section.title} description={section.description} />
@@ -214,11 +271,12 @@ export default function SettingsPage() {
         </section>
 
         <section className="grid gap-4 lg:grid-cols-[1fr_0.85fr]">
-          <DashboardCard accent="documents">
+          <div id="privacy" className="scroll-mt-24">
+            <DashboardCard accent="documents">
             <SectionHeader
               eyebrow="Privacy & Security"
-              title="Account ownership"
-              description="BeastOS settings will gather privacy controls, export paths, deletion controls, and security preferences as platform services mature."
+              title="Privacy"
+              description="Privacy controls are a placeholder until account export, deletion, and security preference workflows are approved."
             />
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
               {[
@@ -235,13 +293,15 @@ export default function SettingsPage() {
                 </div>
               ))}
             </div>
-          </DashboardCard>
+            </DashboardCard>
+          </div>
 
-          <DashboardCard accent="money">
+          <div id="connected-accounts" className="scroll-mt-24">
+            <DashboardCard accent="money">
             <SectionHeader
               eyebrow="Account"
-              title="Management links"
-              description="Identity and policy destinations are separated from platform preferences."
+              title="Connected Accounts"
+              description="Authentication identity and future account connections stay centralized in BeastOS settings."
             />
             <div className="mt-5 grid gap-3">
               {accountLinks.map((link) => (
@@ -257,7 +317,8 @@ export default function SettingsPage() {
                 </Link>
               ))}
             </div>
-          </DashboardCard>
+            </DashboardCard>
+          </div>
         </section>
 
         <DashboardCard accent="beastos">
@@ -296,7 +357,45 @@ export default function SettingsPage() {
           </div>
         </DashboardCard>
 
-        <DashboardCard accent="family">
+        <section id="family" className="scroll-mt-24">
+          <DashboardCard accent="family">
+            <SectionHeader
+              eyebrow="Family"
+              title="Relationships and shared context"
+              description="Family context remains separate from authentication, personas, entitlements, and module-owned records."
+            />
+            <div className="mt-5 grid gap-4 md:grid-cols-3">
+              {[
+                ["Families", familySummary.familyCount],
+                ["Members", familySummary.memberCount],
+                ["Relationships", familySummary.supportedRelationships.length],
+              ].map(([label, value]) => (
+                <div
+                  key={label}
+                  className="rounded-xl border border-[#2a3242] bg-[#111827] p-4"
+                >
+                  <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                    {label}
+                  </div>
+                  <div className="mt-2 text-sm font-black text-white">{value}</div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-5 grid gap-3 md:grid-cols-2">
+              {familyOwnershipRules.map((rule) => (
+                <div
+                  key={rule}
+                  className="rounded-xl border border-[#2a3242] bg-[#0f1419] p-4 text-sm font-semibold text-[#d8dee8]"
+                >
+                  {rule}
+                </div>
+              ))}
+            </div>
+          </DashboardCard>
+        </section>
+
+        <section id="household" className="scroll-mt-24">
+          <DashboardCard accent="family">
           <SectionHeader
             eyebrow="Household"
             title="Lifecycle and shared visibility"
@@ -329,7 +428,8 @@ export default function SettingsPage() {
               </div>
             ))}
           </div>
-        </DashboardCard>
+          </DashboardCard>
+        </section>
 
         <DashboardCard accent="beastos">
           <SectionHeader

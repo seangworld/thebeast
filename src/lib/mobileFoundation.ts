@@ -59,17 +59,11 @@ export function buildMobileNavigation({
     module: item.module,
   }));
   const sharedItems = primaryNavigation
-    .filter((item) =>
-      ["Today", "Calendar", "Notifications", "Search", "Goals", "Documents"].includes(
-        item.label
-      )
-    )
     .map((item) => ({
       label: item.label,
       href: item.href || "/dashboard",
       module: item.module,
     }));
-
   const primary = learningOnly
     ? [
         { label: "Today", href: "/dashboard/today", module: "learning" as ModuleKey, primary: true },
@@ -90,9 +84,6 @@ export function buildMobileNavigation({
     ...sharedItems,
     ...applicationItems,
     { label: "Shared AI", href: "/dashboard/search#shared-ai", module: "search" as ModuleKey },
-    { label: "Quick Uploads", href: "/dashboard/uploads", module: "documents" as ModuleKey },
-    { label: "Profile", href: "/dashboard/profile", module: "beastos" as ModuleKey },
-    { label: "Settings", href: "/dashboard/settings", module: "beastos" as ModuleKey },
   ].filter((item, index, items) =>
     items.findIndex((candidate) => candidate.href === item.href && candidate.label === item.label) === index
   );

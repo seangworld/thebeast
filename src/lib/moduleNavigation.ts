@@ -23,17 +23,15 @@ export type ModuleNavSection = {
 
 export const primaryNavigation: ModuleNavSection[] = [
   { label: "Today", href: "/dashboard/today", module: "beastos" },
-  { label: "Personal Hub", href: "/dashboard/profile", module: "beastos" },
-  { label: "Goals", href: "/dashboard/goals", module: "goals" },
-  { label: "Documents", href: "/dashboard/uploads", module: "documents" },
   { label: "Calendar", href: "/dashboard/calendar", module: "calendar" },
-  { label: "Timeline", href: "/dashboard/timeline", module: "timeline" },
   {
     label: "Notifications",
     href: "/dashboard/notifications",
     module: "notifications",
   },
+  { label: "Timeline", href: "/dashboard/timeline", module: "timeline" },
   { label: "Search", href: "/dashboard/search", module: "search" },
+  { label: "Settings", href: "/dashboard/settings", module: "beastos" },
 ];
 
 export const beastOSNavigation: ModuleNavSection = {
@@ -216,11 +214,11 @@ export function getBeastModuleNavigationForPersona(isAdmin: boolean) {
 }
 
 export const sharedNavigation: ModuleNavSection[] = [
-  { label: "Goals", href: "/dashboard/goals", module: "goals" },
+  { label: "Today", href: "/dashboard/today", module: "beastos" },
   { label: "Calendar", href: "/dashboard/calendar", module: "calendar" },
+  { label: "Notifications", href: "/dashboard/notifications", module: "notifications" },
   { label: "Timeline", href: "/dashboard/timeline", module: "timeline" },
-  { label: "Documents", href: "/dashboard/uploads", module: "documents" },
-  { label: "Personal Hub", href: "/dashboard/profile", module: "beastos" },
+  { label: "Search", href: "/dashboard/search", module: "search" },
   { label: "Settings", href: "/dashboard/settings", module: "beastos" },
 ];
 

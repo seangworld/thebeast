@@ -354,7 +354,7 @@ test("BD-001 Documents overview route stays BeastOS-owned", () => {
     sharedNavigation.some(
       (item) => item.label === "Documents" && item.href === "/dashboard/uploads"
     ),
-    true
+    false
   );
   assert.match(documentsPage, /BeastOS Shared Service/);
   assert.match(documentsPage, /BeastOS Owned/);

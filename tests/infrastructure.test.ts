@@ -401,6 +401,7 @@ import {
 import {
   beastModuleNavigation,
   beastAdminNavigation,
+  beastOSNavigation,
   buildApplicationNavigationForPersona,
   buildBeastModuleNavigationForPersona,
   buildOwnerNavigationForPersona,
@@ -509,13 +510,11 @@ test("module navigation centralizes expandable child items", () => {
     primaryNavigation.map((item) => item.label),
     [
       "Today",
-      "Personal Hub",
-      "Goals",
-      "Documents",
       "Calendar",
-      "Timeline",
       "Notifications",
+      "Timeline",
       "Search",
+      "Settings",
     ]
   );
   assert.deepEqual(
@@ -533,7 +532,7 @@ test("module navigation centralizes expandable child items", () => {
   );
   assert.deepEqual(
     sharedNavigation.map((item) => item.label),
-    ["Goals", "Calendar", "Timeline", "Documents", "Personal Hub", "Settings"]
+    ["Today", "Calendar", "Notifications", "Timeline", "Search", "Settings"]
   );
   assert.deepEqual(
     buildApplicationNavigationForPersona({ isOwner: true }).map(
@@ -591,6 +590,51 @@ test("module navigation centralizes expandable child items", () => {
   assert.match(
     readFileSync("src/app/dashboard/money/debts/page.tsx", "utf8"),
     /<section id="add-debt" className="money-section-card">[\s\S]*<h2 className="money-section-title">Add Debt<\/h2>/
+  );
+});
+
+test("BO-308 keeps BeastOS focused and consolidates Personal Hub into Settings", () => {
+  const settingsPage = readFileSync("src/app/dashboard/settings/page.tsx", "utf8");
+  const settingsProfilePage = readFileSync(
+    "src/app/dashboard/settings/profile/page.tsx",
+    "utf8"
+  );
+
+  assert.deepEqual(
+    primaryNavigation.map(({ label, href }) => [label, href]),
+    [
+      ["Today", "/dashboard/today"],
+      ["Calendar", "/dashboard/calendar"],
+      ["Notifications", "/dashboard/notifications"],
+      ["Timeline", "/dashboard/timeline"],
+      ["Search", "/dashboard/search"],
+      ["Settings", "/dashboard/settings"],
+    ]
+  );
+  assert.equal(beastOSNavigation.href, "/dashboard/today");
+  assert.doesNotMatch(
+    primaryNavigation.map((item) => item.label).join(","),
+    /Personal Hub|Goals|Documents/
+  );
+  for (const destination of [
+    "Profile",
+    "Family",
+    "Household",
+    "Preferences",
+    "Connected Accounts",
+    "Privacy",
+  ]) {
+    assert.match(settingsPage, new RegExp(`label: "${destination}"`));
+  }
+  assert.match(settingsPage, /id="family"/);
+  assert.match(settingsPage, /id="household"/);
+  assert.match(settingsPage, /id="preferences"/);
+  assert.match(settingsPage, /id="connected-accounts"/);
+  assert.match(settingsPage, /id="privacy"/);
+  assert.match(settingsPage, /Privacy controls are a placeholder/);
+  assert.match(
+    settingsProfilePage,
+    /export \{ default \} from "\.\.\/\.\.\/profile\/page"/
   );
 });
 
@@ -5843,7 +5887,7 @@ test("member navigation hides admin and monetization surfaces", () => {
   );
 
   const dashboardLayout = readFileSync("src/app/dashboard/layout.tsx", "utf8");
-  assert.match(dashboardLayout, /primaryNavigation/);
+  assert.match(dashboardLayout, /beastOSNavigation/);
   assert.match(dashboardLayout, /buildApplicationNavigationForPersona/);
   assert.match(dashboardLayout, /buildOwnerNavigationForPersona/);
   assert.match(dashboardLayout, /ADMIN_VIEW_MODE_EVENT/);
@@ -5855,19 +5899,19 @@ test("member navigation hides admin and monetization surfaces", () => {
     primaryNavigation.some(
       (item) => item.label === "Documents" && item.href === "/dashboard/uploads"
     ),
-    true
+    false
   );
   assert.equal(
     sharedNavigation.some(
       (item) => item.label === "Goals" && item.href === "/dashboard/goals"
     ),
-    true
+    false
   );
   assert.equal(
     sharedNavigation.some(
       (item) => item.label === "Documents" && item.href === "/dashboard/uploads"
     ),
-    true
+    false
   );
 });
 
