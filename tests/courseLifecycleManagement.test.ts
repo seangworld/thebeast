@@ -15,6 +15,10 @@ const manager = readFileSync(
   "src/app/dashboard/learning/CourseLifecycleManager.tsx",
   "utf8"
 );
+const lifecycleCard = readFileSync(
+  "src/app/dashboard/learning/CourseLifecycleCard.tsx",
+  "utf8"
+);
 const migration = readFileSync(
   "supabase/migrations/20260724000000_add_learning_course_lifecycle.sql",
   "utf8"
@@ -34,7 +38,8 @@ test("BE-209 exposes contextual resume pause archive and remove actions", () => 
   ]);
   assert.deepEqual(getCourseLifecycleActions("Archived"), ["resume", "remove"]);
   assert.equal(normalizeCourseLifecycleStatus("planned"), "Active");
-  assert.match(workspace, /CourseLifecycleManager/);
+  assert.match(workspace, /CourseLifecycleCard/);
+  assert.match(lifecycleCard, /CourseLifecycleManager/);
 });
 
 test("BE-209 lets course owners and admins remove courses", () => {

@@ -61,6 +61,28 @@ export type AgentMemoryRow = {
   updated_at: string
 }
 
+export type LearningCourseLifecycleState =
+  | "active"
+  | "paused"
+  | "archived"
+  | "removed"
+
+export type LearningCourseLifecycleRow = {
+  id: string
+  user_id: string
+  learner_profile_id?: string | null
+  title: string
+  subject?: string | null
+  status: string
+  lifecycle_state: LearningCourseLifecycleState
+  progress: number
+  paused_at?: string | null
+  archived_at?: string | null
+  removed_at?: string | null
+  created_at: string
+  updated_at: string
+}
+
 export type UserRole = "user" | "beta" | "admin"
 export type MembershipPlan = "free" | "pro"
 export type SubscriptionStatus =

@@ -20,7 +20,7 @@ import {
 } from "@/lib/learning/learningChronology";
 import { buildLearningReports } from "@/lib/learning/learningReports";
 import { LearningReports } from "./LearningReports";
-import { CourseLifecycleManager } from "./CourseLifecycleManager";
+import { CourseLifecycleCard } from "./CourseLifecycleCard";
 import {
   canRemoveCourse,
   normalizeCourseLifecycleStatus,
@@ -61,6 +61,12 @@ async function loadWorkspaceItems(slug: LearningWorkspaceSlug, userId: string) {
   if (result.error) throw new Error(`Unable to load ${learningWorkspaceDefinitions[slug].title}: ${result.error.message}`);
 
   let rows = (result.data || []) as Record<string, unknown>[];
+  if (slug === "courses") {
+    rows = rows.filter((row) => {
+      const lifecycle = String(row.lifecycle_state || row.status || "").toLowerCase();
+      return lifecycle !== "archived" && lifecycle !== "removed";
+    });
+  }
   if (slug === "reviews") {
     rows = rows.filter(({ session_state }) => session_state === "review_due");
   }
@@ -96,7 +102,10 @@ async function loadWorkspaceItems(slug: LearningWorkspaceSlug, userId: string) {
       };
     }
     if (slug === "courses") {
-      const lifecycleStatus = normalizeCourseLifecycleStatus(row.status);
+      const lifecycleStatus = normalizeCourseLifecycleStatus(
+        row.status,
+        row.lifecycle_state
+      );
       return {
         id,
         title: String(row.title || "Learning course"),
@@ -528,7 +537,22 @@ export default async function LearningWorkspaceView({ slug }: { slug: string }) 
             description="This workspace uses your authenticated BeastEducation records."
           />
           <div className="mt-6 grid items-stretch gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {items.map((item) => (
+            {items.map((item) =>
+              slug === "courses" && item.lifecycleStatus && item.ownerId ? (
+                <CourseLifecycleCard
+                  key={item.id}
+                  courseId={item.id}
+                  courseTitle={item.title}
+                  detail={item.detail}
+                  progress={item.progress || 0}
+                  status={item.lifecycleStatus}
+                  canRemove={canRemoveCourse({
+                    actorId: user.id,
+                    courseOwnerId: item.ownerId,
+                    actorRole,
+                  })}
+                />
+              ) : (
               <DashboardCard
                 key={item.id}
                 accent="learning"
@@ -565,21 +589,10 @@ export default async function LearningWorkspaceView({ slug }: { slug: string }) 
                       {slug === "certificates" || slug === "certifications" ? "Open certificate" : "Open learning activity"}
                     </Link>
                   ) : null}
-                  {slug === "courses" && item.lifecycleStatus && item.ownerId ? (
-                    <CourseLifecycleManager
-                      courseId={item.id}
-                      courseTitle={item.title}
-                      status={item.lifecycleStatus}
-                      canRemove={canRemoveCourse({
-                        actorId: user.id,
-                        courseOwnerId: item.ownerId,
-                        actorRole,
-                      })}
-                    />
-                  ) : null}
                 </div>
               </DashboardCard>
-            ))}
+              )
+            )}
           </div>
         </section>
       )}

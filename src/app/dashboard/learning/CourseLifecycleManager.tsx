@@ -15,6 +15,10 @@ type CourseLifecycleManagerProps = {
   courseTitle: string;
   status: CourseLifecycleStatus;
   canRemove: boolean;
+  onChanged?: (
+    action: CourseLifecycleAction,
+    status: CourseLifecycleStatus | "Removed"
+  ) => void;
 };
 
 const actionLabels: Record<CourseLifecycleAction, string> = {
@@ -29,13 +33,26 @@ export function CourseLifecycleManager({
   courseTitle,
   status,
   canRemove,
+  onChanged,
 }: CourseLifecycleManagerProps) {
   const router = useRouter();
   const [pendingAction, setPendingAction] =
     useState<CourseLifecycleAction | null>(null);
   const [confirmingRemoval, setConfirmingRemoval] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const actions = getCourseLifecycleActions(status);
+
+  function lifecycleError(message: string) {
+    const normalized = message.toLowerCase();
+    if (normalized.includes("not permitted") || normalized.includes("permission")) {
+      return "You do not have permission to update this course.";
+    }
+    if (normalized.includes("schema cache") || normalized.includes("column")) {
+      return "Course management is temporarily unavailable. Please try again after the database update.";
+    }
+    return "We couldn’t update this course. Your current course state was preserved.";
+  }
 
   async function runAction(action: CourseLifecycleAction) {
     if (action === "remove") {
@@ -45,39 +62,59 @@ export function CourseLifecycleManager({
 
     setPendingAction(action);
     setError("");
+    setSuccess("");
     const supabase = createClient();
     const update = getCourseLifecycleUpdate(action);
     const result = await supabase
       .from("learning_courses")
       .update(update)
-      .eq("id", courseId);
+      .eq("id", courseId)
+      .select("id")
+      .maybeSingle();
 
     if (result.error) {
-      setError(result.error.message);
+      setError(lifecycleError(result.error.message));
+      setPendingAction(null);
+      return;
+    }
+    if (!result.data) {
+      setError("You do not have permission to update this course.");
       setPendingAction(null);
       return;
     }
 
     setPendingAction(null);
+    const nextStatus = action === "pause" ? "Paused" : action === "archive" ? "Archived" : "Active";
+    setSuccess(
+      action === "pause"
+        ? "Course paused."
+        : action === "archive"
+          ? "Course archived and removed from your active list."
+          : "Course resumed."
+    );
+    onChanged?.(action, nextStatus);
     router.refresh();
   }
 
   async function removeCourse() {
     setPendingAction("remove");
     setError("");
+    setSuccess("");
     const supabase = createClient();
     const result = await supabase.rpc("remove_learning_course", {
       p_course_id: courseId,
     });
 
     if (result.error) {
-      setError(result.error.message);
+      setError(lifecycleError(result.error.message));
       setPendingAction(null);
       return;
     }
 
     setConfirmingRemoval(false);
     setPendingAction(null);
+    setSuccess("Course removed. Your learning history remains available.");
+    onChanged?.("remove", "Removed");
     router.refresh();
   }
 
@@ -108,7 +145,12 @@ export function CourseLifecycleManager({
       </div>
       {error ? (
         <p className="mt-3 text-sm font-bold text-red-200" role="alert">
-          Course update failed: {error}
+          {error}
+        </p>
+      ) : null}
+      {success ? (
+        <p className="mt-3 text-sm font-bold text-emerald-200" role="status">
+          {success}
         </p>
       ) : null}
       {confirmingRemoval ? (

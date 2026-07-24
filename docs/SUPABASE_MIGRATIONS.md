@@ -1,6 +1,6 @@
 # Supabase CLI Migration Management
 
-Last audited: 2026-07-15 EDT
+Last audited: 2026-07-24 EDT
 
 This repository now uses the Supabase CLI-standard migration directory:
 
@@ -133,6 +133,20 @@ The CLI stream preserves SQL contents from `migrations/` while using Supabase CL
 | `20260715000800_add_beast_document_organization.sql` | BeastOS document folders, collections, tags, and organization metadata | Confirmed applied to dev and production |
 | `20260715000900_add_beast_document_access_grants.sql` | BeastOS document ownership, household sharing, and access grants | Confirmed applied to dev and production |
 | `20260715001000_add_beast_document_calendar_links.sql` | BeastOS document calendar associations | Confirmed applied to dev and production |
+| `20260724000100_fix_learning_course_lifecycle_schema.sql` | BE-214 explicit course lifecycle, soft removal, RLS, and schema-cache reload | Pending manual CLI apply in each Supabase environment |
+
+## BE-214 Course Lifecycle Release
+
+The BE-214 migration must be applied to every Supabase environment before
+Pause, Resume, Archive, and Remove can work against that environment. Pushing
+application code does not apply the database migration.
+
+For each environment, explicitly link the intended project, review
+`migration list`, run the environment-specific dry-run, then push with
+`--after-dry-run` and verify. Do not mark
+`20260724000100_fix_learning_course_lifecycle_schema.sql` applied until the
+`learning_courses` lifecycle columns, constraint, RPC, and RLS policy are
+confirmed in that environment.
 
 ## Legacy SQL Inventory
 
