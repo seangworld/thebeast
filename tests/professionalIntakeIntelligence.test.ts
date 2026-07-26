@@ -49,7 +49,7 @@ test("BE-221 makes questions more specific as understanding improves", () => {
   });
   assert.match(
     priorExperience?.question || "",
-    /toward Become a cybersecurity analyst/
+    /toward becoming a cybersecurity analyst/
   );
   assert.equal(priorExperience?.specificity, "focused");
 });

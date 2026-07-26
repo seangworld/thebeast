@@ -26,17 +26,15 @@ function profile(
   });
 }
 
-test("BE-225 leads with an explained recommendation and known context", () => {
+test("BE-225 leads with natural guidance and known context", () => {
   const turn = buildGuidanceCounselorConversationTurn({
     question: "What should I learn first?",
     context,
     profile: profile(),
   });
 
-  assert.match(turn.text, /your goal of Become a cybersecurity analyst/);
-  assert.match(turn.text, /6 study hours per week/);
-  assert.match(turn.text, /I recommend/);
-  assert.match(turn.text, /That gives us|That protects|That is usually|That keeps/);
+  assert.match(turn.text, /interested in becoming a cybersecurity analyst/);
+  assert.doesNotMatch(turn.text, /I recommend|keeping .* in view/i);
   assert.ok(turn.referencedContext.length > 0);
   assert.doesNotMatch(turn.text, /\bAs an AI\b|language model|documentation/i);
 });
@@ -86,8 +84,8 @@ test("BE-225 avoids interrogating broad or uncertain members", () => {
     profile: guidanceDiscoveryProfileFromRow(null),
   });
 
-  assert.match(turn.text, /not a generic education plan/);
-  assert.match(turn.text, /I recommend/);
+  assert.match(turn.text, /don’t need to have everything figured out/i);
+  assert.doesNotMatch(turn.text, /I recommend|not a generic education plan/i);
   assert.equal((turn.text.match(/\?/g) || []).length, 1);
   assert.doesNotMatch(turn.text, /Tell me the outcome.*where you are starting.*constraints/i);
 });

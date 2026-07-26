@@ -198,32 +198,38 @@ function relationshipResponse(
   return "Tell me the outcome you are considering, where you are starting, and what constraints matter most—time, cost, location, schedule, or flexibility. I’ll help you separate verified requirements from assumptions, compare realistic routes, and choose a next step that keeps your options open.";
 }
 
-function conversationalRecommendation(
+function conversationalGuidance(
   topics: readonly GuidancePlanningTopic[]
 ) {
+  if (
+    topics.includes("time-estimate") &&
+    (topics.includes("prerequisites") || topics.includes("certification"))
+  ) {
+    return "A realistic timeline depends on where you’re starting, what the credential actually requires, and how much time you can give it each week. I don’t want to give you a date that sounds certain before we know those pieces.";
+  }
   if (topics.includes("prerequisites") || topics.includes("certification")) {
-    return "I recommend that we verify the governing requirements first, then build only the preparation you actually need. That protects your time and keeps a recommended course from being mistaken for a mandatory one.";
+    return "Requirements can vary, so I don’t want to guess. Once we know the exact program or credential, we can check the official requirements and see what you already have.";
   }
   if (topics.includes("college-pathway") || topics.includes("tradeoffs")) {
-    return "I recommend comparing two realistic routes side by side before committing. That makes the decision about fit, cost, time, and future options—not about which route sounds more impressive.";
+    return "There may be more than one good route. The best fit will depend on the time, cost, support, and flexibility that matter most to you.";
   }
   if (
     topics.includes("learning-order") ||
     topics.includes("foundations") ||
     topics.includes("time-estimate")
   ) {
-    return "I recommend building from the first true dependency toward applied proof. That gives us a useful sequence and lets us estimate time from your actual starting point instead of a generic course calendar.";
+    return "We’ll start with the foundation you actually need and build from there. A realistic timeline depends on where you’re starting and how much time you can give it each week.";
   }
   if (topics.includes("career-progression")) {
-    return "I recommend working backward from the target role and identifying the smallest next step that builds both skill and credible evidence. That is usually more useful than collecting credentials without a clear purpose.";
+    return "Most careers don’t follow one perfect ladder. We can look at the work you want to do, what employers expect, and which next step would give you useful experience.";
   }
   if (topics.includes("interests")) {
-    return "I recommend testing a few directions through small, realistic experiences before choosing one. That lets your decision come from evidence about fit, not pressure to name a permanent career immediately.";
+    return "You don’t have to choose a permanent direction today. A few small, realistic experiences can tell us a lot about what holds your interest and what feels like a good fit.";
   }
   if (topics.includes("goals") || topics.includes("roadmap")) {
-    return "I recommend turning the direction into one near-term decision and one observable checkpoint. That keeps the roadmap useful without making it feel fixed.";
+    return "We can keep the plan simple: one useful step now, then a chance to see whether the direction still feels right.";
   }
-  return "I recommend that we clarify the outcome enough to choose one useful next step, then learn from that step before overbuilding the plan.";
+  return "You don’t need to have the whole plan figured out yet. We can start with what matters most to you and take it one step at a time.";
 }
 
 function relevantKnownContext(
@@ -251,12 +257,43 @@ function relevantKnownContext(
   return references.slice(0, 3);
 }
 
-function withoutEmbeddedQuestions(text: string) {
-  return text
-    .split(/(?<=[.!?])\s+/)
-    .filter((sentence) => !sentence.trim().endsWith("?"))
-    .join(" ")
-    .trim();
+function conversationalGoal(value: string) {
+  const goal = value.trim();
+  const verb = goal.match(
+    /^(?:to\s+)?(become|earn|work|study|complete|pursue|learn|get|build)\s+(.+)$/i
+  );
+  if (!verb) return goal;
+  const gerunds: Record<string, string> = {
+    become: "becoming",
+    earn: "earning",
+    work: "working",
+    study: "studying",
+    complete: "completing",
+    pursue: "pursuing",
+    learn: "learning",
+    get: "getting",
+    build: "building",
+  };
+  return `${gerunds[verb[1].toLowerCase()]} ${verb[2]}`;
+}
+
+function naturalContextLead(
+  profile: GuidanceDiscoveryProfile,
+  context: GuidanceCounselorConversationContext
+) {
+  const goal = profile.goal || (
+    isConfirmed(context.educationalGoal) ? context.educationalGoal : ""
+  );
+  if (goal) {
+    return `I see you’re interested in ${conversationalGoal(goal)}.`;
+  }
+  if (profile.currentEmployment) {
+    return `Your experience as ${profile.currentEmployment} gives us something useful to build on.`;
+  }
+  if (profile.militaryExperience) {
+    return "The experience you gained through military service gives us something useful to build on.";
+  }
+  return "You don’t need to have everything figured out before we start.";
 }
 
 export function buildGuidanceCounselorResponse({
@@ -325,14 +362,9 @@ export function buildGuidanceCounselorConversationTurn({
     previousCounselorResponses,
   });
   const followUp = intakeDecision?.question;
-  const contextLead = relationshipMemory?.text || (referencedContext.length
-    ? `I’m keeping ${referencedContext.join(", ")} in view as we work through this.`
-    : "Let’s make this useful to your actual situation, not a generic education plan.");
-  const explanation = conversationalRecommendation(reasoning.planningTopics);
-  const guidance =
-    reasoning.planningTopics.length === 0
-      ? "We can start with the change you want, then connect it to realistic education and career options. I’ll help you separate what must be verified from what we can explore, and we’ll keep the first step small enough to teach us something useful."
-      : withoutEmbeddedQuestions(reasoning.text);
+  const contextLead =
+    relationshipMemory?.text || naturalContextLead(profile, context);
+  const guidance = conversationalGuidance(reasoning.planningTopics);
 
   return {
     ...reasoning,
@@ -340,7 +372,7 @@ export function buildGuidanceCounselorConversationTurn({
     intakeDecision,
     relationshipMemory,
     referencedContext,
-    text: [contextLead, explanation, guidance, followUp]
+    text: [contextLead, guidance, followUp]
       .filter(Boolean)
       .join("\n\n"),
   };

@@ -115,23 +115,32 @@ function purposefulQuestion(
   profile: GuidanceDiscoveryProfile
 ) {
   const goal = profile.goal.trim();
+  const role = goal.match(/^(?:to\s+)?become\s+(.+)$/i)?.[1];
   switch (item.area) {
-    case "current-situation":
+    case "career-goals":
+      return "What kind of work do you picture yourself doing?";
+    case "educational-goals":
       return goal
-        ? `To plan realistically for ${goal}, what does your current work, school, or military situation look like?`
-        : item.question;
+        ? "What would you like to accomplish first on the way there?"
+        : "What would you like education to help you accomplish first?";
+    case "current-situation":
+      return "What does life look like for you right now—are you working, in school, serving, or something else?";
     case "prior-experience":
       return goal
-        ? `Before I sequence a path toward ${goal}, what relevant education, training, certifications, or experience are you already bringing with you?`
+        ? role
+          ? `What experience do you already have that could help you move toward becoming ${role}?`
+          : `What experience do you already have that could help you move toward ${goal}?`
         : item.question;
     case "growth-areas":
       return goal
-        ? `For ${goal}, what is the one skill or knowledge area you feel least prepared for right now?`
+        ? `What part of ${role || goal} feels least familiar or most challenging right now?`
         : item.question;
     case "constraints":
-      return goal
-        ? `As we plan for ${goal}, which practical constraint should I account for first: cost, time, schedule, location, or family responsibilities?`
-        : item.question;
+      return "What is most likely to get in the way right now—time, cost, schedule, location, or family responsibilities?";
+    case "college-interest":
+      return "Is college one of the options you’re open to considering?";
+    case "trade-interest":
+      return "Would you be open to a trade or apprenticeship path if it fits what you want?";
     default:
       return item.question;
   }
