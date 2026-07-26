@@ -19,6 +19,7 @@ import {
   type PlatformNotificationItem,
 } from "@/lib/platform/notifications";
 import { buildMobileNotificationCards } from "@/lib/mobileSharedServices";
+import { FeedbackReleaseNotifications } from "./FeedbackReleaseNotifications";
 
 const notificationItems: PlatformNotificationItem[] = [
   {
@@ -117,6 +118,8 @@ export default function NotificationsPage() {
           title="Notification Center"
           description="A platform inbox for every Beast application. Critical, important, and informational items share one durable review surface."
         />
+
+        <FeedbackReleaseNotifications />
 
         <section
           className="space-y-3 md:hidden"

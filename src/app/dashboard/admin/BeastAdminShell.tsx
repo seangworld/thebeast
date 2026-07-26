@@ -23,8 +23,10 @@ const adminNavItems = [
   { label: "Roadmap", href: "/dashboard/admin/roadmap" },
   { label: "Member Timeline", href: "/dashboard/admin/members" },
   { label: "Modules", href: "/dashboard/admin/modules" },
+  { label: "Feature Flags", href: "/dashboard/admin/flags" },
+  { label: "Prompt Library", href: "/dashboard/admin/prompts" },
   { label: "AI Analytics", href: "/dashboard/admin/analytics" },
-  { label: "Feedback", href: "/dashboard/admin/feedback" },
+  { label: "Beta Feedback", href: "/dashboard/admin/feedback" },
   { label: "Ads", href: "/dashboard/admin/ads" },
   { label: "Settings", href: "/dashboard/admin/settings" },
 ];

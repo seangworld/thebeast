@@ -389,9 +389,11 @@ export type LearningFeedbackCategory =
 export type LearningFeedbackStatus =
   | "New"
   | "Reviewing"
+  | "Acknowledged"
   | "Planned"
   | "In Progress"
   | "Completed"
+  | "Released"
   | "Declined";
 
 export type LearningFeedbackItem = {

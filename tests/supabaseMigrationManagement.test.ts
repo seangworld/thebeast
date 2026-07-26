@@ -51,6 +51,9 @@ const expectedCliMigrations = [
   "20260726000000_add_beast_admin_product_roadmap.sql",
   "20260726000100_add_beast_admin_ai_analytics.sql",
   "20260726000200_add_beast_admin_member_timeline.sql",
+  "20260726000300_add_beast_admin_beta_feedback.sql",
+  "20260726000400_add_beast_admin_feature_flags.sql",
+  "20260726000500_add_beast_admin_prompt_library.sql",
 ];
 
 test("Supabase CLI migrations exist in dependency-safe order", () => {

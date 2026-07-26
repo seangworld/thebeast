@@ -207,7 +207,9 @@ export function buildBeastAdminExecutiveSnapshot({
       ).size,
       assignments: buildBetaAssignmentRows({ members, assignments: betaAssignments }),
       openFeedback: feedbackItems
-        .filter((item) => item.status !== "Resolved")
+        .filter(
+          (item) => item.status !== "Released" && item.status !== "Declined"
+        )
         .sort(
           (left, right) =>
             right.date.localeCompare(left.date) || left.id.localeCompare(right.id)

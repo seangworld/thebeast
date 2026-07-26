@@ -3,7 +3,13 @@ import type { AdminViewMode } from "./entitlements";
 
 export type BeastAdminMemberStatus = "Active" | "Invited" | "Paused";
 export type BeastAdminMemberRole = "Owner" | "Admin" | "Member" | "Beta";
-export type BeastAdminFeedbackStatus = "New" | "Reviewing" | "Resolved";
+export type BeastAdminFeedbackStatus =
+  | "New"
+  | "Acknowledged"
+  | "Planned"
+  | "In Progress"
+  | "Released"
+  | "Declined";
 
 export type BeastAdminMember = {
   id: string;
@@ -94,7 +100,7 @@ export const beastAdminFeedbackItems: BeastAdminFeedbackItem[] = [
     date: "2026-07-12",
     module: "BeastMoney",
     user: "Sean G.",
-    status: "Reviewing",
+    status: "Acknowledged",
     summary: "Implemented financial workflows should not appear under Future.",
   },
 ];
