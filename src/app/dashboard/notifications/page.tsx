@@ -113,9 +113,9 @@ export default function NotificationsPage() {
       <div className="beast-container space-y-8">
         <PlatformServiceHero
           module="notifications"
-          eyebrow="Shared Service"
+          eyebrow="BeastOS Shared Service"
           title="Notification Center"
-          description="A platform inbox for every BeastOS module. Critical, important, and informational items share one durable review surface."
+          description="A platform inbox for every Beast application. Critical, important, and informational items share one durable review surface."
         />
 
         <section

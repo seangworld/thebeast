@@ -5,15 +5,15 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://thebeast.seangworld.com"),
-  title: "The Beast",
+  title: "BeastOS | The Beast Platform",
   description:
-    "BeastOS is a platform shell for money, planning, and future life operations modules.",
+    "BeastOS is the operating system connecting identity, permissions, memory, shared services, and every Beast application.",
   openGraph: {
-    title: "The Beast",
+    title: "BeastOS | The Beast Platform",
     description:
-      "BeastOS is a platform shell for money, planning, and future life operations modules.",
+      "BeastOS is the operating system connecting identity, permissions, memory, shared services, and every Beast application.",
     url: "https://thebeast.seangworld.com",
-    siteName: "The Beast",
+    siteName: "BeastOS",
     images: [
       {
         url: "/beast-head-icon.png",
@@ -27,9 +27,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "The Beast",
+    title: "BeastOS | The Beast Platform",
     description:
-      "BeastOS is a platform shell for money, planning, and future life operations modules.",
+      "BeastOS is the operating system connecting identity, permissions, memory, shared services, and every Beast application.",
     images: ["/beast-head-icon.png"],
   },
 };

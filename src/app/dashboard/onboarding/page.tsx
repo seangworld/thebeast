@@ -13,6 +13,7 @@ import {
   profileOnboardingCompletionKeyColumn,
   validateLearningOnboardingForm,
 } from "@/lib/learning/onboardingCompletion";
+import { beastOSPlatformIdentity } from "@/lib/platform/identity";
 import { createClient } from "@/lib/supabase/client";
 
 type OnboardingForm = {
@@ -581,10 +582,11 @@ export default function OnboardingPage() {
       <div className="beast-container space-y-8">
         <section className="beast-page-header">
           <div className="space-y-4">
-            <ModuleBadge module="learning" label="First setup" />
-            <h1 className="beast-title">Set Up BeastEducation</h1>
+            <ModuleBadge module="beastos" label="BeastOS onboarding" />
+            <h1 className="beast-title">Welcome to BeastOS</h1>
             <p className="beast-subtitle">
-              Create your learning profile, starter goal, and first study session.
+              {beastOSPlatformIdentity.description} We&apos;ll begin by setting
+              up Education as your first application.
             </p>
           </div>
         </section>
@@ -597,9 +599,9 @@ export default function OnboardingPage() {
 
         <DashboardCard accent="learning">
           <SectionHeader
-            eyebrow="Onboarding"
-            title="Your first learning setup"
-            description="These answers create account-owned Learning records and unlock Today."
+            eyebrow="Education application"
+            title="Set up Education"
+            description="These answers configure Education records inside your BeastOS account and unlock Today. Shared identity, permissions, and memory remain platform services."
           />
 
           {loading ? (

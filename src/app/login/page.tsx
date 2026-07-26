@@ -2,6 +2,11 @@
 
 import Image from "next/image";
 import { useState, type FormEvent } from "react";
+import {
+  beastOSApplications,
+  beastOSPlatformIdentity,
+  beastOSSharedCapabilities,
+} from "@/lib/platform/identity";
 import { createClient } from "@/lib/supabase/client";
 
 type AuthIntent = "login" | "create-account";
@@ -55,20 +60,45 @@ export default function LoginPage() {
         <div className="flex flex-col items-center">
           <Image
             src="/beast-logo-square.png"
-            alt="Beast"
+            alt="BeastOS"
             width={104}
             height={104}
             priority
             className="h-24 w-24 rounded-2xl object-cover sm:h-28 sm:w-28"
           />
+          <p className="mt-6 text-xs font-black uppercase tracking-[0.18em] text-[#38bdf8]">
+            {beastOSPlatformIdentity.role}
+          </p>
           <h1
             id="beast-auth-title"
-            className="mt-6 text-4xl font-black tracking-tight text-white sm:text-5xl"
+            className="mt-3 text-4xl font-black tracking-tight text-white sm:text-5xl"
           >
-            Beast
+            BeastOS
           </h1>
           <p className="mt-3 text-base leading-7 text-[#c7cfdb] sm:text-lg">
-            AI that helps you improve your life.
+            {beastOSPlatformIdentity.description}
+          </p>
+        </div>
+
+        <div
+          className="mt-7 rounded-2xl border border-[#2a3242] bg-[#0f1419] p-4 text-left"
+          aria-label="Beast applications and shared platform services"
+        >
+          <div className="text-xs font-black uppercase tracking-wide text-[#7f8da3]">
+            Beast applications
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {beastOSApplications.map((application) => (
+              <span
+                key={application.id}
+                className="rounded-full border border-[#2a3242] bg-[#111827] px-2.5 py-1 text-xs font-bold text-[#dbe3ef]"
+              >
+                {application.name}
+              </span>
+            ))}
+          </div>
+          <p className="mt-4 text-xs font-semibold leading-5 text-[#7f8da3]">
+            Shared by every application: {beastOSSharedCapabilities.join(" · ")}
           </p>
         </div>
 

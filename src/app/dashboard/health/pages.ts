@@ -12,12 +12,14 @@ export const beastHealthOverview: BeastHealthPlaceholder = {
 
 export const beastHealthPages: Record<string, BeastHealthPlaceholder> = {
   profile: {
-    title: "Health Profile",
-    description: "Placeholder for future member-controlled health profile context.",
+    title: "Health Background",
+    description:
+      "Placeholder for future member-controlled health records that reference BeastOS identity.",
     focus: [
-      "Future demographic and wellness context.",
+      "Shared demographic identity remains owned by BeastOS Personal Hub.",
+      "Future wellness and health-history context remains owned by BeastHealth.",
       "Future provider and preference summaries.",
-      "No separate long-term profile outside BeastOS.",
+      "No duplicate shared identity profile inside BeastHealth.",
     ],
   },
   conditions: {

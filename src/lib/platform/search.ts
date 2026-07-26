@@ -2,8 +2,17 @@ import type { PlatformModule } from "./types";
 
 export type SearchDomain =
   | "Personal Hub"
+  | "Conversations"
   | "Goals"
   | "Documents"
+  | "Financial accounts"
+  | "Debts"
+  | "Lessons"
+  | "Roadmaps"
+  | "Health records"
+  | "Family members"
+  | "Uploaded files"
+  | "Future modules"
   | "Money"
   | "Learning"
   | "Calendar"
@@ -44,6 +53,11 @@ export type SearchResult = PlatformSearchItem & {
   matchedFields: string[];
 };
 
+export type SearchResultGroup = {
+  domain: SearchDomain;
+  results: SearchResult[];
+};
+
 export type SavedSearch = {
   id: string;
   label: string;
@@ -70,10 +84,32 @@ export type SearchActionRequest = {
 };
 
 export const searchContractRules = [
-  "BeastOS Search owns indexing, filtering, result grouping, recent searches, saved-search requests, natural-language interpretation, and action routing.",
+  "BeastOS Search owns permissioned indexing, filtering, result grouping, recent searches, and action routing across the personal knowledge base.",
   "Source modules own source records, domain ranking evidence, completion, edits, deletion, and business-specific actions.",
   "Search results must carry source module, source record, permission scope, result domain, action URL, and source-owned action metadata.",
   "Search actions must open a route or dispatch a source contract request instead of mutating module-owned records directly.",
+  "Search must rely on authenticated owner or explicitly authorized family records and must never bypass module permissions or database RLS.",
+  "Search infrastructure returns source text without generating AI summaries.",
+];
+
+export const unifiedSearchDomainOrder: SearchDomain[] = [
+  "Conversations",
+  "Goals",
+  "Documents",
+  "Financial accounts",
+  "Debts",
+  "Lessons",
+  "Roadmaps",
+  "Health records",
+  "Family members",
+  "Uploaded files",
+  "Future modules",
+  "Personal Hub",
+  "Money",
+  "Learning",
+  "Calendar",
+  "Timeline",
+  "Notifications",
 ];
 
 function normalizeSearchText(value: string) {
@@ -124,17 +160,22 @@ export function searchPlatformIndex({
   query,
   filters = {},
   allowedPermissionScopes = ["Owner"],
+  allowedModules,
 }: {
   items: PlatformSearchItem[];
   query: string;
   filters?: SearchFilters;
   allowedPermissionScopes?: SearchPermissionScope[];
+  allowedModules?: PlatformModule[];
 }): SearchResult[] {
   const normalizedQuery = normalizeSearchText(query);
   const terms = normalizedQuery.split(/\s+/).filter(Boolean);
 
   return buildUniversalSearchIndex(items)
     .filter((item) => allowedPermissionScopes.includes(item.permissionScope))
+    .filter(
+      (item) => !allowedModules || allowedModules.includes(item.source)
+    )
     .filter((item) => !filters.module || item.source === filters.module)
     .filter((item) => !filters.domain || item.domain === filters.domain)
     .filter((item) => !filters.permissionScope || item.permissionScope === filters.permissionScope)
@@ -158,6 +199,26 @@ export function searchPlatformIndex({
     })
     .filter((item) => normalizedQuery.length === 0 || item.score > 0)
     .sort((left, right) => right.score - left.score || right.updatedAt.localeCompare(left.updatedAt));
+}
+
+export function groupSearchResults(
+  results: SearchResult[]
+): SearchResultGroup[] {
+  const grouped = new Map<SearchDomain, SearchResult[]>();
+
+  results.forEach((result) => {
+    grouped.set(result.domain, [
+      ...(grouped.get(result.domain) || []),
+      result,
+    ]);
+  });
+
+  return unifiedSearchDomainOrder
+    .filter((domain) => grouped.has(domain))
+    .map((domain) => ({
+      domain,
+      results: grouped.get(domain) || [],
+    }));
 }
 
 export function buildRecentSearches(searches: string[], limit = 5) {

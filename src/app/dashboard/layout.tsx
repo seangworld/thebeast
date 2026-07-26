@@ -35,6 +35,7 @@ import {
   isRestrictedForLearningOnlyNavigation,
   shouldUseLearningOnlyNavigation,
 } from "@/lib/learning/access";
+import { getBeastOSWorkspaceContext } from "@/lib/platform/identity";
 import {
   getOnboardingRedirect,
   isLearningOnboardingComplete,
@@ -50,11 +51,10 @@ const learningPrimaryNavigation: ModuleNavSection[] = [
   { label: "My Roadmap", href: "/dashboard/education#mentor-plan", module: "learning" },
   { label: "Progress", href: "/dashboard/education#mentor-progress", module: "learning" },
   { label: "Wins", href: "/dashboard/education#wins", module: "learning" },
-  { label: "Profile", href: "/dashboard/profile", module: "beastos" },
 ];
 
 const learningSettingsNavigation: ModuleNavSection[] = [
-  { label: "Settings", href: "/dashboard/settings", module: "beastos" },
+  { label: "Personal Hub", href: "/dashboard/settings", module: "beastos" },
 ];
 
 function loadAdminViewMode() {
@@ -132,6 +132,7 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const router = useRouter();
   const workspaceModule = getWorkspaceModule(pathname);
+  const workspaceContext = getBeastOSWorkspaceContext(workspaceModule);
   const personaModuleNavigation = getBeastModuleNavigationForPersona(isAdminPersona);
   const applicationNavigation = buildApplicationNavigationForPersona({
     isOwner: isAdminPersona,
@@ -802,8 +803,8 @@ export default function DashboardLayout({
         {!navigationOnly ? (
           <div className={compact ? "flex justify-center px-3 py-4" : "px-4 py-5"}>
             <BeastBrandMark
-              module={workspaceModule}
-              subtitle={compact ? "" : "Platform Shell"}
+              module="beastos"
+              subtitle={compact ? "" : workspaceContext}
               size="sm"
               iconOnly={compact}
             />
@@ -812,7 +813,17 @@ export default function DashboardLayout({
 
         <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-4">
           <div className="space-y-6">
-            <nav className="space-y-2" aria-label="Primary navigation">
+            <nav className="space-y-2" aria-label="BeastOS platform">
+              {!compact ? (
+                <div className="px-2">
+                  <div className="text-xs font-bold uppercase tracking-wide text-[#38bdf8]">
+                    Platform
+                  </div>
+                  <p className="mt-1 text-[11px] font-semibold leading-4 text-[#596579]">
+                    Shared identity and services
+                  </p>
+                </div>
+              ) : null}
               {learningOnlyNavigation ? (
                 learningPrimaryNavigation.map((item) => (
                   <div key={item.label} onClick={onNavigate}>
@@ -834,10 +845,15 @@ export default function DashboardLayout({
               <>
                 <div className="border-t border-[#2a3242]" />
 
-                <nav className="space-y-2" aria-label="Applications">
+                <nav className="space-y-2" aria-label="Beast applications">
                   {!compact ? (
-                    <div className="px-2 text-xs font-bold uppercase tracking-wide text-[#596579]">
-                      Applications
+                    <div className="px-2">
+                      <div className="text-xs font-bold uppercase tracking-wide text-[#596579]">
+                        Beast applications
+                      </div>
+                      <p className="mt-1 text-[11px] font-semibold leading-4 text-[#465266]">
+                        Apps running on BeastOS
+                      </p>
                     </div>
                   ) : null}
                   {applicationNavigation.map((item) => (
@@ -937,9 +953,9 @@ export default function DashboardLayout({
       <header className="sticky top-0 z-50 border-b border-[#2a3242] bg-[#11151c]/95 px-3 pb-3 pt-[calc(env(safe-area-inset-top)+12px)] backdrop-blur md:hidden">
         <div className="flex items-center justify-between gap-3">
           <BeastBrandMark
-            module={workspaceModule}
+            module="beastos"
             size="sm"
-            subtitle="Mobile"
+            subtitle={workspaceContext}
           />
           <Link
             href="/dashboard/search"
@@ -987,8 +1003,9 @@ export default function DashboardLayout({
             <div className="flex items-center justify-between border-b border-[#2a3242] px-4 py-3">
               <div id="beast-mobile-more-title">
                 <BeastBrandMark
-                  module={workspaceModule}
+                  module="beastos"
                   size="sm"
+                  subtitle="Platform navigation"
                 />
               </div>
               <button

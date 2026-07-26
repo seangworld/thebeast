@@ -128,13 +128,19 @@ test("BF-MOB-003 adds mobile quick surfaces to Today Notifications Calendar and 
     "utf8"
   );
   const calendar = readFileSync("src/app/dashboard/calendar/page.tsx", "utf8");
-  const search = readFileSync("src/app/dashboard/search/page.tsx", "utf8");
+  const search = [
+    readFileSync("src/app/dashboard/search/page.tsx", "utf8"),
+    readFileSync(
+      "src/app/dashboard/search/UnifiedSearchWorkspace.tsx",
+      "utf8"
+    ),
+  ].join("\n");
 
   assert.match(today, /data-mobile-shared-service="today"/);
   assert.match(notifications, /data-mobile-shared-service="notifications"/);
   assert.match(calendar, /data-mobile-shared-service="calendar"/);
   assert.match(search, /data-mobile-shared-service="search"/);
-  assert.match(search, /data-mobile-shared-ai-entry="true"/);
+  assert.match(search, /id="beast-unified-search"/);
   assert.match(today, /data-mobile-today-source-actions="module-contract-event"/);
 });
 
@@ -143,8 +149,11 @@ test("BF-MOB-003 keeps mobile shared surfaces narrow and desktop routes intact",
     readFileSync("src/app/dashboard/today/page.tsx", "utf8"),
     readFileSync("src/app/dashboard/notifications/page.tsx", "utf8"),
     readFileSync("src/app/dashboard/calendar/page.tsx", "utf8"),
-    readFileSync("src/app/dashboard/search/page.tsx", "utf8"),
   ];
+  const search = readFileSync(
+    "src/app/dashboard/search/UnifiedSearchWorkspace.tsx",
+    "utf8"
+  );
   const globalStyles = readFileSync("src/app/globals.css", "utf8");
 
   for (const page of pages) {
@@ -153,11 +162,15 @@ test("BF-MOB-003 keeps mobile shared surfaces narrow and desktop routes intact",
     assert.match(page, /break-words/);
     assert.match(page, /beast-button/);
   }
+  assert.match(search, /min-w-0/);
+  assert.match(search, /break-words/);
+  assert.match(search, /beast-button/);
 
   assert.match(pages[0], /Your Guidance Counselor Recommends/);
   assert.match(pages[1], /Notification Contracts/);
   assert.match(pages[2], /Calendar Contracts/);
-  assert.match(pages[3], /Natural-language search and action routing/);
+  assert.match(search, /role="combobox"/);
+  assert.doesNotMatch(search, /md:hidden/);
   assert.match(globalStyles, /width: 100%;/);
   assert.match(globalStyles, /min-width: 0;/);
   assert.doesNotMatch(globalStyles, /overflow-x: (?:clip|hidden)/);

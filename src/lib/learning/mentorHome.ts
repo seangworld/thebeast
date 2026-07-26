@@ -224,7 +224,7 @@ export function buildMentorHomeMission(
       journeyUnlockLabel: journeySummary.unlock,
       primaryAction: {
         label: "Set learning context",
-        href: "/dashboard/profile",
+        href: "/dashboard/settings/profile",
         detail: "Tell me what you want to learn so I can choose the right first step.",
       },
       secondaryActions: secondaryActions.filter(

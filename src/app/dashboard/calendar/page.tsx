@@ -99,7 +99,7 @@ export default function CalendarPage() {
       <div className="beast-container space-y-8">
         <PlatformServiceHero
           module="calendar"
-          eyebrow="Shared Service"
+          eyebrow="BeastOS Shared Service"
           title="BeastOS Calendar"
           description="One calendar for the current Money and Learning experience."
         />

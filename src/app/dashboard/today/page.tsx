@@ -836,13 +836,13 @@ export default function TodayPage() {
         <section className="beast-page-header">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-4">
-              <ModuleBadge module="beastos" label="BeastOS Today" />
+              <ModuleBadge module="beastos" label="BeastOS Command Center" />
               <h1 className="beast-title">
                 {state.name ? `${getBeastGreeting(now)}, ${state.name}` : "Today"}
               </h1>
               <p className="beast-subtitle">
-                See what needs attention, what changed, and the clearest next
-                action across your life.
+                BeastOS brings together what needs attention, what changed, and
+                the clearest next action across your connected applications.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">

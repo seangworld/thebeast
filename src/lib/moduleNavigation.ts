@@ -26,6 +26,11 @@ export type ModuleNavSection = {
 
 export const primaryNavigation: ModuleNavSection[] = [
   { label: "Today", href: "/dashboard/today", module: "beastos" },
+  {
+    label: "Relationship Center",
+    href: "/dashboard/relationships",
+    module: "beastos",
+  },
   { label: "Calendar", href: "/dashboard/calendar", module: "calendar" },
   {
     label: "Notifications",
@@ -34,7 +39,7 @@ export const primaryNavigation: ModuleNavSection[] = [
   },
   { label: "Timeline", href: "/dashboard/timeline", module: "timeline" },
   { label: "Search", href: "/dashboard/search", module: "search" },
-  { label: "Settings", href: "/dashboard/settings", module: "beastos" },
+  { label: "Personal Hub", href: "/dashboard/settings", module: "beastos" },
 ];
 
 export const beastOSNavigation: ModuleNavSection = {
@@ -133,7 +138,7 @@ const plannedModuleNavigation: Record<string, ModuleNavSection> = {
     module: "health",
     children: [
       { label: "Overview", href: "/dashboard/health" },
-      { label: "Health Profile", href: "/dashboard/health/profile" },
+      { label: "Health Background", href: "/dashboard/health/profile" },
       { label: "Conditions", href: "/dashboard/health/conditions" },
       { label: "Medications", href: "/dashboard/health/medications" },
       { label: "Procedures", href: "/dashboard/health/procedures" },
@@ -238,11 +243,16 @@ export function getBeastModuleNavigationForPersona(isAdmin: boolean) {
 
 export const sharedNavigation: ModuleNavSection[] = [
   { label: "Today", href: "/dashboard/today", module: "beastos" },
+  {
+    label: "Relationship Center",
+    href: "/dashboard/relationships",
+    module: "beastos",
+  },
   { label: "Calendar", href: "/dashboard/calendar", module: "calendar" },
   { label: "Notifications", href: "/dashboard/notifications", module: "notifications" },
   { label: "Timeline", href: "/dashboard/timeline", module: "timeline" },
   { label: "Search", href: "/dashboard/search", module: "search" },
-  { label: "Settings", href: "/dashboard/settings", module: "beastos" },
+  { label: "Personal Hub", href: "/dashboard/settings", module: "beastos" },
 ];
 
 export const allModuleNavigation: ModuleNavSection[] = [

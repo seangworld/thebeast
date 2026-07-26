@@ -30,3 +30,4 @@ export * from "./reflectionIntelligence";
 export * from "./outcomeLearning";
 export * from "./explainability";
 export * from "./trustDataFreshness";
+export * from "./crossModuleRecommendations";

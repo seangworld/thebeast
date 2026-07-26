@@ -30,76 +30,27 @@ import {
   mockFamilyModel,
   summarizeFamilyModel,
 } from "@/lib/platform/family";
-
-const settingsDestinations = [
-  {
-    label: "Profile",
-    href: "/dashboard/settings/profile",
-    description: "Identity, personal context, and AI context.",
-  },
-  {
-    label: "Family",
-    href: "#family",
-    description: "Family relationships managed by BeastOS.",
-  },
-  {
-    label: "Household",
-    href: "#household",
-    description: "Household membership and shared visibility.",
-  },
-  {
-    label: "Preferences",
-    href: "#preferences",
-    description: "Display, notification, and module preferences.",
-  },
-  {
-    label: "Connected Accounts",
-    href: "#connected-accounts",
-    description: "Account connections and authentication identity.",
-  },
-  {
-    label: "Privacy",
-    href: "#privacy",
-    description: "Account privacy controls and policy placeholder.",
-  },
-] as const;
+import {
+  personalHubModuleReferences,
+  personalHubOwnershipRules,
+  personalHubSections,
+  personalInformationCanonicalRoute,
+} from "@/lib/platform/personalHub";
 
 const settingsSections = [
   {
+    id: "display-preferences",
     title: "Theme & Display",
     description:
       "Appearance, density, accessibility, and dashboard display preferences.",
     items: ["Theme mode", "Dashboard density", "Motion preferences"],
   },
   {
+    id: "notification-preferences",
     title: "Notification Preferences",
     description:
       "Shared alert channels, quiet hours, and module notification rules.",
     items: ["Quiet hours", "Critical alerts", "Module summaries"],
-  },
-  {
-    title: "Module Preferences",
-    description:
-      "Choose active modules and default landing surfaces.",
-    items: ["Money active", "Learning active", "Default workspace"],
-  },
-];
-
-const accountLinks = [
-  {
-    label: "Profile",
-    href: "/dashboard/settings/profile",
-    description: "Manage preferred name and personal context.",
-  },
-  {
-    label: "Privacy",
-    href: "https://seangworld.com/privacy.html",
-    description: "Review the privacy policy.",
-  },
-  {
-    label: "Terms",
-    href: "https://seangworld.com/terms.html",
-    description: "Review platform terms.",
   },
 ];
 
@@ -214,16 +165,17 @@ export default function SettingsPage() {
         <section className="beast-page-header">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-4">
-              <ModuleBadge module="beastos" label="Platform Configuration" />
-              <h1 className="beast-title">Settings</h1>
+              <ModuleBadge module="beastos" label="Shared Identity Owner" />
+              <h1 className="beast-title">Personal Hub</h1>
               <p className="beast-subtitle">
-                App-level preferences for the BeastOS platform. Money-specific
-                cashflow and debt settings remain inside BeastMoney.
+                BeastOS owns your shared identity, relationships, permissions,
+                and platform-wide preferences. Modules reference this context
+                while keeping their own records and workflows.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Link href="/dashboard/settings/profile" className="beast-button">
-                Open Profile
+              <Link href={personalInformationCanonicalRoute} className="beast-button">
+                Personal Information
               </Link>
               <Link href="/dashboard/money/settings" className="beast-button-secondary">
                 Money Settings
@@ -233,12 +185,12 @@ export default function SettingsPage() {
         </section>
 
         <nav
-          aria-label="Settings sections"
-          className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3"
+          aria-label="Personal Hub sections"
+          className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5"
         >
-          {settingsDestinations.map((destination) => (
+          {personalHubSections.map((destination) => (
             <Link
-              key={destination.label}
+              key={destination.id}
               href={destination.href}
               className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 transition duration-200 hover:-translate-y-0.5 hover:border-[#38bdf8]/50 hover:bg-[#202634]"
             >
@@ -246,28 +198,80 @@ export default function SettingsPage() {
               <p className="mt-1 text-sm leading-5 text-[#9aa7b8]">
                 {destination.description}
               </p>
+              <div className="mt-3 text-[0.65rem] font-black uppercase tracking-wide text-[#6f7d90]">
+                {destination.availability === "available"
+                  ? "Available"
+                  : "Foundation"}
+              </div>
             </Link>
           ))}
         </nav>
 
-        <section id="preferences" className="grid scroll-mt-24 gap-4 xl:grid-cols-3">
-          {settingsSections.map((section) => (
-            <DashboardCard key={section.title} accent="beastos">
-              <SectionHeader title={section.title} description={section.description} />
-              <div className="mt-5 grid gap-3">
-                {section.items.map((item) => (
-                  <div
-                    key={item}
-                    className="rounded-xl border border-[#2a3242] bg-[#111827] p-4"
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div className="font-bold text-white">{item}</div>
-                    </div>
-                  </div>
-                ))}
+        <DashboardCard accent="beastos">
+          <SectionHeader
+            eyebrow="BeastOS Ownership"
+            title="One shared identity"
+            description="Changes made in Personal Hub become the shared source authorized modules reference."
+          />
+          <div className="mt-5 grid gap-3 md:grid-cols-2">
+            {personalHubOwnershipRules.map((rule) => (
+              <div
+                key={rule}
+                className="rounded-xl border border-[#2a3242] bg-[#0f1419] p-4 text-sm font-semibold leading-6 text-[#d8dee8]"
+              >
+                {rule}
               </div>
-            </DashboardCard>
+            ))}
+          </div>
+        </DashboardCard>
+
+        <section id="preferences" className="grid scroll-mt-24 gap-4 xl:grid-cols-2">
+          {settingsSections.map((section) => (
+            <div key={section.id} id={section.id} className="scroll-mt-24">
+              <DashboardCard accent="beastos">
+                <SectionHeader title={section.title} description={section.description} />
+                <div className="mt-5 grid gap-3">
+                  {section.items.map((item) => (
+                    <div
+                      key={item}
+                      className="rounded-xl border border-[#2a3242] bg-[#111827] p-4"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="font-bold text-white">{item}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </DashboardCard>
+            </div>
           ))}
+        </section>
+
+        <section className="grid gap-4 lg:grid-cols-2">
+          <div id="emergency-contacts" className="scroll-mt-24">
+            <DashboardCard accent="red">
+              <SectionHeader
+                eyebrow="Reserved Shared Context"
+                title="Emergency Contacts"
+                description="Future emergency contacts will be owner-controlled BeastOS data, available to modules only through explicit permission."
+              />
+              <p className="mt-5 rounded-xl border border-[#2a3242] bg-[#111827] p-4 text-sm font-semibold leading-6 text-[#dbe3ef]">
+                No emergency contact information is collected in this phase.
+              </p>
+            </DashboardCard>
+          </div>
+          <div id="communication-preferences" className="scroll-mt-24">
+            <DashboardCard accent="blue">
+              <SectionHeader
+                eyebrow="Shared Preferences"
+                title="Communication Preferences"
+                description="Tone, detail, format, accessibility, and channel preferences will be centralized here rather than repeated by each module."
+              />
+              <p className="mt-5 rounded-xl border border-[#2a3242] bg-[#111827] p-4 text-sm font-semibold leading-6 text-[#dbe3ef]">
+                Existing module behavior is unchanged while this shared preference foundation is reserved.
+              </p>
+            </DashboardCard>
+          </div>
         </section>
 
         <section className="grid gap-4 lg:grid-cols-[1fr_0.85fr]">
@@ -296,31 +300,33 @@ export default function SettingsPage() {
             </DashboardCard>
           </div>
 
-          <div id="connected-accounts" className="scroll-mt-24">
+          <div id="connected-modules" className="scroll-mt-24">
             <DashboardCard accent="money">
             <SectionHeader
-              eyebrow="Account"
-              title="Connected Accounts"
-              description="Authentication identity and future account connections stay centralized in BeastOS settings."
+              eyebrow="Shared References"
+              title="Connected Modules"
+              description="Each module reads approved Personal Hub context and continues to own its domain records."
             />
             <div className="mt-5 grid gap-3">
-              {accountLinks.map((link) => (
-                <Link
-                  key={link.label}
-                  href={link.href}
-                  className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 transition duration-200 hover:-translate-y-0.5 hover:border-[#38bdf8]/50 hover:bg-[#202634]"
+              {personalHubModuleReferences.map((reference) => (
+                <div
+                  key={reference.module}
+                  className="rounded-xl border border-[#2a3242] bg-[#111827] p-4"
                 >
-                  <div className="font-black text-white">{link.label}</div>
+                  <div className="font-black capitalize text-white">
+                    {reference.module}
+                  </div>
                   <p className="mt-1 text-sm leading-5 text-[#9aa7b8]">
-                    {link.description}
+                    References: {reference.reads.join(", ")}
                   </p>
-                </Link>
+                </div>
               ))}
             </div>
             </DashboardCard>
           </div>
         </section>
 
+        <div id="ai-preferences" className="scroll-mt-24">
         <DashboardCard accent="beastos">
           <SectionHeader
             eyebrow="Shared AI"
@@ -345,6 +351,18 @@ export default function SettingsPage() {
               </div>
             ))}
           </div>
+          <div
+            id="future-memory-settings"
+            className="mt-5 scroll-mt-24 rounded-xl border border-[#2a3242] bg-[#111827] p-4"
+          >
+            <div className="text-xs font-bold uppercase tracking-wide text-[#7f8da3]">
+              Future Memory Settings
+            </div>
+            <p className="mt-2 text-sm font-semibold leading-6 text-[#d8dee8]">
+              Correction, retention, export, and deletion controls remain
+              reserved here. No memory behavior changes in this phase.
+            </p>
+          </div>
           <div className="mt-5 grid gap-3 md:grid-cols-2">
             {sharedAIContractRules.map((rule) => (
               <div
@@ -356,6 +374,7 @@ export default function SettingsPage() {
             ))}
           </div>
         </DashboardCard>
+        </div>
 
         <section id="family" className="scroll-mt-24">
           <DashboardCard accent="family">

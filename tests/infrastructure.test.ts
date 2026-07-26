@@ -510,11 +510,12 @@ test("module navigation centralizes expandable child items", () => {
     primaryNavigation.map((item) => item.label),
     [
       "Today",
+      "Relationship Center",
       "Calendar",
       "Notifications",
       "Timeline",
       "Search",
-      "Settings",
+      "Personal Hub",
     ]
   );
   assert.deepEqual(
@@ -532,7 +533,15 @@ test("module navigation centralizes expandable child items", () => {
   );
   assert.deepEqual(
     sharedNavigation.map((item) => item.label),
-    ["Today", "Calendar", "Notifications", "Timeline", "Search", "Settings"]
+    [
+      "Today",
+      "Relationship Center",
+      "Calendar",
+      "Notifications",
+      "Timeline",
+      "Search",
+      "Personal Hub",
+    ]
   );
   assert.deepEqual(
     buildApplicationNavigationForPersona({ isOwner: true }).map(
@@ -594,10 +603,14 @@ test("module navigation centralizes expandable child items", () => {
   );
 });
 
-test("BO-308 keeps BeastOS focused and consolidates Personal Hub into Settings", () => {
+test("BO-308 keeps BeastOS focused and BO-311 makes Personal Hub canonical", () => {
   const settingsPage = readFileSync("src/app/dashboard/settings/page.tsx", "utf8");
   const settingsProfilePage = readFileSync(
     "src/app/dashboard/settings/profile/page.tsx",
+    "utf8"
+  );
+  const legacyProfilePage = readFileSync(
+    "src/app/dashboard/profile/page.tsx",
     "utf8"
   );
 
@@ -605,38 +618,51 @@ test("BO-308 keeps BeastOS focused and consolidates Personal Hub into Settings",
     primaryNavigation.map(({ label, href }) => [label, href]),
     [
       ["Today", "/dashboard/today"],
+      ["Relationship Center", "/dashboard/relationships"],
       ["Calendar", "/dashboard/calendar"],
       ["Notifications", "/dashboard/notifications"],
       ["Timeline", "/dashboard/timeline"],
       ["Search", "/dashboard/search"],
-      ["Settings", "/dashboard/settings"],
+      ["Personal Hub", "/dashboard/settings"],
     ]
   );
   assert.equal(beastOSNavigation.href, "/dashboard/today");
   assert.doesNotMatch(
     primaryNavigation.map((item) => item.label).join(","),
-    /Personal Hub|Goals|Documents/
+    /Goals|Documents/
   );
   for (const destination of [
-    "Profile",
-    "Family",
+    "Personal Information",
     "Household",
-    "Preferences",
-    "Connected Accounts",
+    "Family",
+    "Emergency Contacts",
+    "Notification Preferences",
     "Privacy",
+    "Connected Modules",
+    "AI Preferences",
+    "Communication Preferences",
+    "Future Memory Settings",
   ]) {
-    assert.match(settingsPage, new RegExp(`label: "${destination}"`));
+    assert.match(
+      [
+        settingsPage,
+        readFileSync("src/lib/platform/personalHub.ts", "utf8"),
+      ].join("\n"),
+      new RegExp(`label: "${destination}"`)
+    );
   }
   assert.match(settingsPage, /id="family"/);
   assert.match(settingsPage, /id="household"/);
   assert.match(settingsPage, /id="preferences"/);
-  assert.match(settingsPage, /id="connected-accounts"/);
+  assert.match(settingsPage, /id="connected-modules"/);
+  assert.match(settingsPage, /id="emergency-contacts"/);
+  assert.match(settingsPage, /id="communication-preferences"/);
+  assert.match(settingsPage, /id="ai-preferences"/);
+  assert.match(settingsPage, /id="future-memory-settings"/);
   assert.match(settingsPage, /id="privacy"/);
   assert.match(settingsPage, /Privacy controls are a placeholder/);
-  assert.match(
-    settingsProfilePage,
-    /export \{ default \} from "\.\.\/\.\.\/profile\/page"/
-  );
+  assert.match(settingsProfilePage, /Personal Information/);
+  assert.match(legacyProfilePage, /redirect\(personalInformationCanonicalRoute\)/);
 });
 
 test("calendar date generation uses local-safe weekday alignment", () => {
@@ -882,7 +908,13 @@ function buildSearchFixtureItems(): PlatformSearchItem[] {
 }
 
 test("BO-35 Search builds a universal index across platform and module records", () => {
-  const searchPage = readFileSync("src/app/dashboard/search/page.tsx", "utf8");
+  const searchPage = [
+    readFileSync("src/app/dashboard/search/page.tsx", "utf8"),
+    readFileSync(
+      "src/app/dashboard/search/UnifiedSearchWorkspace.tsx",
+      "utf8"
+    ),
+  ].join("\n");
   const index = buildUniversalSearchIndex(buildSearchFixtureItems());
   const moneyResult = searchPlatformIndex({
     items: index,
@@ -896,11 +928,17 @@ test("BO-35 Search builds a universal index across platform and module records",
   assert.equal(moneyResult[0].sourceRecordId, "cashflow-1");
   assert.match(searchContractRules[0], /indexing/);
   assert.match(searchPage, /buildUniversalSearchIndex/);
-  assert.match(searchPage, /sourceRecordId/);
+  assert.match(searchPage, /buildUnifiedSearchItems/);
 });
 
 test("BO-36 Search respects permissions filters recent and saved searches", () => {
-  const searchPage = readFileSync("src/app/dashboard/search/page.tsx", "utf8");
+  const searchPage = [
+    readFileSync("src/app/dashboard/search/page.tsx", "utf8"),
+    readFileSync(
+      "src/app/dashboard/search/UnifiedSearchWorkspace.tsx",
+      "utf8"
+    ),
+  ].join("\n");
   const index = buildUniversalSearchIndex(buildSearchFixtureItems());
   const ownerResults = searchPlatformIndex({
     items: index,
@@ -926,11 +964,14 @@ test("BO-36 Search respects permissions filters recent and saved searches", () =
   assert.deepEqual(recent, ["cashflow", "learning"]);
   assert.equal(saved.filters.module, "money");
   assert.match(searchPage, /buildRecentSearches/);
-  assert.match(searchPage, /buildSavedSearch/);
+  assert.match(searchPage, /allowedPermissionScopes/);
 });
 
 test("BO-37 Search interprets natural language and routes actions safely", () => {
-  const searchPage = readFileSync("src/app/dashboard/search/page.tsx", "utf8");
+  const searchWorkspace = readFileSync(
+    "src/app/dashboard/search/UnifiedSearchWorkspace.tsx",
+    "utf8"
+  );
   const item = buildPlatformSearchItem(buildSearchFixtureItems()[0]);
   const intent = interpretNaturalLanguageSearch("Show all Money alerts");
   const request = buildSearchActionRequest({ item, actionType: "Open" });
@@ -941,8 +982,7 @@ test("BO-37 Search interprets natural language and routes actions safely", () =>
   assert.equal(request.sourceOwnershipPreserved, true);
   assert.equal(request.source, "money");
   assert.match(searchContractRules[3], /mutating module-owned records/);
-  assert.match(searchPage, /interpretNaturalLanguageSearch/);
-  assert.match(searchPage, /buildSearchActionRequest/);
+  assert.match(searchWorkspace, /buildSearchActionRequest/);
 });
 
 function buildTimelineFixtureItems(): PlatformTimelineItem[] {
@@ -3140,7 +3180,7 @@ test("dashboard module navigation persists collapsible groups across responsive 
   assert.match(dashboardLayout, /aria-label=\{`\$\{expanded \? "Collapse" : "Expand"\} \$\{item\.label\}`\}/);
   assert.match(dashboardLayout, /href=\{item\.href \|\| "#"\}/);
   assert.match(dashboardLayout, /item=\{beastOSNavigation\}/);
-  assert.match(dashboardLayout, /aria-label="Applications"/);
+  assert.match(dashboardLayout, /aria-label="Beast applications"/);
   assert.match(dashboardLayout, /aria-label="Owner"/);
   assert.match(dashboardLayout, /grid-rows-\[1fr\]/);
   assert.match(dashboardLayout, /grid-rows-\[0fr\]/);
@@ -3370,8 +3410,10 @@ test("authentication presents one permission-aware Beast platform entry point", 
   const loginPage = readFileSync("src/app/login/page.tsx", "utf8");
   const dashboardLayout = readFileSync("src/app/dashboard/layout.tsx", "utf8");
 
-  assert.match(loginPage, />\s*Beast\s*</);
-  assert.match(loginPage, /AI that helps you improve your life\./);
+  assert.match(loginPage, />\s*BeastOS\s*</);
+  assert.match(loginPage, /beastOSPlatformIdentity\.description/);
+  assert.match(loginPage, /beastOSApplications\.map/);
+  assert.match(loginPage, /beastOSSharedCapabilities\.join/);
   assert.match(loginPage, />\s*Log In\s*</);
   assert.match(loginPage, />\s*Create Account\s*</);
   assert.match(loginPage, /signInWithOtp/);
@@ -5988,7 +6030,7 @@ test("BeastAdmin foundation registers modules and protects owner-only navigation
     getModuleChildren("health").map((item) => item.label),
     [
       "Overview",
-      "Health Profile",
+      "Health Background",
       "Conditions",
       "Medications",
       "Procedures",
@@ -6232,7 +6274,7 @@ test("BH-001 BeastHealth foundation is admin-only placeholder application", () =
 
   [
     "Overview",
-    "Health Profile",
+    "Health Background",
     "Conditions",
     "Medications",
     "Procedures",

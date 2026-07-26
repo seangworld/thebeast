@@ -15,7 +15,7 @@ import { isBeastAdminOwnerRole } from "@/lib/beastAdmin";
 
 export const beastHealthSections = [
   { label: "Overview", href: "/dashboard/health" },
-  { label: "Health Profile", href: "/dashboard/health/profile" },
+  { label: "Health Background", href: "/dashboard/health/profile" },
   { label: "Conditions", href: "/dashboard/health/conditions" },
   { label: "Medications", href: "/dashboard/health/medications" },
   { label: "Procedures", href: "/dashboard/health/procedures" },

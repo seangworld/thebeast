@@ -158,7 +158,7 @@ export function buildMobileHouseholdAlertCards({
         alertCount > 0
           ? "Review pending household invitations, shared links, and ownership cleanup signals."
           : "Household context is ready. Alerts will appear here when invitations or shared visibility need attention.",
-      href: "/dashboard/profile#household",
+      href: "/dashboard/settings#household",
       actionLabel: "Review household",
       metadata: [
         `${summary.memberCount} members`,

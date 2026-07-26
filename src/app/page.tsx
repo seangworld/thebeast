@@ -25,7 +25,7 @@ export default function HomePage() {
   return (
     <main className="beast-page flex min-h-screen items-center justify-center">
       <div className="beast-card">
-        <p className="text-sm text-[#c7cfdb]">Loading The Beast...</p>
+        <p className="text-sm text-[#c7cfdb]">Loading BeastOS...</p>
       </div>
     </main>
   );
