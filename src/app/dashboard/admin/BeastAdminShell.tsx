@@ -20,6 +20,9 @@ import {
 
 const adminNavItems = [
   { label: "Dashboard", href: "/dashboard/admin" },
+  { label: "Platform Health", href: "/dashboard/admin/health" },
+  { label: "Executive Metrics", href: "/dashboard/admin/metrics" },
+  { label: "Release Center", href: "/dashboard/admin/releases" },
   { label: "Roadmap", href: "/dashboard/admin/roadmap" },
   { label: "Member Timeline", href: "/dashboard/admin/members" },
   { label: "Modules", href: "/dashboard/admin/modules" },

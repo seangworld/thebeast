@@ -112,6 +112,9 @@ export const beastAdminNavigation: ModuleNavSection = {
   defaultExpanded: true,
   children: [
     { label: "Dashboard", href: "/dashboard/admin" },
+    { label: "Platform Health", href: "/dashboard/admin/health" },
+    { label: "Executive Metrics", href: "/dashboard/admin/metrics" },
+    { label: "Release Center", href: "/dashboard/admin/releases" },
     { label: "Member Timeline", href: "/dashboard/admin/members" },
     { label: "Modules", href: "/dashboard/admin/modules" },
     { label: "Feature Flags", href: "/dashboard/admin/flags" },

@@ -181,6 +181,7 @@ export default function BeastAdminDashboardPage() {
             eyebrow="Platform Health"
             title="What BeastAdmin can verify"
             description="Configuration is visible. Runtime observability remains incomplete until centralized usage and error feeds are connected."
+            action={<AdminSectionLink href="/dashboard/admin/health">Open Platform Health</AdminSectionLink>}
           />
           <div className="mt-5 grid gap-3">
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-green-400/25 bg-green-400/10 p-4">
@@ -210,7 +211,16 @@ export default function BeastAdminDashboardPage() {
             eyebrow="Members"
             title="Known member records"
             description={snapshot.members.sourceLabel}
-            action={<AdminSectionLink href="/dashboard/admin/members">Open Members</AdminSectionLink>}
+            action={
+              <div className="flex flex-wrap gap-2">
+                <AdminSectionLink href="/dashboard/admin/metrics">
+                  Open Metrics
+                </AdminSectionLink>
+                <AdminSectionLink href="/dashboard/admin/members">
+                  Open Members
+                </AdminSectionLink>
+              </div>
+            }
           />
           <dl className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
             {[
@@ -278,7 +288,7 @@ export default function BeastAdminDashboardPage() {
             eyebrow="Recent Releases"
             title="Canonical release identities"
             description="Latest dated products from the generated Beast ecosystem version manifest."
-            action={<AdminSectionLink href="/dashboard/releases">Open Releases</AdminSectionLink>}
+            action={<AdminSectionLink href="/dashboard/admin/releases">Open Release Center</AdminSectionLink>}
           />
           <ol className="mt-5 divide-y divide-[#2a3242]">
             {snapshot.recentReleases.map((release) => (
