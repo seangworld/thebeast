@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   DashboardCard,
-  MetricTile,
   SectionHeader,
 } from "@/app/components/design/DashboardPrimitives";
 import {
@@ -21,6 +20,13 @@ const statusClasses: Record<BeastAdminRoadmapStatus, string> = {
   released: "border-green-300/35 bg-green-300/10 text-green-100",
   archived: "border-slate-300/30 bg-slate-300/10 text-slate-200",
 };
+
+const repositoryStatusClasses = {
+  clean: "border-green-300/30 bg-green-300/10 text-green-100",
+  dirty: "border-amber-300/35 bg-amber-300/10 text-amber-100",
+  unavailable: "border-slate-300/30 bg-slate-300/10 text-slate-200",
+  planning: "border-sky-300/30 bg-sky-300/10 text-sky-100",
+} as const;
 
 function ConsoleLink({
   href,
@@ -99,6 +105,49 @@ function PromptCard({
   );
 }
 
+function DevelopmentMetric({
+  label,
+  count,
+  available,
+  detail,
+}: {
+  label: string;
+  count: number;
+  available: boolean;
+  detail: string;
+}) {
+  return (
+    <article className="min-w-0 rounded-2xl border border-[#2a3242] bg-[#111827] p-4">
+      <p className="text-xs font-black uppercase tracking-wide text-[#7f8da3]">
+        {label}
+      </p>
+      <p className="mt-2 text-2xl font-black text-white">
+        {available ? (count ? count : "None") : "Unavailable"}
+      </p>
+      <p className="mt-2 text-sm leading-6 text-[#9aa7b8]">{detail}</p>
+    </article>
+  );
+}
+
+function MilestoneValue({
+  label,
+  value,
+  empty,
+}: {
+  label: string;
+  value: string | null;
+  empty: string;
+}) {
+  return (
+    <div className="min-w-0 rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+      <p className="text-xs font-black uppercase tracking-wide text-[#7f8da3]">
+        {label}
+      </p>
+      <p className="mt-2 break-words font-black text-white">{value || empty}</p>
+    </div>
+  );
+}
+
 export function BeastAdminDevelopmentConsoleWorkspace() {
   const [snapshot, setSnapshot] =
     useState<BeastAdminDevelopmentConsoleSnapshot | null>(null);
@@ -156,6 +205,14 @@ export function BeastAdminDevelopmentConsoleWorkspace() {
     }),
     [snapshot]
   );
+  const activeSprintSummary = [
+    openByStatus.inProgress
+      ? `${openByStatus.inProgress} in progress`
+      : "",
+    openByStatus.testing ? `${openByStatus.testing} in testing` : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   if (loading && !snapshot) {
     return (
@@ -212,14 +269,26 @@ export function BeastAdminDevelopmentConsoleWorkspace() {
             <p className="beast-kicker">Current sprint</p>
             <h2 className="mt-2 text-3xl font-black text-white">
               {snapshot.currentSprint.length
-                ? `${snapshot.currentSprint.length} prompts in active delivery`
-                : "No active sprint work is recorded"}
+                ? `${snapshot.currentSprint.length} roadmap item${
+                    snapshot.currentSprint.length === 1 ? "" : "s"
+                  } in active delivery`
+                : snapshot.sources.roadmap === "unavailable"
+                  ? "Current sprint unavailable"
+                  : snapshot.completedPrompts.length
+                    ? "The previous sprint has completed"
+                    : snapshot.upcomingWork.length
+                      ? "Awaiting selection of the next sprint"
+                      : "No sprint has been defined yet"}
             </h2>
             <p className="mt-3 max-w-3xl leading-7 text-[#dbe3ef]">
               {snapshot.currentSprint.length
-                ? `${openByStatus.inProgress} in progress and ${openByStatus.testing} in testing. Roadmap status remains the source of truth.`
+                ? `${activeSprintSummary}. Roadmap status remains the source of truth.`
                 : snapshot.sources.roadmap === "available"
-                  ? "Move planned roadmap prompts into In Progress when the next sprint begins."
+                  ? snapshot.upcomingWork.length
+                    ? "Planned roadmap work is ready, but no item has been selected for active delivery."
+                    : snapshot.completedPrompts.length
+                      ? "No roadmap items are currently In Progress. Select the next milestone when planning is ready."
+                      : "Add a roadmap milestone before beginning the first sprint."
                   : "The roadmap source must be restored before BeastAdmin can identify current sprint work."}
             </p>
           </div>
@@ -246,6 +315,40 @@ export function BeastAdminDevelopmentConsoleWorkspace() {
         ) : null}
       </DashboardCard>
 
+      <DashboardCard accent="admin">
+        <SectionHeader
+          eyebrow="Current milestone"
+          title="Development focus"
+          description="The current focus comes from the most recently updated active roadmap item. Missing fields remain explicit."
+        />
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <MilestoneValue
+            label="Current generation"
+            value={snapshot.milestone.currentGeneration}
+            empty="Not recorded in the active roadmap"
+          />
+          <MilestoneValue
+            label="Current product"
+            value={snapshot.milestone.currentProduct}
+            empty="Awaiting sprint selection"
+          />
+          <MilestoneValue
+            label="Current milestone"
+            value={snapshot.milestone.currentMilestone}
+            empty="No active milestone"
+          />
+          <MilestoneValue
+            label="Next planned milestone"
+            value={snapshot.milestone.nextPlannedMilestone}
+            empty={
+              snapshot.sources.roadmap === "available"
+                ? "No planned milestone"
+                : "Roadmap source unavailable"
+            }
+          />
+        </div>
+      </DashboardCard>
+
       {error ? (
         <p
           role="alert"
@@ -259,35 +362,121 @@ export function BeastAdminDevelopmentConsoleWorkspace() {
         className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
         aria-label="Development pipeline totals"
       >
-        <MetricTile
+        <DevelopmentMetric
           label="Open prompts"
-          value={String(snapshot.openPrompts.length)}
-          detail={`${openByStatus.planned} planned · ${openByStatus.inProgress} active · ${openByStatus.testing} testing`}
-          icon="O"
-          tone="blue"
+          count={snapshot.openPrompts.length}
+          available={snapshot.sources.roadmap === "available"}
+          detail={
+            snapshot.sources.roadmap === "unavailable"
+              ? "Roadmap data is unavailable."
+              : snapshot.openPrompts.length
+                ? [
+                    openByStatus.planned
+                      ? `${openByStatus.planned} planned`
+                      : "",
+                    openByStatus.inProgress
+                      ? `${openByStatus.inProgress} active`
+                      : "",
+                    openByStatus.testing
+                      ? `${openByStatus.testing} testing`
+                      : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")
+                : "No roadmap items are currently open."
+          }
         />
-        <MetricTile
+        <DevelopmentMetric
           label="Completed prompts"
-          value={String(snapshot.completedPrompts.length)}
-          detail="Roadmap prompts marked Released"
-          icon="C"
-          tone="green"
+          count={snapshot.completedPrompts.length}
+          available={snapshot.sources.roadmap === "available"}
+          detail={
+            snapshot.sources.roadmap === "unavailable"
+              ? "Released roadmap work cannot be verified."
+              : snapshot.completedPrompts.length
+                ? "Roadmap items marked Released."
+                : "No roadmap items have reached Released."
+          }
         />
-        <MetricTile
+        <DevelopmentMetric
           label="Upcoming work"
-          value={String(snapshot.upcomingWork.length)}
-          detail="Planned prompts awaiting active delivery"
-          icon="U"
-          tone="purple"
+          count={snapshot.upcomingWork.length}
+          available={snapshot.sources.roadmap === "available"}
+          detail={
+            snapshot.sources.roadmap === "unavailable"
+              ? "Planned roadmap work cannot be verified."
+              : snapshot.upcomingWork.length
+                ? "Planned roadmap items awaiting active delivery."
+                : "Awaiting selection of the next sprint."
+          }
         />
-        <MetricTile
+        <DevelopmentMetric
           label="Recently released"
-          value={String(snapshot.recentlyReleased.length)}
-          detail="Latest canonical Release Center records"
-          icon="R"
-          tone="yellow"
+          count={snapshot.recentlyReleased.length}
+          available={snapshot.sources.releases === "available"}
+          detail={
+            snapshot.sources.releases === "unavailable"
+              ? "Release Center data is unavailable."
+              : snapshot.recentlyReleased.length
+                ? "Latest canonical Release Center records."
+                : "No release history has been synchronized."
+          }
         />
       </section>
+
+      <DashboardCard accent="admin">
+        <SectionHeader
+          eyebrow="Repository summary"
+          title="Read-only repository evidence"
+          description="Branch, worktree, and commit values appear only when connected evidence can verify them."
+        />
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {snapshot.repositories.map((repository) => (
+            <article
+              key={repository.repository}
+              className="min-w-0 rounded-xl border border-[#2a3242] bg-[#111827] p-4"
+            >
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <h3 className="font-black text-white">
+                  {repository.repository}
+                </h3>
+                <span
+                  className={`rounded-full border px-2.5 py-1 text-xs font-black ${repositoryStatusClasses[repository.worktree]}`}
+                >
+                  {repository.worktree === "planning"
+                    ? "Planning"
+                    : repository.worktree === "unavailable"
+                      ? "Status unavailable"
+                      : repository.worktree === "clean"
+                        ? "Clean"
+                        : "Dirty"}
+                </span>
+              </div>
+              <dl className="mt-4 grid gap-3 text-sm">
+                <div>
+                  <dt className="text-xs font-black uppercase tracking-wide text-[#68768b]">
+                    Branch
+                  </dt>
+                  <dd className="mt-1 break-words text-[#dbe3ef]">
+                    {repository.branch || "Not available"}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-black uppercase tracking-wide text-[#68768b]">
+                    Latest commit
+                  </dt>
+                  <dd className="mt-1 break-all font-mono text-[#dbe3ef]">
+                    {repository.latestCommit || "Not available"}
+                  </dd>
+                </div>
+              </dl>
+              <p className="mt-4 text-xs leading-5 text-[#7f8da3]">
+                {repository.detail}
+              </p>
+            </article>
+          ))}
+        </div>
+      </DashboardCard>
 
       <section className="grid gap-6 xl:grid-cols-2">
         <DashboardCard accent="admin">
@@ -311,7 +500,9 @@ export function BeastAdminDevelopmentConsoleWorkspace() {
             ) : (
               <p className="rounded-xl border border-dashed border-[#344052] p-5 text-sm leading-6 text-[#9aa7b8]">
                 {snapshot.sources.roadmap === "available"
-                  ? "No open development prompts are recorded."
+                  ? snapshot.upcomingWork.length
+                    ? "No roadmap items are currently In Progress or Testing. Planned work is awaiting sprint selection."
+                    : "No roadmap items are currently open."
                   : "Open prompts cannot be verified while the roadmap source is unavailable."}
               </p>
             )}
@@ -334,7 +525,7 @@ export function BeastAdminDevelopmentConsoleWorkspace() {
             ) : (
               <p className="rounded-xl border border-dashed border-[#344052] p-5 text-sm leading-6 text-[#9aa7b8]">
                 {snapshot.sources.roadmap === "available"
-                  ? "No roadmap prompts are marked Released yet."
+                  ? "No roadmap items have reached Released. Completed work will appear here after roadmap status is updated."
                   : "Completed prompts cannot be verified while the roadmap source is unavailable."}
               </p>
             )}
@@ -358,7 +549,9 @@ export function BeastAdminDevelopmentConsoleWorkspace() {
                 ))
             ) : (
               <p className="rounded-xl border border-dashed border-[#344052] p-5 text-sm leading-6 text-[#9aa7b8]">
-                No upcoming work is available from the roadmap source.
+                {snapshot.sources.roadmap === "available"
+                  ? "Awaiting selection of the next sprint. Add or move a roadmap item to Planned when future work is ready."
+                  : "Upcoming work cannot be verified while the roadmap source is unavailable."}
               </p>
             )}
           </div>
@@ -403,7 +596,7 @@ export function BeastAdminDevelopmentConsoleWorkspace() {
             ) : (
               <p className="rounded-xl border border-dashed border-[#344052] p-5 text-sm leading-6 text-[#9aa7b8]">
                 {snapshot.sources.releases === "available"
-                  ? "No canonical release records exist yet."
+                  ? "No release history has been synchronized. Release records will appear after Release Center captures a validated release."
                   : "Recent releases cannot be verified while Release Center is unavailable."}
               </p>
             )}
@@ -499,7 +692,9 @@ export function BeastAdminDevelopmentConsoleWorkspace() {
               </table>
             ) : (
               <p className="rounded-xl border border-dashed border-[#344052] p-5 text-sm leading-6 text-[#9aa7b8]">
-                No historical Release Center versions are available.
+                {snapshot.sources.releases === "available"
+                  ? "No release history has been synchronized. Version history will appear after Release Center records a release."
+                  : "Version history cannot be verified while Release Center is unavailable."}
               </p>
             )}
           </div>
@@ -533,6 +728,51 @@ export function BeastAdminDevelopmentConsoleWorkspace() {
               </div>
               <p className="mt-3 break-all font-mono text-xs text-[#68768b]">
                 {version.buildId}
+              </p>
+            </article>
+          ))}
+        </div>
+      </DashboardCard>
+
+      <DashboardCard accent="admin">
+        <SectionHeader
+          eyebrow="Future operational signals"
+          title="Reserved development intelligence"
+          description="These areas are intentionally reserved until authoritative sources are connected."
+        />
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {[
+            {
+              label: "Release velocity",
+              detail:
+                "Available after Release Center has enough dated history for a meaningful trend.",
+            },
+            {
+              label: "Sprint statistics",
+              detail:
+                "Available after sprint boundaries and outcomes are explicitly recorded.",
+            },
+            {
+              label: "Recent validation",
+              detail:
+                "Available after validation evidence is connected as a current operating signal.",
+            },
+            {
+              label: "Build health",
+              detail:
+                "Available after a read-only continuous integration health source is connected.",
+            },
+          ].map((signal) => (
+            <article
+              key={signal.label}
+              className="min-w-0 rounded-xl border border-dashed border-[#344052] bg-[#111827]/70 p-4"
+            >
+              <p className="font-black text-white">{signal.label}</p>
+              <p className="mt-2 text-sm font-bold text-[#9aa7b8]">
+                Not connected
+              </p>
+              <p className="mt-2 text-xs leading-5 text-[#7f8da3]">
+                {signal.detail}
               </p>
             </article>
           ))}

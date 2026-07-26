@@ -133,6 +133,105 @@ test("BA-111 derives releases, Git references, and versions from evidence", () =
     ),
     true
   );
+  const educationVersion = snapshot.currentVersions.find(
+    (version) => version.product === "BeastEducation"
+  );
+  assert.ok(educationVersion);
+  assert.match(educationVersion.buildId, /^beasteducation-/);
+  assert.doesNotMatch(educationVersion.buildId, /beastlearning/);
+});
+
+test("BA-116 derives repository and milestone summaries only from verified evidence", () => {
+  const snapshot = buildBeastAdminDevelopmentConsoleSnapshot({
+    roadmapItems: [
+      {
+        ...roadmapItem(
+          "education-current",
+          "in_progress",
+          "2026-07-26T14:00:00.000Z"
+        ),
+        productId: "education",
+        title: "Generation 3 Guidance Counselor",
+      },
+      {
+        ...roadmapItem(
+          "education-next",
+          "planned",
+          "2026-07-26T13:00:00.000Z"
+        ),
+        productId: "education",
+        title: "Education outcome reporting",
+      },
+    ],
+    releases: [
+      {
+        ...release("fusion-release", "2026-07-25", "bf113abc"),
+        product: "fusion",
+      },
+      {
+        ...release("sw-release", "2026-07-24", "5ea9c11"),
+        product: "seangworld",
+      },
+    ],
+    roadmapAvailable: true,
+    releasesAvailable: true,
+    gitEvidence: {
+      commitSha: "33c5ec3eb86d598eafac699294fb5fe15b3baad4",
+      branch: "main",
+      repository: "seangworld/thebeast",
+      commitMessage: "BA-115 Polish CEO Mode operational clarity",
+    },
+    generatedAt: "2026-07-26T17:00:00.000Z",
+  });
+
+  assert.deepEqual(snapshot.milestone, {
+    currentGeneration: "Generation 3",
+    currentProduct: "Education",
+    currentMilestone: "Generation 3 Guidance Counselor",
+    nextPlannedMilestone: "Education outcome reporting",
+  });
+  assert.deepEqual(
+    snapshot.repositories.map((repository) => ({
+      repository: repository.repository,
+      branch: repository.branch,
+      worktree: repository.worktree,
+      latestCommit: repository.latestCommit,
+    })),
+    [
+      {
+        repository: "Beast",
+        branch: "main",
+        worktree: "unavailable",
+        latestCommit: "33c5ec3eb86d",
+      },
+      {
+        repository: "SEANGWORLD",
+        branch: null,
+        worktree: "unavailable",
+        latestCommit: "5ea9c11",
+      },
+      {
+        repository: "BeastFusion",
+        branch: null,
+        worktree: "unavailable",
+        latestCommit: "bf113abc",
+      },
+      {
+        repository: "CW",
+        branch: null,
+        worktree: "planning",
+        latestCommit: null,
+      },
+    ]
+  );
+  assert.equal(
+    snapshot.repositories.some(
+      (repository) =>
+        ["clean", "dirty"].includes(repository.worktree) &&
+        !repository.latestCommit
+    ),
+    false
+  );
 });
 
 test("BA-111 reports unavailable sources instead of empty development claims", () => {
@@ -155,6 +254,14 @@ test("BA-111 reports unavailable sources instead of empty development claims", (
   assert.match(snapshot.sourceGaps[2], /Git SHA or ref/);
   assert.deepEqual(snapshot.gitReferences, []);
   assert.equal(snapshot.currentVersions.length > 0, true);
+  assert.deepEqual(snapshot.milestone, {
+    currentGeneration: null,
+    currentProduct: null,
+    currentMilestone: null,
+    nextPlannedMilestone: null,
+  });
+  assert.equal(snapshot.repositories[0].worktree, "unavailable");
+  assert.equal(snapshot.repositories[3].worktree, "planning");
 });
 
 test("BA-111 validates the complete development console response", () => {
@@ -191,6 +298,22 @@ test("BA-111 validates the complete development console response", () => {
           recordedAt: null,
         },
       ],
+    }),
+    null
+  );
+  assert.equal(
+    normalizeBeastAdminDevelopmentConsoleSnapshot({
+      ...snapshot,
+      repositories: [
+        { ...snapshot.repositories[0], worktree: "invented" },
+      ],
+    }),
+    null
+  );
+  assert.equal(
+    normalizeBeastAdminDevelopmentConsoleSnapshot({
+      ...snapshot,
+      milestone: { ...snapshot.milestone, currentProduct: 12 },
     }),
     null
   );
@@ -238,12 +361,18 @@ test("BA-111 presents the complete owner development workflow", () => {
 
   for (const label of [
     "Current sprint",
+    "Current milestone",
     "Open prompts",
     "Completed prompts",
     "Upcoming work",
     "Recently released",
     "Git references",
     "Version history",
+    "Repository summary",
+    "Release velocity",
+    "Sprint statistics",
+    "Recent validation",
+    "Build health",
   ]) {
     assert.match(workspace, new RegExp(label, "i"));
   }
@@ -256,6 +385,17 @@ test("BA-111 presents the complete owner development workflow", () => {
   assert.match(workspace, /\/dashboard\/admin\/prompts/);
   assert.match(workspace, /does not execute Git/);
   assert.match(workspace, /roadmap work items/);
+  assert.match(workspace, /The previous sprint has completed/);
+  assert.match(workspace, /Awaiting selection of the next sprint/);
+  assert.match(workspace, /No roadmap items are currently In Progress/);
+  assert.match(workspace, /No release history has been synchronized/);
+  assert.match(workspace, /Status unavailable/);
+  assert.match(workspace, /Not connected/);
+  assert.match(workspace, /count \? count : "None"/);
+  assert.match(workspace, /sm:grid-cols-2 xl:grid-cols-4/);
+  assert.match(workspace, /min-w-0/);
+  assert.match(workspace, /overflow-x-auto/);
+  assert.doesNotMatch(workspace, /overflow-x-hidden|w-screen/);
   assert.doesNotMatch(workspace, /localStorage/);
   assert.doesNotMatch(workspace, /git push|git commit|child_process/);
   assert.match(dashboard, /\/dashboard\/admin\/development/);

@@ -57,6 +57,21 @@ export type BeastAdminDevelopmentVersion = {
   source: "version_manifest";
 };
 
+export type BeastAdminDevelopmentRepositoryStatus = {
+  repository: "Beast" | "SEANGWORLD" | "BeastFusion" | "CW";
+  branch: string | null;
+  worktree: "clean" | "dirty" | "unavailable" | "planning";
+  latestCommit: string | null;
+  detail: string;
+};
+
+export type BeastAdminDevelopmentMilestone = {
+  currentGeneration: string | null;
+  currentProduct: string | null;
+  currentMilestone: string | null;
+  nextPlannedMilestone: string | null;
+};
+
 export type BeastAdminDevelopmentConsoleSnapshot = {
   generatedAt: string;
   sources: {
@@ -73,6 +88,8 @@ export type BeastAdminDevelopmentConsoleSnapshot = {
   gitReferences: BeastAdminDevelopmentGitReference[];
   versionHistory: BeastAdminDevelopmentRelease[];
   currentVersions: BeastAdminDevelopmentVersion[];
+  repositories: BeastAdminDevelopmentRepositoryStatus[];
+  milestone: BeastAdminDevelopmentMilestone;
 };
 
 export type BeastAdminDeploymentGitEvidence = {
@@ -137,7 +154,10 @@ function currentVersionIdentities(): BeastAdminDevelopmentVersion[] {
       product: identity.name,
       version: identity.version,
       channel: identity.channel,
-      buildId: identity.buildId,
+      buildId:
+        identity.name === "BeastEducation"
+          ? identity.buildId.replace(/^beastlearning(?=-)/, "beasteducation")
+          : identity.buildId,
       releaseDate: identity.releaseDate,
       source: "version_manifest" as const,
     }))
@@ -146,6 +166,79 @@ function currentVersionIdentities(): BeastAdminDevelopmentVersion[] {
         (right.releaseDate || "").localeCompare(left.releaseDate || "") ||
         left.product.localeCompare(right.product)
     );
+}
+
+function findRepositoryReference(
+  references: BeastAdminDevelopmentGitReference[],
+  productLabel: string
+) {
+  return references.find(
+    (reference) =>
+      reference.source === "release_center" &&
+      reference.title.startsWith(`${productLabel} v`)
+  );
+}
+
+function repositoryStatuses(
+  references: BeastAdminDevelopmentGitReference[]
+): BeastAdminDevelopmentRepositoryStatus[] {
+  const beastReference = references.find(
+    (reference) => reference.source === "current_deployment"
+  );
+  const seangworldReference = findRepositoryReference(
+    references,
+    "SEANGWORLD"
+  );
+  const beastFusionReference = findRepositoryReference(
+    references,
+    "BeastFusion"
+  );
+
+  return [
+    {
+      repository: "Beast",
+      branch: beastReference?.branch || null,
+      worktree: "unavailable",
+      latestCommit: beastReference?.shortReference || null,
+      detail: beastReference
+        ? "Deployment metadata verifies the branch and commit. A hosted runtime cannot inspect local worktree cleanliness."
+        : "Deployment Git metadata is not available, so branch, worktree, and latest commit cannot be verified.",
+    },
+    {
+      repository: "SEANGWORLD",
+      branch: null,
+      worktree: "unavailable",
+      latestCommit: seangworldReference?.shortReference || null,
+      detail: seangworldReference
+        ? "Release Center verifies the commit reference. Branch and worktree evidence are not connected."
+        : "No SEANGWORLD repository source is connected to the Development Console.",
+    },
+    {
+      repository: "BeastFusion",
+      branch: null,
+      worktree: "unavailable",
+      latestCommit: beastFusionReference?.shortReference || null,
+      detail: beastFusionReference
+        ? "Release Center verifies the commit reference. Branch and worktree evidence are not connected."
+        : "No BeastFusion repository source is connected to the Development Console.",
+    },
+    {
+      repository: "CW",
+      branch: null,
+      worktree: "planning",
+      latestCommit: null,
+      detail:
+        "Change the World is represented as planning because no repository evidence is connected.",
+    },
+  ];
+}
+
+function milestoneGeneration(prompt: BeastAdminDevelopmentPrompt | undefined) {
+  if (!prompt) return null;
+  const match = `${prompt.title} ${prompt.summary}`.match(
+    /\bgeneration\s+([0-9]+(?:\.[0-9]+)?)\b/i
+  );
+  return match ? `Generation ${match[1]}` : null;
 }
 
 export function buildBeastAdminDevelopmentConsoleSnapshot({
@@ -222,6 +315,20 @@ export function buildBeastAdminDevelopmentConsoleSnapshot({
       ? "The current deployment did not provide a verified Git SHA or ref."
       : "",
   ].filter(Boolean);
+  const currentSprint = sortedPrompts.filter((prompt) =>
+    ["in_progress", "testing"].includes(prompt.status)
+  );
+  const openPrompts = sortedPrompts.filter((prompt) =>
+    ["planned", "in_progress", "testing"].includes(prompt.status)
+  );
+  const completedPrompts = sortedPrompts.filter(
+    (prompt) => prompt.status === "released"
+  );
+  const upcomingWork = sortedPrompts.filter(
+    (prompt) => prompt.status === "planned"
+  );
+  const currentMilestone = currentSprint[0];
+  const nextPlannedMilestone = upcomingWork[0];
 
   return {
     generatedAt,
@@ -231,22 +338,21 @@ export function buildBeastAdminDevelopmentConsoleSnapshot({
       git: gitReferences.length ? "available" : "unavailable",
     },
     sourceGaps,
-    currentSprint: sortedPrompts.filter((prompt) =>
-      ["in_progress", "testing"].includes(prompt.status)
-    ),
-    openPrompts: sortedPrompts.filter((prompt) =>
-      ["planned", "in_progress", "testing"].includes(prompt.status)
-    ),
-    completedPrompts: sortedPrompts.filter(
-      (prompt) => prompt.status === "released"
-    ),
-    upcomingWork: sortedPrompts.filter(
-      (prompt) => prompt.status === "planned"
-    ),
+    currentSprint,
+    openPrompts,
+    completedPrompts,
+    upcomingWork,
     recentlyReleased: sortedReleases.slice(0, 5),
     gitReferences,
     versionHistory: sortedReleases,
     currentVersions: currentVersionIdentities(),
+    repositories: repositoryStatuses(gitReferences),
+    milestone: {
+      currentGeneration: milestoneGeneration(currentMilestone),
+      currentProduct: currentMilestone?.productLabel || null,
+      currentMilestone: currentMilestone?.title || null,
+      nextPlannedMilestone: nextPlannedMilestone?.title || null,
+    },
   };
 }
 
@@ -347,6 +453,42 @@ function normalizeVersion(
   return value as BeastAdminDevelopmentVersion;
 }
 
+function normalizeRepository(
+  value: unknown
+): BeastAdminDevelopmentRepositoryStatus | null {
+  if (!isRecord(value)) return null;
+  if (
+    !["Beast", "SEANGWORLD", "BeastFusion", "CW"].includes(
+      String(value.repository)
+    ) ||
+    (value.branch !== null && !isString(value.branch)) ||
+    !["clean", "dirty", "unavailable", "planning"].includes(
+      String(value.worktree)
+    ) ||
+    (value.latestCommit !== null && !isString(value.latestCommit)) ||
+    !isString(value.detail) ||
+    !value.detail.trim()
+  ) {
+    return null;
+  }
+  return value as BeastAdminDevelopmentRepositoryStatus;
+}
+
+function normalizeMilestone(
+  value: unknown
+): BeastAdminDevelopmentMilestone | null {
+  if (!isRecord(value)) return null;
+  for (const field of [
+    "currentGeneration",
+    "currentProduct",
+    "currentMilestone",
+    "nextPlannedMilestone",
+  ]) {
+    if (value[field] !== null && !isString(value[field])) return null;
+  }
+  return value as BeastAdminDevelopmentMilestone;
+}
+
 function normalizeArray<T>(
   value: unknown,
   normalize: (entry: unknown) => T | null
@@ -381,6 +523,8 @@ export function normalizeBeastAdminDevelopmentConsoleSnapshot(
   );
   const versionHistory = normalizeArray(value.versionHistory, normalizeRelease);
   const currentVersions = normalizeArray(value.currentVersions, normalizeVersion);
+  const repositories = normalizeArray(value.repositories, normalizeRepository);
+  const milestone = normalizeMilestone(value.milestone);
 
   if (
     !isTimestamp(value.generatedAt) ||
@@ -396,7 +540,9 @@ export function normalizeBeastAdminDevelopmentConsoleSnapshot(
     !recentlyReleased ||
     !gitReferences ||
     !versionHistory ||
-    !currentVersions
+    !currentVersions ||
+    !repositories ||
+    !milestone
   ) {
     return null;
   }
@@ -413,5 +559,7 @@ export function normalizeBeastAdminDevelopmentConsoleSnapshot(
     gitReferences,
     versionHistory,
     currentVersions,
+    repositories,
+    milestone,
   };
 }
