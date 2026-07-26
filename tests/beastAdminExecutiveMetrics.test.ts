@@ -184,7 +184,7 @@ test("BA-110 presents every requested business metric and evidence boundary", ()
     "utf8"
   );
   const dashboard = readFileSync(
-    "src/app/dashboard/admin/page.tsx",
+    "src/app/dashboard/admin/BeastAdminCEOModeWorkspace.tsx",
     "utf8"
   );
   const shell = readFileSync(

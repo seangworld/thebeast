@@ -6025,11 +6025,14 @@ test("BeastAdmin foundation registers modules and protects owner-only navigation
   assert.deepEqual(
     beastAdminNavigation.children?.map((item) => item.label),
     [
-      "Dashboard",
+      "CEO Mode",
+      "Development Console",
       "Platform Health",
       "Executive Metrics",
       "Release Center",
       "Member Timeline",
+      "Knowledge Inspector",
+      "Ecosystem Map",
       "Modules",
       "Feature Flags",
       "Prompt Library",
@@ -6144,9 +6147,10 @@ test("BeastAdmin foundation registers modules and protects owner-only navigation
   );
 });
 
-test("BeastAdmin routes cover members analytics feedback ads and settings", () => {
+test("BeastAdmin routes cover CEO operations members analytics feedback ads and settings", () => {
   const adminFiles = [
     "src/app/dashboard/admin/page.tsx",
+    "src/app/dashboard/admin/development/page.tsx",
     "src/app/dashboard/admin/health/page.tsx",
     "src/app/dashboard/admin/metrics/page.tsx",
     "src/app/dashboard/admin/releases/page.tsx",
@@ -6167,16 +6171,12 @@ test("BeastAdmin routes cover members analytics feedback ads and settings", () =
 
   const adminDashboard = readFileSync("src/app/dashboard/admin/page.tsx", "utf8");
   [
-    "Members",
-    "Active Modules",
-    "Beta Testers",
-    "Feedback",
-    "Recent Activity",
-    "Platform Status",
+    "CEO Mode",
+    "daily operating headquarters",
+    "BeastAdminCEOModeWorkspace",
   ].forEach((label) => {
     assert.match(adminDashboard, new RegExp(label));
   });
-  assert.match(adminDashboard, /BeastAdmin Phase A/);
   assert.match(adminDashboard, /owner-only/);
 
   const shell = readFileSync("src/app/dashboard/admin/BeastAdminShell.tsx", "utf8");

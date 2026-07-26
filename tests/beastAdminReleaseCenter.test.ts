@@ -172,7 +172,7 @@ test("BA-108 provides an owner Release Center without replacing public notes", (
     "utf8"
   );
   const adminDashboard = readFileSync(
-    "src/app/dashboard/admin/page.tsx",
+    "src/app/dashboard/admin/BeastAdminCEOModeWorkspace.tsx",
     "utf8"
   );
   const shell = readFileSync(

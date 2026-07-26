@@ -147,30 +147,19 @@ test("BA-101 recent releases are dated, deterministic, and limited", () => {
   assert.deepEqual(buildRecentBeastReleases({ identities, limit: 0 }), []);
 });
 
-test("BA-101 dashboard presents every required executive section inside BeastAdmin", () => {
+test("BA-101 executive model remains available after CEO Mode becomes the landing experience", () => {
   const page = readFileSync("src/app/dashboard/admin/page.tsx", "utf8");
+  const model = readFileSync("src/lib/beastAdminExecutive.ts", "utf8");
   const shell = readFileSync(
     "src/app/dashboard/admin/BeastAdminShell.tsx",
     "utf8"
   );
 
-  for (const section of [
-    "Executive Dashboard",
-    "Platform Health",
-    "Members",
-    "Module Status",
-    "AI Usage",
-    "Errors",
-    "Recent Releases",
-    "Feature Progress",
-    "Beta Activity",
-  ]) {
-    assert.match(page, new RegExp(section));
-  }
-  assert.match(page, /30-second owner view/);
-  assert.match(page, /not a claim of production uptime/);
-  assert.match(page, /not a\s+live production-member directory/);
-  assert.match(page, /buildBeastAdminExecutiveSnapshot/);
+  assert.match(page, /CEO Mode/);
+  assert.match(page, /BeastAdminCEOModeWorkspace/);
+  assert.match(model, /export function buildBeastAdminExecutiveSnapshot/);
+  assert.match(model, /AI Usage/);
+  assert.match(model, /Errors/);
   assert.match(shell, /canAccessBeastAdmin/);
   assert.match(shell, /router\.replace\("\/dashboard"\)/);
 });

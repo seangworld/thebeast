@@ -132,7 +132,7 @@ test("BA-109 presents services, errors, warnings, refresh, and honest unknowns",
     "utf8"
   );
   const adminDashboard = readFileSync(
-    "src/app/dashboard/admin/page.tsx",
+    "src/app/dashboard/admin/BeastAdminCEOModeWorkspace.tsx",
     "utf8"
   );
   const model = readFileSync(
