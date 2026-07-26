@@ -31,8 +31,16 @@ import {
   normalizeBeastFeatureFlags,
   type BeastFeatureFlag,
 } from "@/lib/beastFeatureFlags";
+import {
+  normalizeBeastAdminInvitationDirectory,
+  type BeastAdminInvitationHousehold,
+  type BeastAdminMemberInvitation,
+} from "@/lib/beastAdminMemberInvitations";
 import { createClient } from "@/lib/supabase/client";
 import { BeastAdminMemberEditor } from "./BeastAdminMemberEditor";
+import { BeastAdminAccountAuditLog } from "./BeastAdminAccountAuditLog";
+import { BeastAdminMemberAccessHistory } from "./BeastAdminMemberAccessHistory";
+import { BeastAdminMemberInvitationPanel } from "./BeastAdminMemberInvitationPanel";
 
 const categoryClasses: Record<BeastAdminMemberTimelineCategory, string> = {
   registration: "border-sky-300/35 bg-sky-300/10 text-sky-100",
@@ -71,7 +79,7 @@ function humanizeTimelineError(error: unknown) {
       message
     )
   ) {
-    return "The authoritative member directory is not available yet. Apply the BA-102, BA-103, and BA-107 Supabase migrations in order, then retry.";
+    return "The authoritative member directory is not available yet. Apply the BA-102, BA-103, BA-107, and BA-108 Supabase migrations in order, then retry.";
   }
   if (/permission|owner access|required|42501/i.test(message)) {
     return "Member timelines are restricted to the Beast owner.";
@@ -163,6 +171,12 @@ export function BeastAdminMemberTimelineWorkspace() {
   >("all");
   const [featureFlags, setFeatureFlags] = useState<BeastFeatureFlag[]>([]);
   const [featureFlagsAvailable, setFeatureFlagsAvailable] = useState(true);
+  const [invitations, setInvitations] = useState<
+    BeastAdminMemberInvitation[]
+  >([]);
+  const [households, setHouseholds] = useState<
+    BeastAdminInvitationHousehold[]
+  >([]);
   const [editorOpen, setEditorOpen] = useState(false);
   const [editSuccess, setEditSuccess] = useState("");
   const [verificationMessage, setVerificationMessage] = useState("");
@@ -178,27 +192,60 @@ export function BeastAdminMemberTimelineWorkspace() {
 
       try {
         const supabase = createClient();
-        const [directoryResult, emailStatusResult, featureFlagResult] =
+        const [
+          directoryResult,
+          emailStatusResult,
+          featureFlagResult,
+          invitationResult,
+        ] =
           await Promise.all([
-          supabase.rpc("get_beast_admin_member_directory"),
-          supabase.rpc("get_beast_admin_member_email_statuses"),
-          supabase.rpc("get_beast_admin_feature_flags"),
+            supabase.rpc("get_beast_admin_member_directory"),
+            supabase.rpc("get_beast_admin_member_email_statuses"),
+            supabase.rpc("get_beast_admin_feature_flags"),
+            supabase.rpc("get_beast_admin_member_invitations"),
           ]);
         const { data, error: directoryError } = directoryResult;
         if (directoryError) throw directoryError;
         if (emailStatusResult.error) throw emailStatusResult.error;
+        if (invitationResult.error) throw invitationResult.error;
 
         const normalizedMembers = normalizeBeastAdminMemberDirectory(data);
         const emailStatuses = normalizeBeastAdminMemberEmailStatuses(
           emailStatusResult.data
         );
-        if (!normalizedMembers || !emailStatuses) {
+        const invitationDirectory = normalizeBeastAdminInvitationDirectory(
+          invitationResult.data
+        );
+        if (!normalizedMembers || !emailStatuses || !invitationDirectory) {
           throw new Error("Member directory data was invalid.");
         }
-        const nextMembers = mergeBeastAdminMemberEmailStatuses(
+        const membersWithEmailStatus = mergeBeastAdminMemberEmailStatuses(
           normalizedMembers,
           emailStatuses
         );
+        const invitationsByMember = new Map(
+          invitationDirectory.invitations.map((invitation) => [
+            invitation.memberId,
+            invitation,
+          ])
+        );
+        const nextMembers = membersWithEmailStatus.map((member) => {
+          const invitation = invitationsByMember.get(member.id);
+          if (
+            !invitation?.householdName ||
+            invitation.state === "revoked"
+          ) {
+            return member;
+          }
+          const householdRole =
+            invitation.state === "accepted" ? "Member" : "Pending member";
+          return {
+            ...member,
+            householdRole: `${householdRole} · ${invitation.householdName}${
+              invitation.relationship ? ` · ${invitation.relationship}` : ""
+            }`,
+          };
+        });
         const nextFeatureFlags = featureFlagResult.error
           ? null
           : normalizeBeastFeatureFlags(featureFlagResult.data);
@@ -207,6 +254,8 @@ export function BeastAdminMemberTimelineWorkspace() {
         setMembers(nextMembers);
         setFeatureFlags(nextFeatureFlags || []);
         setFeatureFlagsAvailable(Boolean(nextFeatureFlags));
+        setInvitations(invitationDirectory.invitations);
+        setHouseholds(invitationDirectory.households);
         setSelectedMemberId((current) => {
           if (current && nextMembers.some((member) => member.id === current)) {
             return current;
@@ -218,6 +267,8 @@ export function BeastAdminMemberTimelineWorkspace() {
           setMembers([]);
           setFeatureFlags([]);
           setFeatureFlagsAvailable(false);
+          setInvitations([]);
+          setHouseholds([]);
           setSelectedMemberId("");
           setTimeline(null);
           setError(humanizeTimelineError(directoryError));
@@ -422,7 +473,24 @@ export function BeastAdminMemberTimelineWorkspace() {
   }
 
   return (
-    <div className="grid min-w-0 gap-6 xl:grid-cols-[24rem_minmax(0,1fr)]">
+    <div className="min-w-0 space-y-6">
+      <BeastAdminMemberInvitationPanel
+        invitations={invitations}
+        households={households}
+        featureFlags={featureFlags}
+        onChanged={(message, memberId) => {
+          setEditSuccess(message);
+          if (memberId) setSelectedMemberId(memberId);
+          setRefreshKey((current) => current + 1);
+        }}
+      />
+      <BeastAdminAccountAuditLog
+        members={members.map((member) => ({
+          id: member.id,
+          displayName: member.displayName,
+        }))}
+      />
+      <div className="grid min-w-0 gap-6 xl:grid-cols-[24rem_minmax(0,1fr)]">
       <aside className="min-w-0 xl:sticky xl:top-6 xl:self-start">
         <DashboardCard accent="admin">
           <SectionHeader
@@ -816,6 +884,15 @@ export function BeastAdminMemberTimelineWorkspace() {
           </DashboardCard>
         ) : null}
 
+        {selectedDirectoryMember ? (
+          <BeastAdminMemberAccessHistory
+            key={selectedDirectoryMember.id}
+            memberId={selectedDirectoryMember.id}
+            memberName={selectedDirectoryMember.displayName}
+            canManage={selectedMemberCanBeEdited}
+          />
+        ) : null}
+
         {timelineLoading ? (
           <TimelineLoadingState
             title={`Loading ${selectedDirectoryMember?.displayName || "member"}’s journey`}
@@ -1074,6 +1151,7 @@ export function BeastAdminMemberTimelineWorkspace() {
             </DashboardCard>
           </>
         )}
+      </div>
       </div>
     </div>
   );

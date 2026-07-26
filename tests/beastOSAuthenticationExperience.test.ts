@@ -125,7 +125,10 @@ test("BA-105 provides every unified BeastOS authentication screen and action", (
   assert.match(callback, /isDisabledBeastUser/);
   assert.match(callback, /no-cache, no-store/);
 
-  assert.match(middleware, /matcher: \["\/dashboard\/:path\*", "\/login"\]/);
+  assert.match(
+    middleware,
+    /matcher: \["\/dashboard\/:path\*", "\/login", "\/api\/:path\*"\]/
+  );
   assert.match(middleware, /buildAuthLoginPath\(destination, state\)/);
   assert.match(middleware, /getSafeAuthDestination/);
 

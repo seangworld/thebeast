@@ -1,5 +1,6 @@
 export const BEAST_OS_LANDING_PATH = "/dashboard/today";
 export const BEAST_PASSWORD_RECOVERY_COOKIE = "beast-password-recovery";
+export const BEAST_INVITATION_COOKIE = "beast-invitation";
 
 export type BeastAuthViewState =
   | "sign_in"

@@ -54,6 +54,9 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
   const isDashboardRoute = request.nextUrl.pathname.startsWith("/dashboard");
   const isLoginRoute = request.nextUrl.pathname === "/login";
+  const isApiRoute = request.nextUrl.pathname.startsWith("/api/");
+  const isPublicAuthApiRoute =
+    request.nextUrl.pathname.startsWith("/api/auth/");
 
   function redirect(path: string) {
     const redirectResponse = NextResponse.redirect(new URL(path, request.url));
@@ -75,6 +78,42 @@ export async function middleware(request: NextRequest) {
         "account_disabled"
       )
     );
+  }
+
+  if (
+    user &&
+    (isDashboardRoute || (isApiRoute && !isPublicAuthApiRoute))
+  ) {
+    const { data: sessionAllowed, error: sessionControlError } =
+      await supabase.rpc("is_current_beast_session_allowed");
+
+    if (!sessionControlError && sessionAllowed === false) {
+      await supabase.auth.signOut({ scope: "global" });
+      if (isApiRoute) {
+        const apiResponse = NextResponse.json(
+          {
+            error:
+              "Your account requires a fresh sign-in before this request can continue.",
+          },
+          { status: 401 }
+        );
+        response.cookies.getAll().forEach((cookie) => {
+          apiResponse.cookies.set(cookie);
+        });
+        apiResponse.headers.set(
+          "cache-control",
+          "private, no-cache, no-store, must-revalidate, max-age=0"
+        );
+        return apiResponse;
+      }
+
+      return redirect(
+        buildAuthLoginPath(
+          `${request.nextUrl.pathname}${request.nextUrl.search}`,
+          "session_expired"
+        )
+      );
+    }
   }
 
   if (isDashboardRoute && (!user || error)) {
@@ -102,5 +141,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/login"],
+  matcher: ["/dashboard/:path*", "/login", "/api/:path*"],
 };

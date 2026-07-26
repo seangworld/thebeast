@@ -204,6 +204,33 @@ export async function PATCH(request: Request, { params }: RouteContext) {
     }
   }
 
+  const [moduleAccessResult, betaAssignmentResult] = await Promise.all([
+    adminClient
+      .from("beast_admin_member_module_access")
+      .select("module_id,enabled")
+      .eq("member_id", params.memberId),
+    adminClient
+      .from("beast_admin_feature_flag_assignments")
+      .select("flag_id")
+      .eq("owner_id", actor.id)
+      .eq("scope_type", "member")
+      .eq("member_id", params.memberId)
+      .eq("stage", "beta"),
+  ]);
+  if (moduleAccessResult.error || betaAssignmentResult.error) {
+    return jsonError(
+      "BeastAdmin could not capture the current access state for the immutable audit log.",
+      503
+    );
+  }
+  const currentModuleAccess = (moduleAccessResult.data || [])
+    .filter((entry) => entry.enabled)
+    .map((entry) => entry.module_id)
+    .sort();
+  const currentBetaFlagIds = (betaAssignmentResult.data || [])
+    .map((entry) => entry.flag_id)
+    .sort();
+
   const nextStatus = edit.accountStatus as BeastAdminEditableAccountStatus;
   const statusChanged = nextStatus !== currentStatus;
   const authUpdates: {
@@ -292,6 +319,14 @@ export async function PATCH(request: Request, { params }: RouteContext) {
       changed: statusChanged,
       before: currentStatus,
       after: nextStatus,
+    },
+    moduleAccess: {
+      before: currentModuleAccess,
+      after: [...edit.moduleAccess].sort(),
+    },
+    betaAssignments: {
+      before: currentBetaFlagIds,
+      after: [...edit.betaFlagIds].sort(),
     },
   };
 

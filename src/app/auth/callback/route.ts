@@ -2,12 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import type { EmailOtpType } from "@supabase/supabase-js";
 import {
+  BEAST_INVITATION_COOKIE,
   buildAuthLoginPath,
   getAuthErrorState,
   getSafeAuthDestination,
   isDisabledBeastUser,
 } from "@/lib/auth/experience";
 import { buildEmailVerificationFailurePath } from "@/lib/auth/emailWorkflows";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -23,6 +25,8 @@ function setRedirectLocation(
 export async function GET(request: NextRequest) {
   const isEmailVerification =
     request.nextUrl.searchParams.get("flow") === "email_verification";
+  const isInvitation =
+    request.nextUrl.searchParams.get("flow") === "invite";
   const destination = getSafeAuthDestination(
     request.nextUrl.searchParams.get("next")
   );
@@ -55,9 +59,20 @@ export async function GET(request: NextRequest) {
   const tokenHash = request.nextUrl.searchParams.get("token_hash");
   const requestedType = request.nextUrl.searchParams.get("type");
   const verificationType: EmailOtpType | null =
-    requestedType === "email" || requestedType === "email_change"
+    requestedType === "email" ||
+    requestedType === "email_change" ||
+    requestedType === "invite"
       ? requestedType
       : null;
+
+  if (isInvitation && verificationType !== "invite") {
+    setRedirectLocation(
+      response,
+      request,
+      buildAuthLoginPath(destination, "invalid_or_expired_link")
+    );
+    return response;
+  }
 
   if (!code && !(tokenHash && verificationType)) {
     setRedirectLocation(
@@ -139,6 +154,47 @@ export async function GET(request: NextRequest) {
       request,
       buildAuthLoginPath(destination, "account_disabled")
     );
+    return response;
+  }
+
+  if (isInvitation) {
+    const adminClient = createAdminClient();
+    if (!adminClient) {
+      await supabase.auth.signOut();
+      setRedirectLocation(
+        response,
+        request,
+        buildAuthLoginPath(destination, "authentication_error")
+      );
+      return response;
+    }
+
+    const { error: acceptanceError } = await adminClient.rpc(
+      "accept_beast_admin_member_invitation",
+      { selected_member_id: user.id }
+    );
+    if (acceptanceError) {
+      await supabase.auth.signOut();
+      setRedirectLocation(
+        response,
+        request,
+        buildAuthLoginPath(destination, "invalid_or_expired_link")
+      );
+      return response;
+    }
+
+    response.cookies.set(BEAST_INVITATION_COOKIE, "authorized", {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: request.nextUrl.protocol === "https:",
+      path: "/",
+      maxAge: 15 * 60,
+    });
+    const acceptPath = new URL("/accept-invitation", request.url);
+    if (destination !== "/dashboard/today") {
+      acceptPath.searchParams.set("next", destination);
+    }
+    setRedirectLocation(response, request, `${acceptPath.pathname}${acceptPath.search}`);
   }
 
   return response;

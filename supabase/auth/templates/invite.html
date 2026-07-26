@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>You're invited to Beast</title>
+  </head>
+  <body style="margin:0;background:#07111f;color:#e5edf7;font-family:Arial,sans-serif">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#07111f">
+      <tr>
+        <td align="center" style="padding:32px 16px">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;border:1px solid #263449;border-radius:18px;background:#0b1626">
+            <tr>
+              <td style="padding:32px">
+                <p style="margin:0;color:#38bdf8;font-size:12px;font-weight:800;letter-spacing:2px;text-transform:uppercase">
+                  BeastOS invitation
+                </p>
+                <h1 style="margin:16px 0 0;color:#ffffff;font-size:28px;line-height:1.2">
+                  You've been invited to Beast
+                </h1>
+                <p style="margin:16px 0 0;color:#b7c4d5;font-size:16px;line-height:1.6">
+                  {{ with .Data.display_name }}Hi {{ . }},{{ else }}Hello,{{ end }}
+                  your Beast owner created one account for you across the Beast ecosystem.
+                </p>
+                {{ with .Data.invitation_message }}
+                <div style="margin:20px 0 0;padding:16px;border-left:3px solid #38bdf8;background:#101e31;color:#d9e6f5;font-size:15px;line-height:1.6">
+                  {{ . }}
+                </div>
+                {{ end }}
+                <p style="margin:24px 0 0">
+                  <a
+                    href="{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=invite"
+                    style="display:inline-block;border-radius:10px;background:#f5b942;color:#101722;font-size:15px;font-weight:800;padding:14px 20px;text-decoration:none"
+                  >
+                    Accept invitation
+                  </a>
+                </p>
+                <p style="margin:24px 0 0;color:#8291a6;font-size:13px;line-height:1.6">
+                  This secure invitation expires shortly and can only be used for {{ .Email }}.
+                  If you were not expecting it, you can safely ignore this email.
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
