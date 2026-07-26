@@ -58,35 +58,61 @@ function captured(message: string, pattern: RegExp) {
   return message.match(pattern)?.[1]?.trim().replace(/[.!?]+$/, "") || "";
 }
 
+function withoutLeadingArticle(value: string) {
+  return value.replace(/^(?:a|an|the)\s+/i, "").trim();
+}
+
 export function learnFromDiscoveryTurn(
   message: string,
   current: GuidanceDiscoveryProfile
 ) {
   const text = message.trim();
-  const lower = text.toLowerCase();
   const next: GuidanceDiscoveryProfile = { ...current };
 
   const career =
-    captured(text, /career (?:in|as)\s+([^,.]+)(?:[,.]|$)/i) ||
-    captured(text, /(?:become|interested in)\s+([^,.]+)(?:[,.]|$)/i) ||
-    captured(text, /(?:work (?:in|as)|job as)\s+([^,.]+)(?:[,.]|$)/i);
+    captured(
+      text,
+      /\bi (?:want|hope|plan|would like|'d like) to (?:be|become|work (?:in|as)|pursue)\s+([^,.]+)(?:[,.]|$)/i
+    ) ||
+    captured(text, /\bi(?:'m| am) interested in\s+([^,.]+)(?:[,.]|$)/i) ||
+    captured(text, /\bmy (?:career )?goal is (?:to )?(?:be|become|work (?:in|as)|pursue)?\s*([^,.]+)(?:[,.]|$)/i) ||
+    captured(
+      text,
+      /\bi (?:currently )?work as [^,.]+?\s+and (?:want|hope|plan|would like) (?:a )?(?:career|job) (?:in|as)\s+([^,.]+)(?:[,.]|$)/i
+    ) ||
+    captured(text, /\bi (?:want|hope|plan|would like|'d like) (?:a )?(?:career|job) (?:in|as)\s+([^,.]+)(?:[,.]|$)/i);
   if (career) {
-    next.careerInterests = unique([...current.careerInterests, career]);
-    if (!next.goal) next.goal = career;
+    const supportedCareer = withoutLeadingArticle(career);
+    next.careerInterests = unique([
+      ...current.careerInterests,
+      supportedCareer,
+    ]);
+    if (!next.goal) next.goal = supportedCareer;
   }
 
-  if (/\b(degree|college|university|certification|certificate|learn|study|training)\b/i.test(text)) {
+  const educationalGoal =
+    text.match(
+      /\bi (?:want|hope|plan|would like|'d like|need) to (?:earn|get|complete|start|attend|study|learn|pursue)[^.!?]*\b(?:degree|college|university|certification|certificate|credential|course|program|training)\b[^.!?]*/i
+    )?.[0]?.trim() ||
+    text.match(
+      /\bmy (?:education|educational) goal is[^.!?]+/i
+    )?.[0]?.trim();
+  if (educationalGoal) {
     next.educationalGoals = unique([...current.educationalGoals, text]);
     if (!next.goal) next.goal = text;
   }
 
   const employment = captured(
     text,
-    /(?:i (?:currently )?work as|my current job is|i(?:'m| am) employed as)\s+(.+)/i
+    /(?:i (?:currently )?work as|my current job is|i(?:'m| am) employed as)\s+([^,.]+?)(?:\s+and\s+(?:i\s+)?(?:want|hope|plan|would like)|[,.]|$)/i
   );
-  if (employment) next.currentEmployment = employment;
+  if (employment) next.currentEmployment = withoutLeadingArticle(employment);
 
-  if (/\b(military|army|navy|air force|marine|coast guard|space force|veteran|active duty)\b/i.test(text)) {
+  if (
+    /\b(?:i (?:am|was|serve|served)|i(?:'m| was)|my (?:military|service))\b[^.]*\b(military|army|navy|air force|marine|coast guard|space force|veteran|active duty)\b/i.test(
+      text
+    )
+  ) {
     next.militaryExperience = text;
   }
 
@@ -102,7 +128,13 @@ export function learnFromDiscoveryTurn(
   );
   if (growth) next.growthAreas = growth;
 
-  const hours = text.match(/\b(\d{1,3}(?:\.\d+)?)\s*hours?\b/i)?.[1];
+  const hours =
+    text.match(
+      /\b(?:i\s+(?:can|could|have)|and\s+can)\s+(?:study|spend|protect|give|set aside)?\s*(\d{1,3}(?:\.\d+)?)\s*hours?\b/i
+    )?.[1] ||
+    text.match(
+      /\bi(?:'m| am) available (?:to study )?for\s+(\d{1,3}(?:\.\d+)?)\s*hours?\b/i
+    )?.[1];
   if (hours !== undefined) {
     next.weeklyHours = Math.max(0, Math.min(168, Number(hours)));
     next.availableStudyTimeKnown = true;
@@ -115,29 +147,93 @@ export function learnFromDiscoveryTurn(
     ["guided instruction", /\b(classroom|teacher|instructor|guided)\b/i],
     ["self-paced", /\b(self.paced|on my own|independent)\b/i],
   ] as const;
-  next.learningPreferences = unique([
-    ...current.learningPreferences,
-    ...preferences.filter(([, pattern]) => pattern.test(text)).map(([label]) => label),
-  ]);
-
-  if (/\bcertif(?:ication|ied)|\b[A-Z]{2,}(?:\+)?\b/.test(text)) {
-    next.certifications = unique([...current.certifications, text]);
-  }
-  if (/\bcollege|university|degree\b/i.test(text)) next.collegeInterest = true;
-  if (/\btrade school|apprenticeship|skilled trade|vocational\b/i.test(text)) {
-    next.tradeInterest = true;
+  if (
+    /\b(?:i (?:really )?prefer|i learn best|i do best with|works? (?:best )?for me|helps? me learn)\b/i.test(
+      text
+    ) ||
+    /(?:^|[,;]\s*)prefer\b/i.test(
+      text
+    )
+  ) {
+    next.learningPreferences = unique([
+      ...current.learningPreferences,
+      ...preferences
+        .filter(([, pattern]) => pattern.test(text))
+        .map(([label]) => label),
+    ]);
   }
 
   if (
-    /\b(cost|money|schedule|childcare|transportation|location|disability|accessibility|time constraint)\b/i.test(
+    /\b(?:i (?:have|hold|earned|completed|passed)|i(?:'m| am) certified (?:in|as)|my certifications? (?:are|include))\b[^.!?]*(?:\bcertif(?:ication|icate|ied)\b|\bcredential\b|\bexam\b|[A-Z][A-Za-z0-9-]*\+)/i.test(
+      text
+    )
+  ) {
+    next.certifications = unique([...current.certifications, text]);
+  }
+  if (
+    /\bi(?:'m| am)\b[^.!?]{0,80}\b(?:considering|interested in|open to)\b[^.!?]*\b(college|university|degree)\b/i.test(
+      text
+    ) ||
+    /\bi (?:want|plan|hope|would like) to (?:attend|go to|apply to|pursue)[^.!?]*\b(college|university|degree)\b/i.test(
+      text
+    )
+  ) {
+    next.collegeInterest = true;
+  } else if (
+    /\b(?:i(?:'m| am) not interested in|i do not want|i don't want|i(?:'m| am) not considering)\b[^.!?]*\b(college|university|degree)\b/i.test(
+      text
+    )
+  ) {
+    next.collegeInterest = false;
+  }
+  if (
+    /\bi(?:'m| am)\b[^.!?]{0,80}\b(?:considering|interested in|open to)\b[^.!?]*\b(trade school|apprenticeship|skilled trade|vocational)\b/i.test(
+      text
+    ) ||
+    /\bi (?:want|plan|hope|would like) to (?:attend|start|pursue)[^.!?]*\b(trade school|apprenticeship|skilled trade|vocational)\b/i.test(
+      text
+    )
+  ) {
+    next.tradeInterest = true;
+  } else if (
+    /\b(?:i(?:'m| am) not interested in|i do not want|i don't want|i(?:'m| am) not considering)\b[^.!?]*\b(trade school|apprenticeship|skilled trade|vocational)\b/i.test(
+      text
+    )
+  ) {
+    next.tradeInterest = false;
+  }
+
+  if (
+    /\b(?:my .{0,30}(?:constraint|concern|problem|schedule)|i (?:can't|cannot|can only|need to work around|am limited by)|cost is (?:my concern|a concern for me)|my (?:money|budget) is tight|i can only study (?:in the )?evenings?|i can only study (?:on )?weekends?)\b/i.test(
       text
     )
   ) {
     next.constraints = text;
   }
 
-  if (!next.currentSituation && text.length >= 12) next.currentSituation = text;
-  if (!next.otherEducationalContext && /\b(previous|experience|background|school|training)\b/i.test(lower)) {
+  if (
+    !next.currentSituation &&
+    /\b(?:my current situation is|right now i(?:'m| am) (?:in school|a student|unemployed|between jobs|looking for work|working)|i(?:'m| am) currently (?:in school|a student|unemployed|between jobs|looking for work|working))\b/i.test(
+      text
+    )
+  ) {
+    next.currentSituation = text;
+  }
+  if (
+    !next.otherEducationalContext &&
+    (/\bi (?:completed|attended|studied|trained|graduated from)\b/i.test(
+      text
+    ) ||
+      /\bi (?:have|finished|earned)\b[^.]*\b(?:education|training|experience|degree|diploma|certificate|certification|credential|course|program|school|college|university)\b/i.test(
+        text
+      ) ||
+      /\bmy (?:education|educational|training) background (?:is|includes)\b/i.test(
+        text
+      ) ||
+      /\bmy previous (?:education|training|experience) (?:is|includes)\b/i.test(
+        text
+      ))
+  ) {
     next.otherEducationalContext = text;
   }
 

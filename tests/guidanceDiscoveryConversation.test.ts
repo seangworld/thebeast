@@ -52,7 +52,7 @@ test("BE-216 learns profile context naturally from member turns", () => {
     profile
   );
   profile = learnFromDiscoveryTurn(
-    "I am a veteran considering college and a Security+ certification",
+    "I am a veteran considering college, and I hold a Security+ certification",
     profile
   );
 
