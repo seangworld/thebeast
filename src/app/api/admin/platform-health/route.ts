@@ -121,7 +121,8 @@ export async function GET() {
       signal({
         id: "email",
         status: "unknown",
-        summary: "Email delivery monitoring is not connected.",
+        summary:
+          "Email delivery monitoring has not been configured for this environment.",
         evidence:
           "Beast has branded Supabase Auth templates, but no read-only delivery or bounce feed is available to this health check.",
         source: "not_connected",
@@ -129,10 +130,10 @@ export async function GET() {
       }),
       signal({
         id: "ai",
-        status: "warning",
+        status: "unknown",
         summary: aiConfigured
-          ? "AI is configured, but provider availability is not probed."
-          : "AI credentials are not configured in this environment.",
+          ? "AI provider monitoring has not been configured for this environment."
+          : "An AI provider has not been configured for this environment.",
         evidence: aiConfigured
           ? "The server can confirm an AI credential exists without exposing it. No paid inference request is made for health monitoring."
           : "AI-dependent experiences use their existing unconfigured or deterministic fallback behavior.",
@@ -156,7 +157,7 @@ export async function GET() {
       signal({
         id: "background_jobs",
         status: "unknown",
-        summary: "Background job monitoring is not connected.",
+        summary: "Background job monitoring has not been configured.",
         evidence:
           "No owner-approved queue, scheduler, or worker telemetry source is registered with BeastAdmin.",
         source: "not_connected",

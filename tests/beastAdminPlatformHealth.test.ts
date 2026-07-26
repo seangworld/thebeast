@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import {
+  beastAdminPlatformHealthStatusLabels,
   beastAdminPlatformServiceIds,
   buildBeastAdminPlatformHealthSnapshot,
   getBeastAdminPlatformHealthCounts,
@@ -62,7 +63,7 @@ test("BA-109 derives errors and warnings only from service evidence", () => {
   );
   assert.deepEqual(
     snapshot.warnings.map((issue) => issue.serviceId),
-    ["ai", "background_jobs"]
+    ["ai"]
   );
   assert.deepEqual(getBeastAdminPlatformHealthCounts(snapshot), {
     operational: 5,
@@ -71,6 +72,26 @@ test("BA-109 derives errors and warnings only from service evidence", () => {
     unknown: 1,
   });
   assert.deepEqual(normalizeBeastAdminPlatformHealthSnapshot(snapshot), snapshot);
+});
+
+test("BA-117 treats missing monitoring as a gap instead of a warning or error", () => {
+  const snapshot = buildBeastAdminPlatformHealthSnapshot({
+    services: beastAdminPlatformServiceIds.map((id) =>
+      service(id, ["email", "ai", "background_jobs"].includes(id)
+        ? "unknown"
+        : "operational")
+    ),
+    generatedAt: "2026-07-26T15:00:00.000Z",
+  });
+
+  assert.equal(snapshot.overallStatus, "unknown");
+  assert.deepEqual(snapshot.errors, []);
+  assert.deepEqual(snapshot.warnings, []);
+  assert.equal(getBeastAdminPlatformHealthCounts(snapshot).unknown, 3);
+  assert.equal(
+    beastAdminPlatformHealthStatusLabels.unknown,
+    "Monitoring gap"
+  );
 });
 
 test("BA-109 refuses incomplete or duplicated platform snapshots", () => {
@@ -112,8 +133,19 @@ test("BA-109 health API is owner-authorized, read-only, and evidence bounded", (
   assert.match(route, /BeastAdmin owner access required/);
   assert.match(route, /\.from\("beast-documents"\)[\s\S]*\.list\(user\.id/);
   assert.match(route, /OPENAI_API_KEY/);
-  assert.match(route, /Email delivery monitoring is not connected/);
-  assert.match(route, /Background job monitoring is not connected/);
+  assert.match(
+    route,
+    /Email delivery monitoring has not been configured for this environment/
+  );
+  assert.match(
+    route,
+    /An AI provider has not been configured for this environment/
+  );
+  assert.match(
+    route,
+    /Background job monitoring has not been configured/
+  );
+  assert.match(route, /id: "ai",[\s\S]*status: "unknown"/);
   assert.match(route, /request sample, not an uptime claim/i);
   assert.match(route, /"Cache-Control": "no-store"/);
   assert.doesNotMatch(route, /api\.openai\.com|chat\/completions/);
@@ -122,7 +154,7 @@ test("BA-109 health API is owner-authorized, read-only, and evidence bounded", (
   assert.doesNotMatch(route, /\.download\(/);
 });
 
-test("BA-109 presents services, errors, warnings, refresh, and honest unknowns", () => {
+test("BA-117 presents four honest states and expandable future monitoring", () => {
   const page = readFileSync(
     "src/app/dashboard/admin/health/page.tsx",
     "utf8"
@@ -158,13 +190,35 @@ test("BA-109 presents services, errors, warnings, refresh, and honest unknowns",
   assert.match(model, /background_jobs: "Background jobs"/);
   assert.match(workspace, /Errors/);
   assert.match(workspace, /Warnings/);
+  assert.match(workspace, /Monitoring Gaps/);
+  assert.match(workspace, /Operational status philosophy/);
+  assert.match(workspace, /Verified healthy/);
+  assert.match(workspace, /No owner-approved monitoring source exists/);
   assert.match(workspace, /Refresh now/);
   assert.match(workspace, /60_000/);
+  assert.match(workspace, /Last successful probe/);
+  assert.match(workspace, /Services checked/);
+  assert.match(workspace, /Probe duration/);
+  assert.match(workspace, /Average latency/);
+  assert.match(workspace, /Latency trend/);
+  assert.match(workspace, /Historical sampling/);
+  assert.match(workspace, /Availability trend/);
+  assert.match(workspace, /Scheduler/);
+  assert.match(workspace, /Queue/);
+  assert.match(workspace, /Workers/);
+  assert.match(workspace, /Last successful execution/);
+  assert.match(workspace, /Next scheduled execution/);
+  assert.match(workspace, /Future approved sources such as Vercel, Supabase/);
+  assert.match(workspace, /OpenAI,\s+Anthropic, email, background jobs, storage, or search/);
   assert.match(workspace, /last successful snapshot remains visible/i);
   assert.match(
     workspace,
     /does not\s+replace a centralized historical error feed/i
   );
+  assert.doesNotMatch(workspace, /["']Unknown["']/);
+  assert.match(workspace, /sm:grid-cols-2 xl:grid-cols-4/);
+  assert.match(workspace, /min-w-0/);
+  assert.doesNotMatch(workspace, /overflow-x-hidden|w-screen/);
   assert.doesNotMatch(workspace, /localStorage/);
   assert.match(adminDashboard, /\/dashboard\/admin\/health/);
   assert.match(shell, /Platform Health/);

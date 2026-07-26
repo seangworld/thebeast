@@ -43,7 +43,7 @@ export const beastAdminPlatformHealthStatusLabels: Record<
   operational: "Operational",
   warning: "Warning",
   critical: "Critical",
-  unknown: "Unknown",
+  unknown: "Monitoring gap",
 };
 
 export type BeastAdminPlatformHealthSource =
@@ -229,9 +229,7 @@ export function buildBeastAdminPlatformHealthSnapshot({
       message: service.summary,
     }));
   const warnings = services
-    .filter((service) =>
-      ["warning", "unknown"].includes(service.status)
-    )
+    .filter((service) => service.status === "warning")
     .map((service) => ({
       serviceId: service.id,
       serviceLabel: beastAdminPlatformServiceLabels[service.id],
@@ -242,7 +240,9 @@ export function buildBeastAdminPlatformHealthSnapshot({
     ? "critical"
     : warnings.length
       ? "warning"
-      : "operational";
+      : services.some((service) => service.status === "unknown")
+        ? "unknown"
+        : "operational";
 
   return {
     overallStatus,

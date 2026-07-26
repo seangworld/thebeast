@@ -26,7 +26,7 @@ const sourceLabels: Record<BeastAdminPlatformHealthSource, string> = {
   live_probe: "Live probe",
   configuration: "Configuration",
   request_sample: "Request sample",
-  not_connected: "Monitor not connected",
+  not_connected: "Monitoring not configured",
 };
 
 function humanizeHealthError(status: number, payload: unknown) {
@@ -53,6 +53,50 @@ function formatTimestamp(value: string) {
     minute: "2-digit",
     second: "2-digit",
   }).format(new Date(value));
+}
+
+function formatTime(value: string) {
+  return new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: "America/New_York",
+  }).format(new Date(value));
+}
+
+function SummaryValue({
+  label,
+  value,
+  detail,
+}: {
+  label: string;
+  value: string;
+  detail: string;
+}) {
+  return (
+    <div className="min-w-0 rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+      <p className="text-xs font-black uppercase tracking-wide text-[#7f8da3]">
+        {label}
+      </p>
+      <p className="mt-2 break-words text-xl font-black text-white">{value}</p>
+      <p className="mt-1 text-xs leading-5 text-[#7f8da3]">{detail}</p>
+    </div>
+  );
+}
+
+function FutureMetric({
+  label,
+  detail,
+}: {
+  label: string;
+  detail: string;
+}) {
+  return (
+    <div className="min-w-0 rounded-xl border border-dashed border-[#344052] bg-[#111827]/70 p-4">
+      <p className="font-black text-white">{label}</p>
+      <p className="mt-2 text-sm font-bold text-[#9aa7b8]">Not connected</p>
+      <p className="mt-2 text-xs leading-5 text-[#7f8da3]">{detail}</p>
+    </div>
+  );
 }
 
 export function BeastAdminPlatformHealthWorkspace() {
@@ -106,6 +150,20 @@ export function BeastAdminPlatformHealthWorkspace() {
     () => (snapshot ? getBeastAdminPlatformHealthCounts(snapshot) : null),
     [snapshot]
   );
+  const monitoringGaps =
+    snapshot?.services.filter((service) => service.status === "unknown") || [];
+  const lastSuccessfulProbe =
+    snapshot?.services
+      .filter(
+        (service) =>
+          ["live_probe", "request_sample"].includes(service.source) &&
+          service.status !== "critical"
+      )
+      .map((service) => service.checkedAt)
+      .sort((left, right) => right.localeCompare(left))[0] || null;
+  const probeDuration =
+    snapshot?.services.find((service) => service.id === "performance")
+      ?.latencyMs ?? null;
 
   if (loading && !snapshot) {
     return (
@@ -152,7 +210,9 @@ export function BeastAdminPlatformHealthWorkspace() {
               {snapshot?.overallStatus === "critical"
                 ? "At least one verified platform service failed its latest probe."
                 : snapshot?.overallStatus === "warning"
-                  ? "No verified outage is hidden, but one or more services need attention or lack monitoring."
+                  ? "No verified outage is hidden, but one or more configured services are degraded or need attention."
+                  : snapshot?.overallStatus === "unknown"
+                    ? "No verified failure or degraded configured service was detected, but one or more services lack an owner-approved monitoring source."
                   : snapshot
                     ? "Every monitored service passed its latest evidence-backed check."
                     : error}
@@ -173,6 +233,47 @@ export function BeastAdminPlatformHealthWorkspace() {
             {refreshing ? "Checking…" : "Refresh now"}
           </button>
         </div>
+        {snapshot ? (
+          <div
+            className="mt-6 grid gap-3 border-t border-[#2a3242] pt-5 sm:grid-cols-2 xl:grid-cols-4"
+            aria-label="Operational probe summary"
+          >
+            <SummaryValue
+              label="Last successful probe"
+              value={
+                lastSuccessfulProbe
+                  ? formatTime(lastSuccessfulProbe)
+                  : "Unavailable"
+              }
+              detail={
+                lastSuccessfulProbe
+                  ? "Latest verified successful service check"
+                  : "No successful probe evidence is available"
+              }
+            />
+            <SummaryValue
+              label="Services checked"
+              value={String(snapshot.services.length)}
+              detail="Services evaluated in this readout"
+            />
+            <SummaryValue
+              label="Warnings"
+              value={
+                snapshot.warnings.length
+                  ? String(snapshot.warnings.length)
+                  : "None"
+              }
+              detail="Configured services currently requiring attention"
+            />
+            <SummaryValue
+              label="Probe duration"
+              value={
+                probeDuration === null ? "Not measured" : `${probeDuration} ms`
+              }
+              detail="Current Platform Health request sample"
+            />
+          </div>
+        ) : null}
       </DashboardCard>
 
       {error ? (
@@ -195,7 +296,7 @@ export function BeastAdminPlatformHealthWorkspace() {
                 ["Operational", counts.operational],
                 ["Warnings", snapshot.warnings.length],
                 ["Errors", snapshot.errors.length],
-                ["Unknown", counts.unknown],
+                ["Monitoring Gaps", counts.unknown],
               ] as const
             ).map(([label, value]) => (
               <div
@@ -205,61 +306,169 @@ export function BeastAdminPlatformHealthWorkspace() {
                 <p className="text-xs font-black uppercase tracking-wide text-[#9aa7b8]">
                   {label}
                 </p>
-                <p className="mt-2 text-3xl font-black text-white">{value}</p>
+                <p className="mt-2 text-3xl font-black text-white">
+                  {value ? value : "None"}
+                </p>
               </div>
             ))}
           </section>
 
+          <DashboardCard accent="admin">
+            <SectionHeader
+              eyebrow="Operational status philosophy"
+              title="Four evidence states"
+              description="Platform Health separates verified conditions from missing monitoring so the owner never has to infer what a status means."
+            />
+            <dl className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              {[
+                ["Operational", "Verified healthy."],
+                [
+                  "Warnings",
+                  "Configured, but degraded or requiring attention.",
+                ],
+                ["Errors", "Verified failures."],
+                [
+                  "Monitoring Gaps",
+                  "No owner-approved monitoring source exists.",
+                ],
+              ].map(([label, definition]) => (
+                <div
+                  key={label}
+                  className="min-w-0 rounded-xl border border-[#2a3242] bg-[#111827] p-4"
+                >
+                  <dt className="font-black text-white">{label}</dt>
+                  <dd className="mt-2 text-sm leading-6 text-[#9aa7b8]">
+                    {definition}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </DashboardCard>
+
           <section
-            className="grid gap-4 md:grid-cols-2 xl:grid-cols-4"
             aria-label="Monitored platform services"
           >
-            {snapshot.services.map((service) => (
-              <article
-                key={service.id}
-                className="min-w-0 rounded-xl border border-[#2a3242] bg-[#111827] p-5"
-              >
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <h3 className="font-black text-white">
-                    {beastAdminPlatformServiceLabels[service.id]}
-                  </h3>
-                  <span
-                    className={`rounded-full border px-2.5 py-1 text-xs font-black ${statusClasses[service.status]}`}
-                  >
-                    {beastAdminPlatformHealthStatusLabels[service.status]}
-                  </span>
-                </div>
-                <p className="mt-4 text-sm font-bold leading-6 text-[#dbe3ef]">
-                  {service.summary}
-                </p>
-                <p className="mt-3 text-xs leading-5 text-[#9aa7b8]">
-                  {service.evidence}
-                </p>
-                <dl className="mt-4 grid grid-cols-2 gap-3 border-t border-[#2a3242] pt-4 text-xs">
-                  <div>
-                    <dt className="font-black uppercase tracking-wide text-[#68768b]">
-                      Source
-                    </dt>
-                    <dd className="mt-1 text-[#c7cfdb]">
-                      {sourceLabels[service.source]}
-                    </dd>
+            <div>
+              <p className="beast-kicker">Service health</p>
+              <h2 className="mt-2 text-2xl font-black text-white">
+                Connected operational signals
+              </h2>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-[#9aa7b8]">
+                Each approved provider receives its own evidence-backed card.
+                Future approved sources such as Vercel, Supabase, OpenAI,
+                Anthropic, email, background jobs, storage, or search can use
+                this responsive grid without changing the page structure.
+              </p>
+            </div>
+            <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              {snapshot.services.map((service) => (
+                <article
+                  key={service.id}
+                  className="min-w-0 rounded-xl border border-[#2a3242] bg-[#111827] p-5"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <h3 className="font-black text-white">
+                      {beastAdminPlatformServiceLabels[service.id]}
+                    </h3>
+                    <span
+                      className={`rounded-full border px-2.5 py-1 text-xs font-black ${statusClasses[service.status]}`}
+                    >
+                      {beastAdminPlatformHealthStatusLabels[service.status]}
+                    </span>
                   </div>
-                  <div>
-                    <dt className="font-black uppercase tracking-wide text-[#68768b]">
-                      Latency
-                    </dt>
-                    <dd className="mt-1 text-[#c7cfdb]">
-                      {service.latencyMs === null
-                        ? "Not measured"
-                        : `${service.latencyMs} ms`}
-                    </dd>
-                  </div>
-                </dl>
-              </article>
-            ))}
+                  <p className="mt-4 text-sm font-bold leading-6 text-[#dbe3ef]">
+                    {service.summary}
+                  </p>
+                  <p className="mt-3 text-xs leading-5 text-[#9aa7b8]">
+                    {service.evidence}
+                  </p>
+                  <dl className="mt-4 grid grid-cols-2 gap-3 border-t border-[#2a3242] pt-4 text-xs">
+                    <div>
+                      <dt className="font-black uppercase tracking-wide text-[#68768b]">
+                        Source
+                      </dt>
+                      <dd className="mt-1 text-[#c7cfdb]">
+                        {sourceLabels[service.source]}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="font-black uppercase tracking-wide text-[#68768b]">
+                        Latency
+                      </dt>
+                      <dd className="mt-1 text-[#c7cfdb]">
+                        {service.latencyMs === null
+                          ? "Not measured"
+                          : `${service.latencyMs} ms`}
+                      </dd>
+                    </div>
+                  </dl>
+                </article>
+              ))}
+            </div>
           </section>
 
-          <section className="grid gap-6 xl:grid-cols-2">
+          <section
+            className="grid gap-6 xl:grid-cols-2"
+            aria-label="Future platform monitoring layouts"
+          >
+            <DashboardCard accent="admin">
+              <SectionHeader
+                eyebrow="Performance"
+                title="Future performance history"
+                description="The current request sample remains visible above. Trend metrics wait for an approved historical source."
+              />
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                <FutureMetric
+                  label="Average latency"
+                  detail="Available after repeated samples are retained by an approved monitoring source."
+                />
+                <FutureMetric
+                  label="Latency trend"
+                  detail="Available after comparable historical latency samples exist."
+                />
+                <FutureMetric
+                  label="Historical sampling"
+                  detail="No historical performance store is connected."
+                />
+                <FutureMetric
+                  label="Availability trend"
+                  detail="No owner-approved uptime history is connected."
+                />
+              </div>
+            </DashboardCard>
+
+            <DashboardCard accent="admin">
+              <SectionHeader
+                eyebrow="Background jobs"
+                title="Future execution health"
+                description="The layout is ready for an approved scheduler, queue, and worker source without implying that one exists today."
+              />
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                <FutureMetric
+                  label="Scheduler"
+                  detail="No owner-approved scheduler telemetry is connected."
+                />
+                <FutureMetric
+                  label="Queue"
+                  detail="No owner-approved queue telemetry is connected."
+                />
+                <FutureMetric
+                  label="Workers"
+                  detail="No owner-approved worker telemetry is connected."
+                />
+                <FutureMetric
+                  label="Last successful execution"
+                  detail="Execution history is unavailable until job monitoring is configured."
+                />
+                <FutureMetric
+                  label="Next scheduled execution"
+                  detail="Schedule evidence is unavailable until job monitoring is configured."
+                />
+              </div>
+            </DashboardCard>
+          </section>
+
+          <section className="grid gap-6 xl:grid-cols-3">
             <DashboardCard accent={snapshot.errors.length ? "red" : "green"}>
               <SectionHeader
                 eyebrow="Errors"
@@ -300,10 +509,12 @@ export function BeastAdminPlatformHealthWorkspace() {
                 eyebrow="Warnings"
                 title={
                   snapshot.warnings.length
-                    ? `${snapshot.warnings.length} warnings or unknowns`
+                    ? `${snapshot.warnings.length} configured service warning${
+                        snapshot.warnings.length === 1 ? "" : "s"
+                      }`
                     : "No current warnings"
                 }
-                description="Warnings include degraded configuration and services that cannot yet be verified."
+                description="Warnings are reserved for configured services that are degraded or require attention."
               />
               <div className="mt-5 grid gap-3">
                 {snapshot.warnings.map((issue) => (
@@ -321,7 +532,44 @@ export function BeastAdminPlatformHealthWorkspace() {
                 ))}
                 {!snapshot.warnings.length ? (
                   <p className="rounded-xl border border-green-300/25 bg-green-300/10 p-4 text-sm leading-6 text-green-100">
-                    Every monitored service has evidence for its current state.
+                    No configured service reported a degraded state. Monitoring
+                    gaps are tracked separately.
+                  </p>
+                ) : null}
+              </div>
+            </DashboardCard>
+
+            <DashboardCard
+              accent={monitoringGaps.length ? "yellow" : "green"}
+            >
+              <SectionHeader
+                eyebrow="Monitoring Gaps"
+                title={
+                  monitoringGaps.length
+                    ? `${monitoringGaps.length} service${
+                        monitoringGaps.length === 1 ? "" : "s"
+                      } without approved monitoring`
+                    : "No monitoring gaps"
+                }
+                description="A monitoring gap means no owner-approved source exists. It is not an operational failure."
+              />
+              <div className="mt-5 grid gap-3">
+                {monitoringGaps.map((service) => (
+                  <div
+                    key={service.id}
+                    className="rounded-xl border border-slate-300/30 bg-slate-300/10 p-4"
+                  >
+                    <p className="font-black text-slate-100">
+                      {beastAdminPlatformServiceLabels[service.id]}
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-[#dbe3ef]">
+                      {service.summary}
+                    </p>
+                  </div>
+                ))}
+                {!monitoringGaps.length ? (
+                  <p className="rounded-xl border border-green-300/25 bg-green-300/10 p-4 text-sm leading-6 text-green-100">
+                    Every service has an owner-approved monitoring source.
                   </p>
                 ) : null}
               </div>
