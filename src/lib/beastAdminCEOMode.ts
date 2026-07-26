@@ -58,6 +58,7 @@ export type BeastAdminCEOSourceSnapshot = {
 
 export type BeastAdminCEOArea =
   | "Development"
+  | "Configuration"
   | "Feedback"
   | "Errors"
   | "Members"
@@ -85,6 +86,16 @@ export type BeastAdminCEOAction = {
   actionLabel: string;
 };
 
+export type BeastAdminCEORepositoryStatus = {
+  repository: "Beast" | "BeastFusion" | "SEANGWORLD" | "Change the World";
+  branch: string | null;
+  worktree: "clean" | "dirty" | "unavailable" | "planning";
+  ahead: number | null;
+  behind: number | null;
+  latestCommit: string | null;
+  detail: string;
+};
+
 export type BeastAdminCEOModeSnapshot = {
   generatedAt: string;
   greeting: string;
@@ -93,7 +104,10 @@ export type BeastAdminCEOModeSnapshot = {
   happenedYesterday: BeastAdminCEODailyItem[];
   changedOvernight: BeastAdminCEODailyItem[];
   needsAttention: BeastAdminCEOAction[];
+  configurationItems: BeastAdminCEOAction[];
+  operationalErrors: BeastAdminCEOAction[];
   workNext: BeastAdminCEOAction[];
+  repositories: BeastAdminCEORepositoryStatus[];
   summaries: {
     development: {
       currentSprint: number | null;
@@ -111,6 +125,7 @@ export type BeastAdminCEOModeSnapshot = {
       status: BeastAdminPlatformHealthSnapshot["overallStatus"] | "unavailable";
       errors: number | null;
       warnings: number | null;
+      configurationItems: number | null;
     };
     members: {
       total: number | null;
@@ -342,6 +357,92 @@ function sourceGapLabel(sourceId: BeastAdminCEOSourceId) {
   return labels[sourceId];
 }
 
+function configurationTitle(
+  signal: BeastAdminPlatformHealthSnapshot["services"][number]
+) {
+  if (signal.id === "ai") {
+    return /credentials are not configured/i.test(signal.summary)
+      ? "AI provider not configured"
+      : "AI provider monitoring not configured";
+  }
+  if (signal.id === "email") return "Email delivery not configured";
+  if (signal.id === "background_jobs") {
+    return "Background monitoring not configured";
+  }
+  return `${sourceGapLabelForService(signal.id)} not configured`;
+}
+
+function sourceGapLabelForService(
+  serviceId: BeastAdminPlatformHealthSnapshot["services"][number]["id"]
+) {
+  const labels: Record<
+    BeastAdminPlatformHealthSnapshot["services"][number]["id"],
+    string
+  > = {
+    authentication: "Authentication monitoring",
+    database: "Database monitoring",
+    api: "API monitoring",
+    storage: "Storage monitoring",
+    email: "Email delivery",
+    ai: "AI provider",
+    performance: "Performance monitoring",
+    background_jobs: "Background monitoring",
+  };
+  return labels[serviceId];
+}
+
+function repositoryStatuses(
+  source: BeastAdminCEOSourceSnapshot
+): BeastAdminCEORepositoryStatus[] {
+  const deployment = source.development.gitReferences.find(
+    (reference) => reference.source === "current_deployment"
+  );
+
+  return [
+    {
+      repository: "Beast",
+      branch: deployment?.branch || null,
+      worktree: "unavailable",
+      ahead: null,
+      behind: null,
+      latestCommit: deployment?.shortReference || null,
+      detail: deployment
+        ? "The hosted deployment reports its branch and commit. Working-tree and remote-divergence state are not exposed by this runtime."
+        : "No verified deployment Git reference is available. Repository synchronization has not been connected.",
+    },
+    {
+      repository: "BeastFusion",
+      branch: null,
+      worktree: "unavailable",
+      ahead: null,
+      behind: null,
+      latestCommit: null,
+      detail:
+        "Repository synchronization has not been connected to BeastAdmin.",
+    },
+    {
+      repository: "SEANGWORLD",
+      branch: null,
+      worktree: "unavailable",
+      ahead: null,
+      behind: null,
+      latestCommit: null,
+      detail:
+        "Repository synchronization has not been connected to BeastAdmin.",
+    },
+    {
+      repository: "Change the World",
+      branch: null,
+      worktree: "planning",
+      ahead: null,
+      behind: null,
+      latestCommit: null,
+      detail:
+        "Planning is documented, but no product repository is connected.",
+    },
+  ];
+}
+
 export function buildBeastAdminCEOModeSnapshot({
   source,
   platformHealth,
@@ -494,8 +595,13 @@ export function buildBeastAdminCEOModeSnapshot({
   }
 
   const needsAttention: BeastAdminCEOAction[] = [];
+  const configurationItems: BeastAdminCEOAction[] = [];
+  const operationalErrors: BeastAdminCEOAction[] = [];
+  const healthSignals = new Map(
+    (platformHealth?.services || []).map((service) => [service.id, service])
+  );
   for (const issue of platformHealth?.errors || []) {
-    needsAttention.push({
+    operationalErrors.push({
       id: `health-error-${issue.serviceId}`,
       priority: "critical",
       area: "Errors",
@@ -506,15 +612,31 @@ export function buildBeastAdminCEOModeSnapshot({
     });
   }
   for (const issue of platformHealth?.warnings || []) {
-    needsAttention.push({
-      id: `health-warning-${issue.serviceId}`,
-      priority: "high",
-      area: "Errors",
-      title: `${issue.serviceLabel}: ${issue.message}`,
-      why: "The service is warning or lacks a connected monitoring source.",
-      href: "/dashboard/admin/health",
-      actionLabel: "Review health",
-    });
+    const signal = healthSignals.get(issue.serviceId);
+    if (
+      signal &&
+      ["configuration", "not_connected"].includes(signal.source)
+    ) {
+      configurationItems.push({
+        id: `health-configuration-${issue.serviceId}`,
+        priority: "low",
+        area: "Configuration",
+        title: configurationTitle(signal),
+        why: signal.evidence,
+        href: "/dashboard/admin/health",
+        actionLabel: "Review configuration",
+      });
+    } else {
+      operationalErrors.push({
+        id: `health-warning-${issue.serviceId}`,
+        priority: "high",
+        area: "Errors",
+        title: `${issue.serviceLabel}: ${issue.message}`,
+        why: "A live or request-sample signal reported degraded operation.",
+        href: "/dashboard/admin/health",
+        actionLabel: "Review health",
+      });
+    }
   }
 
   const newFeedback = source.feedback.filter((item) => item.status === "New");
@@ -557,7 +679,7 @@ export function buildBeastAdminCEOModeSnapshot({
       )
   );
   for (const release of failedReleases) {
-    needsAttention.push({
+    operationalErrors.push({
       id: `failed-release-${release.id}`,
       priority: "critical",
       area: "Releases",
@@ -570,11 +692,11 @@ export function buildBeastAdminCEOModeSnapshot({
 
   for (const sourceId of beastAdminCEOSourceIds) {
     if (source.sources[sourceId] === "available") continue;
-    needsAttention.push({
+    configurationItems.push({
       id: `source-${sourceId}`,
-      priority: sourceId === "aiRecommendations" ? "low" : "medium",
-      area: sourceId.startsWith("ai") ? "AI" : "Development",
-      title: `${sourceGapLabel(sourceId)} is unavailable`,
+      priority: "low",
+      area: "Configuration",
+      title: `${sourceGapLabel(sourceId)} not connected`,
       why:
         sourceId === "aiRecommendations"
           ? source.aiRecommendations.detail
@@ -593,11 +715,11 @@ export function buildBeastAdminCEOModeSnapshot({
     });
   }
   if (!platformHealthAvailable) {
-    needsAttention.push({
+    configurationItems.push({
       id: "source-platform-health",
-      priority: "high",
-      area: "Errors",
-      title: "Platform Health is unavailable",
+      priority: "low",
+      area: "Configuration",
+      title: "Platform Health source not connected",
       why: "Current service errors and warnings could not be verified.",
       href: "/dashboard/admin/health",
       actionLabel: "Open health",
@@ -605,7 +727,9 @@ export function buildBeastAdminCEOModeSnapshot({
   }
 
   const workNext: BeastAdminCEOAction[] = [];
-  const critical = needsAttention.find((item) => item.priority === "critical");
+  const critical = operationalErrors.find(
+    (item) => item.priority === "critical"
+  );
   if (critical) workNext.push(critical);
   if (newFeedback.length) {
     workNext.push({
@@ -660,7 +784,13 @@ export function buildBeastAdminCEOModeSnapshot({
       actionLabel: "Open roadmap",
     });
   }
+  if (!workNext.length && operationalErrors[0]) {
+    workNext.push(operationalErrors[0]);
+  }
   if (!workNext.length && needsAttention[0]) workNext.push(needsAttention[0]);
+  if (!workNext.length && configurationItems[0]) {
+    workNext.push(configurationItems[0]);
+  }
 
   const roadmapCounts = prompts.reduce(
     (counts, prompt) => {
@@ -681,9 +811,16 @@ export function buildBeastAdminCEOModeSnapshot({
   const activeBetaAssignments = assignments.filter(({ assignment }) =>
     ["internal_testing", "beta"].includes(assignment.stage)
   ).length;
-  const sourceGaps = needsAttention
-    .filter((item) => item.id.startsWith("source-"))
-    .map((item) => item.title);
+  const sourceGaps = configurationItems.map((item) => item.title);
+  const sortedActions = (items: BeastAdminCEOAction[]) =>
+    items
+      .sort(
+        (left, right) =>
+          ["critical", "high", "medium", "low"].indexOf(left.priority) -
+            ["critical", "high", "medium", "low"].indexOf(right.priority) ||
+          left.title.localeCompare(right.title)
+      )
+      .slice(0, 12);
 
   return {
     generatedAt: source.generatedAt,
@@ -701,20 +838,16 @@ export function buildBeastAdminCEOModeSnapshot({
       "Yesterday is the prior calendar day. Overnight is 6:00 PM yesterday through 8:00 AM today, America/New_York.",
     happenedYesterday: sortDaily(happenedYesterday).slice(0, 12),
     changedOvernight: sortDaily(changedOvernight).slice(0, 12),
-    needsAttention: needsAttention
-      .sort(
-        (left, right) =>
-          ["critical", "high", "medium", "low"].indexOf(left.priority) -
-            ["critical", "high", "medium", "low"].indexOf(right.priority) ||
-          left.title.localeCompare(right.title)
-      )
-      .slice(0, 12),
+    needsAttention: sortedActions(needsAttention),
+    configurationItems: sortedActions(configurationItems),
+    operationalErrors: sortedActions(operationalErrors),
     workNext: workNext
       .filter(
         (item, index, all) =>
           all.findIndex((candidate) => candidate.id === item.id) === index
       )
       .slice(0, 4),
+    repositories: repositoryStatuses(source),
     summaries: {
       development: {
         currentSprint:
@@ -751,15 +884,22 @@ export function buildBeastAdminCEOModeSnapshot({
             : null,
       },
       errors: {
-        status: platformHealthAvailable
-          ? platformHealth?.overallStatus || "unavailable"
-          : "unavailable",
+        status: !platformHealthAvailable
+          ? "unavailable"
+          : operationalErrors.some((item) => item.priority === "critical")
+            ? "critical"
+            : operationalErrors.length
+              ? "warning"
+              : "operational",
         errors: platformHealthAvailable
-          ? platformHealth?.errors.length ?? null
+          ? operationalErrors.filter((item) => item.priority === "critical")
+              .length
           : null,
         warnings: platformHealthAvailable
-          ? platformHealth?.warnings.length ?? null
+          ? operationalErrors.filter((item) => item.priority !== "critical")
+              .length
           : null,
+        configurationItems: configurationItems.length,
       },
       members: {
         total:

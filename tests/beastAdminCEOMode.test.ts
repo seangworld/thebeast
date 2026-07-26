@@ -137,7 +137,18 @@ function sourceFixture(): BeastAdminCEOSourceSnapshot {
 const platformHealth: BeastAdminPlatformHealthSnapshot = {
   overallStatus: "warning",
   generatedAt,
-  services: [],
+  services: [
+    {
+      id: "email",
+      status: "unknown",
+      summary: "Email delivery monitoring is not connected.",
+      evidence:
+        "No read-only delivery or bounce feed is available to this health check.",
+      source: "not_connected",
+      checkedAt: generatedAt,
+      latencyMs: null,
+    },
+  ],
   errors: [],
   warnings: [
     {
@@ -188,18 +199,68 @@ test("BA-114 prioritizes attention and next work from verified evidence", () => 
 
   assert.deepEqual(
     snapshot.needsAttention.map((item) => item.id),
-    [
-      "new-feedback",
-      "health-warning-email",
-      "abandoned-conversations",
-      "source-aiRecommendations",
-    ]
+    ["new-feedback", "abandoned-conversations"]
   );
+  assert.deepEqual(
+    snapshot.configurationItems.map((item) => item.id),
+    ["source-aiRecommendations", "health-configuration-email"]
+  );
+  assert.deepEqual(snapshot.operationalErrors, []);
   assert.deepEqual(
     snapshot.workNext.map((item) => item.id),
     ["next-feedback", "next-testing-roadmap-testing"]
   );
   assert.match(snapshot.workNext[0].why, /feedback loop/);
+});
+
+test("BA-115 separates missing configuration from verified operational errors", () => {
+  const source = sourceFixture();
+  const operationalHealth: BeastAdminPlatformHealthSnapshot = {
+    overallStatus: "warning",
+    generatedAt,
+    services: [
+      {
+        id: "api",
+        status: "warning",
+        summary: "The API request sample is degraded.",
+        evidence: "A live request exceeded the warning threshold.",
+        source: "request_sample",
+        checkedAt: generatedAt,
+        latencyMs: 1800,
+      },
+      ...platformHealth.services,
+    ],
+    errors: [],
+    warnings: [
+      {
+        serviceId: "api",
+        serviceLabel: "API",
+        severity: "warning",
+        message: "The API request sample is degraded.",
+      },
+      ...platformHealth.warnings,
+    ],
+  };
+
+  const snapshot = buildBeastAdminCEOModeSnapshot({
+    source,
+    platformHealth: operationalHealth,
+    platformHealthAvailable: true,
+    now: new Date(generatedAt),
+  });
+
+  assert.deepEqual(
+    snapshot.operationalErrors.map((item) => item.id),
+    ["health-warning-api"]
+  );
+  assert.deepEqual(
+    snapshot.configurationItems.map((item) => item.id),
+    ["source-aiRecommendations", "health-configuration-email"]
+  );
+  assert.equal(snapshot.summaries.errors.status, "warning");
+  assert.equal(snapshot.summaries.errors.errors, 0);
+  assert.equal(snapshot.summaries.errors.warnings, 1);
+  assert.equal(snapshot.summaries.errors.configurationItems, 2);
 });
 
 test("BA-114 preserves unavailable sources instead of reporting false zeroes", () => {
@@ -239,8 +300,49 @@ test("BA-114 preserves unavailable sources instead of reporting false zeroes", (
   assert.equal(snapshot.summaries.roadmap.planned, null);
   assert.equal(snapshot.summaries.aiActivity.conversations, null);
   assert.equal(snapshot.summaries.errors.errors, null);
+  assert.ok(snapshot.configurationItems.length > 0);
   assert.equal(snapshot.summaries.aiRecommendations.state, "unavailable");
   assert.deepEqual(snapshot.summaries.aiRecommendations.items, []);
+});
+
+test("BA-115 reports only repository evidence available to the hosted runtime", () => {
+  const source = sourceFixture();
+  source.development = buildBeastAdminDevelopmentConsoleSnapshot({
+    roadmapItems: [],
+    releases: [],
+    roadmapAvailable: true,
+    releasesAvailable: true,
+    gitEvidence: {
+      commitSha: "abcdef1234567890",
+      branch: "main",
+      repository: "seangworld/thebeast",
+      commitMessage: "BA-115 CEO Mode polish",
+    },
+    generatedAt,
+  });
+
+  const snapshot = buildBeastAdminCEOModeSnapshot({
+    source,
+    platformHealth,
+    platformHealthAvailable: true,
+    now: new Date(generatedAt),
+  });
+
+  assert.deepEqual(snapshot.repositories[0], {
+    repository: "Beast",
+    branch: "main",
+    worktree: "unavailable",
+    ahead: null,
+    behind: null,
+    latestCommit: "abcdef123456",
+    detail:
+      "The hosted deployment reports its branch and commit. Working-tree and remote-divergence state are not exposed by this runtime.",
+  });
+  assert.equal(snapshot.repositories[1].repository, "BeastFusion");
+  assert.equal(snapshot.repositories[1].worktree, "unavailable");
+  assert.equal(snapshot.repositories[2].repository, "SEANGWORLD");
+  assert.equal(snapshot.repositories[3].worktree, "planning");
+  assert.match(snapshot.repositories[3].detail, /no product repository/i);
 });
 
 test("BA-114 validates the owner briefing contract before rendering it", () => {
@@ -279,12 +381,16 @@ test("BA-114 exposes an owner-only read-only aggregation route", () => {
   assert.match(route, /get_beast_admin_ai_analytics/);
   assert.match(route, /get_beast_admin_feature_flags/);
   assert.match(route, /get_beast_admin_release_records/);
+  assert.match(
+    route,
+    /This area will surface owner-reviewed recommendations from Beast professionals after connected sources become available/
+  );
   assert.match(route, /Cache-Control": "no-store"/);
   assert.doesNotMatch(route, /\.(insert|update|upsert|delete)\(/);
   assert.doesNotMatch(route, /SUPABASE_SERVICE_ROLE_KEY/);
 });
 
-test("BA-114 presents all four morning questions and eight operating summaries", () => {
+test("BA-115 presents an executive snapshot with explained empty states", () => {
   const page = readFileSync("src/app/dashboard/admin/page.tsx", "utf8");
   const workspace = readFileSync(
     "src/app/dashboard/admin/BeastAdminCEOModeWorkspace.tsx",
@@ -308,7 +414,7 @@ test("BA-114 presents all four morning questions and eight operating summaries",
   for (const summary of [
     "Development",
     "Feedback",
-    "Errors",
+    "Operational errors",
     "Members",
     "Beta testing",
     "Releases",
@@ -319,6 +425,27 @@ test("BA-114 presents all four morning questions and eight operating summaries",
   }
   assert.match(workspace, /aria-busy="true"/);
   assert.match(workspace, /Refresh briefing/);
+  assert.match(workspace, /Sprint snapshot/);
+  assert.match(workspace, /Repository Status/);
+  assert.match(workspace, /Current branch/);
+  assert.match(workspace, /Ahead \/ Behind/);
+  assert.match(workspace, /Latest commit/);
+  assert.match(workspace, /No roadmap has been connected yet/);
+  assert.match(workspace, /No release history has been synchronized/);
+  assert.match(
+    workspace,
+    /This area will surface owner-reviewed recommendations from\s+Beast professionals after connected sources become available/
+  );
+  for (const professional of [
+    "Money Coach",
+    "Guidance Counselor",
+    "Health Advisor",
+    "Goals Coach",
+    "Future professionals",
+  ]) {
+    assert.match(workspace, new RegExp(professional));
+  }
+  assert.match(workspace, /value === 0 \? "None"/);
   assert.match(workspace, /No connected source recorded/);
   assert.match(workspace, /absence is never reported as zero/);
   assert.match(shell, /\{ label: "CEO Mode", href: "\/dashboard\/admin" \}/);

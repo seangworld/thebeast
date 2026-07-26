@@ -187,7 +187,7 @@ export async function GET() {
       aiRecommendations: {
         state: "unavailable",
         detail:
-          "No persisted, owner-reviewed cross-platform AI recommendation feed is connected to BeastAdmin yet.",
+          "This area will surface owner-reviewed recommendations from Beast professionals after connected sources become available.",
         items: [],
       },
       sources: {
