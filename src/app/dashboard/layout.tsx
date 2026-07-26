@@ -21,6 +21,7 @@ import {
   type ModuleChildNavItem,
   type ModuleNavSection,
 } from "@/lib/moduleNavigation";
+import type { BeastMemberModuleAccessOverride } from "@/lib/moduleRegistry";
 import { buildMobileNavigation } from "@/lib/mobileFoundation";
 import { buildMobileRuntimeState } from "@/lib/mobileHardening";
 import { isBeastMoneyNavigationActive } from "@/lib/moneyNavigation";
@@ -116,6 +117,9 @@ export default function DashboardLayout({
   ]);
   const [learningOnlyNavigation, setLearningOnlyNavigation] = useState(false);
   const [isAdminPersona, setIsAdminPersona] = useState(false);
+  const [memberModuleAccess, setMemberModuleAccess] = useState<
+    BeastMemberModuleAccessOverride[]
+  >([]);
   const [adminViewMode, setAdminViewMode] = useState<AdminViewMode>(
     loadAdminViewMode
   );
@@ -133,9 +137,13 @@ export default function DashboardLayout({
   const router = useRouter();
   const workspaceModule = getWorkspaceModule(pathname);
   const workspaceContext = getBeastOSWorkspaceContext(workspaceModule);
-  const personaModuleNavigation = getBeastModuleNavigationForPersona(isAdminPersona);
+  const personaModuleNavigation = getBeastModuleNavigationForPersona(
+    isAdminPersona,
+    memberModuleAccess
+  );
   const applicationNavigation = buildApplicationNavigationForPersona({
     isOwner: isAdminPersona,
+    moduleAccess: memberModuleAccess,
   });
   const ownerNavigation = buildOwnerNavigationForPersona({
     isOwner: isAdminPersona,
@@ -143,6 +151,7 @@ export default function DashboardLayout({
   const mobileNavigation = buildMobileNavigation({
     isOwner: isAdminPersona,
     learningOnly: learningOnlyNavigation,
+    moduleAccess: memberModuleAccess,
   });
   const mobileRuntimeState = buildMobileRuntimeState({
     online: mobileOnline,
@@ -306,6 +315,44 @@ export default function DashboardLayout({
         return;
       }
 
+      const canUseBeastAdmin = canAccessBeastAdmin({
+        role: profile.role,
+        adminViewMode,
+      });
+      const { data: moduleAccessRows, error: moduleAccessError } = await supabase
+        .from("beast_admin_member_module_access")
+        .select("module_id,enabled")
+        .eq("member_id", authUser.id);
+
+      if (!active) return;
+
+      const resolvedModuleAccess: BeastMemberModuleAccessOverride[] =
+        moduleAccessError
+          ? []
+          : (moduleAccessRows || []).flatMap((row) =>
+              (row.module_id === "money" || row.module_id === "learning") &&
+              typeof row.enabled === "boolean"
+                ? [
+                    {
+                      moduleId: row.module_id,
+                      enabled: row.enabled,
+                    },
+                  ]
+                : []
+            );
+      setMemberModuleAccess(resolvedModuleAccess);
+
+      const currentModuleOverride = resolvedModuleAccess.find(
+        (item) => item.moduleId === workspaceModule
+      );
+      if (
+        !canUseBeastAdmin &&
+        currentModuleOverride?.enabled === false
+      ) {
+        router.replace("/dashboard/today");
+        return;
+      }
+
       const completionKey = `beastlearning:onboarding-complete:${authUser.id}`;
       let onboardingComplete = isLearningOnboardingComplete({
         profileComplete: profile?.onboarding_complete,
@@ -452,18 +499,18 @@ export default function DashboardLayout({
         gradeLevel: primaryLearningProfile?.learning_style,
       });
 
-      const canUseBeastAdmin = canAccessBeastAdmin({
-        role: profile?.role,
-        adminViewMode,
-      });
-
       if (pathname.startsWith("/dashboard/admin") && !canUseBeastAdmin) {
         router.replace("/dashboard");
         return;
       }
 
       setIsAdminPersona(canUseBeastAdmin);
-      setLearningOnlyNavigation(useLearningOnlyNavigation);
+      setLearningOnlyNavigation(
+        useLearningOnlyNavigation &&
+          !resolvedModuleAccess.some(
+            (item) => item.moduleId === "learning" && !item.enabled
+          )
+      );
       setDashboardGuardResolved(true);
 
       if (
@@ -482,7 +529,7 @@ export default function DashboardLayout({
     return () => {
       active = false;
     };
-  }, [adminViewMode, pathname, router]);
+  }, [adminViewMode, pathname, router, workspaceModule]);
 
   if (onboardingDiagnosticError) {
     return (

@@ -9,6 +9,7 @@ import {
   primaryNavigation,
   type ModuleNavSection,
 } from "./moduleNavigation";
+import type { BeastMemberModuleAccessOverride } from "./moduleRegistry";
 import type { PlatformIntelligence, PlatformModule } from "./platform/types";
 
 export const beastMobileBreakpointPx = 768;
@@ -47,14 +48,19 @@ function canUseModule(module: PlatformModule, visibleModules: Set<ModuleKey>) {
 export function buildMobileNavigation({
   isOwner,
   learningOnly = false,
+  moduleAccess = [],
 }: {
   isOwner: boolean;
   learningOnly?: boolean;
+  moduleAccess?: BeastMemberModuleAccessOverride[];
 }): {
   primary: BeastMobileNavItem[];
   more: BeastMobileNavItem[];
 } {
-  const applicationNavigation = buildApplicationNavigationForPersona({ isOwner });
+  const applicationNavigation = buildApplicationNavigationForPersona({
+    isOwner,
+    moduleAccess,
+  });
   const applicationItems = applicationNavigation.map((item) => ({
     label: item.label,
     href: item.href || "/dashboard",
@@ -73,7 +79,7 @@ export function buildMobileNavigation({
     external: item.external,
   }));
 
-  const primary = learningOnly
+  const primary = (learningOnly
     ? [
         { label: "Today", href: "/dashboard/today", module: "learning" as ModuleKey, primary: true },
         { label: "Guidance Counselor", href: "/dashboard/education", module: "learning" as ModuleKey, primary: true },
@@ -87,7 +93,11 @@ export function buildMobileNavigation({
         { label: "Calendar", href: "/dashboard/calendar", module: "calendar" as ModuleKey, primary: true },
         { label: "AI", href: "/dashboard/search#shared-ai", module: "search" as ModuleKey, primary: true },
         { label: "More", href: "#mobile-more", module: "beastos" as ModuleKey, primary: true },
-      ];
+      ]).filter(
+        (item) =>
+          item.module !== "money" ||
+          applicationNavigation.some((module) => module.module === "money")
+      );
 
   const more = [
     ...sharedItems,

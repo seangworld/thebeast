@@ -2,6 +2,7 @@ import type { ModuleKey } from "@/app/components/design/DashboardPrimitives";
 import {
   beastModuleRegistry,
   getVisibleModuleRegistryEntries,
+  type BeastMemberModuleAccessOverride,
   type BeastModuleRegistryEntry,
 } from "./moduleRegistry";
 import { beastMoneyCoreNavigation } from "./moneyNavigation";
@@ -116,7 +117,7 @@ export const beastAdminNavigation: ModuleNavSection = {
     { label: "Platform Health", href: "/dashboard/admin/health" },
     { label: "Executive Metrics", href: "/dashboard/admin/metrics" },
     { label: "Release Center", href: "/dashboard/admin/releases" },
-    { label: "Member Timeline", href: "/dashboard/admin/members" },
+    { label: "Members", href: "/dashboard/admin/members" },
     { label: "Knowledge Inspector", href: "/dashboard/admin/knowledge" },
     { label: "Ecosystem Map", href: "/dashboard/admin/ecosystem" },
     { label: "Modules", href: "/dashboard/admin/modules" },
@@ -187,11 +188,13 @@ function navigationFromRegistryEntry(entry: BeastModuleRegistryEntry) {
 export function buildBeastModuleNavigationForPersona({
   isOwner,
   registry = beastModuleRegistry,
+  moduleAccess = [],
 }: {
   isOwner: boolean;
   registry?: BeastModuleRegistryEntry[];
+  moduleAccess?: BeastMemberModuleAccessOverride[];
 }) {
-  return getVisibleModuleRegistryEntries({ isOwner, registry })
+  return getVisibleModuleRegistryEntries({ isOwner, registry, moduleAccess })
     .map(navigationFromRegistryEntry)
     .filter(Boolean) as ModuleNavSection[];
 }
@@ -199,11 +202,17 @@ export function buildBeastModuleNavigationForPersona({
 export function buildApplicationNavigationForPersona({
   isOwner,
   registry = beastModuleRegistry,
+  moduleAccess = [],
 }: {
   isOwner: boolean;
   registry?: BeastModuleRegistryEntry[];
+  moduleAccess?: BeastMemberModuleAccessOverride[];
 }) {
-  return buildBeastModuleNavigationForPersona({ isOwner, registry }).filter(
+  return buildBeastModuleNavigationForPersona({
+    isOwner,
+    registry,
+    moduleAccess,
+  }).filter(
     (item) =>
       item.module === "money" ||
       item.module === "learning" ||
@@ -245,8 +254,22 @@ export const memberBeastModuleNavigation: ModuleNavSection[] =
         : item
   );
 
-export function getBeastModuleNavigationForPersona(isAdmin: boolean) {
-  return isAdmin ? beastModuleNavigation : memberBeastModuleNavigation;
+export function getBeastModuleNavigationForPersona(
+  isAdmin: boolean,
+  moduleAccess: BeastMemberModuleAccessOverride[] = []
+) {
+  if (isAdmin) return beastModuleNavigation;
+
+  return buildBeastModuleNavigationForPersona({
+    isOwner: false,
+    moduleAccess,
+  }).map((item) =>
+    item.module === "money"
+      ? memberBeastMoneyNavigation
+      : item.module === "learning"
+        ? memberBeastEducationNavigation
+        : item
+  );
 }
 
 export const sharedNavigation: ModuleNavSection[] = [

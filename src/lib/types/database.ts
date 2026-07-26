@@ -122,6 +122,7 @@ export type BillingProvider = "stripe"
 export type Profile = {
     id: string
     role: UserRole
+    account_kind?: "member" | "system" | "demo"
     membership_plan?: MembershipPlan | null
     onboarding_complete: boolean
     stripe_customer_id?: string | null

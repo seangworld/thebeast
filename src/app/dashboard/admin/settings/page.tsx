@@ -1,80 +1,57 @@
-import { BeastAdminShell } from "../BeastAdminShell";
-import { DashboardCard, SectionHeader } from "@/app/components/design/DashboardPrimitives";
+import Link from "next/link";
 import {
-  beastAdminBetaAssignments,
-  buildBetaAssignmentRows,
-  getBetaAssignableModuleLabels,
-} from "@/lib/beastAdmin";
+  DashboardCard,
+  SectionHeader,
+} from "@/app/components/design/DashboardPrimitives";
+import { BeastAdminShell } from "../BeastAdminShell";
 
 export default function BeastAdminSettingsPage() {
-  const betaModuleLabels = getBetaAssignableModuleLabels();
-  const assignmentRows = buildBetaAssignmentRows();
-
   return (
     <BeastAdminShell
       title="Settings"
-      description="Owner-only settings foundation for module visibility and beta access controls."
+      description="Owner-only entry points for live BeastAdmin access and visibility controls."
     >
       <DashboardCard accent="admin">
         <SectionHeader
           eyebrow="Beta Access"
-          title="Beta assignments are separate from user role"
-          description={`${beastAdminBetaAssignments.length} assignment is seeded. Supported beta apps: ${betaModuleLabels.join(", ")}.`}
+          title="Manage live assignments in Feature Flags"
+          description="Beta access is resolved from persisted module, role, and member assignments. This page does not display seeded members or placeholder assignments."
         />
-        <div className="mt-5 grid gap-4 lg:grid-cols-[1fr_1fr]">
-          <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
-            <h2 className="text-sm font-black uppercase text-[#7f8da3]">
-              Supported beta apps
-            </h2>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {betaModuleLabels.map((label) => (
-                <span
-                  key={label}
-                  className="rounded-full border border-amber-300/40 bg-amber-300/10 px-3 py-1 text-xs font-black text-amber-100"
-                >
-                  {label}
-                </span>
-              ))}
-            </div>
-          </div>
-          <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
-            <h2 className="text-sm font-black uppercase text-[#7f8da3]">
-              Current assignments
-            </h2>
-            <div className="mt-3 space-y-2">
-              {assignmentRows.map((assignment) => (
-                <div
-                  key={assignment.id}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#2a3242] px-3 py-2 text-sm text-[#dbe3ef]"
-                >
-                  <span>
-                    <span className="font-bold text-white">
-                      {assignment.memberName}
-                    </span>{" "}
-                    <span className="text-[#9aa7b8]">
-                      ({assignment.memberRole})
-                    </span>
-                  </span>
-                  <span>{assignment.moduleName}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+        <div className="mt-5 rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+          <h2 className="font-black text-white">Authoritative source</h2>
+          <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
+            Feature definitions and assignments come from{" "}
+            <code className="text-amber-100">
+              beast_admin_feature_flags
+            </code>{" "}
+            and{" "}
+            <code className="text-amber-100">
+              beast_admin_feature_flag_assignments
+            </code>
+            . Member email and name are joined from Supabase Auth and the
+            shared public profile at read time.
+          </p>
+          <Link
+            href="/dashboard/admin/flags"
+            className="mt-4 inline-flex min-h-11 items-center rounded-lg border border-amber-300/30 bg-amber-300/10 px-4 py-2 text-sm font-black text-amber-100 transition hover:border-amber-200 hover:bg-amber-200/20"
+          >
+            Open Feature Flags
+          </Link>
         </div>
-        <button
-          type="button"
-          disabled
-          className="mt-5 rounded-lg border border-[#2a3242] px-4 py-2 text-sm font-black text-[#7f8da3]"
-        >
-          Assign Beta Access Soon
-        </button>
       </DashboardCard>
+
       <DashboardCard accent="admin">
         <SectionHeader
-          eyebrow="Visibility"
-          title="Module visibility controls"
-          description="Supported states are Admin Only, Beta, Released, and Disabled. Interactive editing is reserved for the next phase."
+          eyebrow="Member Identity"
+          title="Audit identity sources in Member Timeline"
+          description="The Members workspace documents whether each displayed value comes from Supabase Auth, public profiles, or derived activity."
         />
+        <Link
+          href="/dashboard/admin/members"
+          className="mt-5 inline-flex min-h-11 items-center rounded-lg border border-amber-300/30 bg-amber-300/10 px-4 py-2 text-sm font-black text-amber-100 transition hover:border-amber-200 hover:bg-amber-200/20"
+        >
+          Open Member Timeline
+        </Link>
       </DashboardCard>
     </BeastAdminShell>
   );

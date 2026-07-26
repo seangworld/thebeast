@@ -418,6 +418,7 @@ export function buildBeastAdminCEOModeSnapshot({
       });
     }
     if (
+      member.lastActivityAt &&
       isOvernight(
         member.lastActivityAt,
         yesterdayKey,
@@ -772,12 +773,14 @@ export function buildBeastAdminCEOModeSnapshot({
         activeOvernight:
           source.sources.members === "available"
             ? source.members.filter((member) =>
-                isOvernight(
-                  member.lastActivityAt,
-                  yesterdayKey,
-                  nowParts.date,
-                  nowParts.minutes
-                )
+                member.lastActivityAt
+                  ? isOvernight(
+                      member.lastActivityAt,
+                      yesterdayKey,
+                      nowParts.date,
+                      nowParts.minutes
+                    )
+                  : false
               ).length
             : null,
       },

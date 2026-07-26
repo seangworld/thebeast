@@ -10,7 +10,7 @@ import {
 } from "../src/lib/beastAdminExecutive";
 import { beastModuleRegistry } from "../src/lib/moduleRegistry";
 
-test("BA-101 builds a 30-second executive snapshot from canonical admin sources", () => {
+test("BA-101 legacy executive snapshot does not invent members without a live source", () => {
   const snapshot = buildBeastAdminExecutiveSnapshot();
 
   assert.deepEqual(snapshot.platformHealth, {
@@ -23,12 +23,12 @@ test("BA-101 builds a 30-second executive snapshot from canonical admin sources"
     observabilityGaps: ["AI Usage", "Errors"],
   });
   assert.deepEqual(snapshot.members, {
-    total: 2,
-    active: 1,
-    invited: 1,
+    total: 0,
+    active: 0,
+    invited: 0,
     paused: 0,
-    betaRoleMembers: 1,
-    sourceLabel: "Configured BeastAdmin member registry",
+    betaRoleMembers: 0,
+    sourceLabel: "No live member source supplied",
   });
   assert.deepEqual(snapshot.modules.byStatus, {
     active: 3,
@@ -46,9 +46,9 @@ test("BA-101 builds a 30-second executive snapshot from canonical admin sources"
     snapshot.featureProgress.foundations.map((module) => module.name),
     ["BeastGoals", "BeastDocuments", "BeastHealth", "BeastHome", "BeastAdmin"]
   );
-  assert.equal(snapshot.betaActivity.assignedMembers, 1);
-  assert.equal(snapshot.betaActivity.assignments.length, 1);
-  assert.equal(snapshot.betaActivity.openFeedback.length, 2);
+  assert.equal(snapshot.betaActivity.assignedMembers, 0);
+  assert.equal(snapshot.betaActivity.assignments.length, 0);
+  assert.equal(snapshot.betaActivity.openFeedback.length, 0);
 });
 
 test("BA-101 never converts unavailable AI usage or errors into false zeroes", () => {

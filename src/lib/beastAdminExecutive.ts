@@ -1,7 +1,4 @@
 import {
-  beastAdminBetaAssignments,
-  beastAdminFeedbackItems,
-  beastAdminMembers,
   buildBetaAssignmentRows,
   type BeastAdminBetaAssignment,
   type BeastAdminFeedbackItem,
@@ -123,10 +120,10 @@ export function buildRecentBeastReleases({
 }
 
 export function buildBeastAdminExecutiveSnapshot({
-  members = beastAdminMembers,
+  members = [],
   modules = beastModuleRegistry,
-  betaAssignments = beastAdminBetaAssignments,
-  feedbackItems = beastAdminFeedbackItems,
+  betaAssignments = [],
+  feedbackItems = [],
   aiUsage = beastAdminTelemetry.aiUsage,
   errors = beastAdminTelemetry.errors,
   releases = buildRecentBeastReleases(),
@@ -184,7 +181,10 @@ export function buildBeastAdminExecutiveSnapshot({
       invited: members.filter((member) => member.status === "Invited").length,
       paused: members.filter((member) => member.status === "Paused").length,
       betaRoleMembers: members.filter((member) => member.role === "Beta").length,
-      sourceLabel: "Configured BeastAdmin member registry",
+      sourceLabel:
+        members.length > 0
+          ? "Caller-supplied member evidence"
+          : "No live member source supplied",
     },
     modules: {
       enabled: enabledModules.length,

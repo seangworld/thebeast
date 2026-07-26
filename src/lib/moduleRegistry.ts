@@ -35,6 +35,11 @@ export type BeastModuleRegistryEntry = {
   href?: string;
 };
 
+export type BeastMemberModuleAccessOverride = {
+  moduleId: BeastModuleIdentifier;
+  enabled: boolean;
+};
+
 export const beastModuleRegistry: BeastModuleRegistryEntry[] = [
   {
     name: "BeastOS",
@@ -155,13 +160,23 @@ export function isModuleVisibleForMember(entry: BeastModuleRegistryEntry) {
 export function getVisibleModuleRegistryEntries({
   isOwner,
   registry = beastModuleRegistry,
+  moduleAccess = [],
 }: {
   isOwner: boolean;
   registry?: BeastModuleRegistryEntry[];
+  moduleAccess?: BeastMemberModuleAccessOverride[];
 }) {
-  return registry.filter((entry) =>
-    isOwner ? isModuleVisibleForOwner(entry) : isModuleVisibleForMember(entry)
-  );
+  return registry.filter((entry) => {
+    const visible = isOwner
+      ? isModuleVisibleForOwner(entry)
+      : isModuleVisibleForMember(entry);
+    if (!visible || isOwner) return visible;
+
+    const accessOverride = moduleAccess.find(
+      (item) => item.moduleId === entry.identifier
+    );
+    return accessOverride ? accessOverride.enabled : true;
+  });
 }
 
 export function updateModuleVisibility(

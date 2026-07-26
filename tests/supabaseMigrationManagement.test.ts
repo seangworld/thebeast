@@ -57,6 +57,9 @@ const expectedCliMigrations = [
   "20260726000600_add_beast_admin_release_center.sql",
   "20260726000700_add_beast_admin_executive_metrics.sql",
   "20260726000800_add_beast_admin_knowledge_inspector.sql",
+  "20260726000900_add_authoritative_beast_admin_member_directory.sql",
+  "20260726000950_ensure_beast_admin_updated_at_trigger.sql",
+  "20260726001000_add_beast_admin_member_account_editing.sql",
 ];
 
 test("Supabase CLI migrations exist in dependency-safe order", () => {
@@ -81,6 +84,97 @@ test("BM-35 timeline and report migration keeps records owner-scoped with RLS", 
   assert.match(migration, /retirement_report_exports/);
   assert.match(migration, /enable row level security/);
   assert.match(migration, /auth\.uid\(\) = owner_id/);
+});
+
+test("trigger helpers exist before every reference in the full migration chain", () => {
+  const definedFunctions = new Set<string>();
+
+  for (const file of expectedCliMigrations) {
+    const sql = readFileSync(join(migrationsDir, file), "utf8");
+    const events = [
+      ...Array.from(
+        sql.matchAll(
+          /create\s+(?:or\s+replace\s+)?function\s+public\.([a-z0-9_]+)\s*\(/gi
+        ),
+        (match) => ({
+          kind: "definition" as const,
+          name: match[1],
+          index: match.index,
+        })
+      ),
+      ...Array.from(
+        sql.matchAll(
+          /execute\s+(?:function|procedure)\s+public\.([a-z0-9_]+)\s*\(/gi
+        ),
+        (match) => ({
+          kind: "reference" as const,
+          name: match[1],
+          index: match.index,
+        })
+      ),
+    ].sort((left, right) => left.index - right.index);
+
+    for (const event of events) {
+      if (event.kind === "definition") {
+        definedFunctions.add(event.name);
+      } else {
+        assert.equal(
+          definedFunctions.has(event.name),
+          true,
+          `${file} references public.${event.name}() before the migration chain defines it`
+        );
+      }
+    }
+  }
+});
+
+test("BA-103 updated-at preflight is idempotent and heals partial application", () => {
+  const featureFlags = readFileSync(
+    join(
+      migrationsDir,
+      "20260726000400_add_beast_admin_feature_flags.sql"
+    ),
+    "utf8"
+  );
+  const correction = readFileSync(
+    join(
+      migrationsDir,
+      "20260726000950_ensure_beast_admin_updated_at_trigger.sql"
+    ),
+    "utf8"
+  );
+  const accountEditing = readFileSync(
+    join(
+      migrationsDir,
+      "20260726001000_add_beast_admin_member_account_editing.sql"
+    ),
+    "utf8"
+  );
+
+  assert.ok(
+    featureFlags.indexOf(
+      "create or replace function public.set_beast_admin_feature_flag_updated_at"
+    ) <
+      featureFlags.indexOf(
+        "execute function public.set_beast_admin_feature_flag_updated_at"
+      )
+  );
+  assert.match(
+    correction,
+    /create or replace function public\.set_beast_admin_feature_flag_updated_at\(\)/
+  );
+  assert.match(correction, /security invoker/);
+  assert.match(correction, /set search_path = public/);
+  assert.match(correction, /new\.updated_at = now\(\)/);
+  assert.match(
+    correction,
+    /to_regclass\('public\.beast_admin_member_module_access'\)/
+  );
+  assert.match(correction, /drop trigger if exists/);
+  assert.match(
+    accountEditing,
+    /execute function public\.set_beast_admin_feature_flag_updated_at\(\)/
+  );
 });
 
 test("Supabase migration documentation records stop conditions and bootstrap commands", () => {

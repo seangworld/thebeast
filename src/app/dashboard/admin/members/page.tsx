@@ -4,8 +4,8 @@ import { BeastAdminMemberTimelineWorkspace } from "./BeastAdminMemberTimelineWor
 export default function BeastAdminMembersPage() {
   return (
     <BeastAdminShell
-      title="Member Timeline"
-      description="Follow each member’s Beast journey from registration through real module activity, without exposing raw private content."
+      title="Member Directory"
+      description="Review authoritative account identity, access, beta assignments, and permissioned activity without exposing sensitive Auth metadata to members."
     >
       <BeastAdminMemberTimelineWorkspace />
     </BeastAdminShell>

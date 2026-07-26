@@ -421,15 +421,54 @@ import {
 import {
   assignBetaModule,
   beastAdminBetaAssignableModules,
-  beastAdminBetaAssignments,
-  beastAdminFeedbackItems,
-  beastAdminMembers,
   buildBeastAdminAnalytics,
   buildBetaAssignmentRows,
   canAccessBeastAdmin,
   getBetaAssignableModuleLabels,
   isBeastAdminOwnerRole,
+  type BeastAdminBetaAssignment,
+  type BeastAdminFeedbackItem,
+  type BeastAdminMember,
 } from "../src/lib/beastAdmin";
+
+const beastAdminFixtureMembers: BeastAdminMember[] = [
+  {
+    id: "fixture-owner",
+    name: "Fixture Owner",
+    email: "owner@example.com",
+    joinDate: "2026-07-01",
+    status: "Active",
+    role: "Owner",
+  },
+  {
+    id: "fixture-beta",
+    name: "Fixture Beta",
+    email: "beta@example.com",
+    joinDate: "2026-07-10",
+    status: "Invited",
+    role: "Beta",
+  },
+];
+
+const beastAdminFixtureAssignments: BeastAdminBetaAssignment[] = [
+  {
+    id: "fixture-learning-beta",
+    memberId: "fixture-beta",
+    moduleId: "learning",
+    assignedAt: "2026-07-13T00:00:00.000Z",
+  },
+];
+
+const beastAdminFixtureFeedback: BeastAdminFeedbackItem[] = [
+  {
+    id: "fixture-feedback",
+    date: "2026-07-13",
+    module: "BeastEducation",
+    user: "Fixture Beta",
+    status: "New",
+    summary: "Fixture feedback for deterministic helper coverage.",
+  },
+];
 
 test("debt strategy registry includes existing strategy options", () => {
   assert.deepEqual(
@@ -3424,10 +3463,11 @@ test("authentication presents one permission-aware Beast platform entry point", 
   );
   assert.doesNotMatch(loginPage, /BeastEducation|Guidance Counselor/);
   assert.match(dashboardLayout, /select\("role, onboarding_complete"\)/);
+  assert.match(dashboardLayout, /beast_admin_member_module_access/);
   assert.match(dashboardLayout, /const isLearningRoute =/);
   assert.match(
     dashboardLayout,
-    /getBeastModuleNavigationForPersona\(isAdminPersona\)/
+    /getBeastModuleNavigationForPersona\(\s*isAdminPersona,\s*memberModuleAccess\s*\)/
   );
 });
 
@@ -6030,7 +6070,7 @@ test("BeastAdmin foundation registers modules and protects owner-only navigation
       "Platform Health",
       "Executive Metrics",
       "Release Center",
-      "Member Timeline",
+      "Members",
       "Knowledge Inspector",
       "Ecosystem Map",
       "Modules",
@@ -6187,13 +6227,6 @@ test("BeastAdmin routes cover CEO operations members analytics feedback ads and 
   assert.match(shell, /router\.replace\("\/dashboard"\)/);
   assert.match(layout, /pathname\.startsWith\("\/dashboard\/admin"\) && !canUseBeastAdmin/);
 
-  assert.deepEqual(
-    beastAdminMembers.map((member) => [member.name, member.email, member.joinDate, member.status, member.role]),
-    [
-      ["Sean G.", "owner@beastos.local", "2026-07-01", "Active", "Owner"],
-      ["Beta Member", "beta@beastos.local", "2026-07-10", "Invited", "Beta"],
-    ]
-  );
   const membersPage = readFileSync(
     "src/app/dashboard/admin/members/page.tsx",
     "utf8"
@@ -6206,24 +6239,22 @@ test("BeastAdmin routes cover CEO operations members analytics feedback ads and 
     "src/lib/beastAdminMemberTimeline.ts",
     "utf8"
   );
-  assert.match(membersPage, /Member Timeline/);
+  assert.match(membersPage, /Member Directory/);
   assert.match(membersPage, /BeastAdminMemberTimelineWorkspace/);
   assert.match(memberTimelineWorkspace, /Search members/);
   assert.match(memberTimelineModel, /Registration/);
   assert.match(memberTimelineWorkspace, /Permission and Source Coverage/);
-  assert.equal(beastAdminFeedbackItems.every((item) => item.date && item.module && item.user && item.status && item.summary), true);
-
   const analytics = buildBeastAdminAnalytics({
-    members: beastAdminMembers,
+    members: beastAdminFixtureMembers,
     moduleCount: beastModuleRegistry.length,
-    feedbackCount: beastAdminFeedbackItems.length,
-    betaAssignments: beastAdminBetaAssignments,
+    feedbackCount: beastAdminFixtureFeedback.length,
+    betaAssignments: beastAdminFixtureAssignments,
   });
   assert.deepEqual(analytics, {
     totalMembers: 2,
     activeMembers: 1,
     moduleCount: 8,
-    feedbackCount: 2,
+    feedbackCount: 1,
     betaUsers: 1,
   });
 });
@@ -6245,26 +6276,29 @@ test("BeastAdmin beta assignments are independent of member role", () => {
   ]);
 
   assert.deepEqual(
-    buildBetaAssignmentRows().map((assignment) => [
+    buildBetaAssignmentRows({
+      members: beastAdminFixtureMembers,
+      assignments: beastAdminFixtureAssignments,
+    }).map((assignment) => [
       assignment.memberName,
       assignment.memberRole,
       assignment.moduleName,
     ]),
-    [["Beta Member", "Beta", "BeastEducation"]]
+    [["Fixture Beta", "Beta", "BeastEducation"]]
   );
 
-  const nextAssignments = assignBetaModule(beastAdminBetaAssignments, {
+  const nextAssignments = assignBetaModule(beastAdminFixtureAssignments, {
     id: "assignment-health-beta",
-    memberId: "member-owner",
+    memberId: "fixture-owner",
     moduleId: "health",
     assignedAt: "2026-07-14T00:00:00.000Z",
   });
 
-  assert.equal(nextAssignments.length, beastAdminBetaAssignments.length + 1);
+  assert.equal(nextAssignments.length, beastAdminFixtureAssignments.length + 1);
   assert.equal(
     nextAssignments.some(
       (assignment) =>
-        assignment.memberId === "member-owner" && assignment.moduleId === "health"
+        assignment.memberId === "fixture-owner" && assignment.moduleId === "health"
     ),
     true
   );
@@ -6274,7 +6308,7 @@ test("BeastAdmin beta assignments are independent of member role", () => {
   );
 
   assert.equal(
-    beastAdminMembers.find((member) => member.id === "member-owner")?.role,
+    beastAdminFixtureMembers.find((member) => member.id === "fixture-owner")?.role,
     "Owner"
   );
 
@@ -6282,10 +6316,10 @@ test("BeastAdmin beta assignments are independent of member role", () => {
     "src/app/dashboard/admin/settings/page.tsx",
     "utf8"
   );
-  assert.match(settingsPage, /Supported beta apps/);
-  assert.match(settingsPage, /Current assignments/);
-  assert.match(settingsPage, /Assign Beta Access Soon/);
-  assert.match(settingsPage, /disabled/);
+  assert.match(settingsPage, /Manage live assignments in Feature Flags/);
+  assert.match(settingsPage, /beast_admin_feature_flag_assignments/);
+  assert.match(settingsPage, /does not display seeded members/);
+  assert.doesNotMatch(settingsPage, /owner@beastos\.local|beta@beastos\.local/);
 });
 
 test("BH-001 BeastHealth foundation is admin-only placeholder application", () => {

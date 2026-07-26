@@ -50,59 +50,12 @@ export function canAccessBeastAdmin({
   return isBeastAdminOwnerRole(role) && adminViewMode === "admin";
 }
 
-export const beastAdminMembers: BeastAdminMember[] = [
-  {
-    id: "member-owner",
-    name: "Sean G.",
-    email: "owner@beastos.local",
-    joinDate: "2026-07-01",
-    status: "Active",
-    role: "Owner",
-  },
-  {
-    id: "member-beta",
-    name: "Beta Member",
-    email: "beta@beastos.local",
-    joinDate: "2026-07-10",
-    status: "Invited",
-    role: "Beta",
-  },
-];
-
 export const beastAdminBetaAssignableModules: BeastModuleIdentifier[] = [
   "learning",
   "health",
   "home",
   "goals",
   "documents",
-];
-
-export const beastAdminBetaAssignments: BeastAdminBetaAssignment[] = [
-  {
-    id: "assignment-learning-beta",
-    memberId: "member-beta",
-    moduleId: "learning",
-    assignedAt: "2026-07-13T00:00:00.000Z",
-  },
-];
-
-export const beastAdminFeedbackItems: BeastAdminFeedbackItem[] = [
-  {
-    id: "feedback-learning-home",
-    date: "2026-07-13",
-    module: "BeastEducation",
-    user: "Beta Member",
-    status: "New",
-    summary: "Guidance Counselor Home made the next learning action clear.",
-  },
-  {
-    id: "feedback-money-nav",
-    date: "2026-07-12",
-    module: "BeastMoney",
-    user: "Sean G.",
-    status: "Acknowledged",
-    summary: "Implemented financial workflows should not appear under Future.",
-  },
 ];
 
 export function assignBetaModule(
@@ -126,8 +79,8 @@ export function getBetaAssignableModuleLabels(
 }
 
 export function buildBetaAssignmentRows({
-  members = beastAdminMembers,
-  assignments = beastAdminBetaAssignments,
+  members = [],
+  assignments = [],
 }: {
   members?: BeastAdminMember[];
   assignments?: BeastAdminBetaAssignment[];
