@@ -42,10 +42,10 @@ export type TimelineGroup = {
 };
 
 export const timelineContractRules = [
-  "BeastOS Timeline owns cross-module activity display, meaningful-event filtering, date grouping, filters, and item detail layout.",
+  "BeastOS Timeline owns the shared cross-module activity display for professionals, meaningful-event filtering, date grouping, filters, and item detail layout.",
   "Source modules own source records, event creation, completion, status changes, deletion, and domain-specific activity meaning.",
   "Timeline events must identify source module, source record, event kind, timestamp, visibility, action URL, and source-provided details.",
-  "Timeline must omit noisy system churn unless a source module marks the event meaningful for the user.",
+  "Timeline must omit technical or system churn and show only source activity that is meaningful to the member.",
 ];
 
 function assertNonEmpty(value: string, label: string) {

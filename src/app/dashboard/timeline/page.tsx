@@ -1,223 +1,318 @@
+import Link from "next/link";
 import {
   DashboardCard,
   ModuleBadge,
   SectionHeader,
 } from "@/app/components/design/DashboardPrimitives";
+import { PlatformServiceHero } from "@/app/dashboard/platformServices";
+import type { BeastDocumentDataClient } from "@/lib/platform/documents";
+import { loadUserDocuments } from "@/lib/platform/documents";
+import type { BeastGoalDataClient, GoalContribution } from "@/lib/platform/goals";
+import { loadUserGoals } from "@/lib/platform/goals";
 import {
-  ModuleFilterRail,
-  PlatformServiceHero,
-} from "@/app/dashboard/platformServices";
+  buildProfessionalActivities,
+  getProfessionalActivityFilter,
+  getProfessionalName,
+  professionalActivityFilters,
+  type EducationProfileActivityRecord,
+  type RetirementReportActivityRecord,
+  type RetirementTimelineActivityRecord,
+} from "@/lib/platform/professionalActivity";
 import {
-  buildTimelineDetail,
   buildTimelineStream,
   groupTimelineByDate,
-  summarizeTimeline,
-  timelineContractRules,
   type PlatformTimelineItem,
 } from "@/lib/platform/timeline";
+import { createRouteClient } from "@/lib/supabase/server";
 
-const timelineItems: PlatformTimelineItem[] = [
-  {
-    id: "timeline-money-buffer",
-    source: "money",
-    sourceRecordId: "cashflow-buffer-review",
-    kind: "Reviewed",
-    title: "Cashflow buffer reviewed",
-    summary: "BeastMoney contributed a meaningful review event for operating cash.",
-    occurredAt: "2026-07-17T13:00:00.000Z",
-    visibility: "Owner",
-    href: "/dashboard/money/cashflow",
-    meaningful: true,
-    details: [
-      { label: "Source", value: "BeastMoney" },
-      { label: "Record", value: "cashflow-buffer-review" },
-    ],
-  },
-  {
-    id: "timeline-learning-step",
-    source: "learning",
-    sourceRecordId: "mentor-next-step",
-    kind: "Scheduled",
-    title: "Learning step queued",
-    summary: "BeastEducation contributed the next Guidance Counselor-guided learning step.",
-    occurredAt: "2026-07-17T11:00:00.000Z",
-    visibility: "Owner",
-    href: "/dashboard/education",
-    meaningful: true,
-    details: [
-      { label: "Source", value: "BeastEducation" },
-      { label: "Record", value: "mentor-next-step" },
-    ],
-  },
-  {
-    id: "timeline-document-upload",
-    source: "documents",
-    sourceRecordId: "document-tax-upload",
-    kind: "Created",
-    title: "Document uploaded",
-    summary: "BeastOS Documents contributed a meaningful upload event.",
-    occurredAt: "2026-07-16T15:00:00.000Z",
-    visibility: "Owner",
-    href: "/dashboard/uploads",
-    meaningful: true,
-    details: [
-      { label: "Source", value: "Documents" },
-      { label: "Record", value: "document-tax-upload" },
-    ],
-  },
-  {
-    id: "timeline-system-noise",
-    source: "beastos",
-    sourceRecordId: "background-refresh",
-    kind: "Updated",
-    title: "Background refresh",
-    summary: "Internal refresh event that should not be shown to users.",
-    occurredAt: "2026-07-17T10:00:00.000Z",
-    visibility: "Owner",
-    href: "/dashboard/timeline",
-    meaningful: false,
-    details: [{ label: "Internal", value: "Refresh" }],
-  },
-];
+type TimelinePageProps = {
+  searchParams?: {
+    source?: string;
+  };
+};
 
-export default function TimelinePage() {
+type ActivityLoadResult = {
+  items: PlatformTimelineItem[];
+  signedOut: boolean;
+  unavailable: boolean;
+};
+
+function formatActivityTime(value: string) {
+  return new Date(value).toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+function mapEducationProfile(
+  row: Record<string, unknown> | null
+): EducationProfileActivityRecord | undefined {
+  if (!row) return undefined;
+
+  return {
+    ownerId: String(row.owner_id || ""),
+    goal: String(row.goal || ""),
+    careerInterests: Array.isArray(row.career_interests)
+      ? row.career_interests.map(String)
+      : [],
+    educationalGoals: Array.isArray(row.educational_goals)
+      ? row.educational_goals.map(String)
+      : [],
+    learningPreferences: Array.isArray(row.learning_preferences)
+      ? row.learning_preferences.map(String)
+      : [],
+    certifications: Array.isArray(row.certifications)
+      ? row.certifications.map(String)
+      : [],
+    strengths: String(row.strengths || ""),
+    updatedAt: String(row.updated_at || ""),
+  };
+}
+
+async function loadProfessionalActivity(): Promise<ActivityLoadResult> {
+  try {
+    const client = createRouteClient();
+    const { data: userData, error: userError } = await client.auth.getUser();
+
+    if (userError || !userData.user) {
+      return {
+        items: [],
+        signedOut: !userData.user,
+        unavailable: Boolean(userError),
+      };
+    }
+
+    const ownerId = userData.user.id;
+    const [
+      goalResult,
+      documentResult,
+      educationProfileResult,
+      retirementTimelineResult,
+      retirementReportResult,
+    ] = await Promise.all([
+      loadUserGoals(client as unknown as BeastGoalDataClient),
+      loadUserDocuments(client as unknown as BeastDocumentDataClient),
+      client
+        .from("education_profiles")
+        .select(
+          "owner_id, goal, strengths, career_interests, educational_goals, learning_preferences, certifications, updated_at"
+        )
+        .eq("owner_id", ownerId)
+        .maybeSingle(),
+      client
+        .from("retirement_timeline_runs")
+        .select("id, calculation_version, created_at")
+        .eq("owner_id", ownerId)
+        .order("created_at", { ascending: false })
+        .limit(25),
+      client
+        .from("retirement_report_exports")
+        .select("id, format, created_at")
+        .eq("owner_id", ownerId)
+        .order("created_at", { ascending: false })
+        .limit(25),
+    ]);
+
+    const goals = goalResult.status === "ready" ? goalResult.goals : [];
+    const documents =
+      documentResult.status === "ready" ? documentResult.documents : [];
+    const contributions: GoalContribution[] = goals.flatMap(
+      (goal) => goal.contributions
+    );
+    const educationProfile = educationProfileResult.error
+      ? undefined
+      : mapEducationProfile(
+          educationProfileResult.data as Record<string, unknown> | null
+        );
+    const retirementTimelineRuns = retirementTimelineResult.error
+      ? []
+      : ((retirementTimelineResult.data || []) as Record<string, unknown>[]).map(
+          (row): RetirementTimelineActivityRecord => ({
+            id: String(row.id),
+            calculationVersion: String(row.calculation_version),
+            createdAt: String(row.created_at),
+          })
+        );
+    const retirementReports = retirementReportResult.error
+      ? []
+      : ((retirementReportResult.data || []) as Record<string, unknown>[]).map(
+          (row): RetirementReportActivityRecord => ({
+            id: String(row.id),
+            format: String(row.format),
+            createdAt: String(row.created_at),
+          })
+        );
+
+    return {
+      items: buildProfessionalActivities({
+        educationProfile,
+        retirementTimelineRuns,
+        retirementReports,
+        documents,
+        goals,
+        goalContributions: contributions,
+      }),
+      signedOut: false,
+      unavailable:
+        goalResult.status === "unavailable" &&
+        documentResult.status === "unavailable" &&
+        Boolean(educationProfileResult.error) &&
+        Boolean(retirementTimelineResult.error) &&
+        Boolean(retirementReportResult.error),
+    };
+  } catch {
+    return { items: [], signedOut: false, unavailable: true };
+  }
+}
+
+export default async function TimelinePage({
+  searchParams,
+}: TimelinePageProps) {
+  const activity = await loadProfessionalActivity();
+  const selectedFilter = getProfessionalActivityFilter(searchParams?.source);
   const stream = buildTimelineStream({
-    items: timelineItems,
+    items: activity.items,
+    filters: selectedFilter.source
+      ? { source: selectedFilter.source }
+      : undefined,
     allowedVisibility: ["Owner"],
   });
   const groups = groupTimelineByDate(stream);
-  const summary = summarizeTimeline(timelineItems);
-  const detailPreview = buildTimelineDetail(stream[0]);
+
+  const emptyMessage = activity.signedOut
+    ? "Sign in to see how your Beast professionals have been working with you."
+    : activity.unavailable
+      ? "Professional activity could not be loaded right now. Please try again."
+      : selectedFilter.id === "all"
+        ? "Your professional activity will appear here as Beast helps you make meaningful progress."
+        : `No meaningful ${selectedFilter.label.toLowerCase()} activity yet.`;
 
   return (
     <main className="beast-page">
       <div className="beast-container space-y-8">
         <PlatformServiceHero
           module="timeline"
-          eyebrow="Shared Service"
-          title="BeastOS Timeline"
-          description="One chronological stream for current Money and Learning activity."
+          eyebrow="BeastOS Shared Service"
+          title="Professional Activity"
+          description="A chronological record of the meaningful work your Beast professionals have done with you."
         />
 
         <DashboardCard accent="timeline">
           <SectionHeader
-            eyebrow="Scope"
-            title="Shared event stream"
-            description="The timeline is organized by time horizon, not by module. Filters let users narrow the shared stream when needed."
-            action={<ModuleBadge module="money" label="Money Events" />}
+            eyebrow="Activity Feed"
+            title="What Beast has been working on"
+            description="Filter by area without losing the context of your shared history."
           />
-          <div className="mt-5">
-            <ModuleFilterRail />
-          </div>
-          <div className="mt-5 grid gap-3 md:grid-cols-4">
-            {[
-              ["Meaningful", summary.totalMeaningful],
-              ["Sources", summary.sources.length],
-              ["Kinds", summary.kinds.length],
-              ["Date Groups", summary.groups],
-            ].map(([label, count]) => (
-              <div
-                key={label}
-                className="rounded-xl border border-[#2a3242] bg-[#111827] p-3"
-              >
-                <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                  {label}
+          <nav
+            aria-label="Filter professional activity"
+            className="mt-5 flex flex-wrap gap-2"
+          >
+            {professionalActivityFilters.map((filter) => {
+              const active = filter.id === selectedFilter.id;
+              const href =
+                filter.id === "all"
+                  ? "/dashboard/timeline"
+                  : `/dashboard/timeline?source=${filter.id}`;
+
+              return (
+                <Link
+                  key={filter.id}
+                  href={href}
+                  aria-current={active ? "page" : undefined}
+                  className={`rounded-full border px-3.5 py-2 text-sm font-black transition ${
+                    active
+                      ? "border-[#91cbff] bg-[#17324a] text-white"
+                      : "border-[#2a3242] bg-[#111827] text-[#aeb9c8] hover:border-[#53627a] hover:text-white"
+                  }`}
+                >
+                  {filter.label}
+                </Link>
+              );
+            })}
+          </nav>
+        </DashboardCard>
+
+        {groups.length ? (
+          <div className="space-y-5">
+            {groups.map((group) => (
+              <section key={group.key} aria-labelledby={`activity-${group.key}`}>
+                <h2
+                  id={`activity-${group.key}`}
+                  className="mb-3 text-sm font-black uppercase tracking-[0.12em] text-[#8f9caf]"
+                >
+                  {group.label}
+                </h2>
+                <div className="relative space-y-3 before:absolute before:bottom-5 before:left-[1.15rem] before:top-5 before:w-px before:bg-[#2a3242]">
+                  {group.items.map((item) => (
+                    <article
+                      key={item.id}
+                      className="relative rounded-2xl border border-[#2a3242] bg-[#111827] p-4 pl-14 shadow-sm sm:p-5 sm:pl-16"
+                    >
+                      <span
+                        aria-hidden="true"
+                        className="absolute left-3 top-6 h-4 w-4 rounded-full border-4 border-[#111827] bg-[#91cbff] ring-1 ring-[#2a3242] sm:left-[0.95rem]"
+                      />
+                      <div className="flex flex-wrap items-center gap-2">
+                        <ModuleBadge
+                          module={item.source}
+                          label={getProfessionalName(item.source)}
+                        />
+                        <span className="text-xs font-bold text-[#7f8da3]">
+                          {formatActivityTime(item.occurredAt)}
+                        </span>
+                      </div>
+                      <h3 className="mt-3 text-lg font-black text-white">
+                        {item.title}
+                      </h3>
+                      <p className="mt-2 max-w-3xl text-sm leading-6 text-[#aeb9c8]">
+                        {item.summary}
+                      </p>
+                      {item.details.length > 1 ? (
+                        <dl className="mt-4 flex flex-wrap gap-2">
+                          {item.details
+                            .filter((detail) => detail.label !== "Professional")
+                            .map((detail) => (
+                              <div
+                                key={`${item.id}-${detail.label}`}
+                                className="rounded-lg border border-[#2a3242] bg-[#0f1419] px-3 py-2"
+                              >
+                                <dt className="text-[0.65rem] font-black uppercase tracking-wide text-[#7f8da3]">
+                                  {detail.label}
+                                </dt>
+                                <dd className="mt-0.5 text-xs font-bold text-[#d8dee8]">
+                                  {detail.value}
+                                </dd>
+                              </div>
+                            ))}
+                        </dl>
+                      ) : null}
+                      <Link
+                        href={item.href}
+                        className="mt-4 inline-flex text-sm font-black text-[#91cbff] hover:text-white"
+                      >
+                        Open in {getProfessionalName(item.source)}
+                        <span aria-hidden="true" className="ml-1">
+                          →
+                        </span>
+                      </Link>
+                    </article>
+                  ))}
                 </div>
-                <div className="mt-1 text-xl font-black text-white">{count}</div>
-              </div>
+              </section>
             ))}
           </div>
-        </DashboardCard>
-
-        <div className="space-y-4">
-          {groups.map((group) => (
-            <DashboardCard key={group.key} accent="timeline">
-              <SectionHeader
-                title={group.label}
-                description="Meaningful source-owned events grouped by date."
-              />
-              <div className="mt-5 grid gap-3 lg:grid-cols-2">
-                {group.items.map((item) => (
-                  <div
-                    key={item.id}
-                    className="rounded-xl border border-[#2a3242] bg-[#111827] p-4"
-                  >
-                    <div className="flex flex-wrap items-center gap-2">
-                      <ModuleBadge module={item.source} />
-                      <span className="rounded-full border border-[#2a3242] px-2.5 py-1 text-xs font-bold text-[#c7cfdb]">
-                        {item.kind}
-                      </span>
-                      <span className="rounded-full border border-[#2a3242] px-2.5 py-1 text-xs font-bold text-[#c7cfdb]">
-                        {item.visibility}
-                      </span>
-                    </div>
-                    <h3 className="mt-3 text-lg font-black text-white">
-                      {item.title}
-                    </h3>
-                    <p className="mt-2 text-sm leading-5 text-[#9aa7b8]">
-                      {item.summary}
-                    </p>
-                    <div className="mt-4 grid gap-2">
-                      {item.details.map((detail) => (
-                        <div
-                          key={`${item.id}-${detail.label}`}
-                          className="flex justify-between gap-3 rounded-lg border border-[#2a3242] bg-[#0f1419] px-3 py-2 text-xs font-semibold"
-                        >
-                          <span className="text-[#7f8da3]">{detail.label}</span>
-                          <span className="text-white">{detail.value}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
+        ) : (
+          <DashboardCard accent="timeline">
+            <div className="py-8 text-center">
+              <div className="text-lg font-black text-white">
+                Nothing meaningful to show yet
               </div>
-            </DashboardCard>
-          ))}
-        </div>
-
-        <DashboardCard accent="timeline">
-          <SectionHeader
-            eyebrow="Timeline Contracts"
-            title="Filters and item details"
-            description="Timeline displays source-provided details without taking over source records."
-          />
-          <div className="mt-5 grid gap-4 lg:grid-cols-3">
-            <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
-              <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                Detail source
-              </div>
-              <div className="mt-2 text-sm font-bold text-white">
-                {detailPreview.source}
-              </div>
+              <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-[#9aa7b8]">
+                {emptyMessage}
+              </p>
             </div>
-            <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
-              <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                Source record
-              </div>
-              <div className="mt-2 text-sm font-bold text-white">
-                {detailPreview.sourceRecordId}
-              </div>
-            </div>
-            <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
-              <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                Ownership
-              </div>
-              <div className="mt-2 text-sm font-bold text-white">
-                Preserved: {String(detailPreview.sourceOwnershipPreserved)}
-              </div>
-            </div>
-          </div>
-          <div className="mt-5 grid gap-3 md:grid-cols-2">
-            {timelineContractRules.map((rule) => (
-              <div
-                key={rule}
-                className="rounded-xl border border-[#2a3242] bg-[#0f1419] p-4 text-sm font-semibold text-[#d8dee8]"
-              >
-                {rule}
-              </div>
-            ))}
-          </div>
-        </DashboardCard>
+          </DashboardCard>
+        )}
       </div>
     </main>
   );

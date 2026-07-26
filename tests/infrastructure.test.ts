@@ -1023,7 +1023,8 @@ test("BO-39 Timeline supports filters date grouping and item details", () => {
   assert.equal(detail.sourceOwnershipPreserved, true);
   assert.equal(detail.details[0].value, "cashflow-1");
   assert.match(timelinePage, /groupTimelineByDate/);
-  assert.match(timelinePage, /buildTimelineDetail/);
+  assert.match(timelinePage, /getProfessionalActivityFilter/);
+  assert.match(timelinePage, /professionalActivityFilters/);
 });
 
 function buildNotificationFixtureItems(): PlatformNotificationItem[] {
