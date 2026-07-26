@@ -21,9 +21,9 @@ import {
 const adminNavItems = [
   { label: "Dashboard", href: "/dashboard/admin" },
   { label: "Roadmap", href: "/dashboard/admin/roadmap" },
-  { label: "Members", href: "/dashboard/admin/members" },
+  { label: "Member Timeline", href: "/dashboard/admin/members" },
   { label: "Modules", href: "/dashboard/admin/modules" },
-  { label: "Analytics", href: "/dashboard/admin/analytics" },
+  { label: "AI Analytics", href: "/dashboard/admin/analytics" },
   { label: "Feedback", href: "/dashboard/admin/feedback" },
   { label: "Ads", href: "/dashboard/admin/ads" },
   { label: "Settings", href: "/dashboard/admin/settings" },

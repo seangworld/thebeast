@@ -6024,7 +6024,15 @@ test("BeastAdmin foundation registers modules and protects owner-only navigation
   assert.equal(getModuleVisibilityLabel("adminOnly"), "Admin Only");
   assert.deepEqual(
     beastAdminNavigation.children?.map((item) => item.label),
-    ["Dashboard", "Members", "Modules", "Analytics", "Feedback", "Ads", "Settings"]
+    [
+      "Dashboard",
+      "Member Timeline",
+      "Modules",
+      "AI Analytics",
+      "Feedback",
+      "Ads",
+      "Settings",
+    ]
   );
   assert.deepEqual(
     getModuleChildren("health").map((item) => item.label),
@@ -6131,7 +6139,7 @@ test("BeastAdmin foundation registers modules and protects owner-only navigation
   );
 });
 
-test("BeastAdmin placeholders cover members analytics feedback ads and settings", () => {
+test("BeastAdmin routes cover members analytics feedback ads and settings", () => {
   const adminFiles = [
     "src/app/dashboard/admin/page.tsx",
     "src/app/dashboard/admin/members/page.tsx",
@@ -6180,13 +6188,19 @@ test("BeastAdmin placeholders cover members analytics feedback ads and settings"
     "src/app/dashboard/admin/members/page.tsx",
     "utf8"
   );
-  assert.match(membersPage, /<span>Name<\/span>/);
-  assert.match(membersPage, /<span>Email<\/span>/);
-  assert.match(membersPage, /<span>Join Date<\/span>/);
-  assert.match(membersPage, /<span>Status<\/span>/);
-  assert.match(membersPage, /<span>Role<\/span>/);
-  assert.match(membersPage, /Edit Soon/);
-  assert.match(membersPage, /disabled/);
+  const memberTimelineWorkspace = readFileSync(
+    "src/app/dashboard/admin/members/BeastAdminMemberTimelineWorkspace.tsx",
+    "utf8"
+  );
+  const memberTimelineModel = readFileSync(
+    "src/lib/beastAdminMemberTimeline.ts",
+    "utf8"
+  );
+  assert.match(membersPage, /Member Timeline/);
+  assert.match(membersPage, /BeastAdminMemberTimelineWorkspace/);
+  assert.match(memberTimelineWorkspace, /Search members/);
+  assert.match(memberTimelineModel, /Registration/);
+  assert.match(memberTimelineWorkspace, /Permission and Source Coverage/);
   assert.equal(beastAdminFeedbackItems.every((item) => item.date && item.module && item.user && item.status && item.summary), true);
 
   const analytics = buildBeastAdminAnalytics({
