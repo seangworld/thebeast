@@ -31,10 +31,26 @@ test("BE-202 provides history, input, context, and the required suggested questi
   assert.match(source, /AgentConversationInput/);
   assert.match(source, /AgentContextSummary/);
   assert.match(source, /Start a conversation/);
-  assert.match(source, /Let’s review my educational goals\./);
-  assert.match(source, /Help me explore career paths that fit me\./);
-  assert.match(source, /What should I learn next\?/);
-  assert.match(source, /Let’s update my roadmap\./);
+  assert.match(source, /guidanceCounselorSuggestedQuestions\.map/);
+});
+
+test("BE-230 suggested prompts sound like messages a student would type", () => {
+  const source = readFileSync(conversationPath, "utf8");
+
+  for (const prompt of [
+    "I’m not sure what career fits me.",
+    "I want to make more money.",
+    "Should I go to college?",
+    "Should I learn a trade?",
+    "Help me figure out what to study.",
+    "I don’t know where to start.",
+  ]) {
+    assert.ok(source.includes(prompt), `missing natural prompt: ${prompt}`);
+  }
+
+  assert.doesNotMatch(source, /Let’s review my educational goals/);
+  assert.doesNotMatch(source, /Help me explore career paths that fit me/);
+  assert.doesNotMatch(source, /Let’s update my roadmap/);
 });
 
 test("BE-202 keeps a member-scoped relationship across navigation", () => {

@@ -43,10 +43,12 @@ import {
 import { createClient } from "@/lib/supabase/client";
 
 export const guidanceCounselorSuggestedQuestions = [
-  "Let’s review my educational goals.",
-  "Help me explore career paths that fit me.",
-  "What should I learn next?",
-  "Let’s update my roadmap.",
+  "I’m not sure what career fits me.",
+  "I want to make more money.",
+  "Should I go to college?",
+  "Should I learn a trade?",
+  "Help me figure out what to study.",
+  "I don’t know where to start.",
 ] as const;
 
 type GuidanceTurn = {
