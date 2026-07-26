@@ -8,34 +8,20 @@ import {
 } from "@/app/components/design/DashboardPrimitives";
 import { getBeastAdminProfessionalName } from "@/lib/beastAdminAIAnalytics";
 import {
+  diagnoseBeastAdminExecutiveMetricsFailure,
   formatBeastAdminMetricRate,
+  getBeastAdminSupabaseProjectRef,
   getBeastAdminGrowthDelta,
   normalizeBeastAdminExecutiveMetrics,
+  type BeastAdminExecutiveMetricsDiagnostic,
   type BeastAdminExecutiveMetricsSnapshot,
 } from "@/lib/beastAdminExecutiveMetrics";
 import { createClient } from "@/lib/supabase/client";
 
 const windowOptions = [7, 30, 90] as const;
-
-function humanizeMetricsError(error: unknown) {
-  const message =
-    error && typeof error === "object" && "message" in error
-      ? String(error.message)
-      : "";
-
-  if (
-    /get_beast_admin_executive_metrics|schema cache|function .* does not exist/i.test(
-      message
-    )
-  ) {
-    return "Executive Metrics are not available yet. Apply the BA-110 Supabase migration, then retry.";
-  }
-  if (/permission|owner access|required|42501/i.test(message)) {
-    return "Executive Metrics are restricted to the Beast owner.";
-  }
-
-  return "BeastAdmin could not load business metrics right now. No growth values were estimated.";
-}
+const supabaseProjectRef = getBeastAdminSupabaseProjectRef(
+  process.env.NEXT_PUBLIC_SUPABASE_URL
+);
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("en-US", {
@@ -98,7 +84,8 @@ export function BeastAdminExecutiveMetricsWorkspace() {
   const [snapshot, setSnapshot] =
     useState<BeastAdminExecutiveMetricsSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [failure, setFailure] =
+    useState<BeastAdminExecutiveMetricsDiagnostic | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
@@ -106,7 +93,7 @@ export function BeastAdminExecutiveMetricsWorkspace() {
 
     async function loadMetrics() {
       setLoading(true);
-      setError("");
+      setFailure(null);
 
       try {
         const supabase = createClient();
@@ -118,13 +105,20 @@ export function BeastAdminExecutiveMetricsWorkspace() {
 
         const nextSnapshot = normalizeBeastAdminExecutiveMetrics(data);
         if (!nextSnapshot) {
-          throw new Error("The Executive Metrics response was invalid.");
+          throw {
+            code: "BEAST_METRICS_INVALID_RESPONSE",
+            message: "The Executive Metrics response was invalid.",
+          };
         }
         if (active) setSnapshot(nextSnapshot);
       } catch (metricsError) {
         if (active) {
           setSnapshot(null);
-          setError(humanizeMetricsError(metricsError));
+          setFailure(
+            diagnoseBeastAdminExecutiveMetricsFailure(metricsError, {
+              projectRef: supabaseProjectRef,
+            })
+          );
         }
       } finally {
         if (active) setLoading(false);
@@ -171,24 +165,78 @@ export function BeastAdminExecutiveMetricsWorkspace() {
     );
   }
 
-  if (error || !snapshot) {
+  if (failure || !snapshot) {
+    const diagnostic =
+      failure ||
+      diagnoseBeastAdminExecutiveMetricsFailure(
+        {
+          code: "BEAST_METRICS_INVALID_RESPONSE",
+          message: "BeastAdmin did not receive a valid aggregate snapshot.",
+        },
+        { projectRef: supabaseProjectRef }
+      );
+
     return (
       <DashboardCard accent="red">
         <SectionHeader
           eyebrow="Executive Metrics"
-          title="Business metrics unavailable"
-          description={
-            error ||
-            "BeastAdmin did not receive a valid aggregate business snapshot."
-          }
+          title={diagnostic.title}
+          description={diagnostic.summary}
         />
-        <button
-          type="button"
-          className="beast-button mt-5"
-          onClick={() => setRefreshKey((current) => current + 1)}
-        >
-          Retry
-        </button>
+        <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.8fr)]">
+          <div className="rounded-xl border border-red-300/25 bg-red-300/10 p-4">
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-red-100">
+              Recommended action
+            </p>
+            <p className="mt-2 text-sm leading-6 text-[#e6edf7]">
+              {diagnostic.action}
+            </p>
+            <button
+              type="button"
+              className="beast-button mt-4"
+              onClick={() => setRefreshKey((current) => current + 1)}
+            >
+              Retry request
+            </button>
+          </div>
+          <div className="min-w-0 rounded-xl border border-[#344052] bg-[#111827] p-4">
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-[#9aa7b8]">
+              Owner diagnostics
+            </p>
+            <dl className="mt-3 grid gap-3 text-sm">
+              <div>
+                <dt className="font-black text-white">Detected state</dt>
+                <dd className="mt-1 break-words text-[#c7cfdb]">
+                  {diagnostic.kind.replaceAll("_", " ")}
+                </dd>
+              </div>
+              <div>
+                <dt className="font-black text-white">Supabase project</dt>
+                <dd className="mt-1 break-all font-mono text-xs text-[#c7cfdb]">
+                  {diagnostic.projectRef}
+                </dd>
+              </div>
+              <div>
+                <dt className="font-black text-white">API code</dt>
+                <dd className="mt-1 font-mono text-xs text-[#c7cfdb]">
+                  {diagnostic.code || "Not returned"}
+                </dd>
+              </div>
+            </dl>
+            <details className="mt-4 border-t border-[#2a3242] pt-4">
+              <summary className="cursor-pointer text-sm font-black text-amber-100">
+                Technical details
+              </summary>
+              <ul className="mt-3 grid gap-2 text-xs leading-5 text-[#9aa7b8]">
+                {diagnostic.technicalDetails.map((detail) => (
+                  <li key={detail} className="break-words font-mono">
+                    {detail}
+                  </li>
+                ))}
+              </ul>
+            </details>
+          </div>
+        </div>
       </DashboardCard>
     );
   }

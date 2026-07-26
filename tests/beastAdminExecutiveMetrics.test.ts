@@ -3,7 +3,9 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import {
+  diagnoseBeastAdminExecutiveMetricsFailure,
   formatBeastAdminMetricRate,
+  getBeastAdminSupabaseProjectRef,
   getBeastAdminGrowthDelta,
   normalizeBeastAdminExecutiveMetrics,
 } from "../src/lib/beastAdminExecutiveMetrics";
@@ -146,6 +148,99 @@ test("BA-110 calculates period growth without inventing a zero baseline rate", (
   });
 });
 
+test("BA-118 reports the exact unavailable RPC without claiming every BA-110 migration is missing", () => {
+  const diagnostic = diagnoseBeastAdminExecutiveMetricsFailure(
+    {
+      code: "PGRST202",
+      message:
+        "Could not find the function public.get_beast_admin_executive_metrics(window_days) in the schema cache",
+      details:
+        "Searched for the function public.get_beast_admin_executive_metrics with parameter window_days.",
+      hint:
+        "Perhaps you meant to call the function public.get_beast_admin_member_timeline",
+    },
+    { projectRef: "production-project" }
+  );
+
+  assert.equal(diagnostic.kind, "rpc_unavailable");
+  assert.equal(diagnostic.code, "PGRST202");
+  assert.equal(diagnostic.projectRef, "production-project");
+  assert.match(diagnostic.summary, /get_beast_admin_executive_metrics/);
+  assert.match(
+    diagnostic.action,
+    /20260726000700_add_beast_admin_executive_metrics\.sql/
+  );
+  assert.match(diagnostic.action, /separate BA-110 account-audit migration/);
+  assert.match(diagnostic.technicalDetails.join(" "), /PGRST202/);
+});
+
+test("BA-118 distinguishes permission, contract, cache, environment, and response failures", () => {
+  assert.equal(
+    diagnoseBeastAdminExecutiveMetricsFailure(
+      { code: "42501", message: "BeastAdmin owner access required" },
+      { projectRef: "production-project" }
+    ).kind,
+    "permission_denied"
+  );
+  assert.equal(
+    diagnoseBeastAdminExecutiveMetricsFailure(
+      { code: "42P01", message: 'relation "activity_events" does not exist' },
+      { projectRef: "production-project" }
+    ).kind,
+    "rpc_contract_mismatch"
+  );
+  assert.equal(
+    diagnoseBeastAdminExecutiveMetricsFailure(
+      {
+        code: "PGRST200",
+        message: "Relationship metadata is stale in the schema cache",
+      },
+      { projectRef: "production-project" }
+    ).kind,
+    "schema_cache_stale"
+  );
+  assert.equal(
+    diagnoseBeastAdminExecutiveMetricsFailure(
+      new Error("network unavailable"),
+      {
+        projectRef: "development-project",
+        expectedProjectRef: "production-project",
+      }
+    ).kind,
+    "wrong_environment"
+  );
+  assert.equal(
+    diagnoseBeastAdminExecutiveMetricsFailure(
+      {
+        code: "BEAST_METRICS_INVALID_RESPONSE",
+        message: "The Executive Metrics response was invalid.",
+      },
+      { projectRef: "production-project" }
+    ).kind,
+    "invalid_response"
+  );
+  assert.equal(
+    diagnoseBeastAdminExecutiveMetricsFailure(new Error("fetch failed"), {
+      projectRef: "production-project",
+    }).kind,
+    "unexpected"
+  );
+});
+
+test("BA-118 reports the public Supabase project without exposing credentials", () => {
+  assert.equal(
+    getBeastAdminSupabaseProjectRef(
+      "https://grpyzwvgqiwtxadfdtni.supabase.co"
+    ),
+    "grpyzwvgqiwtxadfdtni"
+  );
+  assert.equal(getBeastAdminSupabaseProjectRef(undefined), "Not configured");
+  assert.equal(
+    getBeastAdminSupabaseProjectRef("not a URL"),
+    "Invalid Supabase URL"
+  );
+});
+
 test("BA-110 database aggregation is owner-only and privacy bounded", () => {
   const migration = readFileSync(
     "supabase/migrations/20260726000700_add_beast_admin_executive_metrics.sql",
@@ -216,7 +311,9 @@ test("BA-110 presents every requested business metric and evidence boundary", ()
   assert.match(workspace, /7, 30, 90/);
   assert.match(workspace, /not login or page-view telemetry/i);
   assert.match(workspace, /does not expose[\s\S]*member identities/i);
-  assert.match(workspace, /Apply the BA-110 Supabase migration/);
+  assert.match(workspace, /Owner diagnostics/);
+  assert.match(workspace, /Technical details/);
+  assert.doesNotMatch(workspace, /Apply the BA-110 Supabase migration/);
   assert.doesNotMatch(workspace, /localStorage/);
   assert.doesNotMatch(workspace, /SUPABASE_SERVICE_ROLE_KEY/);
   assert.match(dashboard, /\/dashboard\/admin\/metrics/);
