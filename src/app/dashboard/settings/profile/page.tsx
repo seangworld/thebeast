@@ -16,6 +16,7 @@ import {
   SectionHeader,
 } from "@/app/components/design/DashboardPrimitives";
 import type { Profile } from "@/lib/types/database";
+import { AccountEmailWorkflowCard } from "./AccountEmailWorkflowCard";
 
 type ProfileForm = {
   preferred_name: string;
@@ -560,13 +561,7 @@ export default function ProfilePage() {
               </DashboardCard>
             ) : null}
 
-            <DashboardCard accent="documents">
-              <SectionHeader
-                eyebrow="Account Email"
-                title={email || "Not signed in"}
-                description="Authentication remains separate from editable profile context."
-              />
-            </DashboardCard>
+            <AccountEmailWorkflowCard />
 
             <DashboardCard accent="documents">
               <SectionHeader

@@ -13,6 +13,7 @@ export type BeastAuthEmailKind =
   | "welcome"
   | "magic_link"
   | "verify_email"
+  | "email_change"
   | "password_reset";
 
 export type BeastAuthEmailTemplate = {
@@ -90,6 +91,22 @@ export const beastAuthEmailTemplates: BeastAuthEmailTemplate[] = [
       "This reset link can be used one time.",
       "For your security, this link expires soon.",
       "If you did not request a password reset, you can ignore this email and your password will not change.",
+    ],
+  },
+  {
+    kind: "email_change",
+    name: "Change Email",
+    subject: "Confirm your Beast email change",
+    actionLabel: "Confirm Email Change",
+    preheader: "Confirm the requested change to your Beast sign-in email.",
+    title: "Confirm your email change",
+    intro:
+      "Confirm this request before Beast changes the email used for sign-in, verification, and account-security messages.",
+    details: [
+      "This confirmation link can be used one time.",
+      "For your security, this link expires soon.",
+      "Your current email remains authoritative until the required confirmations finish.",
+      "If you did not request this change, do not confirm it.",
     ],
   },
 ];

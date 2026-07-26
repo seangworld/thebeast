@@ -17,6 +17,7 @@ import { useRuntimeToday } from "@/lib/hooks/useRuntimeToday";
 import { getBeastGreeting } from "@/lib/runtimeDate";
 import { createClient } from "@/lib/supabase/client";
 import { getProfileDisplayName } from "@/lib/profile";
+import { buildCurrentAuthLoginPath } from "@/lib/auth/experience";
 import {
   calculateMonthlyRecurringTotal,
   isActiveRecurringSource,
@@ -360,7 +361,7 @@ export default function TodayPage() {
       const authUser = userData?.user;
 
       if (userError || !authUser) {
-        router.replace("/login");
+        router.replace(buildCurrentAuthLoginPath());
         return;
       }
 
@@ -509,7 +510,7 @@ export default function TodayPage() {
       const authUser = userData?.user;
 
       if (userError || !authUser) {
-        router.replace("/login");
+        router.replace(buildCurrentAuthLoginPath());
         return;
       }
 

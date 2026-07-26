@@ -60,6 +60,7 @@ const expectedCliMigrations = [
   "20260726000900_add_authoritative_beast_admin_member_directory.sql",
   "20260726000950_ensure_beast_admin_updated_at_trigger.sql",
   "20260726001000_add_beast_admin_member_account_editing.sql",
+  "20260726001100_add_beast_auth_email_workflows.sql",
 ];
 
 test("Supabase CLI migrations exist in dependency-safe order", () => {

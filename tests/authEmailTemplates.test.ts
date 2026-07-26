@@ -12,6 +12,7 @@ const templateFiles: Record<BeastAuthEmailKind, string> = {
   welcome: "supabase/auth/templates/welcome.html",
   magic_link: "supabase/auth/templates/magic-link.html",
   verify_email: "supabase/auth/templates/verify-email.html",
+  email_change: "supabase/auth/templates/change-email.html",
   password_reset: "supabase/auth/templates/password-reset.html",
 };
 
@@ -19,7 +20,7 @@ test("SW-AUTH-004 registers required Beast authentication email templates", () =
   assert.equal(BEAST_AUTH_EMAIL_SENDER, "seang@seangworld.com");
   assert.deepEqual(
     beastAuthEmailTemplates.map((template) => template.kind),
-    ["welcome", "magic_link", "verify_email", "password_reset"]
+    ["welcome", "magic_link", "verify_email", "password_reset", "email_change"]
   );
 
   for (const template of beastAuthEmailTemplates) {
@@ -73,6 +74,11 @@ test("SW-AUTH-004 Supabase template files keep required placeholders and trust l
 
     if (kind === "welcome") {
       assert.match(source, /\{\{ \.SiteURL \}\}/);
+    } else if (kind === "verify_email" || kind === "email_change") {
+      assert.match(source, /\{\{ \.RedirectTo \}\}/);
+      assert.match(source, /\{\{ \.TokenHash \}\}/);
+      assert.match(source, /one time/i);
+      assert.match(source, /expires soon/i);
     } else {
       assert.match(source, /\{\{ \.ConfirmationURL \}\}/);
       assert.match(source, /one time/i);

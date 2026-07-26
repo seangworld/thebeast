@@ -44,6 +44,7 @@ import {
   profileOnboardingCompletionKeyColumn,
   shouldAttemptLearningOnboardingRepair,
 } from "@/lib/learning/onboardingCompletion";
+import { buildAuthLoginPath } from "@/lib/auth/experience";
 
 const learningPrimaryNavigation: ModuleNavSection[] = [
   { label: "Guidance Counselor", href: "/dashboard/education", module: "learning" },
@@ -267,7 +268,12 @@ export default function DashboardLayout({
       if (!active) return;
 
       if (userError || !authUser) {
-        router.replace("/login");
+        router.replace(
+          buildAuthLoginPath(
+            `${window.location.pathname}${window.location.search}${window.location.hash}`,
+            userError ? "session_expired" : null
+          )
+        );
         return;
       }
 

@@ -60,6 +60,8 @@ export type BeastAdminMemberDirectoryEntry = {
   displayName: string;
   email: string | null;
   emailVerificationStatus: BeastAdminMemberEmailVerificationStatus;
+  pendingEmail?: string | null;
+  emailChangeSentAt?: string | null;
   accountStatus: BeastAdminMemberAccountStatus;
   accountKind: BeastAdminAccountKind;
   role: string;
@@ -292,6 +294,70 @@ export function normalizeBeastAdminMemberDirectory(
   return members.length === value.length ? members : null;
 }
 
+export type BeastAdminMemberEmailStatus = {
+  id: string;
+  currentEmail: string | null;
+  emailVerificationStatus: BeastAdminMemberEmailVerificationStatus;
+  pendingEmail: string | null;
+  emailChangeSentAt: string | null;
+};
+
+export function normalizeBeastAdminMemberEmailStatuses(
+  value: unknown
+): BeastAdminMemberEmailStatus[] | null {
+  if (!Array.isArray(value)) return null;
+
+  const statuses = value.flatMap((entry) => {
+    if (
+      !isRecord(entry) ||
+      typeof entry.id !== "string" ||
+      (entry.currentEmail !== null && typeof entry.currentEmail !== "string") ||
+      !beastAdminMemberEmailVerificationStatuses.includes(
+        entry.emailVerificationStatus as BeastAdminMemberEmailVerificationStatus
+      ) ||
+      (entry.pendingEmail !== null && typeof entry.pendingEmail !== "string") ||
+      !isNullableDateString(entry.emailChangeSentAt)
+    ) {
+      return [];
+    }
+
+    return [
+      {
+        id: entry.id,
+        currentEmail: entry.currentEmail,
+        emailVerificationStatus:
+          entry.emailVerificationStatus as BeastAdminMemberEmailVerificationStatus,
+        pendingEmail: entry.pendingEmail,
+        emailChangeSentAt: entry.emailChangeSentAt,
+      },
+    ];
+  });
+
+  return statuses.length === value.length ? statuses : null;
+}
+
+export function mergeBeastAdminMemberEmailStatuses(
+  members: BeastAdminMemberDirectoryEntry[],
+  statuses: BeastAdminMemberEmailStatus[]
+) {
+  const statusesByMember = new Map(
+    statuses.map((status) => [status.id, status])
+  );
+
+  return members.map((member) => {
+    const status = statusesByMember.get(member.id);
+    if (!status) return member;
+
+    return {
+      ...member,
+      email: status.currentEmail,
+      emailVerificationStatus: status.emailVerificationStatus,
+      pendingEmail: status.pendingEmail,
+      emailChangeSentAt: status.emailChangeSentAt,
+    };
+  });
+}
+
 export type BeastAdminMemberDirectoryFilters = {
   query: string;
   role: string;
@@ -312,6 +378,7 @@ export function filterBeastAdminMemberDirectory(
       [
         member.displayName,
         member.email || "",
+        member.pendingEmail || "",
         member.role,
         member.accountStatus,
         ...member.betaAssignments.flatMap((assignment) => [

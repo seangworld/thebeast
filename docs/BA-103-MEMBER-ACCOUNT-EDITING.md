@@ -7,7 +7,7 @@ BeastAdmin Members now edits each field through its authoritative boundary:
 | Field | Write target | Notes |
 | --- | --- | --- |
 | Display name | `public.profiles.display_name` | The directory prefers this explicit owner-managed value, then falls back to existing Personal Hub identity fields. |
-| Login email | Supabase Auth Admin API | Requires an explicit warning and confirmation. The Auth user ID is unchanged; no profile email copy is written. The result reports whether the new email requires verification. |
+| Login email | Supabase Auth Admin API | Requires an explicit warning and confirmation. The Auth user ID is unchanged; no profile email copy is written. The corrected email is marked unverified and verification delivery must succeed or the original Auth email is restored. |
 | Role | `public.profiles.role` | The database and server route both prevent demotion of the final owner. |
 | Account status | Supabase Auth Admin API | Supports suspension and reactivation. Invitation completion and deletion remain outside this editor. |
 | Household relationship | Not available | Disabled until BeastOS has a real persisted household-membership source. No mock record is written. |
@@ -33,6 +33,8 @@ credentials never leave the server route.
   requests.
 - Duplicate Auth email errors are returned as a human-readable conflict without
   applying profile changes.
+- Because Supabase Admin email updates are direct, BeastAdmin separately sends
+  verification to an owner-corrected address and rolls back if delivery fails.
 - If the database transaction fails after Auth changes, the server attempts to
   restore the previous email and suspension state and reports a hard failure if
   that rollback cannot be verified.

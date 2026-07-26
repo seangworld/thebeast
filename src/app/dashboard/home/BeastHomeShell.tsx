@@ -12,6 +12,7 @@ import {
 } from "@/app/components/design/DashboardPrimitives";
 import { createClient } from "@/lib/supabase/client";
 import { isBeastAdminOwnerRole } from "@/lib/beastAdmin";
+import { buildCurrentAuthLoginPath } from "@/lib/auth/experience";
 
 export const beastHomeSections = [
   { label: "Overview", href: "/dashboard/home" },
@@ -52,7 +53,7 @@ export function BeastHomeShell({
         const userId = userData?.user?.id;
 
         if (!userId) {
-          router.replace("/login");
+          router.replace(buildCurrentAuthLoginPath());
           return;
         }
 

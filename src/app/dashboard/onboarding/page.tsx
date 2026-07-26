@@ -15,6 +15,7 @@ import {
 } from "@/lib/learning/onboardingCompletion";
 import { beastOSPlatformIdentity } from "@/lib/platform/identity";
 import { createClient } from "@/lib/supabase/client";
+import { buildCurrentAuthLoginPath } from "@/lib/auth/experience";
 
 type OnboardingForm = {
   preferredName: string;
@@ -155,7 +156,7 @@ export default function OnboardingPage() {
       if (!active) return;
 
       if (userError || !authUser) {
-        router.replace("/login");
+        router.replace(buildCurrentAuthLoginPath());
         return;
       }
 

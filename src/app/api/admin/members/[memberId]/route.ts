@@ -6,6 +6,10 @@ import {
   type BeastAdminEditableAccountStatus,
   type BeastAdminMemberEditResult,
 } from "@/lib/beastAdminMemberEditing";
+import {
+  buildEmailVerificationCallbackUrl,
+  getEmailWorkflowErrorMessage,
+} from "@/lib/auth/emailWorkflows";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createRouteClient } from "@/lib/supabase/server";
 
@@ -240,6 +244,39 @@ export async function PATCH(request: Request, { params }: RouteContext) {
 
     authWasUpdated = true;
     updatedAuthUser = data.user;
+  }
+
+  if (emailChanged) {
+    const verificationRedirect = buildEmailVerificationCallbackUrl(
+      new URL(request.url).origin,
+      process.env.NEXT_PUBLIC_BEAST_SITE_URL
+    );
+    const { error: verificationError } = await adminClient.auth.resend({
+      type: "signup",
+      email: edit.email,
+      options: { emailRedirectTo: verificationRedirect },
+    });
+
+    if (verificationError) {
+      const { error: rollbackError } =
+        await adminClient.auth.admin.updateUserById(params.memberId, {
+          email: currentEmail,
+          email_confirm: Boolean(targetAuthUser.email_confirmed_at),
+        });
+      if (rollbackError) {
+        return jsonError(
+          "The verification email failed and the Auth email rollback also failed. Inspect this account before retrying.",
+          500
+        );
+      }
+
+      return jsonError(
+        `${getEmailWorkflowErrorMessage(
+          verificationError
+        )} The original Auth email was restored.`,
+        502
+      );
+    }
   }
 
   const emailReverificationRequired =

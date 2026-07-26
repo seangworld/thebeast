@@ -3,6 +3,7 @@ export type BeastAdminMemberFieldSource = {
     | "displayName"
     | "email"
     | "emailVerification"
+    | "pendingEmailChange"
     | "accountStatus"
     | "role"
     | "householdRole"
@@ -73,6 +74,21 @@ export const beastAdminMemberFieldSources: BeastAdminMemberFieldSource[] = [
       "Read directly for each directory request. Accounts without an Auth email are labeled “Not provided.”",
     accessBoundary:
       "auth.users is read only inside the owner-checked security-definer RPC.",
+    kind: "direct",
+  },
+  {
+    id: "pendingEmailChange",
+    label: "Pending email change",
+    displayedAs: "Account details and owner verification action",
+    source: "Supabase Auth",
+    columns: "auth.users.email_change, auth.users.email_change_sent_at",
+    authoritativeSource: "Supabase Auth secure email-change state",
+    editable:
+      "Not edited as profile data. Members initiate the Auth workflow; owners may only resend an existing verification when supported.",
+    synchronization:
+      "Projected at read time. The current auth.users.email remains the displayed sign-in email until Supabase completes verification.",
+    accessBoundary:
+      "Only the pending address and sent timestamp leave the owner-checked security-definer RPC.",
     kind: "direct",
   },
   {

@@ -12,6 +12,7 @@ import {
 } from "@/app/components/design/DashboardPrimitives";
 import { createClient } from "@/lib/supabase/client";
 import { isBeastAdminOwnerRole } from "@/lib/beastAdmin";
+import { buildCurrentAuthLoginPath } from "@/lib/auth/experience";
 
 export const beastHealthSections = [
   { label: "Overview", href: "/dashboard/health" },
@@ -55,7 +56,7 @@ export function BeastHealthShell({
         const userId = userData?.user?.id;
 
         if (!userId) {
-          router.replace("/login");
+          router.replace(buildCurrentAuthLoginPath());
           return;
         }
 

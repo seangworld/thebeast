@@ -16,6 +16,7 @@ Supabase client and never receives a service-role credential or direct
 | Display name | `public.profiles` name precedence | Shows `Not provided.` when every profile name field is blank. Email is never converted into a name. |
 | Authentication email | `auth.users.email` | Shows `Not provided.` for Auth accounts without an email. No profile email copy is used. |
 | Email verification | `auth.users.email_confirmed_at` | Shows Verified, Not verified, or `Not provided.` when no Auth email exists. |
+| Pending email change | `auth.users.email_change`, `email_change_sent_at` | Shows the pending address and request time without replacing the current sign-in email. |
 | Account status | Supabase Auth lifecycle timestamps | Derives Active, Invited, Suspended, or Deleted from explicit Auth state. |
 | Role | `public.profiles.role` | Remains separate from household role and beta assignments. Missing profiles show `Not provided.`. |
 | Household role | No persisted source | Always shows `Not provided.`. Mock household and family contracts are not queried. |
@@ -43,3 +44,7 @@ Apply
 Supabase environment before deploying the updated application. PostgREST will
 then serve the replaced RPC response through its schema cache without a UI
 workaround.
+
+BA-107 additionally requires
+`20260726001100_add_beast_auth_email_workflows.sql` for the owner-only pending
+email-change projection and verification-resend audit action.

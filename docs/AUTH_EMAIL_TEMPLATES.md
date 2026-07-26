@@ -19,6 +19,7 @@ Supabase-ready HTML templates:
 - `supabase/auth/templates/welcome.html`
 - `supabase/auth/templates/magic-link.html`
 - `supabase/auth/templates/verify-email.html`
+- `supabase/auth/templates/change-email.html`
 - `supabase/auth/templates/password-reset.html`
 
 ## Sender
@@ -37,10 +38,16 @@ Use the HTML source files above in Supabase Auth email template settings:
 | --- | --- |
 | Magic Link | `supabase/auth/templates/magic-link.html` |
 | Confirm signup / Verify Email | `supabase/auth/templates/verify-email.html` |
+| Change Email Address | `supabase/auth/templates/change-email.html` |
 | Reset Password | `supabase/auth/templates/password-reset.html` |
 | Welcome / invite-style account message | `supabase/auth/templates/welcome.html` |
 
-The Magic Link, Verify Email, and Password Reset templates use Supabase `{{ .ConfirmationURL }}` for the action button and fallback link. The Welcome template uses `{{ .SiteURL }}`.
+Magic Link and Password Reset use Supabase `{{ .ConfirmationURL }}`. Verify
+Email and Change Email Address send `{{ .TokenHash }}` to the BeastOS
+server-side Auth callback through `{{ .RedirectTo }}` so confirmation works
+with cookie-based SSR sessions and owner-assisted resends. The change template
+identifies the requested address with `{{ .NewEmail }}`. The Welcome template
+uses `{{ .SiteURL }}`.
 
 ## Required Content
 

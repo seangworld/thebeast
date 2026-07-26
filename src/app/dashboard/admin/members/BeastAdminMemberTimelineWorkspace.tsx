@@ -13,7 +13,9 @@ import {
   buildBeastAdminMemberTimelineCounts,
   filterBeastAdminMemberDirectory,
   filterBeastAdminMemberTimelineEvents,
+  mergeBeastAdminMemberEmailStatuses,
   normalizeBeastAdminMemberDirectory,
+  normalizeBeastAdminMemberEmailStatuses,
   normalizeBeastAdminMemberTimeline,
   type BeastAdminMemberAccountStatus,
   type BeastAdminMemberDirectoryEntry,
@@ -69,7 +71,7 @@ function humanizeTimelineError(error: unknown) {
       message
     )
   ) {
-    return "The authoritative member directory is not available yet. Apply the BA-102 Supabase migration, then retry.";
+    return "The authoritative member directory is not available yet. Apply the BA-102, BA-103, and BA-107 Supabase migrations in order, then retry.";
   }
   if (/permission|owner access|required|42501/i.test(message)) {
     return "Member timelines are restricted to the Beast owner.";
@@ -163,6 +165,8 @@ export function BeastAdminMemberTimelineWorkspace() {
   const [featureFlagsAvailable, setFeatureFlagsAvailable] = useState(true);
   const [editorOpen, setEditorOpen] = useState(false);
   const [editSuccess, setEditSuccess] = useState("");
+  const [verificationMessage, setVerificationMessage] = useState("");
+  const [verificationSending, setVerificationSending] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
@@ -174,15 +178,27 @@ export function BeastAdminMemberTimelineWorkspace() {
 
       try {
         const supabase = createClient();
-        const [directoryResult, featureFlagResult] = await Promise.all([
+        const [directoryResult, emailStatusResult, featureFlagResult] =
+          await Promise.all([
           supabase.rpc("get_beast_admin_member_directory"),
+          supabase.rpc("get_beast_admin_member_email_statuses"),
           supabase.rpc("get_beast_admin_feature_flags"),
-        ]);
+          ]);
         const { data, error: directoryError } = directoryResult;
         if (directoryError) throw directoryError;
+        if (emailStatusResult.error) throw emailStatusResult.error;
 
-        const nextMembers = normalizeBeastAdminMemberDirectory(data);
-        if (!nextMembers) throw new Error("Member directory data was invalid.");
+        const normalizedMembers = normalizeBeastAdminMemberDirectory(data);
+        const emailStatuses = normalizeBeastAdminMemberEmailStatuses(
+          emailStatusResult.data
+        );
+        if (!normalizedMembers || !emailStatuses) {
+          throw new Error("Member directory data was invalid.");
+        }
+        const nextMembers = mergeBeastAdminMemberEmailStatuses(
+          normalizedMembers,
+          emailStatuses
+        );
         const nextFeatureFlags = featureFlagResult.error
           ? null
           : normalizeBeastFeatureFlags(featureFlagResult.data);
@@ -312,6 +328,58 @@ export function BeastAdminMemberTimelineWorkspace() {
           : selectedDirectoryMember && !selectedDirectoryMember.email
             ? "This account has no authoritative Auth email and cannot be edited safely here."
             : "";
+  const canResendVerification = Boolean(
+    selectedDirectoryMember &&
+      selectedDirectoryMember.accountKind === "member" &&
+      selectedDirectoryMember.accountStatus !== "deleted" &&
+      selectedDirectoryMember.email &&
+      (selectedDirectoryMember.pendingEmail ||
+        selectedDirectoryMember.emailVerificationStatus === "unverified")
+  );
+
+  async function resendMemberVerification() {
+    if (!selectedDirectoryMember || !canResendVerification) return;
+
+    setVerificationSending(true);
+    setVerificationMessage("");
+    setError("");
+    try {
+      const response = await fetch(
+        `/api/admin/members/${encodeURIComponent(
+          selectedDirectoryMember.id
+        )}/email-verification`,
+        { method: "POST" }
+      );
+      const payload: unknown = await response.json().catch(() => null);
+      if (
+        !response.ok ||
+        !payload ||
+        typeof payload !== "object" ||
+        !("message" in payload) ||
+        typeof payload.message !== "string"
+      ) {
+        const message =
+          payload &&
+          typeof payload === "object" &&
+          "error" in payload &&
+          typeof payload.error === "string"
+            ? payload.error
+            : "BeastAdmin could not resend this verification email.";
+        throw new Error(message);
+      }
+
+      setVerificationMessage(payload.message);
+      setRefreshKey((current) => current + 1);
+    } catch (resendError) {
+      setError(
+        resendError instanceof Error
+          ? resendError.message
+          : "BeastAdmin could not resend this verification email."
+      );
+    } finally {
+      setVerificationSending(false);
+    }
+  }
 
   if (directoryLoading) {
     return <TimelineLoadingState title="Loading owner member directory" />;
@@ -463,6 +531,7 @@ export function BeastAdminMemberTimelineWorkspace() {
                   setSelectedMemberId(member.id);
                   setEditorOpen(false);
                   setEditSuccess("");
+                  setVerificationMessage("");
                 }}
                 className={`rounded-xl border p-3 text-left transition ${
                   selectedMemberId === member.id
@@ -514,6 +583,7 @@ export function BeastAdminMemberTimelineWorkspace() {
                 onClick={() => {
                   setEditorOpen(false);
                   setEditSuccess("");
+                  setVerificationMessage("");
                   setRefreshKey((current) => current + 1);
                 }}
               >
@@ -557,6 +627,15 @@ export function BeastAdminMemberTimelineWorkspace() {
               </p>
             ) : null}
 
+            {verificationMessage ? (
+              <p
+                role="status"
+                className="mt-4 rounded-xl border border-green-300/30 bg-green-300/10 p-4 text-sm font-bold text-green-100"
+              >
+                {verificationMessage}
+              </p>
+            ) : null}
+
             <dl className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               <DirectoryField
                 label="Display name"
@@ -573,6 +652,16 @@ export function BeastAdminMemberTimelineWorkspace() {
                     selectedDirectoryMember.emailVerificationStatus
                   ]
                 }
+              />
+              <DirectoryField
+                label="Pending email change"
+                value={selectedDirectoryMember.pendingEmail || MISSING_VALUE}
+              />
+              <DirectoryField
+                label="Email change requested"
+                value={formatOptionalDate(
+                  selectedDirectoryMember.emailChangeSentAt || null
+                )}
               />
               <DirectoryField
                 label="Account status"
@@ -605,6 +694,29 @@ export function BeastAdminMemberTimelineWorkspace() {
                 )}
               />
             </dl>
+
+            {canResendVerification ? (
+              <div className="mt-5 rounded-xl border border-sky-300/25 bg-sky-300/10 p-4">
+                <p className="text-sm font-black text-sky-100">
+                  Verification action available
+                </p>
+                <p className="mt-2 text-sm leading-6 text-sky-100/80">
+                  {selectedDirectoryMember.pendingEmail
+                    ? "The member has a pending Auth email change. Resending uses the pending address and does not change either email."
+                    : "The authoritative Auth email is not verified. Resending does not alter the member account."}
+                </p>
+                <button
+                  type="button"
+                  onClick={resendMemberVerification}
+                  disabled={verificationSending}
+                  className="beast-button-secondary mt-3 min-h-11 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {verificationSending
+                    ? "Sending verification…"
+                    : "Resend verification"}
+                </button>
+              </div>
+            ) : null}
 
             <div className="mt-5 grid gap-5 lg:grid-cols-2">
               <section>

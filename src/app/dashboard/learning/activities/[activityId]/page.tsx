@@ -27,6 +27,7 @@ import {
 import { selectMentorTutor } from "@/lib/learning/tutorOrchestration";
 import { getProfileDisplayName } from "@/lib/profile";
 import { createClient } from "@/lib/supabase/client";
+import { buildCurrentAuthLoginPath } from "@/lib/auth/experience";
 import { LessonEngine } from "../LessonEngine";
 
 type ActivityRow = LearningActivityRunnerRow & {
@@ -80,7 +81,7 @@ export default function LearningActivityRunnerPage() {
       const authUser = userData?.user;
 
       if (userError || !authUser) {
-        router.replace("/login");
+        router.replace(buildCurrentAuthLoginPath());
         return;
       }
 

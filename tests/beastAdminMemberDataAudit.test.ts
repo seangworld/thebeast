@@ -14,6 +14,7 @@ test("BA-101 maps every displayed member field to an explicit authority", () => 
       "displayName",
       "email",
       "emailVerification",
+      "pendingEmailChange",
       "accountStatus",
       "role",
       "householdRole",

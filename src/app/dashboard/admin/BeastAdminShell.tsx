@@ -11,6 +11,7 @@ import {
 } from "@/app/components/design/DashboardPrimitives";
 import { createClient } from "@/lib/supabase/client";
 import { canAccessBeastAdmin } from "@/lib/beastAdmin";
+import { buildCurrentAuthLoginPath } from "@/lib/auth/experience";
 import {
   ADMIN_VIEW_MODE_EVENT,
   ADMIN_VIEW_MODE_STORAGE_KEY,
@@ -87,7 +88,7 @@ export function BeastAdminShell({
         const userId = userData?.user?.id;
 
         if (!userId) {
-          router.replace("/login");
+          router.replace(buildCurrentAuthLoginPath());
           return;
         }
 

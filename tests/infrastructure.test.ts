@@ -3453,14 +3453,12 @@ test("authentication presents one permission-aware Beast platform entry point", 
   assert.match(loginPage, /beastOSPlatformIdentity\.description/);
   assert.match(loginPage, /beastOSApplications\.map/);
   assert.match(loginPage, /beastOSSharedCapabilities\.join/);
-  assert.match(loginPage, />\s*Log In\s*</);
+  assert.match(loginPage, />\s*Sign In\s*</);
   assert.match(loginPage, />\s*Create Account\s*</);
   assert.match(loginPage, /signInWithOtp/);
   assert.match(loginPage, /shouldCreateUser: intent === "create-account"/);
-  assert.match(
-    loginPage,
-    /emailRedirectTo: `\$\{window\.location\.origin\}\/dashboard\/today`/
-  );
+  assert.match(loginPage, /emailRedirectTo: buildAuthCallbackUrl/);
+  assert.match(loginPage, /getSafeAuthDestination/);
   assert.doesNotMatch(loginPage, /BeastEducation|Guidance Counselor/);
   assert.match(dashboardLayout, /select\("role, onboarding_complete"\)/);
   assert.match(dashboardLayout, /beast_admin_member_module_access/);
