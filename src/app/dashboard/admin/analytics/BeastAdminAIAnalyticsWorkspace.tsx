@@ -18,6 +18,52 @@ import { createClient } from "@/lib/supabase/client";
 
 const windowOptions = [7, 30, 90] as const;
 
+const usageMetricDefinitions = [
+  {
+    title: "Conversation Count",
+    detail:
+      "Counts persisted conversation threads created during the selected measurement window.",
+  },
+  {
+    title: "Average Session Length",
+    detail:
+      "Measures elapsed time between the first and last persisted message for conversations with at least two messages.",
+  },
+  {
+    title: "Messages",
+    detail:
+      "Counts persisted member and professional messages attached to conversations created during the selected window.",
+  },
+  {
+    title: "Abandoned Conversations",
+    detail:
+      "Counts conversations with a member message and no professional reply, or an unanswered latest member message older than 24 hours.",
+  },
+] as const;
+
+const futureQualityMetrics = [
+  {
+    title: "Member satisfaction",
+    detail:
+      "Requires explicit, purpose-built member feedback linked to the experience being measured.",
+  },
+  {
+    title: "Correction rate",
+    detail:
+      "Requires recorded corrections confirmed through member or professional review.",
+  },
+  {
+    title: "Escalation rate",
+    detail:
+      "Requires reviewed escalation events with a defined reason and outcome.",
+  },
+  {
+    title: "Resolution rate",
+    detail:
+      "Requires a member- or professional-confirmed resolution outcome.",
+  },
+] as const;
+
 function humanizeAnalyticsError(error: unknown) {
   const message =
     error && typeof error === "object" && "message" in error
@@ -381,6 +427,27 @@ export function BeastAdminAIAnalyticsWorkspace() {
         </>
       )}
 
+      <DashboardCard accent="admin">
+        <SectionHeader
+          eyebrow="Metric Interpretation"
+          title="How usage is measured"
+          description="Each metric comes from persisted conversation records. Definitions are shown explicitly so activity is not mistaken for quality."
+        />
+        <dl className="mt-5 grid gap-3 sm:grid-cols-2">
+          {usageMetricDefinitions.map((metric) => (
+            <div
+              key={metric.title}
+              className="min-w-0 rounded-xl border border-[#2a3242] bg-[#111827] p-4"
+            >
+              <dt className="font-black text-white">{metric.title}</dt>
+              <dd className="mt-2 text-sm leading-6 text-[#9aa7b8]">
+                {metric.detail}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </DashboardCard>
+
       <section className="grid gap-4 xl:grid-cols-2">
         <DashboardCard accent="yellow">
           <SectionHeader
@@ -391,9 +458,9 @@ export function BeastAdminAIAnalyticsWorkspace() {
             )}
           />
           <p className="mt-4 text-sm leading-6 text-[#c7cfdb]">
-            Beast does not currently record an explicit resolved or completed
-            conversation outcome. Archived conversations are not treated as
-            completed because archiving describes organization, not success.
+            Completion is intentionally not inferred. Beast does not currently
+            record an explicit resolved or completed conversation outcome, and
+            archiving describes organization rather than success.
           </p>
         </DashboardCard>
 
@@ -406,9 +473,9 @@ export function BeastAdminAIAnalyticsWorkspace() {
             )}
           />
           <p className="mt-4 text-sm leading-6 text-[#c7cfdb]">
-            Professional responses do not currently collect a linked
-            helpful/unhelpful vote. Product feedback and lesson grading are
-            different signals and are not reused as response-quality evidence.
+            Explicit response-linked feedback is required before this rate can
+            be measured. Product feedback and lesson grading are different
+            signals, so BeastAdmin never estimates response quality from them.
           </p>
         </DashboardCard>
       </section>
@@ -420,29 +487,17 @@ export function BeastAdminAIAnalyticsWorkspace() {
           description="BA-103 establishes the usage baseline. Future quality reporting should be added only with reviewed, purpose-built signals."
         />
         <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {[
-            {
-              title: "Member helpfulness",
-              detail: "Response-linked helpful or unhelpful feedback.",
-            },
-            {
-              title: "Resolved outcomes",
-              detail: "Member-confirmed completion or next-step resolution.",
-            },
-            {
-              title: "Correction rate",
-              detail: "Responses corrected after member or professional review.",
-            },
-            {
-              title: "Safety and escalation",
-              detail: "Reviewed appropriateness of professional escalation.",
-            },
-          ].map((metric) => (
+          {futureQualityMetrics.map((metric) => (
             <article
               key={metric.title}
               className="rounded-xl border border-[#2a3242] bg-[#111827] p-4"
             >
-              <h3 className="font-black text-white">{metric.title}</h3>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h3 className="font-black text-white">{metric.title}</h3>
+                <span className="rounded-full border border-[#344052] bg-[#0b1220] px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-[#7f8da3]">
+                  Not collected
+                </span>
+              </div>
               <p className="mt-2 text-sm leading-6 text-[#9aa7b8]">
                 {metric.detail}
               </p>

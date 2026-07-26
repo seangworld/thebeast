@@ -176,11 +176,39 @@ test("BA-103 presents every requested metric with honest loading and empty state
   );
   assert.match(workspace, /7, 30, 90/);
   assert.match(workspace, /No recorded conversations/);
-  assert.match(workspace, /does not currently record an explicit resolved/);
-  assert.match(workspace, /do not currently collect a linked/);
+  assert.match(workspace, /Completion is intentionally not inferred/);
+  assert.match(workspace, /Explicit response-linked feedback is required/);
   assert.match(workspace, /aggregate counts only/);
   assert.doesNotMatch(workspace, /SUPABASE_SERVICE_ROLE_KEY/);
   assert.doesNotMatch(workspace, /localStorage/);
   assert.match(shell, /AI Analytics/);
   assert.match(navigation, /AI Analytics/);
+});
+
+test("BA-123 explains usage metrics and reserves quality rates for explicit evidence", () => {
+  const workspace = readFileSync(
+    "src/app/dashboard/admin/analytics/BeastAdminAIAnalyticsWorkspace.tsx",
+    "utf8"
+  );
+
+  for (const definition of [
+    "Counts persisted conversation threads created during the selected measurement window.",
+    "Measures elapsed time between the first and last persisted message for conversations with at least two messages.",
+    "Counts persisted member and professional messages attached to conversations created during the selected window.",
+    "Counts conversations with a member message and no professional reply, or an unanswered latest member message older than 24 hours.",
+  ]) {
+    assert.match(workspace, new RegExp(definition.replace(/[.]/g, "\\.")));
+  }
+
+  assert.match(workspace, /archiving describes organization rather than success/);
+  assert.match(workspace, /never estimates response quality/);
+  assert.match(workspace, /Not collected/);
+  for (const futureMetric of [
+    "Member satisfaction",
+    "Correction rate",
+    "Escalation rate",
+    "Resolution rate",
+  ]) {
+    assert.match(workspace, new RegExp(futureMetric));
+  }
 });
