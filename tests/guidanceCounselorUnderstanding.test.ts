@@ -89,3 +89,21 @@ test("BE-217 replaces the static profile summary in the Counselor workspace", ()
   assert.match(conversation, /item\.confidence/);
   assert.match(reasoning, /nextGuidanceUnderstandingQuestion/);
 });
+
+test("BE-229 welcomes new members while understanding is still empty", () => {
+  assert.match(conversation, /We’re just getting started/);
+  assert.match(
+    conversation,
+    /As we talk I’ll learn about your goals, interests,[\s\S]*strengths, education, and preferred learning style/
+  );
+  assert.match(conversation, /It’s too early to draw conclusions/);
+  assert.match(
+    conversation,
+    /I’ll build working ideas as I learn more about you[\s\S]*through our conversations/
+  );
+  assert.doesNotMatch(conversation, /Nothing is confirmed yet/);
+  assert.doesNotMatch(
+    conversation,
+    /I don’t have a useful working hypothesis yet/
+  );
+});

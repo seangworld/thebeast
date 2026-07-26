@@ -688,18 +688,26 @@ export default function GuidanceCounselorConversation({
                   title="What I Know"
                   items={understandingItems(understanding.whatIKnow)}
                   emptyState={
-                    <p className="mt-3 text-sm text-slate-400">
-                      Nothing is confirmed yet.
-                    </p>
+                    <div className="mt-3 space-y-2 text-sm text-slate-400">
+                      <p>We’re just getting started.</p>
+                      <p>
+                        As we talk I’ll learn about your goals, interests,
+                        strengths, education, and preferred learning style.
+                      </p>
+                    </div>
                   }
                 />
                 <AgentContextSummary
                   title="What I Think"
                   items={understandingItems(understanding.whatIThink)}
                   emptyState={
-                    <p className="mt-3 text-sm text-slate-400">
-                      I don’t have a useful working hypothesis yet.
-                    </p>
+                    <div className="mt-3 space-y-2 text-sm text-slate-400">
+                      <p>It’s too early to draw conclusions.</p>
+                      <p>
+                        I’ll build working ideas as I learn more about you
+                        through our conversations.
+                      </p>
+                    </div>
                   }
                 />
                 <AgentContextSummary
