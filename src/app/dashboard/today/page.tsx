@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   DashboardCard,
-  MetricTile,
   ModuleBadge,
   SectionHeader,
 } from "@/app/components/design/DashboardPrimitives";
@@ -18,7 +17,23 @@ import { useRuntimeToday } from "@/lib/hooks/useRuntimeToday";
 import { getBeastGreeting } from "@/lib/runtimeDate";
 import { createClient } from "@/lib/supabase/client";
 import { getProfileDisplayName } from "@/lib/profile";
+import {
+  calculateMonthlyRecurringTotal,
+  isActiveRecurringSource,
+  numberValue,
+} from "@/lib/financialMetrics";
 import { buildMobileTodayCards } from "@/lib/mobileSharedServices";
+import { buildBeastOSIntelligence } from "@/lib/platform/recommendationEngine";
+import type {
+  PlatformActivity,
+  PlatformTimelineEvent,
+} from "@/lib/platform/types";
+import {
+  getGoalProgressPercent,
+  loadUserGoals,
+  type BeastGoalDataClient,
+  type Goal,
+} from "@/lib/platform/goals";
 import {
   assembleTodayDayPlan,
   buildManualTodayContribution,
@@ -60,6 +75,52 @@ type ProfileNameRow = {
   username?: string | null;
 };
 
+type MoneyDebt = {
+  id: string;
+  name?: string | null;
+  balance?: number | null;
+  minimum_payment?: number | null;
+  due_date?: number | null;
+  is_archived?: boolean | null;
+  assigned_income_date?: string | null;
+  created_at?: string | null;
+};
+
+type MoneyBill = {
+  id: string;
+  name?: string | null;
+  amount?: number | null;
+  frequency?: string | null;
+  due_date?: number | null;
+  is_archived?: boolean | null;
+  next_due_date_after_payment?: string | null;
+  assigned_income_date?: string | null;
+  created_at?: string | null;
+};
+
+type MoneyIncome = {
+  id: string;
+  name?: string | null;
+  amount?: number | null;
+  frequency?: string | null;
+  next_date?: string | null;
+  is_active?: boolean | null;
+  is_archived?: boolean | null;
+};
+
+type MoneySettings = {
+  starting_balance?: number | null;
+  checking_buffer?: number | null;
+};
+
+type MoneyPayment = {
+  id: string;
+  amount?: number | null;
+  amount_paid?: number | null;
+  payment_date?: string | null;
+  created_at?: string | null;
+};
+
 type TodayState = {
   userId: string;
   name: string;
@@ -68,6 +129,13 @@ type TodayState = {
   sessionId: string | null;
   courses: CourseRow[];
   activities: ActivityRow[];
+  debts: MoneyDebt[];
+  bills: MoneyBill[];
+  incomes: MoneyIncome[];
+  cashSettings: MoneySettings | null;
+  billPayments: MoneyPayment[];
+  debtPayments: MoneyPayment[];
+  goals: Goal[];
 };
 
 const emptyState: TodayState = {
@@ -78,6 +146,13 @@ const emptyState: TodayState = {
   sessionId: null,
   courses: [],
   activities: [],
+  debts: [],
+  bills: [],
+  incomes: [],
+  cashSettings: null,
+  billPayments: [],
+  debtPayments: [],
+  goals: [],
 };
 
 const activityBlueprint = ["Lesson", "Practice", "Quiz", "AI Tutor Challenge", "Reflection"];
@@ -296,6 +371,13 @@ export default function TodayPage() {
         plansResult,
         sessionsResult,
         activitiesResult,
+        debtsResult,
+        billsResult,
+        incomesResult,
+        cashSettingsResult,
+        billPaymentsResult,
+        debtPaymentsResult,
+        goalsResult,
       ] =
         await Promise.all([
           supabase
@@ -331,6 +413,35 @@ export default function TodayPage() {
             .select("*")
             .eq("user_id", authUser.id)
             .order("sort_order", { ascending: true }),
+          supabase.from("debts").select("*").eq("user_id", authUser.id),
+          supabase
+            .from("bill_events")
+            .select("*")
+            .eq("user_id", authUser.id)
+            .order("due_date", { ascending: true }),
+          supabase
+            .from("income_events")
+            .select("*")
+            .eq("user_id", authUser.id)
+            .order("next_date", { ascending: true }),
+          supabase
+            .from("cash_settings")
+            .select("*")
+            .eq("user_id", authUser.id)
+            .maybeSingle(),
+          supabase
+            .from("bill_payments")
+            .select("*")
+            .eq("user_id", authUser.id)
+            .order("created_at", { ascending: false })
+            .limit(8),
+          supabase
+            .from("debt_payments")
+            .select("*")
+            .eq("user_id", authUser.id)
+            .order("created_at", { ascending: false })
+            .limit(8),
+          loadUserGoals(supabase as unknown as BeastGoalDataClient),
         ]);
 
       if (profileResult.error) throw profileResult.error;
@@ -363,6 +474,13 @@ export default function TodayPage() {
         sessionId: ensured.sessionId,
         courses,
         activities: ensured.activities,
+        debts: (debtsResult.data || []) as MoneyDebt[],
+        bills: (billsResult.data || []) as MoneyBill[],
+        incomes: (incomesResult.data || []) as MoneyIncome[],
+        cashSettings: cashSettingsResult.data as MoneySettings | null,
+        billPayments: (billPaymentsResult.data || []) as MoneyPayment[],
+        debtPayments: (debtPaymentsResult.data || []) as MoneyPayment[],
+        goals: goalsResult.goals,
       });
     } catch (error) {
       setMessage(
@@ -472,28 +590,59 @@ export default function TodayPage() {
           new Date(a.completed_at || a.created_at || 0).getTime()
       ),
   ];
-  const totalXp = completedActivities.reduce(
-    (sum, activity) => sum + Number(activity.xp || 0),
-    0
+  const moneySnapshot = useMemo(() => {
+    const activeDebts = state.debts.filter(
+      (debt) => !debt.is_archived && numberValue(debt.balance) > 0
+    );
+    const activeBills = state.bills.filter((bill) => !bill.is_archived);
+
+    return {
+      activeDebts,
+      activeBills,
+      monthlyIncome: calculateMonthlyRecurringTotal(
+        state.incomes.filter(isActiveRecurringSource)
+      ),
+      monthlyBills: calculateMonthlyRecurringTotal(activeBills),
+      debtMinimums: activeDebts.reduce(
+        (sum, debt) => sum + numberValue(debt.minimum_payment),
+        0
+      ),
+      startingCash: numberValue(state.cashSettings?.starting_balance),
+      buffer: numberValue(state.cashSettings?.checking_buffer),
+    };
+  }, [state]);
+  const moneyIntelligence = useMemo(
+    () =>
+      buildBeastOSIntelligence({
+        ...moneySnapshot,
+        billPayments: state.billPayments,
+        debtPayments: state.debtPayments,
+        now,
+      }),
+    [
+      moneySnapshot,
+      now,
+      state.billPayments,
+      state.debtPayments,
+    ]
   );
-  const estimatedMinutes = openActivities.reduce(
-    (sum, activity) => sum + Number(activity.estimated_minutes || 0),
-    0
-  );
-  const progressPercent =
-    state.activities.length === 0
-      ? 0
-      : Math.round((completedActivities.length / state.activities.length) * 100);
-  const streak = completedActivities.length > 0 ? 1 : 0;
   const learningContribution: TodayContribution = useMemo(
     () => ({
       id: "today-learning-priority",
       source: "learning",
       type: "Resume",
       title: readyActivity?.title || "Ask your Guidance Counselor for the first step",
-      summary: "BeastEducation supplies the learning readiness and next activity.",
+      summary: readyActivity
+        ? `${readyActivity.estimated_minutes} minutes with your current learning plan.`
+        : state.courses[0]
+          ? `Your ${state.courses[0].title} plan needs its next learning step.`
+          : "Your Guidance Counselor can help define the first useful learning step.",
       reason:
-        "Today ranks the supplied contribution without recomputing learning mastery.",
+        readyActivity
+          ? "This activity is ready in your saved BeastEducation plan."
+          : state.courses[0]
+            ? `${state.courses[0].title} is in your learning path, but no activity is ready.`
+            : "No course or ready learning activity is available yet.",
       recommendedAction: readyActivity ? "Continue with Guidance Counselor" : "Ask Guidance Counselor",
       actionUrl: "/dashboard/education#mentor-session",
       activeDate: todayDate,
@@ -505,23 +654,77 @@ export default function TodayPage() {
       estimatedMinutes: readyActivity?.estimated_minutes || 20,
       dismissible: true,
       status: "Active",
-      sourceEvidenceIds: readyActivity ? [readyActivity.id] : [],
+      sourceEvidenceIds: readyActivity
+        ? [readyActivity.id]
+        : state.courses[0]
+          ? [state.courses[0].id]
+          : [],
     }),
-    [readyActivity, todayDate]
+    [readyActivity, state.courses, todayDate]
+  );
+  const moneyContributions = useMemo<TodayContribution[]>(
+    () =>
+      moneyIntelligence.recommendations.map((recommendation) => ({
+        id: `today-${recommendation.id}`,
+        source: "money",
+        type: "Recommendation",
+        title: recommendation.title,
+        summary: recommendation.summary,
+        reason: recommendation.reason,
+        recommendedAction: recommendation.recommendedAction,
+        actionUrl: recommendation.actionUrl || "/dashboard/money",
+        activeDate: todayDate,
+        timing: "Active",
+        priority: recommendation.priority,
+        importance:
+          recommendation.priority === "Critical"
+            ? 10
+            : recommendation.priority === "High"
+              ? 8
+              : recommendation.priority === "Medium"
+                ? 5
+                : 2,
+        urgency:
+          recommendation.priority === "Critical"
+            ? 10
+            : recommendation.priority === "High"
+              ? 8
+              : recommendation.priority === "Medium"
+                ? 5
+                : 2,
+        preferenceWeight: 5,
+        estimatedMinutes: 10,
+        dismissible: recommendation.dismissible,
+        status: recommendation.completed ? "Completed" : "Active",
+        sourceEvidenceIds: [recommendation.id],
+      })),
+    [moneyIntelligence.recommendations, todayDate]
   );
   const todayDayPlan = useMemo(
     () =>
       assembleTodayDayPlan({
-        contributions: [learningContribution, ...manualTodayItems],
+        contributions: [
+          ...(learningContribution.sourceEvidenceIds.length > 0
+            ? [learningContribution]
+            : []),
+          ...moneyContributions,
+          ...manualTodayItems,
+        ],
         today: todayDate,
       }),
-    [learningContribution, manualTodayItems, todayDate]
+    [
+      learningContribution,
+      manualTodayItems,
+      moneyContributions,
+      todayDate,
+    ]
   );
-  const learningPriorityScore = getTodayPriorityScore(learningContribution);
-  const learningExplanation =
-    getTodayContributionExplanation(learningContribution);
-  const learningActionAvailability =
-    getTodayItemActionAvailability(learningContribution);
+  const primaryPriority = todayDayPlan.active[0] || learningContribution;
+  const primaryPriorityScore = getTodayPriorityScore(primaryPriority);
+  const primaryPriorityExplanation =
+    getTodayContributionExplanation(primaryPriority);
+  const primaryActionAvailability =
+    getTodayItemActionAvailability(primaryPriority);
   const actionButtons: { action: TodayItemActionType; label: string }[] = [
     { action: "Dismiss", label: "Dismiss" },
     { action: "Snooze", label: "Snooze 1h" },
@@ -532,18 +735,70 @@ export default function TodayPage() {
     () => buildMobileTodayCards(todayDayPlan.active, 3),
     [todayDayPlan.active]
   );
+  const professionalRecommendations = useMemo(
+    () =>
+      todayDayPlan.active
+        .filter((item) => item.source === "learning" || item.source === "money")
+        .slice(0, 4),
+    [todayDayPlan.active]
+  );
+  const recentActivity = useMemo<PlatformActivity[]>(() => {
+    const learningActivity = completedActivities
+      .filter((activity) => activity.completed_at || activity.created_at)
+      .map((activity) => ({
+        id: `learning-completed-${activity.id}`,
+        module: "learning" as const,
+        title: activity.title,
+        summary: `${activity.activity_type} completed and saved to your learning history.`,
+        timestamp: activity.completed_at || activity.created_at || "",
+        actionUrl: getLearningActivityRoute(activity.id),
+      }));
 
-  function handleTodayAction(action: TodayItemActionType) {
+    return [...learningActivity, ...moneyIntelligence.activities]
+      .filter((item) => item.timestamp.slice(0, 10) === todayDate)
+      .sort(
+        (left, right) =>
+          new Date(right.timestamp).getTime() -
+          new Date(left.timestamp).getTime()
+      )
+      .slice(0, 5);
+  }, [completedActivities, moneyIntelligence.activities, todayDate]);
+  const upcomingEvents = useMemo<PlatformTimelineEvent[]>(
+    () =>
+      moneyIntelligence.timelineEvents
+        .filter((item) => new Date(item.timestamp).getTime() >= now.getTime())
+        .sort(
+          (left, right) =>
+            new Date(left.timestamp).getTime() -
+            new Date(right.timestamp).getTime()
+        )
+        .slice(0, 5),
+    [moneyIntelligence.timelineEvents, now]
+  );
+  const activeGoals = useMemo(
+    () =>
+      state.goals
+        .filter((goal) =>
+          ["Proposed", "Active", "Blocked"].includes(goal.status)
+        )
+        .slice(0, 3),
+    [state.goals]
+  );
+
+  function handleTodayAction(
+    contribution: TodayContribution,
+    action: TodayItemActionType
+  ) {
     const requestedAt = new Date().toISOString();
     const snoozedUntil = new Date(Date.now() + 60 * 60 * 1000).toISOString();
     const rescheduledFor = new Date(Date.now() + 24 * 60 * 60 * 1000);
     rescheduledFor.setHours(9, 0, 0, 0);
 
     const request = buildTodayItemActionRequest({
-      contribution: learningContribution,
+      contribution,
       action,
       requestedAt,
-      reason: `${action} requested from BeastOS Today and routed to the ${learningContribution.source} owner contract.`,
+      reason: `${action} requested from BeastOS Today and routed to the ${contribution.source} owner contract.`,
       snoozedUntil: action === "Snooze" ? snoozedUntil : undefined,
       rescheduledFor:
         action === "Reschedule" ? rescheduledFor.toISOString() : undefined,
@@ -577,41 +832,42 @@ export default function TodayPage() {
 
   return (
     <main className="beast-page">
-      <div className="beast-container space-y-8">
+      <div className="beast-container space-y-7">
         <section className="beast-page-header">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-4">
-              <ModuleBadge module="learning" label="Student Today" />
+              <ModuleBadge module="beastos" label="BeastOS Today" />
               <h1 className="beast-title">
                 {state.name ? `${getBeastGreeting(now)}, ${state.name}` : "Today"}
               </h1>
               <p className="beast-subtitle">
-                Your Guidance Counselor has one clear next step ready for you.
+                See what needs attention, what changed, and the clearest next
+                action across your life.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Link href="/dashboard/education" className="beast-button">
-                My Guidance Counselor
-              </Link>
               <Link href="/dashboard/timeline" className="beast-button-secondary">
-                View Timeline
+                What changed
+              </Link>
+              <Link href="/dashboard/notifications" className="beast-button">
+                Review alerts
               </Link>
             </div>
           </div>
         </section>
 
         {message ? (
-          <DashboardCard accent="red">
-            <p className="text-sm font-semibold text-red-100">{message}</p>
+          <DashboardCard accent="beastos">
+            <p className="text-sm font-semibold text-[#dbe3ef]">{message}</p>
           </DashboardCard>
         ) : null}
 
         {loading ? (
           <DashboardCard accent="learning">
             <div className="grid animate-pulse gap-3">
-              <div className="h-6 w-40 rounded bg-[#2a3242]" />
+              <div className="h-5 w-36 rounded bg-[#2a3242]" />
               <div className="h-10 w-full max-w-xl rounded bg-[#2a3242]" />
-              <div className="h-20 rounded bg-[#2a3242]" />
+              <div className="h-16 rounded bg-[#2a3242]" />
             </div>
           </DashboardCard>
         ) : null}
@@ -622,9 +878,9 @@ export default function TodayPage() {
         >
           <div className="grid grid-cols-3 gap-2">
             {[
-              ["Active", todayDayPlan.active.length],
-              ["Done", todayDayPlan.completed.length],
-              ["Next", todayDayPlan.tomorrow.length],
+              ["Priorities", todayDayPlan.active.length],
+              ["Changes", recentActivity.length],
+              ["Upcoming", upcomingEvents.length],
             ].map(([label, value]) => (
               <div
                 key={label}
@@ -660,6 +916,13 @@ export default function TodayPage() {
               <p className="mt-2 break-words text-sm leading-6 text-[#c7cfdb]">
                 {card.summary}
               </p>
+              <p className="mt-2 break-words text-xs font-semibold leading-5 text-[#9aa7b8]">
+                Why it matters:{" "}
+                {
+                  todayDayPlan.active.find((item) => item.id === card.id)
+                    ?.reason
+                }
+              </p>
               <Link href={card.href} className="mt-4 flex w-full justify-center beast-button">
                 {card.actionLabel}
               </Link>
@@ -674,8 +937,8 @@ export default function TodayPage() {
               <button
                 key={action}
                 type="button"
-                onClick={() => handleTodayAction(action)}
-                disabled={!learningActionAvailability[action]}
+                onClick={() => handleTodayAction(primaryPriority, action)}
+                disabled={!primaryActionAvailability[action]}
                 className="min-h-[44px] rounded-lg border border-[#2a3242] bg-[#111827] px-3 py-2 text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {label}
@@ -684,198 +947,96 @@ export default function TodayPage() {
           </div>
         </section>
 
-        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <MetricTile
-            label="Saved lessons"
-            value={`${progressPercent}%`}
-            detail={`${completedActivities.length} of ${state.activities.length} learning steps saved`}
-            icon="P"
-            tone="purple"
-          />
-          <MetricTile
-            label="Practice credit"
-            value={String(totalXp)}
-            detail="Earned from saved lessons"
-            icon="PC"
-            tone="yellow"
-          />
-          <MetricTile
-            label="Streak"
-            value={`${streak} day`}
-            detail={streak ? "Learning started today" : "Save one lesson to start"}
-            icon="S"
-            tone="green"
-          />
-          <MetricTile
-            label="Time together"
-            value={`${estimatedMinutes} min`}
-            detail="Estimated for today"
-            icon="T"
-            tone="blue"
-          />
-        </section>
-
-        <DashboardCard accent="beastos">
+        <DashboardCard accent="beastos" className="hidden md:block">
           <SectionHeader
-            eyebrow="Shared Today"
-            title="Cross-module contribution contract"
-            description="Today accepts approved contributions from BeastOS services and active modules, then orders and routes them without replacing the source module engines."
+            eyebrow="What needs my attention?"
+            title="Today's Priorities"
+            description={`${todayDayPlan.headline}. ${todayDayPlan.summary}`}
+            action={
+              <ModuleBadge
+                module="beastos"
+                label={`${todayDayPlan.active.length} active`}
+              />
+            }
           />
-          <div className="mt-5 grid gap-3 lg:grid-cols-[1.2fr_0.8fr]">
-            <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
-              <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                Day State
-              </div>
-              <div className="mt-2 text-2xl font-black text-white">
-                {todayDayPlan.state}
-              </div>
-              <p className="mt-2 text-sm font-semibold leading-6 text-[#c7cfdb]">
-                {todayDayPlan.headline}. {todayDayPlan.summary}
-              </p>
-              <div className="mt-4 grid gap-2 sm:grid-cols-3">
-                <MetricTile
-                  label="Active"
-                  value={String(todayDayPlan.active.length)}
-                  detail="Ready in today's plan"
-                  icon="A"
-                  tone="blue"
-                />
-                <MetricTile
-                  label="Completed"
-                  value={String(todayDayPlan.completed.length)}
-                  detail="Completed Day progress"
-                  icon="CD"
-                  tone="green"
-                />
-                <MetricTile
-                  label="Tomorrow"
-                  value={String(todayDayPlan.tomorrow.length)}
-                  detail="Tomorrow Preview items"
-                  icon="TP"
-                  tone="purple"
-                />
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
-              <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                Weekly Outlook
-              </div>
-              <div className="mt-3 grid gap-2">
-                {todayDayPlan.weeklyOutlook.map((item) => (
-                  <div
-                    key={item.label}
-                    className="flex items-center justify-between rounded-lg border border-[#2a3242] bg-[#0f1419] px-3 py-2 text-sm font-bold text-[#dbe3ef]"
-                  >
-                    <span>{item.label}</span>
-                    <span>{item.active} active</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-          <div className="mt-5 flex flex-wrap gap-2">
-            {todayContributionSources.map((source) => (
-              <span
-                key={source}
-                className="rounded-full border border-[#2a3242] bg-[#111827] px-3 py-1 text-xs font-black uppercase text-[#dbe3ef]"
-              >
-                {source}
-              </span>
-            ))}
-          </div>
-          <div className="mt-5 rounded-xl border border-[#2a3242] bg-[#111827] p-4">
-            <div className="text-xs font-bold uppercase text-[#7f8da3]">
-              Priority Engine
-            </div>
-            <div className="mt-2 text-3xl font-black text-white">
-              {learningPriorityScore.score}
-            </div>
-            <p className="mt-2 text-sm font-semibold leading-6 text-[#c7cfdb]">
-              {learningPriorityScore.explanation}
-            </p>
-          </div>
-          <div className="mt-5 rounded-xl border border-[#2a3242] bg-[#111827] p-4">
-            <div className="text-xs font-bold uppercase text-[#7f8da3]">
-              Explain why shown
-            </div>
-            <p className="mt-2 text-sm font-semibold leading-6 text-[#dbe3ef]">
-              {learningExplanation.displayReason}
-            </p>
-            <div className="mt-4 grid gap-2 text-sm font-semibold leading-6 text-[#c7cfdb] md:grid-cols-2">
-              <p>{learningExplanation.sourceReason}</p>
-              <p>{learningExplanation.evidenceReason}</p>
-              <p>{learningExplanation.timingReason}</p>
-              <p>{learningExplanation.priorityReason}</p>
-              <p>{learningExplanation.actionReason}</p>
-              <p>{learningExplanation.scoreExplanation}</p>
-            </div>
-          </div>
-          <div className="mt-5 grid gap-3 md:grid-cols-2">
-            {todayContributionContractRules.map((rule) => (
-              <div
-                key={rule}
-                className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 text-sm font-semibold leading-6 text-[#dbe3ef]"
-              >
-                {rule}
-              </div>
-            ))}
-          </div>
-          {actionRequest ? (
-            <div className="mt-5 rounded-xl border border-[#2a3242] bg-[#0f1419] p-4">
-              <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                Latest Today action event
-              </div>
-              <p className="mt-2 text-sm font-semibold leading-6 text-[#dbe3ef]">
-                {actionRequest.action} is queued through the {actionRequest.source}{" "}
-                contract for contribution {actionRequest.contributionId}. Dispatch
-                mode: {actionRequest.dispatchMode}.
-              </p>
-            </div>
-          ) : null}
-        </DashboardCard>
-
-        <DashboardCard accent="beastos">
-          <SectionHeader
-            eyebrow="Manual Today"
-            title="Daily plan assembly"
-            description="Manual items are BeastOS-owned plan steps. They sit beside sourced module contributions without changing module-owned records."
-          />
-          <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-            <input
-              type="text"
-              value={manualItemTitle}
-              onChange={(event) => setManualItemTitle(event.target.value)}
-              placeholder="Add a manual Today item"
-              className="min-h-[44px] flex-1 rounded-lg border border-[#2a3242] bg-[#111827] px-3 py-2 text-sm font-semibold text-white outline-none transition placeholder:text-[#7f8da3] focus:border-indigo-300"
-            />
-            <button
-              type="button"
-              onClick={addManualTodayItem}
-              className="beast-button"
-            >
-              Add to Today
-            </button>
-          </div>
           <div className="mt-5 grid gap-3">
-            {manualTodayItems.map((item) => (
-              <div
-                key={item.id}
-                className="rounded-xl border border-[#2a3242] bg-[#111827] p-4"
-              >
-                <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                  BeastOS manual item
-                </div>
-                <h3 className="mt-1 font-black text-white">{item.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
-                  {item.summary}
+            {todayDayPlan.active.slice(0, 5).map((item, index) => {
+              const explanation = getTodayContributionExplanation(item);
+              const availability = getTodayItemActionAvailability(item);
+
+              return (
+                <article
+                  key={item.id}
+                  className={`rounded-xl border p-4 ${
+                    index === 0
+                      ? "border-[#38bdf8]/45 bg-[#38bdf8]/10"
+                      : "border-[#2a3242] bg-[#111827]"
+                  }`}
+                >
+                  <div className="flex flex-wrap items-center gap-2">
+                    <ModuleBadge
+                      module={item.source === "plans" ? "beastos" : item.source}
+                    />
+                    <span className="rounded-full border border-[#2a3242] px-2.5 py-1 text-xs font-black text-[#c7cfdb]">
+                      {index === 0 ? "Start here" : item.priority}
+                    </span>
+                    {item.estimatedMinutes ? (
+                      <span className="text-xs font-bold text-[#9aa7b8]">
+                        About {item.estimatedMinutes} min
+                      </span>
+                    ) : null}
+                  </div>
+                  <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                    <div className="max-w-3xl">
+                      <h2 className="text-xl font-black text-white">
+                        {item.title}
+                      </h2>
+                      <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
+                        {item.summary}
+                      </p>
+                      <p className="mt-2 text-sm font-semibold leading-6 text-[#dbe3ef]">
+                        Why this matters: {item.reason}
+                      </p>
+                      <details className="mt-2 text-xs text-[#9aa7b8]">
+                        <summary className="cursor-pointer font-bold">
+                          Explain why shown
+                        </summary>
+                        <p className="mt-2 leading-5">
+                          {explanation.displayReason}
+                        </p>
+                      </details>
+                    </div>
+                    <Link href={item.actionUrl} className="beast-button">
+                      {item.recommendedAction}
+                    </Link>
+                  </div>
+                  {index === 0 ? (
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {actionButtons.map(({ action, label }) => (
+                        <button
+                          key={action}
+                          type="button"
+                          onClick={() => handleTodayAction(item, action)}
+                          disabled={!availability[action]}
+                          className="rounded-lg border border-[#2a3242] bg-[#0f1419] px-3 py-2 text-xs font-black text-white disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+                </article>
+              );
+            })}
+            {todayDayPlan.active.length === 0 ? (
+              <div className="rounded-xl border border-green-400/25 bg-green-400/10 p-4">
+                <h2 className="font-black text-green-100">
+                  Nothing urgent needs your attention
+                </h2>
+                <p className="mt-2 text-sm leading-6 text-[#dbe3ef]">
+                  Your professionals have not supplied an active priority from
+                  your current records.
                 </p>
-              </div>
-            ))}
-            {manualTodayItems.length === 0 ? (
-              <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 text-sm font-semibold leading-6 text-[#c7cfdb]">
-                No manual items yet. Add one only when Today needs a user-owned
-                plan step outside a module-owned recommendation.
               </div>
             ) : null}
           </div>
@@ -883,156 +1044,432 @@ export default function TodayPage() {
 
         <DashboardCard accent="learning">
           <SectionHeader
-            eyebrow="Your Guidance Counselor Recommends"
-            title={readyActivity?.title || "Ask your Guidance Counselor for the first step"}
-            description={
-              readyActivity
-                ? `This is the best next step for today. It should take about ${readyActivity.estimated_minutes} minutes.`
-                : state.activities.length > 0
-                  ? "You finished the current set. Ask your Guidance Counselor for the next learning step."
-                  : "Your Guidance Counselor can prepare the first learning step from your path."
-            }
-            action={<ModuleBadge module="learning" label="Next Step" />}
+            eyebrow="What are my AI professionals recommending?"
+            title="Professional Recommendations"
+            description="Only recommendations supported by your current module records appear here."
           />
-          <div className="mt-5 flex flex-wrap items-center gap-3">
-            {readyActivity ? (
-              <Link
-                href="/dashboard/education#mentor-session"
-                className="beast-button"
+          <div className="mt-5 grid gap-3 lg:grid-cols-2">
+            {professionalRecommendations.map((item) => (
+              <article
+                key={`professional-${item.id}`}
+                className="flex h-full flex-col rounded-xl border border-[#2a3242] bg-[#111827] p-4"
               >
-                Continue with Guidance Counselor
-              </Link>
-            ) : (
-              <button
-                type="button"
-                onClick={generateNextActivity}
-                className="beast-button"
-                disabled={generating || loading}
-              >
-                {generating ? "Choosing..." : "Let's choose what to learn next"}
-              </button>
-            )}
-            <p className="text-sm font-semibold text-[#c7cfdb]">
-              Why this step:{" "}
-              {readyActivity
-                ? "It matches where you are now and gives the Tutor the right starting point."
-                : state.activities.length > 0
-                  ? "Your Guidance Counselor is ready to choose the next step."
-                  : loading
-                    ? "Your learning context is loading."
-                    : "Start by asking your Guidance Counselor to prepare a lesson."}
-            </p>
-          </div>
-          <div className="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-            {actionButtons.map(({ action, label }) => (
-              <button
-                key={action}
-                type="button"
-                onClick={() => handleTodayAction(action)}
-                disabled={!learningActionAvailability[action]}
-                className="rounded-lg border border-[#2a3242] bg-[#111827] px-3 py-2 text-sm font-black text-white transition hover:border-[#818cf8] hover:bg-[#182033] disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {label}
-              </button>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-xs font-black uppercase tracking-[0.14em] text-[#9aa7b8]">
+                    {item.source === "money"
+                      ? "Money Coach"
+                      : "Your Guidance Counselor Recommends"}
+                  </div>
+                  <ModuleBadge
+                    module={item.source === "plans" ? "beastos" : item.source}
+                  />
+                </div>
+                <h3 className="mt-3 text-lg font-black text-white">
+                  {item.title}
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
+                  {item.summary}
+                </p>
+                <p className="mt-3 flex-1 text-sm font-semibold leading-6 text-[#dbe3ef]">
+                  Why it matters: {item.reason}
+                </p>
+                <Link href={item.actionUrl} className="mt-4 beast-button">
+                  {item.recommendedAction}
+                </Link>
+              </article>
             ))}
+            {professionalRecommendations.length === 0 ? (
+              <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 text-sm leading-6 text-[#c7cfdb] lg:col-span-2">
+                No AI professional has raised a recommendation supported by your
+                current records. Today will surface one when a module has
+                something useful to say.
+              </div>
+            ) : null}
           </div>
-          <p className="mt-3 text-xs font-semibold uppercase text-[#7f8da3]">
-            Actions route through module contract events. BeastOS does not directly
-            mutate learning activity status, schedules, or mastery.
-          </p>
         </DashboardCard>
 
-        <section id="activities" className="grid scroll-mt-24 gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-          <DashboardCard accent="learning">
+        <section className="grid gap-4 xl:grid-cols-2">
+          <DashboardCard accent="timeline">
             <SectionHeader
-              eyebrow="Today"
-              title="Your learning steps"
-              description="Focus on the step your Guidance Counselor recommends. The rest is here only so you can review or return later."
+              eyebrow="What changed today?"
+              title="Recent Activity"
+              description="Meaningful changes from your active modules."
             />
             <div className="mt-5 grid gap-3">
-              {activityList.map((activity) => (
-                <div
-                  key={activity.id}
-                  className={`rounded-xl border p-4 ${getActivityTone(activity.status)}`}
+              {recentActivity.map((item) => (
+                <Link
+                  key={item.id}
+                  href={item.actionUrl || "/dashboard/timeline"}
+                  className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 transition hover:border-[#38bdf8]/40"
                 >
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                        {activity.activity_type} - {activity.difficulty}
-                      </div>
-                      <h3 className="mt-1 font-black text-white">{activity.title}</h3>
-                    </div>
-                    <span className="rounded-full border border-[#2a3242] bg-[#0f1419] px-3 py-1 text-xs font-bold text-[#dbe3ef]">
-                      {activity.status === "Completed" ? "Saved" : "Ready when you are"}
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <ModuleBadge module={item.module} />
+                    <span className="text-xs font-bold text-[#9aa7b8]">
+                      {new Date(item.timestamp).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                      })}
                     </span>
                   </div>
-                  <div className="mt-3 flex flex-wrap gap-2 text-xs font-bold uppercase text-[#9aa7b8]">
-                    <span>{activity.estimated_minutes} min</span>
-                    <span>{activity.xp} practice credit</span>
-                  </div>
-                  <div className="mt-4">
-                    {activity.status === "Completed" ? (
-                      <Link
-                        href={getLearningActivityRoute(activity.id)}
-                        className="beast-button-secondary"
-                      >
-                        Review with Tutor
-                      </Link>
-                    ) : (
-                      <Link
-                        href={getLearningActivityRoute(activity.id)}
-                        className="beast-button"
-                      >
-                        Continue
-                      </Link>
-                    )}
-                  </div>
-                </div>
+                  <h3 className="mt-2 font-black text-white">{item.title}</h3>
+                  <p className="mt-1 text-sm leading-6 text-[#c7cfdb]">
+                    {item.summary}
+                  </p>
+                </Link>
               ))}
-              {activityList.length === 0 ? (
+              {recentActivity.length === 0 ? (
                 <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
-                  <h3 className="font-black text-white">No learning steps yet</h3>
+                  <h3 className="font-black text-white">No new activity yet</h3>
                   <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
-                    {loading
-                      ? "Your learning context is loading."
-                      : "Ask your Guidance Counselor above to prepare the first teaching moment."}
+                    Completed learning and recorded Money activity will appear
+                    here.
                   </p>
                 </div>
               ) : null}
             </div>
           </DashboardCard>
 
-          <DashboardCard accent="purple">
+          <DashboardCard accent="calendar">
             <SectionHeader
-              eyebrow="My Plan"
-              title={state.courses[0]?.title || "Your first course"}
-              description={
-                state.courses.length > 0
-                  ? `${state.courses.length} course${state.courses.length === 1 ? "" : "s"} in your path.`
-                  : "Add a course in onboarding to build your path."
-              }
+              eyebrow="What is coming?"
+              title="Upcoming Events"
+              description="Source-owned dates that may affect your next decision."
             />
             <div className="mt-5 grid gap-3">
-              {state.courses.map((course) => (
-                <div
-                  key={course.id}
-                  className="rounded-xl border border-[#2a3242] bg-[#111827] p-4"
+              {upcomingEvents.map((item) => (
+                <Link
+                  key={item.id}
+                  href={item.actionUrl || "/dashboard/calendar"}
+                  className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 transition hover:border-[#38bdf8]/40"
                 >
-                  <div className="font-black text-white">{course.title}</div>
-                  <div className="mt-2 h-2 rounded-full bg-[#0f1419]">
-                    <div
-                      className="h-full rounded-full bg-[#818cf8]"
-                      style={{ width: `${Number(course.progress || 0)}%` }}
-                    />
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <ModuleBadge module={item.module} />
+                    <span className="text-xs font-bold text-[#9aa7b8]">
+                      {new Date(item.timestamp).toLocaleDateString("en-US", {
+                        weekday: "short",
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </span>
                   </div>
-                  <div className="mt-2 text-xs font-bold uppercase text-[#7f8da3]">
-                    {Number(course.progress || 0)}% of this path explored
-                  </div>
-                </div>
+                  <h3 className="mt-2 font-black text-white">{item.title}</h3>
+                  <p className="mt-1 text-sm leading-6 text-[#c7cfdb]">
+                    {item.summary}
+                  </p>
+                </Link>
               ))}
+              {upcomingEvents.length === 0 ? (
+                <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 text-sm leading-6 text-[#c7cfdb]">
+                  No upcoming module event is available from your current
+                  records.
+                </div>
+              ) : null}
+              <Link href="/dashboard/calendar" className="beast-button-secondary">
+                Open Calendar
+              </Link>
             </div>
           </DashboardCard>
         </section>
+
+        <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
+          <DashboardCard accent="goals">
+            <SectionHeader
+              eyebrow="Where am I making progress?"
+              title="Goals Progress"
+              description="Your active BeastOS goals and their next known step."
+              action={<ModuleBadge module="goals" />}
+            />
+            <div className="mt-5 grid gap-3">
+              {activeGoals.map((goal) => {
+                const progress = getGoalProgressPercent(goal);
+
+                return (
+                  <Link
+                    key={goal.id}
+                    href="/dashboard/goals"
+                    className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 transition hover:border-[#38bdf8]/40"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <h3 className="font-black text-white">{goal.title}</h3>
+                      <span className="rounded-full border border-[#2a3242] px-2.5 py-1 text-xs font-black text-[#c7cfdb]">
+                        {goal.status}
+                      </span>
+                    </div>
+                    {progress !== null ? (
+                      <>
+                        <div className="mt-3 h-2 rounded-full bg-[#0f1419]">
+                          <div
+                            className="h-full rounded-full bg-[#38bdf8]"
+                            style={{ width: `${progress}%` }}
+                          />
+                        </div>
+                        <div className="mt-2 text-xs font-bold text-[#9aa7b8]">
+                          {progress}% complete
+                        </div>
+                      </>
+                    ) : null}
+                    <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
+                      {goal.currentStep ||
+                        goal.summary ||
+                        "Open the goal to define the next measurable step."}
+                    </p>
+                  </Link>
+                );
+              })}
+              {activeGoals.length === 0 ? (
+                <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 text-sm leading-6 text-[#c7cfdb]">
+                  No active BeastOS goal is available yet. Today will show
+                  progress after you create a real goal.
+                </div>
+              ) : null}
+            </div>
+          </DashboardCard>
+
+          <DashboardCard accent="beastos">
+            <SectionHeader
+              eyebrow="What should I do next?"
+              title="Quick Actions"
+              description="Jump directly to the workspace that can move the day forward."
+            />
+            <div className="mt-5 grid gap-2 sm:grid-cols-2">
+              {[
+                ["Ask Money Coach", "/dashboard/money"],
+                ["Ask Guidance Counselor", "/dashboard/education"],
+                ["Review Calendar", "/dashboard/calendar"],
+                ["Check Goals", "/dashboard/goals"],
+                ["Upload a Document", "/dashboard/uploads"],
+                ["Search Beast", "/dashboard/search"],
+              ].map(([label, href]) => (
+                <Link
+                  key={label}
+                  href={href}
+                  className="beast-button-secondary min-h-[44px]"
+                >
+                  {label}
+                </Link>
+              ))}
+            </div>
+            <div className="mt-5 border-t border-[#2a3242] pt-5">
+              <label className="text-xs font-black uppercase text-[#9aa7b8]">
+                Add my own priority
+              </label>
+              <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                <input
+                  type="text"
+                  value={manualItemTitle}
+                  onChange={(event) => setManualItemTitle(event.target.value)}
+                  placeholder="Add a manual Today item"
+                  className="min-h-[44px] min-w-0 flex-1 rounded-lg border border-[#2a3242] bg-[#111827] px-3 py-2 text-sm font-semibold text-white outline-none placeholder:text-[#7f8da3] focus:border-indigo-300"
+                />
+                <button
+                  type="button"
+                  onClick={addManualTodayItem}
+                  className="beast-button"
+                >
+                  Add to Today
+                </button>
+              </div>
+              {manualTodayItems.length > 0 ? (
+                <div className="mt-3 grid gap-2">
+                  {manualTodayItems.map((item) => (
+                    <div
+                      key={item.id}
+                      className="rounded-lg border border-[#2a3242] bg-[#111827] p-3 text-sm font-bold text-white"
+                    >
+                      {item.title}
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          </DashboardCard>
+        </section>
+
+        {actionRequest ? (
+          <DashboardCard accent="beastos">
+            <p className="text-sm font-semibold leading-6 text-[#dbe3ef]">
+              {actionRequest.action} is queued through the {actionRequest.source}{" "}
+              contract. BeastOS left the source record unchanged.
+            </p>
+          </DashboardCard>
+        ) : null}
+
+        <details
+          id="activities"
+          className="scroll-mt-24 rounded-2xl border border-[#2a3242] bg-[#1a1f2b] p-5"
+        >
+          <summary className="cursor-pointer text-base font-black text-white">
+            Learning plan details
+          </summary>
+          <div className="mt-5 grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+            <DashboardCard accent="learning">
+              <SectionHeader
+                eyebrow="Your Guidance Counselor Recommends"
+                title={readyActivity?.title || "Ask your Guidance Counselor for the first step"}
+                description={
+                  readyActivity
+                    ? `This step is ready and should take about ${readyActivity.estimated_minutes} minutes.`
+                    : state.activities.length > 0
+                      ? "You finished the current set. Ask your Guidance Counselor for the next learning step."
+                      : "Ask your Guidance Counselor above to prepare the first teaching moment."
+                }
+              />
+              <div className="mt-4">
+                {readyActivity ? (
+                  <Link
+                    href="/dashboard/education#mentor-session"
+                    className="beast-button"
+                  >
+                    Continue with Guidance Counselor
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={generateNextActivity}
+                    className="beast-button"
+                    disabled={generating || loading}
+                  >
+                    {generating
+                      ? "Choosing..."
+                      : "Let's choose what to learn next"}
+                  </button>
+                )}
+              </div>
+              <div className="mt-5 grid gap-3">
+                {activityList.map((activity) => (
+                  <div
+                    key={activity.id}
+                    className={`rounded-xl border p-4 ${getActivityTone(activity.status)}`}
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <div className="text-xs font-bold uppercase text-[#7f8da3]">
+                          {activity.activity_type} - {activity.difficulty}
+                        </div>
+                        <h3 className="mt-1 font-black text-white">
+                          {activity.title}
+                        </h3>
+                      </div>
+                      <span className="text-xs font-bold text-[#9aa7b8]">
+                        {activity.estimated_minutes} min
+                      </span>
+                    </div>
+                    <Link
+                      href={getLearningActivityRoute(activity.id)}
+                      className="mt-3 inline-flex beast-button-secondary"
+                    >
+                      {activity.status === "Completed"
+                        ? "Review with Tutor"
+                        : "Continue"}
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            </DashboardCard>
+
+            <DashboardCard accent="purple">
+              <SectionHeader
+                eyebrow="Learning path"
+                title={state.courses[0]?.title || "Your first course"}
+                description={`${state.courses.length} course${
+                  state.courses.length === 1 ? "" : "s"
+                } in your path.`}
+              />
+              <div className="mt-5 grid gap-3">
+                {state.courses.map((course) => (
+                  <div
+                    key={course.id}
+                    className="rounded-xl border border-[#2a3242] bg-[#111827] p-4"
+                  >
+                    <div className="font-black text-white">{course.title}</div>
+                    <div className="mt-2 h-2 rounded-full bg-[#0f1419]">
+                      <div
+                        className="h-full rounded-full bg-[#818cf8]"
+                        style={{ width: `${Number(course.progress || 0)}%` }}
+                      />
+                    </div>
+                    <div className="mt-2 text-xs font-bold text-[#9aa7b8]">
+                      {Number(course.progress || 0)}% explored
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </DashboardCard>
+          </div>
+        </details>
+
+        <details className="rounded-2xl border border-[#2a3242] bg-[#111827] p-5">
+          <summary className="cursor-pointer text-sm font-black text-[#c7cfdb]">
+            How Today decides what to show
+          </summary>
+          <div className="mt-5">
+            <SectionHeader
+              eyebrow="Shared Today"
+              title="Cross-module contribution contract"
+              description="Today orders source-owned signals without replacing module engines."
+            />
+            <div
+              className="mt-4 rounded-xl border border-[#2a3242] bg-[#0f1419] p-4"
+              aria-label="Priority Engine"
+            >
+              <div className="text-xs font-black uppercase text-[#9aa7b8]">
+                Priority Engine
+              </div>
+              <div className="mt-2 text-2xl font-black text-white">
+                {primaryPriorityScore.score}
+              </div>
+              <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
+                {primaryPriorityScore.explanation}
+              </p>
+              <div className="mt-4 text-xs font-black uppercase text-[#9aa7b8]">
+                Explain why shown
+              </div>
+              <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
+                {primaryPriorityExplanation.displayReason}
+              </p>
+            </div>
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {todayContributionContractRules.map((rule) => (
+                <p
+                  key={rule}
+                  className="rounded-xl border border-[#2a3242] bg-[#0f1419] p-4 text-sm leading-6 text-[#c7cfdb]"
+                >
+                  {rule}
+                </p>
+              ))}
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {todayContributionSources.map((source) => (
+                <span
+                  key={source}
+                  className="rounded-full border border-[#2a3242] px-3 py-1 text-xs font-black uppercase text-[#9aa7b8]"
+                >
+                  {source}
+                </span>
+              ))}
+            </div>
+            <div className="mt-5 grid gap-2 sm:grid-cols-3">
+              <div className="rounded-lg border border-[#2a3242] p-3 text-sm text-[#c7cfdb]">
+                Completed Day: {todayDayPlan.completed.length}
+              </div>
+              <div className="rounded-lg border border-[#2a3242] p-3 text-sm text-[#c7cfdb]">
+                Tomorrow Preview: {todayDayPlan.tomorrow.length}
+              </div>
+              <div className="rounded-lg border border-[#2a3242] p-3 text-sm text-[#c7cfdb]">
+                Weekly Outlook:{" "}
+                {todayDayPlan.weeklyOutlook.reduce(
+                  (sum, item) => sum + item.active,
+                  0
+                )}{" "}
+                active
+              </div>
+            </div>
+            <p className="mt-4 text-xs font-semibold uppercase text-[#7f8da3]">
+              Actions route through module contract events. BeastOS does not
+              directly mutate module records.
+            </p>
+          </div>
+        </details>
       </div>
     </main>
   );
