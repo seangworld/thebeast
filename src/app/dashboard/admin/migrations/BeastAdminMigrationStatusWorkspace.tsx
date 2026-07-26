@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   DashboardCard,
@@ -290,6 +291,12 @@ export function BeastAdminMigrationStatusWorkspace() {
           >
             {refreshing ? "Refreshing…" : "Refresh status"}
           </button>
+          <Link
+            href="/dashboard/admin/migrations/explorer"
+            className="beast-button-secondary inline-flex min-h-11 items-center justify-center"
+          >
+            Inspect migration SQL
+          </Link>
         </div>
         <dl className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {[

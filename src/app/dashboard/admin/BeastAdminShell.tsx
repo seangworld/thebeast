@@ -24,6 +24,7 @@ const adminNavItems = [
   { label: "Development Console", href: "/dashboard/admin/development" },
   { label: "Platform Health", href: "/dashboard/admin/health" },
   { label: "Migration Status", href: "/dashboard/admin/migrations" },
+  { label: "SQL Explorer", href: "/dashboard/admin/migrations/explorer" },
   { label: "Executive Metrics", href: "/dashboard/admin/metrics" },
   { label: "Release Center", href: "/dashboard/admin/releases" },
   { label: "Roadmap", href: "/dashboard/admin/roadmap" },
