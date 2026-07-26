@@ -33,6 +33,16 @@ export const beastAdminEcosystemRelations = [
 export type BeastAdminEcosystemRelation =
   (typeof beastAdminEcosystemRelations)[number];
 
+export const beastAdminEcosystemRelationKinds = [
+  "ownership",
+  "authorization",
+  "context",
+  "contribution",
+] as const;
+
+export type BeastAdminEcosystemRelationKind =
+  (typeof beastAdminEcosystemRelationKinds)[number];
+
 export type BeastAdminEcosystemNode = {
   id: string;
   label: string;
@@ -40,7 +50,7 @@ export type BeastAdminEcosystemNode = {
   category: BeastAdminEcosystemCategory;
   status: string;
   owner: string;
-  description: string;
+  purpose: string;
   boundaries: readonly string[];
   sourceRefs: readonly string[];
   x: number;
@@ -71,7 +81,7 @@ const sharedServiceNodes: readonly BeastAdminEcosystemNode[] = [
     category: "shared-service",
     status: "active",
     owner: "BeastOS",
-    description:
+    purpose:
       "Provides one platform identity used by every authorized Beast application.",
     boundaries: [
       "Applications reference BeastOS identity instead of owning duplicate shared profiles.",
@@ -93,7 +103,7 @@ const sharedServiceNodes: readonly BeastAdminEcosystemNode[] = [
     category: "shared-service",
     status: "active",
     owner: "BeastOS",
-    description:
+    purpose:
       "Authorizes professional tools and context using explicit resource actions.",
     boundaries: [
       "Explicit deny wins.",
@@ -116,7 +126,7 @@ const sharedServiceNodes: readonly BeastAdminEcosystemNode[] = [
     category: "shared-service",
     status: "active",
     owner: "BeastOS / BeastAgents",
-    description:
+    purpose:
       "Retains purpose-limited professional memory and supplies it to governed runs.",
     boundaries: [
       "Memory is owner and professional scoped.",
@@ -140,7 +150,7 @@ const sharedServiceNodes: readonly BeastAdminEcosystemNode[] = [
     category: "shared-service",
     status: "active",
     owner: "BeastOS",
-    description:
+    purpose:
       "Owns the shared inbox while routing actions back to source-owned module contracts.",
     boundaries: [
       "Source applications own notification creation and business actions.",
@@ -159,7 +169,7 @@ const sharedServiceNodes: readonly BeastAdminEcosystemNode[] = [
     category: "shared-service",
     status: "active",
     owner: "BeastOS",
-    description:
+    purpose:
       "Indexes authorized source records and groups results without taking ownership of them.",
     boundaries: [
       "Search respects module, family, and RLS permissions.",
@@ -181,7 +191,7 @@ const sharedServiceNodes: readonly BeastAdminEcosystemNode[] = [
     category: "shared-service",
     status: "foundation",
     owner: "BeastOS",
-    description:
+    purpose:
       "Provides shared document infrastructure and permissioned confirmed facts to applications.",
     boundaries: [
       "Document intelligence requires explicit permission.",
@@ -201,7 +211,7 @@ const sharedServiceNodes: readonly BeastAdminEcosystemNode[] = [
     category: "shared-service",
     status: "active",
     owner: "BeastOS",
-    description:
+    purpose:
       "Presents meaningful cross-module activity while preserving source ownership.",
     boundaries: [
       "Technical churn is excluded.",
@@ -228,6 +238,28 @@ const modulePositions = [
   [950, 536],
 ] as const;
 
+const modulePurposeStatements: Record<
+  BeastModuleRegistryEntry["id"],
+  string
+> = {
+  beastos:
+    "The shared operating platform connecting identity, permissions, services, applications, and professional collaboration.",
+  money:
+    "Owns financial records, calculations, planning tools, and the member's financial application experience.",
+  learning:
+    "Owns educational records, roadmaps, planning tools, and the member's educational application experience.",
+  goals:
+    "Maintains shared goal records and progress workflows within BeastOS.",
+  documents:
+    "Maintains shared document records and permissioned evidence infrastructure within BeastOS.",
+  health:
+    "Owns health records, health-story workflows, and the member's health application experience.",
+  home:
+    "Owns household records, property workflows, and the member's home-management experience.",
+  admin:
+    "Provides the owner-only workspace for platform oversight, configuration, and release operations.",
+};
+
 function moduleNode(
   module: BeastModuleRegistryEntry,
   position: readonly [number, number]
@@ -239,7 +271,7 @@ function moduleNode(
     category: "module",
     status: module.status,
     owner: module.id === "goals" || module.id === "documents" ? "BeastOS" : module.name,
-    description: module.ownerNotes,
+    purpose: modulePurposeStatements[module.id],
     boundaries: [
       "Owns its domain records and business rules.",
       "Consumes shared services through BeastOS contracts and permissions.",
@@ -258,6 +290,15 @@ const professionalPositions = [
   [720, 388],
 ] as const;
 
+const professionalPurposeStatements: Readonly<Record<string, string>> = {
+  "beastmoney.money-coach":
+    "Provides long-term financial guidance while remaining the owner of financial reasoning and financial records.",
+  "beasteducation.guidance-counselor":
+    "Provides long-term educational guidance while building an evolving understanding of the learner.",
+  "beasthealth.health-advisor":
+    "Provides long-term health guidance while maintaining the member's health story.",
+};
+
 function professionalNode(
   professional: ProfessionalRelationshipDefinition,
   position: readonly [number, number]
@@ -271,7 +312,9 @@ function professionalNode(
     owner:
       beastModuleRegistry.find((module) => module.module === professional.module)
         ?.name || professional.module,
-    description: professional.defaultNextConversation,
+    purpose:
+      professionalPurposeStatements[professional.agentId] ||
+      `Provides ${professional.role.toLocaleLowerCase()} guidance while owning its domain reasoning.`,
     boundaries: [
       "Owns its professional reasoning and response.",
       "May use only permissioned, owner-scoped context.",
@@ -335,8 +378,7 @@ export function buildBeastAdminEcosystemMap({
       category: "platform",
       status: beastOS.status,
       owner: "SEANGWORLD",
-      description:
-        "The shared platform connecting identity, permissions, memory, services, applications, and professional collaboration.",
+      purpose: modulePurposeStatements.beastos,
       boundaries: [
         "BeastOS owns shared platform contracts, not application domain records.",
         "Applications remain independently responsible for their business logic.",
@@ -358,8 +400,8 @@ export function buildBeastAdminEcosystemMap({
       category: "fusion",
       status: "architecture",
       owner: "BeastOS",
-      description:
-        "Brokers permissioned shared context and advisory collaboration between independent professionals.",
+      purpose:
+        "Coordinates approved collaboration without becoming a super-agent.",
       boundaries: [
         "Context access is read-only.",
         "Cross-module writes are not allowed.",
@@ -534,6 +576,36 @@ export function getBeastAdminEcosystemConnections(
   );
 }
 
+export function getBeastAdminEcosystemConnectedNodeId(
+  edge: BeastAdminEcosystemEdge,
+  selectedNodeId: string
+) {
+  if (edge.from === selectedNodeId) return edge.to;
+  if (edge.to === selectedNodeId) return edge.from;
+  return null;
+}
+
+const relationKindByRelation: Record<
+  BeastAdminEcosystemRelation,
+  BeastAdminEcosystemRelationKind
+> = {
+  owns: "ownership",
+  governs: "ownership",
+  hosts: "ownership",
+  authorizes: "authorization",
+  coordinates: "context",
+  informs: "context",
+  "provides-context": "context",
+  indexes: "contribution",
+  routes: "contribution",
+};
+
+export function getBeastAdminEcosystemRelationKind(
+  relation: BeastAdminEcosystemRelation
+) {
+  return relationKindByRelation[relation];
+}
+
 export function filterBeastAdminEcosystemNodes(
   map: BeastAdminEcosystemMap,
   {
@@ -553,7 +625,7 @@ export function filterBeastAdminEcosystemNodes(
           node.label,
           node.subtitle,
           node.owner,
-          node.description,
+          node.purpose,
           ...node.boundaries,
         ].some((value) =>
           value.toLocaleLowerCase().includes(normalizedQuery)

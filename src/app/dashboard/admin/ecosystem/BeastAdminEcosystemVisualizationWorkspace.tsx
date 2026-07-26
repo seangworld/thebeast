@@ -1,20 +1,30 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   DashboardCard,
   SectionHeader,
 } from "@/app/components/design/DashboardPrimitives";
 import {
   beastAdminEcosystemCategories,
+  beastAdminEcosystemRelationKinds,
   buildBeastAdminEcosystemMap,
   filterBeastAdminEcosystemNodes,
+  getBeastAdminEcosystemConnectedNodeId,
   getBeastAdminEcosystemConnections,
   getBeastAdminEcosystemNode,
+  getBeastAdminEcosystemRelationKind,
   getBeastAdminEcosystemVisibleEdges,
   type BeastAdminEcosystemCategory,
   type BeastAdminEcosystemEdge,
   type BeastAdminEcosystemNode,
+  type BeastAdminEcosystemRelationKind,
 } from "@/lib/beastAdminEcosystemVisualization";
 
 const categoryLabels: Record<BeastAdminEcosystemCategory, string> = {
@@ -41,6 +51,68 @@ const legendClasses: Record<BeastAdminEcosystemCategory, string> = {
   module: "border-slate-200/60 bg-slate-300/10",
 };
 
+const categoryPurposes: Record<BeastAdminEcosystemCategory, string> = {
+  platform: "Owns shared platform contracts.",
+  fusion: "Coordinates approved collaboration.",
+  "shared-service": "Provide reusable platform capabilities.",
+  professional: "Own domain reasoning.",
+  module: "Own business logic and user experience.",
+};
+
+const relationshipLegend: Record<
+  BeastAdminEcosystemRelationKind,
+  {
+    label: string;
+    description: string;
+    markerId: string;
+    markerClass: string;
+    pathClass: string;
+    sampleClass: string;
+    dasharray?: string;
+  }
+> = {
+  ownership: {
+    label: "Ownership",
+    description: "Shows which layer owns, governs, or hosts a contract.",
+    markerId: "ecosystem-arrow-ownership",
+    markerClass: "fill-amber-200",
+    pathClass: "stroke-amber-200/80",
+    sampleClass: "border-amber-200",
+  },
+  authorization: {
+    label: "Authorization",
+    description: "Shows where explicit permission gates access.",
+    markerId: "ecosystem-arrow-authorization",
+    markerClass: "fill-rose-300",
+    pathClass: "stroke-rose-300/80",
+    sampleClass: "border-rose-300 border-dashed",
+    dasharray: "7 4",
+  },
+  context: {
+    label: "Context",
+    description: "Shows approved context or coordination flowing to another node.",
+    markerId: "ecosystem-arrow-context",
+    markerClass: "fill-violet-300",
+    pathClass: "stroke-violet-300/80",
+    sampleClass: "border-violet-300 border-dotted",
+    dasharray: "3 4",
+  },
+  contribution: {
+    label: "Contribution",
+    description: "Shows source-owned records or events supplied to a shared capability.",
+    markerId: "ecosystem-arrow-contribution",
+    markerClass: "fill-sky-300",
+    pathClass: "stroke-sky-300/80",
+    sampleClass: "border-sky-300 border-dashed",
+    dasharray: "11 4 2 4",
+  },
+};
+
+type ArchitectureNavigationRequest = {
+  nodeId: string;
+  sequence: number;
+};
+
 function edgePath(
   edge: BeastAdminEcosystemEdge,
   nodes: ReadonlyMap<string, BeastAdminEcosystemNode>
@@ -62,22 +134,50 @@ function ArchitectureGraph({
   edges,
   selectedNodeId,
   focusedNodeIds,
+  navigationRequest,
   onSelect,
 }: {
   nodes: readonly BeastAdminEcosystemNode[];
   edges: readonly BeastAdminEcosystemEdge[];
   selectedNodeId: string;
   focusedNodeIds: ReadonlySet<string>;
+  navigationRequest: ArchitectureNavigationRequest | null;
   onSelect: (nodeId: string) => void;
 }) {
+  const nodeElementsRef = useRef(
+    new Map<string, SVGGElement | null>()
+  );
   const nodesById = useMemo(
     () => new Map(nodes.map((node) => [node.id, node])),
     [nodes]
   );
   const hasFocus = focusedNodeIds.size > 0;
 
+  useEffect(() => {
+    if (!navigationRequest) return;
+    const targetNode = nodeElementsRef.current.get(navigationRequest.nodeId);
+    if (!targetNode) return;
+
+    const animationFrame = window.requestAnimationFrame(() => {
+      const reduceMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)"
+      ).matches;
+
+      targetNode.scrollIntoView({
+        behavior: reduceMotion ? "auto" : "smooth",
+        block: "nearest",
+        inline: "center",
+      });
+    });
+
+    return () => window.cancelAnimationFrame(animationFrame);
+  }, [navigationRequest]);
+
   return (
-    <div className="overflow-x-auto rounded-xl border border-[#2a3242] bg-[#080d15]">
+    <div
+      className="overflow-x-auto rounded-xl border border-[#2a3242] bg-[#080d15]"
+      data-architecture-scroll-container
+    >
       <svg
         viewBox="0 0 1120 630"
         className="block w-full min-w-[920px]"
@@ -90,17 +190,23 @@ function ArchitectureGraph({
           professionals, applications, and their directional relationships.
         </desc>
         <defs>
-          <marker
-            id="ecosystem-arrow"
-            viewBox="0 0 10 10"
-            refX="8"
-            refY="5"
-            markerWidth="5"
-            markerHeight="5"
-            orient="auto-start-reverse"
-          >
-            <path d="M 0 0 L 10 5 L 0 10 z" className="fill-[#778398]" />
-          </marker>
+          {Object.values(relationshipLegend).map((relationship) => (
+            <marker
+              key={relationship.markerId}
+              id={relationship.markerId}
+              viewBox="0 0 10 10"
+              refX="8"
+              refY="5"
+              markerWidth="5"
+              markerHeight="5"
+              orient="auto-start-reverse"
+            >
+              <path
+                d="M 0 0 L 10 5 L 0 10 z"
+                className={relationship.markerClass}
+              />
+            </marker>
+          ))}
         </defs>
 
         <g aria-hidden="true">
@@ -119,24 +225,41 @@ function ArchitectureGraph({
         </g>
 
         <g aria-hidden="true">
-          {edges.map((edge) => (
-            <path
-              key={edge.id}
-              d={edgePath(edge, nodesById)}
-              fill="none"
-              markerEnd="url(#ecosystem-arrow)"
-              className="stroke-[#778398] opacity-75"
-              strokeWidth={edge.from === selectedNodeId || edge.to === selectedNodeId ? 2.5 : 1.5}
-            />
-          ))}
+          {edges.map((edge) => {
+            const relationship =
+              relationshipLegend[
+                getBeastAdminEcosystemRelationKind(edge.relation)
+              ];
+            return (
+              <path
+                key={edge.id}
+                d={edgePath(edge, nodesById)}
+                fill="none"
+                markerEnd={`url(#${relationship.markerId})`}
+                className={`${relationship.pathClass} opacity-80`}
+                strokeDasharray={relationship.dasharray}
+                strokeWidth={
+                  edge.from === selectedNodeId ||
+                  edge.to === selectedNodeId
+                    ? 2.5
+                    : 1.5
+                }
+              />
+            );
+          })}
         </g>
 
         {nodes.map((node) => {
           const selected = node.id === selectedNodeId;
-          const focused = !hasFocus || focusedNodeIds.has(node.id);
+          const focused =
+            selected || !hasFocus || focusedNodeIds.has(node.id);
           return (
             <g
               key={node.id}
+              ref={(element) => {
+                nodeElementsRef.current.set(node.id, element);
+              }}
+              data-architecture-node={node.id}
               role="button"
               aria-label={`${node.label}, ${categoryLabels[node.category]}, ${node.status}`}
               aria-pressed={selected}
@@ -201,32 +324,137 @@ function ArchitectureGraph({
   );
 }
 
+function ArchitectureLegend() {
+  return (
+    <section
+      className="mt-4 rounded-xl border border-[#2a3242] bg-[#0b1220] p-4 sm:p-5"
+      aria-labelledby="architecture-legend-title"
+    >
+      <div>
+        <h3
+          id="architecture-legend-title"
+          className="text-sm font-black text-white"
+        >
+          How to read this map
+        </h3>
+        <p className="mt-1 text-xs leading-5 text-[#7f8da3]">
+          Node colors identify architectural responsibility. Arrowheads point
+          toward the node receiving the relationship.
+        </p>
+      </div>
+
+      <div className="mt-4 grid gap-5 lg:grid-cols-2">
+        <div>
+          <h4 className="text-xs font-black uppercase tracking-wide text-[#9aa7b8]">
+            Layers
+          </h4>
+          <dl className="mt-3 grid gap-3">
+            {beastAdminEcosystemCategories.map((categoryId) => (
+              <div
+                key={categoryId}
+                className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] gap-3"
+              >
+                <span
+                  aria-hidden="true"
+                  className={`mt-1 h-3.5 w-3.5 rounded-sm border ${legendClasses[categoryId]}`}
+                />
+                <div>
+                  <dt className="text-xs font-black text-white">
+                    {categoryLabels[categoryId]}
+                  </dt>
+                  <dd className="mt-0.5 text-xs leading-5 text-[#9aa7b8]">
+                    {categoryPurposes[categoryId]}
+                  </dd>
+                </div>
+              </div>
+            ))}
+          </dl>
+        </div>
+
+        <div>
+          <h4 className="text-xs font-black uppercase tracking-wide text-[#9aa7b8]">
+            Arrow meaning
+          </h4>
+          <dl className="mt-3 grid gap-3">
+            {beastAdminEcosystemRelationKinds.map((kind) => {
+              const relationship = relationshipLegend[kind];
+              return (
+                <div
+                  key={kind}
+                  className="grid min-w-0 grid-cols-[2.75rem_minmax(0,1fr)] gap-3"
+                >
+                  <span
+                    aria-hidden="true"
+                    className="mt-1 inline-flex h-4 items-center"
+                  >
+                    <span
+                      className={`w-8 border-t-2 ${relationship.sampleClass}`}
+                    />
+                    <span className="-ml-0.5 text-sm text-white">›</span>
+                  </span>
+                  <div>
+                    <dt className="text-xs font-black text-white">
+                      {relationship.label}
+                    </dt>
+                    <dd className="mt-0.5 text-xs leading-5 text-[#9aa7b8]">
+                      {relationship.description}
+                    </dd>
+                  </div>
+                </div>
+              );
+            })}
+          </dl>
+        </div>
+      </div>
+
+      <p className="mt-4 border-t border-[#2a3242] pt-4 text-xs leading-5 text-[#68768b]">
+        The map documents registered architecture; it does not inspect live
+        member data or execute platform actions.
+      </p>
+    </section>
+  );
+}
+
 function ConnectionRow({
   edge,
   selectedNodeId,
   nodesById,
-  onSelect,
+  onNavigate,
 }: {
   edge: BeastAdminEcosystemEdge;
   selectedNodeId: string;
   nodesById: ReadonlyMap<string, BeastAdminEcosystemNode>;
-  onSelect: (nodeId: string) => void;
+  onNavigate: (nodeId: string) => void;
 }) {
   const outgoing = edge.from === selectedNodeId;
-  const connectedId = outgoing ? edge.to : edge.from;
+  const connectedId = getBeastAdminEcosystemConnectedNodeId(
+    edge,
+    selectedNodeId
+  );
+  if (!connectedId) return null;
   const connected = nodesById.get(connectedId);
   if (!connected) return null;
 
   return (
     <button
       type="button"
-      onClick={() => onSelect(connectedId)}
-      className="w-full rounded-xl border border-[#2a3242] bg-[#111827] p-3 text-left transition hover:border-amber-200/60"
+      aria-label={`Navigate to ${connected.label} through ${edge.label}`}
+      data-architecture-navigation-target={connectedId}
+      onClick={() => onNavigate(connectedId)}
+      className="group w-full rounded-xl border border-[#2a3242] bg-[#111827] p-3 text-left transition hover:border-amber-200/60 focus-visible:border-amber-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/30"
     >
       <span className="text-xs font-black uppercase tracking-wide text-[#7f8da3]">
         {outgoing ? `${edge.label} →` : `← ${edge.label}`}
       </span>
-      <span className="mt-1 block font-black text-white">{connected.label}</span>
+      <span className="mt-1 flex items-center justify-between gap-3 font-black text-white">
+        <span>{connected.label}</span>
+        <span
+          aria-hidden="true"
+          className="text-amber-200 transition-transform group-hover:translate-x-0.5"
+        >
+          →
+        </span>
+      </span>
       <span className="mt-2 block text-xs leading-5 text-[#9aa7b8]">
         {edge.description}
       </span>
@@ -242,6 +470,9 @@ export function BeastAdminEcosystemVisualizationWorkspace() {
   >("all");
   const [query, setQuery] = useState("");
   const [showAllRelationships, setShowAllRelationships] = useState(false);
+  const navigationSequenceRef = useRef(0);
+  const [navigationRequest, setNavigationRequest] =
+    useState<ArchitectureNavigationRequest | null>(null);
 
   const selectedNode =
     getBeastAdminEcosystemNode(map, selectedNodeId) || map.nodes[0];
@@ -273,6 +504,18 @@ export function BeastAdminEcosystemVisualizationWorkspace() {
   const nodesById = useMemo(
     () => new Map(map.nodes.map((node) => [node.id, node])),
     [map.nodes]
+  );
+  const navigateToConnectedNode = useCallback(
+    (nodeId: string) => {
+      if (!getBeastAdminEcosystemNode(map, nodeId)) return;
+      navigationSequenceRef.current += 1;
+      setSelectedNodeId(nodeId);
+      setNavigationRequest({
+        nodeId,
+        sequence: navigationSequenceRef.current,
+      });
+    },
+    [map]
   );
 
   return (
@@ -344,26 +587,17 @@ export function BeastAdminEcosystemVisualizationWorkspace() {
             edges={visibleEdges}
             selectedNodeId={selectedNode.id}
             focusedNodeIds={focusedNodeIds}
+            navigationRequest={navigationRequest}
             onSelect={setSelectedNodeId}
           />
-          <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-xs font-bold text-[#9aa7b8]">
-            {beastAdminEcosystemCategories.map((categoryId) => (
-              <span key={categoryId} className="inline-flex items-center gap-2">
-                <span
-                  className={`h-3 w-3 rounded-sm border ${legendClasses[categoryId]}`}
-                />
-                {categoryLabels[categoryId]}
-              </span>
-            ))}
-          </div>
-          <p className="mt-4 text-xs leading-5 text-[#68768b]">
-            Arrows show the direction of ownership, authorization, context, or
-            source contribution. The map documents registered architecture; it
-            does not inspect live member data or execute platform actions.
-          </p>
+          <ArchitectureLegend />
         </DashboardCard>
 
-        <aside className="min-w-0 2xl:sticky 2xl:top-6 2xl:self-start">
+        <aside
+          className="min-w-0 2xl:sticky 2xl:top-6 2xl:self-start"
+          aria-live="polite"
+          aria-label={`Architecture details for ${selectedNode.label}`}
+        >
           <DashboardCard accent="admin">
             <p className="beast-kicker">
               {categoryLabels[selectedNode.category]}
@@ -374,9 +608,14 @@ export function BeastAdminEcosystemVisualizationWorkspace() {
             <p className="mt-1 text-xs font-black uppercase tracking-wide text-amber-100">
               {selectedNode.status}
             </p>
-            <p className="mt-4 text-sm leading-6 text-[#dbe3ef]">
-              {selectedNode.description}
-            </p>
+            <div className="mt-4">
+              <p className="text-xs font-black uppercase tracking-wide text-[#7f8da3]">
+                Purpose
+              </p>
+              <p className="mt-2 text-sm leading-6 text-[#dbe3ef]">
+                {selectedNode.purpose}
+              </p>
+            </div>
 
             <dl className="mt-5 grid gap-3">
               <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-3">
@@ -415,6 +654,10 @@ export function BeastAdminEcosystemVisualizationWorkspace() {
               <h3 className="text-sm font-black text-white">
                 Connected architecture
               </h3>
+              <p className="mt-2 text-xs leading-5 text-[#7f8da3]">
+                Follow a connection to move through the map without changing
+                your current search or layer focus.
+              </p>
               <div className="mt-3 grid max-h-[28rem] gap-2 overflow-y-auto pr-1">
                 {selectedConnections.map((connection) => (
                   <ConnectionRow
@@ -422,7 +665,7 @@ export function BeastAdminEcosystemVisualizationWorkspace() {
                     edge={connection}
                     selectedNodeId={selectedNode.id}
                     nodesById={nodesById}
-                    onSelect={setSelectedNodeId}
+                    onNavigate={navigateToConnectedNode}
                   />
                 ))}
               </div>
