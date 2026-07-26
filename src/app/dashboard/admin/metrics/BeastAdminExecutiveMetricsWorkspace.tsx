@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import {
   DashboardCard,
   MetricTile,
@@ -198,6 +199,12 @@ export function BeastAdminExecutiveMetricsWorkspace() {
             >
               Retry request
             </button>
+            <Link
+              href="/dashboard/admin/migrations"
+              className="beast-button-secondary mt-3 inline-flex min-h-11 items-center"
+            >
+              Open Migration Status
+            </Link>
           </div>
           <div className="min-w-0 rounded-xl border border-[#344052] bg-[#111827] p-4">
             <p className="text-xs font-black uppercase tracking-[0.16em] text-[#9aa7b8]">

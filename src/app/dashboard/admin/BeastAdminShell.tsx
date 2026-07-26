@@ -23,6 +23,7 @@ const adminNavItems = [
   { label: "CEO Mode", href: "/dashboard/admin" },
   { label: "Development Console", href: "/dashboard/admin/development" },
   { label: "Platform Health", href: "/dashboard/admin/health" },
+  { label: "Migration Status", href: "/dashboard/admin/migrations" },
   { label: "Executive Metrics", href: "/dashboard/admin/metrics" },
   { label: "Release Center", href: "/dashboard/admin/releases" },
   { label: "Roadmap", href: "/dashboard/admin/roadmap" },

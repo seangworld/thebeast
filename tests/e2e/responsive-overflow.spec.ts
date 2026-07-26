@@ -26,6 +26,7 @@ const authenticatedRoutes = [
   "/dashboard/home",
   "/dashboard/admin",
   "/dashboard/admin/metrics",
+  "/dashboard/admin/migrations",
   "/dashboard/admin/members",
   "/dashboard/admin/modules",
 ] as const;
