@@ -277,3 +277,36 @@ test("BA-106 provides owner management and a fail-closed runtime hook", () => {
   assert.match(shell, /Feature Flags/);
   assert.match(navigation, /Feature Flags/);
 });
+
+test("BA-124 makes an empty feature registry understandable without changing runtime stages", () => {
+  const workspace = readFileSync(
+    "src/app/dashboard/admin/flags/BeastAdminFeatureFlagsWorkspace.tsx",
+    "utf8"
+  );
+
+  for (const example of [
+    "education.guidance-roadmap",
+    "money.velocity-planner",
+    "health.timeline",
+    "home.maintenance",
+    "admin.ceo-mode",
+  ]) {
+    assert.match(workspace, new RegExp(example.replace(/[.-]/g, "\\$&")));
+  }
+
+  assert.match(
+    workspace,
+    /"hidden",[\s\S]*"internal_testing",[\s\S]*"beta",[\s\S]*"released",[\s\S]*"deprecated"/
+  );
+  assert.match(workspace, /Current lifecycle/);
+  assert.match(workspace, /domain-first key/);
+  assert.match(workspace, /owner-only previews/);
+  assert.deepEqual(beastFeatureFlagStages, [
+    "hidden",
+    "owner",
+    "internal_testing",
+    "beta",
+    "released",
+    "deprecated",
+  ]);
+});

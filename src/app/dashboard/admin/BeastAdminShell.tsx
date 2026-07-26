@@ -36,7 +36,7 @@ const adminNavItems = [
   { label: "Prompt Library", href: "/dashboard/admin/prompts" },
   { label: "AI Analytics", href: "/dashboard/admin/analytics" },
   { label: "Beta Feedback", href: "/dashboard/admin/feedback" },
-  { label: "Ads", href: "/dashboard/admin/ads" },
+  { label: "Planned Workspaces", href: "/dashboard/admin/ads" },
   { label: "Settings", href: "/dashboard/admin/settings" },
 ];
 

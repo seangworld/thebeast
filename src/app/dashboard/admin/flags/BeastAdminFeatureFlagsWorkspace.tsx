@@ -38,6 +38,22 @@ const stageClasses: Record<BeastFeatureFlagStage, string> = {
   deprecated: "border-red-300/35 bg-red-300/10 text-red-100",
 };
 
+const featureFlagExamples = [
+  "education.guidance-roadmap",
+  "money.velocity-planner",
+  "health.timeline",
+  "home.maintenance",
+  "admin.ceo-mode",
+] as const;
+
+const featureFlagLifecycle = [
+  "hidden",
+  "internal_testing",
+  "beta",
+  "released",
+  "deprecated",
+] as const satisfies readonly BeastFeatureFlagStage[];
+
 type FlagDraft = {
   key: string;
   name: string;
@@ -508,11 +524,68 @@ export function BeastAdminFeatureFlagsWorkspace() {
                 </button>
               ))}
               {!visibleFlags.length ? (
-                <p className="rounded-xl border border-dashed border-[#2a3242] p-4 text-sm leading-6 text-[#9aa7b8]">
-                  {flags.length
-                    ? "No flags match this search."
-                    : "No feature flags are configured. New flags begin Hidden until an owner adds an audience assignment."}
-                </p>
+                flags.length ? (
+                  <p className="rounded-xl border border-dashed border-[#2a3242] p-4 text-sm leading-6 text-[#9aa7b8]">
+                    No flags match this search.
+                  </p>
+                ) : (
+                  <div className="rounded-xl border border-dashed border-[#344052] bg-[#0b1220] p-4">
+                    <p className="text-sm leading-6 text-[#c7cfdb]">
+                      No feature flags are configured. Use a stable,
+                      domain-first key so its owner and purpose remain clear.
+                    </p>
+
+                    <div className="mt-5">
+                      <p className="text-xs font-black uppercase tracking-wide text-[#9aa7b8]">
+                        Example keys
+                      </p>
+                      <ul className="mt-3 grid gap-2">
+                        {featureFlagExamples.map((example) => (
+                          <li
+                            key={example}
+                            className="min-w-0 rounded-lg border border-[#2a3242] bg-[#111827] px-3 py-2"
+                          >
+                            <code className="break-all font-mono text-xs text-amber-100">
+                              {example}
+                            </code>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div className="mt-5">
+                      <p className="text-xs font-black uppercase tracking-wide text-[#9aa7b8]">
+                        Current lifecycle
+                      </p>
+                      <ol
+                        className="mt-3 grid gap-1.5"
+                        aria-label="Feature flag lifecycle"
+                      >
+                        {featureFlagLifecycle.map((stage, index) => (
+                          <li key={stage}>
+                            {index > 0 ? (
+                              <span
+                                aria-hidden="true"
+                                className="block pl-4 text-sm font-black text-[#68768b]"
+                              >
+                                ↓
+                              </span>
+                            ) : null}
+                            <span
+                              className={`inline-flex max-w-full rounded-full border px-3 py-1.5 text-xs font-black ${stageClasses[stage]}`}
+                            >
+                              {beastFeatureFlagStageLabels[stage]}
+                            </span>
+                          </li>
+                        ))}
+                      </ol>
+                      <p className="mt-3 text-xs leading-5 text-[#7f8da3]">
+                        Owner remains available for owner-only previews and is
+                        not a lifecycle milestone.
+                      </p>
+                    </div>
+                  </div>
+                )
               ) : null}
             </div>
           </DashboardCard>

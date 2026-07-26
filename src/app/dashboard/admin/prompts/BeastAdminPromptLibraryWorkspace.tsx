@@ -21,6 +21,12 @@ import {
   type BeastAdminPromptStatus,
   type BeastAdminPromptVersion,
 } from "@/lib/beastAdminPromptLibrary";
+import {
+  beastAdminPromptRuntimeAdoptionLabels,
+  getBeastAdminPromptDependency,
+  hasBeastAdminPromptRuntimeConsumers,
+  type BeastAdminPromptRuntimeAdoptionStatus,
+} from "@/lib/beastAdminPromptDependencies";
 import { createClient } from "@/lib/supabase/client";
 
 const inputClassName =
@@ -33,6 +39,83 @@ const statusClasses: Record<BeastAdminPromptStatus, string> = {
   released: "border-green-300/35 bg-green-300/10 text-green-100",
   archived: "border-amber-300/30 bg-amber-300/10 text-amber-100",
 };
+
+const adoptionClasses: Record<
+  BeastAdminPromptRuntimeAdoptionStatus,
+  string
+> = {
+  adopted: "border-green-300/35 bg-green-300/10 text-green-100",
+  partial: "border-sky-300/35 bg-sky-300/10 text-sky-100",
+  not_adopted: "border-amber-300/35 bg-amber-300/10 text-amber-100",
+  undocumented: "border-slate-300/30 bg-slate-300/10 text-slate-200",
+};
+
+const dependencyLifecycleStatuses = [
+  { status: "released", label: "Released" },
+  { status: "draft", label: "Draft" },
+  { status: "in_review", label: "Review" },
+  { status: "approved", label: "Approved" },
+  { status: "archived", label: "Archived" },
+] as const satisfies readonly {
+  status: BeastAdminPromptStatus;
+  label: string;
+}[];
+
+const promptAssetExamples = [
+  {
+    key: "money.coach.system",
+    purpose: "Defines the managed system guidance for the Money Coach.",
+    domain: "money",
+  },
+  {
+    key: "education.guidance.system",
+    purpose: "Defines the managed system guidance for the Guidance Counselor.",
+    domain: "education",
+  },
+  {
+    key: "health.advisor.system",
+    purpose: "Defines the managed system guidance for the Health Advisor.",
+    domain: "health",
+  },
+  {
+    key: "goals.coach.system",
+    purpose: "Defines the managed system guidance for the Goals Coach.",
+    domain: "goals",
+  },
+  {
+    key: "fusion.shared-context",
+    purpose: "Defines shared-context guidance governed through BeastFusion.",
+    domain: "fusion",
+  },
+] as const satisfies readonly {
+  key: string;
+  purpose: string;
+  domain: BeastAdminPromptDomain;
+}[];
+
+const promptGovernanceLifecycle = [
+  {
+    title: "Prompt Assets",
+    detail: "Create the stable key, purpose, and owning area.",
+  },
+  {
+    title: "Prompt Versions",
+    detail: "Record each content change as a new immutable version.",
+  },
+  {
+    title: "Approved",
+    detail: "Confirm the reviewed version is ready for release consideration.",
+  },
+  {
+    title: "Released",
+    detail: "Publish the approved version as an owner-governed asset.",
+  },
+  {
+    title: "Runtime Adoption",
+    detail:
+      "A consuming Beast runtime explicitly adopts the released version through a separate implementation.",
+  },
+] as const;
 
 type AssetDraft = {
   key: string;
@@ -449,6 +532,270 @@ export function BeastAdminPromptLibraryWorkspace() {
               {rule}
             </p>
           ))}
+        </div>
+      </DashboardCard>
+
+      <DashboardCard accent="admin">
+        <SectionHeader
+          eyebrow="Prompt Structure"
+          title="Govern prompts before they reach a runtime"
+          description="Prompt Library owns prompt identity, purpose, version history, review, and release evidence. Runtime adoption remains a separate, explicit implementation decision."
+        />
+        <div className="mt-5 grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.65fr)]">
+          <section className="min-w-0">
+            <h3 className="text-sm font-black text-white">
+              Example prompt assets
+            </h3>
+            <div className="mt-3 grid gap-3 md:grid-cols-2">
+              {promptAssetExamples.map((example) => (
+                <article
+                  key={example.key}
+                  className="min-w-0 rounded-xl border border-[#2a3242] bg-[#111827] p-4"
+                >
+                  <dl className="grid gap-3">
+                    <div className="min-w-0">
+                      <dt className="text-[10px] font-black uppercase tracking-wide text-[#7f8da3]">
+                        Prompt key
+                      </dt>
+                      <dd className="mt-1">
+                        <code className="break-all font-mono text-xs text-amber-100">
+                          {example.key}
+                        </code>
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-[10px] font-black uppercase tracking-wide text-[#7f8da3]">
+                        Purpose
+                      </dt>
+                      <dd className="mt-1 text-sm leading-6 text-[#c7cfdb]">
+                        {example.purpose}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-[10px] font-black uppercase tracking-wide text-[#7f8da3]">
+                        Area
+                      </dt>
+                      <dd className="mt-1 inline-flex rounded-full border border-[#344052] bg-[#0b1220] px-2.5 py-1 text-xs font-black text-[#dbe3ef]">
+                        {beastAdminPromptDomainLabels[example.domain]}
+                      </dd>
+                    </div>
+                  </dl>
+                </article>
+              ))}
+            </div>
+          </section>
+
+          <section className="min-w-0 rounded-xl border border-[#2a3242] bg-[#0b1220] p-4">
+            <h3 className="text-sm font-black text-white">
+              Governance lifecycle
+            </h3>
+            <ol
+              className="mt-3 grid gap-1.5"
+              aria-label="Prompt governance lifecycle"
+            >
+              {promptGovernanceLifecycle.map((step, index) => (
+                <li key={step.title}>
+                  {index > 0 ? (
+                    <span
+                      aria-hidden="true"
+                      className="block pl-4 text-sm font-black text-[#68768b]"
+                    >
+                      ↓
+                    </span>
+                  ) : null}
+                  <div className="rounded-xl border border-[#344052] bg-[#111827] p-3">
+                    <p className="text-sm font-black text-white">
+                      {step.title}
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-[#9aa7b8]">
+                      {step.detail}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </section>
+        </div>
+        <p className="mt-5 rounded-xl border border-amber-300/35 bg-amber-300/10 px-4 py-3 text-sm font-bold leading-6 text-amber-100">
+          Prompt Library governs prompts. Approving or releasing a managed
+          version does not automatically change runtime AI behavior.
+        </p>
+      </DashboardCard>
+
+      <DashboardCard accent="admin">
+        <SectionHeader
+          eyebrow="BA-127 · Dependency Explorer"
+          title="Understand impact before changing a prompt"
+          description="Review release state, current runtime adoption, known consumers, target impact, and fallback behavior for every managed prompt."
+        />
+        <p className="mt-5 rounded-xl border border-sky-300/30 bg-sky-300/10 px-4 py-3 text-sm leading-6 text-sky-100">
+          Current consumers reflect explicit managed-prompt adoption only.
+          Documented target paths show possible impact, not active consumption.
+          Releasing a version does not adopt it at runtime.
+        </p>
+
+        <div
+          className="mt-5 grid min-w-0 gap-4 xl:grid-cols-2"
+          aria-label="Managed prompt dependency explorer"
+        >
+          {visibleAssets.map((asset) => {
+            const release = getLatestReleasedPromptVersion(asset);
+            const dependency = getBeastAdminPromptDependency(asset.key);
+            const hasConsumers =
+              hasBeastAdminPromptRuntimeConsumers(dependency);
+
+            return (
+              <article
+                key={asset.id}
+                className="min-w-0 rounded-xl border border-[#2a3242] bg-[#111827] p-4 sm:p-5"
+              >
+                <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-black uppercase tracking-wide text-[#7f8da3]">
+                      Prompt key
+                    </p>
+                    <code className="mt-1 block break-all font-mono text-sm text-amber-100">
+                      {asset.key}
+                    </code>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <p className="text-[10px] font-black uppercase tracking-wide text-[#7f8da3]">
+                      Current released version
+                    </p>
+                    <p className="mt-1 text-sm font-black text-white">
+                      {release ? `v${release.version}` : "None released"}
+                    </p>
+                  </div>
+                </div>
+
+                <div
+                  className="mt-4 flex flex-wrap gap-2"
+                  aria-label={`${asset.key} version lifecycle`}
+                >
+                  {dependencyLifecycleStatuses.map(({ status, label }) => {
+                    const count = asset.versions.filter(
+                      (version) => version.status === status
+                    ).length;
+                    return (
+                      <span
+                        key={status}
+                        className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-bold ${statusClasses[status]}`}
+                      >
+                        {label} · {count}
+                      </span>
+                    );
+                  })}
+                </div>
+
+                <div className="mt-5 rounded-xl border border-[#344052] bg-[#0b1220] p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-xs font-black uppercase tracking-wide text-[#9aa7b8]">
+                      Runtime adoption
+                    </p>
+                    <span
+                      className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-black ${adoptionClasses[dependency.runtimeAdoption]}`}
+                    >
+                      {
+                        beastAdminPromptRuntimeAdoptionLabels[
+                          dependency.runtimeAdoption
+                        ]
+                      }
+                    </span>
+                  </div>
+                  <p className="mt-3 text-sm leading-6 text-[#c7cfdb]">
+                    {dependency.adoptionDetail}
+                  </p>
+                </div>
+
+                <div className="mt-4 grid min-w-0 gap-3 sm:grid-cols-3">
+                  {[
+                    {
+                      label: "Consuming modules",
+                      values: dependency.consumingModules,
+                    },
+                    {
+                      label: "Consuming professionals",
+                      values: dependency.consumingProfessionals,
+                    },
+                    {
+                      label: "Runtime components",
+                      values: dependency.consumingComponents,
+                    },
+                  ].map((group) => (
+                    <div
+                      key={group.label}
+                      className="min-w-0 rounded-xl border border-[#2a3242] bg-[#0b1220] p-3"
+                    >
+                      <p className="text-[10px] font-black uppercase tracking-wide text-[#7f8da3]">
+                        {group.label}
+                      </p>
+                      {group.values.length ? (
+                        <ul className="mt-2 space-y-1 text-xs leading-5 text-[#dbe3ef]">
+                          {group.values.map((value) => (
+                            <li key={value} className="break-words">
+                              {value}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="mt-2 text-xs leading-5 text-[#9aa7b8]">
+                          None documented
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {!hasConsumers && dependency.adoptionTargetPath.length ? (
+                  <div className="mt-4">
+                    <p className="text-xs font-black uppercase tracking-wide text-[#9aa7b8]">
+                      Documented adoption target
+                    </p>
+                    <ol
+                      className="mt-2 flex min-w-0 flex-wrap items-center gap-2"
+                      aria-label={`${asset.key} documented adoption target`}
+                    >
+                      {dependency.adoptionTargetPath.map((step, index) => (
+                        <li
+                          key={`${step}-${index}`}
+                          className="flex min-w-0 items-center gap-2"
+                        >
+                          {index > 0 ? (
+                            <span
+                              aria-hidden="true"
+                              className="shrink-0 text-sm font-black text-[#68768b]"
+                            >
+                              →
+                            </span>
+                          ) : null}
+                          <span className="min-w-0 break-words rounded-lg border border-[#344052] bg-[#0b1220] px-2.5 py-1.5 text-xs font-bold text-[#dbe3ef]">
+                            {step}
+                          </span>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                ) : null}
+
+                <div className="mt-4 rounded-xl border border-amber-300/25 bg-amber-300/5 p-4">
+                  <p className="text-xs font-black uppercase tracking-wide text-amber-100/80">
+                    Fallback behavior
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
+                    {dependency.fallbackBehavior}
+                  </p>
+                </div>
+              </article>
+            );
+          })}
+
+          {!visibleAssets.length ? (
+            <p className="rounded-xl border border-dashed border-[#2a3242] p-5 text-sm leading-6 text-[#9aa7b8] xl:col-span-2">
+              {assets.length
+                ? "No managed prompts match the current library filters."
+                : "No managed prompts exist yet. Dependency information will appear after an owner creates a prompt asset."}
+            </p>
+          ) : null}
         </div>
       </DashboardCard>
 

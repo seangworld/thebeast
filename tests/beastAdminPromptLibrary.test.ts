@@ -202,3 +202,34 @@ test("BA-107 presents central management, release history, and future rollback",
   assert.match(shell, /Prompt Library/);
   assert.match(navigation, /Prompt Library/);
 });
+
+test("BA-125 explains prompt structure governance and explicit runtime adoption", () => {
+  const workspace = readFileSync(
+    "src/app/dashboard/admin/prompts/BeastAdminPromptLibraryWorkspace.tsx",
+    "utf8"
+  );
+
+  for (const example of [
+    "money.coach.system",
+    "education.guidance.system",
+    "health.advisor.system",
+    "goals.coach.system",
+    "fusion.shared-context",
+  ]) {
+    assert.match(workspace, new RegExp(example.replace(/[.-]/g, "\\$&")));
+  }
+
+  assert.match(workspace, /Prompt key/);
+  assert.match(workspace, /Purpose/);
+  assert.match(workspace, /Area/);
+  assert.match(
+    workspace,
+    /Prompt Assets[\s\S]*Prompt Versions[\s\S]*Approved[\s\S]*Released[\s\S]*Runtime Adoption/
+  );
+  assert.match(workspace, /Prompt Library governs prompts/);
+  assert.match(
+    workspace,
+    /does not automatically change runtime AI behavior/
+  );
+  assert.match(workspace, /separate, explicit implementation decision/);
+});
