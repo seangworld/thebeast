@@ -222,6 +222,21 @@ export const beastRoadmapPackageRegistry = [
     ["docs/BA-131-ROADMAP-IDENTITY-AUDIT.md"]
   ),
   packageIdentity(
+    "BA-REC-134",
+    ["BA-134"],
+    "Forward-only Migration Reconciliation",
+    [
+      "supabase/migrations/20260726002000_reconcile_beast_auth_email_workflows.sql",
+      "supabase/migrations/20260726002100_reconcile_beast_admin_member_invitations.sql",
+      "supabase/migrations/20260726002200_reconcile_beast_admin_account_access_history.sql",
+    ],
+    [
+      "20260726002000_reconcile_beast_auth_email_workflows.sql",
+      "20260726002100_reconcile_beast_admin_member_invitations.sql",
+      "20260726002200_reconcile_beast_admin_account_access_history.sql",
+    ]
+  ),
+  packageIdentity(
     "BM-FND-033",
     ["BM-33"],
     "Funding Rules",
