@@ -26,7 +26,10 @@ export type BeastAdminMemberRowAction =
   | "view"
   | "edit"
   | "message"
+  | "copy_login_email"
+  | "send_verification_reminder"
   | "resend_verification"
+  | "view_verification_history"
   | "password_reset"
   | "manage_modules"
   | "manage_beta"
@@ -186,11 +189,26 @@ function MemberActionSelect({
         <option value="message" disabled={!member.email}>
           Message member
         </option>
+        <option value="copy_login_email" disabled={!member.email}>
+          Copy sign-in email
+        </option>
+        <option
+          value="send_verification_reminder"
+          disabled={
+            !manageable ||
+            member.emailVerificationStatus !== "unverified"
+          }
+        >
+          Send private verification reminder
+        </option>
         <option
           value="resend_verification"
           disabled={!verificationAvailable}
         >
           Resend verification
+        </option>
+        <option value="view_verification_history">
+          View verification history
         </option>
         <option value="password_reset" disabled={!manageable}>
           Trigger password reset
@@ -561,7 +579,17 @@ export function BeastAdminMemberManagementTable({
                       {member.email || "Not provided"}
                     </td>
                     <td className="px-3 py-3 font-bold text-[#c7cfdb]">
-                      {verificationLabels[member.emailVerificationStatus]}
+                      <span
+                        className={`inline-flex rounded-full border px-2 py-1 ${
+                          member.emailVerificationStatus === "verified"
+                            ? "border-green-300/30 bg-green-300/10 text-green-100"
+                            : member.emailVerificationStatus === "unverified"
+                              ? "border-amber-300/35 bg-amber-300/10 text-amber-100"
+                              : "border-slate-300/30 bg-slate-300/10 text-slate-200"
+                        }`}
+                      >
+                        {verificationLabels[member.emailVerificationStatus]}
+                      </span>
                     </td>
                     <td className="px-3 py-3 font-bold text-white">
                       {member.role}
@@ -643,7 +671,13 @@ export function BeastAdminMemberManagementTable({
                 <dl className="mt-4 grid min-w-0 grid-cols-2 gap-3 text-xs">
                   <div className="min-w-0">
                     <dt className="text-[#7f8da3]">Verification</dt>
-                    <dd className="mt-1 break-words font-bold text-white">
+                    <dd
+                      className={`mt-1 break-words font-bold ${
+                        member.emailVerificationStatus === "unverified"
+                          ? "text-amber-100"
+                          : "text-white"
+                      }`}
+                    >
                       {verificationLabels[member.emailVerificationStatus]}
                     </dd>
                   </div>

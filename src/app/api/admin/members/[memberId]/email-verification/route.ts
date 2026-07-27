@@ -3,6 +3,7 @@ import {
   buildEmailVerificationCallbackUrl,
   getEmailWorkflowErrorMessage,
 } from "@/lib/auth/emailWorkflows";
+import { getBeastAdminMigrationEnvironment } from "@/lib/beastAdminMigrationStatus";
 import { isProtectedBeastAdminAccount } from "@/lib/beastAdminMemberEditing";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createRouteClient } from "@/lib/supabase/server";
@@ -15,8 +16,25 @@ type RouteContext = {
   };
 };
 
-function jsonError(message: string, status: number) {
-  return NextResponse.json({ error: message }, { status });
+function getEnvironment(request: Request) {
+  return getBeastAdminMigrationEnvironment({
+    supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    siteOrigin: new URL(request.url).origin,
+    vercelEnvironment: process.env.VERCEL_ENV,
+    branch: process.env.VERCEL_GIT_COMMIT_REF,
+    nodeEnvironment: process.env.NODE_ENV,
+  });
+}
+
+function jsonError(
+  message: string,
+  status: number,
+  diagnostic?: Record<string, unknown>
+) {
+  return NextResponse.json(
+    { error: message, ...(diagnostic ? { diagnostic } : {}) },
+    { status }
+  );
 }
 
 export async function POST(request: Request, { params }: RouteContext) {
@@ -103,7 +121,30 @@ export async function POST(request: Request, { params }: RouteContext) {
   });
 
   if (resendError) {
-    return jsonError(getEmailWorkflowErrorMessage(resendError), 502);
+    const { error: auditError } = await adminClient
+      .from("beast_admin_member_account_audit_events")
+      .insert({
+        actor_id: actor.id,
+        member_id: params.memberId,
+        action: "email_verification_resent",
+        changes: {
+          emailVerification: {
+            kind: pendingEmail ? "email_change" : "account",
+            providerCode: resendError.code || null,
+          },
+        },
+        outcome: "failed",
+        reason: "The authentication provider rejected the verification resend.",
+      });
+    return jsonError(getEmailWorkflowErrorMessage(resendError), 502, {
+      environment: getEnvironment(request),
+      providerError: {
+        code: resendError.code || "Not provided",
+        message: resendError.message,
+        status: resendError.status || null,
+      },
+      auditRecorded: !auditError,
+    });
   }
 
   const { error: auditError } = await adminClient
@@ -132,6 +173,13 @@ export async function POST(request: Request, { params }: RouteContext) {
       message: pendingEmail
         ? "Email-change verification sent and owner audit recorded."
         : "Account verification sent and owner audit recorded.",
+      diagnostic: {
+        environment: getEnvironment(request),
+        provider: "Supabase Auth",
+        verificationType: pendingEmail ? "email_change" : "signup",
+        targetEmail,
+        result: "sent",
+      },
     },
     { headers: { "Cache-Control": "no-store" } }
   );

@@ -37,6 +37,12 @@ import {
   type BeastAdminInvitationHousehold,
   type BeastAdminMemberInvitation,
 } from "@/lib/beastAdminMemberInvitations";
+import {
+  BEAST_VERIFICATION_REMINDER_BODY,
+  BEAST_VERIFICATION_REMINDER_SUBJECT,
+  beastEmailVerificationPolicy,
+  getBeastEmailVerificationAccessImpact,
+} from "@/lib/beastEmailVerificationPolicy";
 import { createClient } from "@/lib/supabase/client";
 import { BeastAdminAccountAuditLog } from "./BeastAdminAccountAuditLog";
 import { BeastAdminMemberAccessHistory } from "./BeastAdminMemberAccessHistory";
@@ -108,6 +114,11 @@ function humanizeDirectoryError(error: unknown) {
   return "BeastAdmin could not load the authoritative member directory.";
 }
 
+function formatActionDiagnostic(value: unknown) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return "";
+  return JSON.stringify(value, null, 2);
+}
+
 function DirectoryField({
   label,
   value,
@@ -145,6 +156,7 @@ export function BeastAdminMemberManagementWorkspace() {
   const [editorOpen, setEditorOpen] = useState(false);
   const [actionError, setActionError] = useState("");
   const [actionSuccess, setActionSuccess] = useState("");
+  const [actionDiagnostic, setActionDiagnostic] = useState("");
   const [timeline, setTimeline] =
     useState<BeastAdminMemberTimelineSnapshot | null>(null);
   const [timelineLoading, setTimelineLoading] = useState(false);
@@ -338,6 +350,7 @@ export function BeastAdminMemberManagementWorkspace() {
     setEditorOpen(Boolean(options.edit));
     setActionError("");
     setActionSuccess("");
+    setActionDiagnostic("");
     window.setTimeout(() => {
       document
         .getElementById(`member-management-${options.section || "account"}`)
@@ -363,6 +376,13 @@ export function BeastAdminMemberManagementWorkspace() {
     fallback: string
   ) {
     const payload: unknown = await response.json().catch(() => null);
+    setActionDiagnostic(
+      payload &&
+        typeof payload === "object" &&
+        "diagnostic" in payload
+        ? formatActionDiagnostic(payload.diagnostic)
+        : ""
+    );
     if (
       !response.ok ||
       !payload ||
@@ -383,9 +403,17 @@ export function BeastAdminMemberManagementWorkspace() {
   }
 
   async function resendVerification(member: BeastAdminManagedMember) {
+    if (
+      !window.confirm(
+        `Resend the official Supabase verification email to ${member.email}? The member must open that email to verify the account.`
+      )
+    ) {
+      return;
+    }
     setPendingMemberId(member.id);
     setActionError("");
     setActionSuccess("");
+    setActionDiagnostic("");
     try {
       const response = await fetch(
         `/api/admin/members/${encodeURIComponent(
@@ -411,6 +439,69 @@ export function BeastAdminMemberManagementWorkspace() {
     }
   }
 
+  async function sendVerificationReminder(member: BeastAdminManagedMember) {
+    if (
+      member.emailVerificationStatus !== "unverified" ||
+      !memberCanBeManaged(member)
+    ) {
+      return;
+    }
+    if (
+      !window.confirm(
+        `${BEAST_VERIFICATION_REMINDER_SUBJECT}\n\n${BEAST_VERIFICATION_REMINDER_BODY}\n\nThis private Admin message does not verify the member's email. Send it now?`
+      )
+    ) {
+      return;
+    }
+
+    setPendingMemberId(member.id);
+    setActionError("");
+    setActionSuccess("");
+    setActionDiagnostic("");
+    try {
+      const response = await fetch(
+        `/api/admin/members/${encodeURIComponent(
+          member.id
+        )}/verification-outreach`,
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ action: "send_reminder" }),
+        }
+      );
+      setActionSuccess(
+        await parseActionResponse(
+          response,
+          "BeastAdmin could not send the private verification reminder."
+        )
+      );
+      setRefreshKey((current) => current + 1);
+    } catch (error) {
+      setActionError(
+        error instanceof Error
+          ? error.message
+          : "BeastAdmin could not send the private verification reminder."
+      );
+    } finally {
+      setPendingMemberId("");
+    }
+  }
+
+  async function copyLoginEmail(member: BeastAdminManagedMember) {
+    if (!member.email) return;
+    setActionError("");
+    setActionSuccess("");
+    setActionDiagnostic("");
+    try {
+      await navigator.clipboard.writeText(member.email);
+      setActionSuccess("Authoritative Supabase Auth sign-in email copied.");
+    } catch {
+      setActionError(
+        "BeastAdmin could not copy the sign-in email. Select and copy it from the member detail."
+      );
+    }
+  }
+
   async function passwordReset(member: BeastAdminManagedMember) {
     if (
       !window.confirm(
@@ -422,6 +513,7 @@ export function BeastAdminMemberManagementWorkspace() {
     setPendingMemberId(member.id);
     setActionError("");
     setActionSuccess("");
+    setActionDiagnostic("");
     try {
       const response = await fetch(
         `/api/admin/members/${encodeURIComponent(member.id)}/password-reset`,
@@ -459,6 +551,7 @@ export function BeastAdminMemberManagementWorkspace() {
     setPendingMemberId(member.id);
     setActionError("");
     setActionSuccess("");
+    setActionDiagnostic("");
     try {
       const response = await fetch(
         `/api/admin/members/${encodeURIComponent(member.id)}/access-history`,
@@ -508,6 +601,7 @@ export function BeastAdminMemberManagementWorkspace() {
     setPendingMemberId(member.id);
     setActionError("");
     setActionSuccess("");
+    setActionDiagnostic("");
     try {
       const response = await fetch(
         `/api/admin/members/${encodeURIComponent(member.id)}`,
@@ -564,12 +658,21 @@ export function BeastAdminMemberManagementWorkspace() {
         openMember(member, { edit: true, section: "account" });
         return;
       case "message":
-        if (member.email) {
-          window.location.href = `mailto:${encodeURIComponent(member.email)}`;
-        }
+        window.location.href = `/dashboard/admin/messages?member=${encodeURIComponent(
+          member.id
+        )}`;
+        return;
+      case "copy_login_email":
+        void copyLoginEmail(member);
+        return;
+      case "send_verification_reminder":
+        void sendVerificationReminder(member);
         return;
       case "resend_verification":
         void resendVerification(member);
+        return;
+      case "view_verification_history":
+        openMember(member, { section: "verification" });
         return;
       case "password_reset":
         void passwordReset(member);
@@ -665,6 +768,16 @@ export function BeastAdminMemberManagementWorkspace() {
         >
           {actionSuccess}
         </p>
+      ) : null}
+      {actionDiagnostic ? (
+        <details className="rounded-xl border border-sky-300/25 bg-sky-300/10 p-4 text-sky-100">
+          <summary className="cursor-pointer text-sm font-black">
+            Owner technical diagnostics
+          </summary>
+          <pre className="mt-3 max-w-full overflow-x-auto whitespace-pre-wrap break-words text-xs leading-5">
+            {actionDiagnostic}
+          </pre>
+        </details>
       ) : null}
 
       <BeastAdminMemberManagementTable
@@ -798,6 +911,22 @@ export function BeastAdminMemberManagementWorkspace() {
                       }
                     />
                     <DirectoryField
+                      label="Verified at"
+                      value={formatDate(selectedMember.verifiedAt || null)}
+                    />
+                    <DirectoryField
+                      label="Last verification email sent"
+                      value={formatDate(
+                        selectedMember.lastVerificationEmailSentAt || null
+                      )}
+                    />
+                    <DirectoryField
+                      label="Verification access impact"
+                      value={getBeastEmailVerificationAccessImpact(
+                        selectedMember.emailVerificationStatus === "verified"
+                      )}
+                    />
+                    <DirectoryField
                       label="Account status"
                       value={
                         accountStatusLabels[selectedMember.accountStatus]
@@ -873,18 +1002,45 @@ export function BeastAdminMemberManagementWorkspace() {
                     </section>
                   </div>
 
-                  {selectedMemberCanBeManaged &&
-                  (selectedMember.pendingEmail ||
-                    selectedMember.emailVerificationStatus ===
-                      "unverified") ? (
-                    <button
-                      type="button"
-                      className="beast-button-secondary mt-5 min-h-11"
-                      disabled={pendingMemberId === selectedMember.id}
-                      onClick={() => void resendVerification(selectedMember)}
-                    >
-                      Resend verification
-                    </button>
+                  {selectedMemberCanBeManaged ? (
+                    <div className="mt-5 flex flex-wrap gap-3">
+                      {selectedMember.email ? (
+                        <button
+                          type="button"
+                          className="beast-button-secondary min-h-11"
+                          onClick={() => void copyLoginEmail(selectedMember)}
+                        >
+                          Copy sign-in email
+                        </button>
+                      ) : null}
+                      {selectedMember.emailVerificationStatus ===
+                      "unverified" ? (
+                        <button
+                          type="button"
+                          className="beast-button-secondary min-h-11"
+                          disabled={pendingMemberId === selectedMember.id}
+                          onClick={() =>
+                            void sendVerificationReminder(selectedMember)
+                          }
+                        >
+                          Send private verification reminder
+                        </button>
+                      ) : null}
+                      {selectedMember.pendingEmail ||
+                      selectedMember.emailVerificationStatus ===
+                        "unverified" ? (
+                        <button
+                          type="button"
+                          className="beast-button-secondary min-h-11"
+                          disabled={pendingMemberId === selectedMember.id}
+                          onClick={() =>
+                            void resendVerification(selectedMember)
+                          }
+                        >
+                          Resend official verification email
+                        </button>
+                      ) : null}
+                    </div>
                   ) : null}
 
                   {editorOpen && selectedMemberCanBeManaged ? (
@@ -911,6 +1067,72 @@ export function BeastAdminMemberManagementWorkspace() {
                     )
                   ) : null}
                 </DashboardCard>
+              </section>
+
+              <section id="member-management-verification">
+                <DashboardCard accent="admin">
+                  <SectionHeader
+                    eyebrow="BA-130 · Verification policy"
+                    title="Email verification outreach and history"
+                    description="Supabase Auth is authoritative. A private reminder explains what to do; only the official Supabase verification flow can verify the login email."
+                  />
+                  <div className="mt-5 grid gap-3 md:grid-cols-3">
+                    <MetricTile
+                      label="Current state"
+                      value={
+                        selectedMember.emailVerificationStatus === "verified"
+                          ? "Verified"
+                          : selectedMember.emailVerificationStatus ===
+                              "unverified"
+                            ? "Unverified"
+                            : "Not provided"
+                      }
+                      detail={`Joined ${formatDate(selectedMember.createdAt)}`}
+                      icon="ID"
+                      tone="yellow"
+                    />
+                    <MetricTile
+                      label="Last official email"
+                      value={formatDate(
+                        selectedMember.lastVerificationEmailSentAt || null
+                      )}
+                      detail="Recorded successful provider resend"
+                      icon="@"
+                      tone="blue"
+                    />
+                    <MetricTile
+                      label="Access policy"
+                      value={
+                        beastEmailVerificationPolicy.restrictionEnforced
+                          ? "Feature-specific"
+                          : "No restriction"
+                      }
+                      detail={getBeastEmailVerificationAccessImpact(
+                        selectedMember.emailVerificationStatus === "verified"
+                      )}
+                      icon="✓"
+                      tone="green"
+                    />
+                  </div>
+                  <p className="mt-5 rounded-xl border border-amber-300/25 bg-amber-300/10 p-4 text-sm leading-6 text-amber-100">
+                    No verification-required feature policy or temporary
+                    exception has been owner-approved. BeastAdmin will not
+                    restrict the platform or create an exception until an
+                    approved policy exists.
+                  </p>
+                </DashboardCard>
+                <div className="mt-4">
+                  <BeastAdminAccountAuditLog
+                    key={`${selectedMember.id}-${refreshKey}`}
+                    members={[
+                      {
+                        id: selectedMember.id,
+                        displayName: selectedMember.displayName,
+                      },
+                    ]}
+                    initialMemberId={selectedMember.id}
+                  />
+                </div>
               </section>
 
               <DashboardCard accent="admin">

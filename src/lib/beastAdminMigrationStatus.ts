@@ -56,6 +56,7 @@ export const beastAdminRepositoryMigrationFiles = [
   "20260726001600_add_beast_admin_member_usage_summary.sql",
   "20260726001700_add_beast_admin_private_messaging.sql",
   "20260726001800_harden_beast_admin_private_messaging.sql",
+  "20260726001900_add_email_verification_outreach_policy.sql",
 ] as const;
 
 export type BeastAdminMigrationState =

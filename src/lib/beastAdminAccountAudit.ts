@@ -18,6 +18,10 @@ export const beastAdminAccountAuditActions = [
   "account_deletion_requested",
   "account_deletion_canceled",
   "admin_account_message_sent",
+  "email_verification_reminder_sent",
+  "email_verification_policy_exception_added",
+  "email_verification_policy_exception_removed",
+  "email_became_verified",
 ] as const;
 
 export type BeastAdminAccountAuditAction =
@@ -46,6 +50,12 @@ export const beastAdminAccountAuditActionLabels: Record<
   account_deletion_requested: "Account deletion requested",
   account_deletion_canceled: "Account deletion canceled",
   admin_account_message_sent: "Private account message sent",
+  email_verification_reminder_sent: "Verification reminder sent",
+  email_verification_policy_exception_added:
+    "Verification exception added",
+  email_verification_policy_exception_removed:
+    "Verification exception removed",
+  email_became_verified: "Email became verified",
 };
 
 export type BeastAdminAccountAuditEvent = {

@@ -28,6 +28,10 @@ test("BA-110 exposes every requested sensitive account action", () => {
     "beastos_sessions_revoked",
     "account_deletion_requested",
     "account_deletion_canceled",
+    "email_verification_reminder_sent",
+    "email_verification_policy_exception_added",
+    "email_verification_policy_exception_removed",
+    "email_became_verified",
   ] as const) {
     assert.equal(beastAdminAccountAuditActions.includes(action), true);
     assert.notEqual(getBeastAdminAccountAuditActionLabel(action), action);

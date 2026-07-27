@@ -62,6 +62,8 @@ export type BeastAdminMemberDirectoryEntry = {
   emailVerificationStatus: BeastAdminMemberEmailVerificationStatus;
   pendingEmail?: string | null;
   emailChangeSentAt?: string | null;
+  verifiedAt?: string | null;
+  lastVerificationEmailSentAt?: string | null;
   accountStatus: BeastAdminMemberAccountStatus;
   accountKind: BeastAdminAccountKind;
   role: string;
@@ -300,6 +302,8 @@ export type BeastAdminMemberEmailStatus = {
   emailVerificationStatus: BeastAdminMemberEmailVerificationStatus;
   pendingEmail: string | null;
   emailChangeSentAt: string | null;
+  verifiedAt: string | null;
+  lastVerificationEmailSentAt: string | null;
 };
 
 export function normalizeBeastAdminMemberEmailStatuses(
@@ -316,7 +320,9 @@ export function normalizeBeastAdminMemberEmailStatuses(
         entry.emailVerificationStatus as BeastAdminMemberEmailVerificationStatus
       ) ||
       (entry.pendingEmail !== null && typeof entry.pendingEmail !== "string") ||
-      !isNullableDateString(entry.emailChangeSentAt)
+      !isNullableDateString(entry.emailChangeSentAt) ||
+      !isNullableDateString(entry.verifiedAt ?? null) ||
+      !isNullableDateString(entry.lastVerificationEmailSentAt ?? null)
     ) {
       return [];
     }
@@ -329,6 +335,12 @@ export function normalizeBeastAdminMemberEmailStatuses(
           entry.emailVerificationStatus as BeastAdminMemberEmailVerificationStatus,
         pendingEmail: entry.pendingEmail,
         emailChangeSentAt: entry.emailChangeSentAt,
+        verifiedAt:
+          typeof entry.verifiedAt === "string" ? entry.verifiedAt : null,
+        lastVerificationEmailSentAt:
+          typeof entry.lastVerificationEmailSentAt === "string"
+            ? entry.lastVerificationEmailSentAt
+            : null,
       },
     ];
   });
@@ -354,6 +366,9 @@ export function mergeBeastAdminMemberEmailStatuses(
       emailVerificationStatus: status.emailVerificationStatus,
       pendingEmail: status.pendingEmail,
       emailChangeSentAt: status.emailChangeSentAt,
+      verifiedAt: status.verifiedAt,
+      lastVerificationEmailSentAt:
+        status.lastVerificationEmailSentAt,
     };
   });
 }
