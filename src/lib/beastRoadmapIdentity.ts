@@ -287,6 +287,15 @@ export const beastRoadmapPackageRegistry = [
     ]
   ),
   packageIdentity(
+    "BA-LYT-101",
+    ["BA-134"],
+    "BeastAdmin Layout Standard",
+    [
+      "docs/BA-134-BEASTADMIN-LAYOUT-STANDARD.md",
+      "tests/beastAdminLayoutStandard.test.ts",
+    ]
+  ),
+  packageIdentity(
     "BM-FND-033",
     ["BM-33"],
     "Funding Rules",
