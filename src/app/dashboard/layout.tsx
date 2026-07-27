@@ -777,6 +777,17 @@ export default function DashboardLayout({
         hasChildren &&
         expandedModules.includes(item.module);
       const navGroupId = `${item.module}-nav-group`;
+      const primaryChildren =
+        item.children?.filter(
+          (child) => !child.future && !child.secondary && !child.group
+        ) || [];
+      const groupedChildren =
+        item.children?.filter(
+          (child) => !child.future && !child.secondary && child.group
+        ) || [];
+      const childGroups = Array.from(
+        new Set(groupedChildren.map((child) => child.group).filter(Boolean))
+      );
 
       if (item.external && item.href) {
         return (
@@ -879,8 +890,26 @@ export default function DashboardLayout({
           >
             <div className="min-h-0 overflow-hidden">
               <div className="mt-2 space-y-1 pl-4">
-                {item.children?.filter((child) => !child.future && !child.secondary).map((child) => (
+                {primaryChildren.map((child) => (
                   <ChildLink key={child.label} item={child} module={item.module} />
+                ))}
+                {childGroups.map((group) => (
+                  <div key={group} className="pt-2 first:pt-0">
+                    <div className="px-3 text-[10px] font-bold uppercase tracking-wide text-[#596579]">
+                      {group}
+                    </div>
+                    <div className="mt-1 space-y-1">
+                      {groupedChildren
+                        .filter((child) => child.group === group)
+                        .map((child) => (
+                          <ChildLink
+                            key={child.label}
+                            item={child}
+                            module={item.module}
+                          />
+                        ))}
+                    </div>
+                  </div>
                 ))}
                 {item.children?.some((child) => child.secondary) ? (
                   <div className="pt-2">

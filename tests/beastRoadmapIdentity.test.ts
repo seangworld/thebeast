@@ -31,6 +31,7 @@ test("BA-131 assigns globally unique canonical roadmap package identities", () =
       "BA-110",
       "BA-131",
       "BA-132",
+      "BA-133",
     ]
   );
 });

@@ -447,6 +447,6 @@ test("BA-115 presents an executive snapshot with explained empty states", () => 
   assert.match(workspace, /absence is never reported as zero/);
   assert.match(
     navigation,
-    /\{ label: "CEO Mode", href: "\/dashboard\/admin" \}/
+    /label:\s*"CEO Mode"[\s\S]*?href:\s*"\/dashboard\/admin"/
   );
 });

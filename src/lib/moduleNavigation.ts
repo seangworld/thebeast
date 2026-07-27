@@ -10,6 +10,7 @@ import { beastMoneyCoreNavigation } from "./moneyNavigation";
 export type ModuleChildNavItem = {
   label: string;
   href: string;
+  group?: string;
   future?: boolean;
   secondary?: boolean;
 };
@@ -113,25 +114,85 @@ export const beastAdminNavigation: ModuleNavSection = {
   module: "admin",
   defaultExpanded: true,
   children: [
-    { label: "CEO Mode", href: "/dashboard/admin" },
-    { label: "Development Console", href: "/dashboard/admin/development" },
-    { label: "Platform Health", href: "/dashboard/admin/health" },
-    { label: "Migration Status", href: "/dashboard/admin/migrations" },
-    { label: "SQL Explorer", href: "/dashboard/admin/migrations/explorer" },
-    { label: "Executive Metrics", href: "/dashboard/admin/metrics" },
-    { label: "Release Center", href: "/dashboard/admin/releases" },
-    { label: "Roadmap", href: "/dashboard/admin/roadmap" },
-    { label: "Members", href: "/dashboard/admin/members" },
-    { label: "Member Messages", href: "/dashboard/admin/messages" },
-    { label: "Knowledge Inspector", href: "/dashboard/admin/knowledge" },
-    { label: "Ecosystem Map", href: "/dashboard/admin/ecosystem" },
-    { label: "Modules", href: "/dashboard/admin/modules" },
-    { label: "Feature Flags", href: "/dashboard/admin/flags" },
-    { label: "Prompt Library", href: "/dashboard/admin/prompts" },
-    { label: "AI Analytics", href: "/dashboard/admin/analytics" },
-    { label: "Beta Feedback", href: "/dashboard/admin/feedback" },
-    { label: "Planned Workspaces", href: "/dashboard/admin/ads" },
-    { label: "Settings", href: "/dashboard/admin/settings" },
+    { label: "CEO Mode", href: "/dashboard/admin", group: "Operations" },
+    {
+      label: "Development Console",
+      href: "/dashboard/admin/development",
+      group: "Operations",
+    },
+    {
+      label: "Platform Health",
+      href: "/dashboard/admin/health",
+      group: "Operations",
+    },
+    {
+      label: "Migration Status",
+      href: "/dashboard/admin/migrations",
+      group: "Delivery",
+    },
+    {
+      label: "SQL Explorer",
+      href: "/dashboard/admin/migrations/explorer",
+      group: "Delivery",
+    },
+    {
+      label: "Release Center",
+      href: "/dashboard/admin/releases",
+      group: "Delivery",
+    },
+    { label: "Roadmap", href: "/dashboard/admin/roadmap", group: "Delivery" },
+    {
+      label: "Executive Metrics",
+      href: "/dashboard/admin/metrics",
+      group: "Insights",
+    },
+    {
+      label: "AI Analytics",
+      href: "/dashboard/admin/analytics",
+      group: "Insights",
+    },
+    {
+      label: "Knowledge Inspector",
+      href: "/dashboard/admin/knowledge",
+      group: "Insights",
+    },
+    {
+      label: "Ecosystem Map",
+      href: "/dashboard/admin/ecosystem",
+      group: "Insights",
+    },
+    { label: "Members", href: "/dashboard/admin/members", group: "Members" },
+    {
+      label: "Member Messages",
+      href: "/dashboard/admin/messages",
+      group: "Members",
+    },
+    {
+      label: "Beta Feedback",
+      href: "/dashboard/admin/feedback",
+      group: "Members",
+    },
+    { label: "Modules", href: "/dashboard/admin/modules", group: "Governance" },
+    {
+      label: "Feature Flags",
+      href: "/dashboard/admin/flags",
+      group: "Governance",
+    },
+    {
+      label: "Prompt Library",
+      href: "/dashboard/admin/prompts",
+      group: "Governance",
+    },
+    {
+      label: "Planned Workspaces",
+      href: "/dashboard/admin/ads",
+      group: "Governance",
+    },
+    {
+      label: "Settings",
+      href: "/dashboard/admin/settings",
+      group: "Governance",
+    },
   ],
 };
 

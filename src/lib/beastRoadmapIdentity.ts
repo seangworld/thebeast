@@ -252,6 +252,26 @@ export const beastRoadmapPackageRegistry = [
     ]
   ),
   packageIdentity(
+    "BA-MIGAUD-101",
+    ["BA-133"],
+    "Supabase Migration Reconciliation Audit",
+    [
+      "src/lib/beastAdminMigrationStatus.ts",
+      "tests/beastAdminMigrationStatus.test.ts",
+    ]
+  ),
+  packageIdentity(
+    "BA-IA-101",
+    ["BA-133"],
+    "BeastAdmin Information Architecture",
+    [
+      "docs/BA-133-BEASTADMIN-INFORMATION-ARCHITECTURE.md",
+      "src/lib/moduleNavigation.ts",
+      "src/app/dashboard/layout.tsx",
+      "tests/beastAdminInformationArchitecture.test.ts",
+    ]
+  ),
+  packageIdentity(
     "BA-REC-134",
     ["BA-134"],
     "Forward-only Migration Reconciliation",

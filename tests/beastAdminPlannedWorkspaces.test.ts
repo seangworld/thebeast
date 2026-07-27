@@ -60,5 +60,8 @@ test("BA-126 replaces the Ads placeholder with a read-only roadmap registry", ()
 
   assert.doesNotMatch(page, /placeholder/i);
   assert.doesNotMatch(page, /createClient|fetch\(|\.rpc\(|<form|<button/);
-  assert.match(navigation, /Planned Workspaces.*\/dashboard\/admin\/ads/);
+  assert.match(
+    navigation,
+    /Planned Workspaces[\s\S]*?\/dashboard\/admin\/ads/
+  );
 });
