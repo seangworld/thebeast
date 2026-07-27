@@ -325,10 +325,6 @@ test("BA-119 presents environment identity pending order capabilities and respon
     "src/app/dashboard/admin/migrations/BeastAdminMigrationStatusWorkspace.tsx",
     "utf8"
   );
-  const shell = readFileSync(
-    "src/app/dashboard/admin/BeastAdminShell.tsx",
-    "utf8"
-  );
   const navigation = readFileSync("src/lib/moduleNavigation.ts", "utf8");
   const metrics = readFileSync(
     "src/app/dashboard/admin/metrics/BeastAdminExecutiveMetricsWorkspace.tsx",
@@ -354,7 +350,6 @@ test("BA-119 presents environment identity pending order capabilities and respon
   assert.match(workspace, /md:hidden/);
   assert.match(workspace, /min-w-0/);
   assert.match(workspace, /never applies or repairs migrations/i);
-  assert.match(shell, /Migration Status/);
   assert.match(navigation, /Migration Status/);
   assert.match(metrics, /Open Migration Status/);
   assert.match(responsive, /\/dashboard\/admin\/migrations/);

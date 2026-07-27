@@ -222,6 +222,16 @@ export const beastRoadmapPackageRegistry = [
     ["docs/BA-131-ROADMAP-IDENTITY-AUDIT.md"]
   ),
   packageIdentity(
+    "BA-NAV-101",
+    ["BA-131"],
+    "BeastAdmin Navigation Cleanup",
+    [
+      "src/app/dashboard/admin/BeastAdminShell.tsx",
+      "src/lib/moduleNavigation.ts",
+      "tests/beastAdminNavigationCleanup.test.ts",
+    ]
+  ),
+  packageIdentity(
     "BA-REC-134",
     ["BA-134"],
     "Forward-only Migration Reconciliation",

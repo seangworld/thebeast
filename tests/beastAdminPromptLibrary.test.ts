@@ -173,10 +173,6 @@ test("BA-107 presents central management, release history, and future rollback",
     "src/lib/beastAdminPromptLibrary.ts",
     "utf8"
   );
-  const shell = readFileSync(
-    "src/app/dashboard/admin/BeastAdminShell.tsx",
-    "utf8"
-  );
   const navigation = readFileSync("src/lib/moduleNavigation.ts", "utf8");
 
   assert.match(page, /Prompt Library/);
@@ -199,7 +195,6 @@ test("BA-107 presents central management, release history, and future rollback",
   assert.match(workspace, /No managed prompts exist yet/);
   assert.match(workspace, /live AI behavior remains unchanged/i);
   assert.doesNotMatch(workspace, /localStorage/);
-  assert.match(shell, /Prompt Library/);
   assert.match(navigation, /Prompt Library/);
 });
 

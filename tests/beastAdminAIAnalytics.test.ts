@@ -149,10 +149,6 @@ test("BA-103 presents every requested metric with honest loading and empty state
     "src/app/dashboard/admin/analytics/BeastAdminAIAnalyticsWorkspace.tsx",
     "utf8"
   );
-  const shell = readFileSync(
-    "src/app/dashboard/admin/BeastAdminShell.tsx",
-    "utf8"
-  );
   const navigation = readFileSync("src/lib/moduleNavigation.ts", "utf8");
 
   for (const metric of [
@@ -181,7 +177,6 @@ test("BA-103 presents every requested metric with honest loading and empty state
   assert.match(workspace, /aggregate counts only/);
   assert.doesNotMatch(workspace, /SUPABASE_SERVICE_ROLE_KEY/);
   assert.doesNotMatch(workspace, /localStorage/);
-  assert.match(shell, /AI Analytics/);
   assert.match(navigation, /AI Analytics/);
 });
 

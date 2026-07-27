@@ -359,10 +359,6 @@ test("BA-111 presents the complete owner development workflow", () => {
     "src/app/dashboard/admin/BeastAdminCEOModeWorkspace.tsx",
     "utf8"
   );
-  const shell = readFileSync(
-    "src/app/dashboard/admin/BeastAdminShell.tsx",
-    "utf8"
-  );
   const navigation = readFileSync("src/lib/moduleNavigation.ts", "utf8");
 
   for (const label of [
@@ -405,6 +401,5 @@ test("BA-111 presents the complete owner development workflow", () => {
   assert.doesNotMatch(workspace, /localStorage/);
   assert.doesNotMatch(workspace, /git push|git commit|child_process/);
   assert.match(dashboard, /\/dashboard\/admin\/development/);
-  assert.match(shell, /Development Console/);
   assert.match(navigation, /Development Console/);
 });

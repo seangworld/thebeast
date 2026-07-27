@@ -396,10 +396,7 @@ test("BA-115 presents an executive snapshot with explained empty states", () => 
     "src/app/dashboard/admin/BeastAdminCEOModeWorkspace.tsx",
     "utf8"
   );
-  const shell = readFileSync(
-    "src/app/dashboard/admin/BeastAdminShell.tsx",
-    "utf8"
-  );
+  const navigation = readFileSync("src/lib/moduleNavigation.ts", "utf8");
 
   assert.match(page, /title="CEO Mode"/);
   assert.match(page, /owner-only daily operating headquarters/);
@@ -448,5 +445,8 @@ test("BA-115 presents an executive snapshot with explained empty states", () => 
   assert.match(workspace, /value === 0 \? "None"/);
   assert.match(workspace, /No connected source recorded/);
   assert.match(workspace, /absence is never reported as zero/);
-  assert.match(shell, /\{ label: "CEO Mode", href: "\/dashboard\/admin" \}/);
+  assert.match(
+    navigation,
+    /\{ label: "CEO Mode", href: "\/dashboard\/admin" \}/
+  );
 });

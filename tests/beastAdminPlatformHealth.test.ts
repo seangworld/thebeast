@@ -171,10 +171,6 @@ test("BA-117 presents four honest states and expandable future monitoring", () =
     "src/lib/beastAdminPlatformHealth.ts",
     "utf8"
   );
-  const shell = readFileSync(
-    "src/app/dashboard/admin/BeastAdminShell.tsx",
-    "utf8"
-  );
   const navigation = readFileSync("src/lib/moduleNavigation.ts", "utf8");
 
   assert.match(page, /Platform Health/);
@@ -221,6 +217,5 @@ test("BA-117 presents four honest states and expandable future monitoring", () =
   assert.doesNotMatch(workspace, /overflow-x-hidden|w-screen/);
   assert.doesNotMatch(workspace, /localStorage/);
   assert.match(adminDashboard, /\/dashboard\/admin\/health/);
-  assert.match(shell, /Platform Health/);
   assert.match(navigation, /Platform Health/);
 });

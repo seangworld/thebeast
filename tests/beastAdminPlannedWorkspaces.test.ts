@@ -46,10 +46,6 @@ test("BA-126 replaces the Ads placeholder with a read-only roadmap registry", ()
     "src/app/dashboard/admin/ads/page.tsx",
     "utf8"
   );
-  const shell = readFileSync(
-    "src/app/dashboard/admin/BeastAdminShell.tsx",
-    "utf8"
-  );
   const navigation = readFileSync("src/lib/moduleNavigation.ts", "utf8");
 
   [
@@ -64,6 +60,5 @@ test("BA-126 replaces the Ads placeholder with a read-only roadmap registry", ()
 
   assert.doesNotMatch(page, /placeholder/i);
   assert.doesNotMatch(page, /createClient|fetch\(|\.rpc\(|<form|<button/);
-  assert.match(shell, /Planned Workspaces.*\/dashboard\/admin\/ads/);
   assert.match(navigation, /Planned Workspaces.*\/dashboard\/admin\/ads/);
 });

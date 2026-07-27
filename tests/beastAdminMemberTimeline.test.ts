@@ -324,10 +324,6 @@ test("BA-104 presents owner-only member selection, chronology, coverage, and emp
     "src/lib/beastAdminMemberTimeline.ts",
     "utf8"
   );
-  const shell = readFileSync(
-    "src/app/dashboard/admin/BeastAdminShell.tsx",
-    "utf8"
-  );
   const navigation = readFileSync("src/lib/moduleNavigation.ts", "utf8");
 
   for (const label of [
@@ -369,6 +365,5 @@ test("BA-104 presents owner-only member selection, chronology, coverage, and emp
   assert.match(workspace, /document contents/);
   assert.doesNotMatch(workspace, /SUPABASE_SERVICE_ROLE_KEY/);
   assert.doesNotMatch(workspace, /localStorage/);
-  assert.match(shell, /Members/);
   assert.match(navigation, /Members/);
 });

@@ -179,10 +179,7 @@ test("BA-105 presents lifecycle management, roadmap linking, and member delivery
     "src/app/dashboard/notifications/FeedbackReleaseNotifications.tsx",
     "utf8"
   );
-  const shell = readFileSync(
-    "src/app/dashboard/admin/BeastAdminShell.tsx",
-    "utf8"
-  );
+  const navigation = readFileSync("src/lib/moduleNavigation.ts", "utf8");
 
   assert.match(page, /Beta Feedback/);
   assert.match(page, /BeastAdminFeedbackWorkspace/);
@@ -207,5 +204,5 @@ test("BA-105 presents lifecycle management, roadmap linking, and member delivery
     notifications,
     /\.rpc\(\s*"mark_beast_member_notification_read"/
   );
-  assert.match(shell, /Beta Feedback/);
+  assert.match(navigation, /Beta Feedback/);
 });

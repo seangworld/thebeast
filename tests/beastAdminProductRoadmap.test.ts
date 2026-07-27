@@ -177,6 +177,7 @@ test("BA-102 keeps roadmap persistence owner-only and migration-backed", () => {
     "src/app/dashboard/admin/BeastAdminShell.tsx",
     "utf8"
   );
+  const navigation = readFileSync("src/lib/moduleNavigation.ts", "utf8");
 
   assert.match(migration, /beast_admin_roadmap_items/);
   assert.match(migration, /enable row level security/);
@@ -192,6 +193,6 @@ test("BA-102 keeps roadmap persistence owner-only and migration-backed", () => {
   assert.match(workspace, /Save changes/);
   assert.match(workspace, /No roadmap features match these filters/);
   assert.doesNotMatch(workspace, /localStorage/);
-  assert.match(shell, /\/dashboard\/admin\/roadmap/);
+  assert.match(navigation, /\/dashboard\/admin\/roadmap/);
   assert.match(shell, /canAccessBeastAdmin/);
 });

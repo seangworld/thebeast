@@ -193,10 +193,6 @@ test("BA-112 presents every requested owner inspection area without mutation con
     "src/app/dashboard/admin/knowledge/BeastAdminKnowledgeInspectorWorkspace.tsx",
     "utf8"
   );
-  const shell = readFileSync(
-    "src/app/dashboard/admin/BeastAdminShell.tsx",
-    "utf8"
-  );
   const navigation = readFileSync("src/lib/moduleNavigation.ts", "utf8");
 
   for (const label of [
@@ -217,7 +213,6 @@ test("BA-112 presents every requested owner inspection area without mutation con
   assert.match(workspace, /All professionals/);
   assert.match(workspace, /Read-only inspection/);
   assert.match(workspace, /raw conversation messages/);
-  assert.match(shell, /Knowledge Inspector/);
   assert.match(navigation, /Knowledge Inspector/);
   assert.doesNotMatch(workspace, /\.(insert|update|delete|upsert)\(/);
   assert.doesNotMatch(workspace, /SUPABASE_SERVICE_ROLE_KEY/);

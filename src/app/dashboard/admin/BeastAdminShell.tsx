@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   DashboardCard,
@@ -18,28 +17,6 @@ import {
   normalizeAdminViewMode,
   type AdminViewMode,
 } from "@/lib/entitlements";
-
-const adminNavItems = [
-  { label: "CEO Mode", href: "/dashboard/admin" },
-  { label: "Development Console", href: "/dashboard/admin/development" },
-  { label: "Platform Health", href: "/dashboard/admin/health" },
-  { label: "Migration Status", href: "/dashboard/admin/migrations" },
-  { label: "SQL Explorer", href: "/dashboard/admin/migrations/explorer" },
-  { label: "Executive Metrics", href: "/dashboard/admin/metrics" },
-  { label: "Release Center", href: "/dashboard/admin/releases" },
-  { label: "Roadmap", href: "/dashboard/admin/roadmap" },
-  { label: "Members", href: "/dashboard/admin/members" },
-  { label: "Member Messages", href: "/dashboard/admin/messages" },
-  { label: "Knowledge Inspector", href: "/dashboard/admin/knowledge" },
-  { label: "Ecosystem Map", href: "/dashboard/admin/ecosystem" },
-  { label: "Modules", href: "/dashboard/admin/modules" },
-  { label: "Feature Flags", href: "/dashboard/admin/flags" },
-  { label: "Prompt Library", href: "/dashboard/admin/prompts" },
-  { label: "AI Analytics", href: "/dashboard/admin/analytics" },
-  { label: "Beta Feedback", href: "/dashboard/admin/feedback" },
-  { label: "Planned Workspaces", href: "/dashboard/admin/ads" },
-  { label: "Settings", href: "/dashboard/admin/settings" },
-];
 
 function loadAdminViewMode() {
   if (typeof window === "undefined") return "admin" as AdminViewMode;
@@ -147,18 +124,6 @@ export function BeastAdminShell({
             <p className="beast-subtitle">{description}</p>
           </div>
         </section>
-
-        <nav className="flex flex-wrap gap-2" aria-label="BeastAdmin sections">
-          {adminNavItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="rounded-lg border border-amber-300/30 bg-amber-300/10 px-3 py-2 text-sm font-bold text-amber-100 transition hover:border-amber-200 hover:bg-amber-200/20"
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
 
         {children}
       </div>

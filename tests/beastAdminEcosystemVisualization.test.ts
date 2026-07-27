@@ -285,10 +285,6 @@ test("BA-113 is an owner-shell documentation and debugging surface only", () => 
     "src/app/dashboard/admin/ecosystem/BeastAdminEcosystemVisualizationWorkspace.tsx",
     "utf8"
   );
-  const shell = readFileSync(
-    "src/app/dashboard/admin/BeastAdminShell.tsx",
-    "utf8"
-  );
   const navigation = readFileSync("src/lib/moduleNavigation.ts", "utf8");
 
   assert.match(page, /BeastAdminShell/);
@@ -301,7 +297,6 @@ test("BA-113 is an owner-shell documentation and debugging surface only", () => 
   assert.match(workspace, /role="button"/);
   assert.match(workspace, /event\.key === "Enter"/);
   assert.match(workspace, /does not inspect live\s+member data/);
-  assert.match(shell, /Ecosystem Map/);
   assert.match(navigation, /Ecosystem Map/);
   assert.doesNotMatch(workspace, /createClient|fetch\(|\.rpc\(/);
   assert.doesNotMatch(workspace, /\.(insert|update|delete|upsert)\(/);

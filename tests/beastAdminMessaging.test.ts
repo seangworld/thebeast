@@ -404,10 +404,6 @@ test("BA-129 creates notifications and unread navigation across desktop and mobi
   const navigation = readFileSync("src/lib/moduleNavigation.ts", "utf8");
   const layout = readFileSync("src/app/dashboard/layout.tsx", "utf8");
   const mobile = readFileSync("src/lib/mobileFoundation.ts", "utf8");
-  const adminShell = readFileSync(
-    "src/app/dashboard/admin/BeastAdminShell.tsx",
-    "utf8"
-  );
 
   assert.match(
     notification,
@@ -420,7 +416,6 @@ test("BA-129 creates notifications and unread navigation across desktop and mobi
     navigation,
     /Member Messages.*\/dashboard\/admin\/messages/
   );
-  assert.match(adminShell, /Member Messages/);
   assert.match(layout, /get_beast_admin_message_unread_count/);
   assert.match(layout, /BEAST_ADMIN_MESSAGE_UNREAD_EVENT/);
   assert.match(layout, /unread private messages/);

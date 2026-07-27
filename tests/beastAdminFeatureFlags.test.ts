@@ -249,10 +249,6 @@ test("BA-106 provides owner management and a fail-closed runtime hook", () => {
     "utf8"
   );
   const hook = readFileSync("src/lib/hooks/useFeatureFlag.ts", "utf8");
-  const shell = readFileSync(
-    "src/app/dashboard/admin/BeastAdminShell.tsx",
-    "utf8"
-  );
   const navigation = readFileSync("src/lib/moduleNavigation.ts", "utf8");
 
   assert.match(page, /Feature Flags/);
@@ -274,7 +270,6 @@ test("BA-106 provides owner management and a fail-closed runtime hook", () => {
   assert.doesNotMatch(workspace, /localStorage/);
   assert.match(hook, /get_beast_feature_flag_resolution/);
   assert.match(hook, /visibility fails closed/);
-  assert.match(shell, /Feature Flags/);
   assert.match(navigation, /Feature Flags/);
 });
 

@@ -6072,6 +6072,7 @@ test("BeastAdmin foundation registers modules and protects owner-only navigation
       "SQL Explorer",
       "Executive Metrics",
       "Release Center",
+      "Roadmap",
       "Members",
       "Member Messages",
       "Knowledge Inspector",

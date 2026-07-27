@@ -285,10 +285,6 @@ test("BA-110 presents every requested business metric and evidence boundary", ()
     "src/app/dashboard/admin/BeastAdminCEOModeWorkspace.tsx",
     "utf8"
   );
-  const shell = readFileSync(
-    "src/app/dashboard/admin/BeastAdminShell.tsx",
-    "utf8"
-  );
   const navigation = readFileSync("src/lib/moduleNavigation.ts", "utf8");
 
   for (const metric of [
@@ -320,6 +316,5 @@ test("BA-110 presents every requested business metric and evidence boundary", ()
   assert.doesNotMatch(workspace, /localStorage/);
   assert.doesNotMatch(workspace, /SUPABASE_SERVICE_ROLE_KEY/);
   assert.match(dashboard, /\/dashboard\/admin\/metrics/);
-  assert.match(shell, /Executive Metrics/);
   assert.match(navigation, /Executive Metrics/);
 });

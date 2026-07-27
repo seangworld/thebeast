@@ -175,10 +175,6 @@ test("BA-108 provides an owner Release Center without replacing public notes", (
     "src/app/dashboard/admin/BeastAdminCEOModeWorkspace.tsx",
     "utf8"
   );
-  const shell = readFileSync(
-    "src/app/dashboard/admin/BeastAdminShell.tsx",
-    "utf8"
-  );
   const navigation = readFileSync("src/lib/moduleNavigation.ts", "utf8");
 
   assert.match(page, /Release Center/);
@@ -199,6 +195,5 @@ test("BA-108 provides an owner Release Center without replacing public notes", (
   assert.match(workspace, /href="\/release-notes"/);
   assert.doesNotMatch(workspace, /localStorage/);
   assert.match(adminDashboard, /\/dashboard\/admin\/releases/);
-  assert.match(shell, /Release Center/);
   assert.match(navigation, /Release Center/);
 });

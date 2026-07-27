@@ -120,6 +120,7 @@ export const beastAdminNavigation: ModuleNavSection = {
     { label: "SQL Explorer", href: "/dashboard/admin/migrations/explorer" },
     { label: "Executive Metrics", href: "/dashboard/admin/metrics" },
     { label: "Release Center", href: "/dashboard/admin/releases" },
+    { label: "Roadmap", href: "/dashboard/admin/roadmap" },
     { label: "Members", href: "/dashboard/admin/members" },
     { label: "Member Messages", href: "/dashboard/admin/messages" },
     { label: "Knowledge Inspector", href: "/dashboard/admin/knowledge" },
