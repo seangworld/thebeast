@@ -1,5 +1,5 @@
 import { BeastAdminShell } from "../BeastAdminShell";
-import { BeastAdminMemberTimelineWorkspace } from "./BeastAdminMemberTimelineWorkspace";
+import { BeastAdminMemberManagementWorkspace } from "./BeastAdminMemberManagementWorkspace";
 
 export default function BeastAdminMembersPage() {
   return (
@@ -7,7 +7,7 @@ export default function BeastAdminMembersPage() {
       title="Member Directory"
       description="Review authoritative account identity, access, beta assignments, and permissioned activity without exposing sensitive Auth metadata to members."
     >
-      <BeastAdminMemberTimelineWorkspace />
+      <BeastAdminMemberManagementWorkspace />
     </BeastAdminShell>
   );
 }

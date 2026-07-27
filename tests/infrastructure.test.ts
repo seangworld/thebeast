@@ -6242,7 +6242,7 @@ test("BeastAdmin routes cover CEO operations members analytics feedback ads and 
     "utf8"
   );
   assert.match(membersPage, /Member Directory/);
-  assert.match(membersPage, /BeastAdminMemberTimelineWorkspace/);
+  assert.match(membersPage, /BeastAdminMemberManagementWorkspace/);
   assert.match(memberTimelineWorkspace, /Search members/);
   assert.match(memberTimelineModel, /Registration/);
   assert.match(memberTimelineWorkspace, /Permission and Source Coverage/);

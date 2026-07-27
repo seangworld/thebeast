@@ -24,6 +24,7 @@ test("BA-101 maps every displayed member field to an explicit authority", () => 
       "lastSignInAt",
       "registeredAt",
       "lastActivityAt",
+      "mostUsedModule",
       "eventCount",
       "applicationsUsed",
       "latestActivity",

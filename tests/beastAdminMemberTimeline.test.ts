@@ -344,7 +344,7 @@ test("BA-104 presents owner-only member selection, chronology, coverage, and emp
   }
 
   assert.match(page, /Member Directory/);
-  assert.match(page, /BeastAdminMemberTimelineWorkspace/);
+  assert.match(page, /BeastAdminMemberManagementWorkspace/);
   assert.match(workspace, /\.rpc\(\s*"get_beast_admin_member_directory"/);
   assert.match(workspace, /\.rpc\(\s*"get_beast_admin_member_timeline"/);
   assert.match(workspace, /Search members/);

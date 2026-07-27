@@ -13,6 +13,7 @@ export type BeastAdminMemberFieldSource = {
     | "lastSignInAt"
     | "registeredAt"
     | "lastActivityAt"
+    | "mostUsedModule"
     | "eventCount"
     | "applicationsUsed"
     | "latestActivity"
@@ -125,14 +126,18 @@ export const beastAdminMemberFieldSources: BeastAdminMemberFieldSource[] = [
     id: "householdRole",
     label: "Household role",
     displayedAs: "Account details",
-    source: "No persisted source connected",
-    columns: "null",
-    authoritativeSource: "Not available",
-    editable: "Not editable because Beast has no household-membership record.",
+    source:
+      "beast_admin_member_invitations + beast_admin_invitation_households",
+    columns: "state, relationship, household_id, household name",
+    authoritativeSource:
+      "The persisted BeastAdmin invitation and household assignment",
+    editable:
+      "Editable only through the controlled invitation workflow. A general household-membership editor is not connected.",
     synchronization:
-      "Always labeled “Not provided.” The directory does not infer household relationships.",
-    accessBoundary: "No household or family fixture is queried.",
-    kind: "direct",
+      "Accepted invitations display Member; open invitations display Pending member. Accounts without persisted assignment evidence are labeled “Not provided.”",
+    accessBoundary:
+      "Owner-only invitation RPC; household and family fixtures are never queried.",
+    kind: "derived",
   },
   {
     id: "enabledModules",
@@ -224,6 +229,22 @@ export const beastAdminMemberFieldSources: BeastAdminMemberFieldSource[] = [
     kind: "derived",
   },
   {
+    id: "mostUsedModule",
+    label: "Most-used module",
+    displayedAs: "Member table, filters, and usage summary",
+    source: "BA-128 owner-only persisted-activity aggregation",
+    columns:
+      "COUNT(*) by module during the previous 90 days; ties use latest activity and then module ID",
+    authoritativeSource:
+      "Persisted conversation, goal, learning, payment, retirement-planning, and document timestamps",
+    editable: "Read-only and recomputed when the directory loads.",
+    synchronization:
+      "A module is shown only when supported activity exists. Access, assignments, page views, fixtures, and private content never count as usage.",
+    accessBoundary:
+      "Owner-checked security-definer RPC returns only member ID, module ID, count, latest timestamp, and period.",
+    kind: "derived",
+  },
+  {
     id: "eventCount",
     label: "Journey events",
     displayedAs: "Directory and Journey Events totals",
@@ -284,7 +305,7 @@ export const beastAdminMemberNonSources = [
   {
     source: "Household and Family",
     finding:
-      "No persisted Household or Family member table feeds BeastAdmin Members. Current Household and Family models are application contracts with mock fixtures only.",
+      "No general Household or Family member table feeds BeastAdmin Members. Only persisted BeastAdmin invitation assignments are displayed; current application fixtures are never queried.",
   },
   {
     source: "Learning and Education profiles",

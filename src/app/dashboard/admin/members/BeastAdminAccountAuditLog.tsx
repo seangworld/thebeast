@@ -17,6 +17,7 @@ import {
 
 type Props = {
   members: Array<{ id: string; displayName: string }>;
+  initialMemberId?: string;
 };
 
 function formatAuditDate(value: string) {
@@ -33,8 +34,11 @@ function exclusiveDateEnd(value: string) {
   return date.toISOString();
 }
 
-export function BeastAdminAccountAuditLog({ members }: Props) {
-  const [memberId, setMemberId] = useState("");
+export function BeastAdminAccountAuditLog({
+  members,
+  initialMemberId = "",
+}: Props) {
+  const [memberId, setMemberId] = useState(initialMemberId);
   const [action, setAction] = useState<
     BeastAdminAccountAuditAction | ""
   >("");
@@ -112,13 +116,14 @@ export function BeastAdminAccountAuditLog({ members }: Props) {
   );
 
   useEffect(() => {
+    setMemberId(initialMemberId);
     void loadAuditLog({
-      memberId: "",
+      memberId: initialMemberId,
       action: "",
       dateFrom: "",
       dateTo: "",
     });
-  }, [loadAuditLog]);
+  }, [initialMemberId, loadAuditLog]);
 
   function applyFilters(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
