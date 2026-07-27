@@ -17,6 +17,7 @@ export const beastAdminAccountAuditActions = [
   "suspicious_activity_cleared",
   "account_deletion_requested",
   "account_deletion_canceled",
+  "admin_account_message_sent",
 ] as const;
 
 export type BeastAdminAccountAuditAction =
@@ -44,6 +45,7 @@ export const beastAdminAccountAuditActionLabels: Record<
   suspicious_activity_cleared: "Suspicious activity cleared",
   account_deletion_requested: "Account deletion requested",
   account_deletion_canceled: "Account deletion canceled",
+  admin_account_message_sent: "Private account message sent",
 };
 
 export type BeastAdminAccountAuditEvent = {

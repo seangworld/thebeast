@@ -45,6 +45,7 @@ import {
   shouldAttemptLearningOnboardingRepair,
 } from "@/lib/learning/onboardingCompletion";
 import { buildAuthLoginPath } from "@/lib/auth/experience";
+import { BEAST_ADMIN_MESSAGE_UNREAD_EVENT } from "@/lib/beastAdminMessaging";
 
 const learningPrimaryNavigation: ModuleNavSection[] = [
   { label: "Guidance Counselor", href: "/dashboard/education", module: "learning" },
@@ -56,6 +57,7 @@ const learningPrimaryNavigation: ModuleNavSection[] = [
 ];
 
 const learningSettingsNavigation: ModuleNavSection[] = [
+  { label: "Messages", href: "/dashboard/messages", module: "beastos" },
   { label: "Personal Hub", href: "/dashboard/settings", module: "beastos" },
 ];
 
@@ -127,6 +129,7 @@ export default function DashboardLayout({
   const [resolvingOnboarding, setResolvingOnboarding] = useState(true);
   const [dashboardGuardResolved, setDashboardGuardResolved] = useState(false);
   const [onboardingDiagnosticError, setOnboardingDiagnosticError] = useState("");
+  const [adminMessageUnreadCount, setAdminMessageUnreadCount] = useState(0);
   const [onboardingRedirectDiagnostic, setOnboardingRedirectDiagnostic] = useState<{
     source: string;
     userId: string;
@@ -177,6 +180,45 @@ export default function DashboardLayout({
   useEffect(() => {
     setExpandedModules(loadExpandedModules());
   }, []);
+
+  useEffect(() => {
+    let active = true;
+    async function loadAdminMessageUnreadCount() {
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase.rpc(
+          "get_beast_admin_message_unread_count"
+        );
+        if (
+          active &&
+          !error &&
+          typeof data === "number" &&
+          Number.isInteger(data) &&
+          data >= 0
+        ) {
+          setAdminMessageUnreadCount(data);
+        }
+      } catch {
+        if (active) setAdminMessageUnreadCount(0);
+      }
+    }
+
+    const refreshUnread = () => void loadAdminMessageUnreadCount();
+    void loadAdminMessageUnreadCount();
+    window.addEventListener(
+      BEAST_ADMIN_MESSAGE_UNREAD_EVENT,
+      refreshUnread
+    );
+    const interval = window.setInterval(refreshUnread, 60_000);
+    return () => {
+      active = false;
+      window.removeEventListener(
+        BEAST_ADMIN_MESSAGE_UNREAD_EVENT,
+        refreshUnread
+      );
+      window.clearInterval(interval);
+    };
+  }, [pathname]);
 
   useEffect(() => {
     const syncLocationHash = () => setLocationHash(window.location.hash);
@@ -632,6 +674,16 @@ export default function DashboardLayout({
     return path === "/dashboard" ? isActiveRoute(path) : pathname === path || pathname.startsWith(`${path}/`);
   }
 
+  function privateMessageUnreadCountForHref(href?: string) {
+    if (
+      (isAdminPersona && href === "/dashboard/admin/messages") ||
+      (!isAdminPersona && href === "/dashboard/messages")
+    ) {
+      return adminMessageUnreadCount;
+    }
+    return 0;
+  }
+
   function MobileNavButton({ item }: { item: ReturnType<typeof buildMobileNavigation>["primary"][number] }) {
     const active = item.href === "#mobile-more" ? mobileMoreOpen : isActiveRoute(item.href);
     const accent = moduleAccents[item.module];
@@ -700,7 +752,19 @@ export default function DashboardLayout({
               : "border-transparent text-[#9aa7b8] hover:border-[#2a3242] hover:bg-[#1a1f2b] hover:text-white"
           }`}
         >
-          {item.label}
+          <span className="min-w-0 flex-1 truncate">{item.label}</span>
+          {privateMessageUnreadCountForHref(item.href) > 0 ? (
+            <span
+              className="ml-2 rounded-full bg-red-300 px-1.5 py-0.5 text-[10px] font-black text-[#2b0b0b]"
+              aria-label={`${privateMessageUnreadCountForHref(
+                item.href
+              )} unread private messages`}
+            >
+              {privateMessageUnreadCountForHref(item.href) > 99
+                ? "99+"
+                : privateMessageUnreadCountForHref(item.href)}
+            </span>
+          ) : null}
         </Link>
       );
     }
@@ -749,6 +813,13 @@ export default function DashboardLayout({
               active={active}
               comingSoon={item.comingSoon}
               compact={compact}
+              badgeCount={
+                item.module === "admin" && isAdminPersona
+                  ? adminMessageUnreadCount
+                  : item.module === "beastos" && !isAdminPersona
+                    ? adminMessageUnreadCount
+                    : 0
+              }
             />
           </div>
         );
@@ -948,10 +1019,13 @@ export default function DashboardLayout({
                       <ModuleNavItem
                         label={item.label}
                         href={item.href}
-                        module={item.module}
-                        active={item.href ? isActiveRoute(item.href) : false}
-                        compact={compact}
-                      />
+                      module={item.module}
+                      active={item.href ? isActiveRoute(item.href) : false}
+                      compact={compact}
+                      badgeCount={
+                        privateMessageUnreadCountForHref(item.href)
+                      }
+                    />
                     </div>
                   ))}
                 </nav>

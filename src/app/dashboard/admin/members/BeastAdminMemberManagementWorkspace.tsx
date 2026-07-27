@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
   DashboardCard,
@@ -915,19 +916,23 @@ export function BeastAdminMemberManagementWorkspace() {
               <DashboardCard accent="admin">
                 <SectionHeader
                   eyebrow="Messages with Admin"
-                  title="No connected in-app admin messaging source"
-                  description="BeastAdmin does not fabricate message history or expose professional conversations as owner messages."
+                  title="Private account and support communication"
+                  description="Open this member’s durable private administrative thread. Professional conversations and AI context remain separate."
                 />
-                {selectedMember.email ? (
-                  <a
-                    href={`mailto:${selectedMember.email}`}
+                {selectedMember.accountKind === "member" &&
+                selectedMember.accountStatus !== "deleted" ? (
+                  <Link
+                    href={`/dashboard/admin/messages?member=${encodeURIComponent(
+                      selectedMember.id
+                    )}`}
                     className="beast-button-secondary mt-5 inline-flex min-h-11 items-center"
                   >
-                    Message using login email
-                  </a>
+                    Open Member Messages
+                  </Link>
                 ) : (
                   <p className="mt-5 text-sm text-[#9aa7b8]">
-                    This account has no authoritative login email.
+                    Protected and deleted accounts cannot start a member support
+                    thread.
                   </p>
                 )}
               </DashboardCard>

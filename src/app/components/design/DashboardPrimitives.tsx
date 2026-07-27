@@ -208,6 +208,7 @@ type ModuleNavItemProps = {
   active?: boolean;
   comingSoon?: boolean;
   compact?: boolean;
+  badgeCount?: number;
 };
 
 type QuickActionButtonProps = {
@@ -397,6 +398,7 @@ export function ModuleNavItem({
   active = false,
   comingSoon = false,
   compact = false,
+  badgeCount = 0,
 }: ModuleNavItemProps) {
   const accent = moduleAccents[module];
   const baseClass =
@@ -412,6 +414,16 @@ export function ModuleNavItem({
         style={{ background: active || comingSoon ? accent.color : "#596579" }}
       />
       <span className={`${compact ? "sr-only lg:not-sr-only" : ""} min-w-0 break-words`}>{label}</span>
+      {badgeCount > 0 ? (
+        <span
+          className={`ml-auto rounded-full bg-red-300 px-1.5 py-0.5 text-[10px] font-black text-[#2b0b0b] ${
+            compact ? "h-2 w-2 overflow-hidden p-0 text-transparent" : ""
+          }`}
+          aria-label={`${badgeCount} unread`}
+        >
+          {badgeCount > 99 ? "99+" : badgeCount}
+        </span>
+      ) : null}
       {comingSoon && !compact ? (
         <span className="rounded border border-[#2a3242] px-1.5 py-0.5 text-[10px] uppercase text-[#7f8da3]">
           Soon

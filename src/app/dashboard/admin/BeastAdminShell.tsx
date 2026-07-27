@@ -29,6 +29,7 @@ const adminNavItems = [
   { label: "Release Center", href: "/dashboard/admin/releases" },
   { label: "Roadmap", href: "/dashboard/admin/roadmap" },
   { label: "Members", href: "/dashboard/admin/members" },
+  { label: "Member Messages", href: "/dashboard/admin/messages" },
   { label: "Knowledge Inspector", href: "/dashboard/admin/knowledge" },
   { label: "Ecosystem Map", href: "/dashboard/admin/ecosystem" },
   { label: "Modules", href: "/dashboard/admin/modules" },

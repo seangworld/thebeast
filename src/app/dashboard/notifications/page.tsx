@@ -20,6 +20,7 @@ import {
 } from "@/lib/platform/notifications";
 import { buildMobileNotificationCards } from "@/lib/mobileSharedServices";
 import { FeedbackReleaseNotifications } from "./FeedbackReleaseNotifications";
+import { PrivateAdminMessageNotifications } from "./PrivateAdminMessageNotifications";
 
 const notificationItems: PlatformNotificationItem[] = [
   {
@@ -120,6 +121,7 @@ export default function NotificationsPage() {
         />
 
         <FeedbackReleaseNotifications />
+        <PrivateAdminMessageNotifications />
 
         <section
           className="space-y-3 md:hidden"

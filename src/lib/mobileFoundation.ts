@@ -161,6 +161,7 @@ export function buildMobileCoreRoutes({
     { label: "Home", href: "/dashboard", module: "beastos" },
     { label: "Today", href: "/dashboard/today", module: "beastos" },
     { label: "Notifications", href: "/dashboard/notifications", module: "notifications" },
+    { label: "Messages", href: "/dashboard/messages", module: "beastos" },
     { label: "Calendar", href: "/dashboard/calendar", module: "calendar" },
     { label: "Search", href: "/dashboard/search", module: "search" },
     { label: "Shared AI", href: "/dashboard/search#shared-ai", module: "search" },
