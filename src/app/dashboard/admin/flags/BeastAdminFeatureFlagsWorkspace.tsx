@@ -122,7 +122,7 @@ function humanizeFlagError(error: unknown) {
       message
     )
   ) {
-    return "Feature flag storage is not available yet. Apply the BA-106 Supabase migration, then retry.";
+    return "Feature flag storage is not available yet. Verify BA-FLG-101 using 20260726000400_add_beast_admin_feature_flags.sql, then retry.";
   }
   if (/duplicate key|feature_flags_flag_key_key/i.test(message)) {
     return "That feature key already exists. Use a unique, stable key.";

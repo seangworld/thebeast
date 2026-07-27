@@ -181,7 +181,7 @@ export function diagnoseBeastAdminExecutiveMetricsFailure(
       kind: "rpc_unavailable",
       title: "Executive Metrics RPC is unavailable in this environment",
       summary: `Supabase project ${projectRef} does not currently expose public.get_beast_admin_executive_metrics(window_days).`,
-      action: `Verify that ${executiveMetricsMigration}—not the separate BA-110 account-audit migration—was applied to this project. If the migration ledger confirms it was applied, reload the PostgREST schema cache and retry.`,
+      action: `Verify BA-MET-101 using ${executiveMetricsMigration}—not BA-AUD-101 using 20260726001400_add_immutable_beast_admin_account_audit_log.sql—in this project. If the migration ledger confirms it was applied, reload the PostgREST schema cache and retry.`,
       projectRef,
       code: code || null,
       technicalDetails,

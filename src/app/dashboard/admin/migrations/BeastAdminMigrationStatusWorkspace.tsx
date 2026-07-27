@@ -12,6 +12,12 @@ import {
   type BeastAdminMigrationState,
   type BeastAdminMigrationStatusSnapshot,
 } from "@/lib/beastAdminMigrationStatus";
+import {
+  auditBeastRoadmapIdentities,
+  beastRoadmapPackageRegistry,
+} from "@/lib/beastRoadmapIdentity";
+
+const roadmapIdentityAudit = auditBeastRoadmapIdentities();
 
 const migrationStateLabels: Record<BeastAdminMigrationState, string> = {
   applied: "Applied",
@@ -382,6 +388,67 @@ export function BeastAdminMigrationStatusWorkspace() {
         </div>
       </DashboardCard>
 
+      <DashboardCard
+        accent={
+          roadmapIdentityAudit.canonicalCollisions.length ? "red" : "yellow"
+        }
+      >
+        <SectionHeader
+          eyebrow="Roadmap identity integrity"
+          title={
+            roadmapIdentityAudit.canonicalCollisions.length
+              ? "Canonical roadmap collisions require correction"
+              : "Canonical roadmap identities are unique"
+          }
+          description={`${roadmapIdentityAudit.packageCount} registered packages were audited. Historical identifiers remain visible for provenance and are never sufficient migration instructions by themselves.`}
+        />
+        <div className="mt-5 grid gap-3 sm:grid-cols-3">
+          <SummaryValue
+            label="Registered packages"
+            value={String(roadmapIdentityAudit.packageCount)}
+            detail="Canonical identity registry"
+          />
+          <SummaryValue
+            label="Canonical collisions"
+            value={String(roadmapIdentityAudit.canonicalCollisions.length)}
+            detail="Must remain zero"
+          />
+          <SummaryValue
+            label="Historical collisions"
+            value={String(roadmapIdentityAudit.historicalCollisions.length)}
+            detail="Preserved and disambiguated"
+          />
+        </div>
+        {roadmapIdentityAudit.historicalCollisions.length ? (
+          <div className="mt-5 grid gap-3 md:grid-cols-2">
+            {roadmapIdentityAudit.historicalCollisions.map((collision) => (
+              <article
+                key={collision.identifier}
+                className="min-w-0 rounded-xl border border-amber-300/25 bg-amber-300/10 p-4"
+              >
+                <p className="font-mono text-sm font-black text-amber-100">
+                  {collision.identifier}
+                </p>
+                <p className="mt-2 text-sm leading-6 text-[#dbe3ef]">
+                  {collision.capabilities.join(" · ")}
+                </p>
+                <p className="mt-2 break-words text-xs leading-5 text-[#9aa7b8]">
+                  Canonical IDs: {collision.roadmapIds.join(" · ")}
+                </p>
+              </article>
+            ))}
+          </div>
+        ) : null}
+        <p className="mt-5 rounded-xl border border-[#2a3242] bg-[#111827] p-4 text-sm leading-6 text-[#dbe3ef]">
+          Future packages are checked against{" "}
+          <span className="font-mono">
+            {beastRoadmapPackageRegistry.length} registered identities
+          </span>
+          . Validation warns on historical reuse and fails on canonical
+          collisions.
+        </p>
+      </DashboardCard>
+
       <DashboardCard accent={snapshot.pendingSequence.length ? "yellow" : "green"}>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <SectionHeader
@@ -416,17 +483,33 @@ export function BeastAdminMigrationStatusWorkspace() {
         </div>
         {snapshot.pendingSequence.length ? (
           <ol className="mt-5 grid gap-2">
-            {snapshot.pendingSequence.map((filename) => (
-              <li
-                key={filename}
-                className="flex min-w-0 gap-3 rounded-xl border border-amber-300/25 bg-amber-300/10 p-3 text-sm text-amber-50"
-              >
-                <span className="font-black">
-                  {snapshot.pendingSequence.indexOf(filename) + 1}.
-                </span>
-                <span className="min-w-0 break-all font-mono">{filename}</span>
-              </li>
-            ))}
+            {snapshot.pendingSequence.map((filename) => {
+              const migration = snapshot.migrations.find(
+                (row) => row.filename === filename
+              );
+              return (
+                <li
+                  key={filename}
+                  className="flex min-w-0 gap-3 rounded-xl border border-amber-300/25 bg-amber-300/10 p-3 text-sm text-amber-50"
+                >
+                  <span className="font-black">
+                    {snapshot.pendingSequence.indexOf(filename) + 1}.
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block font-black">
+                      {migration?.roadmapId || "Unregistered identity"} ·{" "}
+                      {migration?.capability || "Capability unavailable"}
+                    </span>
+                    <span className="mt-1 block break-all font-mono text-xs">
+                      {filename}
+                    </span>
+                    <span className="mt-1 block font-mono text-xs text-amber-100/70">
+                      Version {migration?.version || "invalid"}
+                    </span>
+                  </span>
+                </li>
+              );
+            })}
           </ol>
         ) : null}
       </DashboardCard>
@@ -541,10 +624,12 @@ export function BeastAdminMigrationStatusWorkspace() {
           aria-label="Migration inventory table"
           tabIndex={0}
         >
-          <table className="min-w-[960px] text-left text-sm">
+          <table className="min-w-[1180px] text-left text-sm">
             <thead className="bg-[#111827] text-xs uppercase tracking-wide text-[#7f8da3]">
               <tr>
                 <th className="px-4 py-3">Version</th>
+                <th className="px-4 py-3">Roadmap ID</th>
+                <th className="px-4 py-3">Capability</th>
                 <th className="px-4 py-3">Filename</th>
                 <th className="px-4 py-3">Repository</th>
                 <th className="px-4 py-3">Database</th>
@@ -560,6 +645,18 @@ export function BeastAdminMigrationStatusWorkspace() {
                 >
                   <td className="whitespace-nowrap px-4 py-3 font-mono text-xs">
                     {migration.version || "Invalid"}
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-3 font-mono text-xs font-black text-amber-100">
+                    {migration.roadmapId}
+                    {migration.historicalRoadmapId &&
+                    migration.historicalRoadmapId !== migration.roadmapId ? (
+                      <span className="mt-1 block text-[10px] font-normal text-[#7f8da3]">
+                        Historical {migration.historicalRoadmapId}
+                      </span>
+                    ) : null}
+                  </td>
+                  <td className="max-w-56 break-words px-4 py-3 text-xs">
+                    {migration.capability}
                   </td>
                   <td className="max-w-sm break-all px-4 py-3 font-mono text-xs">
                     {migration.filename}
@@ -602,6 +699,20 @@ export function BeastAdminMigrationStatusWorkspace() {
               <p className="mt-3 break-all font-mono text-xs leading-5 text-[#c7cfdb]">
                 {migration.filename}
               </p>
+              <dl className="mt-3 grid gap-3 text-xs">
+                <div>
+                  <dt className="text-[#7f8da3]">Roadmap ID</dt>
+                  <dd className="mt-1 font-mono font-black text-amber-100">
+                    {migration.roadmapId}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-[#7f8da3]">Capability</dt>
+                  <dd className="mt-1 font-black text-white">
+                    {migration.capability}
+                  </dd>
+                </div>
+              </dl>
               <dl className="mt-3 grid grid-cols-2 gap-3 text-xs">
                 <div>
                   <dt className="text-[#7f8da3]">Repository</dt>

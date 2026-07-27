@@ -79,7 +79,7 @@ function humanizeTimelineError(error: unknown) {
       message
     )
   ) {
-    return "The authoritative member directory is not available yet. Apply the BA-102, BA-103, BA-107, and BA-108 Supabase migrations in order, then retry.";
+    return "The authoritative member directory is not available yet. Verify these exact migrations in order: 20260726000900_add_authoritative_beast_admin_member_directory.sql, 20260726001000_add_beast_admin_member_account_editing.sql, 20260726001100_add_beast_auth_email_workflows.sql, and 20260726001200_add_beast_admin_member_invitations.sql.";
   }
   if (/permission|owner access|required|42501/i.test(message)) {
     return "Member timelines are restricted to the Beast owner.";

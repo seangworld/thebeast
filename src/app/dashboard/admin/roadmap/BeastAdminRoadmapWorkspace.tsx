@@ -59,7 +59,7 @@ function humanizeRoadmapError(error: unknown) {
       message
     )
   ) {
-    return "Roadmap storage is not available yet. Apply the BA-102 Supabase migration, then retry.";
+    return "Roadmap storage is not available yet. Verify BA-RDM-101 using 20260726000000_add_beast_admin_product_roadmap.sql, then retry.";
   }
 
   if (/row-level security|permission|policy/i.test(message)) {

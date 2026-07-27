@@ -259,6 +259,7 @@ export function BeastAdminMigrationSqlExplorerWorkspace() {
       [
         migration.filename,
         migration.roadmapId,
+        migration.historicalRoadmapId || "",
         migration.purpose,
         migration.capability,
       ].some((value) =>
@@ -459,8 +460,12 @@ export function BeastAdminMigrationSqlExplorerWorkspace() {
             <dl className="mt-5 grid gap-3 sm:grid-cols-2">
               {[
                 ["Roadmap ID", selected.roadmapId],
-                ["Version", selected.version],
+                ["Migration filename", selected.filename],
+                ["Migration version", selected.version],
                 ["Capability", selected.capability],
+                ...(selected.historicalRoadmapId
+                  ? [["Historical Roadmap ID", selected.historicalRoadmapId]]
+                  : []),
                 [
                   "Environment status",
                   migrationStateLabels[selected.environmentState],

@@ -182,7 +182,7 @@ function humanizePromptError(error: unknown) {
       message
     )
   ) {
-    return "Prompt Library storage is not available yet. Apply the BA-107 Supabase migration, then retry.";
+    return "Prompt Library storage is not available yet. Verify BA-PRM-101 using 20260726000500_add_beast_admin_prompt_library.sql, then retry.";
   }
   if (/duplicate key|owner_key_unique|prompt_version_unique/i.test(message)) {
     return "That prompt key or version already exists. Use a unique value.";

@@ -306,10 +306,10 @@ export function buildBeastAdminDevelopmentConsoleSnapshot({
     );
   const sourceGaps = [
     !roadmapAvailable
-      ? "Roadmap data is unavailable. Apply or verify the BA-102 migration."
+      ? "Roadmap data is unavailable. Verify BA-RDM-101 using 20260726000000_add_beast_admin_product_roadmap.sql."
       : "",
     !releasesAvailable
-      ? "Release history is unavailable. Apply or verify the BA-108 migration."
+      ? "Release history is unavailable. Verify BA-REL-101 using 20260726000600_add_beast_admin_release_center.sql."
       : "",
     gitReferences.length === 0
       ? "The current deployment did not provide a verified Git SHA or ref."

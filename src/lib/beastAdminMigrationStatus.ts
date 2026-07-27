@@ -1,3 +1,5 @@
+import { getBeastMigrationRoadmapIdentity } from "./beastRoadmapIdentity";
+
 export const beastAdminRepositoryMigrationFiles = [
   "20260531000000_dev_schema.sql",
   "20260602000000_add_assignment_columns.sql",
@@ -72,6 +74,9 @@ export type BeastAdminMigrationRow = {
   version: string | null;
   filename: string;
   name: string;
+  roadmapId: string;
+  historicalRoadmapId: string | null;
+  capability: string;
   repositoryStatus: "present" | "missing";
   databaseStatus: "applied" | "not_applied" | "unknown";
   appliedAt: string | null;
@@ -416,10 +421,13 @@ export function buildBeastAdminMigrationInventory(input: {
     else if (!input.historyAvailable) state = "unknown";
     else state = databaseRecord ? "applied" : "pending";
 
+    const identity = getBeastMigrationRoadmapIdentity(record.filename);
+
     return {
       version: record.version,
       filename: record.filename,
       name: record.name,
+      ...identity,
       repositoryStatus: "present",
       databaseStatus: !input.historyAvailable
         ? "unknown"
@@ -433,12 +441,14 @@ export function buildBeastAdminMigrationInventory(input: {
 
   for (const record of input.databaseMigrations) {
     if (!validRepositoryVersions.has(record.version)) {
+      const filename = record.name
+        ? `${record.version}_${record.name}.sql`
+        : `${record.version}_database_only.sql`;
       rows.push({
         version: record.version,
-        filename: record.name
-          ? `${record.version}_${record.name}.sql`
-          : `${record.version}_database_only.sql`,
+        filename,
         name: record.name || "Database migration is missing from repository",
+        ...getBeastMigrationRoadmapIdentity(filename),
         repositoryStatus: "missing",
         databaseStatus: "applied",
         appliedAt: record.appliedAt,
@@ -692,6 +702,10 @@ export function normalizeBeastAdminMigrationStatusSnapshot(
         (row.version === null || typeof row.version === "string") &&
         typeof row.filename === "string" &&
         typeof row.name === "string" &&
+        typeof row.roadmapId === "string" &&
+        (row.historicalRoadmapId === null ||
+          typeof row.historicalRoadmapId === "string") &&
+        typeof row.capability === "string" &&
         ["present", "missing"].includes(String(row.repositoryStatus)) &&
         ["applied", "not_applied", "unknown"].includes(
           String(row.databaseStatus)

@@ -75,7 +75,7 @@ function humanizeAnalyticsError(error: unknown) {
       message
     )
   ) {
-    return "AI analytics are not available yet. Apply the BA-103 Supabase migration, then retry.";
+    return "AI analytics are not available yet. Verify BA-ANA-101 using 20260726000100_add_beast_admin_ai_analytics.sql, then retry.";
   }
   if (/permission|owner access|required|42501/i.test(message)) {
     return "AI analytics are restricted to the Beast owner.";

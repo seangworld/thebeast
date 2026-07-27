@@ -2,6 +2,7 @@ import type {
   BeastAdminMigrationEnvironment,
   BeastAdminMigrationState,
 } from "./beastAdminMigrationStatus";
+import { getBeastMigrationRoadmapIdentity } from "./beastRoadmapIdentity";
 
 export const beastAdminMigrationSafetyLevels = [
   "safe",
@@ -24,6 +25,7 @@ export type BeastAdminMigrationSqlMetadata = {
   version: string;
   filename: string;
   roadmapId: string;
+  historicalRoadmapId: string | null;
   purpose: string;
   capability: string;
   environmentState: BeastAdminMigrationState;
@@ -56,19 +58,6 @@ const filenamePattern = /^(\d{14})_([a-z0-9][a-z0-9_]*)\.sql$/;
 const roadmapIdPattern =
   /\b[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)*-\d+\b/;
 
-const capabilityAreas: Record<string, string> = {
-  AGENT: "BeastAgents",
-  BA: "BeastAdmin",
-  BD: "BeastDocuments",
-  BE: "BeastEducation",
-  BG: "BeastGoals",
-  BL: "BeastEducation",
-  BM: "BeastMoney",
-  BO: "BeastOS",
-  MC: "Money Coach",
-  SW: "SEANGWORLD",
-};
-
 function unique(values: string[]) {
   return Array.from(
     new Set(values.map((value) => value.trim()).filter(Boolean))
@@ -94,12 +83,6 @@ function readableSlug(slug: string) {
       );
     })
     .join(" ");
-}
-
-function roadmapArea(roadmapId: string) {
-  if (roadmapId === "Not documented") return "Platform";
-  const prefix = roadmapId.split("-")[0] || "";
-  return capabilityAreas[prefix] || "Platform";
 }
 
 function extractPurpose(sql: string, fallback: string) {
@@ -342,16 +325,21 @@ export function inspectBeastAdminMigrationSql(input: {
   if (!filenameMatch) {
     throw new Error(`Invalid migration filename: ${input.filename}`);
   }
-  const roadmapId = input.sql.match(roadmapIdPattern)?.[0] || "Not documented";
+  const declaredRoadmapId = input.sql.match(roadmapIdPattern)?.[0] || null;
+  const identity = getBeastMigrationRoadmapIdentity(
+    input.filename,
+    declaredRoadmapId
+  );
   const title = readableSlug(filenameMatch[2]);
   const objects = extractObjects(input.sql);
 
   return {
     version: filenameMatch[1],
     filename: input.filename,
-    roadmapId,
+    roadmapId: identity.roadmapId,
+    historicalRoadmapId: identity.historicalRoadmapId,
     purpose: extractPurpose(input.sql, title),
-    capability: `${roadmapArea(roadmapId)} · ${title}`,
+    capability: identity.capability,
     environmentState: input.environmentState || "unknown",
     expectedObjects: unique(
       input.expectedObjects?.length
@@ -381,6 +369,8 @@ export function normalizeBeastAdminMigrationSqlExplorerSnapshot(
       (migration) =>
         typeof migration.filename === "string" &&
         typeof migration.roadmapId === "string" &&
+        (migration.historicalRoadmapId === null ||
+          typeof migration.historicalRoadmapId === "string") &&
         beastAdminMigrationSafetyLevels.includes(migration.safety?.level)
     )
   ) {

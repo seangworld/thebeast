@@ -249,8 +249,14 @@ test("BA-111 reports unavailable sources instead of empty development claims", (
     git: "unavailable",
   });
   assert.equal(snapshot.sourceGaps.length, 3);
-  assert.match(snapshot.sourceGaps[0], /BA-102/);
-  assert.match(snapshot.sourceGaps[1], /BA-108/);
+  assert.match(
+    snapshot.sourceGaps[0],
+    /BA-RDM-101 using 20260726000000_add_beast_admin_product_roadmap\.sql/
+  );
+  assert.match(
+    snapshot.sourceGaps[1],
+    /BA-REL-101 using 20260726000600_add_beast_admin_release_center\.sql/
+  );
   assert.match(snapshot.sourceGaps[2], /Git SHA or ref/);
   assert.deepEqual(snapshot.gitReferences, []);
   assert.equal(snapshot.currentVersions.length > 0, true);

@@ -170,7 +170,10 @@ test("BA-118 reports the exact unavailable RPC without claiming every BA-110 mig
     diagnostic.action,
     /20260726000700_add_beast_admin_executive_metrics\.sql/
   );
-  assert.match(diagnostic.action, /separate BA-110 account-audit migration/);
+  assert.match(
+    diagnostic.action,
+    /BA-AUD-101 using 20260726001400_add_immutable_beast_admin_account_audit_log\.sql/
+  );
   assert.match(diagnostic.technicalDetails.join(" "), /PGRST202/);
 });
 

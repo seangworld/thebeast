@@ -135,7 +135,7 @@ function humanizeReleaseError(error: unknown) {
       message
     )
   ) {
-    return "Release Center storage is not available yet. Apply the BA-108 Supabase migration, then retry.";
+    return "Release Center storage is not available yet. Verify BA-REL-101 using 20260726000600_add_beast_admin_release_center.sql, then retry.";
   }
   if (/duplicate key|owner_version_unique/i.test(message)) {
     return "That product version is already recorded. Select the existing release to update it.";

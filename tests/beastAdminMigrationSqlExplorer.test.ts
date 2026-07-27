@@ -36,7 +36,8 @@ test("BA-132 inspects every repository migration without inventing source metada
       migration.filename ===
       "20260726001500_add_beast_admin_migration_status.sql"
   );
-  assert.equal(migrationStatus?.roadmapId, "BA-119");
+  assert.equal(migrationStatus?.roadmapId, "BA-MIG-101");
+  assert.equal(migrationStatus?.historicalRoadmapId, "BA-119");
   assert.equal(
     migrationStatus?.rpcs.includes(
       "public.get_beast_admin_migration_status"
@@ -126,6 +127,9 @@ test("BA-132 presents complete highlighted SQL and copy-only controls", () => {
   assert.match(workspace, /Copy SQL/);
   assert.match(workspace, /Copy filename/);
   assert.match(workspace, /Copy roadmap ID/);
+  assert.match(workspace, /Migration filename/);
+  assert.match(workspace, /Migration version/);
+  assert.match(workspace, /Historical Roadmap ID/);
   assert.match(workspace, /Open migration source/);
   assert.match(workspace, /Complete SQL/);
   assert.match(workspace, /HighlightedSql/);

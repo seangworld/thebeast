@@ -67,7 +67,7 @@ function humanizeFeedbackError(error: unknown) {
       message
     )
   ) {
-    return "Beta feedback management is not available yet. Apply the BA-105 Supabase migration, then retry.";
+    return "Beta feedback management is not available yet. Verify BA-FBK-101 using 20260726000300_add_beast_admin_beta_feedback.sql, then retry.";
   }
   if (/roadmap item is required|23514/i.test(message)) {
     return "Link a roadmap item before moving feedback into Planned, In Progress, or Released.";

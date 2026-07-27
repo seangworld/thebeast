@@ -47,7 +47,7 @@ function humanizeKnowledgeError(error: unknown) {
       message
     )
   ) {
-    return "Knowledge inspection is not available yet. Apply the BA-112 Supabase migration, then retry.";
+    return "Knowledge inspection is not available yet. Verify BA-KNO-101 using 20260726000800_add_beast_admin_knowledge_inspector.sql, then retry.";
   }
   if (/permission|owner access|required|42501/i.test(message)) {
     return "Knowledge Inspector is restricted to the Beast owner.";
