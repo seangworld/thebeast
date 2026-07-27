@@ -22,6 +22,10 @@ const roadmapIdentityAudit = auditBeastRoadmapIdentities();
 const migrationStateLabels: Record<BeastAdminMigrationState, string> = {
   applied: "Applied",
   pending: "Pending",
+  history_drift: "Fully Present — History Drift",
+  partial: "Partial",
+  missing: "Missing",
+  unsafe_to_replay: "Unsafe to Replay",
   applied_out_of_order: "Applied out of order",
   database_only: "Database-only",
   duplicate_version: "Duplicate version",
@@ -32,6 +36,10 @@ const migrationStateLabels: Record<BeastAdminMigrationState, string> = {
 const migrationStateClasses: Record<BeastAdminMigrationState, string> = {
   applied: "border-green-300/35 bg-green-300/10 text-green-100",
   pending: "border-amber-300/35 bg-amber-300/10 text-amber-100",
+  history_drift: "border-sky-300/35 bg-sky-300/10 text-sky-100",
+  partial: "border-orange-300/35 bg-orange-300/10 text-orange-100",
+  missing: "border-red-300/35 bg-red-300/10 text-red-100",
+  unsafe_to_replay: "border-red-300/50 bg-red-300/15 text-red-50",
   applied_out_of_order: "border-orange-300/35 bg-orange-300/10 text-orange-100",
   database_only: "border-violet-300/35 bg-violet-300/10 text-violet-100",
   duplicate_version: "border-red-300/35 bg-red-300/10 text-red-100",
@@ -77,6 +85,17 @@ function formatTimestamp(value: string | null) {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(value));
+}
+
+function liveSchemaLabel(
+  value: BeastAdminMigrationStatusSnapshot["migrations"][number]["liveSchemaStatus"]
+) {
+  return {
+    fully_present: "Fully present",
+    partial: "Partial",
+    missing: "Missing",
+    unknown: "Not verified",
+  }[value];
 }
 
 function SummaryValue({
@@ -243,7 +262,8 @@ export function BeastAdminMigrationStatusWorkspace() {
   const issues = useMemo(
     () =>
       snapshot?.migrations.filter(
-        (migration) => migration.state !== "applied"
+        (migration) =>
+          !["applied", "history_drift"].includes(migration.state)
       ) || [],
     [snapshot]
   );
@@ -318,6 +338,12 @@ export function BeastAdminMigrationStatusWorkspace() {
               "History source",
               `${snapshot.historySource.schema}.${snapshot.historySource.table}`,
             ],
+            [
+              "Live schema evidence",
+              snapshot.schemaEvidence.available
+                ? "Connected"
+                : "Not available",
+            ],
           ].map(([label, value]) => (
             <div
               key={label}
@@ -355,37 +381,36 @@ export function BeastAdminMigrationStatusWorkspace() {
               : "This Supabase migration-history table does not record application timestamps, so BeastAdmin does not invent them."
           }
         />
-        <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <SummaryValue
-            label="Repository migrations"
-            value={String(snapshot.summary.repositoryMigrations)}
-            detail={`Latest ${snapshot.summary.latestRepositoryMigration || "not available"}`}
-          />
-          <SummaryValue
-            label="Applied"
-            value={String(snapshot.summary.applied)}
-            detail={`Latest ${snapshot.summary.latestAppliedMigration || "not available"}`}
-          />
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
           <SummaryValue
             label="Pending"
             value={String(snapshot.summary.pending)}
-            detail={
-              snapshot.summary.pending
-                ? "Apply in the exact sequence below"
-                : "Repository and history contain no pending versions"
-            }
+            detail="Ledger absent, live objects missing, safe to execute"
           />
           <SummaryValue
-            label="History issues"
-            value={String(
-              snapshot.summary.outOfOrder +
-                snapshot.summary.databaseOnly +
-                snapshot.summary.duplicateVersions +
-                snapshot.summary.invalidFilenames
-            )}
-            detail={`${snapshot.summary.outOfOrder} out of order · ${snapshot.summary.databaseOnly} database-only`}
+            label="Fully Present — History Drift"
+            value={String(snapshot.summary.historyDrift)}
+            detail="Schema complete; do not replay"
+          />
+          <SummaryValue
+            label="Partial"
+            value={String(snapshot.summary.partial)}
+            detail="Manual investigation required"
+          />
+          <SummaryValue
+            label="Missing"
+            value={String(snapshot.summary.missing)}
+            detail="Absent but not automatically recommended"
+          />
+          <SummaryValue
+            label="Unsafe to Replay"
+            value={String(snapshot.summary.unsafeToReplay)}
+            detail="Use named forward-only reconciliation"
           />
         </div>
+        <p className="mt-4 rounded-xl border border-[#2a3242] bg-[#111827] p-4 text-sm leading-6 text-[#dbe3ef]">
+          {snapshot.schemaEvidence.message}
+        </p>
       </DashboardCard>
 
       <DashboardCard
@@ -449,29 +474,33 @@ export function BeastAdminMigrationStatusWorkspace() {
         </p>
       </DashboardCard>
 
-      <DashboardCard accent={snapshot.pendingSequence.length ? "yellow" : "green"}>
+      <DashboardCard
+        accent={
+          snapshot.executionRecommendations.length ? "yellow" : "green"
+        }
+      >
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <SectionHeader
-            eyebrow="Exact pending sequence"
+            eyebrow="Execution recommendations"
             title={
-              snapshot.pendingSequence.length
-                ? "Apply these migrations next"
-                : "No pending repository migrations"
+              snapshot.executionRecommendations.length
+                ? "Verified migrations ready to execute"
+                : "No migrations are ready to execute"
             }
             description={
-              snapshot.pendingSequence.length
-                ? "The order below follows repository version order. BeastAdmin does not apply or repair these migrations."
-                : "Every valid repository migration is recorded in the connected database history."
+              snapshot.executionRecommendations.length
+                ? "Only ledger-pending migrations with verified-missing live objects and safe repository SQL appear here."
+                : "History Drift, Partial, Missing without safety verification, and Unsafe to Replay entries are never recommended."
             }
           />
-          {snapshot.pendingSequence.length ? (
+          {snapshot.executionRecommendations.length ? (
             <button
               type="button"
               className="beast-button-secondary min-h-11"
               onClick={() =>
                 void copyText(
                   "pending",
-                  snapshot.pendingSequence
+                  snapshot.executionRecommendations
                     .map((filename, index) => `${index + 1}. ${filename}`)
                     .join("\n")
                 )
@@ -481,9 +510,9 @@ export function BeastAdminMigrationStatusWorkspace() {
             </button>
           ) : null}
         </div>
-        {snapshot.pendingSequence.length ? (
+        {snapshot.executionRecommendations.length ? (
           <ol className="mt-5 grid gap-2">
-            {snapshot.pendingSequence.map((filename) => {
+            {snapshot.executionRecommendations.map((filename, index) => {
               const migration = snapshot.migrations.find(
                 (row) => row.filename === filename
               );
@@ -493,7 +522,7 @@ export function BeastAdminMigrationStatusWorkspace() {
                   className="flex min-w-0 gap-3 rounded-xl border border-amber-300/25 bg-amber-300/10 p-3 text-sm text-amber-50"
                 >
                   <span className="font-black">
-                    {snapshot.pendingSequence.indexOf(filename) + 1}.
+                    {index + 1}.
                   </span>
                   <span className="min-w-0">
                     <span className="block font-black">
@@ -616,7 +645,7 @@ export function BeastAdminMigrationStatusWorkspace() {
         <SectionHeader
           eyebrow="Migration inventory"
           title={`${snapshot.migrations.length} repository and database records`}
-          description="Every repository file is shown alongside its authoritative database-history state."
+          description="Repository presence, authoritative migration ledger state, and live schema evidence are shown independently."
         />
         <div
           className="beast-table-wrap mt-5 hidden overflow-x-auto rounded-xl border border-[#2a3242] md:block"
@@ -624,7 +653,7 @@ export function BeastAdminMigrationStatusWorkspace() {
           aria-label="Migration inventory table"
           tabIndex={0}
         >
-          <table className="min-w-[1180px] text-left text-sm">
+          <table className="min-w-[1460px] text-left text-sm">
             <thead className="bg-[#111827] text-xs uppercase tracking-wide text-[#7f8da3]">
               <tr>
                 <th className="px-4 py-3">Version</th>
@@ -632,9 +661,11 @@ export function BeastAdminMigrationStatusWorkspace() {
                 <th className="px-4 py-3">Capability</th>
                 <th className="px-4 py-3">Filename</th>
                 <th className="px-4 py-3">Repository</th>
-                <th className="px-4 py-3">Database</th>
+                <th className="px-4 py-3">Migration ledger</th>
+                <th className="px-4 py-3">Live schema</th>
                 <th className="px-4 py-3">Applied timestamp</th>
-                <th className="px-4 py-3">State</th>
+                <th className="px-4 py-3">Classification</th>
+                <th className="px-4 py-3">Guidance</th>
               </tr>
             </thead>
             <tbody>
@@ -673,11 +704,24 @@ export function BeastAdminMigrationStatusWorkspace() {
                         ? "Not applied"
                         : "Unknown"}
                   </td>
+                  <td className="px-4 py-3">
+                    {liveSchemaLabel(migration.liveSchemaStatus)}
+                  </td>
                   <td className="min-w-48 px-4 py-3 text-xs text-[#9aa7b8]">
                     {formatTimestamp(migration.appliedAt)}
                   </td>
                   <td className="px-4 py-3">
                     <StateBadge state={migration.state} />
+                  </td>
+                  <td className="max-w-sm px-4 py-3 text-xs leading-5 text-[#9aa7b8]">
+                    <span className="block">
+                      {migration.classificationReason}
+                    </span>
+                    {migration.replacementMigration ? (
+                      <span className="mt-2 block break-all font-mono text-red-100">
+                        Forward-only: {migration.replacementMigration}
+                      </span>
+                    ) : null}
                   </td>
                 </tr>
               ))}
@@ -723,7 +767,7 @@ export function BeastAdminMigrationStatusWorkspace() {
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-[#7f8da3]">Database</dt>
+                  <dt className="text-[#7f8da3]">Migration ledger</dt>
                   <dd className="mt-1 font-black text-white">
                     {migration.databaseStatus === "applied"
                       ? "Applied"
@@ -732,7 +776,21 @@ export function BeastAdminMigrationStatusWorkspace() {
                         : "Unknown"}
                   </dd>
                 </div>
+                <div>
+                  <dt className="text-[#7f8da3]">Live schema</dt>
+                  <dd className="mt-1 font-black text-white">
+                    {liveSchemaLabel(migration.liveSchemaStatus)}
+                  </dd>
+                </div>
               </dl>
+              <p className="mt-3 text-xs leading-5 text-[#9aa7b8]">
+                {migration.classificationReason}
+              </p>
+              {migration.replacementMigration ? (
+                <p className="mt-2 break-all font-mono text-xs leading-5 text-red-100">
+                  Forward-only: {migration.replacementMigration}
+                </p>
+              ) : null}
               <p className="mt-3 text-xs leading-5 text-[#7f8da3]">
                 {formatTimestamp(migration.appliedAt)}
               </p>

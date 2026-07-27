@@ -1,9 +1,14 @@
 import { NextResponse } from "next/server";
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import {
+  beastAdminRepositoryMigrationFiles,
   buildBeastAdminMigrationStatusSnapshot,
   getBeastAdminMigrationEnvironment,
   normalizeBeastAdminDatabaseMigrationSnapshot,
 } from "@/lib/beastAdminMigrationStatus";
+import { buildBeastAdminMigrationSchemaEvidence } from "@/lib/beastAdminMigrationSchemaEvidence";
+import { inspectBeastAdminMigrationSql } from "@/lib/beastAdminMigrationSqlExplorer";
 import { createRouteClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -131,9 +136,64 @@ export async function GET(request: Request) {
     "get_beast_admin_executive_metrics",
     { window_days: 7 }
   );
+  let openApi: unknown | null = null;
+  let schemaEvidenceMessage =
+    "The live read-only PostgREST schema inventory is unavailable. Ledger gaps are not execution recommendations.";
+  try {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
+    if (session?.access_token && supabaseUrl && anonKey) {
+      const schemaResponse = await fetch(`${supabaseUrl}/rest/v1/`, {
+        method: "GET",
+        cache: "no-store",
+        headers: {
+          Accept: "application/openapi+json",
+          apikey: anonKey,
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+      if (schemaResponse.ok) {
+        openApi = (await schemaResponse.json()) as unknown;
+        schemaEvidenceMessage =
+          "Live tables, columns, views, and authenticated RPCs were inspected through the owner-authorized PostgREST schema inventory.";
+      } else {
+        schemaEvidenceMessage = `The live schema inventory returned HTTP ${schemaResponse.status}. Ledger gaps remain non-actionable until schema evidence is available.`;
+      }
+    }
+  } catch {
+    // The workspace remains safely read-only and reports unavailable evidence.
+  }
+
+  const migrationSources = await Promise.all(
+    beastAdminRepositoryMigrationFiles.map(async (filename) => {
+      const sql = await readFile(
+        join(process.cwd(), "supabase", "migrations", filename),
+        "utf8"
+      );
+      return {
+        sql,
+        metadata: inspectBeastAdminMigrationSql({ filename, sql }),
+      };
+    })
+  );
+  const schemaEvidenceByMigration =
+    buildBeastAdminMigrationSchemaEvidence({
+      migrations: migrationSources,
+      openApi,
+      diagnosticObjects: databaseSnapshot.objects,
+    });
   const snapshot = buildBeastAdminMigrationStatusSnapshot({
     databaseSnapshot,
     environment,
+    schemaEvidenceByMigration,
+    schemaEvidence: {
+      available: Boolean(openApi),
+      source: "Owner-authorized PostgREST OpenAPI schema inventory",
+      message: schemaEvidenceMessage,
+    },
     actualErrors: executiveMetricsError
       ? { executive_metrics: executiveMetricsError }
       : {},

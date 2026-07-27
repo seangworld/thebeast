@@ -16,6 +16,10 @@ import type { BeastAdminMigrationState } from "@/lib/beastAdminMigrationStatus";
 const migrationStateLabels: Record<BeastAdminMigrationState, string> = {
   applied: "Applied",
   pending: "Pending",
+  history_drift: "Fully Present — History Drift",
+  partial: "Partial",
+  missing: "Missing",
+  unsafe_to_replay: "Unsafe to Replay",
   applied_out_of_order: "Applied out of order",
   database_only: "Database-only",
   duplicate_version: "Duplicate version",
@@ -26,6 +30,10 @@ const migrationStateLabels: Record<BeastAdminMigrationState, string> = {
 const migrationStateClasses: Record<BeastAdminMigrationState, string> = {
   applied: "border-green-300/35 bg-green-300/10 text-green-100",
   pending: "border-amber-300/35 bg-amber-300/10 text-amber-100",
+  history_drift: "border-sky-300/35 bg-sky-300/10 text-sky-100",
+  partial: "border-orange-300/35 bg-orange-300/10 text-orange-100",
+  missing: "border-red-300/35 bg-red-300/10 text-red-100",
+  unsafe_to_replay: "border-red-300/50 bg-red-300/15 text-red-50",
   applied_out_of_order: "border-orange-300/35 bg-orange-300/10 text-orange-100",
   database_only: "border-violet-300/35 bg-violet-300/10 text-violet-100",
   duplicate_version: "border-red-300/35 bg-red-300/10 text-red-100",

@@ -67,6 +67,10 @@ export const beastAdminRepositoryMigrationFiles = [
 export type BeastAdminMigrationState =
   | "applied"
   | "pending"
+  | "history_drift"
+  | "partial"
+  | "missing"
+  | "unsafe_to_replay"
   | "applied_out_of_order"
   | "database_only"
   | "duplicate_version"
@@ -82,14 +86,29 @@ export type BeastAdminMigrationRow = {
   capability: string;
   repositoryStatus: "present" | "missing";
   databaseStatus: "applied" | "not_applied" | "unknown";
+  liveSchemaStatus:
+    | "fully_present"
+    | "partial"
+    | "missing"
+    | "unknown";
+  expectedObjects: string[];
+  presentObjects: string[];
+  missingObjects: string[];
   appliedAt: string | null;
   state: BeastAdminMigrationState;
+  classificationReason: string;
+  executionRecommended: boolean;
+  replacementMigration: string | null;
 };
 
 export type BeastAdminMigrationSummary = {
   repositoryMigrations: number;
   applied: number;
   pending: number;
+  historyDrift: number;
+  partial: number;
+  missing: number;
+  unsafeToReplay: number;
   outOfOrder: number;
   databaseOnly: number;
   duplicateVersions: number;
@@ -167,7 +186,31 @@ export type BeastAdminMigrationStatusSnapshot = {
   migrations: BeastAdminMigrationRow[];
   summary: BeastAdminMigrationSummary;
   pendingSequence: string[];
+  executionRecommendations: string[];
+  schemaEvidence: {
+    available: boolean;
+    source: string;
+    message: string;
+  };
   capabilities: BeastAdminCapabilityDiagnostic[];
+};
+
+export type BeastAdminMigrationSchemaEvidence = {
+  status: "fully_present" | "partial" | "missing" | "unknown";
+  expectedObjects: string[];
+  presentObjects: string[];
+  missingObjects: string[];
+  safeToExecute: boolean;
+  explanation: string;
+};
+
+export const beastAdminUnsafeReplayReplacements: Record<string, string> = {
+  "20260726001100_add_beast_auth_email_workflows.sql":
+    "20260726002000_reconcile_beast_auth_email_workflows.sql",
+  "20260726001200_add_beast_admin_member_invitations.sql":
+    "20260726002100_reconcile_beast_admin_member_invitations.sql",
+  "20260726001300_add_beast_admin_account_access_history.sql":
+    "20260726002200_reconcile_beast_admin_account_access_history.sql",
 };
 
 type RawDatabaseSnapshot = {
@@ -375,6 +418,10 @@ export function buildBeastAdminMigrationInventory(input: {
   repositoryFiles: readonly string[];
   databaseMigrations: BeastAdminDatabaseMigration[];
   historyAvailable: boolean;
+  schemaEvidenceByMigration?: Record<
+    string,
+    BeastAdminMigrationSchemaEvidence
+  >;
 }) {
   const repositoryRecords = input.repositoryFiles.map((filename) => {
     const match = filename.match(migrationFilenamePattern);
@@ -419,10 +466,72 @@ export function buildBeastAdminMigrationInventory(input: {
       ((repositoryVersionCounts.get(record.version || "") || 0) > 1 ||
         (databaseVersionCounts.get(record.version || "") || 0) > 1);
     let state: BeastAdminMigrationState = "unknown";
-    if (!record.valid) state = "invalid_filename";
-    else if (duplicate) state = "duplicate_version";
-    else if (!input.historyAvailable) state = "unknown";
-    else state = databaseRecord ? "applied" : "pending";
+    const evidence = input.schemaEvidenceByMigration?.[record.filename] || {
+      status: "unknown" as const,
+      expectedObjects: [],
+      presentObjects: [],
+      missingObjects: [],
+      safeToExecute: false,
+      explanation:
+        "Live schema evidence is unavailable for this migration.",
+    };
+    const replacementMigration =
+      beastAdminUnsafeReplayReplacements[record.filename] || null;
+    let classificationReason = evidence.explanation;
+    let executionRecommended = false;
+    if (!record.valid) {
+      state = "invalid_filename";
+      classificationReason =
+        "The repository filename does not contain a valid migration version.";
+    } else if (duplicate) {
+      state = "duplicate_version";
+      classificationReason =
+        "This migration version is duplicated in the repository or database ledger.";
+    } else if (!input.historyAvailable) {
+      state = "unknown";
+      classificationReason =
+        "The authoritative migration ledger is unavailable.";
+    } else if (databaseRecord) {
+      if (evidence.status === "missing") {
+        state = "missing";
+        classificationReason =
+          "The ledger records this migration, but its expected live schema objects are absent.";
+      } else if (evidence.status === "partial") {
+        state = "partial";
+        classificationReason =
+          "The ledger records this migration, but only some expected live schema objects are present.";
+      } else {
+        state = "applied";
+        classificationReason =
+          evidence.status === "fully_present"
+            ? "The repository, migration ledger, and live schema agree."
+            : "The migration is recorded in the authoritative ledger; live object verification is unavailable.";
+      }
+    } else if (replacementMigration) {
+      state = "unsafe_to_replay";
+      classificationReason = `This original migration is not ledger-recorded, but replay could conflict with existing schema. Use the forward-only reconciliation migration ${replacementMigration} when reconciliation is required.`;
+    } else if (evidence.status === "fully_present") {
+      state = "history_drift";
+      classificationReason =
+        "All expected live schema objects are present, but the migration ledger does not contain this version. SQL execution is not recommended.";
+    } else if (evidence.status === "partial") {
+      state = "partial";
+      classificationReason =
+        "Only some expected live schema objects are present. Manual investigation is required before any execution.";
+    } else if (evidence.status === "missing" && evidence.safeToExecute) {
+      state = "pending";
+      executionRecommended = true;
+      classificationReason =
+        "The migration is absent from the ledger, its expected live objects are missing, and repository inspection found it safe to execute.";
+    } else if (evidence.status === "missing") {
+      state = "missing";
+      classificationReason =
+        "Expected live schema objects are absent, but automated execution is not recommended without manual review.";
+    } else {
+      state = "partial";
+      classificationReason =
+        "The ledger does not contain this migration and live schema evidence is insufficient. Manual investigation is required.";
+    }
 
     const identity = getBeastMigrationRoadmapIdentity(record.filename);
 
@@ -437,8 +546,15 @@ export function buildBeastAdminMigrationInventory(input: {
         : databaseRecord
           ? "applied"
           : "not_applied",
+      liveSchemaStatus: evidence.status,
+      expectedObjects: evidence.expectedObjects,
+      presentObjects: evidence.presentObjects,
+      missingObjects: evidence.missingObjects,
       appliedAt: databaseRecord?.appliedAt || null,
       state,
+      classificationReason,
+      executionRecommended,
+      replacementMigration,
     };
   });
 
@@ -454,11 +570,19 @@ export function buildBeastAdminMigrationInventory(input: {
         ...getBeastMigrationRoadmapIdentity(filename),
         repositoryStatus: "missing",
         databaseStatus: "applied",
+        liveSchemaStatus: "unknown",
+        expectedObjects: [],
+        presentObjects: [],
+        missingObjects: [],
         appliedAt: record.appliedAt,
         state:
           (databaseVersionCounts.get(record.version) || 0) > 1
             ? "duplicate_version"
             : "database_only",
+        classificationReason:
+          "The database ledger contains this version, but the repository migration file is missing.",
+        executionRecommended: false,
+        replacementMigration: null,
       });
     }
   }
@@ -472,11 +596,13 @@ export function buildBeastAdminMigrationInventory(input: {
         `${right.version}:${right.filename}`
       )
     );
-  let encounteredPending = false;
+  let encounteredLedgerGap = false;
   for (const row of validRepositoryRows) {
-    if (row.state === "pending") encounteredPending = true;
-    else if (row.state === "applied" && encounteredPending) {
+    if (row.databaseStatus === "not_applied") encounteredLedgerGap = true;
+    else if (row.state === "applied" && encounteredLedgerGap) {
       row.state = "applied_out_of_order";
+      row.classificationReason =
+        "The ledger records this migration after an earlier repository version that is not recorded.";
     }
   }
 
@@ -485,9 +611,12 @@ export function buildBeastAdminMigrationInventory(input: {
       `${right.version || "z"}:${right.filename}`
     )
   );
-  const pendingSequence = rows
-    .filter((row) => row.state === "pending")
+  const executionRecommendations = rows
+    .filter(
+      (row) => row.state === "pending" && row.executionRecommended
+    )
     .map((row) => row.filename);
+  const pendingSequence = executionRecommendations;
   const appliedVersions = rows.flatMap((row) =>
     ["applied", "applied_out_of_order"].includes(row.state) && row.version
       ? [row.version]
@@ -500,12 +629,19 @@ export function buildBeastAdminMigrationInventory(input: {
   return {
     migrations: rows,
     pendingSequence,
+    executionRecommendations,
     summary: {
       repositoryMigrations: repositoryRecords.length,
       applied: rows.filter((row) =>
         ["applied", "applied_out_of_order"].includes(row.state)
       ).length,
-      pending: pendingSequence.length,
+      pending: rows.filter((row) => row.state === "pending").length,
+      historyDrift: rows.filter((row) => row.state === "history_drift").length,
+      partial: rows.filter((row) => row.state === "partial").length,
+      missing: rows.filter((row) => row.state === "missing").length,
+      unsafeToReplay: rows.filter(
+        (row) => row.state === "unsafe_to_replay"
+      ).length,
       outOfOrder: rows.filter(
         (row) => row.state === "applied_out_of_order"
       ).length,
@@ -555,7 +691,12 @@ export function buildBeastAdminCapabilityDiagnostics(input: {
     const migrationsApplied =
       migrationStates.length > 0 &&
       migrationStates.every((state) =>
-        ["applied", "applied_out_of_order"].includes(state)
+        [
+          "applied",
+          "applied_out_of_order",
+          "history_drift",
+          "unsafe_to_replay",
+        ].includes(state)
       );
     const missingObjects = objects.filter((object) => !object.exists);
     const permissionFailures = objects.filter(
@@ -568,11 +709,14 @@ export function buildBeastAdminCapabilityDiagnostics(input: {
     let conclusion =
       "Migration history or object verification is not available for this capability.";
     if (
-      migrationStates.some((migrationState) => migrationState === "pending")
+      migrationStates.some((migrationState) =>
+        ["pending", "missing", "partial"].includes(migrationState)
+      ) &&
+      missingObjects.length > 0
     ) {
       state = "pending_migration";
       conclusion =
-        "At least one required migration is not recorded as applied in this environment.";
+        "At least one required migration is not ledger-recorded and expected live schema objects are incomplete.";
     } else if (migrationsApplied && missingObjects.length > 0) {
       state = "history_schema_mismatch";
       conclusion =
@@ -590,7 +734,11 @@ export function buildBeastAdminCapabilityDiagnostics(input: {
     ) {
       state = "available";
       conclusion =
-        "Migration history, expected objects, and owner execution grants agree.";
+        migrationStates.includes("unsafe_to_replay")
+          ? "Expected live objects and owner execution grants are complete. A superseded original migration is unsafe to replay; retain the forward-only reconciliation path."
+          : migrationStates.includes("history_drift")
+          ? "Expected live objects and owner execution grants are complete. The missing ledger entry is history drift and should not be replayed."
+          : "Migration history, expected objects, and owner execution grants agree.";
     } else if (migrationsApplied && actualError) {
       state = "history_schema_mismatch";
       conclusion =
@@ -616,12 +764,18 @@ export function buildBeastAdminMigrationStatusSnapshot(input: {
   actualErrors?: Record<string, unknown>;
   generatedAt?: string;
   repositoryFiles?: readonly string[];
+  schemaEvidenceByMigration?: Record<
+    string,
+    BeastAdminMigrationSchemaEvidence
+  >;
+  schemaEvidence?: BeastAdminMigrationStatusSnapshot["schemaEvidence"];
 }) {
   const inventory = buildBeastAdminMigrationInventory({
     repositoryFiles:
       input.repositoryFiles || beastAdminRepositoryMigrationFiles,
     databaseMigrations: input.databaseSnapshot.migrations,
     historyAvailable: input.databaseSnapshot.historySource.available,
+    schemaEvidenceByMigration: input.schemaEvidenceByMigration,
   });
 
   return {
@@ -631,6 +785,13 @@ export function buildBeastAdminMigrationStatusSnapshot(input: {
     migrations: inventory.migrations,
     summary: inventory.summary,
     pendingSequence: inventory.pendingSequence,
+    executionRecommendations: inventory.executionRecommendations,
+    schemaEvidence: input.schemaEvidence || {
+      available: false,
+      source: "Live PostgREST schema inventory",
+      message:
+        "Live schema evidence was not supplied. Ledger gaps require manual investigation and are not execution recommendations.",
+    },
     capabilities: buildBeastAdminCapabilityDiagnostics({
       migrations: inventory.migrations,
       objects: input.databaseSnapshot.objects,
@@ -650,6 +811,8 @@ export function normalizeBeastAdminMigrationStatusSnapshot(
     !isRecord(value.summary) ||
     !Array.isArray(value.migrations) ||
     !Array.isArray(value.pendingSequence) ||
+    !Array.isArray(value.executionRecommendations) ||
+    !isRecord(value.schemaEvidence) ||
     !Array.isArray(value.capabilities)
   ) {
     return null;
@@ -692,6 +855,10 @@ export function normalizeBeastAdminMigrationStatusSnapshot(
   const allowedStates = new Set<BeastAdminMigrationState>([
     "applied",
     "pending",
+    "history_drift",
+    "partial",
+    "missing",
+    "unsafe_to_replay",
     "applied_out_of_order",
     "database_only",
     "duplicate_version",
@@ -713,12 +880,31 @@ export function normalizeBeastAdminMigrationStatusSnapshot(
         ["applied", "not_applied", "unknown"].includes(
           String(row.databaseStatus)
         ) &&
+        ["fully_present", "partial", "missing", "unknown"].includes(
+          String(row.liveSchemaStatus)
+        ) &&
+        Array.isArray(row.expectedObjects) &&
+        row.expectedObjects.every((item) => typeof item === "string") &&
+        Array.isArray(row.presentObjects) &&
+        row.presentObjects.every((item) => typeof item === "string") &&
+        Array.isArray(row.missingObjects) &&
+        row.missingObjects.every((item) => typeof item === "string") &&
         (row.appliedAt === null ||
           (typeof row.appliedAt === "string" &&
             !Number.isNaN(Date.parse(row.appliedAt)))) &&
-        allowedStates.has(row.state as BeastAdminMigrationState)
+        allowedStates.has(row.state as BeastAdminMigrationState) &&
+        typeof row.classificationReason === "string" &&
+        typeof row.executionRecommended === "boolean" &&
+        (row.replacementMigration === null ||
+          typeof row.replacementMigration === "string")
     ) ||
     !value.pendingSequence.every((item) => typeof item === "string") ||
+    !value.executionRecommendations.every(
+      (item) => typeof item === "string"
+    ) ||
+    typeof value.schemaEvidence.available !== "boolean" ||
+    typeof value.schemaEvidence.source !== "string" ||
+    typeof value.schemaEvidence.message !== "string" ||
     !value.capabilities.every(
       (capability) =>
         isRecord(capability) &&

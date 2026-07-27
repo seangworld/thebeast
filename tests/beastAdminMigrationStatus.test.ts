@@ -13,6 +13,11 @@ import {
   type BeastAdminCapabilityObject,
   type BeastAdminMigrationRow,
 } from "../src/lib/beastAdminMigrationStatus";
+import {
+  buildBeastAdminOpenApiInventory,
+  buildBeastAdminMigrationSchemaEvidence,
+} from "../src/lib/beastAdminMigrationSchemaEvidence";
+import { inspectBeastAdminMigrationSql } from "../src/lib/beastAdminMigrationSqlExplorer";
 
 const historySource = {
   schema: "supabase_migrations",
@@ -86,12 +91,189 @@ test("BA-119 produces the exact pending order and identifies out-of-order histor
       { version: "20260726000300", name: "third", appliedAt: null },
     ],
     historyAvailable: true,
+    schemaEvidenceByMigration: {
+      "20260726000200_second.sql": {
+        status: "missing",
+        expectedObjects: ["relation:second"],
+        presentObjects: [],
+        missingObjects: ["relation:second"],
+        safeToExecute: true,
+        explanation: "The expected relation is absent.",
+      },
+    },
   });
 
   assert.deepEqual(result.pendingSequence, ["20260726000200_second.sql"]);
   assert.equal(result.migrations[1]?.state, "pending");
   assert.equal(result.migrations[2]?.state, "applied_out_of_order");
   assert.equal(result.summary.outOfOrder, 1);
+});
+
+test("BA-119 classifies live schema independently and recommends only verified safe gaps", () => {
+  const files = [
+    "20260726000100_present.sql",
+    "20260726000200_partial.sql",
+    "20260726000300_safe_missing.sql",
+    "20260726000400_review_missing.sql",
+  ];
+  const result = buildBeastAdminMigrationInventory({
+    repositoryFiles: files,
+    databaseMigrations: [],
+    historyAvailable: true,
+    schemaEvidenceByMigration: {
+      [files[0]]: {
+        status: "fully_present",
+        expectedObjects: ["relation:present"],
+        presentObjects: ["relation:present"],
+        missingObjects: [],
+        safeToExecute: true,
+        explanation: "Present.",
+      },
+      [files[1]]: {
+        status: "partial",
+        expectedObjects: ["relation:partial", "rpc:partial"],
+        presentObjects: ["relation:partial"],
+        missingObjects: ["rpc:partial"],
+        safeToExecute: true,
+        explanation: "Partial.",
+      },
+      [files[2]]: {
+        status: "missing",
+        expectedObjects: ["relation:safe_missing"],
+        presentObjects: [],
+        missingObjects: ["relation:safe_missing"],
+        safeToExecute: true,
+        explanation: "Missing.",
+      },
+      [files[3]]: {
+        status: "missing",
+        expectedObjects: ["relation:review_missing"],
+        presentObjects: [],
+        missingObjects: ["relation:review_missing"],
+        safeToExecute: false,
+        explanation: "Missing and requires review.",
+      },
+    },
+  });
+
+  assert.deepEqual(
+    result.migrations.map((migration) => migration.state),
+    ["history_drift", "partial", "pending", "missing"]
+  );
+  assert.deepEqual(result.executionRecommendations, [files[2]]);
+  assert.deepEqual(result.pendingSequence, [files[2]]);
+  assert.equal(result.summary.historyDrift, 1);
+  assert.equal(result.summary.partial, 1);
+  assert.equal(result.summary.pending, 1);
+  assert.equal(result.summary.missing, 1);
+});
+
+test("BA-119 never recommends superseded migrations that are unsafe to replay", () => {
+  const original =
+    "20260726001100_add_beast_auth_email_workflows.sql";
+  const result = buildBeastAdminMigrationInventory({
+    repositoryFiles: [original],
+    databaseMigrations: [],
+    historyAvailable: true,
+    schemaEvidenceByMigration: {
+      [original]: {
+        status: "fully_present",
+        expectedObjects: ["rpc:get_beast_auth_email_status"],
+        presentObjects: ["rpc:get_beast_auth_email_status"],
+        missingObjects: [],
+        safeToExecute: true,
+        explanation: "Present.",
+      },
+    },
+  });
+
+  assert.equal(result.migrations[0]?.state, "unsafe_to_replay");
+  assert.equal(
+    result.migrations[0]?.replacementMigration,
+    "20260726002000_reconcile_beast_auth_email_workflows.sql"
+  );
+  assert.equal(result.migrations[0]?.executionRecommended, false);
+  assert.deepEqual(result.executionRecommendations, []);
+});
+
+test("BA-119 keeps a reconciled capability available while its original migration remains unsafe", () => {
+  const migration: BeastAdminMigrationRow = {
+    version: "20260726001200",
+    filename: "20260726001200_add_beast_admin_member_invitations.sql",
+    name: "add_beast_admin_member_invitations",
+    roadmapId: "BA-INV-101",
+    historicalRoadmapId: "BA-108",
+    capability: "Member Invitations",
+    repositoryStatus: "present",
+    databaseStatus: "not_applied",
+    liveSchemaStatus: "fully_present",
+    expectedObjects: ["relation:beast_admin_member_invitations"],
+    presentObjects: ["relation:beast_admin_member_invitations"],
+    missingObjects: [],
+    appliedAt: null,
+    state: "unsafe_to_replay",
+    classificationReason: "Superseded by reconciliation.",
+    executionRecommended: false,
+    replacementMigration:
+      "20260726002100_reconcile_beast_admin_member_invitations.sql",
+  };
+  const object: BeastAdminCapabilityObject = {
+    capabilityId: "member_administration",
+    requiredMigration: migration.filename,
+    objectId: "member_invitations",
+    kind: "table",
+    schema: "public",
+    name: "beast_admin_member_invitations",
+    identity: "public.beast_admin_member_invitations",
+    exists: true,
+    authenticatedExecute: null,
+    rlsEnabled: true,
+    policyCount: 1,
+  };
+  const diagnostic = buildBeastAdminCapabilityDiagnostics({
+    migrations: [migration],
+    objects: [object],
+  }).find((capability) => capability.id === "member_administration");
+
+  assert.equal(diagnostic?.state, "available");
+  assert.match(diagnostic?.conclusion || "", /unsafe to replay/i);
+});
+
+test("BA-119 derives read-only schema evidence from PostgREST OpenAPI", () => {
+  const sql = `
+    create table if not exists public.example_records (id uuid primary key);
+    alter table public.profiles add column if not exists example_note text;
+    create or replace function public.get_example_records() returns jsonb
+      language sql as $$ select '[]'::jsonb $$;
+    grant execute on function public.get_example_records() to authenticated;
+  `;
+  const metadata = inspectBeastAdminMigrationSql({
+    filename: "20260726000100_example.sql",
+    sql,
+  });
+  const openApi = {
+    paths: {
+      "/example_records": {},
+      "/profiles": {},
+      "/rpc/get_example_records": {},
+    },
+    definitions: {
+      example_records: { properties: { id: {} } },
+      profiles: { properties: { example_note: {} } },
+    },
+  };
+  const inventory = buildBeastAdminOpenApiInventory(openApi);
+  const evidence = buildBeastAdminMigrationSchemaEvidence({
+    migrations: [{ metadata, sql }],
+    openApi,
+    diagnosticObjects: [],
+  })[metadata.filename];
+
+  assert.equal(inventory.relations.has("example_records"), true);
+  assert.equal(inventory.columns.has("profiles.example_note"), true);
+  assert.equal(inventory.rpcs.has("get_example_records"), true);
+  assert.equal(evidence?.status, "fully_present");
+  assert.deepEqual(evidence?.missingObjects, []);
 });
 
 test("BA-119 distinguishes database-only duplicate invalid and unknown records", () => {
@@ -148,8 +330,15 @@ test("BA-119 distinguishes applied history with a missing object from permission
     capability: "Executive Metrics",
     repositoryStatus: "present",
     databaseStatus: "applied",
+    liveSchemaStatus: "fully_present",
+    expectedObjects: ["rpc:get_beast_admin_executive_metrics"],
+    presentObjects: ["rpc:get_beast_admin_executive_metrics"],
+    missingObjects: [],
     appliedAt: null,
     state: "applied",
+    classificationReason: "Repository, ledger, and schema agree.",
+    executionRecommended: false,
+    replacementMigration: null,
   };
   const missingObject = {
     ...executiveMetricsObject,
@@ -193,8 +382,15 @@ test("BA-119 preserves the actual Executive Metrics API error", () => {
     capability: "Executive Metrics",
     repositoryStatus: "present",
     databaseStatus: "not_applied",
+    liveSchemaStatus: "missing",
+    expectedObjects: ["rpc:get_beast_admin_executive_metrics"],
+    presentObjects: [],
+    missingObjects: ["rpc:get_beast_admin_executive_metrics"],
     appliedAt: null,
     state: "pending",
+    classificationReason: "The expected RPC is absent.",
+    executionRecommended: true,
+    replacementMigration: null,
   };
   const diagnostic = buildBeastAdminCapabilityDiagnostics({
     migrations: [pendingMigration],
@@ -310,13 +506,15 @@ test("BA-119 server route protects diagnostics and never exposes service credent
   assert.match(route, /profile\?\.role !== "admin"/);
   assert.match(route, /get_beast_admin_migration_status/);
   assert.match(route, /get_beast_admin_executive_metrics/);
+  assert.match(route, /application\/openapi\+json/);
+  assert.match(route, /buildBeastAdminMigrationSchemaEvidence/);
   assert.match(route, /requiredMigration/);
   assert.match(route, /cache-control/);
   assert.doesNotMatch(route, /createAdminClient|SUPABASE_SERVICE_ROLE_KEY/);
   assert.doesNotMatch(route, /insert\(|update\(|delete\(|migration repair/);
 });
 
-test("BA-119 presents environment identity pending order capabilities and responsive inventory", () => {
+test("BA-119 presents schema-aware classifications recommendations and responsive inventory", () => {
   const page = readFileSync(
     "src/app/dashboard/admin/migrations/page.tsx",
     "utf8"
@@ -339,7 +537,12 @@ test("BA-119 presents environment identity pending order capabilities and respon
   assert.match(page, /BeastAdminShell/);
   assert.match(workspace, /Connected environment/);
   assert.match(workspace, /Supabase project/);
-  assert.match(workspace, /Exact pending sequence/);
+  assert.match(workspace, /Execution recommendations/);
+  assert.match(workspace, /Fully Present — History Drift/);
+  assert.match(workspace, /Unsafe to Replay/);
+  assert.match(workspace, /Live schema/);
+  assert.match(workspace, /Migration ledger/);
+  assert.match(workspace, /Verified migrations ready to execute/);
   assert.match(workspace, /Copy ordered list/);
   assert.match(workspace, /Capability diagnostics/);
   assert.match(workspace, /Migration inventory/);
