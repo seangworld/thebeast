@@ -9,7 +9,7 @@ export default function BeastAdminSettingsPage() {
   return (
     <BeastAdminShell
       title="Settings"
-      description="Owner-only entry points for live BeastAdmin access and visibility controls."
+      purpose="Owner-only entry points for live BeastAdmin access and visibility controls."
     >
       <DashboardCard accent="admin">
         <SectionHeader

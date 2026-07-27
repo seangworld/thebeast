@@ -5,7 +5,7 @@ export default function BeastAdminPromptLibraryPage() {
   return (
     <BeastAdminShell
       title="Prompt Library"
-      description="Manage AI prompts as owner-controlled, versioned assets across the Beast ecosystem."
+      purpose="Manage AI prompts as owner-controlled, versioned assets across the Beast ecosystem."
     >
       <BeastAdminPromptLibraryWorkspace />
     </BeastAdminShell>

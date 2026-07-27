@@ -22,7 +22,16 @@ test("BA-131 assigns globally unique canonical roadmap package identities", () =
   assert.deepEqual(audit.canonicalCollisions, []);
   assert.deepEqual(
     audit.historicalCollisions.map((collision) => collision.identifier),
-    ["BA-102", "BA-103", "BA-106", "BA-107", "BA-108", "BA-110", "BA-131"]
+    [
+      "BA-102",
+      "BA-103",
+      "BA-106",
+      "BA-107",
+      "BA-108",
+      "BA-110",
+      "BA-131",
+      "BA-132",
+    ]
   );
 });
 

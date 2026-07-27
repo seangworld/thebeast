@@ -5,7 +5,7 @@ export default function BeastAdminExecutiveMetricsPage() {
   return (
     <BeastAdminShell
       title="Executive Metrics"
-      description="Owner-only growth, engagement, adoption, professional, and feature metrics derived from meaningful persisted Beast activity."
+      purpose="Owner-only growth, engagement, adoption, professional, and feature metrics derived from meaningful persisted Beast activity."
     >
       <BeastAdminExecutiveMetricsWorkspace />
     </BeastAdminShell>

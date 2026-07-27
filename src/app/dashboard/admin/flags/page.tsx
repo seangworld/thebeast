@@ -5,7 +5,7 @@ export default function BeastAdminFeatureFlagsPage() {
   return (
     <BeastAdminShell
       title="Feature Flags"
-      description="Control feature visibility by module, role, and individual member through one owner-managed release system."
+      purpose="Control feature visibility by module, role, and individual member through one owner-managed release system."
     >
       <BeastAdminFeatureFlagsWorkspace />
     </BeastAdminShell>

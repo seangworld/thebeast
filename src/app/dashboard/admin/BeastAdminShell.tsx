@@ -28,11 +28,13 @@ function loadAdminViewMode() {
 
 export function BeastAdminShell({
   title,
-  description,
+  purpose,
+  actions,
   children,
 }: {
   title: string;
-  description: string;
+  purpose: string;
+  actions?: React.ReactNode;
   children: React.ReactNode;
 }) {
   const [authorized, setAuthorized] = useState(false);
@@ -117,17 +119,48 @@ export function BeastAdminShell({
   return (
     <main className="beast-page">
       <div className="beast-container space-y-6">
-        <section className="beast-page-header">
-          <div className="space-y-4">
-            <ModuleBadge module="admin" label="Owner Only" />
-            <h1 className="beast-title">{title}</h1>
-            <p className="beast-subtitle">{description}</p>
-          </div>
-        </section>
+        <BeastAdminWorkspaceHeader
+          title={title}
+          purpose={purpose}
+          actions={actions}
+        />
 
         {children}
       </div>
     </main>
+  );
+}
+
+export function BeastAdminWorkspaceHeader({
+  title,
+  purpose,
+  actions,
+}: {
+  title: string;
+  purpose: string;
+  actions?: React.ReactNode;
+}) {
+  return (
+    <header className="beast-page-header" aria-label={`${title} workspace`}>
+      <div className="flex min-w-0 flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0 max-w-4xl space-y-4">
+          <ModuleBadge module="admin" label="Owner Only" />
+          <div className="min-w-0 space-y-2">
+            <h1 className="beast-title">{title}</h1>
+            <p className="beast-subtitle">{purpose}</p>
+          </div>
+        </div>
+
+        {actions ? (
+          <div
+            className="flex min-w-0 flex-wrap items-center gap-3 lg:shrink-0 lg:justify-end"
+            aria-label={`${title} actions`}
+          >
+            {actions}
+          </div>
+        ) : null}
+      </div>
+    </header>
   );
 }
 

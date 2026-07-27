@@ -5,7 +5,7 @@ export default function BeastAdminModulesPage() {
   return (
     <BeastAdminShell
       title="Modules"
-      description="Central registry for Beast applications, visibility, status, beta flags, and owner notes."
+      purpose="Central registry for Beast applications, visibility, status, beta flags, and owner notes."
     >
       <section className="grid gap-4 lg:grid-cols-2">
         {beastModuleRegistry.map((module) => (

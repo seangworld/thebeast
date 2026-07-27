@@ -232,6 +232,26 @@ export const beastRoadmapPackageRegistry = [
     ]
   ),
   packageIdentity(
+    "BA-MSQL-101",
+    ["BA-132"],
+    "Migration SQL Explorer",
+    [
+      "src/lib/beastAdminMigrationSqlExplorer.ts",
+      "src/app/api/admin/migration-sql-explorer/route.ts",
+      "src/app/dashboard/admin/migrations/explorer/BeastAdminMigrationSqlExplorerWorkspace.tsx",
+      "tests/beastAdminMigrationSqlExplorer.test.ts",
+    ]
+  ),
+  packageIdentity(
+    "BA-HDR-101",
+    ["BA-132"],
+    "BeastAdmin Workspace Headers",
+    [
+      "src/app/dashboard/admin/BeastAdminShell.tsx",
+      "tests/beastAdminPageHeaders.test.ts",
+    ]
+  ),
+  packageIdentity(
     "BA-REC-134",
     ["BA-134"],
     "Forward-only Migration Reconciliation",

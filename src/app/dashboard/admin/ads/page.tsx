@@ -28,7 +28,7 @@ export default function BeastAdminPlannedWorkspacesPage() {
   return (
     <BeastAdminShell
       title="Planned Workspaces"
-      description="A read-only registry of intentionally deferred capabilities and the conditions required before implementation begins."
+      purpose="A read-only registry of intentionally deferred capabilities and the conditions required before implementation begins."
     >
       <DashboardCard accent="admin">
         <SectionHeader

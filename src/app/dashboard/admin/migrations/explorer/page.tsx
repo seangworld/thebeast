@@ -5,7 +5,7 @@ export default function BeastAdminMigrationSqlExplorerPage() {
   return (
     <BeastAdminShell
       title="Migration SQL Explorer"
-      description="Owner-only, read-only inspection of repository migration purpose, database objects, safety signals, environment status, and complete SQL source."
+      purpose="Owner-only, read-only inspection of repository migration purpose, database objects, safety signals, environment status, and complete SQL source."
     >
       <BeastAdminMigrationSqlExplorerWorkspace />
     </BeastAdminShell>

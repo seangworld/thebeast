@@ -5,7 +5,7 @@ export default function BeastAdminReleaseCenterPage() {
   return (
     <BeastAdminShell
       title="Release Center"
-      description="Maintain complete, evidence-backed release history across every Beast product."
+      purpose="Maintain complete, evidence-backed release history across every Beast product."
     >
       <BeastAdminReleaseCenterWorkspace />
     </BeastAdminShell>
