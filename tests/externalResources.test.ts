@@ -98,5 +98,8 @@ test("resource events are privacy-minimal and external links preserve the Beast 
   assert.match(card, /externalResourceLinkProps/);
   assert.match(card, /Open resource/);
   const rootLayout = readFileSync("src/app/layout.tsx", "utf8");
-  assert.equal((rootLayout.match(/href=\"https:\/\//g) || []).length, (rootLayout.match(/\.\.\.externalResourceLinkProps/g) || []).length);
+  assert.equal(
+    (rootLayout.match(/href=\{beastOSFooterLinks\./g) || []).length,
+    (rootLayout.match(/\.\.\.externalResourceLinkProps/g) || []).length
+  );
 });

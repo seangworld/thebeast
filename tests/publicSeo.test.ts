@@ -4,10 +4,21 @@ import nextConfig from "../next.config";
 import robots from "../src/app/robots";
 import sitemap from "../src/app/sitemap";
 import {
+  beastOSFooterLinks,
   beastOSNonIndexableRoutes,
   beastOSProductionOrigin,
   beastOSPublicRoutes,
+  seangworldProductionOrigin,
 } from "../src/lib/publicSeo";
+
+test("public footer links use canonical production destinations", () => {
+  assert.equal(seangworldProductionOrigin, "https://www.seangworld.com");
+  assert.deepEqual(beastOSFooterLinks, {
+    mainSite: "https://www.seangworld.com",
+    privacy: "https://www.seangworld.com/privacy",
+    terms: "https://www.seangworld.com/terms",
+  });
+});
 
 test("public SEO inventory contains only real indexable application routes", () => {
   assert.deepEqual(beastOSPublicRoutes, ["/", "/release-notes"]);

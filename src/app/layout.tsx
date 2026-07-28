@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import { externalResourceLinkProps } from "@/lib/platform/externalResources";
-import { beastOSProductionOrigin } from "@/lib/publicSeo";
+import {
+  beastOSFooterLinks,
+  beastOSProductionOrigin,
+} from "@/lib/publicSeo";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -72,13 +75,17 @@ export default function RootLayout({
         <footer className="mt-12 space-y-2 border-t border-[#2a3242] py-6 text-center text-sm text-[#7f8da3]">
           <div>© 2026 seangworld.com</div>
           <div>
-            <a {...externalResourceLinkProps} href="https://seangworld.com" className="hover:underline">
+            <a
+              {...externalResourceLinkProps}
+              href={beastOSFooterLinks.mainSite}
+              className="hover:underline"
+            >
               Main Site
             </a>{" "}
             •{" "}
             <a
               {...externalResourceLinkProps}
-              href="https://seangworld.com/privacy.html"
+              href={beastOSFooterLinks.privacy}
               className="hover:underline"
             >
               Privacy
@@ -86,7 +93,7 @@ export default function RootLayout({
             •{" "}
             <a
               {...externalResourceLinkProps}
-              href="https://seangworld.com/terms.html"
+              href={beastOSFooterLinks.terms}
               className="hover:underline"
             >
               Terms
