@@ -46,9 +46,9 @@ test("BM-305A restores independent positions when conversations switch", () => {
   assert.match(source, /conversationId=\{activeThreadId \|\| "new-conversation"\}/);
 });
 
-test("BM-305A focuses the composer without moving the viewport", () => {
-  assert.match(source, /\.focus\(\{ preventScroll: true \}\)/);
-  assert.match(source, /window\.requestAnimationFrame\(focusQuestionInput\)/);
+test("Money Coach removes unrestricted composer focus behavior", () => {
+  assert.doesNotMatch(source, /focusQuestionInput/);
+  assert.doesNotMatch(source, /AgentConversationInput/);
   assert.match(source, /finally\(\(\) => \{\s*setStreamingTurnId\(""\)/);
   assert.match(source, /startConversation/);
 });

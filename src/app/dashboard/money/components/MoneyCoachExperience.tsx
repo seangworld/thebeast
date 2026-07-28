@@ -6,7 +6,6 @@ import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
   AgentAvatar,
-  AgentConversationInput,
   AgentEmptyState,
   AgentErrorState,
   AgentExperience,
@@ -28,6 +27,10 @@ import {
   type AgentConversationThread,
   type AgentMemoryRecord,
   type AgentMessage,
+  SupabaseExecutionHistoryStore,
+  type ExecutionAuditEvent,
+  type ProfessionalExecutionHistory,
+  type RecommendationLifecycleStatus,
 } from "@/lib/platform/agents";
 import {
   answerMoneyCoachQuestion,
@@ -35,6 +38,14 @@ import {
   type MoneyCoachExperienceModel,
   type MoneyCoachStructuredAnswer,
 } from "@/lib/moneyCoachExperience";
+import {
+  buildMoneyCoachNotifications,
+  buildMoneyCoachOutcomeLearning,
+  buildMoneyCoachRecommendations,
+  moneyCoachProfessionalId,
+  type MoneyCoachRecommendation,
+} from "@/lib/moneyCoachOnline";
+import { formatCurrency } from "@/lib/formatters";
 import { MorningFinancialBriefingPanel } from "./MorningFinancialBriefing";
 
 type MoneyCoachExperienceProps = {
@@ -80,7 +91,6 @@ export function MoneyCoachExperience({
   onRetry,
 }: MoneyCoachExperienceProps) {
   const searchParams = useSearchParams();
-  const [input, setInput] = useState("");
   const [turns, setTurns] = useState<{ id: string; question: string; response: MoneyCoachStructuredAnswer }[]>([]);
   const [conversationTitle, setConversationTitle] = useState("Current financial review");
   const [localNow, setLocalNow] = useState<Date | null>(null);
@@ -93,6 +103,12 @@ export function MoneyCoachExperience({
   const [memories, setMemories] = useState<AgentMemoryRecord[]>([]);
   const [historyError, setHistoryError] = useState("");
   const [streamingTurnId, setStreamingTurnId] = useState("");
+  const [executionStore, setExecutionStore] = useState<SupabaseExecutionHistoryStore | null>(null);
+  const [executionHistory, setExecutionHistory] = useState<ProfessionalExecutionHistory>();
+  const [executionHistoryLoading, setExecutionHistoryLoading] = useState(false);
+  const [executionHistoryError, setExecutionHistoryError] = useState("");
+  const [decisionPending, setDecisionPending] = useState("");
+  const [actorType, setActorType] = useState<Extract<ExecutionAuditEvent["actorType"], "member" | "owner">>("member");
   const historyDialogRef = useRef<HTMLDivElement>(null);
   const requestedStarterRef = useRef("");
   const conversationScrollPositionsRef = useRef(new Map<string, number>());
@@ -121,12 +137,16 @@ export function MoneyCoachExperience({
       if (user.id !== ownerId) throw new Error(`Conversation owner mismatch for authenticated member ${user.id}.`);
       const nextRepository = new ServerAgentConversationRepository(new SupabaseAgentConversationStore(client));
       const nextMemoryStore = new SupabaseAgentMemoryStore(client);
-      let available = await nextRepository.list({ ownerId, agentId: "beastmoney.money-coach", includeArchived: true });
-      if (available.length === 0) available = [await nextRepository.create({ ownerId, agentId: "beastmoney.money-coach" })];
+      const available = await nextRepository.list({ ownerId, agentId: "beastmoney.money-coach", includeArchived: true });
       if (cancelled) return;
       const active = available.find((thread) => !thread.archived) || available[0];
-      setRepository(nextRepository); setMemoryStore(nextMemoryStore); setThreads(available); setActiveThreadId(active.id);
-      setConversationTitle(active.title); restoreThread(active); setHistoryError("");
+      setRepository(nextRepository); setMemoryStore(nextMemoryStore); setThreads(available);
+      if (active) {
+        setActiveThreadId(active.id);
+        setConversationTitle(active.title);
+        restoreThread(active);
+      }
+      setHistoryError("");
 
       void nextMemoryStore.query({ ownerId, agentId: "beastmoney.money-coach" })
         .then((records) => { if (!cancelled) setMemories(records); })
@@ -145,6 +165,45 @@ export function MoneyCoachExperience({
     });
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ownerId]);
+
+  useEffect(() => {
+    if (!ownerId || ownerId === "authenticated-owner") return;
+    let cancelled = false;
+    async function loadExecutionHistory() {
+      setExecutionHistoryLoading(true);
+      const client = createClient();
+      const { data: profile } = await client
+        .from("profiles")
+        .select("role")
+        .eq("id", ownerId)
+        .maybeSingle();
+      const store = new SupabaseExecutionHistoryStore(client);
+      const history = await store.listProfessionalHistory(
+        ownerId,
+        moneyCoachProfessionalId
+      );
+      if (cancelled) return;
+      setActorType(
+        (profile as { role?: string } | null)?.role === "admin"
+          ? "owner"
+          : "member"
+      );
+      setExecutionStore(store);
+      setExecutionHistory(history);
+      setExecutionHistoryError("");
+      setExecutionHistoryLoading(false);
+    }
+    void loadExecutionHistory().catch(() => {
+      if (cancelled) return;
+      setExecutionHistoryError(
+        "Recommendation history is temporarily unavailable. Current financial guidance is still based on your BeastMoney records."
+      );
+      setExecutionHistoryLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [ownerId]);
 
   useEffect(() => {
@@ -217,7 +276,6 @@ export function MoneyCoachExperience({
         setConversationTitle(updated.title); await refreshThreads();
       }).catch(() => setHistoryError("This response is visible now but could not be saved. Please retry before leaving this page.")).finally(() => {
         setStreamingTurnId("");
-        window.requestAnimationFrame(focusQuestionInput);
       });
       const durableType = /\b(i prefer|my goal|i decided|remember that|always|never)\b/i.exec(value)?.[1];
       if (memoryStore && durableType) {
@@ -227,21 +285,17 @@ export function MoneyCoachExperience({
       }
     } else {
       setStreamingTurnId("");
-      window.requestAnimationFrame(focusQuestionInput);
     }
-    setInput("");
   }
 
   async function startConversation() {
     if (!repository) {
       conversationScrollPositionsRef.current.delete("new-conversation");
       setActiveThreadId(""); setConversationTitle("New conversation"); setTurns([]);
-      window.requestAnimationFrame(focusQuestionInput);
       return undefined;
     }
     const thread = await repository.create({ ownerId, agentId: "beastmoney.money-coach" });
     setActiveThreadId(thread.id); setConversationTitle(thread.title); setTurns([]);
-    window.requestAnimationFrame(focusQuestionInput);
     await refreshThreads();
     return thread;
   }
@@ -249,11 +303,6 @@ export function MoneyCoachExperience({
   async function beginStarter(prompt: string) {
     const thread = await startConversation();
     await askQuestion(prompt, thread?.id || "", true);
-  }
-
-  async function beginAskAnything() {
-    await startConversation();
-    window.setTimeout(focusQuestionInput, 0);
   }
 
   function openThread(thread: AgentConversationThread) { setActiveThreadId(thread.id); setConversationTitle(thread.title); restoreThread(thread); setHistoryOpen(false); }
@@ -277,11 +326,6 @@ export function MoneyCoachExperience({
     await repository.delete(ownerId, thread.id, true, deleteLinkedMemories ? "delete-linked" : "retain");
     if (thread.id === activeThreadId) await startConversation();
     else await refreshThreads();
-  }
-
-  function focusQuestionInput() {
-    const region = document.getElementById("money-coach-question");
-    region?.querySelector("textarea")?.focus({ preventScroll: true });
   }
 
   const localGreeting = localNow
@@ -310,12 +354,223 @@ export function MoneyCoachExperience({
   const workspaceSuggestions = useMemo(() => {
     const suggestions = [...model.suggestions, ...personalizedStarters];
     return suggestions.filter((suggestion, index) =>
+      suggestion.intent !== "ask" &&
+      Boolean(suggestion.prompt) &&
       suggestions.findIndex((candidate) => candidate.prompt === suggestion.prompt) === index
     );
   }, [model.suggestions, personalizedStarters]);
   const pinnedThreads = threads.filter((thread) => thread.pinned && !thread.archived);
   const recentThreads = threads.filter((thread) => !thread.pinned && !thread.archived).slice(0, 10);
   const archivedThreads = threads.filter((thread) => thread.archived);
+  const recommendations = useMemo(
+    () => buildMoneyCoachRecommendations(model, executionHistory),
+    [executionHistory, model]
+  );
+  const notifications = useMemo(
+    () => buildMoneyCoachNotifications(model),
+    [model]
+  );
+  const outcomeLearning = useMemo(
+    () => buildMoneyCoachOutcomeLearning(executionHistory),
+    [executionHistory]
+  );
+
+  async function refreshExecutionHistory() {
+    if (!executionStore) return;
+    setExecutionHistory(
+      await executionStore.listProfessionalHistory(
+        ownerId,
+        moneyCoachProfessionalId
+      )
+    );
+  }
+
+  async function decideRecommendation(
+    recommendation: MoneyCoachRecommendation,
+    nextStatus: Extract<
+      RecommendationLifecycleStatus,
+      "accepted" | "declined" | "deferred"
+    >
+  ) {
+    if (!executionStore) {
+      setExecutionHistoryError(
+        "Recommendation decisions cannot be saved until execution history is available."
+      );
+      return;
+    }
+    setDecisionPending(recommendation.sourceInsightId);
+    setExecutionHistoryError("");
+    try {
+      let lifecycle = recommendation.lifecycle;
+      let requestStatus = lifecycle
+        ? executionHistory?.requests.find(
+            (request) => request.id === lifecycle?.requestId
+          )?.status
+        : undefined;
+      if (!lifecycle) {
+        const requestId = await executionStore.create({
+          professionalId: moneyCoachProfessionalId,
+          requestType: "financial_recommendation_review",
+          title: recommendation.title,
+          actionClassification: "recommendation_only",
+          contextReferences: [
+            {
+              source: "beastmoney",
+              sourceInsightId: recommendation.sourceInsightId,
+            },
+          ],
+          limitations: recommendation.limitations,
+        });
+        await executionStore.transition(
+          requestId,
+          "analyzing",
+          actorType,
+          { source: "money_coach_recommendation" },
+          recommendation.supportingEvidence
+        );
+        requestStatus = "analyzing";
+        lifecycle = await executionStore.createRecommendation({
+          ownerId,
+          requestId,
+          professionalId: moneyCoachProfessionalId,
+          title: recommendation.title,
+          recommendation: recommendation.recommendation,
+          confidence: recommendation.confidence,
+          limitations: recommendation.limitations,
+          supportingEvidence: [
+            {
+              source: "beastmoney",
+              sourceInsightId: recommendation.sourceInsightId,
+            },
+            ...recommendation.supportingEvidence,
+          ],
+        });
+      }
+      if (lifecycle.status !== nextStatus) {
+        await executionStore.transitionRecommendation({
+          recommendationId: lifecycle.id,
+          status: nextStatus,
+          reason: `Member selected ${nextStatus} in Money Coach.`,
+          confidence: recommendation.confidence,
+          limitations: recommendation.limitations,
+          supportingEvidence: [
+            {
+              source: "beastmoney",
+              sourceInsightId: recommendation.sourceInsightId,
+            },
+            ...recommendation.supportingEvidence,
+          ],
+        });
+      }
+      await executionStore.recordDecision({
+        ownerId,
+        requestId: lifecycle.requestId,
+        decisionScope: actorType === "owner" ? "owner" : "member",
+        decision:
+          nextStatus === "accepted"
+            ? "approved"
+            : nextStatus,
+        reason: `Money Coach recommendation ${nextStatus}.`,
+        limitationsAcknowledged: recommendation.limitations,
+      });
+      if (requestStatus === "queued" || requestStatus === "awaiting_context") {
+        await executionStore.transition(
+          lifecycle.requestId,
+          "analyzing",
+          actorType,
+          { recommendationStatus: nextStatus }
+        );
+        requestStatus = "analyzing";
+      }
+      if (requestStatus === "analyzing") {
+        await executionStore.transition(
+          lifecycle.requestId,
+          nextStatus === "accepted"
+            ? "approved"
+            : nextStatus === "deferred"
+              ? "awaiting_context"
+              : "canceled",
+          actorType,
+          { recommendationStatus: nextStatus }
+        );
+      }
+      await refreshExecutionHistory();
+    } catch {
+      setExecutionHistoryError(
+        "The recommendation decision could not be saved. No financial action was taken."
+      );
+    } finally {
+      setDecisionPending("");
+    }
+  }
+
+  async function recordOutcome(
+    recommendation: MoneyCoachRecommendation,
+    outcomeStatus: "successful" | "neutral" | "unsuccessful"
+  ) {
+    if (!executionStore || !recommendation.lifecycle) return;
+    setDecisionPending(recommendation.sourceInsightId);
+    setExecutionHistoryError("");
+    const learning =
+      outcomeStatus === "successful"
+        ? "Member reported that this recommendation helped."
+        : outcomeStatus === "neutral"
+          ? "Member reported no clear change from this recommendation."
+          : "Member reported that this recommendation did not help.";
+    try {
+      const request = executionHistory?.requests.find(
+        (item) => item.id === recommendation.lifecycle?.requestId
+      );
+      if (request?.status === "approved") {
+        await executionStore.transition(
+          request.id,
+          "executing",
+          actorType,
+          { source: "member_reported_outcome" }
+        );
+      }
+      await executionStore.recordResultAndOutcome({
+        ownerId,
+        requestId: recommendation.lifecycle.requestId,
+        outcomeStatus,
+        recommendationTitle: recommendation.title,
+        memberLearning: [learning],
+        actualResult: {
+          source: "member_report",
+          status: outcomeStatus,
+        },
+        limitations: [
+          "Outcome is member-reported and was not independently verified.",
+        ],
+        supportingEvidence: [
+          {
+            source: "member_report",
+            sourceInsightId: recommendation.sourceInsightId,
+          },
+        ],
+      });
+      await executionStore.transitionRecommendation({
+        recommendationId: recommendation.lifecycle.id,
+        status: "completed",
+        reason: learning,
+      });
+      if (request?.status === "approved") {
+        await executionStore.transition(
+          request.id,
+          "completed",
+          actorType,
+          { outcomeStatus, source: "member_report" }
+        );
+      }
+      await refreshExecutionHistory();
+    } catch {
+      setExecutionHistoryError(
+        "The outcome could not be saved. No financial action was taken."
+      );
+    } finally {
+      setDecisionPending("");
+    }
+  }
 
   function conversationGroup(label: string, items: readonly AgentConversationThread[]) {
     if (!items.length) return null;
@@ -350,7 +605,7 @@ export function MoneyCoachExperience({
         <button type="button" className="text-sm font-bold text-slate-300 lg:hidden" onClick={() => setHistoryOpen(false)} aria-label="Close chat history">Close</button>
       </div>
       <div className="p-3">
-        <button type="button" className="beast-button flex min-h-11 w-full items-center justify-center gap-2" onClick={() => { void startConversation(); setHistoryOpen(false); }}><span aria-hidden="true">＋</span> New Conversation</button>
+        <button type="button" className="beast-button flex min-h-11 w-full items-center justify-center gap-2" onClick={() => { void startConversation(); setHistoryOpen(false); document.getElementById("money-coach-starters-heading")?.scrollIntoView({ behavior: "smooth", block: "start" }); }}><span aria-hidden="true">＋</span> Suggested Questions</button>
         {historyError ? <p className="mt-3 rounded-lg border border-red-300/20 bg-red-300/10 p-2 text-xs leading-5 text-red-100" role="alert">{historyError}</p> : null}
         <label className="mt-3 block text-xs font-bold text-slate-300"><span className="sr-only">Search conversations</span>
           <span className="relative block"><span className="pointer-events-none absolute left-3 top-3 text-slate-500" aria-hidden="true">⌕</span><input className="min-h-11 w-full rounded-xl border border-white/10 bg-slate-950 pl-9 pr-3 text-sm text-white outline-none placeholder:text-slate-600 focus:border-cyan-300 focus:ring-2 focus:ring-cyan-300/20" value={historySearch} onChange={(event) => { setHistorySearch(event.target.value); void refreshThreads(event.target.value); }} placeholder="Search" /></span>
@@ -384,7 +639,6 @@ export function MoneyCoachExperience({
     "Budgeting",
     "Observation Follow-up",
     "Upcoming Events",
-    "Ask Anything",
   ];
   const starterGroups = starterGroupOrder.map((label) => ({
     label,
@@ -393,16 +647,117 @@ export function MoneyCoachExperience({
   const starterExperience = !loading && !error && turns.length === 0 ? (
     <section aria-labelledby="money-coach-starters-heading" data-agent-215-starter-groups="true" data-money-coach-new-conversation="true">
       <div className="max-w-3xl">
-        <h2 id="money-coach-starters-heading" className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Start a conversation</h2>
+        <h2 id="money-coach-starters-heading" className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Suggested Questions</h2>
+        <p className="mt-2 text-sm leading-6 text-slate-400">Choose a question grounded in the current BeastMoney review. Money Coach does not provide an unrestricted chat input.</p>
       </div>
       <div className="mt-4 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
         {starterGroups.map((group) => <section key={group.label} aria-label={group.label}>
           <h3 className="text-[10px] font-black uppercase tracking-[0.14em] text-cyan-300">{group.label}</h3>
-          <div className="mt-2 grid gap-2">{group.suggestions.map((suggestion) => <button key={suggestion.id} type="button" className="min-h-12 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-left text-sm font-semibold leading-5 text-slate-200 transition hover:border-cyan-300/30 hover:bg-cyan-300/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300" onClick={suggestion.intent === "ask" ? () => { void beginAskAnything(); } : () => { void beginStarter(suggestion.prompt || suggestion.label); }}>{suggestion.label}</button>)}</div>
+          <div className="mt-2 grid gap-2">{group.suggestions.map((suggestion) => <button key={suggestion.id} type="button" className="min-h-12 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-left text-sm font-semibold leading-5 text-slate-200 transition hover:border-cyan-300/30 hover:bg-cyan-300/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300" onClick={() => { void beginStarter(suggestion.prompt || suggestion.label); }}>{suggestion.label}</button>)}</div>
         </section>)}
       </div>
     </section>
   ) : null;
+  const financialSummary = (
+    <section aria-labelledby="money-coach-financial-summary">
+      <h2 id="money-coach-financial-summary" className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Financial Summary</h2>
+      <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {[
+          ["Available cash", formatCurrency(model.financialContext.currentCash), `Protected buffer ${formatCurrency(model.financialContext.cashBuffer)}`],
+          ["Monthly income", formatCurrency(model.financialContext.monthlyIncome), "Tracked recurring income"],
+          ["Known obligations", formatCurrency(model.financialContext.monthlyOutflow), "Bills, minimums, and transfers"],
+          [model.financialContext.projectedSurplus >= 0 ? "Projected surplus" : "Projected shortfall", formatCurrency(Math.abs(model.financialContext.projectedSurplus)), "Based on current saved records"],
+        ].map(([label, value, detail]) => (
+          <article key={label} className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
+            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">{label}</p>
+            <p className="mt-2 text-xl font-black text-white">{value}</p>
+            <p className="mt-1 text-xs leading-5 text-slate-400">{detail}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+  const recommendationCards = (
+    <section aria-labelledby="money-coach-recommendations">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 id="money-coach-recommendations" className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Recommendation Cards</h2>
+          <p className="mt-2 text-sm leading-6 text-slate-400">Decisions are saved to immutable Execution History. Choosing a lifecycle status does not move money or modify financial records.</p>
+        </div>
+        {executionHistoryLoading ? <span className="text-xs text-slate-500" role="status">Loading lifecycle history…</span> : null}
+      </div>
+      {executionHistoryError ? <p className="mt-3 rounded-xl border border-amber-300/20 bg-amber-300/10 p-3 text-sm leading-6 text-amber-100" role="alert">{executionHistoryError}</p> : null}
+      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+        {recommendations.map((recommendation) => {
+          const lifecycle = recommendation.lifecycle;
+          const pending = decisionPending === recommendation.sourceInsightId;
+          return (
+            <article key={recommendation.sourceInsightId} className="min-w-0 rounded-2xl border border-white/10 bg-white/[0.035] p-5">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-[10px] font-black uppercase tracking-[0.14em] text-cyan-300">{lifecycle?.status || "proposed"}</p>
+                  <h3 className="mt-2 text-lg font-black text-white">{recommendation.title}</h3>
+                </div>
+                <span className="rounded-full border border-white/10 px-3 py-1 text-xs font-bold text-slate-300">{recommendation.confidence.label} confidence · {recommendation.confidence.score}%</span>
+              </div>
+              <p className="mt-3 text-sm leading-6 text-slate-300">{recommendation.recommendation}</p>
+              <details className="mt-4 rounded-xl border border-white/10 p-3">
+                <summary className="cursor-pointer text-xs font-bold text-cyan-200">Evidence, confidence, and limitations</summary>
+                <p className="mt-3 text-xs leading-5 text-slate-400">{recommendation.confidence.basis}</p>
+                {recommendation.supportingEvidence.length ? <ul className="mt-2 list-disc space-y-1 pl-5 text-xs leading-5 text-slate-400">{recommendation.supportingEvidence.map((item) => <li key={`${item.label}-${String(item.value)}`}>{item.label}: {String(item.value)}</li>)}</ul> : null}
+                <ul className="mt-2 list-disc space-y-1 pl-5 text-xs leading-5 text-slate-500">{recommendation.limitations.map((item) => <li key={item}>{item}</li>)}</ul>
+              </details>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Link className="beast-button-secondary inline-flex min-h-11 items-center" href={recommendation.href}>Review records</Link>
+                {(!lifecycle || lifecycle.status === "proposed" || lifecycle.status === "deferred") ? <button type="button" className="beast-button min-h-11" disabled={pending || !executionStore} onClick={() => { void decideRecommendation(recommendation, "accepted"); }}>Accept</button> : null}
+                {(!lifecycle || lifecycle.status === "proposed") ? <button type="button" className="beast-button-secondary min-h-11" disabled={pending || !executionStore} onClick={() => { void decideRecommendation(recommendation, "deferred"); }}>Defer</button> : null}
+                {(!lifecycle || lifecycle.status === "proposed" || lifecycle.status === "deferred") ? <button type="button" className="beast-button-secondary min-h-11" disabled={pending || !executionStore} onClick={() => { void decideRecommendation(recommendation, "declined"); }}>Decline</button> : null}
+              </div>
+              {lifecycle?.status === "accepted" ? <div className="mt-4 border-t border-white/10 pt-4">
+                <p className="text-xs font-bold text-slate-300">After you try this recommendation, what changed?</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <button type="button" className="beast-button-secondary min-h-11" disabled={pending} onClick={() => { void recordOutcome(recommendation, "successful"); }}>It helped</button>
+                  <button type="button" className="beast-button-secondary min-h-11" disabled={pending} onClick={() => { void recordOutcome(recommendation, "neutral"); }}>No clear change</button>
+                  <button type="button" className="beast-button-secondary min-h-11" disabled={pending} onClick={() => { void recordOutcome(recommendation, "unsuccessful"); }}>It did not help</button>
+                </div>
+              </div> : null}
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+  const notificationsPanel = (
+    <section aria-labelledby="money-coach-notifications">
+      <h2 id="money-coach-notifications" className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Notifications</h2>
+      <div className="mt-3 grid gap-3 md:grid-cols-2">
+        {notifications.length ? notifications.map((notification) => (
+          <article key={notification.id} className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
+            <p className={`text-[10px] font-black uppercase tracking-[0.14em] ${notification.kind === "attention" ? "text-amber-200" : notification.kind === "progress" ? "text-emerald-200" : "text-cyan-200"}`}>{notification.kind}</p>
+            <h3 className="mt-2 font-black text-white">{notification.title}</h3>
+            <p className="mt-1 text-sm leading-6 text-slate-400">{notification.detail}</p>
+            {notification.href ? <Link className="mt-3 inline-flex text-sm font-bold text-cyan-200" href={notification.href}>Review <span aria-hidden="true">→</span></Link> : null}
+          </article>
+        )) : <p className="rounded-2xl border border-white/10 p-4 text-sm text-slate-400">No material changes or alerts are available from the current saved records.</p>}
+      </div>
+    </section>
+  );
+  const learningPanel = (
+    <section aria-labelledby="money-coach-learning">
+      <h2 id="money-coach-learning" className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Learning from Outcomes</h2>
+      <div className="mt-3 grid gap-3">
+        {outcomeLearning.length ? outcomeLearning.map((outcome) => (
+          <article key={outcome.id} className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h3 className="font-black text-white">{outcome.recommendationTitle}</h3>
+              <span className="text-xs font-bold text-slate-400">{outcome.status} · {new Date(outcome.recordedAt).toLocaleDateString()}</span>
+            </div>
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-6 text-slate-400">{outcome.learning.map((item) => <li key={item}>{item}</li>)}</ul>
+          </article>
+        )) : <p className="rounded-2xl border border-white/10 p-4 text-sm leading-6 text-slate-400">No outcomes have been reported yet. Learning appears only after you accept a recommendation and explicitly report what happened.</p>}
+      </div>
+    </section>
+  );
 
   return (
     <ProfessionalConversationWorkspace
@@ -439,10 +794,26 @@ export function MoneyCoachExperience({
           />
         ) : (
           <div className="grid gap-5">
+            <section className="rounded-2xl border border-cyan-300/20 bg-cyan-300/[0.06] p-5" aria-labelledby="money-coach-executive-briefing">
+              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-cyan-300">Executive Briefing</p>
+              <h2 id="money-coach-executive-briefing" className="mt-2 text-xl font-black text-white">{model.primaryRecommendation.title}</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-300">{model.morningBriefing.summary}</p>
+              <p className="mt-2 text-sm leading-6 text-slate-400">{model.primaryRecommendation.action}</p>
+              <Link className="mt-4 inline-flex font-bold text-cyan-200" href={model.primaryRecommendation.href}>Review recommended focus <span aria-hidden="true">→</span></Link>
+            </section>
+            {financialSummary}
+            <section aria-labelledby="money-coach-changes">
+              <h2 id="money-coach-changes" className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Changes Since Last Visit</h2>
+              <div className="mt-3">
             <MorningFinancialBriefingPanel
               briefing={model.morningBriefing}
               defaultOpen={turns.length === 0}
             />
+              </div>
+            </section>
+            {recommendationCards}
+            {notificationsPanel}
+            {learningPanel}
             {starterExperience}
           </div>
         )}
@@ -472,15 +843,11 @@ export function MoneyCoachExperience({
       }
       composer={
         <ProfessionalConversationComposer id="money-coach-question">
-          <AgentConversationInput
-            value={input}
-            onChange={setInput}
-            onSubmit={askQuestion}
-            label="Ask Money Coach about the current BeastMoney plan"
-            placeholder="Ask your Money Coach about bills, debt, retirement, cash flow, income, Velocity, or anything else…"
-            disabled={loading || Boolean(error)}
-          />
-          <p className="mt-2 px-2 text-xs leading-5 text-slate-500">{model.safetyNotice}</p>
+          <div className="rounded-xl border border-white/10 bg-slate-950/50 p-4">
+            <p className="text-sm font-bold text-white">Structured guidance only</p>
+            <p className="mt-1 text-xs leading-5 text-slate-400">Use the evidence-backed suggested questions above. Money Coach does not provide an unrestricted chat input or execute financial transactions.</p>
+            <p className="mt-2 text-xs leading-5 text-slate-500">{model.safetyNotice}</p>
+          </div>
         </ProfessionalConversationComposer>
       }
       />

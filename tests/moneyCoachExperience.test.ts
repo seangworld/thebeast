@@ -129,7 +129,8 @@ test("MC-201 consumes the shared AgentExperience without replacing existing page
   assert.match(component, /<AgentExperience/);
   assert.match(component, /AgentMemoryRecord/);
   assert.match(component, /composerPlacement="before-cards"/);
-  assert.match(component, /Start a conversation/);
+  assert.match(component, /Suggested Questions/);
+  assert.match(component, /Structured guidance only/);
   assert.doesNotMatch(component, /AgentSmartCard/);
   assert.doesNotMatch(component, /Today&apos;s Financial Review/);
   assert.match(component, /buildMoneyCoachGreeting/);
@@ -152,7 +153,7 @@ test("MC-201 consumes the shared AgentExperience without replacing existing page
   assert.match(workspace, /lg:hidden/);
   assert.match(workspace, /role="dialog"/);
   assert.match(workspace, /aria-modal="true"/);
-  assert.match(component, /New Conversation/);
+  assert.match(component, /Suggested Questions/);
   assert.match(component, /Active Money Coach conversation/);
   assert.match(component, /Pinned Conversations/);
   assert.match(component, /Recent Conversations/);
@@ -164,7 +165,7 @@ test("MC-201 consumes the shared AgentExperience without replacing existing page
   assert.match(workspace, /data-message-role/);
   assert.match(scroll, /scrollTo\(\{ top: region\.scrollHeight/);
   assert.match(workspace, /Jump to Latest/);
-  assert.match(component, /preventScroll: true/);
+  assert.doesNotMatch(component, /AgentConversationInput/);
   assert.match(workspace, /\[&_table\]:w-full/);
   assert.match(workspace, /\[&_ul\]:list-disc/);
   assert.match(workspace, /\[&_ol\]:list-decimal/);

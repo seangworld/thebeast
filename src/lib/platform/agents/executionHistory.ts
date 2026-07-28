@@ -64,6 +64,40 @@ export type ExecutionHistoryReplay = {
   currentStatus: ExecutionHistoryStatus;
 };
 
+export type ExecutionRecommendationRecord = {
+  id: string;
+  ownerId: string;
+  requestId: string;
+  professionalId: string;
+  title: string;
+  recommendation: string;
+  status: RecommendationLifecycleStatus;
+  confidence: Record<string, unknown>;
+  limitations: readonly string[];
+  supportingEvidence: readonly unknown[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ExecutionOutcomeRecord = {
+  id: string;
+  requestId: string;
+  outcomeStatus: "successful" | "neutral" | "unsuccessful" | "inconclusive";
+  expectedResult: Record<string, unknown>;
+  actualResult: Record<string, unknown> | null;
+  memberLearning: readonly string[];
+  limitations: readonly string[];
+  supportingEvidence: readonly unknown[];
+  observedAt: string | null;
+  recordedAt: string;
+};
+
+export type ProfessionalExecutionHistory = {
+  requests: readonly ExecutionHistoryRequest[];
+  recommendations: readonly ExecutionRecommendationRecord[];
+  outcomes: readonly ExecutionOutcomeRecord[];
+};
+
 type RequestRow = {
   id: string;
   owner_id: string;
@@ -88,6 +122,34 @@ type AuditRow = {
   decision: Record<string, unknown>;
   supporting_evidence: unknown[];
   occurred_at: string;
+};
+
+type RecommendationRow = {
+  id: string;
+  owner_id: string;
+  request_id: string;
+  professional_id: string;
+  title: string;
+  recommendation: string;
+  status: RecommendationLifecycleStatus;
+  confidence: Record<string, unknown>;
+  limitations: string[];
+  supporting_evidence: unknown[];
+  created_at: string;
+  updated_at: string;
+};
+
+type OutcomeRow = {
+  id: string;
+  request_id: string;
+  outcome_status: ExecutionOutcomeRecord["outcomeStatus"];
+  expected_result: Record<string, unknown>;
+  actual_result: Record<string, unknown> | null;
+  member_learning: string[];
+  limitations: string[];
+  supporting_evidence: unknown[];
+  observed_at: string | null;
+  recorded_at: string;
 };
 
 function mapRequest(row: RequestRow): ExecutionHistoryRequest {
@@ -117,6 +179,40 @@ function mapAudit(row: AuditRow): ExecutionAuditEvent {
     decision: row.decision || {},
     supportingEvidence: row.supporting_evidence || [],
     occurredAt: row.occurred_at,
+  };
+}
+
+function mapRecommendation(
+  row: RecommendationRow
+): ExecutionRecommendationRecord {
+  return {
+    id: row.id,
+    ownerId: row.owner_id,
+    requestId: row.request_id,
+    professionalId: row.professional_id,
+    title: row.title,
+    recommendation: row.recommendation,
+    status: row.status,
+    confidence: row.confidence || {},
+    limitations: row.limitations || [],
+    supportingEvidence: row.supporting_evidence || [],
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function mapOutcome(row: OutcomeRow): ExecutionOutcomeRecord {
+  return {
+    id: row.id,
+    requestId: row.request_id,
+    outcomeStatus: row.outcome_status,
+    expectedResult: row.expected_result || {},
+    actualResult: row.actual_result,
+    memberLearning: row.member_learning || [],
+    limitations: row.limitations || [],
+    supportingEvidence: row.supporting_evidence || [],
+    observedAt: row.observed_at,
+    recordedAt: row.recorded_at,
   };
 }
 
@@ -192,6 +288,143 @@ export class SupabaseExecutionHistoryStore {
     );
     if (error) throw error;
     return data;
+  }
+
+  async createRecommendation(input: {
+    ownerId: string;
+    requestId: string;
+    professionalId: string;
+    title: string;
+    recommendation: string;
+    confidence: Record<string, unknown>;
+    limitations?: readonly string[];
+    supportingEvidence?: readonly unknown[];
+  }): Promise<ExecutionRecommendationRecord> {
+    const { data, error } = await this.client
+      .from("execution_recommendations")
+      .insert({
+        owner_id: input.ownerId,
+        request_id: input.requestId,
+        professional_id: input.professionalId,
+        title: input.title,
+        recommendation: input.recommendation,
+        confidence: input.confidence,
+        limitations: [...(input.limitations || [])],
+        supporting_evidence: [...(input.supportingEvidence || [])],
+      })
+      .select("*")
+      .single();
+    if (error) throw error;
+    return mapRecommendation(data as RecommendationRow);
+  }
+
+  async recordDecision(input: {
+    ownerId: string;
+    requestId: string;
+    decisionScope: "member" | "owner";
+    decision: "approved" | "declined" | "deferred";
+    reason: string;
+    limitationsAcknowledged?: readonly string[];
+  }) {
+    const { error } = await this.client.from("execution_approvals").insert({
+      owner_id: input.ownerId,
+      request_id: input.requestId,
+      decision_scope: input.decisionScope,
+      decision: input.decision,
+      decided_by: input.ownerId,
+      reason: input.reason,
+      limitations_acknowledged: [
+        ...(input.limitationsAcknowledged || []),
+      ],
+    });
+    if (error) throw error;
+  }
+
+  async recordResultAndOutcome(input: {
+    ownerId: string;
+    requestId: string;
+    outcomeStatus: ExecutionOutcomeRecord["outcomeStatus"];
+    recommendationTitle: string;
+    memberLearning: readonly string[];
+    actualResult: Record<string, unknown>;
+    limitations?: readonly string[];
+    supportingEvidence?: readonly unknown[];
+  }) {
+    const { data: result, error: resultError } = await this.client
+      .from("execution_results")
+      .insert({
+        owner_id: input.ownerId,
+        request_id: input.requestId,
+        result_status: "completed",
+        summary: `Member reviewed the outcome for ${input.recommendationTitle}.`,
+        output: { source: "member_reported_outcome" },
+        limitations: [...(input.limitations || [])],
+        supporting_evidence: [...(input.supportingEvidence || [])],
+        external_action_verified: false,
+      })
+      .select("id")
+      .single();
+    if (resultError) throw resultError;
+    const { error: outcomeError } = await this.client
+      .from("execution_outcomes")
+      .insert({
+        owner_id: input.ownerId,
+        request_id: input.requestId,
+        result_id: (result as { id: string }).id,
+        outcome_status: input.outcomeStatus,
+        expected_result: {
+          recommendation: input.recommendationTitle,
+        },
+        actual_result: input.actualResult,
+        member_learning: [...input.memberLearning],
+        limitations: [...(input.limitations || [])],
+        supporting_evidence: [...(input.supportingEvidence || [])],
+        observed_at: new Date().toISOString(),
+      });
+    if (outcomeError) throw outcomeError;
+  }
+
+  async listProfessionalHistory(
+    ownerId: string,
+    professionalId: string
+  ): Promise<ProfessionalExecutionHistory> {
+    const recommendationResult = await this.client
+      .from("execution_recommendations")
+      .select("*")
+      .eq("owner_id", ownerId)
+      .eq("professional_id", professionalId)
+      .order("updated_at", { ascending: false });
+    if (recommendationResult.error) throw recommendationResult.error;
+    const recommendations = (
+      (recommendationResult.data || []) as RecommendationRow[]
+    ).map(mapRecommendation);
+    const requestIds = Array.from(
+      new Set(recommendations.map((item) => item.requestId))
+    );
+    if (requestIds.length === 0) {
+      return { requests: [], recommendations: [], outcomes: [] };
+    }
+    const [requestResult, outcomeResult] = await Promise.all([
+      this.client
+        .from("execution_requests")
+        .select("*")
+        .eq("owner_id", ownerId)
+        .in("id", requestIds)
+        .order("updated_at", { ascending: false }),
+      this.client
+        .from("execution_outcomes")
+        .select("*")
+        .eq("owner_id", ownerId)
+        .in("request_id", requestIds)
+        .order("recorded_at", { ascending: false }),
+    ]);
+    if (requestResult.error) throw requestResult.error;
+    if (outcomeResult.error) throw outcomeResult.error;
+    return {
+      requests: ((requestResult.data || []) as RequestRow[]).map(mapRequest),
+      recommendations,
+      outcomes: ((outcomeResult.data || []) as OutcomeRow[]).map(mapOutcome),
+    };
   }
 
   async list(ownerId: string) {

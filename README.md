@@ -1,11 +1,12 @@
 # The Beast / BeastOS
 
-Current platform release candidate: `BeastOS v2.3.0-alpha2`
+Current platform release candidate: `BeastOS v2.3.0`
 
-BeastOS v2.3.0-alpha2 completes the Digital Staff identity package with
-professional biographies, missions, responsibilities, experience domains,
-reporting relationships, collaboration context, status, versioning, and a
-placeholder-only portrait asset contract. No portrait images are included.
+BeastOS v2.3.0 brings Money Coach online as a structured, evidence-backed
+financial workspace. It combines current BeastMoney records with an executive
+briefing, financial summary, recommendation lifecycle decisions, confidence,
+notifications, changes since the prior visit, and member-reported outcome
+learning. It does not provide unrestricted chat or execute financial actions.
 
 Current Money version: `BeastMoney v2.3.0`
 

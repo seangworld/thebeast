@@ -9,10 +9,10 @@ const workspace = readFileSync(
   "utf8"
 );
 
-test("BM-305 provides a ChatGPT-style left conversation navigation", () => {
+test("Money Coach provides persisted conversation history and bounded questions", () => {
   assert.match(source, /data-money-coach-left-navigation="true"/);
   assert.match(source, /Money Coach conversation navigation/);
-  assert.match(source, /New Conversation/);
+  assert.match(source, /Suggested Questions/);
   assert.match(source, /Pinned Conversations/);
   assert.match(source, /Recent Conversations/);
   assert.match(source, /Search/);
@@ -36,11 +36,13 @@ test("BM-305 keeps persistence resume and automatic title behavior", () => {
   assert.match(source, /titles update automatically/i);
 });
 
-test("BM-305 keeps conversation primary with streaming and a modern composer", () => {
+test("Money Coach keeps structured responses and a bounded composer", () => {
   assert.match(workspace, /data-professional-conversation-workspace="true"/);
   assert.match(source, /composerPlacement="before-cards"/);
   assert.match(source, /AgentStreamingResponseArea/);
   assert.match(source, /streamingTurnId/);
+  assert.doesNotMatch(source, /AgentConversationInput/);
+  assert.match(source, /Structured guidance only/);
   assert.match(workspace, /role="log"/);
   assert.match(workspace, /aria-live="polite"/);
   assert.match(workspace, /min-h-\[44px\]/);
@@ -48,7 +50,7 @@ test("BM-305 keeps conversation primary with streaming and a modern composer", (
   assert.doesNotMatch(source, /FinancialMissionControl|MoneyDashboardCharts|BeastMoney Dashboard/);
 });
 
-test("BM-305 groups AGENT-215 starters into all supported workspace categories", () => {
+test("Money Coach groups supported deterministic questions without Ask Anything", () => {
   for (const label of [
     "Recommended Today",
     "Getting Started",
@@ -61,8 +63,8 @@ test("BM-305 groups AGENT-215 starters into all supported workspace categories",
     "Budgeting",
     "Observation Follow-up",
     "Upcoming Events",
-    "Ask Anything",
   ]) assert.match(source, new RegExp(label));
+  assert.doesNotMatch(source, /"Ask Anything"/);
   assert.match(source, /data-agent-215-starter-groups="true"/);
   assert.match(source, /suggestion\.group/);
 });

@@ -8,7 +8,7 @@ const workspaceSource = readFileSync("src/app/dashboard/money/components/MoneyCo
 test("BM-306 presents a bounded personalized start state instead of a blank conversation", () => {
   assert.match(workspaceSource, /data-money-coach-new-conversation="true"/);
   assert.match(workspaceSource, /turns\.length === 0/);
-  assert.match(workspaceSource, /Start a conversation/);
+  assert.match(workspaceSource, /Suggested Questions/);
   assert.match(workspaceSource, /MorningFinancialBriefingPanel/);
   assert.doesNotMatch(workspaceSource, /reviewIntroduction/);
   assert.match(workspaceSource, /min-h-12/);
@@ -44,8 +44,8 @@ test("BM-306 supplies every requested starter group through shared metadata", ()
     "Retirement",
     "Velocity Banking",
     "Budgeting",
-    "Ask Anything",
   ]) assert.match(workspaceSource, new RegExp(`"${group}"`));
+  assert.doesNotMatch(workspaceSource, /"Ask Anything"/);
 
   const model = buildMoneyCoachExperience({
     ownerId: "owner-1",

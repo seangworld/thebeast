@@ -1,5 +1,37 @@
 # Changelog
 
+## BeastOS v2.3.0 - July 28, 2026
+
+Money Coach online release candidate.
+
+### New Features
+
+- Added a structured Money Coach executive briefing, financial summary,
+  recommendation cards, changes since the prior visit, notifications,
+  suggested questions, and outcome learning.
+- Connected explicit recommendation decisions to persistent Execution History,
+  recommendation lifecycle events, confidence history, approvals, results,
+  outcomes, and immutable audit records.
+- Added member-reported outcome capture so later guidance can display what
+  helped, produced no clear change, or did not help without inventing results.
+
+### Safety and Reliability
+
+- Reused current owner-scoped BeastMoney records and existing calculation,
+  forecasting, funding, debt, and cash-buffer rules.
+- Kept Money Coach guidance deterministic and removed unrestricted text entry
+  from the Money Coach workspace.
+- Viewing the workspace creates no execution activity. Durable records are
+  created only after an explicit lifecycle decision or outcome report.
+- Recommendation actions do not move money, change financial records, or claim
+  that an external action was independently verified.
+
+### Release Boundary
+
+- No database migration is included. This release uses the existing
+  execution-history schema and RLS policies.
+- No push, deployment, or production release is included in this candidate.
+
 ## BeastOS v2.3.0-alpha2 - July 28, 2026
 
 Digital Staff identity release candidate (BP-232).

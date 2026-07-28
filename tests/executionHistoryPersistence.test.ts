@@ -65,6 +65,21 @@ test("request creation and transitions atomically write immutable audit events",
   assert.match(migration, /revoke update, delete on public\.execution_requests from authenticated/);
 });
 
+test("Money Coach persistence can create recommendations, decisions, results, and outcomes", () => {
+  const source = readFileSync(
+    "src/lib/platform/agents/executionHistory.ts",
+    "utf8"
+  );
+  assert.match(source, /createRecommendation/);
+  assert.match(source, /recordDecision/);
+  assert.match(source, /recordResultAndOutcome/);
+  assert.match(source, /listProfessionalHistory/);
+  assert.match(source, /\.from\("execution_recommendations"\)/);
+  assert.match(source, /\.from\("execution_approvals"\)/);
+  assert.match(source, /\.from\("execution_results"\)/);
+  assert.match(source, /\.from\("execution_outcomes"\)/);
+});
+
 test("owner review normalization retains recommendation confidence and limitations", () => {
   const snapshot = normalizeBeastAdminExecutionHistorySnapshot({
     generatedAt: "2026-07-28T12:00:00Z",
