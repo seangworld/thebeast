@@ -1,5 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  async redirects() {
+    return [
+      { source: "/privacy.html", destination: "/privacy", permanent: true },
+      { source: "/privacy.php", destination: "/privacy", permanent: true },
+      { source: "/about.php", destination: "/about", permanent: true },
+    ];
+  },
   experimental: {
     outputFileTracingIncludes: {
       "/api/admin/migration-sql-explorer": [

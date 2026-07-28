@@ -1,0 +1,391 @@
+export const seangworldProviderStatuses = [
+  "configured",
+  "not_configured",
+  "unavailable",
+  "synchronization_failed",
+  "no_data",
+] as const;
+
+export type SeangworldProviderStatus =
+  (typeof seangworldProviderStatuses)[number];
+
+export const seangworldProviderStatusLabels: Record<
+  SeangworldProviderStatus,
+  string
+> = {
+  configured: "Configured",
+  not_configured: "Not Configured",
+  unavailable: "Unavailable",
+  synchronization_failed: "Synchronization Failed",
+  no_data: "No Data",
+};
+
+export type IntelligenceMetric = {
+  value: number;
+  previousValue: number | null;
+};
+
+export type IntelligenceDimension = {
+  label: string;
+  value: number;
+  secondaryValue?: number | null;
+};
+
+export type SeangworldAnalyticsData = {
+  visitors: IntelligenceMetric | null;
+  sessions: IntelligenceMetric | null;
+  views: IntelligenceMetric | null;
+  engagementRate: IntelligenceMetric | null;
+  countries: IntelligenceDimension[];
+  cities: IntelligenceDimension[];
+  devices: IntelligenceDimension[];
+  browsers: IntelligenceDimension[];
+  operatingSystems: IntelligenceDimension[];
+  trafficSources: IntelligenceDimension[];
+  entryPages: IntelligenceDimension[];
+  exitPages: (IntelligenceDimension & { exitRate?: number | null })[];
+  topQueries: (IntelligenceDimension & {
+    impressions?: number | null;
+    clicks?: number | null;
+    ctr?: number | null;
+    previousImpressions?: number | null;
+  })[];
+  topLandingPages: IntelligenceDimension[];
+  historicalTrends: {
+    date: string;
+    visitors: number | null;
+    sessions: number | null;
+    views: number | null;
+  }[];
+  deviceEngagement: {
+    mobileSessions: number;
+    desktopSessions: number;
+    mobileEngagementRate: number;
+    desktopEngagementRate: number;
+  } | null;
+};
+
+export type SeangworldProviderSnapshot = {
+  id: "ga4" | "search_console" | "first_party";
+  label: string;
+  status: SeangworldProviderStatus;
+  guidance: string;
+  lastSynchronizationAt: string | null;
+  lastSuccessfulSynchronizationAt: string | null;
+  freshness: "current" | "recent" | "stale" | "unknown";
+  data: Partial<SeangworldAnalyticsData> | null;
+};
+
+export type SeangworldRecommendation = {
+  id:
+    | "high_exit_page"
+    | "low_ctr"
+    | "growing_impressions"
+    | "mobile_weakness"
+    | "traffic_spike";
+  title: string;
+  supportingMetric: string;
+  comparisonPeriod: string;
+  confidence: "high" | "moderate";
+  rationale: string;
+  suggestedOwnerReview: string;
+};
+
+export type SeangworldIntelligenceSnapshot = {
+  generatedAt: string;
+  comparisonPeriod: string;
+  providers: SeangworldProviderSnapshot[];
+  data: SeangworldAnalyticsData;
+  recommendations: SeangworldRecommendation[];
+  limitations: string[];
+};
+
+const emptyData = (): SeangworldAnalyticsData => ({
+  visitors: null,
+  sessions: null,
+  views: null,
+  engagementRate: null,
+  countries: [],
+  cities: [],
+  devices: [],
+  browsers: [],
+  operatingSystems: [],
+  trafficSources: [],
+  entryPages: [],
+  exitPages: [],
+  topQueries: [],
+  topLandingPages: [],
+  historicalTrends: [],
+  deviceEngagement: null,
+});
+
+function metricChange(metric: IntelligenceMetric) {
+  if (metric.previousValue === null || metric.previousValue === 0) return null;
+  return (metric.value - metric.previousValue) / metric.previousValue;
+}
+
+export function buildSeangworldRecommendations(
+  data: SeangworldAnalyticsData,
+  comparisonPeriod: string
+): SeangworldRecommendation[] {
+  const recommendations: SeangworldRecommendation[] = [];
+  const highExit = data.exitPages
+    .filter((page) => (page.exitRate || 0) >= 0.6 && page.value >= 50)
+    .sort((a, b) => (b.exitRate || 0) - (a.exitRate || 0))[0];
+  if (highExit?.exitRate) {
+    recommendations.push({
+      id: "high_exit_page",
+      title: "Review a frequent exit page",
+      supportingMetric: `${highExit.label}: ${Math.round(highExit.exitRate * 100)}% exit rate across ${highExit.value} exits`,
+      comparisonPeriod,
+      confidence: "high",
+      rationale: "The recorded exit rate is at least 60% and the page has at least 50 exits.",
+      suggestedOwnerReview: "Confirm the page's intended next action and inspect device-specific continuation before changing it.",
+    });
+  }
+
+  const lowCtr = data.topQueries
+    .filter((query) => (query.impressions || 0) >= 1000 && query.ctr !== null && query.ctr !== undefined && query.ctr < 0.02)
+    .sort((a, b) => (b.impressions || 0) - (a.impressions || 0))[0];
+  if (lowCtr?.ctr !== null && lowCtr?.ctr !== undefined) {
+    recommendations.push({
+      id: "low_ctr",
+      title: "Review a high-impression, low-CTR query",
+      supportingMetric: `${lowCtr.label}: ${(lowCtr.impressions || 0).toLocaleString()} impressions and ${(lowCtr.ctr * 100).toFixed(1)}% CTR`,
+      comparisonPeriod,
+      confidence: "high",
+      rationale: "The query has at least 1,000 impressions and a recorded CTR below 2%.",
+      suggestedOwnerReview: "Compare the landing page title and description with the query intent before editing search presentation.",
+    });
+  }
+
+  const growingQuery = data.topQueries
+    .filter((query) => (query.previousImpressions || 0) > 0 && (query.impressions || 0) >= (query.previousImpressions || 0) * 1.25)
+    .sort((a, b) => (b.impressions || 0) - (a.impressions || 0))[0];
+  if (growingQuery) {
+    const growth = ((growingQuery.impressions || 0) / (growingQuery.previousImpressions || 1) - 1) * 100;
+    recommendations.push({
+      id: "growing_impressions",
+      title: "Review a query with growing visibility",
+      supportingMetric: `${growingQuery.label}: ${Math.round(growth)}% impression growth`,
+      comparisonPeriod,
+      confidence: "high",
+      rationale: "Recorded impressions increased by at least 25% from the comparison period.",
+      suggestedOwnerReview: "Verify the associated landing page remains accurate and provides a clear continuation path.",
+    });
+  }
+
+  const device = data.deviceEngagement;
+  if (device) {
+    const total = device.mobileSessions + device.desktopSessions;
+    const mobileShare = total ? device.mobileSessions / total : 0;
+    if (
+      total >= 100 &&
+      mobileShare >= 0.4 &&
+      device.mobileEngagementRate <= device.desktopEngagementRate - 0.15
+    ) {
+      recommendations.push({
+        id: "mobile_weakness",
+        title: "Review mobile engagement",
+        supportingMetric: `${Math.round(mobileShare * 100)}% mobile session share; ${Math.round(device.mobileEngagementRate * 100)}% mobile vs ${Math.round(device.desktopEngagementRate * 100)}% desktop engagement`,
+        comparisonPeriod,
+        confidence: "high",
+        rationale: "Mobile represents at least 40% of recorded sessions and engagement trails desktop by at least 15 percentage points.",
+        suggestedOwnerReview: "Inspect the highest-traffic mobile entry pages for usability or continuation friction.",
+      });
+    }
+  }
+
+  if (data.sessions) {
+    const change = metricChange(data.sessions);
+    if (
+      change !== null &&
+      data.sessions.previousValue !== null &&
+      data.sessions.previousValue >= 100 &&
+      change >= 0.5
+    ) {
+      recommendations.push({
+        id: "traffic_spike",
+        title: "Review a recorded traffic spike",
+        supportingMetric: `${data.sessions.value.toLocaleString()} sessions, up ${Math.round(change * 100)}%`,
+        comparisonPeriod,
+        confidence: "high",
+        rationale: "Recorded sessions increased by at least 50% from a comparison baseline of 100 or more.",
+        suggestedOwnerReview: "Identify the contributing sources and landing pages, then verify engagement quality before acting.",
+      });
+    }
+  }
+  return recommendations;
+}
+
+function mergeData(providers: readonly SeangworldProviderSnapshot[]) {
+  const result = emptyData();
+  for (const provider of providers) {
+    if (!provider.data) continue;
+    for (const [key, value] of Object.entries(provider.data)) {
+      if (value === undefined || value === null) continue;
+      const typedKey = key as keyof SeangworldAnalyticsData;
+      if (Array.isArray(value)) {
+        (result as unknown as Record<string, unknown>)[typedKey] = value;
+      } else {
+        (result as unknown as Record<string, unknown>)[typedKey] = value;
+      }
+    }
+  }
+  return result;
+}
+
+export function buildSeangworldIntelligenceSnapshot(input: {
+  providers: SeangworldProviderSnapshot[];
+  generatedAt: string;
+  comparisonPeriod?: string;
+}): SeangworldIntelligenceSnapshot {
+  const comparisonPeriod = input.comparisonPeriod || "Current 30 days compared with previous 30 days";
+  const data = mergeData(input.providers);
+  const providersWithData = input.providers.filter((provider) => provider.data);
+  return {
+    generatedAt: input.generatedAt,
+    comparisonPeriod,
+    providers: input.providers,
+    data,
+    recommendations: buildSeangworldRecommendations(data, comparisonPeriod),
+    limitations: [
+      ...(providersWithData.length ? [] : ["No provider returned verified analytics data."]),
+      ...input.providers
+        .filter((provider) => provider.status !== "configured")
+        .map((provider) => `${provider.label}: ${provider.guidance}`),
+    ],
+  };
+}
+
+function parseProviderData(value: string | undefined) {
+  if (!value) return null;
+  try {
+    const parsed = JSON.parse(value) as Partial<SeangworldAnalyticsData>;
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? parsed
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function providerStatus(value: string | undefined): SeangworldProviderStatus | null {
+  return seangworldProviderStatuses.includes(value as SeangworldProviderStatus)
+    ? (value as SeangworldProviderStatus)
+    : null;
+}
+
+function freshness(lastSuccessful: string | null, now: string) {
+  if (!lastSuccessful || Number.isNaN(Date.parse(lastSuccessful))) return "unknown" as const;
+  const ageHours = Math.max(0, Date.parse(now) - Date.parse(lastSuccessful)) / 3_600_000;
+  return ageHours <= 24 ? "current" as const : ageHours <= 72 ? "recent" as const : "stale" as const;
+}
+
+export function buildServerSeangworldProviders(
+  environment: Readonly<Record<string, string | undefined>>,
+  now = new Date().toISOString()
+): SeangworldProviderSnapshot[] {
+  const definitions = [
+    {
+      id: "ga4" as const,
+      label: "Google Analytics 4",
+      configured: Boolean(environment.SEANGWORLD_GA4_PROPERTY_ID && environment.SEANGWORLD_GOOGLE_SERVICE_ACCOUNT_EMAIL && environment.SEANGWORLD_GOOGLE_PRIVATE_KEY),
+      status: environment.SEANGWORLD_GA4_STATUS,
+      data: environment.SEANGWORLD_GA4_SNAPSHOT_JSON,
+      synchronized: environment.SEANGWORLD_GA4_LAST_SYNCHRONIZATION_AT,
+      successful: environment.SEANGWORLD_GA4_LAST_SUCCESSFUL_SYNCHRONIZATION_AT,
+    },
+    {
+      id: "search_console" as const,
+      label: "Google Search Console",
+      configured: Boolean(environment.SEANGWORLD_SEARCH_CONSOLE_SITE_URL && environment.SEANGWORLD_GOOGLE_SERVICE_ACCOUNT_EMAIL && environment.SEANGWORLD_GOOGLE_PRIVATE_KEY),
+      status: environment.SEANGWORLD_SEARCH_CONSOLE_STATUS,
+      data: environment.SEANGWORLD_SEARCH_CONSOLE_SNAPSHOT_JSON,
+      synchronized: environment.SEANGWORLD_SEARCH_CONSOLE_LAST_SYNCHRONIZATION_AT,
+      successful: environment.SEANGWORLD_SEARCH_CONSOLE_LAST_SUCCESSFUL_SYNCHRONIZATION_AT,
+    },
+    {
+      id: "first_party" as const,
+      label: "First-party ecosystem telemetry",
+      configured: environment.SEANGWORLD_FIRST_PARTY_ANALYTICS_ENABLED === "true",
+      status: environment.SEANGWORLD_FIRST_PARTY_STATUS,
+      data: environment.SEANGWORLD_FIRST_PARTY_SNAPSHOT_JSON,
+      synchronized: environment.SEANGWORLD_FIRST_PARTY_LAST_SYNCHRONIZATION_AT,
+      successful: environment.SEANGWORLD_FIRST_PARTY_LAST_SUCCESSFUL_SYNCHRONIZATION_AT,
+    },
+  ];
+
+  return definitions.map((definition) => {
+    const data = parseProviderData(definition.data);
+    const explicitStatus = providerStatus(definition.status);
+    const status = !definition.configured
+      ? "not_configured"
+      : explicitStatus || (data ? "configured" : "configured");
+    const guidance = status === "not_configured"
+      ? `Configure ${definition.label} server credentials to begin synchronization.`
+      : status === "synchronization_failed"
+        ? "Review the most recent server-side synchronization error and credentials."
+        : status === "unavailable"
+          ? "The provider is configured but cannot currently be reached."
+          : status === "no_data"
+            ? "The provider is configured and synchronized, but returned no records for this period."
+            : data
+              ? "Verified provider data is available."
+              : "Configuration is present. Run the server-side synchronization before metrics can appear.";
+    return {
+      id: definition.id,
+      label: definition.label,
+      status,
+      guidance,
+      lastSynchronizationAt: definition.synchronized || null,
+      lastSuccessfulSynchronizationAt: definition.successful || null,
+      freshness: freshness(definition.successful || null, now),
+      data,
+    };
+  });
+}
+
+export function normalizeSeangworldIntelligenceSnapshot(
+  value: unknown
+): SeangworldIntelligenceSnapshot | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const snapshot = value as Partial<SeangworldIntelligenceSnapshot>;
+  if (
+    typeof snapshot.generatedAt !== "string" ||
+    Number.isNaN(Date.parse(snapshot.generatedAt)) ||
+    typeof snapshot.comparisonPeriod !== "string" ||
+    !Array.isArray(snapshot.providers) ||
+    !snapshot.data ||
+    typeof snapshot.data !== "object" ||
+    !Array.isArray(snapshot.recommendations) ||
+    !Array.isArray(snapshot.limitations)
+  ) {
+    return null;
+  }
+  if (
+    !snapshot.providers.every(
+      (provider) =>
+        provider &&
+        typeof provider.id === "string" &&
+        typeof provider.label === "string" &&
+        seangworldProviderStatuses.includes(provider.status) &&
+        typeof provider.guidance === "string"
+    )
+  ) {
+    return null;
+  }
+  if (
+    !snapshot.recommendations.every(
+      (recommendation) =>
+        recommendation &&
+        typeof recommendation.title === "string" &&
+        typeof recommendation.supportingMetric === "string" &&
+        typeof recommendation.rationale === "string" &&
+        typeof recommendation.suggestedOwnerReview === "string"
+    )
+  ) {
+    return null;
+  }
+  return snapshot as SeangworldIntelligenceSnapshot;
+}

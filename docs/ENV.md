@@ -18,6 +18,25 @@ This project uses Supabase for backend services. Follow these rules to avoid acc
 
 - Scripts in `/scripts` also require these env vars and will abort if not set.
 
+## SEANGWORLD Intelligence
+
+SEANGWORLD Intelligence checks analytics configuration only in the owner-only
+server route. Google service-account credentials, provider identifiers, status,
+synchronization timestamps, and cached provider snapshots must never use the
+`NEXT_PUBLIC_` prefix.
+
+Google Analytics 4 uses `SEANGWORLD_GA4_PROPERTY_ID`,
+`SEANGWORLD_GOOGLE_SERVICE_ACCOUNT_EMAIL`, and
+`SEANGWORLD_GOOGLE_PRIVATE_KEY`. Search Console uses
+`SEANGWORLD_SEARCH_CONSOLE_SITE_URL` with the same service account. First-party
+telemetry is enabled explicitly with
+`SEANGWORLD_FIRST_PARTY_ANALYTICS_ENABLED=true`.
+
+The `*_SNAPSHOT_JSON` values are transport boundaries for verified output from
+a server-side synchronization job. Do not manually invent snapshots. Without a
+verified snapshot, the dashboard reports configuration and synchronization
+guidance but does not display analytics totals or recommendations.
+
 Quick steps for local setup:
 
 1. Create a development Supabase project (if you don't have one).

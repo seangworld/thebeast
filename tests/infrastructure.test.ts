@@ -550,6 +550,7 @@ test("module navigation centralizes expandable child items", () => {
     [
       "Today",
       "Relationship Center",
+      "Digital Staff",
       "Calendar",
       "Notifications",
       "Messages",
@@ -659,6 +660,7 @@ test("BO-308 keeps BeastOS focused and BO-311 makes Personal Hub canonical", () 
     [
       ["Today", "/dashboard/today"],
       ["Relationship Center", "/dashboard/relationships"],
+      ["Digital Staff", "/dashboard/digital-staff"],
       ["Calendar", "/dashboard/calendar"],
       ["Notifications", "/dashboard/notifications"],
       ["Messages", "/dashboard/messages"],
@@ -6071,9 +6073,11 @@ test("BeastAdmin foundation registers modules and protects owner-only navigation
       "Migration Status",
       "SQL Explorer",
       "Release Center",
+      "Execution History",
       "Roadmap",
       "Executive Metrics",
       "AI Analytics",
+      "SEANGWORLD Intelligence",
       "Knowledge Inspector",
       "Ecosystem Map",
       "Members",

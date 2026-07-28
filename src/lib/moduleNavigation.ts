@@ -33,6 +33,11 @@ export const primaryNavigation: ModuleNavSection[] = [
     href: "/dashboard/relationships",
     module: "beastos",
   },
+  {
+    label: "Digital Staff",
+    href: "/dashboard/digital-staff",
+    module: "beastos",
+  },
   { label: "Calendar", href: "/dashboard/calendar", module: "calendar" },
   {
     label: "Notifications",
@@ -140,6 +145,11 @@ export const beastAdminNavigation: ModuleNavSection = {
       href: "/dashboard/admin/releases",
       group: "Delivery",
     },
+    {
+      label: "Execution History",
+      href: "/dashboard/admin/execution-history",
+      group: "Delivery",
+    },
     { label: "Roadmap", href: "/dashboard/admin/roadmap", group: "Delivery" },
     {
       label: "Executive Metrics",
@@ -149,6 +159,11 @@ export const beastAdminNavigation: ModuleNavSection = {
     {
       label: "AI Analytics",
       href: "/dashboard/admin/analytics",
+      group: "Insights",
+    },
+    {
+      label: "SEANGWORLD Intelligence",
+      href: "/dashboard/admin/intelligence",
       group: "Insights",
     },
     {

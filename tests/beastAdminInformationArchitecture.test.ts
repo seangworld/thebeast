@@ -10,10 +10,11 @@ import { beastAdminNavigation } from "../src/lib/moduleNavigation";
 
 const expectedGroups = {
   Operations: ["CEO Mode", "Development Console", "Platform Health"],
-  Delivery: ["Migration Status", "SQL Explorer", "Release Center", "Roadmap"],
+  Delivery: ["Migration Status", "SQL Explorer", "Release Center", "Execution History", "Roadmap"],
   Insights: [
     "Executive Metrics",
     "AI Analytics",
+    "SEANGWORLD Intelligence",
     "Knowledge Inspector",
     "Ecosystem Map",
   ],
@@ -38,7 +39,7 @@ test("BA-IA-101 defines one grouped persistent BeastAdmin workspace switcher", (
 
   assert.equal(beastAdminNavigation.defaultExpanded, true);
   assert.deepEqual(groupedLabels, expectedGroups);
-  assert.equal(children.length, 19);
+  assert.equal(children.length, 21);
   assert.equal(new Set(children.map((child) => child.href)).size, children.length);
   assert.equal(children.every((child) => Boolean(child.group)), true);
 });
