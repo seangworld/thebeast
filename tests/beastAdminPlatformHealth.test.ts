@@ -156,11 +156,11 @@ test("BA-109 health API is owner-authorized, read-only, and evidence bounded", (
 
 test("BA-117 presents four honest states and expandable future monitoring", () => {
   const page = readFileSync(
-    "src/app/dashboard/admin/health/page.tsx",
+    "src/app/dashboard/admin/platform-health/page.tsx",
     "utf8"
   );
   const workspace = readFileSync(
-    "src/app/dashboard/admin/health/BeastAdminPlatformHealthWorkspace.tsx",
+    "src/app/dashboard/admin/platform-health/BeastAdminPlatformHealthWorkspace.tsx",
     "utf8"
   );
   const adminDashboard = readFileSync(
@@ -216,6 +216,6 @@ test("BA-117 presents four honest states and expandable future monitoring", () =
   assert.match(workspace, /min-w-0/);
   assert.doesNotMatch(workspace, /overflow-x-hidden|w-screen/);
   assert.doesNotMatch(workspace, /localStorage/);
-  assert.match(adminDashboard, /\/dashboard\/admin\/health/);
+  assert.match(adminDashboard, /\/dashboard\/admin\/platform-health/);
   assert.match(navigation, /Platform Health/);
 });

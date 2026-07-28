@@ -17,6 +17,16 @@ const nextConfig = {
         destination: "https://www.seangworld.com/about",
         permanent: true,
       },
+      {
+        source: "/dashboard/admin/health",
+        destination: "/dashboard/admin/platform-health",
+        permanent: true,
+      },
+      {
+        source: "/dashboard/admin/prompts",
+        destination: "/dashboard/admin/prompt-library",
+        permanent: true,
+      },
     ];
   },
   experimental: {

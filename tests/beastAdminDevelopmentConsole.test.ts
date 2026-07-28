@@ -384,7 +384,7 @@ test("BA-111 presents the complete owner development workflow", () => {
   assert.match(workspace, /\/api\/admin\/development-console/);
   assert.match(workspace, /\/dashboard\/admin\/roadmap/);
   assert.match(workspace, /\/dashboard\/admin\/releases/);
-  assert.match(workspace, /\/dashboard\/admin\/prompts/);
+  assert.match(workspace, /\/dashboard\/admin\/prompt-library/);
   assert.match(workspace, /does not execute Git/);
   assert.match(workspace, /roadmap work items/);
   assert.match(workspace, /The previous sprint has completed/);

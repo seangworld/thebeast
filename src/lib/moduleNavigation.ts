@@ -127,7 +127,7 @@ export const beastAdminNavigation: ModuleNavSection = {
     },
     {
       label: "Platform Health",
-      href: "/dashboard/admin/health",
+      href: "/dashboard/admin/platform-health",
       group: "Operations",
     },
     {
@@ -195,7 +195,7 @@ export const beastAdminNavigation: ModuleNavSection = {
     },
     {
       label: "Prompt Library",
-      href: "/dashboard/admin/prompts",
+      href: "/dashboard/admin/prompt-library",
       group: "Governance",
     },
     {

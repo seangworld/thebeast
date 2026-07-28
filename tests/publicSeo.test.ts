@@ -36,7 +36,7 @@ test("robots advertises the production sitemap and excludes private routes", () 
   assert.deepEqual(disallow, beastOSNonIndexableRoutes);
 });
 
-test("legacy BeastOS paths redirect only to existing SEANGWORLD pages", async () => {
+test("legacy BeastOS paths preserve external and BeastAdmin compatibility", async () => {
   const redirects = await nextConfig.redirects?.();
 
   assert.deepEqual(redirects, [
@@ -53,6 +53,16 @@ test("legacy BeastOS paths redirect only to existing SEANGWORLD pages", async ()
     {
       source: "/about.php",
       destination: "https://www.seangworld.com/about",
+      permanent: true,
+    },
+    {
+      source: "/dashboard/admin/health",
+      destination: "/dashboard/admin/platform-health",
+      permanent: true,
+    },
+    {
+      source: "/dashboard/admin/prompts",
+      destination: "/dashboard/admin/prompt-library",
       permanent: true,
     },
   ]);

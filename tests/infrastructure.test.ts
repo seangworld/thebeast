@@ -6199,7 +6199,7 @@ test("BeastAdmin routes cover CEO operations members analytics feedback ads and 
   const adminFiles = [
     "src/app/dashboard/admin/page.tsx",
     "src/app/dashboard/admin/development/page.tsx",
-    "src/app/dashboard/admin/health/page.tsx",
+    "src/app/dashboard/admin/platform-health/page.tsx",
     "src/app/dashboard/admin/metrics/page.tsx",
     "src/app/dashboard/admin/migrations/page.tsx",
     "src/app/dashboard/admin/migrations/explorer/page.tsx",
@@ -6207,7 +6207,7 @@ test("BeastAdmin routes cover CEO operations members analytics feedback ads and 
     "src/app/dashboard/admin/members/page.tsx",
     "src/app/dashboard/admin/modules/page.tsx",
     "src/app/dashboard/admin/flags/page.tsx",
-    "src/app/dashboard/admin/prompts/page.tsx",
+    "src/app/dashboard/admin/prompt-library/page.tsx",
     "src/app/dashboard/admin/analytics/page.tsx",
     "src/app/dashboard/admin/feedback/page.tsx",
     "src/app/dashboard/admin/ads/page.tsx",

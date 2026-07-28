@@ -26,6 +26,16 @@ Workspaces are grouped by owner intent:
 Every BeastAdmin route appears exactly once in the left-rail registry. Grouping
 must not hide, rename, or remove a route.
 
+The permanent canonical routes for the affected workspaces are:
+
+- **Platform Health:** `/dashboard/admin/platform-health`
+- **Prompt Library:** `/dashboard/admin/prompt-library`
+
+The historical short-form routes remain compatibility redirects only and must
+not be used by navigation, workspace links, breadcrumbs, or route helpers.
+Platform Health continues to read from `/api/admin/platform-health`; page-route
+standardization does not rename the established API.
+
 ### Page header
 
 The page header identifies the current workspace and explains its purpose. It
@@ -57,6 +67,6 @@ introduce a separate information architecture or horizontal page navigation.
 
 ## Ownership boundaries
 
-This cleanup changes presentation and navigation organization only. It does not
-change authentication, authorization, routes, business logic, persisted data,
-or database schema.
+This cleanup changes presentation and navigation organization only. Canonical
+route naming and compatibility redirects do not change authentication,
+authorization, business logic, persisted data, or database schema.

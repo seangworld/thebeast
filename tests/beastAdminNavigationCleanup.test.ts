@@ -11,7 +11,7 @@ import {
 const expectedAdminDestinations = [
   ["CEO Mode", "/dashboard/admin"],
   ["Development Console", "/dashboard/admin/development"],
-  ["Platform Health", "/dashboard/admin/health"],
+  ["Platform Health", "/dashboard/admin/platform-health"],
   ["Migration Status", "/dashboard/admin/migrations"],
   ["SQL Explorer", "/dashboard/admin/migrations/explorer"],
   ["Release Center", "/dashboard/admin/releases"],
@@ -27,7 +27,7 @@ const expectedAdminDestinations = [
   ["Beta Feedback", "/dashboard/admin/feedback"],
   ["Modules", "/dashboard/admin/modules"],
   ["Feature Flags", "/dashboard/admin/flags"],
-  ["Prompt Library", "/dashboard/admin/prompts"],
+  ["Prompt Library", "/dashboard/admin/prompt-library"],
   ["Planned Workspaces", "/dashboard/admin/ads"],
   ["Settings", "/dashboard/admin/settings"],
 ] as const;

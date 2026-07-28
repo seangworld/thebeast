@@ -162,11 +162,11 @@ test("BA-107 migration keeps prompt assets owner-only and version history immuta
 
 test("BA-107 presents central management, release history, and future rollback", () => {
   const page = readFileSync(
-    "src/app/dashboard/admin/prompts/page.tsx",
+    "src/app/dashboard/admin/prompt-library/page.tsx",
     "utf8"
   );
   const workspace = readFileSync(
-    "src/app/dashboard/admin/prompts/BeastAdminPromptLibraryWorkspace.tsx",
+    "src/app/dashboard/admin/prompt-library/BeastAdminPromptLibraryWorkspace.tsx",
     "utf8"
   );
   const model = readFileSync(
@@ -200,7 +200,7 @@ test("BA-107 presents central management, release history, and future rollback",
 
 test("BA-125 explains prompt structure governance and explicit runtime adoption", () => {
   const workspace = readFileSync(
-    "src/app/dashboard/admin/prompts/BeastAdminPromptLibraryWorkspace.tsx",
+    "src/app/dashboard/admin/prompt-library/BeastAdminPromptLibraryWorkspace.tsx",
     "utf8"
   );
 

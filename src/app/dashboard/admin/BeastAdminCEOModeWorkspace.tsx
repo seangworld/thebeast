@@ -686,7 +686,7 @@ export function BeastAdminCEOModeWorkspace() {
             eyebrow="Operational errors"
             title="Platform operations"
             description="Verified failures and degraded live signals. Configuration is summarized separately."
-            href="/dashboard/admin/health"
+            href="/dashboard/admin/platform-health"
             actionLabel="Open Platform Health"
           >
             {snapshot.summaries.errors.status === "unavailable" ? (

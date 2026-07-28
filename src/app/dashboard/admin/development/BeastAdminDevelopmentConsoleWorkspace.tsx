@@ -794,7 +794,7 @@ export function BeastAdminDevelopmentConsoleWorkspace() {
           }
           description="The console reports missing evidence instead of treating unavailable development data as an empty queue."
           action={
-            <ConsoleLink href="/dashboard/admin/prompts">
+            <ConsoleLink href="/dashboard/admin/prompt-library">
               Open AI Prompt Library
             </ConsoleLink>
           }

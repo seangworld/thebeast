@@ -12,6 +12,14 @@ Digital Staff and controlled execution foundation release candidate.
   deterministic recommendations and honest provider states.
 - Added automatic sitemap generation and permanent legacy URL redirects.
 
+### Improvements
+
+- Standardized the BeastAdmin Platform Health and Prompt Library workspaces at
+  `/dashboard/admin/platform-health` and
+  `/dashboard/admin/prompt-library`.
+- Preserved existing BeastAdmin bookmarks with permanent redirects from
+  `/dashboard/admin/health` and `/dashboard/admin/prompts`.
+
 ### Release Boundary
 
 - Live analytics provider connections and autonomous execution are excluded.

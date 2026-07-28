@@ -65,7 +65,7 @@ test("BA-127 fails unknown prompt adoption closed", () => {
 
 test("BA-127 renders a read-only dependency explorer for every managed prompt", () => {
   const workspace = readFileSync(
-    "src/app/dashboard/admin/prompts/BeastAdminPromptLibraryWorkspace.tsx",
+    "src/app/dashboard/admin/prompt-library/BeastAdminPromptLibraryWorkspace.tsx",
     "utf8"
   );
 

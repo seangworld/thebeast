@@ -607,7 +607,7 @@ export function buildBeastAdminCEOModeSnapshot({
       area: "Errors",
       title: `${issue.serviceLabel}: ${issue.message}`,
       why: "A current live or configured platform-health signal is critical.",
-      href: "/dashboard/admin/health",
+      href: "/dashboard/admin/platform-health",
       actionLabel: "Investigate",
     });
   }
@@ -623,7 +623,7 @@ export function buildBeastAdminCEOModeSnapshot({
         area: "Configuration",
         title: configurationTitle(signal),
         why: signal.evidence,
-        href: "/dashboard/admin/health",
+        href: "/dashboard/admin/platform-health",
         actionLabel: "Review configuration",
       });
     } else {
@@ -633,7 +633,7 @@ export function buildBeastAdminCEOModeSnapshot({
         area: "Errors",
         title: `${issue.serviceLabel}: ${issue.message}`,
         why: "A live or request-sample signal reported degraded operation.",
-        href: "/dashboard/admin/health",
+        href: "/dashboard/admin/platform-health",
         actionLabel: "Review health",
       });
     }
@@ -721,7 +721,7 @@ export function buildBeastAdminCEOModeSnapshot({
       area: "Configuration",
       title: "Platform Health source not connected",
       why: "Current service errors and warnings could not be verified.",
-      href: "/dashboard/admin/health",
+      href: "/dashboard/admin/platform-health",
       actionLabel: "Open health",
     });
   }
