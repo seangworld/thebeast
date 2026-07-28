@@ -1,5 +1,28 @@
 # Changelog
 
+## BeastOS v2.3.0-alpha2 - July 28, 2026
+
+Digital Staff identity release candidate (BP-232).
+
+### Improvements
+
+- Completed professional identity profiles for the Fusion Director, Money
+  Coach, Guidance Counselor, and planned Health Advisor.
+- Added explicit titles, biographies, missions, responsibilities, experience
+  domains, reporting relationships, collaboration context, status, and profile
+  versions.
+- Improved the Organization Chart, profile cards, About Me pages, relationship
+  links, and accessible text-backed status indicators.
+- Added `portrait_url` and `avatar_url` metadata with explicit placeholder,
+  uploaded, and generated source support.
+
+### Release Boundary
+
+- Portrait URL fields remain null and this candidate includes no generated or
+  uploaded images.
+- The Health Advisor remains planned and cannot access health records.
+- No database migration, push, deployment, or production release is included.
+
 ## BeastOS v2.3.0-alpha1 - July 28, 2026
 
 SEANGWORLD Intelligence provider release candidate (BP-240).

@@ -1,11 +1,11 @@
 # The Beast / BeastOS
 
-Current platform release candidate: `BeastOS v2.3.0-alpha1`
+Current platform release candidate: `BeastOS v2.3.0-alpha2`
 
-BeastOS v2.3.0-alpha1 connects the owner-only SEANGWORLD Intelligence
-foundation to Google Analytics 4 and Google Search Console through secure
-server-side adapters. Provider failures degrade safely and recommendations
-remain deterministic; AdSense remains outside this candidate.
+BeastOS v2.3.0-alpha2 completes the Digital Staff identity package with
+professional biographies, missions, responsibilities, experience domains,
+reporting relationships, collaboration context, status, versioning, and a
+placeholder-only portrait asset contract. No portrait images are included.
 
 Current Money version: `BeastMoney v2.3.0`
 

@@ -4,20 +4,101 @@ import {
   digitalProfessionals,
   digitalProfessionalStatuses,
   getDigitalProfessional,
+  getDigitalProfessionalPortraitReference,
 } from "../src/lib/digitalStaff";
 import sitemap from "../src/app/sitemap";
+import fs from "node:fs";
 
 test("Digital Staff has accessible deterministic statuses and reporting relationships", () => {
   assert.deepEqual(digitalProfessionalStatuses, ["available", "limited", "unavailable", "inactive"]);
-  assert.ok(digitalProfessionals.every((professional) => professional.statusLabel));
-  assert.ok(digitalProfessionals.every((professional) => professional.reportsTo));
+  assert.deepEqual(
+    digitalProfessionals.map((professional) => professional.id),
+    ["fusion-director", "money-coach", "guidance-counselor", "health-advisor"]
+  );
+  assert.ok(
+    digitalProfessionals.every(
+      (professional) =>
+        professional.name &&
+        professional.title &&
+        professional.biography &&
+        professional.mission &&
+        professional.responsibilities.length &&
+        professional.experience.length &&
+        professional.reportsTo &&
+        professional.statusLabel &&
+        professional.version &&
+        professional.collaboratesWith.length
+    )
+  );
+  assert.ok(
+    digitalProfessionals
+      .filter((professional) => professional.reportsToId)
+      .every((professional) =>
+        digitalProfessionals.some(
+          (candidate) => candidate.id === professional.reportsToId
+        )
+      )
+  );
   assert.equal(getDigitalProfessional("health-advisor")?.releaseStatus, "planned");
   assert.equal(getDigitalProfessional("health-advisor")?.status, "inactive");
+});
+
+test("Digital Staff portraits remain explicit placeholders ready for future assets", () => {
+  for (const professional of digitalProfessionals) {
+    assert.equal(professional.portrait.portrait_url, null);
+    assert.equal(professional.portrait.avatar_url, null);
+    assert.equal(professional.portrait.source, "placeholder");
+    assert.match(
+      professional.portrait.placeholder_reference,
+      new RegExp(`^digital-staff:${professional.id}:initials$`)
+    );
+    assert.equal(
+      getDigitalProfessionalPortraitReference(professional, "portrait"),
+      professional.portrait.placeholder_reference
+    );
+    assert.equal(
+      getDigitalProfessionalPortraitReference(professional, "avatar"),
+      professional.portrait.placeholder_reference
+    );
+  }
 });
 
 test("Money Coach and Guidance Counselor retain their safety boundaries", () => {
   assert.ok(getDigitalProfessional("money-coach")?.limitations.some((item) => /No payment execution/i.test(item)));
   assert.ok(getDigitalProfessional("guidance-counselor")?.limitations.some((item) => /Does not duplicate the Tutor/i.test(item)));
+});
+
+test("organization chart profile cards and About Me pages expose the identity package", () => {
+  const chart = fs.readFileSync(
+    "src/app/dashboard/digital-staff/page.tsx",
+    "utf8"
+  );
+  const card = fs.readFileSync(
+    "src/app/dashboard/digital-staff/DigitalProfessionalCard.tsx",
+    "utf8"
+  );
+  const profile = fs.readFileSync(
+    "src/app/dashboard/digital-staff/[professionalId]/page.tsx",
+    "utf8"
+  );
+  assert.match(chart, /Organization chart/);
+  assert.match(chart, /Portrait asset framework/);
+  assert.match(card, /Portrait placeholder/);
+  assert.match(card, /Reports to/);
+  assert.match(card, /Collaborates with/);
+  for (const label of [
+    "About Me",
+    "Mission",
+    "Responsibilities",
+    "Experience",
+    "Reports to",
+    "Collaborates With",
+    "Version",
+    "Release status",
+    "Portrait status",
+  ]) {
+    assert.match(profile, new RegExp(label));
+  }
 });
 
 test("sitemap includes public routes and excludes private application routes", () => {
