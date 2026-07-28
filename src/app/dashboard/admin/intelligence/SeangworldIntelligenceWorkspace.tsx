@@ -26,6 +26,63 @@ function DimensionCard({ title, items, secondary }: { title: string; items: Inte
   return <section className="rounded-2xl border border-white/10 bg-[#111827] p-5"><h2 className="text-lg font-black text-white">{title}</h2>{items.length ? <ol className="mt-4 grid gap-3">{items.slice(0, 10).map((item) => <li key={item.label} className="flex min-w-0 items-center justify-between gap-3 border-b border-white/10 pb-3 text-sm"><span className="min-w-0 break-words text-slate-300">{item.label}</span><span className="shrink-0 font-black text-white">{number(item.value)}{secondary && item.secondaryValue !== undefined && item.secondaryValue !== null ? ` · ${secondary} ${number(item.secondaryValue)}` : ""}</span></li>)}</ol> : <p className="mt-3 text-sm leading-6 text-slate-400">No verified data is available for this section.</p>}</section>;
 }
 
+function QueryCard({
+  items,
+}: {
+  items: SeangworldIntelligenceSnapshot["data"]["topQueries"];
+}) {
+  return (
+    <section className="rounded-2xl border border-white/10 bg-[#111827] p-5 lg:col-span-2 xl:col-span-3">
+      <h2 className="text-lg font-black text-white">Top Queries</h2>
+      {items.length ? (
+        <div
+          className="mt-4 overflow-x-auto"
+          tabIndex={0}
+          aria-label="Top search queries table, horizontally scrollable"
+        >
+          <table className="min-w-[44rem] w-full text-left text-sm">
+            <thead className="text-slate-400">
+              <tr>
+                <th className="p-3">Query</th>
+                <th className="p-3">Clicks</th>
+                <th className="p-3">Impressions</th>
+                <th className="p-3">CTR</th>
+                <th className="p-3">Average Position</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.slice(0, 25).map((item) => (
+                <tr
+                  key={item.label}
+                  className="border-t border-white/10 text-slate-200"
+                >
+                  <td className="max-w-md break-words p-3">{item.label}</td>
+                  <td className="p-3">{number(item.clicks || 0)}</td>
+                  <td className="p-3">{number(item.impressions || 0)}</td>
+                  <td className="p-3">
+                    {item.ctr === null || item.ctr === undefined
+                      ? "Unavailable"
+                      : `${(item.ctr * 100).toFixed(1)}%`}
+                  </td>
+                  <td className="p-3">
+                    {item.position === null || item.position === undefined
+                      ? "Unavailable"
+                      : item.position.toFixed(1)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <p className="mt-3 text-sm leading-6 text-slate-400">
+          No verified search-query data is available.
+        </p>
+      )}
+    </section>
+  );
+}
+
 function time(value: string | null) {
   return value ? new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value)) : "Never";
 }
@@ -65,12 +122,17 @@ export function SeangworldIntelligenceWorkspace() {
 
     <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Primary analytics metrics">
       <MetricCard label="Visitors" metric={data.visitors} />
+      <MetricCard label="Users" metric={data.users} />
       <MetricCard label="Sessions" metric={data.sessions} />
       <MetricCard label="Views" metric={data.views} />
       <MetricCard label="Engagement" metric={data.engagementRate} percent />
+      <MetricCard label="Impressions" metric={data.impressions} />
+      <MetricCard label="Clicks" metric={data.clicks} />
+      <MetricCard label="CTR" metric={data.ctr} percent />
+      <MetricCard label="Average Position" metric={data.averagePosition} />
     </section>
 
-    <section aria-labelledby="provider-status-heading"><h2 id="provider-status-heading" className="text-xl font-black text-white">Provider Status</h2><div className="mt-4 grid gap-4 lg:grid-cols-3">{snapshot.providers.map((provider) => <article key={provider.id} className="rounded-2xl border border-white/10 bg-[#111827] p-5"><div className="flex flex-wrap items-center justify-between gap-2"><h3 className="font-black text-white">{provider.label}</h3><span className="rounded-full border border-white/15 px-3 py-1 text-xs font-bold text-slate-200">{seangworldProviderStatusLabels[provider.status]}</span></div><p className="mt-3 text-sm leading-6 text-slate-300">{provider.guidance}</p><dl className="mt-4 grid gap-3 text-xs"><div><dt className="text-slate-500">Last Synchronization</dt><dd className="mt-1 text-slate-200">{time(provider.lastSynchronizationAt)}</dd></div><div><dt className="text-slate-500">Last Successful Synchronization</dt><dd className="mt-1 text-slate-200">{time(provider.lastSuccessfulSynchronizationAt)}</dd></div><div><dt className="text-slate-500">Data Freshness</dt><dd className="mt-1 capitalize text-slate-200">{provider.freshness}</dd></div></dl></article>)}</div></section>
+    <section aria-labelledby="provider-status-heading"><h2 id="provider-status-heading" className="text-xl font-black text-white">Provider Status</h2><div className="mt-4 grid gap-4 lg:grid-cols-3">{snapshot.providers.map((provider) => <article key={provider.id} className="rounded-2xl border border-white/10 bg-[#111827] p-5"><div className="flex flex-wrap items-center justify-between gap-2"><h3 className="font-black text-white">{provider.label}</h3><span className="rounded-full border border-white/15 px-3 py-1 text-xs font-bold text-slate-200">{seangworldProviderStatusLabels[provider.status]}</span></div><p className="mt-3 text-sm leading-6 text-slate-300">{provider.guidance}</p><dl className="mt-4 grid gap-3 text-xs"><div><dt className="text-slate-500">Connection Status</dt><dd className="mt-1 capitalize text-slate-200">{provider.connectionStatus.replaceAll("_", " ")}</dd></div><div><dt className="text-slate-500">Last Sync</dt><dd className="mt-1 text-slate-200">{time(provider.lastSynchronizationAt)}</dd></div><div><dt className="text-slate-500">Last Successful Synchronization</dt><dd className="mt-1 text-slate-200">{time(provider.lastSuccessfulSynchronizationAt)}</dd></div><div><dt className="text-slate-500">Data Freshness</dt><dd className="mt-1 capitalize text-slate-200">{provider.freshness}</dd></div></dl>{provider.error ? <p className="mt-4 rounded-lg border border-red-300/20 bg-red-300/5 p-3 text-xs leading-5 text-red-100" role="status">{provider.error.message}{provider.error.retryable ? " Retry is safe." : ""}</p> : null}</article>)}</div></section>
 
     <section aria-labelledby="recommendations-heading"><h2 id="recommendations-heading" className="text-xl font-black text-white">Deterministic Recommendations</h2>{snapshot.recommendations.length ? <div className="mt-4 grid gap-4 lg:grid-cols-2">{snapshot.recommendations.map((recommendation) => <article key={recommendation.id} className="rounded-2xl border border-cyan-300/20 bg-cyan-300/5 p-5"><div className="flex justify-between gap-3"><h3 className="font-black text-white">{recommendation.title}</h3><span className="text-xs font-bold capitalize text-cyan-200">{recommendation.confidence} confidence</span></div><p className="mt-3 text-sm font-bold text-cyan-100">{recommendation.supportingMetric}</p><p className="mt-2 text-sm leading-6 text-slate-300">{recommendation.rationale}</p><p className="mt-3 text-xs leading-5 text-slate-400">Owner review: {recommendation.suggestedOwnerReview}</p></article>)}</div> : <div className="mt-4 rounded-xl border border-dashed border-white/15 p-5 text-sm leading-6 text-slate-400">No deterministic rule has enough verified evidence to produce a recommendation. This is normal when providers are not configured or have no data.</div>}</section>
 
@@ -81,10 +143,10 @@ export function SeangworldIntelligenceWorkspace() {
       <DimensionCard title="Browsers" items={data.browsers} />
       <DimensionCard title="Operating Systems" items={data.operatingSystems} />
       <DimensionCard title="Traffic Sources" items={data.trafficSources} />
-      <DimensionCard title="Entry Pages" items={data.entryPages} />
+      <DimensionCard title="Landing Pages" items={data.entryPages} />
       <DimensionCard title="Exit Pages" items={data.exitPages} />
-      <DimensionCard title="Top Queries" items={data.topQueries} />
-      <DimensionCard title="Top Landing Pages" items={data.topLandingPages} />
+      <DimensionCard title="Top Landing Pages" items={data.topLandingPages} secondary="impressions" />
+      <QueryCard items={data.topQueries} />
     </div>
 
     <section className="rounded-2xl border border-white/10 bg-[#111827] p-5"><h2 className="text-lg font-black text-white">Historical Trends</h2>{data.historicalTrends.length ? <div className="mt-4 overflow-x-auto" tabIndex={0} aria-label="Historical trends table, horizontally scrollable"><table className="min-w-[42rem] w-full text-left text-sm"><thead className="text-slate-400"><tr><th className="p-3">Date</th><th className="p-3">Visitors</th><th className="p-3">Sessions</th><th className="p-3">Views</th></tr></thead><tbody>{data.historicalTrends.map((row) => <tr key={row.date} className="border-t border-white/10 text-slate-200"><td className="p-3">{row.date}</td><td className="p-3">{row.visitors === null ? "Unavailable" : number(row.visitors)}</td><td className="p-3">{row.sessions === null ? "Unavailable" : number(row.sessions)}</td><td className="p-3">{row.views === null ? "Unavailable" : number(row.views)}</td></tr>)}</tbody></table></div> : <p className="mt-3 text-sm text-slate-400">No verified historical trend series is available.</p>}</section>

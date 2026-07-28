@@ -9,6 +9,17 @@ export const seangworldProviderStatuses = [
 export type SeangworldProviderStatus =
   (typeof seangworldProviderStatuses)[number];
 
+export const seangworldConnectionStatuses = [
+  "connected",
+  "not_configured",
+  "unavailable",
+  "failed",
+  "no_data",
+] as const;
+
+export type SeangworldConnectionStatus =
+  (typeof seangworldConnectionStatuses)[number];
+
 export const seangworldProviderStatusLabels: Record<
   SeangworldProviderStatus,
   string
@@ -33,9 +44,14 @@ export type IntelligenceDimension = {
 
 export type SeangworldAnalyticsData = {
   visitors: IntelligenceMetric | null;
+  users: IntelligenceMetric | null;
   sessions: IntelligenceMetric | null;
   views: IntelligenceMetric | null;
   engagementRate: IntelligenceMetric | null;
+  impressions: IntelligenceMetric | null;
+  clicks: IntelligenceMetric | null;
+  ctr: IntelligenceMetric | null;
+  averagePosition: IntelligenceMetric | null;
   countries: IntelligenceDimension[];
   cities: IntelligenceDimension[];
   devices: IntelligenceDimension[];
@@ -48,6 +64,7 @@ export type SeangworldAnalyticsData = {
     impressions?: number | null;
     clicks?: number | null;
     ctr?: number | null;
+    position?: number | null;
     previousImpressions?: number | null;
   })[];
   topLandingPages: IntelligenceDimension[];
@@ -69,10 +86,16 @@ export type SeangworldProviderSnapshot = {
   id: "ga4" | "search_console" | "first_party";
   label: string;
   status: SeangworldProviderStatus;
+  connectionStatus: SeangworldConnectionStatus;
   guidance: string;
   lastSynchronizationAt: string | null;
   lastSuccessfulSynchronizationAt: string | null;
   freshness: "current" | "recent" | "stale" | "unknown";
+  error: {
+    code: string;
+    message: string;
+    retryable: boolean;
+  } | null;
   data: Partial<SeangworldAnalyticsData> | null;
 };
 
@@ -80,6 +103,7 @@ export type SeangworldRecommendation = {
   id:
     | "high_exit_page"
     | "low_ctr"
+    | "falling_ctr"
     | "growing_impressions"
     | "mobile_weakness"
     | "traffic_spike";
@@ -102,9 +126,14 @@ export type SeangworldIntelligenceSnapshot = {
 
 const emptyData = (): SeangworldAnalyticsData => ({
   visitors: null,
+  users: null,
   sessions: null,
   views: null,
   engagementRate: null,
+  impressions: null,
+  clicks: null,
+  ctr: null,
+  averagePosition: null,
   countries: [],
   cities: [],
   devices: [],
@@ -156,6 +185,28 @@ export function buildSeangworldRecommendations(
       confidence: "high",
       rationale: "The query has at least 1,000 impressions and a recorded CTR below 2%.",
       suggestedOwnerReview: "Compare the landing page title and description with the query intent before editing search presentation.",
+    });
+  }
+
+  if (
+    data.ctr?.previousValue !== null &&
+    data.ctr &&
+    data.ctr.previousValue > 0 &&
+    data.ctr.value <= data.ctr.previousValue * 0.8 &&
+    (data.impressions?.value || 0) >= 1000
+  ) {
+    const decline =
+      (1 - data.ctr.value / data.ctr.previousValue) * 100;
+    recommendations.push({
+      id: "falling_ctr",
+      title: "Review falling search click-through rate",
+      supportingMetric: `${(data.ctr.value * 100).toFixed(1)}% CTR, down ${Math.round(decline)}% with ${(data.impressions?.value || 0).toLocaleString()} impressions`,
+      comparisonPeriod,
+      confidence: "high",
+      rationale:
+        "Recorded CTR declined by at least 20% while the current period retained at least 1,000 impressions.",
+      suggestedOwnerReview:
+        "Compare affected queries and landing-page snippets before changing search presentation.",
     });
   }
 
@@ -337,10 +388,24 @@ export function buildServerSeangworldProviders(
       id: definition.id,
       label: definition.label,
       status,
+      connectionStatus:
+        status === "configured"
+          ? "connected"
+          : status === "synchronization_failed"
+            ? "failed"
+            : status,
       guidance,
       lastSynchronizationAt: definition.synchronized || null,
       lastSuccessfulSynchronizationAt: definition.successful || null,
       freshness: freshness(definition.successful || null, now),
+      error:
+        status === "synchronization_failed" || status === "unavailable"
+          ? {
+              code: `provider_${status}`,
+              message: guidance,
+              retryable: status === "unavailable",
+            }
+          : null,
       data,
     };
   });
@@ -370,6 +435,7 @@ export function normalizeSeangworldIntelligenceSnapshot(
         typeof provider.id === "string" &&
         typeof provider.label === "string" &&
         seangworldProviderStatuses.includes(provider.status) &&
+        seangworldConnectionStatuses.includes(provider.connectionStatus) &&
         typeof provider.guidance === "string"
     )
   ) {

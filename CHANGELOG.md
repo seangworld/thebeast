@@ -1,5 +1,33 @@
 # Changelog
 
+## BeastOS v2.3.0-alpha1 - July 28, 2026
+
+SEANGWORLD Intelligence provider release candidate (BP-240).
+
+### New Features
+
+- Connected the owner-only intelligence dashboard to Google Analytics 4 and
+  Google Search Console through server-only provider adapters.
+- Added verified visitor, user, session, view, engagement, geography,
+  technology, acquisition, page, query, impression, click, CTR, and average
+  position reporting.
+- Added deterministic falling-CTR recommendations alongside high-exit,
+  low-CTR, rising-impression, mobile-engagement, and traffic-spike rules.
+
+### Reliability and Security
+
+- Added environment validation, bounded concurrency, retry behavior,
+  short-lived server caching, safe provider errors, and graceful degradation.
+- Kept service-account credentials, provider tokens, and identifiers out of
+  browser responses.
+- No provider is required for the application to load, and no fake analytics
+  are generated.
+
+### Release Boundary
+
+- Google AdSense, database migrations, push, deployment, and production release
+  are excluded.
+
 ## BeastOS v2.2.0 - July 28, 2026
 
 Digital Staff and controlled execution foundation release candidate.

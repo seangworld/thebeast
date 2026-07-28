@@ -27,6 +27,41 @@ export default function ReleaseNotesPage() {
       </header>
 
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
+        {/* BeastOS v2.3.0-alpha1 */}
+        <div className="mb-12 rounded-lg border border-[#2a3242] bg-[#0f1419] p-6">
+          <div className="mb-4">
+            <h2 className="text-2xl font-bold">BeastOS v2.3.0-alpha1</h2>
+            <p className="mt-1 text-sm text-[#7f8da3]">
+              July 28, 2026 · Release candidate
+            </p>
+          </div>
+
+          <div className="space-y-4 text-sm">
+            <div>
+              <h3 className="font-semibold text-[#c7cfdb]">
+                SEANGWORLD Intelligence
+              </h3>
+              <ul className="space-y-2 pl-4">
+                <li className="text-[#a5b4c7]">
+                  <span className="text-blue-400">✓</span> Connected Google
+                  Analytics 4 and Google Search Console through secure
+                  server-only adapters.
+                </li>
+                <li className="text-[#a5b4c7]">
+                  <span className="text-blue-400">✓</span> Added live owner
+                  reporting, provider health and freshness, and deterministic
+                  evidence-based recommendations.
+                </li>
+                <li className="text-[#a5b4c7]">
+                  <span className="text-blue-400">✓</span> Missing or
+                  unavailable providers degrade safely without fake analytics.
+                  AdSense remains excluded.
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
         {/* BeastOS v2.2.0 */}
         <div className="mb-12 rounded-lg border border-[#2a3242] bg-[#0f1419] p-6">
           <div className="mb-4">

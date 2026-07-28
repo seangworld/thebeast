@@ -11,7 +11,8 @@ import {
 } from "../src/lib/seangworldIntelligence";
 
 const emptyData = (): SeangworldAnalyticsData => ({
-  visitors: null, sessions: null, views: null, engagementRate: null,
+  visitors: null, users: null, sessions: null, views: null, engagementRate: null,
+  impressions: null, clicks: null, ctr: null, averagePosition: null,
   countries: [], cities: [], devices: [], browsers: [], operatingSystems: [],
   trafficSources: [], entryPages: [], exitPages: [], topQueries: [],
   topLandingPages: [], historicalTrends: [], deviceEngagement: null,
@@ -51,6 +52,8 @@ test("server configuration never returns credential values", () => {
 test("deterministic rules identify high exits low CTR growth mobile weakness and spikes", () => {
   const data = emptyData();
   data.sessions = { value: 300, previousValue: 150 };
+  data.impressions = { value: 2000, previousValue: 1800 };
+  data.ctr = { value: 0.015, previousValue: 0.025 };
   data.exitPages = [{ label: "/beast", value: 80, exitRate: 0.7 }];
   data.topQueries = [
     { label: "beast platform", value: 10, impressions: 2000, clicks: 20, ctr: 0.01, previousImpressions: 1000 },
@@ -61,7 +64,7 @@ test("deterministic rules identify high exits low CTR growth mobile weakness and
   };
   assert.deepEqual(
     buildSeangworldRecommendations(data, "30 days vs prior 30 days").map((item) => item.id),
-    ["high_exit_page", "low_ctr", "growing_impressions", "mobile_weakness", "traffic_spike"]
+    ["high_exit_page", "low_ctr", "falling_ctr", "growing_impressions", "mobile_weakness", "traffic_spike"]
   );
 });
 
@@ -86,10 +89,11 @@ test("owner route and dashboard contain all required sections and no AI claim pa
   assert.match(route, /profile\?\.role !== "admin"/);
   assert.match(route, /cache-control/);
   for (const label of [
-    "Executive Summary", "Visitors", "Sessions", "Views", "Engagement", "Countries",
+    "Executive Summary", "Visitors", "Users", "Sessions", "Views", "Engagement",
+    "Impressions", "Clicks", "CTR", "Average Position", "Countries",
     "Cities", "Devices", "Browsers", "Operating Systems", "Traffic Sources",
-    "Entry Pages", "Exit Pages", "Top Queries", "Top Landing Pages",
-    "Historical Trends", "Provider Status", "Last Synchronization", "Data Freshness",
+    "Landing Pages", "Exit Pages", "Top Queries", "Top Landing Pages",
+    "Historical Trends", "Provider Status", "Connection Status", "Last Sync", "Data Freshness",
   ]) assert.match(workspace, new RegExp(label));
   assert.doesNotMatch(workspace, /OpenAI|generate.*summary|AI-generated/i);
 });

@@ -3,9 +3,11 @@ import {
   buildSeangworldIntelligenceSnapshot,
   buildServerSeangworldProviders,
 } from "@/lib/seangworldIntelligence";
+import { loadLiveSeangworldProviders } from "@/lib/server/seangworldGoogleProviders";
 import { createRouteClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 function error(message: string, status: number) {
   return NextResponse.json({ error: message }, { status });
@@ -21,8 +23,22 @@ export async function GET() {
   if (profile?.role !== "admin") return error("BeastAdmin owner access required.", 403);
 
   const generatedAt = new Date().toISOString();
+  const configuredProviders = buildServerSeangworldProviders(
+    process.env,
+    generatedAt
+  );
+  const liveProviders = await loadLiveSeangworldProviders(
+    process.env,
+    new Date(generatedAt)
+  );
+  const providers = liveProviders
+    ? configuredProviders.map(
+        (provider) =>
+          liveProviders.find((live) => live.id === provider.id) || provider
+      )
+    : configuredProviders;
   const snapshot = buildSeangworldIntelligenceSnapshot({
-    providers: buildServerSeangworldProviders(process.env, generatedAt),
+    providers,
     generatedAt,
   });
   return NextResponse.json(snapshot, {
