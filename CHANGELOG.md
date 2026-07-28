@@ -1,5 +1,40 @@
 # Changelog
 
+## BeastOS v3.0.0 - July 28, 2026
+
+Health Advisor release candidate.
+
+### New Features
+
+- Activated the owner-only Health Advisor with an Executive Health Briefing,
+  Medication Review, Appointment Preparation, Questions for Providers, Health
+  Recommendations, Document Understanding, Timeline Summaries, and
+  preparation-outcome learning.
+- Connected owner-authorized Health Profile, conditions, medications, vitals,
+  appointments, timeline records, and permissioned BeastDocuments health
+  summaries.
+- Connected explicit recommendation decisions to Execution History,
+  recommendation lifecycle, confidence, approvals, results, outcomes, and
+  immutable audit records.
+- Added Appointments as a bounded BeastHealth record type.
+
+### Medical Safety and Release Boundary
+
+- Recommendations are deterministic record-review and appointment-preparation
+  suggestions. They do not diagnose, prescribe, recommend treatment, interpret
+  clinical significance, or execute clinical actions.
+- Medication Review never checks interactions or tells an owner to start, stop,
+  or change medication.
+- Document Understanding shows only existing summaries with explicit
+  document-intelligence permission and never infers blocked or unavailable
+  contents.
+- Confidence measures record support for an organizational suggestion, not
+  medical certainty. Outcomes measure reported preparation usefulness, not
+  health or treatment outcomes.
+- Migration `20260728020000_activate_health_advisor.sql` expands the record
+  constraint for appointments and remains unapplied.
+- No push or deployment is included in this candidate.
+
 ## BeastOS v3.0.0-beta1 - July 28, 2026
 
 BeastHealth owner beta release candidate.

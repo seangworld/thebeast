@@ -397,8 +397,8 @@ export function HealthOverviewWorkspace() {
         <DashboardCard accent="beastos">
           <SectionHeader
             eyebrow="Health Advisor readiness"
-            title="Prepared, not activated"
-            description="The data and shared platform boundaries are ready for future governed integration."
+            title="Active within medical safety boundaries"
+            description="Health Advisor uses saved owner records for review and appointment preparation without diagnosing or replacing clinicians."
           />
           <dl className="mt-5 grid gap-3 text-sm">
             <div className="rounded-xl border border-white/10 p-4">
@@ -407,15 +407,15 @@ export function HealthOverviewWorkspace() {
             </div>
             <div className="rounded-xl border border-white/10 p-4">
               <dt className="font-black text-white">Execution and recommendations</dt>
-              <dd className="mt-1 text-[#c7cfdb]">Disabled</dd>
+              <dd className="mt-1 text-[#c7cfdb]">Owner decisions and organizational recommendations only</dd>
             </div>
             <div className="rounded-xl border border-white/10 p-4">
               <dt className="font-black text-white">Confidence and outcome learning</dt>
-              <dd className="mt-1 text-[#c7cfdb]">Prepared contracts; no active health records</dd>
+              <dd className="mt-1 text-[#c7cfdb]">Active for record support and preparation usefulness—not medical certainty</dd>
             </div>
           </dl>
           <Link href="/dashboard/health/ai-advisor" className="beast-button-secondary mt-4 inline-flex">
-            Review safety boundary
+            Open Health Advisor
           </Link>
         </DashboardCard>
       </section>

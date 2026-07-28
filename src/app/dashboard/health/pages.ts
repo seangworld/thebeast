@@ -6,11 +6,11 @@ import {
 export const beastHealthOverview = {
   title: "BeastHealth",
   description:
-    "Owner-only health record beta with Health Advisor intentionally inactive.",
+    "Owner-only health record and appointment-preparation workspace with active Health Advisor.",
   focus: [
     "Organize private health records with dates and sources.",
-    "Keep Health Advisor, recommendations, and execution disabled.",
-    "Preserve owner control, RLS, and explicit medical-safety boundaries.",
+    "Use Health Advisor for record review and provider-question preparation.",
+    "Preserve owner control, RLS, confidence limits, and explicit medical-safety boundaries.",
   ],
 };
 

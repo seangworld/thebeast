@@ -31,20 +31,20 @@ test("BA-101 legacy executive snapshot does not invent members without a live so
     sourceLabel: "No live member source supplied",
   });
   assert.deepEqual(snapshot.modules.byStatus, {
-    active: 3,
-    foundation: 5,
+    active: 4,
+    foundation: 4,
     planned: 0,
     disabled: 0,
   });
   assert.equal(snapshot.modules.enabled, 8);
-  assert.equal(snapshot.modules.beta, 3);
+  assert.equal(snapshot.modules.beta, 2);
   assert.deepEqual(
     snapshot.featureProgress.operating.map((module) => module.name),
-    ["BeastOS", "BeastMoney", "BeastEducation"]
+    ["BeastOS", "BeastMoney", "BeastEducation", "BeastHealth"]
   );
   assert.deepEqual(
     snapshot.featureProgress.foundations.map((module) => module.name),
-    ["BeastGoals", "BeastDocuments", "BeastHealth", "BeastHome", "BeastAdmin"]
+    ["BeastGoals", "BeastDocuments", "BeastHome", "BeastAdmin"]
   );
   assert.equal(snapshot.betaActivity.assignedMembers, 0);
   assert.equal(snapshot.betaActivity.assignments.length, 0);

@@ -39,8 +39,8 @@ test("Digital Staff has accessible deterministic statuses and reporting relation
         )
       )
   );
-  assert.equal(getDigitalProfessional("health-advisor")?.releaseStatus, "planned");
-  assert.equal(getDigitalProfessional("health-advisor")?.status, "inactive");
+  assert.equal(getDigitalProfessional("health-advisor")?.releaseStatus, "active");
+  assert.equal(getDigitalProfessional("health-advisor")?.status, "available");
 });
 
 test("Digital Staff portraits remain explicit placeholders ready for future assets", () => {

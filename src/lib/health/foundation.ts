@@ -10,6 +10,7 @@ export const healthRecordKinds = [
   "lifestyle",
   "family_history",
   "provider",
+  "appointment",
 ] as const;
 
 export type HealthRecordKind = (typeof healthRecordKinds)[number];
@@ -170,6 +171,18 @@ export const healthWorkspaceDefinitions: Record<
     guidance:
       "Directory entries are owner-maintained and do not verify credentials, availability, or network participation.",
   },
+  appointment: {
+    kind: "appointment",
+    title: "Appointments",
+    description:
+      "Upcoming and historical care appointments with owner-entered preparation context.",
+    singular: "appointment",
+    titleLabel: "Appointment or visit",
+    detailLabel: "Purpose and preparation context",
+    sourceLabel: "Provider, office, or source",
+    guidance:
+      "Confirm dates, locations, and instructions with the provider. BeastHealth does not determine clinical priorities.",
+  },
 };
 
 export const healthWorkspaceHrefs: Record<HealthRecordKind, string> = {
@@ -182,6 +195,7 @@ export const healthWorkspaceHrefs: Record<HealthRecordKind, string> = {
   lifestyle: "/dashboard/health/lifestyle",
   family_history: "/dashboard/health/family-history",
   provider: "/dashboard/health/provider-directory",
+  appointment: "/dashboard/health/appointments",
 };
 
 function isHealthRecordKind(value: string): value is HealthRecordKind {
@@ -268,22 +282,23 @@ export function buildHealthTimeline(records: readonly HealthRecord[]) {
 
 export const healthAdvisorReadiness = {
   professionalId: healthAdvisorProfessionalId,
-  status: "planned" as const,
-  active: false,
-  executionEnabled: false,
-  recommendationHistoryEnabled: false,
-  confidenceEnabled: false,
-  outcomeLearningEnabled: false,
+  status: "active" as const,
+  active: true,
+  executionEnabled: true,
+  recommendationHistoryEnabled: true,
+  confidenceEnabled: true,
+  outcomeLearningEnabled: true,
   preparedCapabilities: [
     "Owner-scoped health record context",
     "Source and date provenance",
     "Existing Execution History foundation",
+    "Permissioned BeastDocuments summaries",
     "Existing recommendation lifecycle and confidence contracts",
-    "Existing outcome-learning contract",
+    "Member-reported outcome-learning contract",
   ],
   limitations: [
-    "Health Advisor is not active and cannot create recommendations or execution requests.",
     "No diagnosis, treatment, medication change, clinical interpretation, or emergency guidance is provided.",
-    "Future activation requires approved health safety, privacy, source-authority, escalation, and professional-boundary policy.",
+    "Recommendations are limited to record review and appointment preparation.",
+    "Execution History records decisions and outcomes; it does not execute clinical actions.",
   ],
 };

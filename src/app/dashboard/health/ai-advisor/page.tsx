@@ -1,5 +1,5 @@
-import { HealthAdvisorPlannedPage } from "../BeastHealthShell";
+import { HealthAdvisorWorkspace } from "../HealthAdvisorWorkspace";
 
 export default function HealthAiAdvisorPage() {
-  return <HealthAdvisorPlannedPage />;
+  return <HealthAdvisorWorkspace />;
 }

@@ -64,9 +64,11 @@ test("BeastHealth beta defines every requested owner record area", () => {
     "lifestyle",
     "family_history",
     "provider",
+    "appointment",
   ]);
   assert.equal(healthWorkspaceHrefs.provider, "/dashboard/health/provider-directory");
   assert.equal(healthWorkspaceHrefs.family_history, "/dashboard/health/family-history");
+  assert.equal(healthWorkspaceHrefs.appointment, "/dashboard/health/appointments");
 });
 
 test("health overview and timeline derive only from saved non-archived records", () => {
@@ -97,21 +99,16 @@ test("invalid health rows fail closed instead of becoming display records", () =
   );
 });
 
-test("Health Advisor and execution capabilities remain inactive", () => {
-  assert.equal(healthAdvisorReadiness.active, false);
-  assert.equal(healthAdvisorReadiness.executionEnabled, false);
-  assert.equal(healthAdvisorReadiness.recommendationHistoryEnabled, false);
-  assert.equal(healthAdvisorReadiness.confidenceEnabled, false);
-  assert.equal(healthAdvisorReadiness.outcomeLearningEnabled, false);
-  const workspace = readFileSync(
-    "src/app/dashboard/health/BeastHealthWorkspace.tsx",
-    "utf8"
-  );
-  assert.doesNotMatch(workspace, /SupabaseExecutionHistoryStore/);
-  assert.doesNotMatch(workspace, /createRecommendation|recordResultAndOutcome/);
+test("Health Advisor activates only the governed shared capabilities", () => {
+  assert.equal(healthAdvisorReadiness.active, true);
+  assert.equal(healthAdvisorReadiness.executionEnabled, true);
+  assert.equal(healthAdvisorReadiness.recommendationHistoryEnabled, true);
+  assert.equal(healthAdvisorReadiness.confidenceEnabled, true);
+  assert.equal(healthAdvisorReadiness.outcomeLearningEnabled, true);
+  assert.ok(healthAdvisorReadiness.limitations.some((item) => /No diagnosis/.test(item)));
 });
 
-test("BeastHealth migration is owner-scoped and does not activate the advisor", () => {
+test("BeastHealth foundation migration remains owner-scoped", () => {
   const migration = readFileSync(
     "supabase/migrations/20260728010000_add_beast_health_foundation.sql",
     "utf8"
@@ -122,4 +119,14 @@ test("BeastHealth migration is owner-scoped and does not activate the advisor", 
   assert.match(migration, /enable row level security/);
   assert.match(migration, /jsonb_typeof\(details\) = 'object'/);
   assert.doesNotMatch(migration, /execution_requests|execution_recommendations/);
+});
+
+test("Health Advisor appointment migration only expands the record vocabulary", () => {
+  const migration = readFileSync(
+    "supabase/migrations/20260728020000_activate_health_advisor.sql",
+    "utf8"
+  );
+  assert.match(migration, /'appointment'/);
+  assert.match(migration, /beast_health_records_record_type_check/);
+  assert.doesNotMatch(migration, /create table|execution_requests|execution_recommendations/);
 });

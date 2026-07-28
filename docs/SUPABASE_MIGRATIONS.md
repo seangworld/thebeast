@@ -260,6 +260,9 @@ Leave these migrations pending so normal CLI push applies them:
 - `20260728010000_add_beast_health_foundation.sql` remains a reviewed,
   unapplied BeastOS 3.0.0-beta1 release-candidate migration until explicit
   environment-specific migration approval is provided.
+- `20260728020000_activate_health_advisor.sql` expands the BeastHealth record
+  type constraint for appointments. It remains unapplied and must run only
+  after the BeastHealth foundation migration.
 
 Then list, dry-run, push, and verify:
 

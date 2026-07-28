@@ -1,13 +1,13 @@
 # The Beast / BeastOS
 
-Current platform release candidate: `BeastOS v3.0.0-beta1`
+Current platform release candidate: `BeastOS v3.0.0`
 
-BeastOS v3.0.0-beta1 begins BeastHealth as a protected owner beta with Health
-Overview, Health Profile, conditions, medications, procedures, vitals,
-documents, lifestyle, family history, Provider Directory, and Health Timeline.
-Health Advisor remains planned and inactive; no health recommendations,
-execution requests, confidence assessments, or outcome-learning activity are
-enabled.
+BeastOS v3.0.0 activates Health Advisor as a protected owner experience for
+health-record review, medication-list organization, appointment preparation,
+provider questions, permissioned document summaries, timeline summaries, and
+deterministic recommendations. Decisions and preparation outcomes use the
+existing Execution History foundation. Health Advisor never diagnoses,
+prescribes, interprets clinical significance, or replaces qualified care.
 
 Current Money version: `BeastMoney v2.3.0`
 

@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   DashboardCard,
-  ExpandableDetailPanel,
   ModuleBadge,
   SectionHeader,
 } from "@/app/components/design/DashboardPrimitives";
@@ -24,8 +23,9 @@ export const beastHealthSections = [
   { label: "Vitals", href: "/dashboard/health/vitals" },
   { label: "Documents", href: "/dashboard/health/documents" },
   { label: "Provider Directory", href: "/dashboard/health/provider-directory" },
+  { label: "Appointments", href: "/dashboard/health/appointments" },
   { label: "Health Timeline", href: "/dashboard/health/timeline" },
-  { label: "Health Advisor (Planned)", href: "/dashboard/health/ai-advisor" },
+  { label: "Health Advisor", href: "/dashboard/health/ai-advisor" },
 ];
 
 export function BeastHealthShell({
@@ -102,7 +102,7 @@ export function BeastHealthShell({
       <div className="beast-container space-y-6">
         <section className="beast-page-header">
           <div className="space-y-4">
-            <ModuleBadge module="health" label="Owner Beta" />
+            <ModuleBadge module="health" label="Health Advisor Active" />
             <h1 className="beast-title">{title}</h1>
             <p className="beast-subtitle">{description}</p>
           </div>
@@ -123,59 +123,5 @@ export function BeastHealthShell({
         {children}
       </div>
     </main>
-  );
-}
-
-export function HealthAdvisorPlannedPage() {
-  return (
-    <BeastHealthShell
-      title="Health Advisor"
-      description="The professional identity and shared platform foundations are prepared, but Health Advisor is not active."
-    >
-      <section className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
-        <DashboardCard accent="health">
-          <SectionHeader
-            eyebrow="Planned"
-            title="Health Advisor remains offline"
-            description="No health recommendation, confidence assessment, execution request, or outcome-learning activity can be created from this page."
-          />
-          <div className="mt-5 grid gap-3">
-            {[
-              "Health records remain owner-controlled source data.",
-              "Execution History and recommendation contracts are prepared but not connected.",
-              "Activation requires approved health safety, privacy, source-authority, escalation, and professional-boundary policy.",
-            ].map((item) => (
-              <div
-                key={item}
-                className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 text-sm font-semibold leading-6 text-[#dbe3ef]"
-              >
-                {item}
-              </div>
-            ))}
-          </div>
-        </DashboardCard>
-
-        <DashboardCard accent="beastos">
-          <SectionHeader
-            eyebrow="Boundary"
-            title="No medical advice"
-            description="BeastHealth organizes owner-entered records. It does not diagnose, treat, interpret measurements, change medication, or replace qualified care."
-          />
-          <div className="mt-5 space-y-3 text-sm font-semibold leading-6 text-[#dbe3ef]">
-            <ExpandableDetailPanel summary="Safety and data boundaries">
-            <p className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
-              Health Advisor has no conversation, recommendation, or execution controls in this release.
-            </p>
-            <p className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
-              An emergency or urgent health concern must be handled through appropriate local emergency or qualified care resources, not BeastHealth.
-            </p>
-            <p className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
-              Future Health Advisor activity must retain evidence, confidence, limitations, approvals, outcomes, and immutable audit history.
-            </p>
-            </ExpandableDetailPanel>
-          </div>
-        </DashboardCard>
-      </section>
-    </BeastHealthShell>
   );
 }

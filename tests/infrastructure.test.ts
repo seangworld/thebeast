@@ -6049,7 +6049,7 @@ test("BeastAdmin foundation registers modules and protects owner-only navigation
       ["BeastEducation", "learning", `v${versionManifest.beastlearning.version} ${versionManifest.beastlearning.channel}`, "active", "beta", true, true, true],
       ["BeastGoals", "goals", `v${versionManifest.beastgoals.version}`, "foundation", "adminOnly", true, false, true],
       ["BeastDocuments", "documents", `v${versionManifest.beastdocuments.version}`, "foundation", "adminOnly", true, false, true],
-      ["BeastHealth", "health", `v${versionManifest.beasthealth.version} ${versionManifest.beasthealth.channel}`, "foundation", "adminOnly", true, true, true],
+      ["BeastHealth", "health", `v${versionManifest.beasthealth.version} ${versionManifest.beasthealth.channel}`, "active", "adminOnly", true, false, true],
       ["BeastHome", "home", `v${versionManifest.beasthome.version} ${versionManifest.beasthome.channel}`, "foundation", "adminOnly", true, true, true],
       ["BeastAdmin", "admin", "foundation", "foundation", "adminOnly", true, false, true],
     ]
@@ -6103,8 +6103,9 @@ test("BeastAdmin foundation registers modules and protects owner-only navigation
       "Vitals",
       "Documents",
       "Provider Directory",
+      "Appointments",
       "Health Timeline",
-      "Health Advisor (Planned)",
+      "Health Advisor",
     ]
   );
   assert.equal(
@@ -6334,7 +6335,7 @@ test("BeastAdmin beta assignments are independent of member role", () => {
   assert.doesNotMatch(settingsPage, /owner@beastos\.local|beta@beastos\.local/);
 });
 
-test("BeastHealth beta is owner-only and Health Advisor remains inactive", () => {
+test("BeastHealth is owner-only and Health Advisor preserves medical boundaries", () => {
   const shell = readFileSync(
     "src/app/dashboard/health/BeastHealthShell.tsx",
     "utf8"
@@ -6353,8 +6354,9 @@ test("BeastHealth beta is owner-only and Health Advisor remains inactive", () =>
     "Vitals",
     "Documents",
     "Provider Directory",
+    "Appointments",
     "Health Timeline",
-    "Health Advisor (Planned)",
+    "Health Advisor",
   ].forEach((label) => assert.equal(shell.includes(label), true));
 
   const workspace = readFileSync(
@@ -6368,9 +6370,15 @@ test("BeastHealth beta is owner-only and Health Advisor remains inactive", () =>
 
   assert.match(shell, /isBeastAdminOwnerRole/);
   assert.match(shell, /router\.replace\("\/dashboard"\)/);
-  assert.match(shell, /No medical advice/);
-  assert.match(shell, /Health Advisor has no conversation, recommendation, or execution controls/);
-  assert.match(pages, /Health Advisor intentionally inactive/);
+  const advisor = readFileSync(
+    "src/app/dashboard/health/HealthAdvisorWorkspace.tsx",
+    "utf8"
+  );
+  assert.match(advisor, /Medical Safety Boundary/);
+  assert.match(advisor, /never diagnoses or replaces clinicians/);
+  assert.match(advisor, /SupabaseExecutionHistoryStore/);
+  assert.match(advisor, /recordResultAndOutcome/);
+  assert.match(pages, /active Health Advisor/);
   assert.match(layout, /pathname\.startsWith\("\/dashboard\/health"\)/);
   assert.equal(
     buildBeastModuleNavigationForPersona({

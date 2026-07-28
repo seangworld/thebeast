@@ -107,7 +107,7 @@ test("BO-311 keeps Health Profile distinct from BeastOS shared identity", () => 
 
   assert.match(navigation, /Health Profile/);
   assert.match(healthShell, /Health Profile/);
-  assert.match(healthPages, /Owner-only health record beta/);
+  assert.match(healthPages, /Owner-only health record and appointment-preparation workspace/);
   assert.match(
     readFileSync("src/lib/health/foundation.ts", "utf8"),
     /without duplicating BeastOS identity/

@@ -71,6 +71,6 @@ test("BF-MOB-007 exposes mobile future module surfaces without replacing desktop
   assert.match(dashboard, /break-words/);
   assert.match(mobileFutureModules, /isOwner: boolean/);
   assert.match(mobileFutureModules, /future-module-foundation-route/);
-  assert.match(healthShell, /Health Advisor remains offline/);
+  assert.match(healthShell, /Health Advisor Active/);
   assert.match(homeShell, /No member-facing BeastHome experience is exposed/);
 });

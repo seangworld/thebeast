@@ -117,7 +117,6 @@ test("BO-310 indexes real personal knowledge categories without AI summaries", (
       "Roadmaps",
       "Health records",
       "Uploaded files",
-      "Future modules",
     ]
   );
   assert.equal(items.some((item) => item.summary.includes("AI summary")), false);
