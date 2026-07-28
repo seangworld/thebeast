@@ -2,9 +2,21 @@
 const nextConfig = {
   async redirects() {
     return [
-      { source: "/privacy.html", destination: "/privacy", permanent: true },
-      { source: "/privacy.php", destination: "/privacy", permanent: true },
-      { source: "/about.php", destination: "/about", permanent: true },
+      {
+        source: "/privacy.html",
+        destination: "https://www.seangworld.com/privacy",
+        permanent: true,
+      },
+      {
+        source: "/privacy.php",
+        destination: "https://www.seangworld.com/privacy",
+        permanent: true,
+      },
+      {
+        source: "/about.php",
+        destination: "https://www.seangworld.com/about",
+        permanent: true,
+      },
     ];
   },
   experimental: {

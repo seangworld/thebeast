@@ -22,10 +22,8 @@ test("Money Coach and Guidance Counselor retain their safety boundaries", () => 
 
 test("sitemap includes public routes and excludes private application routes", () => {
   const urls = sitemap().map((entry) => entry.url);
-  assert.equal(new Set(urls).size, urls.length);
-  assert.ok(urls.some((url) => url.endsWith("/privacy")));
-  assert.ok(urls.every((url) => !url.includes("/dashboard")));
-  assert.ok(urls.every((url) => !url.includes("/admin")));
-  assert.ok(urls.every((url) => !url.includes("/api")));
-  assert.ok(urls.every((url) => url.startsWith("https://thebeast.seangworld.com")));
+  assert.deepEqual(urls, [
+    "https://thebeast.seangworld.com",
+    "https://thebeast.seangworld.com/release-notes",
+  ]);
 });

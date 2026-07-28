@@ -107,6 +107,7 @@ test("BO-313 makes authentication and onboarding explain platform ownership", ()
 test("BO-313 aligns shared page titles and metadata without changing behavior", () => {
   const rootLayout = readFileSync("src/app/layout.tsx", "utf8");
   const home = readFileSync("src/app/page.tsx", "utf8");
+  const homeRedirect = readFileSync("src/app/HomeRedirect.tsx", "utf8");
   const today = readFileSync("src/app/dashboard/today/page.tsx", "utf8");
   const calendar = readFileSync(
     "src/app/dashboard/calendar/page.tsx",
@@ -119,7 +120,8 @@ test("BO-313 aligns shared page titles and metadata without changing behavior", 
 
   assert.match(rootLayout, /BeastOS \| The Beast Platform/);
   assert.match(rootLayout, /operating system connecting identity/);
-  assert.match(home, /Loading BeastOS/);
+  assert.match(home, /<HomeRedirect \/>/);
+  assert.match(homeRedirect, /Loading BeastOS/);
   assert.match(today, /BeastOS Command Center/);
   assert.match(today, /connected applications/);
   assert.match(calendar, /eyebrow="BeastOS Shared Service"/);

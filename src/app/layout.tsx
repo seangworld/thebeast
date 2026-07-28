@@ -1,18 +1,23 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import { externalResourceLinkProps } from "@/lib/platform/externalResources";
+import { beastOSProductionOrigin } from "@/lib/publicSeo";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://thebeast.seangworld.com"),
+  metadataBase: new URL(beastOSProductionOrigin),
   title: "BeastOS | The Beast Platform",
   description:
     "BeastOS is the operating system connecting identity, permissions, memory, shared services, and every Beast application.",
+  robots: {
+    index: false,
+    follow: false,
+  },
   openGraph: {
     title: "BeastOS | The Beast Platform",
     description:
       "BeastOS is the operating system connecting identity, permissions, memory, shared services, and every Beast application.",
-    url: "https://thebeast.seangworld.com",
+    url: beastOSProductionOrigin,
     siteName: "BeastOS",
     images: [
       {
