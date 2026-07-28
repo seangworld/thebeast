@@ -1,5 +1,24 @@
 # Changelog
 
+## BeastOS v2.2.0 - July 28, 2026
+
+Digital Staff and controlled execution foundation release candidate.
+
+### New Features
+
+- Added transparent Digital Professional profiles and organization structure.
+- Added persistent execution-history architecture and owner audit surfaces.
+- Added the owner-only SEANGWORLD Intelligence dashboard foundation with
+  deterministic recommendations and honest provider states.
+- Added automatic sitemap generation and permanent legacy URL redirects.
+
+### Release Boundary
+
+- Live analytics provider connections and autonomous execution are excluded.
+- Migration `20260728000000_add_execution_history.sql` was reviewed but not
+  applied to any environment.
+- No push or deployment is included in this candidate.
+
 ## BeastOS v2.1.1 - July 20, 2026
 
 Critical usability hotfix for site-wide horizontal overflow and off-screen content.

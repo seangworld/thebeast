@@ -1,8 +1,11 @@
 # The Beast / BeastOS
 
-Current platform version: `BeastOS v2.1.1`
+Current platform version: `BeastOS v2.2.0`
 
-BeastOS v2.2 remains the next planned feature release. The v2.1.1 release is an isolated critical usability hotfix for horizontal overflow and off-screen content.
+BeastOS v2.2.0 introduces the Digital Staff and controlled execution-history
+foundations, the owner-only SEANGWORLD Intelligence foundation, automatic
+sitemap generation, and compatibility redirects. Live analytics connections
+remain deferred; unavailable providers are reported honestly.
 
 Current Money version: `BeastMoney v2.3.0`
 
