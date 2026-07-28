@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import {
   DashboardCard,
   ExpandableDetailPanel,
-  GuidedEmptyState,
   ModuleBadge,
   SectionHeader,
 } from "@/app/components/design/DashboardPrimitives";
@@ -16,7 +15,7 @@ import { buildCurrentAuthLoginPath } from "@/lib/auth/experience";
 
 export const beastHealthSections = [
   { label: "Overview", href: "/dashboard/health" },
-  { label: "Health Background", href: "/dashboard/health/profile" },
+  { label: "Health Profile", href: "/dashboard/health/profile" },
   { label: "Conditions", href: "/dashboard/health/conditions" },
   { label: "Medications", href: "/dashboard/health/medications" },
   { label: "Procedures", href: "/dashboard/health/procedures" },
@@ -24,14 +23,10 @@ export const beastHealthSections = [
   { label: "Lifestyle", href: "/dashboard/health/lifestyle" },
   { label: "Vitals", href: "/dashboard/health/vitals" },
   { label: "Documents", href: "/dashboard/health/documents" },
-  { label: "AI Advisor", href: "/dashboard/health/ai-advisor" },
+  { label: "Provider Directory", href: "/dashboard/health/provider-directory" },
+  { label: "Health Timeline", href: "/dashboard/health/timeline" },
+  { label: "Health Advisor (Planned)", href: "/dashboard/health/ai-advisor" },
 ];
-
-export type BeastHealthPlaceholder = {
-  title: string;
-  description: string;
-  focus: string[];
-};
 
 export function BeastHealthShell({
   title,
@@ -94,7 +89,7 @@ export function BeastHealthShell({
             <SectionHeader
               eyebrow="BeastHealth"
               title="Checking owner access"
-              description="BeastHealth foundation routes are protected for admin-only review."
+              description="BeastHealth beta routes are protected for owner-only review."
             />
           </DashboardCard>
         </div>
@@ -107,7 +102,7 @@ export function BeastHealthShell({
       <div className="beast-container space-y-6">
         <section className="beast-page-header">
           <div className="space-y-4">
-            <ModuleBadge module="health" label="Admin Only" />
+            <ModuleBadge module="health" label="Owner Beta" />
             <h1 className="beast-title">{title}</h1>
             <p className="beast-subtitle">{description}</p>
           </div>
@@ -118,7 +113,7 @@ export function BeastHealthShell({
             <Link
               key={item.href}
               href={item.href}
-              className="rounded-lg border border-emerald-300/30 bg-emerald-300/10 px-3 py-2 text-sm font-bold text-emerald-100 transition hover:border-emerald-200 hover:bg-emerald-200/20"
+              className="rounded-lg border border-red-300/30 bg-red-300/10 px-3 py-2 text-sm font-bold text-red-100 transition hover:border-red-200 hover:bg-red-200/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-300"
             >
               {item.label}
             </Link>
@@ -131,25 +126,25 @@ export function BeastHealthShell({
   );
 }
 
-export function BeastHealthPlaceholderPage({
-  page,
-}: {
-  page: BeastHealthPlaceholder;
-}) {
+export function HealthAdvisorPlannedPage() {
   return (
     <BeastHealthShell
-      title={page.title}
-      description={page.description}
+      title="Health Advisor"
+      description="The professional identity and shared platform foundations are prepared, but Health Advisor is not active."
     >
       <section className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
         <DashboardCard accent="health">
           <SectionHeader
-            eyebrow="Foundation"
-            title={`${page.title} workspace`}
-            description="This admin-only foundation reserves the BeastHealth workspace without collecting member health data or providing medical advice."
+            eyebrow="Planned"
+            title="Health Advisor remains offline"
+            description="No health recommendation, confidence assessment, execution request, or outcome-learning activity can be created from this page."
           />
           <div className="mt-5 grid gap-3">
-            {page.focus.map((item) => (
+            {[
+              "Health records remain owner-controlled source data.",
+              "Execution History and recommendation contracts are prepared but not connected.",
+              "Activation requires approved health safety, privacy, source-authority, escalation, and professional-boundary policy.",
+            ].map((item) => (
               <div
                 key={item}
                 className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 text-sm font-semibold leading-6 text-[#dbe3ef]"
@@ -163,20 +158,19 @@ export function BeastHealthPlaceholderPage({
         <DashboardCard accent="beastos">
           <SectionHeader
             eyebrow="Boundary"
-            title="Protected placeholder"
-            description="BeastHealth is admin-only until product scope, safety, privacy, permissions, and health AI policy are explicitly approved."
+            title="No medical advice"
+            description="BeastHealth organizes owner-entered records. It does not diagnose, treat, interpret measurements, change medication, or replace qualified care."
           />
           <div className="mt-5 space-y-3 text-sm font-semibold leading-6 text-[#dbe3ef]">
-            <GuidedEmptyState title="Define the safe health experience first" description="No health data is collected yet. Review the shared platform and documentation boundaries before enabling a member workflow." guidance="Start with permissions, provenance, and a qualified-care escalation path." nextAction={{ label: "Review settings", href: "/dashboard/settings" }} secondaryAction={{ label: "Open documents", href: "/dashboard/uploads" }} />
             <ExpandableDetailPanel summary="Safety and data boundaries">
             <p className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
-              No member-facing BeastHealth experience is exposed by this package.
+              Health Advisor has no conversation, recommendation, or execution controls in this release.
             </p>
             <p className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
-              No diagnosis, treatment, medication guidance, or clinical advice is provided.
+              An emergency or urgent health concern must be handled through appropriate local emergency or qualified care resources, not BeastHealth.
             </p>
             <p className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
-              Future health data must use BeastOS ownership, permissions, privacy, and audit boundaries.
+              Future Health Advisor activity must retain evidence, confidence, limitations, approvals, outcomes, and immutable audit history.
             </p>
             </ExpandableDetailPanel>
           </div>

@@ -1,6 +1,5 @@
-import { BeastHealthPlaceholderPage } from "../BeastHealthShell";
-import { beastHealthPages } from "../pages";
+import { HealthRecordWorkspace } from "../BeastHealthWorkspace";
 
 export default function HealthLifestylePage() {
-  return <BeastHealthPlaceholderPage page={beastHealthPages.lifestyle} />;
+  return <HealthRecordWorkspace kind="lifestyle" />;
 }

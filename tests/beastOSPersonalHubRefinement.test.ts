@@ -94,7 +94,7 @@ test("BO-311 modules reference BeastOS identity without owning shared profile wr
   assert.doesNotMatch(moduleSources, /\.from\("profiles"\)[\s\S]{0,120}\.update/);
 });
 
-test("BO-311 keeps module-specific health context without a duplicate Profile label", () => {
+test("BO-311 keeps Health Profile distinct from BeastOS shared identity", () => {
   const navigation = readFileSync("src/lib/moduleNavigation.ts", "utf8");
   const healthShell = readFileSync(
     "src/app/dashboard/health/BeastHealthShell.tsx",
@@ -105,9 +105,11 @@ test("BO-311 keeps module-specific health context without a duplicate Profile la
     "utf8"
   );
 
-  assert.match(navigation, /Health Background/);
-  assert.match(healthShell, /Health Background/);
-  assert.match(healthPages, /No duplicate shared identity profile/);
-  assert.doesNotMatch(navigation, /Health Profile/);
-  assert.doesNotMatch(healthShell, /Health Profile/);
+  assert.match(navigation, /Health Profile/);
+  assert.match(healthShell, /Health Profile/);
+  assert.match(healthPages, /Owner-only health record beta/);
+  assert.match(
+    readFileSync("src/lib/health/foundation.ts", "utf8"),
+    /without duplicating BeastOS identity/
+  );
 });

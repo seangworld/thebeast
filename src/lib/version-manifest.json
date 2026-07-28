@@ -3,10 +3,10 @@
   "generatedAt": "2026-07-20",
   "identities": {
     "beast": { "name": "The Beast", "version": "2.4.0", "buildId": "beast-2.4.0+20260718.01", "channel": "Production", "releaseDate": "2026-07-18" },
-    "beastos": { "name": "BeastOS", "version": "2.3.1", "buildId": "beastos-2.3.1+20260728.01", "channel": "Development", "releaseDate": null },
+    "beastos": { "name": "BeastOS", "version": "3.0.0-beta1", "buildId": "beastos-3.0.0-beta1+20260728.01", "channel": "Beta", "releaseDate": null },
     "beastmoney": { "name": "BeastMoney", "version": "2.4.0", "buildId": "beastmoney-2.4.0+20260718.01", "channel": "Production", "releaseDate": "2026-07-18" },
     "beastlearning": { "name": "BeastEducation", "version": "1.6.0", "buildId": "beastlearning-1.6.0+20260718.01", "channel": "Beta", "releaseDate": "2026-07-18" },
-    "beasthealth": { "name": "BeastHealth", "version": "0.1.0", "buildId": "beasthealth-0.1.0+planning", "channel": "Development", "releaseDate": null },
+    "beasthealth": { "name": "BeastHealth", "version": "0.1.0-beta1", "buildId": "beasthealth-0.1.0-beta1+20260728.01", "channel": "Beta", "releaseDate": null },
     "beasthome": { "name": "BeastHome", "version": "0.1.0", "buildId": "beasthome-0.1.0+planning", "channel": "Development", "releaseDate": null },
     "beastsecurity": { "name": "BeastSecurity", "version": "0.1.0", "buildId": "beastsecurity-0.1.0+planning", "channel": "Development", "releaseDate": null },
     "beastgoals": { "name": "BeastGoals", "version": "2.2.0", "buildId": "beastgoals-2.2.0+20260718.01", "channel": "Production", "releaseDate": "2026-07-18" },

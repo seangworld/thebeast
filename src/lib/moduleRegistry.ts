@@ -114,7 +114,7 @@ export const beastModuleRegistry: BeastModuleRegistryEntry[] = [
     visibility: "adminOnly",
     enabled: true,
     beta: true,
-    ownerNotes: "Admin-only health workspace foundation with safety and privacy scope reserved.",
+    ownerNotes: "Owner-only health record beta; Health Advisor remains planned and inactive.",
     href: "/dashboard/health",
   },
   {

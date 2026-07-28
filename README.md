@@ -1,13 +1,13 @@
 # The Beast / BeastOS
 
-Current platform release candidate: `BeastOS v2.3.1`
+Current platform release candidate: `BeastOS v3.0.0-beta1`
 
-BeastOS v2.3.1 brings Guidance Counselor online as a structured,
-evidence-backed education workspace. It connects current diagnostics evidence,
-goals, learning paths, confidence, recommendations, notifications, Tutor
-handoffs, Execution History, and member-reported outcome learning. Guidance
-Counselor owns planning and prioritization; Tutor remains the teaching
-specialist.
+BeastOS v3.0.0-beta1 begins BeastHealth as a protected owner beta with Health
+Overview, Health Profile, conditions, medications, procedures, vitals,
+documents, lifestyle, family history, Provider Directory, and Health Timeline.
+Health Advisor remains planned and inactive; no health recommendations,
+execution requests, confidence assessments, or outcome-learning activity are
+enabled.
 
 Current Money version: `BeastMoney v2.3.0`
 

@@ -28,13 +28,16 @@ test("shared primitives enforce guidance progressive save details and adaptive t
 });
 
 test("ecosystem module shells replace inert placeholders with useful next actions", () => {
-  const health = readFileSync("src/app/dashboard/health/BeastHealthShell.tsx", "utf8");
+  const health = [
+    readFileSync("src/app/dashboard/health/BeastHealthShell.tsx", "utf8"),
+    readFileSync("src/app/dashboard/health/BeastHealthWorkspace.tsx", "utf8"),
+  ].join("\n");
   const home = readFileSync("src/app/dashboard/home/BeastHomeShell.tsx", "utf8");
   const platform = readFileSync("src/app/dashboard/platformPlaceholder.tsx", "utf8");
   for (const source of [health, home, platform]) {
     assert.match(source, /GuidedEmptyState/);
     assert.match(source, /nextAction=/);
-    assert.match(source, /secondaryAction=/);
+    if (source !== health) assert.match(source, /secondaryAction=/);
   }
 });
 

@@ -1,5 +1,35 @@
 # Changelog
 
+## BeastOS v3.0.0-beta1 - July 28, 2026
+
+BeastHealth owner beta release candidate.
+
+### New Features
+
+- Added Health Overview, Health Profile, Conditions, Medications, Procedures,
+  Vitals, Documents, Lifestyle, Family History, Provider Directory, and Health
+  Timeline workspaces.
+- Added durable owner-entered health records with dates, sources, flexible
+  context, private notes, archive and restore controls, and explicit empty,
+  loading, unavailable, and save-error states.
+- Added an additive owner-only Supabase record foundation with RLS, bounded
+  values, indexes, and updated-at history.
+
+### Safety and Release Boundary
+
+- Health Advisor remains planned and inactive. BeastHealth contains no Health
+  Advisor conversation, recommendation, execution, confidence, or outcome
+  controls.
+- Future integration points are documented for Execution History,
+  recommendation lifecycle, confidence, and outcome learning without activating
+  them.
+- BeastHealth provides organization only. It does not diagnose, treat, interpret
+  measurements, recommend medication changes, or replace qualified care.
+- No placeholder health records or activity are generated.
+- Migration `20260728010000_add_beast_health_foundation.sql` is included for
+  review but was not applied.
+- No push or deployment is included in this candidate.
+
 ## BeastOS v2.3.1 - July 28, 2026
 
 Guidance Counselor online release candidate.

@@ -1,6 +1,5 @@
-import { BeastHealthPlaceholderPage } from "../BeastHealthShell";
-import { beastHealthPages } from "../pages";
+import { HealthAdvisorPlannedPage } from "../BeastHealthShell";
 
 export default function HealthAiAdvisorPage() {
-  return <BeastHealthPlaceholderPage page={beastHealthPages.aiAdvisor} />;
+  return <HealthAdvisorPlannedPage />;
 }

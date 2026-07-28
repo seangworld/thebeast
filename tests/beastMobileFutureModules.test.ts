@@ -57,7 +57,7 @@ test("BF-MOB-007 routes Health and Home to existing foundation shells only", () 
   assert.ok(cards[1].metadata.includes("foundation"));
 });
 
-test("BF-MOB-007 exposes mobile future module surfaces without replacing desktop placeholders", () => {
+test("BF-MOB-007 exposes mobile future module surfaces without replacing desktop shells", () => {
   const dashboard = readFileSync("src/app/dashboard/page.tsx", "utf8");
   const mobileFutureModules = readFileSync("src/lib/mobileFutureModules.ts", "utf8");
   const healthShell = readFileSync("src/app/dashboard/health/BeastHealthShell.tsx", "utf8");
@@ -71,6 +71,6 @@ test("BF-MOB-007 exposes mobile future module surfaces without replacing desktop
   assert.match(dashboard, /break-words/);
   assert.match(mobileFutureModules, /isOwner: boolean/);
   assert.match(mobileFutureModules, /future-module-foundation-route/);
-  assert.match(healthShell, /No member-facing BeastHealth experience is exposed/);
+  assert.match(healthShell, /Health Advisor remains offline/);
   assert.match(homeShell, /No member-facing BeastHome experience is exposed/);
 });

@@ -257,6 +257,9 @@ Leave these migrations pending so normal CLI push applies them:
 - `20260715000400_add_beast_goal_lifecycle_events.sql`
 - `20260715000500_add_beast_document_module_links.sql`
 - `20260715000600_reconcile_canonical_runtime_schema.sql`
+- `20260728010000_add_beast_health_foundation.sql` remains a reviewed,
+  unapplied BeastOS 3.0.0-beta1 release-candidate migration until explicit
+  environment-specific migration approval is provided.
 
 Then list, dry-run, push, and verify:
 

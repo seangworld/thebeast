@@ -1,6 +1,5 @@
-import { BeastHealthPlaceholderPage } from "../BeastHealthShell";
-import { beastHealthPages } from "../pages";
+import { HealthRecordWorkspace } from "../BeastHealthWorkspace";
 
 export default function HealthFamilyHistoryPage() {
-  return <BeastHealthPlaceholderPage page={beastHealthPages.familyHistory} />;
+  return <HealthRecordWorkspace kind="family_history" />;
 }

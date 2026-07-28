@@ -6094,7 +6094,7 @@ test("BeastAdmin foundation registers modules and protects owner-only navigation
     getModuleChildren("health").map((item) => item.label),
     [
       "Overview",
-      "Health Background",
+      "Health Profile",
       "Conditions",
       "Medications",
       "Procedures",
@@ -6102,7 +6102,9 @@ test("BeastAdmin foundation registers modules and protects owner-only navigation
       "Lifestyle",
       "Vitals",
       "Documents",
-      "AI Advisor",
+      "Provider Directory",
+      "Health Timeline",
+      "Health Advisor (Planned)",
     ]
   );
   assert.equal(
@@ -6332,7 +6334,7 @@ test("BeastAdmin beta assignments are independent of member role", () => {
   assert.doesNotMatch(settingsPage, /owner@beastos\.local|beta@beastos\.local/);
 });
 
-test("BH-001 BeastHealth foundation is admin-only placeholder application", () => {
+test("BeastHealth beta is owner-only and Health Advisor remains inactive", () => {
   const shell = readFileSync(
     "src/app/dashboard/health/BeastHealthShell.tsx",
     "utf8"
@@ -6342,7 +6344,7 @@ test("BH-001 BeastHealth foundation is admin-only placeholder application", () =
 
   [
     "Overview",
-    "Health Background",
+    "Health Profile",
     "Conditions",
     "Medications",
     "Procedures",
@@ -6350,31 +6352,25 @@ test("BH-001 BeastHealth foundation is admin-only placeholder application", () =
     "Lifestyle",
     "Vitals",
     "Documents",
-    "AI Advisor",
-  ].forEach((label) => assert.match(shell, new RegExp(label)));
+    "Provider Directory",
+    "Health Timeline",
+    "Health Advisor (Planned)",
+  ].forEach((label) => assert.equal(shell.includes(label), true));
 
-  [
-    "src/app/dashboard/health/page.tsx",
-    "src/app/dashboard/health/profile/page.tsx",
-    "src/app/dashboard/health/conditions/page.tsx",
-    "src/app/dashboard/health/medications/page.tsx",
-    "src/app/dashboard/health/procedures/page.tsx",
-    "src/app/dashboard/health/family-history/page.tsx",
-    "src/app/dashboard/health/lifestyle/page.tsx",
-    "src/app/dashboard/health/vitals/page.tsx",
-    "src/app/dashboard/health/documents/page.tsx",
-    "src/app/dashboard/health/ai-advisor/page.tsx",
-  ].forEach((path) =>
-    assert.match(readFileSync(path, "utf8"), /BeastHealthPlaceholderPage/)
+  const workspace = readFileSync(
+    "src/app/dashboard/health/BeastHealthWorkspace.tsx",
+    "utf8"
   );
+  assert.match(workspace, /HealthOverviewWorkspace/);
+  assert.match(workspace, /HealthRecordWorkspace/);
+  assert.match(workspace, /HealthTimelineWorkspace/);
+  assert.match(workspace, /\.from\("beast_health_records"\)/);
 
   assert.match(shell, /isBeastAdminOwnerRole/);
   assert.match(shell, /router\.replace\("\/dashboard"\)/);
-  assert.match(
-    shell,
-    /No diagnosis, treatment, medication guidance, or clinical advice/
-  );
-  assert.match(pages, /No health AI advice is active in this foundation/);
+  assert.match(shell, /No medical advice/);
+  assert.match(shell, /Health Advisor has no conversation, recommendation, or execution controls/);
+  assert.match(pages, /Health Advisor intentionally inactive/);
   assert.match(layout, /pathname\.startsWith\("\/dashboard\/health"\)/);
   assert.equal(
     buildBeastModuleNavigationForPersona({

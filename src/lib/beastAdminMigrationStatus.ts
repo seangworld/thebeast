@@ -63,6 +63,7 @@ export const beastAdminRepositoryMigrationFiles = [
   "20260726002100_reconcile_beast_admin_member_invitations.sql",
   "20260726002200_reconcile_beast_admin_account_access_history.sql",
   "20260728000000_add_execution_history.sql",
+  "20260728010000_add_beast_health_foundation.sql",
 ] as const;
 
 export type BeastAdminMigrationState =
