@@ -232,7 +232,7 @@ test("BA-134 migrations are registered after every required dependency", () => {
       positions.get(reconciliations.invitations)!
   );
   assert.deepEqual(
-    beastAdminRepositoryMigrationFiles.slice(-3),
+    beastAdminRepositoryMigrationFiles.slice(-4, -1),
     Object.values(reconciliations)
   );
 });
