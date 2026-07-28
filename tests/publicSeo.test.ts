@@ -34,6 +34,8 @@ test("robots advertises the production sitemap and excludes private routes", () 
   assert.equal(result.host, beastOSProductionOrigin);
   assert.equal(result.sitemap, `${beastOSProductionOrigin}/sitemap.xml`);
   assert.deepEqual(disallow, beastOSNonIndexableRoutes);
+  assert.ok(disallow.includes("/dashboard"));
+  assert.ok(!disallow.includes("/dashboard/"));
 });
 
 test("legacy BeastOS paths preserve external and BeastAdmin compatibility", async () => {

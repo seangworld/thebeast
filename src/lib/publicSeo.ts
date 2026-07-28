@@ -6,7 +6,7 @@ export const beastOSNonIndexableRoutes = [
   "/accept-invitation",
   "/api/",
   "/auth/",
-  "/dashboard/",
+  "/dashboard",
   "/forgot-password",
   "/login",
   "/reset-password",
