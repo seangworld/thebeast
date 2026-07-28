@@ -1,12 +1,13 @@
 # The Beast / BeastOS
 
-Current platform release candidate: `BeastOS v2.3.0`
+Current platform release candidate: `BeastOS v2.3.1`
 
-BeastOS v2.3.0 brings Money Coach online as a structured, evidence-backed
-financial workspace. It combines current BeastMoney records with an executive
-briefing, financial summary, recommendation lifecycle decisions, confidence,
-notifications, changes since the prior visit, and member-reported outcome
-learning. It does not provide unrestricted chat or execute financial actions.
+BeastOS v2.3.1 brings Guidance Counselor online as a structured,
+evidence-backed education workspace. It connects current diagnostics evidence,
+goals, learning paths, confidence, recommendations, notifications, Tutor
+handoffs, Execution History, and member-reported outcome learning. Guidance
+Counselor owns planning and prioritization; Tutor remains the teaching
+specialist.
 
 Current Money version: `BeastMoney v2.3.0`
 

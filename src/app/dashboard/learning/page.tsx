@@ -17,6 +17,7 @@ import { buildLearnerPortfolio } from "@/lib/learning/portfolio";
 import BetaFeedbackPanel from "./BetaFeedbackPanel";
 import GuidanceCounselorMode from "./GuidanceCounselorMode";
 import GuidanceCounselorConversation from "./GuidanceCounselorConversation";
+import GuidanceCounselorOnline from "./GuidanceCounselorOnline";
 import EducationalCareerRoadmap from "./EducationalCareerRoadmap";
 import GuidanceCounselorRecommendation from "./GuidanceCounselorRecommendation";
 import GuidanceCounselorOrientation from "./GuidanceCounselorOrientation";
@@ -840,6 +841,22 @@ export default async function LearningPage() {
               "We’ll define your educational direction together."
             }
             nextStep={missionControl.mission.missionTitle}
+          />
+
+          <GuidanceCounselorOnline
+            memberId={user.id}
+            input={{
+              mission: mentorHomeMission,
+              confidence: confidenceIntelligence,
+              goals: learningGoals,
+              plan: learningPlan,
+              workflow: guidanceWorkflowRecommendation,
+              roadmap: lifelongRoadmap,
+              learningRecommendations,
+              activities: userActivities,
+              courses: learningCourses,
+              sessions: learningSessions,
+            }}
           />
 
           <GuidanceCounselorConversation

@@ -1,5 +1,33 @@
 # Changelog
 
+## BeastOS v2.3.1 - July 28, 2026
+
+Guidance Counselor online release candidate.
+
+### New Features
+
+- Added a structured Learning Briefing, goal planning, learning priorities,
+  career guidance, notifications, recommendation review, Tutor handoff, and
+  outcome learning.
+- Connected explicit recommendation decisions to persistent Execution History,
+  recommendation lifecycle events, confidence history, approvals, results,
+  outcomes, and immutable audit records.
+- Added an honest diagnostics view that uses saved completed-learning evidence
+  when available and clearly reports when no placement diagnostic exists.
+
+### Boundaries and Reliability
+
+- Guidance Counselor owns goals, learning-path planning, prioritization, and
+  handoff context. The existing Tutor remains responsible for teaching the
+  specific concept and returning learning evidence.
+- Viewing the workspace creates no execution activity. Durable records are
+  created only after an explicit lifecycle decision or outcome report.
+- Recommendations are deterministic, retain evidence and limitations, and do
+  not claim mastery, placement, career fit, or credential requirements without
+  supporting records.
+- No database migration, push, deployment, or production release is included
+  in this candidate.
+
 ## BeastOS v2.3.0 - July 28, 2026
 
 Money Coach online release candidate.
