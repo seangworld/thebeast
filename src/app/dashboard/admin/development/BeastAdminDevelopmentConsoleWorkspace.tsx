@@ -646,7 +646,12 @@ export function BeastAdminDevelopmentConsoleWorkspace() {
             title="Recorded product releases"
             description="Historical versions come from owner-managed Release Center records, not inferred build dates."
           />
-          <div className="mt-5 overflow-x-auto">
+          <div
+            className="mt-5 overflow-x-auto focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200"
+            tabIndex={0}
+            role="region"
+            aria-label="Version history table, horizontally scrollable"
+          >
             {snapshot.versionHistory.length ? (
               <table className="w-full min-w-[40rem] border-separate border-spacing-0 text-left text-sm">
                 <thead>

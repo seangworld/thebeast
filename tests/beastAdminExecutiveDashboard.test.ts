@@ -161,5 +161,5 @@ test("BA-101 executive model remains available after CEO Mode becomes the landin
   assert.match(model, /AI Usage/);
   assert.match(model, /Errors/);
   assert.match(shell, /canAccessBeastAdmin/);
-  assert.match(shell, /router\.replace\("\/dashboard"\)/);
+  assert.match(shell, /setAccessState\("denied"\)/);
 });

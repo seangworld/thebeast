@@ -5,6 +5,7 @@ import {
   normalizeBeastAdminExecutionHistorySnapshot,
   type BeastAdminExecutionHistorySnapshot,
 } from "@/lib/beastAdminExecutionHistory";
+import { BeastAdminDataFreshness } from "../BeastAdminShell";
 
 export function BeastAdminExecutionHistoryWorkspace() {
   const [snapshot, setSnapshot] = useState<BeastAdminExecutionHistorySnapshot | null>(null);
@@ -42,6 +43,7 @@ export function BeastAdminExecutionHistoryWorkspace() {
 
   return (
     <div className="space-y-6">
+      <BeastAdminDataFreshness generatedAt={snapshot.generatedAt} staleAfterHours={1} />
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="Execution status summary">
         {Object.entries(snapshot.counts).filter(([, value]) => value > 0).map(([status, value]) => (
           <div key={status} className="rounded-xl border border-white/10 bg-[#111827] p-4">

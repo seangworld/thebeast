@@ -501,7 +501,12 @@ export function BeastAdminMemberManagementTable({
 
       {pagination.items.length ? (
         <>
-          <div className="mt-4 hidden max-w-full overflow-x-auto overscroll-x-contain rounded-xl border border-[#2a3242] lg:block">
+          <div
+            className="mt-4 hidden max-w-full overflow-x-auto overscroll-x-contain rounded-xl border border-[#2a3242] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200 lg:block"
+            tabIndex={0}
+            role="region"
+            aria-label="Member directory table, horizontally scrollable"
+          >
             <table className="min-w-[1380px] w-full border-collapse text-left text-xs">
               <thead className="sticky top-0 z-10 bg-[#0b1220]">
                 <tr className="border-b border-[#344052]">

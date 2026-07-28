@@ -40,7 +40,7 @@ test("BA-NAV-101 makes the left rail the single BeastAdmin page navigation", () 
 
   assert.doesNotMatch(shell, /adminNavItems/);
   assert.doesNotMatch(shell, /aria-label="BeastAdmin sections"/);
-  assert.doesNotMatch(shell, /import Link from "next\/link"/);
+  assert.match(shell, /href="\/dashboard"/);
   assert.doesNotMatch(shell, /href="\/dashboard\/admin/);
   assert.match(shell, /<ModuleBadge module="admin" label="Owner Only"/);
   assert.match(shell, /<h1 className="beast-title">\{title\}<\/h1>/);

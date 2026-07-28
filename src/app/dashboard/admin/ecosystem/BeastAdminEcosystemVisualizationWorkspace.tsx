@@ -175,8 +175,11 @@ function ArchitectureGraph({
 
   return (
     <div
-      className="overflow-x-auto rounded-xl border border-[#2a3242] bg-[#080d15]"
+      className="overflow-x-auto rounded-xl border border-[#2a3242] bg-[#080d15] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200"
       data-architecture-scroll-container
+      tabIndex={0}
+      role="region"
+      aria-label="Architecture Explorer map, horizontally scrollable"
     >
       <svg
         viewBox="0 0 1120 630"

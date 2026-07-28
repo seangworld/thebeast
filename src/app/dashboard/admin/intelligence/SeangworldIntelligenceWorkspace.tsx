@@ -8,6 +8,7 @@ import {
   type IntelligenceMetric,
   type SeangworldIntelligenceSnapshot,
 } from "@/lib/seangworldIntelligence";
+import { BeastAdminDataFreshness } from "../BeastAdminShell";
 
 function number(value: number) {
   return new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 }).format(value);
@@ -56,6 +57,7 @@ export function SeangworldIntelligenceWorkspace() {
 
   const data = snapshot.data;
   return <div className="space-y-6">
+    <BeastAdminDataFreshness generatedAt={snapshot.generatedAt} staleAfterHours={24} />
     <section className="rounded-2xl border border-white/10 bg-[#111827] p-5">
       <div className="flex flex-wrap items-start justify-between gap-4"><div><p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-300">Executive Summary</p><h2 className="mt-2 text-2xl font-black text-white">Verified ecosystem signals</h2><p className="mt-2 text-sm text-slate-300">{snapshot.comparisonPeriod}</p></div><button className="beast-button-secondary" onClick={() => setRefresh((value) => value + 1)}>Refresh status</button></div>
       {snapshot.limitations.length ? <div className="mt-4 rounded-xl border border-amber-300/20 bg-amber-300/5 p-4"><p className="text-sm font-black text-amber-100">Current limitations</p><ul className="mt-2 text-sm leading-6 text-slate-300">{snapshot.limitations.map((item) => <li key={item}>• {item}</li>)}</ul></div> : null}

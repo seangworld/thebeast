@@ -649,9 +649,9 @@ export function BeastAdminMigrationStatusWorkspace() {
         />
         <div
           className="beast-table-wrap mt-5 hidden overflow-x-auto rounded-xl border border-[#2a3242] md:block"
-          role="region"
-          aria-label="Migration inventory table"
           tabIndex={0}
+          role="region"
+          aria-label="Migration inventory table, horizontally scrollable"
         >
           <table className="min-w-[1460px] text-left text-sm">
             <thead className="bg-[#111827] text-xs uppercase tracking-wide text-[#7f8da3]">

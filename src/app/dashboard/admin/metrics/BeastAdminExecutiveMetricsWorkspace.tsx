@@ -388,7 +388,12 @@ export function BeastAdminExecutiveMetricsWorkspace() {
           />
           <div className="mt-5">
             {snapshot.dailyActivity.length ? (
-              <div className="flex h-64 items-end gap-1 overflow-x-auto rounded-xl border border-[#2a3242] bg-[#111827] px-3 pb-3 pt-6">
+              <div
+                className="flex h-64 items-end gap-1 overflow-x-auto rounded-xl border border-[#2a3242] bg-[#111827] px-3 pb-3 pt-6 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200"
+                tabIndex={0}
+                role="region"
+                aria-label="Daily active members chart, horizontally scrollable"
+              >
                 {snapshot.dailyActivity.map((day) => {
                   const height = Math.max(
                     8,

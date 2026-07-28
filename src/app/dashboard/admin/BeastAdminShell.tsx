@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   DashboardCard,
   MetricTile,
@@ -37,8 +38,9 @@ export function BeastAdminShell({
   actions?: React.ReactNode;
   children: React.ReactNode;
 }) {
-  const [authorized, setAuthorized] = useState(false);
-  const [checking, setChecking] = useState(true);
+  const [accessState, setAccessState] = useState<
+    "checking" | "authorized" | "denied" | "error"
+  >("checking");
   const [adminViewMode, setAdminViewMode] = useState<AdminViewMode>(
     loadAdminViewMode
   );
@@ -60,8 +62,7 @@ export function BeastAdminShell({
 
   useEffect(() => {
     let active = true;
-    setChecking(true);
-    setAuthorized(false);
+    setAccessState("checking");
 
     async function verifyOwner() {
       try {
@@ -74,7 +75,7 @@ export function BeastAdminShell({
           return;
         }
 
-        const { data: profile } = await supabase
+        const { data: profile, error: profileError } = await supabase
           .from("profiles")
           .select("role")
           .eq("id", userId)
@@ -82,14 +83,19 @@ export function BeastAdminShell({
 
         if (!active) return;
 
-        if (!canAccessBeastAdmin({ role: profile?.role, adminViewMode })) {
-          router.replace("/dashboard");
+        if (profileError) {
+          setAccessState("error");
           return;
         }
 
-        setAuthorized(true);
-      } finally {
-        if (active) setChecking(false);
+        if (!canAccessBeastAdmin({ role: profile?.role, adminViewMode })) {
+          setAccessState("denied");
+          return;
+        }
+
+        setAccessState("authorized");
+      } catch {
+        if (active) setAccessState("error");
       }
     }
 
@@ -100,16 +106,46 @@ export function BeastAdminShell({
     };
   }, [adminViewMode, router]);
 
-  if (checking || !authorized) {
+  if (accessState !== "authorized") {
+    const denied = accessState === "denied";
+    const failed = accessState === "error";
     return (
       <main className="beast-page">
         <div className="beast-container">
-          <DashboardCard accent="admin">
+          <DashboardCard accent="admin" className="max-w-3xl">
             <SectionHeader
               eyebrow="BeastAdmin"
-              title="Checking owner access"
-              description="BeastAdmin is protected for the owner-only operating workspace."
+              title={
+                denied
+                  ? "Owner access required"
+                  : failed
+                    ? "Owner access could not be verified"
+                    : "Checking owner access"
+              }
+              description={
+                denied
+                  ? adminViewMode !== "admin"
+                    ? "BeastAdmin is hidden while the owner is using Member view. Switch back to Admin view from the dashboard navigation before returning."
+                    : "This account does not have the owner role required for BeastAdmin."
+                  : failed
+                    ? "The authorization source is temporarily unavailable. No owner workspace data was loaded."
+                    : "BeastAdmin is verifying the signed-in account and owner view before loading protected workspace data."
+              }
             />
+            {accessState === "checking" ? (
+              <div className="mt-5 h-2 max-w-sm animate-pulse rounded-full bg-amber-300/20" role="status" aria-label="Verifying owner access" />
+            ) : (
+              <div className="mt-5 flex flex-wrap gap-3">
+                <Link href="/dashboard" className="inline-flex min-h-11 items-center rounded-lg border border-amber-300/30 bg-amber-300/10 px-4 py-2 text-sm font-black text-amber-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200">
+                  Return to dashboard
+                </Link>
+                {failed ? (
+                  <button type="button" onClick={() => window.location.reload()} className="min-h-11 rounded-lg border border-white/15 px-4 py-2 text-sm font-black text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200">
+                    Retry verification
+                  </button>
+                ) : null}
+              </div>
+            )}
           </DashboardCard>
         </div>
       </main>
@@ -124,6 +160,18 @@ export function BeastAdminShell({
           purpose={purpose}
           actions={actions}
         />
+
+        <details className="rounded-xl border border-amber-300/20 bg-amber-300/[0.06] px-4 py-3 text-sm text-slate-300">
+          <summary className="cursor-pointer font-black text-amber-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-amber-200">
+            Owner guidance
+          </summary>
+          <div className="mt-3 space-y-2 leading-6">
+            <p>{purpose}</p>
+            <p>
+              Review source, timestamp, limitations, and unavailable states before acting. A missing or stale source is not a confirmed zero.
+            </p>
+          </div>
+        </details>
 
         {children}
       </div>
@@ -144,7 +192,9 @@ export function BeastAdminWorkspaceHeader({
     <header className="beast-page-header" aria-label={`${title} workspace`}>
       <div className="flex min-w-0 flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0 max-w-4xl space-y-4">
-          <ModuleBadge module="admin" label="Owner Only" />
+          <span title="Visible only after the signed-in account and Admin view are verified.">
+            <ModuleBadge module="admin" label="Owner Only" />
+          </span>
           <div className="min-w-0 space-y-2">
             <h1 className="beast-title">{title}</h1>
             <p className="beast-subtitle">{purpose}</p>
@@ -161,6 +211,43 @@ export function BeastAdminWorkspaceHeader({
         ) : null}
       </div>
     </header>
+  );
+}
+
+export function BeastAdminDataFreshness({
+  generatedAt,
+  staleAfterHours = 24,
+}: {
+  generatedAt: string | null | undefined;
+  staleAfterHours?: number;
+}) {
+  const parsed = generatedAt ? Date.parse(generatedAt) : Number.NaN;
+  const ageHours = Number.isFinite(parsed)
+    ? Math.max(0, Date.now() - parsed) / 3_600_000
+    : null;
+  const stale = ageHours !== null && ageHours > staleAfterHours;
+  return (
+    <div
+      role="status"
+      className={`rounded-xl border px-4 py-3 text-sm ${
+        stale
+          ? "border-amber-300/30 bg-amber-300/10 text-amber-100"
+          : "border-white/10 bg-white/[0.03] text-slate-300"
+      }`}
+    >
+      <span className="font-black">
+        {ageHours === null
+          ? "Freshness unavailable"
+          : stale
+            ? "Data may be stale"
+            : "Data freshness verified"}
+      </span>
+      <span className="ml-2">
+        {ageHours === null
+          ? "No valid generation timestamp was returned; verify the source before acting."
+          : `Snapshot generated ${new Date(parsed).toLocaleString()}.`}
+      </span>
+    </div>
   );
 }
 

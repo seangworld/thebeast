@@ -6234,7 +6234,7 @@ test("BeastAdmin routes cover CEO operations members analytics feedback ads and 
   assert.match(shell, /canAccessBeastAdmin/);
   assert.match(shell, /ADMIN_VIEW_MODE_EVENT/);
   assert.match(shell, /adminViewMode/);
-  assert.match(shell, /router\.replace\("\/dashboard"\)/);
+  assert.match(shell, /setAccessState\("denied"\)/);
   assert.match(layout, /pathname\.startsWith\("\/dashboard\/admin"\) && !canUseBeastAdmin/);
 
   const membersPage = readFileSync(

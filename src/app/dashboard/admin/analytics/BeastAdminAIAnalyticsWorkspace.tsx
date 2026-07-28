@@ -394,7 +394,12 @@ export function BeastAdminAIAnalyticsWorkspace() {
               description="Daily conversation starts within the selected period. Days with no starts remain empty rather than being filled with estimated activity."
             />
             {snapshot.dailyActivity.length ? (
-              <div className="mt-5 flex min-h-48 items-end gap-2 overflow-x-auto pb-2">
+              <div
+                className="mt-5 flex min-h-48 items-end gap-2 overflow-x-auto pb-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200"
+                tabIndex={0}
+                role="region"
+                aria-label="Conversation activity chart, horizontally scrollable"
+              >
                 {snapshot.dailyActivity.map((day) => (
                   <div
                     key={day.date}
