@@ -176,11 +176,23 @@ export default function DigitalProfessionalPage({
             Portrait status
           </p>
           <p className="mt-2 text-sm leading-6 text-slate-300">
-            Placeholder reference:{" "}
-            <span className="break-all font-mono text-xs text-slate-400">
-              {professional.portrait.placeholder_reference}
-            </span>
-            . No uploaded or generated portrait is attached.
+            {professional.portrait.portrait_url ? (
+              <>
+                Approved portrait:{" "}
+                <span className="break-all font-mono text-xs text-slate-400">
+                  {professional.portrait.portrait_url}
+                </span>
+                . Initials remain available if the image cannot be loaded.
+              </>
+            ) : (
+              <>
+                Placeholder reference:{" "}
+                <span className="break-all font-mono text-xs text-slate-400">
+                  {professional.portrait.placeholder_reference}
+                </span>
+                . No uploaded or generated portrait is attached.
+              </>
+            )}
           </p>
         </aside>
       </div>

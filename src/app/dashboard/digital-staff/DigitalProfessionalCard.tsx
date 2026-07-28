@@ -1,7 +1,11 @@
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
 import {
   digitalProfessionalStatusStyles,
   getDigitalProfessionalInitials,
+  getDigitalProfessionalPortraitReference,
   type DigitalProfessional,
 } from "@/lib/digitalStaff";
 
@@ -12,17 +16,40 @@ export function DigitalProfessionalPortraitPlaceholder({
   professional: DigitalProfessional;
   size?: "card" | "profile";
 }) {
+  const [imageUnavailable, setImageUnavailable] = useState(false);
+  const portraitReference = getDigitalProfessionalPortraitReference(
+    professional,
+    size === "profile" ? "portrait" : "avatar"
+  );
+  const hasPortrait =
+    !imageUnavailable &&
+    portraitReference !== professional.portrait.placeholder_reference;
+
   return (
     <div
       role="img"
-      aria-label={`Portrait placeholder for ${professional.name}`}
-      data-portrait-reference={professional.portrait.placeholder_reference}
+      aria-label={
+        hasPortrait
+          ? `Portrait of ${professional.name}`
+          : `Portrait fallback for ${professional.name}`
+      }
+      data-portrait-reference={portraitReference}
       data-portrait-source={professional.portrait.source}
-      className={`grid shrink-0 place-items-center rounded-full border border-cyan-300/20 bg-cyan-300/10 font-black text-cyan-100 ${
+      className={`relative grid shrink-0 place-items-center overflow-hidden rounded-full border border-cyan-300/20 bg-cyan-300/10 font-black text-cyan-100 ${
         size === "profile" ? "h-24 w-24 text-2xl" : "h-14 w-14 text-lg"
       }`}
     >
       {getDigitalProfessionalInitials(professional)}
+      {hasPortrait ? (
+        // The initials remain behind the image as a deterministic fallback.
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={portraitReference}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover"
+          onError={() => setImageUnavailable(true)}
+        />
+      ) : null}
     </div>
   );
 }

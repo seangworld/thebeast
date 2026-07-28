@@ -43,24 +43,40 @@ test("Digital Staff has accessible deterministic statuses and reporting relation
   assert.equal(getDigitalProfessional("health-advisor")?.status, "available");
 });
 
-test("Digital Staff portraits remain explicit placeholders ready for future assets", () => {
+test("Digital Staff portraits reference public assets and retain deterministic fallbacks", () => {
   for (const professional of digitalProfessionals) {
-    assert.equal(professional.portrait.portrait_url, null);
-    assert.equal(professional.portrait.avatar_url, null);
-    assert.equal(professional.portrait.source, "placeholder");
+    const expectedUrl = `/digital-staff/${professional.id}.webp`;
+    assert.equal(professional.portrait.portrait_url, expectedUrl);
+    assert.equal(professional.portrait.avatar_url, expectedUrl);
+    assert.equal(professional.portrait.source, "uploaded");
+    assert.ok(fs.existsSync(`public${expectedUrl}`));
     assert.match(
       professional.portrait.placeholder_reference,
       new RegExp(`^digital-staff:${professional.id}:initials$`)
     );
     assert.equal(
       getDigitalProfessionalPortraitReference(professional, "portrait"),
-      professional.portrait.placeholder_reference
+      expectedUrl
     );
     assert.equal(
       getDigitalProfessionalPortraitReference(professional, "avatar"),
-      professional.portrait.placeholder_reference
+      expectedUrl
     );
   }
+
+  const unavailablePortrait = {
+    ...digitalProfessionals[0],
+    portrait: {
+      ...digitalProfessionals[0].portrait,
+      portrait_url: null,
+      avatar_url: null,
+      source: "placeholder" as const,
+    },
+  };
+  assert.equal(
+    getDigitalProfessionalPortraitReference(unavailablePortrait, "portrait"),
+    unavailablePortrait.portrait.placeholder_reference
+  );
 });
 
 test("Money Coach and Guidance Counselor retain their safety boundaries", () => {
@@ -83,7 +99,7 @@ test("organization chart profile cards and About Me pages expose the identity pa
   );
   assert.match(chart, /Organization chart/);
   assert.match(chart, /Portrait asset framework/);
-  assert.match(card, /Portrait placeholder/);
+  assert.match(card, /Portrait fallback/);
   assert.match(card, /Reports to/);
   assert.match(card, /Collaborates with/);
   for (const label of [

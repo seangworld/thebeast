@@ -62,12 +62,12 @@ export const digitalProfessionalStatusStyles: Record<
   inactive: "border-slate-500/30 bg-slate-500/10 text-slate-300",
 };
 
-const portraitPlaceholder = (id: string): DigitalProfessionalPortrait => ({
-  portrait_url: null,
-  avatar_url: null,
+const portraitAsset = (id: string): DigitalProfessionalPortrait => ({
+  portrait_url: `/digital-staff/${id}.webp`,
+  avatar_url: `/digital-staff/${id}.webp`,
   placeholder_reference: `digital-staff:${id}:initials`,
-  source: "placeholder",
-  asset_version: "1.0.0",
+  source: "uploaded",
+  asset_version: "1.1.0",
 });
 
 export const digitalProfessionals: readonly DigitalProfessional[] = [
@@ -135,7 +135,7 @@ export const digitalProfessionals: readonly DigitalProfessional[] = [
         relationship: "Health record review and appointment preparation",
       },
     ],
-    portrait: portraitPlaceholder("fusion-director"),
+    portrait: portraitAsset("fusion-director"),
     href: "/dashboard/digital-staff/fusion-director",
   },
   {
@@ -195,7 +195,7 @@ export const digitalProfessionals: readonly DigitalProfessional[] = [
         relationship: "Education goals with financial implications",
       },
     ],
-    portrait: portraitPlaceholder("money-coach"),
+    portrait: portraitAsset("money-coach"),
     href: "/dashboard/digital-staff/money-coach",
   },
   {
@@ -258,7 +258,7 @@ export const digitalProfessionals: readonly DigitalProfessional[] = [
         relationship: "Focused instruction after a documented handoff",
       },
     ],
-    portrait: portraitPlaceholder("guidance-counselor"),
+    portrait: portraitAsset("guidance-counselor"),
     href: "/dashboard/digital-staff/guidance-counselor",
   },
   {
@@ -319,7 +319,7 @@ export const digitalProfessionals: readonly DigitalProfessional[] = [
         relationship: "Permissioned coordination and follow-up",
       },
     ],
-    portrait: portraitPlaceholder("health-advisor"),
+    portrait: portraitAsset("health-advisor"),
     href: "/dashboard/digital-staff/health-advisor",
   },
 ];
