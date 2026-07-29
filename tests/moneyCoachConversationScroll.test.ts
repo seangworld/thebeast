@@ -54,7 +54,7 @@ test("Money Coach removes unrestricted composer focus behavior", () => {
 });
 
 test("BM-305A keeps one bounded responsive conversation viewport", () => {
-  assert.match(source, /h-\[36rem\]/);
+  assert.match(source, /h-\[30rem\]/);
   assert.match(workspace, /h-full overflow-y-auto/);
   assert.match(workspace, /max-w-3xl/);
   assert.match(workspace, /sm:px-4/);

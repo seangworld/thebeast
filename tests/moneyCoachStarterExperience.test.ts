@@ -11,9 +11,10 @@ test("BM-306 presents a bounded personalized start state instead of a blank conv
   assert.match(workspaceSource, /Suggested Questions/);
   assert.match(workspaceSource, /MorningFinancialBriefingPanel/);
   assert.doesNotMatch(workspaceSource, /reviewIntroduction/);
-  assert.match(workspaceSource, /min-h-12/);
+  assert.match(workspaceSource, /min-h-11/);
   assert.match(workspaceSource, /sm:grid-cols-2/);
-  assert.match(workspaceSource, /xl:grid-cols-3/);
+  assert.match(workspaceSource, /xl:grid-cols-4/);
+  assert.match(workspaceSource, /Ask Money Coach/);
 });
 
 test("BM-306 consumes AGENT-215 personalization rather than defining another ranking engine", () => {

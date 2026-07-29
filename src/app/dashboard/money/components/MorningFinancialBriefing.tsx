@@ -14,7 +14,7 @@ export function MorningFinancialBriefingPanel({
   return (
     <details
       open={defaultOpen}
-      className="rounded-2xl border border-cyan-300/15 bg-cyan-300/[0.05] p-4 sm:p-5"
+      className="rounded-2xl border border-cyan-300/15 bg-cyan-300/[0.05] p-4"
       data-money-morning-briefing="true"
     >
       <summary className="cursor-pointer list-none rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300">
@@ -23,10 +23,10 @@ export function MorningFinancialBriefingPanel({
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-300">
               Since your last review
             </p>
-            <h2 className="mt-2 text-lg font-black text-white">
+            <h2 className="mt-1 text-lg font-black text-white">
               Daily Briefing
             </h2>
-            <p className="mt-1 text-sm leading-6 text-slate-300">
+            <p className="mt-1 text-sm leading-5 text-slate-300">
               {briefing.summary}
             </p>
           </div>
@@ -34,18 +34,18 @@ export function MorningFinancialBriefingPanel({
             className="mt-1 shrink-0 rounded-full border border-white/10 px-3 py-1 text-[10px] font-bold uppercase text-slate-400"
             aria-hidden="true"
           >
-            Expand
+            Review
           </span>
         </div>
       </summary>
 
-      <div className="mt-5 border-t border-white/10 pt-4">
+      <div className="mt-3 border-t border-white/10 pt-3">
         {briefing.items.length ? (
-          <ul className="grid gap-3">
+          <ul className="grid gap-1 sm:grid-cols-2">
             {briefing.items.map((item) => (
               <li key={item.id}>
                 <Link
-                  className="block min-h-11 rounded-xl px-3 py-2 text-sm leading-6 text-slate-300 transition hover:bg-white/[0.05] focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300"
+                  className="block min-h-11 rounded-lg px-2.5 py-2 text-xs leading-5 text-slate-300 transition hover:bg-white/[0.05] focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300"
                   href={conversationHref(item.conversationPrompt)}
                 >
                   <span className="font-bold text-white">{item.title}.</span>{" "}
@@ -63,25 +63,25 @@ export function MorningFinancialBriefingPanel({
           </p>
         )}
 
-        <div className="mt-5 rounded-xl bg-black/20 p-4">
+        <div className="mt-3 rounded-xl bg-black/20 p-3">
           <p className="text-[10px] font-black uppercase tracking-[0.15em] text-cyan-300">
             Recommended focus
           </p>
-          <p className="mt-2 font-bold text-white">
+          <p className="mt-1 font-bold text-white">
             {briefing.recommendedFocus.title}
           </p>
-          <p className="mt-1 text-sm leading-6 text-slate-300">
+          <p className="mt-1 text-xs leading-5 text-slate-300">
             {briefing.recommendedFocus.detail}
           </p>
           <Link
             href={conversationHref(briefing.recommendedFocus.conversationPrompt)}
-            className="mt-3 inline-flex min-h-11 items-center font-bold text-cyan-200"
+            className="mt-2 inline-flex min-h-11 items-center text-sm font-bold text-cyan-200"
           >
             Discuss with Money Coach <span aria-hidden="true" className="ml-2">→</span>
           </Link>
         </div>
 
-        <p className="mt-4 text-xs leading-5 text-slate-500">
+        <p className="mt-3 text-[11px] leading-5 text-slate-500">
           Data freshness: {briefing.freshness.label}.{" "}
           {briefing.freshness.confidenceNote}
         </p>

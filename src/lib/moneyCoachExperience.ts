@@ -103,6 +103,7 @@ export type MoneyCoachExperienceModel = {
     projectedSurplus: number;
     monthlyIncome: number;
     monthlyOutflow: number;
+    totalDebt: number;
     billsDueSoon: readonly { name: string; amount: number; dueDate: string; status?: string; incomePot?: string }[];
     upcomingIncome: readonly { name: string; amount: number; date?: string }[];
     debts: readonly { name: string; balance: number; minimumPayment: number; interestRate: number; minimumPaymentKnown?: boolean; interestRateKnown?: boolean }[];
@@ -722,6 +723,7 @@ export function buildMoneyCoachExperience(
       projectedSurplus: input.projectedSurplus,
       monthlyIncome: input.monthlyIncome,
       monthlyOutflow: input.monthlyOutflow,
+      totalDebt: input.totalDebt,
       billsDueSoon: input.billsDueSoon || [],
       upcomingIncome: input.upcomingIncome || [],
       debts: input.debts || [],

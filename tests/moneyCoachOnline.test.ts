@@ -127,9 +127,9 @@ test("Money Coach UI is bounded to suggested questions and explicit lifecycle de
   assert.doesNotMatch(source, /AgentConversationInput/);
   assert.match(source, /does not provide an unrestricted chat input/);
   assert.match(source, /Recommendation Cards/);
-  assert.match(source, /Changes Since Last Visit/);
+  assert.match(source, /MorningFinancialBriefingPanel/);
+  assert.match(source, /Executive Briefing/);
   assert.match(source, /Learning from Outcomes/);
   assert.match(source, /recordOutcome/);
   assert.match(source, /SupabaseExecutionHistoryStore/);
 });
-

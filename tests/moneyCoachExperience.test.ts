@@ -146,7 +146,7 @@ test("MC-201 consumes the shared AgentExperience without replacing existing page
   assert.match(component, /Delete/);
   assert.match(component, /Review durable memories/);
   assert.match(workspace, /lg:grid-cols-\[18rem_minmax\(0,1fr\)\]/);
-  assert.match(component, /h-\[36rem\]/);
+  assert.match(component, /h-\[30rem\]/);
   assert.match(workspace, /data-professional-active-scroll="true"/);
   assert.match(component, /data-money-coach-history-list="true"/);
   assert.match(workspace, /overflow-y-auto/);
@@ -155,6 +155,11 @@ test("MC-201 consumes the shared AgentExperience without replacing existing page
   assert.match(workspace, /aria-modal="true"/);
   assert.match(component, /Suggested Questions/);
   assert.match(component, /Active Money Coach conversation/);
+  assert.match(component, /Financial Snapshot/);
+  assert.match(component, /Future Planning/);
+  assert.match(component, /How is my score calculated\?/);
+  assert.match(component, /data-financial-health-formula="true"/);
+  assert.match(component, /Ask Money Coach/);
   assert.match(component, /Pinned Conversations/);
   assert.match(component, /Recent Conversations/);
   assert.match(component, /archivedThreads/);
