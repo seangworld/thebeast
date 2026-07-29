@@ -216,10 +216,11 @@ test("G2.3.1 registers with BeastAgents and preserves owner-scoped long-term mem
 test("BeastEducation is canonical while legacy learning routes remain compatible", () => {
   assert.equal(beastLearningNavigation.label, "BeastEducation");
   assert.equal(beastLearningNavigation.href, "/dashboard/education");
-  assert.equal(memberBeastEducationNavigation.children?.[0]?.label, "Guidance Counselor");
+  assert.equal(memberBeastEducationNavigation.children?.[0]?.label, "Dashboard");
+  assert.equal(memberBeastEducationNavigation.children?.[1]?.label, "Guidance Counselor");
   assert.equal(beastModuleRegistry.find((module) => module.identifier === "learning")?.name, "BeastEducation");
   assert.match(readFileSync("src/app/dashboard/education/page.tsx", "utf8"), /learning\/page/);
-  assert.match(readFileSync("src/app/dashboard/education/goals/page.tsx", "utf8"), /learning\/goals\/page/);
+  assert.match(readFileSync("src/app/dashboard/education/goals/page.tsx", "utf8"), /dashboard\/goals\?module=education/);
   assert.match(readFileSync("src/app/dashboard/education/activities\/[activityId]\/page.tsx", "utf8"), /learning\/activities\/\[activityId\]\/page/);
-  assert.match(readFileSync("src/app/dashboard/learning/page.tsx", "utf8"), /guidanceDiscoveryProfileFromRow/);
+  assert.match(readFileSync("src/app/dashboard/learning/page.tsx", "utf8"), /mode="dashboard"/);
 });

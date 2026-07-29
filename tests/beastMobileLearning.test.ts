@@ -164,7 +164,7 @@ test("BF-MOB-006 builds review reminders and confidence reflection without mutat
 });
 
 test("BF-MOB-006 keeps mobile Learning cards narrow and desktop Learning page intact", () => {
-  const learningPage = readFileSync("src/app/dashboard/learning/page.tsx", "utf8");
+  const learningPage = readFileSync("src/app/dashboard/learning/LegacyLearningDashboard.tsx", "utf8");
   const mobileLearning = readFileSync("src/lib/mobileLearning.ts", "utf8");
   const globalStyles = readFileSync("src/app/globals.css", "utf8");
 

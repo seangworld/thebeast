@@ -147,18 +147,18 @@ export const beastLearningNavigation: ModuleNavSection = {
   href: "/dashboard/education",
   module: "learning",
   children: [
-    { label: "Guidance Counselor", href: "/dashboard/education" },
+    { label: "Dashboard", href: "/dashboard/education" },
+    {
+      label: "Guidance Counselor",
+      href: "/dashboard/education/guidance-counselor",
+    },
     { label: "Educational Roadmap", href: "/dashboard/education/educational-roadmap" },
     { label: "Career Planning", href: "/dashboard/education/career-planning" },
     { label: "Schools", href: "/dashboard/education/schools" },
     { label: "Scholarships", href: "/dashboard/education/scholarships" },
     { label: "Certifications", href: "/dashboard/education/certifications" },
     { label: "Skills", href: "/dashboard/education/skills" },
-    { label: "Achievements", href: "/dashboard/education/achievements" },
     { label: "Reports", href: "/dashboard/education/reports" },
-    { label: "Courses", href: "/dashboard/education/courses", secondary: true },
-    { label: "Tutor", href: "/dashboard/education/tutor", secondary: true },
-    { label: "Lesson History", href: "/dashboard/education/lesson-history", secondary: true },
   ],
 };
 
@@ -167,18 +167,18 @@ export const memberBeastEducationNavigation: ModuleNavSection = {
   href: "/dashboard/education",
   module: "learning",
   children: [
-    { label: "Guidance Counselor", href: "/dashboard/education" },
+    { label: "Dashboard", href: "/dashboard/education" },
+    {
+      label: "Guidance Counselor",
+      href: "/dashboard/education/guidance-counselor",
+    },
     { label: "Educational Roadmap", href: "/dashboard/education/educational-roadmap" },
     { label: "Career Planning", href: "/dashboard/education/career-planning" },
     { label: "Schools", href: "/dashboard/education/schools" },
     { label: "Scholarships", href: "/dashboard/education/scholarships" },
     { label: "Certifications", href: "/dashboard/education/certifications" },
     { label: "Skills", href: "/dashboard/education/skills" },
-    { label: "Achievements", href: "/dashboard/education/achievements" },
     { label: "Reports", href: "/dashboard/education/reports" },
-    { label: "Courses", href: "/dashboard/education/courses", secondary: true },
-    { label: "Tutor", href: "/dashboard/education/tutor", secondary: true },
-    { label: "Lesson History", href: "/dashboard/education/lesson-history", secondary: true },
   ],
 };
 

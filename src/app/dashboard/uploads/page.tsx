@@ -80,9 +80,20 @@ async function getDocumentLoadResult(): Promise<DocumentLoadResult> {
   }
 }
 
-export default async function UploadsPage() {
+export default async function UploadsPage({
+  searchParams,
+}: {
+  searchParams?: { module?: string };
+}) {
   const documentLoadResult = await getDocumentLoadResult();
-  const documents = documentLoadResult.documents;
+  const educationFilter = searchParams?.module === "education";
+  const documents = educationFilter
+    ? documentLoadResult.documents.filter(
+        (document) =>
+          document.sourceModule === "learning" ||
+          document.moduleLinks.some((link) => link.sourceModule === "learning")
+      )
+    : documentLoadResult.documents;
   const folders = documentLoadResult.folders;
   const collections = documentLoadResult.collections;
   const summary = summarizeDocuments(documents);
@@ -101,6 +112,12 @@ export default async function UploadsPage() {
           description="Documents are shared Personal Hub records owned by BeastOS. Modules can reference files without owning the document."
           action={<ModuleBadge module="beastos" label="BeastOS Owned" />}
         />
+        {educationFilter ? (
+          <div className="rounded-xl border border-indigo-300/20 bg-indigo-300/[0.07] p-4 text-sm leading-6 text-indigo-50">
+            Showing BeastOS documents connected to BeastEducation. New files
+            remain owned by the shared Documents service.
+          </div>
+        ) : null}
 
         <section
           id="mobile-quick-upload"

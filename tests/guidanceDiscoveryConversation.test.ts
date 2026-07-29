@@ -11,7 +11,10 @@ const conversation = readFileSync(
   "src/app/dashboard/learning/GuidanceCounselorConversation.tsx",
   "utf8"
 );
-const page = readFileSync("src/app/dashboard/learning/page.tsx", "utf8");
+const page = readFileSync(
+  "src/app/dashboard/learning/BeastEducationExperience.tsx",
+  "utf8"
+);
 const migration = readFileSync(
   "supabase/migrations/20260724000300_add_guidance_discovery_profile_fields.sql",
   "utf8"
@@ -90,7 +93,7 @@ test("BE-216 persists discovery behind the conversation with owner isolation", (
 
 test("BE-216 reuses saved discovery context in conversation and guidance", () => {
   assert.match(page, /guidanceDiscoveryProfileFromRow/);
-  assert.match(page, /initialProfile=\{guidanceDiscoveryProfile\}/);
+  assert.match(page, /initialProfile=\{profile\}/);
   assert.match(conversation, /What I Know/);
   assert.match(conversation, /What I Think/);
   assert.match(conversation, /What I Still Need/);

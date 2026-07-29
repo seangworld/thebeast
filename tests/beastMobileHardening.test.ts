@@ -41,7 +41,7 @@ test("BF-MOB-008 hardens mobile shell accessibility safe areas and overflow", ()
   const layout = readFileSync("src/app/dashboard/layout.tsx", "utf8");
   const css = readFileSync("src/app/globals.css", "utf8");
   const dashboard = readFileSync("src/app/dashboard/page.tsx", "utf8");
-  const learning = readFileSync("src/app/dashboard/learning/page.tsx", "utf8");
+  const learning = readFileSync("src/app/dashboard/learning/LegacyLearningDashboard.tsx", "utf8");
   const money = readFileSync("src/app/dashboard/money/components/MoneyWorkspacePage.tsx", "utf8");
 
   assert.match(layout, /data-mobile-runtime-state=\{mobileRuntimeState\.banner\.kind\.toLowerCase\(\)\}/);

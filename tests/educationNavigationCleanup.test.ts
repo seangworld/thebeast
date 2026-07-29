@@ -24,6 +24,7 @@ test("BE-211 removes duplicated Mission Control returns from workspace chrome", 
 
 test("BE-211 keeps every workspace reachable through persistent navigation", () => {
   for (const destination of [
+    "Dashboard",
     "Guidance Counselor",
     "Educational Roadmap",
     "Career Planning",
@@ -31,11 +32,7 @@ test("BE-211 keeps every workspace reachable through persistent navigation", () 
     "Scholarships",
     "Certifications",
     "Skills",
-    "Achievements",
     "Reports",
-    "Courses",
-    "Tutor",
-    "Lesson History",
   ]) {
     assert.match(navigation, new RegExp(`label: "${destination}"`));
   }

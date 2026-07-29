@@ -80,7 +80,7 @@ test("BO-311 modules reference BeastOS identity without owning shared profile wr
     "utf8"
   );
   const education = readFileSync(
-    "src/app/dashboard/learning/page.tsx",
+    "src/app/dashboard/learning/BeastEducationExperience.tsx",
     "utf8"
   );
   const moduleSources = [

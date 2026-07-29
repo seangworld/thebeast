@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-const page = readFileSync("src/app/dashboard/learning/page.tsx", "utf8");
+const page = readFileSync("src/app/dashboard/learning/LegacyLearningDashboard.tsx", "utf8");
 const orientation = readFileSync(
   "src/app/dashboard/learning/GuidanceCounselorOrientation.tsx",
   "utf8"

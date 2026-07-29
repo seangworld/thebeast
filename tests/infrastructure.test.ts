@@ -596,6 +596,7 @@ test("module navigation centralizes expandable child items", () => {
   assert.deepEqual(
     beastLearningNavigation.children?.map((item) => item.label),
     [
+      "Dashboard",
       "Guidance Counselor",
       "Educational Roadmap",
       "Career Planning",
@@ -603,15 +604,11 @@ test("module navigation centralizes expandable child items", () => {
       "Scholarships",
       "Certifications",
       "Skills",
-      "Achievements",
       "Reports",
-      "Courses",
-      "Tutor",
-      "Lesson History",
     ]
   );
   assert.equal(
-    beastLearningNavigation.children?.[1].href,
+    beastLearningNavigation.children?.[2].href,
     "/dashboard/education/educational-roadmap"
   );
   assert.equal(beastMoneyNavigation.label, "BeastMoney");
@@ -619,7 +616,7 @@ test("module navigation centralizes expandable child items", () => {
     beastMoneyNavigation.children?.map((item) => item.label).join(","),
     "Dashboard,Money Coach,Cash Flow,Income,Expenses,Payoff Plan,Strategies,Timeline,Retirement,Documents,Reports"
   );
-  assert.equal(getModuleChildren("learning").length, 12);
+  assert.equal(getModuleChildren("learning").length, 9);
   const moneyChildren = getModuleChildren("money");
   const addBill = moneyChildren.find((item) => item.label === "Add Bill");
   const addDebt = moneyChildren.find((item) => item.label === "Add Debt");
@@ -3041,7 +3038,7 @@ test("profile display name prefers profile names before username and email", () 
 
 test("today and learning avoid fallback-name flash while profile resolves", () => {
   const todaySource = readFileSync("src/app/dashboard/today/page.tsx", "utf8");
-  const learningSource = readFileSync("src/app/dashboard/learning/page.tsx", "utf8");
+  const learningSource = readFileSync("src/app/dashboard/learning/LegacyLearningDashboard.tsx", "utf8");
 
   assert.match(todaySource, /name: ""/);
   assert.match(todaySource, /state\.name \? `\$\{getBeastGreeting\(now\)\}, \$\{state\.name\}` : "Today"/);
@@ -3370,7 +3367,7 @@ test("learning activities have a dedicated runner and next-activity unlock logic
 });
 
 test("BeastEducation member home starts with Guidance Counselor before dashboard support", () => {
-  const learningPage = readFileSync("src/app/dashboard/learning/page.tsx", "utf8");
+  const learningPage = readFileSync("src/app/dashboard/learning/LegacyLearningDashboard.tsx", "utf8");
   const recommendation = readFileSync(
     "src/app/dashboard/learning/GuidanceCounselorRecommendation.tsx",
     "utf8"
@@ -3418,30 +3415,27 @@ test("BeastEducation member home starts with Guidance Counselor before dashboard
   assert.match(lessonEngine, /Conversation-first learning session/);
 });
 
-test("BeastEducation v2 keeps normal learning in the Guidance Counselor conversation", () => {
-  const learningPage = readFileSync("src/app/dashboard/learning/page.tsx", "utf8");
-  const recommendation = readFileSync(
-    "src/app/dashboard/learning/GuidanceCounselorRecommendation.tsx",
+test("BP-400 keeps teaching implementation preserved but outside Generation 1 navigation", () => {
+  const learningPage = readFileSync(
+    "src/app/dashboard/learning/LegacyLearningDashboard.tsx",
     "utf8"
   );
-  const todayPage = readFileSync("src/app/dashboard/today/page.tsx", "utf8");
-  const dashboardLayout = readFileSync("src/app/dashboard/layout.tsx", "utf8");
+  const educationExperience = readFileSync(
+    "src/app/dashboard/learning/BeastEducationExperience.tsx",
+    "utf8"
+  );
   const moduleNavigation = readFileSync("src/lib/moduleNavigation.ts", "utf8");
-  const mentorHome = readFileSync("src/lib/learning/mentorHome.ts", "utf8");
 
-  assert.match(recommendation, /id="mentor-session"/);
-  assert.match(recommendation, /mission\.primaryAction\.href/);
-  assert.match(recommendation, /mission\.primaryAction\.label/);
-  assert.match(mentorHome, /Start mission/);
   assert.match(learningPage, /Everything else stays available/);
-  assert.doesNotMatch(learningPage, /getLearningActivityRoute\(learningPathReadyActivity\.id\)/);
-  assert.equal(learningPage.includes("Open full Tutor workspace"), false);
-  assert.match(todayPage, /href="\/dashboard\/education#mentor-session"[\s\S]*Continue with Guidance Counselor/);
-  assert.match(dashboardLayout, /href: "\/dashboard\/education#mentor-session"/);
-  assert.match(dashboardLayout, /label: "Guidance Counselor"/);
-  assert.match(dashboardLayout, /label: "My Roadmap"/);
-  assert.match(dashboardLayout, /label: "Progress"/);
-  assert.match(moduleNavigation, /label: "Tutor", href: "\/dashboard\/education\/tutor", secondary: true/);
+  assert.match(educationExperience, /mode === "guidance-counselor"/);
+  assert.match(
+    moduleNavigation,
+    /label: "Guidance Counselor",\s+href: "\/dashboard\/education\/guidance-counselor"/
+  );
+  assert.doesNotMatch(
+    moduleNavigation,
+    /label: "Tutor", href: "\/dashboard\/education\/tutor"/
+  );
   assert.doesNotMatch(moduleNavigation, /label: "Continue", href: "\/dashboard\/learning\/activities"/);
 });
 
@@ -3470,7 +3464,7 @@ test("authentication presents one permission-aware Beast platform entry point", 
 });
 
 test("BeastEducation member experience hides workflow mechanics behind Guidance Counselor and Tutor language", () => {
-  const learningPage = readFileSync("src/app/dashboard/learning/page.tsx", "utf8");
+  const learningPage = readFileSync("src/app/dashboard/learning/LegacyLearningDashboard.tsx", "utf8");
   const activitiesPage = readFileSync(
     "src/app/dashboard/learning/activities/page.tsx",
     "utf8"
@@ -3548,7 +3542,7 @@ test("guided learning sessions keep Guidance Counselor lifecycle Tutor handoff a
 });
 
 test("Guidance Counselor-first integration includes confidence timeline memory and weekly review", () => {
-  const learningPage = readFileSync("src/app/dashboard/learning/page.tsx", "utf8");
+  const learningPage = readFileSync("src/app/dashboard/learning/LegacyLearningDashboard.tsx", "utf8");
   const confidence = readFileSync("src/lib/learning/confidenceIntelligence.ts", "utf8");
   const timeline = readFileSync("src/lib/learning/learningTimeline.ts", "utf8");
   const weeklyReview = readFileSync("src/lib/learning/weeklyMentorReview.ts", "utf8");
@@ -3614,7 +3608,7 @@ test("generated learning activities persist with required visibility fields", ()
     "src/app/dashboard/learning/goals/LearningGoalsManager.tsx",
     "utf8"
   );
-  const learningPage = readFileSync("src/app/dashboard/learning/page.tsx", "utf8");
+  const learningPage = readFileSync("src/app/dashboard/learning/LegacyLearningDashboard.tsx", "utf8");
   const recommendation = readFileSync(
     "src/app/dashboard/learning/GuidanceCounselorRecommendation.tsx",
     "utf8"
@@ -4972,7 +4966,7 @@ test("teaching intelligence keeps learner-facing diagnostics subject-first", () 
     readFileSync("src/lib/learning/mentorHome.ts", "utf8"),
     readFileSync("src/lib/learning/guidedSession.ts", "utf8"),
     readFileSync("src/app/dashboard/learning/LearningGoalBuilder.tsx", "utf8"),
-    readFileSync("src/app/dashboard/learning/page.tsx", "utf8"),
+    readFileSync("src/app/dashboard/learning/LegacyLearningDashboard.tsx", "utf8"),
   ].join("\n");
 
   [
@@ -5898,6 +5892,7 @@ test("member navigation hides admin and monetization surfaces", () => {
   assert.deepEqual(
     memberBeastEducationNavigation.children?.map((item) => item.label),
     [
+      "Dashboard",
       "Guidance Counselor",
       "Educational Roadmap",
       "Career Planning",
@@ -5905,28 +5900,21 @@ test("member navigation hides admin and monetization surfaces", () => {
       "Scholarships",
       "Certifications",
       "Skills",
-      "Achievements",
       "Reports",
-      "Courses",
-      "Tutor",
-      "Lesson History",
     ]
   );
   assert.deepEqual(
     memberBeastEducationNavigation.children?.map((item) => item.href),
     [
       "/dashboard/education",
+      "/dashboard/education/guidance-counselor",
       "/dashboard/education/educational-roadmap",
       "/dashboard/education/career-planning",
       "/dashboard/education/schools",
       "/dashboard/education/scholarships",
       "/dashboard/education/certifications",
       "/dashboard/education/skills",
-      "/dashboard/education/achievements",
       "/dashboard/education/reports",
-      "/dashboard/education/courses",
-      "/dashboard/education/tutor",
-      "/dashboard/education/lesson-history",
     ]
   );
   assert.equal(

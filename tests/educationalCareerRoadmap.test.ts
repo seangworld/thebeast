@@ -56,7 +56,7 @@ test("BE-203 handles missing roadmap context without inventing facts", () => {
 });
 
 test("BE-203 makes the roadmap central to the Guidance Counselor experience", () => {
-  const page = readFileSync("src/app/dashboard/learning/page.tsx", "utf8");
+  const page = readFileSync("src/app/dashboard/learning/LegacyLearningDashboard.tsx", "utf8");
   const view = readFileSync(
     "src/app/dashboard/learning/EducationalCareerRoadmap.tsx",
     "utf8"

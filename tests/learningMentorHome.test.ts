@@ -418,7 +418,7 @@ test("weekly review and meaningful achievements avoid fake trends", () => {
 });
 
 test("BL-46 keeps Guidance Counselor Home accessible on mobile and keyboard paths", () => {
-  const mentorHomeSource = readFileSync("src/app/dashboard/learning/page.tsx", "utf8");
+  const mentorHomeSource = readFileSync("src/app/dashboard/learning/LegacyLearningDashboard.tsx", "utf8");
   const missionControlSource = readFileSync(
     "src/app/dashboard/learning/LearningMissionControl.tsx",
     "utf8"

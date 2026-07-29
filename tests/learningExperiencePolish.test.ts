@@ -37,7 +37,7 @@ test("BL-410 aligns lesson loading reflection and module responsiveness", () => 
   const activity = source(
     "src/app/dashboard/learning/activities/[activityId]/page.tsx"
   );
-  const landing = source("src/app/dashboard/learning/page.tsx");
+  const landing = source("src/app/dashboard/learning/LegacyLearningDashboard.tsx");
 
   assert.match(activity, /motion-safe:animate-pulse/);
   assert.match(activity, /Loading your guided learning session/);

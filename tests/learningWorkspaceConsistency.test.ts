@@ -39,7 +39,10 @@ test("BL-403 defines every Learning workspace through one configuration", () => 
     assert.ok(definition.title);
     assert.ok(definition.description);
     assert.ok(definition.emptyTitle);
-    assert.match(definition.emptyAction.href, /^\/dashboard\/education/);
+    assert.match(
+      definition.emptyAction.href,
+      /^\/dashboard\/(?:education|goals\?module=education)/
+    );
   }
 });
 
@@ -77,11 +80,7 @@ test("BL-403 navigation exposes canonical workspaces without hash substitutes", 
     "scholarships",
     "certifications",
     "skills",
-    "achievements",
     "reports",
-    "courses",
-    "tutor",
-    "lesson-history",
   ];
   for (const navigation of [
     beastLearningNavigation,

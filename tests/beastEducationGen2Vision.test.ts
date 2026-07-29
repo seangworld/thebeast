@@ -59,8 +59,8 @@ test("BE-201 makes the vision visible without removing existing education routes
   assert.match(commandCenter, /BE-201 · Gen2 vision/);
   assert.match(commandCenter, /Guidance for the whole educational journey/);
   assert.match(commandCenter, /supportingCapabilities\.map/);
-  assert.match(moduleNavigation, /\/dashboard\/education\/courses/);
-  assert.match(moduleNavigation, /\/dashboard\/education\/tutor/);
+  assert.doesNotMatch(moduleNavigation, /\/dashboard\/education\/courses/);
+  assert.doesNotMatch(moduleNavigation, /\/dashboard\/education\/tutor/);
   assert.match(workspaces, /slug: "lessons"/);
   assert.match(workspaces, /slug: "reviews"/);
 });

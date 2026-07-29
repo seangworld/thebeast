@@ -72,7 +72,7 @@ export function buildGuidanceWorkflowRecommendation({
       outcome:
         "We will leave with a goal we can test and refine—not a permanent commitment.",
       actionLabel: "Define a goal with me",
-      href: "/dashboard/education/goals",
+      href: "/dashboard/education/guidance-counselor",
     };
   }
 
@@ -158,16 +158,16 @@ export function buildGuidanceWorkflowRecommendation({
 
   if (activeCourseCount > 0 || openSessionCount > 0) {
     return {
-      action: "tutor",
+      action: "roadmap",
       eyebrow: "From your Guidance Counselor",
-      title: "Let’s bring in your Tutor for the next learning step",
-      introduction: `${name}, the direction and roadmap are in place, and you have active learning ready to continue.`,
+      title: "Let’s connect your current learning to the roadmap",
+      introduction: `${name}, you have learning in progress, so the next useful step is to make sure it still supports the direction we chose.`,
       why:
-        "Tutor support adds value now because there is a specific course or session to work on. The Tutor can teach the next concept while I continue managing the larger plan.",
+        "Current courses and sessions are evidence for planning, but they should not become disconnected activity. Reviewing their purpose keeps the roadmap centered on your larger goal.",
       outcome:
-        "You will work on the immediate learning need, and the result will give me evidence for what should happen next.",
-      actionLabel: "Continue with your Tutor",
-      href: "/dashboard/education/tutor",
+        "We will confirm what the current learning supports and what planning milestone should follow it.",
+      actionLabel: "Review the roadmap",
+      href: "/dashboard/education/educational-roadmap",
     };
   }
 

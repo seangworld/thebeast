@@ -4,21 +4,18 @@ import test from "node:test";
 
 const conversationPath =
   "src/app/dashboard/learning/GuidanceCounselorConversation.tsx";
-const pagePath = "src/app/dashboard/learning/page.tsx";
+const pagePath =
+  "src/app/dashboard/learning/BeastEducationExperience.tsx";
 
 test("BE-202 opens BeastEducation with the Guidance Counselor conversation", () => {
   const page = readFileSync(pagePath, "utf8");
 
   assert.match(page, /<GuidanceCounselorConversation/);
+  assert.ok(page.includes("<GuidanceCounselorConversation"));
   assert.ok(
     page.indexOf("<GuidanceCounselorConversation") <
-      page.indexOf("<LearningMissionControl"),
-    "the conversation should lead the education experience"
-  );
-  assert.ok(
-    page.indexOf("<GuidanceCounselorConversation") <
-      page.indexOf("<GuidanceCounselorRecommendation"),
-    "planning dashboards should follow the primary relationship"
+      page.lastIndexOf("<RecommendationCard recommendation={recommendation}"),
+    "the conversation should lead the counselor workspace"
   );
 });
 
@@ -76,14 +73,10 @@ test("BE-205 presents the relationship before its supporting dashboard", () => {
   assert.match(source, /ProfessionalConversationWorkspace/);
   assert.ok(
     page.indexOf("<GuidanceCounselorConversation") <
-      page.indexOf("<GuidanceCounselorRecommendation"),
+      page.lastIndexOf("<RecommendationCard recommendation={recommendation}"),
     "the conversation should precede the current recommendation"
   );
-  assert.ok(
-    page.indexOf("<GuidanceCounselorRecommendation") <
-      page.indexOf("<EducationalCareerRoadmap"),
-    "the current recommendation and roadmap summary should precede the full roadmap"
-  );
+  assert.match(page, /Open the workspace that owns the next decision/);
   assert.match(recommendation, /Current recommendation/);
   assert.match(recommendation, /Educational Roadmap summary/);
   assert.match(recommendation, /View full roadmap/);

@@ -46,7 +46,7 @@ test("BE-218 starts with a goal instead of exposing unrelated workspaces", () =>
   const result = recommend();
 
   assert.equal(result.action, "goals");
-  assert.equal(result.href, "/dashboard/education/goals");
+  assert.equal(result.href, "/dashboard/education/guidance-counselor");
   assert.match(result.why, /do not know your intended outcome/i);
 });
 
@@ -81,7 +81,7 @@ test("BE-218 introduces planning workspaces only from relevant member context", 
   );
 });
 
-test("BE-218 sequences roadmap before Tutor and Tutor after active learning begins", () => {
+test("BP-400 keeps active learning connected to Roadmap without exposing Tutor", () => {
   const profile = {
     goal: "Move into cybersecurity",
     educationalGoals: ["Build the required foundations"],
@@ -94,7 +94,7 @@ test("BE-218 sequences roadmap before Tutor and Tutor after active learning begi
       hasSavedPlan: true,
       activeCourseCount: 1,
     }).action,
-    "tutor"
+    "roadmap"
   );
 });
 
@@ -139,7 +139,6 @@ test("BE-218 every recommendation explains why and names one action", () => {
       "scholarships",
       "certifications",
       "roadmap",
-      "tutor",
     ])
   );
   for (const result of scenarios) {
@@ -149,17 +148,15 @@ test("BE-218 every recommendation explains why and names one action", () => {
   }
 });
 
-test("BE-218 homepage presents the Counselor decision and keeps the adaptive assignment", () => {
-  const page = readFileSync("src/app/dashboard/learning/page.tsx", "utf8");
+test("BP-400 dashboard presents the Counselor decision without teaching assignments", () => {
   const component = readFileSync(
-    "src/app/dashboard/learning/GuidanceCounselorRecommendation.tsx",
+    "src/app/dashboard/learning/BeastEducationExperience.tsx",
     "utf8"
   );
 
-  assert.match(page, /buildGuidanceWorkflowRecommendation/);
-  assert.match(component, /Why I’m recommending this/);
-  assert.match(component, /nextAction\.href/);
-  assert.match(component, /data-guidance-next-action/);
-  assert.match(component, /Today’s assignment from your Guidance Counselor/);
-  assert.match(component, /mission\.primaryAction\.href/);
+  assert.match(component, /buildGuidanceWorkflowRecommendation/);
+  assert.match(component, /Why this matters/);
+  assert.match(component, /recommendation\.href/);
+  assert.match(component, /data-education-owner="guidance-counselor"/);
+  assert.doesNotMatch(component, /Today’s assignment|mission\.primaryAction/);
 });

@@ -205,9 +205,16 @@ async function getGoalLoadResult(): Promise<GoalLoadResult> {
   }
 }
 
-export default async function GoalsOverviewPage() {
+export default async function GoalsOverviewPage({
+  searchParams,
+}: {
+  searchParams?: { module?: string };
+}) {
   const goalLoadResult = await getGoalLoadResult();
-  const goals = goalLoadResult.goals;
+  const educationFilter = searchParams?.module === "education";
+  const goals = educationFilter
+    ? goalLoadResult.goals.filter((goal) => goal.sourceModule === "learning")
+    : goalLoadResult.goals;
   const summary = summarizeGoals(goals);
   const mobileGoalCards = buildMobileGoalActionCards({ goals, summary });
 
@@ -221,6 +228,13 @@ export default async function GoalsOverviewPage() {
           description="Goals are shared Personal Hub outcomes owned by BeastOS. Modules can contribute progress without owning the goal."
           action={<ModuleBadge module="beastos" label="BeastOS Owned" />}
         />
+        {educationFilter ? (
+          <div className="rounded-xl border border-indigo-300/20 bg-indigo-300/[0.07] p-4 text-sm leading-6 text-indigo-50">
+            Showing goals owned by BeastOS that are connected to
+            BeastEducation. Clear the Education filter to review every shared
+            goal.
+          </div>
+        ) : null}
 
         <section
           className="space-y-3 md:hidden"

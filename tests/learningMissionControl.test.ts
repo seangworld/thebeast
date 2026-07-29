@@ -76,7 +76,7 @@ test("BL-401 renders every requested responsive mission-control surface", () => 
     "src/app/dashboard/learning/LearningMissionControl.tsx",
     "utf8"
   );
-  const page = readFileSync("src/app/dashboard/learning/page.tsx", "utf8");
+  const page = readFileSync("src/app/dashboard/learning/LegacyLearningDashboard.tsx", "utf8");
 
   for (const label of [
     "Learning Health Score",

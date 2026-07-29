@@ -7,6 +7,7 @@ import {
 } from "../src/lib/moduleNavigation";
 
 const primaryLabels = [
+  "Dashboard",
   "Guidance Counselor",
   "Educational Roadmap",
   "Career Planning",
@@ -14,13 +15,12 @@ const primaryLabels = [
   "Scholarships",
   "Certifications",
   "Skills",
-  "Achievements",
   "Reports",
 ];
 
-const secondaryLabels = ["Courses", "Tutor", "Lesson History"];
+const secondaryLabels: string[] = [];
 
-test("BE-204 makes Guidance Counselor architecture the primary navigation", () => {
+test("BP-400 preserves the Guidance Counselor architecture in the approved workspace navigation", () => {
   for (const navigation of [
     beastLearningNavigation,
     memberBeastEducationNavigation,
@@ -38,16 +38,19 @@ test("BE-204 makes Guidance Counselor architecture the primary navigation", () =
   }
 });
 
-test("BE-204 visually separates supporting learning destinations", () => {
-  const layout = readFileSync("src/app/dashboard/layout.tsx", "utf8");
-
-  assert.match(layout, /child\.secondary/);
-  assert.match(layout, /Supporting learning/);
+test("BP-400 hides supporting teaching destinations without deleting their routes", () => {
+  const routeDefinitions = readFileSync("src/lib/learning/workspaces.ts", "utf8");
+  assert.match(routeDefinitions, /tutor:/);
+  assert.match(routeDefinitions, /"lesson-history":/);
+  assert.ok(
+    beastLearningNavigation.children?.every((item) => !item.secondary)
+  );
 });
 
 test("BE-204 has no visible BeastLearning product references", () => {
   const visibleSources = [
     "src/app/dashboard/learning/page.tsx",
+    "src/app/dashboard/learning/BeastEducationExperience.tsx",
     "src/app/dashboard/learning/LearningWorkspaceShell.tsx",
     "src/app/dashboard/learning/LearningWorkspaceView.tsx",
     "src/lib/learning/workspaces.ts",

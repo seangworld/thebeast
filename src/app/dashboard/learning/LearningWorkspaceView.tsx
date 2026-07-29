@@ -18,8 +18,8 @@ import {
   buildLearningChronology,
   type LearningChronologyEvent,
 } from "@/lib/learning/learningChronology";
-import { buildLearningReports } from "@/lib/learning/learningReports";
-import { LearningReports } from "./LearningReports";
+import { buildEducationPlanningReports } from "@/lib/education/planningReports";
+import EducationPlanningReports from "./EducationPlanningReports";
 import { CourseLifecycleCard } from "./CourseLifecycleCard";
 import {
   canRemoveCourse,
@@ -157,6 +157,32 @@ function GoalContextCards({
   items: WorkspaceItem[];
   progressLabel: string;
 }) {
+  if (items.length === 0) {
+    return (
+      <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.035] p-5">
+        <p className="text-sm leading-6 text-[#aeb8c7]">
+          No saved Education goals are available for this planning question
+          yet. Start with the Guidance Counselor or review the shared BeastOS
+          Goals workspace.
+        </p>
+        <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+          <Link
+            href="/dashboard/education/guidance-counselor"
+            className="beast-button-primary inline-flex justify-center"
+          >
+            Talk with Guidance Counselor
+          </Link>
+          <Link
+            href="/dashboard/goals?module=education"
+            className="beast-button-secondary inline-flex justify-center"
+          >
+            Open Education goals
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mt-5 grid gap-4 md:grid-cols-2">
       {items.map((item) => (
@@ -181,7 +207,7 @@ function GoalContextCards({
             </p>
           ) : null}
           <Link
-            href="/dashboard/education/goals"
+            href="/dashboard/goals?module=education"
             className="beast-button-secondary mt-4 inline-flex w-full justify-center sm:w-fit"
           >
             Open goal
@@ -358,6 +384,120 @@ function PlanningWorkspace({
   return <ScholarshipsWorkspace items={items} />;
 }
 
+const educationPlanningDomainContent = {
+  "educational-roadmap": {
+    title: "One evolving sequence from direction to evidence",
+    description:
+      "The roadmap owns the long-term plan. Other workspaces contribute decisions and evidence without recreating it.",
+    areas: [
+      ["Direction", "The education or career outcome the roadmap is intended to support."],
+      ["Sequence", "Prerequisites and decisions organized into now, next, and later."],
+      ["Milestones", "Meaningful checkpoints that show when the plan should advance or change."],
+      ["Timeline", "Known timing, dependencies, and uncertainty without invented dates."],
+    ],
+  },
+  certifications: {
+    title: "Credentials connected to a verified purpose",
+    description:
+      "Certification planning separates relevance, requirements, order, and progress from earned credential evidence.",
+    areas: [
+      ["Purpose", "Why the credential matters for the intended education or career outcome."],
+      ["Requirements", "Official prerequisites, exams, experience, costs, and renewal rules."],
+      ["Order", "Where the credential belongs relative to foundations, experience, and other credentials."],
+      ["Progress", "Verified preparation and earned records without inferring readiness."],
+    ],
+  },
+  skills: {
+    title: "Capabilities the roadmap needs",
+    description:
+      "Skills planning identifies current strengths, gaps, and future capabilities. Teaching remains outside this generation.",
+    areas: [
+      ["Desired skills", "Capabilities connected to the member’s intended direction."],
+      ["Current skills", "Strengths supported by saved work, education, or other evidence."],
+      ["Skill gaps", "Missing capabilities that materially affect the roadmap."],
+      ["Future skills", "Capabilities worth revisiting as goals and requirements change."],
+    ],
+  },
+} as const;
+
+function EducationPlanningDomainWorkspace({
+  slug,
+  items,
+}: {
+  slug: keyof typeof educationPlanningDomainContent;
+  items: WorkspaceItem[];
+}) {
+  const content = educationPlanningDomainContent[slug];
+  const definition = learningWorkspaceDefinitions[slug];
+
+  return (
+    <div className="space-y-6">
+      <section>
+        <SectionHeader
+          eyebrow={definition.eyebrow}
+          title={content.title}
+          description={content.description}
+        />
+        <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {content.areas.map(([title, description], index) => (
+            <DashboardCard key={title} accent="learning" className="min-w-0">
+              <span className="text-xs font-black text-indigo-200">
+                0{index + 1}
+              </span>
+              <h2 className="mt-3 text-lg font-black text-white">{title}</h2>
+              <p className="mt-2 text-sm leading-6 text-[#aeb8c7]">
+                {description}
+              </p>
+            </DashboardCard>
+          ))}
+        </div>
+      </section>
+
+      {items.length === 0 ? (
+        <LearningEmptyState
+          title={definition.emptyTitle}
+          description={definition.emptyDescription}
+          action={definition.emptyAction}
+        />
+      ) : (
+        <section aria-label={`${definition.title} saved records`}>
+          <SectionHeader
+            eyebrow="Authenticated records"
+            title="Saved planning evidence"
+            description="These records support this workspace without duplicating their full detail elsewhere."
+          />
+          <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {items.map((item) => {
+              const action = getWorkspaceRecordAction(slug);
+              return (
+                <DashboardCard key={item.id} accent="learning" className="min-w-0">
+                  {item.status ? (
+                    <span className="rounded-full border border-indigo-300/25 bg-indigo-300/10 px-2.5 py-1 text-xs font-black text-indigo-100">
+                      {item.status}
+                    </span>
+                  ) : null}
+                  <h2 className="mt-4 break-words text-xl font-black text-white">
+                    {item.title}
+                  </h2>
+                  <p className="mt-2 break-words text-sm leading-6 text-[#aeb8c7]">
+                    {item.detail}
+                  </p>
+                  <Link
+                    href={item.href || action.href}
+                    className="beast-button-secondary mt-4 inline-flex w-full justify-center sm:w-fit"
+                  >
+                    {item.href ? "Open verified record" : action.label}
+                  </Link>
+                </DashboardCard>
+              );
+            })}
+          </div>
+        </section>
+      )}
+    </div>
+  );
+}
+
 async function loadLearningChronology(userId: string) {
   const supabase = createRouteClient();
   const [
@@ -405,32 +545,27 @@ async function loadLearningChronology(userId: string) {
   });
 }
 
-async function loadLearningReports(userId: string) {
+async function loadEducationPlanningReports(userId: string) {
   const supabase = createRouteClient();
-  const [history, activities, sessions, courses, achievements, mastery, certificates, goals] =
-    await Promise.all([
-      supabase.from("learning_history").select("*").eq("user_id", userId),
-      supabase.from("learning_activities").select("*").eq("user_id", userId),
-      supabase.from("learning_sessions").select("*").eq("user_id", userId),
-      supabase.from("learning_courses").select("*").eq("user_id", userId),
-      supabase.from("learning_achievements").select("*").eq("user_id", userId),
-      supabase.from("learning_mastery").select("*").eq("user_id", userId),
-      supabase.from("learning_certificates").select("*").eq("user_id", userId),
-      supabase.from("learning_goals").select("*").eq("user_id", userId),
-    ]);
-  const results = [history, activities, sessions, courses, achievements, mastery, certificates, goals];
+  const [profile, goals, plans, certificates] = await Promise.all([
+    supabase.from("education_profiles").select("*").eq("owner_id", userId).maybeSingle(),
+    supabase.from("learning_goals").select("*").eq("user_id", userId),
+    supabase.from("learning_plans").select("*").eq("user_id", userId),
+    supabase.from("learning_certificates").select("*").eq("user_id", userId),
+  ]);
+  const results = [profile, goals, plans, certificates];
   const failure = results.find((result) => result.error)?.error;
-  if (failure) throw new Error(`Unable to load Learning Reports: ${failure.message}`);
+  if (failure) {
+    throw new Error(
+      `Unable to load BeastEducation planning reports: ${failure.message}`
+    );
+  }
 
-  return buildLearningReports({
-    history: history.data || [],
-    activities: activities.data || [],
-    sessions: sessions.data || [],
-    courses: courses.data || [],
-    achievements: achievements.data || [],
-    mastery: mastery.data || [],
-    certificates: certificates.data || [],
+  return buildEducationPlanningReports({
+    profileRow: profile.data as Record<string, unknown> | null,
     goals: goals.data || [],
+    plans: plans.data || [],
+    certificates: certificates.data || [],
   });
 }
 
@@ -515,7 +650,8 @@ export default async function LearningWorkspaceView({ slug }: { slug: string }) 
   const timeline = slug === "history" || slug === "lesson-history"
     ? await loadLearningChronology(user.id)
     : null;
-  const reports = slug === "reports" ? await loadLearningReports(user.id) : null;
+  const reports =
+    slug === "reports" ? await loadEducationPlanningReports(user.id) : null;
   const items = timeline || reports ? [] : await loadWorkspaceItems(slug, user.id);
 
   return (
@@ -524,10 +660,14 @@ export default async function LearningWorkspaceView({ slug }: { slug: string }) 
       description={definition.description}
       eyebrow={definition.eyebrow}
     >
-      {isPlanningWorkspaceSlug(slug) && items.length > 0 ? (
+      {isPlanningWorkspaceSlug(slug) ? (
         <PlanningWorkspace slug={slug} items={items} />
+      ) : slug === "educational-roadmap" ||
+        slug === "certifications" ||
+        slug === "skills" ? (
+        <EducationPlanningDomainWorkspace slug={slug} items={items} />
       ) : reports ? (
-        <LearningReports bundle={reports} />
+        <EducationPlanningReports bundle={reports} />
       ) : timeline && timeline.length > 0 ? (
         <LearningTimeline events={timeline} />
       ) : items.length === 0 ? (
@@ -616,7 +756,7 @@ export default async function LearningWorkspaceView({ slug }: { slug: string }) 
                       className="beast-button-secondary mt-auto inline-flex w-full justify-center sm:w-fit"
                     >
                       {item.href
-                        ? slug === "certificates" || slug === "certifications"
+                        ? slug === "certificates"
                           ? "Open certificate"
                           : "Open learning activity"
                         : contextualAction.label}

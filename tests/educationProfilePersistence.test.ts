@@ -11,7 +11,10 @@ const component = readFileSync(
   "src/app/dashboard/learning/EducationCommandCenter.tsx",
   "utf8"
 );
-const page = readFileSync("src/app/dashboard/learning/page.tsx", "utf8");
+const page = readFileSync(
+  "src/app/dashboard/learning/BeastEducationExperience.tsx",
+  "utf8"
+);
 const saveHook = readFileSync(
   "src/lib/platform/useProgressiveSave.ts",
   "utf8"
@@ -59,8 +62,8 @@ test("BE-215 reload restores every saved value including selections", () => {
   assert.equal(restored.weeklyHours, 0);
   assert.deepEqual(restored.answers, { direction: "Security engineering" });
   assert.deepEqual(restored.selectedProviders, ["Microsoft Learn", "Books"]);
-  assert.match(page, /educationProfileDraftFromRow/);
-  assert.match(page, /initialProfile=\{guidanceDiscoveryProfile\}/);
+  assert.match(page, /guidanceDiscoveryProfileFromRow/);
+  assert.match(page, /initialProfile=\{profile\}/);
 });
 
 test("BE-215 persistence payload includes all rendered profile fields", () => {
@@ -116,8 +119,8 @@ test("BE-215 hydration cannot overwrite saved data", () => {
 
 test("BE-215 refreshes Guidance Counselor context after save", () => {
   assert.match(component, /router\.refresh\(\)/);
-  assert.match(page, /educationProfile\.goal/);
-  assert.match(page, /educationProfile\.strengths/);
-  assert.match(page, /educationProfile\.currentSituation/);
-  assert.match(page, /careerInterests: \[activeLearner\.focus, educationProfile\.goal\]/);
+  assert.match(page, /profile\.goal/);
+  assert.match(page, /profile\.strengths/);
+  assert.match(page, /profile\.currentSituation/);
+  assert.match(page, /careerInterests: profile\.careerInterests/);
 });

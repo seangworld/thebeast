@@ -101,7 +101,7 @@ test("BL-407 reports missing evidence honestly instead of fabricating progress",
 
 test("BL-407 exposes print export owner scoping responsive layout and navigation", () => {
   const component = readFileSync(
-    "src/app/dashboard/learning/LearningReports.tsx",
+    "src/app/dashboard/learning/EducationPlanningReports.tsx",
     "utf8"
   );
   const view = readFileSync(
@@ -111,11 +111,11 @@ test("BL-407 exposes print export owner scoping responsive layout and navigation
 
   assert.match(component, /window\.print\(\)/);
   assert.match(component, /JSON\.stringify\(bundle/);
-  assert.match(component, /beastlearning-reports-/);
+  assert.match(component, /beasteducation-planning-reports-/);
   assert.match(component, /xl:grid-cols-2/);
   assert.match(component, /print:break-inside-avoid/);
-  assert.match(component, /aria-label="Print Learning Reports"/);
-  assert.match(component, /aria-label="Export Learning Reports"/);
+  assert.match(component, /Print reports/);
+  assert.match(component, /Export reports/);
   assert.match(view, /\.eq\("user_id", userId\)/);
   for (const navigation of [
     beastLearningNavigation,

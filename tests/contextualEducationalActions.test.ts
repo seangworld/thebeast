@@ -37,7 +37,7 @@ test("BE-219 makes every roadmap section lead to a contextual next action", () =
     getRoadmapCardAction(roadmapSection("college-planning", "needs-context")),
     {
       label: "Discuss with Counselor",
-      href: "/dashboard/education#mentor-session",
+      href: "/dashboard/education/guidance-counselor",
     }
   );
 });
@@ -53,12 +53,12 @@ test("BE-219 gives every supporting learning access card a real route", () => {
   ]);
   for (const action of Object.values(learningAccessActions)) {
     assert.ok(action.label);
-    assert.match(action.href, /^\/dashboard\/education/);
+    assert.match(action.href, /^\/dashboard\/(?:education|goals\?module=education)/);
   }
 });
 
 test("BE-219 contextualizes goal certification course and weak-area actions", () => {
-  const page = readFileSync("src/app/dashboard/learning/page.tsx", "utf8");
+  const page = readFileSync("src/app/dashboard/learning/LegacyLearningDashboard.tsx", "utf8");
   const mission = readFileSync(
     "src/app/dashboard/learning/LearningMissionControl.tsx",
     "utf8"

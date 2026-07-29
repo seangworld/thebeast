@@ -11,7 +11,7 @@ const roadmapActions: Record<
 > = {
   "current-grade": {
     label: "Discuss with Counselor",
-    href: "/dashboard/education#mentor-session",
+    href: "/dashboard/education/guidance-counselor",
   },
   "academic-progress": {
     label: "Review progress",
@@ -35,7 +35,7 @@ const roadmapActions: Record<
   },
   "high-school-planning": {
     label: "Discuss next step",
-    href: "/dashboard/education#mentor-session",
+    href: "/dashboard/education/guidance-counselor",
   },
   "college-planning": {
     label: "Build school criteria",
@@ -53,7 +53,7 @@ export function getRoadmapCardAction(
   if (section.status === "needs-context") {
     return {
       label: "Discuss with Counselor",
-      href: "/dashboard/education#mentor-session",
+      href: "/dashboard/education/guidance-counselor",
     };
   }
   return roadmapActions[section.id];
@@ -62,7 +62,7 @@ export function getRoadmapCardAction(
 export const learningAccessActions = {
   goals: {
     label: "Open goals",
-    href: "/dashboard/education/goals",
+    href: "/dashboard/goals?module=education",
   },
   "study-plan": {
     label: "Continue planning",
@@ -102,7 +102,10 @@ export function getWorkspaceRecordAction(
     };
   }
   if (workspace === "skills") {
-    return { label: "Practice with Tutor", href: "/dashboard/education/tutor" };
+    return {
+      label: "Review with Guidance Counselor",
+      href: "/dashboard/education/guidance-counselor",
+    };
   }
   if (workspace === "tutor") {
     return { label: "Continue with Tutor", href: "/dashboard/education/tutor" };
@@ -113,7 +116,7 @@ export function getWorkspaceRecordAction(
   if (workspace === "achievements") {
     return {
       label: "Continue learning",
-      href: "/dashboard/education#mentor-session",
+      href: "/dashboard/education/guidance-counselor",
     };
   }
   return {

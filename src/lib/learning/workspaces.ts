@@ -147,7 +147,7 @@ export const learningWorkspaceDefinitions: Record<
     description: "Review the evolving education and career plan your Guidance Counselor maintains with you.",
     emptyTitle: "Your lifelong roadmap is ready to begin",
     emptyDescription: "Talk with your Guidance Counselor to connect your current stage, interests, possible pathways, and long-term goals.",
-    emptyAction: { label: "Talk with your Guidance Counselor", href: "/dashboard/education" },
+    emptyAction: { label: "Talk with your Guidance Counselor", href: "/dashboard/education/guidance-counselor" },
   },
   "career-planning": {
     slug: "career-planning",
@@ -156,7 +156,7 @@ export const learningWorkspaceDefinitions: Record<
     description: "Explore credible career directions, real role requirements, fit, and the education each option may require.",
     emptyTitle: "No career direction has been explored yet",
     emptyDescription: "Start with your interests, strengths, priorities, and constraints—no career will be chosen for you.",
-    emptyAction: { label: "Explore with your Guidance Counselor", href: "/dashboard/education" },
+    emptyAction: { label: "Explore with your Guidance Counselor", href: "/dashboard/education/guidance-counselor" },
   },
   schools: {
     slug: "schools",
@@ -174,7 +174,7 @@ export const learningWorkspaceDefinitions: Record<
     description: "Track scholarships and aid opportunities with current eligibility, evidence, requirements, and deadlines.",
     emptyTitle: "No scholarship opportunities are saved yet",
     emptyDescription: "Your Guidance Counselor can help identify what to verify once your school and pathway plans are clearer.",
-    emptyAction: { label: "Discuss school planning", href: "/dashboard/education" },
+    emptyAction: { label: "Discuss school planning", href: "/dashboard/education/guidance-counselor" },
   },
   certifications: {
     slug: "certifications",
@@ -183,7 +183,7 @@ export const learningWorkspaceDefinitions: Record<
     description: "Evaluate relevant credentials, current official requirements, prerequisites, renewal rules, and readiness evidence.",
     emptyTitle: "No certification is recommended yet",
     emptyDescription: "A credential belongs here only after its relevance to your intended outcome is verified.",
-    emptyAction: { label: "Discuss certification goals", href: "/dashboard/education" },
+    emptyAction: { label: "Discuss certification goals", href: "/dashboard/education/guidance-counselor" },
   },
   skills: {
     slug: "skills",
@@ -192,7 +192,7 @@ export const learningWorkspaceDefinitions: Record<
     description: "Understand current strengths, skills to build, evidence needed, and gaps connected to your roadmap.",
     emptyTitle: "No skill evidence is recorded yet",
     emptyDescription: "Skills will appear as your goals, work, learning, projects, and verified outcomes add evidence.",
-    emptyAction: { label: "Review your goals", href: "/dashboard/education" },
+    emptyAction: { label: "Review your goals", href: "/dashboard/goals?module=education" },
   },
   tutor: {
     slug: "tutor",
@@ -277,12 +277,12 @@ export const learningWorkspaceDefinitions: Record<
   },
   reports: {
     slug: "reports",
-    title: "Learning Reports",
-    eyebrow: "Professional reporting",
-    description: "Review, print, and export progress, course, knowledge, achievement, weekly, and monthly summaries.",
-    emptyTitle: "No report evidence is available yet",
-    emptyDescription: "Reports will summarize your authenticated learning records after you begin learning.",
-    emptyAction: { label: "Start a lesson", href: "/dashboard/education/lessons" },
+    title: "Education Reports",
+    eyebrow: "Planning summaries",
+    description: "Review education, career, and roadmap planning summaries backed by saved BeastEducation records.",
+    emptyTitle: "No planning report is available yet",
+    emptyDescription: "Reports will become useful after your Guidance Counselor has a goal, direction, or roadmap to summarize.",
+    emptyAction: { label: "Talk with your Guidance Counselor", href: "/dashboard/education/guidance-counselor" },
   },
 };
 
