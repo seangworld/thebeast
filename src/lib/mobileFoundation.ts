@@ -7,6 +7,8 @@ import {
   buildApplicationNavigationForPersona,
   buildOwnerNavigationForPersona,
   primaryNavigation,
+  secondaryNavigation,
+  sharedNavigation,
   type ModuleNavSection,
 } from "./moduleNavigation";
 import type { BeastMemberModuleAccessOverride } from "./moduleRegistry";
@@ -72,6 +74,16 @@ export function buildMobileNavigation({
       href: item.href || "/dashboard",
       module: item.module,
     }));
+  const sharedPlatformItems = sharedNavigation.map((item) => ({
+    label: item.label,
+    href: item.href || "/dashboard",
+    module: item.module,
+  }));
+  const secondaryItems = secondaryNavigation.map((item) => ({
+    label: item.label,
+    href: item.href || "/dashboard",
+    module: item.module,
+  }));
   const ownerItems = buildOwnerNavigationForPersona({ isOwner }).map((item) => ({
     label: item.label,
     href: item.href || "/dashboard",
@@ -102,6 +114,8 @@ export function buildMobileNavigation({
   const more = [
     ...sharedItems,
     ...applicationItems,
+    ...sharedPlatformItems,
+    ...secondaryItems,
     { label: "Shared AI", href: "/dashboard/search#shared-ai", module: "search" as ModuleKey },
     ...ownerItems,
   ].filter((item, index, items) =>

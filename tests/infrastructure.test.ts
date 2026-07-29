@@ -409,6 +409,7 @@ import {
   beastMoneyNavigation,
   getModuleChildren,
   primaryNavigation,
+  secondaryNavigation,
   sharedNavigation,
 } from "../src/lib/moduleNavigation";
 import {
@@ -548,15 +549,13 @@ test("module navigation centralizes expandable child items", () => {
   assert.deepEqual(
     primaryNavigation.map((item) => item.label),
     [
-      "Today",
-      "Relationship Center",
-      "Digital Staff",
+      "Dashboard",
       "Calendar",
       "Notifications",
       "Messages",
       "Timeline",
-      "Search",
       "Personal Hub",
+      "Search",
     ]
   );
   assert.deepEqual(
@@ -574,15 +573,11 @@ test("module navigation centralizes expandable child items", () => {
   );
   assert.deepEqual(
     sharedNavigation.map((item) => item.label),
-    [
-      "Today",
-      "Relationship Center",
-      "Calendar",
-      "Notifications",
-      "Timeline",
-      "Search",
-      "Personal Hub",
-    ]
+    ["Documents", "Goals"]
+  );
+  assert.deepEqual(
+    secondaryNavigation.map((item) => item.label),
+    ["Relationship Center", "Digital Staff"]
   );
   assert.deepEqual(
     buildApplicationNavigationForPersona({ isOwner: true }).map(
@@ -658,21 +653,19 @@ test("BO-308 keeps BeastOS focused and BO-311 makes Personal Hub canonical", () 
   assert.deepEqual(
     primaryNavigation.map(({ label, href }) => [label, href]),
     [
-      ["Today", "/dashboard/today"],
-      ["Relationship Center", "/dashboard/relationships"],
-      ["Digital Staff", "/dashboard/digital-staff"],
+      ["Dashboard", "/dashboard/today"],
       ["Calendar", "/dashboard/calendar"],
       ["Notifications", "/dashboard/notifications"],
       ["Messages", "/dashboard/messages"],
       ["Timeline", "/dashboard/timeline"],
-      ["Search", "/dashboard/search"],
       ["Personal Hub", "/dashboard/settings"],
+      ["Search", "/dashboard/search"],
     ]
   );
   assert.equal(beastOSNavigation.href, "/dashboard/today");
   assert.doesNotMatch(
     primaryNavigation.map((item) => item.label).join(","),
-    /Goals|Documents/
+    /Goals|Documents|Digital Staff|Relationship Center/
   );
   for (const destination of [
     "Personal Information",
@@ -3225,7 +3218,8 @@ test("dashboard module navigation uses an exclusive accordion across responsive 
   assert.match(dashboardLayout, /controlIdPrefix="mobile"/);
   assert.match(dashboardLayout, /href=\{item\.href \|\| "#"\}/);
   assert.match(dashboardLayout, /item=\{beastOSNavigation\}/);
-  assert.match(dashboardLayout, /aria-label="Beast applications"/);
+  assert.match(dashboardLayout, /aria-label="Life modules"/);
+  assert.match(dashboardLayout, /aria-label="Shared platform"/);
   assert.match(dashboardLayout, /aria-label="Owner"/);
   assert.match(dashboardLayout, /grid-rows-\[1fr\]/);
   assert.match(dashboardLayout, /grid-rows-\[0fr\]/);
@@ -6010,13 +6004,13 @@ test("member navigation hides admin and monetization surfaces", () => {
     sharedNavigation.some(
       (item) => item.label === "Goals" && item.href === "/dashboard/goals"
     ),
-    false
+    true
   );
   assert.equal(
     sharedNavigation.some(
       (item) => item.label === "Documents" && item.href === "/dashboard/uploads"
     ),
-    false
+    true
   );
 });
 

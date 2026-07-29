@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { buildMobileNavigation } from "../src/lib/mobileFoundation";
-import { primaryNavigation } from "../src/lib/moduleNavigation";
+import { secondaryNavigation } from "../src/lib/moduleNavigation";
 import {
   buildProfessionalRelationship,
   buildRelationshipCenter,
@@ -176,9 +176,9 @@ test("BO-314 presents every relationship dimension with honest states", () => {
   assert.match(page, /does not invent history or change how any professional works/);
 });
 
-test("BO-314 is reachable through desktop and mobile BeastOS navigation", () => {
+test("BO-314 is reachable through secondary desktop and mobile navigation", () => {
   assert.deepEqual(
-    primaryNavigation.find((item) => item.label === "Relationship Center"),
+    secondaryNavigation.find((item) => item.label === "Relationship Center"),
     {
       label: "Relationship Center",
       href: "/dashboard/relationships",

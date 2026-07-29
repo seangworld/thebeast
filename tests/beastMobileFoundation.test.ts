@@ -74,6 +74,9 @@ test("BF-MOB-002 builds mobile primary navigation without desktop sidebar densit
   assert.ok(navigation.more.some((item) => item.label === "Notifications"));
   assert.ok(navigation.more.some((item) => item.label === "Timeline"));
   assert.ok(navigation.more.some((item) => item.label === "Personal Hub"));
+  assert.ok(navigation.more.some((item) => item.label === "Documents"));
+  assert.ok(navigation.more.some((item) => item.label === "Goals"));
+  assert.ok(navigation.more.some((item) => item.label === "Digital Staff"));
   assert.equal(
     navigation.more.some((item) => item.label === "Quick Uploads"),
     false

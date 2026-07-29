@@ -20,6 +20,7 @@ export type ModuleNavSection = {
   label: string;
   href?: string;
   module: ModuleKey;
+  group?: string;
   external?: boolean;
   icon?: string;
   comingSoon?: boolean;
@@ -65,7 +66,63 @@ export function toggleExpandedModule(
 }
 
 export const primaryNavigation: ModuleNavSection[] = [
-  { label: "Today", href: "/dashboard/today", module: "beastos" },
+  {
+    label: "Dashboard",
+    href: "/dashboard/today",
+    module: "beastos",
+    group: "Daily",
+  },
+  {
+    label: "Calendar",
+    href: "/dashboard/calendar",
+    module: "calendar",
+    group: "Daily",
+  },
+  {
+    label: "Notifications",
+    href: "/dashboard/notifications",
+    module: "notifications",
+    group: "Daily",
+  },
+  {
+    label: "Messages",
+    href: "/dashboard/messages",
+    module: "beastos",
+    group: "Daily",
+  },
+  {
+    label: "Timeline",
+    href: "/dashboard/timeline",
+    module: "timeline",
+    group: "Daily",
+  },
+  {
+    label: "Personal Hub",
+    href: "/dashboard/settings",
+    module: "beastos",
+    group: "Personal",
+  },
+  {
+    label: "Search",
+    href: "/dashboard/search",
+    module: "search",
+    group: "Personal",
+  },
+];
+
+export const beastOSNavigation: ModuleNavSection = {
+  label: "BeastOS",
+  href: "/dashboard/today",
+  module: "beastos",
+  defaultExpanded: true,
+  children: primaryNavigation.map(({ label, href, group }) => ({
+    label,
+    href: href || "/dashboard/today",
+    group,
+  })),
+};
+
+export const secondaryNavigation: ModuleNavSection[] = [
   {
     label: "Relationship Center",
     href: "/dashboard/relationships",
@@ -76,28 +133,7 @@ export const primaryNavigation: ModuleNavSection[] = [
     href: "/dashboard/digital-staff",
     module: "beastos",
   },
-  { label: "Calendar", href: "/dashboard/calendar", module: "calendar" },
-  {
-    label: "Notifications",
-    href: "/dashboard/notifications",
-    module: "notifications",
-  },
-  { label: "Messages", href: "/dashboard/messages", module: "beastos" },
-  { label: "Timeline", href: "/dashboard/timeline", module: "timeline" },
-  { label: "Search", href: "/dashboard/search", module: "search" },
-  { label: "Personal Hub", href: "/dashboard/settings", module: "beastos" },
 ];
-
-export const beastOSNavigation: ModuleNavSection = {
-  label: "BeastOS",
-  href: "/dashboard/today",
-  module: "beastos",
-  defaultExpanded: true,
-  children: primaryNavigation.map(({ label, href }) => ({
-    label,
-    href: href || "/dashboard/today",
-  })),
-};
 
 export const beastMoneyNavigation: ModuleNavSection = {
   label: "BeastMoney",
@@ -259,6 +295,12 @@ export const bfDashNavigation: ModuleNavSection = {
   icon: "▦",
 };
 
+export const beastSecurityNavigation: ModuleNavSection = {
+  label: "BeastSecurity",
+  module: "projects",
+  comingSoon: true,
+};
+
 const plannedModuleNavigation: Record<string, ModuleNavSection> = {
   health: {
     label: "BeastHealth",
@@ -395,17 +437,12 @@ export function getBeastModuleNavigationForPersona(
 }
 
 export const sharedNavigation: ModuleNavSection[] = [
-  { label: "Today", href: "/dashboard/today", module: "beastos" },
   {
-    label: "Relationship Center",
-    href: "/dashboard/relationships",
-    module: "beastos",
+    label: "Documents",
+    href: "/dashboard/uploads",
+    module: "documents",
   },
-  { label: "Calendar", href: "/dashboard/calendar", module: "calendar" },
-  { label: "Notifications", href: "/dashboard/notifications", module: "notifications" },
-  { label: "Timeline", href: "/dashboard/timeline", module: "timeline" },
-  { label: "Search", href: "/dashboard/search", module: "search" },
-  { label: "Personal Hub", href: "/dashboard/settings", module: "beastos" },
+  { label: "Goals", href: "/dashboard/goals", module: "goals" },
 ];
 
 export const allModuleNavigation: ModuleNavSection[] = [

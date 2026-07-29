@@ -411,7 +411,10 @@ test("BA-129 creates notifications and unread navigation across desktop and mobi
   );
   assert.match(notification, /Message bodies are opened only/);
   assert.match(notificationPage, /PrivateAdminMessageNotifications/);
-  assert.match(navigation, /Messages.*\/dashboard\/messages/);
+  assert.match(
+    navigation,
+    /label: "Messages",[\s\S]*?href: "\/dashboard\/messages"/
+  );
   assert.match(
     navigation,
     /Member Messages[\s\S]*?\/dashboard\/admin\/messages/

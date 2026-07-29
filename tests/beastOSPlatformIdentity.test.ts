@@ -68,8 +68,9 @@ test("BO-313 keeps the shared shell branded as BeastOS inside every application"
   assert.doesNotMatch(shell, /<BeastBrandMark[\s\S]{0,100}module=\{workspaceModule\}/);
   assert.match(shell, /aria-label="BeastOS platform"/);
   assert.match(shell, /Shared identity and services/);
-  assert.match(shell, /aria-label="Beast applications"/);
-  assert.match(shell, /Apps running on BeastOS/);
+  assert.match(shell, /aria-label="Life modules"/);
+  assert.match(shell, /Apps for the parts of life you manage/);
+  assert.match(shell, /aria-label="Shared platform"/);
   assert.equal(getBeastOSWorkspaceContext("beastos"), "The Beast platform");
   assert.equal(getBeastOSWorkspaceContext("money"), "Money application");
   assert.equal(

@@ -14,11 +14,14 @@ import {
   type ModuleKey,
 } from "@/app/components/design/DashboardPrimitives";
 import {
+  beastSecurityNavigation,
   beastOSNavigation,
   buildApplicationNavigationForPersona,
   buildOwnerNavigationForPersona,
   findActiveExpandableModule,
   getBeastModuleNavigationForPersona,
+  secondaryNavigation,
+  sharedNavigation,
   toggleExpandedModule,
   type ModuleChildNavItem,
   type ModuleNavSection,
@@ -140,6 +143,10 @@ export default function DashboardLayout({
     isOwner: isAdminPersona,
     moduleAccess: memberModuleAccess,
   });
+  const lifeModuleNavigation = [
+    ...applicationNavigation,
+    beastSecurityNavigation,
+  ];
   const ownerNavigation = buildOwnerNavigationForPersona({
     isOwner: isAdminPersona,
   });
@@ -156,7 +163,7 @@ export default function DashboardLayout({
   const activeExpandableModule =
     findActiveExpandableModule(pathname, [
       beastOSNavigation,
-      ...applicationNavigation,
+      ...lifeModuleNavigation,
       ...ownerNavigation,
     ]) || getTopLevelModuleForWorkspace(workspaceModule);
 
@@ -952,6 +959,32 @@ export default function DashboardLayout({
       );
     }
 
+    function SecondaryNavigationLinks() {
+      return (
+        <nav
+          className="space-y-2"
+          aria-label="Relationships and about"
+        >
+          {!compact ? (
+            <div className="px-2 text-xs font-bold uppercase tracking-wide text-[#596579]">
+              Relationships &amp; about
+            </div>
+          ) : null}
+          {secondaryNavigation.map((item) => (
+            <div key={item.label} onClick={onNavigate}>
+              <ModuleNavItem
+                label={item.label}
+                href={item.href}
+                module={item.module}
+                active={item.href ? isActiveRoute(item.href) : false}
+                compact={compact}
+              />
+            </div>
+          ))}
+        </nav>
+      );
+    }
+
     return (
       <div className="flex h-full min-h-0 flex-col">
         {!navigationOnly ? (
@@ -999,18 +1032,36 @@ export default function DashboardLayout({
               <>
                 <div className="border-t border-[#2a3242]" />
 
-                <nav className="space-y-2" aria-label="Beast applications">
+                <nav className="space-y-2" aria-label="Life modules">
                   {!compact ? (
                     <div className="px-2">
                       <div className="text-xs font-bold uppercase tracking-wide text-[#596579]">
-                        Beast applications
+                        Life modules
                       </div>
                       <p className="mt-1 text-[11px] font-semibold leading-4 text-[#465266]">
-                        Apps running on BeastOS
+                        Apps for the parts of life you manage
                       </p>
                     </div>
                   ) : null}
-                  {applicationNavigation.map((item) => (
+                  {lifeModuleNavigation.map((item) => (
+                    <ExpandableModuleNavItem key={item.label} item={item} />
+                  ))}
+                </nav>
+
+                <div className="border-t border-[#2a3242]" />
+
+                <nav className="space-y-2" aria-label="Shared platform">
+                  {!compact ? (
+                    <div className="px-2">
+                      <div className="text-xs font-bold uppercase tracking-wide text-[#596579]">
+                        Shared platform
+                      </div>
+                      <p className="mt-1 text-[11px] font-semibold leading-4 text-[#465266]">
+                        Resources used across Beast
+                      </p>
+                    </div>
+                  ) : null}
+                  {sharedNavigation.map((item) => (
                     <ExpandableModuleNavItem key={item.label} item={item} />
                   ))}
                 </nav>
@@ -1061,11 +1112,21 @@ export default function DashboardLayout({
                 </nav>
               </>
             ) : null}
+
           </div>
         </div>
 
+        {navigationOnly ? (
+          <div className="border-t border-[#2a3242] px-3 py-4">
+            <SecondaryNavigationLinks />
+          </div>
+        ) : null}
+
         {!navigationOnly ? (
           <>
+            <div className="border-t border-[#2a3242] px-3 py-4">
+              <SecondaryNavigationLinks />
+            </div>
             <AdminViewAsControl compact={compact} surface="sidebar" />
             <div className="border-t border-[#2a3242] p-3">
               <div className="space-y-2">

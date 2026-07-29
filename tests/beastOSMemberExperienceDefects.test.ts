@@ -13,7 +13,10 @@ test("BeastOS Messages remains a member workspace and never redirects to BeastAd
   );
   const navigation = readFileSync("src/lib/moduleNavigation.ts", "utf8");
 
-  assert.match(navigation, /Messages", href: "\/dashboard\/messages"/);
+  assert.match(
+    navigation,
+    /label: "Messages",[\s\S]*?href: "\/dashboard\/messages"/
+  );
   assert.match(memberPage, /BeastMemberAdminMessagesWorkspace/);
   assert.match(memberWorkspace, /get_beast_member_admin_thread/);
   assert.doesNotMatch(memberWorkspace, /router\.replace\("\/dashboard\/admin\/messages"\)/);
