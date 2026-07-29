@@ -1,8 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import nextConfig from "../next.config";
+import { GET as getAdsTxt } from "../src/app/ads.txt/route";
 import robots from "../src/app/robots";
 import sitemap from "../src/app/sitemap";
+import {
+  seangworldAdSensePublisherId,
+  seangworldAdsTxtBody,
+  seangworldAdsTxtEntry,
+} from "../src/lib/adsense";
 import {
   beastOSFooterLinks,
   beastOSNonIndexableRoutes,
@@ -47,6 +53,28 @@ test("robots advertises the production sitemap and excludes private routes", () 
   assert.deepEqual(disallow, beastOSNonIndexableRoutes);
   assert.ok(disallow.includes("/dashboard"));
   assert.ok(!disallow.includes("/dashboard/"));
+});
+
+test("SEANGWORLD AdSense authorization is served as one canonical plain-text entry", async () => {
+  const response = getAdsTxt();
+  const body = await response.text();
+
+  assert.equal(seangworldAdSensePublisherId, "pub-9840739735056649");
+  assert.equal(
+    seangworldAdsTxtEntry,
+    "google.com, pub-9840739735056649, DIRECT, f08c47fec0942fa0"
+  );
+  assert.equal(seangworldAdsTxtBody, `${seangworldAdsTxtEntry}\n`);
+  assert.equal(response.status, 200);
+  assert.equal(
+    response.headers.get("content-type"),
+    "text/plain; charset=utf-8"
+  );
+  assert.equal(body, seangworldAdsTxtBody);
+  assert.deepEqual(
+    body.trimEnd().split("\n"),
+    [seangworldAdsTxtEntry]
+  );
 });
 
 test("legacy BeastOS paths preserve external and BeastAdmin compatibility", async () => {
