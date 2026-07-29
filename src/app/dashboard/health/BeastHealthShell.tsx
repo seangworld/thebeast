@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   DashboardCard,
@@ -14,6 +13,7 @@ import { buildCurrentAuthLoginPath } from "@/lib/auth/experience";
 
 export const beastHealthSections = [
   { label: "Overview", href: "/dashboard/health" },
+  { label: "Health Advisor", href: "/dashboard/health/ai-advisor" },
   { label: "Health Profile", href: "/dashboard/health/profile" },
   { label: "Conditions", href: "/dashboard/health/conditions" },
   { label: "Medications", href: "/dashboard/health/medications" },
@@ -25,7 +25,6 @@ export const beastHealthSections = [
   { label: "Provider Directory", href: "/dashboard/health/provider-directory" },
   { label: "Appointments", href: "/dashboard/health/appointments" },
   { label: "Health Timeline", href: "/dashboard/health/timeline" },
-  { label: "Health Advisor", href: "/dashboard/health/ai-advisor" },
 ];
 
 export function BeastHealthShell({
@@ -99,26 +98,14 @@ export function BeastHealthShell({
 
   return (
     <main className="beast-page">
-      <div className="beast-container space-y-6">
+      <div className="beast-container space-y-4">
         <section className="beast-page-header">
-          <div className="space-y-4">
+          <div className="space-y-3">
             <ModuleBadge module="health" label="Health Advisor Active" />
             <h1 className="beast-title">{title}</h1>
             <p className="beast-subtitle">{description}</p>
           </div>
         </section>
-
-        <nav className="flex flex-wrap gap-2" aria-label="BeastHealth sections">
-          {beastHealthSections.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="rounded-lg border border-red-300/30 bg-red-300/10 px-3 py-2 text-sm font-bold text-red-100 transition hover:border-red-200 hover:bg-red-200/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-300"
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
 
         {children}
       </div>

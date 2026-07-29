@@ -6095,6 +6095,7 @@ test("BeastAdmin foundation registers modules and protects owner-only navigation
     getModuleChildren("health").map((item) => item.label),
     [
       "Overview",
+      "Health Advisor",
       "Health Profile",
       "Conditions",
       "Medications",
@@ -6106,7 +6107,6 @@ test("BeastAdmin foundation registers modules and protects owner-only navigation
       "Provider Directory",
       "Appointments",
       "Health Timeline",
-      "Health Advisor",
     ]
   );
   assert.equal(

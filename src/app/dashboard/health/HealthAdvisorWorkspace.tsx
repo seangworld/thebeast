@@ -359,7 +359,7 @@ export function HealthAdvisorWorkspace() {
       title="Health Advisor"
       description="Evidence-backed record review and appointment preparation within strict medical safety boundaries."
     >
-      <section className="space-y-6" aria-label="Health Advisor workspace" data-health-advisor-active="true">
+      <section className="space-y-4" aria-label="Health Advisor workspace" data-health-advisor-active="true">
         <DashboardCard accent="health">
           <SectionHeader eyebrow="Executive Health Briefing" title={model.executiveBriefing.title} description={model.executiveBriefing.summary} action={<ModuleBadge module="health" label="Advisor active" />} />
           <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -372,7 +372,7 @@ export function HealthAdvisorWorkspace() {
           {dataError ? <p className="mt-4 rounded-xl border border-amber-300/30 bg-amber-300/10 p-4 text-sm leading-6 text-amber-100" role="alert">{dataError}</p> : null}
         </DashboardCard>
 
-        <div className="grid gap-6 xl:grid-cols-2">
+        <div className="grid gap-4 xl:grid-cols-2">
           <DashboardCard accent="health">
             <SectionHeader eyebrow="Medication Review" title="Saved medication list" description="Names, schedules, dates, and sources are shown exactly from owner records. Health Advisor does not check interactions or change medications." />
             <div className="mt-4 grid gap-3">
@@ -403,7 +403,7 @@ export function HealthAdvisorWorkspace() {
           </ol>
         </DashboardCard>
 
-        <div className="grid gap-6 xl:grid-cols-2">
+        <div className="grid gap-4 xl:grid-cols-2">
           <DashboardCard accent="documents">
             <SectionHeader eyebrow="Document Understanding" title="Permissioned medical document context" description="Only saved summaries with explicit permission are shown. Original documents and clinician interpretation remain authoritative." />
             <div className="mt-4 grid gap-3">

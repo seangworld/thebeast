@@ -5,14 +5,10 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import {
   DashboardCard,
   GuidedEmptyState,
-  MetricTile,
   SectionHeader,
 } from "@/app/components/design/DashboardPrimitives";
 import {
-  buildHealthOverview,
   buildHealthTimeline,
-  healthAdvisorReadiness,
-  healthRecordKinds,
   healthWorkspaceDefinitions,
   healthWorkspaceHrefs,
   normalizeHealthRecord,
@@ -21,6 +17,7 @@ import {
   type HealthRecordRow,
   type HealthRecordStatus,
 } from "@/lib/health/foundation";
+import { buildHealthAdvisorModel } from "@/lib/health/healthAdvisor";
 import { createClient } from "@/lib/supabase/client";
 import { BeastHealthShell } from "./BeastHealthShell";
 
@@ -31,11 +28,103 @@ const statusOptions: HealthRecordStatus[] = [
   "planned",
 ];
 
+const healthWorkspacePresentation: Record<
+  HealthRecordKind,
+  {
+    eyebrow: string;
+    collectionTitle: string;
+    collectionDescription: string;
+    emptyGuidance: string;
+  }
+> = {
+  profile: {
+    eyebrow: "Personal health context",
+    collectionTitle: "Your health background",
+    collectionDescription:
+      "Keep the background, preferences, and care context you want available during preparation.",
+    emptyGuidance:
+      "Start with one confirmed piece of health context that would help you prepare for a clinician conversation.",
+  },
+  condition: {
+    eyebrow: "Known conditions",
+    collectionTitle: "Condition record",
+    collectionDescription:
+      "Review the conditions and statuses you entered without adding diagnostic interpretation.",
+    emptyGuidance:
+      "Add only a condition you already know, using the wording and source available to you.",
+  },
+  medication: {
+    eyebrow: "Medication organization",
+    collectionTitle: "Medication list",
+    collectionDescription:
+      "Keep names, schedules, sources, and status together for clinician or pharmacist review.",
+    emptyGuidance:
+      "Add a medication from a label, prescription, or other source you can verify.",
+  },
+  procedure: {
+    eyebrow: "Procedure history",
+    collectionTitle: "Procedure record",
+    collectionDescription:
+      "Organize procedure dates, facilities, and recovery context without clinical interpretation.",
+    emptyGuidance:
+      "Add a known procedure and its source so it can appear in your timeline.",
+  },
+  vital: {
+    eyebrow: "Recorded measurements",
+    collectionTitle: "Vitals log",
+    collectionDescription:
+      "Review measurements exactly as entered, including date, unit, and source context.",
+    emptyGuidance:
+      "Add a dated measurement with its unit and source. BeastHealth will not interpret it.",
+  },
+  document: {
+    eyebrow: "Medical references",
+    collectionTitle: "Health document references",
+    collectionDescription:
+      "Keep health-specific document references easy to find while originals remain authoritative.",
+    emptyGuidance:
+      "Add a reference to a real document without entering conclusions that are not in the source.",
+  },
+  lifestyle: {
+    eyebrow: "Personal context",
+    collectionTitle: "Lifestyle context",
+    collectionDescription:
+      "Organize owner-entered sleep, movement, nutrition, and wellness context without medical coaching.",
+    emptyGuidance:
+      "Add a habit or cadence you want available as context for future provider questions.",
+  },
+  family_history: {
+    eyebrow: "Family context",
+    collectionTitle: "Family health history",
+    collectionDescription:
+      "Review sensitive relationship-backed context without inferring personal risk.",
+    emptyGuidance:
+      "Add only family history you know, including the relationship and source when available.",
+  },
+  provider: {
+    eyebrow: "Care contacts",
+    collectionTitle: "Provider directory",
+    collectionDescription:
+      "Keep practices, specialties, and contact context together for appointment preparation.",
+    emptyGuidance:
+      "Add a provider or practice you use; confirm credentials and network status independently.",
+  },
+  appointment: {
+    eyebrow: "Visit planning",
+    collectionTitle: "Appointments",
+    collectionDescription:
+      "Review upcoming and historical visits with the preparation context you entered.",
+    emptyGuidance:
+      "Add a confirmed visit date and verify instructions directly with the provider.",
+  },
+};
+
 function formatKind(kind: HealthRecordKind) {
   return healthWorkspaceDefinitions[kind].title;
 }
 
-function formatDate(value: string) {
+function formatDate(value: string | null) {
+  if (!value) return "Not recorded";
   const date = new Date(/^\d{4}-\d{2}-\d{2}$/.test(value) ? `${value}T12:00:00` : value);
   return date.toLocaleDateString(undefined, {
     year: "numeric",
@@ -164,6 +253,10 @@ export function HealthRecordWorkspace({ kind }: { kind: HealthRecordKind }) {
   const [saving, setSaving] = useState(false);
   const [pendingId, setPendingId] = useState("");
   const visibleRecords = records.filter((record) => record.recordType === kind);
+  const activeRecords = visibleRecords.filter(
+    (record) => record.status !== "archived"
+  );
+  const presentation = healthWorkspacePresentation[kind];
 
   async function createRecord(event: FormEvent) {
     event.preventDefault();
@@ -220,14 +313,58 @@ export function HealthRecordWorkspace({ kind }: { kind: HealthRecordKind }) {
 
   return (
     <BeastHealthShell title={definition.title} description={definition.description}>
-      <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+      <section
+        className="grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(20rem,0.85fr)]"
+        data-health-record-purpose={kind}
+      >
+        <DashboardCard accent="red">
+          <SectionHeader
+            eyebrow={presentation.eyebrow}
+            title={presentation.collectionTitle}
+            description={presentation.collectionDescription}
+          />
+          <div className="mt-4 flex flex-wrap gap-2 text-xs font-bold text-[#c7cfdb]">
+            <span className="rounded-full border border-white/10 px-3 py-1.5">
+              {activeRecords.length} active
+            </span>
+            <span className="rounded-full border border-white/10 px-3 py-1.5">
+              {visibleRecords.length} total
+            </span>
+          </div>
+          {error ? (
+            <p className="mt-4 rounded-xl border border-amber-300/30 bg-amber-300/10 p-4 text-sm leading-6 text-amber-100" role="alert">
+              {error}
+            </p>
+          ) : null}
+          <div className="mt-4">
+            {loading ? (
+              <p role="status" className="text-sm text-[#c7cfdb]">
+                Loading {definition.title.toLowerCase()}…
+              </p>
+            ) : visibleRecords.length ? (
+              <RecordList
+                records={visibleRecords}
+                onArchive={(record) => void archiveRecord(record)}
+                pendingId={pendingId}
+              />
+            ) : (
+              <GuidedEmptyState
+                title={`No ${definition.title.toLowerCase()} saved`}
+                description="No placeholder or example health records are shown."
+                guidance={presentation.emptyGuidance}
+                nextAction={{ label: "Ask Health Advisor", href: "/dashboard/health/ai-advisor" }}
+              />
+            )}
+          </div>
+        </DashboardCard>
+
         <DashboardCard accent="health">
           <SectionHeader
-            eyebrow="Owner record"
+            eyebrow="Add verified information"
             title={`Add ${definition.singular}`}
             description={definition.guidance}
           />
-          <form className="mt-5 grid gap-4" onSubmit={createRecord}>
+          <form className="mt-4 grid gap-3" onSubmit={createRecord}>
             <label className="grid gap-2 text-sm font-bold text-[#dbe3ef]">
               {definition.titleLabel}
               <input
@@ -301,39 +438,6 @@ export function HealthRecordWorkspace({ kind }: { kind: HealthRecordKind }) {
             </button>
           </form>
         </DashboardCard>
-
-        <DashboardCard accent="red">
-          <SectionHeader
-            eyebrow="Private records"
-            title={`${definition.title} history`}
-            description="Only records saved by the signed-in owner appear here."
-          />
-          {error ? (
-            <p className="mt-4 rounded-xl border border-amber-300/30 bg-amber-300/10 p-4 text-sm leading-6 text-amber-100" role="alert">
-              {error}
-            </p>
-          ) : null}
-          <div className="mt-5">
-            {loading ? (
-              <p role="status" className="text-sm text-[#c7cfdb]">
-                Loading health records…
-              </p>
-            ) : visibleRecords.length ? (
-              <RecordList
-                records={visibleRecords}
-                onArchive={(record) => void archiveRecord(record)}
-                pendingId={pendingId}
-              />
-            ) : (
-              <GuidedEmptyState
-                title={`No ${definition.title.toLowerCase()} saved`}
-                description="No placeholder or example health records are shown."
-                guidance={definition.guidance}
-                nextAction={{ label: "Review Health Overview", href: "/dashboard/health" }}
-              />
-            )}
-          </div>
-        </DashboardCard>
       </section>
     </BeastHealthShell>
   );
@@ -341,113 +445,221 @@ export function HealthRecordWorkspace({ kind }: { kind: HealthRecordKind }) {
 
 export function HealthOverviewWorkspace() {
   const { records, loading, error } = useHealthRecords();
-  const overview = useMemo(() => buildHealthOverview(records), [records]);
-  const recent = useMemo(() => buildHealthTimeline(records).slice(0, 5), [records]);
+  const model = useMemo(
+    () => buildHealthAdvisorModel({ records }),
+    [records]
+  );
+  const recentChanges = useMemo(
+    () =>
+      records
+        .filter((record) => record.status !== "archived")
+        .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
+        .slice(0, 4),
+    [records]
+  );
 
   return (
     <BeastHealthShell
-      title="Health Overview"
-      description="A private, owner-controlled view of your BeastHealth records."
+      title="BeastHealth"
+      description="Your Health Advisor-led briefing, preparation, and private health record workspace."
     >
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <MetricTile label="Active records" value={String(overview.totalRecords)} detail="Excludes archived records" icon="HR" tone="red" />
-        <MetricTile label="Conditions" value={String(overview.counts.condition)} detail="Owner-entered records" icon="CO" tone="red" />
-        <MetricTile label="Medications" value={String(overview.counts.medication)} detail="Owner-entered records" icon="RX" tone="purple" />
-        <MetricTile label="Providers" value={String(overview.counts.provider)} detail="Private directory" icon="PD" tone="blue" />
-      </section>
-
       {error ? (
         <p className="rounded-xl border border-amber-300/30 bg-amber-300/10 p-4 text-sm leading-6 text-amber-100" role="alert">
           {error}
         </p>
       ) : null}
 
-      <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+      <section className="space-y-4" aria-label="Health Advisor dashboard">
         <DashboardCard accent="health">
           <SectionHeader
-            eyebrow="Health areas"
-            title="Build the record at your pace"
-            description="Every count comes from saved owner records. Empty areas remain explicit."
+            eyebrow="Executive Health Briefing"
+            title={model.executiveBriefing.title}
+            description={model.executiveBriefing.summary}
+            action={
+              <Link
+                href="/dashboard/health/ai-advisor"
+                className="beast-button inline-flex min-h-11 items-center"
+              >
+                Open Health Advisor
+              </Link>
+            }
           />
-          <div className="mt-5 grid gap-3 sm:grid-cols-2">
-            {healthRecordKinds.map((kind) => {
-              const definition = healthWorkspaceDefinitions[kind];
-              const href = healthWorkspaceHrefs[kind];
-              return (
-                <Link
-                  key={kind}
-                  href={href}
-                  className="rounded-xl border border-white/10 bg-white/[0.03] p-4 transition hover:border-red-300/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-300"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <h3 className="font-black text-white">{definition.title}</h3>
-                    <span className="rounded-full border border-white/10 px-2 py-1 text-xs font-bold text-red-100">
-                      {overview.counts[kind]}
-                    </span>
-                  </div>
-                  <p className="mt-2 text-sm leading-6 text-[#aeb8c7]">
-                    {definition.description}
-                  </p>
-                </Link>
-              );
-            })}
+          <div className="mt-4 flex flex-wrap gap-2 text-xs font-bold text-[#dbe3ef]">
+            <span className="rounded-full border border-red-300/20 bg-red-300/[0.06] px-3 py-2">
+              {model.executiveBriefing.totalRecords} active records
+            </span>
+            <span className="rounded-full border border-red-300/20 bg-red-300/[0.06] px-3 py-2">
+              {model.executiveBriefing.populatedAreas} populated areas
+            </span>
+            <span className="rounded-full border border-white/10 px-3 py-2 text-[#aeb8c7]">
+              {model.executiveBriefing.lastUpdatedAt
+                ? `Updated ${formatDate(model.executiveBriefing.lastUpdatedAt)}`
+                : "No saved update"}
+            </span>
           </div>
-        </DashboardCard>
-
-        <DashboardCard accent="beastos">
-          <SectionHeader
-            eyebrow="Health Advisor readiness"
-            title="Active within medical safety boundaries"
-            description="Health Advisor uses saved owner records for review and appointment preparation without diagnosing or replacing clinicians."
-          />
-          <dl className="mt-5 grid gap-3 text-sm">
-            <div className="rounded-xl border border-white/10 p-4">
-              <dt className="font-black text-white">Health Advisor</dt>
-              <dd className="mt-1 text-[#c7cfdb]">{healthAdvisorReadiness.status}</dd>
-            </div>
-            <div className="rounded-xl border border-white/10 p-4">
-              <dt className="font-black text-white">Execution and recommendations</dt>
-              <dd className="mt-1 text-[#c7cfdb]">Owner decisions and organizational recommendations only</dd>
-            </div>
-            <div className="rounded-xl border border-white/10 p-4">
-              <dt className="font-black text-white">Confidence and outcome learning</dt>
-              <dd className="mt-1 text-[#c7cfdb]">Active for record support and preparation usefulness—not medical certainty</dd>
-            </div>
-          </dl>
-          <Link href="/dashboard/health/ai-advisor" className="beast-button-secondary mt-4 inline-flex">
-            Open Health Advisor
-          </Link>
-        </DashboardCard>
-      </section>
-
-      <DashboardCard accent="health">
-        <SectionHeader
-          eyebrow="Recent record activity"
-          title="Health Timeline preview"
-          description="Chronology is derived only from saved records and dates."
-        />
-        <div className="mt-5">
           {loading ? (
-            <p role="status" className="text-sm text-[#c7cfdb]">Loading health records…</p>
-          ) : recent.length ? (
-            <div className="grid gap-3">
-              {recent.map((item) => (
-                <div key={item.id} className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
-                  <p className="text-xs font-black uppercase tracking-wide text-red-200">{formatKind(item.recordType)} · {formatDate(item.date)}</p>
-                  <p className="mt-2 font-black text-white">{item.title}</p>
+            <p className="mt-4 text-sm text-[#c7cfdb]" role="status">
+              Loading owner-authorized health context…
+            </p>
+          ) : null}
+        </DashboardCard>
+
+        <div className="grid gap-4 xl:grid-cols-2">
+          <DashboardCard accent="health">
+            <SectionHeader
+              eyebrow="Recent changes"
+              title="What changed in your record"
+              description="Changes are based only on saved record timestamps."
+            />
+            <div className="mt-4 grid gap-2">
+              {recentChanges.length ? (
+                recentChanges.map((record) => (
+                  <Link
+                    key={record.id}
+                    href={healthWorkspaceDefinitions[record.recordType] ? healthWorkspaceHrefs[record.recordType] : "/dashboard/health"}
+                    className="flex items-start justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-3 transition hover:border-red-300/30"
+                  >
+                    <span>
+                      <span className="block text-xs font-black uppercase tracking-wide text-red-200">
+                        {formatKind(record.recordType)}
+                      </span>
+                      <span className="mt-1 block font-bold text-white">{record.title}</span>
+                    </span>
+                    <span className="shrink-0 text-xs font-bold text-[#9aa7b8]">
+                      {formatDate(record.updatedAt)}
+                    </span>
+                  </Link>
+                ))
+              ) : (
+                <p className="rounded-xl border border-white/10 p-4 text-sm leading-6 text-[#c7cfdb]">
+                  No recent record changes exist. BeastHealth does not create sample activity.
+                </p>
+              )}
+            </div>
+          </DashboardCard>
+
+          <DashboardCard accent="blue">
+            <SectionHeader
+              eyebrow="Upcoming appointments"
+              title={model.appointmentPreparation.nextAppointment?.title || "No upcoming appointment saved"}
+              description={
+                model.appointmentPreparation.nextAppointment
+                  ? `Saved date: ${formatDate(model.appointmentPreparation.nextAppointment.occurredOn)}. Confirm details directly with the provider.`
+                  : "Add a confirmed appointment to prepare questions and records."
+              }
+            />
+            <div className="mt-4 flex flex-wrap gap-2 text-xs font-bold text-[#dbe3ef]">
+              <span className="rounded-full border border-white/10 px-3 py-2">
+                {model.appointmentPreparation.recordsToReview.length} records to review
+              </span>
+            </div>
+            <Link href="/dashboard/health/appointments" className="beast-button-secondary mt-4 inline-flex">
+              Manage appointments
+            </Link>
+          </DashboardCard>
+        </div>
+
+        <div className="grid gap-4 xl:grid-cols-2">
+          <DashboardCard accent="health">
+            <SectionHeader
+              eyebrow="Medication summary"
+              title={`${model.medicationReview.length} saved medication${model.medicationReview.length === 1 ? "" : "s"}`}
+              description="Names and schedules are shown exactly from owner records. No interaction or prescription guidance is provided."
+            />
+            <div className="mt-4 grid gap-2">
+              {model.medicationReview.slice(0, 4).map((medication) => (
+                <div key={medication.id} className="rounded-xl border border-white/10 p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="font-bold text-white">{medication.title}</p>
+                    <span className="text-xs font-bold text-red-100">{medication.status}</span>
+                  </div>
+                  {medication.context ? (
+                    <p className="mt-1 text-sm text-[#c7cfdb]">{medication.context}</p>
+                  ) : null}
                 </div>
               ))}
+              {!model.medicationReview.length ? (
+                <p className="rounded-xl border border-white/10 p-4 text-sm leading-6 text-[#c7cfdb]">
+                  No medication records exist. Health Advisor will not infer a medication list.
+                </p>
+              ) : null}
             </div>
-          ) : (
-            <p className="rounded-xl border border-white/10 p-4 text-sm leading-6 text-[#c7cfdb]">
-              No health activity exists yet. BeastHealth does not create sample records.
-            </p>
-          )}
+            <Link href="/dashboard/health/medications" className="beast-button-secondary mt-4 inline-flex">
+              Review medications
+            </Link>
+          </DashboardCard>
+
+          <DashboardCard accent="beastos">
+            <SectionHeader
+              eyebrow="Timeline summary"
+              title={`${model.timelineSummary.totalEvents} saved event${model.timelineSummary.totalEvents === 1 ? "" : "s"}`}
+              description="This is an organizational chronology, not a clinical trend analysis."
+            />
+            <div className="mt-4 flex flex-wrap gap-2">
+              {model.timelineSummary.byType.map((item) => (
+                <span key={item.kind} className="rounded-full border border-white/10 px-3 py-2 text-xs font-bold text-[#dbe3ef]">
+                  {formatKind(item.kind)} · {item.count}
+                </span>
+              ))}
+              {!model.timelineSummary.byType.length ? (
+                <p className="text-sm leading-6 text-[#c7cfdb]">No dated health activity exists yet.</p>
+              ) : null}
+            </div>
+            <Link href="/dashboard/health/timeline" className="beast-button-secondary mt-4 inline-flex">
+              Open Health Timeline
+            </Link>
+          </DashboardCard>
         </div>
-        <Link href="/dashboard/health/timeline" className="beast-button-secondary mt-4 inline-flex">
-          Open Health Timeline
-        </Link>
-      </DashboardCard>
+
+        <DashboardCard accent="blue">
+          <SectionHeader
+            eyebrow="Suggested questions for providers"
+            title="Prepare questions, not conclusions"
+            description="Questions are derived from saved context. A qualified clinician determines what is medically relevant."
+          />
+          <ol className="mt-4 grid gap-3 md:grid-cols-2">
+            {model.appointmentPreparation.questions.map((question, index) => (
+              <li key={question} className="rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm leading-6 text-[#dbe3ef]">
+                <span className="mr-2 font-black text-red-200">{index + 1}.</span>
+                {question}
+              </li>
+            ))}
+          </ol>
+        </DashboardCard>
+
+        <DashboardCard accent="health">
+          <SectionHeader
+            eyebrow="Recommended actions"
+            title="Organize the next review"
+            description="These actions organize records and preparation only. They do not diagnose, prescribe, or change care."
+          />
+          <div className="mt-4 grid gap-3 lg:grid-cols-2">
+            {model.recommendations.length ? (
+              model.recommendations.slice(0, 4).map((recommendation) => (
+                <article key={recommendation.sourceRecommendationId} className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <h3 className="font-black text-white">{recommendation.title}</h3>
+                    <span className="rounded-full border border-white/10 px-2 py-1 text-xs font-bold text-[#dbe3ef]">
+                      {recommendation.confidence.label} support
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">{recommendation.recommendation}</p>
+                  <Link href={recommendation.href} className="mt-3 inline-flex text-sm font-black text-red-100 underline decoration-red-300/40 underline-offset-4">
+                    Review source
+                  </Link>
+                </article>
+              ))
+            ) : (
+              <p className="rounded-xl border border-white/10 p-4 text-sm leading-6 text-[#c7cfdb]">
+                No evidence-backed organizational action is available from the current records.
+              </p>
+            )}
+          </div>
+          <p className="mt-4 rounded-xl border border-red-300/25 bg-red-300/[0.08] p-4 text-sm font-semibold leading-6 text-red-50">
+            Health Advisor never diagnoses or prescribes. Original records and qualified clinicians remain authoritative.
+          </p>
+        </DashboardCard>
+      </section>
     </BeastHealthShell>
   );
 }
