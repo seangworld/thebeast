@@ -26,6 +26,43 @@ export type ModuleNavSection = {
   children?: ModuleChildNavItem[];
 };
 
+function matchesNavigationPath(pathname: string, href?: string) {
+  if (!href || !href.startsWith("/")) return false;
+
+  const [path] = href.split("#");
+  return pathname === path || pathname.startsWith(`${path}/`);
+}
+
+export function findActiveExpandableModule(
+  pathname: string,
+  sections: ModuleNavSection[]
+): ModuleKey | null {
+  const matchingSection = sections
+    .filter((section) => section.children?.length)
+    .flatMap((section) => {
+      const matchingPaths = [
+        section.href,
+        ...(section.children?.map((child) => child.href) || []),
+      ]
+        .filter((href) => matchesNavigationPath(pathname, href))
+        .map((href) => href?.split("#")[0].length || 0);
+
+      return matchingPaths.length > 0
+        ? [{ module: section.module, matchLength: Math.max(...matchingPaths) }]
+        : [];
+    })
+    .sort((left, right) => right.matchLength - left.matchLength)[0];
+
+  return matchingSection?.module || null;
+}
+
+export function toggleExpandedModule(
+  current: ModuleKey | null,
+  requested: ModuleKey
+): ModuleKey | null {
+  return current === requested ? null : requested;
+}
+
 export const primaryNavigation: ModuleNavSection[] = [
   { label: "Today", href: "/dashboard/today", module: "beastos" },
   {

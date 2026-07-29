@@ -17,7 +17,9 @@ import {
   beastOSNavigation,
   buildApplicationNavigationForPersona,
   buildOwnerNavigationForPersona,
+  findActiveExpandableModule,
   getBeastModuleNavigationForPersona,
+  toggleExpandedModule,
   type ModuleChildNavItem,
   type ModuleNavSection,
 } from "@/lib/moduleNavigation";
@@ -69,28 +71,6 @@ function loadAdminViewMode() {
   );
 }
 
-const EXPANDED_MODULES_STORAGE_KEY = "beast:navigation:expanded-modules";
-
-function loadExpandedModules() {
-  if (typeof window === "undefined") {
-    return ["beastos"] as ModuleKey[];
-  }
-
-  try {
-    const stored = JSON.parse(
-      window.localStorage.getItem(EXPANDED_MODULES_STORAGE_KEY) || "[]"
-    );
-
-    return Array.isArray(stored) && stored.length > 0
-      ? (stored.filter((module): module is ModuleKey =>
-          Object.prototype.hasOwnProperty.call(moduleAccents, module)
-        ) as ModuleKey[])
-      : (["beastos"] as ModuleKey[]);
-  } catch {
-    return ["beastos"] as ModuleKey[];
-  }
-}
-
 function getWorkspaceModule(pathname: string): ModuleKey {
   if (pathname.startsWith("/dashboard/admin")) return "admin";
   if (pathname.startsWith("/dashboard/money")) return "money";
@@ -107,17 +87,30 @@ function getWorkspaceModule(pathname: string): ModuleKey {
   return "beastos";
 }
 
+function getTopLevelModuleForWorkspace(module: ModuleKey): ModuleKey {
+  return module === "calendar" ||
+    module === "documents" ||
+    module === "goals" ||
+    module === "notifications" ||
+    module === "search" ||
+    module === "timeline"
+    ? "beastos"
+    : module;
+}
+
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
+  const router = useRouter();
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
   const [mobileOnline, setMobileOnline] = useState(true);
   const [locationHash, setLocationHash] = useState("");
-  const [expandedModules, setExpandedModules] = useState<ModuleKey[]>([
-    "beastos",
-  ]);
+  const [expandedModule, setExpandedModule] = useState<ModuleKey | null>(() =>
+    getTopLevelModuleForWorkspace(getWorkspaceModule(pathname))
+  );
   const [learningOnlyNavigation, setLearningOnlyNavigation] = useState(false);
   const [isAdminPersona, setIsAdminPersona] = useState(false);
   const [memberModuleAccess, setMemberModuleAccess] = useState<
@@ -137,8 +130,6 @@ export default function DashboardLayout({
     onboardingComplete: boolean | null;
     target: string;
   } | null>(null);
-  const pathname = usePathname();
-  const router = useRouter();
   const workspaceModule = getWorkspaceModule(pathname);
   const workspaceContext = getBeastOSWorkspaceContext(workspaceModule);
   const personaModuleNavigation = getBeastModuleNavigationForPersona(
@@ -162,24 +153,12 @@ export default function DashboardLayout({
     degraded: resolvingOnboarding && dashboardGuardResolved,
   });
   const onboardingPath = "/dashboard/onboarding";
-  const beastOSModules: ModuleKey[] = [
-    "beastos",
-    "calendar",
-    "documents",
-    "goals",
-    "notifications",
-    "search",
-    "timeline",
-  ];
-  const activeExpandableModule = beastOSModules.includes(workspaceModule)
-    ? "beastos"
-    : [beastOSNavigation, ...personaModuleNavigation].find(
-        (item) => item.module === workspaceModule && item.children?.length
-      )?.module || null;
-
-  useEffect(() => {
-    setExpandedModules(loadExpandedModules());
-  }, []);
+  const activeExpandableModule =
+    findActiveExpandableModule(pathname, [
+      beastOSNavigation,
+      ...applicationNavigation,
+      ...ownerNavigation,
+    ]) || getTopLevelModuleForWorkspace(workspaceModule);
 
   useEffect(() => {
     let active = true;
@@ -263,29 +242,11 @@ export default function DashboardLayout({
   useEffect(() => {
     if (!activeExpandableModule) return;
 
-    setExpandedModules((current) => {
-      if (current.includes(activeExpandableModule)) return current;
-
-      const next = [...current, activeExpandableModule];
-      window.localStorage.setItem(
-        EXPANDED_MODULES_STORAGE_KEY,
-        JSON.stringify(next)
-      );
-      return next;
-    });
+    setExpandedModule(activeExpandableModule);
   }, [activeExpandableModule]);
 
-  function toggleExpandedModule(module: ModuleKey) {
-    setExpandedModules((current) => {
-      const next = current.includes(module)
-        ? current.filter((item) => item !== module)
-        : [...current, module];
-      window.localStorage.setItem(
-        EXPANDED_MODULES_STORAGE_KEY,
-        JSON.stringify(next)
-      );
-      return next;
-    });
+  function handleExpandedModuleToggle(module: ModuleKey) {
+    setExpandedModule((current) => toggleExpandedModule(current, module));
   }
 
   useEffect(() => {
@@ -727,10 +688,12 @@ export default function DashboardLayout({
     compact = false,
     navigationOnly = false,
     onNavigate,
+    controlIdPrefix = "desktop",
   }: {
     compact?: boolean;
     navigationOnly?: boolean;
     onNavigate?: () => void;
+    controlIdPrefix?: string;
   }) {
     function ChildLink({
       item,
@@ -775,8 +738,8 @@ export default function DashboardLayout({
       const expanded =
         !compact &&
         hasChildren &&
-        expandedModules.includes(item.module);
-      const navGroupId = `${item.module}-nav-group`;
+        expandedModule === item.module;
+      const navGroupId = `${controlIdPrefix}-${item.module}-nav-group`;
       const primaryChildren =
         item.children?.filter(
           (child) => !child.future && !child.secondary && !child.group
@@ -862,8 +825,8 @@ export default function DashboardLayout({
             </Link>
             <button
               type="button"
-              onClick={() => toggleExpandedModule(item.module)}
-              className="mr-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs text-[#7f8da3] transition hover:bg-[#0f1419] hover:text-white"
+              onClick={() => handleExpandedModuleToggle(item.module)}
+              className="mr-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs text-[#7f8da3] transition hover:bg-[#0f1419] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#38bdf8] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f1419]"
               aria-expanded={expanded}
               aria-controls={navGroupId}
               aria-label={`${expanded ? "Collapse" : "Expand"} ${item.label}`}
@@ -1176,6 +1139,7 @@ export default function DashboardLayout({
               <NavRail
                 navigationOnly
                 onNavigate={() => setMobileMoreOpen(false)}
+                controlIdPrefix="mobile"
               />
             </div>
             <div className="mt-4 border-t border-[#2a3242] pt-4">

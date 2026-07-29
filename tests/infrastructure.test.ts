@@ -3207,20 +3207,21 @@ test("dashboard route changes do not force the full-page guard fallback after in
   );
 });
 
-test("dashboard module navigation persists collapsible groups across responsive layouts", () => {
+test("dashboard module navigation uses an exclusive accordion across responsive layouts", () => {
   const dashboardLayout = readFileSync(
     "src/app/dashboard/layout.tsx",
     "utf8"
   );
 
-  assert.match(dashboardLayout, /EXPANDED_MODULES_STORAGE_KEY/);
-  assert.match(dashboardLayout, /const \[expandedModules, setExpandedModules\]/);
-  assert.match(dashboardLayout, /expandedModules\.includes\(item\.module\)/);
-  assert.match(dashboardLayout, /window\.localStorage\.setItem/);
-  assert.match(dashboardLayout, /setExpandedModules\(loadExpandedModules\(\)\)/);
-  assert.match(dashboardLayout, /\[\.\.\.current, activeExpandableModule\]/);
-  assert.match(dashboardLayout, /beastOSModules\.includes\(workspaceModule\)/);
+  assert.match(dashboardLayout, /const \[expandedModule, setExpandedModule\]/);
+  assert.match(dashboardLayout, /expandedModule === item\.module/);
+  assert.match(dashboardLayout, /setExpandedModule\(activeExpandableModule\)/);
+  assert.match(dashboardLayout, /toggleExpandedModule\(current, module\)/);
+  assert.doesNotMatch(dashboardLayout, /EXPANDED_MODULES_STORAGE_KEY/);
+  assert.doesNotMatch(dashboardLayout, /\[\.\.\.current, activeExpandableModule\]/);
   assert.match(dashboardLayout, /aria-label=\{`\$\{expanded \? "Collapse" : "Expand"\} \$\{item\.label\}`\}/);
+  assert.match(dashboardLayout, /aria-controls=\{navGroupId\}/);
+  assert.match(dashboardLayout, /controlIdPrefix="mobile"/);
   assert.match(dashboardLayout, /href=\{item\.href \|\| "#"\}/);
   assert.match(dashboardLayout, /item=\{beastOSNavigation\}/);
   assert.match(dashboardLayout, /aria-label="Beast applications"/);
