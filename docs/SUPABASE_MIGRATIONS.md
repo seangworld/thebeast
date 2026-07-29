@@ -2,6 +2,12 @@
 
 Last audited: 2026-07-24 EDT
 
+> Current integrity audit: see
+> [`DB-001_DATABASE_INTEGRITY_AUDIT.md`](./DB-001_DATABASE_INTEGRITY_AUDIT.md).
+> The environment classifications below are historical release notes, not a
+> current live-schema verification. Never replay SQL or repair migration
+> history from this document alone.
+
 This repository now uses the Supabase CLI-standard migration directory:
 
 - `supabase/migrations/`

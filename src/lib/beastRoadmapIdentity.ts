@@ -296,6 +296,16 @@ export const beastRoadmapPackageRegistry = [
     ]
   ),
   packageIdentity(
+    "DB-AUD-001",
+    ["DB-001"],
+    "SQL, Migration, and Database Integrity Audit",
+    [
+      "docs/DB-001_DATABASE_INTEGRITY_AUDIT.md",
+      "supabase/seed.sql",
+      "tests/databaseIntegrityAudit.test.ts",
+    ]
+  ),
+  packageIdentity(
     "BM-FND-033",
     ["BM-33"],
     "Funding Rules",

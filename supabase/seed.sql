@@ -1,0 +1,5 @@
+-- Canonical local-development seed entrypoint.
+--
+-- DB-001 intentionally keeps this file data-free. Local database resets may
+-- load it safely without creating demo members, placeholder financial data, or
+-- records that could be mistaken for authenticated member data.
