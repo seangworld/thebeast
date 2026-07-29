@@ -16,6 +16,13 @@ import {
   type HealthDocumentContext,
 } from "@/lib/health/healthAdvisor";
 import {
+  buildHealthAdvisorDataState,
+  buildHealthAdvisorGreeting,
+  healthAdvisorIntroduction,
+  resolveHealthAdvisorMemberName,
+  type HealthAdvisorIdentityProfile,
+} from "@/lib/health/healthAdvisorPresentation";
+import {
   normalizeHealthRecord,
   type HealthRecord,
   type HealthRecordRow,
@@ -84,6 +91,9 @@ function buildDocumentContext(
 
 export function HealthAdvisorWorkspace() {
   const [ownerId, setOwnerId] = useState("");
+  const [memberName, setMemberName] = useState<string | null>(null);
+  const [memberTimeZone, setMemberTimeZone] = useState<string | null>(null);
+  const [localNow, setLocalNow] = useState<Date | null>(null);
   const [records, setRecords] = useState<HealthRecord[]>([]);
   const [documents, setDocuments] = useState<HealthDocumentContext[]>([]);
   const [history, setHistory] = useState<ProfessionalExecutionHistory>();
@@ -91,6 +101,7 @@ export function HealthAdvisorWorkspace() {
     null
   );
   const [loading, setLoading] = useState(true);
+  const [recordsUnavailable, setRecordsUnavailable] = useState(false);
   const [dataError, setDataError] = useState("");
   const [historyError, setHistoryError] = useState("");
   const [pendingId, setPendingId] = useState("");
@@ -109,6 +120,10 @@ export function HealthAdvisorWorkspace() {
   }
 
   useEffect(() => {
+    setLocalNow(new Date());
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
     async function load() {
       setLoading(true);
@@ -117,7 +132,7 @@ export function HealthAdvisorWorkspace() {
       if (authError) throw authError;
       const userId = auth.user?.id;
       if (!userId) throw new Error("Sign in is required.");
-      const [healthResult, documentResult] = await Promise.all([
+      const [healthResult, documentResult, profileResult] = await Promise.all([
         client
           .from("beast_health_records")
           .select(
@@ -127,6 +142,13 @@ export function HealthAdvisorWorkspace() {
           .order("occurred_on", { ascending: false, nullsFirst: false })
           .order("created_at", { ascending: false }),
         loadUserDocuments(client as unknown as BeastDocumentDataClient),
+        client
+          .from("profiles")
+          .select(
+            "preferred_name, display_name, full_name, username, timezone"
+          )
+          .eq("id", userId)
+          .maybeSingle(),
       ]);
       if (healthResult.error) throw healthResult.error;
       const nextRecords = (
@@ -136,8 +158,14 @@ export function HealthAdvisorWorkspace() {
         .filter((record): record is HealthRecord => Boolean(record));
       const nextStore = new SupabaseExecutionHistoryStore(client);
       if (cancelled) return;
+      const profile = profileResult.error
+        ? null
+        : (profileResult.data as HealthAdvisorIdentityProfile | null);
       setOwnerId(userId);
+      setMemberName(resolveHealthAdvisorMemberName(profile, auth.user));
+      setMemberTimeZone(profile?.timezone || null);
       setRecords(nextRecords);
+      setRecordsUnavailable(false);
       setDocuments(
         buildDocumentContext(nextRecords, documentResult.documents)
       );
@@ -164,6 +192,7 @@ export function HealthAdvisorWorkspace() {
       setDataError(
         "Health Advisor could not load owner health records. No health summary or recommendation was generated."
       );
+      setRecordsUnavailable(true);
       setLoading(false);
     });
     return () => {
@@ -177,6 +206,24 @@ export function HealthAdvisorWorkspace() {
     () => buildHealthAdvisorModel({ records, documents, history }),
     [documents, history, records]
   );
+  const greeting = localNow
+    ? buildHealthAdvisorGreeting({
+        memberName,
+        now: localNow,
+        timeZone: memberTimeZone,
+      })
+    : null;
+  const medicationCount = model.medicationReview.length;
+  const appointmentCount =
+    model.timelineSummary.byType.find(
+      (item) => item.kind === "appointment"
+    )?.count || 0;
+  const dataState = buildHealthAdvisorDataState({
+    totalRecords: model.executiveBriefing.totalRecords,
+    populatedAreas: model.executiveBriefing.populatedAreas,
+    medicationCount,
+    appointmentCount,
+  });
 
   async function decideRecommendation(
     recommendation: HealthAdvisorRecommendation,
@@ -360,6 +407,44 @@ export function HealthAdvisorWorkspace() {
       description="Evidence-backed record review and appointment preparation within strict medical safety boundaries."
     >
       <section className="space-y-4" aria-label="Health Advisor workspace" data-health-advisor-active="true">
+        <div className="rounded-xl border border-red-200/15 bg-red-200/[0.04] px-4 py-3">
+          {greeting ? (
+            <h2 className="text-lg font-black text-white">{greeting}</h2>
+          ) : (
+            <p className="text-sm font-bold text-[#c7cfdb]" role="status">
+              Preparing your Health Advisor…
+            </p>
+          )}
+          <p className="mt-1 text-sm leading-6 text-[#dbe3ef]">
+            {healthAdvisorIntroduction}
+          </p>
+          <p className="mt-1 text-xs leading-5 text-[#9aa7b8]">
+            {loading
+              ? "Loading your owner-authorized health context. No health history will be inferred."
+              : recordsUnavailable
+                ? "Your saved health records are unavailable. I will not infer a health history or record counts."
+                : dataState}
+          </p>
+          {!loading &&
+          !recordsUnavailable &&
+          model.executiveBriefing.totalRecords === 0 ? (
+            <nav
+              aria-label="Health Advisor starting points"
+              className="mt-2 flex flex-wrap gap-x-4 gap-y-2 text-xs font-bold"
+            >
+              <Link className="text-red-100 hover:text-white" href="/dashboard/health/profile">
+                Health Profile
+              </Link>
+              <Link className="text-red-100 hover:text-white" href="/dashboard/health/medications">
+                Medications
+              </Link>
+              <Link className="text-red-100 hover:text-white" href="/dashboard/health/appointments">
+                Appointments
+              </Link>
+            </nav>
+          ) : null}
+        </div>
+
         <DashboardCard accent="health">
           <SectionHeader eyebrow="Executive Health Briefing" title={model.executiveBriefing.title} description={model.executiveBriefing.summary} action={<ModuleBadge module="health" label="Advisor active" />} />
           <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
