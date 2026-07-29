@@ -9,10 +9,11 @@ const workspace = readFileSync(
   "utf8"
 );
 
-test("Money Coach provides persisted conversation history and bounded questions", () => {
+test("Money Coach provides persisted conversation history and optional shortcuts", () => {
   assert.match(source, /data-money-coach-left-navigation="true"/);
   assert.match(source, /Money Coach conversation navigation/);
-  assert.match(source, /Suggested Questions/);
+  assert.match(source, /New conversation/);
+  assert.match(source, /Try a conversation starter/);
   assert.match(source, /Pinned Conversations/);
   assert.match(source, /Recent Conversations/);
   assert.match(source, /Search/);
@@ -36,13 +37,13 @@ test("BM-305 keeps persistence resume and automatic title behavior", () => {
   assert.match(source, /titles update automatically/i);
 });
 
-test("Money Coach keeps structured responses and a bounded composer", () => {
+test("Money Coach keeps structured responses and a direct composer", () => {
   assert.match(workspace, /data-professional-conversation-workspace="true"/);
-  assert.match(source, /composerPlacement="before-cards"/);
   assert.match(source, /AgentStreamingResponseArea/);
   assert.match(source, /streamingTurnId/);
-  assert.doesNotMatch(source, /AgentConversationInput/);
-  assert.match(source, /Structured guidance only/);
+  assert.match(source, /AgentConversationInput/);
+  assert.match(source, /Message your Money Coach/);
+  assert.doesNotMatch(source, /Structured guidance only/);
   assert.match(workspace, /role="log"/);
   assert.match(workspace, /aria-live="polite"/);
   assert.match(workspace, /min-h-\[44px\]/);
@@ -50,23 +51,11 @@ test("Money Coach keeps structured responses and a bounded composer", () => {
   assert.doesNotMatch(source, /FinancialMissionControl|MoneyDashboardCharts|BeastMoney Dashboard/);
 });
 
-test("Money Coach groups supported deterministic questions without Ask Anything", () => {
-  for (const label of [
-    "Recommended Today",
-    "Getting Started",
-    "Continue Previous Work",
-    "Planning",
-    "Debt",
-    "Savings",
-    "Retirement",
-    "Velocity Banking",
-    "Budgeting",
-    "Observation Follow-up",
-    "Upcoming Events",
-  ]) assert.match(source, new RegExp(label));
-  assert.doesNotMatch(source, /"Ask Anything"/);
-  assert.match(source, /data-agent-215-starter-groups="true"/);
-  assert.match(source, /suggestion\.group/);
+test("Money Coach keeps shared suggestions optional and typing primary", () => {
+  assert.match(source, /workspaceSuggestions\.slice\(0, 8\)/);
+  assert.match(source, /suggestion\.prompt \|\| suggestion\.label/);
+  assert.match(source, /intent !== "ask"/);
+  assert.match(source, /type your own question at any time/);
 });
 
 test("BM-305 carries AGENT-215 category metadata into Money Coach suggestions", () => {

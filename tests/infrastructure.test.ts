@@ -595,7 +595,7 @@ test("module navigation centralizes expandable child items", () => {
     ["BeastAdmin", "BF-Dash"]
   );
   assert.deepEqual(buildOwnerNavigationForPersona({ isOwner: false }), []);
-  assert.equal(beastMoneyNavigation.href, "/dashboard/money");
+  assert.equal(beastMoneyNavigation.href, "/dashboard/money/dashboard");
   assert.equal(beastLearningNavigation.href, "/dashboard/education");
   assert.equal(beastAdminNavigation.href, "/dashboard/admin");
   assert.deepEqual(
@@ -622,7 +622,7 @@ test("module navigation centralizes expandable child items", () => {
   assert.equal(beastMoneyNavigation.label, "BeastMoney");
   assert.equal(
     beastMoneyNavigation.children?.map((item) => item.label).join(","),
-    "Money Coach,Dashboard,Observation Center,Cash Flow,Income,Bills,Debts,Payoff Plan,Velocity,Retirement,Reports,Settings"
+    "Dashboard,Money Coach,Cash Flow,Income,Expenses,Payoff Plan,Strategies,Timeline,Retirement,Documents,Reports"
   );
   assert.equal(getModuleChildren("learning").length, 12);
   const moneyChildren = getModuleChildren("money");

@@ -27,11 +27,15 @@ test("BeastMoney primary pages use the shared module shell", () => {
   assert.doesNotMatch(shell, /aria-label="BeastMoney sections"/);
   assert.match(shell, /ModuleBadge module="money"/);
   assert.doesNotMatch(shell, /beastMoneyCoreNavigation/);
+  assert.match(navigation, /\/dashboard\/money\/dashboard/);
+  assert.match(navigation, /\/dashboard\/money\/coach/);
   assert.match(navigation, /\/dashboard\/money\/cashflow/);
-  assert.match(navigation, /\/dashboard\/money\/cashflow#bills/);
+  assert.match(navigation, /\/dashboard\/money\/income/);
+  assert.match(navigation, /\/dashboard\/money\/expenses/);
   assert.match(navigation, /\/dashboard\/money\/debts/);
+  assert.match(navigation, /\/dashboard\/money\/debts#strategy-comparison/);
   assert.match(navigation, /\/dashboard\/money\/debts#payoff-plan/);
-  assert.match(navigation, /\/dashboard\/money\/velocity/);
+  assert.doesNotMatch(navigation, /\/dashboard\/money\/velocity/);
   assert.match(shell, /money-page-stack/);
 
   for (const page of pages) {

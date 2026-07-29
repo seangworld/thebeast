@@ -49,6 +49,8 @@ test("Money Coach recommendations retain deterministic evidence and confidence",
   assert.ok((recommendations[0]?.confidence.score || 0) > 0);
   assert.ok((recommendations[0]?.limitations.length || 0) > 0);
   assert.ok((recommendations[0]?.supportingEvidence.length || 0) > 0);
+  assert.ok((recommendations[0]?.whyItExists.length || 0) > 0);
+  assert.ok((recommendations[0]?.whyItMatters.length || 0) > 0);
 });
 
 test("Money Coach joins recommendations to durable lifecycle history by source insight", () => {
@@ -119,17 +121,20 @@ test("notifications are derived from real briefing and insight records", () => {
   assert.ok(notifications.every((item) => item.title && item.detail));
 });
 
-test("Money Coach UI is bounded to suggested questions and explicit lifecycle decisions", () => {
+test("BP-230 gives Money Coach direct conversation and explicit lifecycle decisions", () => {
   const source = readFileSync(
     "src/app/dashboard/money/components/MoneyCoachExperience.tsx",
     "utf8"
   );
-  assert.doesNotMatch(source, /AgentConversationInput/);
-  assert.match(source, /does not provide an unrestricted chat input/);
-  assert.match(source, /Recommendation Cards/);
-  assert.match(source, /MorningFinancialBriefingPanel/);
-  assert.match(source, /Executive Briefing/);
-  assert.match(source, /Learning from Outcomes/);
+  assert.match(source, /AgentConversationInput/);
+  assert.match(source, /Message your Money Coach/);
+  assert.match(source, /Try a conversation starter/);
+  assert.match(source, /Accept recommendation/);
+  assert.match(source, /only its recommendation-history status to accepted/);
+  assert.match(source, /No money moves, financial record changes/);
+  assert.doesNotMatch(source, /MorningFinancialBriefingPanel|Executive Briefing/);
+  assert.match(source, /What Money Coach learns from your feedback/);
+  assert.match(source, /buildMoneyCoachSessionBriefing/);
   assert.match(source, /recordOutcome/);
   assert.match(source, /SupabaseExecutionHistoryStore/);
 });

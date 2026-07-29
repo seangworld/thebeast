@@ -64,8 +64,6 @@ import {
   FinancialMissionControlLoading,
 } from "@/app/dashboard/money/components/FinancialMissionControl";
 import { buildFinancialMissionControl } from "@/lib/financialMissionControl";
-import { buildMoneyObservationCenter } from "@/lib/moneyObservationCenter";
-import { ObservationCenter } from "./ObservationCenter";
 
 type MoneyDebt = {
   id: string;
@@ -289,7 +287,7 @@ function MobileMoneyMetric({
 export function MoneyWorkspacePage({
   view,
 }: {
-  view: "coach" | "dashboard" | "observations";
+  view: "coach" | "dashboard" | "reports";
 }) {
   const [state, setState] = useState<MoneyState>(initialMoneyState);
   const [loading, setLoading] = useState(true);
@@ -917,18 +915,89 @@ export function MoneyWorkspacePage({
       href: snapshot.financialCoach.warnings[0]?.href || (snapshot.activeDebts.length ? "/dashboard/money/debts" : "/dashboard/money/cashflow"),
     },
   });
-  const observationCenter = buildMoneyObservationCenter(
-    moneyCoachExperience.observations,
-    snapshot.simulation.asOfDate.toISOString()
-  );
-  if (view === "observations") {
+  if (view === "reports") {
     return (
       <BeastMoneyShell
-        title="Observation Center"
-        description="Evidence-backed financial observations"
-        showPageHeader={false}
+        title="Reports"
+        description="Printable financial summaries produced from your current BeastMoney records and existing calculation engines."
       >
-        <ObservationCenter model={observationCenter} />
+        {loading ? (
+          <FinancialMissionControlLoading />
+        ) : loadError ? (
+          <section
+            className="rounded-2xl border border-rose-400/20 bg-rose-400/[0.05] p-6"
+            role="alert"
+          >
+            <h2 className="text-xl font-black text-white">
+              Reports are temporarily unavailable.
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-slate-300">
+              {loadError}
+            </p>
+            <button
+              type="button"
+              className="beast-button mt-5"
+              onClick={loadMoneySnapshot}
+            >
+              Try again
+            </button>
+          </section>
+        ) : (
+          <section className="space-y-5" data-money-reports-workspace="true">
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <p className="beast-kicker">Current records</p>
+                <h2 className="mt-2 text-2xl font-black text-white">
+                  Financial reports
+                </h2>
+                <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-300">
+                  Monthly activity, debt progress, interest, net position, and
+                  Velocity summaries remain grounded in the shared BeastMoney
+                  engines.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="beast-button-secondary"
+                aria-label="Print BeastMoney reports"
+              >
+                Print reports
+              </button>
+            </div>
+            <div className="grid items-stretch gap-4 lg:grid-cols-2 xl:grid-cols-3">
+              {snapshot.financialReports.map((report) => (
+                <article
+                  key={report.id}
+                  className="flex h-full min-w-0 flex-col rounded-2xl border border-white/10 bg-white/[0.035] p-5"
+                >
+                  <p className="text-xs font-black uppercase tracking-wide text-cyan-300">
+                    {report.kind.replace(/_/g, " ")}
+                  </p>
+                  <h3 className="mt-2 text-xl font-black text-white">
+                    {report.title}
+                  </h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-400">
+                    {report.subtitle}
+                  </p>
+                  <dl className="mt-4 grid gap-2">
+                    {report.sections[0]?.rows.slice(0, 4).map((row) => (
+                      <div
+                        key={`${report.id}-${row.label}`}
+                        className="flex items-center justify-between gap-4 rounded-xl bg-black/15 px-3 py-2 text-sm"
+                      >
+                        <dt className="text-slate-400">{row.label}</dt>
+                        <dd className="text-right font-bold text-white">
+                          {row.value}
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
       </BeastMoneyShell>
     );
   }

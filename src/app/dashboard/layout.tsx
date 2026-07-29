@@ -742,7 +742,19 @@ export default function DashboardLayout({
       const navGroupId = `${controlIdPrefix}-${item.module}-nav-group`;
       const primaryChildren =
         item.children?.filter(
-          (child) => !child.future && !child.secondary && !child.group
+          (child) =>
+            !child.future &&
+            !child.secondary &&
+            !child.group &&
+            !child.parent
+        ) || [];
+      const nestedChildren =
+        item.children?.filter(
+          (child) =>
+            !child.future &&
+            !child.secondary &&
+            !child.group &&
+            child.parent
         ) || [];
       const groupedChildren =
         item.children?.filter(
@@ -860,7 +872,27 @@ export default function DashboardLayout({
             <div className="min-h-0 overflow-hidden">
               <div className="mt-2 space-y-1 pl-4">
                 {primaryChildren.map((child) => (
-                  <ChildLink key={child.label} item={child} module={item.module} />
+                  <div key={child.label}>
+                    <ChildLink item={child} module={item.module} />
+                    {nestedChildren.some(
+                      (nestedChild) => nestedChild.parent === child.label
+                    ) ? (
+                      <div className="ml-3 mt-1 space-y-1 border-l border-white/10 pl-2">
+                        {nestedChildren
+                          .filter(
+                            (nestedChild) =>
+                              nestedChild.parent === child.label
+                          )
+                          .map((nestedChild) => (
+                            <ChildLink
+                              key={nestedChild.label}
+                              item={nestedChild}
+                              module={item.module}
+                            />
+                          ))}
+                      </div>
+                    ) : null}
+                  </div>
                 ))}
                 {childGroups.map((group) => (
                   <div key={group} className="pt-2 first:pt-0">

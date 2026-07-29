@@ -66,7 +66,7 @@ function HeroCard({ card }: { card: MissionControlHeroCard }) {
 
 function Surface({ id, title, eyebrow, href, children, className = "" }: { id?: string; title: string; eyebrow: string; href: string; children: React.ReactNode; className?: string }) {
   return (
-    <article id={id} className={`min-w-0 scroll-mt-6 rounded-3xl border border-white/10 bg-[#111827]/80 p-5 shadow-[0_20px_60px_rgba(0,0,0,0.16)] backdrop-blur transition duration-300 hover:border-white/15 hover:shadow-[0_24px_70px_rgba(0,0,0,0.2)] sm:p-7 ${className}`}>
+    <article id={id} className={`flex h-full min-w-0 scroll-mt-6 flex-col rounded-3xl border border-white/10 bg-[#111827]/80 p-5 shadow-[0_20px_60px_rgba(0,0,0,0.16)] backdrop-blur transition duration-300 hover:border-white/15 hover:shadow-[0_24px_70px_rgba(0,0,0,0.2)] sm:p-6 ${className}`}>
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-[11px] font-black uppercase tracking-[0.16em] text-cyan-300">{eyebrow}</p>
@@ -74,7 +74,7 @@ function Surface({ id, title, eyebrow, href, children, className = "" }: { id?: 
         </div>
         <Link href={href} className="flex min-h-[44px] shrink-0 items-center rounded-xl border border-white/10 px-3 text-sm font-bold text-slate-300 transition hover:border-cyan-300/40 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300">Open <span className="sr-only">{title}</span><span aria-hidden="true" className="ml-2">↗</span></Link>
       </div>
-      <div className="mt-7">{children}</div>
+      <div className="mt-5 flex-1">{children}</div>
     </article>
   );
 }
@@ -104,7 +104,6 @@ export function FinancialMissionControlLoading() {
 }
 
 export function FinancialMissionControl({ model }: { model: FinancialMissionControlModel }) {
-  const maxScenarioInterest = Math.max(1, ...model.scenarios.map((scenario) => scenario.totalInterest));
   const hasCurrentRecords =
     model.cashFlow.income > 0 ||
     model.cashFlow.outflow > 0 ||
@@ -112,8 +111,20 @@ export function FinancialMissionControl({ model }: { model: FinancialMissionCont
     model.upcomingObligations.length > 0;
   return (
     <div className="mx-auto w-full max-w-[1600px] space-y-8 pb-12 sm:space-y-10" data-financial-mission-control="true">
+      <header className="border-b border-white/10 pb-5">
+        <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-300">
+          Executive Briefing
+        </p>
+        <h1 className="mt-2 text-3xl font-black text-white">
+          BeastMoney Dashboard
+        </h1>
+        <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-300">
+          Your financial health, daily briefing, current snapshot, important
+          alerts, and recommended next step in one place.
+        </p>
+      </header>
       <section id="financial-health" className="scroll-mt-6" aria-labelledby="mission-control-overview">
-        <h1 id="mission-control-overview" className="sr-only">Financial Mission Control</h1>
+        <h2 id="mission-control-overview" className="sr-only">Financial Mission Control</h2>
         <div className="grid items-stretch gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
           {model.heroCards.map((card) => <HeroCard key={card.id} card={card} />)}
         </div>
@@ -313,38 +324,19 @@ export function FinancialMissionControl({ model }: { model: FinancialMissionCont
         </div>
       </section>
 
-      <section aria-labelledby="strategy-heading" className="grid items-stretch gap-5 xl:grid-cols-12">
-        <div className="xl:col-span-7">
-          <Surface title="Strategy comparison" eyebrow="Scenarios" href="/dashboard/money/debts">
-            {model.scenarios.length ? <div className="space-y-4">
-              {model.scenarios.map((scenario) => (
-                <div key={scenario.id} className="grid gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
-                  <div className="min-w-0">
-                    <div className="flex items-center justify-between gap-3"><h3 className="font-black text-white">{scenario.label}</h3><span className="text-xs font-bold uppercase text-slate-400">{scenario.riskLevel} risk</span></div>
-                    <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-gradient-to-r from-violet-400 to-cyan-300" style={{ width: `${Math.max(5, (scenario.totalInterest / maxScenarioInterest) * 100)}%` }} /></div>
-                  </div>
-                  <div className="text-left sm:text-right"><p className="font-black text-white">{scenario.monthsToPayoff} months</p><p className="text-xs text-slate-400">{formatCurrency(scenario.totalInterest)} interest</p></div>
-                </div>
-              ))}
-            </div> : <p className="text-sm text-slate-400">Comparable payoff scenarios are not available yet.</p>}
-          </Surface>
-        </div>
-        <div className="xl:col-span-5">
-          <Surface title="Velocity progress" eyebrow="Velocity" href="/dashboard/money/velocity" className="h-full">
-            {model.velocity.available ? <>
-              <p className="text-3xl font-black text-white">{model.velocity.monthsToPayoff} months</p>
-              <p className="mt-2 text-sm text-slate-400">Modeled payoff · {model.velocity.riskLevel} risk</p>
-              <p className="mt-5 rounded-2xl bg-violet-400/10 p-4 text-sm text-violet-100">{formatCurrency(model.velocity.totalInterest || 0)} modeled interest under the current Velocity scenario.</p>
-            </> : <p className="text-sm leading-6 text-slate-400">A current Velocity scenario is not available. Open Velocity to review required inputs and guardrails.</p>}
-          </Surface>
-        </div>
-      </section>
-
       <section aria-labelledby="focus-heading" className="grid items-stretch gap-5 xl:grid-cols-3">
-        <Surface title="Recommended focus" eyebrow="Today" href={model.recommendedFocus.href}>
+        <Surface id="recommended-next-step" title="Recommended next step" eyebrow="Today" href={model.recommendedFocus.href}>
           <h3 id="focus-heading" className="text-xl font-black text-white">{model.recommendedFocus.title}</h3>
           <p className="mt-3 text-sm leading-6 text-slate-300">{model.recommendedFocus.action}</p>
           <p className="mt-4 rounded-2xl bg-cyan-300/10 p-4 text-xs leading-5 text-cyan-100">{model.recommendedFocus.why}</p>
+          <Link
+            className="mt-4 inline-flex min-h-11 items-center font-bold text-cyan-200"
+            href={`/dashboard/money/coach?starter=${encodeURIComponent(
+              `Can we discuss this recommendation: ${model.recommendedFocus.title}?`
+            )}`}
+          >
+            Discuss with Money Coach <span aria-hidden="true" className="ml-2">→</span>
+          </Link>
         </Surface>
         <Surface title="Upcoming obligations" eyebrow="Next 7 days" href="/dashboard/money/cashflow#bills">
           <div className="space-y-3">
@@ -352,10 +344,10 @@ export function FinancialMissionControl({ model }: { model: FinancialMissionCont
             {!model.upcomingObligations.length ? <p className="text-sm text-slate-400">No obligations are due in the current review window.</p> : null}
           </div>
         </Surface>
-        <Surface id="observations" title="Observation Center" eyebrow="Intelligence" href="/dashboard/money/observations">
+        <Surface id="important-alerts" title="Important alerts" eyebrow="Needs attention" href="/dashboard/money/coach">
           <div className="space-y-3">
-            {model.observations.map((item) => <div key={item.id} className="rounded-xl border border-white/10 p-3"><div className="flex justify-between gap-3"><p className="font-bold text-white">{item.title}</p><span className="text-[10px] font-black uppercase text-cyan-300">{item.priority}</span></div><p className="mt-2 text-xs leading-5 text-slate-400">{item.summary}</p>{item.confidence ? <p className="mt-2 text-[10px] uppercase text-slate-500">{item.confidence} confidence</p> : null}</div>)}
-            {!model.observations.length ? <p className="text-sm text-slate-400">No evidence-backed observations require attention right now.</p> : null}
+            {model.observations.map((item) => <div key={item.id} className="rounded-xl border border-white/10 p-3"><div className="flex justify-between gap-3"><p className="font-bold text-white">{item.title}</p><span className="text-[10px] font-black uppercase text-cyan-300">{item.priority}</span></div><p className="mt-2 text-xs leading-5 text-slate-400">{item.summary}</p>{item.confidence ? <p className="mt-2 text-[10px] uppercase text-slate-500">{item.confidence} confidence</p> : null}<Link className="mt-2 inline-flex text-xs font-bold text-cyan-200" href={`/dashboard/money/coach?starter=${encodeURIComponent(`Help me understand this alert: ${item.title}.`)}`}>Discuss with Money Coach <span aria-hidden="true" className="ml-1">→</span></Link></div>)}
+            {!model.observations.length ? <p className="text-sm text-slate-400">No important alerts require attention from the current records.</p> : null}
           </div>
         </Surface>
       </section>

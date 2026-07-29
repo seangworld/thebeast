@@ -1,5 +1,5 @@
-import { MoneyWorkspacePage } from "../components/MoneyWorkspacePage";
+import { redirect } from "next/navigation";
 
 export default function MoneyObservationCenterPage() {
-  return <MoneyWorkspacePage view="observations" />;
+  redirect("/dashboard/money/dashboard#important-alerts");
 }

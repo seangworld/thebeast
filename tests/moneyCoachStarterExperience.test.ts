@@ -6,15 +6,14 @@ import { buildMoneyCoachExperience } from "../src/lib/moneyCoachExperience";
 const workspaceSource = readFileSync("src/app/dashboard/money/components/MoneyCoachExperience.tsx", "utf8");
 
 test("BM-306 presents a bounded personalized start state instead of a blank conversation", () => {
-  assert.match(workspaceSource, /data-money-coach-new-conversation="true"/);
+  assert.match(workspaceSource, /data-money-coach-conversation-shortcuts="true"/);
   assert.match(workspaceSource, /turns\.length === 0/);
-  assert.match(workspaceSource, /Suggested Questions/);
-  assert.match(workspaceSource, /MorningFinancialBriefingPanel/);
+  assert.match(workspaceSource, /Try a conversation starter/);
+  assert.match(workspaceSource, /type your own question at any time/);
+  assert.match(workspaceSource, /AgentConversationInput/);
   assert.doesNotMatch(workspaceSource, /reviewIntroduction/);
   assert.match(workspaceSource, /min-h-11/);
   assert.match(workspaceSource, /sm:grid-cols-2/);
-  assert.match(workspaceSource, /xl:grid-cols-4/);
-  assert.match(workspaceSource, /Ask Money Coach/);
 });
 
 test("BM-306 consumes AGENT-215 personalization rather than defining another ranking engine", () => {
@@ -34,19 +33,9 @@ test("BM-306 starter selection creates and starts a new persisted conversation",
   assert.match(workspaceSource, /void beginStarter\(suggestion\.prompt \|\| suggestion\.label\)/);
 });
 
-test("BM-306 supplies every requested starter group through shared metadata", () => {
-  for (const group of [
-    "Recommended Today",
-    "Continue Previous Work",
-    "Getting Started",
-    "Planning",
-    "Debt",
-    "Savings",
-    "Retirement",
-    "Velocity Banking",
-    "Budgeting",
-  ]) assert.match(workspaceSource, new RegExp(`"${group}"`));
-  assert.doesNotMatch(workspaceSource, /"Ask Anything"/);
+test("BM-306 preserves shared starter metadata while rendering optional shortcuts", () => {
+  assert.match(workspaceSource, /workspaceSuggestions\.slice\(0, 8\)/);
+  assert.doesNotMatch(workspaceSource, /starterGroupOrder/);
 
   const model = buildMoneyCoachExperience({
     ownerId: "owner-1",

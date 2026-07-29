@@ -116,6 +116,7 @@ test("MC-201 consumes the shared AgentExperience without replacing existing page
   );
   const landing = readFileSync("src/app/dashboard/money/components/MoneyWorkspacePage.tsx", "utf8");
   const landingRoute = readFileSync("src/app/dashboard/money/page.tsx", "utf8");
+  const coachRoute = readFileSync("src/app/dashboard/money/coach/page.tsx", "utf8");
   const workspace = readFileSync(
     "src/app/components/agents/ProfessionalConversationWorkspace.tsx",
     "utf8"
@@ -128,9 +129,10 @@ test("MC-201 consumes the shared AgentExperience without replacing existing page
   assert.match(component, /from "@\/app\/components\/agents"/);
   assert.match(component, /<AgentExperience/);
   assert.match(component, /AgentMemoryRecord/);
-  assert.match(component, /composerPlacement="before-cards"/);
-  assert.match(component, /Suggested Questions/);
-  assert.match(component, /Structured guidance only/);
+  assert.match(component, /AgentConversationInput/);
+  assert.match(component, /Message your Money Coach/);
+  assert.match(component, /type your own question at any time/);
+  assert.match(component, /Try a conversation starter/);
   assert.doesNotMatch(component, /AgentSmartCard/);
   assert.doesNotMatch(component, /Today&apos;s Financial Review/);
   assert.match(component, /buildMoneyCoachGreeting/);
@@ -146,20 +148,18 @@ test("MC-201 consumes the shared AgentExperience without replacing existing page
   assert.match(component, /Delete/);
   assert.match(component, /Review durable memories/);
   assert.match(workspace, /lg:grid-cols-\[18rem_minmax\(0,1fr\)\]/);
-  assert.match(component, /h-\[30rem\]/);
+  assert.match(component, /min-h-\[34rem\]/);
   assert.match(workspace, /data-professional-active-scroll="true"/);
   assert.match(component, /data-money-coach-history-list="true"/);
   assert.match(workspace, /overflow-y-auto/);
   assert.match(workspace, /lg:hidden/);
   assert.match(workspace, /role="dialog"/);
   assert.match(workspace, /aria-modal="true"/);
-  assert.match(component, /Suggested Questions/);
   assert.match(component, /Active Money Coach conversation/);
-  assert.match(component, /Financial Snapshot/);
-  assert.match(component, /Future Planning/);
-  assert.match(component, /How is my score calculated\?/);
-  assert.match(component, /data-financial-health-formula="true"/);
-  assert.match(component, /Ask Money Coach/);
+  assert.doesNotMatch(component, /Executive Briefing|Financial Snapshot|data-financial-health-formula/);
+  assert.match(component, /Accept recommendation/);
+  assert.match(component, /No money moves[\s\S]*calculation changes/);
+  assert.match(component, /What Money Coach learns from your feedback/);
   assert.match(component, /Pinned Conversations/);
   assert.match(component, /Recent Conversations/);
   assert.match(component, /archivedThreads/);
@@ -170,7 +170,11 @@ test("MC-201 consumes the shared AgentExperience without replacing existing page
   assert.match(workspace, /data-message-role/);
   assert.match(scroll, /scrollTo\(\{ top: region\.scrollHeight/);
   assert.match(workspace, /Jump to Latest/);
-  assert.doesNotMatch(component, /AgentConversationInput/);
+  assert.ok(
+    component.indexOf("<ProfessionalConversationTimeline") <
+      component.indexOf("<AgentConversationInput"),
+    "The composer should follow the active conversation"
+  );
   assert.match(workspace, /\[&_table\]:w-full/);
   assert.match(workspace, /\[&_ul\]:list-disc/);
   assert.match(workspace, /\[&_ol\]:list-decimal/);
@@ -186,7 +190,8 @@ test("MC-201 consumes the shared AgentExperience without replacing existing page
   assert.match(landing, /showPageHeader=\{false\}/);
   assert.doesNotMatch(landing, /window\.location\.hash|showDashboard/);
   assert.match(landing, /view === "coach" \? <MoneyCoachExperience/);
-  assert.match(landingRoute, /MoneyWorkspacePage view="coach"/);
+  assert.match(landingRoute, /redirect\("\/dashboard\/money\/dashboard"\)/);
+  assert.match(coachRoute, /MoneyWorkspacePage view="coach"/);
   assert.match(landing, /Financial mission control/);
   assert.match(landing, /BeastMoney Dashboard/);
   assert.match(landing, /Explore current balances, obligations, forecasts, risks, trends, scenarios, and reports/);

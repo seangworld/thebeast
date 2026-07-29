@@ -63,7 +63,7 @@ test("the current group can be manually collapsed", () => {
 test("route reconciliation replaces stale expansion after refresh", () => {
   const staleOpenModule = "beastos";
   const routeOpenModule = findActiveExpandableModule(
-    "/dashboard/money",
+    "/dashboard/money/dashboard",
     navigation
   );
 

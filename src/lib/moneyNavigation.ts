@@ -1,21 +1,21 @@
 export type BeastMoneyNavigationItem = {
   label: string;
   href: string;
+  parent?: string;
 };
 
 export const beastMoneyCoreNavigation: readonly BeastMoneyNavigationItem[] = [
-  { label: "Money Coach", href: "/dashboard/money" },
   { label: "Dashboard", href: "/dashboard/money/dashboard" },
-  { label: "Observation Center", href: "/dashboard/money/observations" },
+  { label: "Money Coach", href: "/dashboard/money/coach" },
   { label: "Cash Flow", href: "/dashboard/money/cashflow" },
-  { label: "Income", href: "/dashboard/money/income" },
-  { label: "Bills", href: "/dashboard/money/cashflow#bills" },
-  { label: "Debts", href: "/dashboard/money/debts" },
-  { label: "Payoff Plan", href: "/dashboard/money/debts#payoff-plan" },
-  { label: "Velocity", href: "/dashboard/money/velocity" },
+  { label: "Income", href: "/dashboard/money/income", parent: "Cash Flow" },
+  { label: "Expenses", href: "/dashboard/money/expenses", parent: "Cash Flow" },
+  { label: "Payoff Plan", href: "/dashboard/money/debts" },
+  { label: "Strategies", href: "/dashboard/money/debts#strategy-comparison", parent: "Payoff Plan" },
+  { label: "Timeline", href: "/dashboard/money/debts#payoff-plan", parent: "Payoff Plan" },
   { label: "Retirement", href: "/dashboard/money/retirement" },
-  { label: "Reports", href: "/dashboard/money/dashboard#reports" },
-  { label: "Settings", href: "/dashboard/money/settings" },
+  { label: "Documents", href: "/dashboard/uploads" },
+  { label: "Reports", href: "/dashboard/money/reports" },
 ] as const;
 
 export function isBeastMoneyNavigationActive(

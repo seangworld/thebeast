@@ -3,18 +3,14 @@
 import { useMemo } from "react";
 import { buildFinancialDecision } from "@/lib/financialDecisionEngine";
 import BillsSection from "./components/BillsSection";
-import DebtsSection from "./components/DebtsSection";
 import CashFlowOverview from "./components/CashFlowOverview";
-import DebtAttackRecommendation from "./components/DebtAttackRecommendation";
 import DailyOperatingFocus from "./components/DailyOperatingFocus";
 import BillsAheadSection from "./components/BillsAheadSection";
 import IncomeDatePlanningSection from "./components/IncomeDatePlanningSection";
 import PaycheckPlanningSection from "./components/PaycheckPlanningSection";
-import StrategySnapshot from "./components/StrategySnapshot";
 import AddIncomeBillSection from "./components/AddIncomeBillSection";
 import CashTimelineSection from "./components/CashTimelineSection";
 import FundingSourcesSection from "./components/FundingSourcesSection";
-import IncomeSourcesSection from "./components/IncomeSourcesSection";
 import ArchivedItemsSection from "./components/ArchivedItemsSection";
 import { BeastMoneyShell } from "@/app/dashboard/money/BeastMoneyShell";
 import { useCashFlow } from "./useCashFlow";
@@ -1183,7 +1179,7 @@ export default function CashFlowPage() {
   return (
     <BeastMoneyShell
       title="Cash Flow"
-      description="Manage paychecks, bills, debt minimums, Monthly Extra Attack payments, required cash, and buffer risk."
+      description="Understand checking, protected cash, available credit, monthly movement, and the income and expenses shaping your position."
     >
       <div className="money-page-stack">
         <CashFlowOverview
@@ -1198,18 +1194,8 @@ export default function CashFlowPage() {
           incomeExpected={incomeExpected}
           netPosition={netPosition}
           buffer={buffer}
-        />
-
-        <DebtAttackRecommendation
-          suggestedMonthlyDebtAttack={suggestedMonthlyDebtAttack}
-          incomes={incomes}
-          nextPaycheckAmount={nextPaycheckAmount}
-          recommendedTargetDebt={recommendedTargetDebt}
-          financialDecision={financialDecision}
-          strategy={strategy}
-          isApplyingSuggestedAttack={isApplyingSuggestedAttack}
-          applySuggestedAttack={applySuggestedAttack}
-          suggestedAttackMessage={suggestedAttackMessage}
+          availableCredit={creditAvailableTotal}
+          monthlySurplus={safeToSpend}
         />
 
         <DailyOperatingFocus
@@ -1295,14 +1281,8 @@ export default function CashFlowPage() {
         />
         </div>
 
-        <StrategySnapshot
-          strategy={strategy}
-          extraPayment={extraPayment}
-          targetDebtName={targetDebtName}
-          activeDebtCount={activeDebts.length}
-        />
-
         <AddIncomeBillSection
+          includeIncome={false}
           showAddIncome={showAddIncome}
           setShowAddIncome={setShowAddIncome}
           incomeName={incomeName}
@@ -1366,66 +1346,6 @@ export default function CashFlowPage() {
           archiveBill={archiveBill}
           resetBillDueDate={resetBillDueDate}
           updatePaymentAutomation={(id, patch) => updatePaymentAutomation("bill", id, patch)}
-        />
-
-        <div id="debts">
-        <DebtsSection
-          showDebts={showDebts}
-          setShowDebts={() => setShowDebts(!showDebts)}
-          activeDebts={activeDebts}
-          editingDebtId={editingDebtId}
-          editDebtName={editDebtName}
-          editDebtBalance={editDebtBalance}
-          editDebtMinimumPayment={editDebtMinimumPayment}
-          editDebtPaymentBehavior={editDebtPaymentBehavior}
-          editDebtInterestRate={editDebtInterestRate}
-          editDebtDueDate={editDebtDueDate}
-          editDebtMinimumPaymentRate={editDebtMinimumPaymentRate}
-          editDebtMinimumPaymentFloor={editDebtMinimumPaymentFloor}
-          setEditDebtName={setEditDebtName}
-          setEditDebtBalance={setEditDebtBalance}
-          setEditDebtMinimumPayment={setEditDebtMinimumPayment}
-          setEditDebtPaymentBehavior={setEditDebtPaymentBehavior}
-          setEditDebtInterestRate={setEditDebtInterestRate}
-          setEditDebtDueDate={setEditDebtDueDate}
-          setEditDebtMinimumPaymentRate={setEditDebtMinimumPaymentRate}
-          setEditDebtMinimumPaymentFloor={setEditDebtMinimumPaymentFloor}
-          incomeBucketPlans={incomeBucketPlans}
-          activeFundingSources={activeFundingSources}
-          updateDebtIncomeDate={updateDebtIncomeDate}
-          updateDebtPaymentConfiguration={updateDebtPaymentConfiguration}
-          debtPayments={debtPayments}
-          setDebtPayments={setDebtPayments}
-          applyDebtPayment={applyDebtPayment}
-          applyingDebtPaymentId={applyingDebtPaymentId}
-          debtPaymentStatus={debtPaymentStatus}
-          startEditDebt={startEditDebt}
-          saveDebtEdit={saveDebtEdit}
-          cancelEditDebt={cancelEditDebt}
-          archiveDebt={archiveDebt}
-          resetDebtDueDate={resetDebtDueDate}
-          deleteDebt={deleteDebt}
-          updatePaymentAutomation={(id, patch) => updatePaymentAutomation("debt", id, patch)}
-        />
-        </div>
-        <IncomeSourcesSection
-          showIncomeEvents={showIncomeEvents}
-          setShowIncomeEvents={setShowIncomeEvents}
-          incomes={incomes}
-          editingIncomeId={editingIncomeId}
-          editIncomeName={editIncomeName}
-          editIncomeAmount={editIncomeAmount}
-          editIncomeFrequency={editIncomeFrequency}
-          editIncomeNextDate={editIncomeNextDate}
-          setEditIncomeName={setEditIncomeName}
-          setEditIncomeAmount={setEditIncomeAmount}
-          setEditIncomeFrequency={setEditIncomeFrequency}
-          setEditIncomeNextDate={setEditIncomeNextDate}
-          getNextIncomeDateDisplay={getNextIncomeDateDisplay}
-          startEditIncome={startEditIncome}
-          saveIncomeEdit={saveIncomeEdit}
-          cancelEditIncome={cancelEditIncome}
-          deleteIncome={deleteIncome}
         />
 
         <ArchivedItemsSection

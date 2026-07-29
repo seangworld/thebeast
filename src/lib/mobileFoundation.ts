@@ -89,7 +89,7 @@ export function buildMobileNavigation({
       ]
     : [
         { label: "Today", href: "/dashboard/today", module: "beastos" as ModuleKey, primary: true },
-        { label: "Money", href: "/dashboard/money", module: "money" as ModuleKey, primary: true },
+        { label: "Money", href: "/dashboard/money/dashboard", module: "money" as ModuleKey, primary: true },
         { label: "Calendar", href: "/dashboard/calendar", module: "calendar" as ModuleKey, primary: true },
         { label: "AI", href: "/dashboard/search#shared-ai", module: "search" as ModuleKey, primary: true },
         { label: "More", href: "#mobile-more", module: "beastos" as ModuleKey, primary: true },

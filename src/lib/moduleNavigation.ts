@@ -10,6 +10,7 @@ import { beastMoneyCoreNavigation } from "./moneyNavigation";
 export type ModuleChildNavItem = {
   label: string;
   href: string;
+  parent?: string;
   group?: string;
   future?: boolean;
   secondary?: boolean;
@@ -100,7 +101,7 @@ export const beastOSNavigation: ModuleNavSection = {
 
 export const beastMoneyNavigation: ModuleNavSection = {
   label: "BeastMoney",
-  href: "/dashboard/money",
+  href: "/dashboard/money/dashboard",
   module: "money",
   children: [...beastMoneyCoreNavigation],
 };

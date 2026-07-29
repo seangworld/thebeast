@@ -51,7 +51,7 @@ test("BF-MOB-009 builds mobile smoke routes from permission-aware route inventor
     adminViewMode: "member",
   }).map((route) => route.href);
 
-  assert.ok(ownerRoutes.includes("/dashboard/money"));
+  assert.ok(ownerRoutes.includes("/dashboard/money/dashboard"));
   assert.ok(ownerRoutes.includes("/dashboard/education"));
   assert.ok(ownerRoutes.includes("/dashboard/health"));
   assert.ok(ownerRoutes.includes("/dashboard/home"));
@@ -83,7 +83,7 @@ test("BF-MOB-009 exposes reusable release readiness and smoke tooling", () => {
     "node scripts/mobile-release-smoke.mjs"
   );
   assert.match(script, /MOBILE_SMOKE_BASE_URL/);
-  assert.match(script, /\/dashboard\/money/);
+  assert.match(script, /\/dashboard\/money\/dashboard/);
   assert.match(layout, /data-mobile-release-readiness="bf-mob-009"/);
   assert.match(layout, /data-mobile-analytics-event="beast_mobile_route_open"/);
 });

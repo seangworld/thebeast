@@ -145,7 +145,7 @@ export function buildMobileReleaseSmokeRoutes({
     "/dashboard/search",
     "/dashboard/uploads",
     "/dashboard/goals",
-    "/dashboard/money",
+    "/dashboard/money/dashboard",
     "/dashboard/education",
     "/dashboard/health",
     "/dashboard/home",

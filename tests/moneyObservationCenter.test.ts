@@ -117,17 +117,18 @@ test("BM-311 exposes evidence, confidence, workspace, and action without duplica
   );
 });
 
-test("BM-311 provides a dedicated accessible route and integration surfaces", () => {
+test("BP-230 retires the Observation Center route without discarding observation intelligence", () => {
   const route = source("src/app/dashboard/money/observations/page.tsx");
   const workspace = source("src/app/dashboard/money/components/MoneyWorkspacePage.tsx");
   const center = source("src/app/dashboard/money/components/ObservationCenter.tsx");
   const missionControl = source("src/app/dashboard/money/components/FinancialMissionControl.tsx");
   const coach = source("src/lib/moneyCoachExperience.ts");
 
-  assert.match(route, /MoneyWorkspacePage view="observations"/);
-  assert.match(workspace, /buildMoneyObservationCenter\(\s*moneyCoachExperience\.observations/);
-  assert.match(workspace, /view === "observations"/);
+  assert.match(route, /redirect\("\/dashboard\/money\/dashboard#important-alerts"\)/);
+  assert.doesNotMatch(workspace, /buildMoneyObservationCenter|view === "observations"/);
   assert.doesNotMatch(workspace, /new SharedObservationIntelligence/);
+  // The prior component remains as compatibility code while no route or
+  // navigation exposes a separate Observation Center workspace.
   assert.match(center, /Summary|item\.summary/);
   assert.match(center, /Why it matters/);
   assert.match(center, /item\.confidenceLabel/);
@@ -144,8 +145,10 @@ test("BM-311 provides a dedicated accessible route and integration surfaces", ()
   assert.match(center, /observedAt/);
   assert.match(center, /sm:grid-cols-2/);
   assert.match(center, /grid gap-4 lg:grid-cols-2/);
-  assert.match(missionControl, /Observation Center/);
-  assert.match(missionControl, /\/dashboard\/money\/observations/);
+  assert.match(missionControl, /Important alerts/);
+  assert.doesNotMatch(missionControl, /Observation Center|\/dashboard\/money\/observations/);
+  assert.match(missionControl, /Discuss with Money Coach/);
   assert.match(coach, /observations\.map[\s\S]*Why I noticed/);
-  assert.match(coach, /action: "Open Observation Center"/);
+  assert.match(coach, /action: "Review important alerts"/);
+  assert.match(coach, /dashboard#important-alerts/);
 });

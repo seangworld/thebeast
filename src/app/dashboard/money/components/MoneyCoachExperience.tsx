@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
   AgentAvatar,
+  AgentConversationInput,
   AgentEmptyState,
   AgentErrorState,
   AgentExperience,
@@ -39,14 +40,13 @@ import {
   type MoneyCoachStructuredAnswer,
 } from "@/lib/moneyCoachExperience";
 import {
-  buildMoneyCoachNotifications,
   buildMoneyCoachOutcomeLearning,
   buildMoneyCoachRecommendations,
+  buildMoneyCoachSessionBriefing,
   moneyCoachProfessionalId,
   type MoneyCoachRecommendation,
+  type MoneyCoachSessionBriefing,
 } from "@/lib/moneyCoachOnline";
-import { formatCurrency } from "@/lib/formatters";
-import { MorningFinancialBriefingPanel } from "./MorningFinancialBriefing";
 
 type MoneyCoachExperienceProps = {
   model: MoneyCoachExperienceModel;
@@ -54,35 +54,6 @@ type MoneyCoachExperienceProps = {
   error?: string;
   onRetry: () => void;
 };
-
-function titleCase(value: string) {
-  return value.charAt(0).toUpperCase() + value.slice(1);
-}
-
-function CompactMetric({
-  label,
-  value,
-  detail,
-  href,
-  action = "View details",
-}: {
-  label: string;
-  value: string;
-  detail: string;
-  href: string;
-  action?: string;
-}) {
-  return (
-    <article className="min-w-0 rounded-xl border border-white/10 bg-black/15 p-3">
-      <p className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">{label}</p>
-      <div className="mt-1 flex min-w-0 flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-        <p className="min-w-0 break-words text-lg font-black text-white">{value}</p>
-        <Link className="shrink-0 text-[11px] font-bold text-cyan-200" href={href}>{action}</Link>
-      </div>
-      <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-400">{detail}</p>
-    </article>
-  );
-}
 
 function persistenceErrorMessage(error: unknown) {
   const detail = typeof error === "object" && error && "message" in error
@@ -113,6 +84,68 @@ function MoneyCoachResponseDocument({ response }: { response: MoneyCoachStructur
   </div>;
 }
 
+function MoneyCoachSessionOpening({
+  briefing,
+}: {
+  briefing: MoneyCoachSessionBriefing;
+}) {
+  return (
+    <div data-money-coach-session-briefing="true">
+      <p>{briefing.summary}</p>
+      {briefing.changes.length ? (
+        <div className="mt-4">
+          <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-400">
+            Since your last review
+          </p>
+          <ul className="mt-2 space-y-2">
+            {briefing.changes.map((change) => (
+              <li key={change.id}>
+                <span className="font-bold text-white">{change.title}:</span>{" "}
+                {change.detail}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      {briefing.continuity.length ? (
+        <div className="mt-4">
+          <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-400">
+            What I remember
+          </p>
+          <ul className="mt-2 space-y-2">
+            {briefing.continuity.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.035] p-3">
+        <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-400">
+          Recommended focus
+        </p>
+        <p className="mt-2 font-bold text-white">
+          {briefing.recommendedFocus.title}
+        </p>
+        <p className="mt-1">{briefing.recommendedFocus.detail}</p>
+        <Link
+          className="mt-2 inline-flex font-bold text-cyan-200"
+          href={briefing.recommendedFocus.href}
+        >
+          Review details <span aria-hidden="true">→</span>
+        </Link>
+      </div>
+      <details className="mt-4">
+        <summary className="cursor-pointer text-xs font-bold text-slate-400">
+          Sources reviewed
+        </summary>
+        <p className="mt-2 text-xs leading-5 text-slate-500">
+          {briefing.sources.join(" · ")}
+        </p>
+      </details>
+    </div>
+  );
+}
+
 export function MoneyCoachExperience({
   model,
   loading,
@@ -121,6 +154,7 @@ export function MoneyCoachExperience({
 }: MoneyCoachExperienceProps) {
   const searchParams = useSearchParams();
   const [turns, setTurns] = useState<{ id: string; question: string; response: MoneyCoachStructuredAnswer }[]>([]);
+  const [input, setInput] = useState("");
   const [conversationTitle, setConversationTitle] = useState("Current financial review");
   const [localNow, setLocalNow] = useState<Date | null>(null);
   const [repository, setRepository] = useState<ServerAgentConversationRepository | null>(null);
@@ -256,6 +290,17 @@ export function MoneyCoachExperience({
     setTurns(restored);
   }
 
+  const sessionBriefing = useMemo(
+    () =>
+      buildMoneyCoachSessionBriefing({
+        model,
+        history: executionHistory,
+        conversations: threads,
+        activeConversationId: activeThreadId,
+      }),
+    [activeThreadId, executionHistory, model, threads]
+  );
+
   async function refreshThreads(search = historySearch) {
     if (!repository) return;
     try {
@@ -272,14 +317,14 @@ export function MoneyCoachExperience({
         id: "money-coach-opening",
         role: "agent",
         author: model.professional.identity.role,
-        content: model.conversationOpening,
+        content: <MoneyCoachSessionOpening briefing={sessionBriefing} />,
       },
       ...turns.flatMap<AgentConversationMessage>((turn) => [
         { id: `${turn.id}-user`, role: "user", author: "You", content: turn.question },
         { id: `${turn.id}-coach`, role: "agent", author: model.professional.identity.role, streaming: streamingTurnId === turn.id, content: <AgentStreamingResponseArea isStreaming={streamingTurnId === turn.id} label="Money Coach response"><MoneyCoachResponseDocument response={turn.response} /></AgentStreamingResponseArea> },
       ]),
     ],
-    [model.conversationOpening, model.professional.identity.role, streamingTurnId, turns]
+    [model.professional.identity.role, sessionBriefing, streamingTurnId, turns]
   );
 
   async function askQuestion(value: string, targetThreadId = activeThreadId, replaceConversation = false) {
@@ -289,6 +334,7 @@ export function MoneyCoachExperience({
       summary: activeThread?.summary?.overview,
       priorSummaries: threads.filter((thread) => thread.id !== targetThreadId).slice(0, 3).map((thread) => thread.summary?.overview).filter((summary): summary is string => Boolean(summary)),
       memories: memories.map((memory) => ({ key: memory.key, value: memory.value })),
+      executionHistory,
     });
     const timestamp = Date.now();
     const turn = { id: `money-${timestamp}`, question: value, response };
@@ -332,6 +378,26 @@ export function MoneyCoachExperience({
   async function beginStarter(prompt: string) {
     const thread = await startConversation();
     await askQuestion(prompt, thread?.id || "", true);
+  }
+
+  function focusComposer() {
+    document
+      .getElementById("money-coach-question")
+      ?.querySelector("textarea")
+      ?.focus({ preventScroll: true });
+  }
+
+  async function sendMessage(question: string) {
+    const cleanQuestion = question.trim();
+    if (!cleanQuestion || streamingTurnId) return;
+    setInput("");
+    let targetThreadId = activeThreadId;
+    if (!targetThreadId) {
+      const thread = await startConversation();
+      targetThreadId = thread?.id || "";
+    }
+    await askQuestion(cleanQuestion, targetThreadId);
+    window.requestAnimationFrame(focusComposer);
   }
 
   function openThread(thread: AgentConversationThread) { setActiveThreadId(thread.id); setConversationTitle(thread.title); restoreThread(thread); setHistoryOpen(false); }
@@ -394,10 +460,6 @@ export function MoneyCoachExperience({
   const recommendations = useMemo(
     () => buildMoneyCoachRecommendations(model, executionHistory),
     [executionHistory, model]
-  );
-  const notifications = useMemo(
-    () => buildMoneyCoachNotifications(model),
-    [model]
   );
   const outcomeLearning = useMemo(
     () => buildMoneyCoachOutcomeLearning(executionHistory),
@@ -634,7 +696,7 @@ export function MoneyCoachExperience({
         <button type="button" className="text-sm font-bold text-slate-300 lg:hidden" onClick={() => setHistoryOpen(false)} aria-label="Close chat history">Close</button>
       </div>
       <div className="p-3">
-        <button type="button" className="beast-button flex min-h-11 w-full items-center justify-center gap-2" onClick={() => { void startConversation(); setHistoryOpen(false); document.getElementById("money-coach-starters-heading")?.scrollIntoView({ behavior: "smooth", block: "start" }); }}><span aria-hidden="true">＋</span> Suggested Questions</button>
+        <button type="button" className="beast-button flex min-h-11 w-full items-center justify-center gap-2" onClick={() => { void startConversation(); setHistoryOpen(false); window.requestAnimationFrame(focusComposer); }}><span aria-hidden="true">＋</span> New conversation</button>
         {historyError ? <p className="mt-3 rounded-lg border border-red-300/20 bg-red-300/10 p-2 text-xs leading-5 text-red-100" role="alert">{historyError}</p> : null}
         <label className="mt-3 block text-xs font-bold text-slate-300"><span className="sr-only">Search conversations</span>
           <span className="relative block"><span className="pointer-events-none absolute left-3 top-3 text-slate-500" aria-hidden="true">⌕</span><input className="min-h-11 w-full rounded-xl border border-white/10 bg-slate-950 pl-9 pr-3 text-sm text-white outline-none placeholder:text-slate-600 focus:border-cyan-300 focus:ring-2 focus:ring-cyan-300/20" value={historySearch} onChange={(event) => { setHistorySearch(event.target.value); void refreshThreads(event.target.value); }} placeholder="Search" /></span>
@@ -656,125 +718,41 @@ export function MoneyCoachExperience({
       </details>
     </aside>
   );
-  const starterGroupOrder = [
-    "Recommended Today",
-    "Continue Previous Work",
-    "Getting Started",
-    "Planning",
-    "Debt",
-    "Savings",
-    "Retirement",
-    "Velocity Banking",
-    "Budgeting",
-    "Observation Follow-up",
-    "Upcoming Events",
-  ];
-  const starterGroups = starterGroupOrder.map((label) => ({
-    label,
-    suggestions: workspaceSuggestions.filter((suggestion) => suggestion.group === label),
-  })).filter((group) => group.suggestions.length > 0);
+  const starterShortcuts = workspaceSuggestions.slice(0, 8);
   const starterExperience = !loading && !error && turns.length === 0 ? (
-    <section className="rounded-2xl border border-white/10 bg-black/10 p-4" aria-labelledby="money-coach-starters-heading" data-agent-215-starter-groups="true" data-money-coach-new-conversation="true">
-      <div className="flex flex-wrap items-end justify-between gap-2">
-        <div className="max-w-3xl">
-          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-cyan-300">Ask Money Coach</p>
-          <h2 id="money-coach-starters-heading" className="mt-1 text-lg font-black text-white">Suggested Questions</h2>
-        </div>
-        <p className="text-xs leading-5 text-slate-500">Grounded in your current BeastMoney review</p>
+    <details className="rounded-xl border border-white/10 bg-black/10 p-3" data-money-coach-conversation-shortcuts="true">
+      <summary className="cursor-pointer text-sm font-bold text-cyan-200">
+        Try a conversation starter
+      </summary>
+      <p className="mt-2 text-xs leading-5 text-slate-400">
+        These are optional shortcuts. You can type your own question at any time.
+      </p>
+      <div className="mt-3 grid gap-2 sm:grid-cols-2">
+        {starterShortcuts.map((suggestion) => (
+          <button
+            key={suggestion.id}
+            type="button"
+            className="min-h-11 rounded-lg border border-white/10 bg-white/[0.035] px-3 py-2 text-left text-xs font-semibold leading-5 text-slate-200 transition hover:border-cyan-300/30 hover:bg-cyan-300/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300"
+            onClick={() => {
+              void beginStarter(suggestion.prompt || suggestion.label);
+            }}
+          >
+            {suggestion.label}
+          </button>
+        ))}
       </div>
-      <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {starterGroups.map((group) => <section key={group.label} className="min-w-0" aria-label={group.label}>
-          <h3 className="text-[10px] font-black uppercase tracking-[0.14em] text-cyan-300">{group.label}</h3>
-          <div className="mt-2 grid gap-1.5">{group.suggestions.map((suggestion) => <button key={suggestion.id} type="button" className="min-h-11 rounded-lg border border-white/10 bg-white/[0.035] px-3 py-2 text-left text-xs font-semibold leading-5 text-slate-200 transition hover:border-cyan-300/30 hover:bg-cyan-300/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300" onClick={() => { void beginStarter(suggestion.prompt || suggestion.label); }}>{suggestion.label}</button>)}</div>
-        </section>)}
-      </div>
-      <p className="mt-3 text-xs leading-5 text-slate-500">Money Coach provides structured guidance and does not offer unrestricted chat or execute transactions.</p>
-    </section>
+    </details>
   ) : null;
-  const financialHealth = model.financialContext.financialHealth;
-  const debtComponent = financialHealth?.components.find((component) => component.id === "debt");
-  const emergencyFundComponent = financialHealth?.components.find((component) => component.id === "emergency-fund");
-  const financialSummary = (
-    <section className="rounded-2xl border border-white/10 bg-white/[0.025] p-3 sm:p-4" aria-labelledby="money-coach-financial-summary">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 id="money-coach-financial-summary" className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Financial Summary</h2>
-        <Link className="text-xs font-bold text-cyan-200" href="/dashboard/money/dashboard">Open full dashboard <span aria-hidden="true">→</span></Link>
-      </div>
-      <div className="mt-3 grid gap-3 xl:grid-cols-[1.15fr_0.85fr_0.85fr_1.15fr]">
-        <section className="grid min-w-0 gap-2 sm:grid-cols-2 xl:grid-cols-1" aria-labelledby="money-snapshot-heading">
-          <h3 id="money-snapshot-heading" className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500 sm:col-span-2 xl:col-span-1">Financial Snapshot</h3>
-          <CompactMetric
-            label="Financial Health"
-            value={financialHealth ? String(financialHealth.score) : "Unavailable"}
-            detail={financialHealth ? `${titleCase(financialHealth.band)} · ${financialHealth.strongest.label} is currently strongest` : "The current component calculation is unavailable."}
-            href="/dashboard/money?starter=How%20is%20my%20financial%20health%20score%20calculated%3F"
-            action="Ask Coach"
-          />
-          <CompactMetric
-            label="Cash Available"
-            value={formatCurrency(model.financialContext.currentCash)}
-            detail={`${formatCurrency(model.financialContext.cashBuffer)} is protected by your current setting.`}
-            href="/dashboard/money/cashflow"
-          />
-        </section>
-        <section className="grid min-w-0 content-start gap-2" aria-labelledby="money-cash-flow-heading">
-          <h3 id="money-cash-flow-heading" className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">Cash Flow</h3>
-          <CompactMetric
-            label={model.financialContext.projectedSurplus >= 0 ? "Monthly Surplus" : "Monthly Shortfall"}
-            value={formatCurrency(Math.abs(model.financialContext.projectedSurplus))}
-            detail={`${formatCurrency(model.financialContext.monthlyIncome)} income · ${formatCurrency(model.financialContext.monthlyOutflow)} known outflow`}
-            href="/dashboard/money/cashflow"
-          />
-        </section>
-        <section className="grid min-w-0 content-start gap-2" aria-labelledby="money-debt-heading">
-          <h3 id="money-debt-heading" className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">Debt</h3>
-          <CompactMetric
-            label="Debt Remaining"
-            value={formatCurrency(model.financialContext.totalDebt)}
-            detail={debtComponent?.available ? `Debt dimension ${debtComponent.score}/100 across ${model.financialContext.debts.length} tracked account${model.financialContext.debts.length === 1 ? "" : "s"}.` : `${model.financialContext.debts.length} active debt account${model.financialContext.debts.length === 1 ? "" : "s"} tracked.`}
-            href="/dashboard/money/debts"
-          />
-        </section>
-        <section className="grid min-w-0 gap-2 sm:grid-cols-2 xl:grid-cols-1" aria-labelledby="money-future-planning-heading">
-          <h3 id="money-future-planning-heading" className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500 sm:col-span-2 xl:col-span-1">Future Planning</h3>
-          <CompactMetric
-            label="Emergency Fund"
-            value={emergencyFundComponent?.available ? `${emergencyFundComponent.score}/100` : "Not scored"}
-            detail={emergencyFundComponent?.evidence[1] || `Protected reserve ${formatCurrency(model.financialContext.cashBuffer)}`}
-            href="/dashboard/money/cashflow"
-          />
-          <CompactMetric
-            label="Retirement"
-            value={model.financialContext.retirementDataAvailable ? "In progress" : "Setup needed"}
-            detail={model.financialContext.retirementDataAvailable ? "Current retirement planning data is available." : "Add retirement inputs before relying on a progress estimate."}
-            href="/dashboard/money/retirement"
-          />
-        </section>
-      </div>
-      {financialHealth ? <details className="mt-3 border-t border-white/10 pt-3" data-financial-health-formula="true">
-        <summary className="cursor-pointer rounded-lg text-xs font-bold text-cyan-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300">How is my score calculated?</summary>
-        <p className="mt-3 text-xs leading-5 text-slate-400">{financialHealth.formula}</p>
-        <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-          {financialHealth.components.map((component) => (
-            <div key={component.id} className="rounded-lg border border-white/10 bg-black/10 p-3">
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-xs font-bold text-white">{component.label}</p>
-                <span className="text-xs font-black text-slate-300">{component.available ? component.score : "N/A"} · {component.weight}%</span>
-              </div>
-              <p className="mt-1 text-[11px] leading-5 text-slate-500">{component.calculation}</p>
-            </div>
-          ))}
-        </div>
-        <p className="mt-3 text-xs leading-5 text-slate-500">{financialHealth.disclaimer}</p>
-      </details> : null}
-    </section>
-  );
   const recommendationCards = (
     <section aria-labelledby="money-coach-recommendations">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 id="money-coach-recommendations" className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Recommendation Cards</h2>
-          <p className="mt-2 text-sm leading-6 text-slate-400">Decisions are saved to immutable Execution History. Choosing a lifecycle status does not move money or modify financial records.</p>
+          <h2 id="money-coach-recommendations" className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Recommendations</h2>
+          <p className="mt-2 text-sm leading-6 text-slate-400">
+            Acknowledging advice records your decision in Execution History. It
+            does not change a financial record, recalculate a plan, or move
+            money.
+          </p>
         </div>
         {executionHistoryLoading ? <span className="text-xs text-slate-500" role="status">Loading lifecycle history…</span> : null}
       </div>
@@ -792,17 +770,29 @@ export function MoneyCoachExperience({
                 </div>
                 <span className="rounded-full border border-white/10 px-3 py-1 text-xs font-bold text-slate-300">{recommendation.confidence.label} confidence · {recommendation.confidence.score}%</span>
               </div>
-              <p className="mt-2 text-sm leading-6 text-slate-300">{recommendation.recommendation}</p>
+              <p className="mt-3 text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">
+                Why it matters
+              </p>
+              <p className="mt-1 text-sm leading-6 text-slate-300">{recommendation.whyItMatters}</p>
               <details className="mt-3 rounded-lg border border-white/10 p-3">
-                <summary className="cursor-pointer text-xs font-bold text-cyan-200">Evidence, confidence, and limitations</summary>
+                <summary className="cursor-pointer text-xs font-bold text-cyan-200">Why this recommendation exists</summary>
+                <p className="mt-3 text-xs leading-5 text-slate-300">{recommendation.whyItExists}</p>
                 <p className="mt-3 text-xs leading-5 text-slate-400">{recommendation.confidence.basis}</p>
                 {recommendation.supportingEvidence.length ? <ul className="mt-2 list-disc space-y-1 pl-5 text-xs leading-5 text-slate-400">{recommendation.supportingEvidence.map((item) => <li key={`${item.label}-${String(item.value)}`}>{item.label}: {String(item.value)}</li>)}</ul> : null}
                 <ul className="mt-2 list-disc space-y-1 pl-5 text-xs leading-5 text-slate-500">{recommendation.limitations.map((item) => <li key={item}>{item}</li>)}</ul>
               </details>
+              <p className="mt-3 rounded-lg border border-white/10 bg-black/10 p-3 text-xs leading-5 text-slate-400">
+                Choose <strong className="text-slate-200">Accept recommendation</strong> to
+                change only its recommendation-history status to accepted. Choose{" "}
+                <strong className="text-slate-200">Decide later</strong> to keep it
+                open, or <strong className="text-slate-200">Decline</strong> to
+                record that decision. No money moves, financial record changes,
+                or calculation changes occur.
+              </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Link className="beast-button-secondary inline-flex min-h-11 items-center" href={recommendation.href}>View details</Link>
-                {(!lifecycle || lifecycle.status === "proposed" || lifecycle.status === "deferred") ? <button type="button" className="beast-button min-h-11" disabled={pending || !executionStore} onClick={() => { void decideRecommendation(recommendation, "accepted"); }}>Accept</button> : null}
-                {(!lifecycle || lifecycle.status === "proposed") ? <button type="button" className="beast-button-secondary min-h-11" disabled={pending || !executionStore} onClick={() => { void decideRecommendation(recommendation, "deferred"); }}>Defer</button> : null}
+                {(!lifecycle || lifecycle.status === "proposed" || lifecycle.status === "deferred") ? <button type="button" className="beast-button min-h-11" disabled={pending || !executionStore} onClick={() => { void decideRecommendation(recommendation, "accepted"); }}>Accept recommendation</button> : null}
+                {(!lifecycle || lifecycle.status === "proposed") ? <button type="button" className="beast-button-secondary min-h-11" disabled={pending || !executionStore} onClick={() => { void decideRecommendation(recommendation, "deferred"); }}>Decide later</button> : null}
                 {(!lifecycle || lifecycle.status === "proposed" || lifecycle.status === "deferred") ? <button type="button" className="beast-button-secondary min-h-11" disabled={pending || !executionStore} onClick={() => { void decideRecommendation(recommendation, "declined"); }}>Decline</button> : null}
               </div>
               {lifecycle?.status === "accepted" ? <div className="mt-4 border-t border-white/10 pt-4">
@@ -819,24 +809,14 @@ export function MoneyCoachExperience({
       </div>
     </section>
   );
-  const notificationsPanel = (
-    <section aria-labelledby="money-coach-notifications">
-      <h2 id="money-coach-notifications" className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Notifications</h2>
-      <div className="mt-3 grid gap-2 md:grid-cols-2">
-        {notifications.length ? notifications.map((notification) => (
-          <article key={notification.id} className="rounded-xl border border-white/10 bg-white/[0.035] p-3">
-            <p className={`text-[10px] font-black uppercase tracking-[0.14em] ${notification.kind === "attention" ? "text-amber-200" : notification.kind === "progress" ? "text-emerald-200" : "text-cyan-200"}`}>{notification.kind}</p>
-            <h3 className="mt-1 font-black text-white">{notification.title}</h3>
-            <p className="mt-1 text-sm leading-5 text-slate-400">{notification.detail}</p>
-            {notification.href ? <Link className="mt-2 inline-flex text-xs font-bold text-cyan-200" href={notification.href}>View details <span aria-hidden="true">→</span></Link> : null}
-          </article>
-        )) : <p className="rounded-xl border border-white/10 p-3 text-sm text-slate-400">No material changes or alerts are available from the current saved records.</p>}
-      </div>
-    </section>
-  );
   const learningPanel = (
     <section aria-labelledby="money-coach-learning">
-      <h2 id="money-coach-learning" className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Learning from Outcomes</h2>
+      <h2 id="money-coach-learning" className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">What Money Coach learns from your feedback</h2>
+      <p className="mt-2 text-sm leading-6 text-slate-400">
+        Money Coach uses completed, member-reported outcomes as approved
+        context when future recommendations are reviewed. It does not retrain
+        itself, infer an outcome, or change your financial records automatically.
+      </p>
       <div className="mt-3 grid gap-2">
         {outcomeLearning.length ? outcomeLearning.map((outcome) => (
           <article key={outcome.id} className="rounded-xl border border-white/10 bg-white/[0.035] p-3">
@@ -846,7 +826,7 @@ export function MoneyCoachExperience({
             </div>
             <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-6 text-slate-400">{outcome.learning.map((item) => <li key={item}>{item}</li>)}</ul>
           </article>
-        )) : <p className="rounded-xl border border-white/10 p-3 text-sm leading-6 text-slate-400">No outcomes have been reported yet. Learning appears only after you accept a recommendation and explicitly report what happened.</p>}
+        )) : <p className="rounded-xl border border-white/10 p-3 text-sm leading-6 text-slate-400">No outcomes have been reported yet. This area updates only after you acknowledge advice and explicitly report what happened.</p>}
       </div>
     </section>
   );
@@ -862,7 +842,8 @@ export function MoneyCoachExperience({
     >
       <AgentExperience
       className="max-w-none !gap-4 border-white/10 bg-[#141a24] !p-3 sm:!p-4"
-      composerPlacement="before-cards"
+      cardsPlacement="after-conversation"
+      cardsLayout="stack"
       header={
         <AgentHeader
           title={model.professional.identity.role}
@@ -873,7 +854,7 @@ export function MoneyCoachExperience({
       }
       greeting={
         <AgentGreeting greeting={localGreeting}>
-          <p>I reviewed your current BeastMoney records and organized the decisions that matter most today.</p>
+          <p>I&apos;ve reviewed the BeastMoney records currently available. What would you like to work through today?</p>
         </AgentGreeting>
       }
       contextSummary={loading ? (
@@ -884,34 +865,7 @@ export function MoneyCoachExperience({
             message={error}
             retryAction={<button type="button" className="beast-button" onClick={onRetry}>Try Again</button>}
           />
-        ) : (
-          <div className="grid gap-4">
-            <div className="grid items-start gap-3 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-              <section className="rounded-2xl border border-cyan-300/20 bg-cyan-300/[0.06] p-4" aria-labelledby="money-coach-executive-briefing">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-cyan-300">Executive Briefing</p>
-                  {financialHealth ? <span className="rounded-full border border-white/10 bg-black/15 px-2.5 py-1 text-[11px] font-bold text-slate-200">Health {financialHealth.score} · {titleCase(financialHealth.band)}</span> : null}
-                </div>
-                <h2 id="money-coach-executive-briefing" className="mt-2 text-lg font-black text-white">{model.primaryRecommendation.title}</h2>
-                <p className="mt-2 text-sm leading-6 text-slate-300">{model.morningBriefing.summary}</p>
-                <p className="mt-2 text-sm leading-5 text-slate-400">{model.primaryRecommendation.action}</p>
-                <div className="mt-3 flex flex-wrap items-center gap-3">
-                  <Link className="inline-flex min-h-11 items-center font-bold text-cyan-200" href={model.primaryRecommendation.href}>View recommended action <span aria-hidden="true" className="ml-2">→</span></Link>
-                  <span className="text-xs text-slate-500">{model.morningBriefing.items.length} meaningful update{model.morningBriefing.items.length === 1 ? "" : "s"} in this review</span>
-                </div>
-              </section>
-              <MorningFinancialBriefingPanel
-                briefing={model.morningBriefing}
-                defaultOpen={turns.length === 0}
-              />
-            </div>
-            {financialSummary}
-            {starterExperience}
-            {recommendationCards}
-            {notificationsPanel}
-            {learningPanel}
-          </div>
-        )}
+        ) : null}
       suggestedActions={null}
       conversation={
         loading ? (
@@ -920,7 +874,7 @@ export function MoneyCoachExperience({
           <AgentEmptyState title="Conversation unavailable" description="Reload your BeastMoney records to continue with Money Coach." />
         ) : (
           <div className="min-w-0">
-            <section className="flex h-[30rem] min-w-0 flex-col" aria-label="Active Money Coach conversation">
+            <section className="flex min-h-[34rem] min-w-0 flex-col" aria-label="Active Money Coach conversation">
             <div className="mb-1 flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.07] pb-3">
               <p className="truncate text-sm font-semibold text-slate-400">{conversationTitle}</p>
               <button type="button" className="text-xs font-bold text-cyan-200" onClick={() => { const active = threads.find((thread) => thread.id === activeThreadId); if (active) void renameThread(active); }}>Rename</button>
@@ -932,19 +886,37 @@ export function MoneyCoachExperience({
               scrollPositions={conversationScrollPositionsRef}
               professionalName="Money Coach"
             />
+            <ProfessionalConversationComposer id="money-coach-question">
+              <AgentConversationInput
+                value={input}
+                onChange={setInput}
+                onSubmit={sendMessage}
+                label="Message your Money Coach"
+                placeholder="Ask about cash flow, debt, savings, retirement, or a financial decision…"
+                busy={Boolean(streamingTurnId)}
+              />
+            </ProfessionalConversationComposer>
+            <div className="mt-3">{starterExperience}</div>
+            <p className="mt-3 text-xs leading-5 text-slate-500">
+              {model.safetyNotice} Money Coach cannot move money or execute a
+              financial transaction.
+            </p>
             </section>
           </div>
         )
       }
-      composer={
-        <ProfessionalConversationComposer id="money-coach-question">
-          <div className="rounded-xl border border-white/10 bg-slate-950/50 p-3">
-            <p className="text-sm font-bold text-white">Structured guidance only</p>
-            <p className="mt-1 text-xs leading-5 text-slate-400">Use the evidence-backed suggested questions above. Money Coach does not provide an unrestricted chat input or execute financial transactions.</p>
-            <p className="mt-2 text-xs leading-5 text-slate-500">{model.safetyNotice}</p>
+      smartCards={
+        <details className="rounded-2xl border border-white/10 bg-black/10 p-4">
+          <summary className="cursor-pointer text-sm font-black text-cyan-200">
+            Review recommendations and reported outcomes
+          </summary>
+          <div className="mt-5 grid gap-6">
+            {recommendationCards}
+            {learningPanel}
           </div>
-        </ProfessionalConversationComposer>
+        </details>
       }
+      composer={null}
       />
     </ProfessionalConversationWorkspace>
   );

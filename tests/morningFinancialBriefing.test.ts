@@ -160,7 +160,7 @@ test("BM-310 honestly handles a quiet review period", () => {
   assert.match(briefing.summary, /did not find a material financial change/i);
 });
 
-test("BM-310 is shared by Money Coach Dashboard and conversation starters", () => {
+test("BP-230 keeps the Daily Briefing on Dashboard and its context in conversation starters", () => {
   const coach = readFileSync(
     "src/app/dashboard/money/components/MoneyCoachExperience.tsx",
     "utf8"
@@ -175,7 +175,7 @@ test("BM-310 is shared by Money Coach Dashboard and conversation starters", () =
     "utf8"
   );
 
-  assert.match(coach, /MorningFinancialBriefingPanel/);
+  assert.doesNotMatch(coach, /MorningFinancialBriefingPanel/);
   assert.match(dashboard, /MorningFinancialBriefingPanel/);
   assert.match(experience, /morning-financial-briefing/);
   assert.match(experience, /Walk me through my morning financial briefing/);

@@ -10,52 +10,59 @@ const briefing = readFileSync(
   "src/app/dashboard/money/components/MorningFinancialBriefing.tsx",
   "utf8"
 );
-const model = readFileSync("src/lib/moneyCoachExperience.ts", "utf8");
+const dashboard = readFileSync(
+  "src/app/dashboard/money/components/FinancialMissionControl.tsx",
+  "utf8"
+);
+const cashFlow = readFileSync(
+  "src/app/dashboard/money/cashflow/components/CashFlowOverview.tsx",
+  "utf8"
+);
 
-test("BP-230 makes Money Coach the compact primary BeastMoney experience", () => {
-  assert.match(coach, /Executive Briefing/);
-  assert.match(coach, /MorningFinancialBriefingPanel/);
+test("BP-230 makes Dashboard the concise primary BeastMoney experience", () => {
+  assert.match(dashboard, /BeastMoney Dashboard/);
+  assert.match(dashboard, /Executive Briefing/);
+  assert.match(dashboard, /Financial Health Score/);
   assert.match(briefing, /Daily Briefing/);
-  assert.match(coach, /Ask Money Coach/);
-  assert.match(coach, /Recommendation Cards/);
-  assert.match(coach, /Notifications/);
-  assert.match(coach, /Learning from Outcomes/);
-  assert.match(coach, /!gap-4/);
-  assert.match(coach, /!p-3/);
-  assert.match(coach, /rounded-xl border border-white\/10 bg-black\/15 p-3/);
-  assert.doesNotMatch(coach, /h-\[36rem\]/);
+  assert.match(dashboard, /Recommended next step/);
+  assert.match(dashboard, /Important alerts/);
+  assert.match(dashboard, /Discuss with Money Coach/);
+  assert.doesNotMatch(dashboard, /Strategy comparison|Observation Center/);
 });
 
-test("BP-230 groups compact summaries without introducing financial calculations", () => {
+test("BP-230 makes Money Coach a typing-first conversation workspace", () => {
   for (const label of [
-    "Financial Snapshot",
-    "Cash Flow",
-    "Debt",
-    "Future Planning",
-    "Financial Health",
-    "Monthly Surplus",
-    "Cash Available",
-    "Debt Remaining",
-    "Emergency Fund",
-    "Retirement",
+    "AgentConversationInput",
+    "Message your Money Coach",
+    "Try a conversation starter",
+    "Accept recommendation",
+    "Decide later",
+    "Decline",
+    "What Money Coach learns from your feedback",
   ]) {
     assert.match(coach, new RegExp(label));
   }
-  assert.match(model, /totalDebt: input\.totalDebt/);
-  assert.match(coach, /model\.financialContext\.totalDebt/);
-  assert.doesNotMatch(coach, /reduce\(\(sum, debt\)/);
+  assert.doesNotMatch(coach, /Structured guidance only|Suggested Questions|Executive Briefing/);
+  assert.ok(
+    coach.indexOf("<ProfessionalConversationTimeline") <
+      coach.indexOf("<AgentConversationInput")
+  );
 });
 
-test("BP-230 keeps the transparent score formula collapsed by default", () => {
-  assert.match(coach, /<details className="mt-3 border-t/);
-  assert.doesNotMatch(coach, /<details[^>]*open[^>]*data-financial-health-formula/);
-  assert.match(coach, /How is my score calculated\?/);
-  assert.match(coach, /financialHealth\.formula/);
-  assert.match(coach, /financialHealth\.components/);
-  assert.match(coach, /financialHealth\.disclaimer/);
+test("BP-230 gives Cash Flow the approved generic summary", () => {
+  for (const label of [
+    "Checking Balance",
+    "Protected Cash Buffer",
+    "Available Credit",
+    "Monthly Cash Flow",
+    "Monthly Surplus",
+  ]) {
+    assert.match(cashFlow, new RegExp(label));
+  }
+  assert.match(cashFlow, /not specific to Velocity/);
 });
 
-test("BP-230 promotes a dense record-backed Daily Briefing", () => {
+test("BP-230 keeps the record-backed Daily Briefing in Dashboard", () => {
   assert.match(briefing, /data-money-morning-briefing="true"/);
   assert.match(briefing, /Since your last review/);
   assert.match(briefing, /Daily Briefing/);

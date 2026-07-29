@@ -1,6 +1,7 @@
 import type { BillFrequency } from "../cashflowUtils";
 
 type AddIncomeBillSectionProps = {
+  includeIncome?: boolean;
   showAddIncome: boolean;
   setShowAddIncome: (value: boolean) => void;
   incomeName: string;
@@ -27,6 +28,7 @@ type AddIncomeBillSectionProps = {
 };
 
 export default function AddIncomeBillSection({
+  includeIncome = true,
   showAddIncome,
   setShowAddIncome,
   incomeName,
@@ -52,8 +54,8 @@ export default function AddIncomeBillSection({
   addBill,
 }: AddIncomeBillSectionProps) {
   return (
-    <section className="grid gap-4 md:grid-cols-2">
-      <div className="money-section-card">
+    <section className={`grid gap-4 ${includeIncome ? "md:grid-cols-2" : ""}`}>
+      {includeIncome ? <div className="money-section-card">
         <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="money-section-title">Add Income</h2>
@@ -109,7 +111,7 @@ export default function AddIncomeBillSection({
             </button>
           </div>
         )}
-      </div>
+      </div> : null}
 
       <div id="add-bill" className="money-section-card">
         <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">

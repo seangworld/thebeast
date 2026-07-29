@@ -7,42 +7,68 @@ import { buildMobileNavigation } from "../src/lib/mobileFoundation";
 
 const source = (path: string) => readFileSync(path, "utf8");
 
-test("BM-303 gives Money Coach and Dashboard explicit distinct routes", () => {
+test("BP-230 makes Dashboard the default while keeping Money Coach distinct", () => {
   const landingRoute = source("src/app/dashboard/money/page.tsx");
+  const coachRoute = source("src/app/dashboard/money/coach/page.tsx");
   const workspace = source("src/app/dashboard/money/components/MoneyWorkspacePage.tsx");
   const dashboardRoute = source("src/app/dashboard/money/dashboard/page.tsx");
-  assert.match(landingRoute, /MoneyWorkspacePage view="coach"/);
+  assert.match(landingRoute, /redirect\("\/dashboard\/money\/dashboard"\)/);
+  assert.match(landingRoute, /\/dashboard\/money\/coach\?starter=/);
+  assert.match(coachRoute, /MoneyWorkspacePage view="coach"/);
   assert.match(dashboardRoute, /MoneyWorkspacePage view="dashboard"/);
   assert.match(workspace, /view === "coach" \? <MoneyCoachExperience/);
   assert.match(workspace, /Financial mission control/);
   assert.doesNotMatch(workspace, /window\.location\.hash|hashchange|showDashboard/);
   assert.notEqual(beastMoneyCoreNavigation[0].href, beastMoneyCoreNavigation[1].href);
   assert.deepEqual(beastMoneyCoreNavigation.slice(0, 2), [
-    { label: "Money Coach", href: "/dashboard/money" },
     { label: "Dashboard", href: "/dashboard/money/dashboard" },
+    { label: "Money Coach", href: "/dashboard/money/coach" },
   ]);
 });
 
-test("BM-303 navigation has one ordered core destination list without add shortcuts", () => {
+test("BP-230 navigation follows the approved workspace hierarchy", () => {
   assert.deepEqual(beastMoneyCoreNavigation.map((item) => item.label), [
-    "Money Coach", "Dashboard", "Observation Center", "Cash Flow", "Income", "Bills", "Debts",
-    "Payoff Plan", "Velocity", "Retirement", "Reports", "Settings",
+    "Dashboard",
+    "Money Coach",
+    "Cash Flow",
+    "Income",
+    "Expenses",
+    "Payoff Plan",
+    "Strategies",
+    "Timeline",
+    "Retirement",
+    "Documents",
+    "Reports",
   ]);
+  assert.deepEqual(
+    beastMoneyCoreNavigation
+      .filter((item) => item.parent === "Cash Flow")
+      .map((item) => item.label),
+    ["Income", "Expenses"]
+  );
+  assert.deepEqual(
+    beastMoneyCoreNavigation
+      .filter((item) => item.parent === "Payoff Plan")
+      .map((item) => item.label),
+    ["Strategies", "Timeline"]
+  );
   assert.deepEqual(beastMoneyNavigation.children, [...beastMoneyCoreNavigation]);
-  assert.equal(beastMoneyCoreNavigation.some((item) => item.label === "Add Bill"), false);
-  assert.equal(beastMoneyCoreNavigation.some((item) => item.label === "Add Debt"), false);
+  assert.equal(beastMoneyCoreNavigation.some((item) => item.label === "Observation Center"), false);
+  assert.equal(beastMoneyCoreNavigation.some((item) => item.label === "Velocity"), false);
 });
 
 test("BM-303 active state follows direct links refresh and history location changes", () => {
   const activeLabel = (pathname: string, hash = "") => beastMoneyCoreNavigation.find((item) => isBeastMoneyNavigationActive(item, pathname, hash))?.label;
   const history = [
-    ["/dashboard/money", "", "Money Coach"],
     ["/dashboard/money/dashboard", "", "Dashboard"],
-    ["/dashboard/money/observations", "", "Observation Center"],
-    ["/dashboard/money/dashboard", "#reports", "Reports"],
-    ["/dashboard/money/cashflow", "#bills", "Bills"],
-    ["/dashboard/money/debts", "#payoff-plan", "Payoff Plan"],
-    ["/dashboard/money/debts", "#add-debt", "Debts"],
+    ["/dashboard/money/coach", "", "Money Coach"],
+    ["/dashboard/money/cashflow", "", "Cash Flow"],
+    ["/dashboard/money/income", "", "Income"],
+    ["/dashboard/money/expenses", "", "Expenses"],
+    ["/dashboard/money/debts", "", "Payoff Plan"],
+    ["/dashboard/money/debts", "#strategy-comparison", "Strategies"],
+    ["/dashboard/money/debts", "#payoff-plan", "Timeline"],
+    ["/dashboard/money/reports", "", "Reports"],
   ] as const;
   history.forEach(([pathname, hash, expected]) => assert.equal(activeLabel(pathname, hash), expected));
   [...history].reverse().forEach(([pathname, hash, expected]) => assert.equal(activeLabel(pathname, hash), expected));
@@ -58,7 +84,7 @@ test("BM-303 desktop and mobile navigation preserve active and history behavior"
   assert.match(layout, /aria-current=\{active \? "page"/);
   assert.match(layout, /addEventListener\("hashchange"/);
   assert.match(layout, /addEventListener\("popstate"/);
-  assert.equal(buildMobileNavigation({ isOwner: false }).primary.find((item) => item.label === "Money")?.href, "/dashboard/money");
+  assert.equal(buildMobileNavigation({ isOwner: false }).primary.find((item) => item.label === "Money")?.href, "/dashboard/money/dashboard");
 });
 
 test("BM-313 keeps the global left navigation as the single BeastMoney navigation source", () => {

@@ -82,22 +82,24 @@ test("BM-304 dashboard view is dedicated responsive and accessible", () => {
     "Monthly spending",
     "Savings trend",
     "Retirement progress",
-    "Velocity progress",
     "Upcoming obligations",
-    "Observation Center",
-    "Recommended focus",
-    "Strategy comparison",
+    "Important alerts",
+    "Recommended next step",
   ].forEach((title) => assert.match(source, new RegExp(title)));
+  assert.doesNotMatch(source, /Strategy comparison|Observation Center/);
+  assert.match(source, /Discuss with Money Coach/);
 });
 
 test("BM-304 Dashboard and Money Coach retain separate render paths", () => {
   const workspace = readFileSync("src/app/dashboard/money/components/MoneyWorkspacePage.tsx", "utf8");
   const dashboardRoute = readFileSync("src/app/dashboard/money/dashboard/page.tsx", "utf8");
-  const coachRoute = readFileSync("src/app/dashboard/money/page.tsx", "utf8");
+  const coachRoute = readFileSync("src/app/dashboard/money/coach/page.tsx", "utf8");
+  const landingRoute = readFileSync("src/app/dashboard/money/page.tsx", "utf8");
   assert.match(workspace, /view === "dashboard"/);
   assert.match(workspace, /FinancialMissionControl/);
   assert.match(dashboardRoute, /view="dashboard"/);
   assert.match(coachRoute, /view="coach"/);
+  assert.match(landingRoute, /redirect\("\/dashboard\/money\/dashboard"\)/);
 });
 
 test("BM-315 gives Mission Control polished responsive loading and empty states", () => {

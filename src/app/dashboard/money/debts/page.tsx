@@ -886,8 +886,8 @@ export default function DebtsPage() {
 
   return (
     <BeastMoneyShell
-      title="Debt Strategy"
-      description="Add debts, choose a payoff strategy, and generate your payoff plan."
+      title="Payoff Plan"
+      description="Manage debt records, compare strategies, review Velocity, and follow the current debt-free projection."
     >
       <div className="money-page-stack">
 
@@ -1164,7 +1164,7 @@ export default function DebtsPage() {
           </button>
         </section>
 
-        <section className="money-section-panel">
+        <section id="debt-accounts" className="money-section-panel scroll-mt-6">
           <div className="money-section-header">
             <h2 className="money-section-title">Debt List</h2>
           </div>

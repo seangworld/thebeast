@@ -28,6 +28,7 @@ import {
   type ProfessionalBehaviorProfile,
   type ProfessionalIdentityProfile,
   type ProfessionalResponseExecution,
+  type ProfessionalExecutionHistory,
   type StructuredAgentAction,
   SharedAgentPlanningEngine,
   specialistRoleDefinitions,
@@ -283,13 +284,15 @@ function moneyInsight(input: MoneyCoachExperienceInput, values: {
 }
 
 function firstName(value: string) {
-  return value.trim().split(/\s+/)[0] || "there";
+  const candidate = value.trim().split(/\s+/)[0] || "";
+  return candidate.toLowerCase() === "there" ? "" : candidate;
 }
 
 export function buildMoneyCoachGreeting(userName: string, date: Date) {
   const hour = date.getHours();
   const period = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
-  return `${period}, ${firstName(userName)}.`;
+  const name = firstName(userName);
+  return name ? `${period}, ${name}.` : `${period}.`;
 }
 
 function plural(value: number, singular: string, pluralLabel = `${singular}s`) {
@@ -716,7 +719,7 @@ export function buildMoneyCoachExperience(
     professional: specialistProfessionalIdentityProfiles.moneyCoach,
     roleDefinition,
     safetyNotice: specialistProfessionalIdentityProfiles.moneyCoach.identity.professionalBoundaries.join(". "),
-    userFirstName: firstName(input.userName),
+    userFirstName: firstName(input.userName) || "there",
     financialContext: {
       currentCash: input.currentCash,
       cashBuffer: input.cashBuffer,
@@ -741,7 +744,7 @@ export function buildMoneyCoachExperience(
   };
 }
 
-export type MoneyCoachIntent = "test" | "social" | "incomplete" | "bills" | "debt-strategy" | "payment-affordability" | "changes" | "benchmarks" | "financial-health" | "cash-flow" | "forecast" | "retirement" | "funding" | "velocity" | "general-finance" | "non-financial";
+export type MoneyCoachIntent = "test" | "social" | "incomplete" | "bills" | "debt-strategy" | "payment-affordability" | "changes" | "recommendation-history" | "benchmarks" | "financial-health" | "cash-flow" | "forecast" | "retirement" | "funding" | "velocity" | "general-finance" | "non-financial";
 
 export type MoneyCoachResponseSection = ConversationResponseSection;
 
@@ -777,6 +780,7 @@ export type MoneyCoachConversationContext = {
   summary?: string;
   priorSummaries?: readonly string[];
   memories?: readonly { key: string; value: unknown }[];
+  executionHistory?: ProfessionalExecutionHistory;
   activeTopics?: readonly MoneyCoachTopic[];
 };
 
@@ -846,6 +850,7 @@ const moneyCoachIntentTools: Partial<Record<MoneyCoachIntent, string>> = {
   forecast: "open-forecast",
   retirement: "open-retirement",
   velocity: "open-velocity",
+  "recommendation-history": "open-money-dashboard",
   incomplete: "continue-money-coach-conversation",
 };
 
@@ -993,6 +998,20 @@ export function answerMoneyCoachQuestion(
     ...(conversation.priorSummaries || []).map((value, index) => ({ id: `prior-summary-${index}`, label: "prior conversation", value, source: "conversation-context" as const })),
     ...(conversation.summary ? [{ id: "active-summary", label: "conversation summary", value: conversation.summary, source: "conversation-context" as const }] : []),
     ...(conversation.memories || []).map((item, index) => ({ id: `memory-${index}`, label: item.key, value: JSON.stringify(item.value), source: "member-understanding" as const, aliases: [item.key.replace(/[-_]/g, " ")] })),
+    ...(conversation.executionHistory?.recommendations || []).map((recommendation, index) => ({
+      id: `recommendation-history-${index}`,
+      label: `${recommendation.status} recommendation`,
+      value: `${recommendation.title}: ${recommendation.recommendation}`,
+      source: "conversation-context" as const,
+      aliases: ["recommendation history", "accepted recommendation", "declined recommendation", "completed recommendation"],
+    })),
+    ...(conversation.executionHistory?.outcomes || []).map((outcome, index) => ({
+      id: `outcome-history-${index}`,
+      label: `${outcome.outcomeStatus} outcome`,
+      value: outcome.memberLearning.join(" ") || "No member learning was recorded.",
+      source: "conversation-context" as const,
+      aliases: ["outcome history", "completed outcome"],
+    })),
   ];
   const knownModuleData = [
     { id: "current-cash", label: "current cash", value: formatCurrency(model.financialContext.currentCash), source: "module-data" as const, aliases: ["cash balance", "available cash"] },
@@ -1043,6 +1062,82 @@ export function answerMoneyCoachQuestion(
 
   if (intent === "incomplete") {
     return structuredAnswer({ intent, opening: "I’m not quite sure what you want me to evaluate yet.", sections: [{ heading: "Clarification", classification: "uncertainty", paragraphs: ["Add the financial topic or decision you want help with, and I’ll use the relevant current records."] }], followUp: "For example: which bills need attention, whether another payment is safe, or how two debt strategies compare.", href: "#money-coach-question", action: "Continue your question" });
+  }
+
+  const asksAboutHistory =
+    /\b(last time|previously|recommendation history|what did we decide|what have we discussed|what (?:did|have) i (?:accept|decline|complete)|(?:accepted|declined|completed) (?:recommendation|advice))\b/i.test(
+      question
+    );
+  if (asksAboutHistory && intent !== "changes") {
+    const priorSummary =
+      conversation.priorSummaries?.[0] || conversation.summary;
+    const recommendations = [
+      ...(conversation.executionHistory?.recommendations || []),
+    ]
+      .filter((recommendation) =>
+        ["accepted", "declined", "completed"].includes(recommendation.status)
+      )
+      .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
+      .slice(0, 3);
+    const outcomes = [
+      ...(conversation.executionHistory?.outcomes || []),
+    ]
+      .sort((left, right) => right.recordedAt.localeCompare(left.recordedAt))
+      .slice(0, 2);
+    if (!priorSummary && recommendations.length === 0 && outcomes.length === 0) {
+      return structuredAnswer({
+        intent: "recommendation-history",
+        opening:
+          "I don't have a verified prior conversation, recommendation decision, or completed outcome to reference yet.",
+        sections: [],
+        followUp:
+          "We can start with the financial decision you want to work through today.",
+        ...dashboard,
+      });
+    }
+    return structuredAnswer({
+      intent: "recommendation-history",
+      opening:
+        "Here is the prior context I can verify from your saved Money Coach history.",
+      sections: [
+        ...(priorSummary
+          ? [
+              {
+                heading: "Previous conversation",
+                paragraphs: [priorSummary],
+              },
+            ]
+          : []),
+        ...(recommendations.length
+          ? [
+              {
+                heading: "Recommendation decisions",
+                bullets: recommendations.map(
+                  (recommendation) =>
+                    `${recommendation.status}: ${recommendation.title}`
+                ),
+              },
+            ]
+          : []),
+        ...(outcomes.length
+          ? [
+              {
+                heading: "Completed outcomes",
+                bullets: outcomes.map(
+                  (outcome) =>
+                    `${outcome.outcomeStatus}: ${
+                      outcome.memberLearning.join(" ") ||
+                      "No member-reported learning was recorded."
+                    }`
+                ),
+              },
+            ]
+          : []),
+      ],
+      followUp:
+        "Would you like to continue one of these decisions or review what has changed since then?",
+      ...dashboard,
+    });
   }
 
   if (
@@ -1186,12 +1281,12 @@ export function answerMoneyCoachQuestion(
         })),
         assumptions: Array.from(new Set(observations.flatMap((observation) => observation.provenance.limitations))),
         followUp: "Would you like me to explain the evidence behind the highest-priority observation?",
-        href: "/dashboard/money/observations",
-        action: "Open Observation Center",
+        href: "/dashboard/money/dashboard#important-alerts",
+        action: "Review important alerts",
       });
     }
     const prior = conversation.priorSummaries?.[0] || conversation.summary;
-    return structuredAnswer({ intent, opening: "I can describe the current position, but I don’t have a versioned financial snapshot that proves which account values changed since your last visit.", sections: [{ heading: "Current position", bullets: [`Cash: ${formatCurrency(context.currentCash)}`, `Debt: ${formatCurrency(context.debts.reduce((sum, item) => sum + item.balance, 0))}`, `Monthly cash flow: ${formatCurrency(context.projectedSurplus)}`] }, ...(prior ? [{ heading: "Prior conversation context", paragraphs: [`The prior discussion was summarized as: ${prior}. That summary is context, not authoritative financial data.`] }] : [])], followUp: "Would you like to review the observations supported by your current records?", href: "/dashboard/money/observations", action: "Open Observation Center" });
+    return structuredAnswer({ intent, opening: "I can describe the current position, but I don’t have a versioned financial snapshot that proves which account values changed since your last visit.", sections: [{ heading: "Current position", bullets: [`Cash: ${formatCurrency(context.currentCash)}`, `Debt: ${formatCurrency(context.debts.reduce((sum, item) => sum + item.balance, 0))}`, `Monthly cash flow: ${formatCurrency(context.projectedSurplus)}`] }, ...(prior ? [{ heading: "Prior conversation context", paragraphs: [`The prior discussion was summarized as: ${prior}. That summary is context, not authoritative financial data.`] }] : [])], followUp: "Would you like to review the observations supported by your current records?", href: "/dashboard/money/dashboard#important-alerts", action: "Review important alerts" });
   }
 
   if (intent === "benchmarks") {
