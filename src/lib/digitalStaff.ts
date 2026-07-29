@@ -29,6 +29,8 @@ export type DigitalProfessionalRelationship = {
 
 export type DigitalProfessional = {
   id: string;
+  canonicalId: string;
+  memberVisibility: "member-facing" | "internal-only";
   name: string;
   role: string;
   title: string;
@@ -70,17 +72,19 @@ const portraitAsset = (id: string): DigitalProfessionalPortrait => ({
   asset_version: "1.1.0",
 });
 
-export const digitalProfessionals: readonly DigitalProfessional[] = [
+const digitalProfessionalRegistry: readonly DigitalProfessional[] = [
   {
     id: "fusion-director",
+    canonicalId: "beastfusion.fusion-director",
+    memberVisibility: "internal-only",
     name: "Avery Stone",
     role: "Fusion Director",
     title: "Director of Digital Staff Operations",
     team: "Digital Staff",
     reportsTo: "Owner",
     reportsToId: null,
-    status: "available",
-    statusLabel: "Available — coordination foundation",
+    status: "inactive",
+    statusLabel: "Internal architecture only",
     releaseStatus: "foundation",
     version: "1.1.0",
     biography:
@@ -140,12 +144,14 @@ export const digitalProfessionals: readonly DigitalProfessional[] = [
   },
   {
     id: "money-coach",
+    canonicalId: "beastmoney.money-coach",
+    memberVisibility: "member-facing",
     name: "Morgan Reed",
     role: "Money Coach",
     title: "Personal Finance Planning Coach",
     team: "BeastMoney",
-    reportsTo: "Fusion Director",
-    reportsToId: "fusion-director",
+    reportsTo: "Owner",
+    reportsToId: null,
     status: "available",
     statusLabel: "Available",
     releaseStatus: "active",
@@ -185,11 +191,6 @@ export const digitalProfessionals: readonly DigitalProfessional[] = [
     ],
     collaboratesWith: [
       {
-        professionalId: "fusion-director",
-        label: "Fusion Director",
-        relationship: "Permissioned coordination and follow-up",
-      },
-      {
         professionalId: "guidance-counselor",
         label: "Guidance Counselor",
         relationship: "Education goals with financial implications",
@@ -200,12 +201,14 @@ export const digitalProfessionals: readonly DigitalProfessional[] = [
   },
   {
     id: "guidance-counselor",
+    canonicalId: "beasteducation.guidance-counselor",
+    memberVisibility: "member-facing",
     name: "Jordan Ellis",
     role: "Guidance Counselor",
     title: "Education and Career Guidance Counselor",
     team: "BeastEducation",
-    reportsTo: "Fusion Director",
-    reportsToId: "fusion-director",
+    reportsTo: "Owner",
+    reportsToId: null,
     status: "available",
     statusLabel: "Available",
     releaseStatus: "active",
@@ -213,18 +216,18 @@ export const digitalProfessionals: readonly DigitalProfessional[] = [
     biography:
       "Jordan is the BeastEducation digital professional who connects a learner's goals, current progress, constraints, and interests to a grounded education or career direction.",
     mission:
-      "Help learners understand what to pursue next, why it matters, and when direct instruction should move to an appropriate Tutor.",
+      "Help learners understand what to pursue next, why it matters, and how education and career options connect to their goals.",
     responsibilities: [
       "Build a clear learner briefing from authorized education context",
       "Identify the next meaningful learning or planning priority",
       "Maintain continuity across goals, progress, and changing circumstances",
-      "Coordinate focused Tutor handoffs when instruction is needed",
+      "Explain how each recommendation connects to the educational roadmap",
     ],
     experience: [
       "Education and career pathway exploration",
       "Learning-goal and readiness review",
       "Progress interpretation and next-step planning",
-      "Tutor handoff and learning continuity",
+      "Education and career roadmap continuity",
     ],
     capabilities: [
       "Interpret progress signals",
@@ -232,7 +235,7 @@ export const digitalProfessionals: readonly DigitalProfessional[] = [
       "Adjust the learning direction",
     ],
     limitations: [
-      "Does not duplicate the Tutor",
+      "Does not teach or grade coursework in Generation 1",
       "Does not guarantee admission, credentials, or employment",
       "Does not replace official school or career authorities",
     ],
@@ -243,19 +246,9 @@ export const digitalProfessionals: readonly DigitalProfessional[] = [
     ],
     collaboratesWith: [
       {
-        professionalId: "fusion-director",
-        label: "Fusion Director",
-        relationship: "Permissioned coordination and follow-up",
-      },
-      {
         professionalId: "money-coach",
         label: "Money Coach",
         relationship: "Financial context for education goals",
-      },
-      {
-        professionalId: null,
-        label: "Tutor",
-        relationship: "Focused instruction after a documented handoff",
       },
     ],
     portrait: portraitAsset("guidance-counselor"),
@@ -263,12 +256,14 @@ export const digitalProfessionals: readonly DigitalProfessional[] = [
   },
   {
     id: "health-advisor",
+    canonicalId: "beasthealth.health-advisor",
+    memberVisibility: "member-facing",
     name: "Taylor Brooks",
     role: "Health Advisor",
     title: "Health Information Advisor",
     team: "BeastHealth",
-    reportsTo: "Fusion Director",
-    reportsToId: "fusion-director",
+    reportsTo: "Owner",
+    reportsToId: null,
     status: "available",
     statusLabel: "Available — medically bounded",
     releaseStatus: "active",
@@ -312,17 +307,16 @@ export const digitalProfessionals: readonly DigitalProfessional[] = [
       "Documents without explicit intelligence permission",
       "External clinical systems that are not connected",
     ],
-    collaboratesWith: [
-      {
-        professionalId: "fusion-director",
-        label: "Fusion Director",
-        relationship: "Permissioned coordination and follow-up",
-      },
-    ],
+    collaboratesWith: [],
     portrait: portraitAsset("health-advisor"),
     href: "/dashboard/digital-staff/health-advisor",
   },
 ];
+
+export const digitalProfessionals: readonly DigitalProfessional[] =
+  digitalProfessionalRegistry.filter(
+    (professional) => professional.memberVisibility === "member-facing"
+  );
 
 export function getDigitalProfessional(id: string) {
   return digitalProfessionals.find((professional) => professional.id === id);

@@ -113,7 +113,6 @@ test("BO-310 indexes real personal knowledge categories without AI summaries", (
       "Documents",
       "Financial accounts",
       "Debts",
-      "Lessons",
       "Roadmaps",
       "Health records",
       "Uploaded files",
@@ -193,11 +192,11 @@ test("BO-310 loads authenticated owner-scoped records and one unified client", (
     "beast_documents",
     "funding_sources",
     "debts",
-    "learning_activities",
     "learning_plans",
   ]) {
     assert.match(page, new RegExp(`from\\("${table}"\\)`));
   }
+  assert.match(page, /educationTeachingCapabilitiesAvailable/);
   assert.match(page, /\.eq\("owner_id", ownerId\)/);
   assert.match(page, /\.eq\("user_id", ownerId\)/);
   assert.match(page, /shouldUseLearningOnlyNavigation/);

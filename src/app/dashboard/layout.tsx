@@ -42,23 +42,19 @@ import {
   shouldUseLearningOnlyNavigation,
 } from "@/lib/learning/access";
 import { getBeastOSWorkspaceContext } from "@/lib/platform/identity";
-import {
-  getOnboardingRedirect,
-  isLearningOnboardingComplete,
-  loadLearningOnboardingDataStatus,
-  profileOnboardingCompletionKeyColumn,
-  shouldAttemptLearningOnboardingRepair,
-} from "@/lib/learning/onboardingCompletion";
 import { buildAuthLoginPath } from "@/lib/auth/experience";
 import { BEAST_ADMIN_MESSAGE_UNREAD_EVENT } from "@/lib/beastAdminMessaging";
 
 const learningPrimaryNavigation: ModuleNavSection[] = [
-  { label: "Guidance Counselor", href: "/dashboard/education", module: "learning" },
+  { label: "Guidance Counselor", href: "/dashboard/education/guidance-counselor", module: "learning" },
   { label: "Today", href: "/dashboard/today", module: "learning" },
-  { label: "Next Step", href: "/dashboard/education#mentor-session", module: "learning" },
-  { label: "My Roadmap", href: "/dashboard/education#mentor-plan", module: "learning" },
-  { label: "Progress", href: "/dashboard/education#mentor-progress", module: "learning" },
-  { label: "Wins", href: "/dashboard/education#wins", module: "learning" },
+  { label: "Educational Roadmap", href: "/dashboard/education/educational-roadmap", module: "learning" },
+  { label: "Career Planning", href: "/dashboard/education/career-planning", module: "learning" },
+  { label: "Schools", href: "/dashboard/education/schools", module: "learning" },
+  { label: "Scholarships", href: "/dashboard/education/scholarships", module: "learning" },
+  { label: "Certifications", href: "/dashboard/education/certifications", module: "learning" },
+  { label: "Skills", href: "/dashboard/education/skills", module: "learning" },
+  { label: "Reports", href: "/dashboard/education/reports", module: "learning" },
 ];
 
 const learningSettingsNavigation: ModuleNavSection[] = [
@@ -122,17 +118,10 @@ export default function DashboardLayout({
   const [adminViewMode, setAdminViewMode] = useState<AdminViewMode>(
     loadAdminViewMode
   );
-  const [resolvingOnboarding, setResolvingOnboarding] = useState(true);
+  const [resolvingDashboardAccess, setResolvingDashboardAccess] = useState(true);
   const [dashboardGuardResolved, setDashboardGuardResolved] = useState(false);
-  const [onboardingDiagnosticError, setOnboardingDiagnosticError] = useState("");
+  const [dashboardAccessError, setDashboardAccessError] = useState(false);
   const [adminMessageUnreadCount, setAdminMessageUnreadCount] = useState(0);
-  const [onboardingRedirectDiagnostic, setOnboardingRedirectDiagnostic] = useState<{
-    source: string;
-    userId: string;
-    reason: string;
-    onboardingComplete: boolean | null;
-    target: string;
-  } | null>(null);
   const workspaceModule = getWorkspaceModule(pathname);
   const workspaceContext = getBeastOSWorkspaceContext(workspaceModule);
   const personaModuleNavigation = getBeastModuleNavigationForPersona(
@@ -157,9 +146,8 @@ export default function DashboardLayout({
   });
   const mobileRuntimeState = buildMobileRuntimeState({
     online: mobileOnline,
-    degraded: resolvingOnboarding && dashboardGuardResolved,
+    degraded: resolvingDashboardAccess && dashboardGuardResolved,
   });
-  const onboardingPath = "/dashboard/onboarding";
   const activeExpandableModule =
     findActiveExpandableModule(pathname, [
       beastOSNavigation,
@@ -258,17 +246,19 @@ export default function DashboardLayout({
 
   useEffect(() => {
     let active = true;
-    setResolvingOnboarding(true);
-    setOnboardingDiagnosticError("");
-    setOnboardingRedirectDiagnostic(null);
+    setResolvingDashboardAccess(true);
+    setDashboardAccessError(false);
 
-    async function routeFirstTimeUsers() {
+    async function resolveDashboardAccess() {
       let supabase: ReturnType<typeof createClient>;
 
       try {
         supabase = createClient();
       } catch {
-        if (active) setResolvingOnboarding(false);
+        if (active) {
+          setDashboardAccessError(true);
+          setResolvingDashboardAccess(false);
+        }
         return;
       }
 
@@ -289,45 +279,15 @@ export default function DashboardLayout({
 
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select("role, onboarding_complete")
-        .eq(profileOnboardingCompletionKeyColumn, authUser.id)
+        .select("role")
+        .eq("id", authUser.id)
         .maybeSingle();
 
       if (!active) return;
 
-      console.info("BeastEducation onboarding profile completion read.", {
-        userId: authUser.id,
-        profileKeyColumn: profileOnboardingCompletionKeyColumn,
-        rowFound: Boolean(profile),
-        onboardingComplete: profile?.onboarding_complete ?? null,
-        errorMessage: profileError?.message ?? null,
-        errorCode: profileError?.code ?? null,
-        errorDetails: profileError?.details ?? null,
-      });
-
-      if (profileError) {
-        console.error("Unable to read onboarding completion profile.", {
-          userId: authUser.id,
-          message: profileError.message,
-          code: profileError.code,
-          details: profileError.details,
-        });
-        setOnboardingDiagnosticError(
-          `BeastEducation could not read your account completion status. User ${authUser.id}. Supabase: ${profileError.message}`
-        );
-        setResolvingOnboarding(false);
-        return;
-      }
-
-      if (!profile) {
-        console.error("BeastEducation profile row is missing.", {
-          userId: authUser.id,
-          profileKeyColumn: profileOnboardingCompletionKeyColumn,
-        });
-        setOnboardingDiagnosticError(
-          `BeastEducation could not find your account profile row. User ${authUser.id}. Expected public.profiles.${profileOnboardingCompletionKeyColumn} to match your authenticated user id.`
-        );
-        setResolvingOnboarding(false);
+      if (profileError || !profile) {
+        setDashboardAccessError(true);
+        setResolvingDashboardAccess(false);
         return;
       }
 
@@ -369,136 +329,6 @@ export default function DashboardLayout({
         return;
       }
 
-      const completionKey = `beastlearning:onboarding-complete:${authUser.id}`;
-      let onboardingComplete = isLearningOnboardingComplete({
-        profileComplete: profile?.onboarding_complete,
-        sessionComplete:
-          typeof window !== "undefined" &&
-          window.sessionStorage.getItem(completionKey) === "complete",
-      });
-
-      if (profile?.onboarding_complete && typeof window !== "undefined") {
-        window.sessionStorage.setItem(completionKey, "complete");
-      }
-
-      if (!onboardingComplete) {
-        const repairKey = `beastlearning:onboarding-repair:${authUser.id}`;
-        const repairAlreadyAttempted =
-          typeof window !== "undefined" &&
-          window.sessionStorage.getItem(repairKey) === "attempted";
-        const { status, error } = await loadLearningOnboardingDataStatus(
-          supabase,
-          authUser.id
-        );
-
-        if (!active) return;
-
-        console.info("BeastEducation onboarding saved data status.", {
-          userId: authUser.id,
-          status,
-          errorMessage:
-            error && typeof error === "object" && "message" in error
-              ? String(error.message)
-              : error
-                ? String(error)
-                : null,
-          repairAlreadyAttempted,
-        });
-
-        if (
-          shouldAttemptLearningOnboardingRepair({
-            onboardingComplete,
-            status,
-            statusError: error,
-            repairAlreadyAttempted,
-          })
-        ) {
-          if (typeof window !== "undefined") {
-            window.sessionStorage.setItem(repairKey, "attempted");
-          }
-
-          const repairResult = await supabase
-            .from("profiles")
-            .update({ onboarding_complete: true })
-            .eq(profileOnboardingCompletionKeyColumn, authUser.id)
-            .select("id, onboarding_complete")
-            .maybeSingle();
-
-          if (!active) return;
-
-          onboardingComplete = !repairResult.error && Boolean(repairResult.data);
-          console.info("BeastEducation onboarding repair result.", {
-            userId: authUser.id,
-            profileKeyColumn: profileOnboardingCompletionKeyColumn,
-            attempted: true,
-            rowFound: Boolean(repairResult.data),
-            onboardingComplete:
-              repairResult.data?.onboarding_complete ?? null,
-            errorMessage: repairResult.error?.message ?? null,
-            errorCode: repairResult.error?.code ?? null,
-            errorDetails: repairResult.error?.details ?? null,
-          });
-          if (onboardingComplete && typeof window !== "undefined") {
-            window.sessionStorage.setItem(completionKey, "complete");
-          }
-          if (!onboardingComplete && repairResult.error) {
-            console.error("Unable to repair BeastEducation onboarding completion.", {
-              userId: authUser.id,
-              message: repairResult.error.message,
-              code: repairResult.error.code,
-              details: repairResult.error.details,
-            });
-          }
-
-          if (!onboardingComplete) {
-            setOnboardingDiagnosticError(
-              repairResult.error
-                ? `BeastEducation could not repair your account completion status. User ${authUser.id}. Supabase: ${repairResult.error.message}`
-                : `BeastEducation found saved setup data but could not update public.profiles.${profileOnboardingCompletionKeyColumn} for user ${authUser.id}.`
-            );
-            setResolvingOnboarding(false);
-            return;
-          }
-        } else if (error) {
-          setOnboardingDiagnosticError(
-            `BeastEducation could not verify your saved setup data. User ${authUser.id}.`
-          );
-          setResolvingOnboarding(false);
-          return;
-        }
-      }
-
-      const isLearningRoute =
-        pathname.startsWith("/dashboard/education") ||
-        pathname.startsWith("/dashboard/learning") ||
-        pathname === onboardingPath;
-      const onboardingRedirect = isLearningRoute
-        ? getOnboardingRedirect({
-            isAuthenticated: true,
-            onboardingComplete,
-            pathname,
-            onboardingPath,
-          })
-        : null;
-
-      if (onboardingRedirect) {
-        if (onboardingRedirect === onboardingPath) {
-          setOnboardingRedirectDiagnostic({
-            source: "src/app/dashboard/layout.tsx",
-            userId: authUser.id,
-            reason:
-              "Authoritative layout guard read public.profiles.onboarding_complete as false for a protected BeastEducation route.",
-            onboardingComplete: profile.onboarding_complete ?? null,
-            target: onboardingRedirect,
-          });
-          setResolvingOnboarding(false);
-          return;
-        }
-
-        router.replace(onboardingRedirect);
-        return;
-      }
-
       const { data: learningProfiles } = await supabase
         .from("learning_profiles")
         .select("id, learner_role, learning_style")
@@ -537,70 +367,37 @@ export default function DashboardLayout({
         return;
       }
 
-      setResolvingOnboarding(false);
+      setResolvingDashboardAccess(false);
     }
 
-    routeFirstTimeUsers();
+    resolveDashboardAccess();
 
     return () => {
       active = false;
     };
   }, [adminViewMode, pathname, router, workspaceModule]);
 
-  if (onboardingDiagnosticError) {
+  if (dashboardAccessError) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#0f1419] px-6">
         <div className="max-w-xl rounded-xl border border-red-300/30 bg-red-400/10 p-6 text-left">
           <p className="text-xs font-bold uppercase tracking-wide text-red-100">
-            BeastEducation setup needs attention
+            Dashboard unavailable
           </p>
           <h1 className="mt-3 text-2xl font-black text-white">
-            We stopped before redirecting.
+            We could not confirm your account access.
           </h1>
-          <p className="mt-3 text-sm font-semibold text-red-100">
-            {onboardingDiagnosticError}
-          </p>
           <p className="mt-4 text-sm text-[#c7cfdb]">
-            This prevents the Today and Learning Setup pages from looping while
-            completion status is ambiguous.
+            Refresh and try again. If the problem continues, contact Beast
+            Administration.
           </p>
-        </div>
-      </div>
-    );
-  }
-
-  if (onboardingRedirectDiagnostic) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[#0f1419] px-6">
-        <div className="max-w-xl rounded-xl border border-amber-300/30 bg-amber-400/10 p-6 text-left">
-          <p className="text-xs font-bold uppercase tracking-wide text-amber-100">
-            BeastEducation setup redirect diagnostic
-          </p>
-          <h1 className="mt-3 text-2xl font-black text-white">
-            Setup is required before continuing.
-          </h1>
-          <div className="mt-4 space-y-2 text-sm font-semibold text-amber-50">
-            <p>Source: {onboardingRedirectDiagnostic.source}</p>
-            <p>User: {onboardingRedirectDiagnostic.userId}</p>
-            <p>Reason: {onboardingRedirectDiagnostic.reason}</p>
-            <p>
-              profiles.onboarding_complete:{" "}
-              {String(onboardingRedirectDiagnostic.onboardingComplete)}
-            </p>
-          </div>
-          <Link
-            href={onboardingRedirectDiagnostic.target}
-            className="mt-5 inline-flex rounded-lg bg-amber-200 px-4 py-2 text-sm font-black text-[#1b1300]"
-          >
-            Continue to Learning Setup
-          </Link>
         </div>
       </div>
     );
   }
 
   const shouldShowDashboardGuardFallback =
-    resolvingOnboarding &&
+    resolvingDashboardAccess &&
     (!dashboardGuardResolved ||
       (learningOnlyNavigation && isRestrictedForLearningOnlyNavigation(pathname)));
 

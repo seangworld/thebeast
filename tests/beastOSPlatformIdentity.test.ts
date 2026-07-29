@@ -89,6 +89,10 @@ test("BO-313 makes authentication and onboarding explain platform ownership", ()
     "src/app/dashboard/onboarding/page.tsx",
     "utf8"
   );
+  const onboardingBoundary = readFileSync(
+    "src/app/dashboard/onboarding/layout.tsx",
+    "utf8"
+  );
 
   assert.match(login, />\s*BeastOS\s*</);
   assert.match(login, /beastOSPlatformIdentity\.role/);
@@ -103,6 +107,10 @@ test("BO-313 makes authentication and onboarding explain platform ownership", ()
   assert.match(onboarding, /Shared identity, permissions, and memory remain platform services/);
   assert.match(onboarding, /completeOnboarding/);
   assert.match(onboarding, /buildOnboardingCompletionProfileUpdate/);
+  assert.match(
+    onboardingBoundary,
+    /redirect\("\/dashboard\/education\/guidance-counselor"\)/
+  );
 });
 
 test("BO-313 aligns shared page titles and metadata without changing behavior", () => {

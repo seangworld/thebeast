@@ -13,7 +13,15 @@ test("Digital Staff has accessible deterministic statuses and reporting relation
   assert.deepEqual(digitalProfessionalStatuses, ["available", "limited", "unavailable", "inactive"]);
   assert.deepEqual(
     digitalProfessionals.map((professional) => professional.id),
-    ["fusion-director", "money-coach", "guidance-counselor", "health-advisor"]
+    ["money-coach", "guidance-counselor", "health-advisor"]
+  );
+  assert.deepEqual(
+    digitalProfessionals.map((professional) => professional.canonicalId),
+    [
+      "beastmoney.money-coach",
+      "beasteducation.guidance-counselor",
+      "beasthealth.health-advisor",
+    ]
   );
   assert.ok(
     digitalProfessionals.every(
@@ -26,8 +34,7 @@ test("Digital Staff has accessible deterministic statuses and reporting relation
         professional.experience.length &&
         professional.reportsTo &&
         professional.statusLabel &&
-        professional.version &&
-        professional.collaboratesWith.length
+        professional.version
     )
   );
   assert.ok(
@@ -81,10 +88,15 @@ test("Digital Staff portraits reference public assets and retain deterministic f
 
 test("Money Coach and Guidance Counselor retain their safety boundaries", () => {
   assert.ok(getDigitalProfessional("money-coach")?.limitations.some((item) => /No payment execution/i.test(item)));
-  assert.ok(getDigitalProfessional("guidance-counselor")?.limitations.some((item) => /Does not duplicate the Tutor/i.test(item)));
+  assert.ok(getDigitalProfessional("guidance-counselor")?.limitations.some((item) => /Does not teach or grade coursework in Generation 1/i.test(item)));
+  assert.equal(getDigitalProfessional("fusion-director"), undefined);
+  assert.doesNotMatch(
+    JSON.stringify(getDigitalProfessional("guidance-counselor")),
+    /Tutor|Fusion Director/
+  );
 });
 
-test("organization chart profile cards and About Me pages expose the identity package", () => {
+test("member profile cards expose professional context without internal implementation details", () => {
   const chart = fs.readFileSync(
     "src/app/dashboard/digital-staff/page.tsx",
     "utf8"
@@ -100,9 +112,10 @@ test("organization chart profile cards and About Me pages expose the identity pa
   assert.match(chart, /Digital Staff\s*<\/h1>/);
   assert.match(
     chart,
-    /Meet the Digital Professionals who coordinate, guide, and assist/
+    /Meet the Digital Professionals who guide and support/
   );
-  assert.match(chart, /Organization chart/);
+  assert.match(chart, /Your professionals/);
+  assert.doesNotMatch(chart, /Fusion Director|Organization chart/);
   assert.doesNotMatch(chart, /Portrait asset framework/);
   assert.match(card, /Portrait fallback/);
   assert.match(card, /Reports to/);
@@ -114,11 +127,16 @@ test("organization chart profile cards and About Me pages expose the identity pa
     "Experience",
     "Reports to",
     "Collaborates With",
+  ]) {
+    assert.match(profile, new RegExp(label));
+  }
+  for (const internalLabel of [
     "Version",
     "Release status",
     "Portrait status",
+    "placeholder_reference",
   ]) {
-    assert.match(profile, new RegExp(label));
+    assert.doesNotMatch(profile, new RegExp(internalLabel));
   }
 });
 

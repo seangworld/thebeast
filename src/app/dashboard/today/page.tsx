@@ -47,6 +47,7 @@ import {
   type TodayItemActionRequest,
   type TodayItemActionType,
 } from "@/lib/platform/today";
+import { educationTeachingCapabilitiesAvailable } from "@/lib/education/generationBoundary";
 
 type CourseRow = {
   id: string;
@@ -1293,10 +1294,11 @@ export default function TodayPage() {
           </DashboardCard>
         ) : null}
 
-        <details
-          id="activities"
-          className="scroll-mt-24 rounded-2xl border border-[#2a3242] bg-[#1a1f2b] p-5"
-        >
+        {educationTeachingCapabilitiesAvailable ? (
+          <details
+            id="activities"
+            className="scroll-mt-24 rounded-2xl border border-[#2a3242] bg-[#1a1f2b] p-5"
+          >
           <summary className="cursor-pointer text-base font-black text-white">
             Learning plan details
           </summary>
@@ -1395,7 +1397,38 @@ export default function TodayPage() {
               </div>
             </DashboardCard>
           </div>
-        </details>
+          </details>
+        ) : (
+          <details
+            id="education-planning"
+            className="scroll-mt-24 rounded-2xl border border-[#2a3242] bg-[#1a1f2b] p-5"
+          >
+            <summary className="cursor-pointer text-base font-black text-white">
+              Education planning
+            </summary>
+            <div className="mt-5">
+              <SectionHeader
+                eyebrow="Guidance Counselor"
+                title="Keep your education and career direction current"
+                description="Review your roadmap or talk through the next useful planning decision with your Guidance Counselor."
+              />
+              <div className="mt-4 flex flex-wrap gap-3">
+                <Link
+                  href="/dashboard/education/guidance-counselor"
+                  className="beast-button"
+                >
+                  Talk with Guidance Counselor
+                </Link>
+                <Link
+                  href="/dashboard/education/educational-roadmap"
+                  className="beast-button-secondary"
+                >
+                  Review roadmap
+                </Link>
+              </div>
+            </div>
+          </details>
+        )}
 
         <details className="rounded-2xl border border-[#2a3242] bg-[#111827] p-5">
           <summary className="cursor-pointer text-sm font-black text-[#c7cfdb]">

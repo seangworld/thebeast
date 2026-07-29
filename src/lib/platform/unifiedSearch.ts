@@ -7,6 +7,7 @@ import {
   type SearchPermissionScope,
 } from "./search";
 import type { PlatformModule } from "./types";
+import { educationTeachingCapabilitiesAvailable } from "../education/generationBoundary";
 
 export type UnifiedConversationRecord = {
   id: string;
@@ -301,30 +302,32 @@ export function buildUnifiedSearchItems({
     );
   });
 
-  lessons.forEach((lesson) => {
-    const href = `/dashboard/education/activities/${lesson.id}`;
-    results.push(
-      item({
-        id: `lesson-${lesson.id}`,
-        source: "learning",
-        sourceRecordId: lesson.id,
-        domain: "Lessons",
-        title: lesson.title,
-        summary: `${lesson.status} ${lesson.difficulty.toLowerCase()} ${lesson.activityType.toLowerCase()} lesson.`,
-        keywords: [
-          "education",
-          "lesson",
-          lesson.activityType,
-          lesson.difficulty,
-          lesson.status,
-        ],
-        href,
-        permissionScope: "Owner",
-        updatedAt: lesson.updatedAt,
-        actions: [{ type: "Resume", label: "Open lesson", href }],
-      })
-    );
-  });
+  if (educationTeachingCapabilitiesAvailable) {
+    lessons.forEach((lesson) => {
+      const href = `/dashboard/education/activities/${lesson.id}`;
+      results.push(
+        item({
+          id: `lesson-${lesson.id}`,
+          source: "learning",
+          sourceRecordId: lesson.id,
+          domain: "Lessons",
+          title: lesson.title,
+          summary: `${lesson.status} ${lesson.difficulty.toLowerCase()} ${lesson.activityType.toLowerCase()} lesson.`,
+          keywords: [
+            "education",
+            "lesson",
+            lesson.activityType,
+            lesson.difficulty,
+            lesson.status,
+          ],
+          href,
+          permissionScope: "Owner",
+          updatedAt: lesson.updatedAt,
+          actions: [{ type: "Resume", label: "Open lesson", href }],
+        })
+      );
+    });
+  }
 
   roadmaps.forEach((roadmap) => {
     results.push(

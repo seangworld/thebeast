@@ -15,6 +15,7 @@ import {
   type UnifiedRoadmapRecord,
 } from "@/lib/platform/unifiedSearch";
 import type { PlatformModule } from "@/lib/platform/types";
+import { educationTeachingCapabilitiesAvailable } from "@/lib/education/generationBoundary";
 import { createRouteClient } from "@/lib/supabase/server";
 import UnifiedSearchWorkspace from "./UnifiedSearchWorkspace";
 
@@ -211,6 +212,8 @@ async function loadUnifiedSearch(): Promise<UnifiedSearchLoadResult> {
     );
     const canSearchMoney = allowedModules.includes("money");
     const canSearchLearning = allowedModules.includes("learning");
+    const canSearchTeaching =
+      canSearchLearning && educationTeachingCapabilitiesAvailable;
 
     const [
       conversationsResult,
@@ -259,7 +262,7 @@ async function loadUnifiedSearch(): Promise<UnifiedSearchLoadResult> {
             .order("created_at", { ascending: false })
             .limit(100)
         : emptyQueryResult(),
-      canSearchLearning
+      canSearchTeaching
         ? client
             .from("learning_activities")
             .select(

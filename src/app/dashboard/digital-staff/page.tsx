@@ -1,17 +1,9 @@
 import {
   DigitalProfessionalCard,
-  DigitalProfessionalStatusBadge,
 } from "./DigitalProfessionalCard";
 import { digitalProfessionals } from "@/lib/digitalStaff";
 
 export default function DigitalStaffPage() {
-  const director = digitalProfessionals.find(
-    (professional) => professional.id === "fusion-director"
-  )!;
-  const team = digitalProfessionals.filter(
-    (professional) => professional.id !== director.id
-  );
-
   return (
     <main className="beast-page">
       <div className="beast-container space-y-8">
@@ -23,45 +15,31 @@ export default function DigitalStaffPage() {
             Digital Staff
           </h1>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-300">
-            Meet the Digital Professionals who coordinate, guide, and assist
-            across your Beast ecosystem.
+            Meet the Digital Professionals who guide and support you across
+            your Beast ecosystem.
           </p>
         </header>
 
-        <section aria-labelledby="organization-heading">
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <h2
-                id="organization-heading"
-                className="text-2xl font-black text-white"
-              >
-                Organization chart
-              </h2>
-              <p className="mt-2 text-sm text-slate-400">
-                The Owner retains decision authority. The Fusion Director
-                coordinates; each specialist retains product responsibility.
-              </p>
-            </div>
-            <DigitalProfessionalStatusBadge professional={director} />
-          </div>
-
-          <ol className="mt-6">
-            <li>
-              <div className="mx-auto max-w-xl">
-                <DigitalProfessionalCard professional={director} />
-              </div>
-              <div aria-hidden="true" className="mx-auto h-8 w-px bg-white/20" />
-              <ol
-                className="grid gap-4 md:grid-cols-3"
-                aria-label="Professionals reporting to the Fusion Director"
-              >
-                {team.map((professional) => (
-                  <li key={professional.id} className="min-w-0">
-                    <DigitalProfessionalCard professional={professional} />
-                  </li>
-                ))}
-              </ol>
-            </li>
+        <section aria-labelledby="professionals-heading">
+          <h2
+            id="professionals-heading"
+            className="text-2xl font-black text-white"
+          >
+            Your professionals
+          </h2>
+          <p className="mt-2 max-w-3xl text-sm text-slate-400">
+            Each professional works within their area and uses only the
+            permissioned context needed to support you.
+          </p>
+          <ol
+            className="mt-6 grid gap-4 md:grid-cols-3"
+            aria-label="Member-facing Digital Professionals"
+          >
+            {digitalProfessionals.map((professional) => (
+              <li key={professional.id} className="min-w-0">
+                <DigitalProfessionalCard professional={professional} />
+              </li>
+            ))}
           </ol>
         </section>
       </div>

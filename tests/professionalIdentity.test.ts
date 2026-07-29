@@ -44,7 +44,7 @@ test("AGENT-205 validates and registers reusable professional profiles", () => {
 test("AGENT-205 registers identity through the shared BeastAgents platform", () => {
   const platform = new BeastAgentsPlatform();
   platform.professionalIdentity.register(specialistProfessionalIdentityProfiles.healthAdvisor);
-  assert.equal(platform.professionalIdentity.require("beasthealth.health-advisor.professional").identity.role, "Health Advisor");
+  assert.equal(platform.professionalIdentity.require("beasthealth.health-advisor").identity.role, "Health Advisor");
 });
 
 test("AGENT-205 example identities remain configuration-only and specialist-neutral", () => {

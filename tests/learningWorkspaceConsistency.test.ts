@@ -93,15 +93,21 @@ test("BL-403 navigation exposes canonical workspaces without hash substitutes", 
   }
 });
 
-test("BL-403 preserves legacy Learning routes and sends Activities to Lessons", () => {
+test("Generation 1 preserves legacy source while blocking dormant teaching routes", () => {
   const legacy = readFileSync(
     "src/app/dashboard/learning/[workspace]/page.tsx",
     "utf8"
   );
+  const workspace = readFileSync(
+    "src/app/dashboard/education/[workspace]/page.tsx",
+    "utf8"
+  );
   const activities = readFileSync(
-    "src/app/dashboard/learning/activities/page.tsx",
+    "src/app/dashboard/learning/activities/layout.tsx",
     "utf8"
   );
   assert.match(legacy, /education\/\[workspace\]\/page/);
-  assert.match(activities, /\/dashboard\/education\/lessons/);
+  assert.match(workspace, /isDormantTeachingWorkspace/);
+  assert.match(workspace, /redirect\("\/dashboard\/education"\)/);
+  assert.match(activities, /redirect\("\/dashboard\/education"\)/);
 });

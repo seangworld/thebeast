@@ -33,8 +33,6 @@ export function DigitalProfessionalPortraitPlaceholder({
           ? `Portrait of ${professional.name}`
           : `Portrait fallback for ${professional.name}`
       }
-      data-portrait-reference={portraitReference}
-      data-portrait-source={professional.portrait.source}
       className={`relative grid shrink-0 place-items-center overflow-hidden rounded-full border border-cyan-300/20 bg-cyan-300/10 font-black text-cyan-100 ${
         size === "profile" ? "h-24 w-24 text-2xl" : "h-14 w-14 text-lg"
       }`}
@@ -82,9 +80,6 @@ export function DigitalProfessionalCard({
     >
       <div className="flex items-start justify-between gap-4">
         <DigitalProfessionalPortraitPlaceholder professional={professional} />
-        <span className="text-xs font-bold text-slate-500">
-          v{professional.version}
-        </span>
       </div>
       <h2 className="mt-4 text-xl font-black text-white">
         {professional.name}

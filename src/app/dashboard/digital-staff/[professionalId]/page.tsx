@@ -29,10 +29,6 @@ export default function DigitalProfessionalPage({
     ["Data this professional can access", professional.dataAccess],
     ["Data this professional cannot access", professional.unavailableData],
   ] as const;
-  const reportsTo = professional.reportsToId
-    ? getDigitalProfessional(professional.reportsToId)
-    : null;
-
   return (
     <main className="beast-page">
       <div className="beast-container space-y-6">
@@ -80,11 +76,10 @@ export default function DigitalProfessionalPage({
           </div>
         </header>
 
-        <dl className="grid gap-4 sm:grid-cols-3">
+        <dl className="grid gap-4 sm:grid-cols-2">
           {[
+            ["Team", professional.team],
             ["Reports to", professional.reportsTo],
-            ["Version", professional.version],
-            ["Release status", professional.releaseStatus],
           ].map(([label, value]) => (
             <div
               key={label}
@@ -94,16 +89,7 @@ export default function DigitalProfessionalPage({
                 {label}
               </dt>
               <dd className="mt-2 text-sm font-bold capitalize text-white">
-                {label === "Reports to" && reportsTo ? (
-                  <Link
-                    href={reportsTo.href}
-                    className="text-cyan-200 hover:text-cyan-100"
-                  >
-                    {value}
-                  </Link>
-                ) : (
-                  value
-                )}
+                {value}
               </dd>
             </div>
           ))}
@@ -170,31 +156,6 @@ export default function DigitalProfessionalPage({
             </section>
           ))}
         </div>
-
-        <aside className="rounded-xl border border-dashed border-white/15 p-4">
-          <p className="text-xs font-black uppercase tracking-wide text-slate-400">
-            Portrait status
-          </p>
-          <p className="mt-2 text-sm leading-6 text-slate-300">
-            {professional.portrait.portrait_url ? (
-              <>
-                Approved portrait:{" "}
-                <span className="break-all font-mono text-xs text-slate-400">
-                  {professional.portrait.portrait_url}
-                </span>
-                . Initials remain available if the image cannot be loaded.
-              </>
-            ) : (
-              <>
-                Placeholder reference:{" "}
-                <span className="break-all font-mono text-xs text-slate-400">
-                  {professional.portrait.placeholder_reference}
-                </span>
-                . No uploaded or generated portrait is attached.
-              </>
-            )}
-          </p>
-        </aside>
       </div>
     </main>
   );

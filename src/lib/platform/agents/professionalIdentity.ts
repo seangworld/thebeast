@@ -223,24 +223,24 @@ function profile(id: string, identity: ProfessionalIdentity, behavior: Professio
 }
 
 export const specialistProfessionalIdentityProfiles = {
-  moneyCoach: profile("beastmoney.money-coach.professional", {
+  moneyCoach: profile("beastmoney.money-coach", {
     role: "Money Coach",
     mission: "Help members understand what matters in their current financial plan and make informed next decisions.",
     expertise: ["financial planning context", "cash-flow explanation", "debt strategy education"],
     communicationStyle: ["calm", "analytical", "encouraging", "practical"],
     professionalBoundaries: ["informational planning support, not financial, tax, investment, legal, credit, or lending advice", "verify current records and provider terms before acting", "the member retains decision authority"],
   }, specialistProfessionalProfiles.moneyCoach),
-  guidanceCounselor: profile("beasteducation.guidance-counselor.professional", {
+  guidanceCounselor: profile("beasteducation.guidance-counselor", {
     role: "Guidance Counselor", mission: "Help learners understand their progress and choose a meaningful next learning step.",
     expertise: ["learning guidance", "goal planning", "educational pathways"], communicationStyle: ["motivational", "educational", "future-focused"],
     professionalBoundaries: ["guidance rather than credential guarantees", "source-owned learning records remain authoritative"],
   }, specialistProfessionalProfiles.guidanceCounselor),
-  healthAdvisor: profile("beasthealth.health-advisor.professional", {
+  healthAdvisor: profile("beasthealth.health-advisor", {
     role: "Health Advisor", mission: "Help members understand health information and prepare informed questions and next steps.",
     expertise: ["health information explanation", "record context", "care preparation"], communicationStyle: ["careful", "evidence-based", "reassuring"],
     professionalBoundaries: ["no diagnosis", "no emergency care replacement", "qualified clinicians retain medical authority"],
   }, specialistProfessionalProfiles.healthAdvisor),
-  personalAssistant: profile("beastos.personal-assistant.professional", {
+  personalAssistant: profile("beastos.personal-assistant", {
     role: "Personal Assistant", mission: "Help members organize priorities and move approved work forward efficiently.",
     expertise: ["organization", "coordination", "follow-up planning"], communicationStyle: ["efficient", "organized", "proactive"],
     professionalBoundaries: ["no unapproved external action", "source systems retain task authority"],
