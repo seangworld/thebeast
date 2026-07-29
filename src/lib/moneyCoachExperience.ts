@@ -347,7 +347,7 @@ export function buildMoneyCoachExperience(
       rule: "Count active bill records with a due date from today through seven days from today.",
       factors: { urgency: 90, financialImpact: 70, confidence: 90, dueDate: 95, unresolvedStatus: 80, recurrence: 60 },
       supportingData: [{ label: "Bills due within 7 days", value: input.billsDueSoonCount, source: "bill_events" }],
-      href: "/dashboard/money/cashflow#bills", severity: "warning",
+      href: "/dashboard/money/bills", severity: "warning",
     }));
   }
 
@@ -429,7 +429,7 @@ export function buildMoneyCoachExperience(
       id: "upcoming-bills", category: "Financial Summary", title: "Upcoming Bills", summary: `${plural(input.activeBillCount, "active bill")}`,
       explanation: "This summarizes active bill records and the normalized monthly bill total.", rule: "Count active bills and use Cash Intelligence monthlyBills.",
       factors: { urgency: 40, financialImpact: 60, confidence: 90, dueDate: 40, unresolvedStatus: 40, recurrence: 70 },
-      supportingData: [{ label: "Active bills", value: input.activeBillCount }, { label: "Monthly bills", value: input.monthlyBills }], href: "/dashboard/money/cashflow#bills",
+      supportingData: [{ label: "Active bills", value: input.activeBillCount }, { label: "Monthly bills", value: input.monthlyBills }], href: "/dashboard/money/bills",
     });
     if (!insights.includes(cardInsight)) insights.push(cardInsight);
     cards.push({
@@ -441,7 +441,7 @@ export function buildMoneyCoachExperience(
           ? `${plural(input.billsDueSoonCount, "bill")} need attention in the next 7 days.`
           : "No tracked bills are due in the next 7 days.",
       explainWhy: `This uses ${input.activeBillCount} active bill records and the Cash Intelligence monthly bill total of ${formatCurrency(input.monthlyBills)}.`,
-      href: "/dashboard/money/cashflow#bills",
+      href: "/dashboard/money/bills",
       insight: cardInsight,
     });
   }
@@ -496,7 +496,7 @@ export function buildMoneyCoachExperience(
       input.totalObligationCount - input.assignedIncomePotCount,
       0
     );
-    const cardInsight = moneyInsight(input, { id: "income-pots", category: unassigned > 0 ? "Needs Attention" : "Wins", title: "Income Pots", summary: `${input.assignedIncomePotCount} of ${input.totalObligationCount} assigned`, explanation: "This counts income-date assignments on current active bills and debts.", rule: "Count non-empty assigned_income_date values on active obligations.", factors: { urgency: unassigned > 0 ? 65 : 20, financialImpact: 60, confidence: 95, dueDate: 55, unresolvedStatus: unassigned > 0 ? 80 : 10, recurrence: 50 }, supportingData: [{ label: "Assigned obligations", value: input.assignedIncomePotCount }, { label: "Total obligations", value: input.totalObligationCount }], href: "/dashboard/money/cashflow#bills", severity: unassigned > 0 ? "warning" : "success" });
+    const cardInsight = moneyInsight(input, { id: "income-pots", category: unassigned > 0 ? "Needs Attention" : "Wins", title: "Income Pots", summary: `${input.assignedIncomePotCount} of ${input.totalObligationCount} assigned`, explanation: "This counts income-date assignments on current active bills and debts.", rule: "Count non-empty assigned_income_date values on active obligations.", factors: { urgency: unassigned > 0 ? 65 : 20, financialImpact: 60, confidence: 95, dueDate: 55, unresolvedStatus: unassigned > 0 ? 80 : 10, recurrence: 50 }, supportingData: [{ label: "Assigned obligations", value: input.assignedIncomePotCount }, { label: "Total obligations", value: input.totalObligationCount }], href: "/dashboard/money/bills", severity: unassigned > 0 ? "warning" : "success" });
     insights.push(cardInsight);
     cards.push({
       id: "income-pots",
@@ -507,7 +507,7 @@ export function buildMoneyCoachExperience(
           ? `${plural(unassigned, "obligation")} still need an income date.`
           : "Every active obligation has an income-date assignment.",
       explainWhy: `This counts assigned_income_date values on the current active bill and debt records.`,
-      href: "/dashboard/money/cashflow#bills",
+      href: "/dashboard/money/bills",
       insight: cardInsight,
     });
   }
@@ -843,7 +843,7 @@ export function classifyMoneyCoachIntent(question: string): MoneyCoachIntent {
 
 const moneyCoachIntentTools: Partial<Record<MoneyCoachIntent, string>> = {
   bills: "open-bills",
-  "debt-strategy": "open-debt",
+  "debt-strategy": "open-payoff-plan",
   "cash-flow": "open-cash-flow",
   "financial-health": "open-financial-health-score",
   benchmarks: "open-money-dashboard",
@@ -856,8 +856,8 @@ const moneyCoachIntentTools: Partial<Record<MoneyCoachIntent, string>> = {
 
 const moneyCoachTopicTools: Record<MoneyCoachTopic, string> = {
   "velocity-banking": "open-velocity",
-  avalanche: "open-debt",
-  snowball: "open-debt",
+  avalanche: "open-payoff-plan",
+  snowball: "open-payoff-plan",
   "financial-health": "open-financial-health-score",
   "cash-flow": "open-cash-flow",
   bills: "open-bills",
@@ -939,11 +939,11 @@ function createMoneyCoachResponse(values: Omit<MoneyCoachStructuredAnswer, "text
 
 const moneyTopicDetails: Record<MoneyCoachTopic, { label: string; definition: string; href: string }> = {
   "velocity-banking": { label: "Velocity Banking", definition: "Velocity Banking is a debt-paydown method that uses available revolving credit as a temporary cash-flow tool, then directs income back toward restoring that credit line.", href: "/dashboard/money/velocity" },
-  avalanche: { label: "Avalanche", definition: "The debt avalanche directs extra payments to the highest-interest debt first while maintaining required payments on the others.", href: "/dashboard/money/debts" },
-  snowball: { label: "Snowball", definition: "The debt snowball directs extra payments to the smallest balance first to create earlier account wins.", href: "/dashboard/money/debts" },
+  avalanche: { label: "Avalanche", definition: "The debt avalanche directs extra payments to the highest-interest debt first while maintaining required payments on the others.", href: "/dashboard/money/payoff-plan" },
+  snowball: { label: "Snowball", definition: "The debt snowball directs extra payments to the smallest balance first to create earlier account wins.", href: "/dashboard/money/payoff-plan" },
   "financial-health": { label: "Financial Health Score", definition: "The Financial Health Score is a transparent BeastMoney financial-wellness measure. It is not a credit score.", href: "/dashboard/money/dashboard#financial-health-score" },
   "cash-flow": { label: "Cash Flow", definition: "Cash flow is the movement of income into and obligations or spending out of your plan over time.", href: "/dashboard/money/cashflow" },
-  bills: { label: "Bills", definition: "Bills are scheduled obligations with an amount and due date that must be accounted for in the cash plan.", href: "/dashboard/money/cashflow#bills" },
+  bills: { label: "Bills", definition: "Bills are scheduled obligations with an amount and due date that must be accounted for in the cash plan.", href: "/dashboard/money/bills" },
   debts: { label: "Debts", definition: "Debts are outstanding balances owed to creditors, usually governed by rates, required payments, and payoff terms.", href: "/dashboard/money/debts" },
   "income-pots": { label: "Income Pots", definition: "Income Pots group obligations against a particular income date so the money has an explicit job before it is spent.", href: "/dashboard/money/cashflow#income-planning" },
   "funding-sources": { label: "Payment Configuration", definition: "Payment Configuration separates the account a payment drafts from, the account or income pot where its funds originated, and the strategy used to move those funds.", href: "/dashboard/money/cashflow#funding-sources" },
@@ -979,8 +979,8 @@ function velocityResponse(route: DomainIntentRoute<MoneyCoachTopic>, model: Mone
     ], assumptions: ["Current balances, income, obligations, debt rates, and reserve settings are accurate.", "No new revolving spending is added during recovery."], followUp: "The next useful step is to compare the verified HELOC cost with the current Avalanche scenario.", href: details.href, action: "Review Velocity assumptions" });
   }
   if (route.intentType === "compare") {
-    if (!velocity || !avalanche) return structuredAnswer({ intent: "debt-strategy", intentType: route.intentType, topics: route.topics, confidence: route.confidence, opening: "I can explain the difference, but I cannot make a current numerical comparison because both modeled scenarios are not available.", sections: [{ heading: "General difference", table: { columns: ["Strategy", "Primary mechanism", "Key risk"], rows: [["Velocity", "Temporary credit-line cycling", "Credit-line cost and recovery risk"], ["Avalanche", "Highest-rate debt first", "Fewer early account wins"]] } }], followUp: "Is your priority minimizing modeled interest or preserving the simplest, lowest-risk process?", href: "/dashboard/money/debts", action: "Review debt strategies" });
-    return structuredAnswer({ intent: "debt-strategy", intentType: route.intentType, topics: route.topics, confidence: route.confidence, opening: `${velocity.totalInterest < avalanche.totalInterest ? "Velocity" : "Avalanche"} has the lower modeled interest in the current scenarios, but cost is not the only decision factor.`, sections: [{ heading: "Current comparison", table: { columns: ["Strategy", "Payoff time", "Total interest", "Monthly strain", "Risk"], rows: [velocity, avalanche].map((scenario) => [scenario.label, `${scenario.monthsToPayoff} months`, formatCurrency(scenario.totalInterest), formatCurrency(scenario.monthlyCashStrain), scenario.riskLevel]) } }, { heading: "Tradeoff", paragraphs: ["Avalanche is operationally simpler. Velocity depends on suitable credit terms, reliable cash flow, and disciplined recovery."] }], followUp: "Which matters more to you: the lowest modeled interest or the simpler strategy with less credit-line exposure?", href: "/dashboard/money/debts", action: "Compare strategies" });
+    if (!velocity || !avalanche) return structuredAnswer({ intent: "debt-strategy", intentType: route.intentType, topics: route.topics, confidence: route.confidence, opening: "I can explain the difference, but I cannot make a current numerical comparison because both modeled scenarios are not available.", sections: [{ heading: "General difference", table: { columns: ["Strategy", "Primary mechanism", "Key risk"], rows: [["Velocity", "Temporary credit-line cycling", "Credit-line cost and recovery risk"], ["Avalanche", "Highest-rate debt first", "Fewer early account wins"]] } }], followUp: "Is your priority minimizing modeled interest or preserving the simplest, lowest-risk process?", href: "/dashboard/money/payoff-plan", action: "Review debt strategies" });
+    return structuredAnswer({ intent: "debt-strategy", intentType: route.intentType, topics: route.topics, confidence: route.confidence, opening: `${velocity.totalInterest < avalanche.totalInterest ? "Velocity" : "Avalanche"} has the lower modeled interest in the current scenarios, but cost is not the only decision factor.`, sections: [{ heading: "Current comparison", table: { columns: ["Strategy", "Payoff time", "Total interest", "Monthly strain", "Risk"], rows: [velocity, avalanche].map((scenario) => [scenario.label, `${scenario.monthsToPayoff} months`, formatCurrency(scenario.totalInterest), formatCurrency(scenario.monthlyCashStrain), scenario.riskLevel]) } }, { heading: "Tradeoff", paragraphs: ["Avalanche is operationally simpler. Velocity depends on suitable credit terms, reliable cash flow, and disciplined recovery."] }], followUp: "Which matters more to you: the lowest modeled interest or the simpler strategy with less credit-line exposure?", href: "/dashboard/money/payoff-plan", action: "Compare strategies" });
   }
   if (route.intentType === "calculate") return structuredAnswer({ intent: "velocity", intentType: route.intentType, topics: route.topics, confidence: route.confidence, opening: velocity && avalanche ? `The current Velocity scenario models ${formatCurrency(Math.max(avalanche.totalInterest - velocity.totalInterest, 0))} less interest than Avalanche.` : "I cannot calculate current Velocity interest savings because comparable Velocity and Avalanche scenarios are not both available.", sections: velocity && avalanche ? [{ heading: "Calculation", table: { columns: ["Scenario", "Modeled interest"], rows: [["Avalanche", formatCurrency(avalanche.totalInterest)], ["Velocity", formatCurrency(velocity.totalInterest)], ["Difference", formatCurrency(avalanche.totalInterest - velocity.totalInterest)]] } }] : [{ heading: "Required inputs", bullets: ["Current balances and rates", "Verified HELOC rate and fees", "Payment capacity and recovery timing", "Comparable strategy scenarios"] }], assumptions: ["Scenario inputs remain unchanged and HELOC terms are fully represented."], href: details.href, action: "Review Velocity calculation" });
   return undefined;
@@ -1238,12 +1238,12 @@ export function answerMoneyCoachQuestion(
   }
 
   if (intent === "bills") {
-    if (!context.billsDueSoon.length) return structuredAnswer({ intent, opening: "I don’t see any bill records due in the current seven-day review window.", sections: [{ heading: "What I need", paragraphs: ["If you expected a bill here, confirm its due date and active status in Bills so I can evaluate it without guessing."] }], followUp: "Would you like to review all saved bills?", href: "/dashboard/money/cashflow#bills", action: "Open Bills" });
+    if (!context.billsDueSoon.length) return structuredAnswer({ intent, opening: "I don’t see any bill records due in the current seven-day review window.", sections: [{ heading: "What I need", paragraphs: ["If you expected a bill here, confirm its due date and active status in Bills so I can evaluate it without guessing."] }], followUp: "Would you like to review all saved bills?", href: "/dashboard/money/bills", action: "Open Bills" });
     const total = context.billsDueSoon.reduce((sum, bill) => sum + bill.amount, 0);
     return structuredAnswer({ intent, opening: `${context.billsDueSoon.length} bill${context.billsDueSoon.length === 1 ? "" : "s"} need the closest attention, totaling ${formatCurrency(total)}.`, sections: [
       { heading: "Bills to review", table: { columns: ["Due", "Bill", "Amount", "Status", "Income Pot"], rows: context.billsDueSoon.map((bill) => [bill.dueDate, bill.name, formatCurrency(bill.amount), bill.status || "Upcoming", bill.incomePot || "Not assigned"]) } },
       { heading: "Explain Why", paragraphs: ["These are active bills whose saved due dates fall inside the current seven-day review window. Overdue and due-today items should be handled before later items."] },
-    ], followUp: "Would you like me to help match these bills to upcoming income?", href: "/dashboard/money/cashflow#bills", action: "Open Bills" });
+    ], followUp: "Would you like me to help match these bills to upcoming income?", href: "/dashboard/money/bills", action: "Open Bills" });
   }
 
   if (intent === "debt-strategy") {
@@ -1258,7 +1258,7 @@ export function answerMoneyCoachQuestion(
       { heading: "Observation", paragraphs: [`${betterInterest.label} has the lower modeled interest cost. The current strategy is ${context.activeDebtStrategy}.`] },
       { heading: "Recommendation", paragraphs: [preference ? `I also considered your saved preference: ${preference}. Current balances and scenario calculations still control the recommendation.` : "If minimizing interest is your priority, use the lower-interest scenario. If early account wins matter more, snowball may still be the better behavioral fit."] },
       { heading: "Explain Why", paragraphs: [`The comparison uses current balances, rates, minimum payments, and modeled payoff schedules across ${context.debts.length} debt account${context.debts.length === 1 ? "" : "s"}.`] },
-    ], assumptions: ["Debt records and modeled extra-payment capacity are current.", "Payoff dates can change with rates, fees, or new charges."], followUp: "Is your higher priority minimizing total interest or getting faster account wins?", href: "/dashboard/money/debts", action: "Review debt strategy" });
+    ], assumptions: ["Debt records and modeled extra-payment capacity are current.", "Payoff dates can change with rates, fees, or new charges."], followUp: "Is your higher priority minimizing total interest or getting faster account wins?", href: "/dashboard/money/payoff-plan", action: "Review debt strategy" });
   }
 
   if (intent === "changes") {

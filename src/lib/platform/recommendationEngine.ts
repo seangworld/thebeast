@@ -212,7 +212,7 @@ export function buildMoneyIntelligence(
         reason: "Money has a recurring bill due within 3 days.",
         recommendedAction: "Open Cash Flow and confirm payment funding.",
         estimatedBenefit: "Avoid missed or rushed bill payments.",
-        actionUrl: "/dashboard/money/cashflow#bills",
+        actionUrl: "/dashboard/money/bills",
       })
     );
   }
@@ -278,7 +278,7 @@ export function buildMoneyIntelligence(
           title: "Bills due within 3 days",
           module: "money",
           severity: "warning",
-          actionUrl: "/dashboard/money/cashflow#bills",
+          actionUrl: "/dashboard/money/bills",
           summary: `${billsDueWithinThreeDays.length} bill${
             billsDueWithinThreeDays.length === 1 ? "" : "s"
           } need attention soon.`,

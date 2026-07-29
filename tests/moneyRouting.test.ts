@@ -33,6 +33,8 @@ test("BP-230 navigation follows the approved workspace hierarchy", () => {
     "Cash Flow",
     "Income",
     "Expenses",
+    "Bills",
+    "Debts",
     "Payoff Plan",
     "Strategies",
     "Timeline",
@@ -65,9 +67,11 @@ test("BM-303 active state follows direct links refresh and history location chan
     ["/dashboard/money/cashflow", "", "Cash Flow"],
     ["/dashboard/money/income", "", "Income"],
     ["/dashboard/money/expenses", "", "Expenses"],
-    ["/dashboard/money/debts", "", "Payoff Plan"],
-    ["/dashboard/money/debts", "#strategy-comparison", "Strategies"],
-    ["/dashboard/money/debts", "#payoff-plan", "Timeline"],
+    ["/dashboard/money/bills", "", "Bills"],
+    ["/dashboard/money/debts", "", "Debts"],
+    ["/dashboard/money/payoff-plan", "", "Payoff Plan"],
+    ["/dashboard/money/payoff-plan", "#strategy-comparison", "Strategies"],
+    ["/dashboard/money/payoff-plan", "#payoff-plan", "Timeline"],
     ["/dashboard/money/reports", "", "Reports"],
   ] as const;
   history.forEach(([pathname, hash, expected]) => assert.equal(activeLabel(pathname, hash), expected));

@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { buildFinancialDecision } from "@/lib/financialDecisionEngine";
 import BillsSection from "./components/BillsSection";
 import CashFlowOverview from "./components/CashFlowOverview";
@@ -13,6 +14,7 @@ import CashTimelineSection from "./components/CashTimelineSection";
 import FundingSourcesSection from "./components/FundingSourcesSection";
 import ArchivedItemsSection from "./components/ArchivedItemsSection";
 import { BeastMoneyShell } from "@/app/dashboard/money/BeastMoneyShell";
+import { MoneyManagementNavigation } from "@/app/dashboard/money/components/MoneyManagementNavigation";
 import { useCashFlow } from "./useCashFlow";
 import {
   getPaymentFundingStrategy,
@@ -48,6 +50,18 @@ import {
 } from "./cashflowUtils";
 
 export default function CashFlowPage() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const view = pathname === "/dashboard/money/bills" ? "bills" : "cash-flow";
+
+  useEffect(() => {
+    if (
+      pathname === "/dashboard/money/cashflow" &&
+      window.location.hash === "#bills"
+    ) {
+      router.replace("/dashboard/money/bills");
+    }
+  }, [pathname, router]);
   const {
     data,
     incomes,
@@ -1176,6 +1190,88 @@ export default function CashFlowPage() {
     activeFundingSources,
   ]);
 
+  if (view === "bills") {
+    return (
+      <BeastMoneyShell
+        title="Bills"
+        description="Manage recurring bills, schedules, due dates, payment status, and bill details."
+      >
+        <MoneyManagementNavigation />
+        <div className="money-page-stack">
+          <AddIncomeBillSection
+            includeIncome={false}
+            showAddIncome={showAddIncome}
+            setShowAddIncome={setShowAddIncome}
+            incomeName={incomeName}
+            setIncomeName={setIncomeName}
+            incomeAmount={incomeAmount}
+            setIncomeAmount={setIncomeAmount}
+            incomeFrequency={incomeFrequency}
+            setIncomeFrequency={setIncomeFrequency}
+            incomeNextDate={incomeNextDate}
+            setIncomeNextDate={setIncomeNextDate}
+            addIncome={addIncome}
+            showAddBill={showAddBill}
+            setShowAddBill={setShowAddBill}
+            billName={billName}
+            setBillName={setBillName}
+            billAmount={billAmount}
+            setBillAmount={setBillAmount}
+            billDueDate={billDueDate}
+            setBillDueDate={setBillDueDate}
+            billFrequency={billFrequency}
+            setBillFrequency={setBillFrequency}
+            billFrequencyOptions={billFrequencyOptions}
+            addBill={addBill}
+          />
+
+          <BillsSection
+            showBills={showBills}
+            setShowBills={() => setShowBills(!showBills)}
+            activeBills={activeBills}
+            editingBillId={editingBillId}
+            editBillName={editBillName}
+            editBillAmount={editBillAmount}
+            editBillDueDate={editBillDueDate}
+            editBillFrequency={editBillFrequency}
+            setEditBillName={setEditBillName}
+            setEditBillAmount={setEditBillAmount}
+            setEditBillDueDate={setEditBillDueDate}
+            setEditBillFrequency={setEditBillFrequency}
+            billFrequencyOptions={billFrequencyOptions}
+            getFrequencyLabel={getFrequencyLabel}
+            incomeBucketPlans={incomeBucketPlans}
+            activeFundingSources={activeFundingSources}
+            updateBillIncomeDate={updateBillIncomeDate}
+            updateBillPaymentConfiguration={updateBillPaymentConfiguration}
+            partialPayments={partialPayments}
+            setPartialPayments={setPartialPayments}
+            addBillPayment={addBillPayment}
+            markBillPaid={markBillPaid}
+            startEditBill={startEditBill}
+            saveBillEdit={saveBillEdit}
+            cancelEditBill={cancelEditBill}
+            archiveBill={archiveBill}
+            resetBillDueDate={resetBillDueDate}
+            updatePaymentAutomation={(id, patch) =>
+              updatePaymentAutomation("bill", id, patch)
+            }
+          />
+
+          <ArchivedItemsSection
+            showArchivedBills={showArchivedBills}
+            setShowArchivedBills={setShowArchivedBills}
+            archivedBills={archivedBills}
+            getFrequencyLabel={getFrequencyLabel}
+            getIncomeBucketLabel={getIncomeBucketLabel}
+            getPaymentConfigurationLabel={getPaymentConfigurationLabel}
+            unarchiveBill={unarchiveBill}
+          />
+        </div>
+      </BeastMoneyShell>
+    );
+  }
+
   return (
     <BeastMoneyShell
       title="Cash Flow"
@@ -1281,33 +1377,6 @@ export default function CashFlowPage() {
         />
         </div>
 
-        <AddIncomeBillSection
-          includeIncome={false}
-          showAddIncome={showAddIncome}
-          setShowAddIncome={setShowAddIncome}
-          incomeName={incomeName}
-          setIncomeName={setIncomeName}
-          incomeAmount={incomeAmount}
-          setIncomeAmount={setIncomeAmount}
-          incomeFrequency={incomeFrequency}
-          setIncomeFrequency={setIncomeFrequency}
-          incomeNextDate={incomeNextDate}
-          setIncomeNextDate={setIncomeNextDate}
-          addIncome={addIncome}
-          showAddBill={showAddBill}
-          setShowAddBill={setShowAddBill}
-          billName={billName}
-          setBillName={setBillName}
-          billAmount={billAmount}
-          setBillAmount={setBillAmount}
-          billDueDate={billDueDate}
-          setBillDueDate={setBillDueDate}
-          billFrequency={billFrequency}
-          setBillFrequency={setBillFrequency}
-          billFrequencyOptions={billFrequencyOptions}
-          addBill={addBill}
-        />
-
         <CashTimelineSection
           showCashTimeline={showCashTimeline}
           setShowCashTimeline={setShowCashTimeline}
@@ -1317,50 +1386,6 @@ export default function CashFlowPage() {
           buffer={buffer}
         />
 
-        <BillsSection
-          showBills={showBills}
-          setShowBills={() => setShowBills(!showBills)}
-          activeBills={activeBills}
-          editingBillId={editingBillId}
-          editBillName={editBillName}
-          editBillAmount={editBillAmount}
-          editBillDueDate={editBillDueDate}
-          editBillFrequency={editBillFrequency}
-          setEditBillName={setEditBillName}
-          setEditBillAmount={setEditBillAmount}
-          setEditBillDueDate={setEditBillDueDate}
-          setEditBillFrequency={setEditBillFrequency}
-          billFrequencyOptions={billFrequencyOptions}
-          getFrequencyLabel={getFrequencyLabel}
-          incomeBucketPlans={incomeBucketPlans}
-          activeFundingSources={activeFundingSources}
-          updateBillIncomeDate={updateBillIncomeDate}
-          updateBillPaymentConfiguration={updateBillPaymentConfiguration}
-          partialPayments={partialPayments}
-          setPartialPayments={setPartialPayments}
-          addBillPayment={addBillPayment}
-          markBillPaid={markBillPaid}
-          startEditBill={startEditBill}
-          saveBillEdit={saveBillEdit}
-          cancelEditBill={cancelEditBill}
-          archiveBill={archiveBill}
-          resetBillDueDate={resetBillDueDate}
-          updatePaymentAutomation={(id, patch) => updatePaymentAutomation("bill", id, patch)}
-        />
-
-        <ArchivedItemsSection
-          showArchivedBills={showArchivedBills}
-          setShowArchivedBills={setShowArchivedBills}
-          archivedBills={archivedBills}
-          showArchivedDebts={showArchivedDebts}
-          setShowArchivedDebts={setShowArchivedDebts}
-          archivedDebts={archivedDebts}
-          getFrequencyLabel={getFrequencyLabel}
-          getIncomeBucketLabel={getIncomeBucketLabel}
-          getPaymentConfigurationLabel={getPaymentConfigurationLabel}
-          unarchiveBill={unarchiveBill}
-          unarchiveDebt={unarchiveDebt}
-        />
       </div>
     </BeastMoneyShell>
   );

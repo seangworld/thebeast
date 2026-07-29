@@ -229,7 +229,7 @@ export function buildMoneyCoachSessionBriefing({
       id: `upcoming-bill:${index}:${bill.name}`,
       title: bill.name,
       detail: `${money(bill.amount)} · ${bill.status || `Due ${bill.dueDate}`}`,
-      href: "/dashboard/money/cashflow#bills",
+      href: "/dashboard/money/bills",
     })),
     ...model.financialContext.upcomingIncome.map((income, index) => ({
       id: `upcoming-income:${index}:${income.name}`,

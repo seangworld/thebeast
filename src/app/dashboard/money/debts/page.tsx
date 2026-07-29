@@ -2,6 +2,7 @@
 
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
   formatShortDate,
@@ -44,6 +45,7 @@ import {
   type PayoffPlanDisplayRow,
   type PayoffOptionalColumn,
 } from "@/lib/payoffPlanView";
+import { MoneyManagementNavigation } from "@/app/dashboard/money/components/MoneyManagementNavigation";
 
 const PAYOFF_COLUMNS_STORAGE_KEY = "beastmoney.payoff-plan.columns.v1";
 
@@ -174,6 +176,10 @@ function summarizePayoffProjection({
 }
 
 export default function DebtsPage() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const view =
+    pathname === "/dashboard/money/payoff-plan" ? "payoff-plan" : "debts";
   const [debts, setDebts] = useState<Debt[]>([]);
   const [incomes, setIncomes] = useState<any[]>([]);
   const [bills, setBills] = useState<any[]>([]);
@@ -215,6 +221,18 @@ export default function DebtsPage() {
   const [expandedPayoffRow, setExpandedPayoffRow] = useState<string | null>(null);
   const focusReloadInFlightRef = useRef(false);
   const lastFocusReloadAtRef = useRef(0);
+
+  useEffect(() => {
+    if (pathname !== "/dashboard/money/debts") return;
+
+    const legacyHash = window.location.hash;
+    if (
+      legacyHash === "#strategy-comparison" ||
+      legacyHash === "#payoff-plan"
+    ) {
+      router.replace(`/dashboard/money/payoff-plan${legacyHash}`);
+    }
+  }, [pathname, router]);
 
   const debtsWithNextDueDate = useMemo(() => {
     return debts.map((debt) => {
@@ -886,9 +904,14 @@ export default function DebtsPage() {
 
   return (
     <BeastMoneyShell
-      title="Payoff Plan"
-      description="Manage debt records, compare strategies, review Velocity, and follow the current debt-free projection."
+      title={view === "debts" ? "Debts" : "Payoff Plan"}
+      description={
+        view === "debts"
+          ? "Manage debt accounts, balances, interest rates, lenders, payment details, and account status."
+          : "Compare payoff strategies, timelines, projections, Velocity calculations, and the recommended path forward."
+      }
     >
+      <MoneyManagementNavigation />
       <div className="money-page-stack">
 
         <section className="money-section-card">
@@ -926,6 +949,13 @@ export default function DebtsPage() {
             </div>
           </div>
 
+          {view === "debts" ? (
+            <div className="money-section-card">
+              <div className="money-metric-label">Active Debts</div>
+              <div className="money-metric-value">{activeDebts.length}</div>
+            </div>
+          ) : (
+            <>
           <div className="money-section-card">
             <div className="money-metric-label">Payoff Time</div>
             <div className="money-metric-value">
@@ -964,9 +994,12 @@ export default function DebtsPage() {
               </Link>
             ) : null}
           </div>
+            </>
+          )}
         </section>
 
-        <section id="add-debt" className="money-section-card">
+        {view === "payoff-plan" ? (
+        <section id="strategy-settings" className="money-section-card">
           <div className="grid gap-4 md:grid-cols-3">
             <div>
               <label className="money-field-label">Strategy</label>
@@ -1019,8 +1052,11 @@ export default function DebtsPage() {
             </div>
           </div>
         </section>
+        ) : null}
 
-        <section className="money-section-card">
+        {view === "debts" ? (
+        <>
+        <section id="add-debt" className="money-section-card">
           <h2 className="money-section-title">Add Debt</h2>
 
           <div className="money-field-grid md:grid-cols-3">
@@ -1694,7 +1730,11 @@ export default function DebtsPage() {
             </div>
           )}
         </section>
+        </>
+        ) : null}
 
+        {view === "payoff-plan" ? (
+        <>
         <section id="strategy-comparison" className="money-section-panel">
           <div className="money-section-header">
             <div>
@@ -1817,6 +1857,8 @@ export default function DebtsPage() {
             </table>
           </div>
         </section>
+        </>
+        ) : null}
       </div>
     </BeastMoneyShell>
   );

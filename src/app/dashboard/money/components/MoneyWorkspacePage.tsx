@@ -186,7 +186,7 @@ const quickActions = [
   { label: "Transfer", href: "/dashboard/money/cashflow", icon: "T" },
   { label: "Make Payment", href: "/dashboard/money/cashflow", icon: "P" },
   { label: "Go to Cash Flow", href: "/dashboard/money/cashflow", icon: "CF" },
-  { label: "Go to Bills", href: "/dashboard/money/cashflow#bills", icon: "BL" },
+  { label: "Go to Bills", href: "/dashboard/money/bills", icon: "BL" },
   { label: "Go to Debts", href: "/dashboard/money/debts", icon: "DB" },
   { label: "Go to Velocity", href: "/dashboard/money/velocity", icon: "V" },
   { label: "Retirement Planning", href: "/dashboard/money/retirement", icon: "R" },
@@ -642,7 +642,7 @@ export function MoneyWorkspacePage({
           snapshot.billsDueSoon.length === 1 ? "" : "s"
         } due in the next 7 days.`,
         severity: "warning",
-        href: "/dashboard/money/cashflow#bills",
+        href: "/dashboard/money/bills",
       });
     }
 
@@ -1099,7 +1099,7 @@ export function MoneyWorkspacePage({
             id="mobile-money-bills"
             title="Bills"
             action={
-              <Link href="/dashboard/money/cashflow#bills" className="text-sm font-black text-green-200">
+              <Link href="/dashboard/money/bills" className="text-sm font-black text-green-200">
                 View all
               </Link>
             }
@@ -1213,7 +1213,7 @@ export function MoneyWorkspacePage({
               <input className="beast-input" inputMode="decimal" placeholder="Amount" />
               <input className="beast-input" placeholder="Name or note" />
               <div className="grid grid-cols-2 gap-2">
-                <Link href="/dashboard/money/cashflow#bills" className="beast-button">
+                <Link href="/dashboard/money/bills" className="beast-button">
                   Add Bill Pay
                 </Link>
                 <Link href="/dashboard/money/debts" className="beast-button-secondary">

@@ -41,7 +41,7 @@ test("MC-212 lists actual bills with evidence and a structured action", () => {
   assert.match(response.text, /Electric/);
   assert.match(response.text, /Mortgage/);
   assert.match(response.text, /\$1,740\.00/);
-  assert.equal(response.href, "/dashboard/money/cashflow#bills");
+  assert.equal(response.href, "/dashboard/money/bills");
 });
 
 test("MC-212 compares current debt scenarios and asks for the member priority", () => {

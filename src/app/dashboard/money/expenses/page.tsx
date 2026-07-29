@@ -6,7 +6,7 @@ const expenseAreas = [
     title: "Bills",
     description:
       "Manage recurring bills, due dates, payment status, reminders, and funding assignments.",
-    href: "/dashboard/money/cashflow#bills",
+    href: "/dashboard/money/bills",
     action: "Manage bills",
   },
   {
@@ -55,7 +55,7 @@ export default function MoneyExpensesPage() {
         </p>
         <Link
           className="mt-4 inline-flex min-h-11 items-center font-bold text-cyan-200"
-          href="/dashboard/money/debts"
+          href="/dashboard/money/payoff-plan"
         >
           Open Payoff Plan <span aria-hidden="true" className="ml-2">→</span>
         </Link>

@@ -338,7 +338,7 @@ export function FinancialMissionControl({ model }: { model: FinancialMissionCont
             Discuss with Money Coach <span aria-hidden="true" className="ml-2">→</span>
           </Link>
         </Surface>
-        <Surface title="Upcoming obligations" eyebrow="Next 7 days" href="/dashboard/money/cashflow#bills">
+        <Surface title="Upcoming obligations" eyebrow="Next 7 days" href="/dashboard/money/bills">
           <div className="space-y-3">
             {model.upcomingObligations.slice(0, 5).map((item) => <div key={item.id} className="flex items-center justify-between gap-4 rounded-xl bg-white/[0.04] p-3"><div className="min-w-0"><p className="truncate font-bold text-white">{item.name}</p><p className="text-xs text-slate-400">{item.dueLabel}</p></div><span className="shrink-0 font-black text-white">{formatCurrency(item.amount)}</span></div>)}
             {!model.upcomingObligations.length ? <p className="text-sm text-slate-400">No obligations are due in the current review window.</p> : null}

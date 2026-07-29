@@ -204,7 +204,7 @@ function buildWarnings(input: FinancialCoachInput): FinancialCoachWarning[] {
       title: "Debt is not projected to decrease",
       message: "The current 30-day plan does not reduce tracked debt.",
       action: "Review minimum payments and the recommended payoff strategy.",
-      href: "/dashboard/money/debts",
+      href: "/dashboard/money/payoff-plan",
     });
   }
 
@@ -228,7 +228,7 @@ function buildWarnings(input: FinancialCoachInput): FinancialCoachWarning[] {
       title: "Debt-payoff goal is stalled",
       message: "The current monthly plan shows no progress toward debt freedom.",
       action: "Review the plan and update records or safe extra-payment capacity.",
-      href: "/dashboard/money/debts",
+      href: "/dashboard/money/payoff-plan",
     });
   }
 

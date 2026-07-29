@@ -146,7 +146,7 @@ export function buildMorningFinancialBriefing(
         href:
           payment.kind === "debt"
             ? "/dashboard/money/debts"
-            : "/dashboard/money/cashflow#bills",
+            : "/dashboard/money/bills",
         conversationPrompt: `Walk me through the ${payment.name} payment that posted and what it changes in my plan.`,
         priority: payment.kind === "debt" ? 88 : 76,
       })
@@ -182,7 +182,7 @@ export function buildMorningFinancialBriefing(
             .map((bill) => `${bill.name} (${money(bill.amount)})`)
             .join(" · "),
           source: "current-data",
-          href: "/dashboard/money/cashflow#bills",
+          href: "/dashboard/money/bills",
           conversationPrompt: "Which upcoming bills deserve my attention first, and why?",
           priority: 70,
         },

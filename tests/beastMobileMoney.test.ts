@@ -19,7 +19,7 @@ test("BF-MOB-004 mobile Money builds bill cards with visible payment actions", (
   });
 
   assert.equal(cards[0].status, "Due Today");
-  assert.equal(cards[0].actionHref, "/dashboard/money/cashflow#bills");
+  assert.equal(cards[0].actionHref, "/dashboard/money/bills");
   assert.match(page, /data-mobile-money-bill-cards="true"/);
   assert.match(page, /Pay or record payment/);
   assert.match(page, /break-words text-base font-black/);

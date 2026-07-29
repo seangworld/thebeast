@@ -118,7 +118,7 @@ export function buildMobileMoneyBillCards({
         amountDue: numberValue(bill.amount),
         dueDate,
         status: getMobileMoneyBillStatus(dueDate, asOfDate),
-        actionHref: "/dashboard/money/cashflow#bills",
+        actionHref: "/dashboard/money/bills",
       };
     })
     .sort((left, right) => left.dueDate.getTime() - right.dueDate.getTime());

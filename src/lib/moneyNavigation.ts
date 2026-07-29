@@ -10,12 +10,20 @@ export const beastMoneyCoreNavigation: readonly BeastMoneyNavigationItem[] = [
   { label: "Cash Flow", href: "/dashboard/money/cashflow" },
   { label: "Income", href: "/dashboard/money/income", parent: "Cash Flow" },
   { label: "Expenses", href: "/dashboard/money/expenses", parent: "Cash Flow" },
-  { label: "Payoff Plan", href: "/dashboard/money/debts" },
-  { label: "Strategies", href: "/dashboard/money/debts#strategy-comparison", parent: "Payoff Plan" },
-  { label: "Timeline", href: "/dashboard/money/debts#payoff-plan", parent: "Payoff Plan" },
+  { label: "Bills", href: "/dashboard/money/bills" },
+  { label: "Debts", href: "/dashboard/money/debts" },
+  { label: "Payoff Plan", href: "/dashboard/money/payoff-plan" },
+  { label: "Strategies", href: "/dashboard/money/payoff-plan#strategy-comparison", parent: "Payoff Plan" },
+  { label: "Timeline", href: "/dashboard/money/payoff-plan#payoff-plan", parent: "Payoff Plan" },
   { label: "Retirement", href: "/dashboard/money/retirement" },
   { label: "Documents", href: "/dashboard/uploads" },
   { label: "Reports", href: "/dashboard/money/reports" },
+] as const;
+
+export const moneyManagementWorkspaces = [
+  { label: "Bills", href: "/dashboard/money/bills" },
+  { label: "Debts", href: "/dashboard/money/debts" },
+  { label: "Payoff Plan", href: "/dashboard/money/payoff-plan" },
 ] as const;
 
 export function isBeastMoneyNavigationActive(

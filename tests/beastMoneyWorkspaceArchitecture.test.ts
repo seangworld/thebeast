@@ -31,6 +31,8 @@ test("BP-230 exposes only the approved workspace hierarchy", () => {
       { label: "Cash Flow", parent: null },
       { label: "Income", parent: "Cash Flow" },
       { label: "Expenses", parent: "Cash Flow" },
+      { label: "Bills", parent: null },
+      { label: "Debts", parent: null },
       { label: "Payoff Plan", parent: null },
       { label: "Strategies", parent: "Payoff Plan" },
       { label: "Timeline", parent: "Payoff Plan" },
@@ -59,21 +61,25 @@ test("BP-230 gives expenses payoff and reports distinct workspace ownership", ()
   assert.match(expenses, /Manage bills/);
   assert.match(expenses, /Manage debts/);
   assert.match(expenses, /payoff strategy[\s\S]*Payoff Plan/i);
-  assert.match(payoff, /title="Payoff Plan"/);
+  assert.match(payoff, /title=\{view === "debts" \? "Debts" : "Payoff Plan"\}/);
   assert.match(payoff, /id="strategy-comparison"/);
   assert.match(payoff, /id="payoff-plan"/);
   assert.match(reports, /view="reports"/);
   assert.match(workspace, /data-money-reports-workspace="true"/);
 });
 
-test("BP-230 removes payoff strategy and debt management from Cash Flow presentation", () => {
+test("BP-401 keeps Cash Flow presentation separate from the Bills workspace", () => {
   const cashFlow = source("src/app/dashboard/money/cashflow/page.tsx");
 
   assert.doesNotMatch(cashFlow, /<DebtAttackRecommendation/);
   assert.doesNotMatch(cashFlow, /<StrategySnapshot/);
   assert.doesNotMatch(cashFlow, /<DebtsSection/);
   assert.doesNotMatch(cashFlow, /<IncomeSourcesSection/);
-  assert.match(cashFlow, /includeIncome=\{false\}/);
+  assert.match(cashFlow, /if \(view === "bills"\)[\s\S]*includeIncome=\{false\}/);
+  assert.ok(
+    cashFlow.indexOf('if (view === "bills")') <
+      cashFlow.indexOf('title="Cash Flow"')
+  );
   assert.match(cashFlow, /availableCredit=\{creditAvailableTotal\}/);
 });
 

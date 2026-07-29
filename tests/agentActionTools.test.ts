@@ -14,7 +14,7 @@ test("the shared registry exposes the required action catalog as metadata", () =
   const ids = new Set(defaultAgentActionTools.map((tool) => tool.id));
   [
     "open-workspace", "create-goal", "create-reminder", "upload-document",
-    "search-documents", "open-bills", "open-debt", "open-forecast", "open-retirement",
+    "search-documents", "open-bills", "open-debt", "open-payoff-plan", "open-forecast", "open-retirement",
   ].forEach((id) => assert.equal(ids.has(id), true, `missing ${id}`));
   defaultAgentActionTools.forEach((tool) => {
     assert.ok(tool.title);
@@ -65,7 +65,11 @@ test("future specialists can register tools without changing the shared registry
 test("the platform provides the same default specialist-neutral action registry", () => {
   const platform = new BeastAgentsPlatform();
   assert.equal(platform.actionTools.require("create-reminder").confirmation, "required");
-  assert.equal(platform.actionTools.require("open-bills").target, "/dashboard/money/cashflow#bills");
+  assert.equal(platform.actionTools.require("open-bills").target, "/dashboard/money/bills");
+  assert.equal(
+    platform.actionTools.require("open-payoff-plan").target,
+    "/dashboard/money/payoff-plan"
+  );
 });
 
 test("Money Coach responses select registered structured tools", () => {
@@ -77,7 +81,7 @@ test("Money Coach responses select registered structured tools", () => {
     utilization: 10, fundingSourceCount: 1, safeFundingSourceCapacity: 500,
     assignedIncomePotCount: 1, totalObligationCount: 1, recommendationTitle: "Review bills",
     recommendationAction: "Review upcoming bills", recommendationWhy: "One bill is due soon.",
-    recommendationHref: "/dashboard/money/cashflow#bills", interestSaved: 0, timeSavedMonths: 0,
+    recommendationHref: "/dashboard/money/bills", interestSaved: 0, timeSavedMonths: 0,
     billsDueSoon: [{ name: "Rent", amount: 100, dueDate: "2026-07-23" }],
   });
   const response = answerMoneyCoachQuestion("Which bills need attention?", model);

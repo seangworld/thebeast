@@ -255,7 +255,7 @@ const billDetector: ObservationDetector<MoneyObservationData> = {
         materiality: 55,
         relevance: 80,
         actionability: 95,
-        workspaceTarget: "/dashboard/money/cashflow#bills",
+        workspaceTarget: "/dashboard/money/bills",
       }));
     }
     const priorBills = context.data.history[0]?.bills;
@@ -289,7 +289,7 @@ const billDetector: ObservationDetector<MoneyObservationData> = {
           materiality: Math.min(100, percent),
           relevance: 80,
           actionability: 75,
-          workspaceTarget: "/dashboard/money/cashflow#bills",
+          workspaceTarget: "/dashboard/money/bills",
           materiallyChanged: true,
         }));
       }
@@ -538,7 +538,7 @@ const strategyAndDataDetector: ObservationDetector<MoneyObservationData> = {
         relevance: 80,
         actionability: 95,
         confidence: 0.75,
-        workspaceTarget: "/dashboard/money/cashflow#bills",
+        workspaceTarget: "/dashboard/money/bills",
       }));
     }
     return { observations };
