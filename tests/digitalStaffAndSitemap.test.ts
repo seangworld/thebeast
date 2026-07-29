@@ -97,6 +97,11 @@ test("organization chart profile cards and About Me pages expose the identity pa
     "src/app/dashboard/digital-staff/[professionalId]/page.tsx",
     "utf8"
   );
+  assert.match(chart, /Digital Staff\s*<\/h1>/);
+  assert.match(
+    chart,
+    /Meet the Digital Professionals who coordinate, guide, and assist/
+  );
   assert.match(chart, /Organization chart/);
   assert.doesNotMatch(chart, /Portrait asset framework/);
   assert.match(card, /Portrait fallback/);

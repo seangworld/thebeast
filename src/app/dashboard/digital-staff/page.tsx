@@ -20,13 +20,11 @@ export default function DigitalStaffPage() {
             BeastOS Digital Staff
           </p>
           <h1 className="mt-2 text-4xl font-black text-white">
-            Your Digital Professionals
+            Digital Staff
           </h1>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-300">
-            Meet the professionals who explain, recommend, and coordinate
-            within explicit permissions. Every profile names its reporting
-            relationships, status, boundaries, and current version. Planned
-            roles are never presented as operational.
+            Meet the Digital Professionals who coordinate, guide, and assist
+            across your Beast ecosystem.
           </p>
         </header>
 
@@ -66,7 +64,6 @@ export default function DigitalStaffPage() {
             </li>
           </ol>
         </section>
-
       </div>
     </main>
   );
