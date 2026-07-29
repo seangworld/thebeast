@@ -295,9 +295,6 @@ export function buildProfessionalActivities({
           "Your Money Coach recalculated the saved timeline for your retirement plan.",
         occurredAt: run.createdAt,
         href: "/dashboard/money/retirement",
-        details: [
-          { label: "Calculation version", value: run.calculationVersion },
-        ],
       })
     );
   });

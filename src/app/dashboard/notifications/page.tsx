@@ -10,11 +10,9 @@ import {
   serviceModules,
 } from "@/app/dashboard/platformServices";
 import {
-  buildNotificationActionRequest,
   buildNotificationDigest,
   buildNotificationInbox,
   groupNotificationsBySeverity,
-  notificationContractRules,
   type NotificationPreferences,
   type PlatformNotificationItem,
 } from "@/lib/platform/notifications";
@@ -86,10 +84,6 @@ export default function NotificationsPage() {
   const digest = buildNotificationDigest({
     items: notificationItems,
     preferences: notificationPreferences,
-  });
-  const actionPreview = buildNotificationActionRequest({
-    item: inbox[0],
-    actionType: "Dismiss",
   });
   const mobileNotificationCards = buildMobileNotificationCards(inbox, 4);
   const notificationGroups = [
@@ -263,49 +257,6 @@ export default function NotificationsPage() {
           ))}
         </section>
 
-        <DashboardCard accent="notifications">
-          <SectionHeader
-            eyebrow="Notification Contracts"
-            title="Actions, preferences, and digests"
-            description="Notifications route user actions through source contracts while BeastOS owns shared inbox presentation."
-          />
-          <div className="mt-5 grid gap-4 lg:grid-cols-3">
-            <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
-              <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                Action dispatch
-              </div>
-              <div className="mt-2 text-sm font-bold text-white">
-                {actionPreview.dispatchMode}
-              </div>
-            </div>
-            <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
-              <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                Source
-              </div>
-              <div className="mt-2 text-sm font-bold text-white">
-                {actionPreview.source}
-              </div>
-            </div>
-            <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
-              <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                Digest enabled
-              </div>
-              <div className="mt-2 text-sm font-bold text-white">
-                {String(digest.enabled)}
-              </div>
-            </div>
-          </div>
-          <div className="mt-5 grid gap-3 md:grid-cols-2">
-            {notificationContractRules.map((rule) => (
-              <div
-                key={rule}
-                className="rounded-xl border border-[#2a3242] bg-[#0f1419] p-4 text-sm font-semibold text-[#d8dee8]"
-              >
-                {rule}
-              </div>
-            ))}
-          </div>
-        </DashboardCard>
       </div>
     </main>
   );

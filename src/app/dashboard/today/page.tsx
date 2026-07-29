@@ -42,7 +42,6 @@ import {
   getTodayContributionExplanation,
   getTodayPriorityScore,
   getTodayItemActionAvailability,
-  todayContributionContractRules,
   todayContributionSources,
   type TodayContribution,
   type TodayItemActionRequest,
@@ -799,7 +798,7 @@ export default function TodayPage() {
       contribution,
       action,
       requestedAt,
-      reason: `${action} requested from BeastOS Today and routed to the ${contribution.source} owner contract.`,
+      reason: `${action} requested from BeastOS Today for ${contribution.source}.`,
       snoozedUntil: action === "Snooze" ? snoozedUntil : undefined,
       rescheduledFor:
         action === "Reschedule" ? rescheduledFor.toISOString() : undefined,
@@ -807,7 +806,7 @@ export default function TodayPage() {
 
     setActionRequest(request);
     setMessage(
-      `${action} request queued for ${request.source}. BeastOS did not change source module records directly.`
+      `${action} request sent to ${request.source}.`
     );
   }
 
@@ -1289,8 +1288,7 @@ export default function TodayPage() {
         {actionRequest ? (
           <DashboardCard accent="beastos">
             <p className="text-sm font-semibold leading-6 text-[#dbe3ef]">
-              {actionRequest.action} is queued through the {actionRequest.source}{" "}
-              contract. BeastOS left the source record unchanged.
+              {actionRequest.action} was sent to {actionRequest.source}.
             </p>
           </DashboardCard>
         ) : null}
@@ -1405,9 +1403,9 @@ export default function TodayPage() {
           </summary>
           <div className="mt-5">
             <SectionHeader
-              eyebrow="Shared Today"
-              title="Cross-module contribution contract"
-              description="Today orders source-owned signals without replacing module engines."
+              eyebrow="Why this is prioritized"
+              title="How Today chose your next step"
+              description="Today weighs urgency, importance, effort, and your current priorities."
             />
             <div
               className="mt-4 rounded-xl border border-[#2a3242] bg-[#0f1419] p-4"
@@ -1428,16 +1426,6 @@ export default function TodayPage() {
               <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
                 {primaryPriorityExplanation.displayReason}
               </p>
-            </div>
-            <div className="mt-4 grid gap-3 md:grid-cols-2">
-              {todayContributionContractRules.map((rule) => (
-                <p
-                  key={rule}
-                  className="rounded-xl border border-[#2a3242] bg-[#0f1419] p-4 text-sm leading-6 text-[#c7cfdb]"
-                >
-                  {rule}
-                </p>
-              ))}
             </div>
             <div className="mt-4 flex flex-wrap gap-2">
               {todayContributionSources.map((source) => (
@@ -1465,10 +1453,6 @@ export default function TodayPage() {
                 active
               </div>
             </div>
-            <p className="mt-4 text-xs font-semibold uppercase text-[#7f8da3]">
-              Actions route through module contract events. BeastOS does not
-              directly mutate module records.
-            </p>
           </div>
         </details>
       </div>

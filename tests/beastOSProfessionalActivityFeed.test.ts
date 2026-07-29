@@ -97,6 +97,7 @@ test("BO-309 builds chronological professional activity from persisted evidence"
   assert.equal(stream[0].source, "learning");
   assert.equal(stream[0].title, "Learned your career interests.");
   assert.match(stream[1].title, /retirement timeline/);
+  assert.doesNotMatch(JSON.stringify(stream[1].details), /2026\.1|Calculation version/);
   assert.match(stream[2].title, /Processed/);
   assert.match(stream[3].title, /Marked/);
 });

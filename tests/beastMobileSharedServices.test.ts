@@ -167,8 +167,8 @@ test("BF-MOB-003 keeps mobile shared surfaces narrow and desktop routes intact",
   assert.match(search, /beast-button/);
 
   assert.match(pages[0], /Your Guidance Counselor Recommends/);
-  assert.match(pages[1], /Notification Contracts/);
-  assert.match(pages[2], /Calendar Contracts/);
+  assert.doesNotMatch(pages[1], /Notification Contracts/);
+  assert.doesNotMatch(pages[2], /Calendar Contracts/);
   assert.match(search, /role="combobox"/);
   assert.doesNotMatch(search, /md:hidden/);
   assert.match(globalStyles, /width: 100%;/);

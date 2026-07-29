@@ -126,8 +126,9 @@ test("BO-25 Today defines the shared cross-module contribution contract", () => 
     /reason is required/
   );
   assert.match(todayContributionContractRules[1], /Modules own source calculations/);
-  assert.match(todayPage, /Cross-module contribution contract/);
-  assert.match(todayPage, /todayContributionContractRules/);
+  assert.match(todayPage, /How Today chose your next step/);
+  assert.doesNotMatch(todayPage, /Cross-module contribution contract/);
+  assert.doesNotMatch(todayPage, /todayContributionContractRules/);
   assert.doesNotMatch(
     todayPage,
     /recompute learning mastery|recompute bill cycles|cash-flow risk/
@@ -257,7 +258,7 @@ test("BO-27 Today routes item actions through source-owned contracts", () => {
   assert.match(todayPage, /Snooze 1h/);
   assert.match(todayPage, /Complete/);
   assert.match(todayPage, /Tomorrow/);
-  assert.match(todayPage, /module contract events/);
+  assert.doesNotMatch(todayPage, /module contract events/);
   assert.doesNotMatch(todayPage, /from\("learning_activities"\)\s*\.update/);
 });
 

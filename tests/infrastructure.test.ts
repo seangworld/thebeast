@@ -685,6 +685,7 @@ test("BO-308 keeps BeastOS focused and BO-311 makes Personal Hub canonical", () 
     "AI Preferences",
     "Communication Preferences",
     "Future Memory Settings",
+    "Theme & Display",
   ]) {
     assert.match(
       [
@@ -694,16 +695,12 @@ test("BO-308 keeps BeastOS focused and BO-311 makes Personal Hub canonical", () 
       new RegExp(`label: "${destination}"`)
     );
   }
-  assert.match(settingsPage, /id="family"/);
-  assert.match(settingsPage, /id="household"/);
-  assert.match(settingsPage, /id="preferences"/);
-  assert.match(settingsPage, /id="connected-modules"/);
-  assert.match(settingsPage, /id="emergency-contacts"/);
-  assert.match(settingsPage, /id="communication-preferences"/);
-  assert.match(settingsPage, /id="ai-preferences"/);
-  assert.match(settingsPage, /id="future-memory-settings"/);
-  assert.match(settingsPage, /id="privacy"/);
-  assert.match(settingsPage, /Privacy controls are a placeholder/);
+  assert.match(settingsPage, /availableSections\.map/);
+  assert.match(settingsPage, /plannedSections\.map/);
+  assert.match(settingsPage, /id=\{section\.id\}/);
+  assert.match(settingsPage, /data-personal-hub-availability="available"/);
+  assert.match(settingsPage, /data-personal-hub-availability="planned"/);
+  assert.match(settingsPage, /Not available yet/);
   assert.match(settingsProfilePage, /Personal Information/);
   assert.match(legacyProfilePage, /redirect\(personalInformationCanonicalRoute\)/);
 });
@@ -776,7 +773,7 @@ test("BO-31 Calendar models unified source events with permissions", () => {
     /source record id/
   );
   assert.match(calendarContractRules[2], /permission scope/);
-  assert.match(calendarPage, /calendarContractRules/);
+  assert.doesNotMatch(calendarPage, /calendarContractRules/);
   assert.match(calendarPage, /permissionScope/);
 });
 
@@ -860,8 +857,8 @@ test("BO-33 Calendar recurrence and drag rescheduling preserve source rules", ()
   assert.equal(request.source, "learning");
   assert.match(calendarContractRules[3], /source contract event/);
   assert.match(calendarPage, /buildRecurringCalendarEvents/);
-  assert.match(calendarPage, /buildCalendarRescheduleRequest/);
-  assert.match(calendarPage, /dispatchMode/);
+  assert.doesNotMatch(calendarPage, /buildCalendarRescheduleRequest/);
+  assert.doesNotMatch(calendarPage, /dispatchMode/);
 });
 
 test("BO-34 Calendar detects conflicts reminders and time zone issues", () => {
@@ -1194,7 +1191,7 @@ test("BO-41 Notifications route actions preferences and digests safely", () => {
   assert.equal(digest.enabled, true);
   assert.deepEqual(digest.sources, ["learning", "money"]);
   assert.match(notificationContractRules[3], /source contract events/);
-  assert.match(notificationsPage, /buildNotificationActionRequest/);
+  assert.doesNotMatch(notificationsPage, /buildNotificationActionRequest/);
   assert.match(notificationsPage, /buildNotificationDigest/);
 });
 
@@ -1230,7 +1227,7 @@ function buildSharedAIContextFixtureItems(): SharedAIContextItem[] {
   ];
 }
 
-test("BO-42 Shared AI assembles permissioned context without owning sources", () => {
+test("BO-42 Shared AI assembles permissioned context without exposing contracts in Personal Hub", () => {
   const settingsPage = readFileSync("src/app/dashboard/settings/page.tsx", "utf8");
   const allowed = buildSharedAIContext(buildSharedAIContextFixtureItems());
 
@@ -1241,8 +1238,9 @@ test("BO-42 Shared AI assembles permissioned context without owning sources", ()
   assert.equal(allowed[1].source, "money");
   assert.equal(allowed[1].sourceRecordId, "cashflow-summary");
   assert.match(sharedAIContractRules[0], /permissioned context assembly/);
-  assert.match(settingsPage, /buildSharedAIContext/);
-  assert.match(settingsPage, /sharedAIContractRules/);
+  assert.doesNotMatch(settingsPage, /buildSharedAIContext/);
+  assert.doesNotMatch(settingsPage, /sharedAIContractRules/);
+  assert.match(settingsPage, /Planned Personal Hub settings/);
 });
 
 test("BO-43 Shared AI frames recommendations from context metadata", () => {
@@ -1273,7 +1271,8 @@ test("BO-44 Shared AI memory boundaries expose correction export and deletion co
   assert.equal(boundary.retentionDays, 0);
   assert.deepEqual(boundary.restrictedContextIds, ["private-document"]);
   assert.match(sharedAIContractRules[2], /retention/);
-  assert.match(settingsPage, /buildSharedAIMemoryBoundary/);
+  assert.doesNotMatch(settingsPage, /buildSharedAIMemoryBoundary/);
+  assert.match(settingsPage, /plannedSections/);
 });
 
 test("BO-45 Shared AI routes specialist handoffs while preserving ownership", () => {
@@ -1292,7 +1291,8 @@ test("BO-45 Shared AI routes specialist handoffs while preserving ownership", ()
   assert.equal(moneyHandoff.dispatchMode, "specialist-handoff");
   assert.equal(moneyHandoff.sourceOwnershipPreserved, true);
   assert.match(sharedAIContractRules[3], /Specialist handoffs/);
-  assert.match(settingsPage, /buildSharedAISpecialistHandoff/);
+  assert.doesNotMatch(settingsPage, /buildSharedAISpecialistHandoff/);
+  assert.match(settingsPage, /plannedSections/);
 });
 
 test("BO-48 Platform UX tracks responsive accessible core services", () => {
@@ -1318,7 +1318,8 @@ test("BO-48 Platform UX tracks responsive accessible core services", () => {
     ]
   );
   assert.match(platformUXRules[1], /mobile and desktop/);
-  assert.match(settingsPage, /buildPlatformUXReadiness/);
+  assert.doesNotMatch(settingsPage, /buildPlatformUXReadiness/);
+  assert.match(settingsPage, /sm:grid-cols-2 xl:grid-cols-3/);
 });
 
 test("BO-49 Platform UX standardizes useful service fallback states", () => {
@@ -1341,8 +1342,8 @@ test("BO-49 Platform UX standardizes useful service fallback states", () => {
     assert.equal(state.recoveryAction.length > 20, true);
   });
   assert.match(platformUXRules[2], /what the user can do next/);
-  assert.match(settingsPage, /buildPlatformUXState/);
-  assert.match(settingsPage, /Degraded state/);
+  assert.doesNotMatch(settingsPage, /buildPlatformUXState/);
+  assert.doesNotMatch(settingsPage, /Degraded state/);
 });
 
 test("BO-50 Platform UX exposes onboarding help feedback and release notes", () => {
@@ -1356,7 +1357,7 @@ test("BO-50 Platform UX exposes onboarding help feedback and release notes", () 
   );
   assert.equal(supportLinks.find((link) => link.id === "release-notes")?.href, "/dashboard/releases");
   assert.match(platformUXRules[3], /Onboarding help feedback and release notes/);
-  assert.match(settingsPage, /getPlatformSupportLinks/);
+  assert.doesNotMatch(settingsPage, /getPlatformSupportLinks/);
   assert.match(releasesPage, /BeastOS v2\.2 Shared Services Progress/);
   assert.match(releasesPage, /loading, empty, error, offline, and degraded/);
 });

@@ -10,14 +10,15 @@ export type PersonalHubSectionId =
   | "connected-modules"
   | "ai-preferences"
   | "communication-preferences"
-  | "future-memory-settings";
+  | "future-memory-settings"
+  | "theme-display";
 
 export type PersonalHubSection = {
   id: PersonalHubSectionId;
   label: string;
   description: string;
   href: string;
-  availability: "available" | "foundation";
+  availability: "available" | "planned";
 };
 
 export type PersonalHubModuleReference = {
@@ -43,17 +44,17 @@ export const personalHubSections: PersonalHubSection[] = [
     id: "household",
     label: "Household",
     description:
-      "Household membership, roles, and permissioned shared visibility.",
-    href: `${personalHubCanonicalRoute}#household`,
-    availability: "foundation",
+      "Saved family or household context that Beast should account for.",
+    href: `${personalInformationCanonicalRoute}#household-context`,
+    availability: "available",
   },
   {
     id: "family",
     label: "Family",
     description:
-      "Family relationships and shared context owned by BeastOS.",
-    href: `${personalHubCanonicalRoute}#family`,
-    availability: "foundation",
+      "Saved family context that helps Beast understand your support system.",
+    href: `${personalInformationCanonicalRoute}#household-context`,
+    availability: "available",
   },
   {
     id: "emergency-contacts",
@@ -61,7 +62,7 @@ export const personalHubSections: PersonalHubSection[] = [
     description:
       "A reserved owner-controlled location for future emergency contact information.",
     href: `${personalHubCanonicalRoute}#emergency-contacts`,
-    availability: "foundation",
+    availability: "planned",
   },
   {
     id: "notification-preferences",
@@ -69,7 +70,7 @@ export const personalHubSections: PersonalHubSection[] = [
     description:
       "Shared notification channels, quiet hours, and module-level delivery choices.",
     href: `${personalHubCanonicalRoute}#notification-preferences`,
-    availability: "foundation",
+    availability: "planned",
   },
   {
     id: "privacy",
@@ -77,7 +78,7 @@ export const personalHubSections: PersonalHubSection[] = [
     description:
       "Account-level privacy, export, deletion, and sharing boundaries.",
     href: `${personalHubCanonicalRoute}#privacy`,
-    availability: "foundation",
+    availability: "planned",
   },
   {
     id: "connected-modules",
@@ -85,7 +86,7 @@ export const personalHubSections: PersonalHubSection[] = [
     description:
       "Which Beast modules may reference shared Personal Hub context.",
     href: `${personalHubCanonicalRoute}#connected-modules`,
-    availability: "foundation",
+    availability: "planned",
   },
   {
     id: "ai-preferences",
@@ -93,7 +94,7 @@ export const personalHubSections: PersonalHubSection[] = [
     description:
       "Permissioned context and specialist preferences shared through BeastOS.",
     href: `${personalHubCanonicalRoute}#ai-preferences`,
-    availability: "foundation",
+    availability: "planned",
   },
   {
     id: "communication-preferences",
@@ -101,7 +102,7 @@ export const personalHubSections: PersonalHubSection[] = [
     description:
       "Reserved preferences for tone, detail, format, and preferred channels.",
     href: `${personalHubCanonicalRoute}#communication-preferences`,
-    availability: "foundation",
+    availability: "planned",
   },
   {
     id: "future-memory-settings",
@@ -109,7 +110,15 @@ export const personalHubSections: PersonalHubSection[] = [
     description:
       "A reserved location for future correction, retention, export, and deletion controls.",
     href: `${personalHubCanonicalRoute}#future-memory-settings`,
-    availability: "foundation",
+    availability: "planned",
+  },
+  {
+    id: "theme-display",
+    label: "Theme & Display",
+    description:
+      "Appearance, density, accessibility, and motion preferences.",
+    href: `${personalHubCanonicalRoute}#theme-display`,
+    availability: "planned",
   },
 ];
 

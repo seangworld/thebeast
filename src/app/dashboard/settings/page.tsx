@@ -5,159 +5,17 @@ import {
   SectionHeader,
 } from "@/app/components/design/DashboardPrimitives";
 import {
-  buildSharedAIContext,
-  buildSharedAIMemoryBoundary,
-  buildSharedAIRecommendation,
-  buildSharedAISpecialistHandoff,
-  sharedAIContractRules,
-  type SharedAIContextItem,
-} from "@/lib/platform/sharedAI";
-import {
-  buildHouseholdInvitationRequest,
-  buildHouseholdSharedLinkRequest,
-  getHouseholdSharedLinksForMember,
-  householdOwnershipRules,
-  type HouseholdModel,
-} from "@/lib/platform/household";
-import {
-  buildPlatformUXReadiness,
-  buildPlatformUXState,
-  getPlatformSupportLinks,
-  platformUXRules,
-} from "@/lib/platform/ux";
-import {
-  familyOwnershipRules,
-  mockFamilyModel,
-  summarizeFamilyModel,
-} from "@/lib/platform/family";
-import {
-  personalHubModuleReferences,
-  personalHubOwnershipRules,
   personalHubSections,
   personalInformationCanonicalRoute,
 } from "@/lib/platform/personalHub";
 
-const settingsSections = [
-  {
-    id: "display-preferences",
-    title: "Theme & Display",
-    description:
-      "Appearance, density, accessibility, and dashboard display preferences.",
-    items: ["Theme mode", "Dashboard density", "Motion preferences"],
-  },
-  {
-    id: "notification-preferences",
-    title: "Notification Preferences",
-    description:
-      "Shared alert channels, quiet hours, and module notification rules.",
-    items: ["Quiet hours", "Critical alerts", "Module summaries"],
-  },
-];
-
 export default function SettingsPage() {
-  const familySummary = summarizeFamilyModel(mockFamilyModel);
-  const householdModel: HouseholdModel = {
-    households: [
-      {
-        id: "household-primary",
-        ownerId: "member-owner",
-        name: "Primary household",
-        createdAt: "2026-07-17T00:00:00.000Z",
-        updatedAt: "2026-07-17T00:00:00.000Z",
-      },
-    ],
-    members: [
-      {
-        id: "member-owner",
-        householdId: "household-primary",
-        userId: "member-owner",
-        displayName: "Owner",
-        isOwner: true,
-        joinedAt: "2026-07-17T00:00:00.000Z",
-        updatedAt: "2026-07-17T00:00:00.000Z",
-      },
-      {
-        id: "member-household",
-        householdId: "household-primary",
-        displayName: "Household member",
-        isOwner: false,
-        role: "Member",
-        joinedAt: "2026-07-17T00:00:00.000Z",
-        updatedAt: "2026-07-17T00:00:00.000Z",
-      },
-    ],
-  };
-  const householdInvitation = buildHouseholdInvitationRequest({
-    householdId: "household-primary",
-    invitedByMemberId: "member-owner",
-    email: "member@example.com",
-    role: "Member",
-    model: householdModel,
-  });
-  const householdSharedLink = buildHouseholdSharedLinkRequest({
-    householdId: "household-primary",
-    kind: "Document",
-    sourceRecordId: "document-1",
-    title: "Shared document",
-    permission: "View",
-    grantedByMemberId: "member-owner",
-    grantedToMemberIds: ["member-household"],
-    model: householdModel,
-  });
-  const householdVisibleLinks = getHouseholdSharedLinksForMember({
-    householdId: "household-primary",
-    memberId: "member-household",
-    model: {
-      ...householdModel,
-      sharedLinks: [householdSharedLink],
-    },
-  });
-  const platformUXReadiness = buildPlatformUXReadiness();
-  const degradedState = buildPlatformUXState("Degraded");
-  const supportLinks = getPlatformSupportLinks();
-  const sharedAIContext: SharedAIContextItem[] = [
-    {
-      id: "context-user-preferences",
-      kind: "User",
-      source: "beastos",
-      sourceRecordId: "personal-hub-context",
-      summary: "Owner-provided preferences and AI context controls.",
-      permission: "Allowed",
-      retention: "Exportable",
-    },
-    {
-      id: "context-money-cashflow",
-      kind: "Module",
-      source: "money",
-      sourceRecordId: "cashflow-summary",
-      summary: "Money summary can be referenced but calculations stay with BeastMoney.",
-      permission: "Allowed",
-      retention: "Session",
-    },
-    {
-      id: "context-private-document",
-      kind: "Document",
-      source: "documents",
-      sourceRecordId: "restricted-document",
-      summary: "Restricted document context is withheld from Shared AI.",
-      permission: "Restricted",
-      retention: "Session",
-    },
-  ];
-  const allowedContext = buildSharedAIContext(sharedAIContext);
-  const recommendation = buildSharedAIRecommendation({
-    id: "shared-ai-recommendation-preview",
-    title: "Review the next useful step",
-    context: sharedAIContext,
-    ownerModule: "beastos",
-  });
-  const memoryBoundary = buildSharedAIMemoryBoundary({
-    context: sharedAIContext,
-    retentionDays: 30,
-  });
-  const handoff = buildSharedAISpecialistHandoff({
-    request: "Help me understand my money alert",
-  });
+  const availableSections = personalHubSections.filter(
+    (section) => section.availability === "available"
+  );
+  const plannedSections = personalHubSections.filter(
+    (section) => section.availability === "planned"
+  );
 
   return (
     <main className="beast-page">
@@ -165,332 +23,81 @@ export default function SettingsPage() {
         <section className="beast-page-header">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-4">
-              <ModuleBadge module="beastos" label="Shared Identity Owner" />
-              <h1 className="beast-title">Personal Hub</h1>
+              <ModuleBadge module="beastos" label="Personal Hub" />
+              <h1 className="beast-title">Your shared Beast profile</h1>
               <p className="beast-subtitle">
-                BeastOS owns your shared identity, relationships, permissions,
-                and platform-wide preferences. Modules reference this context
-                while keeping their own records and workflows.
+                Keep the information Beast uses across your applications in one
+                place. Available settings open a real saved workflow; upcoming
+                settings are clearly marked until their controls are ready.
               </p>
             </div>
-            <div className="flex flex-wrap gap-2">
-              <Link href={personalInformationCanonicalRoute} className="beast-button">
-                Personal Information
-              </Link>
-              <Link href="/dashboard/money/settings" className="beast-button-secondary">
-                Money Settings
-              </Link>
-            </div>
-          </div>
-        </section>
-
-        <nav
-          aria-label="Personal Hub sections"
-          className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5"
-        >
-          {personalHubSections.map((destination) => (
             <Link
-              key={destination.id}
-              href={destination.href}
-              className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 transition duration-200 hover:-translate-y-0.5 hover:border-[#38bdf8]/50 hover:bg-[#202634]"
+              href={personalInformationCanonicalRoute}
+              className="beast-button"
             >
-              <div className="font-black text-white">{destination.label}</div>
-              <p className="mt-1 text-sm leading-5 text-[#9aa7b8]">
-                {destination.description}
-              </p>
-              <div className="mt-3 text-[0.65rem] font-black uppercase tracking-wide text-[#6f7d90]">
-                {destination.availability === "available"
-                  ? "Available"
-                  : "Foundation"}
-              </div>
+              Edit personal information
             </Link>
-          ))}
-        </nav>
+          </div>
+        </section>
 
-        <DashboardCard accent="beastos">
+        <section aria-label="Available Personal Hub settings">
           <SectionHeader
-            eyebrow="BeastOS Ownership"
-            title="One shared identity"
-            description="Changes made in Personal Hub become the shared source authorized modules reference."
+            eyebrow="Available now"
+            title="Manage your information"
+            description="These settings are connected to your saved Beast account."
           />
-          <div className="mt-5 grid gap-3 md:grid-cols-2">
-            {personalHubOwnershipRules.map((rule) => (
-              <div
-                key={rule}
-                className="rounded-xl border border-[#2a3242] bg-[#0f1419] p-4 text-sm font-semibold leading-6 text-[#d8dee8]"
+          <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {availableSections.map((section) => (
+              <Link
+                key={section.id}
+                href={section.href}
+                data-personal-hub-availability="available"
+                className="group rounded-2xl border border-[#2a3242] bg-[#111827] p-5 transition duration-200 hover:-translate-y-0.5 hover:border-[#38bdf8]/60 hover:bg-[#202634] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#38bdf8]"
               >
-                {rule}
-              </div>
+                <div className="flex items-start justify-between gap-3">
+                  <h2 className="font-black text-white">{section.label}</h2>
+                  <span className="rounded-full border border-emerald-300/30 bg-emerald-300/10 px-2.5 py-1 text-[0.65rem] font-black uppercase tracking-wide text-emerald-100">
+                    Available
+                  </span>
+                </div>
+                <p className="mt-3 text-sm leading-6 text-[#aeb9c8]">
+                  {section.description}
+                </p>
+                <span className="mt-5 inline-flex text-sm font-black text-[#91cbff] group-hover:text-white">
+                  Open settings <span aria-hidden="true" className="ml-1">→</span>
+                </span>
+              </Link>
             ))}
           </div>
-        </DashboardCard>
-
-        <section id="preferences" className="grid scroll-mt-24 gap-4 xl:grid-cols-2">
-          {settingsSections.map((section) => (
-            <div key={section.id} id={section.id} className="scroll-mt-24">
-              <DashboardCard accent="beastos">
-                <SectionHeader title={section.title} description={section.description} />
-                <div className="mt-5 grid gap-3">
-                  {section.items.map((item) => (
-                    <div
-                      key={item}
-                      className="rounded-xl border border-[#2a3242] bg-[#111827] p-4"
-                    >
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="font-bold text-white">{item}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </DashboardCard>
-            </div>
-          ))}
-        </section>
-
-        <section className="grid gap-4 lg:grid-cols-2">
-          <div id="emergency-contacts" className="scroll-mt-24">
-            <DashboardCard accent="red">
-              <SectionHeader
-                eyebrow="Reserved Shared Context"
-                title="Emergency Contacts"
-                description="Future emergency contacts will be owner-controlled BeastOS data, available to modules only through explicit permission."
-              />
-              <p className="mt-5 rounded-xl border border-[#2a3242] bg-[#111827] p-4 text-sm font-semibold leading-6 text-[#dbe3ef]">
-                No emergency contact information is collected in this phase.
-              </p>
-            </DashboardCard>
-          </div>
-          <div id="communication-preferences" className="scroll-mt-24">
-            <DashboardCard accent="blue">
-              <SectionHeader
-                eyebrow="Shared Preferences"
-                title="Communication Preferences"
-                description="Tone, detail, format, accessibility, and channel preferences will be centralized here rather than repeated by each module."
-              />
-              <p className="mt-5 rounded-xl border border-[#2a3242] bg-[#111827] p-4 text-sm font-semibold leading-6 text-[#dbe3ef]">
-                Existing module behavior is unchanged while this shared preference foundation is reserved.
-              </p>
-            </DashboardCard>
-          </div>
-        </section>
-
-        <section className="grid gap-4 lg:grid-cols-[1fr_0.85fr]">
-          <div id="privacy" className="scroll-mt-24">
-            <DashboardCard accent="documents">
-            <SectionHeader
-              eyebrow="Privacy & Security"
-              title="Privacy"
-              description="Privacy controls are a placeholder until account export, deletion, and security preference workflows are approved."
-            />
-            <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              {[
-                "Your data belongs to you.",
-                "Export and deletion controls will be centralized here.",
-                "Security preferences will remain account-level.",
-                "Uploads and profile context stay associated with your account.",
-              ].map((item) => (
-                <div
-                  key={item}
-                  className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 text-sm font-semibold leading-5 text-[#dbe3ef]"
-                >
-                  {item}
-                </div>
-              ))}
-            </div>
-            </DashboardCard>
-          </div>
-
-          <div id="connected-modules" className="scroll-mt-24">
-            <DashboardCard accent="money">
-            <SectionHeader
-              eyebrow="Shared References"
-              title="Connected Modules"
-              description="Each module reads approved Personal Hub context and continues to own its domain records."
-            />
-            <div className="mt-5 grid gap-3">
-              {personalHubModuleReferences.map((reference) => (
-                <div
-                  key={reference.module}
-                  className="rounded-xl border border-[#2a3242] bg-[#111827] p-4"
-                >
-                  <div className="font-black capitalize text-white">
-                    {reference.module}
-                  </div>
-                  <p className="mt-1 text-sm leading-5 text-[#9aa7b8]">
-                    References: {reference.reads.join(", ")}
-                  </p>
-                </div>
-              ))}
-            </div>
-            </DashboardCard>
-          </div>
-        </section>
-
-        <div id="ai-preferences" className="scroll-mt-24">
-        <DashboardCard accent="beastos">
-          <SectionHeader
-            eyebrow="Shared AI"
-            title="Context and specialist boundaries"
-            description="Shared AI can assemble permissioned context and route handoffs without owning module-specific logic."
-          />
-          <div className="mt-5 grid gap-4 lg:grid-cols-4">
-            {[
-              ["Allowed context", allowedContext.length],
-              ["Recommendation facts", recommendation.sourceContextIds.length],
-              ["Retention days", memoryBoundary.retentionDays],
-              ["Handoff", handoff.specialist],
-            ].map(([label, value]) => (
-              <div
-                key={label}
-                className="rounded-xl border border-[#2a3242] bg-[#111827] p-4"
-              >
-                <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                  {label}
-                </div>
-                <div className="mt-2 text-lg font-black text-white">{value}</div>
-              </div>
-            ))}
-          </div>
-          <div
-            id="future-memory-settings"
-            className="mt-5 scroll-mt-24 rounded-xl border border-[#2a3242] bg-[#111827] p-4"
-          >
-            <div className="text-xs font-bold uppercase tracking-wide text-[#7f8da3]">
-              Future Memory Settings
-            </div>
-            <p className="mt-2 text-sm font-semibold leading-6 text-[#d8dee8]">
-              Correction, retention, export, and deletion controls remain
-              reserved here. No memory behavior changes in this phase.
-            </p>
-          </div>
-          <div className="mt-5 grid gap-3 md:grid-cols-2">
-            {sharedAIContractRules.map((rule) => (
-              <div
-                key={rule}
-                className="rounded-xl border border-[#2a3242] bg-[#0f1419] p-4 text-sm font-semibold text-[#d8dee8]"
-              >
-                {rule}
-              </div>
-            ))}
-          </div>
-        </DashboardCard>
-        </div>
-
-        <section id="family" className="scroll-mt-24">
-          <DashboardCard accent="family">
-            <SectionHeader
-              eyebrow="Family"
-              title="Relationships and shared context"
-              description="Family context remains separate from authentication, personas, entitlements, and module-owned records."
-            />
-            <div className="mt-5 grid gap-4 md:grid-cols-3">
-              {[
-                ["Families", familySummary.familyCount],
-                ["Members", familySummary.memberCount],
-                ["Relationships", familySummary.supportedRelationships.length],
-              ].map(([label, value]) => (
-                <div
-                  key={label}
-                  className="rounded-xl border border-[#2a3242] bg-[#111827] p-4"
-                >
-                  <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                    {label}
-                  </div>
-                  <div className="mt-2 text-sm font-black text-white">{value}</div>
-                </div>
-              ))}
-            </div>
-            <div className="mt-5 grid gap-3 md:grid-cols-2">
-              {familyOwnershipRules.map((rule) => (
-                <div
-                  key={rule}
-                  className="rounded-xl border border-[#2a3242] bg-[#0f1419] p-4 text-sm font-semibold text-[#d8dee8]"
-                >
-                  {rule}
-                </div>
-              ))}
-            </div>
-          </DashboardCard>
-        </section>
-
-        <section id="household" className="scroll-mt-24">
-          <DashboardCard accent="family">
-          <SectionHeader
-            eyebrow="Household"
-            title="Lifecycle and shared visibility"
-            description="Household actions are routed as BeastOS contract events while source modules keep their own business logic."
-          />
-          <div className="mt-5 grid gap-4 md:grid-cols-3">
-            {[
-              ["Invitation", householdInvitation.dispatchMode],
-              ["Shared links", householdVisibleLinks.length],
-              ["Source owner", householdSharedLink.sourceModule],
-            ].map(([label, value]) => (
-              <div
-                key={label}
-                className="rounded-xl border border-[#2a3242] bg-[#111827] p-4"
-              >
-                <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                  {label}
-                </div>
-                <div className="mt-2 text-sm font-black text-white">{value}</div>
-              </div>
-            ))}
-          </div>
-          <div className="mt-5 grid gap-3 md:grid-cols-2">
-            {householdOwnershipRules.slice(0, 4).map((rule) => (
-              <div
-                key={rule}
-                className="rounded-xl border border-[#2a3242] bg-[#0f1419] p-4 text-sm font-semibold text-[#d8dee8]"
-              >
-                {rule}
-              </div>
-            ))}
-          </div>
-          </DashboardCard>
         </section>
 
         <DashboardCard accent="beastos">
           <SectionHeader
-            eyebrow="Platform UX"
-            title="Responsive states and support"
-            description="BeastOS keeps shared service pages responsive, accessible, and clear when data is loading, empty, unavailable, or degraded."
+            eyebrow="Coming later"
+            title="Planned Personal Hub settings"
+            description="These areas are part of the Personal Hub plan, but they do not have approved saved workflows yet."
           />
-          <div className="mt-5 grid gap-4 md:grid-cols-4">
-            {[
-              ["Services", platformUXReadiness.totalServices],
-              ["Mobile ready", platformUXReadiness.mobileReadyServices],
-              ["Keyboard ready", platformUXReadiness.keyboardReadyServices],
-              ["Support links", supportLinks.length],
-            ].map(([label, value]) => (
-              <div
-                key={label}
-                className="rounded-xl border border-[#2a3242] bg-[#111827] p-4"
+          <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {plannedSections.map((section) => (
+              <article
+                key={section.id}
+                id={section.id}
+                data-personal-hub-availability="planned"
+                className="scroll-mt-24 rounded-2xl border border-dashed border-[#344052] bg-[#0f1419] p-5"
               >
-                <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                  {label}
+                <div className="flex items-start justify-between gap-3">
+                  <h2 className="font-black text-[#d8dee8]">{section.label}</h2>
+                  <span className="rounded-full border border-[#465266] bg-[#1a1f2b] px-2.5 py-1 text-[0.65rem] font-black uppercase tracking-wide text-[#9aa7b8]">
+                    Planned
+                  </span>
                 </div>
-                <div className="mt-2 text-sm font-black text-white">{value}</div>
-              </div>
-            ))}
-          </div>
-          <div className="mt-5 rounded-xl border border-[#2a3242] bg-[#0f1419] p-4">
-            <div className="text-xs font-bold uppercase text-[#7f8da3]">
-              Degraded state
-            </div>
-            <div className="mt-2 font-black text-white">{degradedState.title}</div>
-            <p className="mt-1 text-sm leading-5 text-[#9aa7b8]">
-              {degradedState.recoveryAction}
-            </p>
-          </div>
-          <div className="mt-5 grid gap-3 md:grid-cols-2">
-            {platformUXRules.map((rule) => (
-              <div
-                key={rule}
-                className="rounded-xl border border-[#2a3242] bg-[#0f1419] p-4 text-sm font-semibold text-[#d8dee8]"
-              >
-                {rule}
-              </div>
+                <p className="mt-3 text-sm leading-6 text-[#7f8da3]">
+                  {section.description}
+                </p>
+                <p className="mt-5 text-xs font-bold text-[#68768b]">
+                  Not available yet
+                </p>
+              </article>
             ))}
           </div>
         </DashboardCard>

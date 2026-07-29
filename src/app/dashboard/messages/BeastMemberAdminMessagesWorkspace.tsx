@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
 import {
   DashboardCard,
   SectionHeader,
@@ -43,7 +42,6 @@ function announceUnreadChange() {
 }
 
 export function BeastMemberAdminMessagesWorkspace() {
-  const router = useRouter();
   const [thread, setThread] = useState<BeastAdminPrivateThread | null>(null);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
@@ -67,16 +65,6 @@ export function BeastMemberAdminMessagesWorkspace() {
           error: userError,
         } = await supabase.auth.getUser();
         if (userError || !user) throw userError || new Error("Authentication required.");
-        const { data: profile, error: profileError } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", user.id)
-          .maybeSingle();
-        if (profileError) throw profileError;
-        if (profile?.role === "admin") {
-          router.replace("/dashboard/admin/messages");
-          return;
-        }
         const { data, error: loadError } = await supabase.rpc(
           "get_beast_member_admin_thread"
         );
@@ -111,7 +99,7 @@ export function BeastMemberAdminMessagesWorkspace() {
     return () => {
       active = false;
     };
-  }, [refreshKey, router]);
+  }, [refreshKey]);
 
   async function sendMessage(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

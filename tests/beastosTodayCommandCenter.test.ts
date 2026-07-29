@@ -54,7 +54,8 @@ test("BO-308 aggregates existing modules without taking over their logic", () =>
   assert.match(today, /\.from\("income_events"\)/);
   assert.match(today, /\.eq\("user_id", authUser\.id\)/);
   assert.match(today, /buildTodayItemActionRequest/);
-  assert.match(today, /module contract events/);
+  assert.match(today, /request sent to/);
+  assert.doesNotMatch(today, /module contract events/);
   assert.doesNotMatch(today, /\.from\("debts"\)\s*\.update/);
   assert.doesNotMatch(today, /\.from\("bill_events"\)\s*\.update/);
   assert.doesNotMatch(today, /signInWithOtp|signInWithPassword|signUp/);

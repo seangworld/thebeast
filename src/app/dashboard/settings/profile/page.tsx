@@ -5,11 +5,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { getProfileDisplayName } from "@/lib/profile";
 import { useEntitlements } from "@/lib/hooks/useEntitlements";
-import { goalPlanOwnershipRules } from "@/lib/platform/goalsPlans";
-import {
-  personalHubOwnershipRules,
-  personalInformationCanonicalRoute,
-} from "@/lib/platform/personalHub";
+import { personalInformationCanonicalRoute } from "@/lib/platform/personalHub";
 import {
   DashboardCard,
   ModuleBadge,
@@ -462,14 +458,16 @@ export default function ProfilePage() {
                     }
                     placeholder="Careers, certifications, trades, or skills you are curious about."
                   />
-                  <TextAreaField
-                    label="Family or household context"
-                    value={form.household_context}
-                    onChange={(value) =>
-                      updateField("household_context", value)
-                    }
-                    placeholder="Family, household, or support context BeastOS should account for."
-                  />
+                  <div id="household-context" className="scroll-mt-24">
+                    <TextAreaField
+                      label="Family or household context"
+                      value={form.household_context}
+                      onChange={(value) =>
+                        updateField("household_context", value)
+                      }
+                      placeholder="Family, household, or support context BeastOS should account for."
+                    />
+                  </div>
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="md:col-span-2 text-sm font-black uppercase text-[#7f8da3]">
@@ -571,37 +569,6 @@ export default function ProfilePage() {
               />
             </DashboardCard>
 
-            <DashboardCard accent="goals">
-              <SectionHeader
-                eyebrow="Shared Goals and Plans"
-                title="Goals are outcomes. Plans are paths."
-                description="BeastOS owns the shared Goal and Plan records. Money and Learning can contribute progress or recommendations without duplicating ownership."
-              />
-              <ul className="mt-4 space-y-2 text-sm leading-6 text-[#dbe3ef]">
-                {goalPlanOwnershipRules.slice(0, 3).map((rule) => (
-                  <li key={rule} className="flex gap-2">
-                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-yellow-300" />
-                    <span>{rule}</span>
-                  </li>
-                ))}
-              </ul>
-            </DashboardCard>
-
-            <DashboardCard accent="beastos">
-              <SectionHeader
-                eyebrow="Platform Ownership"
-                title="One identity, referenced everywhere"
-                description="Modules consume shared BeastOS context while retaining ownership of their domain records."
-              />
-              <ul className="mt-4 space-y-2 text-sm leading-6 text-[#dbe3ef]">
-                {personalHubOwnershipRules.slice(0, 4).map((rule) => (
-                  <li key={rule} className="flex gap-2">
-                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-sky-300" />
-                    <span>{rule}</span>
-                  </li>
-                ))}
-              </ul>
-            </DashboardCard>
           </div>
         </section>
 

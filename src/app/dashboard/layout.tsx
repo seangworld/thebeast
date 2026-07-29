@@ -751,6 +751,12 @@ export default function DashboardLayout({
       const childGroups = Array.from(
         new Set(groupedChildren.map((child) => child.group).filter(Boolean))
       );
+      const handleModuleLabelNavigation = () => {
+        if (hasChildren) {
+          setExpandedModule(item.module);
+        }
+        onNavigate?.();
+      };
 
       if (item.external && item.href) {
         return (
@@ -810,7 +816,7 @@ export default function DashboardLayout({
           >
             <Link
               href={item.href || "#"}
-              onClick={onNavigate}
+              onClick={handleModuleLabelNavigation}
               className="flex min-w-0 flex-1 items-center gap-2 px-3 py-2 sm:px-4"
             >
               <span

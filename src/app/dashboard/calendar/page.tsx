@@ -17,11 +17,9 @@ import {
 } from "@/app/dashboard/platformServices";
 import {
   buildCalendarReminders,
-  buildCalendarRescheduleRequest,
   buildCalendarViews,
   buildMonthGrid,
   buildRecurringCalendarEvents,
-  calendarContractRules,
   detectCalendarConflicts,
   weekdayLabels,
   type CalendarEvent,
@@ -77,13 +75,6 @@ export default function CalendarPage() {
   const recurringPreview = buildRecurringCalendarEvents({
     event: sharedCalendarEvents[1],
     occurrences: 3,
-  });
-  const reschedulePreview = buildCalendarRescheduleRequest({
-    event: sharedCalendarEvents[0],
-    requestedAt: now.toISOString(),
-    newStartsAt: "2026-07-17T13:00:00.000Z",
-    newEndsAt: "2026-07-17T13:30:00.000Z",
-    reason: "Drag reschedule preview routes to the source contract.",
   });
   const reminders = buildCalendarReminders(sharedCalendarEvents[0]);
   const conflicts = detectCalendarConflicts(sharedCalendarEvents);
@@ -268,14 +259,14 @@ export default function CalendarPage() {
 
         <DashboardCard accent="calendar">
           <SectionHeader
-            eyebrow="Calendar Contracts"
-            title="Ownership-safe scheduling"
-            description="BeastOS assembles shared calendar state while source modules keep their own scheduling rules."
+            eyebrow="Schedule details"
+            title="Recurring events and reminders"
+            description="Review useful timing details from your current calendar without implementation metadata."
           />
-          <div className="mt-5 grid gap-4 lg:grid-cols-4">
+          <div className="mt-5 grid gap-4 md:grid-cols-3">
             <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
               <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                Recurrence
+                Next Guidance Counselor reviews
               </div>
               <div className="mt-3 space-y-2">
                 {recurringPreview.map((event) => (
@@ -290,21 +281,7 @@ export default function CalendarPage() {
             </div>
             <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
               <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                Reschedule
-              </div>
-              <div className="mt-3 text-sm font-bold text-white">
-                {reschedulePreview.dispatchMode}
-              </div>
-              <div className="mt-2 text-xs font-semibold text-[#9aa6b6]">
-                Source: {reschedulePreview.source}
-              </div>
-              <div className="mt-1 text-xs font-semibold text-[#9aa6b6]">
-                Rules preserved: {String(reschedulePreview.sourceRulesPreserved)}
-              </div>
-            </div>
-            <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
-              <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                Reminders
+                Rent review reminders
               </div>
               <div className="mt-3 space-y-2">
                 {reminders.map((reminder) => (
@@ -319,30 +296,20 @@ export default function CalendarPage() {
             </div>
             <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
               <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                Conflicts
+                Schedule conflicts
               </div>
               <div className="mt-3 text-2xl font-black text-white">
                 {conflicts.length}
               </div>
-              <div className="mt-2 text-xs font-semibold text-[#9aa6b6]">
-                Time zone: America/New_York
-              </div>
-              <div className="mt-1 text-xs font-semibold text-[#9aa6b6]">
-                Scope: Owner
-              </div>
+              <p className="mt-2 text-sm leading-5 text-[#9aa6b6]">
+                {conflicts.length
+                  ? "Review overlapping events before they arrive."
+                  : "No overlapping events were found."}
+              </p>
             </div>
           </div>
-          <div className="mt-5 grid gap-3 md:grid-cols-2">
-            {calendarContractRules.map((rule) => (
-              <div
-                key={rule}
-                className="rounded-xl border border-[#2a3242] bg-[#0f1419] p-4 text-sm font-semibold text-[#d8dee8]"
-              >
-                {rule}
-              </div>
-            ))}
-          </div>
         </DashboardCard>
+
       </div>
     </main>
   );

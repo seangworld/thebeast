@@ -223,7 +223,7 @@ test("BeastOS goal and plan summary preserves module boundaries", () => {
   );
 });
 
-test("Personal Hub preserves goals and plans as shared BeastOS data", () => {
+test("Personal Hub keeps shared identity editable without developer ownership panels", () => {
   const legacyProfilePage = readFileSync("src/app/dashboard/profile/page.tsx", "utf8");
   const settingsProfilePage = readFileSync(
     "src/app/dashboard/settings/profile/page.tsx",
@@ -231,8 +231,9 @@ test("Personal Hub preserves goals and plans as shared BeastOS data", () => {
   );
   const navigation = readFileSync("src/lib/moduleNavigation.ts", "utf8");
 
-  assert.match(settingsProfilePage, /Shared Goals and Plans/);
-  assert.match(settingsProfilePage, /Goals are outcomes\. Plans are paths\./);
+  assert.match(settingsProfilePage, /Save Personal Hub/);
+  assert.doesNotMatch(settingsProfilePage, /Shared Goals and Plans/);
+  assert.doesNotMatch(settingsProfilePage, /Goals are outcomes\. Plans are paths\./);
   assert.match(legacyProfilePage, /personalInformationCanonicalRoute/);
   assert.match(navigation, /label: "Personal Hub"/);
 });

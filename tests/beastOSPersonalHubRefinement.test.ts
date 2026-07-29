@@ -29,6 +29,7 @@ test("BO-311 gives BeastOS one complete Personal Hub information architecture", 
       "AI Preferences",
       "Communication Preferences",
       "Future Memory Settings",
+      "Theme & Display",
     ]
   );
   assert.equal(
@@ -66,10 +67,11 @@ test("BO-311 has one canonical editable shared profile and a compatibility redir
   assert.match(personalInformation, /\.from\("profiles"\)/);
   assert.match(personalInformation, /\.update\(\{/);
   assert.match(personalInformation, /Personal Information/);
-  assert.match(personalInformation, /personalHubOwnershipRules/);
+  assert.match(personalInformation, /id="household-context"/);
   assert.match(legacyProfile, /redirect\(personalInformationCanonicalRoute\)/);
   assert.doesNotMatch(legacyProfile, /\.from\("profiles"\)/);
-  assert.match(settings, /personalHubSections\.map/);
+  assert.match(settings, /availableSections\.map/);
+  assert.match(settings, /plannedSections\.map/);
 });
 
 test("BO-311 modules reference BeastOS identity without owning shared profile writes", () => {
