@@ -98,7 +98,7 @@ test("organization chart profile cards and About Me pages expose the identity pa
     "utf8"
   );
   assert.match(chart, /Organization chart/);
-  assert.match(chart, /Portrait asset framework/);
+  assert.doesNotMatch(chart, /Portrait asset framework/);
   assert.match(card, /Portrait fallback/);
   assert.match(card, /Reports to/);
   assert.match(card, /Collaborates with/);

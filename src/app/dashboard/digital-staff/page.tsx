@@ -67,16 +67,6 @@ export default function DigitalStaffPage() {
           </ol>
         </section>
 
-        <aside className="rounded-2xl border border-white/10 bg-[#111827] p-5">
-          <h2 className="text-lg font-black text-white">
-            Portrait asset framework
-          </h2>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-300">
-            Initials are intentional portrait placeholders. Each identity has
-            separate portrait and avatar URL fields ready for a future reviewed
-            upload or generated asset; this release includes no portrait image.
-          </p>
-        </aside>
       </div>
     </main>
   );
