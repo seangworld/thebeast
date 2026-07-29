@@ -160,6 +160,69 @@ test("BM-310 honestly handles a quiet review period", () => {
   assert.match(briefing.summary, /did not find a material financial change/i);
 });
 
+test("Money Coach first review establishes an honest baseline without retrospective changes", () => {
+  const briefing = buildMorningFinancialBriefing({
+    ownerId: "owner-1",
+    asOf,
+    since: asOf,
+    firstReview: true,
+    observations: [observation],
+    benchmarks: [benchmark],
+    recentPayments: [
+      {
+        id: "payment-1",
+        name: "HELOC",
+        amount: 1500,
+        date: "2026-07-23T08:00:00.000Z",
+        kind: "debt",
+      },
+    ],
+    upcomingBills: [
+      {
+        id: "bill-1",
+        name: "Electric",
+        amount: 125,
+        dueDate: "2026-07-25",
+      },
+    ],
+    currentGoals: [
+      {
+        id: "goal-1",
+        title: "Starter reserve",
+        status: "Completed",
+        updatedAt: "2026-07-23T08:00:00.000Z",
+      },
+    ],
+    recommendedFocus: {
+      title: "Review the current plan",
+      detail: "Start with verified current records.",
+      href: "/dashboard/money",
+    },
+  });
+
+  assert.equal(briefing.firstReview, true);
+  assert.match(briefing.summary, /first financial review/i);
+  assert.equal(
+    briefing.items.some(
+      (item) =>
+        item.id.startsWith("payment:") ||
+        item.id.startsWith("observation:") ||
+        item.id.startsWith("benchmark:")
+    ),
+    false
+  );
+  assert.ok(
+    briefing.items.some((item) => item.id === "current-data:upcoming-bills")
+  );
+  assert.deepEqual(briefing.completedMilestones, [
+    {
+      id: "goal-1",
+      title: "Starter reserve",
+      completedAt: "2026-07-23T08:00:00.000Z",
+    },
+  ]);
+});
+
 test("BP-230 keeps the Daily Briefing on Dashboard and its context in conversation starters", () => {
   const coach = readFileSync(
     "src/app/dashboard/money/components/MoneyCoachExperience.tsx",

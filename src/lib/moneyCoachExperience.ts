@@ -608,9 +608,8 @@ export function buildMoneyCoachExperience(
   const morningBriefing = buildMorningFinancialBriefing({
     ownerId: input.ownerId,
     asOf: input.asOfDate.toISOString(),
-    since:
-      input.lastVisitedAt ||
-      new Date(input.asOfDate.getTime() - 24 * 60 * 60 * 1000).toISOString(),
+    since: input.lastVisitedAt || input.asOfDate.toISOString(),
+    firstReview: !input.lastVisitedAt,
     observations,
     benchmarks,
     journalEntries: input.professionalJournalEntries,
@@ -781,6 +780,7 @@ export type MoneyCoachConversationContext = {
   priorSummaries?: readonly string[];
   memories?: readonly { key: string; value: unknown }[];
   executionHistory?: ProfessionalExecutionHistory;
+  lastReviewAt?: string;
   activeTopics?: readonly MoneyCoachTopic[];
 };
 
@@ -1262,23 +1262,186 @@ export function answerMoneyCoachQuestion(
   }
 
   if (intent === "changes") {
-    const changeObservations = model.observations.filter((observation) =>
-      ["Change", "Trend", "Improvement", "Regression", "Milestone"].includes(observation.type)
+    const lastReviewAt =
+      conversation.lastReviewAt ||
+      (model.morningBriefing.firstReview
+        ? undefined
+        : model.morningBriefing.since);
+    const changeObservations = model.observations.filter(
+      (observation) =>
+        ["Change", "Trend", "Improvement", "Regression", "Milestone"].includes(
+          observation.type
+        ) &&
+        (!lastReviewAt ||
+          Date.parse(observation.time.observedAt) >= Date.parse(lastReviewAt))
     );
-    if (changeObservations.length) {
+    if (!lastReviewAt) {
+      const priorConversation =
+        conversation.priorSummaries?.[0] || conversation.summary;
+      if (changeObservations.length) {
+        const observations = changeObservations.slice(0, 5);
+        return structuredAnswer({
+          intent,
+          opening:
+            "I do not have an earlier versioned financial snapshot for a visit-to-visit comparison yet, but I do have saved observations from your current BeastMoney history.",
+          sections: observations.map((observation) => ({
+            heading: observation.presentation.title,
+            paragraphs: [
+              observation.presentation.whatChanged ||
+                observation.presentation.detail,
+              `Why I noticed: ${observation.presentation.whyNoticed}`,
+              ...(observation.presentation.whyItMayMatter
+                ? [`Why it may matter: ${observation.presentation.whyItMayMatter}`]
+                : []),
+              ...(observation.confidenceAnalysis?.reasons[0]
+                ? [observation.confidenceAnalysis.reasons[0]]
+                : []),
+            ],
+          })),
+          assumptions: Array.from(
+            new Set(
+              observations.flatMap(
+                (observation) => observation.provenance.limitations
+              )
+            )
+          ),
+          followUp:
+            "Would you like me to explain the evidence behind the highest-priority observation?",
+          href: "/dashboard/money/dashboard#important-alerts",
+          action: "Review important alerts",
+        });
+      }
+      return structuredAnswer({
+        intent,
+        opening:
+          "This is our first recorded financial review, so I do not have an earlier versioned financial snapshot to compare against yet.",
+        sections: [
+          {
+            heading: "Current position",
+            bullets: [
+              `Cash: ${formatCurrency(context.currentCash)}`,
+              `Debt: ${formatCurrency(
+                context.debts.reduce((sum, item) => sum + item.balance, 0)
+              )}`,
+              `Monthly cash flow: ${formatCurrency(context.projectedSurplus)}`,
+            ],
+          },
+          ...(model.morningBriefing.items.length
+            ? [
+                {
+                  heading: "Upcoming items already in BeastMoney",
+                  bullets: model.morningBriefing.items.map(
+                    (item) => `${item.title}: ${item.detail}`
+                  ),
+                },
+              ]
+            : []),
+          ...(priorConversation
+            ? [
+                {
+                  heading: "Prior conversation context",
+                  paragraphs: [
+                    `The prior discussion was summarized as: ${priorConversation}. That summary is context, not authoritative financial data.`,
+                  ],
+                },
+              ]
+            : []),
+        ],
+        followUp:
+          "After this review, I’ll use later verified activity to explain what changed without asking you to repeat it.",
+        ...dashboard,
+      });
+    }
+    const recentRecommendationDecisions = [
+      ...(conversation.executionHistory?.recommendations || []),
+    ]
+      .filter(
+        (recommendation) =>
+          ["accepted", "declined", "completed"].includes(
+            recommendation.status
+          ) &&
+          Date.parse(recommendation.updatedAt) >= Date.parse(lastReviewAt)
+      )
+      .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
+      .slice(0, 3);
+    const recentOutcomes = [
+      ...(conversation.executionHistory?.outcomes || []),
+    ]
+      .filter(
+        (outcome) =>
+          Date.parse(outcome.recordedAt) >= Date.parse(lastReviewAt)
+      )
+      .sort((left, right) => right.recordedAt.localeCompare(left.recordedAt))
+      .slice(0, 3);
+    const briefingChanges = model.morningBriefing.items.filter(
+      (item) =>
+        item.id !== "current-data:upcoming-bills" &&
+        !item.id.startsWith("goal:")
+    );
+    if (
+      changeObservations.length ||
+      briefingChanges.length ||
+      recentRecommendationDecisions.length ||
+      recentOutcomes.length
+    ) {
       const observations = changeObservations.slice(0, 5);
       return structuredAnswer({
         intent,
-        opening: observations[0].presentation.summary,
-        sections: observations.map((observation) => ({
-          heading: observation.presentation.title,
-          paragraphs: [
-            observation.presentation.whatChanged || observation.presentation.detail,
-            `Why I noticed: ${observation.presentation.whyNoticed}`,
-            ...(observation.presentation.whyItMayMatter ? [`Why it may matter: ${observation.presentation.whyItMayMatter}`] : []),
-            ...(observation.confidenceAnalysis?.reasons[0] ? [observation.confidenceAnalysis.reasons[0]] : []),
-          ],
-        })),
+        opening:
+          observations[0]?.presentation.summary ||
+          briefingChanges[0]?.detail ||
+          "I found verified activity since our last review.",
+        sections: [
+          ...observations.map((observation) => ({
+            heading: observation.presentation.title,
+            paragraphs: [
+              observation.presentation.whatChanged ||
+                observation.presentation.detail,
+              `Why I noticed: ${observation.presentation.whyNoticed}`,
+              ...(observation.presentation.whyItMayMatter
+                ? [`Why it may matter: ${observation.presentation.whyItMayMatter}`]
+                : []),
+              ...(observation.confidenceAnalysis?.reasons[0]
+                ? [observation.confidenceAnalysis.reasons[0]]
+                : []),
+            ],
+          })),
+          ...(briefingChanges.length
+            ? [
+                {
+                  heading: "Recorded financial activity",
+                  bullets: briefingChanges.map(
+                    (item) => `${item.title}: ${item.detail}`
+                  ),
+                },
+              ]
+            : []),
+          ...(recentRecommendationDecisions.length
+            ? [
+                {
+                  heading: "Recommendation decisions",
+                  bullets: recentRecommendationDecisions.map(
+                    (recommendation) =>
+                      `${recommendation.status}: ${recommendation.title}`
+                  ),
+                },
+              ]
+            : []),
+          ...(recentOutcomes.length
+            ? [
+                {
+                  heading: "Completed outcomes",
+                  bullets: recentOutcomes.map(
+                    (outcome) =>
+                      `${outcome.outcomeStatus}: ${
+                        outcome.memberLearning.join(" ") ||
+                        "No member-reported learning was recorded."
+                      }`
+                  ),
+                },
+              ]
+            : []),
+        ],
         assumptions: Array.from(new Set(observations.flatMap((observation) => observation.provenance.limitations))),
         followUp: "Would you like me to explain the evidence behind the highest-priority observation?",
         href: "/dashboard/money/dashboard#important-alerts",
@@ -1286,7 +1449,7 @@ export function answerMoneyCoachQuestion(
       });
     }
     const prior = conversation.priorSummaries?.[0] || conversation.summary;
-    return structuredAnswer({ intent, opening: "I can describe the current position, but I don’t have a versioned financial snapshot that proves which account values changed since your last visit.", sections: [{ heading: "Current position", bullets: [`Cash: ${formatCurrency(context.currentCash)}`, `Debt: ${formatCurrency(context.debts.reduce((sum, item) => sum + item.balance, 0))}`, `Monthly cash flow: ${formatCurrency(context.projectedSurplus)}`] }, ...(prior ? [{ heading: "Prior conversation context", paragraphs: [`The prior discussion was summarized as: ${prior}. That summary is context, not authoritative financial data.`] }] : [])], followUp: "Would you like to review the observations supported by your current records?", href: "/dashboard/money/dashboard#important-alerts", action: "Review important alerts" });
+    return structuredAnswer({ intent, opening: "I did not find a verified financial change, recommendation decision, or completed outcome since your last recorded review.", sections: [{ heading: "Current position", bullets: [`Cash: ${formatCurrency(context.currentCash)}`, `Debt: ${formatCurrency(context.debts.reduce((sum, item) => sum + item.balance, 0))}`, `Monthly cash flow: ${formatCurrency(context.projectedSurplus)}`] }, ...(prior ? [{ heading: "Prior conversation context", paragraphs: [`The prior discussion was summarized as: ${prior}. That summary is context, not authoritative financial data.`] }] : [])], followUp: "Would you like to review the current observations supported by your records?", href: "/dashboard/money/dashboard#important-alerts", action: "Review important alerts" });
   }
 
   if (intent === "benchmarks") {

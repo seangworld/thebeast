@@ -252,8 +252,10 @@ export function buildFinancialMissionControl(input: BuildFinancialMissionControl
         ownerId: input.ownerId,
         generatedAt: input.asOf,
         since: input.asOf,
+        firstReview: true,
         summary: "Current dashboard records are ready for review.",
         items: [],
+        completedMilestones: [],
         recommendedFocus: {
           title: input.recommendedFocus.title,
           detail: input.recommendedFocus.action,

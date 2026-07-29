@@ -25,8 +25,14 @@ export type MorningFinancialBriefing = {
   ownerId: string;
   generatedAt: string;
   since: string;
+  firstReview: boolean;
   summary: string;
   items: readonly MorningFinancialBriefingItem[];
+  completedMilestones: readonly {
+    id: string;
+    title: string;
+    completedAt?: string;
+  }[];
   recommendedFocus: {
     title: string;
     detail: string;
@@ -52,6 +58,7 @@ export type BuildMorningFinancialBriefingInput = {
   ownerId: string;
   asOf: string;
   since: string;
+  firstReview?: boolean;
   observations: readonly Observation[];
   benchmarks: readonly BenchmarkResult[];
   journalEntries?: readonly ProfessionalJournalReasoningItem[];
@@ -108,7 +115,7 @@ function conversationalPrompt(title: string, detail: string) {
 export function buildMorningFinancialBriefing(
   input: BuildMorningFinancialBriefingInput
 ): MorningFinancialBriefing {
-  const observationItems = input.observations
+  const observationItems = (input.firstReview ? [] : input.observations)
     .filter((observation) =>
       after(observation.time.observedAt, input.since, input.asOf)
     )
@@ -128,7 +135,7 @@ export function buildMorningFinancialBriefing(
         priority: observation.assessment.priorityScore,
       })
     );
-  const paymentItems = (input.recentPayments || [])
+  const paymentItems = (input.firstReview ? [] : input.recentPayments || [])
     .filter((payment) => after(payment.date, input.since, input.asOf))
     .map(
       (payment): MorningFinancialBriefingItem => ({
@@ -149,7 +156,7 @@ export function buildMorningFinancialBriefing(
       .filter((entry) => after(entry.timestamp, input.since, input.asOf))
       .flatMap((entry) => entry.relatedResources.map((resource) => resource.toLowerCase()))
   );
-  const benchmarkItems = input.benchmarks
+  const benchmarkItems = (input.firstReview ? [] : input.benchmarks)
     .filter((benchmark) => after(benchmark.evaluatedAt, input.since, input.asOf))
     .slice(0, 2)
     .map(
@@ -200,6 +207,23 @@ export function buildMorningFinancialBriefing(
         priority: 66,
       }]
     : [];
+  const completedMilestones = (input.currentGoals || [])
+    .filter((goal) => goal.status === "Completed")
+    .filter(
+      (goal) =>
+        input.firstReview ||
+        !goal.updatedAt ||
+        after(goal.updatedAt, input.since, input.asOf)
+    )
+    .sort((left, right) =>
+      (right.updatedAt || "").localeCompare(left.updatedAt || "")
+    )
+    .slice(0, 3)
+    .map((goal) => ({
+      id: goal.id,
+      title: goal.title,
+      completedAt: goal.updatedAt,
+    }));
 
   const candidates = [
     ...paymentItems,
@@ -249,10 +273,16 @@ export function buildMorningFinancialBriefing(
     ownerId: input.ownerId,
     generatedAt: input.asOf,
     since: input.since,
-    summary: items.length
-      ? `I found ${items.length} meaningful update${items.length === 1 ? "" : "s"} since your last review.`
-      : "I did not find a material financial change since your last review.",
+    firstReview: Boolean(input.firstReview),
+    summary: input.firstReview
+      ? items.length
+        ? `This is your first financial review. I found ${items.length} upcoming item${items.length === 1 ? "" : "s"} worth planning for.`
+        : "This is your first financial review. I have not established a prior review baseline yet."
+      : items.length
+        ? `I found ${items.length} meaningful update${items.length === 1 ? "" : "s"} since your last review.`
+        : "I did not find a material financial change since your last review.",
     items,
+    completedMilestones,
     recommendedFocus: {
       ...input.recommendedFocus,
       conversationPrompt:

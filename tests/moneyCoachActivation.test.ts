@@ -7,18 +7,23 @@ import {
   buildMoneyCoachExperience,
   buildMoneyCoachGreeting,
 } from "../src/lib/moneyCoachExperience";
-import { buildMoneyCoachSessionBriefing } from "../src/lib/moneyCoachOnline";
+import {
+  buildMoneyCoachSessionBriefing,
+  describeTimeSince,
+} from "../src/lib/moneyCoachOnline";
 import type {
   AgentConversationThread,
   ProfessionalExecutionHistory,
 } from "../src/lib/platform/agents";
 
-function experience() {
+function experience(
+  lastVisitedAt: string | null = "2026-07-28T16:00:00.000Z"
+) {
   return buildMoneyCoachExperience({
     ownerId: "owner-1",
     userName: "Sean Gatewood",
     asOfDate: new Date("2026-07-29T16:00:00.000Z"),
-    lastVisitedAt: "2026-07-28T16:00:00.000Z",
+    lastVisitedAt: lastVisitedAt || undefined,
     activeBillCount: 2,
     billsDueSoonCount: 1,
     monthlyBills: 1200,
@@ -56,6 +61,21 @@ function experience() {
         name: "Electric",
         amount: 125,
         dueDate: "2026-07-31",
+      },
+    ],
+    upcomingIncome: [
+      {
+        name: "Paycheck",
+        amount: 2500,
+        date: "Aug 1",
+      },
+    ],
+    currentGoals: [
+      {
+        id: "goal-1",
+        title: "Build starter reserve",
+        status: "Completed",
+        updatedAt: "2026-07-29T10:00:00.000Z",
       },
     ],
   });
@@ -141,11 +161,35 @@ test("BP-231 session briefing uses verified changes and existing continuity", ()
     model: experience(),
     history,
     conversations: [priorConversation],
+    now: new Date("2026-07-29T18:00:00.000Z"),
   });
 
+  assert.equal(briefing.visit.firstVisit, false);
+  assert.equal(briefing.visit.lastReviewAt, "2026-07-28T16:00:00.000Z");
+  assert.equal(briefing.visit.timeSinceLastReview, "Yesterday");
   assert.match(briefing.summary, /reviewed your financial picture/i);
   assert.ok(briefing.changes.some((item) => /Home Depot payment posted/.test(item.title)));
-  assert.ok(briefing.changes.some((item) => /bill.*due soon/i.test(item.title)));
+  assert.equal(briefing.changes.some((item) => /bill.*due soon/i.test(item.title)), false);
+  assert.ok(
+    briefing.upcomingEvents.some(
+      (item) => item.title === "Electric" && /125/.test(item.detail)
+    )
+  );
+  assert.ok(
+    briefing.upcomingEvents.some(
+      (item) => item.title === "Paycheck" && /2,500/.test(item.detail)
+    )
+  );
+  assert.ok(
+    briefing.completedMilestones.some(
+      (item) => item.title === "Build starter reserve"
+    )
+  );
+  assert.deepEqual(
+    briefing.historicalRecommendations.map((item) => item.status),
+    ["accepted"]
+  );
+  assert.match(briefing.completedOutcomes[0]?.detail || "", /reserve remained intact/i);
   assert.ok(
     briefing.continuity.some((item) =>
       /Last time we discussed whether a truck fits the current payoff plan/.test(item)
@@ -161,6 +205,38 @@ test("BP-231 session briefing uses verified changes and existing continuity", ()
   assert.ok(briefing.sources.includes("Recommendation history"));
   assert.ok(briefing.sources.includes("Completed outcome history"));
   assert.ok(briefing.sources.includes("Recommendation confidence history"));
+});
+
+test("time awareness distinguishes a real first visit from a prior review", () => {
+  const firstVisit = buildMoneyCoachSessionBriefing({
+    model: experience(null),
+    now: new Date("2026-07-29T18:00:00.000Z"),
+  });
+
+  assert.equal(firstVisit.visit.firstVisit, true);
+  assert.equal(firstVisit.visit.lastReviewAt, undefined);
+  assert.equal(
+    firstVisit.visit.timeSinceLastReview,
+    "No previous review is recorded."
+  );
+  assert.match(firstVisit.summary, /first financial review/i);
+  assert.deepEqual(firstVisit.changes, []);
+  assert.ok(firstVisit.upcomingEvents.some((item) => item.title === "Electric"));
+  assert.equal(
+    experience(null).morningBriefing.items.some((item) =>
+      item.id.startsWith("payment:")
+    ),
+    false,
+    "first visit must not present existing payments as changes since a fabricated review"
+  );
+
+  assert.equal(
+    describeTimeSince(
+      "2026-07-28T18:00:00.000Z",
+      new Date("2026-07-29T18:00:00.000Z")
+    ),
+    "Yesterday"
+  );
 });
 
 test("BP-231 references only persisted recommendation and outcome history", () => {
@@ -184,6 +260,22 @@ test("BP-231 references only persisted recommendation and outcome history", () =
   assert.doesNotMatch(noHistory.text, /Protect the reserve/);
 });
 
+test("Money Coach answers change questions from activity already recorded in Beast", () => {
+  const answer = answerMoneyCoachQuestion(
+    "What changed since my last review?",
+    experience(),
+    {
+      executionHistory: history,
+      lastReviewAt: "2026-07-28T16:00:00.000Z",
+    }
+  );
+
+  assert.match(answer.text, /Home Depot payment posted/i);
+  assert.match(answer.text, /accepted: Protect the reserve/i);
+  assert.match(answer.text, /successful: The reserve remained intact/i);
+  assert.doesNotMatch(answer.text, /tell me what happened/i);
+});
+
 test("BP-231 exposes continuous conversation, optional starters, and explicit lifecycle effects", () => {
   const coach = readFileSync(
     "src/app/dashboard/money/components/MoneyCoachExperience.tsx",
@@ -196,6 +288,10 @@ test("BP-231 exposes continuous conversation, optional starters, and explicit li
 
   assert.match(coach, /data-money-coach-session-briefing="true"/);
   assert.match(coach, /Since your last review/);
+  assert.match(coach, /First financial review/);
+  assert.match(coach, /Coming up/);
+  assert.match(coach, /Completed milestones/);
+  assert.match(coach, /Previous recommendations and outcomes/);
   assert.match(coach, /What I remember/);
   assert.match(coach, /AgentConversationInput/);
   assert.match(coach, /Try a conversation starter/);
@@ -208,4 +304,14 @@ test("BP-231 exposes continuous conversation, optional starters, and explicit li
   assert.match(coach, /No money moves, financial record changes/);
   assert.match(coach, /completed, member-reported outcomes as approved/);
   assert.doesNotMatch(coach, /automatic transfer|autonomous execution/i);
+
+  const workspace = readFileSync(
+    "src/app/dashboard/money/components/MoneyWorkspacePage.tsx",
+    "utf8"
+  );
+  assert.match(workspace, /existingSessionVisit === "first-visit"/);
+  assert.doesNotMatch(
+    workspace,
+    /new Date\(new Date\(\)\.getTime\(\) - 24 \* 60 \* 60 \* 1000\)/
+  );
 });

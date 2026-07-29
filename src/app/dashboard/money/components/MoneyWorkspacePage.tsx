@@ -306,17 +306,22 @@ export function MoneyWorkspacePage({
     const visitKey = `beastmoney:last-visit:${ownerId}`;
     const sessionKey = `beastmoney:session-prior-visit:${ownerId}`;
     const existingSessionVisit = window.sessionStorage.getItem(sessionKey);
-    if (existingSessionVisit) {
-      setLastVisitedAt(existingSessionVisit);
+    if (existingSessionVisit !== null) {
+      setLastVisitedAt(
+        existingSessionVisit === "first-visit"
+          ? undefined
+          : existingSessionVisit
+      );
       return;
     }
     const now = new Date().toISOString();
-    const previousVisit =
-      window.localStorage.getItem(visitKey) ||
-      new Date(new Date().getTime() - 24 * 60 * 60 * 1000).toISOString();
-    window.sessionStorage.setItem(sessionKey, previousVisit);
+    const previousVisit = window.localStorage.getItem(visitKey);
+    window.sessionStorage.setItem(
+      sessionKey,
+      previousVisit || "first-visit"
+    );
     window.localStorage.setItem(visitKey, now);
-    setLastVisitedAt(previousVisit);
+    setLastVisitedAt(previousVisit || undefined);
   }, [ownerId]);
 
   const loadMoneySnapshot = useCallback(async () => {

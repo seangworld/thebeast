@@ -92,6 +92,11 @@ function MoneyCoachSessionOpening({
   return (
     <div data-money-coach-session-briefing="true">
       <p>{briefing.summary}</p>
+      <p className="mt-2 text-xs font-bold text-slate-400">
+        {briefing.visit.firstVisit
+          ? "First financial review"
+          : `Last review: ${briefing.visit.timeSinceLastReview}`}
+      </p>
       {briefing.changes.length ? (
         <div className="mt-4">
           <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-400">
@@ -102,6 +107,36 @@ function MoneyCoachSessionOpening({
               <li key={change.id}>
                 <span className="font-bold text-white">{change.title}:</span>{" "}
                 {change.detail}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      {briefing.upcomingEvents.length ? (
+        <div className="mt-4">
+          <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-400">
+            Coming up
+          </p>
+          <ul className="mt-2 space-y-2">
+            {briefing.upcomingEvents.map((event) => (
+              <li key={event.id}>
+                <span className="font-bold text-white">{event.title}:</span>{" "}
+                {event.detail}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      {briefing.completedMilestones.length ? (
+        <div className="mt-4">
+          <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-400">
+            Completed milestones
+          </p>
+          <ul className="mt-2 space-y-2">
+            {briefing.completedMilestones.map((milestone) => (
+              <li key={milestone.id}>
+                <span className="font-bold text-white">{milestone.title}:</span>{" "}
+                {milestone.detail}
               </li>
             ))}
           </ul>
@@ -118,6 +153,30 @@ function MoneyCoachSessionOpening({
             ))}
           </ul>
         </div>
+      ) : null}
+      {briefing.historicalRecommendations.length ||
+      briefing.completedOutcomes.length ? (
+        <details className="mt-4 rounded-xl border border-white/10 bg-white/[0.025] p-3">
+          <summary className="cursor-pointer text-xs font-black uppercase tracking-[0.12em] text-slate-400">
+            Previous recommendations and outcomes
+          </summary>
+          <ul className="mt-3 space-y-2">
+            {briefing.historicalRecommendations.map((recommendation) => (
+              <li key={recommendation.id}>
+                <span className="font-bold text-white">
+                  {recommendation.title}:
+                </span>{" "}
+                {recommendation.status}
+              </li>
+            ))}
+            {briefing.completedOutcomes.map((outcome) => (
+              <li key={outcome.id}>
+                <span className="font-bold text-white">{outcome.title}:</span>{" "}
+                {outcome.detail}
+              </li>
+            ))}
+          </ul>
+        </details>
       ) : null}
       <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.035] p-3">
         <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-400">
@@ -297,8 +356,9 @@ export function MoneyCoachExperience({
         history: executionHistory,
         conversations: threads,
         activeConversationId: activeThreadId,
+        now: localNow || new Date(model.morningBriefing.generatedAt),
       }),
-    [activeThreadId, executionHistory, model, threads]
+    [activeThreadId, executionHistory, localNow, model, threads]
   );
 
   async function refreshThreads(search = historySearch) {
@@ -335,6 +395,7 @@ export function MoneyCoachExperience({
       priorSummaries: threads.filter((thread) => thread.id !== targetThreadId).slice(0, 3).map((thread) => thread.summary?.overview).filter((summary): summary is string => Boolean(summary)),
       memories: memories.map((memory) => ({ key: memory.key, value: memory.value })),
       executionHistory,
+      lastReviewAt: sessionBriefing.visit.lastReviewAt,
     });
     const timestamp = Date.now();
     const turn = { id: `money-${timestamp}`, question: value, response };
