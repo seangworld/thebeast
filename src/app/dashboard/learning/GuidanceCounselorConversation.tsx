@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   AgentAvatar,
-  AgentContextSummary,
   AgentConversationInput,
   AgentEmptyState,
   AgentExperience,
@@ -16,7 +15,10 @@ import {
   ProfessionalConversationComposer,
   ProfessionalConversationTimeline,
   ProfessionalConversationWorkspace,
+  ProfessionalKnowledgeWorkspace,
   type AgentConversationMessage,
+  type ProfessionalKnowledgeItem,
+  type ProfessionalKnowledgeModel,
 } from "@/app/components/agents";
 import {
   buildGuidanceCounselorConversationTurn,
@@ -102,6 +104,10 @@ export default function GuidanceCounselorConversation({
   const [historyLoading, setHistoryLoading] = useState(true);
   const [historyError, setHistoryError] = useState("");
   const [streamingTurnId, setStreamingTurnId] = useState("");
+  const [knowledgePrompt, setKnowledgePrompt] = useState<{
+    id: string;
+    text: string;
+  } | null>(null);
   const [discoveryProfile, setDiscoveryProfile] =
     useState<GuidanceDiscoveryProfile>(initialProfile);
   const [profileSaveStatus, setProfileSaveStatus] = useState<
@@ -235,6 +241,7 @@ export default function GuidanceCounselorConversation({
   async function sendMessage(question: string) {
     const cleanQuestion = question.trim();
     if (!cleanQuestion) return;
+    setKnowledgePrompt(null);
     const turnId = `guidance-${Date.now()}`;
     const learnedProfile = learnFromDiscoveryTurn(
       cleanQuestion,
@@ -334,6 +341,7 @@ export default function GuidanceCounselorConversation({
 
   async function startConversation() {
     conversationScrollPositionsRef.current.delete("new-conversation");
+    setKnowledgePrompt(null);
     if (!repository) {
       setActiveThreadId("");
       setConversationTitle("New conversation");
@@ -400,6 +408,16 @@ export default function GuidanceCounselorConversation({
         author: "Guidance Counselor",
         content: `Hi${memberName ? ` ${memberName}` : ""}. I’m your Guidance Counselor. How can I help you today?`,
       },
+      ...(knowledgePrompt
+        ? [
+            {
+              id: knowledgePrompt.id,
+              role: "agent" as const,
+              author: "Guidance Counselor",
+              content: knowledgePrompt.text,
+            },
+          ]
+        : []),
       ...turns.flatMap<AgentConversationMessage>((turn) => [
         {
           id: `${turn.id}-user`,
@@ -423,21 +441,90 @@ export default function GuidanceCounselorConversation({
         },
       ]),
     ],
-    [memberName, streamingTurnId, turns]
+    [knowledgePrompt, memberName, streamingTurnId, turns]
   );
 
   const understanding = buildGuidanceCounselorUnderstanding(discoveryProfile);
-  const understandingItems = (items: readonly GuidanceUnderstandingItem[]) =>
-    items.map((item) => (
-      <span key={item.area}>
-        <strong className="text-white">{item.label}</strong>
-        {" · "}
-        <span className="capitalize text-cyan-200">
-          {item.confidence} confidence
-        </span>
-        {item.value ? ` · ${item.value}` : ""}
-      </span>
-    ));
+  const guidanceKnowledgeHref = (item: GuidanceUnderstandingItem) => {
+    if (item.area === "career-goals") {
+      return "/dashboard/education/career-planning";
+    }
+    if (item.area === "educational-goals") {
+      return "/dashboard/education/educational-roadmap";
+    }
+    if (item.area === "prior-experience") {
+      return "/dashboard/education/certifications";
+    }
+    if (item.area === "college-interest") {
+      return "/dashboard/education/schools";
+    }
+    if (item.area === "trade-interest") {
+      return "/dashboard/education/career-planning";
+    }
+    return "/dashboard/education/guidance-counselor";
+  };
+  const guidanceKnowledgeItem = (
+    item: GuidanceUnderstandingItem
+  ): ProfessionalKnowledgeItem => ({
+    id: `guidance-${item.area}`,
+    label: item.label,
+    summary:
+      item.value ||
+      item.question ||
+      "The Guidance Counselor needs more context before using this area.",
+    confidence: item.confidence,
+    why:
+      item.state === "thought"
+        ? `This is a working idea based on ${item.evidence.join(", ")}.`
+        : undefined,
+    evidence: item.evidence,
+    action:
+      item.state === "needed"
+        ? {
+            label: "Talk about this",
+            mode: "conversation",
+            prompt:
+              item.question ||
+              `Tell me what you would like me to understand about ${item.label.toLowerCase()}.`,
+          }
+        : {
+            label:
+              item.state === "thought"
+                ? "Review supporting plan"
+                : "Review or update",
+            mode: item.state === "thought" ? "detail" : "edit",
+            href: guidanceKnowledgeHref(item),
+          },
+  });
+  const guidanceKnowledgeModel: ProfessionalKnowledgeModel = {
+    professionalId,
+    professionalName: "Guidance Counselor",
+    known: understanding.whatIKnow.map(guidanceKnowledgeItem),
+    thinking: understanding.whatIThink.map(guidanceKnowledgeItem),
+    needed: understanding.whatIStillNeed
+      .slice()
+      .sort((left, right) => left.priority - right.priority)
+      .slice(0, 4)
+      .map(guidanceKnowledgeItem),
+    emptyStates: {
+      known:
+        "We’re just getting started. As we talk I’ll learn about your goals, interests, strengths, education, and preferred learning style.",
+      thinking:
+        "It’s too early to draw conclusions. I’ll build working ideas as I learn more about you through our conversations.",
+      needed:
+        "I have enough context for the current guidance. I’ll ask for more only when it would improve the plan.",
+    },
+  };
+
+  function beginKnowledgeConversation(item: ProfessionalKnowledgeItem) {
+    if (item.action.mode !== "conversation") return;
+    const prompt = item.action.prompt;
+    setKnowledgePrompt({
+      id: `guidance-knowledge-prompt-${Date.now()}`,
+      text: prompt,
+    });
+    window.requestAnimationFrame(focusComposer);
+  }
   const pinnedThreads = threads.filter(
     (thread) => thread.pinned && !thread.archived
   );
@@ -682,44 +769,11 @@ export default function GuidanceCounselorConversation({
           }
           contextSummary={
             <div className="grid gap-5">
-              <div
-                className="grid gap-3 lg:grid-cols-3"
-                data-guidance-understanding-model="true"
-              >
-                <AgentContextSummary
-                  title="What I Know"
-                  items={understandingItems(understanding.whatIKnow)}
-                  emptyState={
-                    <div className="mt-3 space-y-2 text-sm text-slate-400">
-                      <p>We’re just getting started.</p>
-                      <p>
-                        As we talk I’ll learn about your goals, interests,
-                        strengths, education, and preferred learning style.
-                      </p>
-                    </div>
-                  }
-                />
-                <AgentContextSummary
-                  title="What I Think"
-                  items={understandingItems(understanding.whatIThink)}
-                  emptyState={
-                    <div className="mt-3 space-y-2 text-sm text-slate-400">
-                      <p>It’s too early to draw conclusions.</p>
-                      <p>
-                        I’ll build working ideas as I learn more about you
-                        through our conversations.
-                      </p>
-                    </div>
-                  }
-                />
-                <AgentContextSummary
-                  title="What I Still Need"
-                  items={understandingItems(understanding.whatIStillNeed)}
-                  emptyState={
-                    <p className="mt-3 text-sm text-slate-400">
-                      I have enough context for the current plan.
-                    </p>
-                  }
+              <div data-guidance-understanding-model="true">
+                <ProfessionalKnowledgeWorkspace
+                  model={guidanceKnowledgeModel}
+                  onAction={beginKnowledgeConversation}
+                  className="rounded-2xl border border-white/10 bg-black/10 p-4"
                 />
               </div>
               {starterExperience}

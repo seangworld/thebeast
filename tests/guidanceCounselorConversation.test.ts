@@ -26,7 +26,7 @@ test("BE-202 provides history, input, context, and the required suggested questi
   assert.match(source, /ProfessionalConversationTimeline/);
   assert.match(source, /ProfessionalConversationWorkspace/);
   assert.match(source, /AgentConversationInput/);
-  assert.match(source, /AgentContextSummary/);
+  assert.match(source, /ProfessionalKnowledgeWorkspace/);
   assert.match(source, /Start a conversation/);
   assert.match(source, /guidanceCounselorSuggestedQuestions\.map/);
 });

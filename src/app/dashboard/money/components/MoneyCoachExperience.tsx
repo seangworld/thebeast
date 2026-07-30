@@ -18,7 +18,10 @@ import {
   ProfessionalConversationComposer,
   ProfessionalConversationTimeline,
   ProfessionalConversationWorkspace,
+  ProfessionalKnowledgeWorkspace,
   type AgentConversationMessage,
+  type ProfessionalKnowledgeItem,
+  type ProfessionalKnowledgeModel,
 } from "@/app/components/agents";
 import {
   ServerAgentConversationRepository,
@@ -54,6 +57,14 @@ type MoneyCoachExperienceProps = {
   error?: string;
   onRetry: () => void;
 };
+
+function formatMoney(value: number) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(value);
+}
 
 function persistenceErrorMessage(error: unknown) {
   const detail = typeof error === "object" && error && "message" in error
@@ -225,6 +236,12 @@ export function MoneyCoachExperience({
   const [memories, setMemories] = useState<AgentMemoryRecord[]>([]);
   const [historyError, setHistoryError] = useState("");
   const [streamingTurnId, setStreamingTurnId] = useState("");
+  const [knowledgePrompt, setKnowledgePrompt] = useState<{
+    id: string;
+    itemId: string;
+    label: string;
+    text: string;
+  } | null>(null);
   const [executionStore, setExecutionStore] = useState<SupabaseExecutionHistoryStore | null>(null);
   const [executionHistory, setExecutionHistory] = useState<ProfessionalExecutionHistory>();
   const [executionHistoryLoading, setExecutionHistoryLoading] = useState(false);
@@ -379,12 +396,28 @@ export function MoneyCoachExperience({
         author: model.professional.identity.role,
         content: <MoneyCoachSessionOpening briefing={sessionBriefing} />,
       },
+      ...(knowledgePrompt
+        ? [
+            {
+              id: knowledgePrompt.id,
+              role: "agent" as const,
+              author: model.professional.identity.role,
+              content: knowledgePrompt.text,
+            },
+          ]
+        : []),
       ...turns.flatMap<AgentConversationMessage>((turn) => [
         { id: `${turn.id}-user`, role: "user", author: "You", content: turn.question },
         { id: `${turn.id}-coach`, role: "agent", author: model.professional.identity.role, streaming: streamingTurnId === turn.id, content: <AgentStreamingResponseArea isStreaming={streamingTurnId === turn.id} label="Money Coach response"><MoneyCoachResponseDocument response={turn.response} /></AgentStreamingResponseArea> },
       ]),
     ],
-    [model.professional.identity.role, sessionBriefing, streamingTurnId, turns]
+    [
+      knowledgePrompt,
+      model.professional.identity.role,
+      sessionBriefing,
+      streamingTurnId,
+      turns,
+    ]
   );
 
   async function askQuestion(value: string, targetThreadId = activeThreadId, replaceConversation = false) {
@@ -429,6 +462,7 @@ export function MoneyCoachExperience({
     setActiveThreadId("");
     setConversationTitle("New conversation");
     setTurns([]);
+    setKnowledgePrompt(null);
     if (!repository) {
       return undefined;
     }
@@ -465,6 +499,7 @@ export function MoneyCoachExperience({
   async function sendMessage(question: string) {
     const cleanQuestion = question.trim();
     if (!cleanQuestion || streamingTurnId) return;
+    const pendingKnowledgePrompt = knowledgePrompt;
     setInput("");
     let targetThreadId = activeThreadId;
     if (!targetThreadId) {
@@ -472,6 +507,47 @@ export function MoneyCoachExperience({
       targetThreadId = thread?.id || "";
     }
     await askQuestion(cleanQuestion, targetThreadId);
+    if (pendingKnowledgePrompt && memoryStore && targetThreadId) {
+      const now = new Date().toISOString();
+      const memory: AgentMemoryRecord = {
+        id: `money-knowledge-memory-${Date.now()}`,
+        agentId: "beastmoney.money-coach",
+        ownerId,
+        scope: "user",
+        key: `professional-knowledge:${pendingKnowledgePrompt.itemId}`,
+        value: {
+          content: cleanQuestion,
+          label: pendingKnowledgePrompt.label,
+          memoryType: "member-confirmed-professional-knowledge",
+          confidence: "high",
+          sourceConversationId: targetThreadId,
+          timestamp: now,
+        },
+        purpose:
+          "Remember member-confirmed context gathered through the professional knowledge workspace.",
+        evidence: [
+          {
+            source: targetThreadId,
+            capturedAt: now,
+            description: pendingKnowledgePrompt.text,
+          },
+        ],
+        createdAt: now,
+        updatedAt: now,
+      };
+      try {
+        await memoryStore.put(memory);
+        setMemories((current) => [
+          ...current.filter((item) => item.key !== memory.key),
+          memory,
+        ]);
+      } catch {
+        setHistoryError(
+          "The conversation was saved, but this new planning context could not be added to durable Money Coach memory."
+        );
+      }
+    }
+    setKnowledgePrompt(null);
     window.requestAnimationFrame(focusComposer);
   }
 
@@ -532,6 +608,221 @@ export function MoneyCoachExperience({
   const pinnedThreads = threads.filter((thread) => thread.pinned && !thread.archived);
   const recentThreads = threads.filter((thread) => !thread.pinned && !thread.archived).slice(0, 10);
   const archivedThreads = threads.filter((thread) => thread.archived);
+  const moneyKnowledgeModel = useMemo<ProfessionalKnowledgeModel>(() => {
+    const context = model.financialContext;
+    const known: ProfessionalKnowledgeItem[] = [];
+    const needed: ProfessionalKnowledgeItem[] = [];
+    const learnedKnowledge = new Map(
+      memories
+        .filter((memory) => memory.key.startsWith("professional-knowledge:"))
+        .map((memory) => [
+          memory.key.replace("professional-knowledge:", ""),
+          memory,
+        ])
+    );
+
+    if (context.monthlyIncome > 0 || context.upcomingIncome.length) {
+      known.push({
+        id: "money-income",
+        label: "Income",
+        summary: `${formatMoney(context.monthlyIncome)} in tracked monthly income.`,
+        confidence: "high",
+        action: {
+          label: "Review income",
+          mode: "detail",
+          href: "/dashboard/money/income",
+        },
+      });
+    } else {
+      needed.push({
+        id: "money-income-needed",
+        label: "Income",
+        summary: "Current income information would improve cash-flow guidance.",
+        confidence: "unknown",
+        action: {
+          label: "Talk about income",
+          mode: "conversation",
+          prompt: "Tell me about the income you want me to consider in your financial planning.",
+        },
+      });
+    }
+
+    if (context.debts.length) {
+      known.push({
+        id: "money-debts",
+        label: "Debts",
+        summary: `${context.debts.length} active debt record${context.debts.length === 1 ? "" : "s"} totaling ${formatMoney(context.totalDebt)}.`,
+        confidence: "high",
+        action: {
+          label: "Review debts",
+          mode: "detail",
+          href: "/dashboard/money/debts",
+        },
+      });
+    } else {
+      needed.push({
+        id: "money-debts-needed",
+        label: "Debt status",
+        summary: "I still need to know whether you are debt-free or have debts that are not tracked yet.",
+        confidence: "unknown",
+        action: {
+          label: "Talk about debt",
+          mode: "conversation",
+          prompt: "Are you currently debt-free, or are there debts you would like us to add or discuss?",
+        },
+      });
+    }
+
+    if (context.totalObligationCount > 0) {
+      known.push({
+        id: "money-bills",
+        label: "Bills and obligations",
+        summary: `${context.totalObligationCount} recurring obligation${context.totalObligationCount === 1 ? "" : "s"} are included in the current plan.`,
+        confidence: "high",
+        action: {
+          label: "Review bills",
+          mode: "detail",
+          href: "/dashboard/money/bills",
+        },
+      });
+    } else {
+      needed.push({
+        id: "money-bills-needed",
+        label: "Recurring bills",
+        summary: "Recurring obligations would make cash-flow and timing guidance more complete.",
+        confidence: "unknown",
+        action: {
+          label: "Talk about bills",
+          mode: "conversation",
+          prompt: "Which recurring bills or obligations should I understand first?",
+        },
+      });
+    }
+
+    if (context.retirementDataAvailable) {
+      known.push({
+        id: "money-retirement",
+        label: "Retirement",
+        summary: "Retirement planning information is available for this review.",
+        confidence: "high",
+        action: {
+          label: "Review retirement",
+          mode: "detail",
+          href: "/dashboard/money/retirement",
+        },
+      });
+    } else {
+      needed.push({
+        id: "money-retirement-needed",
+        label: "Retirement direction",
+        summary: "A retirement goal and time horizon would improve long-term guidance.",
+        confidence: "unknown",
+        action: {
+          label: "Talk about retirement",
+          mode: "conversation",
+          prompt: "What would you like retirement to look like, and when do you hope to reach it?",
+        },
+      });
+    }
+
+    if (context.currentGoals.length) {
+      known.push({
+        id: "money-goals",
+        label: "Financial goals",
+        summary: `${context.currentGoals.length} current goal${context.currentGoals.length === 1 ? "" : "s"} can inform Money Coach guidance.`,
+        confidence: "high",
+        action: {
+          label: "Review goals",
+          mode: "detail",
+          href: "/dashboard/goals",
+        },
+      });
+    } else {
+      needed.push({
+        id: "money-goals-needed",
+        label: "Financial priorities",
+        summary: "A clear financial priority would help rank future recommendations.",
+        confidence: "unknown",
+        action: {
+          label: "Talk about priorities",
+          mode: "conversation",
+          prompt: "What financial change would make the biggest difference in your life right now?",
+        },
+      });
+    }
+
+    const thinking: ProfessionalKnowledgeItem[] = [];
+    if (context.financialHealth) {
+      const health = context.financialHealth;
+      thinking.push({
+        id: "money-health-score",
+        label: "Financial health",
+        summary: `The current evidence-based score is ${health.score}, in the ${health.band} range.`,
+        confidence: health.availableWeight >= 80 ? "high" : health.availableWeight >= 50 ? "medium" : "low",
+        why: health.formula,
+        evidence: health.components
+          .filter((component) => component.available)
+          .slice(0, 4)
+          .flatMap((component) => component.evidence.slice(0, 1)),
+        action: {
+          label: "Review score",
+          mode: "detail",
+          href: "/dashboard/money/financial-health",
+        },
+      });
+    }
+    thinking.push({
+      id: "money-current-priority",
+      label: model.primaryRecommendation.title,
+      summary: model.primaryRecommendation.action,
+      confidence: model.insights.length ? "medium" : "low",
+      why: model.primaryRecommendation.explainWhy,
+      evidence: model.insights.slice(0, 3).map((insight) => insight.summary),
+      action: {
+        label: "Review recommendation",
+        mode: "detail",
+        href: model.primaryRecommendation.href,
+      },
+    });
+
+    learnedKnowledge.forEach((memory, itemId) => {
+      const value =
+        typeof memory.value === "object" && memory.value
+          ? (memory.value as Record<string, unknown>)
+          : {};
+      const content = value.content;
+      const label = value.label;
+      known.push({
+        id: `money-known-${itemId}`,
+        label:
+          typeof label === "string" ? label : "Financial planning context",
+        summary:
+          typeof content === "string"
+            ? content
+            : "Conversation context is saved in Money Coach memory.",
+        confidence: "high",
+        action: {
+          label: "Review in conversation",
+          mode: "conversation",
+          prompt: `Let’s review what I previously shared about ${
+            typeof label === "string"
+              ? label.toLowerCase()
+              : "this financial context"
+          }.`,
+        },
+      });
+    });
+
+    return {
+      professionalId: moneyCoachProfessionalId,
+      professionalName: "Money Coach",
+      known,
+      thinking,
+      needed: needed
+        .filter((item) => !learnedKnowledge.has(item.id))
+        .slice(0, 4),
+    };
+  }, [memories, model]);
   const recommendations = useMemo(
     () => buildMoneyCoachRecommendations(model, executionHistory),
     [executionHistory, model]
@@ -540,6 +831,17 @@ export function MoneyCoachExperience({
     () => buildMoneyCoachOutcomeLearning(executionHistory),
     [executionHistory]
   );
+
+  function beginKnowledgeConversation(item: ProfessionalKnowledgeItem) {
+    if (item.action.mode !== "conversation") return;
+    setKnowledgePrompt({
+      id: `money-knowledge-${item.id}`,
+      itemId: item.id,
+      label: item.label,
+      text: item.action.prompt,
+    });
+    window.requestAnimationFrame(focusComposer);
+  }
 
   async function refreshExecutionHistory() {
     if (!executionStore) return;
@@ -1001,15 +1303,21 @@ export function MoneyCoachExperience({
         )
       }
       smartCards={
-        <details className="rounded-2xl border border-white/10 bg-black/10 p-4">
-          <summary className="cursor-pointer text-sm font-black text-cyan-200">
-            Review recommendations and reported outcomes
-          </summary>
-          <div className="mt-5 grid gap-6">
-            {recommendationCards}
-            {learningPanel}
-          </div>
-        </details>
+        <div className="grid min-w-0 gap-4">
+          <ProfessionalKnowledgeWorkspace
+            model={moneyKnowledgeModel}
+            onAction={beginKnowledgeConversation}
+          />
+          <details className="rounded-2xl border border-white/10 bg-black/10 p-4">
+            <summary className="cursor-pointer text-sm font-black text-cyan-200">
+              Review recommendations and reported outcomes
+            </summary>
+            <div className="mt-5 grid gap-6">
+              {recommendationCards}
+              {learningPanel}
+            </div>
+          </details>
+        </div>
       }
       composer={null}
       />

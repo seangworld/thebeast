@@ -1,7 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
+import {
+  ProfessionalKnowledgeWorkspace,
+  type ProfessionalKnowledgeConfidence,
+  type ProfessionalKnowledgeItem,
+  type ProfessionalKnowledgeModel,
+} from "@/app/components/agents";
 import {
   DashboardCard,
   GuidedEmptyState,
@@ -23,6 +35,7 @@ import {
   type HealthAdvisorIdentityProfile,
 } from "@/lib/health/healthAdvisorPresentation";
 import {
+  healthWorkspaceHrefs,
   normalizeHealthRecord,
   type HealthRecord,
   type HealthRecordRow,
@@ -105,6 +118,14 @@ export function HealthAdvisorWorkspace() {
   const [dataError, setDataError] = useState("");
   const [historyError, setHistoryError] = useState("");
   const [pendingId, setPendingId] = useState("");
+  const [knowledgePrompt, setKnowledgePrompt] =
+    useState<ProfessionalKnowledgeItem | null>(null);
+  const [knowledgeAnswer, setKnowledgeAnswer] = useState("");
+  const [pendingKnowledgeAnswer, setPendingKnowledgeAnswer] = useState("");
+  const [knowledgeSaveState, setKnowledgeSaveState] = useState<
+    "idle" | "review" | "saving" | "saved" | "error"
+  >("idle");
+  const knowledgeInputRef = useRef<HTMLTextAreaElement>(null);
 
   async function refreshHistory(
     nextStore = store,
@@ -224,6 +245,233 @@ export function HealthAdvisorWorkspace() {
     medicationCount,
     appointmentCount,
   });
+  const knowledgeModel = useMemo<ProfessionalKnowledgeModel>(() => {
+    const activeRecords = records.filter(
+      (record) => record.status !== "archived"
+    );
+    const recordsByKind = activeRecords.reduce<
+      Map<HealthRecord["recordType"], HealthRecord[]>
+    >((groups, record) => {
+      const group = groups.get(record.recordType) || [];
+      group.push(record);
+      groups.set(record.recordType, group);
+      return groups;
+    }, new Map());
+    const known = Array.from(recordsByKind.entries()).flatMap(
+      ([recordType, groupedRecords]): ProfessionalKnowledgeItem[] => {
+        const directRecords =
+          recordType === "profile"
+            ? groupedRecords.filter((record) => !record.details.topic)
+            : groupedRecords;
+        if (!directRecords.length) return [];
+        return [{
+          id: `health-known-${recordType}`,
+          label:
+            recordType === "profile"
+              ? "Health background"
+              : recordType === "provider"
+                ? "Care team"
+                : recordType === "family_history"
+                  ? "Family history"
+                  : healthWorkspaceHrefs[recordType]
+                    .split("/")
+                    .at(-1)
+                    ?.replaceAll("-", " ") || recordType,
+          summary: `${directRecords.length} saved ${directRecords.length === 1 ? "record" : "records"}: ${directRecords
+            .slice(0, 3)
+            .map((record) => record.title)
+            .join(", ")}${directRecords.length > 3 ? "…" : ""}`,
+          confidence: "high",
+          action: {
+            label: "Review or edit",
+            mode: "edit",
+            href: healthWorkspaceHrefs[recordType],
+          },
+        }];
+      }
+    );
+    for (const record of activeRecords.filter(
+      (item) => item.recordType === "profile" && item.details.topic
+    )) {
+      known.push({
+        id: `health-known-conversation-${record.id}`,
+        label: record.title,
+        summary:
+          typeof record.details.context === "string"
+            ? record.details.context
+            : "Member-reported context is saved.",
+        confidence: "high",
+        action: {
+          label: "Review or edit",
+          mode: "edit",
+          href: healthWorkspaceHrefs.profile,
+        },
+      });
+    }
+    const confidence = (
+      label: HealthAdvisorRecommendation["confidence"]["label"]
+    ): ProfessionalKnowledgeConfidence =>
+      label === "high"
+        ? "high"
+        : label === "moderate"
+          ? "medium"
+          : label === "low"
+            ? "low"
+            : "unknown";
+    const thinking = model.recommendations.map(
+      (recommendation): ProfessionalKnowledgeItem => ({
+        id: `health-thinking-${recommendation.sourceRecommendationId}`,
+        label: recommendation.title,
+        summary: recommendation.recommendation,
+        confidence: confidence(recommendation.confidence.label),
+        why: recommendation.confidence.basis,
+        evidence: recommendation.supportingEvidence.map((evidence) => {
+          const source = evidence.source;
+          return `Evidence source: ${
+            typeof source === "string" ? source : "saved BeastHealth context"
+          }`;
+        }),
+        action: {
+          label: "Review source",
+          mode: "detail",
+          href: recommendation.href,
+        },
+      })
+    );
+    const neededCandidates: {
+      id: string;
+      label: string;
+      summary: string;
+      prompt: string;
+      kind: HealthRecord["recordType"];
+    }[] = [
+      {
+        id: "health-background-needed",
+        label: "Health background",
+        summary:
+          "Member-reported health background would improve record organization and appointment preparation.",
+        prompt:
+          "Tell me the health background or allergy information you want me to remember for future preparation.",
+        kind: "profile",
+      },
+      {
+        id: "health-medications-needed",
+        label: "Current medication status",
+        summary:
+          "Knowing whether you take any medications would make record review more complete.",
+        prompt:
+          "What would you like me to know about your current medication status? It is okay to say that you do not take any.",
+        kind: "medication",
+      },
+      {
+        id: "health-conditions-needed",
+        label: "Known condition status",
+        summary:
+          "Only conditions the member reports or verifies should become part of the health story.",
+        prompt:
+          "Are there any clinician-confirmed conditions or ongoing health concerns you want included in your health story?",
+        kind: "condition",
+      },
+      {
+        id: "health-care-team-needed",
+        label: "Care team",
+        summary:
+          "Provider or specialist context can improve appointment and document preparation.",
+        prompt:
+          "Which doctor, practice, or specialist should I know about for future appointment preparation?",
+        kind: "provider",
+      },
+    ];
+    const needed = neededCandidates
+      .filter(
+        (candidate) =>
+          !recordsByKind.has(candidate.kind) &&
+          !activeRecords.some(
+            (record) =>
+              record.recordType === "profile" &&
+              record.details.topic === candidate.id
+          )
+      )
+      .map(
+        (candidate): ProfessionalKnowledgeItem => ({
+          id: candidate.id,
+          label: candidate.label,
+          summary: candidate.summary,
+          confidence: "unknown",
+          action: {
+            label: "Talk with Health Advisor",
+            mode: "conversation",
+            prompt: candidate.prompt,
+          },
+        })
+      );
+
+    return {
+      professionalId: healthAdvisorProfessionalId,
+      professionalName: "Health Advisor",
+      known,
+      thinking,
+      needed,
+    };
+  }, [model.recommendations, records]);
+
+  function beginKnowledgeConversation(item: ProfessionalKnowledgeItem) {
+    if (item.action.mode !== "conversation") return;
+    setKnowledgePrompt(item);
+    setKnowledgeAnswer("");
+    setPendingKnowledgeAnswer("");
+    setKnowledgeSaveState("idle");
+    window.requestAnimationFrame(() =>
+      knowledgeInputRef.current?.focus({ preventScroll: true })
+    );
+  }
+
+  function reviewKnowledgeAnswer(event: FormEvent) {
+    event.preventDefault();
+    const answer = knowledgeAnswer.trim();
+    if (!answer) return;
+    setPendingKnowledgeAnswer(answer);
+    setKnowledgeSaveState("review");
+  }
+
+  async function confirmKnowledgeAnswer() {
+    if (!ownerId || !knowledgePrompt || !pendingKnowledgeAnswer) return;
+    setKnowledgeSaveState("saving");
+    setDataError("");
+    try {
+      const client = createClient();
+      const { data, error } = await client
+        .from("beast_health_records")
+        .insert({
+          owner_id: ownerId,
+          record_type: "profile",
+          title: knowledgePrompt.label,
+          status: "active",
+          occurred_on: null,
+          source: "Member-reported Health Advisor conversation",
+          details: {
+            context: pendingKnowledgeAnswer,
+            topic: knowledgePrompt.id,
+            provenance: "member_confirmed_conversation",
+          },
+          notes: null,
+        })
+        .select(
+          "id, owner_id, record_type, title, status, occurred_on, source, details, notes, created_at, updated_at"
+        )
+        .single();
+      if (error) throw error;
+      const saved = normalizeHealthRecord(data as HealthRecordRow);
+      if (!saved) throw new Error("The saved health context was invalid.");
+      setRecords((current) => [saved, ...current]);
+      setKnowledgeSaveState("saved");
+      setKnowledgePrompt(null);
+      setKnowledgeAnswer("");
+      setPendingKnowledgeAnswer("");
+    } catch {
+      setKnowledgeSaveState("error");
+    }
+  }
 
   async function decideRecommendation(
     recommendation: HealthAdvisorRecommendation,
@@ -444,6 +692,115 @@ export function HealthAdvisorWorkspace() {
             </nav>
           ) : null}
         </div>
+
+        {!loading && !recordsUnavailable ? (
+          <DashboardCard accent="health">
+            <ProfessionalKnowledgeWorkspace
+              model={knowledgeModel}
+              onAction={beginKnowledgeConversation}
+            />
+            {knowledgePrompt ? (
+              <section
+                className="mt-5 rounded-2xl border border-red-200/15 bg-black/10 p-4"
+                aria-label="Health Advisor knowledge conversation"
+              >
+                <p className="text-xs font-black uppercase tracking-[0.14em] text-red-200">
+                  Health Advisor
+                </p>
+                <p className="mt-2 text-sm leading-6 text-[#dbe3ef]">
+                  {knowledgePrompt.action.mode === "conversation"
+                    ? knowledgePrompt.action.prompt
+                    : ""}
+                </p>
+                <form className="mt-4 grid gap-3" onSubmit={reviewKnowledgeAnswer}>
+                  <label className="grid gap-2 text-sm font-bold text-white">
+                    Your answer
+                    <textarea
+                      ref={knowledgeInputRef}
+                      className="beast-input min-h-28 min-w-0 resize-y"
+                      value={knowledgeAnswer}
+                      maxLength={1000}
+                      onChange={(event) => {
+                        setKnowledgeAnswer(event.target.value);
+                        if (knowledgeSaveState !== "idle") {
+                          setKnowledgeSaveState("idle");
+                        }
+                      }}
+                    />
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="submit"
+                      className="beast-button min-h-11"
+                      disabled={!knowledgeAnswer.trim()}
+                    >
+                      Review before saving
+                    </button>
+                    <button
+                      type="button"
+                      className="beast-button-secondary min-h-11"
+                      onClick={() => setKnowledgePrompt(null)}
+                    >
+                      Not now
+                    </button>
+                  </div>
+                </form>
+                {knowledgeSaveState === "review" ? (
+                  <div className="mt-4 rounded-xl border border-white/10 p-4">
+                    <p className="text-xs font-black uppercase text-red-200">
+                      Confirm member-reported context
+                    </p>
+                    <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-[#dbe3ef]">
+                      {pendingKnowledgeAnswer}
+                    </p>
+                    <p className="mt-2 text-xs leading-5 text-[#9aa7b8]">
+                      Saving adds this as member-reported context. It does not
+                      confirm a diagnosis, medication, allergy, or clinical
+                      conclusion.
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        className="beast-button min-h-11"
+                        onClick={() => void confirmKnowledgeAnswer()}
+                      >
+                        Save confirmed context
+                      </button>
+                      <button
+                        type="button"
+                        className="beast-button-secondary min-h-11"
+                        onClick={() => setKnowledgeSaveState("idle")}
+                      >
+                        Keep editing
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+                {knowledgeSaveState === "saving" ? (
+                  <p className="mt-3 text-sm text-[#c7cfdb]" role="status">
+                    Saving confirmed health context…
+                  </p>
+                ) : null}
+                {knowledgeSaveState === "error" ? (
+                  <p
+                    className="mt-3 rounded-xl border border-amber-300/30 bg-amber-300/10 p-3 text-sm text-amber-100"
+                    role="alert"
+                  >
+                    The context could not be saved. Your answer is still here
+                    so you can retry.
+                  </p>
+                ) : null}
+              </section>
+            ) : knowledgeSaveState === "saved" ? (
+              <p
+                className="mt-4 rounded-xl border border-emerald-300/25 bg-emerald-300/10 p-3 text-sm text-emerald-100"
+                role="status"
+              >
+                Saved as member-reported health context.
+              </p>
+            ) : null}
+          </DashboardCard>
+        ) : null}
 
         <DashboardCard accent="health">
           <SectionHeader eyebrow="Executive Health Briefing" title={model.executiveBriefing.title} description={model.executiveBriefing.summary} action={<ModuleBadge module="health" label="Advisor active" />} />

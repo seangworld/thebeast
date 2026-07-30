@@ -15,6 +15,10 @@ const reasoning = readFileSync(
   "src/lib/education/guidanceCounselorReasoning.ts",
   "utf8"
 );
+const sharedWorkspace = readFileSync(
+  "src/app/components/agents/ProfessionalKnowledgeWorkspace.tsx",
+  "utf8"
+);
 
 test("BE-217 separates known provisional and missing understanding", () => {
   const model = buildGuidanceCounselorUnderstanding(
@@ -83,9 +87,10 @@ test("BE-217 never asks for an area already known", () => {
 test("BE-217 replaces the static profile summary in the Counselor workspace", () => {
   assert.match(conversation, /buildGuidanceCounselorUnderstanding/);
   assert.match(conversation, /data-guidance-understanding-model="true"/);
-  assert.match(conversation, /title="What I Know"/);
-  assert.match(conversation, /title="What I Think"/);
-  assert.match(conversation, /title="What I Still Need"/);
+  assert.match(conversation, /ProfessionalKnowledgeWorkspace/);
+  assert.match(sharedWorkspace, /title="What I Know"/);
+  assert.match(sharedWorkspace, /title="What I Think"/);
+  assert.match(sharedWorkspace, /title="What I Still Need"/);
   assert.match(conversation, /item\.confidence/);
   assert.match(reasoning, /nextGuidanceUnderstandingQuestion/);
 });

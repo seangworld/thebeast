@@ -127,6 +127,13 @@ export type MoneyCoachExperienceModel = {
     totalObligationCount: number;
     retirementDataAvailable: boolean;
     financialHealth?: FinancialHealthScoreResult;
+    currentGoals: readonly {
+      id: string;
+      title: string;
+      status?: string;
+      targetDate?: string;
+      updatedAt?: string;
+    }[];
   };
 };
 
@@ -739,6 +746,7 @@ export function buildMoneyCoachExperience(
       totalObligationCount: input.totalObligationCount,
       retirementDataAvailable: Boolean(input.retirementDataAvailable),
       financialHealth: input.financialHealth,
+      currentGoals: input.currentGoals || [],
     },
   };
 }

@@ -23,3 +23,10 @@ export {
   ProfessionalConversationTimeline,
   ProfessionalConversationWorkspace,
 } from "./ProfessionalConversationWorkspace";
+export {
+  ProfessionalKnowledgeWorkspace,
+  type ProfessionalKnowledgeAction,
+  type ProfessionalKnowledgeConfidence,
+  type ProfessionalKnowledgeItem,
+  type ProfessionalKnowledgeModel,
+} from "./ProfessionalKnowledgeWorkspace";

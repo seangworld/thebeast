@@ -92,11 +92,16 @@ test("BE-216 persists discovery behind the conversation with owner isolation", (
 });
 
 test("BE-216 reuses saved discovery context in conversation and guidance", () => {
+  const knowledgeWorkspace = readFileSync(
+    "src/app/components/agents/ProfessionalKnowledgeWorkspace.tsx",
+    "utf8"
+  );
   assert.match(page, /guidanceDiscoveryProfileFromRow/);
   assert.match(page, /initialProfile=\{profile\}/);
-  assert.match(conversation, /What I Know/);
-  assert.match(conversation, /What I Think/);
-  assert.match(conversation, /What I Still Need/);
+  assert.match(conversation, /ProfessionalKnowledgeWorkspace/);
+  assert.match(knowledgeWorkspace, /What I Know/);
+  assert.match(knowledgeWorkspace, /What I Think/);
+  assert.match(knowledgeWorkspace, /What I Still Need/);
   assert.match(conversation, /router\.refresh\(\)/);
   assert.match(conversation, /I’ll remember this for future guidance/);
 });
