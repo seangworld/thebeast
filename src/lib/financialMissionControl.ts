@@ -152,7 +152,7 @@ export function buildFinancialMissionControl(input: BuildFinancialMissionControl
       detail: financialHealth.band,
       trend: `Strongest: ${financialHealth.strongest.label} · Focus: ${financialHealth.improvementPriority.label}`,
       tone: healthTone,
-      href: "/dashboard/money/dashboard#financial-health-score",
+      href: "/dashboard/money/financial-health",
       explanation: heroExplanation({
         ownerId: input.ownerId,
         asOf: input.asOf,

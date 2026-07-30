@@ -54,7 +54,7 @@ test("BP-230 gives Cash Flow the approved generic summary", () => {
     "Checking Balance",
     "Protected Cash Buffer",
     "Available Credit",
-    "Monthly Cash Flow",
+    "Monthly Income",
     "Monthly Surplus",
   ]) {
     assert.match(cashFlow, new RegExp(label));

@@ -941,7 +941,7 @@ const moneyTopicDetails: Record<MoneyCoachTopic, { label: string; definition: st
   "velocity-banking": { label: "Velocity Banking", definition: "Velocity Banking is a debt-paydown method that uses available revolving credit as a temporary cash-flow tool, then directs income back toward restoring that credit line.", href: "/dashboard/money/velocity" },
   avalanche: { label: "Avalanche", definition: "The debt avalanche directs extra payments to the highest-interest debt first while maintaining required payments on the others.", href: "/dashboard/money/payoff-plan" },
   snowball: { label: "Snowball", definition: "The debt snowball directs extra payments to the smallest balance first to create earlier account wins.", href: "/dashboard/money/payoff-plan" },
-  "financial-health": { label: "Financial Health Score", definition: "The Financial Health Score is a transparent BeastMoney financial-wellness measure. It is not a credit score.", href: "/dashboard/money/dashboard#financial-health-score" },
+  "financial-health": { label: "Financial Health Score", definition: "The Financial Health Score is a transparent BeastMoney financial-wellness measure. It is not a credit score.", href: "/dashboard/money/financial-health" },
   "cash-flow": { label: "Cash Flow", definition: "Cash flow is the movement of income into and obligations or spending out of your plan over time.", href: "/dashboard/money/cashflow" },
   bills: { label: "Bills", definition: "Bills are scheduled obligations with an amount and due date that must be accounted for in the cash plan.", href: "/dashboard/money/bills" },
   debts: { label: "Debts", definition: "Debts are outstanding balances owed to creditors, usually governed by rates, required payments, and payoff terms.", href: "/dashboard/money/debts" },
@@ -1168,7 +1168,7 @@ export function answerMoneyCoachQuestion(
           paragraphs: ["It is a transparent financial-wellness measure across cash flow, debt, savings, emergency reserves, retirement progress, goal progress, consistency, and planning completeness. It is not a credit score."],
         }],
         followUp: "Open the dashboard after the current BeastMoney records finish loading.",
-        href: "/dashboard/money/dashboard#financial-health-score",
+        href: "/dashboard/money/financial-health",
         action: "Review Financial Health Score",
       });
     }
@@ -1211,7 +1211,7 @@ export function answerMoneyCoachQuestion(
         },
       ],
       followUp: `Would you like to work through the ${health.improvementPriority.label.toLowerCase()} inputs or options?`,
-      href: "/dashboard/money/dashboard#financial-health-score",
+      href: "/dashboard/money/financial-health",
       action: "Review Financial Health Score",
     });
   }

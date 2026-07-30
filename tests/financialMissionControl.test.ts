@@ -111,10 +111,10 @@ test("BM-315 gives Mission Control polished responsive loading and empty states"
   assert.match(source, /animate-pulse/);
   assert.match(source, /data-financial-mission-control-empty="true"/);
   assert.match(source, /Build your financial picture/);
-  assert.match(source, /space-y-8[\s\S]*sm:space-y-10/);
-  assert.match(source, /grid items-stretch gap-5/);
+  assert.match(source, /space-y-6 pb-10/);
+  assert.match(source, /grid items-stretch gap-4/);
   assert.match(source, /transition duration-300/);
-  assert.match(source, /hover:-translate-y-1/);
+  assert.match(source, /hover:-translate-y-0\.5/);
   assert.match(source, /sm:grid-cols-3/);
   assert.doesNotMatch(source, />Current score</);
   assert.match(workspace, /<FinancialMissionControlLoading/);

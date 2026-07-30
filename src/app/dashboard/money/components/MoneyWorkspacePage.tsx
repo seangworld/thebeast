@@ -63,6 +63,7 @@ import {
   FinancialMissionControl,
   FinancialMissionControlLoading,
 } from "@/app/dashboard/money/components/FinancialMissionControl";
+import { FinancialHealthScoreWorkspace } from "@/app/dashboard/money/components/FinancialHealthScoreWorkspace";
 import { buildFinancialMissionControl } from "@/lib/financialMissionControl";
 
 type MoneyDebt = {
@@ -287,7 +288,7 @@ function MobileMoneyMetric({
 export function MoneyWorkspacePage({
   view,
 }: {
-  view: "coach" | "dashboard" | "reports";
+  view: "coach" | "dashboard" | "financial-health" | "reports";
 }) {
   const [state, setState] = useState<MoneyState>(initialMoneyState);
   const [loading, setLoading] = useState(true);
@@ -1002,6 +1003,41 @@ export function MoneyWorkspacePage({
               ))}
             </div>
           </section>
+        )}
+      </BeastMoneyShell>
+    );
+  }
+  if (view === "financial-health") {
+    return (
+      <BeastMoneyShell
+        title="Financial Health Score"
+        description="A transparent view of your current score, category weighting, evidence, and improvement opportunities."
+      >
+        {loading ? (
+          <FinancialMissionControlLoading />
+        ) : loadError ? (
+          <section
+            className="mx-auto w-full max-w-3xl rounded-2xl border border-rose-400/20 bg-rose-400/[0.05] p-6"
+            role="alert"
+          >
+            <h2 className="text-xl font-black text-white">
+              Your Financial Health Score is temporarily unavailable.
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-slate-300">
+              {loadError}
+            </p>
+            <button
+              type="button"
+              className="beast-button mt-5"
+              onClick={loadMoneySnapshot}
+            >
+              Try again
+            </button>
+          </section>
+        ) : (
+          <FinancialHealthScoreWorkspace
+            model={financialMissionControl.financialHealth}
+          />
         )}
       </BeastMoneyShell>
     );

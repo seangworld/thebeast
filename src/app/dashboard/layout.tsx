@@ -560,6 +560,37 @@ export default function DashboardLayout({
             !child.group &&
             child.parent
         ) || [];
+      function ChildBranch({
+        child,
+        depth = 0,
+      }: {
+        child: ModuleChildNavItem;
+        depth?: number;
+      }) {
+        const descendants = nestedChildren.filter(
+          (candidate) => candidate.parent === child.label
+        );
+
+        return (
+          <div>
+            <ChildLink item={child} module={item.module} />
+            {descendants.length > 0 ? (
+              <div
+                className="ml-3 mt-1 space-y-1 border-l border-white/10 pl-2"
+                data-navigation-depth={depth + 1}
+              >
+                {descendants.map((descendant) => (
+                  <ChildBranch
+                    key={descendant.label}
+                    child={descendant}
+                    depth={depth + 1}
+                  />
+                ))}
+              </div>
+            ) : null}
+          </div>
+        );
+      }
       const groupedChildren =
         item.children?.filter(
           (child) => !child.future && !child.secondary && child.group
@@ -676,27 +707,7 @@ export default function DashboardLayout({
             <div className="min-h-0 overflow-hidden">
               <div className="mt-2 space-y-1 pl-4">
                 {primaryChildren.map((child) => (
-                  <div key={child.label}>
-                    <ChildLink item={child} module={item.module} />
-                    {nestedChildren.some(
-                      (nestedChild) => nestedChild.parent === child.label
-                    ) ? (
-                      <div className="ml-3 mt-1 space-y-1 border-l border-white/10 pl-2">
-                        {nestedChildren
-                          .filter(
-                            (nestedChild) =>
-                              nestedChild.parent === child.label
-                          )
-                          .map((nestedChild) => (
-                            <ChildLink
-                              key={nestedChild.label}
-                              item={nestedChild}
-                              module={item.module}
-                            />
-                          ))}
-                      </div>
-                    ) : null}
-                  </div>
+                  <ChildBranch key={child.label} child={child} />
                 ))}
                 {childGroups.map((group) => (
                   <div key={group} className="pt-2 first:pt-0">

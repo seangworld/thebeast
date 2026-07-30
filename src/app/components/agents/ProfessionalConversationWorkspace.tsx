@@ -63,6 +63,7 @@ type ProfessionalConversationTimelineProps = {
   followLatestSignal?: number;
   scrollPositions: MutableRefObject<Map<string, number>>;
   professionalName: string;
+  professionalAvatar?: ReactNode;
 };
 
 export function ProfessionalConversationTimeline({
@@ -72,6 +73,7 @@ export function ProfessionalConversationTimeline({
   followLatestSignal,
   scrollPositions,
   professionalName,
+  professionalAvatar,
 }: ProfessionalConversationTimelineProps) {
   const {
     contentRef,
@@ -123,30 +125,37 @@ export function ProfessionalConversationTimeline({
                 className="py-6 first:pt-4 sm:py-8"
                 data-message-role={message.role}
               >
-                <div className="flex items-baseline justify-between gap-4">
-                  <h3
-                    className={`text-sm font-black ${
-                      message.role === "agent"
-                        ? "text-white"
-                        : message.role === "user"
-                          ? "text-cyan-200"
-                          : "text-slate-300"
-                    }`}
-                  >
-                    {message.author}
-                  </h3>
-                  {message.timestamp ? (
-                    <time className="shrink-0 text-xs text-slate-500">
-                      {message.timestamp}
-                    </time>
+                <div className="flex items-start gap-3">
+                  {message.role === "agent" && professionalAvatar ? (
+                    <div className="pt-0.5">{professionalAvatar}</div>
                   ) : null}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-baseline justify-between gap-4">
+                      <h3
+                        className={`text-sm font-black ${
+                          message.role === "agent"
+                            ? "text-white"
+                            : message.role === "user"
+                              ? "text-cyan-200"
+                              : "text-slate-300"
+                        }`}
+                      >
+                        {message.author}
+                      </h3>
+                      {message.timestamp ? (
+                        <time className="shrink-0 text-xs text-slate-500">
+                          {message.timestamp}
+                        </time>
+                      ) : null}
+                    </div>
+                    <div className="mt-3 break-words text-[15px] leading-7 text-slate-200 [&_a]:font-bold [&_a]:text-cyan-200 [&_a]:underline-offset-4 [&_a:hover]:underline [&_details]:mt-4 [&_li]:my-1 [&_ol]:my-4 [&_ol]:list-decimal [&_ol]:pl-6 [&_p+p]:mt-4 [&_table]:my-5 [&_table]:w-full [&_table]:border-collapse [&_td]:border-b [&_td]:border-white/10 [&_td]:px-3 [&_td]:py-2 [&_th]:border-b [&_th]:border-white/15 [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_ul]:my-4 [&_ul]:list-disc [&_ul]:pl-6">
+                      {message.content}
+                    </div>
+                    {message.streaming ? (
+                      <span className="sr-only">Response is streaming</span>
+                    ) : null}
+                  </div>
                 </div>
-                <div className="mt-3 break-words text-[15px] leading-7 text-slate-200 [&_a]:font-bold [&_a]:text-cyan-200 [&_a]:underline-offset-4 [&_a:hover]:underline [&_details]:mt-4 [&_li]:my-1 [&_ol]:my-4 [&_ol]:list-decimal [&_ol]:pl-6 [&_p+p]:mt-4 [&_table]:my-5 [&_table]:w-full [&_table]:border-collapse [&_td]:border-b [&_td]:border-white/10 [&_td]:px-3 [&_td]:py-2 [&_th]:border-b [&_th]:border-white/15 [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_ul]:my-4 [&_ul]:list-disc [&_ul]:pl-6">
-                  {message.content}
-                </div>
-                {message.streaming ? (
-                  <span className="sr-only">Response is streaming</span>
-                ) : null}
               </li>
             ))}
           </ol>

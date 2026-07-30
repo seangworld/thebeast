@@ -120,25 +120,24 @@ test("BM-312 Money Coach explains the current score, change evidence, and improv
   assert.match(response.text, /How it is calculated/);
   assert.match(response.text, /Why it changed/);
   assert.match(response.text, /How to improve it/);
-  assert.equal(response.href, "/dashboard/money/dashboard#financial-health-score");
+  assert.equal(response.href, "/dashboard/money/financial-health");
 });
 
-test("BM-312 Mission Control renders the transparent calculation accessibly", () => {
+test("BM-401 Financial Health Score workspace renders the transparent calculation accessibly", () => {
   const source = readFileSync(
-    "src/app/dashboard/money/components/FinancialMissionControl.tsx",
+    "src/app/dashboard/money/components/FinancialHealthScoreWorkspace.tsx",
     "utf8"
   );
-  assert.match(source, /id="financial-health-score"/);
-  assert.match(source, /How your Financial Health Score is calculated/);
-  assert.match(source, /model\.financialHealth\.formula/);
-  assert.match(source, /model\.financialHealth\.disclaimer/);
-  assert.match(source, /<table/);
-  assert.match(source, /<th scope="row"/);
-  assert.match(source, /Why it changed/);
+  assert.match(source, /data-financial-health-score-workspace/);
+  assert.match(source, /How your score is built/);
+  assert.match(source, /model\.formula/);
+  assert.match(source, /model\.disclaimer/);
+  assert.match(source, /Category breakdown/);
+  assert.match(source, /Scores, weighting, and evidence/);
+  assert.match(source, /Current strength/);
   assert.match(source, /Best improvement opportunity/);
-  assert.match(source, /data-financial-health-hero/);
-  assert.match(source, /text-5xl sm:text-6xl/);
-  assert.match(source, /Financial Health Score components/);
-  assert.match(source, /md:hidden/);
+  assert.match(source, /Improvement opportunities/);
+  assert.match(source, /Score history/);
+  assert.match(source, /No trend is inferred from a single snapshot/);
   assert.match(source, /Calculation and evidence/);
 });

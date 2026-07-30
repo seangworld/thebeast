@@ -50,6 +50,12 @@ test("BP-230 navigation follows the approved workspace hierarchy", () => {
   );
   assert.deepEqual(
     beastMoneyCoreNavigation
+      .filter((item) => item.parent === "Expenses")
+      .map((item) => item.label),
+    ["Bills", "Debts"]
+  );
+  assert.deepEqual(
+    beastMoneyCoreNavigation
       .filter((item) => item.parent === "Payoff Plan")
       .map((item) => item.label),
     ["Strategies", "Timeline"]

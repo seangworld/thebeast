@@ -77,9 +77,9 @@ export default function CashFlowOverview({
         </div>
 
         <div className="beast-card">
-          <div className="text-sm font-bold text-[#c7cfdb]">Monthly Cash Flow</div>
+          <div className="text-sm font-bold text-[#c7cfdb]">Monthly Income</div>
           <div className="mt-2 break-words text-2xl font-bold">
-            ${incomeExpected.toFixed(2)} in
+            ${incomeExpected.toFixed(2)}
           </div>
           <p className="mt-2 text-xs text-slate-400">${billsDue.toFixed(2)} in known bills and debt minimums.</p>
         </div>

@@ -30,7 +30,7 @@ function ProgressBar({ value, label }: { value: number; label: string }) {
 
 function Explainability({ card }: { card: MissionControlHeroCard }) {
   return (
-    <details className="mt-4 border-t border-white/10 pt-3 text-xs">
+    <details className="mt-3 border-t border-white/10 pt-2 text-xs">
       <summary className="cursor-pointer font-bold text-cyan-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300">Explain this</summary>
       <div className="mt-3 space-y-2 leading-5 text-slate-300">
         <p>{card.explanation.why}</p>
@@ -47,7 +47,7 @@ function HeroCard({ card }: { card: MissionControlHeroCard }) {
   const isFinancialHealth = card.id === "financial-health";
   return (
     <article
-      className={`group flex min-h-[13rem] min-w-0 flex-col rounded-3xl border bg-gradient-to-br p-5 shadow-[0_18px_50px_rgba(0,0,0,0.14)] transition duration-300 hover:-translate-y-1 hover:border-white/25 hover:shadow-[0_24px_60px_rgba(0,0,0,0.22)] sm:p-6 ${isFinancialHealth ? "sm:col-span-2 xl:col-span-1 2xl:col-span-2" : ""} ${tones[card.tone]}`}
+      className={`group flex min-h-[10.5rem] min-w-0 flex-col rounded-2xl border bg-gradient-to-br p-4 shadow-[0_14px_40px_rgba(0,0,0,0.12)] transition duration-300 hover:-translate-y-0.5 hover:border-white/25 hover:shadow-[0_20px_50px_rgba(0,0,0,0.2)] ${tones[card.tone]}`}
       data-financial-health-hero={isFinancialHealth ? "true" : undefined}
     >
       <Link href={card.href} className="block rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-300" aria-label={`Open ${card.label}`}>
@@ -55,8 +55,8 @@ function HeroCard({ card }: { card: MissionControlHeroCard }) {
           <p className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-400">{card.label}</p>
           <span aria-hidden="true" className="text-slate-500 transition group-hover:translate-x-0.5 group-hover:text-white">↗</span>
         </div>
-        <p className={`mt-3 break-words font-black tracking-tight text-white ${isFinancialHealth ? "text-5xl sm:text-6xl" : "text-2xl sm:text-3xl"}`}>{card.value}</p>
-        <p className="mt-2 text-sm font-semibold text-slate-200">{card.detail}</p>
+        <p className={`mt-2 break-words font-black tracking-tight text-white ${isFinancialHealth ? "text-4xl" : "text-2xl"}`}>{card.value}</p>
+        <p className="mt-1 text-sm font-semibold text-slate-200">{card.detail}</p>
         <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-400">{card.trend}</p>
       </Link>
       <div className="mt-auto"><Explainability card={card} /></div>
@@ -66,7 +66,7 @@ function HeroCard({ card }: { card: MissionControlHeroCard }) {
 
 function Surface({ id, title, eyebrow, href, children, className = "" }: { id?: string; title: string; eyebrow: string; href: string; children: React.ReactNode; className?: string }) {
   return (
-    <article id={id} className={`flex h-full min-w-0 scroll-mt-6 flex-col rounded-3xl border border-white/10 bg-[#111827]/80 p-5 shadow-[0_20px_60px_rgba(0,0,0,0.16)] backdrop-blur transition duration-300 hover:border-white/15 hover:shadow-[0_24px_70px_rgba(0,0,0,0.2)] sm:p-6 ${className}`}>
+    <article id={id} className={`flex h-full min-w-0 scroll-mt-6 flex-col rounded-2xl border border-white/10 bg-[#111827]/80 p-4 shadow-[0_16px_48px_rgba(0,0,0,0.14)] backdrop-blur transition duration-300 hover:border-white/15 hover:shadow-[0_20px_56px_rgba(0,0,0,0.18)] sm:p-5 ${className}`}>
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-[11px] font-black uppercase tracking-[0.16em] text-cyan-300">{eyebrow}</p>
@@ -74,7 +74,7 @@ function Surface({ id, title, eyebrow, href, children, className = "" }: { id?: 
         </div>
         <Link href={href} className="flex min-h-[44px] shrink-0 items-center rounded-xl border border-white/10 px-3 text-sm font-bold text-slate-300 transition hover:border-cyan-300/40 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300">Open <span className="sr-only">{title}</span><span aria-hidden="true" className="ml-2">↗</span></Link>
       </div>
-      <div className="mt-5 flex-1">{children}</div>
+      <div className="mt-4 flex-1">{children}</div>
     </article>
   );
 }
@@ -82,22 +82,22 @@ function Surface({ id, title, eyebrow, href, children, className = "" }: { id?: 
 export function FinancialMissionControlLoading() {
   return (
     <div
-      className="mx-auto w-full max-w-[1600px] animate-pulse space-y-8 pb-12"
+      className="mx-auto w-full max-w-[1600px] animate-pulse space-y-6 pb-10"
       aria-busy="true"
       aria-label="Loading Financial Mission Control"
       data-financial-mission-control-loading="true"
     >
       <span className="sr-only">Loading current BeastMoney records.</span>
-      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-        <div className="h-52 rounded-3xl bg-white/[0.07] sm:col-span-2 xl:col-span-1" />
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+        <div className="h-44 rounded-2xl bg-white/[0.07]" />
         {Array.from({ length: 5 }, (_, index) => (
-          <div key={index} className="h-52 rounded-3xl bg-white/[0.05]" />
+          <div key={index} className="h-44 rounded-2xl bg-white/[0.05]" />
         ))}
       </div>
-      <div className="h-36 rounded-3xl bg-white/[0.05]" />
-      <div className="grid gap-5 lg:grid-cols-2">
-        <div className="h-80 rounded-3xl bg-white/[0.05]" />
-        <div className="h-80 rounded-3xl bg-white/[0.05]" />
+      <div className="h-32 rounded-2xl bg-white/[0.05]" />
+      <div className="grid gap-4 lg:grid-cols-2">
+        <div className="h-72 rounded-2xl bg-white/[0.05]" />
+        <div className="h-72 rounded-2xl bg-white/[0.05]" />
       </div>
     </div>
   );
@@ -110,7 +110,7 @@ export function FinancialMissionControl({ model }: { model: FinancialMissionCont
     model.debt.remaining > 0 ||
     model.upcomingObligations.length > 0;
   return (
-    <div className="mx-auto w-full max-w-[1600px] space-y-8 pb-12 sm:space-y-10" data-financial-mission-control="true">
+    <div className="mx-auto w-full max-w-[1600px] space-y-6 pb-10" data-financial-mission-control="true">
       <header className="border-b border-white/10 pb-5">
         <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-300">
           Executive Briefing
@@ -123,9 +123,14 @@ export function FinancialMissionControl({ model }: { model: FinancialMissionCont
           alerts, and recommended next step in one place.
         </p>
       </header>
-      <section id="financial-health" className="scroll-mt-6" aria-labelledby="mission-control-overview">
+      <section
+        id="financial-health"
+        className="scroll-mt-6"
+        aria-labelledby="mission-control-overview"
+        aria-label="Financial Health Score and current financial summaries"
+      >
         <h2 id="mission-control-overview" className="sr-only">Financial Mission Control</h2>
-        <div className="grid items-stretch gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+        <div className="grid items-stretch gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
           {model.heroCards.map((card) => <HeroCard key={card.id} card={card} />)}
         </div>
       </section>
@@ -148,115 +153,12 @@ export function FinancialMissionControl({ model }: { model: FinancialMissionCont
 
       <MorningFinancialBriefingPanel briefing={model.morningBriefing} />
 
-      <section
-        id="financial-health-score"
-        className="scroll-mt-6 rounded-3xl border border-white/10 bg-[#111827]/85 p-5 shadow-[0_24px_70px_rgba(0,0,0,0.2)] sm:p-6"
-        aria-labelledby="financial-health-score-heading"
-      >
-        <div>
-          <div className="max-w-4xl">
-            <p className="text-[11px] font-black uppercase tracking-[0.16em] text-cyan-300">
-              Transparent wellness measure
-            </p>
-            <h2 id="financial-health-score-heading" className="mt-2 text-2xl font-black text-white">
-              How your Financial Health Score is calculated
-            </h2>
-            <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-300">
-              {model.financialHealth.formula}
-            </p>
-          </div>
-        </div>
-
-        <p className="mt-5 rounded-xl border border-amber-300/15 bg-amber-300/[0.05] p-4 text-sm text-amber-100">
-          {model.financialHealth.disclaimer}
-        </p>
-
-        <div className="mt-6 hidden overflow-x-auto md:block">
-          <table className="w-full min-w-[720px] text-left text-sm">
-            <thead className="text-xs uppercase tracking-wide text-slate-500">
-              <tr>
-                <th className="pb-3 pr-4">Dimension</th>
-                <th className="pb-3 pr-4">Score</th>
-                <th className="pb-3 pr-4">Weight</th>
-                <th className="pb-3 pr-4">Weighted points</th>
-                <th className="pb-3">Calculation</th>
-              </tr>
-            </thead>
-            <tbody>
-              {model.financialHealth.components.map((component) => (
-                <tr key={component.id} className="border-t border-white/10 align-top">
-                  <th scope="row" className="py-4 pr-4 font-bold text-white">{component.label}</th>
-                  <td className="py-4 pr-4 text-slate-300">{component.available ? `${component.score}/100` : "Unavailable"}</td>
-                  <td className="py-4 pr-4 text-slate-300">{component.weight}%</td>
-                  <td className="py-4 pr-4 text-slate-300">{component.available ? component.weightedPoints.toFixed(1) : "Excluded"}</td>
-                  <td className="py-4 text-slate-400">
-                    <p>{component.calculation}</p>
-                    <p className="mt-2 text-xs">{component.evidence.join(" · ")}</p>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="mt-6 grid gap-3 md:hidden" aria-label="Financial Health Score components">
-          {model.financialHealth.components.map((component) => (
-            <article key={component.id} className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-              <div className="flex items-start justify-between gap-4">
-                <h3 className="font-black text-white">{component.label}</h3>
-                <span className="shrink-0 text-sm font-bold text-cyan-200">
-                  {component.available ? `${component.score}/100` : "Unavailable"}
-                </span>
-              </div>
-              <dl className="mt-3 grid grid-cols-2 gap-3 text-xs">
-                <div>
-                  <dt className="text-slate-500">Weight</dt>
-                  <dd className="mt-1 font-bold text-slate-300">{component.weight}%</dd>
-                </div>
-                <div>
-                  <dt className="text-slate-500">Weighted points</dt>
-                  <dd className="mt-1 font-bold text-slate-300">
-                    {component.available ? component.weightedPoints.toFixed(1) : "Excluded"}
-                  </dd>
-                </div>
-              </dl>
-              <details className="mt-3 border-t border-white/10 pt-3">
-                <summary className="cursor-pointer text-sm font-bold text-cyan-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300">
-                  Calculation and evidence
-                </summary>
-                <p className="mt-3 text-xs leading-5 text-slate-400">{component.calculation}</p>
-                <ul className="mt-2 list-disc space-y-1 pl-5 text-xs leading-5 text-slate-400">
-                  {component.evidence.map((evidence) => <li key={evidence}>{evidence}</li>)}
-                </ul>
-              </details>
-            </article>
-          ))}
-        </div>
-
-        <div className="mt-6 grid gap-4 md:grid-cols-2">
-          <div className="rounded-2xl bg-white/[0.04] p-4">
-            <h3 className="font-black text-white">Why it changed</h3>
-            <p className="mt-2 text-sm leading-6 text-slate-300">{model.financialHealth.change.explanation}</p>
-            {model.financialHealth.change.drivers.length ? (
-              <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-slate-400">
-                {model.financialHealth.change.drivers.map((driver) => <li key={driver}>{driver}</li>)}
-              </ul>
-            ) : null}
-          </div>
-          <div className="rounded-2xl bg-white/[0.04] p-4">
-            <h3 className="font-black text-white">Best improvement opportunity</h3>
-            <p className="mt-2 text-sm font-bold text-cyan-200">{model.financialHealth.improvementPriority.label}</p>
-            <p className="mt-2 text-sm leading-6 text-slate-300">{model.financialHealth.improvementPriority.improvement}</p>
-          </div>
-        </div>
-      </section>
-
       <section aria-labelledby="financial-motion-heading" className="space-y-4">
         <div>
           <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-300">Financial motion</p>
           <h2 id="financial-motion-heading" className="mt-2 text-2xl font-black text-white">Where your money is moving</h2>
         </div>
-        <div className="grid items-stretch gap-5 lg:grid-cols-2 xl:grid-cols-12">
+        <div className="grid items-stretch gap-4 lg:grid-cols-2 xl:grid-cols-12">
           <Surface title="Cash-flow trend" eyebrow="Cash Flow" href="/dashboard/money/cashflow" className="xl:col-span-7">
             <div className="grid gap-3 sm:grid-cols-3">
               {[["Income", model.cashFlow.income, "text-emerald-300"], ["Outflow", model.cashFlow.outflow, "text-amber-200"], ["Surplus", model.cashFlow.surplus, model.cashFlow.surplus >= 0 ? "text-cyan-300" : "text-rose-300"]].map(([label, value, tone]) => (

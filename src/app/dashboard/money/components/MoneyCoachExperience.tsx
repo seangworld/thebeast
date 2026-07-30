@@ -425,15 +425,29 @@ export function MoneyCoachExperience({
   }
 
   async function startConversation() {
+    conversationScrollPositionsRef.current.delete("new-conversation");
+    setActiveThreadId("");
+    setConversationTitle("New conversation");
+    setTurns([]);
     if (!repository) {
-      conversationScrollPositionsRef.current.delete("new-conversation");
-      setActiveThreadId(""); setConversationTitle("New conversation"); setTurns([]);
       return undefined;
     }
-    const thread = await repository.create({ ownerId, agentId: "beastmoney.money-coach" });
-    setActiveThreadId(thread.id); setConversationTitle(thread.title); setTurns([]);
-    await refreshThreads();
-    return thread;
+    try {
+      const thread = await repository.create({
+        ownerId,
+        agentId: "beastmoney.money-coach",
+      });
+      setActiveThreadId(thread.id);
+      setConversationTitle(thread.title);
+      await refreshThreads();
+      setHistoryError("");
+      return thread;
+    } catch {
+      setHistoryError(
+        "A new conversation could not be created. Your previous conversations and durable memories were not changed."
+      );
+      return undefined;
+    }
   }
 
   async function beginStarter(prompt: string) {
@@ -757,7 +771,20 @@ export function MoneyCoachExperience({
         <button type="button" className="text-sm font-bold text-slate-300 lg:hidden" onClick={() => setHistoryOpen(false)} aria-label="Close chat history">Close</button>
       </div>
       <div className="p-3">
-        <button type="button" className="beast-button flex min-h-11 w-full items-center justify-center gap-2" onClick={() => { void startConversation(); setHistoryOpen(false); window.requestAnimationFrame(focusComposer); }}><span aria-hidden="true">＋</span> New conversation</button>
+        <button
+          type="button"
+          className="beast-button flex min-h-11 w-full items-center justify-center gap-2"
+          disabled={!repository}
+          onClick={() => {
+            setHistoryOpen(false);
+            void startConversation().then(() =>
+              window.requestAnimationFrame(focusComposer)
+            );
+          }}
+        >
+          <span aria-hidden="true">＋</span>{" "}
+          {repository ? "New conversation" : "Loading conversations…"}
+        </button>
         {historyError ? <p className="mt-3 rounded-lg border border-red-300/20 bg-red-300/10 p-2 text-xs leading-5 text-red-100" role="alert">{historyError}</p> : null}
         <label className="mt-3 block text-xs font-bold text-slate-300"><span className="sr-only">Search conversations</span>
           <span className="relative block"><span className="pointer-events-none absolute left-3 top-3 text-slate-500" aria-hidden="true">⌕</span><input className="min-h-11 w-full rounded-xl border border-white/10 bg-slate-950 pl-9 pr-3 text-sm text-white outline-none placeholder:text-slate-600 focus:border-cyan-300 focus:ring-2 focus:ring-cyan-300/20" value={historySearch} onChange={(event) => { setHistorySearch(event.target.value); void refreshThreads(event.target.value); }} placeholder="Search" /></span>
@@ -946,6 +973,13 @@ export function MoneyCoachExperience({
               streaming={Boolean(streamingTurnId)}
               scrollPositions={conversationScrollPositionsRef}
               professionalName="Money Coach"
+              professionalAvatar={
+                <AgentAvatar
+                  name={model.professional.identity.role}
+                  initials="MC"
+                  size="sm"
+                />
+              }
             />
             <ProfessionalConversationComposer id="money-coach-question">
               <AgentConversationInput
