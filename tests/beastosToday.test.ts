@@ -72,6 +72,7 @@ test("BO-25 Today defines the shared cross-module contribution contract", () => 
   assert.deepEqual(todayContributionSources, [
     "learning",
     "money",
+    "health",
     "calendar",
     "notifications",
     "goals",
@@ -115,7 +116,7 @@ test("BO-25 Today defines the shared cross-module contribution contract", () => 
   assert.deepEqual(summary.sources, ["learning", "money"]);
   assert.equal(
     getTodayContributionEmptyState([]),
-    "No urgent work is waiting in Today. Continue learning, review money, check Calendar, review Notifications, or confirm a Goal."
+    "No urgent work is waiting in Today. Review your education roadmap, check Money, open Calendar, review Notifications, or confirm a Goal."
   );
   assert.throws(
     () => buildTodayContribution({ ...learningContribution, actionUrl: "" }),
@@ -160,8 +161,8 @@ test("BO-26 Today ranks work by urgency importance effort and preference", () =>
   assert.equal(ranked[0].contribution.id, "money-critical-quick");
   assert.equal(ranked[0].rank, 1);
   assert.match(ranked[0].priorityScore.explanation, /urgency 10/);
-  assert.match(todayPage, /Priority Engine/);
-  assert.match(todayPage, /getTodayPriorityScore/);
+  assert.match(todayPage, /Priority explanation/);
+  assert.doesNotMatch(todayPage, /Priority Engine/);
 });
 
 test("BO-27 Today routes item actions through source-owned contracts", () => {

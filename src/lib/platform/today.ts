@@ -153,6 +153,7 @@ export type ManualTodayItemInput = {
 export const todayContributionSources: TodayContributionSource[] = [
   "learning",
   "money",
+  "health",
   "calendar",
   "notifications",
   "goals",
@@ -195,7 +196,7 @@ export const todayContributionTimings: TodayContributionTiming[] = [
 
 export const todayContributionContractRules = [
   "BeastOS Today owns aggregation, ordering, de-duplication, display, empty states, completion routing, and permission filtering.",
-  "Modules own source calculations such as bill cycles, cash-flow risk, learning mastery, review schedules, and readiness.",
+  "Modules own source calculations and evidence such as bill cycles, cash-flow risk, education planning milestones, appointment dates, review schedules, and readiness.",
   "Completion must route back to the owning module or service before BeastOS marks a contribution completed.",
   "Today contributions must carry source evidence so BeastOS does not invent tasks, progress, or placeholder work.",
   "Dismiss, snooze, complete, and reschedule requests must dispatch through the owning module or service contract instead of mutating source records directly.",
@@ -556,7 +557,7 @@ export function getTodayContributionEmptyState(
   const summary = summarizeTodayContributions(contributions);
 
   return summary.active === 0
-    ? "No urgent work is waiting in Today. Continue learning, review money, check Calendar, review Notifications, or confirm a Goal."
+    ? "No urgent work is waiting in Today. Review your education roadmap, check Money, open Calendar, review Notifications, or confirm a Goal."
     : "";
 }
 

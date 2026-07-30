@@ -8,11 +8,6 @@ import {
   ModuleBadge,
   SectionHeader,
 } from "@/app/components/design/DashboardPrimitives";
-import {
-  getLearningActivityRoute,
-  getNewestReadyLearningActivity,
-} from "@/lib/learning/activityRunner";
-import { getLearningActivityTitleForCourse } from "@/lib/learning/sampleContentRegistry";
 import { useRuntimeToday } from "@/lib/hooks/useRuntimeToday";
 import { getBeastGreeting } from "@/lib/runtimeDate";
 import { createClient } from "@/lib/supabase/client";
@@ -30,6 +25,11 @@ import type {
   PlatformTimelineEvent,
 } from "@/lib/platform/types";
 import {
+  normalizeHealthRecord,
+  type HealthRecord,
+  type HealthRecordRow,
+} from "@/lib/health/foundation";
+import {
   getGoalProgressPercent,
   loadUserGoals,
   type BeastGoalDataClient,
@@ -40,34 +40,18 @@ import {
   buildManualTodayContribution,
   buildTodayItemActionRequest,
   getTodayContributionExplanation,
-  getTodayPriorityScore,
   getTodayItemActionAvailability,
   todayContributionSources,
   type TodayContribution,
   type TodayItemActionRequest,
   type TodayItemActionType,
 } from "@/lib/platform/today";
-import { educationTeachingCapabilitiesAvailable } from "@/lib/education/generationBoundary";
-
-type CourseRow = {
-  id: string;
-  title: string;
-  progress?: number | null;
-};
-
-type ActivityRow = {
-  id: string;
-  course_id?: string | null;
-  activity_type: string;
-  title: string;
-  difficulty: string;
-  estimated_minutes: number;
-  xp: number;
-  status: string;
-  completed_at?: string | null;
-  sort_order?: number | null;
-  created_at?: string | null;
-};
+import {
+  buildEducationPlanningContributions,
+  buildHealthTodayContributions,
+  buildHealthUpcomingEvents,
+  getTodayProfessionalLabel,
+} from "@/lib/platform/todayGenerationOne";
 
 type ProfileNameRow = {
   preferred_name?: string | null;
@@ -123,13 +107,8 @@ type MoneyPayment = {
 };
 
 type TodayState = {
-  userId: string;
   name: string;
-  learnerProfileId: string | null;
-  planId: string | null;
-  sessionId: string | null;
-  courses: CourseRow[];
-  activities: ActivityRow[];
+  healthRecords: HealthRecord[];
   debts: MoneyDebt[];
   bills: MoneyBill[];
   incomes: MoneyIncome[];
@@ -140,13 +119,8 @@ type TodayState = {
 };
 
 const emptyState: TodayState = {
-  userId: "",
   name: "",
-  learnerProfileId: null,
-  planId: null,
-  sessionId: null,
-  courses: [],
-  activities: [],
+  healthRecords: [],
   debts: [],
   bills: [],
   incomes: [],
@@ -156,54 +130,10 @@ const emptyState: TodayState = {
   goals: [],
 };
 
-const activityBlueprint = ["Lesson", "Practice", "Quiz", "AI Tutor Challenge", "Reflection"];
-
-function getActivityTone(status: string) {
-  if (status === "Completed") return "border-green-400/35 bg-green-400/10";
-  if (status === "Ready") return "border-indigo-300/40 bg-indigo-300/10";
-  return "border-[#2a3242] bg-[#111827]";
-}
-
-function getStarterActivityTitle(courseTitle: string) {
-  return getLearningActivityTitleForCourse(courseTitle);
-}
-
-function buildStarterActivityRow({
-  userId,
-  learnerProfileId,
-  course,
-  planId,
-  sessionId,
-  sortOrder,
-}: {
-  userId: string;
-  learnerProfileId: string;
-  course: CourseRow;
-  planId: string;
-  sessionId: string | null;
-  sortOrder: number;
-}) {
-  return {
-    user_id: userId,
-    learner_profile_id: learnerProfileId,
-    course_id: course.id,
-    plan_id: planId,
-    session_id: sessionId,
-    activity_type: "Lesson",
-    title: getStarterActivityTitle(course.title),
-    difficulty: "Beginner",
-    estimated_minutes: 35,
-    xp: 20,
-    status: "Ready",
-    sort_order: sortOrder,
-  };
-}
-
 export default function TodayPage() {
   const router = useRouter();
   const [state, setState] = useState<TodayState>(emptyState);
   const [loading, setLoading] = useState(true);
-  const [generating, setGenerating] = useState(false);
   const [message, setMessage] = useState("");
   const [actionRequest, setActionRequest] =
     useState<TodayItemActionRequest | null>(null);
@@ -211,145 +141,6 @@ export default function TodayPage() {
   const [manualTodayItems, setManualTodayItems] = useState<TodayContribution[]>([]);
   const { now } = useRuntimeToday();
   const todayDate = now.toISOString().slice(0, 10);
-
-  const ensureLearningPlan = useCallback(
-    async ({
-      supabase,
-      userId,
-      learnerProfileId,
-      courses,
-      existingPlanId,
-      existingSessionId,
-      existingActivities,
-    }: {
-      supabase: ReturnType<typeof createClient>;
-      userId: string;
-      learnerProfileId: string | null;
-      courses: CourseRow[];
-      existingPlanId: string | null;
-      existingSessionId: string | null;
-      existingActivities: ActivityRow[];
-    }) => {
-      if (!learnerProfileId || courses.length === 0) {
-        return {
-          planId: existingPlanId,
-          sessionId: existingSessionId,
-          activities: existingActivities,
-        };
-      }
-
-      let planId = existingPlanId;
-      let sessionId = existingSessionId;
-      const primaryCourse = courses[0];
-
-      if (!planId) {
-        const { data, error } = await supabase
-          .from("learning_plans")
-          .insert({
-            user_id: userId,
-            learner_profile_id: learnerProfileId,
-            title: `${primaryCourse.title} learning path`,
-            summary: `Continue with ${primaryCourse.title}.`,
-            weekly_session_target: 3,
-          })
-          .select("id")
-          .single();
-
-        if (error) throw error;
-        planId = data.id;
-      }
-
-      if (!sessionId) {
-        const { data, error } = await supabase
-          .from("learning_sessions")
-          .insert({
-            user_id: userId,
-            learner_profile_id: learnerProfileId,
-            plan_id: planId,
-            title: `Continue ${primaryCourse.title}`,
-            course_title: primaryCourse.title,
-            scheduled_for: new Date().toISOString(),
-            duration_minutes: 20,
-            status: "Scheduled",
-          })
-          .select("id")
-          .single();
-
-        if (error) throw error;
-        sessionId = data.id;
-      }
-
-      const activePlanId = planId;
-      if (!activePlanId) {
-        throw new Error("Unable to create a learning plan for today's mission.");
-      }
-
-      const openExistingActivities = existingActivities.filter(
-        (activity) => activity.status !== "Completed"
-      );
-
-      if (openExistingActivities.length > 0) {
-        return { planId, sessionId, activities: existingActivities };
-      }
-
-      const nextSortOrder =
-        existingActivities.reduce(
-          (max, activity) => Math.max(max, Number(activity.sort_order || 0)),
-          0
-        ) + 1;
-
-      const activityRows =
-        existingActivities.length > 0
-          ? [
-              buildStarterActivityRow({
-                userId,
-                learnerProfileId,
-                course: primaryCourse,
-                planId: activePlanId,
-                sessionId,
-                sortOrder: nextSortOrder,
-              }),
-            ]
-          : activityBlueprint.map((activityType, index) => {
-              const course = courses[index % courses.length];
-              return {
-                user_id: userId,
-                learner_profile_id: learnerProfileId,
-                course_id: course.id,
-                plan_id: activePlanId,
-                session_id: index === 0 ? sessionId : null,
-                activity_type: activityType,
-                title:
-                  index === 0
-                    ? getStarterActivityTitle(course.title)
-                    : `${activityType}: ${course.title}`,
-                difficulty: index < 2 ? "Beginner" : "Adaptive",
-                estimated_minutes: 15 + index * 5,
-                xp: 10 + index * 5,
-                status: index === 0 ? "Ready" : "Queued",
-                sort_order: index + 1,
-              };
-            });
-
-      const { data, error } = await supabase
-        .from("learning_activities")
-        .insert(activityRows)
-        .select("*")
-        .order("sort_order", { ascending: true });
-
-      if (error) throw error;
-
-      return {
-        planId,
-        sessionId,
-        activities:
-          existingActivities.length > 0
-            ? [...existingActivities, ...((data || []) as ActivityRow[])]
-            : ((data || []) as ActivityRow[]),
-      };
-    },
-    []
-  );
 
   const loadToday = useCallback(async () => {
     setLoading(true);
@@ -367,11 +158,7 @@ export default function TodayPage() {
 
       const [
         profileResult,
-        learnerResult,
-        coursesResult,
-        plansResult,
-        sessionsResult,
-        activitiesResult,
+        healthRecordsResult,
         debtsResult,
         billsResult,
         incomesResult,
@@ -387,33 +174,12 @@ export default function TodayPage() {
             .eq("id", authUser.id)
             .maybeSingle(),
           supabase
-            .from("learning_profiles")
-            .select("id")
-            .eq("user_id", authUser.id)
-            .order("created_at", { ascending: true })
-            .limit(1),
-          supabase
-            .from("learning_courses")
-            .select("id, title, progress")
-            .eq("user_id", authUser.id)
-            .order("created_at", { ascending: true }),
-          supabase
-            .from("learning_plans")
-            .select("id")
-            .eq("user_id", authUser.id)
-            .order("created_at", { ascending: true })
-            .limit(1),
-          supabase
-            .from("learning_sessions")
-            .select("id")
-            .eq("user_id", authUser.id)
-            .order("created_at", { ascending: true })
-            .limit(1),
-          supabase
-            .from("learning_activities")
-            .select("*")
-            .eq("user_id", authUser.id)
-            .order("sort_order", { ascending: true }),
+            .from("beast_health_records")
+            .select(
+              "id, owner_id, record_type, title, status, occurred_on, source, details, notes, created_at, updated_at"
+            )
+            .eq("owner_id", authUser.id)
+            .neq("status", "archived"),
           supabase.from("debts").select("*").eq("user_id", authUser.id),
           supabase
             .from("bill_events")
@@ -446,35 +212,17 @@ export default function TodayPage() {
         ]);
 
       if (profileResult.error) throw profileResult.error;
-      if (learnerResult.error) throw learnerResult.error;
-      if (coursesResult.error) throw coursesResult.error;
-      if (plansResult.error) throw plansResult.error;
-      if (sessionsResult.error) throw sessionsResult.error;
-      if (activitiesResult.error) throw activitiesResult.error;
-
-      const learnerProfileId = learnerResult.data?.[0]?.id || null;
-      const courses = (coursesResult.data || []) as CourseRow[];
-      const ensured = await ensureLearningPlan({
-        supabase,
-        userId: authUser.id,
-        learnerProfileId,
-        courses,
-        existingPlanId: plansResult.data?.[0]?.id || null,
-        existingSessionId: sessionsResult.data?.[0]?.id || null,
-        existingActivities: (activitiesResult.data || []) as ActivityRow[],
-      });
 
       setState({
-        userId: authUser.id,
         name: getProfileDisplayName(
           (profileResult.data as ProfileNameRow | null) || null,
           authUser
         ),
-        learnerProfileId,
-        planId: ensured.planId,
-        sessionId: ensured.sessionId,
-        courses,
-        activities: ensured.activities,
+        healthRecords: healthRecordsResult.error
+          ? []
+          : ((healthRecordsResult.data || []) as HealthRecordRow[])
+              .map(normalizeHealthRecord)
+              .filter((record): record is HealthRecord => record !== null),
         debts: (debtsResult.data || []) as MoneyDebt[],
         bills: (billsResult.data || []) as MoneyBill[],
         incomes: (incomesResult.data || []) as MoneyIncome[],
@@ -487,110 +235,17 @@ export default function TodayPage() {
       setMessage(
         error instanceof Error
           ? error.message
-          : "Your Guidance Counselor had trouble opening today's learning plan. Try again in a moment."
+          : "BeastOS had trouble opening Today. Try again in a moment."
       );
     } finally {
       setLoading(false);
     }
-  }, [ensureLearningPlan, router]);
+  }, [router]);
 
   useEffect(() => {
     loadToday();
   }, [loadToday]);
 
-  async function generateNextActivity() {
-    if (generating) return;
-
-    setGenerating(true);
-    setMessage("");
-
-    try {
-      const supabase = createClient();
-      const { data: userData, error: userError } = await supabase.auth.getUser();
-      const authUser = userData?.user;
-
-      if (userError || !authUser) {
-        router.replace(buildCurrentAuthLoginPath());
-        return;
-      }
-
-      const learnerProfileId = state.learnerProfileId;
-      const course = state.courses[0];
-      const planId = state.planId;
-
-      if (!learnerProfileId || !course || !planId) {
-        setMessage(
-          "Your learning path needs a course before Beast can create a mission. Open Learning Path to choose one."
-        );
-        return;
-      }
-
-      const existingReady = getNewestReadyLearningActivity(state.activities);
-      if (existingReady) {
-        router.push(getLearningActivityRoute(existingReady.id));
-        return;
-      }
-
-      const nextSortOrder =
-        state.activities.reduce(
-          (max, activity) => Math.max(max, Number(activity.sort_order || 0)),
-          0
-        ) + 1;
-
-      const { data, error } = await supabase
-        .from("learning_activities")
-        .insert(
-          buildStarterActivityRow({
-            userId: authUser.id,
-            learnerProfileId,
-            course,
-            planId,
-            sessionId: state.sessionId,
-            sortOrder: nextSortOrder,
-          })
-        )
-        .select("*")
-        .single();
-
-      if (error) throw error;
-
-      const createdActivity = data as ActivityRow;
-      setState((current) => ({
-        ...current,
-        activities: [...current.activities, createdActivity],
-      }));
-      setMessage(`${createdActivity.title} is ready. Your Tutor is opening it now.`);
-      router.push(getLearningActivityRoute(createdActivity.id));
-    } catch (error) {
-      setMessage(
-        error instanceof Error
-          ? error.message
-          : "Your Guidance Counselor had trouble choosing the next lesson. Try again in a moment."
-      );
-    } finally {
-      setGenerating(false);
-    }
-  }
-
-  const completedActivities = state.activities.filter(
-    (activity) => activity.status === "Completed"
-  );
-  const openActivities = state.activities.filter(
-    (activity) => activity.status !== "Completed"
-  );
-  const readyActivity = getNewestReadyLearningActivity(state.activities);
-  const activityList = [
-    ...openActivities.sort(
-      (a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0)
-    ),
-    ...completedActivities
-      .slice()
-      .sort(
-        (a, b) =>
-          new Date(b.completed_at || b.created_at || 0).getTime() -
-          new Date(a.completed_at || a.created_at || 0).getTime()
-      ),
-  ];
   const moneySnapshot = useMemo(() => {
     const activeDebts = state.debts.filter(
       (debt) => !debt.is_archived && numberValue(debt.balance) > 0
@@ -627,41 +282,21 @@ export default function TodayPage() {
       state.debtPayments,
     ]
   );
-  const learningContribution: TodayContribution = useMemo(
-    () => ({
-      id: "today-learning-priority",
-      source: "learning",
-      type: "Resume",
-      title: readyActivity?.title || "Ask your Guidance Counselor for the first step",
-      summary: readyActivity
-        ? `${readyActivity.estimated_minutes} minutes with your current learning plan.`
-        : state.courses[0]
-          ? `Your ${state.courses[0].title} plan needs its next learning step.`
-          : "Your Guidance Counselor can help define the first useful learning step.",
-      reason:
-        readyActivity
-          ? "This activity is ready in your saved BeastEducation plan."
-          : state.courses[0]
-            ? `${state.courses[0].title} is in your learning path, but no activity is ready.`
-            : "No course or ready learning activity is available yet.",
-      recommendedAction: readyActivity ? "Continue with Guidance Counselor" : "Ask Guidance Counselor",
-      actionUrl: "/dashboard/education#mentor-session",
-      activeDate: todayDate,
-      timing: readyActivity ? "Active" : "Informational",
-      priority: readyActivity ? "Medium" : "Low",
-      importance: readyActivity ? 6 : 2,
-      urgency: readyActivity ? 6 : 1,
-      preferenceWeight: 5,
-      estimatedMinutes: readyActivity?.estimated_minutes || 20,
-      dismissible: true,
-      status: "Active",
-      sourceEvidenceIds: readyActivity
-        ? [readyActivity.id]
-        : state.courses[0]
-          ? [state.courses[0].id]
-          : [],
-    }),
-    [readyActivity, state.courses, todayDate]
+  const educationContributions = useMemo(
+    () =>
+      buildEducationPlanningContributions({
+        goals: state.goals,
+        today: todayDate,
+      }),
+    [state.goals, todayDate]
+  );
+  const healthContributions = useMemo(
+    () =>
+      buildHealthTodayContributions({
+        records: state.healthRecords,
+        today: todayDate,
+      }),
+    [state.healthRecords, todayDate]
   );
   const moneyContributions = useMemo<TodayContribution[]>(
     () =>
@@ -705,27 +340,28 @@ export default function TodayPage() {
     () =>
       assembleTodayDayPlan({
         contributions: [
-          ...(learningContribution.sourceEvidenceIds.length > 0
-            ? [learningContribution]
-            : []),
+          ...educationContributions,
+          ...healthContributions,
           ...moneyContributions,
           ...manualTodayItems,
         ],
         today: todayDate,
       }),
     [
-      learningContribution,
+      educationContributions,
+      healthContributions,
       manualTodayItems,
       moneyContributions,
       todayDate,
     ]
   );
-  const primaryPriority = todayDayPlan.active[0] || learningContribution;
-  const primaryPriorityScore = getTodayPriorityScore(primaryPriority);
-  const primaryPriorityExplanation =
-    getTodayContributionExplanation(primaryPriority);
-  const primaryActionAvailability =
-    getTodayItemActionAvailability(primaryPriority);
+  const primaryPriority = todayDayPlan.active[0] || null;
+  const primaryPriorityExplanation = primaryPriority
+    ? getTodayContributionExplanation(primaryPriority)
+    : null;
+  const primaryActionAvailability = primaryPriority
+    ? getTodayItemActionAvailability(primaryPriority)
+    : null;
   const actionButtons: { action: TodayItemActionType; label: string }[] = [
     { action: "Dismiss", label: "Dismiss" },
     { action: "Snooze", label: "Snooze 1h" },
@@ -739,34 +375,30 @@ export default function TodayPage() {
   const professionalRecommendations = useMemo(
     () =>
       todayDayPlan.active
-        .filter((item) => item.source === "learning" || item.source === "money")
+        .filter((item) =>
+          ["learning", "money", "health"].includes(item.source)
+        )
         .slice(0, 4),
     [todayDayPlan.active]
   );
-  const recentActivity = useMemo<PlatformActivity[]>(() => {
-    const learningActivity = completedActivities
-      .filter((activity) => activity.completed_at || activity.created_at)
-      .map((activity) => ({
-        id: `learning-completed-${activity.id}`,
-        module: "learning" as const,
-        title: activity.title,
-        summary: `${activity.activity_type} completed and saved to your learning history.`,
-        timestamp: activity.completed_at || activity.created_at || "",
-        actionUrl: getLearningActivityRoute(activity.id),
-      }));
-
-    return [...learningActivity, ...moneyIntelligence.activities]
+  const recentActivity = useMemo<PlatformActivity[]>(
+    () =>
+      moneyIntelligence.activities
       .filter((item) => item.timestamp.slice(0, 10) === todayDate)
       .sort(
         (left, right) =>
           new Date(right.timestamp).getTime() -
           new Date(left.timestamp).getTime()
       )
-      .slice(0, 5);
-  }, [completedActivities, moneyIntelligence.activities, todayDate]);
+      .slice(0, 5),
+    [moneyIntelligence.activities, todayDate]
+  );
   const upcomingEvents = useMemo<PlatformTimelineEvent[]>(
     () =>
-      moneyIntelligence.timelineEvents
+      [
+        ...moneyIntelligence.timelineEvents,
+        ...buildHealthUpcomingEvents({ records: state.healthRecords, now }),
+      ]
         .filter((item) => new Date(item.timestamp).getTime() >= now.getTime())
         .sort(
           (left, right) =>
@@ -774,7 +406,7 @@ export default function TodayPage() {
             new Date(right.timestamp).getTime()
         )
         .slice(0, 5),
-    [moneyIntelligence.timelineEvents, now]
+    [moneyIntelligence.timelineEvents, now, state.healthRecords]
   );
   const activeGoals = useMemo(
     () =>
@@ -930,22 +562,24 @@ export default function TodayPage() {
             </div>
           ))}
 
-          <div
-            className="grid grid-cols-2 gap-2"
-            data-mobile-today-source-actions="module-contract-event"
-          >
-            {actionButtons.map(({ action, label }) => (
-              <button
-                key={action}
-                type="button"
-                onClick={() => handleTodayAction(primaryPriority, action)}
-                disabled={!primaryActionAvailability[action]}
-                className="min-h-[44px] rounded-lg border border-[#2a3242] bg-[#111827] px-3 py-2 text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+          {primaryPriority && primaryActionAvailability ? (
+            <div
+              className="grid grid-cols-2 gap-2"
+              data-mobile-today-source-actions="module-contract-event"
+            >
+              {actionButtons.map(({ action, label }) => (
+                <button
+                  key={action}
+                  type="button"
+                  onClick={() => handleTodayAction(primaryPriority, action)}
+                  disabled={!primaryActionAvailability[action]}
+                  className="min-h-[44px] rounded-lg border border-[#2a3242] bg-[#111827] px-3 py-2 text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          ) : null}
         </section>
 
         <DashboardCard accent="beastos" className="hidden md:block">
@@ -1045,7 +679,7 @@ export default function TodayPage() {
 
         <DashboardCard accent="learning">
           <SectionHeader
-            eyebrow="What are my AI professionals recommending?"
+            eyebrow="What are my professionals recommending?"
             title="Professional Recommendations"
             description="Only recommendations supported by your current module records appear here."
           />
@@ -1057,9 +691,7 @@ export default function TodayPage() {
               >
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-xs font-black uppercase tracking-[0.14em] text-[#9aa7b8]">
-                    {item.source === "money"
-                      ? "Money Coach"
-                      : "Your Guidance Counselor Recommends"}
+                    {getTodayProfessionalLabel(item.source)}
                   </div>
                   <ModuleBadge
                     module={item.source === "plans" ? "beastos" : item.source}
@@ -1081,7 +713,7 @@ export default function TodayPage() {
             ))}
             {professionalRecommendations.length === 0 ? (
               <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 text-sm leading-6 text-[#c7cfdb] lg:col-span-2">
-                No AI professional has raised a recommendation supported by your
+                No professional has raised a recommendation supported by your
                 current records. Today will surface one when a module has
                 something useful to say.
               </div>
@@ -1122,8 +754,8 @@ export default function TodayPage() {
                 <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
                   <h3 className="font-black text-white">No new activity yet</h3>
                   <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
-                    Completed learning and recorded Money activity will appear
-                    here.
+                    Meaningful changes recorded by your active modules will
+                    appear here.
                   </p>
                 </div>
               ) : null}
@@ -1235,7 +867,10 @@ export default function TodayPage() {
             <div className="mt-5 grid gap-2 sm:grid-cols-2">
               {[
                 ["Ask Money Coach", "/dashboard/money"],
-                ["Ask Guidance Counselor", "/dashboard/education"],
+                [
+                  "Ask Guidance Counselor",
+                  "/dashboard/education/guidance-counselor",
+                ],
                 ["Review Calendar", "/dashboard/calendar"],
                 ["Check Goals", "/dashboard/goals"],
                 ["Upload a Document", "/dashboard/uploads"],
@@ -1294,141 +929,35 @@ export default function TodayPage() {
           </DashboardCard>
         ) : null}
 
-        {educationTeachingCapabilitiesAvailable ? (
-          <details
-            id="activities"
-            className="scroll-mt-24 rounded-2xl border border-[#2a3242] bg-[#1a1f2b] p-5"
-          >
+        <details
+          id="education-planning"
+          className="scroll-mt-24 rounded-2xl border border-[#2a3242] bg-[#1a1f2b] p-5"
+        >
           <summary className="cursor-pointer text-base font-black text-white">
-            Learning plan details
+            Education planning
           </summary>
-          <div className="mt-5 grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-            <DashboardCard accent="learning">
-              <SectionHeader
-                eyebrow="Your Guidance Counselor Recommends"
-                title={readyActivity?.title || "Ask your Guidance Counselor for the first step"}
-                description={
-                  readyActivity
-                    ? `This step is ready and should take about ${readyActivity.estimated_minutes} minutes.`
-                    : state.activities.length > 0
-                      ? "You finished the current set. Ask your Guidance Counselor for the next learning step."
-                      : "Ask your Guidance Counselor above to prepare the first teaching moment."
-                }
-              />
-              <div className="mt-4">
-                {readyActivity ? (
-                  <Link
-                    href="/dashboard/education#mentor-session"
-                    className="beast-button"
-                  >
-                    Continue with Guidance Counselor
-                  </Link>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={generateNextActivity}
-                    className="beast-button"
-                    disabled={generating || loading}
-                  >
-                    {generating
-                      ? "Choosing..."
-                      : "Let's choose what to learn next"}
-                  </button>
-                )}
-              </div>
-              <div className="mt-5 grid gap-3">
-                {activityList.map((activity) => (
-                  <div
-                    key={activity.id}
-                    className={`rounded-xl border p-4 ${getActivityTone(activity.status)}`}
-                  >
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <div className="text-xs font-bold uppercase text-[#7f8da3]">
-                          {activity.activity_type} - {activity.difficulty}
-                        </div>
-                        <h3 className="mt-1 font-black text-white">
-                          {activity.title}
-                        </h3>
-                      </div>
-                      <span className="text-xs font-bold text-[#9aa7b8]">
-                        {activity.estimated_minutes} min
-                      </span>
-                    </div>
-                    <Link
-                      href={getLearningActivityRoute(activity.id)}
-                      className="mt-3 inline-flex beast-button-secondary"
-                    >
-                      {activity.status === "Completed"
-                        ? "Review with Tutor"
-                        : "Continue"}
-                    </Link>
-                  </div>
-                ))}
-              </div>
-            </DashboardCard>
-
-            <DashboardCard accent="purple">
-              <SectionHeader
-                eyebrow="Learning path"
-                title={state.courses[0]?.title || "Your first course"}
-                description={`${state.courses.length} course${
-                  state.courses.length === 1 ? "" : "s"
-                } in your path.`}
-              />
-              <div className="mt-5 grid gap-3">
-                {state.courses.map((course) => (
-                  <div
-                    key={course.id}
-                    className="rounded-xl border border-[#2a3242] bg-[#111827] p-4"
-                  >
-                    <div className="font-black text-white">{course.title}</div>
-                    <div className="mt-2 h-2 rounded-full bg-[#0f1419]">
-                      <div
-                        className="h-full rounded-full bg-[#818cf8]"
-                        style={{ width: `${Number(course.progress || 0)}%` }}
-                      />
-                    </div>
-                    <div className="mt-2 text-xs font-bold text-[#9aa7b8]">
-                      {Number(course.progress || 0)}% explored
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </DashboardCard>
-          </div>
-          </details>
-        ) : (
-          <details
-            id="education-planning"
-            className="scroll-mt-24 rounded-2xl border border-[#2a3242] bg-[#1a1f2b] p-5"
-          >
-            <summary className="cursor-pointer text-base font-black text-white">
-              Education planning
-            </summary>
-            <div className="mt-5">
-              <SectionHeader
-                eyebrow="Guidance Counselor"
-                title="Keep your education and career direction current"
-                description="Review your roadmap or talk through the next useful planning decision with your Guidance Counselor."
-              />
-              <div className="mt-4 flex flex-wrap gap-3">
-                <Link
-                  href="/dashboard/education/guidance-counselor"
-                  className="beast-button"
-                >
-                  Talk with Guidance Counselor
-                </Link>
-                <Link
-                  href="/dashboard/education/educational-roadmap"
-                  className="beast-button-secondary"
-                >
-                  Review roadmap
-                </Link>
-              </div>
+          <div className="mt-5">
+            <SectionHeader
+              eyebrow="Guidance Counselor"
+              title="Keep your education and career direction current"
+              description="Review your roadmap or talk through the next useful planning decision with your Guidance Counselor."
+            />
+            <div className="mt-4 flex flex-wrap gap-3">
+              <Link
+                href="/dashboard/education/guidance-counselor"
+                className="beast-button"
+              >
+                Talk with Guidance Counselor
+              </Link>
+              <Link
+                href="/dashboard/education/educational-roadmap"
+                className="beast-button-secondary"
+              >
+                Review roadmap
+              </Link>
             </div>
-          </details>
-        )}
+          </div>
+        </details>
 
         <details className="rounded-2xl border border-[#2a3242] bg-[#111827] p-5">
           <summary className="cursor-pointer text-sm font-black text-[#c7cfdb]">
@@ -1438,26 +967,19 @@ export default function TodayPage() {
             <SectionHeader
               eyebrow="Why this is prioritized"
               title="How Today chose your next step"
-              description="Today weighs urgency, importance, effort, and your current priorities."
+              description="Today shows only verified records and recommendations from capabilities available in your connected modules."
             />
             <div
               className="mt-4 rounded-xl border border-[#2a3242] bg-[#0f1419] p-4"
-              aria-label="Priority Engine"
+              aria-label="Priority explanation"
             >
               <div className="text-xs font-black uppercase text-[#9aa7b8]">
-                Priority Engine
-              </div>
-              <div className="mt-2 text-2xl font-black text-white">
-                {primaryPriorityScore.score}
+                Why this appears
               </div>
               <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
-                {primaryPriorityScore.explanation}
-              </p>
-              <div className="mt-4 text-xs font-black uppercase text-[#9aa7b8]">
-                Explain why shown
-              </div>
-              <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
-                {primaryPriorityExplanation.displayReason}
+                {primaryPriorityExplanation
+                  ? primaryPriorityExplanation.displayReason
+                  : "No connected module has supplied an active, evidence-backed priority for today."}
               </p>
             </div>
             <div className="mt-4 flex flex-wrap gap-2">
@@ -1466,7 +988,9 @@ export default function TodayPage() {
                   key={source}
                   className="rounded-full border border-[#2a3242] px-3 py-1 text-xs font-black uppercase text-[#9aa7b8]"
                 >
-                  {source}
+                  {["learning", "money", "health"].includes(source)
+                    ? getTodayProfessionalLabel(source)
+                    : source}
                 </span>
               ))}
             </div>

@@ -29,7 +29,7 @@ test("BO-308 makes Today the BeastOS command center", () => {
   assert.match(today, /What needs my attention/);
   assert.match(today, /What changed today/);
   assert.match(today, /What should I do next/);
-  assert.match(today, /What are my AI professionals recommending/);
+  assert.match(today, /What are my professionals recommending/);
 });
 
 test("BO-308 professional recommendations use personalized source-owned evidence", () => {
@@ -37,10 +37,11 @@ test("BO-308 professional recommendations use personalized source-owned evidence
   assert.match(today, /loadUserGoals/);
   assert.match(today, /getGoalProgressPercent/);
   assert.match(today, /sourceEvidenceIds: \[recommendation\.id\]/);
-  assert.match(today, /learningContribution\.sourceEvidenceIds\.length > 0/);
+  assert.match(today, /buildEducationPlanningContributions/);
+  assert.match(today, /buildHealthTodayContributions/);
   assert.match(today, /Only recommendations supported by your current module records/);
   assert.match(today, /Money Coach/);
-  assert.match(today, /Your Guidance Counselor Recommends/);
+  assert.match(today, /getTodayProfessionalLabel/);
   assert.match(today, /Why this matters:/);
   assert.match(today, /href=\{item\.actionUrl\}/);
   assert.doesNotMatch(today, /Your Home Depot promotion expires/);
@@ -63,8 +64,9 @@ test("BO-308 aggregates existing modules without taking over their logic", () =>
 
 test("BO-308 keeps Today concise while preserving supporting workflows", () => {
   assert.match(today, /How Today decides what to show/);
-  assert.match(today, /Learning plan details/);
-  assert.match(today, /activityList\.map/);
+  assert.match(today, /Education planning/);
+  assert.doesNotMatch(today, /activityList\.map/);
+  assert.doesNotMatch(today, /learning_activities|learning_sessions|learning_plans/);
   assert.match(today, /manualTodayItems/);
   assert.match(today, /data-mobile-shared-service="today"/);
   assert.match(today, /md:hidden/);

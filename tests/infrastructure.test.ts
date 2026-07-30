@@ -3079,8 +3079,8 @@ test("home and today navigation render stable route shells during data loading",
   assert.match(todaySource, /const \[loading, setLoading\] = useState\(true\)/);
   assert.match(homeSource, /\{loading \? \(/);
   assert.match(todaySource, /\{loading \? \(/);
-  assert.match(todaySource, /title=\{readyActivity\?\.title \|\| "Ask your Guidance Counselor for the first step"\}/);
-  assert.match(todaySource, /disabled=\{generating \|\| loading\}/);
+  assert.match(todaySource, /title="Keep your education and career direction current"/);
+  assert.match(todaySource, /buildEducationPlanningContributions/);
   assert.doesNotMatch(homeSource, /\{loading \|\| !user\.name\s+\?/);
   assert.doesNotMatch(todaySource, /\{loading \|\| !state\.name\s+\?/);
   assert.doesNotMatch(todaySource, /\{loading \? \([\s\S]*?\) : \(\s*<>\s*<section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"/);
@@ -3490,7 +3490,7 @@ test("BeastEducation member experience hides workflow mechanics behind Guidance 
     studySessionCard,
   ].join("\n");
 
-  assert.match(memberExperienceSource, /Continue with Guidance Counselor/);
+  assert.match(memberExperienceSource, /Talk with Guidance Counselor/);
   assert.match(memberExperienceSource, /mission\.primaryAction\.label/);
   assert.match(activitiesPage, /redirect\("\/dashboard\/education\/lessons"\)/);
   assert.match(memberExperienceSource, /Your Guidance Counselor/);
@@ -3676,13 +3676,13 @@ test("generated learning activities persist with required visibility fields", ()
   assert.equal(goalsManager.includes("Switch Active Goal"), true);
   assert.equal(goalsManager.includes("Progress stays saved"), true);
   assert.equal(goalsManager.includes('status: "Paused"'), true);
-  assert.equal(todayPage.includes("getNewestReadyLearningActivity"), true);
+  assert.equal(todayPage.includes("getNewestReadyLearningActivity"), false);
   assert.equal(activitiesPage.includes("redirect(\"/dashboard/education/lessons\")"), true);
   assert.equal(recommendation.includes("mission.primaryAction.label"), true);
   assert.equal(learningPage.includes("learning_activities"), true);
 });
 
-test("Today learning mission generation avoids dead ends", () => {
+test("Today excludes the legacy learning mission engine", () => {
   const todayPage = readFileSync("src/app/dashboard/today/page.tsx", "utf8");
   const completedOnly = [
     {
@@ -3767,15 +3767,15 @@ test("Today learning mission generation avoids dead ends", () => {
   assert.equal(continuity.nextQueuedActivityId, "next-queued");
   assert.equal(continuity.queueExhausted, false);
   assert.equal(continuity.continuityBasis.includes("preserves queue order"), true);
-  assert.equal(todayPage.includes("async function generateNextActivity"), true);
-  assert.equal(todayPage.includes(".from(\"learning_activities\")"), true);
-  assert.equal(todayPage.includes(".insert("), true);
-  assert.equal(todayPage.includes("onClick={generateNextActivity}"), true);
+  assert.equal(todayPage.includes("async function generateNextActivity"), false);
+  assert.equal(todayPage.includes(".from(\"learning_activities\")"), false);
+  assert.equal(todayPage.includes(".insert("), false);
+  assert.equal(todayPage.includes("onClick={generateNextActivity}"), false);
   assert.equal(todayPage.includes("onClick={loadToday} className=\"beast-button\""), false);
-  assert.equal(todayPage.includes("getLearningActivityTitleForCourse"), true);
-  assert.equal(todayPage.includes("You finished the current set. Ask your Guidance Counselor for the next learning step."), true);
-  assert.equal(todayPage.includes("Ask your Guidance Counselor above to prepare the first teaching moment."), true);
-  assert.equal(todayPage.includes("activityList.map"), true);
+  assert.equal(todayPage.includes("getLearningActivityTitleForCourse"), false);
+  assert.equal(todayPage.includes("first teaching moment"), false);
+  assert.equal(todayPage.includes("activityList.map"), false);
+  assert.equal(todayPage.includes("Education planning"), true);
 });
 
 test("lesson engine supports the adaptive BeastEducation teaching cycle", () => {
