@@ -33,6 +33,19 @@ property identifier (`sc-domain:example.com` or a URL-prefix property including
 its trailing slash). First-party telemetry is enabled explicitly with
 `SEANGWORLD_FIRST_PARTY_ANALYTICS_ENABLED=true`.
 
+Privacy-first browser product analytics uses
+`NEXT_PUBLIC_GA_MEASUREMENT_ID`. It must be a GA4 web-stream measurement ID such
+as `G-XXXXXXXXXX`; do not confuse it with the numeric Data API property ID.
+`NEXT_PUBLIC_ANALYTICS_CONSENT_DEFAULT` supports `pending`, `disabled`, or
+`enabled` and defaults safely to `pending`. Collection is suppressed outside
+production and GA4 does not load until consent is enabled. Beast configures
+`send_page_view: false`, disables Google Signals and advertising
+personalization, and emits only the allowlisted `bo404-v1` product-intelligence
+contract. BeastAdmin treats `BEAST_ECOSYSTEM_GA4_PROPERTY_ID` as the numeric
+property explicitly approved for cross-product aggregates. The legacy
+`SEANGWORLD_GA4_PROPERTY_ID` is not assumed to have ecosystem-wide stream
+coverage.
+
 The Google Analytics Data API and Search Console API must be enabled in the
 service account's Google Cloud project. Grant the service-account email:
 

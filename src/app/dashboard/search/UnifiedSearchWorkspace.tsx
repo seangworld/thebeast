@@ -147,6 +147,15 @@ export default function UnifiedSearchWorkspace({
         <form
           className="mt-5"
           role="search"
+          data-analytics-event="search_performed"
+          data-analytics-action="unified_search"
+          data-analytics-result={
+            query.trim()
+              ? orderedResults.length
+                ? "success"
+                : "no_results"
+              : undefined
+          }
           onSubmit={(event) => {
             event.preventDefault();
             if (query.trim()) rememberSearch(query);

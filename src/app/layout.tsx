@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Script from "next/script";
+import { BeastAnalytics } from "@/app/components/analytics/BeastAnalytics";
 import { externalResourceLinkProps } from "@/lib/platform/externalResources";
 import {
   beastOSFooterLinks,
@@ -50,19 +50,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-YFRV4QJK04"
-          strategy="afterInteractive"
+        <BeastAnalytics
+          measurementId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || ""}
+          environmentName={process.env.VERCEL_ENV || process.env.NODE_ENV}
+          configuredConsent={
+            process.env.NEXT_PUBLIC_ANALYTICS_CONSENT_DEFAULT
+          }
         />
-
-        <Script id="google-analytics" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-YFRV4QJK04');
-          `}
-        </Script>
 
         {process.env.NODE_ENV !== "production" && (
           <div className="mx-auto mt-2 max-w-full bg-[#fef3c7] px-3 py-1 text-center text-xs font-semibold text-[#92400e] sm:text-sm">

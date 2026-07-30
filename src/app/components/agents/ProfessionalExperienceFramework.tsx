@@ -449,6 +449,8 @@ export function ProfessionalConversationHistory({
       <div className="p-3">
         <button
           type="button"
+          data-analytics-event="conversation_created"
+          data-analytics-action="new_conversation"
           className="beast-button flex min-h-11 w-full items-center justify-center gap-2"
           disabled={loading}
           onClick={onNewConversation}
@@ -513,6 +515,8 @@ export function ProfessionalConversationHistory({
                     >
                       <button
                         type="button"
+                        data-analytics-event="conversation_resumed"
+                        data-analytics-action="open_conversation"
                         className="w-full rounded-md text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300"
                         onClick={() => onOpen(thread)}
                       >

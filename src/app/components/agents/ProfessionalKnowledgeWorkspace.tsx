@@ -51,9 +51,13 @@ export type ProfessionalKnowledgeModel = {
 
 function KnowledgeAction({
   item,
+  analyticsEvent,
   onAction,
 }: {
   item: ProfessionalKnowledgeItem;
+  analyticsEvent:
+    | "knowledge_area_selected"
+    | "missing_information_flow_started";
   onAction?: (item: ProfessionalKnowledgeItem) => void;
 }) {
   const className =
@@ -63,6 +67,8 @@ function KnowledgeAction({
     return (
       <button
         type="button"
+        data-analytics-event={analyticsEvent}
+        data-analytics-action="start_conversation"
         className={className}
         disabled={!onAction}
         onClick={() => onAction?.(item)}
@@ -73,7 +79,12 @@ function KnowledgeAction({
   }
 
   return (
-    <Link className={className} href={item.action.href}>
+    <Link
+      className={className}
+      href={item.action.href}
+      data-analytics-event={analyticsEvent}
+      data-analytics-action="open_knowledge"
+    >
       {item.action.label} <span aria-hidden="true">→</span>
     </Link>
   );
@@ -124,7 +135,15 @@ function KnowledgeItemCard({
           )}
         </details>
       ) : null}
-      <KnowledgeAction item={item} onAction={onAction} />
+      <KnowledgeAction
+        item={item}
+        analyticsEvent={
+          kind === "needed"
+            ? "missing_information_flow_started"
+            : "knowledge_area_selected"
+        }
+        onAction={onAction}
+      />
       {item.relatedLinks?.length ? (
         <nav
           className="mt-3 flex flex-wrap gap-2 border-t border-white/10 pt-3"

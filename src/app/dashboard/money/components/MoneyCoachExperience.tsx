@@ -1257,9 +1257,9 @@ export function MoneyCoachExperience({
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Link className="beast-button-secondary inline-flex min-h-11 items-center" href={recommendation.href}>View details</Link>
-                {(!lifecycle || lifecycle.status === "proposed" || lifecycle.status === "deferred") ? <button type="button" className="beast-button min-h-11" disabled={pending || !executionStore} onClick={() => { void decideRecommendation(recommendation, "accepted"); }}>Accept recommendation</button> : null}
-                {(!lifecycle || lifecycle.status === "proposed") ? <button type="button" className="beast-button-secondary min-h-11" disabled={pending || !executionStore} onClick={() => { void decideRecommendation(recommendation, "deferred"); }}>Decide later</button> : null}
-                {(!lifecycle || lifecycle.status === "proposed" || lifecycle.status === "deferred") ? <button type="button" className="beast-button-secondary min-h-11" disabled={pending || !executionStore} onClick={() => { void decideRecommendation(recommendation, "declined"); }}>Decline</button> : null}
+                {(!lifecycle || lifecycle.status === "proposed" || lifecycle.status === "deferred") ? <button type="button" data-analytics-event="recommendation_accepted" data-analytics-status="accepted" className="beast-button min-h-11" disabled={pending || !executionStore} onClick={() => { void decideRecommendation(recommendation, "accepted"); }}>Accept recommendation</button> : null}
+                {(!lifecycle || lifecycle.status === "proposed") ? <button type="button" data-analytics-event="recommendation_deferred" data-analytics-status="deferred" className="beast-button-secondary min-h-11" disabled={pending || !executionStore} onClick={() => { void decideRecommendation(recommendation, "deferred"); }}>Decide later</button> : null}
+                {(!lifecycle || lifecycle.status === "proposed" || lifecycle.status === "deferred") ? <button type="button" data-analytics-event="recommendation_dismissed" data-analytics-status="dismissed" className="beast-button-secondary min-h-11" disabled={pending || !executionStore} onClick={() => { void decideRecommendation(recommendation, "declined"); }}>Decline</button> : null}
               </div>
               {lifecycle?.status === "accepted" ? <div className="mt-4 border-t border-white/10 pt-4">
                 <p className="text-xs font-bold text-slate-300">After you try this recommendation, what changed?</p>

@@ -934,6 +934,8 @@ export default function GuidanceCounselorConversation({
           ["proposed", "deferred"].includes(recommendationLifecycle.status) ? (
             <button
               type="button"
+              data-analytics-event="recommendation_accepted"
+              data-analytics-status="accepted"
               className="beast-button min-h-11"
               disabled={decisionPending || !executionStore}
               onClick={() => void decideRecommendation("accepted")}
@@ -945,6 +947,8 @@ export default function GuidanceCounselorConversation({
           recommendationLifecycle.status === "proposed" ? (
             <button
               type="button"
+              data-analytics-event="recommendation_deferred"
+              data-analytics-status="deferred"
               className="beast-button-secondary min-h-11"
               disabled={decisionPending || !executionStore}
               onClick={() => void decideRecommendation("deferred")}
@@ -956,6 +960,8 @@ export default function GuidanceCounselorConversation({
           ["proposed", "deferred"].includes(recommendationLifecycle.status) ? (
             <button
               type="button"
+              data-analytics-event="recommendation_dismissed"
+              data-analytics-status="dismissed"
               className="beast-button-secondary min-h-11"
               disabled={decisionPending || !executionStore}
               onClick={() => void decideRecommendation("declined")}
