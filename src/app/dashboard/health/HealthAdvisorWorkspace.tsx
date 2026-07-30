@@ -160,15 +160,25 @@ function HealthAdvisorAnswerDocument({
 }: {
   response: HealthAdvisorQuestionAnswer;
 }) {
+  const recordEvidence = response.recordEvidence || [];
+  const documentEvidence = response.documentEvidence || [];
+  const conversationEvidence = response.conversationEvidence || [];
+  const contextWarnings = response.contextWarnings || [];
+  const generalInformation = response.generalInformation || response.answer;
   return (
     <div className="grid gap-4">
       <section aria-label="BeastHealth record evidence used">
         <h4 className="text-xs font-black uppercase tracking-[0.12em] text-red-200">
-          From your BeastHealth record
+          Verified BeastHealth records
         </h4>
-        {response.recordEvidence.length ? (
+        <p className="mt-2 text-xs leading-5 text-[#9aa7b8]">
+          Verified here means retrieved from your owner-scoped BeastHealth
+          record. It does not mean a clinician has independently confirmed the
+          information.
+        </p>
+        {recordEvidence.length ? (
           <ul className="mt-2 grid gap-2">
-            {response.recordEvidence.map((record) => (
+            {recordEvidence.map((record) => (
               <li
                 key={record.id}
                 className="rounded-xl border border-white/10 bg-black/10 p-3"
@@ -188,11 +198,97 @@ function HealthAdvisorAnswerDocument({
           </p>
         )}
       </section>
+      {documentEvidence.length ? (
+        <section aria-label="Uploaded health document evidence used">
+          <h4 className="text-xs font-black uppercase tracking-[0.12em] text-red-200">
+            Uploaded health documents
+          </h4>
+          <ul className="mt-2 grid gap-2">
+            {documentEvidence.map((document) => (
+              <li
+                key={document.id}
+                className="rounded-xl border border-white/10 bg-black/10 p-3"
+              >
+                <p className="font-bold text-white">{document.title}</p>
+                <p className="mt-1 text-xs leading-5 text-[#9aa7b8]">
+                  {document.source} · Updated {formatDate(document.updatedAt)}
+                </p>
+                {document.summary ? (
+                  <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
+                    {document.summary}
+                  </p>
+                ) : (
+                  <p className="mt-2 text-xs leading-5 text-[#9aa7b8]">
+                    Document metadata is available. No owner-approved document
+                    summary was used.
+                  </p>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+      {conversationEvidence.length ? (
+        <section aria-label="Prior Health Advisor conversation context used">
+          <h4 className="text-xs font-black uppercase tracking-[0.12em] text-red-200">
+            Prior conversations
+          </h4>
+          <ul className="mt-2 grid gap-2">
+            {conversationEvidence.map((conversation) => (
+              <li
+                key={conversation.id}
+                className="rounded-xl border border-white/10 bg-black/10 p-3"
+              >
+                <p className="font-bold text-white">{conversation.title}</p>
+                <p className="mt-1 text-sm leading-6 text-[#c7cfdb]">
+                  {conversation.summary}
+                </p>
+                <p className="mt-1 text-xs leading-5 text-[#9aa7b8]">
+                  Updated {formatDate(conversation.updatedAt)}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+      {contextWarnings.length ? (
+        <section
+          aria-label="Unavailable Health Advisor context"
+          className="rounded-xl border border-amber-300/30 bg-amber-300/10 p-3"
+        >
+          <h4 className="text-xs font-black uppercase tracking-[0.12em] text-amber-100">
+            Context unavailable
+          </h4>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-6 text-amber-50">
+            {contextWarnings.map((warning) => (
+              <li key={warning}>{warning}</li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
       <section aria-label="General health information">
         <h4 className="text-xs font-black uppercase tracking-[0.12em] text-red-200">
-          General information
+          General medical information
         </h4>
-        <p className="mt-2 whitespace-pre-wrap">{response.answer}</p>
+        <p className="mt-2 whitespace-pre-wrap">{generalInformation}</p>
+      </section>
+      <section aria-label="Possible medical explanations">
+        <h4 className="text-xs font-black uppercase tracking-[0.12em] text-red-200">
+          Possible explanations
+        </h4>
+        <p className="mt-2 whitespace-pre-wrap">
+          {response.possibleExplanations ||
+            "No source-supported possibilities were included for this question."}
+        </p>
+      </section>
+      <section aria-label="Questions for a clinician">
+        <h4 className="text-xs font-black uppercase tracking-[0.12em] text-red-200">
+          Questions for a clinician
+        </h4>
+        <p className="mt-2 whitespace-pre-wrap">
+          {response.questionsForClinician ||
+            "No additional clinician questions were identified."}
+        </p>
       </section>
       <section aria-label="External medical sources">
         <h4 className="text-xs font-black uppercase tracking-[0.12em] text-red-200">
@@ -226,7 +322,7 @@ function HealthAdvisorAnswerDocument({
       </section>
       <details className="rounded-xl border border-white/10 p-3">
         <summary className="cursor-pointer text-sm font-bold text-red-100">
-          Limitations
+          Safety limitations
         </summary>
         <ul className="mt-3 list-disc space-y-1 pl-5 text-xs leading-5 text-[#9aa7b8]">
           {response.limitations.map((limitation) => (

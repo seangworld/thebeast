@@ -33,6 +33,23 @@ export type HealthAdvisorRecordEvidence = {
   provenance: "saved_beasthealth_record";
 };
 
+export type HealthAdvisorDocumentEvidence = {
+  id: string;
+  title: string;
+  updatedAt: string;
+  source: string;
+  summary: string | null;
+  provenance: "saved_beast_document";
+};
+
+export type HealthAdvisorConversationEvidence = {
+  id: string;
+  title: string;
+  updatedAt: string;
+  summary: string;
+  provenance: "saved_health_advisor_conversation";
+};
+
 export type HealthAdvisorExternalSource = {
   title: string;
   url: string;
@@ -47,10 +64,34 @@ export type HealthAdvisorQuestionAnswer = {
     | "insufficient_sources"
     | "error";
   answer: string;
+  generalInformation: string;
+  possibleExplanations: string;
+  questionsForClinician: string;
   recordEvidence: HealthAdvisorRecordEvidence[];
+  documentEvidence: HealthAdvisorDocumentEvidence[];
+  conversationEvidence: HealthAdvisorConversationEvidence[];
+  contextWarnings: string[];
   externalSources: HealthAdvisorExternalSource[];
   limitations: string[];
   model: string;
+};
+
+export type HealthAdvisorDocumentContext = {
+  id: string;
+  title: string;
+  description: string | null;
+  status: string;
+  updatedAt: string;
+  source: string;
+  summary: string | null;
+};
+
+export type HealthAdvisorConversationContext = {
+  id: string;
+  title: string;
+  updatedAt: string;
+  summary: string;
+  archived: boolean;
 };
 
 export type HealthAdvisorDisclosureTopic = {
@@ -210,6 +251,40 @@ const stopWords = new Set([
   "your",
 ]);
 
+const timelineTerms = [
+  "timeline",
+  "history",
+  "historical",
+  "previous",
+  "prior",
+  "past",
+  "recent",
+] as const;
+
+const documentTerms = [
+  "document",
+  "documents",
+  "uploaded",
+  "upload",
+  "report",
+  "reports",
+  "record",
+  "records",
+  "lab",
+  "labs",
+] as const;
+
+const conversationTerms = [
+  "conversation",
+  "conversations",
+  "discussed",
+  "last time",
+  "previously",
+  "prior",
+  "earlier",
+  "remember",
+] as const;
+
 const disclosureTopics: readonly {
   id: string;
   label: string;
@@ -358,6 +433,9 @@ export function selectRelevantHealthRecords(
     }
   }
   const tokens = questionTokens(question);
+  const isTimelineQuestion = timelineTerms.some((term) =>
+    normalizedQuestion.includes(term)
+  );
   return records
     .filter((record) => record.status !== "archived")
     .map((record) => {
@@ -368,6 +446,7 @@ export function selectRelevantHealthRecords(
       return {
         record,
         score:
+          (isTimelineQuestion ? 50 : 0) +
           (topicalKinds.has(record.recordType) ? 100 : 0) +
           lexicalMatches * 10,
       };
@@ -380,6 +459,96 @@ export function selectRelevantHealthRecords(
     )
     .slice(0, limit)
     .map(({ record }) => record);
+}
+
+function contextSearchText(...values: (string | null | undefined)[]) {
+  return values.filter(Boolean).join(" ").toLowerCase();
+}
+
+function selectRelevantContext<T>(
+  values: readonly T[],
+  question: string,
+  searchText: (value: T) => string,
+  updatedAt: (value: T) => string,
+  broadTerms: readonly string[],
+  limit: number
+) {
+  const normalizedQuestion = question.toLowerCase();
+  const broadQuestion = broadTerms.some((term) =>
+    normalizedQuestion.includes(term)
+  );
+  const tokens = questionTokens(question);
+  return values
+    .map((value) => {
+      const searchable = searchText(value);
+      return {
+        value,
+        score:
+          (broadQuestion ? 50 : 0) +
+          tokens.filter((token) => searchable.includes(token)).length * 10,
+      };
+    })
+    .filter(({ score }) => score > 0)
+    .sort(
+      (left, right) =>
+        right.score - left.score ||
+        updatedAt(right.value).localeCompare(updatedAt(left.value))
+    )
+    .slice(0, limit)
+    .map(({ value }) => value);
+}
+
+export function buildHealthAdvisorDocumentEvidence(
+  documents: readonly HealthAdvisorDocumentContext[],
+  question: string,
+  limit = 8
+): HealthAdvisorDocumentEvidence[] {
+  return selectRelevantContext(
+    documents.filter(
+      (document) =>
+        document.status !== "Archived" && document.status !== "Deleted"
+    ),
+    question,
+    (document) =>
+      contextSearchText(
+        document.title,
+        document.description,
+        document.source,
+        document.summary
+      ),
+    (document) => document.updatedAt,
+    documentTerms,
+    limit
+  ).map((document) => ({
+    id: document.id,
+    title: document.title,
+    updatedAt: document.updatedAt,
+    source: document.source,
+    summary: document.summary,
+    provenance: "saved_beast_document",
+  }));
+}
+
+export function buildHealthAdvisorConversationEvidence(
+  conversations: readonly HealthAdvisorConversationContext[],
+  question: string,
+  limit = 6
+): HealthAdvisorConversationEvidence[] {
+  return selectRelevantContext(
+    conversations.filter((conversation) => !conversation.archived),
+    question,
+    (conversation) =>
+      contextSearchText(conversation.title, conversation.summary),
+    (conversation) => conversation.updatedAt,
+    conversationTerms,
+    limit
+  ).map((conversation) => ({
+    id: conversation.id,
+    title: conversation.title,
+    updatedAt: conversation.updatedAt,
+    summary: conversation.summary,
+    provenance: "saved_health_advisor_conversation",
+  }));
 }
 
 export function buildHealthAdvisorRecordEvidence(
@@ -461,16 +630,49 @@ export function parseHealthAdvisorOpenAIResponse(
   };
 }
 
+function extractSection(text: string, heading: string, nextHeadings: string[]) {
+  const escapedHeading = heading.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const escapedNext = nextHeadings
+    .map((value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+    .join("|");
+  const pattern = new RegExp(
+    `(?:^|\\n)#{0,3}\\s*${escapedHeading}\\s*\\n([\\s\\S]*?)${
+      escapedNext ? `(?=\\n#{0,3}\\s*(?:${escapedNext})\\s*\\n|$)` : "$"
+    }`,
+    "i"
+  );
+  return text.match(pattern)?.[1]?.trim() || "";
+}
+
+export function parseHealthAdvisorMedicalSections(text: string) {
+  const headings = [
+    "General medical information",
+    "Possible explanations",
+    "Questions for a clinician",
+    "Safety limitations",
+  ];
+  return {
+    generalInformation:
+      extractSection(text, headings[0], headings.slice(1)) || text.trim(),
+    possibleExplanations: extractSection(text, headings[1], headings.slice(2)),
+    questionsForClinician: extractSection(text, headings[2], headings.slice(3)),
+    safetyLimitations: extractSection(text, headings[3], []),
+  };
+}
+
 export const healthAdvisorExternalResearchInstructions = [
   "You are the member's Health Advisor inside BeastHealth.",
   "Answer the submitted health question carefully and conversationally using current external medical sources.",
   "You do not receive the member's saved BeastHealth records. Do not imply that you reviewed or know their record.",
   "Use web search for every answer. Prefer FDA, NIH, CDC, MedlinePlus, official medication labeling, recognized professional medical associations, and reputable academic medical centers.",
   "Do not state an externally supported medical claim without a web-search citation. Do not fabricate a citation or source.",
-  "Clearly label the response General information.",
-  "Distinguish established facts from possibilities or inference. State relevant uncertainty and limitations.",
-  "When useful, finish with concise Questions for your clinician.",
+  "Use exactly these four Markdown headings in this order: General medical information; Possible explanations; Questions for a clinician; Safety limitations.",
+  "Under General medical information, explain established, source-supported information only.",
+  "Under Possible explanations, distinguish possibilities from facts and do not infer a diagnosis. If possibilities would be irresponsible or irrelevant, say so plainly.",
+  "Under Questions for a clinician, provide concise questions that help the member prepare for a qualified clinician or pharmacist.",
+  "Under Safety limitations, state the relevant limits of the answer and any appropriate follow-up or urgent-care boundary.",
   "Never diagnose, prescribe, determine treatment, or tell the member to start, stop, or change medication.",
+  "For medication or interaction questions, explain only source-supported general information and direct personalized medication decisions to a qualified clinician or pharmacist.",
   "Never present general medical information as personalized clinical advice.",
   "Never claim that a lab, vital, symptom, or situation is safe, normal, or harmless for this member.",
   "If the question may describe an urgent or emergency concern, state that you cannot assess urgency remotely and direct the member to appropriate local emergency or qualified clinical care. Do not provide false reassurance.",
