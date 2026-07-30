@@ -6,6 +6,10 @@ const shared = readFileSync(
   "src/app/components/agents/ProfessionalConversationWorkspace.tsx",
   "utf8"
 );
+const framework = readFileSync(
+  "src/app/components/agents/ProfessionalExperienceFramework.tsx",
+  "utf8"
+);
 const agentExports = readFileSync("src/app/components/agents/index.ts", "utf8");
 const money = readFileSync(
   "src/app/dashboard/money/components/MoneyCoachExperience.tsx",
@@ -18,12 +22,14 @@ const guidance = readFileSync(
 
 test("BE-223 provides one shared professional conversation workspace", () => {
   assert.match(agentExports, /ProfessionalConversationWorkspace/);
+  assert.match(agentExports, /ProfessionalExperienceFramework/);
   assert.match(shared, /data-professional-conversation-workspace/);
   for (const source of [money, guidance]) {
-    assert.match(source, /<ProfessionalConversationWorkspace/);
+    assert.match(source, /<ProfessionalExperienceFramework/);
     assert.match(source, /<ProfessionalConversationTimeline/);
     assert.match(source, /<ProfessionalConversationComposer/);
   }
+  assert.match(framework, /<ProfessionalConversationWorkspace/);
 });
 
 test("BE-223 shares scrolling, streaming, message layout, and responsive behavior", () => {
@@ -42,10 +48,11 @@ test("BE-223 gives Guidance Counselor durable owner-scoped conversation history"
   assert.match(guidance, /SupabaseAgentConversationStore/);
   assert.match(guidance, /agentId: professionalId/);
   assert.match(guidance, /ownerId: memberId/);
-  assert.match(guidance, /Pinned Conversations/);
-  assert.match(guidance, /Recent Conversations/);
-  assert.match(guidance, /Archived/);
-  assert.match(guidance, /Search conversations/);
+  assert.match(guidance, /<ProfessionalConversationHistory/);
+  assert.match(framework, /Pinned conversations/);
+  assert.match(framework, /Recent conversations/);
+  assert.match(framework, /Archived/);
+  assert.match(framework, /Search \{professionalName\} conversations/);
 });
 
 test("BE-223 preserves only the professional-specific identity and guidance", () => {

@@ -8,20 +8,24 @@ const workspace = readFileSync(
   "src/app/components/agents/ProfessionalConversationWorkspace.tsx",
   "utf8"
 );
+const framework = readFileSync(
+  "src/app/components/agents/ProfessionalExperienceFramework.tsx",
+  "utf8"
+);
 
 test("Money Coach provides persisted conversation history and optional shortcuts", () => {
-  assert.match(source, /data-money-coach-left-navigation="true"/);
-  assert.match(source, /Money Coach conversation navigation/);
-  assert.match(source, /New conversation/);
+  assert.match(source, /<ProfessionalConversationHistory/);
+  assert.match(framework, /conversation navigation/);
+  assert.match(framework, /New conversation/);
   assert.match(source, /Try a conversation starter/);
-  assert.match(source, /Pinned Conversations/);
-  assert.match(source, /Recent Conversations/);
-  assert.match(source, /Search/);
-  assert.match(source, /Archived/);
-  assert.match(source, /Rename/);
-  assert.match(source, /Unpin/);
-  assert.match(source, /Archive/);
-  assert.match(source, /Delete/);
+  assert.match(framework, /Pinned conversations/);
+  assert.match(framework, /Recent conversations/);
+  assert.match(framework, /Search/);
+  assert.match(framework, /Archived/);
+  assert.match(framework, /Rename/);
+  assert.match(framework, /Unpin/);
+  assert.match(framework, /Archive/);
+  assert.match(framework, /Delete/);
   assert.match(workspace, /lg:grid-cols-\[18rem_minmax\(0,1fr\)\]/);
 });
 
@@ -34,7 +38,6 @@ test("BM-305 keeps persistence resume and automatic title behavior", () => {
   assert.match(source, /setConversationTitle\(updated\.title\)/);
   assert.match(source, /restoreThread/);
   assert.match(source, /openThread/);
-  assert.match(source, /titles update automatically/i);
 });
 
 test("Money Coach keeps structured responses and a direct composer", () => {

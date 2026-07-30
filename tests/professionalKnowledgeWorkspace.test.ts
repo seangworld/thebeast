@@ -42,6 +42,16 @@ test("BO-402 makes every knowledge item an action with no inert hash links", () 
   assert.doesNotMatch(sharedWorkspace, /href=\{item\.action\.href \|\| "#"\}/);
 });
 
+test("BO-403 knowledge can connect to supporting BeastOS context", () => {
+  assert.match(sharedWorkspace, /relatedLinks/);
+  assert.match(
+    sharedWorkspace,
+    /document"\s*\|\s*"goal"\s*\|\s*"timeline"\s*\|\s*"conversation"\s*\|\s*"workspace"/
+  );
+  assert.match(sharedWorkspace, /item\.relatedLinks\?\.length/);
+  assert.match(sharedWorkspace, /href=\{link\.href\}/);
+});
+
 test("BO-402 is consumed by Money Coach, Guidance Counselor, and Health Advisor", () => {
   for (const source of [moneyCoach, guidanceCounselor, healthAdvisor]) {
     assert.match(source, /<ProfessionalKnowledgeWorkspace/);

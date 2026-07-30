@@ -112,10 +112,11 @@ test("BE-401 knowledge-card conversations can add and correct structured context
 });
 
 test("BE-401 keeps conversation primary and reuses shared professional infrastructure", () => {
-  assert.match(conversation, /ProfessionalConversationWorkspace/);
+  assert.match(conversation, /ProfessionalExperienceFramework/);
   assert.match(conversation, /ProfessionalKnowledgeWorkspace/);
-  assert.match(conversation, /cardsPlacement="after-conversation"/);
-  assert.match(conversation, /composer=\{null\}/);
+  assert.match(conversation, /ProfessionalConversationHistory/);
+  assert.match(conversation, /ProfessionalTimeAwareness/);
+  assert.match(conversation, /ProfessionalMemoryTimeline/);
   assert.match(conversation, /learnFromGuidanceKnowledgeAnswer/);
   assert.match(conversation, /SupabaseAgentMemoryStore/);
   assert.match(conversation, /SupabaseExecutionHistoryStore/);

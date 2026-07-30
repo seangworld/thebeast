@@ -7,16 +7,19 @@ import {
   AgentAvatar,
   AgentConversationInput,
   AgentEmptyState,
-  AgentExperience,
   AgentGreeting,
   AgentHeader,
   AgentLoadingState,
   AgentStatus,
   AgentStreamingResponseArea,
   ProfessionalConversationComposer,
+  ProfessionalConversationHistory,
   ProfessionalConversationTimeline,
-  ProfessionalConversationWorkspace,
+  ProfessionalExperienceFramework,
   ProfessionalKnowledgeWorkspace,
+  ProfessionalMemoryTimeline,
+  ProfessionalSupportingWorkspaces,
+  ProfessionalTimeAwareness,
   type AgentConversationMessage,
   type ProfessionalKnowledgeItem,
   type ProfessionalKnowledgeModel,
@@ -87,6 +90,29 @@ function historyErrorMessage(error: unknown) {
   return process.env.NODE_ENV === "development"
     ? `Conversation history could not load: ${detail}`
     : "Conversation history could not load. Please try again.";
+}
+
+function describeGuidanceMemory(memory: AgentMemoryRecord) {
+  if (
+    memory.value &&
+    typeof memory.value === "object" &&
+    !Array.isArray(memory.value)
+  ) {
+    const value = memory.value as Record<string, unknown>;
+    for (const candidate of [
+      value.content,
+      value.summary,
+      value.goal,
+      value.careerDirection,
+    ]) {
+      if (typeof candidate === "string" && candidate.trim()) {
+        return candidate.trim();
+      }
+    }
+  }
+  return typeof memory.value === "string"
+    ? memory.value
+    : "Persisted Guidance Counselor context is available.";
 }
 
 export default function GuidanceCounselorConversation({
@@ -798,163 +824,45 @@ export default function GuidanceCounselorConversation({
     });
     window.requestAnimationFrame(focusComposer);
   }
-  const pinnedThreads = threads.filter(
-    (thread) => thread.pinned && !thread.archived
-  );
-  const recentThreads = threads.filter(
-    (thread) => !thread.pinned && !thread.archived
-  );
-  const archivedThreads = threads.filter((thread) => thread.archived);
-
-  function conversationGroup(
-    label: string,
-    items: readonly AgentConversationThread[]
-  ) {
-    if (!items.length) return null;
-    return (
-      <section aria-label={label}>
-        <h3 className="px-2 text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">
-          {label}
-        </h3>
-        <div className="mt-2 grid gap-1">
-          {items.map((thread) => (
-            <article
-              key={thread.id}
-              className={`group rounded-xl border px-2 py-2.5 ${
-                thread.id === activeThreadId
-                  ? "border-cyan-300/35 bg-cyan-300/10"
-                  : "border-transparent hover:border-white/10 hover:bg-white/[0.04]"
-              }`}
-              aria-current={thread.id === activeThreadId ? "page" : undefined}
-            >
-              <button
-                type="button"
-                className="w-full rounded-md text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300"
-                onClick={() => openThread(thread)}
-              >
-                <span className="block truncate text-sm font-bold text-white">
-                  {thread.title}
-                </span>
-                <span className="mt-1 block text-[11px] text-slate-500">
-                  {new Date(thread.updatedAt).toLocaleDateString()} ·{" "}
-                  {thread.messageCount} messages
-                </span>
-              </button>
-              <div className="mt-2 flex flex-wrap gap-x-3 gap-y-2 opacity-80 transition group-hover:opacity-100 group-focus-within:opacity-100">
-                <button
-                  type="button"
-                  className="text-[11px] font-bold text-cyan-200"
-                  onClick={() => void renameThread(thread)}
-                >
-                  Rename
-                </button>
-                <button
-                  type="button"
-                  className="text-[11px] font-bold text-cyan-200"
-                  onClick={() =>
-                    void repository
-                      ?.pin(memberId, thread.id, !thread.pinned)
-                      .then(() => refreshThreads())
-                  }
-                >
-                  {thread.pinned ? "Unpin" : "Pin"}
-                </button>
-                <button
-                  type="button"
-                  className="text-[11px] font-bold text-cyan-200"
-                  onClick={() => void archiveThread(thread)}
-                >
-                  {thread.archived ? "Restore" : "Archive"}
-                </button>
-                <button
-                  type="button"
-                  className="text-[11px] font-bold text-red-200"
-                  onClick={() => void deleteThread(thread)}
-                >
-                  Delete
-                </button>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-    );
-  }
-
   const historyPanel = (
-    <aside
-      className="flex h-full min-h-0 flex-col bg-[#0d131e]"
-      aria-label="Guidance Counselor conversation navigation"
-      data-professional-left-navigation="true"
-    >
-      <div className="flex items-center justify-between gap-3 border-b border-white/10 p-4">
-        <div>
-          <p className="text-xs font-black uppercase tracking-[0.16em] text-cyan-300">
-            Guidance Counselor
-          </p>
-          <h2 className="mt-1 text-base font-black text-white">
-            Conversations <span aria-hidden="true">▼</span>
-          </h2>
-        </div>
-        <button
-          type="button"
-          className="text-sm font-bold text-slate-300 lg:hidden"
-          onClick={() => setHistoryOpen(false)}
-          aria-label="Close chat history"
-        >
-          Close
-        </button>
-      </div>
-      <div className="p-3">
-        <button
-          type="button"
-          className="beast-button flex min-h-11 w-full items-center justify-center gap-2"
-          onClick={() => void startConversation()}
-        >
-          <span aria-hidden="true">＋</span> New Conversation
-        </button>
-        {historyError ? (
-          <p
-            className="mt-3 rounded-lg border border-red-300/20 bg-red-300/10 p-2 text-xs leading-5 text-red-100"
-            role="alert"
-          >
-            {historyError}
-          </p>
-        ) : null}
-        <label className="mt-3 block text-xs font-bold text-slate-300">
-          <span className="sr-only">Search conversations</span>
-          <span className="relative block">
-            <span
-              className="pointer-events-none absolute left-3 top-3 text-slate-500"
-              aria-hidden="true"
-            >
-              ⌕
-            </span>
-            <input
-              className="min-h-11 w-full rounded-xl border border-white/10 bg-slate-950 pl-9 pr-3 text-sm text-white outline-none placeholder:text-slate-600 focus:border-cyan-300 focus:ring-2 focus:ring-cyan-300/20"
-              value={historySearch}
-              onChange={(event) => {
-                setHistorySearch(event.target.value);
-                void refreshThreads(event.target.value);
-              }}
-              placeholder="Search"
-            />
-          </span>
-        </label>
-      </div>
-      <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-3">
-        <div className="grid gap-5">
-          {conversationGroup("Pinned Conversations", pinnedThreads)}
-          {conversationGroup("Recent Conversations", recentThreads)}
-          {conversationGroup("Archived", archivedThreads)}
-          {!historyLoading && threads.length === 0 ? (
-            <p className="py-4 text-sm text-slate-400">
-              No matching conversations.
-            </p>
-          ) : null}
-        </div>
-      </div>
-    </aside>
+    <ProfessionalConversationHistory
+      professionalName="Guidance Counselor"
+      threads={threads}
+      activeThreadId={activeThreadId}
+      searchValue={historySearch}
+      loading={historyLoading}
+      error={historyError}
+      onSearchChange={(value) => {
+        setHistorySearch(value);
+        void refreshThreads(value);
+      }}
+      onNewConversation={() => void startConversation()}
+      onOpen={(item) => {
+        const thread = threads.find((candidate) => candidate.id === item.id);
+        if (thread) openThread(thread);
+      }}
+      onRename={(item) => {
+        const thread = threads.find((candidate) => candidate.id === item.id);
+        if (thread) void renameThread(thread);
+      }}
+      onPin={(item) => {
+        const thread = threads.find((candidate) => candidate.id === item.id);
+        if (thread) {
+          void repository
+            ?.pin(memberId, thread.id, !thread.pinned)
+            .then(() => refreshThreads());
+        }
+      }}
+      onArchive={(item) => {
+        const thread = threads.find((candidate) => candidate.id === item.id);
+        if (thread) void archiveThread(thread);
+      }}
+      onDelete={(item) => {
+        const thread = threads.find((candidate) => candidate.id === item.id);
+        if (thread) void deleteThread(thread);
+      }}
+      onClose={() => setHistoryOpen(false)}
+    />
   );
 
   const starterExperience =
@@ -984,14 +892,6 @@ export default function GuidanceCounselorConversation({
   const reportedOutcomes = executionHistory?.outcomes || [];
   const supportPanels = (
     <div className="grid gap-5">
-      <div data-guidance-understanding-model="true">
-        <ProfessionalKnowledgeWorkspace
-          model={guidanceKnowledgeModel}
-          onAction={beginKnowledgeConversation}
-          className="rounded-2xl border border-white/10 bg-black/10 p-4"
-        />
-      </div>
-
       <section
         className="rounded-2xl border border-violet-300/20 bg-violet-300/[0.06] p-4 sm:p-5"
         aria-labelledby="guidance-current-recommendation"
@@ -1183,18 +1083,15 @@ export default function GuidanceCounselorConversation({
       className="scroll-mt-24"
       data-guidance-home-primary="true"
     >
-      <ProfessionalConversationWorkspace
+      <ProfessionalExperienceFramework
+        professionalId={professionalId}
         history={historyPanel}
         historyOpen={historyOpen}
         onCloseHistory={() => setHistoryOpen(false)}
         historyDialogRef={historyDialogRef}
         professionalName="Guidance Counselor"
         drawerId="guidance-counselor-history-drawer"
-      >
-        <AgentExperience
-          className="max-w-none border-white/10 bg-[#141a24]"
-          cardsPlacement="after-conversation"
-          cardsLayout="stack"
+        className="max-w-none border-white/10 bg-[#141a24]"
           header={
             <AgentHeader
               title="Guidance Counselor"
@@ -1243,8 +1140,6 @@ export default function GuidanceCounselorConversation({
             )
           }
           contextSummary={null}
-          smartCards={supportPanels}
-          suggestedActions={null}
           conversation={
             historyLoading ? (
               <AgentLoadingState label="Loading Guidance Counselor conversation" />
@@ -1320,10 +1215,106 @@ export default function GuidanceCounselorConversation({
               </section>
             )
           }
-          composer={null}
-          statusArea={null}
+          knowledge={
+            <div data-guidance-understanding-model="true">
+              <ProfessionalKnowledgeWorkspace
+                model={guidanceKnowledgeModel}
+                onAction={beginKnowledgeConversation}
+                className="rounded-2xl border border-white/10 bg-black/10 p-4"
+              />
+            </div>
+          }
+          timeAwareness={
+            <ProfessionalTimeAwareness
+              title={
+                previousReviewAt
+                  ? "Returning planning conversation"
+                  : "First planning conversation"
+              }
+              description="Timing comes from saved Guidance Counselor conversation history, never an inferred visit."
+              items={[
+                {
+                  id: "guidance-review-timing",
+                  label: previousReviewAt
+                    ? "Previous conversation"
+                    : "Conversation status",
+                  value: previousReviewAt
+                    ? new Date(previousReviewAt).toLocaleString()
+                    : "No earlier conversation was found",
+                  evidence: previousConversationSummary
+                    ? "A persisted conversation summary is available for continuity."
+                    : "No prior summary is available.",
+                },
+                {
+                  id: "guidance-profile-updates",
+                  label: "Current profile state",
+                  value:
+                    profileSaveStatus === "saved"
+                      ? "Latest conversation context saved"
+                      : profileSaveStatus === "saving"
+                        ? "Saving verified conversation context"
+                        : "No new verified update this turn",
+                  evidence:
+                    "Only information extracted from the member’s conversation is persisted.",
+                },
+              ]}
+              unavailableMessage="Conversation timing becomes available after the first saved Guidance Counselor conversation."
+            />
+          }
+          memory={
+            <ProfessionalMemoryTimeline
+              professionalName="Guidance Counselor"
+              items={relationshipMemories.slice(0, 6).map((memory) => ({
+                id: memory.id,
+                title: memory.key.replaceAll("-", " "),
+                summary: describeGuidanceMemory(memory),
+                occurredAt: new Date(memory.updatedAt).toLocaleString(),
+                source: memory.evidence?.[0]?.source
+                  ? "Saved conversation evidence"
+                  : "Guidance Counselor memory",
+              }))}
+              emptyState="No durable Guidance Counselor memory has been saved yet. The counselor will not invent prior context."
+            />
+          }
+          recommendations={supportPanels}
+          supportingWorkspaces={
+            <ProfessionalSupportingWorkspaces
+              professionalName="Guidance Counselor"
+              workspaces={[
+                {
+                  id: "education-roadmap",
+                  label: "Educational Roadmap",
+                  description: "Review milestones and planning sequence.",
+                  href: "/dashboard/education/educational-roadmap",
+                },
+                {
+                  id: "education-career",
+                  label: "Career Planning",
+                  description: "Explore career direction and tradeoffs.",
+                  href: "/dashboard/education/career-planning",
+                },
+                {
+                  id: "education-schools",
+                  label: "Schools",
+                  description: "Review where relevant education is available.",
+                  href: "/dashboard/education/schools",
+                },
+                {
+                  id: "education-scholarships",
+                  label: "Scholarships",
+                  description: "Review education funding opportunities.",
+                  href: "/dashboard/education/scholarships",
+                },
+                {
+                  id: "education-certifications",
+                  label: "Certifications",
+                  description: "Review certification pathways and requirements.",
+                  href: "/dashboard/education/certifications",
+                },
+              ]}
+            />
+          }
         />
-      </ProfessionalConversationWorkspace>
     </div>
   );
 }

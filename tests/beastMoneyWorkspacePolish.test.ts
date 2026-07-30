@@ -43,7 +43,8 @@ test("BM-401 creates a real new Money Coach conversation and restores the avatar
   assert.ok(clear > start && clear < create);
   assert.match(coach, /setTurns\(\[\]\)/);
   assert.match(coach, /startConversation\(\)\.then\(\(\) =>[\s\S]*focusComposer/);
-  assert.match(coach, /disabled=\{!repository\}/);
+  assert.match(coach, /<ProfessionalConversationHistory/);
+  assert.match(coach, /loading=\{!repository\}/);
   assert.match(coach, /professionalAvatar=/);
   assert.match(coach, /initials="MC"/);
   assert.match(sharedWorkspace, /message\.role === "agent" && professionalAvatar/);

@@ -127,7 +127,7 @@ test("MC-201 consumes the shared AgentExperience without replacing existing page
   );
 
   assert.match(component, /from "@\/app\/components\/agents"/);
-  assert.match(component, /<AgentExperience/);
+  assert.match(component, /<ProfessionalExperienceFramework/);
   assert.match(component, /AgentMemoryRecord/);
   assert.match(component, /AgentConversationInput/);
   assert.match(component, /Message your Money Coach/);
@@ -141,16 +141,12 @@ test("MC-201 consumes the shared AgentExperience without replacing existing page
   assert.match(component, /SupabaseAgentConversationStore/);
   assert.match(component, /SupabaseAgentMemoryStore/);
   assert.match(component, /importLegacy/);
-  assert.match(component, /Money Coach conversation navigation/);
-  assert.match(component, /Rename/);
-  assert.match(component, /Unpin/);
-  assert.match(component, /Archive/);
-  assert.match(component, /Delete/);
+  assert.match(component, /<ProfessionalConversationHistory/);
   assert.match(component, /Review durable memories/);
   assert.match(workspace, /lg:grid-cols-\[18rem_minmax\(0,1fr\)\]/);
   assert.match(component, /min-h-\[34rem\]/);
   assert.match(workspace, /data-professional-active-scroll="true"/);
-  assert.match(component, /data-money-coach-history-list="true"/);
+  assert.match(component, /<ProfessionalConversationHistory/);
   assert.match(workspace, /overflow-y-auto/);
   assert.match(workspace, /lg:hidden/);
   assert.match(workspace, /role="dialog"/);
@@ -160,9 +156,8 @@ test("MC-201 consumes the shared AgentExperience without replacing existing page
   assert.match(component, /Accept recommendation/);
   assert.match(component, /No money moves[\s\S]*calculation changes/);
   assert.match(component, /What Money Coach learns from your feedback/);
-  assert.match(component, /Pinned Conversations/);
-  assert.match(component, /Recent Conversations/);
-  assert.match(component, /archivedThreads/);
+  assert.match(component, /ProfessionalMemoryTimeline/);
+  assert.match(component, /ProfessionalTimeAwareness/);
   assert.match(component, /AgentStreamingResponseArea/);
   assert.match(component, /ProfessionalConversationTimeline/);
   assert.match(workspace, /max-w-3xl/);

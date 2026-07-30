@@ -11,8 +11,13 @@ import {
   AgentConversationInput,
   AgentThinkingIndicator,
   ProfessionalConversationComposer,
+  ProfessionalConversationHistory,
   ProfessionalConversationTimeline,
+  ProfessionalExperienceBoundary,
   ProfessionalKnowledgeWorkspace,
+  ProfessionalMemoryTimeline,
+  ProfessionalSupportingWorkspaces,
+  ProfessionalTimeAwareness,
   type AgentConversationMessage,
   type ProfessionalKnowledgeConfidence,
   type ProfessionalKnowledgeItem,
@@ -403,6 +408,9 @@ export function HealthAdvisorWorkspace() {
   const [conversationTitle, setConversationTitle] =
     useState("New conversation");
   const [conversationHistoryError, setConversationHistoryError] = useState("");
+  const [conversationHistoryOpen, setConversationHistoryOpen] = useState(false);
+  const [conversationHistorySearch, setConversationHistorySearch] =
+    useState("");
   const [loading, setLoading] = useState(true);
   const [recordsUnavailable, setRecordsUnavailable] = useState(false);
   const [dataError, setDataError] = useState("");
@@ -423,16 +431,33 @@ export function HealthAdvisorWorkspace() {
     "idle" | "review" | "saving" | "saved" | "error"
   >("idle");
   const healthConversationScrollPositions = useRef(new Map<string, number>());
+  const conversationHistoryDialogRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!conversationHistoryOpen) return;
+    conversationHistoryDialogRef.current
+      ?.querySelector<HTMLButtonElement>("button")
+      ?.focus();
+    function closeConversationHistory(event: KeyboardEvent) {
+      if (event.key === "Escape") setConversationHistoryOpen(false);
+    }
+    document.addEventListener("keydown", closeConversationHistory);
+    return () =>
+      document.removeEventListener("keydown", closeConversationHistory);
+  }, [conversationHistoryOpen]);
   const workspacePromptHydrated = useRef(false);
 
   async function refreshConversationThreads(
     nextRepository = conversationRepository,
-    selectedOwnerId = ownerId
+    selectedOwnerId = ownerId,
+    search = conversationHistorySearch
   ) {
     if (!nextRepository || !selectedOwnerId) return [];
     const nextThreads = await nextRepository.list({
       ownerId: selectedOwnerId,
       agentId: healthAdvisorProfessionalId,
+      includeArchived: true,
+      search,
     });
     setConversationThreads(nextThreads);
     return nextThreads;
@@ -563,14 +588,15 @@ export function HealthAdvisorWorkspace() {
         let nextThreads = await nextConversationRepository.list({
           ownerId: userId,
           agentId: healthAdvisorProfessionalId,
+          includeArchived: true,
         });
-        let activeThread = nextThreads[0];
+        let activeThread = nextThreads.find((thread) => !thread.archived);
         if (!activeThread) {
           activeThread = await nextConversationRepository.create({
             ownerId: userId,
             agentId: healthAdvisorProfessionalId,
           });
-          nextThreads = [activeThread];
+          nextThreads = [activeThread, ...nextThreads];
         }
         if (!cancelled) {
           setConversationThreads(nextThreads);
@@ -1171,6 +1197,7 @@ export function HealthAdvisorWorkspace() {
     setKnowledgeSaveState("idle");
     setHealthQuestion("");
     setQuestionTurns([]);
+    setConversationHistoryOpen(false);
     if (!conversationRepository || !ownerId) {
       setActiveConversationId("");
       setConversationTitle("New conversation");
@@ -1201,6 +1228,84 @@ export function HealthAdvisorWorkspace() {
     setPendingKnowledgeAnswer("");
     setKnowledgeSaveState("idle");
     setHealthQuestion("");
+    setConversationHistoryOpen(false);
+  }
+
+  async function renameHealthAdvisorConversation(
+    thread: AgentConversationThread
+  ) {
+    if (!conversationRepository || !ownerId) return;
+    const title = window.prompt("Rename conversation", thread.title);
+    if (!title?.trim()) return;
+    try {
+      await conversationRepository.rename(ownerId, thread.id, title);
+      if (thread.id === activeConversationId) {
+        setConversationTitle(title.trim());
+      }
+      await refreshConversationThreads();
+      setConversationHistoryError("");
+    } catch {
+      setConversationHistoryError("The conversation could not be renamed.");
+    }
+  }
+
+  async function pinHealthAdvisorConversation(thread: AgentConversationThread) {
+    if (!conversationRepository || !ownerId) return;
+    try {
+      await conversationRepository.pin(ownerId, thread.id, !thread.pinned);
+      await refreshConversationThreads();
+      setConversationHistoryError("");
+    } catch {
+      setConversationHistoryError("The conversation pin could not be updated.");
+    }
+  }
+
+  async function archiveHealthAdvisorConversation(
+    thread: AgentConversationThread
+  ) {
+    if (!conversationRepository || !ownerId) return;
+    try {
+      await conversationRepository.archive(
+        ownerId,
+        thread.id,
+        !thread.archived
+      );
+      if (thread.id === activeConversationId && !thread.archived) {
+        await startHealthAdvisorConversation();
+      } else {
+        await refreshConversationThreads();
+      }
+      setConversationHistoryError("");
+    } catch {
+      setConversationHistoryError(
+        "The conversation archive state could not be updated."
+      );
+    }
+  }
+
+  async function deleteHealthAdvisorConversation(
+    thread: AgentConversationThread
+  ) {
+    if (
+      !conversationRepository ||
+      !ownerId ||
+      !window.confirm(
+        "Delete this Health Advisor conversation? Saved health records and recommendation history will remain."
+      )
+    ) {
+      return;
+    }
+    try {
+      await conversationRepository.delete(ownerId, thread.id, true, "retain");
+      if (thread.id === activeConversationId) {
+        await startHealthAdvisorConversation();
+      } else {
+        await refreshConversationThreads();
+      }
+      setConversationHistoryError("");
+    } catch {
+      setConversationHistoryError("The conversation could not be deleted.");
+    }
   }
 
   async function decideRecommendation(
@@ -1432,13 +1537,72 @@ export function HealthAdvisorWorkspace() {
     ],
     [healthQuestionBusy, knowledgePrompt, memberName, questionTurns]
   );
+  const previousHealthConversation = conversationThreads
+    .filter(
+      (thread) => thread.id !== activeConversationId && !thread.archived
+    )
+    .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))[0];
+  const healthConversationHistory = (
+    <ProfessionalConversationHistory
+      professionalName="Health Advisor"
+      threads={conversationThreads}
+      activeThreadId={activeConversationId}
+      searchValue={conversationHistorySearch}
+      loading={loading}
+      error={conversationHistoryError}
+      onSearchChange={(value) => {
+        setConversationHistorySearch(value);
+        void refreshConversationThreads(
+          conversationRepository,
+          ownerId,
+          value
+        );
+      }}
+      onNewConversation={() => void startHealthAdvisorConversation()}
+      onOpen={(item) => {
+        const thread = conversationThreads.find(
+          (candidate) => candidate.id === item.id
+        );
+        if (thread) openHealthAdvisorConversation(thread);
+      }}
+      onRename={(item) => {
+        const thread = conversationThreads.find(
+          (candidate) => candidate.id === item.id
+        );
+        if (thread) void renameHealthAdvisorConversation(thread);
+      }}
+      onPin={(item) => {
+        const thread = conversationThreads.find(
+          (candidate) => candidate.id === item.id
+        );
+        if (thread) void pinHealthAdvisorConversation(thread);
+      }}
+      onArchive={(item) => {
+        const thread = conversationThreads.find(
+          (candidate) => candidate.id === item.id
+        );
+        if (thread) void archiveHealthAdvisorConversation(thread);
+      }}
+      onDelete={(item) => {
+        const thread = conversationThreads.find(
+          (candidate) => candidate.id === item.id
+        );
+        if (thread) void deleteHealthAdvisorConversation(thread);
+      }}
+      onClose={() => setConversationHistoryOpen(false)}
+    />
+  );
 
   return (
     <BeastHealthShell
       title="Health Advisor"
       description="Evidence-backed record review and appointment preparation within strict medical safety boundaries."
     >
-      <section className="space-y-4" aria-label="Health Advisor workspace" data-health-advisor-active="true">
+      <ProfessionalExperienceBoundary
+        professionalId={healthAdvisorProfessionalId}
+        professionalName="Health Advisor"
+      >
+        <section className="space-y-4" aria-label="Health Advisor workspace" data-health-advisor-active="true">
         <div className="rounded-xl border border-red-200/15 bg-red-200/[0.04] px-4 py-3">
           {greeting ? (
             <h2 className="text-lg font-black text-white">{greeting}</h2>
@@ -1465,38 +1629,47 @@ export function HealthAdvisorWorkspace() {
             title={conversationTitle}
             description="Conversation is the front door to BeastHealth. Build your health story naturally, review saved context, or ask a question."
             action={
-              <button
-                type="button"
-                className="beast-button-secondary min-h-11"
-                onClick={() => void startHealthAdvisorConversation()}
-              >
-                New conversation
-              </button>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  className="beast-button-secondary min-h-11"
+                  aria-expanded={conversationHistoryOpen}
+                  aria-controls="health-advisor-history-drawer"
+                  onClick={() => setConversationHistoryOpen(true)}
+                >
+                  Conversations
+                </button>
+                <button
+                  type="button"
+                  className="beast-button-secondary min-h-11"
+                  onClick={() => void startHealthAdvisorConversation()}
+                >
+                  New conversation
+                </button>
+              </div>
             }
           />
-          {conversationThreads.length ? (
-            <nav
-              className="mt-4 flex max-w-full gap-2 overflow-x-auto pb-1"
-              aria-label="Health Advisor conversation history"
+          {conversationHistoryOpen ? (
+            <div
+              className="fixed inset-0 z-50 bg-black/70 p-3"
+              role="presentation"
+              onMouseDown={(event) => {
+                if (event.target === event.currentTarget) {
+                  setConversationHistoryOpen(false);
+                }
+              }}
             >
-              {conversationThreads.slice(0, 8).map((thread) => (
-                <button
-                  key={thread.id}
-                  type="button"
-                  className={`min-h-11 shrink-0 rounded-xl border px-3 text-left text-xs font-bold ${
-                    thread.id === activeConversationId
-                      ? "border-red-200/40 bg-red-200/10 text-white"
-                      : "border-white/10 bg-black/10 text-[#c7cfdb]"
-                  }`}
-                  aria-current={
-                    thread.id === activeConversationId ? "page" : undefined
-                  }
-                  onClick={() => openHealthAdvisorConversation(thread)}
-                >
-                  {thread.title}
-                </button>
-              ))}
-            </nav>
+              <div
+                ref={conversationHistoryDialogRef}
+                id="health-advisor-history-drawer"
+                className="ml-auto h-full max-h-[calc(100vh-1.5rem)] w-full max-w-sm overflow-hidden rounded-2xl border border-white/15 bg-slate-950 shadow-2xl"
+                role="dialog"
+                aria-modal="true"
+                aria-label="Health Advisor conversations"
+              >
+                {healthConversationHistory}
+              </div>
+            </div>
           ) : null}
           {conversationHistoryError ? (
             <p
@@ -1649,6 +1822,102 @@ export function HealthAdvisorWorkspace() {
           </DashboardCard>
         ) : null}
 
+        <div className="grid min-w-0 gap-4 xl:grid-cols-2">
+          <ProfessionalTimeAwareness
+            title={
+              previousHealthConversation
+                ? "Returning health conversation"
+                : "First recorded health conversation"
+            }
+            description="Timing comes only from persisted Health Advisor conversations and saved record timestamps."
+            items={[
+              {
+                id: "health-conversation-timing",
+                label: previousHealthConversation
+                  ? "Previous conversation"
+                  : "Conversation status",
+                value: previousHealthConversation
+                  ? new Date(
+                      previousHealthConversation.updatedAt
+                    ).toLocaleString()
+                  : "No earlier conversation was found",
+                evidence: previousHealthConversation
+                  ? "Persisted Health Advisor conversation history."
+                  : "No previous conversation timestamp is available.",
+              },
+              {
+                id: "health-record-updates",
+                label: "Latest verified record update",
+                value: model.executiveBriefing.lastUpdatedAt
+                  ? formatDate(model.executiveBriefing.lastUpdatedAt)
+                  : "No saved record update",
+                evidence:
+                  "This is record freshness only, not a medical trend or conclusion.",
+              },
+            ]}
+            unavailableMessage="Health timing becomes available after a conversation or health record is saved."
+          />
+          <ProfessionalMemoryTimeline
+            professionalName="Health Advisor"
+            items={conversationThreads
+              .filter((thread) => !thread.archived)
+              .slice(0, 6)
+              .map((thread) => ({
+                id: thread.id,
+                title: thread.title,
+                summary:
+                  thread.summary.overview === "No conversation summary yet."
+                    ? "No saved summary is available for this conversation."
+                    : thread.summary.overview,
+                occurredAt: new Date(thread.updatedAt).toLocaleString(),
+                source: "Saved Health Advisor conversation",
+              }))}
+            emptyState="No Health Advisor conversation memory is available. Health history will not be inferred."
+          />
+        </div>
+
+        <ProfessionalSupportingWorkspaces
+          professionalName="Health Advisor"
+          workspaces={[
+            {
+              id: "health-conditions",
+              label: "Conditions",
+              description: "Review saved condition records and context.",
+              href: "/dashboard/health/conditions",
+            },
+            {
+              id: "health-medications",
+              label: "Medications",
+              description: "Review the member-controlled medication list.",
+              href: "/dashboard/health/medications",
+            },
+            {
+              id: "health-procedures",
+              label: "Procedures",
+              description: "Review procedures and linked records.",
+              href: "/dashboard/health/procedures",
+            },
+            {
+              id: "health-vitals",
+              label: "Vitals",
+              description: "Review saved vital measurements without inference.",
+              href: "/dashboard/health/vitals",
+            },
+            {
+              id: "health-appointments",
+              label: "Appointments",
+              description: "Prepare questions and organize upcoming care.",
+              href: "/dashboard/health/appointments",
+            },
+            {
+              id: "health-documents",
+              label: "Documents",
+              description: "Review permissioned medical document context.",
+              href: "/dashboard/health/documents",
+            },
+          ]}
+        />
+
         <DashboardCard accent="health">
           <SectionHeader eyebrow="Executive Health Briefing" title={model.executiveBriefing.title} description={model.executiveBriefing.summary} action={<ModuleBadge module="health" label="Advisor active" />} />
           <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -1752,7 +2021,8 @@ export function HealthAdvisorWorkspace() {
           <ul className="mt-4 list-disc space-y-2 pl-5 text-sm leading-6 text-[#dbe3ef]">{model.safety.map((item) => <li key={item}>{item}</li>)}</ul>
           <p className="mt-4 rounded-xl border border-red-300/25 bg-red-300/[0.08] p-4 text-sm font-semibold leading-6 text-red-50">If you may be experiencing an urgent or emergency health concern, use appropriate local emergency or qualified clinical care instead of BeastHealth.</p>
         </DashboardCard>
-      </section>
+        </section>
+      </ProfessionalExperienceBoundary>
     </BeastHealthShell>
   );
 }

@@ -27,6 +27,12 @@ export type ProfessionalKnowledgeItem = {
   confidence?: ProfessionalKnowledgeConfidence;
   why?: string;
   evidence?: readonly string[];
+  relatedLinks?: readonly {
+    id: string;
+    label: string;
+    href: string;
+    kind: "document" | "goal" | "timeline" | "conversation" | "workspace";
+  }[];
   action: ProfessionalKnowledgeAction;
 };
 
@@ -119,6 +125,22 @@ function KnowledgeItemCard({
         </details>
       ) : null}
       <KnowledgeAction item={item} onAction={onAction} />
+      {item.relatedLinks?.length ? (
+        <nav
+          className="mt-3 flex flex-wrap gap-2 border-t border-white/10 pt-3"
+          aria-label={`${item.label} related context`}
+        >
+          {item.relatedLinks.map((link) => (
+            <Link
+              key={link.id}
+              href={link.href}
+              className="rounded-full border border-white/10 px-2.5 py-1.5 text-xs font-bold text-slate-300 transition hover:border-cyan-300/40 hover:text-cyan-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300"
+            >
+              {link.label}
+            </Link>
+          ))}
+        </nav>
+      ) : null}
     </article>
   );
 }
@@ -190,6 +212,7 @@ export function ProfessionalKnowledgeWorkspace({
       className={`min-w-0 ${className}`}
       aria-label={`${model.professionalName} knowledge workspace`}
       data-professional-knowledge-workspace={model.professionalId}
+      data-professional-capability="knowledge"
     >
       <div className="mb-4">
         <p className="text-xs font-black uppercase tracking-[0.16em] text-cyan-300">

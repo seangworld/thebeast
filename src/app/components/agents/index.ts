@@ -30,3 +30,17 @@ export {
   type ProfessionalKnowledgeItem,
   type ProfessionalKnowledgeModel,
 } from "./ProfessionalKnowledgeWorkspace";
+export {
+  ProfessionalConversationHistory,
+  ProfessionalExperienceBoundary,
+  ProfessionalExperienceFramework,
+  ProfessionalMemoryTimeline,
+  ProfessionalSupportingWorkspaces,
+  ProfessionalTimeAwareness,
+  professionalExperienceCapabilities,
+  type ProfessionalExperienceCapability,
+  type ProfessionalConversationHistoryItem,
+  type ProfessionalMemoryTimelineItem,
+  type ProfessionalSupportingWorkspace,
+  type ProfessionalTimeAwarenessItem,
+} from "./ProfessionalExperienceFramework";

@@ -9,16 +9,19 @@ import {
   AgentConversationInput,
   AgentEmptyState,
   AgentErrorState,
-  AgentExperience,
   AgentGreeting,
   AgentHeader,
   AgentLoadingState,
   AgentStatus,
   AgentStreamingResponseArea,
   ProfessionalConversationComposer,
+  ProfessionalConversationHistory,
   ProfessionalConversationTimeline,
-  ProfessionalConversationWorkspace,
+  ProfessionalExperienceFramework,
   ProfessionalKnowledgeWorkspace,
+  ProfessionalMemoryTimeline,
+  ProfessionalSupportingWorkspaces,
+  ProfessionalTimeAwareness,
   type AgentConversationMessage,
   type ProfessionalKnowledgeItem,
   type ProfessionalKnowledgeModel,
@@ -64,6 +67,24 @@ function formatMoney(value: number) {
     currency: "USD",
     maximumFractionDigits: 0,
   }).format(value);
+}
+
+function describeMemory(memory: AgentMemoryRecord) {
+  if (
+    memory.value &&
+    typeof memory.value === "object" &&
+    !Array.isArray(memory.value)
+  ) {
+    const value = memory.value as Record<string, unknown>;
+    for (const candidate of [value.content, value.summary, value.statement]) {
+      if (typeof candidate === "string" && candidate.trim()) {
+        return candidate.trim();
+      }
+    }
+  }
+  return typeof memory.value === "string"
+    ? memory.value
+    : "Persisted Money Coach context is available.";
 }
 
 function persistenceErrorMessage(error: unknown) {
@@ -605,9 +626,6 @@ export function MoneyCoachExperience({
       suggestions.findIndex((candidate) => candidate.prompt === suggestion.prompt) === index
     );
   }, [model.suggestions, personalizedStarters]);
-  const pinnedThreads = threads.filter((thread) => thread.pinned && !thread.archived);
-  const recentThreads = threads.filter((thread) => !thread.pinned && !thread.archived).slice(0, 10);
-  const archivedThreads = threads.filter((thread) => thread.archived);
   const moneyKnowledgeModel = useMemo<ProfessionalKnowledgeModel>(() => {
     const context = model.financialContext;
     const known: ProfessionalKnowledgeItem[] = [];
@@ -1040,73 +1058,131 @@ export function MoneyCoachExperience({
     }
   }
 
-  function conversationGroup(label: string, items: readonly AgentConversationThread[]) {
-    if (!items.length) return null;
-    return <section aria-labelledby={`money-coach-${label.toLowerCase().replace(/\s+/g, "-")}`}>
-      <h3 id={`money-coach-${label.toLowerCase().replace(/\s+/g, "-")}`} className="px-2 text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">{label}</h3>
-      <div className="mt-2 grid gap-1">
-        {items.map((thread) => (
-          <article key={thread.id} className={`group rounded-xl border px-2 py-2.5 ${thread.id === activeThreadId ? "border-cyan-300/35 bg-cyan-300/10" : "border-transparent hover:border-white/10 hover:bg-white/[0.04]"}`} aria-current={thread.id === activeThreadId ? "page" : undefined}>
-            <button type="button" className="w-full rounded-md text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300" onClick={() => openThread(thread)}>
-              <span className="block truncate text-sm font-bold text-white">{thread.title}</span>
-              <span className="mt-1 block text-[11px] text-slate-500">{new Date(thread.updatedAt).toLocaleDateString()} · {thread.messageCount} messages</span>
-            </button>
-            <div className="mt-2 flex flex-wrap gap-x-3 gap-y-2 opacity-80 transition group-hover:opacity-100 group-focus-within:opacity-100">
-              <button type="button" className="text-[11px] font-bold text-cyan-200" onClick={() => { void renameThread(thread); }}>Rename</button>
-              <button type="button" className="text-[11px] font-bold text-cyan-200" onClick={() => { void repository?.pin(ownerId, thread.id, !thread.pinned).then(() => refreshThreads()); }}>{thread.pinned ? "Unpin" : "Pin"}</button>
-              <button type="button" className="text-[11px] font-bold text-cyan-200" onClick={() => { void archiveThread(thread); }}>{thread.archived ? "Restore" : "Archive"}</button>
-              <button type="button" className="text-[11px] font-bold text-red-200" onClick={() => { void deleteThread(thread); }}>Delete</button>
-            </div>
-          </article>
-        ))}
-      </div>
-    </section>;
-  }
-
   const historyPanel = (
-    <aside className="flex h-full min-h-0 flex-col bg-[#0d131e]" aria-label="Money Coach conversation navigation" data-money-coach-left-navigation="true">
-      <div className="flex items-center justify-between gap-3 border-b border-white/10 p-4">
-        <div>
-          <p className="text-xs font-black uppercase tracking-[0.16em] text-cyan-300">Money Coach</p>
-          <h2 className="mt-1 text-base font-black text-white">Conversations <span aria-hidden="true">▼</span></h2>
-        </div>
-        <button type="button" className="text-sm font-bold text-slate-300 lg:hidden" onClick={() => setHistoryOpen(false)} aria-label="Close chat history">Close</button>
-      </div>
-      <div className="p-3">
-        <button
-          type="button"
-          className="beast-button flex min-h-11 w-full items-center justify-center gap-2"
-          disabled={!repository}
-          onClick={() => {
-            setHistoryOpen(false);
-            void startConversation().then(() =>
-              window.requestAnimationFrame(focusComposer)
-            );
-          }}
-        >
-          <span aria-hidden="true">＋</span>{" "}
-          {repository ? "New conversation" : "Loading conversations…"}
-        </button>
-        {historyError ? <p className="mt-3 rounded-lg border border-red-300/20 bg-red-300/10 p-2 text-xs leading-5 text-red-100" role="alert">{historyError}</p> : null}
-        <label className="mt-3 block text-xs font-bold text-slate-300"><span className="sr-only">Search conversations</span>
-          <span className="relative block"><span className="pointer-events-none absolute left-3 top-3 text-slate-500" aria-hidden="true">⌕</span><input className="min-h-11 w-full rounded-xl border border-white/10 bg-slate-950 pl-9 pr-3 text-sm text-white outline-none placeholder:text-slate-600 focus:border-cyan-300 focus:ring-2 focus:ring-cyan-300/20" value={historySearch} onChange={(event) => { setHistorySearch(event.target.value); void refreshThreads(event.target.value); }} placeholder="Search" /></span>
-        </label>
-        <p className="mt-2 px-1 text-[10px] leading-4 text-slate-600">Conversation titles update automatically from the discussion and can be renamed anytime.</p>
-      </div>
-      <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-3" data-money-coach-history-list="true">
-        <div className="grid gap-5">
-          {conversationGroup("Pinned Conversations", pinnedThreads)}
-          {conversationGroup("Recent Conversations", recentThreads)}
-          {conversationGroup("Archived", archivedThreads)}
-          {threads.length === 0 ? <p className="py-4 text-sm text-slate-400">No matching conversations.</p> : null}
-        </div>
-      </div>
-      <details className="border-t border-white/10 p-3">
-        <summary className="cursor-pointer text-xs font-bold text-cyan-200">Review durable memories ({memories.length})</summary>
-        <p className="mt-2 text-xs leading-5 text-slate-400">Current BeastMoney records take priority. Deleting a conversation does not automatically delete its durable memories.</p>
-        <div className="mt-2 grid max-h-36 gap-2 overflow-y-auto">{memories.map((memory) => { const value = memory.value as { content?: string; memoryType?: string; confidence?: string }; const content = value.content || String(memory.value); return <div key={memory.id} className="rounded-lg border border-white/10 p-2 text-xs text-slate-300"><p>{content}</p><div className="mt-2 flex gap-3"><button type="button" className="font-bold text-cyan-200" onClick={() => { const corrected = window.prompt("Correct this memory", content); if (corrected && memoryStore) void memoryStore.correct({ agentId: memory.agentId, ownerId, id: memory.id, value: { ...value, content: corrected }, updatedAt: new Date().toISOString() }).then((updated) => setMemories((items) => items.map((item) => item.id === updated.id ? updated : item))); }}>Correct</button><button type="button" className="font-bold text-red-200" onClick={() => { if (memoryStore) void memoryStore.delete({ agentId: memory.agentId, ownerId, id: memory.id }).then(() => setMemories((items) => items.filter((item) => item.id !== memory.id))); }}>Remove</button></div></div>; })}</div>
-      </details>
-    </aside>
+    <ProfessionalConversationHistory
+      professionalName="Money Coach"
+      threads={threads}
+      activeThreadId={activeThreadId}
+      searchValue={historySearch}
+      loading={!repository}
+      error={historyError}
+      onSearchChange={(value) => {
+        setHistorySearch(value);
+        void refreshThreads(value);
+      }}
+      onNewConversation={() => {
+        setHistoryOpen(false);
+        void startConversation().then(() =>
+          window.requestAnimationFrame(focusComposer)
+        );
+      }}
+      onOpen={(item) => {
+        const thread = threads.find((candidate) => candidate.id === item.id);
+        if (thread) openThread(thread);
+      }}
+      onRename={(item) => {
+        const thread = threads.find((candidate) => candidate.id === item.id);
+        if (thread) void renameThread(thread);
+      }}
+      onPin={(item) => {
+        const thread = threads.find((candidate) => candidate.id === item.id);
+        if (thread) {
+          void repository
+            ?.pin(ownerId, thread.id, !thread.pinned)
+            .then(() => refreshThreads());
+        }
+      }}
+      onArchive={(item) => {
+        const thread = threads.find((candidate) => candidate.id === item.id);
+        if (thread) void archiveThread(thread);
+      }}
+      onDelete={(item) => {
+        const thread = threads.find((candidate) => candidate.id === item.id);
+        if (thread) void deleteThread(thread);
+      }}
+      onClose={() => setHistoryOpen(false)}
+      footer={
+        <details className="p-3">
+          <summary className="cursor-pointer text-xs font-bold text-cyan-200">
+            Review durable memories ({memories.length})
+          </summary>
+          <p className="mt-2 text-xs leading-5 text-slate-400">
+            Current BeastMoney records take priority. Deleting a conversation
+            does not automatically delete its durable memories.
+          </p>
+          <div className="mt-2 grid max-h-36 gap-2 overflow-y-auto">
+            {memories.map((memory) => {
+              const value = memory.value as {
+                content?: string;
+                memoryType?: string;
+                confidence?: string;
+              };
+              const content = value.content || String(memory.value);
+              return (
+                <div
+                  key={memory.id}
+                  className="rounded-lg border border-white/10 p-2 text-xs text-slate-300"
+                >
+                  <p>{content}</p>
+                  <div className="mt-2 flex gap-3">
+                    <button
+                      type="button"
+                      className="font-bold text-cyan-200"
+                      onClick={() => {
+                        const corrected = window.prompt(
+                          "Correct this memory",
+                          content
+                        );
+                        if (corrected && memoryStore) {
+                          void memoryStore
+                            .correct({
+                              agentId: memory.agentId,
+                              ownerId,
+                              id: memory.id,
+                              value: { ...value, content: corrected },
+                              updatedAt: new Date().toISOString(),
+                            })
+                            .then((updated) =>
+                              setMemories((items) =>
+                                items.map((item) =>
+                                  item.id === updated.id ? updated : item
+                                )
+                              )
+                            );
+                        }
+                      }}
+                    >
+                      Correct
+                    </button>
+                    <button
+                      type="button"
+                      className="font-bold text-red-200"
+                      onClick={() => {
+                        if (memoryStore) {
+                          void memoryStore
+                            .delete({
+                              agentId: memory.agentId,
+                              ownerId,
+                              id: memory.id,
+                            })
+                            .then(() =>
+                              setMemories((items) =>
+                                items.filter((item) => item.id !== memory.id)
+                              )
+                            );
+                        }
+                      }}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </details>
+      }
+    />
   );
   const starterShortcuts = workspaceSuggestions.slice(0, 8);
   const starterExperience = !loading && !error && turns.length === 0 ? (
@@ -1222,18 +1298,15 @@ export function MoneyCoachExperience({
   );
 
   return (
-    <ProfessionalConversationWorkspace
+    <ProfessionalExperienceFramework
+      professionalId={moneyCoachProfessionalId}
       history={historyPanel}
       historyOpen={historyOpen}
       onCloseHistory={() => setHistoryOpen(false)}
       historyDialogRef={historyDialogRef}
       professionalName="Money Coach"
       drawerId="money-coach-history-drawer"
-    >
-      <AgentExperience
       className="max-w-none !gap-4 border-white/10 bg-[#141a24] !p-3 sm:!p-4"
-      cardsPlacement="after-conversation"
-      cardsLayout="stack"
       header={
         <AgentHeader
           title={model.professional.identity.role}
@@ -1256,7 +1329,6 @@ export function MoneyCoachExperience({
             retryAction={<button type="button" className="beast-button" onClick={onRetry}>Try Again</button>}
           />
         ) : null}
-      suggestedActions={null}
       conversation={
         loading ? (
           <AgentLoadingState label="Loading Money Coach conversation" />
@@ -1302,25 +1374,116 @@ export function MoneyCoachExperience({
           </div>
         )
       }
-      smartCards={
-        <div className="grid min-w-0 gap-4">
-          <ProfessionalKnowledgeWorkspace
-            model={moneyKnowledgeModel}
-            onAction={beginKnowledgeConversation}
-          />
-          <details className="rounded-2xl border border-white/10 bg-black/10 p-4">
-            <summary className="cursor-pointer text-sm font-black text-cyan-200">
-              Review recommendations and reported outcomes
-            </summary>
-            <div className="mt-5 grid gap-6">
-              {recommendationCards}
-              {learningPanel}
-            </div>
-          </details>
-        </div>
+      knowledge={
+        <ProfessionalKnowledgeWorkspace
+          model={moneyKnowledgeModel}
+          onAction={beginKnowledgeConversation}
+        />
       }
-      composer={null}
-      />
-    </ProfessionalConversationWorkspace>
+      timeAwareness={
+        <ProfessionalTimeAwareness
+          title={
+            sessionBriefing.visit.firstVisit
+              ? "First financial review"
+              : "Returning financial review"
+          }
+          description="Timing and changes come only from persisted review history and current BeastMoney records."
+          items={[
+            {
+              id: "money-review-timing",
+              label: sessionBriefing.visit.firstVisit
+                ? "Review status"
+                : "Time since last review",
+              value: sessionBriefing.visit.firstVisit
+                ? "No earlier completed review was found"
+                : sessionBriefing.visit.timeSinceLastReview,
+              evidence: sessionBriefing.visit.lastReviewAt
+                ? `Previous review recorded ${new Date(
+                    sessionBriefing.visit.lastReviewAt
+                  ).toLocaleString()}.`
+                : "No authoritative previous-review timestamp is available.",
+            },
+            {
+              id: "money-verified-updates",
+              label: "Verified changes",
+              value: `${sessionBriefing.changes.length} meaningful update${
+                sessionBriefing.changes.length === 1 ? "" : "s"
+              }`,
+              evidence:
+                sessionBriefing.changes.length > 0
+                  ? "Derived from current BeastMoney records compared with the prior review."
+                  : "No verified financial change was identified.",
+            },
+          ]}
+          unavailableMessage="Review timing is unavailable until a persisted Money Coach review exists."
+        />
+      }
+      memory={
+        <ProfessionalMemoryTimeline
+          professionalName="Money Coach"
+          items={memories.slice(0, 6).map((memory) => ({
+            id: memory.id,
+            title: memory.key.replaceAll("-", " "),
+            summary: describeMemory(memory),
+            occurredAt: new Date(memory.updatedAt).toLocaleString(),
+            source: memory.evidence?.[0]?.source
+              ? "Saved conversation evidence"
+              : "Durable Money Coach memory",
+          }))}
+          emptyState="No durable Money Coach memory has been saved yet. Current BeastMoney records remain authoritative."
+        />
+      }
+      recommendations={
+        <details
+          className="rounded-2xl border border-white/10 bg-black/10 p-4"
+          open
+        >
+          <summary className="cursor-pointer text-sm font-black text-cyan-200">
+            Review recommendations and reported outcomes
+          </summary>
+          <div className="mt-5 grid gap-6">
+            {recommendationCards}
+            {learningPanel}
+          </div>
+        </details>
+      }
+      supportingWorkspaces={
+        <ProfessionalSupportingWorkspaces
+          professionalName="Money Coach"
+          workspaces={[
+            {
+              id: "money-income",
+              label: "Income",
+              description: "Review persisted income and cash-flow sources.",
+              href: "/dashboard/money/income",
+            },
+            {
+              id: "money-bills",
+              label: "Bills",
+              description: "Manage recurring obligations and due dates.",
+              href: "/dashboard/money/bills",
+            },
+            {
+              id: "money-debts",
+              label: "Debts",
+              description: "Review balances, lenders, and account details.",
+              href: "/dashboard/money/debts",
+            },
+            {
+              id: "money-payoff",
+              label: "Payoff Plan",
+              description: "Review strategies, projections, and timelines.",
+              href: "/dashboard/money/payoff-plan",
+            },
+            {
+              id: "money-retirement",
+              label: "Retirement",
+              description: "Review retirement assumptions and planning.",
+              href: "/dashboard/money/retirement",
+            },
+          ]}
+        />
+      }
+    />
   );
 }
