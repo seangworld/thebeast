@@ -46,7 +46,8 @@ test("BE-206 gives learning order and time estimates without false precision", (
   assert.ok(response.planningTopics.includes("foundations"));
   assert.ok(response.planningTopics.includes("learning-order"));
   assert.ok(response.planningTopics.includes("time-estimate"));
-  assert.match(response.text, /foundations to proof/i);
+  assert.match(response.text, /verified requirements and useful milestones/i);
+  assert.match(response.text, /inventory the education, experience, and skills/i);
   assert.match(response.text, /precise completion date would be false confidence/i);
   assert.match(response.text, /starting level.*verified scope.*hours/i);
 });

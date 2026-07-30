@@ -25,6 +25,19 @@ const blankProfile: GuidanceDiscoveryProfile = {
   currentEmployment: "",
   militaryExperience: "",
   otherEducationalContext: "",
+  educationHistory: [],
+  militaryTraining: [],
+  schools: [],
+  degrees: [],
+  experience: [],
+  skills: [],
+  educationBudget: "",
+  giBill: null,
+  vre: null,
+  employerReimbursement: null,
+  scholarshipInterest: null,
+  targetTimeline: "",
+  discoveryAnswers: {},
 };
 
 function recommend(
@@ -36,8 +49,6 @@ function recommend(
     profile: { ...blankProfile, ...profile },
     hasSavedGoal: false,
     hasSavedPlan: false,
-    activeCourseCount: 0,
-    openSessionCount: 0,
     ...state,
   });
 }
@@ -81,7 +92,7 @@ test("BE-218 introduces planning workspaces only from relevant member context", 
   );
 });
 
-test("BP-400 keeps active learning connected to Roadmap without exposing Tutor", () => {
+test("BE-401 keeps established plans connected to Roadmap without instruction", () => {
   const profile = {
     goal: "Move into cybersecurity",
     educationalGoals: ["Build the required foundations"],
@@ -92,7 +103,6 @@ test("BP-400 keeps active learning connected to Roadmap without exposing Tutor",
     recommend(profile, {
       hasSavedGoal: true,
       hasSavedPlan: true,
-      activeCourseCount: 1,
     }).action,
     "roadmap"
   );
@@ -126,7 +136,7 @@ test("BE-218 every recommendation explains why and names one action", () => {
         goal: "Advance at work",
         educationalGoals: ["Build new skills"],
       },
-      { hasSavedGoal: true, hasSavedPlan: true, openSessionCount: 1 }
+      { hasSavedGoal: true, hasSavedPlan: true }
     ),
   ];
 

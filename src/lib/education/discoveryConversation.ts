@@ -18,6 +18,19 @@ export type GuidanceDiscoveryProfile = {
   currentEmployment: string;
   militaryExperience: string;
   otherEducationalContext: string;
+  educationHistory: string[];
+  militaryTraining: string[];
+  schools: string[];
+  degrees: string[];
+  experience: string[];
+  skills: string[];
+  educationBudget: string;
+  giBill: boolean | null;
+  vre: boolean | null;
+  employerReimbursement: boolean | null;
+  scholarshipInterest: boolean | null;
+  targetTimeline: string;
+  discoveryAnswers: Record<string, unknown>;
 };
 
 export function guidanceDiscoveryProfileFromRow(
@@ -25,6 +38,16 @@ export function guidanceDiscoveryProfileFromRow(
 ): GuidanceDiscoveryProfile {
   const strings = (value: unknown) =>
     Array.isArray(value) ? value.map(String).filter(Boolean) : [];
+  const discoveryAnswers =
+    row?.discovery_answers &&
+    typeof row.discovery_answers === "object" &&
+    !Array.isArray(row.discovery_answers)
+      ? (row.discovery_answers as Record<string, unknown>)
+      : {};
+  const answerBoolean = (key: string) =>
+    typeof discoveryAnswers[key] === "boolean"
+      ? (discoveryAnswers[key] as boolean)
+      : null;
   return {
     goal: String(row?.goal ?? ""),
     currentSituation: String(row?.current_situation ?? ""),
@@ -47,6 +70,31 @@ export function guidanceDiscoveryProfileFromRow(
     currentEmployment: String(row?.current_employment ?? ""),
     militaryExperience: String(row?.military_experience ?? ""),
     otherEducationalContext: String(row?.other_educational_context ?? ""),
+    educationHistory: strings(
+      discoveryAnswers.guidance_education_history
+    ),
+    militaryTraining: strings(
+      discoveryAnswers.guidance_military_training
+    ),
+    schools: strings(discoveryAnswers.guidance_schools),
+    degrees: strings(discoveryAnswers.guidance_degrees),
+    experience: strings(discoveryAnswers.guidance_experience),
+    skills: strings(discoveryAnswers.guidance_skills),
+    educationBudget: String(
+      discoveryAnswers.guidance_education_budget ?? ""
+    ),
+    giBill: answerBoolean("guidance_gi_bill"),
+    vre: answerBoolean("guidance_vre"),
+    employerReimbursement: answerBoolean(
+      "guidance_employer_reimbursement"
+    ),
+    scholarshipInterest: answerBoolean(
+      "guidance_scholarship_interest"
+    ),
+    targetTimeline: String(
+      discoveryAnswers.guidance_target_timeline ?? ""
+    ),
+    discoveryAnswers,
   };
 }
 
@@ -60,6 +108,32 @@ function captured(message: string, pattern: RegExp) {
 
 function withoutLeadingArticle(value: string) {
   return value.replace(/^(?:a|an|the)\s+/i, "").trim();
+}
+
+function explicitAvailability(
+  text: string,
+  subject: RegExp
+): boolean | null {
+  if (/\b(?:do not know|don't know|not sure|unsure)\b/i.test(text)) {
+    return null;
+  }
+  if (
+    new RegExp(
+      `\\b(?:no|not eligible for|do not have|don't have|cannot use|can't use)\\b[^.!?]{0,45}${subject.source}`,
+      "i"
+    ).test(text)
+  ) {
+    return false;
+  }
+  if (
+    new RegExp(
+      `\\b(?:have|use|using|eligible for|approved for|receive|receiving|interested in|applying for)\\b[^.!?]{0,45}${subject.source}`,
+      "i"
+    ).test(text)
+  ) {
+    return true;
+  }
+  return null;
 }
 
 export function learnFromDiscoveryTurn(
@@ -237,10 +311,217 @@ export function learnFromDiscoveryTurn(
     next.otherEducationalContext = text;
   }
 
+  if (
+    /\b(?:my educational journey|my education(?:al)? (?:history|background)|i (?:attended|studied|trained|graduated|completed)|i (?:have|earned|finished)[^.!?]*(?:degree|diploma|education|training))\b/i.test(
+      text
+    )
+  ) {
+    next.educationHistory = unique([...current.educationHistory, text]);
+  }
+
+  if (
+    /\b(?:attended|graduated from|studied at|enrolled at|applied to|applying to|considering)\b[^.!?]*(?:school|college|university|academy|institute)\b/i.test(
+      text
+    ) ||
+    /\b(?:degree|diploma|certificate)\b[^.!?]*\bfrom\b[^.!?]*(?:school|college|university|academy|institute)\b/i.test(
+      text
+    ) ||
+    /\b(?:school|college|university) i (?:attended|graduated from|am considering|want to attend)\b/i.test(
+      text
+    )
+  ) {
+    next.schools = unique([...current.schools, text]);
+  }
+
+  if (
+    /\b(?:i (?:have|hold|earned|completed)|my degree is|i do not have|i don't have)\b[^.!?]*\b(?:degree|associate'?s|bachelor'?s|master'?s|doctorate|phd|diploma)\b/i.test(
+      text
+    ) ||
+    /\b(?:educational journey|education(?:al)? (?:history|background))\b[^.!?]*\b(?:degree|associate'?s|bachelor'?s|master'?s|doctorate|phd|diploma)\b/i.test(
+      text
+    )
+  ) {
+    next.degrees = unique([...current.degrees, text]);
+  }
+
+  if (
+    /\b(?:military|army|navy|air force|marine|coast guard|space force|mos|afsc|rating)\b[^.!?]*\b(?:training|school|course|specialty|occupation|qualification)\b/i.test(
+      text
+    )
+  ) {
+    next.militaryTraining = unique([...current.militaryTraining, text]);
+  }
+
+  if (
+    /\b(?:i have|i've|my experience includes)\b[^.!?]*\b(?:years? of )?experience\b/i.test(
+      text
+    ) ||
+    /\bi (?:worked|served|managed|led|built|supported)\b[^.!?]+/i.test(text)
+  ) {
+    next.experience = unique([...current.experience, text]);
+  }
+
+  if (
+    /\b(?:my skills? (?:are|include)|i am skilled in|i'm skilled in|i know how to|i have skills? in)\b/i.test(
+      text
+    )
+  ) {
+    next.skills = unique([...current.skills, text]);
+  }
+
+  const budget =
+    text.match(
+      /\b(?:my (?:education )?budget is|i can (?:spend|afford)|i have a budget of|tuition needs to be)\b[^.!?]*/i
+    )?.[0]?.trim() || "";
+  if (budget) next.educationBudget = budget;
+
+  const giBill = explicitAvailability(text, /(?:the )?gi bill/);
+  if (giBill !== null) next.giBill = giBill;
+  const vre = explicitAvailability(text, /(?:vr&e|veteran readiness and employment)/);
+  if (vre !== null) next.vre = vre;
+  const employerReimbursement = explicitAvailability(
+    text,
+    /(?:employer|company|workplace) (?:tuition )?(?:reimbursement|assistance|benefit)/
+  );
+  if (employerReimbursement !== null) {
+    next.employerReimbursement = employerReimbursement;
+  } else if (
+    /\b(?:my employer|my company|my workplace|work)\b[^.!?]{0,45}\b(?:offers?|provides?|includes?)\b[^.!?]{0,35}\b(?:tuition reimbursement|tuition assistance|education benefit)\b/i.test(
+      text
+    )
+  ) {
+    next.employerReimbursement = true;
+  }
+  const scholarshipInterest = explicitAvailability(
+    text,
+    /scholarships?/
+  );
+  if (scholarshipInterest !== null) {
+    next.scholarshipInterest = scholarshipInterest;
+  }
+
+  const timeline =
+    text.match(
+      /\b(?:my timeline is|i want to (?:finish|start|complete|change careers?)|i need to (?:finish|start|complete)|by (?:next|this)|within \d+)\b[^.!?]*/i
+    )?.[0]?.trim() || "";
+  if (timeline) next.targetTimeline = timeline;
+
+  return next;
+}
+
+function directBooleanAnswer(message: string) {
+  if (/\b(?:do not know|don't know|not sure|unsure)\b/i.test(message)) {
+    return null;
+  }
+  if (/^\s*(?:no|not currently|none|i do not|i don't)\b/i.test(message)) {
+    return false;
+  }
+  if (/^\s*(?:yes|i do|i have|i am|i'm|currently)\b/i.test(message)) {
+    return true;
+  }
+  return null;
+}
+
+export function learnFromGuidanceKnowledgeAnswer(
+  message: string,
+  area: string,
+  current: GuidanceDiscoveryProfile
+) {
+  const text = message.trim();
+  const next = learnFromDiscoveryTurn(text, current);
+  if (!text) return next;
+
+  switch (area) {
+    case "career-goals":
+      next.goal = text;
+      next.careerInterests = [text];
+      break;
+    case "educational-goals":
+      next.educationalGoals = [text];
+      break;
+    case "education-history":
+      next.educationHistory = [text];
+      next.otherEducationalContext = text;
+      break;
+    case "schools":
+      next.schools = [text];
+      break;
+    case "degrees":
+      next.degrees = [text];
+      break;
+    case "certifications":
+      next.certifications = [text];
+      break;
+    case "current-situation":
+      next.currentEmployment = text;
+      break;
+    case "military-training":
+      next.militaryTraining = [text];
+      next.militaryExperience = text;
+      break;
+    case "experience":
+      next.experience = [text];
+      break;
+    case "skills":
+      next.skills = [text];
+      break;
+    case "strengths":
+      next.strengths = text;
+      break;
+    case "growth-areas":
+      next.growthAreas = text;
+      break;
+    case "learning-style":
+      next.learningPreferences = [text];
+      break;
+    case "weekly-study-time": {
+      const hours = text.match(/\d{1,3}(?:\.\d+)?/)?.[0];
+      if (hours !== undefined) {
+        next.weeklyHours = Math.max(0, Math.min(168, Number(hours)));
+        next.availableStudyTimeKnown = true;
+      }
+      break;
+    }
+    case "education-budget":
+      next.educationBudget = text;
+      break;
+    case "gi-bill":
+      next.giBill = directBooleanAnswer(text);
+      break;
+    case "vre":
+      next.vre = directBooleanAnswer(text);
+      break;
+    case "employer-reimbursement":
+      next.employerReimbursement = directBooleanAnswer(text);
+      break;
+    case "scholarship-interest":
+      next.scholarshipInterest = directBooleanAnswer(text);
+      break;
+    case "timeline":
+      next.targetTimeline = text;
+      break;
+    case "constraints":
+      next.constraints = text;
+      break;
+    case "college-interest":
+      next.collegeInterest = directBooleanAnswer(text);
+      break;
+    case "trade-interest":
+      next.tradeInterest = directBooleanAnswer(text);
+      break;
+  }
   return next;
 }
 
 export function nextDiscoveryQuestion(profile: GuidanceDiscoveryProfile) {
+  if (
+    profile.educationHistory.length === 0 &&
+    profile.degrees.length === 0 &&
+    profile.schools.length === 0 &&
+    !profile.otherEducationalContext
+  ) {
+    return "Tell me about your educational journey.";
+  }
   if (!profile.goal && profile.careerInterests.length === 0) {
     return "What would you like education or career guidance to help you change?";
   }
@@ -268,6 +549,18 @@ export function nextDiscoveryQuestion(profile: GuidanceDiscoveryProfile) {
   if (profile.collegeInterest === null && profile.tradeInterest === null) {
     return "Are you currently considering college, a skilled trade, certifications, or an experience-first path?";
   }
+  if (
+    !profile.educationBudget &&
+    profile.giBill === null &&
+    profile.vre === null &&
+    profile.employerReimbursement === null &&
+    profile.scholarshipInterest === null
+  ) {
+    return "What funding options should I keep in mind—your budget, GI Bill, VR&E, employer reimbursement, scholarships, or something else?";
+  }
+  if (!profile.targetTimeline) {
+    return "Is there a timeline or deadline that should shape the plan?";
+  }
   return "What would you like us to work on first?";
 }
 
@@ -290,6 +583,21 @@ export function discoveryProfileUpdate(profile: GuidanceDiscoveryProfile) {
     current_employment: profile.currentEmployment,
     military_experience: profile.militaryExperience,
     other_educational_context: profile.otherEducationalContext,
+    discovery_answers: {
+      ...profile.discoveryAnswers,
+      guidance_education_history: profile.educationHistory,
+      guidance_military_training: profile.militaryTraining,
+      guidance_schools: profile.schools,
+      guidance_degrees: profile.degrees,
+      guidance_experience: profile.experience,
+      guidance_skills: profile.skills,
+      guidance_education_budget: profile.educationBudget,
+      guidance_gi_bill: profile.giBill,
+      guidance_vre: profile.vre,
+      guidance_employer_reimbursement: profile.employerReimbursement,
+      guidance_scholarship_interest: profile.scholarshipInterest,
+      guidance_target_timeline: profile.targetTimeline,
+    },
     updated_at: new Date().toISOString(),
   };
 }

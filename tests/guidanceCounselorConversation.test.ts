@@ -12,10 +12,9 @@ test("BE-202 opens BeastEducation with the Guidance Counselor conversation", () 
 
   assert.match(page, /<GuidanceCounselorConversation/);
   assert.ok(page.includes("<GuidanceCounselorConversation"));
-  assert.ok(
-    page.indexOf("<GuidanceCounselorConversation") <
-      page.lastIndexOf("<RecommendationCard recommendation={recommendation}"),
-    "the conversation should lead the counselor workspace"
+  assert.match(
+    page,
+    /<GuidanceCounselorConversation[\s\S]*recommendation=\{recommendation\}/
   );
 });
 
@@ -52,14 +51,18 @@ test("BE-230 suggested prompts sound like messages a student would type", () => 
 
 test("BE-202 keeps a member-scoped relationship across navigation", () => {
   const source = readFileSync(conversationPath, "utf8");
+  const liveExperience = readFileSync(
+    "src/lib/education/guidanceCounselorLive.ts",
+    "utf8"
+  );
 
   assert.match(source, /ServerAgentConversationRepository/);
   assert.match(source, /SupabaseAgentConversationStore/);
   assert.match(source, /beasteducation\.guidance-counselor/);
   assert.match(source, /ownerId: memberId/);
   assert.match(source, /Your primary BeastEducation professional/);
-  assert.match(source, /I’m your Guidance Counselor/);
-  assert.match(source, /How can I help you today/);
+  assert.match(liveExperience, /I’m your Guidance Counselor/);
+  assert.match(liveExperience, /Tell me about your educational journey/);
 });
 
 test("BE-205 presents the relationship before its supporting dashboard", () => {
@@ -71,11 +74,8 @@ test("BE-205 presents the relationship before its supporting dashboard", () => {
   );
 
   assert.match(source, /ProfessionalConversationWorkspace/);
-  assert.ok(
-    page.indexOf("<GuidanceCounselorConversation") <
-      page.lastIndexOf("<RecommendationCard recommendation={recommendation}"),
-    "the conversation should precede the current recommendation"
-  );
+  assert.match(source, /cardsPlacement="after-conversation"/);
+  assert.match(source, /Current recommendation/);
   assert.match(page, /Open the workspace that owns the next decision/);
   assert.match(recommendation, /Current recommendation/);
   assert.match(recommendation, /Educational Roadmap summary/);

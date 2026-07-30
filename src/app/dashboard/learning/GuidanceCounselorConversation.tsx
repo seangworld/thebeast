@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -22,6 +23,7 @@ import {
 } from "@/app/components/agents";
 import {
   buildGuidanceCounselorConversationTurn,
+  buildGuidanceCounselorSessionAwareness,
   buildGuidanceCounselorUnderstanding,
   explicitGuidanceGoalChange,
   guidanceRelationshipMemoryRecord,
@@ -32,15 +34,21 @@ import {
 import {
   discoveryProfileUpdate,
   learnFromDiscoveryTurn,
+  learnFromGuidanceKnowledgeAnswer,
   type GuidanceDiscoveryProfile,
 } from "@/lib/education/discoveryConversation";
+import type { GuidanceWorkflowRecommendation } from "@/lib/education/guidanceWorkflow";
 import {
   ServerAgentConversationRepository,
   SupabaseAgentConversationStore,
+  SupabaseExecutionHistoryStore,
   SupabaseAgentMemoryStore,
   type AgentMemoryRecord,
   type AgentConversationThread,
   type AgentMessage,
+  type ExecutionAuditEvent,
+  type ProfessionalExecutionHistory,
+  type RecommendationLifecycleStatus,
 } from "@/lib/platform/agents";
 import { createClient } from "@/lib/supabase/client";
 
@@ -64,6 +72,7 @@ type GuidanceCounselorConversationProps = {
   memberName: string;
   context: GuidanceCounselorConversationContext;
   initialProfile: GuidanceDiscoveryProfile;
+  recommendation: GuidanceWorkflowRecommendation;
 };
 
 const professionalId = "beasteducation.guidance-counselor";
@@ -85,6 +94,7 @@ export default function GuidanceCounselorConversation({
   memberName,
   context,
   initialProfile,
+  recommendation,
 }: GuidanceCounselorConversationProps) {
   const router = useRouter();
   const [input, setInput] = useState("");
@@ -107,14 +117,34 @@ export default function GuidanceCounselorConversation({
   const [knowledgePrompt, setKnowledgePrompt] = useState<{
     id: string;
     text: string;
+    area: string;
   } | null>(null);
   const [discoveryProfile, setDiscoveryProfile] =
     useState<GuidanceDiscoveryProfile>(initialProfile);
   const [profileSaveStatus, setProfileSaveStatus] = useState<
     "idle" | "saving" | "saved" | "error"
   >("idle");
+  const [sessionNow, setSessionNow] = useState<Date | null>(null);
+  const [previousReviewAt, setPreviousReviewAt] = useState("");
+  const [previousConversationSummary, setPreviousConversationSummary] =
+    useState("");
+  const [executionStore, setExecutionStore] =
+    useState<SupabaseExecutionHistoryStore | null>(null);
+  const [executionHistory, setExecutionHistory] =
+    useState<ProfessionalExecutionHistory>();
+  const [executionHistoryLoading, setExecutionHistoryLoading] = useState(true);
+  const [executionHistoryError, setExecutionHistoryError] = useState("");
+  const [decisionPending, setDecisionPending] = useState(false);
+  const [actorType, setActorType] =
+    useState<Extract<ExecutionAuditEvent["actorType"], "member" | "owner">>(
+      "member"
+    );
   const historyDialogRef = useRef<HTMLDivElement>(null);
   const conversationScrollPositionsRef = useRef(new Map<string, number>());
+
+  useEffect(() => {
+    setSessionNow(new Date());
+  }, []);
 
   useEffect(() => {
     if (!historyOpen) return;
@@ -152,6 +182,9 @@ export default function GuidanceCounselorConversation({
         agentId: professionalId,
         includeArchived: true,
       });
+      const previousConversation = available
+        .filter((thread) => thread.messageCount > 0)
+        .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))[0];
       if (available.length === 0) {
         available = [
           await nextRepository.create({
@@ -165,6 +198,12 @@ export default function GuidanceCounselorConversation({
       setRepository(nextRepository);
       setMemoryStore(nextMemoryStore);
       setRelationshipMemories([...memories]);
+      setPreviousReviewAt(previousConversation?.updatedAt || "");
+      setPreviousConversationSummary(
+        previousConversation?.summary.overview
+          ?.replace(/^Discussed\s+/i, "we discussed ")
+          .replace(/[.!?]+$/, "") || ""
+      );
       setThreads(available);
       setActiveThreadId(active.id);
       setConversationTitle(active.title);
@@ -182,6 +221,52 @@ export default function GuidanceCounselorConversation({
     };
   // restoreThread has stable behavior and history loads only for the authenticated owner.
   // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [memberId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadExecutionHistory() {
+      const client = createClient();
+      const [
+        {
+          data: { user },
+          error: authError,
+        },
+        profileResult,
+      ] = await Promise.all([
+        client.auth.getUser(),
+        client.from("profiles").select("role").eq("id", memberId).maybeSingle(),
+      ]);
+      if (authError) throw authError;
+      if (!user || user.id !== memberId) {
+        throw new Error("Execution history owner mismatch.");
+      }
+      const store = new SupabaseExecutionHistoryStore(client);
+      const history = await store.listProfessionalHistory(
+        memberId,
+        professionalId
+      );
+      if (cancelled) return;
+      setActorType(
+        (profileResult.data as { role?: string } | null)?.role === "admin"
+          ? "owner"
+          : "member"
+      );
+      setExecutionStore(store);
+      setExecutionHistory(history);
+      setExecutionHistoryError("");
+      setExecutionHistoryLoading(false);
+    }
+    void loadExecutionHistory().catch(() => {
+      if (cancelled) return;
+      setExecutionHistoryError(
+        "Recommendation history is temporarily unavailable. Current guidance remains available from your saved education context."
+      );
+      setExecutionHistoryLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [memberId]);
 
   function restoreThread(thread: AgentConversationThread) {
@@ -220,6 +305,202 @@ export default function GuidanceCounselorConversation({
     }
   }
 
+  async function refreshExecutionHistory() {
+    if (!executionStore) return;
+    setExecutionHistory(
+      await executionStore.listProfessionalHistory(memberId, professionalId)
+    );
+  }
+
+  const sourceRecommendationId = `guidance-workflow:${recommendation.action}`;
+  const recommendationLifecycle = executionHistory?.recommendations.find(
+    (item) =>
+      item.supportingEvidence.some(
+        (evidence) =>
+          typeof evidence === "object" &&
+          evidence !== null &&
+          "sourceRecommendationId" in evidence &&
+          evidence.sourceRecommendationId === sourceRecommendationId
+      )
+  );
+  const recommendationLimitations = [
+    "Guidance depends on the completeness and freshness of the member’s saved education context.",
+    "School, credential, funding, and benefit requirements must be verified with current authoritative sources.",
+  ];
+  const recommendationEvidence = [
+    { label: "Current recommendation", value: recommendation.action },
+    { label: "Why", value: recommendation.why },
+  ];
+
+  async function decideRecommendation(
+    nextStatus: Extract<
+      RecommendationLifecycleStatus,
+      "accepted" | "declined" | "deferred"
+    >
+  ) {
+    if (!executionStore) {
+      setExecutionHistoryError(
+        "Recommendation decisions cannot be saved until recommendation history is available."
+      );
+      return;
+    }
+    setDecisionPending(true);
+    setExecutionHistoryError("");
+    try {
+      let lifecycle = recommendationLifecycle;
+      let requestStatus = lifecycle
+        ? executionHistory?.requests.find(
+            (request) => request.id === lifecycle?.requestId
+          )?.status
+        : undefined;
+      if (!lifecycle) {
+        const requestId = await executionStore.create({
+          professionalId,
+          requestType: "education_planning_recommendation_review",
+          title: recommendation.title,
+          actionClassification: "recommendation_only",
+          contextReferences: [
+            { source: "beasteducation", sourceRecommendationId },
+          ],
+          limitations: recommendationLimitations,
+        });
+        await executionStore.transition(
+          requestId,
+          "analyzing",
+          actorType,
+          { source: "guidance_counselor_recommendation" },
+          recommendationEvidence
+        );
+        requestStatus = "analyzing";
+        lifecycle = await executionStore.createRecommendation({
+          ownerId: memberId,
+          requestId,
+          professionalId,
+          title: recommendation.title,
+          recommendation: recommendation.why,
+          confidence: {
+            level: "contextual",
+            basis: "Saved member context and current planning state",
+          },
+          limitations: recommendationLimitations,
+          supportingEvidence: [
+            { source: "beasteducation", sourceRecommendationId },
+            ...recommendationEvidence,
+          ],
+        });
+      }
+      if (lifecycle.status !== nextStatus) {
+        await executionStore.transitionRecommendation({
+          recommendationId: lifecycle.id,
+          status: nextStatus,
+          reason: `Member selected ${nextStatus} in Guidance Counselor.`,
+          limitations: recommendationLimitations,
+          supportingEvidence: [
+            { source: "beasteducation", sourceRecommendationId },
+            ...recommendationEvidence,
+          ],
+        });
+      }
+      await executionStore.recordDecision({
+        ownerId: memberId,
+        requestId: lifecycle.requestId,
+        decisionScope: actorType === "owner" ? "owner" : "member",
+        decision: nextStatus === "accepted" ? "approved" : nextStatus,
+        reason: `Guidance Counselor recommendation ${nextStatus}.`,
+        limitationsAcknowledged: recommendationLimitations,
+      });
+      if (requestStatus === "queued" || requestStatus === "awaiting_context") {
+        await executionStore.transition(
+          lifecycle.requestId,
+          "analyzing",
+          actorType,
+          { recommendationStatus: nextStatus }
+        );
+        requestStatus = "analyzing";
+      }
+      if (requestStatus === "analyzing") {
+        await executionStore.transition(
+          lifecycle.requestId,
+          nextStatus === "accepted"
+            ? "approved"
+            : nextStatus === "deferred"
+              ? "awaiting_context"
+              : "canceled",
+          actorType,
+          { recommendationStatus: nextStatus }
+        );
+      }
+      await refreshExecutionHistory();
+    } catch {
+      setExecutionHistoryError(
+        "The recommendation decision could not be saved. No application, enrollment, payment, or education record was changed."
+      );
+    } finally {
+      setDecisionPending(false);
+    }
+  }
+
+  async function recordRecommendationOutcome(
+    outcomeStatus: "successful" | "neutral" | "unsuccessful"
+  ) {
+    if (!executionStore || !recommendationLifecycle) return;
+    setDecisionPending(true);
+    setExecutionHistoryError("");
+    const learning =
+      outcomeStatus === "successful"
+        ? "Member reported that this planning guidance helped."
+        : outcomeStatus === "neutral"
+          ? "Member reported no clear change from this planning guidance."
+          : "Member reported that this planning guidance did not help.";
+    try {
+      const request = executionHistory?.requests.find(
+        (item) => item.id === recommendationLifecycle.requestId
+      );
+      if (request?.status === "approved") {
+        await executionStore.transition(
+          request.id,
+          "executing",
+          actorType,
+          { source: "member_reported_outcome" }
+        );
+      }
+      await executionStore.recordResultAndOutcome({
+        ownerId: memberId,
+        requestId: recommendationLifecycle.requestId,
+        outcomeStatus,
+        recommendationTitle: recommendation.title,
+        memberLearning: [learning],
+        actualResult: { source: "member_report", status: outcomeStatus },
+        limitations: [
+          "Outcome is member-reported and was not independently verified.",
+        ],
+        supportingEvidence: [
+          { source: "member_report", sourceRecommendationId },
+        ],
+      });
+      await executionStore.transitionRecommendation({
+        recommendationId: recommendationLifecycle.id,
+        status: "completed",
+        reason: learning,
+      });
+      if (request?.status === "approved") {
+        await executionStore.transition(
+          request.id,
+          "completed",
+          actorType,
+          { outcomeStatus, source: "member_report" }
+        );
+      }
+      await refreshExecutionHistory();
+    } catch {
+      setExecutionHistoryError(
+        "The outcome could not be saved. No application, enrollment, payment, or education record was changed."
+      );
+    } finally {
+      setDecisionPending(false);
+    }
+  }
+
   async function saveDiscoveryProfile(profile: GuidanceDiscoveryProfile) {
     setProfileSaveStatus("saving");
     const result = await createClient()
@@ -241,12 +522,16 @@ export default function GuidanceCounselorConversation({
   async function sendMessage(question: string) {
     const cleanQuestion = question.trim();
     if (!cleanQuestion) return;
+    const activeKnowledgePrompt = knowledgePrompt;
     setKnowledgePrompt(null);
     const turnId = `guidance-${Date.now()}`;
-    const learnedProfile = learnFromDiscoveryTurn(
-      cleanQuestion,
-      discoveryProfile
-    );
+    const learnedProfile = activeKnowledgePrompt
+      ? learnFromGuidanceKnowledgeAnswer(
+          cleanQuestion,
+          activeKnowledgePrompt.area,
+          discoveryProfile
+        )
+      : learnFromDiscoveryTurn(cleanQuestion, discoveryProfile);
     const changedGoal = explicitGuidanceGoalChange(
       cleanQuestion,
       discoveryProfile.goal
@@ -400,13 +685,19 @@ export default function GuidanceCounselorConversation({
       ?.focus({ preventScroll: true });
   }
 
+  const sessionAwareness = buildGuidanceCounselorSessionAwareness({
+    memberName,
+    now: sessionNow || new Date(0),
+    previousReviewAt,
+    previousConversationSummary,
+  });
   const timelineMessages = useMemo<AgentConversationMessage[]>(
     () => [
       {
         id: "guidance-counselor-opening",
         role: "agent",
         author: "Guidance Counselor",
-        content: `Hi${memberName ? ` ${memberName}` : ""}. I’m your Guidance Counselor. How can I help you today?`,
+        content: sessionAwareness.opening,
       },
       ...(knowledgePrompt
         ? [
@@ -441,28 +732,10 @@ export default function GuidanceCounselorConversation({
         },
       ]),
     ],
-    [knowledgePrompt, memberName, streamingTurnId, turns]
+    [knowledgePrompt, sessionAwareness.opening, streamingTurnId, turns]
   );
 
   const understanding = buildGuidanceCounselorUnderstanding(discoveryProfile);
-  const guidanceKnowledgeHref = (item: GuidanceUnderstandingItem) => {
-    if (item.area === "career-goals") {
-      return "/dashboard/education/career-planning";
-    }
-    if (item.area === "educational-goals") {
-      return "/dashboard/education/educational-roadmap";
-    }
-    if (item.area === "prior-experience") {
-      return "/dashboard/education/certifications";
-    }
-    if (item.area === "college-interest") {
-      return "/dashboard/education/schools";
-    }
-    if (item.area === "trade-interest") {
-      return "/dashboard/education/career-planning";
-    }
-    return "/dashboard/education/guidance-counselor";
-  };
   const guidanceKnowledgeItem = (
     item: GuidanceUnderstandingItem
   ): ProfessionalKnowledgeItem => ({
@@ -478,23 +751,22 @@ export default function GuidanceCounselorConversation({
         ? `This is a working idea based on ${item.evidence.join(", ")}.`
         : undefined,
     evidence: item.evidence,
-    action:
-      item.state === "needed"
-        ? {
-            label: "Talk about this",
-            mode: "conversation",
-            prompt:
-              item.question ||
-              `Tell me what you would like me to understand about ${item.label.toLowerCase()}.`,
-          }
-        : {
-            label:
-              item.state === "thought"
-                ? "Review supporting plan"
-                : "Review or update",
-            mode: item.state === "thought" ? "detail" : "edit",
-            href: guidanceKnowledgeHref(item),
-          },
+    action: {
+      label:
+        item.state === "needed"
+          ? "Talk about this"
+          : item.state === "thought"
+            ? "Revisit this"
+            : "Review or update",
+      mode: "conversation",
+      prompt:
+        item.state === "needed"
+          ? item.question ||
+            `Tell me what you would like me to understand about ${item.label.toLowerCase()}.`
+          : item.state === "thought"
+            ? `I currently see ${item.value} as a possibility. What would you like me to reconsider or clarify?`
+            : `I currently have ${item.label.toLowerCase()} as “${item.value}.” Tell me what you want to correct, replace, or expand.`,
+    },
   });
   const guidanceKnowledgeModel: ProfessionalKnowledgeModel = {
     professionalId,
@@ -522,6 +794,7 @@ export default function GuidanceCounselorConversation({
     setKnowledgePrompt({
       id: `guidance-knowledge-prompt-${Date.now()}`,
       text: prompt,
+      area: item.id.replace(/^guidance-/, ""),
     });
     window.requestAnimationFrame(focusComposer);
   }
@@ -707,6 +980,202 @@ export default function GuidanceCounselorConversation({
         </div>
       </section>
     ) : null;
+  const recommendationHistory = executionHistory?.recommendations || [];
+  const reportedOutcomes = executionHistory?.outcomes || [];
+  const supportPanels = (
+    <div className="grid gap-5">
+      <div data-guidance-understanding-model="true">
+        <ProfessionalKnowledgeWorkspace
+          model={guidanceKnowledgeModel}
+          onAction={beginKnowledgeConversation}
+          className="rounded-2xl border border-white/10 bg-black/10 p-4"
+        />
+      </div>
+
+      <section
+        className="rounded-2xl border border-violet-300/20 bg-violet-300/[0.06] p-4 sm:p-5"
+        aria-labelledby="guidance-current-recommendation"
+      >
+        <p className="text-xs font-black uppercase tracking-[0.14em] text-violet-200">
+          Current recommendation
+        </p>
+        <h2
+          id="guidance-current-recommendation"
+          className="mt-2 text-xl font-black text-white"
+        >
+          {recommendation.title}
+        </h2>
+        <p className="mt-3 text-sm leading-6 text-slate-200">
+          {recommendation.introduction}
+        </p>
+        <div className="mt-4 rounded-xl border border-white/10 bg-black/15 p-4">
+          <p className="text-xs font-black uppercase tracking-wide text-slate-400">
+            Why this matters
+          </p>
+          <p className="mt-2 text-sm leading-6 text-slate-200">
+            {recommendation.why}
+          </p>
+          <p className="mt-3 text-sm leading-6 text-slate-300">
+            Expected outcome: {recommendation.outcome}
+          </p>
+        </div>
+        <p className="mt-4 text-xs leading-5 text-slate-400">
+          Accepting records your decision only. It does not submit an
+          application, enroll you, move money, or change an education record.
+        </p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Link
+            href={recommendation.href}
+            className="beast-button-secondary inline-flex min-h-11 items-center"
+          >
+            {recommendation.actionLabel}
+          </Link>
+          {!recommendationLifecycle ||
+          ["proposed", "deferred"].includes(recommendationLifecycle.status) ? (
+            <button
+              type="button"
+              className="beast-button min-h-11"
+              disabled={decisionPending || !executionStore}
+              onClick={() => void decideRecommendation("accepted")}
+            >
+              Accept
+            </button>
+          ) : null}
+          {!recommendationLifecycle ||
+          recommendationLifecycle.status === "proposed" ? (
+            <button
+              type="button"
+              className="beast-button-secondary min-h-11"
+              disabled={decisionPending || !executionStore}
+              onClick={() => void decideRecommendation("deferred")}
+            >
+              Defer
+            </button>
+          ) : null}
+          {!recommendationLifecycle ||
+          ["proposed", "deferred"].includes(recommendationLifecycle.status) ? (
+            <button
+              type="button"
+              className="beast-button-secondary min-h-11"
+              disabled={decisionPending || !executionStore}
+              onClick={() => void decideRecommendation("declined")}
+            >
+              Decline
+            </button>
+          ) : null}
+        </div>
+        {recommendationLifecycle?.status === "accepted" ? (
+          <div className="mt-4 border-t border-white/10 pt-4">
+            <p className="text-xs font-bold text-slate-300">
+              After using this guidance, what changed?
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <button
+                type="button"
+                className="beast-button-secondary min-h-11"
+                disabled={decisionPending}
+                onClick={() => void recordRecommendationOutcome("successful")}
+              >
+                It helped
+              </button>
+              <button
+                type="button"
+                className="beast-button-secondary min-h-11"
+                disabled={decisionPending}
+                onClick={() => void recordRecommendationOutcome("neutral")}
+              >
+                No clear change
+              </button>
+              <button
+                type="button"
+                className="beast-button-secondary min-h-11"
+                disabled={decisionPending}
+                onClick={() =>
+                  void recordRecommendationOutcome("unsuccessful")
+                }
+              >
+                It did not help
+              </button>
+            </div>
+          </div>
+        ) : null}
+        {executionHistoryLoading ? (
+          <p className="mt-4 text-xs text-slate-400" role="status">
+            Loading recommendation history…
+          </p>
+        ) : null}
+        {executionHistoryError ? (
+          <p
+            className="mt-4 rounded-xl border border-amber-300/20 bg-amber-300/10 p-3 text-sm leading-6 text-amber-100"
+            role="alert"
+          >
+            {executionHistoryError}
+          </p>
+        ) : null}
+      </section>
+
+      <div className="grid gap-5 lg:grid-cols-2">
+        <section className="rounded-2xl border border-white/10 bg-black/10 p-4 sm:p-5">
+          <h2 className="text-base font-black text-white">
+            Recommendation history
+          </h2>
+          <p className="mt-1 text-sm leading-6 text-slate-400">
+            Decisions you have made with your Guidance Counselor.
+          </p>
+          {recommendationHistory.length ? (
+            <ul className="mt-4 grid gap-3">
+              {recommendationHistory.slice(0, 4).map((item) => (
+                <li
+                  key={item.id}
+                  className="rounded-xl border border-white/10 bg-white/[0.03] p-3"
+                >
+                  <p className="font-bold text-white">{item.title}</p>
+                  <p className="mt-1 text-xs font-bold uppercase tracking-wide text-violet-200">
+                    {item.status}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          ) : executionHistoryLoading ? null : (
+            <p className="mt-4 text-sm leading-6 text-slate-400">
+              No recommendation decisions have been recorded yet.
+            </p>
+          )}
+        </section>
+
+        <section className="rounded-2xl border border-white/10 bg-black/10 p-4 sm:p-5">
+          <h2 className="text-base font-black text-white">Outcome learning</h2>
+          <p className="mt-1 text-sm leading-6 text-slate-400">
+            Member-reported outcomes help shape future guidance. They do not
+            create autonomous decisions.
+          </p>
+          {reportedOutcomes.length ? (
+            <ul className="mt-4 grid gap-3">
+              {reportedOutcomes.slice(0, 4).map((outcome) => (
+                <li
+                  key={outcome.id}
+                  className="rounded-xl border border-white/10 bg-white/[0.03] p-3"
+                >
+                  <p className="font-bold capitalize text-white">
+                    {outcome.outcomeStatus}
+                  </p>
+                  <p className="mt-1 text-sm leading-6 text-slate-300">
+                    {outcome.memberLearning.join(" ") ||
+                      "No member-reported detail was recorded."}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          ) : executionHistoryLoading ? null : (
+            <p className="mt-4 text-sm leading-6 text-slate-400">
+              No outcomes have been reported yet. This area updates only after
+              you explicitly report what happened.
+            </p>
+          )}
+        </section>
+      </div>
+    </div>
+  );
 
   return (
     <div
@@ -724,7 +1193,8 @@ export default function GuidanceCounselorConversation({
       >
         <AgentExperience
           className="max-w-none border-white/10 bg-[#141a24]"
-          composerPlacement="before-cards"
+          cardsPlacement="after-conversation"
+          cardsLayout="stack"
           header={
             <AgentHeader
               title="Guidance Counselor"
@@ -763,34 +1233,24 @@ export default function GuidanceCounselorConversation({
             />
           }
           greeting={
-            <AgentGreeting greeting={`Hi${memberName ? ` ${memberName}` : ""}.`}>
-              <p>I’m your Guidance Counselor. How can I help you today?</p>
-            </AgentGreeting>
+            sessionNow ? (
+              <AgentGreeting greeting={sessionAwareness.greeting} />
+            ) : (
+              <AgentLoadingState
+                label="Preparing Guidance Counselor greeting"
+                lines={1}
+              />
+            )
           }
-          contextSummary={
-            <div className="grid gap-5">
-              <div data-guidance-understanding-model="true">
-                <ProfessionalKnowledgeWorkspace
-                  model={guidanceKnowledgeModel}
-                  onAction={beginKnowledgeConversation}
-                  className="rounded-2xl border border-white/10 bg-black/10 p-4"
-                />
-              </div>
-              {starterExperience}
-            </div>
-          }
+          contextSummary={null}
+          smartCards={supportPanels}
           suggestedActions={null}
           conversation={
             historyLoading ? (
               <AgentLoadingState label="Loading Guidance Counselor conversation" />
-            ) : historyError && turns.length === 0 ? (
-              <AgentEmptyState
-                title="Conversation history unavailable"
-                description="You can still start a conversation while saved history reconnects."
-              />
             ) : (
               <section
-                className="flex h-[36rem] min-w-0 flex-col"
+                className="flex min-h-[36rem] min-w-0 flex-col"
                 aria-label="Active Guidance Counselor conversation"
               >
                 <div className="mb-1 flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.07] pb-3">
@@ -810,44 +1270,58 @@ export default function GuidanceCounselorConversation({
                     Rename
                   </button>
                 </div>
-                <ProfessionalConversationTimeline
-                  messages={timelineMessages}
-                  conversationId={activeThreadId || "new-conversation"}
-                  streaming={Boolean(streamingTurnId)}
-                  scrollPositions={conversationScrollPositionsRef}
-                  professionalName="Guidance Counselor"
-                />
+                {historyError && turns.length === 0 ? (
+                  <AgentEmptyState
+                    title="Conversation history unavailable"
+                    description="You can still start a conversation while saved history reconnects."
+                  />
+                ) : (
+                  <ProfessionalConversationTimeline
+                    messages={timelineMessages}
+                    conversationId={activeThreadId || "new-conversation"}
+                    streaming={Boolean(streamingTurnId)}
+                    scrollPositions={conversationScrollPositionsRef}
+                    professionalName="Guidance Counselor"
+                  />
+                )}
+                <div className="mt-4 grid gap-4 border-t border-white/[0.07] pt-4">
+                  <ProfessionalConversationComposer id="guidance-counselor-question">
+                    <AgentConversationInput
+                      value={input}
+                      onChange={setInput}
+                      onSubmit={sendMessage}
+                      label="Message your Guidance Counselor"
+                      placeholder="Ask about career direction, schools, certifications, funding, skills, or your roadmap…"
+                      busy={Boolean(streamingTurnId)}
+                    />
+                  </ProfessionalConversationComposer>
+                  {profileSaveStatus === "saving" ? (
+                    <p
+                      className="text-xs font-bold text-indigo-100"
+                      role="status"
+                    >
+                      Remembering what you shared…
+                    </p>
+                  ) : profileSaveStatus === "saved" ? (
+                    <p
+                      className="text-xs font-bold text-emerald-200"
+                      role="status"
+                    >
+                      I’ll remember this for future guidance.
+                    </p>
+                  ) : profileSaveStatus === "error" ? (
+                    <p className="text-xs font-bold text-red-200" role="alert">
+                      I couldn’t save that profile update. Your conversation is
+                      still here.
+                    </p>
+                  ) : null}
+                  {starterExperience}
+                </div>
               </section>
             )
           }
-          composer={
-            <ProfessionalConversationComposer id="guidance-counselor-question">
-              <AgentConversationInput
-                value={input}
-                onChange={setInput}
-                onSubmit={sendMessage}
-                label="Message your Guidance Counselor"
-                placeholder="Ask about education, career paths, certifications, colleges, trades, or what to learn next…"
-                busy={Boolean(streamingTurnId)}
-              />
-            </ProfessionalConversationComposer>
-          }
-          statusArea={
-            profileSaveStatus === "saving" ? (
-              <p className="text-xs font-bold text-indigo-100" role="status">
-                Remembering what you shared…
-              </p>
-            ) : profileSaveStatus === "saved" ? (
-              <p className="text-xs font-bold text-emerald-200" role="status">
-                I’ll remember this for future guidance.
-              </p>
-            ) : profileSaveStatus === "error" ? (
-              <p className="text-xs font-bold text-red-200" role="alert">
-                I couldn’t save that profile update. Your conversation is still
-                here.
-              </p>
-            ) : null
-          }
+          composer={null}
+          statusArea={null}
         />
       </ProfessionalConversationWorkspace>
     </div>

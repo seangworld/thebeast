@@ -57,6 +57,11 @@ test("BE-225 does not ask for context the member already provided", () => {
   const known = profile({
     other_educational_context: "Prior IT support training",
     certifications: ["CompTIA A+"],
+    discovery_answers: {
+      guidance_education_history: ["Prior IT support training"],
+      guidance_degrees: ["No completed degree"],
+      guidance_experience: ["Operations and IT support experience"],
+    },
   });
   const turn = buildGuidanceCounselorConversationTurn({
     question: "What certification prerequisites should I check?",
@@ -86,6 +91,6 @@ test("BE-225 avoids interrogating broad or uncertain members", () => {
 
   assert.match(turn.text, /don’t need to have everything figured out/i);
   assert.doesNotMatch(turn.text, /I recommend|not a generic education plan/i);
-  assert.equal((turn.text.match(/\?/g) || []).length, 1);
+  assert.equal((turn.text.match(/\?/g) || []).length, 0);
   assert.doesNotMatch(turn.text, /Tell me the outcome.*where you are starting.*constraints/i);
 });

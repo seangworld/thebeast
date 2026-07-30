@@ -33,6 +33,19 @@ const source = {
     currentEmployment: "",
     militaryExperience: "",
     otherEducationalContext: "",
+    educationHistory: [],
+    militaryTraining: [],
+    schools: [],
+    degrees: [],
+    experience: [],
+    skills: [],
+    educationBudget: "",
+    giBill: null,
+    vre: null,
+    employerReimbursement: null,
+    scholarshipInterest: null,
+    targetTimeline: "",
+    discoveryAnswers: {},
     updatedAt: "2026-07-26T12:00:00.000Z",
   },
   memories: [
@@ -120,8 +133,9 @@ test("BA-112 separates confirmed facts, hypotheses, and unknowns", () => {
     false
   );
   assert.equal(
-    inspector.workingHypotheses.some(
-      (item) => item.label === "Learning style" && item.confidence === "medium"
+    inspector.knownFacts.some(
+      (item) =>
+        item.label === "Learning preferences" && item.confidence === "high"
     ),
     true
   );

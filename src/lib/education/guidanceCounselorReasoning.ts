@@ -156,11 +156,11 @@ function sequenceResponse(
   context: GuidanceCounselorConversationContext
 ) {
   return [
-    `${planningFrame(context)} I’d plan this from foundations to proof, not from a random course list.`,
-    "First, identify the knowledge that later work truly depends on. Next, check your current level with a small diagnostic or real example. Then close only the gaps that block progress, build the core skill in dependency order, and finish with applied work that shows you can use it.",
+    `${planningFrame(context)} I’d organize this around verified requirements and useful milestones, not a generic checklist.`,
+    "First, verify what the destination actually requires. Next, inventory the education, experience, and skills you already have. Then identify only the missing requirements, put the planning decisions in dependency order, and define the evidence that will show each milestone is complete.",
     topics.includes("time-estimate")
       ? "A responsible time estimate needs four things I do not want to guess: your starting level, the verified scope, hours you can sustain each week, and the standard of evidence required. With those, I can give you a range and checkpoints; without them, a precise completion date would be false confidence."
-      : "We should use checkpoints rather than completion clicks: can you explain the idea, apply it in a new situation, and produce the evidence the next step expects?",
+      : "We should use evidence-based checkpoints: an official requirement verified, a decision made with clear tradeoffs, an application milestone completed, or a credential requirement documented.",
     isConfirmed(context.roadmap)
       ? `Your current roadmap gives us a starting frame: ${context.roadmap}`
       : "Once we confirm the destination, I can turn this into a practical now-next-later sequence.",
@@ -193,7 +193,7 @@ function relationshipResponse(
     return `${planningFrame(context)} Let’s test the goal for fit, urgency, constraints, and the evidence that would count as real progress. We can keep it, refine it, pause it, or replace it; the roadmap should serve your life, not trap you in an old decision.`;
   }
   if (topics.includes("roadmap")) {
-    return `${planningFrame(context)} We’ll review what changed, verify any requirements that control the route, and organize the plan into now, next, and later. The next step should be small enough to do and useful enough to teach us whether the direction still fits.`;
+    return `${planningFrame(context)} We’ll review what changed, verify any requirements that control the route, and organize the plan into now, next, and later. The next step should be practical enough to complete and useful enough to show whether the direction still fits.`;
   }
   return "Tell me the outcome you are considering, where you are starting, and what constraints matter most—time, cost, location, schedule, or flexibility. I’ll help you separate verified requirements from assumptions, compare realistic routes, and choose a next step that keeps your options open.";
 }

@@ -196,6 +196,29 @@ function normalizeProfile(value: unknown): BeastAdminKnowledgeProfile | null {
     currentEmployment: value.currentEmployment,
     militaryExperience: value.militaryExperience,
     otherEducationalContext: value.otherEducationalContext,
+    educationHistory: strings(value.educationHistory),
+    militaryTraining: strings(value.militaryTraining),
+    schools: strings(value.schools),
+    degrees: strings(value.degrees),
+    experience: strings(value.experience),
+    skills: strings(value.skills),
+    educationBudget:
+      typeof value.educationBudget === "string" ? value.educationBudget : "",
+    giBill: typeof value.giBill === "boolean" ? value.giBill : null,
+    vre: typeof value.vre === "boolean" ? value.vre : null,
+    employerReimbursement:
+      typeof value.employerReimbursement === "boolean"
+        ? value.employerReimbursement
+        : null,
+    scholarshipInterest:
+      typeof value.scholarshipInterest === "boolean"
+        ? value.scholarshipInterest
+        : null,
+    targetTimeline:
+      typeof value.targetTimeline === "string" ? value.targetTimeline : "",
+    discoveryAnswers: isRecord(value.discoveryAnswers)
+      ? value.discoveryAnswers
+      : {},
     updatedAt: value.updatedAt,
   };
 }

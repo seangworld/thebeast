@@ -7,8 +7,7 @@ export type GuidanceWorkflowAction =
   | "schools"
   | "scholarships"
   | "certifications"
-  | "roadmap"
-  | "tutor";
+  | "roadmap";
 
 export type GuidanceWorkflowRecommendation = {
   action: GuidanceWorkflowAction;
@@ -26,8 +25,10 @@ export type GuidanceWorkflowInput = {
   profile: GuidanceDiscoveryProfile;
   hasSavedGoal: boolean;
   hasSavedPlan: boolean;
-  activeCourseCount: number;
-  openSessionCount: number;
+  /** Compatibility evidence from dormant instruction workspaces; ignored by Generation 1 guidance. */
+  activeCourseCount?: number;
+  /** Compatibility evidence from dormant instruction workspaces; ignored by Generation 1 guidance. */
+  openSessionCount?: number;
 };
 
 const fundingConstraint =
@@ -44,8 +45,6 @@ export function buildGuidanceWorkflowRecommendation({
   profile,
   hasSavedGoal,
   hasSavedPlan,
-  activeCourseCount,
-  openSessionCount,
 }: GuidanceWorkflowInput): GuidanceWorkflowRecommendation {
   const understanding = buildGuidanceCounselorUnderstanding(profile);
   const name = firstName(memberName);
@@ -68,7 +67,7 @@ export function buildGuidanceWorkflowRecommendation({
       title: "Let’s define what you want education to change",
       introduction: `${name}, I’d like us to choose a useful direction before we build the rest of your plan.`,
       why:
-        "I do not know your intended outcome with enough confidence yet. A clear goal gives us a basis for comparing every path, school, credential, and learning step that follows.",
+        "I do not know your intended outcome with enough confidence yet. A clear goal gives us a basis for comparing every path, school, credential, and planning decision that follows.",
       outcome:
         "We will leave with a goal we can test and refine—not a permanent commitment.",
       actionLabel: "Define a goal with me",
@@ -111,7 +110,16 @@ export function buildGuidanceWorkflowRecommendation({
     };
   }
 
-  if (profile.collegeInterest === true && fundingConstraint.test(profile.constraints)) {
+  const fundingIsRelevant =
+    fundingConstraint.test(
+      [profile.constraints, profile.educationBudget].join(" ")
+    ) ||
+    profile.giBill === true ||
+    profile.vre === true ||
+    profile.employerReimbursement === true ||
+    profile.scholarshipInterest === true;
+
+  if (profile.collegeInterest === true && fundingIsRelevant) {
     return {
       action: "scholarships",
       eyebrow: "From your Guidance Counselor",
@@ -146,27 +154,12 @@ export function buildGuidanceWorkflowRecommendation({
       action: "roadmap",
       eyebrow: "From your Guidance Counselor",
       title: "Let’s turn the direction into a roadmap",
-      introduction: `${name}, we have enough direction to sequence the decisions and learning ahead.`,
+      introduction: `${name}, we have enough direction to sequence the decisions and milestones ahead.`,
       why:
         "A roadmap will connect your goal to prerequisites, credible pathways, checkpoints, and the next decision without pretending every future requirement is already known.",
       outcome:
         "We will establish an ordered plan that can adapt as we verify requirements and learn more about you.",
       actionLabel: "Build the roadmap",
-      href: "/dashboard/education/educational-roadmap",
-    };
-  }
-
-  if (activeCourseCount > 0 || openSessionCount > 0) {
-    return {
-      action: "roadmap",
-      eyebrow: "From your Guidance Counselor",
-      title: "Let’s connect your current learning to the roadmap",
-      introduction: `${name}, you have learning in progress, so the next useful step is to make sure it still supports the direction we chose.`,
-      why:
-        "Current courses and sessions are evidence for planning, but they should not become disconnected activity. Reviewing their purpose keeps the roadmap centered on your larger goal.",
-      outcome:
-        "We will confirm what the current learning supports and what planning milestone should follow it.",
-      actionLabel: "Review the roadmap",
       href: "/dashboard/education/educational-roadmap",
     };
   }
@@ -177,9 +170,9 @@ export function buildGuidanceWorkflowRecommendation({
     title: "Let’s review the roadmap before we add another step",
     introduction: `${name}, the next useful move is to make sure the plan still reflects where you are going.`,
     why:
-      "There is no active course or session that needs your attention right now. Reviewing the roadmap helps us choose the next commitment for a reason instead of adding disconnected activity.",
+      "Goals, requirements, funding, and timing can change. Reviewing the roadmap helps us choose the next commitment for a reason instead of adding disconnected activity.",
     outcome:
-      "We will confirm the next decision, course, credential, or planning task the roadmap actually calls for.",
+      "We will confirm the next decision, credential, school, funding step, or career-planning task the roadmap actually calls for.",
     actionLabel: "Review the roadmap",
     href: "/dashboard/education/educational-roadmap",
   };

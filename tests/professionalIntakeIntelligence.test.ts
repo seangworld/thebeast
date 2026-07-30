@@ -19,7 +19,7 @@ test("BE-221 gives every intake question a professional purpose and consequence"
     profile: guidanceDiscoveryProfileFromRow(null),
   });
 
-  assert.equal(decision?.area, "career-goals");
+  assert.equal(decision?.area, "education-history");
   assert.ok((decision?.purpose.length || 0) > 30);
   assert.ok((decision?.expectedInfluence.length || 0) > 30);
   assert.equal(decision?.stage, "orientation");
@@ -33,6 +33,11 @@ test("BE-221 makes questions more specific as understanding improves", () => {
     current_employment: "operations specialist",
     strengths: "troubleshooting",
     learning_preferences: ["hands-on"],
+    discovery_answers: {
+      guidance_education_history: [
+        "Completed technical training after high school",
+      ],
+    },
   });
   const decision = planProfessionalIntake({ profile });
 
@@ -44,13 +49,13 @@ test("BE-221 makes questions more specific as understanding improves", () => {
       goal: "Become a cybersecurity analyst",
       educational_goals: ["Build job-ready evidence"],
       current_employment: "operations specialist",
+      discovery_answers: {
+        guidance_education_history: ["Completed technical training"],
+      },
     }),
     topics: ["prerequisites"],
   });
-  assert.match(
-    priorExperience?.question || "",
-    /toward becoming a cybersecurity analyst/
-  );
+  assert.equal(priorExperience?.area, "degrees");
   assert.equal(priorExperience?.specificity, "focused");
 });
 
@@ -58,13 +63,13 @@ test("BE-221 lets each answer change the next professional question", () => {
   const blank = guidanceDiscoveryProfileFromRow(null);
   const first = planProfessionalIntake({ profile: blank });
   const learned = learnFromDiscoveryTurn(
-    "I want a career in cybersecurity",
+    "My educational journey includes technical training after high school.",
     blank
   );
   const second = planProfessionalIntake({ profile: learned });
 
-  assert.equal(first?.area, "career-goals");
-  assert.equal(second?.area, "educational-goals");
+  assert.equal(first?.area, "education-history");
+  assert.equal(second?.area, "career-goals");
   assert.notEqual(first?.question, second?.question);
 });
 
@@ -78,8 +83,8 @@ test("BE-221 does not repeat a question already asked in conversation history", 
     ],
   });
 
-  assert.equal(first?.area, "career-goals");
-  assert.equal(second?.area, "educational-goals");
+  assert.equal(first?.area, "education-history");
+  assert.equal(second?.area, "career-goals");
 });
 
 test("BE-221 asks at most one relevant intake question without exposing mechanics", () => {
@@ -114,5 +119,6 @@ test("BE-221 supports longitudinal intake from persisted understanding", () => {
   });
   const decision = planProfessionalIntake({ profile: persisted });
 
-  assert.equal(decision, undefined);
+  assert.equal(decision?.area, "schools");
+  assert.match(decision?.purpose || "", /institutions/i);
 });

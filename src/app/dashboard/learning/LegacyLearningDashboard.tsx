@@ -863,6 +863,7 @@ export default async function LegacyLearningDashboard() {
             memberId={user.id}
             memberName={fallbackName || "there"}
             initialProfile={guidanceDiscoveryProfile}
+            recommendation={guidanceWorkflowRecommendation}
             context={{
               educationalGoal:
                 learningGoals[0]?.title ||

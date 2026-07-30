@@ -325,10 +325,7 @@ export function buildGuidanceCounselorOnlineModel(
     },
     tutorHandoff: {
       ...tutor,
-      href:
-        input.workflow.action === "tutor"
-          ? input.workflow.href
-          : "/dashboard/education/tutor",
+      href: "/dashboard/education/tutor",
       boundary:
         "Guidance Counselor chooses and explains the learning objective. Tutor teaches the specific concept and returns learning evidence; Tutor does not own the long-term plan.",
     },

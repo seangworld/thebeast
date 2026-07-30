@@ -3,6 +3,7 @@ export * from "./guidance";
 export * from "./prompt";
 export * from "./intelligence";
 export * from "./guidanceCounselorReasoning";
+export * from "./guidanceCounselorLive";
 export * from "./discoveryConversation";
 export * from "./guidanceUnderstanding";
 export * from "./professionalIntake";

@@ -85,9 +85,12 @@ test("BP-400 gives Dashboard and Guidance Counselor independent ownership", () =
     assert.match(experience, new RegExp(heading));
   }
   assert.match(counselorRoute, /mode="guidance-counselor"/);
-  assert.ok(
-    experience.indexOf("<GuidanceCounselorConversation") <
-      experience.lastIndexOf("<RecommendationCard recommendation={recommendation}")
+  assert.match(experience, /<GuidanceCounselorConversation[\s\S]*recommendation=\{recommendation\}/);
+  assert.equal(
+    (experience.match(/<RecommendationCard recommendation=\{recommendation\}/g) || [])
+      .length,
+    1,
+    "the dashboard owns its summary card while the Counselor owns the live recommendation"
   );
   assert.doesNotMatch(
     experience,

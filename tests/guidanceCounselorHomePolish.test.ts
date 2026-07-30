@@ -11,6 +11,10 @@ const conversation = readFileSync(
   "src/app/dashboard/learning/GuidanceCounselorConversation.tsx",
   "utf8"
 );
+const liveExperience = readFileSync(
+  "src/lib/education/guidanceCounselorLive.ts",
+  "utf8"
+);
 const workspace = readFileSync(
   "src/app/components/agents/ProfessionalConversationWorkspace.tsx",
   "utf8"
@@ -68,6 +72,6 @@ test("BE-212 provides honest homepage and conversation loading states", () => {
 test("BE-212 keeps empty planning context honest without adding features", () => {
   assert.match(page, /We’ll define your educational direction together/);
   assert.match(page, /No career direction has been confirmed yet/);
-  assert.match(conversation, /How can I help you today/);
+  assert.match(liveExperience, /Tell me about your educational journey/);
   assert.doesNotMatch(orientation, /mock|sample|placeholder/i);
 });

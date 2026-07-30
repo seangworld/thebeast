@@ -32,6 +32,11 @@ const intakePurpose: Record<
   GuidanceUnderstandingArea,
   Pick<ProfessionalIntakeDecision, "purpose" | "expectedInfluence">
 > = {
+  "education-history": {
+    purpose: "Understand the member’s educational journey without repeating prior work.",
+    expectedInfluence:
+      "Changes pathway comparisons, prerequisite verification, and roadmap starting points.",
+  },
   "career-goals": {
     purpose: "Clarify the life or work change the member wants education to support.",
     expectedInfluence:
@@ -47,10 +52,35 @@ const intakePurpose: Record<
     expectedInfluence:
       "Changes pathway feasibility, sequencing, and the kind of support recommended.",
   },
-  "prior-experience": {
-    purpose: "Avoid repeating education or overlooking transferable experience.",
+  schools: {
+    purpose: "Understand institutions already attended or under consideration.",
     expectedInfluence:
-      "Changes prerequisite assumptions, starting level, and learning order.",
+      "Changes admissions, transfer, accreditation, and fit questions that need verification.",
+  },
+  degrees: {
+    purpose: "Understand completed or considered degree work.",
+    expectedInfluence:
+      "Changes prerequisite assumptions, transfer questions, and program comparisons.",
+  },
+  certifications: {
+    purpose: "Understand credentials already earned or under consideration.",
+    expectedInfluence:
+      "Changes credential sequencing and the official requirements that need verification.",
+  },
+  "military-training": {
+    purpose: "Recognize military education, training, and transferable experience.",
+    expectedInfluence:
+      "Changes credit, benefit, credential, and career-path questions worth investigating.",
+  },
+  experience: {
+    purpose: "Avoid overlooking transferable work and life experience.",
+    expectedInfluence:
+      "Changes pathway assumptions, starting points, and evidence already available.",
+  },
+  skills: {
+    purpose: "Identify skills the member can already apply.",
+    expectedInfluence:
+      "Changes possible directions, gaps, and the evidence needed for future roles.",
   },
   strengths: {
     purpose: "Identify capabilities that can support the plan.",
@@ -60,7 +90,7 @@ const intakePurpose: Record<
   "growth-areas": {
     purpose: "Identify the most consequential capability gap.",
     expectedInfluence:
-      "Determines whether review, foundational learning, or Tutor support is useful next.",
+      "Changes which skill-building options and planning milestones deserve attention next.",
   },
   "learning-style": {
     purpose: "Understand the conditions in which learning has worked well.",
@@ -71,6 +101,36 @@ const intakePurpose: Record<
     purpose: "Set sustainable planning capacity instead of guessing at timing.",
     expectedInfluence:
       "Changes time estimates, weekly workload, and roadmap pacing.",
+  },
+  "education-budget": {
+    purpose: "Understand the affordability boundary for education planning.",
+    expectedInfluence:
+      "Changes school, credential, funding, and timeline tradeoffs.",
+  },
+  "gi-bill": {
+    purpose: "Learn whether GI Bill benefits may be relevant.",
+    expectedInfluence:
+      "Changes which official benefit and school-eligibility sources should be reviewed.",
+  },
+  vre: {
+    purpose: "Learn whether VR&E may be relevant.",
+    expectedInfluence:
+      "Changes benefit-verification and funding questions in the plan.",
+  },
+  "employer-reimbursement": {
+    purpose: "Learn whether employer education assistance may be available.",
+    expectedInfluence:
+      "Changes affordability, eligible-program, and reimbursement-timing questions.",
+  },
+  "scholarship-interest": {
+    purpose: "Learn whether scholarship planning should be included.",
+    expectedInfluence:
+      "Changes funding milestones, evidence collection, and deadline planning.",
+  },
+  timeline: {
+    purpose: "Understand the date or pace the member is planning around.",
+    expectedInfluence:
+      "Changes roadmap sequencing, application timing, and feasibility tradeoffs.",
   },
   constraints: {
     purpose: "Plan around the practical factor most likely to block progress.",
@@ -125,7 +185,8 @@ function purposefulQuestion(
         : "What would you like education to help you accomplish first?";
     case "current-situation":
       return "What does life look like for you right now—are you working, in school, serving, or something else?";
-    case "prior-experience":
+    case "education-history":
+    case "experience":
       return goal
         ? role
           ? `What experience do you already have that could help you move toward becoming ${role}?`

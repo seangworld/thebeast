@@ -15,15 +15,19 @@ const page = readFileSync(
   "src/app/dashboard/learning/BeastEducationExperience.tsx",
   "utf8"
 );
+const liveExperience = readFileSync(
+  "src/lib/education/guidanceCounselorLive.ts",
+  "utf8"
+);
 const migration = readFileSync(
   "supabase/migrations/20260724000300_add_guidance_discovery_profile_fields.sql",
   "utf8"
 );
 
 test("BE-216 begins with the Guidance Counselor instead of a profile form", () => {
-  assert.match(conversation, /greeting=\{`Hi\$\{memberName/);
-  assert.match(conversation, /I’m your Guidance Counselor/);
-  assert.match(conversation, /How can I help you today/);
+  assert.match(conversation, /sessionAwareness\.greeting/);
+  assert.match(liveExperience, /I’m your Guidance Counselor/);
+  assert.match(liveExperience, /Tell me about your educational journey/);
   assert.doesNotMatch(page, /<EducationCommandCenter/);
 });
 
@@ -31,11 +35,19 @@ test("BE-216 asks one logical discovery question at a time", () => {
   const blank = guidanceDiscoveryProfileFromRow(null);
   assert.equal(
     nextDiscoveryQuestion(blank),
+    "Tell me about your educational journey."
+  );
+  const afterJourney = learnFromDiscoveryTurn(
+    "I earned an associate degree at a community college.",
+    blank
+  );
+  assert.equal(
+    nextDiscoveryQuestion(afterJourney),
     "What would you like education or career guidance to help you change?"
   );
   const afterGoal = learnFromDiscoveryTurn(
     "I want a career in cybersecurity",
-    blank
+    afterJourney
   );
   assert.equal(
     nextDiscoveryQuestion(afterGoal),

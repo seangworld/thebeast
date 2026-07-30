@@ -41,8 +41,8 @@ test("BE-217 separates known provisional and missing understanding", () => {
 
   assert.equal(career?.confidence, "high");
   assert.equal(career?.state, "known");
-  assert.equal(learningStyle?.confidence, "medium");
-  assert.equal(learningStyle?.state, "thought");
+  assert.equal(learningStyle?.confidence, "high");
+  assert.equal(learningStyle?.state, "known");
   assert.equal(college?.confidence, "unknown");
   assert.equal(studyTime?.confidence, "unknown");
 });

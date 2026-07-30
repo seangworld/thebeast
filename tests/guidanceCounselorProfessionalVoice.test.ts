@@ -20,8 +20,8 @@ test("BE-227 sounds curious before advising", () => {
   });
 
   assert.match(turn.text, /don’t need to have everything figured out/i);
-  assert.match(turn.text, /What kind of work do you picture yourself doing\?/);
-  assert.equal((turn.text.match(/\?/g) || []).length, 1);
+  assert.match(turn.text, /Tell me about your educational journey\./);
+  assert.equal((turn.text.match(/\?/g) || []).length, 0);
 });
 
 test("BE-227 acknowledges a known goal without narrating internal reasoning", () => {

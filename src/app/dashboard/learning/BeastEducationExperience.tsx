@@ -35,12 +35,6 @@ type EducationPlanRow = {
   summary: string | null;
 };
 
-type EducationCourseRow = {
-  title: string | null;
-  status: string | null;
-  lifecycle_state?: string | null;
-};
-
 type EducationCertificateRow = {
   path_name: string | null;
 };
@@ -450,9 +444,8 @@ function GuidanceCounselorExperience({
           memberName={memberName}
           context={context}
           initialProfile={profile}
+          recommendation={recommendation}
         />
-
-        <RecommendationCard recommendation={recommendation} />
 
         <section aria-labelledby="guidance-planning-workspaces-title">
           <SectionHeader
@@ -509,7 +502,6 @@ export default async function BeastEducationExperience({
     educationProfileResult,
     goalsResult,
     plansResult,
-    coursesResult,
     certificatesResult,
   ] = await Promise.all([
     supabase
@@ -533,11 +525,6 @@ export default async function BeastEducationExperience({
       .eq("user_id", user.id)
       .order("created_at", { ascending: true }),
     supabase
-      .from("learning_courses")
-      .select("title, status, lifecycle_state")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: true }),
-    supabase
       .from("learning_certificates")
       .select("path_name")
       .eq("user_id", user.id)
@@ -553,7 +540,6 @@ export default async function BeastEducationExperience({
   const profile = guidanceDiscoveryProfileFromRow(educationProfileRow);
   const goals = (goalsResult.data || []) as EducationGoalRow[];
   const plans = (plansResult.data || []) as EducationPlanRow[];
-  const courses = (coursesResult.data || []) as EducationCourseRow[];
   const certificates = (certificatesResult.data ||
     []) as EducationCertificateRow[];
   const activeGoal =
@@ -563,12 +549,6 @@ export default async function BeastEducationExperience({
   const currentGoal = firstUseful([activeGoal?.title, profile.goal]);
   const currentCareerPath = firstUseful(profile.careerInterests);
   const currentPlan = firstUseful([activePlan?.summary, activePlan?.title]);
-  const activeCourses = courses.filter(
-    (course) =>
-      !["completed", "archived", "removed"].includes(
-        String(course.lifecycle_state || course.status || "").toLowerCase()
-      )
-  );
   const roadmap = buildLifelongEducationRoadmap({
     academicProgressPercent:
       typeof activeGoal?.progress === "number" ? activeGoal.progress : undefined,
@@ -576,7 +556,7 @@ export default async function BeastEducationExperience({
     activeGoal: currentGoal,
     goalCategory: activeGoal?.category || undefined,
     planSummary: currentPlan,
-    currentCourses: activeCourses.map((course) => course.title || "").filter(Boolean),
+    currentCourses: [],
     earnedCertifications: certificates
       .map((certificate) => certificate.path_name || "")
       .filter(Boolean),
@@ -586,15 +566,12 @@ export default async function BeastEducationExperience({
     profile,
     hasSavedGoal: Boolean(activeGoal),
     hasSavedPlan: Boolean(activePlan),
-    activeCourseCount: activeCourses.length,
-    openSessionCount: 0,
   });
   const loadErrors = [
     profileResult.error,
     educationProfileResult.error,
     goalsResult.error,
     plansResult.error,
-    coursesResult.error,
     certificatesResult.error,
   ].filter(Boolean);
   const dataWarning =
