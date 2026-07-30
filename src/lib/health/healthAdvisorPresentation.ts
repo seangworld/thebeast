@@ -69,7 +69,7 @@ export function buildHealthAdvisorGreeting(input: {
 }
 
 export const healthAdvisorIntroduction =
-  "I’m ready to help you organize your health records, prepare for appointments, and review questions for your clinicians.";
+  "I’m your Health Advisor. I’d like to understand your health history so I can help you organize records and prepare for appointments.";
 
 function plural(value: number, singular: string) {
   return `${value} ${singular}${value === 1 ? "" : "s"}`;
@@ -82,7 +82,7 @@ export function buildHealthAdvisorDataState(input: {
   appointmentCount: number;
 }) {
   if (input.totalRecords === 0) {
-    return "No health records are saved yet. I will not infer a health history. Start with Health Profile, Medications, or Appointments.";
+    return "No health records are saved yet. I will not infer a health history. We can begin naturally through conversation.";
   }
 
   const includedCounts = [

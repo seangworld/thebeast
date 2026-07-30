@@ -6,10 +6,14 @@ import {
   useMemo,
   useRef,
   useState,
-  type FormEvent,
 } from "react";
 import {
+  AgentConversationInput,
+  AgentThinkingIndicator,
+  ProfessionalConversationComposer,
+  ProfessionalConversationTimeline,
   ProfessionalKnowledgeWorkspace,
+  type AgentConversationMessage,
   type ProfessionalKnowledgeConfidence,
   type ProfessionalKnowledgeItem,
   type ProfessionalKnowledgeModel,
@@ -35,13 +39,21 @@ import {
   type HealthAdvisorIdentityProfile,
 } from "@/lib/health/healthAdvisorPresentation";
 import {
+  detectMemberHealthDisclosure,
+  type HealthAdvisorQuestionAnswer,
+} from "@/lib/health/healthAdvisorQuestionAnswering";
+import {
   healthWorkspaceHrefs,
   normalizeHealthRecord,
   type HealthRecord,
   type HealthRecordRow,
 } from "@/lib/health/foundation";
 import {
+  ServerAgentConversationRepository,
+  SupabaseAgentConversationStore,
   SupabaseExecutionHistoryStore,
+  type AgentConversationThread,
+  type AgentMessage,
   type ProfessionalExecutionHistory,
   type RecommendationLifecycleStatus,
 } from "@/lib/platform/agents";
@@ -52,6 +64,160 @@ import {
 } from "@/lib/platform/documents";
 import { createClient } from "@/lib/supabase/client";
 import { BeastHealthShell } from "./BeastHealthShell";
+
+type HealthAdvisorQuestionTurn = {
+  id: string;
+  question: string;
+  response?:
+    | { kind: "external"; answer: HealthAdvisorQuestionAnswer }
+    | { kind: "intake"; text: string };
+};
+
+const knowledgeRecordKinds: Record<string, HealthRecord["recordType"]> = {
+  "health-background-needed": "profile",
+  "health-allergies-needed": "profile",
+  "health-symptoms-needed": "profile",
+  "health-medications-needed": "medication",
+  "health-conditions-needed": "condition",
+  "health-care-team-needed": "provider",
+  "health-clinician-outcomes-needed": "profile",
+  "health-procedures-needed": "procedure",
+  "health-family-history-needed": "family_history",
+  "health-lifestyle-needed": "lifestyle",
+  "health-vitals-needed": "vital",
+  "health-insurance-needed": "profile",
+  "health-appointments-needed": "appointment",
+  "health-goals-needed": "profile",
+  "health-documents-needed": "document",
+};
+
+function restoreHealthAdvisorTurns(
+  thread: AgentConversationThread
+): HealthAdvisorQuestionTurn[] {
+  const turns: HealthAdvisorQuestionTurn[] = [];
+  for (let index = 0; index < thread.messages.length; index += 1) {
+    const message = thread.messages[index];
+    if (message.sender.kind !== "user" || typeof message.content !== "string") {
+      continue;
+    }
+    const responseMessage = thread.messages
+      .slice(index + 1)
+      .find((candidate) => candidate.sender.kind === "agent");
+    const content =
+      responseMessage?.content &&
+      typeof responseMessage.content === "object" &&
+      !Array.isArray(responseMessage.content)
+        ? (responseMessage.content as Record<string, unknown>)
+        : null;
+    if (
+      content?.kind === "health_advisor_answer" &&
+      content.answer &&
+      typeof content.answer === "object"
+    ) {
+      turns.push({
+        id: message.id,
+        question: message.content,
+        response: {
+          kind: "external",
+          answer: content.answer as HealthAdvisorQuestionAnswer,
+        },
+      });
+    } else if (
+      content?.kind === "health_advisor_intake" &&
+      typeof content.text === "string"
+    ) {
+      turns.push({
+        id: message.id,
+        question: message.content,
+        response: { kind: "intake", text: content.text },
+      });
+    }
+  }
+  return turns;
+}
+
+function HealthAdvisorAnswerDocument({
+  response,
+}: {
+  response: HealthAdvisorQuestionAnswer;
+}) {
+  return (
+    <div className="grid gap-4">
+      <section aria-label="BeastHealth record evidence used">
+        <h4 className="text-xs font-black uppercase tracking-[0.12em] text-red-200">
+          From your BeastHealth record
+        </h4>
+        {response.recordEvidence.length ? (
+          <ul className="mt-2 grid gap-2">
+            {response.recordEvidence.map((record) => (
+              <li
+                key={record.id}
+                className="rounded-xl border border-white/10 bg-black/10 p-3"
+              >
+                <p className="font-bold text-white">{record.title}</p>
+                <p className="mt-1 text-xs leading-5 text-[#9aa7b8]">
+                  Saved {record.kind.replaceAll("_", " ")} · {record.status} ·{" "}
+                  {record.source}
+                  {record.occurredOn ? ` · ${formatDate(record.occurredOn)}` : ""}
+                </p>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
+            No relevant saved BeastHealth record was used for this question.
+          </p>
+        )}
+      </section>
+      <section aria-label="General health information">
+        <h4 className="text-xs font-black uppercase tracking-[0.12em] text-red-200">
+          General information
+        </h4>
+        <p className="mt-2 whitespace-pre-wrap">{response.answer}</p>
+      </section>
+      <section aria-label="External medical sources">
+        <h4 className="text-xs font-black uppercase tracking-[0.12em] text-red-200">
+          External medical sources
+        </h4>
+        {response.externalSources.length ? (
+          <ul className="mt-2 list-disc space-y-2 pl-5">
+            {response.externalSources.map((source) => (
+              <li key={source.url}>
+                <a
+                  href={source.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-bold text-cyan-200 underline-offset-4 hover:underline"
+                >
+                  {source.title}
+                </a>
+                <span className="text-[#9aa7b8]">
+                  {" "}
+                  — {source.organization}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
+            No approved external citation was available. No uncited medical
+            answer was substituted.
+          </p>
+        )}
+      </section>
+      <details className="rounded-xl border border-white/10 p-3">
+        <summary className="cursor-pointer text-sm font-bold text-red-100">
+          Limitations
+        </summary>
+        <ul className="mt-3 list-disc space-y-1 pl-5 text-xs leading-5 text-[#9aa7b8]">
+          {response.limitations.map((limitation) => (
+            <li key={limitation}>{limitation}</li>
+          ))}
+        </ul>
+      </details>
+    </div>
+  );
+}
 
 function formatDate(value: string | null) {
   if (!value) return "Not recorded";
@@ -113,6 +279,15 @@ export function HealthAdvisorWorkspace() {
   const [store, setStore] = useState<SupabaseExecutionHistoryStore | null>(
     null
   );
+  const [conversationRepository, setConversationRepository] =
+    useState<ServerAgentConversationRepository | null>(null);
+  const [conversationThreads, setConversationThreads] = useState<
+    AgentConversationThread[]
+  >([]);
+  const [activeConversationId, setActiveConversationId] = useState("");
+  const [conversationTitle, setConversationTitle] =
+    useState("New conversation");
+  const [conversationHistoryError, setConversationHistoryError] = useState("");
   const [loading, setLoading] = useState(true);
   const [recordsUnavailable, setRecordsUnavailable] = useState(false);
   const [dataError, setDataError] = useState("");
@@ -120,12 +295,31 @@ export function HealthAdvisorWorkspace() {
   const [pendingId, setPendingId] = useState("");
   const [knowledgePrompt, setKnowledgePrompt] =
     useState<ProfessionalKnowledgeItem | null>(null);
-  const [knowledgeAnswer, setKnowledgeAnswer] = useState("");
   const [pendingKnowledgeAnswer, setPendingKnowledgeAnswer] = useState("");
+  const [healthQuestion, setHealthQuestion] = useState("");
+  const [healthQuestionBusy, setHealthQuestionBusy] = useState(false);
+  const [healthQuestionError, setHealthQuestionError] = useState("");
+  const [externalResearchConsent, setExternalResearchConsent] = useState(false);
+  const [questionTurns, setQuestionTurns] = useState<
+    HealthAdvisorQuestionTurn[]
+  >([]);
   const [knowledgeSaveState, setKnowledgeSaveState] = useState<
     "idle" | "review" | "saving" | "saved" | "error"
   >("idle");
-  const knowledgeInputRef = useRef<HTMLTextAreaElement>(null);
+  const healthConversationScrollPositions = useRef(new Map<string, number>());
+
+  async function refreshConversationThreads(
+    nextRepository = conversationRepository,
+    selectedOwnerId = ownerId
+  ) {
+    if (!nextRepository || !selectedOwnerId) return [];
+    const nextThreads = await nextRepository.list({
+      ownerId: selectedOwnerId,
+      agentId: healthAdvisorProfessionalId,
+    });
+    setConversationThreads(nextThreads);
+    return nextThreads;
+  }
 
   async function refreshHistory(
     nextStore = store,
@@ -178,6 +372,10 @@ export function HealthAdvisorWorkspace() {
         .map(normalizeHealthRecord)
         .filter((record): record is HealthRecord => Boolean(record));
       const nextStore = new SupabaseExecutionHistoryStore(client);
+      const nextConversationRepository =
+        new ServerAgentConversationRepository(
+          new SupabaseAgentConversationStore(client)
+        );
       if (cancelled) return;
       const profile = profileResult.error
         ? null
@@ -191,6 +389,7 @@ export function HealthAdvisorWorkspace() {
         buildDocumentContext(nextRecords, documentResult.documents)
       );
       setStore(nextStore);
+      setConversationRepository(nextConversationRepository);
       setDataError(
         documentResult.status === "unavailable"
           ? "Medical documents are temporarily unavailable. Health Advisor is using BeastHealth records only."
@@ -203,6 +402,33 @@ export function HealthAdvisorWorkspace() {
         if (!cancelled) {
           setHistoryError(
             "Recommendation history is unavailable. Record summaries remain available, but decisions and outcomes cannot be saved."
+          );
+        }
+      }
+      try {
+        let nextThreads = await nextConversationRepository.list({
+          ownerId: userId,
+          agentId: healthAdvisorProfessionalId,
+        });
+        let activeThread = nextThreads[0];
+        if (!activeThread) {
+          activeThread = await nextConversationRepository.create({
+            ownerId: userId,
+            agentId: healthAdvisorProfessionalId,
+          });
+          nextThreads = [activeThread];
+        }
+        if (!cancelled) {
+          setConversationThreads(nextThreads);
+          setActiveConversationId(activeThread.id);
+          setConversationTitle(activeThread.title);
+          setQuestionTurns(restoreHealthAdvisorTurns(activeThread));
+          setConversationHistoryError("");
+        }
+      } catch {
+        if (!cancelled) {
+          setConversationHistoryError(
+            "Saved conversation history is unavailable. You can still ask a question, but this conversation may not be remembered."
           );
         }
       }
@@ -283,7 +509,7 @@ export function HealthAdvisorWorkspace() {
             .join(", ")}${directRecords.length > 3 ? "…" : ""}`,
           confidence: "high",
           action: {
-            label: "Review or edit",
+            label: "Review, edit, or remove",
             mode: "edit",
             href: healthWorkspaceHrefs[recordType],
           },
@@ -302,9 +528,22 @@ export function HealthAdvisorWorkspace() {
             : "Member-reported context is saved.",
         confidence: "high",
         action: {
-          label: "Review or edit",
+          label: "Review, edit, or remove",
           mode: "edit",
           href: healthWorkspaceHrefs.profile,
+        },
+      });
+    }
+    if (documents.length) {
+      known.push({
+        id: "health-known-medical-documents",
+        label: "Medical documents",
+        summary: `${documents.length} owner-authorized document${documents.length === 1 ? "" : "s"} available for record review.`,
+        confidence: "high",
+        action: {
+          label: "Review documents",
+          mode: "detail",
+          href: healthWorkspaceHrefs.document,
         },
       });
     }
@@ -344,6 +583,7 @@ export function HealthAdvisorWorkspace() {
       summary: string;
       prompt: string;
       kind: HealthRecord["recordType"];
+      profileTopic?: boolean;
     }[] = [
       {
         id: "health-background-needed",
@@ -353,6 +593,26 @@ export function HealthAdvisorWorkspace() {
         prompt:
           "Tell me the health background or allergy information you want me to remember for future preparation.",
         kind: "profile",
+      },
+      {
+        id: "health-allergies-needed",
+        label: "Allergies",
+        summary:
+          "Member-confirmed allergy context helps organize medication and appointment preparation.",
+        prompt:
+          "What allergies or sensitivities, if any, would you like me to remember? Please share only what you know from your own records or care team.",
+        kind: "profile",
+        profileTopic: true,
+      },
+      {
+        id: "health-symptoms-needed",
+        label: "Symptoms or health concerns",
+        summary:
+          "Member-reported symptoms can be remembered as context without becoming a diagnosis.",
+        prompt:
+          "What symptoms or health concerns would you like me to remember, including when they started and what you have already discussed with a clinician?",
+        kind: "profile",
+        profileTopic: true,
       },
       {
         id: "health-medications-needed",
@@ -381,16 +641,116 @@ export function HealthAdvisorWorkspace() {
           "Which doctor, practice, or specialist should I know about for future appointment preparation?",
         kind: "provider",
       },
+      {
+        id: "health-clinician-outcomes-needed",
+        label: "Clinician outcomes",
+        summary:
+          "Member-reported clinician conclusions and follow-up outcomes can preserve continuity when clearly sourced.",
+        prompt:
+          "What did your clinician conclude, confirm, rule out, or ask you to follow up on? I’ll save it as member-reported context, not as an independently verified diagnosis.",
+        kind: "profile",
+        profileTopic: true,
+      },
+      {
+        id: "health-procedures-needed",
+        label: "Procedure history",
+        summary:
+          "Known procedure history can improve record and appointment organization.",
+        prompt:
+          "What past or planned procedures would you like included in your health story?",
+        kind: "procedure",
+      },
+      {
+        id: "health-family-history-needed",
+        label: "Family history",
+        summary:
+          "Member-reported family history can provide useful context without establishing personal risk.",
+        prompt:
+          "Is there any family health history you want me to remember, and which relative does it concern?",
+        kind: "family_history",
+      },
+      {
+        id: "health-lifestyle-needed",
+        label: "Lifestyle context",
+        summary:
+          "Sleep, movement, nutrition, and other member-reported context can improve preparation.",
+        prompt:
+          "What should I understand about your sleep, activity, nutrition, or other daily health routines?",
+        kind: "lifestyle",
+      },
+      {
+        id: "health-vitals-needed",
+        label: "Vitals",
+        summary:
+          "Saved measurements can be organized without interpreting whether they are clinically normal.",
+        prompt:
+          "Which dated measurements would you like recorded, including the value, unit, date, and source?",
+        kind: "vital",
+      },
+      {
+        id: "health-insurance-needed",
+        label: "Insurance context",
+        summary:
+          "Insurance context can help organize care logistics without making coverage claims.",
+        prompt:
+          "What insurance or coverage context would help with future appointment preparation? Avoid sharing member or policy numbers here.",
+        kind: "profile",
+        profileTopic: true,
+      },
+      {
+        id: "health-appointments-needed",
+        label: "Appointments",
+        summary:
+          "Upcoming appointments help Health Advisor prepare questions and records.",
+        prompt:
+          "What upcoming appointment should I know about, including the date, provider, and purpose you were given?",
+        kind: "appointment",
+      },
+      {
+        id: "health-goals-needed",
+        label: "Health goals",
+        summary:
+          "Member-defined goals can guide organization and clinician preparation without becoming treatment advice.",
+        prompt:
+          "What health-related goal would you like support organizing or discussing with your clinician?",
+        kind: "profile",
+        profileTopic: true,
+      },
+      {
+        id: "health-documents-needed",
+        label: "Medical documents",
+        summary:
+          "Permissioned medical documents can support record organization and appointment preparation.",
+        prompt:
+          "What medical document would you like to add or review? Tell me what it is, and I’ll keep it clearly separated from confirmed clinical facts.",
+        kind: "document",
+      },
     ];
     const needed = neededCandidates
       .filter(
-        (candidate) =>
-          !recordsByKind.has(candidate.kind) &&
-          !activeRecords.some(
-            (record) =>
-              record.recordType === "profile" &&
-              record.details.topic === candidate.id
-          )
+        (candidate) => {
+          if (
+            candidate.id === "health-documents-needed" &&
+            documents.length > 0
+          ) {
+            return false;
+          }
+          if (candidate.profileTopic) {
+            return !activeRecords.some(
+              (record) =>
+                record.recordType === "profile" &&
+                record.details.topic === candidate.id
+            );
+          }
+          return (
+            !recordsByKind.has(candidate.kind) &&
+            !activeRecords.some(
+              (record) =>
+                record.recordType === "profile" &&
+                record.details.topic === candidate.id
+            )
+          );
+        }
       )
       .map(
         (candidate): ProfessionalKnowledgeItem => ({
@@ -413,25 +773,24 @@ export function HealthAdvisorWorkspace() {
       thinking,
       needed,
     };
-  }, [model.recommendations, records]);
+  }, [documents.length, model.recommendations, records]);
 
   function beginKnowledgeConversation(item: ProfessionalKnowledgeItem) {
     if (item.action.mode !== "conversation") return;
     setKnowledgePrompt(item);
-    setKnowledgeAnswer("");
     setPendingKnowledgeAnswer("");
     setKnowledgeSaveState("idle");
-    window.requestAnimationFrame(() =>
-      knowledgeInputRef.current?.focus({ preventScroll: true })
-    );
-  }
-
-  function reviewKnowledgeAnswer(event: FormEvent) {
-    event.preventDefault();
-    const answer = knowledgeAnswer.trim();
-    if (!answer) return;
-    setPendingKnowledgeAnswer(answer);
-    setKnowledgeSaveState("review");
+    setHealthQuestion("");
+    setHealthQuestionError("");
+    window.requestAnimationFrame(() => {
+      document
+        .getElementById("health-advisor-question")
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      document
+        .getElementById("health-advisor-question")
+        ?.querySelector("textarea")
+        ?.focus({ preventScroll: true });
+    });
   }
 
   async function confirmKnowledgeAnswer() {
@@ -444,7 +803,8 @@ export function HealthAdvisorWorkspace() {
         .from("beast_health_records")
         .insert({
           owner_id: ownerId,
-          record_type: "profile",
+          record_type:
+            knowledgeRecordKinds[knowledgePrompt.id] || "profile",
           title: knowledgePrompt.label,
           status: "active",
           occurred_on: null,
@@ -466,11 +826,194 @@ export function HealthAdvisorWorkspace() {
       setRecords((current) => [saved, ...current]);
       setKnowledgeSaveState("saved");
       setKnowledgePrompt(null);
-      setKnowledgeAnswer("");
       setPendingKnowledgeAnswer("");
     } catch {
       setKnowledgeSaveState("error");
     }
+  }
+
+  async function persistHealthConversationTurn(
+    turnId: string,
+    question: string,
+    response:
+      | { kind: "external"; answer: HealthAdvisorQuestionAnswer }
+      | { kind: "intake"; text: string }
+  ) {
+    if (!conversationRepository || !activeConversationId || !ownerId) return;
+    const timestamp = new Date().toISOString();
+    const messages: AgentMessage[] = [
+      {
+        id: `${turnId}-member`,
+        threadId: activeConversationId,
+        sender: { kind: "user", id: ownerId },
+        recipient: { kind: "agent", id: healthAdvisorProfessionalId },
+        content: question,
+        timestamp,
+      },
+      {
+        id: `${turnId}-advisor`,
+        threadId: activeConversationId,
+        sender: { kind: "agent", id: healthAdvisorProfessionalId },
+        recipient: { kind: "module", id: "beasthealth" },
+        content:
+          response.kind === "external"
+            ? {
+                kind: "health_advisor_answer",
+                answer: response.answer,
+              }
+            : {
+                kind: "health_advisor_intake",
+                text: response.text,
+              },
+        timestamp,
+      },
+    ];
+    try {
+      const updated = await conversationRepository.append(
+        ownerId,
+        activeConversationId,
+        messages
+      );
+      await conversationRepository.summarize(ownerId, activeConversationId, {
+        overview: `Discussed ${question.slice(0, 100)}`,
+        decisions: [],
+        unresolvedFollowUps:
+          response.kind === "intake"
+            ? ["Confirm whether the member-reported context should be saved."]
+            : [],
+        updatedAt: timestamp,
+      });
+      setConversationTitle(updated.title);
+      await refreshConversationThreads();
+      setConversationHistoryError("");
+    } catch {
+      setConversationHistoryError(
+        "This response is visible now but could not be added to saved conversation history."
+      );
+    }
+  }
+
+  async function askHealthAdvisor(question: string) {
+    if (healthQuestionBusy) return;
+    const turnId = `health-question-${Date.now()}`;
+    const disclosedTopic = knowledgePrompt
+      ? null
+      : detectMemberHealthDisclosure(question);
+    const activeKnowledgePrompt =
+      knowledgePrompt ||
+      (disclosedTopic
+        ? ({
+            id: disclosedTopic.id,
+            label: disclosedTopic.label,
+            summary:
+              "Direct member-reported context detected in this conversation.",
+            confidence: "unknown",
+            action: {
+              label: "Review before saving",
+              mode: "conversation",
+              prompt:
+                "I noticed health context that may be useful to remember. I’ll ask you to confirm it before it becomes a record.",
+            },
+          } satisfies ProfessionalKnowledgeItem)
+        : null);
+    if (activeKnowledgePrompt) {
+      const intakeResponse = {
+        kind: "intake" as const,
+        text: `Thank you. I heard this as member-reported ${activeKnowledgePrompt.label.toLowerCase()} context. Review it below before I add it to your BeastHealth record.`,
+      };
+      if (!knowledgePrompt) setKnowledgePrompt(activeKnowledgePrompt);
+      setQuestionTurns((current) => [
+        ...current,
+        { id: turnId, question, response: intakeResponse },
+      ]);
+      setPendingKnowledgeAnswer(question);
+      setKnowledgeSaveState("review");
+      setHealthQuestion("");
+      void persistHealthConversationTurn(turnId, question, intakeResponse);
+      return;
+    }
+    if (!externalResearchConsent) {
+      setHealthQuestionError(
+        "Approve external research for this question before sending it. Saved BeastHealth records will remain inside Beast."
+      );
+      return;
+    }
+    setHealthQuestionBusy(true);
+    setHealthQuestionError("");
+    try {
+      const result = await fetch("/api/health/advisor", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          question,
+          externalResearchConsent: true,
+        }),
+      });
+      const payload = (await result.json()) as
+        | HealthAdvisorQuestionAnswer
+        | { error?: string };
+      if (!("answer" in payload)) {
+        throw new Error(
+          payload.error || "Health Advisor could not answer this question."
+        );
+      }
+      const externalResponse = {
+        kind: "external" as const,
+        answer: payload,
+      };
+      setQuestionTurns((current) => [
+        ...current,
+        { id: turnId, question, response: externalResponse },
+      ]);
+      setHealthQuestion("");
+      setExternalResearchConsent(false);
+      void persistHealthConversationTurn(turnId, question, externalResponse);
+    } catch (error) {
+      setHealthQuestionError(
+        error instanceof Error
+          ? error.message
+          : "Health Advisor could not answer this question."
+      );
+    } finally {
+      setHealthQuestionBusy(false);
+    }
+  }
+
+  async function startHealthAdvisorConversation() {
+    setKnowledgePrompt(null);
+    setPendingKnowledgeAnswer("");
+    setKnowledgeSaveState("idle");
+    setHealthQuestion("");
+    setQuestionTurns([]);
+    if (!conversationRepository || !ownerId) {
+      setActiveConversationId("");
+      setConversationTitle("New conversation");
+      return;
+    }
+    try {
+      const thread = await conversationRepository.create({
+        ownerId,
+        agentId: healthAdvisorProfessionalId,
+      });
+      setActiveConversationId(thread.id);
+      setConversationTitle(thread.title);
+      await refreshConversationThreads();
+      setConversationHistoryError("");
+    } catch {
+      setConversationHistoryError(
+        "A new saved conversation could not be created."
+      );
+    }
+  }
+
+  function openHealthAdvisorConversation(thread: AgentConversationThread) {
+    setActiveConversationId(thread.id);
+    setConversationTitle(thread.title);
+    setQuestionTurns(restoreHealthAdvisorTurns(thread));
+    setKnowledgePrompt(null);
+    setPendingKnowledgeAnswer("");
+    setKnowledgeSaveState("idle");
+    setHealthQuestion("");
   }
 
   async function decideRecommendation(
@@ -649,6 +1192,60 @@ export function HealthAdvisorWorkspace() {
     }
   }
 
+  const healthQuestionMessages = useMemo<AgentConversationMessage[]>(
+    () => [
+      {
+        id: "health-question-opening",
+        role: "agent",
+        author: "Health Advisor",
+        content: `Hi${memberName ? ` ${memberName.split(/\s+/)[0]}` : ""}. I’m your Health Advisor. I’d like to understand your health history so I can help you organize your records and prepare for appointments. What would you like me to know first?`,
+      },
+      ...(knowledgePrompt?.action.mode === "conversation"
+        ? [
+            {
+              id: `health-intake-${knowledgePrompt.id}`,
+              role: "agent" as const,
+              author: "Health Advisor",
+              content: knowledgePrompt.action.prompt,
+            },
+          ]
+        : []),
+      ...questionTurns.flatMap<AgentConversationMessage>((turn) => [
+        {
+          id: `${turn.id}-member`,
+          role: "user",
+          author: "You",
+          content: turn.question,
+        },
+        {
+          id: `${turn.id}-advisor`,
+          role: "agent",
+          author: "Health Advisor",
+          content:
+            turn.response?.kind === "external" ? (
+              <HealthAdvisorAnswerDocument response={turn.response.answer} />
+            ) : (
+              <p>{turn.response?.text}</p>
+            ),
+        },
+      ]),
+      ...(healthQuestionBusy
+        ? [
+            {
+              id: "health-question-pending",
+              role: "agent" as const,
+              author: "Health Advisor",
+              streaming: true,
+              content: (
+                <AgentThinkingIndicator label="Reviewing current medical sources…" />
+              ),
+            },
+          ]
+        : []),
+    ],
+    [healthQuestionBusy, knowledgePrompt, memberName, questionTurns]
+  );
+
   return (
     <BeastHealthShell
       title="Health Advisor"
@@ -673,25 +1270,185 @@ export function HealthAdvisorWorkspace() {
                 ? "Your saved health records are unavailable. I will not infer a health history or record counts."
                 : dataState}
           </p>
-          {!loading &&
-          !recordsUnavailable &&
-          model.executiveBriefing.totalRecords === 0 ? (
+        </div>
+
+        <DashboardCard accent="health">
+          <SectionHeader
+            eyebrow="Health Advisor"
+            title={conversationTitle}
+            description="Conversation is the front door to BeastHealth. Build your health story naturally, review saved context, or ask a question."
+            action={
+              <button
+                type="button"
+                className="beast-button-secondary min-h-11"
+                onClick={() => void startHealthAdvisorConversation()}
+              >
+                New conversation
+              </button>
+            }
+          />
+          {conversationThreads.length ? (
             <nav
-              aria-label="Health Advisor starting points"
-              className="mt-2 flex flex-wrap gap-x-4 gap-y-2 text-xs font-bold"
+              className="mt-4 flex max-w-full gap-2 overflow-x-auto pb-1"
+              aria-label="Health Advisor conversation history"
             >
-              <Link className="text-red-100 hover:text-white" href="/dashboard/health/profile">
-                Health Profile
-              </Link>
-              <Link className="text-red-100 hover:text-white" href="/dashboard/health/medications">
-                Medications
-              </Link>
-              <Link className="text-red-100 hover:text-white" href="/dashboard/health/appointments">
-                Appointments
-              </Link>
+              {conversationThreads.slice(0, 8).map((thread) => (
+                <button
+                  key={thread.id}
+                  type="button"
+                  className={`min-h-11 shrink-0 rounded-xl border px-3 text-left text-xs font-bold ${
+                    thread.id === activeConversationId
+                      ? "border-red-200/40 bg-red-200/10 text-white"
+                      : "border-white/10 bg-black/10 text-[#c7cfdb]"
+                  }`}
+                  aria-current={
+                    thread.id === activeConversationId ? "page" : undefined
+                  }
+                  onClick={() => openHealthAdvisorConversation(thread)}
+                >
+                  {thread.title}
+                </button>
+              ))}
             </nav>
           ) : null}
-        </div>
+          {conversationHistoryError ? (
+            <p
+              className="mt-3 rounded-xl border border-amber-300/30 bg-amber-300/10 p-3 text-sm leading-6 text-amber-100"
+              role="alert"
+            >
+              {conversationHistoryError}
+            </p>
+          ) : null}
+          <div className="mt-5 flex h-[38rem] min-h-0 flex-col">
+            <ProfessionalConversationTimeline
+              messages={healthQuestionMessages}
+              conversationId={
+                activeConversationId || "health-advisor-new-conversation"
+              }
+              streaming={healthQuestionBusy}
+              followLatestSignal={
+                questionTurns.length + (healthQuestionBusy ? 1 : 0)
+              }
+              scrollPositions={healthConversationScrollPositions}
+              professionalName="Health Advisor"
+            />
+          </div>
+          <div className="mt-4 grid gap-3 border-t border-white/10 pt-4">
+            {knowledgePrompt ? (
+              <div className="rounded-xl border border-red-200/15 bg-red-200/[0.05] p-3 text-sm leading-6 text-[#dbe3ef]">
+                <p className="font-bold text-white">
+                  Building: {knowledgePrompt.label}
+                </p>
+                <p className="mt-1">
+                  Your answer stays inside Beast and will be shown for
+                  confirmation before it becomes a saved record.
+                </p>
+                <button
+                  type="button"
+                  className="mt-2 text-xs font-bold text-red-100"
+                  onClick={() => {
+                    setKnowledgePrompt(null);
+                    setPendingKnowledgeAnswer("");
+                    setKnowledgeSaveState("idle");
+                  }}
+                >
+                  Cancel this topic
+                </button>
+              </div>
+            ) : (
+              <label className="flex items-start gap-3 rounded-xl border border-white/10 bg-black/10 p-3 text-sm leading-6 text-[#dbe3ef]">
+                <input
+                  type="checkbox"
+                  className="mt-1 h-4 w-4 shrink-0 accent-red-300"
+                  checked={externalResearchConsent}
+                  onChange={(event) => {
+                    setExternalResearchConsent(event.target.checked);
+                    setHealthQuestionError("");
+                  }}
+                />
+                <span>
+                  For this question, I approve sending the text I type to OpenAI
+                  for current web research. My saved BeastHealth records will
+                  not be sent; they stay inside Beast and appear separately.
+                </span>
+              </label>
+            )}
+            <ProfessionalConversationComposer id="health-advisor-question">
+              <AgentConversationInput
+                value={healthQuestion}
+                onChange={setHealthQuestion}
+                onSubmit={askHealthAdvisor}
+                label="Message your Health Advisor"
+                placeholder="Ask about a condition, symptom, medication, procedure, lab, vital, appointment, family history, or clinician question…"
+                busy={healthQuestionBusy}
+              />
+            </ProfessionalConversationComposer>
+            {knowledgeSaveState === "review" && knowledgePrompt ? (
+              <div className="rounded-xl border border-white/10 p-4">
+                <p className="text-xs font-black uppercase text-red-200">
+                  Confirm member-reported context
+                </p>
+                <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-[#dbe3ef]">
+                  {pendingKnowledgeAnswer}
+                </p>
+                <p className="mt-2 text-xs leading-5 text-[#9aa7b8]">
+                  Saving adds this as member-reported context. It does not
+                  confirm a diagnosis, medication, allergy, or clinical
+                  conclusion.
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    className="beast-button min-h-11"
+                    onClick={() => void confirmKnowledgeAnswer()}
+                  >
+                    Save confirmed context
+                  </button>
+                  <button
+                    type="button"
+                    className="beast-button-secondary min-h-11"
+                    onClick={() => setKnowledgeSaveState("idle")}
+                  >
+                    Keep discussing
+                  </button>
+                </div>
+              </div>
+            ) : knowledgeSaveState === "saving" ? (
+              <p className="text-sm text-[#c7cfdb]" role="status">
+                Saving confirmed health context…
+              </p>
+            ) : knowledgeSaveState === "saved" ? (
+              <p
+                className="rounded-xl border border-emerald-300/25 bg-emerald-300/10 p-3 text-sm text-emerald-100"
+                role="status"
+              >
+                Saved as member-reported health context.
+              </p>
+            ) : knowledgeSaveState === "error" ? (
+              <p
+                className="rounded-xl border border-amber-300/30 bg-amber-300/10 p-3 text-sm text-amber-100"
+                role="alert"
+              >
+                The context could not be saved. Your answer remains in this
+                conversation so you can retry.
+              </p>
+            ) : null}
+            {healthQuestionError ? (
+              <p
+                className="rounded-xl border border-amber-300/30 bg-amber-300/10 p-3 text-sm leading-6 text-amber-100"
+                role="alert"
+              >
+                {healthQuestionError}
+              </p>
+            ) : null}
+            <p className="text-xs leading-5 text-[#9aa7b8]">
+              Health Advisor does not diagnose, prescribe, determine treatment,
+              or tell you to start, stop, or change medication. For urgent
+              concerns, use appropriate local emergency or qualified clinical
+              care.
+            </p>
+          </div>
+        </DashboardCard>
 
         {!loading && !recordsUnavailable ? (
           <DashboardCard accent="health">
@@ -699,106 +1456,6 @@ export function HealthAdvisorWorkspace() {
               model={knowledgeModel}
               onAction={beginKnowledgeConversation}
             />
-            {knowledgePrompt ? (
-              <section
-                className="mt-5 rounded-2xl border border-red-200/15 bg-black/10 p-4"
-                aria-label="Health Advisor knowledge conversation"
-              >
-                <p className="text-xs font-black uppercase tracking-[0.14em] text-red-200">
-                  Health Advisor
-                </p>
-                <p className="mt-2 text-sm leading-6 text-[#dbe3ef]">
-                  {knowledgePrompt.action.mode === "conversation"
-                    ? knowledgePrompt.action.prompt
-                    : ""}
-                </p>
-                <form className="mt-4 grid gap-3" onSubmit={reviewKnowledgeAnswer}>
-                  <label className="grid gap-2 text-sm font-bold text-white">
-                    Your answer
-                    <textarea
-                      ref={knowledgeInputRef}
-                      className="beast-input min-h-28 min-w-0 resize-y"
-                      value={knowledgeAnswer}
-                      maxLength={1000}
-                      onChange={(event) => {
-                        setKnowledgeAnswer(event.target.value);
-                        if (knowledgeSaveState !== "idle") {
-                          setKnowledgeSaveState("idle");
-                        }
-                      }}
-                    />
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      type="submit"
-                      className="beast-button min-h-11"
-                      disabled={!knowledgeAnswer.trim()}
-                    >
-                      Review before saving
-                    </button>
-                    <button
-                      type="button"
-                      className="beast-button-secondary min-h-11"
-                      onClick={() => setKnowledgePrompt(null)}
-                    >
-                      Not now
-                    </button>
-                  </div>
-                </form>
-                {knowledgeSaveState === "review" ? (
-                  <div className="mt-4 rounded-xl border border-white/10 p-4">
-                    <p className="text-xs font-black uppercase text-red-200">
-                      Confirm member-reported context
-                    </p>
-                    <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-[#dbe3ef]">
-                      {pendingKnowledgeAnswer}
-                    </p>
-                    <p className="mt-2 text-xs leading-5 text-[#9aa7b8]">
-                      Saving adds this as member-reported context. It does not
-                      confirm a diagnosis, medication, allergy, or clinical
-                      conclusion.
-                    </p>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        className="beast-button min-h-11"
-                        onClick={() => void confirmKnowledgeAnswer()}
-                      >
-                        Save confirmed context
-                      </button>
-                      <button
-                        type="button"
-                        className="beast-button-secondary min-h-11"
-                        onClick={() => setKnowledgeSaveState("idle")}
-                      >
-                        Keep editing
-                      </button>
-                    </div>
-                  </div>
-                ) : null}
-                {knowledgeSaveState === "saving" ? (
-                  <p className="mt-3 text-sm text-[#c7cfdb]" role="status">
-                    Saving confirmed health context…
-                  </p>
-                ) : null}
-                {knowledgeSaveState === "error" ? (
-                  <p
-                    className="mt-3 rounded-xl border border-amber-300/30 bg-amber-300/10 p-3 text-sm text-amber-100"
-                    role="alert"
-                  >
-                    The context could not be saved. Your answer is still here
-                    so you can retry.
-                  </p>
-                ) : null}
-              </section>
-            ) : knowledgeSaveState === "saved" ? (
-              <p
-                className="mt-4 rounded-xl border border-emerald-300/25 bg-emerald-300/10 p-3 text-sm text-emerald-100"
-                role="status"
-              >
-                Saved as member-reported health context.
-              </p>
-            ) : null}
           </DashboardCard>
         ) : null}
 

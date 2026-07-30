@@ -70,7 +70,7 @@ test("Health Advisor selects morning afternoon and evening in the member timezon
   );
 });
 
-test("Health Advisor empty state refuses inference and offers clear starting points", () => {
+test("Health Advisor empty state refuses inference and begins with conversation", () => {
   const dataState = buildHealthAdvisorDataState({
     totalRecords: 0,
     populatedAreas: 0,
@@ -79,9 +79,8 @@ test("Health Advisor empty state refuses inference and offers clear starting poi
   });
 
   assert.match(dataState, /will not infer a health history/i);
-  assert.match(dataState, /Health Profile/);
-  assert.match(dataState, /Medications/);
-  assert.match(dataState, /Appointments/);
+  assert.match(dataState, /begin naturally through conversation/i);
+  assert.doesNotMatch(dataState, /Health Profile|Medications|Appointments/);
 });
 
 test("Health Advisor populated state reports saved counts without unsupported claims", () => {
@@ -107,12 +106,13 @@ test("Health Advisor renders the compact introduction before the executive brief
     "utf8"
   );
 
-  assert.match(healthAdvisorIntroduction, /questions for your clinicians/);
+  assert.match(healthAdvisorIntroduction, /I’m your Health Advisor/);
+  assert.match(healthAdvisorIntroduction, /understand your health history/);
   assert.ok(
     source.indexOf("healthAdvisorIntroduction") <
       source.indexOf("Executive Health Briefing")
   );
   assert.match(source, /preferred_name, display_name, full_name, username, timezone/);
-  assert.match(source, /Health Advisor starting points/);
+  assert.doesNotMatch(source, /Health Advisor starting points/);
   assert.match(source, /Your saved health records are unavailable/);
 });
