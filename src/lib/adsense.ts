@@ -1,4 +1,6 @@
 export const seangworldAdSensePublisherId = "pub-9840739735056649";
+export const seangworldAdSenseClientId =
+  `ca-${seangworldAdSensePublisherId}`;
 
 export const seangworldAdsTxtEntry =
   `google.com, ${seangworldAdSensePublisherId}, DIRECT, f08c47fec0942fa0`;

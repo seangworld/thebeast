@@ -274,8 +274,13 @@ export const beastAdminNavigation: ModuleNavSection = {
     },
     {
       label: "Planned Workspaces",
-      href: "/dashboard/admin/ads",
+      href: "/dashboard/admin/planned-workspaces",
       group: "Governance",
+    },
+    {
+      label: "Revenue",
+      href: "/dashboard/admin/ads",
+      group: "Insights",
     },
     {
       label: "Settings",

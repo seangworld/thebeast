@@ -17,6 +17,7 @@ const expectedGroups = {
     "SEANGWORLD Intelligence",
     "Knowledge Inspector",
     "Ecosystem Map",
+    "Revenue",
   ],
   Members: ["Members", "Member Messages", "Beta Feedback"],
   Governance: [
@@ -39,7 +40,7 @@ test("BA-IA-101 defines one grouped persistent BeastAdmin workspace switcher", (
 
   assert.equal(beastAdminNavigation.defaultExpanded, true);
   assert.deepEqual(groupedLabels, expectedGroups);
-  assert.equal(children.length, 21);
+  assert.equal(children.length, 22);
   assert.equal(new Set(children.map((child) => child.href)).size, children.length);
   assert.equal(children.every((child) => Boolean(child.group)), true);
 });

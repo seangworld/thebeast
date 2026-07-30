@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { BeastAnalytics } from "@/app/components/analytics/BeastAnalytics";
+import { AdSensePlacement } from "@/app/components/ads/AdSensePlacement";
+import { seangworldAdSenseClientId } from "@/lib/adsense";
 import { externalResourceLinkProps } from "@/lib/platform/externalResources";
 import {
   beastOSFooterLinks,
@@ -67,6 +69,14 @@ export default function RootLayout({
         {children}
 
         <footer className="mt-12 space-y-2 border-t border-[#2a3242] py-6 text-center text-sm text-[#7f8da3]">
+          <AdSensePlacement
+            clientId={seangworldAdSenseClientId}
+            slot={process.env.NEXT_PUBLIC_ADSENSE_FOOTER_SLOT || ""}
+            environmentName={process.env.VERCEL_ENV || process.env.NODE_ENV}
+            configuredConsent={
+              process.env.NEXT_PUBLIC_ADSENSE_CONSENT_DEFAULT
+            }
+          />
           <div>© 2026 seangworld.com</div>
           <div>
             <a

@@ -6071,6 +6071,7 @@ test("BeastAdmin foundation registers modules and protects owner-only navigation
       "Feature Flags",
       "Prompt Library",
       "Planned Workspaces",
+      "Revenue",
       "Settings",
     ]
   );

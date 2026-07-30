@@ -21,7 +21,10 @@ Workspaces are grouped by owner intent:
 - **Delivery:** Migration Status, SQL Explorer, Release Center, Roadmap.
 - **Insights:** Executive Metrics, AI Analytics, Knowledge Inspector, Ecosystem Map.
 - **Members:** Members, Member Messages, Beta Feedback.
-- **Governance:** Modules, Feature Flags, Prompt Library, Planned Workspaces, Settings.
+- **Insights:** Executive Metrics, AI Analytics, SEANGWORLD Intelligence,
+  Knowledge Inspector, Ecosystem Map, Revenue.
+- **Governance:** Modules, Feature Flags, Prompt Library, Planned Workspaces,
+  Settings.
 
 Every BeastAdmin route appears exactly once in the left-rail registry. Grouping
 must not hide, rename, or remove a route.

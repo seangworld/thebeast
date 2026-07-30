@@ -63,8 +63,8 @@ periods return safe provider states instead of failing the application.
 
 The `*_STATUS`, `*_SNAPSHOT_JSON`, and synchronization timestamp values remain
 as a compatibility fallback for verified server-generated snapshots. Do not
-manually invent snapshots. AdSense is intentionally not connected in
-2.3.0-alpha1.
+manually invent snapshots. AdSense reporting is configured independently as
+described below.
 
 Setup:
 
@@ -86,3 +86,27 @@ Quick steps for local setup:
 Before deploying production, validate against `the-beast-dev` and confirm every required migration has been applied there first. Production deploys must not be used as the first test of a database migration.
 
 If you need to run against production for any reason, do NOT set production creds in `.env.local`. Instead, use a protected environment in your CI/CD or Vercel with restricted access and approvals.
+## Revenue Center and AdSense
+
+Revenue Center reports aggregate AdSense data only when these server variables
+are configured in the target environment:
+
+- `GOOGLE_ADSENSE_CLIENT_ID`
+- `GOOGLE_ADSENSE_CLIENT_SECRET`
+- `GOOGLE_ADSENSE_REFRESH_TOKEN`
+- `GOOGLE_ADSENSE_ACCOUNT_ID`
+- `GOOGLE_ADSENSE_REPORTING_START_DATE` (optional `YYYY-MM-DD`; required for
+  the lifetime custom range)
+
+The browser ad unit derives its `ca-pub-...` client identifier from the same
+canonical publisher registry used by `/ads.txt`. It uses
+`NEXT_PUBLIC_ADSENSE_FOOTER_SLOT` and
+`NEXT_PUBLIC_ADSENSE_CONSENT_DEFAULT`. Consent defaults to `pending`; ads do not
+load unless it is explicitly `enabled`, the runtime is production, the
+placement feature flag is Released, and the current route is eligible.
+
+OAuth credentials are server-only. Never prefix them with `NEXT_PUBLIC_`.
+Revenue Center remains truthful and shows unavailable states when reporting is
+not configured. SEANGWORLD placement is controlled in its own repository and
+through approved Google page exclusions; this Beast workspace does not pretend
+to modify an external site.

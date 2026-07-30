@@ -17,6 +17,7 @@ import {
   normalizeBeastAdminPlatformHealthSnapshot,
   type BeastAdminPlatformHealthSnapshot,
 } from "@/lib/beastAdminPlatformHealth";
+import type { RevenueSnapshot } from "@/lib/revenueCenter";
 
 function humanizeCEOError(status: number) {
   if (status === 401) return "Sign in again to open CEO Mode.";
@@ -48,6 +49,14 @@ function countPhrase(
   if (value === null) return `${plural} unavailable`;
   if (value === 0) return `No ${plural}`;
   return `${value} ${value === 1 ? singular : plural}`;
+}
+
+function formatRevenue(value: number | null, currency = "USD") {
+  if (value === null) return "Unavailable";
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency,
+  }).format(value);
 }
 
 function WorkspaceLink({
@@ -213,6 +222,7 @@ export function BeastAdminCEOModeWorkspace() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
+  const [revenue, setRevenue] = useState<RevenueSnapshot | null>(null);
 
   const loadCEOBriefing = useCallback(async (initial = false) => {
     if (initial) setLoading(true);
@@ -220,13 +230,18 @@ export function BeastAdminCEOModeWorkspace() {
     setError("");
 
     try {
-      const [sourceResponse, healthResponse] = await Promise.all([
+      const [sourceResponse, healthResponse, revenueResponse] = await Promise.all([
         fetch("/api/admin/ceo-mode", {
           method: "GET",
           cache: "no-store",
           headers: { Accept: "application/json" },
         }),
         fetch("/api/admin/platform-health", {
+          method: "GET",
+          cache: "no-store",
+          headers: { Accept: "application/json" },
+        }),
+        fetch("/api/admin/revenue", {
           method: "GET",
           cache: "no-store",
           headers: { Accept: "application/json" },
@@ -248,6 +263,14 @@ export function BeastAdminCEOModeWorkspace() {
           (await healthResponse.json()) as unknown
         );
         platformHealthAvailable = Boolean(platformHealth);
+      }
+      if (revenueResponse.ok) {
+        const revenuePayload = (await revenueResponse.json()) as RevenueSnapshot;
+        setRevenue(
+          revenuePayload?.provider === "adsense" ? revenuePayload : null
+        );
+      } else {
+        setRevenue(null);
       }
 
       setSnapshot(
@@ -955,6 +978,71 @@ export function BeastAdminCEOModeWorkspace() {
                   </div>
                 </div>
               </div>
+            )}
+          </SummaryCard>
+
+          <SummaryCard
+            eyebrow="Revenue"
+            title="Revenue intelligence"
+            description="Connected AdSense reporting, projections, source readiness, and owner-governed placements."
+            href="/dashboard/admin/ads"
+            actionLabel="Open Revenue Center"
+          >
+            {revenue?.state === "available" ? (
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-3">
+                  <p className="text-xs font-black uppercase tracking-wide text-[#7f8da3]">
+                    Today
+                  </p>
+                  <p className="mt-2 text-lg font-black text-white">
+                    {formatRevenue(
+                      revenue.periods.today?.estimatedEarnings ?? null,
+                      revenue.periods.today?.currency || "USD"
+                    )}
+                  </p>
+                </div>
+                <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-3">
+                  <p className="text-xs font-black uppercase tracking-wide text-[#7f8da3]">
+                    This month
+                  </p>
+                  <p className="mt-2 text-lg font-black text-white">
+                    {formatRevenue(
+                      revenue.periods.month?.estimatedEarnings ?? null,
+                      revenue.periods.month?.currency || "USD"
+                    )}
+                  </p>
+                </div>
+                <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-3">
+                  <p className="text-xs font-black uppercase tracking-wide text-[#7f8da3]">
+                    Sources
+                  </p>
+                  <p className="mt-2 font-black text-white">1 connected</p>
+                </div>
+                <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-3">
+                  <p className="text-xs font-black uppercase tracking-wide text-[#7f8da3]">
+                    AdSense share
+                  </p>
+                  <p className="mt-2 font-black text-white">100%</p>
+                </div>
+                <p className="col-span-2 text-xs leading-5 text-[#9aa7b8]">
+                  Trend:{" "}
+                  {revenue.periods.today?.estimatedEarnings !== null &&
+                  revenue.periods.today?.estimatedEarnings !== undefined &&
+                  revenue.periods.yesterday?.estimatedEarnings !== null &&
+                  revenue.periods.yesterday?.estimatedEarnings !== undefined
+                    ? revenue.periods.today.estimatedEarnings >=
+                      revenue.periods.yesterday.estimatedEarnings
+                      ? "today is at or above yesterday"
+                      : "today is below yesterday"
+                    : "unavailable until both daily periods are reported"}
+                  . Values are estimated.
+                </p>
+              </div>
+            ) : (
+              <EmptyOperatingState>
+                {revenue?.diagnostic ||
+                  "Revenue reporting is unavailable. No earnings are inferred."}
+              </EmptyOperatingState>
             )}
           </SummaryCard>
         </div>

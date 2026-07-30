@@ -28,7 +28,8 @@ const expectedAdminDestinations = [
   ["Modules", "/dashboard/admin/modules"],
   ["Feature Flags", "/dashboard/admin/flags"],
   ["Prompt Library", "/dashboard/admin/prompt-library"],
-  ["Planned Workspaces", "/dashboard/admin/ads"],
+  ["Planned Workspaces", "/dashboard/admin/planned-workspaces"],
+  ["Revenue", "/dashboard/admin/ads"],
   ["Settings", "/dashboard/admin/settings"],
 ] as const;
 

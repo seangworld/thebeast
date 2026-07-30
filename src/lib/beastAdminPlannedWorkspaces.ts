@@ -9,7 +9,7 @@ export type BeastAdminPlannedWorkspaceStatus =
   (typeof beastAdminPlannedWorkspaceStatuses)[number];
 
 export type BeastAdminPlannedWorkspace = {
-  id: "ads" | "crm" | "billing" | "marketplace";
+  id: "crm" | "billing" | "marketplace";
   name: string;
   status: BeastAdminPlannedWorkspaceStatus;
   purpose: string;
@@ -33,21 +33,6 @@ const unscheduledMilestone =
 
 export const beastAdminPlannedWorkspaces: readonly BeastAdminPlannedWorkspace[] =
   [
-    {
-      id: "ads",
-      name: "Ads",
-      status: "deferred",
-      purpose:
-        "Reserve an owner workspace for future advertising placement, campaign, and performance governance.",
-      reason:
-        "Advertising is intentionally deferred while core member applications and platform operations mature.",
-      dependencies: [
-        "Approved advertising strategy",
-        "Consent and privacy requirements",
-        "Placement inventory and reporting definitions",
-      ],
-      targetMilestone: unscheduledMilestone,
-    },
     {
       id: "crm",
       name: "Future CRM",

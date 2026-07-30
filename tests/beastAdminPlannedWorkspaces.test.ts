@@ -18,7 +18,6 @@ test("BA-126 registers every intentionally deferred workspace and status", () =>
   assert.deepEqual(
     beastAdminPlannedWorkspaces.map(({ id, status }) => ({ id, status })),
     [
-      { id: "ads", status: "deferred" },
       { id: "crm", status: "research" },
       { id: "billing", status: "planning" },
       { id: "marketplace", status: "future" },
@@ -41,27 +40,22 @@ test("BA-126 registry documents purpose boundaries without inventing milestones"
   );
 });
 
-test("BA-126 replaces the Ads placeholder with a read-only roadmap registry", () => {
+test("BA-126 keeps deferred work separate from the operational Revenue Center", () => {
+  const navigation = readFileSync("src/lib/moduleNavigation.ts", "utf8");
   const page = readFileSync(
-    "src/app/dashboard/admin/ads/page.tsx",
+    "src/app/dashboard/admin/planned-workspaces/page.tsx",
     "utf8"
   );
-  const navigation = readFileSync("src/lib/moduleNavigation.ts", "utf8");
 
-  [
-    "Planned Workspaces",
-    "Planned workspace registry",
-    "Current status",
-    "Purpose",
-    "Reason",
-    "Dependencies",
-    "Target milestone",
-  ].forEach((copy) => assert.match(page, new RegExp(copy)));
-
-  assert.doesNotMatch(page, /placeholder/i);
-  assert.doesNotMatch(page, /createClient|fetch\(|\.rpc\(|<form|<button/);
+  assert.equal(getBeastAdminPlannedWorkspace("crm")?.name, "Future CRM");
+  assert.doesNotMatch(
+    beastAdminPlannedWorkspaces.map((workspace) => workspace.name).join(" "),
+    /\bAds\b/
+  );
+  assert.match(page, /Planned workspace registry/);
+  assert.match(navigation, /Revenue[\s\S]*?\/dashboard\/admin\/ads/);
   assert.match(
     navigation,
-    /Planned Workspaces[\s\S]*?\/dashboard\/admin\/ads/
+    /Planned Workspaces[\s\S]*?\/dashboard\/admin\/planned-workspaces/
   );
 });

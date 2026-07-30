@@ -336,6 +336,12 @@ export const beastRoadmapPackageRegistry = [
     "Funding Source Recommendation Audit",
     ["docs/BEASTMONEY_BM_BUG_002_RECOMMENDATION_AUDIT.md"]
   ),
+  packageIdentity(
+    "BA-ADS-201",
+    ["BA-ADS-201"],
+    "Revenue Center and AdSense Management",
+    ["docs/BEASTADMIN_REVENUE_CENTER.md"]
+  ),
 ] as const satisfies readonly BeastRoadmapPackageIdentity[];
 
 function collisionsFor(
