@@ -70,7 +70,10 @@ test("BO-402 Health Advisor stores only explicitly confirmed member-reported con
   assert.match(healthAdvisor, /Member-reported Health Advisor conversation/);
   assert.match(healthAdvisor, /\.eq\("owner_id", userId\)/);
   assert.match(healthAdvisor, /It does not[\s\S]*confirm a diagnosis/);
-  assert.match(healthAdvisor, /setRecords\(\(current\) => \[saved, \.\.\.current\]\)/);
+  assert.match(
+    healthAdvisor,
+    /setRecords\(\(current\) =>[\s\S]*targetRecord[\s\S]*\[saved, \.\.\.current\]/
+  );
 });
 
 test("BO-402 does not introduce database, permission, or calculation changes", () => {

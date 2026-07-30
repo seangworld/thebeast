@@ -91,7 +91,9 @@ test("BP-300 gives each record workspace purpose-specific presentation", () => {
   assert.match(workspace, /data-health-record-purpose=\{kind\}/);
   assert.match(workspace, /presentation\.collectionTitle/);
   assert.match(workspace, /presentation\.emptyGuidance/);
-  assert.match(workspace, /Add verified information/);
+  assert.match(workspace, /Health Advisor workspace/);
+  assert.match(workspace, /ProfessionalKnowledgeWorkspace/);
+  assert.match(workspace, /Direct record editing/);
   assert.match(workspace, /\.from\("beast_health_records"\)/);
   assert.match(workspace, /\.insert\(/);
   assert.match(workspace, /\.update\(/);

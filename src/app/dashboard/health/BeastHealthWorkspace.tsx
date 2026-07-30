@@ -1,7 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
+import {
+  useEffect,
+  useMemo,
+  useState,
+  type FormEvent,
+} from "react";
+import {
+  ProfessionalKnowledgeWorkspace,
+  type ProfessionalKnowledgeItem,
+  type ProfessionalKnowledgeModel,
+} from "@/app/components/agents";
 import {
   DashboardCard,
   GuidedEmptyState,
@@ -17,7 +28,11 @@ import {
   type HealthRecordRow,
   type HealthRecordStatus,
 } from "@/lib/health/foundation";
-import { buildHealthAdvisorModel } from "@/lib/health/healthAdvisor";
+import {
+  buildHealthAdvisorModel,
+  healthAdvisorProfessionalId,
+  type HealthAdvisorRecommendation,
+} from "@/lib/health/healthAdvisor";
 import { createClient } from "@/lib/supabase/client";
 import { BeastHealthShell } from "./BeastHealthShell";
 
@@ -119,6 +134,110 @@ const healthWorkspacePresentation: Record<
   },
 };
 
+const healthWorkspaceConversationTopics: Record<
+  HealthRecordKind,
+  {
+    knowledgeId: string;
+    conversationTitle: string;
+    openingPrompt: string;
+    emptyPrompt: string;
+  }
+> = {
+  profile: {
+    knowledgeId: "health-background-needed",
+    conversationTitle: "health background",
+    openingPrompt:
+      "I want to review the health background and care preferences that would help you support me.",
+    emptyPrompt:
+      "Help me begin my health background with one useful piece of context.",
+  },
+  condition: {
+    knowledgeId: "health-conditions-needed",
+    conversationTitle: "conditions",
+    openingPrompt:
+      "I want to review my saved conditions and make sure the record reflects only what I know.",
+    emptyPrompt:
+      "I want to tell you about a condition that belongs in my health record.",
+  },
+  medication: {
+    knowledgeId: "health-medications-needed",
+    conversationTitle: "medications",
+    openingPrompt:
+      "I want to review my saved medications, schedules, and sources.",
+    emptyPrompt:
+      "I want to tell you about a medication that belongs in my health record.",
+  },
+  procedure: {
+    knowledgeId: "health-procedures-needed",
+    conversationTitle: "procedures",
+    openingPrompt:
+      "I want to review my procedure history and the context I have saved.",
+    emptyPrompt:
+      "I want to tell you about a procedure that belongs in my health record.",
+  },
+  vital: {
+    knowledgeId: "health-vitals-needed",
+    conversationTitle: "vitals",
+    openingPrompt:
+      "I want to review the measurements I have recorded without interpreting them.",
+    emptyPrompt:
+      "I want to record a dated vital measurement and its source.",
+  },
+  document: {
+    knowledgeId: "health-documents-needed",
+    conversationTitle: "medical documents",
+    openingPrompt:
+      "I want to review the medical documents connected to my health story.",
+    emptyPrompt:
+      "I want to tell you about a medical document that should be part of my health context.",
+  },
+  lifestyle: {
+    knowledgeId: "health-lifestyle-needed",
+    conversationTitle: "lifestyle context",
+    openingPrompt:
+      "I want to review the lifestyle context that may help me prepare for care conversations.",
+    emptyPrompt:
+      "I want to share a lifestyle detail that would be useful health context.",
+  },
+  family_history: {
+    knowledgeId: "health-family-history-needed",
+    conversationTitle: "family health history",
+    openingPrompt:
+      "I want to review the family health history I know and where it came from.",
+    emptyPrompt:
+      "I want to share a family health history detail that I know.",
+  },
+  provider: {
+    knowledgeId: "health-care-team-needed",
+    conversationTitle: "care team",
+    openingPrompt:
+      "I want to review the providers and practices involved in my care.",
+    emptyPrompt:
+      "I want to tell you about a provider or practice involved in my care.",
+  },
+  appointment: {
+    knowledgeId: "health-appointments-needed",
+    conversationTitle: "appointments",
+    openingPrompt:
+      "I want to review my appointments and prepare the right records and questions.",
+    emptyPrompt:
+      "I want to tell you about an appointment that belongs in my health record.",
+  },
+};
+
+function buildHealthAdvisorConversationHref(
+  kind: HealthRecordKind,
+  prompt: string,
+  recordId?: string
+) {
+  const parameters = new URLSearchParams({
+    topic: kind,
+    prompt,
+  });
+  if (recordId) parameters.set("record", recordId);
+  return `/dashboard/health/ai-advisor?${parameters.toString()}#health-advisor-conversation`;
+}
+
 function formatKind(kind: HealthRecordKind) {
   return healthWorkspaceDefinitions[kind].title;
 }
@@ -133,63 +252,535 @@ function formatDate(value: string | null) {
   });
 }
 
+function formatRecordSummary(record: HealthRecord) {
+  const context =
+    typeof record.details.context === "string"
+      ? record.details.context.trim()
+      : "";
+  const parts = [
+    record.status,
+    record.occurredOn ? formatDate(record.occurredOn) : null,
+    record.source ? `Source: ${record.source}` : null,
+  ].filter(Boolean);
+  return context || parts.join(" · ");
+}
+
+function recommendationMatchesWorkspace(
+  recommendation: HealthAdvisorRecommendation,
+  kind: HealthRecordKind
+) {
+  return recommendation.href === healthWorkspaceHrefs[kind];
+}
+
+function toKnowledgeConfidence(
+  confidence: HealthAdvisorRecommendation["confidence"]["label"]
+) {
+  if (confidence === "moderate") return "medium" as const;
+  if (confidence === "insufficient") return "unknown" as const;
+  return confidence;
+}
+
+function buildWorkspaceKnowledgeModel(input: {
+  kind: HealthRecordKind;
+  records: readonly HealthRecord[];
+  recommendations: readonly HealthAdvisorRecommendation[];
+}): ProfessionalKnowledgeModel {
+  const definition = healthWorkspaceDefinitions[input.kind];
+  const topic = healthWorkspaceConversationTopics[input.kind];
+  const visible = input.records.filter(
+    (record) =>
+      record.recordType === input.kind && record.status !== "archived"
+  );
+  const known: ProfessionalKnowledgeItem[] = visible.map((record) => ({
+    id: `health-workspace-known-${record.id}`,
+    label: record.title,
+    summary: formatRecordSummary(record),
+    confidence: "high",
+    action: {
+      label: "View record",
+      mode: "detail",
+      href: `${healthWorkspaceHrefs[input.kind]}#health-record-${record.id}`,
+    },
+  }));
+  const thinking: ProfessionalKnowledgeItem[] = input.recommendations
+    .filter((recommendation) =>
+      recommendationMatchesWorkspace(recommendation, input.kind)
+    )
+    .map((recommendation) => ({
+      id: `health-workspace-thinking-${recommendation.sourceRecommendationId}`,
+      label: recommendation.title,
+      summary: recommendation.recommendation,
+      confidence: toKnowledgeConfidence(recommendation.confidence.label),
+      why: recommendation.confidence.basis,
+      evidence: recommendation.supportingEvidence.map((evidence) =>
+        "healthRecordId" in evidence
+          ? `Saved record ${String(evidence.healthRecordId)}`
+          : "Owner-authorized BeastHealth context"
+      ),
+      action: {
+        label: "Discuss this",
+        mode: "conversation",
+        prompt: `Help me understand this organizational recommendation: ${recommendation.title}.`,
+      },
+    }));
+  const needed: ProfessionalKnowledgeItem[] = [];
+
+  if (!visible.length) {
+    needed.push({
+      id: `health-workspace-needed-${topic.knowledgeId}`,
+      label: `Current ${topic.conversationTitle}`,
+      summary: `No current ${definition.title.toLowerCase()} are saved. Health Advisor will not infer them.`,
+      confidence: "unknown",
+      action: {
+        label: "Talk with Health Advisor",
+        mode: "conversation",
+        prompt: topic.emptyPrompt,
+      },
+    });
+  } else {
+    const missingSource = visible.filter((record) => !record.source);
+    const missingDate = visible.filter((record) => !record.occurredOn);
+    const missingContext = visible.filter(
+      (record) =>
+        typeof record.details.context !== "string" ||
+        !record.details.context.trim()
+    );
+    if (missingSource.length) {
+      needed.push({
+        id: `health-workspace-needed-${input.kind}-source`,
+        label: "Source context",
+        summary: `${missingSource.length} saved ${definition.singular}${missingSource.length === 1 ? "" : "s"} ${missingSource.length === 1 ? "does" : "do"} not include a source.`,
+        confidence: "unknown",
+        action: {
+          label: "Add through conversation",
+          mode: "conversation",
+          prompt: `Help me add source context to my saved ${topic.conversationTitle}.`,
+        },
+      });
+    }
+    if (missingDate.length) {
+      needed.push({
+        id: `health-workspace-needed-${input.kind}-date`,
+        label: "Timeline context",
+        summary: `${missingDate.length} saved ${definition.singular}${missingDate.length === 1 ? "" : "s"} ${missingDate.length === 1 ? "does" : "do"} not include a date.`,
+        confidence: "unknown",
+        action: {
+          label: "Add through conversation",
+          mode: "conversation",
+          prompt: `Help me add accurate timeline context to my saved ${topic.conversationTitle}.`,
+        },
+      });
+    }
+    if (missingContext.length) {
+      needed.push({
+        id: `health-workspace-needed-${input.kind}-context`,
+        label: "Useful context",
+        summary: `${missingContext.length} saved ${definition.singular}${missingContext.length === 1 ? "" : "s"} ${missingContext.length === 1 ? "has" : "have"} no supporting context.`,
+        confidence: "unknown",
+        action: {
+          label: "Add through conversation",
+          mode: "conversation",
+          prompt: `Help me add only the context I know about my saved ${topic.conversationTitle}.`,
+        },
+      });
+    }
+  }
+
+  return {
+    professionalId: `${healthAdvisorProfessionalId}.${input.kind}`,
+    professionalName: "Health Advisor",
+    known,
+    thinking,
+    needed,
+    emptyStates: {
+      known: `No ${definition.title.toLowerCase()} are confirmed yet. Start with Health Advisor when you are ready.`,
+      thinking:
+        "Health Advisor has no evidence-backed observation for this workspace yet.",
+      needed:
+        "The saved records include the basic source, date, and context fields Health Advisor uses here.",
+    },
+  };
+}
+
+type HealthRecordUpdate = {
+  title: string;
+  context: string;
+  source: string;
+  notes: string;
+  occurredOn: string;
+  status: HealthRecordStatus;
+  linkedDocumentId: string;
+  linkedAppointmentId: string;
+};
+
+function RecordEditor({
+  record,
+  relatedRecords,
+  pending,
+  onSave,
+}: {
+  record: HealthRecord;
+  relatedRecords: readonly HealthRecord[];
+  pending: boolean;
+  onSave: (record: HealthRecord, update: HealthRecordUpdate) => void;
+}) {
+  const [title, setTitle] = useState(record.title);
+  const [context, setContext] = useState(
+    typeof record.details.context === "string"
+      ? record.details.context
+      : ""
+  );
+  const [source, setSource] = useState(record.source || "");
+  const [notes, setNotes] = useState(record.notes || "");
+  const [occurredOn, setOccurredOn] = useState(record.occurredOn || "");
+  const [status, setStatus] = useState<HealthRecordStatus>(
+    record.status === "archived" ? "active" : record.status
+  );
+  const [linkedDocumentId, setLinkedDocumentId] = useState(
+    typeof record.details.linked_document_id === "string"
+      ? record.details.linked_document_id
+      : ""
+  );
+  const [linkedAppointmentId, setLinkedAppointmentId] = useState(
+    typeof record.details.linked_appointment_id === "string"
+      ? record.details.linked_appointment_id
+      : ""
+  );
+  const definition = healthWorkspaceDefinitions[record.recordType];
+  const documentRecords = relatedRecords.filter(
+    (candidate) =>
+      candidate.recordType === "document" &&
+      candidate.status !== "archived" &&
+      candidate.id !== record.id
+  );
+  const appointmentRecords = relatedRecords.filter(
+    (candidate) =>
+      candidate.recordType === "appointment" &&
+      candidate.status !== "archived" &&
+      candidate.id !== record.id
+  );
+
+  function submit(event: FormEvent) {
+    event.preventDefault();
+    if (!title.trim()) return;
+    onSave(record, {
+      title: title.trim(),
+      context: context.trim(),
+      source: source.trim(),
+      notes: notes.trim(),
+      occurredOn,
+      status,
+      linkedDocumentId,
+      linkedAppointmentId,
+    });
+  }
+
+  return (
+    <form className="mt-4 grid gap-3" onSubmit={submit}>
+      <label className="grid gap-2 text-sm font-bold text-[#dbe3ef]">
+        {definition.titleLabel}
+        <input
+          className="beast-input min-w-0"
+          maxLength={200}
+          required
+          value={title}
+          onChange={(event) => setTitle(event.target.value)}
+        />
+      </label>
+      <label className="grid gap-2 text-sm font-bold text-[#dbe3ef]">
+        {definition.detailLabel}
+        <textarea
+          className="beast-input min-h-24 min-w-0 resize-y"
+          maxLength={1000}
+          value={context}
+          onChange={(event) => setContext(event.target.value)}
+        />
+      </label>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <label className="grid min-w-0 gap-2 text-sm font-bold text-[#dbe3ef]">
+          Date
+          <input
+            type="date"
+            className="beast-input min-w-0"
+            value={occurredOn}
+            onChange={(event) => setOccurredOn(event.target.value)}
+          />
+        </label>
+        <label className="grid min-w-0 gap-2 text-sm font-bold text-[#dbe3ef]">
+          Status
+          <select
+            className="beast-input min-w-0"
+            value={status}
+            onChange={(event) =>
+              setStatus(event.target.value as HealthRecordStatus)
+            }
+          >
+            {statusOptions.map((item) => (
+              <option key={item} value={item}>
+                {item}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <label className="grid gap-2 text-sm font-bold text-[#dbe3ef]">
+        {definition.sourceLabel}
+        <input
+          className="beast-input min-w-0"
+          maxLength={300}
+          value={source}
+          onChange={(event) => setSource(event.target.value)}
+        />
+      </label>
+      <label className="grid gap-2 text-sm font-bold text-[#dbe3ef]">
+        Private notes
+        <textarea
+          className="beast-input min-h-24 min-w-0 resize-y"
+          maxLength={4000}
+          value={notes}
+          onChange={(event) => setNotes(event.target.value)}
+        />
+      </label>
+      <fieldset className="grid gap-3 rounded-xl border border-white/10 p-3 sm:grid-cols-2">
+        <legend className="px-2 text-xs font-black uppercase text-red-200">
+          Linked context
+        </legend>
+        <label className="grid min-w-0 gap-2 text-sm font-bold text-[#dbe3ef]">
+          Medical document
+          <select
+            className="beast-input min-w-0"
+            value={linkedDocumentId}
+            onChange={(event) => setLinkedDocumentId(event.target.value)}
+          >
+            <option value="">No linked document</option>
+            {documentRecords.map((document) => (
+              <option key={document.id} value={document.id}>
+                {document.title}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="grid min-w-0 gap-2 text-sm font-bold text-[#dbe3ef]">
+          Appointment
+          <select
+            className="beast-input min-w-0"
+            value={linkedAppointmentId}
+            onChange={(event) => setLinkedAppointmentId(event.target.value)}
+          >
+            <option value="">No linked appointment</option>
+            {appointmentRecords.map((appointment) => (
+              <option key={appointment.id} value={appointment.id}>
+                {appointment.title}
+              </option>
+            ))}
+          </select>
+        </label>
+      </fieldset>
+      <button
+        type="submit"
+        className="beast-button-primary min-h-11 w-full sm:w-fit"
+        disabled={pending}
+      >
+        {pending ? "Saving changes…" : "Save direct edits"}
+      </button>
+    </form>
+  );
+}
+
 function RecordList({
   records,
+  allRecords,
   onArchive,
+  onUpdate,
   pendingId,
 }: {
   records: readonly HealthRecord[];
+  allRecords: readonly HealthRecord[];
   onArchive: (record: HealthRecord) => void;
+  onUpdate: (record: HealthRecord, update: HealthRecordUpdate) => void;
   pendingId: string;
 }) {
+  const [expandedId, setExpandedId] = useState("");
+
+  useEffect(() => {
+    function syncHash() {
+      const prefix = "#health-record-";
+      if (!window.location.hash.startsWith(prefix)) return;
+      const recordId = window.location.hash.slice(prefix.length);
+      if (records.some((record) => record.id === recordId)) {
+        setExpandedId(recordId);
+        window.requestAnimationFrame(() =>
+          document
+            .getElementById(`health-record-${recordId}`)
+            ?.scrollIntoView({ behavior: "smooth", block: "start" })
+        );
+      }
+    }
+    syncHash();
+    window.addEventListener("hashchange", syncHash);
+    return () => window.removeEventListener("hashchange", syncHash);
+  }, [records]);
+
   return (
     <div className="grid gap-3">
       {records.map((record) => (
         <article
           key={record.id}
+          id={`health-record-${record.id}`}
           className="rounded-xl border border-white/10 bg-white/[0.03] p-4"
         >
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-xs font-black uppercase tracking-wide text-red-200">
-                {formatKind(record.recordType)} · {record.status}
-              </p>
-              <h3 className="mt-2 break-words font-black text-white">
-                {record.title}
-              </h3>
-            </div>
-            <span className="text-xs font-bold text-[#9aa7b8]">
-              {formatDate(record.occurredOn || record.createdAt)}
-            </span>
-          </div>
-          {record.details.context ? (
-            <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-6 text-[#c7cfdb]">
-              {String(record.details.context)}
-            </p>
-          ) : null}
-          {record.source ? (
-            <p className="mt-2 break-words text-xs text-[#9aa7b8]">
-              Source: {record.source}
-            </p>
-          ) : null}
-          {record.notes ? (
-            <details className="mt-3 rounded-lg border border-white/10 p-3">
-              <summary className="cursor-pointer text-sm font-bold text-red-100">
-                Notes
-              </summary>
-              <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-[#c7cfdb]">
-                {record.notes}
-              </p>
-            </details>
-          ) : null}
           <button
             type="button"
-            className="beast-button-secondary mt-4 min-h-11"
-            disabled={pendingId === record.id}
-            onClick={() => onArchive(record)}
+            className="flex min-h-11 w-full items-start justify-between gap-3 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300"
+            aria-expanded={expandedId === record.id}
+            aria-controls={`health-record-details-${record.id}`}
+            onClick={() => {
+              const nextId = expandedId === record.id ? "" : record.id;
+              setExpandedId(nextId);
+              window.history.replaceState(
+                null,
+                "",
+                nextId
+                  ? `${window.location.pathname}${window.location.search}#health-record-${nextId}`
+                  : `${window.location.pathname}${window.location.search}`
+              );
+            }}
           >
-            {record.status === "archived" ? "Restore" : "Archive"}
+            <span className="min-w-0">
+              <span className="block text-xs font-black uppercase tracking-wide text-red-200">
+                {formatKind(record.recordType)} · {record.status}
+              </span>
+              <span className="mt-2 block break-words font-black text-white">
+                {record.title}
+              </span>
+              <span className="mt-2 block text-xs leading-5 text-[#9aa7b8]">
+                Updated {formatDate(record.updatedAt)}
+              </span>
+            </span>
+            <span
+              className="shrink-0 rounded-full border border-white/10 px-3 py-1.5 text-xs font-bold text-cyan-100"
+              aria-hidden="true"
+            >
+              {expandedId === record.id ? "Close" : "View"}
+            </span>
           </button>
+
+          {expandedId === record.id ? (
+            <div
+              id={`health-record-details-${record.id}`}
+              className="mt-4 border-t border-white/10 pt-4"
+            >
+              <div className="grid gap-3 text-sm leading-6 text-[#c7cfdb] sm:grid-cols-2">
+                <div className="rounded-xl border border-white/10 p-3">
+                  <p className="text-xs font-black uppercase text-red-200">
+                    Timeline
+                  </p>
+                  <p className="mt-1">
+                    {formatDate(record.occurredOn || record.createdAt)}
+                  </p>
+                </div>
+                <div className="rounded-xl border border-white/10 p-3">
+                  <p className="text-xs font-black uppercase text-red-200">
+                    Source
+                  </p>
+                  <p className="mt-1">{record.source || "Not recorded"}</p>
+                </div>
+              </div>
+              {record.details.context ? (
+                <div className="mt-3 rounded-xl border border-white/10 p-3">
+                  <p className="text-xs font-black uppercase text-red-200">
+                    Saved context
+                  </p>
+                  <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-[#c7cfdb]">
+                    {String(record.details.context)}
+                  </p>
+                </div>
+              ) : null}
+              {record.notes ? (
+                <div className="mt-3 rounded-xl border border-white/10 p-3">
+                  <p className="text-xs font-black uppercase text-red-200">
+                    Private notes
+                  </p>
+                  <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-[#c7cfdb]">
+                    {record.notes}
+                  </p>
+                </div>
+              ) : null}
+
+              <div className="mt-4 rounded-xl border border-white/10 bg-black/10 p-3">
+                <p className="text-xs font-black uppercase text-red-200">
+                  Related context
+                </p>
+                <p className="mt-2 text-xs leading-5 text-[#9aa7b8]">
+                  Continue this record through its authoritative workspace.
+                  Opening another workspace does not create or imply a medical
+                  relationship by itself.
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Link
+                    className="beast-button-secondary inline-flex min-h-11 items-center"
+                    href={buildHealthAdvisorConversationHref(
+                      record.recordType,
+                      `I want to review my saved ${formatKind(record.recordType).toLowerCase()} record "${record.title}" and add only information I can confirm.`,
+                      record.id
+                    )}
+                  >
+                    Link conversation
+                  </Link>
+                  {typeof record.details.linked_document_id === "string" &&
+                  allRecords.some(
+                    (candidate) =>
+                      candidate.id === record.details.linked_document_id
+                  ) ? (
+                    <Link
+                      className="beast-button-secondary inline-flex min-h-11 items-center"
+                      href={`/dashboard/health/documents#health-record-${record.details.linked_document_id}`}
+                    >
+                      View linked document
+                    </Link>
+                  ) : null}
+                  {typeof record.details.linked_appointment_id === "string" &&
+                  allRecords.some(
+                    (candidate) =>
+                      candidate.id === record.details.linked_appointment_id
+                  ) ? (
+                    <Link
+                      className="beast-button-secondary inline-flex min-h-11 items-center"
+                      href={`/dashboard/health/appointments#health-record-${record.details.linked_appointment_id}`}
+                    >
+                      View linked appointment
+                    </Link>
+                  ) : null}
+                </div>
+              </div>
+
+              <details className="mt-4 rounded-xl border border-white/10 p-3">
+                <summary className="cursor-pointer font-bold text-cyan-100">
+                  Direct record editing
+                </summary>
+                <p className="mt-2 text-xs leading-5 text-[#9aa7b8]">
+                  Use direct editing to correct confirmed record details.
+                  Conversation remains the preferred way to add new context.
+                </p>
+                <RecordEditor
+                  key={`${record.id}-${record.updatedAt}`}
+                  record={record}
+                  relatedRecords={allRecords}
+                  pending={pendingId === record.id}
+                  onSave={onUpdate}
+                />
+              </details>
+
+              <button
+                type="button"
+                className="beast-button-secondary mt-4 min-h-11"
+                disabled={pendingId === record.id}
+                onClick={() => onArchive(record)}
+              >
+                {record.status === "archived" ? "Restore" : "Archive"}
+              </button>
+            </div>
+          ) : null}
         </article>
       ))}
     </div>
@@ -241,9 +832,11 @@ function useHealthRecords() {
 }
 
 export function HealthRecordWorkspace({ kind }: { kind: HealthRecordKind }) {
+  const router = useRouter();
   const definition = healthWorkspaceDefinitions[kind];
   const { ownerId, records, loading, error, setError, reload } =
     useHealthRecords();
+  const topic = healthWorkspaceConversationTopics[kind];
   const [title, setTitle] = useState("");
   const [context, setContext] = useState("");
   const [source, setSource] = useState("");
@@ -252,17 +845,57 @@ export function HealthRecordWorkspace({ kind }: { kind: HealthRecordKind }) {
   const [status, setStatus] = useState<HealthRecordStatus>("active");
   const [saving, setSaving] = useState(false);
   const [pendingId, setPendingId] = useState("");
+  const [conversationDraft, setConversationDraft] = useState("");
+  const [statusMessage, setStatusMessage] = useState("");
   const visibleRecords = records.filter((record) => record.recordType === kind);
   const activeRecords = visibleRecords.filter(
     (record) => record.status !== "archived"
   );
+  const timeline = useMemo(
+    () => buildHealthTimeline(activeRecords).slice(0, 6),
+    [activeRecords]
+  );
+  const recentUpdates = useMemo(
+    () =>
+      [...activeRecords]
+        .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
+        .slice(0, 4),
+    [activeRecords]
+  );
+  const advisorModel = useMemo(
+    () => buildHealthAdvisorModel({ records }),
+    [records]
+  );
+  const knowledgeModel = useMemo(
+    () =>
+      buildWorkspaceKnowledgeModel({
+        kind,
+        records,
+        recommendations: advisorModel.recommendations,
+      }),
+    [advisorModel.recommendations, kind, records]
+  );
   const presentation = healthWorkspacePresentation[kind];
+
+  function startConversation(event: FormEvent) {
+    event.preventDefault();
+    const prompt = conversationDraft.trim() || topic.openingPrompt;
+    router.push(buildHealthAdvisorConversationHref(kind, prompt));
+  }
+
+  function beginKnowledgeConversation(item: ProfessionalKnowledgeItem) {
+    if (item.action.mode !== "conversation") return;
+    router.push(
+      buildHealthAdvisorConversationHref(kind, item.action.prompt)
+    );
+  }
 
   async function createRecord(event: FormEvent) {
     event.preventDefault();
     if (!ownerId || !title.trim()) return;
     setSaving(true);
     setError("");
+    setStatusMessage("");
     try {
       const client = createClient();
       const { error: insertError } = await client
@@ -285,6 +918,9 @@ export function HealthRecordWorkspace({ kind }: { kind: HealthRecordKind }) {
       setOccurredOn("");
       setStatus("active");
       await reload();
+      setStatusMessage(
+        `${definition.singular[0].toUpperCase()}${definition.singular.slice(1)} saved.`
+      );
     } catch {
       setError("The record could not be saved. Your form values were preserved.");
     } finally {
@@ -292,9 +928,72 @@ export function HealthRecordWorkspace({ kind }: { kind: HealthRecordKind }) {
     }
   }
 
+  async function updateRecord(
+    record: HealthRecord,
+    update: HealthRecordUpdate
+  ) {
+    setPendingId(record.id);
+    setError("");
+    setStatusMessage("");
+    try {
+      const client = createClient();
+      const linkedDocumentId = !update.linkedDocumentId
+        ? null
+        : records.some(
+              (candidate) =>
+                candidate.id === update.linkedDocumentId &&
+                candidate.ownerId === ownerId &&
+                candidate.recordType === "document" &&
+                candidate.status !== "archived"
+            )
+          ? update.linkedDocumentId
+          : typeof record.details.linked_document_id === "string"
+            ? record.details.linked_document_id
+            : null;
+      const linkedAppointmentId = !update.linkedAppointmentId
+        ? null
+        : records.some(
+              (candidate) =>
+                candidate.id === update.linkedAppointmentId &&
+                candidate.ownerId === ownerId &&
+                candidate.recordType === "appointment" &&
+                candidate.status !== "archived"
+            )
+          ? update.linkedAppointmentId
+          : typeof record.details.linked_appointment_id === "string"
+            ? record.details.linked_appointment_id
+            : null;
+      const { error: updateError } = await client
+        .from("beast_health_records")
+        .update({
+          title: update.title,
+          status: update.status,
+          occurred_on: update.occurredOn || null,
+          source: update.source || null,
+          details: {
+            ...record.details,
+            context: update.context || null,
+            linked_document_id: linkedDocumentId,
+            linked_appointment_id: linkedAppointmentId,
+          },
+          notes: update.notes || null,
+        })
+        .eq("id", record.id)
+        .eq("owner_id", ownerId);
+      if (updateError) throw updateError;
+      await reload();
+      setStatusMessage(`Changes to "${update.title}" were saved.`);
+    } catch {
+      setError("The record could not be updated. No saved details were changed.");
+    } finally {
+      setPendingId("");
+    }
+  }
+
   async function archiveRecord(record: HealthRecord) {
     setPendingId(record.id);
     setError("");
+    setStatusMessage("");
     try {
       const client = createClient();
       const { error: updateError } = await client
@@ -304,6 +1003,11 @@ export function HealthRecordWorkspace({ kind }: { kind: HealthRecordKind }) {
         .eq("owner_id", ownerId);
       if (updateError) throw updateError;
       await reload();
+      setStatusMessage(
+        record.status === "archived"
+          ? `"${record.title}" was restored.`
+          : `"${record.title}" was archived.`
+      );
     } catch {
       setError("The record status could not be changed. No local record was removed.");
     } finally {
@@ -314,129 +1018,306 @@ export function HealthRecordWorkspace({ kind }: { kind: HealthRecordKind }) {
   return (
     <BeastHealthShell title={definition.title} description={definition.description}>
       <section
-        className="grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(20rem,0.85fr)]"
+        className="space-y-4"
         data-health-record-purpose={kind}
+        data-health-advisor-workspace={kind}
       >
         <DashboardCard accent="red">
           <SectionHeader
-            eyebrow={presentation.eyebrow}
-            title={presentation.collectionTitle}
-            description={presentation.collectionDescription}
+            eyebrow="Health Advisor workspace"
+            title={`Talk about your ${topic.conversationTitle}`}
+            description={`Conversation is the primary way to add, correct, and understand ${definition.title.toLowerCase()}. Health Advisor will show extracted information for confirmation before it becomes a structured record.`}
+            action={
+              <Link
+                href="/dashboard/health/ai-advisor"
+                className="beast-button-secondary inline-flex min-h-11 items-center"
+              >
+                Open full conversation
+              </Link>
+            }
           />
-          <div className="mt-4 flex flex-wrap gap-2 text-xs font-bold text-[#c7cfdb]">
-            <span className="rounded-full border border-white/10 px-3 py-1.5">
-              {activeRecords.length} active
-            </span>
-            <span className="rounded-full border border-white/10 px-3 py-1.5">
-              {visibleRecords.length} total
-            </span>
-          </div>
-          {error ? (
-            <p className="mt-4 rounded-xl border border-amber-300/30 bg-amber-300/10 p-4 text-sm leading-6 text-amber-100" role="alert">
-              {error}
-            </p>
-          ) : null}
-          <div className="mt-4">
-            {loading ? (
-              <p role="status" className="text-sm text-[#c7cfdb]">
-                Loading {definition.title.toLowerCase()}…
+          <form
+            className="mt-5 rounded-2xl border border-white/10 bg-black/10 p-3"
+            onSubmit={startConversation}
+          >
+            <label
+              className="sr-only"
+              htmlFor={`health-advisor-${kind}-conversation`}
+            >
+              Message Health Advisor about {topic.conversationTitle}
+            </label>
+            <textarea
+              id={`health-advisor-${kind}-conversation`}
+              className="beast-input min-h-24 w-full min-w-0 resize-y"
+              maxLength={2000}
+              placeholder={topic.openingPrompt}
+              value={conversationDraft}
+              onChange={(event) => setConversationDraft(event.target.value)}
+            />
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+              <p className="max-w-2xl text-xs leading-5 text-[#9aa7b8]">
+                Your message opens the durable Health Advisor conversation.
+                Saving structured context still requires your confirmation.
               </p>
-            ) : visibleRecords.length ? (
-              <RecordList
-                records={visibleRecords}
-                onArchive={(record) => void archiveRecord(record)}
-                pendingId={pendingId}
-              />
-            ) : (
-              <GuidedEmptyState
-                title={`No ${definition.title.toLowerCase()} saved`}
-                description="No placeholder or example health records are shown."
-                guidance={presentation.emptyGuidance}
-                nextAction={{ label: "Ask Health Advisor", href: "/dashboard/health/ai-advisor" }}
-              />
-            )}
+              <button
+                type="submit"
+                className="beast-button-primary min-h-11"
+              >
+                Continue with Health Advisor
+              </button>
+            </div>
+          </form>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Link
+              href={buildHealthAdvisorConversationHref(
+                kind,
+                topic.openingPrompt
+              )}
+              className="rounded-full border border-white/10 px-3 py-2 text-xs font-bold text-cyan-100 transition hover:border-cyan-300/40"
+            >
+              Review what is saved
+            </Link>
+            <Link
+              href={buildHealthAdvisorConversationHref(kind, topic.emptyPrompt)}
+              className="rounded-full border border-white/10 px-3 py-2 text-xs font-bold text-cyan-100 transition hover:border-cyan-300/40"
+            >
+              Add through conversation
+            </Link>
           </div>
+          <p className="mt-4 text-xs leading-5 text-[#9aa7b8]">
+            Health Advisor organizes member-reported context. It does not
+            diagnose, prescribe, determine treatment, or tell you to change
+            medication.
+          </p>
         </DashboardCard>
 
+        {!loading ? (
+          <DashboardCard accent="health">
+            <ProfessionalKnowledgeWorkspace
+              model={knowledgeModel}
+              onAction={beginKnowledgeConversation}
+            />
+          </DashboardCard>
+        ) : null}
+
+        {error ? (
+          <p
+            className="rounded-xl border border-amber-300/30 bg-amber-300/10 p-4 text-sm leading-6 text-amber-100"
+            role="alert"
+          >
+            {error}
+          </p>
+        ) : null}
+        {statusMessage ? (
+          <p
+            className="rounded-xl border border-emerald-300/25 bg-emerald-300/10 p-4 text-sm leading-6 text-emerald-100"
+            role="status"
+          >
+            {statusMessage}
+          </p>
+        ) : null}
+
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(20rem,0.85fr)]">
+          <DashboardCard accent="red">
+            <SectionHeader
+              eyebrow={presentation.eyebrow}
+              title={presentation.collectionTitle}
+              description={`${presentation.collectionDescription} Select any saved record to view, expand, edit, or continue it through Health Advisor.`}
+            />
+            <div className="mt-4 flex flex-wrap gap-2 text-xs font-bold text-[#c7cfdb]">
+              <span className="rounded-full border border-white/10 px-3 py-1.5">
+                {activeRecords.length} current
+              </span>
+              <span className="rounded-full border border-white/10 px-3 py-1.5">
+                {visibleRecords.length} total
+              </span>
+            </div>
+            <div className="mt-4">
+              {loading ? (
+                <p role="status" className="text-sm text-[#c7cfdb]">
+                  Loading {definition.title.toLowerCase()}…
+                </p>
+              ) : visibleRecords.length ? (
+                <RecordList
+                  records={visibleRecords}
+                  allRecords={records}
+                  onArchive={(record) => void archiveRecord(record)}
+                  onUpdate={(record, update) =>
+                    void updateRecord(record, update)
+                  }
+                  pendingId={pendingId}
+                />
+              ) : (
+                <GuidedEmptyState
+                  title={`No ${definition.title.toLowerCase()} saved`}
+                  description="No placeholder or example health records are shown."
+                  guidance={`${presentation.emptyGuidance} Health Advisor can gather the information naturally and will ask you to confirm it before saving.`}
+                  nextAction={{
+                    label: "Start a conversation",
+                    href: buildHealthAdvisorConversationHref(
+                      kind,
+                      topic.emptyPrompt
+                    ),
+                  }}
+                />
+              )}
+            </div>
+          </DashboardCard>
+
+          <div className="grid content-start gap-4">
+            <DashboardCard accent="blue">
+              <SectionHeader
+                eyebrow="Timeline"
+                title={`${definition.title} timeline`}
+                description="Dates come only from saved records. Health Advisor does not infer when an event happened."
+              />
+              <ol className="mt-4 grid gap-3">
+                {timeline.length ? (
+                  timeline.map((event) => (
+                    <li
+                      key={event.id}
+                      className="rounded-xl border border-white/10 bg-black/10 p-3"
+                    >
+                      <Link
+                        href={`${healthWorkspaceHrefs[kind]}#health-record-${event.id}`}
+                        className="block focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300"
+                      >
+                        <span className="block text-xs font-black uppercase text-blue-200">
+                          {formatDate(event.date)}
+                        </span>
+                        <span className="mt-1 block font-bold text-white">
+                          {event.title}
+                        </span>
+                        <span className="mt-1 block text-xs text-[#9aa7b8]">
+                          {event.status} · {event.source || "Source not recorded"}
+                        </span>
+                      </Link>
+                    </li>
+                  ))
+                ) : (
+                  <li className="rounded-xl border border-dashed border-white/10 p-4 text-sm leading-6 text-[#9aa7b8]">
+                    No dated timeline exists for this workspace yet.
+                  </li>
+                )}
+              </ol>
+            </DashboardCard>
+
+            <DashboardCard accent="health">
+              <SectionHeader
+                eyebrow="Recent updates"
+                title="What changed"
+                description="Updates reflect saved record timestamps, not clinical change or improvement."
+              />
+              <div className="mt-4 grid gap-3">
+                {recentUpdates.length ? (
+                  recentUpdates.map((record) => (
+                    <Link
+                      key={record.id}
+                      href={`${healthWorkspaceHrefs[kind]}#health-record-${record.id}`}
+                      className="rounded-xl border border-white/10 bg-black/10 p-3 transition hover:border-red-300/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300"
+                    >
+                      <span className="block font-bold text-white">
+                        {record.title}
+                      </span>
+                      <span className="mt-1 block text-xs text-[#9aa7b8]">
+                        Updated {formatDate(record.updatedAt)}
+                      </span>
+                    </Link>
+                  ))
+                ) : (
+                  <p className="rounded-xl border border-dashed border-white/10 p-4 text-sm leading-6 text-[#9aa7b8]">
+                    No saved updates exist. BeastHealth does not create sample
+                    activity.
+                  </p>
+                )}
+              </div>
+            </DashboardCard>
+          </div>
+        </div>
+
         <DashboardCard accent="health">
-          <SectionHeader
-            eyebrow="Add verified information"
-            title={`Add ${definition.singular}`}
-            description={definition.guidance}
-          />
-          <form className="mt-4 grid gap-3" onSubmit={createRecord}>
-            <label className="grid gap-2 text-sm font-bold text-[#dbe3ef]">
-              {definition.titleLabel}
-              <input
-                className="beast-input min-w-0"
-                maxLength={200}
-                required
-                value={title}
-                onChange={(event) => setTitle(event.target.value)}
+          <details>
+            <summary className="cursor-pointer list-none rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300">
+              <SectionHeader
+                eyebrow="Direct record editing"
+                title={`Add ${definition.singular} manually`}
+                description={`${definition.guidance} Use this only when you want to enter a confirmed record directly. Conversation remains the primary experience.`}
               />
-            </label>
-            <label className="grid gap-2 text-sm font-bold text-[#dbe3ef]">
-              {definition.detailLabel}
-              <textarea
-                className="beast-input min-h-24 min-w-0 resize-y"
-                maxLength={1000}
-                value={context}
-                onChange={(event) => setContext(event.target.value)}
-              />
-            </label>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="grid min-w-0 gap-2 text-sm font-bold text-[#dbe3ef]">
-                Date
+            </summary>
+            <form className="mt-5 grid gap-3" onSubmit={createRecord}>
+              <label className="grid gap-2 text-sm font-bold text-[#dbe3ef]">
+                {definition.titleLabel}
                 <input
-                  type="date"
                   className="beast-input min-w-0"
-                  value={occurredOn}
-                  onChange={(event) => setOccurredOn(event.target.value)}
+                  maxLength={200}
+                  required
+                  value={title}
+                  onChange={(event) => setTitle(event.target.value)}
                 />
               </label>
-              <label className="grid min-w-0 gap-2 text-sm font-bold text-[#dbe3ef]">
-                Status
-                <select
-                  className="beast-input min-w-0"
-                  value={status}
-                  onChange={(event) =>
-                    setStatus(event.target.value as HealthRecordStatus)
-                  }
-                >
-                  {statusOptions.map((item) => (
-                    <option key={item} value={item}>
-                      {item}
-                    </option>
-                  ))}
-                </select>
+              <label className="grid gap-2 text-sm font-bold text-[#dbe3ef]">
+                {definition.detailLabel}
+                <textarea
+                  className="beast-input min-h-24 min-w-0 resize-y"
+                  maxLength={1000}
+                  value={context}
+                  onChange={(event) => setContext(event.target.value)}
+                />
               </label>
-            </div>
-            <label className="grid gap-2 text-sm font-bold text-[#dbe3ef]">
-              {definition.sourceLabel}
-              <input
-                className="beast-input min-w-0"
-                maxLength={300}
-                value={source}
-                onChange={(event) => setSource(event.target.value)}
-              />
-            </label>
-            <label className="grid gap-2 text-sm font-bold text-[#dbe3ef]">
-              Private notes
-              <textarea
-                className="beast-input min-h-24 min-w-0 resize-y"
-                maxLength={4000}
-                value={notes}
-                onChange={(event) => setNotes(event.target.value)}
-              />
-            </label>
-            <button
-              type="submit"
-              className="beast-button-primary min-h-11 w-full sm:w-fit"
-              disabled={saving || loading || !ownerId}
-            >
-              {saving ? "Saving…" : `Save ${definition.singular}`}
-            </button>
-          </form>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="grid min-w-0 gap-2 text-sm font-bold text-[#dbe3ef]">
+                  Date
+                  <input
+                    type="date"
+                    className="beast-input min-w-0"
+                    value={occurredOn}
+                    onChange={(event) => setOccurredOn(event.target.value)}
+                  />
+                </label>
+                <label className="grid min-w-0 gap-2 text-sm font-bold text-[#dbe3ef]">
+                  Status
+                  <select
+                    className="beast-input min-w-0"
+                    value={status}
+                    onChange={(event) =>
+                      setStatus(event.target.value as HealthRecordStatus)
+                    }
+                  >
+                    {statusOptions.map((item) => (
+                      <option key={item} value={item}>
+                        {item}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              <label className="grid gap-2 text-sm font-bold text-[#dbe3ef]">
+                {definition.sourceLabel}
+                <input
+                  className="beast-input min-w-0"
+                  maxLength={300}
+                  value={source}
+                  onChange={(event) => setSource(event.target.value)}
+                />
+              </label>
+              <label className="grid gap-2 text-sm font-bold text-[#dbe3ef]">
+                Private notes
+                <textarea
+                  className="beast-input min-h-24 min-w-0 resize-y"
+                  maxLength={4000}
+                  value={notes}
+                  onChange={(event) => setNotes(event.target.value)}
+                />
+              </label>
+              <button
+                type="submit"
+                className="beast-button-primary min-h-11 w-full sm:w-fit"
+                disabled={saving || loading || !ownerId}
+              >
+                {saving ? "Saving…" : `Save ${definition.singular}`}
+              </button>
+            </form>
+          </details>
         </DashboardCard>
       </section>
     </BeastHealthShell>

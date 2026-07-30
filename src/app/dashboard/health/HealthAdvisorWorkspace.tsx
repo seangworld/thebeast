@@ -91,6 +91,25 @@ const knowledgeRecordKinds: Record<string, HealthRecord["recordType"]> = {
   "health-documents-needed": "document",
 };
 
+const healthWorkspacePromptTopics: Record<
+  string,
+  { id: string; label: string }
+> = {
+  profile: { id: "health-background-needed", label: "Health background" },
+  condition: { id: "health-conditions-needed", label: "Conditions" },
+  medication: { id: "health-medications-needed", label: "Medications" },
+  procedure: { id: "health-procedures-needed", label: "Procedures" },
+  vital: { id: "health-vitals-needed", label: "Vitals" },
+  document: { id: "health-documents-needed", label: "Medical documents" },
+  lifestyle: { id: "health-lifestyle-needed", label: "Lifestyle context" },
+  family_history: {
+    id: "health-family-history-needed",
+    label: "Family health history",
+  },
+  provider: { id: "health-care-team-needed", label: "Care team" },
+  appointment: { id: "health-appointments-needed", label: "Appointments" },
+};
+
 function restoreHealthAdvisorTurns(
   thread: AgentConversationThread
 ): HealthAdvisorQuestionTurn[] {
@@ -295,6 +314,7 @@ export function HealthAdvisorWorkspace() {
   const [pendingId, setPendingId] = useState("");
   const [knowledgePrompt, setKnowledgePrompt] =
     useState<ProfessionalKnowledgeItem | null>(null);
+  const [knowledgeTargetRecordId, setKnowledgeTargetRecordId] = useState("");
   const [pendingKnowledgeAnswer, setPendingKnowledgeAnswer] = useState("");
   const [healthQuestion, setHealthQuestion] = useState("");
   const [healthQuestionBusy, setHealthQuestionBusy] = useState(false);
@@ -307,6 +327,7 @@ export function HealthAdvisorWorkspace() {
     "idle" | "review" | "saving" | "saved" | "error"
   >("idle");
   const healthConversationScrollPositions = useRef(new Map<string, number>());
+  const workspacePromptHydrated = useRef(false);
 
   async function refreshConversationThreads(
     nextRepository = conversationRepository,
@@ -336,6 +357,43 @@ export function HealthAdvisorWorkspace() {
 
   useEffect(() => {
     setLocalNow(new Date());
+  }, []);
+
+  useEffect(() => {
+    if (workspacePromptHydrated.current) return;
+    workspacePromptHydrated.current = true;
+    const parameters = new URLSearchParams(window.location.search);
+    const prompt = parameters.get("prompt")?.trim();
+    const topic = parameters.get("topic")?.trim();
+    const recordId = parameters.get("record")?.trim();
+    const topicDefinition = topic ? healthWorkspacePromptTopics[topic] : null;
+    if (!prompt || !topicDefinition) return;
+    setKnowledgePrompt({
+      id: topicDefinition.id,
+      label: topicDefinition.label,
+      summary:
+        "Context opened from a BeastHealth record workspace for member review.",
+      confidence: "unknown",
+      action: {
+        label: "Continue conversation",
+        mode: "conversation",
+        prompt: `Tell me what you would like me to understand about your ${topicDefinition.label.toLowerCase()}.`,
+      },
+    });
+    setKnowledgeTargetRecordId(recordId || "");
+    setHealthQuestion(prompt);
+    setPendingKnowledgeAnswer("");
+    setKnowledgeSaveState("idle");
+    setHealthQuestionError("");
+    window.requestAnimationFrame(() => {
+      document
+        .getElementById("health-advisor-conversation")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+      document
+        .getElementById("health-advisor-question")
+        ?.querySelector("textarea")
+        ?.focus({ preventScroll: true });
+    });
   }, []);
 
   useEffect(() => {
@@ -778,6 +836,7 @@ export function HealthAdvisorWorkspace() {
   function beginKnowledgeConversation(item: ProfessionalKnowledgeItem) {
     if (item.action.mode !== "conversation") return;
     setKnowledgePrompt(item);
+    setKnowledgeTargetRecordId("");
     setPendingKnowledgeAnswer("");
     setKnowledgeSaveState("idle");
     setHealthQuestion("");
@@ -799,23 +858,48 @@ export function HealthAdvisorWorkspace() {
     setDataError("");
     try {
       const client = createClient();
-      const { data, error } = await client
-        .from("beast_health_records")
-        .insert({
-          owner_id: ownerId,
-          record_type:
-            knowledgeRecordKinds[knowledgePrompt.id] || "profile",
-          title: knowledgePrompt.label,
-          status: "active",
-          occurred_on: null,
-          source: "Member-reported Health Advisor conversation",
-          details: {
-            context: pendingKnowledgeAnswer,
-            topic: knowledgePrompt.id,
-            provenance: "member_confirmed_conversation",
-          },
-          notes: null,
-        })
+      const targetRecord = knowledgeTargetRecordId
+        ? records.find(
+            (record) =>
+              record.id === knowledgeTargetRecordId &&
+              record.ownerId === ownerId
+          )
+        : null;
+      const mutation = targetRecord
+        ? client
+            .from("beast_health_records")
+            .update({
+              details: {
+                ...targetRecord.details,
+                context: pendingKnowledgeAnswer,
+                topic: knowledgePrompt.id,
+                provenance: "member_confirmed_conversation",
+                conversation_id:
+                  activeConversationId ||
+                  (typeof targetRecord.details.conversation_id === "string"
+                    ? targetRecord.details.conversation_id
+                    : "") ||
+                  null,
+              },
+            })
+            .eq("id", targetRecord.id)
+            .eq("owner_id", ownerId)
+        : client.from("beast_health_records").insert({
+            owner_id: ownerId,
+            record_type:
+              knowledgeRecordKinds[knowledgePrompt.id] || "profile",
+            title: knowledgePrompt.label,
+            status: "active",
+            occurred_on: null,
+            source: "Member-reported Health Advisor conversation",
+            details: {
+              context: pendingKnowledgeAnswer,
+              topic: knowledgePrompt.id,
+              provenance: "member_confirmed_conversation",
+            },
+            notes: null,
+          });
+      const { data, error } = await mutation
         .select(
           "id, owner_id, record_type, title, status, occurred_on, source, details, notes, created_at, updated_at"
         )
@@ -823,9 +907,14 @@ export function HealthAdvisorWorkspace() {
       if (error) throw error;
       const saved = normalizeHealthRecord(data as HealthRecordRow);
       if (!saved) throw new Error("The saved health context was invalid.");
-      setRecords((current) => [saved, ...current]);
+      setRecords((current) =>
+        targetRecord
+          ? current.map((record) => (record.id === saved.id ? saved : record))
+          : [saved, ...current]
+      );
       setKnowledgeSaveState("saved");
       setKnowledgePrompt(null);
+      setKnowledgeTargetRecordId("");
       setPendingKnowledgeAnswer("");
     } catch {
       setKnowledgeSaveState("error");
@@ -981,6 +1070,7 @@ export function HealthAdvisorWorkspace() {
 
   async function startHealthAdvisorConversation() {
     setKnowledgePrompt(null);
+    setKnowledgeTargetRecordId("");
     setPendingKnowledgeAnswer("");
     setKnowledgeSaveState("idle");
     setHealthQuestion("");
@@ -1011,6 +1101,7 @@ export function HealthAdvisorWorkspace() {
     setConversationTitle(thread.title);
     setQuestionTurns(restoreHealthAdvisorTurns(thread));
     setKnowledgePrompt(null);
+    setKnowledgeTargetRecordId("");
     setPendingKnowledgeAnswer("");
     setKnowledgeSaveState("idle");
     setHealthQuestion("");
@@ -1348,6 +1439,7 @@ export function HealthAdvisorWorkspace() {
                   className="mt-2 text-xs font-bold text-red-100"
                   onClick={() => {
                     setKnowledgePrompt(null);
+                    setKnowledgeTargetRecordId("");
                     setPendingKnowledgeAnswer("");
                     setKnowledgeSaveState("idle");
                   }}
@@ -1392,9 +1484,9 @@ export function HealthAdvisorWorkspace() {
                   {pendingKnowledgeAnswer}
                 </p>
                 <p className="mt-2 text-xs leading-5 text-[#9aa7b8]">
-                  Saving adds this as member-reported context. It does not
-                  confirm a diagnosis, medication, allergy, or clinical
-                  conclusion.
+                  Saving {knowledgeTargetRecordId ? "updates the selected record" : "adds this as member-reported context"}.
+                  It does not confirm a diagnosis, medication, allergy, or
+                  clinical conclusion.
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <button
@@ -1402,7 +1494,9 @@ export function HealthAdvisorWorkspace() {
                     className="beast-button min-h-11"
                     onClick={() => void confirmKnowledgeAnswer()}
                   >
-                    Save confirmed context
+                    {knowledgeTargetRecordId
+                      ? "Update confirmed record"
+                      : "Save confirmed context"}
                   </button>
                   <button
                     type="button"
