@@ -19,6 +19,7 @@ import {
 } from "@/lib/financialCoach";
 import { buildPaymentAutomationContext } from "@/lib/paymentAutomation";
 import { formatCurrency } from "@/lib/formatters";
+import { getDebtDueDetail, getDebtDueState } from "@/lib/debtManagement";
 import { getProfileDisplayName } from "@/lib/profile";
 import { buildMoneyCoachExperience } from "@/lib/moneyCoachExperience";
 import {
@@ -78,12 +79,27 @@ type MoneyDebt = {
   auto_pay_enabled?: boolean | null;
   reminder_enabled?: boolean | null;
   assigned_income_date?: string | null;
+  next_due_date_after_payment?: string | null;
   funding_source_id?: string | null;
   payment_account_id?: string | null;
   funding_account_type?: "account" | "income_pot" | null;
   funding_account_id?: string | null;
   funding_strategy_id?: string | null;
 };
+
+function OverdueDebtIntelligence({ debts, surface }: { debts: MoneyDebt[]; surface: "Money Coach" | "Daily Briefing" | "Financial Health" | "Dashboard" }) {
+  const now = new Date();
+  const overdue = debts.flatMap((debt) => {
+    if (debt.is_archived || numberValue(debt.balance) <= 0) return [];
+    const dueDate = debt.next_due_date_after_payment
+      ? new Date(`${debt.next_due_date_after_payment}T00:00:00`)
+      : new Date(now.getFullYear(), now.getMonth(), Math.min(Math.max(Number(debt.due_date || 1), 1), 28));
+    const due = getDebtDueState({ balance: numberValue(debt.balance), dueDate, now });
+    return due.isOverdue ? [{ debt, due }] : [];
+  });
+  if (!overdue.length) return null;
+  return <section className="rounded-2xl border border-red-500/30 bg-red-950/20 p-5" data-overdue-debt-surface={surface.toLowerCase().replaceAll(" ", "-")}><p className="beast-kicker text-red-200">{surface}</p><h2 className="mt-2 text-xl font-black text-white">Overdue debt attention</h2><div className="mt-3 grid gap-2">{overdue.map(({ debt, due }) => <div key={debt.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-500/20 bg-black/20 p-3"><div><div className="font-bold text-white">{debt.name || "Debt payment"}</div><div className="text-sm text-red-100">{getDebtDueDetail(due)}</div></div><Link href="/dashboard/money/debts" className="beast-button">Review Payment</Link></div>)}</div></section>;
+}
 
 type MoneyBill = {
   id: string;
@@ -1035,9 +1051,7 @@ export function MoneyWorkspacePage({
             </button>
           </section>
         ) : (
-          <FinancialHealthScoreWorkspace
-            model={financialMissionControl.financialHealth}
-          />
+          <div className="grid gap-5"><OverdueDebtIntelligence debts={state.debts} surface="Financial Health" /><FinancialHealthScoreWorkspace model={financialMissionControl.financialHealth} /></div>
         )}
       </BeastMoneyShell>
     );
@@ -1058,7 +1072,7 @@ export function MoneyWorkspacePage({
           <button type="button" className="beast-button mt-6 min-h-11" onClick={loadMoneySnapshot}>Try again</button>
         </section>
       ) : (
-        <FinancialMissionControl model={financialMissionControl} />
+        <div className="grid gap-5"><OverdueDebtIntelligence debts={state.debts} surface="Dashboard" /><OverdueDebtIntelligence debts={state.debts} surface="Daily Briefing" /><FinancialMissionControl model={financialMissionControl} /></div>
       )}
     </BeastMoneyShell>
   ) : null;
@@ -1071,12 +1085,12 @@ export function MoneyWorkspacePage({
       description="Money Coach leads your conversation-first experience, with the existing Money Cockpit grounded in current BeastMoney records and calculations below."
       showPageHeader={false}
     >
-      {view === "coach" ? <MoneyCoachExperience
+      {view === "coach" ? <div className="grid gap-5"><OverdueDebtIntelligence debts={state.debts} surface="Money Coach" /><MoneyCoachExperience
         model={moneyCoachExperience}
         loading={loading}
         error={loadError}
         onRetry={loadMoneySnapshot}
-      /> : <>
+      /></div> : <>
         <header className="border-b border-white/10 pb-6">
           <p className="beast-kicker">Financial mission control</p>
           <h1 className="mt-2 text-3xl font-black text-white">BeastMoney Dashboard</h1>

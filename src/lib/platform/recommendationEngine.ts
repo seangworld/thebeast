@@ -1,4 +1,5 @@
 import { numberValue } from "../financialMetrics";
+import { getDebtDueDetail, getDebtDueState } from "../debtManagement";
 import type {
   ModuleHealth,
   ModuleSummary,
@@ -20,6 +21,7 @@ type MoneyDebt = {
   due_date?: number | null;
   is_archived?: boolean | null;
   assigned_income_date?: string | null;
+  next_due_date_after_payment?: string | null;
   created_at?: string | null;
 };
 
@@ -126,14 +128,11 @@ function dateFromBillDueDate(bill: MoneyBill, now: Date) {
 }
 
 function dateFromDebtDueDate(debt: MoneyDebt, now: Date) {
-  const safeDay = Math.min(Math.max(Number(debt.due_date || 1), 1), 28);
-  const candidate = new Date(now.getFullYear(), now.getMonth(), safeDay);
-
-  if (candidate < now) {
-    return new Date(now.getFullYear(), now.getMonth() + 1, safeDay);
+  if (debt.next_due_date_after_payment) {
+    return new Date(`${debt.next_due_date_after_payment}T00:00:00`);
   }
-
-  return candidate;
+  const safeDay = Math.min(Math.max(Number(debt.due_date || 1), 1), 28);
+  return new Date(now.getFullYear(), now.getMonth(), safeDay);
 }
 
 function daysUntil(date: Date, now: Date) {
@@ -195,6 +194,22 @@ export function buildMoneyIntelligence(
     .map((bill) => ({ bill, dueDate: dateFromBillDueDate(bill, now) }))
     .filter((item) => daysUntil(item.dueDate, now) <= 3)
     .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime());
+  const overdueDebts = input.activeDebts
+    .map((debt) => ({ debt, dueDate: dateFromDebtDueDate(debt, now) }))
+    .map((item) => ({ ...item, due: getDebtDueState({ balance: numberValue(item.debt.balance), dueDate: item.dueDate, now }) }))
+    .filter((item) => item.due.isOverdue)
+    .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime());
+
+  for (const { debt, due } of overdueDebts) {
+    const debtName = debt.name || "Debt payment";
+    recommendations.push(createRecommendation({
+      id: `money-debt-overdue-${debt.id}`, module: "money", priority: "Critical", severity: "critical",
+      title: `${debtName} is overdue.`, summary: getDebtDueDetail(due),
+      reason: "The current debt balance remains open after its tracked due date.",
+      recommendedAction: "Open Debts to record, skip, or review the payment and next due date.",
+      estimatedBenefit: "Restore an accurate payment timeline and reduce late-payment risk.", actionUrl: "/dashboard/money/debts",
+    }));
+  }
 
   for (const { bill, dueDate } of billsDueWithinThreeDays.slice(0, 3)) {
     const billName = bill.name || "bill";
@@ -286,6 +301,14 @@ export function buildMoneyIntelligence(
         now
       )
     );
+  }
+
+  if (overdueDebts.length > 0) {
+    notifications.push(createNotification({
+      id: "money-debts-overdue", title: "Overdue debt payments", module: "money", severity: "critical",
+      actionUrl: "/dashboard/money/debts",
+      summary: `${overdueDebts.length} debt payment${overdueDebts.length === 1 ? " is" : "s are"} overdue.`,
+    }, now));
   }
 
   if (input.startingCash < input.buffer) {

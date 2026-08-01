@@ -19,6 +19,7 @@ import {
 import { buildMobileNotificationCards } from "@/lib/mobileSharedServices";
 import { FeedbackReleaseNotifications } from "./FeedbackReleaseNotifications";
 import { PrivateAdminMessageNotifications } from "./PrivateAdminMessageNotifications";
+import { OverdueDebtNotifications } from "./OverdueDebtNotifications";
 
 const notificationItems: PlatformNotificationItem[] = [
   {
@@ -116,6 +117,7 @@ export default function NotificationsPage() {
 
         <FeedbackReleaseNotifications />
         <PrivateAdminMessageNotifications />
+        <OverdueDebtNotifications />
 
         <section
           className="space-y-3 md:hidden"

@@ -16,7 +16,7 @@ test("BP-230 makes Dashboard the default while keeping Money Coach distinct", ()
   assert.match(landingRoute, /\/dashboard\/money\/coach\?starter=/);
   assert.match(coachRoute, /MoneyWorkspacePage view="coach"/);
   assert.match(dashboardRoute, /MoneyWorkspacePage view="dashboard"/);
-  assert.match(workspace, /view === "coach" \? <MoneyCoachExperience/);
+  assert.match(workspace, /view === "coach" \? <div[^>]*><OverdueDebtIntelligence[^>]*surface="Money Coach"[^>]*\/><MoneyCoachExperience/);
   assert.match(workspace, /Financial mission control/);
   assert.doesNotMatch(workspace, /window\.location\.hash|hashchange|showDashboard/);
   assert.notEqual(beastMoneyCoreNavigation[0].href, beastMoneyCoreNavigation[1].href);

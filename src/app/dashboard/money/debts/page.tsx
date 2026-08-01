@@ -46,6 +46,9 @@ import {
   type PayoffOptionalColumn,
 } from "@/lib/payoffPlanView";
 import { MoneyManagementNavigation } from "@/app/dashboard/money/components/MoneyManagementNavigation";
+import { DebtManagementActions, type DebtManagementDebt, type DebtPaymentHistoryRow } from "./DebtManagementActions";
+import { getNextDebtCycleDate, toDebtDateInput, type DebtPaymentAction } from "@/lib/debtManagement";
+import { applyDebtPaymentToCycle } from "@/lib/financialPayments";
 
 const PAYOFF_COLUMNS_STORAGE_KEY = "beastmoney.payoff-plan.columns.v1";
 
@@ -93,6 +96,7 @@ type Debt = {
   minimum_payment_floor?: number;
   credit_limit?: number;
   available_credit?: number;
+  statement_balance?: number | null;
   next_due_date_after_payment?: string | null;
   nextDueDate?: Date;
   nextDueDateDisplay?: string;
@@ -184,6 +188,8 @@ export default function DebtsPage() {
   const [incomes, setIncomes] = useState<any[]>([]);
   const [bills, setBills] = useState<any[]>([]);
   const [fundingSources, setFundingSources] = useState<any[]>([]);
+  const [debtPayments, setDebtPayments] = useState<DebtPaymentHistoryRow[]>([]);
+  const [paymentBusyId, setPaymentBusyId] = useState<string | null>(null);
   const [strategy, setStrategy] = useState<DebtStrategy>("snowball");
   const [extraPayment, setExtraPayment] = useState("");
   const [startingBalance, setStartingBalance] = useState<number | null>(null);
@@ -200,6 +206,7 @@ export default function DebtsPage() {
   const [minimumPaymentRate, setMinimumPaymentRate] = useState("2");
   const [minimumPaymentFloor, setMinimumPaymentFloor] = useState("25");
   const [creditLimit, setCreditLimit] = useState("");
+  const [statementBalance, setStatementBalance] = useState("");
 
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
@@ -215,6 +222,7 @@ export default function DebtsPage() {
   const [editMinimumPaymentRate, setEditMinimumPaymentRate] = useState("2");
   const [editMinimumPaymentFloor, setEditMinimumPaymentFloor] = useState("25");
   const [editCreditLimit, setEditCreditLimit] = useState("");
+  const [editStatementBalance, setEditStatementBalance] = useState("");
   const [projectionMonths, setProjectionMonths] = useState(24);
   const [showArchivedDebts, setShowArchivedDebts] = useState(false);
   const [payoffOptionalColumns, setPayoffOptionalColumns] = useState<PayoffOptionalColumn[]>([]);
@@ -592,10 +600,10 @@ export default function DebtsPage() {
       return;
     }
 
-    const { data: debtRows } = await supabase
-      .from("debts")
-      .select("*")
-      .eq("user_id", userId);
+    const [{ data: debtRows }, { data: debtPaymentRows }] = await Promise.all([
+      supabase.from("debts").select("*").eq("user_id", userId),
+      supabase.from("debt_payments").select("*").eq("user_id", userId).order("created_at", { ascending: false }),
+    ]);
 
     const { data: incomeRows } = await supabase
       .from("income_events")
@@ -634,6 +642,7 @@ export default function DebtsPage() {
       .maybeSingle();
 
     setDebts(debtRows || []);
+    setDebtPayments((debtPaymentRows || []) as DebtPaymentHistoryRow[]);
     setIncomes(incomeRows || []);
     setBills(billRows || []);
     setFundingSources(fundingSourceRows || []);
@@ -755,6 +764,7 @@ export default function DebtsPage() {
       minimum_payment_rate: Number(minimumPaymentRate || 2),
       minimum_payment_floor: Number(minimumPaymentFloor || 25),
       credit_limit: creditLimitNum,
+      statement_balance: paymentBehavior === "revolving" && statementBalance !== "" ? Number(statementBalance) : null,
       available_credit: availableCredit,
       is_archived: false,
       auto_pay_enabled: false,
@@ -775,6 +785,7 @@ export default function DebtsPage() {
     setMinimumPaymentRate("2");
     setMinimumPaymentFloor("25");
     setCreditLimit("");
+    setStatementBalance("");
 
     await load();
   }
@@ -795,6 +806,7 @@ export default function DebtsPage() {
       String(debt.minimum_payment_floor ?? 25)
     );
     setEditCreditLimit(String(debt.credit_limit ?? ""));
+    setEditStatementBalance(String(debt.statement_balance ?? ""));
   }
   
   function cancelEditDebt() {
@@ -809,6 +821,7 @@ export default function DebtsPage() {
     setEditMinimumPaymentRate("2");
     setEditMinimumPaymentFloor("25");
     setEditCreditLimit("");
+    setEditStatementBalance("");
   }
   
   async function saveEditDebt(id: string) {
@@ -833,6 +846,7 @@ export default function DebtsPage() {
         minimum_payment_rate: Number(editMinimumPaymentRate || 2),
         minimum_payment_floor: Number(editMinimumPaymentFloor || 25),
         credit_limit: creditLimitNum,
+        statement_balance: editPaymentBehavior === "revolving" && editStatementBalance !== "" ? Number(editStatementBalance) : null,
         available_credit: availableCredit,
       })
       .eq("id", id);
@@ -900,6 +914,72 @@ export default function DebtsPage() {
     }
 
     await load();
+  }
+
+  const debtHistory = useCallback(
+    (debtId: string) => debtPayments.filter((payment) => payment.debt_id === debtId),
+    [debtPayments]
+  );
+
+  async function recordDebtPayment(input: { debt: DebtManagementDebt; amount: number; paymentDate: string; fundingSourceId: string | null; notes: string; actionType: DebtPaymentAction }) {
+    const { debt, amount, actionType } = input;
+    if (actionType !== "skip" && (!Number.isFinite(amount) || amount <= 0)) { setMessage("Payment amount must be greater than zero."); return; }
+    if (amount > Number(debt.balance || 0)) { setMessage("Payment amount cannot exceed the current balance."); return; }
+    const userId = await getUserId();
+    if (!userId) return;
+    setPaymentBusyId(debt.id); setMessage("");
+    try {
+      const supabase = createClient();
+      const currentDueDate = getCurrentDebtCycleDueDate(debt);
+      const cycleDueDate = toDebtDateInput(currentDueDate);
+      const currentCyclePaid = debtHistory(debt.id)
+        .filter((payment) => payment.action_type !== "skip" && payment.cycle_due_date === cycleDueDate)
+        .reduce((sum, payment) => sum + Number(payment.amount || 0), 0);
+      const result = applyDebtPaymentToCycle({ balance: Number(debt.balance || 0), currentCyclePaid, paymentAmount: amount, minimumPayment: Number(debt.minimum_payment || 0), currentCycleDueDate: currentDueDate });
+      const nextDueDate = actionType === "skip" ? getNextDebtCycleDate(currentDueDate) : result.nextDueDateAfterPayment;
+      const configuredSource = input.fundingSourceId || (debt as any).funding_source_id || null;
+      const { error: insertError } = await supabase.from("debt_payments").insert({
+        user_id: userId, debt_id: debt.id, amount, payment_date: input.paymentDate, cycle_due_date: cycleDueDate,
+        funding_source_id: configuredSource, payment_account_id: configuredSource,
+        funding_account_type: configuredSource ? "account" : null, funding_account_id: configuredSource,
+        funding_strategy_id: "direct_payment", action_type: actionType, notes: input.notes || null,
+        is_outside_beast: actionType === "paid_outside_beast",
+      });
+      if (insertError) throw insertError;
+      const update: Record<string, unknown> = { balance: result.newBalance };
+      if (nextDueDate) { update.next_due_date_after_payment = nextDueDate; update.assigned_income_date = null; }
+      const { error: updateError } = await supabase.from("debts").update(update).eq("id", debt.id).eq("user_id", userId);
+      if (updateError) throw updateError;
+      setMessage(actionType === "skip" ? "Payment skipped and the next due date advanced." : actionType === "paid_outside_beast" ? "Payment completed outside Beast was recorded." : "Debt payment recorded. Money calculations and surfaces refreshed.");
+      await load();
+    } catch (error) { setMessage(`Payment error: ${error instanceof Error ? error.message : "Unable to record payment."}`); }
+    finally { setPaymentBusyId(null); }
+  }
+
+  async function resetDebtDueDate(debt: DebtManagementDebt, requestedDate: string) {
+    const userId = await getUserId();
+    if (!userId) return;
+    setPaymentBusyId(debt.id);
+    const nextDate = requestedDate === "next-cycle" ? getNextDebtCycleDate(getCurrentDebtCycleDueDate(debt)) : requestedDate;
+    const { error } = await createClient().from("debts").update({ next_due_date_after_payment: nextDate, assigned_income_date: null }).eq("id", debt.id).eq("user_id", userId);
+    setPaymentBusyId(null);
+    if (error) setMessage(`Due date error: ${error.message}`);
+    else { setMessage("Next due date updated. Payment history was preserved."); await load(); }
+  }
+
+  async function undoLastDebtPayment(debt: DebtManagementDebt, payment: DebtPaymentHistoryRow) {
+    if (!window.confirm(`Undo the last payment for ${debt.name}?`)) return;
+    const userId = await getUserId();
+    if (!userId) return;
+    setPaymentBusyId(debt.id);
+    const supabase = createClient();
+    const { error: deleteError } = await supabase.from("debt_payments").delete().eq("id", payment.id).eq("user_id", userId).eq("debt_id", debt.id);
+    if (deleteError) { setMessage(`Undo error: ${deleteError.message}`); setPaymentBusyId(null); return; }
+    const restoredBalance = money(Number(debt.balance || 0) + Number(payment.amount || 0));
+    const { error: updateError } = await supabase.from("debts").update({ balance: restoredBalance, next_due_date_after_payment: payment.cycle_due_date || null }).eq("id", debt.id).eq("user_id", userId);
+    setPaymentBusyId(null);
+    if (updateError) setMessage(`Undo balance restore error: ${updateError.message}`);
+    else { setMessage("Last payment undone and the recorded principal restored."); await load(); }
   }
 
   return (
@@ -1165,6 +1245,11 @@ export default function DebtsPage() {
       </div>
 
       <div>
+        <label className="text-sm text-[#c7cfdb]">Statement Balance</label>
+        <input type="number" value={statementBalance} onChange={(e) => setStatementBalance(e.target.value)} placeholder="Optional" className="beast-input mt-2" />
+      </div>
+
+      <div>
         <label className="text-sm text-[#c7cfdb]">
           Minimum % of Balance
         </label>
@@ -1260,6 +1345,7 @@ export default function DebtsPage() {
                           className="beast-input"
                           placeholder="Due day"
                         />
+                        {editPaymentBehavior === "revolving" ? <input type="number" value={editStatementBalance} onChange={(e) => setEditStatementBalance(e.target.value)} className="beast-input" placeholder="Statement Balance" /> : null}
                       </div>
 
                       <div className="grid min-w-0 grid-cols-1 gap-2 min-[380px]:grid-cols-2">
@@ -1323,6 +1409,18 @@ export default function DebtsPage() {
                         </div>
                       </div>
                       <div className="mt-3"><PaymentAutomationControls name={debt.name} {...normalizePaymentAutomation(debt)} onSave={(patch) => updateDebtAutomation(debt.id, patch)} /></div>
+
+                      <div className="mt-4">
+                        <DebtManagementActions
+                          debt={debt}
+                          fundingSources={fundingSources}
+                          history={debtHistory(debt.id)}
+                          busy={paymentBusyId === debt.id}
+                          onPayment={recordDebtPayment}
+                          onResetDueDate={resetDebtDueDate}
+                          onUndoLastPayment={undoLastDebtPayment}
+                        />
+                      </div>
 
                       <div className="mt-4 grid min-w-0 grid-cols-1 gap-2 min-[390px]:grid-cols-3">
                         <button
@@ -1412,6 +1510,7 @@ export default function DebtsPage() {
                               className="beast-input"
                               placeholder="Credit Limit"
                             />
+                            {editPaymentBehavior === "revolving" ? <input type="number" value={editStatementBalance} onChange={(e) => setEditStatementBalance(e.target.value)} className="beast-input" placeholder="Statement Balance" /> : null}
                             <input
                               type="text"
                               readOnly
@@ -1525,7 +1624,22 @@ export default function DebtsPage() {
                             </button>
                           </div>
                         ) : (
-                          <div className="flex justify-end gap-2">
+                          <div className="grid min-w-0 gap-2 text-left">
+                            <details>
+                              <summary className="beast-button cursor-pointer list-none text-center">Pay / Manage</summary>
+                              <div className="mt-3 min-w-[360px] rounded-xl border border-[#2a3242] bg-[#111827] p-3">
+                                <DebtManagementActions
+                                  debt={debt}
+                                  fundingSources={fundingSources}
+                                  history={debtHistory(debt.id)}
+                                  busy={paymentBusyId === debt.id}
+                                  onPayment={recordDebtPayment}
+                                  onResetDueDate={resetDebtDueDate}
+                                  onUndoLastPayment={undoLastDebtPayment}
+                                />
+                              </div>
+                            </details>
+                            <div className="flex justify-end gap-2">
                             <button
                               onClick={() => startEditDebt(debt)}
                               className="beast-button-secondary"
@@ -1546,6 +1660,7 @@ export default function DebtsPage() {
                             >
                               Delete
                             </button>
+                            </div>
                           </div>
                         )}
                       </td>
