@@ -161,7 +161,18 @@ export type BeastGoalCategory =
   | "Project"
   | "Home"
   | "Health"
+  | "Family"
   | "Other"
+
+export type BeastGoalPriority = "Low" | "Medium" | "High" | "Critical"
+
+export type BeastGoalSourceType =
+  | "member"
+  | "professional"
+  | "module"
+  | "document"
+  | "import"
+  | "system"
 
 export type BeastGoal = {
     id: string
@@ -170,9 +181,22 @@ export type BeastGoal = {
     category: BeastGoalCategory
     status: BeastGoalStatus
     summary?: string | null
+    description?: string | null
+    priority?: BeastGoalPriority
+    timeline?: string | null
+    progress?: number | null
+    notes?: string | null
+    tags?: string[]
+    linked_professional?: string | null
+    source_type?: BeastGoalSourceType
+    source_label?: string
+    source_reference?: string | null
+    custom_category?: string | null
     target_date?: string | null
     current_step?: string | null
     source_module?: string | null
+    archived_at?: string | null
+    deleted_at?: string | null
     created_at: string
     updated_at: string
   }
@@ -322,6 +346,12 @@ export type BeastGoalLifecycleEventType =
   | "Revised"
   | "Archived"
   | "Superseded"
+  | "Created"
+  | "Paused"
+  | "Resumed"
+  | "Merged"
+  | "Split"
+  | "Deleted"
 
 export type BeastGoalLifecycleEvent = {
     id: string
@@ -335,6 +365,33 @@ export type BeastGoalLifecycleEvent = {
     superseded_by_goal_id?: string | null
     source_module?: string | null
     occurred_at: string
+    created_at: string
+    updated_at: string
+  }
+
+export type BeastGoalFieldSource = {
+    id: string
+    owner_id: string
+    goal_id: string
+    field_name:
+      | "title"
+      | "category"
+      | "description"
+      | "status"
+      | "priority"
+      | "timeline"
+      | "target_date"
+      | "progress"
+      | "current_step"
+      | "notes"
+      | "tags"
+      | "linked_professional"
+    source_type: BeastGoalSourceType
+    source_label: string
+    source_module?: string | null
+    source_professional?: string | null
+    source_reference?: string | null
+    evidence: Record<string, unknown>
     created_at: string
     updated_at: string
   }

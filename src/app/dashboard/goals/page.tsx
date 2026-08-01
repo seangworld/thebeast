@@ -5,6 +5,7 @@ import {
 } from "@/app/components/design/DashboardPrimitives";
 import Link from "next/link";
 import { PlatformServiceHero } from "@/app/dashboard/platformServices";
+import { LifePlanningHub } from "./LifePlanningHub";
 import { createRouteClient } from "@/lib/supabase/server";
 import { buildMobileGoalActionCards } from "@/lib/mobilePersonalHub";
 import {
@@ -212,6 +213,14 @@ export default async function GoalsOverviewPage({
 }) {
   const goalLoadResult = await getGoalLoadResult();
   const educationFilter = searchParams?.module === "education";
+  const requestedModule =
+    searchParams?.module === "education"
+      ? "learning"
+      : ["beastos", "learning", "money", "health", "home", "family", "projects"].includes(
+            searchParams?.module || ""
+          )
+        ? searchParams?.module
+        : "All";
   const goals = educationFilter
     ? goalLoadResult.goals.filter((goal) => goal.sourceModule === "learning")
     : goalLoadResult.goals;
@@ -224,8 +233,8 @@ export default async function GoalsOverviewPage({
         <PlatformServiceHero
           module="goals"
           eyebrow="BeastOS Shared Service"
-          title="Goals"
-          description="Goals are shared Personal Hub outcomes owned by BeastOS. Modules can contribute progress without owning the goal."
+          title="BeastGoals"
+          description="The BeastOS Life Planning Hub: one owner-controlled source for financial, education, career, health, home, family, personal, and project goals."
           action={<ModuleBadge module="beastos" label="BeastOS Owned" />}
         />
         {educationFilter ? (
@@ -235,6 +244,11 @@ export default async function GoalsOverviewPage({
             goal.
           </div>
         ) : null}
+
+        <LifePlanningHub
+          initialGoals={goalLoadResult.goals}
+          initialModule={requestedModule}
+        />
 
         <section
           className="space-y-3 md:hidden"

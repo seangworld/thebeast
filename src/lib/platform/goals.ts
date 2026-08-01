@@ -2,6 +2,7 @@ import type { PlatformModule } from "./types";
 import type {
   BeastGoal as BeastGoalRow,
   BeastGoalContribution as BeastGoalContributionRow,
+  BeastGoalFieldSource as BeastGoalFieldSourceRow,
   BeastGoalLifecycleEvent as BeastGoalLifecycleEventRow,
   BeastGoalMilestone as BeastGoalMilestoneRow,
   BeastGoalRecommendation as BeastGoalRecommendationRow,
@@ -25,7 +26,30 @@ export type GoalCategory =
   | "Project"
   | "Home"
   | "Health"
+  | "Family"
   | "Other";
+
+export type GoalPriority = "Low" | "Medium" | "High" | "Critical";
+export type GoalSourceType =
+  | "member"
+  | "professional"
+  | "module"
+  | "document"
+  | "import"
+  | "system";
+export type GoalFieldName =
+  | "title"
+  | "category"
+  | "description"
+  | "status"
+  | "priority"
+  | "timeline"
+  | "target_date"
+  | "progress"
+  | "current_step"
+  | "notes"
+  | "tags"
+  | "linked_professional";
 
 export type GoalMilestoneStatus =
   | "Not Started"
@@ -94,7 +118,28 @@ export type GoalLifecycleEventType =
   | "Abandoned"
   | "Revised"
   | "Archived"
-  | "Superseded";
+  | "Superseded"
+  | "Created"
+  | "Paused"
+  | "Resumed"
+  | "Merged"
+  | "Split"
+  | "Deleted";
+
+export type GoalFieldSource = {
+  id: string;
+  ownerId: string;
+  goalId: string;
+  fieldName: GoalFieldName;
+  sourceType: GoalSourceType;
+  sourceLabel: string;
+  sourceModule?: PlatformModule;
+  sourceProfessional?: string;
+  sourceReference?: string;
+  evidence: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+};
 
 export type GoalMilestone = {
   id: string;
@@ -196,6 +241,17 @@ export type Goal = {
   category: GoalCategory;
   status: GoalStatus;
   summary?: string;
+  description?: string;
+  priority?: GoalPriority;
+  timeline?: string;
+  progress?: number;
+  notes?: string;
+  tags?: string[];
+  linkedProfessional?: string;
+  sourceType?: GoalSourceType;
+  sourceLabel?: string;
+  sourceReference?: string;
+  customCategory?: string;
   targetDate?: string;
   currentStep?: string;
   sourceModule?: PlatformModule;
@@ -205,6 +261,9 @@ export type Goal = {
   contributions: GoalContribution[];
   recommendations: GoalRecommendation[];
   lifecycleEvents: GoalLifecycleEvent[];
+  fieldSources?: GoalFieldSource[];
+  archivedAt?: string;
+  deletedAt?: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -276,6 +335,7 @@ export type BeastGoalDataClient = {
             | BeastGoalSupportItemRow[]
             | BeastGoalReferenceRow[]
             | BeastGoalContributionRow[]
+            | BeastGoalFieldSourceRow[]
             | BeastGoalRecommendationRow[]
             | BeastGoalLifecycleEventRow[]
             | null;
@@ -305,6 +365,7 @@ export const goalCategories: GoalCategory[] = [
   "Project",
   "Home",
   "Health",
+  "Family",
   "Other",
 ];
 
@@ -322,6 +383,7 @@ export const goalReferenceDatabaseTableName = "beast_goal_references";
 export const goalContributionDatabaseTableName = "beast_goal_contributions";
 export const goalRecommendationDatabaseTableName = "beast_goal_recommendations";
 export const goalLifecycleEventDatabaseTableName = "beast_goal_lifecycle_events";
+export const goalFieldSourceDatabaseTableName = "beast_goal_field_sources";
 
 export const goalDatabaseColumns: GoalDatabaseColumn[] = [
   { name: "id", type: "uuid", required: true },
@@ -330,9 +392,22 @@ export const goalDatabaseColumns: GoalDatabaseColumn[] = [
   { name: "category", type: "text", required: true },
   { name: "status", type: "text", required: true },
   { name: "summary", type: "text", required: false },
+  { name: "description", type: "text", required: false },
+  { name: "priority", type: "text", required: true },
+  { name: "timeline", type: "text", required: false },
+  { name: "progress", type: "integer", required: false },
+  { name: "notes", type: "text", required: false },
+  { name: "tags", type: "text[]", required: true },
+  { name: "linked_professional", type: "text", required: false },
+  { name: "source_type", type: "text", required: true },
+  { name: "source_label", type: "text", required: true },
+  { name: "source_reference", type: "text", required: false },
+  { name: "custom_category", type: "text", required: false },
   { name: "target_date", type: "date", required: false },
   { name: "current_step", type: "text", required: false },
   { name: "source_module", type: "text", required: false },
+  { name: "archived_at", type: "timestamptz", required: false },
+  { name: "deleted_at", type: "timestamptz", required: false },
   { name: "created_at", type: "timestamptz", required: true },
   { name: "updated_at", type: "timestamptz", required: true },
 ];
@@ -490,6 +565,12 @@ export const goalLifecycleEventTypes: GoalLifecycleEventType[] = [
   "Revised",
   "Archived",
   "Superseded",
+  "Created",
+  "Paused",
+  "Resumed",
+  "Merged",
+  "Split",
+  "Deleted",
 ];
 
 export const goalLifecycleEventDatabaseColumns: GoalDatabaseColumn[] = [
@@ -509,7 +590,7 @@ export const goalLifecycleEventDatabaseColumns: GoalDatabaseColumn[] = [
 ];
 
 export const goalOwnershipRules = [
-  "Goals belong to BeastOS as shared Personal Hub data.",
+  "BeastGoals is the canonical owner-controlled Life Planning Hub for BeastOS.",
   "Goals are outcomes, not module-owned task lists.",
   "Modules may suggest goals and contribute progress without owning shared goals.",
   "Dependencies, prerequisites, blockers, and recurring actions attach to BeastOS-owned goals and plans.",
@@ -517,7 +598,7 @@ export const goalOwnershipRules = [
   "Modules may contribute evidence, progress, milestones, recommendations, and reviews without owning shared goals.",
   "Recommendations must include a plain-language reason and can be dismissed without deleting history.",
   "Goal and Plan lifecycle events preserve completion, abandonment, revision, archive, and superseded history.",
-  "BeastGoals remains superseded as a standalone customer-facing module.",
+  "Specialist modules synchronize through references and contributions; they never create private goal copies.",
 ];
 
 export const mockGoals: Goal[] = [
@@ -596,6 +677,17 @@ export function mapGoalRow(row: BeastGoalRow): Goal {
     category: row.category,
     status: row.status,
     summary: row.summary ?? undefined,
+    description: row.description ?? undefined,
+    priority: row.priority ?? "Medium",
+    timeline: row.timeline ?? undefined,
+    progress: row.progress ?? undefined,
+    notes: row.notes ?? undefined,
+    tags: row.tags ?? [],
+    linkedProfessional: row.linked_professional ?? undefined,
+    sourceType: row.source_type ?? "member",
+    sourceLabel: row.source_label ?? "Member",
+    sourceReference: row.source_reference ?? undefined,
+    customCategory: row.custom_category ?? undefined,
     targetDate: row.target_date ?? undefined,
     currentStep: row.current_step ?? undefined,
     sourceModule: toPlatformModule(row.source_module),
@@ -605,9 +697,50 @@ export function mapGoalRow(row: BeastGoalRow): Goal {
     contributions: [],
     recommendations: [],
     lifecycleEvents: [],
+    fieldSources: [],
+    archivedAt: row.archived_at ?? undefined,
+    deletedAt: row.deleted_at ?? undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   });
+}
+
+const goalFieldNames: GoalFieldName[] = [
+  "title",
+  "category",
+  "description",
+  "status",
+  "priority",
+  "timeline",
+  "target_date",
+  "progress",
+  "current_step",
+  "notes",
+  "tags",
+  "linked_professional",
+];
+
+export function mapGoalFieldSourceRow(
+  row: BeastGoalFieldSourceRow
+): GoalFieldSource {
+  if (!goalFieldNames.includes(row.field_name)) {
+    throw new Error(`Unsupported goal field source: ${row.field_name}`);
+  }
+
+  return {
+    id: row.id,
+    ownerId: row.owner_id,
+    goalId: row.goal_id,
+    fieldName: row.field_name,
+    sourceType: row.source_type,
+    sourceLabel: row.source_label,
+    sourceModule: toPlatformModule(row.source_module),
+    sourceProfessional: row.source_professional ?? undefined,
+    sourceReference: row.source_reference ?? undefined,
+    evidence: row.evidence,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
 }
 
 export function isGoalMilestoneStatus(
@@ -874,7 +1007,7 @@ export async function loadUserGoals(
     const { data, error } = await client
       .from(goalDatabaseTableName)
       .select(
-        "id, owner_id, title, category, status, summary, target_date, current_step, source_module, created_at, updated_at"
+        "id, owner_id, title, category, status, summary, description, priority, timeline, progress, notes, tags, linked_professional, source_type, source_label, source_reference, custom_category, target_date, current_step, source_module, archived_at, deleted_at, created_at, updated_at"
       )
       .eq("owner_id", userData.user.id)
       .order("created_at", { ascending: false });
@@ -966,12 +1099,25 @@ export async function loadUserGoals(
       : ((lifecycleResult.data ?? []) as BeastGoalLifecycleEventRow[]).map(
           mapGoalLifecycleEventRow
         );
+    const fieldSourceResult = await client
+      .from(goalFieldSourceDatabaseTableName)
+      .select(
+        "id, owner_id, goal_id, field_name, source_type, source_label, source_module, source_professional, source_reference, evidence, created_at, updated_at"
+      )
+      .eq("owner_id", userData.user.id)
+      .order("updated_at", { ascending: false });
+    const fieldSources = fieldSourceResult.error
+      ? []
+      : ((fieldSourceResult.data ?? []) as BeastGoalFieldSourceRow[]).map(
+          mapGoalFieldSourceRow
+        );
     const milestonesByGoal = new Map<string, GoalMilestone[]>();
     const supportItemsByGoal = new Map<string, GoalSupportItem[]>();
     const referencesByGoal = new Map<string, GoalReference[]>();
     const contributionsByGoal = new Map<string, GoalContribution[]>();
     const recommendationsByGoal = new Map<string, GoalRecommendation[]>();
     const lifecycleEventsByGoal = new Map<string, GoalLifecycleEvent[]>();
+    const fieldSourcesByGoal = new Map<string, GoalFieldSource[]>();
 
     milestones.forEach((milestone) => {
       milestonesByGoal.set(milestone.goalId, [
@@ -1009,9 +1155,15 @@ export async function loadUserGoals(
         event,
       ]);
     });
+    fieldSources.forEach((fieldSource) => {
+      fieldSourcesByGoal.set(fieldSource.goalId, [
+        ...(fieldSourcesByGoal.get(fieldSource.goalId) || []),
+        fieldSource,
+      ]);
+    });
 
     return {
-      goals: ((data ?? []) as BeastGoalRow[]).map((row) => {
+      goals: ((data ?? []) as BeastGoalRow[]).filter((row) => !row.deleted_at).map((row) => {
         const goal = mapGoalRow(row);
 
         return {
@@ -1030,6 +1182,7 @@ export async function loadUserGoals(
           lifecycleEvents: [
             ...(lifecycleEventsByGoal.get(goal.id) || []),
           ].sort((left, right) => right.occurredAt.localeCompare(left.occurredAt)),
+          fieldSources: fieldSourcesByGoal.get(goal.id) || [],
         };
       }),
       status: "ready",

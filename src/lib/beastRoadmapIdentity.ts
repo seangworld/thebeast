@@ -347,6 +347,18 @@ export const beastRoadmapPackageRegistry = [
     ["20260801000300_track_debt_interest_changes.sql"]
   ),
   packageIdentity(
+    "BO-501",
+    ["BO-501"],
+    "BeastOS Life Planning Hub",
+    [
+      "docs/BO-501-BEASTGOALS-LIFE-PLANNING-HUB.md",
+      "src/lib/platform/lifePlanning.ts",
+      "src/app/dashboard/goals/LifePlanningHub.tsx",
+      "supabase/migrations/20260801000700_transform_beast_goals_life_planning_hub.sql",
+    ],
+    ["20260801000700_transform_beast_goals_life_planning_hub.sql"]
+  ),
+  packageIdentity(
     "BE-201",
     ["BE-201"],
     "Education and Career Intelligence",

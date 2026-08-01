@@ -52,6 +52,7 @@ import {
   buildHealthUpcomingEvents,
   getTodayProfessionalLabel,
 } from "@/lib/platform/todayGenerationOne";
+import { rankGoalsForToday } from "@/lib/platform/lifePlanning";
 
 type ProfileNameRow = {
   preferred_name?: string | null;
@@ -298,6 +299,44 @@ export default function TodayPage() {
       }),
     [state.healthRecords, todayDate]
   );
+  const lifePlanningContributions = useMemo<TodayContribution[]>(
+    () =>
+      rankGoalsForToday(state.goals, now)
+        .filter(
+          ({ goal }) =>
+            goal.category !== "Education" && goal.category !== "Career"
+        )
+        .slice(0, 5)
+        .map(({ goal, overdueMilestones, score }) => ({
+          id: `goal-${goal.id}`,
+          source: goal.sourceModule || "goals",
+          type: "Goal Action",
+          title: goal.title,
+          summary:
+            goal.currentStep ||
+            goal.description ||
+            goal.summary ||
+            "Review this goal and choose the next measurable step.",
+          reason:
+            overdueMilestones > 0
+              ? `${overdueMilestones} milestone${overdueMilestones === 1 ? " is" : "s are"} overdue.`
+              : `${goal.priority || "Medium"} priority shared goal in the Life Planning Hub.`,
+          recommendedAction: goal.currentStep || "Review the goal",
+          actionUrl: "/dashboard/goals",
+          activeDate: todayDate,
+          timing: "Active",
+          priority: goal.priority || "Medium",
+          importance: Math.min(10, Math.max(1, Math.round(score / 50))),
+          urgency: overdueMilestones > 0 ? 10 : goal.targetDate ? 7 : 4,
+          preferenceWeight: 6,
+          estimatedMinutes: 10,
+          relatedGoalId: goal.id,
+          dismissible: true,
+          status: "Active",
+          sourceEvidenceIds: [goal.id],
+        })),
+    [now, state.goals, todayDate]
+  );
   const moneyContributions = useMemo<TodayContribution[]>(
     () =>
       moneyIntelligence.recommendations.map((recommendation) => ({
@@ -343,6 +382,7 @@ export default function TodayPage() {
           ...educationContributions,
           ...healthContributions,
           ...moneyContributions,
+          ...lifePlanningContributions,
           ...manualTodayItems,
         ],
         today: todayDate,
@@ -350,6 +390,7 @@ export default function TodayPage() {
     [
       educationContributions,
       healthContributions,
+      lifePlanningContributions,
       manualTodayItems,
       moneyContributions,
       todayDate,
@@ -383,7 +424,17 @@ export default function TodayPage() {
   );
   const recentActivity = useMemo<PlatformActivity[]>(
     () =>
-      moneyIntelligence.activities
+      [
+        ...moneyIntelligence.activities,
+        ...state.goals.map((goal) => ({
+          id: `goal-update-${goal.id}`,
+          module: "goals" as const,
+          title: `${goal.title} updated`,
+          summary: goal.currentStep || goal.description || goal.summary || "Goal details changed.",
+          timestamp: goal.updatedAt,
+          actionUrl: "/dashboard/goals",
+        })),
+      ]
       .filter((item) => item.timestamp.slice(0, 10) === todayDate)
       .sort(
         (left, right) =>
@@ -391,13 +442,33 @@ export default function TodayPage() {
           new Date(left.timestamp).getTime()
       )
       .slice(0, 5),
-    [moneyIntelligence.activities, todayDate]
+    [moneyIntelligence.activities, state.goals, todayDate]
   );
   const upcomingEvents = useMemo<PlatformTimelineEvent[]>(
     () =>
       [
         ...moneyIntelligence.timelineEvents,
         ...buildHealthUpcomingEvents({ records: state.healthRecords, now }),
+        ...state.goals.flatMap((goal) => [
+          ...(goal.targetDate
+            ? [{
+                id: `goal-deadline-${goal.id}`,
+                module: "goals" as const,
+                title: `${goal.title} target date`,
+                summary: goal.currentStep || "Review the goal before its target date.",
+                timestamp: `${goal.targetDate}T12:00:00.000Z`,
+                actionUrl: "/dashboard/goals",
+              }]
+            : []),
+          ...goal.milestones.filter((milestone) => milestone.targetDate && milestone.status !== "Completed" && milestone.status !== "Skipped").map((milestone) => ({
+            id: `goal-milestone-${milestone.id}`,
+            module: "goals" as const,
+            title: milestone.title,
+            summary: `Milestone for ${goal.title}`,
+            timestamp: `${milestone.targetDate}T12:00:00.000Z`,
+            actionUrl: "/dashboard/goals",
+          })),
+        ]),
       ]
         .filter((item) => new Date(item.timestamp).getTime() >= now.getTime())
         .sort(
@@ -406,16 +477,14 @@ export default function TodayPage() {
             new Date(right.timestamp).getTime()
         )
         .slice(0, 5),
-    [moneyIntelligence.timelineEvents, now, state.healthRecords]
+    [moneyIntelligence.timelineEvents, now, state.goals, state.healthRecords]
   );
   const activeGoals = useMemo(
     () =>
-      state.goals
-        .filter((goal) =>
-          ["Proposed", "Active", "Blocked"].includes(goal.status)
-        )
-        .slice(0, 3),
-    [state.goals]
+      rankGoalsForToday(state.goals, now)
+        .slice(0, 3)
+        .map(({ goal }) => goal),
+    [now, state.goals]
   );
 
   function handleTodayAction(

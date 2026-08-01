@@ -83,6 +83,16 @@ type HealthAdvisorQuestionTurn = {
     | { kind: "intake"; text: string };
 };
 
+type HealthAdvisorGoal = {
+  id: string;
+  title: string;
+  status: string;
+  priority: string | null;
+  progress: number | null;
+  current_step: string | null;
+  target_date: string | null;
+};
+
 const knowledgeRecordKinds: Record<string, HealthRecord["recordType"]> = {
   "health-background-needed": "profile",
   "health-allergies-needed": "profile",
@@ -462,6 +472,7 @@ export function HealthAdvisorWorkspace() {
   const [localNow, setLocalNow] = useState<Date | null>(null);
   const [records, setRecords] = useState<HealthRecord[]>([]);
   const [documents, setDocuments] = useState<HealthDocumentContext[]>([]);
+  const [healthGoals, setHealthGoals] = useState<HealthAdvisorGoal[]>([]);
   const [history, setHistory] = useState<ProfessionalExecutionHistory>();
   const [store, setStore] = useState<SupabaseExecutionHistoryStore | null>(
     null
@@ -593,7 +604,7 @@ export function HealthAdvisorWorkspace() {
       if (authError) throw authError;
       const userId = auth.user?.id;
       if (!userId) throw new Error("Sign in is required.");
-      const [healthResult, documentResult, profileResult] = await Promise.all([
+      const [healthResult, documentResult, profileResult, goalResult] = await Promise.all([
         client
           .from("beast_health_records")
           .select(
@@ -610,6 +621,13 @@ export function HealthAdvisorWorkspace() {
           )
           .eq("id", userId)
           .maybeSingle(),
+        client
+          .from("beast_goals")
+          .select("id, title, status, priority, progress, current_step, target_date")
+          .eq("owner_id", userId)
+          .eq("category", "Health")
+          .neq("status", "Archived")
+          .order("updated_at", { ascending: false }),
       ]);
       if (healthResult.error) throw healthResult.error;
       const nextRecords = (
@@ -633,6 +651,9 @@ export function HealthAdvisorWorkspace() {
       setRecordsUnavailable(false);
       setDocuments(
         buildDocumentContext(nextRecords, documentResult.documents)
+      );
+      setHealthGoals(
+        goalResult.error ? [] : ((goalResult.data || []) as HealthAdvisorGoal[])
       );
       setStore(nextStore);
       setConversationRepository(nextConversationRepository);
@@ -1756,6 +1777,42 @@ export function HealthAdvisorWorkspace() {
             },
           ]}
         />
+
+        <DashboardCard accent="goals">
+          <SectionHeader
+            eyebrow="Shared Life Planning"
+            title="Health goals"
+            description="Health Advisor reads the owner’s canonical BeastGoals records. Recommendations and progress updates attach to these IDs instead of creating a separate health-goal list."
+            action={<ModuleBadge module="goals" label="BeastGoals" />}
+          />
+          <div className="mt-5 grid gap-3 md:grid-cols-2">
+            {healthGoals.length > 0 ? (
+              healthGoals.map((goal) => (
+                <Link
+                  key={goal.id}
+                  href="/dashboard/goals?module=health"
+                  className="min-w-0 rounded-xl border border-[#2a3242] bg-[#111827] p-4 transition hover:border-red-300/30"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h3 className="break-words font-black text-white">{goal.title}</h3>
+                    <span className="rounded-full border border-[#364153] px-2.5 py-1 text-xs font-black text-[#c7cfdb]">{goal.priority || "Medium"}</span>
+                  </div>
+                  <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">
+                    {goal.current_step || "Review this goal and define the next safe step."}
+                  </p>
+                  <div className="mt-2 text-xs font-bold text-[#7f8da3]">
+                    {goal.progress == null ? "Progress not set" : `${goal.progress}% complete`}
+                    {goal.target_date ? ` · Target ${goal.target_date}` : ""}
+                  </div>
+                </Link>
+              ))
+            ) : (
+              <p className="rounded-xl border border-[#2a3242] bg-[#111827] p-4 text-sm leading-6 text-[#c7cfdb]">
+                No active Health goal is saved. Health Advisor will not infer one; the member can create or approve it in BeastGoals.
+              </p>
+            )}
+          </div>
+        </DashboardCard>
 
         <DashboardCard accent="health">
           <SectionHeader eyebrow="Executive Health Briefing" title={model.executiveBriefing.title} description={model.executiveBriefing.summary} action={<ModuleBadge module="health" label="Advisor active" />} />

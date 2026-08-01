@@ -71,6 +71,7 @@ export const beastAdminRepositoryMigrationFiles = [
   "20260801000400_add_beast_health_discovery.sql",
   "20260801000500_add_health_document_extractions.sql",
   "20260801000600_add_education_career_intelligence.sql",
+  "20260801000700_transform_beast_goals_life_planning_hub.sql",
 ] as const;
 
 export type BeastAdminMigrationState =

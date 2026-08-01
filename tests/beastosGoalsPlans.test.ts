@@ -13,6 +13,7 @@ import {
   goalCategories,
   goalContributionDatabaseColumns,
   goalContributionDatabaseTableName,
+  goalFieldSourceDatabaseTableName,
   goalContributionStatuses,
   goalContributionTypes,
   goalDatabaseColumns,
@@ -256,6 +257,7 @@ test("BG-001 creates a BeastOS-owned Goal model and database contract", () => {
     "Project",
     "Home",
     "Health",
+    "Family",
     "Other",
   ]);
   assert.deepEqual(
@@ -267,9 +269,22 @@ test("BG-001 creates a BeastOS-owned Goal model and database contract", () => {
       ["category", true],
       ["status", true],
       ["summary", false],
+      ["description", false],
+      ["priority", true],
+      ["timeline", false],
+      ["progress", false],
+      ["notes", false],
+      ["tags", true],
+      ["linked_professional", false],
+      ["source_type", true],
+      ["source_label", true],
+      ["source_reference", false],
+      ["custom_category", false],
       ["target_date", false],
       ["current_step", false],
       ["source_module", false],
+      ["archived_at", false],
+      ["deleted_at", false],
       ["created_at", true],
       ["updated_at", true],
     ]
@@ -424,6 +439,12 @@ test("BG-001 creates a BeastOS-owned Goal model and database contract", () => {
     "Revised",
     "Archived",
     "Superseded",
+    "Created",
+    "Paused",
+    "Resumed",
+    "Merged",
+    "Split",
+    "Deleted",
   ]);
   assert.deepEqual(
     goalLifecycleEventDatabaseColumns.map((column) => [
@@ -463,10 +484,10 @@ test("BG-001 creates a BeastOS-owned Goal model and database contract", () => {
   );
   assert.equal(
     goalOwnershipRules[0],
-    "Goals belong to BeastOS as shared Personal Hub data."
+    "BeastGoals is the canonical owner-controlled Life Planning Hub for BeastOS."
   );
   assert.ok(
-    goalOwnershipRules.some((rule) => /BeastGoals remains superseded/.test(rule))
+    goalOwnershipRules.some((rule) => /never create private goal copies/.test(rule))
   );
 });
 
@@ -654,7 +675,8 @@ function createGoalClient(
           table === goalReferenceDatabaseTableName ||
           table === goalContributionDatabaseTableName ||
           table === goalRecommendationDatabaseTableName ||
-          table === goalLifecycleEventDatabaseTableName
+          table === goalLifecycleEventDatabaseTableName ||
+          table === goalFieldSourceDatabaseTableName
       );
 
       return {
@@ -685,6 +707,9 @@ function createGoalClient(
                   } else if (table === goalLifecycleEventDatabaseTableName) {
                     assert.equal(columnName, "occurred_at");
                     assert.deepEqual(orderOptions, { ascending: false });
+                  } else if (table === goalFieldSourceDatabaseTableName) {
+                    assert.equal(columnName, "updated_at");
+                    assert.deepEqual(orderOptions, { ascending: false });
                   } else {
                     assert.equal(table, goalReferenceDatabaseTableName);
                     assert.equal(columnName, "created_at");
@@ -709,6 +734,7 @@ function createGoalClient(
                       if (table === goalLifecycleEventDatabaseTableName) {
                         return options.lifecycleRows ?? [];
                       }
+                      if (table === goalFieldSourceDatabaseTableName) return [];
                       return options.referenceRows ?? [];
                     })(),
                     error: (() => {
