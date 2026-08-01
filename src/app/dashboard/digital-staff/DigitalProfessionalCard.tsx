@@ -98,18 +98,32 @@ export function DigitalProfessionalCard({
       </p>
       <dl className="mt-4 grid gap-2 border-t border-white/10 pt-4 text-xs">
         <div className="flex items-start justify-between gap-3">
+          <dt className="text-slate-500">Module</dt>
+          <dd className="text-right font-bold text-slate-200">
+            {professional.assignedModules.join(", ")}
+          </dd>
+        </div>
+        <div className="flex items-start justify-between gap-3">
           <dt className="text-slate-500">Reports to</dt>
           <dd className="text-right font-bold text-slate-200">
             {professional.reportsTo}
           </dd>
         </div>
         <div className="flex items-start justify-between gap-3">
-          <dt className="text-slate-500">Collaborates with</dt>
+          <dt className="text-slate-500">
+            {professional.directReports.length ? "Direct reports" : "Collaborates with"}
+          </dt>
           <dd className="text-right font-bold text-slate-200">
-            {professional.collaboratesWith.length}{" "}
-            {professional.collaboratesWith.length === 1
+            {professional.directReports.length || professional.collaboratesWith.length}{" "}
+            {(professional.directReports.length || professional.collaboratesWith.length) === 1
               ? "professional"
               : "professionals"}
+          </dd>
+        </div>
+        <div className="flex items-start justify-between gap-3">
+          <dt className="text-slate-500">Last activity</dt>
+          <dd className="max-w-[12rem] text-right font-bold text-slate-200">
+            {professional.lastActivity}
           </dd>
         </div>
       </dl>

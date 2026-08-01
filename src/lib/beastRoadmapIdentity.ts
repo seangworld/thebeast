@@ -418,6 +418,18 @@ export const beastRoadmapPackageRegistry = [
       "tests/sharedMemberSessionDetection.test.ts",
     ]
   ),
+  packageIdentity(
+    "BO-503",
+    ["BO-503"],
+    "Digital Staff Director",
+    [
+      "docs/BO-503-DIGITAL-STAFF-DIRECTOR.md",
+      "src/lib/director.ts",
+      "src/app/api/director/conversations/route.ts",
+      "src/app/dashboard/director/DirectorExperience.tsx",
+      "tests/digitalStaffDirector.test.ts",
+    ]
+  ),
 ] as const satisfies readonly BeastRoadmapPackageIdentity[];
 
 function collisionsFor(

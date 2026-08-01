@@ -129,6 +129,11 @@ export const secondaryNavigation: ModuleNavSection[] = [
     module: "beastos",
   },
   {
+    label: "Director",
+    href: "/dashboard/director",
+    module: "beastos",
+  },
+  {
     label: "Digital Staff",
     href: "/dashboard/digital-staff",
     module: "beastos",

@@ -25,7 +25,7 @@ export default function DigitalProfessionalPage({
     ["Responsibilities", professional.responsibilities],
     ["Experience", professional.experience],
     ["Capabilities", professional.capabilities],
-    ["Limitations", professional.limitations],
+    ["Boundaries", professional.limitations],
     ["Data this professional can access", professional.dataAccess],
     ["Data this professional cannot access", professional.unavailableData],
   ] as const;
@@ -66,6 +66,14 @@ export default function DigitalProfessionalPage({
           <p className="mt-5 max-w-3xl text-sm leading-6 text-slate-300">
             {professional.biography}
           </p>
+          {professional.conversationHref ? (
+            <Link
+              href={professional.conversationHref}
+              className="beast-button mt-5 inline-flex"
+            >
+              Start a conversation with {professional.name}
+            </Link>
+          ) : null}
           <div className="mt-5 rounded-xl border border-cyan-300/15 bg-cyan-300/5 p-4">
             <p className="text-xs font-black uppercase tracking-wide text-cyan-200">
               Mission
@@ -80,6 +88,9 @@ export default function DigitalProfessionalPage({
           {[
             ["Team", professional.team],
             ["Reports to", professional.reportsTo],
+            ["Assigned modules", professional.assignedModules.join(", ")],
+            ["Status", professional.statusLabel],
+            ["Last activity", professional.lastActivity],
           ].map(([label, value]) => (
             <div
               key={label}
@@ -94,6 +105,31 @@ export default function DigitalProfessionalPage({
             </div>
           ))}
         </dl>
+
+        {professional.directReports.length ? (
+          <section className="rounded-2xl border border-violet-300/20 bg-violet-300/5 p-5" aria-labelledby="direct-reports-heading">
+            <h2 id="direct-reports-heading" className="text-lg font-black text-white">
+              Specialists reporting to the Director
+            </h2>
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              {professional.directReports.map((professionalId) => {
+                const report = getDigitalProfessional(professionalId);
+                return report ? (
+                  <Link
+                    key={professionalId}
+                    href={report.href}
+                    className="rounded-xl border border-white/10 p-4 font-bold text-cyan-100 hover:border-cyan-300/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300"
+                  >
+                    {report.name}
+                    <span className="mt-1 block text-xs font-normal text-slate-400">
+                      {report.role} · {report.team}
+                    </span>
+                  </Link>
+                ) : null;
+              })}
+            </div>
+          </section>
+        ) : null}
 
         <section
           className="rounded-2xl border border-white/10 bg-[#111827] p-5"

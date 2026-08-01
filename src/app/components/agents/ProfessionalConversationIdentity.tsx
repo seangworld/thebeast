@@ -71,6 +71,8 @@ export const guidanceCounselorConversationIdentity =
   getProfessionalConversationIdentity("guidance-counselor", "learning");
 export const healthAdvisorConversationIdentity =
   getProfessionalConversationIdentity("health-advisor", "health");
+export const directorConversationIdentity =
+  getProfessionalConversationIdentity("fusion-director", "neutral");
 
 export function formatProfessionalMessageTime(timestamp?: string) {
   if (!timestamp) return undefined;

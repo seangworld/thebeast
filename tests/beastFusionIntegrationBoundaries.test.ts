@@ -55,16 +55,17 @@ test("BF-001 blocks questionnaire, teaching workspace, and activity entry routes
   assert.match(files[4], /redirect\("\/dashboard\/education\/goals"\)/);
 });
 
-test("BF-001 keeps internal orchestration out of member Digital Staff surfaces", () => {
+test("BO-503 exposes the approved Director without exposing internal orchestration", () => {
   assert.deepEqual(
     digitalProfessionals.map((professional) => professional.canonicalId),
     [
+      "beastfusion.fusion-director",
       "beastmoney.money-coach",
       "beasteducation.guidance-counselor",
       "beasthealth.health-advisor",
     ]
   );
-  assert.equal(getDigitalProfessional("fusion-director"), undefined);
+  assert.equal(getDigitalProfessional("fusion-director")?.role, "Digital Staff Director");
 
   const memberSource = [
     readFileSync("src/app/dashboard/digital-staff/page.tsx", "utf8"),
@@ -75,7 +76,7 @@ test("BF-001 keeps internal orchestration out of member Digital Staff surfaces",
   ].join("\n");
   assert.doesNotMatch(
     memberSource,
-    /Fusion Director|Release status|Portrait status|placeholder_reference/
+    /Release status|Portrait status|placeholder_reference|context graph|model delegation/
   );
 });
 

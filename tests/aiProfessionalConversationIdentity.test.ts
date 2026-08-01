@@ -36,7 +36,7 @@ const documentation = readFileSync(
 test("AP-001 registry provides unique complete identity for every current professional", () => {
   assert.deepEqual(
     digitalProfessionals.map((professional) => professional.id),
-    ["money-coach", "guidance-counselor", "health-advisor"]
+    ["fusion-director", "money-coach", "guidance-counselor", "health-advisor"]
   );
   assert.equal(
     new Set(digitalProfessionals.map((professional) => professional.canonicalId)).size,

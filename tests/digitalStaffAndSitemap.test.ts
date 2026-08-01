@@ -13,11 +13,12 @@ test("Digital Staff has accessible deterministic statuses and reporting relation
   assert.deepEqual(digitalProfessionalStatuses, ["available", "limited", "unavailable", "inactive"]);
   assert.deepEqual(
     digitalProfessionals.map((professional) => professional.id),
-    ["money-coach", "guidance-counselor", "health-advisor"]
+    ["fusion-director", "money-coach", "guidance-counselor", "health-advisor"]
   );
   assert.deepEqual(
     digitalProfessionals.map((professional) => professional.canonicalId),
     [
+      "beastfusion.fusion-director",
       "beastmoney.money-coach",
       "beasteducation.guidance-counselor",
       "beasthealth.health-advisor",
@@ -89,10 +90,11 @@ test("Digital Staff portraits reference public assets and retain deterministic f
 test("Money Coach and Guidance Counselor retain their safety boundaries", () => {
   assert.ok(getDigitalProfessional("money-coach")?.limitations.some((item) => /No payment execution/i.test(item)));
   assert.ok(getDigitalProfessional("guidance-counselor")?.limitations.some((item) => /Does not teach or grade coursework in Generation 1/i.test(item)));
-  assert.equal(getDigitalProfessional("fusion-director"), undefined);
+  assert.equal(getDigitalProfessional("fusion-director")?.releaseStatus, "active");
+  assert.equal(getDigitalProfessional("fusion-director")?.conversationHref, "/dashboard/director");
   assert.doesNotMatch(
     JSON.stringify(getDigitalProfessional("guidance-counselor")),
-    /Tutor|Fusion Director/
+    /Tutor/
   );
 });
 
@@ -110,12 +112,10 @@ test("member profile cards expose professional context without internal implemen
     "utf8"
   );
   assert.match(chart, /Digital Staff\s*<\/h1>/);
-  assert.match(
-    chart,
-    /Meet the Digital Professionals who guide and support/
-  );
-  assert.match(chart, /Your professionals/);
-  assert.doesNotMatch(chart, /Fusion Director|Organization chart/);
+  assert.match(chart, /Your Director helps you choose what matters most/);
+  assert.match(chart, /How your Digital Staff works/);
+  assert.match(chart, /data-digital-staff-level="director"/);
+  assert.match(chart, /data-digital-staff-level="specialists"/);
   assert.doesNotMatch(chart, /Portrait asset framework/);
   assert.match(card, /Portrait fallback/);
   assert.match(card, /Reports to/);
@@ -127,6 +127,8 @@ test("member profile cards expose professional context without internal implemen
     "Experience",
     "Reports to",
     "Collaborates With",
+    "Assigned modules",
+    "Last activity",
   ]) {
     assert.match(profile, new RegExp(label));
   }

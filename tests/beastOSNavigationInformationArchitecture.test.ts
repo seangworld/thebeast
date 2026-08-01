@@ -117,6 +117,7 @@ test("BP-001 relocates Digital Staff without removing its functionality", () => 
     secondaryNavigation.map(({ label, href }) => [label, href]),
     [
       ["Relationship Center", "/dashboard/relationships"],
+      ["Director", "/dashboard/director"],
       ["Digital Staff", "/dashboard/digital-staff"],
     ]
   );

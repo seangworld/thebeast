@@ -49,6 +49,10 @@ export type DigitalProfessional = {
   limitations: string[];
   dataAccess: string[];
   unavailableData: string[];
+  assignedModules: string[];
+  directReports: string[];
+  lastActivity: string;
+  conversationHref: string | null;
   collaboratesWith: DigitalProfessionalRelationship[];
   portrait: DigitalProfessionalPortrait;
   href: string;
@@ -76,26 +80,26 @@ const digitalProfessionalRegistry: readonly DigitalProfessional[] = [
   {
     id: "fusion-director",
     canonicalId: "beastfusion.fusion-director",
-    memberVisibility: "internal-only",
+    memberVisibility: "member-facing",
     name: "Avery Stone",
-    role: "Fusion Director",
-    title: "Director of Digital Staff Operations",
+    role: "Digital Staff Director",
+    title: "Director of Digital Staff",
     team: "Digital Staff",
     reportsTo: "Owner",
     reportsToId: null,
-    status: "inactive",
-    statusLabel: "Internal architecture only",
-    releaseStatus: "foundation",
-    version: "1.1.0",
+    status: "available",
+    statusLabel: "Available",
+    releaseStatus: "active",
+    version: "2.0.0",
     biography:
-      "Avery is the Digital Staff coordination professional. The role receives permissioned requests, identifies the right product-owned professional, and keeps approvals, evidence, and follow-up visible without becoming a super-agent.",
+      "The Director looks across your Beast experience, coordinates your specialists, and helps you decide what matters most next.",
     mission:
       "Coordinate the right professional response while preserving owner decisions, product authority, and explicit approval boundaries.",
     responsibilities: [
-      "Receive and classify owner-approved requests",
-      "Route work to the professional with the correct product authority",
+      "Look across approved Beast summaries for the most important next step",
+      "Send detailed questions to the specialist with the right expertise",
       "Coordinate permissioned context and cross-professional follow-up",
-      "Keep limitations, approvals, and execution evidence visible",
+      "Explain which specialists and records support each recommendation",
     ],
     experience: [
       "Cross-product request coordination",
@@ -104,14 +108,18 @@ const digitalProfessionalRegistry: readonly DigitalProfessional[] = [
       "Evidence-backed execution review",
     ],
     capabilities: [
-      "Select an appropriate professional",
-      "Report execution limitations",
-      "Coordinate approved follow-up",
+      "Prioritize one clear next step across Beast",
+      "Coordinate specialist input without impersonating a specialist",
+      "Identify conflicts in dates, costs, priorities, and dependencies",
+      "Explain recommendation sources, confidence, and limitations",
     ],
     limitations: [
-      "Cannot bypass approval",
-      "Cannot edit product-owned records",
-      "Cannot claim external work occurred without evidence",
+      "Cannot diagnose, prescribe, or tell a member to change medication",
+      "Cannot make individualized investment or tax decisions",
+      "Cannot guarantee education, employment, promotion, or salary outcomes",
+      "Cannot bypass approval or edit authoritative records",
+      "Cannot expose another household member's private information",
+      "Cannot present assumptions or unavailable data as facts",
     ],
     dataAccess: [
       "Approved request metadata",
@@ -122,6 +130,10 @@ const digitalProfessionalRegistry: readonly DigitalProfessional[] = [
       "Credentials",
       "Private professional reasoning",
     ],
+    assignedModules: ["BeastOS", "BeastGoals", "BeastDocuments"],
+    directReports: ["money-coach", "guidance-counselor", "health-advisor"],
+    lastActivity: "Shown from your saved Director conversations",
+    conversationHref: "/dashboard/director",
     collaboratesWith: [
       {
         professionalId: "money-coach",
@@ -150,8 +162,8 @@ const digitalProfessionalRegistry: readonly DigitalProfessional[] = [
     role: "Money Coach",
     title: "Personal Finance Planning Coach",
     team: "BeastMoney",
-    reportsTo: "Owner",
-    reportsToId: null,
+    reportsTo: "Avery Stone, Director",
+    reportsToId: "fusion-director",
     status: "available",
     statusLabel: "Available",
     releaseStatus: "active",
@@ -189,6 +201,10 @@ const digitalProfessionalRegistry: readonly DigitalProfessional[] = [
       "Other members' records",
       "Unapproved household context",
     ],
+    assignedModules: ["BeastMoney"],
+    directReports: [],
+    lastActivity: "Shown from saved Money Coach activity",
+    conversationHref: "/dashboard/money/coach",
     collaboratesWith: [
       {
         professionalId: "guidance-counselor",
@@ -207,8 +223,8 @@ const digitalProfessionalRegistry: readonly DigitalProfessional[] = [
     role: "Guidance Counselor",
     title: "Education and Career Guidance Counselor",
     team: "BeastEducation",
-    reportsTo: "Owner",
-    reportsToId: null,
+    reportsTo: "Avery Stone, Director",
+    reportsToId: "fusion-director",
     status: "available",
     statusLabel: "Available",
     releaseStatus: "active",
@@ -244,6 +260,10 @@ const digitalProfessionalRegistry: readonly DigitalProfessional[] = [
       "Other learners' records",
       "Unverified school or employer requirements",
     ],
+    assignedModules: ["BeastEducation"],
+    directReports: [],
+    lastActivity: "Shown from saved Guidance Counselor activity",
+    conversationHref: "/dashboard/education/guidance-counselor",
     collaboratesWith: [
       {
         professionalId: "money-coach",
@@ -262,8 +282,8 @@ const digitalProfessionalRegistry: readonly DigitalProfessional[] = [
     role: "Health Advisor",
     title: "Health Information Advisor",
     team: "BeastHealth",
-    reportsTo: "Owner",
-    reportsToId: null,
+    reportsTo: "Avery Stone, Director",
+    reportsToId: "fusion-director",
     status: "available",
     statusLabel: "Available — medically bounded",
     releaseStatus: "active",
@@ -307,6 +327,10 @@ const digitalProfessionalRegistry: readonly DigitalProfessional[] = [
       "Documents without explicit intelligence permission",
       "External clinical systems that are not connected",
     ],
+    assignedModules: ["BeastHealth"],
+    directReports: [],
+    lastActivity: "Shown from saved Health Advisor activity",
+    conversationHref: "/dashboard/health/ai-advisor",
     collaboratesWith: [],
     portrait: portraitAsset("health-advisor"),
     href: "/dashboard/digital-staff/health-advisor",
@@ -317,6 +341,14 @@ export const digitalProfessionals: readonly DigitalProfessional[] =
   digitalProfessionalRegistry.filter(
     (professional) => professional.memberVisibility === "member-facing"
   );
+
+export const digitalStaffDirector = digitalProfessionals.find(
+  (professional) => professional.id === "fusion-director"
+)!;
+
+export const digitalStaffSpecialists = digitalProfessionals.filter(
+  (professional) => professional.reportsToId === digitalStaffDirector.id
+);
 
 export function getDigitalProfessional(id: string) {
   return digitalProfessionals.find((professional) => professional.id === id);
