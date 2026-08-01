@@ -26,7 +26,7 @@ export type DebtPaymentHistoryRow = {
   created_at?: string | null;
 };
 
-type Props = {
+export type DebtManagementActionsProps = {
   debt: DebtManagementDebt;
   fundingSources: { id: string; name: string }[];
   history: DebtPaymentHistoryRow[];
@@ -38,7 +38,7 @@ type Props = {
 
 const today = () => new Date().toISOString().slice(0, 10);
 
-export function DebtManagementActions({ debt, fundingSources, history, busy, onPayment, onResetDueDate, onUndoLastPayment }: Props) {
+export function DebtManagementActions({ debt, fundingSources, history, busy, onPayment, onResetDueDate, onUndoLastPayment }: DebtManagementActionsProps) {
   const [panel, setPanel] = useState<"custom" | "reset" | "history" | null>(null);
   const [amount, setAmount] = useState("");
   const [paymentDate, setPaymentDate] = useState(today);

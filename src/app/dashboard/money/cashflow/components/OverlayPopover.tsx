@@ -5,13 +5,16 @@ import { createPortal } from "react-dom";
 
 type Position = { left: number; top?: number; bottom?: number; width: number; maxHeight: number };
 
-export function OverlayPopover({ label, ariaLabel, children, width = 240, testId, triggerClassName = "" }: {
+export function OverlayPopover({ label, ariaLabel, children, width = 240, testId, triggerClassName = "", onOpenChange, panelRole = "menu", panelAriaLabel }: {
   label: string;
   ariaLabel?: string;
   children: (close: () => void) => ReactNode;
   width?: number;
   testId?: string;
   triggerClassName?: string;
+  onOpenChange?: (open: boolean) => void;
+  panelRole?: "menu" | "dialog";
+  panelAriaLabel?: string;
 }) {
   const id = useId();
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -19,20 +22,25 @@ export function OverlayPopover({ label, ariaLabel, children, width = 240, testId
   const [open, setOpen] = useState(false);
   const [position, setPosition] = useState<Position | null>(null);
 
+  const updateOpen = useCallback((nextOpen: boolean) => {
+    setOpen(nextOpen);
+    onOpenChange?.(nextOpen);
+  }, [onOpenChange]);
+
   const close = useCallback(() => {
-    setOpen(false);
+    updateOpen(false);
     requestAnimationFrame(() => buttonRef.current?.focus());
-  }, []);
+  }, [updateOpen]);
 
   useEffect(() => {
     if (!open) return;
     window.dispatchEvent(new CustomEvent("money-popover-open", { detail: id }));
     const onOtherOpen = (event: Event) => {
-      if ((event as CustomEvent<string>).detail !== id) setOpen(false);
+      if ((event as CustomEvent<string>).detail !== id) updateOpen(false);
     };
     const onPointerDown = (event: PointerEvent) => {
       const target = event.target as Node;
-      if (!buttonRef.current?.contains(target) && !panelRef.current?.contains(target)) setOpen(false);
+      if (!buttonRef.current?.contains(target) && !panelRef.current?.contains(target)) updateOpen(false);
     };
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -64,7 +72,7 @@ export function OverlayPopover({ label, ariaLabel, children, width = 240, testId
       document.removeEventListener("pointerdown", onPointerDown);
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, [close, id, open]);
+  }, [close, id, open, updateOpen]);
 
   useEffect(() => {
     if (!open || !position) return;
@@ -112,16 +120,16 @@ export function OverlayPopover({ label, ariaLabel, children, width = 240, testId
 
   return (
     <div className="inline-block max-w-full" data-overlay-popover={testId || "true"}>
-      <button ref={buttonRef} type="button" className={`beast-button-secondary inline-flex max-w-full items-center gap-2 whitespace-nowrap ${triggerClassName}`} aria-label={ariaLabel} aria-haspopup="menu" aria-expanded={open} aria-controls={`${id}-panel`} onClick={() => setOpen((current) => !current)} onKeyDown={(event) => {
+      <button ref={buttonRef} type="button" className={`beast-button-secondary inline-flex max-w-full items-center gap-2 whitespace-nowrap ${triggerClassName}`} aria-label={ariaLabel} aria-haspopup={panelRole} aria-expanded={open} aria-controls={`${id}-panel`} onClick={() => updateOpen(!open)} onKeyDown={(event) => {
         if (event.key === "ArrowDown" || event.key === "ArrowUp") {
           event.preventDefault();
-          setOpen(true);
+          updateOpen(true);
         }
       }}>
         <span className="min-w-0 flex-1 truncate">{label}</span><span className="shrink-0" aria-hidden="true">▾</span>
       </button>
       {open && position && createPortal(
-        <div ref={panelRef} id={`${id}-panel`} role="menu" className="fixed z-[100] overflow-y-auto overflow-x-hidden rounded-lg border border-[#2a3242] bg-[#111827] p-2 text-left shadow-2xl" style={position} data-popover-overlay="true">
+        <div ref={panelRef} id={`${id}-panel`} role={panelRole} aria-label={panelAriaLabel} className="fixed z-[100] overflow-y-auto overflow-x-hidden rounded-lg border border-[#2a3242] bg-[#111827] p-2 text-left shadow-2xl" style={position} data-popover-overlay="true">
           {children(close)}
         </div>,
         document.body

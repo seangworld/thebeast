@@ -41,10 +41,30 @@ test("Debt List consolidates row controls into one confirmed Actions menu", () =
   assert.match(page, /text-red-300/);
   assert.match(page, /window\.confirm\(`Archive/);
   assert.match(page, /window\.confirm\(`Delete/);
-  assert.match(page, /data-debt-management-panel="true"/);
-  assert.match(page, /data-debt-management-row="true"/);
+  assert.match(page, /data-debt-management-popover="true"/);
+  assert.match(page, /data-action-menu-list="debt"/);
+  assert.match(page, /Back to actions/);
+  assert.match(page, /width=\{view === "manage" \? 560 : 208\}/);
+  assert.match(page, /panelRole=\{view === "manage" \? "dialog" : "menu"\}/);
+  assert.match(page, /panelAriaLabel=\{view === "manage"/);
+  assert.doesNotMatch(page, /data-debt-management-panel="true"/);
+  assert.doesNotMatch(page, /data-debt-management-row="true"/);
+  assert.doesNotMatch(page, /managedDebtId/);
   assert.match(page, /className="grid min-w-0 gap-3 p-3 lg:hidden"/);
   assert.doesNotMatch(page, /<summary[^>]*>Pay \/ Manage<\/summary>/);
+});
+
+test("Bills and Debts keep payment workflows in the shared Actions overlay", () => {
+  const bills = readFileSync(
+    "src/app/dashboard/money/cashflow/components/BillsSection.tsx",
+    "utf8"
+  );
+  const debts = readFileSync("src/app/dashboard/money/debts/page.tsx", "utf8");
+
+  assert.match(bills, /<OverlayPopover label="Actions"/);
+  assert.match(bills, /<BillPaymentControls/);
+  assert.match(debts, /<OverlayPopover/);
+  assert.match(debts, /<DebtManagementActions \{\.\.\.management\} \/>/);
 });
 
 test("shared Actions overlay supports focus, arrow keys, Escape, and a mobile sheet", () => {
@@ -59,6 +79,8 @@ test("shared Actions overlay supports focus, arrow keys, Escape, and a mobile sh
   assert.match(overlay, /querySelector<HTMLElement>\('\[role="menuitem"\]/);
   assert.match(overlay, /buttonRef\.current\?\.focus/);
   assert.match(overlay, /aria-label=\{ariaLabel\}/);
+  assert.match(overlay, /aria-haspopup=\{panelRole\}/);
+  assert.match(overlay, /onOpenChange\?\.\(nextOpen\)/);
   assert.match(overlay, /window\.innerWidth <= 640/);
   assert.match(overlay, /bottom: gutter/);
 });
