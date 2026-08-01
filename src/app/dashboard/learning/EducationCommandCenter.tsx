@@ -237,10 +237,10 @@ export default function EducationCommandCenter({
       </div>
       <div className="mt-5 rounded-xl border border-green-400/25 bg-green-400/10 p-4">
         <div className="text-xs font-bold uppercase text-green-100">
-          Supporting capabilities stay available
+          Historical instructional capabilities are on hold
         </div>
         <p className="mt-2 text-sm leading-6 text-green-100">
-          {plan.teachingSupport}
+          BeastEducation currently provides education and career planning only. Historical teaching data is preserved without presenting course, lesson, practice, or tutoring delivery as an active product.
         </p>
         <div className="mt-4 grid gap-2 sm:grid-cols-2">
           {beastEducationGen2Vision.supportingCapabilities.map((capability) => (

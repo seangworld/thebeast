@@ -10,16 +10,15 @@ import {
 const approvedNavigation = [
   ["Dashboard", "/dashboard/education"],
   ["Guidance Counselor", "/dashboard/education/guidance-counselor"],
-  ["Educational Roadmap", "/dashboard/education/educational-roadmap"],
-  ["Career Planning", "/dashboard/education/career-planning"],
-  ["Schools", "/dashboard/education/schools"],
-  ["Scholarships", "/dashboard/education/scholarships"],
-  ["Certifications", "/dashboard/education/certifications"],
-  ["Skills", "/dashboard/education/skills"],
-  ["Reports", "/dashboard/education/reports"],
+  ["Profile", "/dashboard/education#profile"],
+  ["Paths", "/dashboard/education#paths"],
+  ["Roadmap", "/dashboard/education#roadmap"],
+  ["Goals", "/dashboard/goals?module=education"],
+  ["Documents", "/dashboard/uploads?module=education"],
+  ["Outcomes", "/dashboard/education#outcomes"],
 ];
 
-test("BP-400 exposes only the approved Generation 1 BeastEducation navigation", () => {
+test("BE-201 exposes only the approved Education and Career navigation", () => {
   for (const navigation of [
     beastLearningNavigation,
     memberBeastEducationNavigation,

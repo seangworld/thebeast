@@ -12,6 +12,7 @@ import { buildLifelongEducationRoadmap } from "@/lib/education/lifelongRoadmap";
 import { getProfileDisplayName } from "@/lib/profile";
 import { createRouteClient } from "@/lib/supabase/server";
 import GuidanceCounselorConversation from "./GuidanceCounselorConversation";
+import EducationCareerWorkspace from "./EducationCareerWorkspace";
 
 export const dynamic = "force-dynamic";
 
@@ -293,6 +294,8 @@ function DashboardExperience({
         </section>
 
         <RecommendationCard recommendation={recommendation} />
+
+        <EducationCareerWorkspace />
 
         <section className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
           <DashboardCard accent="learning" className="min-w-0">

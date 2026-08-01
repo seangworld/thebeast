@@ -44,6 +44,7 @@ import {
   learnFromGuidanceKnowledgeAnswer,
   type GuidanceDiscoveryProfile,
 } from "@/lib/education/discoveryConversation";
+import { guidanceConversationProfileItems } from "@/lib/education/conversationProfileItems";
 import {
   buildGuidanceProactiveOpportunities,
   type GuidanceWorkflowRecommendation,
@@ -558,6 +559,46 @@ export default function GuidanceCounselorConversation({
     }
     setProfileSaveStatus("saved");
 
+    const normalizedItems = guidanceConversationProfileItems(profile);
+    if (normalizedItems.length) {
+      const references = normalizedItems.map((item) => item.sourceReference);
+      const existing = await client
+        .from("education_career_profile_items")
+        .select("id, source_reference")
+        .eq("owner_id", memberId)
+        .eq("source_type", "conversation")
+        .in("source_reference", references);
+      if (!existing.error) {
+        const existingByReference = new Map(
+          (existing.data || []).map((item) => [item.source_reference, item.id])
+        );
+        await Promise.all(
+          normalizedItems.map((item) => {
+            const values = {
+              owner_id: memberId,
+              phase: item.phase,
+              category: item.category,
+              label: item.label,
+              value: item.value,
+              source_type: "conversation",
+              source_reference: item.sourceReference,
+              verification_status: "member_reported",
+              confidence: 1,
+              updated_at: new Date().toISOString(),
+            };
+            const existingId = existingByReference.get(item.sourceReference);
+            return existingId
+              ? client
+                  .from("education_career_profile_items")
+                  .update(values)
+                  .eq("id", existingId)
+                  .eq("owner_id", memberId)
+              : client.from("education_career_profile_items").insert(values);
+          })
+        );
+      }
+    }
+
     const goalProposal = buildGuidanceCareerGoalProposal(profile);
     if (goalProposal) {
       const existingGoals = await client
@@ -827,7 +868,7 @@ export default function GuidanceCounselorConversation({
         item.state === "needed"
           ? "Talk about this"
           : item.state === "thought"
-            ? "Revisit this"
+            ? "Confirm, reject, or correct"
             : "Review or update",
       mode: "conversation",
       prompt:

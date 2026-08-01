@@ -15,10 +15,16 @@ import {
 } from "../src/lib/digitalStaff";
 import { buildUnifiedSearchItems } from "../src/lib/platform/unifiedSearch";
 
-test("BF-001 exposes only approved Generation 1 BeastEducation workspaces", () => {
+test("BE-201 exposes planning workspaces and keeps historical teaching dormant", () => {
   assert.equal(beastEducationGeneration, 1);
   assert.equal(educationTeachingCapabilitiesAvailable, false);
   assert.deepEqual(generationOneEducationWorkspaces, [
+    "profile",
+    "paths",
+    "roadmap",
+    "documents",
+    "outcomes",
+    "research",
     "educational-roadmap",
     "career-planning",
     "schools",
@@ -28,6 +34,7 @@ test("BF-001 exposes only approved Generation 1 BeastEducation workspaces", () =
     "reports",
   ]);
   assert.ok(isGenerationOneEducationWorkspace("career-planning"));
+  assert.ok(isGenerationOneEducationWorkspace("profile"));
   assert.ok(dormantTeachingWorkspaces.every(isDormantTeachingWorkspace));
   assert.equal(isGenerationOneEducationWorkspace("tutor"), false);
 });

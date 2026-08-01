@@ -598,25 +598,24 @@ test("module navigation centralizes expandable child items", () => {
     [
       "Dashboard",
       "Guidance Counselor",
-      "Educational Roadmap",
-      "Career Planning",
-      "Schools",
-      "Scholarships",
-      "Certifications",
-      "Skills",
-      "Reports",
+      "Profile",
+      "Paths",
+      "Roadmap",
+      "Goals",
+      "Documents",
+      "Outcomes",
     ]
   );
   assert.equal(
     beastLearningNavigation.children?.[2].href,
-    "/dashboard/education/educational-roadmap"
+    "/dashboard/education#profile"
   );
   assert.equal(beastMoneyNavigation.label, "BeastMoney");
   assert.equal(
     beastMoneyNavigation.children?.map((item) => item.label).join(","),
     "Dashboard,Money Coach,Cash Flow,Income,Expenses,Bills,Debts,Payoff Plan,Strategies,Timeline,Retirement,Documents,Reports"
   );
-  assert.equal(getModuleChildren("learning").length, 9);
+  assert.equal(getModuleChildren("learning").length, 8);
   const moneyChildren = getModuleChildren("money");
   const addBill = moneyChildren.find((item) => item.label === "Add Bill");
   const addDebt = moneyChildren.find((item) => item.label === "Add Debt");
@@ -5894,13 +5893,12 @@ test("member navigation hides admin and monetization surfaces", () => {
     [
       "Dashboard",
       "Guidance Counselor",
-      "Educational Roadmap",
-      "Career Planning",
-      "Schools",
-      "Scholarships",
-      "Certifications",
-      "Skills",
-      "Reports",
+      "Profile",
+      "Paths",
+      "Roadmap",
+      "Goals",
+      "Documents",
+      "Outcomes",
     ]
   );
   assert.deepEqual(
@@ -5908,13 +5906,12 @@ test("member navigation hides admin and monetization surfaces", () => {
     [
       "/dashboard/education",
       "/dashboard/education/guidance-counselor",
-      "/dashboard/education/educational-roadmap",
-      "/dashboard/education/career-planning",
-      "/dashboard/education/schools",
-      "/dashboard/education/scholarships",
-      "/dashboard/education/certifications",
-      "/dashboard/education/skills",
-      "/dashboard/education/reports",
+      "/dashboard/education#profile",
+      "/dashboard/education#paths",
+      "/dashboard/education#roadmap",
+      "/dashboard/goals?module=education",
+      "/dashboard/uploads?module=education",
+      "/dashboard/education#outcomes",
     ]
   );
   assert.equal(

@@ -1,22 +1,7 @@
-# BeastEducation — Generation 2
+# BeastEducation product direction
 
-BeastEducation is the product evolution of the former BeastLearning experience. Its mission is to help a person discover, plan, and achieve educational, professional, and personal growth. The primary AI relationship is the **Guidance Counselor**. Teaching remains available as supporting help when a roadmap exposes a specific knowledge gap; BeastEducation is not an AI tutoring platform and does not compete with course providers.
+BeastEducation is the member’s education and career planning product, centered on a long-term Guidance Counselor relationship. The authoritative current definition is [BE-201-EDUCATION-CAREER-INTELLIGENCE.md](./BE-201-EDUCATION-CAREER-INTELLIGENCE.md).
 
-The Guidance Counselor learns the user's story, goals, strengths, weaknesses, education history, constraints, and progress over time. It owns the lifelong Education Profile and continuously adapts career, certification, school, book, and external-resource recommendations. Specialist resources or future tutoring capabilities own teaching.
+The Guidance Counselor learns the member’s education, employment, military experience, training, credentials, skills, interests, constraints, and goals over time. It identifies the gap between the present position and an intended destination, researches current credible options, compares alternatives, and maintains a realistic member-approved roadmap.
 
-## Product architecture
-
-- **Education Profile** records the user's situation, education, certifications, employment, military experience, skills, interests, strengths, weaknesses, learning preferences, available time, career aspirations, long-term goals, constraints, and preferred sources.
-- **Discovery onboarding** begins with the person's story and progressively asks only for missing destination, starting-point, interests, motivation, and constraint context. An incomplete profile still produces a useful next step.
-- **Guidance planning** assembles career, education, and certification considerations with a skill-gap analysis and a personalized now/next/later roadmap.
-- **Long-term progress** records meaningful roadmap events and evidence rather than treating content consumption as success.
-- **External recommendations** deep-link to YouTube, Khan Academy, Coursera, Microsoft Learn, LinkedIn Learning, edX, books, professional organizations, schools, and official certification sources. Recommendations carry verification guidance and never guarantee outcomes, rank providers, resell content, or replace provider authority.
-- **Learning support** reuses the existing Tutor, lesson, activity, practice, and mastery capabilities behind the guidance relationship.
-
-## Compatibility boundary
-
-`/dashboard/education` is the canonical product route. Existing `/dashboard/learning` routes remain available as compatibility routes so saved links and cross-module actions do not break. The internal `learning` module key, legacy `mentor*` anchors and event identifiers, database contracts, and existing learning-domain types remain stable to avoid a destructive data migration; none of those compatibility identifiers represents the user-facing relationship.
-
-## Generation 2 alignment
-
-The Guidance Counselor starts from the user's story, recommends the next useful action before a dead end appears, remembers meaningful evidence, and progressively completes the plan. Responsive cards and fields use constrained grids and `min-width: 0` behavior. Cross-module ownership remains unchanged: BeastEducation owns the guidance relationship and contributes source-owned actions through existing BeastOS contracts.
+There is no active BeastLearning product. Teaching, tutoring, courses, lessons, quizzes, diagnostics, practice, remediation, mastery checks, and instructional content generation are on hold. Historical data remains preserved and compatibility routes may redirect safely, but those capabilities must not be restored to active navigation or product positioning without a future owner-approved roadmap item.

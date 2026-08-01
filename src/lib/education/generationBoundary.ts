@@ -1,6 +1,12 @@
 export const beastEducationGeneration = 1 as const;
 
 export const generationOneEducationWorkspaces = [
+  "profile",
+  "paths",
+  "roadmap",
+  "documents",
+  "outcomes",
+  "research",
   "educational-roadmap",
   "career-planning",
   "schools",
@@ -21,6 +27,15 @@ export const dormantTeachingWorkspaces = [
   "history",
   "certificates",
 ] as const;
+
+export const retiredPlanningAliases: Readonly<Record<string, string>> = {
+  "educational-roadmap": "/dashboard/education#roadmap",
+  "career-planning": "/dashboard/education#paths",
+  schools: "/dashboard/education#paths",
+  scholarships: "/dashboard/education#research",
+  certifications: "/dashboard/education#paths",
+  skills: "/dashboard/education#profile",
+};
 
 export const educationTeachingCapabilitiesAvailable = false;
 

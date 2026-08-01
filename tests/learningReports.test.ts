@@ -117,14 +117,7 @@ test("BL-407 exposes print export owner scoping responsive layout and navigation
   assert.match(component, /Print reports/);
   assert.match(component, /Export reports/);
   assert.match(view, /\.eq\("user_id", userId\)/);
-  for (const navigation of [
-    beastLearningNavigation,
-    memberBeastEducationNavigation,
-  ]) {
-    assert.ok(
-      navigation.children?.some(
-        ({ href }) => href === "/dashboard/education/reports"
-      )
-    );
-  }
+  assert.ok(beastLearningNavigation.children?.every(({ href }) => href !== "/dashboard/education/reports"));
+  assert.ok(memberBeastEducationNavigation.children?.every(({ href }) => href !== "/dashboard/education/reports"));
+  assert.match(view, /slug === "reports"/);
 });

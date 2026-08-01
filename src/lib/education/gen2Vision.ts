@@ -13,7 +13,7 @@ export type BeastEducationGen2Focus = {
 export type BeastEducationSupportingCapability = {
   id: "courses" | "lessons" | "practice" | "tutor-specialists";
   title: string;
-  generation: "preserved-supporting" | "future-specialist";
+  generation: "on-hold";
   positioning: string;
 };
 
@@ -65,38 +65,38 @@ export const beastEducationGen2Vision = {
     {
       id: "courses",
       title: "Courses",
-      generation: "preserved-supporting",
+      generation: "on-hold",
       positioning:
-        "Remain available when a roadmap identifies structured learning as useful.",
+        "Historical records remain preserved, but course delivery is not an active BeastEducation capability.",
     },
     {
       id: "lessons",
       title: "Lessons",
-      generation: "preserved-supporting",
+      generation: "on-hold",
       positioning:
-        "Remain available as focused learning steps within a counselor-led roadmap.",
+        "Historical lesson records remain preserved; lesson delivery is explicitly on hold.",
     },
     {
       id: "practice",
       title: "Practice and review",
-      generation: "preserved-supporting",
+      generation: "on-hold",
       positioning:
-        "Remain available to produce evidence, confidence, and readiness signals.",
+        "Practice, diagnostics, remediation, and mastery checks are explicitly on hold.",
     },
     {
       id: "tutor-specialists",
       title: "Tutor specialist agents",
-      generation: "future-specialist",
+      generation: "on-hold",
       positioning:
-        "Teaching is handed to future specialist agents only when the Guidance Counselor identifies a specific knowledge gap.",
+        "Tutor specialists are not active products or navigation surfaces in the current roadmap.",
     },
   ] satisfies readonly BeastEducationSupportingCapability[],
 } as const;
 
 export const beastEducationGen2ArchitectureRules = [
   "The Guidance Counselor owns the primary BeastEducation relationship.",
-  "Educational and career planning lead the experience; courses and tutoring do not.",
-  "Teaching remains available through preserved capabilities and future specialist agents.",
-  "Existing courses, lessons, practice, review, Tutor orchestration, progress, and records are preserved.",
-  "Supporting capabilities must connect back to a member-owned educational roadmap.",
+  "Education and career planning are the sole current BeastEducation product purpose.",
+  "Teaching, tutoring, courses, lessons, quizzes, diagnostics, practice, remediation, and mastery checks are on hold.",
+  "Historical teaching records remain preserved but are not exposed as active product capabilities.",
+  "Every active planning capability connects back to a member-owned profile, goal, path, or roadmap.",
 ] as const;

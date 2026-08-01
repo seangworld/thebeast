@@ -347,6 +347,20 @@ export const beastRoadmapPackageRegistry = [
     ["20260801000300_track_debt_interest_changes.sql"]
   ),
   packageIdentity(
+    "BE-201",
+    ["BE-201"],
+    "Education and Career Intelligence",
+    [
+      "docs/BE-201-EDUCATION-CAREER-INTELLIGENCE.md",
+      "src/lib/education/careerIntelligence.ts",
+      "src/lib/education/documentExtraction.ts",
+      "src/app/api/education/research/route.ts",
+      "src/app/api/education/documents/[documentId]/extract/route.ts",
+      "supabase/migrations/20260801000600_add_education_career_intelligence.sql",
+    ],
+    ["20260801000600_add_education_career_intelligence.sql"]
+  ),
+  packageIdentity(
     "BH-201",
     ["BH-201"],
     "BeastHealth Onboarding and Discovery",

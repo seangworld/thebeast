@@ -9,18 +9,17 @@ import {
 const primaryLabels = [
   "Dashboard",
   "Guidance Counselor",
-  "Educational Roadmap",
-  "Career Planning",
-  "Schools",
-  "Scholarships",
-  "Certifications",
-  "Skills",
-  "Reports",
+  "Profile",
+  "Paths",
+  "Roadmap",
+  "Goals",
+  "Documents",
+  "Outcomes",
 ];
 
 const secondaryLabels: string[] = [];
 
-test("BP-400 preserves the Guidance Counselor architecture in the approved workspace navigation", () => {
+test("BE-201 preserves the Guidance Counselor architecture in Education and Career navigation", () => {
   for (const navigation of [
     beastLearningNavigation,
     memberBeastEducationNavigation,

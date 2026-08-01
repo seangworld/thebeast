@@ -26,13 +26,12 @@ test("BE-211 keeps every workspace reachable through persistent navigation", () 
   for (const destination of [
     "Dashboard",
     "Guidance Counselor",
-    "Educational Roadmap",
-    "Career Planning",
-    "Schools",
-    "Scholarships",
-    "Certifications",
-    "Skills",
-    "Reports",
+    "Profile",
+    "Paths",
+    "Roadmap",
+    "Goals",
+    "Documents",
+    "Outcomes",
   ]) {
     assert.match(navigation, new RegExp(`label: "${destination}"`));
   }

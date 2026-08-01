@@ -47,14 +47,12 @@ import { BEAST_ADMIN_MESSAGE_UNREAD_EVENT } from "@/lib/beastAdminMessaging";
 
 const learningPrimaryNavigation: ModuleNavSection[] = [
   { label: "Guidance Counselor", href: "/dashboard/education/guidance-counselor", module: "learning" },
-  { label: "Today", href: "/dashboard/today", module: "learning" },
-  { label: "Educational Roadmap", href: "/dashboard/education/educational-roadmap", module: "learning" },
-  { label: "Career Planning", href: "/dashboard/education/career-planning", module: "learning" },
-  { label: "Schools", href: "/dashboard/education/schools", module: "learning" },
-  { label: "Scholarships", href: "/dashboard/education/scholarships", module: "learning" },
-  { label: "Certifications", href: "/dashboard/education/certifications", module: "learning" },
-  { label: "Skills", href: "/dashboard/education/skills", module: "learning" },
-  { label: "Reports", href: "/dashboard/education/reports", module: "learning" },
+  { label: "Profile", href: "/dashboard/education#profile", module: "learning" },
+  { label: "Paths", href: "/dashboard/education#paths", module: "learning" },
+  { label: "Roadmap", href: "/dashboard/education#roadmap", module: "learning" },
+  { label: "Goals", href: "/dashboard/goals?module=education", module: "learning" },
+  { label: "Documents", href: "/dashboard/uploads?module=education", module: "learning" },
+  { label: "Outcomes", href: "/dashboard/education#outcomes", module: "learning" },
 ];
 
 const learningSettingsNavigation: ModuleNavSection[] = [

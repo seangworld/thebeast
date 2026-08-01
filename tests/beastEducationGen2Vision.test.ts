@@ -32,20 +32,20 @@ test("BE-201 establishes the Guidance Counselor as the Gen2 primary professional
   );
 });
 
-test("BE-201 preserves learning features as supporting and future-specialist capabilities", () => {
+test("BE-201 keeps teaching records dormant while instructional scope is on hold", () => {
   assert.deepEqual(
     beastEducationGen2Vision.supportingCapabilities.map(
       ({ id, generation }) => [id, generation]
     ),
     [
-      ["courses", "preserved-supporting"],
-      ["lessons", "preserved-supporting"],
-      ["practice", "preserved-supporting"],
-      ["tutor-specialists", "future-specialist"],
+      ["courses", "on-hold"],
+      ["lessons", "on-hold"],
+      ["practice", "on-hold"],
+      ["tutor-specialists", "on-hold"],
     ]
   );
-  assert.match(beastEducationGen2ArchitectureRules[1], /courses and tutoring do not/);
-  assert.match(beastEducationGen2ArchitectureRules[3], /Existing courses, lessons/);
+  assert.match(beastEducationGen2ArchitectureRules[1], /sole current/);
+  assert.match(beastEducationGen2ArchitectureRules[3], /Historical teaching records/);
 });
 
 test("BE-201 makes the vision visible without removing existing education routes", () => {
