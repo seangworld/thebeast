@@ -67,6 +67,7 @@ export const beastAdminRepositoryMigrationFiles = [
   "20260728020000_activate_health_advisor.sql",
   "20260801000100_restore_debt_management_workflow.sql",
   "20260801000200_add_google_oauth_connections.sql",
+  "20260801000300_track_debt_interest_changes.sql",
 ] as const;
 
 export type BeastAdminMigrationState =

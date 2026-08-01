@@ -46,6 +46,8 @@ export type FinancialHealthScoreInput = {
   totalDebt: number;
   debtMinimums?: number;
   creditUtilization?: number;
+  overdueDebtCount?: number;
+  missedDebtPaymentCount?: number;
   retirementProgressPercent?: number;
   goalProgressPercent?: number;
   consistencyPercent?: number;
@@ -128,11 +130,23 @@ export function buildFinancialHealthScore(
     income > 0 && input.debtMinimums !== undefined
       ? percent(100 - (Math.max(0, input.debtMinimums) / income) * 250)
       : undefined;
-  const debtScore = !hasDebt
+  const debtScoreBeforeTimeliness = !hasDebt
     ? 100
     : utilizationScore !== undefined && debtServiceScore !== undefined
       ? percent(utilizationScore * 0.6 + debtServiceScore * 0.4)
       : utilizationScore ?? debtServiceScore;
+  const overdueDebtCount = Math.max(0, Math.floor(input.overdueDebtCount || 0));
+  const missedDebtPaymentCount = Math.max(
+    0,
+    Math.floor(input.missedDebtPaymentCount || 0)
+  );
+  const debtTimelinessPenalty = Math.min(
+    40,
+    overdueDebtCount * 10 + missedDebtPaymentCount * 15
+  );
+  const debtScore = debtScoreBeforeTimeliness === undefined
+    ? undefined
+    : Math.max(0, debtScoreBeforeTimeliness - debtTimelinessPenalty);
   const inferredCompleteness = percent(
     ([
       income > 0,
@@ -163,14 +177,19 @@ export function buildFinancialHealthScore(
       "Debt",
       debtScore,
       hasDebt
-        ? "60% utilization score + 40% debt-service score; each score is capped from 0 to 100"
+        ? "60% utilization score + 40% debt-service score, minus 10 points per overdue debt and 15 points per missed payment; timeliness penalty capped at 40"
         : "No active debt = 100",
       [
         `Active debt: ${currency(input.totalDebt)}`,
         input.creditUtilization === undefined ? "Credit utilization unavailable" : `Credit utilization: ${input.creditUtilization.toFixed(1)}%`,
         input.debtMinimums === undefined ? "Debt minimums unavailable" : `Monthly debt minimums: ${currency(input.debtMinimums)}`,
+        `Overdue debts: ${overdueDebtCount}`,
+        `Missed debt payments: ${missedDebtPaymentCount}`,
+        `Debt timeliness penalty: ${debtTimelinessPenalty} of 40 possible Debt-dimension points`,
       ],
-      "Reduce high-cost balances and required monthly debt payments without weakening the protected cash reserve."
+      debtTimelinessPenalty > 0
+        ? "Resolve overdue or missed required payments, then reduce high-cost balances without weakening the protected cash reserve."
+        : "Reduce high-cost balances and required monthly debt payments without weakening the protected cash reserve."
     ),
     component(
       "savings",

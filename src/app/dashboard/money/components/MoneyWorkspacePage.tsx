@@ -19,7 +19,7 @@ import {
 } from "@/lib/financialCoach";
 import { buildPaymentAutomationContext } from "@/lib/paymentAutomation";
 import { formatCurrency } from "@/lib/formatters";
-import { getDebtDueDetail, getDebtDueState } from "@/lib/debtManagement";
+import { buildMoneyDebtAwareness, type DebtAwarenessSummary } from "@/lib/moneyDebtAwareness";
 import { getProfileDisplayName } from "@/lib/profile";
 import { buildMoneyCoachExperience } from "@/lib/moneyCoachExperience";
 import {
@@ -73,6 +73,8 @@ type MoneyDebt = {
   balance?: number | null;
   minimum_payment?: number | null;
   interest_rate?: number | null;
+  previous_interest_rate?: number | null;
+  interest_rate_updated_at?: string | null;
   due_date?: number | null;
   credit_limit?: number | null;
   is_archived?: boolean | null;
@@ -87,18 +89,9 @@ type MoneyDebt = {
   funding_strategy_id?: string | null;
 };
 
-function OverdueDebtIntelligence({ debts, surface }: { debts: MoneyDebt[]; surface: "Money Coach" | "Daily Briefing" | "Financial Health" | "Dashboard" }) {
-  const now = new Date();
-  const overdue = debts.flatMap((debt) => {
-    if (debt.is_archived || numberValue(debt.balance) <= 0) return [];
-    const dueDate = debt.next_due_date_after_payment
-      ? new Date(`${debt.next_due_date_after_payment}T00:00:00`)
-      : new Date(now.getFullYear(), now.getMonth(), Math.min(Math.max(Number(debt.due_date || 1), 1), 28));
-    const due = getDebtDueState({ balance: numberValue(debt.balance), dueDate, now });
-    return due.isOverdue ? [{ debt, due }] : [];
-  });
-  if (!overdue.length) return null;
-  return <section className="rounded-2xl border border-red-500/30 bg-red-950/20 p-5" data-overdue-debt-surface={surface.toLowerCase().replaceAll(" ", "-")}><p className="beast-kicker text-red-200">{surface}</p><h2 className="mt-2 text-xl font-black text-white">Overdue debt attention</h2><div className="mt-3 grid gap-2">{overdue.map(({ debt, due }) => <div key={debt.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-500/20 bg-black/20 p-3"><div><div className="font-bold text-white">{debt.name || "Debt payment"}</div><div className="text-sm text-red-100">{getDebtDueDetail(due)}</div></div><Link href="/dashboard/money/debts" className="beast-button">Review Payment</Link></div>)}</div></section>;
+function DebtImmediateAttention({ awareness, surface }: { awareness: DebtAwarenessSummary; surface: "Money Coach" | "Daily Briefing" | "Financial Health" | "Dashboard" }) {
+  if (!awareness.immediateAttention.length) return null;
+  return <section id={surface === "Dashboard" ? "immediate-attention" : undefined} className="rounded-2xl border border-red-500/30 bg-red-950/20 p-5" data-debt-attention-surface={surface.toLowerCase().replaceAll(" ", "-")}><p className="beast-kicker text-red-200">{surface}</p><h2 className="mt-2 text-xl font-black text-white">{surface === "Dashboard" ? "Immediate Attention" : "Debt payment attention"}</h2><div className="mt-4 grid gap-3">{awareness.immediateAttention.map((item) => <article key={item.id} className="rounded-xl border border-red-500/20 bg-black/20 p-4"><div className="flex flex-wrap items-start justify-between gap-3"><div><h3 className="font-black text-white">{item.name}</h3><div className="mt-1 flex flex-wrap items-center gap-2"><span className={`rounded-full px-2.5 py-1 text-xs font-black ${item.due.badgeClassName}`}>{item.due.status.toUpperCase()}</span><span className="text-sm font-bold text-red-100">{item.dueDetail}</span>{item.missedPayment ? <span className="rounded-full bg-red-500/20 px-2.5 py-1 text-xs font-black text-red-100">MISSED PAYMENT</span> : null}</div></div><dl className="text-right"><dt className="text-xs font-bold uppercase text-slate-400">Minimum Due</dt><dd className="mt-1 text-xl font-black text-white">{formatCurrency(item.minimumDue)}</dd></dl></div><div className="mt-4 grid gap-2 text-sm leading-6 text-slate-300 lg:grid-cols-3"><p><strong className="text-white">Why it matters:</strong> {item.whyItMatters}</p><p><strong className="text-white">Payoff and health:</strong> {item.payoffImpact} {item.financialHealthImpact}</p><p><strong className="text-white">Velocity:</strong> {item.velocityImpact}</p></div><div className="mt-4 flex flex-wrap items-center justify-between gap-3"><p className="text-xs text-slate-400">{item.paymentCount} payment record{item.paymentCount === 1 ? "" : "s"} loaded · {item.payoffProgressPercent}% payment-backed progress</p><Link href="/dashboard/money/debts" className="beast-button">Review Payment Options</Link></div></article>)}</div></section>;
 }
 
 type MoneyBill = {
@@ -158,6 +151,8 @@ type MoneyPayment = {
   amount_paid?: number | null;
   payment_date?: string | null;
   created_at?: string | null;
+  cycle_due_date?: string | null;
+  action_type?: "minimum" | "full_balance" | "custom" | "statement_balance" | "skip" | "paid_outside_beast" | null;
 };
 
 type DebtSettings = {
@@ -409,7 +404,7 @@ export function MoneyWorkspacePage({
           .select("*")
           .eq("user_id", userId)
           .order("created_at", { ascending: false })
-          .limit(8),
+          .limit(250),
         supabase
           .from("beast_goals")
           .select("id, title, status, target_date, updated_at")
@@ -562,6 +557,11 @@ export function MoneyWorkspacePage({
       );
       return daysAway <= 7;
     });
+    const debtAwareness = buildMoneyDebtAwareness({
+      debts: activeDebts,
+      payments: state.debtPayments,
+      now: asOfDate,
+    });
     const financialInsights = buildFinancialInsights({
       cashIntelligence,
       financialDecision,
@@ -573,6 +573,8 @@ export function MoneyWorkspacePage({
       currentCash: startingCash,
       cashBuffer: buffer,
       debtMinimums,
+      overdueDebtCount: debtAwareness.overdueCount,
+      missedDebtPaymentCount: debtAwareness.missedPaymentCount,
     });
     const scenarioComparison = compareFinancialScenarios({
       debts: forecastDebts,
@@ -629,6 +631,7 @@ export function MoneyWorkspacePage({
       creditAvailable,
       utilization,
       billsDueSoon,
+      debtAwareness,
       safeFundingSourceCapacity: cashIntelligence.safeFundingSourceCapacity,
     };
   }, [coachCorrections, simulationDate, state]);
@@ -867,6 +870,7 @@ export function MoneyWorkspacePage({
     forecast: snapshot.financialForecast.periods.map((period) => ({ label: period.label, cash: period.cash, debt: period.debt, cashShortages: period.cashShortages })),
     retirementDataAvailable: false,
     financialHealth: snapshot.financialInsights.financialHealth,
+    debtAwareness: snapshot.debtAwareness,
     lastVisitedAt,
     currentGoals: state.goals.map((goal) => ({
       id: goal.id,
@@ -1051,7 +1055,7 @@ export function MoneyWorkspacePage({
             </button>
           </section>
         ) : (
-          <div className="grid gap-5"><OverdueDebtIntelligence debts={state.debts} surface="Financial Health" /><FinancialHealthScoreWorkspace model={financialMissionControl.financialHealth} /></div>
+          <div className="grid gap-5"><DebtImmediateAttention awareness={snapshot.debtAwareness} surface="Financial Health" /><FinancialHealthScoreWorkspace model={financialMissionControl.financialHealth} /></div>
         )}
       </BeastMoneyShell>
     );
@@ -1072,7 +1076,7 @@ export function MoneyWorkspacePage({
           <button type="button" className="beast-button mt-6 min-h-11" onClick={loadMoneySnapshot}>Try again</button>
         </section>
       ) : (
-        <div className="grid gap-5"><OverdueDebtIntelligence debts={state.debts} surface="Dashboard" /><OverdueDebtIntelligence debts={state.debts} surface="Daily Briefing" /><FinancialMissionControl model={financialMissionControl} /></div>
+        <div className="grid gap-5"><DebtImmediateAttention awareness={snapshot.debtAwareness} surface="Dashboard" /><DebtImmediateAttention awareness={snapshot.debtAwareness} surface="Daily Briefing" /><FinancialMissionControl model={financialMissionControl} /></div>
       )}
     </BeastMoneyShell>
   ) : null;
@@ -1085,7 +1089,7 @@ export function MoneyWorkspacePage({
       description="Money Coach leads your conversation-first experience, with the existing Money Cockpit grounded in current BeastMoney records and calculations below."
       showPageHeader={false}
     >
-      {view === "coach" ? <div className="grid gap-5"><OverdueDebtIntelligence debts={state.debts} surface="Money Coach" /><MoneyCoachExperience
+      {view === "coach" ? <div className="grid gap-5"><DebtImmediateAttention awareness={snapshot.debtAwareness} surface="Money Coach" /><MoneyCoachExperience
         model={moneyCoachExperience}
         loading={loading}
         error={loadError}

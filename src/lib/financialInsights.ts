@@ -56,6 +56,8 @@ export type FinancialInsightsInput = {
   currentCash?: number;
   cashBuffer?: number;
   debtMinimums?: number;
+  overdueDebtCount?: number;
+  missedDebtPaymentCount?: number;
   retirementProgressPercent?: number;
   goalProgressPercent?: number;
   consistencyPercent?: number;
@@ -165,6 +167,8 @@ export function buildFinancialInsights(
     totalDebt,
     debtMinimums: input.debtMinimums,
     creditUtilization: input.creditUtilization,
+    overdueDebtCount: input.overdueDebtCount,
+    missedDebtPaymentCount: input.missedDebtPaymentCount,
     retirementProgressPercent: input.retirementProgressPercent,
     goalProgressPercent: input.goalProgressPercent,
     consistencyPercent: input.consistencyPercent,

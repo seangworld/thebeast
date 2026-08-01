@@ -184,7 +184,7 @@ test("MC-201 consumes the shared AgentExperience without replacing existing page
   }
   assert.match(landing, /showPageHeader=\{false\}/);
   assert.doesNotMatch(landing, /window\.location\.hash|showDashboard/);
-  assert.match(landing, /view === "coach" \? <div[^>]*><OverdueDebtIntelligence[^>]*surface="Money Coach"[^>]*\/><MoneyCoachExperience/);
+  assert.match(landing, /view === "coach" \? <div[^>]*><DebtImmediateAttention[^>]*surface="Money Coach"[^>]*\/><MoneyCoachExperience/);
   assert.match(landingRoute, /redirect\("\/dashboard\/money\/dashboard"\)/);
   assert.match(coachRoute, /MoneyWorkspacePage view="coach"/);
   assert.match(landing, /Financial mission control/);

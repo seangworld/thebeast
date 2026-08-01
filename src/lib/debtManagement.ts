@@ -47,6 +47,7 @@ export function getDebtDueDetail(state: DebtDueState) {
   if (state.status === "Paid") return "Balance paid";
   if (state.daysLate !== null) return `${state.daysLate} day${state.daysLate === 1 ? "" : "s"} late`;
   if (state.daysUntilDue === 0) return "Due today";
+  if (state.daysUntilDue === 1) return "Due tomorrow";
   return `${state.daysUntilDue} day${state.daysUntilDue === 1 ? "" : "s"} until due`;
 }
 

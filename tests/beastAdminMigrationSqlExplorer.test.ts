@@ -16,7 +16,7 @@ test("BA-132 inspects every repository migration without inventing source metada
     })
   );
 
-  assert.equal(migrations.length, 66);
+  assert.equal(migrations.length, 67);
   for (const migration of migrations) {
     assert.match(migration.version, /^\d{14}$/);
     assert.equal(migration.filename.endsWith(".sql"), true);

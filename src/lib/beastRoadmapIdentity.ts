@@ -337,6 +337,16 @@ export const beastRoadmapPackageRegistry = [
     ["docs/BEASTMONEY_BM_BUG_002_RECOMMENDATION_AUDIT.md"]
   ),
   packageIdentity(
+    "BM-DBT-037",
+    ["BM-37"],
+    "Money Coach Debt Awareness",
+    [
+      "docs/BM-37-MONEY-COACH-DEBT-AWARENESS.md",
+      "supabase/migrations/20260801000300_track_debt_interest_changes.sql",
+    ],
+    ["20260801000300_track_debt_interest_changes.sql"]
+  ),
+  packageIdentity(
     "BA-ADS-201",
     ["BA-ADS-201"],
     "Revenue Center and AdSense Management",

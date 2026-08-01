@@ -49,6 +49,7 @@ import {
   type MorningFinancialBriefing,
 } from "./moneyMorningBriefing";
 import type { FinancialHealthScoreResult } from "./financialHealthScore";
+import type { DebtAwarenessSummary } from "./moneyDebtAwareness";
 
 export type MoneyCoachExperienceCard = {
   id: string;
@@ -127,6 +128,7 @@ export type MoneyCoachExperienceModel = {
     totalObligationCount: number;
     retirementDataAvailable: boolean;
     financialHealth?: FinancialHealthScoreResult;
+    debtAwareness?: DebtAwarenessSummary;
     currentGoals: readonly {
       id: string;
       title: string;
@@ -184,6 +186,7 @@ export type MoneyCoachExperienceInput = {
   forecast?: readonly { label: string; cash: number; debt: number; cashShortages: number }[];
   retirementDataAvailable?: boolean;
   financialHealth?: FinancialHealthScoreResult;
+  debtAwareness?: DebtAwarenessSummary;
   observationHistory?: readonly MoneyObservationSnapshot[];
   observationVelocity?: MoneyObservationSnapshot["velocity"];
   observationRetirement?: MoneyObservationSnapshot["retirement"];
@@ -342,6 +345,63 @@ export function buildMoneyCoachExperience(
     observations,
     input.benchmarkConfiguration
   );
+
+  const debtAwareness = input.debtAwareness;
+  if (debtAwareness?.immediateAttention.length) {
+    const first = debtAwareness.immediateAttention[0];
+    const attentionSummary = `${first.name} is ${first.due.status.toLowerCase()} (${first.dueDetail}); minimum due ${formatCurrency(first.minimumDue)}.`;
+    importantItems.push(attentionSummary);
+    if (debtAwareness.overdueCount || debtAwareness.missedPaymentCount) {
+      potentialIssues.push(
+        `${debtAwareness.overdueCount} overdue debt payment${debtAwareness.overdueCount === 1 ? "" : "s"} and ${debtAwareness.missedPaymentCount} missed payment${debtAwareness.missedPaymentCount === 1 ? "" : "s"} need review.`
+      );
+    }
+    const attentionInsight = moneyInsight(input, {
+      id: "debt-immediate-attention",
+      category: "Needs Attention",
+      title: "Debt payments need immediate attention",
+      summary: attentionSummary,
+      explanation: `${first.whyItMatters} ${first.payoffImpact} ${first.financialHealthImpact} ${first.velocityImpact}`,
+      rule: "Classify active owner-scoped debt due dates, then verify the current cycle against recorded debt payment history.",
+      factors: { urgency: first.due.isOverdue ? 100 : 90, financialImpact: 90, confidence: 95, dueDate: 100, unresolvedStatus: first.missedPayment ? 100 : 85, recurrence: 80 },
+      supportingData: [
+        { label: "Debt", value: first.name, source: "debts" },
+        { label: "Status", value: first.due.status, source: "debts" },
+        { label: "Minimum due", value: first.minimumDue, source: "debts" },
+        { label: "Recorded payments", value: first.paymentCount, source: "debt_payments" },
+      ],
+      href: "/dashboard/money/debts",
+      severity: first.due.isOverdue || first.missedPayment ? "critical" : "warning",
+      limitations: ["Beast does not infer lender fees, delinquency reporting, or an external payment result."],
+    });
+    insights.push(attentionInsight);
+    cards.unshift({
+      id: "debt-immediate-attention",
+      title: "Immediate Debt Attention",
+      summary: attentionSummary,
+      detail: `${first.payoffImpact} ${first.financialHealthImpact}`,
+      explainWhy: `${first.whyItMatters} ${first.velocityImpact}`,
+      href: "/dashboard/money/debts",
+      insight: attentionInsight,
+    });
+  }
+
+  if (
+    debtAwareness &&
+    !debtAwareness.immediateAttention.length &&
+    debtAwareness.upcomingCount > 0
+  ) {
+    importantItems.push(
+      `${debtAwareness.upcomingCount} active debt payment${debtAwareness.upcomingCount === 1 ? " is" : "s are"} upcoming; required minimums remain reserved in the cash plan.`
+    );
+  }
+
+  if (debtAwareness?.interestChangeCount) {
+    const changes = debtAwareness.items.filter((item) => item.interestChange);
+    importantItems.push(
+      `${changes.length} tracked debt interest rate${changes.length === 1 ? " has" : "s have"} changed since the prior recorded rate.`
+    );
+  }
 
   if (input.billsDueSoonCount > 0) {
     importantItems.push(
@@ -746,12 +806,13 @@ export function buildMoneyCoachExperience(
       totalObligationCount: input.totalObligationCount,
       retirementDataAvailable: Boolean(input.retirementDataAvailable),
       financialHealth: input.financialHealth,
+      debtAwareness,
       currentGoals: input.currentGoals || [],
     },
   };
 }
 
-export type MoneyCoachIntent = "test" | "social" | "incomplete" | "bills" | "debt-strategy" | "payment-affordability" | "changes" | "recommendation-history" | "benchmarks" | "financial-health" | "cash-flow" | "forecast" | "retirement" | "funding" | "velocity" | "general-finance" | "non-financial";
+export type MoneyCoachIntent = "test" | "social" | "incomplete" | "bills" | "debt-status" | "debt-strategy" | "payment-affordability" | "changes" | "recommendation-history" | "benchmarks" | "financial-health" | "cash-flow" | "forecast" | "retirement" | "funding" | "velocity" | "general-finance" | "non-financial";
 
 export type MoneyCoachResponseSection = ConversationResponseSection;
 
@@ -817,6 +878,7 @@ export function classifyMoneyCoachRequest(question: string, conversation: MoneyC
 function recognizeMoneyDomainIntent(value: string): DomainIntentCandidate<Exclude<MoneyCoachIntent, "test" | "social" | "incomplete" | "non-financial">> | undefined {
   if (/\b(stay with|switch (to|from)|avalanche|snowball|payoff (method|strategy)|debt strategy)\b/.test(value)) return { intent: "debt-strategy", confidence: 0.95, signals: ["strategy-comparison"] };
   const candidates: readonly [RegExp, Exclude<MoneyCoachIntent, "test" | "social" | "incomplete" | "non-financial">, string][] = [
+    [/\b(overdue debt|late debt|missed payment|debt payment|payment history|payoff progress|interest (rate )?change)\b/, "debt-status", "debt-awareness"],
     [/\b(can i afford|safe to (pay|make)|another payment|extra payment|pay more)\b/, "payment-affordability", "payment-capacity"],
     [/\b(what changed|what is different|since (my )?last|recent changes?)\b/, "changes", "change-comparison"],
     [/\b(financial health|health score|wellness score)\b/, "financial-health", "financial-health"],
@@ -851,6 +913,7 @@ export function classifyMoneyCoachIntent(question: string): MoneyCoachIntent {
 
 const moneyCoachIntentTools: Partial<Record<MoneyCoachIntent, string>> = {
   bills: "open-bills",
+  "debt-status": "open-debt",
   "debt-strategy": "open-payoff-plan",
   "cash-flow": "open-cash-flow",
   "financial-health": "open-financial-health-score",
@@ -1243,6 +1306,88 @@ export function answerMoneyCoachQuestion(
       { heading: "Projected effect", paragraphs: [`Tracked monthly cash flow is ${context.projectedSurplus >= 0 ? `${formatCurrency(context.projectedSurplus)} positive` : `${formatCurrency(Math.abs(context.projectedSurplus))} short`}.${nextForecast ? ` The next forecast period ends at ${formatCurrency(nextForecast.cash)} with ${nextForecast.cashShortages} projected cash shortage${nextForecast.cashShortages === 1 ? "" : "s"}.` : ""}`] },
       { heading: "Explain Why", paragraphs: [model.primaryRecommendation.explainWhy] },
     ], assumptions: ["This assumes your saved balances, income, due dates, and reserve settings are current.", "This is planning guidance, not a guarantee of account availability."], followUp: "What payment amount are you considering? I can compare it with the reserve and upcoming bills.", ...dashboard });
+  }
+
+  if (intent === "debt-status") {
+    const awareness = context.debtAwareness;
+    if (!awareness?.items.length) {
+      return structuredAnswer({
+        intent,
+        opening: "I don’t see an active debt balance with a current due-status record to review.",
+        sections: [{
+          heading: "What I need",
+          paragraphs: ["Add or update the debt balance, minimum payment, interest rate, and due date so I can assess it without guessing."],
+        }],
+        followUp: "Would you like to review your saved debt records?",
+        href: "/dashboard/money/debts",
+        action: "Open Debts",
+      });
+    }
+    const attention = awareness.immediateAttention;
+    const interestChanges = awareness.items.filter((item) => item.interestChange);
+    const opening = attention.length
+      ? `${attention.length} debt payment${attention.length === 1 ? " needs" : "s need"} immediate attention. ${attention[0].name} is ${attention[0].due.status.toLowerCase()} (${attention[0].dueDetail}).`
+      : `All ${awareness.items.length} active debt payment${awareness.items.length === 1 ? " is" : "s are"} currently outside the immediate-attention window.`;
+    return structuredAnswer({
+      intent,
+      opening,
+      sections: [
+        {
+          heading: "Current debt status",
+          table: {
+            columns: ["Debt", "Status", "Timing", "Minimum due", "Payoff progress"],
+            rows: awareness.items.map((item) => [
+              item.name,
+              item.missedPayment ? `${item.due.status} · missed` : item.due.status,
+              item.dueDetail,
+              formatCurrency(item.minimumDue),
+              `${item.payoffProgressPercent}% from loaded payment history`,
+            ]),
+          },
+        },
+        ...(attention.length
+          ? [{
+              heading: "Why it matters and what options exist",
+              paragraphs: [attention[0].whyItMatters],
+              bullets: attention[0].options,
+            }]
+          : []),
+        {
+          heading: "Impact on payoff, Financial Health, and Velocity Banking",
+          bullets: (attention.length ? attention : awareness.items.slice(0, 1)).flatMap((item) => [
+            `${item.name} payoff: ${item.payoffImpact}`,
+            `${item.name} Financial Health: ${item.financialHealthImpact}`,
+            `${item.name} Velocity Banking: ${item.velocityImpact}`,
+          ]),
+        },
+        {
+          heading: "Payment history",
+          bullets: awareness.items.map((item) =>
+            item.lastPayment
+              ? `${item.name}: ${item.paymentCount} loaded payment record${item.paymentCount === 1 ? "" : "s"}; last ${formatCurrency(item.lastPayment.amount)} on ${item.lastPayment.date}.`
+              : `${item.name}: no payment history is currently recorded.`
+          ),
+        },
+        ...(interestChanges.length
+          ? [{
+              heading: "Interest changes",
+              bullets: interestChanges.map((item) => {
+                const change = item.interestChange!;
+                return `${item.name}: ${change.previousRate.toFixed(2)}% to ${change.currentRate.toFixed(2)}% (${change.percentagePointChange >= 0 ? "+" : ""}${change.percentagePointChange.toFixed(2)} percentage points).`;
+              }),
+            }]
+          : []),
+      ],
+      assumptions: [
+        "Payoff progress uses the current balance plus loaded recorded payments; older unavailable payment history is not invented.",
+        "Beast does not infer lender fees, delinquency reporting, or whether an external transfer settled.",
+      ],
+      followUp: attention.length
+        ? "Would you like to compare the minimum, a custom payment, and the current cash buffer?"
+        : "Would you like to review the current payoff strategy or payment history?",
+      href: "/dashboard/money/debts",
+      action: "Review debt payments",
+    });
   }
 
   if (intent === "bills") {
