@@ -1,6 +1,11 @@
 "use client";
 
-import type { MutableRefObject, ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  type MutableRefObject,
+  type ReactNode,
+} from "react";
 import { useConversationScroll } from "./useConversationScroll";
 import type { AgentConversationMessage } from "./AgentExperience";
 import {
@@ -90,6 +95,8 @@ export function ProfessionalConversationTimeline({
   professionalName,
   professionalIdentity,
 }: ProfessionalConversationTimelineProps) {
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const previousConversationIdRef = useRef(conversationId);
   const {
     contentRef,
     handleScroll,
@@ -108,6 +115,13 @@ export function ProfessionalConversationTimeline({
   });
   const headingId = `${professionalName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-conversation-heading`;
 
+  useEffect(() => {
+    if (previousConversationIdRef.current !== conversationId) {
+      previousConversationIdRef.current = conversationId;
+      headingRef.current?.focus({ preventScroll: true });
+    }
+  }, [conversationId]);
+
   return (
     <div className="relative min-h-0 flex-1">
       <div
@@ -124,7 +138,12 @@ export function ProfessionalConversationTimeline({
           className="mx-auto w-full max-w-3xl px-1 pb-8 sm:px-4"
           aria-labelledby={headingId}
         >
-          <h2 id={headingId} className="mb-2 text-lg font-black text-white">
+          <h2
+            ref={headingRef}
+            id={headingId}
+            tabIndex={-1}
+            className="mb-2 text-lg font-black text-white outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
+          >
             Conversation
           </h2>
           <ol
@@ -141,6 +160,11 @@ export function ProfessionalConversationTimeline({
                   message.role === "user" ? "flex justify-end" : ""
                 }`}
                 data-message-role={message.role}
+                aria-label={`Message from ${
+                  message.role === "agent" && professionalIdentity
+                    ? professionalIdentity.name
+                    : message.author
+                }`}
               >
                 <div
                   className={`flex min-w-0 items-start gap-3 ${
@@ -195,7 +219,7 @@ export function ProfessionalConversationTimeline({
                       ) : null}
                     </div>
                     <div
-                      className={`mt-2 min-w-0 break-words rounded-2xl border px-4 py-3 text-[15px] leading-7 text-slate-200 sm:px-5 sm:py-4 ${
+                      className={`mt-2 min-w-0 max-w-full overflow-x-auto break-words rounded-2xl border px-4 py-3 text-[15px] leading-7 text-slate-200 sm:px-5 sm:py-4 ${
                         message.role === "agent"
                           ? `rounded-tl-md ${
                               professionalBubbleAccentClasses[

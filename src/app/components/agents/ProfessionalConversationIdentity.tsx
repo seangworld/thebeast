@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  getDigitalProfessional,
+  digitalProfessionals,
   getDigitalProfessionalInitials,
 } from "@/lib/digitalStaff";
 import { AgentAvatar } from "./AgentExperience";
@@ -14,12 +14,15 @@ export type ProfessionalConversationAccent =
 
 export type ProfessionalConversationIdentity = {
   id: string;
+  canonicalId: string;
   name: string;
   role: string;
   roleDescription: string;
   avatarUrl?: string;
+  avatarDescription: string;
   initials: string;
   accent: ProfessionalConversationAccent;
+  moduleAssociation: string;
 };
 
 const accentClasses: Record<ProfessionalConversationAccent, string> = {
@@ -29,24 +32,37 @@ const accentClasses: Record<ProfessionalConversationAccent, string> = {
   neutral: "ring-violet-300/35",
 };
 
-export function getProfessionalConversationIdentity(
-  professionalId: string,
-  accent: ProfessionalConversationAccent = "neutral"
-): ProfessionalConversationIdentity {
-  const professional = getDigitalProfessional(professionalId);
-  if (!professional) {
-    throw new Error(`Unknown Digital Professional: ${professionalId}`);
-  }
+const moduleAccents: Readonly<Record<string, ProfessionalConversationAccent>> = {
+  BeastMoney: "money",
+  BeastEducation: "learning",
+  BeastHealth: "health",
+};
 
-  return {
+export const professionalConversationRegistry: readonly ProfessionalConversationIdentity[] =
+  digitalProfessionals.map((professional) => ({
     id: professional.id,
+    canonicalId: professional.canonicalId,
     name: professional.name,
     role: professional.role,
     roleDescription: professional.title,
     avatarUrl: professional.portrait.avatar_url || undefined,
+    avatarDescription: `${professional.name}, ${professional.role}`,
     initials: getDigitalProfessionalInitials(professional),
-    accent,
-  };
+    accent: moduleAccents[professional.team] || "neutral",
+    moduleAssociation: professional.team,
+  }));
+
+export function getProfessionalConversationIdentity(
+  professionalId: string,
+  accent?: ProfessionalConversationAccent
+): ProfessionalConversationIdentity {
+  const registered = professionalConversationRegistry.find(
+    (professional) => professional.id === professionalId
+  );
+  if (!registered) {
+    throw new Error(`Unknown Digital Professional: ${professionalId}`);
+  }
+  return accent ? { ...registered, accent } : registered;
 }
 
 export const moneyCoachConversationIdentity =
@@ -79,7 +95,8 @@ export function ProfessionalConversationAvatar({
       data-professional-avatar={identity.id}
     >
       <AgentAvatar
-        name={`${identity.name}, ${identity.role}`}
+        name={identity.name}
+        accessibleLabel={identity.avatarDescription}
         imageUrl={identity.avatarUrl}
         initials={identity.initials}
         size={size}

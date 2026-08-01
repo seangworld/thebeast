@@ -30,6 +30,7 @@ export {
   guidanceCounselorConversationIdentity,
   healthAdvisorConversationIdentity,
   moneyCoachConversationIdentity,
+  professionalConversationRegistry,
   type ProfessionalConversationAccent,
   type ProfessionalConversationIdentity,
 } from "./ProfessionalConversationIdentity";

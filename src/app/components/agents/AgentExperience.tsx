@@ -4,7 +4,9 @@ import {
   type FormEvent,
   type KeyboardEvent,
   type ReactNode,
+  useEffect,
   useId,
+  useState,
 } from "react";
 
 export type AgentStatusState =
@@ -33,6 +35,7 @@ export type AgentSuggestion = {
 
 type AgentAvatarProps = {
   name: string;
+  accessibleLabel?: string;
   imageUrl?: string;
   initials?: string;
   size?: "sm" | "md" | "lg";
@@ -151,10 +154,13 @@ const statusStyles: Record<AgentStatusState, { dot: string; fallback: string }> 
 
 export function AgentAvatar({
   name,
+  accessibleLabel,
   imageUrl,
   initials,
   size = "md",
 }: AgentAvatarProps) {
+  const [imageFailed, setImageFailed] = useState(false);
+  useEffect(() => setImageFailed(false), [imageUrl]);
   const fallback =
     initials ||
     name
@@ -168,12 +174,18 @@ export function AgentAvatar({
   return (
     <div
       className={`grid shrink-0 place-items-center overflow-hidden rounded-full border border-white/15 bg-gradient-to-br from-cyan-400/25 to-violet-400/25 font-black text-white ${avatarSizes[size]}`}
-      aria-label={`${name} avatar`}
+      aria-label={accessibleLabel || `${name} avatar`}
       data-agent-avatar="true"
+      data-agent-avatar-fallback={imageFailed || !imageUrl ? fallback : undefined}
     >
-      {imageUrl ? (
+      {imageUrl && !imageFailed ? (
         // eslint-disable-next-line @next/next/no-img-element -- agent avatars may use runtime-provided URLs.
-        <img className="h-full w-full object-cover" src={imageUrl} alt="" />
+        <img
+          className="h-full w-full object-cover"
+          src={imageUrl}
+          alt=""
+          onError={() => setImageFailed(true)}
+        />
       ) : (
         <span aria-hidden="true">{fallback}</span>
       )}

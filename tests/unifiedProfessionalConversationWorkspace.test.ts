@@ -53,7 +53,8 @@ test("BE-223 shares scrolling, streaming, message layout, and responsive behavio
 });
 
 test("AP-001 gives every current Digital Professional a shared message identity", () => {
-  assert.match(identity, /getDigitalProfessional\(professionalId\)/);
+  assert.match(identity, /professionalConversationRegistry/);
+  assert.match(identity, /digitalProfessionals\.map/);
   assert.match(identity, /professional\.portrait\.avatar_url/);
   assert.match(identity, /moneyCoachConversationIdentity/);
   assert.match(identity, /guidanceCounselorConversationIdentity/);
