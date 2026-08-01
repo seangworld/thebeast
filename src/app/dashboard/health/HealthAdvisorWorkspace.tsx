@@ -21,7 +21,6 @@ import {
   formatProfessionalMessageTime,
   healthAdvisorConversationIdentity,
   type AgentConversationMessage,
-  type ProfessionalKnowledgeConfidence,
   type ProfessionalKnowledgeItem,
   type ProfessionalKnowledgeModel,
 } from "@/app/components/agents";
@@ -50,11 +49,14 @@ import {
   type HealthAdvisorQuestionAnswer,
 } from "@/lib/health/healthAdvisorQuestionAnswering";
 import {
-  healthWorkspaceHrefs,
   normalizeHealthRecord,
   type HealthRecord,
   type HealthRecordRow,
 } from "@/lib/health/foundation";
+import {
+  buildHealthAdvisorUnderstanding,
+  type HealthUnderstandingItem,
+} from "@/lib/health/understanding";
 import {
   ServerAgentConversationRepository,
   SupabaseAgentConversationStore,
@@ -99,6 +101,7 @@ const knowledgeRecordKinds: Record<string, HealthRecord["recordType"]> = {
   "health-appointments-needed": "appointment",
   "health-goals-needed": "profile",
   "health-vaccination-status-needed": "profile",
+  "health-lab-records-needed": "document",
   "health-documents-needed": "document",
 };
 
@@ -170,6 +173,10 @@ const healthWorkspacePromptTopics: Record<
   "health-vaccination-status-needed": {
     id: "health-vaccination-status-needed",
     label: "Vaccination status",
+  },
+  "health-lab-records-needed": {
+    id: "health-lab-records-needed",
+    label: "Lab records",
   },
 };
 
@@ -712,336 +719,48 @@ export function HealthAdvisorWorkspace() {
     appointmentCount,
   });
   const knowledgeModel = useMemo<ProfessionalKnowledgeModel>(() => {
-    const activeRecords = records.filter(
-      (record) => record.status !== "archived"
-    );
-    const recordsByKind = activeRecords.reduce<
-      Map<HealthRecord["recordType"], HealthRecord[]>
-    >((groups, record) => {
-      const group = groups.get(record.recordType) || [];
-      group.push(record);
-      groups.set(record.recordType, group);
-      return groups;
-    }, new Map());
-    const known = Array.from(recordsByKind.entries()).flatMap(
-      ([recordType, groupedRecords]): ProfessionalKnowledgeItem[] => {
-        const directRecords =
-          recordType === "profile"
-            ? groupedRecords.filter((record) => !record.details.topic)
-            : groupedRecords;
-        if (!directRecords.length) return [];
-        return [{
-          id: `health-known-${recordType}`,
-          label:
-            recordType === "profile"
-              ? "Health background"
-              : recordType === "provider"
-                ? "Care team"
-                : recordType === "family_history"
-                  ? "Family history"
-                  : healthWorkspaceHrefs[recordType]
-                    .split("/")
-                    .at(-1)
-                    ?.replaceAll("-", " ") || recordType,
-          summary: `${directRecords.length} saved ${directRecords.length === 1 ? "record" : "records"}: ${directRecords
-            .slice(0, 3)
-            .map((record) => record.title)
-            .join(", ")}${directRecords.length > 3 ? "…" : ""}`,
-          confidence: "high",
-          action: {
-            label: "Review, edit, or remove",
-            mode: "edit",
-            href: healthWorkspaceHrefs[recordType],
-          },
-        }];
-      }
-    );
-    for (const record of activeRecords.filter(
-      (item) => item.recordType === "profile" && item.details.topic
-    )) {
-      known.push({
-        id: `health-known-conversation-${record.id}`,
-        label: record.title,
-        summary:
-          typeof record.details.context === "string"
-            ? record.details.context
-            : "Member-reported context is saved.",
-        confidence: "high",
-        action: {
-          label: "Review, edit, or remove",
-          mode: "edit",
-          href: healthWorkspaceHrefs.profile,
-        },
-      });
-    }
-    if (documents.length) {
-      known.push({
-        id: "health-known-medical-documents",
-        label: "Medical documents",
-        summary: `${documents.length} owner-authorized document${documents.length === 1 ? "" : "s"} available for record review.`,
-        confidence: "high",
-        action: {
-          label: "Review documents",
-          mode: "detail",
-          href: healthWorkspaceHrefs.document,
-        },
-      });
-    }
-    const confidence = (
-      label: HealthAdvisorRecommendation["confidence"]["label"]
-    ): ProfessionalKnowledgeConfidence =>
-      label === "high"
-        ? "high"
-        : label === "moderate"
-          ? "medium"
-          : label === "low"
-            ? "low"
-            : "unknown";
-    const thinking = model.recommendations.map(
-      (recommendation): ProfessionalKnowledgeItem => ({
-        id: `health-thinking-${recommendation.sourceRecommendationId}`,
-        label: recommendation.title,
-        summary: recommendation.recommendation,
-        confidence: confidence(recommendation.confidence.label),
-        why: recommendation.confidence.basis,
-        evidence: recommendation.supportingEvidence.map((evidence) => {
-          const source = evidence.source;
-          return `Evidence source: ${
-            typeof source === "string" ? source : "saved BeastHealth context"
-          }`;
-        }),
-        action: {
-          label: "Review source",
-          mode: "detail",
-          href: recommendation.href,
-        },
-      })
-    );
-    const neededCandidates: {
-      id: string;
-      label: string;
-      summary: string;
-      prompt: string;
-      kind: HealthRecord["recordType"];
-      profileTopic?: boolean;
-      topicSpecific?: boolean;
-    }[] = [
-      {
-        id: "health-background-needed",
-        label: "Health background",
-        summary:
-          "Member-reported health background would improve record organization and appointment preparation.",
-        prompt:
-          "Tell me the health background or allergy information you want me to remember for future preparation.",
-        kind: "profile",
-      },
-      {
-        id: "health-allergies-needed",
-        label: "Allergies",
-        summary:
-          "Member-confirmed allergy context helps organize medication and appointment preparation.",
-        prompt:
-          "What allergies or sensitivities, if any, would you like me to remember? Please share only what you know from your own records or care team.",
-        kind: "profile",
-        profileTopic: true,
-      },
-      {
-        id: "health-symptoms-needed",
-        label: "Symptoms or health concerns",
-        summary:
-          "Member-reported symptoms can be remembered as context without becoming a diagnosis.",
-        prompt:
-          "What symptoms or health concerns would you like me to remember, including when they started and what you have already discussed with a clinician?",
-        kind: "profile",
-        profileTopic: true,
-      },
-      {
-        id: "health-medications-needed",
-        label: "Current medication status",
-        summary:
-          "Knowing whether you take any medications would make record review more complete.",
-        prompt:
-          "What would you like me to know about your current medication status? It is okay to say that you do not take any.",
-        kind: "medication",
-      },
-      {
-        id: "health-conditions-needed",
-        label: "Known condition status",
-        summary:
-          "Only conditions the member reports or verifies should become part of the health story.",
-        prompt:
-          "Are there any clinician-confirmed conditions or ongoing health concerns you want included in your health story?",
-        kind: "condition",
-      },
-      {
-        id: "health-care-team-needed",
-        label: "Care team",
-        summary:
-          "Provider or specialist context can improve appointment and document preparation.",
-        prompt:
-          "Which doctor, practice, or specialist should I know about for future appointment preparation?",
-        kind: "provider",
-        topicSpecific: true,
-      },
-      {
-        id: "health-primary-care-needed",
-        label: "Primary care provider",
-        summary:
-          "Primary care context can improve appointment and record preparation.",
-        prompt:
-          "Who is your primary care provider or practice, if you have one?",
-        kind: "provider",
-        topicSpecific: true,
-      },
-      {
-        id: "health-specialists-needed",
-        label: "Specialists",
-        summary:
-          "Specialist context can improve preparation without making network or credential claims.",
-        prompt:
-          "Which specialists or specialty practices should I know about for future appointment preparation?",
-        kind: "provider",
-        topicSpecific: true,
-      },
-      {
-        id: "health-clinician-outcomes-needed",
-        label: "Clinician outcomes",
-        summary:
-          "Member-reported clinician conclusions and follow-up outcomes can preserve continuity when clearly sourced.",
-        prompt:
-          "What did your clinician conclude, confirm, rule out, or ask you to follow up on? I’ll save it as member-reported context, not as an independently verified diagnosis.",
-        kind: "profile",
-        profileTopic: true,
-      },
-      {
-        id: "health-procedures-needed",
-        label: "Procedure history",
-        summary:
-          "Known procedure history can improve record and appointment organization.",
-        prompt:
-          "What past or planned procedures would you like included in your health story?",
-        kind: "procedure",
-      },
-      {
-        id: "health-family-history-needed",
-        label: "Family history",
-        summary:
-          "Member-reported family history can provide useful context without establishing personal risk.",
-        prompt:
-          "Is there any family health history you want me to remember, and which relative does it concern?",
-        kind: "family_history",
-      },
-      {
-        id: "health-lifestyle-needed",
-        label: "Lifestyle context",
-        summary:
-          "Sleep, movement, nutrition, and other member-reported context can improve preparation.",
-        prompt:
-          "What should I understand about your sleep, activity, nutrition, or other daily health routines?",
-        kind: "lifestyle",
-      },
-      {
-        id: "health-vitals-needed",
-        label: "Vitals",
-        summary:
-          "Saved measurements can be organized without interpreting whether they are clinically normal.",
-        prompt:
-          "Which dated measurements would you like recorded, including the value, unit, date, and source?",
-        kind: "vital",
-      },
-      {
-        id: "health-insurance-needed",
-        label: "Insurance context",
-        summary:
-          "Insurance context can help organize care logistics without making coverage claims.",
-        prompt:
-          "What insurance or coverage context would help with future appointment preparation? Avoid sharing member or policy numbers here.",
-        kind: "profile",
-        profileTopic: true,
-      },
-      {
-        id: "health-appointments-needed",
-        label: "Appointments",
-        summary:
-          "Upcoming appointments help Health Advisor prepare questions and records.",
-        prompt:
-          "What upcoming appointment should I know about, including the date, provider, and purpose you were given?",
-        kind: "appointment",
-      },
-      {
-        id: "health-goals-needed",
-        label: "Health goals",
-        summary:
-          "Member-defined goals can guide organization and clinician preparation without becoming treatment advice.",
-        prompt:
-          "What health-related goal would you like support organizing or discussing with your clinician?",
-        kind: "profile",
-        profileTopic: true,
-      },
-      {
-        id: "health-vaccination-status-needed",
-        label: "Vaccination status",
-        summary:
-          "Member-confirmed vaccination records can be organized without recommending a vaccination schedule.",
-        prompt:
-          "What vaccination information would you like organized from a record you can verify? It is okay to return to this later.",
-        kind: "profile",
-        profileTopic: true,
-      },
-      {
-        id: "health-documents-needed",
-        label: "Medical documents",
-        summary:
-          "Permissioned medical documents can support record organization and appointment preparation.",
-        prompt:
-          "What medical document would you like to add or review? Tell me what it is, and I’ll keep it clearly separated from confirmed clinical facts.",
-        kind: "document",
-      },
-    ];
-    const needed = neededCandidates
-      .filter(
-        (candidate) => {
-          if (
-            candidate.id === "health-documents-needed" &&
-            documents.length > 0
-          ) {
-            return false;
-          }
-          if (candidate.profileTopic) {
-            return !activeRecords.some(
-              (record) =>
-                record.recordType === "profile" &&
-                record.details.topic === candidate.id
-            );
-          }
-          if (candidate.topicSpecific) {
-            return !activeRecords.some(
-              (record) => record.details.topic === candidate.id
-            );
-          }
-          return (
-            !recordsByKind.has(candidate.kind) &&
-            !activeRecords.some(
-              (record) =>
-                record.recordType === "profile" &&
-                record.details.topic === candidate.id
-            )
-          );
-        }
-      )
-      .map(
-        (candidate): ProfessionalKnowledgeItem => ({
-          id: candidate.id,
-          label: candidate.label,
-          summary: candidate.summary,
-          confidence: "unknown",
-          action: {
-            label: "Talk with Health Advisor",
-            mode: "conversation",
-            prompt: candidate.prompt,
-          },
-        })
-      );
+    const understanding = buildHealthAdvisorUnderstanding({
+      records,
+      recommendations: model.recommendations,
+      documents,
+    });
+    const healthKnowledgeItem = (
+      item: HealthUnderstandingItem
+    ): ProfessionalKnowledgeItem => ({
+      id: item.id,
+      label: item.label,
+      summary:
+        item.value ||
+        item.question ||
+        "Health Advisor needs more owner-confirmed context for this area.",
+      confidence: item.confidence,
+      why: item.why,
+      evidence: item.evidence,
+      action:
+        item.state === "needed"
+          ? {
+              label: "Talk with Health Advisor",
+              mode: "conversation",
+              prompt:
+                item.question ||
+                `Tell me what you would like me to understand about ${item.label.toLowerCase()}.`,
+            }
+          : {
+              label:
+                item.state === "thought"
+                  ? "Review supporting context"
+                  : "Review or edit",
+              mode: item.state === "thought" ? "detail" : "edit",
+              href: item.href || "/dashboard/health",
+            },
+    });
+    const known = understanding.whatIKnow.map(healthKnowledgeItem);
+    const thinking = understanding.whatIThink.map(healthKnowledgeItem);
+    const needed = understanding.whatIStillNeed
+      .filter((item) => Boolean(knowledgeRecordKinds[item.id]))
+      .slice()
+      .sort((left, right) => left.priority - right.priority)
+      .map(healthKnowledgeItem);
 
     return {
       professionalId: healthAdvisorProfessionalId,
@@ -1049,8 +768,16 @@ export function HealthAdvisorWorkspace() {
       known,
       thinking,
       needed,
+      emptyStates: {
+        known:
+          "We’re just getting started. Confirmed health context will appear here with its evidence source.",
+        thinking:
+          "There is not enough evidence for a useful working idea. Health Advisor never presents a working idea as medical fact.",
+        needed:
+          "I have enough owner-confirmed context for the current health organization workflow.",
+      },
     };
-  }, [documents.length, model.recommendations, records]);
+  }, [documents, model.recommendations, records]);
 
   function beginKnowledgeConversation(item: ProfessionalKnowledgeItem) {
     if (item.action.mode !== "conversation") return;
