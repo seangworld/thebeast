@@ -88,6 +88,8 @@ const knowledgeRecordKinds: Record<string, HealthRecord["recordType"]> = {
   "health-medications-needed": "medication",
   "health-conditions-needed": "condition",
   "health-care-team-needed": "provider",
+  "health-primary-care-needed": "provider",
+  "health-specialists-needed": "provider",
   "health-clinician-outcomes-needed": "profile",
   "health-procedures-needed": "procedure",
   "health-family-history-needed": "family_history",
@@ -96,6 +98,7 @@ const knowledgeRecordKinds: Record<string, HealthRecord["recordType"]> = {
   "health-insurance-needed": "profile",
   "health-appointments-needed": "appointment",
   "health-goals-needed": "profile",
+  "health-vaccination-status-needed": "profile",
   "health-documents-needed": "document",
 };
 
@@ -116,6 +119,58 @@ const healthWorkspacePromptTopics: Record<
   },
   provider: { id: "health-care-team-needed", label: "Care team" },
   appointment: { id: "health-appointments-needed", label: "Appointments" },
+  "health-symptoms-needed": {
+    id: "health-symptoms-needed",
+    label: "Primary health concerns",
+  },
+  "health-conditions-needed": {
+    id: "health-conditions-needed",
+    label: "Current conditions",
+  },
+  "health-medications-needed": {
+    id: "health-medications-needed",
+    label: "Current medications",
+  },
+  "health-allergies-needed": {
+    id: "health-allergies-needed",
+    label: "Allergies",
+  },
+  "health-procedures-needed": {
+    id: "health-procedures-needed",
+    label: "Past procedures",
+  },
+  "health-primary-care-needed": {
+    id: "health-primary-care-needed",
+    label: "Primary care provider",
+  },
+  "health-specialists-needed": {
+    id: "health-specialists-needed",
+    label: "Specialists",
+  },
+  "health-insurance-needed": {
+    id: "health-insurance-needed",
+    label: "Insurance",
+  },
+  "health-family-history-needed": {
+    id: "health-family-history-needed",
+    label: "Family history",
+  },
+  "health-lifestyle-needed": {
+    id: "health-lifestyle-needed",
+    label: "Lifestyle",
+  },
+  "health-goals-needed": {
+    id: "health-goals-needed",
+    label: "Health goals",
+  },
+  "health-appointments-needed": {
+    id: "health-appointments-needed",
+    label: "Upcoming appointments",
+  },
+  "health-vaccination-status-needed": {
+    id: "health-vaccination-status-needed",
+    label: "Vaccination status",
+  },
 };
 
 function restoreHealthAdvisorTurns(
@@ -769,6 +824,7 @@ export function HealthAdvisorWorkspace() {
       prompt: string;
       kind: HealthRecord["recordType"];
       profileTopic?: boolean;
+      topicSpecific?: boolean;
     }[] = [
       {
         id: "health-background-needed",
@@ -825,6 +881,27 @@ export function HealthAdvisorWorkspace() {
         prompt:
           "Which doctor, practice, or specialist should I know about for future appointment preparation?",
         kind: "provider",
+        topicSpecific: true,
+      },
+      {
+        id: "health-primary-care-needed",
+        label: "Primary care provider",
+        summary:
+          "Primary care context can improve appointment and record preparation.",
+        prompt:
+          "Who is your primary care provider or practice, if you have one?",
+        kind: "provider",
+        topicSpecific: true,
+      },
+      {
+        id: "health-specialists-needed",
+        label: "Specialists",
+        summary:
+          "Specialist context can improve preparation without making network or credential claims.",
+        prompt:
+          "Which specialists or specialty practices should I know about for future appointment preparation?",
+        kind: "provider",
+        topicSpecific: true,
       },
       {
         id: "health-clinician-outcomes-needed",
@@ -902,6 +979,16 @@ export function HealthAdvisorWorkspace() {
         profileTopic: true,
       },
       {
+        id: "health-vaccination-status-needed",
+        label: "Vaccination status",
+        summary:
+          "Member-confirmed vaccination records can be organized without recommending a vaccination schedule.",
+        prompt:
+          "What vaccination information would you like organized from a record you can verify? It is okay to return to this later.",
+        kind: "profile",
+        profileTopic: true,
+      },
+      {
         id: "health-documents-needed",
         label: "Medical documents",
         summary:
@@ -925,6 +1012,11 @@ export function HealthAdvisorWorkspace() {
               (record) =>
                 record.recordType === "profile" &&
                 record.details.topic === candidate.id
+            );
+          }
+          if (candidate.topicSpecific) {
+            return !activeRecords.some(
+              (record) => record.details.topic === candidate.id
             );
           }
           return (

@@ -78,6 +78,7 @@ const expectedCliMigrations = [
   "20260801000100_restore_debt_management_workflow.sql",
   "20260801000200_add_google_oauth_connections.sql",
   "20260801000300_track_debt_interest_changes.sql",
+  "20260801000400_add_beast_health_discovery.sql",
 ];
 
 test("Supabase CLI migrations exist in dependency-safe order", () => {

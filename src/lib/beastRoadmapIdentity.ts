@@ -347,6 +347,13 @@ export const beastRoadmapPackageRegistry = [
     ["20260801000300_track_debt_interest_changes.sql"]
   ),
   packageIdentity(
+    "BH-201",
+    ["BH-201"],
+    "BeastHealth Onboarding and Discovery",
+    ["supabase/migrations/20260801000400_add_beast_health_discovery.sql"],
+    ["20260801000400_add_beast_health_discovery.sql"]
+  ),
+  packageIdentity(
     "BA-ADS-201",
     ["BA-ADS-201"],
     "Revenue Center and AdSense Management",

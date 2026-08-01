@@ -35,6 +35,7 @@ import {
 } from "@/lib/health/healthAdvisor";
 import { createClient } from "@/lib/supabase/client";
 import { BeastHealthShell } from "./BeastHealthShell";
+import { HealthDiscoveryOnboarding } from "./HealthDiscoveryOnboarding";
 
 const statusOptions: HealthRecordStatus[] = [
   "active",
@@ -1325,7 +1326,7 @@ export function HealthRecordWorkspace({ kind }: { kind: HealthRecordKind }) {
 }
 
 export function HealthOverviewWorkspace() {
-  const { records, loading, error } = useHealthRecords();
+  const { ownerId, records, loading, error } = useHealthRecords();
   const model = useMemo(
     () => buildHealthAdvisorModel({ records }),
     [records]
@@ -1349,6 +1350,13 @@ export function HealthOverviewWorkspace() {
           {error}
         </p>
       ) : null}
+
+      <HealthDiscoveryOnboarding
+        ownerId={ownerId}
+        records={records}
+        recordsLoading={loading}
+        recordsUnavailable={Boolean(error)}
+      />
 
       <section className="space-y-4" aria-label="Health Advisor dashboard">
         <DashboardCard accent="health">
