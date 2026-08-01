@@ -222,7 +222,7 @@ function DashboardExperience({
                   : "Your Guidance Counselor can help you define a useful direction without locking you into it."}
               </p>
               <Link
-                href="/dashboard/goals?module=education"
+                href="/dashboard/education/goals"
                 className="beast-button-secondary mt-4 inline-flex w-full justify-center sm:w-fit"
               >
                 Open Education goals
@@ -329,7 +329,7 @@ function DashboardExperience({
               </p>
             )}
             <Link
-              href="/dashboard/education/educational-roadmap"
+              href="/dashboard/education/education-planning"
               className="beast-button-secondary mt-5 inline-flex w-full justify-center sm:w-fit"
             >
               Open Educational Roadmap
@@ -368,7 +368,7 @@ function DashboardExperience({
             </dl>
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
               <WorkspaceLink
-                href="/dashboard/uploads?module=education"
+                href="/dashboard/education/documents"
                 title="Education Documents"
                 description="Open the shared BeastOS document service filtered to Education."
               />
@@ -461,7 +461,7 @@ function GuidanceCounselorExperience({
             className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
           >
             <WorkspaceLink
-              href="/dashboard/education/educational-roadmap"
+              href="/dashboard/education/education-planning"
               title="Educational Roadmap"
               description="Review the long-term sequence and milestones."
             />

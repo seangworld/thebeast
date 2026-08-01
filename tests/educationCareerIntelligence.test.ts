@@ -225,10 +225,10 @@ test("BE-201 active navigation contains no teaching, tutoring, lesson, quiz, or 
   const activeEducationNav = `${navigation.match(/export const beastLearningNavigation[\s\S]*?\n};/)?.[0]}\n${layout.match(/const learningPrimaryNavigation[\s\S]*?\n];/)?.[0]}`;
   assert.match(activeEducationNav, /Guidance Counselor/);
   assert.match(activeEducationNav, /Profile/);
-  assert.match(activeEducationNav, /Paths/);
-  assert.match(activeEducationNav, /Roadmap/);
-  assert.match(activeEducationNav, /Goals/);
-  assert.match(activeEducationNav, /Documents/);
+  assert.match(activeEducationNav, /Education Planning/);
+  assert.match(activeEducationNav, /Career Planning/);
+  assert.match(activeEducationNav, /Education Goals/);
+  assert.match(activeEducationNav, /Education Documents/);
   assert.match(activeEducationNav, /Outcomes/);
   assert.doesNotMatch(activeEducationNav, /Tutor|Lesson|Quiz|Mastery|Courses/);
 });

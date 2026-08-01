@@ -52,7 +52,7 @@ test("BF-001 blocks questionnaire, teaching workspace, and activity entry routes
   assert.match(files[1], /isDormantTeachingWorkspace/);
   assert.match(files[1], /redirect\("\/dashboard\/education"\)/);
   assert.ok(files.slice(2, 4).every((source) => /redirect\("\/dashboard\/education"\)/.test(source)));
-  assert.match(files[4], /redirect\("\/dashboard\/goals\?module=education"\)/);
+  assert.match(files[4], /redirect\("\/dashboard\/education\/goals"\)/);
 });
 
 test("BF-001 keeps internal orchestration out of member Digital Staff surfaces", () => {

@@ -16,7 +16,8 @@ export const beastMoneyCoreNavigation: readonly BeastMoneyNavigationItem[] = [
   { label: "Strategies", href: "/dashboard/money/payoff-plan#strategy-comparison", parent: "Payoff Plan" },
   { label: "Timeline", href: "/dashboard/money/payoff-plan#payoff-plan", parent: "Payoff Plan" },
   { label: "Retirement", href: "/dashboard/money/retirement" },
-  { label: "Documents", href: "/dashboard/uploads" },
+  { label: "Financial Goals", href: "/dashboard/money/goals" },
+  { label: "Financial Documents", href: "/dashboard/money/documents" },
   { label: "Reports", href: "/dashboard/money/reports" },
 ] as const;
 

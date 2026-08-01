@@ -29,11 +29,7 @@ export const dormantTeachingWorkspaces = [
 ] as const;
 
 export const retiredPlanningAliases: Readonly<Record<string, string>> = {
-  "educational-roadmap": "/dashboard/education#roadmap",
-  "career-planning": "/dashboard/education#paths",
-  schools: "/dashboard/education#paths",
-  scholarships: "/dashboard/education#research",
-  certifications: "/dashboard/education#paths",
+  "educational-roadmap": "/dashboard/education/education-planning",
   skills: "/dashboard/education#profile",
 };
 

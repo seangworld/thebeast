@@ -48,10 +48,10 @@ import { BEAST_ADMIN_MESSAGE_UNREAD_EVENT } from "@/lib/beastAdminMessaging";
 const learningPrimaryNavigation: ModuleNavSection[] = [
   { label: "Guidance Counselor", href: "/dashboard/education/guidance-counselor", module: "learning" },
   { label: "Profile", href: "/dashboard/education#profile", module: "learning" },
-  { label: "Paths", href: "/dashboard/education#paths", module: "learning" },
-  { label: "Roadmap", href: "/dashboard/education#roadmap", module: "learning" },
-  { label: "Goals", href: "/dashboard/goals?module=education", module: "learning" },
-  { label: "Documents", href: "/dashboard/uploads?module=education", module: "learning" },
+  { label: "Education Planning", href: "/dashboard/education/education-planning", module: "learning" },
+  { label: "Career Planning", href: "/dashboard/education/career-planning", module: "learning" },
+  { label: "Education Goals", href: "/dashboard/education/goals", module: "learning" },
+  { label: "Education Documents", href: "/dashboard/education/documents", module: "learning" },
   { label: "Outcomes", href: "/dashboard/education#outcomes", module: "learning" },
 ];
 

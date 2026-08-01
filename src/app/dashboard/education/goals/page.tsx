@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import GoalsOverviewPage from "../../goals/page";
 
-export default function EducationGoalsCompatibilityRoute() {
-  redirect("/dashboard/goals?module=education");
+export default function EducationGoalsPage() {
+  return <GoalsOverviewPage searchParams={{ module: "education" }} />;
 }

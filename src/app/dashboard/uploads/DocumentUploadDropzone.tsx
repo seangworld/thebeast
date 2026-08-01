@@ -11,6 +11,7 @@ import {
   type DocumentCategory,
 } from "@/lib/platform/documents";
 import { createClient } from "@/lib/supabase/client";
+import type { ContextualWorkspaceConfig } from "@/lib/platform/contextualWorkspaces";
 
 type UploadState = "idle" | "ready" | "uploading" | "success" | "error";
 
@@ -23,10 +24,16 @@ function getInitialTitle(fileName: string) {
   return fileName.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ").trim();
 }
 
-export function DocumentUploadDropzone() {
+export function DocumentUploadDropzone({
+  context,
+}: {
+  context?: ContextualWorkspaceConfig;
+}) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [selected, setSelected] = useState<SelectedDocument | null>(null);
-  const [category, setCategory] = useState<DocumentCategory>("Other");
+  const [category, setCategory] = useState<DocumentCategory>(
+    context?.defaultDocumentCategory || "Other"
+  );
   const [isDragging, setIsDragging] = useState(false);
   const [state, setState] = useState<UploadState>("idle");
   const [message, setMessage] = useState(
@@ -132,6 +139,33 @@ export function DocumentUploadDropzone() {
         throw new Error(
           metadataError.message || "Document metadata could not be saved."
         );
+      }
+
+      if (context) {
+        const { error: contextError } = await supabase
+          .from("beast_document_module_links")
+          .insert({
+            owner_id: ownerId,
+            document_id: documentId,
+            source_module: context.module,
+            title: context.documentsLabel,
+            summary: `Connected from ${context.applicationName}.`,
+          });
+
+        if (contextError) {
+          await supabase
+            .from("beast_documents")
+            .delete()
+            .eq("id", documentId)
+            .eq("owner_id", ownerId);
+          await supabase.storage
+            .from(documentStorageBucketName)
+            .remove([storagePath]);
+          throw new Error(
+            contextError.message ||
+              "The document context could not be saved, so the upload was rolled back."
+          );
+        }
       }
 
       setState("success");

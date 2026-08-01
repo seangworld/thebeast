@@ -1,10 +1,10 @@
-import UploadsPage from "../../uploads/page";
+import GoalsOverviewPage from "../../goals/page";
 import { OwnerOnlyModuleGuard } from "../../OwnerOnlyModuleGuard";
 
-export default function BeastHomeDocumentsPage() {
+export default function HomeGoalsPage() {
   return (
     <OwnerOnlyModuleGuard module="home" applicationName="BeastHome">
-      <UploadsPage searchParams={{ module: "home" }} />
+      <GoalsOverviewPage searchParams={{ module: "home" }} />
     </OwnerOnlyModuleGuard>
   );
 }

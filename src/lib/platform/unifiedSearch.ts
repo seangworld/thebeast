@@ -339,14 +339,14 @@ export function buildUnifiedSearchItems({
         title: roadmap.title,
         summary: roadmap.summary || "Your saved educational roadmap.",
         keywords: ["education", "roadmap", "plan", "learning path"],
-        href: "/dashboard/education/educational-roadmap",
+        href: "/dashboard/education/education-planning",
         permissionScope: "Owner",
         updatedAt: roadmap.updatedAt,
         actions: [
           {
             type: "Open",
             label: "Open roadmap",
-            href: "/dashboard/education/educational-roadmap",
+            href: "/dashboard/education/education-planning",
           },
         ],
       })

@@ -37,7 +37,8 @@ test("BP-230 exposes only the approved workspace hierarchy", () => {
       { label: "Strategies", parent: "Payoff Plan" },
       { label: "Timeline", parent: "Payoff Plan" },
       { label: "Retirement", parent: null },
-      { label: "Documents", parent: null },
+      { label: "Financial Goals", parent: null },
+      { label: "Financial Documents", parent: null },
       { label: "Reports", parent: null },
     ]
   );

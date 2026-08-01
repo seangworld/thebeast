@@ -18,6 +18,7 @@ import {
   professionalGoalAccess,
   rankGoalsForToday,
 } from "@/lib/platform/lifePlanning";
+import type { ContextualWorkspaceConfig } from "@/lib/platform/contextualWorkspaces";
 
 const priorities: GoalPriority[] = ["Critical", "High", "Medium", "Low"];
 const timelines = ["Now", "Next", "Later", "Someday"];
@@ -84,17 +85,17 @@ function formatDate(value?: string) {
 
 export function LifePlanningHub({
   initialGoals,
-  initialModule = "All",
+  context,
 }: {
   initialGoals: Goal[];
-  initialModule?: string;
+  context?: ContextualWorkspaceConfig;
 }) {
   const router = useRouter();
   const titleRef = useRef<HTMLInputElement>(null);
   const openerRef = useRef<HTMLElement | null>(null);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
-  const [module, setModule] = useState(initialModule);
+  const [module, setModule] = useState("All");
   const [timeline, setTimeline] = useState("All");
   const [priority, setPriority] = useState("All");
   const [professional, setProfessional] = useState("All");
@@ -129,7 +130,17 @@ export function LifePlanningHub({
     openerRef.current = document.activeElement as HTMLElement | null;
     setSplitSource(null);
     setEditing(goal || null);
-    setDraft(goal ? draftFromGoal(goal) : emptyDraft);
+    setDraft(
+      goal
+        ? draftFromGoal(goal)
+        : context
+          ? {
+              ...emptyDraft,
+              category: context.defaultGoalCategory,
+              tags: context.tags[0],
+            }
+          : emptyDraft
+    );
     setMessage("");
     requestAnimationFrame(() => titleRef.current?.focus());
   }
@@ -179,6 +190,7 @@ export function LifePlanningHub({
           .filter(Boolean),
         source_type: "member",
         source_label: "Member",
+        ...(!editing && context ? { source_module: context.module } : {}),
         updated_at: now,
       };
       let goalId = editing?.id;

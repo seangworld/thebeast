@@ -12,7 +12,7 @@ const educationPlanningRoutes = {
   scholarship: "/dashboard/education/scholarships",
   school: "/dashboard/education/schools",
   career: "/dashboard/education/career-planning",
-  roadmap: "/dashboard/education/educational-roadmap",
+  roadmap: "/dashboard/education/education-planning",
 } as const;
 
 function educationPlanningDestination(value: string) {

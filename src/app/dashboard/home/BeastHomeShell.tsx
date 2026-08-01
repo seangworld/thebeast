@@ -20,7 +20,8 @@ export const beastHomeSections = [
   { label: "Vehicles", href: "/dashboard/home/vehicles" },
   { label: "Maintenance", href: "/dashboard/home/maintenance" },
   { label: "Security", href: "/dashboard/home/security" },
-  { label: "Documents", href: "/dashboard/home/documents" },
+  { label: "Home Goals", href: "/dashboard/home/goals" },
+  { label: "Home Documents", href: "/dashboard/home/documents" },
   { label: "Settings", href: "/dashboard/home/settings" },
 ];
 

@@ -1,10 +1,10 @@
-import UploadsPage from "../../uploads/page";
+import GoalsOverviewPage from "../../goals/page";
 import { OwnerOnlyModuleGuard } from "../../OwnerOnlyModuleGuard";
 
-export default function HealthDocumentsPage() {
+export default function HealthGoalsPage() {
   return (
     <OwnerOnlyModuleGuard module="health" applicationName="BeastHealth">
-      <UploadsPage searchParams={{ module: "health" }} />
+      <GoalsOverviewPage searchParams={{ module: "health" }} />
     </OwnerOnlyModuleGuard>
   );
 }

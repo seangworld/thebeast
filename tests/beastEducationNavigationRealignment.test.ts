@@ -10,10 +10,13 @@ const primaryLabels = [
   "Dashboard",
   "Guidance Counselor",
   "Profile",
-  "Paths",
-  "Roadmap",
-  "Goals",
-  "Documents",
+  "Education Planning",
+  "Career Planning",
+  "Education Goals",
+  "Schools",
+  "Certifications",
+  "Scholarships",
+  "Education Documents",
   "Outcomes",
 ];
 

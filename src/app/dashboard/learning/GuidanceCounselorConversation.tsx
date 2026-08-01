@@ -1432,15 +1432,27 @@ export default function GuidanceCounselorConversation({
               workspaces={[
                 {
                   id: "education-roadmap",
-                  label: "Educational Roadmap",
+                  label: "Education Planning",
                   description: "Review milestones and planning sequence.",
-                  href: "/dashboard/education/educational-roadmap",
+                  href: "/dashboard/education/education-planning",
                 },
                 {
                   id: "education-career",
                   label: "Career Planning",
                   description: "Explore career direction and tradeoffs.",
                   href: "/dashboard/education/career-planning",
+                },
+                {
+                  id: "education-goals",
+                  label: "Education Goals",
+                  description: "Review shared BeastOS goals in Education context.",
+                  href: "/dashboard/education/goals",
+                },
+                {
+                  id: "education-documents",
+                  label: "Education Documents",
+                  description: "Review shared BeastOS documents in Education context.",
+                  href: "/dashboard/education/documents",
                 },
                 {
                   id: "education-schools",

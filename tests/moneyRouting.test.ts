@@ -39,7 +39,8 @@ test("BP-230 navigation follows the approved workspace hierarchy", () => {
     "Strategies",
     "Timeline",
     "Retirement",
-    "Documents",
+    "Financial Goals",
+    "Financial Documents",
     "Reports",
   ]);
   assert.deepEqual(

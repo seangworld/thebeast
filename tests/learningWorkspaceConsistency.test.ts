@@ -75,10 +75,13 @@ test("BL-403 uses one responsive shell with consistent loading empty and error s
 test("BE-201 navigation exposes the consolidated planning anchors", () => {
   const visibleNavigationHrefs = [
     "/dashboard/education#profile",
-    "/dashboard/education#paths",
-    "/dashboard/education#roadmap",
-    "/dashboard/goals?module=education",
-    "/dashboard/uploads?module=education",
+    "/dashboard/education/education-planning",
+    "/dashboard/education/career-planning",
+    "/dashboard/education/goals",
+    "/dashboard/education/schools",
+    "/dashboard/education/certifications",
+    "/dashboard/education/scholarships",
+    "/dashboard/education/documents",
     "/dashboard/education#outcomes",
   ];
   for (const navigation of [

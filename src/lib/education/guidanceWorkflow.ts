@@ -62,14 +62,14 @@ export function buildGuidanceProactiveOpportunities(
       title: "Courses and training to evaluate",
       why:
         "The right learning options depend on your verified skill gaps, preferred learning style, available study time, and budget—not a generic course list.",
-      href: "/dashboard/education/educational-roadmap",
+      href: "/dashboard/education/education-planning",
     },
     {
       id: "roadmap",
       title: "An adaptable education roadmap",
       why:
         "A roadmap can connect the direction to requirements, decision points, and evidence-based milestones while keeping room to change course.",
-      href: "/dashboard/education/educational-roadmap",
+      href: "/dashboard/education/education-planning",
     },
   ];
 
@@ -241,7 +241,7 @@ export function buildGuidanceWorkflowRecommendation({
       outcome:
         "We will establish an ordered plan that can adapt as we verify requirements and learn more about you.",
       actionLabel: "Build the roadmap",
-      href: "/dashboard/education/educational-roadmap",
+      href: "/dashboard/education/education-planning",
     };
   }
 
@@ -255,6 +255,6 @@ export function buildGuidanceWorkflowRecommendation({
     outcome:
       "We will confirm the next decision, credential, school, funding step, or career-planning task the roadmap actually calls for.",
     actionLabel: "Review the roadmap",
-    href: "/dashboard/education/educational-roadmap",
+    href: "/dashboard/education/education-planning",
   };
 }

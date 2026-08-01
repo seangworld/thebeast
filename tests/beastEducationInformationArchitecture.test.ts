@@ -11,10 +11,13 @@ const approvedNavigation = [
   ["Dashboard", "/dashboard/education"],
   ["Guidance Counselor", "/dashboard/education/guidance-counselor"],
   ["Profile", "/dashboard/education#profile"],
-  ["Paths", "/dashboard/education#paths"],
-  ["Roadmap", "/dashboard/education#roadmap"],
-  ["Goals", "/dashboard/goals?module=education"],
-  ["Documents", "/dashboard/uploads?module=education"],
+  ["Education Planning", "/dashboard/education/education-planning"],
+  ["Career Planning", "/dashboard/education/career-planning"],
+  ["Education Goals", "/dashboard/education/goals"],
+  ["Schools", "/dashboard/education/schools"],
+  ["Certifications", "/dashboard/education/certifications"],
+  ["Scholarships", "/dashboard/education/scholarships"],
+  ["Education Documents", "/dashboard/education/documents"],
   ["Outcomes", "/dashboard/education#outcomes"],
 ];
 
@@ -105,11 +108,11 @@ test("BP-400 routes Education goals and documents through filtered BeastOS servi
   const goals = readFileSync("src/app/dashboard/goals/page.tsx", "utf8");
   const documents = readFileSync("src/app/dashboard/uploads/page.tsx", "utf8");
 
-  assert.match(goalsCompatibility, /\/dashboard\/goals\?module=education/);
-  assert.match(goals, /searchParams\?\.module === "education"/);
-  assert.match(goals, /goal\.sourceModule === "learning"/);
-  assert.match(documents, /searchParams\?\.module === "education"/);
-  assert.match(documents, /document\.sourceModule === "learning"/);
+  assert.match(goalsCompatibility, /GoalsOverviewPage[\s\S]*module: "education"/);
+  assert.match(goals, /getContextualWorkspaceConfig/);
+  assert.match(goals, /goalMatchesContext/);
+  assert.match(documents, /getContextualWorkspaceConfig/);
+  assert.match(documents, /documentMatchesContext/);
 });
 
 test("BP-400 keeps planning reports truthful and planning-oriented", () => {

@@ -34,6 +34,10 @@ import {
   loadUserGoals,
   summarizeGoals,
 } from "@/lib/platform/goals";
+import {
+  getContextualWorkspaceConfig,
+  goalMatchesContext,
+} from "@/lib/platform/contextualWorkspaces";
 
 function formatGoalDate(date?: string) {
   if (!date) return "No target date";
@@ -212,17 +216,9 @@ export default async function GoalsOverviewPage({
   searchParams?: { module?: string };
 }) {
   const goalLoadResult = await getGoalLoadResult();
-  const educationFilter = searchParams?.module === "education";
-  const requestedModule =
-    searchParams?.module === "education"
-      ? "learning"
-      : ["beastos", "learning", "money", "health", "home", "family", "projects"].includes(
-            searchParams?.module || ""
-          )
-        ? searchParams?.module
-        : "All";
-  const goals = educationFilter
-    ? goalLoadResult.goals.filter((goal) => goal.sourceModule === "learning")
+  const context = getContextualWorkspaceConfig(searchParams?.module);
+  const goals = context
+    ? goalLoadResult.goals.filter((goal) => goalMatchesContext(goal, context))
     : goalLoadResult.goals;
   const summary = summarizeGoals(goals);
   const mobileGoalCards = buildMobileGoalActionCards({ goals, summary });
@@ -232,22 +228,21 @@ export default async function GoalsOverviewPage({
       <div className="beast-container space-y-8">
         <PlatformServiceHero
           module="goals"
-          eyebrow="BeastOS Shared Service"
-          title="BeastGoals"
+          eyebrow={context ? `${context.applicationName} · BeastOS Shared Service` : "BeastOS Shared Service"}
+          title={context?.goalsLabel || "BeastGoals"}
           description="The BeastOS Life Planning Hub: one owner-controlled source for financial, education, career, health, home, family, personal, and project goals."
           action={<ModuleBadge module="beastos" label="BeastOS Owned" />}
         />
-        {educationFilter ? (
+        {context ? (
           <div className="rounded-xl border border-indigo-300/20 bg-indigo-300/[0.07] p-4 text-sm leading-6 text-indigo-50">
-            Showing goals owned by BeastOS that are connected to
-            BeastEducation. Clear the Education filter to review every shared
-            goal.
+            Showing BeastOS-owned goals connected to {context.applicationName}.
+            Cross-module links remain attached to this one authoritative goal.
           </div>
         ) : null}
 
         <LifePlanningHub
-          initialGoals={goalLoadResult.goals}
-          initialModule={requestedModule}
+          initialGoals={goals}
+          context={context}
         />
 
         <section

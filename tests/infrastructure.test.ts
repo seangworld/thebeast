@@ -599,10 +599,13 @@ test("module navigation centralizes expandable child items", () => {
       "Dashboard",
       "Guidance Counselor",
       "Profile",
-      "Paths",
-      "Roadmap",
-      "Goals",
-      "Documents",
+      "Education Planning",
+      "Career Planning",
+      "Education Goals",
+      "Schools",
+      "Certifications",
+      "Scholarships",
+      "Education Documents",
       "Outcomes",
     ]
   );
@@ -613,9 +616,9 @@ test("module navigation centralizes expandable child items", () => {
   assert.equal(beastMoneyNavigation.label, "BeastMoney");
   assert.equal(
     beastMoneyNavigation.children?.map((item) => item.label).join(","),
-    "Dashboard,Money Coach,Cash Flow,Income,Expenses,Bills,Debts,Payoff Plan,Strategies,Timeline,Retirement,Documents,Reports"
+    "Dashboard,Money Coach,Cash Flow,Income,Expenses,Bills,Debts,Payoff Plan,Strategies,Timeline,Retirement,Financial Goals,Financial Documents,Reports"
   );
-  assert.equal(getModuleChildren("learning").length, 8);
+  assert.equal(getModuleChildren("learning").length, 11);
   const moneyChildren = getModuleChildren("money");
   const addBill = moneyChildren.find((item) => item.label === "Add Bill");
   const addDebt = moneyChildren.find((item) => item.label === "Add Debt");
@@ -5894,10 +5897,13 @@ test("member navigation hides admin and monetization surfaces", () => {
       "Dashboard",
       "Guidance Counselor",
       "Profile",
-      "Paths",
-      "Roadmap",
-      "Goals",
-      "Documents",
+      "Education Planning",
+      "Career Planning",
+      "Education Goals",
+      "Schools",
+      "Certifications",
+      "Scholarships",
+      "Education Documents",
       "Outcomes",
     ]
   );
@@ -5907,10 +5913,13 @@ test("member navigation hides admin and monetization surfaces", () => {
       "/dashboard/education",
       "/dashboard/education/guidance-counselor",
       "/dashboard/education#profile",
-      "/dashboard/education#paths",
-      "/dashboard/education#roadmap",
-      "/dashboard/goals?module=education",
-      "/dashboard/uploads?module=education",
+      "/dashboard/education/education-planning",
+      "/dashboard/education/career-planning",
+      "/dashboard/education/goals",
+      "/dashboard/education/schools",
+      "/dashboard/education/certifications",
+      "/dashboard/education/scholarships",
+      "/dashboard/education/documents",
       "/dashboard/education#outcomes",
     ]
   );
@@ -6084,7 +6093,8 @@ test("BeastAdmin foundation registers modules and protects owner-only navigation
       "Family History",
       "Lifestyle",
       "Vitals",
-      "Documents",
+      "Health Goals",
+      "Health Documents",
       "Provider Directory",
       "Appointments",
       "Health Timeline",
@@ -6102,7 +6112,8 @@ test("BeastAdmin foundation registers modules and protects owner-only navigation
       "Vehicles",
       "Maintenance",
       "Security",
-      "Documents",
+      "Home Goals",
+      "Home Documents",
       "Settings",
     ]
   );
@@ -6334,7 +6345,8 @@ test("BeastHealth is owner-only and Health Advisor preserves medical boundaries"
     "Family History",
     "Lifestyle",
     "Vitals",
-    "Documents",
+    "Health Goals",
+    "Health Documents",
     "Provider Directory",
     "Appointments",
     "Health Timeline",
@@ -6389,7 +6401,8 @@ test("BHM-001 BeastHome foundation is admin-only placeholder application", () =>
     "Vehicles",
     "Maintenance",
     "Security",
-    "Documents",
+    "Home Goals",
+    "Home Documents",
     "Settings",
   ].forEach((label) => assert.match(shell, new RegExp(label)));
 
@@ -6399,10 +6412,13 @@ test("BHM-001 BeastHome foundation is admin-only placeholder application", () =>
     "src/app/dashboard/home/vehicles/page.tsx",
     "src/app/dashboard/home/maintenance/page.tsx",
     "src/app/dashboard/home/security/page.tsx",
-    "src/app/dashboard/home/documents/page.tsx",
     "src/app/dashboard/home/settings/page.tsx",
   ].forEach((path) =>
     assert.match(readFileSync(path, "utf8"), /BeastHomePlaceholderPage/)
+  );
+  assert.match(
+    readFileSync("src/app/dashboard/home/documents/page.tsx", "utf8"),
+    /UploadsPage[\s\S]*module: "home"/
   );
 
   assert.match(shell, /isBeastAdminOwnerRole/);

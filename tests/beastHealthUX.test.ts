@@ -22,7 +22,8 @@ test("BP-300 promotes Health Advisor directly below Overview in the shared sideb
       "Family History",
       "Lifestyle",
       "Vitals",
-      "Documents",
+      "Health Goals",
+      "Health Documents",
       "Provider Directory",
       "Appointments",
       "Health Timeline",
@@ -30,9 +31,13 @@ test("BP-300 promotes Health Advisor directly below Overview in the shared sideb
   );
   assert.equal(health.children?.[0]?.group, undefined);
   assert.equal(health.children?.[1]?.group, undefined);
-  health.children?.slice(2).forEach((item) => {
+  health.children?.slice(2).filter((item) => item.label !== "Health Goals").forEach((item) => {
     assert.equal(item.group, "Health records");
   });
+  assert.equal(
+    health.children?.find((item) => item.label === "Health Goals")?.group,
+    "Planning"
+  );
 });
 
 test("BP-300 removes the duplicate BeastHealth horizontal page navigation", () => {

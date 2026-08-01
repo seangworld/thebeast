@@ -165,7 +165,7 @@ export const learningWorkspaceDefinitions: Record<
     description: "Compare verified programs, prerequisites, deadlines, accreditation, support, cost, and fit.",
     emptyTitle: "No schools are being compared yet",
     emptyDescription: "Schools will appear after your roadmap identifies a program type and the criteria that matter to you.",
-    emptyAction: { label: "Review your roadmap", href: "/dashboard/education/educational-roadmap" },
+    emptyAction: { label: "Review Education Planning", href: "/dashboard/education/education-planning" },
   },
   scholarships: {
     slug: "scholarships",
@@ -192,7 +192,7 @@ export const learningWorkspaceDefinitions: Record<
     description: "Understand current strengths, skills to build, evidence needed, and gaps connected to your roadmap.",
     emptyTitle: "No skill evidence is recorded yet",
     emptyDescription: "Skills will appear as your goals, work, learning, projects, and verified outcomes add evidence.",
-    emptyAction: { label: "Review your goals", href: "/dashboard/goals?module=education" },
+    emptyAction: { label: "Review Education Goals", href: "/dashboard/education/goals" },
   },
   tutor: {
     slug: "tutor",

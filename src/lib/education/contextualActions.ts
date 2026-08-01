@@ -27,7 +27,7 @@ const roadmapActions: Record<
   },
   "required-education": {
     label: "Continue planning",
-    href: "/dashboard/education/educational-roadmap",
+    href: "/dashboard/education/education-planning",
   },
   "recommended-certifications": {
     label: "View credential plan",
@@ -62,11 +62,11 @@ export function getRoadmapCardAction(
 export const learningAccessActions = {
   goals: {
     label: "Open goals",
-    href: "/dashboard/goals?module=education",
+    href: "/dashboard/education/goals",
   },
   "study-plan": {
     label: "Continue planning",
-    href: "/dashboard/education/educational-roadmap",
+    href: "/dashboard/education/education-planning",
   },
   courses: {
     label: "Open learning paths",
@@ -92,7 +92,7 @@ export function getWorkspaceRecordAction(
   if (workspace === "learning-path" || workspace === "educational-roadmap") {
     return {
       label: "Continue planning",
-      href: "/dashboard/education/educational-roadmap",
+      href: "/dashboard/education/education-planning",
     };
   }
   if (workspace === "certifications" || workspace === "certificates") {

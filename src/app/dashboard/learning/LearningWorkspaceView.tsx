@@ -173,7 +173,7 @@ function GoalContextCards({
             Talk with Guidance Counselor
           </Link>
           <Link
-            href="/dashboard/goals?module=education"
+            href="/dashboard/education/goals"
             className="beast-button-secondary inline-flex justify-center"
           >
             Open Education goals
@@ -207,7 +207,7 @@ function GoalContextCards({
             </p>
           ) : null}
           <Link
-            href="/dashboard/goals?module=education"
+            href="/dashboard/education/goals"
             className="beast-button-secondary mt-4 inline-flex w-full justify-center sm:w-fit"
           >
             Open goal

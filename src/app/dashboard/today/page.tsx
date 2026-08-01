@@ -1019,7 +1019,7 @@ export default function TodayPage() {
                 Talk with Guidance Counselor
               </Link>
               <Link
-                href="/dashboard/education/educational-roadmap"
+                href="/dashboard/education/education-planning"
                 className="beast-button-secondary"
               >
                 Review roadmap

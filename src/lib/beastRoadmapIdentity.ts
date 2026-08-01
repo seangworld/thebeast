@@ -359,6 +359,12 @@ export const beastRoadmapPackageRegistry = [
     ["20260801000700_transform_beast_goals_life_planning_hub.sql"]
   ),
   packageIdentity(
+    "BO-502",
+    ["BO-502"],
+    "Contextual Shared Workspaces and Education Planning Navigation",
+    ["docs/BO-502-CONTEXTUAL-WORKSPACES.md"]
+  ),
+  packageIdentity(
     "BE-201",
     ["BE-201"],
     "Education and Career Intelligence",

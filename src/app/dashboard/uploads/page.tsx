@@ -43,6 +43,10 @@ import {
   supportedDocumentFileTypes,
 } from "@/lib/platform/documents";
 import { DocumentUploadDropzone } from "./DocumentUploadDropzone";
+import {
+  documentMatchesContext,
+  getContextualWorkspaceConfig,
+} from "@/lib/platform/contextualWorkspaces";
 
 const uploadCategories: {
   label: string;
@@ -86,12 +90,10 @@ export default async function UploadsPage({
   searchParams?: { module?: string };
 }) {
   const documentLoadResult = await getDocumentLoadResult();
-  const educationFilter = searchParams?.module === "education";
-  const documents = educationFilter
-    ? documentLoadResult.documents.filter(
-        (document) =>
-          document.sourceModule === "learning" ||
-          document.moduleLinks.some((link) => link.sourceModule === "learning")
+  const context = getContextualWorkspaceConfig(searchParams?.module);
+  const documents = context
+    ? documentLoadResult.documents.filter((document) =>
+        documentMatchesContext(document, context)
       )
     : documentLoadResult.documents;
   const folders = documentLoadResult.folders;
@@ -107,15 +109,16 @@ export default async function UploadsPage({
       <div className="beast-container space-y-8">
         <PlatformServiceHero
           module="documents"
-          eyebrow="BeastOS Shared Service"
-          title="Documents"
+          eyebrow={context ? `${context.applicationName} · BeastOS Shared Service` : "BeastOS Shared Service"}
+          title={context?.documentsLabel || "Documents"}
           description="Documents are shared Personal Hub records owned by BeastOS. Modules can reference files without owning the document."
           action={<ModuleBadge module="beastos" label="BeastOS Owned" />}
         />
-        {educationFilter ? (
+        {context ? (
           <div className="rounded-xl border border-indigo-300/20 bg-indigo-300/[0.07] p-4 text-sm leading-6 text-indigo-50">
-            Showing BeastOS documents connected to BeastEducation. New files
-            remain owned by the shared Documents service.
+            Showing BeastOS documents connected to {context.applicationName}.
+            New files remain owned by the shared Documents service and receive
+            an owner-scoped contextual link.
           </div>
         ) : null}
 
@@ -183,7 +186,7 @@ export default async function UploadsPage({
               title="Add a document"
               description="Add one file to the shared BeastOS Upload Center. The workflow stores the file and records owner-scoped document metadata. Automatic AI extraction is intentionally not part of Upload Center; owner-reviewed local medical extraction is available from BeastHealth Documents."
             />
-            <DocumentUploadDropzone />
+            <DocumentUploadDropzone context={context} />
             <div className="mt-5 text-xs font-bold uppercase text-[#7f8da3]">
               Supported file types
             </div>
