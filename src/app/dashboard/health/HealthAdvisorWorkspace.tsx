@@ -842,6 +842,7 @@ export function HealthAdvisorWorkspace() {
               context: pendingKnowledgeAnswer,
               topic: knowledgePrompt.id,
               provenance: "member_confirmed_conversation",
+              conversation_id: activeConversationId || null,
             },
             notes: null,
           });

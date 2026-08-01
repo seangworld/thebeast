@@ -36,6 +36,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { BeastHealthShell } from "./BeastHealthShell";
 import { HealthDiscoveryOnboarding } from "./HealthDiscoveryOnboarding";
+import { LivingHealthTimeline } from "./LivingHealthTimeline";
 
 const statusOptions: HealthRecordStatus[] = [
   "active",
@@ -1555,40 +1556,23 @@ export function HealthOverviewWorkspace() {
 
 export function HealthTimelineWorkspace() {
   const { records, loading, error } = useHealthRecords();
-  const timeline = useMemo(() => buildHealthTimeline(records), [records]);
   return (
     <BeastHealthShell
       title="Health Timeline"
-      description="A chronological view derived from owner-entered BeastHealth records."
+      description="Your living health story, grounded in owner-entered records and confirmed Health Advisor context."
     >
       <DashboardCard accent="health">
         <SectionHeader
-          eyebrow="Chronology"
-          title="Health record history"
-          description="Dates and sources remain visible. No event or trend is inferred."
+          eyebrow="Living health story"
+          title="Your health history in context"
+          description="Search and navigate saved events, their sources, and explicit record relationships. BeastHealth does not infer clinical meaning, causes, or outcomes."
         />
-        {error ? <p className="mt-4 rounded-xl border border-amber-300/30 bg-amber-300/10 p-4 text-sm text-amber-100" role="alert">{error}</p> : null}
-        <div className="mt-5">
-          {loading ? (
-            <p role="status" className="text-sm text-[#c7cfdb]">Loading timeline…</p>
-          ) : timeline.length ? (
-            <ol className="grid gap-3">
-              {timeline.map((item) => (
-                <li key={item.id} className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
-                  <p className="text-xs font-black uppercase tracking-wide text-red-200">{formatDate(item.date)} · {formatKind(item.recordType)}</p>
-                  <h2 className="mt-2 font-black text-white">{item.title}</h2>
-                  <p className="mt-1 text-sm text-[#c7cfdb]">{item.status}{item.source ? ` · Source: ${item.source}` : ""}</p>
-                </li>
-              ))}
-            </ol>
-          ) : (
-            <GuidedEmptyState
-              title="No health timeline yet"
-              description="The timeline appears after you save a dated health record."
-              guidance="No placeholder health activity is generated."
-              nextAction={{ label: "Open Health Overview", href: "/dashboard/health" }}
-            />
-          )}
+        <div className="mt-5 min-w-0">
+          <LivingHealthTimeline
+            records={records}
+            loading={loading}
+            error={error}
+          />
         </div>
       </DashboardCard>
     </BeastHealthShell>
