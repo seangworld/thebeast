@@ -36,6 +36,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { BeastHealthShell } from "./BeastHealthShell";
 import { HealthDiscoveryOnboarding } from "./HealthDiscoveryOnboarding";
+import { HealthDocumentExtractionReview } from "./HealthDocumentExtractionReview";
 import { LivingHealthTimeline } from "./LivingHealthTimeline";
 
 const statusOptions: HealthRecordStatus[] = [
@@ -1118,6 +1119,8 @@ export function HealthRecordWorkspace({ kind }: { kind: HealthRecordKind }) {
             {statusMessage}
           </p>
         ) : null}
+
+        {kind === "document" ? <HealthDocumentExtractionReview /> : null}
 
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(20rem,0.85fr)]">
           <DashboardCard accent="red">

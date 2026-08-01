@@ -354,6 +354,17 @@ export const beastRoadmapPackageRegistry = [
     ["20260801000400_add_beast_health_discovery.sql"]
   ),
   packageIdentity(
+    "BH-204",
+    ["BH-204"],
+    "Intelligent Medical Records",
+    [
+      "src/lib/health/documentExtraction.ts",
+      "src/app/api/health/documents/[documentId]/extract/route.ts",
+      "supabase/migrations/20260801000500_add_health_document_extractions.sql",
+    ],
+    ["20260801000500_add_health_document_extractions.sql"]
+  ),
+  packageIdentity(
     "BA-ADS-201",
     ["BA-ADS-201"],
     "Revenue Center and AdSense Management",

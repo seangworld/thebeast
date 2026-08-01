@@ -133,7 +133,7 @@ export const healthWorkspaceDefinitions: Record<
     detailLabel: "Document type or reference",
     sourceLabel: "Provider or source",
     guidance:
-      "This beta stores a reference only. It does not extract, summarize, or interpret document contents.",
+      "Document extraction creates review proposals only. Nothing becomes a permanent health record until the owner approves it, and BeastHealth does not interpret clinical meaning.",
   },
   lifestyle: {
     kind: "lifestyle",
