@@ -54,7 +54,7 @@ test("BH-201 models every requested discovery topic without a questionnaire", ()
   );
   assert.match(workspace, /One question for now/);
   assert.match(workspace, /Skip for now/);
-  assert.match(workspace, /Choose another topic/);
+  assert.match(workspace, /Choose another area/);
   assert.match(workspace, /role="progressbar"/);
   assert.doesNotMatch(workspace, /<form/);
 });

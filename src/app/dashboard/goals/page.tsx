@@ -230,21 +230,27 @@ export default async function GoalsOverviewPage({
           module="goals"
           eyebrow={context?.key === "education"
             ? "Education & Career Planning"
+            : context?.key === "health"
+              ? "Your Health Story"
             : context
               ? `${context.applicationName} · BeastOS Shared Service`
               : "BeastOS Shared Service"}
           title={context?.goalsLabel || "BeastGoals"}
           description={context?.key === "education"
             ? "These are the education goals you're working toward."
+            : context?.key === "health"
+              ? "These are the health goals you're working toward."
             : "The BeastOS Life Planning Hub: one owner-controlled source for financial, education, career, health, home, family, personal, and project goals."}
-          action={context?.key === "education"
-            ? <ModuleBadge module="learning" label="Saved in Beast" />
+          action={context?.key === "education" || context?.key === "health"
+            ? <ModuleBadge module={context.key === "health" ? "health" : "learning"} label="Saved in Beast" />
             : <ModuleBadge module="beastos" label="BeastOS Owned" />}
         />
         {context ? (
           <div className="rounded-xl border border-indigo-300/20 bg-indigo-300/[0.07] p-4 text-sm leading-6 text-indigo-50">
             {context.key === "education"
               ? "Your Guidance Counselor uses these goals to keep your plan focused. Add or update one goal when you are ready."
+              : context.key === "health"
+                ? "Health goals help Beast understand what matters to you and keep your next steps together. Add or update one goal when you are ready."
               : `Showing BeastOS-owned goals connected to ${context.applicationName}. Cross-module links remain attached to this one authoritative goal.`}
           </div>
         ) : null}

@@ -125,9 +125,9 @@ export function HealthDiscoveryOnboarding({
     <section aria-labelledby="health-discovery-title">
       <DashboardCard accent="health">
         <SectionHeader
-          eyebrow="Guided health discovery"
-          title="Build your health profile over time"
-          description="Start with one topic. You can skip anything and resume later; confirmed answers stay in your private BeastHealth record."
+          eyebrow="One step at a time"
+          title="Build your health story over time"
+          description="Answer one simple question, skip anything you do not want to answer, and come back whenever you are ready."
         />
 
         <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)]">
@@ -142,7 +142,7 @@ export function HealthDiscoveryOnboarding({
                 </h2>
               </div>
               <span className="text-sm font-bold text-[#c7cfdb]">
-                {progress.completed} of {progress.total} available topics
+                {progress.completed} of {progress.total} areas finished
               </span>
             </div>
             <div
@@ -161,11 +161,11 @@ export function HealthDiscoveryOnboarding({
 
             {busy ? (
               <p className="mt-5 text-sm text-[#c7cfdb]" role="status">
-                Loading your saved discovery progress…
+                Loading your saved progress…
               </p>
             ) : recordsUnavailable ? (
               <p className="mt-5 rounded-xl border border-amber-300/30 bg-amber-300/10 p-4 text-sm leading-6 text-amber-100">
-                Health discovery cannot calculate progress while your records are unavailable.
+                Your progress cannot be calculated while your saved health records are unavailable.
               </p>
             ) : activeTopic ? (
               <div className="mt-5">
@@ -200,26 +200,26 @@ export function HealthDiscoveryOnboarding({
                 </div>
                 {activeTopic.status === "unavailable" ? (
                   <p className="mt-3 text-xs leading-5 text-[#9aa7b8]">
-                    Managed by BeastOS. Emergency Contacts is still planned, so it is excluded from completion until that source is available.
+                    Emergency contacts will be added through BeastOS in the future, so this area does not count toward your progress yet.
                   </p>
                 ) : null}
               </div>
             ) : (
               <p className="mt-5 rounded-xl border border-emerald-300/20 bg-emerald-300/[0.06] p-4 text-sm leading-6 text-emerald-100">
-                Your available discovery topics are complete. You can still review or update any area below.
+                You finished every available area. You can still review or update anything below.
               </p>
             )}
 
             {workflowUnavailable ? (
               <p className="mt-4 text-xs leading-5 text-amber-100" role="alert">
-                Resume and skip preferences are temporarily unavailable. Your health records were not changed.
+                Beast cannot remember where you paused right now. Your health records were not changed.
               </p>
             ) : null}
           </div>
 
           <div className="min-w-0">
             <p className="text-xs font-black uppercase tracking-[0.16em] text-[#9aa7b8]">
-              Profile areas
+              Your progress
             </p>
             <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
               {progress.categories.map((category) => (
@@ -245,7 +245,7 @@ export function HealthDiscoveryOnboarding({
         </div>
 
         <details className="mt-4 rounded-xl border border-white/10 bg-black/10 p-4">
-          <summary className="cursor-pointer font-bold text-white">Choose another topic</summary>
+          <summary className="cursor-pointer font-bold text-white">Choose another area</summary>
           <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
             {progress.topics.map((topic) => (
               <button
@@ -258,7 +258,13 @@ export function HealthDiscoveryOnboarding({
               >
                 <span className="block font-bold text-white">{topic.label}</span>
                 <span className="mt-1 block text-xs capitalize text-[#9aa7b8]">
-                  {topic.status === "unavailable" ? "Managed by BeastOS — planned" : topic.status}
+                  {topic.status === "unavailable"
+                    ? "Coming later"
+                    : topic.status === "complete"
+                      ? "Done"
+                      : topic.status === "available"
+                        ? "Ready"
+                        : "Skipped for now"}
                 </span>
               </button>
             ))}

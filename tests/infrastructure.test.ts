@@ -6092,12 +6092,12 @@ test("BeastAdmin foundation registers modules and protects owner-only navigation
       "Procedures",
       "Family History",
       "Lifestyle",
-      "Vitals",
+      "Health Measurements",
       "Health Goals",
       "Health Documents",
-      "Provider Directory",
+      "Providers",
       "Appointments",
-      "Health Timeline",
+      "Timeline",
     ]
   );
   assert.equal(
@@ -6344,12 +6344,12 @@ test("BeastHealth is owner-only and Health Advisor preserves medical boundaries"
     "Procedures",
     "Family History",
     "Lifestyle",
-    "Vitals",
+    "Health Measurements",
     "Health Goals",
     "Health Documents",
-    "Provider Directory",
+    "Providers",
     "Appointments",
-    "Health Timeline",
+    "Timeline",
     "Health Advisor",
   ].forEach((label) => assert.equal(shell.includes(label), true));
 
@@ -6372,7 +6372,8 @@ test("BeastHealth is owner-only and Health Advisor preserves medical boundaries"
   assert.match(advisor, /never diagnoses or replaces clinicians/);
   assert.match(advisor, /SupabaseExecutionHistoryStore/);
   assert.match(advisor, /recordResultAndOutcome/);
-  assert.match(pages, /active Health Advisor/);
+  assert.match(pages, /Build your health story/);
+  assert.match(shell, /Health Advisor Active/);
   assert.match(layout, /pathname\.startsWith\("\/dashboard\/health"\)/);
   assert.equal(
     buildBeastModuleNavigationForPersona({

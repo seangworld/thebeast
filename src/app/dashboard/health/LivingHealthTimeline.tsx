@@ -133,7 +133,7 @@ export function LivingHealthTimeline({ records, loading, error }: Props) {
             ? "Health records are unavailable, so BeastHealth cannot build the timeline."
             : "The timeline grows from dated records and confirmed Health Advisor conversations."
         }
-        guidance="No placeholder health activity, clinical event, or relationship is generated."
+        guidance="Beast shows only health events you saved. It does not make up missing activity."
         nextAction={{ label: "Open Health Overview", href: "/dashboard/health" }}
       />
     );
@@ -160,7 +160,7 @@ export function LivingHealthTimeline({ records, loading, error }: Props) {
             />
           </label>
           <label className="grid min-w-0 gap-2 text-sm font-bold text-[#dbe3ef]">
-            Filter event type
+            Show only
             <select
               className="beast-input min-w-0"
               value={eventType}
@@ -168,7 +168,7 @@ export function LivingHealthTimeline({ records, loading, error }: Props) {
                 setEventType(event.target.value as LivingHealthTimelineEventType | "all")
               }
             >
-              <option value="all">All events</option>
+              <option value="all">All health events</option>
               {livingHealthTimelineEventTypes.map((type) => (
                 <option key={type} value={type}>{formatLivingHealthEventType(type)}</option>
               ))}
@@ -179,7 +179,7 @@ export function LivingHealthTimeline({ records, loading, error }: Props) {
         <div className="grid min-w-0 gap-3 xl:grid-cols-3">
           <form className="grid min-w-0 gap-2 sm:grid-cols-[minmax(0,1fr)_auto]" onSubmit={submitDateJump}>
             <label className="grid min-w-0 gap-2 text-sm font-bold text-[#dbe3ef]">
-              Jump to date
+              Go to date
               <input
                 type="date"
                 className="beast-input min-w-0"
@@ -193,9 +193,9 @@ export function LivingHealthTimeline({ records, loading, error }: Props) {
           </form>
           <div className="grid min-w-0 gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
             <label className="grid min-w-0 gap-2 text-sm font-bold text-[#dbe3ef]">
-              Jump to provider
+              Go to doctor or specialist
               <select className="beast-input min-w-0" value={providerId} onChange={(event) => setProviderId(event.target.value)}>
-                <option value="">Select provider</option>
+                <option value="">Choose a doctor or specialist</option>
                 {providers.map((provider) => <option key={provider.id} value={provider.id}>{provider.label}</option>)}
               </select>
             </label>
@@ -205,7 +205,7 @@ export function LivingHealthTimeline({ records, loading, error }: Props) {
           </div>
           <div className="grid min-w-0 gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
             <label className="grid min-w-0 gap-2 text-sm font-bold text-[#dbe3ef]">
-              Jump to condition
+              Go to condition
               <select className="beast-input min-w-0" value={conditionId} onChange={(event) => setConditionId(event.target.value)}>
                 <option value="">Select condition</option>
                 {conditions.map((condition) => <option key={condition.id} value={condition.id}>{condition.label}</option>)}
@@ -252,11 +252,11 @@ export function LivingHealthTimeline({ records, loading, error }: Props) {
                   <span className="font-bold text-white">Source:</span> {event.source || "Source not recorded"}
                 </p>
                 <dl className="mt-4 grid min-w-0 gap-4 border-t border-white/10 pt-4 md:grid-cols-2 xl:grid-cols-4">
-                  <TimelineLinks label="Linked records" links={event.linkedRecords} />
-                  <TimelineLinks label="Documents" links={event.documents} />
-                  <TimelineLinks label="Providers" links={event.providers} />
+                  <TimelineLinks label="Related records" links={event.linkedRecords} />
+                  <TimelineLinks label="Health documents" links={event.documents} />
+                  <TimelineLinks label="Doctors and specialists" links={event.providers} />
                   <div className="min-w-0">
-                    <dt className="text-[11px] font-black uppercase tracking-wide text-[#8f9cad]">Conversation references</dt>
+                    <dt className="text-[11px] font-black uppercase tracking-wide text-[#8f9cad]">Health Advisor conversations</dt>
                     <dd className="mt-1 flex min-w-0 flex-wrap gap-1.5">
                       {event.conversationReferences.length ? (
                         event.conversationReferences.map((reference) => (

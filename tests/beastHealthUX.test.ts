@@ -21,12 +21,12 @@ test("BP-300 promotes Health Advisor directly below Overview in the shared sideb
       "Procedures",
       "Family History",
       "Lifestyle",
-      "Vitals",
+      "Health Measurements",
       "Health Goals",
       "Health Documents",
-      "Provider Directory",
+      "Providers",
       "Appointments",
-      "Health Timeline",
+      "Timeline",
     ]
   );
   assert.equal(health.children?.[0]?.group, undefined);
@@ -52,20 +52,20 @@ test("BP-300 removes the duplicate BeastHealth horizontal page navigation", () =
   assert.match(shell, /beast-container space-y-4/);
 });
 
-test("BP-300 makes Overview an advisor-led executive health briefing", () => {
+test("BH-205 makes Overview a member-led health story", () => {
   const workspace = readFileSync(
     "src/app/dashboard/health/BeastHealthWorkspace.tsx",
     "utf8"
   );
 
   [
-    "Executive Health Briefing",
+    "Your health today",
     "Recent changes",
     "Upcoming appointments",
-    "Medication summary",
+    "Your medicines",
     "Suggested questions for providers",
-    "Timeline summary",
-    "Recommended actions",
+    "Your health story",
+    "Possible next steps",
   ].forEach((label) => assert.match(workspace, new RegExp(label)));
 
   assert.match(workspace, /buildHealthAdvisorModel\(\{ records \}\)/);
@@ -81,24 +81,24 @@ test("BP-300 gives each record workspace purpose-specific presentation", () => {
   );
 
   [
-    "Personal health context",
-    "Known conditions",
-    "Medication organization",
-    "Procedure history",
-    "Recorded measurements",
-    "Medical references",
-    "Personal context",
-    "Family context",
-    "Care contacts",
-    "Visit planning",
+    "Your information",
+    "Your conditions",
+    "Your medicines",
+    "Your procedures",
+    "Your measurements",
+    "Your documents",
+    "Your routines",
+    "Your family history",
+    "Your care team",
+    "Your visits",
   ].forEach((label) => assert.match(workspace, new RegExp(label)));
 
   assert.match(workspace, /data-health-record-purpose=\{kind\}/);
   assert.match(workspace, /presentation\.collectionTitle/);
   assert.match(workspace, /presentation\.emptyGuidance/);
-  assert.match(workspace, /Health Advisor workspace/);
+  assert.match(workspace, /Talk with Health Advisor/);
   assert.match(workspace, /ProfessionalKnowledgeWorkspace/);
-  assert.match(workspace, /Direct record editing/);
+  assert.match(workspace, /Add it yourself/);
   assert.match(workspace, /\.from\("beast_health_records"\)/);
   assert.match(workspace, /\.insert\(/);
   assert.match(workspace, /\.update\(/);

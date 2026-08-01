@@ -53,6 +53,9 @@ export type HealthWorkspaceDefinition = {
   kind: HealthRecordKind;
   title: string;
   description: string;
+  why: string;
+  how: string;
+  nextStep: string;
   singular: string;
   titleLabel: string;
   detailLabel: string;
@@ -68,7 +71,10 @@ export const healthWorkspaceDefinitions: Record<
     kind: "profile",
     title: "Health Profile",
     description:
-      "Owner-controlled health background and care preferences without duplicating BeastOS identity.",
+      "This helps Beast understand your health so it can give you better guidance.",
+    why: "Your health background helps put your records, goals, and appointments in context.",
+    how: "Beast uses only the information you save to organize your health story and prepare useful questions.",
+    nextStep: "Add one thing that would help someone understand your health today. You can skip anything and return later.",
     singular: "profile item",
     titleLabel: "Profile item",
     detailLabel: "Value or context",
@@ -80,7 +86,10 @@ export const healthWorkspaceDefinitions: Record<
     kind: "condition",
     title: "Conditions",
     description:
-      "A personal record of conditions and status—not a diagnostic system.",
+      "Tell us about any health conditions you have now or had in the past.",
+    why: "Knowing your conditions helps keep related medicines, visits, and records together.",
+    how: "Beast organizes what you enter. It does not diagnose a condition or decide what treatment you need.",
+    nextStep: "Add one condition you already know about, or review something you saved earlier.",
     singular: "condition",
     titleLabel: "Condition name",
     detailLabel: "Care context",
@@ -92,7 +101,10 @@ export const healthWorkspaceDefinitions: Record<
     kind: "medication",
     title: "Medications",
     description:
-      "Medication, dose, schedule, and status records under owner control.",
+      "List the medicines you take so Beast can understand your health story.",
+    why: "A clear medicine list can help you prepare for visits and keep your records organized.",
+    how: "Beast stores the name, amount, schedule, and source exactly as you enter them.",
+    nextStep: "Add one medicine from a label or prescription, or check that a saved medicine is still correct.",
     singular: "medication",
     titleLabel: "Medication name",
     detailLabel: "Dose and schedule",
@@ -103,7 +115,10 @@ export const healthWorkspaceDefinitions: Record<
   procedure: {
     kind: "procedure",
     title: "Procedures",
-    description: "Procedure history, dates, providers, and recovery context.",
+    description: "Keep track of surgeries, treatments, and other procedures you have had or are planning.",
+    why: "Dates and details help connect procedures with your doctors, documents, and health timeline.",
+    how: "Beast organizes the information you save without deciding what it means medically.",
+    nextStep: "Add one procedure you know about, including the date if you have it.",
     singular: "procedure",
     titleLabel: "Procedure",
     detailLabel: "Facility or care context",
@@ -113,9 +128,12 @@ export const healthWorkspaceDefinitions: Record<
   },
   vital: {
     kind: "vital",
-    title: "Vitals",
+    title: "Health Measurements",
     description:
-      "Dated measurements recorded exactly as entered, without clinical interpretation.",
+      "Keep track of measurements like blood pressure, temperature, weight, or heart rate.",
+    why: "Saved dates and units make it easier to bring accurate information to a health visit.",
+    how: "Beast shows measurements exactly as you enter them and does not decide whether they are normal.",
+    nextStep: "Add one measurement with its date, number, unit, and source.",
     singular: "measurement",
     titleLabel: "Measurement type",
     detailLabel: "Value and unit",
@@ -127,7 +145,10 @@ export const healthWorkspaceDefinitions: Record<
     kind: "document",
     title: "Documents",
     description:
-      "Health-specific references to records managed through BeastOS Documents.",
+      "Upload records like visit summaries, lab reports, or vaccination records.",
+    why: "Keeping records together makes them easier to find when you prepare for care.",
+    how: "Beast can suggest information found in a document, but you review it before anything is added to your health record.",
+    nextStep: "Upload one useful health record or review information Beast found in a document.",
     singular: "document reference",
     titleLabel: "Document label",
     detailLabel: "Document type or reference",
@@ -139,7 +160,10 @@ export const healthWorkspaceDefinitions: Record<
     kind: "lifestyle",
     title: "Lifestyle",
     description:
-      "Owner-entered sleep, movement, nutrition, and wellness context.",
+      "Share everyday habits like sleep, movement, food, and other routines that affect your health story.",
+    why: "Daily routines can give useful context for your goals and conversations with a doctor.",
+    how: "Beast keeps only what you choose to share and does not turn it into medical advice.",
+    nextStep: "Add one routine you want to remember or discuss later.",
     singular: "lifestyle record",
     titleLabel: "Habit or context",
     detailLabel: "Cadence or details",
@@ -151,7 +175,10 @@ export const healthWorkspaceDefinitions: Record<
     kind: "family_history",
     title: "Family History",
     description:
-      "Sensitive family health context with explicit relationship provenance.",
+      "Tell us about health conditions that run in your family, if you know them.",
+    why: "Family history can be useful information to bring to a doctor or specialist.",
+    how: "Beast records the relative and source you provide without deciding your personal risk.",
+    nextStep: "Add one family health detail you know, or skip this area and return later.",
     singular: "family-history record",
     titleLabel: "Condition or health pattern",
     detailLabel: "Relationship and context",
@@ -161,9 +188,12 @@ export const healthWorkspaceDefinitions: Record<
   },
   provider: {
     kind: "provider",
-    title: "Provider Directory",
+    title: "Providers",
     description:
-      "A private directory of care providers and contact context.",
+      "Tell us about your doctors and specialists.",
+    why: "A care-team list helps connect appointments, records, and questions to the right person or office.",
+    how: "Beast keeps the names and contact details you enter. It does not verify credentials or insurance coverage.",
+    nextStep: "Add your primary doctor, a specialist, or a medical practice you use.",
     singular: "provider",
     titleLabel: "Provider or practice",
     detailLabel: "Specialty and contact details",
@@ -175,7 +205,10 @@ export const healthWorkspaceDefinitions: Record<
     kind: "appointment",
     title: "Appointments",
     description:
-      "Upcoming and historical care appointments with owner-entered preparation context.",
+      "Keep track of upcoming visits and appointments from the past.",
+    why: "Saving the date, doctor, and purpose helps you prepare records and questions.",
+    how: "Beast organizes the visit details you enter; always confirm instructions with the doctor or office.",
+    nextStep: "Add your next confirmed appointment or review an earlier visit.",
     singular: "appointment",
     titleLabel: "Appointment or visit",
     detailLabel: "Purpose and preparation context",

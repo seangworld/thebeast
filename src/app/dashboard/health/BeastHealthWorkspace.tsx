@@ -56,82 +56,82 @@ const healthWorkspacePresentation: Record<
   }
 > = {
   profile: {
-    eyebrow: "Personal health context",
+    eyebrow: "Your information",
     collectionTitle: "Your health background",
     collectionDescription:
-      "Keep the background, preferences, and care context you want available during preparation.",
+      "Keep the health details and care preferences you want Beast to remember.",
     emptyGuidance:
       "Start with one confirmed piece of health context that would help you prepare for a clinician conversation.",
   },
   condition: {
-    eyebrow: "Known conditions",
-    collectionTitle: "Condition record",
+    eyebrow: "Your conditions",
+    collectionTitle: "Conditions you saved",
     collectionDescription:
-      "Review the conditions and statuses you entered without adding diagnostic interpretation.",
+      "Review the conditions and dates you entered. Beast does not add a diagnosis.",
     emptyGuidance:
       "Add only a condition you already know, using the wording and source available to you.",
   },
   medication: {
-    eyebrow: "Medication organization",
-    collectionTitle: "Medication list",
+    eyebrow: "Your medicines",
+    collectionTitle: "Medicines you saved",
     collectionDescription:
-      "Keep names, schedules, sources, and status together for clinician or pharmacist review.",
+      "Keep names, amounts, schedules, and sources together for your next visit or pharmacy conversation.",
     emptyGuidance:
       "Add a medication from a label, prescription, or other source you can verify.",
   },
   procedure: {
-    eyebrow: "Procedure history",
-    collectionTitle: "Procedure record",
+    eyebrow: "Your procedures",
+    collectionTitle: "Procedures you saved",
     collectionDescription:
-      "Organize procedure dates, facilities, and recovery context without clinical interpretation.",
+      "Keep dates, places, and notes together without Beast deciding what they mean medically.",
     emptyGuidance:
       "Add a known procedure and its source so it can appear in your timeline.",
   },
   vital: {
-    eyebrow: "Recorded measurements",
-    collectionTitle: "Vitals log",
+    eyebrow: "Your measurements",
+    collectionTitle: "Measurements you saved",
     collectionDescription:
-      "Review measurements exactly as entered, including date, unit, and source context.",
+      "Review each number exactly as entered, including its date, unit, and source.",
     emptyGuidance:
       "Add a dated measurement with its unit and source. BeastHealth will not interpret it.",
   },
   document: {
-    eyebrow: "Medical references",
-    collectionTitle: "Health document references",
+    eyebrow: "Your documents",
+    collectionTitle: "Health records you saved",
     collectionDescription:
-      "Keep health-specific document references easy to find while originals remain authoritative.",
+      "Keep visit summaries, lab reports, vaccination records, and other health files easy to find.",
     emptyGuidance:
       "Add a reference to a real document without entering conclusions that are not in the source.",
   },
   lifestyle: {
-    eyebrow: "Personal context",
-    collectionTitle: "Lifestyle context",
+    eyebrow: "Your routines",
+    collectionTitle: "Lifestyle details you saved",
     collectionDescription:
-      "Organize owner-entered sleep, movement, nutrition, and wellness context without medical coaching.",
+      "Review the sleep, movement, food, and wellness details you chose to save.",
     emptyGuidance:
       "Add a habit or cadence you want available as context for future provider questions.",
   },
   family_history: {
-    eyebrow: "Family context",
-    collectionTitle: "Family health history",
+    eyebrow: "Your family history",
+    collectionTitle: "Family health details you saved",
     collectionDescription:
-      "Review sensitive relationship-backed context without inferring personal risk.",
+      "Review the family health details and relationships you entered. Beast does not decide your personal risk.",
     emptyGuidance:
       "Add only family history you know, including the relationship and source when available.",
   },
   provider: {
-    eyebrow: "Care contacts",
-    collectionTitle: "Provider directory",
+    eyebrow: "Your care team",
+    collectionTitle: "Doctors and specialists you saved",
     collectionDescription:
-      "Keep practices, specialties, and contact context together for appointment preparation.",
+      "Keep names, specialties, offices, and contact details together for visits.",
     emptyGuidance:
       "Add a provider or practice you use; confirm credentials and network status independently.",
   },
   appointment: {
-    eyebrow: "Visit planning",
-    collectionTitle: "Appointments",
+    eyebrow: "Your visits",
+    collectionTitle: "Appointments you saved",
     collectionDescription:
-      "Review upcoming and historical visits with the preparation context you entered.",
+      "Review upcoming visits and appointments from the past using the details you entered.",
     emptyGuidance:
       "Add a confirmed visit date and verify instructions directly with the provider.",
   },
@@ -318,12 +318,12 @@ function buildWorkspaceKnowledgeModel(input: {
       evidence: recommendation.supportingEvidence.map((evidence) =>
         "healthRecordId" in evidence
           ? `Saved record ${String(evidence.healthRecordId)}`
-          : "Owner-authorized BeastHealth context"
+          : "Information you chose to save in BeastHealth"
       ),
       action: {
         label: "Discuss this",
         mode: "conversation",
-        prompt: `Help me understand this organizational recommendation: ${recommendation.title}.`,
+        prompt: `Help me understand this idea: ${recommendation.title}.`,
       },
     }));
   const needed: ProfessionalKnowledgeItem[] = [];
@@ -351,11 +351,11 @@ function buildWorkspaceKnowledgeModel(input: {
     if (missingSource.length) {
       needed.push({
         id: `health-workspace-needed-${input.kind}-source`,
-        label: "Source context",
-        summary: `${missingSource.length} saved ${definition.singular}${missingSource.length === 1 ? "" : "s"} ${missingSource.length === 1 ? "does" : "do"} not include a source.`,
+        label: "Where this came from",
+        summary: `${missingSource.length} saved ${definition.singular}${missingSource.length === 1 ? "" : "s"} ${missingSource.length === 1 ? "does" : "do"} not say where the information came from.`,
         confidence: "unknown",
         action: {
-          label: "Add through conversation",
+          label: "Tell Health Advisor",
           mode: "conversation",
           prompt: `Help me add source context to my saved ${topic.conversationTitle}.`,
         },
@@ -364,11 +364,11 @@ function buildWorkspaceKnowledgeModel(input: {
     if (missingDate.length) {
       needed.push({
         id: `health-workspace-needed-${input.kind}-date`,
-        label: "Timeline context",
+        label: "When this happened",
         summary: `${missingDate.length} saved ${definition.singular}${missingDate.length === 1 ? "" : "s"} ${missingDate.length === 1 ? "does" : "do"} not include a date.`,
         confidence: "unknown",
         action: {
-          label: "Add through conversation",
+          label: "Tell Health Advisor",
           mode: "conversation",
           prompt: `Help me add accurate timeline context to my saved ${topic.conversationTitle}.`,
         },
@@ -377,11 +377,11 @@ function buildWorkspaceKnowledgeModel(input: {
     if (missingContext.length) {
       needed.push({
         id: `health-workspace-needed-${input.kind}-context`,
-        label: "Useful context",
-        summary: `${missingContext.length} saved ${definition.singular}${missingContext.length === 1 ? "" : "s"} ${missingContext.length === 1 ? "has" : "have"} no supporting context.`,
+        label: "Helpful details",
+        summary: `${missingContext.length} saved ${definition.singular}${missingContext.length === 1 ? "" : "s"} ${missingContext.length === 1 ? "has" : "have"} no extra details yet.`,
         confidence: "unknown",
         action: {
-          label: "Add through conversation",
+          label: "Tell Health Advisor",
           mode: "conversation",
           prompt: `Help me add only the context I know about my saved ${topic.conversationTitle}.`,
         },
@@ -398,9 +398,9 @@ function buildWorkspaceKnowledgeModel(input: {
     emptyStates: {
       known: `No ${definition.title.toLowerCase()} are confirmed yet. Start with Health Advisor when you are ready.`,
       thinking:
-        "Health Advisor has no evidence-backed observation for this workspace yet.",
+        "Health Advisor does not have enough saved information to offer an idea here yet.",
       needed:
-        "The saved records include the basic source, date, and context fields Health Advisor uses here.",
+        "Your saved records already include where the information came from, when it happened, and helpful details.",
     },
   };
 }
@@ -584,7 +584,7 @@ function RecordEditor({
         className="beast-button-primary min-h-11 w-full sm:w-fit"
         disabled={pending}
       >
-        {pending ? "Saving changes…" : "Save direct edits"}
+        {pending ? "Saving changes…" : "Save changes"}
       </button>
     </form>
   );
@@ -712,12 +712,11 @@ function RecordList({
 
               <div className="mt-4 rounded-xl border border-white/10 bg-black/10 p-3">
                 <p className="text-xs font-black uppercase text-red-200">
-                  Related context
+                  Related information
                 </p>
                 <p className="mt-2 text-xs leading-5 text-[#9aa7b8]">
-                  Continue this record through its authoritative workspace.
-                  Opening another workspace does not create or imply a medical
-                  relationship by itself.
+                  Open a related record or talk about this with Health Advisor.
+                  Beast keeps the original saved information attached.
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <Link
@@ -728,7 +727,7 @@ function RecordList({
                       record.id
                     )}
                   >
-                    Link conversation
+                    Talk about this
                   </Link>
                   {typeof record.details.linked_document_id === "string" &&
                   allRecords.some(
@@ -759,11 +758,10 @@ function RecordList({
 
               <details className="mt-4 rounded-xl border border-white/10 p-3">
                 <summary className="cursor-pointer font-bold text-cyan-100">
-                  Direct record editing
+                  Edit this record
                 </summary>
                 <p className="mt-2 text-xs leading-5 text-[#9aa7b8]">
-                  Use direct editing to correct confirmed record details.
-                  Conversation remains the preferred way to add new context.
+                  Use this form to correct information you already know.
                 </p>
                 <RecordEditor
                   key={`${record.id}-${record.updatedAt}`}
@@ -848,7 +846,6 @@ export function HealthRecordWorkspace({ kind }: { kind: HealthRecordKind }) {
   const [status, setStatus] = useState<HealthRecordStatus>("active");
   const [saving, setSaving] = useState(false);
   const [pendingId, setPendingId] = useState("");
-  const [conversationDraft, setConversationDraft] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
   const visibleRecords = records.filter((record) => record.recordType === kind);
   const activeRecords = visibleRecords.filter(
@@ -879,12 +876,6 @@ export function HealthRecordWorkspace({ kind }: { kind: HealthRecordKind }) {
     [advisorModel.recommendations, kind, records]
   );
   const presentation = healthWorkspacePresentation[kind];
-
-  function startConversation(event: FormEvent) {
-    event.preventDefault();
-    const prompt = conversationDraft.trim() || topic.openingPrompt;
-    router.push(buildHealthAdvisorConversationHref(kind, prompt));
-  }
 
   function beginKnowledgeConversation(item: ProfessionalKnowledgeItem) {
     if (item.action.mode !== "conversation") return;
@@ -1019,81 +1010,22 @@ export function HealthRecordWorkspace({ kind }: { kind: HealthRecordKind }) {
   }
 
   return (
-    <BeastHealthShell title={definition.title} description={definition.description}>
+    <BeastHealthShell
+      title={definition.title}
+      description={definition.description}
+      why={definition.why}
+      how={definition.how}
+      next={definition.nextStep}
+      action={{
+        label: "Talk with Health Advisor",
+        href: buildHealthAdvisorConversationHref(kind, topic.openingPrompt),
+      }}
+    >
       <section
         className="space-y-4"
         data-health-record-purpose={kind}
         data-health-advisor-workspace={kind}
       >
-        <DashboardCard accent="red">
-          <SectionHeader
-            eyebrow="Health Advisor workspace"
-            title={`Talk about your ${topic.conversationTitle}`}
-            description={`Conversation is the primary way to add, correct, and understand ${definition.title.toLowerCase()}. Health Advisor will show extracted information for confirmation before it becomes a structured record.`}
-            action={
-              <Link
-                href="/dashboard/health/ai-advisor"
-                className="beast-button-secondary inline-flex min-h-11 items-center"
-              >
-                Open full conversation
-              </Link>
-            }
-          />
-          <form
-            className="mt-5 rounded-2xl border border-white/10 bg-black/10 p-3"
-            onSubmit={startConversation}
-          >
-            <label
-              className="sr-only"
-              htmlFor={`health-advisor-${kind}-conversation`}
-            >
-              Message Health Advisor about {topic.conversationTitle}
-            </label>
-            <textarea
-              id={`health-advisor-${kind}-conversation`}
-              className="beast-input min-h-24 w-full min-w-0 resize-y"
-              maxLength={2000}
-              placeholder={topic.openingPrompt}
-              value={conversationDraft}
-              onChange={(event) => setConversationDraft(event.target.value)}
-            />
-            <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-              <p className="max-w-2xl text-xs leading-5 text-[#9aa7b8]">
-                Your message opens the durable Health Advisor conversation.
-                Saving structured context still requires your confirmation.
-              </p>
-              <button
-                type="submit"
-                className="beast-button-primary min-h-11"
-              >
-                Continue with Health Advisor
-              </button>
-            </div>
-          </form>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <Link
-              href={buildHealthAdvisorConversationHref(
-                kind,
-                topic.openingPrompt
-              )}
-              className="rounded-full border border-white/10 px-3 py-2 text-xs font-bold text-cyan-100 transition hover:border-cyan-300/40"
-            >
-              Review what is saved
-            </Link>
-            <Link
-              href={buildHealthAdvisorConversationHref(kind, topic.emptyPrompt)}
-              className="rounded-full border border-white/10 px-3 py-2 text-xs font-bold text-cyan-100 transition hover:border-cyan-300/40"
-            >
-              Add through conversation
-            </Link>
-          </div>
-          <p className="mt-4 text-xs leading-5 text-[#9aa7b8]">
-            Health Advisor organizes member-reported context. It does not
-            diagnose, prescribe, determine treatment, or tell you to change
-            medication.
-          </p>
-        </DashboardCard>
-
         {!loading ? (
           <DashboardCard accent="health">
             <ProfessionalKnowledgeWorkspace
@@ -1127,7 +1059,7 @@ export function HealthRecordWorkspace({ kind }: { kind: HealthRecordKind }) {
             <SectionHeader
               eyebrow={presentation.eyebrow}
               title={presentation.collectionTitle}
-              description={`${presentation.collectionDescription} Select any saved record to view, expand, edit, or continue it through Health Advisor.`}
+              description={`${presentation.collectionDescription} Choose any saved item to see its details or make a change.`}
             />
             <div className="mt-4 flex flex-wrap gap-2 text-xs font-bold text-[#c7cfdb]">
               <span className="rounded-full border border-white/10 px-3 py-1.5">
@@ -1244,9 +1176,9 @@ export function HealthRecordWorkspace({ kind }: { kind: HealthRecordKind }) {
           <details>
             <summary className="cursor-pointer list-none rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300">
               <SectionHeader
-                eyebrow="Direct record editing"
-                title={`Add ${definition.singular} manually`}
-                description={`${definition.guidance} Use this only when you want to enter a confirmed record directly. Conversation remains the primary experience.`}
+                eyebrow="Add it yourself"
+                title={`Add ${definition.singular} yourself`}
+                description={`${definition.guidance} Use this form when you already know what you want to save.`}
               />
             </summary>
             <form className="mt-5 grid gap-3" onSubmit={createRecord}>
@@ -1347,7 +1279,10 @@ export function HealthOverviewWorkspace() {
   return (
     <BeastHealthShell
       title="BeastHealth"
-      description="Your Health Advisor-led briefing, preparation, and private health record workspace."
+      description="Build your health story one step at a time and keep important information easy to find."
+      why="A complete health story can help you prepare for appointments and remember what happened over time."
+      how="Beast organizes only the information you save. It does not diagnose, prescribe, or replace a doctor."
+      next="Answer one guided question below. You can skip anything and come back later."
     >
       {error ? (
         <p className="rounded-xl border border-amber-300/30 bg-amber-300/10 p-4 text-sm leading-6 text-amber-100" role="alert">
@@ -1365,7 +1300,7 @@ export function HealthOverviewWorkspace() {
       <section className="space-y-4" aria-label="Health Advisor dashboard">
         <DashboardCard accent="health">
           <SectionHeader
-            eyebrow="Executive Health Briefing"
+            eyebrow="Your health today"
             title={model.executiveBriefing.title}
             description={model.executiveBriefing.summary}
             action={
@@ -1379,10 +1314,10 @@ export function HealthOverviewWorkspace() {
           />
           <div className="mt-4 flex flex-wrap gap-2 text-xs font-bold text-[#dbe3ef]">
             <span className="rounded-full border border-red-300/20 bg-red-300/[0.06] px-3 py-2">
-              {model.executiveBriefing.totalRecords} active records
+              {model.executiveBriefing.totalRecords} saved records
             </span>
             <span className="rounded-full border border-red-300/20 bg-red-300/[0.06] px-3 py-2">
-              {model.executiveBriefing.populatedAreas} populated areas
+              {model.executiveBriefing.populatedAreas} areas started
             </span>
             <span className="rounded-full border border-white/10 px-3 py-2 text-[#aeb8c7]">
               {model.executiveBriefing.lastUpdatedAt
@@ -1392,7 +1327,7 @@ export function HealthOverviewWorkspace() {
           </div>
           {loading ? (
             <p className="mt-4 text-sm text-[#c7cfdb]" role="status">
-              Loading owner-authorized health context…
+              Loading your saved health information…
             </p>
           ) : null}
         </DashboardCard>
@@ -1454,10 +1389,10 @@ export function HealthOverviewWorkspace() {
 
         <div className="grid gap-4 xl:grid-cols-2">
           <DashboardCard accent="health">
-            <SectionHeader
-              eyebrow="Medication summary"
+          <SectionHeader
+              eyebrow="Your medicines"
               title={`${model.medicationReview.length} saved medication${model.medicationReview.length === 1 ? "" : "s"}`}
-              description="Names and schedules are shown exactly from owner records. No interaction or prescription guidance is provided."
+              description="Names and schedules are shown exactly as you saved them. Beast does not check interactions or tell you to change medicine."
             />
             <div className="mt-4 grid gap-2">
               {model.medicationReview.slice(0, 4).map((medication) => (
@@ -1484,9 +1419,9 @@ export function HealthOverviewWorkspace() {
 
           <DashboardCard accent="beastos">
             <SectionHeader
-              eyebrow="Timeline summary"
+              eyebrow="Your health story"
               title={`${model.timelineSummary.totalEvents} saved event${model.timelineSummary.totalEvents === 1 ? "" : "s"}`}
-              description="This is an organizational chronology, not a clinical trend analysis."
+              description="See saved health events in date order. Beast does not decide whether your health is improving or getting worse."
             />
             <div className="mt-4 flex flex-wrap gap-2">
               {model.timelineSummary.byType.map((item) => (
@@ -1499,7 +1434,7 @@ export function HealthOverviewWorkspace() {
               ) : null}
             </div>
             <Link href="/dashboard/health/timeline" className="beast-button-secondary mt-4 inline-flex">
-              Open Health Timeline
+              Open Timeline
             </Link>
           </DashboardCard>
         </div>
@@ -1522,9 +1457,9 @@ export function HealthOverviewWorkspace() {
 
         <DashboardCard accent="health">
           <SectionHeader
-            eyebrow="Recommended actions"
-            title="Organize the next review"
-            description="These actions organize records and preparation only. They do not diagnose, prescribe, or change care."
+            eyebrow="Possible next steps"
+            title="Choose one thing to review"
+            description="These ideas help organize records and prepare questions. They do not diagnose, prescribe, or change care."
           />
           <div className="mt-4 grid gap-3 lg:grid-cols-2">
             {model.recommendations.length ? (
@@ -1533,18 +1468,18 @@ export function HealthOverviewWorkspace() {
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <h3 className="font-black text-white">{recommendation.title}</h3>
                     <span className="rounded-full border border-white/10 px-2 py-1 text-xs font-bold text-[#dbe3ef]">
-                      {recommendation.confidence.label} support
+                      {recommendation.confidence.label} confidence
                     </span>
                   </div>
                   <p className="mt-2 text-sm leading-6 text-[#c7cfdb]">{recommendation.recommendation}</p>
                   <Link href={recommendation.href} className="mt-3 inline-flex text-sm font-black text-red-100 underline decoration-red-300/40 underline-offset-4">
-                    Review source
+                    Review this area
                   </Link>
                 </article>
               ))
             ) : (
               <p className="rounded-xl border border-white/10 p-4 text-sm leading-6 text-[#c7cfdb]">
-                No evidence-backed organizational action is available from the current records.
+                Beast does not have enough saved information to suggest a next step yet.
               </p>
             )}
           </div>
@@ -1561,14 +1496,17 @@ export function HealthTimelineWorkspace() {
   const { records, loading, error } = useHealthRecords();
   return (
     <BeastHealthShell
-      title="Health Timeline"
-      description="Your living health story, grounded in owner-entered records and confirmed Health Advisor context."
+      title="Timeline"
+      description="See your health story in the order it happened."
+      why="A timeline can help you remember when medicines, conditions, visits, procedures, and other events happened."
+      how="Beast puts saved records in date order and keeps their sources and links attached. It does not decide what caused an event."
+      next="Search your story, choose a date, or open one event to review its details."
     >
       <DashboardCard accent="health">
         <SectionHeader
-          eyebrow="Living health story"
-          title="Your health history in context"
-          description="Search and navigate saved events, their sources, and explicit record relationships. BeastHealth does not infer clinical meaning, causes, or outcomes."
+          eyebrow="Your health story"
+          title="Find an event or date"
+          description="Search saved events and see the records, documents, providers, and conversations connected to them."
         />
         <div className="mt-5 min-w-0">
           <LivingHealthTimeline

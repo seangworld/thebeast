@@ -10,6 +10,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { isBeastAdminOwnerRole } from "@/lib/beastAdmin";
 import { buildCurrentAuthLoginPath } from "@/lib/auth/experience";
+import { HealthPageIntroduction } from "./HealthPageIntroduction";
 
 export const beastHealthSections = [
   { label: "Overview", href: "/dashboard/health" },
@@ -20,21 +21,29 @@ export const beastHealthSections = [
   { label: "Procedures", href: "/dashboard/health/procedures" },
   { label: "Family History", href: "/dashboard/health/family-history" },
   { label: "Lifestyle", href: "/dashboard/health/lifestyle" },
-  { label: "Vitals", href: "/dashboard/health/vitals" },
+  { label: "Health Measurements", href: "/dashboard/health/vitals" },
   { label: "Health Goals", href: "/dashboard/health/goals" },
   { label: "Health Documents", href: "/dashboard/health/documents" },
-  { label: "Provider Directory", href: "/dashboard/health/provider-directory" },
+  { label: "Providers", href: "/dashboard/health/provider-directory" },
   { label: "Appointments", href: "/dashboard/health/appointments" },
-  { label: "Health Timeline", href: "/dashboard/health/timeline" },
+  { label: "Timeline", href: "/dashboard/health/timeline" },
 ];
 
 export function BeastHealthShell({
   title,
   description,
+  why,
+  how,
+  next,
+  action,
   children,
 }: {
   title: string;
   description: string;
+  why?: string;
+  how?: string;
+  next?: string;
+  action?: { label: string; href: string };
   children: React.ReactNode;
 }) {
   const [authorized, setAuthorized] = useState(false);
@@ -100,13 +109,24 @@ export function BeastHealthShell({
   return (
     <main className="beast-page">
       <div className="beast-container space-y-4">
-        <section className="beast-page-header">
-          <div className="space-y-3">
-            <ModuleBadge module="health" label="Health Advisor Active" />
-            <h1 className="beast-title">{title}</h1>
-            <p className="beast-subtitle">{description}</p>
-          </div>
-        </section>
+        {why && how && next ? (
+          <HealthPageIntroduction
+            title={title}
+            introduction={description}
+            why={why}
+            how={how}
+            next={next}
+            action={action}
+          />
+        ) : (
+          <section className="beast-page-header">
+            <div className="space-y-3">
+              <ModuleBadge module="health" label="Health Advisor Active" />
+              <h1 className="beast-title">{title}</h1>
+              <p className="beast-subtitle">{description}</p>
+            </div>
+          </section>
+        )}
 
         {children}
       </div>

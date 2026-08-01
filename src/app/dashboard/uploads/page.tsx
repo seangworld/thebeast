@@ -111,21 +111,27 @@ export default async function UploadsPage({
           module="documents"
           eyebrow={context?.key === "education"
             ? "Education & Career Planning"
+            : context?.key === "health"
+              ? "Your Health Story"
             : context
               ? `${context.applicationName} · BeastOS Shared Service`
               : "BeastOS Shared Service"}
           title={context?.documentsLabel || "Documents"}
           description={context?.key === "education"
             ? "Upload things like transcripts, resumes, certificates, or military records."
+            : context?.key === "health"
+              ? "Upload records like visit summaries, lab reports, or vaccination records."
             : "Documents are shared Personal Hub records owned by BeastOS. Modules can reference files without owning the document."}
-          action={context?.key === "education"
-            ? <ModuleBadge module="learning" label="Saved in Beast" />
+          action={context?.key === "education" || context?.key === "health"
+            ? <ModuleBadge module={context.key === "health" ? "health" : "learning"} label="Saved in Beast" />
             : <ModuleBadge module="beastos" label="BeastOS Owned" />}
         />
         {context ? (
           <div className="rounded-xl border border-indigo-300/20 bg-indigo-300/[0.07] p-4 text-sm leading-6 text-indigo-50">
             {context.key === "education"
               ? "These records help your Guidance Counselor understand your experience and recommend a better plan. Upload one useful document when you are ready."
+              : context.key === "health"
+                ? "Health records help Beast connect your visits, medicines, conditions, and timeline. Upload one useful document when you are ready; you review anything Beast finds before it is saved as health information."
               : `Showing BeastOS documents connected to ${context.applicationName}. New files remain owned by the shared Documents service and receive an owner-scoped contextual link.`}
           </div>
         ) : null}

@@ -23,26 +23,21 @@ const recordPages = [
   "appointments",
 ];
 
-test("BH-402 makes Health Advisor the first experience in every record workspace", () => {
+test("BH-205 keeps Health Advisor separate from every record workspace", () => {
   assert.match(recordWorkspace, /data-health-advisor-workspace=\{kind\}/);
-  assert.match(recordWorkspace, /Health Advisor workspace/);
-  assert.match(recordWorkspace, /Continue with Health Advisor/);
-  assert.match(recordWorkspace, /Add through conversation/);
-  assert.match(recordWorkspace, /Open full conversation/);
+  assert.match(recordWorkspace, /label: "Talk with Health Advisor"/);
+  assert.doesNotMatch(recordWorkspace, /health-advisor-\$\{kind\}-conversation/);
+  assert.doesNotMatch(recordWorkspace, /Continue with Health Advisor/);
 
-  const conversation = recordWorkspace.indexOf(
-    'eyebrow="Health Advisor workspace"'
-  );
   const knowledge = recordWorkspace.indexOf("<ProfessionalKnowledgeWorkspace");
   const currentRecords = recordWorkspace.indexOf(
-    "Select any saved record to view, expand, edit"
+    "Choose any saved item to see its details"
   );
   const directEntry = recordWorkspace.indexOf(
-    'eyebrow="Direct record editing"'
+    'eyebrow="Add it yourself"'
   );
 
-  assert.ok(conversation >= 0);
-  assert.ok(knowledge > conversation);
+  assert.ok(knowledge >= 0);
   assert.ok(currentRecords > knowledge);
   assert.ok(directEntry > currentRecords);
 });
@@ -69,11 +64,11 @@ test("BH-402 keeps every BeastHealth record route on the reusable workspace", ()
   assert.match(recordWorkspace, /What I Know|ProfessionalKnowledgeWorkspace/);
 });
 
-test("BH-402 makes saved records expandable and directly editable", () => {
+test("BH-205 makes saved records expandable and plainly editable", () => {
   assert.match(recordWorkspace, /id=\{`health-record-\$\{record\.id\}`\}/);
   assert.match(recordWorkspace, /aria-expanded=\{expandedId === record\.id\}/);
-  assert.match(recordWorkspace, /Direct record editing/);
-  assert.match(recordWorkspace, /Save direct edits/);
+  assert.match(recordWorkspace, /Edit this record/);
+  assert.match(recordWorkspace, /Save changes/);
   assert.match(recordWorkspace, /\.update\(\{/);
   assert.match(recordWorkspace, /\.eq\("id", record\.id\)/);
   assert.match(recordWorkspace, /\.eq\("owner_id", ownerId\)/);
@@ -86,7 +81,7 @@ test("BH-402 links documents appointments and durable conversations without new 
   assert.match(recordWorkspace, /candidate\.ownerId === ownerId/);
   assert.match(recordWorkspace, /View linked document/);
   assert.match(recordWorkspace, /View linked appointment/);
-  assert.match(recordWorkspace, /Link conversation/);
+  assert.match(recordWorkspace, /Talk about this/);
   assert.match(recordWorkspace, /recordId/);
 
   assert.match(advisorWorkspace, /knowledgeTargetRecordId/);
@@ -96,19 +91,10 @@ test("BH-402 links documents appointments and durable conversations without new 
   assert.match(advisorWorkspace, /member_confirmed_conversation/);
 });
 
-test("BH-402 keeps forms secondary and preserves medical safety boundaries", () => {
-  assert.match(
-    recordWorkspace,
-    /Conversation remains the primary experience/
-  );
-  assert.match(
-    recordWorkspace,
-    /Health Advisor organizes member-reported context/
-  );
-  assert.match(
-    recordWorkspace,
-    /does not\s+diagnose, prescribe, determine treatment/
-  );
+test("BH-205 keeps forms secondary and preserves medical safety boundaries", () => {
+  assert.match(recordWorkspace, /Use this form when you already know what you want to save/);
+  assert.match(recordWorkspace, /never diagnoses or prescribes/);
+  assert.match(recordWorkspace, /qualified clinicians remain authoritative/);
   assert.match(recordWorkspace, /<details>/);
   assert.doesNotMatch(recordWorkspace, /create table|alter table|create policy/i);
   assert.doesNotMatch(advisorWorkspace, /create table|alter table|create policy/i);

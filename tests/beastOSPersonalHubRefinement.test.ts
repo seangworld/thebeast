@@ -109,9 +109,9 @@ test("BO-311 keeps Health Profile distinct from BeastOS shared identity", () => 
 
   assert.match(navigation, /Health Profile/);
   assert.match(healthShell, /Health Profile/);
-  assert.match(healthPages, /Owner-only health record and appointment-preparation workspace/);
+  assert.match(healthPages, /Build your health story/);
   assert.match(
     readFileSync("src/lib/health/foundation.ts", "utf8"),
-    /without duplicating BeastOS identity/
+    /Shared identity remains in BeastOS Personal Hub/
   );
 });

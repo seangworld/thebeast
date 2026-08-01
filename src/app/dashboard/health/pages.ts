@@ -6,11 +6,11 @@ import {
 export const beastHealthOverview = {
   title: "BeastHealth",
   description:
-    "Owner-only health record and appointment-preparation workspace with active Health Advisor.",
+    "Build your health story, keep important records together, and prepare for appointments.",
   focus: [
-    "Organize private health records with dates and sources.",
-    "Use Health Advisor for record review and provider-question preparation.",
-    "Preserve owner control, RLS, confidence limits, and explicit medical-safety boundaries.",
+    "Save health information with dates and sources.",
+    "Prepare useful questions for doctors and specialists.",
+    "Stay in control of what Beast saves and uses.",
   ],
 };
 

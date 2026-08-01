@@ -131,14 +131,14 @@ test("BH-203 provides responsive accessible timeline controls and honest empty r
   );
   for (const label of [
     "Search health story",
-    "Filter event type",
-    "Jump to date",
-    "Jump to provider",
-    "Jump to condition",
-    "Linked records",
-    "Documents",
-    "Providers",
-    "Conversation references",
+    "Show only",
+    "Go to date",
+    "Go to doctor or specialist",
+    "Go to condition",
+    "Related records",
+    "Health documents",
+    "Doctors and specialists",
+    "Health Advisor conversations",
   ]) {
     assert.match(workspace, new RegExp(label));
   }
