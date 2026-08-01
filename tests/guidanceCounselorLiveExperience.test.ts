@@ -121,7 +121,7 @@ test("BE-401 keeps conversation primary and reuses shared professional infrastru
   assert.match(conversation, /SupabaseAgentMemoryStore/);
   assert.match(conversation, /SupabaseExecutionHistoryStore/);
   assert.match(conversation, /Recommendation history/);
-  assert.match(conversation, /Outcome learning/);
+  assert.match(conversation, /What worked for you/);
   assert.match(experience, /recommendation=\{recommendation\}/);
   assert.doesNotMatch(experience, /\.from\("learning_courses"\)/);
 });

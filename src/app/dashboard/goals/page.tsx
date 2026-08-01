@@ -228,15 +228,24 @@ export default async function GoalsOverviewPage({
       <div className="beast-container space-y-8">
         <PlatformServiceHero
           module="goals"
-          eyebrow={context ? `${context.applicationName} · BeastOS Shared Service` : "BeastOS Shared Service"}
+          eyebrow={context?.key === "education"
+            ? "Education & Career Planning"
+            : context
+              ? `${context.applicationName} · BeastOS Shared Service`
+              : "BeastOS Shared Service"}
           title={context?.goalsLabel || "BeastGoals"}
-          description="The BeastOS Life Planning Hub: one owner-controlled source for financial, education, career, health, home, family, personal, and project goals."
-          action={<ModuleBadge module="beastos" label="BeastOS Owned" />}
+          description={context?.key === "education"
+            ? "These are the education goals you're working toward."
+            : "The BeastOS Life Planning Hub: one owner-controlled source for financial, education, career, health, home, family, personal, and project goals."}
+          action={context?.key === "education"
+            ? <ModuleBadge module="learning" label="Saved in Beast" />
+            : <ModuleBadge module="beastos" label="BeastOS Owned" />}
         />
         {context ? (
           <div className="rounded-xl border border-indigo-300/20 bg-indigo-300/[0.07] p-4 text-sm leading-6 text-indigo-50">
-            Showing BeastOS-owned goals connected to {context.applicationName}.
-            Cross-module links remain attached to this one authoritative goal.
+            {context.key === "education"
+              ? "Your Guidance Counselor uses these goals to keep your plan focused. Add or update one goal when you are ready."
+              : `Showing BeastOS-owned goals connected to ${context.applicationName}. Cross-module links remain attached to this one authoritative goal.`}
           </div>
         ) : null}
 

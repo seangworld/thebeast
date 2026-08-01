@@ -10,7 +10,7 @@ import {
 const approvedNavigation = [
   ["Dashboard", "/dashboard/education"],
   ["Guidance Counselor", "/dashboard/education/guidance-counselor"],
-  ["Profile", "/dashboard/education#profile"],
+  ["About You", "/dashboard/education/about-you"],
   ["Education Planning", "/dashboard/education/education-planning"],
   ["Career Planning", "/dashboard/education/career-planning"],
   ["Education Goals", "/dashboard/education/goals"],
@@ -18,7 +18,7 @@ const approvedNavigation = [
   ["Certifications", "/dashboard/education/certifications"],
   ["Scholarships", "/dashboard/education/scholarships"],
   ["Education Documents", "/dashboard/education/documents"],
-  ["Outcomes", "/dashboard/education#outcomes"],
+  ["Progress & Decisions", "/dashboard/education/progress"],
 ];
 
 test("BE-201 exposes only the approved Education and Career navigation", () => {
@@ -76,12 +76,12 @@ test("BP-400 gives Dashboard and Guidance Counselor independent ownership", () =
   );
 
   for (const heading of [
-    "Executive Education Briefing",
+    "Your plan today",
     "Current Goal",
-    "Current Career Path",
+    "Career Direction",
     "Today’s recommendation",
     "Current Progress",
-    "Upcoming Milestones",
+    "Next steps",
     "Quick Summary",
   ]) {
     assert.match(experience, new RegExp(heading));

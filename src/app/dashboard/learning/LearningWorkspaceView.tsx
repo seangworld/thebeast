@@ -237,8 +237,8 @@ function CareerPlanningWorkspace({ items }: { items: WorkspaceItem[] }) {
       <section aria-label="Career planning framework">
         <SectionHeader
           eyebrow="Explore"
-          title="From possibilities to credible next roles"
-          description="Use these lenses to investigate a direction without treating it as a predetermined answer."
+          title="Careers worth learning more about"
+          description="Compare what the work is like, what it requires, and how well it may fit you."
         />
         <div className="mt-5 grid gap-4 lg:grid-cols-3">
           {definition.focusAreas.map((area, index) => (
@@ -288,8 +288,8 @@ function SchoolsWorkspace({ items }: { items: WorkspaceItem[] }) {
       <section aria-label="School comparison framework">
         <SectionHeader
           eyebrow="Compare"
-          title="A school earns consideration by meeting your criteria"
-          description="No institution appears as a recommendation until a real candidate and current source evidence are available."
+          title="Compare schools using what matters to you"
+          description="Look at programs, cost, location, support, and admissions before deciding what belongs on your list."
         />
         <ol className="mt-5 divide-y divide-white/10 rounded-2xl border border-white/10 bg-[#111827]">
           {definition.focusAreas.map((area, index) => (
@@ -341,8 +341,8 @@ function ScholarshipsWorkspace({ items }: { items: WorkspaceItem[] }) {
       <section aria-label="Scholarship funding framework">
         <SectionHeader
           eyebrow="Fund"
-          title="A funding pipeline, not a list of promises"
-          description="Keep possible opportunities, submitted applications, and confirmed awards clearly separated."
+          title="Ways to help pay for your education"
+          description="Keep possible scholarships, applications you sent, and awards you received clearly separated."
         />
         <div className="mt-5 grid gap-4 md:grid-cols-3">
           {definition.focusAreas.map((area) => (

@@ -26,6 +26,12 @@ export function LearningWorkspaceShell({
               <ModuleBadge module="learning" label={eyebrow || "BeastEducation"} />
               <h1 className="beast-title">{title}</h1>
               <p className="beast-subtitle">{description}</p>
+              <p className="max-w-3xl text-sm leading-6 text-slate-300">
+                <strong className="text-white">Why this helps:</strong> it gives
+                your Guidance Counselor better information. Beast uses what you
+                save here to improve your plan. Start with one item, and you can
+                come back later.
+              </p>
             </div>
             {actions ? (
               <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">

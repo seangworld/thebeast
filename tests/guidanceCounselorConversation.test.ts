@@ -76,7 +76,7 @@ test("BE-205 presents the relationship before its supporting dashboard", () => {
   assert.match(source, /ProfessionalExperienceFramework/);
   assert.match(source, /ProfessionalSupportingWorkspaces/);
   assert.match(source, /Current recommendation/);
-  assert.match(page, /Open the workspace that owns the next decision/);
+  assert.match(page, /Choose where to continue/);
   assert.match(recommendation, /Current recommendation/);
   assert.match(recommendation, /Educational Roadmap summary/);
   assert.match(recommendation, /View full roadmap/);

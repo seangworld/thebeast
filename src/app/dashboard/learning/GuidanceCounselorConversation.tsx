@@ -1114,12 +1114,11 @@ export default function GuidanceCounselorConversation({
           aria-labelledby="guidance-opportunities"
         >
           <h2 id="guidance-opportunities" className="text-lg font-black text-white">
-            Paths worth exploring
+            Ideas we can explore
           </h2>
           <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-300">
-            These are evidence-backed areas to investigate, not promises or
-            enrollment decisions. Each recommendation explains why it fits the
-            context you have shared.
+            These are ideas to consider, not promises or decisions. Your
+            counselor explains why each one may fit what you have shared.
           </p>
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             {proactiveOpportunities.map((opportunity) => (
@@ -1174,10 +1173,10 @@ export default function GuidanceCounselorConversation({
         </section>
 
         <section className="rounded-2xl border border-white/10 bg-black/10 p-4 sm:p-5">
-          <h2 className="text-base font-black text-white">Outcome learning</h2>
+          <h2 className="text-base font-black text-white">What worked for you</h2>
           <p className="mt-1 text-sm leading-6 text-slate-400">
-            Member-reported outcomes help shape future guidance. They do not
-            create autonomous decisions.
+            What you report helps your counselor give better guidance next
+            time. You still make every decision.
           </p>
           {reportedOutcomes.length ? (
             <ul className="mt-4 grid gap-3">
@@ -1318,7 +1317,7 @@ export default function GuidanceCounselorConversation({
                       onChange={setInput}
                       onSubmit={sendMessage}
                       label="Message your Guidance Counselor"
-                      placeholder="Ask about career direction, schools, certifications, funding, skills, or your roadmap…"
+                      placeholder="Tell your counselor what you’re thinking about, or ask what to do next…"
                       busy={Boolean(streamingTurnId)}
                     />
                   </ProfessionalConversationComposer>
@@ -1377,10 +1376,10 @@ export default function GuidanceCounselorConversation({
             <ProfessionalTimeAwareness
               title={
                 previousReviewAt
-                  ? "Returning planning conversation"
-                  : "First planning conversation"
+                  ? "Welcome back"
+                  : "Let’s get started"
               }
-              description="Timing comes from saved Guidance Counselor conversation history, never an inferred visit."
+              description="Your saved conversations help your counselor remember where you left off."
               items={[
                 {
                   id: "guidance-review-timing",

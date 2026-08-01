@@ -12,7 +12,7 @@ import { buildLifelongEducationRoadmap } from "@/lib/education/lifelongRoadmap";
 import { getProfileDisplayName } from "@/lib/profile";
 import { createRouteClient } from "@/lib/supabase/server";
 import GuidanceCounselorConversation from "./GuidanceCounselorConversation";
-import EducationCareerWorkspace from "./EducationCareerWorkspace";
+import { EducationPageIntroduction } from "../education/EducationPageIntroduction";
 
 export const dynamic = "force-dynamic";
 
@@ -177,8 +177,13 @@ function DashboardExperience({
                 {memberName ? `${memberName}, here’s your education plan.` : "Your education plan"}
               </h1>
               <p className="beast-subtitle mt-3">
-                A concise briefing on your direction, the plan in progress, and
-                the next decision your Guidance Counselor recommends.
+                See where you are today, where you want to go, and the one next
+                step your Guidance Counselor recommends.
+              </p>
+              <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-300">
+                Beast uses what you choose to share to make your plan more
+                useful. Start with today’s recommendation, and take one step at
+                a time.
               </p>
             </div>
             <Link
@@ -201,9 +206,9 @@ function DashboardExperience({
 
         <section aria-labelledby="education-briefing-title">
           <SectionHeader
-            eyebrow="Executive Education Briefing"
+            eyebrow="Your plan today"
             title="Where your plan stands"
-            description="Summary only. Open the owning workspace when you want the full planning detail."
+            description="Start here for the big picture, then open one area when you are ready to work on it."
           />
           <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             <DashboardCard accent="learning" className="min-w-0">
@@ -231,7 +236,7 @@ function DashboardExperience({
 
             <DashboardCard accent="purple" className="min-w-0">
               <p className="text-xs font-black uppercase tracking-[0.12em] text-violet-200">
-                Current Career Path
+                Career Direction
               </p>
               <h2 className="mt-3 break-words text-xl font-black text-white">
                 {currentCareerPath || "No career direction confirmed yet"}
@@ -286,7 +291,7 @@ function DashboardExperience({
               ) : (
                 <p className="mt-3 text-sm leading-6 text-[#aeb8c7]">
                   No progress baseline has been recorded. Progress will become
-                  meaningful after a goal and roadmap exist.
+                  meaningful after you choose a goal and start a plan.
                 </p>
               )}
             </DashboardCard>
@@ -295,14 +300,37 @@ function DashboardExperience({
 
         <RecommendationCard recommendation={recommendation} />
 
-        <EducationCareerWorkspace />
+        <section aria-labelledby="education-plan-parts-title">
+          <SectionHeader
+            eyebrow="Your plan"
+            title="Three simple places to keep moving"
+            description="Start with the part that matches the next step your Guidance Counselor recommended."
+          />
+          <div id="education-plan-parts-title" className="mt-5 grid gap-3 md:grid-cols-3">
+            <WorkspaceLink
+              href="/dashboard/education/about-you"
+              title="About You"
+              description="Share where you are today and what matters to you."
+            />
+            <WorkspaceLink
+              href="/dashboard/education/education-planning"
+              title="Education Planning"
+              description="See the school, training, and credential steps ahead."
+            />
+            <WorkspaceLink
+              href="/dashboard/education/career-planning"
+              title="Career Planning"
+              description="Compare careers and what each one would take."
+            />
+          </div>
+        </section>
 
         <section className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
           <DashboardCard accent="learning" className="min-w-0">
             <SectionHeader
-              eyebrow="Upcoming Milestones"
-              title="What the roadmap needs next"
-              description="These are planning checkpoints, not fabricated dates or requirements."
+              eyebrow="Next steps"
+              title="What comes next"
+              description="These are suggested planning steps. You decide which ones belong in your plan."
             />
             {milestones.length > 0 ? (
               <ol className="mt-5 grid gap-3">
@@ -325,22 +353,22 @@ function DashboardExperience({
               </ol>
             ) : (
               <p className="mt-5 rounded-xl border border-white/10 bg-white/[0.035] p-4 text-sm text-[#aeb8c7]">
-                The current roadmap has no unresolved planning checkpoints.
+                Your plan has no unfinished next steps right now.
               </p>
             )}
             <Link
               href="/dashboard/education/education-planning"
               className="beast-button-secondary mt-5 inline-flex w-full justify-center sm:w-fit"
             >
-              Open Educational Roadmap
+              Open Education Planning
             </Link>
           </DashboardCard>
 
           <DashboardCard accent="purple" className="min-w-0">
             <SectionHeader
               eyebrow="Quick Summary"
-              title="Planning readiness"
-              description={`${establishedFoundations} of ${planningFoundations.length} planning foundations are established.`}
+              title="What we know so far"
+              description={`${establishedFoundations} of ${planningFoundations.length} important planning details are ready.`}
             />
             <dl className="mt-5 grid gap-3 sm:grid-cols-2">
               {[
@@ -370,7 +398,7 @@ function DashboardExperience({
               <WorkspaceLink
                 href="/dashboard/education/documents"
                 title="Education Documents"
-                description="Open the shared BeastOS document service filtered to Education."
+                description="Upload transcripts, resumes, certificates, or military records."
               />
               <WorkspaceLink
                 href="/dashboard/education/reports"
@@ -412,26 +440,14 @@ function GuidanceCounselorExperience({
       data-education-workspace="guidance-counselor"
     >
       <div className="beast-container space-y-6 sm:space-y-8">
-        <section className="beast-page-header rounded-3xl border border-white/10 bg-gradient-to-br from-indigo-300/[0.08] via-[#111722] to-[#0e141e] p-5 sm:p-7">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-4xl">
-              <ModuleBadge module="learning" label="Guidance Counselor" />
-              <h1 className="beast-title mt-4">
-                Your education and career planning conversation
-              </h1>
-              <p className="beast-subtitle mt-3">
-                Talk through goals, career options, schools, funding,
-                certifications, skills, and the roadmap that connects them.
-              </p>
-            </div>
-            <Link
-              href="/dashboard/education"
-              className="beast-button-secondary inline-flex w-full justify-center sm:w-fit"
-            >
-              View Education Dashboard
-            </Link>
-          </div>
-        </section>
+        <EducationPageIntroduction
+          title="Your Guidance Counselor"
+          introduction="Your counselor helps you understand your choices and decide what to do next."
+          why="Talking things through helps Beast understand your goals, questions, and real-life needs."
+          how="Your counselor remembers what you share and uses it to build advice that fits you."
+          next="Say what you are thinking about. Your counselor will guide the conversation one step at a time."
+          action={{ label: "View Education Dashboard", href: "/dashboard/education" }}
+        />
 
         {dataWarning ? (
           <p
@@ -453,8 +469,8 @@ function GuidanceCounselorExperience({
         <section aria-labelledby="guidance-planning-workspaces-title">
           <SectionHeader
             eyebrow="Continue the plan"
-            title="Open the workspace that owns the next decision"
-            description="The conversation guides the work. Each planning workspace keeps its own detail."
+            title="Choose where to continue"
+            description="Your counselor guides the process. Open the one area that matches your next step."
           />
           <div
             id="guidance-planning-workspaces-title"
@@ -462,13 +478,13 @@ function GuidanceCounselorExperience({
           >
             <WorkspaceLink
               href="/dashboard/education/education-planning"
-              title="Educational Roadmap"
-              description="Review the long-term sequence and milestones."
+              title="Education Planning"
+              description="Review your education steps and what comes next."
             />
             <WorkspaceLink
               href="/dashboard/education/career-planning"
               title="Career Planning"
-              description="Explore credible directions and requirements."
+              description="Compare career ideas and what each one would take."
             />
             <WorkspaceLink
               href="/dashboard/education/schools"
@@ -478,7 +494,7 @@ function GuidanceCounselorExperience({
             <WorkspaceLink
               href="/dashboard/education/scholarships"
               title="Scholarships"
-              description="Plan funding opportunities and deadlines."
+              description="Find ways to help pay and remember important dates."
             />
           </div>
         </section>
@@ -579,7 +595,7 @@ export default async function BeastEducationExperience({
   ].filter(Boolean);
   const dataWarning =
     loadErrors.length > 0
-      ? "Some saved education context could not be loaded. The workspace is preserving that uncertainty instead of treating unavailable records as empty."
+      ? "Some saved information could not be loaded right now. Nothing missing was treated as complete."
       : "";
   const context = {
     educationalGoal: currentGoal || "No educational goal confirmed yet",
@@ -587,7 +603,7 @@ export default async function BeastEducationExperience({
       profile.careerInterests.join(", ") || "No interests confirmed yet",
     careerDirection:
       currentCareerPath || "No career direction confirmed yet",
-    roadmap: currentPlan || "No roadmap has been saved yet",
+    roadmap: currentPlan || "No education plan has been saved yet",
   };
   const profileKnown = Boolean(
     profile.goal ||

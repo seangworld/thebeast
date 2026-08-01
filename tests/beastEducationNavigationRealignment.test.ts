@@ -9,7 +9,7 @@ import {
 const primaryLabels = [
   "Dashboard",
   "Guidance Counselor",
-  "Profile",
+  "About You",
   "Education Planning",
   "Career Planning",
   "Education Goals",
@@ -17,7 +17,7 @@ const primaryLabels = [
   "Certifications",
   "Scholarships",
   "Education Documents",
-  "Outcomes",
+  "Progress & Decisions",
 ];
 
 const secondaryLabels: string[] = [];

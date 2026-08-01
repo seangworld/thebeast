@@ -1,14 +1,17 @@
 import EducationCareerWorkspace from "../../learning/EducationCareerWorkspace";
+import { EducationPageIntroduction } from "../EducationPageIntroduction";
 
 export default function CareerPlanningPage() {
   return (
     <main className="beast-page">
       <div className="beast-container space-y-6">
-        <header className="rounded-2xl border border-violet-300/20 bg-violet-300/[0.07] p-5 sm:p-6">
-          <p className="text-xs font-black uppercase tracking-[0.16em] text-violet-200">BeastEducation · Planning</p>
-          <h1 className="mt-2 text-3xl font-black text-white">Career Planning</h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-300">Compare credible career destinations and routes using qualification gaps, experience, credentials, salary, employer, location, advancement, risks, and unknowns.</p>
-        </header>
+        <EducationPageIntroduction
+          title="Career Planning"
+          introduction="We'll compare careers that fit you and build the best path forward."
+          why="Understanding the work, pay, training, location, and opportunities helps you make a confident choice."
+          how="Your Guidance Counselor compares what each career needs with what matters to you."
+          next="Add or compare one career you would like to understand better."
+        />
         <EducationCareerWorkspace focus="career-planning" />
       </div>
     </main>

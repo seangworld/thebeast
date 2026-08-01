@@ -34,7 +34,7 @@ test("BE-208 renders distinct career, school, and scholarship structures", () =>
   assert.match(source, /Scholarship funding framework/);
   assert.match(source, /identity, role fit, and progression/i);
   assert.match(source, /places and programs/i);
-  assert.match(source, /funding pipeline/i);
+  assert.match(source, /Ways to help pay for your education/i);
 });
 
 test("BE-208 treats goals as context and does not fabricate planning records", () => {

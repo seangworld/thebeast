@@ -598,7 +598,7 @@ test("module navigation centralizes expandable child items", () => {
     [
       "Dashboard",
       "Guidance Counselor",
-      "Profile",
+      "About You",
       "Education Planning",
       "Career Planning",
       "Education Goals",
@@ -606,12 +606,12 @@ test("module navigation centralizes expandable child items", () => {
       "Certifications",
       "Scholarships",
       "Education Documents",
-      "Outcomes",
+      "Progress & Decisions",
     ]
   );
   assert.equal(
     beastLearningNavigation.children?.[2].href,
-    "/dashboard/education#profile"
+    "/dashboard/education/about-you"
   );
   assert.equal(beastMoneyNavigation.label, "BeastMoney");
   assert.equal(
@@ -5896,7 +5896,7 @@ test("member navigation hides admin and monetization surfaces", () => {
     [
       "Dashboard",
       "Guidance Counselor",
-      "Profile",
+      "About You",
       "Education Planning",
       "Career Planning",
       "Education Goals",
@@ -5904,7 +5904,7 @@ test("member navigation hides admin and monetization surfaces", () => {
       "Certifications",
       "Scholarships",
       "Education Documents",
-      "Outcomes",
+      "Progress & Decisions",
     ]
   );
   assert.deepEqual(
@@ -5912,7 +5912,7 @@ test("member navigation hides admin and monetization surfaces", () => {
     [
       "/dashboard/education",
       "/dashboard/education/guidance-counselor",
-      "/dashboard/education#profile",
+      "/dashboard/education/about-you",
       "/dashboard/education/education-planning",
       "/dashboard/education/career-planning",
       "/dashboard/education/goals",
@@ -5920,7 +5920,7 @@ test("member navigation hides admin and monetization surfaces", () => {
       "/dashboard/education/certifications",
       "/dashboard/education/scholarships",
       "/dashboard/education/documents",
-      "/dashboard/education#outcomes",
+      "/dashboard/education/progress",
     ]
   );
   assert.equal(

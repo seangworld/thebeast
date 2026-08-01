@@ -152,7 +152,7 @@ export const beastLearningNavigation: ModuleNavSection = {
       label: "Guidance Counselor",
       href: "/dashboard/education/guidance-counselor",
     },
-    { label: "Profile", href: "/dashboard/education#profile" },
+    { label: "About You", href: "/dashboard/education/about-you" },
     { label: "Education Planning", href: "/dashboard/education/education-planning", group: "Planning" },
     { label: "Career Planning", href: "/dashboard/education/career-planning", group: "Planning" },
     { label: "Education Goals", href: "/dashboard/education/goals", group: "Planning" },
@@ -160,7 +160,7 @@ export const beastLearningNavigation: ModuleNavSection = {
     { label: "Certifications", href: "/dashboard/education/certifications", group: "Research" },
     { label: "Scholarships", href: "/dashboard/education/scholarships", group: "Research" },
     { label: "Education Documents", href: "/dashboard/education/documents" },
-    { label: "Outcomes", href: "/dashboard/education#outcomes" },
+    { label: "Progress & Decisions", href: "/dashboard/education/progress" },
   ],
 };
 
@@ -174,7 +174,7 @@ export const memberBeastEducationNavigation: ModuleNavSection = {
       label: "Guidance Counselor",
       href: "/dashboard/education/guidance-counselor",
     },
-    { label: "Profile", href: "/dashboard/education#profile" },
+    { label: "About You", href: "/dashboard/education/about-you" },
     { label: "Education Planning", href: "/dashboard/education/education-planning", group: "Planning" },
     { label: "Career Planning", href: "/dashboard/education/career-planning", group: "Planning" },
     { label: "Education Goals", href: "/dashboard/education/goals", group: "Planning" },
@@ -182,7 +182,7 @@ export const memberBeastEducationNavigation: ModuleNavSection = {
     { label: "Certifications", href: "/dashboard/education/certifications", group: "Research" },
     { label: "Scholarships", href: "/dashboard/education/scholarships", group: "Research" },
     { label: "Education Documents", href: "/dashboard/education/documents" },
-    { label: "Outcomes", href: "/dashboard/education#outcomes" },
+    { label: "Progress & Decisions", href: "/dashboard/education/progress" },
   ],
 };
 
