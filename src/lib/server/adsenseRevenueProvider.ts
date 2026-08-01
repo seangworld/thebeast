@@ -5,6 +5,12 @@ import {
   type RevenuePeriod,
   type RevenueSnapshot,
 } from "../revenueCenter";
+import { refreshGoogleAccessToken } from "./googleOAuth";
+
+export type AdSenseOAuthCredentials = {
+  refreshToken: string;
+  accountId: string;
+};
 
 type FetchLike = typeof fetch;
 type ReportCell = { value?: string };
@@ -74,22 +80,17 @@ function reportRows(report: ReportResult, dimension: string) {
   });
 }
 
-async function accessToken(env: NodeJS.ProcessEnv, fetchImpl: FetchLike) {
-  const response = await fetchImpl("https://oauth2.googleapis.com/token", {
-    method: "POST",
-    headers: { "content-type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      client_id: env.GOOGLE_ADSENSE_CLIENT_ID || "",
-      client_secret: env.GOOGLE_ADSENSE_CLIENT_SECRET || "",
-      refresh_token: env.GOOGLE_ADSENSE_REFRESH_TOKEN || "",
-      grant_type: "refresh_token",
-    }),
-    cache: "no-store",
+async function accessToken(
+  env: NodeJS.ProcessEnv,
+  credentials: AdSenseOAuthCredentials,
+  fetchImpl: FetchLike
+) {
+  const payload = await refreshGoogleAccessToken({
+    refreshToken: credentials.refreshToken,
+    env,
+    fetchImpl,
   });
-  if (!response.ok) throw new Error("oauth");
-  const payload = (await response.json()) as { access_token?: string };
-  if (!payload.access_token) throw new Error("oauth");
-  return payload.access_token;
+  return payload.access_token || "";
 }
 
 async function report({
@@ -101,6 +102,7 @@ async function report({
   limit,
   customStartDate,
   customEndDate,
+  accountId,
 }: {
   env: NodeJS.ProcessEnv;
   fetchImpl: FetchLike;
@@ -110,8 +112,9 @@ async function report({
   limit?: number;
   customStartDate?: string;
   customEndDate?: string;
+  accountId: string;
 }) {
-  const rawAccount = env.GOOGLE_ADSENSE_ACCOUNT_ID || "";
+  const rawAccount = accountId;
   const account = rawAccount.startsWith("accounts/")
     ? rawAccount
     : `accounts/${rawAccount}`;
@@ -167,16 +170,11 @@ function emptySnapshot(
 export async function loadAdSenseRevenueSnapshot(
   env: NodeJS.ProcessEnv,
   now = new Date(),
-  fetchImpl: FetchLike = fetch
+  fetchImpl: FetchLike = fetch,
+  credentials?: AdSenseOAuthCredentials | null
 ): Promise<RevenueSnapshot> {
   const generatedAt = now.toISOString();
-  const required = [
-    env.GOOGLE_ADSENSE_CLIENT_ID,
-    env.GOOGLE_ADSENSE_CLIENT_SECRET,
-    env.GOOGLE_ADSENSE_REFRESH_TOKEN,
-    env.GOOGLE_ADSENSE_ACCOUNT_ID,
-  ];
-  if (required.some((value) => !value)) {
+  if (!credentials) {
     return emptySnapshot(
       "not_configured",
       generatedAt,
@@ -185,7 +183,7 @@ export async function loadAdSenseRevenueSnapshot(
   }
 
   try {
-    const token = await accessToken(env, fetchImpl);
+    const token = await accessToken(env, credentials, fetchImpl);
     const ranges: Array<[RevenuePeriod, string]> = [
       ["today", "TODAY"],
       ["yesterday", "YESTERDAY"],
@@ -197,7 +195,7 @@ export async function loadAdSenseRevenueSnapshot(
         async ([period, dateRange]) =>
           [
             period,
-            await report({ env, fetchImpl, token, dateRange }),
+            await report({ env, fetchImpl, token, dateRange, accountId: credentials.accountId }),
           ] as const
       )
     );
@@ -209,6 +207,7 @@ export async function loadAdSenseRevenueSnapshot(
         dateRange: "LAST_30_DAYS",
         dimensions: ["PAGE_URL"],
         limit: 10,
+        accountId: credentials.accountId,
       }),
       report({
         env,
@@ -217,6 +216,7 @@ export async function loadAdSenseRevenueSnapshot(
         dateRange: "LAST_30_DAYS",
         dimensions: ["OWNED_SITE_DOMAIN_NAME"],
         limit: 10,
+        accountId: credentials.accountId,
       }),
       report({
         env,
@@ -225,6 +225,7 @@ export async function loadAdSenseRevenueSnapshot(
         dateRange: "LAST_30_DAYS",
         dimensions: ["AD_UNIT_NAME"],
         limit: 10,
+        accountId: credentials.accountId,
       }),
       report({
         env,
@@ -232,6 +233,7 @@ export async function loadAdSenseRevenueSnapshot(
         token,
         dateRange: "LAST_30_DAYS",
         dimensions: ["DATE"],
+        accountId: credentials.accountId,
       }),
     ]);
     const periods = Object.fromEntries(
@@ -247,6 +249,7 @@ export async function loadAdSenseRevenueSnapshot(
         dateRange: "CUSTOM",
         customStartDate: env.GOOGLE_ADSENSE_REPORTING_START_DATE,
         customEndDate: generatedAt.slice(0, 10),
+        accountId: credentials.accountId,
       });
       periods.lifetime = reportMetrics(lifetime);
     }

@@ -342,6 +342,13 @@ export const beastRoadmapPackageRegistry = [
     "Revenue Center and AdSense Management",
     ["docs/BEASTADMIN_REVENUE_CENTER.md"]
   ),
+  packageIdentity(
+    "BA-ADS-202",
+    ["BA-ADS-202"],
+    "Google OAuth for Revenue Center",
+    ["supabase/migrations/20260801000200_add_google_oauth_connections.sql"],
+    ["20260801000200_add_google_oauth_connections.sql"]
+  ),
 ] as const satisfies readonly BeastRoadmapPackageIdentity[];
 
 function collisionsFor(

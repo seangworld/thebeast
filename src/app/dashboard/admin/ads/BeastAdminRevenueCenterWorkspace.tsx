@@ -75,6 +75,22 @@ function humanizeError(error: unknown) {
     : "Placement could not be saved. The current state was preserved.";
 }
 
+type GoogleConnectionStatus = {
+  connected: boolean;
+  provider: "adsense";
+  publisherId?: string | null;
+  account?: string | null;
+  lastSync?: string | null;
+  connectedAt?: string | null;
+  unavailable?: boolean;
+};
+
+function timestamp(value: string | null | undefined) {
+  if (!value) return "Never";
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.valueOf()) ? "Unavailable" : parsed.toLocaleString();
+}
+
 export function BeastAdminRevenueCenterWorkspace() {
   const [snapshot, setSnapshot] = useState<RevenueSnapshot | null>(null);
   const [flags, setFlags] = useState<BeastFeatureFlag[]>([]);
@@ -82,19 +98,25 @@ export function BeastAdminRevenueCenterWorkspace() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [saving, setSaving] = useState("");
+  const [googleStatus, setGoogleStatus] = useState<GoogleConnectionStatus | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
-      const [response, flagResponse] = await Promise.all([
+      const [response, statusResponse, flagResponse] = await Promise.all([
         fetch("/api/admin/revenue", {
+          cache: "no-store",
+          credentials: "same-origin",
+        }),
+        fetch("/api/admin/revenue/google/status", {
           cache: "no-store",
           credentials: "same-origin",
         }),
         createClient().rpc("get_beast_admin_feature_flags"),
       ]);
       const payload = (await response.json()) as RevenueSnapshot | { error?: string };
+      const statusPayload = (await statusResponse.json()) as GoogleConnectionStatus;
       if (!response.ok || !("provider" in payload)) {
         throw new Error("Revenue reporting is unavailable.");
       }
@@ -102,6 +124,7 @@ export function BeastAdminRevenueCenterWorkspace() {
         ? null
         : normalizeBeastFeatureFlags(flagResponse.data);
       setSnapshot(payload);
+      setGoogleStatus(statusPayload);
       setFlags(normalizedFlags || []);
     } catch {
       setError(
@@ -111,6 +134,26 @@ export function BeastAdminRevenueCenterWorkspace() {
       setLoading(false);
     }
   }, []);
+
+  async function disconnectGoogle() {
+    if (!window.confirm("Disconnect Google AdSense from Revenue Center?")) return;
+    setSaving("google-disconnect");
+    setError("");
+    setNotice("");
+    try {
+      const response = await fetch("/api/admin/revenue/google/disconnect", {
+        method: "POST",
+        credentials: "same-origin",
+      });
+      if (!response.ok) throw new Error("disconnect");
+      setNotice("Google AdSense disconnected.");
+      await load();
+    } catch {
+      setError("Google AdSense could not be disconnected. The current connection state was preserved.");
+    } finally {
+      setSaving("");
+    }
+  }
 
   useEffect(() => {
     void load();
@@ -200,6 +243,50 @@ export function BeastAdminRevenueCenterWorkspace() {
 
   return (
     <div className="space-y-6">
+      <DashboardCard accent="admin">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+          <SectionHeader
+            eyebrow="BA-ADS-202 · Google OAuth"
+            title="Google AdSense"
+            description="Owner-authorized read-only reporting. Beast stores the refresh token encrypted on the server and refreshes access automatically."
+          />
+          <span className={`inline-flex w-fit rounded-full px-3 py-1 text-xs font-black ${googleStatus?.connected ? "bg-green-400/15 text-green-100" : "bg-slate-400/15 text-slate-200"}`}>
+            {googleStatus?.connected ? "Connected" : "Not Connected"}
+          </span>
+        </div>
+        {googleStatus?.unavailable ? (
+          <p role="alert" className="mt-4 rounded-xl border border-amber-300/30 bg-amber-400/10 p-3 text-sm text-amber-100">
+            Google connection status is unavailable. Revenue Center does not infer a disconnected account.
+          </p>
+        ) : googleStatus?.connected ? (
+          <>
+            <dl className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+              {[
+                ["Publisher ID", googleStatus.publisherId || "Unavailable"],
+                ["Account", googleStatus.account || "Unavailable"],
+                ["Last Sync", timestamp(googleStatus.lastSync)],
+                ["Estimated Earnings", money(snapshot?.periods.month?.estimatedEarnings ?? null, snapshot?.periods.month?.currency)],
+                ["Today's Revenue", money(snapshot?.periods.today?.estimatedEarnings ?? null, snapshot?.periods.today?.currency)],
+              ].map(([label, value]) => (
+                <div key={label} className="min-w-0 rounded-xl border border-white/10 bg-black/15 p-3">
+                  <dt className="text-xs font-bold uppercase text-slate-400">{label}</dt>
+                  <dd className="mt-2 break-words font-semibold text-white">{value}</dd>
+                </div>
+              ))}
+            </dl>
+            <div className="mt-5 flex flex-wrap gap-2">
+              <button type="button" onClick={() => void load()} disabled={loading} className="beast-button-secondary">Refresh</button>
+              <button type="button" onClick={() => void disconnectGoogle()} disabled={saving === "google-disconnect"} className="beast-button-secondary">{saving === "google-disconnect" ? "Disconnecting…" : "Disconnect"}</button>
+            </div>
+          </>
+        ) : (
+          <div className="mt-5">
+            <a href="/api/admin/revenue/google/connect" className="beast-button inline-flex">Connect Google Account</a>
+            <p className="mt-3 text-sm text-slate-300">Google Login → approve AdSense Read-Only → return securely to Beast.</p>
+          </div>
+        )}
+      </DashboardCard>
+
       <DashboardCard accent="admin">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <SectionHeader

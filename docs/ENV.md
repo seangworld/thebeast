@@ -91,10 +91,12 @@ If you need to run against production for any reason, do NOT set production cred
 Revenue Center reports aggregate AdSense data only when these server variables
 are configured in the target environment:
 
-- `GOOGLE_ADSENSE_CLIENT_ID`
-- `GOOGLE_ADSENSE_CLIENT_SECRET`
-- `GOOGLE_ADSENSE_REFRESH_TOKEN`
-- `GOOGLE_ADSENSE_ACCOUNT_ID`
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
+- `GOOGLE_REDIRECT_URI` (the exact production callback URL, for example
+  `https://thebeast.seangworld.com/api/admin/revenue/google/callback`)
+- `GOOGLE_OAUTH_TOKEN_ENCRYPTION_KEY` (32 random bytes encoded as base64 or
+  64 hexadecimal characters; keep this stable and server-only)
 - `GOOGLE_ADSENSE_REPORTING_START_DATE` (optional `YYYY-MM-DD`; required for
   the lifetime custom range)
 
@@ -105,7 +107,10 @@ canonical publisher registry used by `/ads.txt`. It uses
 load unless it is explicitly `enabled`, the runtime is production, the
 placement feature flag is Released, and the current route is eligible.
 
-OAuth credentials are server-only. Never prefix them with `NEXT_PUBLIC_`.
+OAuth credentials and token-encryption keys are server-only. Never prefix them
+with `NEXT_PUBLIC_`. Refresh tokens are created through the owner Connect flow,
+encrypted in `google_oauth_connections`, and must not be manually stored in
+Vercel environment variables.
 Revenue Center remains truthful and shows unavailable states when reporting is
 not configured. SEANGWORLD placement is controlled in its own repository and
 through approved Google page exclusions; this Beast workspace does not pretend

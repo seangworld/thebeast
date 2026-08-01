@@ -1,7 +1,7 @@
 # BeastAdmin Revenue Center
 
 BA-ADS-201 introduces the Generation 1 owner workspace for revenue reporting
-and advertising governance.
+and advertising governance. BA-ADS-202 adds production Google OAuth.
 
 ## Boundaries
 
@@ -43,10 +43,22 @@ placement, route, and feature-flag identifiers before rendering an ad.
 
 ## Provider setup
 
-The server adapter uses OAuth read access to the AdSense Management API. Set the
-variables documented in `docs/ENV.md` independently in development, preview,
-and production. The owner-only route never returns OAuth credentials or raw
-provider error payloads.
+The server adapter uses the Google web-server OAuth flow with offline access,
+PKCE, a short-lived HTTP-only state cookie, and the
+`adsense.readonly` scope. Connect, callback, status, and disconnect routes are
+owner-only. The callback validates state before exchanging the authorization
+code. Access tokens are refreshed automatically and never persisted.
 
-No database migration is required. Beast placement state is persisted through
-the existing feature-flag capability.
+Set `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`, and
+`GOOGLE_OAUTH_TOKEN_ENCRYPTION_KEY` as documented in `docs/ENV.md`. Do not store
+a refresh token manually in Vercel. Refresh tokens are encrypted with
+AES-256-GCM before being stored in the owner-scoped
+`google_oauth_connections` table. Browser responses contain only connection
+metadata, never credentials, token ciphertext, or raw provider errors.
+
+The forward-only BA-ADS-202 migration creates `google_oauth_connections` with
+RLS requiring the authenticated owner and an admin profile. The architecture
+registers stable provider identifiers for future Analytics, Search Console,
+Drive, Calendar, and Gmail integrations without granting those scopes today.
+Beast placement state remains persisted through the existing feature-flag
+capability.

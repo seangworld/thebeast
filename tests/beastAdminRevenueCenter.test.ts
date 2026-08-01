@@ -131,13 +131,13 @@ test("BA-ADS-201 maps aggregate provider reports and removes page query data", a
   const snapshot = await loadAdSenseRevenueSnapshot(
     {
       NODE_ENV: "test",
-      GOOGLE_ADSENSE_CLIENT_ID: "client",
-      GOOGLE_ADSENSE_CLIENT_SECRET: "secret",
-      GOOGLE_ADSENSE_REFRESH_TOKEN: "refresh",
-      GOOGLE_ADSENSE_ACCOUNT_ID: "pub-account",
+      GOOGLE_CLIENT_ID: "client",
+      GOOGLE_CLIENT_SECRET: "secret",
+      GOOGLE_REDIRECT_URI: "https://example.com/callback",
     },
     new Date("2026-07-30T12:00:00.000Z"),
-    fetchMock
+    fetchMock,
+    { refreshToken: "refresh", accountId: "pub-account" }
   );
   assert.equal(snapshot.state, "available");
   assert.equal(snapshot.periods.today?.estimatedEarnings, 12.5);
@@ -216,19 +216,19 @@ test("BA-ADS-201 keeps Revenue responsive and placement controls accessible", ()
   assert.doesNotMatch(workspace, /overflow-x-hidden/);
 });
 
-test("BA-ADS-201 documents provider setup and no-migration boundary", () => {
+test("BA-ADS-202 documents provider setup and encrypted connection storage", () => {
   const env = readFileSync("docs/ENV.md", "utf8");
   const docs = readFileSync("docs/BEASTADMIN_REVENUE_CENTER.md", "utf8");
   for (const variable of [
-    "GOOGLE_ADSENSE_CLIENT_ID",
-    "GOOGLE_ADSENSE_CLIENT_SECRET",
-    "GOOGLE_ADSENSE_REFRESH_TOKEN",
-    "GOOGLE_ADSENSE_ACCOUNT_ID",
+    "GOOGLE_CLIENT_ID",
+    "GOOGLE_CLIENT_SECRET",
+    "GOOGLE_REDIRECT_URI",
+    "GOOGLE_OAUTH_TOKEN_ENCRYPTION_KEY",
     "NEXT_PUBLIC_ADSENSE_FOOTER_SLOT",
   ]) {
     assert.match(env, new RegExp(variable));
   }
-  assert.match(docs, /No database migration is required/);
+  assert.match(docs, /google_oauth_connections/);
   assert.match(docs, /Conversations/);
   assert.match(docs, /SEANGWORLD is a separate application/);
 });
