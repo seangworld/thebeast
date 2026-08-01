@@ -49,8 +49,8 @@ test("BE-211 preserves contextual returns that close an activity workflow", () =
 });
 
 test("BE-211 preserves workspace actions and retry behavior", () => {
-  assert.match(shell, /actions \?/);
-  assert.match(shell, /\{actions\}/);
+  assert.match(shell, /actions\?: React\.ReactNode/);
+  assert.match(shell, /actions=\{actions\}/);
   assert.match(errorState, /onClick=\{reset\}/);
   assert.match(errorState, /Try again/);
 });

@@ -59,10 +59,15 @@ test("BL-403 uses one responsive shell with consistent loading empty and error s
     "src/app/dashboard/education/[workspace]/error.tsx",
     "utf8"
   );
+  const primitives = readFileSync(
+    "src/app/components/design/DashboardPrimitives.tsx",
+    "utf8"
+  );
 
   assert.match(shell, /beast-page/);
   assert.match(shell, /beast-container space-y-6 sm:space-y-8/);
-  assert.match(shell, /beast-page-header/);
+  assert.match(shell, /PlatformPageHeader/);
+  assert.match(primitives, /className="beast-page-header"/);
   assert.match(shell, /LearningEmptyState/);
   assert.match(shell, /LearningWorkspaceLoading/);
   assert.match(shell, /aria-busy="true"/);

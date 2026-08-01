@@ -25,7 +25,8 @@ test("BeastMoney primary pages use the shared module shell", () => {
 
   assert.doesNotMatch(shell, /beast-module-tabs/);
   assert.doesNotMatch(shell, /aria-label="BeastMoney sections"/);
-  assert.match(shell, /ModuleBadge module="money"/);
+  assert.match(shell, /PlatformPageHeader/);
+  assert.match(shell, /module="money"/);
   assert.doesNotMatch(shell, /beastMoneyCoreNavigation/);
   assert.match(navigation, /\/dashboard\/money\/dashboard/);
   assert.match(navigation, /\/dashboard\/money\/coach/);

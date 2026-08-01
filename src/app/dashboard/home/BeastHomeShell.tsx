@@ -8,6 +8,7 @@ import {
   ExpandableDetailPanel,
   GuidedEmptyState,
   ModuleBadge,
+  PlatformPageHeader,
   SectionHeader,
 } from "@/app/components/design/DashboardPrimitives";
 import { createClient } from "@/lib/supabase/client";
@@ -103,20 +104,19 @@ export function BeastHomeShell({
   return (
     <main className="beast-page">
       <div className="beast-container space-y-6">
-        <section className="beast-page-header">
-          <div className="space-y-4">
-            <ModuleBadge module="home" label="Admin Only" />
-            <h1 className="beast-title">{title}</h1>
-            <p className="beast-subtitle">{description}</p>
-          </div>
-        </section>
+        <PlatformPageHeader
+          module="home"
+          badge="Admin Only"
+          title={title}
+          description={description}
+        />
 
         <nav className="flex flex-wrap gap-2" aria-label="BeastHome sections">
           {beastHomeSections.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="rounded-lg border border-cyan-300/30 bg-cyan-300/10 px-3 py-2 text-sm font-bold text-cyan-100 transition hover:border-cyan-200 hover:bg-cyan-200/20"
+              className="beast-module-tab"
             >
               {item.label}
             </Link>

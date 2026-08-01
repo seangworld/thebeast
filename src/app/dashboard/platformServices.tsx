@@ -3,6 +3,7 @@ import {
   AlertCard,
   DashboardCard,
   ModuleBadge,
+  PlatformPageHeader,
   SectionHeader,
   moduleAccents,
   type DashboardAlertSeverity,
@@ -121,16 +122,13 @@ export function PlatformServiceHero({
   action?: React.ReactNode;
 }) {
   return (
-    <section className="beast-page-header">
-      <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-        <div className="space-y-4">
-          <ModuleBadge module={module} label={eyebrow} />
-          <h1 className="beast-title">{title}</h1>
-          <p className="beast-subtitle">{description}</p>
-        </div>
-        {action ? <div className="shrink-0">{action}</div> : null}
-      </div>
-    </section>
+    <PlatformPageHeader
+      module={module}
+      badge={eyebrow}
+      title={title}
+      description={description}
+      actions={action}
+    />
   );
 }
 

@@ -161,6 +161,15 @@ type SectionHeaderProps = {
   action?: React.ReactNode;
 };
 
+type PlatformPageHeaderProps = {
+  module: ModuleKey;
+  title: string;
+  description: string;
+  badge?: string;
+  guidance?: readonly { label: string; text: string }[];
+  actions?: React.ReactNode;
+};
+
 type MetricTileProps = {
   label: string;
   value: string;
@@ -310,7 +319,8 @@ export function DashboardCard({
 }: DashboardCardProps) {
   return (
     <section
-      className={`relative overflow-hidden rounded-2xl border border-[#2a3242] bg-[#1a1f2b] p-5 shadow-[0_18px_60px_rgba(0,0,0,0.22)] transition duration-200 before:absolute before:left-0 before:top-0 before:h-1 before:w-full hover:-translate-y-0.5 hover:border-[#38bdf8]/60 ${getAccentClass(accent)} ${className}`}
+      className={`relative overflow-hidden rounded-beast-lg border border-beast-border bg-beast-surface p-5 shadow-beast-md transition duration-beast before:absolute before:left-0 before:top-0 before:h-1 before:w-full hover:-translate-y-0.5 hover:border-beast-accent ${getAccentClass(accent)} ${className}`}
+      data-beast-component="dashboard-card"
     >
       {children}
     </section>
@@ -454,7 +464,7 @@ export function SectionHeader({
   action,
 }: SectionHeaderProps) {
   return (
-    <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+    <div className="flex min-w-0 flex-col gap-3 md:flex-row md:items-end md:justify-between" data-beast-component="section-header">
       <div>
         {eyebrow ? <p className="beast-kicker">{eyebrow}</p> : null}
         <h2 className="mt-1 text-2xl font-bold tracking-normal">{title}</h2>
@@ -466,6 +476,49 @@ export function SectionHeader({
       </div>
       {action ? <div className="shrink-0">{action}</div> : null}
     </div>
+  );
+}
+
+export function PlatformPageHeader({
+  module,
+  title,
+  description,
+  badge,
+  guidance = [],
+  actions,
+}: PlatformPageHeaderProps) {
+  return (
+    <header
+      className="beast-page-header"
+      aria-label={`${title} workspace`}
+      data-beast-component="page-header"
+      data-beast-module-accent={module}
+    >
+      <div className="flex min-w-0 flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0 max-w-4xl space-y-3">
+          <ModuleBadge module={module} label={badge} />
+          <div className="min-w-0 space-y-2">
+            <h1 className="beast-title">{title}</h1>
+            <p className="beast-subtitle">{description}</p>
+          </div>
+        </div>
+        {actions ? (
+          <div className="flex min-w-0 flex-wrap items-center gap-3 lg:shrink-0 lg:justify-end" aria-label={`${title} actions`}>
+            {actions}
+          </div>
+        ) : null}
+      </div>
+      {guidance.length ? (
+        <dl className="mt-5 grid min-w-0 gap-3 md:grid-cols-3">
+          {guidance.map((item) => (
+            <div key={item.label} className="beast-surface p-4">
+              <dt className="text-xs font-black uppercase tracking-wide text-beast-accent">{item.label}</dt>
+              <dd className="mt-2 text-sm leading-6 text-beast-secondary">{item.text}</dd>
+            </div>
+          ))}
+        </dl>
+      ) : null}
+    </header>
   );
 }
 

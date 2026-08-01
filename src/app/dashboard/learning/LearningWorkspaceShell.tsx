@@ -1,7 +1,7 @@
 import Link from "next/link";
 import {
   DashboardCard,
-  ModuleBadge,
+  PlatformPageHeader,
 } from "@/app/components/design/DashboardPrimitives";
 
 export function LearningWorkspaceShell({
@@ -20,26 +20,17 @@ export function LearningWorkspaceShell({
   return (
     <main className="beast-page">
       <div className="beast-container space-y-6 sm:space-y-8">
-        <section className="beast-page-header">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div className="min-w-0 space-y-3 sm:space-y-4">
-              <ModuleBadge module="learning" label={eyebrow || "BeastEducation"} />
-              <h1 className="beast-title">{title}</h1>
-              <p className="beast-subtitle">{description}</p>
-              <p className="max-w-3xl text-sm leading-6 text-slate-300">
-                <strong className="text-white">Why this helps:</strong> it gives
-                your Guidance Counselor better information. Beast uses what you
-                save here to improve your plan. Start with one item, and you can
-                come back later.
-              </p>
-            </div>
-            {actions ? (
-              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-                {actions}
-              </div>
-            ) : null}
-          </div>
-        </section>
+        <PlatformPageHeader
+          module="learning"
+          badge={eyebrow || "BeastEducation"}
+          title={title}
+          description={description}
+          guidance={[{
+            label: "Why this helps",
+            text: "It gives your Guidance Counselor better information. Beast uses what you save here to improve your plan. Start with one item, and come back later.",
+          }]}
+          actions={actions}
+        />
         {children}
       </div>
     </main>

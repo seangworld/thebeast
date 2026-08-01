@@ -63,7 +63,7 @@ export function ProfessionalConversationWorkspace({
           <div
             ref={historyDialogRef}
             id={drawerId}
-            className="ml-auto h-full max-h-[calc(100vh-1.5rem)] w-full max-w-sm overflow-hidden rounded-2xl border border-white/15 bg-slate-950 shadow-2xl"
+            className="beast-drawer ml-auto h-full w-full max-w-sm overflow-hidden rounded-beast-lg"
             role="dialog"
             tabIndex={-1}
             aria-modal="true"

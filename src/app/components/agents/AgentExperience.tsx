@@ -342,7 +342,7 @@ export function AgentConversationInput({
   }
 
   return (
-    <form className="flex min-w-0 flex-col gap-3 rounded-2xl border border-white/10 bg-[#111827] p-3 sm:flex-row sm:items-end" onSubmit={submit}>
+    <form className="flex min-w-0 flex-col gap-3 rounded-beast-lg border border-beast-border bg-beast-inset p-3 sm:flex-row sm:items-end" onSubmit={submit}>
       <div className="min-w-0 flex-1">
         <label htmlFor={inputId} className="sr-only">{label}</label>
         <textarea
@@ -398,7 +398,7 @@ export function AgentSmartCard({
   action,
 }: AgentSmartCardProps) {
   return (
-    <article className="flex min-w-0 flex-col rounded-2xl border border-white/10 bg-[#111827] p-4 shadow-lg shadow-black/10">
+    <article className="flex min-w-0 flex-col rounded-beast-lg border border-beast-border bg-beast-inset p-4 shadow-beast-sm">
       {eyebrow ? <p className="text-xs font-black uppercase tracking-[0.14em] text-cyan-300">{eyebrow}</p> : null}
       <h3 className="mt-1 break-words text-base font-black text-white">{title}</h3>
       {description ? <p className="mt-2 text-sm leading-6 text-slate-400">{description}</p> : null}
@@ -428,7 +428,7 @@ export function AgentLoadingState({
   lines = 3,
 }: AgentLoadingStateProps) {
   return (
-    <div className="grid gap-3 rounded-2xl border border-white/10 bg-[#111827] p-4" role="status" aria-live="polite" aria-label={label} data-agent-loading-state="true">
+    <div className="beast-loading-state grid gap-3" role="status" aria-live="polite" aria-label={label} data-agent-loading-state="true">
       <span className="sr-only">{label}</span>
       {Array.from({ length: Math.max(1, lines) }, (_, index) => (
         <span
@@ -467,7 +467,7 @@ export function AgentEmptyState({
   action,
 }: AgentEmptyStateProps) {
   return (
-    <div className="rounded-2xl border border-dashed border-white/15 bg-black/10 p-5 text-center" data-agent-empty-state="true">
+    <div className="beast-empty-state text-center" data-agent-empty-state="true">
       <h3 className="font-black text-white">{title}</h3>
       <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-400">{description}</p>
       {action ? <div className="mt-4 flex justify-center">{action}</div> : null}
@@ -481,7 +481,7 @@ export function AgentErrorState({
   retryAction,
 }: AgentErrorStateProps) {
   return (
-    <div className="rounded-2xl border border-red-400/35 bg-red-400/10 p-4 text-red-100" role="alert" data-agent-error-state="true">
+    <div className="beast-error-state text-red-100" role="alert" data-agent-error-state="true">
       <h3 className="font-black">{title}</h3>
       <p className="mt-2 text-sm leading-6">{message}</p>
       {retryAction ? <div className="mt-4">{retryAction}</div> : null}
@@ -514,7 +514,8 @@ export function AgentExperience({
   ) : null;
   return (
     <section
-      className={`mx-auto grid w-full max-w-5xl min-w-0 gap-6 rounded-2xl border border-white/10 bg-[#1a1f2b] p-4 shadow-[0_18px_60px_rgba(0,0,0,0.22)] sm:p-6 ${className}`}
+      className={`mx-auto grid w-full max-w-5xl min-w-0 gap-6 rounded-beast-lg border border-beast-border bg-beast-surface p-4 shadow-beast-md sm:p-6 ${className}`}
+      data-beast-component="professional-experience"
       data-agent-experience="true"
     >
       {header}

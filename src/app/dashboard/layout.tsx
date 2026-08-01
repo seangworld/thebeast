@@ -78,7 +78,7 @@ function getWorkspaceModule(pathname: string): ModuleKey {
   if (pathname.startsWith("/dashboard/notifications")) return "notifications";
   if (pathname.startsWith("/dashboard/timeline")) return "timeline";
   if (pathname.startsWith("/dashboard/search")) return "search";
-  if (pathname.startsWith("/dashboard/uploads")) return "documents";
+  if (pathname.startsWith("/dashboard/uploads") || pathname.startsWith("/dashboard/documents")) return "documents";
   if (pathname.startsWith("/dashboard/goals")) return "goals";
 
   return "beastos";
@@ -964,7 +964,11 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen min-w-0 bg-[#11151c] text-white">
+    <div
+      className="beast-app-shell"
+      data-beast-design-system="beastos"
+      data-beast-module={workspaceModule}
+    >
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-20 border-r border-[#2a3242] bg-[#0f1419]/98 backdrop-blur md:block lg:w-72">
         <div className="hidden h-full lg:block">
           <NavRail />

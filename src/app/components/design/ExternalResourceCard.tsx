@@ -6,7 +6,7 @@ export function ExternalResourceCard({ recommendation, onEvent }: {
   onEvent?: (type: ExternalResourceEventType, recommendation: ExternalResourceRecommendation) => void;
 }) {
   return (
-    <article className="grid min-w-0 content-between gap-4 rounded-xl border border-[#2a3242] bg-[#0f1419] p-4">
+    <article className="grid min-w-0 content-between gap-4 rounded-beast-md border border-beast-border bg-beast-overlay p-4 shadow-beast-sm" data-beast-component="external-resource-card">
       <div className="min-w-0">
         <div className="flex min-w-0 items-center gap-2 text-xs font-bold uppercase text-indigo-200">
           <span aria-hidden="true" className="grid h-7 min-w-7 place-items-center rounded-md bg-indigo-300/10 px-1">{recommendation.providerIcon}</span>
