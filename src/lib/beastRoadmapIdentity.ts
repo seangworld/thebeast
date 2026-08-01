@@ -359,6 +359,15 @@ export const beastRoadmapPackageRegistry = [
     ["supabase/migrations/20260801000200_add_google_oauth_connections.sql"],
     ["20260801000200_add_google_oauth_connections.sql"]
   ),
+  packageIdentity(
+    "BO-405",
+    ["BO-405"],
+    "Shared Member Session Detection",
+    [
+      "docs/SHARED_MEMBER_SESSION_DETECTION.md",
+      "tests/sharedMemberSessionDetection.test.ts",
+    ]
+  ),
 ] as const satisfies readonly BeastRoadmapPackageIdentity[];
 
 function collisionsFor(
