@@ -22,7 +22,8 @@ const agentExperience = readFileSync(
 test("BL-409 polishes Mentor message grouping and conversation rhythm", () => {
   assert.match(source, /ProfessionalConversationTimeline/);
   assert.match(workspace, /max-w-3xl/);
-  assert.match(workspace, /sm:py-8/);
+  assert.match(workspace, /grid gap-5/);
+  assert.match(workspace, /rounded-2xl border/);
   assert.match(source, /AgentStreamingResponseArea/);
   assert.match(workspace, /message\.streaming/);
 });

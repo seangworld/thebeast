@@ -45,9 +45,9 @@ test("BM-401 creates a real new Money Coach conversation and restores the avatar
   assert.match(coach, /startConversation\(\)\.then\(\(\) =>[\s\S]*focusComposer/);
   assert.match(coach, /<ProfessionalConversationHistory/);
   assert.match(coach, /loading=\{!repository\}/);
-  assert.match(coach, /professionalAvatar=/);
-  assert.match(coach, /initials="MC"/);
-  assert.match(sharedWorkspace, /message\.role === "agent" && professionalAvatar/);
+  assert.match(coach, /professionalIdentity=\{moneyCoachConversationIdentity\}/);
+  assert.match(coach, /ProfessionalConversationAvatar/);
+  assert.match(sharedWorkspace, /message\.role === "agent" && professionalIdentity/);
 });
 
 test("BM-401 nests expense workspaces and preserves Payoff Plan ownership", () => {

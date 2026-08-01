@@ -3,6 +3,21 @@
 import type { MutableRefObject, ReactNode } from "react";
 import { useConversationScroll } from "./useConversationScroll";
 import type { AgentConversationMessage } from "./AgentExperience";
+import {
+  ProfessionalConversationAvatar,
+  type ProfessionalConversationAccent,
+  type ProfessionalConversationIdentity,
+} from "./ProfessionalConversationIdentity";
+
+const professionalBubbleAccentClasses: Record<
+  ProfessionalConversationAccent,
+  string
+> = {
+  money: "border-cyan-300/15 bg-cyan-300/[0.045]",
+  learning: "border-indigo-300/15 bg-indigo-300/[0.045]",
+  health: "border-rose-300/15 bg-rose-300/[0.045]",
+  neutral: "border-white/10 bg-white/[0.045]",
+};
 
 type ProfessionalConversationWorkspaceProps = {
   history: ReactNode;
@@ -63,7 +78,7 @@ type ProfessionalConversationTimelineProps = {
   followLatestSignal?: number;
   scrollPositions: MutableRefObject<Map<string, number>>;
   professionalName: string;
-  professionalAvatar?: ReactNode;
+  professionalIdentity?: ProfessionalConversationIdentity;
 };
 
 export function ProfessionalConversationTimeline({
@@ -73,7 +88,7 @@ export function ProfessionalConversationTimeline({
   followLatestSignal,
   scrollPositions,
   professionalName,
-  professionalAvatar,
+  professionalIdentity,
 }: ProfessionalConversationTimelineProps) {
   const {
     contentRef,
@@ -113,7 +128,7 @@ export function ProfessionalConversationTimeline({
             Conversation
           </h2>
           <ol
-            className="divide-y divide-white/[0.07]"
+            className="grid gap-5"
             role="log"
             aria-live="polite"
             aria-relevant="additions text"
@@ -122,17 +137,39 @@ export function ProfessionalConversationTimeline({
             {messages.map((message) => (
               <li
                 key={message.id}
-                className="py-6 first:pt-4 sm:py-8"
+                className={`min-w-0 first:pt-3 ${
+                  message.role === "user" ? "flex justify-end" : ""
+                }`}
                 data-message-role={message.role}
               >
-                <div className="flex items-start gap-3">
-                  {message.role === "agent" && professionalAvatar ? (
-                    <div className="pt-0.5">{professionalAvatar}</div>
+                <div
+                  className={`flex min-w-0 items-start gap-3 ${
+                    message.role === "user"
+                      ? "max-w-[min(88%,42rem)] flex-row-reverse"
+                      : "w-full"
+                  }`}
+                >
+                  {message.role === "agent" && professionalIdentity ? (
+                    <div className="pt-0.5">
+                      <ProfessionalConversationAvatar
+                        identity={professionalIdentity}
+                      />
+                    </div>
                   ) : null}
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-baseline justify-between gap-4">
+                  <div
+                    className={`min-w-0 ${
+                      message.role === "user" ? "flex-1" : "w-full"
+                    }`}
+                  >
+                    <div
+                      className={`flex flex-wrap items-baseline gap-x-2 gap-y-1 ${
+                        message.role === "user"
+                          ? "justify-end"
+                          : "justify-between"
+                      }`}
+                    >
                       <h3
-                        className={`text-sm font-black ${
+                        className={`flex min-w-0 flex-wrap items-baseline gap-x-2 text-sm font-black ${
                           message.role === "agent"
                             ? "text-white"
                             : message.role === "user"
@@ -140,7 +177,16 @@ export function ProfessionalConversationTimeline({
                               : "text-slate-300"
                         }`}
                       >
-                        {message.author}
+                        {message.role === "agent" && professionalIdentity ? (
+                          <>
+                            <span>{professionalIdentity.name}</span>
+                            <span className="text-xs font-semibold text-slate-400">
+                              {professionalIdentity.role}
+                            </span>
+                          </>
+                        ) : (
+                          message.author
+                        )}
                       </h3>
                       {message.timestamp ? (
                         <time className="shrink-0 text-xs text-slate-500">
@@ -148,7 +194,24 @@ export function ProfessionalConversationTimeline({
                         </time>
                       ) : null}
                     </div>
-                    <div className="mt-3 break-words text-[15px] leading-7 text-slate-200 [&_a]:font-bold [&_a]:text-cyan-200 [&_a]:underline-offset-4 [&_a:hover]:underline [&_details]:mt-4 [&_li]:my-1 [&_ol]:my-4 [&_ol]:list-decimal [&_ol]:pl-6 [&_p+p]:mt-4 [&_table]:my-5 [&_table]:w-full [&_table]:border-collapse [&_td]:border-b [&_td]:border-white/10 [&_td]:px-3 [&_td]:py-2 [&_th]:border-b [&_th]:border-white/15 [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_ul]:my-4 [&_ul]:list-disc [&_ul]:pl-6">
+                    <div
+                      className={`mt-2 min-w-0 break-words rounded-2xl border px-4 py-3 text-[15px] leading-7 text-slate-200 sm:px-5 sm:py-4 ${
+                        message.role === "agent"
+                          ? `rounded-tl-md ${
+                              professionalBubbleAccentClasses[
+                                professionalIdentity?.accent || "neutral"
+                              ]
+                            }`
+                          : message.role === "user"
+                            ? "rounded-tr-md border-cyan-300/20 bg-cyan-300/10"
+                            : "border-white/10 bg-black/15 text-slate-300"
+                      } [&_a]:font-bold [&_a]:text-cyan-200 [&_a]:underline-offset-4 [&_a:hover]:underline [&_details]:mt-4 [&_li]:my-1 [&_ol]:my-4 [&_ol]:list-decimal [&_ol]:pl-6 [&_p+p]:mt-4 [&_table]:my-5 [&_table]:w-full [&_table]:border-collapse [&_td]:border-b [&_td]:border-white/10 [&_td]:px-3 [&_td]:py-2 [&_th]:border-b [&_th]:border-white/15 [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_ul]:my-4 [&_ul]:list-disc [&_ul]:pl-6`}
+                      data-professional-accent={
+                        message.role === "agent"
+                          ? professionalIdentity?.accent
+                          : undefined
+                      }
+                    >
                       {message.content}
                     </div>
                     {message.streaming ? (

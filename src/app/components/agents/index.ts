@@ -24,6 +24,16 @@ export {
   ProfessionalConversationWorkspace,
 } from "./ProfessionalConversationWorkspace";
 export {
+  ProfessionalConversationAvatar,
+  formatProfessionalMessageTime,
+  getProfessionalConversationIdentity,
+  guidanceCounselorConversationIdentity,
+  healthAdvisorConversationIdentity,
+  moneyCoachConversationIdentity,
+  type ProfessionalConversationAccent,
+  type ProfessionalConversationIdentity,
+} from "./ProfessionalConversationIdentity";
+export {
   ProfessionalKnowledgeWorkspace,
   type ProfessionalKnowledgeAction,
   type ProfessionalKnowledgeConfidence,

@@ -5,7 +5,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
-  AgentAvatar,
   AgentConversationInput,
   AgentEmptyState,
   AgentErrorState,
@@ -15,6 +14,7 @@ import {
   AgentStatus,
   AgentStreamingResponseArea,
   ProfessionalConversationComposer,
+  ProfessionalConversationAvatar,
   ProfessionalConversationHistory,
   ProfessionalConversationTimeline,
   ProfessionalExperienceFramework,
@@ -22,6 +22,8 @@ import {
   ProfessionalMemoryTimeline,
   ProfessionalSupportingWorkspaces,
   ProfessionalTimeAwareness,
+  formatProfessionalMessageTime,
+  moneyCoachConversationIdentity,
   type AgentConversationMessage,
   type ProfessionalKnowledgeItem,
   type ProfessionalKnowledgeModel,
@@ -244,7 +246,14 @@ export function MoneyCoachExperience({
   onRetry,
 }: MoneyCoachExperienceProps) {
   const searchParams = useSearchParams();
-  const [turns, setTurns] = useState<{ id: string; question: string; response: MoneyCoachStructuredAnswer }[]>([]);
+  const [turns, setTurns] = useState<
+    {
+      id: string;
+      question: string;
+      response: MoneyCoachStructuredAnswer;
+      timestamp?: string;
+    }[]
+  >([]);
   const [input, setInput] = useState("");
   const [conversationTitle, setConversationTitle] = useState("Current financial review");
   const [localNow, setLocalNow] = useState<Date | null>(null);
@@ -382,7 +391,12 @@ export function MoneyCoachExperience({
       if (!user || !agent) continue;
       const content = agent.content as { text: string; href: string; action: string; structured?: MoneyCoachStructuredAnswer };
       const response = content.structured || { intent: "general-finance", opening: content.text, sections: [], text: content.text, href: content.href, action: content.action, professionalExecution: { profileId: model.professional.id, role: model.professional.identity.role, mission: model.professional.identity.mission, expertiseApplied: model.professional.identity.expertise, communicationStyle: model.professional.identity.communicationStyle, professionalBoundaries: model.professional.identity.professionalBoundaries, teachingMethod: model.professional.playbook.teaching.method, investigationOrder: model.professional.playbook.investigation.evidenceOrder, uncertaintyRulesApplied: [], closingRule: model.professional.playbook.closing.style } } satisfies MoneyCoachStructuredAnswer;
-      restored.push({ id: user.id, question: String(user.content), response });
+      restored.push({
+        id: user.id,
+        question: String(user.content),
+        response,
+        timestamp: agent.timestamp || user.timestamp,
+      });
     }
     setTurns(restored);
   }
@@ -428,8 +442,8 @@ export function MoneyCoachExperience({
           ]
         : []),
       ...turns.flatMap<AgentConversationMessage>((turn) => [
-        { id: `${turn.id}-user`, role: "user", author: "You", content: turn.question },
-        { id: `${turn.id}-coach`, role: "agent", author: model.professional.identity.role, streaming: streamingTurnId === turn.id, content: <AgentStreamingResponseArea isStreaming={streamingTurnId === turn.id} label="Money Coach response"><MoneyCoachResponseDocument response={turn.response} /></AgentStreamingResponseArea> },
+        { id: `${turn.id}-user`, role: "user", author: "You", content: turn.question, timestamp: formatProfessionalMessageTime(turn.timestamp) },
+        { id: `${turn.id}-coach`, role: "agent", author: model.professional.identity.role, streaming: streamingTurnId === turn.id, timestamp: formatProfessionalMessageTime(turn.timestamp), content: <AgentStreamingResponseArea isStreaming={streamingTurnId === turn.id} label="Money Coach response"><MoneyCoachResponseDocument response={turn.response} /></AgentStreamingResponseArea> },
       ]),
     ],
     [
@@ -452,11 +466,11 @@ export function MoneyCoachExperience({
       lastReviewAt: sessionBriefing.visit.lastReviewAt,
     });
     const timestamp = Date.now();
-    const turn = { id: `money-${timestamp}`, question: value, response };
+    const now = new Date(timestamp).toISOString();
+    const turn = { id: `money-${timestamp}`, question: value, response, timestamp: now };
     setStreamingTurnId(turn.id);
     setTurns((current) => replaceConversation ? [turn] : [...current, turn]);
     if (repository && targetThreadId) {
-      const now = new Date().toISOString();
       const messages: AgentMessage[] = [
         { id: `${turn.id}-user`, threadId: targetThreadId, sender: { kind: "user", id: ownerId }, recipient: { kind: "agent", id: "beastmoney.money-coach" }, content: value, timestamp: now },
         { id: `${turn.id}-coach`, threadId: targetThreadId, sender: { kind: "agent", id: "beastmoney.money-coach" }, recipient: { kind: "module", id: "beastmoney" }, content: { text: response.text, href: response.href, action: response.action, structured: response }, timestamp: now },
@@ -1311,7 +1325,12 @@ export function MoneyCoachExperience({
         <AgentHeader
           title={model.professional.identity.role}
           subtitle={`${model.behavior.communication.tone} guidance · ${model.behavior.communication.verbosity} detail`}
-          avatar={<AgentAvatar name={model.professional.identity.role} initials="MC" size="md" />}
+          avatar={
+            <ProfessionalConversationAvatar
+              identity={moneyCoachConversationIdentity}
+              size="md"
+            />
+          }
           status={<div className="flex items-center gap-2"><AgentStatus state={loading ? "loading" : error ? "error" : streamingTurnId ? "streaming" : "available"} /><button type="button" className="beast-button-secondary min-h-11 lg:hidden" aria-expanded={historyOpen} aria-controls="money-coach-history-drawer" onClick={() => setHistoryOpen(true)}>Conversations</button></div>}
         />
       }
@@ -1347,13 +1366,7 @@ export function MoneyCoachExperience({
               streaming={Boolean(streamingTurnId)}
               scrollPositions={conversationScrollPositionsRef}
               professionalName="Money Coach"
-              professionalAvatar={
-                <AgentAvatar
-                  name={model.professional.identity.role}
-                  initials="MC"
-                  size="sm"
-                />
-              }
+              professionalIdentity={moneyCoachConversationIdentity}
             />
             <ProfessionalConversationComposer id="money-coach-question">
               <AgentConversationInput

@@ -19,6 +19,14 @@ const guidance = readFileSync(
   "src/app/dashboard/learning/GuidanceCounselorConversation.tsx",
   "utf8"
 );
+const health = readFileSync(
+  "src/app/dashboard/health/HealthAdvisorWorkspace.tsx",
+  "utf8"
+);
+const identity = readFileSync(
+  "src/app/components/agents/ProfessionalConversationIdentity.tsx",
+  "utf8"
+);
 
 test("BE-223 provides one shared professional conversation workspace", () => {
   assert.match(agentExports, /ProfessionalConversationWorkspace/);
@@ -38,9 +46,44 @@ test("BE-223 shares scrolling, streaming, message layout, and responsive behavio
   assert.match(shared, /overscroll-contain/);
   assert.match(shared, /message\.streaming/);
   assert.match(shared, /data-message-role/);
-  assert.match(shared, /sm:py-8/);
+  assert.match(shared, /grid gap-5/);
+  assert.match(shared, /rounded-2xl border/);
   assert.match(shared, /lg:grid-cols-\[18rem_minmax\(0,1fr\)\]/);
   assert.match(shared, /lg:hidden/);
+});
+
+test("AP-001 gives every current Digital Professional a shared message identity", () => {
+  assert.match(identity, /getDigitalProfessional\(professionalId\)/);
+  assert.match(identity, /professional\.portrait\.avatar_url/);
+  assert.match(identity, /moneyCoachConversationIdentity/);
+  assert.match(identity, /guidanceCounselorConversationIdentity/);
+  assert.match(identity, /healthAdvisorConversationIdentity/);
+  assert.match(shared, /<ProfessionalConversationAvatar/);
+  assert.match(shared, /professionalIdentity\.name/);
+  assert.match(shared, /professionalIdentity\.role/);
+  assert.match(shared, /data-professional-accent/);
+
+  for (const [source, identityName] of [
+    [money, "moneyCoachConversationIdentity"],
+    [guidance, "guidanceCounselorConversationIdentity"],
+    [health, "healthAdvisorConversationIdentity"],
+  ] as const) {
+    assert.match(
+      source,
+      new RegExp(`professionalIdentity=[\\s\\S]{0,80}${identityName}`)
+    );
+  }
+});
+
+test("AP-001 timestamps persisted turns without inventing opening-message times", () => {
+  assert.match(identity, /formatProfessionalMessageTime/);
+  for (const source of [money, guidance, health]) {
+    assert.match(source, /formatProfessionalMessageTime\(turn\.timestamp\)/);
+  }
+  assert.doesNotMatch(
+    shared,
+    /new Date\(\).*data-agent-conversation-timeline/
+  );
 });
 
 test("BE-223 gives Guidance Counselor durable owner-scoped conversation history", () => {

@@ -161,7 +161,8 @@ test("MC-201 consumes the shared AgentExperience without replacing existing page
   assert.match(component, /AgentStreamingResponseArea/);
   assert.match(component, /ProfessionalConversationTimeline/);
   assert.match(workspace, /max-w-3xl/);
-  assert.match(workspace, /divide-y divide-white\/\[0\.07\]/);
+  assert.match(workspace, /grid gap-5/);
+  assert.match(workspace, /rounded-tl-md/);
   assert.match(workspace, /data-message-role/);
   assert.match(scroll, /scrollTo\(\{ top: region\.scrollHeight/);
   assert.match(workspace, /Jump to Latest/);

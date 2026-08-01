@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  AgentAvatar,
   AgentConversationInput,
   AgentEmptyState,
   AgentGreeting,
@@ -13,6 +12,7 @@ import {
   AgentStatus,
   AgentStreamingResponseArea,
   ProfessionalConversationComposer,
+  ProfessionalConversationAvatar,
   ProfessionalConversationHistory,
   ProfessionalConversationTimeline,
   ProfessionalExperienceFramework,
@@ -20,6 +20,8 @@ import {
   ProfessionalMemoryTimeline,
   ProfessionalSupportingWorkspaces,
   ProfessionalTimeAwareness,
+  formatProfessionalMessageTime,
+  guidanceCounselorConversationIdentity,
   type AgentConversationMessage,
   type ProfessionalKnowledgeItem,
   type ProfessionalKnowledgeModel,
@@ -68,6 +70,7 @@ type GuidanceTurn = {
   id: string;
   question: string;
   response: string;
+  timestamp?: string;
 };
 
 type GuidanceCounselorConversationProps = {
@@ -309,6 +312,7 @@ export default function GuidanceCounselorConversation({
         id: member.id.replace(/-user$/, ""),
         question: String(member.content),
         response: content,
+        timestamp: counselor.timestamp || member.timestamp,
       });
     }
     setTurns(restored);
@@ -583,17 +587,23 @@ export default function GuidanceCounselorConversation({
       relationshipMemory,
     }).text;
 
+    const messageTimestamp = new Date().toISOString();
     setStreamingTurnId(turnId);
     setTurns((current) => [
       ...current,
-      { id: turnId, question: cleanQuestion, response },
+      {
+        id: turnId,
+        question: cleanQuestion,
+        response,
+        timestamp: messageTimestamp,
+      },
     ]);
     setDiscoveryProfile(learnedProfile);
     setInput("");
     void saveDiscoveryProfile(learnedProfile);
 
     if (repository && activeThreadId) {
-      const now = new Date().toISOString();
+      const now = messageTimestamp;
       const messages: AgentMessage[] = [
         {
           id: `${turnId}-user`,
@@ -741,12 +751,14 @@ export default function GuidanceCounselorConversation({
           role: "user",
           author: "You",
           content: turn.question,
+          timestamp: formatProfessionalMessageTime(turn.timestamp),
         },
         {
           id: `${turn.id}-counselor`,
           role: "agent",
           author: "Guidance Counselor",
           streaming: streamingTurnId === turn.id,
+          timestamp: formatProfessionalMessageTime(turn.timestamp),
           content: (
             <AgentStreamingResponseArea
               isStreaming={streamingTurnId === turn.id}
@@ -1103,9 +1115,8 @@ export default function GuidanceCounselorConversation({
               title="Guidance Counselor"
               subtitle="Your primary BeastEducation professional"
               avatar={
-                <AgentAvatar
-                  name="Guidance Counselor"
-                  initials="GC"
+                <ProfessionalConversationAvatar
+                  identity={guidanceCounselorConversationIdentity}
                   size="lg"
                 />
               }
@@ -1183,6 +1194,9 @@ export default function GuidanceCounselorConversation({
                     streaming={Boolean(streamingTurnId)}
                     scrollPositions={conversationScrollPositionsRef}
                     professionalName="Guidance Counselor"
+                    professionalIdentity={
+                      guidanceCounselorConversationIdentity
+                    }
                   />
                 )}
                 <div className="mt-4 grid gap-4 border-t border-white/[0.07] pt-4">

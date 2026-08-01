@@ -18,6 +18,8 @@ import {
   ProfessionalMemoryTimeline,
   ProfessionalSupportingWorkspaces,
   ProfessionalTimeAwareness,
+  formatProfessionalMessageTime,
+  healthAdvisorConversationIdentity,
   type AgentConversationMessage,
   type ProfessionalKnowledgeConfidence,
   type ProfessionalKnowledgeItem,
@@ -73,6 +75,7 @@ import { BeastHealthShell } from "./BeastHealthShell";
 type HealthAdvisorQuestionTurn = {
   id: string;
   question: string;
+  timestamp?: string;
   response?:
     | { kind: "external"; answer: HealthAdvisorQuestionAnswer }
     | { kind: "intake"; text: string };
@@ -141,6 +144,7 @@ function restoreHealthAdvisorTurns(
       turns.push({
         id: message.id,
         question: message.content,
+        timestamp: responseMessage?.timestamp || message.timestamp,
         response: {
           kind: "external",
           answer: content.answer as HealthAdvisorQuestionAnswer,
@@ -153,6 +157,7 @@ function restoreHealthAdvisorTurns(
       turns.push({
         id: message.id,
         question: message.content,
+        timestamp: responseMessage?.timestamp || message.timestamp,
         response: { kind: "intake", text: content.text },
       });
     }
@@ -1106,6 +1111,7 @@ export function HealthAdvisorWorkspace() {
 
   async function askHealthAdvisor(question: string) {
     if (healthQuestionBusy) return;
+    const messageTimestamp = new Date().toISOString();
     const turnId = `health-question-${Date.now()}`;
     const disclosedTopic = knowledgePrompt
       ? null
@@ -1135,7 +1141,12 @@ export function HealthAdvisorWorkspace() {
       if (!knowledgePrompt) setKnowledgePrompt(activeKnowledgePrompt);
       setQuestionTurns((current) => [
         ...current,
-        { id: turnId, question, response: intakeResponse },
+        {
+          id: turnId,
+          question,
+          response: intakeResponse,
+          timestamp: messageTimestamp,
+        },
       ]);
       setPendingKnowledgeAnswer(question);
       setKnowledgeSaveState("review");
@@ -1174,7 +1185,12 @@ export function HealthAdvisorWorkspace() {
       };
       setQuestionTurns((current) => [
         ...current,
-        { id: turnId, question, response: externalResponse },
+        {
+          id: turnId,
+          question,
+          response: externalResponse,
+          timestamp: messageTimestamp,
+        },
       ]);
       setHealthQuestion("");
       setExternalResearchConsent(false);
@@ -1508,11 +1524,13 @@ export function HealthAdvisorWorkspace() {
           role: "user",
           author: "You",
           content: turn.question,
+          timestamp: formatProfessionalMessageTime(turn.timestamp),
         },
         {
           id: `${turn.id}-advisor`,
           role: "agent",
           author: "Health Advisor",
+          timestamp: formatProfessionalMessageTime(turn.timestamp),
           content:
             turn.response?.kind === "external" ? (
               <HealthAdvisorAnswerDocument response={turn.response.answer} />
@@ -1691,6 +1709,7 @@ export function HealthAdvisorWorkspace() {
               }
               scrollPositions={healthConversationScrollPositions}
               professionalName="Health Advisor"
+              professionalIdentity={healthAdvisorConversationIdentity}
             />
           </div>
           <div className="mt-4 grid gap-3 border-t border-white/10 pt-4">
