@@ -47,6 +47,7 @@ import {
 } from "@/lib/payoffPlanView";
 import { MoneyManagementNavigation } from "@/app/dashboard/money/components/MoneyManagementNavigation";
 import { DebtManagementActions, type DebtManagementDebt, type DebtPaymentHistoryRow } from "./DebtManagementActions";
+import { OverlayPopover } from "../cashflow/components/OverlayPopover";
 import { getNextDebtCycleDate, toDebtDateInput, type DebtPaymentAction } from "@/lib/debtManagement";
 import { applyDebtPaymentToCycle } from "@/lib/financialPayments";
 
@@ -120,6 +121,55 @@ type StrategyComparisonRow = {
   isBestInterest: boolean;
   isFastest: boolean;
 };
+
+function DebtActionsMenu({
+  debt,
+  onPayManage,
+  onEdit,
+  lifecycleLabel = "Archive",
+  onLifecycle,
+  onDelete,
+}: {
+  debt: Debt;
+  onPayManage?: () => void;
+  onEdit: () => void;
+  lifecycleLabel?: "Archive" | "Unarchive";
+  onLifecycle: () => void;
+  onDelete: () => void;
+}) {
+  const menuItemClass =
+    "w-full rounded-md px-3 py-2 text-left text-sm font-semibold text-[#dbe3ef] hover:bg-[#1b2432] focus:bg-[#1b2432] focus:outline-none";
+
+  return (
+    <OverlayPopover
+      label="Actions"
+      ariaLabel={`${debt.name} actions`}
+      width={208}
+      testId="debt-list-actions"
+      triggerClassName="w-full justify-center sm:w-auto"
+    >
+      {(close) => (
+        <div className="grid gap-1" data-debt-actions-menu="true">
+          {onPayManage ? (
+            <button type="button" role="menuitem" className={menuItemClass} onClick={() => { close(); onPayManage(); }}>
+              Pay / Manage
+            </button>
+          ) : null}
+          <button type="button" role="menuitem" className={menuItemClass} onClick={() => { close(); onEdit(); }}>
+            Edit
+          </button>
+          <div role="separator" className="my-1 border-t border-[#2a3242]" />
+          <button type="button" role="menuitem" className={menuItemClass} onClick={() => { close(); onLifecycle(); }}>
+            {lifecycleLabel}
+          </button>
+          <button type="button" role="menuitem" className={`${menuItemClass} text-red-300 hover:bg-red-950/40 focus:bg-red-950/40`} onClick={() => { close(); onDelete(); }}>
+            Delete
+          </button>
+        </div>
+      )}
+    </OverlayPopover>
+  );
+}
 
 function summarizePayoffProjection({
   strategy,
@@ -212,6 +262,7 @@ export default function DebtsPage() {
   const [loading, setLoading] = useState(true);
 
   const [editingDebtId, setEditingDebtId] = useState<string | null>(null);
+  const [managedDebtId, setManagedDebtId] = useState<string | null>(null);
 
   const [editName, setEditName] = useState("");
   const [editBalance, setEditBalance] = useState("");
@@ -863,6 +914,8 @@ export default function DebtsPage() {
     await load();
   }
   async function archiveDebt(id: string) {
+    const debt = debts.find((candidate) => candidate.id === id);
+    if (!window.confirm(`Archive ${debt?.name || "this debt"}? It will be removed from active payoff calculations.`)) return;
     const supabase = createClient();
 
     const { error } = await supabase
@@ -904,6 +957,8 @@ export default function DebtsPage() {
   }
 
   async function deleteDebt(id: string) {
+    const debt = debts.find((candidate) => candidate.id === id);
+    if (!window.confirm(`Delete ${debt?.name || "this debt"}? This cannot be undone.`)) return;
     const supabase = createClient();
 
     const { error } = await supabase.from("debts").delete().eq("id", id);
@@ -1291,7 +1346,7 @@ export default function DebtsPage() {
           </div>
 
           <div
-            className="grid min-w-0 gap-3 p-3 md:hidden"
+            className="grid min-w-0 gap-3 p-3 lg:hidden"
             data-mobile-debt-list-cards="true"
           >
             {loading ? (
@@ -1410,40 +1465,35 @@ export default function DebtsPage() {
                       </div>
                       <div className="mt-3"><PaymentAutomationControls name={debt.name} {...normalizePaymentAutomation(debt)} onSave={(patch) => updateDebtAutomation(debt.id, patch)} /></div>
 
-                      <div className="mt-4">
-                        <DebtManagementActions
+                      <div className="mt-4 flex justify-end">
+                        <DebtActionsMenu
                           debt={debt}
-                          fundingSources={fundingSources}
-                          history={debtHistory(debt.id)}
-                          busy={paymentBusyId === debt.id}
-                          onPayment={recordDebtPayment}
-                          onResetDueDate={resetDebtDueDate}
-                          onUndoLastPayment={undoLastDebtPayment}
+                          onPayManage={() => setManagedDebtId((current) => current === debt.id ? null : debt.id)}
+                          onEdit={() => startEditDebt(debt)}
+                          onLifecycle={() => void archiveDebt(debt.id)}
+                          onDelete={() => void deleteDebt(debt.id)}
                         />
                       </div>
 
-                      <div className="mt-4 grid min-w-0 grid-cols-1 gap-2 min-[390px]:grid-cols-3">
-                        <button
-                          onClick={() => startEditDebt(debt)}
-                          className="beast-button-secondary"
-                        >
-                          Edit
-                        </button>
-
-                        <button
-                          onClick={() => archiveDebt(debt.id)}
-                          className="beast-button-secondary"
-                        >
-                          Archive
-                        </button>
-
-                        <button
-                          onClick={() => deleteDebt(debt.id)}
-                          className="beast-button"
-                        >
-                          Delete
-                        </button>
-                      </div>
+                      {managedDebtId === debt.id ? (
+                        <div className="mt-4 rounded-xl border border-[#2a3242] bg-[#0f1419] p-3" data-debt-management-panel="true">
+                          <div className="mb-3 flex items-center justify-between gap-3">
+                            <h4 className="font-bold text-white">Payment management</h4>
+                            <button type="button" onClick={() => setManagedDebtId(null)} className="beast-button-secondary" aria-label={`Close ${debt.name} payment management`}>
+                              Close
+                            </button>
+                          </div>
+                          <DebtManagementActions
+                            debt={debt}
+                            fundingSources={fundingSources}
+                            history={debtHistory(debt.id)}
+                            busy={paymentBusyId === debt.id}
+                            onPayment={recordDebtPayment}
+                            onResetDueDate={resetDebtDueDate}
+                            onUndoLastPayment={undoLastDebtPayment}
+                          />
+                        </div>
+                      ) : null}
                     </>
                   )}
                 </article>
@@ -1477,7 +1527,8 @@ export default function DebtsPage() {
                   </tr>
                 ) : (
                   orderedDebts.map((debt, index) => (
-                    <tr key={debt.id}>
+                    <Fragment key={debt.id}>
+                    <tr>
                     <td>#{index + 1}</td>
                   
                       <td>
@@ -1624,47 +1675,40 @@ export default function DebtsPage() {
                             </button>
                           </div>
                         ) : (
-                          <div className="grid min-w-0 gap-2 text-left">
-                            <details>
-                              <summary className="beast-button cursor-pointer list-none text-center">Pay / Manage</summary>
-                              <div className="mt-3 min-w-[360px] rounded-xl border border-[#2a3242] bg-[#111827] p-3">
-                                <DebtManagementActions
-                                  debt={debt}
-                                  fundingSources={fundingSources}
-                                  history={debtHistory(debt.id)}
-                                  busy={paymentBusyId === debt.id}
-                                  onPayment={recordDebtPayment}
-                                  onResetDueDate={resetDebtDueDate}
-                                  onUndoLastPayment={undoLastDebtPayment}
-                                />
-                              </div>
-                            </details>
-                            <div className="flex justify-end gap-2">
-                            <button
-                              onClick={() => startEditDebt(debt)}
-                              className="beast-button-secondary"
-                            >
-                              Edit
-                            </button>
-
-                            <button
-                              onClick={() => archiveDebt(debt.id)}
-                              className="beast-button-secondary"
-                            >
-                              Archive
-                            </button>
-                  
-                            <button
-                              onClick={() => deleteDebt(debt.id)}
-                              className="beast-button"
-                            >
-                              Delete
-                            </button>
-                            </div>
-                          </div>
+                          <DebtActionsMenu
+                            debt={debt}
+                            onPayManage={() => setManagedDebtId((current) => current === debt.id ? null : debt.id)}
+                            onEdit={() => startEditDebt(debt)}
+                            onLifecycle={() => void archiveDebt(debt.id)}
+                            onDelete={() => void deleteDebt(debt.id)}
+                          />
                         )}
                       </td>
                     </tr>
+                    {managedDebtId === debt.id && editingDebtId !== debt.id ? (
+                      <tr data-debt-management-row="true">
+                        <td colSpan={8}>
+                          <div className="rounded-xl border border-[#2a3242] bg-[#0f1419] p-4">
+                            <div className="mb-3 flex items-center justify-between gap-3">
+                              <h4 className="font-bold text-white">{debt.name} payment management</h4>
+                              <button type="button" onClick={() => setManagedDebtId(null)} className="beast-button-secondary" aria-label={`Close ${debt.name} payment management`}>
+                                Close
+                              </button>
+                            </div>
+                            <DebtManagementActions
+                              debt={debt}
+                              fundingSources={fundingSources}
+                              history={debtHistory(debt.id)}
+                              busy={paymentBusyId === debt.id}
+                              onPayment={recordDebtPayment}
+                              onResetDueDate={resetDebtDueDate}
+                              onUndoLastPayment={undoLastDebtPayment}
+                            />
+                          </div>
+                        </td>
+                      </tr>
+                    ) : null}
+                    </Fragment>
                   ))
                 )}
               </tbody>
@@ -1804,37 +1848,13 @@ export default function DebtsPage() {
                               </button>
                             </div>
                           ) : (
-                            <div className="flex justify-end gap-2">
-                              <button
-                                onClick={() => startEditDebt(debt)}
-                                className="beast-button-secondary"
-                              >
-                                Edit
-                              </button>
-
-                              {Boolean(debt.is_archived) ? (
-                                <button
-                                  onClick={() => unarchiveDebt(debt.id)}
-                                  className="beast-button-secondary"
-                                >
-                                  Unarchive
-                                </button>
-                              ) : (
-                                <button
-                                  onClick={() => archiveDebt(debt.id)}
-                                  className="beast-button-secondary"
-                                >
-                                  Archive
-                                </button>
-                              )}
-
-                              <button
-                                onClick={() => deleteDebt(debt.id)}
-                                className="beast-button"
-                              >
-                                Delete
-                              </button>
-                            </div>
+                            <DebtActionsMenu
+                              debt={debt}
+                              onEdit={() => startEditDebt(debt)}
+                              lifecycleLabel={Boolean(debt.is_archived) ? "Unarchive" : "Archive"}
+                              onLifecycle={() => Boolean(debt.is_archived) ? void unarchiveDebt(debt.id) : void archiveDebt(debt.id)}
+                              onDelete={() => void deleteDebt(debt.id)}
+                            />
                           )}
                         </td>
                       </tr>

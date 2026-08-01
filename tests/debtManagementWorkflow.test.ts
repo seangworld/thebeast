@@ -26,3 +26,39 @@ test("Debt Management exposes the complete payment, reset, history, and status w
   for (const label of ["Pay Minimum", "Pay Full Balance", "Custom Payment", "Statement Balance", "Skip Payment", "Mark Paid Outside Beast", "Undo Last Payment", "Reset Due Date", "Move to next recurring cycle", "Select custom next due date", "Payment Date", "Funding Source", "Optional Notes", "History"]) assert.match(source, new RegExp(label));
   assert.match(source, /getDebtDueState/);
 });
+
+test("Debt List consolidates row controls into one confirmed Actions menu", () => {
+  const page = readFileSync("src/app/dashboard/money/debts/page.tsx", "utf8");
+
+  assert.match(page, /function DebtActionsMenu/);
+  assert.match(page, /label="Actions"/);
+  assert.match(page, /ariaLabel=\{`\$\{debt\.name\} actions`\}/);
+  for (const label of ["Pay / Manage", "Edit", "Archive", "Delete"]) {
+    assert.match(page, new RegExp(label));
+  }
+  assert.match(page, /role="separator"/);
+  assert.match(page, /role="menuitem"/);
+  assert.match(page, /text-red-300/);
+  assert.match(page, /window\.confirm\(`Archive/);
+  assert.match(page, /window\.confirm\(`Delete/);
+  assert.match(page, /data-debt-management-panel="true"/);
+  assert.match(page, /data-debt-management-row="true"/);
+  assert.match(page, /className="grid min-w-0 gap-3 p-3 lg:hidden"/);
+  assert.doesNotMatch(page, /<summary[^>]*>Pay \/ Manage<\/summary>/);
+});
+
+test("shared Actions overlay supports focus, arrow keys, Escape, and a mobile sheet", () => {
+  const overlay = readFileSync(
+    "src/app/dashboard/money/cashflow/components/OverlayPopover.tsx",
+    "utf8"
+  );
+
+  for (const key of ["ArrowDown", "ArrowUp", "Home", "End", "Escape"]) {
+    assert.match(overlay, new RegExp(`event\\.key === "${key}"`));
+  }
+  assert.match(overlay, /querySelector<HTMLElement>\('\[role="menuitem"\]/);
+  assert.match(overlay, /buttonRef\.current\?\.focus/);
+  assert.match(overlay, /aria-label=\{ariaLabel\}/);
+  assert.match(overlay, /window\.innerWidth <= 640/);
+  assert.match(overlay, /bottom: gutter/);
+});
