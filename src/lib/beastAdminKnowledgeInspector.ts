@@ -196,6 +196,19 @@ function normalizeProfile(value: unknown): BeastAdminKnowledgeProfile | null {
     currentEmployment: value.currentEmployment,
     militaryExperience: value.militaryExperience,
     otherEducationalContext: value.otherEducationalContext,
+    incomeGoal: optionalString(value.incomeGoal) || "",
+    familyConsiderations: optionalString(value.familyConsiderations) || "",
+    technicalExperience: strings(value.technicalExperience),
+    leadershipInterest:
+      typeof value.leadershipInterest === "boolean"
+        ? value.leadershipInterest
+        : null,
+    preferredWork: optionalString(value.preferredWork) || "",
+    workLocationPreference:
+      optionalString(value.workLocationPreference) || "",
+    sectorPreference: optionalString(value.sectorPreference) || "",
+    travelWillingness: optionalString(value.travelWillingness) || "",
+    longTermGoals: optionalString(value.longTermGoals) || "",
     educationHistory: strings(value.educationHistory),
     militaryTraining: strings(value.militaryTraining),
     schools: strings(value.schools),

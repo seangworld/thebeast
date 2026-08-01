@@ -7,6 +7,12 @@ export type GuidanceRelationshipMemoryValue = {
   careerInterests?: readonly string[];
   currentSituation?: string;
   constraints?: string;
+  incomeGoal?: string;
+  longTermGoals?: string;
+  preferredWork?: string;
+  workLocationPreference?: string;
+  sectorPreference?: string;
+  familyConsiderations?: string;
   sourceConversationId: string;
   sourceMessageId: string;
   capturedAt: string;
@@ -68,6 +74,12 @@ function relationshipValue(record: AgentMemoryRecord | undefined) {
     careerInterests: cleanList(value.careerInterests),
     currentSituation: clean(value.currentSituation),
     constraints: clean(value.constraints),
+    incomeGoal: clean(value.incomeGoal),
+    longTermGoals: clean(value.longTermGoals),
+    preferredWork: clean(value.preferredWork),
+    workLocationPreference: clean(value.workLocationPreference),
+    sectorPreference: clean(value.sectorPreference),
+    familyConsiderations: clean(value.familyConsiderations),
     sourceConversationId,
     sourceMessageId,
     capturedAt: clean(value.capturedAt),
@@ -92,7 +104,13 @@ export function guidanceRelationshipMemoryRecord({
       profile.educationalGoals.length ||
       profile.careerInterests.length ||
       profile.currentSituation.trim() ||
-      profile.constraints.trim()
+      profile.constraints.trim() ||
+      profile.incomeGoal.trim() ||
+      profile.longTermGoals.trim() ||
+      profile.preferredWork.trim() ||
+      profile.workLocationPreference.trim() ||
+      profile.sectorPreference.trim() ||
+      profile.familyConsiderations.trim()
   );
   if (!hasKnownContext || !conversationId || !messageId) return undefined;
 
@@ -102,6 +120,13 @@ export function guidanceRelationshipMemoryRecord({
     careerInterests: profile.careerInterests,
     currentSituation: profile.currentSituation.trim() || undefined,
     constraints: profile.constraints.trim() || undefined,
+    incomeGoal: profile.incomeGoal.trim() || undefined,
+    longTermGoals: profile.longTermGoals.trim() || undefined,
+    preferredWork: profile.preferredWork.trim() || undefined,
+    workLocationPreference:
+      profile.workLocationPreference.trim() || undefined,
+    sectorPreference: profile.sectorPreference.trim() || undefined,
+    familyConsiderations: profile.familyConsiderations.trim() || undefined,
     sourceConversationId: conversationId,
     sourceMessageId: messageId,
     capturedAt,
@@ -179,6 +204,22 @@ export function guidanceRelationshipReference({
   if (remembered.currentSituation) {
     return {
       text: `I remember you said your current situation is ${remembered.currentSituation}.`,
+      memoryId: record.id,
+      sourceConversationId: remembered.sourceConversationId,
+      kind: "remembered",
+    };
+  }
+  if (remembered.longTermGoals) {
+    return {
+      text: `I remember that, longer term, you’re working toward ${remembered.longTermGoals}.`,
+      memoryId: record.id,
+      sourceConversationId: remembered.sourceConversationId,
+      kind: "remembered",
+    };
+  }
+  if (remembered.preferredWork) {
+    return {
+      text: `I remember what you said about the work that fits you: ${remembered.preferredWork}.`,
       memoryId: record.id,
       sourceConversationId: remembered.sourceConversationId,
       kind: "remembered",

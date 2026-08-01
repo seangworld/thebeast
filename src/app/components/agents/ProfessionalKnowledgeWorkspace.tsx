@@ -135,6 +135,30 @@ function KnowledgeItemCard({
           )}
         </details>
       ) : null}
+      {kind === "known" ? (
+        <details className="mt-3 border-t border-white/10 pt-3">
+          <summary className="cursor-pointer text-xs font-bold text-cyan-200">
+            Evidence source
+          </summary>
+          {item.evidence?.length ? (
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-xs leading-5 text-slate-400">
+              {item.evidence.map((evidence) => (
+                <li key={evidence}>{evidence}</li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-2 text-xs leading-5 text-slate-500">
+              No verified source is available for this item yet.
+            </p>
+          )}
+        </details>
+      ) : null}
+      {kind === "needed" ? (
+        <p className="mt-3 border-t border-white/10 pt-3 text-xs leading-5 text-slate-500">
+          No verified evidence yet. Start a conversation to add or correct this
+          context.
+        </p>
+      ) : null}
       <KnowledgeAction
         item={item}
         analyticsEvent={

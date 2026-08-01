@@ -253,6 +253,11 @@ function relevantKnownContext(
       `your preference for ${profile.learningPreferences.slice(0, 2).join(" and ")} learning`
     );
   }
+  if (profile.incomeGoal) references.push(profile.incomeGoal);
+  if (profile.preferredWork) references.push("the work preferences you described");
+  if (profile.familyConsiderations) {
+    references.push("the family considerations you asked me to respect");
+  }
   if (profile.constraints) references.push("the constraints you already identified");
   return references.slice(0, 3);
 }

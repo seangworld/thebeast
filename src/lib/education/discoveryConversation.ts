@@ -25,6 +25,15 @@ export type GuidanceDiscoveryProfile = {
   experience: string[];
   skills: string[];
   educationBudget: string;
+  incomeGoal: string;
+  familyConsiderations: string;
+  technicalExperience: string[];
+  leadershipInterest: boolean | null;
+  preferredWork: string;
+  workLocationPreference: string;
+  sectorPreference: string;
+  travelWillingness: string;
+  longTermGoals: string;
   giBill: boolean | null;
   vre: boolean | null;
   employerReimbursement: boolean | null;
@@ -83,6 +92,25 @@ export function guidanceDiscoveryProfileFromRow(
     educationBudget: String(
       discoveryAnswers.guidance_education_budget ?? ""
     ),
+    incomeGoal: String(discoveryAnswers.guidance_income_goal ?? ""),
+    familyConsiderations: String(
+      discoveryAnswers.guidance_family_considerations ?? ""
+    ),
+    technicalExperience: strings(
+      discoveryAnswers.guidance_technical_experience
+    ),
+    leadershipInterest: answerBoolean("guidance_leadership_interest"),
+    preferredWork: String(discoveryAnswers.guidance_preferred_work ?? ""),
+    workLocationPreference: String(
+      discoveryAnswers.guidance_work_location_preference ?? ""
+    ),
+    sectorPreference: String(
+      discoveryAnswers.guidance_sector_preference ?? ""
+    ),
+    travelWillingness: String(
+      discoveryAnswers.guidance_travel_willingness ?? ""
+    ),
+    longTermGoals: String(discoveryAnswers.guidance_long_term_goals ?? ""),
     giBill: answerBoolean("guidance_gi_bill"),
     vre: answerBoolean("guidance_vre"),
     employerReimbursement: answerBoolean(
@@ -182,6 +210,18 @@ export function learnFromDiscoveryTurn(
   );
   if (employment) next.currentEmployment = withoutLeadingArticle(employment);
 
+  const incomeGoal =
+    text.match(
+      /\b(?:my (?:income|salary|earning) goal is|i (?:want|need|hope|would like) to (?:earn|make)|i(?:'d| would) like to get to)\b[^.!?]*/i
+    )?.[0]?.trim() || "";
+  if (incomeGoal) next.incomeGoal = incomeGoal;
+
+  const longTermGoal =
+    text.match(
+      /\b(?:my long.term goal is|long term,? i (?:want|hope|plan|would like)|eventually i (?:want|hope|plan|would like))\b[^.!?]*/i
+    )?.[0]?.trim() || "";
+  if (longTermGoal) next.longTermGoals = longTermGoal;
+
   if (
     /\b(?:i (?:am|was|serve|served)|i(?:'m| was)|my (?:military|service))\b[^.]*\b(military|army|navy|air force|marine|coast guard|space force|veteran|active duty)\b/i.test(
       text
@@ -201,6 +241,68 @@ export function learnFromDiscoveryTurn(
     /(?:i (?:need|want) to (?:improve|strengthen)|i struggle with|my weak(?:ness| areas?) (?:is|are))\s+(.+)/i
   );
   if (growth) next.growthAreas = growth;
+
+  if (
+    /\b(?:technical experience|technical background|worked (?:in|with)|experience (?:in|with))\b[^.!?]*/i.test(
+      text
+    ) &&
+    /\b(?:technology|technical|software|hardware|network|cyber|data|code|coding|programming|systems?|engineering|it)\b/i.test(
+      text
+    )
+  ) {
+    next.technicalExperience = unique([
+      ...current.technicalExperience,
+      text,
+    ]);
+  }
+
+  if (
+    /\b(?:not interested in|do not want|don't want|prefer not to)\b[^.!?]{0,50}\b(?:leadership|leading|management|managing|supervising)\b/i.test(
+      text
+    )
+  ) {
+    next.leadershipInterest = false;
+  } else if (
+    /\b(?:interested in|open to|want to|enjoy|prefer)\b[^.!?]{0,50}\b(?:leadership|leading|management|managing|supervising)\b/i.test(
+      text
+    )
+  ) {
+    next.leadershipInterest = true;
+  }
+
+  const preferredWork =
+    text.match(
+      /\b(?:i prefer|i enjoy|i want|i like|work that fits me is)\b[^.!?]{0,90}\b(?:work|problems?|projects?|tasks?|role|job)\b[^.!?]*/i
+    )?.[0]?.trim() || "";
+  if (preferredWork) next.preferredWork = preferredWork;
+
+  const workLocation = text.match(/\b(remote|on.?site|hybrid)\b/i)?.[1];
+  if (workLocation) next.workLocationPreference = workLocation.toLowerCase();
+
+  if (/\b(?:government|public sector|federal|state government|local government)\b/i.test(text)) {
+    next.sectorPreference = /\b(?:private sector|private company|corporate)\b/i.test(text)
+      ? "Open to government and private-sector work"
+      : "Government or public-sector work";
+  } else if (/\b(?:private sector|private company|corporate)\b/i.test(text)) {
+    next.sectorPreference = "Private-sector work";
+  }
+
+  const travelPreference =
+    text.match(
+      /\b(?:i(?:'m| am) (?:not )?willing to travel|i (?:can|cannot|can't|do not want to|don't want to|prefer not to) travel|travel is (?:fine|okay|not an option))\b[^.!?]*/i
+    )?.[0]?.trim() || "";
+  if (travelPreference) next.travelWillingness = travelPreference;
+
+  if (
+    /\b(?:family|children|kids|childcare|caregiving|caregiver|spouse|partner)\b/i.test(
+      text
+    ) &&
+    /\b(?:schedule|time|travel|relocat|consider|responsib|need|constraint|balance|support)\b/i.test(
+      text
+    )
+  ) {
+    next.familyConsiderations = text;
+  }
 
   const hours =
     text.match(
@@ -485,6 +587,33 @@ export function learnFromGuidanceKnowledgeAnswer(
     case "education-budget":
       next.educationBudget = text;
       break;
+    case "income-goals":
+      next.incomeGoal = text;
+      break;
+    case "family-considerations":
+      next.familyConsiderations = text;
+      break;
+    case "technical-experience":
+      next.technicalExperience = [text];
+      break;
+    case "leadership-interest":
+      next.leadershipInterest = directBooleanAnswer(text);
+      break;
+    case "preferred-work":
+      next.preferredWork = text;
+      break;
+    case "work-location":
+      next.workLocationPreference = text;
+      break;
+    case "sector-preference":
+      next.sectorPreference = text;
+      break;
+    case "travel-willingness":
+      next.travelWillingness = text;
+      break;
+    case "long-term-goals":
+      next.longTermGoals = text;
+      break;
     case "gi-bill":
       next.giBill = directBooleanAnswer(text);
       break;
@@ -592,6 +721,15 @@ export function discoveryProfileUpdate(profile: GuidanceDiscoveryProfile) {
       guidance_experience: profile.experience,
       guidance_skills: profile.skills,
       guidance_education_budget: profile.educationBudget,
+      guidance_income_goal: profile.incomeGoal,
+      guidance_family_considerations: profile.familyConsiderations,
+      guidance_technical_experience: profile.technicalExperience,
+      guidance_leadership_interest: profile.leadershipInterest,
+      guidance_preferred_work: profile.preferredWork,
+      guidance_work_location_preference: profile.workLocationPreference,
+      guidance_sector_preference: profile.sectorPreference,
+      guidance_travel_willingness: profile.travelWillingness,
+      guidance_long_term_goals: profile.longTermGoals,
       guidance_gi_bill: profile.giBill,
       guidance_vre: profile.vre,
       guidance_employer_reimbursement: profile.employerReimbursement,

@@ -12,6 +12,15 @@ export type GuidanceUnderstandingArea =
   | "career-goals"
   | "educational-goals"
   | "current-situation"
+  | "income-goals"
+  | "family-considerations"
+  | "technical-experience"
+  | "leadership-interest"
+  | "preferred-work"
+  | "work-location"
+  | "sector-preference"
+  | "travel-willingness"
+  | "long-term-goals"
   | "schools"
   | "degrees"
   | "certifications"
@@ -165,6 +174,134 @@ export function buildGuidanceCounselorUnderstanding(
           "Current career or situation",
           "What does your current work, school, or military situation look like?",
           30
+        ),
+    profile.incomeGoal
+      ? known(
+          "income-goals",
+          "Income goals",
+          profile.incomeGoal,
+          32,
+          ["member-described income goal"]
+        )
+      : needed(
+          "income-goals",
+          "Income goals",
+          "Is there an income range or kind of financial change you want this path to support?",
+          32
+        ),
+    profile.longTermGoals
+      ? known(
+          "long-term-goals",
+          "Long-term goals",
+          profile.longTermGoals,
+          34,
+          ["member-described long-term goal"]
+        )
+      : needed(
+          "long-term-goals",
+          "Long-term goals",
+          "Looking further ahead, what would you like your work and education to make possible?",
+          34
+        ),
+    profile.preferredWork
+      ? known(
+          "preferred-work",
+          "Preferred work",
+          profile.preferredWork,
+          36,
+          ["member-described work preference"]
+        )
+      : needed(
+          "preferred-work",
+          "Preferred work",
+          "What kind of work, problems, or day-to-day responsibilities tend to suit you best?",
+          36
+        ),
+    profile.workLocationPreference
+      ? known(
+          "work-location",
+          "Remote, hybrid, or onsite",
+          profile.workLocationPreference,
+          38,
+          ["member-described work-location preference"]
+        )
+      : needed(
+          "work-location",
+          "Remote, hybrid, or onsite",
+          "Do you have a preference for remote, hybrid, or onsite work?",
+          38
+        ),
+    profile.sectorPreference
+      ? known(
+          "sector-preference",
+          "Government or private sector",
+          profile.sectorPreference,
+          39,
+          ["member-described sector preference"]
+        )
+      : needed(
+          "sector-preference",
+          "Government or private sector",
+          "Are government, private-sector, or both kinds of employers worth considering?",
+          39
+        ),
+    profile.leadershipInterest !== null
+      ? known(
+          "leadership-interest",
+          "Leadership interest",
+          profile.leadershipInterest
+            ? "Interested in leadership or management"
+            : "Not currently seeking leadership or management",
+          41,
+          ["member-described leadership interest"]
+        )
+      : needed(
+          "leadership-interest",
+          "Leadership interest",
+          "Would you like leadership or management to be part of the direction we explore?",
+          41
+        ),
+    profile.technicalExperience.length
+      ? known(
+          "technical-experience",
+          "Technical experience",
+          profile.technicalExperience.join("; "),
+          43,
+          ["member-described technical experience"]
+        )
+      : needed(
+          "technical-experience",
+          "Technical experience",
+          "What technical tools, systems, or projects have you worked with, if any?",
+          43
+        ),
+    profile.familyConsiderations
+      ? known(
+          "family-considerations",
+          "Family considerations",
+          profile.familyConsiderations,
+          45,
+          ["member-described family consideration"]
+        )
+      : needed(
+          "family-considerations",
+          "Family considerations",
+          "Are there family or caregiving responsibilities the plan should respect?",
+          45
+        ),
+    profile.travelWillingness
+      ? known(
+          "travel-willingness",
+          "Travel willingness",
+          profile.travelWillingness,
+          47,
+          ["member-described travel preference"]
+        )
+      : needed(
+          "travel-willingness",
+          "Travel willingness",
+          "How much work travel, if any, would fit your life?",
+          47
         ),
     profile.schools.length
       ? known(
@@ -462,8 +599,24 @@ const topicAreas: Record<string, readonly GuidanceUnderstandingArea[]> = {
     "college-interest",
     "trade-interest",
   ],
-  "career-progression": ["career-goals", "current-situation"],
-  interests: ["strengths", "skills", "learning-style"],
+  "career-progression": [
+    "career-goals",
+    "income-goals",
+    "long-term-goals",
+    "leadership-interest",
+    "preferred-work",
+    "work-location",
+    "sector-preference",
+    "travel-willingness",
+    "current-situation",
+  ],
+  interests: [
+    "preferred-work",
+    "strengths",
+    "skills",
+    "technical-experience",
+    "learning-style",
+  ],
   "learning-order": ["growth-areas", "skills", "learning-style"],
   foundations: ["growth-areas", "education-history", "experience"],
   goals: ["career-goals", "educational-goals"],

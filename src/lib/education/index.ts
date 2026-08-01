@@ -8,4 +8,5 @@ export * from "./discoveryConversation";
 export * from "./guidanceUnderstanding";
 export * from "./professionalIntake";
 export * from "./guidanceRelationshipMemory";
+export * from "./guidanceGoals";
 export * from "./agentManifest";

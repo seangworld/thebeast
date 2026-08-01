@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
+  discoveryProfileUpdate,
   guidanceDiscoveryProfileFromRow,
   learnFromDiscoveryTurn,
   nextDiscoveryQuestion,
@@ -116,4 +117,42 @@ test("BE-216 reuses saved discovery context in conversation and guidance", () =>
   assert.match(knowledgeWorkspace, /What I Still Need/);
   assert.match(conversation, /router\.refresh\(\)/);
   assert.match(conversation, /I’ll remember this for future guidance/);
+});
+
+test("BE-201 learns work and life context gradually and persists it as counselor memory", () => {
+  const learned = [
+    "My income goal is $95,000 within three years.",
+    "Long term, I want to build a stable career that leaves room for my family.",
+    "I have technical experience with network systems and IT support.",
+    "I am interested in leadership and management.",
+    "I prefer remote work on practical problems and projects.",
+    "I am open to government and private sector roles.",
+    "I cannot travel because of family caregiving responsibilities.",
+  ].reduce(
+    (profile, message) => learnFromDiscoveryTurn(message, profile),
+    guidanceDiscoveryProfileFromRow(null)
+  );
+
+  assert.match(learned.incomeGoal, /95,000/);
+  assert.match(learned.longTermGoals, /stable career/i);
+  assert.equal(learned.technicalExperience.length, 1);
+  assert.equal(learned.leadershipInterest, true);
+  assert.equal(learned.workLocationPreference, "remote");
+  assert.match(learned.sectorPreference, /government and private/i);
+  assert.match(learned.travelWillingness, /cannot travel/i);
+  assert.match(learned.familyConsiderations, /caregiving/i);
+
+  const update = discoveryProfileUpdate(learned);
+  assert.equal(
+    update.discovery_answers.guidance_income_goal,
+    learned.incomeGoal
+  );
+  assert.deepEqual(
+    update.discovery_answers.guidance_technical_experience,
+    learned.technicalExperience
+  );
+  assert.equal(
+    update.discovery_answers.guidance_family_considerations,
+    learned.familyConsiderations
+  );
 });

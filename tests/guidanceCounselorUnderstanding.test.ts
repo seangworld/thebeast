@@ -112,3 +112,39 @@ test("BE-229 welcomes new members while understanding is still empty", () => {
     /I don’t have a useful working hypothesis yet/
   );
 });
+
+test("BE-201 keeps facts, working ideas, and missing context visibly distinct", () => {
+  const model = buildGuidanceCounselorUnderstanding(
+    guidanceDiscoveryProfileFromRow({
+      career_interests: ["cybersecurity"],
+      discovery_answers: {
+        guidance_income_goal: "Reach $95,000 within three years",
+      },
+    })
+  );
+
+  assert.equal(
+    model.whatIKnow.find((item) => item.area === "income-goals")?.state,
+    "known"
+  );
+  assert.deepEqual(
+    model.whatIKnow.find((item) => item.area === "income-goals")?.evidence,
+    ["member-described income goal"]
+  );
+  assert.equal(
+    model.whatIThink.find((item) => item.area === "career-goals")?.state,
+    "thought"
+  );
+  assert.equal(
+    model.whatIStillNeed.find((item) => item.area === "family-considerations")
+      ?.state,
+    "needed"
+  );
+});
+
+test("BE-201 exposes evidence and keeps the full missing-context checklist actionable", () => {
+  assert.match(sharedWorkspace, /Evidence source/);
+  assert.match(sharedWorkspace, /missing_information_flow_started/);
+  assert.match(sharedWorkspace, /Start a conversation to add or correct/);
+  assert.doesNotMatch(conversation, /whatIStillNeed[\s\S]{0,80}\.slice\(0, 4\)/);
+});

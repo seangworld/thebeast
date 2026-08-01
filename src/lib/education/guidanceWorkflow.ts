@@ -20,6 +20,13 @@ export type GuidanceWorkflowRecommendation = {
   href: string;
 };
 
+export type GuidanceProactiveOpportunity = {
+  id: string;
+  title: string;
+  why: string;
+  href: string;
+};
+
 export type GuidanceWorkflowInput = {
   memberName: string;
   profile: GuidanceDiscoveryProfile;
@@ -35,6 +42,80 @@ const fundingConstraint =
   /\b(cost|money|tuition|financial|afford|fund|scholarship|debt|aid)\b/i;
 const certificationDirection =
   /\b(certification|certificate|credential|license|licensure|certified)\b/i;
+
+export function buildGuidanceProactiveOpportunities(
+  profile: GuidanceDiscoveryProfile
+): GuidanceProactiveOpportunity[] {
+  const direction =
+    profile.goal.trim() || profile.careerInterests[0]?.trim() || "";
+  if (!direction) return [];
+
+  const opportunities: GuidanceProactiveOpportunity[] = [
+    {
+      id: "career-paths",
+      title: "Career paths to compare",
+      why: `Your stated direction toward ${direction} gives us a reason to compare role fit, progression, and verified employer requirements.`,
+      href: "/dashboard/education/career-planning",
+    },
+    {
+      id: "courses-training",
+      title: "Courses and training to evaluate",
+      why:
+        "The right learning options depend on your verified skill gaps, preferred learning style, available study time, and budget—not a generic course list.",
+      href: "/dashboard/education/educational-roadmap",
+    },
+    {
+      id: "roadmap",
+      title: "An adaptable education roadmap",
+      why:
+        "A roadmap can connect the direction to requirements, decision points, and evidence-based milestones while keeping room to change course.",
+      href: "/dashboard/education/educational-roadmap",
+    },
+  ];
+
+  if (
+    profile.certifications.length > 0 ||
+    certificationDirection.test(
+      [profile.goal, ...profile.educationalGoals].join(" ")
+    )
+  ) {
+    opportunities.splice(1, 0, {
+      id: "certifications",
+      title: "Certifications worth verifying",
+      why:
+        "A credential is relevant to the direction you described, so issuer requirements, recognition, cost, and renewal rules should be verified before committing.",
+      href: "/dashboard/education/certifications",
+    });
+  }
+
+  if (profile.collegeInterest === true) {
+    opportunities.push({
+      id: "schools",
+      title: "Schools that meet your criteria",
+      why:
+        "College is one of the paths you want considered, so programs should be compared against verified requirements, total cost, delivery, support, and outcomes.",
+      href: "/dashboard/education/schools",
+    });
+  }
+
+  if (
+    profile.scholarshipInterest === true ||
+    profile.giBill === true ||
+    profile.vre === true ||
+    profile.employerReimbursement === true ||
+    Boolean(profile.educationBudget || profile.constraints)
+  ) {
+    opportunities.push({
+      id: "scholarships-funding",
+      title: "Scholarships and funding options",
+      why:
+        "Affordability is part of your context, so funding eligibility, deadlines, and out-of-pocket tradeoffs belong in the plan before enrollment decisions.",
+      href: "/dashboard/education/scholarships",
+    });
+  }
+
+  return opportunities;
+}
 
 function firstName(name: string) {
   return name.trim().split(/\s+/)[0] || "there";

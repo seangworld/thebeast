@@ -52,6 +52,51 @@ const intakePurpose: Record<
     expectedInfluence:
       "Changes pathway feasibility, sequencing, and the kind of support recommended.",
   },
+  "income-goals": {
+    purpose: "Understand the financial change the member wants a career path to support.",
+    expectedInfluence:
+      "Changes career comparisons, advancement options, and the tradeoffs worth explaining.",
+  },
+  "long-term-goals": {
+    purpose: "Connect near-term education decisions to the member’s longer-term direction.",
+    expectedInfluence:
+      "Changes roadmap sequencing and whether a path preserves the options the member values.",
+  },
+  "preferred-work": {
+    purpose: "Understand the work and responsibilities that fit the member best.",
+    expectedInfluence:
+      "Changes which career paths and small fit-testing experiences deserve attention.",
+  },
+  "work-location": {
+    purpose: "Understand where the member can and wants to work.",
+    expectedInfluence:
+      "Changes employer, program, schedule, and location tradeoffs in the plan.",
+  },
+  "sector-preference": {
+    purpose: "Learn whether government, private-sector, or both paths fit the member.",
+    expectedInfluence:
+      "Changes employer research, credential relevance, and hiring requirements to verify.",
+  },
+  "leadership-interest": {
+    purpose: "Learn whether leadership should be part of the career direction.",
+    expectedInfluence:
+      "Changes role comparisons, development priorities, and future advancement milestones.",
+  },
+  "technical-experience": {
+    purpose: "Recognize technical experience the member already has.",
+    expectedInfluence:
+      "Changes starting points, skill-gap assumptions, and evidence already available.",
+  },
+  "family-considerations": {
+    purpose: "Respect family and caregiving realities without making assumptions.",
+    expectedInfluence:
+      "Changes schedule, travel, location, pacing, and affordability tradeoffs.",
+  },
+  "travel-willingness": {
+    purpose: "Understand whether work travel fits the member’s life.",
+    expectedInfluence:
+      "Changes role, employer, location, and progression options worth comparing.",
+  },
   schools: {
     purpose: "Understand institutions already attended or under consideration.",
     expectedInfluence:
@@ -185,6 +230,24 @@ function purposefulQuestion(
         : "What would you like education to help you accomplish first?";
     case "current-situation":
       return "What does life look like for you right now—are you working, in school, serving, or something else?";
+    case "income-goals":
+      return "Is there an income range or financial change you want this direction to support?";
+    case "long-term-goals":
+      return "Looking further ahead, what would you like your work and education to make possible?";
+    case "preferred-work":
+      return "What kind of work or day-to-day problems tend to bring out your best?";
+    case "work-location":
+      return "Would remote, hybrid, or onsite work fit you best?";
+    case "sector-preference":
+      return "Should we look at government roles, private-sector roles, or both?";
+    case "leadership-interest":
+      return "Would you like leadership or management to be part of the direction we explore?";
+    case "technical-experience":
+      return "What technical tools, systems, or projects have you worked with so far?";
+    case "family-considerations":
+      return "Are there family or caregiving responsibilities the plan should respect?";
+    case "travel-willingness":
+      return "How much work travel, if any, would fit your life?";
     case "education-history":
     case "experience":
       return goal

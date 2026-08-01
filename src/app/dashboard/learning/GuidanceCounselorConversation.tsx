@@ -30,9 +30,11 @@ import {
   buildGuidanceCounselorConversationTurn,
   buildGuidanceCounselorSessionAwareness,
   buildGuidanceCounselorUnderstanding,
+  buildGuidanceCareerGoalProposal,
   explicitGuidanceGoalChange,
   guidanceRelationshipMemoryRecord,
   guidanceRelationshipReference,
+  hasMatchingGuidanceCareerGoal,
   type GuidanceCounselorConversationContext,
   type GuidanceUnderstandingItem,
 } from "@/lib/education";
@@ -42,7 +44,10 @@ import {
   learnFromGuidanceKnowledgeAnswer,
   type GuidanceDiscoveryProfile,
 } from "@/lib/education/discoveryConversation";
-import type { GuidanceWorkflowRecommendation } from "@/lib/education/guidanceWorkflow";
+import {
+  buildGuidanceProactiveOpportunities,
+  type GuidanceWorkflowRecommendation,
+} from "@/lib/education/guidanceWorkflow";
 import {
   ServerAgentConversationRepository,
   SupabaseAgentConversationStore,
@@ -55,6 +60,7 @@ import {
   type ProfessionalExecutionHistory,
   type RecommendationLifecycleStatus,
 } from "@/lib/platform/agents";
+import { goalDatabaseTableName } from "@/lib/platform/goals";
 import { createClient } from "@/lib/supabase/client";
 
 export const guidanceCounselorSuggestedQuestions = [
@@ -152,6 +158,9 @@ export default function GuidanceCounselorConversation({
     useState<GuidanceDiscoveryProfile>(initialProfile);
   const [profileSaveStatus, setProfileSaveStatus] = useState<
     "idle" | "saving" | "saved" | "error"
+  >("idle");
+  const [goalSyncStatus, setGoalSyncStatus] = useState<
+    "idle" | "linked" | "existing" | "error"
   >("idle");
   const [sessionNow, setSessionNow] = useState<Date | null>(null);
   const [previousReviewAt, setPreviousReviewAt] = useState("");
@@ -533,7 +542,9 @@ export default function GuidanceCounselorConversation({
 
   async function saveDiscoveryProfile(profile: GuidanceDiscoveryProfile) {
     setProfileSaveStatus("saving");
-    const result = await createClient()
+    setGoalSyncStatus("idle");
+    const client = createClient();
+    const result = await client
       .from("education_profiles")
       .upsert(
         { owner_id: memberId, ...discoveryProfileUpdate(profile) },
@@ -546,6 +557,28 @@ export default function GuidanceCounselorConversation({
       return;
     }
     setProfileSaveStatus("saved");
+
+    const goalProposal = buildGuidanceCareerGoalProposal(profile);
+    if (goalProposal) {
+      const existingGoals = await client
+        .from(goalDatabaseTableName)
+        .select("title, status")
+        .eq("owner_id", memberId)
+        .eq("category", "Career");
+      if (existingGoals.error) {
+        setGoalSyncStatus("error");
+      } else if (
+        hasMatchingGuidanceCareerGoal(goalProposal, existingGoals.data || [])
+      ) {
+        setGoalSyncStatus("existing");
+      } else {
+        const goalResult = await client.from(goalDatabaseTableName).insert({
+          owner_id: memberId,
+          ...goalProposal,
+        });
+        setGoalSyncStatus(goalResult.error ? "error" : "linked");
+      }
+    }
     router.refresh();
   }
 
@@ -814,7 +847,6 @@ export default function GuidanceCounselorConversation({
     needed: understanding.whatIStillNeed
       .slice()
       .sort((left, right) => left.priority - right.priority)
-      .slice(0, 4)
       .map(guidanceKnowledgeItem),
     emptyStates: {
       known:
@@ -902,6 +934,9 @@ export default function GuidanceCounselorConversation({
     ) : null;
   const recommendationHistory = executionHistory?.recommendations || [];
   const reportedOutcomes = executionHistory?.outcomes || [];
+  const proactiveOpportunities = buildGuidanceProactiveOpportunities(
+    discoveryProfile
+  );
   const supportPanels = (
     <div className="grid gap-5">
       <section
@@ -1031,6 +1066,42 @@ export default function GuidanceCounselorConversation({
           </p>
         ) : null}
       </section>
+
+      {proactiveOpportunities.length ? (
+        <section
+          className="rounded-2xl border border-indigo-300/20 bg-indigo-300/[0.05] p-4 sm:p-5"
+          aria-labelledby="guidance-opportunities"
+        >
+          <h2 id="guidance-opportunities" className="text-lg font-black text-white">
+            Paths worth exploring
+          </h2>
+          <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-300">
+            These are evidence-backed areas to investigate, not promises or
+            enrollment decisions. Each recommendation explains why it fits the
+            context you have shared.
+          </p>
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            {proactiveOpportunities.map((opportunity) => (
+              <article
+                key={opportunity.id}
+                className="rounded-xl border border-white/10 bg-black/15 p-4"
+              >
+                <h3 className="font-black text-white">{opportunity.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-300">
+                  <span className="font-bold text-indigo-100">Why:</span>{" "}
+                  {opportunity.why}
+                </p>
+                <Link
+                  href={opportunity.href}
+                  className="mt-3 inline-flex min-h-11 items-center text-sm font-bold text-indigo-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-300"
+                >
+                  Explore with your plan <span aria-hidden="true">→</span>
+                </Link>
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <div className="grid gap-5 lg:grid-cols-2">
         <section className="rounded-2xl border border-white/10 bg-black/10 p-4 sm:p-5">
@@ -1228,6 +1299,23 @@ export default function GuidanceCounselorConversation({
                     <p className="text-xs font-bold text-red-200" role="alert">
                       I couldn’t save that profile update. Your conversation is
                       still here.
+                    </p>
+                  ) : null}
+                  {goalSyncStatus === "linked" ? (
+                    <p
+                      className="text-xs font-bold text-indigo-100"
+                      role="status"
+                    >
+                      Your verified career direction was added to Beast Goals
+                      as a proposal for your review.
+                    </p>
+                  ) : goalSyncStatus === "error" ? (
+                    <p
+                      className="text-xs font-bold text-amber-200"
+                      role="status"
+                    >
+                      Your Guidance Counselor context is saved, but Beast Goals
+                      could not be updated right now.
                     </p>
                   ) : null}
                   {starterExperience}

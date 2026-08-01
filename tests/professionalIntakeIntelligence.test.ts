@@ -119,6 +119,6 @@ test("BE-221 supports longitudinal intake from persisted understanding", () => {
   });
   const decision = planProfessionalIntake({ profile: persisted });
 
-  assert.equal(decision?.area, "schools");
-  assert.match(decision?.purpose || "", /institutions/i);
+  assert.equal(decision?.area, "income-goals");
+  assert.match(decision?.purpose || "", /financial change/i);
 });
