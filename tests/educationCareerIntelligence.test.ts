@@ -94,6 +94,20 @@ test("BE-201 persists Past, Present, and Goals with owner-only RLS and append-on
   assert.doesNotMatch(migration, /using\s*\(\s*true\s*\)/i);
 });
 
+test("BE-201 roadmap milestone links preserve compound ownership and are rerunnable", () => {
+  assert.match(
+    migration,
+    /constraint beast_goal_milestones_id_owner_id_key unique \(id, owner_id\)/
+  );
+  assert.match(
+    migration,
+    /education_career_roadmap_steps_milestone_owner_fk foreign key \(goal_milestone_id, owner_id\)[\s\S]*?references public\.beast_goal_milestones \(id, owner_id\)/
+  );
+  assert.match(migration, /duplicate \(id, owner_id\) pairs exist/);
+  assert.match(migration, /drop trigger if exists set_education_career_roadmap_steps_updated_at/);
+  assert.match(migration, /drop policy if exists "Members manage own education career roadmap steps"/);
+});
+
 test("BE-201 conversation discovery and direct forms target the same profile model", () => {
   const mapped = guidanceConversationProfileItems({
     ...blankProfile,

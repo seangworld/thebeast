@@ -2,6 +2,38 @@
 -- Historical learning data remains untouched. New records are owner-scoped and
 -- document-derived proposals require explicit member approval.
 
+-- Roadmap steps retain the same compound ownership guarantee used throughout
+-- Beast Goals. The milestone table's primary key covers only id, so PostgreSQL
+-- requires this matching unique key before it can enforce (id, owner_id).
+do $$
+begin
+  if exists (
+    select 1
+    from public.beast_goal_milestones
+    group by id, owner_id
+    having count(*) > 1
+  ) then
+    raise exception 'Cannot add milestone owner key: duplicate (id, owner_id) pairs exist';
+  end if;
+
+  if not exists (
+    select 1
+    from pg_constraint constraint_record
+    where constraint_record.conrelid = 'public.beast_goal_milestones'::regclass
+      and constraint_record.contype in ('p', 'u')
+      and constraint_record.conkey = array[
+        (select attnum from pg_attribute
+          where attrelid = 'public.beast_goal_milestones'::regclass and attname = 'id'),
+        (select attnum from pg_attribute
+          where attrelid = 'public.beast_goal_milestones'::regclass and attname = 'owner_id')
+      ]::smallint[]
+  ) then
+    alter table public.beast_goal_milestones
+      add constraint beast_goal_milestones_id_owner_id_key unique (id, owner_id);
+  end if;
+end;
+$$;
+
 create table if not exists public.education_career_profile_items (
   id uuid primary key default gen_random_uuid(),
   owner_id uuid not null references auth.users(id) on delete cascade,
@@ -225,42 +257,66 @@ begin
 end;
 $$;
 
+drop trigger if exists set_education_career_profile_items_updated_at
+  on public.education_career_profile_items;
 create trigger set_education_career_profile_items_updated_at
   before update on public.education_career_profile_items
   for each row execute function public.set_education_career_updated_at();
+drop trigger if exists set_education_career_paths_updated_at
+  on public.education_career_paths;
 create trigger set_education_career_paths_updated_at
   before update on public.education_career_paths
   for each row execute function public.set_education_career_updated_at();
+drop trigger if exists set_education_career_roadmaps_updated_at
+  on public.education_career_roadmaps;
 create trigger set_education_career_roadmaps_updated_at
   before update on public.education_career_roadmaps
   for each row execute function public.set_education_career_updated_at();
+drop trigger if exists set_education_career_roadmap_steps_updated_at
+  on public.education_career_roadmap_steps;
 create trigger set_education_career_roadmap_steps_updated_at
   before update on public.education_career_roadmap_steps
   for each row execute function public.set_education_career_updated_at();
 
+drop policy if exists "Members manage own education career profile items"
+  on public.education_career_profile_items;
 create policy "Members manage own education career profile items"
   on public.education_career_profile_items for all to authenticated
   using (auth.uid() = owner_id) with check (auth.uid() = owner_id);
+drop policy if exists "Members manage own education career paths"
+  on public.education_career_paths;
 create policy "Members manage own education career paths"
   on public.education_career_paths for all to authenticated
   using (auth.uid() = owner_id) with check (auth.uid() = owner_id);
+drop policy if exists "Members manage own education career roadmaps"
+  on public.education_career_roadmaps;
 create policy "Members manage own education career roadmaps"
   on public.education_career_roadmaps for all to authenticated
   using (auth.uid() = owner_id) with check (auth.uid() = owner_id);
+drop policy if exists "Members manage own education career roadmap steps"
+  on public.education_career_roadmap_steps;
 create policy "Members manage own education career roadmap steps"
   on public.education_career_roadmap_steps for all to authenticated
   using (auth.uid() = owner_id) with check (auth.uid() = owner_id);
+drop policy if exists "Members manage own education career document extractions"
+  on public.education_career_document_extractions;
 create policy "Members manage own education career document extractions"
   on public.education_career_document_extractions for all to authenticated
   using (auth.uid() = owner_id) with check (auth.uid() = owner_id);
+drop policy if exists "Members manage own education career document extraction items"
+  on public.education_career_document_extraction_items;
 create policy "Members manage own education career document extraction items"
   on public.education_career_document_extraction_items for all to authenticated
   using (auth.uid() = owner_id) with check (auth.uid() = owner_id);
 
 -- Outcomes are append-only for members. Historical records cannot be rewritten.
+drop policy if exists "Members read own education career outcomes"
+  on public.education_career_outcomes;
 create policy "Members read own education career outcomes"
   on public.education_career_outcomes for select to authenticated
   using (auth.uid() = owner_id);
+drop policy if exists "Members append own education career outcomes"
+  on public.education_career_outcomes;
 create policy "Members append own education career outcomes"
   on public.education_career_outcomes for insert to authenticated
   with check (auth.uid() = owner_id);
