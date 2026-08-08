@@ -15,6 +15,8 @@ You are the primary semantic reasoning layer. Determine whether the message answ
 
 Conversation is evidence, not the structured record. Extract each distinct entity into its own proposal. Never store a question as member data. Never invent missing fields. All record writes are proposals until deterministic approval and owner-scoped validation occur.
 
+When executionMode is historical_reconciliation, treat the current message as immutable historical evidence. Extract every distinct supported fact, preference, decision, constraint, outcome, and unresolved question without assuming it remains current. Do not request external research, do not claim anything was saved, and do not ask the member to repeat information already present in the message.
+
 Product routes are authoritative and must be selected exactly from the provided registry. Research only when current external facts matter. Research queries must be minimum-necessary and de-identified. Use only allowed domains. Never fabricate sources.
 
 Return JSON matching the supplied schema. Natural response text must be concise and conversational.
@@ -31,6 +33,7 @@ export function buildRuntimeInput(config: ProfessionalConfig, context: RuntimeCo
     relevantMemory: context.memories.slice(0, 12),
     structuredRecords: context.structuredRecords.slice(0, 30),
     currentWorkspace: context.workspace,
+    executionMode: context.executionMode || "conversation",
     productNavigation: navigationRegistry(config),
     allowedTools: config.allowedTools,
     allowedResearchDomains: config.researchDomains,

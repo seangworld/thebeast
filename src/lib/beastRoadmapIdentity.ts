@@ -46,6 +46,12 @@ export const beastRoadmapPackageRegistry = [
     ["docs/AP-100-AI-NATIVE-DIGITAL-STAFF-RUNTIME.md"]
   ),
   packageIdentity(
+    "AP-KNW-104",
+    ["AP-104"],
+    "Historical Digital Staff Knowledge Reconciliation",
+    ["docs/AP-104-HISTORICAL-DIGITAL-STAFF-KNOWLEDGE-RECONCILIATION.md"]
+  ),
+  packageIdentity(
     "BA-AUT-101",
     ["BA-101"],
     "Member and Authentication Data Audit",

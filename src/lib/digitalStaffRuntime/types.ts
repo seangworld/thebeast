@@ -55,6 +55,7 @@ export type RuntimeContext = {
   memories: Array<{ key: string; value: unknown; updatedAt: string }>;
   structuredRecords: Array<{ domain: string; record: unknown; updatedAt?: string }>;
   workspace: string | null;
+  executionMode?: "conversation" | "historical_reconciliation";
 };
 
 export type RuntimeResearchRequest = {

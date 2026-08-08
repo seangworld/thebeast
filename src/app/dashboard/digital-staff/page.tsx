@@ -5,6 +5,7 @@ import {
   digitalStaffDirector,
   digitalStaffSpecialists,
 } from "@/lib/digitalStaff";
+import Link from "next/link";
 
 export default function DigitalStaffPage() {
   return (
@@ -62,6 +63,12 @@ export default function DigitalStaffPage() {
             profile to understand a professional&apos;s role, capabilities,
             boundaries, assigned area, and conversation entry point.
           </p>
+        </section>
+
+        <section className="rounded-2xl border border-cyan-300/20 bg-cyan-300/5 p-5" aria-labelledby="historical-knowledge-heading">
+          <h2 id="historical-knowledge-heading" className="text-lg font-black text-white">Organize earlier conversations</h2>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-300">Your Digital Staff can organize useful information from conversations that happened before structured review was available. Nothing is saved as an authoritative record until you review it.</p>
+          <Link href="/dashboard/digital-staff/reconciliation" className="beast-button mt-4 inline-flex">Review earlier knowledge</Link>
         </section>
       </div>
     </main>

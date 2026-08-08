@@ -83,6 +83,6 @@ export async function runDigitalStaffRuntime(context: RuntimeContext): Promise<R
   });
   if (!response.ok) throw new Error(`Digital Staff model request failed (${response.status}).`);
   const validated = validateRuntimePlan(context, parseRuntimePlan((await response.json()) as ResponsesPayload));
-  const research = validated.research ? await executeResearch(model, buildRuntimeInstructions(config), validated.research.query, validated.research.domains) : null;
+  const research = validated.research && context.executionMode !== "historical_reconciliation" ? await executeResearch(model, buildRuntimeInstructions(config), validated.research.query, validated.research.domains) : null;
   return { ...validated, response: research?.answer || validated.response, model, latencyMs: Date.now() - startedAt, researchSources: research?.sources || [] };
 }

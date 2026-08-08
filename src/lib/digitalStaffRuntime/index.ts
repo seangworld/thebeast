@@ -4,6 +4,7 @@ export * from "./navigation";
 export * from "./persistence";
 export * from "./prompt";
 export * from "./professionalPrompts";
+export * from "./reconciliation";
 export * from "./runtime";
 export * from "./tools";
 export * from "./types";

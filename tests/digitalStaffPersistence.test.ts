@@ -41,3 +41,11 @@ test("Money priority proposals update the canonical Money goal contract", async 
   assert.equal((calls[0].payload as { category: string }).category, "Money");
   assert.equal((calls[0].payload as { source_reference: string }).source_reference, "message-1");
 });
+
+test("AP-104 merge updates only the matched owner-scoped Health record contract", async () => {
+  const { client, calls } = fakeClient();
+  await applyApprovedKnowledgeProposal({ client, ownerId: "owner-1", professionalId: "beasthealth.health-advisor", proposal: { ...base, domain: "health", entityType: "medication", fields: { name: "Metoprolol", dose: "25 mg" }, relatedRecordId: "medication-1", proposedAction: "update" } });
+  assert.equal(calls[0].table, "beast_health_records");
+  assert.equal(calls[0].operation, "update");
+  assert.equal((calls[0].payload as { details: { dose: string } }).details.dose, "25 mg");
+});
