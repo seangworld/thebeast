@@ -1,15 +1,14 @@
 import { requireProfessionalConfig } from "./config";
 import { inferProductNavigationTarget, validateNavigationTarget } from "./navigation";
 import { buildRuntimeInput, buildRuntimeInstructions, runtimeJsonSchema } from "./prompt";
+import { requestOpenAIResponse } from "./provider";
 import { deidentifyResearchQuery, validateToolCalls } from "./tools";
 import type { RuntimeContext, RuntimePlan, RuntimeResult } from "./types";
 
 type ResponsesPayload = { output_text?: string; output?: Array<{ content?: Array<{ type?: string; text?: string; annotations?: Array<{ type?: string; title?: string; url?: string }> }> }> };
 
 async function executeResearch(model: string, instructions: string, query: string, domains: string[]) {
-  const response = await fetch("https://api.openai.com/v1/responses", { method: "POST", headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}`, "Content-Type": "application/json" }, body: JSON.stringify({ model, store: false, instructions: `${instructions}\nAnswer only from retrieved authoritative evidence. State limitations and never fabricate a citation.`, input: query, tools: [{ type: "web_search", filters: { allowed_domains: domains }, search_context_size: "high" }], tool_choice: "required" }) });
-  if (!response.ok) throw new Error(`Authoritative research failed (${response.status}).`);
-  const payload = (await response.json()) as ResponsesPayload;
+  const payload = await requestOpenAIResponse<ResponsesPayload>({ model, store: false, instructions: `${instructions}\nAnswer only from retrieved authoritative evidence. State limitations and never fabricate a citation.`, input: query, tools: [{ type: "web_search", filters: { allowed_domains: domains }, search_context_size: "high" }], tool_choice: "required" });
   const content = payload.output?.flatMap((item) => item.content || []) || [];
   const answer = payload.output_text || content.find((item) => item.type === "output_text")?.text || "";
   const retrievedAt = new Date().toISOString();
@@ -72,17 +71,11 @@ export async function runDigitalStaffRuntime(context: RuntimeContext): Promise<R
   const startedAt = Date.now();
   const config = requireProfessionalConfig(context.professionalId);
   const model = process.env.OPENAI_DIGITAL_STAFF_MODEL || "gpt-5";
-  if (!process.env.OPENAI_API_KEY) throw new Error("Digital Staff model runtime is not configured.");
-  const response = await fetch("https://api.openai.com/v1/responses", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
+  const payload = await requestOpenAIResponse<ResponsesPayload>({
       model, store: false, instructions: buildRuntimeInstructions(config), input: buildRuntimeInput(config, context),
       text: { format: { type: "json_schema", name: "digital_staff_runtime_plan", strict: true, schema: runtimeJsonSchema } },
-    }),
   });
-  if (!response.ok) throw new Error(`Digital Staff model request failed (${response.status}).`);
-  const validated = validateRuntimePlan(context, parseRuntimePlan((await response.json()) as ResponsesPayload));
+  const validated = validateRuntimePlan(context, parseRuntimePlan(payload));
   const research = validated.research && context.executionMode !== "historical_reconciliation" ? await executeResearch(model, buildRuntimeInstructions(config), validated.research.query, validated.research.domains) : null;
   return { ...validated, response: research?.answer || validated.response, model, latencyMs: Date.now() - startedAt, researchSources: research?.sources || [] };
 }

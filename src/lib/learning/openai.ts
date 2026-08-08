@@ -69,13 +69,11 @@ export async function callOpenAILearningSpecialist(
     };
   }
 
+  const requestId = crypto.randomUUID();
   try {
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-        "Content-Type": "application/json",
-      },
+      headers: createOpenAIRequestHeaders(requestId),
       body: JSON.stringify({
         model: defaultModel,
         messages: buildOpenAILearningMessages(request),
@@ -105,11 +103,16 @@ export async function callOpenAILearningSpecialist(
       model: defaultModel,
     };
   } catch (error) {
+    reportDigitalStaffError("learning-openai", error, requestId);
     return {
       status: "error",
       specialistId: request.specialistId,
-      content: error instanceof Error ? error.message : "OpenAI request failed.",
+      content: "The learning specialist is temporarily unavailable. Please try again.",
       model: defaultModel,
     };
   }
 }
+import {
+  createOpenAIRequestHeaders,
+} from "../digitalStaffRuntime/provider";
+import { reportDigitalStaffError } from "../digitalStaffRuntime/security";

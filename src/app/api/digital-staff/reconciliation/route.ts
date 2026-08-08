@@ -8,6 +8,7 @@ import {
   requireProfessionalConfig,
   resolvedNeedKeysFromProposals,
   runDigitalStaffRuntime,
+  safeDigitalStaffFailure,
   safeHistoricalReconciliationTelemetry,
   transitionHistoricalReconciliationState,
   type CanonicalKnowledgeRecord,
@@ -116,6 +117,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const requestId = crypto.randomUUID();
   const client = createRouteClient();
   const { data: { user }, error: authError } = await client.auth.getUser();
   if (authError || !user) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
@@ -194,9 +196,10 @@ export async function POST(request: Request) {
         conflictsDetected += reconciled.conflictsDetected;
       }
     } catch (error) {
-      state = { ...state, status: "failed", updatedAt: now, lastError: error instanceof Error ? error.message : "The batch failed.", metrics: { ...state.metrics, failures: state.metrics.failures + 1 } };
+      const safeFailure = safeDigitalStaffFailure("historical-reconciliation", error, requestId);
+      state = { ...state, status: "failed", updatedAt: now, lastError: safeFailure.error, metrics: { ...state.metrics, failures: state.metrics.failures + 1 } };
       await client.from("agent_conversations").update({ summary: { ...existingSummary, ap104Reconciliation: state }, updated_at: now }).eq("id", conversationId).eq("owner_id", user.id);
-      return NextResponse.json({ error: "The reconciliation batch failed safely and can be resumed.", professionals: await responseSnapshot(client, user.id) }, { status: 502 });
+      return NextResponse.json({ error: safeFailure.error, requestId: safeFailure.requestId, professionals: await responseSnapshot(client, user.id) }, { status: 502 });
     }
     const completed = batch.length < historicalReconciliationBatchSize;
     if (batch.length) {

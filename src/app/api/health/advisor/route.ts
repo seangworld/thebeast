@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createOpenAIRequestHeaders } from "@/lib/digitalStaffRuntime";
 import {
   buildHealthAdvisorConversationEvidence,
   buildHealthAdvisorDocumentEvidence,
@@ -233,10 +234,7 @@ export async function POST(request: Request) {
   try {
     const openAIResponse = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-        "Content-Type": "application/json",
-      },
+      headers: createOpenAIRequestHeaders(crypto.randomUUID()),
       body: JSON.stringify({
         model: healthModel,
         store: false,

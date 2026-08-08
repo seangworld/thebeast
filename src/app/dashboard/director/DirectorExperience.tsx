@@ -25,6 +25,7 @@ import {
   ProfessionalConversationAvatar,
 } from "@/app/components/agents/ProfessionalConversationIdentity";
 import type { DirectorRecommendation } from "@/lib/director";
+import { digitalStaffUnavailableMessage } from "@/lib/digitalStaffRuntime/security";
 
 type DirectorMessage = {
   id: string;
@@ -243,17 +244,13 @@ export default function DirectorExperience() {
         error?: string;
       };
       if (!response.ok || !payload.conversation) {
-        throw new Error(payload.error || "The Director could not respond.");
+        throw new Error(digitalStaffUnavailableMessage);
       }
       await refresh(payload.conversation.id);
       setQuestion("");
       setFollowLatestSignal((current) => current + 1);
-    } catch (submitError) {
-      setError(
-        submitError instanceof Error
-          ? submitError.message
-          : "The Director could not respond."
-      );
+    } catch {
+      setError(digitalStaffUnavailableMessage);
     } finally {
       setSending(false);
     }

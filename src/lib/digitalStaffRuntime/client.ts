@@ -1,13 +1,29 @@
 import type { ProfessionalId, RuntimeResult } from "./types";
 import type { HistoricalKnowledgeProposal, HistoricalReconciliationState } from "./reconciliation";
+import { digitalStaffUnavailableMessage } from "./security";
 
 export type DigitalStaffRuntimeResponse = { assistantMessageId: string; result: RuntimeResult };
 
+export class DigitalStaffClientError extends Error {
+  readonly requestId: string | null;
+
+  constructor(requestId?: string) {
+    super(digitalStaffUnavailableMessage);
+    this.name = "DigitalStaffClientError";
+    this.requestId = requestId || null;
+  }
+}
+
 export async function requestDigitalStaffResponse(input: { professionalId: ProfessionalId; conversationId: string; message: string; workspace: string }) {
-  const response = await fetch("/api/digital-staff/runtime", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify(input) });
-  const payload = (await response.json()) as DigitalStaffRuntimeResponse | { error?: string };
-  if (!response.ok || !("result" in payload)) throw new Error(("error" in payload && payload.error) || "The Digital Staff runtime could not respond safely.");
-  return payload;
+  try {
+    const response = await fetch("/api/digital-staff/runtime", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify(input) });
+    const payload = (await response.json()) as DigitalStaffRuntimeResponse | { requestId?: string };
+    if (!response.ok || !("result" in payload)) throw new DigitalStaffClientError("requestId" in payload ? payload.requestId : undefined);
+    return payload;
+  } catch (error) {
+    if (error instanceof DigitalStaffClientError) throw error;
+    throw new DigitalStaffClientError();
+  }
 }
 
 export async function decideDigitalStaffProposal(input: { professionalId: ProfessionalId; conversationId: string; proposalId: string; decision: "approve" | "reject"; editedFields?: Record<string, string | number | boolean | null> }) {

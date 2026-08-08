@@ -5,6 +5,7 @@ import {
   parseEducationResearchResponse,
   type OpenAIEducationResearchPayload,
 } from "@/lib/education/research";
+import { createOpenAIRequestHeaders } from "@/lib/digitalStaffRuntime";
 import { createRouteClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -59,10 +60,7 @@ export async function POST(request: Request) {
   try {
     const providerResponse = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-        "Content-Type": "application/json",
-      },
+      headers: createOpenAIRequestHeaders(crypto.randomUUID()),
       body: JSON.stringify({
         model,
         store: false,

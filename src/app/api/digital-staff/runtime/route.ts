@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { applyApprovedKnowledgeProposal, runDigitalStaffRuntime, requireProfessionalConfig, type ConversationState, type ProfessionalId, type RuntimeMessage, type StructuredKnowledgeProposal } from "@/lib/digitalStaffRuntime";
+import { applyApprovedKnowledgeProposal, runDigitalStaffRuntime, requireProfessionalConfig, safeDigitalStaffFailure, type ConversationState, type ProfessionalId, type RuntimeMessage, type StructuredKnowledgeProposal } from "@/lib/digitalStaffRuntime";
 import { createRouteClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -23,6 +23,7 @@ async function loadStructuredRecords(supabase: ReturnType<typeof createRouteClie
 }
 
 export async function POST(request: Request) {
+  const requestId = crypto.randomUUID();
   const supabase = createRouteClient();
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
@@ -62,7 +63,7 @@ export async function POST(request: Request) {
       }
       return NextResponse.json({ result });
     } catch (error) {
-      return NextResponse.json({ error: error instanceof Error ? error.message : "The approved proposal could not be persisted." }, { status: 422 });
+      return NextResponse.json(safeDigitalStaffFailure("proposal-decision", error, requestId), { status: 422 });
     }
   }
   if (!text || text.length > maxMessageLength) return NextResponse.json({ error: "A message is required." }, { status: 400 });
@@ -99,6 +100,6 @@ export async function POST(request: Request) {
     if (summaryError) return NextResponse.json({ error: "The conversation was saved, but its continuity state could not be updated." }, { status: 503 });
     return NextResponse.json({ message, assistantMessageId, result });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "The Digital Staff runtime could not respond safely." }, { status: 502 });
+    return NextResponse.json(safeDigitalStaffFailure("runtime-route", error, requestId), { status: 502 });
   }
 }
