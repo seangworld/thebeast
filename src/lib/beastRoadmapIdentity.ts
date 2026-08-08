@@ -52,6 +52,12 @@ export const beastRoadmapPackageRegistry = [
     ["docs/AP-104-HISTORICAL-DIGITAL-STAFF-KNOWLEDGE-RECONCILIATION.md"]
   ),
   packageIdentity(
+    "AP-PER-105",
+    ["AP-105"],
+    "Digital Staff Response Experience",
+    ["docs/AP-105-DIGITAL-STAFF-RESPONSE-EXPERIENCE.md"]
+  ),
+  packageIdentity(
     "BA-AUT-101",
     ["BA-101"],
     "Member and Authentication Data Audit",

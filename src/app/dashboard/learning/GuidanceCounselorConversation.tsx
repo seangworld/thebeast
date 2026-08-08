@@ -10,6 +10,7 @@ import {
   AgentHeader,
   AgentLoadingState,
   AgentStatus,
+  AgentThinkingIndicator,
   AgentStreamingResponseArea,
   RuntimeProposalReview,
   ProfessionalConversationComposer,
@@ -54,8 +55,8 @@ import {
 } from "@/lib/platform/agents";
 import { goalDatabaseTableName } from "@/lib/platform/goals";
 import { createClient } from "@/lib/supabase/client";
-import { requestDigitalStaffResponse } from "@/lib/digitalStaffRuntime/client";
-import type { StructuredKnowledgeProposal } from "@/lib/digitalStaffRuntime";
+import { digitalStaffActivityLabels, requestDigitalStaffResponse } from "@/lib/digitalStaffRuntime/client";
+import type { DigitalStaffActivity, StructuredKnowledgeProposal } from "@/lib/digitalStaffRuntime";
 
 export const guidanceCounselorSuggestedQuestions = [
   "I’m not sure what career fits me.",
@@ -70,6 +71,8 @@ type GuidanceTurn = {
   id: string;
   question: string;
   response: string;
+  activity?: DigitalStaffActivity;
+  failed?: boolean;
   proposals?: readonly StructuredKnowledgeProposal[];
   timestamp?: string;
 };
@@ -174,6 +177,8 @@ export default function GuidanceCounselorConversation({
     );
   const historyDialogRef = useRef<HTMLDivElement>(null);
   const conversationScrollPositionsRef = useRef(new Map<string, number>());
+  const retryTurnRef = useRef<(question: string, turnId: string) => void>(() => undefined);
+  retryTurnRef.current = (question, turnId) => { void sendMessage(question, turnId); };
 
   useEffect(() => {
     setSessionNow(new Date());
@@ -619,23 +624,30 @@ export default function GuidanceCounselorConversation({
     router.refresh();
   }
 
-  async function sendMessage(question: string) {
+  async function sendMessage(question: string, existingTurnId = "") {
     const cleanQuestion = question.trim();
     if (!cleanQuestion) return;
     setKnowledgePrompt(null);
-    const turnId = `guidance-${Date.now()}`;
+    const turnId = existingTurnId || `guidance-${Date.now()}`;
     const messageTimestamp = new Date().toISOString();
     setStreamingTurnId(turnId);
     setInput("");
+    const optimisticTurn: GuidanceTurn = { id: turnId, question: cleanQuestion, response: "", activity: "accepted", timestamp: messageTimestamp };
+    setTurns((current) => existingTurnId ? current.map((turn) => turn.id === turnId ? optimisticTurn : turn) : [...current, optimisticTurn]);
     let conversationId = activeThreadId;
     if (!conversationId) conversationId = (await startConversation())?.id || "";
     if (conversationId && conversationId !== activeThreadId) setActiveThreadId(conversationId);
     try {
-      const payload = await requestDigitalStaffResponse({ professionalId, conversationId, message: cleanQuestion, workspace: "/dashboard/education/guidance-counselor" });
-      setTurns((current) => [...current, { id: turnId, question: cleanQuestion, response: payload.result.response, proposals: payload.result.proposals, timestamp: messageTimestamp }]);
+      const payload = await requestDigitalStaffResponse({ professionalId, conversationId, message: cleanQuestion, workspace: "/dashboard/education/guidance-counselor" }, {
+        onAcknowledged: () => setTurns((current) => current.map((turn) => turn.id === turnId ? { ...turn, activity: "thinking" } : turn)),
+        onActivity: (activity) => setTurns((current) => current.map((turn) => turn.id === turnId ? { ...turn, activity } : turn)),
+        onResponseDelta: (delta) => setTurns((current) => current.map((turn) => turn.id === turnId ? { ...turn, response: `${turn.response}${delta}` } : turn)),
+      });
+      setTurns((current) => current.map((turn) => turn.id === turnId ? { id: turnId, question: cleanQuestion, response: payload.result.response, proposals: payload.result.proposals, timestamp: messageTimestamp } : turn));
       await refreshThreads();
       setHistoryError("");
     } catch (error) {
+      setTurns((current) => current.map((turn) => turn.id === turnId ? { ...turn, failed: true, activity: undefined } : turn));
       setHistoryError(error instanceof Error ? error.message : "Guidance Counselor could not respond safely.");
     } finally {
       setStreamingTurnId("");
@@ -748,7 +760,7 @@ export default function GuidanceCounselorConversation({
               isStreaming={streamingTurnId === turn.id}
               label="Guidance Counselor response"
             >
-              <p>{turn.response}</p>
+              {turn.failed ? <div><p>The Guidance Counselor service is temporarily unavailable. Your message is still here.</p><button className="beast-button mt-3" type="button" onClick={() => retryTurnRef.current(turn.question, turn.id)}>Try again</button></div> : turn.response ? <p>{turn.response}</p> : <AgentThinkingIndicator label={digitalStaffActivityLabels[turn.activity || "accepted"]} />}
               {turn.proposals?.length && activeThreadId ? <RuntimeProposalReview professionalId={professionalId} conversationId={activeThreadId} proposals={turn.proposals} onDecision={() => void refreshThreads()} /> : null}
             </AgentStreamingResponseArea>
           ),
@@ -1230,6 +1242,7 @@ export default function GuidanceCounselorConversation({
                       label="Message your Guidance Counselor"
                       placeholder="Tell your counselor what you’re thinking about, or ask what to do next…"
                       busy={Boolean(streamingTurnId)}
+                      busyLabel={turns.find((turn) => turn.id === streamingTurnId)?.activity === "accepted" ? "Sending…" : "Working…"}
                     />
                   </ProfessionalConversationComposer>
                   {profileSaveStatus === "saving" ? (

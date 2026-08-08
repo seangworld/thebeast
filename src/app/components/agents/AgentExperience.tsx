@@ -77,6 +77,7 @@ type AgentConversationInputProps = {
   label?: string;
   placeholder?: string;
   submitLabel?: string;
+  busyLabel?: string;
   disabled?: boolean;
   busy?: boolean;
 };
@@ -322,6 +323,7 @@ export function AgentConversationInput({
   label = "Message your specialist",
   placeholder = "Ask anything…",
   submitLabel = "Send",
+  busyLabel = "Sending…",
   disabled = false,
   busy = false,
 }: AgentConversationInputProps) {
@@ -358,7 +360,7 @@ export function AgentConversationInput({
         />
       </div>
       <button className="beast-button shrink-0 sm:min-w-[88px]" type="submit" disabled={disabled || busy || value.trim().length === 0}>
-        {busy ? "Sending…" : submitLabel}
+        {busy ? busyLabel : submitLabel}
       </button>
     </form>
   );

@@ -79,6 +79,33 @@ export type RuntimePlan = {
 export type RuntimeResult = RuntimePlan & {
   model: string;
   latencyMs: number;
+  timings: RuntimeTimings;
   researchSources: Array<{ title: string; url: string; supportedClaim: string; retrievedAt: string }>;
   validationFailures: string[];
+};
+
+export type DigitalStaffActivity =
+  | "accepted"
+  | "loading_context"
+  | "thinking"
+  | "researching"
+  | "validating_sources"
+  | "preparing_answer"
+  | "persisting"
+  | "complete";
+
+export type RuntimeTimings = {
+  totalMs: number;
+  contextAssemblyMs: number;
+  initialModelMs: number;
+  firstModelOutputMs: number | null;
+  researchMs: number;
+  researchValidationMs: number;
+  persistenceMs: number;
+};
+
+export type RuntimeObserver = {
+  onActivity?: (activity: DigitalStaffActivity) => void | Promise<void>;
+  onResponseDelta?: (delta: string) => void | Promise<void>;
+  onFirstModelOutput?: () => void;
 };

@@ -12,6 +12,7 @@ import {
   AgentHeader,
   AgentLoadingState,
   AgentStatus,
+  AgentThinkingIndicator,
   AgentStreamingResponseArea,
   ProfessionalConversationComposer,
   ProfessionalConversationAvatar,
@@ -55,8 +56,7 @@ import {
   type MoneyCoachRecommendation,
   type MoneyCoachSessionBriefing,
 } from "@/lib/moneyCoachOnline";
-import { requestDigitalStaffResponse, type RuntimeResult } from "@/lib/digitalStaffRuntime";
-import type { StructuredKnowledgeProposal } from "@/lib/digitalStaffRuntime";
+import { digitalStaffActivityLabels, requestDigitalStaffResponse, type DigitalStaffActivity, type RuntimeResult, type StructuredKnowledgeProposal } from "@/lib/digitalStaffRuntime";
 
 type MoneyCoachExperienceProps = {
   model: MoneyCoachExperienceModel;
@@ -262,7 +262,10 @@ export function MoneyCoachExperience({
     {
       id: string;
       question: string;
-      response: MoneyCoachStructuredAnswer;
+      response?: MoneyCoachStructuredAnswer;
+      partialText?: string;
+      activity?: DigitalStaffActivity;
+      failed?: boolean;
       proposals?: readonly StructuredKnowledgeProposal[];
       timestamp?: string;
     }[]
@@ -293,6 +296,8 @@ export function MoneyCoachExperience({
   const [actorType, setActorType] = useState<Extract<ExecutionAuditEvent["actorType"], "member" | "owner">>("member");
   const historyDialogRef = useRef<HTMLDivElement>(null);
   const requestedStarterRef = useRef("");
+  const retryTurnRef = useRef<(question: string, turnId: string) => void>(() => undefined);
+  retryTurnRef.current = (question, turnId) => { void askQuestion(question, activeThreadId, false, turnId); };
   const conversationScrollPositionsRef = useRef(new Map<string, number>());
   const ownerId = model.ownerId;
 
@@ -457,7 +462,7 @@ export function MoneyCoachExperience({
         : []),
       ...turns.flatMap<AgentConversationMessage>((turn) => [
         { id: `${turn.id}-user`, role: "user", author: "You", content: turn.question, timestamp: formatProfessionalMessageTime(turn.timestamp) },
-        { id: `${turn.id}-coach`, role: "agent", author: model.professional.identity.role, streaming: streamingTurnId === turn.id, timestamp: formatProfessionalMessageTime(turn.timestamp), content: <AgentStreamingResponseArea isStreaming={streamingTurnId === turn.id} label="Money Coach response"><MoneyCoachResponseDocument response={turn.response} />{turn.proposals?.length && activeThreadId ? <RuntimeProposalReview professionalId="beastmoney.money-coach" conversationId={activeThreadId} proposals={turn.proposals} onDecision={() => void refreshThreads()} /> : null}</AgentStreamingResponseArea> },
+        { id: `${turn.id}-coach`, role: "agent", author: model.professional.identity.role, streaming: streamingTurnId === turn.id, timestamp: formatProfessionalMessageTime(turn.timestamp), content: <AgentStreamingResponseArea isStreaming={streamingTurnId === turn.id} label="Money Coach response">{turn.failed ? <div><p>The Money Coach service is temporarily unavailable. Your message is still here.</p><button className="beast-button mt-3" type="button" onClick={() => retryTurnRef.current(turn.question, turn.id)}>Try again</button></div> : turn.response ? <MoneyCoachResponseDocument response={turn.response} /> : <div>{turn.partialText ? <p>{turn.partialText}</p> : null}<AgentThinkingIndicator label={digitalStaffActivityLabels[turn.activity || "accepted"]} /></div>}{turn.proposals?.length && activeThreadId ? <RuntimeProposalReview professionalId="beastmoney.money-coach" conversationId={activeThreadId} proposals={turn.proposals} onDecision={() => void refreshThreads()} /> : null}</AgentStreamingResponseArea> },
       ]),
     ],
     [
@@ -471,18 +476,27 @@ export function MoneyCoachExperience({
     ]
   );
 
-  async function askQuestion(value: string, targetThreadId = activeThreadId, replaceConversation = false) {
+  async function askQuestion(value: string, targetThreadId = activeThreadId, replaceConversation = false, existingTurnId = "") {
     const timestamp = Date.now();
     const now = new Date(timestamp).toISOString();
-    const turnId = `money-${timestamp}`;
+    const turnId = existingTurnId || `money-${timestamp}`;
+    const optimisticTurn = { id: turnId, question: value, partialText: "", activity: "accepted" as DigitalStaffActivity, timestamp: now };
+    setTurns((current) => existingTurnId
+      ? current.map((turn) => turn.id === turnId ? optimisticTurn : turn)
+      : replaceConversation ? [optimisticTurn] : [...current, optimisticTurn]);
     setStreamingTurnId(turnId);
     try {
-      const payload = await requestDigitalStaffResponse({ professionalId: "beastmoney.money-coach", conversationId: targetThreadId, message: value, workspace: "/dashboard/money/coach" });
+      const payload = await requestDigitalStaffResponse({ professionalId: "beastmoney.money-coach", conversationId: targetThreadId, message: value, workspace: "/dashboard/money/coach" }, {
+        onAcknowledged: () => setTurns((current) => current.map((turn) => turn.id === turnId ? { ...turn, activity: "thinking" } : turn)),
+        onActivity: (activity) => setTurns((current) => current.map((turn) => turn.id === turnId ? { ...turn, activity } : turn)),
+        onResponseDelta: (delta) => setTurns((current) => current.map((turn) => turn.id === turnId ? { ...turn, partialText: `${turn.partialText || ""}${delta}` } : turn)),
+      });
       const turn = { id: turnId, question: value, response: runtimeMoneyCoachAnswer(payload.result, model), proposals: payload.result.proposals, timestamp: now };
-      setTurns((current) => replaceConversation ? [turn] : [...current, turn]);
+      setTurns((current) => current.map((item) => item.id === turnId ? turn : item));
       await refreshThreads();
       setHistoryError("");
     } catch (error) {
+      setTurns((current) => current.map((turn) => turn.id === turnId ? { ...turn, failed: true, activity: undefined } : turn));
       setHistoryError(error instanceof Error ? error.message : "Money Coach could not respond safely.");
     } finally {
       setStreamingTurnId("");
@@ -1373,6 +1387,7 @@ export function MoneyCoachExperience({
                 label="Message your Money Coach"
                 placeholder="Ask about cash flow, debt, savings, retirement, or a financial decision…"
                 busy={Boolean(streamingTurnId)}
+                busyLabel={turns.find((turn) => turn.id === streamingTurnId)?.activity === "accepted" ? "Sending…" : "Working…"}
               />
             </ProfessionalConversationComposer>
             <div className="mt-3">{starterExperience}</div>

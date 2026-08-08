@@ -71,8 +71,8 @@ import {
   type BeastDocumentDataClient,
 } from "@/lib/platform/documents";
 import { createClient } from "@/lib/supabase/client";
-import { requestDigitalStaffResponse } from "@/lib/digitalStaffRuntime/client";
-import type { StructuredKnowledgeProposal } from "@/lib/digitalStaffRuntime";
+import { digitalStaffActivityLabels, requestDigitalStaffResponse } from "@/lib/digitalStaffRuntime/client";
+import type { DigitalStaffActivity, StructuredKnowledgeProposal } from "@/lib/digitalStaffRuntime";
 import { BeastHealthShell } from "./BeastHealthShell";
 
 type HealthAdvisorQuestionTurn = {
@@ -83,6 +83,9 @@ type HealthAdvisorQuestionTurn = {
     | { kind: "external"; answer: HealthAdvisorQuestionAnswer }
     | { kind: "intake"; text: string };
   proposals?: readonly StructuredKnowledgeProposal[];
+  activity?: DigitalStaffActivity;
+  failed?: boolean;
+  partialText?: string;
 };
 
 type HealthAdvisorGoal = {
@@ -513,6 +516,8 @@ export function HealthAdvisorWorkspace() {
     "idle" | "review" | "saving" | "saved" | "error"
   >("idle");
   const healthConversationScrollPositions = useRef(new Map<string, number>());
+  const retryTurnRef = useRef<(question: string, turnId: string) => void>(() => undefined);
+  retryTurnRef.current = (question, turnId) => { void askHealthAdvisor(question, turnId); };
   const conversationHistoryDialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -954,33 +959,37 @@ export function HealthAdvisorWorkspace() {
     }
   }
 
-  async function askHealthAdvisor(question: string) {
+  async function askHealthAdvisor(question: string, existingTurnId = "") {
     if (healthQuestionBusy) return;
     const messageTimestamp = new Date().toISOString();
-    const turnId = `health-question-${Date.now()}`;
+    const turnId = existingTurnId || `health-question-${Date.now()}`;
     if (!activeConversationId) { setHealthQuestionError("Start a saved Health Advisor conversation before sending a message."); return; }
     setHealthQuestionBusy(true);
     setHealthQuestionError("");
+    const optimisticTurn: HealthAdvisorQuestionTurn = { id: turnId, question, timestamp: messageTimestamp, activity: "accepted" };
+    setQuestionTurns((current) => existingTurnId ? current.map((turn) => turn.id === turnId ? optimisticTurn : turn) : [...current, optimisticTurn]);
     try {
-      const runtime = await requestDigitalStaffResponse({ professionalId: "beasthealth.health-advisor", conversationId: activeConversationId, message: question, workspace: "/dashboard/health/ai-advisor" });
+      const runtime = await requestDigitalStaffResponse({ professionalId: "beasthealth.health-advisor", conversationId: activeConversationId, message: question, workspace: "/dashboard/health/ai-advisor" }, {
+        onAcknowledged: () => setQuestionTurns((current) => current.map((turn) => turn.id === turnId ? { ...turn, activity: "thinking" } : turn)),
+        onActivity: (activity) => setQuestionTurns((current) => current.map((turn) => turn.id === turnId ? { ...turn, activity } : turn)),
+        onResponseDelta: (delta) => setQuestionTurns((current) => current.map((turn) => turn.id === turnId ? { ...turn, partialText: `${turn.partialText || ""}${delta}` } : turn)),
+      });
       const payload: HealthAdvisorQuestionAnswer = { status: "ready", answer: runtime.result.response, generalInformation: runtime.result.response, possibleExplanations: "", questionsForClinician: runtime.result.nextQuestion || "", recordEvidence: [], documentEvidence: [], conversationEvidence: [], contextWarnings: runtime.result.validationFailures, externalSources: runtime.result.researchSources.map((source) => ({ title: source.title, url: source.url, organization: new URL(source.url).hostname })), limitations: [], model: runtime.result.model };
       const externalResponse = {
         kind: "external" as const,
         answer: payload,
       };
-      setQuestionTurns((current) => [
-        ...current,
-        {
+      setQuestionTurns((current) => current.map((turn) => turn.id === turnId ? {
           id: turnId,
           question,
           response: externalResponse,
           proposals: runtime.result.proposals,
           timestamp: messageTimestamp,
-        },
-      ]);
+        } : turn));
       setHealthQuestion("");
       await refreshConversationThreads();
     } catch (error) {
+      setQuestionTurns((current) => current.map((turn) => turn.id === turnId ? { ...turn, failed: true, activity: undefined } : turn));
       setHealthQuestionError(
         error instanceof Error
           ? error.message
@@ -1315,28 +1324,20 @@ export function HealthAdvisorWorkspace() {
           id: `${turn.id}-advisor`,
           role: "agent",
           author: "Health Advisor",
+          streaming: healthQuestionBusy && !turn.response && !turn.failed,
           timestamp: formatProfessionalMessageTime(turn.timestamp),
           content:
             turn.response?.kind === "external" ? (
               <><HealthAdvisorAnswerDocument response={turn.response.answer} />{turn.proposals?.length && activeConversationId ? <RuntimeProposalReview professionalId="beasthealth.health-advisor" conversationId={activeConversationId} proposals={turn.proposals} onDecision={() => void refreshConversationThreads()} /> : null}</>
-            ) : (
+            ) : turn.failed ? (
+              <div><p>The Health Advisor service is temporarily unavailable. Your message is still here.</p><button className="beast-button mt-3" type="button" onClick={() => retryTurnRef.current(turn.question, turn.id)}>Try again</button></div>
+            ) : turn.response ? (
               <p>{turn.response?.text}</p>
+            ) : (
+              <div>{turn.partialText ? <p>{turn.partialText}</p> : null}<AgentThinkingIndicator label={digitalStaffActivityLabels[turn.activity || "accepted"]} /></div>
             ),
         },
       ]),
-      ...(healthQuestionBusy
-        ? [
-            {
-              id: "health-question-pending",
-              role: "agent" as const,
-              author: "Health Advisor",
-              streaming: true,
-              content: (
-                <AgentThinkingIndicator label="Reviewing current medical sources…" />
-              ),
-            },
-          ]
-        : []),
     ],
     [healthQuestionBusy, knowledgePrompt, memberName, questionTurns, activeConversationId, refreshConversationThreads]
   );
@@ -1529,6 +1530,7 @@ export function HealthAdvisorWorkspace() {
                 label="Message your Health Advisor"
                 placeholder="Ask about a condition, symptom, medication, procedure, lab, vital, appointment, family history, or clinician question…"
                 busy={healthQuestionBusy}
+                busyLabel={questionTurns.find((turn) => turn.activity === "accepted") ? "Sending…" : "Working…"}
               />
             </ProfessionalConversationComposer>
             {knowledgeSaveState === "review" && knowledgePrompt ? (

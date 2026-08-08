@@ -29,7 +29,8 @@ test("BM-306 starter selection creates and starts a new persisted conversation",
   assert.match(workspaceSource, /const thread = await startConversation\(\)/);
   assert.match(workspaceSource, /await askQuestion\(prompt, thread\?\.id \|\| "", true\)/);
   assert.match(workspaceSource, /repository\.create/);
-  assert.match(workspaceSource, /replaceConversation \? \[turn\]/);
+  assert.match(workspaceSource, /replaceConversation \? \[optimisticTurn\]/);
+  assert.match(workspaceSource, /current\.map\(\(item\) => item\.id === turnId \? turn : item\)/);
   assert.match(workspaceSource, /void beginStarter\(suggestion\.prompt \|\| suggestion\.label\)/);
 });
 

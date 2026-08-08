@@ -26,18 +26,24 @@ ${authoritativeProfessionalPrompt(config.id)}`;
 }
 
 export function buildRuntimeInput(config: ProfessionalConfig, context: RuntimeContext) {
+  const productSupport = isProductSupportQuestion(context.message.text);
   return JSON.stringify({
     currentMessage: context.message,
     conversationState: context.state,
-    recentConversation: context.recentMessages.slice(-12),
-    relevantMemory: context.memories.slice(0, 12),
-    structuredRecords: context.structuredRecords.slice(0, 30),
+    recentConversation: context.recentMessages.slice(productSupport ? -4 : -8),
+    relevantMemory: productSupport ? [] : context.memories.slice(0, 8),
+    structuredRecords: productSupport ? [] : context.structuredRecords.slice(0, 20),
     currentWorkspace: context.workspace,
     executionMode: context.executionMode || "conversation",
     productNavigation: navigationRegistry(config),
     allowedTools: config.allowedTools,
     allowedResearchDomains: config.researchDomains,
   });
+}
+
+export function isProductSupportQuestion(text: string) {
+  return /\b(?:how|where)\s+(?:do|can|should)\s+i\b.{0,80}\b(?:edit|upload|update|find|open|view|manage|change|add)\b/i.test(text)
+    || /\bwhere\s+is\b.{0,80}\b(?:plan|transcript|medications?|records?|settings?)\b/i.test(text);
 }
 
 export const runtimeJsonSchema = {

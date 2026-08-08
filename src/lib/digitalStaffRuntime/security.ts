@@ -52,6 +52,18 @@ export function reportDigitalStaffError(
   });
 }
 
+export function reportDigitalStaffLifecycle(
+  requestId: string,
+  professionalId: string,
+  timings: Record<string, number | null>
+) {
+  console.info("Digital Staff lifecycle completed.", {
+    requestId,
+    professionalId,
+    timings,
+  });
+}
+
 export function safeDigitalStaffFailure(
   scope: string,
   error: unknown,

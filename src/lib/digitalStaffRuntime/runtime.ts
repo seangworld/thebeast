@@ -1,20 +1,37 @@
 import { requireProfessionalConfig } from "./config";
 import { inferProductNavigationTarget, validateNavigationTarget } from "./navigation";
 import { buildRuntimeInput, buildRuntimeInstructions, runtimeJsonSchema } from "./prompt";
-import { requestOpenAIResponse } from "./provider";
+import { requestOpenAIResponseStream } from "./provider";
 import { deidentifyResearchQuery, validateToolCalls } from "./tools";
-import type { RuntimeContext, RuntimePlan, RuntimeResult } from "./types";
+import type { RuntimeContext, RuntimeObserver, RuntimePlan, RuntimeResult } from "./types";
 
 type ResponsesPayload = { output_text?: string; output?: Array<{ content?: Array<{ type?: string; text?: string; annotations?: Array<{ type?: string; title?: string; url?: string }> }> }> };
 
-async function executeResearch(model: string, instructions: string, query: string, domains: string[]) {
-  const payload = await requestOpenAIResponse<ResponsesPayload>({ model, store: false, instructions: `${instructions}\nAnswer only from retrieved authoritative evidence. State limitations and never fabricate a citation.`, input: query, tools: [{ type: "web_search", filters: { allowed_domains: domains }, search_context_size: "high" }], tool_choice: "required" });
+async function executeResearch(model: string, instructions: string, query: string, domains: string[], observer: RuntimeObserver) {
+  const payload = await requestOpenAIResponseStream<ResponsesPayload>({ model, store: false, instructions: `${instructions}\nAnswer only from retrieved authoritative evidence. State limitations and never fabricate a citation.`, input: query, tools: [{ type: "web_search", filters: { allowed_domains: domains }, search_context_size: "high" }], tool_choice: "required" }, {
+    onFirstOutput: observer.onFirstModelOutput,
+    onOutputTextDelta: observer.onResponseDelta,
+  });
   const content = payload.output?.flatMap((item) => item.content || []) || [];
   const answer = payload.output_text || content.find((item) => item.type === "output_text")?.text || "";
   const retrievedAt = new Date().toISOString();
   const sources = Array.from(new Map(content.flatMap((item) => item.annotations || []).filter((item) => item.type === "url_citation" && item.url).map((item) => [item.url as string, { title: item.title || new URL(item.url as string).hostname, url: item.url as string, supportedClaim: "Supports the researched response.", retrievedAt }])).values());
   if (!answer || sources.length === 0) throw new Error("Authoritative research returned no attributable evidence.");
   return { answer, sources };
+}
+
+export function requiresDeterministicResearch(context: Pick<RuntimeContext, "professionalId" | "message">) {
+  const text = context.message.text;
+  if (!/\b(?:current|currently|latest|today|now|official|according to)\b/i.test(text)) return false;
+  if (/\bcurrent\s+(?:medications?|debts?|goals?|priorit(?:y|ies)|records?|plan)\b/i.test(text)) return false;
+  const externalAuthority = context.professionalId === "beastmoney.money-coach"
+    ? /\b(?:irs|tax|contribution|deduction|credit|limit|law|rule|guidance)\b/i
+    : context.professionalId === "beasteducation.guidance-counselor"
+      ? /\b(?:opm|federal\s+series|certifications?|qualifications?|requirements?|accreditation|rule|guidance)\b/i
+      : context.professionalId === "beasthealth.health-advisor"
+        ? /\b(?:fda|cdc|nih|medication|drug|treatment|warning|guidance|recommendation|evidence)\b/i
+        : /\b(?:law|rule|requirements?|guidance|standard)\b/i;
+  return externalAuthority.test(text);
 }
 
 export function parseRuntimePlan(payload: ResponsesPayload): RuntimePlan {
@@ -50,7 +67,7 @@ export function validateRuntimePlan(context: RuntimeContext, plan: RuntimePlan) 
     : plan.proposals.filter((proposal) => proposal.sourceMessageId === context.message.id && proposal.approvalStatus === "proposed");
   if (proposals.length !== plan.proposals.length) validationFailures.push("Rejected one or more unsafe structured proposals.");
   const explicitlyRequestsAuthoritativeResearch = config.researchDomains.length > 0
-    && /(?:\b(?:authoritative|according to|what does .{0,40} say)\b|\b(?:current|latest)\b.{0,60}\b(?:guidance|limits?|laws?|rules?|requirements?|official|research)\b)/i.test(context.message.text);
+    && (requiresDeterministicResearch(context) || /\b(?:authoritative|according to|what does .{0,40} say)\b/i.test(context.message.text));
   const requestedResearch = explicitlyRequestsAuthoritativeResearch
     ? {
         query: context.message.text,
@@ -67,15 +84,47 @@ export function validateRuntimePlan(context: RuntimeContext, plan: RuntimePlan) 
   return { ...plan, proposals, navigationTarget: productNavigation?.href || null, toolCalls: tools.accepted, research, handoff, validationFailures };
 }
 
-export async function runDigitalStaffRuntime(context: RuntimeContext): Promise<RuntimeResult> {
+export async function runDigitalStaffRuntime(context: RuntimeContext, observer: RuntimeObserver = {}): Promise<RuntimeResult> {
   const startedAt = Date.now();
   const config = requireProfessionalConfig(context.professionalId);
   const model = process.env.OPENAI_DIGITAL_STAFF_MODEL || "gpt-5";
-  const payload = await requestOpenAIResponse<ResponsesPayload>({
+  await observer.onActivity?.("thinking");
+  let firstModelOutputMs: number | null = null;
+  const modelStartedAt = Date.now();
+  const payload = await requestOpenAIResponseStream<ResponsesPayload>({
       model, store: false, instructions: buildRuntimeInstructions(config), input: buildRuntimeInput(config, context),
       text: { format: { type: "json_schema", name: "digital_staff_runtime_plan", strict: true, schema: runtimeJsonSchema } },
+  }, {
+      onFirstOutput: () => {
+        if (firstModelOutputMs === null) firstModelOutputMs = Date.now() - startedAt;
+        observer.onFirstModelOutput?.();
+      },
   });
+  const initialModelMs = Date.now() - modelStartedAt;
   const validated = validateRuntimePlan(context, parseRuntimePlan(payload));
-  const research = validated.research && context.executionMode !== "historical_reconciliation" ? await executeResearch(model, buildRuntimeInstructions(config), validated.research.query, validated.research.domains) : null;
-  return { ...validated, response: research?.answer || validated.response, model, latencyMs: Date.now() - startedAt, researchSources: research?.sources || [] };
+  let researchMs = 0;
+  let researchValidationMs = 0;
+  let research: Awaited<ReturnType<typeof executeResearch>> | null = null;
+  if (validated.research && context.executionMode !== "historical_reconciliation") {
+    await observer.onActivity?.("researching");
+    const researchStartedAt = Date.now();
+    research = await executeResearch(model, buildRuntimeInstructions(config), validated.research.query, validated.research.domains, observer);
+    researchMs = Date.now() - researchStartedAt;
+    await observer.onActivity?.("validating_sources");
+    const validationStartedAt = Date.now();
+    if (research.sources.length === 0) throw new Error("Research sources could not be validated.");
+    researchValidationMs = Date.now() - validationStartedAt;
+  } else {
+    await observer.onActivity?.("preparing_answer");
+    await observer.onResponseDelta?.(validated.response);
+  }
+  const totalMs = Date.now() - startedAt;
+  return {
+    ...validated,
+    response: research?.answer || validated.response,
+    model,
+    latencyMs: totalMs,
+    timings: { totalMs, contextAssemblyMs: 0, initialModelMs, firstModelOutputMs, researchMs, researchValidationMs, persistenceMs: 0 },
+    researchSources: research?.sources || [],
+  };
 }

@@ -125,12 +125,16 @@ export default function DirectorExperience() {
   const [question, setQuestion] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [pendingQuestion, setPendingQuestion] = useState("");
+  const [pendingFailed, setPendingFailed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [followLatestSignal, setFollowLatestSignal] = useState(0);
   const historyDialogRef = useRef<HTMLDivElement>(null);
   const historyTriggerRef = useRef<HTMLButtonElement>(null);
   const scrollPositions = useRef(new Map<string, number>());
+  const retryTurnRef = useRef<(question: string) => void>(() => undefined);
+  retryTurnRef.current = (nextQuestion) => { void submit(nextQuestion); };
 
   const refresh = useCallback(async (preferredId?: string) => {
     const response = await fetch("/api/director/conversations", {
@@ -183,15 +187,19 @@ export default function DirectorExperience() {
     (conversation) => conversation.id === activeId
   );
   const messages = useMemo<AgentConversationMessage[]>(() => {
-    if (!activeConversation?.messages.length) return [openingMessage];
-    return activeConversation.messages.map((message) => ({
+    const saved = activeConversation?.messages.length ? activeConversation.messages.map((message) => ({
       id: message.id,
       role: message.role,
       author: message.role === "agent" ? "Avery Stone" : "You",
       content: message.text,
       timestamp: formatProfessionalMessageTime(message.createdAt),
-    }));
-  }, [activeConversation]);
+    })) : [openingMessage];
+    if (!pendingQuestion) return saved;
+    return [...saved,
+      { id: "director-pending-member", role: "user", author: "You", content: pendingQuestion },
+      { id: "director-pending-response", role: "agent", author: "Avery Stone", streaming: sending, content: pendingFailed ? <div><p>{digitalStaffUnavailableMessage}</p><button className="beast-button mt-3" type="button" onClick={() => retryTurnRef.current(pendingQuestion)}>Try again</button></div> : "Thinking…" },
+    ];
+  }, [activeConversation, pendingFailed, pendingQuestion, sending]);
   const latestRecommendation = [...(activeConversation?.messages || [])]
     .reverse()
     .find((message) => message.role === "agent" && message.recommendation)
@@ -231,6 +239,8 @@ export default function DirectorExperience() {
 
   async function submit(value: string) {
     setSending(true);
+    setPendingQuestion(value);
+    setPendingFailed(false);
     setError(null);
     try {
       const response = await fetch("/api/director/conversations", {
@@ -247,10 +257,12 @@ export default function DirectorExperience() {
         throw new Error(digitalStaffUnavailableMessage);
       }
       await refresh(payload.conversation.id);
+      setPendingQuestion("");
       setQuestion("");
       setFollowLatestSignal((current) => current + 1);
     } catch {
       setError(digitalStaffUnavailableMessage);
+      setPendingFailed(true);
     } finally {
       setSending(false);
     }
@@ -361,6 +373,7 @@ export default function DirectorExperience() {
                 placeholder="Ask what changed, what matters most, or which specialist should help…"
                 submitLabel="Ask Director"
                 busy={sending}
+                busyLabel="Working…"
                 disabled={loading}
               />
             </ProfessionalConversationComposer>
