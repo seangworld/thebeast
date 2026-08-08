@@ -9,6 +9,7 @@ import {
   getCurrentDebtCycleDueDate,
 } from "../cashflowUtils";
 import type { PaymentConfigurationRecord } from "@/lib/paymentConfiguration";
+import { resolveDebtLifecycle } from "@/lib/debtLifecycle";
 
 type PaymentConfigurationPatch = Partial<
   Pick<
@@ -225,6 +226,7 @@ export function useCashFlowPaymentActions({
 
       const debtPaymentsByDebtAndCycle: Record<string, number> = {};
       for (const payment of debtPaymentRows) {
+        if (payment.reversed_at) continue;
         const key = `${payment.debt_id}||${payment.cycle_due_date}`;
         debtPaymentsByDebtAndCycle[key] =
           Number(debtPaymentsByDebtAndCycle[key] || 0) + Number(payment.amount || 0);
@@ -239,7 +241,7 @@ export function useCashFlowPaymentActions({
       });
       const nextDueDateAfterPayment = paymentResult.nextDueDateAfterPayment;
 
-      const { error: insertError } = await supabase
+      const { data: insertedPayment, error: insertError } = await supabase
         .from("debt_payments")
         .insert({
           user_id: userId,
@@ -254,7 +256,9 @@ export function useCashFlowPaymentActions({
             debt.funding_account_id || debt.funding_source_id || null,
           funding_strategy_id: debt.funding_strategy_id || "direct_payment",
           funding_source_id: debt.funding_source_id || null,
-        });
+        })
+        .select("id")
+        .single();
 
       if (insertError) {
         throw new Error(`Failed to insert payment: ${insertError.message}`);
@@ -267,6 +271,18 @@ export function useCashFlowPaymentActions({
         updatePayload.assigned_income_date = null;
         updatePayload.next_due_date_after_payment = nextDueDateAfterPayment;
       }
+      const lifecycle = resolveDebtLifecycle({
+        balance: newBalance,
+        paymentBehavior: debt.payment_behavior,
+        isArchived: debt.is_archived,
+        currentStatus: debt.lifecycle_status,
+        source: "beast_payment",
+        effectiveDate: new Date().toISOString().slice(0, 10),
+        reminderEnabled: debt.reminder_enabled,
+        reminderEnabledBeforePayoff: debt.reminder_enabled_before_payoff,
+        lifecycleAutoArchived: debt.lifecycle_auto_archived,
+      });
+      Object.assign(updatePayload, lifecycle.update);
 
       const { error: updateError } = await supabase
         .from("debts")
@@ -275,6 +291,19 @@ export function useCashFlowPaymentActions({
 
       if (updateError) {
         throw new Error(`Failed to update debt: ${updateError.message}`);
+      }
+      if (lifecycle.changed) {
+        const { error: lifecycleError } = await supabase.from("debt_lifecycle_events").insert({
+          user_id: userId,
+          debt_id: debt.id,
+          previous_status: debt.lifecycle_status || (debt.is_archived ? "archived" : "active_balance"),
+          next_status: lifecycle.status,
+          source: "beast_payment",
+          balance: newBalance,
+          reason: lifecycle.reason,
+          payment_id: insertedPayment?.id || null,
+        });
+        if (lifecycleError) throw new Error(`Failed to preserve debt lifecycle history: ${lifecycleError.message}`);
       }
 
       setDebtPayments((prev) => ({

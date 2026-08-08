@@ -47,6 +47,7 @@ import { DebtManagementActions, type DebtManagementActionsProps, type DebtManage
 import { OverlayPopover } from "../cashflow/components/OverlayPopover";
 import { getNextDebtCycleDate, toDebtDateInput, type DebtPaymentAction } from "@/lib/debtManagement";
 import { applyDebtPaymentToCycle } from "@/lib/financialPayments";
+import { getDebtLifecycleLabel, getDebtLifecycleStatus, resolveDebtLifecycle, type DebtLifecycleStatus } from "@/lib/debtLifecycle";
 
 const PAYOFF_COLUMNS_STORAGE_KEY = "beastmoney.payoff-plan.columns.v1";
 
@@ -100,6 +101,12 @@ type Debt = {
   nextDueDateDisplay?: string;
   auto_pay_enabled?: boolean | null;
   reminder_enabled?: boolean | null;
+  lifecycle_status?: DebtLifecycleStatus | null;
+  paid_off_at?: string | null;
+  closed_at?: string | null;
+  archived_at?: string | null;
+  lifecycle_auto_archived?: boolean | null;
+  reminder_enabled_before_payoff?: boolean | null;
 };
 
 function money(value: number) {
@@ -657,6 +664,28 @@ export default function DebtsPage() {
     return data?.user?.id;
   }, []);
 
+  async function recordLifecycleEvent({ userId, debt, resolution, balance, source, paymentId }: {
+    userId: string;
+    debt: Debt;
+    resolution: ReturnType<typeof resolveDebtLifecycle>;
+    balance: number;
+    source: string;
+    paymentId?: string | null;
+  }) {
+    if (!resolution.changed) return;
+    const { error } = await createClient().from("debt_lifecycle_events").insert({
+      user_id: userId,
+      debt_id: debt.id,
+      previous_status: debt.lifecycle_status || (debt.is_archived ? "archived" : "active_balance"),
+      next_status: resolution.status,
+      source,
+      balance,
+      reason: resolution.reason,
+      payment_id: paymentId || null,
+    });
+    if (error) throw error;
+  }
+
   const load = useCallback(async () => {
     setLoading(true);
 
@@ -820,8 +849,9 @@ export default function DebtsPage() {
     const availableCredit = creditLimitNum !== null
       ? money(creditLimitNum - balanceNum)
       : null;
+    const lifecycle = resolveDebtLifecycle({ balance: balanceNum, paymentBehavior, source: "manual_correction", effectiveDate: new Date().toISOString().slice(0, 10), reminderEnabled: true });
 
-    const { error } = await supabase.from("debts").insert({
+    const { data: insertedDebt, error } = await supabase.from("debts").insert({
       user_id: userId,
       name,
       balance: balanceNum,
@@ -837,12 +867,14 @@ export default function DebtsPage() {
       is_archived: false,
       auto_pay_enabled: false,
       reminder_enabled: true,
-    });
+      ...lifecycle.update,
+    }).select("*").single();
 
     if (error) {
       setMessage(`Add debt error: ${error.message}`);
       return;
     }
+    if (insertedDebt) await recordLifecycleEvent({ userId, debt: { ...insertedDebt, lifecycle_status: null } as Debt, resolution: { ...lifecycle, changed: true }, balance: balanceNum, source: "manual_correction" });
 
     setName("");
     setBalance("");
@@ -894,6 +926,9 @@ export default function DebtsPage() {
   
   async function saveEditDebt(id: string) {
     const supabase = createClient();
+    const userId = await getUserId();
+    const existingDebt = debts.find((debt) => debt.id === id);
+    if (!userId || !existingDebt) return;
   
     // Debt available credit is derived, not user-entered.
     const creditLimitNum = editCreditLimit === "" ? null : Number(editCreditLimit);
@@ -901,6 +936,18 @@ export default function DebtsPage() {
     const availableCredit = creditLimitNum !== null
       ? money(creditLimitNum - balanceNum)
       : null;
+    const effectiveDate = new Date().toISOString().slice(0, 10);
+    const lifecycle = resolveDebtLifecycle({
+      balance: balanceNum,
+      paymentBehavior: editPaymentBehavior,
+      isArchived: existingDebt.is_archived,
+      currentStatus: existingDebt.lifecycle_status,
+      source: "manual_correction",
+      effectiveDate,
+      reminderEnabled: existingDebt.reminder_enabled,
+      reminderEnabledBeforePayoff: existingDebt.reminder_enabled_before_payoff,
+      lifecycleAutoArchived: existingDebt.lifecycle_auto_archived,
+    });
   
     const { error } = await supabase
       .from("debts")
@@ -916,13 +963,16 @@ export default function DebtsPage() {
         credit_limit: creditLimitNum,
         statement_balance: editPaymentBehavior === "revolving" && editStatementBalance !== "" ? Number(editStatementBalance) : null,
         available_credit: availableCredit,
+        ...lifecycle.update,
       })
-      .eq("id", id);
+      .eq("id", id)
+      .eq("user_id", userId);
   
     if (error) {
       setMessage(`Update error: ${error.message}`);
       return;
     }
+    await recordLifecycleEvent({ userId, debt: existingDebt, resolution: lifecycle, balance: balanceNum, source: "manual_correction" });
   
     setMessage("Debt updated.");
   
@@ -934,16 +984,21 @@ export default function DebtsPage() {
     const debt = debts.find((candidate) => candidate.id === id);
     if (!window.confirm(`Archive ${debt?.name || "this debt"}? It will be removed from active payoff calculations.`)) return;
     const supabase = createClient();
+    const userId = await getUserId();
+    if (!userId || !debt) return;
+    const lifecycle = resolveDebtLifecycle({ balance: debt.balance, paymentBehavior: debt.payment_behavior, isArchived: debt.is_archived, currentStatus: debt.lifecycle_status, source: "manual_archive", effectiveDate: new Date().toISOString() });
 
     const { error } = await supabase
       .from("debts")
-      .update({ is_archived: true })
-      .eq("id", id);
+      .update(lifecycle.update)
+      .eq("id", id)
+      .eq("user_id", userId);
 
     if (error) {
       setMessage(`Archive error: ${error.message}`);
       return;
     }
+    await recordLifecycleEvent({ userId, debt, resolution: lifecycle, balance: debt.balance, source: "manual_archive" });
 
     setMessage("Debt archived.");
     await load();
@@ -958,16 +1013,22 @@ export default function DebtsPage() {
 
   async function unarchiveDebt(id: string) {
     const supabase = createClient();
+    const userId = await getUserId();
+    const debt = debts.find((candidate) => candidate.id === id);
+    if (!userId || !debt) return;
+    const lifecycle = resolveDebtLifecycle({ balance: debt.balance, paymentBehavior: debt.payment_behavior, isArchived: debt.is_archived, currentStatus: debt.lifecycle_status, source: "manual_restore", effectiveDate: new Date().toISOString() });
 
     const { error } = await supabase
       .from("debts")
-      .update({ is_archived: false })
-      .eq("id", id);
+      .update(lifecycle.update)
+      .eq("id", id)
+      .eq("user_id", userId);
 
     if (error) {
       setMessage(`Unarchive error: ${error.message}`);
       return;
     }
+    await recordLifecycleEvent({ userId, debt, resolution: lifecycle, balance: debt.balance, source: "manual_restore" });
 
     setMessage("Debt restored.");
     await load();
@@ -1005,23 +1066,36 @@ export default function DebtsPage() {
       const currentDueDate = getCurrentDebtCycleDueDate(debt);
       const cycleDueDate = toDebtDateInput(currentDueDate);
       const currentCyclePaid = debtHistory(debt.id)
-        .filter((payment) => payment.action_type !== "skip" && payment.cycle_due_date === cycleDueDate)
+        .filter((payment) => !payment.reversed_at && payment.action_type !== "skip" && payment.cycle_due_date === cycleDueDate)
         .reduce((sum, payment) => sum + Number(payment.amount || 0), 0);
       const result = applyDebtPaymentToCycle({ balance: Number(debt.balance || 0), currentCyclePaid, paymentAmount: amount, minimumPayment: Number(debt.minimum_payment || 0), currentCycleDueDate: currentDueDate });
       const nextDueDate = actionType === "skip" ? getNextDebtCycleDate(currentDueDate) : result.nextDueDateAfterPayment;
       const configuredSource = input.fundingSourceId || (debt as any).funding_source_id || null;
-      const { error: insertError } = await supabase.from("debt_payments").insert({
+      const { data: insertedPayment, error: insertError } = await supabase.from("debt_payments").insert({
         user_id: userId, debt_id: debt.id, amount, payment_date: input.paymentDate, cycle_due_date: cycleDueDate,
         funding_source_id: configuredSource, payment_account_id: configuredSource,
         funding_account_type: configuredSource ? "account" : null, funding_account_id: configuredSource,
         funding_strategy_id: "direct_payment", action_type: actionType, notes: input.notes || null,
         is_outside_beast: actionType === "paid_outside_beast",
-      });
+      }).select("id").single();
       if (insertError) throw insertError;
       const update: Record<string, unknown> = { balance: result.newBalance };
       if (nextDueDate) { update.next_due_date_after_payment = nextDueDate; update.assigned_income_date = null; }
+      const lifecycle = resolveDebtLifecycle({
+        balance: result.newBalance,
+        paymentBehavior: debt.payment_behavior,
+        isArchived: (debt as Debt).is_archived,
+        currentStatus: (debt as Debt).lifecycle_status,
+        source: actionType === "paid_outside_beast" ? "outside_payment" : "beast_payment",
+        effectiveDate: input.paymentDate,
+        reminderEnabled: (debt as Debt).reminder_enabled,
+        reminderEnabledBeforePayoff: (debt as Debt).reminder_enabled_before_payoff,
+        lifecycleAutoArchived: (debt as Debt).lifecycle_auto_archived,
+      });
+      Object.assign(update, lifecycle.update);
       const { error: updateError } = await supabase.from("debts").update(update).eq("id", debt.id).eq("user_id", userId);
       if (updateError) throw updateError;
+      await recordLifecycleEvent({ userId, debt: debt as Debt, resolution: lifecycle, balance: result.newBalance, source: actionType === "paid_outside_beast" ? "outside_payment" : "beast_payment", paymentId: insertedPayment?.id });
       setMessage(actionType === "skip" ? "Payment skipped and the next due date advanced." : actionType === "paid_outside_beast" ? "Payment completed outside Beast was recorded." : "Debt payment recorded. Money calculations and surfaces refreshed.");
       await load();
     } catch (error) { setMessage(`Payment error: ${error instanceof Error ? error.message : "Unable to record payment."}`); }
@@ -1045,13 +1119,17 @@ export default function DebtsPage() {
     if (!userId) return;
     setPaymentBusyId(debt.id);
     const supabase = createClient();
-    const { error: deleteError } = await supabase.from("debt_payments").delete().eq("id", payment.id).eq("user_id", userId).eq("debt_id", debt.id);
-    if (deleteError) { setMessage(`Undo error: ${deleteError.message}`); setPaymentBusyId(null); return; }
+    const reversedAt = new Date().toISOString();
+    const { data: reversedPayment, error: reverseError } = await supabase.from("debt_payments").update({ reversed_at: reversedAt, reversal_reason: "Member reversed the recorded payment." }).eq("id", payment.id).eq("user_id", userId).eq("debt_id", debt.id).is("reversed_at", null).select("id").maybeSingle();
+    if (reverseError) { setMessage(`Undo error: ${reverseError.message}`); setPaymentBusyId(null); return; }
+    if (!reversedPayment) { setMessage("Undo error: This payment was already reversed."); setPaymentBusyId(null); return; }
     const restoredBalance = money(Number(debt.balance || 0) + Number(payment.amount || 0));
-    const { error: updateError } = await supabase.from("debts").update({ balance: restoredBalance, next_due_date_after_payment: payment.cycle_due_date || null }).eq("id", debt.id).eq("user_id", userId);
+    const currentDebt = debt as Debt;
+    const lifecycle = resolveDebtLifecycle({ balance: restoredBalance, paymentBehavior: currentDebt.payment_behavior, isArchived: currentDebt.is_archived, currentStatus: currentDebt.lifecycle_status, source: "payment_reversal", effectiveDate: reversedAt, reminderEnabled: currentDebt.reminder_enabled, reminderEnabledBeforePayoff: currentDebt.reminder_enabled_before_payoff, lifecycleAutoArchived: currentDebt.lifecycle_auto_archived });
+    const { error: updateError } = await supabase.from("debts").update({ balance: restoredBalance, next_due_date_after_payment: payment.cycle_due_date || null, ...lifecycle.update }).eq("id", debt.id).eq("user_id", userId);
     setPaymentBusyId(null);
     if (updateError) setMessage(`Undo balance restore error: ${updateError.message}`);
-    else { setMessage("Last payment undone and the recorded principal restored."); await load(); }
+    else { await recordLifecycleEvent({ userId, debt: currentDebt, resolution: lifecycle, balance: restoredBalance, source: "payment_reversal", paymentId: payment.id }); setMessage("Last payment reversed and the recorded principal restored; history was preserved."); await load(); }
   }
 
   return (
@@ -1809,13 +1887,7 @@ export default function DebtsPage() {
                         </td>
 
                         <td className="text-right">
-                          {Boolean(debt.is_archived) ? (
-                            <span className="text-[#7f8da3]">Archived</span>
-                          ) : Number(debt.balance || 0) <= 0 ? (
-                            <span className="font-semibold text-green-300">Paid Off</span>
-                          ) : (
-                            <span className="text-[#7f8da3]">Inactive</span>
-                          )}
+                          <span className={getDebtLifecycleStatus(debt) === "open_zero_balance" ? "font-semibold text-cyan-200" : getDebtLifecycleStatus(debt) === "paid_off_closed" ? "font-semibold text-green-300" : "text-[#7f8da3]"}>{getDebtLifecycleLabel(getDebtLifecycleStatus(debt))}{debt.paid_off_at ? ` · ${debt.paid_off_at}` : ""}</span>
                         </td>
 
                         <td className="text-right">

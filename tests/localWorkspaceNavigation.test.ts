@@ -27,11 +27,12 @@ test("BP-401 highlights exactly one active local financial workspace", () => {
   );
 });
 
-test("BP-401 gives Bills, Debts, and Payoff Plan unique focused routes", () => {
+test("BP-401 gives Bills, Debts, Payoff Plan, and Velocity Banking unique focused routes", () => {
   assert.deepEqual(moneyManagementWorkspaces, [
     { label: "Bills", href: "/dashboard/money/bills" },
     { label: "Debts", href: "/dashboard/money/debts" },
     { label: "Payoff Plan", href: "/dashboard/money/payoff-plan" },
+    { label: "Velocity Banking", href: "/dashboard/money/velocity" },
   ]);
   assert.equal(
     new Set(moneyManagementWorkspaces.map((item) => item.href)).size,

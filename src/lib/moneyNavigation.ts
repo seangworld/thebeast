@@ -15,6 +15,7 @@ export const beastMoneyCoreNavigation: readonly BeastMoneyNavigationItem[] = [
   { label: "Payoff Plan", href: "/dashboard/money/payoff-plan" },
   { label: "Strategies", href: "/dashboard/money/payoff-plan#strategy-comparison", parent: "Payoff Plan" },
   { label: "Timeline", href: "/dashboard/money/payoff-plan#payoff-plan", parent: "Payoff Plan" },
+  { label: "Velocity Banking", href: "/dashboard/money/velocity" },
   { label: "Retirement", href: "/dashboard/money/retirement" },
   { label: "Financial Goals", href: "/dashboard/money/goals" },
   { label: "Financial Documents", href: "/dashboard/money/documents" },
@@ -25,6 +26,7 @@ export const moneyManagementWorkspaces = [
   { label: "Bills", href: "/dashboard/money/bills" },
   { label: "Debts", href: "/dashboard/money/debts" },
   { label: "Payoff Plan", href: "/dashboard/money/payoff-plan" },
+  { label: "Velocity Banking", href: "/dashboard/money/velocity" },
 ] as const;
 
 export function isBeastMoneyNavigationActive(

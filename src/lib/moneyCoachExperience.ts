@@ -109,6 +109,7 @@ export type MoneyCoachExperienceModel = {
     billsDueSoon: readonly { name: string; amount: number; dueDate: string; status?: string; incomePot?: string }[];
     upcomingIncome: readonly { name: string; amount: number; date?: string }[];
     debts: readonly { name: string; balance: number; minimumPayment: number; interestRate: number; minimumPaymentKnown?: boolean; interestRateKnown?: boolean }[];
+    debtLifecycle: readonly { name: string; balance: number; status: "active_balance" | "open_zero_balance" | "paid_off_closed" | "archived"; paidOffAt?: string }[];
     fundingSources: readonly { name: string; type: string; available: number }[];
     paymentConfigurations: readonly {
       obligationName: string;
@@ -169,6 +170,7 @@ export type MoneyCoachExperienceInput = {
   billsDueSoon?: readonly { name: string; amount: number; dueDate: string; status?: string; incomePot?: string }[];
   upcomingIncome?: readonly { name: string; amount: number; date?: string }[];
   debts?: readonly { name: string; balance: number; minimumPayment: number; interestRate: number; minimumPaymentKnown?: boolean; interestRateKnown?: boolean }[];
+  debtLifecycle?: readonly { name: string; balance: number; status: "active_balance" | "open_zero_balance" | "paid_off_closed" | "archived"; paidOffAt?: string }[];
   fundingSources?: readonly { name: string; type: string; available: number }[];
   paymentConfigurations?: readonly {
     obligationName: string;
@@ -796,6 +798,7 @@ export function buildMoneyCoachExperience(
       billsDueSoon: input.billsDueSoon || [],
       upcomingIncome: input.upcomingIncome || [],
       debts: input.debts || [],
+      debtLifecycle: input.debtLifecycle || [],
       fundingSources: input.fundingSources || [],
       paymentConfigurations: input.paymentConfigurations || [],
       helocReserve: input.helocReserve || 0,
@@ -1251,6 +1254,7 @@ export function answerMoneyCoachQuestion(
       confidence: domainRoute.confidence,
       opening: `Your current Financial Health Score is ${health.score} out of 100, in the ${health.band} range. This is a financial-wellness measure, not a credit score.`,
       sections: [
+        ...(context.debtLifecycle.some((debt) => debt.status !== "active_balance") ? [{ heading: "Paid-off and open zero-balance accounts", table: { columns: ["Debt", "Canonical status", "Balance"], rows: context.debtLifecycle.filter((debt) => debt.status !== "active_balance").map((debt) => [debt.name, debt.status === "open_zero_balance" ? "Open — Zero Balance" : debt.status === "paid_off_closed" ? "Paid Off / Closed" : "Archived", formatCurrency(debt.balance)]) } }] : []),
         {
           heading: "How it is calculated",
           paragraphs: [health.formula],
@@ -1332,6 +1336,7 @@ export function answerMoneyCoachQuestion(
       intent,
       opening,
       sections: [
+        ...(context.debtLifecycle.some((debt) => debt.status !== "active_balance") ? [{ heading: "Paid-off and open zero-balance accounts", table: { columns: ["Debt", "Canonical status", "Balance"], rows: context.debtLifecycle.filter((debt) => debt.status !== "active_balance").map((debt) => [debt.name, debt.status === "open_zero_balance" ? "Open — Zero Balance" : debt.status === "paid_off_closed" ? "Paid Off / Closed" : "Archived", formatCurrency(debt.balance)]) } }] : []),
         {
           heading: "Current debt status",
           table: {

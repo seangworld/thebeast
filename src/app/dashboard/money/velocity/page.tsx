@@ -631,14 +631,14 @@ export default function VelocityPlannerPage() {
 
   return (
     <BeastMoneyShell
-      title="Velocity Planner"
-      description="A planning workspace for Velocity recommendations, recovery timing, and deterministic interest savings."
+      title="Velocity Banking"
+      description="Understand readiness, guardrails, recovery timing, risks, and deterministic comparisons before using revolving credit for debt payoff."
     >
       <div className="money-page-stack">
 
         <section className="grid gap-4 lg:grid-cols-2">
           <div className="money-section-card">
-            <h2 className="money-section-title">Velocity v2</h2>
+            <h2 className="money-section-title">What is Velocity Banking?</h2>
             <p className="mt-3 text-sm text-[#c7cfdb]">
               Velocity uses available monthly cash flow, debt information,
               and a revolving credit source to accelerate debt payoff while
@@ -664,6 +664,15 @@ export default function VelocityPlannerPage() {
               cash timing, debt reduction, and liquidity guardrails. Keep other
               source ideas as planning notes until they are ready to model.
             </p>
+          </div>
+        </section>
+
+        <section className="money-section-panel">
+          <div className="money-section-header"><div><h2 className="money-section-title">How Beast models it</h2><p className="money-section-description">Beast compares a guarded revolving-credit chunk with minimum-only and conventional payoff paths. It includes source interest, utilization, emergency reserve, monthly recovery capacity, and the required recovery window.</p></div></div>
+          <div className="grid gap-4 p-5 md:grid-cols-3">
+            <div className="money-section-card"><h3 className="font-bold text-white">What could go wrong?</h3><p className="mt-2 text-sm text-[#9aa7b8]">Variable rates, fees, new charges, income disruption, or slow recovery can erase modeled savings and increase secured-credit risk.</p></div>
+            <div className="money-section-card"><h3 className="font-bold text-white">Safety criteria</h3><p className="mt-2 text-sm text-[#9aa7b8]">Beast requires a suitable source, available credit within the utilization limit, preserved emergency reserves, positive recovery capacity, and recovery inside the configured window.</p></div>
+            <div className="money-section-card"><h3 className="font-bold text-white">Alternatives</h3><p className="mt-2 text-sm text-[#9aa7b8]">Compare minimum payments, debt snowball, and debt avalanche. Holding cash is the correct result whenever Velocity guardrails do not pass.</p></div>
           </div>
         </section>
 

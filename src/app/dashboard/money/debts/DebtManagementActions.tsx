@@ -24,6 +24,7 @@ export type DebtPaymentHistoryRow = {
   notes?: string | null;
   is_outside_beast?: boolean | null;
   created_at?: string | null;
+  reversed_at?: string | null;
 };
 
 export type DebtManagementActionsProps = {
@@ -46,7 +47,7 @@ export function DebtManagementActions({ debt, fundingSources, history, busy, onP
   const [notes, setNotes] = useState("");
   const [customDueDate, setCustomDueDate] = useState("");
   const due = useMemo(() => getDebtDueState({ balance: debt.balance, dueDate: debt.nextDueDate }), [debt.balance, debt.nextDueDate]);
-  const lastPayment = history[0] || null;
+  const lastPayment = history.find((payment) => !payment.reversed_at) || null;
 
   async function record(actionType: DebtPaymentAction, requestedAmount: number) {
     await onPayment({ debt, amount: requestedAmount, paymentDate, fundingSourceId: fundingSourceId || null, notes, actionType });
@@ -87,7 +88,7 @@ export function DebtManagementActions({ debt, fundingSources, history, busy, onP
         <div className="flex gap-2"><button type="button" disabled={busy || !customDueDate} onClick={() => onResetDueDate(debt, customDueDate)} className="beast-button-secondary">Save Custom Date</button><button type="button" onClick={() => setPanel(null)} className="beast-button-secondary">Cancel</button></div>
       </div> : null}
 
-      {panel === "history" ? <div className="rounded-xl border border-[#2a3242] bg-[#0f1419] p-4"><div className="flex items-center justify-between"><h4 className="font-black text-white">History</h4><button type="button" onClick={() => setPanel(null)} className="text-sm text-cyan-200">Close</button></div>{history.length ? <ul className="mt-3 grid gap-2">{history.map((payment) => <li key={payment.id} className="rounded-lg border border-[#2a3242] p-3 text-sm"><div className="flex justify-between gap-3"><span className="font-bold capitalize">{String(payment.action_type || "custom").replaceAll("_", " ")}</span><span>${Number(payment.amount || 0).toFixed(2)}</span></div><div className="mt-1 text-xs text-[#9aa7b8]">{payment.payment_date}{payment.is_outside_beast ? " · Recorded outside Beast" : ""}</div>{payment.notes ? <p className="mt-2 text-[#c7cfdb]">{payment.notes}</p> : null}</li>)}</ul> : <p className="mt-3 text-sm text-[#9aa7b8]">No payment history yet.</p>}</div> : null}
+      {panel === "history" ? <div className="rounded-xl border border-[#2a3242] bg-[#0f1419] p-4"><div className="flex items-center justify-between"><h4 className="font-black text-white">History</h4><button type="button" onClick={() => setPanel(null)} className="text-sm text-cyan-200">Close</button></div>{history.length ? <ul className="mt-3 grid gap-2">{history.map((payment) => <li key={payment.id} className="rounded-lg border border-[#2a3242] p-3 text-sm"><div className="flex justify-between gap-3"><span className="font-bold capitalize">{String(payment.action_type || "custom").replaceAll("_", " ")}{payment.reversed_at ? " · Reversed" : ""}</span><span>${Number(payment.amount || 0).toFixed(2)}</span></div><div className="mt-1 text-xs text-[#9aa7b8]">{payment.payment_date}{payment.is_outside_beast ? " · Recorded outside Beast" : ""}</div>{payment.notes ? <p className="mt-2 text-[#c7cfdb]">{payment.notes}</p> : null}</li>)}</ul> : <p className="mt-3 text-sm text-[#9aa7b8]">No payment history yet.</p>}</div> : null}
     </div>
   );
 }

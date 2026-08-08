@@ -365,6 +365,17 @@ export const beastRoadmapPackageRegistry = [
     ["20260801000300_track_debt_interest_changes.sql"]
   ),
   packageIdentity(
+    "BM-VEL-040",
+    ["BM-40", "BM-41"],
+    "Velocity Banking and Paid-Off Debt Lifecycle",
+    [
+      "src/lib/debtLifecycle.ts",
+      "src/app/dashboard/money/velocity/page.tsx",
+      "supabase/migrations/20260808000100_add_debt_lifecycle.sql",
+    ],
+    ["20260808000100_add_debt_lifecycle.sql"]
+  ),
+  packageIdentity(
     "BO-501",
     ["BO-501"],
     "BeastOS Life Planning Hub",

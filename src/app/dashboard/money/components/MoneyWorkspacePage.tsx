@@ -67,6 +67,7 @@ import {
 import { FinancialHealthScoreWorkspace } from "@/app/dashboard/money/components/FinancialHealthScoreWorkspace";
 import { buildFinancialMissionControl } from "@/lib/financialMissionControl";
 import { normalizeDebtStrategy } from "@/lib/debtStrategies";
+import { getDebtLifecycleStatus, type DebtLifecycleStatus } from "@/lib/debtLifecycle";
 
 type MoneyDebt = {
   id: string;
@@ -83,6 +84,8 @@ type MoneyDebt = {
   payment_behavior?: "fixed" | "revolving" | null;
   minimum_payment_rate?: number | null;
   minimum_payment_floor?: number | null;
+  lifecycle_status?: DebtLifecycleStatus | null;
+  paid_off_at?: string | null;
   auto_pay_enabled?: boolean | null;
   reminder_enabled?: boolean | null;
   assigned_income_date?: string | null;
@@ -158,6 +161,7 @@ type MoneyPayment = {
   created_at?: string | null;
   cycle_due_date?: string | null;
   action_type?: "minimum" | "full_balance" | "custom" | "statement_balance" | "skip" | "paid_outside_beast" | null;
+  reversed_at?: string | null;
 };
 
 type DebtSettings = {
@@ -570,7 +574,7 @@ export function MoneyWorkspacePage({
     });
     const debtAwareness = buildMoneyDebtAwareness({
       debts: activeDebts,
-      payments: state.debtPayments,
+      payments: state.debtPayments.filter((payment) => !payment.reversed_at),
       now: asOfDate,
     });
     const financialInsights = buildFinancialInsights({
@@ -778,7 +782,7 @@ export function MoneyWorkspacePage({
   });
   const mobileTransactions = buildRecentMoneyTransactions({
     billPayments: state.billPayments,
-    debtPayments: state.debtPayments,
+    debtPayments: state.debtPayments.filter((payment) => !payment.reversed_at),
   });
   const overdueBills = mobileBillCards.filter(
     (bill) => bill.status === "Overdue"
@@ -841,6 +845,7 @@ export function MoneyWorkspacePage({
       minimumPaymentKnown: isKnownNumericInput(debt.minimum_payment),
       interestRateKnown: isKnownNumericInput(debt.interest_rate),
     })),
+    debtLifecycle: state.debts.map((debt) => ({ name: debt.name || "Debt", balance: numberValue(debt.balance), status: getDebtLifecycleStatus(debt), paidOffAt: debt.paid_off_at || undefined })),
     fundingSources: state.fundingSources.filter((source) => source.is_active !== false).map((source) => ({ name: source.name || "Funding source", type: source.type || "other", available: numberValue(source.available_credit) })),
     paymentConfigurations: [...snapshot.activeBills, ...snapshot.activeDebts]
       .map((obligation) => {
@@ -901,7 +906,7 @@ export function MoneyWorkspacePage({
         date: payment.payment_date || payment.created_at || "",
         kind: "bill" as const,
       })),
-      ...state.debtPayments.map((payment) => ({
+      ...state.debtPayments.filter((payment) => !payment.reversed_at).map((payment) => ({
         id: payment.id,
         name:
           state.debts.find((debt) => debt.id === payment.debt_id)?.name ||

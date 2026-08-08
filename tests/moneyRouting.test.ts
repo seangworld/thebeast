@@ -38,6 +38,7 @@ test("BP-230 navigation follows the approved workspace hierarchy", () => {
     "Payoff Plan",
     "Strategies",
     "Timeline",
+    "Velocity Banking",
     "Retirement",
     "Financial Goals",
     "Financial Documents",
@@ -63,7 +64,7 @@ test("BP-230 navigation follows the approved workspace hierarchy", () => {
   );
   assert.deepEqual(beastMoneyNavigation.children, [...beastMoneyCoreNavigation]);
   assert.equal(beastMoneyCoreNavigation.some((item) => item.label === "Observation Center"), false);
-  assert.equal(beastMoneyCoreNavigation.some((item) => item.label === "Velocity"), false);
+  assert.equal(beastMoneyCoreNavigation.some((item) => item.label === "Velocity Banking" && item.href === "/dashboard/money/velocity"), true);
 });
 
 test("BM-303 active state follows direct links refresh and history location changes", () => {
@@ -79,6 +80,7 @@ test("BM-303 active state follows direct links refresh and history location chan
     ["/dashboard/money/payoff-plan", "", "Payoff Plan"],
     ["/dashboard/money/payoff-plan", "#strategy-comparison", "Strategies"],
     ["/dashboard/money/payoff-plan", "#payoff-plan", "Timeline"],
+    ["/dashboard/money/velocity", "", "Velocity Banking"],
     ["/dashboard/money/reports", "", "Reports"],
   ] as const;
   history.forEach(([pathname, hash, expected]) => assert.equal(activeLabel(pathname, hash), expected));

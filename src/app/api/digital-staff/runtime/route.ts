@@ -12,7 +12,7 @@ function messageText(content: MessageRow["content"]) { return typeof content ===
 
 async function loadStructuredRecords(supabase: ReturnType<typeof createRouteClient>, ownerId: string, professionalId: string) {
   const queries = professionalId === "beastmoney.money-coach"
-    ? [supabase.from("debts").select("id, name, balance, minimum_payment, interest_rate, due_date, next_due_date_after_payment, payment_behavior, created_at").eq("user_id", ownerId).eq("is_archived", false).limit(30), supabase.from("bill_events").select("id, name, amount, frequency, due_date, next_due_date_after_payment, created_at").eq("user_id", ownerId).eq("is_archived", false).limit(30)]
+    ? [supabase.from("debts").select("id, name, balance, minimum_payment, interest_rate, due_date, next_due_date_after_payment, payment_behavior, lifecycle_status, paid_off_at, is_archived, created_at").eq("user_id", ownerId).limit(30), supabase.from("bill_events").select("id, name, amount, frequency, due_date, next_due_date_after_payment, created_at").eq("user_id", ownerId).eq("is_archived", false).limit(30)]
     : professionalId === "beasteducation.guidance-counselor"
       ? [supabase.from("education_profiles").select("id, goal_kind, goal, current_situation, background, strengths, growth_areas, constraints, weekly_hours, selected_providers, updated_at").eq("owner_id", ownerId).limit(1), supabase.from("education_career_profile_items").select("id, category, label, value, verification_status, confidence, updated_at").eq("owner_id", ownerId).limit(50)]
       : professionalId === "beasthealth.health-advisor"

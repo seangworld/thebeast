@@ -37,7 +37,7 @@ test("BeastMoney primary pages use the shared module shell", () => {
   assert.match(navigation, /\/dashboard\/money\/debts/);
   assert.match(navigation, /\/dashboard\/money\/payoff-plan#strategy-comparison/);
   assert.match(navigation, /\/dashboard\/money\/payoff-plan#payoff-plan/);
-  assert.doesNotMatch(navigation, /\/dashboard\/money\/velocity/);
+  assert.match(navigation, /Velocity Banking[\s\S]*\/dashboard\/money\/velocity/);
   assert.match(shell, /money-page-stack/);
 
   for (const page of pages) {
