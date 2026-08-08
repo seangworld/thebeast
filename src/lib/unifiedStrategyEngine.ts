@@ -10,7 +10,7 @@ import type {
 import { runVelocityEngine } from "./velocity/engine";
 import type { VelocityEngineResult, VelocityInputSnapshot } from "./velocity/types";
 import type { DebtStrategy } from "./debtStrategies";
-import { roundMoney } from "./formatters";
+import { addMonthsClamped, roundMoney } from "./formatters";
 
 export type UnifiedStrategy = DebtStrategy | "custom";
 
@@ -56,6 +56,20 @@ export type UnifiedPaymentScheduleRow = {
 
 export type PayoffMonth = UnifiedPaymentScheduleRow;
 
+export type CanonicalDebtScheduleRow = {
+  month: number;
+  debt_id: string;
+  debt_name: string;
+  opening_balance: number;
+  interest: number;
+  required_payment: number;
+  additional_payment: number;
+  total_payment: number;
+  principal_reduction: number;
+  closing_balance: number;
+  paid_off: boolean;
+};
+
 export type UnifiedStrategyResult = {
   strategy: UnifiedStrategy;
   months_to_payoff: number;
@@ -64,12 +78,15 @@ export type UnifiedStrategyResult = {
   first_target: string;
   payoff_months: UnifiedPaymentScheduleRow[];
   payment_schedule: UnifiedPaymentScheduleRow[];
+  debt_payment_schedule: CanonicalDebtScheduleRow[];
+  payoff_complete: boolean;
   recommended_extra_payment: number;
   recommended_action: string;
   safety_rating: FinancialDecisionResult["safetyRating"] | "not_evaluated";
   confidence_score: number;
   guardrail_violations: string[];
   funding_source_assumptions: string[];
+  calculation_assumptions: string[];
   velocity_chunk_applied?: number;
   velocity_source_interest?: number;
   velocity_source_paid?: number;
@@ -91,6 +108,14 @@ export type UnifiedStrategyEngineInput = {
   velocityTargetDebtId?: string;
   customDebtOrder?: string[];
 };
+
+export function getInclusivePayoffDate(
+  startDate: Date,
+  monthsToPayoff: number
+) {
+  if (!Number.isFinite(monthsToPayoff) || monthsToPayoff <= 0) return null;
+  return addMonthsClamped(startDate, Math.max(Math.trunc(monthsToPayoff) - 1, 0));
+}
 
 function money(value: number) {
   return roundMoney(value);
@@ -237,6 +262,17 @@ function buildFundingSourceAssumptions(
   ];
 }
 
+function buildCalculationAssumptions(input: UnifiedStrategyEngineInput) {
+  return [
+    "Projection starts from each debt's current saved balance and APR.",
+    "Interest accrues monthly before that month's required and additional payments.",
+    input.strategy === "minimum"
+      ? "Minimum-only payments do not roll a paid debt's former payment into another debt."
+      : "After a debt is paid, its payment capacity rolls into the next debt selected by the strategy.",
+    "Months remaining equals the number of generated schedule months; the final partial payment month is included.",
+  ];
+}
+
 export function runUnifiedStrategyEngine(
   input: UnifiedStrategyEngineInput
 ): UnifiedStrategyResult {
@@ -293,6 +329,7 @@ export function runUnifiedStrategyEngine(
     input,
     velocityEngineResult
   );
+  const calculationAssumptions = buildCalculationAssumptions(input);
   let sourceBalance = 0;
   let velocityChunkApplied = 0;
   let velocitySourceInterest = 0;
@@ -310,18 +347,22 @@ export function runUnifiedStrategyEngine(
     }
   }
 
-  if (!firstTarget || (baseMonthlyPayment <= 0 && sourceBalance <= 0)) {
+  const hasOutstandingDebt = workingDebts.some((debt) => debt.balance > 0);
+  if ((!hasOutstandingDebt && sourceBalance <= 0) || baseMonthlyPayment <= 0) {
     return {
       strategy: input.strategy,
       months_to_payoff: 0,
       total_interest: 0,
       total_paid: 0,
-      first_target: "—",
+      first_target: firstTarget?.name || "—",
       payoff_months: [],
       payment_schedule: [],
+      debt_payment_schedule: [],
+      payoff_complete: workingDebts.every((debt) => debt.balance <= 0) && sourceBalance <= 0,
       recommended_extra_payment: recommendedExtraPayment,
       ...safety,
       funding_source_assumptions: fundingSourceAssumptions,
+      calculation_assumptions: calculationAssumptions,
       velocity_chunk_applied: velocityChunkApplied,
       velocity_source_interest: 0,
       velocity_source_paid: 0,
@@ -332,6 +373,7 @@ export function runUnifiedStrategyEngine(
   let totalInterest = 0;
   let totalPaid = 0;
   const payoffMonths: UnifiedPaymentScheduleRow[] = [];
+  const debtPaymentSchedule: CanonicalDebtScheduleRow[] = [];
 
   while (
     (workingDebts.some((debt) => debt.balance > 0) || sourceBalance > 0) &&
@@ -344,6 +386,7 @@ export function runUnifiedStrategyEngine(
     );
     const startingBalances: Record<string, number> = {};
     const interestByDebt: Record<string, number> = {};
+    const requiredPaidByDebt: Record<string, number> = {};
     const attackPaidByDebt: Record<string, number> = {};
     let monthlyInterest = 0;
     let monthlySourceInterest = 0;
@@ -383,6 +426,7 @@ export function runUnifiedStrategyEngine(
       const payment = Math.min(getEffectiveMinimumPayment(debt), debt.balance);
 
       debt.balance = money(debt.balance - payment);
+      requiredPaidByDebt[debt.id] = money(payment);
       paymentPool = money(paymentPool - payment);
       monthlyPaid = money(monthlyPaid + payment);
     }
@@ -414,6 +458,29 @@ export function runUnifiedStrategyEngine(
     }
     monthlyPaid = money(monthlyPaid + targetPayment);
 
+    for (const debt of workingDebts) {
+      const openingBalance = startingBalances[debt.id];
+      if (openingBalance == null) continue;
+      const interest = money(interestByDebt[debt.id] || 0);
+      const requiredPayment = money(requiredPaidByDebt[debt.id] || 0);
+      const additionalPayment = money(attackPaidByDebt[debt.id] || 0);
+      const totalPayment = money(requiredPayment + additionalPayment);
+      const closingBalance = money(debt.balance);
+      debtPaymentSchedule.push({
+        month,
+        debt_id: debt.id,
+        debt_name: debt.name,
+        opening_balance: openingBalance,
+        interest,
+        required_payment: requiredPayment,
+        additional_payment: additionalPayment,
+        total_payment: totalPayment,
+        principal_reduction: money(totalPayment - interest),
+        closing_balance: closingBalance,
+        paid_off: openingBalance > 0 && closingBalance <= 0,
+      });
+    }
+
     const targetForRow =
       targetAtMonthStart ||
       chooseTarget({
@@ -437,12 +504,8 @@ export function runUnifiedStrategyEngine(
       targetForRow ? attackPaidByDebt[targetForRow.id] || 0 : 0
     );
     const targetEndingBalance = money(Number(targetForRow?.balance || 0));
-    const targetTotalPayment = money(
-      targetRequiredMinimum + targetAttackPaid + monthlySourcePayment
-    );
-    const targetPrincipalReduction = money(
-      targetTotalPayment - targetInterest - monthlySourceInterest
-    );
+    const targetTotalPayment = money(targetRequiredMinimum + targetAttackPaid);
+    const targetPrincipalReduction = money(targetTotalPayment - targetInterest);
     const paidOffThisMonth =
       targetStartingBalance > 0 && targetEndingBalance <= 0;
     const recoveredMinimum = paidOffThisMonth ? targetRequiredMinimum : 0;
@@ -452,7 +515,7 @@ export function runUnifiedStrategyEngine(
         : targetRequiredMinimum;
     const paymentTooLow = targetTotalPayment < targetInterest;
     const remainingDebt = money(
-      workingDebts.reduce((sum, debt) => sum + debt.balance, 0)
+      workingDebts.reduce((sum, debt) => sum + debt.balance, 0) + sourceBalance
     );
 
     totalInterest = money(totalInterest + monthlyInterest);
@@ -468,7 +531,7 @@ export function runUnifiedStrategyEngine(
       remaining_debt: remainingDebt,
       debt_starting_balance: targetStartingBalance,
       required_minimum: targetRequiredMinimum,
-      monthly_interest: money(targetInterest + monthlySourceInterest),
+      monthly_interest: targetInterest,
       principal_reduction: targetPrincipalReduction,
       recommended_minimum: recommendedMinimum,
       extra_attack: targetAttackPaid,
@@ -485,15 +548,22 @@ export function runUnifiedStrategyEngine(
 
   return {
     strategy: input.strategy,
-    months_to_payoff: payoffMonths.length,
+    months_to_payoff:
+      workingDebts.every((debt) => debt.balance <= 0) && sourceBalance <= 0
+        ? payoffMonths.length
+        : 0,
     total_interest: totalInterest,
     total_paid: totalPaid,
-    first_target: firstTarget.name,
+    first_target: firstTarget?.name || "—",
     payoff_months: payoffMonths,
     payment_schedule: payoffMonths,
+    debt_payment_schedule: debtPaymentSchedule,
+    payoff_complete:
+      workingDebts.every((debt) => debt.balance <= 0) && sourceBalance <= 0,
     recommended_extra_payment: recommendedExtraPayment,
     ...safety,
     funding_source_assumptions: fundingSourceAssumptions,
+    calculation_assumptions: calculationAssumptions,
     velocity_chunk_applied: velocityChunkApplied,
     velocity_source_interest: velocitySourceInterest,
     velocity_source_paid: velocitySourcePaid,

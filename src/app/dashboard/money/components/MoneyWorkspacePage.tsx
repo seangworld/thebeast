@@ -66,6 +66,7 @@ import {
 } from "@/app/dashboard/money/components/FinancialMissionControl";
 import { FinancialHealthScoreWorkspace } from "@/app/dashboard/money/components/FinancialHealthScoreWorkspace";
 import { buildFinancialMissionControl } from "@/lib/financialMissionControl";
+import { normalizeDebtStrategy } from "@/lib/debtStrategies";
 
 type MoneyDebt = {
   id: string;
@@ -78,6 +79,10 @@ type MoneyDebt = {
   due_date?: number | null;
   credit_limit?: number | null;
   is_archived?: boolean | null;
+  is_excluded?: boolean | null;
+  payment_behavior?: "fixed" | "revolving" | null;
+  minimum_payment_rate?: number | null;
+  minimum_payment_floor?: number | null;
   auto_pay_enabled?: boolean | null;
   reminder_enabled?: boolean | null;
   assigned_income_date?: string | null;
@@ -157,6 +162,7 @@ type MoneyPayment = {
 
 type DebtSettings = {
   extra_payment?: number | null;
+  strategy?: string | null;
 };
 
 type MoneyGoal = {
@@ -461,7 +467,12 @@ export function MoneyWorkspacePage({
       balance: numberValue(debt.balance),
       minimum_payment: numberValue(debt.minimum_payment),
       interest_rate: numberValue(debt.interest_rate),
+      is_excluded: debt.is_excluded,
+      payment_behavior: debt.payment_behavior,
+      minimum_payment_rate: debt.minimum_payment_rate,
+      minimum_payment_floor: debt.minimum_payment_floor,
     }));
+    const payoffStrategy = normalizeDebtStrategy(state.debtSettings?.strategy);
     const activeBills = state.bills.filter((bill) => !bill.is_archived);
     const activeIncomes = state.incomes.filter(isActiveRecurringSource);
     const startingCash = resolveCoachCorrection(
@@ -512,7 +523,7 @@ export function MoneyWorkspacePage({
       income: activeIncomes,
       bills: activeBills,
       fundingSources: state.fundingSources,
-      strategy: "avalanche",
+      strategy: payoffStrategy,
     });
     const financialForecast = buildFinancialForecast({
       asOfDate,
@@ -522,7 +533,7 @@ export function MoneyWorkspacePage({
       income: activeIncomes,
       bills: activeBills,
       fundingSources: state.fundingSources,
-      strategy: "avalanche",
+      strategy: payoffStrategy,
       currentCash: startingCash,
       cashBuffer: buffer,
     });
@@ -567,7 +578,7 @@ export function MoneyWorkspacePage({
       financialDecision,
       financialForecast,
       debts: forecastDebts,
-      strategy: "avalanche",
+      strategy: payoffStrategy,
       creditUtilization: utilization,
       billsDueSoon: billsDueSoon.length,
       currentCash: startingCash,
@@ -617,6 +628,7 @@ export function MoneyWorkspacePage({
       debtMinimums,
       totalDebt,
       extraPayment,
+      payoffStrategy,
       monthlyOutflow,
       projectedSurplus,
       financialDecision,
@@ -865,8 +877,8 @@ export function MoneyWorkspacePage({
         };
       }),
     helocReserve: state.fundingSources.filter((source) => source.is_active !== false && source.type?.toLowerCase().includes("heloc")).reduce((sum, source) => sum + numberValue(source.available_credit), 0),
-    activeDebtStrategy: "avalanche",
-    strategyScenarios: snapshot.scenarioComparison.scenarios.filter((scenario) => ["avalanche", "snowball", "velocity"].includes(scenario.id)).map((scenario) => ({ id: scenario.id, label: scenario.label, monthsToPayoff: scenario.monthsToPayoff, totalInterest: scenario.totalInterest, monthlyCashStrain: scenario.monthlyCashStrain, riskLevel: scenario.riskLevel, debtFreeDate: scenario.debtFreeDate })),
+    activeDebtStrategy: snapshot.payoffStrategy,
+    strategyScenarios: snapshot.scenarioComparison.scenarios.filter((scenario) => ["minimum", "avalanche", "snowball", "velocity"].includes(scenario.id)).map((scenario) => ({ id: scenario.id, label: scenario.label, monthsToPayoff: scenario.monthsToPayoff, totalInterest: scenario.totalInterest, monthlyCashStrain: scenario.monthlyCashStrain, riskLevel: scenario.riskLevel, debtFreeDate: scenario.debtFreeDate })),
     forecast: snapshot.financialForecast.periods.map((period) => ({ label: period.label, cash: period.cash, debt: period.debt, cashShortages: period.cashShortages })),
     retirementDataAvailable: false,
     financialHealth: snapshot.financialInsights.financialHealth,

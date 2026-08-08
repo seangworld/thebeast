@@ -8,6 +8,7 @@ import {
 import type { FinancialDecisionResult } from "./financialDecisionEngine";
 import { roundMoney } from "./formatters";
 import {
+  getInclusivePayoffDate,
   runUnifiedStrategyEngine,
   type UnifiedStrategy,
   type UnifiedStrategyDebt,
@@ -64,16 +65,10 @@ function money(value: number) {
   return roundMoney(value);
 }
 
-function addMonths(date: Date, months: number) {
-  const next = new Date(date);
-  next.setMonth(next.getMonth() + months);
-  return next;
-}
-
 function formatDebtFreeDate(asOfDate: Date, monthsToPayoff: number) {
   if (monthsToPayoff <= 0) return "Already debt-free";
 
-  return addMonths(asOfDate, monthsToPayoff).toLocaleDateString("en-US", {
+  return getInclusivePayoffDate(asOfDate, monthsToPayoff)!.toLocaleDateString("en-US", {
     month: "long",
     year: "numeric",
   });

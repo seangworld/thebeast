@@ -6,12 +6,14 @@ import type { UnifiedStrategyResult } from "../src/lib/unifiedStrategyEngine";
 const result: UnifiedStrategyResult = {
   strategy: "snowball", months_to_payoff: 2, total_interest: 15, total_paid: 215, first_target: "Card",
   recommended_extra_payment: 50, recommended_action: "Continue", safety_rating: "safe", confidence_score: 1,
-  guardrail_violations: [], funding_source_assumptions: [], velocity_chunk_applied: 0, velocity_source_interest: 0, velocity_source_paid: 0,
+  guardrail_violations: [], funding_source_assumptions: [], calculation_assumptions: [], velocity_chunk_applied: 0, velocity_source_interest: 0, velocity_source_paid: 0,
   payoff_months: [
     { month: 1, target: "Card", starting_balance: 200, interest_paid: 10, principal_paid: 90, total_payment: 100, remaining_debt: 110, debt_starting_balance: 200, required_minimum: 50, monthly_interest: 10, principal_reduction: 90, recommended_minimum: 50, extra_attack: 50, debt_ending_balance: 110, recovered_minimum: 0, paid_off: false, warning: "" },
     { month: 2, target: "Card", starting_balance: 110, interest_paid: 5, principal_paid: 110, total_payment: 115, remaining_debt: 0, debt_starting_balance: 110, required_minimum: 50, monthly_interest: 5, principal_reduction: 110, recommended_minimum: 50, extra_attack: 65, debt_ending_balance: 0, recovered_minimum: 50, paid_off: true, warning: "" },
   ],
   payment_schedule: [],
+  debt_payment_schedule: [],
+  payoff_complete: true,
 };
 
 test("Payoff Plan display preserves engine calculations and derives progressive row details", () => {
@@ -23,7 +25,7 @@ test("Payoff Plan display preserves engine calculations and derives progressive 
   assert.equal(rows[1].remainingInterest, 5);
   assert.equal(rows[0].monthsRemaining, 1);
   assert.equal(rows[1].status, "Paid off");
-  assert.equal(rows[0].payoffDate, "Sep 2026");
+  assert.equal(rows[0].payoffDate, "Aug 2026");
   assert.equal(rows[0].suggestedPayment, 100);
   assert.equal(rows[0].suggestedPaymentSource, "planned_fallback");
   assert.match(rows[0].suggestedPaymentWhy, /No Money Coach recommendation/);

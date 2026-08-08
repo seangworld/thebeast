@@ -121,7 +121,7 @@ export type MoneyCoachExperienceModel = {
       explanation: string;
     }[];
     helocReserve: number;
-    activeDebtStrategy: "avalanche" | "snowball" | "velocity" | "custom";
+    activeDebtStrategy: "minimum" | "avalanche" | "snowball" | "velocity" | "custom";
     strategyScenarios: readonly { id: string; label: string; monthsToPayoff: number; totalInterest: number; monthlyCashStrain: number; riskLevel: string; debtFreeDate: string }[];
     forecast: readonly { label: string; cash: number; debt: number; cashShortages: number }[];
     incomePotAssignedCount: number;
@@ -181,7 +181,7 @@ export type MoneyCoachExperienceInput = {
     explanation: string;
   }[];
   helocReserve?: number;
-  activeDebtStrategy?: "avalanche" | "snowball" | "velocity" | "custom";
+  activeDebtStrategy?: "minimum" | "avalanche" | "snowball" | "velocity" | "custom";
   strategyScenarios?: readonly { id: string; label: string; monthsToPayoff: number; totalInterest: number; monthlyCashStrain: number; riskLevel: string; debtFreeDate: string }[];
   forecast?: readonly { label: string; cash: number; debt: number; cashShortages: number }[];
   retirementDataAvailable?: boolean;

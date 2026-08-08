@@ -48,6 +48,8 @@ test("compareFinancialScenarios returns required strategy scenarios", () => {
   assert.equal(comparison.bestByInterest.interestSaved >= 0, true);
   assert.equal(comparison.bestBySpeed.timeSavedMonths >= 0, true);
   assert.equal(comparison.scenarios.every((scenario) => scenario.riskLevel), true);
+  assert.equal(comparison.baseline.strategy, "minimum");
+  assert.equal(comparison.scenarios[0].strategy, "minimum");
 });
 
 test("extra payment and cash assumption scenarios increase monthly cash strain", () => {

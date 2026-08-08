@@ -229,3 +229,58 @@ test("runUnifiedStrategyEngine states Velocity funding source assumptions", () =
     true
   );
 });
+
+test("canonical schedule drives payoff months and records exact per-debt monthly math", () => {
+  const result = runUnifiedStrategyEngine({
+    debts: [{ id: "card", name: "Card", balance: 100, minimum_payment: 60, interest_rate: 0 }],
+    strategy: "minimum",
+  });
+
+  assert.equal(result.payoff_complete, true);
+  assert.equal(result.months_to_payoff, result.payment_schedule.length);
+  assert.equal(result.months_to_payoff, 2);
+  assert.deepEqual(result.debt_payment_schedule, [
+    { month: 1, debt_id: "card", debt_name: "Card", opening_balance: 100, interest: 0, required_payment: 60, additional_payment: 0, total_payment: 60, principal_reduction: 60, closing_balance: 40, paid_off: false },
+    { month: 2, debt_id: "card", debt_name: "Card", opening_balance: 40, interest: 0, required_payment: 40, additional_payment: 0, total_payment: 40, principal_reduction: 40, closing_balance: 0, paid_off: true },
+  ]);
+});
+
+test("rollover, zero-interest, exclusions, and changed authoritative inputs stay deterministic", () => {
+  const base = [
+    { id: "small", name: "Small", balance: 50, minimum_payment: 50, interest_rate: 0 },
+    { id: "large", name: "Large", balance: 300, minimum_payment: 50, interest_rate: 12 },
+  ];
+  const result = runUnifiedStrategyEngine({ debts: base, strategy: "snowball", extraPayment: 50 });
+  assert.equal(result.debt_payment_schedule.find((row) => row.month === 1 && row.debt_id === "large")?.additional_payment, 50);
+  assert.equal(result.debt_payment_schedule.find((row) => row.month === 2 && row.debt_id === "large")?.additional_payment, 100);
+
+  const afterOutsidePayment = runUnifiedStrategyEngine({ debts: [{ ...base[1], balance: 200 }], strategy: "avalanche", extraPayment: 50 });
+  const afterReversal = runUnifiedStrategyEngine({ debts: [{ ...base[1], balance: 250 }], strategy: "avalanche", extraPayment: 50 });
+  const afterAprChange = runUnifiedStrategyEngine({ debts: [{ ...base[1], balance: 250, interest_rate: 24 }], strategy: "avalanche", extraPayment: 50 });
+  const afterCashFlowChange = runUnifiedStrategyEngine({ debts: [{ ...base[1], balance: 250 }], strategy: "avalanche", extraPayment: 100 });
+  assert.ok(afterOutsidePayment.total_interest < afterReversal.total_interest);
+  assert.ok(afterAprChange.total_interest > afterReversal.total_interest);
+  assert.ok(afterCashFlowChange.months_to_payoff < afterReversal.months_to_payoff);
+});
+
+test("zero balances are complete and Velocity includes source recovery in payoff duration", () => {
+  const empty = runUnifiedStrategyEngine({ debts: [{ id: "paid", name: "Paid", balance: 0, minimum_payment: 25, interest_rate: 20 }], strategy: "snowball" });
+  assert.equal(empty.payoff_complete, true);
+  assert.equal(empty.months_to_payoff, 0);
+
+  const result = runUnifiedStrategyEngine({
+    debts: [{ id: "card", name: "Card", balance: 500, minimum_payment: 100, interest_rate: 24 }],
+    strategy: "velocity",
+    velocityEngineResult: {
+      target_debt: { id: "card", name: "Card", balance: 500, minimum_payment: 100, interest_rate: 24 },
+      chunk_recommendation: { recommended_chunk: 500 } as never,
+      interest_savings: { source_apr: 0 } as never,
+      recovery_timeline: { monthly_recovery_capacity: 100 } as never,
+      recommendation: { debt_id: "card" } as never,
+    } as never,
+  });
+  assert.equal(result.payoff_complete, true);
+  assert.equal(result.months_to_payoff, 5);
+  assert.equal(result.payment_schedule[0].remaining_debt, 400);
+  assert.equal(result.payment_schedule.at(-1)?.remaining_debt, 0);
+});

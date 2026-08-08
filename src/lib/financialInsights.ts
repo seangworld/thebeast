@@ -140,7 +140,7 @@ export function buildFinancialInsights(
   const strategy = input.strategy || "avalanche";
   const baselinePlan = runUnifiedStrategyEngine({
     debts: input.debts,
-    strategy: strategy === "minimum" ? "avalanche" : strategy,
+    strategy: "minimum",
     cashIntelligence: input.cashIntelligence,
     extraPayment: 0,
   });

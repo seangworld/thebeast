@@ -1,5 +1,5 @@
-import { addMonthsClamped, formatMonthYear, roundMoney } from "./formatters";
-import type { PayoffMonth, UnifiedStrategyResult } from "./unifiedStrategyEngine";
+import { formatMonthYear, roundMoney } from "./formatters";
+import { getInclusivePayoffDate, type PayoffMonth, type UnifiedStrategyResult } from "./unifiedStrategyEngine";
 
 export const PAYOFF_OPTIONAL_COLUMNS = [
   { id: "month", label: "Month" },
@@ -79,7 +79,7 @@ export function buildPayoffPlanDisplayRows(
       key: `${row.month}-${row.target}-${index}`,
       debtId: debt?.id,
       apr: Number(debt?.interest_rate || 0),
-      payoffDate: payoffMonth ? formatMonthYear(addMonthsClamped(startDate, payoffMonth)) : "Not projected",
+      payoffDate: payoffMonth ? formatMonthYear(getInclusivePayoffDate(startDate, payoffMonth)!) : "Not projected",
       status: row.paid_off ? "Paid off" : row.warning || "On track",
       remainingInterest,
       totalProjectedInterest: totalInterestByTarget.get(row.target) ?? 0,

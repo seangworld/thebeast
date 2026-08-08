@@ -15,6 +15,7 @@ import {
   runVelocityEngine,
 } from "@/lib/velocity";
 import {
+  getInclusivePayoffDate,
   simulatePayoffPlan,
 } from "@/lib/payoffPlan";
 import { buildCashIntelligence } from "@/lib/cashIntelligence";
@@ -25,11 +26,7 @@ import {
   normalizeDebtStrategy,
   type DebtStrategy,
 } from "@/lib/debtStrategies";
-import {
-  addMonthsClamped,
-  formatMonthYear,
-  roundMoney,
-} from "@/lib/formatters";
+import { formatMonthYear, roundMoney } from "@/lib/formatters";
 import {
   DEFAULT_VELOCITY_SETTINGS,
   mapVelocitySettingsRow,
@@ -237,7 +234,7 @@ function summarizePayoffProjection({
     debtFreeDate:
       monthsValue === null
         ? "—"
-        : formatMonthYear(addMonthsClamped(new Date(), monthsValue)),
+        : formatMonthYear(getInclusivePayoffDate(new Date(), monthsValue)!),
     monthsToDebtFree: monthsValue === null ? "—" : String(monthsValue),
     monthsValue,
     totalInterest: money(Number(result.total_interest || 0)),
@@ -437,7 +434,7 @@ export default function DebtsPage() {
         activeDebts.length === 0
           ? "Already debt-free"
           : projected
-          ? formatMonthYear(addMonthsClamped(new Date(), result.months_to_payoff))
+          ? formatMonthYear(getInclusivePayoffDate(new Date(), result.months_to_payoff)!)
           : "—",
       status: projected ? "projected" : "blocked",
       notes:
@@ -1963,7 +1960,7 @@ export default function DebtsPage() {
                 <dl className="mt-3 grid grid-cols-2 gap-2 text-sm"><div><dt className="text-xs text-[#7f8da3]">Balance</dt><dd>${row.debt_starting_balance.toFixed(2)}</dd></div><div><dt className="text-xs text-[#7f8da3]">Minimum Payment</dt><dd>${row.required_minimum.toFixed(2)}</dd></div><div><dt className="text-xs text-[#7f8da3]">Planned Payment</dt><dd>${row.total_payment.toFixed(2)}</dd></div><div><dt className="text-xs text-[#7f8da3]">Suggested Payment</dt><dd className="font-bold">${row.suggestedPayment.toFixed(2)}</dd><dd className="text-xs text-[#7f8da3]">{row.suggestedPaymentLabel}</dd></div></dl>
                 <details className="mt-3 rounded-lg border border-[#2a3242] p-3 text-sm"><summary className="cursor-pointer font-semibold text-cyan-200">Why?</summary><p className="mt-2 text-[#c7cfdb]">{row.suggestedPaymentWhy}</p></details>
                 <button type="button" className="beast-button-secondary mt-4 w-full" aria-expanded={expandedPayoffRow === row.key} onClick={() => setExpandedPayoffRow(expandedPayoffRow === row.key ? null : row.key)}>{expandedPayoffRow === row.key ? "Hide details" : "View details"}</button>
-                {expandedPayoffRow === row.key ? <PayoffRowDetails row={row} strategy={strategy} assumptions={payoffPlan.funding_source_assumptions} debt={activeDebts.find((debt) => debt.id === row.debtId)} onEdit={startEditDebt} onArchive={archiveDebt} onDelete={deleteDebt} /> : null}
+                {expandedPayoffRow === row.key ? <PayoffRowDetails row={row} strategy={strategy} assumptions={[...payoffPlan.calculation_assumptions, ...payoffPlan.funding_source_assumptions]} debt={activeDebts.find((debt) => debt.id === row.debtId)} onEdit={startEditDebt} onArchive={archiveDebt} onDelete={deleteDebt} /> : null}
               </article>
             ))}
             {payoffDisplayRows.length === 0 ? <p className="rounded-xl border border-[#2a3242] p-4 text-sm">Add debts to generate a payoff plan.</p> : null}
@@ -1976,7 +1973,7 @@ export default function DebtsPage() {
                 {payoffDisplayRows.length === 0 ? <tr><td colSpan={7 + payoffOptionalColumns.length}>Add debts to generate a payoff plan.</td></tr> : payoffDisplayRows.slice(0, projectionMonths).map((row) => (
                   <Fragment key={row.key}>
                     <tr><td><button type="button" className="flex max-w-full items-center gap-2 text-left font-semibold text-white" aria-expanded={expandedPayoffRow === row.key} aria-controls={`payoff-details-${row.key}`} onClick={() => setExpandedPayoffRow(expandedPayoffRow === row.key ? null : row.key)}><span aria-hidden="true">{expandedPayoffRow === row.key ? "▾" : "▸"}</span><span className="break-words">{row.target}</span></button></td><td className="text-right">${row.debt_starting_balance.toFixed(2)}</td><td className="payoff-hide-laptop text-right">{row.apr.toFixed(2)}%</td><td className="payoff-hide-tablet text-right font-semibold">${row.total_payment.toFixed(2)}</td><td className="text-right"><div className="font-bold">${row.suggestedPayment.toFixed(2)}</div><div className="text-xs text-[#7f8da3]">{row.suggestedPaymentLabel}</div><details className="mt-1 text-left"><summary className="cursor-pointer text-xs font-semibold text-cyan-200">Why?</summary><p className="mt-1 break-words text-xs text-[#c7cfdb]">{row.suggestedPaymentWhy}</p></details></td><td>{row.payoffDate}</td><td className={row.warning ? "text-red-300" : "text-green-300"}>{row.status}</td>{payoffOptionalColumns.includes("month") ? <td>{row.month}</td> : null}{payoffOptionalColumns.includes("minimumPayment") ? <td className="text-right">${row.required_minimum.toFixed(2)}</td> : null}{payoffOptionalColumns.includes("remainingInterest") ? <td className="text-right">${row.remainingInterest.toFixed(2)}</td> : null}{payoffOptionalColumns.includes("monthsRemaining") ? <td className="text-right">{row.monthsRemaining ?? "—"}</td> : null}</tr>
-                    {expandedPayoffRow === row.key ? <tr id={`payoff-details-${row.key}`}><td colSpan={7 + payoffOptionalColumns.length}><PayoffRowDetails row={row} strategy={strategy} assumptions={payoffPlan.funding_source_assumptions} debt={activeDebts.find((debt) => debt.id === row.debtId)} onEdit={startEditDebt} onArchive={archiveDebt} onDelete={deleteDebt} /></td></tr> : null}
+                    {expandedPayoffRow === row.key ? <tr id={`payoff-details-${row.key}`}><td colSpan={7 + payoffOptionalColumns.length}><PayoffRowDetails row={row} strategy={strategy} assumptions={[...payoffPlan.calculation_assumptions, ...payoffPlan.funding_source_assumptions]} debt={activeDebts.find((debt) => debt.id === row.debtId)} onEdit={startEditDebt} onArchive={archiveDebt} onDelete={deleteDebt} /></td></tr> : null}
                   </Fragment>
                 ))}
               </tbody>

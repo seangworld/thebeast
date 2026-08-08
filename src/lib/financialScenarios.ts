@@ -2,6 +2,7 @@ import type { CashIntelligenceResult } from "./cashIntelligence";
 import type { FinancialDecisionResult } from "./financialDecisionEngine";
 import { roundMoney } from "./formatters";
 import {
+  getInclusivePayoffDate,
   runUnifiedStrategyEngine,
   type UnifiedStrategy,
   type UnifiedStrategyDebt,
@@ -68,15 +69,9 @@ function money(value: number) {
   return roundMoney(value);
 }
 
-function addMonths(date: Date, months: number) {
-  const next = new Date(date);
-  next.setMonth(next.getMonth() + months);
-  return next;
-}
-
 function formatDebtFreeDate(asOfDate: Date, months: number) {
   if (months <= 0) return "Not projected";
-  return addMonths(asOfDate, months).toLocaleDateString("en-US", {
+  return getInclusivePayoffDate(asOfDate, months)!.toLocaleDateString("en-US", {
     month: "long",
     year: "numeric",
   });
@@ -86,7 +81,7 @@ function defaultScenarios(input: FinancialScenarioComparisonInput): FinancialSce
   const safeExtra = Math.max(input.financialDecision.suggestedExtraPayment || 0, 0);
 
   return [
-    { id: "minimum", label: "Minimum", kind: "minimum", strategy: "avalanche", extraPayment: 0 },
+    { id: "minimum", label: "Minimum", kind: "minimum", strategy: "minimum", extraPayment: 0 },
     { id: "snowball", label: "Snowball", kind: "snowball", strategy: "snowball" },
     { id: "avalanche", label: "Avalanche", kind: "avalanche", strategy: "avalanche" },
     { id: "velocity", label: "Velocity", kind: "velocity", strategy: "velocity" },
@@ -196,7 +191,7 @@ export function compareFinancialScenarios(
 ): FinancialScenarioComparisonResult {
   const baselinePlan = runUnifiedStrategyEngine({
     debts: input.debts,
-    strategy: "avalanche",
+    strategy: "minimum",
     cashIntelligence: input.cashIntelligence,
     extraPayment: 0,
   });
@@ -204,7 +199,7 @@ export function compareFinancialScenarios(
     id: "baseline",
     label: "Minimum Baseline",
     kind: "minimum",
-    strategy: "avalanche",
+    strategy: "minimum",
     extraPayment: 0,
   };
   const baseline = buildScenarioResult({
