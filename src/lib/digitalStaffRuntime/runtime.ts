@@ -1,5 +1,5 @@
 import { requireProfessionalConfig } from "./config";
-import { validateNavigationTarget } from "./navigation";
+import { inferProductNavigationTarget, validateNavigationTarget } from "./navigation";
 import { buildRuntimeInput, buildRuntimeInstructions, runtimeJsonSchema } from "./prompt";
 import { deidentifyResearchQuery, validateToolCalls } from "./tools";
 import type { RuntimeContext, RuntimePlan, RuntimeResult } from "./types";
@@ -43,17 +43,29 @@ export function validateRuntimePlan(context: RuntimeContext, plan: RuntimePlan) 
   validationFailures.push(...tools.failures);
   const navigation = validateNavigationTarget(config, plan.navigationTarget);
   if (plan.navigationTarget && !navigation) validationFailures.push(`Rejected unknown navigation target ${plan.navigationTarget}.`);
+  const productNavigation = plan.intent === "product_support"
+    ? navigation || inferProductNavigationTarget(config, context.message.text)
+    : navigation;
   const proposals = plan.intent === "clarification" || context.message.text.trim().endsWith("?")
     ? []
     : plan.proposals.filter((proposal) => proposal.sourceMessageId === context.message.id && proposal.approvalStatus === "proposed");
   if (proposals.length !== plan.proposals.length) validationFailures.push("Rejected one or more unsafe structured proposals.");
-  const research = plan.research && config.researchDomains.length
-    ? { ...plan.research, query: deidentifyResearchQuery(plan.research.query), domains: plan.research.domains.filter((domain) => config.researchDomains.includes(domain)) }
+  const explicitlyRequestsAuthoritativeResearch = config.researchDomains.length > 0
+    && /(?:\b(?:authoritative|according to|what does .{0,40} say)\b|\b(?:current|latest)\b.{0,60}\b(?:guidance|limits?|laws?|rules?|requirements?|official|research)\b)/i.test(context.message.text);
+  const requestedResearch = explicitlyRequestsAuthoritativeResearch
+    ? {
+        query: context.message.text,
+        reason: "The member explicitly requested current or authoritative evidence.",
+        domains: config.researchDomains,
+      }
+    : plan.research;
+  const research = requestedResearch && config.researchDomains.length
+    ? { ...requestedResearch, query: deidentifyResearchQuery(requestedResearch.query), domains: requestedResearch.domains.filter((domain) => config.researchDomains.includes(domain)) }
     : null;
-  if (plan.research && (!research || research.domains.length === 0)) validationFailures.push("Rejected research outside the professional source policy.");
+  if (requestedResearch && (!research || research.domains.length === 0)) validationFailures.push("Rejected research outside the professional source policy.");
   const handoff = plan.handoff && config.handoffs.includes(plan.handoff.professionalId) ? plan.handoff : null;
   if (plan.handoff && !handoff) validationFailures.push("Rejected an unauthorized professional handoff.");
-  return { ...plan, proposals, navigationTarget: navigation?.href || null, toolCalls: tools.accepted, research, handoff, validationFailures };
+  return { ...plan, proposals, navigationTarget: productNavigation?.href || null, toolCalls: tools.accepted, research, handoff, validationFailures };
 }
 
 export async function runDigitalStaffRuntime(context: RuntimeContext): Promise<RuntimeResult> {

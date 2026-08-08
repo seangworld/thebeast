@@ -40,6 +40,20 @@ test("product support can return only an authoritative direct route", () => {
   assert.equal(validateNavigationTarget(config, "/invented-route"), null);
 });
 
+test("product support infers an authoritative route when the model omits its navigation target", () => {
+  const moneyResult = validateRuntimePlan(
+    { ...context, professionalId: "beastmoney.money-coach", message: { ...context.message, text: "Where in Beast can I review and manage my debts?" } },
+    plan({ intent: "product_support", navigationTarget: null })
+  );
+  const educationResult = validateRuntimePlan(
+    { ...context, message: { ...context.message, text: "Where in Beast should I build my education plan?" } },
+    plan({ intent: "product_support", navigationTarget: null })
+  );
+
+  assert.equal(moneyResult.navigationTarget, "/dashboard/money/debts");
+  assert.equal(educationResult.navigationTarget, "/dashboard/education/education-planning");
+});
+
 test("out-of-scope and malformed tool calls fail closed", () => {
   const result = validateToolCalls(requireProfessionalConfig("beasthealth.health-advisor"), [{ name: "move_money", arguments: {} }, { name: "read_health_records", arguments: [] as unknown as Record<string, unknown> }]);
   assert.equal(result.accepted.length, 0);
@@ -49,6 +63,34 @@ test("out-of-scope and malformed tool calls fail closed", () => {
 test("research queries remove direct identifiers", () => {
   const query = deidentifyResearchQuery("My name is Sean World and email is sean@example.com. Account 4111 1111 1111 1111. What does FDA say?");
   assert.doesNotMatch(query, /Sean World|sean@example.com|4111/);
+});
+
+test("explicit authoritative-current questions require de-identified allowlisted research", () => {
+  const result = validateRuntimePlan(
+    {
+      ...context,
+      professionalId: "beasthealth.health-advisor",
+      message: { ...context.message, text: "According to current authoritative guidance, what does 180/120 mean? Email me at member@example.com." },
+    },
+    plan({ research: null })
+  );
+
+  assert.ok(result.research);
+  assert.doesNotMatch(result.research.query, /member@example.com/);
+  assert.deepEqual(result.research.domains, requireProfessionalConfig("beasthealth.health-advisor").researchDomains);
+});
+
+test("ordinary references to current member records do not force external research", () => {
+  const result = validateRuntimePlan(
+    {
+      ...context,
+      professionalId: "beasthealth.health-advisor",
+      message: { ...context.message, text: "Can you organize my current medications?" },
+    },
+    plan({ research: null })
+  );
+
+  assert.equal(result.research, null);
 });
 
 test("malformed model output fails safely before any tool execution", () => {

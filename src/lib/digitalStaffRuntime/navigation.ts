@@ -17,3 +17,20 @@ export function validateNavigationTarget(config: ProfessionalConfig, href: strin
   if (!href) return null;
   return navigationRegistry(config).find((item) => item.href === href) || null;
 }
+
+export function inferProductNavigationTarget(config: ProfessionalConfig, message: string) {
+  const normalizedMessage = message.toLowerCase();
+  const workspacesByHref = new Map(config.workspaces.map((workspace) => [workspace.href, workspace]));
+  const matches = navigationRegistry(config).flatMap((target) => {
+    const workspace = workspacesByHref.get(target.href);
+    const pathTopic = target.href.split("/").at(-1)?.replaceAll("-", " ") || "";
+    const terms = [target.label.toLowerCase(), pathTopic, ...(workspace?.topics || []).map((topic) => topic.toLowerCase())]
+      .filter((term, index, all) => term.length > 2 && all.indexOf(term) === index);
+    const matchedTerm = terms
+      .filter((term) => normalizedMessage.includes(term))
+      .sort((left, right) => right.length - left.length)[0];
+    return matchedTerm ? [{ target, score: matchedTerm.length }] : [];
+  });
+
+  return matches.sort((left, right) => right.score - left.score)[0]?.target || null;
+}
