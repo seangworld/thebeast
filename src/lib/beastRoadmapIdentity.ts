@@ -40,6 +40,12 @@ const packageIdentity = (
  */
 export const beastRoadmapPackageRegistry = [
   packageIdentity(
+    "AP-RUN-100",
+    ["AP-100"],
+    "AI-Native Digital Staff Runtime",
+    ["docs/AP-100-AI-NATIVE-DIGITAL-STAFF-RUNTIME.md"]
+  ),
+  packageIdentity(
     "BA-AUT-101",
     ["BA-101"],
     "Member and Authentication Data Audit",
