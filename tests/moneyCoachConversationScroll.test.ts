@@ -53,7 +53,7 @@ test("BP-230 keeps composer focus after the member sends a message", () => {
   assert.match(source, /\.focus\(\{ preventScroll: true \}\)/);
   assert.match(source, /await askQuestion\(cleanQuestion, targetThreadId\)/);
   assert.match(source, /requestAnimationFrame\(focusComposer\)/);
-  assert.match(source, /finally\(\(\) => \{\s*setStreamingTurnId\(""\)/);
+  assert.match(source, /finally \{\s*setStreamingTurnId\(""\)/);
   assert.match(source, /startConversation/);
 });
 

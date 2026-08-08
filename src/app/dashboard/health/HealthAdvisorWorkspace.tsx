@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -18,6 +19,7 @@ import {
   ProfessionalMemoryTimeline,
   ProfessionalSupportingWorkspaces,
   ProfessionalTimeAwareness,
+  RuntimeProposalReview,
   formatProfessionalMessageTime,
   healthAdvisorConversationIdentity,
   type AgentConversationMessage,
@@ -44,10 +46,7 @@ import {
   resolveHealthAdvisorMemberName,
   type HealthAdvisorIdentityProfile,
 } from "@/lib/health/healthAdvisorPresentation";
-import {
-  detectMemberHealthDisclosure,
-  type HealthAdvisorQuestionAnswer,
-} from "@/lib/health/healthAdvisorQuestionAnswering";
+import { type HealthAdvisorQuestionAnswer } from "@/lib/health/healthAdvisorQuestionAnswering";
 import {
   normalizeHealthRecord,
   type HealthRecord,
@@ -72,6 +71,8 @@ import {
   type BeastDocumentDataClient,
 } from "@/lib/platform/documents";
 import { createClient } from "@/lib/supabase/client";
+import { requestDigitalStaffResponse } from "@/lib/digitalStaffRuntime/client";
+import type { StructuredKnowledgeProposal } from "@/lib/digitalStaffRuntime";
 import { BeastHealthShell } from "./BeastHealthShell";
 
 type HealthAdvisorQuestionTurn = {
@@ -81,6 +82,7 @@ type HealthAdvisorQuestionTurn = {
   response?:
     | { kind: "external"; answer: HealthAdvisorQuestionAnswer }
     | { kind: "intake"; text: string };
+  proposals?: readonly StructuredKnowledgeProposal[];
 };
 
 type HealthAdvisorGoal = {
@@ -232,6 +234,9 @@ function restoreHealthAdvisorTurns(
         timestamp: responseMessage?.timestamp || message.timestamp,
         response: { kind: "intake", text: content.text },
       });
+    } else if (typeof content?.text === "string") {
+      const runtime = content.runtime && typeof content.runtime === "object" ? content.runtime as { model?: string; validationFailures?: string[]; proposals?: StructuredKnowledgeProposal[]; researchSources?: Array<{ title: string; url: string }> } : null;
+      turns.push({ id: message.id, question: message.content, timestamp: responseMessage?.timestamp || message.timestamp, proposals: runtime?.proposals, response: { kind: "external", answer: { status: "ready", answer: content.text, generalInformation: content.text, possibleExplanations: "", questionsForClinician: "", recordEvidence: [], documentEvidence: [], conversationEvidence: [], contextWarnings: runtime?.validationFailures || [], externalSources: (runtime?.researchSources || []).map((source) => ({ ...source, organization: new URL(source.url).hostname })), limitations: [], model: runtime?.model || "Digital Staff runtime" } } });
     }
   }
   return turns;
@@ -501,7 +506,6 @@ export function HealthAdvisorWorkspace() {
   const [healthQuestion, setHealthQuestion] = useState("");
   const [healthQuestionBusy, setHealthQuestionBusy] = useState(false);
   const [healthQuestionError, setHealthQuestionError] = useState("");
-  const [externalResearchConsent, setExternalResearchConsent] = useState(false);
   const [questionTurns, setQuestionTurns] = useState<
     HealthAdvisorQuestionTurn[]
   >([]);
@@ -525,11 +529,11 @@ export function HealthAdvisorWorkspace() {
   }, [conversationHistoryOpen]);
   const workspacePromptHydrated = useRef(false);
 
-  async function refreshConversationThreads(
+  const refreshConversationThreads = useCallback(async (
     nextRepository = conversationRepository,
     selectedOwnerId = ownerId,
     search = conversationHistorySearch
-  ) {
+  ) => {
     if (!nextRepository || !selectedOwnerId) return [];
     const nextThreads = await nextRepository.list({
       ownerId: selectedOwnerId,
@@ -539,7 +543,7 @@ export function HealthAdvisorWorkspace() {
     });
     setConversationThreads(nextThreads);
     return nextThreads;
-  }
+  }, [conversationHistorySearch, conversationRepository, ownerId]);
 
   async function refreshHistory(
     nextStore = store,
@@ -954,72 +958,12 @@ export function HealthAdvisorWorkspace() {
     if (healthQuestionBusy) return;
     const messageTimestamp = new Date().toISOString();
     const turnId = `health-question-${Date.now()}`;
-    const disclosedTopic = knowledgePrompt
-      ? null
-      : detectMemberHealthDisclosure(question);
-    const activeKnowledgePrompt =
-      knowledgePrompt ||
-      (disclosedTopic
-        ? ({
-            id: disclosedTopic.id,
-            label: disclosedTopic.label,
-            summary:
-              "Direct member-reported context detected in this conversation.",
-            confidence: "unknown",
-            action: {
-              label: "Review before saving",
-              mode: "conversation",
-              prompt:
-                "I noticed health context that may be useful to remember. I’ll ask you to confirm it before it becomes a record.",
-            },
-          } satisfies ProfessionalKnowledgeItem)
-        : null);
-    if (activeKnowledgePrompt) {
-      const intakeResponse = {
-        kind: "intake" as const,
-        text: `Thank you. I heard this as member-reported ${activeKnowledgePrompt.label.toLowerCase()} context. Review it below before I add it to your BeastHealth record.`,
-      };
-      if (!knowledgePrompt) setKnowledgePrompt(activeKnowledgePrompt);
-      setQuestionTurns((current) => [
-        ...current,
-        {
-          id: turnId,
-          question,
-          response: intakeResponse,
-          timestamp: messageTimestamp,
-        },
-      ]);
-      setPendingKnowledgeAnswer(question);
-      setKnowledgeSaveState("review");
-      setHealthQuestion("");
-      void persistHealthConversationTurn(turnId, question, intakeResponse);
-      return;
-    }
-    if (!externalResearchConsent) {
-      setHealthQuestionError(
-        "Approve external research for this question before sending it. Saved BeastHealth records will remain inside Beast."
-      );
-      return;
-    }
+    if (!activeConversationId) { setHealthQuestionError("Start a saved Health Advisor conversation before sending a message."); return; }
     setHealthQuestionBusy(true);
     setHealthQuestionError("");
     try {
-      const result = await fetch("/api/health/advisor", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          question,
-          externalResearchConsent: true,
-        }),
-      });
-      const payload = (await result.json()) as
-        | HealthAdvisorQuestionAnswer
-        | { error?: string };
-      if (!("answer" in payload)) {
-        throw new Error(
-          payload.error || "Health Advisor could not answer this question."
-        );
-      }
+      const runtime = await requestDigitalStaffResponse({ professionalId: "beasthealth.health-advisor", conversationId: activeConversationId, message: question, workspace: "/dashboard/health/ai-advisor" });
+      const payload: HealthAdvisorQuestionAnswer = { status: "ready", answer: runtime.result.response, generalInformation: runtime.result.response, possibleExplanations: "", questionsForClinician: runtime.result.nextQuestion || "", recordEvidence: [], documentEvidence: [], conversationEvidence: [], contextWarnings: runtime.result.validationFailures, externalSources: runtime.result.researchSources.map((source) => ({ title: source.title, url: source.url, organization: new URL(source.url).hostname })), limitations: [], model: runtime.result.model };
       const externalResponse = {
         kind: "external" as const,
         answer: payload,
@@ -1030,12 +974,12 @@ export function HealthAdvisorWorkspace() {
           id: turnId,
           question,
           response: externalResponse,
+          proposals: runtime.result.proposals,
           timestamp: messageTimestamp,
         },
       ]);
       setHealthQuestion("");
-      setExternalResearchConsent(false);
-      void persistHealthConversationTurn(turnId, question, externalResponse);
+      await refreshConversationThreads();
     } catch (error) {
       setHealthQuestionError(
         error instanceof Error
@@ -1374,7 +1318,7 @@ export function HealthAdvisorWorkspace() {
           timestamp: formatProfessionalMessageTime(turn.timestamp),
           content:
             turn.response?.kind === "external" ? (
-              <HealthAdvisorAnswerDocument response={turn.response.answer} />
+              <><HealthAdvisorAnswerDocument response={turn.response.answer} />{turn.proposals?.length && activeConversationId ? <RuntimeProposalReview professionalId="beasthealth.health-advisor" conversationId={activeConversationId} proposals={turn.proposals} onDecision={() => void refreshConversationThreads()} /> : null}</>
             ) : (
               <p>{turn.response?.text}</p>
             ),
@@ -1394,7 +1338,7 @@ export function HealthAdvisorWorkspace() {
           ]
         : []),
     ],
-    [healthQuestionBusy, knowledgePrompt, memberName, questionTurns]
+    [healthQuestionBusy, knowledgePrompt, memberName, questionTurns, activeConversationId, refreshConversationThreads]
   );
   const previousHealthConversation = conversationThreads
     .filter(
@@ -1576,24 +1520,7 @@ export function HealthAdvisorWorkspace() {
                   Cancel this topic
                 </button>
               </div>
-            ) : (
-              <label className="flex items-start gap-3 rounded-xl border border-white/10 bg-black/10 p-3 text-sm leading-6 text-[#dbe3ef]">
-                <input
-                  type="checkbox"
-                  className="mt-1 h-4 w-4 shrink-0 accent-red-300"
-                  checked={externalResearchConsent}
-                  onChange={(event) => {
-                    setExternalResearchConsent(event.target.checked);
-                    setHealthQuestionError("");
-                  }}
-                />
-                <span>
-                  For this question, I approve sending the text I type to OpenAI
-                  for current web research. My saved BeastHealth records will
-                  not be sent; they stay inside Beast and appear separately.
-                </span>
-              </label>
-            )}
+            ) : null}
             <ProfessionalConversationComposer id="health-advisor-question">
               <AgentConversationInput
                 value={healthQuestion}

@@ -97,7 +97,8 @@ test("BH-401 keeps record management available without displacing conversation",
 });
 
 test("BH-401 preserves privacy and medical safety boundaries", () => {
-  assert.match(workspace, /My saved BeastHealth records will\s+not be sent/);
+  assert.match(workspace, /requestDigitalStaffResponse/);
+  assert.doesNotMatch(workspace, /OpenAI/);
   assert.match(workspace, /does not diagnose, prescribe, determine treatment/);
   assert.match(workspace, /start, stop, or change medication/);
   assert.match(workspace, /local emergency or qualified clinical\s+care/);

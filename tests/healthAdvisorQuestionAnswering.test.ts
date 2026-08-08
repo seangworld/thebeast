@@ -293,7 +293,7 @@ test("Health Advisor API keeps records owner-scoped and outside the external pay
   assert.doesNotMatch(externalRequestBody, /memberContext/);
 });
 
-test("Health Advisor workspace discloses external research and renders both evidence layers", () => {
+test("Health Advisor uses native shared-runtime research and renders both evidence layers", () => {
   const workspace = readFileSync(
     "src/app/dashboard/health/HealthAdvisorWorkspace.tsx",
     "utf8"
@@ -307,6 +307,7 @@ test("Health Advisor workspace discloses external research and renders both evid
   assert.match(workspace, /Questions for a clinician/);
   assert.match(workspace, /Safety limitations/);
   assert.match(workspace, /External medical sources/);
-  assert.match(workspace, /approve sending the text I type to OpenAI/);
-  assert.match(workspace, /My saved BeastHealth records will\s+not/);
+  assert.match(workspace, /requestDigitalStaffResponse/);
+  assert.doesNotMatch(workspace, /approve sending the text I type to OpenAI/);
+  assert.doesNotMatch(workspace, /externalResearchConsent/);
 });

@@ -55,4 +55,10 @@ The following remain readable for compatibility but are no longer the target sem
 
 ## AP-100B
 
-AP-100B should complete UI cutover for all four professionals, execute validated tools, persist structured proposals in an additive owner-scoped schema, add contextual research consent and attributable sources, add the privacy-safe BeastAdmin event sink, replay preserved conversations, and remove deprecated semantic engines after parity verification.
+AP-100B converts all four live message paths to the shared runtime. Authoritative professional prompts now harden continuity, product-support classification, structured extraction, tone, research, and professional scope. The shared route loads bounded owner-scoped records and memories, validates routes/tools/proposals/handoffs, performs de-identified allowlisted research when planned, persists both turns plus runtime provenance, and stores explicit continuity state in the existing conversation summary.
+
+Legacy semantic functions remain in the repository only for saved-response compatibility and non-live regression evidence. They are no longer called by the active Money Coach, Guidance Counselor, Health Advisor, or Director message paths. The legacy `/api/health/advisor` route remains temporarily available for compatibility but is not called by the Health Advisor workspace.
+
+Structured proposals are durable inside the source assistant message, including source message ID, confidence, contradictions, missing fields, approval state, and proposed action. The owner-scoped runtime route exposes explicit Accept/Reject decisions; Accept validates provenance and writes structured records through existing contracts (`beast_health_records`, `education_career_profile_items`, or `beast_goals`), while Reject is recorded without a write. Health, Education, and Money writes remain behind the existing authorization/RLS boundaries. No schema change or production SQL is required for this conversion.
+
+Operational metadata is limited to professional, model, latency, tool names, research citations, handoff, proposal metadata, and validation failures stored with the owner-scoped conversation. Raw prompts, secrets, and unrelated member records are not exposed to normal members.

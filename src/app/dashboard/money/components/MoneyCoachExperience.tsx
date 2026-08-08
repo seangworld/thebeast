@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -21,6 +21,7 @@ import {
   ProfessionalKnowledgeWorkspace,
   ProfessionalMemoryTimeline,
   ProfessionalSupportingWorkspaces,
+  RuntimeProposalReview,
   ProfessionalTimeAwareness,
   formatProfessionalMessageTime,
   moneyCoachConversationIdentity,
@@ -42,7 +43,6 @@ import {
   type RecommendationLifecycleStatus,
 } from "@/lib/platform/agents";
 import {
-  answerMoneyCoachQuestion,
   buildMoneyCoachGreeting,
   type MoneyCoachExperienceModel,
   type MoneyCoachStructuredAnswer,
@@ -55,6 +55,8 @@ import {
   type MoneyCoachRecommendation,
   type MoneyCoachSessionBriefing,
 } from "@/lib/moneyCoachOnline";
+import { requestDigitalStaffResponse, type RuntimeResult } from "@/lib/digitalStaffRuntime";
+import type { StructuredKnowledgeProposal } from "@/lib/digitalStaffRuntime";
 
 type MoneyCoachExperienceProps = {
   model: MoneyCoachExperienceModel;
@@ -116,6 +118,16 @@ function MoneyCoachResponseDocument({ response }: { response: MoneyCoachStructur
     {response.followUp ? <p className="mt-5">{response.followUp}</p> : null}
     <Link className="mt-4 inline-flex font-bold text-cyan-200" href={actionTarget}>{actionTitle} <span aria-hidden="true">→</span></Link>
   </div>;
+}
+
+function runtimeMoneyCoachAnswer(result: RuntimeResult, model: MoneyCoachExperienceModel): MoneyCoachStructuredAnswer {
+  return {
+    intent: "general-finance", opening: result.response, sections: [], text: result.response,
+    followUp: result.nextQuestion || undefined,
+    href: result.navigationTarget || "/dashboard/money/dashboard",
+    action: result.navigationTarget ? "Open workspace" : "Open financial dashboard",
+    professionalExecution: { profileId: model.professional.id, role: model.professional.identity.role, mission: model.professional.identity.mission, expertiseApplied: model.professional.identity.expertise, communicationStyle: model.professional.identity.communicationStyle, professionalBoundaries: model.professional.identity.professionalBoundaries, teachingMethod: model.professional.playbook.teaching.method, investigationOrder: model.professional.playbook.investigation.evidenceOrder, uncertaintyRulesApplied: result.validationFailures, closingRule: model.professional.playbook.closing.style },
+  };
 }
 
 function MoneyCoachSessionOpening({
@@ -251,6 +263,7 @@ export function MoneyCoachExperience({
       id: string;
       question: string;
       response: MoneyCoachStructuredAnswer;
+      proposals?: readonly StructuredKnowledgeProposal[];
       timestamp?: string;
     }[]
   >([]);
@@ -389,12 +402,13 @@ export function MoneyCoachExperience({
     for (let index = 0; index < thread.messages.length; index += 2) {
       const user = thread.messages[index]; const agent = thread.messages[index + 1];
       if (!user || !agent) continue;
-      const content = agent.content as { text: string; href: string; action: string; structured?: MoneyCoachStructuredAnswer };
-      const response = content.structured || { intent: "general-finance", opening: content.text, sections: [], text: content.text, href: content.href, action: content.action, professionalExecution: { profileId: model.professional.id, role: model.professional.identity.role, mission: model.professional.identity.mission, expertiseApplied: model.professional.identity.expertise, communicationStyle: model.professional.identity.communicationStyle, professionalBoundaries: model.professional.identity.professionalBoundaries, teachingMethod: model.professional.playbook.teaching.method, investigationOrder: model.professional.playbook.investigation.evidenceOrder, uncertaintyRulesApplied: [], closingRule: model.professional.playbook.closing.style } } satisfies MoneyCoachStructuredAnswer;
+      const content = agent.content as { text: string; href?: string; action?: string; structured?: MoneyCoachStructuredAnswer; runtime?: { navigationTarget?: string | null; proposals?: StructuredKnowledgeProposal[] } };
+      const response = content.structured || { intent: "general-finance", opening: content.text, sections: [], text: content.text, href: content.runtime?.navigationTarget || content.href || "/dashboard/money/dashboard", action: content.action || "Open financial dashboard", professionalExecution: { profileId: model.professional.id, role: model.professional.identity.role, mission: model.professional.identity.mission, expertiseApplied: model.professional.identity.expertise, communicationStyle: model.professional.identity.communicationStyle, professionalBoundaries: model.professional.identity.professionalBoundaries, teachingMethod: model.professional.playbook.teaching.method, investigationOrder: model.professional.playbook.investigation.evidenceOrder, uncertaintyRulesApplied: [], closingRule: model.professional.playbook.closing.style } } satisfies MoneyCoachStructuredAnswer;
       restored.push({
         id: user.id,
         question: String(user.content),
         response,
+        proposals: content.runtime?.proposals,
         timestamp: agent.timestamp || user.timestamp,
       });
     }
@@ -413,7 +427,7 @@ export function MoneyCoachExperience({
     [activeThreadId, executionHistory, localNow, model, threads]
   );
 
-  async function refreshThreads(search = historySearch) {
+  const refreshThreads = useCallback(async (search = historySearch) => {
     if (!repository) return;
     try {
       setThreads(await repository.list({ ownerId, agentId: "beastmoney.money-coach", includeArchived: true, search }));
@@ -421,7 +435,7 @@ export function MoneyCoachExperience({
     } catch {
       setHistoryError("Saved conversations could not be refreshed. Please try again.");
     }
-  }
+  }, [historySearch, ownerId, repository]);
 
   const messages = useMemo<AgentConversationMessage[]>(
     () => [
@@ -443,7 +457,7 @@ export function MoneyCoachExperience({
         : []),
       ...turns.flatMap<AgentConversationMessage>((turn) => [
         { id: `${turn.id}-user`, role: "user", author: "You", content: turn.question, timestamp: formatProfessionalMessageTime(turn.timestamp) },
-        { id: `${turn.id}-coach`, role: "agent", author: model.professional.identity.role, streaming: streamingTurnId === turn.id, timestamp: formatProfessionalMessageTime(turn.timestamp), content: <AgentStreamingResponseArea isStreaming={streamingTurnId === turn.id} label="Money Coach response"><MoneyCoachResponseDocument response={turn.response} /></AgentStreamingResponseArea> },
+        { id: `${turn.id}-coach`, role: "agent", author: model.professional.identity.role, streaming: streamingTurnId === turn.id, timestamp: formatProfessionalMessageTime(turn.timestamp), content: <AgentStreamingResponseArea isStreaming={streamingTurnId === turn.id} label="Money Coach response"><MoneyCoachResponseDocument response={turn.response} />{turn.proposals?.length && activeThreadId ? <RuntimeProposalReview professionalId="beastmoney.money-coach" conversationId={activeThreadId} proposals={turn.proposals} onDecision={() => void refreshThreads()} /> : null}</AgentStreamingResponseArea> },
       ]),
     ],
     [
@@ -452,42 +466,25 @@ export function MoneyCoachExperience({
       sessionBriefing,
       streamingTurnId,
       turns,
+      activeThreadId,
+      refreshThreads,
     ]
   );
 
   async function askQuestion(value: string, targetThreadId = activeThreadId, replaceConversation = false) {
-    const activeThread = repository && targetThreadId ? await repository.get(ownerId, targetThreadId).catch(() => undefined) : undefined;
-    const response = answerMoneyCoachQuestion(value, model, {
-      recentMessages: activeThread?.messages.slice(-8).map((message) => typeof message.content === "string" ? message.content : JSON.stringify(message.content)),
-      summary: activeThread?.summary?.overview,
-      priorSummaries: threads.filter((thread) => thread.id !== targetThreadId).slice(0, 3).map((thread) => thread.summary?.overview).filter((summary): summary is string => Boolean(summary)),
-      memories: memories.map((memory) => ({ key: memory.key, value: memory.value })),
-      executionHistory,
-      lastReviewAt: sessionBriefing.visit.lastReviewAt,
-    });
     const timestamp = Date.now();
     const now = new Date(timestamp).toISOString();
-    const turn = { id: `money-${timestamp}`, question: value, response, timestamp: now };
-    setStreamingTurnId(turn.id);
-    setTurns((current) => replaceConversation ? [turn] : [...current, turn]);
-    if (repository && targetThreadId) {
-      const messages: AgentMessage[] = [
-        { id: `${turn.id}-user`, threadId: targetThreadId, sender: { kind: "user", id: ownerId }, recipient: { kind: "agent", id: "beastmoney.money-coach" }, content: value, timestamp: now },
-        { id: `${turn.id}-coach`, threadId: targetThreadId, sender: { kind: "agent", id: "beastmoney.money-coach" }, recipient: { kind: "module", id: "beastmoney" }, content: { text: response.text, href: response.href, action: response.action, structured: response }, timestamp: now },
-      ];
-      void repository.append(ownerId, targetThreadId, messages, { insightIds: model.insights.map((item) => item.id), actionIds: [response.toolAction?.toolId || response.action] }).then(async (updated) => {
-        await repository.summarize(ownerId, targetThreadId, { overview: `Discussed ${value.slice(0, 100)}`, decisions: [], unresolvedFollowUps: [], updatedAt: now });
-        setConversationTitle(updated.title); await refreshThreads();
-      }).catch(() => setHistoryError("This response is visible now but could not be saved. Please retry before leaving this page.")).finally(() => {
-        setStreamingTurnId("");
-      });
-      const durableType = /\b(i prefer|my goal|i decided|remember that|always|never)\b/i.exec(value)?.[1];
-      if (memoryStore && durableType) {
-        const memoryType = durableType === "my goal" ? "financial-goal" : durableType === "i decided" ? "confirmed-decision" : "preference-or-constraint";
-        const memory: AgentMemoryRecord = { id: `money-memory-${timestamp}`, agentId: "beastmoney.money-coach", ownerId, scope: "user", key: memoryType, value: { content: value, memoryType, confidence: "high", sourceConversationId: targetThreadId, sourceMessageId: messages[0].id, timestamp: now }, purpose: "Remember an explicit member preference, goal, decision, or recurring constraint.", evidence: [{ source: targetThreadId, capturedAt: now, description: messages[0].id }], createdAt: now, updatedAt: now };
-        void memoryStore.put(memory).then(() => setMemories((current) => [...current, memory]));
-      }
-    } else {
+    const turnId = `money-${timestamp}`;
+    setStreamingTurnId(turnId);
+    try {
+      const payload = await requestDigitalStaffResponse({ professionalId: "beastmoney.money-coach", conversationId: targetThreadId, message: value, workspace: "/dashboard/money/coach" });
+      const turn = { id: turnId, question: value, response: runtimeMoneyCoachAnswer(payload.result, model), proposals: payload.result.proposals, timestamp: now };
+      setTurns((current) => replaceConversation ? [turn] : [...current, turn]);
+      await refreshThreads();
+      setHistoryError("");
+    } catch (error) {
+      setHistoryError(error instanceof Error ? error.message : "Money Coach could not respond safely.");
+    } finally {
       setStreamingTurnId("");
     }
   }

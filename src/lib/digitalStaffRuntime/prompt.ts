@@ -1,6 +1,7 @@
 import type { ProfessionalConfig } from "./config";
 import { navigationRegistry } from "./navigation";
 import type { RuntimeContext } from "./types";
+import { authoritativeProfessionalPrompt } from "./professionalPrompts";
 
 export function buildRuntimeInstructions(config: ProfessionalConfig) {
   return `You are ${config.name}, the member's ${config.role} in Beast.
@@ -16,7 +17,10 @@ Conversation is evidence, not the structured record. Extract each distinct entit
 
 Product routes are authoritative and must be selected exactly from the provided registry. Research only when current external facts matter. Research queries must be minimum-necessary and de-identified. Use only allowed domains. Never fabricate sources.
 
-Return JSON matching the supplied schema. Natural response text must be concise and conversational.`;
+Return JSON matching the supplied schema. Natural response text must be concise and conversational.
+
+Authoritative professional instructions:
+${authoritativeProfessionalPrompt(config.id)}`;
 }
 
 export function buildRuntimeInput(config: ProfessionalConfig, context: RuntimeContext) {
@@ -43,10 +47,10 @@ export const runtimeJsonSchema = {
       currentTopic: { type: ["string", "null"] }, currentWorkspace: { type: ["string", "null"] }, lastProfessionalQuestion: { type: ["string", "null"] }, unresolvedQuestions: { type: "array", items: { type: "string" } }, corrections: { type: "array", items: { type: "string" } }, pendingApprovals: { type: "array", items: { type: "string" } }, currentGoal: { type: ["string", "null"] }, previousDecisions: { type: "array", items: { type: "string" } },
     } },
     proposals: { type: "array", items: { type: "object", additionalProperties: false, required: ["id", "domain", "entityType", "fields", "sourceMessageId", "confidence", "missingFields", "contradictions", "approvalStatus", "relatedRecordId", "proposedAction"], properties: {
-      id: { type: "string" }, domain: { type: "string", enum: ["money", "education", "military", "employment", "health", "goal", "preference"] }, entityType: { type: "string" }, fields: { type: "object", additionalProperties: { type: ["string", "number", "boolean", "null"] } }, sourceMessageId: { type: "string" }, confidence: { type: "number", minimum: 0, maximum: 1 }, missingFields: { type: "array", items: { type: "string" } }, contradictions: { type: "array", items: { type: "string" } }, approvalStatus: { type: "string", enum: ["proposed", "approved", "rejected"] }, relatedRecordId: { type: ["string", "null"] }, proposedAction: { type: "string", enum: ["create", "update", "none"] },
+      id: { type: "string" }, domain: { type: "string", enum: ["money", "education", "military", "employment", "health", "goal", "preference"] }, entityType: { type: "string" }, fields: { type: "array", items: { type: "object", additionalProperties: false, required: ["name", "value"], properties: { name: { type: "string" }, value: { type: ["string", "number", "boolean", "null"] } } } }, sourceMessageId: { type: "string" }, confidence: { type: "number", minimum: 0, maximum: 1 }, missingFields: { type: "array", items: { type: "string" } }, contradictions: { type: "array", items: { type: "string" } }, approvalStatus: { type: "string", enum: ["proposed", "approved", "rejected"] }, relatedRecordId: { type: ["string", "null"] }, proposedAction: { type: "string", enum: ["create", "update", "none"] },
     } } },
     navigationTarget: { type: ["string", "null"] },
-    toolCalls: { type: "array", items: { type: "object", additionalProperties: false, required: ["name", "arguments"], properties: { name: { type: "string" }, arguments: { type: "object", additionalProperties: true } } } },
+    toolCalls: { type: "array", items: { type: "object", additionalProperties: false, required: ["name", "arguments"], properties: { name: { type: "string" }, arguments: { type: "array", items: { type: "object", additionalProperties: false, required: ["name", "value"], properties: { name: { type: "string" }, value: { type: ["string", "number", "boolean", "null"] } } } } } } },
     research: { anyOf: [{ type: "null" }, { type: "object", additionalProperties: false, required: ["query", "reason", "domains"], properties: { query: { type: "string" }, reason: { type: "string" }, domains: { type: "array", items: { type: "string" } } } }] },
     handoff: { anyOf: [{ type: "null" }, { type: "object", additionalProperties: false, required: ["professionalId", "reason"], properties: { professionalId: { type: "string" }, reason: { type: "string" } } }] },
   },

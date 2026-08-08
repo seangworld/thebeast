@@ -68,13 +68,13 @@ test("BO-402 missing information starts existing professional conversation flows
   assert.match(moneyCoach, /focusComposer/);
   assert.match(moneyCoach, /ProfessionalConversationTimeline/);
   assert.match(guidanceCounselor, /setKnowledgePrompt/);
-  assert.match(guidanceCounselor, /learnFromDiscoveryTurn/);
-  assert.match(guidanceCounselor, /saveDiscoveryProfile/);
-  assert.match(guidanceCounselor, /router\.refresh\(\)/);
+  assert.match(guidanceCounselor, /requestDigitalStaffResponse/);
+  assert.doesNotMatch(guidanceCounselor, /learnFromDiscoveryTurn\(cleanQuestion/);
 });
 
 test("BO-402 Health Advisor stores only explicitly confirmed member-reported context", () => {
-  assert.match(healthAdvisor, /Review before saving/);
+  assert.match(healthAdvisor, /requestDigitalStaffResponse/);
+  assert.doesNotMatch(healthAdvisor, /detectMemberHealthDisclosure\(question/);
   assert.match(healthAdvisor, /Save confirmed context/);
   assert.match(healthAdvisor, /member_confirmed_conversation/);
   assert.match(healthAdvisor, /Member-reported Health Advisor conversation/);

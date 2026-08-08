@@ -33,9 +33,8 @@ test("BM-305 keeps persistence resume and automatic title behavior", () => {
   assert.match(source, /ServerAgentConversationRepository/);
   assert.match(source, /SupabaseAgentConversationStore/);
   assert.match(source, /repository\.create/);
-  assert.match(source, /repository\.append/);
-  assert.match(source, /repository\.summarize/);
-  assert.match(source, /setConversationTitle\(updated\.title\)/);
+  assert.match(source, /requestDigitalStaffResponse/);
+  assert.match(source, /refreshThreads/);
   assert.match(source, /restoreThread/);
   assert.match(source, /openThread/);
 });

@@ -182,5 +182,6 @@ test("Health Advisor workspace exposes the required governed integrations", () =
   assert.match(source, /recordResultAndOutcome/);
   assert.match(source, /never diagnoses or replaces clinicians/);
   assert.match(source, /AgentConversationInput/);
-  assert.match(source, /\/api\/health\/advisor/);
+  assert.match(source, /requestDigitalStaffResponse/);
+  assert.doesNotMatch(source, /fetch\("\/api\/health\/advisor"/);
 });

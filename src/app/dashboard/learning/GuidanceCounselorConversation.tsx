@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   AgentConversationInput,
@@ -11,6 +11,7 @@ import {
   AgentLoadingState,
   AgentStatus,
   AgentStreamingResponseArea,
+  RuntimeProposalReview,
   ProfessionalConversationComposer,
   ProfessionalConversationAvatar,
   ProfessionalConversationHistory,
@@ -27,23 +28,14 @@ import {
   type ProfessionalKnowledgeModel,
 } from "@/app/components/agents";
 import {
-  buildGuidanceCounselorConversationTurn,
   buildGuidanceCounselorSessionAwareness,
   buildGuidanceCounselorUnderstanding,
   buildGuidanceCareerGoalProposal,
-  explicitGuidanceGoalChange,
-  guidanceRelationshipMemoryRecord,
-  guidanceRelationshipReference,
   hasMatchingGuidanceCareerGoal,
   type GuidanceCounselorConversationContext,
   type GuidanceUnderstandingItem,
 } from "@/lib/education";
-import {
-  discoveryProfileUpdate,
-  learnFromDiscoveryTurn,
-  learnFromGuidanceKnowledgeAnswer,
-  type GuidanceDiscoveryProfile,
-} from "@/lib/education/discoveryConversation";
+import { discoveryProfileUpdate, type GuidanceDiscoveryProfile } from "@/lib/education/discoveryConversation";
 import { guidanceConversationProfileItems } from "@/lib/education/conversationProfileItems";
 import {
   buildGuidanceProactiveOpportunities,
@@ -56,13 +48,14 @@ import {
   SupabaseAgentMemoryStore,
   type AgentMemoryRecord,
   type AgentConversationThread,
-  type AgentMessage,
   type ExecutionAuditEvent,
   type ProfessionalExecutionHistory,
   type RecommendationLifecycleStatus,
 } from "@/lib/platform/agents";
 import { goalDatabaseTableName } from "@/lib/platform/goals";
 import { createClient } from "@/lib/supabase/client";
+import { requestDigitalStaffResponse } from "@/lib/digitalStaffRuntime/client";
+import type { StructuredKnowledgeProposal } from "@/lib/digitalStaffRuntime";
 
 export const guidanceCounselorSuggestedQuestions = [
   "I’m not sure what career fits me.",
@@ -77,6 +70,7 @@ type GuidanceTurn = {
   id: string;
   question: string;
   response: string;
+  proposals?: readonly StructuredKnowledgeProposal[];
   timestamp?: string;
 };
 
@@ -318,17 +312,19 @@ export default function GuidanceCounselorConversation({
         typeof counselor.content === "string"
           ? counselor.content
           : String((counselor.content as { text?: string }).text || "");
+      const runtime = counselor.content && typeof counselor.content === "object" && !Array.isArray(counselor.content) ? (counselor.content as { runtime?: { proposals?: StructuredKnowledgeProposal[] } }).runtime : undefined;
       restored.push({
         id: member.id.replace(/-user$/, ""),
         question: String(member.content),
         response: content,
+        proposals: runtime?.proposals,
         timestamp: counselor.timestamp || member.timestamp,
       });
     }
     setTurns(restored);
   }
 
-  async function refreshThreads(search = historySearch) {
+  const refreshThreads = useCallback(async (search = historySearch) => {
     if (!repository) return;
     try {
       setThreads(
@@ -343,7 +339,7 @@ export default function GuidanceCounselorConversation({
     } catch {
       setHistoryError("Saved conversations could not be refreshed. Please try again.");
     }
-  }
+  }, [historySearch, memberId, repository]);
 
   async function refreshExecutionHistory() {
     if (!executionStore) return;
@@ -626,111 +622,24 @@ export default function GuidanceCounselorConversation({
   async function sendMessage(question: string) {
     const cleanQuestion = question.trim();
     if (!cleanQuestion) return;
-    const activeKnowledgePrompt = knowledgePrompt;
     setKnowledgePrompt(null);
     const turnId = `guidance-${Date.now()}`;
-    const learnedProfile = activeKnowledgePrompt
-      ? learnFromGuidanceKnowledgeAnswer(
-          cleanQuestion,
-          activeKnowledgePrompt.area,
-          discoveryProfile
-        )
-      : learnFromDiscoveryTurn(cleanQuestion, discoveryProfile);
-    const changedGoal = explicitGuidanceGoalChange(
-      cleanQuestion,
-      discoveryProfile.goal
-    );
-    if (changedGoal) learnedProfile.goal = changedGoal;
-    const relationshipMemory = guidanceRelationshipReference({
-      memories: relationshipMemories,
-      previousProfile: discoveryProfile,
-      currentProfile: learnedProfile,
-      currentConversationId: activeThreadId,
-    });
-    const response = buildGuidanceCounselorConversationTurn({
-      question: cleanQuestion,
-      context: {
-        ...context,
-        educationalGoal: learnedProfile.goal || context.educationalGoal,
-        interests:
-          learnedProfile.careerInterests.join(", ") || context.interests,
-        careerDirection: learnedProfile.goal || context.careerDirection,
-      },
-      profile: learnedProfile,
-      previousCounselorResponses: turns.map((turn) => turn.response),
-      relationshipMemory,
-    }).text;
-
     const messageTimestamp = new Date().toISOString();
     setStreamingTurnId(turnId);
-    setTurns((current) => [
-      ...current,
-      {
-        id: turnId,
-        question: cleanQuestion,
-        response,
-        timestamp: messageTimestamp,
-      },
-    ]);
-    setDiscoveryProfile(learnedProfile);
     setInput("");
-    void saveDiscoveryProfile(learnedProfile);
-
-    if (repository && activeThreadId) {
-      const now = messageTimestamp;
-      const messages: AgentMessage[] = [
-        {
-          id: `${turnId}-user`,
-          threadId: activeThreadId,
-          sender: { kind: "user", id: memberId },
-          recipient: { kind: "agent", id: professionalId },
-          content: cleanQuestion,
-          timestamp: now,
-        },
-        {
-          id: `${turnId}-counselor`,
-          threadId: activeThreadId,
-          sender: { kind: "agent", id: professionalId },
-          recipient: { kind: "module", id: "beasteducation" },
-          content: { text: response },
-          timestamp: now,
-        },
-      ];
-      try {
-        const updated = await repository.append(
-          memberId,
-          activeThreadId,
-          messages
-        );
-        await repository.summarize(memberId, activeThreadId, {
-          overview: `Discussed ${cleanQuestion.slice(0, 100)}`,
-          decisions: [],
-          unresolvedFollowUps: [],
-          updatedAt: now,
-        });
-        setConversationTitle(updated.title);
-        const memory = guidanceRelationshipMemoryRecord({
-          ownerId: memberId,
-          profile: learnedProfile,
-          conversationId: activeThreadId,
-          messageId: messages[0].id,
-          capturedAt: now,
-        });
-        if (memoryStore && memory) {
-          await memoryStore.put(memory);
-          setRelationshipMemories((current) => [
-            memory,
-            ...current.filter((item) => item.id !== memory.id),
-          ]);
-        }
-        await refreshThreads();
-      } catch {
-        setHistoryError(
-          "This response is visible now but could not be saved. Please retry before leaving."
-        );
-      }
+    let conversationId = activeThreadId;
+    if (!conversationId) conversationId = (await startConversation())?.id || "";
+    if (conversationId && conversationId !== activeThreadId) setActiveThreadId(conversationId);
+    try {
+      const payload = await requestDigitalStaffResponse({ professionalId, conversationId, message: cleanQuestion, workspace: "/dashboard/education/guidance-counselor" });
+      setTurns((current) => [...current, { id: turnId, question: cleanQuestion, response: payload.result.response, proposals: payload.result.proposals, timestamp: messageTimestamp }]);
+      await refreshThreads();
+      setHistoryError("");
+    } catch (error) {
+      setHistoryError(error instanceof Error ? error.message : "Guidance Counselor could not respond safely.");
+    } finally {
+      setStreamingTurnId("");
     }
-    setStreamingTurnId("");
     window.requestAnimationFrame(focusComposer);
   }
 
@@ -754,6 +663,7 @@ export default function GuidanceCounselorConversation({
     setHistoryOpen(false);
     await refreshThreads();
     window.requestAnimationFrame(focusComposer);
+    return thread;
   }
 
   function openThread(thread: AgentConversationThread) {
@@ -839,12 +749,13 @@ export default function GuidanceCounselorConversation({
               label="Guidance Counselor response"
             >
               <p>{turn.response}</p>
+              {turn.proposals?.length && activeThreadId ? <RuntimeProposalReview professionalId={professionalId} conversationId={activeThreadId} proposals={turn.proposals} onDecision={() => void refreshThreads()} /> : null}
             </AgentStreamingResponseArea>
           ),
         },
       ]),
     ],
-    [knowledgePrompt, sessionAwareness.opening, streamingTurnId, turns]
+    [knowledgePrompt, sessionAwareness.opening, streamingTurnId, turns, activeThreadId, refreshThreads]
   );
 
   const understanding = buildGuidanceCounselorUnderstanding(discoveryProfile);

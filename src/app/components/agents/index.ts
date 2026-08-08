@@ -55,3 +55,4 @@ export {
   type ProfessionalSupportingWorkspace,
   type ProfessionalTimeAwarenessItem,
 } from "./ProfessionalExperienceFramework";
+export { RuntimeProposalReview } from "./RuntimeProposalReview";

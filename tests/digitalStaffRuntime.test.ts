@@ -54,3 +54,13 @@ test("research queries remove direct identifiers", () => {
 test("malformed model output fails safely before any tool execution", () => {
   assert.throws(() => parseRuntimePlan({ output_text: JSON.stringify({ response: "missing protocol" }) }), /malformed/);
 });
+
+test("strict model protocol normalizes structured fields and tool arguments", () => {
+  const parsed = parseRuntimePlan({ output_text: JSON.stringify({
+    ...plan(),
+    proposals: [{ id: "medication", domain: "health", entityType: "medication", fields: [{ name: "name", value: "metoprolol" }], sourceMessageId: "message-a", confidence: 0.95, missingFields: ["dose"], contradictions: [], approvalStatus: "proposed", relatedRecordId: null, proposedAction: "create" }],
+    toolCalls: [{ name: "create_knowledge_proposal", arguments: [{ name: "proposalId", value: "medication" }] }],
+  }) });
+  assert.deepEqual(parsed.proposals[0]?.fields, { name: "metoprolol" });
+  assert.deepEqual(parsed.toolCalls[0]?.arguments, { proposalId: "medication" });
+});
