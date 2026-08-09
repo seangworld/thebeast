@@ -71,3 +71,15 @@ test("BH-212 Health records expose owner-confirmed deletion without changing arc
   assert.match(workspace, /\.eq\("owner_id", ownerId\)/);
   assert.match(workspace, /Delete/);
 });
+
+test("DS-UX-01 uses human-readable shared Digital Staff proposal labels", () => {
+  const presentation = readFileSync("src/lib/digitalStaffRuntime/presentation.ts", "utf8");
+  const review = readFileSync("src/app/components/agents/RuntimeProposalReview.tsx", "utf8");
+  const guidance = readFileSync("src/app/dashboard/learning/GuidanceCounselorConversation.tsx", "utf8");
+  assert.match(presentation, /military_service/);
+  assert.match(presentation, /Military Service/);
+  assert.match(presentation, /MOS Code/);
+  assert.match(review, /humanizeDigitalStaffLabel/);
+  assert.match(guidance, /ProfessionalExperienceFramework/);
+  assert.match(guidance, /guidance-counselor-history-drawer/);
+});
