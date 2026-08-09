@@ -1,6 +1,11 @@
 import type { HealthAdvisorRecommendation, HealthDocumentContext } from "./healthAdvisor";
 import type { HealthRecord, HealthRecordKind } from "./foundation";
 import { healthWorkspaceHrefs } from "./foundation";
+import {
+  healthKnownSummary,
+  healthRecordMissingQuestion,
+  isMeaningfulHealthRecord,
+} from "./canonicalCoverage";
 
 export type HealthUnderstandingConfidence = "high" | "medium" | "low" | "unknown";
 export type HealthUnderstandingState = "known" | "thought" | "needed";
@@ -199,6 +204,7 @@ function recordsForDefinition(
   records: readonly HealthRecord[]
 ) {
   return records.filter((record) => {
+    if (!isMeaningfulHealthRecord(record)) return false;
     if (definition.matches) return definition.matches(record);
     if (record.recordType !== definition.kind) return false;
     return definition.topic ? record.details.topic === definition.topic : true;
@@ -220,10 +226,7 @@ function knownItem(
     label: definition.label,
     state: "known",
     confidence: "high",
-    value: `Member-saved context: ${records
-      .slice(0, 3)
-      .map((record) => record.title)
-      .join(", ")}${records.length > 3 ? "…" : ""}`,
+    value: healthKnownSummary(definition.kind, records),
     evidence: records.map(evidenceFor),
     priority: definition.priority,
     href: definition.href,
@@ -265,6 +268,24 @@ export function buildHealthAdvisorUnderstanding(input: {
     const matches = recordsForDefinition(definition, activeRecords);
     return matches.length ? knownItem(definition, matches) : neededItem(definition);
   });
+  const fieldNeeds: HealthUnderstandingItem[] = definitions.flatMap((definition) => {
+    const record = recordsForDefinition(definition, activeRecords).find((candidate) =>
+      Boolean(healthRecordMissingQuestion(candidate))
+    );
+    const question = record ? healthRecordMissingQuestion(record) : null;
+    if (!record || !question) return [];
+    return [{
+      id: promptIds[definition.area],
+      area: definition.area,
+      label: `${definition.label}: ${record.title}`,
+      state: "needed" as const,
+      confidence: "unknown" as const,
+      evidence: [evidenceFor(record)],
+      question,
+      priority: definition.priority + 1,
+      href: definition.href,
+    }];
+  });
   const documentEvidence = (input.documents || [])
     .filter((document) => /\b(?:lab|laboratory|test result)\b/i.test(document.title))
     .map((document) => `${document.sourceLabel}: ${document.title}`);
@@ -297,12 +318,15 @@ export function buildHealthAdvisorUnderstanding(input: {
       href: recommendation.href,
     })
   );
-  const items = [...factualItems, ...thinking];
+  const items = [...factualItems, ...fieldNeeds, ...thinking];
   return {
     items,
     whatIKnow: factualItems.filter((item) => item.state === "known"),
     whatIThink: thinking,
-    whatIStillNeed: factualItems.filter((item) => item.state === "needed"),
+    whatIStillNeed: [
+      ...factualItems.filter((item) => item.state === "needed"),
+      ...fieldNeeds,
+    ],
   };
 }
 

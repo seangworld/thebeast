@@ -74,8 +74,8 @@ test("BH-201 derives completion from active health records and not skipped topic
   );
 
   assert.equal(progress.total, 13);
-  assert.equal(progress.completed, 2);
-  assert.equal(progress.percent, 15);
+  assert.equal(progress.completed, 1);
+  assert.equal(progress.percent, 12);
   assert.equal(
     progress.topics.find((topic) => topic.id === "health-insurance-needed")?.status,
     "skipped"

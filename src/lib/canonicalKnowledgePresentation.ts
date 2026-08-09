@@ -118,6 +118,10 @@ export function canonicalMissingActions(entityType: string, value: unknown) {
     ? [["dose", "dosage", "Add dosage"], ["frequency", "schedule", "Add frequency"]]
     : /condition|diagnos/.test(normalized)
       ? [["diagnosisDate", "onsetDate", "Add diagnosis date"]]
+      : /procedure/.test(normalized)
+        ? [["procedureDate", "date", "Add procedure date"]]
+        : /provider/.test(normalized)
+          ? [["specialty", "providerType", "Add provider type"]]
       : [];
   return required.flatMap(([first, second, action]) =>
     displayValue(fields[first]) || displayValue(fields[second]) ? [] : [action]

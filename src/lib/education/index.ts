@@ -6,6 +6,7 @@ export * from "./guidanceCounselorReasoning";
 export * from "./guidanceCounselorLive";
 export * from "./discoveryConversation";
 export * from "./guidanceUnderstanding";
+export * from "./canonicalUnderstanding";
 export * from "./professionalIntake";
 export * from "./guidanceRelationshipMemory";
 export * from "./guidanceGoals";

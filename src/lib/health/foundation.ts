@@ -1,3 +1,5 @@
+import { isMeaningfulHealthRecord } from "./canonicalCoverage";
+
 export const healthAdvisorProfessionalId = "beasthealth.health-advisor";
 
 export const healthRecordKinds = [
@@ -281,7 +283,7 @@ export function normalizeHealthRecord(row: HealthRecordRow): HealthRecord | null
 }
 
 export function buildHealthOverview(records: readonly HealthRecord[]) {
-  const visible = records.filter((record) => record.status !== "archived");
+  const visible = records.filter(isMeaningfulHealthRecord);
   const counts = Object.fromEntries(
     healthRecordKinds.map((kind) => [
       kind,
@@ -301,7 +303,7 @@ export function buildHealthOverview(records: readonly HealthRecord[]) {
 
 export function buildHealthTimeline(records: readonly HealthRecord[]) {
   return records
-    .filter((record) => record.status !== "archived")
+    .filter(isMeaningfulHealthRecord)
     .map((record) => ({
       id: record.id,
       recordType: record.recordType,

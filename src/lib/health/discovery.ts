@@ -1,5 +1,6 @@
 import type { HealthRecord, HealthRecordKind } from "./foundation";
 import { getPersonalHubSection } from "../platform/personalHub";
+import { healthAreaCoverage, isConfirmedNegativeHealthRecord, isMeaningfulHealthRecord } from "./canonicalCoverage";
 
 export const healthDiscoveryTopicIds = [
   "health-symptoms-needed",
@@ -219,15 +220,18 @@ export function normalizeHealthDiscoveryState(value: unknown): HealthDiscoverySt
   };
 }
 
-function topicHasRecord(topic: HealthDiscoveryTopic, records: readonly HealthRecord[]) {
+function topicCoverage(topic: HealthDiscoveryTopic, records: readonly HealthRecord[]) {
   if (!topic.recordKind) return false;
-  return records.some((record) => {
+  const matching = records.filter((record) => {
     if (record.status === "archived" || record.recordType !== topic.recordKind) return false;
     if (["condition", "medication", "procedure", "family_history", "lifestyle", "appointment"].includes(topic.recordKind!)) {
-      return true;
+      return isMeaningfulHealthRecord(record);
     }
-    return record.details.topic === topic.id;
+    return record.details.topic === topic.id && isMeaningfulHealthRecord(record);
   });
+  if (!matching.length) return 0;
+  if (matching.some(isConfirmedNegativeHealthRecord)) return 100;
+  return healthAreaCoverage(topic.recordKind, matching);
 }
 
 export function buildHealthDiscoveryProgress(
@@ -235,15 +239,16 @@ export function buildHealthDiscoveryProgress(
   state: HealthDiscoveryState
 ): HealthDiscoveryProgress {
   const topics = healthDiscoveryTopics.map((topic) => {
+    const coverage = topicCoverage(topic, records);
     const status: HealthDiscoveryTopicStatus =
       topic.source === "beastos" && emergencyContacts?.availability !== "available"
         ? "unavailable"
-        : topicHasRecord(topic, records)
+        : coverage === 100
           ? "complete"
           : state.skippedTopics.includes(topic.id)
             ? "skipped"
             : "available";
-    return { ...topic, status };
+    return { ...topic, status, coverage: typeof coverage === "number" ? coverage : 0 };
   });
   const availableTopics = topics.filter((topic) => topic.status !== "unavailable");
   const completed = availableTopics.filter((topic) => topic.status === "complete").length;
@@ -255,7 +260,7 @@ export function buildHealthDiscoveryProgress(
       label: categoryLabels[id],
       complete,
       total: categoryTopics.length,
-      percent: categoryTopics.length ? Math.round((complete / categoryTopics.length) * 100) : 0,
+      percent: categoryTopics.length ? Math.round(categoryTopics.reduce((sum, topic) => sum + topic.coverage, 0) / categoryTopics.length) : 0,
     };
   });
   const resumable = topics.filter((topic) => topic.status === "available");
@@ -269,7 +274,7 @@ export function buildHealthDiscoveryProgress(
     categories,
     completed,
     total: availableTopics.length,
-    percent: availableTopics.length ? Math.round((completed / availableTopics.length) * 100) : 0,
+    percent: availableTopics.length ? Math.round(availableTopics.reduce((sum, topic) => sum + topic.coverage, 0) / availableTopics.length) : 0,
     nextTopic,
   };
 }

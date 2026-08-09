@@ -35,6 +35,8 @@ import {
   hasMatchingGuidanceCareerGoal,
   type GuidanceCounselorConversationContext,
   type GuidanceUnderstandingItem,
+  buildCanonicalEducationUnderstanding,
+  type EducationCanonicalRecord,
 } from "@/lib/education";
 import { discoveryProfileUpdate, type GuidanceDiscoveryProfile } from "@/lib/education/discoveryConversation";
 import { guidanceConversationProfileItems } from "@/lib/education/conversationProfileItems";
@@ -154,6 +156,7 @@ export default function GuidanceCounselorConversation({
   } | null>(null);
   const [discoveryProfile, setDiscoveryProfile] =
     useState<GuidanceDiscoveryProfile>(initialProfile);
+  const [canonicalProfileItems, setCanonicalProfileItems] = useState<EducationCanonicalRecord[]>([]);
   const [profileSaveStatus, setProfileSaveStatus] = useState<
     "idle" | "saving" | "saved" | "error"
   >("idle");
@@ -205,6 +208,14 @@ export default function GuidanceCounselorConversation({
       if (error) throw error;
       if (!user || user.id !== memberId) {
         throw new Error("The authenticated member does not match this conversation.");
+      }
+      const canonicalResult = await client
+        .from("education_career_profile_items")
+        .select("id, category, label, value, verification_status")
+        .eq("owner_id", memberId)
+        .is("archived_at", null);
+      if (!canonicalResult.error && !cancelled) {
+        setCanonicalProfileItems((canonicalResult.data || []) as EducationCanonicalRecord[]);
       }
       const nextRepository = new ServerAgentConversationRepository(
         new SupabaseAgentConversationStore(client)
@@ -771,6 +782,8 @@ export default function GuidanceCounselorConversation({
   );
 
   const understanding = buildGuidanceCounselorUnderstanding(discoveryProfile);
+  const canonicalUnderstanding = buildCanonicalEducationUnderstanding(canonicalProfileItems);
+  const canonicalAreas = new Set(canonicalUnderstanding.known.map((item) => item.area));
   const guidanceKnowledgeItem = (
     item: GuidanceUnderstandingItem
   ): ProfessionalKnowledgeItem => ({
@@ -806,9 +819,12 @@ export default function GuidanceCounselorConversation({
   const guidanceKnowledgeModel: ProfessionalKnowledgeModel = {
     professionalId,
     professionalName: "Guidance Counselor",
-    known: understanding.whatIKnow.map(guidanceKnowledgeItem),
+    known: [
+      ...understanding.whatIKnow.filter((item) => !canonicalAreas.has(item.area)),
+      ...canonicalUnderstanding.known,
+    ].map(guidanceKnowledgeItem),
     thinking: understanding.whatIThink.map(guidanceKnowledgeItem),
-    needed: understanding.whatIStillNeed
+    needed: [...understanding.whatIStillNeed.filter((item) => !canonicalAreas.has(item.area)), ...canonicalUnderstanding.needed]
       .slice()
       .sort((left, right) => left.priority - right.priority)
       .map(guidanceKnowledgeItem),
