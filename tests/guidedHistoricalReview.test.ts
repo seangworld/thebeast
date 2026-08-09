@@ -61,3 +61,13 @@ test("BH-211 shared proposal review replaces technical success copy and removes 
   assert.match(review, /setDecided/);
   assert.match(review, /role=\"status\"/);
 });
+
+test("BH-212 Health records expose owner-confirmed deletion without changing archive semantics", () => {
+  const workspace = readFileSync("src/app/dashboard/health/BeastHealthWorkspace.tsx", "utf8");
+  assert.match(workspace, /onDelete/);
+  assert.match(workspace, /role=\"dialog\"/);
+  assert.match(workspace, /This permanently removes/);
+  assert.match(workspace, /\.delete\(\)/);
+  assert.match(workspace, /\.eq\("owner_id", ownerId\)/);
+  assert.match(workspace, /Delete/);
+});

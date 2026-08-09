@@ -597,16 +597,20 @@ function RecordList({
   records,
   allRecords,
   onArchive,
+  onDelete,
   onUpdate,
   pendingId,
 }: {
   records: readonly HealthRecord[];
   allRecords: readonly HealthRecord[];
   onArchive: (record: HealthRecord) => void;
+  onDelete: (record: HealthRecord) => Promise<void>;
   onUpdate: (record: HealthRecord, update: HealthRecordUpdate) => void;
   pendingId: string;
 }) {
   const [expandedId, setExpandedId] = useState("");
+  const [deleteCandidate, setDeleteCandidate] = useState<HealthRecord | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     function syncHash() {
@@ -798,6 +802,7 @@ function RecordList({
                 />
               </details>
 
+              <div className="mt-4 flex flex-wrap gap-2">
               <button
                 type="button"
                 className="beast-button-secondary mt-4 min-h-11"
@@ -806,10 +811,13 @@ function RecordList({
               >
                 {record.status === "archived" ? "Restore" : "Archive"}
               </button>
+              <button type="button" className="beast-button-secondary mt-4 min-h-11 border-red-300/30 text-red-100" disabled={pendingId === record.id || deleting} onClick={() => setDeleteCandidate(record)}>Delete</button>
+              </div>
             </div>
           ) : null}
         </article>
       ))}
+      {deleteCandidate ? <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 px-4 py-8" onMouseDown={(event) => { if (event.currentTarget === event.target && !deleting) setDeleteCandidate(null); }}><div role="dialog" aria-modal="true" aria-labelledby="delete-health-record-title" aria-describedby="delete-health-record-description" className="beast-card w-full max-w-md p-5 text-left shadow-2xl sm:p-6"><p className="text-xs font-black uppercase tracking-wide text-red-200">BeastHealth record</p><h2 id="delete-health-record-title" className="mt-2 text-xl font-black text-white">Delete this {formatKind(deleteCandidate.recordType).toLowerCase()}?</h2><p id="delete-health-record-description" className="mt-2 text-sm leading-6 text-[#b8c2d0]">This permanently removes “{deleteCandidate.title}” from your BeastHealth information. This cannot be undone.</p><div className="mt-5 grid gap-3 sm:grid-cols-2"><button type="button" className="beast-button-secondary min-h-11" disabled={deleting} onClick={() => setDeleteCandidate(null)}>Cancel</button><button type="button" className="beast-button min-h-11 bg-red-700" disabled={deleting} onClick={async () => { setDeleting(true); try { await onDelete(deleteCandidate); setExpandedId(""); setDeleteCandidate(null); } finally { setDeleting(false); } }}>{deleting ? "Deleting…" : "Delete"}</button></div></div></div> : null}
     </div>
   );
 }
@@ -1025,6 +1033,24 @@ export function HealthRecordWorkspace({ kind }: { kind: HealthRecordKind }) {
     }
   }
 
+  async function deleteRecord(record: HealthRecord) {
+    setPendingId(record.id);
+    setError("");
+    setStatusMessage("");
+    try {
+      const client = createClient();
+      const { error: deleteError } = await client.from("beast_health_records").delete().eq("id", record.id).eq("owner_id", ownerId);
+      if (deleteError) throw deleteError;
+      await reload();
+      setStatusMessage(`"${record.title}" was deleted.`);
+    } catch {
+      setError("The record could not be deleted. No saved details were changed.");
+      throw new Error("Health record deletion failed.");
+    } finally {
+      setPendingId("");
+    }
+  }
+
   return (
     <BeastHealthShell
       title={definition.title}
@@ -1114,6 +1140,7 @@ export function HealthRecordWorkspace({ kind }: { kind: HealthRecordKind }) {
                   records={visibleRecords}
                   allRecords={records}
                   onArchive={(record) => void archiveRecord(record)}
+                  onDelete={deleteRecord}
                   onUpdate={(record, update) =>
                     void updateRecord(record, update)
                   }
