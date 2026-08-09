@@ -38,6 +38,11 @@ import { BeastHealthShell } from "./BeastHealthShell";
 import { HealthDiscoveryOnboarding } from "./HealthDiscoveryOnboarding";
 import { HealthDocumentExtractionReview } from "./HealthDocumentExtractionReview";
 import { LivingHealthTimeline } from "./LivingHealthTimeline";
+import {
+  canonicalDisplayFields,
+  canonicalMissingActions,
+  preferStructuredCanonicalRecords,
+} from "@/lib/canonicalKnowledgePresentation";
 
 const statusOptions: HealthRecordStatus[] = [
   "active",
@@ -256,6 +261,7 @@ function formatDate(value: string | null) {
 }
 
 function formatRecordSummary(record: HealthRecord) {
+  const structured = canonicalDisplayFields(record.details);
   const context =
     typeof record.details.context === "string"
       ? record.details.context.trim()
@@ -265,7 +271,9 @@ function formatRecordSummary(record: HealthRecord) {
     record.occurredOn ? formatDate(record.occurredOn) : null,
     record.source ? `Source: ${record.source}` : null,
   ].filter(Boolean);
-  return context || parts.join(" · ");
+  return structured.length
+    ? structured.slice(0, 3).map((field) => `${field.label}: ${field.value}`).join(" · ")
+    : context || parts.join(" · ");
 }
 
 function recommendationMatchesWorkspace(
@@ -672,7 +680,30 @@ function RecordList({
             <div
               id={`health-record-details-${record.id}`}
               className="mt-4 border-t border-white/10 pt-4"
-            >
+              >
+              {canonicalDisplayFields(record.details).length ? (
+                <dl className="grid gap-3 text-sm sm:grid-cols-2">
+                  {canonicalDisplayFields(record.details).map((field) => (
+                    <div key={`${field.label}-${field.value}`} className="min-w-0 rounded-xl border border-white/10 p-3">
+                      <dt className="text-xs font-black uppercase text-red-200">{field.label}</dt>
+                      <dd className="mt-1 break-words text-[#c7cfdb]">{field.value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              ) : null}
+              {canonicalMissingActions(String(record.details.subtype || record.recordType), record.details).length ? (
+                <div className="mt-3 flex flex-wrap gap-2" aria-label="Information you can add">
+                  {canonicalMissingActions(String(record.details.subtype || record.recordType), record.details).map((action) => (
+                    <Link
+                      key={action}
+                      href={buildHealthAdvisorConversationHref(record.recordType, `${action} for ${record.title}.`, record.id)}
+                      className="beast-button-secondary inline-flex min-h-11 items-center"
+                    >
+                      {action}
+                    </Link>
+                  ))}
+                </div>
+              ) : null}
               <div className="grid gap-3 text-sm leading-6 text-[#c7cfdb] sm:grid-cols-2">
                 <div className="rounded-xl border border-white/10 p-3">
                   <p className="text-xs font-black uppercase text-red-200">
@@ -689,7 +720,7 @@ function RecordList({
                   <p className="mt-1">{record.source || "Not recorded"}</p>
                 </div>
               </div>
-              {record.details.context ? (
+              {record.details.context && !canonicalDisplayFields(record.details).length ? (
                 <div className="mt-3 rounded-xl border border-white/10 p-3">
                   <p className="text-xs font-black uppercase text-red-200">
                     Saved context
@@ -811,11 +842,17 @@ function useHealthRecords() {
       .order("created_at", { ascending: false });
     if (recordsError) throw recordsError;
     setOwnerId(userId);
-    setRecords(
-      ((data || []) as HealthRecordRow[])
+    const normalizedRecords = ((data || []) as HealthRecordRow[])
         .map(normalizeHealthRecord)
-        .filter((record): record is HealthRecord => Boolean(record))
-    );
+        .filter((record): record is HealthRecord => Boolean(record));
+    setRecords(preferStructuredCanonicalRecords(normalizedRecords, {
+      category: (record) => record.recordType,
+      value: (record) => record.details,
+      isLegacyAggregate: (record) =>
+        record.source === "Health Advisor conversation" &&
+        typeof record.details.context === "string" &&
+        Boolean(record.details.context.trim()),
+    }));
     setError("");
     setLoading(false);
   }

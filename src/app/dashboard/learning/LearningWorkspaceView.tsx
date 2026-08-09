@@ -27,6 +27,12 @@ import {
   type CourseLifecycleStatus,
 } from "@/lib/learning/courseLifecycle";
 import { getWorkspaceRecordAction } from "@/lib/education/contextualActions";
+import {
+  canonicalDisplayFields,
+  canonicalMissingActions,
+  canonicalPrimaryValue,
+  parseCanonicalFields,
+} from "@/lib/canonicalKnowledgePresentation";
 
 type WorkspaceItem = {
   id: string;
@@ -38,20 +44,60 @@ type WorkspaceItem = {
   href?: string;
   ownerId?: string;
   lifecycleStatus?: CourseLifecycleStatus;
+  structuredFields?: Array<{ label: string; value: string }>;
+  completionActions?: string[];
 };
 
 async function loadWorkspaceItems(slug: LearningWorkspaceSlug, userId: string) {
   const supabase = createRouteClient();
+  if (slug === "schools" || slug === "certifications") {
+    const categories = slug === "schools"
+      ? ["school", "degree", "coursework"]
+      : ["certification", "license"];
+    const result = await supabase
+      .from("education_career_profile_items")
+      .select("id, owner_id, phase, category, label, value, source_type, verification_status, occurred_on, updated_at, archived_at")
+      .eq("owner_id", userId)
+      .in("category", categories)
+      .is("archived_at", null)
+      .order("updated_at", { ascending: false });
+    if (result.error) throw new Error(`Unable to load ${learningWorkspaceDefinitions[slug].title}: ${result.error.message}`);
+    const rows = (result.data || []) as Record<string, unknown>[];
+    const structuredCategories = new Set(
+      rows.filter((row) => canonicalDisplayFields(row.value).length > 0).map((row) => String(row.category))
+    );
+    return rows.filter((row) => {
+      if (!structuredCategories.has(String(row.category))) return true;
+      if (canonicalDisplayFields(row.value).length > 0) return true;
+      return !(row.source_type === "conversation" && String(row.source_reference || "").startsWith("guidance:"));
+    }).map((row): WorkspaceItem => {
+      const structuredFields = canonicalDisplayFields(row.value);
+      const fields = parseCanonicalFields(row.value);
+      const entityType = String(fields.entityType || row.category || slug);
+      return {
+        id: String(row.id),
+        ownerId: String(row.owner_id || userId),
+        title: canonicalPrimaryValue(row.value, String(row.label || (slug === "schools" ? "School" : "Certification"))),
+        detail: structuredFields.length
+          ? `${String(row.phase || "present")} · ${String(row.verification_status || "member reported").replaceAll("_", " ")}`
+          : String(row.value || "No additional information has been saved yet."),
+        status: String(row.phase || "present"),
+        meta: row.occurred_on ? new Date(`${String(row.occurred_on)}T12:00:00`).toLocaleDateString() : undefined,
+        structuredFields,
+        completionActions: canonicalMissingActions(entityType, row.value),
+      };
+    });
+  }
   const table =
     slug === "learning-path" || slug === "educational-roadmap"
       ? "learning_plans"
       : slug === "courses"
         ? "learning_courses"
-        : slug === "career-planning" || slug === "schools" || slug === "scholarships"
+        : slug === "career-planning" || slug === "scholarships"
           ? "learning_goals"
         : slug === "achievements"
           ? "learning_achievements"
-          : slug === "certificates" || slug === "certifications"
+          : slug === "certificates"
             ? "learning_certificates"
             : slug === "skills"
               ? "learning_mastery"
@@ -126,7 +172,7 @@ async function loadWorkspaceItems(slug: LearningWorkspaceSlug, userId: string) {
         meta: row.earned_at ? new Date(String(row.earned_at)).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : undefined,
       };
     }
-    if (slug === "certificates" || slug === "certifications") {
+    if (slug === "certificates") {
       return {
         id,
         title: String(row.path_name || "Learning certificate"),
@@ -212,6 +258,56 @@ function GoalContextCards({
           >
             Open goal
           </Link>
+        </DashboardCard>
+      ))}
+    </div>
+  );
+}
+
+function CanonicalEducationCards({
+  items,
+  emptyTitle,
+  emptyDescription,
+}: {
+  items: WorkspaceItem[];
+  emptyTitle: string;
+  emptyDescription: string;
+}) {
+  if (!items.length) {
+    return (
+      <LearningEmptyState
+        title={emptyTitle}
+        description={emptyDescription}
+        action={{ label: "Talk with your Guidance Counselor", href: "/dashboard/education/guidance-counselor" }}
+      />
+    );
+  }
+  return (
+    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3" data-canonical-education-records>
+      {items.map((item) => (
+        <DashboardCard key={item.id} accent="learning" className="min-w-0">
+          <span className="rounded-full border border-indigo-300/25 bg-indigo-300/10 px-2.5 py-1 text-xs font-black capitalize text-indigo-100">
+            {item.status}
+          </span>
+          <h3 className="mt-4 break-words text-xl font-black text-white">{item.title}</h3>
+          <p className="mt-2 text-sm leading-6 text-[#aeb8c7]">{item.detail}</p>
+          {item.structuredFields?.length ? (
+            <dl className="mt-4 grid gap-3 text-sm">
+              {item.structuredFields.map((field) => (
+                <div key={`${field.label}-${field.value}`} className="min-w-0 rounded-xl border border-white/10 p-3">
+                  <dt className="text-xs font-black uppercase tracking-wide text-indigo-200">{field.label}</dt>
+                  <dd className="mt-1 break-words text-[#c7cfdb]">{field.value}</dd>
+                </div>
+              ))}
+            </dl>
+          ) : null}
+          <div className="mt-4 flex flex-wrap gap-2">
+            {(item.completionActions || []).map((action) => (
+              <Link key={action} href={`/dashboard/education/guidance-counselor?prompt=${encodeURIComponent(`${action} for ${item.title}.`)}`} className="beast-button-secondary inline-flex min-h-11 items-center">
+                {action}
+              </Link>
+            ))}
+          </div>
         </DashboardCard>
       ))}
     </div>
@@ -313,7 +409,11 @@ function SchoolsWorkspace({ items }: { items: WorkspaceItem[] }) {
           title={definition.contextTitle}
           description={definition.contextDescription}
         />
-        <GoalContextCards items={items} progressLabel="Goal progress" />
+        <CanonicalEducationCards
+          items={items}
+          emptyTitle="No schools are saved yet"
+          emptyDescription="Schools you approve or add will appear here one at a time. Start with your current school or a school you attended before."
+        />
       </section>
       <p className="rounded-xl border border-cyan-300/20 bg-cyan-300/5 p-4 text-sm leading-6 text-cyan-50">
         {definition.verificationNote}
@@ -466,7 +566,15 @@ function EducationPlanningDomainWorkspace({
             title="Saved planning evidence"
             description="These records support this workspace without duplicating their full detail elsewhere."
           />
-          <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {slug === "certifications" ? (
+            <div className="mt-5">
+              <CanonicalEducationCards
+                items={items}
+                emptyTitle={definition.emptyTitle}
+                emptyDescription={definition.emptyDescription}
+              />
+            </div>
+          ) : <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {items.map((item) => {
               const action = getWorkspaceRecordAction(slug);
               return (
@@ -491,7 +599,7 @@ function EducationPlanningDomainWorkspace({
                 </DashboardCard>
               );
             })}
-          </div>
+          </div>}
         </section>
       )}
     </div>

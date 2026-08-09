@@ -46,7 +46,7 @@ export async function applyApprovedKnowledgeProposal({
     : professionalId;
 
   if (targetProfessional === "beasthealth.health-advisor") {
-    const title = stringField(normalized, "name", "title", "condition", "institution", "provider") || normalized.entityType;
+    const title = stringField(normalized, "medicationName", "supplementName", "condition", "name", "title", "institution", "provider") || normalized.entityType;
     const type = /supplement|medication/i.test(normalized.entityType) ? "medication" : /measurement|vital/i.test(normalized.entityType) ? "vital" : /family/i.test(normalized.entityType) ? "family_history" : /allerg|vaccin|appointment/i.test(normalized.entityType) ? "profile" : /surgery|procedure/i.test(normalized.entityType) ? "procedure" : /specialist|provider/i.test(normalized.entityType) ? "provider" : /diagnos|condition/i.test(normalized.entityType) ? "condition" : normalized.entityType;
     const allowedTypes = ["profile", "condition", "medication", "procedure", "vital", "document", "lifestyle", "family_history", "provider"];
     if (!allowedTypes.includes(type)) throw new Error("Health proposal type is outside the canonical record contract.");
@@ -59,7 +59,7 @@ export async function applyApprovedKnowledgeProposal({
   }
 
   if (targetProfessional === "beasteducation.guidance-counselor") {
-    const label = stringField(normalized, "institution", "employer", "certificate", "title", "preference", "name") || normalized.entityType;
+    const label = stringField(normalized, "institution", "schoolName", "employer", "certificationName", "certificate", "title", "preference", "name") || normalized.entityType;
     const categoryMap: Record<string, string> = {
       institution: "school", school: "school", degree: "degree", diploma: "degree", credit: "coursework", certification: "certification", license: "license",
       coursework: "coursework", training: "training", military_education: "training", military_service: "military", employment: "employment", job: "employment", employer: "employer_type", role: "role", target_role: "occupation", skill: "skill",

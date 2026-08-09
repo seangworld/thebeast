@@ -9,6 +9,7 @@ import {
   type EducationCareerProfilePhase,
   type ResearchSource,
 } from "@/lib/education/careerIntelligence";
+import { canonicalDisplayFields } from "@/lib/canonicalKnowledgePresentation";
 
 type ProfileRow = {
   id: string;
@@ -456,10 +457,19 @@ export default function EducationCareerWorkspace({
               <h3 id={`profile-${phase}`} className="text-lg font-black text-white">{phaseCopy[phase].title}</h3>
               {items.length ? <ul className="mt-3 grid gap-3">{items.map((item) => <li key={item.id} className="min-w-0 rounded-lg border border-white/10 bg-white/[0.035] p-3">
                 <p className="break-words font-bold text-white">{item.label}</p>
-                <p className="mt-1 break-words text-sm leading-5 text-slate-300">{item.value}</p>
+                {canonicalDisplayFields(item.value).length ? (
+                  <dl className="mt-2 grid gap-2 text-sm">
+                    {canonicalDisplayFields(item.value).map((field) => (
+                      <div key={`${field.label}-${field.value}`} className="min-w-0 rounded-lg border border-white/10 p-2">
+                        <dt className="text-xs font-bold uppercase text-cyan-200">{field.label}</dt>
+                        <dd className="mt-1 break-words text-slate-300">{field.value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                ) : <p className="mt-1 break-words text-sm leading-5 text-slate-300">{item.value}</p>}
                 <p className="mt-2 text-xs text-slate-500">{titleCase(item.category)} · {titleCase(item.verification_status)} · {Math.round(item.confidence * 100)}% confidence</p>
                 <p className="mt-1 text-xs text-slate-500">Source: {titleCase(item.source_type)} · Updated {displayDate(item.updated_at)}</p>
-                <div className="mt-3 flex flex-wrap gap-2"><button type="button" className="text-xs font-bold text-cyan-200" onClick={() => { setEditingProfileId(item.id); setProfileDraft({ phase: item.phase, category: item.category, label: item.label, value: item.value, occurredOn: item.occurred_on || "" }); }}>Edit or correct</button><button type="button" className="text-xs font-bold text-red-200" onClick={() => void removeProfile(item)}>Remove</button></div>
+                <div className="mt-3 flex flex-wrap gap-2">{canonicalDisplayFields(item.value).length ? <Link className="text-xs font-bold text-cyan-200" href={`/dashboard/education/guidance-counselor?prompt=${encodeURIComponent(`Help me correct the saved ${titleCase(item.category)} record ${item.label}.`)}`}>Correct with Guidance Counselor</Link> : <button type="button" className="text-xs font-bold text-cyan-200" onClick={() => { setEditingProfileId(item.id); setProfileDraft({ phase: item.phase, category: item.category, label: item.label, value: item.value, occurredOn: item.occurred_on || "" }); }}>Edit or correct</button>}<button type="button" className="text-xs font-bold text-red-200" onClick={() => void removeProfile(item)}>Remove</button></div>
               </li>)}</ul> : <p className="mt-3 text-sm leading-6 text-slate-400">{phaseCopy[phase].empty}</p>}
             </section>;
           })}
