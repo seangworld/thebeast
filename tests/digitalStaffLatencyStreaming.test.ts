@@ -47,10 +47,14 @@ test("AP-105 OpenAI stream parser forwards text deltas and returns the completed
   ].join("\n\n") + "\n\n";
   globalThis.fetch = async () => new Response(body, { status: 200, headers: { "Content-Type": "text/event-stream" } });
   const deltas: string[] = [];
+  let responseHeadersSeen = false;
+  let completedSeen = false;
   try {
-    const result = await requestOpenAIResponseStream<typeof completed>({ model: "test" }, { apiKey: "sk-proj-SINGLE_TEST_TOKEN_1234567890", onOutputTextDelta: (delta) => { deltas.push(delta); } });
+    const result = await requestOpenAIResponseStream<typeof completed>({ model: "test" }, { apiKey: "sk-proj-SINGLE_TEST_TOKEN_1234567890", onOutputTextDelta: (delta) => { deltas.push(delta); }, onResponseHeaders: () => { responseHeadersSeen = true; }, onComplete: () => { completedSeen = true; } });
     assert.equal(result.output_text, "Hello");
     assert.equal(deltas.join(""), "Hello");
+    assert.equal(responseHeadersSeen, true);
+    assert.equal(completedSeen, true);
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -62,8 +66,14 @@ test("AP-105 shared client and route expose acknowledged activity streaming and 
   assert.match(client, /application\/x-ndjson/);
   assert.match(client, /onAcknowledged/);
   assert.match(client, /onResponseDelta/);
+  assert.match(client, /onFirstUsefulContent/);
+  assert.match(client, /onStreamComplete/);
   assert.match(route, /type: "acknowledged"/);
   assert.match(route, /reportDigitalStaffLifecycle/);
+  assert.match(route, /providerResponseHeadersMs/);
+  assert.match(route, /providerFirstEventMs/);
+  assert.match(route, /providerCompleteMs/);
+  assert.match(route, /validationMs/);
   assert.doesNotMatch(route, /console\.(?:log|info).*message/);
   assert.equal(digitalStaffActivityLabels.researching, "Checking current sources…");
 });

@@ -90,18 +90,26 @@ export async function runDigitalStaffRuntime(context: RuntimeContext, observer: 
   const model = process.env.OPENAI_DIGITAL_STAFF_MODEL || "gpt-5";
   await observer.onActivity?.("thinking");
   let firstModelOutputMs: number | null = null;
+  let providerResponseHeadersMs: number | null = null;
+  let providerFirstEventMs: number | null = null;
+  let providerCompleteMs: number | null = null;
   const modelStartedAt = Date.now();
   const payload = await requestOpenAIResponseStream<ResponsesPayload>({
       model, store: false, instructions: buildRuntimeInstructions(config), input: buildRuntimeInput(config, context),
       text: { format: { type: "json_schema", name: "digital_staff_runtime_plan", strict: true, schema: runtimeJsonSchema } },
   }, {
+      onResponseHeaders: () => { providerResponseHeadersMs = Date.now() - startedAt; },
       onFirstOutput: () => {
         if (firstModelOutputMs === null) firstModelOutputMs = Date.now() - startedAt;
+        if (providerFirstEventMs === null) providerFirstEventMs = Date.now() - startedAt;
         observer.onFirstModelOutput?.();
       },
+      onComplete: () => { providerCompleteMs = Date.now() - startedAt; },
   });
   const initialModelMs = Date.now() - modelStartedAt;
+  const validationStartedAt = Date.now();
   const validated = validateRuntimePlan(context, parseRuntimePlan(payload));
+  const validationMs = Date.now() - validationStartedAt;
   let researchMs = 0;
   let researchValidationMs = 0;
   let research: Awaited<ReturnType<typeof executeResearch>> | null = null;
@@ -124,7 +132,7 @@ export async function runDigitalStaffRuntime(context: RuntimeContext, observer: 
     response: research?.answer || validated.response,
     model,
     latencyMs: totalMs,
-    timings: { totalMs, contextAssemblyMs: 0, initialModelMs, firstModelOutputMs, researchMs, researchValidationMs, persistenceMs: 0 },
+    timings: { totalMs, contextAssemblyMs: 0, initialModelMs, firstModelOutputMs, researchMs, researchValidationMs, persistenceMs: 0, providerResponseHeadersMs, providerFirstEventMs, providerCompleteMs, validationMs },
     researchSources: research?.sources || [],
   };
 }

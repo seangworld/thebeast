@@ -102,6 +102,10 @@ export type RuntimeTimings = {
   researchMs: number;
   researchValidationMs: number;
   persistenceMs: number;
+  providerResponseHeadersMs?: number | null;
+  providerFirstEventMs?: number | null;
+  providerCompleteMs?: number | null;
+  validationMs?: number | null;
 };
 
 export type RuntimeObserver = {

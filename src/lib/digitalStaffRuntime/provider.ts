@@ -67,6 +67,8 @@ export async function requestOpenAIResponseStream<T>(
     requestId?: string;
     onOutputTextDelta?: (delta: string) => void | Promise<void>;
     onFirstOutput?: () => void;
+    onResponseHeaders?: () => void;
+    onComplete?: () => void;
   } = {}
 ) {
   const requestId = options.requestId || crypto.randomUUID();
@@ -79,6 +81,7 @@ export async function requestOpenAIResponseStream<T>(
     if (!response.ok || !response.body) {
       throw new Error(`OpenAI Responses API returned status ${response.status}.`);
     }
+    options.onResponseHeaders?.();
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = "";
@@ -106,6 +109,7 @@ export async function requestOpenAIResponseStream<T>(
       if (done) break;
     }
     if (!completed) throw new Error("OpenAI streaming response did not complete safely.");
+    options.onComplete?.();
     return completed;
   } catch (error) {
     reportDigitalStaffError("openai-responses-stream", error, requestId);

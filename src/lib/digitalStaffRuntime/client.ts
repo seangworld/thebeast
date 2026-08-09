@@ -30,6 +30,8 @@ export type DigitalStaffRequestObserver = {
   onAcknowledged?: (message: RuntimeMessage) => void;
   onActivity?: (activity: DigitalStaffActivity) => void;
   onResponseDelta?: (delta: string) => void;
+  onFirstUsefulContent?: () => void;
+  onStreamComplete?: () => void;
 };
 
 export async function requestDigitalStaffResponse(input: { professionalId: ProfessionalId; conversationId: string; message: string; workspace: string }, observer: DigitalStaffRequestObserver = {}) {
@@ -50,6 +52,7 @@ export async function requestDigitalStaffResponse(input: { professionalId: Profe
     const decoder = new TextDecoder();
     let buffer = "";
     let completed: DigitalStaffRuntimeResponse | null = null;
+    let firstUsefulContentSeen = false;
     while (true) {
       const { done, value } = await reader.read();
       buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
@@ -65,13 +68,21 @@ export async function requestDigitalStaffResponse(input: { professionalId: Profe
           | { type: "error"; requestId?: string };
         if (event.type === "acknowledged") observer.onAcknowledged?.(event.message);
         if (event.type === "activity") observer.onActivity?.(event.activity);
-        if (event.type === "response_delta") observer.onResponseDelta?.(event.delta);
+        if (event.type === "response_delta") {
+          if (!event.delta) continue;
+          if (!firstUsefulContentSeen) {
+            firstUsefulContentSeen = true;
+            observer.onFirstUsefulContent?.();
+          }
+          observer.onResponseDelta?.(event.delta);
+        }
         if (event.type === "complete") completed = event.payload;
         if (event.type === "error") throw new DigitalStaffClientError(event.requestId);
       }
       if (done) break;
     }
     if (!completed) throw new DigitalStaffClientError();
+    observer.onStreamComplete?.();
     return completed;
   } catch (error) {
     if (error instanceof DigitalStaffClientError) throw error;
