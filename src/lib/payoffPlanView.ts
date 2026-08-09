@@ -2,7 +2,6 @@ import { formatMonthYear, roundMoney } from "./formatters";
 import { getInclusivePayoffDate, type PayoffMonth, type UnifiedStrategyResult } from "./unifiedStrategyEngine";
 
 export const PAYOFF_OPTIONAL_COLUMNS = [
-  { id: "month", label: "Month" },
   { id: "minimumPayment", label: "Minimum Payment" },
   { id: "remainingInterest", label: "Remaining Interest" },
   { id: "monthsRemaining", label: "Months Remaining" },

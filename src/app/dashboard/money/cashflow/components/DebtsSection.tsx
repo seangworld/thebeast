@@ -288,9 +288,6 @@ export default function DebtsSection({
                   )}
 
                   <div className="mt-4 min-w-0">
-                    <PaymentAutomationControls name={debt.name} {...normalizePaymentAutomation(debt)} onSave={(patch) => updatePaymentAutomation(debt.id, patch)} />
-                  </div>
-                  <div className="mt-4 min-w-0">
                     {editingDebtId === debt.id ? <DebtPaymentControls
                       debt={debt}
                       editingDebtId={editingDebtId}
@@ -305,7 +302,7 @@ export default function DebtsSection({
                       archiveDebt={archiveDebt}
                       resetDebtDueDate={resetDebtDueDate}
                       deleteDebt={deleteDebt}
-                    /> : <OverlayPopover label="Actions" width={192} testId="debt-actions">{() => <DebtPaymentControls
+                    /> : <OverlayPopover label="Actions" width={224} testId="debt-actions">{() => <div className="grid min-w-0 gap-3 whitespace-normal"><PaymentAutomationControls name={debt.name} {...normalizePaymentAutomation(debt)} onSave={(patch) => updatePaymentAutomation(debt.id, patch)} /><DebtPaymentControls
                       debt={debt}
                       editingDebtId={editingDebtId}
                       debtPayments={debtPayments}
@@ -319,7 +316,7 @@ export default function DebtsSection({
                       archiveDebt={archiveDebt}
                       resetDebtDueDate={resetDebtDueDate}
                       deleteDebt={deleteDebt}
-                    />}</OverlayPopover>}
+                    /></div>}</OverlayPopover>}
                   </div>
 
                   {editingDebtId !== debt.id ? (
@@ -479,9 +476,6 @@ export default function DebtsSection({
                           </div>
                         </div>
                       )}
-                      <div className="mt-2">
-                        <PaymentAutomationControls compact name={debt.name} {...normalizePaymentAutomation(debt)} onSave={(patch) => updatePaymentAutomation(debt.id, patch)} />
-                      </div>
                       <details className="mt-2 text-xs text-[#9aa7b8]">
                         <summary className="cursor-pointer font-semibold text-cyan-200">Row details</summary>
                         <div className="mt-2 grid gap-1">
@@ -520,7 +514,9 @@ export default function DebtsSection({
                     </td>
 
                     <td className="w-[18%] align-top">
-                      <OverlayPopover label="Actions" width={192} testId="debt-actions">{() => <div className="min-w-0 whitespace-normal">
+                      <OverlayPopover label="Actions" width={224} testId="debt-actions">{() => <div className="min-w-0 whitespace-normal">
+                      <PaymentAutomationControls compact name={debt.name} {...normalizePaymentAutomation(debt)} onSave={(patch) => updatePaymentAutomation(debt.id, patch)} />
+                      <div className="mt-3 border-t border-[#2a3242] pt-3">
                       <DebtPaymentControls
                         debt={debt}
                         editingDebtId={editingDebtId}
@@ -536,6 +532,7 @@ export default function DebtsSection({
                         resetDebtDueDate={resetDebtDueDate}
                         deleteDebt={deleteDebt}
                       />
+                      </div>
                         </div>}</OverlayPopover>
                     </td>
                   </tr>

@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -128,6 +128,7 @@ type StrategyComparisonRow = {
 
 function DebtActionsMenu({
   debt,
+  automation,
   management,
   onEdit,
   lifecycleLabel = "Archive",
@@ -135,6 +136,7 @@ function DebtActionsMenu({
   onDelete,
 }: {
   debt: Debt;
+  automation: ReactNode;
   management?: DebtManagementActionsProps;
   onEdit: () => void;
   lifecycleLabel?: "Archive" | "Unarchive";
@@ -157,8 +159,8 @@ function DebtActionsMenu({
       testId="debt-list-actions"
       triggerClassName="w-full justify-center sm:w-auto"
       onOpenChange={resetViewWhenClosed}
-      panelRole={view === "manage" ? "dialog" : "menu"}
-      panelAriaLabel={view === "manage" ? `${debt.name} payment management` : undefined}
+      panelRole="dialog"
+      panelAriaLabel={view === "manage" ? `${debt.name} payment management` : `${debt.name} actions and payment automation`}
     >
       {(close) => (
         view === "manage" && management ? (
@@ -175,6 +177,7 @@ function DebtActionsMenu({
           </div>
         ) : (
         <div className="grid gap-1" data-debt-actions-menu="true" data-action-menu-list="debt">
+          <div className="mb-2 border-b border-[#2a3242] pb-3">{automation}</div>
           {management ? (
             <button type="button" role="menuitem" className={menuItemClass} onClick={() => setView("manage")}>
               Pay / Manage
@@ -1558,11 +1561,10 @@ export default function DebtsPage() {
                           </div>
                         </div>
                       </div>
-                      <div className="mt-3"><PaymentAutomationControls name={debt.name} {...normalizePaymentAutomation(debt)} onSave={(patch) => updateDebtAutomation(debt.id, patch)} /></div>
-
                       <div className="mt-4 flex justify-end">
                         <DebtActionsMenu
                           debt={debt}
+                          automation={<PaymentAutomationControls name={debt.name} {...normalizePaymentAutomation(debt)} onSave={(patch) => updateDebtAutomation(debt.id, patch)} />}
                           management={{
                             debt,
                             fundingSources,
@@ -1590,7 +1592,6 @@ export default function DebtsPage() {
                 <tr>
                   <th>Priority</th>
                   <th>Name</th>
-                  <th className="text-center">Auto</th>
                   <th className="text-right">Balance</th>
                   <th className="text-right">Minimum</th>
                   <th className="text-right">APR</th>
@@ -1602,11 +1603,11 @@ export default function DebtsPage() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={8}>Loading debts...</td>
+                    <td colSpan={7}>Loading debts...</td>
                   </tr>
                 ) : orderedDebts.length === 0 ? (
                   <tr>
-                    <td colSpan={8}>No debts added yet.</td>
+                    <td colSpan={7}>No debts added yet.</td>
                   </tr>
                 ) : (
                   orderedDebts.map((debt, index) => (
@@ -1624,7 +1625,6 @@ export default function DebtsPage() {
                           debt.name
                         )}
                       </td>
-                      <td className="align-top"><PaymentAutomationControls compact name={debt.name} {...normalizePaymentAutomation(debt)} onSave={(patch) => updateDebtAutomation(debt.id, patch)} /></td>
                   
                       <td className="text-right">
                         {editingDebtId === debt.id ? (
@@ -1759,6 +1759,7 @@ export default function DebtsPage() {
                         ) : (
                           <DebtActionsMenu
                             debt={debt}
+                            automation={<PaymentAutomationControls compact name={debt.name} {...normalizePaymentAutomation(debt)} onSave={(patch) => updateDebtAutomation(debt.id, patch)} />}
                             management={{
                               debt,
                               fundingSources,
@@ -1910,6 +1911,7 @@ export default function DebtsPage() {
                           ) : (
                             <DebtActionsMenu
                               debt={debt}
+                              automation={<PaymentAutomationControls compact name={debt.name} {...normalizePaymentAutomation(debt)} onSave={(patch) => updateDebtAutomation(debt.id, patch)} />}
                               onEdit={() => startEditDebt(debt)}
                               lifecycleLabel={Boolean(debt.is_archived) ? "Unarchive" : "Archive"}
                               onLifecycle={() => Boolean(debt.is_archived) ? void unarchiveDebt(debt.id) : void archiveDebt(debt.id)}
@@ -2029,7 +2031,7 @@ export default function DebtsPage() {
             {payoffDisplayRows.slice(0, projectionMonths).map((row) => (
               <article key={row.key} className="min-w-0 rounded-xl border border-[#2a3242] bg-[#111827] p-4">
                 <div className="flex min-w-0 items-start justify-between gap-3"><div className="min-w-0"><h3 className="break-words font-bold text-white">{row.target}</h3><p className="text-xs text-[#7f8da3]">{row.apr.toFixed(2)}% APR · {row.payoffDate}</p></div><span className={row.warning ? "text-xs font-semibold text-red-300" : "text-xs font-semibold text-green-300"}>{row.status}</span></div>
-                <dl className="mt-3 grid grid-cols-2 gap-2 text-sm"><div><dt className="text-xs text-[#7f8da3]">Balance</dt><dd>${row.debt_starting_balance.toFixed(2)}</dd></div><div><dt className="text-xs text-[#7f8da3]">Minimum Payment</dt><dd>${row.required_minimum.toFixed(2)}</dd></div><div><dt className="text-xs text-[#7f8da3]">Planned Payment</dt><dd>${row.total_payment.toFixed(2)}</dd></div><div><dt className="text-xs text-[#7f8da3]">Suggested Payment</dt><dd className="font-bold">${row.suggestedPayment.toFixed(2)}</dd><dd className="text-xs text-[#7f8da3]">{row.suggestedPaymentLabel}</dd></div></dl>
+                <dl className="mt-3 grid grid-cols-2 gap-2 text-sm"><div><dt className="text-xs text-[#7f8da3]">Month</dt><dd>{row.month}</dd></div><div><dt className="text-xs text-[#7f8da3]">Balance</dt><dd>${row.debt_starting_balance.toFixed(2)}</dd></div><div><dt className="text-xs text-[#7f8da3]">Minimum Payment</dt><dd>${row.required_minimum.toFixed(2)}</dd></div><div><dt className="text-xs text-[#7f8da3]">Planned Payment</dt><dd>${row.total_payment.toFixed(2)}</dd></div><div><dt className="text-xs text-[#7f8da3]">Suggested Payment</dt><dd className="font-bold">${row.suggestedPayment.toFixed(2)}</dd><dd className="text-xs text-[#7f8da3]">{row.suggestedPaymentLabel}</dd></div></dl>
                 <details className="mt-3 rounded-lg border border-[#2a3242] p-3 text-sm"><summary className="cursor-pointer font-semibold text-cyan-200">Why?</summary><p className="mt-2 text-[#c7cfdb]">{row.suggestedPaymentWhy}</p></details>
                 <button type="button" className="beast-button-secondary mt-4 w-full" aria-expanded={expandedPayoffRow === row.key} onClick={() => setExpandedPayoffRow(expandedPayoffRow === row.key ? null : row.key)}>{expandedPayoffRow === row.key ? "Hide details" : "View details"}</button>
                 {expandedPayoffRow === row.key ? <PayoffRowDetails row={row} strategy={strategy} assumptions={[...payoffPlan.calculation_assumptions, ...payoffPlan.funding_source_assumptions]} debt={activeDebts.find((debt) => debt.id === row.debtId)} onEdit={startEditDebt} onArchive={archiveDebt} onDelete={deleteDebt} /> : null}
@@ -2040,12 +2042,12 @@ export default function DebtsPage() {
 
           <div className="hidden min-w-0 md:block" role="region" aria-label="Debt payoff schedule table">
             <table className="money-payoff-table w-full table-fixed text-sm">
-              <thead><tr><th className="w-[22%]">Debt</th><th className="text-right">Balance</th><th className="payoff-hide-laptop text-right">APR</th><th className="payoff-hide-tablet text-right">Planned Payment</th><th className="text-right">Suggested Payment</th><th>Payoff Date</th><th>Status</th>{payoffOptionalColumns.includes("month") ? <th>Month</th> : null}{payoffOptionalColumns.includes("minimumPayment") ? <th className="text-right">Minimum</th> : null}{payoffOptionalColumns.includes("remainingInterest") ? <th className="text-right">Remaining Interest</th> : null}{payoffOptionalColumns.includes("monthsRemaining") ? <th className="text-right">Months Left</th> : null}</tr></thead>
+              <thead><tr><th>Month</th><th className="w-[22%]">Debt</th><th className="text-right">Balance</th><th className="payoff-hide-laptop text-right">APR</th><th className="payoff-hide-tablet text-right">Planned Payment</th><th className="text-right">Suggested Payment</th><th>Payoff Date</th><th>Status</th>{payoffOptionalColumns.includes("minimumPayment") ? <th className="text-right">Minimum</th> : null}{payoffOptionalColumns.includes("remainingInterest") ? <th className="text-right">Remaining Interest</th> : null}{payoffOptionalColumns.includes("monthsRemaining") ? <th className="text-right">Months Left</th> : null}</tr></thead>
               <tbody>
-                {payoffDisplayRows.length === 0 ? <tr><td colSpan={7 + payoffOptionalColumns.length}>Add debts to generate a payoff plan.</td></tr> : payoffDisplayRows.slice(0, projectionMonths).map((row) => (
+                {payoffDisplayRows.length === 0 ? <tr><td colSpan={8 + payoffOptionalColumns.length}>Add debts to generate a payoff plan.</td></tr> : payoffDisplayRows.slice(0, projectionMonths).map((row) => (
                   <Fragment key={row.key}>
-                    <tr><td><button type="button" className="flex max-w-full items-center gap-2 text-left font-semibold text-white" aria-expanded={expandedPayoffRow === row.key} aria-controls={`payoff-details-${row.key}`} onClick={() => setExpandedPayoffRow(expandedPayoffRow === row.key ? null : row.key)}><span aria-hidden="true">{expandedPayoffRow === row.key ? "▾" : "▸"}</span><span className="break-words">{row.target}</span></button></td><td className="text-right">${row.debt_starting_balance.toFixed(2)}</td><td className="payoff-hide-laptop text-right">{row.apr.toFixed(2)}%</td><td className="payoff-hide-tablet text-right font-semibold">${row.total_payment.toFixed(2)}</td><td className="text-right"><div className="font-bold">${row.suggestedPayment.toFixed(2)}</div><div className="text-xs text-[#7f8da3]">{row.suggestedPaymentLabel}</div><details className="mt-1 text-left"><summary className="cursor-pointer text-xs font-semibold text-cyan-200">Why?</summary><p className="mt-1 break-words text-xs text-[#c7cfdb]">{row.suggestedPaymentWhy}</p></details></td><td>{row.payoffDate}</td><td className={row.warning ? "text-red-300" : "text-green-300"}>{row.status}</td>{payoffOptionalColumns.includes("month") ? <td>{row.month}</td> : null}{payoffOptionalColumns.includes("minimumPayment") ? <td className="text-right">${row.required_minimum.toFixed(2)}</td> : null}{payoffOptionalColumns.includes("remainingInterest") ? <td className="text-right">${row.remainingInterest.toFixed(2)}</td> : null}{payoffOptionalColumns.includes("monthsRemaining") ? <td className="text-right">{row.monthsRemaining ?? "—"}</td> : null}</tr>
-                    {expandedPayoffRow === row.key ? <tr id={`payoff-details-${row.key}`}><td colSpan={7 + payoffOptionalColumns.length}><PayoffRowDetails row={row} strategy={strategy} assumptions={[...payoffPlan.calculation_assumptions, ...payoffPlan.funding_source_assumptions]} debt={activeDebts.find((debt) => debt.id === row.debtId)} onEdit={startEditDebt} onArchive={archiveDebt} onDelete={deleteDebt} /></td></tr> : null}
+                    <tr><td>{row.month}</td><td><button type="button" className="flex max-w-full items-center gap-2 text-left font-semibold text-white" aria-expanded={expandedPayoffRow === row.key} aria-controls={`payoff-details-${row.key}`} onClick={() => setExpandedPayoffRow(expandedPayoffRow === row.key ? null : row.key)}><span aria-hidden="true">{expandedPayoffRow === row.key ? "▾" : "▸"}</span><span className="break-words">{row.target}</span></button></td><td className="text-right">${row.debt_starting_balance.toFixed(2)}</td><td className="payoff-hide-laptop text-right">{row.apr.toFixed(2)}%</td><td className="payoff-hide-tablet text-right font-semibold">${row.total_payment.toFixed(2)}</td><td className="text-right"><div className="font-bold">${row.suggestedPayment.toFixed(2)}</div><div className="text-xs text-[#7f8da3]">{row.suggestedPaymentLabel}</div><details className="mt-1 text-left"><summary className="cursor-pointer text-xs font-semibold text-cyan-200">Why?</summary><p className="mt-1 break-words text-xs text-[#c7cfdb]">{row.suggestedPaymentWhy}</p></details></td><td>{row.payoffDate}</td><td className={row.warning ? "text-red-300" : "text-green-300"}>{row.status}</td>{payoffOptionalColumns.includes("minimumPayment") ? <td className="text-right">${row.required_minimum.toFixed(2)}</td> : null}{payoffOptionalColumns.includes("remainingInterest") ? <td className="text-right">${row.remainingInterest.toFixed(2)}</td> : null}{payoffOptionalColumns.includes("monthsRemaining") ? <td className="text-right">{row.monthsRemaining ?? "—"}</td> : null}</tr>
+                    {expandedPayoffRow === row.key ? <tr id={`payoff-details-${row.key}`}><td colSpan={8 + payoffOptionalColumns.length}><PayoffRowDetails row={row} strategy={strategy} assumptions={[...payoffPlan.calculation_assumptions, ...payoffPlan.funding_source_assumptions]} debt={activeDebts.find((debt) => debt.id === row.debtId)} onEdit={startEditDebt} onArchive={archiveDebt} onDelete={deleteDebt} /></td></tr> : null}
                   </Fragment>
                 ))}
               </tbody>

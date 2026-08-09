@@ -45,7 +45,8 @@ test("Debt List consolidates row controls into one confirmed Actions menu", () =
   assert.match(page, /data-action-menu-list="debt"/);
   assert.match(page, /Back to actions/);
   assert.match(page, /width=\{view === "manage" \? 560 : 208\}/);
-  assert.match(page, /panelRole=\{view === "manage" \? "dialog" : "menu"\}/);
+  assert.match(page, /panelRole="dialog"/);
+  assert.match(page, /actions and payment automation/);
   assert.match(page, /panelAriaLabel=\{view === "manage"/);
   assert.doesNotMatch(page, /data-debt-management-panel="true"/);
   assert.doesNotMatch(page, /data-debt-management-row="true"/);

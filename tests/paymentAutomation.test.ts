@@ -31,6 +31,7 @@ test("migration and responsive controls preserve owner-scoped RLS tables", () =>
   const controls = readFileSync("src/app/dashboard/money/components/PaymentAutomationControls.tsx", "utf8");
   const bills = readFileSync("src/app/dashboard/money/cashflow/components/BillsSection.tsx", "utf8");
   const debts = readFileSync("src/app/dashboard/money/cashflow/components/DebtsSection.tsx", "utf8");
+  const debtWorkspace = readFileSync("src/app/dashboard/money/debts/page.tsx", "utf8");
   const assignments = readFileSync("src/app/dashboard/money/cashflow/components/CompactAssignmentSelect.tsx", "utf8");
   for (const table of ["bill_events", "debts"]) assert.match(migration, new RegExp(`alter table public\\.${table}`));
   assert.match(migration, /auto_pay_enabled boolean not null default false/g);
@@ -58,4 +59,22 @@ test("migration and responsive controls preserve owner-scoped RLS tables", () =>
   assert.match(assignments, /onChange\(option\.value\); close\(\);/);
   assert.match(assignments, /compactIncomeLabel/);
   assert.match(assignments, /withoutBalance/);
+  assert.doesNotMatch(debtWorkspace, /<th[^>]*>Auto<\/th>/);
+  assert.doesNotMatch(debtWorkspace, /<div className="mt-3"><PaymentAutomationControls/);
+  assert.match(debtWorkspace, /data-debt-actions-menu[\s\S]*\{automation\}/);
+  assert.match(debtWorkspace, /actions and payment automation/);
+});
+
+test("BM-37 keeps each bill and debt automation control only inside its Actions dropdown", () => {
+  for (const file of [
+    "src/app/dashboard/money/cashflow/components/BillsSection.tsx",
+    "src/app/dashboard/money/cashflow/components/DebtsSection.tsx",
+  ]) {
+    const source = readFileSync(file, "utf8");
+    const controls = source.match(/<PaymentAutomationControls/g) || [];
+    const popovers = source.match(/<OverlayPopover label="Actions"/g) || [];
+    assert.equal(controls.length, 2);
+    assert.equal(popovers.length, 2);
+    assert.doesNotMatch(source, /<th[^>]*>Auto<\/th>/);
+  }
 });

@@ -249,9 +249,6 @@ export default function BillsSection({
                   )}
 
                   <div className="mt-4 min-w-0">
-                    <PaymentAutomationControls name={bill.name} {...normalizePaymentAutomation(bill)} onSave={(patch) => updatePaymentAutomation(bill.id, patch)} />
-                  </div>
-                  <div className="mt-4 min-w-0">
                     {editingBillId === bill.id ? <BillPaymentControls
                       bill={bill}
                       editingBillId={editingBillId}
@@ -264,7 +261,7 @@ export default function BillsSection({
                       cancelEditBill={cancelEditBill}
                       archiveBill={archiveBill}
                       resetBillDueDate={resetBillDueDate}
-                    /> : <OverlayPopover label="Actions" width={192} testId="bill-actions">{() => <BillPaymentControls
+                    /> : <OverlayPopover label="Actions" width={224} testId="bill-actions">{() => <div className="grid min-w-0 gap-3 whitespace-normal"><PaymentAutomationControls name={bill.name} {...normalizePaymentAutomation(bill)} onSave={(patch) => updatePaymentAutomation(bill.id, patch)} /><BillPaymentControls
                       bill={bill}
                       editingBillId={editingBillId}
                       partialPayments={partialPayments}
@@ -276,7 +273,7 @@ export default function BillsSection({
                       cancelEditBill={cancelEditBill}
                       archiveBill={archiveBill}
                       resetBillDueDate={resetBillDueDate}
-                    />}</OverlayPopover>}
+                    /></div>}</OverlayPopover>}
                   </div>
 
                   {editingBillId !== bill.id ? (
@@ -398,7 +395,6 @@ export default function BillsSection({
                           </div>
                         </div>
                       )}
-                      <div className="mt-2"><PaymentAutomationControls compact name={bill.name} {...normalizePaymentAutomation(bill)} onSave={(patch) => updatePaymentAutomation(bill.id, patch)} /></div>
                       <details className="mt-2 text-xs text-[#9aa7b8]"><summary className="cursor-pointer font-semibold text-cyan-200">Row details</summary><div className="mt-2 grid gap-1"><span>Paid: ${Number(bill.paid || 0).toFixed(2)}</span><span>Income pot: {incomeOptions.find((option) => option.value === bill.assigned_income_date)?.detailLabel || "Unassigned"}</span><span>Payment setup is available in the Payment Setup control.</span><span>Status: {bill.status}</span></div></details>
                     </td>
 
@@ -425,7 +421,9 @@ export default function BillsSection({
                     </td>
 
                     <td className="w-[18%] align-top">
-                      <OverlayPopover label="Actions" width={192} testId="bill-actions">{() => <div className="min-w-0 whitespace-normal">
+                      <OverlayPopover label="Actions" width={224} testId="bill-actions">{() => <div className="min-w-0 whitespace-normal">
+                      <PaymentAutomationControls compact name={bill.name} {...normalizePaymentAutomation(bill)} onSave={(patch) => updatePaymentAutomation(bill.id, patch)} />
+                      <div className="mt-3 border-t border-[#2a3242] pt-3">
                       <BillPaymentControls
                         bill={bill}
                         editingBillId={editingBillId}
@@ -439,6 +437,7 @@ export default function BillsSection({
                         archiveBill={archiveBill}
                         resetBillDueDate={resetBillDueDate}
                       />
+                      </div>
                       </div>}</OverlayPopover>
                     </td>
                   </tr>

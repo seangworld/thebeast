@@ -46,16 +46,20 @@ test("Suggested Payment safely falls back to minimum when no plan or recommendat
 });
 
 test("Payoff Plan column preferences accept only supported optional columns", () => {
-  assert.deepEqual(parsePayoffColumnPreference('["month","remainingInterest","unsafe"]'), ["month", "remainingInterest"]);
+  assert.deepEqual(parsePayoffColumnPreference('["month","remainingInterest","unsafe"]'), ["remainingInterest"]);
   assert.deepEqual(parsePayoffColumnPreference("invalid"), []);
   assert.deepEqual(parsePayoffColumnPreference(null), []);
 });
 
-test("Payoff Plan uses a responsive Suggested Payment column, row details, local preferences, and phone cards", async () => {
+test("Payoff Plan keeps Month far left and uses responsive details, preferences, and phone cards", async () => {
   const { readFile } = await import("node:fs/promises");
   const source = await readFile("src/app/dashboard/money/debts/page.tsx", "utf8");
   const css = await readFile("src/app/globals.css", "utf8");
   for (const column of ["Debt", "Balance", "APR", "Planned Payment", "Suggested Payment", "Payoff Date", "Status"]) assert.match(source, new RegExp(`>${column}<`));
+  assert.match(source, /<thead><tr><th>Month<\/th><th[^>]*>Debt<\/th>/);
+  assert.match(source, /<tr><td>\{row\.month\}<\/td><td><button/);
+  assert.doesNotMatch(source, /payoffOptionalColumns\.includes\("month"\)/);
+  assert.doesNotMatch(source, /id: "month", label: "Month"/);
   assert.match(source, />Minimum Payment</);
   assert.match(source, />Why\?</);
   assert.match(source, /suggestedPaymentLabel/);

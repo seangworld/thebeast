@@ -177,7 +177,7 @@ test("Bills and Debts use viewport-bound overlay menus without changing row widt
 
   for (const source of [bills, debts]) {
     assert.match(source, /<OverlayPopover label="Actions"/);
-    assert.equal(source.match(/<OverlayPopover label="Actions" width=\{192\}/g)?.length, 2);
+    assert.equal(source.match(/<OverlayPopover label="Actions" width=\{224\}/g)?.length, 2);
     assert.equal(source.match(/<PaymentConfigurationControl/g)?.length, 2);
     assert.doesNotMatch(source, /<summary[^>]*>Actions<\/summary>/);
     assert.doesNotMatch(source, /min-w-\[900px\]/);
