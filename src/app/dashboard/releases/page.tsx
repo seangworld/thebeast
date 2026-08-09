@@ -1,5 +1,6 @@
 import Link from "next/link";
 import {
+  APP_VERSION,
   BEASTOS_UI_POLISH_NOTE,
   BEAST_LEARNING_VERSION,
   BEAST_MONEY_VERSION_LABEL,
@@ -316,7 +317,7 @@ export default function ReleasesPage() {
 
             <div className="inline-flex w-fit items-center gap-2 rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1 text-green-300">
               <span className="h-2 w-2 rounded-full bg-green-300" />
-              <span className="font-semibold">Active v2.1.1</span>
+              <span className="font-semibold">Current {APP_VERSION}</span>
             </div>
           </div>
         </section>

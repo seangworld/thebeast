@@ -1,6 +1,6 @@
 # The Beast / BeastOS
 
-Current platform release candidate: `BeastOS v3.0.0`
+Current platform manifest: `BeastOS v3.0.0` (Development)
 
 BeastOS v3.0.0 activates Health Advisor as a protected owner experience for
 health-record review, medication-list organization, appointment preparation,
@@ -9,7 +9,7 @@ deterministic recommendations. Decisions and preparation outcomes use the
 existing Execution History foundation. Health Advisor never diagnoses,
 prescribes, interprets clinical significance, or replaces qualified care.
 
-Current Money version: `BeastMoney v2.3.0`
+Current Money version: `BeastMoney v2.4.0` (Production)
 
 Current education version: `BeastEducation v1.6 Beta`
 

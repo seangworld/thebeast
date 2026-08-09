@@ -522,6 +522,15 @@ test("BeastMoney version is consistent across visible release surfaces", () => {
   });
 });
 
+test("platform release copy does not retain stale current-version literals", () => {
+  const readme = readFileSync("README.md", "utf8");
+  const releasesPage = readFileSync("src/app/dashboard/releases/page.tsx", "utf8");
+  assert.match(readme, new RegExp(`BeastMoney v${versionManifest.beastmoney.version}`));
+  assert.doesNotMatch(readme, /BeastMoney v2\.3\.0/);
+  assert.match(releasesPage, /Current \{APP_VERSION\}/);
+  assert.doesNotMatch(releasesPage, /Active v2\.1\.1/);
+});
+
 function readSourceFiles(directory: string): string[] {
   return readdirSync(directory).flatMap((entry) => {
     const path = `${directory}/${entry}`;
