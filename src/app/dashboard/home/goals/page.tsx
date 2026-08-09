@@ -4,7 +4,7 @@ import { OwnerOnlyModuleGuard } from "../../OwnerOnlyModuleGuard";
 export default function HomeGoalsPage() {
   return (
     <OwnerOnlyModuleGuard module="home" applicationName="BeastHome">
-      <GoalsOverviewPage searchParams={{ module: "home" }} />
+      <GoalsOverviewPage searchParams={Promise.resolve({ module: "home" })} />
     </OwnerOnlyModuleGuard>
   );
 }

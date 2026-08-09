@@ -1,5 +1,5 @@
 import UploadsPage from "../../uploads/page";
 
 export default function MoneyDocumentsPage() {
-  return <UploadsPage searchParams={{ module: "money" }} />;
+  return <UploadsPage searchParams={Promise.resolve({ module: "money" })} />;
 }

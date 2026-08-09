@@ -8,14 +8,15 @@ import {
 } from "@/lib/auth/experience";
 import AcceptInvitationForm from "./AcceptInvitationForm";
 
-export default function AcceptInvitationPage({
+export default async function AcceptInvitationPage({
   searchParams,
 }: {
-  searchParams?: { next?: string };
+  searchParams?: Promise<{ next?: string }>;
 }) {
-  const destination = getSafeAuthDestination(searchParams?.next);
+  const resolvedSearchParams = await searchParams;
+  const destination = getSafeAuthDestination(resolvedSearchParams?.next);
   const invitationAuthorized =
-    cookies().get(BEAST_INVITATION_COOKIE)?.value === "authorized";
+    (await cookies()).get(BEAST_INVITATION_COOKIE)?.value === "authorized";
 
   if (!invitationAuthorized) {
     redirect(buildAuthLoginPath(destination, "invalid_or_expired_link"));

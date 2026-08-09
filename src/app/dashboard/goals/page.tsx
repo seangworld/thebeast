@@ -213,10 +213,11 @@ async function getGoalLoadResult(): Promise<GoalLoadResult> {
 export default async function GoalsOverviewPage({
   searchParams,
 }: {
-  searchParams?: { module?: string };
+  searchParams?: Promise<{ module?: string }>;
 }) {
+  const resolvedSearchParams = await searchParams;
   const goalLoadResult = await getGoalLoadResult();
-  const context = getContextualWorkspaceConfig(searchParams?.module);
+  const context = getContextualWorkspaceConfig(resolvedSearchParams?.module);
   const goals = context
     ? goalLoadResult.goals.filter((goal) => goalMatchesContext(goal, context))
     : goalLoadResult.goals;

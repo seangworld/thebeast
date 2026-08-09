@@ -1,5 +1,5 @@
 import GoalsOverviewPage from "../../goals/page";
 
 export default function EducationGoalsPage() {
-  return <GoalsOverviewPage searchParams={{ module: "education" }} />;
+  return <GoalsOverviewPage searchParams={Promise.resolve({ module: "education" })} />;
 }

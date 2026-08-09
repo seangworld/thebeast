@@ -1,4 +1,4 @@
-import { cookies } from "next/headers";
+import { cookies, type UnsafeUnwrappedCookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -11,7 +11,9 @@ export function createRouteClient() {
     );
   }
 
-  const cookieStore = cookies();
+  // Supabase's client factory must remain synchronous for its existing callers.
+  // Next 15 retains this compatibility path while async request APIs are adopted.
+  const cookieStore = cookies() as unknown as UnsafeUnwrappedCookies;
 
   return createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {

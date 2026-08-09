@@ -8,9 +8,10 @@ import { createRouteClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 const maximumTextLength = 250_000;
-type RouteContext = { params: { documentId: string } };
+type RouteContext = { params: Promise<{ documentId: string }> };
 
 export async function POST(request: Request, context: RouteContext) {
+  const { documentId } = await context.params;
   const supabase = createRouteClient();
   const {
     data: { user },
@@ -43,7 +44,7 @@ export async function POST(request: Request, context: RouteContext) {
       supabase
         .from("beast_documents")
         .select("id, owner_id, title, category, status")
-        .eq("id", context.params.documentId)
+        .eq("id", documentId)
         .eq("owner_id", user.id)
         .eq("category", "Health")
         .maybeSingle(),

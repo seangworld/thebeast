@@ -9,9 +9,9 @@ import { createRouteClient } from "@/lib/supabase/server";
 export const dynamic = "force-dynamic";
 
 type RouteContext = {
-  params: {
+  params: Promise<{
     memberId: string;
-  };
+  }>;
 };
 
 type OutreachAction =
@@ -61,6 +61,7 @@ function jsonError(
 }
 
 export async function POST(request: Request, { params }: RouteContext) {
+  const { memberId } = await params;
   const routeClient = createRouteClient();
   const {
     data: { user: actor },
@@ -101,7 +102,7 @@ export async function POST(request: Request, { params }: RouteContext) {
   if (action.action === "send_reminder") {
     const { error } = await routeClient.rpc(
       "send_beast_admin_verification_reminder",
-      { selected_member_id: params.memberId }
+      { selected_member_id: memberId }
     );
     if (error) {
       const status = /permission|owner access|required|42501/i.test(
@@ -165,7 +166,7 @@ export async function POST(request: Request, { params }: RouteContext) {
   const { data, error } = await routeClient.rpc(
     "set_beast_admin_email_verification_exception",
     {
-      selected_member_id: params.memberId,
+      selected_member_id: memberId,
       selected_policy_key: policyKey,
       selected_expires_at: expiresAt,
       selected_reason: action.reason || "Owner removed the exception.",

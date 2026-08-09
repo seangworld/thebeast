@@ -13,12 +13,13 @@ export function generateStaticParams() {
   return digitalProfessionals.map(({ id }) => ({ professionalId: id }));
 }
 
-export default function DigitalProfessionalPage({
+export default async function DigitalProfessionalPage({
   params,
 }: {
-  params: { professionalId: string };
+  params: Promise<{ professionalId: string }>;
 }) {
-  const professional = getDigitalProfessional(params.professionalId);
+  const { professionalId } = await params;
+  const professional = getDigitalProfessional(professionalId);
   if (!professional) notFound();
 
   const sections = [

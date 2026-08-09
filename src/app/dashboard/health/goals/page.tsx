@@ -4,7 +4,7 @@ import { OwnerOnlyModuleGuard } from "../../OwnerOnlyModuleGuard";
 export default function HealthGoalsPage() {
   return (
     <OwnerOnlyModuleGuard module="health" applicationName="BeastHealth">
-      <GoalsOverviewPage searchParams={{ module: "health" }} />
+      <GoalsOverviewPage searchParams={Promise.resolve({ module: "health" })} />
     </OwnerOnlyModuleGuard>
   );
 }

@@ -11,9 +11,9 @@ import { createRouteClient } from "@/lib/supabase/server";
 export const dynamic = "force-dynamic";
 
 type RouteContext = {
-  params: {
+  params: Promise<{
     invitationId: string;
-  };
+  }>;
 };
 
 function jsonError(message: string, status: number) {
@@ -28,6 +28,7 @@ function invitationExpiryHours() {
 }
 
 export async function POST(request: Request, { params }: RouteContext) {
+  const { invitationId } = await params;
   const routeClient = createRouteClient();
   const {
     data: { user: actor },
@@ -76,7 +77,7 @@ export async function POST(request: Request, { params }: RouteContext) {
     .select(
       "id,invited_by,member_id,email,display_name,invitation_message,status"
     )
-    .eq("id", params.invitationId)
+    .eq("id", invitationId)
     .eq("invited_by", actor.id)
     .maybeSingle();
 

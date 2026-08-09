@@ -6,12 +6,13 @@ import {
 } from "@/lib/auth/experience";
 import ForgotPasswordForm from "./ForgotPasswordForm";
 
-export default function ForgotPasswordPage({
+export default async function ForgotPasswordPage({
   searchParams,
 }: {
-  searchParams?: { next?: string };
+  searchParams?: Promise<{ next?: string }>;
 }) {
-  const destination = getSafeAuthDestination(searchParams?.next);
+  const resolvedSearchParams = await searchParams;
+  const destination = getSafeAuthDestination(resolvedSearchParams?.next);
 
   if (
     !isPasswordSignInEnabled(

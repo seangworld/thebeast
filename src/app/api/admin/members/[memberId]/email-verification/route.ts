@@ -11,9 +11,9 @@ import { createRouteClient } from "@/lib/supabase/server";
 export const dynamic = "force-dynamic";
 
 type RouteContext = {
-  params: {
+  params: Promise<{
     memberId: string;
-  };
+  }>;
 };
 
 function getEnvironment(request: Request) {
@@ -38,6 +38,7 @@ function jsonError(
 }
 
 export async function POST(request: Request, { params }: RouteContext) {
+  const { memberId } = await params;
   const routeClient = createRouteClient();
   const {
     data: { user: actor },
@@ -71,11 +72,11 @@ export async function POST(request: Request, { params }: RouteContext) {
 
   const [{ data: authData, error: authError }, { data: profile, error: profileError }] =
     await Promise.all([
-      adminClient.auth.admin.getUserById(params.memberId),
+      adminClient.auth.admin.getUserById(memberId),
       adminClient
         .from("profiles")
         .select("account_kind")
-        .eq("id", params.memberId)
+        .eq("id", memberId)
         .maybeSingle(),
     ]);
   const member = authData?.user;
@@ -125,7 +126,7 @@ export async function POST(request: Request, { params }: RouteContext) {
       .from("beast_admin_member_account_audit_events")
       .insert({
         actor_id: actor.id,
-        member_id: params.memberId,
+        member_id: memberId,
         action: "email_verification_resent",
         changes: {
           emailVerification: {
@@ -151,7 +152,7 @@ export async function POST(request: Request, { params }: RouteContext) {
     .from("beast_admin_member_account_audit_events")
     .insert({
       actor_id: actor.id,
-      member_id: params.memberId,
+      member_id: memberId,
       action: "email_verification_resent",
       changes: {
         emailVerification: {

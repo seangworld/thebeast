@@ -26,9 +26,9 @@ import {
 import { createRouteClient } from "@/lib/supabase/server";
 
 type TimelinePageProps = {
-  searchParams?: {
+  searchParams?: Promise<{
     source?: string;
-  };
+  }>;
 };
 
 type ActivityLoadResult = {
@@ -168,8 +168,9 @@ async function loadProfessionalActivity(): Promise<ActivityLoadResult> {
 export default async function TimelinePage({
   searchParams,
 }: TimelinePageProps) {
+  const resolvedSearchParams = await searchParams;
   const activity = await loadProfessionalActivity();
-  const selectedFilter = getProfessionalActivityFilter(searchParams?.source);
+  const selectedFilter = getProfessionalActivityFilter(resolvedSearchParams?.source);
   const stream = buildTimelineStream({
     items: activity.items,
     filters: selectedFilter.source

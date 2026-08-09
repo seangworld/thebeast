@@ -5,7 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createRouteClient } from "@/lib/supabase/server";
 
 export async function POST() {
-  if (cookies().get(BEAST_INVITATION_COOKIE)?.value !== "authorized") {
+  if ((await cookies()).get(BEAST_INVITATION_COOKIE)?.value !== "authorized") {
     return NextResponse.json(
       { error: "The invitation session is no longer available." },
       { status: 401 }

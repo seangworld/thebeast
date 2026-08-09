@@ -11,9 +11,9 @@ import { createRouteClient } from "@/lib/supabase/server";
 export const dynamic = "force-dynamic";
 
 type RouteContext = {
-  params: {
+  params: Promise<{
     memberId: string;
-  };
+  }>;
 };
 
 function jsonError(message: string, status: number) {
@@ -21,6 +21,7 @@ function jsonError(message: string, status: number) {
 }
 
 export async function POST(request: Request, { params }: RouteContext) {
+  const { memberId } = await params;
   const routeClient = createRouteClient();
   const {
     data: { user: actor },
@@ -68,11 +69,11 @@ export async function POST(request: Request, { params }: RouteContext) {
     { data: authData, error: authError },
     { data: profile, error: profileError },
   ] = await Promise.all([
-    adminClient.auth.admin.getUserById(params.memberId),
+    adminClient.auth.admin.getUserById(memberId),
     adminClient
       .from("profiles")
       .select("account_kind")
-      .eq("id", params.memberId)
+      .eq("id", memberId)
       .maybeSingle(),
   ]);
   const member = authData?.user;
@@ -117,7 +118,7 @@ export async function POST(request: Request, { params }: RouteContext) {
     "record_beast_admin_account_audit_event",
     {
       selected_actor_id: actor.id,
-      selected_member_id: params.memberId,
+      selected_member_id: memberId,
       selected_action: "password_reset_triggered",
       selected_previous_value: { resetRequested: false },
       selected_new_value: { resetRequested: !resetError },

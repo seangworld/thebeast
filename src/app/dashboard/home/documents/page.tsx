@@ -4,7 +4,7 @@ import { OwnerOnlyModuleGuard } from "../../OwnerOnlyModuleGuard";
 export default function BeastHomeDocumentsPage() {
   return (
     <OwnerOnlyModuleGuard module="home" applicationName="BeastHome">
-      <UploadsPage searchParams={{ module: "home" }} />
+      <UploadsPage searchParams={Promise.resolve({ module: "home" })} />
     </OwnerOnlyModuleGuard>
   );
 }

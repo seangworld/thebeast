@@ -9,9 +9,9 @@ import { createRouteClient } from "@/lib/supabase/server";
 export const dynamic = "force-dynamic";
 
 type RouteContext = {
-  params: {
+  params: Promise<{
     memberId: string;
-  };
+  }>;
 };
 
 function jsonError(message: string, status: number) {
@@ -48,13 +48,14 @@ async function requireOwner() {
 }
 
 export async function GET(_request: Request, { params }: RouteContext) {
+  const { memberId } = await params;
   const owner = await requireOwner();
   if ("error" in owner) return owner.error;
 
   const { data, error } = await owner.routeClient.rpc(
     "get_beast_admin_member_access_history",
     {
-      selected_member_id: params.memberId,
+      selected_member_id: memberId,
       event_limit: 100,
     }
   );
@@ -84,6 +85,7 @@ export async function GET(_request: Request, { params }: RouteContext) {
 }
 
 export async function POST(request: Request, { params }: RouteContext) {
+  const { memberId } = await params;
   const owner = await requireOwner();
   if ("error" in owner) return owner.error;
 
@@ -111,7 +113,7 @@ export async function POST(request: Request, { params }: RouteContext) {
   }
 
   const { data: targetData, error: targetError } =
-    await adminClient.auth.admin.getUserById(params.memberId);
+    await adminClient.auth.admin.getUserById(memberId);
   if (targetError || !targetData.user) {
     return jsonError("The selected Auth account is not available.", 404);
   }
@@ -120,7 +122,7 @@ export async function POST(request: Request, { params }: RouteContext) {
     "apply_beast_admin_member_auth_control",
     {
       selected_actor_id: owner.actor.id,
-      selected_member_id: params.memberId,
+      selected_member_id: memberId,
       selected_action: action.action,
       selected_reason: action.reason,
     }

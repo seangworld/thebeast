@@ -1,13 +1,14 @@
 import { redirect } from "next/navigation";
 
-export default function BeastMoneyLandingPage({
+export default async function BeastMoneyLandingPage({
   searchParams,
 }: {
-  searchParams?: { starter?: string | string[] };
+  searchParams?: Promise<{ starter?: string | string[] }>;
 }) {
-  const starter = Array.isArray(searchParams?.starter)
-    ? searchParams?.starter[0]
-    : searchParams?.starter;
+  const resolvedSearchParams = await searchParams;
+  const starter = Array.isArray(resolvedSearchParams?.starter)
+    ? resolvedSearchParams?.starter[0]
+    : resolvedSearchParams?.starter;
 
   if (starter?.trim()) {
     redirect(

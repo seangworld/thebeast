@@ -70,8 +70,9 @@ function buildCertificatePdf({
 
 export async function GET(
   _request: Request,
-  { params }: { params: { certificateId: string } }
+  { params }: { params: Promise<{ certificateId: string }> }
 ) {
+  const { certificateId } = await params;
   const supabase = createRouteClient();
   const {
     data: { user },
@@ -85,7 +86,7 @@ export async function GET(
   const { data: certificate, error } = await supabase
     .from("learning_certificates")
     .select("certificate_id, learner_name, path_name, completion_date")
-    .eq("certificate_id", params.certificateId)
+    .eq("certificate_id", certificateId)
     .eq("user_id", user.id)
     .maybeSingle();
 

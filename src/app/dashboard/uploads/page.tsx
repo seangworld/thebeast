@@ -87,10 +87,11 @@ async function getDocumentLoadResult(): Promise<DocumentLoadResult> {
 export default async function UploadsPage({
   searchParams,
 }: {
-  searchParams?: { module?: string };
+  searchParams?: Promise<{ module?: string }>;
 }) {
+  const resolvedSearchParams = await searchParams;
   const documentLoadResult = await getDocumentLoadResult();
-  const context = getContextualWorkspaceConfig(searchParams?.module);
+  const context = getContextualWorkspaceConfig(resolvedSearchParams?.module);
   const documents = context
     ? documentLoadResult.documents.filter((document) =>
         documentMatchesContext(document, context)

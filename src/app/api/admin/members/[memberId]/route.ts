@@ -16,9 +16,9 @@ import { createRouteClient } from "@/lib/supabase/server";
 export const dynamic = "force-dynamic";
 
 type RouteContext = {
-  params: {
+  params: Promise<{
     memberId: string;
-  };
+  }>;
 };
 
 function jsonError(message: string, status: number) {
@@ -56,6 +56,7 @@ function isDuplicateEmailError(error: unknown) {
 }
 
 export async function PATCH(request: Request, { params }: RouteContext) {
+  const { memberId } = await params;
   const routeClient = createRouteClient();
   const {
     data: { user: actor },
@@ -100,7 +101,7 @@ export async function PATCH(request: Request, { params }: RouteContext) {
   }
 
   const { data: targetAuthData, error: targetAuthError } =
-    await adminClient.auth.admin.getUserById(params.memberId);
+    await adminClient.auth.admin.getUserById(memberId);
   const targetAuthUser = targetAuthData?.user;
 
   if (targetAuthError || !targetAuthUser) {
@@ -110,7 +111,7 @@ export async function PATCH(request: Request, { params }: RouteContext) {
   const { data: targetProfile, error: targetProfileError } = await adminClient
     .from("profiles")
     .select("id,role,display_name,account_kind")
-    .eq("id", params.memberId)
+    .eq("id", memberId)
     .maybeSingle();
 
   if (targetProfileError) {
@@ -208,13 +209,13 @@ export async function PATCH(request: Request, { params }: RouteContext) {
     adminClient
       .from("beast_admin_member_module_access")
       .select("module_id,enabled")
-      .eq("member_id", params.memberId),
+      .eq("member_id", memberId),
     adminClient
       .from("beast_admin_feature_flag_assignments")
       .select("flag_id")
       .eq("owner_id", actor.id)
       .eq("scope_type", "member")
-      .eq("member_id", params.memberId)
+      .eq("member_id", memberId)
       .eq("stage", "beta"),
   ]);
   if (moduleAccessResult.error || betaAssignmentResult.error) {
@@ -254,7 +255,7 @@ export async function PATCH(request: Request, { params }: RouteContext) {
 
   if (Object.keys(authUpdates).length) {
     const { data, error } = await adminClient.auth.admin.updateUserById(
-      params.memberId,
+      memberId,
       authUpdates
     );
     if (error) {
@@ -286,7 +287,7 @@ export async function PATCH(request: Request, { params }: RouteContext) {
 
     if (verificationError) {
       const { error: rollbackError } =
-        await adminClient.auth.admin.updateUserById(params.memberId, {
+        await adminClient.auth.admin.updateUserById(memberId, {
           email: currentEmail,
           email_confirm: Boolean(targetAuthUser.email_confirmed_at),
         });
@@ -332,7 +333,7 @@ export async function PATCH(request: Request, { params }: RouteContext) {
 
   const { data: databaseUpdate, error: databaseError } =
     await adminClient.rpc("update_beast_admin_member_account", {
-      selected_member_id: params.memberId,
+      selected_member_id: memberId,
       selected_display_name: edit.displayName,
       selected_role: edit.role,
       selected_account_status: nextStatus,
@@ -358,7 +359,7 @@ export async function PATCH(request: Request, { params }: RouteContext) {
           currentStatus === "suspended" ? "876000h" : "none";
       }
       const { error: rollbackError } =
-        await adminClient.auth.admin.updateUserById(params.memberId, rollback);
+        await adminClient.auth.admin.updateUserById(memberId, rollback);
       if (rollbackError) {
         return jsonError(
           "The profile update failed and Auth rollback also failed. Inspect this account before retrying.",
@@ -399,7 +400,7 @@ export async function PATCH(request: Request, { params }: RouteContext) {
   }
 
   const result: BeastAdminMemberEditResult = {
-    memberId: params.memberId,
+    memberId,
     emailChanged,
     emailReverificationRequired,
     auditEventId,

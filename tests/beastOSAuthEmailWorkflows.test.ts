@@ -177,7 +177,8 @@ test("BA-107 owner correction and resend remain server-only, confirmed, and audi
   assert.match(editRoute, /adminClient\.auth\.resend/);
   assert.match(editRoute, /The original Auth email was restored/);
   assert.match(resendRoute, /actorProfile\?\.role !== "admin"/);
-  assert.match(resendRoute, /auth\.admin\.getUserById\(params\.memberId\)/);
+  assert.match(resendRoute, /const \{ memberId \} = await params/);
+  assert.match(resendRoute, /auth\.admin\.getUserById\(memberId\)/);
   assert.match(resendRoute, /email_verification_resent/);
   assert.match(resendRoute, /System, demo, and unmanaged accounts are protected/);
   assert.match(workspace, /Pending email change/);

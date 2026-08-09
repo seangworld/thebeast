@@ -166,7 +166,8 @@ test("BA-103 server route updates authoritative Auth with confirmation and rollb
   assert.match(route, /createRouteClient\(\)/);
   assert.match(route, /actorProfile\?\.role !== "admin"/);
   assert.match(route, /createAdminClient\(\)/);
-  assert.match(route, /auth\.admin\.getUserById\(params\.memberId\)/);
+  assert.match(route, /const \{ memberId \} = await params/);
+  assert.match(route, /auth\.admin\.getUserById\(memberId\)/);
   assert.match(route, /auth\.admin\.updateUserById/);
   assert.match(
     route,

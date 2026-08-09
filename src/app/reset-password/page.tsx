@@ -8,12 +8,13 @@ import {
 } from "@/lib/auth/experience";
 import ResetPasswordForm from "./ResetPasswordForm";
 
-export default function ResetPasswordPage({
+export default async function ResetPasswordPage({
   searchParams,
 }: {
-  searchParams?: { next?: string; state?: string };
+  searchParams?: Promise<{ next?: string; state?: string }>;
 }) {
-  const destination = getSafeAuthDestination(searchParams?.next);
+  const resolvedSearchParams = await searchParams;
+  const destination = getSafeAuthDestination(resolvedSearchParams?.next);
 
   if (
     !isPasswordSignInEnabled(
@@ -24,11 +25,11 @@ export default function ResetPasswordPage({
   }
 
   const recoveryAuthorized =
-    cookies().get(BEAST_PASSWORD_RECOVERY_COOKIE)?.value === "authorized";
+    (await cookies()).get(BEAST_PASSWORD_RECOVERY_COOKIE)?.value === "authorized";
   const failureState =
-    searchParams?.state === "authentication_error"
+    resolvedSearchParams?.state === "authentication_error"
       ? "authentication_error"
-      : searchParams?.state === "invalid_or_expired_link"
+      : resolvedSearchParams?.state === "invalid_or_expired_link"
         ? "invalid_or_expired_link"
         : null;
 

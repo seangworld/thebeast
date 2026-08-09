@@ -7,21 +7,22 @@ import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
-export default function EducationWorkspacePage({
+export default async function EducationWorkspacePage({
   params,
 }: {
-  params: { workspace: string };
+  params: Promise<{ workspace: string }>;
 }) {
-  if (isDormantTeachingWorkspace(params.workspace)) {
+  const { workspace } = await params;
+  if (isDormantTeachingWorkspace(workspace)) {
     redirect("/dashboard/education");
   }
 
-  const planningDestination = retiredPlanningAliases[params.workspace];
+  const planningDestination = retiredPlanningAliases[workspace];
   if (planningDestination) redirect(planningDestination);
 
-  if (["profile", "paths", "roadmap", "documents", "outcomes", "research"].includes(params.workspace)) {
-    redirect(`/dashboard/education#${params.workspace}`);
+  if (["profile", "paths", "roadmap", "documents", "outcomes", "research"].includes(workspace)) {
+    redirect(`/dashboard/education#${workspace}`);
   }
 
-  return <LearningWorkspaceView slug={params.workspace} />;
+  return <LearningWorkspaceView slug={workspace} />;
 }
