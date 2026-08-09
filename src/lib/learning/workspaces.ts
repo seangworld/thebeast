@@ -169,12 +169,12 @@ export const learningWorkspaceDefinitions: Record<
   },
   scholarships: {
     slug: "scholarships",
-    title: "Scholarships",
-    eyebrow: "Funding opportunities",
-    description: "Keep track of scholarships, financial aid, what you need to apply, and important dates.",
-    emptyTitle: "No scholarship opportunities are saved yet",
-    emptyDescription: "Your Guidance Counselor can help identify what to verify once your school and pathway plans are clearer.",
-    emptyAction: { label: "Discuss school planning", href: "/dashboard/education/guidance-counselor" },
+    title: "Education Funding",
+    eyebrow: "Paying for education",
+    description: "Track scholarships, grants, FAFSA, veteran benefits, employer help, applications, awards, and important dates.",
+    emptyTitle: "No education-funding records are saved yet",
+    emptyDescription: "Start with a possible funding source or ask your Guidance Counselor what may fit your education plan.",
+    emptyAction: { label: "Discuss education funding", href: "/dashboard/education/guidance-counselor?prompt=Help%20me%20understand%20education%20funding%20options." },
   },
   certifications: {
     slug: "certifications",

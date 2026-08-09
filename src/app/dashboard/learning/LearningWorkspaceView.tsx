@@ -33,6 +33,11 @@ import {
   canonicalPrimaryValue,
   parseCanonicalFields,
 } from "@/lib/canonicalKnowledgePresentation";
+import {
+  educationRecordState,
+  isEducationFundingRecord,
+  lifeWorkspaceIntroductions,
+} from "@/lib/education/lifeWorkspaces";
 
 type WorkspaceItem = {
   id: string;
@@ -46,27 +51,35 @@ type WorkspaceItem = {
   lifecycleStatus?: CourseLifecycleStatus;
   structuredFields?: Array<{ label: string; value: string }>;
   completionActions?: string[];
+  kind?: "record" | "recommendation" | "goal" | "document";
 };
+
+function titleCase(value: string) {
+  return value.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
 
 async function loadWorkspaceItems(slug: LearningWorkspaceSlug, userId: string) {
   const supabase = createRouteClient();
-  if (slug === "schools" || slug === "certifications") {
+  if (slug === "schools" || slug === "certifications" || slug === "scholarships") {
     const categories = slug === "schools"
       ? ["school", "degree", "coursework"]
-      : ["certification", "license"];
-    const result = await supabase
-      .from("education_career_profile_items")
-      .select("id, owner_id, phase, category, label, value, source_type, verification_status, occurred_on, updated_at, archived_at")
-      .eq("owner_id", userId)
-      .in("category", categories)
-      .is("archived_at", null)
-      .order("updated_at", { ascending: false });
-    if (result.error) throw new Error(`Unable to load ${learningWorkspaceDefinitions[slug].title}: ${result.error.message}`);
-    const rows = (result.data || []) as Record<string, unknown>[];
+      : slug === "certifications"
+        ? ["certification", "license"]
+        : ["budget", "constraint", "military", "employment", "other"];
+    const [recordResult, pathResult, goalResult, documentResult] = await Promise.all([
+      supabase.from("education_career_profile_items").select("id, owner_id, phase, category, label, value, source_type, source_reference, verification_status, occurred_on, updated_at, archived_at").eq("owner_id", userId).in("category", categories).is("archived_at", null).order("updated_at", { ascending: false }),
+      supabase.from("education_career_paths").select("id, owner_id, title, path_type, status, comparison, rationale, source_url, source_name, source_effective_on, source_retrieved_at, limitations").eq("owner_id", userId).neq("status", "archived").order("updated_at", { ascending: false }),
+      supabase.from("beast_goals").select("id, owner_id, title, category, status, target_date").eq("owner_id", userId).in("category", ["Education", "Career"]).neq("status", "Archived").order("updated_at", { ascending: false }),
+      supabase.from("beast_documents").select("id, owner_id, title, category, status").eq("owner_id", userId).not("status", "in", '("Archived","Deleted")').order("updated_at", { ascending: false }),
+    ]);
+    const failure = [recordResult, pathResult, goalResult, documentResult].find((result) => result.error)?.error;
+    if (failure) throw new Error(`Unable to load ${learningWorkspaceDefinitions[slug].title}: ${failure.message}`);
+    const allRows = (recordResult.data || []) as Record<string, unknown>[];
+    const rows = slug === "scholarships" ? allRows.filter(isEducationFundingRecord) : allRows;
     const structuredCategories = new Set(
       rows.filter((row) => canonicalDisplayFields(row.value).length > 0).map((row) => String(row.category))
     );
-    return rows.filter((row) => {
+    const records = rows.filter((row) => {
       if (!structuredCategories.has(String(row.category))) return true;
       if (canonicalDisplayFields(row.value).length > 0) return true;
       return !(row.source_type === "conversation" && String(row.source_reference || "").startsWith("guidance:"));
@@ -81,19 +94,38 @@ async function loadWorkspaceItems(slug: LearningWorkspaceSlug, userId: string) {
         detail: structuredFields.length
           ? `${String(row.phase || "present")} · ${String(row.verification_status || "member reported").replaceAll("_", " ")}`
           : String(row.value || "No additional information has been saved yet."),
-        status: String(row.phase || "present"),
+        status: educationRecordState(slug, row),
         meta: row.occurred_on ? new Date(`${String(row.occurred_on)}T12:00:00`).toLocaleDateString() : undefined,
         structuredFields,
         completionActions: canonicalMissingActions(entityType, row.value),
+        kind: "record",
       };
     });
+    const relevantPath = (path: Record<string, unknown>) => {
+      const value = `${String(path.path_type || "")} ${String(path.title || "")}`.toLowerCase();
+      return slug === "schools" ? /school|college|university|program|degree/.test(value) : slug === "certifications" ? /certif|credential|license/.test(value) : /scholar|grant|fund|fafsa|benefit|tuition/.test(value);
+    };
+    const recommendations = ((pathResult.data || []) as Record<string, unknown>[]).filter(relevantPath).map((path): WorkspaceItem => ({
+      id: `path-${String(path.id)}`,
+      ownerId: String(path.owner_id || userId),
+      title: String(path.title || "Suggested option"),
+      detail: `${String(path.rationale || "Review why this option may or may not fit before acting.")}${path.limitations ? ` Limitation: ${String(path.limitations)}` : ""}`,
+      status: "Recommended",
+      meta: path.source_name ? `Source: ${String(path.source_name)}` : "Current details still need verification",
+      href: path.source_url ? String(path.source_url) : undefined,
+      structuredFields: Object.entries((path.comparison || {}) as Record<string, unknown>).flatMap(([label, value]) => typeof value === "string" && value.trim() ? [{ label: titleCase(label), value }] : []),
+      kind: "recommendation",
+    }));
+    const goals = ((goalResult.data || []) as Record<string, unknown>[]).map((goal): WorkspaceItem => ({ id: `goal-${String(goal.id)}`, ownerId: String(goal.owner_id || userId), title: String(goal.title || "Education goal"), detail: goal.target_date ? `Target: ${new Date(`${String(goal.target_date)}T12:00:00`).toLocaleDateString()}` : "No target date is saved.", status: String(goal.status || "Saved"), href: "/dashboard/education/goals", kind: "goal" }));
+    const documents = ((documentResult.data || []) as Record<string, unknown>[]).filter((document) => /education|school|transcript|certif|scholar|financial aid|fund/i.test(`${String(document.category || "")} ${String(document.title || "")}`)).map((document): WorkspaceItem => ({ id: `document-${String(document.id)}`, ownerId: String(document.owner_id || userId), title: String(document.title || "Education document"), detail: String(document.category || "Education document"), status: String(document.status || "Saved"), href: `/dashboard/education/documents?document=${encodeURIComponent(String(document.id))}`, kind: "document" }));
+    return [...records, ...recommendations, ...goals, ...documents];
   }
   const table =
     slug === "learning-path" || slug === "educational-roadmap"
       ? "learning_plans"
       : slug === "courses"
         ? "learning_courses"
-        : slug === "career-planning" || slug === "scholarships"
+        : slug === "career-planning"
           ? "learning_goals"
         : slug === "achievements"
           ? "learning_achievements"
@@ -302,6 +334,11 @@ function CanonicalEducationCards({
             </dl>
           ) : null}
           <div className="mt-4 flex flex-wrap gap-2">
+            {item.href ? (
+              <Link href={item.href} target={item.href.startsWith("http") ? "_blank" : undefined} rel={item.href.startsWith("http") ? "noreferrer" : undefined} className="beast-button-secondary inline-flex min-h-11 items-center">
+                {item.href.startsWith("http") ? "Open official source" : "Open related record"}
+              </Link>
+            ) : null}
             {(item.completionActions || []).map((action) => (
               <Link key={action} href={`/dashboard/education/guidance-counselor?prompt=${encodeURIComponent(`${action} for ${item.title}.`)}`} className="beast-button-secondary inline-flex min-h-11 items-center">
                 {action}
@@ -365,8 +402,42 @@ function CareerPlanningWorkspace({ items }: { items: WorkspaceItem[] }) {
   );
 }
 
+function LifeWorkspaceOrientation({ workspace }: { workspace: "schools" | "certifications" | "scholarships" }) {
+  const copy = lifeWorkspaceIntroductions[workspace];
+  return (
+    <section aria-label="How to use this workspace" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      {[["What is this?", copy.what], ["Why does this matter?", copy.why], ["What should I do here?", copy.doHere], ["What happens next?", copy.next]].map(([title, description]) => (
+        <DashboardCard key={title} accent="learning" className="min-w-0">
+          <h2 className="text-base font-black text-white">{title}</h2>
+          <p className="mt-2 text-sm leading-6 text-[#aeb8c7]">{description}</p>
+        </DashboardCard>
+      ))}
+    </section>
+  );
+}
+
+function RelatedEducationRecords({ items }: { items: WorkspaceItem[] }) {
+  const related = items.filter((item) => item.kind === "goal" || item.kind === "document");
+  return (
+    <section aria-label="Related education goals and documents">
+      <SectionHeader eyebrow="Connected records" title="Related goals and documents" description="These are the shared BeastOS records that help explain this plan. They stay authoritative in Goals and Documents." />
+      {related.length ? (
+        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          {related.map((item) => <Link key={item.id} href={item.href || "/dashboard/education"} className="min-w-0 rounded-2xl border border-white/10 bg-white/[0.035] p-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-indigo-300"><span className="text-xs font-black uppercase tracking-wide text-indigo-200">{item.kind}</span><h3 className="mt-2 break-words font-black text-white">{item.title}</h3><p className="mt-1 text-sm text-[#aeb8c7]">{item.detail}</p></Link>)}
+        </div>
+      ) : <p className="mt-5 rounded-2xl border border-white/10 bg-white/[0.035] p-5 text-sm leading-6 text-[#aeb8c7]">No related Education goals or documents are available yet. Add them through the shared Education Goals and Education Documents pages when they become useful.</p>}
+    </section>
+  );
+}
+
+function CounselorWorkspaceHelp({ prompt }: { prompt: string }) {
+  return <section className="rounded-2xl border border-indigo-300/25 bg-indigo-300/10 p-5 sm:p-6"><h2 className="text-xl font-black text-white">Ask your Guidance Counselor</h2><p className="mt-2 max-w-3xl text-sm leading-6 text-[#c7cfdb]">Get a plain-language explanation of fit, concerns, tradeoffs, and the next fact to verify. Current facts can be researched from official sources when needed.</p><Link href={`/dashboard/education/guidance-counselor?prompt=${encodeURIComponent(prompt)}`} className="beast-button-primary mt-4 inline-flex min-h-11 items-center justify-center">Start this conversation</Link></section>;
+}
+
 function SchoolsWorkspace({ items }: { items: WorkspaceItem[] }) {
   const definition = planningWorkspaceDefinitions.schools;
+  const records = items.filter((item) => item.kind === "record");
+  const recommendations = items.filter((item) => item.kind === "recommendation");
   return (
     <div className="space-y-6">
       <section className="rounded-2xl border border-cyan-300/25 bg-gradient-to-r from-cyan-300/10 to-transparent p-5 sm:p-6">
@@ -381,6 +452,9 @@ function SchoolsWorkspace({ items }: { items: WorkspaceItem[] }) {
           criteria are clear.
         </p>
       </section>
+      <LifeWorkspaceOrientation workspace="schools" />
+      <section aria-label="My schools"><SectionHeader eyebrow="My Schools" title="Current and previous schools" description="Keep attendance, completion, degree or diploma, GPA when you choose to track it, credits, location, and related evidence together." /><div className="mt-5"><CanonicalEducationCards items={records} emptyTitle="No schools are saved yet" emptyDescription="Add your current school or a school you attended before. Your Guidance Counselor can help turn a conversation into a record for you to review and approve." /></div></section>
+      <section aria-label="Suggested schools"><SectionHeader eyebrow="Suggested Schools" title="Options connected to your real plan" description="Suggestions should use your goals, education, credits, location, budget, format preferences, benefits, funding, and constraints—not a generic ranking." /><div className="mt-5"><CanonicalEducationCards items={recommendations} emptyTitle="No school suggestions are ready yet" emptyDescription="First clarify the program or outcome you want and the constraints that matter. Then ask your Guidance Counselor to research current options." /></div></section>
       <section aria-label="School comparison framework">
         <SectionHeader
           eyebrow="Compare"
@@ -403,18 +477,8 @@ function SchoolsWorkspace({ items }: { items: WorkspaceItem[] }) {
           ))}
         </ol>
       </section>
-      <section aria-label="Saved school planning context">
-        <SectionHeader
-          eyebrow="Search criteria"
-          title={definition.contextTitle}
-          description={definition.contextDescription}
-        />
-        <CanonicalEducationCards
-          items={items}
-          emptyTitle="No schools are saved yet"
-          emptyDescription="Schools you approve or add will appear here one at a time. Start with your current school or a school you attended before."
-        />
-      </section>
+      <CounselorWorkspaceHelp prompt="Help me review my schools, explain which options may fit or may not fit, compare the tradeoffs, and identify the next fact I should verify." />
+      <RelatedEducationRecords items={items} />
       <p className="rounded-xl border border-cyan-300/20 bg-cyan-300/5 p-4 text-sm leading-6 text-cyan-50">
         {definition.verificationNote}
       </p>
@@ -424,6 +488,8 @@ function SchoolsWorkspace({ items }: { items: WorkspaceItem[] }) {
 
 function ScholarshipsWorkspace({ items }: { items: WorkspaceItem[] }) {
   const definition = planningWorkspaceDefinitions.scholarships;
+  const records = items.filter((item) => item.kind === "record");
+  const recommendations = items.filter((item) => item.kind === "recommendation");
   return (
     <div className="space-y-6">
       <section className="rounded-2xl border border-green-300/25 bg-gradient-to-br from-green-300/10 to-transparent p-5 sm:p-6">
@@ -438,6 +504,7 @@ function ScholarshipsWorkspace({ items }: { items: WorkspaceItem[] }) {
           and deadlines.
         </p>
       </section>
+      <LifeWorkspaceOrientation workspace="scholarships" />
       <section aria-label="Scholarship funding framework">
         <SectionHeader
           eyebrow="Fund"
@@ -455,19 +522,32 @@ function ScholarshipsWorkspace({ items }: { items: WorkspaceItem[] }) {
           ))}
         </div>
       </section>
-      <section aria-label="Saved scholarship planning context">
-        <SectionHeader
-          eyebrow="Funding purpose"
-          title={definition.contextTitle}
-          description={definition.contextDescription}
-        />
-        <GoalContextCards items={items} progressLabel="Goal progress" />
-      </section>
+      <section aria-label="Education funding lifecycle"><SectionHeader eyebrow="Your funding" title="Saved, applied, and awarded" description="Possible funding and submitted applications remain separate from confirmed awards." />{records.length ? <div className="mt-5 grid gap-5 lg:grid-cols-3">{["Saved", "Applied", "Awarded"].map((state) => <div key={state} className="min-w-0"><h3 className="mb-3 text-lg font-black text-white">{state}</h3><CanonicalEducationCards items={records.filter((item) => item.status === state)} emptyTitle={`Nothing ${state.toLowerCase()} yet`} emptyDescription={state === "Awarded" ? "Only confirmed awards belong here." : `Funding options will appear here when their status is ${state.toLowerCase()}.`} /></div>)}</div> : <LearningEmptyState title="No funding records are saved yet" description="Scholarships, grants, FAFSA, GI Bill or other veteran benefits, employer tuition assistance, and other education funding can be organized here." action={{ label: "Ask about funding options", href: "/dashboard/education/guidance-counselor?prompt=What%20education%20funding%20options%20should%20I%20consider%3F" }} />}</section>
+      <section aria-label="Recommended education funding"><SectionHeader eyebrow="Recommendations" title="Funding options to verify" description="A recommendation is a lead to check, never a promise of eligibility or an award." /><div className="mt-5"><CanonicalEducationCards items={recommendations} emptyTitle="No funding recommendations are ready" emptyDescription="Ask your Guidance Counselor to research official sources after your program, school, timing, and relevant circumstances are clear." /></div></section>
+      <section aria-label="Funding source types" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">{["Scholarships", "Grants", "FAFSA", "GI Bill and veteran benefits", "Employer tuition assistance"].map((kind) => <div key={kind} className="min-w-0 rounded-2xl border border-green-300/15 bg-green-300/5 p-4"><h3 className="font-black text-white">{kind}</h3><p className="mt-2 text-sm leading-6 text-[#aeb8c7]">Track current terms, deadlines, required documents, and confirmation from the responsible official source.</p></div>)}</section>
+      <CounselorWorkspaceHelp prompt="Help me find education funding for my plan using official sources. Separate possible eligibility from confirmed funding and show me the next deadline or fact to verify." />
+      <RelatedEducationRecords items={items} />
       <p className="rounded-xl border border-green-300/20 bg-green-300/5 p-4 text-sm leading-6 text-green-50">
         {definition.verificationNote}
       </p>
     </div>
   );
+}
+
+function CertificationsWorkspace({ items }: { items: WorkspaceItem[] }) {
+  const records = items.filter((item) => item.kind === "record");
+  const recommendations = items.filter((item) => item.kind === "recommendation");
+  return <div className="space-y-6">
+    <LifeWorkspaceOrientation workspace="certifications" />
+    <section aria-label="My certifications"><SectionHeader eyebrow="My Certifications" title="Active, expired, and planned credentials" description="Keep the issuing body, earned and expiration dates, renewal needs, continuing education, exam history, and evidence together when known." />
+      {records.length ? <div className="mt-5 space-y-6">{["Active", "Expired", "Planned"].map((state) => { const stateItems = records.filter((item) => item.status === state); return stateItems.length ? <div key={state}><h3 className="mb-3 text-lg font-black text-white">{state}</h3><CanonicalEducationCards items={stateItems} emptyTitle="" emptyDescription="" /></div> : null; })}</div> : <LearningEmptyState title="No certifications are saved yet" description="Certifications you already have, credentials that expired, and certifications you plan to pursue all belong here." action={{ label: "Tell your Guidance Counselor", href: "/dashboard/education/guidance-counselor?prompt=Help%20me%20add%20a%20certification%20record." }} />}
+    </section>
+    <section aria-label="Recommended certifications"><SectionHeader eyebrow="Recommended" title="Credentials connected to your goals" description="Each recommendation should explain its purpose, prerequisites, requirements, cost, renewal rules, and why it may or may not fit." /><div className="mt-5"><CanonicalEducationCards items={recommendations} emptyTitle="No certification recommendation is ready" emptyDescription="A credential should be recommended only after its connection to your goal and current official requirements are checked." /></div></section>
+    <section aria-label="Certification comparison" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{[["Purpose", "What goal or role would this credential support?"], ["Requirements", "What prerequisites, exams, experience, and continuing education are required?"], ["Cost and time", "What are the current exam, preparation, renewal costs, and realistic timing?"], ["Official source", "What does the certification body currently say, and when was it checked?"]].map(([title, description]) => <DashboardCard key={title} accent="learning"><h3 className="font-black text-white">{title}</h3><p className="mt-2 text-sm leading-6 text-[#aeb8c7]">{description}</p></DashboardCard>)}</section>
+    <CounselorWorkspaceHelp prompt="Review my certifications and goals. Explain which credential may fit, which may not, the tradeoffs, and the official requirements I should verify next." />
+    <RelatedEducationRecords items={items} />
+    <p className="rounded-xl border border-indigo-300/20 bg-indigo-300/5 p-4 text-sm leading-6 text-indigo-50">Use the official certification body as the preferred source for prerequisites, exams, costs, renewal dates, and continuing-education rules. A recommendation does not guarantee eligibility, readiness, or a passing result.</p>
+  </div>;
 }
 
 function PlanningWorkspace({
@@ -770,8 +850,9 @@ export default async function LearningWorkspaceView({ slug }: { slug: string }) 
     >
       {isPlanningWorkspaceSlug(slug) ? (
         <PlanningWorkspace slug={slug} items={items} />
+      ) : slug === "certifications" ? (
+        <CertificationsWorkspace items={items} />
       ) : slug === "educational-roadmap" ||
-        slug === "certifications" ||
         slug === "skills" ? (
         <EducationPlanningDomainWorkspace slug={slug} items={items} />
       ) : reports ? (
