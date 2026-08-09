@@ -44,6 +44,16 @@ export function canonicalHealthEntityName(entityType: string, fields: Record<str
   return stringField({ fields } as StructuredKnowledgeProposal, ...identityKeys, "entityName", "entity_name", "name", "title", "label") || entityType;
 }
 
+function healthRecordStatus(proposal: StructuredKnowledgeProposal & { reconciliation?: { currentStatus?: string } }) {
+  if (proposal.reconciliation?.currentStatus === "current") return "active" as const;
+  if (proposal.reconciliation?.currentStatus === "historical") return "historical" as const;
+  const explicit = stringField(proposal, "status", "lifecycleStatus", "currentStatus").toLowerCase();
+  if (/historical|stopped|past|former|previous/.test(explicit)) return "historical" as const;
+  if (/active|current|ongoing|taking|take/.test(explicit)) return "active" as const;
+  const evidence = Object.values(proposal.fields).filter((value): value is string => typeof value === "string").join(" ").toLowerCase();
+  return /used to|stopped|previously|formerly|no longer|past medication|former provider/.test(evidence) ? "historical" as const : "active" as const;
+}
+
 function jsonFields(proposal: StructuredKnowledgeProposal) {
   const reconciliation = (proposal as StructuredKnowledgeProposal & { reconciliation?: unknown }).reconciliation;
   return { ...proposal.fields, sourceMessageId: proposal.sourceMessageId, confidence: proposal.confidence, proposalId: proposal.id, ...(reconciliation ? { reconciliation } : {}) };
@@ -89,7 +99,7 @@ export async function applyApprovedKnowledgeProposal({
     const values = { record_type: type, title, details: { ...jsonFields(normalized), subtype: normalized.entityType, provenance: "digital_staff_runtime", conversation_message_id: normalized.sourceMessageId }, updated_at: new Date().toISOString() };
     const result = normalized.proposedAction === "update" && normalized.relatedRecordId
       ? await client.from("beast_health_records").update(values).eq("id", normalized.relatedRecordId).eq("owner_id", ownerId).select("id").single()
-      : await client.from("beast_health_records").insert({ owner_id: ownerId, ...values, status: (normalized as typeof normalized & { reconciliation?: { currentStatus?: string } }).reconciliation?.currentStatus === "current" ? "active" : "historical", occurred_on: null, source: "Health Advisor conversation", notes: null }).select("id").single();
+      : await client.from("beast_health_records").insert({ owner_id: ownerId, ...values, status: healthRecordStatus(normalized as typeof normalized & { reconciliation?: { currentStatus?: string } }), occurred_on: null, source: "Health Advisor conversation", notes: null }).select("id").single();
     if (result.error || !result.data) throw new Error("The approved Health record could not be saved.");
     return { proposalId: normalized.id, status: "approved", recordId: String(result.data.id), table: "beast_health_records" };
   }

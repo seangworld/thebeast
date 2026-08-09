@@ -52,3 +52,12 @@ test("AP-107 diagnostics classify sanitized approval failures server-side", () =
   assert.match(security, /detail: sanitizedErrorDetail/);
   assert.match(security, /requestId/);
 });
+
+test("BH-211 shared proposal review replaces technical success copy and removes decisions after save", () => {
+  const review = readFileSync("src/app/components/agents/RuntimeProposalReview.tsx", "utf8");
+  assert.match(review, /Saved/);
+  assert.doesNotMatch(review, /Saved to the canonical workspace/);
+  assert.match(review, /decided\[proposal\.id\]/);
+  assert.match(review, /setDecided/);
+  assert.match(review, /role=\"status\"/);
+});

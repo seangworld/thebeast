@@ -44,6 +44,15 @@ test("BH-210 canonical Health names prefer the supplied entity identity", () => 
   assert.equal(canonicalHealthEntityName("procedure", { label: "Appendectomy" }), "Appendectomy");
 });
 
+test("BH-211 live Health proposals default to active and preserve explicit past tense", async () => {
+  const active = fakeClient();
+  await applyApprovedKnowledgeProposal({ client: active.client, ownerId: "owner-1", professionalId: "beasthealth.health-advisor", proposal: { ...base, fields: { name: "Current Medication" }, domain: "health", entityType: "medication" } });
+  assert.equal((active.calls[0].payload as { status: string }).status, "active");
+  const past = fakeClient();
+  await applyApprovedKnowledgeProposal({ client: past.client, ownerId: "owner-1", professionalId: "beasthealth.health-advisor", proposal: { ...base, fields: { name: "Past Medication", status: "stopped" }, domain: "health", entityType: "medication" } });
+  assert.equal((past.calls[0].payload as { status: string }).status, "historical");
+});
+
 test("Education proposals normalize entity categories and avoid raw sentence persistence", async () => {
   const { client, calls } = fakeClient();
   await applyApprovedKnowledgeProposal({ client, ownerId: "owner-1", professionalId: "beasteducation.guidance-counselor", proposal: { ...base, domain: "education", entityType: "institution", fields: { institution: "State University", year: 2026 } } });
