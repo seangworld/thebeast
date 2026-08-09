@@ -6,6 +6,7 @@ import { DatabaseSync } from "node:sqlite";
 import { loadCanonicalMemberHealthRecords } from "../src/lib/health/canonicalRecords";
 import { applyApprovedKnowledgeProposal } from "../src/lib/digitalStaffRuntime/persistence";
 import { decomposeHistoricalProposals, reconcileHistoricalProposals, type CanonicalKnowledgeRecord, type HistoricalConversationMessage, type StructuredKnowledgeProposal } from "../src/lib/digitalStaffRuntime";
+import { presentCanonicalHealthRecords } from "../src/lib/health/canonicalRecords";
 
 type Row = Record<string, unknown>;
 
@@ -117,6 +118,15 @@ test("BH-206 persists five decomposed records and reloads five workspace entitie
   const rerun = reconcileHistoricalProposals({ professionalId: historical.professionalId, message: historical, proposals: decomposed, canonicalRecords: canonical, reconciledAt: "2026-08-09T12:05:00.000Z" });
   assert.equal(rerun.proposals.length, 0, JSON.stringify(rerun.proposals));
   db.close();
+});
+
+test("BH-209 keeps a legacy aggregate visible until every preserved item is accepted", () => {
+  const base = { ownerId: "owner-1", status: "active" as const, occurredOn: null, source: "Member-reported Health Advisor conversation", notes: null, createdAt: "2026-08-09T12:00:00.000Z", updatedAt: "2026-08-09T12:00:00.000Z" };
+  const aggregate = { id: "aggregate", recordType: "medication" as const, title: "Current medications", details: { topic: "health-medications-needed", context: "I take Medication A, Medication B, Supplement C, Medication D and Medication E." }, ...base };
+  const partial = [aggregate, ...["Medication A", "Medication B"].map((title, index) => ({ id: `canonical-${index}`, recordType: "medication" as const, title, details: { medicationName: title }, ...base }))];
+  assert.equal(presentCanonicalHealthRecords(partial).some((record) => record.id === "aggregate"), true);
+  const complete = [...partial, ...["Supplement C", "Medication D", "Medication E"].map((title, index) => ({ id: `canonical-rest-${index}`, recordType: "medication" as const, title, details: { medicationName: title }, ...base }))];
+  assert.equal(presentCanonicalHealthRecords(complete).some((record) => record.id === "aggregate"), false);
 });
 
 test("BE-206 persists mixed historical Education entities as separate database records", async () => {

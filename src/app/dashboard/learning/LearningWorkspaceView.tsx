@@ -52,6 +52,7 @@ type WorkspaceItem = {
   structuredFields?: Array<{ label: string; value: string }>;
   completionActions?: string[];
   kind?: "record" | "recommendation" | "goal" | "document";
+  historicalAggregate?: boolean;
 };
 
 function titleCase(value: string) {
@@ -98,6 +99,7 @@ async function loadWorkspaceItems(slug: LearningWorkspaceSlug, userId: string) {
         meta: row.occurred_on ? new Date(`${String(row.occurred_on)}T12:00:00`).toLocaleDateString() : undefined,
         structuredFields,
         completionActions: canonicalMissingActions(entityType, row.value),
+        historicalAggregate: row.source_type === "conversation" && String(row.source_reference || "").startsWith("guidance:") && canonicalDisplayFields(row.value).length === 0 && /(?:,|;|\band\b|\bor\b)/i.test(String(row.value || "")),
         kind: "record",
       };
     });
@@ -300,10 +302,12 @@ function CanonicalEducationCards({
   items,
   emptyTitle,
   emptyDescription,
+  reviewHref = "/dashboard/digital-staff/reconciliation?professionalId=beasteducation.guidance-counselor&returnTo=%2Fdashboard%2Feducation",
 }: {
   items: WorkspaceItem[];
   emptyTitle: string;
   emptyDescription: string;
+  reviewHref?: string;
 }) {
   if (!items.length) {
     return (
@@ -314,8 +318,10 @@ function CanonicalEducationCards({
       />
     );
   }
+  const unresolved = items.some((item) => item.historicalAggregate);
   return (
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3" data-canonical-education-records>
+      {unresolved ? <div className="md:col-span-2 xl:col-span-3 rounded-2xl border border-cyan-300/25 bg-cyan-300/[0.07] p-5" aria-label="Earlier education information to organize"><p className="text-xs font-black uppercase tracking-[0.16em] text-cyan-200">Earlier information</p><h2 className="mt-2 text-xl font-black text-white">We found information from an earlier conversation that can be organized better.</h2><p className="mt-2 text-sm leading-6 text-[#d6e7f2]">Review what Beast found so schools, work, training, and preferences can be saved separately.</p><Link href={reviewHref} className="beast-button-primary mt-4 inline-flex min-h-11 items-center">Review &amp; organize</Link></div> : null}
       {items.map((item) => (
         <DashboardCard key={item.id} accent="learning" className="min-w-0">
           <span className="rounded-full border border-indigo-300/25 bg-indigo-300/10 px-2.5 py-1 text-xs font-black capitalize text-indigo-100">

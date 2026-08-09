@@ -37,7 +37,7 @@ import { HealthDiscoveryOnboarding } from "./HealthDiscoveryOnboarding";
 import { HealthDocumentExtractionReview } from "./HealthDocumentExtractionReview";
 import { LivingHealthTimeline } from "./LivingHealthTimeline";
 import { canonicalDisplayFields, canonicalMissingActions } from "@/lib/canonicalKnowledgePresentation";
-import { loadCanonicalMemberHealthRecords } from "@/lib/health/canonicalRecords";
+import { legacyHealthAggregateState, loadCanonicalMemberHealthRecords } from "@/lib/health/canonicalRecords";
 
 const statusOptions: HealthRecordStatus[] = [
   "active",
@@ -865,6 +865,8 @@ export function HealthRecordWorkspace({ kind }: { kind: HealthRecordKind }) {
   const activeRecords = visibleRecords.filter(
     (record) => record.status !== "archived"
   );
+  const unresolvedAggregate = activeRecords.find((record) => legacyHealthAggregateState(record));
+  const reviewHref = `/dashboard/digital-staff/reconciliation?professionalId=beasthealth.health-advisor&returnTo=${encodeURIComponent(healthWorkspaceHrefs[kind])}`;
   const timeline = useMemo(
     () => buildHealthTimeline(activeRecords).slice(0, 6),
     [activeRecords]
@@ -1047,6 +1049,25 @@ export function HealthRecordWorkspace({ kind }: { kind: HealthRecordKind }) {
               onAction={beginKnowledgeConversation}
             />
           </DashboardCard>
+        ) : null}
+
+        {unresolvedAggregate ? (
+          <section className="rounded-2xl border border-cyan-300/25 bg-cyan-300/[0.07] p-5" aria-label="Earlier information to organize">
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-cyan-200">Earlier information</p>
+            {legacyHealthAggregateState(unresolvedAggregate)?.recoverable ? (
+              <>
+                <h2 className="mt-2 text-xl font-black text-white">We found information from an earlier conversation that can be organized better.</h2>
+                <p className="mt-2 max-w-3xl text-sm leading-6 text-[#d6e7f2]">Your earlier answer appears to contain several items. Review what Beast found so they can be saved separately.</p>
+                <Link href={reviewHref} className="beast-button-primary mt-4 inline-flex min-h-11 items-center">Review &amp; organize</Link>
+              </>
+            ) : (
+              <>
+                <h2 className="mt-2 text-xl font-black text-white">An older saved answer needs your review.</h2>
+                <p className="mt-2 max-w-3xl text-sm leading-6 text-[#d6e7f2]">Beast cannot safely separate it automatically because the original details are not available.</p>
+                <div className="mt-4 flex flex-wrap gap-2"><Link href={`${healthWorkspaceHrefs[kind]}#health-record-${unresolvedAggregate.id}`} className="beast-button-secondary inline-flex min-h-11 items-center">Edit manually</Link><Link href={buildHealthAdvisorConversationHref(kind, `I want to review my saved ${formatKind(kind).toLowerCase()} information and keep only what I can confirm.`, unresolvedAggregate.id)} className="beast-button-secondary inline-flex min-h-11 items-center">Tell Health Advisor</Link></div>
+              </>
+            )}
+          </section>
         ) : null}
 
         {error ? (
@@ -1289,6 +1310,7 @@ export function HealthOverviewWorkspace() {
         .slice(0, 4),
     [records]
   );
+  const unresolvedAreas = useMemo(() => Array.from(new Set(records.filter((record) => legacyHealthAggregateState(record)).map((record) => formatKind(record.recordType)))), [records]);
 
   return (
     <BeastHealthShell
@@ -1310,6 +1332,14 @@ export function HealthOverviewWorkspace() {
         recordsLoading={loading}
         recordsUnavailable={Boolean(error)}
       />
+
+      {!loading && unresolvedAreas.length ? (
+        <section className="mb-4 rounded-2xl border border-cyan-300/25 bg-cyan-300/[0.07] p-5" aria-label="Earlier information to organize">
+          <h2 className="text-xl font-black text-white">Earlier information can be organized</h2>
+          <p className="mt-2 text-sm leading-6 text-[#d6e7f2]">{unresolvedAreas.length} {unresolvedAreas.length === 1 ? "area has" : "areas have"} information from an earlier conversation that can be reviewed and saved more clearly.</p>
+          <Link href="/dashboard/digital-staff/reconciliation?professionalId=beasthealth.health-advisor&returnTo=%2Fdashboard%2Fhealth" className="beast-button-primary mt-4 inline-flex min-h-11 items-center">Review earlier information</Link>
+        </section>
+      ) : null}
 
       <section className="space-y-4" aria-label="Health Advisor dashboard">
         <DashboardCard accent="health">

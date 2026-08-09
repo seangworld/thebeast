@@ -1,15 +1,31 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { preferStructuredCanonicalRecords } from "../canonicalKnowledgePresentation";
 import { normalizeHealthRecord, type HealthRecord, type HealthRecordRow } from "./foundation";
+import { isStructuredCanonicalValue } from "../canonicalKnowledgePresentation";
+
+const legacyTopics = new Set([
+  "health-conditions-needed", "health-medications-needed", "health-allergies-needed",
+  "health-procedures-needed", "health-care-team-needed", "health-family-history-needed",
+]);
+
+export function legacyHealthAggregateState(record: HealthRecord) {
+  const isLegacySource = record.source === "Health Advisor conversation" || record.source === "Member-reported Health Advisor conversation";
+  const topic = typeof record.details.topic === "string" ? record.details.topic : "";
+  if (!isLegacySource || !legacyTopics.has(topic) || isStructuredCanonicalValue(record.details)) return null;
+  const context = typeof record.details.context === "string" && record.details.context.trim();
+  return { recoverable: Boolean(context), topic } as const;
+}
 
 export function presentCanonicalHealthRecords(records: readonly HealthRecord[]) {
-  return preferStructuredCanonicalRecords(records, {
-    category: (record) => record.recordType,
-    value: (record) => record.details,
-    isLegacyAggregate: (record) =>
-      (record.source === "Health Advisor conversation" || record.source === "Member-reported Health Advisor conversation") &&
-      typeof record.details.context === "string" &&
-      Boolean(record.details.context.trim()),
+  const structuredCounts = new Map<string, number>();
+  for (const record of records) {
+    if (record.status !== "archived" && isStructuredCanonicalValue(record.details)) structuredCounts.set(record.recordType, (structuredCounts.get(record.recordType) || 0) + 1);
+  }
+  return records.filter((record) => {
+    const legacy = (record.source === "Health Advisor conversation" || record.source === "Member-reported Health Advisor conversation") && typeof record.details.context === "string" && Boolean(record.details.context.trim()) && !isStructuredCanonicalValue(record.details);
+    if (!legacy) return true;
+    const context = String(record.details.context);
+    const estimatedEntities = context.split(/\s*(?:,|;|\band\b|&)\s*/i).map((item) => item.trim()).filter(Boolean).length;
+    return (structuredCounts.get(record.recordType) || 0) < Math.max(1, estimatedEntities);
   });
 }
 

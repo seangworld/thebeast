@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { loadHistoricalReconciliation, updateHistoricalReconciliation, type HistoricalReconciliationProfessional } from "@/lib/digitalStaffRuntime/client";
 import type { HistoricalKnowledgeProposal, ProfessionalId } from "@/lib/digitalStaffRuntime";
 
@@ -36,16 +37,22 @@ function ProposalCard({ professionalId, proposal, busy, onDecision }: { professi
   );
 }
 
-export function HistoricalKnowledgeReconciliation() {
+export function HistoricalKnowledgeReconciliation({ professionalId, returnTo }: { professionalId?: string; returnTo?: string }) {
+  const router = useRouter();
   const [professionals, setProfessionals] = useState<HistoricalReconciliationProfessional[]>([]);
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
-  useEffect(() => { void loadHistoricalReconciliation().then(setProfessionals).catch((reason) => setError(reason instanceof Error ? reason.message : "Historical reconciliation is unavailable.")); }, []);
+  useEffect(() => { void loadHistoricalReconciliation().then((items) => setProfessionals(professionalId ? items.filter((item) => item.professionalId === professionalId) : items)).catch((reason) => setError(reason instanceof Error ? reason.message : "Historical reconciliation is unavailable.")); }, [professionalId]);
   const pendingCount = useMemo(() => professionals.reduce((total, item) => total + item.proposals.filter((proposal) => proposal.approvalStatus === "proposed").length, 0), [professionals]);
 
   async function act(professionalId: ProfessionalId, action: "start" | "process" | "pause" | "skip" | "decide", extra: Record<string, unknown> = {}) {
     setBusy(`${professionalId}:${action}`); setError("");
-    try { setProfessionals(await updateHistoricalReconciliation({ professionalId, action, ...extra } as Parameters<typeof updateHistoricalReconciliation>[0])); }
+    try {
+      const next = await updateHistoricalReconciliation({ professionalId, action, ...extra } as Parameters<typeof updateHistoricalReconciliation>[0]);
+      const scoped = professionalId ? next.filter((item) => item.professionalId === professionalId) : next;
+      setProfessionals(scoped);
+      if (action === "decide" && returnTo && scoped.every((item) => !item.proposals.some((proposal) => proposal.approvalStatus === "proposed"))) router.push(returnTo);
+    }
     catch (reason) { setError(reason instanceof Error ? reason.message : "The reconciliation control failed safely."); }
     finally { setBusy(""); }
   }
