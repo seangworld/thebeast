@@ -155,7 +155,7 @@ function DebtActionsMenu({
     <OverlayPopover
       label="Actions"
       ariaLabel={`${debt.name} actions`}
-      width={view === "manage" ? 560 : 208}
+      width={view === "manage" ? 560 : 240}
       testId="debt-list-actions"
       triggerClassName="w-full justify-center sm:w-auto"
       onOpenChange={resetViewWhenClosed}
@@ -1788,7 +1788,7 @@ export default function DebtsPage() {
             <div>
               <h2 className="money-section-title">Paid Off / Archived Debts</h2>
               <p className="money-section-description">
-                Debts with a $0 balance or archived status are removed from active payoff strategy calculations.
+                Paid-off fixed debts and archived accounts leave the active payoff plan. Revolving accounts at $0 stay open as Open — Zero Balance until you close or archive them.
               </p>
             </div>
 

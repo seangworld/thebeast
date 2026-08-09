@@ -56,6 +56,7 @@ import {
   buildHealthAdvisorUnderstanding,
   type HealthUnderstandingItem,
 } from "@/lib/health/understanding";
+import { preferStructuredCanonicalRecords } from "@/lib/canonicalKnowledgePresentation";
 import {
   ServerAgentConversationRepository,
   SupabaseAgentConversationStore,
@@ -656,7 +657,14 @@ export function HealthAdvisorWorkspace() {
       setOwnerId(userId);
       setMemberName(resolveHealthAdvisorMemberName(profile, auth.user));
       setMemberTimeZone(profile?.timezone || null);
-      setRecords(nextRecords);
+      setRecords(preferStructuredCanonicalRecords(nextRecords, {
+        category: (record) => record.recordType,
+        value: (record) => record.details,
+        isLegacyAggregate: (record) =>
+          (record.source === "Health Advisor conversation" || record.source === "Member-reported Health Advisor conversation") &&
+          typeof record.details.context === "string" &&
+          Boolean(record.details.context.trim()),
+      }));
       setRecordsUnavailable(false);
       setDocuments(
         buildDocumentContext(nextRecords, documentResult.documents)

@@ -3,6 +3,8 @@ import test from "node:test";
 import {
   assertHistoricalMessagesOwnerScoped,
   createHistoricalReconciliationState,
+  historicalEducationProfileEvidence,
+  historicalHealthAggregateEvidence,
   reconcileHistoricalProposals,
   removeAnsweredNeeds,
   transitionHistoricalReconciliationState,
@@ -102,4 +104,33 @@ test("AP-104 reconciliation enriches proposals but leaves original messages unch
   const snapshot = structuredClone(original);
   reconcileHistoricalProposals({ professionalId: education, message: original, proposals: [proposal("education", "preference", { preference: "Certifications" })], canonicalRecords: [], reconciledAt: now });
   assert.deepEqual(original, snapshot);
+});
+
+test("OT-001 replays preserved Health aggregate context and never the generic title", () => {
+  const evidence = historicalHealthAggregateEvidence([{ id: "record-1", owner_id: "owner-1", title: "Current medications", details: { topic: "health-medications-needed", context: "I take Medicine A, Medicine B, Supplement C and Supplement D.", conversation_id: "conversation-1" }, created_at: "2025-01-02T12:00:00.000Z" }]);
+  assert.equal(evidence.length, 1);
+  assert.equal(evidence[0]?.text, "I take Medicine A, Medicine B, Supplement C and Supplement D.");
+  assert.doesNotMatch(evidence[0]?.text || "", /^Current medications$/);
+  assert.equal(evidence[0]?.conversationId, "conversation-1");
+});
+
+test("OT-001 ignores aggregate Health records that have no preserved member evidence", () => {
+  assert.deepEqual(historicalHealthAggregateEvidence([{ id: "record-1", owner_id: "owner-1", title: "Conditions", details: { topic: "health-conditions-needed" } }]), []);
+});
+
+test("OT-001 replays mixed Education discovery answers as preserved evidence", () => {
+  const evidence = historicalEducationProfileEvidence([{ owner_id: "owner-1", discovery_answers: { background: "I finished high school, served in the military, and now work full time.", preference: "I prefer a certification." }, updated_at: now }]);
+  assert.deepEqual(evidence.map((item) => item.text), ["I finished high school, served in the military, and now work full time.", "I prefer a certification."]);
+  assert.ok(evidence.every((item) => item.ownerId === "owner-1"));
+});
+
+test("OT-001 suppresses a fake allergy proposal from negative health evidence", () => {
+  const result = reconcile({ professionalId: health, text: "I have no known allergies.", proposals: [proposal("health", "allergy", { name: "No known allergies" })] });
+  assert.equal(result.proposals.length, 0);
+});
+
+test("OT-001 deduplicates repeated entities within one extracted message", () => {
+  const result = reconcile({ professionalId: health, proposals: [proposal("health", "medication", { name: "Medicine A" }, 1), proposal("health", "medication", { name: "medicine a" }, 2)] });
+  assert.equal(result.proposals.length, 1);
+  assert.equal(result.duplicatesIgnored, 1);
 });

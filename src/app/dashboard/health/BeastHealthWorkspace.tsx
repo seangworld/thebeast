@@ -849,7 +849,7 @@ function useHealthRecords() {
       category: (record) => record.recordType,
       value: (record) => record.details,
       isLegacyAggregate: (record) =>
-        record.source === "Health Advisor conversation" &&
+        (record.source === "Health Advisor conversation" || record.source === "Member-reported Health Advisor conversation") &&
         typeof record.details.context === "string" &&
         Boolean(record.details.context.trim()),
     }));

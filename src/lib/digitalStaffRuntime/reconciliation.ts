@@ -1,6 +1,6 @@
 import type { ProfessionalId, RuntimeContext, StructuredKnowledgeProposal } from "./types";
 
-export const historicalReconciliationVersion = "ap104-v1";
+export const historicalReconciliationVersion = "ap104-ot001-v2";
 export const historicalReconciliationBatchSize = 4;
 
 export type HistoricalConversationMessage = RuntimeContext["message"] & {
@@ -8,6 +8,67 @@ export type HistoricalConversationMessage = RuntimeContext["message"] & {
   conversationId: string;
   professionalId: ProfessionalId;
 };
+
+export type LegacyHealthAggregateRecord = {
+  id: string;
+  owner_id: string;
+  title?: string | null;
+  details?: Record<string, unknown> | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+};
+
+export type LegacyEducationProfile = {
+  owner_id: string;
+  discovery_answers?: Record<string, unknown> | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+};
+
+const legacyHealthTopics = new Set([
+  "health-conditions-needed", "health-medications-needed", "health-allergies-needed",
+  "health-procedures-needed", "health-care-team-needed", "health-measurements-needed",
+  "health-vaccination-status-needed", "health-family-history-needed",
+]);
+
+function preservedText(value: unknown) {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+/** Uses only preserved member evidence. Aggregate labels and topic keys are never treated as evidence. */
+export function historicalHealthAggregateEvidence(records: LegacyHealthAggregateRecord[]): HistoricalConversationMessage[] {
+  return records.flatMap((row) => {
+    const topic = preservedText(row.details?.topic);
+    const text = preservedText(row.details?.context);
+    if (!topic || !legacyHealthTopics.has(topic) || !text) return [];
+    return [{
+      id: `legacy-health-record:${row.id}`,
+      role: "user" as const,
+      text,
+      createdAt: row.created_at || row.updated_at || new Date(0).toISOString(),
+      ownerId: row.owner_id,
+      conversationId: preservedText(row.details?.conversation_id) || `legacy-health-record:${row.id}`,
+      professionalId: "beasthealth.health-advisor" as const,
+    }];
+  });
+}
+
+/** Replays each preserved discovery answer independently so mixed narratives can yield distinct proposals. */
+export function historicalEducationProfileEvidence(profiles: LegacyEducationProfile[]): HistoricalConversationMessage[] {
+  return profiles.flatMap((row) => Object.entries(row.discovery_answers || {}).flatMap(([key, value]) => {
+    const text = preservedText(value);
+    if (!text) return [];
+    return [{
+      id: `legacy-education-answer:${key}`,
+      role: "user" as const,
+      text,
+      createdAt: row.created_at || row.updated_at || new Date(0).toISOString(),
+      ownerId: row.owner_id,
+      conversationId: "legacy-education-profile",
+      professionalId: "beasteducation.guidance-counselor" as const,
+    }];
+  }));
+}
 
 export type HistoricalProposalDisposition = "create" | "merge" | "conflict";
 
@@ -160,11 +221,16 @@ export function reconcileHistoricalProposals({
   reconciledAt: string;
 }) {
   const accepted: HistoricalKnowledgeProposal[] = [];
+  const workingRecords = [...canonicalRecords];
   let duplicatesIgnored = 0;
   let conflictsDetected = 0;
 
   for (const proposal of proposals) {
-    const candidate = candidateFor(proposal, canonicalRecords);
+    if (/allerg/i.test(proposal.entityType) && /\b(?:no known allergies|no allergies|without allergies|do not have allergies|don't have allergies|none known)\b/i.test(message.text)) {
+      duplicatesIgnored += 1;
+      continue;
+    }
+    const candidate = candidateFor(proposal, workingRecords);
     const differences = candidate ? comparableDifferences(proposal, candidate) : [];
     if (candidate && !differences.length && hasSupportingOverlap(proposal, candidate)) {
       duplicatesIgnored += 1;
@@ -174,7 +240,7 @@ export function reconcileHistoricalProposals({
     if (disposition === "conflict") conflictsDetected += 1;
     const fields = stableObject(proposal.fields);
     const proposalId = `ap104-${stableHash(JSON.stringify([professionalId, message.conversationId, message.id, proposal.domain, proposal.entityType, fields]))}`;
-    accepted.push({
+    const reconciled: HistoricalKnowledgeProposal = {
       ...proposal,
       id: proposalId,
       fields,
@@ -191,7 +257,9 @@ export function reconcileHistoricalProposals({
         candidateRecordId: candidate?.id || null,
         candidateSummary: candidate ? `${candidate.entityType} record ${candidate.id}` : null,
       },
-    });
+    };
+    accepted.push(reconciled);
+    workingRecords.push({ id: reconciled.id, domain: reconciled.domain, entityType: reconciled.entityType, fields: reconciled.fields });
   }
   return { proposals: accepted, duplicatesIgnored, conflictsDetected };
 }

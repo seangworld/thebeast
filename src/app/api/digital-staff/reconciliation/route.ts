@@ -4,6 +4,9 @@ import {
   assertHistoricalMessagesOwnerScoped,
   createHistoricalReconciliationState,
   historicalReconciliationBatchSize,
+  historicalEducationProfileEvidence,
+  historicalHealthAggregateEvidence,
+  historicalReconciliationVersion,
   reconcileHistoricalProposals,
   requireProfessionalConfig,
   resolvedNeedKeysFromProposals,
@@ -105,7 +108,8 @@ async function responseSnapshot(client: ReturnType<typeof createRouteClient>, ow
     const conversation = (conversationResult.data || []).find((item) => item.id === conversationId);
     const summary = conversation?.summary as ReconciliationSummary | undefined;
     const proposals = messages.filter((item) => item.conversation_id === conversationId).flatMap((item) => (item.content as MessageContent)?.runtime?.proposals || []);
-    return { professionalId, conversationId, state: summary?.ap104Reconciliation || null, telemetry: summary?.ap104Reconciliation ? safeHistoricalReconciliationTelemetry(summary.ap104Reconciliation) : null, proposals };
+    const state = summary?.ap104Reconciliation?.version === historicalReconciliationVersion ? summary.ap104Reconciliation : null;
+    return { professionalId, conversationId, state, telemetry: state ? safeHistoricalReconciliationTelemetry(state) : null, proposals };
   });
 }
 
@@ -135,7 +139,7 @@ export async function POST(request: Request) {
   let state = existingSummary.ap104Reconciliation;
 
   if (action === "start") {
-    if (!state || state.status === "skipped") state = createHistoricalReconciliationState(professionalId, now);
+    if (!state || state.version !== historicalReconciliationVersion || state.status === "skipped") state = createHistoricalReconciliationState(professionalId, now);
     const result = await client.from("agent_conversations").upsert({ id: conversationId, owner_id: user.id, agent_id: professionalId, title: "Historical knowledge reconciliation", summary: { ...existingSummary, ap104Reconciliation: state }, message_count: Number(existingResult.data?.message_count || 0), updated_at: now }, { onConflict: "id" });
     if (result.error) return NextResponse.json({ error: "Reconciliation could not be started." }, { status: 503 });
     return NextResponse.json({ professionals: await responseSnapshot(client, user.id) });
@@ -163,17 +167,32 @@ export async function POST(request: Request) {
       if (recoveredUpdate.error) return NextResponse.json({ error: "The saved batch cursor could not be recovered yet; retry remains safe." }, { status: 503 });
       return NextResponse.json({ professionals: await responseSnapshot(client, user.id) });
     }
-    const conversationsResult = await client.from("agent_conversations").select("id", { count: "exact", head: true }).eq("owner_id", user.id).eq("agent_id", professionalId).neq("id", conversationId).lte("created_at", state.captureThrough);
-    if (conversationsResult.error) return NextResponse.json({ error: "Historical conversations are temporarily unavailable." }, { status: 503 });
-    const historicalConversationCount = Number(conversationsResult.count || 0);
-    if (!historicalConversationCount) {
+    const [conversationsResult, messagesResult, legacyHealthResult, legacyEducationResult] = await Promise.all([
+      client.from("agent_conversations").select("id", { count: "exact", head: true }).eq("owner_id", user.id).eq("agent_id", professionalId).neq("id", conversationId).lte("created_at", state.captureThrough),
+      client.from("agent_conversation_messages").select("id, owner_id, conversation_id, content, created_at").eq("owner_id", user.id).eq("sender->>kind", "user").eq("recipient->>id", professionalId).lte("created_at", state.captureThrough).order("created_at", { ascending: true }).limit(500),
+      professionalId === "beasthealth.health-advisor"
+        ? client.from("beast_health_records").select("id, owner_id, title, details, created_at, updated_at").eq("owner_id", user.id).in("details->>topic", ["health-conditions-needed", "health-medications-needed", "health-allergies-needed", "health-procedures-needed", "health-care-team-needed", "health-measurements-needed", "health-vaccination-status-needed", "health-family-history-needed"]).limit(200)
+        : Promise.resolve({ data: [], error: null }),
+      professionalId === "beasteducation.guidance-counselor"
+        ? client.from("education_profiles").select("owner_id, discovery_answers, created_at, updated_at").eq("owner_id", user.id).limit(1)
+        : Promise.resolve({ data: [], error: null }),
+    ]);
+    if (conversationsResult.error || messagesResult.error || legacyHealthResult.error || legacyEducationResult.error) return NextResponse.json({ error: "Historical evidence is temporarily unavailable." }, { status: 503 });
+    const conversationMessages: HistoricalConversationMessage[] = (messagesResult.data || []).map((row) => ({ id: row.id, role: "user", text: textFromContent(row.content), createdAt: row.created_at, ownerId: row.owner_id, conversationId: row.conversation_id, professionalId }));
+    const legacyEvidence = professionalId === "beasthealth.health-advisor"
+      ? historicalHealthAggregateEvidence(legacyHealthResult.data || [])
+      : professionalId === "beasteducation.guidance-counselor"
+        ? historicalEducationProfileEvidence(legacyEducationResult.data || [])
+        : [];
+    const evidenceById = new Map([...conversationMessages, ...legacyEvidence].map((item) => [item.id, item]));
+    const allEvidence = Array.from(evidenceById.values()).sort((left, right) => left.createdAt.localeCompare(right.createdAt) || left.id.localeCompare(right.id));
+    const historicalConversationCount = new Set(allEvidence.map((item) => item.conversationId)).size || Number(conversationsResult.count || 0);
+    if (!allEvidence.length) {
       state = { ...state, status: "completed", completedAt: now, updatedAt: now, metrics: { ...state.metrics, conversationsScanned: 0 } };
       await client.from("agent_conversations").update({ summary: { ...existingSummary, ap104Reconciliation: state }, updated_at: now }).eq("id", conversationId).eq("owner_id", user.id);
       return NextResponse.json({ professionals: await responseSnapshot(client, user.id) });
     }
-    const messagesResult = await client.from("agent_conversation_messages").select("id, owner_id, conversation_id, content, created_at").eq("owner_id", user.id).eq("sender->>kind", "user").eq("recipient->>id", professionalId).lte("created_at", state.captureThrough).order("created_at", { ascending: true }).range(state.nextMessageOffset, state.nextMessageOffset + historicalReconciliationBatchSize - 1);
-    if (messagesResult.error) return NextResponse.json({ error: "Historical messages are temporarily unavailable." }, { status: 503 });
-    const batch: HistoricalConversationMessage[] = (messagesResult.data || []).map((row) => ({ id: row.id, role: "user", text: textFromContent(row.content), createdAt: row.created_at, ownerId: row.owner_id, conversationId: row.conversation_id, professionalId }));
+    const batch = allEvidence.slice(state.nextMessageOffset, state.nextMessageOffset + historicalReconciliationBatchSize);
     assertHistoricalMessagesOwnerScoped(batch, user.id, professionalId);
     const [canonicalRecords, memoriesResult, priorRows] = await Promise.all([
       loadCanonicalKnowledge(client, user.id, professionalId),
@@ -201,9 +220,9 @@ export async function POST(request: Request) {
       await client.from("agent_conversations").update({ summary: { ...existingSummary, ap104Reconciliation: state }, updated_at: now }).eq("id", conversationId).eq("owner_id", user.id);
       return NextResponse.json({ error: safeFailure.error, requestId: safeFailure.requestId, professionals: await responseSnapshot(client, user.id) }, { status: 502 });
     }
-    const completed = batch.length < historicalReconciliationBatchSize;
+    const completed = state.nextMessageOffset + batch.length >= allEvidence.length;
     if (batch.length) {
-      const insert = await client.from("agent_conversation_messages").upsert({ id: batchId, owner_id: user.id, conversation_id: conversationId, sender: { kind: "agent", id: professionalId }, recipient: { kind: "module", id: professionalId.split(".")[0] }, content: { text: "I found information from your earlier conversations that isn't fully organized yet. I've organized what I found below so you can review it.", runtime: { proposals: generated, reconciliation: { version: "ap104-v1", sourceMessageIds: batch.map((item) => item.id), sourceConversationIds: Array.from(new Set(batch.map((item) => item.conversationId))), proposalCount: generated.length, duplicatesIgnored, conflictsDetected, completed, reconciledAt: now } } }, created_at: now }, { onConflict: "id" });
+      const insert = await client.from("agent_conversation_messages").upsert({ id: batchId, owner_id: user.id, conversation_id: conversationId, sender: { kind: "agent", id: professionalId }, recipient: { kind: "module", id: professionalId.split(".")[0] }, content: { text: "I found information from your earlier conversations that isn't fully organized yet. I've organized what I found below so you can review it.", runtime: { proposals: generated, reconciliation: { version: historicalReconciliationVersion, sourceMessageIds: batch.map((item) => item.id), sourceConversationIds: Array.from(new Set(batch.map((item) => item.conversationId))), proposalCount: generated.length, duplicatesIgnored, conflictsDetected, completed, reconciledAt: now } } }, created_at: now }, { onConflict: "id" });
       if (insert.error) return NextResponse.json({ error: "The batch was analyzed but could not be saved; it is safe to resume." }, { status: 503 });
     }
     state = {

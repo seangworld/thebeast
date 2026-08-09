@@ -17,7 +17,7 @@ test("AP-104 route reuses the AP-100 runtime and existing owner-scoped storage",
 });
 
 test("AP-104 member review exposes every required non-blocking control", () => {
-  for (const label of ["Start reconciliation", "Pause", "Resume", "Review", "Accept", "edited", "Reject", "Merge", "Skip for now"]) assert.match(workspace, new RegExp(label, "i"));
+  for (const label of ["Review information from earlier conversations", "Pause", "Resume", "Review", "Accept", "edited", "Reject", "Merge", "Skip for now"]) assert.match(workspace, new RegExp(label, "i"));
   assert.match(workspace, /continue using every Digital Professional normally/);
 });
 

@@ -69,4 +69,7 @@ test("Velocity Banking is first-class and Money Coach uses its canonical route a
   assert.match(coach, /open-velocity/);
   assert.match(coach, /Holding cash is the correct result|I would not use Velocity/);
   assert.match(coach, /Open — Zero Balance/);
+  const debtsPage = readFileSync("src/app/dashboard/money/debts/page.tsx", "utf8");
+  assert.match(debtsPage, /Paid-off fixed debts and archived accounts leave the active payoff plan/);
+  assert.match(debtsPage, /Revolving accounts at \$0 stay open as Open — Zero Balance/);
 });
