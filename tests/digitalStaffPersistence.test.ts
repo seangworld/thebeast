@@ -25,6 +25,18 @@ test("Health proposals write structured canonical records with provenance", asyn
   assert.equal((calls[0].payload as { details: { sourceMessageId: string } }).details.sourceMessageId, "message-1");
 });
 
+test("AP-107 accepts production-shaped snake_case medication fields without aggregation", async () => {
+  const { client, calls } = fakeClient();
+  const result = await applyApprovedKnowledgeProposal({ client, ownerId: "owner-1", professionalId: "beasthealth.health-advisor", proposal: { ...base, id: "ap107-medication", domain: "health", entityType: "medication", fields: { medication_name: "Test Medication", dose: "10 mg", frequency: "every 3 days" } } });
+  const payload = calls[0].payload as { record_type: string; title: string; details: Record<string, unknown> };
+  assert.equal(result.table, "beast_health_records");
+  assert.equal(payload.record_type, "medication");
+  assert.equal(payload.title, "Test Medication");
+  assert.equal(payload.details.dose, "10 mg");
+  assert.equal(payload.details.frequency, "every 3 days");
+  assert.equal(payload.details.proposalId, "ap107-medication");
+});
+
 test("Education proposals normalize entity categories and avoid raw sentence persistence", async () => {
   const { client, calls } = fakeClient();
   await applyApprovedKnowledgeProposal({ client, ownerId: "owner-1", professionalId: "beasteducation.guidance-counselor", proposal: { ...base, domain: "education", entityType: "institution", fields: { institution: "State University", year: 2026 } } });

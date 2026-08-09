@@ -324,6 +324,19 @@ export const beastRoadmapPackageRegistry = [
     ]
   ),
   packageIdentity(
+    "AP-107",
+    ["AP-107"],
+    "Digital Staff Proposal Approval",
+    [
+      "src/app/api/digital-staff/runtime/route.ts",
+      "src/lib/digitalStaffRuntime/persistence.ts",
+      "supabase/migrations/20260809000100_restore_member_health_record_rls.sql",
+      "tests/digitalStaffPersistence.test.ts",
+      "tests/guidedHistoricalReview.test.ts",
+    ],
+    ["20260809000100_restore_member_health_record_rls.sql"]
+  ),
+  packageIdentity(
     "BM-FND-033",
     ["BM-33"],
     "Funding Rules",

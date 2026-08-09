@@ -48,8 +48,23 @@ export function reportDigitalStaffError(
   console.error("Digital Staff request failed.", {
     scope,
     requestId,
+    category: classifyDigitalStaffFailure(scope, error),
     detail: sanitizedErrorDetail(error),
   });
+}
+
+export function classifyDigitalStaffFailure(scope: string, error: unknown) {
+  const detail = sanitizedErrorDetail(error).toLowerCase();
+  if (/authentication|required|unauthori[sz]ed|jwt|session/.test(detail)) return "auth_failure";
+  if (/proposal.*(not available|not found)|not found/.test(detail)) return "proposal_not_found";
+  if (/outside the canonical|cannot persist|unsupported|unknown digital/.test(detail)) return "unsupported_proposal_type";
+  if (/rls|row-level security|permission denied|policy/.test(detail)) return "rls_failure";
+  if (/constraint|duplicate|violates/.test(detail)) return "database_constraint_failure";
+  if (/json|serialize|parse/.test(detail)) return "serialization_failure";
+  if (/validation|required|malformed/.test(detail)) return "validation_failure";
+  if (/revalidat/.test(detail)) return "revalidation_failure";
+  if (scope.includes("proposal")) return "canonical_writer_failure";
+  return "provider_or_runtime_failure";
 }
 
 export function reportDigitalStaffLifecycle(

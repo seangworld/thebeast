@@ -30,3 +30,23 @@ test("BH-209 review remains the deployed v3 route with focused owner-scoped retu
   assert.match(route, /applyApprovedKnowledgeProposal/);
   assert.doesNotMatch(route, /insert\(.*aggregate/i);
 });
+
+test("AP-107 keeps live approval owner-scoped across proposal-bearing messages", () => {
+  const route = readFileSync("src/app/api/digital-staff/runtime/route.ts", "utf8");
+  const migration = readFileSync("supabase/migrations/20260809000100_restore_member_health_record_rls.sql", "utf8");
+  assert.match(route, /proposalMessages/);
+  assert.match(route, /eq\("owner_id", user\.id\)/);
+  assert.match(route, /safeDigitalStaffFailure\("proposal-decision"/);
+  assert.doesNotMatch(route, /Authorization/);
+  assert.match(migration, /with check \(auth\.uid\(\) = owner_id\)/);
+  assert.doesNotMatch(migration, /profiles\.role = 'admin'/);
+});
+
+test("AP-107 diagnostics classify sanitized approval failures server-side", () => {
+  const security = readFileSync("src/lib/digitalStaffRuntime/security.ts", "utf8");
+  assert.match(security, /classifyDigitalStaffFailure/);
+  assert.match(security, /rls_failure/);
+  assert.match(security, /database_constraint_failure/);
+  assert.match(security, /detail: sanitizedErrorDetail/);
+  assert.match(security, /requestId/);
+});

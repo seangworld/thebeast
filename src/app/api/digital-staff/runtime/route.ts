@@ -45,25 +45,31 @@ export async function POST(request: Request) {
   if (body.decision === "approve" || body.decision === "reject") {
     const proposalId = typeof body.proposalId === "string" ? body.proposalId : "";
     if (!proposalId) return NextResponse.json({ error: "A proposal ID is required." }, { status: 400 });
-    const latest = await supabase.from("agent_conversation_messages").select("id, sender, content, created_at").eq("conversation_id", conversationId).eq("owner_id", user.id).eq("sender->>kind", "agent").order("created_at", { ascending: false }).limit(1).maybeSingle();
-    const runtime = latest.data?.content && typeof latest.data.content === "object" && !Array.isArray(latest.data.content) ? (latest.data.content as { runtime?: { proposals?: StructuredKnowledgeProposal[] } }).runtime : null;
+    const proposalMessages = await supabase.from("agent_conversation_messages").select("id, sender, content, created_at").eq("conversation_id", conversationId).eq("owner_id", user.id).eq("sender->>kind", "agent").order("created_at", { ascending: false }).limit(50);
+    const proposalMessage = (proposalMessages.data || []).find((message) => {
+      const content = message.content;
+      const runtime = content && typeof content === "object" && !Array.isArray(content) ? (content as { runtime?: { proposals?: StructuredKnowledgeProposal[] } }).runtime : null;
+      return runtime?.proposals?.some((item) => item.id === proposalId);
+    });
+    const latest = proposalMessage || null;
+    const runtime = latest?.content && typeof latest.content === "object" && !Array.isArray(latest.content) ? (latest.content as { runtime?: { proposals?: StructuredKnowledgeProposal[] } }).runtime : null;
     const proposal = runtime?.proposals?.find((item) => item.id === proposalId);
     if (!proposal) return NextResponse.json({ error: "That proposal is not available for this owner-scoped conversation." }, { status: 404 });
     if (body.decision === "reject") {
-      if (latest.data?.id && latest.data.content && typeof latest.data.content === "object" && !Array.isArray(latest.data.content)) {
-        const content = latest.data.content as { runtime?: { proposals?: StructuredKnowledgeProposal[]; [key: string]: unknown } };
+      if (latest?.id && latest.content && typeof latest.content === "object" && !Array.isArray(latest.content)) {
+        const content = latest.content as { runtime?: { proposals?: StructuredKnowledgeProposal[]; [key: string]: unknown } };
         const updatedContent = { ...content, runtime: { ...(content.runtime || {}), proposals: (content.runtime?.proposals || []).map((item: StructuredKnowledgeProposal) => item.id === proposalId ? { ...item, approvalStatus: "rejected" as const } : item) } };
-        await supabase.from("agent_conversation_messages").update({ content: updatedContent }).eq("id", latest.data.id).eq("owner_id", user.id);
+        await supabase.from("agent_conversation_messages").update({ content: updatedContent }).eq("id", latest.id).eq("owner_id", user.id);
       }
       return NextResponse.json({ proposalId, status: "rejected" });
     }
     const editedFields = body.editedFields && typeof body.editedFields === "object" && !Array.isArray(body.editedFields) ? body.editedFields as Record<string, string | number | boolean | null> : undefined;
     try {
       const result = await applyApprovedKnowledgeProposal({ client: supabase, ownerId: user.id, professionalId: professionalId as ProfessionalId, proposal, editedFields });
-      if (latest.data?.id && latest.data.content && typeof latest.data.content === "object" && !Array.isArray(latest.data.content)) {
-        const content = latest.data.content as { text?: string; runtime?: { proposals?: StructuredKnowledgeProposal[]; [key: string]: unknown } };
+      if (latest?.id && latest.content && typeof latest.content === "object" && !Array.isArray(latest.content)) {
+        const content = latest.content as { text?: string; runtime?: { proposals?: StructuredKnowledgeProposal[]; [key: string]: unknown } };
         const updatedContent = { ...content, runtime: { ...(content.runtime || {}), proposals: (content.runtime?.proposals || []).map((item) => item.id === proposalId ? { ...item, approvalStatus: "approved" as const, approvedRecordId: result.recordId } : item) } };
-        await supabase.from("agent_conversation_messages").update({ content: updatedContent }).eq("id", latest.data.id).eq("owner_id", user.id);
+        await supabase.from("agent_conversation_messages").update({ content: updatedContent }).eq("id", latest.id).eq("owner_id", user.id);
       }
       return NextResponse.json({ result });
     } catch (error) {

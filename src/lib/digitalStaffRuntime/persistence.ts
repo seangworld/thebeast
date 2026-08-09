@@ -12,6 +12,19 @@ function stringField(proposal: StructuredKnowledgeProposal, ...keys: string[]) {
   return "";
 }
 
+function normalizedProposalFields(proposal: StructuredKnowledgeProposal) {
+  const fields = proposal.fields;
+  return {
+    ...fields,
+    medicationName: fields.medicationName ?? fields.medication_name,
+    supplementName: fields.supplementName ?? fields.supplement_name,
+    procedureName: fields.procedureName ?? fields.procedure_name,
+    providerName: fields.providerName ?? fields.provider_name,
+    measurementName: fields.measurementName ?? fields.measurement_name,
+    vaccinationName: fields.vaccinationName ?? fields.vaccination_name,
+  };
+}
+
 function jsonFields(proposal: StructuredKnowledgeProposal) {
   const reconciliation = (proposal as StructuredKnowledgeProposal & { reconciliation?: unknown }).reconciliation;
   return { ...proposal.fields, sourceMessageId: proposal.sourceMessageId, confidence: proposal.confidence, proposalId: proposal.id, ...(reconciliation ? { reconciliation } : {}) };
@@ -30,7 +43,7 @@ export async function applyApprovedKnowledgeProposal({
   proposal: StructuredKnowledgeProposal;
   editedFields?: Record<string, string | number | boolean | null>;
 }): Promise<ProposalWriteResult> {
-  const normalized = { ...proposal, fields: { ...proposal.fields, ...(editedFields || {}) } };
+  const normalized = { ...proposal, fields: { ...normalizedProposalFields(proposal), ...(editedFields || {}) } };
   if (normalized.approvalStatus !== "proposed") throw new Error("Only a pending proposal can be approved.");
   if (normalized.sourceMessageId.trim() === "") throw new Error("Proposal provenance is required.");
   if (normalized.proposedAction === "none") throw new Error("This proposal does not authorize a record write.");
@@ -46,7 +59,7 @@ export async function applyApprovedKnowledgeProposal({
     : professionalId;
 
   if (targetProfessional === "beasthealth.health-advisor") {
-    const title = stringField(normalized, "medicationName", "supplementName", "condition", "procedureName", "providerName", "allergy", "measurementName", "vaccinationName", "relationship", "name", "title", "institution", "provider") || normalized.entityType;
+    const title = stringField(normalized, "medicationName", "medication_name", "supplementName", "supplement_name", "condition", "procedureName", "procedure_name", "providerName", "provider_name", "allergy", "measurementName", "measurement_name", "vaccinationName", "vaccination_name", "relationship", "name", "title", "institution", "provider") || normalized.entityType;
     const type = /supplement|medication/i.test(normalized.entityType) ? "medication" : /measurement|vital/i.test(normalized.entityType) ? "vital" : /family/i.test(normalized.entityType) ? "family_history" : /allerg|vaccin|appointment/i.test(normalized.entityType) ? "profile" : /surgery|procedure/i.test(normalized.entityType) ? "procedure" : /specialist|provider/i.test(normalized.entityType) ? "provider" : /diagnos|condition/i.test(normalized.entityType) ? "condition" : normalized.entityType;
     const allowedTypes = ["profile", "condition", "medication", "procedure", "vital", "document", "lifestyle", "family_history", "provider"];
     if (!allowedTypes.includes(type)) throw new Error("Health proposal type is outside the canonical record contract.");
