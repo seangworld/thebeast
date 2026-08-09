@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { getDebtDueDetail, getDebtDueState, type DebtPaymentAction } from "@/lib/debtManagement";
+import { calculateDebtPaymentAmount, getDebtDueDetail, getDebtDueState, type DebtPaymentAction, type DebtPaymentMode } from "@/lib/debtManagement";
 
 export type DebtManagementDebt = {
   id: string;
@@ -40,7 +40,9 @@ export type DebtManagementActionsProps = {
 const today = () => new Date().toISOString().slice(0, 10);
 
 export function DebtManagementActions({ debt, fundingSources, history, busy, onPayment, onResetDueDate, onUndoLastPayment }: DebtManagementActionsProps) {
-  const [panel, setPanel] = useState<"custom" | "reset" | "history" | null>(null);
+  const [panel, setPanel] = useState<"payment" | "reset" | "history" | null>(null);
+  const [paymentMode, setPaymentMode] = useState<DebtPaymentMode>("custom");
+  const [extraPayment, setExtraPayment] = useState("");
   const [amount, setAmount] = useState("");
   const [paymentDate, setPaymentDate] = useState(today);
   const [fundingSourceId, setFundingSourceId] = useState("");
@@ -51,7 +53,7 @@ export function DebtManagementActions({ debt, fundingSources, history, busy, onP
 
   async function record(actionType: DebtPaymentAction, requestedAmount: number) {
     await onPayment({ debt, amount: requestedAmount, paymentDate, fundingSourceId: fundingSourceId || null, notes, actionType });
-    setAmount(""); setNotes(""); setPanel(null);
+    setAmount(""); setExtraPayment(""); setNotes(""); setPanel(null);
   }
 
   return (
@@ -62,9 +64,9 @@ export function DebtManagementActions({ debt, fundingSources, history, busy, onP
       </div>
 
       <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-        <button type="button" disabled={busy} onClick={() => record("minimum", Math.min(Number(debt.minimum_payment || 0), Number(debt.balance || 0)))} className="beast-button">Pay Minimum</button>
+        <button type="button" disabled={busy} onClick={() => { setPaymentMode("minimum"); setPanel("payment"); }} className="beast-button">Pay Minimum</button>
         <button type="button" disabled={busy} onClick={() => record("full_balance", Number(debt.balance || 0))} className="beast-button">Pay Full Balance</button>
-        <button type="button" disabled={busy} onClick={() => setPanel("custom")} className="beast-button-secondary">Custom Payment</button>
+        <button type="button" disabled={busy} onClick={() => { setPaymentMode("custom"); setPanel("payment"); }} className="beast-button-secondary">Custom Payment</button>
         {debt.payment_behavior === "revolving" ? <button type="button" disabled={busy || Number(debt.statement_balance ?? debt.balance ?? 0) <= 0} onClick={() => record("statement_balance", Math.min(Number(debt.statement_balance ?? debt.balance ?? 0), Number(debt.balance || 0)))} className="beast-button-secondary">Statement Balance</button> : null}
         <button type="button" disabled={busy} onClick={() => record("skip", 0)} className="beast-button-secondary">Skip Payment</button>
         <button type="button" disabled={busy} onClick={() => record("paid_outside_beast", Math.min(Number(debt.minimum_payment || 0), Number(debt.balance || 0)))} className="beast-button-secondary">Mark Paid Outside Beast</button>
@@ -73,12 +75,19 @@ export function DebtManagementActions({ debt, fundingSources, history, busy, onP
         <button type="button" onClick={() => setPanel("history")} className="beast-button-secondary">History</button>
       </div>
 
-      {panel === "custom" ? <div className="grid gap-3 rounded-xl border border-[#2a3242] bg-[#0f1419] p-4" role="dialog" aria-label={`${debt.name} custom payment`}>
-        <label className="money-field-label">Amount<input type="number" min="0.01" step="0.01" value={amount} onChange={(event) => setAmount(event.target.value)} className="beast-input mt-2" /></label>
+      {panel === "payment" ? <div className="grid gap-3 rounded-xl border border-[#2a3242] bg-[#0f1419] p-4" role="dialog" aria-label={`${debt.name} payment`}>
+        <div className="grid gap-2 sm:grid-cols-3" aria-label="Payment amount mode">
+          <button type="button" className={paymentMode === "minimum" ? "beast-button" : "beast-button-secondary"} onClick={() => setPaymentMode("minimum")}>Minimum</button>
+          <button type="button" className={paymentMode === "minimum_plus_extra" ? "beast-button" : "beast-button-secondary"} onClick={() => setPaymentMode("minimum_plus_extra")}>Minimum + Extra</button>
+          <button type="button" className={paymentMode === "custom" ? "beast-button" : "beast-button-secondary"} onClick={() => setPaymentMode("custom")}>Custom Total</button>
+        </div>
+        <p className="text-sm text-[#9aa7b8]">Current balance: ${Number(debt.balance || 0).toFixed(2)} · Minimum: ${Number(debt.minimum_payment || 0).toFixed(2)}</p>
+        {paymentMode === "minimum_plus_extra" ? <label className="money-field-label">Extra payment<input type="number" min="0" step="0.01" value={extraPayment} onChange={(event) => setExtraPayment(event.target.value)} className="beast-input mt-2" /></label> : null}
+        {paymentMode === "custom" ? <label className="money-field-label">Total payment<input type="number" min="0.01" step="0.01" value={amount} onChange={(event) => setAmount(event.target.value)} className="beast-input mt-2" /></label> : null}
         <label className="money-field-label">Payment Date<input type="date" value={paymentDate} onChange={(event) => setPaymentDate(event.target.value)} className="beast-input mt-2" /></label>
         <label className="money-field-label">Funding Source<select value={fundingSourceId} onChange={(event) => setFundingSourceId(event.target.value)} className="beast-input mt-2"><option value="">Use configured source</option>{fundingSources.map((source) => <option key={source.id} value={source.id}>{source.name}</option>)}</select></label>
         <label className="money-field-label">Optional Notes<textarea value={notes} onChange={(event) => setNotes(event.target.value)} className="beast-input mt-2 min-h-20" /></label>
-        <div className="flex gap-2"><button type="button" disabled={busy || Number(amount) <= 0} onClick={() => record("custom", Number(amount))} className="beast-button">Record Payment</button><button type="button" onClick={() => setPanel(null)} className="beast-button-secondary">Cancel</button></div>
+        <div className="flex gap-2"><button type="button" disabled={busy || calculateDebtPaymentAmount({ balance: debt.balance, minimumPayment: debt.minimum_payment, mode: paymentMode, extraPayment: Number(extraPayment), customAmount: Number(amount) }) <= 0} onClick={() => record(paymentMode === "minimum" ? "minimum" : "custom", calculateDebtPaymentAmount({ balance: debt.balance, minimumPayment: debt.minimum_payment, mode: paymentMode, extraPayment: Number(extraPayment), customAmount: Number(amount) }))} className="beast-button">Record Payment</button><button type="button" onClick={() => setPanel(null)} className="beast-button-secondary">Cancel</button></div>
       </div> : null}
 
       {panel === "reset" ? <div className="grid gap-3 rounded-xl border border-[#2a3242] bg-[#0f1419] p-4" role="dialog" aria-label={`${debt.name} reset due date`}>

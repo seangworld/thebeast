@@ -166,7 +166,7 @@ function DebtActionsMenu({
         view === "manage" && management ? (
           <div className="grid min-w-0 gap-3" data-debt-management-popover="true">
             <div className="flex min-w-0 items-center justify-between gap-2 border-b border-[#2a3242] pb-2">
-              <button type="button" autoFocus className={menuItemClass} onClick={() => setView("actions")}>
+              <button type="button" autoFocus className={`${menuItemClass} w-auto shrink-0`} onClick={() => setView("actions")}>
                 Back to actions
               </button>
               <button type="button" className={`${menuItemClass} w-auto shrink-0`} aria-label={`Close ${debt.name} payment management`} onClick={close}>
@@ -180,7 +180,7 @@ function DebtActionsMenu({
           <div className="mb-2 border-b border-[#2a3242] pb-3">{automation}</div>
           {management ? (
             <button type="button" role="menuitem" className={menuItemClass} onClick={() => setView("manage")}>
-              Pay / Manage
+              Make Payment
             </button>
           ) : null}
           <button type="button" role="menuitem" className={menuItemClass} onClick={() => { close(); onEdit(); }}>

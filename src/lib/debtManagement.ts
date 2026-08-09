@@ -9,6 +9,31 @@ export type DebtPaymentAction =
   | "skip"
   | "paid_outside_beast";
 
+export type DebtPaymentMode = "minimum" | "minimum_plus_extra" | "custom";
+
+/** Resolve the member-entered payment amount before the canonical payment writer runs. */
+export function calculateDebtPaymentAmount({
+  balance,
+  minimumPayment,
+  mode,
+  extraPayment = 0,
+  customAmount = 0,
+}: {
+  balance: number;
+  minimumPayment: number;
+  mode: DebtPaymentMode;
+  extraPayment?: number;
+  customAmount?: number;
+}) {
+  const currentBalance = Math.max(Number(balance || 0), 0);
+  const minimum = Math.max(Number(minimumPayment || 0), 0);
+  if (mode === "minimum_plus_extra") {
+    return Math.min(currentBalance, minimum + Math.max(Number(extraPayment || 0), 0));
+  }
+  if (mode === "custom") return Math.max(Number(customAmount || 0), 0);
+  return Math.min(currentBalance, minimum);
+}
+
 export type DebtDueState = {
   status: DebtDueStatus;
   daysUntilDue: number | null;

@@ -1,7 +1,14 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { buildDebtOverdueSignals, getDebtDueState, getNextDebtCycleDate } from "../src/lib/debtManagement";
+import { buildDebtOverdueSignals, calculateDebtPaymentAmount, getDebtDueState, getNextDebtCycleDate } from "../src/lib/debtManagement";
+
+test("debt payment modes resolve against the current balance", () => {
+  assert.equal(calculateDebtPaymentAmount({ balance: 500, minimumPayment: 75, mode: "minimum" }), 75);
+  assert.equal(calculateDebtPaymentAmount({ balance: 100, minimumPayment: 75, mode: "minimum_plus_extra", extraPayment: 50 }), 100);
+  assert.equal(calculateDebtPaymentAmount({ balance: 500, minimumPayment: 75, mode: "minimum_plus_extra", extraPayment: 25 }), 100);
+  assert.equal(calculateDebtPaymentAmount({ balance: 500, minimumPayment: 75, mode: "custom", customAmount: 125 }), 125);
+});
 
 test("debt due intelligence distinguishes upcoming, due soon, due today, overdue, and paid", () => {
   const now = new Date(2026, 7, 10);
@@ -23,7 +30,7 @@ test("reset next cycle clamps month ends and overdue facts expose architecture-o
 
 test("Debt Management exposes the complete payment, reset, history, and status workflow", () => {
   const source = readFileSync("src/app/dashboard/money/debts/DebtManagementActions.tsx", "utf8");
-  for (const label of ["Pay Minimum", "Pay Full Balance", "Custom Payment", "Statement Balance", "Skip Payment", "Mark Paid Outside Beast", "Undo Last Payment", "Reset Due Date", "Move to next recurring cycle", "Select custom next due date", "Payment Date", "Funding Source", "Optional Notes", "History"]) assert.match(source, new RegExp(label));
+  for (const label of ["Pay Minimum", "Pay Full Balance", "Custom Payment", "Minimum \\+ Extra", "Custom Total", "Statement Balance", "Skip Payment", "Mark Paid Outside Beast", "Undo Last Payment", "Reset Due Date", "Move to next recurring cycle", "Select custom next due date", "Payment Date", "Funding Source", "Optional Notes", "History"]) assert.match(source, new RegExp(label));
   assert.match(source, /getDebtDueState/);
 });
 
@@ -33,7 +40,7 @@ test("Debt List consolidates row controls into one confirmed Actions menu", () =
   assert.match(page, /function DebtActionsMenu/);
   assert.match(page, /label="Actions"/);
   assert.match(page, /ariaLabel=\{`\$\{debt\.name\} actions`\}/);
-  for (const label of ["Pay / Manage", "Edit", "Archive", "Delete"]) {
+  for (const label of ["Make Payment", "Edit", "Archive", "Delete"]) {
     assert.match(page, new RegExp(label));
   }
   assert.match(page, /role="separator"/);
@@ -44,6 +51,7 @@ test("Debt List consolidates row controls into one confirmed Actions menu", () =
   assert.match(page, /data-debt-management-popover="true"/);
   assert.match(page, /data-action-menu-list="debt"/);
   assert.match(page, /Back to actions/);
+  assert.match(page, /Back to actions[\s\S]*w-auto shrink-0/);
   assert.match(page, /width=\{view === "manage" \? 560 : 240\}/);
   assert.match(page, /panelRole="dialog"/);
   assert.match(page, /actions and payment automation/);
