@@ -79,9 +79,11 @@ test("AP-106 keeps mixed canonical entities independently representable", () => 
 test("AP-106 member workspaces query canonical records with owner scope", () => {
   const education = readFileSync("src/app/dashboard/learning/LearningWorkspaceView.tsx", "utf8");
   const health = readFileSync("src/app/dashboard/health/BeastHealthWorkspace.tsx", "utf8");
+  const healthLoader = readFileSync("src/lib/health/canonicalRecords.ts", "utf8");
   const runtime = readFileSync("src/app/api/digital-staff/runtime/route.ts", "utf8");
   assert.match(education, /from\("education_career_profile_items"\)[\s\S]*?\.eq\("owner_id", userId\)/);
-  assert.match(health, /from\("beast_health_records"\)[\s\S]*?\.eq\("owner_id", userId\)/);
+  assert.match(health, /loadCanonicalMemberHealthRecords\(client, userId\)/);
+  assert.match(healthLoader, /from\("beast_health_records"\)[\s\S]*?\.eq\("owner_id", ownerId\)/);
   assert.match(runtime, /education_career_profile_items/);
   assert.match(runtime, /beast_health_records/);
 });

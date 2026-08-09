@@ -3,6 +3,7 @@ import {
   applyApprovedKnowledgeProposal,
   assertHistoricalMessagesOwnerScoped,
   createHistoricalReconciliationState,
+  decomposeHistoricalProposals,
   historicalReconciliationBatchSize,
   historicalEducationProfileEvidence,
   historicalHealthAggregateEvidence,
@@ -209,7 +210,8 @@ export async function POST(request: Request) {
         if (!historical.text.trim()) continue;
         const runtimeMessage: RuntimeMessage = { id: historical.id, role: "user", text: historical.text, createdAt: historical.createdAt };
         const result = await runDigitalStaffRuntime({ ownerId: user.id, professionalId, conversationId: historical.conversationId, message: runtimeMessage, recentMessages: [], state: emptyState, memories: memoriesResult.error ? [] : (memoriesResult.data || []).map((item) => ({ key: String(item.memory_key), value: item.value, updatedAt: String(item.updated_at) })), structuredRecords: canonicalRecords.map((item) => ({ domain: item.domain, record: item.fields, updatedAt: item.updatedAt })), workspace: null, executionMode: "historical_reconciliation" });
-        const reconciled = reconcileHistoricalProposals({ professionalId, message: historical, proposals: result.proposals, canonicalRecords: [...canonicalRecords, ...pendingAsCanonical, ...generated.map((proposal) => ({ id: proposal.id, domain: proposal.domain, entityType: proposal.entityType, fields: proposal.fields }))], reconciledAt: now });
+        const decomposed = decomposeHistoricalProposals(historical, result.proposals);
+        const reconciled = reconcileHistoricalProposals({ professionalId, message: historical, proposals: decomposed, canonicalRecords: [...canonicalRecords, ...pendingAsCanonical, ...generated.map((proposal) => ({ id: proposal.id, domain: proposal.domain, entityType: proposal.entityType, fields: proposal.fields }))], reconciledAt: now });
         generated.push(...reconciled.proposals);
         duplicatesIgnored += reconciled.duplicatesIgnored;
         conflictsDetected += reconciled.conflictsDetected;

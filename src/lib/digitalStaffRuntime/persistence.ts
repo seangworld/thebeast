@@ -46,10 +46,14 @@ export async function applyApprovedKnowledgeProposal({
     : professionalId;
 
   if (targetProfessional === "beasthealth.health-advisor") {
-    const title = stringField(normalized, "medicationName", "supplementName", "condition", "name", "title", "institution", "provider") || normalized.entityType;
+    const title = stringField(normalized, "medicationName", "supplementName", "condition", "procedureName", "providerName", "allergy", "measurementName", "vaccinationName", "relationship", "name", "title", "institution", "provider") || normalized.entityType;
     const type = /supplement|medication/i.test(normalized.entityType) ? "medication" : /measurement|vital/i.test(normalized.entityType) ? "vital" : /family/i.test(normalized.entityType) ? "family_history" : /allerg|vaccin|appointment/i.test(normalized.entityType) ? "profile" : /surgery|procedure/i.test(normalized.entityType) ? "procedure" : /specialist|provider/i.test(normalized.entityType) ? "provider" : /diagnos|condition/i.test(normalized.entityType) ? "condition" : normalized.entityType;
     const allowedTypes = ["profile", "condition", "medication", "procedure", "vital", "document", "lifestyle", "family_history", "provider"];
     if (!allowedTypes.includes(type)) throw new Error("Health proposal type is outside the canonical record contract.");
+    const existingProposal = normalized.proposedAction === "create"
+      ? await client.from("beast_health_records").select("id").eq("owner_id", ownerId).eq("details->>proposalId", normalized.id).limit(1).maybeSingle()
+      : { data: null, error: null };
+    if (existingProposal.data?.id) return { proposalId: normalized.id, status: "approved", recordId: String(existingProposal.data.id), table: "beast_health_records" };
     const values = { record_type: type, title, details: { ...jsonFields(normalized), subtype: normalized.entityType, provenance: "digital_staff_runtime", conversation_message_id: normalized.sourceMessageId }, updated_at: new Date().toISOString() };
     const result = normalized.proposedAction === "update" && normalized.relatedRecordId
       ? await client.from("beast_health_records").update(values).eq("id", normalized.relatedRecordId).eq("owner_id", ownerId).select("id").single()
@@ -59,7 +63,7 @@ export async function applyApprovedKnowledgeProposal({
   }
 
   if (targetProfessional === "beasteducation.guidance-counselor") {
-    const label = stringField(normalized, "institution", "schoolName", "employer", "certificationName", "certificate", "title", "preference", "name") || normalized.entityType;
+    const label = stringField(normalized, "institution", "schoolName", "employer", "certificationName", "credentialName", "certificate", "branch", "role", "skill", "constraint", "goal", "title", "preference", "name") || normalized.entityType;
     const categoryMap: Record<string, string> = {
       institution: "school", school: "school", degree: "degree", diploma: "degree", credit: "coursework", certification: "certification", license: "license",
       coursework: "coursework", training: "training", military_education: "training", military_service: "military", employment: "employment", job: "employment", employer: "employer_type", role: "role", target_role: "occupation", skill: "skill",
@@ -68,6 +72,10 @@ export async function applyApprovedKnowledgeProposal({
       goal: "education_goal", preference: "other", education_preference: "other", career_preference: "other", decision: "outcome", rejected_path: "outcome", outcome: "outcome",
     };
     const category = categoryMap[normalized.entityType.toLowerCase()] || "other";
+    const existingProposal = normalized.proposedAction === "create"
+      ? await client.from("education_career_profile_items").select("id").eq("owner_id", ownerId).eq("details->>proposalId", normalized.id).limit(1).maybeSingle()
+      : { data: null, error: null };
+    if (existingProposal.data?.id) return { proposalId: normalized.id, status: "approved", recordId: String(existingProposal.data.id), table: "education_career_profile_items" };
     const value = JSON.stringify(jsonFields(normalized));
     const values = { category, label, value, verification_status: "member_reported", confidence: normalized.confidence, details: { entityType: normalized.entityType, provenance: "digital_staff_runtime", proposalId: normalized.id }, updated_at: new Date().toISOString() };
     const result = normalized.proposedAction === "update" && normalized.relatedRecordId

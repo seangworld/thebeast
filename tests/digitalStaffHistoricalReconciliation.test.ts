@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   assertHistoricalMessagesOwnerScoped,
   createHistoricalReconciliationState,
+  decomposeHistoricalProposals,
   historicalEducationProfileEvidence,
   historicalHealthAggregateEvidence,
   reconcileHistoricalProposals,
@@ -133,4 +134,38 @@ test("OT-001 deduplicates repeated entities within one extracted message", () =>
   const result = reconcile({ professionalId: health, proposals: [proposal("health", "medication", { name: "Medicine A" }, 1), proposal("health", "medication", { name: "medicine a" }, 2)] });
   assert.equal(result.proposals.length, 1);
   assert.equal(result.duplicatesIgnored, 1);
+});
+
+test("BH-206 deterministically decomposes one aggregate medication proposal before review", () => {
+  const historical = message("I take Medication A, Medication B, Supplement C, Medication D and Medication E.", health);
+  const decomposed = decomposeHistoricalProposals(historical, [proposal("health", "medication", { name: "Medication A, Medication B, Supplement C, Medication D and Medication E" })]);
+  assert.equal(decomposed.length, 5);
+  assert.deepEqual(decomposed.map((item) => item.entityType), ["medication", "medication", "supplement", "medication", "medication"]);
+  assert.deepEqual(decomposed.map((item) => item.fields.name), ["Medication A", "Medication B", "Supplement C", "Medication D", "Medication E"]);
+});
+
+test("BE-206 decomposes model-classified schools without copying ambiguous aggregate fields", () => {
+  const historical = message("My schools include School A, School B and School C.", education);
+  const decomposed = decomposeHistoricalProposals(historical, [proposal("education", "school", { institution: "School A, School B and School C", graduationYear: 2020 })]);
+  assert.deepEqual(decomposed.map((item) => item.fields), [{ institution: "School A" }, { institution: "School B" }, { institution: "School C" }]);
+});
+
+test("BH-206 decomposes conditions procedures and providers one entity per proposal", () => {
+  for (const [entityType, key, text] of [
+    ["condition", "condition", "Condition A, Condition B and Condition C"],
+    ["procedure", "procedureName", "Procedure A, Procedure B and Procedure C"],
+    ["provider", "providerName", "Provider A, Provider B and Provider C"],
+  ] as const) {
+    const historical = message(text, health, `message-${entityType}`);
+    const result = decomposeHistoricalProposals(historical, [proposal("health", entityType, { [key]: text })]);
+    assert.equal(result.length, 3);
+    assert.deepEqual(result.map((item) => item.fields[key]), [`${entityType === "condition" ? "Condition" : entityType === "procedure" ? "Procedure" : "Provider"} A`, `${entityType === "condition" ? "Condition" : entityType === "procedure" ? "Procedure" : "Provider"} B`, `${entityType === "condition" ? "Condition" : entityType === "procedure" ? "Procedure" : "Provider"} C`]);
+  }
+});
+
+test("BH-206 keeps negative allergy family-history and supplement statements out of entity rows", () => {
+  for (const [text, entityType] of [["I have no allergies", "allergy"], ["No family history that I know of", "family_history"], ["I don't take any supplements", "supplement"]]) {
+    const result = reconcile({ professionalId: health, text, proposals: [proposal("health", entityType, { name: text })] });
+    assert.equal(result.proposals.length, 0);
+  }
 });

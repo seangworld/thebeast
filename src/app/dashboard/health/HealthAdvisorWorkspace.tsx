@@ -56,7 +56,7 @@ import {
   buildHealthAdvisorUnderstanding,
   type HealthUnderstandingItem,
 } from "@/lib/health/understanding";
-import { preferStructuredCanonicalRecords } from "@/lib/canonicalKnowledgePresentation";
+import { loadCanonicalMemberHealthRecords } from "@/lib/health/canonicalRecords";
 import {
   ServerAgentConversationRepository,
   SupabaseAgentConversationStore,
@@ -614,15 +614,8 @@ export function HealthAdvisorWorkspace() {
       if (authError) throw authError;
       const userId = auth.user?.id;
       if (!userId) throw new Error("Sign in is required.");
-      const [healthResult, documentResult, profileResult, goalResult] = await Promise.all([
-        client
-          .from("beast_health_records")
-          .select(
-            "id, owner_id, record_type, title, status, occurred_on, source, details, notes, created_at, updated_at"
-          )
-          .eq("owner_id", userId)
-          .order("occurred_on", { ascending: false, nullsFirst: false })
-          .order("created_at", { ascending: false }),
+      const [canonicalRecords, documentResult, profileResult, goalResult] = await Promise.all([
+        loadCanonicalMemberHealthRecords(client, userId),
         loadUserDocuments(client as unknown as BeastDocumentDataClient),
         client
           .from("profiles")
@@ -639,12 +632,7 @@ export function HealthAdvisorWorkspace() {
           .neq("status", "Archived")
           .order("updated_at", { ascending: false }),
       ]);
-      if (healthResult.error) throw healthResult.error;
-      const nextRecords = (
-        (healthResult.data || []) as HealthRecordRow[]
-      )
-        .map(normalizeHealthRecord)
-        .filter((record): record is HealthRecord => Boolean(record));
+      const nextRecords = canonicalRecords;
       const nextStore = new SupabaseExecutionHistoryStore(client);
       const nextConversationRepository =
         new ServerAgentConversationRepository(
@@ -657,14 +645,7 @@ export function HealthAdvisorWorkspace() {
       setOwnerId(userId);
       setMemberName(resolveHealthAdvisorMemberName(profile, auth.user));
       setMemberTimeZone(profile?.timezone || null);
-      setRecords(preferStructuredCanonicalRecords(nextRecords, {
-        category: (record) => record.recordType,
-        value: (record) => record.details,
-        isLegacyAggregate: (record) =>
-          (record.source === "Health Advisor conversation" || record.source === "Member-reported Health Advisor conversation") &&
-          typeof record.details.context === "string" &&
-          Boolean(record.details.context.trim()),
-      }));
+      setRecords(nextRecords);
       setRecordsUnavailable(false);
       setDocuments(
         buildDocumentContext(nextRecords, documentResult.documents)

@@ -1,6 +1,6 @@
 import type { ProfessionalId, RuntimeContext, StructuredKnowledgeProposal } from "./types";
 
-export const historicalReconciliationVersion = "ap104-ot001-v2";
+export const historicalReconciliationVersion = "bh206-be206-v3";
 export const historicalReconciliationBatchSize = 4;
 
 export type HistoricalConversationMessage = RuntimeContext["message"] & {
@@ -144,7 +144,7 @@ export function transitionHistoricalReconciliationState(state: HistoricalReconci
 
 function normalized(value: unknown) {
   return typeof value === "string"
-    ? value.toLowerCase().replace(/\b(?:the|a|an|u\.s\.)\b/g, " ").replace(/[^a-z0-9]+/g, " ").trim()
+    ? value.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim().replace(/^(?:the|a|an)\s+/, "")
     : typeof value === "number" || typeof value === "boolean" ? String(value) : "";
 }
 
@@ -161,11 +161,55 @@ function stableHash(value: string) {
   return (hash >>> 0).toString(36);
 }
 
-const identityKeys = ["name", "title", "institution", "employer", "certificate", "condition", "medicationName", "supplementName", "accountName", "debtName", "goal", "priority", "preference"];
+const identityKeys = [
+  "name", "title", "institution", "schoolName", "employer", "certificate", "credentialName", "certificationName",
+  "condition", "medicationName", "supplementName", "procedureName", "providerName", "allergy", "measurementName",
+  "vaccinationName", "relationship", "branch", "role", "skill", "constraint", "accountName", "debtName", "goal", "priority", "preference",
+];
 const temporalKeys = ["date", "year", "graduationYear", "startDate", "endDate", "occurredOn"];
 
 function identityValues(fields: Record<string, unknown>) {
   return identityKeys.map((key) => normalized(fields[key])).filter(Boolean);
+}
+
+const genericAggregateIdentities = /^(?:current\s+)?(?:medications?|supplements?|conditions?|procedures?|providers?|specialists?|allergies?|measurements?|vaccinations?|family history|lifestyle|schools?|education history|employment|military experience|certifications?|preferences?|constraints?)$/i;
+
+function listParts(value: string) {
+  return value
+    .replace(/^[^:]{1,50}:\s*/, "")
+    .replace(/^(?:i\s+(?:currently\s+)?(?:take|use|have|see|saw)|my\s+[^:,.]{1,35}\s+(?:are|include)|(?:current\s+)?[^:,.]{1,35}\s+(?:are|include))\s+/i, "")
+    .split(/\s*(?:\r?\n|;|,|\band\b|&)\s*/i)
+    .map((item) => item.replace(/^(?:also\s+|a\s+|an\s+)/i, "").replace(/[.]+$/, "").trim())
+    .filter((item) => item.length > 1);
+}
+
+function identityKeyFor(proposal: StructuredKnowledgeProposal) {
+  return identityKeys.find((key) => typeof proposal.fields[key] === "string" && String(proposal.fields[key]).trim()) || "name";
+}
+
+function decomposedEntityType(entityType: string, item: string) {
+  if (/medication/i.test(entityType) && /\b(?:supplement|vitamin|mineral|probiotic|fish oil)\b/i.test(item)) return "supplement";
+  return entityType;
+}
+
+/** Enforces one proposal per entity after AP-100 extraction and before review/persistence. */
+export function decomposeHistoricalProposals(message: HistoricalConversationMessage, proposals: StructuredKnowledgeProposal[]) {
+  return proposals.flatMap((proposal) => {
+    const identityKey = identityKeyFor(proposal);
+    const identity = preservedText(proposal.fields[identityKey]);
+    const context = preservedText(proposal.fields.context);
+    const candidateText = identity && !genericAggregateIdentities.test(identity) ? identity : context || message.text;
+    const parts = listParts(candidateText);
+    if (parts.length < 2) return [proposal];
+    return parts.map((item, index) => ({
+      ...proposal,
+      id: `${proposal.id}-entity-${index + 1}`,
+      entityType: decomposedEntityType(proposal.entityType, item),
+      fields: { [identityKey]: item },
+      relatedRecordId: null,
+      proposedAction: "create" as const,
+    }));
+  });
 }
 
 function recordSearchValues(record: CanonicalKnowledgeRecord) {
@@ -226,7 +270,11 @@ export function reconcileHistoricalProposals({
   let conflictsDetected = 0;
 
   for (const proposal of proposals) {
-    if (/allerg/i.test(proposal.entityType) && /\b(?:no known allergies|no allergies|without allergies|do not have allergies|don't have allergies|none known)\b/i.test(message.text)) {
+    const negativeEntityStatement = /\b(?:no|none|without|do not|don't)\b/i.test(message.text)
+      && ((/allerg/i.test(proposal.entityType) && /allerg/i.test(message.text))
+        || (/family/i.test(proposal.entityType) && /family history/i.test(message.text))
+        || (/supplement/i.test(proposal.entityType) && /supplement/i.test(message.text)));
+    if (negativeEntityStatement) {
       duplicatesIgnored += 1;
       continue;
     }

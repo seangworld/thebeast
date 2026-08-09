@@ -22,10 +22,8 @@ import {
   buildHealthTimeline,
   healthWorkspaceDefinitions,
   healthWorkspaceHrefs,
-  normalizeHealthRecord,
   type HealthRecord,
   type HealthRecordKind,
-  type HealthRecordRow,
   type HealthRecordStatus,
 } from "@/lib/health/foundation";
 import {
@@ -38,11 +36,8 @@ import { BeastHealthShell } from "./BeastHealthShell";
 import { HealthDiscoveryOnboarding } from "./HealthDiscoveryOnboarding";
 import { HealthDocumentExtractionReview } from "./HealthDocumentExtractionReview";
 import { LivingHealthTimeline } from "./LivingHealthTimeline";
-import {
-  canonicalDisplayFields,
-  canonicalMissingActions,
-  preferStructuredCanonicalRecords,
-} from "@/lib/canonicalKnowledgePresentation";
+import { canonicalDisplayFields, canonicalMissingActions } from "@/lib/canonicalKnowledgePresentation";
+import { loadCanonicalMemberHealthRecords } from "@/lib/health/canonicalRecords";
 
 const statusOptions: HealthRecordStatus[] = [
   "active",
@@ -832,27 +827,9 @@ function useHealthRecords() {
     if (authError) throw authError;
     const userId = auth.user?.id;
     if (!userId) throw new Error("Sign in is required.");
-    const { data, error: recordsError } = await client
-      .from("beast_health_records")
-      .select(
-        "id, owner_id, record_type, title, status, occurred_on, source, details, notes, created_at, updated_at"
-      )
-      .eq("owner_id", userId)
-      .order("occurred_on", { ascending: false, nullsFirst: false })
-      .order("created_at", { ascending: false });
-    if (recordsError) throw recordsError;
+    const canonicalRecords = await loadCanonicalMemberHealthRecords(client, userId);
     setOwnerId(userId);
-    const normalizedRecords = ((data || []) as HealthRecordRow[])
-        .map(normalizeHealthRecord)
-        .filter((record): record is HealthRecord => Boolean(record));
-    setRecords(preferStructuredCanonicalRecords(normalizedRecords, {
-      category: (record) => record.recordType,
-      value: (record) => record.details,
-      isLegacyAggregate: (record) =>
-        (record.source === "Health Advisor conversation" || record.source === "Member-reported Health Advisor conversation") &&
-        typeof record.details.context === "string" &&
-        Boolean(record.details.context.trim()),
-    }));
+    setRecords(canonicalRecords);
     setError("");
     setLoading(false);
   }
