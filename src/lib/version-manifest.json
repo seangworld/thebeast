@@ -1,6 +1,6 @@
 {
   "generatedFrom": "BeastFusion state/ecosystem-version-registry.json",
-  "generatedAt": "2026-07-20",
+  "generatedAt": "2026-08-09",
   "identities": {
     "beast": { "name": "The Beast", "version": "2.4.0", "buildId": "beast-2.4.0+20260718.01", "channel": "Production", "releaseDate": "2026-07-18" },
     "beastos": { "name": "BeastOS", "version": "3.0.0", "buildId": "beastos-3.0.0+20260728.01", "channel": "Development", "releaseDate": null },
