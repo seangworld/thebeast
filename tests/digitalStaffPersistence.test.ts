@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { applyApprovedKnowledgeProposal } from "../src/lib/digitalStaffRuntime/persistence";
+import { applyApprovedKnowledgeProposal, canonicalHealthEntityName } from "../src/lib/digitalStaffRuntime/persistence";
 
 function fakeClient() {
   const calls: Array<{ table: string; operation: string; payload: unknown }> = [];
@@ -35,6 +35,13 @@ test("AP-107 accepts production-shaped snake_case medication fields without aggr
   assert.equal(payload.details.dose, "10 mg");
   assert.equal(payload.details.frequency, "every 3 days");
   assert.equal(payload.details.proposalId, "ap107-medication");
+});
+
+test("BH-210 canonical Health names prefer the supplied entity identity", () => {
+  assert.equal(canonicalHealthEntityName("medication", { medication_name: "Test Medication Alpha", dose: "10 mg" }), "Test Medication Alpha");
+  assert.equal(canonicalHealthEntityName("supplement", { supplementName: "Vitamin C" }), "Vitamin C");
+  assert.equal(canonicalHealthEntityName("condition", { entity_name: "Asthma" }), "Asthma");
+  assert.equal(canonicalHealthEntityName("procedure", { label: "Appendectomy" }), "Appendectomy");
 });
 
 test("Education proposals normalize entity categories and avoid raw sentence persistence", async () => {

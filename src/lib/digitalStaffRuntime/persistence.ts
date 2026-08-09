@@ -25,6 +25,25 @@ function normalizedProposalFields(proposal: StructuredKnowledgeProposal) {
   };
 }
 
+export function canonicalHealthEntityName(entityType: string, fields: Record<string, string | number | boolean | null>) {
+  const identityKeys = /supplement/i.test(entityType)
+    ? ["supplementName", "supplement_name"]
+    : /condition|diagnos/i.test(entityType)
+      ? ["condition", "conditionName", "condition_name"]
+      : /procedure|surgery/i.test(entityType)
+        ? ["procedureName", "procedure_name"]
+        : /provider|specialist/i.test(entityType)
+          ? ["providerName", "provider_name", "provider"]
+          : /vaccin/i.test(entityType)
+            ? ["vaccinationName", "vaccination_name", "vaccine", "vaccineName"]
+            : /allerg/i.test(entityType)
+              ? ["allergy", "allergen", "allergenName"]
+              : /measurement|vital/i.test(entityType)
+                ? ["measurementName", "measurement_name", "measurementType"]
+                : ["medicationName", "medication_name"];
+  return stringField({ fields } as StructuredKnowledgeProposal, ...identityKeys, "entityName", "entity_name", "name", "title", "label") || entityType;
+}
+
 function jsonFields(proposal: StructuredKnowledgeProposal) {
   const reconciliation = (proposal as StructuredKnowledgeProposal & { reconciliation?: unknown }).reconciliation;
   return { ...proposal.fields, sourceMessageId: proposal.sourceMessageId, confidence: proposal.confidence, proposalId: proposal.id, ...(reconciliation ? { reconciliation } : {}) };
@@ -59,7 +78,7 @@ export async function applyApprovedKnowledgeProposal({
     : professionalId;
 
   if (targetProfessional === "beasthealth.health-advisor") {
-    const title = stringField(normalized, "medicationName", "medication_name", "supplementName", "supplement_name", "condition", "procedureName", "procedure_name", "providerName", "provider_name", "allergy", "measurementName", "measurement_name", "vaccinationName", "vaccination_name", "relationship", "name", "title", "institution", "provider") || normalized.entityType;
+    const title = canonicalHealthEntityName(normalized.entityType, normalized.fields);
     const type = /supplement|medication/i.test(normalized.entityType) ? "medication" : /measurement|vital/i.test(normalized.entityType) ? "vital" : /family/i.test(normalized.entityType) ? "family_history" : /allerg|vaccin|appointment/i.test(normalized.entityType) ? "profile" : /surgery|procedure/i.test(normalized.entityType) ? "procedure" : /specialist|provider/i.test(normalized.entityType) ? "provider" : /diagnos|condition/i.test(normalized.entityType) ? "condition" : normalized.entityType;
     const allowedTypes = ["profile", "condition", "medication", "procedure", "vital", "document", "lifestyle", "family_history", "provider"];
     if (!allowedTypes.includes(type)) throw new Error("Health proposal type is outside the canonical record contract.");
@@ -76,7 +95,7 @@ export async function applyApprovedKnowledgeProposal({
   }
 
   if (targetProfessional === "beasteducation.guidance-counselor") {
-    const label = stringField(normalized, "institution", "schoolName", "employer", "certificationName", "credentialName", "certificate", "branch", "role", "skill", "constraint", "goal", "title", "preference", "name") || normalized.entityType;
+    const label = stringField(normalized, "institution", "schoolName", "school_name", "employer", "employerName", "employer_name", "certificationName", "certification_name", "credentialName", "certificate", "branch", "role", "skill", "constraint", "goal", "title", "preference", "entityName", "entity_name", "name", "label") || normalized.entityType;
     const categoryMap: Record<string, string> = {
       institution: "school", school: "school", degree: "degree", diploma: "degree", credit: "coursework", certification: "certification", license: "license",
       coursework: "coursework", training: "training", military_education: "training", military_service: "military", employment: "employment", job: "employment", employer: "employer_type", role: "role", target_role: "occupation", skill: "skill",

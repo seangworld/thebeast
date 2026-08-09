@@ -42,7 +42,21 @@ export function HistoricalKnowledgeReconciliation({ professionalId, returnTo }: 
   const [professionals, setProfessionals] = useState<HistoricalReconciliationProfessional[]>([]);
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
-  useEffect(() => { void loadHistoricalReconciliation().then((items) => setProfessionals(professionalId ? items.filter((item) => item.professionalId === professionalId) : items)).catch((reason) => setError(reason instanceof Error ? reason.message : "Historical reconciliation is unavailable.")); }, [professionalId]);
+  useEffect(() => {
+    let active = true;
+    void loadHistoricalReconciliation().then(async (items) => {
+      const scoped = professionalId ? items.filter((item) => item.professionalId === professionalId) : items;
+      if (active) setProfessionals(scoped);
+      const target = professionalId ? scoped.find((item) => item.professionalId === professionalId) : undefined;
+      if (target && !target.state) {
+        const started = await updateHistoricalReconciliation({ professionalId: target.professionalId, action: "start" });
+        if (active) setProfessionals(started.filter((item) => item.professionalId === target.professionalId));
+        const processed = await updateHistoricalReconciliation({ professionalId: target.professionalId, action: "process" });
+        if (active) setProfessionals(processed.filter((item) => item.professionalId === target.professionalId));
+      }
+    }).catch((reason) => { if (active) setError(reason instanceof Error ? reason.message : "Historical reconciliation is unavailable."); });
+    return () => { active = false; };
+  }, [professionalId]);
   const pendingCount = useMemo(() => professionals.reduce((total, item) => total + item.proposals.filter((proposal) => proposal.approvalStatus === "proposed").length, 0), [professionals]);
 
   async function act(professionalId: ProfessionalId, action: "start" | "process" | "pause" | "skip" | "decide", extra: Record<string, unknown> = {}) {

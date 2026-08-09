@@ -19,6 +19,8 @@ test("BE-209 exposes structured Education history review without a second persis
   assert.match(workspace, /Review &amp; organize/);
   assert.match(review, /updateHistoricalReconciliation/);
   assert.match(review, /router\.push\(returnTo\)/);
+  assert.match(review, /action: "start"/);
+  assert.match(review, /action: "process"/);
 });
 
 test("BH-209 review remains the deployed v3 route with focused owner-scoped return", () => {
