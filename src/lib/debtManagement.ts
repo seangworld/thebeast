@@ -11,6 +11,12 @@ export type DebtPaymentAction =
 
 export type DebtPaymentMode = "minimum" | "minimum_plus_extra" | "custom";
 
+export function getDebtPaymentWarning({ balance, minimumPayment, amount }: { balance: number; minimumPayment: number; amount: number }) {
+  if (amount > Math.max(Number(balance || 0), 0)) return "Payment is greater than the current balance and will be capped at the balance.";
+  if (amount > 0 && amount < Math.max(Number(minimumPayment || 0), 0)) return "This payment is below the configured minimum; Beast will record the amount you entered.";
+  return null;
+}
+
 /** Resolve the member-entered payment amount before the canonical payment writer runs. */
 export function calculateDebtPaymentAmount({
   balance,

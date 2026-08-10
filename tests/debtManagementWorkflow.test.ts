@@ -1,13 +1,20 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { buildDebtOverdueSignals, calculateDebtPaymentAmount, getDebtDueState, getNextDebtCycleDate } from "../src/lib/debtManagement";
+import { buildDebtOverdueSignals, calculateDebtPaymentAmount, getDebtDueState, getDebtPaymentWarning, getNextDebtCycleDate } from "../src/lib/debtManagement";
 
 test("debt payment modes resolve against the current balance", () => {
   assert.equal(calculateDebtPaymentAmount({ balance: 500, minimumPayment: 75, mode: "minimum" }), 75);
   assert.equal(calculateDebtPaymentAmount({ balance: 100, minimumPayment: 75, mode: "minimum_plus_extra", extraPayment: 50 }), 100);
   assert.equal(calculateDebtPaymentAmount({ balance: 500, minimumPayment: 75, mode: "minimum_plus_extra", extraPayment: 25 }), 100);
   assert.equal(calculateDebtPaymentAmount({ balance: 500, minimumPayment: 75, mode: "custom", customAmount: 125 }), 125);
+});
+
+test("debt payment entry preserves custom reality and explains below-minimum amounts", () => {
+  assert.equal(calculateDebtPaymentAmount({ balance: 500, minimumPayment: 75, mode: "custom", customAmount: 25 }), 25);
+  assert.match(getDebtPaymentWarning({ balance: 500, minimumPayment: 75, amount: 25 }) || "", /below the configured minimum/);
+  assert.match(getDebtPaymentWarning({ balance: 50, minimumPayment: 75, amount: 75 }) || "", /capped at the balance/);
+  assert.equal(getDebtPaymentWarning({ balance: 500, minimumPayment: 75, amount: 75 }), null);
 });
 
 test("debt due intelligence distinguishes upcoming, due soon, due today, overdue, and paid", () => {
@@ -31,6 +38,7 @@ test("reset next cycle clamps month ends and overdue facts expose architecture-o
 test("Debt Management exposes the complete payment, reset, history, and status workflow", () => {
   const source = readFileSync("src/app/dashboard/money/debts/DebtManagementActions.tsx", "utf8");
   for (const label of ["Pay Minimum", "Pay Full Balance", "Custom Payment", "Minimum \\+ Extra", "Custom Total", "Statement Balance", "Skip Payment", "Mark Paid Outside Beast", "Undo Last Payment", "Reset Due Date", "Move to next recurring cycle", "Select custom next due date", "Payment Date", "Funding Source", "Optional Notes", "History"]) assert.match(source, new RegExp(label));
+  assert.match(source, /getDebtPaymentWarning/);
   assert.match(source, /getDebtDueState/);
 });
 

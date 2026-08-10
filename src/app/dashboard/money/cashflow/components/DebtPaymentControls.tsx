@@ -2,6 +2,7 @@
 
 import { useState, type Dispatch, type SetStateAction } from "react";
 import type { DebtRow } from "./DebtsSection";
+import { calculateDebtPaymentAmount, getDebtPaymentWarning, type DebtPaymentMode } from "@/lib/debtManagement";
 
 type DebtPaymentStatus = Record<
   string,
@@ -42,6 +43,17 @@ export default function DebtPaymentControls({
   const actionClass = "w-full whitespace-nowrap px-4 text-sm";
   const isApplying = applyingDebtPaymentId === debt.id;
   const [isResettingDueDate, setIsResettingDueDate] = useState(false);
+  const [paymentMode, setPaymentMode] = useState<DebtPaymentMode>("custom");
+  const [extraPayment, setExtraPayment] = useState("");
+  const enteredAmount = Number(debtPayments[debt.id] || 0);
+  const paymentAmount = calculateDebtPaymentAmount({
+    balance: debt.balance,
+    minimumPayment: debt.minimum_payment,
+    mode: paymentMode,
+    extraPayment: Number(extraPayment || 0),
+    customAmount: enteredAmount,
+  });
+  const paymentWarning = getDebtPaymentWarning({ balance: debt.balance, minimumPayment: debt.minimum_payment, amount: paymentAmount });
 
   async function handleResetDueDate() {
     setIsResettingDueDate(true);
@@ -68,7 +80,16 @@ export default function DebtPaymentControls({
         className="grid min-w-0 grid-cols-1 gap-2"
         data-mobile-money-payment-form="debt"
       >
-        <input
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3" aria-label={`${debt.name} payment amount mode`}>
+          {(["minimum", "minimum_plus_extra", "custom"] as const).map((mode) => (
+            <button key={mode} type="button" className={paymentMode === mode ? "beast-button" : "beast-button-secondary"} onClick={() => setPaymentMode(mode)}>
+              {mode === "minimum" ? "Minimum" : mode === "minimum_plus_extra" ? "Minimum + Extra" : "Custom Total"}
+            </button>
+          ))}
+        </div>
+        <p className="text-xs text-[#9aa7b8]">Balance ${Number(debt.balance || 0).toFixed(2)} · Minimum ${Number(debt.minimum_payment || 0).toFixed(2)}</p>
+        {paymentMode === "minimum_plus_extra" ? <input type="number" min="0" step="0.01" value={extraPayment} onChange={(e) => setExtraPayment(e.target.value)} placeholder="Extra payment" aria-label={`${debt.name} extra payment`} className="beast-input h-9 px-2 text-sm" disabled={isApplying} /> : null}
+        {paymentMode === "custom" ? <input
           type="number"
           value={debtPayments[debt.id] || ""}
           onChange={(e) =>
@@ -80,21 +101,23 @@ export default function DebtPaymentControls({
           placeholder="Payment"
           className="beast-input h-9 px-2 text-sm"
           disabled={isApplying}
-        />
+        /> : null}
+
+        {paymentWarning ? <p role="status" className="rounded bg-amber-950/50 px-2 py-1 text-xs text-amber-200">{paymentWarning}</p> : null}
 
         <button
           onClick={() =>
-            applyDebtPayment(debt, Number(debtPayments[debt.id] || 0))
+            applyDebtPayment(debt, paymentAmount)
           }
-          disabled={isApplying}
+          disabled={isApplying || paymentAmount <= 0}
           className={`beast-button-secondary ${actionClass}`}
         >
-          {isApplying ? "..." : "Apply Payment"}
+          {isApplying ? "..." : "Make Payment"}
         </button>
 
         <button
           onClick={() =>
-            applyDebtPayment(debt, Number(debt.minimum_payment || 0))
+            applyDebtPayment(debt, calculateDebtPaymentAmount({ balance: debt.balance, minimumPayment: debt.minimum_payment, mode: "minimum" }))
           }
           disabled={isApplying}
           className={`beast-button ${actionClass}`}

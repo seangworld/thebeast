@@ -207,7 +207,8 @@ export function useCashFlowPaymentActions({
 
     try {
       const currentBalance = Number(debt.balance || 0);
-      const newBalance = Math.max(currentBalance - amount, 0);
+      const recordedAmount = Math.min(amount, Math.max(currentBalance, 0));
+      const newBalance = Math.max(currentBalance - recordedAmount, 0);
       const userId = await getUserId();
 
       if (!userId) {
@@ -235,7 +236,7 @@ export function useCashFlowPaymentActions({
       const paymentResult = applyDebtPaymentToCycle({
         balance: currentBalance,
         currentCyclePaid: Number(debtPaymentsByDebtAndCycle[cycleKey] || 0),
-        paymentAmount: amount,
+        paymentAmount: recordedAmount,
         minimumPayment,
         currentCycleDueDate,
       });
@@ -246,7 +247,7 @@ export function useCashFlowPaymentActions({
         .insert({
           user_id: userId,
           debt_id: debt.id,
-          amount,
+          amount: recordedAmount,
           payment_date: new Date().toISOString().slice(0, 10),
           cycle_due_date: cycleDueDate,
           payment_account_id: debt.payment_account_id || debt.funding_source_id || null,
@@ -315,7 +316,7 @@ export function useCashFlowPaymentActions({
         ...prev,
         [debt.id]: {
           type: "success",
-          message: `Payment of $${amount.toFixed(2)} applied successfully.`,
+          message: `Payment of $${recordedAmount.toFixed(2)} applied successfully.`,
         },
       }));
 

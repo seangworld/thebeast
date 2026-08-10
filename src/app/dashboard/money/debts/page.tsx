@@ -1060,7 +1060,8 @@ export default function DebtsPage() {
   async function recordDebtPayment(input: { debt: DebtManagementDebt; amount: number; paymentDate: string; fundingSourceId: string | null; notes: string; actionType: DebtPaymentAction }) {
     const { debt, amount, actionType } = input;
     if (actionType !== "skip" && (!Number.isFinite(amount) || amount <= 0)) { setMessage("Payment amount must be greater than zero."); return; }
-    if (amount > Number(debt.balance || 0)) { setMessage("Payment amount cannot exceed the current balance."); return; }
+    const recordedAmount = Math.min(amount, Math.max(Number(debt.balance || 0), 0));
+    if (actionType !== "skip" && recordedAmount <= 0) { setMessage("Payment amount must be greater than zero."); return; }
     const userId = await getUserId();
     if (!userId) return;
     setPaymentBusyId(debt.id); setMessage("");
@@ -1071,11 +1072,11 @@ export default function DebtsPage() {
       const currentCyclePaid = debtHistory(debt.id)
         .filter((payment) => !payment.reversed_at && payment.action_type !== "skip" && payment.cycle_due_date === cycleDueDate)
         .reduce((sum, payment) => sum + Number(payment.amount || 0), 0);
-      const result = applyDebtPaymentToCycle({ balance: Number(debt.balance || 0), currentCyclePaid, paymentAmount: amount, minimumPayment: Number(debt.minimum_payment || 0), currentCycleDueDate: currentDueDate });
+      const result = applyDebtPaymentToCycle({ balance: Number(debt.balance || 0), currentCyclePaid, paymentAmount: recordedAmount, minimumPayment: Number(debt.minimum_payment || 0), currentCycleDueDate: currentDueDate });
       const nextDueDate = actionType === "skip" ? getNextDebtCycleDate(currentDueDate) : result.nextDueDateAfterPayment;
       const configuredSource = input.fundingSourceId || (debt as any).funding_source_id || null;
       const { data: insertedPayment, error: insertError } = await supabase.from("debt_payments").insert({
-        user_id: userId, debt_id: debt.id, amount, payment_date: input.paymentDate, cycle_due_date: cycleDueDate,
+        user_id: userId, debt_id: debt.id, amount: recordedAmount, payment_date: input.paymentDate, cycle_due_date: cycleDueDate,
         funding_source_id: configuredSource, payment_account_id: configuredSource,
         funding_account_type: configuredSource ? "account" : null, funding_account_id: configuredSource,
         funding_strategy_id: "direct_payment", action_type: actionType, notes: input.notes || null,

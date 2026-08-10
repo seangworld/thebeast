@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { calculateDebtPaymentAmount, getDebtDueDetail, getDebtDueState, type DebtPaymentAction, type DebtPaymentMode } from "@/lib/debtManagement";
+import { calculateDebtPaymentAmount, getDebtDueDetail, getDebtDueState, getDebtPaymentWarning, type DebtPaymentAction, type DebtPaymentMode } from "@/lib/debtManagement";
 
 export type DebtManagementDebt = {
   id: string;
@@ -87,7 +87,8 @@ export function DebtManagementActions({ debt, fundingSources, history, busy, onP
         <label className="money-field-label">Payment Date<input type="date" value={paymentDate} onChange={(event) => setPaymentDate(event.target.value)} className="beast-input mt-2" /></label>
         <label className="money-field-label">Funding Source<select value={fundingSourceId} onChange={(event) => setFundingSourceId(event.target.value)} className="beast-input mt-2"><option value="">Use configured source</option>{fundingSources.map((source) => <option key={source.id} value={source.id}>{source.name}</option>)}</select></label>
         <label className="money-field-label">Optional Notes<textarea value={notes} onChange={(event) => setNotes(event.target.value)} className="beast-input mt-2 min-h-20" /></label>
-        <div className="flex gap-2"><button type="button" disabled={busy || calculateDebtPaymentAmount({ balance: debt.balance, minimumPayment: debt.minimum_payment, mode: paymentMode, extraPayment: Number(extraPayment), customAmount: Number(amount) }) <= 0} onClick={() => record(paymentMode === "minimum" ? "minimum" : "custom", calculateDebtPaymentAmount({ balance: debt.balance, minimumPayment: debt.minimum_payment, mode: paymentMode, extraPayment: Number(extraPayment), customAmount: Number(amount) }))} className="beast-button">Record Payment</button><button type="button" onClick={() => setPanel(null)} className="beast-button-secondary">Cancel</button></div>
+        {getDebtPaymentWarning({ balance: debt.balance, minimumPayment: debt.minimum_payment, amount: calculateDebtPaymentAmount({ balance: debt.balance, minimumPayment: debt.minimum_payment, mode: paymentMode, extraPayment: Number(extraPayment), customAmount: Number(amount) }) }) ? <p role="status" className="rounded bg-amber-950/50 px-2 py-1 text-xs text-amber-200">{getDebtPaymentWarning({ balance: debt.balance, minimumPayment: debt.minimum_payment, amount: calculateDebtPaymentAmount({ balance: debt.balance, minimumPayment: debt.minimum_payment, mode: paymentMode, extraPayment: Number(extraPayment), customAmount: Number(amount) }) })}</p> : null}
+        <div className="flex flex-wrap gap-2"><button type="button" disabled={busy || calculateDebtPaymentAmount({ balance: debt.balance, minimumPayment: debt.minimum_payment, mode: paymentMode, extraPayment: Number(extraPayment), customAmount: Number(amount) }) <= 0} onClick={() => record(paymentMode === "minimum" ? "minimum" : "custom", calculateDebtPaymentAmount({ balance: debt.balance, minimumPayment: debt.minimum_payment, mode: paymentMode, extraPayment: Number(extraPayment), customAmount: Number(amount) }))} className="beast-button">Record Payment</button><button type="button" onClick={() => setPanel(null)} className="beast-button-secondary">Cancel</button></div>
       </div> : null}
 
       {panel === "reset" ? <div className="grid gap-3 rounded-xl border border-[#2a3242] bg-[#0f1419] p-4" role="dialog" aria-label={`${debt.name} reset due date`}>
