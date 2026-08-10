@@ -42,7 +42,6 @@ function renderActions(onPayment: DebtManagementActionsProps["onPayment"], histo
     busy: false,
     onPayment,
     onResetDueDate: async () => undefined,
-    onUndoLastPayment: async () => undefined,
   }));
 }
 
@@ -80,20 +79,6 @@ test("BM-42C Custom Payment accepts one total amount and calls the canonical wri
   assert.equal(calls[0]?.actionType, "custom");
 });
 
-test("BM-42C Pay Full Balance uses a visible confirmation and the current canonical balance", async () => {
-  const calls: Parameters<DebtManagementActionsProps["onPayment"]>[0][] = [];
-  const view = renderActions(async (input) => { calls.push(input); return success(); });
-
-  fireEvent.click(within(view.container).getByRole("button", { name: "Pay Full Balance" }));
-  const dialog = within(view.container).getByRole("dialog", { name: /full balance payment confirmation/i });
-  assert.match(dialog.textContent || "", /\$24566\.00/);
-  fireEvent.click(within(dialog).getByRole("button", { name: "Confirm Payment" }));
-
-  await waitFor(() => assert.equal(calls.length, 1));
-  assert.equal(calls[0]?.amount, 24_566);
-  assert.equal(calls[0]?.actionType, "full_balance");
-});
-
 test("BM-42C preserves a failed payment form and displays a safe actionable error", async () => {
   const view = renderActions(async () => ({ ok: false, message: "Unable to record the debt payment. Your entries were preserved; please retry." }));
 
@@ -107,7 +92,7 @@ test("BM-42C preserves a failed payment form and displays a safe actionable erro
   assert.equal((within(view.container).getByLabelText("Total amount paid") as HTMLInputElement).value, "800");
 });
 
-test("BM-42C removes outside payment entry while preserving historical outside-payment presentation", () => {
+test("BM-42D presents only canonical member payment actions while preserving historical outside-payment presentation", () => {
   const view = renderActions(async () => success(), [{
     id: "historical-outside",
     debt_id: debt.id,
@@ -117,7 +102,9 @@ test("BM-42C removes outside payment entry while preserving historical outside-p
     is_outside_beast: true,
   }]);
 
-  assert.equal(within(view.container).queryByRole("button", { name: /outside/i }), null);
+  for (const name of ["Pay Full Balance", "Skip Payment", "Undo Last Payment", "Mark Paid Outside Beast"]) {
+    assert.equal(within(view.container).queryByRole("button", { name }), null);
+  }
   fireEvent.click(within(view.container).getByRole("button", { name: "History" }));
   assert.match(view.container.textContent || "", /Recorded outside Beast/);
 });

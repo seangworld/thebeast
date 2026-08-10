@@ -324,6 +324,14 @@ export default function BillsSection({
 
           <div className="hidden lg:block" role="region" aria-label="Bills table">
           <table className="w-full table-fixed text-sm">
+            <colgroup data-money-table-columns="bills">
+              <col className="w-[28%]" />
+              <col className="w-[14%]" />
+              <col className="w-[14%]" />
+              <col className="w-[17%]" />
+              <col className="hidden w-[14%] min-[1440px]:table-column" />
+              <col className="w-[13%]" />
+            </colgroup>
             <thead>
               <tr>
                 <th className="text-left">Bill</th>
@@ -343,7 +351,7 @@ export default function BillsSection({
               ) : (
                 activeBills.map((bill) => (
                   <tr key={bill.id}>
-                    <td className="w-[28%] text-left align-top">
+                    <td className="text-left align-top">
                       {editingBillId === bill.id ? (
                         <div className="grid gap-2">
                           <input
@@ -420,7 +428,7 @@ export default function BillsSection({
                       />
                     </td>
 
-                    <td className="w-[18%] align-top">
+                    <td className="align-top">
                       <OverlayPopover label="Actions" width={224} testId="bill-actions">{() => <div className="min-w-0 whitespace-normal">
                       <PaymentAutomationControls compact name={bill.name} {...normalizePaymentAutomation(bill)} onSave={(patch) => updatePaymentAutomation(bill.id, patch)} />
                       <div className="mt-3 border-t border-[#2a3242] pt-3">

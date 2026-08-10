@@ -37,11 +37,11 @@ test("reset next cycle clamps month ends and overdue facts expose architecture-o
 
 test("Debt Management exposes direct canonical payment actions and lifecycle workflow", () => {
   const source = readFileSync("src/app/dashboard/money/debts/DebtManagementActions.tsx", "utf8");
-  for (const label of ["Pay Minimum", "Confirm Payment", "Pay Full Balance", "Custom Payment", "Total amount paid", "Skip Payment", "Undo Last Payment", "Reset Due Date", "Move to next recurring cycle", "Select custom next due date", "Payment Date", "Funding Source", "Optional Notes", "History"]) assert.match(source, new RegExp(label));
-  assert.doesNotMatch(source, />Mark Paid Outside Beast</);
+  for (const label of ["Pay Minimum", "Confirm Payment", "Custom Payment", "Total amount paid", "Reset Due Date", "Move to next recurring cycle", "Select custom next due date", "Payment Date", "Funding Source", "Optional Notes", "History"]) assert.match(source, new RegExp(label));
+  for (const label of ["Pay Full Balance", "Skip Payment", "Undo Last Payment", "Mark Paid Outside Beast"]) assert.doesNotMatch(source, new RegExp(`>${label}<`));
   assert.doesNotMatch(source, /Minimum \\+ Extra/);
   assert.doesNotMatch(source, /Custom Total/);
-  assert.match(source, /record\(isMinimum \? "minimum" : "full_balance", paymentAmount\)/);
+  assert.match(source, /record\("minimum", minimumAmount\)/);
   assert.match(source, /record\("custom", customAmount\)/);
   assert.match(source, /stored minimum of/);
   assert.match(source, /if \(!result\.ok\) return/);

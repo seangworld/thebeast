@@ -36,13 +36,12 @@ export type DebtManagementActionsProps = {
   busy: boolean;
   onPayment: (input: { debt: DebtManagementDebt; amount: number; paymentDate: string; fundingSourceId: string | null; notes: string; actionType: DebtPaymentAction }) => Promise<DebtPaymentResult>;
   onResetDueDate: (debt: DebtManagementDebt, nextDueDate: string) => Promise<void>;
-  onUndoLastPayment: (debt: DebtManagementDebt, payment: DebtPaymentHistoryRow) => Promise<void>;
 };
 
 const today = () => new Date().toISOString().slice(0, 10);
 
-export function DebtManagementActions({ debt, fundingSources, history, busy, onPayment, onResetDueDate, onUndoLastPayment }: DebtManagementActionsProps) {
-  const [panel, setPanel] = useState<"minimum" | "custom" | "full" | "reset" | "history" | null>(null);
+export function DebtManagementActions({ debt, fundingSources, history, busy, onPayment, onResetDueDate }: DebtManagementActionsProps) {
+  const [panel, setPanel] = useState<"minimum" | "custom" | "reset" | "history" | null>(null);
   const [amount, setAmount] = useState("");
   const [paymentDate, setPaymentDate] = useState(today);
   const [fundingSourceId, setFundingSourceId] = useState("");
@@ -50,7 +49,6 @@ export function DebtManagementActions({ debt, fundingSources, history, busy, onP
   const [customDueDate, setCustomDueDate] = useState("");
   const [actionStatus, setActionStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const due = useMemo(() => getDebtDueState({ balance: debt.balance, dueDate: debt.nextDueDate }), [debt.balance, debt.nextDueDate]);
-  const lastPayment = history.find((payment) => !payment.reversed_at) || null;
   const minimumAmount = Math.min(Math.max(Number(debt.balance || 0), 0), Math.max(Number(debt.minimum_payment || 0), 0));
   const customAmount = Math.min(Math.max(Number(amount || 0), 0), Math.max(Number(debt.balance || 0), 0));
 
@@ -64,15 +62,13 @@ export function DebtManagementActions({ debt, fundingSources, history, busy, onP
 
   const paymentDetails = <PaymentDetails paymentDate={paymentDate} setPaymentDate={setPaymentDate} fundingSourceId={fundingSourceId} setFundingSourceId={setFundingSourceId} fundingSources={fundingSources} notes={notes} setNotes={setNotes} />;
 
-  if (panel === "minimum" || panel === "full") {
-    const isMinimum = panel === "minimum";
-    const paymentAmount = isMinimum ? minimumAmount : Number(debt.balance || 0);
-    return <div className="grid min-w-0 gap-3" data-debt-management-workflow="true" role="dialog" aria-label={`${debt.name} ${isMinimum ? "minimum" : "full balance"} payment confirmation`}>
-      <h4 className="font-black text-white">Confirm {isMinimum ? "minimum" : "full balance"} payment</h4>
-      <p className="text-sm text-[#c7cfdb]">{isMinimum ? "Beast will record the stored minimum of " : "Beast will record the current balance of "}<strong>${paymentAmount.toFixed(2)}</strong> against {debt.name}.</p>
+  if (panel === "minimum") {
+    return <div className="grid min-w-0 gap-3" data-debt-management-workflow="true" role="dialog" aria-label={`${debt.name} minimum payment confirmation`}>
+      <h4 className="font-black text-white">Confirm minimum payment</h4>
+      <p className="text-sm text-[#c7cfdb]">Beast will record the stored minimum of <strong>${minimumAmount.toFixed(2)}</strong> against {debt.name}.</p>
       {paymentDetails}
       {actionStatus?.type === "error" ? <p role="alert" className="rounded bg-red-950/60 px-3 py-2 text-sm text-red-200">{actionStatus.message}</p> : null}
-      <div className="flex flex-wrap gap-2"><button type="button" disabled={busy || paymentAmount <= 0} onClick={() => void record(isMinimum ? "minimum" : "full_balance", paymentAmount)} className="beast-button">Confirm Payment</button><button type="button" disabled={busy} onClick={() => { setActionStatus(null); setPanel(null); }} className="beast-button-secondary">Cancel</button></div>
+      <div className="flex flex-wrap gap-2"><button type="button" disabled={busy || minimumAmount <= 0} onClick={() => void record("minimum", minimumAmount)} className="beast-button">Confirm Payment</button><button type="button" disabled={busy} onClick={() => { setActionStatus(null); setPanel(null); }} className="beast-button-secondary">Cancel</button></div>
     </div>;
   }
 
@@ -97,10 +93,7 @@ export function DebtManagementActions({ debt, fundingSources, history, busy, onP
 
       <div className="grid gap-2 sm:grid-cols-2">
         <button type="button" disabled={busy || minimumAmount <= 0} onClick={() => setPanel("minimum")} className="beast-button">Pay Minimum</button>
-        <button type="button" disabled={busy || Number(debt.balance || 0) <= 0} onClick={() => setPanel("full")} className="beast-button">Pay Full Balance</button>
         <button type="button" disabled={busy || Number(debt.balance || 0) <= 0} onClick={() => setPanel("custom")} className="beast-button-secondary">Custom Payment</button>
-        <button type="button" disabled={busy} onClick={() => void record("skip", 0)} className="beast-button-secondary">Skip Payment</button>
-        <button type="button" disabled={busy || !lastPayment} onClick={() => lastPayment && onUndoLastPayment(debt, lastPayment)} className="beast-button-secondary">Undo Last Payment</button>
         <button type="button" disabled={busy} onClick={() => setPanel("reset")} className="beast-button-secondary">Reset Due Date</button>
         <button type="button" onClick={() => setPanel("history")} className="beast-button-secondary">History</button>
       </div>

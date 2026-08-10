@@ -254,6 +254,7 @@ export default function DebtsPage() {
   const [minimumPaymentFloor, setMinimumPaymentFloor] = useState("25");
   const [creditLimit, setCreditLimit] = useState("");
   const [statementBalance, setStatementBalance] = useState("");
+  const [showAddDebt, setShowAddDebt] = useState(false);
 
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
@@ -1266,8 +1267,27 @@ export default function DebtsPage() {
         {view === "debts" ? (
         <>
         <section id="add-debt" className="money-section-card">
-          <h2 className="money-section-title">Add Debt</h2>
+          <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="money-section-title">Add Debt</h2>
+              <p className="mt-1 text-sm text-[#7f8da3]">
+                Add a debt account to your payoff plan.
+              </p>
+            </div>
 
+            <button
+              type="button"
+              onClick={() => setShowAddDebt((current) => !current)}
+              className="beast-button-secondary"
+              aria-expanded={showAddDebt}
+              aria-controls="add-debt-form"
+            >
+              {showAddDebt ? "Hide" : "Show"}
+            </button>
+          </div>
+
+          {showAddDebt ? (
+          <div id="add-debt-form" className="mt-4">
           <div className="money-field-grid md:grid-cols-3">
   <div>
     <label className="text-sm text-[#c7cfdb]">
@@ -1412,6 +1432,8 @@ export default function DebtsPage() {
 <button onClick={addDebt} className="beast-button mt-4 w-full">
             Add Debt
           </button>
+          </div>
+          ) : null}
         </section>
 
         <section id="debt-accounts" className="money-section-panel scroll-mt-6">
@@ -1548,7 +1570,6 @@ export default function DebtsPage() {
                             busy: paymentBusyId === debt.id,
                             onPayment: recordDebtPayment,
                             onResetDueDate: resetDebtDueDate,
-                            onUndoLastPayment: undoLastDebtPayment,
                           }}
                           onEdit={() => startEditDebt(debt)}
                           onLifecycle={() => void archiveDebt(debt.id)}
@@ -1564,9 +1585,18 @@ export default function DebtsPage() {
 
           <div className="hidden lg:block" role="region" aria-label="Debt accounts table">
             <table className="w-full table-fixed text-sm">
+              <colgroup data-money-table-columns="debts">
+                <col className="w-[8%]" />
+                <col className="w-[26%]" />
+                <col className="w-[14%]" />
+                <col className="w-[14%]" />
+                <col className="w-[9%]" />
+                <col className="w-[13%]" />
+                <col className="w-[16%]" />
+              </colgroup>
               <thead>
                 <tr>
-                  <th>Priority</th>
+                  <th className="whitespace-nowrap">Priority</th>
                   <th>Name</th>
                   <th className="text-right">Balance</th>
                   <th className="text-right">Minimum</th>
@@ -1588,7 +1618,7 @@ export default function DebtsPage() {
                 ) : (
                   orderedDebts.map((debt, index) => (
                     <tr key={debt.id}>
-                    <td>#{index + 1}</td>
+                    <td className="whitespace-nowrap">#{index + 1}</td>
                   
                       <td>
                         {editingDebtId === debt.id ? (
@@ -1743,7 +1773,6 @@ export default function DebtsPage() {
                               busy: paymentBusyId === debt.id,
                               onPayment: recordDebtPayment,
                               onResetDueDate: resetDebtDueDate,
-                              onUndoLastPayment: undoLastDebtPayment,
                             }}
                             onEdit={() => startEditDebt(debt)}
                             onLifecycle={() => void archiveDebt(debt.id)}
