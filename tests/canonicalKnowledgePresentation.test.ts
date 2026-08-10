@@ -5,6 +5,7 @@ import {
   canonicalDisplayFields,
   canonicalMissingActions,
   canonicalPrimaryValue,
+  memberSafeSourceLabel,
   parseCanonicalFields,
   preferStructuredCanonicalRecords,
 } from "../src/lib/canonicalKnowledgePresentation";
@@ -36,6 +37,19 @@ test("BH-REL-03 hides all internal provenance identifiers from member fields", (
     proposalId: "proposal-uuid",
   });
   assert.deepEqual(fields, [{ label: "Medication", value: "Example medicine" }]);
+});
+
+test("BH-REL-03B hides routing metadata while preserving human source labels", () => {
+  const fields = canonicalDisplayFields({
+    procedure: "Appendectomy",
+    topic: "health-procedures-needed",
+    source_type: "health_agent_message",
+    reconciliation_version: "bh206-be206-v3",
+    classification: "procedure",
+  });
+  assert.deepEqual(fields, [{ label: "Procedure", value: "Appendectomy" }]);
+  assert.equal(memberSafeSourceLabel("health_agent_message"), "Health Advisor conversation");
+  assert.equal(memberSafeSourceLabel("beast_health_records"), "BeastHealth record");
 });
 
 test("AP-106 produces specific completion actions for missing medication fields", () => {

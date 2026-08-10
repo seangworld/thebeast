@@ -6,6 +6,7 @@ import {
   healthRecordMissingQuestion,
   isMeaningfulHealthRecord,
 } from "./canonicalCoverage";
+import { memberSafeSourceLabel } from "../canonicalKnowledgePresentation";
 
 export type HealthUnderstandingConfidence = "high" | "medium" | "low" | "unknown";
 export type HealthUnderstandingState = "known" | "thought" | "needed";
@@ -213,7 +214,7 @@ function recordsForDefinition(
 }
 
 function evidenceFor(record: HealthRecord) {
-  const source = record.source?.trim() || "Owner-entered BeastHealth record";
+  const source = memberSafeSourceLabel(record.source);
   return `${source}: ${record.title} (updated ${record.updatedAt.slice(0, 10)})`;
 }
 

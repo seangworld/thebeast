@@ -74,6 +74,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { digitalStaffActivityLabels, requestDigitalStaffResponse } from "@/lib/digitalStaffRuntime/client";
 import type { DigitalStaffActivity, StructuredKnowledgeProposal } from "@/lib/digitalStaffRuntime";
+import { memberSafeSourceLabel } from "@/lib/canonicalKnowledgePresentation";
 import { BeastHealthShell } from "./BeastHealthShell";
 
 type HealthAdvisorQuestionTurn = {
@@ -449,7 +450,7 @@ function buildDocumentContext(
     .map((record) => ({
       id: `health-record:${record.id}`,
       title: record.title,
-      sourceLabel: record.source || "Owner-entered BeastHealth reference",
+      sourceLabel: memberSafeSourceLabel(record.source),
       updatedAt: record.updatedAt,
       permission: "Not Requested",
     }));

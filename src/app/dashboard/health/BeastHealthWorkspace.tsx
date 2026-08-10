@@ -36,7 +36,7 @@ import { BeastHealthShell } from "./BeastHealthShell";
 import { HealthDiscoveryOnboarding } from "./HealthDiscoveryOnboarding";
 import { HealthDocumentExtractionReview } from "./HealthDocumentExtractionReview";
 import { LivingHealthTimeline } from "./LivingHealthTimeline";
-import { canonicalDisplayFields, canonicalMissingActions } from "@/lib/canonicalKnowledgePresentation";
+import { canonicalDisplayFields, canonicalMissingActions, memberSafeSourceLabel } from "@/lib/canonicalKnowledgePresentation";
 import { legacyHealthAggregateState, loadCanonicalMemberHealthRecords } from "@/lib/health/canonicalRecords";
 
 const statusOptions: HealthRecordStatus[] = [
@@ -264,7 +264,7 @@ function formatRecordSummary(record: HealthRecord) {
   const parts = [
     record.status,
     record.occurredOn ? formatDate(record.occurredOn) : null,
-    record.source ? `Source: ${record.source}` : null,
+    record.source ? `Source: ${memberSafeSourceLabel(record.source)}` : null,
   ].filter(Boolean);
   return structured.length
     ? structured.slice(0, 3).map((field) => `${field.label}: ${field.value}`).join(" · ")
@@ -716,7 +716,7 @@ function RecordList({
                   <p className="text-xs font-black uppercase text-red-200">
                     Source
                   </p>
-                  <p className="mt-1">{record.source || "Not recorded"}</p>
+                    <p className="mt-1">{memberSafeSourceLabel(record.source)}</p>
                 </div>
               </div>
               {record.details.context && !canonicalDisplayFields(record.details).length ? (

@@ -10,8 +10,15 @@ const hiddenKeys = new Set([
   "proposalid",
   "provenance",
   "reconciliation",
+  "routing",
+  "routingkey",
+  "classification",
+  "classifier",
+  "reconciliationversion",
   "sourcemessageid",
+  "sourcetype",
   "subtype",
+  "topic",
 ]);
 
 function isInternalIdentifierKey(normalized: string) {
@@ -84,6 +91,22 @@ export function parseCanonicalFields(value: unknown): Record<string, unknown> {
   } catch {
     return {};
   }
+}
+
+const memberSourceLabels: Record<string, string> = {
+  beast_documents: "Health document",
+  beast_health_records: "BeastHealth record",
+  health_advisor_record_review: "Health Advisor conversation",
+  health_agent_message: "Health Advisor conversation",
+  member_reported_conversation: "Health Advisor conversation",
+  owner_report: "Member-entered record",
+  owner_reported_preparation_outcome: "Member-entered record",
+};
+
+export function memberSafeSourceLabel(value: string | null | undefined) {
+  const source = value?.trim();
+  if (!source) return "Source not recorded";
+  return memberSourceLabels[source.toLowerCase()] || source;
 }
 
 export function canonicalDisplayFields(value: unknown): DisplayField[] {
