@@ -142,3 +142,12 @@ test("BH-202 uses the Guidance Counselor shared understanding workspace", () => 
   assert.match(shared, /Evidence source/);
   assert.match(shared, /confidence/);
 });
+
+test("BH-REL-03 targets each known canonical record directly", () => {
+  const understanding = buildHealthAdvisorUnderstanding({
+    records: [record("condition", "Asthma")],
+  });
+  const item = understanding.whatIKnow.find((candidate) => candidate.area === "conditions");
+  assert.equal(item?.recordId, "condition-Asthma");
+  assert.equal(item?.href, "/dashboard/health/conditions#health-record-condition-Asthma");
+});

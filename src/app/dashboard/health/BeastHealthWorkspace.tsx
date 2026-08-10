@@ -320,7 +320,7 @@ function buildWorkspaceKnowledgeModel(input: {
       why: recommendation.confidence.basis,
       evidence: recommendation.supportingEvidence.map((evidence) =>
         "healthRecordId" in evidence
-          ? `Saved record ${String(evidence.healthRecordId)}`
+          ? "Information you chose to save in BeastHealth"
           : "Information you chose to save in BeastHealth"
       ),
       action: {

@@ -38,6 +38,7 @@ export type HealthUnderstandingItem = {
   priority: number;
   href?: string;
   why?: string;
+  recordId?: string;
 };
 
 export type HealthAdvisorUnderstanding = {
@@ -216,21 +217,22 @@ function evidenceFor(record: HealthRecord) {
   return `${source}: ${record.title} (updated ${record.updatedAt.slice(0, 10)})`;
 }
 
-function knownItem(
+function knownItems(
   definition: UnderstandingDefinition,
   records: readonly HealthRecord[]
-): HealthUnderstandingItem {
-  return {
-    id: `health-known-${definition.area}`,
+): HealthUnderstandingItem[] {
+  return records.map((record) => ({
+    id: `health-known-${definition.area}-${record.id}`,
     area: definition.area,
-    label: definition.label,
-    state: "known",
-    confidence: "high",
-    value: healthKnownSummary(definition.kind, records),
-    evidence: records.map(evidenceFor),
+    label: records.length === 1 ? definition.label : record.title,
+    state: "known" as const,
+    confidence: "high" as const,
+    value: records.length === 1 ? healthKnownSummary(definition.kind, records) : record.title,
+    evidence: [evidenceFor(record)],
     priority: definition.priority,
-    href: definition.href,
-  };
+    href: `${definition.href}#health-record-${record.id}`,
+    recordId: record.id,
+  }));
 }
 
 function neededItem(definition: UnderstandingDefinition): HealthUnderstandingItem {
@@ -264,9 +266,9 @@ export function buildHealthAdvisorUnderstanding(input: {
   documents?: readonly HealthDocumentContext[];
 }): HealthAdvisorUnderstanding {
   const activeRecords = active(input.records);
-  const factualItems = definitions.map((definition) => {
+  const factualItems = definitions.flatMap((definition) => {
     const matches = recordsForDefinition(definition, activeRecords);
-    return matches.length ? knownItem(definition, matches) : neededItem(definition);
+    return matches.length ? knownItems(definition, matches) : [neededItem(definition)];
   });
   const fieldNeeds: HealthUnderstandingItem[] = definitions.flatMap((definition) => {
     const record = recordsForDefinition(definition, activeRecords).find((candidate) =>

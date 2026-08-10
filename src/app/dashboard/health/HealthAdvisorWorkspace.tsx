@@ -768,7 +768,7 @@ export function HealthAdvisorWorkspace() {
               label:
                 item.state === "thought"
                   ? "Review supporting context"
-                  : "Review or edit",
+                  : "View record",
               mode: item.state === "thought" ? "detail" : "edit",
               href: item.href || "/dashboard/health",
             },

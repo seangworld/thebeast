@@ -14,6 +14,13 @@ const hiddenKeys = new Set([
   "subtype",
 ]);
 
+function isInternalIdentifierKey(normalized: string) {
+  return (
+    hiddenKeys.has(normalized) ||
+    /(?:id|uuid)$/.test(normalized)
+  );
+}
+
 const labels: Record<string, string> = {
   attendanceend: "Attendance ended",
   attendancestart: "Attendance started",
@@ -82,7 +89,7 @@ export function parseCanonicalFields(value: unknown): Record<string, unknown> {
 export function canonicalDisplayFields(value: unknown): DisplayField[] {
   return Object.entries(parseCanonicalFields(value)).flatMap(([key, rawValue]) => {
     const normalized = normalizedKey(key);
-    if (hiddenKeys.has(normalized)) return [];
+    if (isInternalIdentifierKey(normalized)) return [];
     const shown = displayValue(rawValue);
     if (!shown) return [];
     return [{ label: labels[normalized] || sentenceCase(key), value: shown }];
@@ -131,7 +138,7 @@ export function canonicalMissingActions(entityType: string, value: unknown) {
 export function isStructuredCanonicalValue(value: unknown) {
   return Object.keys(parseCanonicalFields(value)).some((key) => {
     const normalized = normalizedKey(key);
-    return !hiddenKeys.has(normalized) && !["context", "topic", "linkeddocumentid", "linkedappointmentid"].includes(normalized);
+    return !isInternalIdentifierKey(normalized) && !["context", "topic", "linkeddocumentid", "linkedappointmentid"].includes(normalized);
   });
 }
 

@@ -27,6 +27,17 @@ test("AP-106 presents canonical medication fields without implementation details
   assert.doesNotMatch(JSON.stringify(fields), /proposal|runtime|database/i);
 });
 
+test("BH-REL-03 hides all internal provenance identifiers from member fields", () => {
+  const fields = canonicalDisplayFields({
+    medicationName: "Example medicine",
+    conversationId: "conversation-uuid",
+    messageUuid: "message-uuid",
+    sourceRecordId: "record-uuid",
+    proposalId: "proposal-uuid",
+  });
+  assert.deepEqual(fields, [{ label: "Medication", value: "Example medicine" }]);
+});
+
 test("AP-106 produces specific completion actions for missing medication fields", () => {
   assert.deepEqual(canonicalMissingActions("medication", { medicationName: "Example medicine" }), ["Add dosage", "Add frequency"]);
   assert.deepEqual(canonicalMissingActions("medication", { medicationName: "Example medicine", dose: "10 mg", schedule: "Daily" }), []);

@@ -90,7 +90,7 @@ test("BH-401 memory comes from existing conversations records documents and outc
 });
 
 test("BH-401 keeps record management available without displacing conversation", () => {
-  assert.match(workspace, /Review or edit/);
+  assert.match(workspace, /View record/);
   assert.match(workspace, /buildHealthAdvisorUnderstanding/);
   assert.match(workspace, /ProfessionalKnowledgeWorkspace/);
   assert.match(workspace, /Talk with Health Advisor/);
