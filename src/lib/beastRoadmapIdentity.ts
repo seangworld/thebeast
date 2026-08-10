@@ -337,6 +337,16 @@ export const beastRoadmapPackageRegistry = [
     ["20260809000100_restore_member_health_record_rls.sql"]
   ),
   packageIdentity(
+    "BH-REL-01",
+    ["BH-REL-01"],
+    "BeastHealth General-Member Release Readiness",
+    [
+      "supabase/migrations/20260809000200_prepare_member_health_rls.sql",
+      "tests/healthReleaseReadiness.test.ts",
+    ],
+    ["20260809000200_prepare_member_health_rls.sql"]
+  ),
+  packageIdentity(
     "BM-FND-033",
     ["BM-33"],
     "Funding Rules",
