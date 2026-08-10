@@ -678,6 +678,28 @@ details > summary::-webkit-details-marker {
   vertical-align: top;
 }
 
+.money-page-stack table.money-aligned-table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+.money-page-stack .money-table-cell {
+  padding-left: 14px;
+  padding-right: 14px;
+}
+
+.money-page-stack .money-table-align-left {
+  text-align: left;
+}
+
+.money-page-stack .money-table-align-center {
+  text-align: center;
+}
+
+.money-page-stack .money-table-align-right {
+  text-align: right;
+}
+
 .money-page-stack tbody tr:nth-child(odd) {
   background: rgba(15, 23, 42, 0.54);
 }
@@ -859,5 +881,10 @@ details > summary::-webkit-details-marker {
   .money-page-stack th,
   .money-page-stack td {
     padding: 10px 11px;
+  }
+
+  .money-page-stack .money-table-cell {
+    padding-left: 11px;
+    padding-right: 11px;
   }
 }

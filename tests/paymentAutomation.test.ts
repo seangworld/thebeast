@@ -48,7 +48,7 @@ test("migration and responsive controls preserve owner-scoped RLS tables", () =>
     assert.doesNotMatch(source, /<th[^>]*>Auto<\/th>/);
     assert.match(source, /PaymentAutomationControls/);
     assert.match(source, /CompactAssignmentSelect/);
-    assert.match(source, /hidden text-center min-\[1440px\]:table-cell/);
+    assert.match(source, /className="[^"]*hidden[^"]*min-\[1440px\]:table-cell/);
     assert.match(source, /<details/);
   }
   assert.match(bills, /colSpan=\{6\}/);
@@ -64,7 +64,8 @@ test("migration and responsive controls preserve owner-scoped RLS tables", () =>
   assert.doesNotMatch(debtWorkspace, /<div className="mt-3"><PaymentAutomationControls/);
   assert.match(debtWorkspace, /data-debt-actions-menu[\s\S]*\{automation\}/);
   assert.match(debtWorkspace, /actions and payment automation/);
-  assert.match(debtWorkspace, /width=\{560\}/);
+  assert.match(debtWorkspace, /width=\{224\}/);
+  assert.doesNotMatch(debtWorkspace, /width=\{560\}/);
 });
 
 test("BM-37 keeps each bill and debt automation control only inside its Actions dropdown", () => {

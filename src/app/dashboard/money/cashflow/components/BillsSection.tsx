@@ -323,7 +323,7 @@ export default function BillsSection({
           </div>
 
           <div className="hidden lg:block" role="region" aria-label="Bills table">
-          <table className="w-full table-fixed text-sm">
+          <table className="money-aligned-table w-full table-fixed text-sm">
             <colgroup data-money-table-columns="bills">
               <col className="w-[28%]" />
               <col className="w-[14%]" />
@@ -334,12 +334,12 @@ export default function BillsSection({
             </colgroup>
             <thead>
               <tr>
-                <th className="text-left">Bill</th>
-                <th className="text-right">Remaining</th>
-                <th className="text-center">Next Due</th>
-                <th className="text-center">Income Pot</th>
-                <th className="hidden text-center min-[1440px]:table-cell">Payment Setup</th>
-                <th className="text-center">Actions</th>
+                <th className="money-table-cell money-table-align-left">Bill</th>
+                <th className="money-table-cell money-table-align-right">Remaining</th>
+                <th className="money-table-cell money-table-align-center">Next Due</th>
+                <th className="money-table-cell money-table-align-center">Income Pot</th>
+                <th className="money-table-cell money-table-align-center hidden min-[1440px]:table-cell">Payment Setup</th>
+                <th className="money-table-cell money-table-align-center">Actions</th>
               </tr>
             </thead>
 
@@ -351,7 +351,7 @@ export default function BillsSection({
               ) : (
                 activeBills.map((bill) => (
                   <tr key={bill.id}>
-                    <td className="text-left align-top">
+                    <td className="money-table-cell money-table-align-left align-top">
                       {editingBillId === bill.id ? (
                         <div className="grid gap-2">
                           <input
@@ -406,17 +406,17 @@ export default function BillsSection({
                       <details className="mt-2 text-xs text-[#9aa7b8]"><summary className="cursor-pointer font-semibold text-cyan-200">Row details</summary><div className="mt-2 grid gap-1"><span>Paid: ${Number(bill.paid || 0).toFixed(2)}</span><span>Income pot: {incomeOptions.find((option) => option.value === bill.assigned_income_date)?.detailLabel || "Unassigned"}</span><span>Payment setup is available in the Payment Setup control.</span><span>Status: {bill.status}</span></div></details>
                     </td>
 
-                    <td className="text-right align-top font-semibold">
+                    <td className="money-table-cell money-table-align-right align-top font-semibold">
                       ${Number(bill.remaining || 0).toFixed(2)}
                     </td>
 
-                    <td className="text-center align-top">{bill.nextDueDateDisplay}</td>
+                    <td className="money-table-cell money-table-align-center align-top">{bill.nextDueDateDisplay}</td>
 
-                    <td className="text-center align-top">
+                    <td className="money-table-cell money-table-align-center align-top">
                       <CompactAssignmentSelect label={`${bill.name} income pot`} value={bill.assigned_income_date || ""} options={incomeOptions} onChange={(value) => updateBillIncomeDate(bill.id, value)} />
                     </td>
 
-                    <td className="hidden text-center align-top min-[1440px]:table-cell">
+                    <td className="money-table-cell money-table-align-center hidden align-top min-[1440px]:table-cell">
                       <PaymentConfigurationControl
                         label={`${bill.name} payment configuration`}
                         record={bill}
@@ -428,7 +428,7 @@ export default function BillsSection({
                       />
                     </td>
 
-                    <td className="align-top">
+                    <td className="money-table-cell money-table-align-center align-top">
                       <OverlayPopover label="Actions" width={224} testId="bill-actions">{() => <div className="min-w-0 whitespace-normal">
                       <PaymentAutomationControls compact name={bill.name} {...normalizePaymentAutomation(bill)} onSave={(patch) => updatePaymentAutomation(bill.id, patch)} />
                       <div className="mt-3 border-t border-[#2a3242] pt-3">

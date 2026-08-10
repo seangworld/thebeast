@@ -147,20 +147,19 @@ function DebtActionsMenu({
     <OverlayPopover
       label="Actions"
       ariaLabel={`${debt.name} actions`}
-      width={560}
+      width={224}
       testId="debt-list-actions"
-      triggerClassName="w-full justify-center sm:w-auto"
       panelRole="dialog"
       panelAriaLabel={`${debt.name} actions and payment automation`}
     >
       {(close) => (
-        <div className="grid min-w-0 gap-3" data-debt-actions-menu="true" data-action-menu-list="debt">
-          <div className="border-b border-[#2a3242] pb-3">{automation}</div>
-          {management ? <DebtManagementActions {...management} /> : null}
-          <div className="grid gap-2 border-t border-[#2a3242] pt-3 sm:grid-cols-3">
-            <button type="button" onClick={() => { close(); onEdit(); }} className="beast-button-secondary">Edit</button>
-            <button type="button" onClick={() => { close(); onLifecycle(); }} className="beast-button-secondary">{lifecycleLabel}</button>
-            <button type="button" className="beast-button text-red-300 hover:bg-red-950/40" onClick={() => { close(); onDelete(); }}>Delete</button>
+        <div className="grid min-w-0 gap-2 text-sm" data-debt-actions-menu="true" data-debt-actions-layout="compact" data-action-menu-list="debt">
+          <div className="border-b border-[#2a3242] pb-2">{automation}</div>
+          {management ? <DebtManagementActions {...management} editAction={<button type="button" onClick={() => { close(); onEdit(); }} className="beast-button-secondary w-full whitespace-nowrap px-4 text-sm">Edit</button>} /> : null}
+          <div className="grid grid-cols-1 gap-2 border-t border-[#2a3242] pt-2">
+            {!management ? <button type="button" onClick={() => { close(); onEdit(); }} className="beast-button-secondary w-full whitespace-nowrap px-4 text-sm">Edit</button> : null}
+            <button type="button" onClick={() => { close(); onLifecycle(); }} className="beast-button-secondary w-full whitespace-nowrap px-4 text-sm">{lifecycleLabel}</button>
+            <button type="button" className="beast-button w-full whitespace-nowrap px-4 text-sm text-red-300 hover:bg-red-950/40" onClick={() => { close(); onDelete(); }}>Delete</button>
           </div>
         </div>
       )}
@@ -1562,7 +1561,7 @@ export default function DebtsPage() {
                       <div className="mt-4 flex justify-end">
                         <DebtActionsMenu
                           debt={debt}
-                          automation={<PaymentAutomationControls name={debt.name} {...normalizePaymentAutomation(debt)} onSave={(patch) => updateDebtAutomation(debt.id, patch)} />}
+                          automation={<PaymentAutomationControls compact name={debt.name} {...normalizePaymentAutomation(debt)} onSave={(patch) => updateDebtAutomation(debt.id, patch)} />}
                           management={{
                             debt,
                             fundingSources,
@@ -1584,7 +1583,7 @@ export default function DebtsPage() {
           </div>
 
           <div className="hidden lg:block" role="region" aria-label="Debt accounts table">
-            <table className="w-full table-fixed text-sm">
+            <table className="money-aligned-table w-full table-fixed text-sm">
               <colgroup data-money-table-columns="debts">
                 <col className="w-[8%]" />
                 <col className="w-[26%]" />
@@ -1596,13 +1595,13 @@ export default function DebtsPage() {
               </colgroup>
               <thead>
                 <tr>
-                  <th className="whitespace-nowrap">Priority</th>
-                  <th>Name</th>
-                  <th className="text-right">Balance</th>
-                  <th className="text-right">Minimum</th>
-                  <th className="text-right">APR</th>
-                  <th className="text-right">Next Due</th>
-                  <th className="text-right">Action</th>
+                  <th className="money-table-cell money-table-align-left whitespace-nowrap">Priority</th>
+                  <th className="money-table-cell money-table-align-left">Name</th>
+                  <th className="money-table-cell money-table-align-right">Balance</th>
+                  <th className="money-table-cell money-table-align-right">Minimum</th>
+                  <th className="money-table-cell money-table-align-right">APR</th>
+                  <th className="money-table-cell money-table-align-center">Next Due</th>
+                  <th className="money-table-cell money-table-align-center">Action</th>
                 </tr>
               </thead>
 
@@ -1618,9 +1617,9 @@ export default function DebtsPage() {
                 ) : (
                   orderedDebts.map((debt, index) => (
                     <tr key={debt.id}>
-                    <td className="whitespace-nowrap">#{index + 1}</td>
+                    <td className="money-table-cell money-table-align-left whitespace-nowrap">#{index + 1}</td>
                   
-                      <td>
+                      <td className="money-table-cell money-table-align-left">
                         {editingDebtId === debt.id ? (
                           <input
                             value={editName}
@@ -1632,7 +1631,7 @@ export default function DebtsPage() {
                         )}
                       </td>
                   
-                      <td className="text-right">
+                      <td className="money-table-cell money-table-align-right">
                         {editingDebtId === debt.id ? (
                           <div className="flex flex-col gap-2">
                             <input
@@ -1671,7 +1670,7 @@ export default function DebtsPage() {
                         )}
                       </td>
                   
-                      <td className="text-right">
+                      <td className="money-table-cell money-table-align-right">
                         {editingDebtId === debt.id ? (
                           <div className="flex flex-col gap-2">
                             <input
@@ -1719,7 +1718,7 @@ export default function DebtsPage() {
                         )}
                       </td>
                   
-                      <td className="text-right">
+                      <td className="money-table-cell money-table-align-right">
                         {editingDebtId === debt.id ? (
                           <input
                             type="number"
@@ -1732,7 +1731,7 @@ export default function DebtsPage() {
                         )}
                       </td>
                   
-                      <td className="text-right">
+                      <td className="money-table-cell money-table-align-center">
                         {editingDebtId === debt.id ? (
                           <input
                             type="number"
@@ -1745,7 +1744,7 @@ export default function DebtsPage() {
                         )}
                       </td>
                   
-                      <td className="text-right">
+                      <td className="money-table-cell money-table-align-center">
                         {editingDebtId === debt.id ? (
                           <div className="flex justify-end gap-2">
                             <button

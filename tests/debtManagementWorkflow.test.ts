@@ -55,7 +55,7 @@ test("Debt List consolidates row controls into one confirmed Actions menu", () =
   assert.match(page, /function DebtActionsMenu/);
   assert.match(page, /label="Actions"/);
   assert.match(page, /ariaLabel=\{`\$\{debt\.name\} actions`\}/);
-  assert.match(page, /<DebtManagementActions \{\.\.\.management\} \/>/);
+  assert.match(page, /<DebtManagementActions \{\.\.\.management\} editAction=/);
   assert.match(page, /applyDebtPaymentToCycle/);
   assert.match(page, /action_type: actionType/);
   assert.match(page, /resolveDebtLifecycle/);
@@ -63,7 +63,9 @@ test("Debt List consolidates row controls into one confirmed Actions menu", () =
   assert.match(page, /text-red-300/);
   assert.match(page, /data-action-menu-list="debt"/);
   assert.doesNotMatch(page, /Make Payment/);
-  assert.match(page, /width=\{560\}/);
+  assert.match(page, /width=\{224\}/);
+  assert.match(page, /data-debt-actions-layout="compact"/);
+  assert.doesNotMatch(page, /width=\{560\}/);
   assert.match(page, /panelRole="dialog"/);
   assert.match(page, /actions and payment automation/);
   assert.doesNotMatch(page, /data-debt-management-panel="true"/);
@@ -83,7 +85,7 @@ test("Bills and Debts keep payment workflows in the shared Actions overlay", () 
   assert.match(bills, /<OverlayPopover label="Actions"/);
   assert.match(bills, /<BillPaymentControls/);
   assert.match(debts, /<OverlayPopover/);
-  assert.match(debts, /<DebtManagementActions \{\.\.\.management\} \/>/);
+  assert.match(debts, /<DebtManagementActions \{\.\.\.management\} editAction=/);
 });
 
 test("shared Actions overlay supports focus, arrow keys, Escape, and a mobile sheet", () => {

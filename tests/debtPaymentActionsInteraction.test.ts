@@ -55,6 +55,7 @@ test("BM-42C Pay Minimum renders confirmation and calls the canonical writer wit
 
   fireEvent.click(within(view.container).getByRole("button", { name: "Pay Minimum" }));
   const dialog = within(view.container).getByRole("dialog", { name: /minimum payment confirmation/i });
+  assert.equal(dialog.getAttribute("data-debt-management-layout"), "compact");
   assert.match(dialog.textContent || "", /stored minimum of/);
   assert.match(dialog.textContent || "", /\$589\.00/);
   fireEvent.click(within(dialog).getByRole("button", { name: "Confirm Payment" }));
@@ -71,6 +72,7 @@ test("BM-42C Custom Payment accepts one total amount and calls the canonical wri
   const view = renderActions(async (input) => { calls.push(input); return success(); });
 
   fireEvent.click(within(view.container).getByRole("button", { name: "Custom Payment" }));
+  assert.equal(within(view.container).getByRole("dialog", { name: /custom payment/i }).getAttribute("data-debt-management-layout"), "compact");
   fireEvent.change(within(view.container).getByLabelText("Total amount paid"), { target: { value: "800" } });
   fireEvent.click(within(view.container).getByRole("button", { name: "Confirm Payment" }));
 
