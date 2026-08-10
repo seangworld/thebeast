@@ -133,7 +133,11 @@ export async function middleware(request: NextRequest) {
         .maybeSingle();
       const isAdmin = profile?.role === "admin";
       const ageStatus = classifyMemberAge(profile?.birthday);
-      if (profileError || !profile || (!isAdmin && ageStatus !== "adult")) {
+      if (
+        profileError ||
+        !profile ||
+        (!isAdmin && (gatedModule === "health" || ageStatus !== "adult"))
+      ) {
         if (isApiRoute) {
           return NextResponse.json(
             { error: "This workspace is unavailable for the current member profile." },
