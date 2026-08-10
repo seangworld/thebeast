@@ -3465,7 +3465,7 @@ test("authentication presents one permission-aware Beast platform entry point", 
   assert.match(loginPage, /emailRedirectTo: buildAuthCallbackUrl/);
   assert.match(loginPage, /getSafeAuthDestination/);
   assert.doesNotMatch(loginPage, /BeastEducation|Guidance Counselor/);
-  assert.match(dashboardLayout, /select\("role"\)/);
+  assert.match(dashboardLayout, /select\("role,birthday"\)/);
   assert.match(dashboardLayout, /beast_admin_member_module_access/);
   assert.doesNotMatch(dashboardLayout, /onboarding_complete|onboarding repair/);
   assert.match(

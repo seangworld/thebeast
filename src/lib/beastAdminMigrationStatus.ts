@@ -75,6 +75,7 @@ export const beastAdminRepositoryMigrationFiles = [
   "20260808000100_add_debt_lifecycle.sql",
   "20260809000100_restore_member_health_record_rls.sql",
   "20260809000200_prepare_member_health_rls.sql",
+  "20260809000300_define_member_age_entitlements.sql",
 ] as const;
 
 export type BeastAdminMigrationState =

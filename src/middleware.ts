@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { classifyMemberAge } from "@/lib/memberAgeEntitlements";
 import {
   buildAuthLoginPath,
   getAuthErrorState,
@@ -117,6 +118,30 @@ export async function middleware(request: NextRequest) {
           "session_expired"
         )
       );
+    }
+  }
+
+  if (user && (isDashboardRoute || (isApiRoute && !isPublicAuthApiRoute))) {
+    const gatedModule = request.nextUrl.pathname.match(
+      /(?:^|\/)(?:dashboard\/|api\/)(money|health|home)(?:\/|$)/
+    )?.[1];
+    if (gatedModule) {
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("role,birthday")
+        .eq("id", user.id)
+        .maybeSingle();
+      const isAdmin = profile?.role === "admin";
+      const ageStatus = classifyMemberAge(profile?.birthday);
+      if (profileError || !profile || (!isAdmin && ageStatus !== "adult")) {
+        if (isApiRoute) {
+          return NextResponse.json(
+            { error: "This workspace is unavailable for the current member profile." },
+            { status: profileError || !profile ? 503 : 403 }
+          );
+        }
+        return redirect("/dashboard/education");
+      }
     }
   }
 

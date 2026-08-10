@@ -44,6 +44,7 @@ import {
 import { getBeastOSWorkspaceContext } from "@/lib/platform/identity";
 import { buildAuthLoginPath } from "@/lib/auth/experience";
 import { BEAST_ADMIN_MESSAGE_UNREAD_EVENT } from "@/lib/beastAdminMessaging";
+import { classifyMemberAge } from "@/lib/memberAgeEntitlements";
 
 const learningPrimaryNavigation: ModuleNavSection[] = [
   { label: "Guidance Counselor", href: "/dashboard/education/guidance-counselor", module: "learning" },
@@ -277,7 +278,7 @@ export default function DashboardLayout({
 
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select("role")
+        .select("role,birthday")
         .eq("id", authUser.id)
         .maybeSingle();
 
@@ -342,6 +343,8 @@ export default function DashboardLayout({
         learnerRole: primaryLearningProfile?.learner_role,
         gradeLevel: primaryLearningProfile?.learning_style,
       });
+      const ageStatus = classifyMemberAge(profile.birthday);
+      const ageLearningOnly = !canUseBeastAdmin && ageStatus !== "adult";
 
       if (pathname.startsWith("/dashboard/admin") && !canUseBeastAdmin) {
         router.replace("/dashboard");
@@ -350,7 +353,7 @@ export default function DashboardLayout({
 
       setIsAdminPersona(canUseBeastAdmin);
       setLearningOnlyNavigation(
-        useLearningOnlyNavigation &&
+        (useLearningOnlyNavigation || ageLearningOnly) &&
           !resolvedModuleAccess.some(
             (item) => item.moduleId === "learning" && !item.enabled
           )

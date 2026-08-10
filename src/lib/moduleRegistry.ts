@@ -32,6 +32,7 @@ export type BeastModuleRegistryEntry = {
   enabled: boolean;
   beta: boolean;
   ownerNotes: string;
+  minimumAge?: number;
   href?: string;
 };
 
@@ -53,6 +54,7 @@ export const beastModuleRegistry: BeastModuleRegistryEntry[] = [
     beta: false,
     ownerNotes: "Authenticated shell, Personal Hub, shared services, and platform ownership.",
     href: "/dashboard",
+    minimumAge: 0,
   },
   {
     name: "BeastMoney",
@@ -66,6 +68,7 @@ export const beastModuleRegistry: BeastModuleRegistryEntry[] = [
     beta: false,
     ownerNotes: "Financial cockpit, cash flow, debts, forecasting, and Velocity planning.",
     href: "/dashboard/money",
+    minimumAge: 18,
   },
   {
     name: "BeastEducation",
@@ -79,6 +82,7 @@ export const beastModuleRegistry: BeastModuleRegistryEntry[] = [
     beta: true,
     ownerNotes: "Guidance-first education, career and certification planning, skill analysis, roadmaps, and supporting teaching tools.",
     href: "/dashboard/education",
+    minimumAge: 0,
   },
   {
     name: "BeastGoals",
@@ -91,6 +95,7 @@ export const beastModuleRegistry: BeastModuleRegistryEntry[] = [
     enabled: true,
     beta: false,
     ownerNotes: "Superseded standalone module; now shared BeastOS Personal Hub data.",
+    minimumAge: 18,
   },
   {
     name: "BeastDocuments",
@@ -103,6 +108,7 @@ export const beastModuleRegistry: BeastModuleRegistryEntry[] = [
     enabled: true,
     beta: false,
     ownerNotes: "Superseded standalone module; now shared BeastOS document infrastructure.",
+    minimumAge: 18,
   },
   {
     name: "BeastHealth",
@@ -116,6 +122,7 @@ export const beastModuleRegistry: BeastModuleRegistryEntry[] = [
     beta: false,
     ownerNotes: "Owner-only health record and care-preparation workspace with active, medically bounded Health Advisor.",
     href: "/dashboard/health",
+    minimumAge: 18,
   },
   {
     name: "BeastHome",
@@ -129,6 +136,7 @@ export const beastModuleRegistry: BeastModuleRegistryEntry[] = [
     beta: true,
     ownerNotes: "Admin-only home workspace foundation with household scope reserved.",
     href: "/dashboard/home",
+    minimumAge: 18,
   },
   {
     name: "BeastAdmin",
@@ -141,6 +149,7 @@ export const beastModuleRegistry: BeastModuleRegistryEntry[] = [
     enabled: true,
     beta: false,
     ownerNotes: "Owner-only operational workspace for the Beast ecosystem.",
+    minimumAge: 18,
     href: "/dashboard/admin",
   },
 ];

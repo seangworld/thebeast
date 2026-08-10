@@ -347,6 +347,19 @@ export const beastRoadmapPackageRegistry = [
     ["20260809000200_prepare_member_health_rls.sql"]
   ),
   packageIdentity(
+    "BO-600",
+    ["BO-600"],
+    "Beast-wide age-based member entitlements",
+    [
+      "src/lib/memberAgeEntitlements.ts",
+      "src/lib/memberAgeServer.ts",
+      "src/middleware.ts",
+      "supabase/migrations/20260809000300_define_member_age_entitlements.sql",
+      "tests/memberAgeEntitlements.test.ts",
+    ],
+    ["20260809000300_define_member_age_entitlements.sql"]
+  ),
+  packageIdentity(
     "BM-FND-033",
     ["BM-33"],
     "Funding Rules",

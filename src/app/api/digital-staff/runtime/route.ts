@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { applyApprovedKnowledgeProposal, reportDigitalStaffLifecycle, runDigitalStaffRuntime, requireProfessionalConfig, safeDigitalStaffFailure, type ConversationState, type DigitalStaffActivity, type ProfessionalId, type RuntimeMessage, type RuntimeObserver, type StructuredKnowledgeProposal } from "@/lib/digitalStaffRuntime";
 import { createRouteClient } from "@/lib/supabase/server";
+import { requireProfessionalEntitlement } from "@/lib/memberAgeServer";
 
 export const dynamic = "force-dynamic";
 const maxMessageLength = 4_000;
@@ -36,6 +37,8 @@ export async function POST(request: Request) {
   const conversationId = typeof body.conversationId === "string" ? body.conversationId : "";
   const text = typeof body.message === "string" ? body.message.trim() : "";
   try { requireProfessionalConfig(professionalId); } catch { return NextResponse.json({ error: "Unknown Digital Staff professional." }, { status: 400 }); }
+  const ageEntitlement = await requireProfessionalEntitlement(professionalId);
+  if (!ageEntitlement.ok) return NextResponse.json({ error: ageEntitlement.status === 428 ? "Add your birthday before opening this workspace." : "This Digital Staff professional is unavailable for the current member profile." }, { status: ageEntitlement.status });
   if (!conversationId) return NextResponse.json({ error: "Conversation is required." }, { status: 400 });
 
   const contextPromise = !(body.decision === "approve" || body.decision === "reject") && text && text.length <= maxMessageLength

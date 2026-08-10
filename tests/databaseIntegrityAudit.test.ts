@@ -39,7 +39,7 @@ test("DB-001 canonical migrations have unique ordered versions", () => {
     .sort();
   const versions = files.map((file) => file.slice(0, 14));
 
-  assert.equal(files.length, 74);
+  assert.equal(files.length, 75);
   assert.equal(new Set(versions).size, versions.length);
   assert.deepEqual(
     files,
