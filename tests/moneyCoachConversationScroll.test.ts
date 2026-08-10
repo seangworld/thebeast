@@ -62,6 +62,7 @@ test("BM-305A keeps one bounded responsive conversation viewport", () => {
   assert.match(workspace, /h-full overflow-y-auto/);
   assert.match(workspace, /max-w-3xl/);
   assert.match(workspace, /sm:px-4/);
-  assert.match(workspace, /lg:grid-cols-\[18rem_minmax\(0,1fr\)\]/);
+  assert.doesNotMatch(workspace, /lg:grid-cols-\[18rem_minmax\(0,1fr\)\]/);
+  assert.match(workspace, /data-professional-history-on-demand/);
   assert.match(source, /ServerAgentConversationRepository/);
 });

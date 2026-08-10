@@ -48,8 +48,9 @@ test("BE-223 shares scrolling, streaming, message layout, and responsive behavio
   assert.match(shared, /data-message-role/);
   assert.match(shared, /grid gap-5/);
   assert.match(shared, /rounded-2xl border/);
-  assert.match(shared, /lg:grid-cols-\[18rem_minmax\(0,1fr\)\]/);
-  assert.match(shared, /lg:hidden/);
+  assert.doesNotMatch(shared, /lg:grid-cols-\[18rem_minmax\(0,1fr\)\]/);
+  assert.match(shared, /data-professional-history-on-demand/);
+  assert.match(shared, /fixed inset-0 z-50/);
 });
 
 test("AP-001 gives every current Digital Professional a shared message identity", () => {

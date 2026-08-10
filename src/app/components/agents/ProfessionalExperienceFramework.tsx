@@ -439,7 +439,7 @@ export function ProfessionalConversationHistory({
         </div>
         <button
           type="button"
-          className="text-sm font-bold text-slate-300 lg:hidden"
+          className="text-sm font-bold text-slate-300"
           onClick={onClose}
           aria-label={`Close ${professionalName} conversation history`}
         >

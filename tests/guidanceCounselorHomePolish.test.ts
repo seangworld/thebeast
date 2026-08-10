@@ -47,7 +47,7 @@ test("BE-212 makes the conversation the primary organized flow", () => {
   assert.equal(recommendationIndex < roadmapIndex, true);
   assert.match(page, /data-guidance-primary-flow="true"/);
   assert.match(conversation, /data-guidance-home-primary="true"/);
-  assert.match(workspace, /shadow-\[0_20px_70px/);
+  assert.match(workspace, /data-professional-history-on-demand/);
 });
 
 test("BE-212 improves responsive hierarchy and restrained transitions", () => {

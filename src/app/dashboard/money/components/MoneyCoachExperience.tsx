@@ -1342,7 +1342,7 @@ export function MoneyCoachExperience({
               size="md"
             />
           }
-          status={<div className="flex items-center gap-2"><AgentStatus state={loading ? "loading" : error ? "error" : streamingTurnId ? "streaming" : "available"} /><button type="button" className="beast-button-secondary min-h-11 lg:hidden" aria-expanded={historyOpen} aria-controls="money-coach-history-drawer" onClick={() => setHistoryOpen(true)}>Conversations</button></div>}
+          status={<div className="flex flex-wrap items-center gap-2"><AgentStatus state={loading ? "loading" : error ? "error" : streamingTurnId ? "streaming" : "available"} /><button type="button" className="beast-button-secondary min-h-11" aria-expanded={historyOpen} aria-controls="money-coach-history-drawer" onClick={() => setHistoryOpen(true)}>Conversations</button><button type="button" className="beast-button-secondary min-h-11" onClick={() => { void startConversation(); }}>New conversation</button></div>}
         />
       }
       greeting={

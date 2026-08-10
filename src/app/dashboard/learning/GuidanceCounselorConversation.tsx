@@ -1185,12 +1185,19 @@ export default function GuidanceCounselorConversation({
                   />
                   <button
                     type="button"
-                    className="beast-button-secondary min-h-11 lg:hidden"
+                    className="beast-button-secondary min-h-11"
                     aria-expanded={historyOpen}
                     aria-controls="guidance-counselor-history-drawer"
                     onClick={() => setHistoryOpen(true)}
                   >
                     Conversations
+                  </button>
+                  <button
+                    type="button"
+                    className="beast-button-secondary min-h-11"
+                    onClick={() => void startConversation()}
+                  >
+                    New conversation
                   </button>
                 </div>
               }

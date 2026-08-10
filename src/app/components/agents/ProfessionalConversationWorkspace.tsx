@@ -45,16 +45,14 @@ export function ProfessionalConversationWorkspace({
 }: ProfessionalConversationWorkspaceProps) {
   return (
     <div
-      className="mx-auto grid w-full max-w-[1600px] min-w-0 gap-4 lg:grid-cols-[18rem_minmax(0,1fr)]"
+      className="mx-auto grid w-full max-w-[1600px] min-w-0 gap-4"
       data-professional-conversation-workspace="true"
+      data-professional-history-on-demand="true"
     >
-      <div className="sticky top-4 hidden h-[calc(100vh-8rem)] min-h-[36rem] overflow-hidden rounded-2xl border border-white/10 shadow-[0_20px_70px_rgba(0,0,0,0.24)] lg:block">
-        {history}
-      </div>
       {children}
       {historyOpen ? (
         <div
-          className="fixed inset-0 z-50 bg-black/70 p-3 lg:hidden"
+          className="fixed inset-0 z-50 bg-black/70 p-3"
           role="presentation"
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) onCloseHistory();

@@ -143,12 +143,12 @@ test("MC-201 consumes the shared AgentExperience without replacing existing page
   assert.match(component, /importLegacy/);
   assert.match(component, /<ProfessionalConversationHistory/);
   assert.match(component, /Review durable memories/);
-  assert.match(workspace, /lg:grid-cols-\[18rem_minmax\(0,1fr\)\]/);
+  assert.doesNotMatch(workspace, /lg:grid-cols-\[18rem_minmax\(0,1fr\)\]/);
   assert.match(component, /min-h-\[34rem\]/);
   assert.match(workspace, /data-professional-active-scroll="true"/);
   assert.match(component, /<ProfessionalConversationHistory/);
   assert.match(workspace, /overflow-y-auto/);
-  assert.match(workspace, /lg:hidden/);
+  assert.match(workspace, /data-professional-history-on-demand/);
   assert.match(workspace, /role="dialog"/);
   assert.match(workspace, /aria-modal="true"/);
   assert.match(component, /Active Money Coach conversation/);

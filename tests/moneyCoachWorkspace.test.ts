@@ -26,7 +26,8 @@ test("Money Coach provides persisted conversation history and optional shortcuts
   assert.match(framework, /Unpin/);
   assert.match(framework, /Archive/);
   assert.match(framework, /Delete/);
-  assert.match(workspace, /lg:grid-cols-\[18rem_minmax\(0,1fr\)\]/);
+  assert.doesNotMatch(workspace, /lg:grid-cols-\[18rem_minmax\(0,1fr\)\]/);
+  assert.match(workspace, /data-professional-history-on-demand/);
 });
 
 test("BM-305 keeps persistence resume and automatic title behavior", () => {
