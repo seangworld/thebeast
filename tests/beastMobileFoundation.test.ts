@@ -114,7 +114,7 @@ test("BF-MOB-002 keeps module visibility permission-aware including View As Memb
     intelligence: mobileIntelligence,
   });
 
-  assert.deepEqual(memberCards.map((card) => card.module), ["money", "learning"]);
+  assert.deepEqual(memberCards.map((card) => card.module), ["money", "learning", "health"]);
   assert.deepEqual(ownerCards.map((card) => card.module), [
     "money",
     "learning",
@@ -123,6 +123,7 @@ test("BF-MOB-002 keeps module visibility permission-aware including View As Memb
   assert.deepEqual(viewAsMemberCards.map((card) => card.module), [
     "money",
     "learning",
+    "health",
   ]);
   assert.equal(ownerCards.some((card) => card.module === "admin"), false);
 });

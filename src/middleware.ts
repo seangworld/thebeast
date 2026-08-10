@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
-import { classifyMemberAge } from "@/lib/memberAgeEntitlements";
+import {
+  getModuleRegistryEntry,
+  type BeastModuleIdentifier,
+} from "@/lib/moduleRegistry";
+import { resolveMemberModuleEntitlement } from "@/lib/memberAgeEntitlements";
 import {
   buildAuthLoginPath,
   getAuthErrorState,
@@ -132,11 +136,18 @@ export async function middleware(request: NextRequest) {
         .eq("id", user.id)
         .maybeSingle();
       const isAdmin = profile?.role === "admin";
-      const ageStatus = classifyMemberAge(profile?.birthday);
+      const decision = profile
+        ? resolveMemberModuleEntitlement({
+            module: gatedModule as BeastModuleIdentifier,
+            birthday: profile.birthday,
+            isAdmin,
+            entry: getModuleRegistryEntry(gatedModule as BeastModuleIdentifier),
+          })
+        : null;
       if (
         profileError ||
         !profile ||
-        (!isAdmin && (gatedModule === "health" || ageStatus !== "adult"))
+        !decision?.allowed
       ) {
         if (isApiRoute) {
           return NextResponse.json(

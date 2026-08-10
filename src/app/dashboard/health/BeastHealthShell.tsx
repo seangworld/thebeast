@@ -8,8 +8,18 @@ import {
   SectionHeader,
 } from "@/app/components/design/DashboardPrimitives";
 import { createClient } from "@/lib/supabase/client";
-import { isBeastAdminOwnerRole } from "@/lib/beastAdmin";
 import { buildCurrentAuthLoginPath } from "@/lib/auth/experience";
+import {
+  ADMIN_VIEW_MODE_EVENT,
+  ADMIN_VIEW_MODE_STORAGE_KEY,
+  normalizeAdminViewMode,
+  type AdminViewMode,
+} from "@/lib/entitlements";
+import {
+  getModuleRegistryEntry,
+  type BeastModuleIdentifier,
+} from "@/lib/moduleRegistry";
+import { resolveMemberModuleEntitlement } from "@/lib/memberAgeEntitlements";
 import { HealthPageIntroduction } from "./HealthPageIntroduction";
 
 export const beastHealthSections = [
@@ -48,7 +58,25 @@ export function BeastHealthShell({
 }) {
   const [authorized, setAuthorized] = useState(false);
   const [checking, setChecking] = useState(true);
+  const [adminViewMode, setAdminViewMode] = useState<AdminViewMode>(() =>
+    typeof window === "undefined"
+      ? "admin"
+      : normalizeAdminViewMode(window.localStorage.getItem(ADMIN_VIEW_MODE_STORAGE_KEY))
+  );
   const router = useRouter();
+
+  useEffect(() => {
+    const syncViewMode = () =>
+      setAdminViewMode(
+        normalizeAdminViewMode(window.localStorage.getItem(ADMIN_VIEW_MODE_STORAGE_KEY))
+      );
+    window.addEventListener("storage", syncViewMode);
+    window.addEventListener(ADMIN_VIEW_MODE_EVENT, syncViewMode);
+    return () => {
+      window.removeEventListener("storage", syncViewMode);
+      window.removeEventListener(ADMIN_VIEW_MODE_EVENT, syncViewMode);
+    };
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -64,16 +92,26 @@ export function BeastHealthShell({
           return;
         }
 
-        const { data: profile } = await supabase
+        const { data: profile, error: profileError } = await supabase
           .from("profiles")
-          .select("role")
+          .select("role,birthday")
           .eq("id", userId)
           .maybeSingle();
 
         if (!active) return;
 
-        if (!isBeastAdminOwnerRole(profile?.role)) {
-          router.replace("/dashboard");
+        const isAdmin = profile?.role === "admin" && adminViewMode === "admin";
+        const decision = profile
+          ? resolveMemberModuleEntitlement({
+              module: "health" as BeastModuleIdentifier,
+              birthday: profile.birthday,
+              isAdmin,
+              simulatingMember: profile.role === "admin" && adminViewMode !== "admin",
+              entry: getModuleRegistryEntry("health"),
+            })
+          : null;
+        if (profileError || !decision?.allowed) {
+          router.replace(decision?.needsBirthday ? "/dashboard/settings/profile" : "/dashboard/education");
           return;
         }
 
@@ -88,7 +126,7 @@ export function BeastHealthShell({
     return () => {
       active = false;
     };
-  }, [router]);
+  }, [adminViewMode, router]);
 
   if (checking || !authorized) {
     return (
@@ -98,7 +136,7 @@ export function BeastHealthShell({
             <SectionHeader
               eyebrow="BeastHealth"
               title="Checking owner access"
-              description="BeastHealth beta routes are protected for owner-only review."
+              description="Checking your BeastHealth access and age-based eligibility."
             />
           </DashboardCard>
         </div>

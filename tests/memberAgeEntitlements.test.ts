@@ -6,6 +6,14 @@ import { calculateMemberAge, classifyMemberAge, resolveMemberModuleEntitlement }
 const asOf = new Date("2026-08-09T12:00:00Z");
 const decision = (module: "money" | "learning", birthday?: string | null, options?: { isAdmin?: boolean; simulatingMember?: boolean }) => resolveMemberModuleEntitlement({ module, birthday, entry: getModuleRegistryEntry(module), asOf, ...options });
 
+test("BH-REL-02 releases Health for eligible adults while retaining age gates", () => {
+    const health = getModuleRegistryEntry("health");
+    assert.equal(health?.visibility, "released");
+    assert.equal(resolveMemberModuleEntitlement({ module: "health", birthday: "2000-01-01", entry: health, asOf }).allowed, true);
+    assert.equal(resolveMemberModuleEntitlement({ module: "health", birthday: "2010-01-01", entry: health, asOf }).reason, "minor_education_only");
+    assert.equal(resolveMemberModuleEntitlement({ module: "health", birthday: null, entry: health, asOf }).reason, "unknown_age");
+});
+
 test("BO-600 calculates birthdays on the boundary", () => {
     assert.equal(calculateMemberAge("2008-08-09", asOf), 18);
     assert.equal(calculateMemberAge("2008-08-10", asOf), 17);

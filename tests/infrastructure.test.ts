@@ -5942,13 +5942,13 @@ test("member navigation hides admin and monetization surfaces", () => {
   );
   assert.deepEqual(
     getBeastModuleNavigationForPersona(false).map((item) => item.label),
-    ["BeastMoney", "BeastEducation"]
+    ["BeastMoney", "BeastEducation", "BeastHealth"]
   );
   assert.deepEqual(
     buildApplicationNavigationForPersona({ isOwner: false }).map(
       (item) => item.label
     ),
-    ["BeastMoney", "BeastEducation"]
+    ["BeastMoney", "BeastEducation", "BeastHealth"]
   );
   assert.deepEqual(buildOwnerNavigationForPersona({ isOwner: false }), []);
   assert.equal(
@@ -6048,7 +6048,7 @@ test("BeastAdmin foundation registers modules and protects owner-only navigation
       ["BeastEducation", "learning", `v${versionManifest.beastlearning.version} ${versionManifest.beastlearning.channel}`, "active", "beta", true, true, true],
       ["BeastGoals", "goals", `v${versionManifest.beastgoals.version}`, "foundation", "adminOnly", true, false, true],
       ["BeastDocuments", "documents", `v${versionManifest.beastdocuments.version}`, "foundation", "adminOnly", true, false, true],
-      ["BeastHealth", "health", `v${versionManifest.beasthealth.version} ${versionManifest.beasthealth.channel}`, "active", "adminOnly", true, false, true],
+      ["BeastHealth", "health", `v${versionManifest.beasthealth.version} ${versionManifest.beasthealth.channel}`, "active", "released", true, false, true],
       ["BeastHome", "home", `v${versionManifest.beasthome.version} ${versionManifest.beasthome.channel}`, "foundation", "adminOnly", true, true, true],
       ["BeastAdmin", "admin", "foundation", "foundation", "adminOnly", true, false, true],
     ]
@@ -6136,13 +6136,13 @@ test("BeastAdmin foundation registers modules and protects owner-only navigation
   const memberVisible = getVisibleModuleRegistryEntries({ isOwner: false }).map(
     (module) => module.name
   );
-  assert.deepEqual(memberVisible, ["BeastOS", "BeastMoney", "BeastEducation"]);
+  assert.deepEqual(memberVisible, ["BeastOS", "BeastMoney", "BeastEducation", "BeastHealth"]);
   assert.equal(
     buildBeastModuleNavigationForPersona({
       isOwner: false,
       registry: beastModuleRegistry,
     }).some((item) => item.label === "BeastHealth"),
-    false
+    true
   );
   assert.equal(
     buildBeastModuleNavigationForPersona({
@@ -6337,7 +6337,7 @@ test("BeastAdmin beta assignments are independent of member role", () => {
   assert.doesNotMatch(settingsPage, /owner@beastos\.local|beta@beastos\.local/);
 });
 
-test("BeastHealth is owner-only and Health Advisor preserves medical boundaries", () => {
+test("BeastHealth is released to eligible members and preserves medical boundaries", () => {
   const shell = readFileSync(
     "src/app/dashboard/health/BeastHealthShell.tsx",
     "utf8"
@@ -6371,8 +6371,8 @@ test("BeastHealth is owner-only and Health Advisor preserves medical boundaries"
   assert.match(workspace, /HealthTimelineWorkspace/);
   assert.match(workspace, /\.from\("beast_health_records"\)/);
 
-  assert.match(shell, /isBeastAdminOwnerRole/);
-  assert.match(shell, /router\.replace\("\/dashboard"\)/);
+  assert.match(shell, /resolveMemberModuleEntitlement/);
+  assert.match(shell, /getModuleRegistryEntry\("health"\)/);
   const advisor = readFileSync(
     "src/app/dashboard/health/HealthAdvisorWorkspace.tsx",
     "utf8"

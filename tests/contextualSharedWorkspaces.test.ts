@@ -142,16 +142,22 @@ test("BO-502 contextual creation preserves canonical tables and owner checks", (
   assert.doesNotMatch(goals, /education_goals|health_goals|money_goals|home_goals/);
 });
 
-test("BO-502 retains owner-only module guards while canonical RLS remains authoritative", () => {
+test("BO-502 retains owner-only guards where required while canonical RLS remains authoritative", () => {
   const guard = readFileSync("src/app/dashboard/OwnerOnlyModuleGuard.tsx", "utf8");
   for (const path of [
-    "src/app/dashboard/health/goals/page.tsx",
-    "src/app/dashboard/health/documents/page.tsx",
     "src/app/dashboard/home/goals/page.tsx",
     "src/app/dashboard/home/documents/page.tsx",
   ]) {
     assert.match(readFileSync(path, "utf8"), /OwnerOnlyModuleGuard/);
   }
+  assert.doesNotMatch(
+    readFileSync("src/app/dashboard/health/goals/page.tsx", "utf8"),
+    /OwnerOnlyModuleGuard/
+  );
+  assert.doesNotMatch(
+    readFileSync("src/app/dashboard/health/documents/page.tsx", "utf8"),
+    /OwnerOnlyModuleGuard/
+  );
   assert.match(guard, /isBeastAdminOwnerRole/);
   assert.match(guard, /router\.replace\("\/dashboard"\)/);
   assert.doesNotMatch(guard, /service_role|SUPABASE_SERVICE_ROLE_KEY/);

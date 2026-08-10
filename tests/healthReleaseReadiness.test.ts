@@ -3,14 +3,14 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { beastModuleRegistry } from "../src/lib/moduleRegistry";
 
-test("BH-REL-01 keeps BeastHealth Admin Only until member acceptance is approved", () => {
+test("BH-REL-02 releases BeastHealth through the authoritative registry", () => {
   const health = beastModuleRegistry.find((entry) => entry.id === "health");
   assert.ok(health);
-  assert.equal(health.visibility, "adminOnly");
-  assert.equal(health.version, "v1.0.0 Development");
+  assert.equal(health.visibility, "released");
+  assert.equal(health.version, "v1.0.0 Production");
   const shell = readFileSync("src/app/dashboard/health/BeastHealthShell.tsx", "utf8");
-  assert.match(shell, /isBeastAdminOwnerRole/);
-  assert.match(shell, /router\.replace\("\/dashboard"\)/);
+  assert.match(shell, /resolveMemberModuleEntitlement/);
+  assert.match(shell, /getModuleRegistryEntry\("health"\)/);
 });
 
 test("BH-REL-01 prepares owner-scoped supporting Health RLS without activating visibility", () => {

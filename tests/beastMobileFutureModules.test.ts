@@ -38,7 +38,7 @@ test("BF-MOB-007 builds owner-only read-only future module cards", () => {
     foundations,
   });
 
-  assert.deepEqual(ownerCards.map((card) => card.module), ["health", "home"]);
+  assert.deepEqual(ownerCards.map((card) => card.module), ["home"]);
   assert.deepEqual(memberCards, []);
   assert.equal(ownerCards[0].dispatchMode, "future-module-foundation-route");
   assert.equal(ownerCards[0].readOnly, true);
@@ -51,10 +51,9 @@ test("BF-MOB-007 routes Health and Home to existing foundation shells only", () 
     foundations,
   });
 
-  assert.equal(cards[0].href, "/dashboard/health");
-  assert.equal(cards[1].href, "/dashboard/home");
+  assert.equal(cards[0].href, "/dashboard/home");
   assert.ok(cards[0].metadata.includes("adminOnly"));
-  assert.ok(cards[1].metadata.includes("foundation"));
+  assert.doesNotMatch(JSON.stringify(cards), /BeastHealth|health/);
 });
 
 test("BF-MOB-007 exposes mobile future module surfaces without replacing desktop shells", () => {

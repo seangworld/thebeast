@@ -42,7 +42,11 @@ export function buildMobileFutureModuleCards({
         (entry) => entry.identifier === foundation.identifier
       );
 
-      if (!registryEntry || !isModuleVisibleForOwner(registryEntry)) return null;
+      if (
+        !registryEntry ||
+        !isModuleVisibleForOwner(registryEntry) ||
+        registryEntry.visibility !== "adminOnly"
+      ) return null;
 
       return {
         id: `mobile-future-${foundation.identifier}`,

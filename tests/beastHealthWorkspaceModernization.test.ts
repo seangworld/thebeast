@@ -56,7 +56,7 @@ test("BH-402 keeps every BeastHealth record route on the reusable workspace", ()
     "utf8"
   );
   assert.match(documents, /UploadsPage[\s\S]*module: "health"/);
-  assert.match(documents, /OwnerOnlyModuleGuard/);
+  assert.doesNotMatch(documents, /OwnerOnlyModuleGuard/);
 
   assert.match(recordWorkspace, /healthWorkspaceConversationTopics/);
   assert.match(recordWorkspace, /buildWorkspaceKnowledgeModel/);

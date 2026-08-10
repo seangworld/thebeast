@@ -68,7 +68,7 @@ test("BP-001 keeps life modules permission-aware and in the approved order", () 
     buildApplicationNavigationForPersona({ isOwner: false }).map(
       (item) => item.label
     ),
-    ["BeastMoney", "BeastEducation"]
+    ["BeastMoney", "BeastEducation", "BeastHealth"]
   );
   assert.deepEqual(beastSecurityNavigation, {
     label: "BeastSecurity",

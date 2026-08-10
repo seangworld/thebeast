@@ -66,6 +66,7 @@ function sourceFixture(): BeastAdminCEOSourceSnapshot {
           { id: "beastos", label: "BeastOS" },
           { id: "money", label: "BeastMoney" },
           { id: "learning", label: "BeastEducation" },
+          { id: "health", label: "BeastHealth" },
         ],
         moduleAccessOverrides: [],
         betaAssignments: [],
