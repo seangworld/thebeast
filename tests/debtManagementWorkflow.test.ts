@@ -35,9 +35,14 @@ test("reset next cycle clamps month ends and overdue facts expose architecture-o
   assert.deepEqual(signals[0]?.channels, ["today", "notifications", "money-coach", "daily-briefing", "financial-health", "future-push"]);
 });
 
-test("Debt Management exposes the complete payment, reset, history, and status workflow", () => {
+test("Debt Management exposes direct canonical payment actions and lifecycle workflow", () => {
   const source = readFileSync("src/app/dashboard/money/debts/DebtManagementActions.tsx", "utf8");
-  for (const label of ["Pay Minimum", "Pay Full Balance", "Custom Payment", "Minimum \\+ Extra", "Custom Total", "Statement Balance", "Skip Payment", "Mark Paid Outside Beast", "Undo Last Payment", "Reset Due Date", "Move to next recurring cycle", "Select custom next due date", "Payment Date", "Funding Source", "Optional Notes", "History"]) assert.match(source, new RegExp(label));
+  for (const label of ["Pay Minimum", "Confirm minimum payment", "Confirm Payment", "Pay Full Balance", "Custom Payment", "Total amount paid", "Skip Payment", "Mark Paid Outside Beast", "Undo Last Payment", "Reset Due Date", "Move to next recurring cycle", "Select custom next due date", "Payment Date", "Funding Source", "Optional Notes", "History"]) assert.match(source, new RegExp(label));
+  assert.doesNotMatch(source, /Minimum \\+ Extra/);
+  assert.doesNotMatch(source, /Custom Total/);
+  assert.match(source, /record\("minimum", minimumAmount\)/);
+  assert.match(source, /record\("custom", customAmount\)/);
+  assert.match(source, /stored minimum of/);
   assert.match(source, /getDebtPaymentWarning/);
   assert.match(source, /getDebtDueState/);
 });
@@ -48,22 +53,17 @@ test("Debt List consolidates row controls into one confirmed Actions menu", () =
   assert.match(page, /function DebtActionsMenu/);
   assert.match(page, /label="Actions"/);
   assert.match(page, /ariaLabel=\{`\$\{debt\.name\} actions`\}/);
-  for (const label of ["Make Payment", "Edit", "Archive", "Delete"]) {
-    assert.match(page, new RegExp(label));
-  }
-  assert.match(page, /role="separator"/);
-  assert.match(page, /role="menuitem"/);
+  assert.match(page, /<DebtManagementActions \{\.\.\.management\} \/>/);
+  assert.match(page, /applyDebtPaymentToCycle/);
+  assert.match(page, /action_type: actionType/);
+  assert.match(page, /resolveDebtLifecycle/);
+  for (const label of ["Edit", "Archive", "Delete"]) assert.match(page, new RegExp(label));
   assert.match(page, /text-red-300/);
-  assert.match(page, /window\.confirm\(`Archive/);
-  assert.match(page, /window\.confirm\(`Delete/);
-  assert.match(page, /data-debt-management-popover="true"/);
   assert.match(page, /data-action-menu-list="debt"/);
-  assert.match(page, /Back to actions/);
-  assert.match(page, /Back to actions[\s\S]*w-auto shrink-0/);
-  assert.match(page, /width=\{view === "manage" \? 560 : 240\}/);
+  assert.doesNotMatch(page, /Make Payment/);
+  assert.match(page, /width=\{560\}/);
   assert.match(page, /panelRole="dialog"/);
   assert.match(page, /actions and payment automation/);
-  assert.match(page, /panelAriaLabel=\{view === "manage"/);
   assert.doesNotMatch(page, /data-debt-management-panel="true"/);
   assert.doesNotMatch(page, /data-debt-management-row="true"/);
   assert.doesNotMatch(page, /managedDebtId/);

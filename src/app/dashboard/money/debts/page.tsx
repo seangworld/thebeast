@@ -143,58 +143,26 @@ function DebtActionsMenu({
   onLifecycle: () => void;
   onDelete: () => void;
 }) {
-  const [view, setView] = useState<"actions" | "manage">("actions");
-  const menuItemClass =
-    "w-full rounded-md px-3 py-2 text-left text-sm font-semibold text-[#dbe3ef] hover:bg-[#1b2432] focus:bg-[#1b2432] focus:outline-none";
-
-  const resetViewWhenClosed = useCallback((open: boolean) => {
-    if (!open) setView("actions");
-  }, []);
-
   return (
     <OverlayPopover
       label="Actions"
       ariaLabel={`${debt.name} actions`}
-      width={view === "manage" ? 560 : 240}
+      width={560}
       testId="debt-list-actions"
       triggerClassName="w-full justify-center sm:w-auto"
-      onOpenChange={resetViewWhenClosed}
       panelRole="dialog"
-      panelAriaLabel={view === "manage" ? `${debt.name} payment management` : `${debt.name} actions and payment automation`}
+      panelAriaLabel={`${debt.name} actions and payment automation`}
     >
       {(close) => (
-        view === "manage" && management ? (
-          <div className="grid min-w-0 gap-3" data-debt-management-popover="true">
-            <div className="flex min-w-0 items-center justify-between gap-2 border-b border-[#2a3242] pb-2">
-              <button type="button" autoFocus className={`${menuItemClass} w-auto shrink-0`} onClick={() => setView("actions")}>
-                Back to actions
-              </button>
-              <button type="button" className={`${menuItemClass} w-auto shrink-0`} aria-label={`Close ${debt.name} payment management`} onClick={close}>
-                Close
-              </button>
-            </div>
-            <DebtManagementActions {...management} />
+        <div className="grid min-w-0 gap-3" data-debt-actions-menu="true" data-action-menu-list="debt">
+          <div className="border-b border-[#2a3242] pb-3">{automation}</div>
+          {management ? <DebtManagementActions {...management} /> : null}
+          <div className="grid gap-2 border-t border-[#2a3242] pt-3 sm:grid-cols-3">
+            <button type="button" onClick={() => { close(); onEdit(); }} className="beast-button-secondary">Edit</button>
+            <button type="button" onClick={() => { close(); onLifecycle(); }} className="beast-button-secondary">{lifecycleLabel}</button>
+            <button type="button" className="beast-button text-red-300 hover:bg-red-950/40" onClick={() => { close(); onDelete(); }}>Delete</button>
           </div>
-        ) : (
-        <div className="grid gap-1" data-debt-actions-menu="true" data-action-menu-list="debt">
-          <div className="mb-2 border-b border-[#2a3242] pb-3">{automation}</div>
-          {management ? (
-            <button type="button" role="menuitem" className={menuItemClass} onClick={() => setView("manage")}>
-              Make Payment
-            </button>
-          ) : null}
-          <button type="button" role="menuitem" className={menuItemClass} onClick={() => { close(); onEdit(); }}>
-            Edit
-          </button>
-          <div role="separator" className="my-1 border-t border-[#2a3242]" />
-          <button type="button" role="menuitem" className={menuItemClass} onClick={() => { close(); onLifecycle(); }}>
-            {lifecycleLabel}
-          </button>
-          <button type="button" role="menuitem" className={`${menuItemClass} text-red-300 hover:bg-red-950/40 focus:bg-red-950/40`} onClick={() => { close(); onDelete(); }}>
-            Delete
-          </button>
         </div>
-        )
       )}
     </OverlayPopover>
   );
