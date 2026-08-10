@@ -43,7 +43,7 @@ import {
   type PayoffOptionalColumn,
 } from "@/lib/payoffPlanView";
 import { MoneyManagementNavigation } from "@/app/dashboard/money/components/MoneyManagementNavigation";
-import { DebtManagementActions, type DebtManagementActionsProps, type DebtManagementDebt, type DebtPaymentHistoryRow } from "./DebtManagementActions";
+import { DebtManagementActions, type DebtManagementActionsProps, type DebtManagementDebt, type DebtPaymentHistoryRow, type DebtPaymentResult } from "./DebtManagementActions";
 import { OverlayPopover } from "../cashflow/components/OverlayPopover";
 import { getNextDebtCycleDate, toDebtDateInput, type DebtPaymentAction } from "@/lib/debtManagement";
 import { applyDebtPaymentToCycle } from "@/lib/financialPayments";
@@ -1025,13 +1025,13 @@ export default function DebtsPage() {
     [debtPayments]
   );
 
-  async function recordDebtPayment(input: { debt: DebtManagementDebt; amount: number; paymentDate: string; fundingSourceId: string | null; notes: string; actionType: DebtPaymentAction }) {
+  async function recordDebtPayment(input: { debt: DebtManagementDebt; amount: number; paymentDate: string; fundingSourceId: string | null; notes: string; actionType: DebtPaymentAction }): Promise<DebtPaymentResult> {
     const { debt, amount, actionType } = input;
-    if (actionType !== "skip" && (!Number.isFinite(amount) || amount <= 0)) { setMessage("Payment amount must be greater than zero."); return; }
+    if (actionType !== "skip" && (!Number.isFinite(amount) || amount <= 0)) { const message = "Payment amount must be greater than zero."; setMessage(message); return { ok: false, message }; }
     const recordedAmount = Math.min(amount, Math.max(Number(debt.balance || 0), 0));
-    if (actionType !== "skip" && recordedAmount <= 0) { setMessage("Payment amount must be greater than zero."); return; }
+    if (actionType !== "skip" && recordedAmount <= 0) { const message = "Payment amount must be greater than zero."; setMessage(message); return { ok: false, message }; }
     const userId = await getUserId();
-    if (!userId) return;
+    if (!userId) { const message = "Your session could not be verified. Sign in again and retry the payment."; setMessage(message); return { ok: false, message }; }
     setPaymentBusyId(debt.id); setMessage("");
     try {
       const supabase = createClient();
@@ -1068,9 +1068,16 @@ export default function DebtsPage() {
       const { error: updateError } = await supabase.from("debts").update(update).eq("id", debt.id).eq("user_id", userId);
       if (updateError) throw updateError;
       await recordLifecycleEvent({ userId, debt: debt as Debt, resolution: lifecycle, balance: result.newBalance, source: actionType === "paid_outside_beast" ? "outside_payment" : "beast_payment", paymentId: insertedPayment?.id });
-      setMessage(actionType === "skip" ? "Payment skipped and the next due date advanced." : actionType === "paid_outside_beast" ? "Payment completed outside Beast was recorded." : "Debt payment recorded. Money calculations and surfaces refreshed.");
+      const message = actionType === "skip" ? "Payment skipped and the next due date advanced." : actionType === "paid_outside_beast" ? "Payment completed outside Beast was recorded." : "Debt payment recorded. Money calculations and surfaces refreshed.";
+      setMessage(message);
       await load();
-    } catch (error) { setMessage(`Payment error: ${error instanceof Error ? error.message : "Unable to record payment."}`); }
+      return { ok: true, message };
+    } catch (error) {
+      console.error("Debt payment failed.", { errorCategory: error instanceof Error ? error.name : "provider_error" });
+      const message = "Unable to record the debt payment. Your entries were preserved; please retry.";
+      setMessage(message);
+      return { ok: false, message };
+    }
     finally { setPaymentBusyId(null); }
   }
 
