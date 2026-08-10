@@ -7,6 +7,7 @@ import {
   isProductSupportQuestion,
   requireProfessionalConfig,
   requiresDeterministicResearch,
+  isDeclarativeMemberStatement,
   requestOpenAIResponseStream,
   type RuntimeContext,
 } from "../src/lib/digitalStaffRuntime";
@@ -19,6 +20,13 @@ test("AP-105 deterministic research boundaries distinguish current authorities f
   assert.equal(requiresDeterministicResearch({ professionalId: "beasthealth.health-advisor", message: message("What does the FDA currently say about this medication?") }), true);
   assert.equal(requiresDeterministicResearch({ professionalId: "beasthealth.health-advisor", message: message("Where do I update my current medications?") }), false);
   assert.equal(requiresDeterministicResearch({ professionalId: "beastmoney.money-coach", message: message("What did I tell you my current priority was?") }), false);
+});
+
+test("DS-PERF-01 keeps disclosed member facts out of external research", () => {
+  assert.equal(isDeclarativeMemberStatement("I hold a SECRET clearance."), true);
+  assert.equal(isDeclarativeMemberStatement("I currently take Medication X."), true);
+  assert.equal(isDeclarativeMemberStatement("I work at Employer X."), true);
+  assert.equal(isDeclarativeMemberStatement("What are the current FDA warnings?"), false);
 });
 
 test("AP-105 product navigation omits unrelated private records while preserving bounded continuity", () => {
@@ -74,6 +82,9 @@ test("AP-105 shared client and route expose acknowledged activity streaming and 
   assert.match(route, /providerFirstEventMs/);
   assert.match(route, /providerCompleteMs/);
   assert.match(route, /validationMs/);
+  assert.match(route, /contextPromise/);
+  assert.match(route, /await contextObserverActivity\(observer, "loading_context"\)/);
+  assert.match(route, /Promise\.all\(\[/);
   assert.doesNotMatch(route, /console\.(?:log|info).*message/);
   assert.equal(digitalStaffActivityLabels.researching, "Checking current sources…");
 });

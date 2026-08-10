@@ -22,6 +22,7 @@ async function executeResearch(model: string, instructions: string, query: strin
 
 export function requiresDeterministicResearch(context: Pick<RuntimeContext, "professionalId" | "message">) {
   const text = context.message.text;
+  if (isDeclarativeMemberStatement(text)) return false;
   if (!/\b(?:current|currently|latest|today|now|official|according to)\b/i.test(text)) return false;
   if (/\bcurrent\s+(?:medications?|debts?|goals?|priorit(?:y|ies)|records?|plan)\b/i.test(text)) return false;
   const externalAuthority = context.professionalId === "beastmoney.money-coach"
@@ -32,6 +33,11 @@ export function requiresDeterministicResearch(context: Pick<RuntimeContext, "pro
         ? /\b(?:fda|cdc|nih|medication|drug|treatment|warning|guidance|recommendation|evidence)\b/i
         : /\b(?:law|rule|requirements?|guidance|standard)\b/i;
   return externalAuthority.test(text);
+}
+
+/** A disclosed member fact is not itself a request for external research. */
+export function isDeclarativeMemberStatement(text: string) {
+  return !text.includes("?") && /^\s*(?:i|we|my)\b/i.test(text) && /\b(?:hold|have|take|work|served|graduated|prefer|priority|live|currently)\b/i.test(text);
 }
 
 export function parseRuntimePlan(payload: ResponsesPayload): RuntimePlan {
@@ -74,7 +80,7 @@ export function validateRuntimePlan(context: RuntimeContext, plan: RuntimePlan) 
         reason: "The member explicitly requested current or authoritative evidence.",
         domains: config.researchDomains,
       }
-    : plan.research;
+    : isDeclarativeMemberStatement(context.message.text) ? null : plan.research;
   const research = requestedResearch && config.researchDomains.length
     ? { ...requestedResearch, query: deidentifyResearchQuery(requestedResearch.query), domains: requestedResearch.domains.filter((domain) => config.researchDomains.includes(domain)) }
     : null;

@@ -93,6 +93,14 @@ test("ordinary references to current member records do not force external resear
   assert.equal(result.research, null);
 });
 
+test("disclosed member facts do not accept a model-invented research pass", () => {
+  const result = validateRuntimePlan(
+    { ...context, professionalId: "beasthealth.health-advisor", message: { ...context.message, text: "I currently take Medication X." } },
+    plan({ research: { query: "Medication X", reason: "lookup", domains: ["fda.gov"] } })
+  );
+  assert.equal(result.research, null);
+});
+
 test("malformed model output fails safely before any tool execution", () => {
   assert.throws(() => parseRuntimePlan({ output_text: JSON.stringify({ response: "missing protocol" }) }), /malformed/);
 });

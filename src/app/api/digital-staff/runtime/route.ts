@@ -38,6 +38,17 @@ export async function POST(request: Request) {
   try { requireProfessionalConfig(professionalId); } catch { return NextResponse.json({ error: "Unknown Digital Staff professional." }, { status: 400 }); }
   if (!conversationId) return NextResponse.json({ error: "Conversation is required." }, { status: 400 });
 
+  const contextPromise = !(body.decision === "approve" || body.decision === "reject") && text && text.length <= maxMessageLength
+    ? (() => {
+        const startedAt = Date.now();
+        return Promise.all([
+          supabase.from("agent_conversation_messages").select("id, sender, content, created_at").eq("conversation_id", conversationId).eq("owner_id", user.id).order("created_at", { ascending: false }).limit(12),
+          supabase.from("agent_memories").select("memory_key, value, updated_at").eq("owner_id", user.id).eq("agent_id", professionalId).order("updated_at", { ascending: false }).limit(12),
+          loadStructuredRecords(supabase, user.id, professionalId),
+        ]).then(([historyResult, memoryResult, structuredRecords]) => ({ historyResult, memoryResult, structuredRecords, durationMs: Date.now() - startedAt }));
+      })()
+    : null;
+
   const conversationResult = await supabase.from("agent_conversations").select("id, agent_id, summary, message_count").eq("id", conversationId).eq("owner_id", user.id).eq("agent_id", professionalId).maybeSingle();
   if (conversationResult.error || !conversationResult.data) return NextResponse.json({ error: "Conversation is not available for this member and professional." }, { status: 404 });
   const conversation = conversationResult.data;
@@ -77,18 +88,18 @@ export async function POST(request: Request) {
     }
   }
   if (!text || text.length > maxMessageLength) return NextResponse.json({ error: "A message is required." }, { status: 400 });
-  const contextStartedAt = Date.now();
-  const [historyResult, memoryResult, structuredRecords] = await Promise.all([
-    supabase.from("agent_conversation_messages").select("id, sender, content, created_at").eq("conversation_id", conversationId).eq("owner_id", user.id).order("created_at", { ascending: false }).limit(12),
-    supabase.from("agent_memories").select("memory_key, value, updated_at").eq("owner_id", user.id).eq("agent_id", professionalId).order("updated_at", { ascending: false }).limit(12),
-    loadStructuredRecords(supabase, user.id, professionalId),
-  ]);
-  const contextLoadMs = Date.now() - contextStartedAt;
-  if (historyResult.error || memoryResult.error) return NextResponse.json({ error: "Relevant conversation context is temporarily unavailable." }, { status: 503 });
+  const contextObserverActivity = async (observer: RuntimeObserver, activity: DigitalStaffActivity) => observer.onActivity?.(activity);
+  // These reads are independent and intentionally overlap the conversation authorization read.
   const now = new Date().toISOString();
   const message: RuntimeMessage = { id: crypto.randomUUID(), role: "user", text, createdAt: now };
   const summary = conversation.summary as { runtimeState?: ConversationState } | null;
   const executeTurn = async (observer: RuntimeObserver = {}) => {
+    await contextObserverActivity(observer, "loading_context");
+    const contextResult = contextPromise ? await contextPromise : null;
+    if (!contextResult) throw new Error("Relevant conversation context is temporarily unavailable.");
+    const { historyResult, memoryResult, structuredRecords } = contextResult;
+    if (historyResult.error || memoryResult.error) throw new Error("Relevant conversation context is temporarily unavailable.");
+    const contextLoadMs = contextResult.durationMs;
     const result = await runDigitalStaffRuntime({
       ownerId: user.id, professionalId: professionalId as ProfessionalId, conversationId, message,
       recentMessages: ([...(historyResult.data || [])] as MessageRow[]).reverse().map((row) => ({ id: row.id, role: row.sender?.kind === "user" ? "user" : "assistant", text: messageText(row.content), createdAt: row.created_at })),
