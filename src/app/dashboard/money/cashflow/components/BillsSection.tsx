@@ -1,7 +1,7 @@
 "use client";
 
 import type { Dispatch, SetStateAction } from "react";
-import BillPaymentControls from "./BillPaymentControls";
+import BillPaymentControls, { type BillPaymentResult } from "./BillPaymentControls";
 import { PaymentAutomationControls, type AutomationPatch } from "../../components/PaymentAutomationControls";
 import { normalizePaymentAutomation } from "@/lib/paymentAutomation";
 import { CompactAssignmentSelect, compactIncomeLabel } from "./CompactAssignmentSelect";
@@ -78,8 +78,8 @@ type BillsSectionProps = {
   ) => void;
   partialPayments: Record<string, string>;
   setPartialPayments: Dispatch<SetStateAction<Record<string, string>>>;
-  addBillPayment: (bill: BillRow, amount: number) => Promise<void>;
-  markBillPaid: (bill: BillRow) => Promise<void>;
+  addBillPayment: (bill: BillRow, amount: number, operationId: string) => Promise<BillPaymentResult>;
+  markBillPaid: (bill: BillRow, operationId: string) => Promise<BillPaymentResult>;
   startEditBill: (bill: BillRow) => void;
   saveBillEdit: (id: string) => Promise<void>;
   cancelEditBill: () => void;

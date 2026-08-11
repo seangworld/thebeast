@@ -2,9 +2,11 @@ export type ClientDiagnosticModule = "beasteducation" | "beastmoney";
 
 export type ClientDiagnosticOperation =
   | "bill_due_date_save"
+  | "bill_payment_apply"
   | "cash_settings_autosave"
   | "cash_settings_save"
   | "debt_payment_apply"
+  | "debt_payment_reverse"
   | "debt_settings_save"
   | "funding_source_add"
   | "funding_source_delete"

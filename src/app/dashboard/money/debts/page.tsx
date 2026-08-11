@@ -46,9 +46,14 @@ import { MoneyManagementNavigation } from "@/app/dashboard/money/components/Mone
 import { DebtManagementActions, type DebtManagementActionsProps, type DebtManagementDebt, type DebtPaymentHistoryRow, type DebtPaymentResult } from "./DebtManagementActions";
 import { OverlayPopover } from "../cashflow/components/OverlayPopover";
 import { getNextDebtCycleDate, toDebtDateInput, type DebtPaymentAction } from "@/lib/debtManagement";
-import { applyDebtPaymentToCycle } from "@/lib/financialPayments";
 import { getDebtLifecycleLabel, getDebtLifecycleStatus, resolveDebtLifecycle, type DebtLifecycleStatus } from "@/lib/debtLifecycle";
 import { reportClientOperationFailure } from "@/lib/clientDiagnostics";
+import {
+  AtomicFinancialCommandError,
+  createFinancialOperationId,
+  recordDebtPaymentAtomic,
+  reverseDebtPaymentAtomic,
+} from "@/lib/atomicFinancialCommands";
 
 const PAYOFF_COLUMNS_STORAGE_KEY = "beastmoney.payoff-plan.columns.v1";
 
@@ -274,6 +279,7 @@ export default function DebtsPage() {
   const [showArchivedDebts, setShowArchivedDebts] = useState(false);
   const [payoffOptionalColumns, setPayoffOptionalColumns] = useState<PayoffOptionalColumn[]>([]);
   const [expandedPayoffRow, setExpandedPayoffRow] = useState<string | null>(null);
+  const pendingReversalOperations = useRef(new Map<string, string>());
   const focusReloadInFlightRef = useRef(false);
   const lastFocusReloadAtRef = useRef(0);
 
@@ -1026,11 +1032,9 @@ export default function DebtsPage() {
     [debtPayments]
   );
 
-  async function recordDebtPayment(input: { debt: DebtManagementDebt; amount: number; paymentDate: string; fundingSourceId: string | null; notes: string; actionType: DebtPaymentAction }): Promise<DebtPaymentResult> {
-    const { debt, amount, actionType } = input;
+  async function recordDebtPayment(input: { operationId: string; debt: DebtManagementDebt; amount: number; paymentDate: string; fundingSourceId: string | null; notes: string; actionType: DebtPaymentAction }): Promise<DebtPaymentResult> {
+    const { debt, amount, actionType, operationId } = input;
     if (actionType !== "skip" && (!Number.isFinite(amount) || amount <= 0)) { const message = "Payment amount must be greater than zero."; setMessage(message); return { ok: false, message }; }
-    const recordedAmount = Math.min(amount, Math.max(Number(debt.balance || 0), 0));
-    if (actionType !== "skip" && recordedAmount <= 0) { const message = "Payment amount must be greater than zero."; setMessage(message); return { ok: false, message }; }
     const userId = await getUserId();
     if (!userId) { const message = "Your session could not be verified. Sign in again and retry the payment."; setMessage(message); return { ok: false, message }; }
     setPaymentBusyId(debt.id); setMessage("");
@@ -1038,37 +1042,17 @@ export default function DebtsPage() {
       const supabase = createClient();
       const currentDueDate = getCurrentDebtCycleDueDate(debt);
       const cycleDueDate = toDebtDateInput(currentDueDate);
-      const currentCyclePaid = debtHistory(debt.id)
-        .filter((payment) => !payment.reversed_at && payment.action_type !== "skip" && payment.cycle_due_date === cycleDueDate)
-        .reduce((sum, payment) => sum + Number(payment.amount || 0), 0);
-      const result = applyDebtPaymentToCycle({ balance: Number(debt.balance || 0), currentCyclePaid, paymentAmount: recordedAmount, minimumPayment: Number(debt.minimum_payment || 0), currentCycleDueDate: currentDueDate });
-      const nextDueDate = actionType === "skip" ? getNextDebtCycleDate(currentDueDate) : result.nextDueDateAfterPayment;
-      const configuredSource = input.fundingSourceId || (debt as any).funding_source_id || null;
-      const { data: insertedPayment, error: insertError } = await supabase.from("debt_payments").insert({
-        user_id: userId, debt_id: debt.id, amount: recordedAmount, payment_date: input.paymentDate, cycle_due_date: cycleDueDate,
-        funding_source_id: configuredSource, payment_account_id: configuredSource,
-        funding_account_type: configuredSource ? "account" : null, funding_account_id: configuredSource,
-        funding_strategy_id: "direct_payment", action_type: actionType, notes: input.notes || null,
-        is_outside_beast: actionType === "paid_outside_beast",
-      }).select("id").single();
-      if (insertError) throw insertError;
-      const update: Record<string, unknown> = { balance: result.newBalance };
-      if (nextDueDate) { update.next_due_date_after_payment = nextDueDate; update.assigned_income_date = null; }
-      const lifecycle = resolveDebtLifecycle({
-        balance: result.newBalance,
-        paymentBehavior: debt.payment_behavior,
-        isArchived: (debt as Debt).is_archived,
-        currentStatus: (debt as Debt).lifecycle_status,
-        source: actionType === "paid_outside_beast" ? "outside_payment" : "beast_payment",
-        effectiveDate: input.paymentDate,
-        reminderEnabled: (debt as Debt).reminder_enabled,
-        reminderEnabledBeforePayoff: (debt as Debt).reminder_enabled_before_payoff,
-        lifecycleAutoArchived: (debt as Debt).lifecycle_auto_archived,
+      const configuredSource = input.fundingSourceId;
+      await recordDebtPaymentAtomic(supabase, {
+        operationId,
+        debtId: debt.id,
+        amount,
+        paymentDate: input.paymentDate,
+        cycleDueDate,
+        fundingSourceId: configuredSource,
+        notes: input.notes,
+        actionType,
       });
-      Object.assign(update, lifecycle.update);
-      const { error: updateError } = await supabase.from("debts").update(update).eq("id", debt.id).eq("user_id", userId);
-      if (updateError) throw updateError;
-      await recordLifecycleEvent({ userId, debt: debt as Debt, resolution: lifecycle, balance: result.newBalance, source: actionType === "paid_outside_beast" ? "outside_payment" : "beast_payment", paymentId: insertedPayment?.id });
       const message = actionType === "skip" ? "Payment skipped and the next due date advanced." : actionType === "paid_outside_beast" ? "Payment completed outside Beast was recorded." : "Debt payment recorded. Money calculations and surfaces refreshed.";
       setMessage(message);
       await load();
@@ -1077,7 +1061,7 @@ export default function DebtsPage() {
       reportClientOperationFailure({
         module: "beastmoney",
         operation: "debt_payment_apply",
-        error,
+        category: error instanceof AtomicFinancialCommandError ? error.category : "unknown_error",
       });
       const message = "Unable to record the debt payment. Your entries were preserved; please retry.";
       setMessage(message);
@@ -1102,18 +1086,27 @@ export default function DebtsPage() {
     const userId = await getUserId();
     if (!userId) return;
     setPaymentBusyId(debt.id);
-    const supabase = createClient();
-    const reversedAt = new Date().toISOString();
-    const { data: reversedPayment, error: reverseError } = await supabase.from("debt_payments").update({ reversed_at: reversedAt, reversal_reason: "Member reversed the recorded payment." }).eq("id", payment.id).eq("user_id", userId).eq("debt_id", debt.id).is("reversed_at", null).select("id").maybeSingle();
-    if (reverseError) { setMessage(`Undo error: ${reverseError.message}`); setPaymentBusyId(null); return; }
-    if (!reversedPayment) { setMessage("Undo error: This payment was already reversed."); setPaymentBusyId(null); return; }
-    const restoredBalance = money(Number(debt.balance || 0) + Number(payment.amount || 0));
-    const currentDebt = debt as Debt;
-    const lifecycle = resolveDebtLifecycle({ balance: restoredBalance, paymentBehavior: currentDebt.payment_behavior, isArchived: currentDebt.is_archived, currentStatus: currentDebt.lifecycle_status, source: "payment_reversal", effectiveDate: reversedAt, reminderEnabled: currentDebt.reminder_enabled, reminderEnabledBeforePayoff: currentDebt.reminder_enabled_before_payoff, lifecycleAutoArchived: currentDebt.lifecycle_auto_archived });
-    const { error: updateError } = await supabase.from("debts").update({ balance: restoredBalance, next_due_date_after_payment: payment.cycle_due_date || null, ...lifecycle.update }).eq("id", debt.id).eq("user_id", userId);
-    setPaymentBusyId(null);
-    if (updateError) setMessage(`Undo balance restore error: ${updateError.message}`);
-    else { await recordLifecycleEvent({ userId, debt: currentDebt, resolution: lifecycle, balance: restoredBalance, source: "payment_reversal", paymentId: payment.id }); setMessage("Last payment reversed and the recorded principal restored; history was preserved."); await load(); }
+    const operationId = pendingReversalOperations.current.get(payment.id) || createFinancialOperationId();
+    pendingReversalOperations.current.set(payment.id, operationId);
+    try {
+      await reverseDebtPaymentAtomic(createClient(), {
+        operationId,
+        paymentId: payment.id,
+        reason: "Member reversed the recorded payment.",
+      });
+      pendingReversalOperations.current.delete(payment.id);
+      setMessage("Last payment reversed and the recorded principal restored; history was preserved.");
+      await load();
+    } catch (error) {
+      reportClientOperationFailure({
+        module: "beastmoney",
+        operation: "debt_payment_reverse",
+        category: error instanceof AtomicFinancialCommandError ? error.category : "unknown_error",
+      });
+      setMessage("Unable to reverse the payment. No partial reversal was applied; please retry.");
+    } finally {
+      setPaymentBusyId(null);
+    }
   }
 
   return (

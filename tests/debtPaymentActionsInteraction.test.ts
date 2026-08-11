@@ -82,7 +82,11 @@ test("BM-42C Custom Payment accepts one total amount and calls the canonical wri
 });
 
 test("BM-42C preserves a failed payment form and displays a safe actionable error", async () => {
-  const view = renderActions(async () => ({ ok: false, message: "Unable to record the debt payment. Your entries were preserved; please retry." }));
+  const operationIds: string[] = [];
+  const view = renderActions(async (input) => {
+    operationIds.push(input.operationId);
+    return { ok: false, message: "Unable to record the debt payment. Your entries were preserved; please retry." };
+  });
 
   fireEvent.click(within(view.container).getByRole("button", { name: "Custom Payment" }));
   const amount = within(view.container).getByLabelText("Total amount paid") as HTMLInputElement;
@@ -92,6 +96,10 @@ test("BM-42C preserves a failed payment form and displays a safe actionable erro
   const alert = await within(view.container).findByRole("alert");
   assert.match(alert.textContent || "", /entries were preserved/);
   assert.equal((within(view.container).getByLabelText("Total amount paid") as HTMLInputElement).value, "800");
+  fireEvent.click(within(view.container).getByRole("button", { name: "Confirm Payment" }));
+  await waitFor(() => assert.equal(operationIds.length, 2));
+  assert.equal(operationIds[0], operationIds[1]);
+  assert.match(operationIds[0] || "", /^[0-9a-f-]{36}$/i);
 });
 
 test("BM-42D presents only canonical member payment actions while preserving historical outside-payment presentation", () => {

@@ -5,6 +5,7 @@ import {
   type DebtDueState,
   type DebtPaymentAction,
 } from "./debtManagement";
+import { activeDebtPayments } from "./financialPaymentHistory";
 
 export type DebtAwarenessDebt = {
   id: string;
@@ -27,6 +28,7 @@ export type DebtAwarenessPayment = {
   cycle_due_date?: string | null;
   action_type?: DebtPaymentAction | null;
   created_at?: string | null;
+  reversed_at?: string | null;
 };
 
 export type DebtAwarenessItem = {
@@ -105,7 +107,7 @@ export function buildMoneyDebtAwareness({
     .map((debt): DebtAwarenessItem => {
       const dueDate = resolveDebtAwarenessDueDate(debt, now);
       const due = getDebtDueState({ balance: amount(debt.balance), dueDate, now });
-      const debtPayments = payments
+      const debtPayments = activeDebtPayments(payments)
         .filter((payment) => payment.debt_id === debt.id)
         .sort(
           (left, right) =>

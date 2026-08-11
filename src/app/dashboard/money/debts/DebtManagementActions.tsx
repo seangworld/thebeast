@@ -1,7 +1,8 @@
 "use client";
 
-import { type ReactNode, useMemo, useState } from "react";
+import { type ReactNode, useMemo, useRef, useState } from "react";
 import { getDebtDueDetail, getDebtDueState, getDebtPaymentWarning, type DebtPaymentAction } from "../../../../lib/debtManagement";
+import { createFinancialOperationId } from "../../../../lib/atomicFinancialCommands";
 
 export type DebtManagementDebt = {
   id: string;
@@ -34,7 +35,7 @@ export type DebtManagementActionsProps = {
   fundingSources: { id: string; name: string }[];
   history: DebtPaymentHistoryRow[];
   busy: boolean;
-  onPayment: (input: { debt: DebtManagementDebt; amount: number; paymentDate: string; fundingSourceId: string | null; notes: string; actionType: DebtPaymentAction }) => Promise<DebtPaymentResult>;
+  onPayment: (input: { operationId: string; debt: DebtManagementDebt; amount: number; paymentDate: string; fundingSourceId: string | null; notes: string; actionType: DebtPaymentAction }) => Promise<DebtPaymentResult>;
   onResetDueDate: (debt: DebtManagementDebt, nextDueDate: string) => Promise<void>;
   editAction?: ReactNode;
 };
@@ -49,6 +50,7 @@ export function DebtManagementActions({ debt, fundingSources, history, busy, onP
   const [notes, setNotes] = useState("");
   const [customDueDate, setCustomDueDate] = useState("");
   const [actionStatus, setActionStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const pendingPayment = useRef<{ fingerprint: string; operationId: string } | null>(null);
   const due = useMemo(() => getDebtDueState({ balance: debt.balance, dueDate: debt.nextDueDate }), [debt.balance, debt.nextDueDate]);
   const minimumAmount = Math.min(Math.max(Number(debt.balance || 0), 0), Math.max(Number(debt.minimum_payment || 0), 0));
   const customAmount = Math.min(Math.max(Number(amount || 0), 0), Math.max(Number(debt.balance || 0), 0));
@@ -56,9 +58,15 @@ export function DebtManagementActions({ debt, fundingSources, history, busy, onP
 
   async function record(actionType: DebtPaymentAction, requestedAmount: number) {
     setActionStatus(null);
-    const result = await onPayment({ debt, amount: requestedAmount, paymentDate, fundingSourceId: fundingSourceId || null, notes, actionType });
+    const fingerprint = JSON.stringify({ debtId: debt.id, actionType, requestedAmount, paymentDate, fundingSourceId: fundingSourceId || null, notes });
+    const operationId = pendingPayment.current?.fingerprint === fingerprint
+      ? pendingPayment.current.operationId
+      : createFinancialOperationId();
+    pendingPayment.current = { fingerprint, operationId };
+    const result = await onPayment({ operationId, debt, amount: requestedAmount, paymentDate, fundingSourceId: fundingSourceId || null, notes, actionType });
     setActionStatus({ type: result.ok ? "success" : "error", message: result.message });
     if (!result.ok) return;
+    pendingPayment.current = null;
     setAmount(""); setNotes(""); setPanel(null);
   }
 

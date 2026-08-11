@@ -56,9 +56,9 @@ test("Debt List consolidates row controls into one confirmed Actions menu", () =
   assert.match(page, /label="Actions"/);
   assert.match(page, /ariaLabel=\{`\$\{debt\.name\} actions`\}/);
   assert.match(page, /<DebtManagementActions \{\.\.\.management\} editAction=/);
-  assert.match(page, /applyDebtPaymentToCycle/);
-  assert.match(page, /action_type: actionType/);
-  assert.match(page, /resolveDebtLifecycle/);
+  assert.match(page, /recordDebtPaymentAtomic/);
+  assert.match(page, /operationId/);
+  assert.match(page, /actionType/);
   for (const label of ["Edit", "Archive", "Delete"]) assert.match(page, new RegExp(label));
   assert.match(page, /text-red-300/);
   assert.match(page, /data-action-menu-list="debt"/);

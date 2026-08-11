@@ -5,6 +5,7 @@ import Link from "next/link";
 import { APP_VERSION } from "@/lib/appVersion";
 import { createClient } from "@/lib/supabase/client";
 import { formatCurrency } from "@/lib/formatters";
+import { activeDebtPayments } from "@/lib/financialPaymentHistory";
 import { useRuntimeToday } from "@/lib/hooks/useRuntimeToday";
 import { getProfileDisplayName } from "@/lib/profile";
 import {
@@ -100,6 +101,8 @@ type MoneyPayment = {
   amount_paid?: number | null;
   payment_date?: string | null;
   created_at?: string | null;
+  reversed_at?: string | null;
+  action_type?: string | null;
 };
 
 const initialMoneyState: MoneyState = {
@@ -469,6 +472,7 @@ export default function TodayPage() {
           .from("debt_payments")
           .select("*")
           .eq("user_id", userId)
+          .is("reversed_at", null)
           .order("created_at", { ascending: false })
           .limit(8),
       ]);
@@ -486,7 +490,9 @@ export default function TodayPage() {
       incomes: (incomesResult.data || []) as MoneyIncome[],
       cashSettings: cashSettingsResult.data as MoneySettings | null,
       billPayments: (billPaymentsResult.data || []) as MoneyPayment[],
-      debtPayments: (debtPaymentsResult.data || []) as MoneyPayment[],
+      debtPayments: activeDebtPayments(
+        (debtPaymentsResult.data || []) as MoneyPayment[]
+      ),
     });
     setLoading(false);
   }, []);

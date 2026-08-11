@@ -1,4 +1,5 @@
 import { numberValue } from "../financialMetrics";
+import { activeDebtPayments } from "../financialPaymentHistory";
 import { getDebtDueDetail, getDebtDueState } from "../debtManagement";
 import type {
   ModuleHealth,
@@ -42,6 +43,8 @@ type MoneyPayment = {
   amount_paid?: number | null;
   payment_date?: string | null;
   created_at?: string | null;
+  reversed_at?: string | null;
+  action_type?: string | null;
 };
 
 export type MoneyIntelligenceInput = {
@@ -327,7 +330,7 @@ export function buildMoneyIntelligence(
     );
   }
 
-  for (const payment of [...(input.billPayments || []), ...(input.debtPayments || [])]
+  for (const payment of [...(input.billPayments || []), ...activeDebtPayments(input.debtPayments || [])]
     .slice(0, 4)) {
     const amount = numberValue(payment.amount_paid ?? payment.amount);
     activities.push({

@@ -16,6 +16,7 @@ import ArchivedItemsSection from "./components/ArchivedItemsSection";
 import { BeastMoneyShell } from "@/app/dashboard/money/BeastMoneyShell";
 import { MoneyManagementNavigation } from "@/app/dashboard/money/components/MoneyManagementNavigation";
 import { reportClientOperationFailure } from "@/lib/clientDiagnostics";
+import { applySuggestedDebtAttackCommand } from "@/lib/suggestedDebtAttack";
 import { useCashFlow } from "./useCashFlow";
 import {
   getPaymentFundingStrategy,
@@ -235,8 +236,15 @@ export default function CashFlowPage() {
         return;
       }
 
-      await applyDebtPayment(recommendedTargetDebt, attackAmount);
-      setSuggestedAttackMessage("Suggested attack recorded.");
+      const paymentResult = await applySuggestedDebtAttackCommand({
+        debt: recommendedTargetDebt,
+        amount: attackAmount,
+        applyPayment: applyDebtPayment,
+      });
+      setSuggestedAttackMessage(paymentResult.message);
+      if (!paymentResult.ok) {
+        return;
+      }
 
       setTimeout(() => {
         setSuggestedAttackMessage(null);

@@ -12,6 +12,7 @@ import { useRuntimeToday } from "@/lib/hooks/useRuntimeToday";
 import { getBeastGreeting } from "@/lib/runtimeDate";
 import { createClient } from "@/lib/supabase/client";
 import { getProfileDisplayName } from "@/lib/profile";
+import { activeDebtPayments } from "@/lib/financialPaymentHistory";
 import { buildCurrentAuthLoginPath } from "@/lib/auth/experience";
 import {
   calculateMonthlyRecurringTotal,
@@ -105,6 +106,8 @@ type MoneyPayment = {
   amount_paid?: number | null;
   payment_date?: string | null;
   created_at?: string | null;
+  reversed_at?: string | null;
+  action_type?: string | null;
 };
 
 type TodayState = {
@@ -207,6 +210,7 @@ export default function TodayPage() {
             .from("debt_payments")
             .select("*")
             .eq("user_id", authUser.id)
+            .is("reversed_at", null)
             .order("created_at", { ascending: false })
             .limit(8),
           loadUserGoals(supabase as unknown as BeastGoalDataClient),
@@ -229,7 +233,9 @@ export default function TodayPage() {
         incomes: (incomesResult.data || []) as MoneyIncome[],
         cashSettings: cashSettingsResult.data as MoneySettings | null,
         billPayments: (billPaymentsResult.data || []) as MoneyPayment[],
-        debtPayments: (debtPaymentsResult.data || []) as MoneyPayment[],
+        debtPayments: activeDebtPayments(
+          (debtPaymentsResult.data || []) as MoneyPayment[]
+        ),
         goals: goalsResult.goals,
       });
     } catch (error) {

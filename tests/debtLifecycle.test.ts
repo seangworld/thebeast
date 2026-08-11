@@ -56,7 +56,7 @@ test("BM-40/41 migration preserves owner-scoped lifecycle and reversal history",
   assert.match(migration, /reversed_at timestamptz/);
   assert.match(migration, /payment_id uuid null references public\.debt_payments/);
   const page = readFileSync("src/app/dashboard/money/debts/page.tsx", "utf8");
-  assert.match(page, /update\(\{ reversed_at: reversedAt/);
+  assert.match(page, /reverseDebtPaymentAtomic/);
   assert.doesNotMatch(page, /from\("debt_payments"\)\.delete/);
 });
 

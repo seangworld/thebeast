@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from "react";
 import type { CashIntelligenceResult } from "@/lib/cashIntelligence";
+import { activeDebtPayments } from "@/lib/financialPaymentHistory";
 import { createClient } from "@/lib/supabase/client";
 import type { FundingSource, PayoffStrategy } from "../cashflowUtils";
 
@@ -109,7 +110,8 @@ export function useCashFlowDataLoader({
     const { data: debtPaymentRows } = await supabase
       .from("debt_payments")
       .select("*")
-      .eq("user_id", userId);
+      .eq("user_id", userId)
+      .is("reversed_at", null);
 
     const { data: debtRows } = await supabase
       .from("debts")
@@ -129,13 +131,14 @@ export function useCashFlowDataLoader({
       .eq("user_id", userId)
       .maybeSingle();
 
+    const currentDebtPayments = activeDebtPayments(debtPaymentRows || []);
     const projection = buildProjection({
       userId,
       cycleMonth,
       incomeRows,
       billRows,
       paymentRows,
-      debtPaymentRows,
+      debtPaymentRows: currentDebtPayments,
       debtRows,
       cashSettings,
       debtSettings,

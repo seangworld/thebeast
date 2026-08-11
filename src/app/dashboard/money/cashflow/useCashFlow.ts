@@ -203,7 +203,6 @@ export function useCashFlow() {
     applyDebtPayment,
   } = useCashFlowPaymentActions({
     cycleMonth,
-    debtPaymentRows,
     getUserId,
     load,
     setPartialPayments,

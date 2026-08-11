@@ -1,15 +1,18 @@
 "use client";
 
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction, useRef, useState } from "react";
 import type { BillRow } from "./BillsSection";
+import { createFinancialOperationId } from "../../../../../lib/atomicFinancialCommands";
+
+export type BillPaymentResult = { ok: boolean; message: string };
 
 type BillPaymentControlsProps = {
   bill: BillRow;
   editingBillId: string | null;
   partialPayments: Record<string, string>;
   setPartialPayments: Dispatch<SetStateAction<Record<string, string>>>;
-  addBillPayment: (bill: BillRow, amount: number) => Promise<void>;
-  markBillPaid: (bill: BillRow) => Promise<void>;
+  addBillPayment: (bill: BillRow, amount: number, operationId: string) => Promise<BillPaymentResult>;
+  markBillPaid: (bill: BillRow, operationId: string) => Promise<BillPaymentResult>;
   startEditBill: (bill: BillRow) => void;
   saveBillEdit: (id: string) => Promise<void>;
   cancelEditBill: () => void;
@@ -32,6 +35,22 @@ export default function BillPaymentControls({
 }: BillPaymentControlsProps) {
   const actionClass = "w-full whitespace-nowrap px-4 text-sm";
   const [isResettingDueDate, setIsResettingDueDate] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const pendingPayment = useRef<{ fingerprint: string; operationId: string } | null>(null);
+
+  async function submitPayment(mode: "partial" | "full", amount: number) {
+    const fingerprint = JSON.stringify({ billId: bill.id, mode, amount });
+    const operationId = pendingPayment.current?.fingerprint === fingerprint
+      ? pendingPayment.current.operationId
+      : createFinancialOperationId();
+    pendingPayment.current = { fingerprint, operationId };
+    setPaymentStatus(null);
+    const result = mode === "full"
+      ? await markBillPaid(bill, operationId)
+      : await addBillPayment(bill, amount, operationId);
+    setPaymentStatus({ type: result.ok ? "success" : "error", message: result.message });
+    if (result.ok) pendingPayment.current = null;
+  }
 
   async function handleResetDueDate() {
     setIsResettingDueDate(true);
@@ -72,9 +91,7 @@ export default function BillPaymentControls({
         />
 
         <button
-          onClick={() =>
-            addBillPayment(bill, Number(partialPayments[bill.id] || 0))
-          }
+          onClick={() => void submitPayment("partial", Number(partialPayments[bill.id] || 0))}
           className={`beast-button-secondary ${actionClass}`}
         >
           Partial Payment
@@ -82,9 +99,11 @@ export default function BillPaymentControls({
       </div>
 
       <div className="grid grid-cols-1 gap-2">
-        <button onClick={() => markBillPaid(bill)} className={`beast-button ${actionClass}`}>
+        <button onClick={() => void submitPayment("full", Number(bill.remaining || 0))} className={`beast-button ${actionClass}`}>
           Pay
         </button>
+
+        {paymentStatus ? <p role={paymentStatus.type === "error" ? "alert" : "status"} className={paymentStatus.type === "error" ? "rounded bg-red-950/60 px-3 py-2 text-sm text-red-200" : "rounded bg-emerald-950/60 px-3 py-2 text-sm text-emerald-200"}>{paymentStatus.message}</p> : null}
 
         <button onClick={() => startEditBill(bill)} className={`beast-button-secondary ${actionClass}`}>
           Edit

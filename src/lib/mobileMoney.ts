@@ -1,4 +1,5 @@
 import { numberValue } from "./financialMetrics";
+import { activeDebtPayments } from "./financialPaymentHistory";
 
 export type MobileMoneyBill = {
   id: string;
@@ -27,6 +28,8 @@ export type MobileMoneyPayment = {
   amount_paid?: number | null;
   payment_date?: string | null;
   created_at?: string | null;
+  reversed_at?: string | null;
+  action_type?: string | null;
 };
 
 export type MobileMoneyTransaction = {
@@ -161,7 +164,7 @@ export function buildRecentMoneyTransactions({
     date: payment.payment_date || payment.created_at || "",
     source: "bill" as const,
   }));
-  const debtTransactions = debtPayments.map((payment) => ({
+  const debtTransactions = activeDebtPayments(debtPayments).map((payment) => ({
     id: `debt-payment-${payment.id}`,
     label: "Debt payment",
     amount: numberValue(payment.amount ?? payment.amount_paid),
