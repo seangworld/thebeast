@@ -16,6 +16,7 @@ import {
 import { beastOSPlatformIdentity } from "@/lib/platform/identity";
 import { createClient } from "@/lib/supabase/client";
 import { buildCurrentAuthLoginPath } from "@/lib/auth/experience";
+import { reportClientOperationFailure } from "@/lib/clientDiagnostics";
 
 type OnboardingForm = {
   preferredName: string;
@@ -532,16 +533,6 @@ export default function OnboardingPage() {
         .select("id, onboarding_complete")
         .maybeSingle();
 
-      console.info("BeastEducation onboarding completion update result.", {
-        userId: authUser.id,
-        profileKeyColumn: profileOnboardingCompletionKeyColumn,
-        rowFound: Boolean(profileResult.data),
-        onboardingComplete: profileResult.data?.onboarding_complete ?? null,
-        errorMessage: profileResult.error?.message ?? null,
-        errorCode: profileResult.error?.code ?? null,
-        errorDetails: profileResult.error?.details ?? null,
-      });
-
       if (profileResult.error) {
         throw new Error(
           getOnboardingSaveErrorMessage(
@@ -565,9 +556,10 @@ export default function OnboardingPage() {
 
       router.replace("/dashboard/today");
     } catch (error) {
-      console.error("Unable to complete BeastEducation onboarding.", {
-        userId,
-        message: error instanceof Error ? error.message : String(error),
+      reportClientOperationFailure({
+        module: "beasteducation",
+        operation: "onboarding_completion_save",
+        error,
       });
       setMessage(
         error instanceof Error

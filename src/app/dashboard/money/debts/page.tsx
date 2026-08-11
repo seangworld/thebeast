@@ -48,6 +48,7 @@ import { OverlayPopover } from "../cashflow/components/OverlayPopover";
 import { getNextDebtCycleDate, toDebtDateInput, type DebtPaymentAction } from "@/lib/debtManagement";
 import { applyDebtPaymentToCycle } from "@/lib/financialPayments";
 import { getDebtLifecycleLabel, getDebtLifecycleStatus, resolveDebtLifecycle, type DebtLifecycleStatus } from "@/lib/debtLifecycle";
+import { reportClientOperationFailure } from "@/lib/clientDiagnostics";
 
 const PAYOFF_COLUMNS_STORAGE_KEY = "beastmoney.payoff-plan.columns.v1";
 
@@ -1073,7 +1074,11 @@ export default function DebtsPage() {
       await load();
       return { ok: true, message };
     } catch (error) {
-      console.error("Debt payment failed.", { errorCategory: error instanceof Error ? error.name : "provider_error" });
+      reportClientOperationFailure({
+        module: "beastmoney",
+        operation: "debt_payment_apply",
+        error,
+      });
       const message = "Unable to record the debt payment. Your entries were preserved; please retry.";
       setMessage(message);
       return { ok: false, message };

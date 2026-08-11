@@ -16,6 +16,7 @@ import { useCashFlowDataLoader } from "./hooks/useCashFlowDataLoader";
 import { useCashFlowPaymentActions } from "./hooks/useCashFlowPaymentActions";
 import { buildResetDueDatePayload } from "./dueDateReset";
 import type { AutomationPatch } from "@/app/dashboard/money/components/PaymentAutomationControls";
+import { reportClientOperationFailure } from "@/lib/clientDiagnostics";
 
 export function useCashFlow() {
   const [timeline, setTimeline] = useState<any[]>([]);
@@ -243,7 +244,11 @@ export function useCashFlow() {
 
     if (error) {
       setSaveError(`Failed to add funding source: ${error.message}`);
-      console.error("Failed to add funding source:", error);
+      reportClientOperationFailure({
+        module: "beastmoney",
+        operation: "funding_source_add",
+        error,
+      });
       return;
     }
 
@@ -330,29 +335,22 @@ export function useCashFlow() {
       updatePayload.current_balance = currentBalance;
     }
 
-    // DIAGNOSTIC: Log the exact payload being sent
-    console.log("=== FUNDING SOURCE SAVE DIAGNOSTICS ===");
-    console.log("Funding Source ID:", id);
-    console.log("Payload being sent to Supabase:", updatePayload);
-
     // Update funding source with recalculated available_credit
-    const { data: updateData, error: updateError } = await supabase
+    const { error: updateError } = await supabase
       .from("funding_sources")
       .update(updatePayload)
       .eq("id", id);
 
-    // DIAGNOSTIC: Log the Supabase response
-    console.log("Supabase response data:", updateData);
-    console.log("Supabase response error:", updateError);
-
     if (updateError) {
       setSaveError(`Failed to save funding source: ${updateError.message}`);
-      console.error("Failed to save funding source:", updateError);
-      console.log("=== END DIAGNOSTICS (ERROR CASE) ===");
+      reportClientOperationFailure({
+        module: "beastmoney",
+        operation: "funding_source_save",
+        error: updateError,
+      });
       return;
     }
 
-    console.log("=== END DIAGNOSTICS (SUCCESS) ===");
     setSaveError(null);
 
     cancelEditFundingSource();
@@ -371,7 +369,11 @@ export function useCashFlow() {
 
     if (error) {
       setSaveError(`Failed to delete funding source: ${error.message}`);
-      console.error("Failed to delete funding source:", error);
+      reportClientOperationFailure({
+        module: "beastmoney",
+        operation: "funding_source_delete",
+        error,
+      });
       return;
     }
 
@@ -407,7 +409,11 @@ export function useCashFlow() {
     );
 
     if (error) {
-      console.error("Failed to save cash settings:", error);
+      reportClientOperationFailure({
+        module: "beastmoney",
+        operation: "cash_settings_save",
+        error,
+      });
       throw error;
     }
 
@@ -437,7 +443,11 @@ export function useCashFlow() {
         await saveSettings();
         setSaveStatus("saved");
       } catch (err) {
-        console.error("Autosave failed:", err);
+        reportClientOperationFailure({
+          module: "beastmoney",
+          operation: "cash_settings_autosave",
+          error: err,
+        });
         setSaveStatus("error");
       }
 
@@ -467,7 +477,11 @@ export function useCashFlow() {
       await saveSettings();
       setSaveStatus("saved");
     } catch (err) {
-      console.error("Failed to save starting balance on blur:", err);
+      reportClientOperationFailure({
+        module: "beastmoney",
+        operation: "starting_balance_save",
+        error: err,
+      });
       setSaveStatus("error");
     }
 

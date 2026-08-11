@@ -10,6 +10,7 @@ import {
 } from "../cashflowUtils";
 import type { PaymentConfigurationRecord } from "@/lib/paymentConfiguration";
 import { resolveDebtLifecycle } from "@/lib/debtLifecycle";
+import { reportClientOperationFailure } from "@/lib/clientDiagnostics";
 
 type PaymentConfigurationPatch = Partial<
   Pick<
@@ -93,7 +94,11 @@ export function useCashFlowPaymentActions({
         .update(updatePayload)
         .eq("id", bill.id);
       if (updateError) {
-        console.warn("Warning: Could not persist bill next due date:", updateError);
+        reportClientOperationFailure({
+          module: "beastmoney",
+          operation: "bill_due_date_save",
+          error: updateError,
+        });
       }
     }
 
@@ -188,7 +193,11 @@ export function useCashFlowPaymentActions({
     const supabase = createClient();
 
     if (!debt?.id) {
-      console.error("Invalid debt: missing id");
+      reportClientOperationFailure({
+        module: "beastmoney",
+        operation: "debt_payment_apply",
+        category: "validation_error",
+      });
       return;
     }
 
@@ -329,7 +338,11 @@ export function useCashFlowPaymentActions({
 
       await load();
     } catch (error) {
-      console.error("Error applying debt payment:", error);
+      reportClientOperationFailure({
+        module: "beastmoney",
+        operation: "debt_payment_apply",
+        error,
+      });
       const errorMessage =
         error instanceof Error
           ? error.message

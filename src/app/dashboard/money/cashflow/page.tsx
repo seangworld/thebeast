@@ -15,6 +15,7 @@ import FundingSourcesSection from "./components/FundingSourcesSection";
 import ArchivedItemsSection from "./components/ArchivedItemsSection";
 import { BeastMoneyShell } from "@/app/dashboard/money/BeastMoneyShell";
 import { MoneyManagementNavigation } from "@/app/dashboard/money/components/MoneyManagementNavigation";
+import { reportClientOperationFailure } from "@/lib/clientDiagnostics";
 import { useCashFlow } from "./useCashFlow";
 import {
   getPaymentFundingStrategy,
@@ -241,7 +242,11 @@ export default function CashFlowPage() {
         setSuggestedAttackMessage(null);
       }, 3000);
     } catch (error) {
-      console.error("Error applying suggested attack:", error);
+      reportClientOperationFailure({
+        module: "beastmoney",
+        operation: "suggested_attack_apply",
+        error,
+      });
       setSuggestedAttackMessage("Error recording attack. Please try again.");
     } finally {
       setIsApplyingSuggestedAttack(false);

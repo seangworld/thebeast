@@ -9,6 +9,7 @@ import {
   type DebtStrategy,
 } from "@/lib/debtStrategies";
 import { BeastMoneyShell } from "@/app/dashboard/money/BeastMoneyShell";
+import { reportClientOperationFailure } from "@/lib/clientDiagnostics";
 
 export default function SettingsPage() {
   const [startingBalance, setStartingBalance] = useState(500);
@@ -83,7 +84,11 @@ export default function SettingsPage() {
     );
 
     if (cashError) {
-      console.error("Failed to save cash settings:", cashError);
+      reportClientOperationFailure({
+        module: "beastmoney",
+        operation: "cash_settings_save",
+        error: cashError,
+      });
       setMessage(`❌ Failed to save cash settings: ${cashError.message}`);
       return;
     }
@@ -98,7 +103,11 @@ export default function SettingsPage() {
     );
 
     if (debtError) {
-      console.error("Failed to save debt settings:", debtError);
+      reportClientOperationFailure({
+        module: "beastmoney",
+        operation: "debt_settings_save",
+        error: debtError,
+      });
       setMessage(`❌ Failed to save debt settings: ${debtError.message}`);
       return;
     }
