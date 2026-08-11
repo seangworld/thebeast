@@ -16,6 +16,7 @@ import ArchivedItemsSection from "./components/ArchivedItemsSection";
 import { BeastMoneyShell } from "@/app/dashboard/money/BeastMoneyShell";
 import { MoneyManagementNavigation } from "@/app/dashboard/money/components/MoneyManagementNavigation";
 import { reportClientOperationFailure } from "@/lib/clientDiagnostics";
+import { BEASTMONEY_PAYMENT_MAINTENANCE_MESSAGE } from "@/lib/beastMoneyPaymentWriteGate";
 import { applySuggestedDebtAttackCommand } from "@/lib/suggestedDebtAttack";
 import { useCashFlow } from "./useCashFlow";
 import {
@@ -126,6 +127,7 @@ export default function CashFlowPage() {
     applyingDebtPaymentId,
     isApplyingSuggestedAttack,
     suggestedAttackMessage,
+    paymentWriteGate,
     showAddIncome,
     showAddBill,
     showBills,
@@ -220,6 +222,10 @@ export default function CashFlowPage() {
 
   async function applySuggestedAttack() {
     if (isApplyingSuggestedAttack) return;
+    if (!paymentWriteGate.paymentsAvailable) {
+      setSuggestedAttackMessage(BEASTMONEY_PAYMENT_MAINTENANCE_MESSAGE);
+      return;
+    }
     if (!recommendedTargetDebt) return;
     if (suggestedMonthlyDebtAttack === null || suggestedMonthlyDebtAttack <= 0) return;
 
@@ -1211,6 +1217,11 @@ export default function CashFlowPage() {
       >
         <MoneyManagementNavigation />
         <div className="money-page-stack">
+          {!paymentWriteGate.paymentsAvailable ? (
+            <p role="status" className="rounded-xl border border-amber-500/30 bg-amber-950/40 px-4 py-3 text-sm text-amber-100">
+              {BEASTMONEY_PAYMENT_MAINTENANCE_MESSAGE}
+            </p>
+          ) : null}
           <AddIncomeBillSection
             includeIncome={false}
             showAddIncome={showAddIncome}
@@ -1269,6 +1280,7 @@ export default function CashFlowPage() {
             updatePaymentAutomation={(id, patch) =>
               updatePaymentAutomation("bill", id, patch)
             }
+            paymentWritesAvailable={paymentWriteGate.paymentsAvailable}
           />
 
           <ArchivedItemsSection
@@ -1291,6 +1303,11 @@ export default function CashFlowPage() {
       description="Understand checking, protected cash, available credit, monthly movement, and the income and expenses shaping your position."
     >
       <div className="money-page-stack">
+        {!paymentWriteGate.paymentsAvailable ? (
+          <p role="status" className="rounded-xl border border-amber-500/30 bg-amber-950/40 px-4 py-3 text-sm text-amber-100">
+            {BEASTMONEY_PAYMENT_MAINTENANCE_MESSAGE}
+          </p>
+        ) : null}
         <CashFlowOverview
           startingBalance={startingBalance}
           setStartingBalance={setStartingBalance}

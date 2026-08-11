@@ -3,6 +3,7 @@
 import { Dispatch, SetStateAction, useRef, useState } from "react";
 import type { BillRow } from "./BillsSection";
 import { createFinancialOperationId } from "../../../../../lib/atomicFinancialCommands";
+import { BEASTMONEY_PAYMENT_MAINTENANCE_MESSAGE } from "../../../../../lib/beastMoneyPaymentWriteGate";
 
 export type BillPaymentResult = { ok: boolean; message: string };
 
@@ -18,6 +19,7 @@ type BillPaymentControlsProps = {
   cancelEditBill: () => void;
   archiveBill: (id: string) => Promise<void>;
   resetBillDueDate: (id: string) => Promise<void>;
+  paymentWritesAvailable: boolean;
 };
 
 export default function BillPaymentControls({
@@ -32,6 +34,7 @@ export default function BillPaymentControls({
   cancelEditBill,
   archiveBill,
   resetBillDueDate,
+  paymentWritesAvailable,
 }: BillPaymentControlsProps) {
   const actionClass = "w-full whitespace-nowrap px-4 text-sm";
   const [isResettingDueDate, setIsResettingDueDate] = useState(false);
@@ -88,10 +91,12 @@ export default function BillPaymentControls({
           }
           placeholder="Partial payment"
           className="beast-input h-9 px-2 text-sm"
+          disabled={!paymentWritesAvailable}
         />
 
         <button
           onClick={() => void submitPayment("partial", Number(partialPayments[bill.id] || 0))}
+          disabled={!paymentWritesAvailable}
           className={`beast-button-secondary ${actionClass}`}
         >
           Partial Payment
@@ -99,9 +104,11 @@ export default function BillPaymentControls({
       </div>
 
       <div className="grid grid-cols-1 gap-2">
-        <button onClick={() => void submitPayment("full", Number(bill.remaining || 0))} className={`beast-button ${actionClass}`}>
+        <button disabled={!paymentWritesAvailable} onClick={() => void submitPayment("full", Number(bill.remaining || 0))} className={`beast-button ${actionClass}`}>
           Pay
         </button>
+
+        {!paymentWritesAvailable ? <p role="status" className="rounded bg-amber-950/50 px-3 py-2 text-sm text-amber-100">{BEASTMONEY_PAYMENT_MAINTENANCE_MESSAGE}</p> : null}
 
         {paymentStatus ? <p role={paymentStatus.type === "error" ? "alert" : "status"} className={paymentStatus.type === "error" ? "rounded bg-red-950/60 px-3 py-2 text-sm text-red-200" : "rounded bg-emerald-950/60 px-3 py-2 text-sm text-emerald-200"}>{paymentStatus.message}</p> : null}
 

@@ -54,6 +54,8 @@ import {
   recordDebtPaymentAtomic,
   reverseDebtPaymentAtomic,
 } from "@/lib/atomicFinancialCommands";
+import { BEASTMONEY_PAYMENT_MAINTENANCE_MESSAGE } from "@/lib/beastMoneyPaymentWriteGate";
+import { useBeastMoneyPaymentWriteGate } from "@/lib/hooks/useBeastMoneyPaymentWriteGate";
 
 const PAYOFF_COLUMNS_STORAGE_KEY = "beastmoney.payoff-plan.columns.v1";
 
@@ -236,6 +238,7 @@ export default function DebtsPage() {
   const router = useRouter();
   const view =
     pathname === "/dashboard/money/payoff-plan" ? "payoff-plan" : "debts";
+  const paymentWriteGate = useBeastMoneyPaymentWriteGate();
   const [debts, setDebts] = useState<Debt[]>([]);
   const [incomes, setIncomes] = useState<any[]>([]);
   const [bills, setBills] = useState<any[]>([]);
@@ -1034,6 +1037,10 @@ export default function DebtsPage() {
 
   async function recordDebtPayment(input: { operationId: string; debt: DebtManagementDebt; amount: number; paymentDate: string; fundingSourceId: string | null; notes: string; actionType: DebtPaymentAction }): Promise<DebtPaymentResult> {
     const { debt, amount, actionType, operationId } = input;
+    if (!paymentWriteGate.paymentsAvailable) {
+      setMessage(BEASTMONEY_PAYMENT_MAINTENANCE_MESSAGE);
+      return { ok: false, message: BEASTMONEY_PAYMENT_MAINTENANCE_MESSAGE };
+    }
     if (actionType !== "skip" && (!Number.isFinite(amount) || amount <= 0)) { const message = "Payment amount must be greater than zero."; setMessage(message); return { ok: false, message }; }
     const userId = await getUserId();
     if (!userId) { const message = "Your session could not be verified. Sign in again and retry the payment."; setMessage(message); return { ok: false, message }; }
@@ -1063,7 +1070,11 @@ export default function DebtsPage() {
         operation: "debt_payment_apply",
         category: error instanceof AtomicFinancialCommandError ? error.category : "unknown_error",
       });
-      const message = "Unable to record the debt payment. Your entries were preserved; please retry.";
+      const message =
+        error instanceof AtomicFinancialCommandError &&
+        error.category === "maintenance_error"
+          ? BEASTMONEY_PAYMENT_MAINTENANCE_MESSAGE
+          : "Unable to record the debt payment. Your entries were preserved; please retry.";
       setMessage(message);
       return { ok: false, message };
     }
@@ -1082,6 +1093,10 @@ export default function DebtsPage() {
   }
 
   async function undoLastDebtPayment(debt: DebtManagementDebt, payment: DebtPaymentHistoryRow) {
+    if (!paymentWriteGate.paymentsAvailable) {
+      setMessage(BEASTMONEY_PAYMENT_MAINTENANCE_MESSAGE);
+      return;
+    }
     if (!window.confirm(`Undo the last payment for ${debt.name}?`)) return;
     const userId = await getUserId();
     if (!userId) return;
@@ -1103,7 +1118,12 @@ export default function DebtsPage() {
         operation: "debt_payment_reverse",
         category: error instanceof AtomicFinancialCommandError ? error.category : "unknown_error",
       });
-      setMessage("Unable to reverse the payment. No partial reversal was applied; please retry.");
+      setMessage(
+        error instanceof AtomicFinancialCommandError &&
+        error.category === "maintenance_error"
+          ? BEASTMONEY_PAYMENT_MAINTENANCE_MESSAGE
+          : "Unable to reverse the payment. No partial reversal was applied; please retry."
+      );
     } finally {
       setPaymentBusyId(null);
     }
@@ -1120,6 +1140,12 @@ export default function DebtsPage() {
     >
       <MoneyManagementNavigation />
       <div className="money-page-stack">
+
+        {view === "debts" && !paymentWriteGate.paymentsAvailable ? (
+          <p role="status" className="rounded-xl border border-amber-500/30 bg-amber-950/40 px-4 py-3 text-sm text-amber-100">
+            {BEASTMONEY_PAYMENT_MAINTENANCE_MESSAGE}
+          </p>
+        ) : null}
 
         <section className="money-section-card">
           <div className="flex items-center justify-between">
@@ -1567,6 +1593,7 @@ export default function DebtsPage() {
                             busy: paymentBusyId === debt.id,
                             onPayment: recordDebtPayment,
                             onResetDueDate: resetDebtDueDate,
+                            paymentWritesAvailable: paymentWriteGate.paymentsAvailable,
                           }}
                           onEdit={() => startEditDebt(debt)}
                           onLifecycle={() => void archiveDebt(debt.id)}
@@ -1770,6 +1797,7 @@ export default function DebtsPage() {
                               busy: paymentBusyId === debt.id,
                               onPayment: recordDebtPayment,
                               onResetDueDate: resetDebtDueDate,
+                              paymentWritesAvailable: paymentWriteGate.paymentsAvailable,
                             }}
                             onEdit={() => startEditDebt(debt)}
                             onLifecycle={() => void archiveDebt(debt.id)}

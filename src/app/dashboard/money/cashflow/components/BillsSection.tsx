@@ -86,6 +86,7 @@ type BillsSectionProps = {
   archiveBill: (id: string) => Promise<void>;
   resetBillDueDate: (id: string) => Promise<void>;
   updatePaymentAutomation: (id: string, patch: AutomationPatch) => Promise<void>;
+  paymentWritesAvailable: boolean;
 };
 
 export default function BillsSection({
@@ -117,6 +118,7 @@ export default function BillsSection({
   archiveBill,
   resetBillDueDate,
   updatePaymentAutomation,
+  paymentWritesAvailable,
 }: BillsSectionProps) {
   const incomeOptions = incomeBucketPlans.map((bucket) => ({ value: bucket.date, compactLabel: compactIncomeLabel(bucket.dropdownLabel), detailLabel: bucket.dropdownLabel }));
   return (
@@ -261,6 +263,7 @@ export default function BillsSection({
                       cancelEditBill={cancelEditBill}
                       archiveBill={archiveBill}
                       resetBillDueDate={resetBillDueDate}
+                      paymentWritesAvailable={paymentWritesAvailable}
                     /> : <OverlayPopover label="Actions" width={224} testId="bill-actions">{() => <div className="grid min-w-0 gap-3 whitespace-normal"><PaymentAutomationControls name={bill.name} {...normalizePaymentAutomation(bill)} onSave={(patch) => updatePaymentAutomation(bill.id, patch)} /><BillPaymentControls
                       bill={bill}
                       editingBillId={editingBillId}
@@ -273,6 +276,7 @@ export default function BillsSection({
                       cancelEditBill={cancelEditBill}
                       archiveBill={archiveBill}
                       resetBillDueDate={resetBillDueDate}
+                      paymentWritesAvailable={paymentWritesAvailable}
                     /></div>}</OverlayPopover>}
                   </div>
 
@@ -444,6 +448,7 @@ export default function BillsSection({
                         cancelEditBill={cancelEditBill}
                         archiveBill={archiveBill}
                         resetBillDueDate={resetBillDueDate}
+                        paymentWritesAvailable={paymentWritesAvailable}
                       />
                       </div>
                       </div>}</OverlayPopover>

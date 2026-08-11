@@ -20,6 +20,7 @@ export type ClientDiagnosticErrorCategory =
   | "authorization_error"
   | "conflict_error"
   | "database_error"
+  | "maintenance_error"
   | "network_error"
   | "validation_error"
   | "unknown_error";
@@ -41,6 +42,14 @@ export function classifyClientDiagnosticError(
   const name = readErrorField(error, "name");
   const message = readErrorField(error, "message");
   const description = `${name} ${message}`;
+
+  if (
+    description.includes(
+      "beastmoney_payment_writes_temporarily_unavailable"
+    ) || description.includes("payment_write_control_unavailable")
+  ) {
+    return "maintenance_error";
+  }
 
   if (
     status === "401" ||

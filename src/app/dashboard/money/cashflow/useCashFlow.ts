@@ -17,8 +17,10 @@ import { useCashFlowPaymentActions } from "./hooks/useCashFlowPaymentActions";
 import { buildResetDueDatePayload } from "./dueDateReset";
 import type { AutomationPatch } from "@/app/dashboard/money/components/PaymentAutomationControls";
 import { reportClientOperationFailure } from "@/lib/clientDiagnostics";
+import { useBeastMoneyPaymentWriteGate } from "@/lib/hooks/useBeastMoneyPaymentWriteGate";
 
 export function useCashFlow() {
+  const paymentWriteGate = useBeastMoneyPaymentWriteGate();
   const [timeline, setTimeline] = useState<any[]>([]);
   const [data, setData] = useState<any[]>([]);
   const [incomes, setIncomes] = useState<any[]>([]);
@@ -203,6 +205,7 @@ export function useCashFlow() {
     applyDebtPayment,
   } = useCashFlowPaymentActions({
     cycleMonth,
+    paymentWritesAvailable: paymentWriteGate.paymentsAvailable,
     getUserId,
     load,
     setPartialPayments,
@@ -821,6 +824,7 @@ export function useCashFlow() {
     applyingDebtPaymentId,
     isApplyingSuggestedAttack,
     suggestedAttackMessage,
+    paymentWriteGate,
     showAddIncome,
     showAddBill,
     showBills,

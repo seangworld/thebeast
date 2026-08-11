@@ -37,9 +37,11 @@ const bill = {
 function Harness({
   addBillPayment,
   markBillPaid,
+  paymentWritesAvailable = true,
 }: {
   addBillPayment: (amount: number, operationId: string) => Promise<BillPaymentResult>;
   markBillPaid: (operationId: string) => Promise<BillPaymentResult>;
+  paymentWritesAvailable?: boolean;
 }) {
   const [partialPayments, setPartialPayments] = useState<Record<string, string>>({});
   return React.createElement(BillPaymentControls, {
@@ -54,6 +56,7 @@ function Harness({
     cancelEditBill: () => undefined,
     archiveBill: async () => undefined,
     resetBillDueDate: async () => undefined,
+    paymentWritesAvailable,
   });
 }
 
@@ -115,4 +118,22 @@ test("failed bill payment preserves input and retries the same operation ID", as
   await waitFor(() => assert.equal(calls.length, 2));
   assert.equal(calls[0], calls[1]);
   assert.equal(input.value, "45");
+});
+
+test("bill payment controls are disabled with safe copy during maintenance", () => {
+  const view = render(React.createElement(Harness, {
+    paymentWritesAvailable: false,
+    addBillPayment: async () => ({ ok: true, message: "Paid." }),
+    markBillPaid: async () => ({ ok: true, message: "Paid." }),
+  }));
+
+  assert.equal(
+    within(view.container).getByRole("button", { name: "Partial Payment" }).hasAttribute("disabled"),
+    true
+  );
+  assert.equal(
+    within(view.container).getByRole("button", { name: "Pay" }).hasAttribute("disabled"),
+    true
+  );
+  assert.match(view.container.textContent || "", /temporarily unavailable while BeastMoney is being updated/);
 });

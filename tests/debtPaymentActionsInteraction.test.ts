@@ -34,12 +34,13 @@ const debt = {
   nextDueDate: new Date(2026, 7, 20),
 };
 
-function renderActions(onPayment: DebtManagementActionsProps["onPayment"], history: DebtManagementActionsProps["history"] = []) {
+function renderActions(onPayment: DebtManagementActionsProps["onPayment"], history: DebtManagementActionsProps["history"] = [], paymentWritesAvailable = true) {
   return render(React.createElement(DebtManagementActions, {
     debt,
     fundingSources: [{ id: "checking", name: "Checking" }],
     history,
     busy: false,
+    paymentWritesAvailable,
     onPayment,
     onResetDueDate: async () => undefined,
   }));
@@ -117,4 +118,18 @@ test("BM-42D presents only canonical member payment actions while preserving his
   }
   fireEvent.click(within(view.container).getByRole("button", { name: "History" }));
   assert.match(view.container.textContent || "", /Recorded outside Beast/);
+});
+
+test("debt payment actions are disabled with safe copy during maintenance", () => {
+  const view = renderActions(async () => success(), [], false);
+
+  assert.equal(
+    within(view.container).getByRole("button", { name: "Pay Minimum" }).hasAttribute("disabled"),
+    true
+  );
+  assert.equal(
+    within(view.container).getByRole("button", { name: "Custom Payment" }).hasAttribute("disabled"),
+    true
+  );
+  assert.match(view.container.textContent || "", /temporarily unavailable while BeastMoney is being updated/);
 });

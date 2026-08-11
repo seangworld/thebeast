@@ -3,6 +3,7 @@
 import { type ReactNode, useMemo, useRef, useState } from "react";
 import { getDebtDueDetail, getDebtDueState, getDebtPaymentWarning, type DebtPaymentAction } from "../../../../lib/debtManagement";
 import { createFinancialOperationId } from "../../../../lib/atomicFinancialCommands";
+import { BEASTMONEY_PAYMENT_MAINTENANCE_MESSAGE } from "../../../../lib/beastMoneyPaymentWriteGate";
 
 export type DebtManagementDebt = {
   id: string;
@@ -37,12 +38,13 @@ export type DebtManagementActionsProps = {
   busy: boolean;
   onPayment: (input: { operationId: string; debt: DebtManagementDebt; amount: number; paymentDate: string; fundingSourceId: string | null; notes: string; actionType: DebtPaymentAction }) => Promise<DebtPaymentResult>;
   onResetDueDate: (debt: DebtManagementDebt, nextDueDate: string) => Promise<void>;
+  paymentWritesAvailable: boolean;
   editAction?: ReactNode;
 };
 
 const today = () => new Date().toISOString().slice(0, 10);
 
-export function DebtManagementActions({ debt, fundingSources, history, busy, onPayment, onResetDueDate, editAction }: DebtManagementActionsProps) {
+export function DebtManagementActions({ debt, fundingSources, history, busy, onPayment, onResetDueDate, paymentWritesAvailable, editAction }: DebtManagementActionsProps) {
   const [panel, setPanel] = useState<"minimum" | "custom" | "reset" | "history" | null>(null);
   const [amount, setAmount] = useState("");
   const [paymentDate, setPaymentDate] = useState(today);
@@ -78,7 +80,8 @@ export function DebtManagementActions({ debt, fundingSources, history, busy, onP
       <p className="text-sm text-[#c7cfdb]">Beast will record the stored minimum of <strong>${minimumAmount.toFixed(2)}</strong> against {debt.name}.</p>
       {paymentDetails}
       {actionStatus?.type === "error" ? <p role="alert" className="rounded bg-red-950/60 px-3 py-2 text-sm text-red-200">{actionStatus.message}</p> : null}
-      <div className="grid grid-cols-1 gap-2"><button type="button" disabled={busy || minimumAmount <= 0} onClick={() => void record("minimum", minimumAmount)} className={`beast-button ${actionClass}`}>Confirm Payment</button><button type="button" disabled={busy} onClick={() => { setActionStatus(null); setPanel(null); }} className={`beast-button-secondary ${actionClass}`}>Cancel</button></div>
+      {!paymentWritesAvailable ? <p role="status" className="rounded bg-amber-950/50 px-3 py-2 text-sm text-amber-100">{BEASTMONEY_PAYMENT_MAINTENANCE_MESSAGE}</p> : null}
+      <div className="grid grid-cols-1 gap-2"><button type="button" disabled={busy || minimumAmount <= 0 || !paymentWritesAvailable} onClick={() => void record("minimum", minimumAmount)} className={`beast-button ${actionClass}`}>Confirm Payment</button><button type="button" disabled={busy} onClick={() => { setActionStatus(null); setPanel(null); }} className={`beast-button-secondary ${actionClass}`}>Cancel</button></div>
     </div>;
   }
 
@@ -90,7 +93,8 @@ export function DebtManagementActions({ debt, fundingSources, history, busy, onP
       {getDebtPaymentWarning({ balance: debt.balance, minimumPayment: debt.minimum_payment, amount: customAmount }) ? <p role="status" className="rounded bg-amber-950/50 px-2 py-1 text-xs text-amber-200">{getDebtPaymentWarning({ balance: debt.balance, minimumPayment: debt.minimum_payment, amount: customAmount })}</p> : null}
       {paymentDetails}
       {actionStatus?.type === "error" ? <p role="alert" className="rounded bg-red-950/60 px-3 py-2 text-sm text-red-200">{actionStatus.message}</p> : null}
-      <div className="grid grid-cols-1 gap-2"><button type="button" disabled={busy || customAmount <= 0} onClick={() => void record("custom", customAmount)} className={`beast-button ${actionClass}`}>Confirm Payment</button><button type="button" disabled={busy} onClick={() => { setActionStatus(null); setPanel(null); }} className={`beast-button-secondary ${actionClass}`}>Cancel</button></div>
+      {!paymentWritesAvailable ? <p role="status" className="rounded bg-amber-950/50 px-3 py-2 text-sm text-amber-100">{BEASTMONEY_PAYMENT_MAINTENANCE_MESSAGE}</p> : null}
+      <div className="grid grid-cols-1 gap-2"><button type="button" disabled={busy || customAmount <= 0 || !paymentWritesAvailable} onClick={() => void record("custom", customAmount)} className={`beast-button ${actionClass}`}>Confirm Payment</button><button type="button" disabled={busy} onClick={() => { setActionStatus(null); setPanel(null); }} className={`beast-button-secondary ${actionClass}`}>Cancel</button></div>
     </div>;
   }
 
@@ -102,12 +106,14 @@ export function DebtManagementActions({ debt, fundingSources, history, busy, onP
       </div>
 
       <div className="grid grid-cols-1 gap-2">
-        <button type="button" disabled={busy || minimumAmount <= 0} onClick={() => setPanel("minimum")} className={`beast-button ${actionClass}`}>Pay Minimum</button>
-        <button type="button" disabled={busy || Number(debt.balance || 0) <= 0} onClick={() => setPanel("custom")} className={`beast-button-secondary ${actionClass}`}>Custom Payment</button>
+        <button type="button" disabled={busy || minimumAmount <= 0 || !paymentWritesAvailable} onClick={() => setPanel("minimum")} className={`beast-button ${actionClass}`}>Pay Minimum</button>
+        <button type="button" disabled={busy || Number(debt.balance || 0) <= 0 || !paymentWritesAvailable} onClick={() => setPanel("custom")} className={`beast-button-secondary ${actionClass}`}>Custom Payment</button>
         <button type="button" onClick={() => setPanel("history")} className={`beast-button-secondary ${actionClass}`}>History</button>
         {editAction}
         <button type="button" disabled={busy} onClick={() => setPanel("reset")} className={`beast-button-secondary ${actionClass}`}>Reset Due Date</button>
       </div>
+
+      {!paymentWritesAvailable ? <p role="status" className="rounded bg-amber-950/50 px-3 py-2 text-sm text-amber-100">{BEASTMONEY_PAYMENT_MAINTENANCE_MESSAGE}</p> : null}
 
       {actionStatus?.type === "success" ? <p role="status" className="rounded bg-emerald-950/60 px-3 py-2 text-sm text-emerald-200">{actionStatus.message}</p> : null}
 

@@ -10,6 +10,7 @@ import {
   recordBillPaymentAtomic,
   recordDebtPaymentAtomic,
 } from "@/lib/atomicFinancialCommands";
+import { BEASTMONEY_PAYMENT_MAINTENANCE_MESSAGE } from "@/lib/beastMoneyPaymentWriteGate";
 
 type PaymentConfigurationPatch = Partial<
   Pick<
@@ -23,6 +24,7 @@ type PaymentConfigurationPatch = Partial<
 
 type UseCashFlowPaymentActionsInput = {
   cycleMonth: string;
+  paymentWritesAvailable: boolean;
   getUserId: () => Promise<string | undefined>;
   load: () => Promise<void>;
   setPartialPayments: Dispatch<SetStateAction<Record<string, string>>>;
@@ -37,6 +39,7 @@ type UseCashFlowPaymentActionsInput = {
 
 export function useCashFlowPaymentActions({
   cycleMonth,
+  paymentWritesAvailable,
   getUserId,
   load,
   setPartialPayments,
@@ -49,6 +52,10 @@ export function useCashFlowPaymentActions({
   async function addBillPayment(bill: any, amount: number, operationId: string) {
     const supabase = createClient();
     const userId = await getUserId();
+
+    if (!paymentWritesAvailable) {
+      return { ok: false, message: BEASTMONEY_PAYMENT_MAINTENANCE_MESSAGE };
+    }
 
     if (!userId || !bill?.id || amount <= 0) {
       return { ok: false, message: "Enter a payment amount greater than zero." };
@@ -71,7 +78,14 @@ export function useCashFlowPaymentActions({
         operation: "bill_payment_apply",
         category: error instanceof AtomicFinancialCommandError ? error.category : "unknown_error",
       });
-      return { ok: false, message: "Unable to record the bill payment. Your entry was preserved; please retry." };
+      return {
+        ok: false,
+        message:
+          error instanceof AtomicFinancialCommandError &&
+          error.category === "maintenance_error"
+            ? BEASTMONEY_PAYMENT_MAINTENANCE_MESSAGE
+            : "Unable to record the bill payment. Your entry was preserved; please retry.",
+      };
     }
   }
 
@@ -159,6 +173,19 @@ export function useCashFlowPaymentActions({
   async function applyDebtPayment(debt: any, amount: number) {
     const supabase = createClient();
 
+    if (!paymentWritesAvailable) {
+      if (debt?.id) {
+        setDebtPaymentStatus((prev) => ({
+          ...prev,
+          [debt.id]: {
+            type: "error",
+            message: BEASTMONEY_PAYMENT_MAINTENANCE_MESSAGE,
+          },
+        }));
+      }
+      return { ok: false, message: BEASTMONEY_PAYMENT_MAINTENANCE_MESSAGE };
+    }
+
     if (!debt?.id) {
       reportClientOperationFailure({
         module: "beastmoney",
@@ -239,7 +266,11 @@ export function useCashFlowPaymentActions({
         operation: "debt_payment_apply",
         category: error instanceof AtomicFinancialCommandError ? error.category : "unknown_error",
       });
-      const errorMessage = "Unable to record the debt payment. Your entry was preserved; please retry.";
+      const errorMessage =
+        error instanceof AtomicFinancialCommandError &&
+        error.category === "maintenance_error"
+          ? BEASTMONEY_PAYMENT_MAINTENANCE_MESSAGE
+          : "Unable to record the debt payment. Your entry was preserved; please retry.";
 
       setDebtPaymentStatus((prev) => ({
         ...prev,
