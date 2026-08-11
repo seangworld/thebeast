@@ -106,6 +106,7 @@ select lives_ok(
   )$$,
   'bill payment succeeds atomically'
 );
+reset role;
 select is(
   (select count(*)::bigint from public.bill_payments where operation_id = '40000000-0000-4000-8000-000000000001'),
   1::bigint,
@@ -116,6 +117,7 @@ select is(
   '2026-09-15'::date,
   'bill payment advances due state'
 );
+set local role authenticated;
 select lives_ok(
   $$select public.record_bill_payment_atomic(
     '40000000-0000-4000-8000-000000000001',
@@ -124,6 +126,7 @@ select lives_ok(
   )$$,
   'same bill operation replays safely'
 );
+reset role;
 select is(
   (select count(*)::bigint from public.bill_payments where operation_id = '40000000-0000-4000-8000-000000000001'),
   1::bigint,
@@ -131,6 +134,7 @@ select is(
 );
 
 select set_config('plat001c.failpoint', 'bill_payment_insert', true);
+set local role authenticated;
 select throws_ok(
   $$select public.record_bill_payment_atomic(
     '40000000-0000-4000-8000-000000000002',
@@ -140,6 +144,7 @@ select throws_ok(
   'P0001', 'plat001c:bill_payment_insert',
   'bill history failure aborts the command'
 );
+reset role;
 select set_config('plat001c.failpoint', '', true);
 select is(
   (select count(*)::bigint from public.bill_payments where operation_id = '40000000-0000-4000-8000-000000000002'),
@@ -153,6 +158,7 @@ select is(
 );
 
 select set_config('plat001c.failpoint', 'bill_due_update', true);
+set local role authenticated;
 select throws_ok(
   $$select public.record_bill_payment_atomic(
     '40000000-0000-4000-8000-000000000003',
@@ -162,6 +168,7 @@ select throws_ok(
   'P0001', 'plat001c:bill_due_update',
   'bill due-state failure aborts the command'
 );
+reset role;
 select set_config('plat001c.failpoint', '', true);
 select is(
   (select count(*)::bigint from public.bill_payments where operation_id = '40000000-0000-4000-8000-000000000003'),
@@ -174,6 +181,7 @@ select is(
   'due-state failure leaves the bill unchanged'
 );
 
+set local role authenticated;
 select lives_ok(
   $$select public.record_debt_payment_atomic(
     '50000000-0000-4000-8000-000000000001',
@@ -182,6 +190,7 @@ select lives_ok(
   )$$,
   'debt payment succeeds atomically'
 );
+reset role;
 select is(
   (select balance from public.debts where id = '30000000-0000-4000-8000-000000000001'),
   70::numeric,
@@ -192,6 +201,7 @@ select is(
   1::bigint,
   'debt payment creates one history row'
 );
+set local role authenticated;
 select lives_ok(
   $$select public.record_debt_payment_atomic(
     '50000000-0000-4000-8000-000000000001',
@@ -200,6 +210,7 @@ select lives_ok(
   )$$,
   'same debt operation replays safely'
 );
+reset role;
 select is(
   (select balance from public.debts where id = '30000000-0000-4000-8000-000000000001'),
   70::numeric,
@@ -212,6 +223,7 @@ select is(
 );
 
 select set_config('plat001c.failpoint', 'debt_payment_insert', true);
+set local role authenticated;
 select throws_ok(
   $$select public.record_debt_payment_atomic(
     '50000000-0000-4000-8000-000000000002',
@@ -221,6 +233,7 @@ select throws_ok(
   'P0001', 'plat001c:debt_payment_insert',
   'debt history failure aborts the command'
 );
+reset role;
 select set_config('plat001c.failpoint', '', true);
 select is(
   (select balance from public.debts where id = '30000000-0000-4000-8000-000000000001'),
@@ -229,6 +242,7 @@ select is(
 );
 
 select set_config('plat001c.failpoint', 'debt_balance_update', true);
+set local role authenticated;
 select throws_ok(
   $$select public.record_debt_payment_atomic(
     '50000000-0000-4000-8000-000000000003',
@@ -238,6 +252,7 @@ select throws_ok(
   'P0001', 'plat001c:debt_balance_update',
   'debt balance failure aborts the command'
 );
+reset role;
 select set_config('plat001c.failpoint', '', true);
 select is(
   (select count(*)::bigint from public.debt_payments where operation_id = '50000000-0000-4000-8000-000000000003'),
@@ -250,16 +265,23 @@ select is(
   'debt balance failure leaves the debt unchanged'
 );
 
+select set_config(
+  'plat001c.payment_id',
+  (select id::text from public.debt_payments where operation_id = '50000000-0000-4000-8000-000000000001'),
+  true
+);
 select set_config('plat001c.failpoint', 'debt_reversal_update', true);
+set local role authenticated;
 select throws_ok(
   $$select public.reverse_debt_payment_atomic(
     '60000000-0000-4000-8000-000000000001',
-    (select id from public.debt_payments where operation_id = '50000000-0000-4000-8000-000000000001'),
+    current_setting('plat001c.payment_id')::uuid,
     'Injected reversal'
   )$$,
   'P0001', 'plat001c:debt_reversal_update',
   'reversal write failure aborts the command'
 );
+reset role;
 select set_config('plat001c.failpoint', '', true);
 select ok(
   (select reversed_at is null from public.debt_payments where operation_id = '50000000-0000-4000-8000-000000000001'),
@@ -271,15 +293,17 @@ select is(
   'failed reversal leaves the debt balance applied'
 );
 select set_config('plat001c.failpoint', 'debt_balance_update', true);
+set local role authenticated;
 select throws_ok(
   $$select public.reverse_debt_payment_atomic(
     '60000000-0000-4000-8000-000000000002',
-    (select id from public.debt_payments where operation_id = '50000000-0000-4000-8000-000000000001'),
+    current_setting('plat001c.payment_id')::uuid,
     'Injected downstream reversal failure'
   )$$,
   'P0001', 'plat001c:debt_balance_update',
   'debt restore failure rolls back the reversal marker'
 );
+reset role;
 select set_config('plat001c.failpoint', '', true);
 select ok(
   (select reversed_at is null from public.debt_payments where operation_id = '50000000-0000-4000-8000-000000000001'),
@@ -290,14 +314,16 @@ select is(
   70::numeric,
   'downstream reversal failure leaves principal unchanged'
 );
+set local role authenticated;
 select lives_ok(
   $$select public.reverse_debt_payment_atomic(
     '60000000-0000-4000-8000-000000000003',
-    (select id from public.debt_payments where operation_id = '50000000-0000-4000-8000-000000000001'),
+    current_setting('plat001c.payment_id')::uuid,
     'Injected reversal'
   )$$,
   'debt reversal succeeds atomically'
 );
+reset role;
 select ok(
   (select reversed_at is not null from public.debt_payments where operation_id = '50000000-0000-4000-8000-000000000001'),
   'successful reversal marks the payment'
@@ -307,20 +333,23 @@ select is(
   100::numeric,
   'successful reversal restores the balance'
 );
+set local role authenticated;
 select lives_ok(
   $$select public.reverse_debt_payment_atomic(
     '60000000-0000-4000-8000-000000000003',
-    (select id from public.debt_payments where operation_id = '50000000-0000-4000-8000-000000000001'),
+    current_setting('plat001c.payment_id')::uuid,
     'Injected reversal'
   )$$,
   'same reversal operation replays safely'
 );
+reset role;
 select is(
   (select balance from public.debts where id = '30000000-0000-4000-8000-000000000001'),
   100::numeric,
   'reversal replay restores principal once'
 );
 
+set local role authenticated;
 select throws_ok(
   $$select public.record_bill_payment_atomic(
     '40000000-0000-4000-8000-000000000004',
@@ -330,6 +359,8 @@ select throws_ok(
   'P0002', 'bill_not_found',
   'bill command cannot access another owner'
 );
+reset role;
+set local role authenticated;
 select throws_ok(
   $$select public.record_debt_payment_atomic(
     '50000000-0000-4000-8000-000000000004',
@@ -339,6 +370,7 @@ select throws_ok(
   'P0002', 'debt_not_found',
   'debt command cannot access another owner'
 );
+reset role;
 
 insert into public.debt_payments (
   user_id, debt_id, amount, payment_date, cycle_due_date, action_type
