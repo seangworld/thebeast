@@ -21,6 +21,11 @@ import type {
   LearningGoalBuilderStatus,
 } from "@/lib/learning/types";
 
+const safeBuilderGuidance = [
+  "Sign in again before saving this learning path.",
+  "Complete Learning Setup before saving a generated activity.",
+] as const;
+
 const STORAGE_KEY = "beastos.learning.goalBuilder.v1";
 
 const emptyDraft: LearningGoalBuilderDraft = {
@@ -263,7 +268,7 @@ export default function LearningGoalBuilder() {
       setSaveMessage(`${activityTitle} is saved and ready to start.`);
     } catch (error) {
       setCompleted(false);
-      setSaveMessage(memberSafeMessage(error, "save"));
+      setSaveMessage(memberSafeMessage(error, "save", safeBuilderGuidance));
     } finally {
       setSaving(false);
     }

@@ -1,7 +1,6 @@
 "use client";
 
 export default function ErrorState({
-  error,
   reset,
 }: {
   error: Error & { digest?: string };
@@ -15,7 +14,7 @@ export default function ErrorState({
           <p className="beast-kicker mt-6 text-red-200">Learning workspace unavailable</p>
           <h1 className="mt-2 text-2xl font-black tracking-tight text-white sm:text-3xl">We could not load this workspace</h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-red-50 sm:text-base sm:leading-7">
-            {process.env.NODE_ENV === "development" ? error.message : "Your learning records are still safe. Try loading them again."}
+            Your learning records are still safe. Try loading them again.
           </p>
           <div className="mt-7 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
             <button type="button" onClick={reset} className="beast-button justify-center">Try again</button>

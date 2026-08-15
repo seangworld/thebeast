@@ -6,6 +6,7 @@ import { DocumentUploadDropzone } from "@/app/dashboard/uploads/DocumentUploadDr
 import { analyzeSmartFinancialImport, type SmartFinancialImportAnalysis } from "@/lib/smartFinancialImport";
 import { createClient } from "@/lib/supabase/client";
 import type { MoneyImportTarget } from "@/lib/financialImport";
+import { memberSafeMessage } from "@/lib/memberSafeError";
 
 const sources = ["Excel", "CSV", "Google Sheets", "Rocket Money", "Quicken", "Monarch", "YNAB", "Bank export", "Credit card export", "Loan export", "Statement"];
 
@@ -34,7 +35,7 @@ export function SmartFinancialImport() {
     if (!analysis?.preview.readyToSave || analysis.target === "transaction") return;
     const client = createClient();
     const { data: { user }, error: authError } = await client.auth.getUser();
-    if (authError || !user) { setStatus(authError?.message || "Sign in again before importing."); return; }
+    if (authError || !user) { setStatus("Sign in again before importing."); return; }
     const rows = analysis.preview.validRows.map((row) => {
       if (analysis.target === "bill") return { user_id: user.id, name: String(row.values.name), amount: Number(row.values.amount), due_date: Number(row.values.due_date || 1), frequency: String(row.values.frequency || "monthly"), is_archived: false };
       if (analysis.target === "debt") return { user_id: user.id, name: String(row.values.name), balance: Number(row.values.balance), minimum_payment: Number(row.values.minimum_payment || 0), interest_rate: Number(row.values.interest_rate || 0), due_date: 1, is_archived: false };
@@ -42,7 +43,7 @@ export function SmartFinancialImport() {
     });
     const table = analysis.target === "bill" ? "bill_events" : analysis.target === "debt" ? "debts" : "income_events";
     const { error } = await client.from(table).insert(rows);
-    if (error) setStatus(error.message);
+    if (error) setStatus(memberSafeMessage(error, "create"));
     else { setStatus(`Imported ${rows.length} confirmed ${analysis.target} record${rows.length === 1 ? "" : "s"}.`); setAnalysis(null); }
   }
 

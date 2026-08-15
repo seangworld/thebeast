@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { getConfigurationBoundary, resolveSupabasePublicConfiguration } from "../src/lib/supabase/config";
-import { classifyMemberError, toMemberSafeError } from "../src/lib/memberSafeError";
+import { classifyMemberError, memberSafeMessage, toMemberSafeError } from "../src/lib/memberSafeError";
 
 const valid = { url: "https://project.supabase.co", publicKey: "public-key-with-sufficient-length" };
 
@@ -63,6 +63,15 @@ test("PLAT-001F never returns provider, schema, secret, or identifier diagnostic
   }
 });
 
+test("PLAT-001F preserves only explicitly approved member guidance", () => {
+  const guidance = "Complete Learning Setup before adding a learning goal.";
+  assert.equal(memberSafeMessage(new Error(guidance), "create", [guidance]), guidance);
+  assert.notEqual(
+    memberSafeMessage(new Error("relation learning_goals violates owner_policy"), "create", [guidance]),
+    "relation learning_goals violates owner_policy"
+  );
+});
+
 test("PLAT-001F audited member surfaces use the mapper and specialized boundaries remain", () => {
   const adopted = [
     "src/app/dashboard/money/income/IncomeWorkspace.tsx",
@@ -72,8 +81,20 @@ test("PLAT-001F audited member surfaces use the mapper and specialized boundarie
     "src/app/dashboard/goals/LifePlanningHub.tsx",
     "src/app/dashboard/uploads/DocumentUploadDropzone.tsx",
     "src/app/dashboard/learning/goals/LearningGoalsManager.tsx",
+    "src/app/dashboard/money/import/SmartFinancialImport.tsx",
+    "src/app/dashboard/money/components/MoneyWorkspacePage.tsx",
+    "src/app/dashboard/learning/LearningGoalDiscovery.tsx",
+    "src/app/dashboard/learning/LearningGoalBuilder.tsx",
+    "src/app/dashboard/learning/activities/[activityId]/page.tsx",
   ];
   adopted.forEach((file) => assert.match(readFileSync(file, "utf8"), /memberSafeMessage/));
+  assert.doesNotMatch(readFileSync("src/app/dashboard/money/import/SmartFinancialImport.tsx", "utf8"), /setStatus\(error\.message\)/);
+  assert.doesNotMatch(readFileSync("src/app/dashboard/money/components/MoneyWorkspacePage.tsx", "utf8"), /setLoadError\([\s\S]{0,120}error\.message/);
+  assert.doesNotMatch(readFileSync("src/app/dashboard/learning/LearningGoalDiscovery.tsx", "utf8"), /setMessage\([\s\S]{0,120}error\.message/);
+  assert.doesNotMatch(readFileSync("src/app/dashboard/learning/activities/[activityId]/page.tsx", "utf8"), /setMessage\([\s\S]{0,120}error\.message/);
+  assert.doesNotMatch(readFileSync("src/app/dashboard/education/[workspace]/error.tsx", "utf8"), /error\.message/);
+  assert.match(readFileSync("src/app/dashboard/money/import/SmartFinancialImport.tsx", "utf8"), /Imported \$\{rows\.length\} confirmed/);
+  assert.match(readFileSync("src/app/dashboard/learning/LearningGoalDiscovery.tsx", "utf8"), /Great choice\. I will build your learning plan/);
   assert.match(readFileSync("src/lib/digitalStaffRuntime/security.ts", "utf8"), /safeDigitalStaffFailure/);
   assert.match(readFileSync("src/lib/auth/experience.ts", "utf8"), /getAuthErrorMessage/);
   assert.match(readFileSync("src/app/dashboard/health/HealthAdvisorWorkspace.tsx", "utf8"), /Health Advisor/);

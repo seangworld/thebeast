@@ -54,6 +54,13 @@ export function toMemberSafeError(
   return { category, ...copy[category], ...(options.correlationId ? { correlationId: options.correlationId } : {}) };
 }
 
-export function memberSafeMessage(error: unknown, operation?: MemberOperation): string {
+export function memberSafeMessage(
+  error: unknown,
+  operation?: MemberOperation,
+  safeGuidance: readonly string[] = []
+): string {
+  if (error instanceof Error && safeGuidance.includes(error.message)) {
+    return error.message;
+  }
   return toMemberSafeError(error, { operation }).message;
 }

@@ -68,6 +68,7 @@ import { FinancialHealthScoreWorkspace } from "@/app/dashboard/money/components/
 import { buildFinancialMissionControl } from "@/lib/financialMissionControl";
 import { normalizeDebtStrategy } from "@/lib/debtStrategies";
 import { getDebtLifecycleStatus, type DebtLifecycleStatus } from "@/lib/debtLifecycle";
+import { memberSafeMessage } from "@/lib/memberSafeError";
 
 type MoneyDebt = {
   id: string;
@@ -445,11 +446,7 @@ export function MoneyWorkspacePage({
         goals: goalsResult.error ? [] : (goalsResult.data || []) as MoneyGoal[],
       });
     } catch (error) {
-      setLoadError(
-        error instanceof Error
-          ? error.message
-          : "Unable to load your Money workspace."
-      );
+      setLoadError(memberSafeMessage(error, "load"));
     } finally {
       setLoading(false);
     }

@@ -12,6 +12,12 @@ import {
 import { generateLearningPlan } from "@/lib/learning/planGenerator";
 import { createClient } from "@/lib/supabase/client";
 import type { LearningGoal, LearningGoalBuilderDraft } from "@/lib/learning/types";
+import { memberSafeMessage } from "@/lib/memberSafeError";
+
+const safeGoalGuidance = [
+  "Sign in again before adding this learning goal.",
+  "Complete Learning Setup before adding a learning goal.",
+] as const;
 
 const suggestedCategories = [
   "K-12",
@@ -218,11 +224,7 @@ export default function LearningGoalDiscovery({
       window.dispatchEvent(new Event("beastlearning:goal-created"));
       router.refresh();
     } catch (error) {
-      setMessage(
-        error instanceof Error
-          ? error.message
-          : "Unable to add this learning goal right now."
-      );
+      setMessage(memberSafeMessage(error, "create", safeGoalGuidance));
     } finally {
       setSaving(false);
     }

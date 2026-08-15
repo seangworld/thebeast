@@ -28,6 +28,7 @@ import { selectMentorTutor } from "@/lib/learning/tutorOrchestration";
 import { getProfileDisplayName } from "@/lib/profile";
 import { createClient } from "@/lib/supabase/client";
 import { buildCurrentAuthLoginPath } from "@/lib/auth/experience";
+import { memberSafeMessage } from "@/lib/memberSafeError";
 import { LessonEngine } from "../LessonEngine";
 
 type ActivityRow = LearningActivityRunnerRow & {
@@ -162,11 +163,7 @@ export default function LearningActivityRunnerPage() {
         );
       }
     } catch (error) {
-      setMessage(
-        error instanceof Error
-          ? error.message
-          : "Your Tutor had trouble opening this lesson. Try again in a moment."
-      );
+      setMessage(memberSafeMessage(error, "load"));
     } finally {
       setLoading(false);
     }
@@ -281,11 +278,7 @@ export default function LearningActivityRunnerPage() {
           : "Nice work. Return to Today and your Guidance Counselor will recommend what comes next."
       );
     } catch (error) {
-      setMessage(
-        error instanceof Error
-          ? error.message
-          : "Your Tutor had trouble saving this lesson. Try again in a moment."
-      );
+      setMessage(memberSafeMessage(error, "save"));
     } finally {
       setSaving(false);
     }
