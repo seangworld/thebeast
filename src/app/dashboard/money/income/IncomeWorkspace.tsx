@@ -5,6 +5,7 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { formatCurrency } from "@/lib/formatters";
 import { advanceIncomeDate, getNextIncomeDateDisplay } from "../cashflow/cashflowUtils";
+import { memberSafeMessage } from "@/lib/memberSafeError";
 
 type IncomeRecord = {
   id: string;
@@ -51,7 +52,7 @@ export function IncomeWorkspace() {
     const client = createClient();
     const { data: { user }, error: authError } = await client.auth.getUser();
     if (authError || !user) {
-      setError(authError?.message || "Sign in again to load Income.");
+      setError(authError ? memberSafeMessage(authError) : "Sign in again to load Income.");
       setLoading(false);
       return;
     }
@@ -61,7 +62,7 @@ export function IncomeWorkspace() {
       client.from("debts").select("id,name,assigned_income_date").eq("user_id", user.id).eq("is_archived", false),
     ]);
     const loadError = incomeResult.error || billsResult.error || debtsResult.error;
-    if (loadError) setError(loadError.message);
+    if (loadError) setError(memberSafeMessage(loadError, "load"));
     else {
       setOwnerId(user.id);
       setIncomes((incomeResult.data || []) as IncomeRecord[]);
@@ -81,20 +82,20 @@ export function IncomeWorkspace() {
     const result = editingId
       ? await client.from("income_events").update(values).eq("user_id", ownerId).eq("id", editingId)
       : await client.from("income_events").insert({ ...values, user_id: ownerId, is_active: true, is_archived: false });
-    if (result.error) setError(result.error.message);
+    if (result.error) setError(memberSafeMessage(result.error, "save"));
     else { setDraft(emptyDraft); setEditingId(""); await load(); }
   }
 
   async function updateStatus(id: string, values: Partial<Pick<IncomeRecord, "is_active" | "is_archived">>) {
     const { error: updateError } = await createClient().from("income_events").update(values).eq("user_id", ownerId).eq("id", id);
-    if (updateError) setError(updateError.message);
+    if (updateError) setError(memberSafeMessage(updateError, "update"));
     else await load();
   }
 
   async function remove(record: IncomeRecord) {
     if (!window.confirm(`Delete ${record.name}? This cannot be undone.`)) return;
     const { error: deleteError } = await createClient().from("income_events").delete().eq("user_id", ownerId).eq("id", record.id);
-    if (deleteError) setError(deleteError.message);
+    if (deleteError) setError(memberSafeMessage(deleteError, "delete"));
     else await load();
   }
 

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { simulateCashFlow } from "@/lib/cashflow";
 import type { CashIntelligenceResult } from "@/lib/cashIntelligence";
 import { createClient } from "@/lib/supabase/client";
+import { memberSafeMessage } from "@/lib/memberSafeError";
 import {
   getCycleMonth,
   PayoffStrategy,
@@ -245,7 +246,7 @@ export function useCashFlow() {
     });
 
     if (error) {
-      setSaveError(`Failed to add funding source: ${error.message}`);
+      setSaveError(memberSafeMessage(error, "create"));
       reportClientOperationFailure({
         module: "beastmoney",
         operation: "funding_source_add",
@@ -344,7 +345,7 @@ export function useCashFlow() {
       .eq("id", id);
 
     if (updateError) {
-      setSaveError(`Failed to save funding source: ${updateError.message}`);
+      setSaveError(memberSafeMessage(updateError, "update"));
       reportClientOperationFailure({
         module: "beastmoney",
         operation: "funding_source_save",
@@ -370,7 +371,7 @@ export function useCashFlow() {
       .eq("id", id);
 
     if (error) {
-      setSaveError(`Failed to delete funding source: ${error.message}`);
+      setSaveError(memberSafeMessage(error, "delete"));
       reportClientOperationFailure({
         module: "beastmoney",
         operation: "funding_source_delete",

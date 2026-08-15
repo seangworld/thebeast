@@ -5,6 +5,7 @@ import {
   type BeastModuleIdentifier,
 } from "@/lib/moduleRegistry";
 import { resolveMemberModuleEntitlement } from "@/lib/memberAgeEntitlements";
+import { getConfigurationBoundary, resolveSupabasePublicConfiguration } from "@/lib/supabase/config";
 import {
   buildAuthLoginPath,
   getAuthErrorState,
@@ -12,16 +13,23 @@ import {
   isDisabledBeastUser,
 } from "@/lib/auth/experience";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
 export async function middleware(request: NextRequest) {
   if (request.nextUrl.pathname === "/api/session/status") {
     return NextResponse.next();
   }
 
-  if (!supabaseUrl || !supabaseAnonKey) {
-    return NextResponse.next();
+  const configuration = resolveSupabasePublicConfiguration({
+    url: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    publicKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  });
+  if (!configuration.ok) {
+    const boundary = getConfigurationBoundary(request.nextUrl.pathname);
+    if (boundary === "public") return NextResponse.next();
+    const unavailable = boundary === "api"
+      ? NextResponse.json({ error: "This service is temporarily unavailable. Please try again shortly." }, { status: 503 })
+      : new NextResponse("This workspace is temporarily unavailable. Please try again shortly.", { status: 503 });
+    unavailable.headers.set("cache-control", "private, no-cache, no-store, must-revalidate, max-age=0");
+    return unavailable;
   }
 
   const hadSessionCookie = request.cookies
@@ -33,7 +41,7 @@ export async function middleware(request: NextRequest) {
     },
   });
 
-  const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+  const supabase = createServerClient(configuration.configuration.url, configuration.configuration.publicKey, {
     cookies: {
       getAll() {
         return request.cookies.getAll();

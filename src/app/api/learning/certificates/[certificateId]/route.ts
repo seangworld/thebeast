@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createRouteClient } from "@/lib/supabase/server";
+import { toMemberSafeError } from "@/lib/memberSafeError";
 
 function escapePdfText(value: string) {
   return value.replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
@@ -91,7 +92,8 @@ export async function GET(
     .maybeSingle();
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const safe = toMemberSafeError(error, { operation: "load", correlationId: crypto.randomUUID() });
+    return NextResponse.json({ error: safe.message, requestId: safe.correlationId }, { status: safe.status });
   }
 
   if (!certificate) {

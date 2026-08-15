@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { LearningGoal } from "@/lib/learning/types";
+import { memberSafeMessage } from "@/lib/memberSafeError";
 
 function statusLabel(status: LearningGoal["status"]) {
   if (status === "Paused") return "Archived";
@@ -49,7 +50,7 @@ export default function LearningGoalsManager({
       setMessage(`${goal.title} is archived. Progress stays saved.`);
       router.refresh();
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Unable to archive this goal.");
+      setMessage(memberSafeMessage(error, "update"));
     } finally {
       setBusyGoalId(null);
     }
@@ -69,7 +70,7 @@ export default function LearningGoalsManager({
       setMessage(`${goal.title} is available again. Switch to it when you want it to lead.`);
       router.refresh();
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Unable to resume this goal.");
+      setMessage(memberSafeMessage(error, "update"));
     } finally {
       setBusyGoalId(null);
     }
@@ -99,7 +100,7 @@ export default function LearningGoalsManager({
       setMessage(`${goal.title} is now your active Learning Goal.`);
       router.refresh();
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Unable to switch goals.");
+      setMessage(memberSafeMessage(error, "update"));
     } finally {
       setBusyGoalId(null);
     }

@@ -15,6 +15,7 @@ import {
 } from "@/lib/learning/generatedActivities";
 import { generateLearningPlan } from "@/lib/learning/planGenerator";
 import { createClient } from "@/lib/supabase/client";
+import { memberSafeMessage } from "@/lib/memberSafeError";
 import type {
   LearningGoalBuilderDraft,
   LearningGoalBuilderStatus,
@@ -262,11 +263,7 @@ export default function LearningGoalBuilder() {
       setSaveMessage(`${activityTitle} is saved and ready to start.`);
     } catch (error) {
       setCompleted(false);
-      setSaveMessage(
-        error instanceof Error
-          ? error.message
-          : "Unable to save this generated learning activity."
-      );
+      setSaveMessage(memberSafeMessage(error, "save"));
     } finally {
       setSaving(false);
     }

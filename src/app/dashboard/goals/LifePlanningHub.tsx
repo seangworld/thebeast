@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { memberSafeMessage } from "@/lib/memberSafeError";
 import {
   goalCategories,
   goalStatuses,
@@ -313,7 +314,7 @@ export function LifePlanningHub({
       closeEditor();
       router.refresh();
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Goal could not be saved.");
+      setMessage(memberSafeMessage(error, "create"));
     } finally {
       setBusy(false);
     }
@@ -355,7 +356,7 @@ export function LifePlanningHub({
       });
       router.refresh();
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Goal could not be updated.");
+      setMessage(memberSafeMessage(error, "update"));
     } finally {
       setBusy(false);
     }
@@ -388,7 +389,7 @@ export function LifePlanningHub({
       });
       router.refresh();
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Goals could not be merged.");
+      setMessage(memberSafeMessage(error, "update"));
     } finally {
       setBusy(false);
     }
@@ -411,7 +412,7 @@ export function LifePlanningHub({
       setMilestoneTitles((current) => ({ ...current, [goal.id]: "" }));
       router.refresh();
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Milestone could not be added.");
+      setMessage(memberSafeMessage(error, "create"));
     } finally {
       setBusy(false);
     }

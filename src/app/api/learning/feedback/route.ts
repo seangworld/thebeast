@@ -6,6 +6,7 @@ import {
   mapFeedbackRow,
 } from "@/lib/learning/persistence";
 import type { LearningFeedbackCategory } from "@/lib/learning/types";
+import { toMemberSafeError } from "@/lib/memberSafeError";
 
 export const dynamic = "force-dynamic";
 
@@ -58,7 +59,8 @@ export async function POST(request: Request) {
     .single();
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const safe = toMemberSafeError(error, { operation: "save", correlationId: crypto.randomUUID() });
+    return NextResponse.json({ error: safe.message, requestId: safe.correlationId }, { status: safe.status });
   }
 
   return NextResponse.json({ status: "saved", item: mapFeedbackRow(data) });

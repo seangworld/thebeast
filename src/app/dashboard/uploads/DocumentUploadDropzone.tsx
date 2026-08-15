@@ -12,6 +12,7 @@ import {
 } from "@/lib/platform/documents";
 import { createClient } from "@/lib/supabase/client";
 import type { ContextualWorkspaceConfig } from "@/lib/platform/contextualWorkspaces";
+import { memberSafeMessage } from "@/lib/memberSafeError";
 
 type UploadState = "idle" | "ready" | "uploading" | "success" | "error";
 
@@ -115,7 +116,7 @@ export function DocumentUploadDropzone({
         });
 
       if (uploadError) {
-        throw new Error(uploadError.message || "Document storage failed.");
+        throw uploadError;
       }
 
       const { error: metadataError } = await supabase
@@ -136,9 +137,7 @@ export function DocumentUploadDropzone({
 
       if (metadataError) {
         await supabase.storage.from(documentStorageBucketName).remove([storagePath]);
-        throw new Error(
-          metadataError.message || "Document metadata could not be saved."
-        );
+        throw metadataError;
       }
 
       if (context) {
@@ -161,10 +160,7 @@ export function DocumentUploadDropzone({
           await supabase.storage
             .from(documentStorageBucketName)
             .remove([storagePath]);
-          throw new Error(
-            contextError.message ||
-              "The document context could not be saved, so the upload was rolled back."
-          );
+          throw contextError;
         }
       }
 
@@ -173,11 +169,7 @@ export function DocumentUploadDropzone({
       window.location.reload();
     } catch (error) {
       setState("error");
-      setMessage(
-        error instanceof Error
-          ? error.message
-          : "Document upload could not be completed."
-      );
+      setMessage(memberSafeMessage(error, "upload"));
     }
   }
 

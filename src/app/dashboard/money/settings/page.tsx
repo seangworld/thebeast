@@ -10,6 +10,7 @@ import {
 } from "@/lib/debtStrategies";
 import { BeastMoneyShell } from "@/app/dashboard/money/BeastMoneyShell";
 import { reportClientOperationFailure } from "@/lib/clientDiagnostics";
+import { memberSafeMessage } from "@/lib/memberSafeError";
 
 export default function SettingsPage() {
   const [startingBalance, setStartingBalance] = useState(500);
@@ -89,7 +90,7 @@ export default function SettingsPage() {
         operation: "cash_settings_save",
         error: cashError,
       });
-      setMessage(`❌ Failed to save cash settings: ${cashError.message}`);
+      setMessage(memberSafeMessage(cashError, "save"));
       return;
     }
 
@@ -108,7 +109,7 @@ export default function SettingsPage() {
         operation: "debt_settings_save",
         error: debtError,
       });
-      setMessage(`❌ Failed to save debt settings: ${debtError.message}`);
+      setMessage(memberSafeMessage(debtError, "save"));
       return;
     }
 
@@ -136,7 +137,7 @@ export default function SettingsPage() {
       .eq("user_id", userId);
 
     if (billError) {
-      setMessage(`Failed to reset bill due dates: ${billError.message}`);
+      setMessage(memberSafeMessage(billError, "update"));
       return;
     }
 
@@ -146,7 +147,7 @@ export default function SettingsPage() {
       .eq("user_id", userId);
 
     if (debtError) {
-      setMessage(`Failed to reset debt due dates: ${debtError.message}`);
+      setMessage(memberSafeMessage(debtError, "update"));
       return;
     }
 

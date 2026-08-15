@@ -4,6 +4,7 @@ import { Fragment, type ReactNode, useCallback, useEffect, useMemo, useRef, useS
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { memberSafeMessage } from "@/lib/memberSafeError";
 import {
   formatShortDate,
   getCurrentDebtCycleDueDate,
@@ -803,7 +804,7 @@ export default function DebtsPage() {
     );
 
     if (error) {
-      setMessage(`Settings error: ${error.message}`);
+      setMessage(memberSafeMessage(error, "save"));
       return;
     }
 
@@ -852,7 +853,7 @@ export default function DebtsPage() {
     }).select("*").single();
 
     if (error) {
-      setMessage(`Add debt error: ${error.message}`);
+      setMessage(memberSafeMessage(error, "create"));
       return;
     }
     if (insertedDebt) await recordLifecycleEvent({ userId, debt: { ...insertedDebt, lifecycle_status: null } as Debt, resolution: { ...lifecycle, changed: true }, balance: balanceNum, source: "manual_correction" });
@@ -950,7 +951,7 @@ export default function DebtsPage() {
       .eq("user_id", userId);
   
     if (error) {
-      setMessage(`Update error: ${error.message}`);
+      setMessage(memberSafeMessage(error, "update"));
       return;
     }
     await recordLifecycleEvent({ userId, debt: existingDebt, resolution: lifecycle, balance: balanceNum, source: "manual_correction" });
@@ -976,7 +977,7 @@ export default function DebtsPage() {
       .eq("user_id", userId);
 
     if (error) {
-      setMessage(`Archive error: ${error.message}`);
+      setMessage(memberSafeMessage(error, "update"));
       return;
     }
     await recordLifecycleEvent({ userId, debt, resolution: lifecycle, balance: debt.balance, source: "manual_archive" });
@@ -1006,7 +1007,7 @@ export default function DebtsPage() {
       .eq("user_id", userId);
 
     if (error) {
-      setMessage(`Unarchive error: ${error.message}`);
+      setMessage(memberSafeMessage(error, "update"));
       return;
     }
     await recordLifecycleEvent({ userId, debt, resolution: lifecycle, balance: debt.balance, source: "manual_restore" });
@@ -1023,7 +1024,7 @@ export default function DebtsPage() {
     const { error } = await supabase.from("debts").delete().eq("id", id);
 
     if (error) {
-      setMessage(`Delete error: ${error.message}`);
+      setMessage(memberSafeMessage(error, "delete"));
       return;
     }
 
@@ -1088,7 +1089,7 @@ export default function DebtsPage() {
     const nextDate = requestedDate === "next-cycle" ? getNextDebtCycleDate(getCurrentDebtCycleDueDate(debt)) : requestedDate;
     const { error } = await createClient().from("debts").update({ next_due_date_after_payment: nextDate, assigned_income_date: null }).eq("id", debt.id).eq("user_id", userId);
     setPaymentBusyId(null);
-    if (error) setMessage(`Due date error: ${error.message}`);
+    if (error) setMessage(memberSafeMessage(error, "update"));
     else { setMessage("Next due date updated. Payment history was preserved."); await load(); }
   }
 
