@@ -19,9 +19,18 @@ test("shiftDateBySimulation preserves relative timing", () => {
   assert.equal(shiftDateBySimulation(original, from, simulation).toISOString().slice(0, 10), "2026-08-04");
 });
 
-test("buildFinancialSimulationState labels simulation mode", () => {
-  const state = buildFinancialSimulationState("2026-08-15");
+test("buildFinancialSimulationState labels simulation mode", (context) => {
+  context.mock.timers.enable({
+    apis: ["Date"],
+    now: new Date("2026-08-14T16:00:00.000Z"),
+  });
 
-  assert.equal(state.dateKey, "2026-08-15");
-  assert.equal(state.label.includes("Simulation"), true);
+  try {
+    const state = buildFinancialSimulationState("2026-08-15");
+
+    assert.equal(state.dateKey, "2026-08-15");
+    assert.equal(state.label.includes("Simulation"), true);
+  } finally {
+    context.mock.timers.reset();
+  }
 });
