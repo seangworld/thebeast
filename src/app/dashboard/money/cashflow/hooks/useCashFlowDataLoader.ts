@@ -1,8 +1,11 @@
 import { useCallback, useEffect, useRef } from "react";
 import type { CashIntelligenceResult } from "@/lib/cashIntelligence";
 import { activeDebtPayments } from "@/lib/financialPaymentHistory";
+import { loadCashFlowFinancialData } from "@/lib/financialDataLoaders";
 import { createClient } from "@/lib/supabase/client";
 import type { FundingSource, PayoffStrategy } from "../cashflowUtils";
+
+type SupabaseBrowserClient = ReturnType<typeof createClient>;
 
 type UseCashFlowDataLoaderInput = {
   cycleMonth: string;
@@ -56,15 +59,14 @@ export function useCashFlowDataLoader({
   const focusReloadInFlightRef = useRef(false);
   const lastFocusReloadAtRef = useRef(0);
 
-  const getUserId = useCallback(async () => {
-    const supabase = createClient();
+  const getUserId = useCallback(async (supabase: SupabaseBrowserClient = createClient()) => {
     const { data } = await supabase.auth.getUser();
     return data?.user?.id;
   }, []);
 
   const loadFundingSources = useCallback(async () => {
     const supabase = createClient();
-    const userId = await getUserId();
+    const userId = await getUserId(supabase);
 
     if (!userId) return;
 
@@ -82,54 +84,23 @@ export function useCashFlowDataLoader({
     setLoading(true);
 
     const supabase = createClient();
-    const userId = await getUserId();
+    const userId = await getUserId(supabase);
 
     if (!userId) {
       setLoading(false);
       return;
     }
 
-    const { data: incomeRows } = await supabase
-      .from("income_events")
-      .select("*")
-      .eq("user_id", userId)
-      .order("next_date", { ascending: true });
-
-    const { data: billRows } = await supabase
-      .from("bill_events")
-      .select("*")
-      .eq("user_id", userId)
-      .order("due_date", { ascending: true });
-
-    const { data: paymentRows } = await supabase
-      .from("bill_payments")
-      .select("*")
-      .eq("user_id", userId)
-      .eq("cycle_month", cycleMonth);
-
-    const { data: debtPaymentRows } = await supabase
-      .from("debt_payments")
-      .select("*")
-      .eq("user_id", userId)
-      .is("reversed_at", null);
-
-    const { data: debtRows } = await supabase
-      .from("debts")
-      .select("*")
-      .eq("user_id", userId)
-      .order("due_date", { ascending: true });
-
-    const { data: cashSettings } = await supabase
-      .from("cash_settings")
-      .select("*")
-      .eq("user_id", userId)
-      .maybeSingle();
-
-    const { data: debtSettings } = await supabase
-      .from("debt_settings")
-      .select("*")
-      .eq("user_id", userId)
-      .maybeSingle();
+    const {
+      incomeRows,
+      billRows,
+      paymentRows,
+      debtPaymentRows,
+      debtRows,
+      cashSettings,
+      debtSettings,
+      fundingSourceRows,
+    } = await loadCashFlowFinancialData(supabase, userId, cycleMonth);
 
     const currentDebtPayments = activeDebtPayments(debtPaymentRows || []);
     const projection = buildProjection({
@@ -149,6 +120,7 @@ export function useCashFlowDataLoader({
     setBillPayments(projection.activePayments);
     setDebtPaymentRows(projection.activeDebtPayments);
     setDebts(debtRows || []);
+    setFundingSources(fundingSourceRows || []);
     setTimeline(projection.builtTimeline);
     setData(projection.simulated);
 
@@ -184,6 +156,7 @@ export function useCashFlowDataLoader({
     setDebtPaymentRows,
     setDebts,
     setExtraPayment,
+    setFundingSources,
     setIncomeExpected,
     setCashIntelligence,
     setIncomes,
@@ -198,8 +171,7 @@ export function useCashFlowDataLoader({
 
   useEffect(() => {
     load();
-    loadFundingSources();
-  }, [load, loadFundingSources]);
+  }, [load]);
 
   const reloadCashFlowOnFocus = useCallback(async () => {
     if (focusReloadInFlightRef.current) return;

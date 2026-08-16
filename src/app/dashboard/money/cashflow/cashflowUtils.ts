@@ -79,7 +79,10 @@ export function getAssignmentLabel(value: string) {
   );
 }
 
-export function getTargetDebt(debts: any[], strategy: PayoffStrategy) {
+export function getTargetDebt<T extends { balance?: number | string | null; interest_rate?: number | string | null }>(
+  debts: T[],
+  strategy: PayoffStrategy
+) {
   const active = debts.filter((d) => Number(d.balance || 0) > 0);
 
   if (active.length === 0) return null;
@@ -97,7 +100,7 @@ export function getTargetDebt(debts: any[], strategy: PayoffStrategy) {
   )[0];
 }
 
-export function formatDate(value: any) {
+export function formatDate(value: unknown) {
   return formatSharedDate(value);
 }
 
@@ -114,20 +117,6 @@ export function getFrequencyMonthStep(frequency: string) {
   if (frequency === "every_6_months") return 6;
   if (frequency === "yearly") return 12;
   return 1;
-}
-
-function getNextDueDate(dueDay: number, frequency = "monthly") {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = today.getMonth();
-
-  let dueDate = new Date(year, month, dueDay);
-
-  if (dueDate < new Date(year, month, today.getDate())) {
-    dueDate = new Date(year, month + getFrequencyMonthStep(frequency), dueDay);
-  }
-
-  return dueDate;
 }
 
 export function getDebtCycleDueDate(dueDay: number) {

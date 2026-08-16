@@ -49,16 +49,16 @@ import { OverlayPopover } from "../cashflow/components/OverlayPopover";
 import { getNextDebtCycleDate, toDebtDateInput, type DebtPaymentAction } from "@/lib/debtManagement";
 import { getDebtLifecycleLabel, getDebtLifecycleStatus, resolveDebtLifecycle, type DebtLifecycleStatus } from "@/lib/debtLifecycle";
 import { reportClientOperationFailure } from "@/lib/clientDiagnostics";
+import { loadDebtWorkspaceFinancialData } from "@/lib/financialDataLoaders";
 import {
   AtomicFinancialCommandError,
-  createFinancialOperationId,
   recordDebtPaymentAtomic,
-  reverseDebtPaymentAtomic,
 } from "@/lib/atomicFinancialCommands";
 import { BEASTMONEY_PAYMENT_MAINTENANCE_MESSAGE } from "@/lib/beastMoneyPaymentWriteGate";
 import { useBeastMoneyPaymentWriteGate } from "@/lib/hooks/useBeastMoneyPaymentWriteGate";
 
 const PAYOFF_COLUMNS_STORAGE_KEY = "beastmoney.payoff-plan.columns.v1";
+type SupabaseBrowserClient = ReturnType<typeof createClient>;
 
 function PayoffRowDetails({ row, strategy, assumptions, debt, onEdit, onArchive, onDelete }: {
   row: PayoffPlanDisplayRow;
@@ -283,7 +283,6 @@ export default function DebtsPage() {
   const [showArchivedDebts, setShowArchivedDebts] = useState(false);
   const [payoffOptionalColumns, setPayoffOptionalColumns] = useState<PayoffOptionalColumn[]>([]);
   const [expandedPayoffRow, setExpandedPayoffRow] = useState<string | null>(null);
-  const pendingReversalOperations = useRef(new Map<string, string>());
   const focusReloadInFlightRef = useRef(false);
   const lastFocusReloadAtRef = useRef(0);
 
@@ -640,8 +639,7 @@ export default function DebtsPage() {
     0
   );
 
-  const getUserId = useCallback(async () => {
-    const supabase = createClient();
+  const getUserId = useCallback(async (supabase: SupabaseBrowserClient = createClient()) => {
     const { data } = await supabase.auth.getUser();
     return data?.user?.id;
   }, []);
@@ -672,53 +670,23 @@ export default function DebtsPage() {
     setLoading(true);
 
     const supabase = createClient();
-    const userId = await getUserId();
+    const userId = await getUserId(supabase);
 
     if (!userId) {
       setLoading(false);
       return;
     }
 
-    const [{ data: debtRows }, { data: debtPaymentRows }] = await Promise.all([
-      supabase.from("debts").select("*").eq("user_id", userId),
-      supabase.from("debt_payments").select("*").eq("user_id", userId).order("created_at", { ascending: false }),
-    ]);
-
-    const { data: incomeRows } = await supabase
-      .from("income_events")
-      .select("*")
-      .eq("user_id", userId)
-      .order("next_date", { ascending: true });
-
-    const { data: billRows } = await supabase
-      .from("bill_events")
-      .select("*")
-      .eq("user_id", userId)
-      .order("due_date", { ascending: true });
-
-    const { data: cashSettings } = await supabase
-      .from("cash_settings")
-      .select("*")
-      .eq("user_id", userId)
-      .maybeSingle();
-
-    const { data: fundingSourceRows } = await supabase
-      .from("funding_sources")
-      .select("*")
-      .eq("user_id", userId)
-      .eq("is_active", true);
-
-    const { data: settings } = await supabase
-      .from("debt_settings")
-      .select("*")
-      .eq("user_id", userId)
-      .maybeSingle();
-
-    const { data: velocitySettingsRow } = await supabase
-      .from("velocity_settings")
-      .select("*")
-      .eq("user_id", userId)
-      .maybeSingle();
+    const {
+      debtRows,
+      debtPaymentRows,
+      incomeRows,
+      billRows,
+      cashSettings,
+      fundingSourceRows,
+      settings,
+      velocitySettingsRow,
+    } = await loadDebtWorkspaceFinancialData(supabase, userId);
 
     setDebts(debtRows || []);
     setDebtPayments((debtPaymentRows || []) as DebtPaymentHistoryRow[]);
@@ -1091,43 +1059,6 @@ export default function DebtsPage() {
     setPaymentBusyId(null);
     if (error) setMessage(memberSafeMessage(error, "update"));
     else { setMessage("Next due date updated. Payment history was preserved."); await load(); }
-  }
-
-  async function undoLastDebtPayment(debt: DebtManagementDebt, payment: DebtPaymentHistoryRow) {
-    if (!paymentWriteGate.paymentsAvailable) {
-      setMessage(BEASTMONEY_PAYMENT_MAINTENANCE_MESSAGE);
-      return;
-    }
-    if (!window.confirm(`Undo the last payment for ${debt.name}?`)) return;
-    const userId = await getUserId();
-    if (!userId) return;
-    setPaymentBusyId(debt.id);
-    const operationId = pendingReversalOperations.current.get(payment.id) || createFinancialOperationId();
-    pendingReversalOperations.current.set(payment.id, operationId);
-    try {
-      await reverseDebtPaymentAtomic(createClient(), {
-        operationId,
-        paymentId: payment.id,
-        reason: "Member reversed the recorded payment.",
-      });
-      pendingReversalOperations.current.delete(payment.id);
-      setMessage("Last payment reversed and the recorded principal restored; history was preserved.");
-      await load();
-    } catch (error) {
-      reportClientOperationFailure({
-        module: "beastmoney",
-        operation: "debt_payment_reverse",
-        category: error instanceof AtomicFinancialCommandError ? error.category : "unknown_error",
-      });
-      setMessage(
-        error instanceof AtomicFinancialCommandError &&
-        error.category === "maintenance_error"
-          ? BEASTMONEY_PAYMENT_MAINTENANCE_MESSAGE
-          : "Unable to reverse the payment. No partial reversal was applied; please retry."
-      );
-    } finally {
-      setPaymentBusyId(null);
-    }
   }
 
   return (

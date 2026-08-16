@@ -55,8 +55,9 @@ test("BM-40/41 migration preserves owner-scoped lifecycle and reversal history",
   assert.match(migration, /auth\.uid\(\) = user_id/g);
   assert.match(migration, /reversed_at timestamptz/);
   assert.match(migration, /payment_id uuid null references public\.debt_payments/);
+  const commands = readFileSync("src/lib/atomicFinancialCommands.ts", "utf8");
+  assert.match(commands, /export function reverseDebtPaymentAtomic/);
   const page = readFileSync("src/app/dashboard/money/debts/page.tsx", "utf8");
-  assert.match(page, /reverseDebtPaymentAtomic/);
   assert.doesNotMatch(page, /from\("debt_payments"\)\.delete/);
 });
 
