@@ -129,6 +129,27 @@ test("DS-PERF-01 supplies canonical affordability context without starving suppo
   assert.ok(records.length <= 20);
 });
 
+test("Money Coach keeps open zero-balance revolving accounts in context without inventing an obligation", () => {
+  const records = buildMoneyCoachStructuredRecords({
+    debts: [
+      { id: "open-card", name: "Open Card", balance: 0, minimum_payment: 100, payment_behavior: "revolving", lifecycle_status: "active_balance", is_archived: false },
+      { id: "archived-card", name: "Archived Card", balance: 200, minimum_payment: 25, payment_behavior: "revolving", lifecycle_status: "archived", is_archived: true },
+    ],
+    bills: [],
+    incomes: [],
+    cashSettings: { starting_balance: 1_000, checking_buffer: 200 },
+    fundingSources: [],
+    goals: [],
+  }, new Date("2026-08-16T12:00:00Z"));
+  const summary = records[0]?.record as Record<string, unknown>;
+  assert.equal(summary.activeDebtCount, 1);
+  assert.equal(summary.openZeroBalanceDebtCount, 1);
+  assert.equal(summary.monthlyDebtMinimums, 0);
+  const debtRecords = records.filter((record) => record.domain.endsWith(":debt"));
+  assert.equal(debtRecords.length, 1);
+  assert.equal((debtRecords[0]?.record as Record<string, unknown>).id, "open-card");
+});
+
 test("DS-PERF-01 Money context selects only columns present in the canonical DEV schema", () => {
   const schema = readFileSync("supabase/migrations/20260531000000_dev_schema.sql", "utf8");
   const cashSettingsDefinition = schema.slice(schema.indexOf("create table if not exists public.cash_settings"), schema.indexOf("alter table public.cash_settings"));

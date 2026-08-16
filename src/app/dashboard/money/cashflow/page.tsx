@@ -17,6 +17,7 @@ import { BeastMoneyShell } from "@/app/dashboard/money/BeastMoneyShell";
 import { MoneyManagementNavigation } from "@/app/dashboard/money/components/MoneyManagementNavigation";
 import { reportClientOperationFailure } from "@/lib/clientDiagnostics";
 import { BEASTMONEY_PAYMENT_MAINTENANCE_MESSAGE } from "@/lib/beastMoneyPaymentWriteGate";
+import { isDebtArchivedOrClosed, isDebtOpen, isDebtPayoffEligible } from "@/lib/debtLifecycle";
 import { applySuggestedDebtAttackCommand } from "@/lib/suggestedDebtAttack";
 import { useCashFlow } from "./useCashFlow";
 import {
@@ -710,13 +711,17 @@ export default function CashFlowPage() {
 
   const activeDebts = useMemo(() => {
     return sortObligationsByNextDueDate(
-      debtsWithAssignmentStatus.filter((debt) => !debt.is_archived)
+      debtsWithAssignmentStatus.filter(isDebtOpen)
     );
   }, [debtsWithAssignmentStatus]);
 
+  const payableDebts = useMemo(() => {
+    return activeDebts.filter(isDebtPayoffEligible);
+  }, [activeDebts]);
+
   const archivedDebts = useMemo(() => {
     return sortObligationsByNextDueDate(
-      debtsWithAssignmentStatus.filter((debt) => debt.is_archived)
+      debtsWithAssignmentStatus.filter(isDebtArchivedOrClosed)
     );
   }, [debtsWithAssignmentStatus]);
 
@@ -776,10 +781,10 @@ export default function CashFlowPage() {
   const upcomingDebtMinimums = useMemo(() => {
     if (!nextPayDate) return 0;
 
-    return activeDebts
+    return payableDebts
       .filter((debt) => debt.nextDueDate <= nextPayDate)
       .reduce((sum, debt) => sum + Number(debt.minimum_payment || 0), 0);
-  }, [activeDebts, nextPayDate]);
+  }, [nextPayDate, payableDebts]);
 
   const effectiveNextPaycheckAmount = useMemo(() => {
     if (nextPaycheckAmount) return Number(nextPaycheckAmount);
@@ -802,19 +807,19 @@ export default function CashFlowPage() {
 
     return buildFinancialDecision({
       cashIntelligence,
-      debts: activeDebts,
+      debts: payableDebts,
       income: incomes,
       bills: activeBills,
       fundingSources,
       strategy,
     });
-  }, [cashIntelligence, activeDebts, incomes, activeBills, fundingSources, strategy]);
+  }, [cashIntelligence, payableDebts, incomes, activeBills, fundingSources, strategy]);
 
   const suggestedMonthlyDebtAttack = financialDecision?.suggestedExtraPayment ?? null;
 
   const recommendedTargetDebt = useMemo(() => {
-    return financialDecision?.targetDebt || getTargetDebt(activeDebts, strategy);
-  }, [financialDecision, activeDebts, strategy]);
+    return financialDecision?.targetDebt || getTargetDebt(payableDebts, strategy);
+  }, [financialDecision, payableDebts, strategy]);
 
   const planningWindowEnd = useMemo(() => {
     const today = new Date();
@@ -833,12 +838,12 @@ export default function CashFlowPage() {
 
   const unassignedDebts = useMemo(() => {
     return sortObligationsByNextDueDate(
-      activeDebts.filter(
+      payableDebts.filter(
         (debt) =>
           !debt.assigned_income_date && debt.nextDueDate <= planningWindowEnd
       )
     );
-  }, [activeDebts, planningWindowEnd]);
+  }, [payableDebts, planningWindowEnd]);
 
   const unassignedObligationsTotal = useMemo(() => {
     const billTotal = unassignedBills.reduce(
@@ -898,7 +903,7 @@ export default function CashFlowPage() {
       }
     }
 
-    for (const debt of activeDebts) {
+    for (const debt of payableDebts) {
       if (
         debt.assigned_income_date &&
         Number(debt.minimum_payment || 0) > 0 &&
@@ -968,7 +973,7 @@ export default function CashFlowPage() {
       );
 
       const assignedDebts = sortObligationsByNextDueDate(
-        activeDebts.filter((debt) => debt.assigned_income_date === bucket.date)
+        payableDebts.filter((debt) => debt.assigned_income_date === bucket.date)
       );
 
       // Only count bills funded by checking/cash/savings accounts toward paycheck balance
@@ -1026,7 +1031,7 @@ export default function CashFlowPage() {
         dropdownLabel,
       };
     });
-  }, [incomeBuckets, activeBills, activeDebts, incomes, fundingSources, buffer]);
+  }, [incomeBuckets, activeBills, payableDebts, incomes, fundingSources, buffer]);
 
   const operationalAlerts = useMemo(() => {
     const alerts: OperationalAlert[] = [];
@@ -1162,7 +1167,7 @@ export default function CashFlowPage() {
     }
 
     const unfundedBills = activeBills.filter((bill) => !isPaymentConfigurationComplete(bill));
-    const unfundedDebts = activeDebts.filter((debt) => !isPaymentConfigurationComplete(debt));
+    const unfundedDebts = payableDebts.filter((debt) => !isPaymentConfigurationComplete(debt));
 
     if (activeFundingSources.length > 0 && unfundedBills.length + unfundedDebts.length > 0) {
       steps.push(
@@ -1202,6 +1207,7 @@ export default function CashFlowPage() {
   }, [
     activeBills,
     activeDebts,
+    payableDebts,
     incomeBucketPlans,
     unassignedBills,
     unassignedDebts,

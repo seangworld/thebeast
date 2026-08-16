@@ -35,6 +35,13 @@ export type DebtLifecycleResolution = {
   update: Record<string, string | number | boolean | null>;
 };
 
+export type DebtLifecycleRecord = {
+  balance?: number | string | null;
+  payment_behavior?: "fixed" | "revolving" | null;
+  is_archived?: boolean | null;
+  lifecycle_status?: DebtLifecycleStatus | null;
+};
+
 export function getDebtLifecycleLabel(status: DebtLifecycleStatus) {
   if (status === "active_balance") return "Active Balance";
   if (status === "open_zero_balance") return "Open — Zero Balance";
@@ -42,11 +49,41 @@ export function getDebtLifecycleLabel(status: DebtLifecycleStatus) {
   return "Archived";
 }
 
-export function getDebtLifecycleStatus(debt: { balance?: number | null; payment_behavior?: "fixed" | "revolving" | null; is_archived?: boolean | null; lifecycle_status?: DebtLifecycleStatus | null }): DebtLifecycleStatus {
-  if (debt.lifecycle_status) return debt.lifecycle_status;
-  if (debt.is_archived) return "archived";
-  if (Number(debt.balance ?? 0) > 0) return "active_balance";
-  return debt.payment_behavior === "revolving" ? "open_zero_balance" : "paid_off_closed";
+export function getDebtLifecycleStatus(debt: DebtLifecycleRecord): DebtLifecycleStatus {
+  if (debt.lifecycle_status === "archived") return "archived";
+  if (
+    debt.is_archived &&
+    !(
+      debt.lifecycle_status === "paid_off_closed" &&
+      debt.payment_behavior !== "revolving"
+    )
+  ) {
+    return "archived";
+  }
+
+  const balanceKnown = debt.balance !== null && debt.balance !== undefined && Number.isFinite(Number(debt.balance));
+  if (balanceKnown) {
+    if (Number(debt.balance) > 0) return "active_balance";
+    if (debt.payment_behavior === "revolving" || debt.lifecycle_status === "open_zero_balance") {
+      return "open_zero_balance";
+    }
+    return "paid_off_closed";
+  }
+
+  return debt.lifecycle_status || "active_balance";
+}
+
+export function isDebtOpen(debt: DebtLifecycleRecord) {
+  const status = getDebtLifecycleStatus(debt);
+  return status === "active_balance" || status === "open_zero_balance";
+}
+
+export function isDebtPayoffEligible(debt: DebtLifecycleRecord) {
+  return isDebtOpen(debt) && Number(debt.balance || 0) > 0;
+}
+
+export function isDebtArchivedOrClosed(debt: DebtLifecycleRecord) {
+  return !isDebtOpen(debt);
 }
 
 export function resolveDebtLifecycle(input: DebtLifecycleInput): DebtLifecycleResolution {

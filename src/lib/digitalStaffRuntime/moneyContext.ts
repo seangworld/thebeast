@@ -1,4 +1,5 @@
 import { buildCashIntelligence } from "../cashIntelligence";
+import { getDebtLifecycleStatus, isDebtPayoffEligible } from "../debtLifecycle";
 import { numberValue } from "../financialMetrics";
 
 type MoneyRow = Record<string, unknown>;
@@ -37,6 +38,7 @@ export function buildMoneyCoachStructuredRecords(
   asOfDate = new Date()
 ) {
   const debts = active(rows.debts);
+  const payableDebts = debts.filter(isDebtPayoffEligible);
   const bills = active(rows.bills);
   const incomes = active(rows.incomes);
   const fundingSources = active(rows.fundingSources);
@@ -46,7 +48,7 @@ export function buildMoneyCoachStructuredRecords(
     asOfDate,
     income: incomes,
     bills,
-    debtMinimums: debts,
+    debtMinimums: payableDebts,
     fundingSources,
     settings: { currentCash, cashBuffer, lookaheadDays: 30 },
   });
@@ -69,6 +71,9 @@ export function buildMoneyCoachStructuredRecords(
       projectedCashBalance: cash.projectedCashBalance,
       safeFundingSourceCapacity: cash.safeFundingSourceCapacity,
       activeDebtCount: debts.length,
+      openZeroBalanceDebtCount: debts.filter(
+        (debt) => getDebtLifecycleStatus(debt) === "open_zero_balance"
+      ).length,
       activeBillCount: bills.length,
       activeIncomeCount: incomes.length,
       activeFundingSourceCount: fundingSources.length,

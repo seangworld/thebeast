@@ -6,6 +6,7 @@ import {
 } from "@/lib/director";
 import { runDigitalStaffRuntime, safeDigitalStaffFailure, type ConversationState, type RuntimeMessage } from "@/lib/digitalStaffRuntime";
 import { createRouteClient } from "@/lib/supabase/server";
+import { getDebtLifecycleLabel, getDebtLifecycleStatus } from "@/lib/debtLifecycle";
 
 export const dynamic = "force-dynamic";
 
@@ -153,7 +154,7 @@ async function loadDirectorContext(
       supabase
         .from("debts")
         .select(
-          "id, name, balance, minimum_payment, next_due_date_after_payment, is_archived"
+          "id, name, balance, minimum_payment, next_due_date_after_payment, payment_behavior, lifecycle_status, is_archived"
         )
         .eq("user_id", ownerId)
         .eq("is_archived", false)
@@ -200,7 +201,7 @@ async function loadDirectorContext(
           id: String(row.id),
           domain: "money" as const,
           label: String(row.name),
-          status: Number(row.balance || 0) > 0 ? "active" : "paid",
+          status: getDebtLifecycleLabel(getDebtLifecycleStatus(row)),
           date:
             typeof row.next_due_date_after_payment === "string"
               ? row.next_due_date_after_payment

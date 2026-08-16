@@ -19,6 +19,7 @@ import { buildResetDueDatePayload } from "./dueDateReset";
 import type { AutomationPatch } from "@/app/dashboard/money/components/PaymentAutomationControls";
 import { reportClientOperationFailure } from "@/lib/clientDiagnostics";
 import { useBeastMoneyPaymentWriteGate } from "@/lib/hooks/useBeastMoneyPaymentWriteGate";
+import { resolveDebtLifecycle, type DebtLifecycleSource } from "@/lib/debtLifecycle";
 
 export function useCashFlow() {
   const paymentWriteGate = useBeastMoneyPaymentWriteGate();
@@ -644,8 +645,25 @@ export function useCashFlow() {
 
   async function saveDebtEdit(id: string) {
     const supabase = createClient();
+    const debt = debts.find((candidate) => candidate.id === id);
+    const userId = await getUserId(supabase);
+    if (!debt || !userId) return;
 
-    await supabase
+    const lifecycle = debt.is_archived
+      ? null
+      : resolveDebtLifecycle({
+          balance: Number(editDebtBalance || 0),
+          paymentBehavior: editDebtPaymentBehavior,
+          isArchived: debt.is_archived,
+          currentStatus: debt.lifecycle_status,
+          source: "manual_correction",
+          effectiveDate: new Date().toISOString().slice(0, 10),
+          reminderEnabled: debt.reminder_enabled,
+          reminderEnabledBeforePayoff: debt.reminder_enabled_before_payoff,
+          lifecycleAutoArchived: debt.lifecycle_auto_archived,
+        });
+
+    const { error } = await supabase
       .from("debts")
       .update({
         name: editDebtName,
@@ -656,8 +674,31 @@ export function useCashFlow() {
         payment_behavior: editDebtPaymentBehavior,
         minimum_payment_rate: Number(editDebtMinimumPaymentRate || 2),
         minimum_payment_floor: Number(editDebtMinimumPaymentFloor || 25),
+        ...(lifecycle?.update || {}),
       })
-      .eq("id", id);
+      .eq("id", id)
+      .eq("user_id", userId);
+
+    if (error) {
+      setSaveError(memberSafeMessage(error, "update"));
+      return;
+    }
+
+    if (lifecycle?.changed) {
+      const { error: historyError } = await supabase.from("debt_lifecycle_events").insert({
+        user_id: userId,
+        debt_id: debt.id,
+        previous_status: debt.lifecycle_status || (debt.is_archived ? "archived" : "active_balance"),
+        next_status: lifecycle.status,
+        source: "manual_correction",
+        balance: Number(editDebtBalance || 0),
+        reason: lifecycle.reason,
+      });
+      if (historyError) {
+        setSaveError(memberSafeMessage(historyError, "save"));
+        return;
+      }
+    }
 
     cancelEditDebt();
     await load();
@@ -695,17 +736,56 @@ export function useCashFlow() {
     await load();
   }
 
-  async function archiveDebt(id: string) {
+  async function updateDebtLifecycle(id: string, source: Extract<DebtLifecycleSource, "manual_archive" | "manual_restore">) {
     const supabase = createClient();
+    const debt = debts.find((candidate) => candidate.id === id);
+    const userId = await getUserId(supabase);
+    if (!debt || !userId) return;
 
-    await supabase
+    const lifecycle = resolveDebtLifecycle({
+      balance: debt.balance,
+      paymentBehavior: debt.payment_behavior,
+      isArchived: debt.is_archived,
+      currentStatus: debt.lifecycle_status,
+      source,
+      effectiveDate: new Date().toISOString(),
+      reminderEnabled: debt.reminder_enabled,
+      reminderEnabledBeforePayoff: debt.reminder_enabled_before_payoff,
+      lifecycleAutoArchived: debt.lifecycle_auto_archived,
+    });
+
+    const { error } = await supabase
       .from("debts")
-      .update({
-        is_archived: true,
-      })
-      .eq("id", id);
+      .update(lifecycle.update)
+      .eq("id", id)
+      .eq("user_id", userId);
+
+    if (error) {
+      setSaveError(memberSafeMessage(error, "update"));
+      return;
+    }
+
+    if (lifecycle.changed) {
+      const { error: historyError } = await supabase.from("debt_lifecycle_events").insert({
+        user_id: userId,
+        debt_id: debt.id,
+        previous_status: debt.lifecycle_status || (debt.is_archived ? "archived" : "active_balance"),
+        next_status: lifecycle.status,
+        source,
+        balance: Number(debt.balance || 0),
+        reason: lifecycle.reason,
+      });
+      if (historyError) {
+        setSaveError(memberSafeMessage(historyError, "save"));
+        return;
+      }
+    }
 
     await load();
+  }
+
+  async function archiveDebt(id: string) {
+    await updateDebtLifecycle(id, "manual_archive");
   }
 
   async function resetDebtDueDate(id: string) {
@@ -729,16 +809,7 @@ export function useCashFlow() {
   }
 
   async function unarchiveDebt(id: string) {
-    const supabase = createClient();
-
-    await supabase
-      .from("debts")
-      .update({
-        is_archived: false,
-      })
-      .eq("id", id);
-
-    await load();
+    await updateDebtLifecycle(id, "manual_restore");
   }
 
   async function deleteIncome(id: string) {

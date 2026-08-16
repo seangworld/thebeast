@@ -47,7 +47,7 @@ import { MoneyManagementNavigation } from "@/app/dashboard/money/components/Mone
 import { DebtManagementActions, type DebtManagementActionsProps, type DebtManagementDebt, type DebtPaymentHistoryRow, type DebtPaymentResult } from "./DebtManagementActions";
 import { OverlayPopover } from "../cashflow/components/OverlayPopover";
 import { getNextDebtCycleDate, toDebtDateInput, type DebtPaymentAction } from "@/lib/debtManagement";
-import { getDebtLifecycleLabel, getDebtLifecycleStatus, resolveDebtLifecycle, type DebtLifecycleStatus } from "@/lib/debtLifecycle";
+import { getDebtLifecycleLabel, getDebtLifecycleStatus, isDebtArchivedOrClosed, isDebtOpen, isDebtPayoffEligible, resolveDebtLifecycle, type DebtLifecycleStatus } from "@/lib/debtLifecycle";
 import { reportClientOperationFailure } from "@/lib/clientDiagnostics";
 import { loadDebtWorkspaceFinancialData } from "@/lib/financialDataLoaders";
 import {
@@ -148,7 +148,7 @@ function DebtActionsMenu({
   automation: ReactNode;
   management?: DebtManagementActionsProps;
   onEdit: () => void;
-  lifecycleLabel?: "Archive" | "Unarchive";
+  lifecycleLabel?: "Archive" | "Restore to Active" | null;
   onLifecycle: () => void;
   onDelete: () => void;
 }) {
@@ -167,7 +167,7 @@ function DebtActionsMenu({
           {management ? <DebtManagementActions {...management} editAction={<button type="button" onClick={() => { close(); onEdit(); }} className="beast-button-secondary w-full whitespace-nowrap px-4 text-sm">Edit</button>} /> : null}
           <div className="grid grid-cols-1 gap-2 border-t border-[#2a3242] pt-2">
             {!management ? <button type="button" onClick={() => { close(); onEdit(); }} className="beast-button-secondary w-full whitespace-nowrap px-4 text-sm">Edit</button> : null}
-            <button type="button" onClick={() => { close(); onLifecycle(); }} className="beast-button-secondary w-full whitespace-nowrap px-4 text-sm">{lifecycleLabel}</button>
+            {lifecycleLabel ? <button type="button" onClick={() => { close(); onLifecycle(); }} className="beast-button-secondary w-full whitespace-nowrap px-4 text-sm">{lifecycleLabel}</button> : null}
             <button type="button" className="beast-button w-full whitespace-nowrap px-4 text-sm text-red-300 hover:bg-red-950/40" onClick={() => { close(); onDelete(); }}>Delete</button>
           </div>
         </div>
@@ -320,9 +320,13 @@ export default function DebtsPage() {
 
   const activeDebts = useMemo(() => {
     return sortObligationsByNextDueDate(
-      debtsWithNextDueDate.filter(
-        (debt) => !Boolean(debt.is_archived) && Number(debt.balance || 0) > 0
-      )
+      debtsWithNextDueDate.filter(isDebtPayoffEligible)
+    );
+  }, [debtsWithNextDueDate]);
+
+  const openDebts = useMemo(() => {
+    return sortObligationsByNextDueDate(
+      debtsWithNextDueDate.filter(isDebtOpen)
     );
   }, [debtsWithNextDueDate]);
 
@@ -330,17 +334,13 @@ export default function DebtsPage() {
   // minimum payments as recovered attack capacity instead of vanishing.
   const recoveredMinimums = useMemo(() => {
     return debtsWithNextDueDate
-      .filter(
-        (debt) => Boolean(debt.is_archived) || Number(debt.balance || 0) <= 0
-      )
+      .filter((debt) => !isDebtPayoffEligible(debt))
       .reduce((sum, debt) => sum + Number(debt.minimum_payment || 0), 0);
   }, [debtsWithNextDueDate]);
 
   const archivedDebts = useMemo(() => {
     return sortObligationsByNextDueDate(
-      debtsWithNextDueDate.filter(
-        (debt) => Boolean(debt.is_archived) || Number(debt.balance || 0) <= 0
-      )
+      debtsWithNextDueDate.filter(isDebtArchivedOrClosed)
     );
   }, [debtsWithNextDueDate]);
 
@@ -626,8 +626,8 @@ export default function DebtsPage() {
   ]);
 
   const orderedDebts = useMemo(() => {
-    return activeDebts;
-  }, [activeDebts]);
+    return openDebts;
+  }, [openDebts]);
 
   const totalDebt = activeDebts.reduce(
     (sum, d) => sum + Number(d.balance || 0),
@@ -1117,7 +1117,7 @@ export default function DebtsPage() {
           {view === "debts" ? (
             <div className="money-section-card">
               <div className="money-metric-label">Active Debts</div>
-              <div className="money-metric-value">{activeDebts.length}</div>
+              <div className="money-metric-value">{openDebts.length}</div>
             </div>
           ) : (
             <>
@@ -1480,6 +1480,9 @@ export default function DebtsPage() {
                           <h3 className="mt-1 break-words text-base font-black text-white">
                             {debt.name}
                           </h3>
+                          {getDebtLifecycleStatus(debt) === "open_zero_balance" ? (
+                            <p className="mt-1 text-xs font-semibold text-cyan-200">Open — Zero Balance</p>
+                          ) : null}
                           <p className="mt-1 text-xs text-[#7f8da3]">
                             Due {debt.nextDueDateDisplay || debt.due_date || 1}
                           </p>
@@ -1584,7 +1587,12 @@ export default function DebtsPage() {
                             className="beast-input"
                           />
                         ) : (
-                          debt.name
+                          <div>
+                            <div>{debt.name}</div>
+                            {getDebtLifecycleStatus(debt) === "open_zero_balance" ? (
+                              <div className="text-xs font-semibold text-cyan-200">Open — Zero Balance</div>
+                            ) : null}
+                          </div>
                         )}
                       </td>
                   
@@ -1875,7 +1883,7 @@ export default function DebtsPage() {
                               debt={debt}
                               automation={<PaymentAutomationControls compact name={debt.name} {...normalizePaymentAutomation(debt)} onSave={(patch) => updateDebtAutomation(debt.id, patch)} />}
                               onEdit={() => startEditDebt(debt)}
-                              lifecycleLabel={Boolean(debt.is_archived) ? "Unarchive" : "Archive"}
+                              lifecycleLabel={getDebtLifecycleStatus(debt) === "archived" ? "Restore to Active" : null}
                               onLifecycle={() => Boolean(debt.is_archived) ? void unarchiveDebt(debt.id) : void archiveDebt(debt.id)}
                               onDelete={() => void deleteDebt(debt.id)}
                             />

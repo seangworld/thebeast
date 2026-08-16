@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
-import { getDebtLifecycleLabel, getDebtLifecycleStatus, resolveDebtLifecycle } from "../src/lib/debtLifecycle";
+import { getDebtLifecycleLabel, getDebtLifecycleStatus, isDebtArchivedOrClosed, isDebtOpen, isDebtPayoffEligible, resolveDebtLifecycle } from "../src/lib/debtLifecycle";
 import { applyBillPartialPayment } from "../src/lib/financialPayments";
 
 const date = "2026-08-08";
@@ -26,6 +26,47 @@ test("an open credit card remains open at zero and a closed card can be archived
   const closed = resolveDebtLifecycle({ balance: 0, paymentBehavior: "revolving", currentStatus: "open_zero_balance", source: "manual_archive", effectiveDate: date });
   assert.equal(closed.status, "archived");
   assert.equal(closed.update.is_archived, true);
+});
+
+test("revolving balance state stays separate from explicit lifecycle state", () => {
+  const openZero = {
+    id: "card",
+    balance: 0,
+    minimum_payment: 75,
+    payment_behavior: "revolving" as const,
+    lifecycle_status: "active_balance" as const,
+    is_archived: false,
+  };
+  assert.equal(getDebtLifecycleStatus(openZero), "open_zero_balance");
+  assert.equal(isDebtOpen(openZero), true);
+  assert.equal(isDebtPayoffEligible(openZero), false);
+  assert.equal(isDebtArchivedOrClosed(openZero), false);
+
+  const archived = { ...openZero, lifecycle_status: "archived" as const, is_archived: true };
+  assert.equal(getDebtLifecycleStatus(archived), "archived");
+  assert.equal(isDebtOpen(archived), false);
+  assert.equal(isDebtArchivedOrClosed(archived), true);
+});
+
+test("explicit restore preserves account identity and restores revolving balances without duplication", () => {
+  const zero = resolveDebtLifecycle({ balance: 0, paymentBehavior: "revolving", isArchived: true, currentStatus: "archived", source: "manual_restore", effectiveDate: date });
+  assert.equal(zero.status, "open_zero_balance");
+  assert.equal(zero.update.is_archived, false);
+  assert.equal(zero.update.archived_at, null);
+
+  const positive = resolveDebtLifecycle({ balance: 400, paymentBehavior: "revolving", isArchived: true, currentStatus: "archived", source: "manual_restore", effectiveDate: date });
+  assert.equal(positive.status, "active_balance");
+  assert.equal(positive.update.is_archived, false);
+  assert.equal("id" in positive.update, false);
+});
+
+test("fixed zero-balance debt retains its legitimate paid-off lifecycle", () => {
+  const fixed = { balance: 0, payment_behavior: "fixed" as const, is_archived: true, lifecycle_status: "paid_off_closed" as const };
+  assert.equal(getDebtLifecycleStatus(fixed), "paid_off_closed");
+  assert.equal(isDebtPayoffEligible(fixed), false);
+  const payoff = resolveDebtLifecycle({ balance: 0, paymentBehavior: "fixed", source: "beast_payment", effectiveDate: date, reminderEnabled: true });
+  assert.equal(payoff.status, "paid_off_closed");
+  assert.equal(payoff.update.is_archived, true);
 });
 
 test("pending, unknown, and incomplete reconciliation balances never auto-archive", () => {
@@ -57,8 +98,26 @@ test("BM-40/41 migration preserves owner-scoped lifecycle and reversal history",
   assert.match(migration, /payment_id uuid null references public\.debt_payments/);
   const commands = readFileSync("src/lib/atomicFinancialCommands.ts", "utf8");
   assert.match(commands, /export function reverseDebtPaymentAtomic/);
+  const atomicMigration = readFileSync("supabase/migrations/20260810000100_add_atomic_financial_commands.sql", "utf8");
+  assert.match(atomicMigration, /elsif v_debt\.payment_behavior = 'revolving' then[\s\S]*?v_next_status := 'open_zero_balance';[\s\S]*?v_is_archived := false;/);
+  assert.match(atomicMigration, /insert into public\.debt_payments/);
   const page = readFileSync("src/app/dashboard/money/debts/page.tsx", "utf8");
   assert.doesNotMatch(page, /from\("debt_payments"\)\.delete/);
+});
+
+test("debt management keeps open zero-balance revolving accounts active and exposes explicit restore", () => {
+  const page = readFileSync("src/app/dashboard/money/debts/page.tsx", "utf8");
+  assert.match(page, /debtsWithNextDueDate\.filter\(isDebtOpen\)/);
+  assert.match(page, /debtsWithNextDueDate\.filter\(isDebtArchivedOrClosed\)/);
+  assert.match(page, /Restore to Active/);
+  assert.match(page, /Open — Zero Balance/);
+  assert.doesNotMatch(page, /Boolean\(debt\.is_archived\) \|\| Number\(debt\.balance \|\| 0\) <= 0/);
+
+  const cashFlow = readFileSync("src/app/dashboard/money/cashflow/hooks/useCashFlowProjection.ts", "utf8");
+  assert.match(cashFlow, /payableDebtRows = openDebtRows\.filter\(isDebtPayoffEligible\)/);
+  const actions = readFileSync("src/app/dashboard/money/cashflow/useCashFlow.ts", "utf8");
+  assert.match(actions, /source: Extract<DebtLifecycleSource, "manual_archive" \| "manual_restore">/);
+  assert.match(actions, /from\("debt_lifecycle_events"\)\.insert/);
 });
 
 test("Velocity Banking is first-class and Money Coach uses its canonical route and boundaries", () => {

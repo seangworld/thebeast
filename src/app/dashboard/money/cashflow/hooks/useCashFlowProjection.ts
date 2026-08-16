@@ -1,6 +1,7 @@
 import { buildCashIntelligence } from "@/lib/cashIntelligence";
 import { useCallback } from "react";
 import { normalizeDebtStrategy } from "@/lib/debtStrategies";
+import { isDebtOpen, isDebtPayoffEligible } from "@/lib/debtLifecycle";
 import {
   addDays,
   addMonthsClamped,
@@ -44,10 +45,9 @@ export function useCashFlowProjection() {
     const activeStrategy = normalizeDebtStrategy(debtSettings?.strategy);
     const activeExtraPayment = Number(debtSettings?.extra_payment || 0);
 
-    const activeDebtRows = (debtRows || []).filter(
-      (debt) => !Boolean(debt.is_archived)
-    );
-    const targetDebt = getTargetDebt(activeDebtRows, activeStrategy);
+    const openDebtRows = (debtRows || []).filter(isDebtOpen);
+    const payableDebtRows = openDebtRows.filter(isDebtPayoffEligible);
+    const targetDebt = getTargetDebt(payableDebtRows, activeStrategy);
 
     const activePayments = paymentRows || [];
     const activeDebtPayments = debtPaymentRows || [];
@@ -66,7 +66,7 @@ export function useCashFlowProjection() {
         Number(debtPaymentTotals[key] || 0) + Number(payment.amount || 0);
     }
 
-    const debtsForTimeline = (activeDebtRows || []).map((debt) => {
+    const debtsForTimeline = payableDebtRows.map((debt) => {
       const minimumPayment = Number(debt.minimum_payment || 0);
       const currentCycleDueDate = getCurrentDebtCycleDueDate(debt);
       const cycleKey = `${debt.id}||${currentCycleDueDate
