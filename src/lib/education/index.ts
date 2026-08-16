@@ -9,5 +9,4 @@ export * from "./guidanceUnderstanding";
 export * from "./canonicalUnderstanding";
 export * from "./professionalIntake";
 export * from "./guidanceRelationshipMemory";
-export * from "./guidanceGoals";
 export * from "./agentManifest";

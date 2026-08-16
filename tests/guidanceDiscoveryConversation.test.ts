@@ -83,10 +83,10 @@ test("BE-216 learns profile context naturally from member turns", () => {
   assert.equal(profile.certifications.length > 0, true);
 });
 
-test("BE-216 persists discovery behind the conversation with owner isolation", () => {
-  assert.match(conversation, /\.from\("education_profiles"\)/);
-  assert.match(conversation, /owner_id: memberId/);
-  assert.match(conversation, /onConflict: "owner_id"/);
+test("BE-216 retains the owner-scoped discovery schema behind canonical proposals", () => {
+  assert.match(conversation, /RuntimeProposalReview/);
+  assert.match(conversation, /education_career_profile_items/);
+  assert.match(conversation, /\.eq\("owner_id", memberId\)/);
   assert.match(migration, /alter table public\.education_profiles/);
   for (const field of [
     "career_interests",
@@ -115,8 +115,8 @@ test("BE-216 reuses saved discovery context in conversation and guidance", () =>
   assert.match(knowledgeWorkspace, /What I Know/);
   assert.match(knowledgeWorkspace, /What I Think/);
   assert.match(knowledgeWorkspace, /What I Still Need/);
-  assert.match(conversation, /router\.refresh\(\)/);
-  assert.match(conversation, /I’ll remember this for future guidance/);
+  assert.match(conversation, /onDecision=\{\(\) => void refreshThreads\(\)\}/);
+  assert.match(conversation, /Your saved conversations help your counselor remember where you left off/);
 });
 
 test("BE-201 learns work and life context gradually and persists it as counselor memory", () => {

@@ -10,14 +10,12 @@ import {
   validateExternalEducationResearchQuery,
   type EducationCareerProfileItem,
 } from "../src/lib/education/careerIntelligence";
-import { guidanceConversationProfileItems } from "../src/lib/education/conversationProfileItems";
 import {
   educationDocumentExtractionVersion,
   extractEducationDocumentProposals,
   fingerprintEducationDocument,
 } from "../src/lib/education/documentExtraction";
 import { parseEducationResearchResponse } from "../src/lib/education/research";
-import type { GuidanceDiscoveryProfile } from "../src/lib/education/discoveryConversation";
 
 const migration = readFileSync(
   "supabase/migrations/20260801000600_add_education_career_intelligence.sql",
@@ -31,48 +29,6 @@ const researchRoute = readFileSync(
   "src/app/api/education/research/route.ts",
   "utf8"
 );
-
-const blankProfile: GuidanceDiscoveryProfile = {
-  goal: "",
-  currentSituation: "",
-  strengths: "",
-  growthAreas: "",
-  constraints: "",
-  weeklyHours: 0,
-  availableStudyTimeKnown: false,
-  selectedProviders: [],
-  careerInterests: [],
-  educationalGoals: [],
-  learningPreferences: [],
-  certifications: [],
-  collegeInterest: null,
-  tradeInterest: null,
-  currentEmployment: "",
-  militaryExperience: "",
-  otherEducationalContext: "",
-  educationHistory: [],
-  militaryTraining: [],
-  schools: [],
-  degrees: [],
-  experience: [],
-  skills: [],
-  educationBudget: "",
-  incomeGoal: "",
-  familyConsiderations: "",
-  technicalExperience: [],
-  leadershipInterest: null,
-  preferredWork: "",
-  workLocationPreference: "",
-  sectorPreference: "",
-  travelWillingness: "",
-  longTermGoals: "",
-  giBill: null,
-  vre: null,
-  employerReimbursement: null,
-  scholarshipInterest: null,
-  targetTimeline: "",
-  discoveryAnswers: {},
-};
 
 test("BE-201 persists Past, Present, and Goals with owner-only RLS and append-only outcomes", () => {
   for (const table of [
@@ -108,26 +64,7 @@ test("BE-201 roadmap milestone links preserve compound ownership and are rerunna
   assert.match(migration, /drop policy if exists "Members manage own education career roadmap steps"/);
 });
 
-test("BE-201 conversation discovery and direct forms target the same profile model", () => {
-  const mapped = guidanceConversationProfileItems({
-    ...blankProfile,
-    goal: "Become a cybersecurity analyst",
-    currentEmployment: "Systems administrator",
-    militaryExperience: "Air Force communications",
-    skills: ["Networking", "Linux"],
-    weeklyHours: 8,
-    availableStudyTimeKnown: true,
-  });
-  assert.deepEqual(
-    mapped.map(({ phase, category, sourceReference }) => [phase, category, sourceReference]),
-    [
-      ["past", "military", "guidance:military-experience"],
-      ["present", "employment", "guidance:current-employment"],
-      ["present", "skill", "guidance:skills"],
-      ["present", "schedule", "guidance:study-time"],
-      ["goal", "career_goal", "guidance:goal"],
-    ]
-  );
+test("BE-201 direct forms target the canonical career profile model", () => {
   assert.match(workspace, /education_career_profile_items/);
   assert.match(workspace, /Edit or correct/);
   assert.match(workspace, /Remove/);

@@ -62,7 +62,6 @@ import {
   SupabaseAgentConversationStore,
   SupabaseExecutionHistoryStore,
   type AgentConversationThread,
-  type AgentMessage,
   type ProfessionalExecutionHistory,
   type RecommendationLifecycleStatus,
 } from "@/lib/platform/agents";
@@ -885,67 +884,6 @@ export function HealthAdvisorWorkspace() {
       setPendingKnowledgeAnswer("");
     } catch {
       setKnowledgeSaveState("error");
-    }
-  }
-
-  async function persistHealthConversationTurn(
-    turnId: string,
-    question: string,
-    response:
-      | { kind: "external"; answer: HealthAdvisorQuestionAnswer }
-      | { kind: "intake"; text: string }
-  ) {
-    if (!conversationRepository || !activeConversationId || !ownerId) return;
-    const timestamp = new Date().toISOString();
-    const messages: AgentMessage[] = [
-      {
-        id: `${turnId}-member`,
-        threadId: activeConversationId,
-        sender: { kind: "user", id: ownerId },
-        recipient: { kind: "agent", id: healthAdvisorProfessionalId },
-        content: question,
-        timestamp,
-      },
-      {
-        id: `${turnId}-advisor`,
-        threadId: activeConversationId,
-        sender: { kind: "agent", id: healthAdvisorProfessionalId },
-        recipient: { kind: "module", id: "beasthealth" },
-        content:
-          response.kind === "external"
-            ? {
-                kind: "health_advisor_answer",
-                answer: response.answer,
-              }
-            : {
-                kind: "health_advisor_intake",
-                text: response.text,
-              },
-        timestamp,
-      },
-    ];
-    try {
-      const updated = await conversationRepository.append(
-        ownerId,
-        activeConversationId,
-        messages
-      );
-      await conversationRepository.summarize(ownerId, activeConversationId, {
-        overview: `Discussed ${question.slice(0, 100)}`,
-        decisions: [],
-        unresolvedFollowUps:
-          response.kind === "intake"
-            ? ["Confirm whether the member-reported context should be saved."]
-            : [],
-        updatedAt: timestamp,
-      });
-      setConversationTitle(updated.title);
-      await refreshConversationThreads();
-      setConversationHistoryError("");
-    } catch {
-      setConversationHistoryError(
-        "This response is visible now but could not be added to saved conversation history."
-      );
     }
   }
 

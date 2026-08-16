@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   AgentConversationInput,
   AgentEmptyState,
@@ -31,15 +30,12 @@ import {
 import {
   buildGuidanceCounselorSessionAwareness,
   buildGuidanceCounselorUnderstanding,
-  buildGuidanceCareerGoalProposal,
-  hasMatchingGuidanceCareerGoal,
   type GuidanceCounselorConversationContext,
   type GuidanceUnderstandingItem,
   buildCanonicalEducationUnderstanding,
   type EducationCanonicalRecord,
 } from "@/lib/education";
-import { discoveryProfileUpdate, type GuidanceDiscoveryProfile } from "@/lib/education/discoveryConversation";
-import { guidanceConversationProfileItems } from "@/lib/education/conversationProfileItems";
+import type { GuidanceDiscoveryProfile } from "@/lib/education/discoveryConversation";
 import {
   buildGuidanceProactiveOpportunities,
   type GuidanceWorkflowRecommendation,
@@ -55,7 +51,6 @@ import {
   type ProfessionalExecutionHistory,
   type RecommendationLifecycleStatus,
 } from "@/lib/platform/agents";
-import { goalDatabaseTableName } from "@/lib/platform/goals";
 import { createClient } from "@/lib/supabase/client";
 import { digitalStaffActivityLabels, requestDigitalStaffResponse } from "@/lib/digitalStaffRuntime/client";
 import type { DigitalStaffActivity, StructuredKnowledgeProposal } from "@/lib/digitalStaffRuntime";
@@ -131,7 +126,6 @@ export default function GuidanceCounselorConversation({
   initialProfile,
   recommendation,
 }: GuidanceCounselorConversationProps) {
-  const router = useRouter();
   const [input, setInput] = useState("");
   const [turns, setTurns] = useState<GuidanceTurn[]>([]);
   const [repository, setRepository] =
@@ -154,15 +148,8 @@ export default function GuidanceCounselorConversation({
     text: string;
     area: string;
   } | null>(null);
-  const [discoveryProfile, setDiscoveryProfile] =
-    useState<GuidanceDiscoveryProfile>(initialProfile);
+  const discoveryProfile = initialProfile;
   const [canonicalProfileItems, setCanonicalProfileItems] = useState<EducationCanonicalRecord[]>([]);
-  const [profileSaveStatus, setProfileSaveStatus] = useState<
-    "idle" | "saving" | "saved" | "error"
-  >("idle");
-  const [goalSyncStatus, setGoalSyncStatus] = useState<
-    "idle" | "linked" | "existing" | "error"
-  >("idle");
   const [sessionNow, setSessionNow] = useState<Date | null>(null);
   const [previousReviewAt, setPreviousReviewAt] = useState("");
   const [previousConversationSummary, setPreviousConversationSummary] =
@@ -551,88 +538,6 @@ export default function GuidanceCounselorConversation({
     } finally {
       setDecisionPending(false);
     }
-  }
-
-  async function saveDiscoveryProfile(profile: GuidanceDiscoveryProfile) {
-    setProfileSaveStatus("saving");
-    setGoalSyncStatus("idle");
-    const client = createClient();
-    const result = await client
-      .from("education_profiles")
-      .upsert(
-        { owner_id: memberId, ...discoveryProfileUpdate(profile) },
-        { onConflict: "owner_id" }
-      )
-      .select("owner_id")
-      .single();
-    if (result.error) {
-      setProfileSaveStatus("error");
-      return;
-    }
-    setProfileSaveStatus("saved");
-
-    const normalizedItems = guidanceConversationProfileItems(profile);
-    if (normalizedItems.length) {
-      const references = normalizedItems.map((item) => item.sourceReference);
-      const existing = await client
-        .from("education_career_profile_items")
-        .select("id, source_reference")
-        .eq("owner_id", memberId)
-        .eq("source_type", "conversation")
-        .in("source_reference", references);
-      if (!existing.error) {
-        const existingByReference = new Map(
-          (existing.data || []).map((item) => [item.source_reference, item.id])
-        );
-        await Promise.all(
-          normalizedItems.map((item) => {
-            const values = {
-              owner_id: memberId,
-              phase: item.phase,
-              category: item.category,
-              label: item.label,
-              value: item.value,
-              source_type: "conversation",
-              source_reference: item.sourceReference,
-              verification_status: "member_reported",
-              confidence: 1,
-              updated_at: new Date().toISOString(),
-            };
-            const existingId = existingByReference.get(item.sourceReference);
-            return existingId
-              ? client
-                  .from("education_career_profile_items")
-                  .update(values)
-                  .eq("id", existingId)
-                  .eq("owner_id", memberId)
-              : client.from("education_career_profile_items").insert(values);
-          })
-        );
-      }
-    }
-
-    const goalProposal = buildGuidanceCareerGoalProposal(profile);
-    if (goalProposal) {
-      const existingGoals = await client
-        .from(goalDatabaseTableName)
-        .select("title, status")
-        .eq("owner_id", memberId)
-        .eq("category", "Career");
-      if (existingGoals.error) {
-        setGoalSyncStatus("error");
-      } else if (
-        hasMatchingGuidanceCareerGoal(goalProposal, existingGoals.data || [])
-      ) {
-        setGoalSyncStatus("existing");
-      } else {
-        const goalResult = await client.from(goalDatabaseTableName).insert({
-          owner_id: memberId,
-          ...goalProposal,
-        });
-        setGoalSyncStatus(goalResult.error ? "error" : "linked");
-      }
-    }
-    router.refresh();
   }
 
   async function sendMessage(question: string, existingTurnId = "") {
@@ -1268,43 +1173,6 @@ export default function GuidanceCounselorConversation({
                       busyLabel={turns.find((turn) => turn.id === streamingTurnId)?.activity === "accepted" ? "Sending…" : "Working…"}
                     />
                   </ProfessionalConversationComposer>
-                  {profileSaveStatus === "saving" ? (
-                    <p
-                      className="text-xs font-bold text-indigo-100"
-                      role="status"
-                    >
-                      Remembering what you shared…
-                    </p>
-                  ) : profileSaveStatus === "saved" ? (
-                    <p
-                      className="text-xs font-bold text-emerald-200"
-                      role="status"
-                    >
-                      I’ll remember this for future guidance.
-                    </p>
-                  ) : profileSaveStatus === "error" ? (
-                    <p className="text-xs font-bold text-red-200" role="alert">
-                      I couldn’t save that profile update. Your conversation is
-                      still here.
-                    </p>
-                  ) : null}
-                  {goalSyncStatus === "linked" ? (
-                    <p
-                      className="text-xs font-bold text-indigo-100"
-                      role="status"
-                    >
-                      Your verified career direction was added to Beast Goals
-                      as a proposal for your review.
-                    </p>
-                  ) : goalSyncStatus === "error" ? (
-                    <p
-                      className="text-xs font-bold text-amber-200"
-                      role="status"
-                    >
-                      Your Guidance Counselor context is saved, but Beast Goals
-                      could not be updated right now.
-                    </p>
-                  ) : null}
                   {starterExperience}
                 </div>
               </section>
@@ -1343,12 +1211,7 @@ export default function GuidanceCounselorConversation({
                 {
                   id: "guidance-profile-updates",
                   label: "Current profile state",
-                  value:
-                    profileSaveStatus === "saved"
-                      ? "Latest conversation context saved"
-                      : profileSaveStatus === "saving"
-                        ? "Saving verified conversation context"
-                        : "No new verified update this turn",
+                  value: "No new verified update this turn",
                   evidence:
                     "Only information extracted from the member’s conversation is persisted.",
                 },
