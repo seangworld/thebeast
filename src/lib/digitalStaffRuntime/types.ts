@@ -99,6 +99,7 @@ export type RuntimeTimings = {
   contextAssemblyMs: number;
   initialModelMs: number;
   firstModelOutputMs: number | null;
+  firstUsefulOutputMs?: number | null;
   researchMs: number;
   researchValidationMs: number;
   persistenceMs: number;
@@ -106,6 +107,7 @@ export type RuntimeTimings = {
   providerFirstEventMs?: number | null;
   providerCompleteMs?: number | null;
   validationMs?: number | null;
+  promptCharacters?: number | null;
 };
 
 export type RuntimeObserver = {

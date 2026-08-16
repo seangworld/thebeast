@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { applyApprovedKnowledgeProposal, reportDigitalStaffLifecycle, runDigitalStaffRuntime, requireProfessionalConfig, safeDigitalStaffFailure, type ConversationState, type DigitalStaffActivity, type ProfessionalId, type RuntimeMessage, type RuntimeObserver, type StructuredKnowledgeProposal } from "@/lib/digitalStaffRuntime";
+import { acquireDigitalStaffRequestLease, applyApprovedKnowledgeProposal, reportDigitalStaffLifecycle, runDigitalStaffRuntime, requireProfessionalConfig, safeDigitalStaffFailure, type ConversationState, type DigitalStaffActivity, type ProfessionalId, type RuntimeMessage, type RuntimeObserver, type StructuredKnowledgeProposal } from "@/lib/digitalStaffRuntime";
 import { createRouteClient } from "@/lib/supabase/server";
 import { requireProfessionalEntitlement } from "@/lib/memberAgeServer";
 
@@ -13,14 +13,17 @@ function messageText(content: MessageRow["content"]) { return typeof content ===
 
 async function loadStructuredRecords(supabase: ReturnType<typeof createRouteClient>, ownerId: string, professionalId: string) {
   const queries = professionalId === "beastmoney.money-coach"
-    ? [supabase.from("debts").select("id, name, balance, minimum_payment, interest_rate, due_date, next_due_date_after_payment, payment_behavior, lifecycle_status, paid_off_at, is_archived, created_at").eq("user_id", ownerId).limit(30), supabase.from("bill_events").select("id, name, amount, frequency, due_date, next_due_date_after_payment, created_at").eq("user_id", ownerId).eq("is_archived", false).limit(30)]
+    ? [supabase.from("debts").select("id, name, balance, minimum_payment, interest_rate, due_date, next_due_date_after_payment, payment_behavior, lifecycle_status, paid_off_at, is_archived, created_at").eq("user_id", ownerId).order("created_at", { ascending: false }).limit(10), supabase.from("bill_events").select("id, name, amount, frequency, due_date, next_due_date_after_payment, created_at").eq("user_id", ownerId).eq("is_archived", false).order("created_at", { ascending: false }).limit(10)]
     : professionalId === "beasteducation.guidance-counselor"
-      ? [supabase.from("education_profiles").select("id, goal_kind, goal, current_situation, background, strengths, growth_areas, constraints, weekly_hours, selected_providers, updated_at").eq("owner_id", ownerId).limit(1), supabase.from("education_career_profile_items").select("id, category, label, value, verification_status, confidence, updated_at").eq("owner_id", ownerId).limit(50)]
+      ? [supabase.from("education_profiles").select("id, goal_kind, goal, current_situation, background, strengths, growth_areas, constraints, weekly_hours, selected_providers, updated_at").eq("owner_id", ownerId).limit(1), supabase.from("education_career_profile_items").select("id, category, label, value, verification_status, confidence, updated_at").eq("owner_id", ownerId).order("updated_at", { ascending: false }).limit(19)]
       : professionalId === "beasthealth.health-advisor"
-        ? [supabase.from("beast_health_records").select("id, record_type, title, status, occurred_on, source, details, updated_at").eq("owner_id", ownerId).neq("status", "archived").limit(50)]
-        : [supabase.from("beast_goals").select("id, title, category, status, target_date, current_step, updated_at").eq("owner_id", ownerId).limit(30)];
+        ? [supabase.from("beast_health_records").select("id, record_type, title, status, occurred_on, source, details, updated_at").eq("owner_id", ownerId).neq("status", "archived").order("updated_at", { ascending: false }).limit(20)]
+        : [supabase.from("beast_goals").select("id, title, category, status, target_date, current_step, updated_at").eq("owner_id", ownerId).order("updated_at", { ascending: false }).limit(20)];
   const results = await Promise.all(queries);
-  return results.flatMap((result, index) => result.error ? [] : (result.data || []).map((record) => { const row = record as Record<string, unknown>; return { domain: `${professionalId}:${index}`, record, updatedAt: typeof row.updated_at === "string" ? row.updated_at : undefined }; }));
+  return {
+    queryCount: queries.length,
+    records: results.flatMap((result, index) => result.error ? [] : (result.data || []).map((record) => { const row = record as Record<string, unknown>; return { domain: `${professionalId}:${index}`, record, updatedAt: typeof row.updated_at === "string" ? row.updated_at : undefined }; })),
+  };
 }
 
 export async function POST(request: Request) {
@@ -31,32 +34,49 @@ export async function POST(request: Request) {
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   const authenticationMs = Date.now() - authenticationStartedAt;
   if (authError || !user) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+  const requestParsingStartedAt = Date.now();
   let body: { professionalId?: unknown; conversationId?: unknown; message?: unknown; workspace?: unknown; proposalId?: unknown; decision?: unknown; editedFields?: unknown };
   try { body = (await request.json()) as typeof body; } catch { return NextResponse.json({ error: "A valid request is required." }, { status: 400 }); }
   const professionalId = typeof body.professionalId === "string" ? body.professionalId : "";
   const conversationId = typeof body.conversationId === "string" ? body.conversationId : "";
   const text = typeof body.message === "string" ? body.message.trim() : "";
+  const requestParsingMs = Date.now() - requestParsingStartedAt;
   try { requireProfessionalConfig(professionalId); } catch { return NextResponse.json({ error: "Unknown Digital Staff professional." }, { status: 400 }); }
-  const ageEntitlement = await requireProfessionalEntitlement(professionalId);
-  if (!ageEntitlement.ok) return NextResponse.json({ error: ageEntitlement.status === 428 ? "Add your birthday before opening this workspace." : "This Digital Staff professional is unavailable for the current member profile." }, { status: ageEntitlement.status });
   if (!conversationId) return NextResponse.json({ error: "Conversation is required." }, { status: 400 });
+  const isProposalDecision = body.decision === "approve" || body.decision === "reject";
+  if (!isProposalDecision && (!text || text.length > maxMessageLength)) return NextResponse.json({ error: "A message is required." }, { status: 400 });
 
-  const contextPromise = !(body.decision === "approve" || body.decision === "reject") && text && text.length <= maxMessageLength
+  const entitlementStartedAt = Date.now();
+  const entitlementPromise = requireProfessionalEntitlement(professionalId, { supabase, user })
+    .then((result) => ({ result, durationMs: Date.now() - entitlementStartedAt }));
+  const conversationAccessStartedAt = Date.now();
+  const conversationPromise = supabase.from("agent_conversations").select("id, agent_id, summary, message_count").eq("id", conversationId).eq("owner_id", user.id).eq("agent_id", professionalId).maybeSingle()
+    .then((result) => ({ result, durationMs: Date.now() - conversationAccessStartedAt }));
+
+  const entitlement = await entitlementPromise;
+  const ageEntitlement = entitlement.result;
+  if (!ageEntitlement.ok) return NextResponse.json({ error: ageEntitlement.status === 428 ? "Add your birthday before opening this workspace." : "This Digital Staff professional is unavailable for the current member profile." }, { status: ageEntitlement.status });
+  const contextPromise = !isProposalDecision
     ? (() => {
         const startedAt = Date.now();
+        const timed = async <T,>(promise: PromiseLike<T>) => {
+          const queryStartedAt = Date.now();
+          const result = await promise;
+          return { result, durationMs: Date.now() - queryStartedAt };
+        };
         return Promise.all([
-          supabase.from("agent_conversation_messages").select("id, sender, content, created_at").eq("conversation_id", conversationId).eq("owner_id", user.id).order("created_at", { ascending: false }).limit(12),
-          supabase.from("agent_memories").select("memory_key, value, updated_at").eq("owner_id", user.id).eq("agent_id", professionalId).order("updated_at", { ascending: false }).limit(12),
-          loadStructuredRecords(supabase, user.id, professionalId),
-        ]).then(([historyResult, memoryResult, structuredRecords]) => ({ historyResult, memoryResult, structuredRecords, durationMs: Date.now() - startedAt }));
+          timed(supabase.from("agent_conversation_messages").select("id, sender, content, created_at").eq("conversation_id", conversationId).eq("owner_id", user.id).order("created_at", { ascending: false }).limit(12)),
+          timed(supabase.from("agent_memories").select("memory_key, value, updated_at").eq("owner_id", user.id).eq("agent_id", professionalId).order("updated_at", { ascending: false }).limit(8)),
+          timed(loadStructuredRecords(supabase, user.id, professionalId)),
+        ]).then(([history, memory, structured]) => ({ history, memory, structured, durationMs: Date.now() - startedAt }));
       })()
     : null;
-
-  const conversationResult = await supabase.from("agent_conversations").select("id, agent_id, summary, message_count").eq("id", conversationId).eq("owner_id", user.id).eq("agent_id", professionalId).maybeSingle();
+  const conversationAccess = await conversationPromise;
+  const conversationResult = conversationAccess.result;
   if (conversationResult.error || !conversationResult.data) return NextResponse.json({ error: "Conversation is not available for this member and professional." }, { status: 404 });
   const conversation = conversationResult.data;
 
-  if (body.decision === "approve" || body.decision === "reject") {
+  if (isProposalDecision) {
     const proposalId = typeof body.proposalId === "string" ? body.proposalId : "";
     if (!proposalId) return NextResponse.json({ error: "A proposal ID is required." }, { status: 400 });
     const proposalMessages = await supabase.from("agent_conversation_messages").select("id, sender, content, created_at").eq("conversation_id", conversationId).eq("owner_id", user.id).eq("sender->>kind", "agent").order("created_at", { ascending: false }).limit(50);
@@ -90,7 +110,13 @@ export async function POST(request: Request) {
       return NextResponse.json(safeDigitalStaffFailure("proposal-decision", error, requestId), { status: 422 });
     }
   }
-  if (!text || text.length > maxMessageLength) return NextResponse.json({ error: "A message is required." }, { status: 400 });
+  const requestLease = acquireDigitalStaffRequestLease(user.id, professionalId);
+  if (!requestLease.ok) {
+    return NextResponse.json(
+      { error: "Another Digital Staff request is already being handled. Please retry shortly." },
+      { status: 429, headers: { "Retry-After": String(requestLease.retryAfterSeconds) } }
+    );
+  }
   const contextObserverActivity = async (observer: RuntimeObserver, activity: DigitalStaffActivity) => observer.onActivity?.(activity);
   // These reads are independent and intentionally overlap the conversation authorization read.
   const now = new Date().toISOString();
@@ -100,16 +126,27 @@ export async function POST(request: Request) {
     await contextObserverActivity(observer, "loading_context");
     const contextResult = contextPromise ? await contextPromise : null;
     if (!contextResult) throw new Error("Relevant conversation context is temporarily unavailable.");
-    const { historyResult, memoryResult, structuredRecords } = contextResult;
+    const historyResult = contextResult.history.result;
+    const memoryResult = contextResult.memory.result;
+    const structuredResult = contextResult.structured.result;
+    const structuredRecords = structuredResult.records;
     if (historyResult.error || memoryResult.error) throw new Error("Relevant conversation context is temporarily unavailable.");
     const contextLoadMs = contextResult.durationMs;
+    let firstUsefulOutputMs: number | null = null;
+    const runtimeObserver: RuntimeObserver = {
+      ...observer,
+      onResponseDelta: async (delta) => {
+        if (firstUsefulOutputMs === null && delta) firstUsefulOutputMs = Date.now() - requestStartedAt;
+        await observer.onResponseDelta?.(delta);
+      },
+    };
     const result = await runDigitalStaffRuntime({
       ownerId: user.id, professionalId: professionalId as ProfessionalId, conversationId, message,
       recentMessages: ([...(historyResult.data || [])] as MessageRow[]).reverse().map((row) => ({ id: row.id, role: row.sender?.kind === "user" ? "user" : "assistant", text: messageText(row.content), createdAt: row.created_at })),
       state: summary?.runtimeState || emptyState,
       memories: (memoryResult.data || []).map((row) => ({ key: String(row.memory_key), value: row.value, updatedAt: String(row.updated_at) })),
       structuredRecords, workspace: typeof body.workspace === "string" ? body.workspace : null,
-    }, observer);
+    }, runtimeObserver);
     await observer.onActivity?.("persisting");
     const persistenceStartedAt = Date.now();
     const assistantMessageId = crypto.randomUUID();
@@ -129,17 +166,32 @@ export async function POST(request: Request) {
     result.timings.contextAssemblyMs = contextLoadMs;
     result.timings.persistenceMs = Date.now() - persistenceStartedAt;
     result.timings.totalMs = Date.now() - requestStartedAt;
+    result.timings.firstUsefulOutputMs = firstUsefulOutputMs;
     result.latencyMs = result.timings.totalMs;
     reportDigitalStaffLifecycle(requestId, professionalId, {
       totalMs: result.timings.totalMs,
       authenticationMs,
+      requestParsingMs,
+      entitlementMs: entitlement.durationMs,
+      conversationAccessMs: conversationAccess.durationMs,
       contextLoadMs,
+      historyLoadMs: contextResult.history.durationMs,
+      memoryLoadMs: contextResult.memory.durationMs,
+      structuredRecordLoadMs: contextResult.structured.durationMs,
+      historyCount: (historyResult.data || []).length,
+      memoryCount: (memoryResult.data || []).length,
+      structuredRecordCount: structuredRecords.length,
+      databaseQueryCount: 6 + structuredResult.queryCount,
       initialModelMs: result.timings.initialModelMs,
       firstModelOutputMs: result.timings.firstModelOutputMs,
       providerResponseHeadersMs: result.timings.providerResponseHeadersMs || null,
       providerFirstEventMs: result.timings.providerFirstEventMs || null,
       providerCompleteMs: result.timings.providerCompleteMs || null,
       validationMs: result.timings.validationMs || null,
+      promptCharacters: result.timings.promptCharacters || null,
+      firstUsefulOutputMs,
+      providerInvocationCount: result.timings.researchMs > 0 ? 2 : 1,
+      toolCallCount: result.toolCalls.length,
       researchMs: result.timings.researchMs,
       researchValidationMs: result.timings.researchValidationMs,
       persistenceMs: result.timings.persistenceMs,
@@ -164,6 +216,7 @@ export async function POST(request: Request) {
         } catch (error) {
           send({ type: "error", ...safeDigitalStaffFailure("runtime-stream", error, requestId) });
         } finally {
+          requestLease.release();
           controller.close();
         }
       },
@@ -177,5 +230,7 @@ export async function POST(request: Request) {
     return NextResponse.json(await executeTurn());
   } catch (error) {
     return NextResponse.json(safeDigitalStaffFailure("runtime-route", error, requestId), { status: 502 });
+  } finally {
+    requestLease.release();
   }
 }

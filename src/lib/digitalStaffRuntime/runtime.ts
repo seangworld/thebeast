@@ -1,6 +1,7 @@
 import { requireProfessionalConfig } from "./config";
 import { inferProductNavigationTarget, validateNavigationTarget } from "./navigation";
 import { buildRuntimeInput, buildRuntimeInstructions, runtimeJsonSchema } from "./prompt";
+import { applyDigitalStaffInteractionPolicy } from "./interactionPolicy";
 import { requestOpenAIResponseStream } from "./provider";
 import { deidentifyResearchQuery, validateToolCalls } from "./tools";
 import type { RuntimeContext, RuntimeObserver, RuntimePlan, RuntimeResult } from "./types";
@@ -87,7 +88,19 @@ export function validateRuntimePlan(context: RuntimeContext, plan: RuntimePlan) 
   if (requestedResearch && (!research || research.domains.length === 0)) validationFailures.push("Rejected research outside the professional source policy.");
   const handoff = plan.handoff && config.handoffs.includes(plan.handoff.professionalId) ? plan.handoff : null;
   if (plan.handoff && !handoff) validationFailures.push("Rejected an unauthorized professional handoff.");
-  return { ...plan, proposals, navigationTarget: productNavigation?.href || null, toolCalls: tools.accepted, research, handoff, validationFailures };
+  const governed = applyDigitalStaffInteractionPolicy(context, {
+    ...plan,
+    proposals,
+    navigationTarget: productNavigation?.href || null,
+    toolCalls: tools.accepted,
+    research,
+    handoff,
+  });
+  const { policyFailures, ...governedPlan } = governed;
+  return {
+    ...governedPlan,
+    validationFailures: [...validationFailures, ...policyFailures],
+  };
 }
 
 export async function runDigitalStaffRuntime(context: RuntimeContext, observer: RuntimeObserver = {}): Promise<RuntimeResult> {
@@ -99,9 +112,10 @@ export async function runDigitalStaffRuntime(context: RuntimeContext, observer: 
   let providerResponseHeadersMs: number | null = null;
   let providerFirstEventMs: number | null = null;
   let providerCompleteMs: number | null = null;
+  const runtimeInput = buildRuntimeInput(config, context);
   const modelStartedAt = Date.now();
   const payload = await requestOpenAIResponseStream<ResponsesPayload>({
-      model, store: false, instructions: buildRuntimeInstructions(config), input: buildRuntimeInput(config, context),
+      model, store: false, instructions: buildRuntimeInstructions(config), input: runtimeInput,
       text: { format: { type: "json_schema", name: "digital_staff_runtime_plan", strict: true, schema: runtimeJsonSchema } },
   }, {
       onResponseHeaders: () => { providerResponseHeadersMs = Date.now() - startedAt; },
@@ -138,7 +152,7 @@ export async function runDigitalStaffRuntime(context: RuntimeContext, observer: 
     response: research?.answer || validated.response,
     model,
     latencyMs: totalMs,
-    timings: { totalMs, contextAssemblyMs: 0, initialModelMs, firstModelOutputMs, researchMs, researchValidationMs, persistenceMs: 0, providerResponseHeadersMs, providerFirstEventMs, providerCompleteMs, validationMs },
+    timings: { totalMs, contextAssemblyMs: 0, initialModelMs, firstModelOutputMs, firstUsefulOutputMs: null, researchMs, researchValidationMs, persistenceMs: 0, providerResponseHeadersMs, providerFirstEventMs, providerCompleteMs, validationMs, promptCharacters: runtimeInput.length },
     researchSources: research?.sources || [],
   };
 }

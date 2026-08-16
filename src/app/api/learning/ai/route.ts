@@ -7,6 +7,7 @@ import { callOpenAILearningSpecialist } from "@/lib/learning/openai";
 import { routeLearningAI } from "@/lib/learning/router";
 import { createRouteClient } from "@/lib/supabase/server";
 import type { MasteryProfile, OpenAILearningMessage } from "@/lib/learning/types";
+import { boundLearningConversationMessages, maximumLearningRequestCharacters } from "@/lib/learning/conversationBounds";
 
 export const dynamic = "force-dynamic";
 
@@ -30,7 +31,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Authentication required." }, { status: 401 });
   }
 
-  const body = (await request.json()) as {
+  let body: {
     userRequest?: string;
     learnerName?: string;
     subject?: string;
@@ -39,9 +40,14 @@ export async function POST(request: Request) {
     mastery?: MasteryProfile;
     messages?: OpenAILearningMessage[];
   };
+  try {
+    body = (await request.json()) as typeof body;
+  } catch {
+    return NextResponse.json({ error: "A valid learning request is required." }, { status: 400 });
+  }
   const userRequest = body.userRequest?.trim();
 
-  if (!userRequest) {
+  if (!userRequest || userRequest.length > maximumLearningRequestCharacters) {
     return NextResponse.json({ error: "A learning request is required." }, { status: 400 });
   }
 
@@ -69,7 +75,7 @@ export async function POST(request: Request) {
     specialistId,
     specialistName: specialist?.name || "Tutor",
     conversationType,
-    messages: body.messages || [{ role: "user", content: userRequest }],
+    messages: boundLearningConversationMessages(body.messages, userRequest),
     context,
     homeworkPolicy: getHomeworkPolicyForRequest(userRequest),
   });
