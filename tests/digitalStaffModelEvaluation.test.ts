@@ -33,3 +33,11 @@ test("DS-MODEL-ROUTE evaluation endpoint is Preview-only, owner-only, and model-
   assert.match(route, /createOpenAIRequestHeaders/);
   assert.doesNotMatch(route, /OPENAI_API_KEY/);
 });
+
+test("DS-MODEL-ROUTE evaluation UI runs only the approved synthetic catalog", () => {
+  const page = readFileSync("src/app/dashboard/admin/digital-staff-model-evaluation/page.tsx", "utf8");
+  assert.match(page, /Run approved synthetic benchmark/);
+  assert.match(page, /availability\.cases/);
+  assert.match(page, /does not load member records/i);
+  assert.doesNotMatch(page, /OPENAI_API_KEY/);
+});
