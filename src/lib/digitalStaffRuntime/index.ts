@@ -5,6 +5,7 @@ export * from "./persistence";
 export * from "./presentation";
 export * from "./provider";
 export * from "./interactionPolicy";
+export * from "./educationContext";
 export * from "./moneyContext";
 export * from "./prompt";
 export * from "./professionalPrompts";

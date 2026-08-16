@@ -6,6 +6,8 @@ import {
   buildMoneyCoachStructuredRecords,
   digitalStaffProviderTimeoutMs,
   digitalStaffActivityLabels,
+  guidanceCounselorCareerProfileItemColumns,
+  guidanceCounselorEducationProfileColumns,
   isProductSupportQuestion,
   moneyCoachCashSettingsColumns,
   moneyCoachFundingSourceColumns,
@@ -139,6 +141,27 @@ test("DS-PERF-01 Money context selects only columns present in the canonical DEV
   }
   assert.doesNotMatch(moneyCoachCashSettingsColumns, /updated_at/);
   assert.doesNotMatch(moneyCoachFundingSourceColumns, /max_utilization_percent/);
+});
+
+test("DS-PERF-01 Guidance context selects only columns present in the canonical Education schema", () => {
+  const educationProfileMigration = readFileSync("supabase/migrations/20260724000200_add_education_profiles.sql", "utf8");
+  const educationProfileDefinition = educationProfileMigration.slice(
+    educationProfileMigration.indexOf("create table if not exists public.education_profiles"),
+    educationProfileMigration.indexOf("alter table public.education_profiles")
+  );
+  const careerIntelligenceMigration = readFileSync("supabase/migrations/20260801000600_add_education_career_intelligence.sql", "utf8");
+  const careerProfileItemDefinition = careerIntelligenceMigration.slice(
+    careerIntelligenceMigration.indexOf("create table if not exists public.education_career_profile_items"),
+    careerIntelligenceMigration.indexOf("create index if not exists education_career_profile_items_owner_phase_idx")
+  );
+
+  for (const column of guidanceCounselorEducationProfileColumns.split(", ")) {
+    assert.match(educationProfileDefinition, new RegExp(`\\b${column}\\b`));
+  }
+  for (const column of guidanceCounselorCareerProfileItemColumns.split(", ")) {
+    assert.match(careerProfileItemDefinition, new RegExp(`\\b${column}\\b`));
+  }
+  assert.doesNotMatch(guidanceCounselorEducationProfileColumns, /(?:^|, )id(?:,|$)/);
 });
 
 test("AP-105 shared client and route expose acknowledged activity streaming and safe retry contracts", () => {

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { acquireDigitalStaffRequestLease, applyApprovedKnowledgeProposal, buildMoneyCoachStructuredRecords, moneyCoachCashSettingsColumns, moneyCoachFundingSourceColumns, reportDigitalStaffLifecycle, runDigitalStaffRuntime, requireProfessionalConfig, safeDigitalStaffFailure, type ConversationState, type DigitalStaffActivity, type ProfessionalId, type RuntimeMessage, type RuntimeObserver, type StructuredKnowledgeProposal } from "@/lib/digitalStaffRuntime";
+import { acquireDigitalStaffRequestLease, applyApprovedKnowledgeProposal, buildMoneyCoachStructuredRecords, guidanceCounselorCareerProfileItemColumns, guidanceCounselorEducationProfileColumns, moneyCoachCashSettingsColumns, moneyCoachFundingSourceColumns, reportDigitalStaffLifecycle, runDigitalStaffRuntime, requireProfessionalConfig, safeDigitalStaffFailure, type ConversationState, type DigitalStaffActivity, type ProfessionalId, type RuntimeMessage, type RuntimeObserver, type StructuredKnowledgeProposal } from "@/lib/digitalStaffRuntime";
 import { createRouteClient } from "@/lib/supabase/server";
 import { requireProfessionalEntitlement } from "@/lib/memberAgeServer";
 
@@ -48,7 +48,7 @@ async function loadStructuredRecords(supabase: ReturnType<typeof createRouteClie
     };
   }
   const queries = professionalId === "beasteducation.guidance-counselor"
-      ? [supabase.from("education_profiles").select("id, goal_kind, goal, current_situation, background, strengths, growth_areas, constraints, weekly_hours, selected_providers, updated_at").eq("owner_id", ownerId).limit(1), supabase.from("education_career_profile_items").select("id, category, label, value, verification_status, confidence, updated_at").eq("owner_id", ownerId).order("updated_at", { ascending: false }).limit(19)]
+      ? [supabase.from("education_profiles").select(guidanceCounselorEducationProfileColumns).eq("owner_id", ownerId).limit(1), supabase.from("education_career_profile_items").select(guidanceCounselorCareerProfileItemColumns).eq("owner_id", ownerId).order("updated_at", { ascending: false }).limit(19)]
       : professionalId === "beasthealth.health-advisor"
         ? [supabase.from("beast_health_records").select("id, record_type, title, status, occurred_on, source, details, updated_at").eq("owner_id", ownerId).neq("status", "archived").order("updated_at", { ascending: false }).limit(20)]
         : [supabase.from("beast_goals").select("id, title, category, status, target_date, current_step, updated_at").eq("owner_id", ownerId).order("updated_at", { ascending: false }).limit(20)];
