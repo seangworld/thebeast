@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { acquireDigitalStaffRequestLease, applyApprovedKnowledgeProposal, buildMoneyCoachStructuredRecords, reportDigitalStaffLifecycle, runDigitalStaffRuntime, requireProfessionalConfig, safeDigitalStaffFailure, type ConversationState, type DigitalStaffActivity, type ProfessionalId, type RuntimeMessage, type RuntimeObserver, type StructuredKnowledgeProposal } from "@/lib/digitalStaffRuntime";
+import { acquireDigitalStaffRequestLease, applyApprovedKnowledgeProposal, buildMoneyCoachStructuredRecords, moneyCoachCashSettingsColumns, moneyCoachFundingSourceColumns, reportDigitalStaffLifecycle, runDigitalStaffRuntime, requireProfessionalConfig, safeDigitalStaffFailure, type ConversationState, type DigitalStaffActivity, type ProfessionalId, type RuntimeMessage, type RuntimeObserver, type StructuredKnowledgeProposal } from "@/lib/digitalStaffRuntime";
 import { createRouteClient } from "@/lib/supabase/server";
 import { requireProfessionalEntitlement } from "@/lib/memberAgeServer";
 
@@ -22,8 +22,8 @@ async function loadStructuredRecords(supabase: ReturnType<typeof createRouteClie
       timed(supabase.from("debts").select("id, name, balance, minimum_payment, interest_rate, due_date, next_due_date_after_payment, payment_behavior, lifecycle_status, paid_off_at, is_archived, created_at").eq("user_id", ownerId).order("created_at", { ascending: false }).limit(200)),
       timed(supabase.from("bill_events").select("id, name, amount, frequency, due_date, next_due_date_after_payment, assigned_income_date, is_archived, created_at").eq("user_id", ownerId).order("created_at", { ascending: false }).limit(200)),
       timed(supabase.from("income_events").select("id, name, amount, frequency, next_date, is_active, is_archived, created_at").eq("user_id", ownerId).order("next_date", { ascending: true }).limit(200)),
-      timed(supabase.from("cash_settings").select("starting_balance, checking_buffer, updated_at").eq("user_id", ownerId).maybeSingle()),
-      timed(supabase.from("funding_sources").select("id, name, current_balance, credit_limit, available_credit, max_utilization_percent, is_active, created_at").eq("user_id", ownerId).eq("is_active", true).order("created_at", { ascending: true }).limit(200)),
+      timed(supabase.from("cash_settings").select(moneyCoachCashSettingsColumns).eq("user_id", ownerId).maybeSingle()),
+      timed(supabase.from("funding_sources").select(moneyCoachFundingSourceColumns).eq("user_id", ownerId).eq("is_active", true).order("created_at", { ascending: true }).limit(200)),
       timed(supabase.from("beast_goals").select("id, title, status, target_date, updated_at").eq("owner_id", ownerId).eq("category", "Money").neq("status", "Archived").order("updated_at", { ascending: false }).limit(100)),
     ]);
     const results = [debts, bills, incomes, cashSettings, fundingSources, goals];
@@ -165,7 +165,8 @@ export async function POST(request: Request) {
     const memoryResult = contextResult.memory.result;
     const structuredResult = contextResult.structured.result;
     const structuredRecords = structuredResult.records;
-    if (historyResult.error || memoryResult.error || structuredResult.error) throw new Error("Relevant conversation context is temporarily unavailable.");
+    if (historyResult.error || memoryResult.error) throw new Error("Relevant conversation context is temporarily unavailable.");
+    if (structuredResult.error) throw new Error("Canonical context query failed.");
     const contextLoadMs = contextResult.durationMs;
     let firstUsefulOutputMs: number | null = null;
     const runtimeObserver: RuntimeObserver = {

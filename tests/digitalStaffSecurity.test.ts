@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import {
+  classifyDigitalStaffFailure,
   createOpenAIRequestHeaders,
   digitalStaffUnavailableMessage,
   requestDigitalStaffResponse,
@@ -10,6 +11,13 @@ import {
 } from "../src/lib/digitalStaffRuntime";
 
 const testKey = "sk-proj-SINGLE_TEST_TOKEN_1234567890";
+
+test("DS-PERF-01 classifies canonical context query failures before provider invocation", () => {
+  assert.equal(
+    classifyDigitalStaffFailure("runtime-stream", new Error("Canonical context query failed.")),
+    "database_context_failure"
+  );
+});
 
 test("SEC-002 constructs exactly one OpenAI Authorization bearer token", () => {
   const headers = createOpenAIRequestHeaders("request-1", testKey);

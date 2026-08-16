@@ -3,6 +3,9 @@ import { numberValue } from "../financialMetrics";
 
 type MoneyRow = Record<string, unknown>;
 
+export const moneyCoachCashSettingsColumns = "starting_balance, checking_buffer";
+export const moneyCoachFundingSourceColumns = "id, name, current_balance, credit_limit, available_credit, is_active, created_at";
+
 export type MoneyCoachContextRows = {
   debts: MoneyRow[];
   bills: MoneyRow[];

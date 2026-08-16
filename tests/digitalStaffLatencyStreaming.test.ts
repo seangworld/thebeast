@@ -7,6 +7,8 @@ import {
   digitalStaffProviderTimeoutMs,
   digitalStaffActivityLabels,
   isProductSupportQuestion,
+  moneyCoachCashSettingsColumns,
+  moneyCoachFundingSourceColumns,
   requireProfessionalConfig,
   requiresDeterministicResearch,
   isDeclarativeMemberStatement,
@@ -123,6 +125,20 @@ test("DS-PERF-01 supplies canonical affordability context without starving suppo
   assert.ok(records.some((record) => record.domain.endsWith(":income")));
   assert.ok(records.some((record) => record.domain.endsWith(":goal")));
   assert.ok(records.length <= 20);
+});
+
+test("DS-PERF-01 Money context selects only columns present in the canonical DEV schema", () => {
+  const schema = readFileSync("supabase/migrations/20260531000000_dev_schema.sql", "utf8");
+  const cashSettingsDefinition = schema.slice(schema.indexOf("create table if not exists public.cash_settings"), schema.indexOf("alter table public.cash_settings"));
+  const fundingSourceDefinition = schema.slice(schema.indexOf("create table if not exists public.funding_sources"), schema.indexOf("create index if not exists funding_sources"));
+  for (const column of moneyCoachCashSettingsColumns.split(", ")) {
+    assert.match(cashSettingsDefinition, new RegExp(`\\b${column}\\b`));
+  }
+  for (const column of moneyCoachFundingSourceColumns.split(", ")) {
+    assert.match(fundingSourceDefinition, new RegExp(`\\b${column}\\b`));
+  }
+  assert.doesNotMatch(moneyCoachCashSettingsColumns, /updated_at/);
+  assert.doesNotMatch(moneyCoachFundingSourceColumns, /max_utilization_percent/);
 });
 
 test("AP-105 shared client and route expose acknowledged activity streaming and safe retry contracts", () => {
