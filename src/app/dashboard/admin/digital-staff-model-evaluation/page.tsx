@@ -30,6 +30,7 @@ type EvaluationResult = {
   validationFailures: string[];
   timings: Record<string, number | null>;
   expectations: string[];
+  error?: string;
 };
 
 const endpoint = "/api/admin/digital-staff-model-evaluation";
@@ -69,18 +70,40 @@ export default function DigitalStaffModelEvaluationPage() {
     try {
       const ordinaryCases = availability.cases.filter((item) => item.tier === "ordinary");
       const strongSafetyCases = availability.cases.filter((item) => ["money-multi-debt", "guidance-research", "health-significant-symptoms", "health-medication-interaction"].includes(item.id));
-      const cases = [...ordinaryCases, ...strongSafetyCases];
-      for (const model of benchmarkModels) {
-        for (const evaluationCase of cases) {
-          setStatus(`Running ${model} — ${evaluationCase.id} (${completed.length + 1} of ${benchmarkModels.length * cases.length})…`);
-          const response = await fetch(endpoint, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ model, caseId: evaluationCase.id }),
-          });
-          if (!response.ok) throw new Error(`Evaluation returned ${response.status}.`);
-          completed.push(await response.json() as EvaluationResult);
-          setResults([...completed]);
+      const phases = [ordinaryCases, strongSafetyCases];
+      const total = benchmarkModels.length * phases.reduce((sum, cases) => sum + cases.length, 0);
+      for (const cases of phases) {
+        for (const model of benchmarkModels) {
+          for (const evaluationCase of cases) {
+            setStatus(`Running ${model} — ${evaluationCase.id} (${completed.length + 1} of ${total})…`);
+            const response = await fetch(endpoint, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ model, caseId: evaluationCase.id }),
+            });
+            if (response.ok) {
+              completed.push(await response.json() as EvaluationResult);
+            } else {
+              completed.push({
+                caseId: evaluationCase.id,
+                professionalId: evaluationCase.professionalId,
+                requestedTier: evaluationCase.tier,
+                category: evaluationCase.category,
+                model,
+                response: "",
+                intent: "provider_failure",
+                nextQuestion: null,
+                proposalCount: 0,
+                toolCallCount: 0,
+                researchSourceCount: 0,
+                validationFailures: [],
+                timings: {},
+                expectations: evaluationCase.expectations,
+                error: `Protected evaluation returned status ${response.status}.`,
+              });
+            }
+            setResults([...completed]);
+          }
         }
       }
       setStatus(`Benchmark complete: ${completed.length} synthetic turns.`);
@@ -120,7 +143,7 @@ export default function DigitalStaffModelEvaluationPage() {
               <h2 className="font-black">{result.model} — {result.caseId}</h2>
               <span className="text-xs text-cyan-200">{result.timings.totalMs ?? "—"} ms total · {result.timings.initialModelMs ?? "—"} ms provider</span>
             </div>
-            <p className="mt-3 whitespace-pre-wrap text-sm text-slate-200">{result.response}</p>
+            <p className={`mt-3 whitespace-pre-wrap text-sm ${result.error ? "text-rose-200" : "text-slate-200"}`}>{result.error || result.response}</p>
             <dl className="mt-4 grid gap-2 text-xs text-slate-300 sm:grid-cols-4">
               <div><dt className="font-bold text-white">Tier</dt><dd>{result.requestedTier}</dd></div>
               <div><dt className="font-bold text-white">Intent</dt><dd>{result.intent}</dd></div>

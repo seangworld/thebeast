@@ -38,6 +38,8 @@ test("DS-MODEL-ROUTE evaluation UI runs only the approved synthetic catalog", ()
   const page = readFileSync("src/app/dashboard/admin/digital-staff-model-evaluation/page.tsx", "utf8");
   assert.match(page, /Run approved synthetic benchmark/);
   assert.match(page, /availability\.cases/);
+  assert.match(page, /Protected evaluation returned status/);
+  assert.match(page, /const phases = \[ordinaryCases, strongSafetyCases\]/);
   assert.match(page, /does not load member records/i);
   assert.doesNotMatch(page, /OPENAI_API_KEY/);
 });
