@@ -7,6 +7,7 @@ import {
   buildRuntimeInput,
   buildRuntimeInstructions,
   professionalConfigs,
+  maximumDigitalStaffLeaseMs,
   requestsConsequentialAction,
   runDigitalStaffRuntime,
   validateRuntimePlan,
@@ -177,6 +178,18 @@ test("DS-PERF-01 enforces a per-member professional concurrency and request-rate
   if (!limited.ok) assert.equal(limited.reason, "rate_limit");
 });
 
+test("DS-PERF-01 expires an abandoned lease without letting its late release clear a replacement", () => {
+  const ownerId = `stale-owner-${Date.now()}`;
+  const stale = acquireDigitalStaffRequestLease(ownerId, "beastmoney.money-coach", 1_000);
+  assert.equal(stale.ok, true);
+  const replacement = acquireDigitalStaffRequestLease(ownerId, "beastmoney.money-coach", 1_000 + maximumDigitalStaffLeaseMs);
+  assert.equal(replacement.ok, true);
+  if (stale.ok) stale.release();
+  const stillActive = acquireDigitalStaffRequestLease(ownerId, "beastmoney.money-coach", 1_000 + maximumDigitalStaffLeaseMs + 1);
+  assert.deepEqual(stillActive, { ok: false, reason: "concurrent_request", retryAfterSeconds: 2 });
+  if (replacement.ok) replacement.release();
+});
+
 test("DS-PERF-01 ordinary runtime turns invoke the provider exactly once", async () => {
   const originalFetch = globalThis.fetch;
   const originalKey = process.env.OPENAI_API_KEY;
@@ -204,13 +217,45 @@ test("DS-PERF-01 ordinary runtime turns invoke the provider exactly once", async
   }
 });
 
+test("DS-PERF-01 rejects model-suggested research for the laptop affordability turn", async () => {
+  const originalFetch = globalThis.fetch;
+  const originalKey = process.env.OPENAI_API_KEY;
+  let providerCalls = 0;
+  const completedPlan = plan("Based on the saved cash position, here is the supported conclusion.", {
+    research: { query: "laptop affordability today", reason: "Check current information", domains: ["irs.gov"] },
+  });
+  const body = [
+    `data: ${JSON.stringify({ type: "response.output_text.delta", delta: "{" })}`,
+    `data: ${JSON.stringify({ type: "response.completed", response: { output_text: JSON.stringify(completedPlan) } })}`,
+    "data: [DONE]",
+  ].join("\n\n") + "\n\n";
+  process.env.OPENAI_API_KEY = "sk-proj-SINGLE_TEST_TOKEN_1234567890";
+  globalThis.fetch = async () => {
+    providerCalls += 1;
+    return new Response(body, { status: 200, headers: { "Content-Type": "text/event-stream" } });
+  };
+  try {
+    const result = await runDigitalStaffRuntime(context("beastmoney.money-coach", "Can I afford to buy a new laptop today?"));
+    assert.equal(providerCalls, 1);
+    assert.equal(result.research, null);
+    assert.match(result.validationFailures.join(" "), /unnecessary external research/i);
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (originalKey === undefined) delete process.env.OPENAI_API_KEY;
+    else process.env.OPENAI_API_KEY = originalKey;
+  }
+});
+
 test("DS-PERF-01 keeps context stages concurrent, bounded, and single-fetch", () => {
   const route = readFileSync("src/app/api/digital-staff/runtime/route.ts", "utf8");
   const entitlement = readFileSync("src/lib/memberAgeServer.ts", "utf8");
   assert.match(route, /Promise\.all\(\[/);
   assert.match(route, /requireProfessionalEntitlement\(professionalId, \{ supabase, user \}\)/);
   assert.match(entitlement, /authenticated\?\.supabase \|\| createRouteClient\(\)/);
-  assert.ok((route.match(/\.limit\(10\)/g) || []).length >= 2);
+  assert.match(route, /buildMoneyCoachStructuredRecords/);
+  assert.match(route, /from\("income_events"\)/);
+  assert.match(route, /from\("cash_settings"\)/);
+  assert.match(route, /from\("funding_sources"\)/);
   assert.match(route, /\.limit\(19\)/);
   assert.match(route, /\.limit\(20\)/);
   assert.equal((route.match(/loadStructuredRecords\(supabase, user\.id, professionalId\)/g) || []).length, 1);

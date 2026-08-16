@@ -8,8 +8,18 @@ import type { RuntimeContext, RuntimeObserver, RuntimePlan, RuntimeResult } from
 
 type ResponsesPayload = { output_text?: string; output?: Array<{ content?: Array<{ type?: string; text?: string; annotations?: Array<{ type?: string; title?: string; url?: string }> }> }> };
 
-async function executeResearch(model: string, instructions: string, query: string, domains: string[], observer: RuntimeObserver) {
+async function executeResearch(
+  model: string,
+  instructions: string,
+  query: string,
+  domains: string[],
+  observer: RuntimeObserver,
+  requestId?: string,
+  signal?: AbortSignal
+) {
   const payload = await requestOpenAIResponseStream<ResponsesPayload>({ model, store: false, instructions: `${instructions}\nAnswer only from retrieved authoritative evidence. State limitations and never fabricate a citation.`, input: query, tools: [{ type: "web_search", filters: { allowed_domains: domains }, search_context_size: "high" }], tool_choice: "required" }, {
+    requestId,
+    signal,
     onFirstOutput: observer.onFirstModelOutput,
     onOutputTextDelta: observer.onResponseDelta,
   });
@@ -39,6 +49,14 @@ export function requiresDeterministicResearch(context: Pick<RuntimeContext, "pro
 /** A disclosed member fact is not itself a request for external research. */
 export function isDeclarativeMemberStatement(text: string) {
   return !text.includes("?") && /^\s*(?:i|we|my)\b/i.test(text) && /\b(?:hold|have|take|work|served|graduated|prefer|priority|live|currently)\b/i.test(text);
+}
+
+export function isCanonicalContextQuestion(context: Pick<RuntimeContext, "professionalId" | "message">) {
+  const text = context.message.text;
+  if (requiresDeterministicResearch(context)) return false;
+  return context.professionalId === "beastmoney.money-coach"
+    ? /\b(?:can|could|should)\s+i\s+afford\b|\bmy\s+(?:cash|cash flow|finances?|debts?|bills?|income|budget|plan|records?)\b/i.test(text)
+    : /\b(?:my|our)\s+(?:saved|current|existing)\s+(?:records?|context|plan|profile|goals?)\b/i.test(text);
 }
 
 export function parseRuntimePlan(payload: ResponsesPayload): RuntimePlan {
@@ -75,13 +93,17 @@ export function validateRuntimePlan(context: RuntimeContext, plan: RuntimePlan) 
   if (proposals.length !== plan.proposals.length) validationFailures.push("Rejected one or more unsafe structured proposals.");
   const explicitlyRequestsAuthoritativeResearch = config.researchDomains.length > 0
     && (requiresDeterministicResearch(context) || /\b(?:authoritative|according to|what does .{0,40} say)\b/i.test(context.message.text));
+  const canonicalContextQuestion = isCanonicalContextQuestion(context);
   const requestedResearch = explicitlyRequestsAuthoritativeResearch
     ? {
         query: context.message.text,
         reason: "The member explicitly requested current or authoritative evidence.",
         domains: config.researchDomains,
       }
-    : isDeclarativeMemberStatement(context.message.text) ? null : plan.research;
+    : isDeclarativeMemberStatement(context.message.text) || canonicalContextQuestion ? null : plan.research;
+  if (plan.research && canonicalContextQuestion) {
+    validationFailures.push("Rejected unnecessary external research for a context-answerable turn.");
+  }
   const research = requestedResearch && config.researchDomains.length
     ? { ...requestedResearch, query: deidentifyResearchQuery(requestedResearch.query), domains: requestedResearch.domains.filter((domain) => config.researchDomains.includes(domain)) }
     : null;
@@ -112,16 +134,22 @@ export async function runDigitalStaffRuntime(context: RuntimeContext, observer: 
   let providerResponseHeadersMs: number | null = null;
   let providerFirstEventMs: number | null = null;
   let providerCompleteMs: number | null = null;
+  const promptStartedAt = Date.now();
   const runtimeInput = buildRuntimeInput(config, context);
+  const promptConstructionMs = Date.now() - promptStartedAt;
   const modelStartedAt = Date.now();
   const payload = await requestOpenAIResponseStream<ResponsesPayload>({
       model, store: false, instructions: buildRuntimeInstructions(config), input: runtimeInput,
       text: { format: { type: "json_schema", name: "digital_staff_runtime_plan", strict: true, schema: runtimeJsonSchema } },
   }, {
+      requestId: context.requestId,
+      signal: context.signal,
       onResponseHeaders: () => { providerResponseHeadersMs = Date.now() - startedAt; },
+      onFirstEvent: () => {
+        if (providerFirstEventMs === null) providerFirstEventMs = Date.now() - startedAt;
+      },
       onFirstOutput: () => {
         if (firstModelOutputMs === null) firstModelOutputMs = Date.now() - startedAt;
-        if (providerFirstEventMs === null) providerFirstEventMs = Date.now() - startedAt;
         observer.onFirstModelOutput?.();
       },
       onComplete: () => { providerCompleteMs = Date.now() - startedAt; },
@@ -136,7 +164,7 @@ export async function runDigitalStaffRuntime(context: RuntimeContext, observer: 
   if (validated.research && context.executionMode !== "historical_reconciliation") {
     await observer.onActivity?.("researching");
     const researchStartedAt = Date.now();
-    research = await executeResearch(model, buildRuntimeInstructions(config), validated.research.query, validated.research.domains, observer);
+    research = await executeResearch(model, buildRuntimeInstructions(config), validated.research.query, validated.research.domains, observer, context.requestId, context.signal);
     researchMs = Date.now() - researchStartedAt;
     await observer.onActivity?.("validating_sources");
     const validationStartedAt = Date.now();
@@ -152,7 +180,7 @@ export async function runDigitalStaffRuntime(context: RuntimeContext, observer: 
     response: research?.answer || validated.response,
     model,
     latencyMs: totalMs,
-    timings: { totalMs, contextAssemblyMs: 0, initialModelMs, firstModelOutputMs, firstUsefulOutputMs: null, researchMs, researchValidationMs, persistenceMs: 0, providerResponseHeadersMs, providerFirstEventMs, providerCompleteMs, validationMs, promptCharacters: runtimeInput.length },
+    timings: { totalMs, contextAssemblyMs: 0, initialModelMs, firstModelOutputMs, firstUsefulOutputMs: null, researchMs, researchValidationMs, persistenceMs: 0, providerResponseHeadersMs, providerFirstEventMs, providerCompleteMs, validationMs, promptConstructionMs, promptCharacters: runtimeInput.length },
     researchSources: research?.sources || [],
   };
 }

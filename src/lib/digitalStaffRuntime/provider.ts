@@ -4,6 +4,7 @@ import {
 } from "./security";
 
 const openAIResponsesEndpoint = "https://api.openai.com/v1/responses";
+export const digitalStaffProviderTimeoutMs = 60_000;
 
 function normalizedOpenAIKey(value: string | undefined) {
   const key = value?.trim() || "";
@@ -65,18 +66,33 @@ export async function requestOpenAIResponseStream<T>(
   options: {
     apiKey?: string;
     requestId?: string;
+    fetchImpl?: typeof fetch;
+    signal?: AbortSignal;
+    timeoutMs?: number;
     onOutputTextDelta?: (delta: string) => void | Promise<void>;
+    onFirstEvent?: () => void;
     onFirstOutput?: () => void;
     onResponseHeaders?: () => void;
     onComplete?: () => void;
   } = {}
 ) {
   const requestId = options.requestId || crypto.randomUUID();
+  const controller = new AbortController();
+  const timeoutMs = options.timeoutMs ?? digitalStaffProviderTimeoutMs;
+  let timedOut = false;
+  const abortFromCaller = () => controller.abort(options.signal?.reason);
+  if (options.signal?.aborted) abortFromCaller();
+  else options.signal?.addEventListener("abort", abortFromCaller, { once: true });
+  const timeout = setTimeout(() => {
+    timedOut = true;
+    controller.abort(new Error(`OpenAI provider timed out after ${timeoutMs}ms.`));
+  }, timeoutMs);
   try {
-    const response = await fetch(openAIResponsesEndpoint, {
+    const response = await (options.fetchImpl || fetch)(openAIResponsesEndpoint, {
       method: "POST",
       headers: createOpenAIRequestHeaders(requestId, options.apiKey),
       body: JSON.stringify({ ...(body as Record<string, unknown>), stream: true }),
+      signal: controller.signal,
     });
     if (!response.ok || !response.body) {
       throw new Error(`OpenAI Responses API returned status ${response.status}.`);
@@ -87,6 +103,7 @@ export async function requestOpenAIResponseStream<T>(
     let buffer = "";
     let completed: T | null = null;
     let sawOutput = false;
+    let sawEvent = false;
     while (true) {
       const { done, value } = await reader.read();
       buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
@@ -96,6 +113,10 @@ export async function requestOpenAIResponseStream<T>(
         for (const line of frame.split("\n")) {
           if (!line.startsWith("data: ") || line === "data: [DONE]") continue;
           const event = JSON.parse(line.slice(6)) as OpenAIStreamEvent;
+          if (!sawEvent) {
+            sawEvent = true;
+            options.onFirstEvent?.();
+          }
           if (event.type === "response.output_text.delta" && event.delta) {
             if (!sawOutput) {
               sawOutput = true;
@@ -112,7 +133,15 @@ export async function requestOpenAIResponseStream<T>(
     options.onComplete?.();
     return completed;
   } catch (error) {
-    reportDigitalStaffError("openai-responses-stream", error, requestId);
+    const reported = timedOut
+      ? new Error(`OpenAI provider timed out after ${timeoutMs}ms.`)
+      : options.signal?.aborted
+        ? new Error("OpenAI provider request was aborted by the caller.")
+        : error;
+    reportDigitalStaffError("openai-responses-stream", reported, requestId);
     throw new DigitalStaffServiceError(requestId);
+  } finally {
+    clearTimeout(timeout);
+    options.signal?.removeEventListener("abort", abortFromCaller);
   }
 }

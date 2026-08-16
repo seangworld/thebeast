@@ -3,6 +3,8 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import {
   buildRuntimeInput,
+  buildMoneyCoachStructuredRecords,
+  digitalStaffProviderTimeoutMs,
   digitalStaffActivityLabels,
   isProductSupportQuestion,
   requireProfessionalConfig,
@@ -20,6 +22,7 @@ test("AP-105 deterministic research boundaries distinguish current authorities f
   assert.equal(requiresDeterministicResearch({ professionalId: "beasthealth.health-advisor", message: message("What does the FDA currently say about this medication?") }), true);
   assert.equal(requiresDeterministicResearch({ professionalId: "beasthealth.health-advisor", message: message("Where do I update my current medications?") }), false);
   assert.equal(requiresDeterministicResearch({ professionalId: "beastmoney.money-coach", message: message("What did I tell you my current priority was?") }), false);
+  assert.equal(requiresDeterministicResearch({ professionalId: "beastmoney.money-coach", message: message("Can I afford to buy a new laptop today?") }), false);
 });
 
 test("DS-PERF-01 keeps disclosed member facts out of external research", () => {
@@ -68,6 +71,60 @@ test("AP-105 OpenAI stream parser forwards text deltas and returns the completed
   }
 });
 
+test("DS-PERF-01 aborts a stalled provider call at the configured bound without retrying", async () => {
+  let calls = 0;
+  let sawAbort = false;
+  const originalError = console.error;
+  console.error = () => undefined;
+  try {
+    await assert.rejects(
+      requestOpenAIResponseStream(
+        { model: "test" },
+        {
+          apiKey: "sk-proj-SINGLE_TEST_TOKEN_1234567890",
+          timeoutMs: 5,
+          fetchImpl: async (_input, init) => {
+            calls += 1;
+            return await new Promise<Response>((_resolve, reject) => {
+              init?.signal?.addEventListener("abort", () => {
+                sawAbort = true;
+                reject(init.signal?.reason || new Error("aborted"));
+              }, { once: true });
+            });
+          },
+        }
+      ),
+      /temporarily unavailable/i
+    );
+  } finally {
+    console.error = originalError;
+  }
+  assert.equal(calls, 1);
+  assert.equal(sawAbort, true);
+  assert.equal(digitalStaffProviderTimeoutMs, 60_000);
+});
+
+test("DS-PERF-01 supplies canonical affordability context without starving supporting records", () => {
+  const records = buildMoneyCoachStructuredRecords({
+    debts: [{ id: "debt", name: "Card", balance: 1_000, minimum_payment: 100, is_archived: false }],
+    bills: [{ id: "bill", name: "Rent", amount: 1_000, frequency: "monthly", due_date: 20, is_archived: false }],
+    incomes: [{ id: "income", name: "Pay", amount: 3_000, frequency: "monthly", next_date: "2026-08-20", is_active: true }],
+    cashSettings: { starting_balance: 4_000, checking_buffer: 500 },
+    fundingSources: [],
+    goals: [{ id: "goal", title: "Laptop", status: "Active" }],
+  }, new Date("2026-08-15T12:00:00Z"));
+  const summary = records[0]?.record as Record<string, unknown>;
+  assert.equal(summary.monthlyIncome, 3_000);
+  assert.equal(summary.monthlyBills, 1_000);
+  assert.equal(summary.monthlyDebtMinimums, 100);
+  assert.equal(summary.currentCash, 4_000);
+  assert.equal(summary.cashBuffer, 500);
+  assert.equal(typeof summary.safeToSpendToday, "number");
+  assert.ok(records.some((record) => record.domain.endsWith(":income")));
+  assert.ok(records.some((record) => record.domain.endsWith(":goal")));
+  assert.ok(records.length <= 20);
+});
+
 test("AP-105 shared client and route expose acknowledged activity streaming and safe retry contracts", () => {
   const client = readFileSync("src/lib/digitalStaffRuntime/client.ts", "utf8");
   const route = readFileSync("src/app/api/digital-staff/runtime/route.ts", "utf8");
@@ -83,6 +140,9 @@ test("AP-105 shared client and route expose acknowledged activity streaming and 
   assert.match(route, /providerCompleteMs/);
   assert.match(route, /validationMs/);
   assert.match(route, /contextPromise/);
+  assert.match(route, /incomeLoadMs/);
+  assert.match(route, /otherFinancialContextLoadMs/);
+  assert.match(route, /signal: request\.signal/);
   assert.match(route, /await contextObserverActivity\(observer, "loading_context"\)/);
   assert.match(route, /Promise\.all\(\[/);
   assert.doesNotMatch(route, /console\.(?:log|info).*message/);

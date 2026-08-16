@@ -55,6 +55,8 @@ export function reportDigitalStaffError(
 
 export function classifyDigitalStaffFailure(scope: string, error: unknown) {
   const detail = sanitizedErrorDetail(error).toLowerCase();
+  if (/timed out|timeout/.test(detail)) return "provider_timeout";
+  if (/aborted by the caller/.test(detail)) return "request_aborted";
   if (/authentication|required|unauthori[sz]ed|jwt|session/.test(detail)) return "auth_failure";
   if (/proposal.*(not available|not found)|not found/.test(detail)) return "proposal_not_found";
   if (/outside the canonical|cannot persist|unsupported|unknown digital/.test(detail)) return "unsupported_proposal_type";

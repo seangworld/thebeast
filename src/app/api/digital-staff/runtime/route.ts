@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { acquireDigitalStaffRequestLease, applyApprovedKnowledgeProposal, reportDigitalStaffLifecycle, runDigitalStaffRuntime, requireProfessionalConfig, safeDigitalStaffFailure, type ConversationState, type DigitalStaffActivity, type ProfessionalId, type RuntimeMessage, type RuntimeObserver, type StructuredKnowledgeProposal } from "@/lib/digitalStaffRuntime";
+import { acquireDigitalStaffRequestLease, applyApprovedKnowledgeProposal, buildMoneyCoachStructuredRecords, reportDigitalStaffLifecycle, runDigitalStaffRuntime, requireProfessionalConfig, safeDigitalStaffFailure, type ConversationState, type DigitalStaffActivity, type ProfessionalId, type RuntimeMessage, type RuntimeObserver, type StructuredKnowledgeProposal } from "@/lib/digitalStaffRuntime";
 import { createRouteClient } from "@/lib/supabase/server";
 import { requireProfessionalEntitlement } from "@/lib/memberAgeServer";
 
@@ -12,9 +12,42 @@ type MessageRow = { id: string; sender: { kind?: string }; content: string | { t
 function messageText(content: MessageRow["content"]) { return typeof content === "string" ? content : typeof content?.text === "string" ? content.text : ""; }
 
 async function loadStructuredRecords(supabase: ReturnType<typeof createRouteClient>, ownerId: string, professionalId: string) {
-  const queries = professionalId === "beastmoney.money-coach"
-    ? [supabase.from("debts").select("id, name, balance, minimum_payment, interest_rate, due_date, next_due_date_after_payment, payment_behavior, lifecycle_status, paid_off_at, is_archived, created_at").eq("user_id", ownerId).order("created_at", { ascending: false }).limit(10), supabase.from("bill_events").select("id, name, amount, frequency, due_date, next_due_date_after_payment, created_at").eq("user_id", ownerId).eq("is_archived", false).order("created_at", { ascending: false }).limit(10)]
-    : professionalId === "beasteducation.guidance-counselor"
+  const timed = async <T,>(promise: PromiseLike<T>) => {
+    const startedAt = Date.now();
+    const result = await promise;
+    return { result, durationMs: Date.now() - startedAt };
+  };
+  if (professionalId === "beastmoney.money-coach") {
+    const [debts, bills, incomes, cashSettings, fundingSources, goals] = await Promise.all([
+      timed(supabase.from("debts").select("id, name, balance, minimum_payment, interest_rate, due_date, next_due_date_after_payment, payment_behavior, lifecycle_status, paid_off_at, is_archived, created_at").eq("user_id", ownerId).order("created_at", { ascending: false }).limit(200)),
+      timed(supabase.from("bill_events").select("id, name, amount, frequency, due_date, next_due_date_after_payment, assigned_income_date, is_archived, created_at").eq("user_id", ownerId).order("created_at", { ascending: false }).limit(200)),
+      timed(supabase.from("income_events").select("id, name, amount, frequency, next_date, is_active, is_archived, created_at").eq("user_id", ownerId).order("next_date", { ascending: true }).limit(200)),
+      timed(supabase.from("cash_settings").select("starting_balance, checking_buffer, updated_at").eq("user_id", ownerId).maybeSingle()),
+      timed(supabase.from("funding_sources").select("id, name, current_balance, credit_limit, available_credit, max_utilization_percent, is_active, created_at").eq("user_id", ownerId).eq("is_active", true).order("created_at", { ascending: true }).limit(200)),
+      timed(supabase.from("beast_goals").select("id, title, status, target_date, updated_at").eq("owner_id", ownerId).eq("category", "Money").neq("status", "Archived").order("updated_at", { ascending: false }).limit(100)),
+    ]);
+    const results = [debts, bills, incomes, cashSettings, fundingSources, goals];
+    const error = results.find((item) => item.result.error)?.result.error || null;
+    return {
+      queryCount: results.length,
+      error,
+      timings: {
+        debtLoadMs: debts.durationMs,
+        billLoadMs: bills.durationMs,
+        incomeLoadMs: incomes.durationMs,
+        otherFinancialContextLoadMs: Math.max(cashSettings.durationMs, fundingSources.durationMs, goals.durationMs),
+      },
+      records: error ? [] : buildMoneyCoachStructuredRecords({
+        debts: (debts.result.data || []) as Record<string, unknown>[],
+        bills: (bills.result.data || []) as Record<string, unknown>[],
+        incomes: (incomes.result.data || []) as Record<string, unknown>[],
+        cashSettings: cashSettings.result.data as Record<string, unknown> | null,
+        fundingSources: (fundingSources.result.data || []) as Record<string, unknown>[],
+        goals: (goals.result.data || []) as Record<string, unknown>[],
+      }),
+    };
+  }
+  const queries = professionalId === "beasteducation.guidance-counselor"
       ? [supabase.from("education_profiles").select("id, goal_kind, goal, current_situation, background, strengths, growth_areas, constraints, weekly_hours, selected_providers, updated_at").eq("owner_id", ownerId).limit(1), supabase.from("education_career_profile_items").select("id, category, label, value, verification_status, confidence, updated_at").eq("owner_id", ownerId).order("updated_at", { ascending: false }).limit(19)]
       : professionalId === "beasthealth.health-advisor"
         ? [supabase.from("beast_health_records").select("id, record_type, title, status, occurred_on, source, details, updated_at").eq("owner_id", ownerId).neq("status", "archived").order("updated_at", { ascending: false }).limit(20)]
@@ -22,6 +55,8 @@ async function loadStructuredRecords(supabase: ReturnType<typeof createRouteClie
   const results = await Promise.all(queries);
   return {
     queryCount: queries.length,
+    error: results.find((result) => result.error)?.error || null,
+    timings: { debtLoadMs: null, billLoadMs: null, incomeLoadMs: null, otherFinancialContextLoadMs: null },
     records: results.flatMap((result, index) => result.error ? [] : (result.data || []).map((record) => { const row = record as Record<string, unknown>; return { domain: `${professionalId}:${index}`, record, updatedAt: typeof row.updated_at === "string" ? row.updated_at : undefined }; })),
   };
 }
@@ -130,7 +165,7 @@ export async function POST(request: Request) {
     const memoryResult = contextResult.memory.result;
     const structuredResult = contextResult.structured.result;
     const structuredRecords = structuredResult.records;
-    if (historyResult.error || memoryResult.error) throw new Error("Relevant conversation context is temporarily unavailable.");
+    if (historyResult.error || memoryResult.error || structuredResult.error) throw new Error("Relevant conversation context is temporarily unavailable.");
     const contextLoadMs = contextResult.durationMs;
     let firstUsefulOutputMs: number | null = null;
     const runtimeObserver: RuntimeObserver = {
@@ -141,7 +176,7 @@ export async function POST(request: Request) {
       },
     };
     const result = await runDigitalStaffRuntime({
-      ownerId: user.id, professionalId: professionalId as ProfessionalId, conversationId, message,
+      ownerId: user.id, professionalId: professionalId as ProfessionalId, conversationId, message, requestId, signal: request.signal,
       recentMessages: ([...(historyResult.data || [])] as MessageRow[]).reverse().map((row) => ({ id: row.id, role: row.sender?.kind === "user" ? "user" : "assistant", text: messageText(row.content), createdAt: row.created_at })),
       state: summary?.runtimeState || emptyState,
       memories: (memoryResult.data || []).map((row) => ({ key: String(row.memory_key), value: row.value, updatedAt: String(row.updated_at) })),
@@ -178,6 +213,10 @@ export async function POST(request: Request) {
       historyLoadMs: contextResult.history.durationMs,
       memoryLoadMs: contextResult.memory.durationMs,
       structuredRecordLoadMs: contextResult.structured.durationMs,
+      debtLoadMs: structuredResult.timings.debtLoadMs || null,
+      billLoadMs: structuredResult.timings.billLoadMs || null,
+      incomeLoadMs: structuredResult.timings.incomeLoadMs || null,
+      otherFinancialContextLoadMs: structuredResult.timings.otherFinancialContextLoadMs || null,
       historyCount: (historyResult.data || []).length,
       memoryCount: (memoryResult.data || []).length,
       structuredRecordCount: structuredRecords.length,
@@ -188,6 +227,7 @@ export async function POST(request: Request) {
       providerFirstEventMs: result.timings.providerFirstEventMs || null,
       providerCompleteMs: result.timings.providerCompleteMs || null,
       validationMs: result.timings.validationMs || null,
+      promptConstructionMs: result.timings.promptConstructionMs || null,
       promptCharacters: result.timings.promptCharacters || null,
       firstUsefulOutputMs,
       providerInvocationCount: result.timings.researchMs > 0 ? 2 : 1,

@@ -1,5 +1,5 @@
 type MemberRequestBudget = {
-  activeProfessionals: Set<string>;
+  activeProfessionals: Map<string, { acquiredAt: number; token: symbol }>;
   acceptedAt: number[];
 };
 
@@ -14,6 +14,7 @@ export type DigitalStaffRequestLease = {
 
 const requestWindowMs = 60_000;
 const maximumRequestsPerWindow = 12;
+export const maximumDigitalStaffLeaseMs = 65_000;
 const memberBudgets = new Map<string, MemberRequestBudget>();
 
 export function acquireDigitalStaffRequestLease(
@@ -22,6 +23,11 @@ export function acquireDigitalStaffRequestLease(
   now = Date.now()
 ): DigitalStaffRequestLease {
   memberBudgets.forEach((budget, memberId) => {
+    budget.activeProfessionals.forEach((lease, activeProfessionalId) => {
+      if (now - lease.acquiredAt >= maximumDigitalStaffLeaseMs) {
+        budget.activeProfessionals.delete(activeProfessionalId);
+      }
+    });
     if (
       budget.activeProfessionals.size === 0
       && budget.acceptedAt.every((acceptedAt: number) => now - acceptedAt >= requestWindowMs)
@@ -30,7 +36,7 @@ export function acquireDigitalStaffRequestLease(
     }
   });
   const existing = memberBudgets.get(ownerId) || {
-    activeProfessionals: new Set<string>(),
+    activeProfessionals: new Map<string, { acquiredAt: number; token: symbol }>(),
     acceptedAt: [],
   };
   existing.acceptedAt = existing.acceptedAt.filter(
@@ -50,7 +56,8 @@ export function acquireDigitalStaffRequestLease(
     };
   }
 
-  existing.activeProfessionals.add(professionalId);
+  const token = Symbol(professionalId);
+  existing.activeProfessionals.set(professionalId, { acquiredAt: now, token });
   existing.acceptedAt.push(now);
   let released = false;
   return {
@@ -58,7 +65,9 @@ export function acquireDigitalStaffRequestLease(
     release: () => {
       if (released) return;
       released = true;
-      existing.activeProfessionals.delete(professionalId);
+      if (existing.activeProfessionals.get(professionalId)?.token === token) {
+        existing.activeProfessionals.delete(professionalId);
+      }
       if (existing.activeProfessionals.size === 0 && existing.acceptedAt.length === 0) {
         memberBudgets.delete(ownerId);
       }

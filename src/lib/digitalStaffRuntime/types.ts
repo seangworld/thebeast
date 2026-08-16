@@ -56,6 +56,8 @@ export type RuntimeContext = {
   structuredRecords: Array<{ domain: string; record: unknown; updatedAt?: string }>;
   workspace: string | null;
   executionMode?: "conversation" | "historical_reconciliation";
+  requestId?: string;
+  signal?: AbortSignal;
 };
 
 export type RuntimeResearchRequest = {
@@ -107,6 +109,7 @@ export type RuntimeTimings = {
   providerFirstEventMs?: number | null;
   providerCompleteMs?: number | null;
   validationMs?: number | null;
+  promptConstructionMs?: number | null;
   promptCharacters?: number | null;
 };
 
