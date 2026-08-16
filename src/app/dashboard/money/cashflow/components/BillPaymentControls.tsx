@@ -66,11 +66,11 @@ export default function BillPaymentControls({
 
   return editingBillId === bill.id ? (
     <div className="grid gap-2 sm:grid-cols-2">
-      <button onClick={() => saveBillEdit(bill.id)} className="beast-button">
+      <button type="button" onClick={() => saveBillEdit(bill.id)} className="beast-button">
         Save
       </button>
 
-      <button onClick={cancelEditBill} className="beast-button-secondary">
+      <button type="button" onClick={cancelEditBill} className="beast-button-secondary">
         Cancel
       </button>
     </div>
@@ -95,6 +95,7 @@ export default function BillPaymentControls({
         />
 
         <button
+          type="button"
           onClick={() => void submitPayment("partial", Number(partialPayments[bill.id] || 0))}
           disabled={!paymentWritesAvailable}
           className={`beast-button-secondary ${actionClass}`}
@@ -104,7 +105,7 @@ export default function BillPaymentControls({
       </div>
 
       <div className="grid grid-cols-1 gap-2">
-        <button disabled={!paymentWritesAvailable} onClick={() => void submitPayment("full", Number(bill.remaining || 0))} className={`beast-button ${actionClass}`}>
+        <button type="button" disabled={!paymentWritesAvailable} onClick={() => void submitPayment("full", Number(bill.remaining || 0))} className={`beast-button ${actionClass}`}>
           Pay
         </button>
 
@@ -112,7 +113,7 @@ export default function BillPaymentControls({
 
         {paymentStatus ? <p role={paymentStatus.type === "error" ? "alert" : "status"} className={paymentStatus.type === "error" ? "rounded bg-red-950/60 px-3 py-2 text-sm text-red-200" : "rounded bg-emerald-950/60 px-3 py-2 text-sm text-emerald-200"}>{paymentStatus.message}</p> : null}
 
-        <button onClick={() => startEditBill(bill)} className={`beast-button-secondary ${actionClass}`}>
+        <button type="button" onClick={() => startEditBill(bill)} className={`beast-button-secondary ${actionClass}`}>
           Edit
         </button>
 
@@ -126,6 +127,7 @@ export default function BillPaymentControls({
         </button>
 
         <button
+          type="button"
           onClick={() => { if (window.confirm(`Archive ${bill.name}?`)) void archiveBill(bill.id); }}
           className={`beast-button-secondary ${actionClass}`}
         >

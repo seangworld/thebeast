@@ -66,11 +66,11 @@ export default function DebtPaymentControls({
 
   return editingDebtId === debt.id ? (
     <div className="grid gap-2 sm:grid-cols-2">
-      <button onClick={() => saveDebtEdit(debt.id)} className="beast-button">
+      <button type="button" onClick={() => saveDebtEdit(debt.id)} className="beast-button">
         Save
       </button>
 
-      <button onClick={cancelEditDebt} className="beast-button-secondary">
+      <button type="button" onClick={cancelEditDebt} className="beast-button-secondary">
         Cancel
       </button>
     </div>
@@ -106,6 +106,7 @@ export default function DebtPaymentControls({
         {paymentWarning ? <p role="status" className="rounded bg-amber-950/50 px-2 py-1 text-xs text-amber-200">{paymentWarning}</p> : null}
 
         <button
+          type="button"
           onClick={() =>
             applyDebtPayment(debt, paymentAmount)
           }
@@ -116,6 +117,7 @@ export default function DebtPaymentControls({
         </button>
 
         <button
+          type="button"
           onClick={() =>
             applyDebtPayment(debt, calculateDebtPaymentAmount({ balance: debt.balance, minimumPayment: debt.minimum_payment, mode: "minimum" }))
           }
@@ -139,7 +141,7 @@ export default function DebtPaymentControls({
       )}
 
       <div className="grid grid-cols-1 gap-2">
-        <button onClick={() => startEditDebt(debt)} className={`beast-button-secondary ${actionClass}`}>
+        <button type="button" onClick={() => startEditDebt(debt)} className={`beast-button-secondary ${actionClass}`}>
           Edit
         </button>
 
@@ -153,13 +155,14 @@ export default function DebtPaymentControls({
         </button>
 
         <button
+          type="button"
           onClick={() => { if (window.confirm(`Archive ${debt.name}?`)) void archiveDebt(debt.id); }}
           className={`beast-button-secondary ${actionClass}`}
         >
           Archive
         </button>
 
-        <button onClick={() => { if (window.confirm(`Delete ${debt.name}? This action cannot be undone.`)) void deleteDebt(debt.id); }} className={`beast-button bg-red-700 hover:bg-red-600 ${actionClass}`}>
+        <button type="button" onClick={() => { if (window.confirm(`Delete ${debt.name}? This action cannot be undone.`)) void deleteDebt(debt.id); }} className={`beast-button bg-red-700 hover:bg-red-600 ${actionClass}`}>
           Delete
         </button>
       </div>
