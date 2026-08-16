@@ -40,7 +40,7 @@ test("SEC-001 pins patched direct and transitive security dependencies", () => {
   assert.equal(packageJson.devDependencies["eslint-config-next"], "15.5.21");
   assert.equal(packageJson.devDependencies.postcss, "^8.5.23");
   assert.equal(packageJson.overrides.ws, "8.21.0");
-  assert.equal(packageJson.overrides.nanoid, "3.3.17");
+  assert.equal(packageJson.overrides.nanoid, "3.3.18");
   assert.equal(packageJson.overrides["js-yaml"], "4.3.1");
 });
 
