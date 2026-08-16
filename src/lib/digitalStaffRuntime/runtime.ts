@@ -125,10 +125,14 @@ export function validateRuntimePlan(context: RuntimeContext, plan: RuntimePlan) 
   };
 }
 
-export async function runDigitalStaffRuntime(context: RuntimeContext, observer: RuntimeObserver = {}): Promise<RuntimeResult> {
+export async function runDigitalStaffRuntime(
+  context: RuntimeContext,
+  observer: RuntimeObserver = {},
+  options: { modelOverride?: string } = {}
+): Promise<RuntimeResult> {
   const startedAt = Date.now();
   const config = requireProfessionalConfig(context.professionalId);
-  const model = process.env.OPENAI_DIGITAL_STAFF_MODEL || "gpt-5";
+  const model = options.modelOverride || process.env.OPENAI_DIGITAL_STAFF_MODEL || "gpt-5";
   await observer.onActivity?.("thinking");
   let firstModelOutputMs: number | null = null;
   let providerResponseHeadersMs: number | null = null;
