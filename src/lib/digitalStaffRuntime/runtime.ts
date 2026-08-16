@@ -1,7 +1,7 @@
 import { requireProfessionalConfig } from "./config";
 import { inferProductNavigationTarget, validateNavigationTarget } from "./navigation";
 import { buildRuntimeInput, buildRuntimeInstructions, runtimeJsonSchema } from "./prompt";
-import { applyDigitalStaffInteractionPolicy } from "./interactionPolicy";
+import { applyDigitalStaffInteractionPolicy, requestsConsequentialAction } from "./interactionPolicy";
 import { requestOpenAIResponseStream } from "./provider";
 import { deidentifyResearchQuery, validateToolCalls } from "./tools";
 import type { RuntimeContext, RuntimeObserver, RuntimePlan, RuntimeResult } from "./types";
@@ -57,6 +57,63 @@ export function isCanonicalContextQuestion(context: Pick<RuntimeContext, "profes
   return context.professionalId === "beastmoney.money-coach"
     ? /\b(?:can|could|should)\s+i\s+afford\b|\bmy\s+(?:cash|cash flow|finances?|debts?|bills?|income|budget|plan|records?)\b/i.test(text)
     : /\b(?:my|our)\s+(?:saved|current|existing)\s+(?:records?|context|plan|profile|goals?)\b/i.test(text);
+}
+
+export type DigitalStaffModelTier = "ordinary" | "strong";
+
+export const defaultOrdinaryDigitalStaffModel = "gpt-5.6-luna";
+export const defaultStrongDigitalStaffModel = "gpt-5";
+
+type DigitalStaffModelEnvironment = {
+  OPENAI_DIGITAL_STAFF_MODEL?: string;
+  OPENAI_DIGITAL_STAFF_FAST_MODEL?: string;
+  OPENAI_DIGITAL_STAFF_STRONG_MODEL?: string;
+};
+
+/**
+ * Route deterministically from the member's request. This must stay cheaper than
+ * the work it routes: no provider call, hidden classifier, or mutable member
+ * state is involved.
+ */
+export function digitalStaffModelTier(context: RuntimeContext): DigitalStaffModelTier {
+  const text = context.message.text;
+  if (
+    context.executionMode === "historical_reconciliation"
+    || context.professionalId === "beastfusion.fusion-director"
+    || requestsConsequentialAction(text)
+    || requiresDeterministicResearch(context)
+  ) {
+    return "strong";
+  }
+
+  if (
+    /\b(?:multi[-\s]?stage|multi[-\s]?step|deep(?:ly)?|authoritative|longitudinal)\b/i.test(text)
+    || /\b(?:build|create|develop)\b.{0,80}\b(?:payoff|transition|career|financial)\b.{0,60}\b(?:strategy|plan)\b/i.test(text)
+    || /\bcompare\b.{0,160}\b(?:avalanche|snowball|scenario|tradeoffs?)\b/i.test(text)
+  ) {
+    return "strong";
+  }
+
+  if (context.professionalId === "beasthealth.health-advisor") {
+    const higherRiskHealthWork = /\b(?:chest\s+(?:pain|pressure)|shortness\s+of\s+breath|difficulty\s+breathing|faint(?:ing|ed)?|unresponsive|severe\s+(?:headache|bleeding|pain)|sudden\s+(?:weakness|confusion|vision\s+change)|overdose|suicid(?:e|al)|stroke|emergency|urgent|newly\s+prescribed|drug\s+interaction|medication\s+interaction|interact\s+with|change\s+(?:my\s+)?(?:medication|dose|treatment)|stop\s+(?:taking|my\s+medication)|start\s+(?:taking|a\s+medication)|analy[sz]e\s+(?:the\s+)?pattern|prioriti[sz]ed\s+clinician\s+discussion|intermittent\s+dizziness)\b/i;
+    if (higherRiskHealthWork.test(text)) return "strong";
+  }
+
+  return "ordinary";
+}
+
+export function selectDigitalStaffModel(
+  context: RuntimeContext,
+  environment: DigitalStaffModelEnvironment = {
+    OPENAI_DIGITAL_STAFF_MODEL: process.env.OPENAI_DIGITAL_STAFF_MODEL,
+    OPENAI_DIGITAL_STAFF_FAST_MODEL: process.env.OPENAI_DIGITAL_STAFF_FAST_MODEL,
+    OPENAI_DIGITAL_STAFF_STRONG_MODEL: process.env.OPENAI_DIGITAL_STAFF_STRONG_MODEL,
+  }
+) {
+  const legacyOverride = environment.OPENAI_DIGITAL_STAFF_MODEL;
+  return digitalStaffModelTier(context) === "strong"
+    ? environment.OPENAI_DIGITAL_STAFF_STRONG_MODEL || legacyOverride || defaultStrongDigitalStaffModel
+    : environment.OPENAI_DIGITAL_STAFF_FAST_MODEL || legacyOverride || defaultOrdinaryDigitalStaffModel;
 }
 
 export function parseRuntimePlan(payload: ResponsesPayload): RuntimePlan {
@@ -132,7 +189,7 @@ export async function runDigitalStaffRuntime(
 ): Promise<RuntimeResult> {
   const startedAt = Date.now();
   const config = requireProfessionalConfig(context.professionalId);
-  const model = options.modelOverride || process.env.OPENAI_DIGITAL_STAFF_MODEL || "gpt-5";
+  const model = options.modelOverride || selectDigitalStaffModel(context);
   await observer.onActivity?.("thinking");
   let firstModelOutputMs: number | null = null;
   let providerResponseHeadersMs: number | null = null;
