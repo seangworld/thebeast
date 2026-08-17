@@ -8,6 +8,17 @@ import {
 
 const releaseNotes = [
   {
+    version: "BeastEducation v1.6.0",
+    date: "August 16, 2026",
+    title: "Released",
+    items: [
+      "Graduated BeastEducation from Beta with its Generation 1 Guidance Counselor-led education and career planning contract.",
+      "Guidance Counselor, education-profile context, goals, activities, courses, progress, and protected member access remain the released scope.",
+      "Tutor is deferred future-generation functionality and is not part of the BeastEducation v1.6.0 release contract.",
+      "Release boundary: no database migration or member-data change was required.",
+    ],
+  },
+  {
     version: "BeastOS v2.1.1",
     date: "July 20, 2026",
     title: "Critical Horizontal Overflow Hotfix",

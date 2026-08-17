@@ -6045,7 +6045,7 @@ test("BeastAdmin foundation registers modules and protects owner-only navigation
     [
       ["BeastOS", "beastos", `v${versionManifest.beastos.version}`, "active", "released", true, false, true],
       ["BeastMoney", "money", `v${versionManifest.beastmoney.version}`, "active", "released", true, false, true],
-      ["BeastEducation", "learning", `v${versionManifest.beastlearning.version} ${versionManifest.beastlearning.channel}`, "active", "beta", true, true, true],
+      ["BeastEducation", "learning", `v${versionManifest.beastlearning.version} ${versionManifest.beastlearning.channel}`, "active", "released", true, false, true],
       ["BeastGoals", "goals", `v${versionManifest.beastgoals.version}`, "foundation", "adminOnly", true, false, true],
       ["BeastDocuments", "documents", `v${versionManifest.beastdocuments.version}`, "foundation", "adminOnly", true, false, true],
       ["BeastHealth", "health", `v${versionManifest.beasthealth.version} ${versionManifest.beasthealth.channel}`, "active", "released", true, false, true],

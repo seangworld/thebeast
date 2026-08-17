@@ -11,7 +11,7 @@ prescribes, interprets clinical significance, or replaces qualified care.
 
 Current Money version: `BeastMoney v2.4.0` (Production)
 
-Current education version: `BeastEducation v1.6 Beta`
+Current education version: `BeastEducation v1.6.0` (Released)
 
 ## July 4, 2026 Closeout
 
