@@ -26,6 +26,12 @@ type SearchConsoleRow = {
 };
 type SearchConsoleResponse = { rows?: SearchConsoleRow[] };
 
+type SearchConsoleLoadResult = {
+  data: Partial<SeangworldAnalyticsData>;
+  dataThroughDate: string | null;
+  reportingDelayDays: number | null;
+};
+
 type ProviderError = {
   code: string;
   message: string;
@@ -45,8 +51,20 @@ const GOOGLE_ANALYTICS_SCOPE =
   "https://www.googleapis.com/auth/analytics.readonly";
 const GOOGLE_SEARCH_CONSOLE_SCOPE =
   "https://www.googleapis.com/auth/webmasters.readonly";
-const CACHE_TTL_MS = 5 * 60 * 1000;
+const CACHE_TTL_MS = 15 * 60 * 1000;
 const MAX_RETRIES = 2;
+
+class SafeProviderError extends Error {
+  constructor(
+    readonly safeCode: string,
+    readonly safeMessage: string,
+    readonly retryable: boolean,
+    message: string
+  ) {
+    super(message);
+    this.name = "SafeProviderError";
+  }
+}
 
 let cachedProviders:
   | { expiresAt: number; cacheKey: string; providers: SeangworldProviderSnapshot[] }
@@ -151,6 +169,26 @@ function dateRanges(now: Date, reportingDays: number) {
   previousStart.setUTCDate(previousStart.getUTCDate() - (reportingDays - 1));
   return {
     current: { startDate: isoDate(start), endDate: isoDate(end) },
+    previous: {
+      startDate: isoDate(previousStart),
+      endDate: isoDate(previousEnd),
+    },
+  };
+}
+
+function dateRangesEndingOn(endDate: string, reportingDays: number) {
+  const end = new Date(`${endDate}T00:00:00.000Z`);
+  if (Number.isNaN(end.getTime())) {
+    throw new Error("Search Console returned an invalid reporting date.");
+  }
+  const start = new Date(end);
+  start.setUTCDate(start.getUTCDate() - (reportingDays - 1));
+  const previousEnd = new Date(start);
+  previousEnd.setUTCDate(previousEnd.getUTCDate() - 1);
+  const previousStart = new Date(previousEnd);
+  previousStart.setUTCDate(previousStart.getUTCDate() - (reportingDays - 1));
+  return {
+    current: { startDate: isoDate(start), endDate },
     previous: {
       startDate: isoDate(previousStart),
       endDate: isoDate(previousEnd),
@@ -378,7 +416,7 @@ async function searchConsoleRequest(
 ) {
   const response = await requestWithRetry(
     fetchImplementation,
-    `https://www.googleapis.com/webmasters/v3/sites/${encodeURIComponent(
+    `https://searchconsole.googleapis.com/webmasters/v3/sites/${encodeURIComponent(
       siteUrl
     )}/searchAnalytics/query`,
     {
@@ -391,9 +429,81 @@ async function searchConsoleRequest(
     }
   );
   if (!response.ok) {
-    throw new Error(`Google Search Console request failed (${response.status}).`);
+    const responseBody = (await response.json().catch(() => null)) as
+      | { error?: { message?: string; status?: string } }
+      | null;
+    const providerMessage = responseBody?.error?.message || "";
+    const diagnostic = providerMessage.replace(/[\r\n]+/g, " ").slice(0, 500);
+    if (
+      response.status === 403 &&
+      /has not been used|disabled|accessnotconfigured|service_disabled/i.test(
+        providerMessage
+      )
+    ) {
+      throw new SafeProviderError(
+        "search_console_api_disabled",
+        "The Google Search Console API is not enabled for the configured WIF project.",
+        false,
+        `Google Search Console API is disabled (403): ${diagnostic}`
+      );
+    }
+    if (
+      response.status === 403 &&
+      /permission|insufficient|not authorized|not an owner|does not have/i.test(
+        providerMessage
+      )
+    ) {
+      throw new SafeProviderError(
+        "search_console_permission_denied",
+        "The configured service account does not have Restricted user access to this Search Console property.",
+        false,
+        `Google Search Console property access was denied (403): ${diagnostic}`
+      );
+    }
+    if (response.status === 404) {
+      throw new SafeProviderError(
+        "search_console_property_not_found",
+        "The configured Search Console property could not be found.",
+        false,
+        `Google Search Console property was not found (404): ${diagnostic}`
+      );
+    }
+    throw new Error(
+      `Google Search Console request failed (${response.status})${
+        diagnostic ? `: ${diagnostic}` : "."
+      }`
+    );
   }
   return (await response.json()) as SearchConsoleResponse;
+}
+
+async function latestFinalSearchConsoleDate(
+  siteUrl: string,
+  accessToken: string,
+  now: Date,
+  fetchImplementation: FetchImplementation
+) {
+  const end = new Date(now);
+  end.setUTCDate(end.getUTCDate() - 1);
+  const start = new Date(end);
+  start.setUTCDate(start.getUTCDate() - 9);
+  const response = await searchConsoleRequest(
+    siteUrl,
+    accessToken,
+    fetchImplementation,
+    {
+      startDate: isoDate(start),
+      endDate: isoDate(end),
+      dimensions: ["date"],
+      dataState: "final",
+      rowLimit: 10,
+    }
+  );
+  return (response.rows || [])
+    .map((row) => row.keys?.[0] || "")
+    .filter((date) => /^\d{4}-\d{2}-\d{2}$/.test(date))
+    .sort()
+    .at(-1) || null;
 }
 
 async function loadSearchConsoleData(
@@ -402,20 +512,41 @@ async function loadSearchConsoleData(
   now: Date,
   fetchImplementation: FetchImplementation,
   reportingDays: number
-): Promise<Partial<SeangworldAnalyticsData>> {
+): Promise<SearchConsoleLoadResult> {
   const siteUrl = environment.SEANGWORLD_SEARCH_CONSOLE_SITE_URL;
   if (!siteUrl) throw new Error("Search Console site URL is missing.");
-  const ranges = dateRanges(now, reportingDays);
-  const [currentTotals, previousTotals, current, previous, pages] =
+  const dataThroughDate = await latestFinalSearchConsoleDate(
+    siteUrl,
+    accessToken,
+    now,
+    fetchImplementation
+  );
+  if (!dataThroughDate) {
+    return { data: {}, dataThroughDate: null, reportingDelayDays: null };
+  }
+  const ranges = dateRangesEndingOn(dataThroughDate, reportingDays);
+  const [
+    currentTotals,
+    previousTotals,
+    current,
+    previous,
+    pages,
+    countries,
+    devices,
+    trends,
+  ] =
     await mapWithConcurrency(
       [
-        { ...ranges.current },
-        { ...ranges.previous },
-        { ...ranges.current, dimensions: ["query"], rowLimit: 25 },
-        { ...ranges.previous, dimensions: ["query"], rowLimit: 25 },
-        { ...ranges.current, dimensions: ["page"], rowLimit: 10 },
+        { ...ranges.current, dataState: "final", type: "web" },
+        { ...ranges.previous, dataState: "final", type: "web" },
+        { ...ranges.current, dataState: "final", type: "web", dimensions: ["query"], rowLimit: 25 },
+        { ...ranges.previous, dataState: "final", type: "web", dimensions: ["query"], rowLimit: 25 },
+        { ...ranges.current, dataState: "final", type: "web", dimensions: ["page"], rowLimit: 10 },
+        { ...ranges.current, dataState: "final", type: "web", dimensions: ["country"], rowLimit: 10 },
+        { ...ranges.current, dataState: "final", type: "web", dimensions: ["device"], rowLimit: 10 },
+        { ...ranges.current, dataState: "final", type: "web", dimensions: ["date"], rowLimit: reportingDays },
       ],
-      2,
+      3,
       (body) =>
         searchConsoleRequest(siteUrl, accessToken, fetchImplementation, body)
     );
@@ -433,41 +564,71 @@ async function loadSearchConsoleData(
   }));
   const currentSummary = currentTotals.rows?.[0];
   const previousSummary = previousTotals.rows?.[0];
-  return {
-    topQueries,
-    impressions: currentSummary
-      ? {
-          value: currentSummary.impressions || 0,
-          previousValue: previousSummary?.impressions ?? null,
-        }
-      : null,
-    clicks: currentSummary
-      ? {
-          value: currentSummary.clicks || 0,
-          previousValue: previousSummary?.clicks ?? null,
-        }
-      : null,
-    ctr: currentSummary
-      ? {
-          value: currentSummary.ctr || 0,
-          previousValue: previousSummary?.ctr ?? null,
-        }
-      : null,
-    averagePosition: currentSummary
-      ? {
-          value: currentSummary.position || 0,
-          previousValue: previousSummary?.position ?? null,
-        }
-      : null,
-    topLandingPages: (pages.rows || []).map((row) => ({
-      label: row.keys?.[0] || "Unknown page",
+  const nowDate = new Date(`${isoDate(now)}T00:00:00.000Z`);
+  const throughDate = new Date(`${dataThroughDate}T00:00:00.000Z`);
+  const reportingDelayDays = Math.max(
+    0,
+    Math.round((nowDate.getTime() - throughDate.getTime()) / 86_400_000)
+  );
+  const searchDimensions = (response: SearchConsoleResponse) =>
+    (response.rows || []).map((row) => ({
+      label: row.keys?.[0] || "Unknown",
       value: row.clicks || 0,
       secondaryValue: row.impressions || 0,
-    })),
+    }));
+  return {
+    dataThroughDate,
+    reportingDelayDays,
+    data: {
+      topQueries,
+      impressions: currentSummary
+        ? {
+            value: currentSummary.impressions || 0,
+            previousValue: previousSummary?.impressions ?? null,
+          }
+        : null,
+      clicks: currentSummary
+        ? {
+            value: currentSummary.clicks || 0,
+            previousValue: previousSummary?.clicks ?? null,
+          }
+        : null,
+      ctr: currentSummary
+        ? {
+            value: currentSummary.ctr || 0,
+            previousValue: previousSummary?.ctr ?? null,
+          }
+        : null,
+      averagePosition: currentSummary
+        ? {
+            value: currentSummary.position || 0,
+            previousValue: previousSummary?.position ?? null,
+          }
+        : null,
+      topLandingPages: searchDimensions(pages),
+      searchCountries: searchDimensions(countries),
+      searchDevices: searchDimensions(devices),
+      searchTrends: (trends.rows || [])
+        .map((row) => ({
+          date: row.keys?.[0] || "",
+          clicks: row.clicks || 0,
+          impressions: row.impressions || 0,
+          ctr: row.ctr ?? null,
+          position: row.position ?? null,
+        }))
+        .sort((left, right) => left.date.localeCompare(right.date)),
+    },
   };
 }
 
 function safeProviderError(error: unknown): ProviderError {
+  if (error instanceof SafeProviderError) {
+    return {
+      code: error.safeCode,
+      message: error.safeMessage,
+      retryable: error.retryable,
+    };
+  }
   const shaped = error as {
     message?: string;
     response?: ProviderErrorResponse;
@@ -531,6 +692,8 @@ function liveProvider(input: {
   label: string;
   data: Partial<SeangworldAnalyticsData>;
   synchronizedAt: string;
+  dataThroughDate?: string | null;
+  reportingDelayDays?: number | null;
 }): SeangworldProviderSnapshot {
   const hasData = Object.values(input.data).some((value) =>
     Array.isArray(value) ? value.length > 0 : value !== null && value !== undefined
@@ -541,11 +704,22 @@ function liveProvider(input: {
     status: hasData ? "configured" : "no_data",
     connectionStatus: hasData ? "connected" : "no_data",
     guidance: hasData
-      ? "Live provider data synchronized successfully."
+      ? input.id === "search_console" && input.dataThroughDate
+        ? `Final Search Console data synchronized through ${input.dataThroughDate}; the normal reporting delay is 2–3 days.`
+        : "Live provider data synchronized successfully."
       : "The provider connection succeeded but returned no records for this period.",
     lastSynchronizationAt: input.synchronizedAt,
     lastSuccessfulSynchronizationAt: input.synchronizedAt,
-    freshness: "current",
+    freshness:
+      input.id !== "search_console" || input.reportingDelayDays === null || input.reportingDelayDays === undefined
+        ? "current"
+        : input.reportingDelayDays <= 3
+          ? "current"
+          : input.reportingDelayDays <= 5
+            ? "recent"
+            : "stale",
+    dataThroughDate: input.dataThroughDate ?? null,
+    reportingDelayDays: input.reportingDelayDays ?? null,
     error: null,
     data: hasData ? input.data : null,
   };
@@ -571,6 +745,8 @@ function failedProvider(
     lastSynchronizationAt: synchronizedAt,
     lastSuccessfulSynchronizationAt: null,
     freshness: "unknown",
+    dataThroughDate: null,
+    reportingDelayDays: null,
     error: safeError,
     data: null,
   };
@@ -667,12 +843,14 @@ export async function loadLiveSeangworldProviders(
             fetchImplementation,
             reportingDays
           )
-            .then((data) =>
+            .then((result) =>
               liveProvider({
                 id: "search_console",
                 label: "Google Search Console",
-                data,
+                data: result.data,
                 synchronizedAt,
+                dataThroughDate: result.dataThroughDate,
+                reportingDelayDays: result.reportingDelayDays,
               })
             )
             .catch((error) =>

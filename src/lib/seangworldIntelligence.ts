@@ -53,8 +53,10 @@ export type SeangworldAnalyticsData = {
   ctr: IntelligenceMetric | null;
   averagePosition: IntelligenceMetric | null;
   countries: IntelligenceDimension[];
+  searchCountries: IntelligenceDimension[];
   cities: IntelligenceDimension[];
   devices: IntelligenceDimension[];
+  searchDevices: IntelligenceDimension[];
   browsers: IntelligenceDimension[];
   operatingSystems: IntelligenceDimension[];
   trafficSources: IntelligenceDimension[];
@@ -68,6 +70,13 @@ export type SeangworldAnalyticsData = {
     previousImpressions?: number | null;
   })[];
   topLandingPages: IntelligenceDimension[];
+  searchTrends: {
+    date: string;
+    clicks: number;
+    impressions: number;
+    ctr: number | null;
+    position: number | null;
+  }[];
   historicalTrends: {
     date: string;
     visitors: number | null;
@@ -91,6 +100,8 @@ export type SeangworldProviderSnapshot = {
   lastSynchronizationAt: string | null;
   lastSuccessfulSynchronizationAt: string | null;
   freshness: "current" | "recent" | "stale" | "unknown";
+  dataThroughDate: string | null;
+  reportingDelayDays: number | null;
   error: {
     code: string;
     message: string;
@@ -135,8 +146,10 @@ const emptyData = (): SeangworldAnalyticsData => ({
   ctr: null,
   averagePosition: null,
   countries: [],
+  searchCountries: [],
   cities: [],
   devices: [],
+  searchDevices: [],
   browsers: [],
   operatingSystems: [],
   trafficSources: [],
@@ -144,6 +157,7 @@ const emptyData = (): SeangworldAnalyticsData => ({
   exitPages: [],
   topQueries: [],
   topLandingPages: [],
+  searchTrends: [],
   historicalTrends: [],
   deviceEngagement: null,
 });
@@ -398,6 +412,8 @@ export function buildServerSeangworldProviders(
       lastSynchronizationAt: definition.synchronized || null,
       lastSuccessfulSynchronizationAt: definition.successful || null,
       freshness: freshness(definition.successful || null, now),
+      dataThroughDate: null,
+      reportingDelayDays: null,
       error:
         status === "synchronization_failed" || status === "unavailable"
           ? {
@@ -453,5 +469,16 @@ export function normalizeSeangworldIntelligenceSnapshot(
   ) {
     return null;
   }
-  return snapshot as SeangworldIntelligenceSnapshot;
+  return {
+    ...(snapshot as SeangworldIntelligenceSnapshot),
+    data: {
+      ...emptyData(),
+      ...(snapshot.data as Partial<SeangworldAnalyticsData>),
+    },
+    providers: snapshot.providers.map((provider) => ({
+      ...provider,
+      dataThroughDate: provider.dataThroughDate ?? null,
+      reportingDelayDays: provider.reportingDelayDays ?? null,
+    })),
+  };
 }

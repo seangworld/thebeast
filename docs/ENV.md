@@ -54,16 +54,20 @@ The Google Analytics Data API and, when used, Search Console API must be enabled
 in the service account's Google Cloud project. Grant the service-account email:
 
 - Viewer access to the GA4 property.
-- Search Console user access to the exact configured property.
+- Restricted Search Console user access to the exact configured property. A
+  verified Domain property is preferred when the integration must cover the
+  root domain and its subdomains.
 
 Grant the WIF principal only `roles/iam.workloadIdentityUser` on this dedicated
 service account, constrained to the approved Vercel project and Preview and
 Production environments. Do not grant the service account project roles and do
 not configure `VERCEL_OIDC_TOKEN` manually; Vercel supplies it per invocation.
 
-The owner dashboard synchronizes a 30-day reporting window and its preceding
-30-day comparison window. Requests use bounded concurrency, retry transient
-Google responses, and retain a short server cache to protect provider quotas.
+The owner dashboard supports 7-, 30-, and 90-day reporting windows and matching
+preceding comparison windows. Search Console first discovers the latest date
+with finalized data, then labels the normal 2–3 day reporting delay explicitly.
+Requests use bounded concurrency, retry transient Google responses, and retain
+a 15-minute server cache to protect provider quotas.
 Missing credentials, denied permissions, provider outages, and empty reporting
 periods return safe provider states instead of failing the application.
 

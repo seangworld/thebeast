@@ -13,9 +13,9 @@ import {
 const emptyData = (): SeangworldAnalyticsData => ({
   visitors: null, users: null, sessions: null, views: null, engagementRate: null,
   impressions: null, clicks: null, ctr: null, averagePosition: null,
-  countries: [], cities: [], devices: [], browsers: [], operatingSystems: [],
+  countries: [], searchCountries: [], cities: [], devices: [], searchDevices: [], browsers: [], operatingSystems: [],
   trafficSources: [], entryPages: [], exitPages: [], topQueries: [],
-  topLandingPages: [], historicalTrends: [], deviceEngagement: null,
+  topLandingPages: [], searchTrends: [], historicalTrends: [], deviceEngagement: null,
 });
 
 test("provider cards support every required graceful state", () => {
@@ -93,7 +93,8 @@ test("owner route and dashboard contain all required sections and no AI claim pa
     "Impressions", "Clicks", "CTR", "Average Position", "Countries",
     "Cities", "Devices", "Browsers", "Operating Systems", "Traffic Sources",
     "Landing Pages", "Exit Pages", "Top Queries", "Top Landing Pages",
-    "Historical Trends", "Provider Status", "Connection Status", "Last Sync", "Data Freshness",
+    "Historical Trends", "Search Performance Trends", "Final Data Through", "Reporting Delay",
+    "Provider Status", "Connection Status", "Last Sync", "Data Freshness",
   ]) assert.match(workspace, new RegExp(label));
   assert.doesNotMatch(workspace, /OpenAI|generate.*summary|AI-generated/i);
 });
