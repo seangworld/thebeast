@@ -32,6 +32,14 @@ type ProviderError = {
   retryable: boolean;
 };
 
+type ProviderErrorResponse = {
+  status?: number;
+  data?: {
+    error?: string | { code?: number; message?: string; status?: string };
+    error_description?: string;
+  };
+};
+
 const GOOGLE_STS_URL = "https://sts.googleapis.com/v1/token";
 const GOOGLE_ANALYTICS_SCOPE =
   "https://www.googleapis.com/auth/analytics.readonly";
@@ -460,9 +468,17 @@ async function loadSearchConsoleData(
 }
 
 function safeProviderError(error: unknown): ProviderError {
-  const message = error instanceof Error ? error.message : "Provider request failed.";
-  const status = message.match(/\((\d{3})\)/)?.[1];
-  const retryable = status ? [429, 500, 502, 503, 504].includes(Number(status)) : true;
+  const shaped = error as {
+    message?: string;
+    response?: ProviderErrorResponse;
+  };
+  const message = shaped?.message || "Provider request failed.";
+  const status = String(
+    shaped?.response?.status || message.match(/\((\d{3})\)/)?.[1] || ""
+  );
+  const retryable = status
+    ? [429, 500, 502, 503, 504].includes(Number(status))
+    : true;
   return {
     code: status ? `provider_http_${status}` : "provider_unavailable",
     message:
@@ -470,6 +486,43 @@ function safeProviderError(error: unknown): ProviderError {
         ? "Google rejected the configured service-account access."
         : "The provider could not be synchronized safely.",
     retryable,
+  };
+}
+
+function providerOperationalDiagnostic(error: unknown) {
+  const shaped = error as {
+    name?: string;
+    message?: string;
+    code?: string | number;
+    response?: ProviderErrorResponse;
+  };
+  const providerError = shaped?.response?.data?.error;
+  const clean = (value: unknown) =>
+    typeof value === "string"
+      ? value
+          .replace(/Bearer\s+\S+/gi, "Bearer [redacted]")
+          .replace(
+            /eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g,
+            "[redacted-jwt]"
+          )
+          .slice(0, 600)
+      : undefined;
+  return {
+    name: clean(shaped?.name),
+    message: clean(shaped?.message),
+    code:
+      typeof shaped?.code === "string" || typeof shaped?.code === "number"
+        ? String(shaped.code)
+        : undefined,
+    httpStatus: shaped?.response?.status,
+    providerCode:
+      typeof providerError === "string"
+        ? clean(providerError)
+        : providerError?.code || providerError?.status,
+    providerMessage:
+      typeof providerError === "object" && providerError
+        ? clean(providerError.message)
+        : clean(shaped?.response?.data?.error_description),
   };
 }
 
@@ -504,6 +557,10 @@ function failedProvider(
   error: unknown,
   synchronizedAt: string
 ): SeangworldProviderSnapshot {
+  console.error(
+    `[seangworld-intelligence] ${id} synchronization failed`,
+    providerOperationalDiagnostic(error)
+  );
   const safeError = safeProviderError(error);
   return {
     id,
