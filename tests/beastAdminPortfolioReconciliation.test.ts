@@ -1,0 +1,31 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { beastAdminPortfolio } from "../src/lib/beastAdminPortfolio";
+import { beastModuleRegistry } from "../src/lib/moduleRegistry";
+
+test("BA-REC projects the current ecosystem portfolio from generated version identities", () => {
+  assert.deepEqual(
+    beastAdminPortfolio.map(({ product }) => product),
+    [
+      "The Beast", "BeastOS", "BeastMoney", "BeastEducation", "BeastHealth",
+      "BeastGoals", "BeastDocuments", "Beast Director", "BeastAdmin",
+      "SEANGWORLD", "BeastFusion", "BeastFusion Dashboard", "Change the World",
+      "BeastHome", "BeastSecurity",
+    ]
+  );
+  assert.equal(
+    beastAdminPortfolio.find(({ product }) => product === "BeastEducation")?.version,
+    "v1.6.0"
+  );
+  assert.equal(
+    beastAdminPortfolio.find(({ product }) => product === "Change the World")?.production,
+    "Deployed"
+  );
+});
+
+test("BA-REC released education and deferred Tutor work do not create a beta module", () => {
+  const education = beastModuleRegistry.find(({ name }) => name === "BeastEducation");
+  assert.equal(education?.visibility, "released");
+  assert.equal(education?.beta, false);
+  assert.equal(beastModuleRegistry.filter(({ beta }) => beta).length, 0);
+});

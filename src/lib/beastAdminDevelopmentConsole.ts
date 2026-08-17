@@ -225,10 +225,9 @@ function repositoryStatuses(
     {
       repository: "CW",
       branch: null,
-      worktree: "planning",
+      worktree: "unavailable",
       latestCommit: null,
-      detail:
-        "Change the World is represented as planning because no repository evidence is connected.",
+      detail: `Canonical governance reports Change the World v${versionManifest.cw.version} ${versionManifest.cw.channel}. Branch, worktree, and commit evidence are not connected.`,
     },
   ];
 }

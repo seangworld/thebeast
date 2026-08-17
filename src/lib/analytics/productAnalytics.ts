@@ -11,6 +11,8 @@ export const analyticsEventNames = [
   "contact_action_initiated",
   "sign_in_selected",
   "account_creation_selected",
+  "auth_initiated",
+  "account_created",
   "search_performed",
   "search_succeeded",
   "search_no_results",

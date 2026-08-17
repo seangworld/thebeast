@@ -32,6 +32,8 @@ test("BO-404 uses one typed contract and stable Beast product identifiers", () =
   );
   assert.ok(analyticsEventNames.includes("professional_opened"));
   assert.ok(analyticsEventNames.includes("recommendation_accepted"));
+  assert.ok(analyticsEventNames.includes("auth_initiated"));
+  assert.ok(analyticsEventNames.includes("account_created"));
 });
 
 test("BO-404 allowlists properties and rejects PII and private content", () => {
@@ -139,6 +141,32 @@ test("BO-404 framework attribution cannot be overridden by event callers", () =>
   });
 });
 
+test("BA-REC funnel events remain aggregate and reject member identity", () => {
+  const dispatch = buildAnalyticsDispatch({
+    event: "account_created",
+    context: classifyBeastRoute("/"),
+    properties: {
+      result: "success",
+      category: "password",
+      email: "member@example.com",
+      user_id: "auth-user-id",
+      member_name: "Private Member",
+    },
+    consent: "enabled",
+    environment: "production",
+    measurementId,
+  });
+  assert.deepEqual(dispatch?.properties, {
+    contract_version: "bo404-v1",
+    product_id: "beastos",
+    module_id: "beastos",
+    environment: "production",
+    result: "success",
+    category: "password",
+  });
+  assert.deepEqual(dispatch?.rejectedProperties, ["email", "member_name", "user_id"]);
+});
+
 test("BO-404 prevents duplicate and authentication-transition page views", () => {
   const pageViews = createPageViewDeduplicator();
   assert.equal(pageViews.shouldTrack("/dashboard/today"), true);
@@ -199,8 +227,8 @@ test("BO-404 BeastAdmin reports configuration without fake aggregates", () => {
   const ready = buildBeastAdminProductIntelligenceState({
     NEXT_PUBLIC_GA_MEASUREMENT_ID: measurementId,
     BEAST_ECOSYSTEM_GA4_PROPERTY_ID: "123456789",
-    SEANGWORLD_GOOGLE_SERVICE_ACCOUNT_EMAIL: "service-account",
-    SEANGWORLD_GOOGLE_PRIVATE_KEY: "configured",
+    GOOGLE_WIF_PROVIDER_RESOURCE: "projects/123/locations/global/workloadIdentityPools/vercel/providers/thebeast",
+    GOOGLE_GA4_READER_SERVICE_ACCOUNT_EMAIL: "ga4-reader@example.iam.gserviceaccount.com",
   });
   assert.equal(ready.status, "data_api_ready");
   assert.ok(ready.limitations.every((item) => !/\b0\b/.test(item)));
@@ -208,8 +236,8 @@ test("BO-404 BeastAdmin reports configuration without fake aggregates", () => {
   const legacyProperty = buildBeastAdminProductIntelligenceState({
     NEXT_PUBLIC_GA_MEASUREMENT_ID: measurementId,
     SEANGWORLD_GA4_PROPERTY_ID: "987654321",
-    SEANGWORLD_GOOGLE_SERVICE_ACCOUNT_EMAIL: "service-account",
-    SEANGWORLD_GOOGLE_PRIVATE_KEY: "configured",
+    GOOGLE_WIF_PROVIDER_RESOURCE: "projects/123/locations/global/workloadIdentityPools/vercel/providers/thebeast",
+    GOOGLE_GA4_READER_SERVICE_ACCOUNT_EMAIL: "ga4-reader@example.iam.gserviceaccount.com",
   });
   assert.equal(legacyProperty.status, "property_review_required");
 });

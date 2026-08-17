@@ -1,6 +1,6 @@
 {
   "generatedFrom": "BeastFusion state/ecosystem-version-registry.json",
-  "generatedAt": "2026-08-09",
+  "generatedAt": "2026-08-17",
   "identities": {
     "beast": {
       "name": "The Beast",
@@ -13,8 +13,8 @@
       "name": "BeastOS",
       "version": "3.0.0",
       "buildId": "beastos-3.0.0+20260728.01",
-      "channel": "Development",
-      "releaseDate": null
+      "channel": "Production",
+      "releaseDate": "2026-07-28"
     },
     "beastmoney": {
       "name": "BeastMoney",
@@ -64,6 +64,27 @@
       "buildId": "beastdocuments-2.2.0+20260718.01",
       "channel": "Production",
       "releaseDate": "2026-07-18"
+    },
+    "beastfusion": {
+      "name": "BeastFusion",
+      "version": "2.3.0-alpha1",
+      "buildId": "beastfusion-2.3.0-alpha1+20260728.01",
+      "channel": "Development",
+      "releaseDate": null
+    },
+    "seangworld": {
+      "name": "SEANGWORLD",
+      "version": "1.5.0",
+      "buildId": "sw-1.5.0+20260816.01",
+      "channel": "Production",
+      "releaseDate": "2026-08-16"
+    },
+    "cw": {
+      "name": "Change the World",
+      "version": "0.6.0",
+      "buildId": "cw-0.6.0+20260816.01",
+      "channel": "Production",
+      "releaseDate": "2026-08-16"
     }
   }
 }

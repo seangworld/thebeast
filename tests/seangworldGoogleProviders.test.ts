@@ -1,18 +1,15 @@
 import assert from "node:assert/strict";
-import { generateKeyPairSync } from "node:crypto";
 import test from "node:test";
 import { loadLiveSeangworldProviders } from "../src/lib/server/seangworldGoogleProviders";
 
-function serviceAccountEnvironment(suffix: string) {
-  const { privateKey } = generateKeyPairSync("rsa", { modulusLength: 2048 });
+function workloadIdentityEnvironment(suffix: string) {
   return {
-    SEANGWORLD_GA4_PROPERTY_ID: `property-${suffix}`,
+    BEAST_ECOSYSTEM_GA4_PROPERTY_ID: `property-${suffix}`,
     SEANGWORLD_SEARCH_CONSOLE_SITE_URL: `https://example-${suffix}.com/`,
-    SEANGWORLD_GOOGLE_SERVICE_ACCOUNT_EMAIL: `analytics-${suffix}@example.com`,
-    SEANGWORLD_GOOGLE_PRIVATE_KEY: privateKey.export({
-      type: "pkcs8",
-      format: "pem",
-    }).toString(),
+    GOOGLE_WIF_PROVIDER_RESOURCE:
+      `projects/123456789/locations/global/workloadIdentityPools/vercel/providers/${suffix}`,
+    GOOGLE_GA4_READER_SERVICE_ACCOUNT_EMAIL:
+      `analytics-${suffix}@example.iam.gserviceaccount.com`,
   };
 }
 
@@ -27,12 +24,14 @@ test("live Google providers remain optional", async () => {
 });
 
 test("Google authentication failures degrade safely without credential exposure", async () => {
-  const environment = serviceAccountEnvironment("failure");
+  const environment = workloadIdentityEnvironment("failure");
   const providers = await loadLiveSeangworldProviders(
     environment,
     new Date("2026-07-28T12:00:00Z"),
-    async () =>
-      new Response(JSON.stringify({ error: "forbidden" }), { status: 403 })
+    fetch,
+    async () => {
+      throw new Error("Google authentication failed (403).");
+    }
   );
   assert.ok(providers);
   assert.deepEqual(
@@ -44,30 +43,28 @@ test("Google authentication failures degrade safely without credential exposure"
   const serialized = JSON.stringify(providers);
   assert.doesNotMatch(
     serialized,
-    /analytics-failure@example\.com|BEGIN PRIVATE KEY|property-failure/
+    /analytics-failure@example|workloadIdentityPools|property-failure/
   );
 });
 
 test("live GA4 and Search Console responses map to the provider-neutral dashboard", async () => {
-  const environment = serviceAccountEnvironment("live");
+  const environment = workloadIdentityEnvironment("live");
+  const observedStartDates = new Set<string>();
   const fetchImplementation: typeof fetch = async (input, init) => {
     const url = String(input);
-    if (url.includes("oauth2.googleapis.com/token")) {
-      return new Response(JSON.stringify({ access_token: "test-access-token" }), {
-        status: 200,
-      });
-    }
     const body = JSON.parse(String(init?.body || "{}")) as {
       startDate?: string;
       dateRanges?: { startDate?: string }[];
       dimensions?: { name?: string }[] | string[];
       metrics?: { name?: string }[];
     };
+    const startDate = body.dateRanges?.[0]?.startDate || body.startDate;
+    if (startDate) observedStartDates.add(startDate);
     if (url.includes("analyticsdata.googleapis.com")) {
       const dimension = (body.dimensions?.[0] as { name?: string } | undefined)
         ?.name;
       if (!dimension) {
-        const current = (body.dateRanges?.[0]?.startDate || "") >= "2026-06-01";
+        const current = body.dateRanges?.[0]?.startDate === "2026-07-21";
         return new Response(
           JSON.stringify({
             rows: [
@@ -142,7 +139,7 @@ test("live GA4 and Search Console responses map to the provider-neutral dashboar
         })
       );
     }
-    const current = (body.startDate || "") >= "2026-06-01";
+    const current = body.startDate === "2026-07-21";
     return new Response(
       JSON.stringify({
         rows: [
@@ -160,7 +157,9 @@ test("live GA4 and Search Console responses map to the provider-neutral dashboar
   const providers = await loadLiveSeangworldProviders(
     environment,
     new Date("2026-07-28T12:00:00Z"),
-    fetchImplementation
+    fetchImplementation,
+    async () => "test-access-token",
+    7
   );
   const ga4 = providers?.find((provider) => provider.id === "ga4");
   const searchConsole = providers?.find(
@@ -177,4 +176,19 @@ test("live GA4 and Search Console responses map to the provider-neutral dashboar
   });
   assert.equal(searchConsole?.data?.topQueries?.[0]?.position, 5);
   assert.equal(searchConsole?.data?.topLandingPages?.[0]?.secondaryValue, 500);
+  assert.ok(observedStartDates.has("2026-07-21"));
+  assert.ok(observedStartDates.has("2026-07-14"));
+});
+
+test("live Google providers reject unsupported reporting ranges before authentication", async () => {
+  await assert.rejects(
+    loadLiveSeangworldProviders(
+      workloadIdentityEnvironment("invalid-range"),
+      new Date("2026-07-28T12:00:00Z"),
+      fetch,
+      async () => "unused",
+      365
+    ),
+    /Unsupported analytics reporting range/
+  );
 });

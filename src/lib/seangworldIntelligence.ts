@@ -341,7 +341,7 @@ export function buildServerSeangworldProviders(
     {
       id: "ga4" as const,
       label: "Google Analytics 4",
-      configured: Boolean(environment.SEANGWORLD_GA4_PROPERTY_ID && environment.SEANGWORLD_GOOGLE_SERVICE_ACCOUNT_EMAIL && environment.SEANGWORLD_GOOGLE_PRIVATE_KEY),
+      configured: Boolean(environment.BEAST_ECOSYSTEM_GA4_PROPERTY_ID && environment.GOOGLE_WIF_PROVIDER_RESOURCE && environment.GOOGLE_GA4_READER_SERVICE_ACCOUNT_EMAIL),
       status: environment.SEANGWORLD_GA4_STATUS,
       data: environment.SEANGWORLD_GA4_SNAPSHOT_JSON,
       synchronized: environment.SEANGWORLD_GA4_LAST_SYNCHRONIZATION_AT,
@@ -350,7 +350,7 @@ export function buildServerSeangworldProviders(
     {
       id: "search_console" as const,
       label: "Google Search Console",
-      configured: Boolean(environment.SEANGWORLD_SEARCH_CONSOLE_SITE_URL && environment.SEANGWORLD_GOOGLE_SERVICE_ACCOUNT_EMAIL && environment.SEANGWORLD_GOOGLE_PRIVATE_KEY),
+      configured: Boolean(environment.SEANGWORLD_SEARCH_CONSOLE_SITE_URL && environment.GOOGLE_WIF_PROVIDER_RESOURCE && environment.GOOGLE_GA4_READER_SERVICE_ACCOUNT_EMAIL),
       status: environment.SEANGWORLD_SEARCH_CONSOLE_STATUS,
       data: environment.SEANGWORLD_SEARCH_CONSOLE_SNAPSHOT_JSON,
       synchronized: environment.SEANGWORLD_SEARCH_CONSOLE_LAST_SYNCHRONIZATION_AT,

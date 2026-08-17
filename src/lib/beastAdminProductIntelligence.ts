@@ -16,8 +16,8 @@ export function buildBeastAdminProductIntelligenceState(environment: {
   NEXT_PUBLIC_GA_MEASUREMENT_ID?: string;
   BEAST_ECOSYSTEM_GA4_PROPERTY_ID?: string;
   SEANGWORLD_GA4_PROPERTY_ID?: string;
-  SEANGWORLD_GOOGLE_SERVICE_ACCOUNT_EMAIL?: string;
-  SEANGWORLD_GOOGLE_PRIVATE_KEY?: string;
+  GOOGLE_WIF_PROVIDER_RESOURCE?: string;
+  GOOGLE_GA4_READER_SERVICE_ACCOUNT_EMAIL?: string;
 }): BeastAdminProductIntelligenceState {
   const collectionConfigured = /^G-[A-Z0-9]{6,20}$/.test(
     environment.NEXT_PUBLIC_GA_MEASUREMENT_ID || ""
@@ -27,8 +27,8 @@ export function buildBeastAdminProductIntelligenceState(environment: {
   );
   const dataApiConfigured = Boolean(
     approvedPropertyConfigured &&
-      environment.SEANGWORLD_GOOGLE_SERVICE_ACCOUNT_EMAIL &&
-      environment.SEANGWORLD_GOOGLE_PRIVATE_KEY
+      environment.GOOGLE_WIF_PROVIDER_RESOURCE &&
+      environment.GOOGLE_GA4_READER_SERVICE_ACCOUNT_EMAIL
   );
   const status = dataApiConfigured
     ? "data_api_ready"

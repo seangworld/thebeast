@@ -39,12 +39,12 @@ test("unconfigured providers expose guidance without analytics or fake recommend
 
 test("server configuration never returns credential values", () => {
   const providers = buildServerSeangworldProviders({
-    SEANGWORLD_GA4_PROPERTY_ID: "property-secret",
-    SEANGWORLD_GOOGLE_SERVICE_ACCOUNT_EMAIL: "private@example.com",
-    SEANGWORLD_GOOGLE_PRIVATE_KEY: "private-key-secret",
+    BEAST_ECOSYSTEM_GA4_PROPERTY_ID: "property-secret",
+    GOOGLE_WIF_PROVIDER_RESOURCE: "projects/123/locations/global/workloadIdentityPools/private-pool/providers/private-provider",
+    GOOGLE_GA4_READER_SERVICE_ACCOUNT_EMAIL: "private@example.iam.gserviceaccount.com",
   }, "2026-07-28T12:00:00Z");
   const serialized = JSON.stringify(providers);
-  assert.doesNotMatch(serialized, /property-secret|private@example\.com|private-key-secret/);
+  assert.doesNotMatch(serialized, /property-secret|private@example|private-pool/);
   assert.equal(providers[0]?.status, "configured");
   assert.equal(providers[0]?.data, null);
 });

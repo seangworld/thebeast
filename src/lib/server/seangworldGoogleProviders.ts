@@ -1,4 +1,5 @@
-import { createSign } from "node:crypto";
+import { getVercelOidcToken } from "@vercel/oidc";
+import { IdentityPoolClient } from "google-auth-library";
 import type {
   IntelligenceDimension,
   IntelligenceMetric,
@@ -8,11 +9,6 @@ import type {
 
 type ServerEnvironment = Readonly<Record<string, string | undefined>>;
 type FetchImplementation = typeof fetch;
-
-type GoogleTokenResponse = {
-  access_token?: string;
-  expires_in?: number;
-};
 
 type Ga4Cell = { value?: string };
 type Ga4Row = {
@@ -36,51 +32,20 @@ type ProviderError = {
   retryable: boolean;
 };
 
-const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
-const GOOGLE_SCOPES = [
-  "https://www.googleapis.com/auth/analytics.readonly",
-  "https://www.googleapis.com/auth/webmasters.readonly",
-].join(" ");
+const GOOGLE_STS_URL = "https://sts.googleapis.com/v1/token";
+const GOOGLE_ANALYTICS_SCOPE =
+  "https://www.googleapis.com/auth/analytics.readonly";
+const GOOGLE_SEARCH_CONSOLE_SCOPE =
+  "https://www.googleapis.com/auth/webmasters.readonly";
 const CACHE_TTL_MS = 5 * 60 * 1000;
 const MAX_RETRIES = 2;
 
 let cachedProviders:
   | { expiresAt: number; cacheKey: string; providers: SeangworldProviderSnapshot[] }
   | null = null;
-let inFlightProviders: Promise<SeangworldProviderSnapshot[]> | null = null;
-
-function base64Url(value: string | Buffer) {
-  return Buffer.from(value)
-    .toString("base64")
-    .replace(/=/g, "")
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_");
-}
-
-function createServiceAccountAssertion(
-  email: string,
-  privateKey: string,
-  now: Date
-) {
-  const issuedAt = Math.floor(now.getTime() / 1000);
-  const header = base64Url(JSON.stringify({ alg: "RS256", typ: "JWT" }));
-  const claims = base64Url(
-    JSON.stringify({
-      iss: email,
-      scope: GOOGLE_SCOPES,
-      aud: GOOGLE_TOKEN_URL,
-      iat: issuedAt,
-      exp: issuedAt + 3600,
-    })
-  );
-  const unsigned = `${header}.${claims}`;
-  const signer = createSign("RSA-SHA256");
-  signer.update(unsigned);
-  signer.end();
-  return `${unsigned}.${base64Url(
-    signer.sign(privateKey.replace(/\\n/g, "\n"))
-  )}`;
-}
+let inFlightProviders:
+  | { cacheKey: string; promise: Promise<SeangworldProviderSnapshot[]> }
+  | null = null;
 
 async function requestWithRetry(
   fetchImplementation: FetchImplementation,
@@ -113,43 +78,69 @@ async function requestWithRetry(
 }
 
 async function getGoogleAccessToken(
-  environment: ServerEnvironment,
-  now: Date,
-  fetchImplementation: FetchImplementation
+  environment: ServerEnvironment
 ) {
-  const email = environment.SEANGWORLD_GOOGLE_SERVICE_ACCOUNT_EMAIL;
-  const privateKey = environment.SEANGWORLD_GOOGLE_PRIVATE_KEY;
-  if (!email || !privateKey) throw new Error("Google credentials are incomplete.");
-  const assertion = createServiceAccountAssertion(email, privateKey, now);
-  const response = await requestWithRetry(fetchImplementation, GOOGLE_TOKEN_URL, {
-    method: "POST",
-    headers: { "content-type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
-      assertion,
-    }),
-  });
-  if (!response.ok) {
-    throw new Error(`Google authentication failed (${response.status}).`);
+  const providerResource = environment.GOOGLE_WIF_PROVIDER_RESOURCE
+    ?.trim()
+    .replace(/^https:\/\/iam\.googleapis\.com\//, "")
+    .replace(/^\/\/iam\.googleapis\.com\//, "");
+  const serviceAccountEmail =
+    environment.GOOGLE_GA4_READER_SERVICE_ACCOUNT_EMAIL?.trim();
+  if (!providerResource || !serviceAccountEmail) {
+    throw new Error("Google workload identity configuration is incomplete.");
   }
-  const token = (await response.json()) as GoogleTokenResponse;
-  if (!token.access_token) throw new Error("Google authentication returned no token.");
-  return token.access_token;
+  if (
+    !/^projects\/\d+\/locations\/global\/workloadIdentityPools\/[^/]+\/providers\/[^/]+$/.test(
+      providerResource
+    ) ||
+    !/^[^@\s]+@[^@\s]+\.iam\.gserviceaccount\.com$/.test(serviceAccountEmail)
+  ) {
+    throw new Error("Google workload identity configuration is invalid.");
+  }
+  const audience = `//iam.googleapis.com/${providerResource}`;
+  const client = new IdentityPoolClient({
+    type: "external_account",
+    audience,
+    subject_token_type: "urn:ietf:params:oauth:token-type:jwt",
+    token_url: GOOGLE_STS_URL,
+    service_account_impersonation_url:
+      `https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/` +
+      `${encodeURIComponent(serviceAccountEmail)}:generateAccessToken`,
+    scopes: [
+      ...(environment.BEAST_ECOSYSTEM_GA4_PROPERTY_ID
+        ? [GOOGLE_ANALYTICS_SCOPE]
+        : []),
+      ...(environment.SEANGWORLD_SEARCH_CONSOLE_SITE_URL
+        ? [GOOGLE_SEARCH_CONSOLE_SCOPE]
+        : []),
+    ],
+    subject_token_supplier: {
+      getSubjectToken: () =>
+        getVercelOidcToken({
+          audience: `https://iam.googleapis.com/${providerResource}`,
+        }),
+    },
+  });
+  const accessToken = await client.getAccessToken();
+  if (!accessToken.token) {
+    throw new Error("Google workload identity exchange returned no token.");
+  }
+  return accessToken.token;
 }
 
 function isoDate(date: Date) {
   return date.toISOString().slice(0, 10);
 }
 
-function dateRanges(now: Date) {
+function dateRanges(now: Date, reportingDays: number) {
   const end = new Date(now);
   end.setUTCDate(end.getUTCDate() - 1);
   const start = new Date(end);
-  start.setUTCDate(start.getUTCDate() - 29);
+  start.setUTCDate(start.getUTCDate() - (reportingDays - 1));
   const previousEnd = new Date(start);
   previousEnd.setUTCDate(previousEnd.getUTCDate() - 1);
   const previousStart = new Date(previousEnd);
-  previousStart.setUTCDate(previousStart.getUTCDate() - 29);
+  previousStart.setUTCDate(previousStart.getUTCDate() - (reportingDays - 1));
   return {
     current: { startDate: isoDate(start), endDate: isoDate(end) },
     previous: {
@@ -225,11 +216,12 @@ async function loadGa4Data(
   environment: ServerEnvironment,
   accessToken: string,
   now: Date,
-  fetchImplementation: FetchImplementation
+  fetchImplementation: FetchImplementation,
+  reportingDays: number
 ): Promise<Partial<SeangworldAnalyticsData>> {
-  const propertyId = environment.SEANGWORLD_GA4_PROPERTY_ID;
+  const propertyId = environment.BEAST_ECOSYSTEM_GA4_PROPERTY_ID;
   if (!propertyId) throw new Error("GA4 property ID is missing.");
-  const ranges = dateRanges(now);
+  const ranges = dateRanges(now, reportingDays);
   const reportDefinitions = [
     {
       key: "current",
@@ -400,11 +392,12 @@ async function loadSearchConsoleData(
   environment: ServerEnvironment,
   accessToken: string,
   now: Date,
-  fetchImplementation: FetchImplementation
+  fetchImplementation: FetchImplementation,
+  reportingDays: number
 ): Promise<Partial<SeangworldAnalyticsData>> {
   const siteUrl = environment.SEANGWORLD_SEARCH_CONSOLE_SITE_URL;
   if (!siteUrl) throw new Error("Search Console site URL is missing.");
-  const ranges = dateRanges(now);
+  const ranges = dateRanges(now, reportingDays);
   const [currentTotals, previousTotals, current, previous, pages] =
     await mapWithConcurrency(
       [
@@ -526,44 +519,51 @@ function failedProvider(
   };
 }
 
-function cacheKey(environment: ServerEnvironment) {
+function cacheKey(environment: ServerEnvironment, reportingDays: number) {
   return [
-    environment.SEANGWORLD_GA4_PROPERTY_ID || "",
+    environment.BEAST_ECOSYSTEM_GA4_PROPERTY_ID || "",
     environment.SEANGWORLD_SEARCH_CONSOLE_SITE_URL || "",
-    environment.SEANGWORLD_GOOGLE_SERVICE_ACCOUNT_EMAIL || "",
+    environment.GOOGLE_WIF_PROVIDER_RESOURCE || "",
+    environment.GOOGLE_GA4_READER_SERVICE_ACCOUNT_EMAIL || "",
+    String(reportingDays),
   ].join("|");
 }
+
+type AccessTokenLoader = (
+  environment: ServerEnvironment
+) => Promise<string>;
 
 export async function loadLiveSeangworldProviders(
   environment: ServerEnvironment,
   now = new Date(),
-  fetchImplementation: FetchImplementation = fetch
+  fetchImplementation: FetchImplementation = fetch,
+  accessTokenLoader: AccessTokenLoader = getGoogleAccessToken,
+  reportingDays = 30
 ) {
+  if (![7, 30, 90].includes(reportingDays)) {
+    throw new Error("Unsupported analytics reporting range.");
+  }
   const configuredGa4 = Boolean(
-    environment.SEANGWORLD_GA4_PROPERTY_ID &&
-      environment.SEANGWORLD_GOOGLE_SERVICE_ACCOUNT_EMAIL &&
-      environment.SEANGWORLD_GOOGLE_PRIVATE_KEY
+    environment.BEAST_ECOSYSTEM_GA4_PROPERTY_ID &&
+      environment.GOOGLE_WIF_PROVIDER_RESOURCE &&
+      environment.GOOGLE_GA4_READER_SERVICE_ACCOUNT_EMAIL
   );
   const configuredSearchConsole = Boolean(
     environment.SEANGWORLD_SEARCH_CONSOLE_SITE_URL &&
-      environment.SEANGWORLD_GOOGLE_SERVICE_ACCOUNT_EMAIL &&
-      environment.SEANGWORLD_GOOGLE_PRIVATE_KEY
+      environment.GOOGLE_WIF_PROVIDER_RESOURCE &&
+      environment.GOOGLE_GA4_READER_SERVICE_ACCOUNT_EMAIL
   );
   if (!configuredGa4 && !configuredSearchConsole) return null;
-  const key = cacheKey(environment);
+  const key = cacheKey(environment, reportingDays);
   if (cachedProviders && cachedProviders.expiresAt > now.getTime() && cachedProviders.cacheKey === key) {
     return cachedProviders.providers;
   }
-  if (inFlightProviders) return inFlightProviders;
+  if (inFlightProviders?.cacheKey === key) return inFlightProviders.promise;
   const synchronizedAt = now.toISOString();
-  inFlightProviders = (async () => {
+  const providerRequest = (async () => {
     let accessToken: string;
     try {
-      accessToken = await getGoogleAccessToken(
-        environment,
-        now,
-        fetchImplementation
-      );
+      accessToken = await accessTokenLoader(environment);
     } catch (error) {
       return [
         ...(configuredGa4
@@ -583,7 +583,13 @@ export async function loadLiveSeangworldProviders(
     }
     const providers = await Promise.all([
       configuredGa4
-        ? loadGa4Data(environment, accessToken, now, fetchImplementation)
+        ? loadGa4Data(
+            environment,
+            accessToken,
+            now,
+            fetchImplementation,
+            reportingDays
+          )
             .then((data) =>
               liveProvider({
                 id: "ga4",
@@ -601,7 +607,8 @@ export async function loadLiveSeangworldProviders(
             environment,
             accessToken,
             now,
-            fetchImplementation
+            fetchImplementation,
+            reportingDays
           )
             .then((data) =>
               liveProvider({
@@ -625,8 +632,9 @@ export async function loadLiveSeangworldProviders(
       (provider): provider is SeangworldProviderSnapshot => provider !== null
     );
   })();
+  inFlightProviders = { cacheKey: key, promise: providerRequest };
   try {
-    const providers = await inFlightProviders;
+    const providers = await providerRequest;
     cachedProviders = {
       cacheKey: key,
       expiresAt: now.getTime() + CACHE_TTL_MS,
@@ -634,6 +642,8 @@ export async function loadLiveSeangworldProviders(
     };
     return providers;
   } finally {
-    inFlightProviders = null;
+    if (inFlightProviders?.promise === providerRequest) {
+      inFlightProviders = null;
+    }
   }
 }

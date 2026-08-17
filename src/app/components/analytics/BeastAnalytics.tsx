@@ -28,6 +28,10 @@ const pageViews = createPageViewDeduplicator();
 const supportedClickEvents = new Set<AnalyticsEventName>([
   "navigation_selected",
   "call_to_action_selected",
+  "beast_entry_selected",
+  "sign_in_selected",
+  "account_creation_selected",
+  "auth_initiated",
   "conversation_created",
   "conversation_resumed",
   "recommendation_accepted",

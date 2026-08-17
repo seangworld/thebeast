@@ -133,7 +133,7 @@ export const beastModuleRegistry: BeastModuleRegistryEntry[] = [
     status: "foundation",
     visibility: "adminOnly",
     enabled: true,
-    beta: true,
+    beta: false,
     ownerNotes: "Admin-only home workspace foundation with household scope reserved.",
     href: "/dashboard/home",
     minimumAge: 18,

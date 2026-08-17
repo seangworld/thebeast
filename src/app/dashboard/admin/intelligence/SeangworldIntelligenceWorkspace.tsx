@@ -92,11 +92,12 @@ export function SeangworldIntelligenceWorkspace() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [refresh, setRefresh] = useState(0);
+  const [reportingDays, setReportingDays] = useState(30);
   useEffect(() => {
     let active = true;
     setLoading(true);
     setError("");
-    void fetch("/api/admin/seangworld-intelligence", { cache: "no-store" })
+    void fetch(`/api/admin/seangworld-intelligence?days=${reportingDays}`, { cache: "no-store" })
       .then(async (response) => {
         const body = await response.json();
         if (!response.ok) throw new Error(body.error || "SEANGWORLD Intelligence could not be loaded.");
@@ -107,7 +108,7 @@ export function SeangworldIntelligenceWorkspace() {
       .catch((reason) => { if (active) setError(reason instanceof Error ? reason.message : "SEANGWORLD Intelligence could not be loaded."); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [refresh]);
+  }, [refresh, reportingDays]);
 
   if (loading) return <div role="status" aria-busy="true" className="rounded-2xl border border-white/10 bg-[#111827] p-6 text-slate-300">Loading provider status and verified analytics…</div>;
   if (error || !snapshot) return <div role="alert" className="rounded-2xl border border-red-300/25 bg-red-300/5 p-6"><h2 className="font-black text-white">Intelligence unavailable</h2><p className="mt-2 text-sm text-slate-300">{error}</p><button className="beast-button mt-4" onClick={() => setRefresh((value) => value + 1)}>Retry</button></div>;
@@ -116,7 +117,7 @@ export function SeangworldIntelligenceWorkspace() {
   return <div className="space-y-6">
     <BeastAdminDataFreshness generatedAt={snapshot.generatedAt} staleAfterHours={24} />
     <section className="rounded-2xl border border-white/10 bg-[#111827] p-5">
-      <div className="flex flex-wrap items-start justify-between gap-4"><div><p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-300">Executive Summary</p><h2 className="mt-2 text-2xl font-black text-white">Verified ecosystem signals</h2><p className="mt-2 text-sm text-slate-300">{snapshot.comparisonPeriod}</p></div><button className="beast-button-secondary" onClick={() => setRefresh((value) => value + 1)}>Refresh status</button></div>
+      <div className="flex flex-wrap items-start justify-between gap-4"><div><p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-300">Executive Summary</p><h2 className="mt-2 text-2xl font-black text-white">Verified ecosystem signals</h2><p className="mt-2 text-sm text-slate-300">{snapshot.comparisonPeriod}</p></div><div className="flex flex-wrap items-end gap-3"><label className="grid gap-1 text-xs font-bold text-slate-300">Reporting range<select className="beast-input min-w-32" value={reportingDays} onChange={(event) => setReportingDays(Number(event.target.value))}><option value={7}>7 days</option><option value={30}>30 days</option><option value={90}>90 days</option></select></label><button className="beast-button-secondary" onClick={() => setRefresh((value) => value + 1)}>Refresh status</button></div></div>
       {snapshot.limitations.length ? <div className="mt-4 rounded-xl border border-amber-300/20 bg-amber-300/5 p-4"><p className="text-sm font-black text-amber-100">Current limitations</p><ul className="mt-2 text-sm leading-6 text-slate-300">{snapshot.limitations.map((item) => <li key={item}>• {item}</li>)}</ul></div> : null}
     </section>
 

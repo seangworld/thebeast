@@ -219,7 +219,7 @@ test("BA-116 derives repository and milestone summaries only from verified evide
       {
         repository: "CW",
         branch: null,
-        worktree: "planning",
+        worktree: "unavailable",
         latestCommit: null,
       },
     ]
@@ -267,7 +267,8 @@ test("BA-111 reports unavailable sources instead of empty development claims", (
     nextPlannedMilestone: null,
   });
   assert.equal(snapshot.repositories[0].worktree, "unavailable");
-  assert.equal(snapshot.repositories[3].worktree, "planning");
+  assert.equal(snapshot.repositories[3].worktree, "unavailable");
+  assert.match(snapshot.repositories[3].detail, /v0\.6\.0 Production/);
 });
 
 test("BA-111 validates the complete development console response", () => {

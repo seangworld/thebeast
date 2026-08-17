@@ -22,14 +22,17 @@ This project uses Supabase for backend services. Follow these rules to avoid acc
 ## SEANGWORLD Intelligence
 
 SEANGWORLD Intelligence connects to analytics only from the owner-authorized
-server route. Google service-account credentials and provider identifiers must
-never use the `NEXT_PUBLIC_` prefix and are never serialized to the browser.
+server route. Google workload-identity identifiers must never use the
+`NEXT_PUBLIC_` prefix and are never serialized to the browser. No service-account
+private key is created, stored, or accepted by this integration.
 
-Google Analytics 4 uses `SEANGWORLD_GA4_PROPERTY_ID`,
-`SEANGWORLD_GOOGLE_SERVICE_ACCOUNT_EMAIL`, and
-`SEANGWORLD_GOOGLE_PRIVATE_KEY`. Search Console uses
-`SEANGWORLD_SEARCH_CONSOLE_SITE_URL` with the same service account. Use the
-numeric GA4 property ID, not a measurement ID. Use the exact Search Console
+Google Analytics 4 uses `BEAST_ECOSYSTEM_GA4_PROPERTY_ID`,
+`GOOGLE_WIF_PROVIDER_RESOURCE`, and
+`GOOGLE_GA4_READER_SERVICE_ACCOUNT_EMAIL`. The Vercel runtime exchanges its OIDC
+identity through Google Workload Identity Federation and impersonates the
+dedicated read-only service account with short-lived tokens. Search Console can
+use `SEANGWORLD_SEARCH_CONSOLE_SITE_URL` with the same federation identity. Use
+the numeric GA4 property ID, not a measurement ID. Use the exact Search Console
 property identifier (`sc-domain:example.com` or a URL-prefix property including
 its trailing slash). First-party telemetry is enabled explicitly with
 `SEANGWORLD_FIRST_PARTY_ANALYTICS_ENABLED=true`.
@@ -47,14 +50,16 @@ property explicitly approved for cross-product aggregates. The legacy
 `SEANGWORLD_GA4_PROPERTY_ID` is not assumed to have ecosystem-wide stream
 coverage.
 
-The Google Analytics Data API and Search Console API must be enabled in the
-service account's Google Cloud project. Grant the service-account email:
+The Google Analytics Data API and, when used, Search Console API must be enabled
+in the service account's Google Cloud project. Grant the service-account email:
 
 - Viewer access to the GA4 property.
 - Search Console user access to the exact configured property.
 
-Store the PKCS8 private key as its PEM content. Hosts that require a single-line
-value may preserve line breaks as literal `\n` sequences. Never commit the key.
+Grant the WIF principal only `roles/iam.workloadIdentityUser` on this dedicated
+service account, constrained to the approved Vercel project and Preview and
+Production environments. Do not grant the service account project roles and do
+not configure `VERCEL_OIDC_TOKEN` manually; Vercel supplies it per invocation.
 
 The owner dashboard synchronizes a 30-day reporting window and its preceding
 30-day comparison window. Requests use bounded concurrency, retry transient
@@ -69,12 +74,13 @@ described below.
 
 Setup:
 
-1. Enable the Google Analytics Data API and Google Search Console API.
-2. Create a dedicated service account and securely retain its JSON private key.
-3. Add the service-account email to the GA4 property and Search Console property
-   with the minimum read permissions above.
-4. Set the four `SEANGWORLD_*` live-provider variables in the protected server
-   environment.
+1. Enable the Google Analytics Data API and, when used, Google Search Console API.
+2. Create a dedicated service account without a JSON key and a Workload Identity
+   Federation provider that trusts only the approved Vercel identity claims.
+3. Grant the WIF principal service-account impersonation, then add the service
+   account to GA4 as a restricted Viewer (and Search Console when used).
+4. Set the three non-secret WIF/GA4 variables in the protected Vercel Preview and
+   Production environments.
 5. Open BeastAdmin → SEANGWORLD Intelligence as an owner and confirm each
    provider reports Connected, a recent Last Sync, and current Data Freshness.
 

@@ -26,6 +26,7 @@ import {
   type BeastAuthViewState,
 } from "@/lib/auth/experience";
 import { createClient } from "@/lib/supabase/client";
+import { trackBeastFunnelEvent } from "@/lib/analytics/client";
 
 type AuthIntent = "login" | "create-account";
 type AuthMethod = "magic-link" | "password";
@@ -235,6 +236,13 @@ function LoginExperience() {
             return;
           }
 
+          if (data.user) {
+            trackBeastFunnelEvent("account_created", {
+              result: "success",
+              category: "password",
+            });
+          }
+
           if (data.session && data.user) {
             router.replace(destination);
             router.refresh();
@@ -264,6 +272,10 @@ function LoginExperience() {
         }
 
         router.replace(destination);
+        trackBeastFunnelEvent("login_completed", {
+          result: "success",
+          category: "password",
+        });
         router.refresh();
         return;
       }
@@ -452,7 +464,7 @@ function LoginExperience() {
               </div>
             ) : null}
 
-            <form className="mt-5 text-left" onSubmit={authenticate}>
+            <form className="mt-5 text-left" onSubmit={authenticate} data-analytics-event="auth_initiated" data-analytics-category={method === "password" ? "password" : "magic_link"} data-analytics-status="started">
               <label htmlFor="email" className="text-sm font-bold text-white">
                 Email address
               </label>

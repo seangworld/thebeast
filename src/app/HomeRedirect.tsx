@@ -21,6 +21,7 @@ import {
   beastOSPlatformIdentity,
 } from "@/lib/platform/identity";
 import { createClient } from "@/lib/supabase/client";
+import { trackBeastFunnelEvent } from "@/lib/analytics/client";
 
 type AuthIntent = "login" | "create-account";
 type AuthMethod = "password" | "magic-link";
@@ -136,6 +137,12 @@ function AuthenticationDialog({
           setMessage(getAuthErrorMessage(error));
           return;
         }
+        if (data.user) {
+          trackBeastFunnelEvent("account_created", {
+            result: "success",
+            category: "password",
+          });
+        }
         if (data.session && data.user && !isDisabledBeastUser(data.user)) {
           onAuthenticated(data.user);
           router.push("/dashboard/today");
@@ -161,6 +168,10 @@ function AuthenticationDialog({
         return;
       }
       if (data.user) {
+        trackBeastFunnelEvent("login_completed", {
+          result: "success",
+          category: "password",
+        });
         onAuthenticated(data.user);
         router.push("/dashboard/today");
         router.refresh();
@@ -268,7 +279,7 @@ function AuthenticationDialog({
             </button>
           </div>
         ) : (
-          <form className="mt-6" onSubmit={authenticate}>
+          <form className="mt-6" onSubmit={authenticate} data-analytics-event="auth_initiated" data-analytics-category={method === "password" ? "password" : "magic_link"} data-analytics-status="started">
             <label
               htmlFor={`public-auth-email-${intent}`}
               className="text-sm font-bold"
@@ -509,6 +520,8 @@ export function HomeRedirect() {
                 {publicRegistrationEnabled ? (
                   <button
                     type="button"
+                    data-analytics-event="account_creation_selected"
+                    data-analytics-status="started"
                     className="rounded-xl border border-[#334155] px-3 py-2 text-sm font-bold text-[#d9e4f1] hover:bg-white/5 sm:px-4"
                     onClick={() => openAuthentication("create-account")}
                   >
@@ -517,6 +530,8 @@ export function HomeRedirect() {
                 ) : null}
                 <button
                   type="button"
+                  data-analytics-event="sign_in_selected"
+                  data-analytics-status="started"
                   className="rounded-xl bg-[#2563eb] px-3 py-2 text-sm font-black text-white hover:bg-[#1d4ed8] sm:px-4"
                   onClick={() => openAuthentication("login")}
                 >
@@ -564,6 +579,9 @@ export function HomeRedirect() {
                   {publicRegistrationEnabled ? (
                     <button
                       type="button"
+                      data-analytics-event="beast_entry_selected"
+                      data-analytics-action="create_account"
+                      data-analytics-destination="auth_dialog"
                       className="beast-button min-h-[50px] px-6"
                       onClick={() => openAuthentication("create-account")}
                     >
@@ -572,6 +590,9 @@ export function HomeRedirect() {
                   ) : null}
                   <button
                     type="button"
+                    data-analytics-event="beast_entry_selected"
+                    data-analytics-action="log_in"
+                    data-analytics-destination="auth_dialog"
                     className="beast-button-secondary min-h-[50px] px-6"
                     onClick={() => openAuthentication("login")}
                   >
