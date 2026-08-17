@@ -194,7 +194,17 @@ function gaRequest(
     }
   ).then(async (response) => {
     if (!response.ok) {
-      throw new Error(`Google Analytics 4 request failed (${response.status}).`);
+      const responseBody = (await response.json().catch(() => null)) as
+        | { error?: { message?: string } }
+        | null;
+      const providerMessage = responseBody?.error?.message
+        ?.replace(/[\r\n]+/g, " ")
+        .slice(0, 500);
+      throw new Error(
+        `Google Analytics 4 request failed (${response.status})${
+          providerMessage ? `: ${providerMessage}` : "."
+        }`
+      );
     }
     return (await response.json()) as Ga4Report;
   });
@@ -308,7 +318,12 @@ async function loadGa4Data(
     },
   ] as const;
   const reports = await mapWithConcurrency(reportDefinitions, 3, (definition) =>
-    gaRequest(propertyId, accessToken, fetchImplementation, definition.body)
+    gaRequest(propertyId, accessToken, fetchImplementation, definition.body).catch(
+      (error) => {
+        const message = error instanceof Error ? error.message : "GA4 request failed.";
+        throw new Error(`GA4 ${definition.key} report: ${message}`);
+      }
+    )
   );
   const byKey = Object.fromEntries(
     reportDefinitions.map((definition, index) => [definition.key, reports[index]])
