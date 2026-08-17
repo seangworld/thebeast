@@ -988,12 +988,20 @@ export default function DashboardLayout({
             size="sm"
             subtitle={workspaceContext}
           />
-          <Link
-            href="/dashboard/search"
-            className="rounded-xl border border-[#2a3242] bg-[#0f1419] px-3 py-2 text-sm font-bold text-[#c7cfdb]"
+          <nav
+            aria-label="Member account"
+            className="flex items-center gap-2"
           >
-            Search
-          </Link>
+            <Link
+              href="/dashboard/settings/profile#account-password"
+              className="rounded-xl border border-[#2a3242] bg-[#0f1419] px-3 py-2 text-sm font-bold text-[#c7cfdb]"
+            >
+              Account
+            </Link>
+            <div className="[&>button]:min-h-0 [&>button]:px-3 [&>button]:py-2 [&>button]:text-sm">
+              <LogoutButton />
+            </div>
+          </nav>
         </div>
         {mobileRuntimeState.banner ? (
           <div
@@ -1062,6 +1070,17 @@ export default function DashboardLayout({
       ) : null}
 
       <div className="min-h-screen min-w-0 max-w-full pb-[calc(env(safe-area-inset-bottom)+76px)] md:pb-0 md:pl-20 lg:pl-72">
+        <header className="sticky top-0 z-30 hidden items-center justify-end gap-3 border-b border-[#2a3242] bg-[#11151c]/95 px-5 py-3 backdrop-blur md:flex">
+          <nav aria-label="Member account" className="flex items-center gap-3">
+            <Link
+              href="/dashboard/settings/profile#account-password"
+              className="beast-button-secondary"
+            >
+              Account
+            </Link>
+            <LogoutButton />
+          </nav>
+        </header>
         {children}
       </div>
 

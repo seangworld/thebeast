@@ -34,6 +34,7 @@ test("AUTH-UX exposes Google only through an explicit verified-provider flag", (
 
 test("AUTH-UX public header supports signed-out and signed-in member controls", () => {
   const home = readFileSync("src/app/HomeRedirect.tsx", "utf8");
+  const dashboard = readFileSync("src/app/dashboard/layout.tsx", "utf8");
 
   assert.match(home, /aria-label="Member authentication"/);
   assert.match(home, />\s*Sign Up\s*</);
@@ -44,6 +45,10 @@ test("AUTH-UX public header supports signed-out and signed-in member controls", 
   assert.match(home, /onAuthStateChange/);
   assert.match(home, /auth\.signOut\(\)/);
   assert.doesNotMatch(home, /router\.replace\("\/login"\)/);
+  assert.match(dashboard, /aria-label="Member account"/);
+  assert.match(dashboard, /\/dashboard\/settings\/profile#account-password/);
+  assert.match(dashboard, />\s*Account\s*</);
+  assert.match(dashboard, /<LogoutButton \/>/);
 });
 
 test("AUTH-UX public authentication surface is accessible and password-manager compatible", () => {
@@ -96,4 +101,24 @@ test("AUTH-UX keeps dedicated auth routes as fallback surfaces", () => {
   assert.match(home, /\/login\?intent=create-account/);
   assert.match(login, /searchParams\.get\("intent"\)/);
   assert.match(recovery, /ForgotPasswordForm/);
+});
+
+test("AUTH-UX lets an authenticated passwordless member establish a first password", () => {
+  const profile = readFileSync(
+    "src/app/dashboard/settings/profile/page.tsx",
+    "utf8"
+  );
+  const passwordCard = readFileSync(
+    "src/app/dashboard/settings/profile/AccountPasswordCard.tsx",
+    "utf8"
+  );
+
+  assert.match(profile, /<AccountPasswordCard \/>/);
+  assert.match(passwordCard, /Set or change your password/);
+  assert.match(passwordCard, /magic link/);
+  assert.match(passwordCard, /auth\.getUser\(\)/);
+  assert.match(passwordCard, /auth\.updateUser\(\{/);
+  assert.match(passwordCard, /password,/);
+  assert.match(passwordCard, /validateBeastPassword/);
+  assert.match(passwordCard, /autoComplete="new-password"/);
 });

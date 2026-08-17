@@ -13,6 +13,7 @@ import {
 } from "@/app/components/design/DashboardPrimitives";
 import type { Profile } from "@/lib/types/database";
 import { AccountEmailWorkflowCard } from "./AccountEmailWorkflowCard";
+import { AccountPasswordCard } from "./AccountPasswordCard";
 
 type ProfileForm = {
   preferred_name: string;
@@ -560,6 +561,8 @@ export default function ProfilePage() {
             ) : null}
 
             <AccountEmailWorkflowCard />
+
+            <AccountPasswordCard />
 
             <DashboardCard accent="documents">
               <SectionHeader
