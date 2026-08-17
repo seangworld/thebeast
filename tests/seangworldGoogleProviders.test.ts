@@ -50,6 +50,7 @@ test("Google authentication failures degrade safely without credential exposure"
 test("live GA4 and Search Console responses map to the provider-neutral dashboard", async () => {
   const environment = workloadIdentityEnvironment("live");
   const observedStartDates = new Set<string>();
+  const observedGa4Metrics = new Set<string>();
   const fetchImplementation: typeof fetch = async (input, init) => {
     const url = String(input);
     const body = JSON.parse(String(init?.body || "{}")) as {
@@ -61,6 +62,9 @@ test("live GA4 and Search Console responses map to the provider-neutral dashboar
     const startDate = body.dateRanges?.[0]?.startDate || body.startDate;
     if (startDate) observedStartDates.add(startDate);
     if (url.includes("analyticsdata.googleapis.com")) {
+      body.metrics?.forEach((metric) => {
+        if (metric.name) observedGa4Metrics.add(metric.name);
+      });
       const dimension = (body.dimensions?.[0] as { name?: string } | undefined)
         ?.name;
       if (!dimension) {
@@ -98,9 +102,7 @@ test("live GA4 and Search Console responses map to the provider-neutral dashboar
         );
       }
       const metricValues =
-        dimension === "pagePath"
-          ? [{ value: "70" }, { value: "100" }]
-          : dimension === "date"
+        dimension === "date"
             ? [{ value: "20" }, { value: "30" }, { value: "40" }]
             : [{ value: "50" }];
       return new Response(
@@ -112,9 +114,7 @@ test("live GA4 and Search Console responses map to the provider-neutral dashboar
                   value:
                     dimension === "date"
                       ? "20260727"
-                      : dimension === "pagePath"
-                        ? "/release-notes"
-                        : "Verified",
+                      : "Verified",
                 },
               ],
               metricValues,
@@ -168,7 +168,8 @@ test("live GA4 and Search Console responses map to the provider-neutral dashboar
   assert.equal(ga4?.connectionStatus, "connected");
   assert.deepEqual(ga4?.data?.visitors, { value: 100, previousValue: 80 });
   assert.deepEqual(ga4?.data?.users, { value: 120, previousValue: 100 });
-  assert.equal(ga4?.data?.exitPages?.[0]?.exitRate, 0.7);
+  assert.deepEqual(ga4?.data?.exitPages, []);
+  assert.equal(observedGa4Metrics.has("exits"), false);
   assert.equal(searchConsole?.connectionStatus, "connected");
   assert.deepEqual(searchConsole?.data?.impressions, {
     value: 2000,

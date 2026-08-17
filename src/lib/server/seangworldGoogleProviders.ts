@@ -286,16 +286,6 @@ async function loadGa4Data(
       },
     })),
     {
-      key: "exitPages",
-      body: {
-        dateRanges: [ranges.current],
-        dimensions: [{ name: "pagePath" }],
-        metrics: [{ name: "exits" }, { name: "screenPageViews" }],
-        orderBys: [{ metric: { metricName: "exits" }, desc: true }],
-        limit: "10",
-      },
-    },
-    {
       key: "historicalTrends",
       body: {
         dateRanges: [ranges.current],
@@ -342,13 +332,6 @@ async function loadGa4Data(
             : null,
         }
       : null;
-  const exitPages = dimensions(byKey.exitPages, true).map((page) => ({
-    ...page,
-    exitRate:
-      page.secondaryValue && page.secondaryValue > 0
-        ? page.value / page.secondaryValue
-        : null,
-  }));
   const deviceRows = dimensions(byKey.deviceEngagement, true);
   const mobile = deviceRows.find((row) => row.label.toLowerCase() === "mobile");
   const desktop = deviceRows.find((row) => row.label.toLowerCase() === "desktop");
@@ -366,7 +349,9 @@ async function loadGa4Data(
     trafficSources: dimensions(byKey.trafficSources),
     entryPages: dimensions(byKey.topLandingPages),
     topLandingPages: dimensions(byKey.topLandingPages),
-    exitPages,
+    // GA4's Data API does not expose the legacy Universal Analytics `exits`
+    // metric. Keep this empty instead of relabeling visits or bounce rate as exits.
+    exitPages: [],
     historicalTrends: (byKey.historicalTrends.rows || []).map((row) => ({
       date: row.dimensionValues?.[0]?.value || "",
       visitors: numeric(row.metricValues?.[0]),
