@@ -9,6 +9,7 @@ import {
   getAuthErrorState,
   getSafeAuthDestination,
   isDisabledBeastUser,
+  isGoogleSignInEnabled,
   isPasswordSignInEnabled,
   isPublicRegistrationEnabled,
   normalizeAuthViewState,
@@ -80,6 +81,9 @@ test("BA-105 keeps account creation and password sign-in explicitly configurable
   assert.equal(isPasswordSignInEnabled(undefined), false);
   assert.equal(isPasswordSignInEnabled("false"), false);
   assert.equal(isPasswordSignInEnabled("TRUE"), true);
+  assert.equal(isGoogleSignInEnabled(undefined), false);
+  assert.equal(isGoogleSignInEnabled("false"), false);
+  assert.equal(isGoogleSignInEnabled("TRUE"), true);
 });
 
 test("BA-105 recognizes disabled account metadata without inventing profile state", () => {
@@ -115,6 +119,8 @@ test("BA-105 provides every unified BeastOS authentication screen and action", (
   assert.match(login, /We could not sign you in/);
   assert.match(login, /signInWithOtp/);
   assert.match(login, /signInWithPassword/);
+  assert.match(login, /signUp/);
+  assert.match(login, /signInWithOAuth/);
   assert.match(login, /NEXT_PUBLIC_BEAST_PUBLIC_REGISTRATION_ENABLED/);
   assert.match(login, /NEXT_PUBLIC_BEAST_PASSWORD_SIGN_IN_ENABLED/);
   assert.match(login, /buildAuthCallbackUrl/);
@@ -132,7 +138,7 @@ test("BA-105 provides every unified BeastOS authentication screen and action", (
   assert.match(middleware, /buildAuthLoginPath\(destination, state\)/);
   assert.match(middleware, /getSafeAuthDestination/);
 
-  assert.match(logout, /Sign out of Beast\?/);
+  assert.match(logout, /Log out of Beast\?/);
   assert.match(logout, /role="dialog"/);
   assert.match(logout, /Stay signed in/);
   assert.match(logout, /router\.replace\("\/login\?state=signed_out"\)/);

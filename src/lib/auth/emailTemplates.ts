@@ -3,9 +3,9 @@ export const BEAST_AUTH_EMAIL_SENDER = "seang@seangworld.com";
 export const BEAST_AUTH_EMAIL_LINKS = {
   beastUrl: "https://thebeast.seangworld.com",
   logoUrl: "https://thebeast.seangworld.com/beast-logo-square.png",
-  privacyUrl: "https://seangworld.com/privacy.html",
-  termsUrl: "https://seangworld.com/terms.html",
-  securityUrl: "https://seangworld.com/security.html",
+  privacyUrl: "https://www.seangworld.com/privacy",
+  termsUrl: "https://www.seangworld.com/terms",
+  securityUrl: "https://www.seangworld.com/contact",
   contactUrl: "mailto:seang@seangworld.com",
 };
 
@@ -37,7 +37,7 @@ export const beastAuthEmailTemplates: BeastAuthEmailTemplate[] = [
   {
     kind: "welcome",
     name: "Welcome",
-    subject: "Welcome to Beast",
+    subject: "Welcome to The Beast",
     actionLabel: "Open Beast",
     preheader: "Your Beast account is ready.",
     title: "Welcome to Beast",
@@ -51,7 +51,7 @@ export const beastAuthEmailTemplates: BeastAuthEmailTemplate[] = [
   {
     kind: "magic_link",
     name: "Magic Link",
-    subject: "Open Beast",
+    subject: "Your The Beast sign-in link",
     actionLabel: "Open Beast",
     preheader: "Use your private one-time link to open Beast.",
     title: "Open Beast",
@@ -66,7 +66,7 @@ export const beastAuthEmailTemplates: BeastAuthEmailTemplate[] = [
   {
     kind: "verify_email",
     name: "Verify Email",
-    subject: "Verify your Beast email",
+    subject: "Confirm your The Beast account",
     actionLabel: "Verify Email",
     preheader: "Confirm your email address for Beast.",
     title: "Verify your email",
@@ -81,7 +81,7 @@ export const beastAuthEmailTemplates: BeastAuthEmailTemplate[] = [
   {
     kind: "password_reset",
     name: "Password Reset",
-    subject: "Reset your Beast password",
+    subject: "Reset your The Beast password",
     actionLabel: "Reset Password",
     preheader: "Use this secure link to reset your Beast password.",
     title: "Reset your password",
@@ -96,7 +96,7 @@ export const beastAuthEmailTemplates: BeastAuthEmailTemplate[] = [
   {
     kind: "email_change",
     name: "Change Email",
-    subject: "Confirm your Beast email change",
+    subject: "Confirm your The Beast email change",
     actionLabel: "Confirm Email Change",
     preheader: "Confirm the requested change to your Beast sign-in email.",
     title: "Confirm your email change",

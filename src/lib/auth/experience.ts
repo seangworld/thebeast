@@ -293,6 +293,10 @@ export function isPasswordSignInEnabled(value?: string) {
   return value?.trim().toLowerCase() === "true";
 }
 
+export function isGoogleSignInEnabled(value?: string) {
+  return value?.trim().toLowerCase() === "true";
+}
+
 export const BEAST_PASSWORD_MIN_LENGTH = 12;
 export const BEAST_PASSWORD_MAX_LENGTH = 72;
 

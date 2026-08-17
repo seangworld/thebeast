@@ -76,7 +76,8 @@ test("BA-106 exposes forgot password only when password authentication is enable
     "utf8"
   );
 
-  assert.match(login, /passwordSignInEnabled && intent === "login"/);
+  assert.match(login, /passwordSignInEnabled/);
+  assert.match(login, /intent === "login"/);
   assert.match(login, /method === "password"/);
   assert.match(login, /Forgot password\?/);
   assert.match(login, /buildForgotPasswordPath\(destination\)/);

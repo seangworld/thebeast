@@ -249,19 +249,23 @@ otp_expiry = 3600
 # sender_name = "Admin"
 
 [auth.email.template.invite]
-subject = "You're invited to Beast"
+subject = "You're invited to The Beast"
 content_path = "./supabase/auth/templates/invite.html"
 
 [auth.email.template.recovery]
-subject = "Reset your Beast password"
+subject = "Reset your The Beast password"
 content_path = "./supabase/auth/templates/password-reset.html"
 
 [auth.email.template.confirmation]
-subject = "Verify your Beast email"
+subject = "Confirm your The Beast account"
 content_path = "./supabase/auth/templates/verify-email.html"
 
+[auth.email.template.magic_link]
+subject = "Your The Beast sign-in link"
+content_path = "./supabase/auth/templates/magic-link.html"
+
 [auth.email.template.email_change]
-subject = "Confirm your Beast email change"
+subject = "Confirm your The Beast email change"
 content_path = "./supabase/auth/templates/change-email.html"
 
 # Uncomment to customize notification email template

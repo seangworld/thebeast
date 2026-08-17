@@ -65,9 +65,9 @@ test("SW-AUTH-004 Supabase template files keep required placeholders and trust l
     assert.match(source, /Beast logo/);
     assert.match(source, /beast-logo-square\.png/);
     assert.match(source, /seang@seangworld\.com/);
-    assert.match(source, /https:\/\/seangworld\.com\/privacy\.html/);
-    assert.match(source, /https:\/\/seangworld\.com\/terms\.html/);
-    assert.match(source, /https:\/\/seangworld\.com\/security\.html/);
+    assert.match(source, /https:\/\/www\.seangworld\.com\/privacy/);
+    assert.match(source, /https:\/\/www\.seangworld\.com\/terms/);
+    assert.match(source, /https:\/\/www\.seangworld\.com\/contact/);
     assert.match(source, /mailto:seang@seangworld\.com/);
     assert.match(source, /prefers-color-scheme/);
     assert.match(source, /max-width: 520px/);

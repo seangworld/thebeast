@@ -130,7 +130,10 @@ test("BO-313 aligns shared page titles and metadata without changing behavior", 
   assert.match(rootLayout, /BeastOS \| The Beast Platform/);
   assert.match(rootLayout, /operating system connecting identity/);
   assert.match(home, /<HomeRedirect \/>/);
-  assert.match(homeRedirect, /Loading BeastOS/);
+  assert.match(homeRedirect, /SEANGWORLD \/ The Beast/);
+  assert.match(homeRedirect, /aria-label="Member authentication"/);
+  assert.match(homeRedirect, /Sign Up/);
+  assert.match(homeRedirect, /Log In/);
   assert.match(today, /BeastOS Command Center/);
   assert.match(today, /connected applications/);
   assert.match(calendar, /eyebrow="BeastOS Shared Service"/);

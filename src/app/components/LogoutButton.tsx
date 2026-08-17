@@ -59,7 +59,7 @@ export default function LogoutButton() {
         }}
         className="beast-button-secondary"
       >
-        Sign Out
+        Log Out
       </button>
 
       {confirming ? (
@@ -83,7 +83,7 @@ export default function LogoutButton() {
               BeastOS account
             </p>
             <h2 id="sign-out-title" className="mt-2 text-xl font-black text-white">
-              Sign out of Beast?
+              Log out of Beast?
             </h2>
             <p
               id="sign-out-description"
@@ -120,7 +120,7 @@ export default function LogoutButton() {
                 className="beast-button min-h-[48px] disabled:cursor-wait disabled:opacity-60"
                 onClick={() => void logout()}
               >
-                {signingOut ? "Signing out…" : "Sign Out"}
+                {signingOut ? "Logging out…" : "Log Out"}
               </button>
             </div>
           </div>

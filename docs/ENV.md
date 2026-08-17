@@ -8,6 +8,7 @@ This project uses Supabase for backend services. Follow these rules to avoid acc
   - `NEXT_PUBLIC_BEAST_SITE_URL` is the canonical callback origin. Set it to `https://thebeast.seangworld.com` in production; leave it blank for localhost or dynamic previews.
   - `NEXT_PUBLIC_BEAST_PUBLIC_REGISTRATION_ENABLED` controls whether BeastOS offers account creation. It defaults to enabled unless set to `false`.
   - `NEXT_PUBLIC_BEAST_PASSWORD_SIGN_IN_ENABLED` exposes password sign-in only when set to `true`; magic-link sign-in remains the default.
+  - `NEXT_PUBLIC_BEAST_GOOGLE_AUTH_ENABLED` exposes Google sign-in only when set to `true` after that environment's Supabase Google provider is configured and verified. Unrelated Google integration credentials must not be reused implicitly.
   - `BEAST_INVITATION_EXPIRY_HOURS` controls the lifecycle timestamp shown by BeastAdmin for a newly sent invitation. Keep it aligned with the Supabase Auth Email OTP Expiration; both default to one hour.
 
 - Dev/pre-production (Vercel/Supabase): use the existing `the-beast-dev` Supabase project and separate dev/preview Vercel environment variables. Follow `docs/DEV_ENVIRONMENT.md`.

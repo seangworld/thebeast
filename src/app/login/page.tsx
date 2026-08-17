@@ -18,9 +18,11 @@ import {
   getBeastAuthOrigin,
   getSafeAuthDestination,
   isDisabledBeastUser,
+  isGoogleSignInEnabled,
   isPasswordSignInEnabled,
   isPublicRegistrationEnabled,
   normalizeAuthViewState,
+  validateBeastPassword,
   type BeastAuthViewState,
 } from "@/lib/auth/experience";
 import { createClient } from "@/lib/supabase/client";
@@ -33,6 +35,9 @@ const publicRegistrationEnabled = isPublicRegistrationEnabled(
 );
 const passwordSignInEnabled = isPasswordSignInEnabled(
   process.env.NEXT_PUBLIC_BEAST_PASSWORD_SIGN_IN_ENABLED
+);
+const googleSignInEnabled = isGoogleSignInEnabled(
+  process.env.NEXT_PUBLIC_BEAST_GOOGLE_AUTH_ENABLED
 );
 
 const authStateContent: Record<
@@ -88,8 +93,14 @@ function LoginExperience() {
   const queryState = normalizeAuthViewState(searchParams.get("state"));
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [intent, setIntent] = useState<AuthIntent>("login");
-  const [method, setMethod] = useState<AuthMethod>("magic-link");
+  const [intent, setIntent] = useState<AuthIntent>(() =>
+    publicRegistrationEnabled && searchParams.get("intent") === "create-account"
+      ? "create-account"
+      : "login"
+  );
+  const [method, setMethod] = useState<AuthMethod>(() =>
+    passwordSignInEnabled ? "password" : "magic-link"
+  );
   const [localState, setLocalState] = useState<BeastAuthViewState | null>(null);
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -131,15 +142,46 @@ function LoginExperience() {
     setLocalState(null);
     setMessage("");
     setIntent("login");
-    setMethod("magic-link");
+    setMethod(passwordSignInEnabled ? "password" : "magic-link");
     setPassword("");
     router.replace(buildAuthLoginPath(destination));
   }
 
   function selectIntent(nextIntent: AuthIntent) {
     setIntent(nextIntent);
-    setMethod("magic-link");
+    setMethod(passwordSignInEnabled ? "password" : "magic-link");
     setMessage("");
+  }
+
+  async function authenticateWithGoogle() {
+    setMessage("");
+    setSubmitting(true);
+
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: buildAuthCallbackUrl(
+            getBeastAuthOrigin(
+              window.location.origin,
+              process.env.NEXT_PUBLIC_BEAST_SITE_URL
+            ),
+            destination
+          ),
+        },
+      });
+
+      if (error) {
+        setLocalState(getAuthErrorState(error));
+        setMessage(getAuthErrorMessage(error));
+      }
+    } catch {
+      setLocalState("authentication_error");
+      setMessage("BeastOS could not reach Google sign-in. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   async function authenticate(event: FormEvent<HTMLFormElement>) {
@@ -164,6 +206,46 @@ function LoginExperience() {
       const supabase = createClient();
 
       if (method === "password") {
+        if (intent === "create-account") {
+          const passwordValidation = validateBeastPassword(password);
+          if (!passwordValidation.valid) {
+            setMessage(
+              "Create a password between 12 and 72 characters with at least one letter and one number."
+            );
+            return;
+          }
+
+          const { data, error } = await supabase.auth.signUp({
+            email: normalizedEmail,
+            password,
+            options: {
+              emailRedirectTo: buildAuthCallbackUrl(
+                getBeastAuthOrigin(
+                  window.location.origin,
+                  process.env.NEXT_PUBLIC_BEAST_SITE_URL
+                ),
+                destination
+              ),
+            },
+          });
+
+          if (error) {
+            setLocalState(getAuthErrorState(error));
+            setMessage(getAuthErrorMessage(error));
+            return;
+          }
+
+          if (data.session && data.user) {
+            router.replace(destination);
+            router.refresh();
+            return;
+          }
+
+          setEmail(normalizedEmail);
+          setLocalState("magic_link_requested");
+          return;
+        }
+
         const { data, error } = await supabase.auth.signInWithPassword({
           email: normalizedEmail,
           password,
@@ -395,21 +477,33 @@ function LoginExperience() {
                     >
                       Password
                     </label>
-                    <Link
-                      href={buildForgotPasswordPath(destination)}
-                      className="text-sm font-bold text-[#7dd3fc] transition hover:text-white"
-                    >
-                      Forgot password?
-                    </Link>
+                    {intent === "login" ? (
+                      <Link
+                        href={buildForgotPasswordPath(destination)}
+                        className="text-sm font-bold text-[#7dd3fc] transition hover:text-white"
+                      >
+                        Forgot password?
+                      </Link>
+                    ) : null}
                   </div>
                   <input
                     id="password"
                     type="password"
-                    autoComplete="current-password"
+                    autoComplete={
+                      intent === "create-account"
+                        ? "new-password"
+                        : "current-password"
+                    }
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
                     className="beast-input mt-2 min-h-[48px]"
                   />
+                  {intent === "create-account" ? (
+                    <p className="mt-2 text-xs leading-5 text-[#8d99aa]">
+                      Use 12–72 characters with at least one letter and one
+                      number.
+                    </p>
+                  ) : null}
                 </>
               ) : null}
 
@@ -429,16 +523,20 @@ function LoginExperience() {
               >
                 {submitting
                   ? method === "password"
-                    ? "Signing in…"
+                    ? intent === "create-account"
+                      ? "Creating account…"
+                      : "Signing in…"
                     : "Sending secure link…"
                   : method === "password"
-                    ? "Sign In"
+                    ? intent === "create-account"
+                      ? "Create Account"
+                      : "Log In"
                     : intent === "create-account"
                       ? "Create Account with Email"
                       : "Email Me a Sign-In Link"}
               </button>
 
-              {passwordSignInEnabled && intent === "login" ? (
+              {passwordSignInEnabled ? (
                 <button
                   type="button"
                   className="mt-4 min-h-[44px] w-full text-sm font-bold text-[#7dd3fc] transition hover:text-white"
@@ -450,9 +548,31 @@ function LoginExperience() {
                   }}
                 >
                   {method === "magic-link"
-                    ? "Use password instead"
+                    ? intent === "create-account"
+                      ? "Create an account with a password instead"
+                      : "Use password instead"
                     : "Use a magic link instead"}
                 </button>
+              ) : null}
+
+              {googleSignInEnabled ? (
+                <>
+                  <div className="my-4 flex items-center gap-3" aria-hidden="true">
+                    <span className="h-px flex-1 bg-[#2a3242]" />
+                    <span className="text-xs font-bold uppercase tracking-wide text-[#7f8da3]">
+                      or
+                    </span>
+                    <span className="h-px flex-1 bg-[#2a3242]" />
+                  </div>
+                  <button
+                    type="button"
+                    disabled={submitting}
+                    className="beast-button-secondary min-h-[48px] w-full disabled:cursor-wait disabled:opacity-60"
+                    onClick={() => void authenticateWithGoogle()}
+                  >
+                    Continue with Google
+                  </button>
+                </>
               ) : null}
             </form>
           </>
