@@ -34,8 +34,10 @@ dedicated read-only service account with short-lived tokens. Search Console can
 use `SEANGWORLD_SEARCH_CONSOLE_SITE_URL` with the same federation identity. Use
 the numeric GA4 property ID, not a measurement ID. Use the exact Search Console
 property identifier (`sc-domain:example.com` or a URL-prefix property including
-its trailing slash). First-party telemetry is enabled explicitly with
-`SEANGWORLD_FIRST_PARTY_ANALYTICS_ENABLED=true`.
+its trailing slash). First-party ecosystem telemetry does not require a third-
+party credential or browser environment flag. It becomes available only when
+the BA-TEL-001 database migration is present and the current authenticated user
+passes the existing BeastAdmin owner check.
 
 Privacy-first browser product analytics uses
 `NEXT_PUBLIC_GA_MEASUREMENT_ID`. It must be a GA4 web-stream measurement ID such
@@ -70,6 +72,12 @@ Requests use bounded concurrency, retry transient Google responses, and retain
 a 15-minute server cache to protect provider quotas.
 Missing credentials, denied permissions, provider outages, and empty reporting
 periods return safe provider states instead of failing the application.
+
+First-party telemetry uses canonical Supabase product records plus a bounded
+append-only operational-event table. Raw actor UUIDs stay server-side; the
+owner RPC returns aggregate counts only. Production owner/admin activity is
+classified separately from members, and Preview/DEV/test events never count in
+Production operational telemetry. No first-party event is sent to GA4.
 
 The `*_STATUS`, `*_SNAPSHOT_JSON`, and synchronization timestamp values remain
 as a compatibility fallback for verified server-generated snapshots. Do not

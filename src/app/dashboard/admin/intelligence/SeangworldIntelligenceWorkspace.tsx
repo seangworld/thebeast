@@ -9,6 +9,7 @@ import {
   type SeangworldIntelligenceSnapshot,
 } from "@/lib/seangworldIntelligence";
 import { BeastAdminDataFreshness } from "../BeastAdminShell";
+import { FirstPartyTelemetryPanels } from "./FirstPartyTelemetryPanels";
 
 function number(value: number) {
   return new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 }).format(value);
@@ -127,7 +128,7 @@ export function SeangworldIntelligenceWorkspace() {
       {snapshot.limitations.length ? <div className="mt-4 rounded-xl border border-amber-300/20 bg-amber-300/5 p-4"><p className="text-sm font-black text-amber-100">Current limitations</p><ul className="mt-2 text-sm leading-6 text-slate-300">{snapshot.limitations.map((item) => <li key={item}>• {item}</li>)}</ul></div> : null}
     </section>
 
-    <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Primary analytics metrics">
+    <section aria-labelledby="public-analytics-heading"><h2 id="public-analytics-heading" className="text-xl font-black text-white">Public visitors and search signals</h2><div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Primary public analytics metrics">
       <MetricCard label="Visitors" metric={data.visitors} />
       <MetricCard label="Users" metric={data.users} />
       <MetricCard label="Sessions" metric={data.sessions} />
@@ -137,9 +138,11 @@ export function SeangworldIntelligenceWorkspace() {
       <MetricCard label="Clicks" metric={data.clicks} />
       <MetricCard label="CTR" metric={data.ctr} percent />
       <MetricCard label="Average Position" metric={data.averagePosition} />
-    </section>
+    </div></section>
 
     <section aria-labelledby="provider-status-heading"><h2 id="provider-status-heading" className="text-xl font-black text-white">Provider Status</h2><div className="mt-4 grid gap-4 lg:grid-cols-3">{snapshot.providers.map((provider) => <article key={provider.id} className="rounded-2xl border border-white/10 bg-[#111827] p-5"><div className="flex flex-wrap items-center justify-between gap-2"><h3 className="font-black text-white">{provider.label}</h3><span className="rounded-full border border-white/15 px-3 py-1 text-xs font-bold text-slate-200">{seangworldProviderStatusLabels[provider.status]}</span></div><p className="mt-3 text-sm leading-6 text-slate-300">{provider.guidance}</p><dl className="mt-4 grid gap-3 text-xs"><div><dt className="text-slate-500">Connection Status</dt><dd className="mt-1 capitalize text-slate-200">{provider.connectionStatus.replaceAll("_", " ")}</dd></div><div><dt className="text-slate-500">Last Sync</dt><dd className="mt-1 text-slate-200">{time(provider.lastSynchronizationAt)}</dd></div><div><dt className="text-slate-500">Last Successful Synchronization</dt><dd className="mt-1 text-slate-200">{time(provider.lastSuccessfulSynchronizationAt)}</dd></div>{provider.id === "search_console" ? <><div><dt className="text-slate-500">Final Data Through</dt><dd className="mt-1 text-slate-200">{date(provider.dataThroughDate)}</dd></div><div><dt className="text-slate-500">Reporting Delay</dt><dd className="mt-1 text-slate-200">{provider.reportingDelayDays === null ? "Unavailable" : `${provider.reportingDelayDays} day${provider.reportingDelayDays === 1 ? "" : "s"} (2–3 days is normal)`}</dd></div></> : null}<div><dt className="text-slate-500">Data Freshness</dt><dd className="mt-1 capitalize text-slate-200">{provider.freshness}</dd></div></dl>{provider.error ? <p className="mt-4 rounded-lg border border-red-300/20 bg-red-300/5 p-3 text-xs leading-5 text-red-100" role="status">{provider.error.message}{provider.error.retryable ? " Retry is safe." : ""}</p> : null}</article>)}</div></section>
+
+    <FirstPartyTelemetryPanels data={data.firstPartyTelemetry} />
 
     <section aria-labelledby="recommendations-heading"><h2 id="recommendations-heading" className="text-xl font-black text-white">Deterministic Recommendations</h2>{snapshot.recommendations.length ? <div className="mt-4 grid gap-4 lg:grid-cols-2">{snapshot.recommendations.map((recommendation) => <article key={recommendation.id} className="rounded-2xl border border-cyan-300/20 bg-cyan-300/5 p-5"><div className="flex justify-between gap-3"><h3 className="font-black text-white">{recommendation.title}</h3><span className="text-xs font-bold capitalize text-cyan-200">{recommendation.confidence} confidence</span></div><p className="mt-3 text-sm font-bold text-cyan-100">{recommendation.supportingMetric}</p><p className="mt-2 text-sm leading-6 text-slate-300">{recommendation.rationale}</p><p className="mt-3 text-xs leading-5 text-slate-400">Owner review: {recommendation.suggestedOwnerReview}</p></article>)}</div> : <div className="mt-4 rounded-xl border border-dashed border-white/15 p-5 text-sm leading-6 text-slate-400">No deterministic rule has enough verified evidence to produce a recommendation. This is normal when providers are not configured or have no data.</div>}</section>
 

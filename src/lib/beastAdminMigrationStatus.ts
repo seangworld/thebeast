@@ -78,6 +78,7 @@ export const beastAdminRepositoryMigrationFiles = [
   "20260809000300_define_member_age_entitlements.sql",
   "20260810000100_add_atomic_financial_commands.sql",
   "20260811000100_add_beastmoney_payment_write_gate.sql",
+  "20260817000100_add_first_party_ecosystem_telemetry.sql",
 ] as const;
 
 export type BeastAdminMigrationState =

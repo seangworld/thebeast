@@ -4,6 +4,7 @@ import {
   buildServerSeangworldProviders,
 } from "@/lib/seangworldIntelligence";
 import { loadLiveSeangworldProviders } from "@/lib/server/seangworldGoogleProviders";
+import { loadFirstPartyTelemetryProvider } from "@/lib/server/firstPartyTelemetry";
 import { createRouteClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -38,12 +39,17 @@ export async function GET(request: Request) {
     undefined,
     requestedDays
   );
-  const providers = liveProviders
-    ? configuredProviders.map(
-        (provider) =>
-          liveProviders.find((live) => live.id === provider.id) || provider
-      )
-    : configuredProviders;
+  const firstPartyProvider = await loadFirstPartyTelemetryProvider(
+    client,
+    requestedDays,
+    generatedAt,
+    process.env
+  );
+  const providers = configuredProviders.map(
+    (provider) =>
+      (liveProviders || []).find((live) => live.id === provider.id) ||
+      (provider.id === "first_party" ? firstPartyProvider : provider)
+  );
   const snapshot = buildSeangworldIntelligenceSnapshot({
     providers,
     generatedAt,

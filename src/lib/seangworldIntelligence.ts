@@ -1,3 +1,5 @@
+import type { FirstPartyTelemetrySnapshot } from "./firstPartyTelemetry";
+
 export const seangworldProviderStatuses = [
   "configured",
   "not_configured",
@@ -43,6 +45,7 @@ export type IntelligenceDimension = {
 };
 
 export type SeangworldAnalyticsData = {
+  firstPartyTelemetry: FirstPartyTelemetrySnapshot | null;
   visitors: IntelligenceMetric | null;
   users: IntelligenceMetric | null;
   sessions: IntelligenceMetric | null;
@@ -117,7 +120,12 @@ export type SeangworldRecommendation = {
     | "falling_ctr"
     | "growing_impressions"
     | "mobile_weakness"
-    | "traffic_spike";
+    | "traffic_spike"
+    | "low_member_activation"
+    | "low_d7_retention"
+    | "module_underused"
+    | "reliability_failures"
+    | "professional_latency";
   title: string;
   supportingMetric: string;
   comparisonPeriod: string;
@@ -136,6 +144,7 @@ export type SeangworldIntelligenceSnapshot = {
 };
 
 const emptyData = (): SeangworldAnalyticsData => ({
+  firstPartyTelemetry: null,
   visitors: null,
   users: null,
   sessions: null,
@@ -277,6 +286,93 @@ export function buildSeangworldRecommendations(
         confidence: "high",
         rationale: "Recorded sessions increased by at least 50% from a comparison baseline of 100 or more.",
         suggestedOwnerReview: "Identify the contributing sources and landing pages, then verify engagement quality before acting.",
+      });
+    }
+  }
+
+  const firstParty = data.firstPartyTelemetry;
+  if (firstParty) {
+    if (
+      firstParty.members.onboardingCompleted >= firstParty.minimumCohortSize &&
+      firstParty.members.activationRate !== null &&
+      firstParty.members.activationRate < 0.5
+    ) {
+      recommendations.push({
+        id: "low_member_activation",
+        title: "Review member activation friction",
+        supportingMetric: `${firstParty.members.activated} of ${firstParty.members.onboardingCompleted} onboarding-complete members activated`,
+        comparisonPeriod,
+        confidence: "high",
+        rationale: `The verified activation rate is below 50% and the cohort meets the ${firstParty.minimumCohortSize}-member minimum.`,
+        suggestedOwnerReview: "Review the first meaningful-action paths without inspecting individual member activity.",
+      });
+    }
+    const daySeven = firstParty.retention.find((item) => item.day === 7);
+    if (
+      daySeven?.status === "available" &&
+      daySeven.rate !== null &&
+      daySeven.rate < 0.25
+    ) {
+      recommendations.push({
+        id: "low_d7_retention",
+        title: "Review Day 7 member retention",
+        supportingMetric: `${daySeven.returnedMembers} of ${daySeven.eligibleMembers} eligible activated members returned on Day 7`,
+        comparisonPeriod,
+        confidence: "high",
+        rationale: "The verified Day 7 retention rate is below 25% and the minimum cohort threshold is met.",
+        suggestedOwnerReview: "Review aggregate post-activation value and reminders before changing a product flow.",
+      });
+    }
+    const underused = firstParty.moduleAdoption.find(
+      (module) =>
+        firstParty.members.activated >= firstParty.minimumCohortSize &&
+        module.adoptionRate !== null &&
+        module.adoptionRate < 0.1
+    );
+    if (underused) {
+      recommendations.push({
+        id: "module_underused",
+        title: `Review ${underused.moduleLabel} adoption`,
+        supportingMetric: `${underused.activatedMembers} activated members and ${underused.meaningfulActions} meaningful actions`,
+        comparisonPeriod,
+        confidence: "moderate",
+        rationale: "Verified module adoption is below 10% and the activated-member cohort meets the minimum threshold.",
+        suggestedOwnerReview: "Confirm the module is released and relevant to the cohort before changing discovery or onboarding.",
+      });
+    }
+    const reliabilityTotal =
+      firstParty.reliability.successfulOperations +
+      firstParty.reliability.failures;
+    if (
+      reliabilityTotal >= 10 &&
+      firstParty.reliability.failureRate !== null &&
+      firstParty.reliability.failureRate >= 0.1
+    ) {
+      recommendations.push({
+        id: "reliability_failures",
+        title: "Review repeated operational failures",
+        supportingMetric: `${firstParty.reliability.failures} failures across ${reliabilityTotal} bounded operations`,
+        comparisonPeriod,
+        confidence: "high",
+        rationale: "The verified failure rate is at least 10% across at least 10 recorded operations.",
+        suggestedOwnerReview: "Inspect safe error categories and provider health without opening member content.",
+      });
+    }
+    const slowProfessional = firstParty.professionalUsage.find(
+      (professional) =>
+        professional.turnsCompleted >= 10 &&
+        professional.p95LatencyMs !== null &&
+        professional.p95LatencyMs > 10_000
+    );
+    if (slowProfessional) {
+      recommendations.push({
+        id: "professional_latency",
+        title: "Review Digital Professional latency",
+        supportingMetric: `${slowProfessional.professionalId.replaceAll("_", " ")}: ${slowProfessional.p95LatencyMs} ms P95 across ${slowProfessional.turnsCompleted} completed turns`,
+        comparisonPeriod,
+        confidence: "high",
+        rationale: "P95 latency exceeds 10 seconds across at least 10 completed turns.",
+        suggestedOwnerReview: "Compare provider and persistence latency bands before changing model routing.",
       });
     }
   }

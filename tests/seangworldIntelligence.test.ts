@@ -11,6 +11,7 @@ import {
 } from "../src/lib/seangworldIntelligence";
 
 const emptyData = (): SeangworldAnalyticsData => ({
+  firstPartyTelemetry: null,
   visitors: null, users: null, sessions: null, views: null, engagementRate: null,
   impressions: null, clicks: null, ctr: null, averagePosition: null,
   countries: [], searchCountries: [], cities: [], devices: [], searchDevices: [], browsers: [], operatingSystems: [],

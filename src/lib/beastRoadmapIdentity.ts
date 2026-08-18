@@ -495,6 +495,16 @@ export const beastRoadmapPackageRegistry = [
       "tests/digitalStaffDirector.test.ts",
     ]
   ),
+  packageIdentity(
+    "BA-TEL-001",
+    ["BA-TEL-001"],
+    "First-Party Ecosystem Telemetry",
+    [
+      "docs/BA-TEL-001-FIRST-PARTY-TELEMETRY.md",
+      "supabase/migrations/20260817000100_add_first_party_ecosystem_telemetry.sql",
+    ],
+    ["20260817000100_add_first_party_ecosystem_telemetry.sql"]
+  ),
 ] as const satisfies readonly BeastRoadmapPackageIdentity[];
 
 function collisionsFor(
