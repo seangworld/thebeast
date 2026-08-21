@@ -34,3 +34,12 @@ test("BeastHunter controls explain their behavior on hover", () => {
   assert.match(workspace, /title="Clear every hunt filter/);
   assert.match(workspace, /title=\{`\$\{selected\.includes\(option\)/);
 });
+test("BeastHunter makes active research and optional criteria unmistakable", () => {
+  const workspace = readFileSync("src/app/dashboard/admin/intelligence/hunter/BeastHunterWorkspace.tsx", "utf8");
+  assert.match(workspace, /Search in progress/);
+  assert.match(workspace, /actively researching current sources/);
+  assert.match(workspace, /Elapsed time/);
+  assert.match(workspace, /including expected monthly revenue, is optional/);
+  assert.match(workspace, /fieldset disabled=\{running\}/);
+  assert.match(workspace, /aria-live="polite"/);
+});
