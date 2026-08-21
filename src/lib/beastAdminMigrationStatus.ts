@@ -79,6 +79,7 @@ export const beastAdminRepositoryMigrationFiles = [
   "20260810000100_add_atomic_financial_commands.sql",
   "20260811000100_add_beastmoney_payment_write_gate.sql",
   "20260821000100_add_beast_hunter_foundation.sql",
+  "20260821000200_add_beast_hunter_tracking.sql",
 ] as const;
 
 export type BeastAdminMigrationState =

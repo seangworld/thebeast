@@ -2,11 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { DashboardCard, SectionHeader } from "@/app/components/design/DashboardPrimitives";
-import { beastHunterResultCounts, defaultBeastHunterCriteria, validateBeastHunterCriteria, type BeastHunterCriteria, type BeastHunterRankedCandidate } from "@/lib/beastHunter";
+import { beastHunterResultCounts, beastHunterTrackingStatuses, defaultBeastHunterCriteria, validateBeastHunterCriteria, type BeastHunterCriteria, type BeastHunterRankedCandidate, type BeastHunterTrackingStatus } from "@/lib/beastHunter";
 
 const huntTypes = ["PDF / Book", "App / Micro-SaaS", "Calculator / Tool", "Service", "Affiliate", "Beast Capability", "Social Content"];
 const markets = ["AI", "Money", "Education", "Health", "Home", "Careers", "Veterans", "Small Business", "Entertainment"];
 const revenueModels = ["One-time sale", "Subscription", "Advertising", "Affiliate", "Service fee", "Licensing"];
+const trackingLabels: Record<BeastHunterTrackingStatus, string> = { new: "New", watch: "Watch", validate: "Validate", build: "Build", rejected: "Reject", archived: "Archived" };
+type HuntHistory = { id: string; status: string; query: string; criteria: BeastHunterCriteria; result_limit: number; strictness: string; created_at: string; completed_at: string | null };
 
 function toggle(values: string[], value: string) {
   return values.includes(value) ? values.filter((item) => item !== value) : [...values, value];
@@ -19,6 +21,11 @@ export function BeastHunterWorkspace() {
   const [runError, setRunError] = useState<string | null>(null);
   const [results, setResults] = useState<BeastHunterRankedCandidate[]>([]);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [history, setHistory] = useState<HuntHistory[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(true);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+  const [activeHuntId, setActiveHuntId] = useState<string | null>(null);
+  const [updatingOpportunityId, setUpdatingOpportunityId] = useState<string | null>(null);
   const errors = useMemo(() => validateBeastHunterCriteria(criteria), [criteria]);
   const set = <K extends keyof BeastHunterCriteria>(key: K, value: BeastHunterCriteria[K]) => setCriteria((current) => ({ ...current, [key]: value }));
 
@@ -29,6 +36,41 @@ export function BeastHunterWorkspace() {
     return () => window.clearInterval(timer);
   }, [running]);
 
+  async function loadHistory() {
+    setHistoryLoading(true); setHistoryError(null);
+    try {
+      const response = await fetch("/api/admin/beast-hunter", { cache: "no-store" });
+      const body = await response.json() as { error?: string; hunts?: HuntHistory[] };
+      if (!response.ok || !body.hunts) throw new Error(body.error || "Saved hunts could not be loaded.");
+      setHistory(body.hunts);
+    } catch (reason) { setHistoryError(reason instanceof Error ? reason.message : "Saved hunts could not be loaded."); }
+    finally { setHistoryLoading(false); }
+  }
+
+  useEffect(() => { void loadHistory(); }, []);
+
+  async function openSavedHunt(hunt: HuntHistory) {
+    setRunError(null); setActiveHuntId(hunt.id); setCriteria(hunt.criteria); setSubmitted(true); setResults([]);
+    try {
+      const response = await fetch(`/api/admin/beast-hunter?huntId=${encodeURIComponent(hunt.id)}`, { cache: "no-store" });
+      const body = await response.json() as { error?: string; opportunities?: BeastHunterRankedCandidate[] };
+      if (!response.ok || !body.opportunities) throw new Error(body.error || "That saved hunt could not be opened.");
+      setResults(body.opportunities);
+    } catch (reason) { setRunError(reason instanceof Error ? reason.message : "That saved hunt could not be opened."); }
+  }
+
+  async function updateTracking(opportunityId: string, trackingStatus: BeastHunterTrackingStatus) {
+    const previous = results;
+    setUpdatingOpportunityId(opportunityId); setRunError(null);
+    setResults((current) => current.map((item) => item.id === opportunityId ? { ...item, trackingStatus } : item));
+    try {
+      const response = await fetch("/api/admin/beast-hunter", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ opportunityId, trackingStatus }) });
+      const body = await response.json() as { error?: string };
+      if (!response.ok) throw new Error(body.error || "The tracking status could not be saved.");
+    } catch (reason) { setResults(previous); setRunError(reason instanceof Error ? reason.message : "The tracking status could not be saved."); }
+    finally { setUpdatingOpportunityId(null); }
+  }
+
   async function runHunt() {
     setSubmitted(true);
     if (errors.length) return;
@@ -37,7 +79,7 @@ export function BeastHunterWorkspace() {
       const response = await fetch("/api/admin/beast-hunter", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ criteria }) });
       const body = await response.json() as { error?: string; opportunities?: BeastHunterRankedCandidate[] };
       if (!response.ok || !body.opportunities) throw new Error(body.error || "BeastHunter could not complete this hunt.");
-      setResults(body.opportunities);
+      setResults(body.opportunities.map((item) => ({ ...item, trackingStatus: item.trackingStatus || "new" }))); setActiveHuntId(null); void loadHistory();
     } catch (reason) { setRunError(reason instanceof Error ? reason.message : "BeastHunter could not complete this hunt."); }
     finally { setRunning(false); }
   }
@@ -73,13 +115,17 @@ export function BeastHunterWorkspace() {
         {runError ? <div role="alert" className="mt-5 rounded-xl border border-red-300/30 bg-red-300/10 p-4 text-sm text-red-100">{runError}</div> : null}
       </DashboardCard>
       {running ? <DashboardCard accent="admin"><div role="status" aria-live="polite" aria-atomic="true" className="flex flex-col gap-5 sm:flex-row sm:items-center"><div className="relative h-14 w-14 shrink-0" aria-hidden="true"><span className="absolute inset-0 animate-ping rounded-full bg-amber-300/20" /><span className="absolute inset-1 animate-spin rounded-full border-4 border-amber-300/20 border-t-amber-300" /></div><div><p className="text-xs font-black uppercase tracking-[0.2em] text-amber-200">Search in progress</p><h2 className="mt-1 text-xl font-black text-white">BeastHunter is actively researching current sources</h2><p className="mt-2 text-sm leading-6 text-slate-300">Searching, validating citations, filtering candidates, and calculating rankings. Keep this page open. Elapsed time: <span className="font-black text-white">{elapsedSeconds}s</span>.</p><div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10"><div className="h-full w-1/3 animate-pulse rounded-full bg-amber-300" /></div></div></div></DashboardCard> : null}
+      <DashboardCard accent="admin">
+        <SectionHeader eyebrow="Saved research" title="Hunt history" description="Open any previous hunt to review its evidence and continue tracking its opportunities." />
+        {historyLoading ? <p role="status" className="mt-5 text-sm text-slate-300">Loading saved hunts…</p> : historyError ? <div role="alert" className="mt-5 rounded-xl border border-red-300/30 bg-red-300/10 p-4 text-sm text-red-100">{historyError}</div> : history.length ? <div className="mt-5 grid gap-3">{history.map((hunt) => <button key={hunt.id} type="button" title="Open this saved hunt and reload its ranked opportunities, evidence, and tracking states." onClick={() => void openSavedHunt(hunt)} className={`rounded-xl border p-4 text-left transition ${activeHuntId === hunt.id ? "border-amber-300/50 bg-amber-300/10" : "border-white/10 bg-white/[0.03] hover:border-white/25"}`}><div className="flex flex-wrap items-center justify-between gap-2"><span className="font-black text-white">{hunt.query || `${hunt.criteria.huntTypes?.join(", ") || hunt.criteria.markets?.join(", ") || "Saved hunt"}`}</span><span className="text-xs font-bold uppercase tracking-wider text-slate-400">{new Date(hunt.created_at).toLocaleString()}</span></div><p className="mt-2 text-xs text-slate-300">{hunt.status} · Top {hunt.result_limit} · {hunt.strictness} filters</p></button>)}</div> : <p className="mt-5 text-sm text-slate-300">No saved hunts yet. Your completed searches will appear here automatically.</p>}
+      </DashboardCard>
       {submitted && !errors.length ? (
         <DashboardCard accent="admin">
           <SectionHeader eyebrow="Hunt contract" title={running ? "Researching current evidence" : results.length ? `${results.length} ranked opportunities` : "Ready to hunt"} description={`The configured hunt returns up to ${criteria.resultCount} opportunities using ${criteria.strictness} filters. Uncited candidates are rejected before display or storage.`} />
           <dl className="mt-5 grid gap-3 text-sm sm:grid-cols-3"><Summary label="Freshness" value={`${criteria.freshnessDays} days`} /><Summary label="Build ceiling" value={criteria.maximumBuildDays === null ? "Any" : `${criteria.maximumBuildDays} days`} /><Summary label="Startup ceiling" value={criteria.maximumStartupCost === null ? "Any" : `$${criteria.maximumStartupCost.toLocaleString()}`} /></dl>
         </DashboardCard>
       ) : null}
-      {results.length ? <section className="space-y-4" aria-label="Ranked BeastHunter opportunities">{results.map((result) => <DashboardCard key={result.id} accent="admin"><div className="flex flex-wrap items-start justify-between gap-4"><div className="min-w-0"><p className="text-xs font-black uppercase tracking-[0.18em] text-amber-200">#{result.rank} · {result.huntType} · {result.market}</p><h2 className="mt-2 text-xl font-black text-white">{result.title}</h2></div><div className="rounded-full border border-amber-300/30 bg-amber-300/10 px-4 py-2 text-lg font-black text-amber-100">{result.score}/100</div></div><p className="mt-4 text-sm leading-6 text-slate-200">{result.summary}</p><div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-300"><span>Build: {result.buildDays ?? "Unknown"} days</span><span>•</span><span>Cost: {result.startupCost === null ? "Unknown" : `$${result.startupCost.toLocaleString()}`}</span><span>•</span><span>Window: {result.actionWindowDays ?? "Unknown"} days</span></div>{result.filterNotes.length ? <p className="mt-3 text-xs text-amber-200">Flexible-filter notes: {result.filterNotes.join("; ")}</p> : null}<div className="mt-4 flex flex-wrap gap-3">{result.evidence.map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer" className="text-sm font-bold text-sky-300 underline">{source.label}</a>)}</div></DashboardCard>)}</section> : null}
+      {results.length ? <section className="space-y-4" aria-label="Ranked BeastHunter opportunities">{results.map((result) => <DashboardCard key={result.id} accent="admin"><div className="flex flex-wrap items-start justify-between gap-4"><div className="min-w-0"><p className="text-xs font-black uppercase tracking-[0.18em] text-amber-200">#{result.rank} · {result.huntType} · {result.market}</p><h2 className="mt-2 text-xl font-black text-white">{result.title}</h2></div><div className="rounded-full border border-amber-300/30 bg-amber-300/10 px-4 py-2 text-lg font-black text-amber-100">{result.score}/100</div></div><p className="mt-4 text-sm leading-6 text-slate-200">{result.summary}</p><div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-300"><span>Build: {result.buildDays ?? "Unknown"} days</span><span>•</span><span>Cost: {result.startupCost === null ? "Unknown" : `$${result.startupCost.toLocaleString()}`}</span><span>•</span><span>Window: {result.actionWindowDays ?? "Unknown"} days</span></div>{result.filterNotes.length ? <p className="mt-3 text-xs text-amber-200">Flexible-filter notes: {result.filterNotes.join("; ")}</p> : null}<div className="mt-4 flex flex-wrap gap-3">{result.evidence.map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer" className="text-sm font-bold text-sky-300 underline">{source.label}</a>)}</div><div className="mt-5 border-t border-white/10 pt-4"><p className="text-xs font-black uppercase tracking-wider text-slate-400">Opportunity status</p><div className="mt-3 flex flex-wrap gap-2">{beastHunterTrackingStatuses.map((status) => <button key={status} type="button" title={`Mark this opportunity as ${trackingLabels[status]}.`} disabled={updatingOpportunityId === result.id} aria-pressed={(result.trackingStatus || "new") === status} onClick={() => void updateTracking(result.id, status)} className={`min-h-10 rounded-full border px-3 text-sm font-bold ${(result.trackingStatus || "new") === status ? "border-amber-300 bg-amber-300/15 text-amber-100" : "border-white/15 text-slate-300"}`}>{trackingLabels[status]}</button>)}</div></div></DashboardCard>)}</section> : null}
     </div>
   );
 }
