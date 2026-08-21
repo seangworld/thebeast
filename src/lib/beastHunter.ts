@@ -62,6 +62,40 @@ export type BeastHunterRankedCandidate = BeastHunterCandidate & {
   rank: number;
   filterNotes: string[];
   trackingStatus?: BeastHunterTrackingStatus;
+  validation?: BeastHunterValidation | null;
+  buildBrief?: BeastHunterBuildBrief | null;
+  trendStatus?: BeastHunterTrendStatus;
+  lastMonitoredAt?: string | null;
+};
+
+export const BEAST_HUNTER_VERSION = "1.0.0";
+export const beastHunterTrendStatuses = ["unknown", "rising", "stable", "falling", "saturated", "expired"] as const;
+export type BeastHunterTrendStatus = (typeof beastHunterTrendStatuses)[number];
+export type BeastHunterValidation = {
+  verdict: "go" | "caution" | "no_go";
+  demandEvidence: string;
+  competitorAnalysis: string;
+  realisticMonthlyRevenue: string;
+  startupCost: string;
+  buildEstimate: string;
+  marketingDifficulty: string;
+  platformDependencies: string[];
+  reasonsToProceed: string[];
+  reasonsToReject: string[];
+  nextSteps: string[];
+  sourceUrls: string[];
+  validatedAt: string;
+};
+export type BeastHunterBuildBrief = {
+  objective: string;
+  audience: string;
+  valueProposition: string;
+  minimumViableScope: string[];
+  exclusions: string[];
+  milestones: string[];
+  successMeasures: string[];
+  risks: string[];
+  createdAt: string;
 };
 
 export const beastHunterTrackingStatuses = ["new", "watch", "validate", "build", "rejected", "archived"] as const;
