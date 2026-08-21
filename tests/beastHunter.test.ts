@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
-import { defaultBeastHunterCriteria, normalizeBeastHunterCriteria, rankBeastHunterCandidates, scoreBeastHunterCandidate, validateBeastHunterCriteria, type BeastHunterCandidate } from "../src/lib/beastHunter";
+import { defaultBeastHunterCriteria, isBeastHunterTrackingStatus, normalizeBeastHunterCriteria, rankBeastHunterCandidates, scoreBeastHunterCandidate, validateBeastHunterCriteria, type BeastHunterCandidate } from "../src/lib/beastHunter";
 import { buildBeastHunterResearchInput, parseBeastHunterResearch } from "../src/lib/beastHunterResearch";
 
 const scores = { demand: 90, velocity: 85, competitionGap: 70, commercialIntent: 80, saturation: 25, aiCommoditizationRisk: 20, seangworldFit: 95, timeToMarket: 90, revenuePotential: 75, durability: 65, confidence: 80, actionWindow: 85 };
@@ -42,4 +42,18 @@ test("BeastHunter makes active research and optional criteria unmistakable", () 
   assert.match(workspace, /including expected monthly revenue, is optional/);
   assert.match(workspace, /fieldset disabled=\{running\}/);
   assert.match(workspace, /aria-live="polite"/);
+});
+
+test("BeastHunter supports saved hunt history and controlled opportunity states", () => {
+  assert.equal(isBeastHunterTrackingStatus("watch"), true);
+  assert.equal(isBeastHunterTrackingStatus("deleted"), false);
+  const workspace = readFileSync("src/app/dashboard/admin/intelligence/hunter/BeastHunterWorkspace.tsx", "utf8");
+  const route = readFileSync("src/app/api/admin/beast-hunter/route.ts", "utf8");
+  const migration = readFileSync("supabase/migrations/20260821000200_add_beast_hunter_tracking.sql", "utf8");
+  assert.match(workspace, /title="Hunt history"/);
+  assert.match(workspace, /Opportunity status/);
+  assert.match(route, /export async function PATCH/);
+  assert.match(route, /\.eq\("owner_id", user\.id\)/);
+  assert.match(migration, /tracking_status in \('new', 'watch', 'validate', 'build', 'rejected', 'archived'\)/);
+  assert.match(migration, /beast_hunter_opportunities_owner_tracking_idx/);
 });

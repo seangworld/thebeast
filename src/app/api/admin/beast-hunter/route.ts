@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { normalizeBeastHunterCriteria, rankBeastHunterCandidates } from "@/lib/beastHunter";
+import { isBeastHunterTrackingStatus, normalizeBeastHunterCriteria, rankBeastHunterCandidates, type BeastHunterRankedCandidate } from "@/lib/beastHunter";
 import { beastHunterResearchInstructions, beastHunterResearchSchema, buildBeastHunterResearchInput, parseBeastHunterResearch, type BeastHunterResearchPayload } from "@/lib/beastHunterResearch";
 import { requestOpenAIResponse } from "@/lib/digitalStaffRuntime/provider";
 import { createRouteClient } from "@/lib/supabase/server";
@@ -15,12 +15,38 @@ async function owner() {
   return { client, user: profile?.role === "admin" ? user : null };
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   const { client, user } = await owner();
   if (!user) return NextResponse.json({ error: "BeastAdmin owner access required." }, { status: 403 });
+  const huntId = new URL(request.url).searchParams.get("huntId");
+  if (huntId) {
+    const { data: hunt, error: huntError } = await client.from("beast_hunter_hunts").select("id,status,query,criteria,result_limit,strictness,created_at,completed_at").eq("id", huntId).eq("owner_id", user.id).maybeSingle();
+    if (huntError || !hunt) return NextResponse.json({ error: "That saved hunt could not be found." }, { status: 404 });
+    const { data: opportunities, error: opportunityError } = await client.from("beast_hunter_opportunities").select("id,title,summary,hunt_type,market,discovered_at,attributes,scores,total_score,rank,filter_notes,tracking_status").eq("hunt_id", huntId).eq("owner_id", user.id).order("rank");
+    if (opportunityError) return NextResponse.json({ error: "Saved opportunities are unavailable until the tracking migration is applied." }, { status: 503 });
+    const ids = (opportunities || []).map((item) => item.id);
+    const { data: evidence, error: evidenceError } = ids.length ? await client.from("beast_hunter_evidence").select("opportunity_id,label,source_url,observed_at").eq("owner_id", user.id).in("opportunity_id", ids) : { data: [], error: null };
+    if (evidenceError) return NextResponse.json({ error: "Saved opportunity evidence could not be loaded." }, { status: 503 });
+    const results = (opportunities || []).map((item) => {
+      const attributes = item.attributes as Record<string, unknown>;
+      return { id: item.id, title: item.title, summary: item.summary, huntType: item.hunt_type, market: item.market, discoveredAt: item.discovered_at, startupCost: attributes.startupCost ?? null, buildDays: attributes.buildDays ?? null, interaction: attributes.interaction, automation: attributes.automation, competition: attributes.competition ?? null, actionWindowDays: attributes.actionWindowDays ?? null, revenueModels: attributes.revenueModels ?? [], geography: attributes.geography ?? "", scores: item.scores, score: item.total_score, rank: item.rank, filterNotes: item.filter_notes, trackingStatus: item.tracking_status, evidence: (evidence || []).filter((source) => source.opportunity_id === item.id).map((source) => ({ label: source.label, url: source.source_url, observedAt: source.observed_at })) } as BeastHunterRankedCandidate;
+    });
+    return NextResponse.json({ hunt, opportunities: results }, { headers: { "cache-control": "private, no-store" } });
+  }
   const { data, error } = await client.from("beast_hunter_hunts").select("id,status,query,criteria,result_limit,strictness,created_at,completed_at").eq("owner_id", user.id).order("created_at", { ascending: false }).limit(20);
   if (error) return NextResponse.json({ error: "BeastHunter history is unavailable until its database migration is applied." }, { status: 503 });
   return NextResponse.json({ hunts: data || [] }, { headers: { "cache-control": "private, no-store" } });
+}
+
+export async function PATCH(request: Request) {
+  const { client, user } = await owner();
+  if (!user) return NextResponse.json({ error: "BeastAdmin owner access required." }, { status: 403 });
+  const body = await request.json().catch(() => null) as { opportunityId?: unknown; trackingStatus?: unknown } | null;
+  if (typeof body?.opportunityId !== "string" || !isBeastHunterTrackingStatus(body.trackingStatus)) return NextResponse.json({ error: "A valid opportunity and tracking status are required." }, { status: 400 });
+  const { data, error } = await client.from("beast_hunter_opportunities").update({ tracking_status: body.trackingStatus, updated_at: new Date().toISOString() }).eq("id", body.opportunityId).eq("owner_id", user.id).select("id,tracking_status").maybeSingle();
+  if (error) return NextResponse.json({ error: "Opportunity tracking is unavailable until the tracking migration is applied." }, { status: 503 });
+  if (!data) return NextResponse.json({ error: "That opportunity could not be found." }, { status: 404 });
+  return NextResponse.json({ opportunityId: data.id, trackingStatus: data.tracking_status }, { headers: { "cache-control": "private, no-store" } });
 }
 
 export async function POST(request: Request) {

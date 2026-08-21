@@ -61,7 +61,15 @@ export type BeastHunterRankedCandidate = BeastHunterCandidate & {
   score: number;
   rank: number;
   filterNotes: string[];
+  trackingStatus?: BeastHunterTrackingStatus;
 };
+
+export const beastHunterTrackingStatuses = ["new", "watch", "validate", "build", "rejected", "archived"] as const;
+export type BeastHunterTrackingStatus = (typeof beastHunterTrackingStatuses)[number];
+
+export function isBeastHunterTrackingStatus(value: unknown): value is BeastHunterTrackingStatus {
+  return beastHunterTrackingStatuses.includes(value as BeastHunterTrackingStatus);
+}
 
 export const defaultBeastHunterCriteria: BeastHunterCriteria = {
   query: "",
