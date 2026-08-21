@@ -156,16 +156,36 @@ test("live GA4 and Search Console responses map to the provider-neutral dashboar
         })
       );
     }
+    if (dimensions?.[0] === "page" && dimensions?.[1] === "query") {
+      const current = body.startDate === "2026-07-19";
+      return new Response(
+        JSON.stringify({
+          rows: [
+            {
+              keys: [
+                "https://thebeast.seangworld.com/release-notes",
+                "beast platform",
+              ],
+              clicks: current ? 20 : 12,
+              impressions: current ? 2000 : 1000,
+              ctr: current ? 0.01 : 0.012,
+              position: current ? 5 : 6,
+            },
+          ],
+        })
+      );
+    }
     if (dimensions?.[0] === "page") {
+      const current = body.startDate === "2026-07-19";
       return new Response(
         JSON.stringify({
           rows: [
             {
               keys: ["https://thebeast.seangworld.com/release-notes"],
-              clicks: 25,
-              impressions: 500,
-              ctr: 0.05,
-              position: 4,
+              clicks: current ? 25 : 20,
+              impressions: current ? 500 : 400,
+              ctr: current ? 0.05 : 0.05,
+              position: current ? 4 : 5,
             },
           ],
         })
@@ -224,6 +244,12 @@ test("live GA4 and Search Console responses map to the provider-neutral dashboar
   });
   assert.equal(searchConsole?.data?.topQueries?.[0]?.position, 5);
   assert.equal(searchConsole?.data?.topLandingPages?.[0]?.secondaryValue, 500);
+  assert.equal(searchConsole?.data?.searchLandingPages?.[0]?.change.impressions, 100);
+  assert.equal(searchConsole?.data?.searchOpportunities?.[0]?.page, "https://thebeast.seangworld.com/release-notes");
+  assert.equal(searchConsole?.data?.searchOpportunities?.[0]?.query, "beast platform");
+  assert.equal(searchConsole?.data?.searchOpportunities?.[0]?.disposition, "Improve Existing Page");
+  assert.equal(searchConsole?.data?.searchOpportunityBaseline?.rowLimit, 500);
+  assert.equal(searchConsole?.data?.searchOpportunityBaseline?.currentEndDate, "2026-07-25");
   assert.equal(searchConsole?.data?.searchCountries?.[0]?.label, "usa");
   assert.equal(searchConsole?.data?.searchDevices?.[0]?.label, "mobile");
   assert.equal(searchConsole?.data?.searchTrends?.[0]?.date, "2026-07-25");

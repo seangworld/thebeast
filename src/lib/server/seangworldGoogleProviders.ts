@@ -3,8 +3,14 @@ import { IdentityPoolClient } from "google-auth-library";
 import type {
   IntelligenceDimension,
   IntelligenceMetric,
+  SearchPageQueryEvidence,
+  SearchPerformanceMetrics,
   SeangworldAnalyticsData,
   SeangworldProviderSnapshot,
+} from "../seangworldIntelligence";
+import {
+  buildSearchLandingPagePerformance,
+  buildSearchOpportunities,
 } from "../seangworldIntelligence";
 
 type ServerEnvironment = Readonly<Record<string, string | undefined>>;
@@ -53,6 +59,7 @@ const GOOGLE_SEARCH_CONSOLE_SCOPE =
   "https://www.googleapis.com/auth/webmasters.readonly";
 const CACHE_TTL_MS = 15 * 60 * 1000;
 const MAX_RETRIES = 2;
+const SEARCH_OPPORTUNITY_ROW_LIMIT = 500;
 
 class SafeProviderError extends Error {
   constructor(
@@ -531,6 +538,9 @@ async function loadSearchConsoleData(
     current,
     previous,
     pages,
+    previousPages,
+    pageQueries,
+    previousPageQueries,
     countries,
     devices,
     trends,
@@ -541,7 +551,10 @@ async function loadSearchConsoleData(
         { ...ranges.previous, dataState: "final", type: "web" },
         { ...ranges.current, dataState: "final", type: "web", dimensions: ["query"], rowLimit: 25 },
         { ...ranges.previous, dataState: "final", type: "web", dimensions: ["query"], rowLimit: 25 },
-        { ...ranges.current, dataState: "final", type: "web", dimensions: ["page"], rowLimit: 10 },
+        { ...ranges.current, dataState: "final", type: "web", dimensions: ["page"], rowLimit: 50 },
+        { ...ranges.previous, dataState: "final", type: "web", dimensions: ["page"], rowLimit: 50 },
+        { ...ranges.current, dataState: "final", type: "web", dimensions: ["page", "query"], rowLimit: SEARCH_OPPORTUNITY_ROW_LIMIT },
+        { ...ranges.previous, dataState: "final", type: "web", dimensions: ["page", "query"], rowLimit: SEARCH_OPPORTUNITY_ROW_LIMIT },
         { ...ranges.current, dataState: "final", type: "web", dimensions: ["country"], rowLimit: 10 },
         { ...ranges.current, dataState: "final", type: "web", dimensions: ["device"], rowLimit: 10 },
         { ...ranges.current, dataState: "final", type: "web", dimensions: ["date"], rowLimit: reportingDays },
@@ -576,6 +589,27 @@ async function loadSearchConsoleData(
       value: row.clicks || 0,
       secondaryValue: row.impressions || 0,
     }));
+  const searchPerformance = (
+    response: SearchConsoleResponse
+  ): (SearchPerformanceMetrics & { page: string })[] =>
+    (response.rows || []).map((row) => ({
+      page: row.keys?.[0] || "Unknown page",
+      clicks: row.clicks || 0,
+      impressions: row.impressions || 0,
+      ctr: row.ctr || 0,
+      position: row.position || 0,
+    }));
+  const pageQueryEvidence = (
+    response: SearchConsoleResponse
+  ): SearchPageQueryEvidence[] =>
+    (response.rows || []).map((row) => ({
+      page: row.keys?.[0] || "Unknown page",
+      query: row.keys?.[1] || "Unknown query",
+      clicks: row.clicks || 0,
+      impressions: row.impressions || 0,
+      ctr: row.ctr || 0,
+      position: row.position || 0,
+    }));
   return {
     dataThroughDate,
     reportingDelayDays,
@@ -606,6 +640,23 @@ async function loadSearchConsoleData(
           }
         : null,
       topLandingPages: searchDimensions(pages),
+      searchLandingPages: buildSearchLandingPagePerformance(
+        searchPerformance(pages),
+        searchPerformance(previousPages)
+      ),
+      searchOpportunities: buildSearchOpportunities(
+        pageQueryEvidence(pageQueries),
+        pageQueryEvidence(previousPageQueries)
+      ),
+      searchOpportunityBaseline: {
+        currentStartDate: ranges.current.startDate,
+        currentEndDate: ranges.current.endDate,
+        previousStartDate: ranges.previous.startDate,
+        previousEndDate: ranges.previous.endDate,
+        dataThroughDate,
+        rowLimit: SEARCH_OPPORTUNITY_ROW_LIMIT,
+        partialData: true,
+      },
       searchCountries: searchDimensions(countries),
       searchDevices: searchDimensions(devices),
       searchTrends: (trends.rows || [])

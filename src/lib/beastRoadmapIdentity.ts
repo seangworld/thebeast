@@ -505,6 +505,19 @@ export const beastRoadmapPackageRegistry = [
     ],
     ["20260817000100_add_first_party_ecosystem_telemetry.sql"]
   ),
+  packageIdentity(
+    "SW-SEO-229",
+    ["SW-SEO-229"],
+    "SEANGWORLD Search Opportunity Intelligence",
+    [
+      "docs/SW-SEO-229-SEARCH-OPPORTUNITY-INTELLIGENCE.md",
+      "src/lib/seangworldIntelligence.ts",
+      "src/lib/server/seangworldGoogleProviders.ts",
+      "src/app/dashboard/admin/intelligence/SeangworldIntelligenceWorkspace.tsx",
+      "tests/seangworldIntelligence.test.ts",
+      "tests/seangworldGoogleProviders.test.ts",
+    ]
+  ),
 ] as const satisfies readonly BeastRoadmapPackageIdentity[];
 
 function collisionsFor(

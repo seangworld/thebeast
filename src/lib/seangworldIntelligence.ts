@@ -44,6 +44,64 @@ export type IntelligenceDimension = {
   secondaryValue?: number | null;
 };
 
+export const searchOpportunityDispositions = [
+  "Improve Existing Page",
+  "Create Supporting Content",
+  "Investigate",
+  "Watch",
+  "Ignore",
+] as const;
+
+export type SearchOpportunityDisposition =
+  (typeof searchOpportunityDispositions)[number];
+
+export type SearchPerformanceMetrics = {
+  clicks: number;
+  impressions: number;
+  ctr: number;
+  position: number;
+};
+
+export type SearchPerformanceChange = {
+  clicks: number | null;
+  impressions: number | null;
+  ctr: number | null;
+  position: number | null;
+};
+
+export type SearchPageQueryEvidence = SearchPerformanceMetrics & {
+  page: string;
+  query: string;
+};
+
+export type SearchOpportunity = {
+  page: string;
+  query: string;
+  current: SearchPerformanceMetrics;
+  previous: SearchPerformanceMetrics | null;
+  change: SearchPerformanceChange;
+  score: number;
+  disposition: SearchOpportunityDisposition;
+  rationale: string;
+};
+
+export type SearchLandingPagePerformance = {
+  page: string;
+  current: SearchPerformanceMetrics;
+  previous: SearchPerformanceMetrics | null;
+  change: SearchPerformanceChange;
+};
+
+export type SearchOpportunityBaseline = {
+  currentStartDate: string;
+  currentEndDate: string;
+  previousStartDate: string;
+  previousEndDate: string;
+  dataThroughDate: string;
+  rowLimit: number;
+  partialData: true;
+};
+
 export type SeangworldAnalyticsData = {
   firstPartyTelemetry: FirstPartyTelemetrySnapshot | null;
   visitors: IntelligenceMetric | null;
@@ -73,6 +131,9 @@ export type SeangworldAnalyticsData = {
     previousImpressions?: number | null;
   })[];
   topLandingPages: IntelligenceDimension[];
+  searchLandingPages: SearchLandingPagePerformance[];
+  searchOpportunities: SearchOpportunity[];
+  searchOpportunityBaseline: SearchOpportunityBaseline | null;
   searchTrends: {
     date: string;
     clicks: number;
@@ -166,10 +227,184 @@ const emptyData = (): SeangworldAnalyticsData => ({
   exitPages: [],
   topQueries: [],
   topLandingPages: [],
+  searchLandingPages: [],
+  searchOpportunities: [],
+  searchOpportunityBaseline: null,
   searchTrends: [],
   historicalTrends: [],
   deviceEngagement: null,
 });
+
+function performanceChange(
+  current: SearchPerformanceMetrics,
+  previous: SearchPerformanceMetrics | null
+): SearchPerformanceChange {
+  return {
+    clicks: previous ? current.clicks - previous.clicks : null,
+    impressions: previous ? current.impressions - previous.impressions : null,
+    ctr: previous ? current.ctr - previous.ctr : null,
+    // A negative position change is an improvement because position 1 is best.
+    position: previous ? current.position - previous.position : null,
+  };
+}
+
+function genericSearchLandingPage(page: string) {
+  try {
+    const pathname = new URL(page).pathname.replace(/\/$/, "") || "/";
+    return ["/", "/articles", "/guides", "/tools", "/docs"].includes(
+      pathname
+    );
+  } catch {
+    return false;
+  }
+}
+
+export function buildSearchOpportunities(
+  currentRows: readonly SearchPageQueryEvidence[],
+  previousRows: readonly SearchPageQueryEvidence[]
+): SearchOpportunity[] {
+  const previousByPageQuery = new Map(
+    previousRows.map((row) => [`${row.page}\n${row.query}`, row])
+  );
+
+  return currentRows
+    .map((row) => {
+      const previousRow = previousByPageQuery.get(`${row.page}\n${row.query}`);
+      const current: SearchPerformanceMetrics = {
+        clicks: row.clicks,
+        impressions: row.impressions,
+        ctr: row.ctr,
+        position: row.position,
+      };
+      const previous: SearchPerformanceMetrics | null = previousRow
+        ? {
+            clicks: previousRow.clicks,
+            impressions: previousRow.impressions,
+            ctr: previousRow.ctr,
+            position: previousRow.position,
+          }
+        : null;
+      const impressionGrowth =
+        previous && previous.impressions > 0
+          ? (current.impressions - previous.impressions) / previous.impressions
+          : null;
+      const lowCtr = current.ctr < 0.03;
+      const hasPosition = current.position > 0;
+      const achievablePosition =
+        hasPosition && current.position >= 4 && current.position <= 20;
+      const genericPage = genericSearchLandingPage(row.page);
+      let disposition: SearchOpportunityDisposition;
+      let rationale: string;
+
+      if (
+        current.impressions < 10 &&
+        current.clicks === 0
+      ) {
+        disposition = "Ignore";
+        rationale =
+          "Fewer than 10 sampled impressions and no clicks do not justify action yet.";
+      } else if (
+        genericPage &&
+        current.impressions >= 50 &&
+        hasPosition &&
+        current.position <= 40
+      ) {
+        disposition = "Create Supporting Content";
+        rationale =
+          "Meaningful query visibility currently resolves to a broad hub rather than a focused page.";
+      } else if (
+        current.impressions >= 50 &&
+        lowCtr &&
+        achievablePosition
+      ) {
+        disposition = "Improve Existing Page";
+        rationale =
+          "The existing page has meaningful impressions, CTR below 3%, and an achievable average position of 4–20.";
+      } else if (
+        current.impressions >= 100 &&
+        (current.position > 20 ||
+          (impressionGrowth !== null && impressionGrowth <= -0.25))
+      ) {
+        disposition = "Investigate";
+        rationale =
+          "The query has meaningful visibility, but weak position or a decline of at least 25% needs intent and SERP review.";
+      } else if (
+        current.impressions >= 25 &&
+        (previous === null ||
+          (impressionGrowth !== null && impressionGrowth >= 0.25) ||
+          (hasPosition && current.position <= 30))
+      ) {
+        disposition = "Watch";
+        rationale =
+          "Visibility is emerging, growing, or near an achievable range, but evidence is not yet strong enough for a change.";
+      } else {
+        disposition = "Ignore";
+        rationale =
+          "The sampled visibility, click-through rate, and position do not currently meet an action threshold.";
+      }
+
+      const score = Math.min(
+        100,
+        Math.round(
+          Math.min(40, current.impressions / 10) +
+            (achievablePosition
+              ? 30
+              : hasPosition && current.position <= 40
+                ? 15
+                : 0) +
+            (lowCtr ? 15 : 0) +
+            (impressionGrowth !== null && impressionGrowth >= 0.25 ? 15 : 0)
+        )
+      );
+
+      return {
+        page: row.page,
+        query: row.query,
+        current,
+        previous,
+        change: performanceChange(current, previous),
+        score,
+        disposition,
+        rationale,
+      };
+    })
+    .sort(
+      (left, right) =>
+        right.score - left.score ||
+        right.current.impressions - left.current.impressions ||
+        left.query.localeCompare(right.query)
+    );
+}
+
+export function buildSearchLandingPagePerformance(
+  currentRows: readonly (SearchPerformanceMetrics & { page: string })[],
+  previousRows: readonly (SearchPerformanceMetrics & { page: string })[]
+): SearchLandingPagePerformance[] {
+  const previousByPage = new Map(previousRows.map((row) => [row.page, row]));
+  return currentRows.map((row) => {
+    const previousRow = previousByPage.get(row.page);
+    const current: SearchPerformanceMetrics = {
+      clicks: row.clicks,
+      impressions: row.impressions,
+      ctr: row.ctr,
+      position: row.position,
+    };
+    const previous: SearchPerformanceMetrics | null = previousRow
+      ? {
+          clicks: previousRow.clicks,
+          impressions: previousRow.impressions,
+          ctr: previousRow.ctr,
+          position: previousRow.position,
+        }
+      : null;
+    return {
+      page: row.page,
+      current,
+      previous,
+      change: performanceChange(current, previous),
+    };
+  });
+}
 
 function metricChange(metric: IntelligenceMetric) {
   if (metric.previousValue === null || metric.previousValue === 0) return null;
@@ -412,6 +647,11 @@ export function buildSeangworldIntelligenceSnapshot(input: {
     recommendations: buildSeangworldRecommendations(data, comparisonPeriod),
     limitations: [
       ...(providersWithData.length ? [] : ["No provider returned verified analytics data."]),
+      ...(data.searchOpportunityBaseline
+        ? [
+            "Search Console may anonymize or omit query rows. Page/query opportunities are bounded evidence samples, not exhaustive page totals.",
+          ]
+        : []),
       ...input.providers
         .filter((provider) => provider.status !== "configured")
         .map((provider) => `${provider.label}: ${provider.guidance}`),
