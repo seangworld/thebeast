@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { DashboardCard, SectionHeader } from "@/app/components/design/DashboardPrimitives";
 import { beastHunterResultCounts, defaultBeastHunterCriteria, validateBeastHunterCriteria, type BeastHunterCriteria, type BeastHunterRankedCandidate } from "@/lib/beastHunter";
 
@@ -18,8 +18,16 @@ export function BeastHunterWorkspace() {
   const [running, setRunning] = useState(false);
   const [runError, setRunError] = useState<string | null>(null);
   const [results, setResults] = useState<BeastHunterRankedCandidate[]>([]);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const errors = useMemo(() => validateBeastHunterCriteria(criteria), [criteria]);
   const set = <K extends keyof BeastHunterCriteria>(key: K, value: BeastHunterCriteria[K]) => setCriteria((current) => ({ ...current, [key]: value }));
+
+  useEffect(() => {
+    if (!running) return;
+    setElapsedSeconds(0);
+    const timer = window.setInterval(() => setElapsedSeconds((seconds) => seconds + 1), 1_000);
+    return () => window.clearInterval(timer);
+  }, [running]);
 
   async function runHunt() {
     setSubmitted(true);
@@ -38,24 +46,25 @@ export function BeastHunterWorkspace() {
     <div className="space-y-6">
       <DashboardCard accent="admin">
         <SectionHeader eyebrow="BeastAdmin → Intelligence" title="Start a new hunt" description="BeastHunter will not search broadly and rationalize afterward. Your criteria become the filter and scoring contract before research begins." />
-        <div className="mt-6 grid gap-5 lg:grid-cols-2">
-          <label className="lg:col-span-2 text-sm font-bold text-slate-200">What should BeastHunter find?
-            <textarea value={criteria.query} onChange={(event) => set("query", event.target.value)} rows={3} placeholder="Example: a low-cost, mostly automated product I can launch within 14 days" className="mt-2 w-full rounded-xl border border-white/15 bg-slate-950/70 p-3 text-white placeholder:text-slate-500" />
+        <p className="mt-5 rounded-xl border border-sky-300/20 bg-sky-300/[0.06] p-4 text-sm leading-6 text-sky-100"><span className="font-black">Required:</span> complete at least one of the first three criteria—search objective, hunt type, or market. Every other field, including expected monthly revenue, is optional.</p>
+        <fieldset disabled={running} className="mt-6 grid gap-5 disabled:cursor-wait disabled:opacity-60 lg:grid-cols-2">
+          <label className="lg:col-span-2 text-sm font-bold text-slate-200">What should BeastHunter find? <span className="font-normal text-slate-400">(qualifying field)</span>
+            <textarea title="Describe the opportunity BeastHunter should research. Completing this field satisfies the minimum hunt requirement." value={criteria.query} onChange={(event) => set("query", event.target.value)} rows={3} placeholder="Example: a low-cost, mostly automated product I can launch within 14 days" className="mt-2 w-full rounded-xl border border-white/15 bg-slate-950/70 p-3 text-white placeholder:text-slate-500" />
           </label>
-          <ChoiceGroup title="Hunt type" options={huntTypes} selected={criteria.huntTypes} onToggle={(value) => set("huntTypes", toggle(criteria.huntTypes, value))} />
-          <ChoiceGroup title="Market / category" options={markets} selected={criteria.markets} onToggle={(value) => set("markets", toggle(criteria.markets, value))} />
-          <NumberField label="Freshness window (days)" value={criteria.freshnessDays} onChange={(value) => set("freshnessDays", value ?? 30)} />
-          <NumberField label="Maximum startup cost ($)" value={criteria.maximumStartupCost} onChange={(value) => set("maximumStartupCost", value)} />
-          <NumberField label="Maximum build time (days)" value={criteria.maximumBuildDays} onChange={(value) => set("maximumBuildDays", value)} />
-          <NumberField label="Monthly revenue target ($)" value={criteria.monthlyRevenueTarget} onChange={(value) => set("monthlyRevenueTarget", value)} />
-          <SelectField label="Interaction required" value={criteria.interaction} onChange={(value) => set("interaction", value as BeastHunterCriteria["interaction"])} options={[["any", "Any"], ["none", "None"], ["low", "Low"]]} />
-          <SelectField label="Automation level" value={criteria.automation} onChange={(value) => set("automation", value as BeastHunterCriteria["automation"])} options={[["any", "Any"], ["manual", "Manual"], ["assisted", "AI assisted"], ["mostly_automated", "Mostly automated"]]} />
-          <ChoiceGroup title="Revenue model" options={revenueModels} selected={criteria.revenueModels} onToggle={(value) => set("revenueModels", toggle(criteria.revenueModels, value))} />
+          <ChoiceGroup title="Hunt type (qualifying field)" options={huntTypes} selected={criteria.huntTypes} onToggle={(value) => set("huntTypes", toggle(criteria.huntTypes, value))} />
+          <ChoiceGroup title="Market / category (qualifying field)" options={markets} selected={criteria.markets} onToggle={(value) => set("markets", toggle(criteria.markets, value))} />
+          <NumberField label="Freshness window (days) · Optional" value={criteria.freshnessDays} onChange={(value) => set("freshnessDays", value ?? 30)} />
+          <NumberField label="Maximum startup cost ($) · Optional" value={criteria.maximumStartupCost} onChange={(value) => set("maximumStartupCost", value)} />
+          <NumberField label="Maximum build time (days) · Optional" value={criteria.maximumBuildDays} onChange={(value) => set("maximumBuildDays", value)} />
+          <NumberField label="Monthly revenue target ($) · Optional" value={criteria.monthlyRevenueTarget} onChange={(value) => set("monthlyRevenueTarget", value)} />
+          <SelectField label="Interaction required · Optional" value={criteria.interaction} onChange={(value) => set("interaction", value as BeastHunterCriteria["interaction"])} options={[["any", "Any"], ["none", "None"], ["low", "Low"]]} />
+          <SelectField label="Automation level · Optional" value={criteria.automation} onChange={(value) => set("automation", value as BeastHunterCriteria["automation"])} options={[["any", "Any"], ["manual", "Manual"], ["assisted", "AI assisted"], ["mostly_automated", "Mostly automated"]]} />
+          <ChoiceGroup title="Revenue model (optional)" options={revenueModels} selected={criteria.revenueModels} onToggle={(value) => set("revenueModels", toggle(criteria.revenueModels, value))} />
           <div className="grid gap-4 sm:grid-cols-2">
             <SelectField label="Filter behavior" value={criteria.strictness} onChange={(value) => set("strictness", value as BeastHunterCriteria["strictness"])} options={[["strict", "Strict"], ["flexible", "Flexible"]]} />
             <SelectField label="Results" value={String(criteria.resultCount)} onChange={(value) => set("resultCount", Number(value) as BeastHunterCriteria["resultCount"])} options={beastHunterResultCounts.map((count) => [String(count), `Top ${count}`])} />
           </div>
-        </div>
+        </fieldset>
         {errors.length && submitted ? <div role="alert" className="mt-5 rounded-xl border border-red-300/30 bg-red-300/10 p-4 text-sm text-red-100">{errors.join(" ")}</div> : null}
         <div className="mt-6 flex flex-wrap gap-3">
           <button type="button" title="Research current sources, apply this hunt contract, score the surviving opportunities, and save the evidence-backed results." className="beast-button" disabled={running} onClick={runHunt}>{running ? "Hunting current opportunities…" : "Run BeastHunter"}</button>
@@ -63,6 +72,7 @@ export function BeastHunterWorkspace() {
         </div>
         {runError ? <div role="alert" className="mt-5 rounded-xl border border-red-300/30 bg-red-300/10 p-4 text-sm text-red-100">{runError}</div> : null}
       </DashboardCard>
+      {running ? <DashboardCard accent="admin"><div role="status" aria-live="polite" aria-atomic="true" className="flex flex-col gap-5 sm:flex-row sm:items-center"><div className="relative h-14 w-14 shrink-0" aria-hidden="true"><span className="absolute inset-0 animate-ping rounded-full bg-amber-300/20" /><span className="absolute inset-1 animate-spin rounded-full border-4 border-amber-300/20 border-t-amber-300" /></div><div><p className="text-xs font-black uppercase tracking-[0.2em] text-amber-200">Search in progress</p><h2 className="mt-1 text-xl font-black text-white">BeastHunter is actively researching current sources</h2><p className="mt-2 text-sm leading-6 text-slate-300">Searching, validating citations, filtering candidates, and calculating rankings. Keep this page open. Elapsed time: <span className="font-black text-white">{elapsedSeconds}s</span>.</p><div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10"><div className="h-full w-1/3 animate-pulse rounded-full bg-amber-300" /></div></div></div></DashboardCard> : null}
       {submitted && !errors.length ? (
         <DashboardCard accent="admin">
           <SectionHeader eyebrow="Hunt contract" title={running ? "Researching current evidence" : results.length ? `${results.length} ranked opportunities` : "Ready to hunt"} description={`The configured hunt returns up to ${criteria.resultCount} opportunities using ${criteria.strictness} filters. Uncited candidates are rejected before display or storage.`} />
