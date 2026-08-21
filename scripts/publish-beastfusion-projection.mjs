@@ -1,4 +1,3 @@
-import { createHmac } from "node:crypto";
 import { readFile } from "node:fs/promises";
 
 function fail(message) {
@@ -14,10 +13,12 @@ const valueFor = (name) => {
 
 const file = valueFor("--file");
 const url = valueFor("--url");
-const secret = process.env.BEASTFUSION_PROJECTION_PUBLISH_SECRET;
+const audience = valueFor("--audience") || process.env.BEASTFUSION_OIDC_AUDIENCE;
+const oidcRequestUrl = process.env.ACTIONS_ID_TOKEN_REQUEST_URL;
+const oidcRequestToken = process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN;
 
-if (!file || !url || !secret || secret.length < 32) {
-  fail("--file, --url, and a server-provided BEASTFUSION_PROJECTION_PUBLISH_SECRET of at least 32 characters are required.");
+if (!file || !url || !audience || !oidcRequestUrl || !oidcRequestToken) {
+  fail("--file, --url, --audience, and the GitHub Actions OIDC request environment are required.");
 } else {
   try {
     const target = new URL(url);
@@ -27,14 +28,16 @@ if (!file || !url || !secret || secret.length < 32) {
     const body = await readFile(file, "utf8");
     if (Buffer.byteLength(body, "utf8") > 1024 * 1024) throw new Error("the projection exceeds one megabyte");
     JSON.parse(body);
-    const timestamp = String(Math.floor(Date.now() / 1000));
-    const signature = createHmac("sha256", secret).update(`${timestamp}.${body}`).digest("hex");
+    const tokenUrl = new URL(oidcRequestUrl);
+    tokenUrl.searchParams.set("audience", audience);
+    const tokenResponse = await fetch(tokenUrl, { headers: { authorization: `Bearer ${oidcRequestToken}` } });
+    const tokenResult = await tokenResponse.json().catch(() => null);
+    if (!tokenResponse.ok || !tokenResult?.value) throw new Error("GitHub Actions did not issue a workload identity token");
     const response = await fetch(target, {
       method: "POST",
       headers: {
-        "content-type": "application/json",
-        "x-beastfusion-timestamp": timestamp,
-        "x-beastfusion-signature": signature,
+        "content-type": "application/vnd.beastfusion.command-center+json;version=1",
+        authorization: `Bearer ${tokenResult.value}`,
       },
       body,
     });

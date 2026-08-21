@@ -1,4 +1,4 @@
-import { createHash, createHmac, timingSafeEqual } from "node:crypto";
+import { createHash } from "node:crypto";
 
 export const beastFusionProjectionVersion = "1.0.0";
 export const beastFusionProjectionSchema =
@@ -357,16 +357,4 @@ export function verifyBeastFusionProjectionFreshness(generatedAt: string, now = 
   if (generated < now - maximumAgeMs) return { ok: false, reason: "Projection snapshot is stale." };
   if (generated > now + maximumFutureSkewMs) return { ok: false, reason: "Projection timestamp is in the future." };
   return { ok: true };
-}
-
-export function verifyBeastFusionPublicationSignature(input: { body: string; timestamp: string | null; signature: string | null; secret: string; now?: number; maximumSkewMs?: number }): PublicationVerification {
-  if (input.secret.length < 32) return { ok: false, reason: "Publication secret is not securely configured." };
-  if (!input.timestamp || !/^\d+$/.test(input.timestamp)) return { ok: false, reason: "Publication timestamp is missing or invalid." };
-  const timestamp = Number(input.timestamp);
-  if (Math.abs((input.now ?? Date.now()) - timestamp * 1000) > (input.maximumSkewMs ?? 300_000)) return { ok: false, reason: "Publication timestamp is stale." };
-  const expected = createHmac("sha256", input.secret).update(`${input.timestamp}.${input.body}`).digest("hex");
-  const supplied = input.signature?.replace(/^sha256=/, "") ?? "";
-  if (!/^[0-9a-f]{64}$/.test(supplied)) return { ok: false, reason: "Publication signature is invalid." };
-  const valid = timingSafeEqual(Buffer.from(expected, "hex"), Buffer.from(supplied, "hex"));
-  return valid ? { ok: true } : { ok: false, reason: "Publication signature is invalid." };
 }

@@ -20,21 +20,20 @@ The application never reads the BeastFusion checkout, Git history, or GitHub API
 
 ## Publication protocol
 
-The publisher sends the exact UTF-8 projection JSON to `POST /api/admin/beastfusion-projection` with:
+The allowlisted BeastFusion workflow sends the exact UTF-8 projection JSON to `POST /api/admin/beastfusion-projection` with:
 
-- `content-type: application/json`
-- `x-beastfusion-timestamp`: Unix seconds
-- `x-beastfusion-signature`: lowercase HMAC-SHA256 of `<timestamp>.<exact request body>`
+- `content-type: application/vnd.beastfusion.command-center+json;version=1`
+- `authorization: Bearer <short-lived GitHub Actions OIDC token>`
 
-The shared secret is server-only `BEASTFUSION_PROJECTION_PUBLISH_SECRET`. The endpoint also requires `SUPABASE_SERVICE_ROLE_KEY` and rejects missing, short, stale, malformed, oversized, unsigned, or invalid requests. It returns sanitized status data and never returns secrets or the service-role key.
+The server-only `BEASTFUSION_OIDC_AUDIENCE` and `BEASTFUSION_OIDC_WORKFLOW_REF` values define exact allowlists. The endpoint verifies the GitHub issuer and signature plus audience, repository, workflow, `refs/heads/main`, exact projection commit, token lifetime, run number, and attempt. It also requires `SUPABASE_SERVICE_ROLE_KEY`, returns only sanitized status, and never returns identity tokens or the service-role key. BeastFusion receives no reusable TheBeast, Supabase, Vercel, or database credential.
 
 An operator can publish a generated artifact with:
 
 ```bash
-npm run beastfusion:publish -- --file /absolute/path/to/beastfusion-command-projection.v1.json --url https://dev.example.com/api/admin/beastfusion-projection
+npm run beastfusion:publish -- --file /absolute/path/to/beastfusion-command-projection.v1.json --url https://dev.example.com/api/admin/beastfusion-projection --audience https://dev.example.com/api/admin/beastfusion-projection
 ```
 
-The command reads the publication secret from the process environment. The secret must not be stored in BeastFusion, the projection, client bundles, command history, or committed environment files.
+The command runs only inside the allowlisted GitHub Actions workflow and exchanges GitHub's short-lived request credential for a narrowly scoped OIDC token. No reusable publication secret is stored in BeastFusion.
 
 ## Acceptance and failure behavior
 
@@ -46,14 +45,14 @@ Before insertion, the application verifies:
 - canonical input digest, projection identifier, and payload SHA-256;
 - unique roadmap identities and executable-work governance gates;
 - owner-only sanitized classification and absence of likely secrets, bearer tokens, private keys, and email addresses;
-- HMAC signature and five-minute timestamp window;
+- OIDC signature, issuer, audience, repository, workflow, ref, commit, lifetime, run-order, attempt, and replay controls;
 - one-megabyte maximum payload.
 
 Accepted snapshots are immutable. Re-publishing the current identity is idempotent. A stale timestamp, downgrade, conflicting identity, malformed payload, or drift is rejected and the last valid current pointer remains unchanged. If configuration is missing, no snapshot exists, the current snapshot is stale, or validation fails, the provider exposes an explicit state rather than silently falling back to legacy truth.
 
 ## Storage and access boundary
 
-`public.beastfusion_command_snapshots` is the append-only evidence store. `public.beastfusion_command_current` contains only the singleton pointer to the accepted current snapshot. Row-level security is enabled on both tables. `anon` and `authenticated` have no direct table privileges. Only the service role may publish. An owner-admin may read the current projection through `public.get_beastfusion_command_current()` and the server-side admin API; ordinary members cannot.
+`public.beastfusion_command_snapshots` is the append-only evidence store. `public.beastfusion_command_ingestions` is the append-only accepted-publication/heartbeat receipt store. `public.beastfusion_command_current` contains only the singleton pointer to the accepted current snapshot. Row-level security is enabled on all three tables. `anon` and `authenticated` have no direct table or RPC access. Only the service role may publish or fetch raw payloads; the owner-admin receives bounded typed adapters through the server API. Ordinary members cannot read the owner command-center data.
 
 Database checks duplicate critical identity and monotonicity controls, even though full contract and digest validation occurs in the server-only application boundary. Snapshot update and delete operations fail through an immutable trigger.
 
@@ -86,6 +85,6 @@ Projection v1 intentionally does not contain live deployment observations or ser
 
 ## Validation and release gates
 
-Local acceptance requires focused contract, hash, signature, adapter, conflict, migration-policy, and failure-path tests plus the repository's full test, lint, TypeScript, build, migration, and `git diff --check` checks. DEV must then apply and verify the migration and publish a real BeastFusion projection. Preview and Production require the same evidence and exact promoted commits. A missing project reference, database credential, deployment credential, publication secret, or trusted machine identity is a hard stop; credentials must never be invented.
+Local acceptance requires focused contract, hash, OIDC claim/signature/replay, adapter, conflict, migration-policy, and failure-path tests plus the repository's full test, lint, TypeScript, build, migration, and `git diff --check` checks. DEV must then apply and verify the migration and publish a real BeastFusion projection. Preview and Production require the same evidence and exact promoted commits. A missing project reference, database credential, deployment credential, exact OIDC audience/workflow allowlist, or trusted machine identity is a hard stop; credentials must never be invented.
 
 After Production parity is verified, BeastFusion may record BA-CMD-001A completion through its own governance workflow. Application-side work beyond this package requires separate authorization for `BA-CMD-001B`.

@@ -1,10 +1,11 @@
 import assert from "node:assert/strict";
-import { createHash, createHmac } from "node:crypto";
+import { createHash, generateKeyPairSync, sign } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import test from "node:test";
 import { buildBeastAdminCanonicalReadModel, classifyLegacyBeastAdminRecord, reconcileCanonicalAndLegacy, resolveBeastFusionProviderStatus, type BeastFusionStoredSnapshot } from "../src/lib/beastAdminCanonicalProjection";
-import { stableProjectionString, validateBeastFusionCommandProjection, verifyBeastFusionProjectionFreshness, verifyBeastFusionPublicationSignature } from "../src/lib/beastFusionCommandProjection";
+import { stableProjectionString, validateBeastFusionCommandProjection, verifyBeastFusionProjectionFreshness } from "../src/lib/beastFusionCommandProjection";
+import { verifyBeastFusionWorkflowOidc } from "../src/lib/server/beastFusionOidc";
 
 const digest = (value: string) => `sha256:${createHash("sha256").update(value).digest("hex")}`;
 const sourcePaths = ["MANIFEST.md", "state/beastfusion-package-registry.json", "state/ecosystem-execution-state.json", "state/ecosystem-release-registry.json", "state/ecosystem-version-registry.json", "state/ecosystem-work-scheduler.json", "state/governance-registry.json", "state/shared-agent-registry.json", "versions/versions.json"];
@@ -41,7 +42,7 @@ function acceptedSnapshot(): BeastFusionStoredSnapshot {
   const validation = validateBeastFusionCommandProjection(fixture());
   assert.equal(validation.ok, true);
   if (!validation.ok) throw new Error("fixture invalid");
-  return { projectionId: validation.projection.projectionId, projectionVersion: "1.0.0", payloadHash: validation.payloadHash, canonicalInputDigest: validation.canonicalInputDigest, sourceCommit: validation.projection.source.commit, generatedAt: validation.projection.generatedAt, publishedAt: "2026-08-21T20:01:00Z", payload: validation.projection };
+  return { projectionId: validation.projection.projectionId, projectionVersion: "1.0.0", payloadHash: validation.payloadHash, canonicalInputDigest: validation.canonicalInputDigest, sourceCommit: validation.projection.source.commit, generatedAt: validation.projection.generatedAt, acceptedAt: "2026-08-21T20:01:00Z", lastConfirmedAt: "2026-08-21T20:01:00Z", payload: validation.projection };
 }
 
 function validationErrors(value: unknown) {
@@ -70,12 +71,26 @@ test("malformed partial unknown-version hash and sensitive projections fail clos
   assert.match(validationErrors(sensitive), /sensitive/i);
 });
 
-test("machine publication requires a current valid HMAC", () => {
-  const body = stableProjectionString(fixture()); const secret = "a".repeat(32); const timestamp = "1787342400"; const now = Number(timestamp) * 1000;
-  const signature = `sha256=${createHmac("sha256", secret).update(`${timestamp}.${body}`).digest("hex")}`;
-  assert.deepEqual(verifyBeastFusionPublicationSignature({ body, secret, timestamp, signature, now }), { ok: true });
-  assert.equal(verifyBeastFusionPublicationSignature({ body, secret, timestamp, signature, now: now + 300_001 }).ok, false);
-  assert.equal(verifyBeastFusionPublicationSignature({ body: `${body} `, secret, timestamp, signature, now }).ok, false);
+test("machine publication requires exact short-lived GitHub Actions OIDC claims", async () => {
+  const { publicKey, privateKey } = generateKeyPairSync("rsa", { modulusLength: 2048 });
+  const key = { ...publicKey.export({ format: "jwk" }), kid: "test-key", kty: "RSA" };
+  const now = Date.parse("2026-08-21T20:00:00Z");
+  const nowSeconds = Math.floor(now / 1000);
+  const workflowRef = "seangworld/beastfusion/.github/workflows/publish-beastadmin-projection.yml@refs/heads/main";
+  const audience = "https://dev.example.com/api/admin/beastfusion-projection";
+  const header = Buffer.from(JSON.stringify({ alg: "RS256", kid: "test-key", typ: "JWT" })).toString("base64url");
+  const claims = { iss: "https://token.actions.githubusercontent.com", aud: audience, sub: "repo:seangworld/beastfusion:ref:refs/heads/main", repository: "seangworld/beastfusion", ref: "refs/heads/main", workflow_ref: workflowRef, sha: fixture().source.commit, run_number: "42", run_attempt: "1", iat: nowSeconds - 10, nbf: nowSeconds - 10, exp: nowSeconds + 300 };
+  const tokenFor = (payload: Record<string, unknown>) => {
+    const encoded = Buffer.from(JSON.stringify(payload)).toString("base64url");
+    const signature = sign("RSA-SHA256", Buffer.from(`${header}.${encoded}`), privateKey).toString("base64url");
+    return `${header}.${encoded}.${signature}`;
+  };
+  const valid = await verifyBeastFusionWorkflowOidc({ authorization: `Bearer ${tokenFor(claims)}`, expectedAudience: audience, expectedWorkflowRef: workflowRef, now, keys: [key] });
+  assert.equal(valid.ok, true);
+  for (const overrides of [{ repository: "attacker/repo" }, { ref: "refs/heads/feature" }, { workflow_ref: "seangworld/beastfusion/.github/workflows/other.yml@refs/heads/main" }, { aud: "wrong" }, { exp: nowSeconds - 1 }, { sha: "f".repeat(39) }]) {
+    const result = await verifyBeastFusionWorkflowOidc({ authorization: `Bearer ${tokenFor({ ...claims, ...overrides })}`, expectedAudience: audience, expectedWorkflowRef: workflowRef, now, keys: [key] });
+    assert.equal(result.ok, false);
+  }
 });
 
 test("publication rejects stale and future projections before persistence", () => {
@@ -112,15 +127,16 @@ test("legacy intake annotation and archive remain separate while BeastFusion win
 
 test("migration enforces immutable owner-only service-published snapshots", () => {
   const sql = readFileSync(join(process.cwd(), "supabase/migrations/20260821000500_add_beastfusion_command_projection.sql"), "utf8");
-  for (const expected of ["beastfusion_command_snapshots", "beastfusion_command_current", "prevent_beastfusion_command_snapshot_mutation", "publish_beastfusion_command_snapshot", "get_beastfusion_command_current", "enable row level security", "to service_role", "BeastAdmin owner access required", "governance_classification", "candidate_intake"]) assert.match(sql, new RegExp(expected));
+  for (const expected of ["beastfusion_command_snapshots", "beastfusion_command_ingestions", "beastfusion_command_current", "prevent_beastfusion_command_snapshot_mutation", "publish_beastfusion_command_snapshot", "get_beastfusion_command_current", "enable row level security", "to service_role", "Replay or out-of-order", "governance_classification", "candidate_intake"]) assert.match(sql, new RegExp(expected));
   assert.doesNotMatch(sql, /grant (?:select|insert|update|delete|all).* to authenticated/i);
   assert.match(sql, /revoke all on public\.beastfusion_command_snapshots from anon, authenticated/);
 });
 
 test("publication endpoint is server-only and fails closed", () => {
   const route = readFileSync(join(process.cwd(), "src/app/api/admin/beastfusion-projection/route.ts"), "utf8");
-  assert.match(route, /BEASTFUSION_PROJECTION_PUBLISH_SECRET/);
-  assert.match(route, /x-beastfusion-signature/);
+  assert.match(route, /BEASTFUSION_OIDC_AUDIENCE/);
+  assert.match(route, /verifyBeastFusionWorkflowOidc/);
+  assert.match(route, /source commit does not match/);
   assert.match(route, /createBeastFusionPublicationClient/);
   assert.match(route, /last valid snapshot remains current/);
   assert.doesNotMatch(route, /NEXT_PUBLIC_BEASTFUSION/);

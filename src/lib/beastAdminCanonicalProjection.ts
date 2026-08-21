@@ -19,12 +19,13 @@ export type BeastFusionStoredSnapshot = {
   canonicalInputDigest: string;
   sourceCommit: string;
   generatedAt: string;
-  publishedAt: string;
+  acceptedAt: string;
+  lastConfirmedAt: string;
   payload: BeastFusionCommandProjection;
 };
 
 export type BeastAdminCanonicalReadModel = {
-  provider: { status: BeastFusionProviderStatus; detail: string; projectionId: string | null; generatedAt: string | null; publishedAt: string | null };
+  provider: { status: BeastFusionProviderStatus; detail: string; projectionId: string | null; generatedAt: string | null; acceptedAt: string | null; lastConfirmedAt: string | null };
   cursor: { path: string[]; mode: string; executableWorkAvailable: boolean; selectedPackage: string | null; selectedProduct: string | null; recommendedDirective: string | null };
   products: Array<{ id: string; name: string; parent: string | null; lifecycle: string; version: string | null; buildId: string | null; releaseDate: string | null; declaredDeployment: string; ownerRepository: string | null; source: "beastfusion" }>;
   roadmap: Array<{ id: string; product: string; title: string; status: string; priority: string; dependencies: string[]; blocked: boolean; executable: boolean; ownerApproved: boolean; executionAuthorized: boolean; source: "beastfusion" }>;
@@ -49,12 +50,12 @@ export function classifyLegacyBeastAdminRecord(input: { sourceType?: string | nu
 }
 
 export function resolveBeastFusionProviderStatus(input: { configured: boolean; snapshot: BeastFusionStoredSnapshot | null; validationError?: string | null; drift?: boolean; now?: Date; staleAfterMs?: number }): BeastAdminCanonicalReadModel["provider"] {
-  if (!input.configured) return { status: "not_configured", detail: "The server-only BeastFusion publication boundary is not configured.", projectionId: null, generatedAt: null, publishedAt: null };
-  if (input.validationError) return { status: input.drift ? "drift_detected" : "error", detail: input.validationError, projectionId: input.snapshot?.projectionId ?? null, generatedAt: input.snapshot?.generatedAt ?? null, publishedAt: input.snapshot?.publishedAt ?? null };
-  if (!input.snapshot) return { status: "no_snapshot", detail: "No valid canonical BeastFusion projection has been accepted.", projectionId: null, generatedAt: null, publishedAt: null };
-  const age = (input.now ?? new Date()).getTime() - new Date(input.snapshot.generatedAt).getTime();
-  if (age > (input.staleAfterMs ?? 7 * 24 * 60 * 60 * 1000)) return { status: "stale", detail: "The last valid canonical projection is retained, but its generated timestamp is stale.", projectionId: input.snapshot.projectionId, generatedAt: input.snapshot.generatedAt, publishedAt: input.snapshot.publishedAt };
-  return { status: "connected", detail: "A valid immutable BeastFusion canonical projection is current.", projectionId: input.snapshot.projectionId, generatedAt: input.snapshot.generatedAt, publishedAt: input.snapshot.publishedAt };
+  if (!input.configured) return { status: "not_configured", detail: "The server-only BeastFusion publication boundary is not configured.", projectionId: null, generatedAt: null, acceptedAt: null, lastConfirmedAt: null };
+  if (input.validationError) return { status: input.drift ? "drift_detected" : "error", detail: input.validationError, projectionId: input.snapshot?.projectionId ?? null, generatedAt: input.snapshot?.generatedAt ?? null, acceptedAt: input.snapshot?.acceptedAt ?? null, lastConfirmedAt: input.snapshot?.lastConfirmedAt ?? null };
+  if (!input.snapshot) return { status: "no_snapshot", detail: "No valid canonical BeastFusion projection has been accepted.", projectionId: null, generatedAt: null, acceptedAt: null, lastConfirmedAt: null };
+  const age = (input.now ?? new Date()).getTime() - new Date(input.snapshot.lastConfirmedAt).getTime();
+  if (age > (input.staleAfterMs ?? 26 * 60 * 60 * 1000)) return { status: "stale", detail: "The last valid canonical projection is retained, but its publication heartbeat is stale.", projectionId: input.snapshot.projectionId, generatedAt: input.snapshot.generatedAt, acceptedAt: input.snapshot.acceptedAt, lastConfirmedAt: input.snapshot.lastConfirmedAt };
+  return { status: "connected", detail: "A valid immutable BeastFusion canonical projection is current.", projectionId: input.snapshot.projectionId, generatedAt: input.snapshot.generatedAt, acceptedAt: input.snapshot.acceptedAt, lastConfirmedAt: input.snapshot.lastConfirmedAt };
 }
 
 export function buildBeastAdminCanonicalReadModel(snapshot: BeastFusionStoredSnapshot, options: { configured?: boolean; now?: Date } = {}): BeastAdminCanonicalReadModel {
