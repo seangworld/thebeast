@@ -36,6 +36,17 @@ ${opportunity.summary}
 - Build estimate: ${validation?.buildEstimate || "Not recorded"}
 - Marketing difficulty: ${validation?.marketingDifficulty || "Not recorded"}
 
+## Opportunity economics
+- Price per sale/customer/subscription: ${validation?.economics?.offerPrice || "Not recorded"}
+- Revenue model: ${validation?.economics?.revenueModel || "Not recorded"}
+- Monthly sales/customers needed: ${validation?.economics?.monthlySalesNeeded || "Not recorded"}
+- Realistic monthly gross revenue: ${validation?.economics?.grossRevenueRange || validation?.realisticMonthlyRevenue || "Not recorded"}
+- Estimated monthly operating cost: ${validation?.economics?.monthlyOperatingCost || "Not recorded"}
+- Estimated gross margin: ${validation?.economics?.grossMargin || "Not recorded"}
+- Break-even point: ${validation?.economics?.breakEvenPoint || "Not recorded"}
+- Time to first revenue: ${validation?.economics?.timeToFirstRevenue || "Not recorded"}
+- Income confidence: ${validation?.economics?.incomeConfidence || "Not recorded"}
+
 ### Reasons to proceed
 ${bullets(validation?.reasonsToProceed || [])}
 

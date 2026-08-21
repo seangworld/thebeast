@@ -71,7 +71,7 @@ export type BeastHunterRankedCandidate = BeastHunterCandidate & {
   githubIssueUrl?: string | null;
 };
 
-export const BEAST_HUNTER_VERSION = "1.1.0";
+export const BEAST_HUNTER_VERSION = "1.2.0";
 export const beastHunterTrendStatuses = ["unknown", "rising", "stable", "falling", "saturated", "expired"] as const;
 export type BeastHunterTrendStatus = (typeof beastHunterTrendStatuses)[number];
 export type BeastHunterValidation = {
@@ -82,6 +82,17 @@ export type BeastHunterValidation = {
   startupCost: string;
   buildEstimate: string;
   marketingDifficulty: string;
+  economics: {
+    offerPrice: string;
+    revenueModel: string;
+    monthlySalesNeeded: string;
+    grossRevenueRange: string;
+    monthlyOperatingCost: string;
+    grossMargin: string;
+    breakEvenPoint: string;
+    timeToFirstRevenue: string;
+    incomeConfidence: "low" | "moderate" | "high";
+  };
   platformDependencies: string[];
   reasonsToProceed: string[];
   reasonsToReject: string[];

@@ -5,9 +5,9 @@ const stringArray = { type: "array", items: { type: "string" } } as const;
 
 export const beastHunterValidationSchema = {
   type: "object", additionalProperties: false,
-  required: ["verdict", "demandEvidence", "competitorAnalysis", "realisticMonthlyRevenue", "startupCost", "buildEstimate", "marketingDifficulty", "platformDependencies", "reasonsToProceed", "reasonsToReject", "nextSteps", "sourceUrls"],
+  required: ["verdict", "demandEvidence", "competitorAnalysis", "realisticMonthlyRevenue", "startupCost", "buildEstimate", "marketingDifficulty", "economics", "platformDependencies", "reasonsToProceed", "reasonsToReject", "nextSteps", "sourceUrls"],
   properties: {
-    verdict: { type: "string", enum: ["go", "caution", "no_go"] }, demandEvidence: { type: "string" }, competitorAnalysis: { type: "string" }, realisticMonthlyRevenue: { type: "string" }, startupCost: { type: "string" }, buildEstimate: { type: "string" }, marketingDifficulty: { type: "string" }, platformDependencies: stringArray, reasonsToProceed: stringArray, reasonsToReject: stringArray, nextSteps: stringArray, sourceUrls: stringArray,
+    verdict: { type: "string", enum: ["go", "caution", "no_go"] }, demandEvidence: { type: "string" }, competitorAnalysis: { type: "string" }, realisticMonthlyRevenue: { type: "string" }, startupCost: { type: "string" }, buildEstimate: { type: "string" }, marketingDifficulty: { type: "string" }, economics: { type: "object", additionalProperties: false, required: ["offerPrice", "revenueModel", "monthlySalesNeeded", "grossRevenueRange", "monthlyOperatingCost", "grossMargin", "breakEvenPoint", "timeToFirstRevenue", "incomeConfidence"], properties: { offerPrice: { type: "string" }, revenueModel: { type: "string" }, monthlySalesNeeded: { type: "string" }, grossRevenueRange: { type: "string" }, monthlyOperatingCost: { type: "string" }, grossMargin: { type: "string" }, breakEvenPoint: { type: "string" }, timeToFirstRevenue: { type: "string" }, incomeConfidence: { type: "string", enum: ["low", "moderate", "high"] } } }, platformDependencies: stringArray, reasonsToProceed: stringArray, reasonsToReject: stringArray, nextSteps: stringArray, sourceUrls: stringArray,
   },
 } as const;
 
@@ -35,7 +35,8 @@ export function parseBeastHunterValidation(payload: BeastHunterResearchPayload, 
   const allowed = citedUrls(payload);
   const sourceUrls = (raw.sourceUrls || []).filter((url) => allowed.has(url));
   if (!sourceUrls.length || !["go", "caution", "no_go"].includes(raw.verdict)) throw new Error("Validation was not supported by attributable evidence.");
-  return { validation: { verdict: raw.verdict, demandEvidence: raw.demandEvidence, competitorAnalysis: raw.competitorAnalysis, realisticMonthlyRevenue: raw.realisticMonthlyRevenue, startupCost: raw.startupCost, buildEstimate: raw.buildEstimate, marketingDifficulty: raw.marketingDifficulty, platformDependencies: raw.platformDependencies || [], reasonsToProceed: raw.reasonsToProceed || [], reasonsToReject: raw.reasonsToReject || [], nextSteps: raw.nextSteps || [], sourceUrls, validatedAt: now }, sourceUrls };
+  if (!raw.economics || !["low", "moderate", "high"].includes(raw.economics.incomeConfidence)) throw new Error("Validation returned incomplete opportunity economics.");
+  return { validation: { verdict: raw.verdict, demandEvidence: raw.demandEvidence, competitorAnalysis: raw.competitorAnalysis, realisticMonthlyRevenue: raw.realisticMonthlyRevenue, startupCost: raw.startupCost, buildEstimate: raw.buildEstimate, marketingDifficulty: raw.marketingDifficulty, economics: raw.economics, platformDependencies: raw.platformDependencies || [], reasonsToProceed: raw.reasonsToProceed || [], reasonsToReject: raw.reasonsToReject || [], nextSteps: raw.nextSteps || [], sourceUrls, validatedAt: now }, sourceUrls };
 }
 
 export function parseBeastHunterMonitor(payload: BeastHunterResearchPayload) {
