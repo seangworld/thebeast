@@ -148,3 +148,27 @@ export function validateBeastHunterCriteria(value: BeastHunterCriteria) {
   if (value.freshnessDays < 1 || value.freshnessDays > 365) errors.push("Freshness must be between 1 and 365 days.");
   return errors;
 }
+
+export function normalizeBeastHunterCriteria(value: unknown): BeastHunterCriteria | null {
+  if (!value || typeof value !== "object") return null;
+  const raw = value as Partial<BeastHunterCriteria>;
+  const resultCount = Number(raw.resultCount) as BeastHunterResultCount;
+  const criteria: BeastHunterCriteria = {
+    query: typeof raw.query === "string" ? raw.query.trim().slice(0, 800) : "",
+    huntTypes: Array.isArray(raw.huntTypes) ? raw.huntTypes.filter((item): item is string => typeof item === "string").slice(0, 12) : [],
+    markets: Array.isArray(raw.markets) ? raw.markets.filter((item): item is string => typeof item === "string").slice(0, 12) : [],
+    freshnessDays: Number(raw.freshnessDays),
+    interaction: ["none", "low", "any"].includes(String(raw.interaction)) ? raw.interaction as BeastHunterInteraction : "any",
+    maximumStartupCost: typeof raw.maximumStartupCost === "number" && raw.maximumStartupCost >= 0 ? raw.maximumStartupCost : null,
+    maximumBuildDays: typeof raw.maximumBuildDays === "number" && raw.maximumBuildDays >= 0 ? raw.maximumBuildDays : null,
+    revenueModels: Array.isArray(raw.revenueModels) ? raw.revenueModels.filter((item): item is string => typeof item === "string").slice(0, 12) : [],
+    monthlyRevenueTarget: typeof raw.monthlyRevenueTarget === "number" && raw.monthlyRevenueTarget >= 0 ? raw.monthlyRevenueTarget : null,
+    automation: ["manual", "assisted", "mostly_automated", "any"].includes(String(raw.automation)) ? raw.automation as BeastHunterAutomation : "any",
+    maximumCompetition: typeof raw.maximumCompetition === "number" ? Math.max(0, Math.min(100, raw.maximumCompetition)) : null,
+    geography: typeof raw.geography === "string" ? raw.geography.trim().slice(0, 120) : "United States",
+    minimumActionWindowDays: typeof raw.minimumActionWindowDays === "number" && raw.minimumActionWindowDays >= 0 ? raw.minimumActionWindowDays : null,
+    strictness: raw.strictness === "strict" ? "strict" : "flexible",
+    resultCount,
+  };
+  return validateBeastHunterCriteria(criteria).length ? null : criteria;
+}
