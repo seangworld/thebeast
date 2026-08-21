@@ -250,6 +250,11 @@ export const beastAdminNavigation: ModuleNavSection = {
       group: "Insights",
     },
     {
+      label: "BeastHunter",
+      href: "/dashboard/admin/intelligence/hunter",
+      group: "Insights",
+    },
+    {
       label: "Knowledge Inspector",
       href: "/dashboard/admin/knowledge",
       group: "Insights",

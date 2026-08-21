@@ -20,6 +20,7 @@ const expectedAdminDestinations = [
   ["Executive Metrics", "/dashboard/admin/metrics"],
   ["AI Analytics", "/dashboard/admin/analytics"],
   ["SEANGWORLD Intelligence", "/dashboard/admin/intelligence"],
+  ["BeastHunter", "/dashboard/admin/intelligence/hunter"],
   ["Knowledge Inspector", "/dashboard/admin/knowledge"],
   ["Ecosystem Map", "/dashboard/admin/ecosystem"],
   ["Members", "/dashboard/admin/members"],

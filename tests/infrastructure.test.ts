@@ -6077,6 +6077,7 @@ test("BeastAdmin foundation registers modules and protects owner-only navigation
       "Executive Metrics",
       "AI Analytics",
       "SEANGWORLD Intelligence",
+      "BeastHunter",
       "Knowledge Inspector",
       "Ecosystem Map",
       "Members",
