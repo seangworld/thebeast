@@ -61,10 +61,11 @@ test("BeastHunter supports saved hunt history and controlled opportunity states"
 });
 
 test("BeastHunter v1 completes validation monitoring build briefs and management", () => {
-  assert.equal(BEAST_HUNTER_VERSION, "1.1.0");
+  assert.equal(BEAST_HUNTER_VERSION, "1.2.0");
   const cited = { output: [{ content: [{ type: "output_text", annotations: [{ type: "url_citation", url: "https://evidence.test/current", title: "Current evidence" }] }] }] };
-  const validation = parseBeastHunterValidation({ ...cited, output_text: JSON.stringify({ verdict: "caution", demandEvidence: "Demand exists but is early.", competitorAnalysis: "Two focused competitors.", realisticMonthlyRevenue: "$0-$2,000 until validated.", startupCost: "$100-$500", buildEstimate: "2-4 weeks", marketingDifficulty: "Moderate", platformDependencies: ["Search"], reasonsToProceed: ["Demand"], reasonsToReject: ["Competition"], nextSteps: ["Interview buyers"], sourceUrls: ["https://evidence.test/current"] }) });
+  const validation = parseBeastHunterValidation({ ...cited, output_text: JSON.stringify({ verdict: "caution", demandEvidence: "Demand exists but is early.", competitorAnalysis: "Two focused competitors.", realisticMonthlyRevenue: "$0-$2,000 until validated.", startupCost: "$100-$500", buildEstimate: "2-4 weeks", marketingDifficulty: "Moderate", economics: { offerPrice: "$29 per sale", revenueModel: "One-time sale", monthlySalesNeeded: "35 sales for about $1,000 gross", grossRevenueRange: "$0-$2,000", monthlyOperatingCost: "$50-$200", grossMargin: "60%-85% before owner labor", breakEvenPoint: "4-18 sales", timeToFirstRevenue: "2-8 weeks", incomeConfidence: "moderate" }, platformDependencies: ["Search"], reasonsToProceed: ["Demand"], reasonsToReject: ["Competition"], nextSteps: ["Interview buyers"], sourceUrls: ["https://evidence.test/current"] }) });
   assert.equal(validation.validation.verdict, "caution");
+  assert.equal(validation.validation.economics.offerPrice, "$29 per sale");
   const monitor = parseBeastHunterMonitor({ ...cited, output_text: JSON.stringify({ trendStatus: "rising", summary: "Recent demand increased.", totalScore: 82, sourceUrls: ["https://evidence.test/current"] }) });
   assert.equal(monitor.trendStatus, "rising");
   const brief = buildBeastHunterBuildBrief({ ...candidate, score: 80, rank: 1, filterNotes: [], validation: validation.validation } as BeastHunterRankedCandidate);
@@ -93,8 +94,14 @@ test("BeastHunter promotes approved opportunities into an executable ChatGPT and
   assert.match(workspace, /Copy for ChatGPT/);
   assert.match(workspace, /Download Work Request/);
   assert.match(workspace, /Set as Next Build/);
+  assert.match(workspace, /Opportunity economics/);
+  assert.match(workspace, /Save as preset/);
+  assert.match(workspace, /Update preset/);
   assert.match(actions, /BEAST_GITHUB_TOKEN/);
   assert.match(actions, /beast-build-ready/);
   assert.match(migration, /is_next_build/);
   assert.match(migration, /execution_payload/);
+  const route = readFileSync("src/app/api/admin/beast-hunter/route.ts", "utf8");
+  assert.match(route, /export async function PUT/);
+  assert.match(route, /status: "draft"/);
 });

@@ -79,6 +79,24 @@ export async function DELETE(request: Request) {
   return NextResponse.json({ deleted: true });
 }
 
+export async function PUT(request: Request) {
+  const { client, user } = await owner();
+  if (!user) return NextResponse.json({ error: "BeastAdmin owner access required." }, { status: 403 });
+  const body = await request.json().catch(() => null) as { presetId?: unknown; name?: unknown; criteria?: unknown } | null;
+  const criteria = normalizeBeastHunterCriteria(body?.criteria);
+  const name = typeof body?.name === "string" ? body.name.trim().slice(0, 120) : "";
+  if (!criteria || !name) return NextResponse.json({ error: "A preset name and valid hunt criteria are required." }, { status: 400 });
+  const values = { name, status: "draft", query: criteria.query, criteria, result_limit: criteria.resultCount, strictness: criteria.strictness, archived_at: null };
+  if (typeof body?.presetId === "string") {
+    const { data, error } = await client.from("beast_hunter_hunts").update(values).eq("id", body.presetId).eq("owner_id", user.id).eq("status", "draft").select("id,name,status,criteria,created_at").maybeSingle();
+    if (error || !data) return NextResponse.json({ error: "That editable preset could not be updated." }, { status: error ? 503 : 404 });
+    return NextResponse.json({ preset: data });
+  }
+  const { data, error } = await client.from("beast_hunter_hunts").insert({ owner_id: user.id, ...values }).select("id,name,status,criteria,created_at").single();
+  if (error || !data) return NextResponse.json({ error: "The search preset could not be saved." }, { status: 503 });
+  return NextResponse.json({ preset: data }, { status: 201 });
+}
+
 export async function POST(request: Request) {
   const { client, user } = await owner();
   if (!user) return NextResponse.json({ error: "BeastAdmin owner access required." }, { status: 403 });
