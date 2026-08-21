@@ -66,9 +66,12 @@ export type BeastHunterRankedCandidate = BeastHunterCandidate & {
   buildBrief?: BeastHunterBuildBrief | null;
   trendStatus?: BeastHunterTrendStatus;
   lastMonitoredAt?: string | null;
+  roadmapItemId?: string | null;
+  executionStatus?: "not_queued" | "ready" | "in_progress" | "completed" | "blocked";
+  githubIssueUrl?: string | null;
 };
 
-export const BEAST_HUNTER_VERSION = "1.0.0";
+export const BEAST_HUNTER_VERSION = "1.1.0";
 export const beastHunterTrendStatuses = ["unknown", "rising", "stable", "falling", "saturated", "expired"] as const;
 export type BeastHunterTrendStatus = (typeof beastHunterTrendStatuses)[number];
 export type BeastHunterValidation = {
