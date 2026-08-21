@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
-import { defaultBeastHunterCriteria, isBeastHunterTrackingStatus, normalizeBeastHunterCriteria, rankBeastHunterCandidates, scoreBeastHunterCandidate, validateBeastHunterCriteria, type BeastHunterCandidate } from "../src/lib/beastHunter";
+import { BEAST_HUNTER_VERSION, defaultBeastHunterCriteria, isBeastHunterTrackingStatus, normalizeBeastHunterCriteria, rankBeastHunterCandidates, scoreBeastHunterCandidate, validateBeastHunterCriteria, type BeastHunterCandidate, type BeastHunterRankedCandidate } from "../src/lib/beastHunter";
 import { buildBeastHunterResearchInput, parseBeastHunterResearch } from "../src/lib/beastHunterResearch";
+import { buildBeastHunterBuildBrief, parseBeastHunterMonitor, parseBeastHunterValidation } from "../src/lib/beastHunterDecision";
 
 const scores = { demand: 90, velocity: 85, competitionGap: 70, commercialIntent: 80, saturation: 25, aiCommoditizationRisk: 20, seangworldFit: 95, timeToMarket: 90, revenuePotential: 75, durability: 65, confidence: 80, actionWindow: 85 };
 const candidate: BeastHunterCandidate = { id: "one", title: "Veteran benefit calculator", summary: "A focused calculator", huntType: "Calculator / Tool", market: "Veterans", discoveredAt: "2026-08-21T00:00:00Z", startupCost: 100, buildDays: 7, interaction: "none", automation: "mostly_automated", competition: 35, actionWindowDays: 45, revenueModels: ["Affiliate"], geography: "United States", evidence: [], scores };
@@ -56,4 +57,25 @@ test("BeastHunter supports saved hunt history and controlled opportunity states"
   assert.match(route, /\.eq\("owner_id", user\.id\)/);
   assert.match(migration, /tracking_status in \('new', 'watch', 'validate', 'build', 'rejected', 'archived'\)/);
   assert.match(migration, /beast_hunter_opportunities_owner_tracking_idx/);
+});
+
+test("BeastHunter v1 completes validation monitoring build briefs and management", () => {
+  assert.equal(BEAST_HUNTER_VERSION, "1.0.0");
+  const cited = { output: [{ content: [{ type: "output_text", annotations: [{ type: "url_citation", url: "https://evidence.test/current", title: "Current evidence" }] }] }] };
+  const validation = parseBeastHunterValidation({ ...cited, output_text: JSON.stringify({ verdict: "caution", demandEvidence: "Demand exists but is early.", competitorAnalysis: "Two focused competitors.", realisticMonthlyRevenue: "$0-$2,000 until validated.", startupCost: "$100-$500", buildEstimate: "2-4 weeks", marketingDifficulty: "Moderate", platformDependencies: ["Search"], reasonsToProceed: ["Demand"], reasonsToReject: ["Competition"], nextSteps: ["Interview buyers"], sourceUrls: ["https://evidence.test/current"] }) });
+  assert.equal(validation.validation.verdict, "caution");
+  const monitor = parseBeastHunterMonitor({ ...cited, output_text: JSON.stringify({ trendStatus: "rising", summary: "Recent demand increased.", totalScore: 82, sourceUrls: ["https://evidence.test/current"] }) });
+  assert.equal(monitor.trendStatus, "rising");
+  const brief = buildBeastHunterBuildBrief({ ...candidate, score: 80, rank: 1, filterNotes: [], validation: validation.validation } as BeastHunterRankedCandidate);
+  assert.match(brief.objective, /Veteran benefit calculator/);
+  const workspace = readFileSync("src/app/dashboard/admin/intelligence/hunter/BeastHunterWorkspace.tsx", "utf8");
+  const actions = readFileSync("src/app/api/admin/beast-hunter/actions/route.ts", "utf8");
+  const migration = readFileSync("supabase/migrations/20260821000300_complete_beast_hunter_v1.sql", "utf8");
+  assert.match(workspace, /Validate opportunity/);
+  assert.match(workspace, /Create build brief/);
+  assert.match(workspace, /Hunt comparison/);
+  assert.match(workspace, /Run duplicate anyway/);
+  assert.match(actions, /beast_hunter_opportunity_snapshots/);
+  assert.match(migration, /validation jsonb/);
+  assert.match(migration, /build_brief jsonb/);
 });
