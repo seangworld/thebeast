@@ -290,6 +290,20 @@ export const beastRoadmapPackageRegistry = [
     ]
   ),
   packageIdentity(
+    "BA-CMD-001A",
+    ["BA-CMD-001A"],
+    "BeastFusion Canonical Projection Ingestion and Immutable Read Model",
+    [
+      "docs/BA-CMD-001A-CANONICAL-PROJECTION-INGESTION.md",
+      "src/lib/beastFusionCommandProjection.ts",
+      "src/lib/beastAdminCanonicalProjection.ts",
+      "src/app/api/admin/beastfusion-projection/route.ts",
+      "supabase/migrations/20260821000500_add_beastfusion_command_projection.sql",
+      "tests/beastAdminCanonicalProjection.test.ts",
+    ],
+    ["20260821000500_add_beastfusion_command_projection.sql"]
+  ),
+  packageIdentity(
     "BA-REC-134",
     ["BA-134"],
     "Forward-only Migration Reconciliation",
@@ -553,7 +567,7 @@ export function validateFutureRoadmapIdentifier(
 
   return {
     identifier: normalized,
-    available: /^[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)*-\d+$/.test(normalized) &&
+    available: /^[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)*-\d+[A-Z]?$/.test(normalized) &&
       conflicts.length === 0,
     conflicts: conflicts.map((entry) => ({
       roadmapId: entry.roadmapId,

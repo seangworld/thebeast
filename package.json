@@ -10,6 +10,7 @@
     "start": "next start",
     "lint": "next lint",
     "mobile:release-smoke": "node scripts/mobile-release-smoke.mjs",
+    "beastfusion:publish": "node scripts/publish-beastfusion-projection.mjs",
     "supabase:current": "node scripts/supabase-migration-guard.mjs current",
     "supabase:link:dev": "node scripts/supabase-migration-guard.mjs link dev",
     "supabase:list:dev": "node scripts/supabase-migration-guard.mjs list dev --confirm-env dev",

@@ -82,7 +82,7 @@ test("BeastHunter v1 completes validation monitoring build briefs and management
   assert.match(migration, /build_brief jsonb/);
 });
 
-test("BeastHunter promotes approved opportunities into an executable ChatGPT and GitHub handoff", () => {
+test("BeastHunter promotes opportunities into non-canonical intake and an owner-reviewed handoff", () => {
   const opportunity = { ...candidate, score: 80, rank: 1, filterNotes: [], buildBrief: { objective: "Build it", audience: "Veterans", valueProposition: candidate.summary, minimumViableScope: ["Calculator"], exclusions: ["Payments"], milestones: ["MVP"], successMeasures: ["Working result"], risks: ["Changing rules"], createdAt: "2026-08-21T00:00:00Z" } } as BeastHunterRankedCandidate;
   const request = buildBeastHunterWorkRequest({ roadmapItemId: "roadmap-123", opportunity });
   assert.match(request, /Continue Beast/);
@@ -93,12 +93,14 @@ test("BeastHunter promotes approved opportunities into an executable ChatGPT and
   const migration = readFileSync("supabase/migrations/20260821000400_add_beast_hunter_execution_bridge.sql", "utf8");
   assert.match(workspace, /Copy for ChatGPT/);
   assert.match(workspace, /Download Work Request/);
-  assert.match(workspace, /Set as Next Build/);
+  assert.match(workspace, /Mark Candidate Intake/);
   assert.match(workspace, /Opportunity economics/);
   assert.match(workspace, /Save as preset/);
   assert.match(workspace, /Update preset/);
-  assert.match(actions, /BEAST_GITHUB_TOKEN/);
-  assert.match(actions, /beast-build-ready/);
+  assert.doesNotMatch(actions, /BEAST_GITHUB_TOKEN/);
+  assert.doesNotMatch(actions, /beast-build-ready/);
+  assert.match(actions, /candidate_intake/);
+  assert.match(actions, /BeastFusion roadmap approval/);
   assert.match(migration, /is_next_build/);
   assert.match(migration, /execution_payload/);
   const route = readFileSync("src/app/api/admin/beast-hunter/route.ts", "utf8");

@@ -92,6 +92,7 @@ const expectedCliMigrations = [
   "20260821000200_add_beast_hunter_tracking.sql",
   "20260821000300_complete_beast_hunter_v1.sql",
   "20260821000400_add_beast_hunter_execution_bridge.sql",
+  "20260821000500_add_beastfusion_command_projection.sql",
 ];
 
 test("Supabase CLI migrations exist in dependency-safe order", () => {
