@@ -109,7 +109,7 @@ test("page-query evidence receives exactly one governed SEO disposition", () => 
   assert.equal(byQuery.get("investigate me")?.disposition, "Investigate");
   assert.equal(byQuery.get("watch me")?.disposition, "Watch");
   assert.equal(byQuery.get("ignore me")?.disposition, "Ignore");
-  assert.ok([...byQuery.values()].every((item) => item.rationale && item.score >= 0 && item.score <= 100));
+  assert.ok(Array.from(byQuery.values()).every((item) => item.rationale && item.score >= 0 && item.score <= 100));
   assert.equal(byQuery.get("improve me")?.change.impressions, 20);
 });
 
