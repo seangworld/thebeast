@@ -79,7 +79,7 @@ test("machine publication requires exact short-lived GitHub Actions OIDC claims"
   const workflowRef = "seangworld/beastfusion/.github/workflows/publish-beastadmin-projection.yml@refs/heads/main";
   const audience = "https://dev.example.com/api/admin/beastfusion-projection";
   const header = Buffer.from(JSON.stringify({ alg: "RS256", kid: "test-key", typ: "JWT" })).toString("base64url");
-  const claims = { iss: "https://token.actions.githubusercontent.com", aud: audience, sub: "repo:seangworld/beastfusion:ref:refs/heads/main", repository: "seangworld/beastfusion", ref: "refs/heads/main", workflow_ref: workflowRef, sha: fixture().source.commit, run_number: "42", run_attempt: "1", iat: nowSeconds - 10, nbf: nowSeconds - 10, exp: nowSeconds + 300 };
+  const claims = { iss: "https://token.actions.githubusercontent.com", aud: audience, sub: "repo:seangworld@271630738/beastfusion@129741450:ref:refs/heads/main", repository: "seangworld/beastfusion", ref: "refs/heads/main", workflow_ref: workflowRef, sha: fixture().source.commit, run_number: "42", run_attempt: "1", iat: nowSeconds - 10, nbf: nowSeconds - 10, exp: nowSeconds + 300 };
   const tokenFor = (payload: Record<string, unknown>) => {
     const encoded = Buffer.from(JSON.stringify(payload)).toString("base64url");
     const signature = sign("RSA-SHA256", Buffer.from(`${header}.${encoded}`), privateKey).toString("base64url");
@@ -87,7 +87,7 @@ test("machine publication requires exact short-lived GitHub Actions OIDC claims"
   };
   const valid = await verifyBeastFusionWorkflowOidc({ authorization: `Bearer ${tokenFor(claims)}`, expectedAudience: audience, expectedWorkflowRef: workflowRef, now, keys: [key] });
   assert.equal(valid.ok, true);
-  for (const overrides of [{ repository: "attacker/repo" }, { ref: "refs/heads/feature" }, { workflow_ref: "seangworld/beastfusion/.github/workflows/other.yml@refs/heads/main" }, { aud: "wrong" }, { exp: nowSeconds - 1 }, { sha: "f".repeat(39) }]) {
+  for (const overrides of [{ sub: "repo:seangworld/beastfusion:ref:refs/heads/main" }, { repository: "attacker/repo" }, { ref: "refs/heads/feature" }, { workflow_ref: "seangworld/beastfusion/.github/workflows/other.yml@refs/heads/main" }, { aud: "wrong" }, { exp: nowSeconds - 1 }, { sha: "f".repeat(39) }]) {
     const result = await verifyBeastFusionWorkflowOidc({ authorization: `Bearer ${tokenFor({ ...claims, ...overrides })}`, expectedAudience: audience, expectedWorkflowRef: workflowRef, now, keys: [key] });
     assert.equal(result.ok, false);
   }
