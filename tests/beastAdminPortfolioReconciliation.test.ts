@@ -9,9 +9,13 @@ test("BA-REC projects the current ecosystem portfolio from generated version ide
     [
       "The Beast", "BeastOS", "BeastMoney", "BeastEducation", "BeastHealth",
       "BeastGoals", "BeastDocuments", "Beast Director", "BeastAdmin",
-      "SEANGWORLD", "BeastFusion", "BeastFusion Dashboard", "Change the World",
+      "SEANGWORLD", "BeastFusion", "Change the World",
       "BeastHome", "BeastSecurity",
     ]
+  );
+  assert.equal(
+    beastAdminPortfolio.some(({ product }) => product === "BeastFusion Dashboard"),
+    false
   );
   assert.equal(
     beastAdminPortfolio.find(({ product }) => product === "BeastEducation")?.version,
