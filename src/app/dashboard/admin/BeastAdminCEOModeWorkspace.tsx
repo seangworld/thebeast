@@ -148,7 +148,7 @@ const priorityClasses: Record<BeastAdminCEOAction["priority"], string> = {
   low: "border-slate-300/30 bg-slate-300/10 text-slate-200",
 };
 
-const professionalRecommendationNames = [
+const opportunityRecommendationNames = [
   "Money Coach",
   "Guidance Counselor",
   "Health Advisor",
@@ -309,7 +309,7 @@ export function BeastAdminCEOModeWorkspace() {
         <SectionHeader
           eyebrow="Morning operating brief"
           title="Assembling CEO Mode"
-          description="BeastAdmin is reading owner-scoped development, feedback, member, beta, release, roadmap, AI activity, and platform-health evidence."
+          description="BeastAdmin is reading canonical BeastFusion governance, verified repository and release evidence, and owner-scoped operational signals."
         />
         <div
           className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4"
@@ -415,16 +415,14 @@ export function BeastAdminCEOModeWorkspace() {
           title="Current delivery position"
           description="A compact view of roadmap work and synchronized release history."
         />
-        {snapshot.sources.roadmap === "unavailable" &&
-        snapshot.sources.releases === "unavailable" ? (
+        {snapshot.sources.canonicalGovernance !== "available" ? (
           <div className="mt-5">
             <EmptyOperatingState>
-              Sprint and release data are unavailable because neither source
-              could be verified. Reconnect the Roadmap and Release Center
-              sources before using this summary.
+              Canonical roadmap and release data are unavailable or stale.
+              CEO Mode will not substitute legacy BeastAdmin records.
             </EmptyOperatingState>
           </div>
-        ) : snapshot.sources.roadmap === "available" &&
+        ) : snapshot.sources.canonicalGovernance === "available" &&
           snapshot.summaries.development.openPrompts === 0 &&
           snapshot.summaries.development.completedPrompts === 0 &&
           snapshot.summaries.releases.total === 0 ? (
@@ -444,7 +442,7 @@ export function BeastAdminCEOModeWorkspace() {
               label="Current sprint"
               value={snapshot.summaries.development.currentSprint}
               detail={
-                snapshot.sources.roadmap === "available"
+                snapshot.sources.canonicalGovernance === "available"
                   ? "In progress or testing"
                   : "Roadmap source unavailable"
               }
@@ -453,7 +451,7 @@ export function BeastAdminCEOModeWorkspace() {
               label="Completed"
               value={snapshot.summaries.development.completedPrompts}
               detail={
-                snapshot.sources.roadmap === "available"
+                snapshot.sources.canonicalGovernance === "available"
                   ? "Completed roadmap items"
                   : "Roadmap source unavailable"
               }
@@ -462,7 +460,7 @@ export function BeastAdminCEOModeWorkspace() {
               label="Testing"
               value={snapshot.summaries.roadmap.testing}
               detail={
-                snapshot.sources.roadmap === "available"
+                snapshot.sources.canonicalGovernance === "available"
                   ? "Awaiting validation"
                   : "Roadmap source unavailable"
               }
@@ -471,7 +469,7 @@ export function BeastAdminCEOModeWorkspace() {
               label="Released"
               value={snapshot.summaries.releases.total}
               detail={
-                snapshot.sources.releases === "available"
+                snapshot.sources.canonicalGovernance === "available"
                   ? "Synchronized release records"
                   : "Release source unavailable"
               }
@@ -480,7 +478,7 @@ export function BeastAdminCEOModeWorkspace() {
               label="Open"
               value={snapshot.summaries.development.openPrompts}
               detail={
-                snapshot.sources.roadmap === "available"
+                snapshot.sources.canonicalGovernance === "available"
                   ? "Planned, active, or testing"
                   : "Roadmap source unavailable"
               }
@@ -587,7 +585,7 @@ export function BeastAdminCEOModeWorkspace() {
           <SectionHeader
             eyebrow="Owner attention"
             title="What needs attention?"
-            description="Current member, feedback, and AI-quality signals that need an owner decision."
+            description="Canonical governance, operational, member, feedback, and AI-quality signals that need an owner decision."
           />
           <div className="mt-5">
             {snapshot.needsAttention.length ? (
@@ -605,15 +603,15 @@ export function BeastAdminCEOModeWorkspace() {
           <SectionHeader
             eyebrow="Recommended sequence"
             title="What should I work on next?"
-            description="A deterministic owner priority based on critical health, feedback, testing, and in-progress roadmap evidence."
+            description="A deterministic owner priority that honors canonical authorization, blockers, dependencies, and provider freshness."
           />
           <div className="mt-5">
             {snapshot.workNext.length ? (
               <ActionList items={snapshot.workNext} />
             ) : (
               <EmptyOperatingState>
-                No next task is supported by the currently connected evidence.
-                Open the roadmap to choose planned work.
+                No next action is supported by current canonical evidence. CEO
+                Mode will not infer execution from planned work.
               </EmptyOperatingState>
             )}
           </div>
@@ -637,7 +635,7 @@ export function BeastAdminCEOModeWorkspace() {
             href="/dashboard/admin/development"
             actionLabel="Open Development Console"
           >
-            {snapshot.sources.roadmap === "unavailable" ? (
+            {snapshot.sources.canonicalGovernance !== "available" ? (
               <EmptyOperatingState>
                 Roadmap data is unavailable, so CEO Mode cannot verify the
                 delivery pipeline.
@@ -828,7 +826,7 @@ export function BeastAdminCEOModeWorkspace() {
             href="/dashboard/admin/releases"
             actionLabel="Open Release Center"
           >
-            {snapshot.sources.releases === "unavailable" ? (
+            {snapshot.sources.canonicalGovernance !== "available" ? (
               <EmptyOperatingState>
                 Release Center is unavailable, so release movement cannot be
                 verified.
@@ -866,7 +864,7 @@ export function BeastAdminCEOModeWorkspace() {
             href="/dashboard/admin/roadmap"
             actionLabel="Manage Product Roadmap"
           >
-            {snapshot.sources.roadmap === "unavailable" ? (
+            {snapshot.sources.canonicalGovernance !== "available" ? (
               <EmptyOperatingState>
                 Roadmap data is unavailable, so feature flow cannot be
                 summarized.
@@ -908,16 +906,16 @@ export function BeastAdminCEOModeWorkspace() {
           </SummaryCard>
 
           <SummaryCard
-            eyebrow="AI recommendations"
-            title="Professional recommendations"
-            description="Owner-reviewed recommendations will appear only when a persisted source is connected."
+            eyebrow="Opportunity recommendations"
+            title="Advisory opportunities"
+            description="Source-cited, owner-reviewed opportunities may appear here, but never select or authorize execution."
             href="/dashboard/admin/analytics"
             actionLabel="Open AI Analytics"
           >
-            {snapshot.summaries.aiRecommendations.state === "available" &&
-            snapshot.summaries.aiRecommendations.items.length ? (
+            {snapshot.summaries.opportunityRecommendations.state === "available" &&
+            snapshot.summaries.opportunityRecommendations.items.length ? (
               <ul className="space-y-3">
-                {snapshot.summaries.aiRecommendations.items.map((item) => (
+                {snapshot.summaries.opportunityRecommendations.items.map((item) => (
                   <li
                     key={item.id}
                     className="rounded-xl border border-[#2a3242] bg-[#111827] p-3"
@@ -934,7 +932,7 @@ export function BeastAdminCEOModeWorkspace() {
                   </li>
                 ))}
               </ul>
-            ) : snapshot.summaries.aiRecommendations.state === "available" ? (
+            ) : snapshot.summaries.opportunityRecommendations.state === "available" ? (
               <div className="space-y-4">
                 <EmptyOperatingState>
                   The recommendation source is connected, but no owner-reviewed
@@ -945,7 +943,7 @@ export function BeastAdminCEOModeWorkspace() {
                     Prepared for
                   </p>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {professionalRecommendationNames.map((name) => (
+                    {opportunityRecommendationNames.map((name) => (
                       <span
                         key={name}
                         className="rounded-full border border-[#344055] bg-[#111827] px-3 py-1.5 text-xs font-bold text-[#c7cfdb]"
@@ -959,15 +957,15 @@ export function BeastAdminCEOModeWorkspace() {
             ) : (
               <div className="space-y-4">
                 <EmptyOperatingState>
-                  This area will surface owner-reviewed recommendations from
-                  Beast professionals after connected sources become available.
+                  Opportunity recommendations remain unavailable until a
+                  persisted, source-cited, owner-reviewed feed is approved.
                 </EmptyOperatingState>
                 <div>
                   <p className="text-xs font-black uppercase tracking-wide text-[#7f8da3]">
                     Prepared for
                   </p>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {professionalRecommendationNames.map((name) => (
+                    {opportunityRecommendationNames.map((name) => (
                       <span
                         key={name}
                         className="rounded-full border border-[#344055] bg-[#111827] px-3 py-1.5 text-xs font-bold text-[#c7cfdb]"
@@ -1052,7 +1050,7 @@ export function BeastAdminCEOModeWorkspace() {
         <SectionHeader
           eyebrow="Repository status"
           title="Read-only source control visibility"
-          description="CEO Mode reports only repository evidence available to the hosted runtime. Missing branch, worktree, and synchronization data remain explicitly unavailable."
+          description="CEO Mode uses the read-only 1B provider snapshot. Missing or stale provider evidence remains explicit, and hosted worktree state is never inferred."
         />
         <div
           className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4"
