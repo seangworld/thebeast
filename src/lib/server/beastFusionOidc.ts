@@ -4,7 +4,7 @@ const issuer = "https://token.actions.githubusercontent.com";
 const configurationUrl = `${issuer}/.well-known/openid-configuration`;
 const expectedRepository = "seangworld/beastfusion";
 const expectedRef = "refs/heads/main";
-const expectedSubject = "repo:seangworld@271630738/beastfusion@129741450:ref:refs/heads/main";
+const expectedSubject = "repo:seangworld@271630738/beastfusion@1297414450:ref:refs/heads/main";
 const jwtPattern = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/;
 
 type JsonRecord = Record<string, unknown>;
