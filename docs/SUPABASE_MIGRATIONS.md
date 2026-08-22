@@ -108,6 +108,17 @@ npm run supabase:release-plan
 
 ## CLI Migration Stream
 
+## BA-CMD-001A Canonical Projection Store
+
+`20260821000500_add_beastfusion_command_projection.sql` adds the immutable,
+owner-only BeastFusion projection snapshot store and current pointer. Existing
+BeastAdmin roadmap and release rows are retained and explicitly classified as
+legacy, intake, or annotation; they do not become canonical governance truth.
+Apply this migration only through the environment-specific list, dry-run, push,
+and verify sequence above. A valid signed projection must be published after the
+migration before the provider can report `connected`. See
+[`BA-CMD-001A-CANONICAL-PROJECTION-INGESTION.md`](./BA-CMD-001A-CANONICAL-PROJECTION-INGESTION.md).
+
 The CLI stream preserves SQL contents from `migrations/` while using Supabase CLI timestamp filenames. The 2026-07-14 and 2026-07-15 files are ordered by dependency so parent tables exist before child/link tables.
 
 | CLI migration | Source file | Classification |

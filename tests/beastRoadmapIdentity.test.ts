@@ -114,7 +114,7 @@ test("BA-131 gives every migration an exact stable diagnostic identity", () => {
   }));
 
   for (const identity of identities) {
-    assert.match(identity.roadmapId, /^[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)*-\d+$/);
+    assert.match(identity.roadmapId, /^[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)*-\d+[A-Z]?$/);
     assert.equal(identity.capability.length > 0, true, identity.filename);
     assert.match(basename(identity.filename), /^\d{14}_.+\.sql$/);
   }
