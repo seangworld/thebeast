@@ -30,7 +30,7 @@ export type BeastAdminCanonicalReadModel = {
   products: Array<{ id: string; name: string; parent: string | null; lifecycle: string; version: string | null; buildId: string | null; releaseDate: string | null; declaredDeployment: string; ownerRepository: string | null; source: "beastfusion" }>;
   roadmap: Array<{ id: string; product: string; title: string; status: string; priority: string; dependencies: string[]; blocked: boolean; executable: boolean; ownerApproved: boolean; executionAuthorized: boolean; source: "beastfusion" }>;
   execution: Array<{ id: string; package: string | null; product: string; status: string; occurredAt: string | null; startedAt: string | null; completedAt: string | null; candidateCommit: string | null; result: string; blocker: string | null; source: "beastfusion" }>;
-  releases: Array<{ id: string; product: string; version: string | null; status: string; releaseDate: string | null; preview: "not_in_projection_v1"; production: "not_in_projection_v1"; servedCommit: null; declaredDeployment: string; source: "beastfusion" }>;
+  releases: Array<{ id: string; product: string; version: string | null; status: string; releaseDate: string | null; validationState: string | null; evidenceReference: string | null; preview: "not_in_projection_v1"; production: "not_in_projection_v1"; servedCommit: null; declaredDeployment: string; source: "beastfusion" }>;
   attention: Array<{ id: string; kind: "blocker" | "warning" | "failure" | "drift" | "missing_evidence" | "measurement"; detail: string; source: "beastfusion" }>;
 };
 
@@ -103,7 +103,7 @@ export function buildBeastAdminCanonicalReadModel(snapshot: BeastFusionStoredSna
       };
     }),
     releases: projection.releases.map(record).map((item) => ({
-      id: String(item.id), product: String(item.product), version: typeof item.version === "string" ? item.version : null, status: String(item.state), releaseDate: typeof item.releaseDate === "string" ? item.releaseDate : null, preview: "not_in_projection_v1" as const, production: "not_in_projection_v1" as const, servedCommit: null, declaredDeployment: String(item.declaredDeployment), source: "beastfusion" as const,
+      id: String(item.id), product: String(item.product), version: typeof item.version === "string" ? item.version : null, status: String(item.state), releaseDate: typeof item.releaseDate === "string" ? item.releaseDate : null, validationState: typeof item.validationState === "string" ? item.validationState : null, evidenceReference: typeof item.evidenceReference === "string" ? item.evidenceReference : null, preview: "not_in_projection_v1" as const, production: "not_in_projection_v1" as const, servedCommit: null, declaredDeployment: String(item.declaredDeployment), source: "beastfusion" as const,
     })),
     attention,
   };
