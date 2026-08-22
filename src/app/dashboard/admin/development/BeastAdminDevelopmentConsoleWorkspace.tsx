@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import {
   DashboardCard,
   MetricTile,
@@ -12,6 +13,9 @@ import {
 } from "@/lib/beastAdminCommandCenter";
 import type { BeastAdminCanonicalReadModel } from "@/lib/beastAdminCanonicalProjection";
 import { useBeastAdminCommandCenter } from "@/lib/useBeastAdminCommandCenter";
+import { BeastAdminPagination } from "../BeastAdminPagination";
+
+const DEVELOPMENT_HISTORY_PAGE_SIZE = 10;
 
 function formatTimestamp(value: string | null | undefined) {
   if (!value || Number.isNaN(Date.parse(value))) return "Unavailable";
@@ -147,6 +151,7 @@ function ProjectionIdentity({ canonical }: { canonical: BeastAdminCanonicalReadM
 
 export function BeastAdminDevelopmentConsoleWorkspace() {
   const { canonical, loading, error, reload } = useBeastAdminCommandCenter();
+  const [historyPage, setHistoryPage] = useState(1);
 
   if (loading) {
     return (
@@ -173,9 +178,18 @@ export function BeastAdminDevelopmentConsoleWorkspace() {
   const dependencyItems = canonical.roadmap.filter(
     (item) => item.dependencies.length || item.blocked
   );
-  const history = [...canonical.execution]
-    .sort((left, right) => (right.occurredAt || "").localeCompare(left.occurredAt || ""))
-    .slice(0, 30);
+  const allHistory = [...canonical.execution].sort((left, right) =>
+    (right.occurredAt || "").localeCompare(left.occurredAt || "")
+  );
+  const historyPageCount = Math.max(
+    1,
+    Math.ceil(allHistory.length / DEVELOPMENT_HISTORY_PAGE_SIZE)
+  );
+  const currentHistoryPage = Math.min(historyPage, historyPageCount);
+  const history = allHistory.slice(
+    (currentHistoryPage - 1) * DEVELOPMENT_HISTORY_PAGE_SIZE,
+    currentHistoryPage * DEVELOPMENT_HISTORY_PAGE_SIZE
+  );
   const governance = canonical.governance;
   const validation = canonical.validation;
 
@@ -231,12 +245,12 @@ export function BeastAdminDevelopmentConsoleWorkspace() {
           action={<Link href="/dashboard/admin/roadmap" className="beast-button">Open canonical roadmap</Link>}
         />
         <div
-          className="mt-5 overflow-x-auto rounded-xl border border-white/10"
+          className="mt-5 max-h-[40rem] overflow-auto overflow-x-auto rounded-xl border border-white/10"
           tabIndex={0}
           aria-label="Canonical dependency table, horizontally scrollable"
         >
           <table className="min-w-full text-left text-sm">
-            <thead className="bg-white/[0.04] text-xs uppercase tracking-[0.14em] text-[#7f8da3]">
+            <thead className="sticky top-0 bg-[#111827] text-xs uppercase tracking-[0.14em] text-[#7f8da3]">
               <tr><th className="px-4 py-3">Package</th><th className="px-4 py-3">State</th><th className="px-4 py-3">Dependencies</th><th className="px-4 py-3">Blockers</th></tr>
             </thead>
             <tbody className="divide-y divide-white/10">
@@ -258,8 +272,17 @@ export function BeastAdminDevelopmentConsoleWorkspace() {
           <SectionHeader
             eyebrow="Development History"
             title="Canonical governed execution history"
-            description="This is development history from BeastFusion. Digital Professional Execution History remains a separate member-execution workspace."
+            description="This is development history from BeastFusion. Digital Professional Execution History remains a separate member-execution workspace. History is paged instead of expanding the command center indefinitely."
           />
+          <div className="mt-5">
+            <BeastAdminPagination
+              page={currentHistoryPage}
+              pageSize={DEVELOPMENT_HISTORY_PAGE_SIZE}
+              totalItems={allHistory.length}
+              itemLabel="development events"
+              onPageChange={setHistoryPage}
+            />
+          </div>
           <div className="mt-5 space-y-3">
           {history.length ? history.map((event) => (
             <article key={event.id} className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
@@ -272,6 +295,17 @@ export function BeastAdminDevelopmentConsoleWorkspace() {
             </article>
           )) : <p className="text-sm text-slate-400">No canonical development events are present.</p>}
           </div>
+          {allHistory.length > DEVELOPMENT_HISTORY_PAGE_SIZE ? (
+            <div className="mt-5">
+              <BeastAdminPagination
+                page={currentHistoryPage}
+                pageSize={DEVELOPMENT_HISTORY_PAGE_SIZE}
+                totalItems={allHistory.length}
+                itemLabel="development events"
+                onPageChange={setHistoryPage}
+              />
+            </div>
+          ) : null}
         </DashboardCard>
       </section>
 
@@ -313,17 +347,22 @@ export function BeastAdminDevelopmentConsoleWorkspace() {
         <SectionHeader
           eyebrow="Canonical record drill-down"
           title="Allowlisted BeastFusion source records"
-          description="Only paths included in the validated projection manifest are linked at the exact source commit. Arbitrary repository paths are not accepted."
+          description="Only paths included in the validated projection manifest are linked at the exact source commit. Arbitrary repository paths are not accepted. Technical records stay collapsed until they are needed."
         />
-        <div className="mt-5 grid gap-3 md:grid-cols-2">
-          {(canonical.records ?? []).map((record) => (
-            <div key={record.id} className="min-w-0 rounded-xl border border-white/10 bg-white/[0.03] p-4">
-              <p className="text-xs font-black uppercase tracking-[0.14em] text-[#7f8da3]">{canonicalStatusLabel(record.role)}</p>
-              <div className="mt-2"><EvidenceLink reference={record.path} sourceCommit={sourceCommit} /></div>
-              <p className="mt-2 break-all font-mono text-[11px] text-slate-500">{record.digest}</p>
-            </div>
-          ))}
-        </div>
+        <details className="mt-5 rounded-xl border border-white/10 bg-white/[0.03] p-4">
+          <summary className="cursor-pointer font-black text-amber-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-amber-200">
+            Show {(canonical.records ?? []).length} technical source records
+          </summary>
+          <div className="mt-5 grid gap-3 md:grid-cols-2">
+            {(canonical.records ?? []).map((record) => (
+              <div key={record.id} className="min-w-0 rounded-xl border border-white/10 bg-[#0b1220] p-4">
+                <p className="text-xs font-black uppercase tracking-[0.14em] text-[#7f8da3]">{canonicalStatusLabel(record.role)}</p>
+                <div className="mt-2"><EvidenceLink reference={record.path} sourceCommit={sourceCommit} /></div>
+                <p className="mt-2 break-all font-mono text-[11px] text-slate-500">{record.digest}</p>
+              </div>
+            ))}
+          </div>
+        </details>
       </DashboardCard>
     </div>
   );
