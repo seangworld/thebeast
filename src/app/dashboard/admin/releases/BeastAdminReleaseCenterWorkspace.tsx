@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   DashboardCard,
   MetricTile,
@@ -12,6 +12,10 @@ import {
   canonicalStatusLabel,
 } from "@/lib/beastAdminCommandCenter";
 import { useBeastAdminCommandCenter } from "@/lib/useBeastAdminCommandCenter";
+import {
+  BEAST_ADMIN_PAGE_SIZE,
+  BeastAdminPagination,
+} from "../BeastAdminPagination";
 
 const inputClassName =
   "min-h-11 w-full rounded-lg border border-[#344052] bg-[#0b1220] px-3 py-2 text-sm text-white outline-none transition placeholder:text-[#68768b] focus:border-amber-300/70 focus:ring-2 focus:ring-amber-300/15";
@@ -33,6 +37,7 @@ export function BeastAdminReleaseCenterWorkspace() {
   const [query, setQuery] = useState("");
   const [product, setProduct] = useState("all");
   const [state, setState] = useState("all");
+  const [page, setPage] = useState(1);
 
   const products = useMemo(
     () =>
@@ -68,6 +73,10 @@ export function BeastAdminReleaseCenterWorkspace() {
           left.id.localeCompare(right.id)
       );
   }, [canonical, product, query, state]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [product, query, state]);
 
   if (loading) {
     return (
@@ -108,6 +117,12 @@ export function BeastAdminReleaseCenterWorkspace() {
   ).length;
   const blocked = canonical.releases.filter((item) => item.blockers?.length).length;
   const sourceCommit = canonical.projection?.sourceCommit;
+  const pageCount = Math.max(1, Math.ceil(visible.length / BEAST_ADMIN_PAGE_SIZE));
+  const currentPage = Math.min(page, pageCount);
+  const pagedVisible = visible.slice(
+    (currentPage - 1) * BEAST_ADMIN_PAGE_SIZE,
+    currentPage * BEAST_ADMIN_PAGE_SIZE
+  );
 
   return (
     <div className="space-y-6">
@@ -156,9 +171,16 @@ export function BeastAdminReleaseCenterWorkspace() {
         </div>
       </DashboardCard>
 
+      <BeastAdminPagination
+        page={currentPage}
+        totalItems={visible.length}
+        itemLabel="release records"
+        onPageChange={setPage}
+      />
+
       <section className="space-y-3" aria-label="Canonical releases">
         {visible.length ? (
-          visible.map((release) => {
+          pagedVisible.map((release) => {
             const evidenceHref = canonicalEvidenceHref(
               release.evidenceReference,
               sourceCommit
@@ -201,6 +223,15 @@ export function BeastAdminReleaseCenterWorkspace() {
           </DashboardCard>
         )}
       </section>
+
+      {visible.length > BEAST_ADMIN_PAGE_SIZE ? (
+        <BeastAdminPagination
+          page={currentPage}
+          totalItems={visible.length}
+          itemLabel="release records"
+          onPageChange={setPage}
+        />
+      ) : null}
     </div>
   );
 }

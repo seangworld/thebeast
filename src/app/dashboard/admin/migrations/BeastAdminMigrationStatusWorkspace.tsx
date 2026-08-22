@@ -16,8 +16,15 @@ import {
   auditBeastRoadmapIdentities,
   beastRoadmapPackageRegistry,
 } from "@/lib/beastRoadmapIdentity";
+import {
+  BEAST_ADMIN_PAGE_SIZE,
+  BeastAdminPagination,
+} from "../BeastAdminPagination";
 
 const roadmapIdentityAudit = auditBeastRoadmapIdentities();
+
+const inventoryInputClassName =
+  "min-h-11 w-full rounded-lg border border-[#344052] bg-[#0b1220] px-3 py-2 text-sm text-white outline-none transition placeholder:text-[#68768b] focus:border-amber-300/70 focus:ring-2 focus:ring-amber-300/15";
 
 const migrationStateLabels: Record<BeastAdminMigrationState, string> = {
   applied: "Applied",
@@ -191,6 +198,9 @@ export function BeastAdminMigrationStatusWorkspace() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<MigrationStatusError | null>(null);
   const [copied, setCopied] = useState("");
+  const [query, setQuery] = useState("");
+  const [stateFilter, setStateFilter] = useState<"all" | BeastAdminMigrationState>("all");
+  const [page, setPage] = useState(1);
 
   const refreshStatus = useCallback(async (initial = false) => {
     if (initial) setLoading(true);
@@ -267,6 +277,31 @@ export function BeastAdminMigrationStatusWorkspace() {
       ) || [],
     [snapshot]
   );
+  const filteredMigrations = useMemo(() => {
+    if (!snapshot) return [];
+    const normalizedQuery = query.trim().toLowerCase();
+    return snapshot.migrations.filter((migration) => {
+      const stateMatches = stateFilter === "all" || migration.state === stateFilter;
+      const queryMatches =
+        !normalizedQuery ||
+        [
+          migration.version,
+          migration.roadmapId,
+          migration.historicalRoadmapId || "",
+          migration.capability,
+          migration.filename,
+          migration.classificationReason,
+        ]
+          .join(" ")
+          .toLowerCase()
+          .includes(normalizedQuery);
+      return stateMatches && queryMatches;
+    });
+  }, [query, snapshot, stateFilter]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [query, stateFilter]);
 
   if (loading && !snapshot) {
     return (
@@ -293,6 +328,16 @@ export function BeastAdminMigrationStatusWorkspace() {
   }
 
   if (!snapshot) return null;
+
+  const pageCount = Math.max(
+    1,
+    Math.ceil(filteredMigrations.length / BEAST_ADMIN_PAGE_SIZE)
+  );
+  const currentPage = Math.min(page, pageCount);
+  const pagedMigrations = filteredMigrations.slice(
+    (currentPage - 1) * BEAST_ADMIN_PAGE_SIZE,
+    currentPage * BEAST_ADMIN_PAGE_SIZE
+  );
 
   return (
     <div className="space-y-6">
@@ -645,8 +690,45 @@ export function BeastAdminMigrationStatusWorkspace() {
         <SectionHeader
           eyebrow="Migration inventory"
           title={`${snapshot.migrations.length} repository and database records`}
-          description="Repository presence, authoritative migration ledger state, and live schema evidence are shown independently."
+          description="Repository presence, authoritative migration ledger state, and live schema evidence are shown independently. The inventory is paged so the page remains usable as the ledger grows."
         />
+        <div className="mt-5 grid gap-3 lg:grid-cols-[1fr_260px]">
+          <label className="text-sm font-bold text-slate-300">
+            Search inventory
+            <input
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              className={`${inventoryInputClassName} mt-2`}
+              placeholder="Version, roadmap ID, capability, or filename"
+            />
+          </label>
+          <label className="text-sm font-bold text-slate-300">
+            Classification
+            <select
+              value={stateFilter}
+              onChange={(event) =>
+                setStateFilter(event.target.value as "all" | BeastAdminMigrationState)
+              }
+              className={`${inventoryInputClassName} mt-2`}
+            >
+              <option value="all">All classifications</option>
+              {Object.entries(migrationStateLabels).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <div className="mt-4">
+          <BeastAdminPagination
+            page={currentPage}
+            totalItems={filteredMigrations.length}
+            itemLabel="migration records"
+            onPageChange={setPage}
+          />
+        </div>
         <div
           className="beast-table-wrap mt-5 hidden overflow-x-auto rounded-xl border border-[#2a3242] md:block"
           tabIndex={0}
@@ -669,7 +751,7 @@ export function BeastAdminMigrationStatusWorkspace() {
               </tr>
             </thead>
             <tbody>
-              {snapshot.migrations.map((migration) => (
+              {pagedMigrations.map((migration) => (
                 <tr
                   key={`${migration.version}:${migration.filename}`}
                   className="border-t border-[#2a3242] text-[#dbe3ef]"
@@ -729,7 +811,7 @@ export function BeastAdminMigrationStatusWorkspace() {
           </table>
         </div>
         <div className="mt-5 grid gap-3 md:hidden">
-          {snapshot.migrations.map((migration) => (
+          {pagedMigrations.map((migration) => (
             <article
               key={`${migration.version}:${migration.filename}`}
               className="min-w-0 rounded-xl border border-[#2a3242] bg-[#111827] p-4"
@@ -806,6 +888,21 @@ export function BeastAdminMigrationStatusWorkspace() {
             </article>
           ))}
         </div>
+        {!filteredMigrations.length ? (
+          <p className="mt-5 rounded-xl border border-dashed border-[#344052] p-4 text-sm text-[#9aa7b8]">
+            No migration records match these filters.
+          </p>
+        ) : null}
+        {filteredMigrations.length > BEAST_ADMIN_PAGE_SIZE ? (
+          <div className="mt-5">
+            <BeastAdminPagination
+              page={currentPage}
+              totalItems={filteredMigrations.length}
+              itemLabel="migration records"
+              onPageChange={setPage}
+            />
+          </div>
+        ) : null}
       </DashboardCard>
 
       <p className="text-xs leading-5 text-[#7f8da3]">

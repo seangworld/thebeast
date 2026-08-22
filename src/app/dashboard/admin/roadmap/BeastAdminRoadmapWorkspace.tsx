@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   DashboardCard,
   MetricTile,
@@ -12,6 +12,10 @@ import {
   canonicalStatusLabel,
 } from "@/lib/beastAdminCommandCenter";
 import { useBeastAdminCommandCenter } from "@/lib/useBeastAdminCommandCenter";
+import {
+  BEAST_ADMIN_PAGE_SIZE,
+  BeastAdminPagination,
+} from "../BeastAdminPagination";
 
 const inputClassName =
   "min-h-11 w-full rounded-lg border border-[#344052] bg-[#0b1220] px-3 py-2 text-sm text-white outline-none transition placeholder:text-[#68768b] focus:border-amber-300/70 focus:ring-2 focus:ring-amber-300/15";
@@ -21,6 +25,7 @@ export function BeastAdminRoadmapWorkspace() {
   const [query, setQuery] = useState("");
   const [product, setProduct] = useState("all");
   const [status, setStatus] = useState("all");
+  const [page, setPage] = useState(1);
 
   const products = useMemo(
     () =>
@@ -56,6 +61,10 @@ export function BeastAdminRoadmapWorkspace() {
           left.id.localeCompare(right.id)
       );
   }, [canonical, product, query, status]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [product, query, status]);
 
   if (loading) {
     return (
@@ -97,6 +106,12 @@ export function BeastAdminRoadmapWorkspace() {
     ).length,
   };
   const sourceCommit = canonical.projection?.sourceCommit;
+  const pageCount = Math.max(1, Math.ceil(visible.length / BEAST_ADMIN_PAGE_SIZE));
+  const currentPage = Math.min(page, pageCount);
+  const pagedVisible = visible.slice(
+    (currentPage - 1) * BEAST_ADMIN_PAGE_SIZE,
+    currentPage * BEAST_ADMIN_PAGE_SIZE
+  );
 
   return (
     <div className="space-y-6">
@@ -145,9 +160,16 @@ export function BeastAdminRoadmapWorkspace() {
         </div>
       </DashboardCard>
 
+      <BeastAdminPagination
+        page={currentPage}
+        totalItems={visible.length}
+        itemLabel="roadmap items"
+        onPageChange={setPage}
+      />
+
       <section className="space-y-3" aria-label="Canonical roadmap items">
         {visible.length ? (
-          visible.map((item) => {
+          pagedVisible.map((item) => {
             const sourceHref = canonicalEvidenceHref(item.sourceReference, sourceCommit);
             return (
               <article key={item.id} className="rounded-2xl border border-white/10 bg-[#111827] p-5">
@@ -195,6 +217,15 @@ export function BeastAdminRoadmapWorkspace() {
           </DashboardCard>
         )}
       </section>
+
+      {visible.length > BEAST_ADMIN_PAGE_SIZE ? (
+        <BeastAdminPagination
+          page={currentPage}
+          totalItems={visible.length}
+          itemLabel="roadmap items"
+          onPageChange={setPage}
+        />
+      ) : null}
     </div>
   );
 }
