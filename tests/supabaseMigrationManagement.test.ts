@@ -88,6 +88,7 @@ const expectedCliMigrations = [
   "20260809000300_define_member_age_entitlements.sql",
   "20260810000100_add_atomic_financial_commands.sql",
   "20260811000100_add_beastmoney_payment_write_gate.sql",
+  "20260817000100_add_first_party_ecosystem_telemetry.sql",
   "20260821000100_add_beast_hunter_foundation.sql",
   "20260821000200_add_beast_hunter_tracking.sql",
   "20260821000300_complete_beast_hunter_v1.sql",

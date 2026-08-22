@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { acquireDigitalStaffRequestLease, applyApprovedKnowledgeProposal, buildMoneyCoachStructuredRecords, guidanceCounselorCareerProfileItemColumns, guidanceCounselorEducationProfileColumns, moneyCoachCashSettingsColumns, moneyCoachFundingSourceColumns, reportDigitalStaffLifecycle, runDigitalStaffRuntime, requireProfessionalConfig, safeDigitalStaffFailure, type ConversationState, type DigitalStaffActivity, type ProfessionalId, type RuntimeMessage, type RuntimeObserver, type StructuredKnowledgeProposal } from "@/lib/digitalStaffRuntime";
+import { acquireDigitalStaffRequestLease, applyApprovedKnowledgeProposal, buildMoneyCoachStructuredRecords, classifyDigitalStaffFailure, guidanceCounselorCareerProfileItemColumns, guidanceCounselorEducationProfileColumns, moneyCoachCashSettingsColumns, moneyCoachFundingSourceColumns, reportDigitalStaffLifecycle, runDigitalStaffRuntime, requireProfessionalConfig, safeDigitalStaffFailure, type ConversationState, type DigitalStaffActivity, type ProfessionalId, type RuntimeMessage, type RuntimeObserver, type StructuredKnowledgeProposal } from "@/lib/digitalStaffRuntime";
+import { digitalStaffTelemetryRecord, firstPartyErrorCategoryFromDigitalStaff, recordServerFirstPartyTelemetry } from "@/lib/server/firstPartyTelemetry";
 import { createRouteClient } from "@/lib/supabase/server";
 import { requireProfessionalEntitlement } from "@/lib/memberAgeServer";
 
@@ -237,6 +238,18 @@ export async function POST(request: Request) {
       researchValidationMs: result.timings.researchValidationMs,
       persistenceMs: result.timings.persistenceMs,
     });
+    const completedTelemetry = digitalStaffTelemetryRecord({
+      professionalId,
+      status: "completed",
+      latencyMs: result.timings.totalMs,
+      model: result.model,
+    });
+    if (completedTelemetry) {
+      void recordServerFirstPartyTelemetry({
+        actorId: user.id,
+        record: completedTelemetry,
+      });
+    }
     await observer.onActivity?.("complete");
     return { message, assistantMessageId, result };
   };
@@ -255,6 +268,20 @@ export async function POST(request: Request) {
           const payload = await executeTurn(observer);
           send({ type: "complete", payload });
         } catch (error) {
+          const failedTelemetry = digitalStaffTelemetryRecord({
+            professionalId,
+            status: "failed",
+            latencyMs: Date.now() - requestStartedAt,
+            errorCategory: firstPartyErrorCategoryFromDigitalStaff(
+              classifyDigitalStaffFailure("runtime-stream", error)
+            ),
+          });
+          if (failedTelemetry) {
+            void recordServerFirstPartyTelemetry({
+              actorId: user.id,
+              record: failedTelemetry,
+            });
+          }
           send({ type: "error", ...safeDigitalStaffFailure("runtime-stream", error, requestId) });
         } finally {
           requestLease.release();
@@ -270,6 +297,20 @@ export async function POST(request: Request) {
   try {
     return NextResponse.json(await executeTurn());
   } catch (error) {
+    const failedTelemetry = digitalStaffTelemetryRecord({
+      professionalId,
+      status: "failed",
+      latencyMs: Date.now() - requestStartedAt,
+      errorCategory: firstPartyErrorCategoryFromDigitalStaff(
+        classifyDigitalStaffFailure("runtime-route", error)
+      ),
+    });
+    if (failedTelemetry) {
+      void recordServerFirstPartyTelemetry({
+        actorId: user.id,
+        record: failedTelemetry,
+      });
+    }
     return NextResponse.json(safeDigitalStaffFailure("runtime-route", error, requestId), { status: 502 });
   } finally {
     requestLease.release();
