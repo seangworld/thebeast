@@ -34,6 +34,46 @@ export type BeastAdminCanonicalReadModel = {
   attention: Array<{ id: string; kind: "blocker" | "warning" | "failure" | "drift" | "missing_evidence" | "measurement"; detail: string; source: "beastfusion" }>;
 };
 
+export function normalizeBeastAdminCanonicalReadModel(
+  value: unknown
+): BeastAdminCanonicalReadModel | null {
+  const candidate = record(value);
+  const provider = record(candidate.provider);
+  const cursor = record(candidate.cursor);
+  if (
+    !beastFusionProviderStatuses.includes(
+      provider.status as BeastFusionProviderStatus
+    ) ||
+    typeof provider.detail !== "string" ||
+    !Array.isArray(cursor.path) ||
+    cursor.path.some((item) => typeof item !== "string") ||
+    typeof cursor.mode !== "string" ||
+    typeof cursor.executableWorkAvailable !== "boolean" ||
+    !Array.isArray(candidate.products) ||
+    !Array.isArray(candidate.roadmap) ||
+    !Array.isArray(candidate.execution) ||
+    !Array.isArray(candidate.releases) ||
+    !Array.isArray(candidate.attention)
+  ) {
+    return null;
+  }
+  const requiredStrings = (items: unknown[], keys: string[]) =>
+    items.every((item) => {
+      const entry = record(item);
+      return keys.every((key) => typeof entry[key] === "string");
+    });
+  if (
+    !requiredStrings(candidate.products, ["id", "name", "lifecycle", "source"]) ||
+    !requiredStrings(candidate.roadmap, ["id", "product", "title", "status", "priority", "source"]) ||
+    !requiredStrings(candidate.execution, ["id", "product", "status", "result", "source"]) ||
+    !requiredStrings(candidate.releases, ["id", "product", "status", "declaredDeployment", "source"]) ||
+    !requiredStrings(candidate.attention, ["id", "kind", "detail", "source"])
+  ) {
+    return null;
+  }
+  return value as BeastAdminCanonicalReadModel;
+}
+
 function record(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
 }
