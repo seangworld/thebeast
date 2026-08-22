@@ -94,13 +94,16 @@ begin
 
   if existing_snapshot.id is not null then
     if existing_snapshot.projection_id <> selected_projection_id
-      or existing_snapshot.payload_hash <> selected_payload_hash
       or existing_snapshot.canonical_input_digest <> selected_canonical_input_digest
       or existing_snapshot.source_commit <> selected_source_commit
+      or (existing_snapshot.payload - 'generatedAt') <> (selected_payload - 'generatedAt')
     then
       raise exception 'Projection identity conflicts with immutable history';
     end if;
     if current_snapshot.id is distinct from existing_snapshot.id then
+      raise exception 'Stale or downgrade projection rejected';
+    end if;
+    if selected_generated_at < existing_snapshot.generated_at then
       raise exception 'Stale or downgrade projection rejected';
     end if;
     insert into public.beastfusion_command_ingestions (

@@ -142,6 +142,9 @@ test("migration enforces immutable owner-only service-published snapshots", () =
   assert.match(sql, /revoke all on public\.beastfusion_command_snapshots from anon, authenticated/);
   assert.match(identityPin, /selected_oidc_subject <> 'repo:seangworld@271630738\/beastfusion@1297414450:ref:refs\/heads\/main'/);
   assert.doesNotMatch(identityPin, /selected_oidc_subject not like/);
+  assert.match(identityPin, /\(existing_snapshot\.payload - 'generatedAt'\) <> \(selected_payload - 'generatedAt'\)/);
+  assert.doesNotMatch(identityPin, /existing_snapshot\.payload_hash <> selected_payload_hash/);
+  assert.match(identityPin, /selected_generated_at < existing_snapshot\.generated_at/);
 });
 
 test("publication endpoint is server-only and fails closed", () => {
