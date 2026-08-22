@@ -428,12 +428,12 @@ export function BeastAdminCEOModeWorkspace() {
           snapshot.summaries.releases.total === 0 ? (
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
             <EmptyOperatingState>
-              No roadmap has been connected yet. Add the first roadmap item to
-              establish a current sprint and open-work view.
+              The accepted BeastFusion projection contains no canonical roadmap
+              items.
             </EmptyOperatingState>
             <EmptyOperatingState>
-              No release history has been synchronized. Release movement will
-              appear after a Release Center record is available.
+              The accepted BeastFusion projection contains no canonical release
+              records.
             </EmptyOperatingState>
           </div>
         ) : (
@@ -643,8 +643,8 @@ export function BeastAdminCEOModeWorkspace() {
             ) : snapshot.summaries.development.openPrompts === 0 &&
               snapshot.summaries.development.completedPrompts === 0 ? (
               <EmptyOperatingState>
-                No roadmap has been connected yet. Delivery totals will appear
-                after roadmap items are recorded.
+                The accepted BeastFusion projection contains no canonical
+                roadmap items.
               </EmptyOperatingState>
             ) : (
               <div className="grid grid-cols-2 gap-3">
@@ -822,19 +822,19 @@ export function BeastAdminCEOModeWorkspace() {
           <SummaryCard
             eyebrow="Releases"
             title="Release movement"
-            description="Verified Release Center records and the latest recorded product version."
+            description="Canonical BeastFusion release records and the latest governed product version."
             href="/dashboard/admin/releases"
             actionLabel="Open Release Center"
           >
             {snapshot.sources.canonicalGovernance !== "available" ? (
               <EmptyOperatingState>
-                Release Center is unavailable, so release movement cannot be
-                verified.
+                Canonical release truth is unavailable, so release movement
+                cannot be verified.
               </EmptyOperatingState>
             ) : snapshot.summaries.releases.total === 0 ? (
               <EmptyOperatingState>
-                No release history has been synchronized. Release movement will
-                appear after a Release Center record is available.
+                The accepted BeastFusion projection contains no canonical
+                release records.
               </EmptyOperatingState>
             ) : (
               <div>
@@ -862,7 +862,7 @@ export function BeastAdminCEOModeWorkspace() {
             title="Feature flow"
             description="Roadmap items grouped by their current delivery state."
             href="/dashboard/admin/roadmap"
-            actionLabel="Manage Product Roadmap"
+            actionLabel="Open Canonical Roadmap"
           >
             {snapshot.sources.canonicalGovernance !== "available" ? (
               <EmptyOperatingState>
@@ -876,8 +876,8 @@ export function BeastAdminCEOModeWorkspace() {
                 snapshot.summaries.roadmap.released,
               ].every((value) => value === 0) ? (
               <EmptyOperatingState>
-                No roadmap has been connected yet. Feature flow will appear
-                after roadmap items are recorded.
+                The accepted BeastFusion projection contains no canonical
+                roadmap items.
               </EmptyOperatingState>
             ) : (
               <div className="grid grid-cols-2 gap-3">

@@ -4,8 +4,8 @@ import { BeastAdminReleaseCenterWorkspace } from "./BeastAdminReleaseCenterWorks
 export default function BeastAdminReleaseCenterPage() {
   return (
     <BeastAdminShell
-      title="Release Center"
-      purpose="Maintain complete, evidence-backed release history across every Beast product."
+      title="Canonical Release Center"
+      purpose="Read-only governed release truth from the accepted BeastFusion projection, with operational annotations kept explicitly separate."
     >
       <BeastAdminReleaseCenterWorkspace />
     </BeastAdminShell>

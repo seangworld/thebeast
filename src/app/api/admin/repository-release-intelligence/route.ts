@@ -14,6 +14,14 @@ import { createRouteClient } from "@/lib/supabase/server";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
+const privateHeaders = {
+  "Cache-Control": "private, no-cache, no-store, must-revalidate",
+};
+
+function json(body: unknown, status = 200) {
+  return NextResponse.json(body, { status, headers: privateHeaders });
+}
+
 type OperationalReleaseRow = {
   id: string;
   product: string;
@@ -31,10 +39,7 @@ export async function GET() {
       error: authenticationError,
     } = await supabase.auth.getUser();
     if (authenticationError || !user) {
-      return NextResponse.json(
-        { error: "Authentication required." },
-        { status: 401 }
-      );
+      return json({ error: "Authentication required." }, 401);
     }
 
     const { data: profile, error: profileError } = await supabase
@@ -43,30 +48,24 @@ export async function GET() {
       .eq("id", user.id)
       .maybeSingle();
     if (profileError) {
-      return NextResponse.json(
+      return json(
         { error: "Repository intelligence could not verify owner access." },
-        { status: 503 }
+        503
       );
     }
     if (profile?.role !== "admin") {
-      return NextResponse.json(
-        { error: "BeastAdmin owner access required." },
-        { status: 403 }
-      );
+      return json({ error: "BeastAdmin owner access required." }, 403);
     }
 
     const canonicalResult = await loadBeastFusionCanonicalReadModel();
     if (!canonicalResult.canonical) {
-      return NextResponse.json(
+      return json(
         {
           error:
             "Canonical BeastFusion release truth is unavailable; legacy records were not used as a fallback.",
           canonicalProvider: canonicalResult.provider,
         },
-        {
-          status: 503,
-          headers: { "Cache-Control": "private, no-store" },
-        }
+        503
       );
     }
 
@@ -110,16 +109,14 @@ export async function GET() {
       operationalNotes,
     });
 
-    return NextResponse.json(snapshot, {
-      headers: { "Cache-Control": "private, no-store" },
-    });
+    return json(snapshot);
   } catch {
-    return NextResponse.json(
+    return json(
       {
         error:
           "Repository and release intelligence could not load its verified sources.",
       },
-      { status: 503 }
+      503
     );
   }
 }

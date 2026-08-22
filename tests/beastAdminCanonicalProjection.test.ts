@@ -112,10 +112,16 @@ test("publication rejects stale and future projections before persistence", () =
 test("canonical adapters expose roadmap execution releases attention and cursor without provider claims", () => {
   const model = buildBeastAdminCanonicalReadModel(acceptedSnapshot(), { now: new Date("2026-08-21T20:02:00Z") });
   assert.equal(model.provider.status, "connected"); assert.equal(model.cursor.executableWorkAvailable, false);
+  assert.equal(model.projection?.sourceCommit, "a4a3303a857354ce0568ebcb1ae841e4c7beda0e");
   assert.equal(model.products[0].id, "beastfusion");
-  assert.equal(model.roadmap[0].source, "beastfusion"); assert.equal(model.execution[0].candidateCommit, "a4a3303a857354ce0568ebcb1ae841e4c7beda0e");
+  assert.equal(model.roadmap[0].source, "beastfusion"); assert.equal(model.roadmap[0].sourceReference, "roadmaps/active/BeastFusion.md");
+  assert.equal(model.execution[0].candidateCommit, "a4a3303a857354ce0568ebcb1ae841e4c7beda0e");
   assert.equal(model.execution[0].completedAt, "2026-08-21");
+  assert.deepEqual(model.executionOverview?.reconciliation, { reconciledAt: "2026-08-21", total: 1, completed: 1, remaining: 0, currentExecutableProduct: null, currentExecutablePackage: null, warningCount: 0 });
   assert.equal(model.releases[0].preview, "not_in_projection_v1"); assert.equal(model.releases[0].servedCommit, null);
+  assert.equal(model.governance?.autonomousExecution, false);
+  assert.equal(model.validation?.canonicalConsistency, "passed");
+  assert.equal(model.records?.length, sourcePaths.length);
 });
 
 test("provider states preserve last valid snapshot and never fabricate connection", () => {

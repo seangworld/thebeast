@@ -162,13 +162,17 @@ test("BA-108 migration preserves owner-only release evidence", () => {
   );
 });
 
-test("BA-108 provides an owner Release Center without replacing public notes", () => {
+test("BA-CMD-001E makes Release Center canonical and separates operational annotations", () => {
   const page = readFileSync(
     "src/app/dashboard/admin/releases/page.tsx",
     "utf8"
   );
   const workspace = readFileSync(
     "src/app/dashboard/admin/releases/BeastAdminReleaseCenterWorkspace.tsx",
+    "utf8"
+  );
+  const notes = readFileSync(
+    "src/app/dashboard/admin/releases/BeastAdminReleaseNotesWorkspace.tsx",
     "utf8"
   );
   const adminDashboard = readFileSync(
@@ -179,20 +183,18 @@ test("BA-108 provides an owner Release Center without replacing public notes", (
 
   assert.match(page, /Release Center/);
   assert.match(page, /BeastAdminShell/);
-  assert.match(workspace, /\.rpc\(\s*"get_beast_admin_release_records"/);
-  assert.match(workspace, /save_beast_admin_release_record/);
-  assert.match(workspace, /Version/);
-  assert.match(workspace, /Date/);
-  assert.match(workspace, /Modules included/);
-  assert.match(workspace, /Bug fixes/);
-  assert.match(workspace, /Features/);
-  assert.match(workspace, /Database migrations/);
-  assert.match(workspace, /Validation status/);
-  assert.match(workspace, /Production deployment/);
-  assert.match(workspace, /No complete release records exist yet/);
-  assert.match(workspace, /does not execute a deployment/);
-  assert.match(workspace, /href="\/dashboard\/releases"/);
-  assert.match(workspace, /href="\/release-notes"/);
+  assert.match(workspace, /useBeastAdminCommandCenter/);
+  assert.match(workspace, /Read-only governed release truth/);
+  assert.match(workspace, /\/dashboard\/admin\/releases\/notes/);
+  assert.doesNotMatch(workspace, /get_beast_admin_release_records/);
+  assert.doesNotMatch(workspace, /save_beast_admin_release_record/);
+  assert.doesNotMatch(workspace, /\.insert\(|\.update\(|\.delete\(/);
+  assert.match(notes, /\.rpc\(\s*"get_beast_admin_release_records"/);
+  assert.match(notes, /save_beast_admin_release_record/);
+  assert.match(notes, /Operational release annotations/);
+  assert.match(notes, /do not validate, release, deploy, or override/);
+  assert.match(notes, /href="\/dashboard\/releases"/);
+  assert.match(notes, /href="\/release-notes"/);
   assert.doesNotMatch(workspace, /localStorage/);
   assert.match(adminDashboard, /\/dashboard\/admin\/releases/);
   assert.match(navigation, /Release Center/);

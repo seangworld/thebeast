@@ -18,6 +18,14 @@ import { createRouteClient } from "@/lib/supabase/server";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
+const privateHeaders = {
+  "Cache-Control": "private, no-cache, no-store, must-revalidate",
+};
+
+function json(body: unknown, status = 200) {
+  return NextResponse.json(body, { status, headers: privateHeaders });
+}
+
 function canonicalSourceState(
   status: string
 ): BeastAdminCEOSourceState {
@@ -44,10 +52,7 @@ export async function GET() {
       error: authenticationError,
     } = await supabase.auth.getUser();
     if (authenticationError || !user) {
-      return NextResponse.json(
-        { error: "Authentication required." },
-        { status: 401 }
-      );
+      return json({ error: "Authentication required." }, 401);
     }
 
     const { data: profile, error: profileError } = await supabase
@@ -56,16 +61,10 @@ export async function GET() {
       .eq("id", user.id)
       .maybeSingle();
     if (profileError) {
-      return NextResponse.json(
-        { error: "CEO Mode could not verify owner access." },
-        { status: 503 }
-      );
+      return json({ error: "CEO Mode could not verify owner access." }, 503);
     }
     if (profile?.role !== "admin") {
-      return NextResponse.json(
-        { error: "BeastAdmin owner access required." },
-        { status: 403 }
-      );
+      return json({ error: "BeastAdmin owner access required." }, 403);
     }
 
     const generatedAt = new Date().toISOString();
@@ -145,13 +144,11 @@ export async function GET() {
       },
     };
 
-    return NextResponse.json(snapshot, {
-      headers: { "Cache-Control": "private, no-store" },
-    });
+    return json(snapshot);
   } catch {
-    return NextResponse.json(
+    return json(
       { error: "CEO Mode could not load its verified operating sources." },
-      { status: 503, headers: { "Cache-Control": "private, no-store" } }
+      503
     );
   }
 }

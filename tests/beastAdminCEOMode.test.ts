@@ -311,7 +311,7 @@ test("owner route uses 1A and 1B providers and never queries legacy governance t
   assert.match(route, /readVercelDeploymentEvidence/);
   assert.match(route, /buildBeastAdminRepositoryReleaseSnapshot/);
   assert.match(route, /profile\?\.role !== "admin"/);
-  assert.match(route, /Cache-Control": "private, no-store"/);
+  assert.match(route, /Cache-Control": "private, no-cache, no-store, must-revalidate"/);
   assert.doesNotMatch(route, /beast_admin_roadmap_items/);
   assert.doesNotMatch(route, /get_beast_admin_release_records/);
   assert.doesNotMatch(route, /\.(insert|update|upsert|delete)\(/);

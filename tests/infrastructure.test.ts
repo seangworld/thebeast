@@ -6072,7 +6072,7 @@ test("BeastAdmin foundation registers modules and protects owner-only navigation
       "Migration Status",
       "SQL Explorer",
       "Release Center",
-      "Execution History",
+      "Digital Professional History",
       "Roadmap",
       "Executive Metrics",
       "AI Analytics",

@@ -326,7 +326,7 @@ test("BA-111 validates the complete development console response", () => {
   );
 });
 
-test("BA-111 API is owner-authorized, partial-source safe, and read-only", () => {
+test("BA-CMD-001E Development Console API is owner-authorized, canonical-only, and read-only", () => {
   const route = readFileSync(
     "src/app/api/admin/development-console/route.ts",
     "utf8"
@@ -335,19 +335,17 @@ test("BA-111 API is owner-authorized, partial-source safe, and read-only", () =>
   assert.match(route, /supabase\.auth\.getUser\(\)/);
   assert.match(route, /\.from\("profiles"\)/);
   assert.match(route, /profile\?\.role !== "admin"/);
-  assert.match(route, /\.from\("beast_admin_roadmap_items"\)/);
-  assert.match(route, /\.eq\("user_id", user\.id\)/);
-  assert.match(route, /\.rpc\(\s*"get_beast_admin_release_records"/);
-  assert.match(route, /roadmapAvailable = false/);
-  assert.match(route, /releasesAvailable = false/);
-  assert.match(route, /VERCEL_GIT_COMMIT_SHA/);
-  assert.match(route, /VERCEL_GIT_COMMIT_REF/);
-  assert.match(route, /"Cache-Control": "no-store"/);
+  assert.match(route, /loadBeastFusionCanonicalReadModel/);
+  assert.match(route, /legacy roadmap and release records were not used as a fallback/);
+  assert.match(route, /private, no-cache, no-store, must-revalidate/);
+  assert.doesNotMatch(route, /beast_admin_roadmap_items/);
+  assert.doesNotMatch(route, /get_beast_admin_release_records/);
+  assert.doesNotMatch(route, /VERCEL_GIT_COMMIT_SHA/);
   assert.doesNotMatch(route, /\.insert\(|\.update\(|\.delete\(/);
   assert.doesNotMatch(route, /SUPABASE_SERVICE_ROLE_KEY/);
 });
 
-test("BA-111 presents the complete owner development workflow", () => {
+test("BA-CMD-001E presents the canonical owner development command center", () => {
   const page = readFileSync(
     "src/app/dashboard/admin/development/page.tsx",
     "utf8"
@@ -363,41 +361,33 @@ test("BA-111 presents the complete owner development workflow", () => {
   const navigation = readFileSync("src/lib/moduleNavigation.ts", "utf8");
 
   for (const label of [
-    "Current sprint",
-    "Current milestone",
-    "Open prompts",
-    "Completed prompts",
-    "Upcoming work",
-    "Recently released",
-    "Git references",
-    "Version history",
-    "Repository summary",
-    "Release velocity",
-    "Sprint statistics",
-    "Recent validation",
-    "Build health",
+    "Current governed development state",
+    "Projection identity and freshness",
+    "Package progress",
+    "Blocked work",
+    "Waiting work",
+    "Canonical next five",
+    "Package and roadmap dependency view",
+    "Development History",
+    "Registry, BeastShield, and agent policy",
+    "Validation health",
+    "Canonical record drill-down",
   ]) {
     assert.match(workspace, new RegExp(label, "i"));
   }
 
   assert.match(page, /Development Console/);
   assert.match(page, /BeastAdminDevelopmentConsoleWorkspace/);
-  assert.match(workspace, /\/api\/admin\/development-console/);
+  assert.match(workspace, /useBeastAdminCommandCenter/);
   assert.match(workspace, /\/dashboard\/admin\/roadmap/);
-  assert.match(workspace, /\/dashboard\/admin\/releases/);
-  assert.match(workspace, /\/dashboard\/admin\/prompt-library/);
   assert.match(workspace, /does not execute Git/);
-  assert.match(workspace, /roadmap work items/);
-  assert.match(workspace, /The previous sprint has completed/);
-  assert.match(workspace, /Awaiting selection of the next sprint/);
-  assert.match(workspace, /No roadmap items are currently In Progress/);
-  assert.match(workspace, /No release history has been synchronized/);
-  assert.match(workspace, /Status unavailable/);
-  assert.match(workspace, /Not connected/);
-  assert.match(workspace, /count \? count : "None"/);
+  assert.match(workspace, /Legacy roadmap rows and operational/);
+  assert.match(workspace, /Digital Professional Execution History remains a separate/);
+  assert.match(workspace, /Arbitrary repository paths are not accepted/);
   assert.match(workspace, /sm:grid-cols-2 xl:grid-cols-4/);
   assert.match(workspace, /min-w-0/);
   assert.match(workspace, /overflow-x-auto/);
+  assert.match(workspace, /tabIndex=\{0\}/);
   assert.doesNotMatch(workspace, /overflow-x-hidden|w-screen/);
   assert.doesNotMatch(workspace, /localStorage/);
   assert.doesNotMatch(workspace, /git push|git commit|child_process/);

@@ -4,8 +4,8 @@ import { BeastAdminRoadmapWorkspace } from "./BeastAdminRoadmapWorkspace";
 export default function BeastAdminRoadmapPage() {
   return (
     <BeastAdminShell
-      title="Product Roadmap"
-      purpose="One owner-managed delivery view across BeastOS, its applications, BeastFusion, SEANGWORLD, and future products."
+      title="Canonical Product Roadmap"
+      purpose="Read-only governed delivery truth from the accepted BeastFusion projection, with candidate ideas kept in a separate non-canonical intake workspace."
     >
       <BeastAdminRoadmapWorkspace />
     </BeastAdminShell>

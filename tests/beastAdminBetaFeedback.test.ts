@@ -185,7 +185,7 @@ test("BA-105 presents lifecycle management, roadmap linking, and member delivery
   assert.match(page, /BeastAdminFeedbackWorkspace/);
   assert.match(workspace, /\.rpc\("get_beast_admin_beta_feedback"/);
   assert.match(workspace, /\.rpc\(\s*"update_beast_admin_feedback"/);
-  assert.match(workspace, /Manage Roadmap/);
+  assert.match(workspace, /Manage Candidate Intake/);
   assert.match(workspace, /Roadmap item/);
   assert.match(workspace, /Member update/);
   assert.match(workspace, /Saving will notify the submitting member/);
