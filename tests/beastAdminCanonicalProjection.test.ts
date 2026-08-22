@@ -136,9 +136,12 @@ test("legacy intake annotation and archive remain separate while BeastFusion win
 
 test("migration enforces immutable owner-only service-published snapshots", () => {
   const sql = readFileSync(join(process.cwd(), "supabase/migrations/20260821000500_add_beastfusion_command_projection.sql"), "utf8");
+  const identityPin = readFileSync(join(process.cwd(), "supabase/migrations/20260821000600_pin_beastfusion_oidc_subject.sql"), "utf8");
   for (const expected of ["beastfusion_command_snapshots", "beastfusion_command_ingestions", "beastfusion_command_current", "prevent_beastfusion_command_snapshot_mutation", "publish_beastfusion_command_snapshot", "get_beastfusion_command_current", "enable row level security", "to service_role", "Replay or out-of-order", "governance_classification", "candidate_intake"]) assert.match(sql, new RegExp(expected));
   assert.doesNotMatch(sql, /grant (?:select|insert|update|delete|all).* to authenticated/i);
   assert.match(sql, /revoke all on public\.beastfusion_command_snapshots from anon, authenticated/);
+  assert.match(identityPin, /selected_oidc_subject <> 'repo:seangworld@271630738\/beastfusion@1297414450:ref:refs\/heads\/main'/);
+  assert.doesNotMatch(identityPin, /selected_oidc_subject not like/);
 });
 
 test("publication endpoint is server-only and fails closed", () => {

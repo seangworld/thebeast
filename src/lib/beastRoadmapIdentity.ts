@@ -299,9 +299,10 @@ export const beastRoadmapPackageRegistry = [
       "src/lib/beastAdminCanonicalProjection.ts",
       "src/app/api/admin/beastfusion-projection/route.ts",
       "supabase/migrations/20260821000500_add_beastfusion_command_projection.sql",
+      "supabase/migrations/20260821000600_pin_beastfusion_oidc_subject.sql",
       "tests/beastAdminCanonicalProjection.test.ts",
     ],
-    ["20260821000500_add_beastfusion_command_projection.sql"]
+    ["20260821000500_add_beastfusion_command_projection.sql", "20260821000600_pin_beastfusion_oidc_subject.sql"]
   ),
   packageIdentity(
     "BA-REC-134",
