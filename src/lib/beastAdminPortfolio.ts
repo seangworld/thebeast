@@ -38,10 +38,6 @@ export const beastAdminPortfolio: readonly BeastAdminPortfolioEntry[] = [
   released("beast", "BeastAdmin", "Owner only"),
   released("seangworld", "SEANGWORLD"),
   released("beastfusion", "BeastFusion", "Operational"),
-  {
-    ...released("beastfusion", "BeastFusion Dashboard", "Operational"),
-    production: "Owner runtime",
-  },
   released("cw", "Change the World"),
   released("beasthome", "BeastHome", "Foundation"),
   released("beastsecurity", "BeastSecurity", "Planning"),
