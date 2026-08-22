@@ -596,7 +596,7 @@ test("module navigation centralizes expandable child items", () => {
   );
   assert.deepEqual(
     buildOwnerNavigationForPersona({ isOwner: true }).map((item) => item.label),
-    ["BeastAdmin", "BF-Dash"]
+    ["BeastAdmin"]
   );
   assert.deepEqual(buildOwnerNavigationForPersona({ isOwner: false }), []);
   assert.equal(beastMoneyNavigation.href, "/dashboard/money/dashboard");
@@ -5969,7 +5969,7 @@ test("member navigation hides admin and monetization surfaces", () => {
     buildOwnerNavigationForPersona({
       isOwner: canAccessBeastAdmin({ role: "admin", adminViewMode: "admin" }),
     }).map((item) => item.label),
-    ["BeastAdmin", "BF-Dash"]
+    ["BeastAdmin"]
   );
   assert.deepEqual(
     buildOwnerNavigationForPersona({
@@ -5981,7 +5981,7 @@ test("member navigation hides admin and monetization surfaces", () => {
     buildOwnerNavigationForPersona({
       isOwner: canAccessBeastAdmin({ role: "admin", adminViewMode: "admin" }),
     }).map((item) => item.label),
-    ["BeastAdmin", "BF-Dash"]
+    ["BeastAdmin"]
   );
   assert.equal(
     getBeastModuleNavigationForPersona(false).some((item) => item.label === "BeastAdmin"),
