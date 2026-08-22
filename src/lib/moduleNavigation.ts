@@ -304,16 +304,6 @@ export const beastAdminNavigation: ModuleNavSection = {
   ],
 };
 
-export const BF_DASH_CANONICAL_URL = "http://127.0.0.1:4173/";
-
-export const bfDashNavigation: ModuleNavSection = {
-  label: "BF-Dash",
-  href: BF_DASH_CANONICAL_URL,
-  module: "admin",
-  external: true,
-  icon: "▦",
-};
-
 export const beastSecurityNavigation: ModuleNavSection = {
   label: "BeastSecurity",
   module: "projects",
@@ -419,7 +409,7 @@ export function buildOwnerNavigationForPersona({
     (item) => item.module === "admin"
   );
 
-  return [...ownerModules, bfDashNavigation].filter(
+  return ownerModules.filter(
     (item, index, items) =>
       items.findIndex((candidate) => candidate.label === item.label) === index
   );
