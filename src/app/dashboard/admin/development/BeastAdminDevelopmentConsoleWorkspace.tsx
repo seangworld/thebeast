@@ -220,7 +220,7 @@ export function BeastAdminDevelopmentConsoleWorkspace() {
         <SectionHeader
           eyebrow="Development Console"
           title="Assembling delivery context"
-          description="BeastAdmin is reading the owner roadmap, release history, generated versions, and deployment evidence."
+          description="BeastAdmin is reading its legacy owner roadmap, operational release notes, generated versions, and bounded deployment evidence."
         />
         <div
           className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4"
@@ -282,7 +282,7 @@ export function BeastAdminDevelopmentConsoleWorkspace() {
             </h2>
             <p className="mt-3 max-w-3xl leading-7 text-[#dbe3ef]">
               {snapshot.currentSprint.length
-                ? `${activeSprintSummary}. Roadmap status remains the source of truth.`
+                ? `${activeSprintSummary}. These legacy planning signals do not override BeastFusion governance.`
                 : snapshot.sources.roadmap === "available"
                   ? snapshot.upcomingWork.length
                     ? "Planned roadmap work is ready, but no item has been selected for active delivery."
@@ -418,7 +418,7 @@ export function BeastAdminDevelopmentConsoleWorkspace() {
             snapshot.sources.releases === "unavailable"
               ? "Release Center data is unavailable."
               : snapshot.recentlyReleased.length
-                ? "Latest canonical Release Center records."
+                ? "Latest owner-maintained Release Center operational notes."
                 : "No release history has been synchronized."
           }
         />
@@ -513,7 +513,7 @@ export function BeastAdminDevelopmentConsoleWorkspace() {
           <SectionHeader
             eyebrow="Completed prompts"
             title="Released roadmap work"
-            description="Completion is shown only after the canonical roadmap item reaches Released."
+            description="This legacy roadmap view is retained for operational context; BeastFusion supplies canonical completion truth."
           />
           <div className="mt-5 grid gap-3">
             {snapshot.completedPrompts.length ? (
@@ -561,7 +561,7 @@ export function BeastAdminDevelopmentConsoleWorkspace() {
           <SectionHeader
             eyebrow="Recently released"
             title="Latest release records"
-            description="Release identity, validation, and deployment state come directly from Release Center."
+            description="Owner-maintained release notes are shown as supplemental operational evidence, not canonical governance truth."
             action={
               <ConsoleLink href="/dashboard/admin/releases">
                 Open Release Center
@@ -644,7 +644,7 @@ export function BeastAdminDevelopmentConsoleWorkspace() {
           <SectionHeader
             eyebrow="Version history"
             title="Recorded product releases"
-            description="Historical versions come from owner-managed Release Center records, not inferred build dates."
+            description="Historical operational notes come from owner-managed Release Center records and remain separate from canonical BeastFusion releases."
           />
           <div
             className="mt-5 overflow-x-auto focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200"
