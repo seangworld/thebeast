@@ -1,3 +1,5 @@
+import type { FirstPartyTelemetrySnapshot } from "./firstPartyTelemetry";
+
 export const seangworldProviderStatuses = [
   "configured",
   "not_configured",
@@ -42,7 +44,66 @@ export type IntelligenceDimension = {
   secondaryValue?: number | null;
 };
 
+export const searchOpportunityDispositions = [
+  "Improve Existing Page",
+  "Create Supporting Content",
+  "Investigate",
+  "Watch",
+  "Ignore",
+] as const;
+
+export type SearchOpportunityDisposition =
+  (typeof searchOpportunityDispositions)[number];
+
+export type SearchPerformanceMetrics = {
+  clicks: number;
+  impressions: number;
+  ctr: number;
+  position: number;
+};
+
+export type SearchPerformanceChange = {
+  clicks: number | null;
+  impressions: number | null;
+  ctr: number | null;
+  position: number | null;
+};
+
+export type SearchPageQueryEvidence = SearchPerformanceMetrics & {
+  page: string;
+  query: string;
+};
+
+export type SearchOpportunity = {
+  page: string;
+  query: string;
+  current: SearchPerformanceMetrics;
+  previous: SearchPerformanceMetrics | null;
+  change: SearchPerformanceChange;
+  score: number;
+  disposition: SearchOpportunityDisposition;
+  rationale: string;
+};
+
+export type SearchLandingPagePerformance = {
+  page: string;
+  current: SearchPerformanceMetrics;
+  previous: SearchPerformanceMetrics | null;
+  change: SearchPerformanceChange;
+};
+
+export type SearchOpportunityBaseline = {
+  currentStartDate: string;
+  currentEndDate: string;
+  previousStartDate: string;
+  previousEndDate: string;
+  dataThroughDate: string;
+  rowLimit: number;
+  partialData: true;
+};
+
 export type SeangworldAnalyticsData = {
+  firstPartyTelemetry: FirstPartyTelemetrySnapshot | null;
   visitors: IntelligenceMetric | null;
   users: IntelligenceMetric | null;
   sessions: IntelligenceMetric | null;
@@ -53,8 +114,10 @@ export type SeangworldAnalyticsData = {
   ctr: IntelligenceMetric | null;
   averagePosition: IntelligenceMetric | null;
   countries: IntelligenceDimension[];
+  searchCountries: IntelligenceDimension[];
   cities: IntelligenceDimension[];
   devices: IntelligenceDimension[];
+  searchDevices: IntelligenceDimension[];
   browsers: IntelligenceDimension[];
   operatingSystems: IntelligenceDimension[];
   trafficSources: IntelligenceDimension[];
@@ -68,6 +131,16 @@ export type SeangworldAnalyticsData = {
     previousImpressions?: number | null;
   })[];
   topLandingPages: IntelligenceDimension[];
+  searchLandingPages: SearchLandingPagePerformance[];
+  searchOpportunities: SearchOpportunity[];
+  searchOpportunityBaseline: SearchOpportunityBaseline | null;
+  searchTrends: {
+    date: string;
+    clicks: number;
+    impressions: number;
+    ctr: number | null;
+    position: number | null;
+  }[];
   historicalTrends: {
     date: string;
     visitors: number | null;
@@ -91,6 +164,8 @@ export type SeangworldProviderSnapshot = {
   lastSynchronizationAt: string | null;
   lastSuccessfulSynchronizationAt: string | null;
   freshness: "current" | "recent" | "stale" | "unknown";
+  dataThroughDate: string | null;
+  reportingDelayDays: number | null;
   error: {
     code: string;
     message: string;
@@ -106,7 +181,12 @@ export type SeangworldRecommendation = {
     | "falling_ctr"
     | "growing_impressions"
     | "mobile_weakness"
-    | "traffic_spike";
+    | "traffic_spike"
+    | "low_member_activation"
+    | "low_d7_retention"
+    | "module_underused"
+    | "reliability_failures"
+    | "professional_latency";
   title: string;
   supportingMetric: string;
   comparisonPeriod: string;
@@ -125,6 +205,7 @@ export type SeangworldIntelligenceSnapshot = {
 };
 
 const emptyData = (): SeangworldAnalyticsData => ({
+  firstPartyTelemetry: null,
   visitors: null,
   users: null,
   sessions: null,
@@ -135,8 +216,10 @@ const emptyData = (): SeangworldAnalyticsData => ({
   ctr: null,
   averagePosition: null,
   countries: [],
+  searchCountries: [],
   cities: [],
   devices: [],
+  searchDevices: [],
   browsers: [],
   operatingSystems: [],
   trafficSources: [],
@@ -144,9 +227,184 @@ const emptyData = (): SeangworldAnalyticsData => ({
   exitPages: [],
   topQueries: [],
   topLandingPages: [],
+  searchLandingPages: [],
+  searchOpportunities: [],
+  searchOpportunityBaseline: null,
+  searchTrends: [],
   historicalTrends: [],
   deviceEngagement: null,
 });
+
+function performanceChange(
+  current: SearchPerformanceMetrics,
+  previous: SearchPerformanceMetrics | null
+): SearchPerformanceChange {
+  return {
+    clicks: previous ? current.clicks - previous.clicks : null,
+    impressions: previous ? current.impressions - previous.impressions : null,
+    ctr: previous ? current.ctr - previous.ctr : null,
+    // A negative position change is an improvement because position 1 is best.
+    position: previous ? current.position - previous.position : null,
+  };
+}
+
+function genericSearchLandingPage(page: string) {
+  try {
+    const pathname = new URL(page).pathname.replace(/\/$/, "") || "/";
+    return ["/", "/articles", "/guides", "/tools", "/docs"].includes(
+      pathname
+    );
+  } catch {
+    return false;
+  }
+}
+
+export function buildSearchOpportunities(
+  currentRows: readonly SearchPageQueryEvidence[],
+  previousRows: readonly SearchPageQueryEvidence[]
+): SearchOpportunity[] {
+  const previousByPageQuery = new Map(
+    previousRows.map((row) => [`${row.page}\n${row.query}`, row])
+  );
+
+  return currentRows
+    .map((row) => {
+      const previousRow = previousByPageQuery.get(`${row.page}\n${row.query}`);
+      const current: SearchPerformanceMetrics = {
+        clicks: row.clicks,
+        impressions: row.impressions,
+        ctr: row.ctr,
+        position: row.position,
+      };
+      const previous: SearchPerformanceMetrics | null = previousRow
+        ? {
+            clicks: previousRow.clicks,
+            impressions: previousRow.impressions,
+            ctr: previousRow.ctr,
+            position: previousRow.position,
+          }
+        : null;
+      const impressionGrowth =
+        previous && previous.impressions > 0
+          ? (current.impressions - previous.impressions) / previous.impressions
+          : null;
+      const lowCtr = current.ctr < 0.03;
+      const hasPosition = current.position > 0;
+      const achievablePosition =
+        hasPosition && current.position >= 4 && current.position <= 20;
+      const genericPage = genericSearchLandingPage(row.page);
+      let disposition: SearchOpportunityDisposition;
+      let rationale: string;
+
+      if (
+        current.impressions < 10 &&
+        current.clicks === 0
+      ) {
+        disposition = "Ignore";
+        rationale =
+          "Fewer than 10 sampled impressions and no clicks do not justify action yet.";
+      } else if (
+        genericPage &&
+        current.impressions >= 50 &&
+        hasPosition &&
+        current.position <= 40
+      ) {
+        disposition = "Create Supporting Content";
+        rationale =
+          "Meaningful query visibility currently resolves to a broad hub rather than a focused page.";
+      } else if (
+        current.impressions >= 50 &&
+        lowCtr &&
+        achievablePosition
+      ) {
+        disposition = "Improve Existing Page";
+        rationale =
+          "The existing page has meaningful impressions, CTR below 3%, and an achievable average position of 4–20.";
+      } else if (
+        current.impressions >= 100 &&
+        (current.position > 20 ||
+          (impressionGrowth !== null && impressionGrowth <= -0.25))
+      ) {
+        disposition = "Investigate";
+        rationale =
+          "The query has meaningful visibility, but weak position or a decline of at least 25% needs intent and SERP review.";
+      } else if (
+        current.impressions >= 25 &&
+        (previous === null ||
+          (impressionGrowth !== null && impressionGrowth >= 0.25) ||
+          (hasPosition && current.position <= 30))
+      ) {
+        disposition = "Watch";
+        rationale =
+          "Visibility is emerging, growing, or near an achievable range, but evidence is not yet strong enough for a change.";
+      } else {
+        disposition = "Ignore";
+        rationale =
+          "The sampled visibility, click-through rate, and position do not currently meet an action threshold.";
+      }
+
+      const score = Math.min(
+        100,
+        Math.round(
+          Math.min(40, current.impressions / 10) +
+            (achievablePosition
+              ? 30
+              : hasPosition && current.position <= 40
+                ? 15
+                : 0) +
+            (lowCtr ? 15 : 0) +
+            (impressionGrowth !== null && impressionGrowth >= 0.25 ? 15 : 0)
+        )
+      );
+
+      return {
+        page: row.page,
+        query: row.query,
+        current,
+        previous,
+        change: performanceChange(current, previous),
+        score,
+        disposition,
+        rationale,
+      };
+    })
+    .sort(
+      (left, right) =>
+        right.score - left.score ||
+        right.current.impressions - left.current.impressions ||
+        left.query.localeCompare(right.query)
+    );
+}
+
+export function buildSearchLandingPagePerformance(
+  currentRows: readonly (SearchPerformanceMetrics & { page: string })[],
+  previousRows: readonly (SearchPerformanceMetrics & { page: string })[]
+): SearchLandingPagePerformance[] {
+  const previousByPage = new Map(previousRows.map((row) => [row.page, row]));
+  return currentRows.map((row) => {
+    const previousRow = previousByPage.get(row.page);
+    const current: SearchPerformanceMetrics = {
+      clicks: row.clicks,
+      impressions: row.impressions,
+      ctr: row.ctr,
+      position: row.position,
+    };
+    const previous: SearchPerformanceMetrics | null = previousRow
+      ? {
+          clicks: previousRow.clicks,
+          impressions: previousRow.impressions,
+          ctr: previousRow.ctr,
+          position: previousRow.position,
+        }
+      : null;
+    return {
+      page: row.page,
+      current,
+      previous,
+      change: performanceChange(current, previous),
+    };
+  });
+}
 
 function metricChange(metric: IntelligenceMetric) {
   if (metric.previousValue === null || metric.previousValue === 0) return null;
@@ -266,6 +524,93 @@ export function buildSeangworldRecommendations(
       });
     }
   }
+
+  const firstParty = data.firstPartyTelemetry;
+  if (firstParty) {
+    if (
+      firstParty.members.onboardingCompleted >= firstParty.minimumCohortSize &&
+      firstParty.members.activationRate !== null &&
+      firstParty.members.activationRate < 0.5
+    ) {
+      recommendations.push({
+        id: "low_member_activation",
+        title: "Review member activation friction",
+        supportingMetric: `${firstParty.members.activated} of ${firstParty.members.onboardingCompleted} onboarding-complete members activated`,
+        comparisonPeriod,
+        confidence: "high",
+        rationale: `The verified activation rate is below 50% and the cohort meets the ${firstParty.minimumCohortSize}-member minimum.`,
+        suggestedOwnerReview: "Review the first meaningful-action paths without inspecting individual member activity.",
+      });
+    }
+    const daySeven = firstParty.retention.find((item) => item.day === 7);
+    if (
+      daySeven?.status === "available" &&
+      daySeven.rate !== null &&
+      daySeven.rate < 0.25
+    ) {
+      recommendations.push({
+        id: "low_d7_retention",
+        title: "Review Day 7 member retention",
+        supportingMetric: `${daySeven.returnedMembers} of ${daySeven.eligibleMembers} eligible activated members returned on Day 7`,
+        comparisonPeriod,
+        confidence: "high",
+        rationale: "The verified Day 7 retention rate is below 25% and the minimum cohort threshold is met.",
+        suggestedOwnerReview: "Review aggregate post-activation value and reminders before changing a product flow.",
+      });
+    }
+    const underused = firstParty.moduleAdoption.find(
+      (module) =>
+        firstParty.members.activated >= firstParty.minimumCohortSize &&
+        module.adoptionRate !== null &&
+        module.adoptionRate < 0.1
+    );
+    if (underused) {
+      recommendations.push({
+        id: "module_underused",
+        title: `Review ${underused.moduleLabel} adoption`,
+        supportingMetric: `${underused.activatedMembers} activated members and ${underused.meaningfulActions} meaningful actions`,
+        comparisonPeriod,
+        confidence: "moderate",
+        rationale: "Verified module adoption is below 10% and the activated-member cohort meets the minimum threshold.",
+        suggestedOwnerReview: "Confirm the module is released and relevant to the cohort before changing discovery or onboarding.",
+      });
+    }
+    const reliabilityTotal =
+      firstParty.reliability.successfulOperations +
+      firstParty.reliability.failures;
+    if (
+      reliabilityTotal >= 10 &&
+      firstParty.reliability.failureRate !== null &&
+      firstParty.reliability.failureRate >= 0.1
+    ) {
+      recommendations.push({
+        id: "reliability_failures",
+        title: "Review repeated operational failures",
+        supportingMetric: `${firstParty.reliability.failures} failures across ${reliabilityTotal} bounded operations`,
+        comparisonPeriod,
+        confidence: "high",
+        rationale: "The verified failure rate is at least 10% across at least 10 recorded operations.",
+        suggestedOwnerReview: "Inspect safe error categories and provider health without opening member content.",
+      });
+    }
+    const slowProfessional = firstParty.professionalUsage.find(
+      (professional) =>
+        professional.turnsCompleted >= 10 &&
+        professional.p95LatencyMs !== null &&
+        professional.p95LatencyMs > 10_000
+    );
+    if (slowProfessional) {
+      recommendations.push({
+        id: "professional_latency",
+        title: "Review Digital Professional latency",
+        supportingMetric: `${slowProfessional.professionalId.replaceAll("_", " ")}: ${slowProfessional.p95LatencyMs} ms P95 across ${slowProfessional.turnsCompleted} completed turns`,
+        comparisonPeriod,
+        confidence: "high",
+        rationale: "P95 latency exceeds 10 seconds across at least 10 completed turns.",
+        suggestedOwnerReview: "Compare provider and persistence latency bands before changing model routing.",
+      });
+    }
+  }
   return recommendations;
 }
 
@@ -302,6 +647,11 @@ export function buildSeangworldIntelligenceSnapshot(input: {
     recommendations: buildSeangworldRecommendations(data, comparisonPeriod),
     limitations: [
       ...(providersWithData.length ? [] : ["No provider returned verified analytics data."]),
+      ...(data.searchOpportunityBaseline
+        ? [
+            "Search Console may anonymize or omit query rows. Page/query opportunities are bounded evidence samples, not exhaustive page totals.",
+          ]
+        : []),
       ...input.providers
         .filter((provider) => provider.status !== "configured")
         .map((provider) => `${provider.label}: ${provider.guidance}`),
@@ -398,6 +748,8 @@ export function buildServerSeangworldProviders(
       lastSynchronizationAt: definition.synchronized || null,
       lastSuccessfulSynchronizationAt: definition.successful || null,
       freshness: freshness(definition.successful || null, now),
+      dataThroughDate: null,
+      reportingDelayDays: null,
       error:
         status === "synchronization_failed" || status === "unavailable"
           ? {
@@ -453,5 +805,16 @@ export function normalizeSeangworldIntelligenceSnapshot(
   ) {
     return null;
   }
-  return snapshot as SeangworldIntelligenceSnapshot;
+  return {
+    ...(snapshot as SeangworldIntelligenceSnapshot),
+    data: {
+      ...emptyData(),
+      ...(snapshot.data as Partial<SeangworldAnalyticsData>),
+    },
+    providers: snapshot.providers.map((provider) => ({
+      ...provider,
+      dataThroughDate: provider.dataThroughDate ?? null,
+      reportingDelayDays: provider.reportingDelayDays ?? null,
+    })),
+  };
 }

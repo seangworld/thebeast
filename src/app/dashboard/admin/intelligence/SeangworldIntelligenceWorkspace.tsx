@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   normalizeSeangworldIntelligenceSnapshot,
   seangworldProviderStatusLabels,
@@ -9,6 +9,7 @@ import {
   type SeangworldIntelligenceSnapshot,
 } from "@/lib/seangworldIntelligence";
 import { BeastAdminDataFreshness } from "../BeastAdminShell";
+import { FirstPartyTelemetryPanels } from "./FirstPartyTelemetryPanels";
 
 function number(value: number) {
   return new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 }).format(value);
@@ -83,8 +84,158 @@ function QueryCard({
   );
 }
 
+function changeLabel(
+  value: number | null,
+  kind: "number" | "percent" | "position" = "number"
+) {
+  if (value === null) return "Prior unavailable";
+  if (kind === "position") {
+    if (value === 0) return "No position change";
+    return `${value < 0 ? "Improved" : "Declined"} ${Math.abs(value).toFixed(1)}`;
+  }
+  const formatted = kind === "percent"
+    ? `${Math.abs(value * 100).toFixed(1)} pts`
+    : number(Math.abs(value));
+  return `${value > 0 ? "+" : value < 0 ? "−" : ""}${formatted}`;
+}
+
+function SearchOpportunityIntelligence({
+  data,
+}: {
+  data: SeangworldIntelligenceSnapshot["data"];
+}) {
+  const pages = useMemo(
+    () => Array.from(
+      new Set(data.searchOpportunities.map((opportunity) => opportunity.page))
+    ),
+    [data.searchOpportunities]
+  );
+  const [selectedPage, setSelectedPage] = useState(pages[0] || "");
+  useEffect(() => {
+    if (!pages.includes(selectedPage)) setSelectedPage(pages[0] || "");
+  }, [pages, selectedPage]);
+  const selected = selectedPage || pages[0] || "";
+  const opportunities = data.searchOpportunities.filter(
+    (opportunity) => opportunity.page === selected
+  );
+  const pagePerformance = data.searchLandingPages.find(
+    (page) => page.page === selected
+  );
+  const baseline = data.searchOpportunityBaseline;
+
+  return (
+    <section
+      aria-labelledby="search-opportunity-heading"
+      className="rounded-2xl border border-cyan-300/20 bg-[#111827] p-5"
+    >
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-300">
+            SW-SEO-229
+          </p>
+          <h2 id="search-opportunity-heading" className="mt-2 text-xl font-black text-white">
+            Search Opportunity Intelligence
+          </h2>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-300">
+            Page-to-query evidence ranks practical SEO opportunities without promising rankings or treating sampled rows as exhaustive totals.
+          </p>
+        </div>
+        {pages.length ? (
+          <label className="grid min-w-64 max-w-full gap-1 text-xs font-bold text-slate-300">
+            Landing page
+            <select
+              className="beast-input max-w-full"
+              value={selected}
+              onChange={(event) => setSelectedPage(event.target.value)}
+            >
+              {pages.map((page) => (
+                <option key={page} value={page}>{page}</option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+      </div>
+
+      {baseline ? (
+        <p className="mt-4 text-xs leading-5 text-slate-400">
+          Baseline: {baseline.currentStartDate}–{baseline.currentEndDate} versus {baseline.previousStartDate}–{baseline.previousEndDate}; finalized through {baseline.dataThroughDate}. Up to {baseline.rowLimit.toLocaleString()} page/query rows per period.
+        </p>
+      ) : null}
+      <p className="mt-2 text-xs leading-5 text-slate-500">
+        Disposition set: Improve Existing Page · Create Supporting Content · Investigate · Watch · Ignore
+      </p>
+
+      {pagePerformance ? (
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="Selected landing page search performance">
+          {[
+            ["Clicks", number(pagePerformance.current.clicks), changeLabel(pagePerformance.change.clicks)],
+            ["Impressions", number(pagePerformance.current.impressions), changeLabel(pagePerformance.change.impressions)],
+            ["CTR", `${(pagePerformance.current.ctr * 100).toFixed(1)}%`, changeLabel(pagePerformance.change.ctr, "percent")],
+            ["Average Position", pagePerformance.current.position.toFixed(1), changeLabel(pagePerformance.change.position, "position")],
+          ].map(([label, value, comparison]) => (
+            <div key={label} className="rounded-xl border border-white/10 bg-black/10 p-4">
+              <p className="text-xs font-black uppercase tracking-wide text-slate-400">{label}</p>
+              <p className="mt-2 text-xl font-black text-white">{value}</p>
+              <p className="mt-1 text-xs text-slate-400">{comparison} vs prior</p>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      {opportunities.length ? (
+        <div
+          className="mt-5 overflow-x-auto"
+          tabIndex={0}
+          aria-label="Page to query search opportunities table, horizontally scrollable"
+        >
+          <table className="min-w-[76rem] w-full text-left text-sm">
+            <thead className="text-slate-400">
+              <tr>
+                <th className="p-3">Query</th>
+                <th className="p-3">Clicks</th>
+                <th className="p-3">Impressions</th>
+                <th className="p-3">CTR</th>
+                <th className="p-3">Average Position</th>
+                <th className="p-3">Disposition</th>
+                <th className="p-3">Evidence</th>
+              </tr>
+            </thead>
+            <tbody>
+              {opportunities.map((opportunity) => (
+                <tr key={`${opportunity.page}-${opportunity.query}`} className="border-t border-white/10 align-top text-slate-200">
+                  <td className="max-w-xs break-words p-3 font-bold text-white">{opportunity.query}</td>
+                  <td className="p-3">{number(opportunity.current.clicks)}<span className="mt-1 block text-xs text-slate-500">{changeLabel(opportunity.change.clicks)}</span></td>
+                  <td className="p-3">{number(opportunity.current.impressions)}<span className="mt-1 block text-xs text-slate-500">{changeLabel(opportunity.change.impressions)}</span></td>
+                  <td className="p-3">{(opportunity.current.ctr * 100).toFixed(1)}%<span className="mt-1 block text-xs text-slate-500">{changeLabel(opportunity.change.ctr, "percent")}</span></td>
+                  <td className="p-3">{opportunity.current.position.toFixed(1)}<span className="mt-1 block text-xs text-slate-500">{changeLabel(opportunity.change.position, "position")}</span></td>
+                  <td className="p-3"><span className="inline-flex rounded-full border border-cyan-300/25 bg-cyan-300/5 px-3 py-1 text-xs font-bold text-cyan-100">{opportunity.disposition}</span></td>
+                  <td className="max-w-md p-3"><span className="font-bold text-white">Score {opportunity.score}</span><span className="mt-1 block text-xs leading-5 text-slate-400">{opportunity.rationale}</span></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <p className="mt-4 text-sm leading-6 text-slate-400">
+          No verified page-to-query rows are available for this reporting range.
+        </p>
+      )}
+
+      <p className="mt-4 rounded-xl border border-amber-300/20 bg-amber-300/5 p-4 text-xs leading-5 text-slate-300">
+        Hunt Our Data handoff remains unavailable until BeastHunter is canonically registered. Dispositions are review inputs only; accepted changes require a recorded baseline and later post-change comparison.
+      </p>
+    </section>
+  );
+}
+
 function time(value: string | null) {
   return value ? new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value)) : "Never";
+}
+
+function date(value: string | null) {
+  return value
+    ? new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeZone: "UTC" }).format(new Date(`${value}T00:00:00Z`))
+    : "Unavailable";
 }
 
 export function SeangworldIntelligenceWorkspace() {
@@ -121,7 +272,7 @@ export function SeangworldIntelligenceWorkspace() {
       {snapshot.limitations.length ? <div className="mt-4 rounded-xl border border-amber-300/20 bg-amber-300/5 p-4"><p className="text-sm font-black text-amber-100">Current limitations</p><ul className="mt-2 text-sm leading-6 text-slate-300">{snapshot.limitations.map((item) => <li key={item}>• {item}</li>)}</ul></div> : null}
     </section>
 
-    <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Primary analytics metrics">
+    <section aria-labelledby="public-analytics-heading"><h2 id="public-analytics-heading" className="text-xl font-black text-white">Public visitors and search signals</h2><div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Primary public analytics metrics">
       <MetricCard label="Visitors" metric={data.visitors} />
       <MetricCard label="Users" metric={data.users} />
       <MetricCard label="Sessions" metric={data.sessions} />
@@ -131,25 +282,33 @@ export function SeangworldIntelligenceWorkspace() {
       <MetricCard label="Clicks" metric={data.clicks} />
       <MetricCard label="CTR" metric={data.ctr} percent />
       <MetricCard label="Average Position" metric={data.averagePosition} />
-    </section>
+    </div></section>
 
-    <section aria-labelledby="provider-status-heading"><h2 id="provider-status-heading" className="text-xl font-black text-white">Provider Status</h2><div className="mt-4 grid gap-4 lg:grid-cols-3">{snapshot.providers.map((provider) => <article key={provider.id} className="rounded-2xl border border-white/10 bg-[#111827] p-5"><div className="flex flex-wrap items-center justify-between gap-2"><h3 className="font-black text-white">{provider.label}</h3><span className="rounded-full border border-white/15 px-3 py-1 text-xs font-bold text-slate-200">{seangworldProviderStatusLabels[provider.status]}</span></div><p className="mt-3 text-sm leading-6 text-slate-300">{provider.guidance}</p><dl className="mt-4 grid gap-3 text-xs"><div><dt className="text-slate-500">Connection Status</dt><dd className="mt-1 capitalize text-slate-200">{provider.connectionStatus.replaceAll("_", " ")}</dd></div><div><dt className="text-slate-500">Last Sync</dt><dd className="mt-1 text-slate-200">{time(provider.lastSynchronizationAt)}</dd></div><div><dt className="text-slate-500">Last Successful Synchronization</dt><dd className="mt-1 text-slate-200">{time(provider.lastSuccessfulSynchronizationAt)}</dd></div><div><dt className="text-slate-500">Data Freshness</dt><dd className="mt-1 capitalize text-slate-200">{provider.freshness}</dd></div></dl>{provider.error ? <p className="mt-4 rounded-lg border border-red-300/20 bg-red-300/5 p-3 text-xs leading-5 text-red-100" role="status">{provider.error.message}{provider.error.retryable ? " Retry is safe." : ""}</p> : null}</article>)}</div></section>
+    <section aria-labelledby="provider-status-heading"><h2 id="provider-status-heading" className="text-xl font-black text-white">Provider Status</h2><div className="mt-4 grid gap-4 lg:grid-cols-3">{snapshot.providers.map((provider) => <article key={provider.id} className="rounded-2xl border border-white/10 bg-[#111827] p-5"><div className="flex flex-wrap items-center justify-between gap-2"><h3 className="font-black text-white">{provider.label}</h3><span className="rounded-full border border-white/15 px-3 py-1 text-xs font-bold text-slate-200">{seangworldProviderStatusLabels[provider.status]}</span></div><p className="mt-3 text-sm leading-6 text-slate-300">{provider.guidance}</p><dl className="mt-4 grid gap-3 text-xs"><div><dt className="text-slate-500">Connection Status</dt><dd className="mt-1 capitalize text-slate-200">{provider.connectionStatus.replaceAll("_", " ")}</dd></div><div><dt className="text-slate-500">Last Sync</dt><dd className="mt-1 text-slate-200">{time(provider.lastSynchronizationAt)}</dd></div><div><dt className="text-slate-500">Last Successful Synchronization</dt><dd className="mt-1 text-slate-200">{time(provider.lastSuccessfulSynchronizationAt)}</dd></div>{provider.id === "search_console" ? <><div><dt className="text-slate-500">Final Data Through</dt><dd className="mt-1 text-slate-200">{date(provider.dataThroughDate)}</dd></div><div><dt className="text-slate-500">Reporting Delay</dt><dd className="mt-1 text-slate-200">{provider.reportingDelayDays === null ? "Unavailable" : `${provider.reportingDelayDays} day${provider.reportingDelayDays === 1 ? "" : "s"} (2–3 days is normal)`}</dd></div></> : null}<div><dt className="text-slate-500">Data Freshness</dt><dd className="mt-1 capitalize text-slate-200">{provider.freshness}</dd></div></dl>{provider.error ? <p className="mt-4 rounded-lg border border-red-300/20 bg-red-300/5 p-3 text-xs leading-5 text-red-100" role="status">{provider.error.message}{provider.error.retryable ? " Retry is safe." : ""}</p> : null}</article>)}</div></section>
+
+    <FirstPartyTelemetryPanels data={data.firstPartyTelemetry} />
+
+    <SearchOpportunityIntelligence data={data} />
 
     <section aria-labelledby="recommendations-heading"><h2 id="recommendations-heading" className="text-xl font-black text-white">Deterministic Recommendations</h2>{snapshot.recommendations.length ? <div className="mt-4 grid gap-4 lg:grid-cols-2">{snapshot.recommendations.map((recommendation) => <article key={recommendation.id} className="rounded-2xl border border-cyan-300/20 bg-cyan-300/5 p-5"><div className="flex justify-between gap-3"><h3 className="font-black text-white">{recommendation.title}</h3><span className="text-xs font-bold capitalize text-cyan-200">{recommendation.confidence} confidence</span></div><p className="mt-3 text-sm font-bold text-cyan-100">{recommendation.supportingMetric}</p><p className="mt-2 text-sm leading-6 text-slate-300">{recommendation.rationale}</p><p className="mt-3 text-xs leading-5 text-slate-400">Owner review: {recommendation.suggestedOwnerReview}</p></article>)}</div> : <div className="mt-4 rounded-xl border border-dashed border-white/15 p-5 text-sm leading-6 text-slate-400">No deterministic rule has enough verified evidence to produce a recommendation. This is normal when providers are not configured or have no data.</div>}</section>
 
     <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
-      <DimensionCard title="Countries" items={data.countries} />
+      <DimensionCard title="Countries (GA4)" items={data.countries} />
+      <DimensionCard title="Countries (Search Console)" items={data.searchCountries} secondary="impressions" />
       <DimensionCard title="Cities" items={data.cities} />
-      <DimensionCard title="Devices" items={data.devices} />
+      <DimensionCard title="Devices (GA4)" items={data.devices} />
+      <DimensionCard title="Devices (Search Console)" items={data.searchDevices} secondary="impressions" />
       <DimensionCard title="Browsers" items={data.browsers} />
       <DimensionCard title="Operating Systems" items={data.operatingSystems} />
       <DimensionCard title="Traffic Sources" items={data.trafficSources} />
       <DimensionCard title="Landing Pages" items={data.entryPages} />
       <DimensionCard title="Exit Pages" items={data.exitPages} />
-      <DimensionCard title="Top Landing Pages" items={data.topLandingPages} secondary="impressions" />
+      <DimensionCard title="Top Landing Pages (Search Console)" items={data.topLandingPages} secondary="impressions" />
       <QueryCard items={data.topQueries} />
     </div>
 
-    <section className="rounded-2xl border border-white/10 bg-[#111827] p-5"><h2 className="text-lg font-black text-white">Historical Trends</h2>{data.historicalTrends.length ? <div className="mt-4 overflow-x-auto" tabIndex={0} aria-label="Historical trends table, horizontally scrollable"><table className="min-w-[42rem] w-full text-left text-sm"><thead className="text-slate-400"><tr><th className="p-3">Date</th><th className="p-3">Visitors</th><th className="p-3">Sessions</th><th className="p-3">Views</th></tr></thead><tbody>{data.historicalTrends.map((row) => <tr key={row.date} className="border-t border-white/10 text-slate-200"><td className="p-3">{row.date}</td><td className="p-3">{row.visitors === null ? "Unavailable" : number(row.visitors)}</td><td className="p-3">{row.sessions === null ? "Unavailable" : number(row.sessions)}</td><td className="p-3">{row.views === null ? "Unavailable" : number(row.views)}</td></tr>)}</tbody></table></div> : <p className="mt-3 text-sm text-slate-400">No verified historical trend series is available.</p>}</section>
+    <section className="rounded-2xl border border-white/10 bg-[#111827] p-5"><h2 className="text-lg font-black text-white">Historical Trends (GA4)</h2>{data.historicalTrends.length ? <div className="mt-4 overflow-x-auto" tabIndex={0} aria-label="Historical trends table, horizontally scrollable"><table className="min-w-[42rem] w-full text-left text-sm"><thead className="text-slate-400"><tr><th className="p-3">Date</th><th className="p-3">Visitors</th><th className="p-3">Sessions</th><th className="p-3">Views</th></tr></thead><tbody>{data.historicalTrends.map((row) => <tr key={row.date} className="border-t border-white/10 text-slate-200"><td className="p-3">{row.date}</td><td className="p-3">{row.visitors === null ? "Unavailable" : number(row.visitors)}</td><td className="p-3">{row.sessions === null ? "Unavailable" : number(row.sessions)}</td><td className="p-3">{row.views === null ? "Unavailable" : number(row.views)}</td></tr>)}</tbody></table></div> : <p className="mt-3 text-sm text-slate-400">No verified GA4 historical trend series is available.</p>}</section>
+
+    <section className="rounded-2xl border border-white/10 bg-[#111827] p-5"><h2 className="text-lg font-black text-white">Search Performance Trends</h2>{data.searchTrends.length ? <div className="mt-4 overflow-x-auto" tabIndex={0} aria-label="Search performance trends table, horizontally scrollable"><table className="min-w-[44rem] w-full text-left text-sm"><thead className="text-slate-400"><tr><th className="p-3">Date</th><th className="p-3">Clicks</th><th className="p-3">Impressions</th><th className="p-3">CTR</th><th className="p-3">Average Position</th></tr></thead><tbody>{data.searchTrends.map((row) => <tr key={row.date} className="border-t border-white/10 text-slate-200"><td className="p-3">{row.date}</td><td className="p-3">{number(row.clicks)}</td><td className="p-3">{number(row.impressions)}</td><td className="p-3">{row.ctr === null ? "Unavailable" : `${(row.ctr * 100).toFixed(1)}%`}</td><td className="p-3">{row.position === null ? "Unavailable" : row.position.toFixed(1)}</td></tr>)}</tbody></table></div> : <p className="mt-3 text-sm text-slate-400">No finalized Search Console trend series is available for this period.</p>}</section>
   </div>;
 }

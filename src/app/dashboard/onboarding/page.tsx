@@ -13,6 +13,7 @@ import {
   profileOnboardingCompletionKeyColumn,
   validateLearningOnboardingForm,
 } from "@/lib/learning/onboardingCompletion";
+import { sendFirstPartyTelemetry } from "@/lib/firstPartyTelemetry";
 import { beastOSPlatformIdentity } from "@/lib/platform/identity";
 import { createClient } from "@/lib/supabase/client";
 import { buildCurrentAuthLoginPath } from "@/lib/auth/experience";
@@ -553,6 +554,12 @@ export default function OnboardingPage() {
           "complete"
         );
       }
+
+      void sendFirstPartyTelemetry({
+        eventName: "onboarding_completed",
+        moduleId: "beastos",
+        outcome: "completed",
+      });
 
       router.replace("/dashboard/today");
     } catch (error) {
