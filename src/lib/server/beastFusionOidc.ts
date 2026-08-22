@@ -4,6 +4,7 @@ const issuer = "https://token.actions.githubusercontent.com";
 const configurationUrl = `${issuer}/.well-known/openid-configuration`;
 const expectedRepository = "seangworld/beastfusion";
 const expectedRef = "refs/heads/main";
+const expectedSubject = "repo:seangworld@271630738/beastfusion@129741450:ref:refs/heads/main";
 const jwtPattern = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/;
 
 type JsonRecord = Record<string, unknown>;
@@ -114,7 +115,7 @@ export async function verifyBeastFusionWorkflowOidc(input: {
   const sourceCommit = exactString(claims.sha);
   const runNumber = positiveInteger(claims.run_number);
   const runAttempt = positiveInteger(claims.run_attempt);
-  if (!subject?.startsWith(`repo:${expectedRepository}:`) || !sourceCommit?.match(/^[0-9a-f]{40}$/) || !runNumber || !runAttempt) return { ok: false, reason: "Machine identity claims are incomplete." };
+  if (subject !== expectedSubject || !sourceCommit?.match(/^[0-9a-f]{40}$/) || !runNumber || !runAttempt) return { ok: false, reason: "Machine identity claims are incomplete." };
 
   return {
     ok: true,
