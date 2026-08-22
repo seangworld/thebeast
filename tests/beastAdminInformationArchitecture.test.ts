@@ -10,7 +10,7 @@ import { beastAdminNavigation } from "../src/lib/moduleNavigation";
 
 const expectedGroups = {
   Operations: ["CEO Mode", "Development Console", "Platform Health"],
-  Delivery: ["Migration Status", "SQL Explorer", "Release Center", "Execution History", "Roadmap"],
+  Delivery: ["Migration Status", "SQL Explorer", "Release Center", "Digital Professional History", "Roadmap"],
   Insights: [
     "Executive Metrics",
     "AI Analytics",

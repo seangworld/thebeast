@@ -15,7 +15,7 @@ const expectedAdminDestinations = [
   ["Migration Status", "/dashboard/admin/migrations"],
   ["SQL Explorer", "/dashboard/admin/migrations/explorer"],
   ["Release Center", "/dashboard/admin/releases"],
-  ["Execution History", "/dashboard/admin/execution-history"],
+  ["Digital Professional History", "/dashboard/admin/execution-history"],
   ["Roadmap", "/dashboard/admin/roadmap"],
   ["Executive Metrics", "/dashboard/admin/metrics"],
   ["AI Analytics", "/dashboard/admin/analytics"],

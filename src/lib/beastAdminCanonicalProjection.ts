@@ -27,10 +27,22 @@ export type BeastFusionStoredSnapshot = {
 export type BeastAdminCanonicalReadModel = {
   provider: { status: BeastFusionProviderStatus; detail: string; projectionId: string | null; generatedAt: string | null; acceptedAt: string | null; lastConfirmedAt: string | null };
   cursor: { path: string[]; mode: string; executableWorkAvailable: boolean; selectedPackage: string | null; selectedProduct: string | null; recommendedDirective: string | null };
-  products: Array<{ id: string; name: string; parent: string | null; lifecycle: string; version: string | null; buildId: string | null; releaseDate: string | null; declaredDeployment: string; ownerRepository: string | null; source: "beastfusion" }>;
-  roadmap: Array<{ id: string; product: string; title: string; status: string; priority: string; dependencies: string[]; blocked: boolean; executable: boolean; ownerApproved: boolean; executionAuthorized: boolean; source: "beastfusion" }>;
+  projection?: { projectionId: string; projectionVersion: string; payloadHash: string; canonicalInputDigest: string; sourceCommit: string; generatedAt: string; acceptedAt: string; lastConfirmedAt: string; repository: string; branch: string };
+  products: Array<{ id: string; name: string; parent: string | null; lifecycle: string; version: string | null; buildId: string | null; releaseDate: string | null; channel?: string | null; declaredDeployment: string; ownerRepository: string | null; activeRoadmap?: string | null; source: "beastfusion" }>;
+  roadmap: Array<{ id: string; product: string; title: string; summary?: string; status: string; priority: string; roadmapOrder?: number; dependencies: string[]; blockerCodes?: string[]; blocked: boolean; executable: boolean; ownerApproved: boolean; executionAuthorized: boolean; prerequisitesComplete?: boolean; ownerAction?: string | null; sourceReference?: string | null; evidenceReferences?: string[]; source: "beastfusion" }>;
   execution: Array<{ id: string; package: string | null; product: string; status: string; occurredAt: string | null; startedAt: string | null; completedAt: string | null; candidateCommit: string | null; result: string; blocker: string | null; source: "beastfusion" }>;
-  releases: Array<{ id: string; product: string; version: string | null; status: string; releaseDate: string | null; validationState: string | null; evidenceReference: string | null; preview: "not_in_projection_v1"; production: "not_in_projection_v1"; servedCommit: null; declaredDeployment: string; source: "beastfusion" }>;
+  executionOverview?: {
+    current: { package: string | null; product: string | null; reason: string | null } | null;
+    nextFive: Array<{ package: string | null; product: string | null; reason: string | null; priority: string | null; phase: string | null }>;
+    blocked: Array<{ package: string | null; product: string | null; reason: string | null; ownerDecisionRequired: boolean; blockingDependencies: string[] }>;
+    waiting: Array<{ package: string | null; product: string | null; reason: string | null; ownerDecisionRequired: boolean; blockingDependencies: string[] }>;
+    recentlyCompleted: Array<{ package: string | null; product: string | null; reason: string | null; priority: string | null; phase: string | null }>;
+    reconciliation: { reconciledAt: string | null; total: number; completed: number; remaining: number; currentExecutableProduct: string | null; currentExecutablePackage: string | null; warningCount: number };
+  };
+  releases: Array<{ id: string; product: string; module?: string | null; version: string | null; type?: string; status: string; releaseDate: string | null; ownerApproved?: boolean; validationState: string | null; dependencies?: string[]; blockers?: string[]; evidenceSummary?: string; evidenceReference: string | null; preview: "not_in_projection_v1"; production: "not_in_projection_v1"; servedCommit: null; declaredDeployment: string; source: "beastfusion" }>;
+  governance?: { registryVersion: string; packageRegistryVersion: string; executionStateVersion: string; automationEnabled: boolean; autonomousExecution: boolean; deploymentCapability: boolean; beastShieldState: string; beastShieldMeaning: string; dependencyIntegrity: string; validatorState: string; warningCodes: string[]; errorCodes: string[] };
+  validation?: { projectionSchema: string; projectionGenerated: boolean; canonicalConsistency: string; lastGovernedEvidenceReference: string | null; lastGovernedEvidenceDate: string | null; testCount: number | null; warnings: string[] };
+  records?: Array<{ id: string; label: string; path: string; role: string; digest: string; updatedAt: string | null }>;
   attention: Array<{ id: string; kind: "blocker" | "warning" | "failure" | "drift" | "missing_evidence" | "measurement"; detail: string; source: "beastfusion" }>;
 };
 
@@ -117,6 +129,18 @@ export function buildBeastAdminCanonicalReadModel(snapshot: BeastFusionStoredSna
 
   return {
     provider: resolveBeastFusionProviderStatus({ configured: options.configured ?? true, snapshot, now: options.now }),
+    projection: {
+      projectionId: snapshot.projectionId,
+      projectionVersion: snapshot.projectionVersion,
+      payloadHash: snapshot.payloadHash,
+      canonicalInputDigest: snapshot.canonicalInputDigest,
+      sourceCommit: snapshot.sourceCommit,
+      generatedAt: snapshot.generatedAt,
+      acceptedAt: snapshot.acceptedAt,
+      lastConfirmedAt: snapshot.lastConfirmedAt,
+      repository: projection.source.repository,
+      branch: projection.source.branch,
+    },
     cursor: {
       path: strings(summary.cursorPath),
       mode: String(summary.cursorMode ?? "unknown"),
@@ -126,10 +150,10 @@ export function buildBeastAdminCanonicalReadModel(snapshot: BeastFusionStoredSna
       recommendedDirective: typeof summary.recommendedDirective === "string" ? summary.recommendedDirective : null,
     },
     products: projection.portfolio.map(record).map((item) => ({
-      id: String(item.id), name: String(item.name), parent: typeof item.parent === "string" ? item.parent : null, lifecycle: String(item.lifecycle), version: typeof item.version === "string" ? item.version : null, buildId: typeof item.buildId === "string" ? item.buildId : null, releaseDate: typeof item.releaseDate === "string" ? item.releaseDate : null, declaredDeployment: String(item.declaredDeployment), ownerRepository: typeof item.ownerRepository === "string" ? item.ownerRepository : null, source: "beastfusion" as const,
+      id: String(item.id), name: String(item.name), parent: typeof item.parent === "string" ? item.parent : null, lifecycle: String(item.lifecycle), version: typeof item.version === "string" ? item.version : null, buildId: typeof item.buildId === "string" ? item.buildId : null, releaseDate: typeof item.releaseDate === "string" ? item.releaseDate : null, channel: typeof item.channel === "string" ? item.channel : null, declaredDeployment: String(item.declaredDeployment), ownerRepository: typeof item.ownerRepository === "string" ? item.ownerRepository : null, activeRoadmap: typeof item.activeRoadmap === "string" ? item.activeRoadmap : null, source: "beastfusion" as const,
     })),
     roadmap: (Array.isArray(roadmap.items) ? roadmap.items : []).map(record).map((item) => ({
-      id: String(item.id), product: String(item.product), title: String(item.title), status: String(item.canonicalState), priority: String(item.priority), dependencies: strings(item.dependencies), blocked: item.blocked === true, executable: item.executable === true, ownerApproved: item.ownerApproved === true, executionAuthorized: item.executionAuthorized === true, source: "beastfusion" as const,
+      id: String(item.id), product: String(item.product), title: String(item.title), summary: String(item.summary ?? ""), status: String(item.canonicalState), priority: String(item.priority), roadmapOrder: Number.isInteger(item.roadmapOrder) ? Number(item.roadmapOrder) : 0, dependencies: strings(item.dependencies), blockerCodes: strings(item.blockerCodes), blocked: item.blocked === true, executable: item.executable === true, ownerApproved: item.ownerApproved === true, executionAuthorized: item.executionAuthorized === true, prerequisitesComplete: item.prerequisitesComplete === true, ownerAction: typeof item.ownerAction === "string" ? item.ownerAction : null, sourceReference: typeof item.sourceReference === "string" ? item.sourceReference : null, evidenceReferences: strings(item.evidenceReferences), source: "beastfusion" as const,
     })),
     execution: (Array.isArray(execution.events) ? execution.events : []).map(record).map((item) => {
       const status = String(item.type);
@@ -142,9 +166,24 @@ export function buildBeastAdminCanonicalReadModel(snapshot: BeastFusionStoredSna
         result: String(item.summary ?? ""), blocker: /block|fail/i.test(status) ? String(item.summary ?? "Canonical execution blocker.") : null, source: "beastfusion" as const,
       };
     }),
+    executionOverview: {
+      current: execution.current === null ? null : (() => { const item = record(execution.current); return { package: typeof item.package === "string" ? item.package : null, product: typeof item.product === "string" ? item.product : null, reason: typeof item.reason === "string" ? item.reason : null }; })(),
+      nextFive: (Array.isArray(execution.nextFive) ? execution.nextFive : []).map(record).map((item) => ({ package: typeof item.package === "string" ? item.package : null, product: typeof item.product === "string" ? item.product : null, reason: typeof item.reason === "string" ? item.reason : null, priority: typeof item.priority === "string" ? item.priority : null, phase: typeof item.phase === "string" ? item.phase : null })),
+      blocked: (Array.isArray(execution.blocked) ? execution.blocked : []).map(record).map((item) => ({ package: typeof item.package === "string" ? item.package : null, product: typeof item.product === "string" ? item.product : null, reason: typeof item.reason === "string" ? item.reason : null, ownerDecisionRequired: item.ownerDecisionRequired === true, blockingDependencies: strings(item.blockingDependencies) })),
+      waiting: (Array.isArray(execution.waiting) ? execution.waiting : []).map(record).map((item) => ({ package: typeof item.package === "string" ? item.package : null, product: typeof item.product === "string" ? item.product : null, reason: typeof item.reason === "string" ? item.reason : null, ownerDecisionRequired: item.ownerDecisionRequired === true, blockingDependencies: strings(item.blockingDependencies) })),
+      recentlyCompleted: (Array.isArray(execution.recentlyCompleted) ? execution.recentlyCompleted : []).map(record).map((item) => ({ package: typeof item.package === "string" ? item.package : null, product: typeof item.product === "string" ? item.product : null, reason: typeof item.reason === "string" ? item.reason : null, priority: typeof item.priority === "string" ? item.priority : null, phase: typeof item.phase === "string" ? item.phase : null })),
+      reconciliation: (() => { const item = record(execution.packageReconciliation); return { reconciledAt: typeof item.reconciledAt === "string" ? item.reconciledAt : null, total: Number.isInteger(item.total) ? Number(item.total) : 0, completed: Number.isInteger(item.completed) ? Number(item.completed) : 0, remaining: Number.isInteger(item.remaining) ? Number(item.remaining) : 0, currentExecutableProduct: typeof item.currentExecutableProduct === "string" ? item.currentExecutableProduct : null, currentExecutablePackage: typeof item.currentExecutablePackage === "string" ? item.currentExecutablePackage : null, warningCount: Number.isInteger(item.warningCount) ? Number(item.warningCount) : 0 }; })(),
+    },
     releases: projection.releases.map(record).map((item) => ({
-      id: String(item.id), product: String(item.product), version: typeof item.version === "string" ? item.version : null, status: String(item.state), releaseDate: typeof item.releaseDate === "string" ? item.releaseDate : null, validationState: typeof item.validationState === "string" ? item.validationState : null, evidenceReference: typeof item.evidenceReference === "string" ? item.evidenceReference : null, preview: "not_in_projection_v1" as const, production: "not_in_projection_v1" as const, servedCommit: null, declaredDeployment: String(item.declaredDeployment), source: "beastfusion" as const,
+      id: String(item.id), product: String(item.product), module: typeof item.module === "string" ? item.module : null, version: typeof item.version === "string" ? item.version : null, type: String(item.type ?? ""), status: String(item.state), releaseDate: typeof item.releaseDate === "string" ? item.releaseDate : null, ownerApproved: item.ownerApproved === true, validationState: typeof item.validationState === "string" ? item.validationState : null, dependencies: strings(item.dependencies), blockers: strings(item.blockers), evidenceSummary: String(item.evidenceSummary ?? ""), evidenceReference: typeof item.evidenceReference === "string" ? item.evidenceReference : null, preview: "not_in_projection_v1" as const, production: "not_in_projection_v1" as const, servedCommit: null, declaredDeployment: String(item.declaredDeployment), source: "beastfusion" as const,
     })),
+    governance: {
+      registryVersion: String(governance.registryVersion ?? ""), packageRegistryVersion: String(governance.packageRegistryVersion ?? ""), executionStateVersion: String(governance.executionStateVersion ?? ""), automationEnabled: governance.automationEnabled === true, autonomousExecution: governance.autonomousExecution === true, deploymentCapability: governance.deploymentCapability === true, beastShieldState: String(governance.beastShieldState ?? ""), beastShieldMeaning: String(governance.beastShieldMeaning ?? ""), dependencyIntegrity: String(governance.dependencyIntegrity ?? ""), validatorState: String(governance.validatorState ?? ""), warningCodes: strings(governance.warningCodes), errorCodes: strings(governance.errorCodes),
+    },
+    validation: {
+      projectionSchema: String(validation.projectionSchema ?? ""), projectionGenerated: validation.projectionGenerated === true, canonicalConsistency: String(validation.canonicalConsistency ?? ""), lastGovernedEvidenceReference: typeof validation.lastGovernedEvidenceReference === "string" ? validation.lastGovernedEvidenceReference : null, lastGovernedEvidenceDate: typeof validation.lastGovernedEvidenceDate === "string" ? validation.lastGovernedEvidenceDate : null, testCount: Number.isInteger(validation.testCount) ? Number(validation.testCount) : null, warnings: strings(validation.warnings),
+    },
+    records: projection.sourceManifest.map(record).map((item) => ({ id: `record:${String(item.path)}`, label: String(item.path), path: String(item.path), role: String(item.role), digest: String(item.digest), updatedAt: typeof item.updatedAt === "string" ? item.updatedAt : null })),
     attention,
   };
 }

@@ -297,8 +297,8 @@ export function BeastAdminFeedbackWorkspace() {
           title="Every response has a visible outcome"
           description="Acknowledgement confirms review. Delivery states require a direct roadmap link. Released feedback creates one durable member notification without exposing private owner notes."
           action={
-            <Link href="/dashboard/admin/roadmap" className="beast-button">
-              Manage Roadmap
+            <Link href="/dashboard/admin/roadmap/intake" className="beast-button">
+              Manage Candidate Intake
             </Link>
           }
         />

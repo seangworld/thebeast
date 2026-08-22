@@ -1,17 +1,19 @@
 import { BeastAdminShell } from "../BeastAdminShell";
 import { beastModuleRegistry, getModuleVisibilityLabel } from "@/lib/moduleRegistry";
 import { beastAdminPortfolio } from "@/lib/beastAdminPortfolio";
+import { BeastAdminCanonicalPortfolioWorkspace } from "./BeastAdminCanonicalPortfolioWorkspace";
 
 export default function BeastAdminModulesPage() {
   return (
     <BeastAdminShell
       title="Modules"
-      purpose="Central registry for Beast applications, visibility, status, beta flags, and owner notes."
+      purpose="Canonical BeastFusion product portfolio with Beast runtime module configuration kept explicitly separate."
     >
+      <BeastAdminCanonicalPortfolioWorkspace />
       <section className="mb-6 rounded-2xl border border-white/10 bg-[#111827] p-5">
-        <h2 className="text-lg font-black text-white">Current ecosystem portfolio</h2>
+        <h2 className="text-lg font-black text-white">Generated operational portfolio</h2>
         <p className="mt-2 text-sm leading-6 text-slate-400">
-          Static operational projection generated from BeastFusion version identities. Owner-only and internal components remain distinct from released products.
+          Supplemental generated identities for runtime comparison only. The canonical portfolio above remains authoritative.
         </p>
         <div className="mt-4 overflow-x-auto" tabIndex={0} aria-label="Current ecosystem portfolio, horizontally scrollable">
           <table className="min-w-[48rem] w-full text-left text-sm">

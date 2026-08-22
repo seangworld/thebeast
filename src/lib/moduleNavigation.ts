@@ -229,7 +229,7 @@ export const beastAdminNavigation: ModuleNavSection = {
       group: "Delivery",
     },
     {
-      label: "Execution History",
+      label: "Digital Professional History",
       href: "/dashboard/admin/execution-history",
       group: "Delivery",
     },

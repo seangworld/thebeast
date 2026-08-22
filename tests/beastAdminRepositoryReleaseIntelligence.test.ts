@@ -287,9 +287,9 @@ test("owner route and UI keep provider credentials server-only and expose no mut
     "utf8"
   );
   assert.match(route, /profile\?\.role !== "admin"/);
-  assert.match(route, /Cache-Control": "private, no-store"/);
+  assert.match(route, /Cache-Control": "private, no-cache, no-store, must-revalidate"/);
   assert.match(route, /legacy records were not used as a fallback/);
-  assert.match(route, /status: 503/);
+  assert.match(route, /,\s*503\s*\)/);
   assert.match(route, /runtime = "nodejs"/);
   assert.doesNotMatch(route, /export async function (POST|PUT|PATCH|DELETE)/);
   assert.match(providerSource, /permissions: \{ contents: "read", metadata: "read" \}/);

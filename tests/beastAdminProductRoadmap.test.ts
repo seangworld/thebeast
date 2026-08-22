@@ -164,13 +164,17 @@ test("BA-102 rejects unsupported database values instead of displaying invented 
   assert.equal(invalidProduct, null);
 });
 
-test("BA-102 keeps roadmap persistence owner-only and migration-backed", () => {
+test("BA-CMD-001E makes Product Roadmap canonical and separates owner intake", () => {
   const migration = readFileSync(
     "supabase/migrations/20260726000000_add_beast_admin_product_roadmap.sql",
     "utf8"
   );
   const workspace = readFileSync(
     "src/app/dashboard/admin/roadmap/BeastAdminRoadmapWorkspace.tsx",
+    "utf8"
+  );
+  const intake = readFileSync(
+    "src/app/dashboard/admin/roadmap/BeastAdminRoadmapIntakeWorkspace.tsx",
     "utf8"
   );
   const shell = readFileSync(
@@ -187,11 +191,17 @@ test("BA-102 keeps roadmap persistence owner-only and migration-backed", () => {
     migration,
     /status in \('planned', 'in_progress', 'testing', 'released', 'archived'\)/
   );
-  assert.match(workspace, /\.from\("beast_admin_roadmap_items"\)/);
-  assert.match(workspace, /Add to roadmap/);
-  assert.match(workspace, /Owner notes/);
-  assert.match(workspace, /Save changes/);
-  assert.match(workspace, /No roadmap features match these filters/);
+  assert.match(workspace, /useBeastAdminCommandCenter/);
+  assert.match(workspace, /Read-only governed delivery truth/);
+  assert.match(workspace, /\/dashboard\/admin\/roadmap\/intake/);
+  assert.doesNotMatch(workspace, /beast_admin_roadmap_items/);
+  assert.doesNotMatch(workspace, /\.insert\(|\.update\(|\.delete\(/);
+  assert.match(intake, /\.from\("beast_admin_roadmap_items"\)/);
+  assert.match(intake, /governance_classification: "intake"/);
+  assert.match(intake, /execution_status: "candidate_intake"/);
+  assert.match(intake, /Add to candidate intake/);
+  assert.match(intake, /Save annotation/);
+  assert.match(intake, /cannot approve, authorize, schedule, execute/);
   assert.doesNotMatch(workspace, /localStorage/);
   assert.match(navigation, /\/dashboard\/admin\/roadmap/);
   assert.match(shell, /canAccessBeastAdmin/);
