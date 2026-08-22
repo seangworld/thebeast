@@ -87,6 +87,15 @@ test("machine publication requires exact short-lived GitHub Actions OIDC claims"
   };
   const valid = await verifyBeastFusionWorkflowOidc({ authorization: `Bearer ${tokenFor(claims)}`, expectedAudience: audience, expectedWorkflowRef: workflowRef, now, keys: [key] });
   assert.equal(valid.ok, true);
+  if (valid.ok) {
+    assert.equal(valid.identity.subject, claims.sub);
+    assert.equal(valid.identity.runNumber, 42);
+    assert.equal(valid.identity.runAttempt, 1);
+  }
+  const invalidSubject = await verifyBeastFusionWorkflowOidc({ authorization: `Bearer ${tokenFor({ ...claims, sub: "repo:seangworld/beastfusion:ref:refs/heads/main" })}`, expectedAudience: audience, expectedWorkflowRef: workflowRef, now, keys: [key] });
+  assert.deepEqual(invalidSubject, { ok: false, reason: "Machine identity subject is not allowed." });
+  const invalidRun = await verifyBeastFusionWorkflowOidc({ authorization: `Bearer ${tokenFor({ ...claims, run_number: "not-a-number" })}`, expectedAudience: audience, expectedWorkflowRef: workflowRef, now, keys: [key] });
+  assert.deepEqual(invalidRun, { ok: false, reason: "Machine identity workflow run metadata is invalid." });
   for (const overrides of [{ sub: "repo:seangworld/beastfusion:ref:refs/heads/main" }, { repository: "attacker/repo" }, { ref: "refs/heads/feature" }, { workflow_ref: "seangworld/beastfusion/.github/workflows/other.yml@refs/heads/main" }, { aud: "wrong" }, { exp: nowSeconds - 1 }, { sha: "f".repeat(39) }]) {
     const result = await verifyBeastFusionWorkflowOidc({ authorization: `Bearer ${tokenFor({ ...claims, ...overrides })}`, expectedAudience: audience, expectedWorkflowRef: workflowRef, now, keys: [key] });
     assert.equal(result.ok, false);
