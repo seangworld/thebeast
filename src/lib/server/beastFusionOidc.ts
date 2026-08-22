@@ -115,7 +115,9 @@ export async function verifyBeastFusionWorkflowOidc(input: {
   const sourceCommit = exactString(claims.sha);
   const runNumber = positiveInteger(claims.run_number);
   const runAttempt = positiveInteger(claims.run_attempt);
-  if (subject !== expectedSubject || !sourceCommit?.match(/^[0-9a-f]{40}$/) || !runNumber || !runAttempt) return { ok: false, reason: "Machine identity claims are incomplete." };
+  if (subject !== expectedSubject) return { ok: false, reason: "Machine identity subject is not allowed." };
+  if (!sourceCommit?.match(/^[0-9a-f]{40}$/)) return { ok: false, reason: "Machine identity source commit is malformed." };
+  if (!runNumber || !runAttempt) return { ok: false, reason: "Machine identity workflow run metadata is invalid." };
 
   return {
     ok: true,
