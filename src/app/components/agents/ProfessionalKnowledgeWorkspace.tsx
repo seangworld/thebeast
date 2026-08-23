@@ -166,7 +166,9 @@ function KnowledgeItemCard({
             </p>
           ) : null}
           <p className="mt-2 text-xs leading-5 text-slate-500">
-            Start a conversation to add or correct this information without leaving this page.
+            {item.action.mode === "conversation"
+              ? "Answer here to add or correct this information without leaving this page."
+              : "Use the action below to add or correct this information in its existing record."}
           </p>
         </div>
       ) : null}

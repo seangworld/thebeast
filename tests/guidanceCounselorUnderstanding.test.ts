@@ -145,6 +145,6 @@ test("BE-201 keeps facts, working ideas, and missing context visibly distinct", 
 test("BE-201 exposes evidence and keeps the full missing-context checklist actionable", () => {
   assert.match(sharedWorkspace, /Evidence source/);
   assert.match(sharedWorkspace, /missing_information_flow_started/);
-  assert.match(sharedWorkspace, /Start a conversation to add or correct/);
+  assert.match(sharedWorkspace, /Answer here to add or correct/);
   assert.doesNotMatch(conversation, /whatIStillNeed[\s\S]{0,80}\.slice\(0, 4\)/);
 });

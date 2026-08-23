@@ -611,18 +611,18 @@ export function buildMoneyCoachExperience(
 
   if (input.activeBillCount === 0 && input.activeDebtCount === 0 && input.monthlyIncome === 0) {
     const cardInsight = moneyInsight(input, {
-      id: "missing-core-records", category: "Needs Attention", title: "Add financial information",
-      summary: "Money Coach needs income, bill, or debt records to provide a meaningful review.",
+      id: "missing-core-records", category: "Needs Attention", title: "Add your usual monthly take-home income",
+      summary: "What is your usual monthly take-home income?",
       explanation: "No active recurring income, bill, or debt records were available in the authenticated BeastMoney snapshot.",
       rule: "Show when active income, active bills, and active debts are all absent.",
       factors: { urgency: 45, financialImpact: 50, confidence: 100, dueDate: 10, unresolvedStatus: 90, recurrence: 30 },
       supportingData: [{ label: "Active income total", value: input.monthlyIncome }, { label: "Active bills", value: input.activeBillCount }, { label: "Active debts", value: input.activeDebtCount }],
-      href: "/dashboard/money/cashflow", severity: "warning",
+      href: "/dashboard/money/income", severity: "warning",
       limitations: ["Money Coach will not infer balances, due dates, or recommendations from missing records."],
     });
     insights.push(cardInsight);
     cards.push({ id: "missing-information", title: "Missing Information", summary: cardInsight.summary, detail: cardInsight.detailedExplanation, explainWhy: cardInsight.explainWhy?.reason || cardInsight.detailedExplanation, href: cardInsight.navigationTarget || "/dashboard/money/cashflow", insight: cardInsight });
-    potentialIssues.push("Add income, bills, or debts so Money Coach can evaluate the current plan without guessing.");
+    potentialIssues.push("Add your usual monthly take-home income so Money Coach can compare it with bills and spending without guessing.");
   }
 
   const recommendedToday: StarterCandidate[] = [];
