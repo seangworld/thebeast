@@ -47,7 +47,7 @@ test("BA-119 repository registry matches every Supabase migration file", () => {
     .sort();
 
   assert.deepEqual([...beastAdminRepositoryMigrationFiles], actual);
-  assert.equal(actual.length, 85);
+  assert.equal(actual.length, 86);
 });
 
 test("BA-119 reports a fully applied repository without inventing timestamps", () => {
