@@ -10,7 +10,7 @@ test("BA-REC projects the current ecosystem portfolio from generated version ide
       "The Beast", "BeastOS", "BeastMoney", "BeastEducation", "BeastHealth",
       "BeastGoals", "BeastDocuments", "Beast Director", "BeastAdmin",
       "SEANGWORLD", "BeastFusion", "Change the World",
-      "BeastHome", "BeastSecurity",
+      "BeastHome", "BeastSecurity", "BeastMarketing",
     ]
   );
   assert.equal(
