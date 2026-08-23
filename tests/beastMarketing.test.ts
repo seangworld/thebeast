@@ -13,6 +13,15 @@ import {
   type MarketingCampaign,
   type MarketingOutcome,
 } from "../src/lib/beastMarketing";
+import {
+  buildMarketingDistributionPackage,
+  fingerprintMarketingAdRevision,
+  marketingPlacementProfiles,
+  normalizeMarketingAdRevision,
+  validateMarketingAdRevision,
+  type MarketingAdVariant,
+  type MarketingDistributionPlan,
+} from "../src/lib/beastMarketingPreview";
 
 const campaign: MarketingCampaign = {
   id: "campaign-1",
@@ -36,8 +45,8 @@ function result(metric: MarketingOutcome["metric"], value: number): MarketingOut
   return { id: `${metric}-${value}`, campaignId: campaign.id, metric, value, measuredAt: "2026-08-23T00:00:00Z", sourceLabel: "First-party telemetry", sourceUrl: null, notes: "" };
 }
 
-test("BMKT-001 defines bounded campaign, asset, and outcome states", () => {
-  assert.equal(BEAST_MARKETING_VERSION, "0.1.0");
+test("BeastMarketing v0.2 preserves bounded campaign, asset, and outcome states", () => {
+  assert.equal(BEAST_MARKETING_VERSION, "0.2.0");
   assert.deepEqual(marketingCampaignStatuses, ["draft", "review", "approved", "scheduled", "active", "paused", "completed", "archived"]);
   assert.equal(isMarketingCampaignStatus("approved"), true);
   assert.equal(isMarketingCampaignStatus("published"), false);
@@ -45,6 +54,79 @@ test("BMKT-001 defines bounded campaign, asset, and outcome states", () => {
   assert.equal(isMarketingAssetStatus("posted"), false);
   assert.equal(isMarketingOutcomeMetric("retained_users"), true);
   assert.equal(isMarketingOutcomeMetric("likes"), false);
+});
+
+const adRevision = normalizeMarketingAdRevision({
+  campaignId: campaign.id,
+  placementProfileId: "meta_feed",
+  headline: "A practical AI guide",
+  primaryText: "Learn ten practical things about AI in 2026.",
+  description: "Free public guide",
+  callToAction: "Download",
+  destinationUrl: "https://seangworld.com/ai-guide",
+  mediaUrl: "https://seangworld.com/guide.jpg",
+  mediaType: "image",
+  mediaAltText: "The free AI guide cover",
+  sourceFacts: campaign.sourceFacts,
+  limitations: campaign.limitations,
+});
+
+test("BMKT-002 defines recognizable provider-neutral placement previews", () => {
+  assert.equal(marketingPlacementProfiles.length, 6);
+  assert.deepEqual(marketingPlacementProfiles.map((profile) => profile.id), ["meta_feed", "instagram_story_reel", "x_post", "linkedin_feed", "google_search", "general_display"]);
+  assert.equal(adRevision?.placementProfileId, "meta_feed");
+  assert.equal(validateMarketingAdRevision(adRevision!).errors.length, 0);
+  assert.match(validateMarketingAdRevision(adRevision!).warnings.join(" "), /does not guarantee provider acceptance/);
+});
+
+test("BMKT-002 rejects invalid destinations and planning-limit violations", () => {
+  assert.equal(normalizeMarketingAdRevision({ ...adRevision, destinationUrl: "http://unsafe.test" }), null);
+  const tooLong = { ...adRevision!, headline: "x".repeat(41) };
+  assert.match(validateMarketingAdRevision(tooLong).errors.join(" "), /40-character/);
+  const searchWithMedia = { ...adRevision!, placementProfileId: "google_search" as const };
+  assert.match(validateMarketingAdRevision(searchWithMedia).errors.join(" "), /does not use media/);
+});
+
+test("BMKT-002 fingerprints the exact creative revision deterministically", () => {
+  assert.equal(fingerprintMarketingAdRevision(adRevision!), fingerprintMarketingAdRevision({ ...adRevision! }));
+  assert.notEqual(fingerprintMarketingAdRevision(adRevision!), fingerprintMarketingAdRevision({ ...adRevision!, callToAction: "Read now" }));
+  assert.match(fingerprintMarketingAdRevision(adRevision!), /^fnv1a32:[0-9a-f]{8}$/);
+});
+
+test("BMKT-002 exports only a matching exact approved revision", () => {
+  const hash = fingerprintMarketingAdRevision(adRevision!);
+  const variant: MarketingAdVariant = { ...adRevision!, id: "variant-1", platform: "Meta", placement: "Feed", revision: 2, revisionHash: hash, status: "approved", approvedRevision: 2, approvedRevisionHash: hash, createdAt: campaign.createdAt, updatedAt: campaign.updatedAt };
+  const plan: MarketingDistributionPlan = { id: "plan-1", campaignId: campaign.id, variantId: variant.id, variantRevision: 2, variantRevisionHash: hash, platform: variant.platform, placement: variant.placement, plannedFor: "2026-08-24T15:00:00Z", timezone: "America/New_York", status: "ready", ownerNotes: "Review before manual provider entry", exportedAt: null, createdAt: campaign.createdAt, updatedAt: campaign.updatedAt };
+  const handoff = buildMarketingDistributionPackage({ campaign, variant, plan });
+  assert.equal(handoff?.externalActionPerformed, false);
+  assert.equal(handoff?.providerState.published, false);
+  assert.equal(buildMarketingDistributionPackage({ campaign, variant: { ...variant, revision: 3 }, plan }), null);
+  assert.equal(buildMarketingDistributionPackage({ campaign, variant, plan: { ...plan, status: "cancelled" } }), null);
+});
+
+test("BMKT-002 migration makes edits invalidate approvals and keeps distribution internal", () => {
+  const migration = readFileSync("supabase/migrations/20260823185623_add_beast_marketing_preview_distribution.sql", "utf8");
+  for (const table of ["ad_variants", "ad_decisions", "distribution_plans"]) assert.match(migration, new RegExp(`beast_marketing_${table}`));
+  assert.equal((migration.match(/enable row level security/g) || []).length, 3);
+  assert.equal((migration.match(/grant select, insert, update, delete on table public\.beast_marketing_/g) || []).length, 3);
+  assert.equal((migration.match(/revoke all on table public\.beast_marketing_.+ from public, anon, authenticated/g) || []).length, 3);
+  assert.match(migration, /new\.revision = old\.revision \+ 1/);
+  assert.match(migration, /new\.approved_revision = null/);
+  assert.match(migration, /record_beast_marketing_ad_decision/);
+  assert.match(migration, /security invoker/g);
+  assert.doesNotMatch(migration, /to anon\s+using|http_post|net\.http|vault\./i);
+});
+
+test("BMKT-002 exposes exact visual previews while provider actions stay disabled", () => {
+  const route = readFileSync("src/app/api/admin/beast-marketing/route.ts", "utf8");
+  const workspace = readFileSync("src/app/dashboard/admin/marketing/BeastMarketingWorkspace.tsx", "utf8");
+  assert.match(workspace, /See the exact ad before approval/);
+  assert.match(workspace, /Mobile/);
+  assert.match(workspace, /Desktop/);
+  assert.match(workspace, /Provider-neutral handoff/);
+  assert.match(route, /externalPublishing: "disabled"/);
+  assert.match(route, /externalScheduling: "disabled"/);
+  assert.doesNotMatch(route, /fetch\(["']https:\/\//);
 });
 
 test("BMKT-001 requires a complete campaign contract and HTTPS source facts", () => {

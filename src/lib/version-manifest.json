@@ -53,8 +53,8 @@
     },
     "beastmarketing": {
       "name": "BeastMarketing",
-      "version": "0.1.0",
-      "buildId": "beastmarketing-0.1.0+foundation",
+      "version": "0.2.0",
+      "buildId": "beastmarketing-0.2.0+preview-distribution",
       "channel": "Development",
       "releaseDate": null
     },

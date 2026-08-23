@@ -15,6 +15,16 @@ import {
   type MarketingOutcomeMetric,
   type MarketingRecommendation,
 } from "@/lib/beastMarketing";
+import {
+  getMarketingPlacementProfile,
+  marketingPlacementProfiles,
+  normalizeMarketingAdRevision,
+  validateMarketingAdRevision,
+  type MarketingAdVariant,
+  type MarketingDistributionPlan,
+  type MarketingMediaType,
+  type MarketingPlacementId,
+} from "@/lib/beastMarketingPreview";
 
 type SavedRecommendation = MarketingRecommendation & {
   id: string;
@@ -37,11 +47,30 @@ type Snapshot = {
   outcomes: MarketingOutcome[];
   recommendations: SavedRecommendation[];
   decisions: SavedDecision[];
+  adVariants: MarketingAdVariant[];
+  adDecisions: { id: string; variant_id: string; revision: number; revision_hash: string; decision: string; note: string; created_at: string }[];
+  distributionPlans: MarketingDistributionPlan[];
+  placementProfiles: typeof marketingPlacementProfiles;
   providerState: Record<string, string>;
 };
 
 const inputClass = "min-h-11 w-full rounded-xl border border-white/15 bg-slate-950/70 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:border-amber-300 focus:outline-none";
-const emptySnapshot: Snapshot = { campaigns: [], assets: [], outcomes: [], recommendations: [], decisions: [], providerState: {} };
+const emptySnapshot: Snapshot = { campaigns: [], assets: [], outcomes: [], recommendations: [], decisions: [], adVariants: [], adDecisions: [], distributionPlans: [], placementProfiles: marketingPlacementProfiles, providerState: {} };
+
+const emptyAdDraft = {
+  placementProfileId: "meta_feed" as MarketingPlacementId,
+  headline: "",
+  primaryText: "",
+  description: "",
+  callToAction: "Learn more",
+  destinationUrl: "",
+  mediaUrl: "",
+  mediaType: "image" as MarketingMediaType,
+  mediaAltText: "",
+  sourceLabel: "",
+  sourceUrl: "",
+  limitations: "",
+};
 
 function csv(value: string) {
   return value.split(",").map((item) => item.trim()).filter(Boolean);
@@ -65,6 +94,11 @@ export function BeastMarketingWorkspace() {
   const [campaignDraft, setCampaignDraft] = useState({ title: "", objective: "", audience: "", offer: "", channels: "", callToAction: "", sourceLabel: "", sourceUrl: "", successMeasures: "", limitations: "" });
   const [assetDraft, setAssetDraft] = useState({ name: "", assetType: "Social copy", channel: "Owned social", body: "", sourceLabel: "", sourceUrl: "" });
   const [outcomeDraft, setOutcomeDraft] = useState<{ metric: MarketingOutcomeMetric; value: string; sourceLabel: string; sourceUrl: string; notes: string }>({ metric: "visits", value: "", sourceLabel: "", sourceUrl: "", notes: "" });
+  const [adDraft, setAdDraft] = useState(emptyAdDraft);
+  const [editingVariantId, setEditingVariantId] = useState("");
+  const [previewDevice, setPreviewDevice] = useState<"mobile" | "desktop">("mobile");
+  const [planDraft, setPlanDraft] = useState({ variantId: "", plannedFor: "", timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC", ownerNotes: "" });
+  const [handoff, setHandoff] = useState<Record<string, unknown> | null>(null);
 
   async function load() {
     setLoading(true);
@@ -88,6 +122,16 @@ export function BeastMarketingWorkspace() {
   const campaignAssets = snapshot.assets.filter((item) => item.campaignId === selectedCampaignId);
   const campaignOutcomes = snapshot.outcomes.filter((item) => item.campaignId === selectedCampaignId);
   const campaignRecommendations = snapshot.recommendations.filter((item) => item.campaign_id === selectedCampaignId);
+  const campaignVariants = snapshot.adVariants.filter((item) => item.campaignId === selectedCampaignId);
+  const campaignPlans = snapshot.distributionPlans.filter((item) => item.campaignId === selectedCampaignId);
+  const previewRevision = selectedCampaign ? normalizeMarketingAdRevision({
+    campaignId: selectedCampaign.id,
+    ...adDraft,
+    mediaUrl: adDraft.mediaUrl || null,
+    sourceFacts: adDraft.sourceLabel ? [{ label: adDraft.sourceLabel, url: adDraft.sourceUrl }] : [],
+    limitations: csv(adDraft.limitations),
+  }) : null;
+  const previewValidation = previewRevision ? validateMarketingAdRevision(previewRevision) : { errors: ["Complete the required placement, destination, and evidence fields."], warnings: [] };
   const metrics = useMemo(() => [
     { label: "Campaigns", value: String(snapshot.campaigns.length), detail: "Owner-controlled campaign records", icon: "📣" },
     { label: "Approved assets", value: String(snapshot.assets.filter((item) => item.status === "approved").length), detail: "Reviewed assets only", icon: "✅" },
@@ -129,6 +173,94 @@ export function BeastMarketingWorkspace() {
 
   async function decide(entityType: "campaign" | "asset", entityId: string, decision: "approve" | "reject" | "request_changes", nextStatus: string) {
     await send({ kind: "decision", entityType, entityId, campaignId: selectedCampaignId, decision, nextStatus, note: decision === "approve" ? "Owner approved this exact revision." : "Owner returned this revision for correction." }, decision === "approve" ? "The exact revision is approved. External publication remains disabled." : "The review decision was recorded.");
+  }
+
+  function adPayload() {
+    return {
+      campaignId: selectedCampaignId,
+      placementProfileId: adDraft.placementProfileId,
+      headline: adDraft.headline,
+      primaryText: adDraft.primaryText,
+      description: adDraft.description,
+      callToAction: adDraft.callToAction,
+      destinationUrl: adDraft.destinationUrl,
+      mediaUrl: adDraft.mediaUrl || null,
+      mediaType: adDraft.mediaType,
+      mediaAltText: adDraft.mediaAltText,
+      sourceFacts: adDraft.sourceLabel ? [{ label: adDraft.sourceLabel, url: adDraft.sourceUrl }] : [],
+      limitations: csv(adDraft.limitations),
+    };
+  }
+
+  function editVariant(variant: MarketingAdVariant) {
+    setEditingVariantId(variant.id);
+    setAdDraft({
+      placementProfileId: variant.placementProfileId,
+      headline: variant.headline,
+      primaryText: variant.primaryText,
+      description: variant.description,
+      callToAction: variant.callToAction,
+      destinationUrl: variant.destinationUrl,
+      mediaUrl: variant.mediaUrl || "",
+      mediaType: variant.mediaType,
+      mediaAltText: variant.mediaAltText,
+      sourceLabel: variant.sourceFacts[0]?.label || "",
+      sourceUrl: variant.sourceFacts[0]?.url || "",
+      limitations: variant.limitations.join(", "),
+    });
+  }
+
+  async function saveAdVariant() {
+    const current = snapshot.adVariants.find((item) => item.id === editingVariantId);
+    if (!current) {
+      await send({ kind: "ad_variant", campaignId: selectedCampaignId, variant: adPayload() }, "Ad revision saved for visual review. Nothing was posted or scheduled externally.");
+      setAdDraft(emptyAdDraft);
+      return;
+    }
+    setBusy(current.id);
+    setError("");
+    try {
+      const response = await fetch("/api/admin/beast-marketing", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ kind: "ad_variant", id: current.id, revision: current.revision, revisionHash: current.revisionHash, variant: adPayload() }) });
+      const body = await response.json() as { error?: string };
+      if (!response.ok) throw new Error(body.error || "The ad revision could not be updated.");
+      setNotice("A new exact revision was saved; any prior approval and ready handoff were invalidated.");
+      setEditingVariantId("");
+      setAdDraft(emptyAdDraft);
+      await load();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "The ad revision could not be updated.");
+    } finally {
+      setBusy("");
+    }
+  }
+
+  async function decideAd(variant: MarketingAdVariant, decision: "approve" | "reject" | "request_changes") {
+    await send({ kind: "ad_decision", campaignId: variant.campaignId, variantId: variant.id, revision: variant.revision, revisionHash: variant.revisionHash, decision, note: decision === "approve" ? "Owner approved the exact visual revision shown in Ad Preview Studio." : "Owner returned the exact visual revision for correction." }, decision === "approve" ? `Revision ${variant.revision} is approved for provider-neutral handoff only.` : "The exact-revision decision was recorded.");
+  }
+
+  async function exportPlan(plan: MarketingDistributionPlan) {
+    setBusy(plan.id);
+    setError("");
+    setHandoff(null);
+    try {
+      const response = await fetch("/api/admin/beast-marketing", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ kind: "distribution_export", campaignId: plan.campaignId, planId: plan.id }) });
+      const body = await response.json() as { error?: string; handoff?: Record<string, unknown> };
+      if (!response.ok || !body.handoff) throw new Error(body.error || "The handoff package could not be generated.");
+      setHandoff(body.handoff);
+      const blob = new Blob([JSON.stringify(body.handoff, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `beastmarketing-${plan.platform.toLowerCase().replaceAll(" ", "-")}-revision-${plan.variantRevision}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+      setNotice("Provider-neutral handoff exported. Nothing was posted, sent, or scheduled externally.");
+      await load();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "The handoff package could not be generated.");
+    } finally {
+      setBusy("");
+    }
   }
 
   if (loading && !snapshot.campaigns.length) return <DashboardCard accent="admin"><p role="status" className="text-sm text-slate-300">Loading the owner marketing command center…</p></DashboardCard>;
@@ -177,6 +309,54 @@ export function BeastMarketingWorkspace() {
       </DashboardCard>
 
       <DashboardCard accent="admin">
+        <SectionHeader eyebrow="BMKT-002 · Ad Preview Studio" title="See the exact ad before approval" description="Review the image or video, headline, copy, CTA, destination, placement, and mobile or desktop treatment. These are planning previews—not provider acceptance guarantees." action={<div className="flex gap-2"><MiniButton label="Mobile" disabled={previewDevice === "mobile"} onClick={() => setPreviewDevice("mobile")} /><MiniButton label="Desktop" disabled={previewDevice === "desktop"} onClick={() => setPreviewDevice("desktop")} /></div>} />
+        <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(20rem,0.85fr)]">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="text-sm font-bold text-slate-200">Placement profile<select className={`${inputClass} mt-2`} value={adDraft.placementProfileId} onChange={(event) => setAdDraft((draft) => ({ ...draft, placementProfileId: event.target.value as MarketingPlacementId }))}>{marketingPlacementProfiles.map((profile) => <option key={profile.id} value={profile.id}>{profile.platform} · {profile.placement}</option>)}</select></label>
+            <label className="text-sm font-bold text-slate-200">Media type<select className={`${inputClass} mt-2`} value={adDraft.mediaType} onChange={(event) => setAdDraft((draft) => ({ ...draft, mediaType: event.target.value as MarketingMediaType }))}><option value="none">No media</option><option value="image">Image</option><option value="video">Video</option></select></label>
+            <Field label="Headline" value={adDraft.headline} onChange={(value) => setAdDraft((draft) => ({ ...draft, headline: value }))} />
+            <Field label="Call to action" value={adDraft.callToAction} onChange={(value) => setAdDraft((draft) => ({ ...draft, callToAction: value }))} />
+            <label className="sm:col-span-2 text-sm font-bold text-slate-200">Primary copy<textarea className={`${inputClass} mt-2 min-h-28`} value={adDraft.primaryText} onChange={(event) => setAdDraft((draft) => ({ ...draft, primaryText: event.target.value }))} /></label>
+            <label className="sm:col-span-2 text-sm font-bold text-slate-200">Description<textarea className={`${inputClass} mt-2 min-h-20`} value={adDraft.description} onChange={(event) => setAdDraft((draft) => ({ ...draft, description: event.target.value }))} /></label>
+            <Field label="Destination URL · HTTPS" value={adDraft.destinationUrl} onChange={(value) => setAdDraft((draft) => ({ ...draft, destinationUrl: value }))} />
+            <Field label="Media URL · HTTPS" value={adDraft.mediaUrl} onChange={(value) => setAdDraft((draft) => ({ ...draft, mediaUrl: value }))} />
+            <Field label="Media alt text" value={adDraft.mediaAltText} onChange={(value) => setAdDraft((draft) => ({ ...draft, mediaAltText: value }))} />
+            <Field label="Evidence source" value={adDraft.sourceLabel} onChange={(value) => setAdDraft((draft) => ({ ...draft, sourceLabel: value }))} />
+            <Field label="Evidence URL · HTTPS" value={adDraft.sourceUrl} onChange={(value) => setAdDraft((draft) => ({ ...draft, sourceUrl: value }))} />
+            <Field label="Known limitations · comma separated" value={adDraft.limitations} onChange={(value) => setAdDraft((draft) => ({ ...draft, limitations: value }))} />
+          </div>
+          <div>
+            <AdPreviewCard draft={adDraft} device={previewDevice} />
+            <div className="mt-4 rounded-xl border border-white/10 bg-slate-950/60 p-4 text-xs leading-5 text-slate-300">
+              <p className="font-black uppercase tracking-wider text-white">Placement checks</p>
+              {previewValidation.errors.map((message) => <p key={message} className="mt-2 text-red-200">Error: {message}</p>)}
+              {previewValidation.warnings.map((message) => <p key={message} className="mt-2 text-amber-100">{message}</p>)}
+            </div>
+            <button type="button" className="beast-button mt-4 w-full" disabled={Boolean(busy) || previewValidation.errors.length > 0} onClick={() => void saveAdVariant()}>{editingVariantId ? "Save new exact revision" : "Save ad revision"}</button>
+            {editingVariantId ? <button type="button" className="mt-2 min-h-11 w-full rounded-xl border border-white/15 text-sm font-black text-white" onClick={() => { setEditingVariantId(""); setAdDraft(emptyAdDraft); }}>Cancel revision edit</button> : null}
+          </div>
+        </div>
+
+        <div className="mt-8 space-y-4">
+          {campaignVariants.map((variant) => <div key={variant.id} className="grid gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4 lg:grid-cols-[minmax(0,0.85fr)_minmax(18rem,1.15fr)]"><AdPreviewCard draft={{ placementProfileId: variant.placementProfileId, headline: variant.headline, primaryText: variant.primaryText, description: variant.description, callToAction: variant.callToAction, destinationUrl: variant.destinationUrl, mediaUrl: variant.mediaUrl || "", mediaType: variant.mediaType, mediaAltText: variant.mediaAltText, sourceLabel: variant.sourceFacts[0]?.label || "", sourceUrl: variant.sourceFacts[0]?.url || "", limitations: variant.limitations.join(", ") }} device="mobile" /><div><p className="text-xs font-black uppercase tracking-wider text-amber-200">{variant.platform} · {variant.placement} · Revision {variant.revision}</p><h3 className="mt-2 text-lg font-black text-white">{title(variant.status)} · {variant.revisionHash}</h3><p className="mt-2 text-sm text-slate-300">Approval is bound to this revision number and fingerprint. Editing copy, media, CTA, destination, placement, evidence, or limitations automatically creates a new draft revision.</p><div className="mt-4 flex flex-wrap gap-2"><MiniButton label="Edit into new revision" disabled={Boolean(busy)} onClick={() => editVariant(variant)} /><MiniButton label="Approve exact revision" disabled={Boolean(busy) || variant.status === "approved"} onClick={() => void decideAd(variant, "approve")} /><MiniButton label="Request changes" disabled={Boolean(busy)} onClick={() => void decideAd(variant, "request_changes")} /><MiniButton label="Reject" disabled={Boolean(busy)} onClick={() => void decideAd(variant, "reject")} /></div></div></div>)}
+          {!campaignVariants.length ? <p className="text-sm text-slate-400">No platform-style ad revision has been saved for this campaign.</p> : null}
+        </div>
+      </DashboardCard>
+
+      <DashboardCard accent="admin">
+        <SectionHeader eyebrow="Internal distribution planning" title="Plan and export—without posting" description="A ready plan must reference an exact approved ad revision. Export creates a provider-neutral JSON handoff; it never contacts a platform or spends money." />
+        <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <label className="text-sm font-bold text-slate-200">Approved ad<select className={`${inputClass} mt-2`} value={planDraft.variantId} onChange={(event) => setPlanDraft((draft) => ({ ...draft, variantId: event.target.value }))}><option value="">Select exact revision</option>{campaignVariants.filter((variant) => variant.status === "approved" && variant.approvedRevision === variant.revision && variant.approvedRevisionHash === variant.revisionHash).map((variant) => <option key={variant.id} value={variant.id}>{variant.platform} · {variant.placement} · r{variant.revision}</option>)}</select></label>
+          <Field label="Planned date and time" type="datetime-local" value={planDraft.plannedFor} onChange={(value) => setPlanDraft((draft) => ({ ...draft, plannedFor: value }))} />
+          <Field label="Timezone" value={planDraft.timezone} onChange={(value) => setPlanDraft((draft) => ({ ...draft, timezone: value }))} />
+          <Field label="Owner notes" value={planDraft.ownerNotes} onChange={(value) => setPlanDraft((draft) => ({ ...draft, ownerNotes: value }))} />
+        </div>
+        <button type="button" className="beast-button mt-5" disabled={Boolean(busy) || !planDraft.variantId || !planDraft.plannedFor || !planDraft.timezone} onClick={() => void send({ kind: "distribution_plan", campaignId: selectedCampaign.id, variantId: planDraft.variantId, plannedFor: new Date(planDraft.plannedFor).toISOString(), timezone: planDraft.timezone, ownerNotes: planDraft.ownerNotes }, "Internal ready plan created. Nothing was scheduled externally.")}>Create internal ready plan</button>
+        <div className="mt-6 space-y-3">{campaignPlans.map((plan) => <div key={plan.id} className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-white/10 bg-white/[0.03] p-4"><div><p className="text-xs font-black uppercase tracking-wider text-amber-200">{title(plan.status)} · {plan.platform} · {plan.placement}</p><p className="mt-1 font-black text-white">Revision {plan.variantRevision} · {plan.variantRevisionHash}</p><p className="mt-1 text-sm text-slate-400">{formatDate(plan.plannedFor)} · {plan.timezone}</p></div><MiniButton label={plan.status === "exported" ? "Export again" : "Export handoff"} disabled={Boolean(busy) || plan.status === "cancelled"} onClick={() => void exportPlan(plan)} /></div>)}{!campaignPlans.length ? <p className="text-sm text-slate-400">No internal distribution plan exists yet.</p> : null}</div>
+        {handoff ? <details className="mt-5 rounded-xl border border-green-300/20 bg-green-300/[0.04] p-4"><summary className="cursor-pointer font-black text-green-100">Last provider-neutral handoff package</summary><pre className="mt-4 max-h-80 overflow-auto whitespace-pre-wrap text-xs text-slate-300">{JSON.stringify(handoff, null, 2)}</pre></details> : null}
+      </DashboardCard>
+
+      <DashboardCard accent="admin">
         <SectionHeader eyebrow="Performance" title="Record attributable outcomes" description="Use a named evidence source. A recorded zero is valid evidence; a missing row remains unavailable." />
         <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3"><label className="text-sm font-bold text-slate-200">Metric<select className={`${inputClass} mt-2`} value={outcomeDraft.metric} onChange={(event) => setOutcomeDraft((draft) => ({ ...draft, metric: event.target.value as MarketingOutcomeMetric }))}>{marketingOutcomeMetrics.map((metric) => <option key={metric} value={metric}>{title(metric)}</option>)}</select></label><Field label="Value" type="number" value={outcomeDraft.value} onChange={(value) => setOutcomeDraft((draft) => ({ ...draft, value }))} /><Field label="Evidence source" value={outcomeDraft.sourceLabel} onChange={(value) => setOutcomeDraft((draft) => ({ ...draft, sourceLabel: value }))} /><Field label="Evidence URL · optional" value={outcomeDraft.sourceUrl} onChange={(value) => setOutcomeDraft((draft) => ({ ...draft, sourceUrl: value }))} /><Field label="Notes · optional" value={outcomeDraft.notes} onChange={(value) => setOutcomeDraft((draft) => ({ ...draft, notes: value }))} /></div>
         <button type="button" className="beast-button mt-5" disabled={Boolean(busy)} onClick={() => void send({ kind: "outcome", campaignId: selectedCampaign.id, ...outcomeDraft, value: Number(outcomeDraft.value) }, "Outcome recorded with its evidence source.")}>Record outcome</button>
@@ -188,6 +368,30 @@ export function BeastMarketingWorkspace() {
         <div className="mt-5 space-y-4">{campaignRecommendations.map((item) => <div key={item.id} className="rounded-xl border border-amber-300/20 bg-amber-300/[0.05] p-4"><p className="text-xs font-black uppercase tracking-wider text-amber-200">{item.decision.toUpperCase()} · {item.confidence} confidence</p><ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-slate-200">{item.rationale.map((reason) => <li key={reason}>{reason}</li>)}</ul><p className="mt-3 text-xs text-slate-400">Evidence: {item.evidence.length ? item.evidence.join("; ") : "Unavailable"}</p><p className="mt-1 text-xs text-slate-400">Limitations: {item.limitations.length ? item.limitations.join("; ") : "None recorded"}</p></div>)}{!campaignRecommendations.length ? <p className="text-sm text-slate-400">No recommendation has been recorded yet.</p> : null}</div>
       </DashboardCard>
     </> : null}
+  </div>;
+}
+
+function destinationHost(value: string) {
+  try {
+    return new URL(value).host;
+  } catch {
+    return "destination.example";
+  }
+}
+
+function AdPreviewCard({ draft, device }: { draft: typeof emptyAdDraft; device: "mobile" | "desktop" }) {
+  const profile = getMarketingPlacementProfile(draft.placementProfileId) || marketingPlacementProfiles[0];
+  const compact = device === "mobile";
+  return <div className={`mx-auto overflow-hidden rounded-[1.5rem] border border-white/15 bg-white text-slate-950 shadow-2xl ${compact ? "max-w-[22rem]" : "max-w-[38rem]"}`} aria-label={`${profile.platform} ${profile.placement} ${device} planning preview`}>
+    <div className="flex items-center gap-3 border-b border-slate-200 px-4 py-3"><div className="grid h-10 w-10 place-items-center rounded-full bg-slate-950 text-lg font-black text-amber-300">B</div><div><p className="font-black">The Beast</p><p className="text-xs text-slate-500">Sponsored planning preview · {profile.platform}</p></div></div>
+    {draft.mediaType === "video" && draft.mediaUrl ? <video className={`w-full bg-slate-900 object-cover ${profile.id === "instagram_story_reel" ? "aspect-[9/16]" : "aspect-video"}`} controls muted preload="metadata" src={draft.mediaUrl}><track kind="captions" src="data:text/vtt,WEBVTT" srcLang="en" label="Captions unavailable in planning preview" default /></video> : draft.mediaType === "image" && draft.mediaUrl ? <div role="img" aria-label={draft.mediaAltText || "Ad image preview"} className={`w-full bg-cover bg-center ${profile.id === "instagram_story_reel" ? "aspect-[9/16]" : "aspect-video"}`} style={{ backgroundImage: `url("${draft.mediaUrl.replaceAll('"', "%22")}")` }} /> : profile.id !== "google_search" ? <div className={`grid w-full place-items-center bg-slate-100 text-sm font-black text-slate-400 ${profile.id === "instagram_story_reel" ? "aspect-[9/16]" : "aspect-video"}`}>Media preview</div> : null}
+    <div className="p-4">
+      <p className="text-xs font-black uppercase tracking-wider text-slate-500">{profile.platform} · {profile.placement} · {device}</p>
+      {draft.primaryText ? <p className="mt-3 whitespace-pre-wrap text-sm leading-6">{draft.primaryText}</p> : null}
+      {draft.headline ? <h4 className="mt-3 text-lg font-black">{draft.headline}</h4> : null}
+      {draft.description ? <p className="mt-1 text-sm text-slate-600">{draft.description}</p> : null}
+      <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-200 pt-3"><div className="min-w-0"><p className="truncate text-xs uppercase text-slate-500">{destinationHost(draft.destinationUrl)}</p><p className="truncate text-sm font-bold">{draft.destinationUrl || "HTTPS destination"}</p></div><span className="shrink-0 rounded-lg bg-slate-950 px-3 py-2 text-xs font-black text-white">{draft.callToAction || "CTA"}</span></div>
+    </div>
   </div>;
 }
 
