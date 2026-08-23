@@ -653,6 +653,11 @@ export function MoneyCoachExperience({
   }, [model.suggestions, personalizedStarters]);
   const moneyKnowledgeModel = useMemo<ProfessionalKnowledgeModel>(() => {
     const context = model.financialContext;
+    const hasCoreFinancialRecords =
+      context.monthlyIncome > 0 ||
+      context.upcomingIncome.length > 0 ||
+      context.debts.length > 0 ||
+      context.totalObligationCount > 0;
     const known: ProfessionalKnowledgeItem[] = [];
     const needed: ProfessionalKnowledgeItem[] = [];
     const learnedKnowledge = new Map(
@@ -676,16 +681,22 @@ export function MoneyCoachExperience({
           href: "/dashboard/money/income",
         },
       });
-    } else {
+    } else if (!hasCoreFinancialRecords) {
       needed.push({
         id: "money-income-needed",
-        label: "Income",
-        summary: "Current income information would improve cash-flow guidance.",
+        label: "Monthly take-home income",
+        summary: "No active income is saved in BeastMoney yet.",
         confidence: "unknown",
+        missingInformation: {
+          requirementId: "money-income-needed",
+          question: "What is your usual monthly take-home income?",
+          why: "This helps me compare your regular income with your bills and spending.",
+          input: { kind: "short_text", placeholder: "Monthly take-home income" },
+        },
         action: {
-          label: "Talk about income",
-          mode: "conversation",
-          prompt: "Tell me about the income you want me to consider in your financial planning.",
+          label: "Add income",
+          mode: "edit",
+          href: "/dashboard/money/income",
         },
       });
     }
@@ -702,16 +713,22 @@ export function MoneyCoachExperience({
           href: "/dashboard/money/debts",
         },
       });
-    } else {
+    } else if (!hasCoreFinancialRecords) {
       needed.push({
         id: "money-debts-needed",
-        label: "Debt status",
-        summary: "I still need to know whether you are debt-free or have debts that are not tracked yet.",
+        label: "Current debts",
+        summary: "No active debt is saved in BeastMoney yet.",
         confidence: "unknown",
+        missingInformation: {
+          requirementId: "money-debts-needed",
+          question: "Do you have a debt that should be included in this review?",
+          why: "Current balances, rates, and minimum payments are needed before I compare payoff options.",
+          input: { kind: "conversation", placeholder: "Debt to add" },
+        },
         action: {
-          label: "Talk about debt",
-          mode: "conversation",
-          prompt: "Are you currently debt-free, or are there debts you would like us to add or discuss?",
+          label: "Review or add debts",
+          mode: "edit",
+          href: "/dashboard/money/debts",
         },
       });
     }
@@ -728,19 +745,46 @@ export function MoneyCoachExperience({
           href: "/dashboard/money/bills",
         },
       });
-    } else {
+    } else if (!hasCoreFinancialRecords) {
       needed.push({
         id: "money-bills-needed",
         label: "Recurring bills",
-        summary: "Recurring obligations would make cash-flow and timing guidance more complete.",
+        summary: "No recurring bills are saved in BeastMoney yet.",
         confidence: "unknown",
+        missingInformation: {
+          requirementId: "money-bills-needed",
+          question: "Which recurring bill should be included first?",
+          why: "A bill amount and due date let me evaluate cash-flow timing without guessing.",
+          input: { kind: "short_text", placeholder: "Bill name, amount, and due date" },
+        },
         action: {
-          label: "Talk about bills",
-          mode: "conversation",
-          prompt: "Which recurring bills or obligations should I understand first?",
+          label: "Add a bill",
+          mode: "edit",
+          href: "/dashboard/money/bills",
         },
       });
     }
+
+    context.debts.forEach((debt, index) => {
+      const missingParts = [
+        debt.interestRateKnown === false ? "interest rate" : "",
+        debt.minimumPaymentKnown === false ? "minimum payment" : "",
+      ].filter(Boolean);
+      if (!missingParts.length) return;
+      needed.push({
+        id: `money-debt-details-needed-${index}`,
+        label: `${debt.name} details`,
+        summary: `${debt.name} is already saved, but its ${missingParts.join(" and ")} ${missingParts.length === 1 ? "is" : "are"} missing.`,
+        confidence: "unknown",
+        missingInformation: {
+          requirementId: `money-debt-details-needed-${index}`,
+          question: `What ${missingParts.join(" and ")} should I use for ${debt.name}?`,
+          why: "These values materially affect payoff timing and strategy comparisons.",
+          input: { kind: "short_text", placeholder: `Enter the ${missingParts.join(" and ")}` },
+        },
+        action: { label: "Update this debt", mode: "edit", href: "/dashboard/money/debts" },
+      });
+    });
 
     if (context.retirementDataAvailable) {
       known.push({
@@ -752,18 +796,6 @@ export function MoneyCoachExperience({
           label: "Review retirement",
           mode: "detail",
           href: "/dashboard/money/retirement",
-        },
-      });
-    } else {
-      needed.push({
-        id: "money-retirement-needed",
-        label: "Retirement direction",
-        summary: "A retirement goal and time horizon would improve long-term guidance.",
-        confidence: "unknown",
-        action: {
-          label: "Talk about retirement",
-          mode: "conversation",
-          prompt: "What would you like retirement to look like, and when do you hope to reach it?",
         },
       });
     }
@@ -778,18 +810,6 @@ export function MoneyCoachExperience({
           label: "Review goals",
           mode: "detail",
           href: "/dashboard/goals",
-        },
-      });
-    } else {
-      needed.push({
-        id: "money-goals-needed",
-        label: "Financial priorities",
-        summary: "A clear financial priority would help rank future recommendations.",
-        confidence: "unknown",
-        action: {
-          label: "Talk about priorities",
-          mode: "conversation",
-          prompt: "What financial change would make the biggest difference in your life right now?",
         },
       });
     }

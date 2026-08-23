@@ -80,8 +80,33 @@ test("MC-201 handles missing financial data without inventing facts", () => {
   });
 
   assert.ok(model.cards.some((card) => card.id === "missing-information"));
+  const missing = model.cards.find((card) => card.id === "missing-information");
+  assert.equal(missing?.summary, "What is your usual monthly take-home income?");
+  assert.equal(missing?.href, "/dashboard/money/income");
   assert.match(model.safetyNotice, /not financial, tax, investment, legal, credit, or lending advice/);
   assert.doesNotMatch(JSON.stringify(model), /sample balance|placeholder/i);
+});
+
+test("BM-42 gives missing Money Coach context specific canonical actions", () => {
+  const component = readFileSync(
+    "src/app/dashboard/money/components/MoneyCoachExperience.tsx",
+    "utf8"
+  );
+  const sharedWorkspace = readFileSync(
+    "src/app/components/agents/ProfessionalKnowledgeWorkspace.tsx",
+    "utf8"
+  );
+
+  assert.match(component, /What is your usual monthly take-home income\?/);
+  assert.match(component, /href: "\/dashboard\/money\/income"/);
+  assert.match(component, /Do you have a debt that should be included in this review\?/);
+  assert.match(component, /href: "\/dashboard\/money\/debts"/);
+  assert.match(component, /Which recurring bill should be included first\?/);
+  assert.match(component, /href: "\/dashboard\/money\/bills"/);
+  assert.match(component, /interest rate/);
+  assert.match(component, /minimum payment/);
+  assert.doesNotMatch(component, /Talk about income|Talk about debt|Talk about bills/);
+  assert.match(sharedWorkspace, /existing record/);
 });
 
 test("MC-201 answers with deterministic existing calculations and Explain Why", () => {
