@@ -1,6 +1,6 @@
 {
   "generatedFrom": "BeastFusion state/ecosystem-version-registry.json",
-  "generatedAt": "2026-08-17",
+  "generatedAt": "2026-08-23",
   "identities": {
     "beast": {
       "name": "The Beast",
@@ -48,6 +48,13 @@
       "name": "BeastSecurity",
       "version": "0.1.0",
       "buildId": "beastsecurity-0.1.0+planning",
+      "channel": "Development",
+      "releaseDate": null
+    },
+    "beastmarketing": {
+      "name": "BeastMarketing",
+      "version": "0.1.0",
+      "buildId": "beastmarketing-0.1.0+foundation",
       "channel": "Development",
       "releaseDate": null
     },

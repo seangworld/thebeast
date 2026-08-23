@@ -21,6 +21,7 @@ const expectedAdminDestinations = [
   ["AI Analytics", "/dashboard/admin/analytics"],
   ["SEANGWORLD Intelligence", "/dashboard/admin/intelligence"],
   ["BeastHunter", "/dashboard/admin/intelligence/hunter"],
+  ["BeastMarketing", "/dashboard/admin/marketing"],
   ["Knowledge Inspector", "/dashboard/admin/knowledge"],
   ["Ecosystem Map", "/dashboard/admin/ecosystem"],
   ["Members", "/dashboard/admin/members"],

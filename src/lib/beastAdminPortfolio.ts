@@ -41,4 +41,5 @@ export const beastAdminPortfolio: readonly BeastAdminPortfolioEntry[] = [
   released("cw", "Change the World"),
   released("beasthome", "BeastHome", "Foundation"),
   released("beastsecurity", "BeastSecurity", "Planning"),
+  released("beastmarketing", "BeastMarketing", "Foundation"),
 ] as const;
