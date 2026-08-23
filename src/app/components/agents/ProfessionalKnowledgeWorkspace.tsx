@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import type { MissingInformationRequirement } from "@/lib/platform/agents";
 
 export type ProfessionalKnowledgeConfidence =
   | "high"
@@ -33,6 +34,7 @@ export type ProfessionalKnowledgeItem = {
     href: string;
     kind: "document" | "goal" | "timeline" | "conversation" | "workspace";
   }[];
+  missingInformation?: MissingInformationRequirement;
   action: ProfessionalKnowledgeAction;
 };
 
@@ -154,10 +156,19 @@ function KnowledgeItemCard({
         </details>
       ) : null}
       {kind === "needed" ? (
-        <p className="mt-3 border-t border-white/10 pt-3 text-xs leading-5 text-slate-500">
-          No verified evidence yet. Start a conversation to add or correct this
-          context.
-        </p>
+        <div className="mt-3 border-t border-white/10 pt-3">
+          <p className="text-sm font-bold leading-6 text-white">
+            {item.missingInformation?.question || item.summary}
+          </p>
+          {item.missingInformation?.why ? (
+            <p className="mt-2 text-xs leading-5 text-slate-400">
+              Why I’m asking: {item.missingInformation.why}
+            </p>
+          ) : null}
+          <p className="mt-2 text-xs leading-5 text-slate-500">
+            Start a conversation to add or correct this information without leaving this page.
+          </p>
+        </div>
       ) : null}
       <KnowledgeAction
         item={item}
@@ -295,7 +306,7 @@ export function ProfessionalKnowledgeWorkspace({
         <KnowledgeColumn
           headingId={`${idPrefix}-needed`}
           title="What I Still Need"
-          description="The highest-value unanswered questions for future guidance."
+          description="Answer one clear question here. Once your answer is saved, it moves out of this list."
           items={model.needed}
           kind="needed"
           emptyState={

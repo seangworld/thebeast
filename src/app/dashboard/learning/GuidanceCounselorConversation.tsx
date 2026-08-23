@@ -37,6 +37,10 @@ import {
 } from "@/lib/education";
 import type { GuidanceDiscoveryProfile } from "@/lib/education/discoveryConversation";
 import {
+  discoveryProfileUpdate,
+  learnFromGuidanceKnowledgeAnswer,
+} from "@/lib/education/discoveryConversation";
+import {
   buildGuidanceProactiveOpportunities,
   type GuidanceWorkflowRecommendation,
 } from "@/lib/education/guidanceWorkflow";
@@ -50,6 +54,8 @@ import {
   type ExecutionAuditEvent,
   type ProfessionalExecutionHistory,
   type RecommendationLifecycleStatus,
+  defineMissingInformationRequirement,
+  missingInformationWasSatisfied,
 } from "@/lib/platform/agents";
 import { createClient } from "@/lib/supabase/client";
 import { digitalStaffActivityLabels, requestDigitalStaffResponse } from "@/lib/digitalStaffRuntime/client";
@@ -148,7 +154,9 @@ export default function GuidanceCounselorConversation({
     text: string;
     area: string;
   } | null>(null);
-  const discoveryProfile = initialProfile;
+  const [discoveryProfile, setDiscoveryProfile] =
+    useState<GuidanceDiscoveryProfile>(initialProfile);
+  const [knowledgeAnswerError, setKnowledgeAnswerError] = useState("");
   const [canonicalProfileItems, setCanonicalProfileItems] = useState<EducationCanonicalRecord[]>([]);
   const [sessionNow, setSessionNow] = useState<Date | null>(null);
   const [previousReviewAt, setPreviousReviewAt] = useState("");
@@ -543,6 +551,50 @@ export default function GuidanceCounselorConversation({
   async function sendMessage(question: string, existingTurnId = "") {
     const cleanQuestion = question.trim();
     if (!cleanQuestion) return;
+    const activeKnowledgePrompt = knowledgePrompt;
+    if (activeKnowledgePrompt) {
+      setKnowledgeAnswerError("");
+      const nextProfile = learnFromGuidanceKnowledgeAnswer(
+        cleanQuestion,
+        activeKnowledgePrompt.area,
+        discoveryProfile
+      );
+      const remainingRequirementIds = buildGuidanceCounselorUnderstanding(
+        nextProfile
+      ).whatIStillNeed.map((item) => item.area);
+      if (
+        !missingInformationWasSatisfied({
+          requirementId: activeKnowledgePrompt.area,
+          remainingRequirementIds,
+        })
+      ) {
+        setKnowledgeAnswerError(
+          "I still need a direct answer to that question. A short answer is enough."
+        );
+        return;
+      }
+      try {
+        const client = createClient();
+        const {
+          data: { user },
+        } = await client.auth.getUser();
+        if (!user || user.id !== memberId) {
+          setKnowledgeAnswerError("Sign in again before saving this answer.");
+          return;
+        }
+        const saved = await client.from("education_profiles").upsert(
+          { owner_id: memberId, ...discoveryProfileUpdate(nextProfile) },
+          { onConflict: "owner_id" }
+        );
+        if (saved.error) throw saved.error;
+      } catch {
+        setKnowledgeAnswerError(
+          "Your answer could not be saved. Nothing changed; please try again."
+        );
+        return;
+      }
+      setDiscoveryProfile(nextProfile);
+    }
     setKnowledgePrompt(null);
     const turnId = existingTurnId || `guidance-${Date.now()}`;
     const messageTimestamp = new Date().toISOString();
@@ -704,10 +756,22 @@ export default function GuidanceCounselorConversation({
         ? `This is a working idea based on ${item.evidence.join(", ")}.`
         : undefined,
     evidence: item.evidence,
+    missingInformation:
+      item.state === "needed" && item.question
+        ? defineMissingInformationRequirement({
+            requirementId: item.area,
+            question: item.question,
+            why: "Your answer helps me make the next education or career step fit you.",
+            input: {
+              kind: "conversation",
+              placeholder: "A short answer is enough.",
+            },
+          })
+        : undefined,
     action: {
       label:
         item.state === "needed"
-          ? "Talk about this"
+          ? "Answer this"
           : item.state === "thought"
             ? "Confirm, reject, or correct"
             : "Review or update",
@@ -739,7 +803,7 @@ export default function GuidanceCounselorConversation({
       thinking:
         "It’s too early to draw conclusions. I’ll build working ideas as I learn more about you through our conversations.",
       needed:
-        "I have enough context for the current guidance. I’ll ask for more only when it would improve the plan.",
+        "You’re all caught up. I have what I need for now.",
     },
   };
 
@@ -751,6 +815,7 @@ export default function GuidanceCounselorConversation({
       text: prompt,
       area: item.id.replace(/^guidance-/, ""),
     });
+    setKnowledgeAnswerError("");
     window.requestAnimationFrame(focusComposer);
   }
   const historyPanel = (
@@ -1173,6 +1238,27 @@ export default function GuidanceCounselorConversation({
                       busyLabel={turns.find((turn) => turn.id === streamingTurnId)?.activity === "accepted" ? "Sending…" : "Working…"}
                     />
                   </ProfessionalConversationComposer>
+                  {knowledgePrompt ? (
+                    <div
+                      className="rounded-xl border border-cyan-300/25 bg-cyan-300/10 p-4"
+                      role="status"
+                    >
+                      <p className="text-xs font-black uppercase tracking-[0.14em] text-cyan-200">
+                        Answering now
+                      </p>
+                      <p className="mt-2 text-sm font-bold leading-6 text-white">
+                        {knowledgePrompt.text}
+                      </p>
+                      <p className="mt-1 text-xs leading-5 text-slate-300">
+                        Type a short answer above and send it. I’ll save it to your Education Profile and update what your counselor knows.
+                      </p>
+                      {knowledgeAnswerError ? (
+                        <p className="mt-2 text-sm font-semibold text-rose-200">
+                          {knowledgeAnswerError}
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : null}
                   {starterExperience}
                 </div>
               </section>

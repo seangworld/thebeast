@@ -118,7 +118,9 @@ test("BE-401 keeps conversation primary and reuses shared professional infrastru
   assert.match(conversation, /ProfessionalTimeAwareness/);
   assert.match(conversation, /ProfessionalMemoryTimeline/);
   assert.match(conversation, /requestDigitalStaffResponse/);
-  assert.doesNotMatch(conversation, /learnFromGuidanceKnowledgeAnswer\(/);
+  assert.match(conversation, /learnFromGuidanceKnowledgeAnswer\(/);
+  assert.match(conversation, /\.from\("education_profiles"\)[\s\S]*?\.upsert/);
+  assert.match(conversation, /setDiscoveryProfile\(nextProfile\)/);
   assert.match(conversation, /SupabaseAgentMemoryStore/);
   assert.match(conversation, /SupabaseExecutionHistoryStore/);
   assert.match(conversation, /Recommendation history/);

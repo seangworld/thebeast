@@ -23,6 +23,7 @@ export * from "./observations";
 export * from "./benchmarks";
 export * from "./probabilityConfidence";
 export * from "./professionalJournal";
+export * from "./missingInformation";
 export * from "./memberUnderstanding";
 export * from "./conversationStarters";
 export * from "./consultationIntelligence";
