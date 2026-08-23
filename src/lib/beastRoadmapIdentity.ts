@@ -533,6 +533,16 @@ export const beastRoadmapPackageRegistry = [
       "tests/seangworldGoogleProviders.test.ts",
     ]
   ),
+  packageIdentity(
+    "SEC-002",
+    ["SEC-002"],
+    "Supabase Public Schema Grant Review",
+    [
+      "supabase/migrations/20260823023000_restore_server_only_beast_admin_rpc_grants.sql",
+      "tests/publicSchemaGrantReview.test.ts",
+    ],
+    ["20260823023000_restore_server_only_beast_admin_rpc_grants.sql"]
+  ),
 ] as const satisfies readonly BeastRoadmapPackageIdentity[];
 
 function collisionsFor(
