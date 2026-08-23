@@ -4,7 +4,6 @@ import {
   buildAnalyticsDispatch,
   classifyBeastRoute,
   normalizeAnalyticsConsent,
-  normalizeAnalyticsEnvironment,
   type AnalyticsConsentState,
   type AnalyticsContext,
   type AnalyticsDispatch,
@@ -15,6 +14,16 @@ import {
 export const ANALYTICS_CONSENT_STORAGE_KEY =
   "seangworld.analytics.consent";
 export const ANALYTICS_CONSENT_EVENT = "seangworld:analytics-consent";
+
+let analyticsRuntime: {
+  consentDefault: AnalyticsConsentState;
+  environment: AnalyticsEnvironment;
+  measurementId: string;
+} = { consentDefault: "pending", environment: "development", measurementId: "" };
+
+export function configureAnalyticsRuntime(config: typeof analyticsRuntime) {
+  analyticsRuntime = config;
+}
 
 declare global {
   interface Window {
@@ -36,6 +45,9 @@ export function readAnalyticsConsent(
 export function setAnalyticsConsent(consent: AnalyticsConsentState) {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(ANALYTICS_CONSENT_STORAGE_KEY, consent);
+  window.gtag?.("consent", "update", {
+    analytics_storage: consent === "enabled" ? "granted" : "denied",
+  });
   window.dispatchEvent(
     new CustomEvent(ANALYTICS_CONSENT_EVENT, { detail: consent })
   );
@@ -72,7 +84,7 @@ export function dispatchAnalyticsEvent({
     measurementId,
   });
   if (!dispatch || typeof window === "undefined" || !window.gtag) return dispatch;
-  window.gtag("event", dispatch.event, dispatch.properties);
+  if (dispatch.event !== "page_viewed") window.gtag("event", dispatch.event, dispatch.properties);
   return dispatch;
 }
 
@@ -85,14 +97,8 @@ export function trackBeastFunnelEvent(
     event,
     context: classifyBeastRoute(window.location.pathname),
     properties,
-    consent: readAnalyticsConsent(
-      normalizeAnalyticsConsent(
-        process.env.NEXT_PUBLIC_ANALYTICS_CONSENT_DEFAULT
-      )
-    ),
-    environment: normalizeAnalyticsEnvironment(
-      process.env.NEXT_PUBLIC_VERCEL_ENV
-    ),
-    measurementId: process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || "",
+    consent: readAnalyticsConsent(analyticsRuntime.consentDefault),
+    environment: analyticsRuntime.environment,
+    measurementId: analyticsRuntime.measurementId,
   });
 }

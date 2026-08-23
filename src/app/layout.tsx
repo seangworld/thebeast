@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { BeastAnalytics } from "@/app/components/analytics/BeastAnalytics";
+import { BeastAnalytics, BeastAnalyticsConsentControl } from "@/app/components/analytics/BeastAnalytics";
 import { AdSensePlacement } from "@/app/components/ads/AdSensePlacement";
 import { seangworldAdSenseClientId } from "@/lib/adsense";
 import { externalResourceLinkProps } from "@/lib/platform/externalResources";
@@ -69,6 +69,7 @@ export default function RootLayout({
         {children}
 
         <footer className="mt-12 space-y-2 border-t border-[#2a3242] py-6 text-center text-sm text-[#7f8da3]">
+          <BeastAnalyticsConsentControl configuredConsent={process.env.NEXT_PUBLIC_ANALYTICS_CONSENT_DEFAULT} />
           <AdSensePlacement
             clientId={seangworldAdSenseClientId}
             slot={process.env.NEXT_PUBLIC_ADSENSE_FOOTER_SLOT || ""}

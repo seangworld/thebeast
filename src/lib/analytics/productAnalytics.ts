@@ -323,6 +323,46 @@ export function createPageViewDeduplicator() {
   };
 }
 
+function safeCampaignValue(value: string | null) {
+  return value && /^[A-Za-z0-9._~-]{1,64}$/.test(value) ? value : null;
+}
+
+export function buildGa4PageView(
+  dispatch: AnalyticsDispatch | null,
+  location: { origin: string; pathname: string; search?: string; referrer?: string }
+) {
+  if (!dispatch || dispatch.event !== "page_viewed") return null;
+  const origin = /^https:\/\/[A-Za-z0-9.-]+(?::\d+)?$/.test(location.origin)
+    ? location.origin
+    : "https://thebeast.seangworld.com";
+  const context = classifyBeastRoute(location.pathname);
+  const safePath = ["analytics", context.registration.productId, context.workspaceId || context.moduleId || "entry"]
+    .map((part) => part.replace(/[^a-z0-9_]/g, ""))
+    .join("/");
+  const source = new URLSearchParams(location.search || "");
+  const campaign = new URLSearchParams();
+  for (const name of ["utm_source", "utm_medium", "utm_campaign"] as const) {
+    const value = safeCampaignValue(source.get(name));
+    if (value) campaign.set(name, value);
+  }
+  let pageReferrer: string | undefined;
+  try {
+    const referrer = new URL(location.referrer || "");
+    if (referrer.protocol === "https:" || referrer.protocol === "http:") pageReferrer = referrer.origin;
+  } catch {
+    pageReferrer = undefined;
+  }
+  const query = campaign.toString();
+  return {
+    event: "page_view" as const,
+    properties: {
+      ...dispatch.properties,
+      page_location: `${origin}/${safePath}${query ? `?${query}` : ""}`,
+      ...(pageReferrer ? { page_referrer: pageReferrer } : {}),
+    },
+  };
+}
+
 export function normalizeAnalyticsPath(pathname: string) {
   const path = pathname.split(/[?#]/, 1)[0].replace(/\/+/g, "/");
   if (

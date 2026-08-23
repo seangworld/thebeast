@@ -52,6 +52,15 @@ property explicitly approved for cross-product aggregates. The legacy
 `SEANGWORLD_GA4_PROPERTY_ID` is not assumed to have ecosystem-wide stream
 coverage.
 
+The root footer exposes an equal-choice optional-analytics control. The safe
+default remains `pending`, which means disabled until the visitor or member
+explicitly opts in. Canonical `page_viewed` dispatches map to GA4's standard
+`page_view`; member routes are reduced to coarse product/workspace locations,
+arbitrary query strings are removed, only validated UTM attribution is
+preserved, and referrers are reduced to origin. Authentication success events
+use the provider's injected runtime environment rather than a browser variable
+that Vercel does not expose automatically.
+
 The Google Analytics Data API and, when used, Search Console API must be enabled
 in the service account's Google Cloud project. Grant the service-account email:
 
