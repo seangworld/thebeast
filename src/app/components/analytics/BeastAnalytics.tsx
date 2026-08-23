@@ -10,12 +10,15 @@ import {
   useSyncExternalStore,
 } from "react";
 import {
+  configureAnalyticsRuntime,
   dispatchAnalyticsEvent,
   readAnalyticsConsent,
+  setAnalyticsConsent,
   subscribeToAnalyticsConsent,
 } from "@/lib/analytics/client";
 import {
   analyticsPerformanceBucket,
+  buildGa4PageView,
   classifyBeastRoute,
   createPageViewDeduplicator,
   normalizeAnalyticsConsent,
@@ -43,6 +46,23 @@ const supportedClickEvents = new Set<AnalyticsEventName>([
   "search_succeeded",
   "search_no_results",
 ]);
+
+export function BeastAnalyticsConsentControl({ configuredConsent }: { configuredConsent?: string }) {
+  const consentDefault = normalizeAnalyticsConsent(configuredConsent);
+  const readConsentSnapshot = useCallback(() => readAnalyticsConsent(consentDefault), [consentDefault]);
+  const consent = useSyncExternalStore(subscribeToAnalyticsConsent, readConsentSnapshot, () => consentDefault) as AnalyticsConsentState;
+  return (
+    <section className="mx-auto mt-4 max-w-xl rounded-xl border border-white/10 bg-white/[0.03] p-4 text-left" aria-labelledby="beast-analytics-choice">
+      <h2 id="beast-analytics-choice" className="font-black text-white">Optional product analytics</h2>
+      <p className="mt-2 text-sm leading-6 text-[#aeb8c7]">Share anonymous, category-only usage events to improve Beast. Financial, health, document, conversation, identity, and other member content is never included.</p>
+      <p className="mt-2 text-sm font-bold text-[#dbe3ef]" aria-live="polite">Current choice: {consent === "enabled" ? "enabled" : consent === "disabled" ? "disabled" : "no choice — disabled"}.</p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <button type="button" className="beast-button min-h-11" aria-pressed={consent === "enabled"} onClick={() => setAnalyticsConsent("enabled")}>Enable optional analytics</button>
+        <button type="button" className="beast-button-secondary min-h-11" aria-pressed={consent === "disabled"} onClick={() => setAnalyticsConsent("disabled")}>Keep analytics disabled</button>
+      </div>
+    </section>
+  );
+}
 
 export function BeastAnalytics({
   measurementId,
@@ -75,6 +95,10 @@ export function BeastAnalytics({
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
+    configureAnalyticsRuntime({ consentDefault, environment, measurementId });
+  }, [consentDefault, environment, measurementId]);
+
+  useEffect(() => {
     if (!ready || !pageViews.shouldTrack(pathname)) return;
     const context = classifyBeastRoute(pathname);
     if (!window.sessionStorage.getItem("seangworld.analytics.session_started")) {
@@ -90,7 +114,7 @@ export function BeastAnalytics({
         "true"
       );
     }
-    dispatchAnalyticsEvent({
+    const pageView = dispatchAnalyticsEvent({
       event: "page_viewed",
       context,
       properties: { source: "client_navigation" },
@@ -98,6 +122,13 @@ export function BeastAnalytics({
       environment,
       measurementId,
     });
+    const ga4PageView = buildGa4PageView(pageView, {
+      origin: window.location.origin,
+      pathname,
+      search: window.location.search,
+      referrer: document.referrer,
+    });
+    if (ga4PageView && window.gtag) window.gtag("event", ga4PageView.event, ga4PageView.properties);
     dispatchAnalyticsEvent({
       event: context.professionalId
         ? "professional_opened"

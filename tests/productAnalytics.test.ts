@@ -7,6 +7,7 @@ import {
   analyticsEventNames,
   beastAnalyticsProductRegistry,
   buildAnalyticsDispatch,
+  buildGa4PageView,
   classifyBeastRoute,
   createPageViewDeduplicator,
   registerAnalyticsProduct,
@@ -240,4 +241,24 @@ test("BO-404 BeastAdmin reports configuration without fake aggregates", () => {
     GOOGLE_GA4_READER_SERVICE_ACCOUNT_EMAIL: "ga4-reader@example.iam.gserviceaccount.com",
   });
   assert.equal(legacyProperty.status, "property_review_required");
+});
+
+test("BO-404 maps canonical views to GA4 page_view without private route identifiers", () => {
+  const dispatch = buildAnalyticsDispatch({ event: "page_viewed", context: classifyBeastRoute("/dashboard/admin/members/private-member-id"), consent: "enabled", environment: "production", measurementId });
+  const pageView = buildGa4PageView(dispatch, { origin: "https://thebeast.seangworld.com", pathname: "/dashboard/admin/members/private-member-id", search: "?utm_source=seangworld&utm_medium=cta&utm_campaign=free_guide&email=private@example.com", referrer: "https://www.seangworld.com/private/path?member=123" });
+  assert.equal(pageView?.event, "page_view");
+  assert.equal(pageView?.properties.page_location, "https://thebeast.seangworld.com/analytics/beastadmin/entry?utm_source=seangworld&utm_medium=cta&utm_campaign=free_guide");
+  assert.equal(pageView?.properties.page_referrer, "https://www.seangworld.com");
+  assert.doesNotMatch(JSON.stringify(pageView), /private-member-id|private@example|member=123/);
+});
+
+test("BO-404 exposes an explicit optional-analytics choice and runtime funnel configuration", () => {
+  const provider = readFileSync("src/app/components/analytics/BeastAnalytics.tsx", "utf8");
+  const client = readFileSync("src/lib/analytics/client.ts", "utf8");
+  const layout = readFileSync("src/app/layout.tsx", "utf8");
+  assert.match(provider, /BeastAnalyticsConsentControl/);
+  assert.match(provider, /configureAnalyticsRuntime/);
+  assert.match(client, /analyticsRuntime\.environment/);
+  assert.doesNotMatch(client, /NEXT_PUBLIC_VERCEL_ENV/);
+  assert.match(layout, /BeastAnalyticsConsentControl/);
 });
