@@ -1,25 +1,43 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
-import { BEAST_HUNTER_VERSION, defaultBeastHunterCriteria, isBeastHunterTrackingStatus, normalizeBeastHunterCriteria, rankBeastHunterCandidates, scoreBeastHunterCandidate, validateBeastHunterCriteria, type BeastHunterCandidate, type BeastHunterRankedCandidate } from "../src/lib/beastHunter";
+import { BEAST_HUNTER_VERSION, beastHunterBuiltInPresets, defaultBeastHunterCriteria, isBeastHunterTrackingStatus, isExplicitSpecializedSearch, normalizeBeastHunterCriteria, rankBeastHunterCandidates, scoreBeastHunterCandidate, validateBeastHunterCriteria, type BeastHunterCandidate, type BeastHunterRankedCandidate } from "../src/lib/beastHunter";
 import { buildBeastHunterResearchInput, parseBeastHunterResearch } from "../src/lib/beastHunterResearch";
 import { buildBeastHunterBuildBrief, parseBeastHunterMonitor, parseBeastHunterValidation } from "../src/lib/beastHunterDecision";
 import { buildBeastHunterWorkRequest } from "../src/lib/beastHunterExecution";
 
-const scores = { demand: 90, velocity: 85, competitionGap: 70, commercialIntent: 80, saturation: 25, aiCommoditizationRisk: 20, seangworldFit: 95, timeToMarket: 90, revenuePotential: 75, durability: 65, confidence: 80, actionWindow: 85 };
-const candidate: BeastHunterCandidate = { id: "one", title: "Veteran benefit calculator", summary: "A focused calculator", huntType: "Calculator / Tool", market: "Veterans", discoveredAt: "2026-08-21T00:00:00Z", startupCost: 100, buildDays: 7, interaction: "none", automation: "mostly_automated", competition: 35, actionWindowDays: 45, revenueModels: ["Affiliate"], geography: "United States", evidence: [], scores };
+const scores = { demand: 90, velocity: 85, competitionGap: 70, commercialIntent: 80, saturation: 25, aiCommoditizationRisk: 20, seangworldFit: 95, timeToMarket: 90, revenuePotential: 75, durability: 65, confidence: 80, actionWindow: 85, ownerFit: 90, verifiability: 90, aiBuildability: 90, liabilityRisk: 20 };
+const explanation = { whatItIs: "A plain-language benefit estimator.", customer: "Veterans and their families.", whatToBuild: "A web calculator with cited assumptions.", whyNow: "Current benefit changes create recurring questions.", monetization: "Affiliate and advertising revenue.", verifiability: "Compare every formula with official benefit tables.", difficulty: "A focused one-week build.", ownerInvolvement: "Review official sources and acceptance examples." };
+const candidate: BeastHunterCandidate = { id: "one", title: "Veteran benefit calculator", summary: "A focused calculator", huntType: "Calculator / Tool", market: "Veterans", audience: "general_consumer", discoveredAt: "2026-08-21T00:00:00Z", startupCost: 100, buildDays: 7, interaction: "none", automation: "mostly_automated", competition: 35, actionWindowDays: 45, revenueModels: ["Affiliate"], expectedMonthlyRevenueLow: 0, expectedMonthlyRevenueHigh: 2000, geography: "United States", specializedDomain: "none", explanation, evidence: [], scores };
 
 test("BeastHunter score remains bounded", () => { assert.ok(scoreBeastHunterCandidate(scores) >= 0); assert.ok(scoreBeastHunterCandidate(scores) <= 100); });
 test("strict filters exclude candidates that miss the contract", () => { const results = rankBeastHunterCandidates([candidate], { ...defaultBeastHunterCriteria, query: "calculator", strictness: "strict", maximumBuildDays: 3 }); assert.equal(results.length, 0); });
 test("flexible filters retain candidates and explain misses", () => { const results = rankBeastHunterCandidates([candidate], { ...defaultBeastHunterCriteria, query: "calculator", strictness: "flexible", maximumBuildDays: 3 }); assert.equal(results.length, 1); assert.deepEqual(results[0].filterNotes, ["Build time exceeds target"]); });
 test("a hunt requires an objective, type, or market", () => { assert.equal(validateBeastHunterCriteria(defaultBeastHunterCriteria).length, 1); });
-test("BeastHunter normalizes only complete hunt contracts", () => { assert.equal(normalizeBeastHunterCriteria(defaultBeastHunterCriteria), null); assert.equal(normalizeBeastHunterCriteria({ ...defaultBeastHunterCriteria, query: "current AI tools" })?.resultCount, 25); });
+test("BeastHunter normalizes only complete hunt contracts", () => { assert.equal(normalizeBeastHunterCriteria(defaultBeastHunterCriteria), null); assert.equal(normalizeBeastHunterCriteria({ ...defaultBeastHunterCriteria, query: "current AI tools" })?.resultCount, 10); });
 test("BeastHunter research rejects uncited opportunities", () => {
   const criteria = { ...defaultBeastHunterCriteria, query: "calculator" };
-  const item = { title: "Calculator", summary: "Current opportunity", huntType: "Calculator / Tool", market: "Money", startupCost: 10, buildDays: 4, interaction: "none", automation: "mostly_automated", competition: 30, actionWindowDays: 40, revenueModels: ["Affiliate"], geography: "United States", sourceUrls: ["https://evidence.test/item"], scores };
+  const item = { title: "Calculator", summary: "Current opportunity", huntType: "Calculator / Tool", market: "Money", audience: "general_consumer", startupCost: 10, buildDays: 4, interaction: "none", automation: "mostly_automated", competition: 30, actionWindowDays: 40, revenueModels: ["Affiliate"], expectedMonthlyRevenueLow: 0, expectedMonthlyRevenueHigh: 1500, geography: "United States", specializedDomain: "none", explanation, sourceUrls: ["https://evidence.test/item"], scores };
   assert.equal(parseBeastHunterResearch({ output_text: JSON.stringify({ opportunities: [item] }), output: [] }, criteria).length, 0);
   const cited = parseBeastHunterResearch({ output_text: JSON.stringify({ opportunities: [item] }), output: [{ content: [{ type: "output_text", annotations: [{ type: "url_citation", url: "https://evidence.test/item", title: "Evidence" }] }] }] }, criteria);
   assert.equal(cited.length, 1); assert.equal(cited[0].evidence[0].label, "Evidence"); assert.match(buildBeastHunterResearchInput(criteria), /calculator/);
+});
+
+test("owner fit rejects unrequested specialized work but explicit specialized searches still function", () => {
+  const specialized = { ...candidate, id: "medical", title: "Medicaid billing chart", market: "Health", audience: "professional" as const, specializedDomain: "medical" as const, scores: { ...scores, ownerFit: 25, verifiability: 30, liabilityRisk: 85 } };
+  assert.equal(rankBeastHunterCandidates([specialized], { ...defaultBeastHunterCriteria, query: "side income tools" }).length, 0);
+  const explicit = { ...defaultBeastHunterCriteria, query: "Medicaid billing chart", audience: "any" as const };
+  assert.equal(isExplicitSpecializedSearch(explicit), true);
+  assert.equal(rankBeastHunterCandidates([specialized], explicit)[0]?.recommendation, "REJECT");
+});
+
+test("built-in presets are editable complete hunt contracts and favor focused result counts", () => {
+  assert.deepEqual(beastHunterBuiltInPresets.map((preset) => preset.name), ["Easy App Ideas", "PDF / Guide Opportunities", "Consumer Tools", "Low-Expertise Side Income", "AI-Buildable Products"]);
+  for (const preset of beastHunterBuiltInPresets) {
+    assert.equal(validateBeastHunterCriteria(preset.criteria).length, 0);
+    assert.equal(preset.criteria.resultCount, 10);
+    assert.notEqual(preset.criteria, defaultBeastHunterCriteria);
+  }
 });
 test("BeastHunter persistence is owner-only and evidence-backed", () => {
   const migration = readFileSync("supabase/migrations/20260821000100_add_beast_hunter_foundation.sql", "utf8");
@@ -61,14 +79,14 @@ test("BeastHunter supports saved hunt history and controlled opportunity states"
 });
 
 test("BeastHunter v1 completes validation monitoring build briefs and management", () => {
-  assert.equal(BEAST_HUNTER_VERSION, "1.2.0");
+  assert.equal(BEAST_HUNTER_VERSION, "1.3.0-preview");
   const cited = { output: [{ content: [{ type: "output_text", annotations: [{ type: "url_citation", url: "https://evidence.test/current", title: "Current evidence" }] }] }] };
   const validation = parseBeastHunterValidation({ ...cited, output_text: JSON.stringify({ verdict: "caution", demandEvidence: "Demand exists but is early.", competitorAnalysis: "Two focused competitors.", realisticMonthlyRevenue: "$0-$2,000 until validated.", startupCost: "$100-$500", buildEstimate: "2-4 weeks", marketingDifficulty: "Moderate", economics: { offerPrice: "$29 per sale", revenueModel: "One-time sale", monthlySalesNeeded: "35 sales for about $1,000 gross", grossRevenueRange: "$0-$2,000", monthlyOperatingCost: "$50-$200", grossMargin: "60%-85% before owner labor", breakEvenPoint: "4-18 sales", timeToFirstRevenue: "2-8 weeks", incomeConfidence: "moderate" }, platformDependencies: ["Search"], reasonsToProceed: ["Demand"], reasonsToReject: ["Competition"], nextSteps: ["Interview buyers"], sourceUrls: ["https://evidence.test/current"] }) });
   assert.equal(validation.validation.verdict, "caution");
   assert.equal(validation.validation.economics.offerPrice, "$29 per sale");
   const monitor = parseBeastHunterMonitor({ ...cited, output_text: JSON.stringify({ trendStatus: "rising", summary: "Recent demand increased.", totalScore: 82, sourceUrls: ["https://evidence.test/current"] }) });
   assert.equal(monitor.trendStatus, "rising");
-  const brief = buildBeastHunterBuildBrief({ ...candidate, score: 80, rank: 1, filterNotes: [], validation: validation.validation } as BeastHunterRankedCandidate);
+  const brief = buildBeastHunterBuildBrief({ ...candidate, score: 80, rank: 1, filterNotes: [], recommendation: "BUILD", recommendationReason: "Strong fit", validation: validation.validation } as BeastHunterRankedCandidate);
   assert.match(brief.objective, /Veteran benefit calculator/);
   const workspace = readFileSync("src/app/dashboard/admin/intelligence/hunter/BeastHunterWorkspace.tsx", "utf8");
   const actions = readFileSync("src/app/api/admin/beast-hunter/actions/route.ts", "utf8");
@@ -83,7 +101,7 @@ test("BeastHunter v1 completes validation monitoring build briefs and management
 });
 
 test("BeastHunter promotes opportunities into non-canonical intake and an owner-reviewed handoff", () => {
-  const opportunity = { ...candidate, score: 80, rank: 1, filterNotes: [], buildBrief: { objective: "Build it", audience: "Veterans", valueProposition: candidate.summary, minimumViableScope: ["Calculator"], exclusions: ["Payments"], milestones: ["MVP"], successMeasures: ["Working result"], risks: ["Changing rules"], createdAt: "2026-08-21T00:00:00Z" } } as BeastHunterRankedCandidate;
+  const opportunity = { ...candidate, score: 80, rank: 1, filterNotes: [], recommendation: "BUILD", recommendationReason: "Strong fit", buildBrief: { objective: "Build it", audience: "Veterans", valueProposition: candidate.summary, minimumViableScope: ["Calculator"], exclusions: ["Payments"], milestones: ["MVP"], successMeasures: ["Working result"], risks: ["Changing rules"], createdAt: "2026-08-21T00:00:00Z" } } as BeastHunterRankedCandidate;
   const request = buildBeastHunterWorkRequest({ roadmapItemId: "roadmap-123", opportunity });
   assert.match(request, /Continue Beast/);
   assert.match(request, /roadmap-123/);
