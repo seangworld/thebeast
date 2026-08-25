@@ -131,13 +131,14 @@ function SearchOpportunityIntelligence({
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-300">
-            SW-SEO-229
+            SW-SEO-231
           </p>
           <h2 id="search-opportunity-heading" className="mt-2 text-xl font-black text-white">
-            Search Opportunity Intelligence
+            Content Gap &amp; Search Opportunity Generation
           </h2>
+          <p className="mt-1 text-xs font-bold text-slate-400">Built on Search Opportunity Intelligence</p>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-300">
-            Page-to-query evidence ranks practical SEO opportunities without promising rankings or treating sampled rows as exhaustive totals.
+            Search Console page-to-query evidence, prior-period movement, and existing analytics context continuously identify focused optimization and content gaps without promising rankings or treating sampled rows as exhaustive totals.
           </p>
         </div>
         {pages.length ? (
@@ -162,7 +163,10 @@ function SearchOpportunityIntelligence({
         </p>
       ) : null}
       <p className="mt-2 text-xs leading-5 text-slate-500">
-        Disposition set: Improve Existing Page · Create Supporting Content · Investigate · Watch · Ignore
+        Classification: Optimize Existing · Create New · Monitor · Ignore
+      </p>
+      <p className="mt-1 text-xs leading-5 text-slate-600">
+        Underlying evidence dispositions remain: Improve Existing Page · Create Supporting Content · Investigate · Watch · Ignore
       </p>
 
       {pagePerformance ? (
@@ -188,7 +192,7 @@ function SearchOpportunityIntelligence({
           tabIndex={0}
           aria-label="Page to query search opportunities table, horizontally scrollable"
         >
-          <table className="min-w-[76rem] w-full text-left text-sm">
+          <table className="min-w-[92rem] w-full text-left text-sm">
             <thead className="text-slate-400">
               <tr>
                 <th className="p-3">Query</th>
@@ -196,7 +200,9 @@ function SearchOpportunityIntelligence({
                 <th className="p-3">Impressions</th>
                 <th className="p-3">CTR</th>
                 <th className="p-3">Average Position</th>
-                <th className="p-3">Disposition</th>
+                <th className="p-3">Classification</th>
+                <th className="p-3">Best format</th>
+                <th className="p-3">Signals</th>
                 <th className="p-3">Evidence</th>
               </tr>
             </thead>
@@ -208,7 +214,9 @@ function SearchOpportunityIntelligence({
                   <td className="p-3">{number(opportunity.current.impressions)}<span className="mt-1 block text-xs text-slate-500">{changeLabel(opportunity.change.impressions)}</span></td>
                   <td className="p-3">{(opportunity.current.ctr * 100).toFixed(1)}%<span className="mt-1 block text-xs text-slate-500">{changeLabel(opportunity.change.ctr, "percent")}</span></td>
                   <td className="p-3">{opportunity.current.position.toFixed(1)}<span className="mt-1 block text-xs text-slate-500">{changeLabel(opportunity.change.position, "position")}</span></td>
-                  <td className="p-3"><span className="inline-flex rounded-full border border-cyan-300/25 bg-cyan-300/5 px-3 py-1 text-xs font-bold text-cyan-100">{opportunity.disposition}</span></td>
+                  <td className="p-3"><span className="inline-flex rounded-full border border-cyan-300/25 bg-cyan-300/5 px-3 py-1 text-xs font-bold text-cyan-100">{opportunity.classification}</span></td>
+                  <td className="p-3"><span className="font-bold text-white">{opportunity.recommendedAsset}</span>{opportunity.ownerApprovalRequired ? <span className="mt-1 block text-xs text-amber-200">Owner approval required before publication</span> : null}</td>
+                  <td className="max-w-xs p-3 text-xs leading-5 text-slate-300">{opportunity.signals.length ? opportunity.signals.join(" · ") : "No action signal crossed the governed threshold"}</td>
                   <td className="max-w-md p-3"><span className="font-bold text-white">Score {opportunity.score}</span><span className="mt-1 block text-xs leading-5 text-slate-400">{opportunity.rationale}</span></td>
                 </tr>
               ))}
@@ -222,7 +230,7 @@ function SearchOpportunityIntelligence({
       )}
 
       <p className="mt-4 rounded-xl border border-amber-300/20 bg-amber-300/5 p-4 text-xs leading-5 text-slate-300">
-        Hunt Our Data handoff remains unavailable until BeastHunter is canonically registered. Dispositions are review inputs only; accepted changes require a recorded baseline and later post-change comparison.
+        Hunt Our Data handoff remains unavailable until BeastHunter is canonically registered. Recommendations are decision support only. Creating or materially publishing content always requires explicit owner approval; this engine cannot authorize, draft, or publish work. Accepted changes require a recorded baseline and later post-change comparison.
       </p>
     </section>
   );

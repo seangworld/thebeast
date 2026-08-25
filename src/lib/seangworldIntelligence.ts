@@ -55,6 +55,28 @@ export const searchOpportunityDispositions = [
 export type SearchOpportunityDisposition =
   (typeof searchOpportunityDispositions)[number];
 
+export const searchGrowthClassifications = [
+  "Optimize Existing",
+  "Create New",
+  "Monitor",
+  "Ignore",
+] as const;
+
+export type SearchGrowthClassification =
+  (typeof searchGrowthClassifications)[number];
+
+export const searchGrowthAssetTypes = [
+  "Existing Page",
+  "Calculator",
+  "Tool",
+  "Guide",
+  "Resource",
+  "Product",
+  "Article",
+] as const;
+
+export type SearchGrowthAssetType = (typeof searchGrowthAssetTypes)[number];
+
 export type SearchPerformanceMetrics = {
   clicks: number;
   impressions: number;
@@ -82,6 +104,10 @@ export type SearchOpportunity = {
   change: SearchPerformanceChange;
   score: number;
   disposition: SearchOpportunityDisposition;
+  classification: SearchGrowthClassification;
+  recommendedAsset: SearchGrowthAssetType;
+  signals: string[];
+  ownerApprovalRequired: boolean;
   rationale: string;
 };
 
@@ -259,6 +285,16 @@ function genericSearchLandingPage(page: string) {
   }
 }
 
+function recommendedSearchAsset(query: string): SearchGrowthAssetType {
+  const normalized = query.toLowerCase();
+  if (/\b(calculat|estimate|how much|cost|roi|payment|afford)\b/.test(normalized)) return "Calculator";
+  if (/\b(generator|checker|planner|tracker|compare|converter|template)\b/.test(normalized)) return "Tool";
+  if (/\b(guide|how to|steps|tutorial|checklist)\b/.test(normalized)) return "Guide";
+  if (/\b(download|worksheet|resource|example|sample)\b/.test(normalized)) return "Resource";
+  if (/\b(platform|software|app|service|product)\b/.test(normalized)) return "Product";
+  return "Article";
+}
+
 export function buildSearchOpportunities(
   currentRows: readonly SearchPageQueryEvidence[],
   previousRows: readonly SearchPageQueryEvidence[]
@@ -357,6 +393,24 @@ export function buildSearchOpportunities(
         )
       );
 
+      const classification: SearchGrowthClassification =
+        disposition === "Improve Existing Page"
+          ? "Optimize Existing"
+          : disposition === "Create Supporting Content"
+            ? "Create New"
+            : disposition === "Investigate" || disposition === "Watch"
+              ? "Monitor"
+              : "Ignore";
+      const recommendedAsset = classification === "Optimize Existing"
+        ? "Existing Page"
+        : recommendedSearchAsset(row.query);
+      const signals = [
+        ...(genericPage ? ["No strong matching page"] : []),
+        ...(achievablePosition ? ["Realistic ranking upside"] : []),
+        ...(current.impressions >= 50 && lowCtr ? ["High impressions / low CTR"] : []),
+        ...(impressionGrowth !== null && impressionGrowth >= 0.25 ? ["Growing impressions"] : []),
+      ];
+
       return {
         page: row.page,
         query: row.query,
@@ -365,6 +419,10 @@ export function buildSearchOpportunities(
         change: performanceChange(current, previous),
         score,
         disposition,
+        classification,
+        recommendedAsset,
+        signals,
+        ownerApprovalRequired: classification === "Create New",
         rationale,
       };
     })
