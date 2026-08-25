@@ -14,6 +14,7 @@ import {
 import type { BeastAdminCanonicalReadModel } from "@/lib/beastAdminCanonicalProjection";
 import { useBeastAdminCommandCenter } from "@/lib/useBeastAdminCommandCenter";
 import { BeastAdminPagination } from "../BeastAdminPagination";
+import { DevelopmentAgentDirectory } from "./agents/DevelopmentAgentDirectory";
 
 const DEVELOPMENT_HISTORY_PAGE_SIZE = 10;
 
@@ -195,6 +196,7 @@ export function BeastAdminDevelopmentConsoleWorkspace() {
 
   return (
     <div className="space-y-6">
+      <DevelopmentAgentDirectory canonical={canonical} />
       <DashboardCard accent="admin">
         <SectionHeader
           eyebrow="Canonical command center"
