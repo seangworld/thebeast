@@ -15,6 +15,18 @@ export function proposalQueueStatus(status: string): ProposalQueueStatus {
   return "needs_decision";
 }
 
+export function ownerActionQueueStatus(action: string | undefined): ProposalQueueStatus | null {
+  if (action === "approve") return "approved";
+  if (["modify_return", "investigate_further"].includes(action || "")) return "investigating";
+  if (action === "watch") return "watching";
+  if (action === "reject") return "rejected";
+  return null;
+}
+
+export function effectiveProposalQueueStatus(proposal: CanonicalStrategyProposal, pendingAction?: string) {
+  return ownerActionQueueStatus(pendingAction) || proposalQueueStatus(proposal.status);
+}
+
 export function suppressDuplicateCanonicalProposals(proposals: CanonicalStrategyProposal[]) {
   const seen = new Set<string>();
   return proposals.filter((proposal) => {
