@@ -230,7 +230,7 @@ function SearchOpportunityIntelligence({
       )}
 
       <p className="mt-4 rounded-xl border border-amber-300/20 bg-amber-300/5 p-4 text-xs leading-5 text-slate-300">
-        Hunt Our Data handoff remains unavailable until BeastHunter is canonically registered. Recommendations are decision support only. Creating or materially publishing content always requires explicit owner approval; this engine cannot authorize, draft, or publish work. Accepted changes require a recorded baseline and later post-change comparison.
+        BeastHunter is canonically registered, but this workspace does not silently convert search opportunities into BeastHunter work. Recommendations are decision support only. Creating or materially publishing content always requires explicit owner approval; this engine cannot authorize, draft, or publish work. Accepted changes require a recorded baseline and later post-change comparison.
       </p>
     </section>
   );

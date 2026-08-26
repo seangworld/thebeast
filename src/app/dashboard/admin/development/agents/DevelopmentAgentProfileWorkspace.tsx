@@ -21,7 +21,7 @@ export function DevelopmentAgentProfileWorkspace({ profile }: { profile: Develop
       <p className="mt-5 max-w-4xl text-sm leading-6 text-slate-300">{profile.purpose}</p>
       <div className="mt-5 rounded-xl border border-amber-300/20 bg-amber-300/[0.06] p-4">
         <p className="text-xs font-black uppercase tracking-[0.16em] text-amber-200">Authority boundary</p>
-        <p className="mt-2 font-bold leading-6 text-white">{profile.id === "developer-agent" ? "Developer Agent builds authorized work but cannot authorize itself, expand scope, or release its own work." : "Reviewer Agent independently checks Developer Agent work, but a PASS does not equal owner release authorization."}</p>
+        <p className="mt-2 font-bold leading-6 text-white">{profile.authorityBoundary}</p>
       </div>
     </DashboardCard>
 

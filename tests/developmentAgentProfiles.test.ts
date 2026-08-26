@@ -14,10 +14,13 @@ const canonical = {
   validation: { projectionSchema: "schema", projectionGenerated: true, canonicalConsistency: "passed", lastGovernedEvidenceReference: null, lastGovernedEvidenceDate: null, testCount: 206, warnings: [] },
 } satisfies BeastAdminCanonicalReadModel;
 
-test("development roster contains only the bounded Developer and Reviewer agents", () => {
-  assert.deepEqual(developmentAgentProfiles.map((profile) => profile.id), ["developer-agent", "reviewer-agent"]);
+test("development roster contains the bounded Orchestrator 3.0 lifecycle roles", () => {
+  assert.deepEqual(developmentAgentProfiles.map((profile) => profile.id), ["orchestrator-3", "observer-agent", "proposal-agent", "developer-agent", "reviewer-agent", "outcome-agent"]);
   assert.match(getDevelopmentAgentProfile("developer-agent")!.limitations.join(" "), /Cannot authorize itself/);
   assert.match(getDevelopmentAgentProfile("reviewer-agent")!.limitations.join(" "), /PASS does not equal owner acceptance/);
+  assert.match(getDevelopmentAgentProfile("observer-agent")!.authorityBoundary, /never authorization/);
+  assert.match(getDevelopmentAgentProfile("proposal-agent")!.authorityBoundary, /non-executable/);
+  assert.match(getDevelopmentAgentProfile("outcome-agent")!.limitations.join(" "), /Cannot authorize remediation/);
 });
 
 test("profile status and activity derive from canonical projection without implying active work", () => {
@@ -40,9 +43,9 @@ test("owner-only roster and profiles preserve the established BeastAdmin surface
   const directory = readFileSync("src/app/dashboard/admin/development/agents/DevelopmentAgentDirectory.tsx", "utf8");
   const profile = readFileSync("src/app/dashboard/admin/development/agents/DevelopmentAgentProfileWorkspace.tsx", "utf8");
   const page = readFileSync("src/app/dashboard/admin/development/agents/[agentId]/page.tsx", "utf8");
-  assert.match(directory, /Orchestrator coordinates, Developer Agent builds, Reviewer Agent independently checks, and the owner authorizes/);
-  assert.match(profile, /cannot authorize itself, expand scope, or release its own work/);
-  assert.match(profile, /PASS does not equal owner release authorization/);
+  assert.match(directory, /Orchestrator coordinates, Observer detects, Proposal Agent researches and recommends, Developer builds, Reviewer independently checks, Outcome Agent measures, and the owner authorizes/);
+  assert.match(profile, /profile.authorityBoundary/);
+  assert.match(readFileSync("src/lib/developmentAgentProfiles.ts", "utf8"), /PASS does not equal owner release authorization/);
   assert.match(page, /BeastAdminShell/);
   assert.doesNotMatch(directory + profile, /service_role|access_token|raw provider/i);
 });
