@@ -193,10 +193,12 @@ export function BeastAdminDevelopmentConsoleWorkspace() {
   );
   const governance = canonical.governance;
   const validation = canonical.validation;
+  const pendingProposalCount = (canonical.proposals || []).filter((proposal) => proposal.status === "awaiting_owner_review").length;
 
   return (
     <div className="space-y-6">
       <DevelopmentAgentDirectory canonical={canonical} />
+      <DashboardCard accent="admin"><div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start"><SectionHeader eyebrow="Orchestrator 3.0 owner gate" title="Strategy proposal queue" description="Inspect canonical Observer and Research/Planning proposals and submit non-executable decisions for BeastFusion reconciliation." /><div className="rounded-xl border border-amber-300/30 bg-amber-300/10 px-4 py-3 text-center"><p className="text-2xl font-black text-white">{pendingProposalCount}</p><p className="text-xs font-black uppercase text-amber-200">Canonical pending</p></div></div><Link href="/dashboard/admin/development/proposals" className="beast-button mt-4">Review strategy proposals</Link></DashboardCard>
       <DashboardCard accent="admin">
         <SectionHeader
           eyebrow="Canonical command center"
