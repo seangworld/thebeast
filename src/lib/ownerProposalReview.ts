@@ -24,7 +24,7 @@ export function ownerActionQueueStatus(action: string | undefined): ProposalQueu
 }
 
 export function effectiveProposalQueueStatus(proposal: CanonicalStrategyProposal, pendingAction?: string) {
-  return ownerActionQueueStatus(pendingAction) || proposalQueueStatus(proposal.status);
+  return proposal.status === "awaiting_owner_review" ? ownerActionQueueStatus(pendingAction) || "needs_decision" : proposalQueueStatus(proposal.status);
 }
 
 export function suppressDuplicateCanonicalProposals(proposals: CanonicalStrategyProposal[]) {
