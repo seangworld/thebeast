@@ -14,3 +14,13 @@ test("BF-AGT-011 retries a failing provider no more than the declared bound", as
 test("BF-AGT-011 generated intake uses existing taxonomy and waits for canonical reconciliation", () => { const runner = readFileSync("src/lib/server/standingObservationRunner.ts", "utf8"); const route = readFileSync("src/app/api/admin/strategy-proposals/route.ts", "utf8"); assert.match(runner, /proposalIntakeProduct\("BeastFusion"\)/); assert.match(runner, /awaiting_beastfusion_reconciliation/); assert.match(runner, /proposal_intake_write_failed/); assert.doesNotMatch(route, /payload\?\.proposal/); });
 test("BF-AGT-011 migration is owner-only, disabled by default, and non-executable", () => { const sql = readFileSync("supabase/migrations/20260826194329_add_standing_observation_staff_scheduling.sql", "utf8"); assert.match(sql, /enabled boolean not null default false/); assert.match(sql, /public\.is_profile_admin\(\)/g); assert.match(sql, /revoke all .* from anon, authenticated/); assert.match(sql, /never execution authority/); });
 test("BF-AGT-011 schedule and UI preserve owner and Production gates", () => { const cron = readFileSync("vercel.json", "utf8"); const route = readFileSync("src/app/api/admin/staff-operations/route.ts", "utf8"); const runner = readFileSync("src/lib/server/standingObservationRunner.ts", "utf8"); assert.match(cron, /0 10 \* \* \*/); assert.match(route, /BeastAdmin owner access required/); assert.match(route, /Controlled simulations are disabled in Production/); assert.match(runner, /executionAuthorized: false/); });
+test("BF-AGT-011 exposes only the authenticated clean proof outside Production", () => {
+  const page = readFileSync("src/app/dashboard/admin/development/page.tsx", "utf8");
+  const workspace = readFileSync("src/app/dashboard/admin/development/StaffOperationsWorkspace.tsx", "utf8");
+  assert.match(page, /process\.env\.VERCEL_ENV !== "production"/);
+  assert.match(page, /controlledProofAvailable=\{controlledProofAvailable\}/);
+  assert.match(workspace, /Run Controlled Clean Proof/);
+  assert.match(workspace, /body: JSON\.stringify\(\{ action: "simulate_clean" \}\)/);
+  assert.match(workspace, /does not create a proposal or activate standing scheduling/);
+  assert.doesNotMatch(workspace, /simulate_material|simulate_failure/);
+});

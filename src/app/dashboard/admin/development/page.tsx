@@ -5,6 +5,8 @@ import { DevelopmentConsoleSectionNav } from "./DevelopmentConsoleSectionNav";
 import { StaffOperationsWorkspace } from "./StaffOperationsWorkspace";
 
 export default function BeastAdminDevelopmentConsolePage() {
+  const controlledProofAvailable = process.env.VERCEL_ENV !== "production";
+
   return (
     <BeastAdminShell
       title="Development Console"
@@ -12,7 +14,7 @@ export default function BeastAdminDevelopmentConsolePage() {
     >
       <div className="space-y-6">
         <DevelopmentConsoleSectionNav />
-        <StaffOperationsWorkspace />
+        <StaffOperationsWorkspace controlledProofAvailable={controlledProofAvailable} />
         <section id="releases" className="scroll-mt-24">
           <BeastAdminRepositoryReleaseIntelligenceWorkspace />
         </section>
