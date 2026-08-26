@@ -197,8 +197,7 @@ export function BeastAdminDevelopmentConsoleWorkspace() {
 
   return (
     <div className="space-y-6">
-      <DevelopmentAgentDirectory canonical={canonical} />
-      <DashboardCard accent="admin"><div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start"><SectionHeader eyebrow="Orchestrator 3.0 owner gate" title="Strategy proposal queue" description="Inspect canonical Observer and Research/Planning proposals and submit non-executable decisions for BeastFusion reconciliation." /><div className="rounded-xl border border-amber-300/30 bg-amber-300/10 px-4 py-3 text-center"><p className="text-2xl font-black text-white">{pendingProposalCount}</p><p className="text-xs font-black uppercase text-amber-200">Canonical pending</p></div></div><Link href="/dashboard/admin/development/proposals" className="beast-button mt-4">Review strategy proposals</Link></DashboardCard>
+      <section id="overview" className="scroll-mt-24">
       <DashboardCard accent="admin">
         <SectionHeader
           eyebrow="Canonical command center"
@@ -218,6 +217,15 @@ export function BeastAdminDevelopmentConsoleWorkspace() {
           </p>
         </div>
       </DashboardCard>
+      </section>
+
+      <section id="agents" className="scroll-mt-24">
+        <DevelopmentAgentDirectory canonical={canonical} />
+      </section>
+
+      <section id="proposals" className="scroll-mt-24">
+        <DashboardCard accent="admin"><div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start"><SectionHeader eyebrow="Orchestrator 3.0 owner gate" title="Strategy proposal queue" description="Inspect canonical Observer and Research/Planning proposals and submit non-executable decisions for BeastFusion reconciliation." /><div className="rounded-xl border border-amber-300/30 bg-amber-300/10 px-4 py-3 text-center"><p className="text-2xl font-black text-white">{pendingProposalCount}</p><p className="text-xs font-black uppercase text-amber-200">Canonical pending</p></div></div><Link href="/dashboard/admin/development/proposals" className="beast-button mt-4">Review strategy proposals</Link></DashboardCard>
+      </section>
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Package progress">
         <MetricTile label="Packages indexed" value={String(reconciliation?.total ?? 0)} detail="Canonical package reconciliation" icon="📦" tone="yellow" />
@@ -228,6 +236,7 @@ export function BeastAdminDevelopmentConsoleWorkspace() {
 
       <ProjectionIdentity canonical={canonical} />
 
+      <section id="execution" className="scroll-mt-24">
       <DashboardCard accent="admin">
         <SectionHeader
           eyebrow="Execution gates"
@@ -240,7 +249,9 @@ export function BeastAdminDevelopmentConsoleWorkspace() {
           <WorkList title="Canonical next five" items={overview?.nextFive ?? []} />
         </div>
       </DashboardCard>
+      </section>
 
+      <section id="dependencies" className="scroll-mt-24">
       <DashboardCard accent="admin">
         <SectionHeader
           eyebrow="Dependencies"
@@ -270,8 +281,9 @@ export function BeastAdminDevelopmentConsoleWorkspace() {
           </table>
         </div>
       </DashboardCard>
+      </section>
 
-      <section id="development-history" className="scroll-mt-6">
+      <section id="history" className="scroll-mt-24">
         <DashboardCard accent="admin">
           <SectionHeader
             eyebrow="Development History"
@@ -313,6 +325,7 @@ export function BeastAdminDevelopmentConsoleWorkspace() {
         </DashboardCard>
       </section>
 
+      <section id="governance" className="scroll-mt-24 space-y-6">
       <div className="grid gap-6 xl:grid-cols-2">
         <DashboardCard accent="admin">
           <SectionHeader eyebrow="Governance health" title="Registry, BeastShield, and agent policy" description="Governance declarations are shown with their exact bounded meaning; they are not live-control verification." />
@@ -368,6 +381,7 @@ export function BeastAdminDevelopmentConsoleWorkspace() {
           </div>
         </details>
       </DashboardCard>
+      </section>
     </div>
   );
 }
