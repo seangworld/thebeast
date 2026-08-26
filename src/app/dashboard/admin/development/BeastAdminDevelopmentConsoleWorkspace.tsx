@@ -197,6 +197,7 @@ export function BeastAdminDevelopmentConsoleWorkspace() {
   return (
     <div className="space-y-6">
       <DevelopmentAgentDirectory canonical={canonical} />
+      <DashboardCard accent="admin"><SectionHeader eyebrow="Orchestrator 3.0 owner gate" title="Strategy proposal review" description="Inspect canonical Observer and Research/Planning proposals and submit non-executable decisions for BeastFusion reconciliation." /><Link href="/dashboard/admin/development/proposals" className="beast-button mt-4">Review strategy proposals</Link></DashboardCard>
       <DashboardCard accent="admin">
         <SectionHeader
           eyebrow="Canonical command center"

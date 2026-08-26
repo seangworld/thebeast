@@ -40,6 +40,7 @@ export type BeastAdminCanonicalReadModel = {
     reconciliation: { reconciledAt: string | null; total: number; completed: number; remaining: number; currentExecutableProduct: string | null; currentExecutablePackage: string | null; warningCount: number };
   };
   releases: Array<{ id: string; product: string; module?: string | null; version: string | null; type?: string; status: string; releaseDate: string | null; ownerApproved?: boolean; validationState: string | null; dependencies?: string[]; blockers?: string[]; evidenceSummary?: string; evidenceReference: string | null; preview: "not_in_projection_v1"; production: "not_in_projection_v1"; servedCommit: null; declaredDeployment: string; source: "beastfusion" }>;
+  proposals?: Array<{ id: string; title: string; sourceAgent: "observer_agent" | "research_planning_agent"; product: string; problem: string; evidence: string[]; expectedBenefit: string; effort: string; risk: string; scope: string[]; dependencies: string[]; recommendation: string; confidence: string; status: string; ownerApproved: boolean; executionAuthorized: false; executable: false; createdAt: string; updatedAt: string; source: "beastfusion" }>;
   governance?: { registryVersion: string; packageRegistryVersion: string; executionStateVersion: string; automationEnabled: boolean; autonomousExecution: boolean; deploymentCapability: boolean; beastShieldState: string; beastShieldMeaning: string; dependencyIntegrity: string; validatorState: string; warningCodes: string[]; errorCodes: string[] };
   validation?: { projectionSchema: string; projectionGenerated: boolean; canonicalConsistency: string; lastGovernedEvidenceReference: string | null; lastGovernedEvidenceDate: string | null; testCount: number | null; warnings: string[] };
   records?: Array<{ id: string; label: string; path: string; role: string; digest: string; updatedAt: string | null }>;
@@ -65,6 +66,7 @@ export function normalizeBeastAdminCanonicalReadModel(
     !Array.isArray(candidate.roadmap) ||
     !Array.isArray(candidate.execution) ||
     !Array.isArray(candidate.releases) ||
+    (candidate.proposals !== undefined && !Array.isArray(candidate.proposals)) ||
     !Array.isArray(candidate.attention)
   ) {
     return null;
@@ -79,6 +81,7 @@ export function normalizeBeastAdminCanonicalReadModel(
     !requiredStrings(candidate.roadmap, ["id", "product", "title", "status", "priority", "source"]) ||
     !requiredStrings(candidate.execution, ["id", "product", "status", "result", "source"]) ||
     !requiredStrings(candidate.releases, ["id", "product", "status", "declaredDeployment", "source"]) ||
+    (Array.isArray(candidate.proposals) && !requiredStrings(candidate.proposals, ["id", "title", "sourceAgent", "product", "status", "source"])) ||
     !requiredStrings(candidate.attention, ["id", "kind", "detail", "source"])
   ) {
     return null;
@@ -176,6 +179,9 @@ export function buildBeastAdminCanonicalReadModel(snapshot: BeastFusionStoredSna
     },
     releases: projection.releases.map(record).map((item) => ({
       id: String(item.id), product: String(item.product), module: typeof item.module === "string" ? item.module : null, version: typeof item.version === "string" ? item.version : null, type: String(item.type ?? ""), status: String(item.state), releaseDate: typeof item.releaseDate === "string" ? item.releaseDate : null, ownerApproved: item.ownerApproved === true, validationState: typeof item.validationState === "string" ? item.validationState : null, dependencies: strings(item.dependencies), blockers: strings(item.blockers), evidenceSummary: String(item.evidenceSummary ?? ""), evidenceReference: typeof item.evidenceReference === "string" ? item.evidenceReference : null, preview: "not_in_projection_v1" as const, production: "not_in_projection_v1" as const, servedCommit: null, declaredDeployment: String(item.declaredDeployment), source: "beastfusion" as const,
+    })),
+    proposals: (projection.proposals ?? []).map(record).map((item) => ({
+      id: String(item.id), title: String(item.title), sourceAgent: item.sourceAgent as "observer_agent" | "research_planning_agent", product: String(item.product), problem: String(item.problem), evidence: strings(item.evidence), expectedBenefit: String(item.expectedBenefit), effort: String(item.effort), risk: String(item.risk), scope: strings(item.scope), dependencies: strings(item.dependencies), recommendation: String(item.recommendation), confidence: String(item.confidence), status: String(item.status), ownerApproved: item.ownerApproved === true, executionAuthorized: false as const, executable: false as const, createdAt: String(item.createdAt), updatedAt: String(item.updatedAt), source: "beastfusion" as const,
     })),
     governance: {
       registryVersion: String(governance.registryVersion ?? ""), packageRegistryVersion: String(governance.packageRegistryVersion ?? ""), executionStateVersion: String(governance.executionStateVersion ?? ""), automationEnabled: governance.automationEnabled === true, autonomousExecution: governance.autonomousExecution === true, deploymentCapability: governance.deploymentCapability === true, beastShieldState: String(governance.beastShieldState ?? ""), beastShieldMeaning: String(governance.beastShieldMeaning ?? ""), dependencyIntegrity: String(governance.dependencyIntegrity ?? ""), validatorState: String(governance.validatorState ?? ""), warningCodes: strings(governance.warningCodes), errorCodes: strings(governance.errorCodes),

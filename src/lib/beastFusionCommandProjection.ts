@@ -9,7 +9,7 @@ const shaPattern = /^[0-9a-f]{40}$/;
 const digestPattern = /^sha256:[0-9a-f]{64}$/;
 const projectionIdPattern = /^bfcp_[0-9a-f]{16}$/;
 const dateOrTimestampPattern = /^\d{4}-\d{2}-\d{2}(?:T.*(?:Z|[+-]\d{2}:\d{2}))?$/;
-const sourceRoles = new Set(["constitution", "governance_registry", "package_registry", "execution_state", "scheduler", "release_registry", "version_registry", "agent_registry", "active_roadmap", "planned_roadmap", "roadmap_source"]);
+const sourceRoles = new Set(["constitution", "governance_registry", "package_registry", "execution_state", "scheduler", "release_registry", "version_registry", "agent_registry", "proposal_registry", "active_roadmap", "planned_roadmap", "roadmap_source"]);
 const canonicalStates = new Set(["planning", "approved_not_executable", "ready", "in_progress", "blocked", "validation", "released", "complete", "archived"]);
 const requiredSourcePaths = new Set([
   "MANIFEST.md",
@@ -24,7 +24,7 @@ const requiredSourcePaths = new Set([
 ]);
 
 const exactKeyContracts = {
-  projection: ["$schema", "projectionVersion", "projectionId", "generatedAt", "source", "classification", "sourceManifest", "summary", "portfolio", "roadmap", "execution", "releases", "governance", "validation"],
+  projection: ["$schema", "projectionVersion", "projectionId", "generatedAt", "source", "classification", "sourceManifest", "summary", "portfolio", "roadmap", "execution", "releases", "proposals", "governance", "validation"],
   source: ["owner", "repository", "branch", "commit", "canonicalInputDigest", "generatorVersion"],
   classification: ["audience", "containsMemberData", "containsSecrets", "containsRawPrompts"],
   sourceManifestItem: ["path", "role", "digest", "updatedAt"],
@@ -39,6 +39,7 @@ const exactKeyContracts = {
   executionReconciliation: ["reconciledAt", "total", "completed", "remaining", "currentExecutableProduct", "currentExecutablePackage", "warningCount"],
   executionEvent: ["id", "type", "product", "package", "occurredAt", "summary", "authorizationClass", "evidenceReference"],
   releaseItem: ["id", "product", "module", "version", "type", "state", "releaseDate", "ownerApproved", "validationState", "dependencies", "blockers", "evidenceSummary", "evidenceReference", "declaredDeployment"],
+  proposalItem: ["id", "title", "sourceAgent", "product", "problem", "evidence", "expectedBenefit", "effort", "risk", "scope", "dependencies", "recommendation", "confidence", "status", "ownerApproved", "executionAuthorized", "executable", "createdAt", "updatedAt"],
   portfolioItem: ["id", "name", "parent", "ownerRepository", "lifecycle", "version", "buildId", "releaseDate", "channel", "declaredDeployment", "deploymentEvidenceType", "activeRoadmap"],
   governance: ["registryVersion", "packageRegistryVersion", "executionStateVersion", "automationEnabled", "autonomousExecution", "deploymentCapability", "beastShieldState", "beastShieldMeaning", "dependencyIntegrity", "validatorState", "warningCodes", "errorCodes"],
   validation: ["projectionSchema", "projectionGenerated", "canonicalConsistency", "lastGovernedEvidenceReference", "lastGovernedEvidenceDate", "testCount", "warnings"],
@@ -71,6 +72,7 @@ export type BeastFusionCommandProjection = JsonRecord & {
   roadmap: { items: JsonRecord[]; documents: JsonRecord[]; warnings: string[] };
   execution: JsonRecord & { events: JsonRecord[] };
   releases: JsonRecord[];
+  proposals?: JsonRecord[];
   governance: JsonRecord;
   validation: JsonRecord;
 };
@@ -228,6 +230,16 @@ function validatePrimitiveContract(projection: JsonRecord, errors: string[]) {
     stringValue(item.evidenceReference, `execution.events[${index}].evidenceReference`, errors, { nullable: true });
   });
 
+  if (projection.proposals !== undefined) array(projection.proposals, "proposals", errors).forEach((raw, index) => {
+    const item = recordForValidation(raw);
+    stringValue(item.id, `proposals[${index}].id`, errors, { min: 2, max: 80 });
+    for (const key of ["title", "sourceAgent", "product", "problem", "expectedBenefit", "effort", "risk", "recommendation", "confidence", "status", "createdAt", "updatedAt"]) stringValue(item[key], `proposals[${index}].${key}`, errors, { min: 1, max: 400 });
+    for (const key of ["evidence", "scope", "dependencies"]) stringArray(item[key], `proposals[${index}].${key}`, errors, { maxItems: 40, maxLength: 400 });
+    booleanValue(item.ownerApproved, `proposals[${index}].ownerApproved`, errors);
+    booleanValue(item.executionAuthorized, `proposals[${index}].executionAuthorized`, errors, false);
+    booleanValue(item.executable, `proposals[${index}].executable`, errors, false);
+  });
+
   array(projection.releases, "releases", errors).forEach((raw, index) => {
     const item = recordForValidation(raw);
     stringValue(item.id, `releases[${index}].id`, errors, { min: 1, max: 160 });
@@ -272,7 +284,7 @@ function validateExecutionQueue(item: JsonRecord, label: string, errors: string[
 }
 
 function validateNestedKeys(projection: JsonRecord, errors: string[]) {
-  exactKeys(projection, exactKeyContracts.projection, "projection", errors);
+  exactKeys(projection, projection.proposals === undefined ? exactKeyContracts.projection.filter((key) => key !== "proposals") : exactKeyContracts.projection, "projection", errors);
   exactKeys(projection.source, exactKeyContracts.source, "source", errors);
   exactKeys(projection.classification, exactKeyContracts.classification, "classification", errors);
   array(projection.sourceManifest, "sourceManifest", errors).forEach((item, index) => exactKeys(item, exactKeyContracts.sourceManifestItem, `sourceManifest[${index}]`, errors));
@@ -290,6 +302,7 @@ function validateNestedKeys(projection: JsonRecord, errors: string[]) {
   exactKeys(execution.packageReconciliation, exactKeyContracts.executionReconciliation, "execution.packageReconciliation", errors);
   array(execution.events, "execution.events", errors).forEach((item, index) => exactKeys(item, exactKeyContracts.executionEvent, `execution.events[${index}]`, errors));
   array(projection.releases, "releases", errors).forEach((item, index) => exactKeys(item, exactKeyContracts.releaseItem, `releases[${index}]`, errors));
+  if (projection.proposals !== undefined) array(projection.proposals, "proposals", errors).forEach((item, index) => exactKeys(item, exactKeyContracts.proposalItem, `proposals[${index}]`, errors));
   exactKeys(projection.governance, exactKeyContracts.governance, "governance", errors);
   exactKeys(projection.validation, exactKeyContracts.validation, "validation", errors);
 }
