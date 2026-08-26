@@ -6,6 +6,7 @@ import {
   digitalStaffSpecialists,
 } from "@/lib/digitalStaff";
 import Link from "next/link";
+import { OwnerDevelopmentStaffDirectory } from "./OwnerDevelopmentStaffDirectory";
 
 export default function DigitalStaffPage() {
   return (
@@ -53,6 +54,8 @@ export default function DigitalStaffPage() {
             ))}
           </ol>
         </section>
+
+        <OwnerDevelopmentStaffDirectory />
 
         <section className="rounded-2xl border border-white/10 bg-[#111827] p-5" aria-labelledby="next-step-heading">
           <h2 id="next-step-heading" className="text-lg font-black text-white">
