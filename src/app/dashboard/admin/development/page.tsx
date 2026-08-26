@@ -2,6 +2,7 @@ import { BeastAdminShell } from "../BeastAdminShell";
 import { BeastAdminDevelopmentConsoleWorkspace } from "./BeastAdminDevelopmentConsoleWorkspace";
 import { BeastAdminRepositoryReleaseIntelligenceWorkspace } from "./BeastAdminRepositoryReleaseIntelligenceWorkspace";
 import { DevelopmentConsoleSectionNav } from "./DevelopmentConsoleSectionNav";
+import { StaffOperationsWorkspace } from "./StaffOperationsWorkspace";
 
 export default function BeastAdminDevelopmentConsolePage() {
   return (
@@ -11,6 +12,7 @@ export default function BeastAdminDevelopmentConsolePage() {
     >
       <div className="space-y-6">
         <DevelopmentConsoleSectionNav />
+        <StaffOperationsWorkspace />
         <section id="releases" className="scroll-mt-24">
           <BeastAdminRepositoryReleaseIntelligenceWorkspace />
         </section>
