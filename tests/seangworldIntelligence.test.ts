@@ -179,7 +179,7 @@ test("owner route and dashboard contain all required sections and no AI claim pa
     "Optimize Existing", "Create New", "Monitor", "Ignore", "Best format",
     "Owner approval required before publication",
     "Improve Existing Page", "Create Supporting Content", "Investigate", "Watch", "Ignore",
-    "Baseline", "Hunt Our Data handoff remains unavailable", "Final Data Through", "Reporting Delay",
+    "Baseline", "BeastHunter is canonically registered", "Final Data Through", "Reporting Delay",
     "Provider Status", "Connection Status", "Last Sync", "Data Freshness",
   ]) assert.match(workspace, new RegExp(label));
   assert.doesNotMatch(workspace, /OpenAI|generate.*summary|AI-generated/i);

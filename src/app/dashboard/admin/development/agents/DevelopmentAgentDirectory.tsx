@@ -11,9 +11,9 @@ export function DevelopmentAgentDirectory({ canonical }: { canonical: BeastAdmin
       <SectionHeader
         eyebrow="Development agents"
         title="Governed agent roster"
-        description="Orchestrator coordinates, Developer Agent builds, Reviewer Agent independently checks, and the owner authorizes. These profiles report status from the accepted BeastFusion projection and do not execute work."
+        description="Orchestrator coordinates, Observer detects, Proposal Agent researches and recommends, Developer builds, Reviewer independently checks, Outcome Agent measures, and the owner authorizes. Profiles report accepted BeastFusion state and never create authority."
       />
-      <div className="mt-5 grid gap-4 md:grid-cols-2" data-development-agent-roster="true">
+      <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3" data-development-agent-roster="true">
         {developmentAgentProfiles.map((profile) => {
           const state = deriveDevelopmentAgentCanonicalState(profile, canonical);
           return (
