@@ -111,6 +111,26 @@ test("page-query evidence receives exactly one governed SEO disposition", () => 
   assert.equal(byQuery.get("ignore me")?.disposition, "Ignore");
   assert.ok([...byQuery.values()].every((item) => item.rationale && item.score >= 0 && item.score <= 100));
   assert.equal(byQuery.get("improve me")?.change.impressions, 20);
+  assert.equal(byQuery.get("improve me")?.classification, "Optimize Existing");
+  assert.equal(byQuery.get("support me")?.classification, "Create New");
+  assert.equal(byQuery.get("investigate me")?.classification, "Monitor");
+  assert.equal(byQuery.get("ignore me")?.classification, "Ignore");
+  assert.equal(byQuery.get("support me")?.ownerApprovalRequired, true);
+  assert.equal(byQuery.get("improve me")?.ownerApprovalRequired, false);
+  assert.ok(byQuery.get("support me")?.signals.includes("No strong matching page"));
+});
+
+test("new search gaps recommend useful formats instead of defaulting every query to an article", () => {
+  const opportunities = buildSearchOpportunities([
+    { page: "https://www.seangworld.com/tools", query: "house flipping roi calculator", clicks: 1, impressions: 120, ctr: 0.008, position: 12 },
+    { page: "https://www.seangworld.com/guides", query: "home renovation checklist", clicks: 1, impressions: 90, ctr: 0.011, position: 18 },
+    { page: "https://www.seangworld.com/articles", query: "ai productivity platform", clicks: 1, impressions: 80, ctr: 0.0125, position: 20 },
+  ], []);
+  const byQuery = new Map(opportunities.map((item) => [item.query, item]));
+  assert.equal(byQuery.get("house flipping roi calculator")?.recommendedAsset, "Calculator");
+  assert.equal(byQuery.get("home renovation checklist")?.recommendedAsset, "Guide");
+  assert.equal(byQuery.get("ai productivity platform")?.recommendedAsset, "Product");
+  assert.ok(opportunities.every((item) => item.classification === "Create New"));
 });
 
 test("landing-page performance preserves a missing prior period instead of inventing zero", () => {
@@ -155,7 +175,9 @@ test("owner route and dashboard contain all required sections and no AI claim pa
     "Impressions", "Clicks", "CTR", "Average Position", "Countries",
     "Cities", "Devices", "Browsers", "Operating Systems", "Traffic Sources",
     "Landing Pages", "Exit Pages", "Top Queries", "Top Landing Pages",
-    "Historical Trends", "Search Performance Trends", "Search Opportunity Intelligence",
+    "Historical Trends", "Search Performance Trends", "Content Gap &amp; Search Opportunity Generation",
+    "Optimize Existing", "Create New", "Monitor", "Ignore", "Best format",
+    "Owner approval required before publication",
     "Improve Existing Page", "Create Supporting Content", "Investigate", "Watch", "Ignore",
     "Baseline", "Hunt Our Data handoff remains unavailable", "Final Data Through", "Reporting Delay",
     "Provider Status", "Connection Status", "Last Sync", "Data Freshness",
