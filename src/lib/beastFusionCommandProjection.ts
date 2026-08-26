@@ -39,7 +39,7 @@ const exactKeyContracts = {
   executionReconciliation: ["reconciledAt", "total", "completed", "remaining", "currentExecutableProduct", "currentExecutablePackage", "warningCount"],
   executionEvent: ["id", "type", "product", "package", "occurredAt", "summary", "authorizationClass", "evidenceReference"],
   releaseItem: ["id", "product", "module", "version", "type", "state", "releaseDate", "ownerApproved", "validationState", "dependencies", "blockers", "evidenceSummary", "evidenceReference", "declaredDeployment"],
-  proposalItem: ["id", "title", "sourceAgent", "product", "problem", "evidence", "expectedBenefit", "effort", "risk", "scope", "dependencies", "recommendation", "confidence", "status", "ownerApproved", "executionAuthorized", "executable", "createdAt", "updatedAt"],
+  proposalItem: ["id", "conditionKey", "title", "sourceAgent", "product", "detected", "problem", "evidence", "whyItMatters", "expectedBenefit", "effort", "risk", "scope", "exclusions", "dependencies", "successMeasures", "recommendedPriority", "recommendation", "confidence", "status", "decisionHistory", "ownerApproved", "executionAuthorized", "executable", "createdAt", "updatedAt"],
   portfolioItem: ["id", "name", "parent", "ownerRepository", "lifecycle", "version", "buildId", "releaseDate", "channel", "declaredDeployment", "deploymentEvidenceType", "activeRoadmap"],
   governance: ["registryVersion", "packageRegistryVersion", "executionStateVersion", "automationEnabled", "autonomousExecution", "deploymentCapability", "beastShieldState", "beastShieldMeaning", "dependencyIntegrity", "validatorState", "warningCodes", "errorCodes"],
   validation: ["projectionSchema", "projectionGenerated", "canonicalConsistency", "lastGovernedEvidenceReference", "lastGovernedEvidenceDate", "testCount", "warnings"],
@@ -233,8 +233,10 @@ function validatePrimitiveContract(projection: JsonRecord, errors: string[]) {
   if (projection.proposals !== undefined) array(projection.proposals, "proposals", errors).forEach((raw, index) => {
     const item = recordForValidation(raw);
     stringValue(item.id, `proposals[${index}].id`, errors, { min: 2, max: 80 });
-    for (const key of ["title", "sourceAgent", "product", "problem", "expectedBenefit", "effort", "risk", "recommendation", "confidence", "status", "createdAt", "updatedAt"]) stringValue(item[key], `proposals[${index}].${key}`, errors, { min: 1, max: 400 });
-    for (const key of ["evidence", "scope", "dependencies"]) stringArray(item[key], `proposals[${index}].${key}`, errors, { maxItems: 40, maxLength: 400 });
+    for (const key of ["conditionKey", "title", "sourceAgent", "product", "detected", "problem", "whyItMatters", "expectedBenefit", "effort", "risk", "recommendedPriority", "recommendation", "confidence", "status", "createdAt", "updatedAt"]) stringValue(item[key], `proposals[${index}].${key}`, errors, { min: 1, max: 400 });
+    for (const key of ["scope", "exclusions", "dependencies", "successMeasures"]) stringArray(item[key], `proposals[${index}].${key}`, errors, { maxItems: 40, maxLength: 400 });
+    array(item.evidence, `proposals[${index}].evidence`, errors).forEach((rawEvidence, evidenceIndex) => { const evidence = recordForValidation(rawEvidence); stringValue(evidence.summary, `proposals[${index}].evidence[${evidenceIndex}].summary`, errors, { min: 1, max: 400 }); stringValue(evidence.source, `proposals[${index}].evidence[${evidenceIndex}].source`, errors, { min: 1, max: 200 }); stringValue(evidence.reference, `proposals[${index}].evidence[${evidenceIndex}].reference`, errors, { nullable: true, max: 400 }); nullableDate(evidence.observedAt, `proposals[${index}].evidence[${evidenceIndex}].observedAt`, errors); exactKeys(evidence, ["summary", "source", "reference", "observedAt"], `proposals[${index}].evidence[${evidenceIndex}]`, errors); });
+    array(item.decisionHistory, `proposals[${index}].decisionHistory`, errors);
     booleanValue(item.ownerApproved, `proposals[${index}].ownerApproved`, errors);
     booleanValue(item.executionAuthorized, `proposals[${index}].executionAuthorized`, errors, false);
     booleanValue(item.executable, `proposals[${index}].executable`, errors, false);
