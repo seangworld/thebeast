@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { loadBeastFusionCanonicalReadModel } from "@/lib/server/beastFusionReadModel";
-import { validateOwnerProposalDecision } from "@/lib/ownerProposalReview";
+import { proposalIntakeProduct, validateOwnerProposalDecision } from "@/lib/ownerProposalReview";
 import { createRouteClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -37,7 +37,7 @@ export async function POST(request: Request) {
   if (!validation.valid) return json({ error: validation.reason }, 400);
   const decision = validation.decision;
   const { data, error } = await client.from("beast_admin_roadmap_items").insert({
-    user_id: user.id, product_id: proposal!.product, title: `Owner decision: ${proposal!.title}`, summary: decision.rationale, status: "planned", owner_notes: decision.detail || decision.rationale,
+    user_id: user.id, product_id: proposalIntakeProduct(proposal!.product), title: `Owner decision: ${proposal!.title}`, summary: decision.rationale, status: "planned", owner_notes: decision.detail || decision.rationale,
     source_type: "orchestrator_3_proposal", source_id: proposal!.id, governance_classification: "intake", execution_status: "candidate_intake",
     execution_payload: { decision, proposalProjectionId: canonical.projection?.projectionId || null, proposalUpdatedAt: proposal!.updatedAt }, is_next_build: false,
   }).select("id,source_id,status,owner_notes,execution_payload,created_at").single();

@@ -4,6 +4,9 @@ export const ownerProposalActions = ["approve", "reject", "modify_return", "watc
 export type OwnerProposalAction = (typeof ownerProposalActions)[number];
 export type CanonicalStrategyProposal = NonNullable<BeastAdminCanonicalReadModel["proposals"]>[number];
 
+const intakeProducts: Record<string, string> = { beastfusion: "fusion", beast: "beastos", beastos: "beastos", beastmoney: "money", beastlearning: "education", beasteducation: "education", beasthealth: "health", beastgoals: "goals", beastdocuments: "documents", beasthome: "home", seangworld: "seangworld" };
+export function proposalIntakeProduct(product: string) { return intakeProducts[product] || "future"; }
+
 export function validateOwnerProposalDecision(input: { proposal: CanonicalStrategyProposal | undefined; action: unknown; rationale: unknown; detail: unknown }) {
   if (!input.proposal || input.proposal.status !== "awaiting_owner_review") return { valid: false as const, reason: "Proposal is not available for owner review." };
   if (!ownerProposalActions.includes(input.action as OwnerProposalAction)) return { valid: false as const, reason: "Select a valid owner decision." };
