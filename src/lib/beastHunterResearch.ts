@@ -14,6 +14,8 @@ export const beastHunterResearchInstructions = [
   "Return conservative estimates. Scores are evidence assessments from 0 to 100, not guarantees.",
   "Saturation and AI commoditization are risk scores: higher means worse.",
   "Owner Fit measures whether a non-specialist owner can understand the concept, supervise the work, identify the customer, and judge the outcome.",
+  "Brand Fit measures whether the opportunity fits an existing SEANGWORLD/Beast product or module, extends an existing audience, complements an established category, uses an existing product format, and leverages current capabilities or distribution.",
+  "Treat Brand Fit as a strong preference, not an absolute exclusion. An outside-brand result belongs only when its demand, confidence, commercial evidence, and timing are exceptional; explain the evidence that justifies surfacing it.",
   "Verifiability measures whether the finished product can be independently checked without relying on AI to verify its own specialized claims.",
   "AI Buildability measures how much production or development AI can perform under owner review. Liability Risk is higher when incorrect output could create professional, regulatory, medical, legal, tax, financial, or engineering harm.",
   "Unless the hunt explicitly requests a specialized domain, prefer broadly understandable consumer or small-business products and penalize specialized medical billing, clinical, legal, tax/compliance, engineering, and regulated-finance workflows.",
@@ -34,7 +36,7 @@ export const beastHunterResearchSchema = {
       items: {
         type: "object",
         additionalProperties: false,
-        required: ["title", "summary", "huntType", "market", "audience", "startupCost", "buildDays", "interaction", "automation", "competition", "actionWindowDays", "revenueModels", "expectedMonthlyRevenueLow", "expectedMonthlyRevenueHigh", "geography", "specializedDomain", "explanation", "sourceUrls", "scores"],
+        required: ["title", "summary", "huntType", "market", "audience", "startupCost", "buildDays", "interaction", "automation", "competition", "actionWindowDays", "revenueModels", "expectedMonthlyRevenueLow", "expectedMonthlyRevenueHigh", "geography", "specializedDomain", "brandFit", "explanation", "sourceUrls", "scores"],
         properties: {
           title: { type: "string" }, summary: { type: "string" }, huntType: { type: "string", enum: beastHunterHuntTypes }, market: { type: "string", enum: beastHunterMarkets }, audience: { type: "string", enum: ["general_consumer", "small_business", "professional"] },
           startupCost: { anyOf: [{ type: "number" }, { type: "null" }] }, buildDays: { anyOf: [{ type: "number" }, { type: "null" }] },
@@ -43,9 +45,10 @@ export const beastHunterResearchSchema = {
           revenueModels: { type: "array", items: { type: "string" } },
           expectedMonthlyRevenueLow: { anyOf: [{ type: "number" }, { type: "null" }] }, expectedMonthlyRevenueHigh: { anyOf: [{ type: "number" }, { type: "null" }] },
           geography: { type: "string" }, specializedDomain: { type: "string", enum: ["none", "medical", "legal", "tax_compliance", "engineering", "regulated_finance", "other"] },
+          brandFit: { type: "object", additionalProperties: false, required: ["classification", "rationale", "ecosystemMatches"], properties: { classification: { type: "string", enum: ["in_brand", "outside_brand", "outside_brand_exceptional"] }, rationale: { type: "string" }, ecosystemMatches: { type: "array", items: { type: "string" }, maxItems: 8 } } },
           explanation: { type: "object", additionalProperties: false, required: ["whatItIs", "customer", "whatToBuild", "whyNow", "monetization", "verifiability", "difficulty", "ownerInvolvement"], properties: Object.fromEntries(["whatItIs", "customer", "whatToBuild", "whyNow", "monetization", "verifiability", "difficulty", "ownerInvolvement"].map((name) => [name, { type: "string" }])) },
           sourceUrls: { type: "array", minItems: 1, items: { type: "string" } },
-          scores: { type: "object", additionalProperties: false, required: ["demand", "velocity", "competitionGap", "commercialIntent", "saturation", "aiCommoditizationRisk", "seangworldFit", "timeToMarket", "revenuePotential", "durability", "confidence", "actionWindow", "ownerFit", "verifiability", "aiBuildability", "liabilityRisk"], properties: Object.fromEntries(["demand", "velocity", "competitionGap", "commercialIntent", "saturation", "aiCommoditizationRisk", "seangworldFit", "timeToMarket", "revenuePotential", "durability", "confidence", "actionWindow", "ownerFit", "verifiability", "aiBuildability", "liabilityRisk"].map((name) => [name, { type: "number", minimum: 0, maximum: 100 }])) },
+          scores: { type: "object", additionalProperties: false, required: ["demand", "velocity", "competitionGap", "commercialIntent", "saturation", "aiCommoditizationRisk", "seangworldFit", "brandFit", "timeToMarket", "revenuePotential", "durability", "confidence", "actionWindow", "ownerFit", "verifiability", "aiBuildability", "liabilityRisk"], properties: Object.fromEntries(["demand", "velocity", "competitionGap", "commercialIntent", "saturation", "aiCommoditizationRisk", "seangworldFit", "brandFit", "timeToMarket", "revenuePotential", "durability", "confidence", "actionWindow", "ownerFit", "verifiability", "aiBuildability", "liabilityRisk"].map((name) => [name, { type: "number", minimum: 0, maximum: 100 }])) },
         },
       },
     },
@@ -69,9 +72,11 @@ export function parseBeastHunterResearch(payload: BeastHunterResearchPayload, cr
     if (!sourceUrls.length || !item.scores || typeof item.scores !== "object") return [];
     const scores = item.scores as BeastHunterEvidenceScores;
     const numericScores = Object.values(scores);
-    if (numericScores.length !== 16 || numericScores.some((value) => typeof value !== "number" || value < 0 || value > 100)) return [];
+    if (numericScores.length !== 17 || numericScores.some((value) => typeof value !== "number" || value < 0 || value > 100)) return [];
     const explanation = item.explanation as BeastHunterOpportunityExplanation | undefined;
     if (!explanation || Object.values(explanation).length !== 8 || Object.values(explanation).some((value) => typeof value !== "string" || !value.trim())) return [];
+    const rawBrandFit = item.brandFit as BeastHunterCandidate["brandFit"] | undefined;
+    if (!rawBrandFit || !["in_brand", "outside_brand", "outside_brand_exceptional"].includes(rawBrandFit.classification) || typeof rawBrandFit.rationale !== "string" || !Array.isArray(rawBrandFit.ecosystemMatches)) return [];
     const candidate: BeastHunterCandidate = {
       id: crypto.randomUUID(), title: String(item.title || "").trim().slice(0, 180), summary: String(item.summary || "").trim().slice(0, 1200),
       huntType: String(item.huntType || "").trim(), market: String(item.market || "").trim(), audience: ["small_business", "professional"].includes(String(item.audience)) ? item.audience as BeastHunterCandidate["audience"] : "general_consumer", discoveredAt: now,
@@ -84,6 +89,7 @@ export function parseBeastHunterResearch(payload: BeastHunterResearchPayload, cr
       specializedDomain: ["medical", "legal", "tax_compliance", "engineering", "regulated_finance", "other"].includes(String(item.specializedDomain)) ? item.specializedDomain as BeastHunterCandidate["specializedDomain"] : "none",
       explanation: Object.fromEntries(Object.entries(explanation).map(([key, value]) => [key, value.trim().slice(0, 1200)])) as BeastHunterOpportunityExplanation,
       evidence: sourceUrls.map((url) => ({ ...cited.get(url)!, observedAt: now })), scores,
+      brandFit: { classification: rawBrandFit.classification, rationale: rawBrandFit.rationale.trim().slice(0, 1200), ecosystemMatches: rawBrandFit.ecosystemMatches.filter((value): value is string => typeof value === "string").slice(0, 8) },
     };
     return candidate.title && candidate.summary ? [candidate] : [];
   });
@@ -93,6 +99,7 @@ export function buildBeastHunterResearchInput(criteria: BeastHunterCriteria) {
   return JSON.stringify({
     huntContract: criteria,
     explicitSpecializedSearch: isExplicitSpecializedSearch(criteria),
+    ecosystemContext: { productsAndModules: ["TheBeast", "BeastHome", "BeastMoney", "BeastEducation", "BeastHealth", "BeastAdmin", "BeastMarketing", "BeastHunter", "SEANGWORLD"], productFormats: ["app", "Beast feature", "calculator", "tool", "guide", "PDF", "book", "service", "content resource"], capabilitiesAndDistribution: ["existing Beast member experience", "SEANGWORLD web publishing", "owner-only administration", "AI-assisted product development"] },
     instruction: `Research and return no more than ${criteria.resultCount} opportunities. Quality is more important than filling the maximum. Apply every contract field before selecting candidates. For broad searches, omit specialized professional opportunities that a non-specialist owner cannot reasonably understand or verify.`,
   });
 }

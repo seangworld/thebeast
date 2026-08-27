@@ -1,14 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
-import { BEAST_HUNTER_VERSION, beastHunterBuiltInPresets, defaultBeastHunterCriteria, isBeastHunterTrackingStatus, isExplicitSpecializedSearch, normalizeBeastHunterCriteria, rankBeastHunterCandidates, scoreBeastHunterCandidate, validateBeastHunterCriteria, type BeastHunterCandidate, type BeastHunterRankedCandidate } from "../src/lib/beastHunter";
+import { BEAST_HUNTER_VERSION, beastHunterBuiltInPresets, defaultBeastHunterCriteria, feedbackAdjustmentForCandidate, isBeastHunterRejectionReason, isBeastHunterTrackingStatus, isExplicitSpecializedSearch, normalizeBeastHunterCriteria, rankBeastHunterCandidates, scoreBeastHunterCandidate, validateBeastHunterCriteria, type BeastHunterCandidate, type BeastHunterRankedCandidate } from "../src/lib/beastHunter";
 import { buildBeastHunterResearchInput, parseBeastHunterResearch } from "../src/lib/beastHunterResearch";
 import { buildBeastHunterBuildBrief, parseBeastHunterMonitor, parseBeastHunterValidation } from "../src/lib/beastHunterDecision";
 import { buildBeastHunterWorkRequest } from "../src/lib/beastHunterExecution";
 
-const scores = { demand: 90, velocity: 85, competitionGap: 70, commercialIntent: 80, saturation: 25, aiCommoditizationRisk: 20, seangworldFit: 95, timeToMarket: 90, revenuePotential: 75, durability: 65, confidence: 80, actionWindow: 85, ownerFit: 90, verifiability: 90, aiBuildability: 90, liabilityRisk: 20 };
+const scores = { demand: 90, velocity: 85, competitionGap: 70, commercialIntent: 80, saturation: 25, aiCommoditizationRisk: 20, seangworldFit: 95, brandFit: 95, timeToMarket: 90, revenuePotential: 75, durability: 65, confidence: 80, actionWindow: 85, ownerFit: 90, verifiability: 90, aiBuildability: 90, liabilityRisk: 20 };
 const explanation = { whatItIs: "A plain-language benefit estimator.", customer: "Veterans and their families.", whatToBuild: "A web calculator with cited assumptions.", whyNow: "Current benefit changes create recurring questions.", monetization: "Affiliate and advertising revenue.", verifiability: "Compare every formula with official benefit tables.", difficulty: "A focused one-week build.", ownerInvolvement: "Review official sources and acceptance examples." };
-const candidate: BeastHunterCandidate = { id: "one", title: "Veteran benefit calculator", summary: "A focused calculator", huntType: "Calculator / Tool", market: "Veterans", audience: "general_consumer", discoveredAt: "2026-08-21T00:00:00Z", startupCost: 100, buildDays: 7, interaction: "none", automation: "mostly_automated", competition: 35, actionWindowDays: 45, revenueModels: ["Affiliate"], expectedMonthlyRevenueLow: 0, expectedMonthlyRevenueHigh: 2000, geography: "United States", specializedDomain: "none", explanation, evidence: [], scores };
+const candidate: BeastHunterCandidate = { id: "one", title: "Veteran benefit calculator", summary: "A focused calculator", huntType: "Calculator / Tool", market: "Veterans", audience: "general_consumer", discoveredAt: "2026-08-21T00:00:00Z", startupCost: 100, buildDays: 7, interaction: "none", automation: "mostly_automated", competition: 35, actionWindowDays: 45, revenueModels: ["Affiliate"], expectedMonthlyRevenueLow: 0, expectedMonthlyRevenueHigh: 2000, geography: "United States", specializedDomain: "none", explanation, evidence: [], scores, brandFit: { classification: "in_brand", rationale: "Extends the existing veterans audience with a familiar calculator format.", ecosystemMatches: ["SEANGWORLD veterans content", "Calculator"] } };
 
 test("BeastHunter score remains bounded", () => { assert.ok(scoreBeastHunterCandidate(scores) >= 0); assert.ok(scoreBeastHunterCandidate(scores) <= 100); });
 test("strict filters exclude candidates that miss the contract", () => { const results = rankBeastHunterCandidates([candidate], { ...defaultBeastHunterCriteria, query: "calculator", strictness: "strict", maximumBuildDays: 3 }); assert.equal(results.length, 0); });
@@ -17,7 +17,7 @@ test("a hunt requires an objective, type, or market", () => { assert.equal(valid
 test("BeastHunter normalizes only complete hunt contracts", () => { assert.equal(normalizeBeastHunterCriteria(defaultBeastHunterCriteria), null); assert.equal(normalizeBeastHunterCriteria({ ...defaultBeastHunterCriteria, query: "current AI tools" })?.resultCount, 10); });
 test("BeastHunter research rejects uncited opportunities", () => {
   const criteria = { ...defaultBeastHunterCriteria, query: "calculator" };
-  const item = { title: "Calculator", summary: "Current opportunity", huntType: "Calculator / Tool", market: "Money", audience: "general_consumer", startupCost: 10, buildDays: 4, interaction: "none", automation: "mostly_automated", competition: 30, actionWindowDays: 40, revenueModels: ["Affiliate"], expectedMonthlyRevenueLow: 0, expectedMonthlyRevenueHigh: 1500, geography: "United States", specializedDomain: "none", explanation, sourceUrls: ["https://evidence.test/item"], scores };
+  const item = { title: "Calculator", summary: "Current opportunity", huntType: "Calculator / Tool", market: "Money", audience: "general_consumer", startupCost: 10, buildDays: 4, interaction: "none", automation: "mostly_automated", competition: 30, actionWindowDays: 40, revenueModels: ["Affiliate"], expectedMonthlyRevenueLow: 0, expectedMonthlyRevenueHigh: 1500, geography: "United States", specializedDomain: "none", brandFit: candidate.brandFit, explanation, sourceUrls: ["https://evidence.test/item"], scores };
   assert.equal(parseBeastHunterResearch({ output_text: JSON.stringify({ opportunities: [item] }), output: [] }, criteria).length, 0);
   const cited = parseBeastHunterResearch({ output_text: JSON.stringify({ opportunities: [item] }), output: [{ content: [{ type: "output_text", annotations: [{ type: "url_citation", url: "https://evidence.test/item", title: "Evidence" }] }] }] }, criteria);
   assert.equal(cited.length, 1); assert.equal(cited[0].evidence[0].label, "Evidence"); assert.match(buildBeastHunterResearchInput(criteria), /calculator/);
@@ -29,6 +29,38 @@ test("owner fit rejects unrequested specialized work but explicit specialized se
   const explicit = { ...defaultBeastHunterCriteria, query: "Medicaid billing chart", audience: "any" as const };
   assert.equal(isExplicitSpecializedSearch(explicit), true);
   assert.equal(rankBeastHunterCandidates([specialized], explicit)[0]?.recommendation, "REJECT");
+});
+
+test("Brand Fit favors an ecosystem extension and penalizes a credible outside-brand result", () => {
+  const inBrand = { ...candidate, id: "in-brand", title: "Household document organizer", market: "Home", scores: { ...scores, brandFit: 94 }, brandFit: { classification: "in_brand" as const, rationale: "Extends BeastHome for the same household audience.", ecosystemMatches: ["BeastHome", "existing household audience", "Beast feature"] } };
+  const outside = { ...candidate, id: "outside", title: "Industrial pump maintenance broker", huntType: "Service", market: "Small Business", audience: "small_business" as const, scores: { ...scores, brandFit: 18, seangworldFit: 18, demand: 65, confidence: 62, commercialIntent: 68 }, brandFit: { classification: "outside_brand" as const, rationale: "Requires unrelated industrial expertise and distribution.", ecosystemMatches: [] } };
+  const ranked = rankBeastHunterCandidates([outside, inBrand], { ...defaultBeastHunterCriteria, query: "organizer maintenance", audience: "any" });
+  assert.equal(ranked[0].id, "in-brand");
+  assert.equal(ranked.find((item) => item.id === "outside")?.brandFit?.classification, "outside_brand");
+  assert.equal(ranked.find((item) => item.id === "outside")?.recommendation, "WATCH");
+});
+
+test("exceptional outside-brand opportunities remain visible only with explicit evidence-backed handling", () => {
+  const exceptional = { ...candidate, id: "exceptional", title: "Exceptional unrelated platform", market: "Entertainment", scores: { ...scores, brandFit: 30, seangworldFit: 30, demand: 100, confidence: 100, commercialIntent: 100, revenuePotential: 100, competitionGap: 100, velocity: 100 }, brandFit: { classification: "outside_brand_exceptional" as const, rationale: "Primary evidence shows unusually strong current demand and commercial intent despite no current ecosystem match.", ecosystemMatches: [] } };
+  const [result] = rankBeastHunterCandidates([exceptional], { ...defaultBeastHunterCriteria, query: "exceptional unrelated platform", audience: "any" });
+  assert.equal(result.brandFit?.classification, "outside_brand_exceptional");
+  assert.notEqual(result.recommendationReason, "The opportunity is credible but does not fit the current SEANGWORLD/Beast ecosystem strongly enough to prioritize.");
+});
+
+test("owner brand-relevance feedback is transparent, bounded, and locally deterministic", () => {
+  assert.equal(isBeastHunterRejectionReason("not_relevant_to_brand"), true);
+  assert.equal(isBeastHunterRejectionReason("invented_reason"), false);
+  const adjustment = feedbackAdjustmentForCandidate(candidate, [{ market: "Veterans", huntType: "Service", reason: "not_relevant_to_brand", count: 20 }]);
+  assert.deepEqual(adjustment, { points: -15, reason: "5 prior owner brand-relevance rejections in this market or product type (capped at -15)." });
+  assert.equal(feedbackAdjustmentForCandidate(candidate, [{ market: "Veterans", huntType: "Service", reason: "revenue_too_low", count: 20 }]), null);
+});
+
+test("Photo-to-Home-Inventory characteristics calibrate strong fit without hardcoding the idea", () => {
+  const calibration = { ...candidate, id: "calibration", title: "Photo-to-Home-Inventory Builder for BeastHome", market: "Home", huntType: "App / Micro-SaaS", summary: "Turn owner photos into a reviewable household inventory.", scores: { ...scores, brandFit: 98, ownerFit: 94, verifiability: 92, aiBuildability: 92, confidence: 82 }, brandFit: { classification: "in_brand" as const, rationale: "A clear BeastHome extension for an existing household audience using a reviewable AI workflow.", ecosystemMatches: ["BeastHome", "household audience", "Beast feature"] } };
+  const [result] = rankBeastHunterCandidates([calibration], { ...defaultBeastHunterCriteria, query: "photo home inventory", huntTypes: ["App / Micro-SaaS"], markets: ["Home"] });
+  assert.equal(result.recommendation, "BUILD");
+  assert.ok(result.score >= 72);
+  assert.doesNotMatch(readFileSync("src/lib/beastHunter.ts", "utf8"), /Photo-to-Home-Inventory/);
 });
 
 test("built-in presets are editable complete hunt contracts and favor focused result counts", () => {
@@ -74,12 +106,17 @@ test("BeastHunter supports saved hunt history and controlled opportunity states"
   assert.match(workspace, /Opportunity status/);
   assert.match(route, /export async function PATCH/);
   assert.match(route, /\.eq\("owner_id", user\.id\)/);
+  assert.match(route, /isBeastHunterRejectionReason/);
+  assert.match(route, /rejectionReason/);
+  assert.match(workspace, /beastHunterRejectionReasons/);
+  assert.match(readFileSync("src/lib/beastHunter.ts", "utf8"), /Not relevant to my brand/);
+  assert.match(workspace, /Reject with reason/);
   assert.match(migration, /tracking_status in \('new', 'watch', 'validate', 'build', 'rejected', 'archived'\)/);
   assert.match(migration, /beast_hunter_opportunities_owner_tracking_idx/);
 });
 
 test("BeastHunter v1 completes validation monitoring build briefs and management", () => {
-  assert.equal(BEAST_HUNTER_VERSION, "1.3.0-preview");
+  assert.equal(BEAST_HUNTER_VERSION, "1.4.0-preview");
   const cited = { output: [{ content: [{ type: "output_text", annotations: [{ type: "url_citation", url: "https://evidence.test/current", title: "Current evidence" }] }] }] };
   const validation = parseBeastHunterValidation({ ...cited, output_text: JSON.stringify({ verdict: "caution", demandEvidence: "Demand exists but is early.", competitorAnalysis: "Two focused competitors.", realisticMonthlyRevenue: "$0-$2,000 until validated.", startupCost: "$100-$500", buildEstimate: "2-4 weeks", marketingDifficulty: "Moderate", economics: { offerPrice: "$29 per sale", revenueModel: "One-time sale", monthlySalesNeeded: "35 sales for about $1,000 gross", grossRevenueRange: "$0-$2,000", monthlyOperatingCost: "$50-$200", grossMargin: "60%-85% before owner labor", breakEvenPoint: "4-18 sales", timeToFirstRevenue: "2-8 weeks", incomeConfidence: "moderate" }, platformDependencies: ["Search"], reasonsToProceed: ["Demand"], reasonsToReject: ["Competition"], nextSteps: ["Interview buyers"], sourceUrls: ["https://evidence.test/current"] }) });
   assert.equal(validation.validation.verdict, "caution");
@@ -98,6 +135,23 @@ test("BeastHunter v1 completes validation monitoring build briefs and management
   assert.match(actions, /beast_hunter_opportunity_snapshots/);
   assert.match(migration, /validation jsonb/);
   assert.match(migration, /build_brief jsonb/);
+});
+
+test("active results appear before Hunt History at every responsive width", () => {
+  const workspace = readFileSync("src/app/dashboard/admin/intelligence/hunter/BeastHunterWorkspace.tsx", "utf8");
+  assert.ok(workspace.indexOf('title="Active results"') < workspace.indexOf('title="Hunt history"'));
+  assert.match(workspace, /aria-label="Active BeastHunter results"/);
+  assert.match(workspace, /sm:grid-cols/);
+});
+
+test("Brand Fit evidence stays owner-only and rejection history is not exported to the research provider", () => {
+  const route = readFileSync("src/app/api/admin/beast-hunter/route.ts", "utf8");
+  const research = readFileSync("src/lib/beastHunterResearch.ts", "utf8");
+  const ranking = readFileSync("src/lib/beastHunter.ts", "utf8");
+  assert.match(route, /\.eq\("owner_id", user\.id\)\.eq\("tracking_status", "rejected"\)/);
+  assert.match(ranking, /Math\.min\(15/);
+  assert.doesNotMatch(research, /ownerFeedback/);
+  assert.doesNotMatch(research, /rejectionReason/);
 });
 
 test("BeastHunter promotes opportunities into non-canonical intake and an owner-reviewed handoff", () => {

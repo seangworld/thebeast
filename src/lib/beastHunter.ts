@@ -7,6 +7,20 @@ export type BeastHunterAutomation = "manual" | "assisted" | "mostly_automated" |
 export type BeastHunterAudience = "general_consumer" | "small_business" | "any";
 export type BeastHunterSpecializedDomainMode = "penalize" | "allow";
 export type BeastHunterRecommendation = "BUILD" | "WATCH" | "REJECT";
+export const beastHunterRejectionReasons = [
+  ["not_relevant_to_brand", "Not relevant to my brand", "owner_brand_mismatch"],
+  ["cannot_verify", "Can't verify expertise/accuracy", "opportunity_risk"],
+  ["too_specialized", "Too specialized", "owner_brand_mismatch"],
+  ["too_much_work", "Too much work", "owner_constraint"],
+  ["revenue_too_low", "Revenue too low", "opportunity_quality"],
+  ["too_competitive", "Too competitive", "opportunity_quality"],
+  ["weak_acquisition", "Weak customer-acquisition path", "opportunity_quality"],
+  ["insufficient_differentiation", "Already exists / insufficient differentiation", "opportunity_quality"],
+  ["good_idea_not_now", "Good idea, not now", "timing"],
+] as const;
+export type BeastHunterRejectionReason = (typeof beastHunterRejectionReasons)[number][0];
+export type BeastHunterRejectionCategory = (typeof beastHunterRejectionReasons)[number][2];
+export type BeastHunterFeedbackSignal = { market: string; huntType: string; reason: BeastHunterRejectionReason; count: number };
 
 export const beastHunterHuntTypes = ["PDF / Book", "App / Micro-SaaS", "Calculator / Tool", "Service", "Affiliate", "Beast Capability", "Social Content"] as const;
 export const beastHunterMarkets = ["General Consumer", "AI", "Money", "Education", "Health", "Home", "Careers", "Veterans", "Small Business", "Entertainment"] as const;
@@ -42,6 +56,7 @@ export type BeastHunterEvidenceScores = {
   saturation: number;
   aiCommoditizationRisk: number;
   seangworldFit: number;
+  brandFit?: number;
   timeToMarket: number;
   revenuePotential: number;
   durability: number;
@@ -86,6 +101,11 @@ export type BeastHunterCandidate = {
   explanation: BeastHunterOpportunityExplanation;
   evidence: { label: string; url: string; observedAt: string }[];
   scores: BeastHunterEvidenceScores;
+  brandFit?: {
+    classification: "in_brand" | "outside_brand" | "outside_brand_exceptional";
+    rationale: string;
+    ecosystemMatches: string[];
+  };
 };
 
 export type BeastHunterRankedCandidate = BeastHunterCandidate & {
@@ -102,9 +122,11 @@ export type BeastHunterRankedCandidate = BeastHunterCandidate & {
   githubIssueUrl?: string | null;
   recommendation: BeastHunterRecommendation;
   recommendationReason: string;
+  feedbackAdjustment?: { points: number; reason: string } | null;
+  rejectionReason?: BeastHunterRejectionReason | null;
 };
 
-export const BEAST_HUNTER_VERSION = "1.3.0-preview";
+export const BEAST_HUNTER_VERSION = "1.4.0-preview";
 export const beastHunterTrendStatuses = ["unknown", "rising", "stable", "falling", "saturated", "expired"] as const;
 export type BeastHunterTrendStatus = (typeof beastHunterTrendStatuses)[number];
 export type BeastHunterValidation = {
@@ -208,7 +230,7 @@ export const beastHunterBuiltInPresets = [
   },
 ] satisfies Array<{ id: string; name: string; description: string; criteria: BeastHunterCriteria }>;
 
-const positiveWeights: Record<Exclude<keyof BeastHunterEvidenceScores, "saturation" | "aiCommoditizationRisk">, number> = {
+const positiveWeights: Partial<Record<keyof BeastHunterEvidenceScores, number>> = {
   demand: 0.12,
   velocity: 0.11,
   competitionGap: 0.1,
@@ -231,11 +253,31 @@ function bounded(value: number | undefined) {
 
 export function scoreBeastHunterCandidate(scores: BeastHunterEvidenceScores) {
   const positive = Object.entries(positiveWeights).reduce(
-    (total, [key, weight]) => total + bounded(scores[key as keyof typeof positiveWeights]) * weight,
+    (total, [key, weight]) => total + bounded(scores[key as keyof BeastHunterEvidenceScores]) * (weight ?? 0),
     0
   );
   const riskPenalty = bounded(scores.saturation) * 0.07 + bounded(scores.aiCommoditizationRisk) * 0.05 + bounded(scores.liabilityRisk ?? 50) * 0.1;
-  return Math.round(Math.max(0, Math.min(100, positive - riskPenalty + 12)));
+  const evidenceScore = Math.max(0, Math.min(100, positive - riskPenalty + 12));
+  const brandFit = bounded(scores.brandFit ?? scores.seangworldFit);
+  return Math.round(evidenceScore * 0.75 + brandFit * 0.25);
+}
+
+export function isBeastHunterRejectionReason(value: unknown): value is BeastHunterRejectionReason {
+  return beastHunterRejectionReasons.some(([id]) => id === value);
+}
+
+export function feedbackAdjustmentForCandidate(candidate: BeastHunterCandidate, signals: BeastHunterFeedbackSignal[] = []) {
+  const related = signals.filter((signal) => signal.reason === "not_relevant_to_brand" && (signal.market === candidate.market || signal.huntType === candidate.huntType));
+  const count = related.reduce((total, signal) => total + Math.max(0, Math.min(5, signal.count)), 0);
+  const points = Math.min(15, count * 3);
+  return points ? { points: -points, reason: `${count} prior owner brand-relevance rejection${count === 1 ? "" : "s"} in this market or product type (capped at -15).` } : null;
+}
+
+export function classifyBrandFit(candidate: BeastHunterCandidate, baseScore = scoreBeastHunterCandidate(candidate.scores)) {
+  const brandFit = bounded(candidate.scores.brandFit ?? candidate.scores.seangworldFit);
+  const exceptionalEvidence = baseScore >= 78 && candidate.scores.demand >= 75 && candidate.scores.confidence >= 75 && candidate.scores.commercialIntent >= 70;
+  if (brandFit < 55 && exceptionalEvidence) return "outside_brand_exceptional" as const;
+  return brandFit < 55 ? "outside_brand" as const : "in_brand" as const;
 }
 
 const specializedTerms = /\b(medicaid|medicare|clinical|diagnos(?:is|tic)|medical billing|cpt|icd-?10|legal advice|attorney|tax compliance|tax code|engineering standard|professional engineer|securities compliance|finra)\b/i;
@@ -248,9 +290,12 @@ export function recommendBeastHunterCandidate(candidate: BeastHunterCandidate, s
   const ownerFit = bounded(candidate.scores.ownerFit ?? 50);
   const verifiability = bounded(candidate.scores.verifiability ?? 50);
   const liabilityRisk = bounded(candidate.scores.liabilityRisk ?? 50);
+  const brandFit = bounded(candidate.scores.brandFit ?? candidate.scores.seangworldFit);
+  const brandClassification = classifyBrandFit(candidate, score);
   if (ownerFit < 45) return { recommendation: "REJECT" as const, reason: "The opportunity requires more specialized owner expertise than this search allows." };
   if (verifiability < 45) return { recommendation: "REJECT" as const, reason: "The finished product would be too difficult to verify independently." };
   if (liabilityRisk > 70) return { recommendation: "REJECT" as const, reason: "Professional or regulatory liability is too high for the current opportunity." };
+  if (brandFit < 55 && brandClassification !== "outside_brand_exceptional") return { recommendation: "WATCH" as const, reason: "The opportunity is credible but does not fit the current SEANGWORLD/Beast ecosystem strongly enough to prioritize." };
   if (score >= 72 && ownerFit >= 65 && verifiability >= 65 && liabilityRisk <= 45 && candidate.scores.confidence >= 60) {
     return { recommendation: "BUILD" as const, reason: "Strong evidence, owner fit, verifiability, and manageable execution risk justify build consideration." };
   }
@@ -289,13 +334,18 @@ function evaluateCandidate(candidate: BeastHunterCandidate, criteria: BeastHunte
   return { include: !defaultSpecializedHardStop && (criteria.strictness === "flexible" || failures.length === 0), notes };
 }
 
-export function rankBeastHunterCandidates(candidates: BeastHunterCandidate[], criteria: BeastHunterCriteria) {
+export function rankBeastHunterCandidates(candidates: BeastHunterCandidate[], criteria: BeastHunterCriteria, feedbackSignals: BeastHunterFeedbackSignal[] = []) {
   return candidates
     .map((candidate) => ({ candidate, evaluation: evaluateCandidate(candidate, criteria) }))
     .filter(({ evaluation }) => evaluation.include)
     .map(({ candidate, evaluation }) => {
-      const score = scoreBeastHunterCandidate(candidate.scores);
-      return { ...candidate, score, rank: 0, filterNotes: evaluation.notes, ...recommendBeastHunterCandidate(candidate, score) };
+      const rawScore = scoreBeastHunterCandidate(candidate.scores);
+      const feedbackAdjustment = feedbackAdjustmentForCandidate(candidate, feedbackSignals);
+      const score = Math.max(0, rawScore + (feedbackAdjustment?.points ?? 0));
+      const classification = classifyBrandFit(candidate, rawScore);
+      const brandFit = candidate.brandFit ? { ...candidate.brandFit, classification } : { classification, rationale: "Brand Fit was derived from the candidate's ecosystem-alignment evidence score.", ecosystemMatches: [] };
+      const recommendation = recommendBeastHunterCandidate(candidate, score);
+      return { ...candidate, brandFit, score, rank: 0, filterNotes: evaluation.notes, feedbackAdjustment, recommendation: recommendation.recommendation, recommendationReason: recommendation.reason };
     })
     .sort((a, b) => b.score - a.score || b.scores.confidence - a.scores.confidence || a.title.localeCompare(b.title))
     .slice(0, criteria.resultCount)
