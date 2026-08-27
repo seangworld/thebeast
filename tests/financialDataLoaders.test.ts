@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  BILL_PAYMENT_HISTORY_LIMIT,
   DEBT_PAYMENT_HISTORY_LIMIT,
   loadCashFlowFinancialData,
   loadDebtWorkspaceFinancialData,
@@ -66,6 +67,10 @@ test("cash-flow financial reads begin concurrently and bound payment history", a
   assert.equal(observed.records.length, 8);
   assert.equal(observed.getMaxActiveQueries(), 8);
   assert.deepEqual(result.incomeRows, [{ table: "income_events" }]);
+  assert.equal(
+    observed.records.find(({ table }) => table === "bill_payments")?.limit,
+    BILL_PAYMENT_HISTORY_LIMIT
+  );
   assert.equal(
     observed.records.find(({ table }) => table === "debt_payments")?.limit,
     DEBT_PAYMENT_HISTORY_LIMIT

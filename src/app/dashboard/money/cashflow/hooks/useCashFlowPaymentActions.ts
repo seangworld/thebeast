@@ -84,6 +84,9 @@ export function useCashFlowPaymentActions({
           error instanceof AtomicFinancialCommandError &&
           error.category === "maintenance_error"
             ? BEASTMONEY_PAYMENT_MAINTENANCE_MESSAGE
+            : error instanceof AtomicFinancialCommandError &&
+                error.category === "validation_error"
+              ? "This bill occurrence is already paid or has changed. Refresh and try again."
             : "Unable to record the bill payment. Your entry was preserved; please retry.",
       };
     }

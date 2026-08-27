@@ -74,6 +74,10 @@ export function classifyClientDiagnosticError(
     return "conflict_error";
   }
 
+  if (code.startsWith("22")) {
+    return "validation_error";
+  }
+
   if (
     name === "typeerror" ||
     description.includes("failed to fetch") ||
