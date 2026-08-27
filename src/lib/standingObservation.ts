@@ -2,6 +2,13 @@ import { createHash } from "node:crypto";
 
 export const standingObservationAssignment = "orchestrator_3_standing_observation" as const;
 export const standingObservationCron = "0 10 * * *" as const;
+export const standingObservationOriginPackage = "BF-AGT-011" as const;
+export const standingObservationScope = "orchestrator_3_bounded_observation_v1" as const;
+export const standingObservationPermittedSources = [
+  "beastfusion_canonical_projection",
+  "github_repository_evidence",
+  "vercel_deployment_evidence",
+] as const;
 export const maximumInvestigationsPerCycle = 3;
 export const maximumRetriesPerSource = 2;
 
@@ -29,6 +36,89 @@ export type StandingObservationResult = {
   investigationCount: number;
   proposalCount: number;
 };
+
+export type StandingObservationAuthorization = {
+  authorization_key: string;
+  origin_package_id: string;
+  owner_authorized: boolean;
+  scope_key: string;
+  permitted_sources: string[];
+  revoked_at: string | null;
+};
+
+export type StandingObservationSchedule = {
+  assignment_key: string;
+  enabled: boolean;
+  paused_at: string | null;
+  scope_key: string;
+  permitted_sources: string[];
+};
+
+export type StandingObservationCanonicalItem = {
+  id: string;
+  status: string;
+  ownerApproved: boolean;
+  executionAuthorized: boolean;
+};
+
+export function standingObservationCanonicalOriginFailure(canonicalRoadmap: StandingObservationCanonicalItem[] | null) {
+  if (!canonicalRoadmap) return "canonical_state_unavailable";
+  const origin = canonicalRoadmap.find((item) => item.id === standingObservationOriginPackage);
+  if (!origin || !origin.ownerApproved || (!origin.executionAuthorized && !["complete", "released"].includes(origin.status))) {
+    return "canonical_origin_unavailable";
+  }
+  return null;
+}
+
+const sameSources = (value: string[]) =>
+  value.length === standingObservationPermittedSources.length &&
+  [...value].sort().every((source, index) => source === [...standingObservationPermittedSources].sort()[index]);
+
+export function standingObservationAuthorityFailure({
+  authorization,
+  schedule,
+  canonicalRoadmap,
+  requireEnabled = true,
+}: {
+  authorization: StandingObservationAuthorization | null;
+  schedule: StandingObservationSchedule | null;
+  canonicalRoadmap: StandingObservationCanonicalItem[] | null;
+  requireEnabled?: boolean;
+}) {
+  const canonicalFailure = standingObservationCanonicalOriginFailure(canonicalRoadmap);
+  if (canonicalFailure) return canonicalFailure;
+  if (!authorization || authorization.authorization_key !== standingObservationAssignment || authorization.origin_package_id !== standingObservationOriginPackage || !authorization.owner_authorized || authorization.revoked_at) {
+    return "standing_authorization_unavailable";
+  }
+  if (authorization.scope_key !== standingObservationScope || !sameSources(authorization.permitted_sources)) {
+    return "standing_authorization_scope_changed";
+  }
+  if (!schedule || schedule.assignment_key !== standingObservationAssignment || (requireEnabled && (!schedule.enabled || schedule.paused_at))) {
+    return "standing_schedule_inactive";
+  }
+  if (schedule.scope_key !== authorization.scope_key || !sameSources(schedule.permitted_sources) || !sameSources(authorization.permitted_sources)) {
+    return "standing_schedule_scope_changed";
+  }
+  return null;
+}
+
+export async function runAfterStandingObservationAuthorization<T>(
+  authority: Parameters<typeof standingObservationAuthorityFailure>[0],
+  operation: () => Promise<T>
+) {
+  const failure = standingObservationAuthorityFailure(authority);
+  if (failure) throw new Error(failure);
+  return operation();
+}
+
+export async function runAfterControlledObservationValidation<T>(
+  canonicalRoadmap: StandingObservationCanonicalItem[] | null,
+  operation: () => Promise<T>
+) {
+  const failure = standingObservationCanonicalOriginFailure(canonicalRoadmap);
+  if (failure) throw new Error(failure);
+  return operation();
+}
 
 export function evidenceDigest(results: ObservationSourceResult[]) {
   const stable = results

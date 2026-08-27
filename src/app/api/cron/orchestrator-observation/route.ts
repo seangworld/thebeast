@@ -9,7 +9,7 @@ export const runtime = "nodejs";
 export async function GET(request: Request) {
   if (!verifyCronAuthorization(request.headers.get("authorization"), process.env.CRON_SECRET)) return NextResponse.json({ error: "Not authorized." }, { status: 401 });
   const service = createBeastFusionPublicationClient();
-  const schedules = await service.from("beast_admin_staff_schedules").select("id,owner_id").eq("assignment_key", "orchestrator_3_standing_observation").eq("enabled", true);
+  const schedules = await service.from("beast_admin_staff_schedules").select("id,owner_id").eq("assignment_key", "orchestrator_3_standing_observation").eq("enabled", true).is("paused_at", null);
   if (schedules.error) return NextResponse.json({ error: "Standing assignments are unavailable." }, { status: 503 });
   const outcomes = [];
   for (const schedule of schedules.data || []) {
