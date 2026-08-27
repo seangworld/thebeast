@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 import test from "node:test";
 import { deriveDevelopmentAgentCanonicalState, developmentAgentProfiles, getDevelopmentAgentProfile } from "../src/lib/developmentAgentProfiles";
 import type { BeastAdminCanonicalReadModel } from "../src/lib/beastAdminCanonicalProjection";
@@ -21,6 +21,16 @@ test("development roster contains the bounded Orchestrator 3.0 lifecycle roles",
   assert.match(getDevelopmentAgentProfile("observer-agent")!.authorityBoundary, /never authorization/);
   assert.match(getDevelopmentAgentProfile("proposal-agent")!.authorityBoundary, /non-executable/);
   assert.match(getDevelopmentAgentProfile("outcome-agent")!.limitations.join(" "), /Cannot authorize remediation/);
+});
+
+test("all six canonical development identities use optimized portrait assets with accessible descriptions", () => {
+  for (const profile of developmentAgentProfiles) {
+    assert.match(profile.portraitUrl, /^\/digital-staff\/[a-z0-9-]+\.webp$/);
+    assert.match(profile.portraitAlt, new RegExp(profile.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    const asset = `public${profile.portraitUrl}`;
+    assert.equal(existsSync(asset), true, `${profile.name} portrait must exist`);
+    assert.ok(statSync(asset).size > 10_000 && statSync(asset).size < 150_000, `${profile.name} portrait must be optimized`);
+  }
 });
 
 test("profile status and activity derive from canonical projection without implying active work", () => {
@@ -45,6 +55,7 @@ test("owner-only roster and profiles preserve the established BeastAdmin surface
   const page = readFileSync("src/app/dashboard/admin/development/agents/[agentId]/page.tsx", "utf8");
   assert.match(directory, /Orchestrator coordinates, Observer detects, Proposal Agent researches and recommends, Developer builds, Reviewer independently checks, Outcome Agent measures, and the owner authorizes/);
   assert.match(profile, /profile.authorityBoundary/);
+  assert.match(directory + profile, /AgentAvatar/);
   assert.match(readFileSync("src/lib/developmentAgentProfiles.ts", "utf8"), /PASS does not equal owner release authorization/);
   assert.match(page, /BeastAdminShell/);
   assert.doesNotMatch(directory + profile, /service_role|access_token|raw provider/i);

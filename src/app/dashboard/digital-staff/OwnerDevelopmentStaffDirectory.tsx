@@ -14,6 +14,7 @@ import {
 } from "@/lib/entitlements";
 import { createClient } from "@/lib/supabase/client";
 import { useBeastAdminCommandCenter } from "@/lib/useBeastAdminCommandCenter";
+import { AgentAvatar } from "@/app/components/agents/AgentExperience";
 
 function loadAdminViewMode() {
   return normalizeAdminViewMode(
@@ -55,9 +56,7 @@ function AuthorizedDevelopmentStaffDirectory() {
               aria-label={`View owner-only profile for ${profile.name}`}
             >
               <div className="flex items-start justify-between gap-3">
-                <span className="rounded-full border border-amber-300/20 bg-amber-300/10 px-3 py-1 text-[11px] font-black uppercase tracking-wide text-amber-100">
-                  Development &amp; Operations
-                </span>
+                <AgentAvatar name={profile.name} accessibleLabel={profile.portraitAlt} imageUrl={profile.portraitUrl} size="lg" />
                 <span
                   className={`h-2.5 w-2.5 shrink-0 rounded-full ${
                     !loading && state.status === "available" ? "bg-emerald-300" : "bg-slate-500"
@@ -65,7 +64,8 @@ function AuthorizedDevelopmentStaffDirectory() {
                   aria-hidden="true"
                 />
               </div>
-              <h3 className="mt-4 text-xl font-black text-white">{profile.name}</h3>
+              <p className="mt-4 text-[11px] font-black uppercase tracking-wide text-amber-100">Development &amp; Operations</p>
+              <h3 className="mt-2 text-xl font-black text-white">{profile.name}</h3>
               <p className="mt-1 text-sm font-bold text-amber-200">{profile.title}</p>
               <p className="mt-3 text-sm leading-6 text-slate-300">{profile.role}</p>
               <dl className="mt-4 grid gap-2 border-t border-white/10 pt-4 text-xs">

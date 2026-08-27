@@ -21,6 +21,8 @@ const developmentStaff = readFileSync(
   "src/app/dashboard/digital-staff/OwnerDevelopmentStaffDirectory.tsx",
   "utf8"
 );
+const relationshipPage = readFileSync("src/app/dashboard/relationships/page.tsx", "utf8");
+const developmentRelationships = readFileSync("src/app/dashboard/relationships/OwnerDevelopmentStaffRelationships.tsx", "utf8");
 
 test("BF-AGT-010 exposes compact deep links for every major Development Console section", () => {
   assert.deepEqual(
@@ -74,4 +76,17 @@ test("section navigation and development staff cards preserve responsive horizon
   assert.match(navigation, /sticky top-3/);
   assert.match(developmentStaff, /md:grid-cols-2 xl:grid-cols-3/);
   assert.match(developmentStaff, /min-w-0/);
+});
+
+test("owner-only Relationships shows the canonical chain of command without replacing existing relationships", () => {
+  assert.match(relationshipPage, /OwnerDevelopmentStaffRelationships/);
+  assert.match(relationshipPage, /professionalRelationshipDefinitions/);
+  assert.match(developmentRelationships, /data-development-chain="owner-only"/);
+  assert.match(developmentRelationships, /Owner \/ Sean/);
+  assert.match(developmentRelationships, /Final authority/);
+  assert.match(developmentRelationships, /Observer detects → Proposal Agent researches\/recommends → Owner authorizes → Orchestrator coordinates → Developer builds → Reviewer independently checks → Outcome measures/);
+  assert.match(developmentRelationships, /Reviewer remains independent from Developer/);
+  assert.match(developmentRelationships, /canAccessBeastAdmin/);
+  assert.match(developmentRelationships, /sm:grid-cols-2 xl:grid-cols-5/);
+  assert.doesNotMatch(developmentRelationships, /service_role|access_token|raw provider/i);
 });
