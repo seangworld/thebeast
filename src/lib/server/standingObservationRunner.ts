@@ -1,37 +1,39 @@
-import { evaluateStandingObservation, evidenceDigest, runAfterStandingObservationAuthorization, runWithBoundedRetries, standingProposalSourceId, type ObservationSourceResult } from "../standingObservation";
+import { evaluateStandingObservation, evidenceDigest, runAfterControlledObservationValidation, runAfterStandingObservationAuthorization, runWithBoundedRetries, standingProposalSourceId, type ObservationSourceResult } from "../standingObservation";
 import { proposalIntakeProduct } from "../ownerProposalReview";
 import { loadBeastFusionCanonicalReadModel } from "./beastFusionReadModel";
 import { readGitHubRepositoryEvidence, readVercelDeploymentEvidence } from "./beastAdminRepositoryProviders";
 import { createBeastFusionPublicationClient } from "../supabase/service";
 
-type Simulation = "clean" | "material" | "failure" | null;
+type Simulation = "clean" | null;
 
 export async function runStandingObservation(ownerId: string, scheduleId: string | null, simulation: Simulation = null) {
   const service = createBeastFusionPublicationClient();
   const startedAt = new Date().toISOString();
-  if (simulation === "failure") {
-    return service.from("beast_admin_staff_observation_runs").insert({ owner_id: ownerId, schedule_id: scheduleId, trigger_type: "owner_controlled_simulation", status: "failed", started_at: startedAt, completed_at: new Date().toISOString(), unavailable_sources: ["controlled_fixture"], confidence: "unknown", impact: "none", next_step: "Inspect the categorized source failure; no proposal was created.", error_category: "controlled_source_unavailable" }).select().single();
-  }
-
-  const [canonical, schedule, authorization] = await Promise.all([
-    loadBeastFusionCanonicalReadModel(),
+  const canonical = await loadBeastFusionCanonicalReadModel();
+  let githubAttempt = null;
+  let vercelAttempt = null;
+  if (simulation) {
+    await runAfterControlledObservationValidation(canonical.canonical?.roadmap || null, async () => undefined);
+  } else {
+    const [schedule, authorization] = await Promise.all([
     scheduleId ? service.from("beast_admin_staff_schedules").select("assignment_key,enabled,paused_at,scope_key,permitted_sources").eq("id", scheduleId).eq("owner_id", ownerId).maybeSingle() : Promise.resolve({ data: null, error: null }),
     service.from("beast_admin_standing_authorizations").select("authorization_key,origin_package_id,owner_authorized,scope_key,permitted_sources,revoked_at").eq("owner_id", ownerId).eq("authorization_key", "orchestrator_3_standing_observation").maybeSingle(),
-  ]);
-  if (schedule.error || authorization.error) throw new Error("standing_authorization_unavailable");
-  const [githubAttempt, vercelAttempt] = await runAfterStandingObservationAuthorization(
-    { authorization: authorization.data, schedule: schedule.data, canonicalRoadmap: canonical.canonical?.roadmap || null, requireEnabled: !simulation },
-    async () => simulation ? [null, null] as const : Promise.all([
+    ]);
+    if (schedule.error || authorization.error) throw new Error("standing_authorization_unavailable");
+    [githubAttempt, vercelAttempt] = await runAfterStandingObservationAuthorization(
+      { authorization: authorization.data, schedule: schedule.data, canonicalRoadmap: canonical.canonical?.roadmap || null },
+      async () => Promise.all([
       runWithBoundedRetries(readGitHubRepositoryEvidence, (result) => result.provider.status === "error"),
       runWithBoundedRetries(readVercelDeploymentEvidence, (result) => result.provider.status === "error"),
-    ])
-  );
+      ])
+    );
+  }
   const github = githubAttempt?.value || null;
   const vercel = vercelAttempt?.value || null;
   const retryCount = (githubAttempt?.retries || 0) + (vercelAttempt?.retries || 0);
   const canonicalModel = canonical.canonical;
   if (!canonicalModel) throw new Error("canonical_state_unavailable");
-  const sources: ObservationSourceResult[] = simulation === "material" ? [{ source: "controlled_fixture", available: true, changed: true, summary: "Material controlled signal for Preview proof.", confidence: "high", impact: "high", fingerprint: "bf-agt-011-material-v1" }] : simulation === "clean" ? [{ source: "controlled_fixture", available: true, changed: false, summary: "No material change in controlled evidence.", confidence: "high", impact: "none", fingerprint: "bf-agt-011-clean-v1" }] : [
+  const sources: ObservationSourceResult[] = simulation === "clean" ? [{ source: "controlled_fixture", available: true, changed: false, summary: "No material change in controlled evidence.", confidence: "high", impact: "none", fingerprint: "bf-agt-011-clean-v1" }] : [
     { source: "beastfusion_canonical_projection", available: true, changed: canonicalModel.attention.length > 0, summary: canonicalModel.attention.length ? `${canonicalModel.attention.length} canonical attention item(s).` : "Canonical governance has no attention items.", confidence: "high", impact: canonicalModel.attention.some((item) => item.kind === "failure" || item.kind === "blocker") ? "high" : canonicalModel.attention.length ? "medium" : "none", fingerprint: `${canonicalModel.projection?.payloadHash || "unknown"}:${canonicalModel.attention.map((item) => item.id).sort().join(",")}` },
     { source: "github_repository_evidence", available: github?.provider.status === "connected", changed: github?.observations.some((item) => item.state !== "connected") || false, summary: github?.provider.detail || "GitHub evidence unavailable.", confidence: "high", impact: github?.provider.status === "error" ? "medium" : "none", fingerprint: github?.observations.map((item) => `${item.repository}:${item.headCommit || item.state}`).sort().join("|") || "unavailable" },
     { source: "vercel_deployment_evidence", available: vercel?.provider.status === "connected", changed: vercel?.observations.some((item) => item.state !== "connected") || false, summary: vercel?.provider.detail || "Vercel evidence unavailable.", confidence: "high", impact: vercel?.provider.status === "error" ? "medium" : "none", fingerprint: vercel?.observations.map((item) => `${item.repository}:${item.environment}:${item.deploymentId || item.state}`).sort().join("|") || "unavailable" },

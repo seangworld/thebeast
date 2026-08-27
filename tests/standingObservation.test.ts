@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { evaluateStandingObservation, evidenceDigest, maximumInvestigationsPerCycle, maximumRetriesPerSource, runAfterStandingObservationAuthorization, runWithBoundedRetries, standingObservationAssignment, standingObservationAuthorityFailure, standingObservationPermittedSources, standingObservationScope, standingProposalSourceId, verifyCronAuthorization } from "../src/lib/standingObservation";
+import { evaluateStandingObservation, evidenceDigest, maximumInvestigationsPerCycle, maximumRetriesPerSource, runAfterControlledObservationValidation, runAfterStandingObservationAuthorization, runWithBoundedRetries, standingObservationAssignment, standingObservationAuthorityFailure, standingObservationPermittedSources, standingObservationScope, standingProposalSourceId, verifyCronAuthorization } from "../src/lib/standingObservation";
 
 const clean = [{ source: "canonical", available: true, changed: false, summary: "No change", confidence: "high" as const, impact: "none" as const, fingerprint: "one" }];
 test("BF-AGT-011 records a clean cycle without fabricating findings", () => { const result = evaluateStandingObservation(clean); assert.equal(result.status, "clean"); assert.equal(result.findings.length, 0); assert.equal(result.proposalCount, 0); });
@@ -78,4 +78,17 @@ test("BF-AGT-011 performs no provider reads before every standing authority gate
   assert.equal(providerReads, 0);
   assert.equal(await runAfterStandingObservationAuthorization({ authorization: standingAuthorization, schedule: enabledSchedule, canonicalRoadmap: completedOrigin }, async () => { providerReads += 1; return "read"; }), "read");
   assert.equal(providerReads, 1);
+});
+
+test("BF-AGT-011 controlled clean Preview validation needs canonical origin but no recurring schedule", async () => {
+  let controlledRuns = 0;
+  assert.equal(await runAfterControlledObservationValidation(completedOrigin, async () => { controlledRuns += 1; return "clean"; }), "clean");
+  assert.equal(controlledRuns, 1);
+  await assert.rejects(runAfterControlledObservationValidation(null, async () => { controlledRuns += 1; return "unsafe"; }));
+  assert.equal(controlledRuns, 1);
+  const runner = readFileSync("src/lib/server/standingObservationRunner.ts", "utf8");
+  const route = readFileSync("src/app/api/admin/staff-operations/route.ts", "utf8");
+  assert.match(runner, /runAfterControlledObservationValidation/);
+  assert.match(route, /runStandingObservation\(user\.id, null, "clean"\)/);
+  assert.doesNotMatch(runner, /simulation === "material"|simulation === "failure"/);
 });

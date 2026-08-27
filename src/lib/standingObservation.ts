@@ -61,6 +61,15 @@ export type StandingObservationCanonicalItem = {
   executionAuthorized: boolean;
 };
 
+export function standingObservationCanonicalOriginFailure(canonicalRoadmap: StandingObservationCanonicalItem[] | null) {
+  if (!canonicalRoadmap) return "canonical_state_unavailable";
+  const origin = canonicalRoadmap.find((item) => item.id === standingObservationOriginPackage);
+  if (!origin || !origin.ownerApproved || (!origin.executionAuthorized && !["complete", "released"].includes(origin.status))) {
+    return "canonical_origin_unavailable";
+  }
+  return null;
+}
+
 const sameSources = (value: string[]) =>
   value.length === standingObservationPermittedSources.length &&
   [...value].sort().every((source, index) => source === [...standingObservationPermittedSources].sort()[index]);
@@ -76,11 +85,8 @@ export function standingObservationAuthorityFailure({
   canonicalRoadmap: StandingObservationCanonicalItem[] | null;
   requireEnabled?: boolean;
 }) {
-  if (!canonicalRoadmap) return "canonical_state_unavailable";
-  const origin = canonicalRoadmap.find((item) => item.id === standingObservationOriginPackage);
-  if (!origin || !origin.ownerApproved || (!origin.executionAuthorized && !["complete", "released"].includes(origin.status))) {
-    return "canonical_origin_unavailable";
-  }
+  const canonicalFailure = standingObservationCanonicalOriginFailure(canonicalRoadmap);
+  if (canonicalFailure) return canonicalFailure;
   if (!authorization || authorization.authorization_key !== standingObservationAssignment || authorization.origin_package_id !== standingObservationOriginPackage || !authorization.owner_authorized || authorization.revoked_at) {
     return "standing_authorization_unavailable";
   }
@@ -101,6 +107,15 @@ export async function runAfterStandingObservationAuthorization<T>(
   operation: () => Promise<T>
 ) {
   const failure = standingObservationAuthorityFailure(authority);
+  if (failure) throw new Error(failure);
+  return operation();
+}
+
+export async function runAfterControlledObservationValidation<T>(
+  canonicalRoadmap: StandingObservationCanonicalItem[] | null,
+  operation: () => Promise<T>
+) {
+  const failure = standingObservationCanonicalOriginFailure(canonicalRoadmap);
   if (failure) throw new Error(failure);
   return operation();
 }

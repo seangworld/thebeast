@@ -32,7 +32,17 @@ export async function POST(request: Request) {
   const { client, user } = await ownerContext();
   if (!user) return json({ error: "BeastAdmin owner access required." }, 403);
   const body = await request.json().catch(() => null) as { action?: string } | null;
-  if (!body || !["pause", "resume", "simulate_clean", "simulate_material", "simulate_failure"].includes(body.action || "")) return json({ error: "Unknown owner staff action." }, 400);
+  if (!body || !["pause", "resume", "simulate_clean"].includes(body.action || "")) return json({ error: "Unknown owner staff action." }, 400);
+  if (body.action === "simulate_clean") {
+    if (process.env.VERCEL_ENV === "production") return json({ error: "Controlled simulations are disabled in Production." }, 403);
+    try {
+      const result = await runStandingObservation(user.id, null, "clean");
+      if (result.error) return json({ error: "The controlled observation could not be recorded." }, 503);
+      return json({ run: result.data, executionAuthorized: false }, 201);
+    } catch {
+      return json({ error: "Canonical BF-AGT-011 authorization is unavailable; simulation stopped fail-closed." }, 503);
+    }
+  }
   const [existing, authorization] = await Promise.all([
     client.from("beast_admin_staff_schedules").select("id").eq("owner_id", user.id).eq("assignment_key", "orchestrator_3_standing_observation").maybeSingle(),
     client.from("beast_admin_standing_authorizations").select("id,revoked_at").eq("owner_id", user.id).eq("authorization_key", "orchestrator_3_standing_observation").maybeSingle(),
@@ -47,13 +57,5 @@ export async function POST(request: Request) {
     if (result.error) return json({ error: "The standing assignment could not be updated." }, 503);
     return json({ schedule: result.data, executionAuthorized: false });
   }
-  if (process.env.VERCEL_ENV === "production") return json({ error: "Controlled simulations are disabled in Production." }, 403);
-  try {
-    const mode = body.action === "simulate_clean" ? "clean" : body.action === "simulate_material" ? "material" : "failure";
-    const result = await runStandingObservation(user.id, existing.data?.id || null, mode);
-    if (result.error) return json({ error: "The controlled observation could not be recorded." }, 503);
-    return json({ run: result.data, executionAuthorized: false }, 201);
-  } catch {
-    return json({ error: "Canonical BF-AGT-011 authorization is unavailable; simulation stopped fail-closed." }, 503);
-  }
+  return json({ error: "Unknown owner staff action." }, 400);
 }
