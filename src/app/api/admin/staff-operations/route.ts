@@ -33,12 +33,16 @@ export async function POST(request: Request) {
   if (!user) return json({ error: "BeastAdmin owner access required." }, 403);
   const body = await request.json().catch(() => null) as { action?: string } | null;
   if (!body || !["pause", "resume", "simulate_clean", "simulate_material", "simulate_failure"].includes(body.action || "")) return json({ error: "Unknown owner staff action." }, 400);
-  const existing = await client.from("beast_admin_staff_schedules").select("id").eq("owner_id", user.id).eq("assignment_key", "orchestrator_3_standing_observation").maybeSingle();
+  const [existing, authorization] = await Promise.all([
+    client.from("beast_admin_staff_schedules").select("id").eq("owner_id", user.id).eq("assignment_key", "orchestrator_3_standing_observation").maybeSingle(),
+    client.from("beast_admin_standing_authorizations").select("id,revoked_at").eq("owner_id", user.id).eq("authorization_key", "orchestrator_3_standing_observation").maybeSingle(),
+  ]);
   if (existing.error) return json({ error: "The standing assignment could not be checked." }, 503);
   if (body.action === "pause" || body.action === "resume") {
+    if (!existing.data || authorization.error || !authorization.data || authorization.data.revoked_at) return json({ error: "Canonical standing observation authorization is unavailable." }, 409);
     const enabled = body.action === "resume";
     const values = { enabled, paused_at: enabled ? null : new Date().toISOString(), updated_at: new Date().toISOString(), next_run_at: enabled ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() : null };
-    const write = existing.data ? client.from("beast_admin_staff_schedules").update(values).eq("id", existing.data.id) : client.from("beast_admin_staff_schedules").insert({ ...values, owner_id: user.id, assignment_key: "orchestrator_3_standing_observation" });
+    const write = client.from("beast_admin_staff_schedules").update(values).eq("id", existing.data.id);
     const result = await write.select().single();
     if (result.error) return json({ error: "The standing assignment could not be updated." }, 503);
     return json({ schedule: result.data, executionAuthorized: false });
