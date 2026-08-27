@@ -543,6 +543,17 @@ export const beastRoadmapPackageRegistry = [
     ],
     ["20260823023000_restore_server_only_beast_admin_rpc_grants.sql"]
   ),
+  packageIdentity(
+    "BM-43",
+    ["BM-43"],
+    "Recurring Bill Occurrence Payment Integrity",
+    [
+      "supabase/migrations/20260827214356_add_bill_payment_occurrence_identity.sql",
+      "src/lib/billPaymentOccurrences.ts",
+      "tests/billPaymentOccurrences.test.ts",
+    ],
+    ["20260827214356_add_bill_payment_occurrence_identity.sql"]
+  ),
 ] as const satisfies readonly BeastRoadmapPackageIdentity[];
 
 function collisionsFor(

@@ -3,6 +3,10 @@ import { useCallback } from "react";
 import { normalizeDebtStrategy } from "@/lib/debtStrategies";
 import { isDebtOpen, isDebtPayoffEligible } from "@/lib/debtLifecycle";
 import {
+  billPaymentOccurrenceKey,
+  buildBillPaymentOccurrenceTotals,
+} from "@/lib/billPaymentOccurrences";
+import {
   addDays,
   addMonthsClamped,
   getCurrentBillCycleDueDate,
@@ -52,12 +56,7 @@ export function useCashFlowProjection() {
     const activePayments = paymentRows || [];
     const activeDebtPayments = debtPaymentRows || [];
 
-    const paymentTotals: Record<string, number> = {};
-    for (const payment of activePayments) {
-      paymentTotals[payment.bill_id] =
-        Number(paymentTotals[payment.bill_id] || 0) +
-        Number(payment.amount_paid || 0);
-    }
+    const paymentTotals = buildBillPaymentOccurrenceTotals(activePayments);
 
     const debtPaymentTotals: Record<string, number> = {};
     for (const payment of activeDebtPayments) {
@@ -90,13 +89,17 @@ export function useCashFlowProjection() {
       .filter((bill) => !Boolean(bill.is_archived))
       .map((bill) => {
         const amount = Number(bill.amount || 0);
-        const paid = Number(paymentTotals[bill.id] || 0);
-        const remaining = Math.max(amount - paid, 0);
         const frequency = bill.frequency || "monthly";
         const currentCycleDueDate = getCurrentBillCycleDueDate(
           bill,
           cycleMonth
         );
+        const occurrenceKey = billPaymentOccurrenceKey(
+          bill.id,
+          currentCycleDueDate
+        );
+        const paid = Number(paymentTotals[occurrenceKey] || 0);
+        const remaining = Math.max(amount - paid, 0);
         let nextDueDateOverride = currentCycleDueDate;
 
         if (remaining <= 0 && !bill.next_due_date_after_payment) {

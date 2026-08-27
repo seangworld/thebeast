@@ -83,6 +83,13 @@ test("PLAT-001D classifies provider failures without returning raw details", () 
     "database_error"
   );
   assert.equal(
+    classifyClientDiagnosticError({
+      code: "22023",
+      message: "bill_occurrence_already_paid",
+    }),
+    "validation_error"
+  );
+  assert.equal(
     classifyClientDiagnosticError(new Error("unexpected private provider detail")),
     "unknown_error"
   );

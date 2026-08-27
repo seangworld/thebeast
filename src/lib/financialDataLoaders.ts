@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 export const DEBT_PAYMENT_HISTORY_LIMIT = 250;
+export const BILL_PAYMENT_HISTORY_LIMIT = 250;
 
 type FinancialDataClient = Pick<SupabaseClient, "from">;
 
@@ -33,7 +34,8 @@ export async function loadCashFlowFinancialData(
       .from("bill_payments")
       .select("*")
       .eq("user_id", userId)
-      .eq("cycle_month", cycleMonth),
+      .order("created_at", { ascending: false })
+      .limit(BILL_PAYMENT_HISTORY_LIMIT),
     client
       .from("debt_payments")
       .select("*")

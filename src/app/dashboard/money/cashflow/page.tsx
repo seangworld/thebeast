@@ -19,6 +19,10 @@ import { reportClientOperationFailure } from "@/lib/clientDiagnostics";
 import { BEASTMONEY_PAYMENT_MAINTENANCE_MESSAGE } from "@/lib/beastMoneyPaymentWriteGate";
 import { isDebtArchivedOrClosed, isDebtOpen, isDebtPayoffEligible } from "@/lib/debtLifecycle";
 import { applySuggestedDebtAttackCommand } from "@/lib/suggestedDebtAttack";
+import {
+  billPaymentOccurrenceKey,
+  buildBillPaymentOccurrenceTotals,
+} from "@/lib/billPaymentOccurrences";
 import { useCashFlow } from "./useCashFlow";
 import {
   getPaymentFundingStrategy,
@@ -272,16 +276,10 @@ export default function CashFlowPage() {
     return Number(startingBalance) + incomeExpected - billsDue;
   }, [startingBalance, incomeExpected, billsDue]);
 
-  const paymentsByBillId = useMemo(() => {
-    const totals: Record<string, number> = {};
-
-    for (const payment of billPayments) {
-      totals[payment.bill_id] =
-        Number(totals[payment.bill_id] || 0) + Number(payment.amount_paid || 0);
-    }
-
-    return totals;
-  }, [billPayments]);
+  const paymentsByBillOccurrence = useMemo(
+    () => buildBillPaymentOccurrenceTotals(billPayments),
+    [billPayments]
+  );
 
   const debtPaymentsByDebtAndCycle = useMemo(() => {
     const totals: Record<string, number> = {};
@@ -297,12 +295,16 @@ export default function CashFlowPage() {
   const billsWithPaymentStatus = useMemo(() => {
     return bills.map((bill) => {
       const amount = Number(bill.amount || 0);
-      const paid = Number(paymentsByBillId[bill.id] || 0);
-      const currentCycleRemaining = Math.max(amount - paid, 0);
       const dueDay = Number(bill.due_date || 1);
       const frequency = bill.frequency || "monthly";
       const assignedPaycheck = bill.assigned_paycheck || "unassigned";
       const currentCycleDueDate = getCurrentBillCycleDueDate(bill, cycleMonth);
+      const occurrenceKey = billPaymentOccurrenceKey(
+        bill.id,
+        currentCycleDueDate
+      );
+      const paid = Number(paymentsByBillOccurrence[occurrenceKey] || 0);
+      const currentCycleRemaining = Math.max(amount - paid, 0);
       let nextDueDate = currentCycleDueDate;
       let remaining = currentCycleRemaining;
 
@@ -340,7 +342,7 @@ export default function CashFlowPage() {
         is_archived: Boolean(bill.is_archived),
       };
     });
-  }, [bills, paymentsByBillId, cycleMonth]);
+  }, [bills, paymentsByBillOccurrence, cycleMonth]);
 
   const activeBills = useMemo(() => {
     return sortObligationsByNextDueDate(
@@ -471,6 +473,9 @@ export default function CashFlowPage() {
     }
 
     for (const payment of billPayments) {
+      if (!String(payment.cycle_due_date || "").startsWith(cycleMonth)) {
+        continue;
+      }
       addCoverageAmount(
         payment,
         Number(payment.amount_paid || 0)
