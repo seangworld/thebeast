@@ -4,6 +4,7 @@ import Link from "next/link";
 import { DashboardCard, SectionHeader } from "@/app/components/design/DashboardPrimitives";
 import { deriveDevelopmentAgentCanonicalState, type DevelopmentAgentProfile } from "@/lib/developmentAgentProfiles";
 import { useBeastAdminCommandCenter } from "@/lib/useBeastAdminCommandCenter";
+import { StaffOperationsWorkspace } from "../StaffOperationsWorkspace";
 
 function ListCard({ title, items }: { title: string; items: readonly string[] }) {
   if (!items.length) return null;
@@ -28,6 +29,7 @@ export function DevelopmentAgentProfileWorkspace({ profile }: { profile: Develop
     <dl className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       {[["Role", profile.role], ["Current status", loading ? "Loading canonical status" : state.statusLabel], ["Current / recent work", state.assignmentLabel], ["Current / recent verdict", state.verdictLabel || "Not applicable"]].map(([label, value]) => <div key={label} className="rounded-xl border border-white/10 bg-[#111827] p-4"><dt className="text-xs font-black uppercase tracking-wide text-slate-400">{label}</dt><dd className="mt-2 text-sm font-bold leading-6 text-white">{value}</dd></div>)}
     </dl>
+    {profile.id === "observer-agent" || profile.id === "proposal-agent" ? <StaffOperationsWorkspace compact /> : null}
 
     {!canonical ? <DashboardCard accent="admin"><SectionHeader eyebrow="Fail-closed state" title="Canonical governance unavailable" description={error || state.sourceDetail} /><button type="button" onClick={() => void reload()} className="beast-button mt-4">Retry canonical source</button></DashboardCard> : null}
 
