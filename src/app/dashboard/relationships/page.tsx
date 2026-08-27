@@ -17,6 +17,7 @@ import {
   type RelationshipMemoryEvidence,
 } from "@/lib/platform/relationships";
 import { createClient } from "@/lib/supabase/client";
+import { OwnerDevelopmentStaffRelationships } from "./OwnerDevelopmentStaffRelationships";
 
 type ConversationRow = {
   id: string;
@@ -235,6 +236,8 @@ export default function RelationshipCenterPage() {
             </div>
           </div>
         </DashboardCard>
+
+        <OwnerDevelopmentStaffRelationships />
 
         {loading ? (
           <div

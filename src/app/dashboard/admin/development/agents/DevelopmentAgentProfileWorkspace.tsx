@@ -5,6 +5,7 @@ import { DashboardCard, SectionHeader } from "@/app/components/design/DashboardP
 import { deriveDevelopmentAgentCanonicalState, type DevelopmentAgentProfile } from "@/lib/developmentAgentProfiles";
 import { useBeastAdminCommandCenter } from "@/lib/useBeastAdminCommandCenter";
 import { StaffOperationsWorkspace } from "../StaffOperationsWorkspace";
+import { AgentAvatar } from "@/app/components/agents/AgentExperience";
 
 function ListCard({ title, items }: { title: string; items: readonly string[] }) {
   if (!items.length) return null;
@@ -18,7 +19,10 @@ export function DevelopmentAgentProfileWorkspace({ profile }: { profile: Develop
   return <div className="space-y-6">
     <Link href="/dashboard/admin/development" className="inline-flex text-sm font-bold text-amber-200 hover:text-amber-100">← Development Console</Link>
     <DashboardCard accent="admin">
-      <SectionHeader eyebrow="Persistent development-agent profile" title={profile.name} description={profile.title} />
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+        <AgentAvatar name={profile.name} accessibleLabel={profile.portraitAlt} imageUrl={profile.portraitUrl} size="lg" />
+        <SectionHeader eyebrow="Persistent development-agent profile" title={profile.name} description={profile.title} />
+      </div>
       <p className="mt-5 max-w-4xl text-sm leading-6 text-slate-300">{profile.purpose}</p>
       <div className="mt-5 rounded-xl border border-amber-300/20 bg-amber-300/[0.06] p-4">
         <p className="text-xs font-black uppercase tracking-[0.16em] text-amber-200">Authority boundary</p>

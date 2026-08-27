@@ -6,6 +6,8 @@ export type DevelopmentAgentProfile = {
   title: string;
   role: string;
   purpose: string;
+  portraitUrl: string;
+  portraitAlt: string;
   responsibilities: readonly string[];
   limitations: readonly string[];
   relationships: readonly { label: string; detail: string }[];
@@ -30,6 +32,7 @@ export type DevelopmentAgentCanonicalState = {
 export const developmentAgentProfiles: readonly DevelopmentAgentProfile[] = [
   {
     id: "orchestrator-3", name: "Orchestrator 3.0", title: "Governed strategy lifecycle coordinator", role: "Coordinates evidence from observation through owner proposal gates and post-release evaluation", purpose: "Connect the outer strategy loop to the existing Orchestrator 2.x development and release workflow without inheriting owner authority.",
+    portraitUrl: "/digital-staff/orchestrator-3.webp", portraitAlt: "Portrait of Orchestrator 3.0, governed strategy lifecycle coordinator",
     responsibilities: ["Coordinate Observe through Recommend lifecycle stages", "Route evidence-backed proposals to the owner gate", "Hand approved proposals to existing Orchestrator 2.x validation", "Preserve lifecycle provenance and stop conditions"],
     limitations: ["Cannot self-authorize or execute generated proposals", "Cannot spend, contract, or change privacy or security policy", "Cannot bypass owner gates", "Cannot release without governed authority"],
     relationships: [{ label: "Owner", detail: "Receives proposals and retains all material authorization." }, { label: "Specialist agents", detail: "Coordinates Observer, Proposal, Developer, Reviewer, and Outcome roles without merging their independence." }, { label: "Orchestrator 2.x", detail: "Hands owner-approved proposals to the existing executable-package authorization layer." }],
@@ -37,6 +40,7 @@ export const developmentAgentProfiles: readonly DevelopmentAgentProfile[] = [
   },
   {
     id: "observer-agent", name: "Observer / Operations Agent", title: "Evidence-backed signal detector", role: "Detects meaningful changes in explicitly authorized operational sources", purpose: "Compare aggregate signals with recorded baselines, suppress noise and duplicates, and recommend bounded investigation when evidence warrants it.",
+    portraitUrl: "/digital-staff/observer-agent.webp", portraitAlt: "Portrait of Observer / Operations Agent, evidence-backed signal detector",
     responsibilities: ["Read only authorized aggregate sources", "Record signal, baseline, magnitude, confidence, impact, and urgency", "Suppress normal noise and unchanged duplicates", "Recommend investigation or monitoring"],
     limitations: ["Cannot turn an observation into work authorization", "Cannot use private member records or credentials as evidence", "Cannot diagnose beyond available evidence", "Cannot mutate products or release"],
     relationships: [{ label: "Orchestrator 3.0", detail: "Returns durable observations for bounded investigation or monitoring." }, { label: "Owner", detail: "The owner retains authority over any resulting proposal." }],
@@ -44,6 +48,7 @@ export const developmentAgentProfiles: readonly DevelopmentAgentProfile[] = [
   },
   {
     id: "proposal-agent", name: "Research + Planning / Proposal Agent", title: "Evidence-to-options specialist", role: "Turns bounded investigations into alternatives and non-executable recommendations", purpose: "Give the owner a traceable problem statement, evidence, assumptions, unknowns, options, tradeoffs, expected outcome, risk, cost, validation, and rollback.",
+    portraitUrl: "/digital-staff/proposal-agent.webp", portraitAlt: "Portrait of Research + Planning / Proposal Agent, evidence-to-options specialist",
     responsibilities: ["Research only the bounded investigated question", "Present alternatives and tradeoffs", "Identify assumptions, unknowns, cost, risk, and dependencies", "Stop every proposal at owner approval"],
     limitations: ["Cannot approve or execute its own proposal", "Cannot hide uncertainty or invent evidence", "Cannot create a release candidate", "Cannot bypass Orchestrator 2.x intake after owner approval"],
     relationships: [{ label: "Observer Agent", detail: "Uses observation provenance and a bounded evidence-complete investigation." }, { label: "Orchestrator 3.0", detail: "Returns a non-executable proposal for owner review." }, { label: "Owner", detail: "The owner approves, rejects, or requests changes." }],
@@ -55,6 +60,8 @@ export const developmentAgentProfiles: readonly DevelopmentAgentProfile[] = [
     title: "Bounded implementation specialist",
     role: "Builds owner-authorized work assigned by Orchestrator",
     purpose: "Inspect, implement, correct ordinary defects, validate, and return reviewer-ready evidence inside one governed assignment.",
+    portraitUrl: "/digital-staff/developer-agent.webp",
+    portraitAlt: "Portrait of Developer Agent, bounded implementation specialist",
     responsibilities: [
       "Build only the package and repository scope assigned by Orchestrator",
       "Protect pre-existing workspace changes and preserve exact candidate identity",
@@ -88,6 +95,8 @@ export const developmentAgentProfiles: readonly DevelopmentAgentProfile[] = [
     title: "Independent candidate quality gate",
     role: "Independently checks Developer Agent work for Orchestrator",
     purpose: "Bind review evidence to the exact Developer candidate and evaluate it against the authorized objective without trusting the completion claim by itself.",
+    portraitUrl: "/digital-staff/reviewer-agent.webp",
+    portraitAlt: "Portrait of Reviewer Agent, independent candidate quality gate",
     responsibilities: [
       "Inspect the exact candidate, changed files, tests, evidence, and unresolved risks",
       "Verify the authorized objective and acceptance criteria",
@@ -117,6 +126,7 @@ export const developmentAgentProfiles: readonly DevelopmentAgentProfile[] = [
   },
   {
     id: "outcome-agent", name: "Outcome / Post-Release Evaluation Agent", title: "Independent outcome evaluator", role: "Measures a verified exact release candidate against its recorded baseline", purpose: "Report success, mixed results, regression, or insufficient evidence without confusing correlation with causation.",
+    portraitUrl: "/digital-staff/outcome-agent.webp", portraitAlt: "Portrait of Outcome / Post-Release Evaluation Agent, independent outcome evaluator",
     responsibilities: ["Bind evaluation to the verified exact candidate", "Compare the declared metric, baseline, and measurement window", "Record confidence and evidence limitations", "Recommend monitoring or owner review"],
     limitations: ["Cannot claim the release caused a metric change without causal evidence", "Cannot roll back or modify a release", "Cannot authorize remediation or successor work", "Cannot reinterpret incomplete evidence as success"],
     relationships: [{ label: "Orchestrator 3.0", detail: "Returns durable evaluation evidence and a bounded recommendation." }, { label: "Owner", detail: "The owner decides whether any follow-up proposal should proceed." }],

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { DashboardCard, SectionHeader } from "@/app/components/design/DashboardPrimitives";
 import { developmentAgentProfiles, deriveDevelopmentAgentCanonicalState } from "@/lib/developmentAgentProfiles";
 import type { BeastAdminCanonicalReadModel } from "@/lib/beastAdminCanonicalProjection";
+import { AgentAvatar } from "@/app/components/agents/AgentExperience";
 
 export function DevelopmentAgentDirectory({ canonical }: { canonical: BeastAdminCanonicalReadModel }) {
   return (
@@ -24,7 +25,8 @@ export function DevelopmentAgentDirectory({ canonical }: { canonical: BeastAdmin
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <h3 className="text-xl font-black text-white">{profile.name}</h3>
+                  <AgentAvatar name={profile.name} accessibleLabel={profile.portraitAlt} imageUrl={profile.portraitUrl} size="lg" />
+                  <h3 className="mt-3 text-xl font-black text-white">{profile.name}</h3>
                   <p className="mt-1 text-sm font-bold text-amber-200">{profile.title}</p>
                 </div>
                 <span className="rounded-full border border-white/10 px-3 py-1 text-xs font-bold text-slate-300">
