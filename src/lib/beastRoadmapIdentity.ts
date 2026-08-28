@@ -534,6 +534,21 @@ export const beastRoadmapPackageRegistry = [
     ]
   ),
   packageIdentity(
+    "SW-QTG-001",
+    ["SW-QTG-001"],
+    "SEANGWORLD Qualified Traffic Growth Intelligence",
+    [
+      "docs/SW-QTG-001-QUALIFIED-TRAFFIC-GROWTH.md",
+      "src/lib/seangworldIntelligence.ts",
+      "src/lib/server/seangworldGoogleProviders.ts",
+      "src/app/dashboard/admin/intelligence/SeangworldIntelligenceWorkspace.tsx",
+      "src/app/dashboard/admin/marketing/BeastMarketingWorkspace.tsx",
+      "tests/qualifiedTrafficGrowth.test.ts",
+      "tests/seangworldIntelligence.test.ts",
+      "tests/seangworldGoogleProviders.test.ts",
+    ]
+  ),
+  packageIdentity(
     "SEC-002",
     ["SEC-002"],
     "Supabase Public Schema Grant Review",

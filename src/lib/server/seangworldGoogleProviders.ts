@@ -3,6 +3,7 @@ import { IdentityPoolClient } from "google-auth-library";
 import type {
   IntelligenceDimension,
   IntelligenceMetric,
+  QualifiedTrafficRow,
   SearchPageQueryEvidence,
   SearchPerformanceMetrics,
   SeangworldAnalyticsData,
@@ -21,7 +22,7 @@ type Ga4Row = {
   dimensionValues?: Ga4Cell[];
   metricValues?: Ga4Cell[];
 };
-type Ga4Report = { rows?: Ga4Row[] };
+type Ga4Report = { rows?: Ga4Row[]; unavailable?: true };
 
 type SearchConsoleRow = {
   keys?: string[];
@@ -218,6 +219,43 @@ function dimensions(report: Ga4Report, secondaryMetric = false) {
   }));
 }
 
+function qualifiedTrafficRows(
+  current: Ga4Report,
+  previous: Ga4Report,
+  currentActions: Ga4Report,
+  previousActions: Ga4Report
+): QualifiedTrafficRow[] {
+  const key = (row: Ga4Row) =>
+    `${row.dimensionValues?.[0]?.value || "Unknown"}\n${row.dimensionValues?.[1]?.value || "/"}`;
+  const previousByKey = new Map((previous.rows || []).map((row) => [key(row), row]));
+  const actionsByKey = new Map((currentActions.rows || []).map((row) => [key(row), numeric(row.metricValues?.[0])]));
+  const previousActionsByKey = new Map((previousActions.rows || []).map((row) => [key(row), numeric(row.metricValues?.[0])]));
+  return (current.rows || []).map((row) => {
+    const source = row.dimensionValues?.[0]?.value || "Unknown";
+    const landingPage = row.dimensionValues?.[1]?.value || "/";
+    const sessions = numeric(row.metricValues?.[0]);
+    const engagedSessions = numeric(row.metricValues?.[1]);
+    const previousRow = previousByKey.get(key(row));
+    const previousSessions = previousRow ? numeric(previousRow.metricValues?.[0]) : null;
+    return {
+      source,
+      landingPage,
+      sessions,
+      previousSessions,
+      sessionChange: previousSessions === null ? null : sessions - previousSessions,
+      engagedSessions,
+      engagementRate: sessions > 0 ? engagedSessions / sessions : null,
+      qualifiedActions: currentActions.unavailable
+        ? null
+        : actionsByKey.get(key(row)) || 0,
+      previousQualifiedActions:
+        !previousRow || previousActions.unavailable
+          ? null
+          : previousActionsByKey.get(key(row)) || 0,
+    };
+  });
+}
+
 function gaRequest(
   propertyId: string,
   accessToken: string,
@@ -330,6 +368,47 @@ async function loadGa4Data(
         limit: "10",
       },
     })),
+    ...(["current", "previous"] as const).flatMap((period) => [
+      {
+        key: `qualifiedTraffic${period}`,
+        body: {
+          dateRanges: [ranges[period]],
+          dimensions: [
+            { name: "sessionSource" },
+            { name: "landingPagePlusQueryString" },
+          ],
+          metrics: [{ name: "sessions" }, { name: "engagedSessions" }],
+          orderBys: [{ metric: { metricName: "sessions" }, desc: true }],
+          limit: "50",
+        },
+      },
+      {
+        key: `qualifiedActions${period}`,
+        body: {
+          dateRanges: [ranges[period]],
+          dimensions: [
+            { name: "sessionSource" },
+            { name: "landingPagePlusQueryString" },
+          ],
+          metrics: [{ name: "eventCount" }],
+          dimensionFilter: {
+            filter: {
+              fieldName: "eventName",
+              inListFilter: {
+                values: [
+                  "guide_download",
+                  "resource_viewed",
+                  "beast_entry_selected",
+                  "account_creation_selected",
+                ],
+              },
+            },
+          },
+          orderBys: [{ metric: { metricName: "eventCount" }, desc: true }],
+          limit: "50",
+        },
+      },
+    ]),
     {
       key: "historicalTrends",
       body: {
@@ -355,6 +434,9 @@ async function loadGa4Data(
   const reports = await mapWithConcurrency(reportDefinitions, 3, (definition) =>
     gaRequest(propertyId, accessToken, fetchImplementation, definition.body).catch(
       (error) => {
+        if (definition.key.startsWith("qualified")) {
+          return { unavailable: true } as Ga4Report;
+        }
         const message = error instanceof Error ? error.message : "GA4 request failed.";
         throw new Error(`GA4 ${definition.key} report: ${message}`);
       }
@@ -392,6 +474,12 @@ async function loadGa4Data(
     browsers: dimensions(byKey.browsers),
     operatingSystems: dimensions(byKey.operatingSystems),
     trafficSources: dimensions(byKey.trafficSources),
+    qualifiedTraffic: qualifiedTrafficRows(
+      byKey.qualifiedTrafficcurrent,
+      byKey.qualifiedTrafficprevious,
+      byKey.qualifiedActionscurrent,
+      byKey.qualifiedActionsprevious
+    ),
     entryPages: dimensions(byKey.topLandingPages),
     topLandingPages: dimensions(byKey.topLandingPages),
     // GA4's Data API does not expose the legacy Universal Analytics `exits`

@@ -236,7 +236,12 @@ test("live GA4 and Search Console responses map to the provider-neutral dashboar
   assert.deepEqual(ga4?.data?.visitors, { value: 100, previousValue: 80 });
   assert.deepEqual(ga4?.data?.users, { value: 120, previousValue: 100 });
   assert.deepEqual(ga4?.data?.exitPages, []);
+  assert.equal(ga4?.data?.qualifiedTraffic?.[0]?.source, "Verified");
+  assert.equal(ga4?.data?.qualifiedTraffic?.[0]?.sessions, 50);
+  assert.equal(ga4?.data?.qualifiedTraffic?.[0]?.qualifiedActions, 50);
   assert.equal(observedGa4Metrics.has("exits"), false);
+  assert.equal(observedGa4Metrics.has("engagedSessions"), true);
+  assert.equal(observedGa4Metrics.has("eventCount"), true);
   assert.equal(searchConsole?.connectionStatus, "connected");
   assert.deepEqual(searchConsole?.data?.impressions, {
     value: 2000,

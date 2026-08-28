@@ -47,6 +47,7 @@ export type IntelligenceDimension = {
 export const searchOpportunityDispositions = [
   "Improve Existing Page",
   "Create Supporting Content",
+  "Distribute Existing Asset",
   "Investigate",
   "Watch",
   "Ignore",
@@ -58,6 +59,7 @@ export type SearchOpportunityDisposition =
 export const searchGrowthClassifications = [
   "Optimize Existing",
   "Create New",
+  "Distribute",
   "Monitor",
   "Ignore",
 ] as const;
@@ -109,6 +111,25 @@ export type SearchOpportunity = {
   signals: string[];
   ownerApprovalRequired: boolean;
   rationale: string;
+  trafficSource: "Organic search";
+  targetAudience: string;
+  existingAsset: string;
+  proposedAction: string;
+  expectedBenefit: string;
+  effort: "low" | "medium";
+  measurement: string;
+};
+
+export type QualifiedTrafficRow = {
+  source: string;
+  landingPage: string;
+  sessions: number;
+  previousSessions: number | null;
+  sessionChange: number | null;
+  engagedSessions: number;
+  engagementRate: number | null;
+  qualifiedActions: number | null;
+  previousQualifiedActions: number | null;
 };
 
 export type SearchLandingPagePerformance = {
@@ -147,6 +168,7 @@ export type SeangworldAnalyticsData = {
   browsers: IntelligenceDimension[];
   operatingSystems: IntelligenceDimension[];
   trafficSources: IntelligenceDimension[];
+  qualifiedTraffic: QualifiedTrafficRow[];
   entryPages: IntelligenceDimension[];
   exitPages: (IntelligenceDimension & { exitRate?: number | null })[];
   topQueries: (IntelligenceDimension & {
@@ -249,6 +271,7 @@ const emptyData = (): SeangworldAnalyticsData => ({
   browsers: [],
   operatingSystems: [],
   trafficSources: [],
+  qualifiedTraffic: [],
   entryPages: [],
   exitPages: [],
   topQueries: [],
@@ -357,6 +380,17 @@ export function buildSearchOpportunities(
         rationale =
           "The existing page has meaningful impressions, CTR below 3%, and an achievable average position of 4–20.";
       } else if (
+        !genericPage &&
+        current.clicks >= 3 &&
+        current.impressions >= 25 &&
+        current.ctr >= 0.03 &&
+        hasPosition &&
+        current.position <= 20
+      ) {
+        disposition = "Distribute Existing Asset";
+        rationale =
+          "The existing asset already earns qualified organic attention and is a stronger distribution candidate than another new asset.";
+      } else if (
         current.impressions >= 100 &&
         (current.position > 20 ||
           (impressionGrowth !== null && impressionGrowth <= -0.25))
@@ -398,10 +432,12 @@ export function buildSearchOpportunities(
           ? "Optimize Existing"
           : disposition === "Create Supporting Content"
             ? "Create New"
+            : disposition === "Distribute Existing Asset"
+              ? "Distribute"
             : disposition === "Investigate" || disposition === "Watch"
               ? "Monitor"
               : "Ignore";
-      const recommendedAsset = classification === "Optimize Existing"
+      const recommendedAsset = classification === "Optimize Existing" || classification === "Distribute"
         ? "Existing Page"
         : recommendedSearchAsset(row.query);
       const signals = [
@@ -409,7 +445,29 @@ export function buildSearchOpportunities(
         ...(achievablePosition ? ["Realistic ranking upside"] : []),
         ...(current.impressions >= 50 && lowCtr ? ["High impressions / low CTR"] : []),
         ...(impressionGrowth !== null && impressionGrowth >= 0.25 ? ["Growing impressions"] : []),
+        ...(classification === "Distribute" ? ["Existing asset has validated demand"] : []),
       ];
+
+      const proposedAction = classification === "Optimize Existing"
+        ? "Improve the existing page's search presentation, internal links, and continuation path."
+        : classification === "Create New"
+          ? "Investigate whether the existing inventory truly lacks a focused answer; create only after owner approval."
+          : classification === "Distribute"
+            ? "Increase internal, owned-social, referral, or partner distribution to this existing asset."
+            : classification === "Monitor"
+              ? "Collect another comparable evidence window before changing inventory or distribution."
+              : "Take no action unless the evidence materially changes.";
+      const expectedBenefit = classification === "Optimize Existing"
+        ? "More qualified organic clicks from visibility the page already earns."
+        : classification === "Create New"
+          ? "A focused answer only if verified demand is not already served by an existing asset."
+          : classification === "Distribute"
+            ? "More qualified visits to a useful asset with demonstrated search demand."
+            : classification === "Monitor"
+              ? "Avoid premature work while preserving the opportunity for later review."
+              : "Avoid spending effort on low-value traffic.";
+      const effort: "low" | "medium" =
+        classification === "Create New" ? "medium" : "low";
 
       return {
         page: row.page,
@@ -424,6 +482,13 @@ export function buildSearchOpportunities(
         signals,
         ownerApprovalRequired: classification === "Create New",
         rationale,
+        trafficSource: "Organic search" as const,
+        targetAudience: `People searching for “${row.query}”.`,
+        existingAsset: row.page,
+        proposedAction,
+        expectedBenefit,
+        effort,
+        measurement: "Organic clicks, CTR, engaged sessions, and qualified actions for this landing page.",
       };
     })
     .sort(
