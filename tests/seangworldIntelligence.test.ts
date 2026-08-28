@@ -17,7 +17,7 @@ const emptyData = (): SeangworldAnalyticsData => ({
   visitors: null, users: null, sessions: null, views: null, engagementRate: null,
   impressions: null, clicks: null, ctr: null, averagePosition: null,
   countries: [], searchCountries: [], cities: [], devices: [], searchDevices: [], browsers: [], operatingSystems: [],
-  trafficSources: [], entryPages: [], exitPages: [], topQueries: [],
+  trafficSources: [], qualifiedTraffic: [], entryPages: [], exitPages: [], topQueries: [],
   topLandingPages: [], searchLandingPages: [], searchOpportunities: [],
   searchOpportunityBaseline: null, searchTrends: [], historicalTrends: [], deviceEngagement: null,
 });
@@ -90,6 +90,7 @@ test("page-query evidence receives exactly one governed SEO disposition", () => 
     { page: "https://www.seangworld.com/", query: "support me", clicks: 1, impressions: 100, ctr: 0.01, position: 15 },
     { page: "https://www.seangworld.com/investigate", query: "investigate me", clicks: 2, impressions: 150, ctr: 0.013, position: 25 },
     { page: "https://www.seangworld.com/watch", query: "watch me", clicks: 1, impressions: 30, ctr: 0.033, position: 25 },
+    { page: "https://www.seangworld.com/useful-tool", query: "share me", clicks: 8, impressions: 100, ctr: 0.08, position: 8 },
     { page: "https://www.seangworld.com/ignore", query: "ignore me", clicks: 0, impressions: 5, ctr: 0, position: 70 },
   ];
   const previous = [
@@ -97,6 +98,7 @@ test("page-query evidence receives exactly one governed SEO disposition", () => 
     { ...current[1], impressions: 80 },
     { ...current[2], impressions: 250 },
     { ...current[3], impressions: 20 },
+    { ...current[4], clicks: 5, impressions: 80 },
   ];
   const byQuery = new Map(
     buildSearchOpportunities(current, previous).map((item) => [
@@ -108,12 +110,14 @@ test("page-query evidence receives exactly one governed SEO disposition", () => 
   assert.equal(byQuery.get("support me")?.disposition, "Create Supporting Content");
   assert.equal(byQuery.get("investigate me")?.disposition, "Investigate");
   assert.equal(byQuery.get("watch me")?.disposition, "Watch");
+  assert.equal(byQuery.get("share me")?.disposition, "Distribute Existing Asset");
   assert.equal(byQuery.get("ignore me")?.disposition, "Ignore");
   assert.ok([...byQuery.values()].every((item) => item.rationale && item.score >= 0 && item.score <= 100));
   assert.equal(byQuery.get("improve me")?.change.impressions, 20);
   assert.equal(byQuery.get("improve me")?.classification, "Optimize Existing");
   assert.equal(byQuery.get("support me")?.classification, "Create New");
   assert.equal(byQuery.get("investigate me")?.classification, "Monitor");
+  assert.equal(byQuery.get("share me")?.classification, "Distribute");
   assert.equal(byQuery.get("ignore me")?.classification, "Ignore");
   assert.equal(byQuery.get("support me")?.ownerApprovalRequired, true);
   assert.equal(byQuery.get("improve me")?.ownerApprovalRequired, false);
@@ -176,9 +180,10 @@ test("owner route and dashboard contain all required sections and no AI claim pa
     "Cities", "Devices", "Browsers", "Operating Systems", "Traffic Sources",
     "Landing Pages", "Exit Pages", "Top Queries", "Top Landing Pages",
     "Historical Trends", "Search Performance Trends", "Content Gap &amp; Search Opportunity Generation",
-    "Optimize Existing", "Create New", "Monitor", "Ignore", "Best format",
+    "Optimize Existing", "Create New", "Distribute", "Monitor", "Ignore", "Best format",
     "Owner approval required before publication",
-    "Improve Existing Page", "Create Supporting Content", "Investigate", "Watch", "Ignore",
+    "Improve Existing Page", "Create Supporting Content", "Distribute Existing Asset", "Investigate", "Watch", "Ignore",
+    "Qualified traffic by source and landing page", "Qualified actions", "Evidence-backed recommendation",
     "Baseline", "BeastHunter is canonically registered", "Final Data Through", "Reporting Delay",
     "Provider Status", "Connection Status", "Last Sync", "Data Freshness",
   ]) assert.match(workspace, new RegExp(label));

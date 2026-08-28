@@ -84,6 +84,30 @@ function QueryCard({
   );
 }
 
+function QualifiedTrafficTable({
+  items,
+}: {
+  items: SeangworldIntelligenceSnapshot["data"]["qualifiedTraffic"];
+}) {
+  return (
+    <section className="rounded-2xl border border-emerald-300/20 bg-[#111827] p-5" aria-labelledby="qualified-traffic-heading">
+      <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-300">Primary growth objective</p>
+      <h2 id="qualified-traffic-heading" className="mt-2 text-xl font-black text-white">Qualified traffic by source and landing page</h2>
+      <p className="mt-2 max-w-4xl text-sm leading-6 text-slate-300">
+        This joins existing GA4 acquisition evidence into one owner view. Qualified actions are recorded guide downloads, resource/tool views, Beast entry selections, and account-creation selections—not impressions or visits alone.
+      </p>
+      {items.length ? (
+        <div className="mt-4 overflow-x-auto" tabIndex={0} aria-label="Qualified traffic by source and landing page table, horizontally scrollable">
+          <table className="min-w-[62rem] w-full text-left text-sm">
+            <thead className="text-slate-400"><tr><th className="p-3">Source</th><th className="p-3">Landing page</th><th className="p-3">Sessions</th><th className="p-3">Change</th><th className="p-3">Engaged</th><th className="p-3">Engagement</th><th className="p-3">Qualified actions</th></tr></thead>
+            <tbody>{items.map((item) => <tr key={`${item.source}:${item.landingPage}`} className="border-t border-white/10 text-slate-200"><td className="p-3 font-bold text-white">{item.source}</td><td className="max-w-sm break-words p-3">{item.landingPage}</td><td className="p-3">{number(item.sessions)}</td><td className="p-3">{changeLabel(item.sessionChange)}</td><td className="p-3">{number(item.engagedSessions)}</td><td className="p-3">{item.engagementRate === null ? "Unavailable" : `${(item.engagementRate * 100).toFixed(1)}%`}</td><td className="p-3 font-black text-emerald-200">{item.qualifiedActions === null ? "Unavailable" : number(item.qualifiedActions)}<span className="mt-1 block text-xs font-normal text-slate-500">Prior {item.previousQualifiedActions === null ? "unavailable" : number(item.previousQualifiedActions)}</span></td></tr>)}</tbody>
+          </table>
+        </div>
+      ) : <p className="mt-4 rounded-xl border border-dashed border-white/15 p-5 text-sm text-slate-400">No verified source-to-landing qualified-traffic rows are available. This is unavailable—not zero—until GA4 returns the bounded acquisition reports.</p>}
+    </section>
+  );
+}
+
 function changeLabel(
   value: number | null,
   kind: "number" | "percent" | "position" = "number"
@@ -163,10 +187,10 @@ function SearchOpportunityIntelligence({
         </p>
       ) : null}
       <p className="mt-2 text-xs leading-5 text-slate-500">
-        Classification: Optimize Existing · Create New · Monitor · Ignore
+        Classification: Optimize Existing · Create New · Distribute · Monitor · Ignore
       </p>
       <p className="mt-1 text-xs leading-5 text-slate-600">
-        Underlying evidence dispositions remain: Improve Existing Page · Create Supporting Content · Investigate · Watch · Ignore
+        Underlying evidence dispositions remain: Improve Existing Page · Create Supporting Content · Distribute Existing Asset · Investigate · Watch · Ignore
       </p>
 
       {pagePerformance ? (
@@ -217,7 +241,7 @@ function SearchOpportunityIntelligence({
                   <td className="p-3"><span className="inline-flex rounded-full border border-cyan-300/25 bg-cyan-300/5 px-3 py-1 text-xs font-bold text-cyan-100">{opportunity.classification}</span></td>
                   <td className="p-3"><span className="font-bold text-white">{opportunity.recommendedAsset}</span>{opportunity.ownerApprovalRequired ? <span className="mt-1 block text-xs text-amber-200">Owner approval required before publication</span> : null}</td>
                   <td className="max-w-xs p-3 text-xs leading-5 text-slate-300">{opportunity.signals.length ? opportunity.signals.join(" · ") : "No action signal crossed the governed threshold"}</td>
-                  <td className="max-w-md p-3"><span className="font-bold text-white">Score {opportunity.score}</span><span className="mt-1 block text-xs leading-5 text-slate-400">{opportunity.rationale}</span></td>
+                  <td className="max-w-md p-3"><span className="font-bold text-white">Score {opportunity.score}</span><span className="mt-1 block text-xs leading-5 text-slate-400">{opportunity.rationale}</span><details className="mt-2 text-xs text-slate-300"><summary className="cursor-pointer font-bold text-cyan-200">Evidence-backed recommendation</summary><dl className="mt-2 grid gap-1"><div><dt className="inline font-bold">Traffic source: </dt><dd className="inline">{opportunity.trafficSource}</dd></div><div><dt className="inline font-bold">Target audience: </dt><dd className="inline">{opportunity.targetAudience}</dd></div><div><dt className="inline font-bold">Existing asset: </dt><dd className="inline break-all">{opportunity.existingAsset}</dd></div><div><dt className="inline font-bold">Proposed action: </dt><dd className="inline">{opportunity.proposedAction}</dd></div><div><dt className="inline font-bold">Expected benefit: </dt><dd className="inline">{opportunity.expectedBenefit}</dd></div><div><dt className="inline font-bold">Effort: </dt><dd className="inline capitalize">{opportunity.effort}</dd></div><div><dt className="inline font-bold">Measurement: </dt><dd className="inline">{opportunity.measurement}</dd></div></dl></details></td>
                 </tr>
               ))}
             </tbody>
@@ -295,6 +319,8 @@ export function SeangworldIntelligenceWorkspace() {
     <section aria-labelledby="provider-status-heading"><h2 id="provider-status-heading" className="text-xl font-black text-white">Provider Status</h2><div className="mt-4 grid gap-4 lg:grid-cols-3">{snapshot.providers.map((provider) => <article key={provider.id} className="rounded-2xl border border-white/10 bg-[#111827] p-5"><div className="flex flex-wrap items-center justify-between gap-2"><h3 className="font-black text-white">{provider.label}</h3><span className="rounded-full border border-white/15 px-3 py-1 text-xs font-bold text-slate-200">{seangworldProviderStatusLabels[provider.status]}</span></div><p className="mt-3 text-sm leading-6 text-slate-300">{provider.guidance}</p><dl className="mt-4 grid gap-3 text-xs"><div><dt className="text-slate-500">Connection Status</dt><dd className="mt-1 capitalize text-slate-200">{provider.connectionStatus.replaceAll("_", " ")}</dd></div><div><dt className="text-slate-500">Last Sync</dt><dd className="mt-1 text-slate-200">{time(provider.lastSynchronizationAt)}</dd></div><div><dt className="text-slate-500">Last Successful Synchronization</dt><dd className="mt-1 text-slate-200">{time(provider.lastSuccessfulSynchronizationAt)}</dd></div>{provider.id === "search_console" ? <><div><dt className="text-slate-500">Final Data Through</dt><dd className="mt-1 text-slate-200">{date(provider.dataThroughDate)}</dd></div><div><dt className="text-slate-500">Reporting Delay</dt><dd className="mt-1 text-slate-200">{provider.reportingDelayDays === null ? "Unavailable" : `${provider.reportingDelayDays} day${provider.reportingDelayDays === 1 ? "" : "s"} (2–3 days is normal)`}</dd></div></> : null}<div><dt className="text-slate-500">Data Freshness</dt><dd className="mt-1 capitalize text-slate-200">{provider.freshness}</dd></div></dl>{provider.error ? <p className="mt-4 rounded-lg border border-red-300/20 bg-red-300/5 p-3 text-xs leading-5 text-red-100" role="status">{provider.error.message}{provider.error.retryable ? " Retry is safe." : ""}</p> : null}</article>)}</div></section>
 
     <FirstPartyTelemetryPanels data={data.firstPartyTelemetry} />
+
+    <QualifiedTrafficTable items={data.qualifiedTraffic} />
 
     <SearchOpportunityIntelligence data={data} />
 

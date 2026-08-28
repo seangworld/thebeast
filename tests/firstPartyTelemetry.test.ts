@@ -64,7 +64,7 @@ function intelligenceData(firstPartyTelemetry: FirstPartyTelemetrySnapshot | nul
     visitors: null, users: null, sessions: null, views: null, engagementRate: null,
     impressions: null, clicks: null, ctr: null, averagePosition: null,
     countries: [], searchCountries: [], cities: [], devices: [], searchDevices: [],
-    browsers: [], operatingSystems: [], trafficSources: [], entryPages: [], exitPages: [],
+    browsers: [], operatingSystems: [], trafficSources: [], qualifiedTraffic: [], entryPages: [], exitPages: [],
     topQueries: [], topLandingPages: [], searchLandingPages: [],
     searchOpportunities: [], searchOpportunityBaseline: null,
     searchTrends: [], historicalTrends: [],
