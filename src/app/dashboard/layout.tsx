@@ -1091,7 +1091,7 @@ export default function DashboardLayout({
       {dashboardGuardResolved && !resolvingDashboardAccess && authenticatedMemberId ? (
         <GuidedTour
           memberId={authenticatedMemberId}
-          educationOnly={learningOnlyNavigation}
+          educationOnly={pathname.includes("/education/guidance-counselor")}
         />
       ) : null}
 
