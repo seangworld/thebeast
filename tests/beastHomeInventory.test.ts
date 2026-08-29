@@ -5,7 +5,7 @@ import { resolveMemberModuleEntitlement } from "../src/lib/memberAgeEntitlements
 import { getModuleRegistryEntry } from "../src/lib/moduleRegistry";
 import { normalizeBeastAdminMemberEditRequest } from "../src/lib/beastAdminMemberEditing";
 import { normalizeBeastAdminMemberInvitationRequest } from "../src/lib/beastAdminMemberInvitations";
-const migration = readFileSync("supabase/migrations/20260829040000_add_beast_home_inventory.sql", "utf8");
+const migration = readFileSync("supabase/migrations/20260829142028_add_beast_home_inventory.sql", "utf8");
 const detector = readFileSync("src/app/api/home/inventory/detect/route.ts", "utf8");
 const workspace = readFileSync("src/app/dashboard/home/inventory/BeastHomeInventoryWorkspace.tsx", "utf8");
 const shell = readFileSync("src/app/dashboard/home/BeastHomeShell.tsx", "utf8");

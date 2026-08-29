@@ -36,6 +36,7 @@ import { BeastHealthShell } from "./BeastHealthShell";
 import { HealthDiscoveryOnboarding } from "./HealthDiscoveryOnboarding";
 import { HealthDocumentExtractionReview } from "./HealthDocumentExtractionReview";
 import { LivingHealthTimeline } from "./LivingHealthTimeline";
+import { ProductRoadmapModulePreview } from "@/app/components/ProductRoadmapVisibility";
 import { canonicalDisplayFields, canonicalMissingActions, memberSafeSourceLabel } from "@/lib/canonicalKnowledgePresentation";
 import { legacyHealthAggregateState, loadCanonicalMemberHealthRecords } from "@/lib/health/canonicalRecords";
 
@@ -1319,6 +1320,7 @@ export function HealthRecordWorkspace({ kind }: { kind: HealthRecordKind }) {
           </details>
         </DashboardCard>
       </section>
+      <ProductRoadmapModulePreview product="BeastHealth" />
     </BeastHealthShell>
   );
 }

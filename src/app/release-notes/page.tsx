@@ -27,6 +27,16 @@ export default function ReleaseNotesPage() {
       </header>
 
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
+        <div className="mb-12 rounded-lg border border-amber-300/25 bg-[#0f1419] p-6">
+          <h2 className="text-2xl font-bold">BeastOS v3.0.3</h2>
+          <p className="mt-1 text-sm text-[#7f8da3]">August 29, 2026</p>
+          <h3 className="mt-4 font-semibold text-[#c7cfdb]">Honest Product Roadmap visibility</h3>
+          <ul className="mt-3 space-y-2 pl-4 text-sm text-[#a5b4c7]">
+            <li><span className="text-amber-300">✓</span> Added reusable Available, Preview/Beta, In Development, and Coming Soon presentation semantics.</li>
+            <li><span className="text-amber-300">✓</span> Added member and public-safe roadmap discovery with factual capability details and no speculative dates.</li>
+            <li><span className="text-amber-300">✓</span> Added Coming Soon visibility for BeastHome Sentinel, BeastHome Shield, BeastHealth AI Fitness Trainer, and BeastMoney Connected Balances without activating them.</li>
+          </ul>
+        </div>
         <div className="mb-12 rounded-lg border border-emerald-300/25 bg-[#0f1419] p-6">
           <h2 className="text-2xl font-bold">BeastHome v1.0.0</h2>
           <p className="mt-1 text-sm text-[#7f8da3]">August 29, 2026</p>

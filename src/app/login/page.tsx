@@ -600,6 +600,12 @@ function LoginExperience() {
           <p className="mt-2 text-xs font-semibold leading-5 text-[#6f7d91]">
             {beastOSSharedCapabilities.join(" · ")}
           </p>
+          <Link
+            href="/coming-soon"
+            className="mt-4 inline-flex min-h-11 items-center text-sm font-black text-[#7dd3fc] underline decoration-[#38bdf8]/40 underline-offset-4 transition hover:text-white"
+          >
+            See what is available and coming soon
+          </Link>
           <span className="sr-only">
             {beastOSPlatformIdentity.description}
             {beastOSApplications.map((application) => application.name).join(", ")}

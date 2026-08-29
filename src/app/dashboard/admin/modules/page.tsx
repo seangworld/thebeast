@@ -2,6 +2,8 @@ import { BeastAdminShell } from "../BeastAdminShell";
 import { beastModuleRegistry, getModuleVisibilityLabel } from "@/lib/moduleRegistry";
 import { beastAdminPortfolio } from "@/lib/beastAdminPortfolio";
 import { BeastAdminCanonicalPortfolioWorkspace } from "./BeastAdminCanonicalPortfolioWorkspace";
+import { ProductRoadmapStatusBadge } from "@/app/components/ProductRoadmapVisibility";
+import { productRoadmapItems } from "@/lib/productRoadmapVisibility";
 
 export default function BeastAdminModulesPage() {
   return (
@@ -10,6 +12,26 @@ export default function BeastAdminModulesPage() {
       purpose="Canonical BeastFusion product portfolio with Beast runtime module configuration kept explicitly separate."
     >
       <BeastAdminCanonicalPortfolioWorkspace />
+      <section className="mb-6 rounded-2xl border border-amber-300/20 bg-amber-300/[0.04] p-5">
+        <h2 className="text-lg font-black text-white">Member and public Product Roadmap mirror</h2>
+        <p className="mt-2 text-sm leading-6 text-slate-300">
+          Presentation-only BO-UX-002 allowlist. BeastFusion remains canonical;
+          this surface cannot edit status, authorize work, or expose private roadmap records.
+        </p>
+        <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          {productRoadmapItems.map((item) => (
+            <article key={item.slug} className="rounded-xl border border-white/10 bg-[#111827] p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-xs font-black uppercase text-slate-400">{item.product}</span>
+                <ProductRoadmapStatusBadge status={item.status} />
+              </div>
+              <h3 className="mt-3 font-black text-white">{item.capability}</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-300">{item.availability}</p>
+              <p className="mt-3 font-mono text-xs text-slate-500">{item.sourcePackage}</p>
+            </article>
+          ))}
+        </div>
+      </section>
       <section className="mb-6 rounded-2xl border border-white/10 bg-[#111827] p-5">
         <h2 className="text-lg font-black text-white">Generated operational portfolio</h2>
         <p className="mt-2 text-sm leading-6 text-slate-400">

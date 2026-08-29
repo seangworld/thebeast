@@ -43,8 +43,8 @@ export const beastRoadmapPackageRegistry = [
     "BHM-002",
     [],
     "Photo-to-Home-Inventory V1 and Safe Member Availability",
-    ["docs/BHM-002-PHOTO-HOME-INVENTORY.md", "supabase/migrations/20260829040000_add_beast_home_inventory.sql"],
-    ["20260829040000_add_beast_home_inventory.sql"]
+    ["docs/BHM-002-PHOTO-HOME-INVENTORY.md", "supabase/migrations/20260829142028_add_beast_home_inventory.sql"],
+    ["20260829142028_add_beast_home_inventory.sql"]
   ),
   packageIdentity(
     "BE-301",

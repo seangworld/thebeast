@@ -8,6 +8,16 @@ import {
 
 const releaseNotes = [
   {
+    version: "BeastOS v3.0.3",
+    date: "August 29, 2026",
+    title: "Product Roadmap visibility",
+    items: [
+      "Added one reusable member and public-safe Product Roadmap experience with Available, Preview/Beta, In Development, and Coming Soon status semantics.",
+      "Added factual Coming Soon details for BeastHome Sentinel, BeastHome Shield, BeastHealth AI Fitness Trainer, and BeastMoney Connected Balances.",
+      "Coming Soon pages cannot activate features, connect providers, move money, expose internal governance, or promise release dates.",
+    ],
+  },
+  {
     version: "BeastHome v1.0.0",
     date: "August 29, 2026",
     title: "Private photo-to-home-inventory",
