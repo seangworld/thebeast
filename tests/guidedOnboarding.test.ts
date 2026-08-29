@@ -80,6 +80,11 @@ test("guided modal contains focus and restores the previous control", () => {
   assert.match(source, /const originalControl = document\.activeElement/);
   assert.match(source, /window\.requestAnimationFrame\(\(\) => control\?\.focus\(\)\)/);
   assert.match(source, /\}, \[open\]\);/);
+  assert.ok(
+    source.indexOf("const originalControl = document.activeElement") <
+      source.indexOf("dialogRef.current?.focus()"),
+    "the launcher must be captured before the dialog receives focus"
+  );
   assert.doesNotMatch(
     source.slice(source.indexOf('writeProgress(storageKey, definition, "started"'), source.indexOf("const position")),
     /restoreFocusRef\.current = document\.activeElement/
