@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 58902)
-Total output lines: 6671
-
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readdirSync, readFileSync, statSync } from "node:fs";
@@ -2906,7 +2903,889 @@ test("spaced review detects forgotten mastered skills", () => {
         lastStudiedAt: "2026-07-01",
         previouslyMastered: true,
       },
-    ],…8902 tokens truncated…false);
+    ],
+  });
+
+  assert.deepEqual(
+    reviews.map((review) => review.itemId),
+    ["fractions", "wood-joints"]
+  );
+  assert.equal(reviews[0].reason, "mastery-decay");
+  assert.equal(reviews[0].priority, "Medium");
+  assert.equal(reviews.every((review) => review.id.startsWith("forgotten-")), true);
+});
+
+test("learning quiz and practice exam frameworks support review state", () => {
+  const quiz = learningQuizzes[0];
+  const exam = learningPracticeExams[0];
+  const examSummary = getPracticeExamFrameworkSummary();
+
+  assert.deepEqual(
+    quiz.questions.map((question) => question.type),
+    ["multiple choice", "true/false", "fill in blank"]
+  );
+  assert.equal(getQuizzesRequiringReview().map((item) => item.id)[0], quiz.id);
+  assert.equal(exam.timed, true);
+  assert.equal(exam.sections.length, 2);
+  assert.deepEqual(examSummary, { totalExams: 1, timedExams: 1, sectionCount: 2 });
+});
+
+test("learning study guides notes bookmarks and collections are reusable assets", () => {
+  const collection = learningResourceCollections.find(
+    (item) => item.id === "security-plus-collection"
+  );
+
+  assert.equal(learningStudyGuides[0].reviewChecklist.length >= 3, true);
+  assert.equal(learnerNotes.some((note) => note.pinned && note.favorite), true);
+  assert.equal(getFavoriteBookmarks().length, 2);
+  assert.equal(Boolean(collection), true);
+  assert.equal(collection ? getCollectionResourceCount(collection) : 0, 7);
+  assert.equal(
+    learningBookmarks.some((bookmark) => bookmark.targetType === "study guide"),
+    true
+  );
+});
+
+test("learning search covers courses lessons library cards notes guides and resources", () => {
+  const index = buildLearningSearchIndex();
+  const securityResults = searchLearningContent({
+    query: "security",
+    tag: "Security+",
+  });
+  const beginnerMaterials = searchLearningContent({ difficulty: "Beginner" });
+
+  assert.equal(index.some((item) => item.type === "course"), true);
+  assert.equal(index.some((item) => item.type === "lesson"), true);
+  assert.equal(index.some((item) => item.type === "library"), true);
+  assert.equal(index.some((item) => item.type === "flashcard"), true);
+  assert.equal(index.some((item) => item.type === "note"), true);
+  assert.equal(index.some((item) => item.type === "study guide"), true);
+  assert.equal(index.some((item) => item.type === "resource"), true);
+  assert.equal(securityResults.length > 0, true);
+  assert.equal(
+    beginnerMaterials.every((item) => !item.difficulty || item.difficulty === "Beginner"),
+    true
+  );
+});
+
+test("learning dashboard content aggregates v0.4 study surfaces", () => {
+  const content = buildLearningDashboardContent("2026-07-04");
+
+  assert.equal(content.library.length, learningLibraryMaterials.length);
+  assert.equal(content.recentMaterials.length, 4);
+  assert.equal(content.continueStudying.length > 0, true);
+  assert.equal(content.recommendedResources.length > 0, true);
+  assert.equal(content.flashcardsDue.length, 3);
+  assert.equal(content.upcomingReview.length, 2);
+  assert.equal(content.bookmarkedItems.length, 3);
+  assert.equal(content.studyCollections.length, learningResourceCollections.length);
+  assert.equal(content.courseProgress.length, builtLearningCourses.length);
+});
+
+test("learning onboarding models the full first-time experience", () => {
+  assert.deepEqual(
+    learningOnboardingSteps.map((step) => step.id),
+    [
+      "welcome",
+      "long-term-goal",
+      "interests",
+      "education-level",
+      "learning-style",
+      "study-availability",
+      "preferred-pace",
+      "initial-goals",
+      "starter-dashboard",
+    ]
+  );
+  assert.equal(learningOnboardingSteps.every((step) => step.title && step.prompt), true);
+  assert.equal(learningOnboardingSteps.at(-1)?.skippable, false);
+});
+
+test("learning onboarding completion validates and builds the final profile update", () => {
+  const result = validateLearningOnboardingForm({
+    preferredName: "Taylor",
+    learnerType: "Student",
+    gradeLevel: "High school",
+    primaryGoal: "Build algebra confidence",
+    courses: ["Algebra I"],
+    courseDraft: "Biology",
+    pace: "Steady",
+    availability: "30 minutes",
+  });
+
+  assert.equal(result.valid, true);
+
+  if (result.valid) {
+    assert.deepEqual(result.value.courses, ["Algebra I", "Biology"]);
+    assert.deepEqual(buildOnboardingCompletionProfileUpdate(result.value), {
+      onboarding_complete: true,
+    });
+  }
+});
+
+test("learning onboarding completion uses profiles.id as the auth user key", () => {
+  assert.equal(profileOnboardingCompletionKeyColumn, "id");
+  assert.notEqual(profileOnboardingCompletionKeyColumn, "user_id");
+});
+
+test("profile display name prefers profile names before username and email", () => {
+  const profileSource = readFileSync("src/lib/profile.ts", "utf8");
+  const returnExpression = profileSource.slice(profileSource.indexOf("return ("));
+  const preferenceOrder = [
+    "profile?.preferred_name",
+    "profile?.display_name",
+    "profile?.full_name",
+    "profile?.username",
+    "metadata?.preferred_name",
+    "emailPrefix",
+  ];
+  const indexes = preferenceOrder.map((token) => returnExpression.indexOf(token));
+
+  assert.equal(indexes.every((index) => index >= 0), true);
+  assert.equal(
+    indexes.every((index, position) => position === 0 || index > indexes[position - 1]),
+    true
+  );
+});
+
+test("today and learning avoid fallback-name flash while profile resolves", () => {
+  const todaySource = readFileSync("src/app/dashboard/today/page.tsx", "utf8");
+  const learningSource = readFileSync("src/app/dashboard/learning/LegacyLearningDashboard.tsx", "utf8");
+
+  assert.match(todaySource, /name: ""/);
+  assert.match(todaySource, /state\.name \? `\$\{getBeastGreeting\(now\)\}, \$\{state\.name\}` : "Today"/);
+  assert.doesNotMatch(todaySource, /Loading Today/);
+  assert.doesNotMatch(todaySource, /name: "Learner"/);
+  assert.match(
+    learningSource,
+    /name: fallbackName,\s+role: String\(primaryLearnerRow\.learner_role/
+  );
+  assert.doesNotMatch(
+    learningSource,
+    /name: String\(primaryLearnerRow\.display_name \|\| fallbackName\)/
+  );
+  assert.match(learningSource, /href="\/dashboard\/today"[\s\S]*Back to Today/);
+  assert.doesNotMatch(learningSource, /href="\/dashboard"[\s\S]*Back to Today/);
+});
+
+test("home avoids fallback-name flash while profile resolves", () => {
+  const homeSource = readFileSync("src/app/dashboard/page.tsx", "utf8");
+
+  assert.match(homeSource, /name: ""/);
+  assert.match(homeSource, /user\.name \? `\$\{getBeastGreeting\(now\)\}, \$\{user\.name\}` : "BeastOS Home"/);
+  assert.doesNotMatch(homeSource, /Loading Home/);
+  assert.doesNotMatch(homeSource, /Getting your Beast-wide plan ready\./);
+  assert.doesNotMatch(homeSource, /name: "Commander"/);
+  assert.doesNotMatch(
+    homeSource,
+    /setUser\(\{ name: getProfileDisplayName\(null, authUser \|\| null\) \}\)/
+  );
+});
+
+test("home and today navigation render stable route shells during data loading", () => {
+  const homeSource = readFileSync("src/app/dashboard/page.tsx", "utf8");
+  const todaySource = readFileSync("src/app/dashboard/today/page.tsx", "utf8");
+  const calendarSource = readFileSync("src/app/dashboard/calendar/page.tsx", "utf8");
+
+  assert.match(homeSource, /const \[loading, setLoading\] = useState\(true\)/);
+  assert.match(todaySource, /const \[loading, setLoading\] = useState\(true\)/);
+  assert.match(homeSource, /\{loading \? \(/);
+  assert.match(todaySource, /\{loading \? \(/);
+  assert.match(todaySource, /title="Keep your education and career direction current"/);
+  assert.match(todaySource, /buildEducationPlanningContributions/);
+  assert.doesNotMatch(homeSource, /\{loading \|\| !user\.name\s+\?/);
+  assert.doesNotMatch(todaySource, /\{loading \|\| !state\.name\s+\?/);
+  assert.doesNotMatch(todaySource, /\{loading \? \([\s\S]*?\) : \(\s*<>\s*<section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"/);
+  assert.doesNotMatch(homeSource, /Opening your dashboard/);
+  assert.doesNotMatch(todaySource, /Opening your dashboard/);
+  assert.doesNotMatch(calendarSource, /const \[loading, setLoading\]/);
+});
+
+test("learning onboarding validation names the exact missing required field", () => {
+  const result = validateLearningOnboardingForm({
+    preferredName: "Taylor",
+    learnerType: "Student",
+    gradeLevel: "",
+    primaryGoal: "Build algebra confidence",
+    courses: [],
+    courseDraft: "Algebra I",
+    pace: "Steady",
+    availability: "30 minutes",
+  });
+
+  assert.equal(result.valid, false);
+
+  if (!result.valid) {
+    assert.equal(result.missingField, "Grade / level");
+    assert.equal(
+      result.message,
+      "Grade / level is required before BeastEducation can finish setup."
+    );
+  }
+});
+
+test("learning onboarding routing keeps completed users out of setup", () => {
+  assert.equal(isProtectedLearningOnboardingPath("/dashboard/today"), true);
+  assert.equal(isProtectedLearningOnboardingPath("/dashboard/learning"), true);
+  assert.equal(isProtectedLearningOnboardingPath("/dashboard/profile"), false);
+  assert.equal(isProtectedLearningOnboardingPath("/dashboard/money"), false);
+  assert.equal(
+    getOnboardingRedirect({
+      isAuthenticated: true,
+      onboardingComplete: true,
+      pathname: "/dashboard/onboarding",
+    }),
+    "/dashboard/today"
+  );
+  assert.equal(
+    getOnboardingRedirect({
+      isAuthenticated: true,
+      onboardingComplete: true,
+      pathname: "/dashboard/today",
+    }),
+    null
+  );
+});
+
+test("learning onboarding routing sends incomplete users to setup once", () => {
+  assert.equal(
+    getOnboardingRedirect({
+      isAuthenticated: true,
+      pathname: "/dashboard/today",
+    }),
+    null
+  );
+  assert.equal(
+    getOnboardingRedirect({
+      isAuthenticated: true,
+      onboardingComplete: false,
+      pathname: "/dashboard/today",
+    }),
+    "/dashboard/onboarding"
+  );
+  assert.equal(
+    getOnboardingRedirect({
+      isAuthenticated: true,
+      onboardingComplete: false,
+      pathname: "/dashboard/onboarding",
+    }),
+    null
+  );
+  assert.equal(
+    getOnboardingRedirect({
+      isAuthenticated: true,
+      onboardingComplete: false,
+      pathname: "/dashboard/profile",
+    }),
+    null
+  );
+});
+
+test("dashboard global loading copy stays module neutral", () => {
+  const dashboardLayout = readFileSync(
+    "src/app/dashboard/layout.tsx",
+    "utf8"
+  );
+
+  assert.match(dashboardLayout, /Opening your dashboard\.\.\./);
+  assert.doesNotMatch(dashboardLayout, /Opening BeastEducation\.\.\./);
+});
+
+test("dashboard route changes do not force the full-page guard fallback after initial resolve", () => {
+  const dashboardLayout = readFileSync(
+    "src/app/dashboard/layout.tsx",
+    "utf8"
+  );
+
+  assert.match(
+    dashboardLayout,
+    /const \[dashboardGuardResolved, setDashboardGuardResolved\]/
+  );
+  assert.match(dashboardLayout, /setDashboardGuardResolved\(true\)/);
+  assert.match(dashboardLayout, /const shouldShowDashboardGuardFallback =/);
+  assert.match(dashboardLayout, /!dashboardGuardResolved/);
+  assert.match(
+    dashboardLayout,
+    /learningOnlyNavigation && isRestrictedForLearningOnlyNavigation\(pathname\)/
+  );
+});
+
+test("dashboard module navigation uses an exclusive accordion across responsive layouts", () => {
+  const dashboardLayout = readFileSync(
+    "src/app/dashboard/layout.tsx",
+    "utf8"
+  );
+
+  assert.match(dashboardLayout, /const \[expandedModule, setExpandedModule\]/);
+  assert.match(dashboardLayout, /expandedModule === item\.module/);
+  assert.match(dashboardLayout, /setExpandedModule\(activeExpandableModule\)/);
+  assert.match(dashboardLayout, /toggleExpandedModule\(current, module\)/);
+  assert.doesNotMatch(dashboardLayout, /EXPANDED_MODULES_STORAGE_KEY/);
+  assert.doesNotMatch(dashboardLayout, /\[\.\.\.current, activeExpandableModule\]/);
+  assert.match(dashboardLayout, /aria-label=\{`\$\{expanded \? "Collapse" : "Expand"\} \$\{item\.label\}`\}/);
+  assert.match(dashboardLayout, /aria-controls=\{navGroupId\}/);
+  assert.match(dashboardLayout, /controlIdPrefix="mobile"/);
+  assert.match(dashboardLayout, /href=\{item\.href \|\| "#"\}/);
+  assert.match(dashboardLayout, /item=\{beastOSNavigation\}/);
+  assert.match(dashboardLayout, /aria-label="Life modules"/);
+  assert.match(dashboardLayout, /aria-label="Shared platform"/);
+  assert.match(dashboardLayout, /aria-label="Owner"/);
+  assert.match(dashboardLayout, /grid-rows-\[1fr\]/);
+  assert.match(dashboardLayout, /grid-rows-\[0fr\]/);
+  assert.match(dashboardLayout, /transition-\[grid-template-rows,opacity\]/);
+  assert.match(dashboardLayout, /navigationOnly/);
+  assert.doesNotMatch(dashboardLayout, /aria-label="BeastOS modules"/);
+});
+
+test("learning activities have a dedicated runner and next-activity unlock logic", () => {
+  const activityRunner = readFileSync(
+    "src/app/dashboard/learning/activities/[activityId]/page.tsx",
+    "utf8"
+  );
+  const lessonEngine = readFileSync(
+    "src/app/dashboard/learning/activities/LessonEngine.tsx",
+    "utf8"
+  );
+
+  assert.equal(
+    getLearningActivityRoute("activity-123"),
+    "/dashboard/education/activities/activity-123"
+  );
+  assert.equal(getLearningActivityPrimaryActionLabel("Quiz"), "Let's see what you remember");
+  assert.equal(getLearningActivityChecklist("Reflection").length, 3);
+  assert.deepEqual(
+    getNextQueuedLearningActivity(
+      [
+        {
+          id: "done",
+          activity_type: "Lesson",
+          title: "Done",
+          difficulty: "Beginner",
+          estimated_minutes: 15,
+          xp: 10,
+          status: "Completed",
+          sort_order: 1,
+        },
+        {
+          id: "next",
+          activity_type: "Practice",
+          title: "Next",
+          difficulty: "Beginner",
+          estimated_minutes: 20,
+          xp: 15,
+          status: "Queued",
+          sort_order: 2,
+        },
+      ],
+      "done"
+    )?.id,
+    "next"
+  );
+  assert.equal(
+    getLearningActivityCompletionPayload(new Date("2026-07-06T12:00:00.000Z"))
+      .completed_at,
+    "2026-07-06T12:00:00.000Z"
+  );
+  assert.equal(
+    getNewestReadyLearningActivity([
+      {
+        id: "older-ready",
+        activity_type: "Lesson",
+        title: "Older Ready",
+        difficulty: "Beginner",
+        estimated_minutes: 15,
+        xp: 10,
+        status: "Ready",
+        sort_order: 1,
+        created_at: "2026-07-05T12:00:00.000Z",
+      },
+      {
+        id: "new-generated",
+        activity_type: "Lesson",
+        title: "Pre-Algebra: Combining Like Terms",
+        difficulty: "Beginner",
+        estimated_minutes: 35,
+        xp: 20,
+        status: "Ready",
+        sort_order: 9,
+        created_at: "2026-07-06T12:00:00.000Z",
+      },
+    ])?.id,
+    "new-generated"
+  );
+  assert.match(activityRunner, /Guidance Counselor recap/);
+  assert.match(activityRunner, /Return to Today/);
+  assert.match(activityRunner, /Back to Guidance Counselor/);
+  assert.match(activityRunner, /<LessonEngine/);
+  assert.match(activityRunner, /getProfileDisplayName/);
+  assert.match(activityRunner, /learnerName=\{learnerName\}/);
+  assert.match(activityRunner, /receives the outcome back for recap/);
+  assert.match(lessonEngine, /Conversation-first learning session/);
+  assert.match(lessonEngine, /Active learning conversation/);
+  assert.match(lessonEngine, /Guidance Counselor Snapshot/);
+  assert.match(lessonEngine, /messageBubbleClasses/);
+  assert.match(lessonEngine, /speakerLabel/);
+  assert.match(lessonEngine, /buildMentorCheckpoint/);
+  assert.match(lessonEngine, /progressLanguage/);
+  assert.match(lessonEngine, /saveStatusLabel/);
+  assert.match(lessonEngine, /handleReplyKeyDown/);
+  assert.match(lessonEngine, /currentConcept/);
+  assert.match(lessonEngine, /sticky bottom-0/);
+  assert.match(lessonEngine, /conversationScrollRef/);
+  assert.match(lessonEngine, /replyInputRef/);
+  assert.match(lessonEngine, /responsePendingRef/);
+  assert.match(lessonEngine, /isResponding/);
+  assert.match(lessonEngine, /container\.scrollTo\(\{/);
+  assert.match(lessonEngine, /distanceFromLatest <= 56/);
+  assert.match(lessonEngine, /Jump to latest/);
+  assert.match(lessonEngine, /focus\(\{ preventScroll: true \}\)/);
+  assert.doesNotMatch(lessonEngine, /scrollIntoView/);
+  assert.match(lessonEngine, /requestAnimationFrame/);
+  assert.match(lessonEngine, /nativeEvent\.isComposing/);
+  assert.match(lessonEngine, /event\.shiftKey/);
+  assert.match(lessonEngine, /event\.preventDefault/);
+  assert.match(lessonEngine, /enterKeyHint="send"/);
+  assert.match(lessonEngine, /Hint/);
+  assert.match(lessonEngine, /Explain this another way/);
+  assert.match(lessonEngine, /Check my understanding/);
+  assert.match(lessonEngine, /Finish lesson/);
+  assert.match(lessonEngine, /Don't worry about the formula yet/);
+  assert.match(lessonEngine, /Walk me through what you're thinking/);
+  assert.match(lessonEngine, /Convince me/);
+  assert.match(lessonEngine, /getLessonTeacherResponse/);
+  assert.match(lessonEngine, /captureEvidence/);
+  assert.match(lessonEngine, /sendLearnerMessage/);
+  assert.match(lessonEngine, /Ready to finish/);
+  assert.match(lessonEngine, /window\.localStorage\.setItem/);
+  assert.match(lessonEngine, /window\.localStorage\.removeItem/);
+  assert.match(lessonEngine, /progress\.coachingMessage/);
+  assert.doesNotMatch(lessonEngine, /Tutor context/);
+  assert.doesNotMatch(lessonEngine, /Saved on this device/);
+  assert.doesNotMatch(lessonEngine, /Save for Guidance Counselor/);
+  assert.doesNotMatch(lessonEngine, /Save this for my Guidance Counselor/);
+  assert.doesNotMatch(lessonEngine, /mastery signal/);
+  assert.match(lessonEngine, /onPracticeAnswer/);
+  assert.doesNotMatch(lessonEngine, /type="checkbox"/);
+  assert.doesNotMatch(lessonEngine, /Adaptive Lesson/);
+  assert.doesNotMatch(lessonEngine, /Guided Practice/);
+  assert.doesNotMatch(lessonEngine, /AI Coach/);
+  assert.doesNotMatch(lessonEngine, /Check understanding/);
+  assert.doesNotMatch(lessonEngine, /Wrong\./);
+  assert.doesNotMatch(lessonEngine, /type TutorStep/);
+  assert.doesNotMatch(lessonEngine, /tutorStepTitle/);
+  assert.doesNotMatch(lessonEngine, /tutorStepMessage/);
+  assert.match(activityRunner, /quizAnswers/);
+  assert.match(activityRunner, /practiceAnswers/);
+});
+
+test("BeastEducation member home starts with Guidance Counselor before dashboard support", () => {
+  const learningPage = readFileSync("src/app/dashboard/learning/LegacyLearningDashboard.tsx", "utf8");
+  const recommendation = readFileSync(
+    "src/app/dashboard/learning/GuidanceCounselorRecommendation.tsx",
+    "utf8"
+  );
+  const lessonEngine = readFileSync(
+    "src/app/dashboard/learning/activities/LessonEngine.tsx",
+    "utf8"
+  );
+
+  assert.match(learningPage, /function GuidanceCounselorHome/);
+  assert.match(learningPage, /buildMentorHomeMission/);
+  assert.match(learningPage, /Guidance Counselor/);
+  assert.match(learningPage, /LearningGoalDiscovery/);
+  assert.match(learningPage, /Add Learning Goal/);
+  assert.match(learningPage, /Learning Goals/);
+  assert.match(learningPage, /Manage Goals/);
+  assert.match(learningPage, /planRows\.find\(\(plan\) => plan\.goal_id === activeGoal\?\.id\)/);
+  assert.match(learningPage, /decideAdaptiveProgression/);
+  assert.match(learningPage, /adaptiveProgression/);
+  assert.match(recommendation, /Current recommendation/);
+  assert.match(recommendation, /mission\.missionTitle/);
+  assert.match(recommendation, /mission\.recommendationReason/);
+  assert.match(recommendation, /mission\.journeyProgressLabel/);
+  assert.match(learningPage, /Why this mission/);
+  assert.match(learningPage, /Data boundary/);
+  assert.match(learningPage, /Other useful recommendations/);
+  assert.match(learningPage, /Related actions/);
+  assert.doesNotMatch(learningPage, /Progress I am watching/);
+  assert.doesNotMatch(learningPage, /learningIntelligence\.memory\.recentlyStudied/);
+  assert.doesNotMatch(learningPage, /learningIntelligence\.adaptivePlan\.nextRecommendedLesson/);
+  assert.equal(
+    learningPage.indexOf("<GuidanceCounselorHome") <
+      learningPage.indexOf('id="wins"'),
+    true
+  );
+  assert.doesNotMatch(learningPage, /progressSignals\.snapshotTiles/);
+  assert.doesNotMatch(learningPage, /function AITutorCenter/);
+  const mentorHome = readFileSync("src/lib/learning/mentorHome.ts", "utf8");
+  assert.match(mentorHome, /progressionLabel/);
+  assert.match(mentorHome, /withAdaptiveReason/);
+  assert.match(mentorHome, /buildLearningJourneys/);
+  assert.match(mentorHome, /getActiveJourneySummary/);
+  assert.match(mentorHome, /continue, review, remediate, or advance/);
+  assert.match(mentorHome, /Skip familiar basics/);
+  assert.match(lessonEngine, /Conversation-first learning session/);
+});
+
+test("BP-400 keeps teaching implementation preserved but outside Generation 1 navigation", () => {
+  const learningPage = readFileSync(
+    "src/app/dashboard/learning/LegacyLearningDashboard.tsx",
+    "utf8"
+  );
+  const educationExperience = readFileSync(
+    "src/app/dashboard/learning/BeastEducationExperience.tsx",
+    "utf8"
+  );
+  const moduleNavigation = readFileSync("src/lib/moduleNavigation.ts", "utf8");
+
+  assert.match(learningPage, /Everything else stays available/);
+  assert.match(educationExperience, /mode === "guidance-counselor"/);
+  assert.match(
+    moduleNavigation,
+    /label: "Guidance Counselor",\s+href: "\/dashboard\/education\/guidance-counselor"/
+  );
+  assert.doesNotMatch(
+    moduleNavigation,
+    /label: "Tutor", href: "\/dashboard\/education\/tutor"/
+  );
+  assert.doesNotMatch(moduleNavigation, /label: "Continue", href: "\/dashboard\/learning\/activities"/);
+});
+
+test("authentication presents one permission-aware Beast platform entry point", () => {
+  const loginPage = readFileSync("src/app/login/page.tsx", "utf8");
+  const dashboardLayout = readFileSync("src/app/dashboard/layout.tsx", "utf8");
+
+  assert.match(loginPage, />\s*BeastOS\s*</);
+  assert.match(loginPage, /beastOSPlatformIdentity\.description/);
+  assert.match(loginPage, /beastOSApplications\.map/);
+  assert.match(loginPage, /beastOSSharedCapabilities\.join/);
+  assert.match(loginPage, />\s*Sign In\s*</);
+  assert.match(loginPage, />\s*Create Account\s*</);
+  assert.match(loginPage, /signInWithOtp/);
+  assert.match(loginPage, /shouldCreateUser: intent === "create-account"/);
+  assert.match(loginPage, /emailRedirectTo: buildAuthCallbackUrl/);
+  assert.match(loginPage, /getSafeAuthDestination/);
+  assert.doesNotMatch(loginPage, /BeastEducation|Guidance Counselor/);
+  assert.match(dashboardLayout, /select\("role,birthday"\)/);
+  assert.match(dashboardLayout, /beast_admin_member_module_access/);
+  assert.doesNotMatch(dashboardLayout, /onboarding_complete|onboarding repair/);
+  assert.match(
+    dashboardLayout,
+    /getBeastModuleNavigationForPersona\(\s*isAdminPersona,\s*memberModuleAccess\s*\)/
+  );
+});
+
+test("BeastEducation member experience hides workflow mechanics behind Guidance Counselor and Tutor language", () => {
+  const learningPage = readFileSync("src/app/dashboard/learning/LegacyLearningDashboard.tsx", "utf8");
+  const activitiesPage = readFileSync(
+    "src/app/dashboard/learning/activities/page.tsx",
+    "utf8"
+  );
+  const activityRunner = readFileSync(
+    "src/app/dashboard/learning/activities/[activityId]/page.tsx",
+    "utf8"
+  );
+  const todayPage = readFileSync("src/app/dashboard/today/page.tsx", "utf8");
+  const studySessionCard = readFileSync(
+    "src/app/dashboard/learning/StudySessionCommandCard.tsx",
+    "utf8"
+  );
+  const memberExperienceSource = [
+    learningPage,
+    readFileSync(
+      "src/app/dashboard/learning/GuidanceCounselorRecommendation.tsx",
+      "utf8"
+    ),
+    activitiesPage,
+    activityRunner,
+    todayPage,
+    studySessionCard,
+  ].join("\n");
+
+  assert.match(memberExperienceSource, /Talk with Guidance Counselor/);
+  assert.match(memberExperienceSource, /mission\.primaryAction\.label/);
+  assert.match(activitiesPage, /redirect\("\/dashboard\/education\/lessons"\)/);
+  assert.match(memberExperienceSource, /Your Guidance Counselor/);
+  assert.match(memberExperienceSource, /Let&apos;s see what I&apos;ve learned/);
+  assert.doesNotMatch(memberExperienceSource, /Your Guidance Counselor's Next Step/);
+  assert.doesNotMatch(memberExperienceSource, /Activity Runner/);
+  assert.doesNotMatch(memberExperienceSource, /Start Activity/);
+  assert.doesNotMatch(memberExperienceSource, /Generate Activity/);
+  assert.doesNotMatch(memberExperienceSource, /Mark Started/);
+  assert.doesNotMatch(memberExperienceSource, /Mark Complete/);
+  assert.doesNotMatch(memberExperienceSource, /activity queue|work queue|Empty Queue/);
+  assert.doesNotMatch(memberExperienceSource, /Complete lesson/);
+});
+
+test("guided learning sessions keep Guidance Counselor lifecycle Tutor handoff and reflection storage", () => {
+  const activityRunner = readFileSync(
+    "src/app/dashboard/learning/activities/[activityId]/page.tsx",
+    "utf8"
+  );
+  const lessonEngine = readFileSync(
+    "src/app/dashboard/learning/activities/LessonEngine.tsx",
+    "utf8"
+  );
+  const guidedSession = readFileSync("src/lib/learning/guidedSession.ts", "utf8");
+  const tutorOrchestration = readFileSync("src/lib/learning/tutorOrchestration.ts", "utf8");
+  const reflectionEngine = readFileSync("src/lib/learning/reflectionEngine.ts", "utf8");
+  const migration = readFileSync(
+    "migrations/20260713_add_learning_session_outcomes.sql",
+    "utf8"
+  );
+
+  assert.match(activityRunner, /buildGuidedLearningSession/);
+  assert.match(activityRunner, /selectMentorTutor/);
+  assert.match(activityRunner, /Start guided session/);
+  assert.match(activityRunner, /Guidance Counselor recap/);
+  assert.match(activityRunner, /Learner reflection/);
+  assert.match(activityRunner, /buildLearnerReflectionStorage/);
+  assert.match(lessonEngine, /tutorSelection\.handoff/);
+  assert.match(lessonEngine, /tutorSelection\.role/);
+  assert.match(guidedSession, /not_started/);
+  assert.match(guidedSession, /remediation_required/);
+  assert.match(guidedSession, /mastery_check_required/);
+  assert.match(tutorOrchestration, /General Academic Tutor/);
+  assert.match(tutorOrchestration, /Certification Tutor/);
+  assert.match(reflectionEngine, /I guessed/);
+  assert.match(reflectionEngine, /I'm frustrated/);
+  assert.match(migration, /reflection_option/);
+  assert.match(migration, /session_next_recommendation/);
+});
+
+test("Guidance Counselor-first integration includes confidence timeline memory and weekly review", () => {
+  const learningPage = readFileSync("src/app/dashboard/learning/LegacyLearningDashboard.tsx", "utf8");
+  const confidence = readFileSync("src/lib/learning/confidenceIntelligence.ts", "utf8");
+  const timeline = readFileSync("src/lib/learning/learningTimeline.ts", "utf8");
+  const weeklyReview = readFileSync("src/lib/learning/weeklyMentorReview.ts", "utf8");
+  const missionControl = readFileSync(
+    "src/app/dashboard/learning/LearningMissionControl.tsx",
+    "utf8"
+  );
+
+  assert.match(learningPage, /buildConfidenceIntelligenceSnapshot/);
+  assert.match(learningPage, /buildLearningTimeline/);
+  assert.match(learningPage, /buildMentorLearningMemory/);
+  assert.match(learningPage, /WeeklyGuidanceReviewPanel/);
+  assert.match(learningPage, /Confidence intelligence/);
+  assert.match(learningPage, /Counselor context/);
+  assert.match(missionControl, /Recent Activity/);
+  assert.match(confidence, /Knowledge/);
+  assert.match(confidence, /Confidence/);
+  assert.match(confidence, /Consistency/);
+  assert.match(confidence, /Speed/);
+  assert.match(confidence, /Retention/);
+  assert.match(confidence, /Speed is not being judged yet/);
+  assert.match(timeline, /lesson_completed/);
+  assert.match(timeline, /reflection_recorded/);
+  assert.match(timeline, /review_scheduled/);
+  assert.match(learningPage, /No meaningful achievement is being awarded/);
+  assert.match(weeklyReview, /Complete one guided session/);
+  assert.doesNotMatch(learningPage, /Leaderboard|leaderboard/);
+});
+
+test("generated learning activities persist with required visibility fields", () => {
+  const draft = {
+    learningObjective: "Pre-Algebra",
+    motivation: "Build confidence",
+    targetOutcome: "Combine like terms",
+    timeline: "2 weeks",
+    currentLevel: "Beginner",
+    studyPace: "Steady: 3-4 sessions per week",
+  };
+  const generatedPlan = generateLearningPlan(draft);
+  const payload = buildGeneratedLearningActivityPayload({
+    userId: "user-1",
+    learnerProfileId: "learner-1",
+    courseId: "course-1",
+    planId: "plan-1",
+    sessionId: "session-1",
+    draft,
+    generatedPlan,
+    sortOrder: 7,
+  });
+  const goalBuilder = readFileSync(
+    "src/app/dashboard/learning/LearningGoalBuilder.tsx",
+    "utf8"
+  );
+  const goalDiscovery = readFileSync(
+    "src/app/dashboard/learning/LearningGoalDiscovery.tsx",
+    "utf8"
+  );
+  const goalsPage = readFileSync(
+    "src/app/dashboard/learning/goals/page.tsx",
+    "utf8"
+  );
+  const goalsManager = readFileSync(
+    "src/app/dashboard/learning/goals/LearningGoalsManager.tsx",
+    "utf8"
+  );
+  const learningPage = readFileSync("src/app/dashboard/learning/LegacyLearningDashboard.tsx", "utf8");
+  const recommendation = readFileSync(
+    "src/app/dashboard/learning/GuidanceCounselorRecommendation.tsx",
+    "utf8"
+  );
+  const todayPage = readFileSync("src/app/dashboard/today/page.tsx", "utf8");
+  const activitiesPage = readFileSync(
+    "src/app/dashboard/learning/activities/page.tsx",
+    "utf8"
+  );
+
+  assert.equal(getGeneratedLearningSubject(draft), "Pre-Algebra");
+  assert.equal(getGeneratedActivityTitle(draft), "Pre-Algebra: Combining Like Terms");
+  assert.deepEqual(
+    Object.keys(payload).sort(),
+    [
+      "activity_type",
+      "course_id",
+      "difficulty",
+      "estimated_minutes",
+      "learner_profile_id",
+      "plan_id",
+      "session_id",
+      "sort_order",
+      "status",
+      "title",
+      "user_id",
+      "xp",
+    ].sort()
+  );
+  assert.equal(payload.user_id, "user-1");
+  assert.equal(payload.learner_profile_id, "learner-1");
+  assert.equal(payload.course_id, "course-1");
+  assert.equal(payload.status, "Ready");
+  assert.equal(payload.activity_type, "Lesson");
+  assert.equal(goalBuilder.includes(".from(\"learning_activities\")"), true);
+  assert.equal(goalBuilder.includes("buildGeneratedLearningActivityPayload"), true);
+  assert.equal(goalBuilder.includes("Start Saved Activity"), true);
+  assert.equal(goalDiscovery.includes("What would you like to learn?"), true);
+  assert.equal(goalDiscovery.includes("suggestedCategories"), true);
+  assert.equal(goalDiscovery.includes("K-12"), true);
+  assert.equal(goalDiscovery.includes("Certifications"), true);
+  assert.equal(goalDiscovery.includes("Technology"), true);
+  assert.equal(goalDiscovery.includes("Business"), true);
+  assert.equal(goalDiscovery.includes("Languages"), true);
+  assert.equal(goalDiscovery.includes("Science"), true);
+  assert.equal(goalDiscovery.includes("History"), true);
+  assert.equal(goalDiscovery.includes("Arts"), true);
+  assert.equal(goalDiscovery.includes("Personal Development"), true);
+  assert.equal(goalDiscovery.includes("buildGoalDraft"), true);
+  assert.equal(goalDiscovery.includes("generateLearningPlan"), true);
+  assert.equal(goalDiscovery.includes("buildGeneratedLearningActivityPayload"), true);
+  assert.equal(goalDiscovery.includes(".from(\"learning_goals\")"), true);
+  assert.equal(goalDiscovery.includes(".from(\"learning_courses\")"), true);
+  assert.equal(goalDiscovery.includes(".from(\"learning_plans\")"), true);
+  assert.equal(goalDiscovery.includes(".from(\"learning_sessions\")"), true);
+  assert.equal(goalDiscovery.includes(".from(\"learning_activities\")"), true);
+  assert.equal(goalDiscovery.includes("Great choice. I will build your learning plan"), true);
+  assert.equal(goalDiscovery.includes("Start Placement"), true);
+  assert.equal(goalsPage.includes('title="Goals"'), true);
+  assert.equal(goalsPage.includes("LearningGoalDiscovery"), true);
+  assert.equal(goalsPage.includes("LearningGoalsManager"), true);
+  assert.equal(goalsManager.includes("Archive Goal"), true);
+  assert.equal(goalsManager.includes("Restore Goal"), true);
+  assert.equal(goalsManager.includes("Resume Goal"), true);
+  assert.equal(goalsManager.includes("Switch Active Goal"), true);
+  assert.equal(goalsManager.includes("Progress stays saved"), true);
+  assert.equal(goalsManager.includes('status: "Paused"'), true);
+  assert.equal(todayPage.includes("getNewestReadyLearningActivity"), false);
+  assert.equal(activitiesPage.includes("redirect(\"/dashboard/education/lessons\")"), true);
+  assert.equal(recommendation.includes("mission.primaryAction.label"), true);
+  assert.equal(learningPage.includes("learning_activities"), true);
+});
+
+test("Today excludes the legacy learning mission engine", () => {
+  const todayPage = readFileSync("src/app/dashboard/today/page.tsx", "utf8");
+  const completedOnly = [
+    {
+      id: "old-completed",
+      activity_type: "Lesson",
+      title: "Old completed activity",
+      difficulty: "Beginner",
+      estimated_minutes: 15,
+      xp: 10,
+      status: "Completed",
+      sort_order: 1,
+      completed_at: "2026-07-06T12:00:00.000Z",
+    },
+  ];
+  const newestReady = getNewestReadyLearningActivity([
+    {
+      id: "old-completed",
+      activity_type: "Lesson",
+      title: "Old completed activity",
+      difficulty: "Beginner",
+      estimated_minutes: 15,
+      xp: 10,
+      status: "Completed",
+      sort_order: 1,
+      completed_at: "2026-07-06T12:00:00.000Z",
+    },
+    {
+      id: "older-ready",
+      activity_type: "Lesson",
+      title: "Older ready",
+      difficulty: "Beginner",
+      estimated_minutes: 15,
+      xp: 10,
+      status: "Ready",
+      sort_order: 2,
+      created_at: "2026-07-06T12:00:00.000Z",
+    },
+    {
+      id: "new-ready",
+      activity_type: "Lesson",
+      title: "Pre-Algebra: Combining Like Terms",
+      difficulty: "Beginner",
+      estimated_minutes: 35,
+      xp: 20,
+      status: "Ready",
+      sort_order: 3,
+      created_at: "2026-07-07T12:00:00.000Z",
+    },
+  ]);
+  const continuity = buildLearningActivityContinuityState({
+    completedActivityId: "old-ready",
+    now: new Date("2026-07-07T13:00:00.000Z"),
+    activities: [
+      {
+        id: "old-ready",
+        activity_type: "Lesson",
+        title: "Old ready",
+        difficulty: "Beginner",
+        estimated_minutes: 15,
+        xp: 10,
+        status: "Ready",
+        sort_order: 1,
+        created_at: "2026-07-06T12:00:00.000Z",
+      },
+      {
+        id: "next-queued",
+        activity_type: "Practice",
+        title: "Next queued",
+        difficulty: "Beginner",
+        estimated_minutes: 15,
+        xp: 10,
+        status: "Queued",
+        sort_order: 2,
+        created_at: "2026-07-07T12:00:00.000Z",
+      },
+    ],
+  });
+
+  assert.equal(getNewestReadyLearningActivity(completedOnly), null);
+  assert.equal(newestReady?.id, "new-ready");
+  assert.equal(continuity.completedActivityId, "old-ready");
+  assert.equal(continuity.nextQueuedActivityId, "next-queued");
+  assert.equal(continuity.queueExhausted, false);
+  assert.equal(continuity.continuityBasis.includes("preserves queue order"), true);
+  assert.equal(todayPage.includes("async function generateNextActivity"), false);
+  assert.equal(todayPage.includes(".from(\"learning_activities\")"), false);
+  assert.equal(todayPage.includes(".insert("), false);
+  assert.equal(todayPage.includes("onClick={generateNextActivity}"), false);
+  assert.equal(todayPage.includes("onClick={loadToday} className=\"beast-button\""), false);
+  assert.equal(todayPage.includes("getLearningActivityTitleForCourse"), false);
+  assert.equal(todayPage.includes("first teaching moment"), false);
   assert.equal(todayPage.includes("activityList.map"), false);
   assert.equal(todayPage.includes("Education planning"), true);
 });
