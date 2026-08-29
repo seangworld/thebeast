@@ -8,6 +8,16 @@ import {
 
 const releaseNotes = [
   {
+    version: "BeastHome v1.0.0",
+    date: "August 29, 2026",
+    title: "Private photo-to-home-inventory",
+    items: [
+      "Adult members can review one-time AI suggestions from a room photo, correct them, and save only confirmed possessions.",
+      "Inventories are private and member-owned, organized by room, dated, editable during review, and exportable as CSV.",
+      "Photos are not persisted by this workflow; household sharing, valuation guarantees, claims automation, and home automation remain off.",
+    ],
+  },
+  {
     version: "BeastOS v3.0.2",
     date: "August 29, 2026",
     title: "Clearer CEO Mode governance and source evidence",

@@ -5,6 +5,7 @@ import {
   beastEducationGuidedTour,
   beastEducationTutorGuidedTour,
   beastGuidedTour,
+  beastHomeInventoryGuidedTour,
   guidedTourStorageKey,
   shouldOfferGuidedTour,
   type GuidedTourDefinition,
@@ -61,12 +62,16 @@ export function GuidedTour({
   memberId,
   educationOnly = false,
   tutorOnly = false,
+  homeOnly = false,
 }: {
   memberId: string;
   educationOnly?: boolean;
   tutorOnly?: boolean;
+  homeOnly?: boolean;
 }) {
-  const definition = tutorOnly
+  const definition = homeOnly
+    ? beastHomeInventoryGuidedTour
+    : tutorOnly
     ? beastEducationTutorGuidedTour
     : educationOnly
       ? beastEducationGuidedTour

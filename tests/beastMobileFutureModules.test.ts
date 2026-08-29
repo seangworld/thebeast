@@ -28,7 +28,7 @@ const foundations = [
   },
 ];
 
-test("BF-MOB-007 builds owner-only read-only future module cards", () => {
+test("BF-MOB-007 stops presenting released BeastHome as a future module card", () => {
   const ownerCards = buildMobileFutureModuleCards({
     isOwner: true,
     foundations,
@@ -38,22 +38,17 @@ test("BF-MOB-007 builds owner-only read-only future module cards", () => {
     foundations,
   });
 
-  assert.deepEqual(ownerCards.map((card) => card.module), ["home"]);
+  assert.deepEqual(ownerCards, []);
   assert.deepEqual(memberCards, []);
-  assert.equal(ownerCards[0].dispatchMode, "future-module-foundation-route");
-  assert.equal(ownerCards[0].readOnly, true);
-  assert.equal(ownerCards[0].sourceOwnershipPreserved, true);
 });
 
-test("BF-MOB-007 routes Health and Home to existing foundation shells only", () => {
+test("BF-MOB-007 leaves no future card for released Health or Home", () => {
   const cards = buildMobileFutureModuleCards({
     isOwner: true,
     foundations,
   });
 
-  assert.equal(cards[0].href, "/dashboard/home");
-  assert.ok(cards[0].metadata.includes("adminOnly"));
-  assert.doesNotMatch(JSON.stringify(cards), /BeastHealth|health/);
+  assert.deepEqual(cards, []);
 });
 
 test("BF-MOB-007 exposes mobile future module surfaces without replacing desktop shells", () => {
@@ -71,5 +66,5 @@ test("BF-MOB-007 exposes mobile future module surfaces without replacing desktop
   assert.match(mobileFutureModules, /isOwner: boolean/);
   assert.match(mobileFutureModules, /future-module-foundation-route/);
   assert.match(healthShell, /Health Advisor Active/);
-  assert.match(homeShell, /No member-facing BeastHome experience is exposed/);
+  assert.match(homeShell, /Photo-to-Home-Inventory is the only active member-facing BeastHome workflow/);
 });

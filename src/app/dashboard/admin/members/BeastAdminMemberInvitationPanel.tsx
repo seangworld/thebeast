@@ -24,6 +24,7 @@ import {
 const moduleLabels: Record<BeastAdminEditableModuleId, string> = {
   money: "BeastMoney",
   learning: "BeastEducation",
+  home: "BeastHome",
 };
 
 const stateLabels = {

@@ -151,6 +151,35 @@ export const beastEducationTutorGuidedTour: GuidedTourDefinition = {
   ],
 };
 
+export const beastHomeInventoryGuidedTour: GuidedTourDefinition = {
+  id: "beasthome-inventory-first-use",
+  version: "1.0.0",
+  title: "How to use Home Inventory",
+  steps: [
+    {
+      id: "home-inventory-welcome",
+      title: "Build a private home inventory",
+      description:
+        "Start with one room. BeastHome suggests visible possessions from a photo, but nothing is saved until you review and confirm it.",
+      target: "[data-tour-step=\"home-inventory-photo\"]",
+    },
+    {
+      id: "home-inventory-review",
+      title: "You stay in control",
+      description:
+        "Check every suggestion, fix names and quantities, remove mistakes, and optionally add a value or one of your private Beast Documents as a receipt.",
+      target: "[data-tour-step=\"home-inventory-review\"]",
+    },
+    {
+      id: "home-inventory-export",
+      title: "Keep a dated copy",
+      description:
+        "Your confirmed inventory stays in your private account. Download a dated CSV whenever you want an offline record.",
+      target: "[data-tour-step=\"home-inventory-export\"]",
+    },
+  ],
+};
+
 export function guidedTourStorageKey(memberId: string, tourId: string) {
   return `beast:guided-tour:${memberId}:${tourId}`;
 }

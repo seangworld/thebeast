@@ -19,6 +19,10 @@ export const firstPartyTelemetryEventNames = [
   "document_uploaded",
   "document_processed",
   "document_viewed",
+  "home_inventory_opened",
+  "home_inventory_started",
+  "home_inventory_confirmed",
+  "home_inventory_exported",
   "professional_turn_started",
   "professional_turn_completed",
   "professional_turn_failed",
@@ -36,6 +40,7 @@ export const firstPartyTelemetryModuleIds = [
   "health",
   "goals",
   "documents",
+  "home",
   "admin",
 ] as const;
 

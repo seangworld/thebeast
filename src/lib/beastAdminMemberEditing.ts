@@ -10,7 +10,7 @@ export const beastAdminEditableAccountStatuses = [
 export type BeastAdminEditableAccountStatus =
   (typeof beastAdminEditableAccountStatuses)[number];
 
-export const beastAdminEditableModuleIds = ["money", "learning"] as const;
+export const beastAdminEditableModuleIds = ["money", "learning", "home"] as const;
 
 export type BeastAdminEditableModuleId =
   (typeof beastAdminEditableModuleIds)[number];
