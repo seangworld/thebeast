@@ -132,9 +132,9 @@ export function GuidedTour({
       return;
     }
     if (event.key !== "Tab" || !dialogRef.current) return;
-    const controls = [...dialogRef.current.querySelectorAll<HTMLElement>(
+    const controls = Array.from(dialogRef.current.querySelectorAll<HTMLElement>(
       'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-    )];
+    ));
     if (!controls.length) return;
     const first = controls[0];
     const lastControl = controls[controls.length - 1];
