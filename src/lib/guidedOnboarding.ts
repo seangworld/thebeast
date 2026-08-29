@@ -79,40 +79,33 @@ export const beastEducationGuidedTour: GuidedTourDefinition = {
       id: "education-welcome",
       title: "Welcome to BeastEducation",
       description:
-        "Your Guidance Counselor helps with school and career direction. Your Tutor helps you understand schoolwork.",
+        "Your Guidance Counselor helps with school and career direction. This tour shows what your counselor knows and still needs from you.",
     },
     {
       id: "guidance",
       title: "Guidance Counselor",
       description:
         "Talk here when you want help choosing a direction, making a plan, or deciding what to work toward.",
-      target: "[data-education-guidance]",
+      target: "[data-education-workspace=\"guidance-counselor\"]",
     },
     {
       id: "known",
       title: "What I Know",
       description: "This is stuff you have already told me.",
-      target: "[data-education-known]",
+      target: "[data-guidance-understanding-model] [data-knowledge-kind=\"known\"]",
     },
     {
       id: "planning",
-      title: "What I’m Planning",
-      description: "These are things we are working toward.",
-      target: "[data-education-planning]",
+      title: "What I Think",
+      description: "These are ideas your counselor is still checking with you, not confirmed facts.",
+      target: "[data-guidance-understanding-model] [data-knowledge-kind=\"thinking\"]",
     },
     {
       id: "needed",
       title: "What I Still Need",
       description:
         "These are questions I still need you to answer so I can help you better. Tap Answer This. Once I have enough information, it moves out of this section.",
-      target: "[data-education-still-needed]",
-    },
-    {
-      id: "homework",
-      title: "Homework Helper and Tutor",
-      description:
-        "Need help with homework? Take a picture or upload it here. Your Tutor can explain it and work through it with you.",
-      target: "[data-education-tutor-entry]",
+      target: "[data-guidance-understanding-model] [data-knowledge-kind=\"needed\"]",
     },
     {
       id: "education-finish",
