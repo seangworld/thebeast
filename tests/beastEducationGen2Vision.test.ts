@@ -32,7 +32,7 @@ test("BE-201 establishes the Guidance Counselor as the Gen2 primary professional
   );
 });
 
-test("BE-201 keeps teaching records dormant while instructional scope is on hold", () => {
+test("BE-302 reconciles the released Tutor while unrelated instructional scope stays on hold", () => {
   assert.deepEqual(
     beastEducationGen2Vision.supportingCapabilities.map(
       ({ id, generation }) => [id, generation]
@@ -41,10 +41,11 @@ test("BE-201 keeps teaching records dormant while instructional scope is on hold
       ["courses", "on-hold"],
       ["lessons", "on-hold"],
       ["practice", "on-hold"],
-      ["tutor-specialists", "on-hold"],
+      ["tutor-specialists", "released"],
     ]
   );
-  assert.match(beastEducationGen2ArchitectureRules[1], /sole current/);
+  assert.match(beastEducationGen2ArchitectureRules[1], /AI Tutor teaches and reviews schoolwork/);
+  assert.match(beastEducationGen2ArchitectureRules[2], /AI Tutor and Homework Helper are released/);
   assert.match(beastEducationGen2ArchitectureRules[3], /Historical teaching records/);
 });
 
@@ -59,6 +60,7 @@ test("BE-201 makes the vision visible without removing existing education routes
   assert.match(commandCenter, /BE-201 · Gen2 vision/);
   assert.match(commandCenter, /Guidance for the whole educational journey/);
   assert.match(commandCenter, /supportingCapabilities\.map/);
+  assert.match(commandCenter, /Start tutoring/);
   assert.doesNotMatch(moduleNavigation, /\/dashboard\/education\/courses/);
   assert.match(moduleNavigation, /\/dashboard\/education\/tutor/);
   assert.match(workspaces, /slug: "lessons"/);

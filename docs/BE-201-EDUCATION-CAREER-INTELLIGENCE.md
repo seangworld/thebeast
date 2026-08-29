@@ -4,7 +4,7 @@
 
 BeastEducation is the member’s personalized education and career planning system. Its primary relationship is the Guidance Counselor. The active product understands the member’s past and present, clarifies goals, identifies gaps, researches credible current options, compares paths, and maintains a realistic member-approved roadmap.
 
-There is no active BeastLearning product. Teaching, tutoring, lessons, courses, quizzes, diagnostics, practice, remediation, mastery checks, instructional content generation, and learning games are explicitly on hold. Historical records and compatibility routes are preserved without being shown as active capabilities.
+There is no separate active BeastLearning product. BeastEducation now includes the released Riley Chen AI Tutor and Homework Helper for guided explanations, assignment help, homework review, examples, practice questions, and short quizzes. Riley supports the current learning plan; the Guidance Counselor remains responsible for education and career direction. The older course catalog, lesson engine, diagnostic-placement, mastery-progression, generalized instructional-content generation, and learning-game systems remain on hold. Historical records and compatibility routes are preserved without presenting those deferred systems as active capabilities.
 
 ## Guidance Counselor responsibilities
 

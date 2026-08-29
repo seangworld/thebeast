@@ -1,6 +1,6 @@
 # BeastEducation G2.3.1 Intelligence
 
-G2.3.1 improves the existing Guidance Counselor's long-term advising quality. BE-201 supersedes its earlier teaching references: instructional capabilities are on hold and are not part of the active product.
+G2.3.1 improves the existing Guidance Counselor's long-term advising quality. Its earlier blanket deferral of tutoring was superseded by BE-301 and BE-302: Riley Chen AI Tutor and Homework Helper are released, while the older course, lesson, diagnostic, mastery-progression, and generalized instructional-content systems remain on hold.
 
 The intelligence layer progressively assembles five answers:
 
@@ -27,4 +27,4 @@ The intelligence layer progressively assembles five answers:
 - No autonomous enrollment, application, scheduling, purchasing, or credential decisions.
 - No fabricated profile facts, progress, requirements, opportunities, deadlines, costs, or eligibility.
 - Cross-module context remains permissioned, purpose-limited, and source-owned.
-- Teaching and tutoring are explicitly on hold; historical records remain preserved but inactive.
+- Riley Chen may provide the bounded tutoring and homework-help capabilities defined by BE-301. Deferred course, lesson, diagnostic, mastery-progression, and generalized instructional-content systems remain preserved but inactive.
