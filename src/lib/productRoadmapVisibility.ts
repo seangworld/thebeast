@@ -157,8 +157,23 @@ export function getProductRoadmapItem(slug: string) {
   return productRoadmapItems.find((item) => item.slug === slug) || null;
 }
 
-export function getProductRoadmapItemsForProduct(product: ProductRoadmapItem["product"]) {
-  return productRoadmapItems.filter((item) => item.product === product);
+export function getProductRoadmapItemForAudience(
+  slug: string,
+  audience: ProductRoadmapAudience
+) {
+  const item = getProductRoadmapItem(slug);
+  return item && isProductRoadmapItemVisibleTo(item, audience) ? item : null;
+}
+
+export function getProductRoadmapItemsForAudience(audience: ProductRoadmapAudience) {
+  return productRoadmapItems.filter((item) => isProductRoadmapItemVisibleTo(item, audience));
+}
+
+export function getProductRoadmapItemsForProduct(
+  product: ProductRoadmapItem["product"],
+  audience: ProductRoadmapAudience = "member"
+) {
+  return getProductRoadmapItemsForAudience(audience).filter((item) => item.product === product);
 }
 
 export function isProductRoadmapItemVisibleTo(

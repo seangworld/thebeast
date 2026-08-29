@@ -3,6 +3,8 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import {
   getProductRoadmapItem,
+  getProductRoadmapItemForAudience,
+  getProductRoadmapItemsForAudience,
   hasValidDevelopmentTruth,
   isUnavailableRoadmapStatus,
   productRoadmapItems,
@@ -87,6 +89,25 @@ test("public, member, module, and owner Product Roadmap surfaces stay presentati
   assert.doesNotMatch(moneyNavigation, /Connected Balances · Coming Soon/);
   assert.match(adminModules, /Presentation-only BO-UX-002 allowlist/);
   assert.match(adminModules, /cannot edit status, authorize work/);
+
+  const publicItems = getProductRoadmapItemsForAudience("public");
+  const memberItems = getProductRoadmapItemsForAudience("member");
+  assert.ok(publicItems.every((item) => item.audiences.includes("public")));
+  assert.ok(memberItems.every((item) => item.audiences.includes("member")));
+  assert.equal(getProductRoadmapItemForAudience("home-sentinel", "public")?.slug, "home-sentinel");
+
+  assert.match(publicDetail, /getProductRoadmapItemForAudience\(\(await params\)\.slug, "public"\)/);
+  assert.match(memberDetail, /getProductRoadmapItemForAudience\(\(await params\)\.slug, "member"\)/);
+});
+
+test("BeastHealth dashboard carries its coming-soon preview without changing record workspaces", () => {
+  const healthWorkspace = readFileSync("src/app/dashboard/health/BeastHealthWorkspace.tsx", "utf8");
+  const overviewStart = healthWorkspace.indexOf("export function HealthOverviewWorkspace");
+  const timelineStart = healthWorkspace.indexOf("export function HealthTimelineWorkspace");
+  const overview = healthWorkspace.slice(overviewStart, timelineStart);
+  const recordWorkspace = healthWorkspace.slice(0, overviewStart);
+  assert.match(overview, /ProductRoadmapModulePreview product="BeastHealth"/);
+  assert.doesNotMatch(recordWorkspace, /ProductRoadmapModulePreview product="BeastHealth"/);
 });
 
 test("Product Roadmap cards include responsive layouts and usable detail links", () => {

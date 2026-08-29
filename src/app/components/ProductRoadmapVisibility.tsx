@@ -1,6 +1,7 @@
 import Link from "next/link";
 import {
   getProductRoadmapItemsForProduct,
+  isProductRoadmapItemVisibleTo,
   isUnavailableRoadmapStatus,
   productRoadmapItems,
   productRoadmapStatusLabels,
@@ -20,7 +21,9 @@ export function ProductRoadmapStatusBadge({ status }: { status: ProductRoadmapIt
 
 export function ProductRoadmapGrid({ member = false, items = productRoadmapItems }: { member?: boolean; items?: readonly ProductRoadmapItem[] }) {
   const detailRoot = member ? "/dashboard/roadmap" : "/coming-soon";
-  return <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{items.map((item) => <article key={item.slug} className="flex h-full min-w-0 flex-col rounded-2xl border border-white/10 bg-[#111827] p-5 shadow-xl shadow-black/10">
+  const audience = member ? "member" : "public";
+  const visibleItems = items.filter((item) => isProductRoadmapItemVisibleTo(item, audience));
+  return <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{visibleItems.map((item) => <article key={item.slug} className="flex h-full min-w-0 flex-col rounded-2xl border border-white/10 bg-[#111827] p-5 shadow-xl shadow-black/10">
     <div className="flex flex-wrap items-center justify-between gap-2"><span className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">{item.product}</span><ProductRoadmapStatusBadge status={item.status} /></div>
     <h2 className="mt-4 text-xl font-black text-white">{item.capability}</h2>
     <p className="mt-2 flex-1 text-sm leading-6 text-slate-300">{item.summary}</p>

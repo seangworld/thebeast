@@ -1320,7 +1320,6 @@ export function HealthRecordWorkspace({ kind }: { kind: HealthRecordKind }) {
           </details>
         </DashboardCard>
       </section>
-      <ProductRoadmapModulePreview product="BeastHealth" />
     </BeastHealthShell>
   );
 }
@@ -1561,6 +1560,7 @@ export function HealthOverviewWorkspace() {
           </p>
         </DashboardCard>
       </section>
+      <ProductRoadmapModulePreview product="BeastHealth" />
     </BeastHealthShell>
   );
 }
