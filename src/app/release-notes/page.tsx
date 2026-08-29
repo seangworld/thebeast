@@ -27,6 +27,19 @@ export default function ReleaseNotesPage() {
       </header>
 
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
+        <div className="mb-12 rounded-lg border border-cyan-300/25 bg-[#0f1419] p-6">
+          <div className="mb-4">
+            <h2 className="text-2xl font-bold">BeastOS v3.0.1 · BeastEducation v1.6.1</h2>
+            <p className="mt-1 text-sm text-[#7f8da3]">August 29, 2026</p>
+          </div>
+          <h3 className="font-semibold text-[#c7cfdb]">Guided first-use tours</h3>
+          <ul className="mt-3 space-y-2 pl-4 text-sm text-[#a5b4c7]">
+            <li><span className="text-cyan-300">✓</span> Added a short, skippable walkthrough that highlights the Beast dashboard, navigation, Digital Staff, and privacy controls.</li>
+            <li><span className="text-cyan-300">✓</span> Added an age-appropriate Guidance Counselor tour for What I Know, What I Think, and What I Still Need.</li>
+            <li><span className="text-cyan-300">✓</span> Tours remember completion by version and can be replayed from How to Use Beast.</li>
+          </ul>
+        </div>
+
         {/* BeastOS v3.0.0 */}
         <div className="mb-12 rounded-lg border border-[#2a3242] bg-[#0f1419] p-6">
           <div className="mb-4">
