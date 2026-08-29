@@ -12,18 +12,11 @@ import {
   SectionHeader,
 } from "@/app/components/design/DashboardPrimitives";
 import { createClient } from "@/lib/supabase/client";
-import { isBeastAdminOwnerRole } from "@/lib/beastAdmin";
 import { buildCurrentAuthLoginPath } from "@/lib/auth/experience";
 
 export const beastHomeSections = [
   { label: "Overview", href: "/dashboard/home" },
-  { label: "Home", href: "/dashboard/home/property" },
-  { label: "Vehicles", href: "/dashboard/home/vehicles" },
-  { label: "Maintenance", href: "/dashboard/home/maintenance" },
-  { label: "Security", href: "/dashboard/home/security" },
-  { label: "Home Goals", href: "/dashboard/home/goals" },
-  { label: "Home Documents", href: "/dashboard/home/documents" },
-  { label: "Settings", href: "/dashboard/home/settings" },
+  { label: "Home Inventory", href: "/dashboard/home/inventory" },
 ];
 
 export type BeastHomePlaceholder = {
@@ -48,7 +41,7 @@ export function BeastHomeShell({
   useEffect(() => {
     let active = true;
 
-    async function verifyOwner() {
+    async function verifyMember() {
       try {
         const supabase = createClient();
         const { data: userData } = await supabase.auth.getUser();
@@ -59,26 +52,14 @@ export function BeastHomeShell({
           return;
         }
 
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", userId)
-          .maybeSingle();
-
         if (!active) return;
-
-        if (!isBeastAdminOwnerRole(profile?.role)) {
-          router.replace("/dashboard");
-          return;
-        }
-
         setAuthorized(true);
       } finally {
         if (active) setChecking(false);
       }
     }
 
-    verifyOwner();
+    verifyMember();
 
     return () => {
       active = false;
@@ -92,8 +73,8 @@ export function BeastHomeShell({
           <DashboardCard accent="home">
             <SectionHeader
               eyebrow="BeastHome"
-              title="Checking owner access"
-              description="BeastHome foundation routes are protected for admin-only review."
+              title="Checking member access"
+              description="BeastHome records stay inside the signed-in member’s private account."
             />
           </DashboardCard>
         </div>
@@ -106,7 +87,7 @@ export function BeastHomeShell({
       <div className="beast-container space-y-6">
         <PlatformPageHeader
           module="home"
-          badge="Admin Only"
+          badge="Member Private"
           title={title}
           description={description}
         />
@@ -141,7 +122,7 @@ export function BeastHomePlaceholderPage({
           <SectionHeader
             eyebrow="Foundation"
             title={`${page.title} workspace`}
-            description="This admin-only foundation reserves the BeastHome workspace without collecting member household data or automating home decisions."
+            description="BeastHome begins with a private, member-owned home inventory. Other home workspaces remain planned and inactive."
           />
           <div className="mt-5 grid gap-3">
             {page.focus.map((item) => (
@@ -158,14 +139,14 @@ export function BeastHomePlaceholderPage({
         <DashboardCard accent="beastos">
           <SectionHeader
             eyebrow="Boundary"
-            title="Protected placeholder"
-            description="BeastHome is admin-only until product scope, privacy, permissions, household sharing, and automation policy are explicitly approved."
+            title="Private member boundary"
+            description="Inventory records are scoped to the signed-in member. Household sharing and home automation are not active."
           />
           <div className="mt-5 space-y-3 text-sm font-semibold leading-6 text-[#dbe3ef]">
             <GuidedEmptyState title="Build the household story progressively" description="The module is not collecting household records yet, but you can organize source documents and shared goals now." guidance="Begin with one verified property, vehicle, or maintenance document instead of filling an empty dashboard." nextAction={{ label: "Add a document", href: "/dashboard/uploads" }} secondaryAction={{ label: "Review goals", href: "/dashboard/goals" }} />
             <ExpandableDetailPanel summary="Automation and privacy boundaries">
             <p className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
-              No member-facing BeastHome experience is exposed by this package.
+              Photo-to-Home-Inventory is the only active member-facing BeastHome workflow in this release.
             </p>
             <p className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
               No maintenance scheduling, security automation, vehicle workflow, or household sharing workflow is active.
