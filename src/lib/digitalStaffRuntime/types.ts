@@ -2,6 +2,7 @@ export type ProfessionalId =
   | "beastfusion.fusion-director"
   | "beastmoney.money-coach"
   | "beasteducation.guidance-counselor"
+  | "beasteducation.tutor"
   | "beasthealth.health-advisor";
 
 export type KnowledgeDomain =

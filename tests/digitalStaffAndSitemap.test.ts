@@ -13,7 +13,7 @@ test("Digital Staff has accessible deterministic statuses and reporting relation
   assert.deepEqual(digitalProfessionalStatuses, ["available", "limited", "unavailable", "inactive"]);
   assert.deepEqual(
     digitalProfessionals.map((professional) => professional.id),
-    ["fusion-director", "money-coach", "guidance-counselor", "health-advisor"]
+    ["fusion-director", "money-coach", "guidance-counselor", "tutor", "health-advisor"]
   );
   assert.deepEqual(
     digitalProfessionals.map((professional) => professional.canonicalId),
@@ -21,6 +21,7 @@ test("Digital Staff has accessible deterministic statuses and reporting relation
       "beastfusion.fusion-director",
       "beastmoney.money-coach",
       "beasteducation.guidance-counselor",
+      "beasteducation.tutor",
       "beasthealth.health-advisor",
     ]
   );
@@ -87,15 +88,13 @@ test("Digital Staff portraits reference public assets and retain deterministic f
   );
 });
 
-test("Money Coach and Guidance Counselor retain their safety boundaries", () => {
+test("Money Coach Guidance Counselor and Tutor retain distinct safety boundaries", () => {
   assert.ok(getDigitalProfessional("money-coach")?.limitations.some((item) => /No payment execution/i.test(item)));
-  assert.ok(getDigitalProfessional("guidance-counselor")?.limitations.some((item) => /Does not teach or grade coursework in Generation 1/i.test(item)));
+  assert.ok(getDigitalProfessional("guidance-counselor")?.limitations.some((item) => /AI Tutor teaches and reviews schoolwork/i.test(item)));
+  assert.ok(getDigitalProfessional("tutor")?.limitations.some((item) => /Cannot guarantee grades/i.test(item)));
   assert.equal(getDigitalProfessional("fusion-director")?.releaseStatus, "active");
   assert.equal(getDigitalProfessional("fusion-director")?.conversationHref, "/dashboard/director");
-  assert.doesNotMatch(
-    JSON.stringify(getDigitalProfessional("guidance-counselor")),
-    /Tutor/
-  );
+  assert.equal(getDigitalProfessional("tutor")?.conversationHref, "/dashboard/education/tutor");
 });
 
 test("member profile cards expose professional context without internal implementation details", () => {

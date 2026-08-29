@@ -9,6 +9,7 @@ const labels: Record<ProfessionalId, string> = {
   "beastfusion.fusion-director": "Avery Stone",
   "beastmoney.money-coach": "Money Coach",
   "beasteducation.guidance-counselor": "Guidance Counselor",
+  "beasteducation.tutor": "Riley Chen",
   "beasthealth.health-advisor": "Health Advisor",
 };
 

@@ -49,6 +49,7 @@ import { GuidedTour, GuidedTourReplayButton } from "@/app/components/GuidedTour"
 
 const learningPrimaryNavigation: ModuleNavSection[] = [
   { label: "Guidance Counselor", href: "/dashboard/education/guidance-counselor", module: "learning" },
+  { label: "Homework Helper / AI Tutor", href: "/dashboard/education/tutor", module: "learning" },
   { label: "About You", href: "/dashboard/education/about-you", module: "learning" },
   { label: "Education Planning", href: "/dashboard/education/education-planning", module: "learning" },
   { label: "Career Planning", href: "/dashboard/education/career-planning", module: "learning" },
@@ -1092,6 +1093,7 @@ export default function DashboardLayout({
         <GuidedTour
           memberId={authenticatedMemberId}
           educationOnly={pathname.includes("/education/guidance-counselor")}
+          tutorOnly={pathname.includes("/education/tutor")}
         />
       ) : null}
 

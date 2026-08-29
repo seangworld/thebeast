@@ -63,6 +63,5 @@ export function isProfessionalAllowedForMember(professionalId: string, birthday?
   if (isAdmin || status === "adult") return true;
   return status !== "minor" && status !== "unknown"
     ? true
-    : professionalId === "beasteducation.guidance-counselor";
+    : professionalId === "beasteducation.guidance-counselor" || professionalId === "beasteducation.tutor";
 }
-

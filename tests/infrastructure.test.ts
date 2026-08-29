@@ -607,6 +607,7 @@ test("module navigation centralizes expandable child items", () => {
     [
       "Dashboard",
       "Guidance Counselor",
+      "Homework Helper / AI Tutor",
       "About You",
       "Education Planning",
       "Career Planning",
@@ -619,7 +620,7 @@ test("module navigation centralizes expandable child items", () => {
     ]
   );
   assert.equal(
-    beastLearningNavigation.children?.[2].href,
+    beastLearningNavigation.children?.[3].href,
     "/dashboard/education/about-you"
   );
   assert.equal(beastMoneyNavigation.label, "BeastMoney");
@@ -627,7 +628,7 @@ test("module navigation centralizes expandable child items", () => {
     beastMoneyNavigation.children?.map((item) => item.label).join(","),
     "Dashboard,Money Coach,Cash Flow,Income,Expenses,Bills,Debts,Payoff Plan,Strategies,Timeline,Velocity Banking,Retirement,Financial Goals,Financial Documents,Reports"
   );
-  assert.equal(getModuleChildren("learning").length, 11);
+  assert.equal(getModuleChildren("learning").length, 12);
   const moneyChildren = getModuleChildren("money");
   const addBill = moneyChildren.find((item) => item.label === "Add Bill");
   const addDebt = moneyChildren.find((item) => item.label === "Add Debt");
@@ -5905,6 +5906,7 @@ test("member navigation hides admin and monetization surfaces", () => {
     [
       "Dashboard",
       "Guidance Counselor",
+      "Homework Helper / AI Tutor",
       "About You",
       "Education Planning",
       "Career Planning",
@@ -5921,6 +5923,7 @@ test("member navigation hides admin and monetization surfaces", () => {
     [
       "/dashboard/education",
       "/dashboard/education/guidance-counselor",
+      "/dashboard/education/tutor",
       "/dashboard/education/about-you",
       "/dashboard/education/education-planning",
       "/dashboard/education/career-planning",

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   beastEducationGuidedTour,
+  beastEducationTutorGuidedTour,
   beastGuidedTour,
   guidedTourStorageKey,
   shouldOfferGuidedTour,
@@ -59,11 +60,17 @@ function targetRect(selector?: string) {
 export function GuidedTour({
   memberId,
   educationOnly = false,
+  tutorOnly = false,
 }: {
   memberId: string;
   educationOnly?: boolean;
+  tutorOnly?: boolean;
 }) {
-  const definition = educationOnly ? beastEducationGuidedTour : beastGuidedTour;
+  const definition = tutorOnly
+    ? beastEducationTutorGuidedTour
+    : educationOnly
+      ? beastEducationGuidedTour
+      : beastGuidedTour;
   const storageKey = guidedTourStorageKey(memberId, definition.id);
   const [open, setOpen] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);

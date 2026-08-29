@@ -116,6 +116,41 @@ export const beastEducationGuidedTour: GuidedTourDefinition = {
   ],
 };
 
+export const beastEducationTutorGuidedTour: GuidedTourDefinition = {
+  id: "beasteducation-tutor-first-use",
+  version: "1.0.0",
+  title: "How to use your AI Tutor",
+  steps: [
+    {
+      id: "tutor-welcome",
+      title: "Meet Riley, your AI Tutor",
+      description:
+        "Riley helps you understand schoolwork. Your Guidance Counselor helps with bigger school and career plans.",
+      target: "[data-tour-step=\"tutor-welcome\"]",
+    },
+    {
+      id: "tutor-conversation",
+      title: "Learn by working together",
+      description:
+        "Ask a question and Riley will explain, give a hint, or ask you a small question to check your understanding.",
+      target: "[data-tour-step=\"tutor-conversation\"]",
+    },
+    {
+      id: "tutor-homework",
+      title: "Need help with homework?",
+      description:
+        "Type your question or take a clear picture here. Riley can explain it, review work you already tried, and help you fix the first mistake.",
+      target: "[data-tour-step=\"tutor-upload\"]",
+    },
+    {
+      id: "tutor-finish",
+      title: "You’re ready",
+      description:
+        "Start with what you understand so far. Riley will help with the next step instead of judging you for being stuck.",
+    },
+  ],
+};
+
 export function guidedTourStorageKey(memberId: string, tourId: string) {
   return `beast:guided-tour:${memberId}:${tourId}`;
 }

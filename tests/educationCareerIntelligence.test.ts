@@ -156,7 +156,7 @@ test("BE-201 education document extraction is local, idempotent, and review-only
   assert.match(workspace, /Reject/);
 });
 
-test("BE-201 active navigation contains no teaching, tutoring, lesson, quiz, or mastery surface", () => {
+test("BE-301 adds only the bounded Tutor teaching surface to active navigation", () => {
   const navigation = readFileSync("src/lib/moduleNavigation.ts", "utf8");
   const layout = readFileSync("src/app/dashboard/layout.tsx", "utf8");
   const activeEducationNav = `${navigation.match(/export const beastLearningNavigation[\s\S]*?\n};/)?.[0]}\n${layout.match(/const learningPrimaryNavigation[\s\S]*?\n];/)?.[0]}`;
@@ -167,5 +167,6 @@ test("BE-201 active navigation contains no teaching, tutoring, lesson, quiz, or 
   assert.match(activeEducationNav, /Education Goals/);
   assert.match(activeEducationNav, /Education Documents/);
   assert.match(activeEducationNav, /Progress & Decisions/);
-  assert.doesNotMatch(activeEducationNav, /Tutor|Lesson|Quiz|Mastery|Courses/);
+  assert.match(activeEducationNav, /Homework Helper \/ AI Tutor/);
+  assert.doesNotMatch(activeEducationNav, /Lesson|Quiz|Mastery|Courses/);
 });

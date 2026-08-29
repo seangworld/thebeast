@@ -69,6 +69,8 @@ export const moneyCoachConversationIdentity =
   getProfessionalConversationIdentity("money-coach", "money");
 export const guidanceCounselorConversationIdentity =
   getProfessionalConversationIdentity("guidance-counselor", "learning");
+export const tutorConversationIdentity =
+  getProfessionalConversationIdentity("tutor", "learning");
 export const healthAdvisorConversationIdentity =
   getProfessionalConversationIdentity("health-advisor", "health");
 export const directorConversationIdentity =

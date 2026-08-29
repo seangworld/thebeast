@@ -9,8 +9,8 @@ function plan(patch: Partial<RuntimePlan> = {}): RuntimePlan {
   return { intent: "answer_previous_question", response: "That gives us a useful foundation.", nextQuestion: "What direction would you like to explore next?", state: baseState, proposals: [], navigationTarget: null, toolCalls: [], research: null, handoff: null, ...patch };
 }
 
-test("AP-100A registers four professionals on one configuration contract", () => {
-  assert.deepEqual(Object.keys(professionalConfigs).sort(), ["beasteducation.guidance-counselor", "beastfusion.fusion-director", "beasthealth.health-advisor", "beastmoney.money-coach"]);
+test("AP-100A registers all professionals on one configuration contract", () => {
+  assert.deepEqual(Object.keys(professionalConfigs).sort(), ["beasteducation.guidance-counselor", "beasteducation.tutor", "beastfusion.fusion-director", "beasthealth.health-advisor", "beastmoney.money-coach"]);
   assert.equal(requireProfessionalConfig("beastfusion.fusion-director").name, "Avery Stone");
 });
 
