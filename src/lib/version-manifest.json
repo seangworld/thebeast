@@ -11,8 +11,8 @@
     },
     "beastos": {
       "name": "BeastOS",
-      "version": "3.0.1",
-      "buildId": "beastos-3.0.1+20260829.01",
+      "version": "3.0.2",
+      "buildId": "beastos-3.0.2+20260829.01",
       "channel": "Production",
       "releaseDate": "2026-08-29"
     },

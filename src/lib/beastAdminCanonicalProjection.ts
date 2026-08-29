@@ -123,10 +123,21 @@ export function buildBeastAdminCanonicalReadModel(snapshot: BeastFusionStoredSna
   const attention: BeastAdminCanonicalReadModel["attention"] = [];
 
   for (const item of (Array.isArray(execution.blocked) ? execution.blocked : []).map(record)) attention.push({ id: `blocked:${String(item.package ?? item.product ?? attention.length)}`, kind: "blocker", detail: String(item.reason ?? "Canonical work is blocked."), source: "beastfusion" });
-  strings(roadmap.warnings).forEach((detail, index) => attention.push({ id: `roadmap-warning:${index}`, kind: "warning", detail, source: "beastfusion" }));
-  strings(governance.warningCodes).forEach((detail) => attention.push({ id: `governance-warning:${detail}`, kind: "warning", detail, source: "beastfusion" }));
+  const roadmapWarnings = Array.from(new Set(strings(roadmap.warnings)));
+  if (roadmapWarnings.length) {
+    const affected = roadmapWarnings
+      .map((detail) => detail.match(/^(roadmaps\/[\w./-]+)\s/)?.[1])
+      .filter((value): value is string => Boolean(value));
+    attention.push({
+      id: "roadmap-indexing-reconciliation",
+      kind: "warning",
+      detail: `${roadmapWarnings.length} approved roadmap record${roadmapWarnings.length === 1 ? " requires" : "s require"} indexing reconciliation. BeastFusion could not associate ${roadmapWarnings.length === 1 ? "it" : "them"} with an indexable package row. Impact: roadmap coverage may be incomplete; execution authority is not inferred. Recommended action: reconcile the grouped canonical records. Affected: ${affected.join(", ") || "see canonical validation evidence"}.`,
+      source: "beastfusion",
+    });
+  }
+  strings(governance.warningCodes).filter((detail) => !detail.startsWith("roadmap_unindexed_")).forEach((detail) => attention.push({ id: `governance-warning:${detail}`, kind: "warning", detail, source: "beastfusion" }));
   strings(governance.errorCodes).forEach((detail) => attention.push({ id: `governance-error:${detail}`, kind: "failure", detail, source: "beastfusion" }));
-  strings(validation.warnings).forEach((detail, index) => attention.push({ id: `validation-warning:${index}`, kind: "missing_evidence", detail, source: "beastfusion" }));
+  strings(validation.warnings).filter((detail) => !roadmapWarnings.includes(detail)).forEach((detail, index) => attention.push({ id: `validation-warning:${index}`, kind: "missing_evidence", detail, source: "beastfusion" }));
   if (summary.ownerDecisionRequired === true) attention.push({ id: "owner-decision", kind: "warning", detail: String(summary.ownerDecisionReason ?? "Canonical governance requires an owner decision."), source: "beastfusion" });
   (Array.isArray(roadmap.items) ? roadmap.items : []).map(record).filter((item) => item.canonicalState === "validation").forEach((item) => attention.push({ id: `measurement:${String(item.id)}`, kind: "measurement", detail: `${String(item.id)} is in canonical validation or measurement.`, source: "beastfusion" }));
 

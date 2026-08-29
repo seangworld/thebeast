@@ -44,6 +44,43 @@ function repositorySourceState(
   return "unavailable";
 }
 
+function canonicalOpportunityRecommendations(
+  canonical: BeastAdminCEOSourceSnapshot["canonical"]
+): BeastAdminCEOSourceSnapshot["opportunityRecommendations"] {
+  if (!canonical) {
+    return {
+      state: "unavailable",
+      detail: "Canonical Strategy Proposal evidence is unavailable.",
+      items: [],
+    };
+  }
+  const items = (canonical.proposals || [])
+    .filter(
+      (proposal) =>
+        proposal.ownerApproved &&
+        proposal.evidence.length > 0 &&
+        !["rejected", "archived"].includes(proposal.status)
+    )
+    .map((proposal) => ({
+      id: proposal.id,
+      professionalName:
+        proposal.sourceAgent === "research_planning_agent"
+          ? "Research + Planning"
+          : "Observer / Operations",
+      recommendation: proposal.title,
+      whySurfaced: proposal.evidence.map((item) => item.summary).join(" "),
+      createdAt: proposal.createdAt,
+    }));
+  return {
+    state: "available",
+    detail:
+      items.length > 0
+        ? "Connected to owner-approved, source-cited Strategy Proposal evidence from canonical BeastFusion."
+        : "Connected to the canonical Strategy Proposal feed; no owner-approved recommendation is currently pending.",
+    items,
+  };
+}
+
 export async function GET() {
   try {
     const supabase = createRouteClient();
@@ -119,6 +156,9 @@ export async function GET() {
         )
       : "unavailable";
 
+    const opportunityRecommendations = canonicalOpportunityRecommendations(
+      canonicalResult.canonical
+    );
     const snapshot: BeastAdminCEOSourceSnapshot = {
       generatedAt,
       canonical: canonicalResult.canonical,
@@ -127,12 +167,7 @@ export async function GET() {
       members: members || [],
       aiAnalytics,
       featureFlags: featureFlags || [],
-      opportunityRecommendations: {
-        state: "unavailable",
-        detail:
-          "Opportunity recommendations are advisory only and remain unavailable until a persisted, source-cited, owner-reviewed feed is approved.",
-        items: [],
-      },
+      opportunityRecommendations,
       sources: {
         canonicalGovernance: canonicalSourceState(canonicalResult.provider.status),
         repositoryIntelligence: repositoryState,
@@ -140,7 +175,7 @@ export async function GET() {
         members: members ? "available" : "unavailable",
         betaTesting: featureFlags ? "available" : "unavailable",
         aiActivity: aiAnalytics ? "available" : "unavailable",
-        opportunityRecommendations: "unavailable",
+        opportunityRecommendations: opportunityRecommendations.state,
       },
     };
 

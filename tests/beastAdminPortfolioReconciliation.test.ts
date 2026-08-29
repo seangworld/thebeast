@@ -22,6 +22,10 @@ test("BA-REC projects the current ecosystem portfolio from generated version ide
     "v1.7.1"
   );
   assert.equal(
+    beastAdminPortfolio.find(({ product }) => product === "BeastOS")?.version,
+    "v3.0.2"
+  );
+  assert.equal(
     beastAdminPortfolio.find(({ product }) => product === "Change the World")?.production,
     "Deployed"
   );
