@@ -13,8 +13,9 @@ export type BeastEducationGen2Focus = {
 export type BeastEducationSupportingCapability = {
   id: "courses" | "lessons" | "practice" | "tutor-specialists";
   title: string;
-  generation: "on-hold";
+  generation: "on-hold" | "released";
   positioning: string;
+  href?: string;
 };
 
 export const beastEducationGen2Vision = {
@@ -85,18 +86,19 @@ export const beastEducationGen2Vision = {
     },
     {
       id: "tutor-specialists",
-      title: "Tutor specialist agents",
-      generation: "on-hold",
+      title: "AI Tutor & Homework Helper",
+      generation: "released",
       positioning:
-        "Tutor specialists are not active products or navigation surfaces in the current roadmap.",
+        "Riley Chen is available now for age-appropriate explanations, guided homework help, shown-work review, practice, and short quizzes.",
+      href: "/dashboard/education/tutor",
     },
   ] satisfies readonly BeastEducationSupportingCapability[],
 } as const;
 
 export const beastEducationGen2ArchitectureRules = [
   "The Guidance Counselor owns the primary BeastEducation relationship.",
-  "Education and career planning are the sole current BeastEducation product purpose.",
-  "Teaching, tutoring, courses, lessons, quizzes, diagnostics, practice, remediation, and mastery checks are on hold.",
-  "Historical teaching records remain preserved but are not exposed as active product capabilities.",
+  "The Guidance Counselor owns education and career direction; the AI Tutor teaches and reviews schoolwork without taking over the long-term plan.",
+  "The bounded AI Tutor and Homework Helper are released; unrelated course, lesson, diagnostic, and mastery-delivery systems remain on hold.",
+  "Historical teaching records remain preserved, while only the released AI Tutor is exposed as an active instructional capability.",
   "Every active planning capability connects back to a member-owned profile, goal, path, or roadmap.",
 ] as const;

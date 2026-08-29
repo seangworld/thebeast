@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { DashboardCard, ModuleBadge, ProgressiveSaveStatus, SectionHeader } from "@/app/components/design/DashboardPrimitives";
 import { ExternalResourceCard } from "@/app/components/design/ExternalResourceCard";
 import { buildEducationGuidancePlan, educationDiscoveryQuestions, type EducationGoalKind, type EducationProfile, type EducationResourceProvider } from "@/lib/education";
@@ -237,10 +238,10 @@ export default function EducationCommandCenter({
       </div>
       <div className="mt-5 rounded-xl border border-green-400/25 bg-green-400/10 p-4">
         <div className="text-xs font-bold uppercase text-green-100">
-          Historical instructional capabilities are on hold
+          Learning support
         </div>
         <p className="mt-2 text-sm leading-6 text-green-100">
-          BeastEducation currently provides education and career planning only. Historical teaching data is preserved without presenting course, lesson, practice, or tutoring delivery as an active product.
+          Your Guidance Counselor plans where your education is going. Riley, your AI Tutor, is available now to explain schoolwork and help you practice. Unrelated course and lesson delivery remains on hold.
         </p>
         <div className="mt-4 grid gap-2 sm:grid-cols-2">
           {beastEducationGen2Vision.supportingCapabilities.map((capability) => (
@@ -252,6 +253,7 @@ export default function EducationCommandCenter({
               <p className="mt-1 text-xs leading-5 text-green-100">
                 {capability.positioning}
               </p>
+              {capability.href ? <Link className="beast-button-secondary mt-3 inline-flex" href={capability.href}>Start tutoring</Link> : null}
             </div>
           ))}
         </div>

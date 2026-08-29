@@ -30,6 +30,8 @@ The Tutor uses the existing guided-reasoning-first homework policy. It should as
 
 BE-301 integrates Tutor with BeastEducation navigation, mobile/shared module navigation, Digital Staff, professional profile identity, portrait, Director reporting, Relationship Center, BeastAdmin ecosystem visualization, contextual guided onboarding, user-facing release notes, version identity, documentation, and aggregate Outcome-ready events.
 
+BE-302 reconciles an older BE-201 command-center message that still described tutoring as on hold after BE-301 was released. BeastEducation 1.7.1 now presents Riley as available, links directly to the Tutor workspace, and preserves the Guidance Counselor as the owner of education and career direction. No entitlement, provider, database, RLS, member data, or privacy boundary changes are required for this Product-truth remediation.
+
 Outcome evaluation should use an appropriate post-release window and aggregate evidence for Tutor workspace visits, turns started, turns completed, failures, and repeat usage. A privacy-bounded telemetry migration registers only the Tutor professional ID and governed status fields; it does not collect assignment text, filenames, prompts, responses, exact birthdays, or image contents. A started turn without a later completion/failure provides bounded abandonment evidence.
 
 The existing protected raw telemetry policy retains the actor UUID solely for retention and repeat-use aggregation. “No member identity” in the migration header means no contact or profile identity fields are added; the owner aggregate never returns actor UUIDs.

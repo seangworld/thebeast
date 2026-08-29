@@ -8,6 +8,16 @@ import {
 
 const releaseNotes = [
   {
+    version: "BeastEducation v1.7.1",
+    date: "August 29, 2026",
+    title: "AI Tutor availability clarified",
+    items: [
+      "Removed the outdated BeastEducation message that said tutoring was still on hold after Riley had already been released.",
+      "Added a direct Start tutoring action from the main BeastEducation workspace and kept the Guidance Counselor and Tutor roles clearly separated.",
+      "Verified Tutor remains member-facing through the released BeastEducation entitlement with age-aware access, owner-scoped conversations, and existing privacy boundaries.",
+    ],
+  },
+  {
     version: "BeastEducation v1.7.0",
     date: "August 29, 2026",
     title: "AI Tutor & Homework Helper",

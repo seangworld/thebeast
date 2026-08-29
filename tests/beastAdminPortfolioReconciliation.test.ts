@@ -19,7 +19,7 @@ test("BA-REC projects the current ecosystem portfolio from generated version ide
   );
   assert.equal(
     beastAdminPortfolio.find(({ product }) => product === "BeastEducation")?.version,
-    "v1.7.0"
+    "v1.7.1"
   );
   assert.equal(
     beastAdminPortfolio.find(({ product }) => product === "Change the World")?.production,
@@ -27,7 +27,7 @@ test("BA-REC projects the current ecosystem portfolio from generated version ide
   );
 });
 
-test("BA-REC released education and deferred Tutor work do not create a beta module", () => {
+test("BA-REC released education and active Tutor do not create a beta module", () => {
   const education = beastModuleRegistry.find(({ name }) => name === "BeastEducation");
   assert.equal(education?.visibility, "released");
   assert.equal(education?.beta, false);
