@@ -309,7 +309,7 @@ export default function DashboardLayout({
         moduleAccessError
           ? []
           : (moduleAccessRows || []).flatMap((row) =>
-              (row.module_id === "money" || row.module_id === "learning") &&
+              (row.module_id === "money" || row.module_id === "learning" || row.module_id === "home") &&
               typeof row.enabled === "boolean"
                 ? [
                     {
@@ -1094,6 +1094,7 @@ export default function DashboardLayout({
           memberId={authenticatedMemberId}
           educationOnly={pathname.includes("/education/guidance-counselor")}
           tutorOnly={pathname.includes("/education/tutor")}
+          homeOnly={pathname.includes("/home/inventory")}
         />
       ) : null}
 

@@ -618,7 +618,7 @@ export function BeastAdminMemberManagementWorkspace() {
             accountStatus: nextStatus,
             moduleAccess: member.enabledModules
               .map((module) => module.id)
-              .filter((id) => ["money", "learning"].includes(id)),
+              .filter((id) => ["money", "learning", "home"].includes(id)),
             betaFlagIds: directBetaFlagIds(member.id),
             confirmEmailChange: false,
           }),

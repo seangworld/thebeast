@@ -17,6 +17,7 @@ import { USER_ROLES, type UserRole } from "@/lib/entitlements";
 const moduleLabels: Record<BeastAdminEditableModuleId, string> = {
   money: "BeastMoney",
   learning: "BeastEducation",
+  home: "BeastHome",
 };
 
 function readErrorMessage(value: unknown) {

@@ -1,20 +1,23 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   DashboardCard,
   GuidedEmptyState,
   SectionHeader,
 } from "@/app/components/design/DashboardPrimitives";
 import { createClient } from "@/lib/supabase/client";
+import { sendFirstPartyTelemetry } from "@/lib/firstPartyTelemetry";
 
 type Draft = {
   name: string;
   quantity: number;
   details: string;
   value: string;
+  receiptDocumentId: string;
   keep: boolean;
 };
+type DocumentOption = { id: string; title: string };
 type Saved = {
   id: string;
   name: string;
@@ -22,6 +25,7 @@ type Saved = {
   details: string | null;
   estimated_value_cents: number | null;
   beast_home_inventory_rooms: { name: string } | null;
+  beast_documents: { title: string } | null;
 };
 
 export function BeastHomeInventoryWorkspace() {
@@ -29,38 +33,50 @@ export function BeastHomeInventoryWorkspace() {
   const [room, setRoom] = useState("Living room");
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [saved, setSaved] = useState<Saved[]>([]);
+  const [documents, setDocuments] = useState<DocumentOption[]>([]);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const supabase = useMemo(() => createClient(), []);
 
-  async function load() {
+  const load = useCallback(async () => {
     const { data: auth } = await supabase.auth.getUser();
     const id = auth.user?.id ?? "";
     setUserId(id);
     if (!id) return;
-    const { data } = await supabase
-      .from("beast_home_inventory_items")
-      .select(
-        "id,name,quantity,details,estimated_value_cents,beast_home_inventory_rooms(name)",
-      )
-      .order("created_at", { ascending: false });
+    const [{ data }, { data: documentRows }] = await Promise.all([
+      supabase
+        .from("beast_home_inventory_items")
+        .select(
+          "id,name,quantity,details,estimated_value_cents,beast_home_inventory_rooms(name),beast_documents!beast_home_inventory_items_receipt_owner_fk(title)",
+        )
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("beast_documents")
+        .select("id,title")
+        .eq("owner_id", id)
+        .not("status", "in", '("Archived","Deleted")')
+        .order("updated_at", { ascending: false }),
+    ]);
     setSaved((data ?? []) as unknown as Saved[]);
-  }
+    setDocuments((documentRows ?? []) as DocumentOption[]);
+  }, [supabase]);
   useEffect(() => {
     void load();
-  }, []);
+    void sendFirstPartyTelemetry({ eventName: "home_inventory_opened", moduleId: "home", outcome: "completed" });
+  }, [load]);
 
   async function detect(file?: File) {
     if (!file) return;
     if (
-      file.size > 5_000_000 ||
+      file.size > 3_000_000 ||
       !["image/jpeg", "image/png", "image/webp"].includes(file.type)
     ) {
-      setMessage("Use a JPG, PNG, or WebP image up to 5 MB.");
+      setMessage("Use a JPG, PNG, or WebP image up to 3 MB.");
       return;
     }
     setBusy(true);
     setMessage("Reviewing the private photo…");
+    void sendFirstPartyTelemetry({ eventName: "home_inventory_started", moduleId: "home", outcome: "started" });
     const image = await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(String(reader.result));
@@ -79,7 +95,7 @@ export function BeastHomeInventoryWorkspace() {
     if (!response.ok) setMessage(body.error || "Photo detection failed.");
     else {
       setDrafts(
-        (body.items ?? []).map((item) => ({ ...item, value: "", keep: true })),
+        (body.items ?? []).map((item) => ({ ...item, value: "", receiptDocumentId: "", keep: true })),
       );
       setMessage(
         "AI suggestions are not saved yet. Edit, remove, and confirm them first.",
@@ -148,6 +164,7 @@ export function BeastHomeInventoryWorkspace() {
           estimated_value_cents: item.value
             ? Math.round(Number(item.value) * 100)
             : null,
+          receipt_document_id: item.receiptDocumentId || null,
         })),
       );
     if (error) setMessage("Confirmed items could not be saved.");
@@ -156,6 +173,7 @@ export function BeastHomeInventoryWorkspace() {
       setMessage(
         `${selected.length} confirmed item${selected.length === 1 ? "" : "s"} saved.`,
       );
+      void sendFirstPartyTelemetry({ eventName: "home_inventory_confirmed", moduleId: "home", outcome: "completed" });
       await load();
     }
     setBusy(false);
@@ -163,7 +181,7 @@ export function BeastHomeInventoryWorkspace() {
 
   function exportCsv() {
     const rows = [
-      ["Room", "Item", "Quantity", "Details", "Estimated value"],
+      ["Room", "Item", "Quantity", "Details", "Estimated value", "Receipt document"],
       ...saved.map((item) => [
         item.beast_home_inventory_rooms?.name || "",
         item.name,
@@ -172,6 +190,7 @@ export function BeastHomeInventoryWorkspace() {
         item.estimated_value_cents == null
           ? ""
           : (item.estimated_value_cents / 100).toFixed(2),
+        item.beast_documents?.title || "",
       ]),
     ];
     const csv = rows
@@ -184,6 +203,7 @@ export function BeastHomeInventoryWorkspace() {
     link.download = `beast-home-inventory-${new Date().toISOString().slice(0, 10)}.csv`;
     link.click();
     URL.revokeObjectURL(link.href);
+    void sendFirstPartyTelemetry({ eventName: "home_inventory_exported", moduleId: "home", outcome: "completed" });
   }
 
   return (
@@ -194,7 +214,7 @@ export function BeastHomeInventoryWorkspace() {
           title="Start with one room"
           description="Your photo is sent privately for one-time item suggestions and is not saved by this workflow. Nothing enters your inventory until you confirm it."
         />
-        <div className="mt-5 grid gap-4 sm:grid-cols-[1fr_1fr]">
+        <div className="mt-5 grid gap-4 sm:grid-cols-[1fr_1fr]" data-tour-step="home-inventory-photo">
           <label className="text-sm font-semibold text-[#dbe3ef]">
             Room name
             <input
@@ -228,13 +248,13 @@ export function BeastHomeInventoryWorkspace() {
           <SectionHeader
             eyebrow="Review required"
             title="Confirm what the photo actually shows"
-            description="Correct names and quantities, add optional values, and uncheck anything AI got wrong."
+          description="Correct names and quantities, add optional values or a private receipt document, and uncheck anything AI got wrong."
           />
-          <div className="mt-5 space-y-3">
+          <div className="mt-5 space-y-3" data-tour-step="home-inventory-review">
             {drafts.map((item, index) => (
               <div
                 key={`${item.name}-${index}`}
-                className="grid gap-3 rounded-xl border border-[#334155] p-4 md:grid-cols-[auto_1.2fr_90px_1.5fr_120px]"
+                className="grid gap-3 rounded-xl border border-[#334155] p-4 md:grid-cols-[auto_1.1fr_80px_1.3fr_110px_1fr]"
               >
                 <input
                   aria-label={`Keep ${item.name}`}
@@ -248,6 +268,23 @@ export function BeastHomeInventoryWorkspace() {
                     )
                   }
                 />
+                <select
+                  aria-label="Receipt or document"
+                  className="rounded-lg bg-[#0f172a] p-2"
+                  value={item.receiptDocumentId}
+                  onChange={(event) =>
+                    setDrafts((all) =>
+                      all.map((x, i) =>
+                        i === index ? { ...x, receiptDocumentId: event.target.value } : x,
+                      ),
+                    )
+                  }
+                >
+                  <option value="">No receipt</option>
+                  {documents.map((document) => (
+                    <option key={document.id} value={document.id}>{document.title}</option>
+                  ))}
+                </select>
                 <input
                   aria-label="Item name"
                   className="rounded-lg bg-[#0f172a] p-2"
@@ -329,8 +366,9 @@ export function BeastHomeInventoryWorkspace() {
         <SectionHeader
           eyebrow="Dated inventory"
           title={`${saved.length} confirmed item${saved.length === 1 ? "" : "s"}`}
-          description="Only items you confirmed appear here. Keep receipts in Beast Documents and use the dated CSV for your records or insurance conversation."
+          description="Only items you confirmed appear here. Linked receipts stay in your private Beast Documents, and the dated CSV gives you an offline record."
         />
+        <div data-tour-step="home-inventory-export">
         {saved.length === 0 ? (
           <div className="mt-5">
             <GuidedEmptyState
@@ -351,6 +389,7 @@ export function BeastHomeInventoryWorkspace() {
                     <th>Qty</th>
                     <th>Details</th>
                     <th>Value</th>
+                    <th>Receipt</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -367,6 +406,7 @@ export function BeastHomeInventoryWorkspace() {
                           ? "—"
                           : `$${(item.estimated_value_cents / 100).toFixed(2)}`}
                       </td>
+                      <td>{item.beast_documents?.title || "—"}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -377,6 +417,7 @@ export function BeastHomeInventoryWorkspace() {
             </button>
           </>
         )}
+        </div>
       </DashboardCard>
     </div>
   );

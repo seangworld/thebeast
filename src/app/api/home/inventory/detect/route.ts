@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createRouteClient } from "@/lib/supabase/server";
 import { createOpenAIRequestHeaders } from "@/lib/digitalStaffRuntime/provider";
+import { requireMemberModuleEntitlement } from "@/lib/memberAgeServer";
 
 export const dynamic = "force-dynamic";
 const headers = { "Cache-Control": "private, no-store, max-age=0", Pragma: "no-cache" };
@@ -9,11 +10,20 @@ export async function POST(request: Request) {
   const supabase = createRouteClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Authentication required." }, { status: 401, headers });
+  const entitlement = await requireMemberModuleEntitlement("home", { supabase, user });
+  if (!entitlement.ok) {
+    return NextResponse.json(
+      { error: entitlement.status === 428 ? "Complete your birthday before using BeastHome." : "BeastHome is available to eligible adult members." },
+      { status: entitlement.status, headers }
+    );
+  }
 
   const body = await request.json().catch(() => null) as { image?: string; room?: string } | null;
   const image = body?.image ?? "";
-  if (!/^data:image\/(?:jpeg|png|webp);base64,/.test(image) || image.length > 7_000_000) {
-    return NextResponse.json({ error: "Use one private JPG, PNG, or WebP image up to 5 MB." }, { status: 400, headers });
+  const match = /^data:image\/(?:jpeg|png|webp);base64,([A-Za-z0-9+/]+={0,2})$/.exec(image);
+  const decodedBytes = match ? Buffer.from(match[1], "base64").byteLength : 0;
+  if (!match || decodedBytes === 0 || decodedBytes > 3_000_000 || image.length > 4_200_000) {
+    return NextResponse.json({ error: "Use one private JPG, PNG, or WebP image up to 3 MB." }, { status: 400, headers });
   }
   if (!process.env.OPENAI_API_KEY) return NextResponse.json({ error: "Photo detection is not configured." }, { status: 503, headers });
 
