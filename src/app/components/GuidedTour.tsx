@@ -93,6 +93,19 @@ export function GuidedTour({
 
   useEffect(() => {
     if (!open) return;
+    const originalControl = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null;
+    restoreFocusRef.current = originalControl;
+    return () => {
+      const control = restoreFocusRef.current;
+      restoreFocusRef.current = null;
+      window.requestAnimationFrame(() => control?.focus());
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
     writeProgress(storageKey, definition, "started", stepIndex);
     const update = () => setRect(targetRect(step.target));
     update();
@@ -104,19 +117,6 @@ export function GuidedTour({
       window.removeEventListener("scroll", update, true);
     };
   }, [definition, open, step.target, stepIndex, storageKey]);
-
-  useEffect(() => {
-    if (!open) return;
-    const originalControl = document.activeElement instanceof HTMLElement
-      ? document.activeElement
-      : null;
-    restoreFocusRef.current = originalControl;
-    return () => {
-      const control = restoreFocusRef.current;
-      restoreFocusRef.current = null;
-      window.requestAnimationFrame(() => control?.focus());
-    };
-  }, [open]);
 
   const position = useMemo(() => {
     if (!rect) return "left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2";
