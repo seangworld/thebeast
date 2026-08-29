@@ -282,6 +282,33 @@ test("empty canonical roadmap retains truthful zeroes and a strategy directive",
   assert.equal(snapshot.workNext[0].title, "Owner Strategy Review");
 });
 
+test("BA-CMD-002 resolves Release Movement through the canonical product display identity", () => {
+  const model = canonical({
+    products: [
+      ...canonical().products,
+      {
+        ...canonical().products[0],
+        id: "beastlearning",
+        name: "BeastEducation",
+      },
+    ],
+    releases: [
+      {
+        ...canonical().releases[0],
+        id: "beasteducation-1.7.1-2026-08-29",
+        product: "beastlearning",
+        version: "1.7.1",
+      },
+    ],
+  });
+  const snapshot = buildBeastAdminCEOModeSnapshot({
+    source: sourceFixture(model),
+    platformHealth: healthy,
+    platformHealthAvailable: true,
+  });
+  assert.equal(snapshot.summaries.releases.latestLabel, "BeastEducation v1.7.1");
+});
+
 test("missing canonical state preserves unavailable values and never falls back to legacy", () => {
   const snapshot = buildBeastAdminCEOModeSnapshot({ source: sourceFixture(null), platformHealth: null, platformHealthAvailable: false });
   assert.equal(snapshot.summaries.roadmap.planned, null);
@@ -310,6 +337,10 @@ test("owner route uses 1A and 1B providers and never queries legacy governance t
   assert.match(route, /readGitHubRepositoryEvidence/);
   assert.match(route, /readVercelDeploymentEvidence/);
   assert.match(route, /buildBeastAdminRepositoryReleaseSnapshot/);
+  assert.match(route, /canonicalOpportunityRecommendations/);
+  assert.match(route, /proposal\.ownerApproved/);
+  assert.match(route, /proposal\.evidence\.length > 0/);
+  assert.match(route, /Connected to the canonical Strategy Proposal feed/);
   assert.match(route, /profile\?\.role !== "admin"/);
   assert.match(route, /Cache-Control": "private, no-cache, no-store, must-revalidate"/);
   assert.doesNotMatch(route, /beast_admin_roadmap_items/);
@@ -325,4 +356,6 @@ test("CEO Mode UI explains deterministic governance and advisory opportunities",
   assert.match(workspace, /Opportunity recommendations/);
   assert.match(workspace, /never select or authorize execution/);
   assert.match(workspace, /read-only 1B provider snapshot/);
+  assert.match(workspace, /Hosted · local state unavailable/);
+  assert.doesNotMatch(workspace, />Status unavailable</);
 });

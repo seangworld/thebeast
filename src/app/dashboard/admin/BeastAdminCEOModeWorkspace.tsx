@@ -1070,7 +1070,7 @@ export function BeastAdminCEOModeWorkspace() {
                     repository.worktree === "planning"
                       ? "Planning"
                       : repository.worktree === "unavailable"
-                        ? "Unavailable"
+                        ? "Hosted environment; local worktree not observable"
                         : repository.worktree
                   }`}
                   className={`rounded-full border px-2.5 py-1 text-xs font-black ${
@@ -1086,7 +1086,7 @@ export function BeastAdminCEOModeWorkspace() {
                   {repository.worktree === "planning"
                     ? "Planning"
                     : repository.worktree === "unavailable"
-                      ? "Status unavailable"
+                      ? "Hosted · local state unavailable"
                       : repository.worktree === "clean"
                         ? "Clean"
                         : "Dirty"}

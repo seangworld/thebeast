@@ -8,6 +8,17 @@ import {
 
 const releaseNotes = [
   {
+    version: "BeastOS v3.0.2",
+    date: "August 29, 2026",
+    title: "Clearer CEO Mode governance and source evidence",
+    items: [
+      "Grouped related roadmap-indexing diagnostics into one actionable owner summary with cause, impact, recommendation, and affected canonical records.",
+      "Connected advisory opportunities to the existing owner-approved, source-cited Strategy Proposal feed without granting execution authority.",
+      "Clarified that hosted BeastAdmin can verify repository and deployment evidence while local worktree state is not observable.",
+      "Reconciled CEO Mode release movement with current canonical product names and versions.",
+    ],
+  },
+  {
     version: "BeastEducation v1.7.1",
     date: "August 29, 2026",
     title: "AI Tutor availability clarified",

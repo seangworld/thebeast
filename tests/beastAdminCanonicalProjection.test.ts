@@ -124,6 +124,43 @@ test("canonical adapters expose roadmap execution releases attention and cursor 
   assert.equal(model.records?.length, sourcePaths.length);
 });
 
+test("BA-CMD-002 groups roadmap indexing diagnostics into one actionable owner signal", () => {
+  const payload = fixture();
+  const mutable = payload as unknown as {
+    roadmap: { warnings: string[] };
+    governance: { warningCodes: string[] };
+    validation: { warnings: string[] };
+    summary: { warningCount: number };
+  };
+  const warnings = [
+    "roadmaps/active/BeastHome.md is approved but contains no indexable package table rows.",
+    "roadmaps/planned/BeastMoney/v2.5.0.md is approved but contains no indexable package table rows.",
+  ];
+  mutable.roadmap.warnings = warnings;
+  mutable.governance.warningCodes = ["roadmap_unindexed_1", "roadmap_unindexed_2"];
+  mutable.validation.warnings = warnings;
+  mutable.summary.warningCount = warnings.length;
+  const validation = validateBeastFusionCommandProjection(payload);
+  assert.equal(validation.ok, true);
+  if (!validation.ok) throw new Error("fixture invalid");
+  const model = buildBeastAdminCanonicalReadModel({
+    projectionId: validation.projection.projectionId,
+    projectionVersion: validation.projection.projectionVersion,
+    payloadHash: validation.payloadHash,
+    canonicalInputDigest: validation.canonicalInputDigest,
+    sourceCommit: validation.projection.source.commit,
+    generatedAt: validation.projection.generatedAt,
+    acceptedAt: "2026-08-21T20:01:00Z",
+    lastConfirmedAt: "2026-08-21T20:01:00Z",
+    payload: validation.projection,
+  });
+  assert.equal(model.attention.length, 2);
+  const grouped = model.attention.find((item) => item.id === "roadmap-indexing-reconciliation");
+  assert.match(grouped?.detail || "", /2 approved roadmap records require indexing reconciliation/);
+  assert.match(grouped?.detail || "", /Impact: roadmap coverage may be incomplete/);
+  assert.doesNotMatch(model.attention.map((item) => item.id).join(" "), /roadmap_unindexed_/);
+});
+
 test("provider states preserve last valid snapshot and never fabricate connection", () => {
   assert.equal(resolveBeastFusionProviderStatus({ configured: false, snapshot: null }).status, "not_configured");
   assert.equal(resolveBeastFusionProviderStatus({ configured: true, snapshot: null }).status, "no_snapshot");

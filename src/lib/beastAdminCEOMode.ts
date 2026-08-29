@@ -214,6 +214,15 @@ export function buildBeastAdminCEOModeSnapshot({ source, platformHealth, platfor
   const completed = canonical?.roadmap.filter((item) => isCompleteStatus(item.status)).length ?? null;
   const open = canonical?.roadmap.filter((item) => !isCompleteStatus(item.status)).length ?? null;
   const current = canonical?.roadmap.filter((item) => isActiveStatus(item.status) || isTestingStatus(item.status)).length ?? null;
+  const latestRelease = canonical?.releases[0] || null;
+  const latestReleaseProduct = latestRelease
+    ? canonical?.products.find((product) => product.id === latestRelease.product)
+    : null;
+  const latestReleaseLabel = latestRelease
+    ? `${latestReleaseProduct?.name || latestRelease.product}${latestRelease.version ? ` v${latestRelease.version}` : ""}`
+    : canonical
+      ? "No releases recorded"
+      : "Unavailable";
 
   return {
     generatedAt: source.generatedAt,
@@ -227,7 +236,7 @@ export function buildBeastAdminCEOModeSnapshot({ source, platformHealth, platfor
       errors: { status: !platformHealthAvailable ? "unavailable" : operationalErrors.some((item) => item.priority === "critical") ? "critical" : operationalErrors.length ? "warning" : "operational", errors: platformHealthAvailable ? operationalErrors.filter((item) => item.priority === "critical").length : null, warnings: platformHealthAvailable ? operationalErrors.filter((item) => item.priority !== "critical").length : null, configurationItems: configurationItems.length },
       members: { total: source.sources.members === "available" ? source.members.length : null, newYesterday: source.sources.members === "available" ? source.members.filter((member) => isYesterday(member.registeredAt, yesterdayKey)).length : null, activeOvernight: source.sources.members === "available" ? source.members.filter((member) => member.lastActivityAt && isOvernight(member.lastActivityAt, yesterdayKey, nowParts.date, nowParts.minutes)).length : null },
       betaTesting: { flags: source.sources.betaTesting === "available" ? source.featureFlags.length : null, assignments: source.sources.betaTesting === "available" ? assignments.length : null, activeAssignments: source.sources.betaTesting === "available" ? activeBetaAssignments : null },
-      releases: { total: canonical ? canonical.releases.length : null, releasedYesterday, latestLabel: canonical?.releases[0] ? `${canonical.releases[0].product}${canonical.releases[0].version ? ` v${canonical.releases[0].version}` : ""}` : canonical ? "No releases recorded" : "Unavailable" },
+      releases: { total: canonical ? canonical.releases.length : null, releasedYesterday, latestLabel: latestReleaseLabel },
       roadmap: roadmapCounts || { planned: null, inProgress: null, testing: null, released: null },
       opportunityRecommendations: source.opportunityRecommendations,
       aiActivity: { conversations: source.sources.aiActivity === "available" ? source.aiAnalytics?.conversationCount ?? 0 : null, abandoned: source.sources.aiActivity === "available" ? source.aiAnalytics?.abandonedCount ?? 0 : null, yesterday: source.sources.aiActivity === "available" ? yesterdayAIConversations ?? 0 : null },
