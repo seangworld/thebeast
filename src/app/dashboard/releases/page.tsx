@@ -8,6 +8,17 @@ import {
 
 const releaseNotes = [
   {
+    version: "BeastEducation v1.7.0",
+    date: "August 29, 2026",
+    title: "AI Tutor & Homework Helper",
+    items: [
+      "Added Riley Chen as a persistent AI Tutor in BeastEducation and Digital Staff, separate from the Guidance Counselor's education and career planning role.",
+      "Learners can type a question or attach a readable homework image for guided explanation, shown-work review, practice, and correction.",
+      "Added an age-appropriate first-use Tutor walkthrough, member navigation, profile, portrait, relationships, release analytics, and privacy guidance.",
+      "Added privacy-bounded Tutor outcome telemetry with no student content or backfill; no new provider credential was required, conversations remain owner-scoped, and images are not saved in conversation history.",
+    ],
+  },
+  {
     version: "BeastEducation v1.6.0",
     date: "August 16, 2026",
     title: "Released",

@@ -10,10 +10,11 @@ const director = readFileSync("src/app/api/director/conversations/route.ts", "ut
 const runtimeRoute = readFileSync("src/app/api/digital-staff/runtime/route.ts", "utf8");
 
 test("AP-100B gives every current professional an authoritative hardened prompt", () => {
-  assert.equal(Object.keys(authoritativeProfessionalPrompts).length, 4);
+  assert.equal(Object.keys(authoritativeProfessionalPrompts).length, 5);
   assert.match(authoritativeProfessionalPrompts["beastmoney.money-coach"], /canonical deterministic calculations/);
   assert.match(authoritativeProfessionalPrompts["beastmoney.money-coach"], /Answer every material part of a compound question/);
   assert.match(authoritativeProfessionalPrompts["beasteducation.guidance-counselor"], /instead of following a discovery script/);
+  assert.match(authoritativeProfessionalPrompts["beasteducation.tutor"], /Teach for understanding/);
   assert.match(authoritativeProfessionalPrompts["beasthealth.health-advisor"], /Do not diagnose, prescribe/);
   assert.match(authoritativeProfessionalPrompts["beasthealth.health-advisor"], /without current authoritative evidence/);
   assert.match(authoritativeProfessionalPrompts["beastfusion.fusion-director"], /Coordinate rather than impersonate specialists/);

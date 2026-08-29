@@ -22,6 +22,7 @@ const professionalLabels = {
   fusion_director: "Director",
   money_coach: "Money Coach",
   guidance_counselor: "Guidance Counselor",
+  tutor: "AI Tutor",
   health_advisor: "Health Advisor",
 };
 

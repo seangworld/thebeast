@@ -38,6 +38,7 @@ test("BE-202 navigation uses understandable planning names", () => {
   const expected = [
     "Dashboard",
     "Guidance Counselor",
+    "Homework Helper / AI Tutor",
     "About You",
     "Education Planning",
     "Career Planning",
@@ -57,11 +58,8 @@ test("BE-202 navigation uses understandable planning names", () => {
       navigation.children?.map((item) => item.label),
       expected
     );
-    assert.ok(
-      navigation.children?.every(
-        (item) => !/Tutor|Lesson|Course|Teaching/.test(item.label)
-      )
-    );
+    assert.ok(navigation.children?.some((item) => item.label === "Homework Helper / AI Tutor"));
+    assert.ok(navigation.children?.every((item) => !/Lesson|Course|Teaching/.test(item.label)));
   }
 });
 

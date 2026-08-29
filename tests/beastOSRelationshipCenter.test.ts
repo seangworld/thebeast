@@ -122,10 +122,10 @@ test("BO-314 does not mistake preferences or constraints for objectives", () => 
   assert.equal(relationship.understandingConfidence.label, "Growing");
 });
 
-test("BO-314 supports Money Coach Guidance Counselor and Health Advisor independently", () => {
+test("BE-301 adds AI Tutor as an independent professional relationship", () => {
   assert.deepEqual(
     professionalRelationshipDefinitions.map((professional) => professional.role),
-    ["Money Coach", "Guidance Counselor", "Health Advisor"]
+    ["Money Coach", "Guidance Counselor", "AI Tutor", "Health Advisor"]
   );
   assert.deepEqual(
     professionalRelationshipDefinitions.map(
@@ -134,6 +134,7 @@ test("BO-314 supports Money Coach Guidance Counselor and Health Advisor independ
     [
       "beastmoney.money-coach",
       "beasteducation.guidance-counselor",
+      "beasteducation.tutor",
       "beasthealth.health-advisor",
     ]
   );

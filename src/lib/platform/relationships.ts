@@ -76,6 +76,15 @@ export const professionalRelationshipDefinitions: readonly ProfessionalRelations
         "Review your direction, roadmap, and next educational step.",
     },
     {
+      agentId: "beasteducation.tutor",
+      role: "AI Tutor",
+      module: "learning",
+      href: "/dashboard/education/tutor",
+      actionLabel: "Study with AI Tutor",
+      defaultNextConversation:
+        "Bring a question or assignment and work through the next step together.",
+    },
+    {
       agentId: "beasthealth.health-advisor",
       role: "Health Advisor",
       module: "health",

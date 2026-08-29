@@ -285,9 +285,10 @@ function moduleNode(
 }
 
 const professionalPositions = [
-  [260, 388],
-  [490, 388],
-  [720, 388],
+  [150, 388],
+  [385, 388],
+  [620, 388],
+  [855, 388],
 ] as const;
 
 const professionalPurposeStatements: Readonly<Record<string, string>> = {
@@ -295,6 +296,8 @@ const professionalPurposeStatements: Readonly<Record<string, string>> = {
     "Provides long-term financial guidance while remaining the owner of financial reasoning and financial records.",
   "beasteducation.guidance-counselor":
     "Provides long-term educational guidance while building an evolving understanding of the learner.",
+  "beasteducation.tutor":
+    "Teaches schoolwork through guided practice while preserving learner agency and education privacy.",
   "beasthealth.health-advisor":
     "Provides long-term health guidance while maintaining the member's health story.",
 };

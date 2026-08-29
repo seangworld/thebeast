@@ -40,7 +40,7 @@ test("invalid legacy rows cannot leak into a current occurrence total", () => {
 
 test("BM-43 migration preserves authorization, write gates, and operation idempotency", () => {
   const migration = readFileSync(
-    "supabase/migrations/20260827214356_add_bill_payment_occurrence_identity.sql",
+    "supabase/migrations/20260827231649_add_bill_payment_occurrence_identity.sql",
     "utf8"
   );
   const writeGate = readFileSync(

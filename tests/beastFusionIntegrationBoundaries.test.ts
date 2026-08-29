@@ -62,6 +62,7 @@ test("BO-503 exposes the approved Director without exposing internal orchestrati
       "beastfusion.fusion-director",
       "beastmoney.money-coach",
       "beasteducation.guidance-counselor",
+      "beasteducation.tutor",
       "beasthealth.health-advisor",
     ]
   );

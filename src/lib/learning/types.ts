@@ -1538,6 +1538,12 @@ export type OpenAILearningMessage = {
   content: string;
 };
 
+export type LearningImageAttachment = {
+  dataUrl: string;
+  fileName: string;
+  mediaType: "image/jpeg" | "image/png" | "image/webp";
+};
+
 export type OpenAILearningRequest = {
   specialistId: string;
   specialistName: LearningSpecialistRole;
@@ -1545,6 +1551,8 @@ export type OpenAILearningRequest = {
   messages: OpenAILearningMessage[];
   context: LearningAIContext;
   homeworkPolicy: HomeworkPolicy;
+  imageAttachment?: LearningImageAttachment;
+  outwardPersona?: "guidance_counselor" | "tutor";
 };
 
 export type OpenAILearningResponse = {

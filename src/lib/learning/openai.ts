@@ -7,6 +7,7 @@ import {
   learningSystemPrompt,
   reflectionPrompt,
   teachingPrompt,
+  tutorSystemPrompt,
 } from "./promptLibrary";
 import { buildMentorConversationPresentationPrompt } from "./mentorConversationPresentation";
 import type {
@@ -37,7 +38,7 @@ export function buildOpenAILearningMessages(
     {
       role: "system",
       content: [
-        learningSystemPrompt,
+        request.outwardPersona === "tutor" ? tutorSystemPrompt : learningSystemPrompt,
         specialistPrompt,
         promptForConversationType(request.conversationType),
         buildMentorConversationPresentationPrompt({
@@ -50,6 +51,31 @@ export function buildOpenAILearningMessages(
     },
     ...request.messages,
   ];
+}
+
+type OpenAIProviderMessage = {
+  role: "system" | "user" | "assistant";
+  content: string | Array<
+    | { type: "text"; text: string }
+    | { type: "image_url"; image_url: { url: string; detail: "high" } }
+  >;
+};
+
+function providerMessages(request: OpenAILearningRequest): OpenAIProviderMessage[] {
+  const messages: OpenAIProviderMessage[] = buildOpenAILearningMessages(request);
+  if (!request.imageAttachment) return messages;
+  const lastUserIndex = messages.findLastIndex((message) => message.role === "user");
+  const lastUser = messages[lastUserIndex];
+  if (lastUser && typeof lastUser.content === "string") {
+    messages[lastUserIndex] = {
+      ...lastUser,
+      content: [
+        { type: "text", text: `${lastUser.content}\n\nThe learner attached ${request.imageAttachment.fileName}. Read only what is visibly present. Say clearly if any part is blurry, cropped, or uncertain.` },
+        { type: "image_url", image_url: { url: request.imageAttachment.dataUrl, detail: "high" } },
+      ],
+    };
+  }
+  return messages;
 }
 
 export function isOpenAILearningConfigured() {
@@ -76,7 +102,7 @@ export async function callOpenAILearningSpecialist(
       headers: createOpenAIRequestHeaders(requestId),
       body: JSON.stringify({
         model: defaultModel,
-        messages: buildOpenAILearningMessages(request),
+        messages: providerMessages(request),
         temperature: 0.4,
       }),
     });

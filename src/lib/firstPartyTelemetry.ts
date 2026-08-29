@@ -46,6 +46,7 @@ export const firstPartyTelemetryProfessionalIds = [
   "fusion_director",
   "money_coach",
   "guidance_counselor",
+  "tutor",
   "health_advisor",
 ] as const;
 
@@ -219,13 +220,14 @@ export function firstPartyProfessionalId(value: string) {
   if (value === "beastfusion.fusion-director") return "fusion_director" as const;
   if (value === "beastmoney.money-coach") return "money_coach" as const;
   if (value === "beasteducation.guidance-counselor") return "guidance_counselor" as const;
+  if (value === "beasteducation.tutor") return "tutor" as const;
   if (value === "beasthealth.health-advisor") return "health_advisor" as const;
   return null;
 }
 
 export function firstPartyModuleForProfessional(value: string) {
   if (value === "beastmoney.money-coach") return "money" as const;
-  if (value === "beasteducation.guidance-counselor") return "education" as const;
+  if (value === "beasteducation.guidance-counselor" || value === "beasteducation.tutor") return "education" as const;
   if (value === "beasthealth.health-advisor") return "health" as const;
   return "beastos" as const;
 }

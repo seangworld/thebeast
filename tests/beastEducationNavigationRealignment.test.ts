@@ -9,6 +9,7 @@ import {
 const primaryLabels = [
   "Dashboard",
   "Guidance Counselor",
+  "Homework Helper / AI Tutor",
   "About You",
   "Education Planning",
   "Career Planning",
@@ -40,13 +41,14 @@ test("BE-201 preserves the Guidance Counselor architecture in Education and Care
   }
 });
 
-test("BP-400 hides supporting teaching destinations without deleting their routes", () => {
+test("BE-301 releases Tutor without reopening unrelated teaching destinations", () => {
   const routeDefinitions = readFileSync("src/lib/learning/workspaces.ts", "utf8");
   assert.match(routeDefinitions, /tutor:/);
   assert.match(routeDefinitions, /"lesson-history":/);
   assert.ok(
     beastLearningNavigation.children?.every((item) => !item.secondary)
   );
+  assert.ok(beastLearningNavigation.children?.some((item) => item.href === "/dashboard/education/tutor"));
 });
 
 test("BE-204 has no visible BeastLearning product references", () => {

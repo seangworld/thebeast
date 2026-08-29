@@ -51,7 +51,7 @@ test("BO-503 restores the stable Director profile above the specialist hierarchy
   assert.equal(digitalStaffDirector.conversationHref, "/dashboard/director");
   assert.deepEqual(
     digitalStaffSpecialists.map((professional) => professional.id),
-    ["money-coach", "guidance-counselor", "health-advisor"]
+    ["money-coach", "guidance-counselor", "tutor", "health-advisor"]
   );
   assert.ok(
     digitalStaffSpecialists.every(

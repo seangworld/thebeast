@@ -10,6 +10,7 @@ import {
 const approvedNavigation = [
   ["Dashboard", "/dashboard/education"],
   ["Guidance Counselor", "/dashboard/education/guidance-counselor"],
+  ["Homework Helper / AI Tutor", "/dashboard/education/tutor"],
   ["About You", "/dashboard/education/about-you"],
   ["Education Planning", "/dashboard/education/education-planning"],
   ["Career Planning", "/dashboard/education/career-planning"],
@@ -33,15 +34,15 @@ test("BE-201 exposes only the approved Education and Career navigation", () => {
   }
 });
 
-test("BP-400 keeps future teaching routes in code while hiding them from navigation", () => {
+test("BE-301 releases Tutor while keeping unrelated legacy teaching routes hidden", () => {
   const hiddenDestinations = [
-    "tutor",
     "lesson-history",
     "courses",
     "achievements",
   ];
   const visibleHrefs =
     memberBeastEducationNavigation.children?.map((item) => item.href) || [];
+  assert.ok(visibleHrefs.includes("/dashboard/education/tutor"));
 
   for (const destination of hiddenDestinations) {
     assert.ok(
