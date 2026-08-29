@@ -222,6 +222,7 @@ function KnowledgeColumn({
     <section
       className="min-w-0 rounded-2xl border border-white/10 bg-white/[0.025] p-4"
       aria-labelledby={headingId}
+      data-knowledge-kind={kind}
     >
       <h2
         id={headingId}
