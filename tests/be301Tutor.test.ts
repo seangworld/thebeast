@@ -110,7 +110,7 @@ test("BE-301 provides an age-appropriate contextual tutorial and Outcome hooks",
   assert.match(workspace, /data-analytics-status="started"/);
   assert.match(workspace, /data-tour-step="tutor-upload"/);
   assert.equal(firstPartyProfessionalId("beasteducation.tutor"), "tutor");
-  const migration = readFileSync("supabase/migrations/20260829010000_add_tutor_outcome_telemetry.sql", "utf8");
+  const migration = readFileSync("supabase/migrations/20260829033929_add_tutor_outcome_telemetry.sql", "utf8");
   assert.match(migration, /professional_turn_started/);
   assert.match(migration, /professional_turn_completed/);
   assert.match(migration, /professional_turn_failed/);

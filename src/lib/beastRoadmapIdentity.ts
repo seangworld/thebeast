@@ -45,9 +45,9 @@ export const beastRoadmapPackageRegistry = [
     "BeastEducation AI Tutor and Homework Helper",
     [
       "docs/BEASTEDUCATION_AI_TUTOR.md",
-      "supabase/migrations/20260829010000_add_tutor_outcome_telemetry.sql",
+      "supabase/migrations/20260829033929_add_tutor_outcome_telemetry.sql",
     ],
-    ["20260829010000_add_tutor_outcome_telemetry.sql"]
+    ["20260829033929_add_tutor_outcome_telemetry.sql"]
   ),
   packageIdentity(
     "AP-RUN-100",
@@ -573,11 +573,11 @@ export const beastRoadmapPackageRegistry = [
     ["BM-43"],
     "Recurring Bill Occurrence Payment Integrity",
     [
-      "supabase/migrations/20260827214356_add_bill_payment_occurrence_identity.sql",
+      "supabase/migrations/20260827231649_add_bill_payment_occurrence_identity.sql",
       "src/lib/billPaymentOccurrences.ts",
       "tests/billPaymentOccurrences.test.ts",
     ],
-    ["20260827214356_add_bill_payment_occurrence_identity.sql"]
+    ["20260827231649_add_bill_payment_occurrence_identity.sql"]
   ),
 ] as const satisfies readonly BeastRoadmapPackageIdentity[];
 
