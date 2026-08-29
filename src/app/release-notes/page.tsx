@@ -27,6 +27,16 @@ export default function ReleaseNotesPage() {
       </header>
 
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
+        <div className="mb-12 rounded-lg border border-emerald-300/25 bg-[#0f1419] p-6">
+          <h2 className="text-2xl font-bold">BeastHome v1.0.0</h2>
+          <p className="mt-1 text-sm text-[#7f8da3]">August 29, 2026</p>
+          <h3 className="mt-4 font-semibold text-[#c7cfdb]">Private photo-to-home-inventory</h3>
+          <ul className="mt-3 space-y-2 pl-4 text-sm text-[#a5b4c7]">
+            <li><span className="text-emerald-300">✓</span> Adult members can turn one room photo into reviewable item suggestions and save only what they confirm.</li>
+            <li><span className="text-emerald-300">✓</span> Inventories are private, member-owned, organized by room, dated, and exportable as CSV.</li>
+            <li><span className="text-emerald-300">✓</span> Photos are not saved by this workflow; sharing, valuation guarantees, claims, and home automation remain off.</li>
+          </ul>
+        </div>
         <div className="mb-12 rounded-lg border border-cyan-300/25 bg-[#0f1419] p-6">
           <div className="mb-4">
             <h2 className="text-2xl font-bold">BeastEducation v1.7.1 · BeastOS v3.0.2</h2>
