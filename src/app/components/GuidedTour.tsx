@@ -69,6 +69,7 @@ export function GuidedTour({
   const [stepIndex, setStepIndex] = useState(0);
   const [rect, setRect] = useState<ReturnType<typeof targetRect>>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
+  const restoreFocusRef = useRef<HTMLElement | null>(null);
   const step = definition.steps[stepIndex];
 
   useEffect(() => {
@@ -92,6 +93,9 @@ export function GuidedTour({
 
   useEffect(() => {
     if (!open) return;
+    restoreFocusRef.current = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null;
     writeProgress(storageKey, definition, "started", stepIndex);
     const update = () => setRect(targetRect(step.target));
     update();
@@ -118,15 +122,36 @@ export function GuidedTour({
   function close(status: "completed" | "skipped") {
     writeProgress(storageKey, definition, status, stepIndex);
     setOpen(false);
+    window.requestAnimationFrame(() => restoreFocusRef.current?.focus());
+  }
+
+  function containFocus(event: React.KeyboardEvent<HTMLDivElement>) {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      close("skipped");
+      return;
+    }
+    if (event.key !== "Tab" || !dialogRef.current) return;
+    const controls = [...dialogRef.current.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    )];
+    if (!controls.length) return;
+    const first = controls[0];
+    const lastControl = controls[controls.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      lastControl.focus();
+    } else if (!event.shiftKey && document.activeElement === lastControl) {
+      event.preventDefault();
+      first.focus();
+    }
   }
 
   return (
     <div
       className="fixed inset-0 z-[100]"
       role="presentation"
-      onKeyDown={(event) => {
-        if (event.key === "Escape") close("skipped");
-      }}
+      onKeyDown={containFocus}
       data-guided-tour={definition.id}
     >
       <div className="absolute inset-0 bg-black/70" />
@@ -159,6 +184,9 @@ export function GuidedTour({
             type="button"
             className="rounded-lg px-2 py-1 text-sm font-bold text-slate-300 hover:bg-white/10 hover:text-white"
             onClick={() => close("skipped")}
+            data-analytics-event="workflow_completed"
+            data-analytics-category="guided_tour"
+            data-analytics-status="dismissed"
           >
             Skip
           </button>
@@ -196,6 +224,9 @@ export function GuidedTour({
                 ? close("completed")
                 : setStepIndex((current) => Math.min(definition.steps.length - 1, current + 1))
             }
+            data-analytics-event={last ? "workflow_completed" : "call_to_action_selected"}
+            data-analytics-category="guided_tour"
+            data-analytics-status={last ? "completed" : "continued"}
           >
             {last ? "Finish" : step.actionLabel || "Next"}
           </button>
@@ -225,6 +256,9 @@ export function GuidedTourReplayButton({
           new CustomEvent(START_GUIDED_TOUR_EVENT, { detail: { tourId } })
         )
       }
+      data-analytics-event="call_to_action_selected"
+      data-analytics-category="guided_tour"
+      data-analytics-action="replay"
     >
       {compact ? "Tour" : "How to Use Beast / Take the Tour Again"}
     </button>
