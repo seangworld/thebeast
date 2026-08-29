@@ -45,6 +45,7 @@ import { getBeastOSWorkspaceContext } from "@/lib/platform/identity";
 import { buildAuthLoginPath } from "@/lib/auth/experience";
 import { BEAST_ADMIN_MESSAGE_UNREAD_EVENT } from "@/lib/beastAdminMessaging";
 import { classifyMemberAge } from "@/lib/memberAgeEntitlements";
+import { GuidedTour, GuidedTourReplayButton } from "@/app/components/GuidedTour";
 
 const learningPrimaryNavigation: ModuleNavSection[] = [
   { label: "Guidance Counselor", href: "/dashboard/education/guidance-counselor", module: "learning" },
@@ -121,6 +122,7 @@ export default function DashboardLayout({
   const [dashboardGuardResolved, setDashboardGuardResolved] = useState(false);
   const [dashboardAccessError, setDashboardAccessError] = useState(false);
   const [adminMessageUnreadCount, setAdminMessageUnreadCount] = useState(0);
+  const [authenticatedMemberId, setAuthenticatedMemberId] = useState("");
   const workspaceModule = getWorkspaceModule(pathname);
   const workspaceContext = getBeastOSWorkspaceContext(workspaceModule);
   const personaModuleNavigation = getBeastModuleNavigationForPersona(
@@ -275,6 +277,7 @@ export default function DashboardLayout({
         );
         return;
       }
+      setAuthenticatedMemberId(authUser.id);
 
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
@@ -807,7 +810,7 @@ export default function DashboardLayout({
           </div>
         ) : null}
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-4">
+        <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-4" data-beast-navigation>
           <div className="space-y-6">
             <nav className="space-y-2" aria-label="BeastOS platform">
               {!compact ? (
@@ -926,19 +929,20 @@ export default function DashboardLayout({
         </div>
 
         {navigationOnly ? (
-          <div className="border-t border-[#2a3242] px-3 py-4">
+          <div className="border-t border-[#2a3242] px-3 py-4" data-beast-relationships-navigation>
             <SecondaryNavigationLinks />
           </div>
         ) : null}
 
         {!navigationOnly ? (
           <>
-            <div className="border-t border-[#2a3242] px-3 py-4">
+            <div className="border-t border-[#2a3242] px-3 py-4" data-beast-relationships-navigation>
               <SecondaryNavigationLinks />
             </div>
             <AdminViewAsControl compact={compact} surface="sidebar" />
             <div className="border-t border-[#2a3242] p-3">
               <div className="space-y-2">
+                <GuidedTourReplayButton compact={compact} />
                 <div className={compact ? "[&>button]:w-full [&>button]:px-2" : "[&>button]:w-full"}>
                   <LogoutButton />
                 </div>
@@ -1071,7 +1075,7 @@ export default function DashboardLayout({
 
       <div className="min-h-screen min-w-0 max-w-full pb-[calc(env(safe-area-inset-bottom)+76px)] md:pb-0 md:pl-20 lg:pl-72">
         <header className="sticky top-0 z-30 hidden items-center justify-end gap-3 border-b border-[#2a3242] bg-[#11151c]/95 px-5 py-3 backdrop-blur md:flex">
-          <nav aria-label="Member account" className="flex items-center gap-3">
+          <nav aria-label="Member account" className="flex items-center gap-3" data-beast-account-navigation>
             <Link
               href="/dashboard/settings/profile#account-password"
               className="beast-button-secondary"
@@ -1081,8 +1085,15 @@ export default function DashboardLayout({
             <LogoutButton />
           </nav>
         </header>
-        {children}
+        <div data-beast-main-content>{children}</div>
       </div>
+
+      {dashboardGuardResolved && !resolvingDashboardAccess && authenticatedMemberId ? (
+        <GuidedTour
+          memberId={authenticatedMemberId}
+          educationOnly={learningOnlyNavigation}
+        />
+      ) : null}
 
       <nav
         className="fixed inset-x-0 bottom-0 z-50 border-t border-[#2a3242] bg-[#0f1419]/98 px-2 pb-[calc(env(safe-area-inset-bottom)+8px)] pt-2 backdrop-blur md:hidden"
