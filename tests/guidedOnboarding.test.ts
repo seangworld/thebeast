@@ -77,7 +77,13 @@ test("contextual spotlight selectors are implemented by Education surfaces", () 
 test("guided modal contains focus and restores the previous control", () => {
   const source = readFileSync("src/app/components/GuidedTour.tsx", "utf8");
   assert.match(source, /event\.key !== "Tab"/);
-  assert.match(source, /restoreFocusRef\.current\?\.focus/);
+  assert.match(source, /const originalControl = document\.activeElement/);
+  assert.match(source, /window\.requestAnimationFrame\(\(\) => control\?\.focus\(\)\)/);
+  assert.match(source, /\}, \[open\]\);/);
+  assert.doesNotMatch(
+    source.slice(source.indexOf('writeProgress(storageKey, definition, "started"'), source.indexOf("const position")),
+    /restoreFocusRef\.current = document\.activeElement/
+  );
   assert.match(source, /aria-modal="true"/);
 });
 
