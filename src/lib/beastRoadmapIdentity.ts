@@ -40,6 +40,16 @@ const packageIdentity = (
  */
 export const beastRoadmapPackageRegistry = [
   packageIdentity(
+    "BE-301",
+    [],
+    "BeastEducation AI Tutor and Homework Helper",
+    [
+      "docs/BEASTEDUCATION_AI_TUTOR.md",
+      "supabase/migrations/20260829010000_add_tutor_outcome_telemetry.sql",
+    ],
+    ["20260829010000_add_tutor_outcome_telemetry.sql"]
+  ),
+  packageIdentity(
     "AP-RUN-100",
     ["AP-100"],
     "AI-Native Digital Staff Runtime",

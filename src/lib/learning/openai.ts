@@ -7,6 +7,7 @@ import {
   learningSystemPrompt,
   reflectionPrompt,
   teachingPrompt,
+  tutorSystemPrompt,
 } from "./promptLibrary";
 import { buildMentorConversationPresentationPrompt } from "./mentorConversationPresentation";
 import type {
@@ -37,7 +38,7 @@ export function buildOpenAILearningMessages(
     {
       role: "system",
       content: [
-        learningSystemPrompt,
+        request.outwardPersona === "tutor" ? tutorSystemPrompt : learningSystemPrompt,
         specialistPrompt,
         promptForConversationType(request.conversationType),
         buildMentorConversationPresentationPrompt({

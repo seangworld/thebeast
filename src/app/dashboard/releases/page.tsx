@@ -15,7 +15,7 @@ const releaseNotes = [
       "Added Riley Chen as a persistent AI Tutor in BeastEducation and Digital Staff, separate from the Guidance Counselor's education and career planning role.",
       "Learners can type a question or attach a readable homework image for guided explanation, shown-work review, practice, and correction.",
       "Added an age-appropriate first-use Tutor walkthrough, member navigation, profile, portrait, relationships, release analytics, and privacy guidance.",
-      "No database migration or new provider credential was required; Tutor conversations use existing owner-scoped persistence and images are not saved in conversation history.",
+      "Added privacy-bounded Tutor outcome telemetry with no student content or backfill; no new provider credential was required, conversations remain owner-scoped, and images are not saved in conversation history.",
     ],
   },
   {

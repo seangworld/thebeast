@@ -9,13 +9,13 @@ import {
 import type { AgentConversationThread } from "@/lib/platform/agents/conversationPersistence";
 import type { AgentMessage } from "@/lib/platform/agents/types";
 import type { LearningImageAttachment, OpenAILearningMessage } from "@/lib/learning/types";
+import { buildPersistedTutorAnswer, maximumTutorImageBytes } from "@/lib/learning/tutorRequest";
 import {
   ProfessionalConversationAvatar,
   tutorConversationIdentity,
 } from "@/app/components/agents/ProfessionalConversationIdentity";
 
 const tutorId = "beasteducation.tutor";
-const maxImageBytes = 8 * 1024 * 1024;
 const imageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 type Turn = { id: string; role: "user" | "assistant"; text: string; timestamp: string; attachmentName?: string };
@@ -40,7 +40,7 @@ function turnsFromThread(thread: AgentConversationThread | null): Turn[] {
 
 function fileAsAttachment(file: File): Promise<LearningImageAttachment> {
   if (!imageTypes.has(file.type)) return Promise.reject(new Error("Use a JPEG, PNG, or WebP image."));
-  if (file.size > maxImageBytes) return Promise.reject(new Error("Homework images must be 8 MB or smaller."));
+  if (file.size > maximumTutorImageBytes) return Promise.reject(new Error("Homework images must be 3 MB or smaller."));
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onerror = () => reject(new Error("The image could not be read."));
@@ -107,7 +107,7 @@ export default function TutorWorkspace() {
       const payload = await response.json() as { error?: string; response?: { content?: string; status?: string } };
       if (!response.ok || !payload.response?.content) throw new Error(payload.error || "Your Tutor could not respond.");
       const answer = payload.response.content;
-      const agentMessage: AgentMessage = { id: crypto.randomUUID(), threadId: thread.id, sender: { kind: "agent", id: tutorId }, recipient: { kind: "module", id: "beasteducation" }, content: { kind: "tutor_answer", text: answer, attachmentName: attachment?.fileName || null }, timestamp: new Date().toISOString() };
+      const agentMessage: AgentMessage = { id: crypto.randomUUID(), threadId: thread.id, sender: { kind: "agent", id: tutorId }, recipient: { kind: "module", id: "beasteducation" }, content: buildPersistedTutorAnswer(answer, attachment?.fileName), timestamp: new Date().toISOString() };
       const updated = await repository.append(ownerId, thread.id, [agentMessage]);
       setThread(updated); setTurns(turnsFromThread(updated)); setAttachment(undefined);
       if (fileInput.current) fileInput.current.value = "";
@@ -138,7 +138,7 @@ export default function TutorWorkspace() {
             {attachment ? <span className="text-sm text-indigo-200">Attached: {attachment.fileName}</span> : null}
             {attachment ? <button type="button" className="text-sm font-bold text-slate-300 underline" onClick={() => { setAttachment(undefined); if (fileInput.current) fileInput.current.value = ""; }}>Remove</button> : null}
           </div>
-          <p className="mt-3 text-xs leading-5 text-slate-400">JPEG, PNG, or WebP up to 8 MB. The image is sent only for this tutoring request and is not saved in Tutor conversation history. Riley will say when text is unreadable.</p>
+          <p className="mt-3 text-xs leading-5 text-slate-400">JPEG, PNG, or WebP up to 3 MB. The image is sent only for this tutoring request and is not saved in Tutor conversation history. Riley will say when text is unreadable.</p>
           {error ? <p role="alert" className="mt-3 rounded-xl border border-rose-300/30 bg-rose-300/10 p-3 text-sm text-rose-100">{error}</p> : null}
           <button type="button" className="beast-button mt-4" disabled={busy || (!request.trim() && !attachment) || !thread} onClick={() => void send()} data-analytics-event="call_to_action_selected" data-analytics-category="ai_tutor" data-analytics-status="started">{busy ? "Riley is working…" : "Start tutoring"}</button>
         </section>

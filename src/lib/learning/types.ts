@@ -1552,6 +1552,7 @@ export type OpenAILearningRequest = {
   context: LearningAIContext;
   homeworkPolicy: HomeworkPolicy;
   imageAttachment?: LearningImageAttachment;
+  outwardPersona?: "guidance_counselor" | "tutor";
 };
 
 export type OpenAILearningResponse = {

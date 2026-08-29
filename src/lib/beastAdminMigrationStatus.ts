@@ -91,6 +91,7 @@ export const beastAdminRepositoryMigrationFiles = [
   "20260826194329_add_standing_observation_staff_scheduling.sql",
   "20260827014607_add_standing_observation_authorization.sql",
   "20260827214356_add_bill_payment_occurrence_identity.sql",
+  "20260829010000_add_tutor_outcome_telemetry.sql",
 ] as const;
 
 export type BeastAdminMigrationState =

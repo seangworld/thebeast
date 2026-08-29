@@ -39,7 +39,7 @@ export default function ReleaseNotesPage() {
             <li><span className="text-cyan-300">✓</span> Tours remember completion by version and can be replayed from How to Use Beast.</li>
             <li><span className="text-cyan-300">✓</span> Added Riley Chen, a persistent BeastEducation AI Tutor with a complete Digital Staff profile, relationship, and professional portrait.</li>
             <li><span className="text-cyan-300">✓</span> Added guided homework help, shown-work review, practice support, and readable JPEG/PNG/WebP assignment-photo understanding.</li>
-            <li><span className="text-cyan-300">✓</span> Homework images are bounded to 8 MB, used only for the active request, and not copied into Tutor conversation history.</li>
+            <li><span className="text-cyan-300">✓</span> Homework images are bounded to 3 MB so encoded requests stay within hosting limits, used only for the active request, and not copied into Tutor conversation history.</li>
           </ul>
         </div>
 

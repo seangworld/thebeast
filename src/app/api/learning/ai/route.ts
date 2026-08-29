@@ -6,30 +6,34 @@ import { conversationTypeFromIntent, detectLearningIntent } from "@/lib/learning
 import { callOpenAILearningSpecialist } from "@/lib/learning/openai";
 import { routeLearningAI } from "@/lib/learning/router";
 import { createRouteClient } from "@/lib/supabase/server";
+import { acquireDigitalStaffRequestLease } from "@/lib/digitalStaffRuntime";
+import { digitalStaffTelemetryRecord, recordServerFirstPartyTelemetry } from "@/lib/server/firstPartyTelemetry";
+import { requireProfessionalEntitlement } from "@/lib/memberAgeServer";
+import { firstPartyPerformanceBucket, type FirstPartyTelemetryErrorCategory } from "@/lib/firstPartyTelemetry";
+import { buildTutorLearnerContext, requireAuthenticatedTutorMember, tutorProfessionalId, tutorResponseHeaders, validateTutorImageAttachment } from "@/lib/learning/tutorRequest";
 import type { LearningImageAttachment, MasteryProfile, OpenAILearningMessage } from "@/lib/learning/types";
 import { boundLearningConversationMessages, maximumLearningRequestCharacters } from "@/lib/learning/conversationBounds";
 
 export const dynamic = "force-dynamic";
-const allowedImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
-const maximumImageBytes = 8 * 1024 * 1024;
+function json(body: unknown, status = 200) {
+  return NextResponse.json(body, { status, headers: tutorResponseHeaders });
+}
 
-function validateImageAttachment(value: unknown): LearningImageAttachment | undefined {
-  if (value == null) return undefined;
-  if (!value || typeof value !== "object") throw new Error("The homework image is invalid.");
-  const attachment = value as Record<string, unknown>;
-  const dataUrl = typeof attachment.dataUrl === "string" ? attachment.dataUrl : "";
-  const fileName = typeof attachment.fileName === "string" ? attachment.fileName.trim().slice(0, 120) : "homework image";
-  const mediaType = typeof attachment.mediaType === "string" ? attachment.mediaType : "";
-  if (!allowedImageTypes.has(mediaType) || !dataUrl.startsWith(`data:${mediaType};base64,`)) {
-    throw new Error("Use a JPEG, PNG, or WebP homework image.");
-  }
-  const encoded = dataUrl.slice(dataUrl.indexOf(",") + 1);
-  if (!/^[A-Za-z0-9+/]+={0,2}$/.test(encoded)) {
-    throw new Error("The homework image is not valid base64 data.");
-  }
-  const approximateBytes = Math.floor((encoded.length * 3) / 4);
-  if (!encoded || approximateBytes > maximumImageBytes) throw new Error("Homework images must be 8 MB or smaller.");
-  return { dataUrl, fileName: fileName || "homework image", mediaType: mediaType as LearningImageAttachment["mediaType"] };
+function tutorTelemetry(status: "started" | "completed" | "failed", startedAt: number, errorCategory?: FirstPartyTelemetryErrorCategory) {
+  if (status === "started") return {
+    eventName: "professional_turn_started" as const,
+    moduleId: "education" as const,
+    professionalId: "tutor" as const,
+    outcome: "started" as const,
+    performanceBucket: "unknown" as const,
+    modelRoute: "none" as const,
+  };
+  return digitalStaffTelemetryRecord({
+    professionalId: tutorProfessionalId,
+    status,
+    latencyMs: Date.now() - startedAt,
+    errorCategory,
+  });
 }
 
 const defaultMastery: MasteryProfile = {
@@ -42,6 +46,7 @@ const defaultMastery: MasteryProfile = {
 };
 
 export async function POST(request: Request) {
+  const startedAt = Date.now();
   const supabase = createRouteClient();
   const {
     data: { user },
@@ -49,8 +54,12 @@ export async function POST(request: Request) {
   } = await supabase.auth.getUser();
 
   if (userError || !user) {
-    return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+    return json({ error: "Authentication required." }, 401);
   }
+  requireAuthenticatedTutorMember(user.id);
+
+  const entitlement = await requireProfessionalEntitlement(tutorProfessionalId, { supabase, user });
+  if (!entitlement.ok) return json({ error: "The AI Tutor is unavailable for this member profile." }, entitlement.status);
 
   let body: {
     userRequest?: string;
@@ -65,28 +74,53 @@ export async function POST(request: Request) {
   try {
     body = (await request.json()) as typeof body;
   } catch {
-    return NextResponse.json({ error: "A valid learning request is required." }, { status: 400 });
+    return json({ error: "A valid learning request is required." }, 400);
   }
   const userRequest = body.userRequest?.trim();
 
   if (!userRequest || userRequest.length > maximumLearningRequestCharacters) {
-    return NextResponse.json({ error: "A learning request is required." }, { status: 400 });
+    return json({ error: "A learning request is required." }, 400);
   }
   let imageAttachment: LearningImageAttachment | undefined;
   try {
-    imageAttachment = validateImageAttachment(body.imageAttachment);
+    imageAttachment = validateTutorImageAttachment(body.imageAttachment);
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "The homework image is invalid." }, { status: 400 });
+    void recordServerFirstPartyTelemetry({ actorId: user.id, record: tutorTelemetry("failed", startedAt, "validation")! });
+    return json({ error: error instanceof Error ? error.message : "The homework image is invalid." }, 400);
   }
 
-  const intent = detectLearningIntent(userRequest);
+  const requestLease = acquireDigitalStaffRequestLease(user.id, tutorProfessionalId);
+  if (!requestLease.ok) {
+    void recordServerFirstPartyTelemetry({ actorId: user.id, record: tutorTelemetry("failed", startedAt, "rate_limited")! });
+    return NextResponse.json({ error: "Another Tutor request is already being handled. Please retry shortly." }, { status: 429, headers: { ...tutorResponseHeaders, "Retry-After": String(requestLease.retryAfterSeconds) } });
+  }
+  void recordServerFirstPartyTelemetry({ actorId: user.id, record: tutorTelemetry("started", startedAt)! });
+
+  try {
+    const { data: learningProfile } = await supabase
+      .from("learning_profiles")
+      .select("focus,birthday,learning_style,preferred_pace")
+      .eq("user_id", user.id)
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const learnerContext = buildTutorLearnerContext({
+      accountBirthday: entitlement.profile.birthday,
+      learningBirthday: learningProfile?.birthday,
+      focus: learningProfile?.focus,
+      learningStyle: learningProfile?.learning_style,
+      preferredPace: learningProfile?.preferred_pace,
+    });
+
+    const intent = detectLearningIntent(userRequest);
   const conversationType = conversationTypeFromIntent(intent);
-  const context = buildLearningAIContext({
-    learnerName: user.email?.split("@")[0] || "Learner",
+    const context = buildLearningAIContext({
+    learnerName: learnerContext.profile,
     mastery: body.mastery || defaultMastery,
     weakAreas: body.mastery?.weakConcepts || [],
     currentLesson: body.currentLesson || "Private beta learning session",
   });
+    context.learningStyle = `${learnerContext.learningStyle}; preferred pace: ${learnerContext.preferredPace}`;
   const routed = routeLearningAI({
     userRequest,
     context,
@@ -99,7 +133,7 @@ export async function POST(request: Request) {
   const specialistId = routed.selectedSpecialistIds[0] || "tutor";
   const specialist = getAISpecialistById(specialistId);
 
-  const aiResponse = await callOpenAILearningSpecialist({
+    const aiResponse = await callOpenAILearningSpecialist({
     specialistId,
     specialistName: specialist?.name || "Tutor",
     conversationType,
@@ -107,12 +141,26 @@ export async function POST(request: Request) {
     context,
     homeworkPolicy: getHomeworkPolicyForRequest(userRequest),
     imageAttachment,
+    outwardPersona: "tutor",
   });
 
-  return NextResponse.json({
+    if (aiResponse.status !== "ready") {
+      void recordServerFirstPartyTelemetry({ actorId: user.id, record: tutorTelemetry("failed", startedAt, aiResponse.status === "unconfigured" ? "configuration" : "provider")! });
+      return json({ error: aiResponse.content }, aiResponse.status === "unconfigured" ? 503 : 502);
+    }
+    const completed = tutorTelemetry("completed", startedAt);
+    if (completed) void recordServerFirstPartyTelemetry({ actorId: user.id, record: { ...completed, performanceBucket: firstPartyPerformanceBucket(Date.now() - startedAt) } });
+    return json({
     intent,
     conversationType,
     routed,
-    response: aiResponse,
-  }, { headers: { "Cache-Control": "private, no-store" } });
+    professionalId: tutorProfessionalId,
+    response: { ...aiResponse, specialistId: tutorProfessionalId },
+    });
+  } catch {
+    void recordServerFirstPartyTelemetry({ actorId: user.id, record: tutorTelemetry("failed", startedAt, "provider")! });
+    return json({ error: "Your Tutor is temporarily unavailable. Please try again." }, 502);
+  } finally {
+    requestLease.release();
+  }
 }
