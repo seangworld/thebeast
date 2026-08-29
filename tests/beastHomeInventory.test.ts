@@ -3,6 +3,8 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { resolveMemberModuleEntitlement } from "../src/lib/memberAgeEntitlements";
 import { getModuleRegistryEntry } from "../src/lib/moduleRegistry";
+import { normalizeBeastAdminMemberEditRequest } from "../src/lib/beastAdminMemberEditing";
+import { normalizeBeastAdminMemberInvitationRequest } from "../src/lib/beastAdminMemberInvitations";
 const migration = readFileSync("supabase/migrations/20260829040000_add_beast_home_inventory.sql", "utf8");
 const detector = readFileSync("src/app/api/home/inventory/detect/route.ts", "utf8");
 const workspace = readFileSync("src/app/dashboard/home/inventory/BeastHomeInventoryWorkspace.tsx", "utf8");
@@ -25,7 +27,7 @@ test("BHM-002 persistence is explicitly owner-scoped and RLS protected", () => {
   assert.match(migration, /references public\.beast_documents\(id, owner_id\)/);
   assert.match(migration, /on delete set null \(receipt_document_id\)/);
   assert.match(migration, /foreign key \(room_id, inventory_id, owner_id\)/);
-  assert.doesNotMatch(migration, /service_role/);
+  assert.doesNotMatch(migration, /grant [^;]*beast_home_[^;]* to service_role/);
 });
 
 test("BHM-002 entitlement denies minors unknown ages and disabled access while preserving adult and admin access", () => {
@@ -61,4 +63,35 @@ test("BHM-002 implements receipt linking onboarding and privacy-bounded Outcome 
   const tour = readFileSync("src/lib/guidedOnboarding.ts", "utf8");
   assert.match(tour, /beasthome-inventory-first-use/);
   assert.match(tour, /private home inventory[\s\S]*review and confirm/i);
+});
+
+test("BHM-002 persists Home access through canonical member editing and invitation contracts", () => {
+  const edit = normalizeBeastAdminMemberEditRequest({
+    displayName: "Adult Member",
+    email: "adult@example.com",
+    role: "user",
+    accountStatus: "active",
+    moduleAccess: ["home"],
+    betaFlagIds: [],
+    confirmEmailChange: false,
+  });
+  assert.deepEqual(edit?.moduleAccess, ["home"]);
+
+  const invitation = normalizeBeastAdminMemberInvitationRequest({
+    email: "new-adult@example.com",
+    displayName: "New Adult",
+    role: "user",
+    householdId: null,
+    relationship: null,
+    moduleAccess: ["home"],
+    betaFlagIds: [],
+    invitationMessage: null,
+  });
+  assert.deepEqual(invitation?.moduleAccess, ["home"]);
+
+  assert.match(migration, /beast_admin_member_invitations_module_check[\s\S]*'money', 'learning', 'home'/);
+  assert.match(migration, /update_beast_admin_member_account\(uuid,text,text,text,text\[\],uuid\[\],jsonb,uuid\)/);
+  assert.match(migration, /create_beast_admin_member_invitation\(uuid,uuid,text,text,text,uuid,text,text\[\],uuid\[\],text,timestamptz,timestamptz\)/);
+  assert.equal((migration.match(/replacement_count <> 2/g) ?? []).length, 2);
+  assert.equal((migration.match(/grant execute on function public\.(?:update_beast_admin_member_account|create_beast_admin_member_invitation)/g) ?? []).length, 2);
 });

@@ -112,3 +112,91 @@ begin
 end; $$;
 revoke all on function public.get_beast_admin_first_party_telemetry(integer, text) from public, anon;
 grant execute on function public.get_beast_admin_first_party_telemetry(integer, text) to authenticated;
+
+
+-- Keep BeastAdmin member editing and invitations aligned with the newly
+-- released Home entitlement. The guarded transformation preserves the
+-- canonical function signatures, authorization, audit, and feature-flag logic
+-- while failing closed if an environment's prior function differs.
+alter table public.beast_admin_member_invitations
+  drop constraint if exists beast_admin_member_invitations_module_check;
+alter table public.beast_admin_member_invitations
+  add constraint beast_admin_member_invitations_module_check check (
+    module_ids <@ array['money', 'learning', 'home']::text[]
+  );
+
+do $bhm_member_access_rpc$
+declare
+  function_definition text;
+  replacement_count integer;
+  old_modules constant text := 'array[''money'', ''learning'']::text[]';
+  new_modules constant text := 'array[''money'', ''learning'', ''home'']::text[]';
+begin
+  select pg_get_functiondef(
+    to_regprocedure(
+      'public.update_beast_admin_member_account(uuid,text,text,text,text[],uuid[],jsonb,uuid)'
+    )
+  ) into function_definition;
+
+  if function_definition is null then
+    raise exception 'Canonical member account RPC is unavailable'
+      using errcode = 'P0002';
+  end if;
+
+  replacement_count :=
+    (length(function_definition) - length(replace(function_definition, old_modules, '')))
+    / length(old_modules);
+
+  if replacement_count <> 2 then
+    raise exception 'Canonical member account RPC differs from reviewed Home entitlement contract'
+      using errcode = '55000';
+  end if;
+
+  execute replace(function_definition, old_modules, new_modules);
+end;
+$bhm_member_access_rpc$;
+
+revoke all on function public.update_beast_admin_member_account(
+  uuid, text, text, text, text[], uuid[], jsonb, uuid
+) from public, anon, authenticated;
+grant execute on function public.update_beast_admin_member_account(
+  uuid, text, text, text, text[], uuid[], jsonb, uuid
+) to service_role;
+
+do $bhm_invitation_access_rpc$
+declare
+  function_definition text;
+  replacement_count integer;
+  old_modules constant text := 'array[''money'', ''learning'']::text[]';
+  new_modules constant text := 'array[''money'', ''learning'', ''home'']::text[]';
+begin
+  select pg_get_functiondef(
+    to_regprocedure(
+      'public.create_beast_admin_member_invitation(uuid,uuid,text,text,text,uuid,text,text[],uuid[],text,timestamptz,timestamptz)'
+    )
+  ) into function_definition;
+
+  if function_definition is null then
+    raise exception 'Canonical member invitation RPC is unavailable'
+      using errcode = 'P0002';
+  end if;
+
+  replacement_count :=
+    (length(function_definition) - length(replace(function_definition, old_modules, '')))
+    / length(old_modules);
+
+  if replacement_count <> 2 then
+    raise exception 'Canonical member invitation RPC differs from reviewed Home entitlement contract'
+      using errcode = '55000';
+  end if;
+
+  execute replace(function_definition, old_modules, new_modules);
+end;
+$bhm_invitation_access_rpc$;
+
+revoke all on function public.create_beast_admin_member_invitation(
+  uuid, uuid, text, text, text, uuid, text, text[], uuid[], text, timestamptz, timestamptz
+) from public, anon, authenticated;
+grant execute on function public.create_beast_admin_member_invitation(
+  uuid, uuid, text, text, text, uuid, text, text[], uuid[], text, timestamptz, timestamptz
+) to service_role;
