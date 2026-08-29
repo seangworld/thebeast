@@ -1,6 +1,6 @@
 {
   "generatedFrom": "BeastFusion state/ecosystem-version-registry.json",
-  "generatedAt": "2026-08-23",
+  "generatedAt": "2026-08-29",
   "identities": {
     "beast": {
       "name": "The Beast",
@@ -11,10 +11,10 @@
     },
     "beastos": {
       "name": "BeastOS",
-      "version": "3.0.0",
-      "buildId": "beastos-3.0.0+20260728.01",
+      "version": "3.0.1",
+      "buildId": "beastos-3.0.1+20260829.01",
       "channel": "Production",
-      "releaseDate": "2026-07-28"
+      "releaseDate": "2026-08-29"
     },
     "beastmoney": {
       "name": "BeastMoney",
@@ -25,10 +25,10 @@
     },
     "beastlearning": {
       "name": "BeastEducation",
-      "version": "1.6.0",
-      "buildId": "beastlearning-1.6.0+20260816.01",
+      "version": "1.6.1",
+      "buildId": "beastlearning-1.6.1+20260829.01",
       "channel": "Production",
-      "releaseDate": "2026-08-16"
+      "releaseDate": "2026-08-29"
     },
     "beasthealth": {
       "name": "BeastHealth",
