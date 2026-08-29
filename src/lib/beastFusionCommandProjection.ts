@@ -344,7 +344,8 @@ export function validateBeastFusionCommandProjection(value: unknown): BeastFusio
   for (const item of sourceManifest) if (!String(item.path ?? "").match(/^(?!\/)(?!.*\.\.)[A-Za-z0-9_./-]+$/) || !digestPattern.test(String(item.digest ?? ""))) errors.push("Source manifest contains an unsafe path or malformed digest.");
   const calculatedInputDigest = sha256(sourceManifest.map((item) => `${item.path}\0${item.digest}`).join("\n"));
   if (source.canonicalInputDigest !== calculatedInputDigest) errors.push("Canonical input digest mismatch.");
-  if (value.projectionId !== `bfcp_${calculatedInputDigest.slice(7, 23)}`) errors.push("Projection identity does not match canonical inputs.");
+  const calculatedProjectionIdentity = sha256(`${calculatedInputDigest}\0${String(source.commit ?? "")}`);
+  if (value.projectionId !== `bfcp_${calculatedProjectionIdentity.slice(7, 23)}`) errors.push("Projection identity does not match canonical inputs and exact source commit.");
 
   const roadmap = isRecord(value.roadmap) ? value.roadmap : {};
   const roadmapItems = array(roadmap.items, "roadmap.items", errors).filter(isRecord);

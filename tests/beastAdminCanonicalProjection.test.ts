@@ -24,9 +24,11 @@ function fixture() {
   };
   const sourceManifest = sourcePaths.map((path) => ({ path, role: roles[path], digest: digest(path), updatedAt: "2026-08-21" }));
   const canonicalInputDigest = digest(sourceManifest.map((item) => `${item.path}\0${item.digest}`).join("\n"));
+  const sourceCommit = "a4a3303a857354ce0568ebcb1ae841e4c7beda0e";
+  const projectionIdentity = digest(`${canonicalInputDigest}\0${sourceCommit}`);
   return {
-    $schema: "beastfusion-command-center-projection.schema.json", projectionVersion: "1.0.0", projectionId: `bfcp_${canonicalInputDigest.slice(7, 23)}`, generatedAt: "2026-08-21T20:00:00Z",
-    source: { owner: "beastfusion", repository: "seangworld/beastfusion", branch: "main", commit: "a4a3303a857354ce0568ebcb1ae841e4c7beda0e", canonicalInputDigest, generatorVersion: "1.0.0" },
+    $schema: "beastfusion-command-center-projection.schema.json", projectionVersion: "1.0.0", projectionId: `bfcp_${projectionIdentity.slice(7, 23)}`, generatedAt: "2026-08-21T20:00:00Z",
+    source: { owner: "beastfusion", repository: "seangworld/beastfusion", branch: "main", commit: sourceCommit, canonicalInputDigest, generatorVersion: "1.0.0" },
     classification: { audience: "beastadmin_owner_only", containsMemberData: false, containsSecrets: false, containsRawPrompts: false }, sourceManifest,
     summary: { cursorPath: ["Planning Mode"], cursorMode: "planning_mode", executableWorkAvailable: false, selectedPackage: null, selectedProduct: null, selectionReason: "Owner review required", recommendedDirective: "Owner Strategy Review", ownerDecisionRequired: true, ownerDecisionReason: "No approved work", warningCount: 0, errorCount: 0 },
     portfolio: [{ id: "beastfusion", name: "BeastFusion", parent: null, ownerRepository: "seangworld/beastfusion", lifecycle: "active", version: "1.0.0", buildId: null, releaseDate: "2026-08-21", channel: "canonical", declaredDeployment: "repository", deploymentEvidenceType: "canonical_declaration", activeRoadmap: "roadmaps/active/BeastFusion.md" }],
@@ -54,6 +56,16 @@ test("BA-CMD-001A accepts the strict canonical projection deterministically", ()
   const first = validateBeastFusionCommandProjection(fixture());
   const second = validateBeastFusionCommandProjection(JSON.parse(stableProjectionString(fixture())));
   assert.equal(first.ok, true); assert.deepEqual(first, second);
+});
+
+test("projection identity binds unchanged canonical content to the exact source commit", () => {
+  const first = fixture();
+  const next = fixture();
+  next.source.commit = "b4a3303a857354ce0568ebcb1ae841e4c7beda0e";
+  const nextIdentity = digest(`${next.source.canonicalInputDigest}\0${next.source.commit}`);
+  next.projectionId = `bfcp_${nextIdentity.slice(7, 23)}`;
+  assert.notEqual(first.projectionId, next.projectionId);
+  assert.equal(validateBeastFusionCommandProjection(next).ok, true);
 });
 
 test("malformed partial unknown-version hash and sensitive projections fail closed", () => {
