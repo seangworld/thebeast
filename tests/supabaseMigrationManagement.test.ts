@@ -102,6 +102,7 @@ const expectedCliMigrations = [
   "20260827014607_add_standing_observation_authorization.sql",
   "20260827231649_add_bill_payment_occurrence_identity.sql",
   "20260829033929_add_tutor_outcome_telemetry.sql",
+  "20260829040000_add_beast_home_inventory.sql",
 ];
 
 test("Supabase CLI migrations exist in dependency-safe order", () => {
