@@ -2,9 +2,9 @@ import type { BeastHomePlaceholder } from "./BeastHomeShell";
 
 export const beastHomeOverview: BeastHomePlaceholder = {
   title: "BeastHome",
-  description: "Admin-only foundation for the future BeastHome workspace.",
+  description: "Private home records and a reviewed photo-to-inventory workflow.",
   focus: [
-    "Reserve the BeastHome application shell.",
+    "Create a dated room-by-room inventory from reviewed photo suggestions.",
     "Keep home, vehicle, maintenance, security, and document scope protected until policy is approved.",
     "Confirm future home data belongs behind BeastOS permissions.",
   ],
