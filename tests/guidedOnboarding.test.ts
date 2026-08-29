@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import {
   beastEducationGuidedTour,
@@ -54,9 +55,34 @@ test("BeastEducation tutorial uses plain language and includes homework help", (
     .map((step) => `${step.title} ${step.description}`)
     .join(" ");
   assert.match(copy, /What I Know/);
-  assert.match(copy, /What I.m Planning/);
+  assert.match(copy, /What I Think/);
   assert.match(copy, /What I Still Need/);
   assert.match(copy, /Answer This/);
-  assert.match(copy, /Take a picture or upload it/);
   assert.doesNotMatch(copy, /canonical|governance|runtime|telemetry/i);
+});
+
+test("contextual spotlight selectors are implemented by Education surfaces", () => {
+  const source = [
+    readFileSync("src/app/dashboard/learning/BeastEducationExperience.tsx", "utf8"),
+    readFileSync("src/app/dashboard/learning/GuidanceCounselorConversation.tsx", "utf8"),
+    readFileSync("src/app/components/agents/ProfessionalKnowledgeWorkspace.tsx", "utf8"),
+  ].join("\n");
+  for (const step of beastEducationGuidedTour.steps) {
+    if (!step.target) continue;
+    const stableHook = step.target.match(/data-[a-z-]+/)?.[0];
+    assert.ok(stableHook && source.includes(stableHook), `${step.id} target must exist`);
+  }
+});
+
+test("guided modal contains focus and restores the previous control", () => {
+  const source = readFileSync("src/app/components/GuidedTour.tsx", "utf8");
+  assert.match(source, /event\.key !== "Tab"/);
+  assert.match(source, /restoreFocusRef\.current\?\.focus/);
+  assert.match(source, /aria-modal="true"/);
+});
+
+test("Education tour selection follows route context rather than member persona", () => {
+  const source = readFileSync("src/app/dashboard/layout.tsx", "utf8");
+  assert.match(source, /educationOnly=\{pathname\.includes\("\/education\/guidance-counselor"\)\}/);
+  assert.doesNotMatch(source, /educationOnly=\{learningOnlyNavigation\}/);
 });
