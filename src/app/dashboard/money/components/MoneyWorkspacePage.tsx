@@ -69,6 +69,7 @@ import { buildFinancialMissionControl } from "@/lib/financialMissionControl";
 import { normalizeDebtStrategy } from "@/lib/debtStrategies";
 import { getDebtLifecycleStatus, type DebtLifecycleStatus } from "@/lib/debtLifecycle";
 import { memberSafeMessage } from "@/lib/memberSafeError";
+import { ProductRoadmapModulePreview } from "@/app/components/ProductRoadmapVisibility";
 
 type MoneyDebt = {
   id: string;
@@ -1092,6 +1093,7 @@ export function MoneyWorkspacePage({
       ) : (
         <div className="grid gap-5"><DebtImmediateAttention awareness={snapshot.debtAwareness} surface="Dashboard" /><DebtImmediateAttention awareness={snapshot.debtAwareness} surface="Daily Briefing" /><FinancialMissionControl model={financialMissionControl} /></div>
       )}
+      <ProductRoadmapModulePreview product="BeastMoney" />
     </BeastMoneyShell>
   ) : null;
 
