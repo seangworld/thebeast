@@ -23,7 +23,11 @@ first supported error, guides correction, and offers targeted practice. Images
 remain active-request-only and are not stored in conversation history.
 
 All four specialists use an isolated, tool-less semantic verifier before
-primary generation and after buffered final output. The final researched answer,
+primary generation and after buffered final output. Input verification is
+limited to executable protected-instruction override or disclosure attempts;
+ordinary requests that require a bounded specialist refusal continue to the
+specialist and are checked against the full response-boundary taxonomy on
+output. The final researched answer,
 when research is permitted, is what receives output verification. A generating
 model cannot approve its own prose merely by labeling a response contract safe;
 unsafe, uncertain, malformed, or unavailable verification fails closed to a

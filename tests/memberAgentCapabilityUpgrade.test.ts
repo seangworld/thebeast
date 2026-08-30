@@ -491,7 +491,7 @@ test("semantic verifier times out internally and fails closed", async () => {
   }
 });
 
-test("semantic verifier strict schema uses only supported array keywords and deduplicates categories", async () => {
+test("semantic verifier uses phase-bounded categories and deduplicates output categories", async () => {
   const priorKey = process.env.OPENAI_API_KEY;
   const priorFetch = globalThis.fetch;
   try {
@@ -502,13 +502,30 @@ test("semantic verifier strict schema uses only supported array keywords and ded
       return semanticVerifierResponse("unsafe", ["academic_integrity", "academic_integrity"]);
     }) as typeof fetch;
 
+    const inputResult = await verifyMemberAgentSemanticSafety({
+      professionalId: "beastmoney.money-coach",
+      phase: "input",
+      memberMessage: "Submit the payment for me now.",
+      model: "test-model",
+    });
+    const inputRequest = requestBody;
+
+    globalThis.fetch = (async (_input, init) => {
+      requestBody = requestPayload(init);
+      return semanticVerifierResponse("unsafe", ["academic_integrity", "academic_integrity"]);
+    }) as typeof fetch;
     const result = await verifyMemberAgentSemanticSafety({
       professionalId: "beasteducation.tutor",
-      phase: "input",
+      phase: "output",
       memberMessage: "Give me final answers for a live graded test.",
+      candidateResponse: "Here are the final answers to submit.",
       model: "test-model",
     });
 
+    assert.equal(inputResult.failure, "semantic-verifier-malformed");
+    assert.equal(JSON.stringify(inputRequest).includes("consequential_financial_action"), false);
+    assert.equal(JSON.stringify(inputRequest).includes("protected_instruction_override"), true);
+    assert.equal(JSON.stringify(requestBody).includes("academic_integrity"), true);
     assert.equal(JSON.stringify(requestBody).includes("uniqueItems"), false);
     assert.deepEqual(result.categories, ["academic_integrity"]);
     assert.equal(result.failure, "semantic-verifier-unsafe");
