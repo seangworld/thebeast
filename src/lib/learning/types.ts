@@ -1553,6 +1553,7 @@ export type OpenAILearningRequest = {
   homeworkPolicy: HomeworkPolicy;
   imageAttachment?: LearningImageAttachment;
   outwardPersona?: "guidance_counselor" | "tutor";
+  contextBoundary?: import("../memberAgentCapabilityFramework").MemberSpecialistContextPacket;
 };
 
 export type OpenAILearningResponse = {
@@ -1560,4 +1561,5 @@ export type OpenAILearningResponse = {
   specialistId: string;
   content: string;
   model: string;
+  safetyContract?: import("../memberAgentResponseSafety").MemberAgentResponseContract;
 };

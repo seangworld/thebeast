@@ -27,6 +27,18 @@ export default function ReleaseNotesPage() {
       </header>
 
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
+        <div className="mb-12 rounded-lg border border-indigo-300/25 bg-[#0f1419] p-6">
+          <h2 className="text-2xl font-bold">BeastOS v3.2.0 · BeastFusion v2.5.0</h2>
+          <p className="mt-1 text-sm text-[#7f8da3]">August 30, 2026</p>
+          <h3 className="mt-4 font-semibold text-[#c7cfdb]">Member AI capability upgrade</h3>
+          <ul className="mt-3 space-y-2 pl-4 text-sm text-[#a5b4c7]">
+            <li><span className="text-indigo-300">✓</span> Added evidence-backed capability, autonomy, authority, privacy, and data-boundary contracts for Guidance Counselor, Money Coach, Health Advisor, and AI Tutor.</li>
+            <li><span className="text-indigo-300">✓</span> Added server-derived purpose, age-band, entitlement, provenance, completeness, and current-agent continuity context.</li>
+            <li><span className="text-indigo-300">✓</span> Strengthened deterministic safety handling and Tutor Homework Check/Review without expanding professional or execution authority.</li>
+            <li><span className="text-indigo-300">✓</span> Added sanitized public profiles and shared assessment methodology. Connected Balances and AI Fitness Trainer remain unavailable.</li>
+          </ul>
+          <Link href="/ai-specialists" className="beast-button mt-5 inline-flex">Explore member AI evidence</Link>
+        </div>
         <div className="mb-12 rounded-lg border border-violet-300/25 bg-[#0f1419] p-6">
           <h2 className="text-2xl font-bold">BeastOS v3.1.0 · BeastFusion v2.4.0</h2>
           <p className="mt-1 text-sm text-[#7f8da3]">August 30, 2026</p>

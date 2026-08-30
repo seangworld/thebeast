@@ -59,7 +59,8 @@ import {
 } from "@/lib/platform/agents";
 import { createClient } from "@/lib/supabase/client";
 import { digitalStaffActivityLabels, requestDigitalStaffResponse } from "@/lib/digitalStaffRuntime/client";
-import type { DigitalStaffActivity, StructuredKnowledgeProposal } from "@/lib/digitalStaffRuntime";
+import type { DigitalStaffActivity, ProfessionalId, StructuredKnowledgeProposal } from "@/lib/digitalStaffRuntime";
+import { resolveMemberHandoffDestination } from "@/lib/memberAgentCapabilityFramework";
 
 export const guidanceCounselorSuggestedQuestions = [
   "I’m not sure what career fits me.",
@@ -77,6 +78,7 @@ type GuidanceTurn = {
   activity?: DigitalStaffActivity;
   failed?: boolean;
   proposals?: readonly StructuredKnowledgeProposal[];
+  handoff?: { professionalId: ProfessionalId; reason: string } | null;
   timestamp?: string;
 };
 
@@ -323,12 +325,13 @@ export default function GuidanceCounselorConversation({
         typeof counselor.content === "string"
           ? counselor.content
           : String((counselor.content as { text?: string }).text || "");
-      const runtime = counselor.content && typeof counselor.content === "object" && !Array.isArray(counselor.content) ? (counselor.content as { runtime?: { proposals?: StructuredKnowledgeProposal[] } }).runtime : undefined;
+      const runtime = counselor.content && typeof counselor.content === "object" && !Array.isArray(counselor.content) ? (counselor.content as { runtime?: { proposals?: StructuredKnowledgeProposal[]; handoff?: { professionalId: ProfessionalId; reason: string } | null } }).runtime : undefined;
       restored.push({
         id: member.id.replace(/-user$/, ""),
         question: String(member.content),
         response: content,
         proposals: runtime?.proposals,
+        handoff: runtime?.handoff,
         timestamp: counselor.timestamp || member.timestamp,
       });
     }
@@ -611,7 +614,7 @@ export default function GuidanceCounselorConversation({
         onActivity: (activity) => setTurns((current) => current.map((turn) => turn.id === turnId ? { ...turn, activity } : turn)),
         onResponseDelta: (delta) => setTurns((current) => current.map((turn) => turn.id === turnId ? { ...turn, response: `${turn.response}${delta}` } : turn)),
       });
-      setTurns((current) => current.map((turn) => turn.id === turnId ? { id: turnId, question: cleanQuestion, response: payload.result.response, proposals: payload.result.proposals, timestamp: messageTimestamp } : turn));
+      setTurns((current) => current.map((turn) => turn.id === turnId ? { id: turnId, question: cleanQuestion, response: payload.result.response, proposals: payload.result.proposals, handoff: payload.result.handoff, timestamp: messageTimestamp } : turn));
       await refreshThreads();
       setHistoryError("");
     } catch (error) {
@@ -729,6 +732,16 @@ export default function GuidanceCounselorConversation({
               label="Guidance Counselor response"
             >
               {turn.failed ? <div><p>The Guidance Counselor service is temporarily unavailable. Your message is still here.</p><button className="beast-button mt-3" type="button" onClick={() => retryTurnRef.current(turn.question, turn.id)}>Try again</button></div> : turn.response ? <p>{turn.response}</p> : <AgentThinkingIndicator label={digitalStaffActivityLabels[turn.activity || "accepted"]} />}
+              {turn.handoff ? (() => {
+                const destination = resolveMemberHandoffDestination(professionalId, turn.handoff.professionalId);
+                return destination ? (
+                  <div className="mt-4 rounded-xl border border-cyan-300/20 bg-cyan-300/5 p-4">
+                    <p className="text-sm text-slate-300">{turn.handoff.reason}</p>
+                    <Link className="beast-button-secondary mt-3 inline-flex" href={destination.href}>{destination.label}</Link>
+                    <p className="mt-2 text-xs text-slate-400">You choose whether to continue. Tutor checks access independently and receives no copied conversation or specialist context.</p>
+                  </div>
+                ) : null;
+              })() : null}
               {turn.proposals?.length && activeThreadId ? <RuntimeProposalReview professionalId={professionalId} conversationId={activeThreadId} proposals={turn.proposals} onDecision={() => void refreshThreads()} /> : null}
             </AgentStreamingResponseArea>
           ),

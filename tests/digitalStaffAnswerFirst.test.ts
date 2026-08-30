@@ -16,6 +16,7 @@ import {
   type RuntimeContext,
   type RuntimePlan,
 } from "../src/lib/digitalStaffRuntime";
+import { safeMemberAgentResponseContract } from "../src/lib/memberAgentResponseSafety";
 import {
   boundLearningConversationMessages,
   maximumLearningHistoryCharacters,
@@ -59,6 +60,7 @@ function plan(response: string, patch: Partial<RuntimePlan> = {}): RuntimePlan {
     toolCalls: [],
     research: null,
     handoff: null,
+    responseContract: safeMemberAgentResponseContract,
     ...patch,
   };
 }
@@ -190,10 +192,11 @@ test("DS-PERF-01 expires an abandoned lease without letting its late release cle
   if (replacement.ok) replacement.release();
 });
 
-test("DS-PERF-01 ordinary runtime turns invoke the provider exactly once", async () => {
+test("DS-PERF-01 ordinary runtime turns use one generation plus isolated input/output verification", async () => {
   const originalFetch = globalThis.fetch;
   const originalKey = process.env.OPENAI_API_KEY;
-  let providerCalls = 0;
+  let generationCalls = 0;
+  let verifierCalls = 0;
   const completedPlan = plan("A direct answer from the supplied context.");
   const body = [
     `data: ${JSON.stringify({ type: "response.output_text.delta", delta: "{" })}`,
@@ -201,14 +204,20 @@ test("DS-PERF-01 ordinary runtime turns invoke the provider exactly once", async
     "data: [DONE]",
   ].join("\n\n") + "\n\n";
   process.env.OPENAI_API_KEY = "sk-proj-SINGLE_TEST_TOKEN_1234567890";
-  globalThis.fetch = async () => {
-    providerCalls += 1;
+  globalThis.fetch = async (_input, init) => {
+    const request = JSON.parse(String(init?.body || "{}")) as { text?: { format?: { name?: string } } };
+    if (request.text?.format?.name === "member_agent_semantic_verification") {
+      verifierCalls += 1;
+      return Response.json({ output_text: JSON.stringify({ verdict: "safe", categories: [] }) });
+    }
+    generationCalls += 1;
     return new Response(body, { status: 200, headers: { "Content-Type": "text/event-stream" } });
   };
   try {
     const result = await runDigitalStaffRuntime(context("beastmoney.money-coach", "Explain my saved debt picture."));
     assert.equal(result.response, completedPlan.response);
-    assert.equal(providerCalls, 1);
+    assert.equal(generationCalls, 1);
+    assert.equal(verifierCalls, 2);
     assert.ok((result.timings.promptCharacters || 0) > 0);
   } finally {
     globalThis.fetch = originalFetch;
@@ -220,7 +229,8 @@ test("DS-PERF-01 ordinary runtime turns invoke the provider exactly once", async
 test("DS-PERF-01 rejects model-suggested research for the laptop affordability turn", async () => {
   const originalFetch = globalThis.fetch;
   const originalKey = process.env.OPENAI_API_KEY;
-  let providerCalls = 0;
+  let generationCalls = 0;
+  let verifierCalls = 0;
   const completedPlan = plan("Based on the saved cash position, here is the supported conclusion.", {
     research: { query: "laptop affordability today", reason: "Check current information", domains: ["irs.gov"] },
   });
@@ -230,13 +240,19 @@ test("DS-PERF-01 rejects model-suggested research for the laptop affordability t
     "data: [DONE]",
   ].join("\n\n") + "\n\n";
   process.env.OPENAI_API_KEY = "sk-proj-SINGLE_TEST_TOKEN_1234567890";
-  globalThis.fetch = async () => {
-    providerCalls += 1;
+  globalThis.fetch = async (_input, init) => {
+    const request = JSON.parse(String(init?.body || "{}")) as { text?: { format?: { name?: string } } };
+    if (request.text?.format?.name === "member_agent_semantic_verification") {
+      verifierCalls += 1;
+      return Response.json({ output_text: JSON.stringify({ verdict: "safe", categories: [] }) });
+    }
+    generationCalls += 1;
     return new Response(body, { status: 200, headers: { "Content-Type": "text/event-stream" } });
   };
   try {
     const result = await runDigitalStaffRuntime(context("beastmoney.money-coach", "Can I afford to buy a new laptop today?"));
-    assert.equal(providerCalls, 1);
+    assert.equal(generationCalls, 1);
+    assert.equal(verifierCalls, 2);
     assert.equal(result.research, null);
     assert.match(result.validationFailures.join(" "), /unnecessary external research/i);
   } finally {

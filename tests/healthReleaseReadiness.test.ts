@@ -7,7 +7,7 @@ test("BH-REL-02 releases BeastHealth through the authoritative registry", () => 
   const health = beastModuleRegistry.find((entry) => entry.id === "health");
   assert.ok(health);
   assert.equal(health.visibility, "released");
-  assert.equal(health.version, "v1.0.0 Production");
+  assert.equal(health.version, "v1.1.0 Production");
   const shell = readFileSync("src/app/dashboard/health/BeastHealthShell.tsx", "utf8");
   assert.match(shell, /resolveMemberModuleEntitlement/);
   assert.match(shell, /getModuleRegistryEntry\("health"\)/);

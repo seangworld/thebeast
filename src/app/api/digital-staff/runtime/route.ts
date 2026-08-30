@@ -3,9 +3,15 @@ import { acquireDigitalStaffRequestLease, applyApprovedKnowledgeProposal, buildM
 import { digitalStaffTelemetryRecord, firstPartyErrorCategoryFromDigitalStaff, recordServerFirstPartyTelemetry } from "@/lib/server/firstPartyTelemetry";
 import { createRouteClient } from "@/lib/supabase/server";
 import { requireProfessionalEntitlement } from "@/lib/memberAgeServer";
+import { buildMemberSpecialistContextPacket, isMemberSpecialistId } from "@/lib/memberAgentCapabilityFramework";
 
 export const dynamic = "force-dynamic";
 const maxMessageLength = 4_000;
+const privateResponseHeaders = { "Cache-Control": "private, no-store" } as const;
+function privateJson(body: unknown, init?: number | ResponseInit) {
+  const responseInit = typeof init === "number" ? { status: init } : init;
+  return NextResponse.json(body, { ...responseInit, headers: { ...privateResponseHeaders, ...(responseInit?.headers || {}) } });
+}
 const emptyState: ConversationState = { currentTopic: null, currentWorkspace: null, lastProfessionalQuestion: null, unresolvedQuestions: [], corrections: [], pendingApprovals: [], currentGoal: null, previousDecisions: [] };
 
 type MessageRow = { id: string; sender: { kind?: string }; content: string | { text?: string; runtime?: { proposals?: StructuredKnowledgeProposal[] } }; created_at: string };
@@ -32,6 +38,12 @@ async function loadStructuredRecords(supabase: ReturnType<typeof createRouteClie
     return {
       queryCount: results.length,
       error,
+      canonicalRecordsComplete: !error
+        && (debts.result.data || []).length < 200
+        && (bills.result.data || []).length < 200
+        && (incomes.result.data || []).length < 200
+        && (fundingSources.result.data || []).length < 200
+        && (goals.result.data || []).length < 100,
       timings: {
         debtLoadMs: debts.durationMs,
         billLoadMs: bills.durationMs,
@@ -57,6 +69,16 @@ async function loadStructuredRecords(supabase: ReturnType<typeof createRouteClie
   return {
     queryCount: queries.length,
     error: results.find((result) => result.error)?.error || null,
+    canonicalRecordsComplete: results.every((result, index) => {
+      if (result.error) return false;
+      const fetched = (result.data || []).length;
+      const limit = professionalId === "beasteducation.guidance-counselor"
+        ? (index === 0 ? 1 : 19)
+        : 20;
+      return index === 0 && professionalId === "beasteducation.guidance-counselor"
+        ? fetched <= 1
+        : fetched < limit;
+    }),
     timings: { debtLoadMs: null, billLoadMs: null, incomeLoadMs: null, otherFinancialContextLoadMs: null },
     records: results.flatMap((result, index) => result.error ? [] : (result.data || []).map((record) => { const row = record as Record<string, unknown>; return { domain: `${professionalId}:${index}`, record, updatedAt: typeof row.updated_at === "string" ? row.updated_at : undefined }; })),
   };
@@ -69,18 +91,18 @@ export async function POST(request: Request) {
   const authenticationStartedAt = Date.now();
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   const authenticationMs = Date.now() - authenticationStartedAt;
-  if (authError || !user) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+  if (authError || !user) return privateJson({ error: "Authentication required." }, 401);
   const requestParsingStartedAt = Date.now();
   let body: { professionalId?: unknown; conversationId?: unknown; message?: unknown; workspace?: unknown; proposalId?: unknown; decision?: unknown; editedFields?: unknown };
-  try { body = (await request.json()) as typeof body; } catch { return NextResponse.json({ error: "A valid request is required." }, { status: 400 }); }
+  try { body = (await request.json()) as typeof body; } catch { return privateJson({ error: "A valid request is required." }, 400); }
   const professionalId = typeof body.professionalId === "string" ? body.professionalId : "";
   const conversationId = typeof body.conversationId === "string" ? body.conversationId : "";
   const text = typeof body.message === "string" ? body.message.trim() : "";
   const requestParsingMs = Date.now() - requestParsingStartedAt;
-  try { requireProfessionalConfig(professionalId); } catch { return NextResponse.json({ error: "Unknown Digital Staff professional." }, { status: 400 }); }
-  if (!conversationId) return NextResponse.json({ error: "Conversation is required." }, { status: 400 });
+  try { requireProfessionalConfig(professionalId); } catch { return privateJson({ error: "Unknown Digital Staff professional." }, 400); }
+  if (!conversationId) return privateJson({ error: "Conversation is required." }, 400);
   const isProposalDecision = body.decision === "approve" || body.decision === "reject";
-  if (!isProposalDecision && (!text || text.length > maxMessageLength)) return NextResponse.json({ error: "A message is required." }, { status: 400 });
+  if (!isProposalDecision && (!text || text.length > maxMessageLength)) return privateJson({ error: "A message is required." }, 400);
 
   const entitlementStartedAt = Date.now();
   const entitlementPromise = requireProfessionalEntitlement(professionalId, { supabase, user })
@@ -91,7 +113,7 @@ export async function POST(request: Request) {
 
   const entitlement = await entitlementPromise;
   const ageEntitlement = entitlement.result;
-  if (!ageEntitlement.ok) return NextResponse.json({ error: ageEntitlement.status === 428 ? "Add your birthday before opening this workspace." : "This Digital Staff professional is unavailable for the current member profile." }, { status: ageEntitlement.status });
+  if (!ageEntitlement.ok) return privateJson({ error: ageEntitlement.status === 428 ? "Add your birthday before opening this workspace." : "This Digital Staff professional is unavailable for the current member profile." }, ageEntitlement.status);
   const contextPromise = !isProposalDecision
     ? (() => {
         const startedAt = Date.now();
@@ -109,12 +131,12 @@ export async function POST(request: Request) {
     : null;
   const conversationAccess = await conversationPromise;
   const conversationResult = conversationAccess.result;
-  if (conversationResult.error || !conversationResult.data) return NextResponse.json({ error: "Conversation is not available for this member and professional." }, { status: 404 });
+  if (conversationResult.error || !conversationResult.data) return privateJson({ error: "Conversation is not available for this member and professional." }, 404);
   const conversation = conversationResult.data;
 
   if (isProposalDecision) {
     const proposalId = typeof body.proposalId === "string" ? body.proposalId : "";
-    if (!proposalId) return NextResponse.json({ error: "A proposal ID is required." }, { status: 400 });
+    if (!proposalId) return privateJson({ error: "A proposal ID is required." }, 400);
     const proposalMessages = await supabase.from("agent_conversation_messages").select("id, sender, content, created_at").eq("conversation_id", conversationId).eq("owner_id", user.id).eq("sender->>kind", "agent").order("created_at", { ascending: false }).limit(50);
     const proposalMessage = (proposalMessages.data || []).find((message) => {
       const content = message.content;
@@ -124,14 +146,14 @@ export async function POST(request: Request) {
     const latest = proposalMessage || null;
     const runtime = latest?.content && typeof latest.content === "object" && !Array.isArray(latest.content) ? (latest.content as { runtime?: { proposals?: StructuredKnowledgeProposal[] } }).runtime : null;
     const proposal = runtime?.proposals?.find((item) => item.id === proposalId);
-    if (!proposal) return NextResponse.json({ error: "That proposal is not available for this owner-scoped conversation." }, { status: 404 });
+    if (!proposal) return privateJson({ error: "That proposal is not available for this owner-scoped conversation." }, 404);
     if (body.decision === "reject") {
       if (latest?.id && latest.content && typeof latest.content === "object" && !Array.isArray(latest.content)) {
         const content = latest.content as { runtime?: { proposals?: StructuredKnowledgeProposal[]; [key: string]: unknown } };
         const updatedContent = { ...content, runtime: { ...(content.runtime || {}), proposals: (content.runtime?.proposals || []).map((item: StructuredKnowledgeProposal) => item.id === proposalId ? { ...item, approvalStatus: "rejected" as const } : item) } };
         await supabase.from("agent_conversation_messages").update({ content: updatedContent }).eq("id", latest.id).eq("owner_id", user.id);
       }
-      return NextResponse.json({ proposalId, status: "rejected" });
+      return privateJson({ proposalId, status: "rejected" });
     }
     const editedFields = body.editedFields && typeof body.editedFields === "object" && !Array.isArray(body.editedFields) ? body.editedFields as Record<string, string | number | boolean | null> : undefined;
     try {
@@ -141,14 +163,14 @@ export async function POST(request: Request) {
         const updatedContent = { ...content, runtime: { ...(content.runtime || {}), proposals: (content.runtime?.proposals || []).map((item) => item.id === proposalId ? { ...item, approvalStatus: "approved" as const, approvedRecordId: result.recordId } : item) } };
         await supabase.from("agent_conversation_messages").update({ content: updatedContent }).eq("id", latest.id).eq("owner_id", user.id);
       }
-      return NextResponse.json({ result });
+      return privateJson({ result });
     } catch (error) {
-      return NextResponse.json(safeDigitalStaffFailure("proposal-decision", error, requestId), { status: 422 });
+      return privateJson(safeDigitalStaffFailure("proposal-decision", error, requestId), 422);
     }
   }
   const requestLease = acquireDigitalStaffRequestLease(user.id, professionalId);
   if (!requestLease.ok) {
-    return NextResponse.json(
+    return privateJson(
       { error: "Another Digital Staff request is already being handled. Please retry shortly." },
       { status: 429, headers: { "Retry-After": String(requestLease.retryAfterSeconds) } }
     );
@@ -182,7 +204,22 @@ export async function POST(request: Request) {
       recentMessages: ([...(historyResult.data || [])] as MessageRow[]).reverse().map((row) => ({ id: row.id, role: row.sender?.kind === "user" ? "user" : "assistant", text: messageText(row.content), createdAt: row.created_at })),
       state: summary?.runtimeState || emptyState,
       memories: (memoryResult.data || []).map((row) => ({ key: String(row.memory_key), value: row.value, updatedAt: String(row.updated_at) })),
-      structuredRecords, workspace: typeof body.workspace === "string" ? body.workspace : null,
+      structuredRecords,
+      contextBoundary: isMemberSpecialistId(professionalId)
+        ? buildMemberSpecialistContextPacket({
+            config: requireProfessionalConfig(professionalId),
+            ageBand: ageEntitlement.decision.ageStatus,
+            sources: [
+              ...structuredRecords.slice(0, 20).map((record) => ({ domain: record.domain, provenance: "canonical-record" as const, updatedAt: record.updatedAt || null })),
+              ...(historyResult.data || []).slice(-1).map((record) => ({ domain: professionalId, provenance: "current-conversation" as const, updatedAt: String(record.created_at) })),
+              ...(memoryResult.data || []).slice(0, 1).map((record) => ({ domain: professionalId, provenance: "current-agent-memory" as const, updatedAt: String(record.updated_at) })),
+            ],
+            canonicalRecordsComplete: structuredResult.canonicalRecordsComplete,
+            recentConversationCount: Number(conversation.message_count || 0),
+            currentAgentMemoryCount: (memoryResult.data || []).length === 8 ? 9 : (memoryResult.data || []).length,
+          })
+        : undefined,
+      workspace: typeof body.workspace === "string" ? body.workspace : null,
     }, runtimeObserver);
     await observer.onActivity?.("persisting");
     const persistenceStartedAt = Date.now();
@@ -232,7 +269,10 @@ export async function POST(request: Request) {
       promptConstructionMs: result.timings.promptConstructionMs || null,
       promptCharacters: result.timings.promptCharacters || null,
       firstUsefulOutputMs,
-      providerInvocationCount: result.timings.researchMs > 0 ? 2 : 1,
+      providerInvocationCount: result.timings.providerInvocationCount,
+      semanticVerifierInvocationCount: result.timings.semanticVerifierInvocationCount,
+      semanticVerifierMs: result.timings.semanticVerifierMs,
+      semanticVerifierFailureCount: result.timings.semanticVerifierFailureCount,
       toolCallCount: result.toolCalls.length,
       researchMs: result.timings.researchMs,
       researchValidationMs: result.timings.researchValidationMs,
@@ -290,12 +330,12 @@ export async function POST(request: Request) {
       },
     });
     return new Response(stream, {
-      headers: { "Content-Type": "application/x-ndjson; charset=utf-8", "Cache-Control": "no-cache, no-transform" },
+      headers: { "Content-Type": "application/x-ndjson; charset=utf-8", "Cache-Control": "private, no-store, no-transform" },
     });
   }
 
   try {
-    return NextResponse.json(await executeTurn());
+    return privateJson(await executeTurn());
   } catch (error) {
     const failedTelemetry = digitalStaffTelemetryRecord({
       professionalId,
@@ -311,7 +351,7 @@ export async function POST(request: Request) {
         record: failedTelemetry,
       });
     }
-    return NextResponse.json(safeDigitalStaffFailure("runtime-route", error, requestId), { status: 502 });
+    return privateJson(safeDigitalStaffFailure("runtime-route", error, requestId), 502);
   } finally {
     requestLease.release();
   }

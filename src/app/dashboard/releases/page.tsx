@@ -8,6 +8,17 @@ import {
 
 const releaseNotes = [
   {
+    version: "BeastOS v3.2.0 · BeastFusion v2.5.0",
+    date: "August 30, 2026",
+    title: "Member AI capability upgrade",
+    items: [
+      "Added evidence-backed capability, autonomy, authority, privacy, and data-boundary contracts for Guidance Counselor, Money Coach, Health Advisor, and AI Tutor.",
+      "Added server-derived purpose, age-band, entitlement, provenance, completeness, and current-agent-only continuity context with canonical-first precedence.",
+      "Strengthened deterministic response safety and Tutor Homework Check/Review without expanding professional authority, member-data access, providers, payments, or money movement.",
+      "Added public-safe specialist profiles and shared assessment methodology; Connected Balances and AI Fitness Trainer remain unavailable.",
+    ],
+  },
+  {
     version: "BeastOS v3.1.0 · BeastFusion v2.4.0",
     date: "August 30, 2026",
     title: "Development & Operations AI capability upgrade",

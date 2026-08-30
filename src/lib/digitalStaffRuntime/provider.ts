@@ -36,6 +36,7 @@ export async function requestOpenAIResponse<T>(
     fetchImpl?: typeof fetch;
     apiKey?: string;
     requestId?: string;
+    signal?: AbortSignal;
   } = {}
 ) {
   const requestId = options.requestId || crypto.randomUUID();
@@ -44,6 +45,7 @@ export async function requestOpenAIResponse<T>(
       method: "POST",
       headers: createOpenAIRequestHeaders(requestId, options.apiKey),
       body: JSON.stringify(body),
+      signal: options.signal,
     });
     if (!response.ok) {
       throw new Error(`OpenAI Responses API returned status ${response.status}.`);

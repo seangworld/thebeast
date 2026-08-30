@@ -4,6 +4,7 @@ export const seangworldProductionOrigin = "https://www.seangworld.com";
 export const beastOSFooterLinks = {
   mainSite: seangworldProductionOrigin,
   developmentAi: `${beastOSProductionOrigin}/ai-development-staff`,
+  memberAi: `${beastOSProductionOrigin}/ai-specialists`,
   privacy: `${seangworldProductionOrigin}/privacy`,
   terms: `${seangworldProductionOrigin}/terms`,
 } as const;
@@ -19,6 +20,12 @@ export const beastOSPublicRoutes = [
   "/ai-development-staff/developer-agent",
   "/ai-development-staff/reviewer-agent",
   "/ai-development-staff/outcome-agent",
+  "/ai-specialists",
+  "/ai-specialists/methodology",
+  "/ai-specialists/money-coach",
+  "/ai-specialists/guidance-counselor",
+  "/ai-specialists/tutor",
+  "/ai-specialists/health-advisor",
 ] as const;
 
 export const beastOSNonIndexableRoutes = [

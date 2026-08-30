@@ -35,3 +35,49 @@ Selecting **New conversation** remains module-owned because each module owns its
 ## Boundaries
 
 The shared components do not change conversation ownership, RLS, durable memory, recommendation logic, financial calculations, education or career reasoning, Health Advisor medical safeguards, or module navigation.
+
+## BF-AGT-014 member-specialist context and safety contract
+
+Guidance Counselor, Money Coach, Health Advisor, and AI Tutor reuse one
+capability-assessment and context-boundary architecture. The server derives the
+professional purpose, age band (never raw birthday), entitlement decision,
+allowed data domains and tools, provenance, freshness, and explicit
+completeness/truncation before invoking a specialist. Client-provided text may
+not change identity, age, entitlement, canonical records, or authority.
+
+Canonical Product Truth and current owner-scoped records have precedence.
+Current member corrections are surfaced as pending confirmation and cannot
+silently replace canonical data. Current-agent memory is contextual evidence
+only and never overrides canonical records. A specialist receives only its own
+memory and conversation; another specialist's sensitive context is not copied.
+
+Guidance Counselor may direct a learner to Tutor through an allowlisted
+navigation-only handoff. The target route rechecks entitlement and receives no
+copied conversation, memory, or sensitive record context. Money Coach directs
+members to existing BeastMoney surfaces rather than performing financial
+actions. Health Advisor's future Fitness Trainer extension is explicitly
+unavailable with handoff and data transfer disabled.
+
+Member-specialist input passes deterministic screening and a separate,
+tool-less semantic verification call before primary generation. Generated and
+researched responses remain buffered, pass deterministic validation, and then
+receive an independent semantic verification of the actual final prose. The
+generating model's response contract is defense-in-depth, not self-approval.
+Unsafe, uncertain, malformed, or unavailable verification produces a bounded
+deterministic replacement before any member-visible output. The safety layers
+reject protected-instruction extraction, financial execution claims, false
+professional claims, diagnosis or medication-change direction, missing health
+emergency escalation, dishonest Tutor completion, unsupported image-reading
+claims, and incomplete Homework Check/Review behavior.
+
+The verifier uses the already-authorized provider and model policy with
+`store: false`, receives only the minimum member text, candidate response,
+specialist boundary, and routed learning intent, and has no tools or execution
+authority. It never receives canonical records, conversation history, uploaded
+image bytes, credentials, or cross-specialist context.
+
+Runtime JSON and NDJSON responses are private and no-store. First-party Outcome
+telemetry records only the governed started/completed/failed event taxonomy,
+specialist ID, result, route class, error category, and latency bucket. It does
+not store prompts, responses, homework, financial values, health content, or
+member identity.

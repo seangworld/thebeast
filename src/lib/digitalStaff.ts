@@ -172,7 +172,7 @@ const digitalProfessionalRegistry: readonly DigitalProfessional[] = [
     status: "available",
     statusLabel: "Available",
     releaseStatus: "active",
-    version: "1.1.0",
+    version: "2.0.0",
     biography:
       "Morgan is the BeastMoney digital professional who helps members understand their financial story through authorized records, deterministic calculations, and clearly bounded planning support.",
     mission:
@@ -233,7 +233,7 @@ const digitalProfessionalRegistry: readonly DigitalProfessional[] = [
     status: "available",
     statusLabel: "Available",
     releaseStatus: "active",
-    version: "1.1.0",
+    version: "2.0.0",
     biography:
       "Jordan is the BeastEducation digital professional who connects a learner's goals, current progress, constraints, and interests to a grounded education or career direction.",
     mission:
@@ -297,7 +297,7 @@ const digitalProfessionalRegistry: readonly DigitalProfessional[] = [
     status: "available",
     statusLabel: "Available",
     releaseStatus: "active",
-    version: "1.0.0",
+    version: "2.0.0",
     biography:
       "Riley is the BeastEducation AI Tutor who helps learners understand schoolwork, practice concepts, and find the first place their reasoning went off track.",
     mission:
@@ -364,7 +364,7 @@ const digitalProfessionalRegistry: readonly DigitalProfessional[] = [
     status: "available",
     statusLabel: "Available — medically bounded",
     releaseStatus: "active",
-    version: "1.0.0",
+    version: "2.0.0",
     biography:
       "Taylor is the BeastHealth digital professional who helps the owner review authorized health records, understand permissioned document summaries, and prepare questions for qualified clinicians.",
     mission:

@@ -1,6 +1,6 @@
 {
   "name": "thebeast",
-  "version": "3.0.0",
+  "version": "3.2.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -9,6 +9,7 @@
     "test:responsive": "playwright test",
     "start": "next start",
     "lint": "next lint",
+    "validate:member-ai-evidence": "node scripts/validate-member-ai-evidence-consistency.mjs",
     "mobile:release-smoke": "node scripts/mobile-release-smoke.mjs",
     "beastfusion:publish": "node scripts/publish-beastfusion-projection.mjs",
     "supabase:current": "node scripts/supabase-migration-guard.mjs current",

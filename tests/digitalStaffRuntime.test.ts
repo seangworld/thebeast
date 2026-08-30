@@ -1,12 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { professionalConfigs, requireProfessionalConfig, validateNavigationTarget, validateRuntimePlan, validateToolCalls, deidentifyResearchQuery, parseRuntimePlan, type RuntimeContext, type RuntimePlan } from "../src/lib/digitalStaffRuntime";
+import { safeMemberAgentResponseContract } from "../src/lib/memberAgentResponseSafety";
 
 const baseState = { currentTopic: "education", currentWorkspace: "/dashboard/education/guidance-counselor", lastProfessionalQuestion: "Tell me about your educational journey.", unresolvedQuestions: [], corrections: [], pendingApprovals: [], currentGoal: null, previousDecisions: [] };
 const context: RuntimeContext = { ownerId: "owner-a", professionalId: "beasteducation.guidance-counselor", conversationId: "conversation-a", message: { id: "message-a", role: "user", text: "I graduated high school in 1990, joined the Army, later served in the Guard, and now work for DLA.", createdAt: "2026-08-08T12:00:00Z" }, recentMessages: [], state: baseState, memories: [], structuredRecords: [], workspace: "/dashboard/education/guidance-counselor" };
 
 function plan(patch: Partial<RuntimePlan> = {}): RuntimePlan {
-  return { intent: "answer_previous_question", response: "That gives us a useful foundation.", nextQuestion: "What direction would you like to explore next?", state: baseState, proposals: [], navigationTarget: null, toolCalls: [], research: null, handoff: null, ...patch };
+  return { intent: "answer_previous_question", response: "That gives us a useful foundation.", nextQuestion: "What direction would you like to explore next?", state: baseState, proposals: [], navigationTarget: null, toolCalls: [], research: null, handoff: null, responseContract: safeMemberAgentResponseContract, ...patch };
 }
 
 test("AP-100A registers all professionals on one configuration contract", () => {

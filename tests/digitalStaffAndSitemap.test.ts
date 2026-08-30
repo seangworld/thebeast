@@ -127,12 +127,12 @@ test("member profile cards expose professional context without internal implemen
     "Reports to",
     "Collaborates With",
     "Assigned modules",
+    "Version",
     "Last activity",
   ]) {
     assert.match(profile, new RegExp(label));
   }
   for (const internalLabel of [
-    "Version",
     "Release status",
     "Portrait status",
     "placeholder_reference",
@@ -154,5 +154,11 @@ test("sitemap includes public routes and excludes private application routes", (
     "https://thebeast.seangworld.com/ai-development-staff/developer-agent",
     "https://thebeast.seangworld.com/ai-development-staff/reviewer-agent",
     "https://thebeast.seangworld.com/ai-development-staff/outcome-agent",
+    "https://thebeast.seangworld.com/ai-specialists",
+    "https://thebeast.seangworld.com/ai-specialists/methodology",
+    "https://thebeast.seangworld.com/ai-specialists/money-coach",
+    "https://thebeast.seangworld.com/ai-specialists/guidance-counselor",
+    "https://thebeast.seangworld.com/ai-specialists/tutor",
+    "https://thebeast.seangworld.com/ai-specialists/health-advisor",
   ]);
 });
