@@ -1,4 +1,8 @@
 import type { BeastAdminCanonicalReadModel } from "./beastAdminCanonicalProjection";
+import {
+  getDevelopmentAgentCapabilityAssessment,
+  publicDevelopmentAgentCapabilityAssessment,
+} from "./developmentAgentCapabilityFramework";
 
 export type DevelopmentAgentProfile = {
   id: "orchestrator-3" | "observer-agent" | "proposal-agent" | "developer-agent" | "reviewer-agent" | "outcome-agent";
@@ -137,6 +141,35 @@ export const developmentAgentProfiles: readonly DevelopmentAgentProfile[] = [
 export function getDevelopmentAgentProfile(id: string) {
   return developmentAgentProfiles.find((profile) => profile.id === id);
 }
+
+export function getDevelopmentAgentProfileWithCapability(id: string) {
+  const profile = getDevelopmentAgentProfile(id);
+  const capabilityAssessment = getDevelopmentAgentCapabilityAssessment(id);
+  return profile && capabilityAssessment ? { ...profile, capabilityAssessment } : null;
+}
+
+export function getPublicDevelopmentAgentProfile(id: string) {
+  const profile = getDevelopmentAgentProfile(id);
+  const capabilityAssessment = publicDevelopmentAgentCapabilityAssessment(id);
+  if (!profile || !capabilityAssessment) return null;
+  return {
+    id: profile.id,
+    name: profile.name,
+    title: profile.title,
+    role: profile.role,
+    purpose: profile.purpose,
+    portraitUrl: profile.portraitUrl,
+    portraitAlt: profile.portraitAlt,
+    demonstratedCapabilities: profile.responsibilities,
+    limitations: profile.limitations,
+    authorityBoundary: profile.authorityBoundary,
+    capabilityAssessment,
+  };
+}
+
+export const publicDevelopmentAgentProfiles = developmentAgentProfiles.map(({ id }) =>
+  getPublicDevelopmentAgentProfile(id)
+).filter((profile): profile is NonNullable<typeof profile> => Boolean(profile));
 
 export function deriveDevelopmentAgentCanonicalState(
   profile: DevelopmentAgentProfile,

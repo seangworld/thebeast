@@ -21,18 +21,27 @@ test("public footer links use canonical production destinations", () => {
   assert.equal(seangworldProductionOrigin, "https://www.seangworld.com");
   assert.deepEqual(beastOSFooterLinks, {
     mainSite: "https://www.seangworld.com",
+    developmentAi: "https://thebeast.seangworld.com/ai-development-staff",
     privacy: "https://www.seangworld.com/privacy",
     terms: "https://www.seangworld.com/terms",
   });
 });
 
 test("public SEO inventory contains only real indexable application routes", () => {
-  assert.deepEqual(beastOSPublicRoutes, ["/", "/release-notes"]);
+  assert.deepEqual(beastOSPublicRoutes, ["/", "/release-notes", "/ai-development-staff", "/ai-development-staff/methodology", "/ai-development-staff/orchestrator-3", "/ai-development-staff/observer-agent", "/ai-development-staff/proposal-agent", "/ai-development-staff/developer-agent", "/ai-development-staff/reviewer-agent", "/ai-development-staff/outcome-agent"]);
   assert.deepEqual(
     sitemap().map((entry) => entry.url),
     [
       beastOSProductionOrigin,
       `${beastOSProductionOrigin}/release-notes`,
+      `${beastOSProductionOrigin}/ai-development-staff`,
+      `${beastOSProductionOrigin}/ai-development-staff/methodology`,
+      `${beastOSProductionOrigin}/ai-development-staff/orchestrator-3`,
+      `${beastOSProductionOrigin}/ai-development-staff/observer-agent`,
+      `${beastOSProductionOrigin}/ai-development-staff/proposal-agent`,
+      `${beastOSProductionOrigin}/ai-development-staff/developer-agent`,
+      `${beastOSProductionOrigin}/ai-development-staff/reviewer-agent`,
+      `${beastOSProductionOrigin}/ai-development-staff/outcome-agent`,
     ]
   );
 });

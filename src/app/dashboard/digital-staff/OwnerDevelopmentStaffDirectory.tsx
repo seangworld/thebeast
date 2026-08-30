@@ -15,6 +15,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { useBeastAdminCommandCenter } from "@/lib/useBeastAdminCommandCenter";
 import { AgentAvatar } from "@/app/components/agents/AgentExperience";
+import { getDevelopmentAgentCapabilityAssessment } from "@/lib/developmentAgentCapabilityFramework";
 
 function loadAdminViewMode() {
   return normalizeAdminViewMode(
@@ -48,6 +49,7 @@ function AuthorizedDevelopmentStaffDirectory() {
       <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {developmentAgentProfiles.map((profile) => {
           const state = deriveDevelopmentAgentCanonicalState(profile, canonical);
+          const assessment = getDevelopmentAgentCapabilityAssessment(profile.id);
           return (
             <Link
               key={profile.id}
@@ -81,6 +83,7 @@ function AuthorizedDevelopmentStaffDirectory() {
                     {profile.relationships.map(({ label }) => label).join(", ")}
                   </dd>
                 </div>
+                {assessment ? <div className="flex items-start justify-between gap-3"><dt className="text-slate-500">Capability</dt><dd className="max-w-[65%] text-right font-bold text-slate-200">Knight L{assessment.autonomy.level} self-assessed · {assessment.authority.classification}</dd></div> : null}
               </dl>
             </Link>
           );

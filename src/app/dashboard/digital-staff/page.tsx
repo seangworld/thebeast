@@ -57,6 +57,12 @@ export default function DigitalStaffPage() {
 
         <OwnerDevelopmentStaffDirectory />
 
+        <section className="rounded-2xl border border-cyan-300/20 bg-cyan-300/5 p-5" aria-labelledby="development-ai-evidence-heading">
+          <h2 id="development-ai-evidence-heading" className="text-lg font-black text-white">How BeastFusion&apos;s development AI works</h2>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-300">Public-safe profiles explain the Development &amp; Operations agents&apos; demonstrated capabilities, designed autonomy, important limitations, and authority boundaries without exposing private execution evidence.</p>
+          <Link href="/ai-development-staff" className="beast-button mt-4 inline-flex">Explore development AI evidence</Link>
+        </section>
+
         <section className="rounded-2xl border border-white/10 bg-[#111827] p-5" aria-labelledby="next-step-heading">
           <h2 id="next-step-heading" className="text-lg font-black text-white">
             What should I do next?

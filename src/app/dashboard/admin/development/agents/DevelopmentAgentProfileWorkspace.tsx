@@ -6,6 +6,7 @@ import { deriveDevelopmentAgentCanonicalState, type DevelopmentAgentProfile } fr
 import { useBeastAdminCommandCenter } from "@/lib/useBeastAdminCommandCenter";
 import { StaffOperationsWorkspace } from "../StaffOperationsWorkspace";
 import { AgentAvatar } from "@/app/components/agents/AgentExperience";
+import { getDevelopmentAgentCapabilityAssessment } from "@/lib/developmentAgentCapabilityFramework";
 
 function ListCard({ title, items }: { title: string; items: readonly string[] }) {
   if (!items.length) return null;
@@ -15,6 +16,7 @@ function ListCard({ title, items }: { title: string; items: readonly string[] })
 export function DevelopmentAgentProfileWorkspace({ profile }: { profile: DevelopmentAgentProfile }) {
   const { canonical, loading, error, reload } = useBeastAdminCommandCenter();
   const state = deriveDevelopmentAgentCanonicalState(profile, canonical);
+  const assessment = getDevelopmentAgentCapabilityAssessment(profile.id);
 
   return <div className="space-y-6">
     <Link href="/dashboard/admin/development" className="inline-flex text-sm font-bold text-amber-200 hover:text-amber-100">← Development Console</Link>
@@ -33,6 +35,18 @@ export function DevelopmentAgentProfileWorkspace({ profile }: { profile: Develop
     <dl className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       {[["Role", profile.role], ["Current status", loading ? "Loading canonical status" : state.statusLabel], ["Current / recent work", state.assignmentLabel], ["Current / recent verdict", state.verdictLabel || "Not applicable"]].map(([label, value]) => <div key={label} className="rounded-xl border border-white/10 bg-[#111827] p-4"><dt className="text-xs font-black uppercase tracking-wide text-slate-400">{label}</dt><dd className="mt-2 text-sm font-bold leading-6 text-white">{value}</dd></div>)}
     </dl>
+    {assessment ? <>
+      <DashboardCard accent="admin">
+        <SectionHeader eyebrow="BF-AGT-013 capability evidence" title="Software, capability, autonomy, and authority" description="These are separate claims. The autonomy level is a BeastFusion self-assessment against a published framework, not a certification or authority grant." />
+        <dl className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {[["Software generation", assessment.softwareGeneration], ["Capability evidence", "OpenAI four qualitative dimensions"], ["Designed autonomy", `Knight L${assessment.autonomy.level} · user as ${assessment.autonomy.userRole}`], ["Canonical authority", assessment.authority.classification]].map(([label, value]) => <div key={label} className="rounded-xl border border-white/10 bg-white/[0.03] p-4"><dt className="text-xs font-black uppercase tracking-wide text-slate-400">{label}</dt><dd className="mt-2 text-sm font-bold leading-6 text-white">{value}</dd></div>)}
+        </dl>
+        <p className="mt-4 text-xs leading-5 text-slate-400">Assessed {assessment.assessedAt} · {assessment.assessedVersion}</p>
+      </DashboardCard>
+      <div className="grid gap-4 lg:grid-cols-2">
+        {assessment.capability.map((item) => <DashboardCard key={item.dimension} accent="admin"><h2 className="text-lg font-black text-white">{item.label}</h2><p className="mt-2 text-sm leading-6 text-slate-300">{item.demonstrated}</p><p className="mt-3 text-xs leading-5 text-slate-400">Limitation: {item.limitation}</p></DashboardCard>)}
+      </div>
+    </> : null}
     {profile.id === "observer-agent" || profile.id === "proposal-agent" ? <StaffOperationsWorkspace compact /> : null}
 
     {!canonical ? <DashboardCard accent="admin"><SectionHeader eyebrow="Fail-closed state" title="Canonical governance unavailable" description={error || state.sourceDetail} /><button type="button" onClick={() => void reload()} className="beast-button mt-4">Retry canonical source</button></DashboardCard> : null}

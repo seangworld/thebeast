@@ -5,6 +5,7 @@ import { DashboardCard, SectionHeader } from "@/app/components/design/DashboardP
 import { developmentAgentProfiles, deriveDevelopmentAgentCanonicalState } from "@/lib/developmentAgentProfiles";
 import type { BeastAdminCanonicalReadModel } from "@/lib/beastAdminCanonicalProjection";
 import { AgentAvatar } from "@/app/components/agents/AgentExperience";
+import { getDevelopmentAgentCapabilityAssessment } from "@/lib/developmentAgentCapabilityFramework";
 
 export function DevelopmentAgentDirectory({ canonical }: { canonical: BeastAdminCanonicalReadModel }) {
   return (
@@ -17,6 +18,7 @@ export function DevelopmentAgentDirectory({ canonical }: { canonical: BeastAdmin
       <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3" data-development-agent-roster="true">
         {developmentAgentProfiles.map((profile) => {
           const state = deriveDevelopmentAgentCanonicalState(profile, canonical);
+          const assessment = getDevelopmentAgentCapabilityAssessment(profile.id);
           return (
             <Link
               key={profile.id}
@@ -34,6 +36,7 @@ export function DevelopmentAgentDirectory({ canonical }: { canonical: BeastAdmin
                 </span>
               </div>
               <p className="mt-4 text-sm leading-6 text-slate-300">{profile.role}</p>
+              {assessment ? <p className="mt-3 text-xs font-bold text-cyan-200">Software {assessment.capabilityRelease} · Knight L{assessment.autonomy.level} self-assessed · {assessment.authority.classification}</p> : null}
               <p className="mt-4 border-t border-white/10 pt-4 text-xs leading-5 text-slate-400">
                 Most recent governed package: {state.assignmentLabel}
               </p>
