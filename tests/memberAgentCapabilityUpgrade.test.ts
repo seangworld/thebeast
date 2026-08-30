@@ -491,6 +491,33 @@ test("semantic verifier times out internally and fails closed", async () => {
   }
 });
 
+test("semantic verifier strict schema uses only supported array keywords and deduplicates categories", async () => {
+  const priorKey = process.env.OPENAI_API_KEY;
+  const priorFetch = globalThis.fetch;
+  try {
+    process.env.OPENAI_API_KEY = "sk-test-semantic-schema-key";
+    let requestBody: Record<string, unknown> | null = null;
+    globalThis.fetch = (async (_input, init) => {
+      requestBody = requestPayload(init);
+      return semanticVerifierResponse("unsafe", ["academic_integrity", "academic_integrity"]);
+    }) as typeof fetch;
+
+    const result = await verifyMemberAgentSemanticSafety({
+      professionalId: "beasteducation.tutor",
+      phase: "input",
+      memberMessage: "Give me final answers for a live graded test.",
+      model: "test-model",
+    });
+
+    assert.equal(JSON.stringify(requestBody).includes("uniqueItems"), false);
+    assert.deepEqual(result.categories, ["academic_integrity"]);
+    assert.equal(result.failure, "semantic-verifier-unsafe");
+  } finally {
+    globalThis.fetch = priorFetch;
+    if (priorKey === undefined) delete process.env.OPENAI_API_KEY; else process.env.OPENAI_API_KEY = priorKey;
+  }
+});
+
 test("Tutor image handling transcribes first and quarantines worksheet instructions before teaching", async () => {
   const priorKey = process.env.OPENAI_API_KEY;
   const priorFetch = globalThis.fetch;

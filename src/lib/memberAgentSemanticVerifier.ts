@@ -39,7 +39,7 @@ const verificationSchema = {
   required: ["verdict", "categories"],
   properties: {
     verdict: { type: "string", enum: ["safe", "unsafe", "uncertain"] },
-    categories: { type: "array", uniqueItems: true, items: { type: "string", enum: categories } },
+    categories: { type: "array", items: { type: "string", enum: categories } },
   },
 } as const;
 
@@ -75,7 +75,7 @@ function parseVerification(payload: ResponsesPayload): MemberAgentSemanticVerifi
       return { valid: false, verdict: "uncertain", categories: [], failure: "semantic-verifier-malformed" };
     }
     const verdict = parsed.verdict as MemberAgentSemanticVerdict;
-    const classified = parsed.categories as string[];
+    const classified = Array.from(new Set(parsed.categories as string[]));
     if ((verdict === "safe") !== (classified.length === 0)) {
       return { valid: false, verdict: "uncertain", categories: classified, failure: "semantic-verifier-inconsistent" };
     }
