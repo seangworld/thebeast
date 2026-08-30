@@ -44,15 +44,15 @@ test("machine-readable BF-AGT-014 safety evidence cases match executable results
   }
 });
 
-test("BF-AGT-015 assesses exactly four Production-model member specialists without conflating authority", () => {
+test("BF-AGT-016 assesses exactly four Production-model member specialists without conflating authority", () => {
   const canonical: Record<string, { assessmentId: string; software: string; scenarioEvidence: string }> = {
-    "beastmoney.money-coach": { assessmentId: "BF-AGT-015-ASMT-MC-001", software: "Beast Member AI 1.0.0 / Money Coach", scenarioEvidence: "BF-AGT-015-PROD-EVAL-001" },
-    "beasteducation.guidance-counselor": { assessmentId: "BF-AGT-015-ASMT-GC-001", software: "Beast Member AI 1.0.0 / Guidance Counselor", scenarioEvidence: "BF-AGT-015-PROD-EVAL-001" },
-    "beasthealth.health-advisor": { assessmentId: "BF-AGT-015-ASMT-HA-001", software: "Beast Member AI 1.0.0 / Health Advisor", scenarioEvidence: "BF-AGT-015-PROD-EVAL-001" },
-    "beasteducation.tutor": { assessmentId: "BF-AGT-015-ASMT-TUTOR-001", software: "Beast Member AI 1.0.0 / AI Tutor", scenarioEvidence: "BF-AGT-015-PROD-EVAL-001" },
+    "beastmoney.money-coach": { assessmentId: "BF-AGT-016-ASMT-MC-001", software: "Beast Member AI 1.0.0 / Money Coach", scenarioEvidence: "BF-AGT-016-PROD-EVAL-001" },
+    "beasteducation.guidance-counselor": { assessmentId: "BF-AGT-016-ASMT-GC-001", software: "Beast Member AI 1.0.0 / Guidance Counselor", scenarioEvidence: "BF-AGT-016-PROD-EVAL-001" },
+    "beasthealth.health-advisor": { assessmentId: "BF-AGT-016-ASMT-HA-001", software: "Beast Member AI 1.0.0 / Health Advisor", scenarioEvidence: "BF-AGT-016-PROD-EVAL-001" },
+    "beasteducation.tutor": { assessmentId: "BF-AGT-016-ASMT-TUTOR-001", software: "Beast Member AI 1.0.0 / AI Tutor", scenarioEvidence: "BF-AGT-016-PROD-EVAL-001" },
   };
   const canonicalEvidenceHashes: Record<string, string> = {
-    "BF-AGT-015-PROD-EVAL-001": "f57be4fae662a3e29ffe77bbd2b4a361811675fe279bdccc41bdba63b398d42c",
+    "BF-AGT-016-PROD-EVAL-001": "2bad79aa41e7e31d7a5cd66ca52555545e770f587fda365d82f8871a2a94c883",
   };
   assert.deepEqual(memberAgentCapabilityAssessments.map((item) => item.agentId).sort(), [
     "beasteducation.guidance-counselor", "beasteducation.tutor", "beasthealth.health-advisor", "beastmoney.money-coach",
@@ -65,8 +65,8 @@ test("BF-AGT-015 assesses exactly four Production-model member specialists witho
     assert.equal(assessment.autonomy.classification, "self-assessed");
     assert.equal(assessment.assessmentId, canonical[assessment.agentId].assessmentId);
     assert.equal(assessment.softwareGeneration, canonical[assessment.agentId].software);
-    assert.equal(assessment.assessedVersion, "1.3.0");
-    assert.equal(assessment.capabilityRelease, "BF-AGT-015 1.3.0");
+    assert.equal(assessment.assessedVersion, "1.4.0");
+    assert.equal(assessment.capabilityRelease, "BF-AGT-016 1.4.0");
     assert.equal(assessment.capability.length, 4);
     assert.ok(assessment.authority.prohibited.length >= 3);
     assert.ok(assessment.dataBoundary.prohibited.length >= 3);
@@ -79,7 +79,7 @@ test("BF-AGT-015 assesses exactly four Production-model member specialists witho
   }
 });
 
-test("BF-AGT-015 current evidence has one canonical L2 controlled Production assessment truth", () => {
+test("BF-AGT-016 current evidence has one canonical L2 controlled Production assessment truth", () => {
   const output = execFileSync(process.execPath, ["scripts/validate-member-ai-evidence-consistency.mjs"], { encoding: "utf8" });
   assert.match(output, /evidence consistency passed/i);
   for (const legacyName of ["guidance-scenario-v1.json", "money-scenario-v1.json", "health-scenario-v1.json", "tutor-scenario-v1.json", "guidance-boundary-v1.json", "money-boundary-v1.json", "health-boundary-v1.json", "tutor-boundary-v1.json"]) {
