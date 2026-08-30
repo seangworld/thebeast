@@ -7,6 +7,7 @@ export * from "./provider";
 export * from "./interactionPolicy";
 export * from "./educationContext";
 export * from "./evaluation";
+export * from "./productionEvaluation";
 export * from "./moneyContext";
 export * from "./prompt";
 export * from "./professionalPrompts";
