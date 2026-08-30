@@ -94,6 +94,7 @@ test("guided modal contains focus and restores the previous control", () => {
 
 test("Education tour selection follows route context rather than member persona", () => {
   const source = readFileSync("src/app/dashboard/layout.tsx", "utf8");
-  assert.match(source, /educationOnly=\{pathname\.includes\("\/education\/guidance-counselor"\)\}/);
+  assert.match(source, /resolveGuidedToursForPath/);
+  assert.match(source, /eligibleTourModules/);
   assert.doesNotMatch(source, /educationOnly=\{learningOnlyNavigation\}/);
 });

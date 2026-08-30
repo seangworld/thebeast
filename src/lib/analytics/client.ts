@@ -102,3 +102,29 @@ export function trackBeastFunnelEvent(
     measurementId: analyticsRuntime.measurementId,
   });
 }
+
+export function trackGuidedOnboardingEvent(
+  event:
+    | "onboarding_offered"
+    | "onboarding_started"
+    | "onboarding_completed"
+    | "onboarding_skipped"
+    | "onboarding_replayed"
+    | "whats_new_started"
+    | "whats_new_completed",
+  properties: {
+    action: string;
+    category: "guided_tour" | "whats_new";
+    status: "offered" | "started" | "completed" | "skipped" | "replayed";
+  }
+) {
+  if (typeof window === "undefined") return null;
+  return dispatchAnalyticsEvent({
+    event,
+    context: classifyBeastRoute(window.location.pathname),
+    properties,
+    consent: readAnalyticsConsent(analyticsRuntime.consentDefault),
+    environment: analyticsRuntime.environment,
+    measurementId: analyticsRuntime.measurementId,
+  });
+}

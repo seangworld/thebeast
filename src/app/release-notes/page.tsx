@@ -27,6 +27,16 @@ export default function ReleaseNotesPage() {
       </header>
 
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
+        <div className="mb-12 rounded-lg border border-cyan-300/25 bg-[#0f1419] p-6">
+          <h2 className="text-2xl font-bold">BeastOS v3.0.4</h2>
+          <p className="mt-1 text-sm text-[#7f8da3]">August 30, 2026</p>
+          <h3 className="mt-4 font-semibold text-[#c7cfdb]">Module-specific guided onboarding</h3>
+          <ul className="mt-3 space-y-2 pl-4 text-sm text-[#a5b4c7]">
+            <li><span className="text-cyan-300">✓</span> Added short first-use tours for BeastMoney, BeastHealth, BeastEducation, and BeastHome by extending the existing guided-tour architecture.</li>
+            <li><span className="text-cyan-300">✓</span> Added module-specific replay controls, versioned completion/skip state, and optional targeted What&apos;s New support.</li>
+            <li><span className="text-cyan-300">✓</span> Tours remain entitlement-aware, age-appropriate, responsive, keyboard accessible, privacy bounded, and limited to currently released capabilities.</li>
+          </ul>
+        </div>
         <div className="mb-12 rounded-lg border border-amber-300/25 bg-[#0f1419] p-6">
           <h2 className="text-2xl font-bold">BeastOS v3.0.3</h2>
           <p className="mt-1 text-sm text-[#7f8da3]">August 29, 2026</p>

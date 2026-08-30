@@ -46,6 +46,7 @@ import { buildAuthLoginPath } from "@/lib/auth/experience";
 import { BEAST_ADMIN_MESSAGE_UNREAD_EVENT } from "@/lib/beastAdminMessaging";
 import { classifyMemberAge } from "@/lib/memberAgeEntitlements";
 import { GuidedTour, GuidedTourReplayButton } from "@/app/components/GuidedTour";
+import { resolveGuidedToursForPath } from "@/lib/guidedOnboarding";
 
 const learningPrimaryNavigation: ModuleNavSection[] = [
   { label: "Guidance Counselor", href: "/dashboard/education/guidance-counselor", module: "learning" },
@@ -150,6 +151,14 @@ export default function DashboardLayout({
     online: mobileOnline,
     degraded: resolvingDashboardAccess && dashboardGuardResolved,
   });
+  const eligibleTourModules = learningOnlyNavigation
+    ? ["beastos", "learning"]
+    : ["beastos", ...applicationNavigation.map((item) => item.module)];
+  const guidedTourDefinitions = resolveGuidedToursForPath(
+    pathname,
+    eligibleTourModules
+  );
+  const guidedTourDefinition = guidedTourDefinitions[0] || null;
   const activeExpandableModule =
     findActiveExpandableModule(pathname, [
       beastOSNavigation,
@@ -943,7 +952,13 @@ export default function DashboardLayout({
             <AdminViewAsControl compact={compact} surface="sidebar" />
             <div className="border-t border-[#2a3242] p-3">
               <div className="space-y-2">
-                <GuidedTourReplayButton compact={compact} />
+                {guidedTourDefinitions.map((definition) => (
+                  <GuidedTourReplayButton
+                    key={definition.id}
+                    compact={compact}
+                    definition={definition}
+                  />
+                ))}
                 <div className={compact ? "[&>button]:w-full [&>button]:px-2" : "[&>button]:w-full"}>
                   <LogoutButton />
                 </div>
@@ -1008,6 +1023,16 @@ export default function DashboardLayout({
             </div>
           </nav>
         </div>
+        {guidedTourDefinitions.length ? (
+          <div className="mt-2 space-y-2 [&>button]:min-h-11 [&>button]:w-full [&>button]:border [&>button]:border-cyan-300/20 [&>button]:bg-cyan-300/[0.06] [&>button]:px-3 [&>button]:text-center">
+            {guidedTourDefinitions.map((definition) => (
+              <GuidedTourReplayButton
+                key={definition.id}
+                definition={definition}
+              />
+            ))}
+          </div>
+        ) : null}
         {mobileRuntimeState.banner ? (
           <div
             className="mt-3 rounded-xl border border-amber-300/30 bg-amber-300/10 p-3 text-left"
@@ -1090,12 +1115,14 @@ export default function DashboardLayout({
       </div>
 
       {dashboardGuardResolved && !resolvingDashboardAccess && authenticatedMemberId ? (
-        <GuidedTour
-          memberId={authenticatedMemberId}
-          educationOnly={pathname.includes("/education/guidance-counselor")}
-          tutorOnly={pathname.includes("/education/tutor")}
-          homeOnly={pathname.includes("/home/inventory")}
-        />
+        guidedTourDefinitions.map((definition) => (
+          <GuidedTour
+            key={definition.id}
+            memberId={authenticatedMemberId}
+            definition={definition}
+            pathname={pathname}
+          />
+        ))
       ) : null}
 
       <nav

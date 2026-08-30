@@ -110,7 +110,7 @@ export function FinancialMissionControl({ model }: { model: FinancialMissionCont
     model.debt.remaining > 0 ||
     model.upcomingObligations.length > 0;
   return (
-    <div className="mx-auto w-full max-w-[1600px] space-y-6 pb-10" data-financial-mission-control="true">
+    <div className="mx-auto w-full max-w-[1600px] space-y-6 pb-10" data-financial-mission-control="true" data-tour-step="money-dashboard">
       <header className="border-b border-white/10 pb-5">
         <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-300">
           Executive Briefing
@@ -153,7 +153,7 @@ export function FinancialMissionControl({ model }: { model: FinancialMissionCont
 
       <MorningFinancialBriefingPanel briefing={model.morningBriefing} />
 
-      <section aria-labelledby="financial-motion-heading" className="space-y-4">
+      <section aria-labelledby="financial-motion-heading" className="space-y-4" data-tour-step="money-planning">
         <div>
           <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-300">Financial motion</p>
           <h2 id="financial-motion-heading" className="mt-2 text-2xl font-black text-white">Where your money is moving</h2>
@@ -227,6 +227,7 @@ export function FinancialMissionControl({ model }: { model: FinancialMissionCont
       </section>
 
       <section aria-labelledby="focus-heading" className="grid items-stretch gap-5 xl:grid-cols-3">
+        <div className="h-full" data-tour-step="money-coach">
         <Surface id="recommended-next-step" title="Recommended next step" eyebrow="Today" href={model.recommendedFocus.href}>
           <h3 id="focus-heading" className="text-xl font-black text-white">{model.recommendedFocus.title}</h3>
           <p className="mt-3 text-sm leading-6 text-slate-300">{model.recommendedFocus.action}</p>
@@ -240,12 +241,15 @@ export function FinancialMissionControl({ model }: { model: FinancialMissionCont
             Discuss with Money Coach <span aria-hidden="true" className="ml-2">→</span>
           </Link>
         </Surface>
+        </div>
+        <div className="h-full" data-tour-step="money-bills">
         <Surface title="Upcoming obligations" eyebrow="Next 7 days" href="/dashboard/money/bills">
           <div className="space-y-3">
             {model.upcomingObligations.slice(0, 5).map((item) => <div key={item.id} className="flex items-center justify-between gap-4 rounded-xl bg-white/[0.04] p-3"><div className="min-w-0"><p className="truncate font-bold text-white">{item.name}</p><p className="text-xs text-slate-400">{item.dueLabel}</p></div><span className="shrink-0 font-black text-white">{formatCurrency(item.amount)}</span></div>)}
             {!model.upcomingObligations.length ? <p className="text-sm text-slate-400">No obligations are due in the current review window.</p> : null}
           </div>
         </Surface>
+        </div>
         <Surface id="important-alerts" title="Important alerts" eyebrow="Needs attention" href="/dashboard/money/coach">
           <div className="space-y-3">
             {model.observations.map((item) => <div key={item.id} className="rounded-xl border border-white/10 p-3"><div className="flex justify-between gap-3"><p className="font-bold text-white">{item.title}</p><span className="text-[10px] font-black uppercase text-cyan-300">{item.priority}</span></div><p className="mt-2 text-xs leading-5 text-slate-400">{item.summary}</p>{item.confidence ? <p className="mt-2 text-[10px] uppercase text-slate-500">{item.confidence} confidence</p> : null}<Link className="mt-2 inline-flex text-xs font-bold text-cyan-200" href={`/dashboard/money/coach?starter=${encodeURIComponent(`Help me understand this alert: ${item.title}.`)}`}>Discuss with Money Coach <span aria-hidden="true" className="ml-1">→</span></Link></div>)}

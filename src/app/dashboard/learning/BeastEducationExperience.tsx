@@ -164,6 +164,7 @@ function DashboardExperience({
       id="education-dashboard"
       className="beast-page"
       data-education-workspace="dashboard"
+      data-tour-step="education-dashboard"
     >
       <div className="beast-container space-y-6 sm:space-y-8">
         <section className="beast-page-header overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-indigo-300/[0.08] via-[#111722] to-[#0e141e] p-5 shadow-[0_18px_55px_rgba(0,0,0,0.18)] sm:p-7">
@@ -189,6 +190,7 @@ function DashboardExperience({
             <Link
               href="/dashboard/education/guidance-counselor"
               className="beast-button-primary inline-flex w-full justify-center sm:w-fit"
+              data-tour-step="education-guidance"
             >
               Talk with Guidance Counselor
             </Link>
@@ -254,7 +256,8 @@ function DashboardExperience({
               </Link>
             </DashboardCard>
 
-            <DashboardCard accent="learning" className="min-w-0 md:col-span-2 xl:col-span-1">
+            <div className="min-w-0 md:col-span-2 xl:col-span-1" data-tour-step="education-progress">
+            <DashboardCard accent="learning" className="h-full min-w-0">
               <p className="text-xs font-black uppercase tracking-[0.12em] text-cyan-200">
                 Current Progress
               </p>
@@ -295,6 +298,7 @@ function DashboardExperience({
                 </p>
               )}
             </DashboardCard>
+            </div>
           </div>
         </section>
 
@@ -306,7 +310,7 @@ function DashboardExperience({
             title="Three simple places to keep moving"
             description="Start with the part that matches the next step your Guidance Counselor recommended."
           />
-          <div id="education-plan-parts-title" className="mt-5 grid gap-3 md:grid-cols-3">
+          <div id="education-plan-parts-title" className="mt-5 grid gap-3 md:grid-cols-3 xl:grid-cols-4">
             <WorkspaceLink
               href="/dashboard/education/about-you"
               title="About You"
@@ -322,6 +326,13 @@ function DashboardExperience({
               title="Career Planning"
               description="Compare careers and what each one would take."
             />
+            <div data-tour-step="education-tutor">
+              <WorkspaceLink
+                href="/dashboard/education/tutor"
+                title="Homework Helper / AI Tutor"
+                description="Get age-appropriate explanations, hints, and help reviewing work you already tried."
+              />
+            </div>
           </div>
         </section>
 

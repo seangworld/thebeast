@@ -1,6 +1,6 @@
 {
   "generatedFrom": "BeastFusion state/ecosystem-version-registry.json",
-  "generatedAt": "2026-08-29",
+  "generatedAt": "2026-08-30",
   "identities": {
     "beast": {
       "name": "The Beast",
@@ -11,10 +11,10 @@
     },
     "beastos": {
       "name": "BeastOS",
-      "version": "3.0.3",
-      "buildId": "beastos-3.0.3+20260829.01",
+      "version": "3.0.4",
+      "buildId": "beastos-3.0.4+20260830.01",
       "channel": "Production",
-      "releaseDate": "2026-08-29"
+      "releaseDate": "2026-08-30"
     },
     "beastmoney": {
       "name": "BeastMoney",
