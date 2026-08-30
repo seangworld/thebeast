@@ -30,6 +30,29 @@ export function createOpenAIRequestHeaders(
   return headers;
 }
 
+function safeProviderDiagnosticValue(value: unknown) {
+  return typeof value === "string" && /^[a-z0-9_.-]{1,80}$/i.test(value)
+    ? value
+    : null;
+}
+
+async function openAIProviderStatusError(response: Response) {
+  let errorType: string | null = null;
+  let errorCode: string | null = null;
+  try {
+    const payload = await response.json() as { error?: { type?: unknown; code?: unknown } };
+    errorType = safeProviderDiagnosticValue(payload.error?.type);
+    errorCode = safeProviderDiagnosticValue(payload.error?.code);
+  } catch {
+    // The HTTP status remains the safe fallback when the provider body is absent or malformed.
+  }
+  const diagnostic = [
+    errorType ? `type=${errorType}` : null,
+    errorCode ? `code=${errorCode}` : null,
+  ].filter(Boolean).join(", ");
+  return new Error(`OpenAI Responses API returned status ${response.status}${diagnostic ? ` (${diagnostic})` : ""}.`);
+}
+
 export async function requestOpenAIResponse<T>(
   body: unknown,
   options: {
@@ -48,7 +71,7 @@ export async function requestOpenAIResponse<T>(
       signal: options.signal,
     });
     if (!response.ok) {
-      throw new Error(`OpenAI Responses API returned status ${response.status}.`);
+      throw await openAIProviderStatusError(response);
     }
     return (await response.json()) as T;
   } catch (error) {
@@ -97,7 +120,7 @@ export async function requestOpenAIResponseStream<T>(
       signal: controller.signal,
     });
     if (!response.ok || !response.body) {
-      throw new Error(`OpenAI Responses API returned status ${response.status}.`);
+      throw await openAIProviderStatusError(response);
     }
     options.onResponseHeaders?.();
     const reader = response.body.getReader();

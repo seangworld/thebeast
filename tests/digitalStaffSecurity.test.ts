@@ -96,6 +96,39 @@ test("SEC-002 provider failures never expose secrets in errors or logs", async (
   }
 });
 
+test("provider failure logs expose only allowlisted OpenAI error type and code diagnostics", async () => {
+  const logs: unknown[][] = [];
+  const originalConsoleError = console.error;
+  console.error = (...values: unknown[]) => { logs.push(values); };
+  try {
+    await assert.rejects(
+      requestOpenAIResponse(
+        { input: "test" },
+        {
+          apiKey: testKey,
+          requestId: "request-safe-provider-diagnostic",
+          fetchImpl: async () => new Response(JSON.stringify({
+            error: {
+              type: "insufficient_quota",
+              code: "project_spend_limit_exceeded",
+              message: `Authorization: Bearer ${testKey}`,
+              param: `private-${testKey}`,
+            },
+          }), { status: 429, headers: { "Content-Type": "application/json" } }),
+        }
+      ),
+      (error: unknown) => error instanceof Error && error.message === digitalStaffUnavailableMessage
+    );
+  } finally {
+    console.error = originalConsoleError;
+  }
+  const logged = JSON.stringify(logs);
+  assert.match(logged, /type=insufficient_quota/);
+  assert.match(logged, /code=project_spend_limit_exceeded/);
+  assert.doesNotMatch(logged, new RegExp(testKey));
+  assert.doesNotMatch(logged, /private-/);
+});
+
 test("SEC-002 sanitizes malformed-header exceptions before logging", async () => {
   const logs: unknown[][] = [];
   const originalConsoleError = console.error;
