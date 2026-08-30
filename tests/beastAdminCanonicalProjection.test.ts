@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import test from "node:test";
 import { buildBeastAdminCanonicalReadModel, classifyLegacyBeastAdminRecord, reconcileCanonicalAndLegacy, resolveBeastFusionProviderStatus, type BeastFusionStoredSnapshot } from "../src/lib/beastAdminCanonicalProjection";
-import { stableProjectionString, validateBeastFusionCommandProjection, verifyBeastFusionProjectionFreshness } from "../src/lib/beastFusionCommandProjection";
+import { calculateBeastFusionProjectionId, stableProjectionString, validateBeastFusionCommandProjection, verifyBeastFusionProjectionFreshness } from "../src/lib/beastFusionCommandProjection";
 import { verifyBeastFusionWorkflowOidc } from "../src/lib/server/beastFusionOidc";
 
 const digest = (value: string) => `sha256:${createHash("sha256").update(value).digest("hex")}`;
@@ -25,9 +25,8 @@ function fixture() {
   const sourceManifest = sourcePaths.map((path) => ({ path, role: roles[path], digest: digest(path), updatedAt: "2026-08-21" }));
   const canonicalInputDigest = digest(sourceManifest.map((item) => `${item.path}\0${item.digest}`).join("\n"));
   const sourceCommit = "a4a3303a857354ce0568ebcb1ae841e4c7beda0e";
-  const projectionIdentity = digest(`${canonicalInputDigest}\0${sourceCommit}`);
   return {
-    $schema: "beastfusion-command-center-projection.schema.json", projectionVersion: "1.0.0", projectionId: `bfcp_${projectionIdentity.slice(7, 23)}`, generatedAt: "2026-08-21T20:00:00Z",
+    $schema: "beastfusion-command-center-projection.schema.json", projectionVersion: "1.0.0", projectionId: calculateBeastFusionProjectionId(canonicalInputDigest, sourceCommit), generatedAt: "2026-08-21T20:00:00Z",
     source: { owner: "beastfusion", repository: "seangworld/beastfusion", branch: "main", commit: sourceCommit, canonicalInputDigest, generatorVersion: "1.0.0" },
     classification: { audience: "beastadmin_owner_only", containsMemberData: false, containsSecrets: false, containsRawPrompts: false }, sourceManifest,
     summary: { cursorPath: ["Planning Mode"], cursorMode: "planning_mode", executableWorkAvailable: false, selectedPackage: null, selectedProduct: null, selectionReason: "Owner review required", recommendedDirective: "Owner Strategy Review", ownerDecisionRequired: true, ownerDecisionReason: "No approved work", warningCount: 0, errorCount: 0 },
@@ -62,8 +61,7 @@ test("projection identity binds unchanged canonical content to the exact source 
   const first = fixture();
   const next = fixture();
   next.source.commit = "b4a3303a857354ce0568ebcb1ae841e4c7beda0e";
-  const nextIdentity = digest(`${next.source.canonicalInputDigest}\0${next.source.commit}`);
-  next.projectionId = `bfcp_${nextIdentity.slice(7, 23)}`;
+  next.projectionId = calculateBeastFusionProjectionId(next.source.canonicalInputDigest, next.source.commit);
   assert.notEqual(first.projectionId, next.projectionId);
   assert.equal(validateBeastFusionCommandProjection(next).ok, true);
 });

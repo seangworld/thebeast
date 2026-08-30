@@ -1,9 +1,9 @@
 import { createHash } from "node:crypto";
+import { beastFusionProjectionContract } from "./beastFusionProjectionContract";
 
-export const beastFusionProjectionVersion = "1.0.0";
-export const beastFusionProjectionSchema =
-  "beastfusion-command-center-projection.schema.json";
-export const beastFusionProjectionMaxBytes = 1024 * 1024;
+export const beastFusionProjectionVersion = beastFusionProjectionContract.projectionVersion;
+export const beastFusionProjectionSchema = beastFusionProjectionContract.schema;
+export const beastFusionProjectionMaxBytes = beastFusionProjectionContract.maximumBytes;
 
 const shaPattern = /^[0-9a-f]{40}$/;
 const digestPattern = /^sha256:[0-9a-f]{64}$/;
@@ -101,6 +101,10 @@ export function stableProjectionString(value: unknown) {
 
 function sha256(value: string) {
   return `sha256:${createHash("sha256").update(value).digest("hex")}`;
+}
+
+export function calculateBeastFusionProjectionId(canonicalInputDigest: string, sourceCommit: string) {
+  return `bfcp_${sha256(`${canonicalInputDigest}\0${sourceCommit}`).slice(7, 23)}`;
 }
 
 function exactKeys(value: unknown, expected: readonly string[], label: string, errors: string[]) {
@@ -344,8 +348,7 @@ export function validateBeastFusionCommandProjection(value: unknown): BeastFusio
   for (const item of sourceManifest) if (!String(item.path ?? "").match(/^(?!\/)(?!.*\.\.)[A-Za-z0-9_./-]+$/) || !digestPattern.test(String(item.digest ?? ""))) errors.push("Source manifest contains an unsafe path or malformed digest.");
   const calculatedInputDigest = sha256(sourceManifest.map((item) => `${item.path}\0${item.digest}`).join("\n"));
   if (source.canonicalInputDigest !== calculatedInputDigest) errors.push("Canonical input digest mismatch.");
-  const calculatedProjectionIdentity = sha256(`${calculatedInputDigest}\0${String(source.commit ?? "")}`);
-  if (value.projectionId !== `bfcp_${calculatedProjectionIdentity.slice(7, 23)}`) errors.push("Projection identity does not match canonical inputs and exact source commit.");
+  if (value.projectionId !== calculateBeastFusionProjectionId(calculatedInputDigest, String(source.commit ?? ""))) errors.push("Projection identity does not match canonical inputs and exact source commit.");
 
   const roadmap = isRecord(value.roadmap) ? value.roadmap : {};
   const roadmapItems = array(roadmap.items, "roadmap.items", errors).filter(isRecord);

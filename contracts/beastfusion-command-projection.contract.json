@@ -1,0 +1,10 @@
+{
+  "contractId": "beastfusion-command-center-projection",
+  "contractVersion": "1.1.0",
+  "compatibilityId": "bfcp-v1-sha256-input-digest-nul-source-commit",
+  "projectionVersion": "1.0.0",
+  "schema": "beastfusion-command-center-projection.schema.json",
+  "mediaType": "application/vnd.beastfusion.command-center+json;version=1",
+  "identityAlgorithm": "sha256(canonicalInputDigest + NUL + sourceCommit); bfcp_ + first 16 hex",
+  "maximumBytes": 1048576
+}
