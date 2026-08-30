@@ -68,7 +68,7 @@ export default function MemberAIProductionEvaluationPage() {
   return (
     <main className="mx-auto max-w-6xl space-y-6 p-6 text-white">
       <header className="space-y-2">
-        <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">Owner-only · BF-AGT-015</p>
+        <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">Owner-only · BF-AGT-016</p>
         <h1 className="text-3xl font-black">Member AI Production capability evaluation</h1>
         <p className="max-w-3xl text-sm text-slate-300">Runs only approved synthetic multi-turn scenarios through this deployment’s configured model-selection, prompt, safety, context, and handoff architecture. It does not load or write member records and cannot override the configured model.</p>
       </header>

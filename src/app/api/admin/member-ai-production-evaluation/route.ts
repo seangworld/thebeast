@@ -33,7 +33,7 @@ export async function GET() {
   const access = await requireOwner();
   if (access.response) return access.response;
   return NextResponse.json({
-    packageId: "BF-AGT-015",
+    packageId: "BF-AGT-016",
     environment: process.env.VERCEL_ENV || "local",
     configuredModelPolicy: {
       turns: productionEvaluationScenarios.flatMap((scenario) => [
@@ -155,7 +155,7 @@ export async function POST(request: Request) {
       }
     }
     return NextResponse.json({
-      packageId: "BF-AGT-015",
+      packageId: "BF-AGT-016",
       scenarioId: scenario.id,
       title: scenario.title,
       professionalId: scenario.professionalId,

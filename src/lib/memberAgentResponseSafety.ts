@@ -70,6 +70,29 @@ const guidedCorrection = /\b(?:next step|try|correct|because|work through|show m
 const targetedPractice = /\b(?:practice|similar problem|try this)\b/i;
 const unreadableCaveat = /\b(?:blurry|cropped|unreadable|cannot clearly read|can't clearly read|uncertain)\b/i;
 
+export type TutorReviewPhase = "initial_review" | "learner_retry" | "alternate_method" | "targeted_practice" | "insufficient_evidence" | "integrity_boundary" | "not_review";
+
+export function classifyTutorReviewPhase(memberMessage: string): TutorReviewPhase {
+  const message = normalizedSafetyText(memberMessage);
+  if (/\b(?:live graded test|exam|quiz)\b/i.test(message) && /\b(?:final answers?|just give|do it for me|don't explain|do not explain)\b/i.test(message)) return "integrity_boundary";
+  if (/\b(?:blurry|cropped|unreadable|without (?:seeing|showing)|can't (?:see|read)|cannot (?:see|read))\b/i.test(message)) return "insufficient_evidence";
+  if (/\b(?:similar|practice)\s+(?:problem|question)|targets? the mistake|wait for my attempt\b/i.test(message)) return "targeted_practice";
+  if (/\b(?:alternate|alternative|another)\s+(?:method|way)|could i .{0,45}\b(?:instead|first)\b|what if i .{0,45}\b(?:instead|first)\b/i.test(message)) return "alternate_method";
+  if (/\b(?:is|was) (?:that|this|my) (?:reasoning|step|work) (?:right|correct)|right so far|correct so far|then i\b/i.test(message)) return "learner_retry";
+  if (isLearningWorkReviewRequest(message)) return "initial_review";
+  return "not_review";
+}
+
+function tutorPhaseRequirementsSatisfied(phase: TutorReviewPhase, response: string) {
+  if (phase === "insufficient_evidence") return unreadableCaveat.test(response);
+  if (phase === "integrity_boundary") return !dishonestTutor.test(response);
+  if (phase === "targeted_practice") return targetedPractice.test(response);
+  if (phase === "alternate_method") return /\b(?:equivalent|also correct|valid|works|same equation|same result|divide both sides)\b/i.test(response);
+  if (phase === "learner_retry") return /\b(?:correct|right|yes|that step|so far)\b/i.test(response) && guidedCorrection.test(response);
+  if (phase === "initial_review") return supportedReview.test(response) && guidedCorrection.test(response);
+  return true;
+}
+
 export type MemberInstructionIntent = "none" | "reported" | "executable";
 
 function normalizedSafetyText(value: string) {
@@ -210,13 +233,10 @@ export function enforceMemberAgentResponseSafety({
   if (professionalId === "beasteducation.tutor") {
     if (dishonestTutor.test(response)) failures.push("academic-integrity-failure");
     if (!imageProvided && unreadMaterialClaim.test(response)) failures.push("unsupported-image-reading-claim");
-    const reviewRequested = learningIntent === "Review" || isLearningWorkReviewRequest(memberMessage);
+    const reviewPhase = classifyTutorReviewPhase(memberMessage);
+    const reviewRequested = learningIntent === "Review" || reviewPhase !== "not_review";
     if (reviewRequested && contract && !["evidence_based", "insufficient_evidence"].includes(contract.homeworkReview)) failures.push("missing-homework-review-contract");
-    if (reviewRequested
-      && !unreadableCaveat.test(response)
-      && !(supportedReview.test(response) && guidedCorrection.test(response) && targetedPractice.test(response))) {
-      failures.push("incomplete-homework-review");
-    }
+    if (reviewRequested && !tutorPhaseRequirementsSatisfied(reviewPhase, response)) failures.push(`incomplete-homework-review:${reviewPhase}`);
   }
   if (!failures.length) return { safe: true, response, failures };
   const replacement = memberAgentSafetyFallback(professionalId, memberMessage, failures);

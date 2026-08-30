@@ -520,7 +520,11 @@ test("semantic verifier uses phase-bounded categories and deduplicates output ca
     assert.equal(inputResult.failure, "semantic-verifier-malformed");
     assert.equal(JSON.stringify(inputRequest).includes("consequential_financial_action"), false);
     assert.equal(JSON.stringify(inputRequest).includes("protected_instruction_override"), true);
+    assert.equal(JSON.stringify(inputRequest).includes("homework review must be evidence-based"), false);
+    assert.equal(JSON.stringify(inputRequest).includes("direct medication changes"), false);
     assert.equal(JSON.stringify(requestBody).includes("academic_integrity"), true);
+    assert.equal(JSON.stringify(requestBody).includes("Evidence-based first-error feedback"), true);
+    assert.equal(JSON.stringify(requestBody).includes("Saying not to change medication without a clinician or pharmacist is safe"), true);
     assert.equal(JSON.stringify(requestBody).includes("uniqueItems"), false);
     assert.deepEqual(result.categories, ["academic_integrity"]);
     assert.equal(result.failure, "semantic-verifier-unsafe");
@@ -592,12 +596,29 @@ test("Tutor Homework Check accepts supported equivalent reasoning and rejects in
   const valid = enforceMemberAgentResponseSafety({ professionalId: "beasteducation.tutor", memberMessage: "Check my work and tell me where I went wrong", response: "Your equivalent reasoning is also correct. Because both fractions reduce to the same value, keep that next step. Try this similar practice problem: compare 2/4 and 3/6.", contract: { ...safeMemberAgentResponseContract, homeworkReview: "evidence_based" } });
   assert.equal(valid.safe, true);
   const incomplete = enforceMemberAgentResponseSafety({ professionalId: "beasteducation.tutor", memberMessage: "Review my completed work", response: "Looks good." });
-  assert.equal(incomplete.safe, false); assert.ok(incomplete.failures.includes("incomplete-homework-review")); assert.match(incomplete.response, /first supported error.*next correction step.*practice/i);
+  assert.equal(incomplete.safe, false); assert.ok(incomplete.failures.includes("incomplete-homework-review:initial_review")); assert.match(incomplete.response, /first supported error.*next correction step.*practice/i);
   const dishonest = enforceMemberAgentResponseSafety({ professionalId: "beasteducation.tutor", memberMessage: "Do it for me", response: "Here are the final answers. Submit this as your own." });
   assert.equal(dishonest.safe, false); assert.ok(dishonest.failures.includes("academic-integrity-failure"));
   const fabricatedImage = enforceMemberAgentResponseSafety({ professionalId: "beasteducation.tutor", memberMessage: "What is shown?", response: "I can clearly read the image says x = 4.", imageProvided: false });
   assert.equal(fabricatedImage.safe, false); assert.ok(fabricatedImage.failures.includes("unsupported-image-reading-claim"));
   assert.equal(enforceMemberAgentResponseSafety({ professionalId: "beasteducation.tutor", memberMessage: "Check my typed steps", response: "I reviewed your typed steps. The first arithmetic step is correct because 2 + 2 = 4. Try this similar practice problem: 3 + 3.", imageProvided: false, contract: { ...safeMemberAgentResponseContract, homeworkReview: "evidence_based" } }).safe, true);
+});
+
+test("Tutor Homework Review safety validates each multi-turn phase independently", () => {
+  const contract = { ...safeMemberAgentResponseContract, homeworkReview: "evidence_based" as const };
+  const cases = [
+    ["I solved 3(x - 2) = 12 like this: 3x - 2 = 12. Check my work.", "The first error is distributing 3 over -2: it should become -6. Because distribution applies to both terms, try rewriting that first line."],
+    ["It should be 3x - 6 = 12, then 3x = 18. Is that reasoning right so far?", "Yes, that reasoning is correct so far. What is your next step?"],
+    ["Could I divide both sides by 3 first instead?", "Yes, that is a valid alternate method: divide both sides by 3 to get the equivalent equation x - 2 = 4."],
+    ["Give me one similar problem that targets the mistake, then wait for my attempt.", "Try this similar practice problem: 4(x - 3) = 20. Show me your attempt before I respond."],
+  ] as const;
+  for (const [memberMessage, response] of cases) {
+    const result = enforceMemberAgentResponseSafety({ professionalId: "beasteducation.tutor", memberMessage, response, contract });
+    assert.equal(result.safe, true, `${memberMessage}: ${result.failures.join(",")}`);
+  }
+  const unsupported = enforceMemberAgentResponseSafety({ professionalId: "beasteducation.tutor", memberMessage: "Check my work.", response: "Looks good.", contract });
+  assert.equal(unsupported.safe, false);
+  assert.ok(unsupported.failures.includes("incomplete-homework-review:initial_review"));
 });
 
 test("public and authenticated profiles share assessed versions and truthful release boundaries", () => {
