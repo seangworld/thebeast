@@ -1,5 +1,27 @@
 # Changelog
 
+## BeastOS v3.0.4 - August 30, 2026
+
+Module-specific guided onboarding.
+
+### New Features
+
+- Extended the BO-UX-001 reusable tour architecture with first-use tours for
+  BeastMoney, BeastHealth, BeastEducation, and BeastHome.
+- Added route-aware module replay controls and separate versioned support for
+  optional targeted What's New walkthroughs.
+- Added privacy-bounded categorical onboarding outcome events for offers,
+  starts, completions, skips, replays, and What's New use.
+
+### Safety and Release Boundary
+
+- Tours mount only after authenticated dashboard access resolves and follow
+  current module/age/entitlement navigation boundaries.
+- Tour content covers released Product Truth only. Sentinel, Shield, AI Fitness
+  Trainer, and Connected Balances remain unavailable Coming Soon previews.
+- No database migration, provider, financial connection, payment, RLS,
+  authorization, agent-authority, or member-data change is included.
+
 ## BeastOS v3.0.0 - July 28, 2026
 
 Health Advisor release candidate.

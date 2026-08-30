@@ -1,18 +1,20 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import {
-  beastEducationGuidedTour,
-  beastEducationTutorGuidedTour,
   beastGuidedTour,
-  beastHomeInventoryGuidedTour,
   guidedTourStorageKey,
+  guidedTourAnalyticsAction,
+  isGuidedTourAutoOfferPath,
   shouldOfferGuidedTour,
   type GuidedTourDefinition,
   type GuidedTourProgress,
 } from "@/lib/guidedOnboarding";
+import { trackGuidedOnboardingEvent } from "@/lib/analytics/client";
 
 export const START_GUIDED_TOUR_EVENT = "beast:start-guided-tour";
+export const REQUESTED_GUIDED_TOUR_KEY = "beast:guided-tour:requested";
 
 function readProgress(key: string): GuidedTourProgress | null {
   try {
@@ -60,48 +62,87 @@ function targetRect(selector?: string) {
 
 export function GuidedTour({
   memberId,
-  educationOnly = false,
-  tutorOnly = false,
-  homeOnly = false,
+  definition = beastGuidedTour,
+  pathname,
 }: {
   memberId: string;
-  educationOnly?: boolean;
-  tutorOnly?: boolean;
-  homeOnly?: boolean;
+  definition?: GuidedTourDefinition;
+  pathname: string;
 }) {
-  const definition = homeOnly
-    ? beastHomeInventoryGuidedTour
-    : tutorOnly
-    ? beastEducationTutorGuidedTour
-    : educationOnly
-      ? beastEducationGuidedTour
-      : beastGuidedTour;
   const storageKey = guidedTourStorageKey(memberId, definition.id);
   const [open, setOpen] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
   const [rect, setRect] = useState<ReturnType<typeof targetRect>>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const restoreFocusRef = useRef<HTMLElement | null>(null);
-  const step = definition.steps[stepIndex];
+  const startedEventRef = useRef(false);
+  const boundedStepIndex = Math.min(
+    Math.max(0, stepIndex),
+    Math.max(0, definition.steps.length - 1)
+  );
+  const step = definition.steps[boundedStepIndex];
+
+  const track = useCallback((
+    status: "offered" | "started" | "completed" | "skipped" | "replayed"
+  ) => {
+    const whatsNew = definition.experience === "whats_new";
+    const event = status === "offered"
+      ? "onboarding_offered"
+      : status === "replayed"
+        ? "onboarding_replayed"
+        : status === "started"
+          ? whatsNew ? "whats_new_started" : "onboarding_started"
+          : status === "completed"
+            ? whatsNew ? "whats_new_completed" : "onboarding_completed"
+            : "onboarding_skipped";
+    trackGuidedOnboardingEvent(event, {
+      action: guidedTourAnalyticsAction(definition.id),
+      category: whatsNew ? "whats_new" : "guided_tour",
+      status,
+    });
+  }, [definition.experience, definition.id]);
 
   useEffect(() => {
+    setOpen(false);
+    setStepIndex(0);
+    startedEventRef.current = false;
+  }, [definition.id]);
+
+  useEffect(() => {
+    if (!isGuidedTourAutoOfferPath(pathname, definition)) return;
     const progress = readProgress(storageKey);
     if (!shouldOfferGuidedTour(progress, definition)) return;
-    writeProgress(storageKey, definition, "offered", 0);
-    const timer = window.setTimeout(() => setOpen(true), 700);
+    startedEventRef.current = false;
+    const timer = window.setTimeout(() => {
+      writeProgress(storageKey, definition, "offered", 0);
+      track("offered");
+      setOpen(true);
+    }, 700);
     return () => window.clearTimeout(timer);
-  }, [definition, storageKey]);
+  }, [definition, pathname, storageKey, track]);
 
   useEffect(() => {
     function start(event: Event) {
       const requested = (event as CustomEvent<{ tourId?: string }>).detail?.tourId;
       if (requested && requested !== definition.id) return;
       setStepIndex(0);
+      startedEventRef.current = false;
+      track("replayed");
       setOpen(true);
     }
     window.addEventListener(START_GUIDED_TOUR_EVENT, start);
     return () => window.removeEventListener(START_GUIDED_TOUR_EVENT, start);
-  }, [definition.id]);
+  }, [definition.id, track]);
+
+  useEffect(() => {
+    const requested = window.sessionStorage.getItem(REQUESTED_GUIDED_TOUR_KEY);
+    if (requested !== definition.id) return;
+    window.sessionStorage.removeItem(REQUESTED_GUIDED_TOUR_KEY);
+    setStepIndex(0);
+    startedEventRef.current = false;
+    track("replayed");
+    setOpen(true);
+  }, [definition.id, track]);
 
   useEffect(() => {
     if (!open) return;
@@ -117,8 +158,12 @@ export function GuidedTour({
   }, [open]);
 
   useEffect(() => {
-    if (!open) return;
-    writeProgress(storageKey, definition, "started", stepIndex);
+    if (!open || !step) return;
+    writeProgress(storageKey, definition, "started", boundedStepIndex);
+    if (!startedEventRef.current) {
+      startedEventRef.current = true;
+      track("started");
+    }
     const update = () => setRect(targetRect(step.target));
     update();
     window.addEventListener("resize", update);
@@ -128,7 +173,7 @@ export function GuidedTour({
       window.removeEventListener("resize", update);
       window.removeEventListener("scroll", update, true);
     };
-  }, [definition, open, step.target, stepIndex, storageKey]);
+  }, [boundedStepIndex, definition, open, step, storageKey, track]);
 
   const position = useMemo(() => {
     if (!rect) return "left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2";
@@ -138,11 +183,12 @@ export function GuidedTour({
       : "left-1/2 top-5 -translate-x-1/2";
   }, [rect]);
 
-  if (!open) return null;
+  if (!open || !step) return null;
 
-  const last = stepIndex === definition.steps.length - 1;
+  const last = boundedStepIndex === definition.steps.length - 1;
   function close(status: "completed" | "skipped") {
-    writeProgress(storageKey, definition, status, stepIndex);
+    writeProgress(storageKey, definition, status, boundedStepIndex);
+    track(status);
     setOpen(false);
   }
 
@@ -159,7 +205,10 @@ export function GuidedTour({
     if (!controls.length) return;
     const first = controls[0];
     const lastControl = controls[controls.length - 1];
-    if (event.shiftKey && document.activeElement === first) {
+    if (document.activeElement === dialogRef.current) {
+      event.preventDefault();
+      (event.shiftKey ? lastControl : first).focus();
+    } else if (event.shiftKey && document.activeElement === first) {
       event.preventDefault();
       lastControl.focus();
     } else if (!event.shiftKey && document.activeElement === lastControl) {
@@ -195,7 +244,7 @@ export function GuidedTour({
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.14em] text-cyan-200">
-              {definition.title} · {stepIndex + 1} of {definition.steps.length}
+              {definition.title} · {boundedStepIndex + 1} of {definition.steps.length}
             </p>
             <h2 id="guided-tour-title" className="mt-2 text-2xl font-black text-white">
               {step.title}
@@ -221,18 +270,18 @@ export function GuidedTour({
           aria-label="Tour progress"
           aria-valuemin={1}
           aria-valuemax={definition.steps.length}
-          aria-valuenow={stepIndex + 1}
+          aria-valuenow={boundedStepIndex + 1}
         >
           <div
             className="h-full rounded-full bg-cyan-300 transition-[width] motion-reduce:transition-none"
-            style={{ width: `${((stepIndex + 1) / definition.steps.length) * 100}%` }}
+            style={{ width: `${((boundedStepIndex + 1) / definition.steps.length) * 100}%` }}
           />
         </div>
         <div className="mt-5 flex items-center justify-between gap-3">
           <button
             type="button"
             className="beast-button-secondary disabled:cursor-not-allowed disabled:opacity-40"
-            disabled={stepIndex === 0}
+            disabled={boundedStepIndex === 0}
             onClick={() => setStepIndex((current) => Math.max(0, current - 1))}
           >
             Back
@@ -259,11 +308,28 @@ export function GuidedTour({
 
 export function GuidedTourReplayButton({
   compact = false,
-  tourId,
+  definition = beastGuidedTour,
 }: {
   compact?: boolean;
-  tourId?: string;
+  definition?: GuidedTourDefinition;
 }) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const label = definition.replayLabel || definition.title;
+
+  function replay() {
+    if (definition.entryPath && pathname !== definition.entryPath) {
+      window.sessionStorage.setItem(REQUESTED_GUIDED_TOUR_KEY, definition.id);
+      router.push(definition.entryPath);
+      return;
+    }
+    window.dispatchEvent(
+      new CustomEvent(START_GUIDED_TOUR_EVENT, {
+        detail: { tourId: definition.id },
+      })
+    );
+  }
+
   return (
     <button
       type="button"
@@ -272,16 +338,13 @@ export function GuidedTourReplayButton({
           ? "w-full rounded-lg px-2 py-2 text-center text-xs font-bold text-cyan-200 hover:bg-white/10"
           : "w-full rounded-lg px-3 py-2 text-left text-sm font-bold text-cyan-100 hover:bg-white/10"
       }
-      onClick={() =>
-        window.dispatchEvent(
-          new CustomEvent(START_GUIDED_TOUR_EVENT, { detail: { tourId } })
-        )
-      }
+      onClick={replay}
+      aria-label={label}
       data-analytics-event="call_to_action_selected"
       data-analytics-category="guided_tour"
       data-analytics-action="replay"
     >
-      {compact ? "Tour" : "How to Use Beast / Take the Tour Again"}
+      {compact ? "Tour" : label}
     </button>
   );
 }

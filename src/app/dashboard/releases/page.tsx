@@ -8,6 +8,16 @@ import {
 
 const releaseNotes = [
   {
+    version: "BeastOS v3.0.4",
+    date: "August 30, 2026",
+    title: "Module-specific guided onboarding",
+    items: [
+      "Added short first-use tours for BeastMoney, BeastHealth, BeastEducation, and BeastHome using the existing BO-UX-001 architecture.",
+      "Added contextual How to Use replay controls and versioned support for optional, targeted What's New walkthroughs without resetting original onboarding.",
+      "Preserved age, module entitlement, authentication, privacy, responsive, keyboard, and current Product Truth boundaries; no Coming Soon capability was activated.",
+    ],
+  },
+  {
     version: "BeastOS v3.0.3",
     date: "August 29, 2026",
     title: "Product Roadmap visibility",

@@ -1354,12 +1354,14 @@ export function HealthOverviewWorkspace() {
         </p>
       ) : null}
 
-      <HealthDiscoveryOnboarding
-        ownerId={ownerId}
-        records={records}
-        recordsLoading={loading}
-        recordsUnavailable={Boolean(error)}
-      />
+      <div data-tour-step="health-records">
+        <HealthDiscoveryOnboarding
+          ownerId={ownerId}
+          records={records}
+          recordsLoading={loading}
+          recordsUnavailable={Boolean(error)}
+        />
+      </div>
 
       {!loading && unresolvedAreas.length ? (
         <section className="mb-4 rounded-2xl border border-cyan-300/25 bg-cyan-300/[0.07] p-5" aria-label="Earlier information to organize">
@@ -1369,7 +1371,7 @@ export function HealthOverviewWorkspace() {
         </section>
       ) : null}
 
-      <section className="space-y-4" aria-label="Health Advisor dashboard">
+      <section className="space-y-4" aria-label="Health Advisor dashboard" data-tour-step="health-overview">
         <DashboardCard accent="health">
           <SectionHeader
             eyebrow="Your health today"
@@ -1379,6 +1381,7 @@ export function HealthOverviewWorkspace() {
               <Link
                 href="/dashboard/health/ai-advisor"
                 className="beast-button inline-flex min-h-11 items-center"
+                data-tour-step="health-advisor"
               >
                 Open Health Advisor
               </Link>
@@ -1533,6 +1536,13 @@ export function HealthOverviewWorkspace() {
             title="Choose one thing to review"
             description="These ideas help organize records and prepare questions. They do not diagnose, prescribe, or change care."
           />
+          <Link
+            href="/dashboard/health/goals"
+            className="beast-button-secondary mt-4 inline-flex min-h-11 items-center"
+            data-tour-step="health-goals"
+          >
+            Open Health Goals
+          </Link>
           <div className="mt-4 grid gap-3 lg:grid-cols-2">
             {model.recommendations.length ? (
               model.recommendations.slice(0, 4).map((recommendation) => (
