@@ -8,6 +8,16 @@ import {
 
 const releaseNotes = [
   {
+    version: "BeastOS v3.1.0 · BeastFusion v2.4.0",
+    date: "August 30, 2026",
+    title: "Development & Operations AI capability upgrade",
+    items: [
+      "Separated software generation, demonstrated capability, designed autonomy, and canonical authority for Orchestrator, Developer, Reviewer, Observer, Proposal, and Outcome.",
+      "Added honest external-benchmark self-assessments, reproducible workflow packets, cross-ecosystem impact discovery, governed engineering memory, and stronger review/outcome contracts.",
+      "Added public-safe profiles and methodology without expanding agent authority, Observer sources, provider access, or proposal execution.",
+    ],
+  },
+  {
     version: "BeastOS v3.0.4",
     date: "August 30, 2026",
     title: "Module-specific guided onboarding",

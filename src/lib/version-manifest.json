@@ -11,8 +11,8 @@
     },
     "beastos": {
       "name": "BeastOS",
-      "version": "3.0.4",
-      "buildId": "beastos-3.0.4+20260830.01",
+      "version": "3.1.0",
+      "buildId": "beastos-3.1.0+20260830.01",
       "channel": "Production",
       "releaseDate": "2026-08-30"
     },
@@ -74,10 +74,10 @@
     },
     "beastfusion": {
       "name": "BeastFusion",
-      "version": "2.3.0-alpha1",
-      "buildId": "beastfusion-2.3.0-alpha1+20260728.01",
+      "version": "2.4.0",
+      "buildId": "beastfusion-2.4.0+20260830.01",
       "channel": "Development",
-      "releaseDate": null
+      "releaseDate": "2026-08-30"
     },
     "seangworld": {
       "name": "SEANGWORLD",

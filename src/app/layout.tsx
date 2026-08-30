@@ -81,6 +81,13 @@ export default function RootLayout({
           <div>© 2026 seangworld.com</div>
           <div>
             <a
+              href={beastOSFooterLinks.developmentAi}
+              className="hover:underline"
+            >
+              Development AI
+            </a>{" "}
+            •{" "}
+            <a
               {...externalResourceLinkProps}
               href={beastOSFooterLinks.mainSite}
               className="hover:underline"

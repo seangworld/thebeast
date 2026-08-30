@@ -99,7 +99,16 @@ test("resource events are privacy-minimal and external links preserve the Beast 
   assert.match(card, /Open resource/);
   const rootLayout = readFileSync("src/app/layout.tsx", "utf8");
   assert.equal(
-    (rootLayout.match(/href=\{beastOSFooterLinks\./g) || []).length,
-    (rootLayout.match(/\.\.\.externalResourceLinkProps/g) || []).length
+    (rootLayout.match(/\.\.\.externalResourceLinkProps/g) || []).length,
+    (rootLayout.match(/href=\{beastOSFooterLinks\.(?:mainSite|privacy|terms)\}/g) || []).length
+  );
+  assert.equal(
+    (rootLayout.match(/href=\{beastOSFooterLinks\.developmentAi\}/g) || []).length,
+    1,
+    "the internal public Development AI route must not open as an external resource"
+  );
+  assert.equal(
+    (rootLayout.match(/\.\.\.externalResourceLinkProps/g) || []).length,
+    3
   );
 });

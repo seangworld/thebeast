@@ -1,0 +1,628 @@
+{
+  "projectionContractVersion": "1.0.0",
+  "source": {
+    "ownedBy": "beastfusion",
+    "registryPath": "state/agent-capability-assessment-registry.json",
+    "registryVersion": "1.0.0",
+    "versionsPath": "versions/versions.json",
+    "versionsRegistryVersion": "1.6.0",
+    "beastFusionVersion": "2.4.0",
+    "packageId": "BF-AGT-013"
+  },
+  "release": {
+    "packageId": "BF-AGT-013",
+    "beastFusionVersion": "2.4.0",
+    "beastOSVersion": "3.1.0",
+    "assessedAt": "2026-08-30"
+  },
+  "primaryBenchmark": {
+    "name": "Levels of Autonomy for AI Agents",
+    "publisher": "Knight First Amendment Institute at Columbia University",
+    "authors": [
+      "Kevin Feng",
+      "David McDonald",
+      "Amy Zhang"
+    ],
+    "publishedAt": "2025-07-28",
+    "sourceUrl": "https://knightcolumbia.org/content/levels-of-autonomy-for-ai-agents-1",
+    "status": "Published research framework; not represented as an industry standard or certification.",
+    "levels": [
+      {
+        "level": 1,
+        "userRole": "operator",
+        "definition": "The user directs the workflow and invokes agent support."
+      },
+      {
+        "level": 2,
+        "userRole": "collaborator",
+        "definition": "The user and agent plan, delegate, and execute through frequent collaboration."
+      },
+      {
+        "level": 3,
+        "userRole": "consultant",
+        "definition": "The agent plans and executes bounded work while the user supplies direction, preferences, and feedback."
+      },
+      {
+        "level": 4,
+        "userRole": "approver",
+        "definition": "The agent handles a bounded workflow and involves the user for blockers or consequential approvals."
+      },
+      {
+        "level": 5,
+        "userRole": "observer",
+        "definition": "The agent operates without normal user involvement; only monitoring and an emergency stop remain."
+      }
+    ],
+    "methodology": [
+      "Classify designed user involvement in the agent's actual bounded operating environment, not model capability or marketing aspiration.",
+      "Require reproducible workflow evidence and explicit stop, approval, and escalation behavior.",
+      "Record the highest demonstrated level no greater than the behavior evidenced; reassess after a material workflow or authority change.",
+      "Keep autonomy separate from capability and canonical authority."
+    ],
+    "limitations": [
+      "BeastFusion classifications are internal self-assessments, not Knight Institute certificates.",
+      "A level describes designed user involvement for a bounded environment, not intelligence, safety, quality, or general capability.",
+      "Comparisons can become stale when models, tools, workflows, or governance change."
+    ]
+  },
+  "companionFramework": {
+    "name": "Practices for Governing Agentic AI Systems",
+    "publisher": "OpenAI",
+    "publishedAt": "2023-12-14",
+    "sourceUrl": "https://openai.com/index/practices-for-governing-agentic-ai-systems/",
+    "dimensions": [
+      {
+        "id": "goal-complexity",
+        "label": "Goal complexity",
+        "question": "How challenging and varied are the goals the system can demonstrably pursue?"
+      },
+      {
+        "id": "environmental-complexity",
+        "label": "Environmental complexity",
+        "question": "Across how many tools, domains, stakeholders, and time horizons can it operate?"
+      },
+      {
+        "id": "adaptability",
+        "label": "Adaptability",
+        "question": "How well does it respond to novel or unexpected circumstances?"
+      },
+      {
+        "id": "independent-execution",
+        "label": "Independent execution",
+        "question": "How reliably can it achieve goals with limited direct supervision?"
+      }
+    ],
+    "use": "Qualitative evidence dimensions only. They are not converted into a Beast score or claimed as an OpenAI certification."
+  },
+  "assessments": [
+    {
+      "agentId": "orchestrator-3",
+      "softwareGeneration": "BeastFusion Development & Operations AI 2.4.0 / Orchestrator 3.0",
+      "capabilityRelease": "2.4.0",
+      "autonomy": {
+        "framework": "Knight Institute Levels of Autonomy for AI Agents",
+        "level": 3,
+        "userRole": "consultant",
+        "conciseDefinition": "Plans and coordinates bounded authorized work while the owner supplies strategy, material decisions, and required approvals.",
+        "evidence": [
+          "Builds bounded context packets from objective, Product Truth, dependencies, risks, and stop conditions.",
+          "Routes independent Developer and Reviewer work and stops at authority boundaries."
+        ],
+        "limitations": [
+          "Cannot create authorization, approve its own plan, or cross a material owner gate."
+        ],
+        "classification": "self-assessed"
+      },
+      "capability": [
+        {
+          "dimension": "goal-complexity",
+          "label": "Goal complexity",
+          "demonstrated": "Decomposes broad authorized product objectives into bounded packages and acceptance evidence.",
+          "evidence": [
+            "BF-ORCH-004 lifecycle",
+            "BF-AGT-013 objective packet"
+          ],
+          "limitation": "Only authorized objectives may be decomposed."
+        },
+        {
+          "dimension": "environmental-complexity",
+          "label": "Environmental complexity",
+          "demonstrated": "Coordinates canonical governance, repositories, release evidence, Product Completeness, and specialist handoffs.",
+          "evidence": [
+            "Machine-readable impact graph",
+            "Canonical context packet"
+          ],
+          "limitation": "Access remains limited to configured repositories and approved evidence."
+        },
+        {
+          "dimension": "adaptability",
+          "label": "Adaptability",
+          "demonstrated": "Replans around verified blockers and bounded Reviewer findings.",
+          "evidence": [
+            "Bounded remediation classifier",
+            "Stop-condition contract"
+          ],
+          "limitation": "Material scope changes return to the owner."
+        },
+        {
+          "dimension": "independent-execution",
+          "label": "Independent execution",
+          "demonstrated": "Coordinates routine low-touch stages inside an approved package.",
+          "evidence": [
+            "Governed lifecycle stage contracts"
+          ],
+          "limitation": "Release and high-risk gates remain governed."
+        }
+      ],
+      "authority": {
+        "classification": "coordinate-authorized",
+        "permitted": [
+          "Coordinate only explicitly authorized packages",
+          "Assign bounded work and collect evidence",
+          "Stop on blockers or exhausted authority"
+        ],
+        "prohibited": [
+          "Invent or expand owner authority",
+          "Bypass independent Reviewer or required owner gates",
+          "Expose secrets, private member data, or security-sensitive configuration",
+          "Start unrelated or successor work",
+          "Implement, independently review, or self-authorize a candidate"
+        ],
+        "source": "canonical BeastFusion package authority"
+      },
+      "assessedAt": "2026-08-30",
+      "assessedVersion": "1.1.0",
+      "assessmentId": "BF-AGT-013-ASMT-ORCH-001",
+      "evidenceIds": [
+        "BF-AGT-013-EV-ORCH-001",
+        "BF-AGT-013-EV-ORCH-002"
+      ],
+      "assessmentBinding": {
+        "modelId": "gpt-5.6-sol",
+        "toolsetId": "beastfusion-governed-tools-2026-08-30",
+        "promptContractId": "BF-AGT-013-orchestrator-contract-v1",
+        "configurationId": "bf-agt-013-low-touch-authority-v1",
+        "environmentId": "beastfusion-bounded-development-2026-08-30"
+      }
+    },
+    {
+      "agentId": "observer-agent",
+      "softwareGeneration": "BeastFusion Development & Operations AI 2.4.0 / Observer",
+      "capabilityRelease": "2.4.0",
+      "autonomy": {
+        "framework": "Knight Institute Levels of Autonomy for AI Agents",
+        "level": 4,
+        "userRole": "approver",
+        "conciseDefinition": "Runs a scheduled, read-only, tightly allowlisted observation cycle and involves the owner only when governance requires action.",
+        "evidence": [
+          "Standing schedule authorization",
+          "Duplicate suppression and bounded investigations",
+          "Fixed three-source allowlist"
+        ],
+        "limitations": [
+          "Read-only autonomy does not grant diagnosis, mutation, remediation, or proposal execution."
+        ],
+        "classification": "self-assessed"
+      },
+      "capability": [
+        {
+          "dimension": "goal-complexity",
+          "label": "Goal complexity",
+          "demonstrated": "Detects material operational changes against recorded baselines.",
+          "evidence": [
+            "Signal/baseline/magnitude/confidence/impact schema"
+          ],
+          "limitation": "Cannot turn a signal into work authorization."
+        },
+        {
+          "dimension": "environmental-complexity",
+          "label": "Environmental complexity",
+          "demonstrated": "Reads three existing approved evidence classes.",
+          "evidence": [
+            "Canonical projection",
+            "GitHub evidence",
+            "Vercel evidence"
+          ],
+          "limitation": "Provider scope is unchanged by BF-AGT-013."
+        },
+        {
+          "dimension": "adaptability",
+          "label": "Adaptability",
+          "demonstrated": "Retries bounded failures, suppresses duplicates, and distinguishes noise from material findings.",
+          "evidence": [
+            "Maximum retries and investigations"
+          ],
+          "limitation": "Cannot infer beyond available evidence."
+        },
+        {
+          "dimension": "independent-execution",
+          "label": "Independent execution",
+          "demonstrated": "Completes enabled standing cycles without routine owner involvement.",
+          "evidence": [
+            "Authorization and schedule fail-closed gates"
+          ],
+          "limitation": "Any write or expanded source requires separate authority."
+        }
+      ],
+      "authority": {
+        "classification": "detect-only",
+        "permitted": [
+          "Read the unchanged approved source allowlist",
+          "Record and classify evidence-backed findings",
+          "Recommend monitor, ignore, or investigate"
+        ],
+        "prohibited": [
+          "Invent or expand owner authority",
+          "Bypass independent Reviewer or required owner gates",
+          "Expose secrets, private member data, or security-sensitive configuration",
+          "Start unrelated or successor work",
+          "Execute fixes or expand source/provider access"
+        ],
+        "source": "canonical BeastFusion package authority"
+      },
+      "assessedAt": "2026-08-30",
+      "assessedVersion": "1.1.0",
+      "assessmentId": "BF-AGT-013-ASMT-OBS-001",
+      "evidenceIds": [
+        "BF-AGT-013-EV-OBS-001",
+        "BF-AGT-013-EV-OBS-002"
+      ],
+      "assessmentBinding": {
+        "modelId": "gpt-5.6-sol",
+        "toolsetId": "beastfusion-read-only-observer-tools-2026-08-30",
+        "promptContractId": "BF-AGT-013-observer-contract-v1",
+        "configurationId": "bf-agt-011-standing-observation-authority-v1",
+        "environmentId": "beastfusion-standing-read-only-observation-2026-08-30"
+      }
+    },
+    {
+      "agentId": "proposal-agent",
+      "softwareGeneration": "BeastFusion Development & Operations AI 2.4.0 / Proposal",
+      "capabilityRelease": "2.4.0",
+      "autonomy": {
+        "framework": "Knight Institute Levels of Autonomy for AI Agents",
+        "level": 3,
+        "userRole": "consultant",
+        "conciseDefinition": "Independently investigates a bounded finding and returns evidence-backed options for owner decision.",
+        "evidence": [
+          "Structured non-executable proposal contract",
+          "Evidence, effort, risk, dependency, confidence, and disposition fields"
+        ],
+        "limitations": [
+          "Cannot authorize or execute a recommendation."
+        ],
+        "classification": "self-assessed"
+      },
+      "capability": [
+        {
+          "dimension": "goal-complexity",
+          "label": "Goal complexity",
+          "demonstrated": "Turns a bounded problem or opportunity into decision-ready alternatives.",
+          "evidence": [
+            "Proposal intelligence contract"
+          ],
+          "limitation": "Cannot expand the investigated question."
+        },
+        {
+          "dimension": "environmental-complexity",
+          "label": "Environmental complexity",
+          "demonstrated": "Reconciles evidence, affected products, dependencies, risk, effort, and expected benefit.",
+          "evidence": [
+            "Impact graph references"
+          ],
+          "limitation": "Research stays within approved sources and package scope."
+        },
+        {
+          "dimension": "adaptability",
+          "label": "Adaptability",
+          "demonstrated": "Records assumptions, unknowns, confidence, and alternative dispositions.",
+          "evidence": [
+            "Owner-decision stop state"
+          ],
+          "limitation": "Material ambiguity is escalated, not hidden."
+        },
+        {
+          "dimension": "independent-execution",
+          "label": "Independent execution",
+          "demonstrated": "Produces a recommendation from an authorized investigation without detailed owner drafting.",
+          "evidence": [
+            "Non-executable proposal schema"
+          ],
+          "limitation": "Execution always waits for governance."
+        }
+      ],
+      "authority": {
+        "classification": "recommend-only",
+        "permitted": [
+          "Investigate a bounded authorized finding",
+          "Prepare evidence-backed options and a recommended disposition",
+          "Return the proposal for owner/governance decision"
+        ],
+        "prohibited": [
+          "Invent or expand owner authority",
+          "Bypass independent Reviewer or required owner gates",
+          "Expose secrets, private member data, or security-sensitive configuration",
+          "Start unrelated or successor work",
+          "Approve or execute a proposal"
+        ],
+        "source": "canonical BeastFusion package authority"
+      },
+      "assessedAt": "2026-08-30",
+      "assessedVersion": "1.1.0",
+      "assessmentId": "BF-AGT-013-ASMT-PROP-001",
+      "evidenceIds": [
+        "BF-AGT-013-EV-PROP-001",
+        "BF-AGT-013-EV-PROP-002"
+      ],
+      "assessmentBinding": {
+        "modelId": "gpt-5.6-sol",
+        "toolsetId": "beastfusion-governed-tools-2026-08-30",
+        "promptContractId": "BF-AGT-013-proposal-contract-v1",
+        "configurationId": "bf-agt-013-non-executable-proposal-v1",
+        "environmentId": "beastfusion-bounded-proposal-2026-08-30"
+      }
+    },
+    {
+      "agentId": "developer-agent",
+      "softwareGeneration": "BeastFusion Development & Operations AI 2.4.0 / Developer",
+      "capabilityRelease": "2.4.0",
+      "autonomy": {
+        "framework": "Knight Institute Levels of Autonomy for AI Agents",
+        "level": 3,
+        "userRole": "consultant",
+        "conciseDefinition": "Plans, implements, tests, diagnoses, and remediates a bounded authorized assignment while escalating material decisions.",
+        "evidence": [
+          "Developer context packet",
+          "Eight-stage exact-candidate loop",
+          "Bounded remediation handback"
+        ],
+        "limitations": [
+          "Cannot approve, merge, deploy, or release its candidate."
+        ],
+        "classification": "self-assessed"
+      },
+      "capability": [
+        {
+          "dimension": "goal-complexity",
+          "label": "Goal complexity",
+          "demonstrated": "Implements multi-part bounded product packages from outcome and acceptance criteria.",
+          "evidence": [
+            "Inspect-to-exact-candidate loop"
+          ],
+          "limitation": "Package scope and exclusions are immutable without new authority."
+        },
+        {
+          "dimension": "environmental-complexity",
+          "label": "Environmental complexity",
+          "demonstrated": "Uses repository maps, dependency evidence, Product Truth, constraints, and validation contracts.",
+          "evidence": [
+            "Developer context packet"
+          ],
+          "limitation": "Credentials and unavailable systems remain blockers."
+        },
+        {
+          "dimension": "adaptability",
+          "label": "Adaptability",
+          "demonstrated": "Diagnoses validation failures and corrects routine in-scope defects.",
+          "evidence": [
+            "Bounded remediation classification"
+          ],
+          "limitation": "Architecture or product decisions are escalated."
+        },
+        {
+          "dimension": "independent-execution",
+          "label": "Independent execution",
+          "demonstrated": "Produces an exact candidate and reproducible evidence after normal validation.",
+          "evidence": [
+            "Candidate identity contract"
+          ],
+          "limitation": "Independent Reviewer remains mandatory."
+        }
+      ],
+      "authority": {
+        "classification": "implement-authorized",
+        "permitted": [
+          "Inspect and modify only assigned repositories and files",
+          "Run bounded validation and remediation",
+          "Return an exact candidate plus evidence"
+        ],
+        "prohibited": [
+          "Invent or expand owner authority",
+          "Bypass independent Reviewer or required owner gates",
+          "Expose secrets, private member data, or security-sensitive configuration",
+          "Start unrelated or successor work",
+          "Approve, merge, deploy, or release its own work"
+        ],
+        "source": "canonical BeastFusion package authority"
+      },
+      "assessedAt": "2026-08-30",
+      "assessedVersion": "1.1.0",
+      "assessmentId": "BF-AGT-013-ASMT-DEV-001",
+      "evidenceIds": [
+        "BF-AGT-013-EV-DEV-001",
+        "BF-AGT-013-EV-DEV-002"
+      ],
+      "assessmentBinding": {
+        "modelId": "gpt-5.6-sol",
+        "toolsetId": "beastfusion-governed-tools-2026-08-30",
+        "promptContractId": "BF-AGT-013-developer-contract-v1",
+        "configurationId": "bf-agt-013-low-touch-authority-v1",
+        "environmentId": "beastfusion-bounded-development-2026-08-30"
+      }
+    },
+    {
+      "agentId": "reviewer-agent",
+      "softwareGeneration": "BeastFusion Development & Operations AI 2.4.0 / Reviewer",
+      "capabilityRelease": "2.4.0",
+      "autonomy": {
+        "framework": "Knight Institute Levels of Autonomy for AI Agents",
+        "level": 3,
+        "userRole": "consultant",
+        "conciseDefinition": "Independently evaluates an exact candidate across engineering, QA, security, regression, and Product Completeness dimensions.",
+        "evidence": [
+          "Exact-candidate review matrix",
+          "Independent verdict and bounded re-review contract"
+        ],
+        "limitations": [
+          "Cannot implement findings, waive material defects, or authorize release."
+        ],
+        "classification": "self-assessed"
+      },
+      "capability": [
+        {
+          "dimension": "goal-complexity",
+          "label": "Goal complexity",
+          "demonstrated": "Tests both technical acceptance and the actual user need.",
+          "evidence": [
+            "Sixteen-dimension review matrix"
+          ],
+          "limitation": "A PASS is not owner acceptance or release authority."
+        },
+        {
+          "dimension": "environmental-complexity",
+          "label": "Environmental complexity",
+          "demonstrated": "Reviews cross-repository, authentication, authorization, RLS, privacy, mobile, accessibility, and Product Truth impact.",
+          "evidence": [
+            "Impact graph and Product Completeness evidence"
+          ],
+          "limitation": "Review is bounded to available candidate and evidence."
+        },
+        {
+          "dimension": "adaptability",
+          "label": "Adaptability",
+          "demonstrated": "Returns precise findings and independently re-reviews remediated candidate identities.",
+          "evidence": [
+            "Re-review identity binding"
+          ],
+          "limitation": "Cannot silently repair Developer work."
+        },
+        {
+          "dimension": "independent-execution",
+          "label": "Independent execution",
+          "demonstrated": "Runs the assigned review without relying on Developer's completion claim.",
+          "evidence": [
+            "Exact candidate plus evidence requirement"
+          ],
+          "limitation": "Missing identity or evidence is a fail-closed finding."
+        }
+      ],
+      "authority": {
+        "classification": "review-only",
+        "permitted": [
+          "Inspect the exact assigned candidate and evidence",
+          "Return findings and PASS/PASS WITH NOTES/RETURN/OWNER DECISION verdicts",
+          "Independently re-review bounded remediation"
+        ],
+        "prohibited": [
+          "Invent or expand owner authority",
+          "Bypass independent Reviewer or required owner gates",
+          "Expose secrets, private member data, or security-sensitive configuration",
+          "Start unrelated or successor work",
+          "Implement findings or authorize merge/release"
+        ],
+        "source": "canonical BeastFusion package authority"
+      },
+      "assessedAt": "2026-08-30",
+      "assessedVersion": "1.1.0",
+      "assessmentId": "BF-AGT-013-ASMT-REV-001",
+      "evidenceIds": [
+        "BF-AGT-013-EV-REV-001",
+        "BF-AGT-013-EV-REV-002"
+      ],
+      "assessmentBinding": {
+        "modelId": "gpt-5.6-sol",
+        "toolsetId": "beastfusion-governed-tools-2026-08-30",
+        "promptContractId": "BF-AGT-013-reviewer-contract-v1",
+        "configurationId": "bf-agt-013-independent-review-v1",
+        "environmentId": "beastfusion-bounded-review-2026-08-30"
+      }
+    },
+    {
+      "agentId": "outcome-agent",
+      "softwareGeneration": "BeastFusion Development & Operations AI 2.4.0 / Outcome",
+      "capabilityRelease": "2.4.0",
+      "autonomy": {
+        "framework": "Knight Institute Levels of Autonomy for AI Agents",
+        "level": 3,
+        "userRole": "consultant",
+        "conciseDefinition": "Evaluates a verified release across declared measurement windows and recommends what governance should consider next.",
+        "evidence": [
+          "Immediate, short, 7-day, and 30-day evaluation windows",
+          "Continue/Modify/Stop/Investigate recommendation model"
+        ],
+        "limitations": [
+          "Cannot claim causation without evidence or authorize follow-up work."
+        ],
+        "classification": "self-assessed"
+      },
+      "capability": [
+        {
+          "dimension": "goal-complexity",
+          "label": "Goal complexity",
+          "demonstrated": "Separates release health from whether the intended outcome occurred.",
+          "evidence": [
+            "Outcome evaluation contract"
+          ],
+          "limitation": "Only declared measurable outcomes are evaluated."
+        },
+        {
+          "dimension": "environmental-complexity",
+          "label": "Environmental complexity",
+          "demonstrated": "Reconciles candidate provenance, baseline, privacy-bounded telemetry, windows, and confounders.",
+          "evidence": [
+            "Four-window measurement plan"
+          ],
+          "limitation": "Unavailable or incomparable evidence yields Investigate."
+        },
+        {
+          "dimension": "adaptability",
+          "label": "Adaptability",
+          "demonstrated": "Changes recommendation based on evidence quality, trend, regressions, and confidence.",
+          "evidence": [
+            "Continue/Modify/Stop/Investigate"
+          ],
+          "limitation": "Correlation is not represented as causation."
+        },
+        {
+          "dimension": "independent-execution",
+          "label": "Independent execution",
+          "demonstrated": "Can perform scheduled evaluations using approved evidence.",
+          "evidence": [
+            "Window-specific due state"
+          ],
+          "limitation": "Cannot roll back, remediate, or create successor authority."
+        }
+      ],
+      "authority": {
+        "classification": "evaluate-only",
+        "permitted": [
+          "Evaluate the verified exact release against its recorded baseline",
+          "Use approved privacy-bounded telemetry",
+          "Recommend Continue, Modify, Stop, or Investigate"
+        ],
+        "prohibited": [
+          "Invent or expand owner authority",
+          "Bypass independent Reviewer or required owner gates",
+          "Expose secrets, private member data, or security-sensitive configuration",
+          "Start unrelated or successor work",
+          "Roll back, remediate, or authorize successor work"
+        ],
+        "source": "canonical BeastFusion package authority"
+      },
+      "assessedAt": "2026-08-30",
+      "assessedVersion": "1.1.0",
+      "assessmentId": "BF-AGT-013-ASMT-OUT-001",
+      "evidenceIds": [
+        "BF-AGT-013-EV-OUT-001",
+        "BF-AGT-013-EV-OUT-002"
+      ],
+      "assessmentBinding": {
+        "modelId": "gpt-5.6-sol",
+        "toolsetId": "beastfusion-governed-tools-2026-08-30",
+        "promptContractId": "BF-AGT-013-outcome-contract-v1",
+        "configurationId": "bf-agt-013-evaluation-only-v1",
+        "environmentId": "beastfusion-verified-outcome-2026-08-30"
+      }
+    }
+  ]
+}

@@ -27,6 +27,18 @@ export default function ReleaseNotesPage() {
       </header>
 
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
+        <div className="mb-12 rounded-lg border border-violet-300/25 bg-[#0f1419] p-6">
+          <h2 className="text-2xl font-bold">BeastOS v3.1.0 · BeastFusion v2.4.0</h2>
+          <p className="mt-1 text-sm text-[#7f8da3]">August 30, 2026</p>
+          <h3 className="mt-4 font-semibold text-[#c7cfdb]">Development &amp; Operations AI capability upgrade</h3>
+          <ul className="mt-3 space-y-2 pl-4 text-sm text-[#a5b4c7]">
+            <li><span className="text-violet-300">✓</span> Separated software generation, demonstrated capability, designed autonomy, and canonical authority for all six development agents.</li>
+            <li><span className="text-violet-300">✓</span> Added evidence-backed Knight autonomy self-assessments and qualitative OpenAI capability dimensions without claiming certification or an industry standard.</li>
+            <li><span className="text-violet-300">✓</span> Strengthened context packets, impact discovery, independent review, bounded remediation, engineering memory, and outcome evaluation.</li>
+            <li><span className="text-violet-300">✓</span> Added sanitized public profiles and methodology while preserving owner gates, Reviewer independence, Observer provider scope, and proposal non-execution.</li>
+          </ul>
+          <Link href="/ai-development-staff" className="beast-button mt-5 inline-flex">Explore development AI evidence</Link>
+        </div>
         <div className="mb-12 rounded-lg border border-cyan-300/25 bg-[#0f1419] p-6">
           <h2 className="text-2xl font-bold">BeastOS v3.0.4</h2>
           <p className="mt-1 text-sm text-[#7f8da3]">August 30, 2026</p>

@@ -146,5 +146,13 @@ test("sitemap includes public routes and excludes private application routes", (
   assert.deepEqual(urls, [
     "https://thebeast.seangworld.com",
     "https://thebeast.seangworld.com/release-notes",
+    "https://thebeast.seangworld.com/ai-development-staff",
+    "https://thebeast.seangworld.com/ai-development-staff/methodology",
+    "https://thebeast.seangworld.com/ai-development-staff/orchestrator-3",
+    "https://thebeast.seangworld.com/ai-development-staff/observer-agent",
+    "https://thebeast.seangworld.com/ai-development-staff/proposal-agent",
+    "https://thebeast.seangworld.com/ai-development-staff/developer-agent",
+    "https://thebeast.seangworld.com/ai-development-staff/reviewer-agent",
+    "https://thebeast.seangworld.com/ai-development-staff/outcome-agent",
   ]);
 });
