@@ -1,12 +1,18 @@
 import projection from "./development-agent-capability-projection.json";
+import type {
+  AgentAssessmentBinding,
+  AgentAutonomyAssessment,
+  AgentCapabilityDimensionAssessment,
+  CapabilityDimensionId,
+  KnightAutonomyLevel,
+} from "./agentCapabilityFramework";
 
 export type DevelopmentAgentId = "orchestrator-3" | "observer-agent" | "proposal-agent" | "developer-agent" | "reviewer-agent" | "outcome-agent";
-export type CapabilityDimensionId = "goal-complexity" | "environmental-complexity" | "adaptability" | "independent-execution";
-export type KnightAutonomyLevel = 1 | 2 | 3 | 4 | 5;
+export type { CapabilityDimensionId, KnightAutonomyLevel } from "./agentCapabilityFramework";
 export type CanonicalAuthorityClass = "coordinate-authorized" | "detect-only" | "recommend-only" | "implement-authorized" | "review-only" | "evaluate-only";
 
-export type CapabilityDimensionAssessment = { dimension: CapabilityDimensionId; label: string; demonstrated: string; evidence: readonly string[]; limitation: string };
-export type AssessmentBinding = { modelId: string; toolsetId: string; promptContractId: string; configurationId: string; environmentId: string };
+export type CapabilityDimensionAssessment = AgentCapabilityDimensionAssessment;
+export type AssessmentBinding = AgentAssessmentBinding;
 export type DevelopmentAgentCapabilityAssessment = {
   agentId: DevelopmentAgentId;
   assessmentId: string;
@@ -14,7 +20,7 @@ export type DevelopmentAgentCapabilityAssessment = {
   assessmentBinding: AssessmentBinding;
   softwareGeneration: string;
   capabilityRelease: string;
-  autonomy: { framework: "Knight Institute Levels of Autonomy for AI Agents"; level: KnightAutonomyLevel; userRole: "operator" | "collaborator" | "consultant" | "approver" | "observer"; conciseDefinition: string; evidence: readonly string[]; limitations: readonly string[]; classification: "self-assessed" };
+  autonomy: AgentAutonomyAssessment;
   capability: readonly CapabilityDimensionAssessment[];
   authority: { classification: CanonicalAuthorityClass; permitted: readonly string[]; prohibited: readonly string[]; source: "canonical BeastFusion package authority" };
   assessedAt: string;

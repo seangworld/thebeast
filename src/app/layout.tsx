@@ -87,6 +87,10 @@ export default function RootLayout({
               Development AI
             </a>{" "}
             •{" "}
+            <a href={beastOSFooterLinks.memberAi} className="hover:underline">
+              Member AI
+            </a>{" "}
+            •{" "}
             <a
               {...externalResourceLinkProps}
               href={beastOSFooterLinks.mainSite}

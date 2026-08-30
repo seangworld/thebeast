@@ -10,6 +10,7 @@ import {
   type RuntimeContext,
   type RuntimePlan,
 } from "../src/lib/digitalStaffRuntime";
+import { safeMemberAgentResponseContract } from "../src/lib/memberAgentResponseSafety";
 
 const baseState = {
   currentTopic: null,
@@ -47,6 +48,7 @@ function completedPlan(response: string): RuntimePlan {
     toolCalls: [],
     research: null,
     handoff: null,
+    responseContract: safeMemberAgentResponseContract,
   };
 }
 
@@ -87,14 +89,14 @@ test("DS-MODEL-ROUTE preserves explicit model overrides", () => {
   );
 });
 
-test("DS-MODEL-ROUTE keeps an ordinary turn to one provider call with the fast model", async () => {
+test("DS-MODEL-ROUTE keeps generation and isolated verification on the fast model", async () => {
   const originalFetch = globalThis.fetch;
   const originalKey = process.env.OPENAI_API_KEY;
   const originalLegacyModel = process.env.OPENAI_DIGITAL_STAFF_MODEL;
   const originalFastModel = process.env.OPENAI_DIGITAL_STAFF_FAST_MODEL;
   const originalStrongModel = process.env.OPENAI_DIGITAL_STAFF_STRONG_MODEL;
   let providerCalls = 0;
-  let requestedModel = "";
+  const requestedModels: string[] = [];
   const plan = completedPlan("A direct answer from canonical context.");
   const body = [
     `data: ${JSON.stringify({ type: "response.output_text.delta", delta: "{" })}`,
@@ -108,14 +110,16 @@ test("DS-MODEL-ROUTE keeps an ordinary turn to one provider call with the fast m
   delete process.env.OPENAI_DIGITAL_STAFF_STRONG_MODEL;
   globalThis.fetch = async (_input, init) => {
     providerCalls += 1;
-    requestedModel = String(JSON.parse(String(init?.body)).model || "");
+    const request = JSON.parse(String(init?.body)) as { model?: string; text?: { format?: { name?: string } } };
+    requestedModels.push(String(request.model || ""));
+    if (request.text?.format?.name === "member_agent_semantic_verification") return Response.json({ output_text: JSON.stringify({ verdict: "safe", categories: [] }) });
     return new Response(body, { status: 200, headers: { "Content-Type": "text/event-stream" } });
   };
 
   try {
     const result = await runDigitalStaffRuntime(context("Explain my saved debt picture."));
-    assert.equal(providerCalls, 1);
-    assert.equal(requestedModel, defaultOrdinaryDigitalStaffModel);
+    assert.equal(providerCalls, 3);
+    assert.deepEqual(requestedModels, [defaultOrdinaryDigitalStaffModel, defaultOrdinaryDigitalStaffModel, defaultOrdinaryDigitalStaffModel]);
     assert.equal(result.model, defaultOrdinaryDigitalStaffModel);
   } finally {
     globalThis.fetch = originalFetch;

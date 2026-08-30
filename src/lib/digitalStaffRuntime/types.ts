@@ -55,6 +55,7 @@ export type RuntimeContext = {
   state: ConversationState;
   memories: Array<{ key: string; value: unknown; updatedAt: string }>;
   structuredRecords: Array<{ domain: string; record: unknown; updatedAt?: string }>;
+  contextBoundary?: import("../memberAgentCapabilityFramework").MemberSpecialistContextPacket;
   workspace: string | null;
   executionMode?: "conversation" | "historical_reconciliation";
   requestId?: string;
@@ -77,6 +78,7 @@ export type RuntimePlan = {
   toolCalls: Array<{ name: string; arguments: Record<string, unknown> }>;
   research: RuntimeResearchRequest | null;
   handoff: { professionalId: ProfessionalId; reason: string } | null;
+  responseContract: import("../memberAgentResponseSafety").MemberAgentResponseContract;
 };
 
 export type RuntimeResult = RuntimePlan & {
@@ -112,6 +114,10 @@ export type RuntimeTimings = {
   validationMs?: number | null;
   promptConstructionMs?: number | null;
   promptCharacters?: number | null;
+  providerInvocationCount: number;
+  semanticVerifierInvocationCount: number;
+  semanticVerifierMs: number;
+  semanticVerifierFailureCount: number;
 };
 
 export type RuntimeObserver = {

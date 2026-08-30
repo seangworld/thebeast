@@ -166,8 +166,8 @@ test("BF-AGT-013 updates owner surfaces, public discovery, documentation, and ve
   const manifest = JSON.parse(readFileSync("src/lib/version-manifest.json", "utf8"));
   assert.match(owner, /Software, capability, autonomy, and authority/);
   assert.match(publicSeo, /ai-development-staff\/methodology/);
-  assert.equal(manifest.identities.beastos.version, "3.1.0");
-  assert.equal(manifest.identities.beastfusion.version, "2.4.0");
+  assert.ok(["3.1.0", "3.2.0"].includes(manifest.identities.beastos.version), "BF-AGT-013 remains represented after a compatible later release");
+  assert.ok(["2.4.0", "2.5.0"].includes(manifest.identities.beastfusion.version), "BF-AGT-013 remains represented after a compatible later release");
   assert.match(readFileSync("docs/BEASTOS-3.1.0-BEASTFUSION-2.4.0-DEVELOPMENT-OPERATIONS-AI.md", "utf8"), /No database migration/);
   assert.equal(readFileSync("src/lib/standingObservation.ts", "utf8").match(/standingObservationPermittedSources = \[([\s\S]*?)\] as const/)?.[1].trim(), '"beastfusion_canonical_projection",\n  "github_repository_evidence",\n  "vercel_deployment_evidence",');
 });

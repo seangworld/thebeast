@@ -11,31 +11,31 @@
     },
     "beastos": {
       "name": "BeastOS",
-      "version": "3.1.0",
-      "buildId": "beastos-3.1.0+20260830.01",
+      "version": "3.2.0",
+      "buildId": "beastos-3.2.0+20260830.01",
       "channel": "Production",
       "releaseDate": "2026-08-30"
     },
     "beastmoney": {
       "name": "BeastMoney",
-      "version": "2.4.0",
-      "buildId": "beastmoney-2.4.0+20260718.01",
+      "version": "2.5.0",
+      "buildId": "beastmoney-2.5.0+20260830.01",
       "channel": "Production",
-      "releaseDate": "2026-07-18"
+      "releaseDate": "2026-08-30"
     },
     "beastlearning": {
       "name": "BeastEducation",
-      "version": "1.7.1",
-      "buildId": "beastlearning-1.7.1+20260829.01",
+      "version": "1.8.0",
+      "buildId": "beastlearning-1.8.0+20260830.01",
       "channel": "Production",
-      "releaseDate": "2026-08-29"
+      "releaseDate": "2026-08-30"
     },
     "beasthealth": {
       "name": "BeastHealth",
-      "version": "1.0.0",
-      "buildId": "beasthealth-1.0.0+20260810.01",
+      "version": "1.1.0",
+      "buildId": "beasthealth-1.1.0+20260830.01",
       "channel": "Production",
-      "releaseDate": "2026-08-10"
+      "releaseDate": "2026-08-30"
     },
     "beasthome": {
       "name": "BeastHome",
@@ -74,8 +74,8 @@
     },
     "beastfusion": {
       "name": "BeastFusion",
-      "version": "2.4.0",
-      "buildId": "beastfusion-2.4.0+20260830.01",
+      "version": "2.5.0",
+      "buildId": "beastfusion-2.5.0+20260830.01",
       "channel": "Development",
       "releaseDate": "2026-08-30"
     },

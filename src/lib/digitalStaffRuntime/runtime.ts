@@ -5,6 +5,9 @@ import { applyDigitalStaffInteractionPolicy, requestsConsequentialAction } from 
 import { requestOpenAIResponseStream } from "./provider";
 import { deidentifyResearchQuery, validateToolCalls } from "./tools";
 import type { RuntimeContext, RuntimeObserver, RuntimePlan, RuntimeResult } from "./types";
+import { isMemberSpecialistId } from "../memberAgentCapabilityFramework";
+import { enforceMemberAgentResponseSafety, filterMemberAgentContextItems, isMemberAgentResponseContract, memberAgentSafetyFallback, safeMemberAgentResponseContract, sanitizeUntrustedMemberText, screenMemberAgentInput } from "../memberAgentResponseSafety";
+import { verifyMemberAgentSemanticSafety } from "../memberAgentSemanticVerifier";
 
 type ResponsesPayload = { output_text?: string; output?: Array<{ content?: Array<{ type?: string; text?: string; annotations?: Array<{ type?: string; title?: string; url?: string }> }> }> };
 
@@ -120,7 +123,7 @@ export function parseRuntimePlan(payload: ResponsesPayload): RuntimePlan {
   const text = payload.output_text || payload.output?.flatMap((item) => item.content || []).find((item) => item.type === "output_text")?.text;
   if (!text) throw new Error("The model returned no structured runtime plan.");
   const raw = JSON.parse(text) as RuntimePlan & { proposals?: Array<RuntimePlan["proposals"][number] & { fields: Array<{ name: string; value: string | number | boolean | null }> }>; toolCalls?: Array<{ name: string; arguments: Array<{ name: string; value: unknown }> }> };
-  if (!raw || typeof raw.response !== "string" || !Array.isArray(raw.proposals) || !Array.isArray(raw.toolCalls)) {
+  if (!raw || typeof raw.response !== "string" || !Array.isArray(raw.proposals) || !Array.isArray(raw.toolCalls) || !isMemberAgentResponseContract(raw.responseContract)) {
     throw new Error("The model returned a malformed runtime plan.");
   }
   const proposals = raw.proposals.map((proposal) => {
@@ -188,17 +191,95 @@ export async function runDigitalStaffRuntime(
   options: { modelOverride?: string } = {}
 ): Promise<RuntimeResult> {
   const startedAt = Date.now();
+  let providerInvocationCount = 0;
+  let semanticVerifierInvocationCount = 0;
+  let semanticVerifierMs = 0;
+  let semanticVerifierFailureCount = 0;
   const config = requireProfessionalConfig(context.professionalId);
   const model = options.modelOverride || selectDigitalStaffModel(context);
+  const bufferMemberOutput = isMemberSpecialistId(context.professionalId);
+  const modelObserver: RuntimeObserver = bufferMemberOutput
+    ? { ...observer, onResponseDelta: async () => undefined }
+    : observer;
+  const inputSafety = screenMemberAgentInput(context.message.text);
+  if (isMemberSpecialistId(context.professionalId) && !inputSafety.safe) {
+    await observer.onResponseDelta?.(inputSafety.response);
+    const totalMs = Date.now() - startedAt;
+    return {
+      intent: "answer",
+      response: inputSafety.response,
+      nextQuestion: null,
+      state: context.state,
+      proposals: [],
+      navigationTarget: null,
+      toolCalls: [],
+      research: null,
+      handoff: null,
+      responseContract: safeMemberAgentResponseContract,
+      model: "deterministic-safety-policy",
+      latencyMs: totalMs,
+      timings: { totalMs, contextAssemblyMs: 0, initialModelMs: 0, firstModelOutputMs: null, firstUsefulOutputMs: 0, researchMs: 0, researchValidationMs: 0, persistenceMs: 0, validationMs: 0, promptConstructionMs: 0, promptCharacters: 0, providerInvocationCount, semanticVerifierInvocationCount, semanticVerifierMs, semanticVerifierFailureCount },
+      researchSources: [],
+      validationFailures: inputSafety.failures.slice(),
+    };
+  }
+  if (isMemberSpecialistId(context.professionalId)) {
+    await observer.onActivity?.("thinking");
+    providerInvocationCount += 1;
+    semanticVerifierInvocationCount += 1;
+    const semanticInputStartedAt = Date.now();
+    const semanticInput = await verifyMemberAgentSemanticSafety({
+      professionalId: context.professionalId,
+      phase: "input",
+      memberMessage: context.message.text,
+      model,
+      requestId: context.requestId,
+      signal: context.signal,
+    });
+    semanticVerifierMs += Date.now() - semanticInputStartedAt;
+    if (!semanticInput.valid || semanticInput.verdict !== "safe") {
+      semanticVerifierFailureCount += 1;
+      const semanticFailures = [semanticInput.failure || "semantic-verifier-input-rejected", ...semanticInput.categories];
+      const response = memberAgentSafetyFallback(context.professionalId, context.message.text, semanticFailures);
+      await observer.onResponseDelta?.(response);
+      const totalMs = Date.now() - startedAt;
+      return {
+        intent: "answer",
+        response,
+        nextQuestion: null,
+        state: context.state,
+        proposals: [],
+        navigationTarget: null,
+        toolCalls: [],
+        research: null,
+        handoff: null,
+        responseContract: safeMemberAgentResponseContract,
+        model: "semantic-safety-verifier",
+        latencyMs: totalMs,
+        timings: { totalMs, contextAssemblyMs: 0, initialModelMs: 0, firstModelOutputMs: null, firstUsefulOutputMs: 0, researchMs: 0, researchValidationMs: 0, persistenceMs: 0, validationMs: 0, promptConstructionMs: 0, promptCharacters: 0, providerInvocationCount, semanticVerifierInvocationCount, semanticVerifierMs, semanticVerifierFailureCount },
+        researchSources: [],
+        validationFailures: semanticFailures,
+      };
+    }
+  }
+  const recentContextSafety = filterMemberAgentContextItems(context.recentMessages);
+  const memoryContextSafety = filterMemberAgentContextItems(context.memories);
+  const recordContextSafety = filterMemberAgentContextItems(context.structuredRecords);
+  const currentMessageSafety = sanitizeUntrustedMemberText(context.message.text);
+  const rejectedContextCount = recentContextSafety.rejectedCount + memoryContextSafety.rejectedCount + recordContextSafety.rejectedCount + (currentMessageSafety.quarantined ? 1 : 0);
+  const executionContext: RuntimeContext = isMemberSpecialistId(context.professionalId)
+    ? { ...context, message: { ...context.message, text: currentMessageSafety.value }, recentMessages: recentContextSafety.accepted, memories: memoryContextSafety.accepted, structuredRecords: recordContextSafety.accepted }
+    : context;
   await observer.onActivity?.("thinking");
   let firstModelOutputMs: number | null = null;
   let providerResponseHeadersMs: number | null = null;
   let providerFirstEventMs: number | null = null;
   let providerCompleteMs: number | null = null;
   const promptStartedAt = Date.now();
-  const runtimeInput = buildRuntimeInput(config, context);
+  const runtimeInput = buildRuntimeInput(config, executionContext);
   const promptConstructionMs = Date.now() - promptStartedAt;
   const modelStartedAt = Date.now();
+  providerInvocationCount += 1;
   const payload = await requestOpenAIResponseStream<ResponsesPayload>({
       model, store: false, instructions: buildRuntimeInstructions(config), input: runtimeInput,
       text: { format: { type: "json_schema", name: "digital_staff_runtime_plan", strict: true, schema: runtimeJsonSchema } },
@@ -217,7 +298,7 @@ export async function runDigitalStaffRuntime(
   });
   const initialModelMs = Date.now() - modelStartedAt;
   const validationStartedAt = Date.now();
-  const validated = validateRuntimePlan(context, parseRuntimePlan(payload));
+  const validated = validateRuntimePlan(executionContext, parseRuntimePlan(payload));
   const validationMs = Date.now() - validationStartedAt;
   let researchMs = 0;
   let researchValidationMs = 0;
@@ -225,7 +306,8 @@ export async function runDigitalStaffRuntime(
   if (validated.research && context.executionMode !== "historical_reconciliation") {
     await observer.onActivity?.("researching");
     const researchStartedAt = Date.now();
-    research = await executeResearch(model, buildRuntimeInstructions(config), validated.research.query, validated.research.domains, observer, context.requestId, context.signal);
+    providerInvocationCount += 1;
+    research = await executeResearch(model, buildRuntimeInstructions(config), validated.research.query, validated.research.domains, modelObserver, context.requestId, context.signal);
     researchMs = Date.now() - researchStartedAt;
     await observer.onActivity?.("validating_sources");
     const validationStartedAt = Date.now();
@@ -233,15 +315,44 @@ export async function runDigitalStaffRuntime(
     researchValidationMs = Date.now() - validationStartedAt;
   } else {
     await observer.onActivity?.("preparing_answer");
-    await observer.onResponseDelta?.(validated.response);
+    await modelObserver.onResponseDelta?.(validated.response);
   }
+  const unguardedResponse = research?.answer || validated.response;
+  let responseSafety = isMemberSpecialistId(context.professionalId)
+    ? enforceMemberAgentResponseSafety({ professionalId: context.professionalId, memberMessage: context.message.text, response: unguardedResponse, contract: validated.responseContract })
+    : { safe: true, response: unguardedResponse, failures: [] as readonly string[] };
+  if (isMemberSpecialistId(context.professionalId) && responseSafety.safe) {
+    providerInvocationCount += 1;
+    semanticVerifierInvocationCount += 1;
+    const semanticOutputStartedAt = Date.now();
+    const semanticOutput = await verifyMemberAgentSemanticSafety({
+      professionalId: context.professionalId,
+      phase: "output",
+      memberMessage: context.message.text,
+      candidateResponse: unguardedResponse,
+      model,
+      requestId: context.requestId,
+      signal: context.signal,
+    });
+    semanticVerifierMs += Date.now() - semanticOutputStartedAt;
+    if (!semanticOutput.valid || semanticOutput.verdict !== "safe") {
+      semanticVerifierFailureCount += 1;
+      responseSafety = {
+        safe: false,
+        response: memberAgentSafetyFallback(context.professionalId, context.message.text, [semanticOutput.failure || "semantic-verifier-output-rejected", ...semanticOutput.categories]),
+        failures: [semanticOutput.failure || "semantic-verifier-output-rejected", ...semanticOutput.categories],
+      };
+    }
+  }
+  if (bufferMemberOutput) await observer.onResponseDelta?.(responseSafety.response);
   const totalMs = Date.now() - startedAt;
   return {
     ...validated,
-    response: research?.answer || validated.response,
+    response: responseSafety.response,
+    validationFailures: [...validated.validationFailures, ...(rejectedContextCount ? [`Rejected ${rejectedContextCount} untrusted context item(s) containing instruction-override content.`] : []), ...responseSafety.failures],
     model,
     latencyMs: totalMs,
-    timings: { totalMs, contextAssemblyMs: 0, initialModelMs, firstModelOutputMs, firstUsefulOutputMs: null, researchMs, researchValidationMs, persistenceMs: 0, providerResponseHeadersMs, providerFirstEventMs, providerCompleteMs, validationMs, promptConstructionMs, promptCharacters: runtimeInput.length },
+    timings: { totalMs, contextAssemblyMs: 0, initialModelMs, firstModelOutputMs, firstUsefulOutputMs: null, researchMs, researchValidationMs, persistenceMs: 0, providerResponseHeadersMs, providerFirstEventMs, providerCompleteMs, validationMs, promptConstructionMs, promptCharacters: runtimeInput.length, providerInvocationCount, semanticVerifierInvocationCount, semanticVerifierMs, semanticVerifierFailureCount },
     researchSources: research?.sources || [],
   };
 }

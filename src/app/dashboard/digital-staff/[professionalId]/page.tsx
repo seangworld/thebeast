@@ -8,6 +8,7 @@ import {
   digitalProfessionals,
   getDigitalProfessional,
 } from "@/lib/digitalStaff";
+import { getMemberSpecialistAssessment } from "@/lib/memberAgentCapabilityFramework";
 
 export function generateStaticParams() {
   return digitalProfessionals.map(({ id }) => ({ professionalId: id }));
@@ -21,6 +22,7 @@ export default async function DigitalProfessionalPage({
   const { professionalId } = await params;
   const professional = getDigitalProfessional(professionalId);
   if (!professional) notFound();
+  const capabilityAssessment = getMemberSpecialistAssessment(professional.canonicalId);
 
   const sections = [
     ["Responsibilities", professional.responsibilities],
@@ -85,12 +87,23 @@ export default async function DigitalProfessionalPage({
           </div>
         </header>
 
+        {capabilityAssessment ? (
+          <section className="rounded-2xl border border-indigo-300/20 bg-indigo-300/5 p-5" aria-labelledby="capability-assessment-heading">
+            <h2 id="capability-assessment-heading" className="text-xl font-black text-white">Capability, autonomy, and authority</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-300">{capabilityAssessment.softwareGeneration} · Knight Level {capabilityAssessment.autonomy.level}, user as {capabilityAssessment.autonomy.userRole} · {capabilityAssessment.authority.classification}</p>
+            <p className="mt-2 text-sm leading-6 text-slate-300">{capabilityAssessment.autonomy.conciseDefinition}</p>
+            <p className="mt-3 text-xs text-slate-400">Environment-bound self-assessment {capabilityAssessment.assessedVersion}, assessed {capabilityAssessment.assessedAt}. This is not certification or a universal industry standard.</p>
+            <div className="mt-4 flex flex-wrap gap-3"><Link href={`/ai-specialists/${professional.id}`} className="beast-button-secondary">View public evidence</Link><Link href="/ai-specialists/methodology" className="beast-button-secondary">Assessment methodology</Link></div>
+          </section>
+        ) : null}
+
         <dl className="grid gap-4 sm:grid-cols-2">
           {[
             ["Team", professional.team],
             ["Reports to", professional.reportsTo],
             ["Assigned modules", professional.assignedModules.join(", ")],
             ["Status", professional.statusLabel],
+            ["Version", professional.version],
             ["Last activity", professional.lastActivity],
           ].map(([label, value]) => (
             <div
