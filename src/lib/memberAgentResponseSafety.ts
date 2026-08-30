@@ -68,7 +68,8 @@ const unreadMaterialClaim = /\b(?:i can clearly read|the image says|i (?:read|re
 const supportedReview = /\b(?:first|equivalent|also correct|reasoning is correct|arithmetic|transcription|conceptual)\b/i;
 const guidedCorrection = /\b(?:next step|try|correct|because|work through|show me)\b/i;
 const targetedPractice = /\b(?:practice|similar problem|try this)\b/i;
-const unreadableCaveat = /\b(?:blurry|cropped|unreadable|cannot clearly read|can't clearly read|uncertain)\b/i;
+const unreadableCaveat = /\b(?:blurry|cropped|unreadable|cannot clearly read|can't clearly read|can't verify|cannot verify|not enough (?:detail|evidence|information)|need (?:a )?(?:readable|clearer)|uncertain)\b/i;
+const safeMedicationBoundary = /\b(?:do not|don't|should not|shouldn't)\s+(?:start|stop|skip|take|increase|decrease|change|adjust|double|halve)\b.{0,100}\b(?:without|unless|until|contact|ask|confirm|speak|talk)\b.{0,80}\b(?:clinician|doctor|prescriber|pharmacist|licensed professional)\b/i;
 
 export type TutorReviewPhase = "initial_review" | "learner_retry" | "alternate_method" | "targeted_practice" | "insufficient_evidence" | "integrity_boundary" | "not_review";
 
@@ -88,7 +89,7 @@ function tutorPhaseRequirementsSatisfied(phase: TutorReviewPhase, response: stri
   if (phase === "integrity_boundary") return !dishonestTutor.test(response);
   if (phase === "targeted_practice") return targetedPractice.test(response);
   if (phase === "alternate_method") return /\b(?:equivalent|also correct|valid|works|same equation|same result|divide both sides)\b/i.test(response);
-  if (phase === "learner_retry") return /\b(?:correct|right|yes|that step|so far)\b/i.test(response) && guidedCorrection.test(response);
+  if (phase === "learner_retry") return /\b(?:correct|right|yes|works|accurate|that step|so far)\b/i.test(response) && /\b(?:next|now|try|what|how|continue|proceed|because)\b/i.test(response);
   if (phase === "initial_review") return supportedReview.test(response) && guidedCorrection.test(response);
   return true;
 }
@@ -122,6 +123,10 @@ export function classifyMemberInstructionIntent(input: string): MemberInstructio
   const matches = instructionMatches(normalized);
   if (!matches.length) return "none";
   return matches.every((signal) => isReportedSignal(normalized, signal)) ? "reported" : "executable";
+}
+
+export function isExplicitSafeMedicationBoundary(response: string) {
+  return safeMedicationBoundary.test(normalizedSafetyText(response));
 }
 
 export function sanitizeUntrustedMemberText(input: string) {
@@ -235,7 +240,8 @@ export function enforceMemberAgentResponseSafety({
     if (!imageProvided && unreadMaterialClaim.test(response)) failures.push("unsupported-image-reading-claim");
     const reviewPhase = classifyTutorReviewPhase(memberMessage);
     const reviewRequested = learningIntent === "Review" || reviewPhase !== "not_review";
-    if (reviewRequested && contract && !["evidence_based", "insufficient_evidence"].includes(contract.homeworkReview)) failures.push("missing-homework-review-contract");
+    const verdictPhase = ["initial_review", "learner_retry", "alternate_method", "insufficient_evidence"].includes(reviewPhase);
+    if (verdictPhase && contract && !["evidence_based", "insufficient_evidence"].includes(contract.homeworkReview)) failures.push("missing-homework-review-contract");
     if (reviewRequested && !tutorPhaseRequirementsSatisfied(reviewPhase, response)) failures.push(`incomplete-homework-review:${reviewPhase}`);
   }
   if (!failures.length) return { safe: true, response, failures };

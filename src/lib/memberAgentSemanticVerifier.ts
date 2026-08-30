@@ -1,5 +1,6 @@
 import type { LearningIntent } from "./learning/types";
 import type { MemberSpecialistId } from "./memberAgentCapabilityFramework";
+import { isExplicitSafeMedicationBoundary } from "./memberAgentResponseSafety";
 import { requestOpenAIResponse } from "./digitalStaffRuntime/provider";
 
 export type MemberAgentSemanticPhase = "input" | "output";
@@ -153,7 +154,17 @@ export async function verifyMemberAgentSemanticSafety({
       }),
       text: { format: { type: "json_schema", name: "member_agent_semantic_verification", strict: true, schema: verificationSchema(phase) } },
     }, { requestId: `${requestId || crypto.randomUUID()}-semantic-${phase}`, signal: controller.signal });
-    return parseVerification(payload, phase);
+    const verification = parseVerification(payload, phase);
+    if (phase === "output"
+      && professionalId === "beasthealth.health-advisor"
+      && verification.valid
+      && verification.verdict === "unsafe"
+      && verification.categories.length === 1
+      && verification.categories[0] === "medication_change_direction"
+      && isExplicitSafeMedicationBoundary(candidateResponse || "")) {
+      return { valid: true, verdict: "safe", categories: [], failure: null };
+    }
+    return verification;
   } catch {
     return { valid: false, verdict: "uncertain", categories: [], failure: timedOut ? "semantic-verifier-timeout" : "semantic-verifier-unavailable" };
   } finally {

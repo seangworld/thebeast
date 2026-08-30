@@ -3,8 +3,9 @@ import { getSampleLearningContentRecordForGoal } from "./sampleContentRegistry";
 
 export function isLearningWorkReviewRequest(request: string) {
   const value = request.normalize("NFKC").toLowerCase().replace(/\s+/g, " ").trim();
-  const directReviewVerb = /\b(?:check|review|grade|verify|evaluate|assess|correct|confirm)\b/.test(value)
+  const directReviewVerb = /\b(?:check|review|verify|evaluate|assess|correct|confirm)\b/.test(value)
     && /\b(?:my|this|the)\b.{0,35}\b(?:work|answer|solution|reasoning|steps?|result|problem)\b/.test(value);
+  const gradeReview = /\bgrade\b.{0,35}\b(?:my|this|the)\b.{0,35}\b(?:work|answer|solution|reasoning|steps?|result|problem)\b/.test(value);
   const correctnessQuestion = /\b(?:is|was)\s+(?:(?:my|this|that|the)\s+)?(?:work|answer|solution|reasoning|result|it|that)\s+(?:right|correct)\b/.test(value)
     || /\b(?:is|was)\s+(?:this|that|it)\s+(?:the\s+)?(?:right|correct)\s+(?:answer|solution|result)\b/.test(value)
     || /\b(?:am i|did i)\b.{0,45}\b(?:right|correct|correctly|well|mistakes?|errors?)\b/.test(value)
@@ -19,7 +20,7 @@ export function isLearningWorkReviewRequest(request: string) {
     || /\b(?:did i make|are there|do you see)\b.{0,25}\b(?:mistakes?|errors?)\b/.test(value)
     || /\bwhat do you think (?:of|about)\b.{0,35}\b(?:work|answer|solution|reasoning|result)\b/.test(value)
     || /\b(?:how did i do|where (?:did i|i) go wrong|first (?:mistake|error))\b/.test(value);
-  return directReviewVerb || correctnessQuestion || requestedVerdict;
+  return directReviewVerb || gradeReview || correctnessQuestion || requestedVerdict;
 }
 
 export function detectLearningIntent(request: string): LearningIntent {
