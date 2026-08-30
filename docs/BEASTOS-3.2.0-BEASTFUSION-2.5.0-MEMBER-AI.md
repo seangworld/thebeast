@@ -4,10 +4,11 @@ BF-AGT-014 applies BF-AGT-013's evidence-backed capability architecture to
 Guidance Counselor, Money Coach, Health Advisor, and AI Tutor. Software
 generation, demonstrated capability, Knight autonomy, canonical authority, and
 permitted member data remain separate claims. All four Level 2 Collaborator
-classifications are moderate-confidence, environment-bound Beast self-assessments
-of governed orchestration and provider-stub behavior. Configured-model reasoning
-quality was not evaluated, so the evidence does not support a Production-model
-capability claim. The classifications are not certification or a universal
+classifications are environment-bound Beast self-assessments of governed
+orchestration and controlled synthetic Production-model behavior. BF-AGT-015
+demonstrated strong Guidance Counselor and Money Coach performance, mixed Health
+Advisor performance, and material Tutor review-quality gaps while preserving
+fail-closed safety. The classifications are not certification or a universal
 industry standard.
 
 The shared context contract carries server-derived purpose, age band,

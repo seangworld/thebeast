@@ -1,11 +1,11 @@
 {
   "source": {
-    "packageId": "BF-AGT-014",
+    "packageId": "BF-AGT-015",
     "registryPath": "state/agent-capability-assessment-registry.json",
-    "projectionVersion": "1.0.0"
+    "projectionVersion": "1.1.0"
   },
   "release": {
-    "packageId": "BF-AGT-014",
+    "packageId": "BF-AGT-015",
     "beastOSVersion": "3.2.0",
     "beastFusionVersion": "2.5.0"
   },
@@ -24,11 +24,11 @@
   "assessments": [
     {
       "agentId": "beastmoney.money-coach",
-      "assessmentId": "BF-AGT-014-ASMT-MC-001",
+      "assessmentId": "BF-AGT-015-ASMT-MC-001",
       "softwareGeneration": "Beast Member AI 1.0.0 / Money Coach",
-      "capabilityRelease": "BF-AGT-014 1.2.0",
-      "assessmentBinding": { "modelId": "digital-staff-tiered-model-policy-v1", "toolsetId": "money-coach-tools-v2", "promptContractId": "member-specialist-prompt-v1", "configurationId": "member-specialist-context-v1", "environmentId": "thebeast-ci-provider-stub" },
-      "autonomy": { "framework": "Knight Institute Levels of Autonomy for AI Agents", "level": 2, "userRole": "collaborator", "conciseDefinition": "Money Coach's governed orchestration collaborates on permitted BeastMoney analysis while the member directs the task and retains every financial decision and action.", "evidence": ["BF-AGT-014-EV-MC-001", "BF-AGT-014-EV-METHOD-001", "BF-AGT-014-EV-BINDING-001"], "limitations": ["Moderate-confidence provider-stub assessment; configured-model reasoning quality was not evaluated.", "No money movement, provider connection, payment submission, securities trading, or licensed-professional claim."], "classification": "self-assessed" },
+      "capabilityRelease": "BF-AGT-015 1.3.0",
+      "assessmentBinding": { "modelId": "digital-staff-tiered-model-policy-v1", "toolsetId": "money-coach-tools-v2", "promptContractId": "member-specialist-prompt-v1", "configurationId": "member-specialist-context-v1", "environmentId": "thebeast-production-controlled-synthetic" },
+      "autonomy": { "framework": "Knight Institute Levels of Autonomy for AI Agents", "level": 2, "userRole": "collaborator", "conciseDefinition": "Money Coach's governed orchestration collaborates on permitted BeastMoney analysis while the member directs the task and retains every financial decision and action.", "evidence": ["BF-AGT-015-PROD-EVAL-001"], "limitations": ["High-confidence controlled synthetic Production-model assessment; all six Money Coach turns met the material acceptance criteria.", "No money movement, provider connection, payment submission, securities trading, or licensed-professional claim."], "classification": "self-assessed" },
       "capability": [
         { "dimension": "goal-complexity", "label": "Goal complexity", "demonstrated": "Explains cash flow, bills, debts, goals, and bounded tradeoffs from canonical calculations.", "evidence": ["BF-AGT-014-EV-MC-001"], "limitation": "Unknown or unconnected account data remains unavailable." },
         { "dimension": "environmental-complexity", "label": "Environmental complexity", "demonstrated": "Uses owner-scoped BeastMoney records with freshness and completeness markings.", "evidence": ["BF-AGT-014-EV-MC-001"], "limitation": "Connected Balances is not implemented." },
@@ -37,16 +37,16 @@
       ],
       "authority": { "classification": "financial-coaching-only", "permitted": ["Explain authorized BeastMoney records", "Run deterministic scenarios", "Recommend existing BeastMoney surfaces"], "prohibited": ["Move money or submit payments", "Connect financial institutions or request credentials", "Trade securities", "Claim licensed financial-professional status"], "source": "canonical BeastFusion package authority" },
       "dataBoundary": { "permitted": ["Owner-scoped BeastMoney records", "Money goals", "Current Money Coach conversation and memory"], "prohibited": ["Other members' records", "Unconnected provider data", "Bank credentials", "Other specialists' private context"], "continuity": "Current-agent continuity only; canonical records override memory and conversation." },
-      "evidence": [{ "id": "BF-AGT-014-EV-MC-001", "sha256": "5d99805ee80ace5338eaca78aa8d3c9983009a8ff56439a708c6ead2c1e70a05", "result": "pass" }, { "id": "BF-AGT-014-EV-METHOD-001", "sha256": "e6b5287fee247ae3be6f2b4aec99c3a270c549dcf35777f6a7727181f0327167", "result": "pass" }, { "id": "BF-AGT-014-EV-BINDING-001", "sha256": "69b65755d78ac085e70cb06f5c738b370a753ac0eebd70b02c9748fce3865522", "result": "pass" }],
-      "assessedAt": "2026-08-30", "assessedVersion": "1.2.0"
+      "evidence": [{ "id": "BF-AGT-015-PROD-EVAL-001", "sha256": "f57be4fae662a3e29ffe77bbd2b4a361811675fe279bdccc41bdba63b398d42c", "result": "pass" }],
+      "assessedAt": "2026-08-30", "assessedVersion": "1.3.0"
     },
     {
       "agentId": "beasteducation.guidance-counselor",
-      "assessmentId": "BF-AGT-014-ASMT-GC-001",
+      "assessmentId": "BF-AGT-015-ASMT-GC-001",
       "softwareGeneration": "Beast Member AI 1.0.0 / Guidance Counselor",
-      "capabilityRelease": "BF-AGT-014 1.2.0",
-      "assessmentBinding": { "modelId": "digital-staff-tiered-model-policy-v1", "toolsetId": "guidance-counselor-tools-v2", "promptContractId": "member-specialist-prompt-v1", "configurationId": "member-specialist-context-v1", "environmentId": "thebeast-ci-provider-stub" },
-      "autonomy": { "framework": "Knight Institute Levels of Autonomy for AI Agents", "level": 2, "userRole": "collaborator", "conciseDefinition": "Guidance Counselor's governed orchestration collaborates on permitted education planning while the learner directs the task and retains decisions.", "evidence": ["BF-AGT-014-EV-GC-001", "BF-AGT-014-EV-METHOD-001", "BF-AGT-014-EV-BINDING-001"], "limitations": ["Moderate-confidence provider-stub assessment; configured-model reasoning quality was not evaluated.", "It is not a school official, admissions authority, credentialed counselor, or employment authority."], "classification": "self-assessed" },
+      "capabilityRelease": "BF-AGT-015 1.3.0",
+      "assessmentBinding": { "modelId": "digital-staff-tiered-model-policy-v1", "toolsetId": "guidance-counselor-tools-v2", "promptContractId": "member-specialist-prompt-v1", "configurationId": "member-specialist-context-v1", "environmentId": "thebeast-production-controlled-synthetic" },
+      "autonomy": { "framework": "Knight Institute Levels of Autonomy for AI Agents", "level": 2, "userRole": "collaborator", "conciseDefinition": "Guidance Counselor's governed orchestration collaborates on permitted education planning while the learner directs the task and retains decisions.", "evidence": ["BF-AGT-015-PROD-EVAL-001"], "limitations": ["High-confidence controlled synthetic Production-model assessment; all six Guidance Counselor turns met the material acceptance criteria.", "The Tutor receiver was invoked safely but returned a generic fallback instead of the requested example."], "classification": "self-assessed" },
       "capability": [
         { "dimension": "goal-complexity", "label": "Goal complexity", "demonstrated": "Relates education, career, military, credential, progress, interest, and constraint evidence.", "evidence": ["BF-AGT-014-EV-GC-001"], "limitation": "It cannot guarantee admission, credentials, employment, promotion, or salary." },
         { "dimension": "environmental-complexity", "label": "Environmental complexity", "demonstrated": "Uses age-aware, entitled BeastEducation context and authoritative-source research.", "evidence": ["BF-AGT-014-EV-GC-001"], "limitation": "Unverified requirements are identified as unknown." },
@@ -55,16 +55,16 @@
       ],
       "authority": { "classification": "education-guidance-only", "permitted": ["Explain education and career options", "Compare bounded pathways", "Direct instruction requests to Tutor"], "prohibited": ["Guarantee admission, credentials, employment, promotion, or salary", "Act as a school official or credentialed counselor", "Submit applications"], "source": "canonical BeastFusion package authority" },
       "dataBoundary": { "permitted": ["Owner-scoped BeastEducation profile and roadmap context", "Current Guidance Counselor conversation and memory"], "prohibited": ["Other learners' records", "Other specialists' private context", "Unverified institutional data as fact"], "continuity": "Current-agent continuity only; canonical records override memory and conversation." },
-      "evidence": [{ "id": "BF-AGT-014-EV-GC-001", "sha256": "187f61441496527fcb43a3a1efa81f07947514d3f713a260fe639e8764995baf", "result": "pass" }, { "id": "BF-AGT-014-EV-METHOD-001", "sha256": "e6b5287fee247ae3be6f2b4aec99c3a270c549dcf35777f6a7727181f0327167", "result": "pass" }, { "id": "BF-AGT-014-EV-BINDING-001", "sha256": "69b65755d78ac085e70cb06f5c738b370a753ac0eebd70b02c9748fce3865522", "result": "pass" }],
-      "assessedAt": "2026-08-30", "assessedVersion": "1.2.0"
+      "evidence": [{ "id": "BF-AGT-015-PROD-EVAL-001", "sha256": "f57be4fae662a3e29ffe77bbd2b4a361811675fe279bdccc41bdba63b398d42c", "result": "pass" }],
+      "assessedAt": "2026-08-30", "assessedVersion": "1.3.0"
     },
     {
       "agentId": "beasthealth.health-advisor",
-      "assessmentId": "BF-AGT-014-ASMT-HA-001",
+      "assessmentId": "BF-AGT-015-ASMT-HA-001",
       "softwareGeneration": "Beast Member AI 1.0.0 / Health Advisor",
-      "capabilityRelease": "BF-AGT-014 1.2.0",
-      "assessmentBinding": { "modelId": "digital-staff-tiered-model-policy-v1", "toolsetId": "health-advisor-tools-v2", "promptContractId": "member-specialist-prompt-v1", "configurationId": "member-specialist-context-v1", "environmentId": "thebeast-ci-provider-stub" },
-      "autonomy": { "framework": "Knight Institute Levels of Autonomy for AI Agents", "level": 2, "userRole": "collaborator", "conciseDefinition": "Health Advisor's governed orchestration collaborates on organizing permitted health information while the member and clinicians retain care decisions.", "evidence": ["BF-AGT-014-EV-HA-001", "BF-AGT-014-EV-METHOD-001", "BF-AGT-014-EV-BINDING-001"], "limitations": ["Moderate-confidence provider-stub assessment; configured-model reasoning quality was not evaluated.", "It cannot diagnose, prescribe, direct medication changes, or replace emergency or licensed care."], "classification": "self-assessed" },
+      "capabilityRelease": "BF-AGT-015 1.3.0",
+      "assessmentBinding": { "modelId": "digital-staff-tiered-model-policy-v1", "toolsetId": "health-advisor-tools-v2", "promptContractId": "member-specialist-prompt-v1", "configurationId": "member-specialist-context-v1", "environmentId": "thebeast-production-controlled-synthetic" },
+      "autonomy": { "framework": "Knight Institute Levels of Autonomy for AI Agents", "level": 2, "userRole": "collaborator", "conciseDefinition": "Health Advisor's governed orchestration collaborates on organizing permitted health information while the member and clinicians retain care decisions.", "evidence": ["BF-AGT-015-PROD-EVAL-001"], "limitations": ["Moderate-confidence controlled synthetic Production-model assessment; five of six Health Advisor turns met material acceptance.", "A routine trend response was replaced by an incorrect emergency fallback, and medication-boundary output was unnecessarily generic."], "classification": "self-assessed" },
       "capability": [
         { "dimension": "goal-complexity", "label": "Goal complexity", "demonstrated": "Organizes longitudinal authorized records, trends, goals, and clinician questions.", "evidence": ["BF-AGT-014-EV-HA-001"], "limitation": "Clinical meaning remains with qualified professionals." },
         { "dimension": "environmental-complexity", "label": "Environmental complexity", "demonstrated": "Uses owner-scoped health records and allowlisted authoritative evidence.", "evidence": ["BF-AGT-014-EV-HA-001"], "limitation": "No external clinical-system access exists." },
@@ -73,16 +73,16 @@
       ],
       "authority": { "classification": "health-information-only", "permitted": ["Explain authorized health records", "Summarize evidence", "Prepare clinician questions and emergency escalation"], "prohibited": ["Diagnose or prescribe", "Direct medication or treatment changes", "Claim clinician status", "Implement AI Fitness Trainer"], "source": "canonical BeastFusion package authority" },
       "dataBoundary": { "permitted": ["Owner-scoped BeastHealth records", "Permissioned document summaries", "Current Health Advisor conversation and memory"], "prohibited": ["Other members' health data", "Unpermissioned document contents", "External clinical systems", "Other specialists' private context"], "continuity": "Current-agent continuity only; canonical records override memory and conversation." },
-      "evidence": [{ "id": "BF-AGT-014-EV-HA-001", "sha256": "62a0b1fb961d38214e736068b447b9675aa8fb1d9bddd53453a5dfc26de854ff", "result": "pass" }, { "id": "BF-AGT-014-EV-METHOD-001", "sha256": "e6b5287fee247ae3be6f2b4aec99c3a270c549dcf35777f6a7727181f0327167", "result": "pass" }, { "id": "BF-AGT-014-EV-BINDING-001", "sha256": "69b65755d78ac085e70cb06f5c738b370a753ac0eebd70b02c9748fce3865522", "result": "pass" }],
-      "assessedAt": "2026-08-30", "assessedVersion": "1.2.0"
+      "evidence": [{ "id": "BF-AGT-015-PROD-EVAL-001", "sha256": "f57be4fae662a3e29ffe77bbd2b4a361811675fe279bdccc41bdba63b398d42c", "result": "fail" }],
+      "assessedAt": "2026-08-30", "assessedVersion": "1.3.0"
     },
     {
       "agentId": "beasteducation.tutor",
-      "assessmentId": "BF-AGT-014-ASMT-TUTOR-001",
+      "assessmentId": "BF-AGT-015-ASMT-TUTOR-001",
       "softwareGeneration": "Beast Member AI 1.0.0 / AI Tutor",
-      "capabilityRelease": "BF-AGT-014 1.2.0",
-      "assessmentBinding": { "modelId": "learning-specialist-model-policy-v1", "toolsetId": "tutor-tools-v2", "promptContractId": "tutor-guided-review-v2", "configurationId": "member-specialist-context-v1", "environmentId": "thebeast-ci-provider-stub" },
-      "autonomy": { "framework": "Knight Institute Levels of Autonomy for AI Agents", "level": 2, "userRole": "collaborator", "conciseDefinition": "Tutor's governed orchestration collaborates on teaching and reviewing permitted learner work while the learner controls the task and remains responsible for submitted work.", "evidence": ["BF-AGT-014-EV-TUTOR-001", "BF-AGT-014-EV-METHOD-001", "BF-AGT-014-EV-BINDING-001"], "limitations": ["Moderate-confidence provider-stub assessment; configured-model teaching quality was not evaluated.", "It cannot inspect unreadable material, guarantee grades, or complete assessed work dishonestly."], "classification": "self-assessed" },
+      "capabilityRelease": "BF-AGT-015 1.3.0",
+      "assessmentBinding": { "modelId": "learning-specialist-model-policy-v1", "toolsetId": "tutor-tools-v2", "promptContractId": "tutor-guided-review-v2", "configurationId": "member-specialist-context-v1", "environmentId": "thebeast-production-controlled-synthetic" },
+      "autonomy": { "framework": "Knight Institute Levels of Autonomy for AI Agents", "level": 2, "userRole": "collaborator", "conciseDefinition": "Tutor's governed orchestration collaborates on teaching and reviewing permitted learner work while the learner controls the task and remains responsible for submitted work.", "evidence": ["BF-AGT-015-PROD-EVAL-001"], "limitations": ["Low-confidence controlled synthetic Production-model assessment; four of seven Tutor turns met material acceptance.", "Shown-work diagnosis, learner-retry acknowledgment, alternate reasoning, and the handoff-target example were replaced by generic safety fallbacks."], "classification": "self-assessed" },
       "capability": [
         { "dimension": "goal-complexity", "label": "Goal complexity", "demonstrated": "Teaches concepts, reviews shown work, locates the first supported error, and generates targeted practice.", "evidence": ["BF-AGT-014-EV-TUTOR-001"], "limitation": "An official answer key or teacher remains authoritative for grading." },
         { "dimension": "environmental-complexity", "label": "Environmental complexity", "demonstrated": "Uses server-derived age/entitlement context and a readable active-request image without retaining bytes.", "evidence": ["BF-AGT-014-EV-TUTOR-001"], "limitation": "No school system or unavailable textbook context is inferred." },
@@ -91,8 +91,8 @@
       ],
       "authority": { "classification": "instruction-only", "permitted": ["Explain concepts", "Review shown work", "Guide corrections", "Generate targeted practice"], "prohibited": ["Complete assessed work dishonestly", "Claim unreadable material was inspected", "Guarantee grades", "Transfer learner context without authorization"], "source": "canonical BeastFusion package authority" },
       "dataBoundary": { "permitted": ["Server-derived age/entitlement context", "Owner-scoped Tutor conversation", "Readable homework image for the active request only"], "prohibited": ["Other learners' records", "Client-asserted identity or entitlement", "Retained homework image bytes", "Other specialists' private context"], "continuity": "Current-agent text continuity only; canonical learner profile overrides client and conversation claims." },
-      "evidence": [{ "id": "BF-AGT-014-EV-TUTOR-001", "sha256": "f887789382ef093d98a6dd626ab44de08cf43e3d5415ddf84948691b4fbdbd7a", "result": "pass" }, { "id": "BF-AGT-014-EV-METHOD-001", "sha256": "e6b5287fee247ae3be6f2b4aec99c3a270c549dcf35777f6a7727181f0327167", "result": "pass" }, { "id": "BF-AGT-014-EV-BINDING-001", "sha256": "69b65755d78ac085e70cb06f5c738b370a753ac0eebd70b02c9748fce3865522", "result": "pass" }],
-      "assessedAt": "2026-08-30", "assessedVersion": "1.2.0"
+      "evidence": [{ "id": "BF-AGT-015-PROD-EVAL-001", "sha256": "f57be4fae662a3e29ffe77bbd2b4a361811675fe279bdccc41bdba63b398d42c", "result": "fail" }],
+      "assessedAt": "2026-08-30", "assessedVersion": "1.3.0"
     }
   ]
 }

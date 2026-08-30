@@ -19,20 +19,20 @@ try {
 
 const forbidden = [
   { label: "stale Level 3 member assessment", expression: /\b(?:L3|Level 3)\b/ },
-  { label: "stale Production assessment binding", expression: /thebeast-production/ },
 ];
 const failures = [];
 for (const file of currentEvidenceFiles) {
   const content = await readFile(resolve(file), "utf8");
   for (const rule of forbidden) if (rule.expression.test(content)) failures.push(`${file}: ${rule.label}`);
+  if ([currentEvidenceFiles[0], currentEvidenceFiles[1]].includes(file) && /configured-model (?:reasoning|teaching) quality was not evaluated/i.test(content)) failures.push(`${file}: stale unevaluated Production-model claim`);
 }
 
 const projection = JSON.parse(await readFile(resolve(currentEvidenceFiles[0]), "utf8"));
 if (projection.assessments?.length !== 4) failures.push("projection must contain exactly four member specialist assessments");
 for (const assessment of projection.assessments || []) {
   if (assessment.autonomy?.level !== 2 || assessment.autonomy?.userRole !== "collaborator") failures.push(`${assessment.agentId}: assessment must be Knight L2 Collaborator`);
-  if (assessment.assessmentBinding?.environmentId !== "thebeast-ci-provider-stub") failures.push(`${assessment.agentId}: assessment must bind the CI provider-stub environment`);
-  if (!assessment.autonomy?.limitations?.some((item) => /configured-model .* was not evaluated/i.test(item))) failures.push(`${assessment.agentId}: configured-model limitation is required`);
+  if (assessment.assessmentBinding?.environmentId !== "thebeast-production-controlled-synthetic") failures.push(`${assessment.agentId}: assessment must bind the controlled synthetic Production environment`);
+  if (!assessment.autonomy?.limitations?.some((item) => /controlled synthetic Production-model assessment/i.test(item))) failures.push(`${assessment.agentId}: Production-model evidence boundary is required`);
 }
 
 if (failures.length) {
