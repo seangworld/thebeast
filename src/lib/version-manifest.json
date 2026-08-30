@@ -12,7 +12,7 @@
     "beastos": {
       "name": "BeastOS",
       "version": "3.2.0",
-      "buildId": "beastos-3.2.0+20260830.01",
+      "buildId": "beastos-3.2.0+20260830.02",
       "channel": "Production",
       "releaseDate": "2026-08-30"
     },
@@ -54,9 +54,9 @@
     "beastmarketing": {
       "name": "BeastMarketing",
       "version": "0.2.0",
-      "buildId": "beastmarketing-0.2.0+preview-distribution",
-      "channel": "Development",
-      "releaseDate": null
+      "buildId": "beastmarketing-0.2.0+20260823.01",
+      "channel": "Production",
+      "releaseDate": "2026-08-23"
     },
     "beastgoals": {
       "name": "BeastGoals",
@@ -81,17 +81,17 @@
     },
     "seangworld": {
       "name": "SEANGWORLD",
-      "version": "1.5.0",
-      "buildId": "sw-1.5.0+20260816.01",
+      "version": "1.6.0",
+      "buildId": "sw-1.6.0+20260829.01",
       "channel": "Production",
-      "releaseDate": "2026-08-16"
+      "releaseDate": "2026-08-29"
     },
     "cw": {
       "name": "Change the World",
-      "version": "0.6.0",
-      "buildId": "cw-0.6.0+20260816.01",
+      "version": "0.7.0",
+      "buildId": "cw-0.7.0+20260822.01",
       "channel": "Production",
-      "releaseDate": "2026-08-16"
+      "releaseDate": "2026-08-22"
     }
   }
 }

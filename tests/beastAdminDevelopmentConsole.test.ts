@@ -6,6 +6,7 @@ import {
   buildBeastAdminDevelopmentConsoleSnapshot,
   normalizeBeastAdminDevelopmentConsoleSnapshot,
 } from "../src/lib/beastAdminDevelopmentConsole";
+import { versionManifest } from "../src/lib/appVersion";
 import type { BeastAdminRoadmapItem } from "../src/lib/beastAdminRoadmap";
 import type { BeastAdminReleaseRecord } from "../src/lib/beastAdminReleaseCenter";
 
@@ -268,7 +269,10 @@ test("BA-111 reports unavailable sources instead of empty development claims", (
   });
   assert.equal(snapshot.repositories[0].worktree, "unavailable");
   assert.equal(snapshot.repositories[3].worktree, "unavailable");
-  assert.match(snapshot.repositories[3].detail, /v0\.6\.0 Production/);
+  assert.match(
+    snapshot.repositories[3].detail,
+    new RegExp(`v${versionManifest.cw.version.replaceAll(".", "\\.")} ${versionManifest.cw.channel}`)
+  );
 });
 
 test("BA-111 validates the complete development console response", () => {
