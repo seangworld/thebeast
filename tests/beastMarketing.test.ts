@@ -22,6 +22,7 @@ import {
   type MarketingAdVariant,
   type MarketingDistributionPlan,
 } from "../src/lib/beastMarketingPreview";
+import { allowedVideoTransitions, defaultVideoSeriesSettings, evaluateVideoReadiness, externalVideoAuthorities, videoJobStates, VIDEO_ENGINE_VERSION } from "../src/lib/beastMarketingVideo";
 
 const campaign: MarketingCampaign = {
   id: "campaign-1",
@@ -45,8 +46,8 @@ function result(metric: MarketingOutcome["metric"], value: number): MarketingOut
   return { id: `${metric}-${value}`, campaignId: campaign.id, metric, value, measuredAt: "2026-08-23T00:00:00Z", sourceLabel: "First-party telemetry", sourceUrl: null, notes: "" };
 }
 
-test("BeastMarketing v0.2 preserves bounded campaign, asset, and outcome states", () => {
-  assert.equal(BEAST_MARKETING_VERSION, "0.2.0");
+test("BeastMarketing v0.3 preserves bounded campaign, asset, and outcome states", () => {
+  assert.equal(BEAST_MARKETING_VERSION, "0.3.0");
   assert.deepEqual(marketingCampaignStatuses, ["draft", "review", "approved", "scheduled", "active", "paused", "completed", "archived"]);
   assert.equal(isMarketingCampaignStatus("approved"), true);
   assert.equal(isMarketingCampaignStatus("published"), false);
@@ -54,6 +55,31 @@ test("BeastMarketing v0.2 preserves bounded campaign, asset, and outcome states"
   assert.equal(isMarketingAssetStatus("posted"), false);
   assert.equal(isMarketingOutcomeMetric("retained_users"), true);
   assert.equal(isMarketingOutcomeMetric("likes"), false);
+});
+
+test("BMKT-003 defines configurable video controls and deterministic lifecycle", () => {
+  assert.equal(VIDEO_ENGINE_VERSION, "0.3.0");
+  assert.equal(defaultVideoSeriesSettings.aspectRatio, "9:16");
+  assert.equal(defaultVideoSeriesSettings.publishingEnabled, false);
+  assert.equal(defaultVideoSeriesSettings.approvalMode, "owner_approval");
+  assert.deepEqual(allowedVideoTransitions.generating, ["ready", "failed"]);
+  assert.equal(videoJobStates.includes("measuring"), true);
+  assert.deepEqual(externalVideoAuthorities, { providersConfigured: false, youtubeAuthorized: false, externalPublishingEnabled: false, automaticPublishingEnabled: false });
+});
+
+test("BMKT-003 readiness blocks weak or unsafe videos instead of maintaining frequency", () => {
+  const result = evaluateVideoReadiness({ factualClaimsVerified: true, productTruthVerified: true, misleadingClaimsAbsent: true, safeContent: true, provenanceComplete: false, destinationValid: true, duplicateRisk: 0.1, mediaIntegrity: true, metadataQuality: 92, attributionValid: true, runtimeSeconds: 60, settings: defaultVideoSeriesSettings });
+  assert.equal(result.ready, false);
+  assert.match(result.blockers.join(" "), /provenance/i);
+});
+
+test("BMKT-003 persists owner-only series, presenter profiles, and retry-safe jobs", () => {
+  const migration = readFileSync("supabase/migrations/20260831150054_add_beast_marketing_video_control_plane.sql", "utf8");
+  for (const table of ["video_series", "presenter_profiles", "video_jobs"]) assert.match(migration, new RegExp(`beast_marketing_${table}`));
+  assert.equal((migration.match(/enable row level security/g) || []).length, 3);
+  assert.match(migration, /unique \(owner_id, idempotency_key\)/);
+  assert.match(migration, /future_owner_likeness/);
+  assert.doesNotMatch(migration, /to anon\s+using|http_post|net\.http|vault\./i);
 });
 
 const adRevision = normalizeMarketingAdRevision({
