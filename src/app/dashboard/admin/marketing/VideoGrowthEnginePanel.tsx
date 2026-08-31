@@ -85,7 +85,7 @@ export function VideoGrowthEnginePanel() {
 
   return <div className="space-y-6">
     <DashboardCard accent="admin">
-      <SectionHeader eyebrow="BMKT-003 · Owner only" title="AI Video & YouTube Growth Engine" description="A deterministic control plane for series, presenters, production jobs, and future YouTube delivery. No external provider is contacted by this panel." />
+      <SectionHeader eyebrow="BMKT-004 · Owner only" title="AI Video & YouTube Growth Engine" description="A deterministic control plane for evidence-backed discovery, grounded scripting, series, presenters, production jobs, and future YouTube delivery." />
       <div className={`mt-5 rounded-2xl border p-5 ${data.controls.pause_all_publishing ? "border-red-300/40 bg-red-400/[0.08]" : "border-amber-300/30 bg-amber-300/[0.05]"}`}>
         <div className="flex flex-wrap items-center justify-between gap-4"><div><p className="text-sm font-black uppercase tracking-widest text-red-100">Global publishing interlock</p><p className="mt-1 text-sm text-slate-300">{data.controls.pause_all_publishing ? "PAUSE ALL PUBLISHING is active." : "Internal scheduling is unpaused; external authority is still absent."}</p></div><button className="beast-button" disabled={Boolean(busy)} onClick={() => void send("PATCH", { kind: "controls", pauseAllPublishing: !data.controls.pause_all_publishing }, data.controls.pause_all_publishing ? "Global pause released. YouTube publishing is still locked." : "All publishing paused.")}>{data.controls.pause_all_publishing ? "Release global pause" : "PAUSE ALL PUBLISHING"}</button></div>
       </div>
