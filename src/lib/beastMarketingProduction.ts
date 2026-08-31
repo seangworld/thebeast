@@ -1,6 +1,6 @@
 import type { VideoSeriesSettings } from "./beastMarketingVideo";
 
-export const VIDEO_PRODUCTION_ENGINE_VERSION = "0.5.0";
+export const VIDEO_PRODUCTION_ENGINE_VERSION = "0.6.0";
 
 export const videoProductionProviderSlots = ["narration", "visuals", "licensed_media", "composition"] as const;
 export type VideoProductionProviderSlot = (typeof videoProductionProviderSlots)[number];
@@ -14,6 +14,14 @@ export type ProductionManifest = {
   scenes: ProductionScene[]; assets: ProductionAsset[]; providerBindings: ProviderBinding[]; retryPolicy: { maximumAttempts: number; delaysSeconds: number[] };
   planState: "planned_provider_blocked"; blockers: string[]; checksum: string;
 };
+export type ProductionOperation = "narration" | "visuals" | "composition";
+export type ProductionAttempt = { operation: ProductionOperation; attemptNumber: number; idempotencyKey: string; status: "planned" | "submitted" | "succeeded" | "failed" | "cancelled"; retryable: boolean };
+export interface VideoProductionProviderAdapter {
+  readonly providerId: string;
+  readonly operations: readonly ProductionOperation[];
+  submit(input: { idempotencyKey: string; manifest: ProductionManifest; operation: ProductionOperation }): Promise<{ providerRequestId: string; status: "submitted" | "succeeded" }>;
+  inspect(providerRequestId: string): Promise<{ status: "submitted" | "succeeded" | "failed"; retryable: boolean; assets: ProductionAsset[] }>;
+}
 
 const dimensions: Record<VideoSeriesSettings["aspectRatio"], [number, number]> = { "9:16": [1080, 1920], "16:9": [1920, 1080], "1:1": [1080, 1080] };
 const fingerprint = (value: string) => {
@@ -58,6 +66,27 @@ export function validateProducedAssets(assets: ProductionAsset[]) {
     ...(!finalVideo?.uri || finalVideo.mimeType !== "video/mp4" ? ["A final MP4 asset is required."] : []),
     ...(assets.some((asset) => !asset.provenanceComplete || !asset.contentHash) ? ["Every produced asset requires complete provenance and a content hash."] : []),
     ...(assets.some((asset) => asset.sourceType === "licensed" && !asset.license) ? ["Licensed assets require a retained license reference."] : []),
+  ];
+  return { valid: errors.length === 0, errors };
+}
+
+export function buildProductionAttempt(input: { jobId: string; revision: number; operation: ProductionOperation; attemptNumber: number }): ProductionAttempt {
+  const attemptNumber = Math.max(1, Math.min(20, Math.trunc(input.attemptNumber)));
+  return { operation: input.operation, attemptNumber, idempotencyKey: `bmkt-production:${fingerprint(`${input.jobId}|${input.revision}|${input.operation}|${attemptNumber}`)}`, status: "planned", retryable: false };
+}
+
+export function nextProductionRetry(attempt: ProductionAttempt, delaysSeconds = [30, 120, 600]) {
+  if (attempt.status !== "failed" || !attempt.retryable || attempt.attemptNumber >= delaysSeconds.length) return { allowed: false, delaySeconds: null, nextAttemptNumber: null };
+  return { allowed: true, delaySeconds: delaysSeconds[attempt.attemptNumber - 1], nextAttemptNumber: attempt.attemptNumber + 1 };
+}
+
+export function validatePersistedAssetCandidate(input: { ownerId: string; storagePath: string; mimeType: string; contentHash: string; sizeBytes: number }) {
+  const allowedMimeTypes = new Set(["video/mp4", "audio/mpeg", "audio/wav", "image/jpeg", "image/png", "image/webp", "text/vtt", "application/json"]);
+  const errors = [
+    ...(!input.storagePath.startsWith(`${input.ownerId}/`) ? ["The private storage path must begin with the owner ID."] : []),
+    ...(!allowedMimeTypes.has(input.mimeType) ? ["The media type is not allowed."] : []),
+    ...(!/^[a-z0-9]+:[a-z0-9_-]{8,}$/i.test(input.contentHash) ? ["A provider-qualified content hash is required."] : []),
+    ...(!Number.isInteger(input.sizeBytes) || input.sizeBytes < 0 || input.sizeBytes > 500_000_000 ? ["The asset size is outside the private media limit."] : []),
   ];
   return { valid: errors.length === 0, errors };
 }

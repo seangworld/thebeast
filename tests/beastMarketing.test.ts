@@ -24,7 +24,7 @@ import {
 } from "../src/lib/beastMarketingPreview";
 import { allowedVideoTransitions, defaultVideoSeriesSettings, evaluateVideoReadiness, externalVideoAuthorities, videoJobStates, VIDEO_ENGINE_VERSION } from "../src/lib/beastMarketingVideo";
 import { buildGroundedScript, buildYouTubeMetadata, scoreVideoOpportunity, VIDEO_CONTENT_ENGINE_VERSION } from "../src/lib/beastMarketingContent";
-import { buildProductionManifest, validateProducedAssets, validateProductionManifest, VIDEO_PRODUCTION_ENGINE_VERSION } from "../src/lib/beastMarketingProduction";
+import { buildProductionAttempt, buildProductionManifest, nextProductionRetry, validatePersistedAssetCandidate, validateProducedAssets, validateProductionManifest, VIDEO_PRODUCTION_ENGINE_VERSION } from "../src/lib/beastMarketingProduction";
 
 const campaign: MarketingCampaign = {
   id: "campaign-1",
@@ -48,8 +48,8 @@ function result(metric: MarketingOutcome["metric"], value: number): MarketingOut
   return { id: `${metric}-${value}`, campaignId: campaign.id, metric, value, measuredAt: "2026-08-23T00:00:00Z", sourceLabel: "First-party telemetry", sourceUrl: null, notes: "" };
 }
 
-test("BeastMarketing v0.5 preserves bounded campaign, asset, and outcome states", () => {
-  assert.equal(BEAST_MARKETING_VERSION, "0.5.0");
+test("BeastMarketing v0.6 preserves bounded campaign, asset, and outcome states", () => {
+  assert.equal(BEAST_MARKETING_VERSION, "0.6.0");
   assert.deepEqual(marketingCampaignStatuses, ["draft", "review", "approved", "scheduled", "active", "paused", "completed", "archived"]);
   assert.equal(isMarketingCampaignStatus("approved"), true);
   assert.equal(isMarketingCampaignStatus("published"), false);
@@ -60,7 +60,7 @@ test("BeastMarketing v0.5 preserves bounded campaign, asset, and outcome states"
 });
 
 test("BMKT-003 defines configurable video controls and deterministic lifecycle", () => {
-  assert.equal(VIDEO_ENGINE_VERSION, "0.5.0");
+  assert.equal(VIDEO_ENGINE_VERSION, "0.6.0");
   assert.equal(defaultVideoSeriesSettings.aspectRatio, "9:16");
   assert.equal(defaultVideoSeriesSettings.publishingEnabled, false);
   assert.equal(defaultVideoSeriesSettings.approvalMode, "owner_approval");
@@ -115,7 +115,7 @@ test("BMKT-004 keeps evidence-backed intelligence and scripting owner-scoped", (
 test("BMKT-005 creates a deterministic provider-neutral vertical production manifest", () => {
   const input = { jobId: "job-1", revision: 2, script: { hook: "A strong opening question for the viewer.", narration: ["A verified useful fact explains the capability.", "A second fact gives the viewer practical context."], cta: "Visit the relevant SEANGWORLD page to learn more.", estimatedSeconds: 60 }, settings: defaultVideoSeriesSettings };
   const first = buildProductionManifest(input); const second = buildProductionManifest(input);
-  assert.equal(VIDEO_PRODUCTION_ENGINE_VERSION, "0.5.0");
+  assert.equal(VIDEO_PRODUCTION_ENGINE_VERSION, "0.6.0");
   assert.equal(first.aspectRatio, "9:16");
   assert.deepEqual([first.width, first.height], [1080, 1920]);
   assert.equal(first.checksum, second.checksum);
@@ -143,6 +143,33 @@ test("BMKT-005 plans internally and blocks generation until provider authority e
   assert.match(panel, /Prepare production manifest/);
   assert.match(panel, /Generate video · provider gate/);
   assert.match(panel, /\["selected", "scripted", "generating", "scheduled", "published"\]/);
+});
+
+test("BMKT-006 makes attempt identity and bounded retry deterministic", () => {
+  const first = buildProductionAttempt({ jobId: "job-1", revision: 2, operation: "narration", attemptNumber: 1 });
+  const duplicate = buildProductionAttempt({ jobId: "job-1", revision: 2, operation: "narration", attemptNumber: 1 });
+  assert.equal(first.idempotencyKey, duplicate.idempotencyKey);
+  assert.deepEqual(nextProductionRetry({ ...first, status: "failed", retryable: true }), { allowed: true, delaySeconds: 30, nextAttemptNumber: 2 });
+  assert.equal(nextProductionRetry({ ...first, attemptNumber: 3, status: "failed", retryable: true }).allowed, false);
+});
+
+test("BMKT-006 validates private media storage boundaries", () => {
+  assert.equal(validatePersistedAssetCandidate({ ownerId: "owner-1", storagePath: "owner-1/job-1/final.mp4", mimeType: "video/mp4", contentHash: "sha256:abcdefgh", sizeBytes: 1000 }).valid, true);
+  const invalid = validatePersistedAssetCandidate({ ownerId: "owner-1", storagePath: "another-owner/job-1/final.mp4", mimeType: "text/html", contentHash: "bad", sizeBytes: 600_000_000 });
+  assert.equal(invalid.valid, false);
+  assert.equal(invalid.errors.length, 4);
+});
+
+test("BMKT-006 persists owner-admin-only attempts and private provenance assets", () => {
+  const migration = readFileSync("supabase/migrations/20260831224500_add_beast_marketing_media_persistence.sql", "utf8");
+  for (const table of ["video_attempts", "video_assets"]) assert.match(migration, new RegExp(`beast_marketing_${table}`));
+  assert.equal((migration.match(/enable row level security/g) || []).length, 2);
+  assert.match(migration, /beast-marketing-media/);
+  assert.match(migration, /public, file_size_limit/);
+  assert.match(migration, /profiles\.role = 'admin'/);
+  assert.match(migration, /storage_path like owner_id::text/);
+  assert.match(migration, /unique \(owner_id, idempotency_key\)/);
+  assert.doesNotMatch(migration, /grant delete|for delete|public\s*=\s*true|http_post|net\.http|vault\./i);
 });
 
 test("BMKT-003 readiness blocks weak or unsafe videos instead of maintaining frequency", () => {
