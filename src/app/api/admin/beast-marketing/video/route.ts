@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createHash } from "node:crypto";
 import { allowedVideoTransitions, defaultVideoSeriesSettings, videoJobStates, type VideoJobState, type VideoSeriesSettings } from "@/lib/beastMarketingVideo";
 import { buildGroundedScript, buildYouTubeMetadata, scoreVideoOpportunity, type ScriptFact, type VideoEvidence } from "@/lib/beastMarketingContent";
 import { createRouteClient } from "@/lib/supabase/server";
@@ -22,6 +23,42 @@ const integer = (value: unknown, minimum: number, maximum: number, fallback: num
   const parsed = Number(value);
   return Number.isInteger(parsed) && parsed >= minimum && parsed <= maximum ? parsed : fallback;
 };
+const decimal = (value: unknown, minimum: number, maximum: number, fallback = 0) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= minimum && parsed <= maximum ? parsed : fallback;
+};
+const httpsUrl = (value: unknown, maximum = 1000) => {
+  const normalized = clean(value, maximum);
+  return /^https:\/\//i.test(normalized) ? normalized : null;
+};
+const seangworldUrl = (value: unknown) => {
+  const normalized = httpsUrl(value);
+  if (!normalized) return null;
+  try { const hostname = new URL(normalized).hostname.toLowerCase(); return hostname === "seangworld.com" || hostname.endsWith(".seangworld.com") ? normalized : null; }
+  catch { return null; }
+};
+
+function evidence(value: unknown): VideoEvidence[] {
+  if (!Array.isArray(value)) return [];
+  const sources = new Set<VideoEvidence["source"]>(["search_console", "ga4", "first_party", "owner", "youtube_history"]);
+  return value.flatMap((item) => {
+    const record = item && typeof item === "object" ? item as Record<string, unknown> : {};
+    const source = clean(record.source, 40) as VideoEvidence["source"];
+    const label = clean(record.label, 200);
+    if (!sources.has(source) || !label) return [];
+    return [{ source, label, url: httpsUrl(record.url), observedAt: clean(record.observedAt, 40) || null, sampleSize: record.sampleSize == null ? null : integer(record.sampleSize, 0, 10_000_000, 0), value: record.value == null ? null : integer(record.value, 0, 100, 0), limitation: clean(record.limitation, 500) || null }];
+  }).slice(0, 20);
+}
+
+function facts(value: unknown): ScriptFact[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    const record = item && typeof item === "object" ? item as Record<string, unknown> : {};
+    const statement = clean(record.statement, 1000); const sourceLabel = clean(record.sourceLabel, 200);
+    if (!statement || !sourceLabel) return [];
+    return [{ statement, sourceLabel, sourceUrl: httpsUrl(record.sourceUrl), verified: record.verified === true }];
+  }).slice(0, 8);
+}
 
 function settings(value: unknown): VideoSeriesSettings {
   const record = value && typeof value === "object" ? value as Record<string, unknown> : {};
@@ -79,14 +116,41 @@ export async function POST(request: Request) {
   if (!user) return forbidden();
   const body = await request.json().catch(() => null) as Record<string, unknown> | null;
   const kind = clean(body?.kind, 40);
+  if (kind === "search_opportunity_job") {
+    const seriesId = clean(body?.seriesId, 80);
+    const raw = body?.opportunity && typeof body.opportunity === "object" ? body.opportunity as Record<string, unknown> : {};
+    const query = clean(raw.query, 240); const page = seangworldUrl(raw.page); const generatedAt = clean(body?.generatedAt, 40) || null;
+    if (!seriesId || !query || !page) return NextResponse.json({ error: "A series and valid Search Console page/query opportunity are required." }, { status: 400 });
+    const { data: ownedSeries } = await client.from("beast_marketing_video_series").select("id").eq("id", seriesId).eq("owner_id", user.id).maybeSingle();
+    if (!ownedSeries) return NextResponse.json({ error: "The selected series is unavailable." }, { status: 404 });
+    const current = raw.current && typeof raw.current === "object" ? raw.current as Record<string, unknown> : {};
+    const normalized = {
+      page, query,
+      score: integer(raw.score, 0, 100, 0),
+      disposition: clean(raw.disposition, 80), classification: clean(raw.classification, 80), recommendedAsset: clean(raw.recommendedAsset, 80),
+      rationale: clean(raw.rationale, 1000), signals: list(raw.signals, 12),
+      current: { clicks: integer(current.clicks, 0, 10_000_000, 0), impressions: integer(current.impressions, 0, 100_000_000, 0), ctr: decimal(current.ctr, 0, 1), position: decimal(current.position, 0, 1000) },
+    };
+    const idempotencyKey = `bmkt-004:gsc:${createHash("sha256").update(`${seriesId}|${page}|${query.toLowerCase()}`).digest("hex")}`;
+    const { data: existing } = await client.from("beast_marketing_video_jobs").select("id").eq("owner_id", user.id).eq("idempotency_key", idempotencyKey).maybeSingle();
+    if (existing) return NextResponse.json({ error: "This Search Console opportunity is already in the selected series queue.", jobId: existing.id }, { status: 409 });
+    const sourceEvidence: VideoEvidence[] = [{ source: "search_console", label: `Search Console page/query sample: ${query}`, url: page, observedAt: generatedAt, sampleSize: normalized.current.impressions, value: normalized.score, limitation: "Search Console query samples can be partial and do not prove trend, product fit, funnel value, or causality." }];
+    const topic = { title: query, category: "search_intelligence", source: "search_console", confidence: null, evidenceStatus: "partial", selectable: false, evidence: sourceEvidence, searchOpportunity: normalized, rationale: ["Audience-interest evidence is available from Search Console.", "Beast capability match and funnel value must be verified before selection.", "Trend and prior YouTube performance remain unavailable."] };
+    const { data, error } = await client.from("beast_marketing_video_jobs").insert({ owner_id: user.id, series_id: seriesId, state: "idea", idempotency_key: idempotencyKey, topic, provenance: { createdBy: "bmkt-004_search_intelligence", providersUsed: ["search_console"], evidence: sourceEvidence, evidenceStatus: "partial" } }).select("*").single();
+    if (error?.code === "23505") return NextResponse.json({ error: "This Search Console opportunity is already in the selected series queue." }, { status: 409 });
+    return error || !data ? unavailable() : NextResponse.json({ job: data }, { status: 201 });
+  }
   if (kind === "evaluate_job") {
     const id = clean(body?.id, 80);
     const { data: job } = await client.from("beast_marketing_video_jobs").select("id, series_id, topic, state").eq("id", id).eq("owner_id", user.id).maybeSingle();
     if (!job || !["idea", "modify"].includes(job.state)) return NextResponse.json({ error: "Only an owner-scoped idea can be evaluated." }, { status: 409 });
     const { data: series } = await client.from("beast_marketing_video_series").select("settings").eq("id", job.series_id).eq("owner_id", user.id).maybeSingle();
     if (!series) return NextResponse.json({ error: "The series settings are unavailable." }, { status: 404 });
-    const evidence = Array.isArray(body?.evidence) ? body.evidence as VideoEvidence[] : [];
-    const opportunity = scoreVideoOpportunity({ title: clean((job.topic as Record<string, unknown>)?.title, 240), category: clean(body?.category, 100), capabilityMatch: integer(body?.capabilityMatch, 0, 100, 0), funnelValue: integer(body?.funnelValue, 0, 100, 0), historicalPerformance: body?.historicalPerformance == null ? null : integer(body.historicalPerformance, 0, 100, 0), audienceInterest: body?.audienceInterest == null ? null : integer(body.audienceInterest, 0, 100, 0), trendOpportunity: body?.trendOpportunity == null ? null : integer(body.trendOpportunity, 0, 100, 0), evidence }, settings(series.settings));
+    const storedTopic = job.topic as Record<string, unknown>;
+    const normalizedEvidence = evidence(storedTopic.evidence);
+    const searchOpportunity = storedTopic.searchOpportunity && typeof storedTopic.searchOpportunity === "object" ? storedTopic.searchOpportunity as Record<string, unknown> : null;
+    const audienceInterest = normalizedEvidence.some((item) => ["search_console", "ga4", "first_party"].includes(item.source)) && searchOpportunity ? integer(searchOpportunity.score, 0, 100, 0) : null;
+    const opportunity = scoreVideoOpportunity({ title: clean(storedTopic.title, 240), category: clean(body?.category, 100), capabilityMatch: integer(body?.capabilityMatch, 0, 100, 0), funnelValue: integer(body?.funnelValue, 0, 100, 0), historicalPerformance: null, audienceInterest, trendOpportunity: null, evidence: normalizedEvidence }, settings(series.settings));
     const { data, error } = await client.from("beast_marketing_video_jobs").update({ topic: opportunity, state: opportunity.selectable ? "selected" : "idea", provenance: { evaluatedBy: "bmkt-004", evidence: opportunity.evidence, evidenceStatus: opportunity.evidenceStatus }, updated_at: new Date().toISOString() }).eq("id", id).eq("owner_id", user.id).select("*").maybeSingle();
     return error || !data ? unavailable() : NextResponse.json({ job: data, opportunity });
   }
@@ -98,7 +162,7 @@ export async function POST(request: Request) {
     if (!series) return NextResponse.json({ error: "The series settings are unavailable." }, { status: 404 });
     const topic = clean((job.topic as Record<string, unknown>)?.title, 240);
     const destinationUrl = clean(body?.destinationUrl, 1000);
-    const script = buildGroundedScript({ topic, facts: Array.isArray(body?.facts) ? body.facts as ScriptFact[] : [], destinationLabel: clean(body?.destinationLabel, 120) || "SEANGWORLD", destinationUrl, settings: settings(series.settings) });
+    const script = buildGroundedScript({ topic, facts: facts(body?.facts), destinationLabel: clean(body?.destinationLabel, 120) || "SEANGWORLD", destinationUrl, settings: settings(series.settings) });
     const metadata = buildYouTubeMetadata({ topic, summary: clean(body?.summary, 2000), keywords: list(body?.keywords, 20), destinationUrl, campaignId: clean(body?.campaignId, 120) || `bmkt-${id}` });
     const ready = script.generationReady && metadata.warnings.length === 0;
     const { data, error } = await client.from("beast_marketing_video_jobs").update({ script, metadata, destination: { url: metadata.destinationUrl, campaign: metadata.campaign }, state: ready ? "scripted" : "selected", quality: { scriptReady: ready, warnings: [...script.warnings, ...metadata.warnings] }, updated_at: new Date().toISOString() }).eq("id", id).eq("owner_id", user.id).select("*").maybeSingle();

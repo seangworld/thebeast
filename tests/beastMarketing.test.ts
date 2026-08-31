@@ -94,11 +94,21 @@ test("BMKT-004 produces relevant natural metadata with measurable attribution", 
 
 test("BMKT-004 keeps evidence-backed intelligence and scripting owner-scoped", () => {
   const route = readFileSync("src/app/api/admin/beast-marketing/video/route.ts", "utf8");
+  const panel = readFileSync("src/app/dashboard/admin/marketing/VideoGrowthEnginePanel.tsx", "utf8");
+  assert.match(route, /kind === "search_opportunity_job"/);
   assert.match(route, /kind === "evaluate_job"/);
   assert.match(route, /kind === "script_job"/);
   assert.match(route, /\.eq\("owner_id", user\.id\)/);
   assert.match(route, /evidenceStatus/);
+  assert.match(route, /Search Console query samples can be partial/);
+  assert.match(route, /createHash\("sha256"\)/);
   assert.doesNotMatch(route, /fetch\(["']https:\/\//);
+  assert.match(panel, /Refresh content opportunities/);
+  assert.match(panel, /No provider is contacted until the owner requests a refresh/);
+  assert.match(panel, /No synthetic opportunities were created/);
+  assert.match(panel, /Evaluate Product Truth and funnel fit/);
+  assert.match(panel, /Build grounded script and YouTube metadata/);
+  assert.doesNotMatch(panel, /useEffect\(\(\) => \{ void loadIntelligence/);
 });
 
 test("BMKT-003 readiness blocks weak or unsafe videos instead of maintaining frequency", () => {
