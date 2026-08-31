@@ -4,6 +4,17 @@ create table public.beast_marketing_video_series (
   settings jsonb not null default '{}'::jsonb, created_at timestamptz not null default now(), updated_at timestamptz not null default now(), unique (id, owner_id)
 );
 
+create table public.beast_marketing_video_controls (
+  owner_id uuid primary key references auth.users(id) on delete cascade,
+  pause_all_publishing boolean not null default true,
+  external_publishing_authorized boolean not null default false,
+  automatic_publishing_authorized boolean not null default false,
+  youtube_authorized boolean not null default false,
+  updated_at timestamptz not null default now(),
+  check (not automatic_publishing_authorized or external_publishing_authorized),
+  check (not external_publishing_authorized or youtube_authorized)
+);
+
 create table public.beast_marketing_presenter_profiles (
   id uuid primary key default gen_random_uuid(), owner_id uuid not null references auth.users(id) on delete cascade,
   name text not null, presenter_type text not null check (presenter_type in ('faceless','future_owner_likeness','future_character')),
@@ -27,12 +38,14 @@ create table public.beast_marketing_video_jobs (
 
 create index beast_marketing_video_jobs_owner_state_idx on public.beast_marketing_video_jobs(owner_id, state, updated_at desc);
 alter table public.beast_marketing_video_series enable row level security;
+alter table public.beast_marketing_video_controls enable row level security;
 alter table public.beast_marketing_presenter_profiles enable row level security;
 alter table public.beast_marketing_video_jobs enable row level security;
 
 create policy "BeastMarketing video series are owner only" on public.beast_marketing_video_series for all to authenticated using ((select auth.uid()) = owner_id) with check ((select auth.uid()) = owner_id);
+create policy "BeastMarketing video controls are owner only" on public.beast_marketing_video_controls for all to authenticated using ((select auth.uid()) = owner_id) with check ((select auth.uid()) = owner_id);
 create policy "BeastMarketing presenter profiles are owner only" on public.beast_marketing_presenter_profiles for all to authenticated using ((select auth.uid()) = owner_id) with check ((select auth.uid()) = owner_id);
 create policy "BeastMarketing video jobs are owner only" on public.beast_marketing_video_jobs for all to authenticated using ((select auth.uid()) = owner_id) with check ((select auth.uid()) = owner_id);
 
-revoke all on table public.beast_marketing_video_series, public.beast_marketing_presenter_profiles, public.beast_marketing_video_jobs from public, anon, authenticated;
-grant select, insert, update, delete on table public.beast_marketing_video_series, public.beast_marketing_presenter_profiles, public.beast_marketing_video_jobs to authenticated;
+revoke all on table public.beast_marketing_video_series, public.beast_marketing_video_controls, public.beast_marketing_presenter_profiles, public.beast_marketing_video_jobs from public, anon, authenticated;
+grant select, insert, update, delete on table public.beast_marketing_video_series, public.beast_marketing_video_controls, public.beast_marketing_presenter_profiles, public.beast_marketing_video_jobs to authenticated;

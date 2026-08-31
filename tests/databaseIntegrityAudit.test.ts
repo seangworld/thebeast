@@ -65,7 +65,7 @@ test("DB-001 every canonical public table enables RLS", () => {
     )
   );
 
-  assert.equal(createdTables.size, 118);
+  assert.equal(createdTables.size, 119);
   assert.deepEqual(
     Array.from(createdTables).filter((table) => !rlsTables.has(table)),
     []

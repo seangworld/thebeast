@@ -75,11 +75,25 @@ test("BMKT-003 readiness blocks weak or unsafe videos instead of maintaining fre
 
 test("BMKT-003 persists owner-only series, presenter profiles, and retry-safe jobs", () => {
   const migration = readFileSync("supabase/migrations/20260831150054_add_beast_marketing_video_control_plane.sql", "utf8");
-  for (const table of ["video_series", "presenter_profiles", "video_jobs"]) assert.match(migration, new RegExp(`beast_marketing_${table}`));
-  assert.equal((migration.match(/enable row level security/g) || []).length, 3);
+  for (const table of ["video_series", "video_controls", "presenter_profiles", "video_jobs"]) assert.match(migration, new RegExp(`beast_marketing_${table}`));
+  assert.equal((migration.match(/enable row level security/g) || []).length, 4);
   assert.match(migration, /unique \(owner_id, idempotency_key\)/);
   assert.match(migration, /future_owner_likeness/);
+  assert.match(migration, /pause_all_publishing boolean not null default true/);
   assert.doesNotMatch(migration, /to anon\s+using|http_post|net\.http|vault\./i);
+});
+
+test("BMKT-003 exposes owner controls while every external video action fails closed", () => {
+  const route = readFileSync("src/app/api/admin/beast-marketing/video/route.ts", "utf8");
+  const panel = readFileSync("src/app/dashboard/admin/marketing/VideoGrowthEnginePanel.tsx", "utf8");
+  const workspace = readFileSync("src/app/dashboard/admin/marketing/BeastMarketingWorkspace.tsx", "utf8");
+  assert.match(route, /profile\?\.role === "admin"/);
+  assert.match(route, /YouTube authorization and external publishing authority are required/);
+  assert.match(route, /external_publishing_authorized: false/);
+  assert.doesNotMatch(route, /fetch\(["']https:\/\//);
+  for (const control of ["PAUSE ALL PUBLISHING", "Approval mode", "Minimum runtime", "Maximum per week", "Allowed topics", "Optimization", "AI Sean · locked", "Publish Now · locked"]) assert.match(panel, new RegExp(control));
+  assert.match(panel, /Idea → learn, with guarded transitions/);
+  assert.match(workspace, /<VideoGrowthEnginePanel/);
 });
 
 const adRevision = normalizeMarketingAdRevision({
