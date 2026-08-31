@@ -23,6 +23,7 @@ import {
   type MarketingDistributionPlan,
 } from "../src/lib/beastMarketingPreview";
 import { allowedVideoTransitions, defaultVideoSeriesSettings, evaluateVideoReadiness, externalVideoAuthorities, videoJobStates, VIDEO_ENGINE_VERSION } from "../src/lib/beastMarketingVideo";
+import { buildGroundedScript, buildYouTubeMetadata, scoreVideoOpportunity, VIDEO_CONTENT_ENGINE_VERSION } from "../src/lib/beastMarketingContent";
 
 const campaign: MarketingCampaign = {
   id: "campaign-1",
@@ -46,8 +47,8 @@ function result(metric: MarketingOutcome["metric"], value: number): MarketingOut
   return { id: `${metric}-${value}`, campaignId: campaign.id, metric, value, measuredAt: "2026-08-23T00:00:00Z", sourceLabel: "First-party telemetry", sourceUrl: null, notes: "" };
 }
 
-test("BeastMarketing v0.3 preserves bounded campaign, asset, and outcome states", () => {
-  assert.equal(BEAST_MARKETING_VERSION, "0.3.0");
+test("BeastMarketing v0.4 preserves bounded campaign, asset, and outcome states", () => {
+  assert.equal(BEAST_MARKETING_VERSION, "0.4.0");
   assert.deepEqual(marketingCampaignStatuses, ["draft", "review", "approved", "scheduled", "active", "paused", "completed", "archived"]);
   assert.equal(isMarketingCampaignStatus("approved"), true);
   assert.equal(isMarketingCampaignStatus("published"), false);
@@ -58,13 +59,56 @@ test("BeastMarketing v0.3 preserves bounded campaign, asset, and outcome states"
 });
 
 test("BMKT-003 defines configurable video controls and deterministic lifecycle", () => {
-  assert.equal(VIDEO_ENGINE_VERSION, "0.3.0");
+  assert.equal(VIDEO_ENGINE_VERSION, "0.4.0");
   assert.equal(defaultVideoSeriesSettings.aspectRatio, "9:16");
   assert.equal(defaultVideoSeriesSettings.publishingEnabled, false);
   assert.equal(defaultVideoSeriesSettings.approvalMode, "owner_approval");
   assert.deepEqual(allowedVideoTransitions.generating, ["ready", "failed"]);
   assert.equal(videoJobStates.includes("measuring"), true);
   assert.deepEqual(externalVideoAuthorities, { providersConfigured: false, youtubeAuthorized: false, externalPublishingEnabled: false, automaticPublishingEnabled: false });
+});
+
+test("BMKT-004 ranks the intersection of evidence, capability truth, and funnel value", () => {
+  const result = scoreVideoOpportunity({ title: "AI Tutor homework review", category: "education", capabilityMatch: 95, funnelValue: 90, historicalPerformance: null, audienceInterest: 80, trendOpportunity: null, evidence: [{ source: "search_console", label: "GSC page/query sample", url: null, observedAt: "2026-08-31T00:00:00Z", sampleSize: 120, value: 80, limitation: "Search Console may omit queries." }] }, { ...defaultVideoSeriesSettings, minimumOpportunityConfidence: 40 });
+  assert.equal(VIDEO_CONTENT_ENGINE_VERSION, "0.4.0");
+  assert.equal(result.selectable, true);
+  assert.equal(result.evidenceStatus, "partial");
+  assert.match(result.rationale.join(" "), /provenance/i);
+});
+
+test("BMKT-004 does not invent trend evidence or pad an under-length script", () => {
+  const opportunity = scoreVideoOpportunity({ title: "Generic AI rumor", category: "AI", capabilityMatch: 70, funnelValue: 30, historicalPerformance: null, audienceInterest: null, trendOpportunity: null, evidence: [{ source: "owner", label: "Owner idea", url: null, observedAt: null, sampleSize: null, value: null, limitation: null }] }, defaultVideoSeriesSettings);
+  assert.equal(opportunity.evidenceStatus, "owner_only");
+  assert.match(opportunity.rationale.join(" "), /unavailable/i);
+  const script = buildGroundedScript({ topic: "AI Tutor", facts: [{ statement: "AI Tutor provides age-appropriate contextual tutorials.", sourceLabel: "Product Truth", sourceUrl: null, verified: true }], destinationLabel: "SEANGWORLD", destinationUrl: "https://seangworld.com", settings: defaultVideoSeriesSettings });
+  assert.equal(script.generationReady, false);
+  assert.match(script.warnings.join(" "), /do not pad/i);
+});
+
+test("BMKT-004 produces relevant natural metadata with measurable attribution", () => {
+  const metadata = buildYouTubeMetadata({ topic: "How AI Tutor Reviews Homework", summary: "See how guided review identifies the first incorrect step.", keywords: ["AI tutor", "homework review", "AI tutor", "x".repeat(60)], destinationUrl: "https://seangworld.com/ai-specialists", campaignId: "bmkt-ai-tutor-001" });
+  assert.deepEqual(metadata.tags, ["ai tutor", "homework review"]);
+  assert.match(metadata.destinationUrl, /utm_source=youtube/);
+  assert.equal(metadata.warnings.length, 0);
+});
+
+test("BMKT-004 keeps evidence-backed intelligence and scripting owner-scoped", () => {
+  const route = readFileSync("src/app/api/admin/beast-marketing/video/route.ts", "utf8");
+  const panel = readFileSync("src/app/dashboard/admin/marketing/VideoGrowthEnginePanel.tsx", "utf8");
+  assert.match(route, /kind === "search_opportunity_job"/);
+  assert.match(route, /kind === "evaluate_job"/);
+  assert.match(route, /kind === "script_job"/);
+  assert.match(route, /\.eq\("owner_id", user\.id\)/);
+  assert.match(route, /evidenceStatus/);
+  assert.match(route, /Search Console query samples can be partial/);
+  assert.match(route, /createHash\("sha256"\)/);
+  assert.doesNotMatch(route, /fetch\(["']https:\/\//);
+  assert.match(panel, /Refresh content opportunities/);
+  assert.match(panel, /No provider is contacted until the owner requests a refresh/);
+  assert.match(panel, /No synthetic opportunities were created/);
+  assert.match(panel, /Evaluate Product Truth and funnel fit/);
+  assert.match(panel, /Build grounded script and YouTube metadata/);
+  assert.doesNotMatch(panel, /useEffect\(\(\) => \{ void loadIntelligence/);
 });
 
 test("BMKT-003 readiness blocks weak or unsafe videos instead of maintaining frequency", () => {
