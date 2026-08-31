@@ -24,6 +24,7 @@ import {
 } from "../src/lib/beastMarketingPreview";
 import { allowedVideoTransitions, defaultVideoSeriesSettings, evaluateVideoReadiness, externalVideoAuthorities, videoJobStates, VIDEO_ENGINE_VERSION } from "../src/lib/beastMarketingVideo";
 import { buildGroundedScript, buildYouTubeMetadata, scoreVideoOpportunity, VIDEO_CONTENT_ENGINE_VERSION } from "../src/lib/beastMarketingContent";
+import { buildProductionManifest, validateProducedAssets, validateProductionManifest, VIDEO_PRODUCTION_ENGINE_VERSION } from "../src/lib/beastMarketingProduction";
 
 const campaign: MarketingCampaign = {
   id: "campaign-1",
@@ -47,8 +48,8 @@ function result(metric: MarketingOutcome["metric"], value: number): MarketingOut
   return { id: `${metric}-${value}`, campaignId: campaign.id, metric, value, measuredAt: "2026-08-23T00:00:00Z", sourceLabel: "First-party telemetry", sourceUrl: null, notes: "" };
 }
 
-test("BeastMarketing v0.4 preserves bounded campaign, asset, and outcome states", () => {
-  assert.equal(BEAST_MARKETING_VERSION, "0.4.0");
+test("BeastMarketing v0.5 preserves bounded campaign, asset, and outcome states", () => {
+  assert.equal(BEAST_MARKETING_VERSION, "0.5.0");
   assert.deepEqual(marketingCampaignStatuses, ["draft", "review", "approved", "scheduled", "active", "paused", "completed", "archived"]);
   assert.equal(isMarketingCampaignStatus("approved"), true);
   assert.equal(isMarketingCampaignStatus("published"), false);
@@ -59,7 +60,7 @@ test("BeastMarketing v0.4 preserves bounded campaign, asset, and outcome states"
 });
 
 test("BMKT-003 defines configurable video controls and deterministic lifecycle", () => {
-  assert.equal(VIDEO_ENGINE_VERSION, "0.4.0");
+  assert.equal(VIDEO_ENGINE_VERSION, "0.5.0");
   assert.equal(defaultVideoSeriesSettings.aspectRatio, "9:16");
   assert.equal(defaultVideoSeriesSettings.publishingEnabled, false);
   assert.equal(defaultVideoSeriesSettings.approvalMode, "owner_approval");
@@ -109,6 +110,39 @@ test("BMKT-004 keeps evidence-backed intelligence and scripting owner-scoped", (
   assert.match(panel, /Evaluate Product Truth and funnel fit/);
   assert.match(panel, /Build grounded script and YouTube metadata/);
   assert.doesNotMatch(panel, /useEffect\(\(\) => \{ void loadIntelligence/);
+});
+
+test("BMKT-005 creates a deterministic provider-neutral vertical production manifest", () => {
+  const input = { jobId: "job-1", revision: 2, script: { hook: "A strong opening question for the viewer.", narration: ["A verified useful fact explains the capability.", "A second fact gives the viewer practical context."], cta: "Visit the relevant SEANGWORLD page to learn more.", estimatedSeconds: 60 }, settings: defaultVideoSeriesSettings };
+  const first = buildProductionManifest(input); const second = buildProductionManifest(input);
+  assert.equal(VIDEO_PRODUCTION_ENGINE_VERSION, "0.5.0");
+  assert.equal(first.aspectRatio, "9:16");
+  assert.deepEqual([first.width, first.height], [1080, 1920]);
+  assert.equal(first.checksum, second.checksum);
+  assert.equal(first.scenes[0].startMs, 0);
+  assert.equal(first.scenes.at(-1)?.endMs, 60_000);
+  assert.deepEqual(validateProductionManifest(first, defaultVideoSeriesSettings).missingProviders, ["narration", "visuals", "composition"]);
+  assert.equal(validateProductionManifest(first, defaultVideoSeriesSettings).planValid, true);
+  assert.equal(validateProductionManifest(first, defaultVideoSeriesSettings).renderReady, false);
+});
+
+test("BMKT-005 rejects final media without complete source and license provenance", () => {
+  const result = validateProducedAssets([{ id: "final", role: "final_video", uri: "https://assets.seangworld.com/video.mp4", mimeType: "video/mp4", sourceType: "licensed", providerId: "future-provider", license: null, contentHash: null, createdAt: null, provenanceComplete: false }]);
+  assert.equal(result.valid, false);
+  assert.match(result.errors.join(" "), /provenance/i);
+  assert.match(result.errors.join(" "), /license/i);
+});
+
+test("BMKT-005 plans internally and blocks generation until provider authority exists", () => {
+  const route = readFileSync("src/app/api/admin/beast-marketing/video/route.ts", "utf8");
+  const panel = readFileSync("src/app/dashboard/admin/marketing/VideoGrowthEnginePanel.tsx", "utf8");
+  assert.match(route, /kind === "plan_production"/);
+  assert.match(route, /externalActionPerformed: false/);
+  assert.match(route, /An authorized production provider and renderer are required/);
+  assert.doesNotMatch(route, /fetch\(["']https:\/\//);
+  assert.match(panel, /Prepare production manifest/);
+  assert.match(panel, /Generate video · provider gate/);
+  assert.match(panel, /\["selected", "scripted", "generating", "scheduled", "published"\]/);
 });
 
 test("BMKT-003 readiness blocks weak or unsafe videos instead of maintaining frequency", () => {

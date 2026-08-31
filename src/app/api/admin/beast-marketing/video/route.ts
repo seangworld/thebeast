@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createHash } from "node:crypto";
 import { allowedVideoTransitions, defaultVideoSeriesSettings, videoJobStates, type VideoJobState, type VideoSeriesSettings } from "@/lib/beastMarketingVideo";
 import { buildGroundedScript, buildYouTubeMetadata, scoreVideoOpportunity, type ScriptFact, type VideoEvidence } from "@/lib/beastMarketingContent";
+import { buildProductionManifest, validateProductionManifest } from "@/lib/beastMarketingProduction";
 import { createRouteClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -116,6 +117,23 @@ export async function POST(request: Request) {
   if (!user) return forbidden();
   const body = await request.json().catch(() => null) as Record<string, unknown> | null;
   const kind = clean(body?.kind, 40);
+  if (kind === "plan_production") {
+    const id = clean(body?.id, 80);
+    const { data: job } = await client.from("beast_marketing_video_jobs").select("id, series_id, state, revision, script, provenance").eq("id", id).eq("owner_id", user.id).maybeSingle();
+    if (!job || job.state !== "scripted") return NextResponse.json({ error: "A grounded scripted queue item is required before production planning." }, { status: 409 });
+    const { data: series } = await client.from("beast_marketing_video_series").select("settings").eq("id", job.series_id).eq("owner_id", user.id).maybeSingle();
+    if (!series) return NextResponse.json({ error: "The series settings are unavailable." }, { status: 404 });
+    const rawScript = job.script && typeof job.script === "object" ? job.script as Record<string, unknown> : {};
+    const normalizedScript = { hook: clean(rawScript.hook, 1000), narration: list(rawScript.narration, 8), cta: clean(rawScript.cta, 1000), estimatedSeconds: integer(rawScript.estimatedSeconds, 1, 7200, 1) };
+    if (!normalizedScript.hook || !normalizedScript.narration.length || !normalizedScript.cta) return NextResponse.json({ error: "The grounded script is incomplete and cannot be planned for production." }, { status: 409 });
+    const normalizedSettings = settings(series.settings);
+    const manifest = buildProductionManifest({ jobId: job.id, revision: integer(job.revision, 1, 1_000_000, 1), script: normalizedScript, settings: normalizedSettings });
+    const validation = validateProductionManifest(manifest, normalizedSettings);
+    if (!validation.planValid) return NextResponse.json({ error: validation.errors.join(" ") }, { status: 409 });
+    const priorProvenance = job.provenance && typeof job.provenance === "object" ? job.provenance as Record<string, unknown> : {};
+    const { data, error } = await client.from("beast_marketing_video_jobs").update({ production: { manifest, validation, providerState: "authorization_required", externalActionPerformed: false }, provenance: { ...priorProvenance, productionPlan: { engine: "bmkt-005", manifestChecksum: manifest.checksum, providersUsed: [], paidServicesUsed: false } }, quality: { productionPlanReady: true, renderReady: false, warnings: manifest.blockers }, updated_at: new Date().toISOString() }).eq("id", id).eq("owner_id", user.id).select("*").maybeSingle();
+    return error || !data ? unavailable() : NextResponse.json({ job: data, manifest, validation });
+  }
   if (kind === "search_opportunity_job") {
     const seriesId = clean(body?.seriesId, 80);
     const raw = body?.opportunity && typeof body.opportunity === "object" ? body.opportunity as Record<string, unknown> : {};
@@ -212,6 +230,7 @@ export async function PATCH(request: Request) {
     if (!videoJobStates.includes(next)) return NextResponse.json({ error: "A valid queue state is required." }, { status: 400 });
     const { data: current } = await client.from("beast_marketing_video_jobs").select("state").eq("id", id).eq("owner_id", user.id).maybeSingle();
     if (!current || !allowedVideoTransitions[current.state as VideoJobState]?.includes(next)) return NextResponse.json({ error: "That queue transition is not allowed." }, { status: 409 });
+    if (next === "generating") return NextResponse.json({ error: "An authorized production provider and renderer are required before generation can start." }, { status: 409 });
     if (["scheduled", "published"].includes(next)) return NextResponse.json({ error: "YouTube authorization and external publishing authority are required before scheduling or publishing." }, { status: 409 });
     const { data, error } = await client.from("beast_marketing_video_jobs").update({ state: next, updated_at: new Date().toISOString(), last_error: null }).eq("id", id).eq("owner_id", user.id).select("*").maybeSingle();
     return error || !data ? unavailable() : NextResponse.json({ job: data });

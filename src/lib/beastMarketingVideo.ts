@@ -1,4 +1,4 @@
-export const VIDEO_ENGINE_VERSION = "0.4.0";
+export const VIDEO_ENGINE_VERSION = "0.5.0";
 
 export const videoJobStates = ["idea", "selected", "scripted", "generating", "ready", "scheduled", "published", "measuring", "completed", "scale", "modify", "stop", "failed", "skipped"] as const;
 export type VideoJobState = (typeof videoJobStates)[number];
