@@ -81,7 +81,7 @@ export async function POST(request: Request) {
     const { data: attempt, error: insertError } = await client.from("beast_marketing_video_attempts").insert({
       owner_id: user.id, job_id: job.id, attempt_number: attemptNumber, operation: "composition", provider_id: SHOTSTACK_PROVIDER_ID,
       idempotency_key: idempotencyKey, status: "planned", retryable: false,
-      evidence: { environment: configuration.environment, manifestChecksum: manifest.checksum, estimate, automaticRetry: false, youtubeDestination: false, manualCredentialRemediation: attemptNumber === 2, manualSchemaRemediation: attemptNumber === 3, previousAttemptId: latest?.id || null },
+      evidence: { environment: configuration.environment, manifestChecksum: manifest.checksum, estimate, automaticRetry: false, youtubeDestination: false, manualCredentialRemediation: attemptNumber === 2, manualSchemaRemediation: attemptNumber >= 3, previousAttemptId: latest?.id || null },
       started_at: now, updated_at: now,
     }).select("*").single();
     if (insertError || !attempt) return NextResponse.json({ error: safeError }, { status: 503 });

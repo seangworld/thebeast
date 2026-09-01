@@ -48,6 +48,8 @@ test("BMKT-007 builds current Shotstack faceless composition without a destinati
   assert.match(serialized, /alias:\/\/bmkt-narration/);
   assert.match(serialized, /"vertical":"middle"/);
   assert.doesNotMatch(serialized, /"vertical":"center"/);
+  assert.doesNotMatch(serialized, /"preset":"fade"/);
+  assert.match(serialized, /"preset":"fadeIn"/);
   assert.doesNotMatch(serialized, /youtube|destinations|webhook|callback/i);
   assert.doesNotMatch(serialized, /api[_-]?key|secret|token/i);
 });
@@ -95,7 +97,8 @@ test("BMKT-007 permits bounded credential and schema remediation before provider
   assert.equal(nextShotstackManualAttempt({ attemptNumber: 2, status: "failed", errorCategory: "validation", providerRequestId: null }), 3);
   assert.equal(nextShotstackManualAttempt({ attemptNumber: 2, status: "failed", errorCategory: "authentication", providerRequestId: null }), null);
   assert.equal(nextShotstackManualAttempt({ attemptNumber: 2, status: "failed", errorCategory: "validation", providerRequestId: "render-2" }), null);
-  assert.equal(nextShotstackManualAttempt({ attemptNumber: 3, status: "failed", errorCategory: "validation", providerRequestId: null }), null);
+  assert.equal(nextShotstackManualAttempt({ attemptNumber: 3, status: "failed", errorCategory: "validation", providerRequestId: null }), 4);
+  assert.equal(nextShotstackManualAttempt({ attemptNumber: 4, status: "failed", errorCategory: "validation", providerRequestId: null }), null);
 });
 
 test("BMKT-007 inspects Edit then Serve and accepts only the Shotstack CDN", async () => {

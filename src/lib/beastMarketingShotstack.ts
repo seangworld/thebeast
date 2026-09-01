@@ -1,9 +1,9 @@
 import type { ProductionManifest } from "./beastMarketingProduction";
 
-export const SHOTSTACK_ADAPTER_VERSION = "0.7.2";
+export const SHOTSTACK_ADAPTER_VERSION = "0.7.3";
 export const SHOTSTACK_PROVIDER_ID = "shotstack";
 export const SHOTSTACK_MAX_ESTIMATED_CREDITS_PER_RENDER = 2;
-export const SHOTSTACK_MAX_MANUAL_ATTEMPTS = 3;
+export const SHOTSTACK_MAX_MANUAL_ATTEMPTS = 4;
 
 export type ShotstackAttemptSummary = {
   attemptNumber: number;
@@ -59,11 +59,11 @@ export function nextShotstackManualAttempt(latest: ShotstackAttemptSummary | nul
     && latest.providerRequestId === null
     && ["authentication", "configuration"].includes(latest.errorCategory || "");
   if (credentialFailureBeforeSubmission) return 2;
-  const schemaFailureBeforeSubmission = latest.attemptNumber === 2
+  const schemaFailureBeforeSubmission = [2, 3].includes(latest.attemptNumber)
     && latest.status === "failed"
     && latest.providerRequestId === null
     && latest.errorCategory === "validation";
-  return schemaFailureBeforeSubmission ? SHOTSTACK_MAX_MANUAL_ATTEMPTS : null;
+  return schemaFailureBeforeSubmission ? latest.attemptNumber + 1 : null;
 }
 
 const asRecord = (value: unknown): Record<string, unknown> => value && typeof value === "object" ? value as Record<string, unknown> : {};
@@ -104,7 +104,7 @@ export function buildShotstackEdit(manifest: ProductionManifest): ShotstackEdit 
       align: { horizontal: "center", vertical: "middle" },
       background: { color: index % 2 === 0 ? "#111827" : "#172033", opacity: 0.94, borderRadius: 32 },
       padding: 44,
-      animation: { preset: index === 0 ? "typewriter" : "fade", duration: 0.6, style: "word" },
+      animation: { preset: index === 0 ? "typewriter" : "fadeIn", duration: 0.6, style: "word" },
     },
     start: scene.startMs / 1000,
     length: Math.max(0.1, (scene.endMs - scene.startMs) / 1000),
