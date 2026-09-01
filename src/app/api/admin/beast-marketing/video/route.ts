@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { allowedVideoTransitions, defaultVideoSeriesSettings, videoJobStates, type VideoJobState, type VideoSeriesSettings } from "@/lib/beastMarketingVideo";
 import { buildGroundedScript, buildYouTubeMetadata, scoreVideoOpportunity, type ScriptFact, type VideoEvidence } from "@/lib/beastMarketingContent";
 import { buildProductionManifest, validateProductionManifest } from "@/lib/beastMarketingProduction";
+import { shotstackConfiguration } from "@/lib/beastMarketingShotstack";
 import { createRouteClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -108,7 +109,12 @@ export async function GET() {
   return NextResponse.json({
     controls: controls.data || { pause_all_publishing: true, external_publishing_authorized: false, automatic_publishing_authorized: false, youtube_authorized: false },
     series: series.data || [], presenters: presenters.data || [], jobs: jobs.data || [],
-    authorities: { externalPublishing: "disabled", automaticPublishing: "disabled", youtube: "not_authorized", paidProviders: "not_configured" },
+    authorities: {
+      externalPublishing: "disabled",
+      automaticPublishing: "disabled",
+      youtube: "not_authorized",
+      paidProviders: shotstackConfiguration().configured ? "shotstack_internal_only" : "not_configured",
+    },
   }, { headers: { "cache-control": "private, no-store" } });
 }
 

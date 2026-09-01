@@ -146,7 +146,7 @@ test("DB-001 application table and RPC literals exist in canonical migrations", 
   const rpcReferences = new Set(
     matches(source, /\.rpc\(\s*["'`]([^"'`]+)["'`]/g)
   );
-  const storageBuckets = new Set(["beast-documents"]);
+  const storageBuckets = new Set(["beast-documents", "beast-marketing-media"]);
 
   assert.deepEqual(
     Array.from(relationReferences).filter(
