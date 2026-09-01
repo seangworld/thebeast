@@ -1,9 +1,9 @@
 import type { ProductionManifest } from "./beastMarketingProduction";
 
-export const SHOTSTACK_ADAPTER_VERSION = "0.7.1";
+export const SHOTSTACK_ADAPTER_VERSION = "0.7.2";
 export const SHOTSTACK_PROVIDER_ID = "shotstack";
 export const SHOTSTACK_MAX_ESTIMATED_CREDITS_PER_RENDER = 2;
-export const SHOTSTACK_MAX_MANUAL_ATTEMPTS = 2;
+export const SHOTSTACK_MAX_MANUAL_ATTEMPTS = 3;
 
 export type ShotstackAttemptSummary = {
   attemptNumber: number;
@@ -54,11 +54,16 @@ export class ShotstackProviderError extends Error {
 
 export function nextShotstackManualAttempt(latest: ShotstackAttemptSummary | null) {
   if (!latest) return 1;
-  const failedBeforeSubmission = latest.attemptNumber === 1
+  const credentialFailureBeforeSubmission = latest.attemptNumber === 1
     && latest.status === "failed"
     && latest.providerRequestId === null
     && ["authentication", "configuration"].includes(latest.errorCategory || "");
-  return failedBeforeSubmission ? SHOTSTACK_MAX_MANUAL_ATTEMPTS : null;
+  if (credentialFailureBeforeSubmission) return 2;
+  const schemaFailureBeforeSubmission = latest.attemptNumber === 2
+    && latest.status === "failed"
+    && latest.providerRequestId === null
+    && latest.errorCategory === "validation";
+  return schemaFailureBeforeSubmission ? SHOTSTACK_MAX_MANUAL_ATTEMPTS : null;
 }
 
 const asRecord = (value: unknown): Record<string, unknown> => value && typeof value === "object" ? value as Record<string, unknown> : {};
@@ -96,7 +101,7 @@ export function buildShotstackEdit(manifest: ProductionManifest): ShotstackEdit 
       text: scene.narration.slice(0, 220),
       font: { family: "Montserrat", size: manifest.aspectRatio === "9:16" ? 72 : 58, weight: 800, color: "#f8fafc" },
       style: { lineHeight: 1.12 },
-      align: { horizontal: "center", vertical: "center" },
+      align: { horizontal: "center", vertical: "middle" },
       background: { color: index % 2 === 0 ? "#111827" : "#172033", opacity: 0.94, borderRadius: 32 },
       padding: 44,
       animation: { preset: index === 0 ? "typewriter" : "fade", duration: 0.6, style: "word" },

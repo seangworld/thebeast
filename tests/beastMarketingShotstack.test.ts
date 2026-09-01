@@ -46,6 +46,8 @@ test("BMKT-007 builds current Shotstack faceless composition without a destinati
   assert.match(serialized, /rich-caption/);
   assert.match(serialized, /text-to-speech/);
   assert.match(serialized, /alias:\/\/bmkt-narration/);
+  assert.match(serialized, /"vertical":"middle"/);
+  assert.doesNotMatch(serialized, /"vertical":"center"/);
   assert.doesNotMatch(serialized, /youtube|destinations|webhook|callback/i);
   assert.doesNotMatch(serialized, /api[_-]?key|secret|token/i);
 });
@@ -84,13 +86,16 @@ test("BMKT-007 maps provider authentication failures to safe typed errors", asyn
   );
 });
 
-test("BMKT-007 permits exactly one manual remediation after a pre-submission credential failure", () => {
+test("BMKT-007 permits bounded credential and schema remediation before provider submission", () => {
   assert.equal(nextShotstackManualAttempt(null), 1);
   assert.equal(nextShotstackManualAttempt({ attemptNumber: 1, status: "failed", errorCategory: "authentication", providerRequestId: null }), 2);
   assert.equal(nextShotstackManualAttempt({ attemptNumber: 1, status: "failed", errorCategory: "configuration", providerRequestId: null }), 2);
   assert.equal(nextShotstackManualAttempt({ attemptNumber: 1, status: "failed", errorCategory: "provider", providerRequestId: null }), null);
   assert.equal(nextShotstackManualAttempt({ attemptNumber: 1, status: "submitted", errorCategory: null, providerRequestId: "render-1" }), null);
+  assert.equal(nextShotstackManualAttempt({ attemptNumber: 2, status: "failed", errorCategory: "validation", providerRequestId: null }), 3);
   assert.equal(nextShotstackManualAttempt({ attemptNumber: 2, status: "failed", errorCategory: "authentication", providerRequestId: null }), null);
+  assert.equal(nextShotstackManualAttempt({ attemptNumber: 2, status: "failed", errorCategory: "validation", providerRequestId: "render-2" }), null);
+  assert.equal(nextShotstackManualAttempt({ attemptNumber: 3, status: "failed", errorCategory: "validation", providerRequestId: null }), null);
 });
 
 test("BMKT-007 inspects Edit then Serve and accepts only the Shotstack CDN", async () => {
