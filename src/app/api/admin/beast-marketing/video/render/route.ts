@@ -8,6 +8,7 @@ import {
   buildShotstackEdit,
   estimateShotstackCredits,
   inspectShotstackRender,
+  nextShotstackManualAttempt,
   shotstackConfiguration,
   submitShotstackRender,
 } from "@/lib/beastMarketingShotstack";
@@ -65,14 +66,22 @@ export async function POST(request: Request) {
     if (estimate.estimatedTotal > SHOTSTACK_MAX_ESTIMATED_CREDITS_PER_RENDER) {
       return NextResponse.json({ error: `The estimated ${estimate.estimatedTotal.toFixed(1)} credits exceed the ${SHOTSTACK_MAX_ESTIMATED_CREDITS_PER_RENDER.toFixed(1)}-credit internal-render cap.` }, { status: 409 });
     }
-    const idempotencyKey = `bmkt-shotstack:${job.id}:${job.revision}:${manifest.checksum}:1`;
+    const { data: latest, error: latestError } = await client.from("beast_marketing_video_attempts").select("*").eq("owner_id", user.id).eq("job_id", job.id).eq("provider_id", SHOTSTACK_PROVIDER_ID).order("attempt_number", { ascending: false }).limit(1).maybeSingle();
+    if (latestError) return NextResponse.json({ error: safeError }, { status: 503 });
+    const attemptNumber = nextShotstackManualAttempt(latest ? {
+      attemptNumber: Number(latest.attempt_number), status: clean(latest.status, 40),
+      errorCategory: clean(latest.error_category, 40) || null,
+      providerRequestId: clean(latest.provider_request_id, 100) || null,
+    } : null);
+    if (!attemptNumber) return NextResponse.json({ error: "No additional internal Shotstack attempt is authorized for this exact job revision." }, { status: 409 });
+    const idempotencyKey = `bmkt-shotstack:${job.id}:${job.revision}:${manifest.checksum}:${attemptNumber}`;
     const { data: existing } = await client.from("beast_marketing_video_attempts").select("*").eq("owner_id", user.id).eq("idempotency_key", idempotencyKey).maybeSingle();
     if (existing) return NextResponse.json({ attempt: existing, estimate, duplicatePrevented: true });
     const now = new Date().toISOString();
     const { data: attempt, error: insertError } = await client.from("beast_marketing_video_attempts").insert({
-      owner_id: user.id, job_id: job.id, attempt_number: 1, operation: "composition", provider_id: SHOTSTACK_PROVIDER_ID,
+      owner_id: user.id, job_id: job.id, attempt_number: attemptNumber, operation: "composition", provider_id: SHOTSTACK_PROVIDER_ID,
       idempotency_key: idempotencyKey, status: "planned", retryable: false,
-      evidence: { environment: configuration.environment, manifestChecksum: manifest.checksum, estimate, automaticRetry: false, youtubeDestination: false },
+      evidence: { environment: configuration.environment, manifestChecksum: manifest.checksum, estimate, automaticRetry: false, youtubeDestination: false, manualCredentialRemediation: attemptNumber > 1, previousAttemptId: latest?.id || null },
       started_at: now, updated_at: now,
     }).select("*").single();
     if (insertError || !attempt) return NextResponse.json({ error: safeError }, { status: 503 });

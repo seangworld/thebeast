@@ -1,8 +1,16 @@
 import type { ProductionManifest } from "./beastMarketingProduction";
 
-export const SHOTSTACK_ADAPTER_VERSION = "0.7.0";
+export const SHOTSTACK_ADAPTER_VERSION = "0.7.1";
 export const SHOTSTACK_PROVIDER_ID = "shotstack";
 export const SHOTSTACK_MAX_ESTIMATED_CREDITS_PER_RENDER = 2;
+export const SHOTSTACK_MAX_MANUAL_ATTEMPTS = 2;
+
+export type ShotstackAttemptSummary = {
+  attemptNumber: number;
+  status: string;
+  errorCategory: string | null;
+  providerRequestId: string | null;
+};
 
 export type ShotstackEnvironment = "stage" | "v1";
 export type ShotstackEdit = {
@@ -42,6 +50,15 @@ export class ShotstackProviderError extends Error {
     this.category = category;
     this.retryable = retryable;
   }
+}
+
+export function nextShotstackManualAttempt(latest: ShotstackAttemptSummary | null) {
+  if (!latest) return 1;
+  const failedBeforeSubmission = latest.attemptNumber === 1
+    && latest.status === "failed"
+    && latest.providerRequestId === null
+    && ["authentication", "configuration"].includes(latest.errorCategory || "");
+  return failedBeforeSubmission ? SHOTSTACK_MAX_MANUAL_ATTEMPTS : null;
 }
 
 const asRecord = (value: unknown): Record<string, unknown> => value && typeof value === "object" ? value as Record<string, unknown> : {};

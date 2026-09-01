@@ -9,6 +9,7 @@ import {
   buildShotstackEdit,
   estimateShotstackCredits,
   inspectShotstackRender,
+  nextShotstackManualAttempt,
   shotstackConfiguration,
   shotstackEnvironment,
   submitShotstackRender,
@@ -83,6 +84,15 @@ test("BMKT-007 maps provider authentication failures to safe typed errors", asyn
   );
 });
 
+test("BMKT-007 permits exactly one manual remediation after a pre-submission credential failure", () => {
+  assert.equal(nextShotstackManualAttempt(null), 1);
+  assert.equal(nextShotstackManualAttempt({ attemptNumber: 1, status: "failed", errorCategory: "authentication", providerRequestId: null }), 2);
+  assert.equal(nextShotstackManualAttempt({ attemptNumber: 1, status: "failed", errorCategory: "configuration", providerRequestId: null }), 2);
+  assert.equal(nextShotstackManualAttempt({ attemptNumber: 1, status: "failed", errorCategory: "provider", providerRequestId: null }), null);
+  assert.equal(nextShotstackManualAttempt({ attemptNumber: 1, status: "submitted", errorCategory: null, providerRequestId: "render-1" }), null);
+  assert.equal(nextShotstackManualAttempt({ attemptNumber: 2, status: "failed", errorCategory: "authentication", providerRequestId: null }), null);
+});
+
 test("BMKT-007 inspects Edit then Serve and accepts only the Shotstack CDN", async () => {
   const responses = [
     new Response(JSON.stringify({ response: { status: "done" } }), { status: 200 }),
@@ -105,6 +115,7 @@ test("BMKT-007 route stays owner-scoped, idempotent, bounded, private, and unpub
   assert.match(route, /profile\?\.role === "admin"/);
   assert.match(route, /\.eq\("owner_id", user\.id\)/);
   assert.match(route, /idempotencyKey/);
+  assert.match(route, /manualCredentialRemediation/);
   assert.match(route, /SHOTSTACK_MAX_ESTIMATED_CREDITS_PER_RENDER/);
   assert.match(route, /upsert: false/);
   assert.match(route, /beast-marketing-media/);
