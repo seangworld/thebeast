@@ -111,7 +111,7 @@ export async function GET() {
   if (controls.error || series.error || presenters.error || jobs.error) return unavailable();
   return NextResponse.json({
     controls: controls.data || { pause_all_publishing: true, external_publishing_authorized: false, automatic_publishing_authorized: false, youtube_authorized: false },
-    series: series.data || [], presenters: presenters.data || [], jobs: jobs.data || [],
+    series: (series.data || []).map((item) => ({ ...item, settings: settings(item.settings) })), presenters: presenters.data || [], jobs: jobs.data || [],
     authorities: {
       externalPublishing: "disabled",
       automaticPublishing: "disabled",

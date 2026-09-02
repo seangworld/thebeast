@@ -309,6 +309,7 @@ test("BMKT-007 persists per-series approval mode and evaluates auto-approval onl
   for (const label of ["Owner Approval", "Auto-Approve & Schedule", "Require manual approval for first N videos", "Why auto-approval did not run"]) assert.match(panel, new RegExp(label));
   assert.match(route, /approvalMode: record\.approvalMode === "automatic"/);
   assert.match(route, /manualApprovalFirstN: integer/);
+  assert.match(route, /settings: settings\(item\.settings\)/);
   assert.match(route, /ownerApprovalSource: decision === "approved" \? "manual"/);
   assert.match(renderRoute, /evaluateSeriesAutoApproval/);
   assert.match(renderRoute, /pause_all_publishing/);
