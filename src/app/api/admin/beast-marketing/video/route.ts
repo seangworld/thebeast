@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createHash } from "node:crypto";
-import { allowedVideoTransitions, defaultVideoSeriesSettings, videoJobStates, type VideoJobState, type VideoSeriesSettings } from "@/lib/beastMarketingVideo";
+import { allowedVideoTransitions, defaultVideoSeriesSettings, normalizeVideoTopicPhrases, validateVideoTopicPhrases, videoJobStates, type VideoJobState, type VideoSeriesSettings } from "@/lib/beastMarketingVideo";
 import { buildGroundedScript, buildYouTubeMetadata, scoreVideoOpportunity, type ScriptFact, type VideoEvidence } from "@/lib/beastMarketingContent";
 import { buildProductionManifest, validateProductionManifest } from "@/lib/beastMarketingProduction";
 import { shotstackConfiguration } from "@/lib/beastMarketingShotstack";
@@ -84,7 +84,7 @@ function settings(value: unknown): VideoSeriesSettings {
     captionStyle: clean(record.captionStyle, 100) || defaultVideoSeriesSettings.captionStyle,
     presenterProfileId: clean(record.presenterProfileId, 80) || null,
     qualityThreshold: integer(record.qualityThreshold, 1, 100, defaultVideoSeriesSettings.qualityThreshold),
-    allowedTopics: list(record.allowedTopics), excludedTopics: list(record.excludedTopics),
+    allowedTopics: normalizeVideoTopicPhrases(record.allowedTopics), excludedTopics: normalizeVideoTopicPhrases(record.excludedTopics),
     evergreenPercent: integer(record.evergreenPercent, 0, 100, defaultVideoSeriesSettings.evergreenPercent),
     beastPromotionPercent: integer(record.beastPromotionPercent, 0, 100, defaultVideoSeriesSettings.beastPromotionPercent),
     trendSensitivity: integer(record.trendSensitivity, 0, 100, defaultVideoSeriesSettings.trendSensitivity),
@@ -195,6 +195,9 @@ export async function POST(request: Request) {
   if (kind === "series") {
     const name = clean(body?.name, 160);
     if (!name) return NextResponse.json({ error: "A series name is required." }, { status: 400 });
+    const rawSettings = body?.settings && typeof body.settings === "object" ? body.settings as Record<string, unknown> : {};
+    const topicValidation = [validateVideoTopicPhrases(rawSettings.allowedTopics), validateVideoTopicPhrases(rawSettings.excludedTopics)].find((result) => !result.valid);
+    if (topicValidation?.error) return NextResponse.json({ error: topicValidation.error }, { status: 400 });
     const { data, error } = await client.from("beast_marketing_video_series").insert({ owner_id: user.id, name, description: clean(body?.description, 1000), enabled: false, settings: settings(body?.settings) }).select("*").single();
     return error || !data ? unavailable() : NextResponse.json({ series: data }, { status: 201 });
   }
@@ -227,6 +230,9 @@ export async function PATCH(request: Request) {
   }
   if (!id) return NextResponse.json({ error: "A record ID is required." }, { status: 400 });
   if (kind === "series") {
+    const rawSettings = body?.settings && typeof body.settings === "object" ? body.settings as Record<string, unknown> : {};
+    const topicValidation = [validateVideoTopicPhrases(rawSettings.allowedTopics), validateVideoTopicPhrases(rawSettings.excludedTopics)].find((result) => !result.valid);
+    if (topicValidation?.error) return NextResponse.json({ error: topicValidation.error }, { status: 400 });
     const normalized = settings(body?.settings);
     const { data, error } = await client.from("beast_marketing_video_series").update({ name: clean(body?.name, 160), description: clean(body?.description, 1000), enabled: body?.enabled === true, settings: normalized, updated_at: new Date().toISOString() }).eq("id", id).eq("owner_id", user.id).select("*").maybeSingle();
     return error || !data ? unavailable() : NextResponse.json({ series: data });

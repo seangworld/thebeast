@@ -1,4 +1,32 @@
 export const VIDEO_ENGINE_VERSION = "0.6.0";
+export const VIDEO_TOPIC_PHRASE_LIMIT = 30;
+export const VIDEO_TOPIC_PHRASE_MAX_LENGTH = 80;
+
+export function normalizeVideoTopicPhrases(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  const seen = new Set<string>();
+  const phrases: string[] = [];
+  for (const item of value) {
+    if (typeof item !== "string") continue;
+    const phrase = item.replace(/\s+/g, " ").trim();
+    const identity = phrase.toLowerCase();
+    if (!phrase || phrase.length > VIDEO_TOPIC_PHRASE_MAX_LENGTH || seen.has(identity)) continue;
+    seen.add(identity);
+    phrases.push(phrase);
+    if (phrases.length === VIDEO_TOPIC_PHRASE_LIMIT) break;
+  }
+  return phrases;
+}
+
+export function validateVideoTopicPhrases(value: unknown) {
+  if (value == null) return { valid: true as const, phrases: [] as string[], error: null };
+  if (!Array.isArray(value)) return { valid: false as const, phrases: [] as string[], error: "Topics must be stored as an array of phrases." };
+  if (value.length > VIDEO_TOPIC_PHRASE_LIMIT) return { valid: false as const, phrases: [] as string[], error: `A series can contain at most ${VIDEO_TOPIC_PHRASE_LIMIT} topic phrases in each list.` };
+  if (value.some((item) => typeof item !== "string")) return { valid: false as const, phrases: [] as string[], error: "Every topic must be a text phrase." };
+  const tooLong = value.find((item) => item.replace(/\s+/g, " ").trim().length > VIDEO_TOPIC_PHRASE_MAX_LENGTH);
+  if (tooLong) return { valid: false as const, phrases: [] as string[], error: `Each topic phrase must be ${VIDEO_TOPIC_PHRASE_MAX_LENGTH} characters or fewer.` };
+  return { valid: true as const, phrases: normalizeVideoTopicPhrases(value), error: null };
+}
 
 export const videoJobStates = ["idea", "selected", "scripted", "generating", "ready", "scheduled", "published", "measuring", "completed", "scale", "modify", "stop", "failed", "skipped"] as const;
 export type VideoJobState = (typeof videoJobStates)[number];

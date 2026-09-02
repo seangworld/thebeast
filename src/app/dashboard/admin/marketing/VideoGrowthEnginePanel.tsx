@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { DashboardCard, SectionHeader } from "@/app/components/design/DashboardPrimitives";
-import { allowedVideoTransitions, defaultVideoSeriesSettings, type VideoJobState, type VideoSeriesSettings } from "@/lib/beastMarketingVideo";
+import { allowedVideoTransitions, defaultVideoSeriesSettings, normalizeVideoTopicPhrases, VIDEO_TOPIC_PHRASE_LIMIT, VIDEO_TOPIC_PHRASE_MAX_LENGTH, type VideoJobState, type VideoSeriesSettings } from "@/lib/beastMarketingVideo";
 
 type Series = { id: string; name: string; description: string; enabled: boolean; settings: VideoSeriesSettings };
 type Presenter = { id: string; name: string; presenter_type: string; active: boolean };
@@ -114,8 +114,8 @@ export function VideoGrowthEnginePanel() {
           <Field title="Days (0 Sun–6 Sat)" value={selected.settings.daysOfWeek.join(", ")} onChange={(value) => updateSetting("daysOfWeek", words(value).map(Number).filter((day) => day >= 0 && day <= 6))} />
           <Field title="Visual style" value={selected.settings.visualStyle} onChange={(value) => updateSetting("visualStyle", value)} />
           <Field title="Caption style" value={selected.settings.captionStyle} onChange={(value) => updateSetting("captionStyle", value)} />
-          <Field title="Allowed topics" value={selected.settings.allowedTopics.join(", ")} onChange={(value) => updateSetting("allowedTopics", words(value))} />
-          <Field title="Excluded topics" value={selected.settings.excludedTopics.join(", ")} onChange={(value) => updateSetting("excludedTopics", words(value))} />
+          <TopicPhraseInput key={`allowed-${selected.id}`} title="Allowed topics" values={selected.settings.allowedTopics} onChange={(value) => updateSetting("allowedTopics", value)} />
+          <TopicPhraseInput key={`excluded-${selected.id}`} title="Excluded topics" values={selected.settings.excludedTopics} onChange={(value) => updateSetting("excludedTopics", value)} />
           <NumberField title="Evergreen %" value={selected.settings.evergreenPercent} onChange={(value) => updateSetting("evergreenPercent", value)} />
           <NumberField title="Beast promotion %" value={selected.settings.beastPromotionPercent} onChange={(value) => updateSetting("beastPromotionPercent", value)} />
           <NumberField title="Trend sensitivity" value={selected.settings.trendSensitivity} onChange={(value) => updateSetting("trendSensitivity", value)} />
@@ -155,6 +155,46 @@ export function VideoGrowthEnginePanel() {
 function Field({ title, value, onChange }: { title: string; value: string; onChange: (value: string) => void }) { return <label className="text-sm font-bold text-slate-200">{title}<input className={input} value={value} onChange={(event) => onChange(event.target.value)} /></label>; }
 function NumberField({ title, value, onChange }: { title: string; value: number; onChange: (value: number) => void }) { return <label className="text-sm font-bold text-slate-200">{title}<input className={input} type="number" min={0} value={value} onChange={(event) => onChange(Number(event.target.value))} /></label>; }
 function Select({ title, value, options, optionLabels, onChange }: { title: string; value: string; options: string[]; optionLabels?: Record<string, string>; onChange: (value: string) => void }) { return <label className="text-sm font-bold text-slate-200">{title}<select className={input} value={value} onChange={(event) => onChange(event.target.value)}>{options.map((option) => <option key={option} value={option}>{optionLabels?.[option] || label(option)}</option>)}</select></label>; }
+
+function TopicPhraseInput({ title, values, onChange }: { title: string; values: string[]; onChange: (value: string[]) => void }) {
+  const [draft, setDraft] = useState("");
+  const [validationError, setValidationError] = useState("");
+  const inputId = `topic-phrases-${title.toLowerCase().replace(/\s+/g, "-")}`;
+  const helpId = `${inputId}-help`;
+  const errorId = `${inputId}-error`;
+
+  function commit(rawPhrases: string[]) {
+    const pending = rawPhrases.map((item) => item.replace(/\s+/g, " ").trim()).filter(Boolean);
+    if (!pending.length) return true;
+    const tooLong = pending.find((item) => item.length > VIDEO_TOPIC_PHRASE_MAX_LENGTH);
+    if (tooLong) { setValidationError(`Each topic phrase must be ${VIDEO_TOPIC_PHRASE_MAX_LENGTH} characters or fewer.`); return false; }
+    const next = [...values];
+    for (const phrase of pending) {
+      if (!next.some((item) => item.toLowerCase() === phrase.toLowerCase())) next.push(phrase);
+    }
+    if (next.length === values.length) { setValidationError("That topic phrase is already in this list."); return false; }
+    if (next.length > VIDEO_TOPIC_PHRASE_LIMIT) { setValidationError(`Use no more than ${VIDEO_TOPIC_PHRASE_LIMIT} topic phrases in this list.`); return false; }
+    onChange(normalizeVideoTopicPhrases(next)); setValidationError(""); return true;
+  }
+
+  function handleDraftChange(value: string) {
+    const parts = value.split(",");
+    if (parts.length === 1) { setDraft(value); return; }
+    const remainder = parts.pop() || "";
+    if (commit(parts)) setDraft(remainder);
+  }
+
+  return <div className="text-sm font-bold text-slate-200">
+    <label htmlFor={inputId}>{title}</label>
+    <p id={helpId} className="mt-1 text-xs font-normal text-slate-400">Enter a topic phrase such as “AI agents,” then press Enter or comma. Add multiple phrases without creating another series.</p>
+    {values.length ? <ul aria-label={`${title} selected topic phrases`} aria-live="polite" className="mt-2 flex flex-wrap gap-2">{values.map((topic) => <li key={topic} className="flex min-h-9 items-center gap-2 rounded-full border border-amber-300/25 bg-amber-300/[0.07] px-3 text-sm text-amber-100"><span>{topic}</span><button type="button" className="rounded-full px-1 text-base leading-none hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-amber-300" aria-label={`Remove ${topic} from ${title}`} onClick={() => { onChange(values.filter((item) => item !== topic)); setValidationError(""); }}>×</button></li>)}</ul> : null}
+    <input id={inputId} className={input} value={draft} autoComplete="off" aria-describedby={`${helpId}${validationError ? ` ${errorId}` : ""}`} aria-invalid={Boolean(validationError)} placeholder="Type a topic phrase" onChange={(event) => handleDraftChange(event.target.value)} onBlur={() => { if (commit([draft])) setDraft(""); }} onKeyDown={(event) => {
+      if (event.key === "Enter" || event.key === ",") { event.preventDefault(); if (commit([draft])) setDraft(""); }
+      else if (event.key === "Backspace" && !draft && values.length) onChange(values.slice(0, -1));
+    }} />
+    {validationError ? <p id={errorId} role="alert" className="mt-1 text-xs font-bold text-red-200">{validationError}</p> : null}
+  </div>;
+}
 
 type Send = (method: "POST" | "PATCH", payload: Record<string, unknown>, success: string) => Promise<void>;
 

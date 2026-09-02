@@ -22,7 +22,7 @@ import {
   type MarketingAdVariant,
   type MarketingDistributionPlan,
 } from "../src/lib/beastMarketingPreview";
-import { allowedVideoTransitions, defaultVideoSeriesSettings, evaluateVideoReadiness, externalVideoAuthorities, videoJobStates, VIDEO_ENGINE_VERSION } from "../src/lib/beastMarketingVideo";
+import { allowedVideoTransitions, defaultVideoSeriesSettings, evaluateVideoReadiness, externalVideoAuthorities, normalizeVideoTopicPhrases, validateVideoTopicPhrases, videoJobStates, VIDEO_ENGINE_VERSION, VIDEO_TOPIC_PHRASE_LIMIT, VIDEO_TOPIC_PHRASE_MAX_LENGTH } from "../src/lib/beastMarketingVideo";
 import { buildGroundedScript, buildYouTubeMetadata, scoreVideoOpportunity, VIDEO_CONTENT_ENGINE_VERSION } from "../src/lib/beastMarketingContent";
 import { buildProductionAttempt, buildProductionManifest, nextProductionRetry, validatePersistedAssetCandidate, validateProducedAssets, validateProductionManifest, VIDEO_PRODUCTION_ENGINE_VERSION } from "../src/lib/beastMarketingProduction";
 import { containsInternalProductionMarkers, stripInternalProductionMarkers } from "../src/lib/beastMarketingNarration";
@@ -223,6 +223,24 @@ test("BMKT-003 exposes owner controls while every external video action fails cl
   assert.match(panel, /Idea → learn, with guarded transitions/);
   assert.doesNotMatch(workspace, /VideoGrowthEnginePanel/);
   assert.match(videoGrowthPage, /<VideoGrowthEnginePanel/);
+});
+
+test("BMKT-007 topic controls preserve multiple multi-word phrases as arrays", () => {
+  assert.deepEqual(normalizeVideoTopicPhrases([" AI agents ", "machine   learning", "ai AGENTS", "personal finance"]), ["AI agents", "machine learning", "personal finance"]);
+  assert.deepEqual(validateVideoTopicPhrases(["AI agents", "practical AI tools"]), { valid: true, phrases: ["AI agents", "practical AI tools"], error: null });
+  assert.equal(validateVideoTopicPhrases("AI agents").valid, false);
+  assert.equal(validateVideoTopicPhrases(["x".repeat(VIDEO_TOPIC_PHRASE_MAX_LENGTH + 1)]).valid, false);
+  assert.equal(validateVideoTopicPhrases(Array.from({ length: VIDEO_TOPIC_PHRASE_LIMIT + 1 }, (_, index) => `topic ${index}`)).valid, false);
+
+  const panel = readFileSync("src/app/dashboard/admin/marketing/VideoGrowthEnginePanel.tsx", "utf8");
+  const route = readFileSync("src/app/api/admin/beast-marketing/video/route.ts", "utf8");
+  assert.match(panel, /TopicPhraseInput/);
+  assert.match(panel, /event\.key === "Enter" \|\| event\.key === ","/);
+  assert.match(panel, /aria-label=\{`Remove \$\{topic\} from \$\{title\}`\}/);
+  assert.match(panel, /Add multiple phrases without creating another series/);
+  assert.doesNotMatch(panel, /allowedTopics\.join\(", "\)/);
+  assert.match(route, /allowedTopics: normalizeVideoTopicPhrases/);
+  assert.match(route, /validateVideoTopicPhrases\(rawSettings\.allowedTopics\)/);
 });
 
 test("BeastMarketing uses one owner-only six-workspace hierarchy without duplicated engines", () => {
