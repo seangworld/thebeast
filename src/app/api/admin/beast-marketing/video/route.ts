@@ -71,7 +71,8 @@ function settings(value: unknown): VideoSeriesSettings {
   return {
     ...defaultVideoSeriesSettings,
     publishingEnabled: record.publishingEnabled === true,
-    approvalMode: "owner_approval",
+    approvalMode: record.approvalMode === "automatic" ? "automatic" : "owner_approval",
+    manualApprovalFirstN: integer(record.manualApprovalFirstN, 0, 100, defaultVideoSeriesSettings.manualApprovalFirstN),
     daysOfWeek: Array.isArray(record.daysOfWeek) ? record.daysOfWeek.map(Number).filter((day) => Number.isInteger(day) && day >= 0 && day <= 6).slice(0, 7) : defaultVideoSeriesSettings.daysOfWeek,
     preferredWindows: list(record.preferredWindows, 7),
     minimumSpacingMinutes: integer(record.minimumSpacingMinutes, 15, 10080, defaultVideoSeriesSettings.minimumSpacingMinutes),
@@ -233,7 +234,7 @@ export async function POST(request: Request) {
         createdBy: "beastmarketing_owner_workflow", generatedBy: "BeastMarketing", generationMode: mode, generatedAt,
         waitingForOwnerApproval: true, candidateIndex: index + 1, candidateCount: requestedCount, topicFamily: topicPolicy.topicFamily,
         cadencePlan: { plannedFor, minimumSpacingMinutes: normalizedSettings.minimumSpacingMinutes, maximumPerDay: normalizedSettings.maximumPerDay, maximumPerWeek: normalizedSettings.maximumPerWeek },
-        generationSettings: { minimumRuntimeSeconds: normalizedSettings.minimumRuntimeSeconds, targetRuntimeSeconds: normalizedSettings.targetRuntimeSeconds, maximumRuntimeSeconds: normalizedSettings.maximumRuntimeSeconds, aspectRatio: normalizedSettings.aspectRatio, presenterProfileId: normalizedSettings.presenterProfileId, qualityThreshold: normalizedSettings.qualityThreshold, allowedTopics: normalizedSettings.allowedTopics, excludedTopics: normalizedSettings.excludedTopics, approvalMode: "owner_approval" },
+        generationSettings: { minimumRuntimeSeconds: normalizedSettings.minimumRuntimeSeconds, targetRuntimeSeconds: normalizedSettings.targetRuntimeSeconds, maximumRuntimeSeconds: normalizedSettings.maximumRuntimeSeconds, aspectRatio: normalizedSettings.aspectRatio, presenterProfileId: normalizedSettings.presenterProfileId, qualityThreshold: normalizedSettings.qualityThreshold, allowedTopics: normalizedSettings.allowedTopics, excludedTopics: normalizedSettings.excludedTopics, approvalMode: normalizedSettings.approvalMode, manualApprovalFirstN: normalizedSettings.manualApprovalFirstN },
         publishingInterlocks: { pauseAllPublishing: controls?.pause_all_publishing !== false, externalPublishingAuthorized: false, automaticPublishingAuthorized: false, youtubeAuthorized: false },
         providersUsed: [], paidServicesUsed: false, shotstackCreditsConsumed: 0, externallyPublished: false,
       },
@@ -297,7 +298,7 @@ export async function PATCH(request: Request) {
     const nextState = decision === "rejected" ? "skipped" : decision === "needs_changes" ? "modify" : currentState;
     const { data, error } = await client.from("beast_marketing_video_jobs").update({
       state: nextState,
-      quality: { ...currentQuality, ownerQualityReview: decision, ownerWorkflowDecision: decision, ownerReviewedAt: reviewedAt },
+      quality: { ...currentQuality, ownerQualityReview: decision, ownerWorkflowDecision: decision, ownerApprovalSource: decision === "approved" ? "manual" : currentQuality.ownerApprovalSource, ownerReviewedAt: reviewedAt },
       provenance: { ...record(current.provenance), waitingForOwnerApproval: ["pending", "held"].includes(decision), ownerDecision: decision, ownerReviewedAt: reviewedAt, youtubePublished: false },
       updated_at: reviewedAt,
       last_error: null,

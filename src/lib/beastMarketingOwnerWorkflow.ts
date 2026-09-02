@@ -1,9 +1,74 @@
-import { normalizeVideoTopicPhrases, type VideoJobState, type VideoSeriesSettings } from "./beastMarketingVideo";
+import { evaluateVideoReadiness, normalizeVideoTopicPhrases, type VideoJobState, type VideoSeriesSettings } from "./beastMarketingVideo";
 
 export const VIDEO_CANDIDATE_BATCH_LIMIT = 5;
 
 export type OwnerWorkflowGroup = "needs_review" | "approved_scheduled" | "published_history" | "rejected_needs_changes";
 export type OwnerWorkflowDecision = "pending" | "held" | "approved" | "rejected" | "needs_changes";
+
+export type AutoApprovalEvidence = {
+  factualClaimsVerified?: boolean;
+  productTruthVerified?: boolean;
+  misleadingClaimsAbsent?: boolean;
+  safeContent?: boolean;
+  provenanceComplete?: boolean;
+  destinationValid?: boolean;
+  duplicateRisk?: number;
+  mediaIntegrity?: boolean;
+  metadataQuality?: number;
+  attributionValid?: boolean;
+  runtimeSeconds?: number;
+  publicationEligibleMedia?: boolean;
+};
+
+export type AutoApprovalControls = {
+  pauseAllPublishing: boolean;
+  externalPublishingAuthorized: boolean;
+  automaticPublishingAuthorized: boolean;
+  youtubeAuthorized: boolean;
+};
+
+export function evaluateSeriesAutoApproval(input: { settings: VideoSeriesSettings; seriesEnabled: boolean; manuallyApprovedCount: number; controls: AutoApprovalControls; evidence: AutoApprovalEvidence }) {
+  if (input.settings.approvalMode !== "automatic") return { approved: false as const, fallback: "needs_review" as const, blockers: ["Owner Approval is configured for this series."] };
+  const uncertain: string[] = [];
+  const failed: string[] = [];
+  if (!input.seriesEnabled) uncertain.push("The series is paused.");
+  if (input.manuallyApprovedCount < input.settings.manualApprovalFirstN) uncertain.push(`${input.settings.manualApprovalFirstN - input.manuallyApprovedCount} more manually approved video${input.settings.manualApprovalFirstN - input.manuallyApprovedCount === 1 ? " is" : "s are"} required before auto-approval.`);
+  if (input.controls.pauseAllPublishing) uncertain.push("PAUSE ALL PUBLISHING is active.");
+  if (!input.controls.youtubeAuthorized) uncertain.push("YouTube OAuth is not authorized.");
+  if (!input.controls.externalPublishingAuthorized) uncertain.push("External publishing authority is absent.");
+  if (!input.controls.automaticPublishingAuthorized) uncertain.push("Automatic publishing authority is absent.");
+
+  const booleanGates: [keyof AutoApprovalEvidence, string][] = [
+    ["factualClaimsVerified", "Factual claims verification"], ["productTruthVerified", "Product Truth verification"],
+    ["misleadingClaimsAbsent", "Misleading-claims review"], ["safeContent", "Safety review"],
+    ["provenanceComplete", "Provenance review"], ["destinationValid", "Destination validation"],
+    ["mediaIntegrity", "Media integrity"], ["attributionValid", "Attribution validation"],
+  ];
+  for (const [key, label] of booleanGates) {
+    if (input.evidence[key] === false) failed.push(`${label} failed.`);
+    else if (input.evidence[key] !== true) uncertain.push(`${label} is unavailable.`);
+  }
+  if (input.evidence.publicationEligibleMedia === false) failed.push("The rendered media is not publication-eligible.");
+  else if (input.evidence.publicationEligibleMedia !== true) uncertain.push("Publication-eligible media evidence is unavailable.");
+  if (!Number.isFinite(input.evidence.duplicateRisk)) uncertain.push("Duplication risk is unavailable.");
+  else if (Number(input.evidence.duplicateRisk) >= 0.8) failed.push("Duplication risk is too high.");
+  if (!Number.isFinite(input.evidence.metadataQuality)) uncertain.push("Metadata quality is unavailable.");
+  else if (Number(input.evidence.metadataQuality) < input.settings.qualityThreshold) failed.push("Metadata quality is below the series threshold.");
+  if (!Number.isFinite(input.evidence.runtimeSeconds)) uncertain.push("Runtime validation is unavailable.");
+  else if (Number(input.evidence.runtimeSeconds) < input.settings.minimumRuntimeSeconds || Number(input.evidence.runtimeSeconds) > input.settings.maximumRuntimeSeconds) failed.push("Runtime is outside the configured range.");
+
+  if (!failed.length && !uncertain.length) {
+    const readiness = evaluateVideoReadiness({
+      factualClaimsVerified: true, productTruthVerified: true, misleadingClaimsAbsent: true, safeContent: true,
+      provenanceComplete: true, destinationValid: true, duplicateRisk: Number(input.evidence.duplicateRisk), mediaIntegrity: true,
+      metadataQuality: Number(input.evidence.metadataQuality), attributionValid: true, runtimeSeconds: Number(input.evidence.runtimeSeconds), settings: input.settings,
+    });
+    if (!readiness.ready) failed.push(...readiness.blockers);
+  }
+  if (failed.length) return { approved: false as const, fallback: "needs_changes" as const, blockers: [...failed, ...uncertain] };
+  if (uncertain.length) return { approved: false as const, fallback: "needs_review" as const, blockers: uncertain };
+  return { approved: true as const, fallback: null, blockers: [] as string[] };
+}
 
 type WorkflowJob = {
   state: VideoJobState;

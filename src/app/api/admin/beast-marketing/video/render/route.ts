@@ -1,6 +1,8 @@
 import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import type { ProductionManifest } from "@/lib/beastMarketingProduction";
+import { evaluateSeriesAutoApproval } from "@/lib/beastMarketingOwnerWorkflow";
+import { defaultVideoSeriesSettings, type VideoSeriesSettings } from "@/lib/beastMarketingVideo";
 import {
   SHOTSTACK_MAX_ESTIMATED_CREDITS_PER_RENDER,
   SHOTSTACK_PROVIDER_ID,
@@ -22,6 +24,24 @@ export const maxDuration = 60;
 const safeError = "The internal Shotstack render could not be completed.";
 const clean = (value: unknown, maximum = 500) => typeof value === "string" ? value.trim().slice(0, maximum) : "";
 const record = (value: unknown): Record<string, unknown> => value && typeof value === "object" ? value as Record<string, unknown> : {};
+const boundedInteger = (value: unknown, minimum: number, maximum: number, fallback: number) => {
+  const parsed = Number(value); return Number.isInteger(parsed) && parsed >= minimum && parsed <= maximum ? parsed : fallback;
+};
+
+function renderSettings(value: unknown): VideoSeriesSettings {
+  const stored = record(value);
+  return {
+    ...defaultVideoSeriesSettings,
+    ...stored,
+    approvalMode: stored.approvalMode === "automatic" ? "automatic" : "owner_approval",
+    manualApprovalFirstN: boundedInteger(stored.manualApprovalFirstN, 0, 100, defaultVideoSeriesSettings.manualApprovalFirstN),
+    minimumRuntimeSeconds: boundedInteger(stored.minimumRuntimeSeconds, 15, 3600, defaultVideoSeriesSettings.minimumRuntimeSeconds),
+    maximumRuntimeSeconds: boundedInteger(stored.maximumRuntimeSeconds, 15, 7200, defaultVideoSeriesSettings.maximumRuntimeSeconds),
+    qualityThreshold: boundedInteger(stored.qualityThreshold, 1, 100, defaultVideoSeriesSettings.qualityThreshold),
+    allowedTopics: Array.isArray(stored.allowedTopics) ? stored.allowedTopics.filter((item): item is string => typeof item === "string") : [],
+    excludedTopics: Array.isArray(stored.excludedTopics) ? stored.excludedTopics.filter((item): item is string => typeof item === "string") : [],
+  } as VideoSeriesSettings;
+}
 
 async function owner() {
   const client = createRouteClient();
@@ -55,7 +75,7 @@ export async function POST(request: Request) {
   const configuration = shotstackConfiguration();
   if (!configuration.configured) return NextResponse.json({ error: "Shotstack is not configured for this environment." }, { status: 503 });
 
-  const { data: job } = await client.from("beast_marketing_video_jobs").select("id, owner_id, state, revision, production, provenance, quality").eq("id", jobId).eq("owner_id", user.id).maybeSingle();
+  const { data: job } = await client.from("beast_marketing_video_jobs").select("id, owner_id, series_id, state, revision, production, provenance, quality").eq("id", jobId).eq("owner_id", user.id).maybeSingle();
   if (!job) return NextResponse.json({ error: "The owner-scoped video job is unavailable." }, { status: 404 });
   const production = record(job.production);
   const manifest = production.manifest;
@@ -112,7 +132,7 @@ export async function POST(request: Request) {
   if (!attempt?.provider_request_id) return NextResponse.json({ error: "No submitted Shotstack render exists for this job." }, { status: 409 });
   const { data: existingAsset } = await client.from("beast_marketing_video_assets").select("*").eq("owner_id", user.id).eq("attempt_id", attempt.id).eq("role", "final_video").maybeSingle();
   if (existingAsset) {
-    if (job.state !== "ready") await client.from("beast_marketing_video_jobs").update({ state: "ready", last_error: null, updated_at: new Date().toISOString() }).eq("id", job.id).eq("owner_id", user.id);
+    if (job.state === "generating") await client.from("beast_marketing_video_jobs").update({ state: "ready", last_error: null, updated_at: new Date().toISOString() }).eq("id", job.id).eq("owner_id", user.id);
     const { data: signed } = await client.storage.from("beast-marketing-media").createSignedUrl(existingAsset.storage_path, 3600);
     return NextResponse.json({ status: "succeeded", attempt, asset: existingAsset, signedUrl: signed?.signedUrl || null });
   }
@@ -145,9 +165,48 @@ export async function POST(request: Request) {
     if (assetError || !asset) throw new ShotstackProviderError("provider", false);
     const completed = new Date().toISOString();
     await client.from("beast_marketing_video_attempts").update({ status: "succeeded", retryable: false, completed_at: completed, evidence: { ...record(attempt.evidence), providerStatus: "ready", assetId: asset.id }, updated_at: completed }).eq("id", attempt.id).eq("owner_id", user.id);
+    const [seriesResult, controlsResult, historyResult] = await Promise.all([
+      client.from("beast_marketing_video_series").select("enabled, settings").eq("id", job.series_id).eq("owner_id", user.id).maybeSingle(),
+      client.from("beast_marketing_video_controls").select("pause_all_publishing, external_publishing_authorized, automatic_publishing_authorized, youtube_authorized").eq("owner_id", user.id).maybeSingle(),
+      client.from("beast_marketing_video_jobs").select("id, quality").eq("owner_id", user.id).eq("series_id", job.series_id),
+    ]);
+    const normalizedSettings = renderSettings(seriesResult.data?.settings);
+    const existingQuality = record(job.quality);
+    const manuallyApprovedCount = (historyResult.data || []).filter((candidate) => candidate.id !== job.id && record(candidate.quality).ownerApprovalSource === "manual" && record(candidate.quality).ownerWorkflowDecision === "approved").length;
+    const watermark = shotstackWatermarkPolicy(configuration.environment);
+    const autoApproval = evaluateSeriesAutoApproval({
+      settings: normalizedSettings,
+      seriesEnabled: seriesResult.data?.enabled === true,
+      manuallyApprovedCount,
+      controls: {
+        pauseAllPublishing: controlsResult.data?.pause_all_publishing !== false,
+        externalPublishingAuthorized: controlsResult.data?.external_publishing_authorized === true,
+        automaticPublishingAuthorized: controlsResult.data?.automatic_publishing_authorized === true,
+        youtubeAuthorized: controlsResult.data?.youtube_authorized === true,
+      },
+      evidence: {
+        factualClaimsVerified: existingQuality.factualClaimsVerified as boolean | undefined,
+        productTruthVerified: existingQuality.productTruthVerified as boolean | undefined,
+        misleadingClaimsAbsent: existingQuality.misleadingClaimsAbsent as boolean | undefined,
+        safeContent: existingQuality.safeContent as boolean | undefined,
+        provenanceComplete: true,
+        destinationValid: existingQuality.destinationValid as boolean | undefined,
+        duplicateRisk: existingQuality.duplicateRisk as number | undefined,
+        mediaIntegrity: true,
+        metadataQuality: existingQuality.metadataQuality as number | undefined,
+        attributionValid: existingQuality.attributionValid as boolean | undefined,
+        runtimeSeconds: manifest.runtimeMs / 1000,
+        publicationEligibleMedia: watermark.publicationWatermarkEligible,
+      },
+    });
+    const automaticMode = normalizedSettings.approvalMode === "automatic";
+    const ownerWorkflowDecision = autoApproval.approved ? "approved" : automaticMode && autoApproval.fallback === "needs_changes" ? "needs_changes" : "pending";
+    const nextState = autoApproval.approved ? "scheduled" : ownerWorkflowDecision === "needs_changes" ? "modify" : "ready";
+    const baseWarning = configuration.environment === "stage" ? "Sandbox watermark is test-only. This asset is not publication-eligible; external publishing remains disabled and owner quality review is required." : "Internal render complete. External publishing remains disabled; owner quality review is still required.";
     await client.from("beast_marketing_video_jobs").update({
-      state: "ready", production: { ...production, providerState: "rendered_internal", providerId: SHOTSTACK_PROVIDER_ID, assetId: asset.id, externalActionPerformed: true },
-      quality: { ...record(job.quality), renderReady: true, mediaIntegrity: true, provenanceComplete: true, internalRenderStatus: "ready", ownerQualityReview: "pending", warnings: configuration.environment === "stage" ? ["Sandbox watermark is test-only. This asset is not publication-eligible; external publishing remains disabled and owner quality review is required."] : ["Internal render complete. External publishing remains disabled; owner quality review is still required."] },
+      state: nextState, production: { ...production, providerState: "rendered_internal", providerId: SHOTSTACK_PROVIDER_ID, assetId: asset.id, externalActionPerformed: true },
+      quality: { ...existingQuality, renderReady: true, mediaIntegrity: true, provenanceComplete: true, publicationEligibleMedia: watermark.publicationWatermarkEligible, runtimeSeconds: manifest.runtimeMs / 1000, internalRenderStatus: "ready", ownerQualityReview: ownerWorkflowDecision, ownerWorkflowDecision, ownerApprovalSource: autoApproval.approved ? "automatic" : existingQuality.ownerApprovalSource, autoApprovalEvaluated: automaticMode, autoApprovalBlockers: automaticMode ? autoApproval.blockers : [], warnings: [baseWarning] },
+      provenance: { ...record(job.provenance), waitingForOwnerApproval: !autoApproval.approved, autoApproval: { evaluatedAt: completed, approved: autoApproval.approved, fallback: autoApproval.fallback, blockers: autoApproval.blockers, manuallyApprovedCount, requiredManualApprovals: normalizedSettings.manualApprovalFirstN, youtubePublished: false } },
       last_error: null, updated_at: completed,
     }).eq("id", job.id).eq("owner_id", user.id);
     const { data: signed } = await client.storage.from("beast-marketing-media").createSignedUrl(storagePath, 3600);

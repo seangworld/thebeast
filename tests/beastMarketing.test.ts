@@ -26,7 +26,7 @@ import { allowedVideoTransitions, defaultVideoSeriesSettings, evaluateVideoReadi
 import { buildGroundedScript, buildYouTubeMetadata, scoreVideoOpportunity, VIDEO_CONTENT_ENGINE_VERSION } from "../src/lib/beastMarketingContent";
 import { buildProductionAttempt, buildProductionManifest, nextProductionRetry, validatePersistedAssetCandidate, validateProducedAssets, validateProductionManifest, VIDEO_PRODUCTION_ENGINE_VERSION } from "../src/lib/beastMarketingProduction";
 import { containsInternalProductionMarkers, stripInternalProductionMarkers } from "../src/lib/beastMarketingNarration";
-import { ownerWorkflowGroup, ownerWorkflowStatus, planCandidateCadence, validateTopicFamily, VIDEO_CANDIDATE_BATCH_LIMIT } from "../src/lib/beastMarketingOwnerWorkflow";
+import { evaluateSeriesAutoApproval, ownerWorkflowGroup, ownerWorkflowStatus, planCandidateCadence, validateTopicFamily, VIDEO_CANDIDATE_BATCH_LIMIT } from "../src/lib/beastMarketingOwnerWorkflow";
 
 const campaign: MarketingCampaign = {
   id: "campaign-1",
@@ -66,6 +66,7 @@ test("BMKT-003 defines configurable video controls and deterministic lifecycle",
   assert.equal(defaultVideoSeriesSettings.aspectRatio, "9:16");
   assert.equal(defaultVideoSeriesSettings.publishingEnabled, false);
   assert.equal(defaultVideoSeriesSettings.approvalMode, "owner_approval");
+  assert.equal(defaultVideoSeriesSettings.manualApprovalFirstN, 3);
   assert.deepEqual(allowedVideoTransitions.generating, ["ready", "failed"]);
   assert.equal(videoJobStates.includes("measuring"), true);
   assert.deepEqual(externalVideoAuthorities, { providersConfigured: false, youtubeAuthorized: false, externalPublishingEnabled: false, automaticPublishingEnabled: false });
@@ -272,7 +273,7 @@ test("BMKT-007 owner workflow creates no-spend candidates and keeps publishing l
   const route = readFileSync("src/app/api/admin/beast-marketing/video/route.ts", "utf8");
   for (const label of ["Generate Test Video", "Generate Batch", "Needs Review", "Approved / Scheduled", "Published / History", "Rejected / Needs Changes", "Preview / Watch", "Approve for Scheduling", "Request Changes / Regenerate"]) assert.match(panel, new RegExp(label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   assert.match(panel, /BeastMarketing generated this candidate and is waiting for owner review/);
-  assert.match(panel, /Automatic mode is separately governed and remains locked/);
+  assert.match(panel, /Automatic publishing authority \{authorities\.automaticPublishing === "enabled" \? "enabled" : "locked"\}/);
   assert.match(route, /kind === "owner_generate"/);
   assert.match(route, /kind === "owner_review"/);
   assert.match(route, /shotstackCreditsConsumed: 0/);
@@ -280,6 +281,41 @@ test("BMKT-007 owner workflow creates no-spend candidates and keeps publishing l
   assert.match(route, /Only a finished internal render can be approved/);
   assert.match(route, /YouTube authorization and external publishing authority are required/);
   assert.doesNotMatch(route, /fetch\(["']https:\/\//);
+});
+
+test("BMKT-007 auto-approval requires complete quality evidence, history, and publishing authority", () => {
+  const settings = { ...defaultVideoSeriesSettings, approvalMode: "automatic" as const, manualApprovalFirstN: 2 };
+  const controls = { pauseAllPublishing: false, externalPublishingAuthorized: true, automaticPublishingAuthorized: true, youtubeAuthorized: true };
+  const evidence = { factualClaimsVerified: true, productTruthVerified: true, misleadingClaimsAbsent: true, safeContent: true, provenanceComplete: true, destinationValid: true, duplicateRisk: 0.1, mediaIntegrity: true, metadataQuality: 95, attributionValid: true, runtimeSeconds: 60, publicationEligibleMedia: true };
+  assert.deepEqual(evaluateSeriesAutoApproval({ settings, seriesEnabled: true, manuallyApprovedCount: 2, controls, evidence }), { approved: true, fallback: null, blockers: [] });
+  const firstN = evaluateSeriesAutoApproval({ settings, seriesEnabled: true, manuallyApprovedCount: 1, controls, evidence });
+  assert.equal(firstN.approved, false); assert.equal(firstN.fallback, "needs_review"); assert.match(firstN.blockers.join(" "), /1 more manually approved video is required/);
+  const paused = evaluateSeriesAutoApproval({ settings, seriesEnabled: true, manuallyApprovedCount: 2, controls: { ...controls, pauseAllPublishing: true }, evidence });
+  assert.equal(paused.fallback, "needs_review"); assert.match(paused.blockers.join(" "), /PAUSE ALL PUBLISHING/);
+  const unsafe = evaluateSeriesAutoApproval({ settings, seriesEnabled: true, manuallyApprovedCount: 2, controls, evidence: { ...evidence, safeContent: false } });
+  assert.equal(unsafe.fallback, "needs_changes"); assert.match(unsafe.blockers.join(" "), /Safety review failed/);
+  const uncertain = evaluateSeriesAutoApproval({ settings, seriesEnabled: true, manuallyApprovedCount: 2, controls, evidence: { ...evidence, duplicateRisk: undefined } });
+  assert.equal(uncertain.fallback, "needs_review"); assert.match(uncertain.blockers.join(" "), /Duplication risk is unavailable/);
+  const noYoutube = evaluateSeriesAutoApproval({ settings, seriesEnabled: true, manuallyApprovedCount: 2, controls: { ...controls, youtubeAuthorized: false }, evidence });
+  assert.equal(noYoutube.fallback, "needs_review"); assert.match(noYoutube.blockers.join(" "), /YouTube OAuth/);
+  const watermark = evaluateSeriesAutoApproval({ settings, seriesEnabled: true, manuallyApprovedCount: 2, controls, evidence: { ...evidence, publicationEligibleMedia: false } });
+  assert.equal(watermark.fallback, "needs_changes"); assert.match(watermark.blockers.join(" "), /not publication-eligible/);
+});
+
+test("BMKT-007 persists per-series approval mode and evaluates auto-approval only after rendering", () => {
+  const panel = readFileSync("src/app/dashboard/admin/marketing/VideoGrowthEnginePanel.tsx", "utf8");
+  const route = readFileSync("src/app/api/admin/beast-marketing/video/route.ts", "utf8");
+  const renderRoute = readFileSync("src/app/api/admin/beast-marketing/video/render/route.ts", "utf8");
+  for (const label of ["Owner Approval", "Auto-Approve & Schedule", "Require manual approval for first N videos", "Why auto-approval did not run"]) assert.match(panel, new RegExp(label));
+  assert.match(route, /approvalMode: record\.approvalMode === "automatic"/);
+  assert.match(route, /manualApprovalFirstN: integer/);
+  assert.match(route, /ownerApprovalSource: decision === "approved" \? "manual"/);
+  assert.match(renderRoute, /evaluateSeriesAutoApproval/);
+  assert.match(renderRoute, /pause_all_publishing/);
+  assert.match(renderRoute, /automatic_publishing_authorized/);
+  assert.match(renderRoute, /youtube_authorized/);
+  assert.match(renderRoute, /state: nextState/);
+  assert.doesNotMatch(renderRoute, /state: "published"/);
 });
 
 test("BeastMarketing uses one owner-only six-workspace hierarchy without duplicated engines", () => {

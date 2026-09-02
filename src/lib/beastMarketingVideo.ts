@@ -39,7 +39,7 @@ export const allowedVideoTransitions: Record<VideoJobState, readonly VideoJobSta
 };
 
 export type VideoSeriesSettings = {
-  publishingEnabled: boolean; approvalMode: "owner_approval" | "automatic"; daysOfWeek: number[]; preferredWindows: string[];
+  publishingEnabled: boolean; approvalMode: "owner_approval" | "automatic"; manualApprovalFirstN: number; daysOfWeek: number[]; preferredWindows: string[];
   minimumSpacingMinutes: number; maximumPerDay: number; maximumPerWeek: number;
   minimumRuntimeSeconds: number; targetRuntimeSeconds: number; maximumRuntimeSeconds: number; aspectRatio: "9:16" | "16:9" | "1:1";
   voiceProfileId: string | null; visualStyle: string; captionStyle: string; presenterProfileId: string | null; qualityThreshold: number;
@@ -49,7 +49,7 @@ export type VideoSeriesSettings = {
 };
 
 export const defaultVideoSeriesSettings: VideoSeriesSettings = {
-  publishingEnabled: false, approvalMode: "owner_approval", daysOfWeek: [1, 3, 5], preferredWindows: ["18:00-21:00"],
+  publishingEnabled: false, approvalMode: "owner_approval", manualApprovalFirstN: 3, daysOfWeek: [1, 3, 5], preferredWindows: ["18:00-21:00"],
   minimumSpacingMinutes: 720, maximumPerDay: 1, maximumPerWeek: 3, minimumRuntimeSeconds: 45, targetRuntimeSeconds: 60,
   maximumRuntimeSeconds: 90, aspectRatio: "9:16", voiceProfileId: null, visualStyle: "faceless_editorial", captionStyle: "high_contrast",
   presenterProfileId: null, qualityThreshold: 85, allowedTopics: [], excludedTopics: [], evergreenPercent: 60, beastPromotionPercent: 35,
