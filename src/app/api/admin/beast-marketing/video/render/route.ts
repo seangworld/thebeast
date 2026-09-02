@@ -10,6 +10,7 @@ import {
   inspectShotstackRender,
   nextShotstackManualAttempt,
   shotstackConfiguration,
+  shotstackWatermarkPolicy,
   submitShotstackRender,
 } from "@/lib/beastMarketingShotstack";
 import { createRouteClient } from "@/lib/supabase/server";
@@ -63,7 +64,8 @@ export async function POST(request: Request) {
   if (action === "submit") {
     const quality = record(job.quality);
     const qualityRemediation = job.state === "ready" && quality.ownerQualityReview === "pending" && quality.remediationRenderUsed !== true;
-    if (job.state !== "scripted" && !qualityRemediation) return NextResponse.json({ error: "Only a scripted queue item or its one pending quality remediation can start an internal render." }, { status: 409 });
+    const pronunciationValidation = job.state === "ready" && quality.ownerQualityReview === "pending" && quality.remediationRenderUsed === true && quality.narrationNormalizationRenderUsed !== true;
+    if (job.state !== "scripted" && !qualityRemediation && !pronunciationValidation) return NextResponse.json({ error: "Only a scripted queue item or its bounded pending quality validation can start an internal render." }, { status: 409 });
     const estimate = estimateShotstackCredits(manifest, configuration.environment);
     if (estimate.estimatedTotal > SHOTSTACK_MAX_ESTIMATED_CREDITS_PER_RENDER) {
       return NextResponse.json({ error: `The estimated ${estimate.estimatedTotal.toFixed(1)} credits exceed the ${SHOTSTACK_MAX_ESTIMATED_CREDITS_PER_RENDER.toFixed(1)}-credit internal-render cap.` }, { status: 409 });
@@ -83,7 +85,7 @@ export async function POST(request: Request) {
     const { data: attempt, error: insertError } = await client.from("beast_marketing_video_attempts").insert({
       owner_id: user.id, job_id: job.id, attempt_number: attemptNumber, operation: "composition", provider_id: SHOTSTACK_PROVIDER_ID,
       idempotency_key: idempotencyKey, status: "planned", retryable: false,
-      evidence: { environment: configuration.environment, manifestChecksum: manifest.checksum, estimate, automaticRetry: false, youtubeDestination: false, manualCredentialRemediation: attemptNumber === 2, manualSchemaRemediation: [3, 4].includes(attemptNumber), qualityRemediation: attemptNumber === 5, previousAttemptId: latest?.id || null },
+      evidence: { environment: configuration.environment, manifestChecksum: manifest.checksum, estimate, automaticRetry: false, youtubeDestination: false, manualCredentialRemediation: attemptNumber === 2, manualSchemaRemediation: [3, 4].includes(attemptNumber), qualityRemediation: attemptNumber === 5, narrationNormalization: attemptNumber === 6, ...shotstackWatermarkPolicy(configuration.environment), previousAttemptId: latest?.id || null },
       started_at: now, updated_at: now,
     }).select("*").single();
     if (insertError || !attempt) return NextResponse.json({ error: safeError }, { status: 503 });
@@ -93,8 +95,8 @@ export async function POST(request: Request) {
       await client.from("beast_marketing_video_jobs").update({
         state: "generating",
         production: { ...production, providerState: "submitted", providerId: SHOTSTACK_PROVIDER_ID, providerEnvironment: configuration.environment, attemptId: attempt.id, externalActionPerformed: true, estimatedCredits: estimate },
-        provenance: { ...record(job.provenance), productionProvider: { id: SHOTSTACK_PROVIDER_ID, environment: configuration.environment, editApi: true, serveApi: true, youtubeDestination: false } },
-        quality: { ...quality, renderReady: false, internalRenderStatus: "submitted", remediationRenderUsed: qualityRemediation || quality.remediationRenderUsed === true, warnings: ["Internal Shotstack render is awaiting media and quality validation."] },
+        provenance: { ...record(job.provenance), productionProvider: { id: SHOTSTACK_PROVIDER_ID, environment: configuration.environment, editApi: true, serveApi: true, youtubeDestination: false, ...shotstackWatermarkPolicy(configuration.environment) } },
+        quality: { ...quality, renderReady: false, internalRenderStatus: "submitted", remediationRenderUsed: qualityRemediation || quality.remediationRenderUsed === true, narrationNormalizationRenderUsed: pronunciationValidation || quality.narrationNormalizationRenderUsed === true, warnings: ["Internal Shotstack render is awaiting media and quality validation."] },
         last_error: null, updated_at: new Date().toISOString(),
       }).eq("id", job.id).eq("owner_id", user.id);
       return NextResponse.json({ attempt: { ...attempt, status: "submitted", provider_request_id: submitted.providerRequestId }, estimate, duplicatePrevented: false }, { status: 202 });
@@ -137,14 +139,14 @@ export async function POST(request: Request) {
       owner_id: user.id, job_id: job.id, attempt_id: attempt.id, role: "final_video", storage_path: storagePath, mime_type: "video/mp4",
       source_type: "generated", provider_id: SHOTSTACK_PROVIDER_ID, provider_asset_id: inspection.asset.id, license_reference: "Shotstack account-generated internal render",
       content_hash: contentHash, size_bytes: media.length, duration_ms: manifest.runtimeMs, status: "available",
-      provenance: { provider: SHOTSTACK_PROVIDER_ID, environment: configuration.environment, renderId: attempt.provider_request_id, serveAssetId: inspection.asset.id, manifestChecksum: manifest.checksum, internalOnly: true, youtubePublished: false },
+      provenance: { provider: SHOTSTACK_PROVIDER_ID, environment: configuration.environment, renderId: attempt.provider_request_id, serveAssetId: inspection.asset.id, manifestChecksum: manifest.checksum, internalOnly: true, youtubePublished: false, ...shotstackWatermarkPolicy(configuration.environment) },
     }).select("*").single();
     if (assetError || !asset) throw new ShotstackProviderError("provider", false);
     const completed = new Date().toISOString();
     await client.from("beast_marketing_video_attempts").update({ status: "succeeded", retryable: false, completed_at: completed, evidence: { ...record(attempt.evidence), providerStatus: "ready", assetId: asset.id }, updated_at: completed }).eq("id", attempt.id).eq("owner_id", user.id);
     await client.from("beast_marketing_video_jobs").update({
       state: "ready", production: { ...production, providerState: "rendered_internal", providerId: SHOTSTACK_PROVIDER_ID, assetId: asset.id, externalActionPerformed: true },
-      quality: { ...record(job.quality), renderReady: true, mediaIntegrity: true, provenanceComplete: true, internalRenderStatus: "ready", ownerQualityReview: "pending", warnings: ["Internal render complete. External publishing remains disabled; owner quality review is still required."] },
+      quality: { ...record(job.quality), renderReady: true, mediaIntegrity: true, provenanceComplete: true, internalRenderStatus: "ready", ownerQualityReview: "pending", warnings: configuration.environment === "stage" ? ["Sandbox watermark is test-only. This asset is not publication-eligible; external publishing remains disabled and owner quality review is required."] : ["Internal render complete. External publishing remains disabled; owner quality review is still required."] },
       last_error: null, updated_at: completed,
     }).eq("id", job.id).eq("owner_id", user.id);
     const { data: signed } = await client.storage.from("beast-marketing-media").createSignedUrl(storagePath, 3600);

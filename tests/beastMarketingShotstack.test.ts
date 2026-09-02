@@ -4,6 +4,11 @@ import test from "node:test";
 import { defaultVideoSeriesSettings } from "../src/lib/beastMarketingVideo";
 import { buildProductionManifest } from "../src/lib/beastMarketingProduction";
 import {
+  BEAST_PRONUNCIATION_MAP,
+  normalizeBeastDisplayNames,
+  normalizeBeastNarrationForSpeech,
+} from "../src/lib/beastMarketingNarration";
+import {
   SHOTSTACK_MAX_ESTIMATED_CREDITS_PER_RENDER,
   ShotstackProviderError,
   buildShotstackEdit,
@@ -12,6 +17,7 @@ import {
   nextShotstackManualAttempt,
   shotstackConfiguration,
   shotstackEnvironment,
+  shotstackWatermarkPolicy,
   submitShotstackRender,
 } from "../src/lib/beastMarketingShotstack";
 
@@ -28,6 +34,24 @@ const manifest = buildProductionManifest({
     estimatedSeconds: 45,
   },
   settings: defaultVideoSeriesSettings,
+});
+
+test("BMKT-007 keeps Product Truth display names separate from spoken TTS names", () => {
+  const source = "beastos connects BeastMoney and BeastEducation AI at SEANGWORLD.COM.";
+  assert.equal(
+    normalizeBeastDisplayNames(source),
+    "BeastOS connects BeastMoney and BeastEducation AI at SEANGWORLD.COM.",
+  );
+  assert.equal(
+    normalizeBeastNarrationForSpeech(source),
+    "Beast O S connects Beast Money and Beast Education A I at Sean G World dot com.",
+  );
+  assert.equal(normalizeBeastNarrationForSpeech(normalizeBeastNarrationForSpeech(source)), normalizeBeastNarrationForSpeech(source));
+  assert.equal(normalizeBeastNarrationForSpeech("MyBeastOSPlugin uses an apiary."), "MyBeastOSPlugin uses an apiary.");
+  assert.equal(new Set(BEAST_PRONUNCIATION_MAP.map((entry) => entry.canonical.toLowerCase())).size, BEAST_PRONUNCIATION_MAP.length);
+  assert.deepEqual(BEAST_PRONUNCIATION_MAP.find((entry) => entry.canonical === "BeastOS"), {
+    canonical: "BeastOS", display: "BeastOS", spoken: "Beast O S",
+  });
 });
 
 test("BMKT-007 defaults to sandbox and requires a substantial server-only key", () => {
@@ -52,6 +76,27 @@ test("BMKT-007 builds current Shotstack faceless composition without a destinati
   assert.match(serialized, /"speed":1\.1/);
   assert.doesNotMatch(serialized, /youtube|destinations|webhook|callback/i);
   assert.doesNotMatch(serialized, /api[_-]?key|secret|token/i);
+});
+
+test("BMKT-007 normalizes pronunciation only at the TTS boundary", () => {
+  const beastOSManifest = buildProductionManifest({
+    jobId: "job-beastos", revision: 1,
+    script: { hook: "What is beastos?", narration: ["BeastOS connects AI specialists."], cta: "Visit SEANGWORLD.COM.", estimatedSeconds: 30 },
+    settings: { ...defaultVideoSeriesSettings, minimumRuntimeSeconds: 30, maximumRuntimeSeconds: 30 },
+  });
+  const edit = buildShotstackEdit(beastOSManifest);
+  const tracks = edit.timeline.tracks;
+  const tts = tracks.flatMap((track) => track.clips).find((clip) => clip.alias === "bmkt-narration")!;
+  assert.match(JSON.stringify(tts), /Beast O S/);
+  assert.doesNotMatch(JSON.stringify(tts), /BeastOS|beastos/);
+  const visible = JSON.stringify(tracks.slice(0, 3));
+  assert.match(visible, /BeastOS/);
+  assert.doesNotMatch(visible, /Beast O S/);
+});
+
+test("BMKT-007 marks Sandbox watermarks test-only and publication-ineligible", () => {
+  assert.deepEqual(shotstackWatermarkPolicy("stage"), { publicationWatermarkEligible: false, testWatermarkExpected: true });
+  assert.deepEqual(shotstackWatermarkPolicy("v1"), { publicationWatermarkEligible: true, testWatermarkExpected: false });
 });
 
 test("BMKT-007 estimates sandbox and Production credits before submission", () => {
@@ -100,7 +145,8 @@ test("BMKT-007 permits bounded credential and schema remediation before provider
   assert.equal(nextShotstackManualAttempt({ attemptNumber: 3, status: "failed", errorCategory: "validation", providerRequestId: null }), 4);
   assert.equal(nextShotstackManualAttempt({ attemptNumber: 4, status: "failed", errorCategory: "validation", providerRequestId: null }), null);
   assert.equal(nextShotstackManualAttempt({ attemptNumber: 4, status: "succeeded", errorCategory: null, providerRequestId: "render-4" }), 5);
-  assert.equal(nextShotstackManualAttempt({ attemptNumber: 5, status: "succeeded", errorCategory: null, providerRequestId: "render-5" }), null);
+  assert.equal(nextShotstackManualAttempt({ attemptNumber: 5, status: "succeeded", errorCategory: null, providerRequestId: "render-5" }), 6);
+  assert.equal(nextShotstackManualAttempt({ attemptNumber: 6, status: "succeeded", errorCategory: null, providerRequestId: "render-6" }), null);
 });
 
 test("BMKT-007 inspects Edit then Serve and accepts only the Shotstack CDN", async () => {
@@ -127,6 +173,8 @@ test("BMKT-007 route stays owner-scoped, idempotent, bounded, private, and unpub
   assert.match(route, /idempotencyKey/);
   assert.match(route, /manualCredentialRemediation/);
   assert.match(route, /qualityRemediation/);
+  assert.match(route, /narrationNormalization/);
+  assert.match(route, /shotstackWatermarkPolicy/);
   assert.match(route, /SHOTSTACK_MAX_ESTIMATED_CREDITS_PER_RENDER/);
   assert.match(route, /upsert: false/);
   assert.match(route, /beast-marketing-media/);
@@ -134,6 +182,8 @@ test("BMKT-007 route stays owner-scoped, idempotent, bounded, private, and unpub
   assert.match(route, /youtubeDestination: false/);
   assert.doesNotMatch(route, /youtube\.googleapis|upload\/youtube|automaticRetry: true/i);
   assert.match(panel, /Generate internal Shotstack render/);
+  assert.match(panel, /Generate pronunciation-validation render/);
+  assert.match(panel, /Sandbox watermarks are test-only/);
   assert.match(panel, /no automatic retry/i);
   assert.match(panel, /no YouTube destination/i);
 });

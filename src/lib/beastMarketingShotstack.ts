@@ -1,9 +1,10 @@
 import type { ProductionManifest } from "./beastMarketingProduction";
+import { normalizeBeastDisplayNames, normalizeBeastNarrationForSpeech } from "./beastMarketingNarration";
 
-export const SHOTSTACK_ADAPTER_VERSION = "0.8.0";
+export const SHOTSTACK_ADAPTER_VERSION = "0.9.0";
 export const SHOTSTACK_PROVIDER_ID = "shotstack";
 export const SHOTSTACK_MAX_ESTIMATED_CREDITS_PER_RENDER = 2;
-export const SHOTSTACK_MAX_MANUAL_ATTEMPTS = 5;
+export const SHOTSTACK_MAX_MANUAL_ATTEMPTS = 6;
 
 export type ShotstackAttemptSummary = {
   attemptNumber: number;
@@ -69,7 +70,12 @@ export function nextShotstackManualAttempt(latest: ShotstackAttemptSummary | nul
     && latest.status === "succeeded"
     && latest.providerRequestId !== null
     && !latest.errorCategory;
-  return firstQualityRemediation ? SHOTSTACK_MAX_MANUAL_ATTEMPTS : null;
+  if (firstQualityRemediation) return 5;
+  const pronunciationValidation = latest.attemptNumber === 5
+    && latest.status === "succeeded"
+    && latest.providerRequestId !== null
+    && !latest.errorCategory;
+  return pronunciationValidation ? SHOTSTACK_MAX_MANUAL_ATTEMPTS : null;
 }
 
 const asRecord = (value: unknown): Record<string, unknown> => value && typeof value === "object" ? value as Record<string, unknown> : {};
@@ -84,8 +90,14 @@ export function shotstackConfiguration(environment: Readonly<Record<string, stri
   return { configured: apiKey.length >= 20, apiKey, environment: shotstackEnvironment(environment) };
 }
 
+export function shotstackWatermarkPolicy(environment: ShotstackEnvironment) {
+  return environment === "v1"
+    ? { publicationWatermarkEligible: true, testWatermarkExpected: false }
+    : { publicationWatermarkEligible: false, testWatermarkExpected: true };
+}
+
 export function estimateShotstackCredits(manifest: ProductionManifest, environment: ShotstackEnvironment) {
-  const narration = manifest.scenes.map((scene) => scene.narration).join(" ");
+  const narration = normalizeBeastNarrationForSpeech(manifest.scenes.map((scene) => scene.narration).join(" "));
   const speechCredits = Math.ceil(Math.max(1, narration.length) / 100) * 0.1;
   const renderCredits = environment === "v1" ? Math.ceil(manifest.runtimeMs / 60_000 * 10) / 10 : 0;
   return {
@@ -98,7 +110,7 @@ export function estimateShotstackCredits(manifest: ProductionManifest, environme
 
 export function buildShotstackEdit(manifest: ProductionManifest): ShotstackEdit {
   if (!manifest.scenes.length) throw new ShotstackProviderError("validation", false);
-  const narration = manifest.scenes.map((scene) => scene.narration.trim()).filter(Boolean).join(" ");
+  const narration = normalizeBeastNarrationForSpeech(manifest.scenes.map((scene) => scene.narration.trim()).filter(Boolean).join(" "));
   if (!narration) throw new ShotstackProviderError("validation", false);
 
   const sceneHeadline = (narration: string, index: number) => {
@@ -111,7 +123,7 @@ export function buildShotstackEdit(manifest: ProductionManifest): ShotstackEdit 
   const sceneClips = manifest.scenes.map((scene, index) => ({
     asset: {
       type: "rich-text",
-      text: sceneHeadline(scene.narration, index),
+      text: normalizeBeastDisplayNames(sceneHeadline(scene.narration, index)),
       font: { family: "Montserrat", size: manifest.aspectRatio === "9:16" ? 84 : 64, weight: 800, color: "#f8fafc" },
       style: { lineHeight: 1.12 },
       align: { horizontal: "center", vertical: "middle" },
@@ -128,7 +140,7 @@ export function buildShotstackEdit(manifest: ProductionManifest): ShotstackEdit 
   const captionClips = manifest.scenes.flatMap((scene) => scene.captions.map((cue) => ({
     asset: {
       type: "rich-text",
-      text: cue.text,
+      text: normalizeBeastDisplayNames(cue.text),
       font: { family: "Montserrat", size: manifest.aspectRatio === "9:16" ? 46 : 38, weight: 800, color: "#ffffff" },
       style: { lineHeight: 1.12 },
       background: { color: "#070b14", opacity: 0.72, borderRadius: 18 },
