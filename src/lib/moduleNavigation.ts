@@ -256,11 +256,12 @@ export const beastAdminNavigation: ModuleNavSection = {
       href: "/dashboard/admin/intelligence/hunter",
       group: "Insights",
     },
-    {
-      label: "BeastMarketing",
-      href: "/dashboard/admin/marketing",
-      group: "Insights",
-    },
+    { label: "Overview", href: "/dashboard/admin/marketing", group: "BeastMarketing" },
+    { label: "Advertising", href: "/dashboard/admin/marketing/advertising", group: "BeastMarketing" },
+    { label: "Video Growth", href: "/dashboard/admin/marketing/video-growth", group: "BeastMarketing" },
+    { label: "Social", href: "/dashboard/admin/marketing/social", group: "BeastMarketing" },
+    { label: "Email", href: "/dashboard/admin/marketing/email", group: "BeastMarketing" },
+    { label: "Analytics", href: "/dashboard/admin/marketing/analytics", group: "BeastMarketing" },
     {
       label: "Knowledge Inspector",
       href: "/dashboard/admin/knowledge",

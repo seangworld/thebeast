@@ -25,6 +25,7 @@ import {
 import { allowedVideoTransitions, defaultVideoSeriesSettings, evaluateVideoReadiness, externalVideoAuthorities, videoJobStates, VIDEO_ENGINE_VERSION } from "../src/lib/beastMarketingVideo";
 import { buildGroundedScript, buildYouTubeMetadata, scoreVideoOpportunity, VIDEO_CONTENT_ENGINE_VERSION } from "../src/lib/beastMarketingContent";
 import { buildProductionAttempt, buildProductionManifest, nextProductionRetry, validatePersistedAssetCandidate, validateProducedAssets, validateProductionManifest, VIDEO_PRODUCTION_ENGINE_VERSION } from "../src/lib/beastMarketingProduction";
+import { containsInternalProductionMarkers, stripInternalProductionMarkers } from "../src/lib/beastMarketingNarration";
 
 const campaign: MarketingCampaign = {
   id: "campaign-1",
@@ -91,6 +92,27 @@ test("BMKT-004 produces relevant natural metadata with measurable attribution", 
   assert.deepEqual(metadata.tags, ["ai tutor", "homework review"]);
   assert.match(metadata.destinationUrl, /utm_source=youtube/);
   assert.equal(metadata.warnings.length, 0);
+});
+
+test("BMKT production output strips internal sequencing labels from scripts, captions, narration, and metadata", () => {
+  for (const [marker, expected] of [["NEXT", ""], ["NEXT: useful fact", "useful fact"], ["SCENE 2 - useful fact", "useful fact"], ["[CONTINUE] useful fact", "useful fact"], ["TRANSITION — useful fact", "useful fact"], ["START HERE: useful fact", "useful fact"]] as const) {
+    assert.equal(stripInternalProductionMarkers(marker), expected);
+    assert.equal(containsInternalProductionMarkers(marker), true);
+  }
+  const script = buildGroundedScript({
+    topic: "SCENE 1: BeastOS",
+    facts: [{ statement: "NEXT: BeastOS connects focused AI specialists.", sourceLabel: "Product Truth", sourceUrl: null, verified: true }],
+    destinationLabel: "CONTINUE: SEANGWORLD.COM",
+    destinationUrl: "https://seangworld.com",
+    settings: { ...defaultVideoSeriesSettings, minimumRuntimeSeconds: 1 },
+  });
+  assert.equal(script.hook, "What should you know about BeastOS before you act?");
+  assert.deepEqual(script.narration, ["BeastOS connects focused AI specialists."]);
+  assert.doesNotMatch(JSON.stringify(script), /(?:NEXT|SCENE|CONTINUE|TRANSITION|START HERE)\s*(?::|—|-)/i);
+  const production = buildProductionManifest({ jobId: "job-clean", revision: 1, script: { hook: "SCENE 1: BeastOS", narration: ["NEXT: Useful fact."], cta: "CONTINUE: Visit SEANGWORLD.COM.", estimatedSeconds: 30 }, settings: { ...defaultVideoSeriesSettings, minimumRuntimeSeconds: 30, maximumRuntimeSeconds: 30 } });
+  assert.equal(production.scenes.every((scene) => !containsInternalProductionMarkers(scene.narration) && scene.captions.every((cue) => !containsInternalProductionMarkers(cue.text))), true);
+  const metadata = buildYouTubeMetadata({ topic: "SCENE 1: BeastOS", summary: "NEXT: Useful summary.", keywords: ["CONTINUE: BeastOS"], destinationUrl: "https://seangworld.com", campaignId: "TRANSITION: bmkt-clean" });
+  assert.deepEqual({ title: metadata.title, description: metadata.description.split("\n")[0], tags: metadata.tags, campaignId: metadata.campaign.id }, { title: "BeastOS", description: "Useful summary.", tags: ["beastos"], campaignId: "bmkt-clean" });
 });
 
 test("BMKT-004 keeps evidence-backed intelligence and scripting owner-scoped", () => {
@@ -192,13 +214,42 @@ test("BMKT-003 exposes owner controls while every external video action fails cl
   const route = readFileSync("src/app/api/admin/beast-marketing/video/route.ts", "utf8");
   const panel = readFileSync("src/app/dashboard/admin/marketing/VideoGrowthEnginePanel.tsx", "utf8");
   const workspace = readFileSync("src/app/dashboard/admin/marketing/BeastMarketingWorkspace.tsx", "utf8");
+  const videoGrowthPage = readFileSync("src/app/dashboard/admin/marketing/video-growth/page.tsx", "utf8");
   assert.match(route, /profile\?\.role === "admin"/);
   assert.match(route, /YouTube authorization and external publishing authority are required/);
   assert.match(route, /external_publishing_authorized: false/);
   assert.doesNotMatch(route, /fetch\(["']https:\/\//);
   for (const control of ["PAUSE ALL PUBLISHING", "Approval mode", "Minimum runtime", "Maximum per week", "Allowed topics", "Optimization", "AI Sean · locked", "Publish Now · locked"]) assert.match(panel, new RegExp(control));
   assert.match(panel, /Idea → learn, with guarded transitions/);
-  assert.match(workspace, /<VideoGrowthEnginePanel/);
+  assert.doesNotMatch(workspace, /VideoGrowthEnginePanel/);
+  assert.match(videoGrowthPage, /<VideoGrowthEnginePanel/);
+});
+
+test("BeastMarketing uses one owner-only six-workspace hierarchy without duplicated engines", () => {
+  const sectionNav = readFileSync("src/app/dashboard/admin/marketing/MarketingSectionNav.tsx", "utf8");
+  const moduleNavigation = readFileSync("src/lib/moduleNavigation.ts", "utf8");
+  const overview = readFileSync("src/app/dashboard/admin/marketing/page.tsx", "utf8");
+  const overviewSummary = readFileSync("src/app/dashboard/admin/marketing/BeastMarketingOverviewSummary.tsx", "utf8");
+  const advertising = readFileSync("src/app/dashboard/admin/marketing/advertising/page.tsx", "utf8");
+  const advertisingWorkspace = readFileSync("src/app/dashboard/admin/marketing/BeastMarketingWorkspace.tsx", "utf8");
+  const video = readFileSync("src/app/dashboard/admin/marketing/video-growth/page.tsx", "utf8");
+  for (const label of ["Overview", "Advertising", "Video Growth", "Social", "Email", "Analytics"]) {
+    assert.match(sectionNav, new RegExp(`label: "${label}"`));
+    assert.match(moduleNavigation, new RegExp(`label: "${label}"[^\n]+group: "BeastMarketing"`));
+  }
+  assert.equal((moduleNavigation.match(/label: "BeastMarketing"/g) || []).length, 0);
+  assert.match(overview, /BeastMarketingOverviewSummary/);
+  assert.match(overviewSummary, /Provider and publishing state/);
+  assert.match(overviewSummary, /Growth evidence/);
+  assert.match(advertising, /BeastMarketingWorkspace/);
+  assert.doesNotMatch(advertisingWorkspace, /VideoGrowthEnginePanel/);
+  assert.match(video, /VideoGrowthEnginePanel/);
+  for (const route of ["social", "email", "analytics"]) {
+    const foundation = readFileSync(`src/app/dashboard/admin/marketing/${route}/page.tsx`, "utf8");
+    assert.match(foundation, /MarketingFoundationPage/);
+  }
+  const foundation = readFileSync("src/app/dashboard/admin/marketing/MarketingFoundationPage.tsx", "utf8");
+  assert.match(foundation, /No provider connection, external publishing, new credential, or spend authority/);
 });
 
 const adRevision = normalizeMarketingAdRevision({

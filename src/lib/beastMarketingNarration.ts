@@ -27,6 +27,21 @@ export const BEAST_PRONUNCIATION_MAP: readonly BeastPronunciationEntry[] = [
 
 const escapePattern = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
+const INTERNAL_PRODUCTION_MARKER = /^\s*(?:\[\s*)?(?:next|scene(?:\s+\d+)?|continue|transition|start\s+here|cut\s+to)(?:\s*\])?\s*(?:(?::|—|-)\s*|\s+|$)/i;
+
+/** Removes internal orchestration labels while preserving the actual audience-facing sentence. */
+export function stripInternalProductionMarkers(value: string) {
+  return value.split(/\r?\n/).map((line) => {
+    let result = line;
+    while (INTERNAL_PRODUCTION_MARKER.test(result)) result = result.replace(INTERNAL_PRODUCTION_MARKER, "");
+    return result.trim();
+  }).filter(Boolean).join("\n").trim();
+}
+
+export function containsInternalProductionMarkers(value: string) {
+  return value.split(/\r?\n/).some((line) => INTERNAL_PRODUCTION_MARKER.test(line));
+}
+
 function replaceKnownTerms(value: string, output: "display" | "spoken") {
   return [...BEAST_PRONUNCIATION_MAP]
     .sort((left, right) => right.canonical.length - left.canonical.length)
@@ -43,7 +58,7 @@ function replaceKnownTerms(value: string, output: "display" | "spoken") {
 
 /** Restores known aliases to Product Truth casing without phonetic spelling. */
 export function normalizeBeastDisplayNames(value: string) {
-  return replaceKnownTerms(value, "display");
+  return replaceKnownTerms(stripInternalProductionMarkers(value), "display");
 }
 
 /** Converts canonical/display terms only at the TTS boundary. */

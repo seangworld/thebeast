@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BeastAdminShell } from "../BeastAdminShell";
+import { BeastMarketingOverviewSummary } from "./BeastMarketingOverviewSummary";
 import { MarketingSectionNav } from "./MarketingSectionNav";
 
 const sections = [
@@ -42,6 +43,7 @@ export default function BeastMarketingPage() {
       purpose="Run the owner-only marketing operation through focused workspaces instead of one oversized page."
     >
       <MarketingSectionNav />
+      <BeastMarketingOverviewSummary />
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {sections.map((section) => (
           <Link

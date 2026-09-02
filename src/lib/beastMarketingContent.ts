@@ -1,4 +1,5 @@
 import type { VideoSeriesSettings } from "./beastMarketingVideo";
+import { stripInternalProductionMarkers } from "./beastMarketingNarration";
 
 export const VIDEO_CONTENT_ENGINE_VERSION = "0.4.0";
 
@@ -62,10 +63,14 @@ export type ScriptFact = { statement: string; sourceLabel: string; sourceUrl: st
 export type VideoScript = { hook: string; narration: string[]; cta: string; estimatedSeconds: number; facts: ScriptFact[]; warnings: string[]; generationReady: boolean };
 
 export function buildGroundedScript(input: { topic: string; facts: ScriptFact[]; destinationLabel: string; destinationUrl: string; settings: VideoSeriesSettings }): VideoScript {
-  const facts = input.facts.filter((fact) => fact.verified && fact.statement.trim()).slice(0, 8);
-  const hook = `What should you know about ${input.topic} before you act?`;
-  const narration = facts.map((fact, index) => `${index === 0 ? "Start here" : "Next"}: ${fact.statement.trim()}`);
-  const cta = `For the relevant tools and current details, visit ${input.destinationLabel}.`;
+  const facts = input.facts
+    .filter((fact) => fact.verified && fact.statement.trim())
+    .map((fact) => ({ ...fact, statement: stripInternalProductionMarkers(fact.statement), sourceLabel: stripInternalProductionMarkers(fact.sourceLabel) }))
+    .filter((fact) => fact.statement)
+    .slice(0, 8);
+  const hook = `What should you know about ${stripInternalProductionMarkers(input.topic)} before you act?`;
+  const narration = facts.map((fact) => stripInternalProductionMarkers(fact.statement)).filter(Boolean);
+  const cta = `For the relevant tools and current details, visit ${stripInternalProductionMarkers(input.destinationLabel)}.`;
   const wordCount = [hook, ...narration, cta].join(" ").split(/\s+/).filter(Boolean).length;
   const estimatedSeconds = Math.ceil(wordCount / 2.5);
   const warnings = [
@@ -80,11 +85,12 @@ export function buildGroundedScript(input: { topic: string; facts: ScriptFact[];
 export type YouTubeMetadata = { title: string; description: string; tags: string[]; hashtags: string[]; spokenTerms: string[]; destinationUrl: string; campaign: Record<string, string>; warnings: string[] };
 
 export function buildYouTubeMetadata(input: { topic: string; summary: string; keywords: string[]; destinationUrl: string; campaignId: string }): YouTubeMetadata {
-  const natural = Array.from(new Set(input.keywords.map((item) => item.trim().toLowerCase()).filter((item) => item.length >= 2 && item.length <= 40))).slice(0, 12);
+  const natural = Array.from(new Set(input.keywords.map((item) => stripInternalProductionMarkers(item).toLowerCase()).filter((item) => item.length >= 2 && item.length <= 40))).slice(0, 12);
+  const campaignId = stripInternalProductionMarkers(input.campaignId);
   const separator = input.destinationUrl.includes("?") ? "&" : "?";
-  const destinationUrl = `${input.destinationUrl}${separator}utm_source=youtube&utm_medium=organic_video&utm_campaign=${encodeURIComponent(input.campaignId)}`;
-  const title = input.topic.trim().slice(0, 100);
+  const destinationUrl = `${input.destinationUrl}${separator}utm_source=youtube&utm_medium=organic_video&utm_campaign=${encodeURIComponent(campaignId)}`;
+  const title = stripInternalProductionMarkers(input.topic).slice(0, 100);
   const hashtags = natural.slice(0, 3).map((item) => `#${item.replace(/[^a-z0-9]+/g, "")}`).filter((item) => item.length > 1);
   const warnings = [...(!/^https:\/\//.test(input.destinationUrl) ? ["Destination must use HTTPS."] : []), ...(!title ? ["A truthful title is required."] : [])];
-  return { title, description: `${input.summary.trim()}\n\nLearn more: ${destinationUrl}`.slice(0, 5000), tags: natural, hashtags, spokenTerms: natural.slice(0, 6), destinationUrl, campaign: { source: "youtube", medium: "organic_video", id: input.campaignId }, warnings };
+  return { title, description: `${stripInternalProductionMarkers(input.summary)}\n\nLearn more: ${destinationUrl}`.slice(0, 5000), tags: natural, hashtags, spokenTerms: natural.slice(0, 6), destinationUrl, campaign: { source: "youtube", medium: "organic_video", id: campaignId }, warnings };
 }

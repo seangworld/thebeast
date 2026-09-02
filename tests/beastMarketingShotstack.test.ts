@@ -94,6 +94,19 @@ test("BMKT-007 normalizes pronunciation only at the TTS boundary", () => {
   assert.doesNotMatch(visible, /Beast O S/);
 });
 
+test("BMKT-007 excludes internal control labels from every provider-facing text asset", () => {
+  const controlled = buildProductionManifest({
+    jobId: "job-control-labels", revision: 1,
+    script: { hook: "SCENE 1: BeastOS", narration: ["NEXT: BeastOS connects AI specialists.", "TRANSITION — Visit SEANGWORLD.COM."], cta: "CONTINUE: Learn more.", estimatedSeconds: 30 },
+    settings: { ...defaultVideoSeriesSettings, minimumRuntimeSeconds: 30, maximumRuntimeSeconds: 30 },
+  });
+  const edit = buildShotstackEdit(controlled);
+  const textAssets = edit.timeline.tracks.flatMap((track) => track.clips).map((clip) => clip.asset).filter((asset): asset is Record<string, unknown> => Boolean(asset && typeof asset === "object"));
+  for (const asset of textAssets) {
+    if (typeof asset.text === "string") assert.doesNotMatch(asset.text, /^(?:NEXT|SCENE(?:\s+\d+)?|CONTINUE|TRANSITION|START HERE|CUT TO)\b\s*(?::|—|-)?/i);
+  }
+});
+
 test("BMKT-007 marks Sandbox watermarks test-only and publication-ineligible", () => {
   assert.deepEqual(shotstackWatermarkPolicy("stage"), { publicationWatermarkEligible: false, testWatermarkExpected: true });
   assert.deepEqual(shotstackWatermarkPolicy("v1"), { publicationWatermarkEligible: true, testWatermarkExpected: false });
@@ -146,7 +159,8 @@ test("BMKT-007 permits bounded credential and schema remediation before provider
   assert.equal(nextShotstackManualAttempt({ attemptNumber: 4, status: "failed", errorCategory: "validation", providerRequestId: null }), null);
   assert.equal(nextShotstackManualAttempt({ attemptNumber: 4, status: "succeeded", errorCategory: null, providerRequestId: "render-4" }), 5);
   assert.equal(nextShotstackManualAttempt({ attemptNumber: 5, status: "succeeded", errorCategory: null, providerRequestId: "render-5" }), 6);
-  assert.equal(nextShotstackManualAttempt({ attemptNumber: 6, status: "succeeded", errorCategory: null, providerRequestId: "render-6" }), null);
+  assert.equal(nextShotstackManualAttempt({ attemptNumber: 6, status: "succeeded", errorCategory: null, providerRequestId: "render-6" }), 7);
+  assert.equal(nextShotstackManualAttempt({ attemptNumber: 7, status: "succeeded", errorCategory: null, providerRequestId: "render-7" }), null);
 });
 
 test("BMKT-007 inspects Edit then Serve and accepts only the Shotstack CDN", async () => {
@@ -174,6 +188,7 @@ test("BMKT-007 route stays owner-scoped, idempotent, bounded, private, and unpub
   assert.match(route, /manualCredentialRemediation/);
   assert.match(route, /qualityRemediation/);
   assert.match(route, /narrationNormalization/);
+  assert.match(route, /controlTokenRemediation/);
   assert.match(route, /shotstackWatermarkPolicy/);
   assert.match(route, /SHOTSTACK_MAX_ESTIMATED_CREDITS_PER_RENDER/);
   assert.match(route, /upsert: false/);
@@ -183,6 +198,7 @@ test("BMKT-007 route stays owner-scoped, idempotent, bounded, private, and unpub
   assert.doesNotMatch(route, /youtube\.googleapis|upload\/youtube|automaticRetry: true/i);
   assert.match(panel, /Generate internal Shotstack render/);
   assert.match(panel, /Generate pronunciation-validation render/);
+  assert.match(panel, /Generate clean-output validation render/);
   assert.match(panel, /Sandbox watermarks are test-only/);
   assert.match(panel, /no automatic retry/i);
   assert.match(panel, /no YouTube destination/i);

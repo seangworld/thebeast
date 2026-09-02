@@ -4,7 +4,7 @@ import { normalizeBeastDisplayNames, normalizeBeastNarrationForSpeech } from "./
 export const SHOTSTACK_ADAPTER_VERSION = "0.9.0";
 export const SHOTSTACK_PROVIDER_ID = "shotstack";
 export const SHOTSTACK_MAX_ESTIMATED_CREDITS_PER_RENDER = 2;
-export const SHOTSTACK_MAX_MANUAL_ATTEMPTS = 6;
+export const SHOTSTACK_MAX_MANUAL_ATTEMPTS = 7;
 
 export type ShotstackAttemptSummary = {
   attemptNumber: number;
@@ -75,7 +75,12 @@ export function nextShotstackManualAttempt(latest: ShotstackAttemptSummary | nul
     && latest.status === "succeeded"
     && latest.providerRequestId !== null
     && !latest.errorCategory;
-  return pronunciationValidation ? SHOTSTACK_MAX_MANUAL_ATTEMPTS : null;
+  if (pronunciationValidation) return 6;
+  const controlTokenRemediation = latest.attemptNumber === 6
+    && latest.status === "succeeded"
+    && latest.providerRequestId !== null
+    && !latest.errorCategory;
+  return controlTokenRemediation ? SHOTSTACK_MAX_MANUAL_ATTEMPTS : null;
 }
 
 const asRecord = (value: unknown): Record<string, unknown> => value && typeof value === "object" ? value as Record<string, unknown> : {};

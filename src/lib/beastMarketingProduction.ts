@@ -1,4 +1,5 @@
 import type { VideoSeriesSettings } from "./beastMarketingVideo";
+import { stripInternalProductionMarkers } from "./beastMarketingNarration";
 
 export const VIDEO_PRODUCTION_ENGINE_VERSION = "0.6.0";
 
@@ -32,7 +33,7 @@ const fingerprint = (value: string) => {
 const words = (value: string) => value.trim().split(/\s+/).filter(Boolean).length;
 
 export function buildProductionManifest(input: { jobId: string; revision: number; script: { hook: string; narration: string[]; cta: string; estimatedSeconds: number }; settings: VideoSeriesSettings }): ProductionManifest {
-  const segments = [input.script.hook, ...input.script.narration, input.script.cta].map((item) => item.trim()).filter(Boolean);
+  const segments = [input.script.hook, ...input.script.narration, input.script.cta].map(stripInternalProductionMarkers).filter(Boolean);
   const totalWords = Math.max(1, segments.reduce((sum, item) => sum + words(item), 0));
   const runtimeMs = Math.max(1, input.script.estimatedSeconds) * 1000;
   let cursor = 0;
@@ -45,7 +46,7 @@ export function buildProductionManifest(input: { jobId: string; revision: number
   if (scenes.length) { scenes[scenes.length - 1].endMs = runtimeMs; scenes[scenes.length - 1].captions[0].endMs = runtimeMs; }
   const [width, height] = dimensions[input.settings.aspectRatio];
   const providerBindings = videoProductionProviderSlots.map((slot) => ({ slot, required: slot !== "licensed_media", providerId: null, modelOrService: null, authorized: false, paid: false, termsObservedAt: null }));
-  const base = { schemaVersion: "bmkt-production-1" as const, jobId: input.jobId, revision: input.revision, aspectRatio: input.settings.aspectRatio, width, height, runtimeMs, visualStyle: input.settings.visualStyle, captionStyle: input.settings.captionStyle, presenterProfileId: input.settings.presenterProfileId, presenterMode: "faceless" as const, scenes, assets: [] as ProductionAsset[], providerBindings, retryPolicy: { maximumAttempts: 3, delaysSeconds: [30, 120, 600] }, planState: "planned_provider_blocked" as const, blockers: ["No authorized narration provider is bound.", "No authorized visual provider is bound.", "No authorized composition renderer is bound."] };
+  const base = { schemaVersion: "bmkt-production-1" as const, jobId: input.jobId, revision: input.revision, aspectRatio: input.settings.aspectRatio, width, height, runtimeMs, visualStyle: stripInternalProductionMarkers(input.settings.visualStyle), captionStyle: stripInternalProductionMarkers(input.settings.captionStyle), presenterProfileId: input.settings.presenterProfileId, presenterMode: "faceless" as const, scenes, assets: [] as ProductionAsset[], providerBindings, retryPolicy: { maximumAttempts: 3, delaysSeconds: [30, 120, 600] }, planState: "planned_provider_blocked" as const, blockers: ["No authorized narration provider is bound.", "No authorized visual provider is bound.", "No authorized composition renderer is bound."] };
   return { ...base, checksum: fingerprint(JSON.stringify(base)) };
 }
 

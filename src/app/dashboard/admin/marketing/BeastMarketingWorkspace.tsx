@@ -25,7 +25,6 @@ import {
   type MarketingMediaType,
   type MarketingPlacementId,
 } from "@/lib/beastMarketingPreview";
-import { VideoGrowthEnginePanel } from "./VideoGrowthEnginePanel";
 
 type SavedRecommendation = MarketingRecommendation & {
   id: string;
@@ -313,8 +312,6 @@ export function BeastMarketingWorkspace() {
         <button type="button" className="beast-button mt-5" disabled={Boolean(busy)} onClick={() => void send({ kind: "asset", campaignId: selectedCampaign.id, ...assetDraft, sourceFacts: assetDraft.sourceLabel ? [{ label: assetDraft.sourceLabel, url: assetDraft.sourceUrl }] : [] }, "Asset draft saved. Nothing was scheduled or published.")}>Save asset draft</button>
         <div className="mt-6 space-y-3">{campaignAssets.map((item) => <div key={item.id} className="rounded-xl border border-white/10 bg-white/[0.03] p-4"><div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-black uppercase tracking-wider text-amber-200">{title(item.status)} · {item.channel}</p><h3 className="mt-1 font-black text-white">{item.name}</h3></div><div className="flex flex-wrap gap-2"><MiniButton label="Review" disabled={busy === item.id} onClick={() => void updateStatus("asset", item.id, "review")} /><MiniButton label="Approve" disabled={Boolean(busy)} onClick={() => void decide("asset", item.id, "approve", "approved")} /><MiniButton label="Reject" disabled={Boolean(busy)} onClick={() => void decide("asset", item.id, "reject", "rejected")} /></div></div><p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-slate-300">{item.body}</p></div>)}{!campaignAssets.length ? <p className="text-sm text-slate-400">No assets have been drafted for this campaign.</p> : null}</div>
       </DashboardCard>
-
-      <VideoGrowthEnginePanel />
 
       <DashboardCard accent="admin">
         <SectionHeader eyebrow="BMKT-002 · Ad Preview Studio" title="See the exact ad before approval" description="Review the image or video, headline, copy, CTA, destination, placement, and mobile or desktop treatment. These are planning previews—not provider acceptance guarantees." action={<div className="flex gap-2"><MiniButton label="Mobile" disabled={previewDevice === "mobile"} onClick={() => setPreviewDevice("mobile")} /><MiniButton label="Desktop" disabled={previewDevice === "desktop"} onClick={() => setPreviewDevice("desktop")} /></div>} />
