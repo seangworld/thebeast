@@ -26,6 +26,7 @@ import { allowedVideoTransitions, defaultVideoSeriesSettings, evaluateVideoReadi
 import { buildGroundedScript, buildYouTubeMetadata, scoreVideoOpportunity, VIDEO_CONTENT_ENGINE_VERSION } from "../src/lib/beastMarketingContent";
 import { buildProductionAttempt, buildProductionManifest, nextProductionRetry, validatePersistedAssetCandidate, validateProducedAssets, validateProductionManifest, VIDEO_PRODUCTION_ENGINE_VERSION } from "../src/lib/beastMarketingProduction";
 import { containsInternalProductionMarkers, stripInternalProductionMarkers } from "../src/lib/beastMarketingNarration";
+import { ownerWorkflowGroup, ownerWorkflowStatus, planCandidateCadence, validateTopicFamily, VIDEO_CANDIDATE_BATCH_LIMIT } from "../src/lib/beastMarketingOwnerWorkflow";
 
 const campaign: MarketingCampaign = {
   id: "campaign-1",
@@ -241,6 +242,44 @@ test("BMKT-007 topic controls preserve multiple multi-word phrases as arrays", (
   assert.doesNotMatch(panel, /allowedTopics\.join\(", "\)/);
   assert.match(route, /allowedTopics: normalizeVideoTopicPhrases/);
   assert.match(route, /validateVideoTopicPhrases\(rawSettings\.allowedTopics\)/);
+});
+
+test("BMKT-007 maps canonical video states into the owner production workflow", () => {
+  assert.equal(ownerWorkflowGroup({ state: "idea", quality: { ownerWorkflowDecision: "pending" } }), "needs_review");
+  assert.equal(ownerWorkflowStatus({ state: "ready", quality: { renderReady: true, ownerQualityReview: "pending" } }), "Waiting for owner approval");
+  assert.equal(ownerWorkflowGroup({ state: "ready", quality: { renderReady: true, ownerWorkflowDecision: "approved" } }), "approved_scheduled");
+  assert.equal(ownerWorkflowGroup({ state: "measuring" }), "published_history");
+  assert.equal(ownerWorkflowGroup({ state: "modify", quality: { ownerWorkflowDecision: "needs_changes" } }), "rejected_needs_changes");
+});
+
+test("BMKT-007 candidate generation enforces topic policy, cadence, and bounded batches", () => {
+  const settings = { ...defaultVideoSeriesSettings, daysOfWeek: [0, 1, 2, 3, 4, 5, 6], preferredWindows: ["10:00-18:00"], minimumSpacingMinutes: 120, maximumPerDay: 2, maximumPerWeek: 4, allowedTopics: ["AI agents", "BeastOS"], excludedTopics: ["celebrity gossip"] };
+  assert.equal(validateTopicFamily("practical AI agents for families", settings).valid, true);
+  assert.match(validateTopicFamily("celebrity gossip with AI agents", settings).error || "", /excluded topic phrase/);
+  assert.match(validateTopicFamily("home gardening", settings).error || "", /allowed topic phrases/);
+  const cadence = planCandidateCadence(settings, 4, new Date("2026-08-31T08:00:00-04:00"));
+  assert.equal(cadence.valid, true);
+  if (cadence.valid) {
+    assert.equal(cadence.slots.length, 4);
+    assert.ok(new Date(cadence.slots[1]).getTime() - new Date(cadence.slots[0]).getTime() >= 120 * 60 * 1000);
+  }
+  assert.equal(planCandidateCadence(settings, VIDEO_CANDIDATE_BATCH_LIMIT + 1).valid, false);
+  assert.equal(planCandidateCadence(settings, settings.maximumPerWeek + 1).valid, false);
+});
+
+test("BMKT-007 owner workflow creates no-spend candidates and keeps publishing locked", () => {
+  const panel = readFileSync("src/app/dashboard/admin/marketing/VideoGrowthEnginePanel.tsx", "utf8");
+  const route = readFileSync("src/app/api/admin/beast-marketing/video/route.ts", "utf8");
+  for (const label of ["Generate Test Video", "Generate Batch", "Needs Review", "Approved / Scheduled", "Published / History", "Rejected / Needs Changes", "Preview / Watch", "Approve for Scheduling", "Request Changes / Regenerate"]) assert.match(panel, new RegExp(label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  assert.match(panel, /BeastMarketing generated this candidate and is waiting for owner review/);
+  assert.match(panel, /Automatic mode is separately governed and remains locked/);
+  assert.match(route, /kind === "owner_generate"/);
+  assert.match(route, /kind === "owner_review"/);
+  assert.match(route, /shotstackCreditsConsumed: 0/);
+  assert.match(route, /externallyPublished: false/);
+  assert.match(route, /Only a finished internal render can be approved/);
+  assert.match(route, /YouTube authorization and external publishing authority are required/);
+  assert.doesNotMatch(route, /fetch\(["']https:\/\//);
 });
 
 test("BeastMarketing uses one owner-only six-workspace hierarchy without duplicated engines", () => {

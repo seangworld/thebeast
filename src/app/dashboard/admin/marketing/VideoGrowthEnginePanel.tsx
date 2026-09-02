@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { DashboardCard, SectionHeader } from "@/app/components/design/DashboardPrimitives";
 import { allowedVideoTransitions, defaultVideoSeriesSettings, normalizeVideoTopicPhrases, VIDEO_TOPIC_PHRASE_LIMIT, VIDEO_TOPIC_PHRASE_MAX_LENGTH, type VideoJobState, type VideoSeriesSettings } from "@/lib/beastMarketingVideo";
+import { ownerWorkflowGroup, ownerWorkflowStatus, VIDEO_CANDIDATE_BATCH_LIMIT, type OwnerWorkflowGroup } from "@/lib/beastMarketingOwnerWorkflow";
 
 type Series = { id: string; name: string; description: string; enabled: boolean; settings: VideoSeriesSettings };
 type Presenter = { id: string; name: string; presenter_type: string; active: boolean };
@@ -10,7 +11,7 @@ type Evidence = { source: string; label: string; url: string | null; observedAt:
 type SearchOpportunity = { page: string; query: string; score: number; disposition: string; classification: string; recommendedAsset: string; signals: string[]; rationale: string; current: { clicks: number; impressions: number; ctr: number; position: number } };
 type IntelligenceSnapshot = { generatedAt: string; providers: { id: string; label: string; status: string; guidance?: string | null }[]; data: { searchOpportunities: SearchOpportunity[] }; limitations: string[] };
 type JobTopic = { title?: string; score?: number; confidence?: number | null; evidenceStatus?: string; evidence?: Evidence[]; rationale?: string[]; searchOpportunity?: SearchOpportunity };
-type Job = { id: string; series_id: string; state: VideoJobState; topic: JobTopic; script?: { estimatedSeconds?: number; warnings?: string[] }; production?: { manifest?: { checksum: string; runtimeMs: number; width: number; height: number; scenes: unknown[]; planState: string; blockers: string[] }; providerState?: string; externalActionPerformed?: boolean; estimatedCredits?: { estimatedTotal: number; basis: string } }; quality?: { warnings?: string[]; ownerQualityReview?: string; remediationRenderUsed?: boolean; narrationNormalizationRenderUsed?: boolean; controlTokenRemediationRenderUsed?: boolean }; last_error?: string | null; updated_at: string };
+type Job = { id: string; series_id: string; state: VideoJobState; topic: JobTopic; script?: { estimatedSeconds?: number; warnings?: string[] }; production?: { manifest?: { checksum: string; runtimeMs: number; width: number; height: number; scenes: unknown[]; planState: string; blockers: string[] }; providerState?: string; externalActionPerformed?: boolean; estimatedCredits?: { estimatedTotal: number; basis: string } }; quality?: { warnings?: string[]; renderReady?: boolean; ownerQualityReview?: string; ownerWorkflowDecision?: string; remediationRenderUsed?: boolean; narrationNormalizationRenderUsed?: boolean; controlTokenRemediationRenderUsed?: boolean }; provenance?: { generatedBy?: string; generationMode?: string; generatedAt?: string; waitingForOwnerApproval?: boolean; candidateIndex?: number; candidateCount?: number; cadencePlan?: { plannedFor?: string } }; last_error?: string | null; updated_at: string };
 type Snapshot = {
   controls: { pause_all_publishing: boolean };
   series: Series[];
@@ -83,6 +84,22 @@ export function VideoGrowthEnginePanel() {
     await send("PATCH", { kind: "series", id: selected.id, name: selected.name, description: selected.description, enabled: selected.enabled, settings: selected.settings }, "Series controls saved. External publishing remains disabled.");
   }
 
+  async function generateCandidates(mode: "test" | "batch", topicFamily: string, count: number) {
+    if (!selected) return;
+    setBusy("owner_generate"); setError(""); setMessage("");
+    try {
+      const saveResponse = await fetch("/api/admin/beast-marketing/video", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ kind: "series", id: selected.id, name: selected.name, description: selected.description, enabled: selected.enabled, settings: selected.settings }) });
+      const saved = await saveResponse.json() as { error?: string };
+      if (!saveResponse.ok) throw new Error(saved.error || "The current series settings could not be saved.");
+      const response = await fetch("/api/admin/beast-marketing/video", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ kind: "owner_generate", mode, seriesId: selected.id, topicFamily, count }) });
+      const body = await response.json() as { error?: string; candidateCount?: number; shotstackCreditsConsumed?: number };
+      if (!response.ok) throw new Error(body.error || "The candidate videos could not be prepared.");
+      setMessage(`${body.candidateCount || count} ${mode === "test" ? "test video candidate" : "video candidates"} prepared from the current series settings. No Shotstack credits were used and nothing was published.`);
+      await load();
+    } catch (reason) { setError(reason instanceof Error ? reason.message : "The candidate videos could not be prepared."); }
+    finally { setBusy(""); }
+  }
+
   return <div className="space-y-6">
     <DashboardCard accent="admin">
       <SectionHeader eyebrow="BMKT-006 · Owner only" title="AI Video & YouTube Growth Engine" description="A deterministic control plane for evidence-backed discovery, grounded scripting, provider-neutral production planning, private media provenance, series, presenters, jobs, and future YouTube delivery." />
@@ -101,7 +118,7 @@ export function VideoGrowthEnginePanel() {
       {selected ? <div className="mt-6 space-y-5 rounded-2xl border border-white/10 bg-white/[0.02] p-5">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Select title="Series state" value={selected.enabled ? "enabled" : "paused"} options={["paused", "enabled"]} onChange={(value) => setData((current) => ({ ...current, series: current.series.map((item) => item.id === selected.id ? { ...item, enabled: value === "enabled" } : item) }))} />
-          <Select title="Approval mode" value={selected.settings.approvalMode} options={["owner_approval", "automatic"]} onChange={(value) => updateSetting("approvalMode", value as VideoSeriesSettings["approvalMode"])} />
+          <label className="text-sm font-bold text-slate-200">Approval mode<select className={input} value="owner_approval" disabled><option value="owner_approval">Owner Approval</option></select><span className="mt-1 block text-xs font-normal text-slate-400">Automatic mode is separately governed and remains locked.</span></label>
           <Select title="Aspect ratio" value={selected.settings.aspectRatio} options={["9:16", "16:9", "1:1"]} onChange={(value) => updateSetting("aspectRatio", value as VideoSeriesSettings["aspectRatio"])} />
           <NumberField title="Quality threshold" value={selected.settings.qualityThreshold} onChange={(value) => updateSetting("qualityThreshold", value)} />
           <NumberField title="Minimum runtime (sec)" value={selected.settings.minimumRuntimeSeconds} onChange={(value) => updateSetting("minimumRuntimeSeconds", value)} />
@@ -125,6 +142,8 @@ export function VideoGrowthEnginePanel() {
         <button className="beast-button" disabled={Boolean(busy)} onClick={() => void saveSeries()}>Save series controls</button>
       </div> : null}
     </DashboardCard>
+
+    <OwnerProductionWorkflow series={data.series} jobs={data.jobs} selectedId={selectedId} onSelectSeries={setSelectedId} busy={Boolean(busy)} pauseAllPublishing={data.controls.pause_all_publishing} authorities={data.authorities} onGenerate={generateCandidates} onSend={send} />
 
     <DashboardCard accent="admin">
       <SectionHeader eyebrow="Identity foundation" title="Reusable presenter profiles" description="Faceless profiles are available now. AI Sean likeness, voice, and source media remain explicitly locked pending separate consent." />
@@ -150,6 +169,75 @@ export function VideoGrowthEnginePanel() {
       <div className="mt-5 space-y-3">{data.jobs.map((job) => <div key={job.id} className="rounded-xl border border-white/10 bg-white/[0.03] p-4"><div className="flex flex-wrap items-start justify-between gap-4"><div><p className="font-black text-white">{job.topic?.title || "Untitled idea"}</p><p className="mt-1 text-xs font-black uppercase tracking-wider text-amber-200">{label(job.state)}{typeof job.topic.score === "number" ? ` · score ${job.topic.score}/100 · confidence ${job.topic.confidence ?? 0}/100` : ""}</p>{job.topic.evidenceStatus ? <p className="mt-1 text-xs text-slate-400">Evidence: {label(job.topic.evidenceStatus)}</p> : null}{job.last_error ? <p className="mt-1 text-sm text-red-200">{job.last_error}</p> : null}{job.quality?.warnings?.length ? <p className="mt-1 text-sm text-amber-100">{job.quality.warnings.join(" ")}</p> : null}</div><div className="flex flex-wrap gap-2">{allowedVideoTransitions[job.state].filter((state) => !["selected", "scripted", "generating", "scheduled", "published"].includes(state)).map((state) => <button key={state} className="min-h-10 rounded-lg border border-white/15 px-3 text-sm font-black text-white disabled:opacity-50" disabled={Boolean(busy)} onClick={() => void send("PATCH", { kind: "job", id: job.id, state }, `Queue item moved to ${label(state)}.`)}>{label(state)}</button>)}<button className="min-h-10 rounded-lg border border-white/10 px-3 text-sm font-black text-slate-500" disabled title="YouTube OAuth and publishing authority required">Publish Now · locked</button></div></div>{["idea", "modify"].includes(job.state) ? <OpportunityEvaluation job={job} busy={Boolean(busy)} onSend={send} /> : null}{["selected", "modify"].includes(job.state) ? <ScriptBuilder job={job} busy={Boolean(busy)} onSend={send} /> : null}{["scripted", "generating", "ready", "failed"].includes(job.state) ? <ProductionPlanner job={job} busy={Boolean(busy)} onSend={send} /> : null}</div>)}{!data.jobs.length ? <p className="text-sm text-slate-400">The production queue is empty.</p> : null}</div>
     </DashboardCard>
   </div>;
+}
+
+const workflowSections: { id: OwnerWorkflowGroup; title: string; description: string }[] = [
+  { id: "needs_review", title: "Needs Review", description: "Preparing, rendering, held, or waiting for your approval." },
+  { id: "approved_scheduled", title: "Approved / Scheduled", description: "Owner-approved candidates; upload remains locked until authority exists." },
+  { id: "published_history", title: "Published / History", description: "Persistent publication and Outcome history for ongoing analytics." },
+  { id: "rejected_needs_changes", title: "Rejected / Needs Changes", description: "Rejected candidates and revision or regeneration requests." },
+];
+
+function OwnerProductionWorkflow({ series, jobs, selectedId, onSelectSeries, busy, pauseAllPublishing, authorities, onGenerate, onSend }: { series: Series[]; jobs: Job[]; selectedId: string; onSelectSeries: (id: string) => void; busy: boolean; pauseAllPublishing: boolean; authorities: Snapshot["authorities"]; onGenerate: (mode: "test" | "batch", topicFamily: string, count: number) => Promise<void>; onSend: Send }) {
+  const [topicFamily, setTopicFamily] = useState("");
+  const [count, setCount] = useState(3);
+  const grouped = useMemo(() => Object.fromEntries(workflowSections.map((section) => [section.id, jobs.filter((job) => ownerWorkflowGroup(job) === section.id)])) as Record<OwnerWorkflowGroup, Job[]>, [jobs]);
+  const seriesNames = Object.fromEntries(series.map((item) => [item.id, item.name]));
+  const publishingLocked = authorities.youtube !== "authorized" || authorities.externalPublishing !== "enabled";
+  return <DashboardCard accent="admin">
+    <SectionHeader eyebrow="BMKT-007 · Owner production workflow" title="Generate, review, approve, and track video candidates" description="Series are reusable content strategies. Prepare one test candidate or a bounded batch from a multi-word topic family, then manage the finished videos without learning internal job states." />
+    <div className="mt-5 rounded-2xl border border-amber-300/25 bg-amber-300/[0.05] p-5">
+      <div className="grid gap-4 lg:grid-cols-[1fr_1.4fr_9rem_auto_auto]">
+        <Select title="Series" value={selectedId} options={series.map((item) => item.id)} optionLabels={seriesNames} onChange={onSelectSeries} />
+        <Field title="Topic or topic family" value={topicFamily} onChange={setTopicFamily} />
+        <label className="text-sm font-bold text-slate-200">Batch count<input className={input} type="number" min={1} max={VIDEO_CANDIDATE_BATCH_LIMIT} value={count} onChange={(event) => setCount(Math.max(1, Math.min(VIDEO_CANDIDATE_BATCH_LIMIT, Number(event.target.value) || 1)))} /></label>
+        <button className="beast-button self-end" disabled={busy || !selectedId || !topicFamily.trim()} onClick={() => void onGenerate("test", topicFamily, 1)}>Generate Test Video</button>
+        <button className="beast-button self-end" disabled={busy || !selectedId || !topicFamily.trim()} onClick={() => void onGenerate("batch", topicFamily, count)}>Generate Batch</button>
+      </div>
+      <p className="mt-3 text-xs text-slate-400">Current series settings are saved first. Topic policy, presenter, runtime, quality threshold, cadence, and Owner Approval are snapshotted onto each candidate. This prepares internal jobs only: 0 Shotstack credits, no YouTube upload, and no external publication.</p>
+      <div className="mt-4 flex flex-wrap gap-2 text-xs font-black"><span className={`rounded-full border px-3 py-1 ${pauseAllPublishing ? "border-red-300/30 text-red-100" : "border-white/10 text-slate-300"}`}>{pauseAllPublishing ? "PAUSE ALL PUBLISHING active" : "Global pause released"}</span><span className="rounded-full border border-white/10 px-3 py-1 text-slate-300">Owner Approval required</span><span className="rounded-full border border-white/10 px-3 py-1 text-slate-300">Automatic mode locked</span><span className="rounded-full border border-white/10 px-3 py-1 text-slate-300">YouTube upload locked</span></div>
+    </div>
+    <div className="mt-6 grid gap-4 xl:grid-cols-2">
+      {workflowSections.map((section) => <section key={section.id} aria-labelledby={`workflow-${section.id}`} className="rounded-2xl border border-white/10 bg-white/[0.02] p-4"><div className="flex items-start justify-between gap-3"><div><h3 id={`workflow-${section.id}`} className="font-black text-white">{section.title}</h3><p className="mt-1 text-sm text-slate-400">{section.description}</p></div><span className="rounded-full border border-white/10 px-3 py-1 text-xs font-black text-slate-300">{grouped[section.id].length}</span></div><div className="mt-4 space-y-3">{grouped[section.id].map((job) => <OwnerWorkflowCard key={job.id} job={job} seriesName={seriesNames[job.series_id] || "Video series"} busy={busy} publishingLocked={publishingLocked} onSend={onSend} />)}{!grouped[section.id].length ? <p className="rounded-xl border border-dashed border-white/10 p-4 text-sm text-slate-500">No videos in this view.</p> : null}</div></section>)}
+    </div>
+  </DashboardCard>;
+}
+
+function OwnerWorkflowCard({ job, seriesName, busy, publishingLocked, onSend }: { job: Job; seriesName: string; busy: boolean; publishingLocked: boolean; onSend: Send }) {
+  const [previewBusy, setPreviewBusy] = useState(false);
+  const [previewError, setPreviewError] = useState("");
+  const [signedUrl, setSignedUrl] = useState("");
+  const decision = job.quality?.ownerWorkflowDecision;
+  const finished = job.state === "ready" && job.quality?.renderReady === true;
+  const canReject = allowedVideoTransitions[job.state].includes("skipped");
+  const canRequestChanges = allowedVideoTransitions[job.state].includes("modify");
+
+  async function preview() {
+    setPreviewBusy(true); setPreviewError("");
+    try {
+      const response = await fetch("/api/admin/beast-marketing/video/render", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "inspect", jobId: job.id }) });
+      const body = await response.json() as { error?: string; signedUrl?: string };
+      if (!response.ok || !body.signedUrl) throw new Error(body.error || "The finished preview is not available yet.");
+      setSignedUrl(body.signedUrl);
+    } catch (reason) { setPreviewError(reason instanceof Error ? reason.message : "The finished preview is not available yet."); }
+    finally { setPreviewBusy(false); }
+  }
+
+  return <article className="rounded-xl border border-white/10 bg-slate-950/40 p-4">
+    <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="font-black text-white">{job.topic.title || "Untitled candidate"}</p><p className="mt-1 text-xs text-slate-400">{seriesName}{job.provenance?.candidateCount ? ` · Candidate ${job.provenance.candidateIndex || 1} of ${job.provenance.candidateCount}` : ""}</p></div><span className="rounded-full border border-amber-300/25 bg-amber-300/[0.07] px-3 py-1 text-xs font-black text-amber-100">{ownerWorkflowStatus(job)}</span></div>
+    {job.provenance?.generatedBy === "BeastMarketing" ? <p className="mt-3 text-sm font-bold text-green-200">BeastMarketing generated this candidate and is waiting for owner review.</p> : null}
+    {job.provenance?.cadencePlan?.plannedFor ? <p className="mt-2 text-xs text-slate-500">Cadence plan: {new Date(job.provenance.cadencePlan.plannedFor).toLocaleString()}</p> : null}
+    {job.quality?.warnings?.length ? <p className="mt-2 text-sm text-amber-100">{job.quality.warnings.join(" ")}</p> : null}
+    {finished ? <div className="mt-3"><button className="min-h-10 rounded-lg border border-white/15 px-3 text-sm font-black text-white disabled:opacity-50" disabled={busy || previewBusy} onClick={() => void preview()}>{previewBusy ? "Loading preview…" : signedUrl ? "Refresh preview link" : "Preview / Watch"}</button>{previewError ? <p role="alert" className="mt-2 text-sm text-red-200">{previewError}</p> : null}{signedUrl ? <video aria-label={`Preview of ${job.topic.title || "video candidate"}`} className="mt-3 max-h-[30rem] w-full rounded-xl bg-black" src={signedUrl} controls preload="metadata" /> : null}</div> : null}
+    <div className="mt-3 flex flex-wrap gap-2">
+      {finished && decision !== "approved" ? <button className="beast-button" disabled={busy} onClick={() => void onSend("PATCH", { kind: "owner_review", id: job.id, decision: "approved" }, "Video approved. It is visible in Approved / Scheduled, but YouTube scheduling remains locked until authority exists.")}>Approve for Scheduling</button> : null}
+      {decision !== "held" && !["approved", "rejected", "needs_changes"].includes(decision || "") && !["published", "measuring", "completed", "scale"].includes(job.state) ? <button className="min-h-10 rounded-lg border border-white/15 px-3 text-sm font-black text-white disabled:opacity-50" disabled={busy} onClick={() => void onSend("PATCH", { kind: "owner_review", id: job.id, decision: "held" }, "Video candidate placed on hold.")}>Hold</button> : null}
+      {["held", "approved"].includes(decision || "") && job.state === "ready" ? <button className="min-h-10 rounded-lg border border-white/15 px-3 text-sm font-black text-white disabled:opacity-50" disabled={busy} onClick={() => void onSend("PATCH", { kind: "owner_review", id: job.id, decision: "pending" }, "Video returned to Needs Review.")}>Return to Needs Review</button> : null}
+      {finished && canRequestChanges ? <button className="min-h-10 rounded-lg border border-white/15 px-3 text-sm font-black text-white disabled:opacity-50" disabled={busy} onClick={() => void onSend("PATCH", { kind: "owner_review", id: job.id, decision: "needs_changes" }, "Changes requested. The candidate moved to Rejected / Needs Changes for revision or regeneration.")}>Request Changes / Regenerate</button> : null}
+      {canReject && decision !== "rejected" ? <button className="min-h-10 rounded-lg border border-red-300/25 px-3 text-sm font-black text-red-100 disabled:opacity-50" disabled={busy} onClick={() => void onSend("PATCH", { kind: "owner_review", id: job.id, decision: "rejected" }, "Video candidate rejected and retained in history.")}>Reject</button> : null}
+      {decision === "approved" && publishingLocked ? <span className="self-center text-xs font-bold text-slate-500">Scheduled upload locked · YouTube OAuth and publishing authority required</span> : null}
+    </div>
+  </article>;
 }
 
 function Field({ title, value, onChange }: { title: string; value: string; onChange: (value: string) => void }) { return <label className="text-sm font-bold text-slate-200">{title}<input className={input} value={value} onChange={(event) => onChange(event.target.value)} /></label>; }

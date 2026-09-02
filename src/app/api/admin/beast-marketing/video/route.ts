@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { allowedVideoTransitions, defaultVideoSeriesSettings, normalizeVideoTopicPhrases, validateVideoTopicPhrases, videoJobStates, type VideoJobState, type VideoSeriesSettings } from "@/lib/beastMarketingVideo";
 import { buildGroundedScript, buildYouTubeMetadata, scoreVideoOpportunity, type ScriptFact, type VideoEvidence } from "@/lib/beastMarketingContent";
 import { buildProductionManifest, validateProductionManifest } from "@/lib/beastMarketingProduction";
+import { planCandidateCadence, validateTopicFamily, type OwnerWorkflowDecision } from "@/lib/beastMarketingOwnerWorkflow";
 import { shotstackConfiguration } from "@/lib/beastMarketingShotstack";
 import { createRouteClient } from "@/lib/supabase/server";
 
@@ -29,6 +30,7 @@ const decimal = (value: unknown, minimum: number, maximum: number, fallback = 0)
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed >= minimum && parsed <= maximum ? parsed : fallback;
 };
+const record = (value: unknown) => value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
 const httpsUrl = (value: unknown, maximum = 1000) => {
   const normalized = clean(value, maximum);
   return /^https:\/\//i.test(normalized) ? normalized : null;
@@ -69,7 +71,7 @@ function settings(value: unknown): VideoSeriesSettings {
   return {
     ...defaultVideoSeriesSettings,
     publishingEnabled: record.publishingEnabled === true,
-    approvalMode: record.approvalMode === "automatic" ? "automatic" : "owner_approval",
+    approvalMode: "owner_approval",
     daysOfWeek: Array.isArray(record.daysOfWeek) ? record.daysOfWeek.map(Number).filter((day) => Number.isInteger(day) && day >= 0 && day <= 6).slice(0, 7) : defaultVideoSeriesSettings.daysOfWeek,
     preferredWindows: list(record.preferredWindows, 7),
     minimumSpacingMinutes: integer(record.minimumSpacingMinutes, 15, 10080, defaultVideoSeriesSettings.minimumSpacingMinutes),
@@ -207,6 +209,38 @@ export async function POST(request: Request) {
     const { data, error } = await client.from("beast_marketing_presenter_profiles").insert({ owner_id: user.id, name, presenter_type: "faceless", presentation_rules: { style: clean(body?.style, 300) || "Faceless editorial narration" }, active: false, provenance: { origin: "owner_created_profile", likenessOrVoiceMediaUsed: false } }).select("*").single();
     return error || !data ? unavailable() : NextResponse.json({ presenter: data }, { status: 201 });
   }
+  if (kind === "owner_generate") {
+    const seriesId = clean(body?.seriesId, 80);
+    const mode = body?.mode === "batch" ? "batch" : "test";
+    const requestedCount = mode === "test" ? 1 : integer(body?.count, 1, 5, 0);
+    const { data: ownedSeries } = await client.from("beast_marketing_video_series").select("id, name, enabled, settings").eq("id", seriesId).eq("owner_id", user.id).maybeSingle();
+    if (!ownedSeries) return NextResponse.json({ error: "The selected series is unavailable." }, { status: 404 });
+    const normalizedSettings = settings(ownedSeries.settings);
+    const topicPolicy = validateTopicFamily(clean(body?.topicFamily, 240), normalizedSettings);
+    if (!topicPolicy.valid) return NextResponse.json({ error: topicPolicy.error }, { status: 400 });
+    const cadence = planCandidateCadence(normalizedSettings, requestedCount);
+    if (!cadence.valid) return NextResponse.json({ error: cadence.error }, { status: 400 });
+    const { data: controls } = await client.from("beast_marketing_video_controls").select("pause_all_publishing, external_publishing_authorized, automatic_publishing_authorized, youtube_authorized").eq("owner_id", user.id).maybeSingle();
+    const generatedAt = new Date().toISOString();
+    const rows = cadence.slots.map((plannedFor, index) => ({
+      owner_id: user.id,
+      series_id: seriesId,
+      state: "idea" as const,
+      idempotency_key: crypto.randomUUID(),
+      topic: { title: topicPolicy.topicFamily, source: "beastmarketing_owner_workflow", confidence: null, topicFamily: topicPolicy.topicFamily },
+      quality: { renderReady: false, ownerQualityReview: "not_ready", ownerWorkflowDecision: "pending", warnings: ["Candidate prepared from the series strategy. Grounded scripting and internal rendering remain gated."] },
+      provenance: {
+        createdBy: "beastmarketing_owner_workflow", generatedBy: "BeastMarketing", generationMode: mode, generatedAt,
+        waitingForOwnerApproval: true, candidateIndex: index + 1, candidateCount: requestedCount, topicFamily: topicPolicy.topicFamily,
+        cadencePlan: { plannedFor, minimumSpacingMinutes: normalizedSettings.minimumSpacingMinutes, maximumPerDay: normalizedSettings.maximumPerDay, maximumPerWeek: normalizedSettings.maximumPerWeek },
+        generationSettings: { minimumRuntimeSeconds: normalizedSettings.minimumRuntimeSeconds, targetRuntimeSeconds: normalizedSettings.targetRuntimeSeconds, maximumRuntimeSeconds: normalizedSettings.maximumRuntimeSeconds, aspectRatio: normalizedSettings.aspectRatio, presenterProfileId: normalizedSettings.presenterProfileId, qualityThreshold: normalizedSettings.qualityThreshold, allowedTopics: normalizedSettings.allowedTopics, excludedTopics: normalizedSettings.excludedTopics, approvalMode: "owner_approval" },
+        publishingInterlocks: { pauseAllPublishing: controls?.pause_all_publishing !== false, externalPublishingAuthorized: false, automaticPublishingAuthorized: false, youtubeAuthorized: false },
+        providersUsed: [], paidServicesUsed: false, shotstackCreditsConsumed: 0, externallyPublished: false,
+      },
+    }));
+    const { data, error } = await client.from("beast_marketing_video_jobs").insert(rows).select("*");
+    return error || !data ? unavailable() : NextResponse.json({ jobs: data, mode, candidateCount: data.length, shotstackCreditsConsumed: 0, externallyPublished: false }, { status: 201 });
+  }
   if (kind === "job") {
     const seriesId = clean(body?.seriesId, 80); const topicTitle = clean(body?.topicTitle, 240);
     if (!seriesId || !topicTitle) return NextResponse.json({ error: "A series and topic are required." }, { status: 400 });
@@ -246,6 +280,29 @@ export async function PATCH(request: Request) {
     if (["scheduled", "published"].includes(next)) return NextResponse.json({ error: "YouTube authorization and external publishing authority are required before scheduling or publishing." }, { status: 409 });
     const { data, error } = await client.from("beast_marketing_video_jobs").update({ state: next, updated_at: new Date().toISOString(), last_error: null }).eq("id", id).eq("owner_id", user.id).select("*").maybeSingle();
     return error || !data ? unavailable() : NextResponse.json({ job: data });
+  }
+  if (kind === "owner_review") {
+    const decision = clean(body?.decision, 40) as OwnerWorkflowDecision;
+    if (!["pending", "held", "approved", "rejected", "needs_changes"].includes(decision)) return NextResponse.json({ error: "A valid owner review decision is required." }, { status: 400 });
+    const { data: current } = await client.from("beast_marketing_video_jobs").select("state, quality, provenance").eq("id", id).eq("owner_id", user.id).maybeSingle();
+    if (!current) return NextResponse.json({ error: "The selected video candidate is unavailable." }, { status: 404 });
+    const currentState = current.state as VideoJobState;
+    const currentQuality = record(current.quality);
+    if (decision === "approved" && (currentState !== "ready" || currentQuality.renderReady !== true)) return NextResponse.json({ error: "Only a finished internal render can be approved." }, { status: 409 });
+    if (decision === "rejected" && !allowedVideoTransitions[currentState]?.includes("skipped")) return NextResponse.json({ error: "This candidate cannot be rejected from its current preparation state." }, { status: 409 });
+    if (decision === "needs_changes" && !allowedVideoTransitions[currentState]?.includes("modify")) return NextResponse.json({ error: "A finished candidate is required before requesting changes." }, { status: 409 });
+    if (decision === "held" && ["published", "measuring", "completed", "scale", "stop", "skipped"].includes(currentState)) return NextResponse.json({ error: "This candidate is no longer active and cannot be held." }, { status: 409 });
+    if (decision === "pending" && currentState !== "ready") return NextResponse.json({ error: "Only a finished candidate can return to Needs Review." }, { status: 409 });
+    const reviewedAt = new Date().toISOString();
+    const nextState = decision === "rejected" ? "skipped" : decision === "needs_changes" ? "modify" : currentState;
+    const { data, error } = await client.from("beast_marketing_video_jobs").update({
+      state: nextState,
+      quality: { ...currentQuality, ownerQualityReview: decision, ownerWorkflowDecision: decision, ownerReviewedAt: reviewedAt },
+      provenance: { ...record(current.provenance), waitingForOwnerApproval: ["pending", "held"].includes(decision), ownerDecision: decision, ownerReviewedAt: reviewedAt, youtubePublished: false },
+      updated_at: reviewedAt,
+      last_error: null,
+    }).eq("id", id).eq("owner_id", user.id).select("*").maybeSingle();
+    return error || !data ? unavailable() : NextResponse.json({ job: data, externallyPublished: false, schedulingAuthorized: false });
   }
   return NextResponse.json({ error: "A valid video update is required." }, { status: 400 });
 }
