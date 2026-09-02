@@ -41,15 +41,15 @@ test("BMKT-007 defaults to sandbox and requires a substantial server-only key", 
 test("BMKT-007 builds current Shotstack faceless composition without a destination", () => {
   const edit = buildShotstackEdit(manifest);
   const serialized = JSON.stringify(edit);
-  assert.deepEqual(edit.output, { format: "mp4", size: { width: 1080, height: 1920 } });
+  assert.deepEqual(edit.output, { format: "mp4", size: { width: 1080, height: 1920 }, range: { start: 0, length: 45 } });
   assert.match(serialized, /rich-text/);
-  assert.match(serialized, /rich-caption/);
+  assert.doesNotMatch(serialized, /rich-caption/);
   assert.match(serialized, /text-to-speech/);
-  assert.match(serialized, /alias:\/\/bmkt-narration/);
   assert.match(serialized, /"vertical":"middle"/);
   assert.doesNotMatch(serialized, /"vertical":"center"/);
   assert.doesNotMatch(serialized, /"preset":"fade"/);
   assert.match(serialized, /"preset":"fadeIn"/);
+  assert.match(serialized, /"speed":1\.1/);
   assert.doesNotMatch(serialized, /youtube|destinations|webhook|callback/i);
   assert.doesNotMatch(serialized, /api[_-]?key|secret|token/i);
 });
@@ -99,6 +99,8 @@ test("BMKT-007 permits bounded credential and schema remediation before provider
   assert.equal(nextShotstackManualAttempt({ attemptNumber: 2, status: "failed", errorCategory: "validation", providerRequestId: "render-2" }), null);
   assert.equal(nextShotstackManualAttempt({ attemptNumber: 3, status: "failed", errorCategory: "validation", providerRequestId: null }), 4);
   assert.equal(nextShotstackManualAttempt({ attemptNumber: 4, status: "failed", errorCategory: "validation", providerRequestId: null }), null);
+  assert.equal(nextShotstackManualAttempt({ attemptNumber: 4, status: "succeeded", errorCategory: null, providerRequestId: "render-4" }), 5);
+  assert.equal(nextShotstackManualAttempt({ attemptNumber: 5, status: "succeeded", errorCategory: null, providerRequestId: "render-5" }), null);
 });
 
 test("BMKT-007 inspects Edit then Serve and accepts only the Shotstack CDN", async () => {
@@ -124,6 +126,7 @@ test("BMKT-007 route stays owner-scoped, idempotent, bounded, private, and unpub
   assert.match(route, /\.eq\("owner_id", user\.id\)/);
   assert.match(route, /idempotencyKey/);
   assert.match(route, /manualCredentialRemediation/);
+  assert.match(route, /qualityRemediation/);
   assert.match(route, /SHOTSTACK_MAX_ESTIMATED_CREDITS_PER_RENDER/);
   assert.match(route, /upsert: false/);
   assert.match(route, /beast-marketing-media/);

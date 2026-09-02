@@ -61,7 +61,9 @@ export async function POST(request: Request) {
   if (!validManifest(manifest) || manifest.jobId !== job.id || manifest.revision !== job.revision) return NextResponse.json({ error: "A valid exact-revision BMKT production manifest is required before rendering." }, { status: 409 });
 
   if (action === "submit") {
-    if (job.state !== "scripted") return NextResponse.json({ error: "Only a scripted queue item can start an internal render." }, { status: 409 });
+    const quality = record(job.quality);
+    const qualityRemediation = job.state === "ready" && quality.ownerQualityReview === "pending" && quality.remediationRenderUsed !== true;
+    if (job.state !== "scripted" && !qualityRemediation) return NextResponse.json({ error: "Only a scripted queue item or its one pending quality remediation can start an internal render." }, { status: 409 });
     const estimate = estimateShotstackCredits(manifest, configuration.environment);
     if (estimate.estimatedTotal > SHOTSTACK_MAX_ESTIMATED_CREDITS_PER_RENDER) {
       return NextResponse.json({ error: `The estimated ${estimate.estimatedTotal.toFixed(1)} credits exceed the ${SHOTSTACK_MAX_ESTIMATED_CREDITS_PER_RENDER.toFixed(1)}-credit internal-render cap.` }, { status: 409 });
@@ -81,7 +83,7 @@ export async function POST(request: Request) {
     const { data: attempt, error: insertError } = await client.from("beast_marketing_video_attempts").insert({
       owner_id: user.id, job_id: job.id, attempt_number: attemptNumber, operation: "composition", provider_id: SHOTSTACK_PROVIDER_ID,
       idempotency_key: idempotencyKey, status: "planned", retryable: false,
-      evidence: { environment: configuration.environment, manifestChecksum: manifest.checksum, estimate, automaticRetry: false, youtubeDestination: false, manualCredentialRemediation: attemptNumber === 2, manualSchemaRemediation: attemptNumber >= 3, previousAttemptId: latest?.id || null },
+      evidence: { environment: configuration.environment, manifestChecksum: manifest.checksum, estimate, automaticRetry: false, youtubeDestination: false, manualCredentialRemediation: attemptNumber === 2, manualSchemaRemediation: [3, 4].includes(attemptNumber), qualityRemediation: attemptNumber === 5, previousAttemptId: latest?.id || null },
       started_at: now, updated_at: now,
     }).select("*").single();
     if (insertError || !attempt) return NextResponse.json({ error: safeError }, { status: 503 });
@@ -92,7 +94,7 @@ export async function POST(request: Request) {
         state: "generating",
         production: { ...production, providerState: "submitted", providerId: SHOTSTACK_PROVIDER_ID, providerEnvironment: configuration.environment, attemptId: attempt.id, externalActionPerformed: true, estimatedCredits: estimate },
         provenance: { ...record(job.provenance), productionProvider: { id: SHOTSTACK_PROVIDER_ID, environment: configuration.environment, editApi: true, serveApi: true, youtubeDestination: false } },
-        quality: { ...record(job.quality), renderReady: false, internalRenderStatus: "submitted", warnings: ["Internal Shotstack render is awaiting media and quality validation."] },
+        quality: { ...quality, renderReady: false, internalRenderStatus: "submitted", remediationRenderUsed: qualityRemediation || quality.remediationRenderUsed === true, warnings: ["Internal Shotstack render is awaiting media and quality validation."] },
         last_error: null, updated_at: new Date().toISOString(),
       }).eq("id", job.id).eq("owner_id", user.id);
       return NextResponse.json({ attempt: { ...attempt, status: "submitted", provider_request_id: submitted.providerRequestId }, estimate, duplicatePrevented: false }, { status: 202 });

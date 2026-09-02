@@ -1,9 +1,9 @@
 import type { ProductionManifest } from "./beastMarketingProduction";
 
-export const SHOTSTACK_ADAPTER_VERSION = "0.7.3";
+export const SHOTSTACK_ADAPTER_VERSION = "0.8.0";
 export const SHOTSTACK_PROVIDER_ID = "shotstack";
 export const SHOTSTACK_MAX_ESTIMATED_CREDITS_PER_RENDER = 2;
-export const SHOTSTACK_MAX_MANUAL_ATTEMPTS = 4;
+export const SHOTSTACK_MAX_MANUAL_ATTEMPTS = 5;
 
 export type ShotstackAttemptSummary = {
   attemptNumber: number;
@@ -21,6 +21,7 @@ export type ShotstackEdit = {
   output: {
     format: "mp4";
     size: { width: number; height: number };
+    range?: { start: number; length: number };
   };
 };
 
@@ -63,7 +64,12 @@ export function nextShotstackManualAttempt(latest: ShotstackAttemptSummary | nul
     && latest.status === "failed"
     && latest.providerRequestId === null
     && latest.errorCategory === "validation";
-  return schemaFailureBeforeSubmission ? latest.attemptNumber + 1 : null;
+  if (schemaFailureBeforeSubmission) return latest.attemptNumber + 1;
+  const firstQualityRemediation = latest.attemptNumber === 4
+    && latest.status === "succeeded"
+    && latest.providerRequestId !== null
+    && !latest.errorCategory;
+  return firstQualityRemediation ? SHOTSTACK_MAX_MANUAL_ATTEMPTS : null;
 }
 
 const asRecord = (value: unknown): Record<string, unknown> => value && typeof value === "object" ? value as Record<string, unknown> : {};
@@ -95,11 +101,18 @@ export function buildShotstackEdit(manifest: ProductionManifest): ShotstackEdit 
   const narration = manifest.scenes.map((scene) => scene.narration.trim()).filter(Boolean).join(" ");
   if (!narration) throw new ShotstackProviderError("validation", false);
 
+  const sceneHeadline = (narration: string, index: number) => {
+    const normalized = narration.replace(/^Next:\s*/i, "").trim();
+    if (index === 0) return normalized;
+    if (index === manifest.scenes.length - 1) return "Explore The Beast AI Specialists";
+    const subject = normalized.split(/\s+(?:presents|separates|are|explains|connects|guides|organizes|publishes)\b/i)[0]?.trim();
+    return (subject || normalized.split(/\s+/).slice(0, 6).join(" ")).slice(0, 90);
+  };
   const sceneClips = manifest.scenes.map((scene, index) => ({
     asset: {
       type: "rich-text",
-      text: scene.narration.slice(0, 220),
-      font: { family: "Montserrat", size: manifest.aspectRatio === "9:16" ? 72 : 58, weight: 800, color: "#f8fafc" },
+      text: sceneHeadline(scene.narration, index),
+      font: { family: "Montserrat", size: manifest.aspectRatio === "9:16" ? 84 : 64, weight: 800, color: "#f8fafc" },
       style: { lineHeight: 1.12 },
       align: { horizontal: "center", vertical: "middle" },
       background: { color: index % 2 === 0 ? "#111827" : "#172033", opacity: 0.94, borderRadius: 32 },
@@ -112,29 +125,31 @@ export function buildShotstackEdit(manifest: ProductionManifest): ShotstackEdit 
     height: Math.round(manifest.height * 0.42),
     position: "center",
   }));
+  const captionClips = manifest.scenes.flatMap((scene) => scene.captions.map((cue) => ({
+    asset: {
+      type: "rich-text",
+      text: cue.text,
+      font: { family: "Montserrat", size: manifest.aspectRatio === "9:16" ? 46 : 38, weight: 800, color: "#ffffff" },
+      style: { lineHeight: 1.12 },
+      background: { color: "#070b14", opacity: 0.72, borderRadius: 18 },
+      padding: 22,
+      align: { horizontal: "center", vertical: "middle" },
+    },
+    start: cue.startMs / 1000,
+    length: Math.max(0.1, (cue.endMs - cue.startMs) / 1000),
+    width: Math.round(manifest.width * 0.9),
+    height: Math.round(manifest.height * 0.24),
+    position: "bottom",
+    offset: { x: 0, y: 0.06 },
+    fit: "none",
+  })));
 
   return {
     timeline: {
       background: "#070b14",
       tracks: [
         {
-          clips: [{
-            asset: {
-              type: "rich-caption",
-              src: "alias://bmkt-narration",
-              font: { family: "Montserrat", size: manifest.aspectRatio === "9:16" ? 54 : 42, weight: 800, color: "#ffffff" },
-              active: { font: { color: "#fbbf24" } },
-              animation: { style: "highlight" },
-              stroke: { width: 3, color: "#000000", opacity: 0.9 },
-            },
-            start: 0,
-            length: "end",
-            width: Math.round(manifest.width * 0.9),
-            height: Math.round(manifest.height * 0.24),
-            position: "bottom",
-            offset: { x: 0, y: 0.08 },
-            fit: "none",
-          }],
+          clips: captionClips,
         },
         { clips: sceneClips },
         {
@@ -147,23 +162,23 @@ export function buildShotstackEdit(manifest: ProductionManifest): ShotstackEdit 
             },
             start: 0,
             length: "end",
-            width: Math.round(manifest.width * 0.9),
+            width: Math.round(manifest.width * 0.58),
             height: 100,
-            position: "top",
-            offset: { x: 0, y: -0.04 },
+            position: "topLeft",
+            offset: { x: 0.03, y: -0.04 },
           }],
         },
         {
           clips: [{
             alias: "bmkt-narration",
-            asset: { type: "text-to-speech", text: narration, voice: "Matthew", language: "en-US", newscaster: true },
+            asset: { type: "text-to-speech", text: narration, voice: "Matthew", language: "en-US", newscaster: true, speed: 1.1 },
             start: 0,
             length: "auto",
           }],
         },
       ],
     },
-    output: { format: "mp4", size: { width: manifest.width, height: manifest.height } },
+    output: { format: "mp4", size: { width: manifest.width, height: manifest.height }, range: { start: 0, length: manifest.runtimeMs / 1000 } },
   };
 }
 
