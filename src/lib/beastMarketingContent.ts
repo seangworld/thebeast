@@ -1,7 +1,7 @@
 import type { VideoSeriesSettings } from "./beastMarketingVideo";
 import { stripInternalProductionMarkers } from "./beastMarketingNarration";
 
-export const VIDEO_CONTENT_ENGINE_VERSION = "0.4.0";
+export const VIDEO_CONTENT_ENGINE_VERSION = "0.5.0";
 
 export type VideoEvidence = {
   source: "search_console" | "ga4" | "first_party" | "owner" | "youtube_history";
@@ -68,9 +68,9 @@ export function buildGroundedScript(input: { topic: string; facts: ScriptFact[];
     .map((fact) => ({ ...fact, statement: stripInternalProductionMarkers(fact.statement), sourceLabel: stripInternalProductionMarkers(fact.sourceLabel) }))
     .filter((fact) => fact.statement)
     .slice(0, 8);
-  const hook = `What should you know about ${stripInternalProductionMarkers(input.topic)} before you act?`;
+  const hook = `Here is the useful part about ${stripInternalProductionMarkers(input.topic)}.`;
   const narration = facts.map((fact) => stripInternalProductionMarkers(fact.statement)).filter(Boolean);
-  const cta = `For the relevant tools and current details, visit ${stripInternalProductionMarkers(input.destinationLabel)}.`;
+  const cta = `Want to see the tools for yourself? Visit ${stripInternalProductionMarkers(input.destinationLabel)}.`;
   const wordCount = [hook, ...narration, cta].join(" ").split(/\s+/).filter(Boolean).length;
   const estimatedSeconds = Math.ceil(wordCount / 2.5);
   const warnings = [

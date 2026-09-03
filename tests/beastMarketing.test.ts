@@ -74,7 +74,7 @@ test("BMKT-003 defines configurable video controls and deterministic lifecycle",
 
 test("BMKT-004 ranks the intersection of evidence, capability truth, and funnel value", () => {
   const result = scoreVideoOpportunity({ title: "AI Tutor homework review", category: "education", capabilityMatch: 95, funnelValue: 90, historicalPerformance: null, audienceInterest: 80, trendOpportunity: null, evidence: [{ source: "search_console", label: "GSC page/query sample", url: null, observedAt: "2026-08-31T00:00:00Z", sampleSize: 120, value: 80, limitation: "Search Console may omit queries." }] }, { ...defaultVideoSeriesSettings, minimumOpportunityConfidence: 40 });
-  assert.equal(VIDEO_CONTENT_ENGINE_VERSION, "0.4.0");
+  assert.equal(VIDEO_CONTENT_ENGINE_VERSION, "0.5.0");
   assert.equal(result.selectable, true);
   assert.equal(result.evidenceStatus, "partial");
   assert.match(result.rationale.join(" "), /provenance/i);
@@ -108,7 +108,7 @@ test("BMKT production output strips internal sequencing labels from scripts, cap
     destinationUrl: "https://seangworld.com",
     settings: { ...defaultVideoSeriesSettings, minimumRuntimeSeconds: 1 },
   });
-  assert.equal(script.hook, "What should you know about BeastOS before you act?");
+  assert.equal(script.hook, "Here is the useful part about BeastOS.");
   assert.deepEqual(script.narration, ["BeastOS connects focused AI specialists."]);
   assert.doesNotMatch(JSON.stringify(script), /(?:NEXT|SCENE|CONTINUE|TRANSITION|START HERE)\s*(?::|—|-)/i);
   const production = buildProductionManifest({ jobId: "job-clean", revision: 1, script: { hook: "SCENE 1: BeastOS", narration: ["NEXT: Useful fact."], cta: "CONTINUE: Visit SEANGWORLD.COM.", estimatedSeconds: 30 }, settings: { ...defaultVideoSeriesSettings, minimumRuntimeSeconds: 30, maximumRuntimeSeconds: 30 } });
