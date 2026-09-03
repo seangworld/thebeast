@@ -12,7 +12,6 @@ import {
   inspectShotstackRender,
   nextShotstackManualAttempt,
   shotstackConfiguration,
-  shotstackVisualAssetBaseUrl,
   shotstackWatermarkPolicy,
   submitShotstackRender,
 } from "@/lib/beastMarketingShotstack";
@@ -113,7 +112,7 @@ export async function POST(request: Request) {
     }).select("*").single();
     if (insertError || !attempt) return NextResponse.json({ error: safeError }, { status: 503 });
     try {
-      const submitted = await submitShotstackRender({ apiKey: configuration.apiKey, environment: configuration.environment, edit: buildShotstackEdit(manifest, { visualAssetBaseUrl: shotstackVisualAssetBaseUrl() }) });
+      const submitted = await submitShotstackRender({ apiKey: configuration.apiKey, environment: configuration.environment, edit: buildShotstackEdit(manifest) });
       await client.from("beast_marketing_video_attempts").update({ status: "submitted", provider_request_id: submitted.providerRequestId, retryable: true, updated_at: new Date().toISOString() }).eq("id", attempt.id).eq("owner_id", user.id);
       await client.from("beast_marketing_video_jobs").update({
         state: "generating",

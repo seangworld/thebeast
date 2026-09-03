@@ -11,6 +11,7 @@ import {
 } from "../src/lib/beastMarketingNarration";
 import {
   SHOTSTACK_MAX_ESTIMATED_CREDITS_PER_RENDER,
+  SHOTSTACK_APP_SCREENSHOT_BASE_URL,
   SHOTSTACK_NARRATOR,
   ShotstackProviderError,
   buildShotstackEdit,
@@ -85,10 +86,10 @@ test("BMKT-007 builds current Shotstack faceless composition without a destinati
   assert.doesNotMatch(serialized, /api[_-]?key|secret|token/i);
 });
 
-test("BMKT-007 uses exact HTTPS deployment origins for public app screenshots", () => {
-  assert.equal(shotstackVisualAssetBaseUrl({ VERCEL_URL: "thebeast-example.vercel.app" }), "https://thebeast-example.vercel.app");
-  assert.equal(shotstackVisualAssetBaseUrl({ NEXT_PUBLIC_BEAST_SITE_URL: "https://preview.thebeast.seangworld.com/path" }), "https://preview.thebeast.seangworld.com");
-  assert.throws(() => shotstackVisualAssetBaseUrl({ BEAST_MARKETING_VISUAL_BASE_URL: "http://unsafe.example" }), ShotstackProviderError);
+test("BMKT-007 uses an immutable HTTPS source for public app screenshots", () => {
+  assert.match(SHOTSTACK_APP_SCREENSHOT_BASE_URL, /^https:\/\/raw\.githubusercontent\.com\/seangworld\/thebeast\/[a-f0-9]{40}\/public\/$/);
+  assert.equal(shotstackVisualAssetBaseUrl("https://assets.example/app-screens"), "https://assets.example/app-screens/");
+  assert.throws(() => shotstackVisualAssetBaseUrl("http://unsafe.example"), ShotstackProviderError);
 });
 
 test("BMKT-007 chooses privacy-safe app screenshots that match scene subjects", () => {
@@ -96,7 +97,7 @@ test("BMKT-007 chooses privacy-safe app screenshots that match scene subjects", 
   subjectManifest.scenes[0].narration = "BeastMoney helps organize bills.";
   subjectManifest.scenes[1].narration = "The AI Tutor supports learning.";
   subjectManifest.scenes[2].narration = "BeastHealth organizes health context.";
-  const edit = buildShotstackEdit(subjectManifest, { visualAssetBaseUrl: "https://preview.thebeast.seangworld.com" });
+  const edit = buildShotstackEdit(subjectManifest, { visualAssetBaseUrl: "https://assets.example/public/" });
   const serialized = JSON.stringify(edit);
   for (const asset of ["money-coach-mobile.png", "tutor-mobile.png", "health-advisor-mobile.png"]) assert.match(serialized, new RegExp(asset.replace(".", "\\.")));
   assert.doesNotMatch(serialized, /dashboard|owner|member-record|token|secret/i);

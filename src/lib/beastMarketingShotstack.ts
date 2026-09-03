@@ -6,6 +6,7 @@ export const SHOTSTACK_PROVIDER_ID = "shotstack";
 export const SHOTSTACK_MAX_ESTIMATED_CREDITS_PER_RENDER = 2;
 export const SHOTSTACK_MAX_MANUAL_ATTEMPTS = 8;
 export const SHOTSTACK_NARRATOR = { voice: "Joey", language: "en-US", newscaster: false, speed: 1 } as const;
+export const SHOTSTACK_APP_SCREENSHOT_BASE_URL = "https://raw.githubusercontent.com/seangworld/thebeast/956338c50dfe6b1452f7c3687a1ac3fedf9489e9/public/";
 
 const SHOTSTACK_APP_SCREENSHOTS = {
   specialists: "/marketing/video-growth/ai-specialists-mobile.png",
@@ -114,15 +115,11 @@ export function shotstackWatermarkPolicy(environment: ShotstackEnvironment) {
     : { publicationWatermarkEligible: false, testWatermarkExpected: true };
 }
 
-export function shotstackVisualAssetBaseUrl(environment: Readonly<Record<string, string | undefined>> = process.env) {
-  const configured = clean(environment.BEAST_MARKETING_VISUAL_BASE_URL, 300);
-  const vercelUrl = clean(environment.VERCEL_URL, 300);
-  const fallback = clean(environment.NEXT_PUBLIC_BEAST_SITE_URL, 300) || "https://thebeast.seangworld.com";
-  const candidate = configured || (vercelUrl ? `https://${vercelUrl}` : fallback);
+export function shotstackVisualAssetBaseUrl(candidate = SHOTSTACK_APP_SCREENSHOT_BASE_URL) {
   try {
     const url = new URL(candidate);
     if (url.protocol !== "https:" || url.username || url.password) throw new Error("unsafe visual origin");
-    return url.origin;
+    return url.href.endsWith("/") ? url.href : `${url.href}/`;
   } catch {
     throw new ShotstackProviderError("configuration", false);
   }
@@ -158,9 +155,9 @@ export function buildShotstackEdit(manifest: ProductionManifest, options: { visu
   if (!manifest.scenes.length) throw new ShotstackProviderError("validation", false);
   const narration = normalizeBeastNarrationSegmentsForSpeech(manifest.scenes.map((scene) => conversationalizeLegacyTemplateNarration(scene.narration)));
   if (!narration) throw new ShotstackProviderError("validation", false);
-  const visualAssetBaseUrl = shotstackVisualAssetBaseUrl({ NEXT_PUBLIC_BEAST_SITE_URL: options.visualAssetBaseUrl });
+  const visualAssetBaseUrl = shotstackVisualAssetBaseUrl(options.visualAssetBaseUrl);
   const visualClips = manifest.scenes.map((scene, index) => ({
-    asset: { type: "image", src: new URL(screenshotForScene(scene.narration), visualAssetBaseUrl).toString() },
+    asset: { type: "image", src: new URL(screenshotForScene(scene.narration).replace(/^\//, ""), visualAssetBaseUrl).toString() },
     start: scene.startMs / 1000,
     length: Math.max(0.1, (scene.endMs - scene.startMs) / 1000),
     fit: "crop",
