@@ -1,10 +1,18 @@
 import type { ProductionManifest } from "./beastMarketingProduction";
 import { normalizeBeastDisplayNames, normalizeBeastNarrationSegmentsForSpeech } from "./beastMarketingNarration";
 
-export const SHOTSTACK_ADAPTER_VERSION = "0.10.0";
+export const SHOTSTACK_ADAPTER_VERSION = "0.11.0";
 export const SHOTSTACK_PROVIDER_ID = "shotstack";
 export const SHOTSTACK_MAX_ESTIMATED_CREDITS_PER_RENDER = 2;
 export const SHOTSTACK_MAX_MANUAL_ATTEMPTS = 8;
+export const SHOTSTACK_NARRATOR = { voice: "Joey", language: "en-US", newscaster: false, speed: 1 } as const;
+
+const SHOTSTACK_APP_SCREENSHOTS = {
+  specialists: "/marketing/video-growth/ai-specialists-mobile.png",
+  money: "/marketing/video-growth/money-coach-mobile.png",
+  tutor: "/marketing/video-growth/tutor-mobile.png",
+  health: "/marketing/video-growth/health-advisor-mobile.png",
+} as const;
 
 export type ShotstackAttemptSummary = {
   attemptNumber: number;
@@ -106,8 +114,36 @@ export function shotstackWatermarkPolicy(environment: ShotstackEnvironment) {
     : { publicationWatermarkEligible: false, testWatermarkExpected: true };
 }
 
+export function shotstackVisualAssetBaseUrl(environment: Readonly<Record<string, string | undefined>> = process.env) {
+  const configured = clean(environment.BEAST_MARKETING_VISUAL_BASE_URL, 300);
+  const vercelUrl = clean(environment.VERCEL_URL, 300);
+  const fallback = clean(environment.NEXT_PUBLIC_BEAST_SITE_URL, 300) || "https://thebeast.seangworld.com";
+  const candidate = configured || (vercelUrl ? `https://${vercelUrl}` : fallback);
+  try {
+    const url = new URL(candidate);
+    if (url.protocol !== "https:" || url.username || url.password) throw new Error("unsafe visual origin");
+    return url.origin;
+  } catch {
+    throw new ShotstackProviderError("configuration", false);
+  }
+}
+
+function screenshotForScene(narration: string) {
+  const normalized = narration.toLowerCase();
+  if (/beastmoney|money|financial|cash|debt|bill/.test(normalized)) return SHOTSTACK_APP_SCREENSHOTS.money;
+  if (/beasthealth|health|wellness|medical/.test(normalized)) return SHOTSTACK_APP_SCREENSHOTS.health;
+  if (/beasteducation|education|learning|tutor|school/.test(normalized)) return SHOTSTACK_APP_SCREENSHOTS.tutor;
+  return SHOTSTACK_APP_SCREENSHOTS.specialists;
+}
+
+function conversationalizeLegacyTemplateNarration(value: string) {
+  return value
+    .replace(/^What should you know about (.+) before you act\?$/i, "Here is the useful part about $1.")
+    .replace(/^For the relevant tools and current details, visit (.+)\.$/i, "Want to see the tools for yourself? Visit $1.");
+}
+
 export function estimateShotstackCredits(manifest: ProductionManifest, environment: ShotstackEnvironment) {
-  const narration = normalizeBeastNarrationSegmentsForSpeech(manifest.scenes.map((scene) => scene.narration));
+  const narration = normalizeBeastNarrationSegmentsForSpeech(manifest.scenes.map((scene) => conversationalizeLegacyTemplateNarration(scene.narration)));
   const speechCredits = Math.ceil(Math.max(1, narration.length) / 100) * 0.1;
   const renderCredits = environment === "v1" ? Math.ceil(manifest.runtimeMs / 60_000 * 10) / 10 : 0;
   return {
@@ -118,34 +154,20 @@ export function estimateShotstackCredits(manifest: ProductionManifest, environme
   };
 }
 
-export function buildShotstackEdit(manifest: ProductionManifest): ShotstackEdit {
+export function buildShotstackEdit(manifest: ProductionManifest, options: { visualAssetBaseUrl?: string } = {}): ShotstackEdit {
   if (!manifest.scenes.length) throw new ShotstackProviderError("validation", false);
-  const narration = normalizeBeastNarrationSegmentsForSpeech(manifest.scenes.map((scene) => scene.narration));
+  const narration = normalizeBeastNarrationSegmentsForSpeech(manifest.scenes.map((scene) => conversationalizeLegacyTemplateNarration(scene.narration)));
   if (!narration) throw new ShotstackProviderError("validation", false);
-
-  const sceneHeadline = (narration: string, index: number) => {
-    const normalized = narration.replace(/^Next:\s*/i, "").trim();
-    if (index === 0) return normalized;
-    if (index === manifest.scenes.length - 1) return "Explore The Beast AI Specialists";
-    const subject = normalized.split(/\s+(?:presents|separates|are|explains|connects|guides|organizes|publishes)\b/i)[0]?.trim();
-    return (subject || normalized.split(/\s+/).slice(0, 6).join(" ")).slice(0, 90);
-  };
-  const sceneClips = manifest.scenes.map((scene, index) => ({
-    asset: {
-      type: "rich-text",
-      text: normalizeBeastDisplayNames(sceneHeadline(scene.narration, index)),
-      font: { family: "Montserrat", size: manifest.aspectRatio === "9:16" ? 84 : 64, weight: 800, color: "#f8fafc" },
-      style: { lineHeight: 1.12 },
-      align: { horizontal: "center", vertical: "middle" },
-      background: { color: index % 2 === 0 ? "#111827" : "#172033", opacity: 0.94, borderRadius: 32 },
-      padding: 44,
-      animation: { preset: index === 0 ? "typewriter" : "fadeIn", duration: 0.6, style: "word" },
-    },
+  const visualAssetBaseUrl = shotstackVisualAssetBaseUrl({ NEXT_PUBLIC_BEAST_SITE_URL: options.visualAssetBaseUrl });
+  const visualClips = manifest.scenes.map((scene, index) => ({
+    asset: { type: "image", src: new URL(screenshotForScene(scene.narration), visualAssetBaseUrl).toString() },
     start: scene.startMs / 1000,
     length: Math.max(0.1, (scene.endMs - scene.startMs) / 1000),
-    width: Math.round(manifest.width * 0.82),
-    height: Math.round(manifest.height * 0.42),
+    fit: "crop",
     position: "center",
+    effect: index % 2 === 0 ? "zoomInSlow" : "slideUpSlow",
+    transition: { in: index === 0 ? "none" : "fade", out: "fade" },
+    filter: "darken",
   }));
   const captionClips = manifest.scenes.flatMap((scene) => scene.captions.map((cue) => ({
     asset: {
@@ -173,7 +195,6 @@ export function buildShotstackEdit(manifest: ProductionManifest): ShotstackEdit 
         {
           clips: captionClips,
         },
-        { clips: sceneClips },
         {
           clips: [{
             asset: {
@@ -193,11 +214,12 @@ export function buildShotstackEdit(manifest: ProductionManifest): ShotstackEdit 
         {
           clips: [{
             alias: "bmkt-narration",
-            asset: { type: "text-to-speech", text: narration, voice: "Matthew", language: "en-US", newscaster: true, speed: 1.1 },
+            asset: { type: "text-to-speech", text: narration, ...SHOTSTACK_NARRATOR },
             start: 0,
             length: "auto",
           }],
         },
+        { clips: visualClips },
       ],
     },
     output: { format: "mp4", size: { width: manifest.width, height: manifest.height }, range: { start: 0, length: manifest.runtimeMs / 1000 } },

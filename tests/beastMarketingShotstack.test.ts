@@ -11,6 +11,7 @@ import {
 } from "../src/lib/beastMarketingNarration";
 import {
   SHOTSTACK_MAX_ESTIMATED_CREDITS_PER_RENDER,
+  SHOTSTACK_NARRATOR,
   ShotstackProviderError,
   buildShotstackEdit,
   estimateShotstackCredits,
@@ -19,6 +20,7 @@ import {
   shotstackConfiguration,
   shotstackEnvironment,
   shotstackWatermarkPolicy,
+  shotstackVisualAssetBaseUrl,
   submitShotstackRender,
 } from "../src/lib/beastMarketingShotstack";
 
@@ -73,10 +75,31 @@ test("BMKT-007 builds current Shotstack faceless composition without a destinati
   assert.match(serialized, /"vertical":"middle"/);
   assert.doesNotMatch(serialized, /"vertical":"center"/);
   assert.doesNotMatch(serialized, /"preset":"fade"/);
-  assert.match(serialized, /"preset":"fadeIn"/);
-  assert.match(serialized, /"speed":1\.1/);
+  assert.match(serialized, /"type":"image"/);
+  assert.match(serialized, /marketing\/video-growth\/ai-specialists-mobile\.png/);
+  assert.match(serialized, /"effect":"(?:zoomInSlow|slideUpSlow)"/);
+  assert.deepEqual(SHOTSTACK_NARRATOR, { voice: "Joey", language: "en-US", newscaster: false, speed: 1 });
+  assert.match(serialized, /"voice":"Joey"/);
+  assert.match(serialized, /"newscaster":false/);
   assert.doesNotMatch(serialized, /youtube|destinations|webhook|callback/i);
   assert.doesNotMatch(serialized, /api[_-]?key|secret|token/i);
+});
+
+test("BMKT-007 uses exact HTTPS deployment origins for public app screenshots", () => {
+  assert.equal(shotstackVisualAssetBaseUrl({ VERCEL_URL: "thebeast-example.vercel.app" }), "https://thebeast-example.vercel.app");
+  assert.equal(shotstackVisualAssetBaseUrl({ NEXT_PUBLIC_BEAST_SITE_URL: "https://preview.thebeast.seangworld.com/path" }), "https://preview.thebeast.seangworld.com");
+  assert.throws(() => shotstackVisualAssetBaseUrl({ BEAST_MARKETING_VISUAL_BASE_URL: "http://unsafe.example" }), ShotstackProviderError);
+});
+
+test("BMKT-007 chooses privacy-safe app screenshots that match scene subjects", () => {
+  const subjectManifest = structuredClone(manifest);
+  subjectManifest.scenes[0].narration = "BeastMoney helps organize bills.";
+  subjectManifest.scenes[1].narration = "The AI Tutor supports learning.";
+  subjectManifest.scenes[2].narration = "BeastHealth organizes health context.";
+  const edit = buildShotstackEdit(subjectManifest, { visualAssetBaseUrl: "https://preview.thebeast.seangworld.com" });
+  const serialized = JSON.stringify(edit);
+  for (const asset of ["money-coach-mobile.png", "tutor-mobile.png", "health-advisor-mobile.png"]) assert.match(serialized, new RegExp(asset.replace(".", "\\.")));
+  assert.doesNotMatch(serialized, /dashboard|owner|member-record|token|secret/i);
 });
 
 test("BMKT-007 normalizes pronunciation only at the TTS boundary", () => {
@@ -90,9 +113,22 @@ test("BMKT-007 normalizes pronunciation only at the TTS boundary", () => {
   const tts = tracks.flatMap((track) => track.clips).find((clip) => clip.alias === "bmkt-narration")!;
   assert.match(JSON.stringify(tts), /Beast O S/);
   assert.doesNotMatch(JSON.stringify(tts), /BeastOS|beastos/);
-  const visible = JSON.stringify(tracks.slice(0, 3));
+  const visible = JSON.stringify(tracks.flatMap((track) => track.clips).filter((clip) => (clip.asset as Record<string, unknown>)?.type !== "text-to-speech"));
   assert.match(visible, /BeastOS/);
   assert.doesNotMatch(visible, /Beast O S/);
+});
+
+test("BMKT-007 makes legacy template narration conversational without changing facts", () => {
+  const legacy = structuredClone(manifest);
+  legacy.scenes[0].narration = "What should you know about BeastOS before you act?";
+  legacy.scenes.at(-1)!.narration = "For the relevant tools and current details, visit SEANGWORLD.COM.";
+  const edit = buildShotstackEdit(legacy);
+  const tts = edit.timeline.tracks.flatMap((track) => track.clips).find((clip) => clip.alias === "bmkt-narration")!;
+  const spoken = String((tts.asset as Record<string, unknown>).text);
+  assert.match(spoken, /^Here is the useful part about Beast O S\./);
+  assert.match(spoken, /Want to see the tools for yourself\? Visit Sean G World dot com\.$/);
+  assert.match(spoken, /verify the result before relying on it/);
+  assert.doesNotMatch(spoken, /before you act|relevant tools and current details/i);
 });
 
 test("BMKT-007 excludes internal control labels from every provider-facing text asset", () => {
