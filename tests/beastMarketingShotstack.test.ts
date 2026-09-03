@@ -7,6 +7,7 @@ import {
   BEAST_PRONUNCIATION_MAP,
   normalizeBeastDisplayNames,
   normalizeBeastNarrationForSpeech,
+  normalizeBeastNarrationSegmentsForSpeech,
 } from "../src/lib/beastMarketingNarration";
 import {
   SHOTSTACK_MAX_ESTIMATED_CREDITS_PER_RENDER,
@@ -107,6 +108,20 @@ test("BMKT-007 excludes internal control labels from every provider-facing text 
   }
 });
 
+test("BMKT-007 strips spoken control labels at every legacy manifest scene boundary", () => {
+  const legacyManifest = structuredClone(manifest);
+  legacyManifest.scenes[0].narration = "START HERE: BeastOS connects focused tools.";
+  legacyManifest.scenes[1].narration = "NEXT: BeastMoney supports financial organization.";
+  legacyManifest.scenes[2].narration = "SCENE 3 — CONTINUE: Visit SEANGWORLD.COM.";
+  legacyManifest.scenes[3].narration = "TRANSITION: Learn more at SEANGWORLD.";
+  const speech = normalizeBeastNarrationSegmentsForSpeech(legacyManifest.scenes.map((scene) => scene.narration));
+  assert.equal(speech, "Beast O S connects focused tools. Beast Money supports financial organization. Visit Sean G World dot com. Learn more at Sean G World.");
+  assert.doesNotMatch(speech, /\b(?:NEXT|SCENE|CONTINUE|TRANSITION|START HERE|CUT TO)\b/i);
+  const edit = buildShotstackEdit(legacyManifest);
+  const tts = edit.timeline.tracks.flatMap((track) => track.clips).find((clip) => clip.alias === "bmkt-narration")!;
+  assert.equal((tts.asset as Record<string, unknown>).text, speech);
+});
+
 test("BMKT-007 marks Sandbox watermarks test-only and publication-ineligible", () => {
   assert.deepEqual(shotstackWatermarkPolicy("stage"), { publicationWatermarkEligible: false, testWatermarkExpected: true });
   assert.deepEqual(shotstackWatermarkPolicy("v1"), { publicationWatermarkEligible: true, testWatermarkExpected: false });
@@ -160,7 +175,8 @@ test("BMKT-007 permits bounded credential and schema remediation before provider
   assert.equal(nextShotstackManualAttempt({ attemptNumber: 4, status: "succeeded", errorCategory: null, providerRequestId: "render-4" }), 5);
   assert.equal(nextShotstackManualAttempt({ attemptNumber: 5, status: "succeeded", errorCategory: null, providerRequestId: "render-5" }), 6);
   assert.equal(nextShotstackManualAttempt({ attemptNumber: 6, status: "succeeded", errorCategory: null, providerRequestId: "render-6" }), 7);
-  assert.equal(nextShotstackManualAttempt({ attemptNumber: 7, status: "succeeded", errorCategory: null, providerRequestId: "render-7" }), null);
+  assert.equal(nextShotstackManualAttempt({ attemptNumber: 7, status: "succeeded", errorCategory: null, providerRequestId: "render-7" }), 8);
+  assert.equal(nextShotstackManualAttempt({ attemptNumber: 8, status: "succeeded", errorCategory: null, providerRequestId: "render-8" }), null);
 });
 
 test("BMKT-007 inspects Edit then Serve and accepts only the Shotstack CDN", async () => {
@@ -189,6 +205,7 @@ test("BMKT-007 route stays owner-scoped, idempotent, bounded, private, and unpub
   assert.match(route, /qualityRemediation/);
   assert.match(route, /narrationNormalization/);
   assert.match(route, /controlTokenRemediation/);
+  assert.match(route, /spokenControlTokenRemediation/);
   assert.match(route, /shotstackWatermarkPolicy/);
   assert.match(route, /SHOTSTACK_MAX_ESTIMATED_CREDITS_PER_RENDER/);
   assert.match(route, /upsert: false/);
@@ -199,6 +216,7 @@ test("BMKT-007 route stays owner-scoped, idempotent, bounded, private, and unpub
   assert.match(panel, /Generate internal Shotstack render/);
   assert.match(panel, /Generate pronunciation-validation render/);
   assert.match(panel, /Generate clean-output validation render/);
+  assert.match(panel, /Generate spoken-label correction render/);
   assert.match(panel, /Sandbox watermarks are test-only/);
   assert.match(panel, /no automatic retry/i);
   assert.match(panel, /no YouTube destination/i);

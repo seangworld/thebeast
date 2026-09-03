@@ -1,10 +1,10 @@
 import type { ProductionManifest } from "./beastMarketingProduction";
-import { normalizeBeastDisplayNames, normalizeBeastNarrationForSpeech } from "./beastMarketingNarration";
+import { normalizeBeastDisplayNames, normalizeBeastNarrationSegmentsForSpeech } from "./beastMarketingNarration";
 
-export const SHOTSTACK_ADAPTER_VERSION = "0.9.0";
+export const SHOTSTACK_ADAPTER_VERSION = "0.10.0";
 export const SHOTSTACK_PROVIDER_ID = "shotstack";
 export const SHOTSTACK_MAX_ESTIMATED_CREDITS_PER_RENDER = 2;
-export const SHOTSTACK_MAX_MANUAL_ATTEMPTS = 7;
+export const SHOTSTACK_MAX_MANUAL_ATTEMPTS = 8;
 
 export type ShotstackAttemptSummary = {
   attemptNumber: number;
@@ -80,7 +80,12 @@ export function nextShotstackManualAttempt(latest: ShotstackAttemptSummary | nul
     && latest.status === "succeeded"
     && latest.providerRequestId !== null
     && !latest.errorCategory;
-  return controlTokenRemediation ? SHOTSTACK_MAX_MANUAL_ATTEMPTS : null;
+  if (controlTokenRemediation) return 7;
+  const spokenControlTokenRemediation = latest.attemptNumber === 7
+    && latest.status === "succeeded"
+    && latest.providerRequestId !== null
+    && !latest.errorCategory;
+  return spokenControlTokenRemediation ? SHOTSTACK_MAX_MANUAL_ATTEMPTS : null;
 }
 
 const asRecord = (value: unknown): Record<string, unknown> => value && typeof value === "object" ? value as Record<string, unknown> : {};
@@ -102,7 +107,7 @@ export function shotstackWatermarkPolicy(environment: ShotstackEnvironment) {
 }
 
 export function estimateShotstackCredits(manifest: ProductionManifest, environment: ShotstackEnvironment) {
-  const narration = normalizeBeastNarrationForSpeech(manifest.scenes.map((scene) => scene.narration).join(" "));
+  const narration = normalizeBeastNarrationSegmentsForSpeech(manifest.scenes.map((scene) => scene.narration));
   const speechCredits = Math.ceil(Math.max(1, narration.length) / 100) * 0.1;
   const renderCredits = environment === "v1" ? Math.ceil(manifest.runtimeMs / 60_000 * 10) / 10 : 0;
   return {
@@ -115,7 +120,7 @@ export function estimateShotstackCredits(manifest: ProductionManifest, environme
 
 export function buildShotstackEdit(manifest: ProductionManifest): ShotstackEdit {
   if (!manifest.scenes.length) throw new ShotstackProviderError("validation", false);
-  const narration = normalizeBeastNarrationForSpeech(manifest.scenes.map((scene) => scene.narration.trim()).filter(Boolean).join(" "));
+  const narration = normalizeBeastNarrationSegmentsForSpeech(manifest.scenes.map((scene) => scene.narration));
   if (!narration) throw new ShotstackProviderError("validation", false);
 
   const sceneHeadline = (narration: string, index: number) => {
