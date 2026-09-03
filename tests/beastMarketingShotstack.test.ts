@@ -14,6 +14,7 @@ import {
   SHOTSTACK_APP_SCREENSHOT_BASE_URL,
   SHOTSTACK_NARRATOR,
   ShotstackProviderError,
+  buildShotstackNarration,
   buildShotstackEdit,
   estimateShotstackCredits,
   inspectShotstackRender,
@@ -69,16 +70,17 @@ test("BMKT-007 defaults to sandbox and requires a substantial server-only key", 
 test("BMKT-007 builds current Shotstack faceless composition without a destination", () => {
   const edit = buildShotstackEdit(manifest);
   const serialized = JSON.stringify(edit);
-  assert.deepEqual(edit.output, { format: "mp4", size: { width: 1080, height: 1920 }, range: { start: 0, length: 45 } });
+  assert.deepEqual(edit.output, { format: "mp4", size: { width: 1080, height: 1920 } });
   assert.match(serialized, /rich-text/);
   assert.doesNotMatch(serialized, /rich-caption/);
+  assert.match(serialized, /alias:\/\/bmkt-narration-1/);
   assert.match(serialized, /text-to-speech/);
   assert.match(serialized, /"vertical":"middle"/);
   assert.doesNotMatch(serialized, /"vertical":"center"/);
   assert.doesNotMatch(serialized, /"preset":"fade"/);
   assert.match(serialized, /"type":"image"/);
   assert.match(serialized, /marketing\/video-growth\/ai-specialists-mobile\.png/);
-  assert.match(serialized, /"effect":"(?:zoomInSlow|slideUpSlow)"/);
+  assert.match(serialized, /"effect":"(?:zoomInFast|slideLeftFast|zoomOutFast|slideUpFast|slideRightFast|slideDownFast)"/);
   assert.deepEqual(SHOTSTACK_NARRATOR, { voice: "Joey", language: "en-US", newscaster: false, speed: 1 });
   assert.match(serialized, /"voice":"Joey"/);
   assert.match(serialized, /"newscaster":false/);
@@ -111,7 +113,7 @@ test("BMKT-007 normalizes pronunciation only at the TTS boundary", () => {
   });
   const edit = buildShotstackEdit(beastOSManifest);
   const tracks = edit.timeline.tracks;
-  const tts = tracks.flatMap((track) => track.clips).find((clip) => clip.alias === "bmkt-narration")!;
+  const tts = tracks.flatMap((track) => track.clips).find((clip) => clip.alias === "bmkt-narration-1")!;
   assert.match(JSON.stringify(tts), /Beast O S/);
   assert.doesNotMatch(JSON.stringify(tts), /BeastOS|beastos/);
   const visible = JSON.stringify(tracks.flatMap((track) => track.clips).filter((clip) => (clip.asset as Record<string, unknown>)?.type !== "text-to-speech"));
@@ -124,12 +126,43 @@ test("BMKT-007 makes legacy template narration conversational without changing f
   legacy.scenes[0].narration = "What should you know about BeastOS before you act?";
   legacy.scenes.at(-1)!.narration = "For the relevant tools and current details, visit SEANGWORLD.COM.";
   const edit = buildShotstackEdit(legacy);
-  const tts = edit.timeline.tracks.flatMap((track) => track.clips).find((clip) => clip.alias === "bmkt-narration")!;
-  const spoken = String((tts.asset as Record<string, unknown>).text);
+  const tts = edit.timeline.tracks.flatMap((track) => track.clips).filter((clip) => String(clip.alias || "").startsWith("bmkt-narration-"));
+  const spoken = tts.map((clip) => String((clip.asset as Record<string, unknown>).text)).join(" ");
   assert.match(spoken, /^Here is the useful part about Beast O S\./);
   assert.match(spoken, /Want to see the tools for yourself\? Visit Sean G World dot com\.$/);
   assert.match(spoken, /verify the result before relying on it/);
   assert.doesNotMatch(spoken, /before you act|relevant tools and current details/i);
+});
+
+test("BMKT-007 turns the BeastOS specialist proof into a short marketing spot", () => {
+  const specialistManifest = buildProductionManifest({
+    jobId: "job-specialist-spot", revision: 1,
+    script: {
+      hook: "What should you know about BeastOS before you act?",
+      narration: [
+        "The Money Coach explains authorized financial records, forecasts, and tradeoffs.",
+        "The Guidance Counselor connects learner goals and progress to grounded directions.",
+        "The AI Tutor explains schoolwork and guides practice.",
+        "The Health Advisor organizes authorized health information and appointment questions.",
+      ],
+      cta: "Visit The Beast AI Specialists.", estimatedSeconds: 63,
+    },
+    settings: defaultVideoSeriesSettings,
+  });
+  const spoken = buildShotstackNarration(specialistManifest);
+  assert.ok(spoken.split(/\s+/).length < 85);
+  assert.match(spoken, /^What if your tools actually knew their lane\?/);
+  assert.match(spoken, /No hidden authority\. No fake certainty\./);
+  assert.doesNotMatch(spoken, /before you act|published assessments|environment-bound/i);
+  const edit = buildShotstackEdit(specialistManifest);
+  const clips = edit.timeline.tracks.flatMap((track) => track.clips);
+  const captions = clips.filter((clip) => (clip.asset as Record<string, unknown>)?.type === "rich-text" && String((clip.asset as Record<string, unknown>).text) !== "BeastOS  ·  THE BEAST");
+  assert.equal(captions.length, 9);
+  assert.equal(captions[0].start, "alias://bmkt-narration-1");
+  assert.equal(captions[0].length, "alias://bmkt-narration-1");
+  assert.match(JSON.stringify(captions), /Meet BeastOS\./);
+  assert.equal(edit.output.range, undefined);
+  assert.match(JSON.stringify(edit), /BeastOS  ·  THE BEAST/);
 });
 
 test("BMKT-007 excludes internal control labels from every provider-facing text asset", () => {
@@ -155,8 +188,8 @@ test("BMKT-007 strips spoken control labels at every legacy manifest scene bound
   assert.equal(speech, "Beast O S connects focused tools. Beast Money supports financial organization. Visit Sean G World dot com. Learn more at Sean G World.");
   assert.doesNotMatch(speech, /\b(?:NEXT|SCENE|CONTINUE|TRANSITION|START HERE|CUT TO)\b/i);
   const edit = buildShotstackEdit(legacyManifest);
-  const tts = edit.timeline.tracks.flatMap((track) => track.clips).find((clip) => clip.alias === "bmkt-narration")!;
-  assert.equal((tts.asset as Record<string, unknown>).text, speech);
+  const tts = edit.timeline.tracks.flatMap((track) => track.clips).filter((clip) => String(clip.alias || "").startsWith("bmkt-narration-"));
+  assert.equal(tts.map((clip) => String((clip.asset as Record<string, unknown>).text)).join(" "), speech);
 });
 
 test("BMKT-007 marks Sandbox watermarks test-only and publication-ineligible", () => {
@@ -213,7 +246,8 @@ test("BMKT-007 permits bounded credential and schema remediation before provider
   assert.equal(nextShotstackManualAttempt({ attemptNumber: 5, status: "succeeded", errorCategory: null, providerRequestId: "render-5" }), 6);
   assert.equal(nextShotstackManualAttempt({ attemptNumber: 6, status: "succeeded", errorCategory: null, providerRequestId: "render-6" }), 7);
   assert.equal(nextShotstackManualAttempt({ attemptNumber: 7, status: "succeeded", errorCategory: null, providerRequestId: "render-7" }), 8);
-  assert.equal(nextShotstackManualAttempt({ attemptNumber: 8, status: "succeeded", errorCategory: null, providerRequestId: "render-8" }), null);
+  assert.equal(nextShotstackManualAttempt({ attemptNumber: 8, status: "succeeded", errorCategory: null, providerRequestId: "render-8" }), 9);
+  assert.equal(nextShotstackManualAttempt({ attemptNumber: 9, status: "succeeded", errorCategory: null, providerRequestId: "render-9" }), null);
 });
 
 test("BMKT-007 inspects Edit then Serve and accepts only the Shotstack CDN", async () => {
@@ -243,6 +277,7 @@ test("BMKT-007 route stays owner-scoped, idempotent, bounded, private, and unpub
   assert.match(route, /narrationNormalization/);
   assert.match(route, /controlTokenRemediation/);
   assert.match(route, /spokenControlTokenRemediation/);
+  assert.match(route, /creativeTimingRemediation/);
   assert.match(route, /shotstackWatermarkPolicy/);
   assert.match(route, /SHOTSTACK_MAX_ESTIMATED_CREDITS_PER_RENDER/);
   assert.match(route, /upsert: false/);
@@ -254,6 +289,7 @@ test("BMKT-007 route stays owner-scoped, idempotent, bounded, private, and unpub
   assert.match(panel, /Generate pronunciation-validation render/);
   assert.match(panel, /Generate clean-output validation render/);
   assert.match(panel, /Generate spoken-label correction render/);
+  assert.match(panel, /Generate dynamic marketing correction/);
   assert.match(panel, /Sandbox watermarks are test-only/);
   assert.match(panel, /no automatic retry/i);
   assert.match(panel, /no YouTube destination/i);

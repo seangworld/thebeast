@@ -1,10 +1,10 @@
 import type { ProductionManifest } from "./beastMarketingProduction";
-import { normalizeBeastDisplayNames, normalizeBeastNarrationSegmentsForSpeech } from "./beastMarketingNarration";
+import { normalizeBeastDisplayNames, normalizeBeastNarrationForSpeech } from "./beastMarketingNarration";
 
-export const SHOTSTACK_ADAPTER_VERSION = "0.11.0";
+export const SHOTSTACK_ADAPTER_VERSION = "0.12.0";
 export const SHOTSTACK_PROVIDER_ID = "shotstack";
 export const SHOTSTACK_MAX_ESTIMATED_CREDITS_PER_RENDER = 2;
-export const SHOTSTACK_MAX_MANUAL_ATTEMPTS = 8;
+export const SHOTSTACK_MAX_MANUAL_ATTEMPTS = 9;
 export const SHOTSTACK_NARRATOR = { voice: "Joey", language: "en-US", newscaster: false, speed: 1 } as const;
 export const SHOTSTACK_APP_SCREENSHOT_BASE_URL = "https://raw.githubusercontent.com/seangworld/thebeast/956338c50dfe6b1452f7c3687a1ac3fedf9489e9/public/";
 
@@ -94,7 +94,12 @@ export function nextShotstackManualAttempt(latest: ShotstackAttemptSummary | nul
     && latest.status === "succeeded"
     && latest.providerRequestId !== null
     && !latest.errorCategory;
-  return spokenControlTokenRemediation ? SHOTSTACK_MAX_MANUAL_ATTEMPTS : null;
+  if (spokenControlTokenRemediation) return 8;
+  const creativeTimingRemediation = latest.attemptNumber === 8
+    && latest.status === "succeeded"
+    && latest.providerRequestId !== null
+    && !latest.errorCategory;
+  return creativeTimingRemediation ? SHOTSTACK_MAX_MANUAL_ATTEMPTS : null;
 }
 
 const asRecord = (value: unknown): Record<string, unknown> => value && typeof value === "object" ? value as Record<string, unknown> : {};
@@ -139,8 +144,43 @@ function conversationalizeLegacyTemplateNarration(value: string) {
     .replace(/^For the relevant tools and current details, visit (.+)\.$/i, "Want to see the tools for yourself? Visit $1.");
 }
 
+const BEAST_OS_MARKETING_SEGMENTS = [
+  { display: "What if your tools actually knew their lane?", screenshot: SHOTSTACK_APP_SCREENSHOTS.specialists },
+  { display: "Meet BeastOS.", screenshot: SHOTSTACK_APP_SCREENSHOTS.specialists },
+  { display: "Four focused AI specialists. One place.", screenshot: SHOTSTACK_APP_SCREENSHOTS.specialists },
+  { display: "Money Coach: forecasts and tradeoffs.", screenshot: SHOTSTACK_APP_SCREENSHOTS.money },
+  { display: "Guidance Counselor + AI Tutor: goals, progress, practice.", screenshot: SHOTSTACK_APP_SCREENSHOTS.tutor },
+  { display: "Health Advisor: information and appointment questions.", screenshot: SHOTSTACK_APP_SCREENSHOTS.health },
+  { display: "Visible limits.", screenshot: SHOTSTACK_APP_SCREENSHOTS.specialists },
+  { display: "No hidden authority. No fake certainty.", screenshot: SHOTSTACK_APP_SCREENSHOTS.specialists },
+  { display: "Explore The Beast AI Specialists.", screenshot: SHOTSTACK_APP_SCREENSHOTS.specialists },
+] as const;
+
+function isBeastOsSpecialistSpot(manifest: ProductionManifest) {
+  const source = manifest.scenes.map((scene) => scene.narration).join(" ").toLowerCase();
+  return ["money coach", "guidance counselor", "ai tutor", "health advisor"].every((term) => source.includes(term));
+}
+
+function mentionsBeastOs(manifest: ProductionManifest) {
+  return manifest.scenes.some((scene) => /\bbeast\s*o\s*s\b/i.test(scene.narration));
+}
+
+export function buildShotstackNarration(manifest: ProductionManifest) {
+  return narrationSegments(manifest).map((segment) => segment.spoken).join(" ");
+}
+
+function narrationSegments(manifest: ProductionManifest) {
+  if (isBeastOsSpecialistSpot(manifest)) {
+    return BEAST_OS_MARKETING_SEGMENTS.map((segment) => ({ ...segment, spoken: normalizeBeastNarrationForSpeech(segment.display) }));
+  }
+  return manifest.scenes.map((scene) => {
+    const display = normalizeBeastDisplayNames(conversationalizeLegacyTemplateNarration(scene.narration));
+    return { display, spoken: normalizeBeastNarrationForSpeech(display), screenshot: screenshotForScene(scene.narration) };
+  }).filter((segment) => segment.spoken);
+}
+
 export function estimateShotstackCredits(manifest: ProductionManifest, environment: ShotstackEnvironment) {
-  const narration = normalizeBeastNarrationSegmentsForSpeech(manifest.scenes.map((scene) => conversationalizeLegacyTemplateNarration(scene.narration)));
+  const narration = buildShotstackNarration(manifest);
   const speechCredits = Math.ceil(Math.max(1, narration.length) / 100) * 0.1;
   const renderCredits = environment === "v1" ? Math.ceil(manifest.runtimeMs / 60_000 * 10) / 10 : 0;
   return {
@@ -153,37 +193,41 @@ export function estimateShotstackCredits(manifest: ProductionManifest, environme
 
 export function buildShotstackEdit(manifest: ProductionManifest, options: { visualAssetBaseUrl?: string } = {}): ShotstackEdit {
   if (!manifest.scenes.length) throw new ShotstackProviderError("validation", false);
-  const narration = normalizeBeastNarrationSegmentsForSpeech(manifest.scenes.map((scene) => conversationalizeLegacyTemplateNarration(scene.narration)));
+  const narration = buildShotstackNarration(manifest);
   if (!narration) throw new ShotstackProviderError("validation", false);
   const visualAssetBaseUrl = shotstackVisualAssetBaseUrl(options.visualAssetBaseUrl);
-  const visualClips = manifest.scenes.map((scene, index) => ({
-    asset: { type: "image", src: new URL(screenshotForScene(scene.narration).replace(/^\//, ""), visualAssetBaseUrl).toString() },
-    start: scene.startMs / 1000,
-    length: Math.max(0.1, (scene.endMs - scene.startMs) / 1000),
+  const segments = narrationSegments(manifest);
+  const effects = ["zoomInFast", "slideLeftFast", "zoomOutFast", "slideUpFast", "slideRightFast", "zoomInFast", "slideDownFast"];
+  const visualClips = segments.map((segment, index) => ({
+    asset: { type: "image", src: new URL(segment.screenshot.replace(/^\//, ""), visualAssetBaseUrl).toString() },
+    start: `alias://bmkt-narration-${index + 1}`,
+    length: `alias://bmkt-narration-${index + 1}`,
     fit: "crop",
     position: "center",
-    effect: index % 2 === 0 ? "zoomInSlow" : "slideUpSlow",
-    transition: { in: index === 0 ? "none" : "fade", out: "fade" },
-    filter: "darken",
+    effect: effects[index % effects.length],
+    transition: { in: index === 0 ? "none" : index % 2 === 0 ? "carouselLeftFast" : "zoomFast", out: "fadeFast" },
+    filter: "boost",
   }));
-  const captionClips = manifest.scenes.flatMap((scene) => scene.captions.map((cue) => ({
+  const captionClips = segments.map((segment, index) => ({
     asset: {
       type: "rich-text",
-      text: normalizeBeastDisplayNames(cue.text),
-      font: { family: "Montserrat", size: manifest.aspectRatio === "9:16" ? 46 : 38, weight: 800, color: "#ffffff" },
-      style: { lineHeight: 1.12 },
-      background: { color: "#070b14", opacity: 0.72, borderRadius: 18 },
-      padding: 22,
+      text: segment.display,
+      font: { family: "Montserrat", size: manifest.aspectRatio === "9:16" ? 54 : 42, weight: 800, color: "#ffffff" },
+      style: { lineHeight: 1.05 },
+      background: { color: "#070b14", opacity: 0.66, borderRadius: 18 },
+      stroke: { width: 2, color: "#000000", opacity: 0.9 },
+      padding: 18,
       align: { horizontal: "center", vertical: "middle" },
     },
-    start: cue.startMs / 1000,
-    length: Math.max(0.1, (cue.endMs - cue.startMs) / 1000),
+    start: `alias://bmkt-narration-${index + 1}`,
+    length: `alias://bmkt-narration-${index + 1}`,
     width: Math.round(manifest.width * 0.9),
     height: Math.round(manifest.height * 0.24),
     position: "bottom",
     offset: { x: 0, y: 0.06 },
     fit: "none",
-  })));
+    transition: { in: "zoomFast", out: "fadeFast" },
+  }));
 
   return {
     timeline: {
@@ -196,7 +240,7 @@ export function buildShotstackEdit(manifest: ProductionManifest, options: { visu
           clips: [{
             asset: {
               type: "rich-text",
-              text: "SEANGWORLD  ·  THE BEAST",
+              text: mentionsBeastOs(manifest) ? "BeastOS  ·  THE BEAST" : "SEANGWORLD  ·  THE BEAST",
               font: { family: "Montserrat", size: manifest.aspectRatio === "9:16" ? 34 : 28, weight: 800, color: "#fbbf24" },
               style: { letterSpacing: 3, textTransform: "uppercase" },
             },
@@ -209,17 +253,17 @@ export function buildShotstackEdit(manifest: ProductionManifest, options: { visu
           }],
         },
         {
-          clips: [{
-            alias: "bmkt-narration",
-            asset: { type: "text-to-speech", text: narration, ...SHOTSTACK_NARRATOR },
-            start: 0,
+          clips: segments.map((segment, index) => ({
+            alias: `bmkt-narration-${index + 1}`,
+            asset: { type: "text-to-speech", text: segment.spoken, ...SHOTSTACK_NARRATOR },
+            start: index === 0 ? 0 : "auto",
             length: "auto",
-          }],
+          })),
         },
         { clips: visualClips },
       ],
     },
-    output: { format: "mp4", size: { width: manifest.width, height: manifest.height }, range: { start: 0, length: manifest.runtimeMs / 1000 } },
+    output: { format: "mp4", size: { width: manifest.width, height: manifest.height } },
   };
 }
 
