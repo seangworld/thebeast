@@ -68,52 +68,32 @@ export default function RootLayout({
 
         {children}
 
-        <footer className="mt-12 space-y-2 border-t border-[#2a3242] py-6 text-center text-sm text-[#7f8da3]">
-          <BeastAnalyticsConsentControl configuredConsent={process.env.NEXT_PUBLIC_ANALYTICS_CONSENT_DEFAULT} />
-          <AdSensePlacement
-            clientId={seangworldAdSenseClientId}
-            slot={process.env.NEXT_PUBLIC_ADSENSE_FOOTER_SLOT || ""}
-            environmentName={process.env.VERCEL_ENV || process.env.NODE_ENV}
-            configuredConsent={
-              process.env.NEXT_PUBLIC_ADSENSE_CONSENT_DEFAULT
-            }
-          />
-          <div>© 2026 seangworld.com</div>
-          <div>
-            <a
-              href={beastOSFooterLinks.developmentAi}
-              className="hover:underline"
-            >
-              Development AI
-            </a>{" "}
-            •{" "}
-            <a href={beastOSFooterLinks.memberAi} className="hover:underline">
-              Member AI
-            </a>{" "}
-            •{" "}
-            <a
-              {...externalResourceLinkProps}
-              href={beastOSFooterLinks.mainSite}
-              className="hover:underline"
-            >
-              Main Site
-            </a>{" "}
-            •{" "}
-            <a
-              {...externalResourceLinkProps}
-              href={beastOSFooterLinks.privacy}
-              className="hover:underline"
-            >
-              Privacy
-            </a>{" "}
-            •{" "}
-            <a
-              {...externalResourceLinkProps}
-              href={beastOSFooterLinks.terms}
-              className="hover:underline"
-            >
-              Terms
-            </a>
+        <footer className="mt-12 border-t border-[#2a3242] py-6 text-center text-sm text-[#7f8da3]">
+          <div className="mx-auto mb-6 w-[min(1100px,calc(100%-32px))] rounded-xl border border-cyan-400/30 bg-[linear-gradient(135deg,rgba(15,23,42,0.98),rgba(3,10,24,0.98))] p-5 text-left">
+            <div className="text-[10px] font-black uppercase tracking-[0.16em] text-cyan-300">SEANGWORLD flagship</div>
+            <div className="mt-1 text-xl font-black text-white">SEANGWORLDNEWS</div>
+            <div className="mt-1 text-sm leading-relaxed text-slate-300">Facts-first news from national coverage down toward local communities. Just the facts. No opinion. No BS.</div>
+            <a {...externalResourceLinkProps} href="https://news.seangworld.com" className="mt-3 inline-block text-xs font-black uppercase tracking-[0.12em] text-cyan-300 hover:text-cyan-100">Read the News →</a>
+          </div>
+          <div className="space-y-2">
+            <div className="font-semibold text-slate-300">The Beast · BeastOS is a SEANGWORLD flagship product.</div>
+            <BeastAnalyticsConsentControl configuredConsent={process.env.NEXT_PUBLIC_ANALYTICS_CONSENT_DEFAULT} />
+            <AdSensePlacement
+              clientId={seangworldAdSenseClientId}
+              slot={process.env.NEXT_PUBLIC_ADSENSE_FOOTER_SLOT || ""}
+              environmentName={process.env.VERCEL_ENV || process.env.NODE_ENV}
+              configuredConsent={
+                process.env.NEXT_PUBLIC_ADSENSE_CONSENT_DEFAULT
+              }
+            />
+            <div>© 2026 seangworld.com</div>
+            <div>
+              <a href={beastOSFooterLinks.developmentAi} className="hover:underline">Development AI</a>{" "}•{" "}
+              <a href={beastOSFooterLinks.memberAi} className="hover:underline">Member AI</a>{" "}•{" "}
+              <a {...externalResourceLinkProps} href={beastOSFooterLinks.mainSite} className="hover:underline">SEANGWORLD</a>{" "}•{" "}
+              <a {...externalResourceLinkProps} href={beastOSFooterLinks.privacy} className="hover:underline">Privacy</a>{" "}•{" "}
+              <a {...externalResourceLinkProps} href={beastOSFooterLinks.terms} className="hover:underline">Terms</a>
+            </div>
           </div>
         </footer>
       </body>
