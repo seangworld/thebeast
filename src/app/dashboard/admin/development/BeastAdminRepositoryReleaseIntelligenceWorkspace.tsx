@@ -80,6 +80,15 @@ export function BeastAdminRepositoryReleaseIntelligenceWorkspace() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
+  const recentReleases = snapshot
+    ? [...snapshot.releases]
+        .sort((left, right) => {
+          const leftTime = left.releaseDate ? Date.parse(left.releaseDate) : 0;
+          const rightTime = right.releaseDate ? Date.parse(right.releaseDate) : 0;
+          return rightTime - leftTime;
+        })
+        .slice(0, 10)
+    : [];
 
   const load = useCallback(async (initial = false) => {
     if (initial) setLoading(true);
@@ -190,8 +199,8 @@ export function BeastAdminRepositoryReleaseIntelligenceWorkspace() {
         <DashboardCard accent="admin">
           <SectionHeader
             eyebrow="Release truth table"
-            title="Canonical releases compared with provider evidence"
-            description="A BeastAdmin note can supplement this evidence, but it cannot override a BeastFusion release record."
+            title="Latest 10 canonical releases"
+            description="The ten most recent releases are compared with provider evidence. Older canonical history remains preserved at its source."
           />
           <div className="mt-5 overflow-x-auto rounded-xl border border-[#2a3242]">
             <table className="min-w-full divide-y divide-[#2a3242] text-left text-sm">
@@ -199,7 +208,7 @@ export function BeastAdminRepositoryReleaseIntelligenceWorkspace() {
                 <tr><th className="px-4 py-3">Canonical release</th><th className="px-4 py-3">Declared</th><th className="px-4 py-3">Repository</th><th className="px-4 py-3">Production</th><th className="px-4 py-3">Evidence</th></tr>
               </thead>
               <tbody className="divide-y divide-[#2a3242] bg-[#0f1623]">
-                {snapshot.releases.map((release) => (
+                {recentReleases.map((release) => (
                   <tr key={release.id}>
                     <td className="px-4 py-3"><p className="font-black text-white">{release.id}</p><p className="mt-1 text-xs text-[#7f8da3]">{release.product} · {release.version || "No version"}</p></td>
                     <td className="px-4 py-3 font-mono text-[#c7cfdb]">{shortCommit(release.declaredCommit)}</td>

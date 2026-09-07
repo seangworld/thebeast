@@ -9,17 +9,18 @@ import {
 import { beastAdminNavigation } from "../src/lib/moduleNavigation";
 
 const expectedGroups = {
-  Operations: ["CEO Mode", "Development Console", "Platform Health"],
-  Delivery: ["Migration Status", "SQL Explorer", "Release Center", "Digital Professional History", "Roadmap"],
-  Insights: [
-    "Executive Metrics",
-    "AI Analytics",
-    "SEANGWORLD Intelligence",
-    "BeastHunter",
-    "Knowledge Inspector",
-    "Ecosystem Map",
-    "Revenue",
+  CEO: ["CEO Mode", "Empire Overview", "Revenue"],
+  "SEANGWORLD.com": ["Company Overview", "Company Analytics"],
+  "The Beast": ["The Beast Overview", "Members", "Member Messages", "Beta Feedback", "The Beast Analytics"],
+  BeastFusion: [
+    "BeastFusion Overview", "Development Console", "Platform Health", "Migration Status", "SQL Explorer",
+    "Release Center", "Digital Professional History", "Roadmap", "Capacity & AI Analytics",
+    "Knowledge Inspector", "Ecosystem Map", "Modules", "Feature Flags", "Prompt Library",
+    "Planned Workspaces", "Settings",
   ],
+  SEANGWORLDNEWS: ["Overview & Operations"],
+  "Change the World": ["Change the World Overview"],
+  BeastHunter: ["Overview"],
   BeastMarketing: [
     "Overview",
     "Advertising",
@@ -27,14 +28,6 @@ const expectedGroups = {
     "Social",
     "Email",
     "Analytics",
-  ],
-  Members: ["Members", "Member Messages", "Beta Feedback"],
-  Governance: [
-    "Modules",
-    "Feature Flags",
-    "Prompt Library",
-    "Planned Workspaces",
-    "Settings",
   ],
 } as const;
 
@@ -49,7 +42,7 @@ test("BA-IA-101 defines one grouped persistent BeastAdmin workspace switcher", (
 
   assert.equal(beastAdminNavigation.defaultExpanded, true);
   assert.deepEqual(groupedLabels, expectedGroups);
-  assert.equal(children.length, 29);
+  assert.equal(children.length, 35);
   assert.equal(new Set(children.map((child) => child.href)).size, children.length);
   assert.equal(children.every((child) => Boolean(child.group)), true);
 });
