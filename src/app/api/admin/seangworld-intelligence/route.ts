@@ -6,6 +6,7 @@ import {
 import { loadLiveSeangworldProviders } from "@/lib/server/seangworldGoogleProviders";
 import { loadFirstPartyTelemetryProvider } from "@/lib/server/firstPartyTelemetry";
 import { createRouteClient } from "@/lib/supabase/server";
+import { getSeangworldAnalyticsScope } from "@/lib/seangworldAnalyticsScope";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -24,9 +25,15 @@ export async function GET(request: Request) {
   if (profile?.role !== "admin") return error("BeastAdmin owner access required.", 403);
 
   const generatedAt = new Date().toISOString();
-  const requestedDays = Number(new URL(request.url).searchParams.get("days") || 30);
+  const searchParams = new URL(request.url).searchParams;
+  const requestedDays = Number(searchParams.get("days") || 30);
   if (![7, 30, 90].includes(requestedDays)) {
     return error("Select a supported analytics range: 7, 30, or 90 days.", 400);
+  }
+  const requestedProduct = searchParams.get("product");
+  const scope = getSeangworldAnalyticsScope(requestedProduct);
+  if (requestedProduct && !scope) {
+    return error("Select a supported product analytics scope.", 400);
   }
   const configuredProviders = buildServerSeangworldProviders(
     process.env,
@@ -37,23 +44,30 @@ export async function GET(request: Request) {
     new Date(generatedAt),
     fetch,
     undefined,
-    requestedDays
-  );
-  const firstPartyProvider = await loadFirstPartyTelemetryProvider(
-    client,
     requestedDays,
-    generatedAt,
-    process.env
+    scope
   );
-  const providers = configuredProviders.map(
+  const firstPartyProvider = scope
+    ? null
+    : await loadFirstPartyTelemetryProvider(
+        client,
+        requestedDays,
+        generatedAt,
+        process.env
+      );
+  const providers = configuredProviders.filter(
+    (provider) => !scope || provider.id !== "first_party"
+  ).map(
     (provider) =>
       (liveProviders || []).find((live) => live.id === provider.id) ||
-      (provider.id === "first_party" ? firstPartyProvider : provider)
+      (provider.id === "first_party" && firstPartyProvider
+        ? firstPartyProvider
+        : provider)
   );
   const snapshot = buildSeangworldIntelligenceSnapshot({
     providers,
     generatedAt,
-    comparisonPeriod: `Current ${requestedDays} days compared with previous ${requestedDays} days`,
+    comparisonPeriod: `${scope ? `${scope.label}: ` : ""}current ${requestedDays} days compared with previous ${requestedDays} days`,
   });
   return NextResponse.json(snapshot, {
     headers: { "cache-control": "private, no-cache, no-store, must-revalidate" },

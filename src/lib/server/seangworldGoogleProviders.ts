@@ -13,6 +13,7 @@ import {
   buildSearchLandingPagePerformance,
   buildSearchOpportunities,
 } from "../seangworldIntelligence";
+import type { SeangworldAnalyticsScope } from "../seangworldAnalyticsScope";
 
 type ServerEnvironment = Readonly<Record<string, string | undefined>>;
 type FetchImplementation = typeof fetch;
@@ -293,6 +294,58 @@ function gaRequest(
   });
 }
 
+function ga4ScopeFilter(scope: SeangworldAnalyticsScope | null) {
+  return scope
+    ? {
+        filter: {
+          fieldName: "hostName",
+          stringFilter: {
+            matchType: "FULL_REGEXP",
+            value: scope.ga4HostRegex,
+            caseSensitive: false,
+          },
+        },
+      }
+    : null;
+}
+
+function withGa4Scope(
+  body: Record<string, unknown>,
+  scope: SeangworldAnalyticsScope | null
+) {
+  const scopeFilter = ga4ScopeFilter(scope);
+  if (!scopeFilter) return body;
+  const existingFilter = body.dimensionFilter;
+  return {
+    ...body,
+    dimensionFilter: existingFilter
+      ? { andGroup: { expressions: [existingFilter, scopeFilter] } }
+      : scopeFilter,
+  };
+}
+
+function withSearchConsoleScope(
+  body: Record<string, unknown>,
+  scope: SeangworldAnalyticsScope | null
+) {
+  if (!scope) return body;
+  return {
+    ...body,
+    dimensionFilterGroups: [
+      {
+        groupType: "and",
+        filters: [
+          {
+            dimension: "page",
+            operator: "includingRegex",
+            expression: scope.searchConsolePageRegex,
+          },
+        ],
+      },
+    ],
+  };
+}
+
 async function mapWithConcurrency<T, R>(
   items: readonly T[],
   limit: number,
@@ -318,7 +371,8 @@ async function loadGa4Data(
   accessToken: string,
   now: Date,
   fetchImplementation: FetchImplementation,
-  reportingDays: number
+  reportingDays: number,
+  scope: SeangworldAnalyticsScope | null
 ): Promise<Partial<SeangworldAnalyticsData>> {
   const propertyId = environment.BEAST_ECOSYSTEM_GA4_PROPERTY_ID;
   if (!propertyId) throw new Error("GA4 property ID is missing.");
@@ -432,7 +486,12 @@ async function loadGa4Data(
     },
   ] as const;
   const reports = await mapWithConcurrency(reportDefinitions, 3, (definition) =>
-    gaRequest(propertyId, accessToken, fetchImplementation, definition.body).catch(
+    gaRequest(
+      propertyId,
+      accessToken,
+      fetchImplementation,
+      withGa4Scope(definition.body, scope)
+    ).catch(
       (error) => {
         if (definition.key.startsWith("qualified")) {
           return { unavailable: true } as Ga4Report;
@@ -576,7 +635,8 @@ async function latestFinalSearchConsoleDate(
   siteUrl: string,
   accessToken: string,
   now: Date,
-  fetchImplementation: FetchImplementation
+  fetchImplementation: FetchImplementation,
+  scope: SeangworldAnalyticsScope | null
 ) {
   const end = new Date(now);
   end.setUTCDate(end.getUTCDate() - 1);
@@ -586,13 +646,13 @@ async function latestFinalSearchConsoleDate(
     siteUrl,
     accessToken,
     fetchImplementation,
-    {
+    withSearchConsoleScope({
       startDate: isoDate(start),
       endDate: isoDate(end),
       dimensions: ["date"],
       dataState: "final",
       rowLimit: 10,
-    }
+    }, scope)
   );
   return (response.rows || [])
     .map((row) => row.keys?.[0] || "")
@@ -606,7 +666,8 @@ async function loadSearchConsoleData(
   accessToken: string,
   now: Date,
   fetchImplementation: FetchImplementation,
-  reportingDays: number
+  reportingDays: number,
+  scope: SeangworldAnalyticsScope | null
 ): Promise<SearchConsoleLoadResult> {
   const siteUrl = environment.SEANGWORLD_SEARCH_CONSOLE_SITE_URL;
   if (!siteUrl) throw new Error("Search Console site URL is missing.");
@@ -614,7 +675,8 @@ async function loadSearchConsoleData(
     siteUrl,
     accessToken,
     now,
-    fetchImplementation
+    fetchImplementation,
+    scope
   );
   if (!dataThroughDate) {
     return { data: {}, dataThroughDate: null, reportingDelayDays: null };
@@ -649,7 +711,12 @@ async function loadSearchConsoleData(
       ],
       3,
       (body) =>
-        searchConsoleRequest(siteUrl, accessToken, fetchImplementation, body)
+        searchConsoleRequest(
+          siteUrl,
+          accessToken,
+          fetchImplementation,
+          withSearchConsoleScope(body, scope)
+        )
     );
   const previousByQuery = new Map(
     (previous.rows || []).map((row) => [row.keys?.[0] || "", row.impressions || 0])
@@ -891,13 +958,18 @@ function failedProvider(
   };
 }
 
-function cacheKey(environment: ServerEnvironment, reportingDays: number) {
+function cacheKey(
+  environment: ServerEnvironment,
+  reportingDays: number,
+  scope: SeangworldAnalyticsScope | null
+) {
   return [
     environment.BEAST_ECOSYSTEM_GA4_PROPERTY_ID || "",
     environment.SEANGWORLD_SEARCH_CONSOLE_SITE_URL || "",
     environment.GOOGLE_WIF_PROVIDER_RESOURCE || "",
     environment.GOOGLE_GA4_READER_SERVICE_ACCOUNT_EMAIL || "",
     String(reportingDays),
+    scope?.id || "ecosystem",
   ].join("|");
 }
 
@@ -910,7 +982,8 @@ export async function loadLiveSeangworldProviders(
   now = new Date(),
   fetchImplementation: FetchImplementation = fetch,
   accessTokenLoader: AccessTokenLoader = getGoogleAccessToken,
-  reportingDays = 30
+  reportingDays = 30,
+  scope: SeangworldAnalyticsScope | null = null
 ) {
   if (![7, 30, 90].includes(reportingDays)) {
     throw new Error("Unsupported analytics reporting range.");
@@ -926,7 +999,7 @@ export async function loadLiveSeangworldProviders(
       environment.GOOGLE_GA4_READER_SERVICE_ACCOUNT_EMAIL
   );
   if (!configuredGa4 && !configuredSearchConsole) return null;
-  const key = cacheKey(environment, reportingDays);
+  const key = cacheKey(environment, reportingDays, scope);
   if (cachedProviders && cachedProviders.expiresAt > now.getTime() && cachedProviders.cacheKey === key) {
     return cachedProviders.providers;
   }
@@ -960,7 +1033,8 @@ export async function loadLiveSeangworldProviders(
             accessToken,
             now,
             fetchImplementation,
-            reportingDays
+            reportingDays,
+            scope
           )
             .then((data) =>
               liveProvider({
@@ -980,7 +1054,8 @@ export async function loadLiveSeangworldProviders(
             accessToken,
             now,
             fetchImplementation,
-            reportingDays
+            reportingDays,
+            scope
           )
             .then((result) =>
               liveProvider({

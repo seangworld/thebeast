@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { loadLiveSeangworldProviders } from "../src/lib/server/seangworldGoogleProviders";
+import { getSeangworldAnalyticsScope } from "../src/lib/seangworldAnalyticsScope";
 
 function workloadIdentityEnvironment(suffix: string) {
   return {
@@ -321,5 +322,46 @@ test("live Google providers reject unsupported reporting ranges before authentic
       365
     ),
     /Unsupported analytics reporting range/
+  );
+});
+
+test("product analytics apply the canonical host filter to every provider request", async () => {
+  const ga4Bodies: Record<string, unknown>[] = [];
+  const searchBodies: Record<string, unknown>[] = [];
+  const fetchImplementation: typeof fetch = async (input, init) => {
+    const body = JSON.parse(String(init?.body || "{}")) as Record<string, unknown>;
+    if (String(input).includes("analyticsdata.googleapis.com")) {
+      ga4Bodies.push(body);
+    } else {
+      searchBodies.push(body);
+    }
+    return new Response(JSON.stringify({ rows: [] }));
+  };
+  const providers = await loadLiveSeangworldProviders(
+    workloadIdentityEnvironment("news-scope"),
+    new Date("2026-09-07T18:00:00Z"),
+    fetchImplementation,
+    async () => "test-access-token",
+    30,
+    getSeangworldAnalyticsScope("seangworldnews")
+  );
+  assert.equal(providers?.length, 2);
+  assert.ok(ga4Bodies.length > 0);
+  assert.ok(searchBodies.length > 0);
+  assert.ok(
+    ga4Bodies.every((body) =>
+      JSON.stringify(body.dimensionFilter).includes("^news\\\\.seangworld\\\\.com$")
+    )
+  );
+  assert.ok(
+    searchBodies.every((body) =>
+      JSON.stringify(body.dimensionFilterGroups).includes(
+        "^https://news\\\\.seangworld\\\\.com/.*"
+      )
+    )
+  );
+  assert.ok(
+    ga4Bodies.some((body) => JSON.stringify(body.dimensionFilter).includes("andGroup")),
+    "qualified-action event filters must be combined with the product host filter"
   );
 });
