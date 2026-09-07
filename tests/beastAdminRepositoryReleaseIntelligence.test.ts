@@ -172,6 +172,18 @@ test("BA-CMD-001B applies the deterministic release evidence truth table", () =>
   );
 });
 
+test("BA-EMPIRE-101 limits the operating release truth table to the latest ten", () => {
+  const workspace = readFileSync(
+    "src/app/dashboard/admin/development/BeastAdminRepositoryReleaseIntelligenceWorkspace.tsx",
+    "utf8"
+  );
+  assert.match(workspace, /Latest 10 canonical releases/);
+  assert.match(workspace, /\.sort\(\(left, right\)/);
+  assert.match(workspace, /\.slice\(0, 10\)/);
+  assert.match(workspace, /recentReleases\.map/);
+  assert.doesNotMatch(workspace, /snapshot\.releases\.map/);
+});
+
 test("stale and failing providers preserve canonical truth without a legacy fallback", () => {
   const stale = buildBeastAdminRepositoryReleaseSnapshot({
     canonical: canonical(),
