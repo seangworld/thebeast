@@ -11,6 +11,7 @@ export type EmpireProduct = {
   purpose: string;
   controlLinks: readonly { label: string; href: string }[];
   analyticsLink: { label: string; href: string; state: "available" | "needs-product-filter" };
+  analyticsScope?: "seangworld" | "seangworldnews" | "change-the-world";
 };
 
 export const empireProducts: readonly EmpireProduct[] = [
@@ -24,6 +25,7 @@ export const empireProducts: readonly EmpireProduct[] = [
       { label: "Marketing", href: "/dashboard/admin/marketing" },
     ],
     analyticsLink: { label: "Company analytics", href: "/dashboard/admin/intelligence", state: "available" },
+    analyticsScope: "seangworld",
   },
   {
     id: "the-beast",
@@ -52,14 +54,16 @@ export const empireProducts: readonly EmpireProduct[] = [
     name: "SEANGWORLDNEWS",
     purpose: "Sources, locations, headlines, Fact Desk, newsroom automation, and News audience performance.",
     controlLinks: [{ label: "News operations", href: "/dashboard/admin/news" }],
-    analyticsLink: { label: "News analytics", href: "/dashboard/admin/news", state: "needs-product-filter" },
+    analyticsLink: { label: "News analytics", href: "/dashboard/admin/news", state: "available" },
+    analyticsScope: "seangworldnews",
   },
   {
     id: "change-the-world",
     name: "Change the World",
     purpose: "The public civic-action product, its content, participation, and impact outcomes.",
     controlLinks: [],
-    analyticsLink: { label: "Change the World analytics", href: "/dashboard/admin/change-the-world", state: "needs-product-filter" },
+    analyticsLink: { label: "Change the World analytics", href: "/dashboard/admin/change-the-world", state: "available" },
+    analyticsScope: "change-the-world",
   },
 ] as const;
 
