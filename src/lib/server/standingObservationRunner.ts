@@ -6,6 +6,7 @@ import { createBeastFusionPublicationClient } from "../supabase/service";
 import { buildNonExecutableProposal, buildObserverFinding } from "../developmentWorkflowIntelligence";
 
 import { buildStandingEcosystemEvidence } from "../standingObservationEvidence";
+import { buildStandingObservationLearning } from "../standingObservationLearning";
 
 type Simulation = "clean" | null;
 
@@ -39,7 +40,12 @@ export async function runStandingObservation(ownerId: string, scheduleId: string
   const sources: ObservationSourceResult[] = simulation === "clean" ? [{ source: "controlled_fixture", available: true, changed: false, summary: "No material change in controlled evidence.", confidence: "high", impact: "none", fingerprint: "bf-agt-011-clean-v1" }] : buildStandingEcosystemEvidence(canonicalModel, github?.observations || [], vercel?.observations || []);
   const prior = await service.from("beast_admin_staff_observation_runs").select("evidence_digest").eq("owner_id", ownerId).eq("trigger_type", simulation ? "owner_controlled_simulation" : "schedule").in("status", ["clean", "findings", "duplicate_skipped"]).order("started_at", { ascending: false }).limit(1).maybeSingle();
   if (prior.error) throw new Error("observation_history_unavailable");
+  // Duplicate cycles omit investigations, so compare against the last evaluated
+  // baseline instead of mistaking an empty duplicate record for resolved findings.
+  const baseline = await service.from("beast_admin_staff_observation_runs").select("findings,unavailable_sources").eq("owner_id", ownerId).eq("trigger_type", simulation ? "owner_controlled_simulation" : "schedule").in("status", ["clean", "findings"]).order("started_at", { ascending: false }).limit(1).maybeSingle();
+  if (baseline.error) throw new Error("observation_learning_history_unavailable");
   const result = evaluateStandingObservation(sources, prior.data?.evidence_digest);
+  result.changes.push(...buildStandingObservationLearning(sources, baseline.data));
   const structuredFindings = result.findings.map((item) => buildObserverFinding({
     source: item.source as (typeof standingObservationPermittedSources)[number],
     observedAt: new Date().toISOString(),
