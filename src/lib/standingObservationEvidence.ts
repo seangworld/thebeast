@@ -23,7 +23,7 @@ export function buildStandingEcosystemEvidence(
       summary: attention.length ? `${attention.length} canonical attention item(s) across the SEANGWORLD ecosystem.` : "No canonical attention items recorded.",
       confidence: "high", impact: attention.some((item) => ["failure", "blocker"].includes(item.kind)) ? "high" : attention.length ? "medium" : "none",
       // Publication timestamps and unrelated commits must not recreate the same proposal.
-      fingerprint: JSON.stringify(attention), affectedProducts: ["BeastFusion", "The Beast", "SEANGWORLD", "Change the World"],
+      fingerprint: JSON.stringify(attention), affectedProducts: ["BeastFusion"],
     },
     {
       source: "github_repository_evidence", available: repositories.some((item) => item.state === "connected"), changed: repositoryProblems.length > 0,
