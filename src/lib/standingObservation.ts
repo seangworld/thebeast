@@ -20,6 +20,7 @@ export type ObservationSourceResult = {
   confidence: "low" | "medium" | "high";
   impact: "none" | "low" | "medium" | "high";
   fingerprint: string;
+  affectedProducts?: string[];
 };
 
 export type StandingObservationResult = {
@@ -135,12 +136,12 @@ export function evaluateStandingObservation(
   const checkedSources = results.filter((item) => item.available).map((item) => item.source);
   const unavailableSources = results.filter((item) => !item.available).map((item) => item.source);
   if (previousDigest === digest) {
-    return { status: "duplicate_skipped", checkedSources, unavailableSources, changes: [], suppressedSignals: ["Evidence digest is unchanged; investigation skipped."], findings: [], confidence: "high", impact: "none", nextStep: "Continue the standing cadence.", evidenceDigest: digest, investigationCount: 0, proposalCount: 0 };
+    return { status: "duplicate_skipped", checkedSources, unavailableSources, changes: [], suppressedSignals: ["Evidence digest is unchanged; investigation skipped."], findings: [], confidence: unavailableSources.length ? "unknown" : "high", impact: "none", nextStep: unavailableSources.length ? "Restore unavailable evidence before assessing ecosystem health." : "Continue the standing cadence.", evidenceDigest: digest, investigationCount: 0, proposalCount: 0 };
   }
   const changed = results.filter((item) => item.available && item.changed);
   const findings = changed.filter((item) => item.impact === "medium" || item.impact === "high").slice(0, maximumInvestigationsPerCycle);
   const suppressedSignals = changed.filter((item) => !findings.includes(item)).map((item) => `${item.source}: ${item.summary}`);
-  const confidence = findings.some((item) => item.confidence === "high") ? "high" : findings.length ? "medium" : "high";
+  const confidence = unavailableSources.length ? "unknown" : findings.some((item) => item.confidence === "high") ? "high" : findings.length ? "medium" : "high";
   const impact = findings.some((item) => item.impact === "high") ? "high" : findings.length ? "medium" : "none";
   return {
     status: findings.length ? "findings" : "clean",
@@ -151,7 +152,7 @@ export function evaluateStandingObservation(
     findings,
     confidence,
     impact,
-    nextStep: findings.length ? "Queue bounded Proposal Agent investigation; do not execute." : "No owner action required.",
+    nextStep: findings.length ? "Queue bounded Proposal Agent investigation; do not execute." : unavailableSources.length ? "Restore unavailable evidence before assessing ecosystem health." : "No owner action required.",
     evidenceDigest: digest,
     investigationCount: findings.length,
     proposalCount: findings.length,

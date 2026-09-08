@@ -316,5 +316,5 @@ test("BA-110 presents every requested business metric and evidence boundary", ()
   assert.doesNotMatch(workspace, /localStorage/);
   assert.doesNotMatch(workspace, /SUPABASE_SERVICE_ROLE_KEY/);
   assert.match(dashboard, /\/dashboard\/admin\/metrics/);
-  assert.match(navigation, /Executive Metrics/);
+  assert.match(navigation, /label: "The Beast Analytics", href: "\/dashboard\/admin\/metrics"/);
 });

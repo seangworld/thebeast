@@ -24,7 +24,7 @@ export async function GET() {
   ]);
   if (schedule.error || runs.error) return json({ error: "Standing staff evidence is unavailable." }, 503);
   const latest = runs.data?.[0] || null;
-  const state = !latest ? "never_run" : latest.status === "failed" ? "failed" : latest.status === "clean" || latest.status === "duplicate_skipped" ? "clean" : "findings";
+  const state = !latest ? "never_run" : latest.status === "failed" ? "failed" : latest.status === "running" ? "running" : latest.finding_count > 0 ? "findings" : "clean";
   return json({ schedule: schedule.data, runs: runs.data || [], state, authority: "Observation and proposals are non-executable; owner approval and separate BeastFusion authorization are required." });
 }
 
