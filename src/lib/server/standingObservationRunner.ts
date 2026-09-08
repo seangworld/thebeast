@@ -5,6 +5,8 @@ import { readGitHubRepositoryEvidence, readVercelDeploymentEvidence } from "./be
 import { createBeastFusionPublicationClient } from "../supabase/service";
 import { buildNonExecutableProposal, buildObserverFinding } from "../developmentWorkflowIntelligence";
 
+import { buildStandingEcosystemEvidence } from "../standingObservationEvidence";
+
 type Simulation = "clean" | null;
 
 export async function runStandingObservation(ownerId: string, scheduleId: string | null, simulation: Simulation = null) {
@@ -34,13 +36,9 @@ export async function runStandingObservation(ownerId: string, scheduleId: string
   const retryCount = (githubAttempt?.retries || 0) + (vercelAttempt?.retries || 0);
   const canonicalModel = canonical.canonical;
   if (!canonicalModel) throw new Error("canonical_state_unavailable");
-  const sources: ObservationSourceResult[] = simulation === "clean" ? [{ source: "controlled_fixture", available: true, changed: false, summary: "No material change in controlled evidence.", confidence: "high", impact: "none", fingerprint: "bf-agt-011-clean-v1" }] : [
-    { source: "beastfusion_canonical_projection", available: true, changed: canonicalModel.attention.length > 0, summary: canonicalModel.attention.length ? `${canonicalModel.attention.length} canonical attention item(s).` : "Canonical governance has no attention items.", confidence: "high", impact: canonicalModel.attention.some((item) => item.kind === "failure" || item.kind === "blocker") ? "high" : canonicalModel.attention.length ? "medium" : "none", fingerprint: `${canonicalModel.projection?.payloadHash || "unknown"}:${canonicalModel.attention.map((item) => item.id).sort().join(",")}` },
-    { source: "github_repository_evidence", available: github?.provider.status === "connected", changed: github?.observations.some((item) => item.state !== "connected") || false, summary: github?.provider.detail || "GitHub evidence unavailable.", confidence: "high", impact: github?.provider.status === "error" ? "medium" : "none", fingerprint: github?.observations.map((item) => `${item.repository}:${item.headCommit || item.state}`).sort().join("|") || "unavailable" },
-    { source: "vercel_deployment_evidence", available: vercel?.provider.status === "connected", changed: vercel?.observations.some((item) => item.state !== "connected") || false, summary: vercel?.provider.detail || "Vercel evidence unavailable.", confidence: "high", impact: vercel?.provider.status === "error" ? "medium" : "none", fingerprint: vercel?.observations.map((item) => `${item.repository}:${item.environment}:${item.deploymentId || item.state}`).sort().join("|") || "unavailable" },
-  ];
-  const digest = evidenceDigest(sources);
-  const prior = await service.from("beast_admin_staff_observation_runs").select("evidence_digest").eq("owner_id", ownerId).eq("evidence_digest", digest).in("status", ["clean", "findings"]).limit(1).maybeSingle();
+  const sources: ObservationSourceResult[] = simulation === "clean" ? [{ source: "controlled_fixture", available: true, changed: false, summary: "No material change in controlled evidence.", confidence: "high", impact: "none", fingerprint: "bf-agt-011-clean-v1" }] : buildStandingEcosystemEvidence(canonicalModel, github?.observations || [], vercel?.observations || []);
+  const prior = await service.from("beast_admin_staff_observation_runs").select("evidence_digest").eq("owner_id", ownerId).eq("trigger_type", simulation ? "owner_controlled_simulation" : "schedule").in("status", ["clean", "findings", "duplicate_skipped"]).order("started_at", { ascending: false }).limit(1).maybeSingle();
+  if (prior.error) throw new Error("observation_history_unavailable");
   const result = evaluateStandingObservation(sources, prior.data?.evidence_digest);
   const structuredFindings = result.findings.map((item) => buildObserverFinding({
     source: item.source as (typeof standingObservationPermittedSources)[number],
@@ -60,10 +58,11 @@ export async function runStandingObservation(ownerId: string, scheduleId: string
 
   let createdProposals = 0;
   for (const finding of result.findings) {
-    const sourceId = standingProposalSourceId(result.evidenceDigest, finding.source);
+    const sourceId = standingProposalSourceId(evidenceDigest([finding]), finding.source);
     const duplicate = await service.from("beast_admin_roadmap_items").select("id").eq("user_id", ownerId).eq("source_type", "orchestrator_3_proposal").eq("source_id", sourceId).maybeSingle();
+    if (duplicate.error) throw new Error("proposal_history_unavailable");
     if (!duplicate.data) {
-      const proposal = buildNonExecutableProposal({ findingReference: sourceId, evidence: [`standing-observation:${result.evidenceDigest}`], problemOrOpportunity: finding.summary, expectedBenefit: "Resolve or consciously disposition the evidence-backed operational finding.", proposedScope: ["Investigate the recorded finding within existing governance before defining implementation work."], effort: "unknown", risk: finding.impact === "high" ? "high" : "medium", dependencies: ["Canonical BeastFusion reconciliation", "Owner decision"], affectedProducts: ["BeastFusion"], priority: finding.impact === "high" ? "urgent" : "high", confidence: finding.confidence, recommendedDisposition: "INVESTIGATE", unknowns: result.unavailableSources });
+      const proposal = buildNonExecutableProposal({ findingReference: sourceId, evidence: [`standing-observation:${result.evidenceDigest}`], problemOrOpportunity: finding.summary, expectedBenefit: "Resolve or consciously disposition the evidence-backed operational finding.", proposedScope: ["Investigate the recorded finding within existing governance before defining implementation work."], effort: "unknown", risk: finding.impact === "high" ? "high" : "medium", dependencies: ["Canonical BeastFusion reconciliation", "Owner decision"], affectedProducts: finding.affectedProducts?.length ? finding.affectedProducts : ["BeastFusion"], priority: finding.impact === "high" ? "urgent" : "high", confidence: finding.confidence, recommendedDisposition: "INVESTIGATE", unknowns: result.unavailableSources });
       const created = await service.from("beast_admin_roadmap_items").insert({ user_id: ownerId, source_type: "orchestrator_3_proposal", source_id: sourceId, product_id: proposalIntakeProduct("BeastFusion"), title: `Standing observation: ${finding.source.replaceAll("_", " ")}`, summary: finding.summary, status: "planned", governance_classification: "intake", execution_status: "candidate_intake", is_next_build: false, execution_payload: { ...proposal, generatedBy: "proposal_agent", standingObservationRunId: inserted.data.id, evidenceDigest: result.evidenceDigest, reconciliationStatus: "awaiting_beastfusion_reconciliation", executionAuthorized: false, executable: false } });
       if (created.error) {
         await service.from("beast_admin_staff_observation_runs").update({ status: "failed", proposal_count: createdProposals, error_category: "proposal_intake_write_failed", next_step: "Proposal intake persistence failed; no proposal is available for review or execution." }).eq("id", inserted.data.id);

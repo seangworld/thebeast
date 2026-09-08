@@ -100,7 +100,8 @@ test("resource events are privacy-minimal and external links preserve the Beast 
   const rootLayout = readFileSync("src/app/layout.tsx", "utf8");
   assert.equal(
     (rootLayout.match(/\.\.\.externalResourceLinkProps/g) || []).length,
-    (rootLayout.match(/href=\{beastOSFooterLinks\.(?:mainSite|privacy|terms)\}/g) || []).length
+    (rootLayout.match(/href=\{beastOSFooterLinks\.(?:mainSite|privacy|terms)\}/g) || []).length +
+      (rootLayout.match(/href="https:\/\/news.seangworld.com"/g) || []).length
   );
   assert.equal(
     (rootLayout.match(/href=\{beastOSFooterLinks\.developmentAi\}/g) || []).length,
@@ -109,6 +110,6 @@ test("resource events are privacy-minimal and external links preserve the Beast 
   );
   assert.equal(
     (rootLayout.match(/\.\.\.externalResourceLinkProps/g) || []).length,
-    3
+    4
   );
 });
