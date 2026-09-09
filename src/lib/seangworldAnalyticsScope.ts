@@ -1,6 +1,7 @@
 export const seangworldAnalyticsScopeIds = [
   "seangworld",
   "seangworldnews",
+  "thebeast",
   "change-the-world",
 ] as const;
 
@@ -15,6 +16,12 @@ export type SeangworldAnalyticsScope = {
 };
 
 const scopes: Record<SeangworldAnalyticsScopeId, SeangworldAnalyticsScope> = {
+  thebeast: {
+    id: "thebeast",
+    label: "The Beast",
+    ga4HostRegex: "^thebeast\\.seangworld\\.com$",
+    searchConsolePageRegex: "^https://thebeast\\.seangworld\\.com/.*",
+  },
   seangworld: {
     id: "seangworld",
     label: "SEANGWORLD.com",
@@ -44,4 +51,3 @@ export function getSeangworldAnalyticsScope(
   }
   return scopes[value as SeangworldAnalyticsScopeId];
 }
-

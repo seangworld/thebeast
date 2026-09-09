@@ -1,0 +1,13 @@
+# Search Growth Engine campaign preparation
+
+Status: candidate; not released.
+
+The existing owner-only Search Growth Engine can prepare a BeastMarketing campaign for an actionable Beast or News opportunity. Choose **Prepare campaign**, then follow **Review in BeastMarketing**. The server reloads the product-scoped Search Console evidence, retains the finalized current and prior baseline, and saves a draft in the existing campaign workspace. Existing campaign editing, asset review and distribution controls remain authoritative.
+
+Preparation is idempotent for the same owner, page and query. Retrying returns the original campaign, including an approved, paused or archived campaign, without replacing its baseline or reopening it. Concurrent preparation relies on the existing campaign primary key; no new tables or migrations are required. Browser-supplied metrics, claims and approval flags are ignored. The source must remain actionable and recent on the server, unless its campaign already exists.
+
+Search demand is not proof of a product or news claim. This prepares an internal campaign brief; creative still needs factual grounding and review. No AI provider call, paid service, publication, external scheduling, new integration authority or expansion of the three-source standing observation assignment is introduced. Scheduled discovery and execution remain unfinished work in the authorized batch.
+
+Product Completeness: existing Intelligence and Advertising surfaces provide discovery and review; no public/member route, new staff identity, uploads or independently versioned module is introduced. Owner role, owner-scoped database access and existing RLS remain required. The new semantic button, loading state, status link and error state need responsive rendered verification on the exact Preview. No unavailable visual check may be reported as passed.
+
+Validation: focused source/freshness/baseline/privacy/idempotency tests, full suite, types, lint and build; independent review before release. After release verify the owner boundary and exact Production provenance and record canonical closure. Measure the first three actual campaign preparations: same-opportunity retries retain one campaign and its original baseline, unavailable evidence saves none, and no external action occurs. Campaign effectiveness requires later qualified-action measurements; preparations and clicks alone do not prove growth.

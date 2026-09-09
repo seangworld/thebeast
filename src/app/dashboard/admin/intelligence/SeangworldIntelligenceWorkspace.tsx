@@ -10,6 +10,7 @@ import {
 } from "@/lib/seangworldIntelligence";
 import { BeastAdminDataFreshness } from "../BeastAdminShell";
 import { FirstPartyTelemetryPanels } from "./FirstPartyTelemetryPanels";
+import { SearchGrowthCampaignAction } from "./SearchGrowthCampaignAction";
 import {
   getSeangworldAnalyticsScope,
   type SeangworldAnalyticsScopeId,
@@ -129,8 +130,10 @@ function changeLabel(
 
 function SearchOpportunityIntelligence({
   data,
+  days,
 }: {
   data: SeangworldIntelligenceSnapshot["data"];
+  days: number;
 }) {
   const pages = useMemo(
     () => Array.from(
@@ -245,7 +248,7 @@ function SearchOpportunityIntelligence({
                   <td className="p-3"><span className="inline-flex rounded-full border border-cyan-300/25 bg-cyan-300/5 px-3 py-1 text-xs font-bold text-cyan-100">{opportunity.classification}</span></td>
                   <td className="p-3"><span className="font-bold text-white">{opportunity.recommendedAsset}</span>{opportunity.ownerApprovalRequired ? <span className="mt-1 block text-xs text-amber-200">Owner approval required before publication</span> : null}</td>
                   <td className="max-w-xs p-3 text-xs leading-5 text-slate-300">{opportunity.signals.length ? opportunity.signals.join(" · ") : "No action signal crossed the governed threshold"}</td>
-                  <td className="max-w-md p-3"><span className="font-bold text-white">Score {opportunity.score}</span><span className="mt-1 block text-xs leading-5 text-slate-400">{opportunity.rationale}</span><details className="mt-2 text-xs text-slate-300"><summary className="cursor-pointer font-bold text-cyan-200">Evidence-backed recommendation</summary><dl className="mt-2 grid gap-1"><div><dt className="inline font-bold">Traffic source: </dt><dd className="inline">{opportunity.trafficSource}</dd></div><div><dt className="inline font-bold">Target audience: </dt><dd className="inline">{opportunity.targetAudience}</dd></div><div><dt className="inline font-bold">Existing asset: </dt><dd className="inline break-all">{opportunity.existingAsset}</dd></div><div><dt className="inline font-bold">Proposed action: </dt><dd className="inline">{opportunity.proposedAction}</dd></div><div><dt className="inline font-bold">Expected benefit: </dt><dd className="inline">{opportunity.expectedBenefit}</dd></div><div><dt className="inline font-bold">Effort: </dt><dd className="inline capitalize">{opportunity.effort}</dd></div><div><dt className="inline font-bold">Measurement: </dt><dd className="inline">{opportunity.measurement}</dd></div></dl></details></td>
+                  <td className="max-w-md p-3"><span className="font-bold text-white">Score {opportunity.score}</span><span className="mt-1 block text-xs leading-5 text-slate-400">{opportunity.rationale}</span><details className="mt-2 text-xs text-slate-300"><summary className="cursor-pointer font-bold text-cyan-200">Evidence-backed recommendation</summary><dl className="mt-2 grid gap-1"><div><dt className="inline font-bold">Traffic source: </dt><dd className="inline">{opportunity.trafficSource}</dd></div><div><dt className="inline font-bold">Target audience: </dt><dd className="inline">{opportunity.targetAudience}</dd></div><div><dt className="inline font-bold">Existing asset: </dt><dd className="inline break-all">{opportunity.existingAsset}</dd></div><div><dt className="inline font-bold">Proposed action: </dt><dd className="inline">{opportunity.proposedAction}</dd></div><div><dt className="inline font-bold">Expected benefit: </dt><dd className="inline">{opportunity.expectedBenefit}</dd></div><div><dt className="inline font-bold">Effort: </dt><dd className="inline capitalize">{opportunity.effort}</dd></div><div><dt className="inline font-bold">Measurement: </dt><dd className="inline">{opportunity.measurement}</dd></div></dl></details><SearchGrowthCampaignAction key={`${opportunity.page}:${opportunity.query}:${days}`} page={opportunity.page} query={opportunity.query} days={days} classification={opportunity.classification} /></td>
                 </tr>
               ))}
             </tbody>
@@ -333,7 +336,7 @@ export function SeangworldIntelligenceWorkspace({
 
     <QualifiedTrafficTable items={data.qualifiedTraffic} />
 
-    <SearchOpportunityIntelligence data={data} />
+    <SearchOpportunityIntelligence data={data} days={reportingDays} />
 
     <section aria-labelledby="recommendations-heading"><h2 id="recommendations-heading" className="text-xl font-black text-white">Deterministic Recommendations</h2>{snapshot.recommendations.length ? <div className="mt-4 grid gap-4 lg:grid-cols-2">{snapshot.recommendations.map((recommendation) => <article key={recommendation.id} className="rounded-2xl border border-cyan-300/20 bg-cyan-300/5 p-5"><div className="flex justify-between gap-3"><h3 className="font-black text-white">{recommendation.title}</h3><span className="text-xs font-bold capitalize text-cyan-200">{recommendation.confidence} confidence</span></div><p className="mt-3 text-sm font-bold text-cyan-100">{recommendation.supportingMetric}</p><p className="mt-2 text-sm leading-6 text-slate-300">{recommendation.rationale}</p><p className="mt-3 text-xs leading-5 text-slate-400">Owner review: {recommendation.suggestedOwnerReview}</p></article>)}</div> : <div className="mt-4 rounded-xl border border-dashed border-white/15 p-5 text-sm leading-6 text-slate-400">No deterministic rule has enough verified evidence to produce a recommendation. This is normal when providers are not configured or have no data.</div>}</section>
 
