@@ -3,7 +3,7 @@ import {
   buildMarketingRecommendation,
   isMarketingAssetStatus,
   isMarketingCampaignStatus,
-  isMarketingOutcomeMetric,
+  validateMarketingOutcomeDraft,
   normalizeMarketingSourceFacts,
   type MarketingCampaign,
   type MarketingOutcome,
@@ -301,13 +301,10 @@ export async function POST(request: Request) {
   }
 
   if (kind === "outcome") {
-    const metric = body?.metric;
-    const value = typeof body?.value === "number" ? body.value : Number(body?.value);
-    const sourceLabel = clean(body?.sourceLabel, 240);
+    const draft = validateMarketingOutcomeDraft(body);
+    if (!draft) return NextResponse.json({ error: "Enter an explicit non-negative result, an evidence source, and a valid measurement time that is not in the future." }, { status: 400 });
     const sourceUrl = clean(body?.sourceUrl, 1_000);
-    const measuredAt = clean(body?.measuredAt, 80);
-    if (!isMarketingOutcomeMetric(metric) || !Number.isFinite(value) || value < 0 || !sourceLabel) return NextResponse.json({ error: "A valid non-negative outcome and evidence source are required." }, { status: 400 });
-    const { data, error } = await client.from("beast_marketing_outcomes").insert({ owner_id: user.id, campaign_id: campaignId, metric, value, source_label: sourceLabel, source_url: /^https:\/\//i.test(sourceUrl) ? sourceUrl : null, measured_at: measuredAt && Number.isFinite(Date.parse(measuredAt)) ? measuredAt : new Date().toISOString(), notes: clean(body?.notes, 1_000) }).select("*").single();
+    const { data, error } = await client.from("beast_marketing_outcomes").insert({ owner_id: user.id, campaign_id: campaignId, metric: draft.metric, value: draft.value, source_label: draft.sourceLabel, source_url: /^https:\/\//i.test(sourceUrl) ? sourceUrl : null, measured_at: draft.measuredAt, notes: clean(body?.notes, 1_000) }).select("*").single();
     if (error || !data) return unavailable();
     return NextResponse.json({ outcome: outcome(data) }, { status: 201 });
   }
@@ -315,7 +312,7 @@ export async function POST(request: Request) {
   if (kind === "recommendation") {
     const [campaignResult, outcomeResult, assetResult] = await Promise.all([
       client.from("beast_marketing_campaigns").select("*").eq("id", campaignId).eq("owner_id", user.id).maybeSingle(),
-      client.from("beast_marketing_outcomes").select("metric,value,source_label").eq("campaign_id", campaignId).eq("owner_id", user.id),
+      client.from("beast_marketing_outcomes").select("metric,value,source_label,measured_at").eq("campaign_id", campaignId).eq("owner_id", user.id),
       client.from("beast_marketing_assets").select("id").eq("campaign_id", campaignId).eq("owner_id", user.id).eq("status", "approved"),
     ]);
     if (campaignResult.error || !campaignResult.data || outcomeResult.error || assetResult.error) return unavailable();
@@ -323,9 +320,10 @@ export async function POST(request: Request) {
     if (!isMarketingCampaignStatus(normalizedCampaign.status)) return unavailable();
     const normalizedOutcomes = (outcomeResult.data || []).map((row) => ({
       metric: row.metric,
-      value: Number(row.value),
+      value: row.value,
       sourceLabel: row.source_label,
-    })) as Pick<MarketingOutcome, "metric" | "value" | "sourceLabel">[];
+      measuredAt: row.measured_at,
+    })) as Pick<MarketingOutcome, "metric" | "value" | "sourceLabel" | "measuredAt">[];
     const recommendation = buildMarketingRecommendation({
       campaign: normalizedCampaign,
       outcomes: normalizedOutcomes,

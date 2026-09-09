@@ -1,6 +1,6 @@
 # Search Growth Engine campaign preparation
 
-Status: candidate; not released.
+Status: campaign preparation released through PR62 on 2026-09-09. Outcome evidence integrity below is a new candidate.
 
 The existing owner-only Search Growth Engine can prepare a BeastMarketing campaign for an actionable Beast or News opportunity. Choose **Prepare campaign**, then follow **Review in BeastMarketing**. The server reloads the product-scoped Search Console evidence, retains the finalized current and prior baseline, and saves a draft in the existing campaign workspace. Existing campaign editing, asset review and distribution controls remain authoritative.
 
@@ -13,3 +13,13 @@ Product Completeness: existing Intelligence and Advertising surfaces provide dis
 Validation: focused source/freshness/baseline/privacy/idempotency tests, full suite, types, lint and build; independent review before release. After release verify the owner boundary and exact Production provenance and record canonical closure. Measure the first three actual campaign preparations: same-opportunity retries retain one campaign and its original baseline, unavailable evidence saves none, and no external action occurs. Campaign effectiveness requires later qualified-action measurements; preparations and clicks alone do not prove growth.
 
 Independent review of ed8ebdfe75bc42c672e777bfaa665729215b97f3 found two integration blockers: campaign evidence was not visible before approval, and the handoff lost the campaign ID. The remediation exposes source facts, baseline, timestamps, per-fact limitations, success measures and campaign limitations in existing review cards, and carries the exact owner-scoped campaign ID to Advertising. An unavailable requested campaign never silently selects another. Behavioral tests cover archived retries, concurrent insert conflicts, missing evidence, lookup/write failures, exact selection and rendered evidence. Re-review must bind to the remediated candidate. Preview currently redirects this browser to Vercel login; no authenticated or responsive verification is claimed.
+
+## Outcome evidence integrity candidate
+
+An empty result must not become a recorded zero. The existing outcome form now requires an explicit non-negative value and named evidence source; the server repeats validation and rejects null, boolean, blank, invalid, and future-dated evidence. Omitting the optional measurement time records the submission time, while an explicitly invalid time is never replaced with now. Existing records are not rewritten.
+
+New advisory recommendations retain measurement dates, exclude invalid records, distinguish unmeasured downstream results from explicit zero and positive observations, and do not sum potentially overlapping records. Repeated rows do not increase confidence. Recommendations remain low-confidence because attribution, comparable windows and current effectiveness are unestablished. Positive history supports consideration of a bounded approved test, never causal lift or permission to scale. Existing saved recommendations remain historical records; generate a new assessment to apply this logic.
+
+This is part of the authorized Growth learning foundation, not autonomous growth completion. No database schema, provider, authorization, paid generation, external publishing, cadence or standing-observation source changes are made. Existing owner-scoped access and approval controls remain authoritative. Rollback is reverting this bounded application change; no data rollback is needed.
+
+Product Completeness: the existing Advertising outcome/recommendation surfaces are reused, with no new navigation or module version. The disabled outcome control prevents blank submission. Behavioral validation covers explicit zero, unavailable results, bad measurement times, invalid stored evidence and repeated observations. Full tests, lint, types, build and independent review are required before release. Authenticated rendered verification remains deferred under the owner's recorded batch exception, not passed. Real campaign effectiveness remains inconclusive until comparable qualified-action evidence is observed.

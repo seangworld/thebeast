@@ -11,6 +11,7 @@ import {
 import {
   BEAST_MARKETING_VERSION,
   marketingOutcomeMetrics,
+  parseMarketingOutcomeValue,
   type MarketingAsset,
   type MarketingCampaign,
   type MarketingOutcome,
@@ -368,7 +369,7 @@ export function BeastMarketingWorkspace({ initialCampaignId = "" }: { initialCam
       <DashboardCard accent="admin">
         <SectionHeader eyebrow="Performance" title="Record attributable outcomes" description="Use a named evidence source. A recorded zero is valid evidence; a missing row remains unavailable." />
         <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3"><label className="text-sm font-bold text-slate-200">Metric<select className={`${inputClass} mt-2`} value={outcomeDraft.metric} onChange={(event) => setOutcomeDraft((draft) => ({ ...draft, metric: event.target.value as MarketingOutcomeMetric }))}>{marketingOutcomeMetrics.map((metric) => <option key={metric} value={metric}>{title(metric)}</option>)}</select></label><Field label="Value" type="number" value={outcomeDraft.value} onChange={(value) => setOutcomeDraft((draft) => ({ ...draft, value }))} /><Field label="Evidence source" value={outcomeDraft.sourceLabel} onChange={(value) => setOutcomeDraft((draft) => ({ ...draft, sourceLabel: value }))} /><Field label="Evidence URL · optional" value={outcomeDraft.sourceUrl} onChange={(value) => setOutcomeDraft((draft) => ({ ...draft, sourceUrl: value }))} /><Field label="Notes · optional" value={outcomeDraft.notes} onChange={(value) => setOutcomeDraft((draft) => ({ ...draft, notes: value }))} /></div>
-        <button type="button" className="beast-button mt-5" disabled={Boolean(busy)} onClick={() => void send({ kind: "outcome", campaignId: selectedCampaign.id, ...outcomeDraft, value: Number(outcomeDraft.value) }, "Outcome recorded with its evidence source.")}>Record outcome</button>
+        <button type="button" className="beast-button mt-5" disabled={Boolean(busy) || parseMarketingOutcomeValue(outcomeDraft.value) === null || !outcomeDraft.sourceLabel.trim()} onClick={() => void send({ kind: "outcome", campaignId: selectedCampaign.id, ...outcomeDraft }, "Outcome recorded with its evidence source.")}>Record outcome</button>
         <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{campaignOutcomes.map((item) => <div key={item.id} className="rounded-xl border border-white/10 bg-white/[0.03] p-4"><p className="text-xs font-black uppercase tracking-wider text-slate-400">{title(item.metric)}</p><p className="mt-1 text-2xl font-black text-white">{item.value.toLocaleString()}</p><p className="mt-2 text-xs text-slate-400">{item.sourceLabel} · {formatDate(item.measuredAt)}</p></div>)}{!campaignOutcomes.length ? <p className="text-sm text-slate-400">Performance evidence is unavailable.</p> : null}</div>
       </DashboardCard>
 
