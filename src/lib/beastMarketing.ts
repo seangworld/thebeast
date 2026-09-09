@@ -155,56 +155,83 @@ export function validateCampaignDraft(value: unknown) {
   };
 }
 
+/** Missing input is not a measured zero. Numeric strings support existing form/API callers. */
+export function parseMarketingOutcomeValue(value: unknown): number | null {
+  if (typeof value !== "number" && (typeof value !== "string" || !/^(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i.test(value.trim()))) return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+}
+
+function validOutcomeTimestamp(value: unknown, now: Date): value is string {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})$/.test(value)) return false;
+  const instant = Date.parse(value);
+  const day = value.slice(0, 10);
+  return Number.isFinite(instant) && instant <= now.getTime()
+    && new Date(`${day}T00:00:00Z`).toISOString().slice(0, 10) === day;
+}
+
+export function validateMarketingOutcomeDraft(input: unknown, now = new Date()) {
+  if (!input || typeof input !== "object" || !Number.isFinite(now.getTime())) return null;
+  const row = input as Record<string, unknown>;
+  const value = parseMarketingOutcomeValue(row.value);
+  const sourceLabel = text(row.sourceLabel, 240);
+  const measuredAt = row.measuredAt === undefined ? now.toISOString() : row.measuredAt;
+  if (!isMarketingOutcomeMetric(row.metric) || value === null || !sourceLabel || !validOutcomeTimestamp(measuredAt, now)) return null;
+  return { metric: row.metric, value, sourceLabel, measuredAt };
+}
+
 export function buildMarketingRecommendation({
   campaign,
   outcomes,
   approvedAssetCount,
+  now = new Date(),
 }: {
   campaign: Pick<MarketingCampaign, "status" | "sourceFacts" | "limitations">;
-  outcomes: Pick<MarketingOutcome, "metric" | "value" | "sourceLabel">[];
+  outcomes: Pick<MarketingOutcome, "metric" | "value" | "sourceLabel" | "measuredAt">[];
   approvedAssetCount: number;
+  now?: Date;
 }): MarketingRecommendation {
-  const totals = new Map<MarketingOutcomeMetric, number>();
-  for (const outcome of outcomes) {
-    totals.set(outcome.metric, (totals.get(outcome.metric) || 0) + outcome.value);
-  }
-  const evidence = outcomes.map((outcome) => `${outcome.sourceLabel}: ${outcome.metric} ${outcome.value}`);
-  const limitations = [...campaign.limitations];
+  const valid = outcomes.filter((outcome) => outcome.measuredAt !== undefined && validateMarketingOutcomeDraft(outcome, now));
+  const evidence = Array.from(new Set(valid.map((outcome) => `${outcome.sourceLabel}: ${outcome.metric} ${outcome.value} (measured ${outcome.measuredAt})`)));
+  const limitations = [...campaign.limitations, "Recorded observations may overlap and are not summed. Attribution and comparable reporting windows are not established; these records do not prove causal lift or authorize increased distribution.", "Historical observations do not establish current performance. Repeated records do not increase confidence."];
+  if (valid.length !== outcomes.length) limitations.push("Invalid, undated or future observations were excluded; excluded evidence is not zero.");
 
-  if (!outcomes.length) {
+  if (!valid.length) {
     return {
       decision: "modify",
       confidence: "low",
       rationale: ["Performance evidence is unavailable, so continuation or cancellation cannot be supported yet.", "Define a bounded approved test and record at least one useful outcome before judging the campaign."],
       evidence: campaign.sourceFacts.map((fact) => fact.label),
-      limitations: [...limitations, "No performance outcome has been recorded."],
+      limitations: [...limitations, "No performance outcome with valid measurement evidence is available."],
     };
   }
 
-  const conversions = (totals.get("downloads") || 0) + (totals.get("registrations") || 0) + (totals.get("activations") || 0) + (totals.get("retained_users") || 0);
-  const visits = totals.get("visits");
-  if (conversions > 0 && approvedAssetCount > 0) {
+  const downstream = valid.filter((outcome) => outcome.metric !== "visits");
+  if (!downstream.length) {
+    return { decision: "modify", confidence: "low", rationale: ["Downstream results have not been measured in the available evidence; they are unknown, not zero.", "Complete downstream measurement before judging the offer, creative or campaign."], evidence, limitations };
+  }
+  if (downstream.some((outcome) => outcome.value > 0) && approvedAssetCount > 0) {
     return {
       decision: "continue",
-      confidence: outcomes.length >= 3 ? "high" : "moderate",
-      rationale: ["Recorded evidence includes a useful downstream outcome.", "At least one reviewed asset is approved for this campaign."],
+      confidence: "low",
+      rationale: ["Recorded evidence includes a positive downstream observation and an approved asset.", "Consider continuing the bounded approved test after reviewing its measurement date and attribution; effectiveness is not established."],
       evidence,
       limitations,
     };
   }
-  if (typeof visits === "number" && visits > 0) {
+  if (downstream.some((outcome) => outcome.value > 0)) {
     return {
       decision: "modify",
-      confidence: "moderate",
-      rationale: ["The campaign produced recorded visits but no recorded downstream outcome.", "Revise the offer, call to action, or approved asset before increasing distribution."],
+      confidence: "low",
+      rationale: ["A positive downstream observation exists, but no reviewed asset is approved.", "Complete asset review and verify measurement attribution before considering continuation."],
       evidence,
       limitations,
     };
   }
   return {
-    decision: campaign.status === "completed" ? "stop" : "modify",
-    confidence: outcomes.length >= 2 ? "moderate" : "low",
-    rationale: ["Recorded outcomes do not yet show a useful result.", campaign.status === "completed" ? "Close or archive the campaign unless new evidence changes the result." : "Keep the campaign bounded while changing the test."],
+    decision: "modify",
+    confidence: "low",
+    rationale: ["Available downstream observations explicitly record zero; other unmeasured metrics remain unknown.", "Review the measurement window, attribution and test before changing or closing the campaign."],
     evidence,
     limitations,
   };

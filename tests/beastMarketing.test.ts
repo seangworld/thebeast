@@ -10,6 +10,8 @@ import {
   marketingCampaignStatuses,
   normalizeMarketingSourceFacts,
   validateCampaignDraft,
+  parseMarketingOutcomeValue,
+  validateMarketingOutcomeDraft,
   type MarketingCampaign,
   type MarketingOutcome,
 } from "../src/lib/beastMarketing";
@@ -441,6 +443,52 @@ test("BMKT-001 recommends Continue only from a useful recorded outcome and appro
   assert.equal(converted.decision, "continue");
   const unapproved = buildMarketingRecommendation({ campaign, outcomes: [result("downloads", 12)], approvedAssetCount: 0 });
   assert.notEqual(unapproved.decision, "continue");
+});
+
+test("growth outcomes distinguish explicit zero from missing and coerced input", () => {
+  for (const value of [undefined, null, "", "  ", false, true, [], {}, -1, NaN, Infinity, "0x10", "-2"]) {
+    assert.equal(parseMarketingOutcomeValue(value), null, String(value));
+    assert.equal(validateMarketingOutcomeDraft({ metric: "visits", value, sourceLabel: "Analytics" }), null);
+  }
+  for (const value of [0, "0", " 0 ", 12, "12.5"]) assert.notEqual(parseMarketingOutcomeValue(value), null);
+});
+
+test("growth evidence requires a real measurement date and retains explicit zero", () => {
+  const now = new Date("2026-09-09T10:00:00Z");
+  const draft = { metric: "registrations", value: 0, sourceLabel: "Analytics" };
+  assert.equal(validateMarketingOutcomeDraft(draft, now)?.measuredAt, now.toISOString());
+  for (const measuredAt of [null, "", "invalid", "2026-02-30T00:00:00Z", "2026-09-10T00:00:00Z"]) assert.equal(validateMarketingOutcomeDraft({ ...draft, measuredAt }, now), null);
+  assert.equal(validateMarketingOutcomeDraft({ ...draft, measuredAt: "2026-09-08T12:00:00Z" }, now)?.value, 0);
+  assert.equal(validateMarketingOutcomeDraft({ ...draft, measuredAt: "2026-09-08T12:00:00.123456+00:00" }, now)?.value, 0);
+});
+
+test("unmeasured downstream results prompt measurement, not creative changes or closure", () => {
+  for (const status of ["active", "completed"] as const) {
+    const recommendation = buildMarketingRecommendation({ campaign: { ...campaign, status }, outcomes: [result("visits", 100)], approvedAssetCount: 1 });
+    assert.equal(recommendation.decision, "modify");
+    assert.match(recommendation.rationale.join(" "), /unknown, not zero/);
+    assert.doesNotMatch(recommendation.rationale.join(" "), /Revise the offer|Close or archive/);
+  }
+  const zero = buildMarketingRecommendation({ campaign, outcomes: [result("registrations", 0)], approvedAssetCount: 1 });
+  assert.match(zero.rationale.join(" "), /explicitly record zero/);
+});
+
+test("repeated historical outcomes cannot raise confidence or establish causal lift", () => {
+  const observation = result("registrations", 3);
+  const single = buildMarketingRecommendation({ campaign, outcomes: [observation], approvedAssetCount: 1 });
+  const repeated = buildMarketingRecommendation({ campaign, outcomes: [observation, observation, observation], approvedAssetCount: 1 });
+  assert.equal(single.confidence, "low");
+  assert.deepEqual(repeated, single);
+  assert.match(single.limitations.join(" "), /do not prove causal lift/);
+  assert.match(single.evidence.join(" "), /2026-08-23/);
+});
+
+test("invalid persisted outcomes do not support learning recommendations", () => {
+  for (const observation of [{ ...result("registrations", 1), measuredAt: "invalid" }, { ...result("registrations", 1), measuredAt: "2099-01-01T00:00:00Z" }, result("registrations", NaN), { ...result("registrations", 1), sourceLabel: "" }]) {
+    const recommendation = buildMarketingRecommendation({ campaign, outcomes: [observation], approvedAssetCount: 1 });
+    assert.equal(recommendation.decision, "modify");
+    assert.match(recommendation.limitations.join(" "), /excluded/);
+  }
 });
 
 test("BMKT-001 persists owner-only records with explicit grants and atomic decisions", () => {
