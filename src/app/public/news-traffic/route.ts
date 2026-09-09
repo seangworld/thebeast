@@ -4,7 +4,7 @@ import { loadPublicNewsTraffic } from "@/lib/server/publicNewsTraffic";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
-const readTraffic = unstable_cache(() => loadPublicNewsTraffic(), ["public-news-traffic-v1"], { revalidate: 300 });
+const readTraffic = unstable_cache(() => loadPublicNewsTraffic(), ["public-news-traffic-v2"], { revalidate: 300 });
 
 export async function GET() {
   const data = await readTraffic();

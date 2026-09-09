@@ -20,6 +20,20 @@ test("incomplete, malformed, suppressed and ambiguous reports stay unavailable",
   assert.equal(summarizeNewsTraffic(report(), new Date("2026-11-01T15:00:00Z")).pageViews, null);
 });
 
+test("identified empty GA4 ProtoJSON reports use omitted zero defaults only", () => {
+  const empty = { ...report(), kind: "analyticsData#runReport", rowCount: undefined, rows: undefined };
+  assert.equal(summarizeNewsTraffic(empty, now).pageViews, 0);
+  assert.equal(summarizeNewsTraffic({ ...empty, rows: [] }, now).pageViews, 0);
+  for (const input of [
+    { ...empty, kind: undefined }, { ...empty, kind: "other" },
+    { ...empty, rows: null }, { ...empty, rows: {} }, { ...empty, rowCount: null },
+    { ...empty, rows: [row("202609091200", "2")] },
+    { ...empty, metadata: {} }, { ...empty, metricHeaders: [] },
+    { ...empty, metadata: { timeZone: "UTC", emptyReason: "suppressed" } },
+    { ...empty, metadata: { timeZone: "UTC", subjectToThresholding: true } },
+  ]) assert.equal(summarizeNewsTraffic(input, now).pageViews, null);
+});
+
 test("public loader is fixed to News aggregate, omits sensitive output and does not request when unconfigured", async () => {
   const environment = { BEAST_ECOSYSTEM_GA4_PROPERTY_ID: "123", GOOGLE_WIF_PROVIDER_RESOURCE: "existing", GOOGLE_GA4_READER_SERVICE_ACCOUNT_EMAIL: "existing@example.test" };
   let calls = 0;
