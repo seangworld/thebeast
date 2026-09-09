@@ -13,7 +13,7 @@ Object.defineProperties(globalThis, {
   Node: { value: dom.window.Node, configurable: true }, MutationObserver: { value: dom.window.MutationObserver, configurable: true },
   IS_REACT_ACT_ENVIRONMENT: { value: true, configurable: true, writable: true },
 });
-const { render, cleanup, waitFor, within } = require("@testing-library/react") as typeof import("@testing-library/react");
+const { render, cleanup, waitFor, within, fireEvent } = require("@testing-library/react") as typeof import("@testing-library/react");
 const originalFetch = globalThis.fetch;
 afterEach(() => { cleanup(); globalThis.fetch = originalFetch; });
 
@@ -67,4 +67,33 @@ test("running proposal work is not described as a completed cycle", async () => 
   await waitFor(() => assert.match(view.container.textContent || "", /processing are in progress/));
   assert.doesNotMatch(view.container.textContent || "", /Latest cycle completed/);
   saveFixture("running", view.container);
+});
+
+test("owner can retry a failed briefing with a read-only request", async () => {
+  const methods: string[] = [];
+  globalThis.fetch = async (_input, init) => {
+    methods.push(init?.method || "GET");
+    return methods.length === 1 ? Response.json({ error: "Unavailable" }, { status: 503 }) : Response.json(payload);
+  };
+  const view = render(React.createElement(StaffOperationsWorkspace, { compact: true }));
+  fireEvent.click(await within(view.container).findByRole("button", { name: "Retry briefing" }));
+  await waitFor(() => assert.match(view.container.textContent || "", /attention persists/));
+  assert.equal(within(view.container).queryByRole("alert"), null);
+  assert.deepEqual(methods, ["GET", "GET"]);
+});
+
+test("failed reload removes stale assignment status and controls until evidence recovers", async () => {
+  let reads = 0;
+  globalThis.fetch = async (_input, init) => {
+    if (init?.method === "POST") return Response.json({ ok: true });
+    reads += 1;
+    return reads === 2 ? Response.json({ error: "Evidence unavailable" }, { status: 503 }) : Response.json(payload);
+  };
+  const view = render(React.createElement(StaffOperationsWorkspace));
+  fireEvent.click(await within(view.container).findByRole("button", { name: "Pause daily assignment" }));
+  await within(view.container).findByRole("alert");
+  assert.doesNotMatch(view.container.textContent || "", /Daily assignment active|attention persists/);
+  assert.equal(within(view.container).queryByRole("button", { name: "Pause daily assignment" }), null);
+  fireEvent.click(within(view.container).getByRole("button", { name: "Retry briefing" }));
+  await within(view.container).findByRole("button", { name: "Pause daily assignment" });
 });
