@@ -1,6 +1,6 @@
 # SEANGWORLD Orchestrator briefing — BF-ORCH-005
 
-Status: candidate; not released.
+Status: initial briefing released on 2026-09-08; three-day operating assessment is the next candidate.
 
 ## Owner release note and operating help
 
@@ -33,3 +33,9 @@ Assess the next three real scheduled cycles after release: every attempt has a t
 The initial independent review returned two persistence blockers and incomplete Product Completeness evidence. The persistence changes and tests address those findings; re-review must bind to the new exact candidate. The browser refuses owner taps/typing, blocks localhost, and rejects offline fixture URLs. Synthetic DOM tests are not authenticated Preview acceptance or rendered mobile evidence.
 
 Broader outcome-driven Orchestrator optimization and the Growth, News and UX workstreams remain authorized and unfinished.
+
+## Three-day operating assessment
+
+The standing Orchestrator now adds an advisory Continue, Modify or Investigate assessment to its existing persisted briefing. It compares the current source observations with the latest completed scheduled observation on each of two distinct earlier days, bounded to the previous four days. Repeated runs on one day, future/incomplete records, stale records and malformed findings cannot establish the history window. Missing evidence produces Investigate; recurring source attention recommends investigation of existing findings without generating duplicate work.
+
+This assesses evidence collection and operational attention, not causal release effectiveness, user growth or member outcomes. It reads at most twelve existing owner-scoped scheduled run records, adds no provider or storage, keeps simulations separate, and never changes cadence, pause/revocation, proposal authorization or publication authority. The existing UI renders the result as another briefing item; there is no new navigation, control or member/public surface. Evaluate its usefulness over the next three real scheduled cycles; fewer comparable days remain insufficient evidence.

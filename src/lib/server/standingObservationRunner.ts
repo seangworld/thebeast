@@ -8,6 +8,7 @@ import { buildNonExecutableProposal, buildObserverFinding } from "../development
 import { buildStandingEcosystemEvidence } from "../standingObservationEvidence";
 import { buildStandingObservationLearning } from "../standingObservationLearning";
 import { persistStandingObservationCycle } from "../standingObservationPersistence";
+import { assessStandingOperations, type OperatingHistoryRow } from "../standingObservationOptimization";
 
 type Simulation = "clean" | null;
 
@@ -44,8 +45,15 @@ export async function runStandingObservation(ownerId: string, scheduleId: string
   const baseline = await service.from("beast_admin_staff_observation_runs").select("findings,unavailable_sources").eq("owner_id", ownerId).eq("trigger_type", simulation ? "owner_controlled_simulation" : "schedule").in("status", ["clean", "findings", "duplicate_skipped"]).order("started_at", { ascending: false }).limit(1).maybeSingle();
   if (baseline.error) throw new Error("observation_learning_history_unavailable");
   const triggerType = simulation ? "owner_controlled_simulation" : "schedule";
+  const learning = buildStandingObservationLearning(sources, baseline.data);
+  if (!simulation) {
+    const history = await service.from("beast_admin_staff_observation_runs").select("status,started_at,completed_at,checked_sources,unavailable_sources,findings").eq("owner_id", ownerId).eq("trigger_type", "schedule").order("started_at", { ascending: false }).limit(12);
+    if (history.error) throw new Error("observation_operating_history_unavailable");
+    const assessment = assessStandingOperations(sources, (history.data || []) as OperatingHistoryRow[], new Date(startedAt));
+    learning.push(`SEANGWORLD operating assessment — ${assessment.explanation}`);
+  }
   let createdProposals = 0;
-  const run = await persistStandingObservationCycle(sources, buildStandingObservationLearning(sources, baseline.data), {
+  const run = await persistStandingObservationCycle(sources, learning, {
     async hasAcceptedDigest(digest) {
       // Match the existing owner/digest unique index, which spans trigger types.
       const accepted = await service.from("beast_admin_staff_observation_runs").select("id").eq("owner_id", ownerId).eq("evidence_digest", digest).in("status", ["clean", "findings"]).limit(1).maybeSingle();
