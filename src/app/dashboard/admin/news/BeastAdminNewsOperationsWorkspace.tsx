@@ -53,7 +53,10 @@ export function BeastAdminNewsOperationsWorkspace({ status }: { status: NewsOper
 
       <section className="rounded-2xl border border-white/10 bg-[#111827] p-5" aria-labelledby="news-fact-desk-heading">
         <h2 id="news-fact-desk-heading" className="text-xl font-black text-white">Fact Desk Runtime</h2>
-        <p className="mt-2 text-sm text-slate-400">Ready through: <span className="font-black text-white">{status.factDesk.readiness.readyThrough}</span></p>
+        <p className="mt-2 text-sm text-slate-200">Observed worker health: <strong>{status.factDeskOperational?.status.toUpperCase() || "UNKNOWN"}</strong></p>
+        <p className="mt-2 text-sm text-slate-300">{status.factDeskOperational?.explanation || "Worker evidence unavailable; configuration alone does not establish operating health."}</p>
+        <p className="mt-2 text-xs text-slate-400">Last observed completion: {status.factDeskOperational?.lastCompletedAt || "Unavailable"}</p>
+        <p className="mt-4 text-sm text-slate-400">Configuration ready through: <span className="font-black text-white">{status.factDesk.readiness.readyThrough}</span></p>
         <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {runtime.map(([label, value]) => <div key={label} className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/10 p-4"><span className="text-sm font-bold text-slate-300">{label}</span><BooleanState value={value} /></div>)}
         </div>
