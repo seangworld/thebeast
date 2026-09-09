@@ -340,7 +340,8 @@ test("BeastMarketing uses one owner-only six-workspace hierarchy without duplica
   assert.match(advertising, /BeastMarketingWorkspace/);
   assert.doesNotMatch(advertisingWorkspace, /VideoGrowthEnginePanel/);
   assert.match(video, /VideoGrowthEnginePanel/);
-  for (const route of ["social", "email", "analytics"]) {
+  assert.match(readFileSync("src/app/dashboard/admin/marketing/analytics/page.tsx", "utf8"), /GrowthCyclePanel/);
+  for (const route of ["social", "email"]) {
     const foundation = readFileSync(`src/app/dashboard/admin/marketing/${route}/page.tsx`, "utf8");
     assert.match(foundation, /MarketingFoundationPage/);
   }

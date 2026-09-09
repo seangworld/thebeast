@@ -259,10 +259,11 @@ function qualifiedTrafficRows(
   return Array.from(qualifiedRowsByKey(current)).flatMap(([key, row]) => {
     if (!row) return [];
     const [source, landingPage, medium, campaignName, campaignId] = row.dimensionValues!.map((cell) => cell.value!);
-    const sessions = numeric(row.metricValues?.[0]);
-    const engagedSessions = numeric(row.metricValues?.[1]);
+    const sessions = actionCount(row.metricValues?.[0]);
+    const engagedSessions = actionCount(row.metricValues?.[1]);
+    if (sessions === null || engagedSessions === null || engagedSessions > sessions) return [];
     const previousRow = previousByKey.get(key);
-    const previousSessions = previousRow ? numeric(previousRow.metricValues?.[0]) : null;
+    const previousSessions = previousRow ? actionCount(previousRow.metricValues?.[0]) : null;
     return [{
       source, landingPage, medium, campaignName, campaignId,
       sessions,
@@ -546,6 +547,7 @@ async function loadGa4Data(
     browsers: dimensions(byKey.browsers),
     operatingSystems: dimensions(byKey.operatingSystems),
     trafficSources: dimensions(byKey.trafficSources),
+    qualifiedTrafficWindow: { ...ranges, scopeId: scope?.id || null },
     qualifiedTraffic: qualifiedTrafficRows(
       byKey.qualifiedTrafficcurrent,
       byKey.qualifiedTrafficprevious,

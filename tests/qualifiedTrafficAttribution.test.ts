@@ -54,6 +54,18 @@ test("suppression, sampling and mismatched headers remain unavailable", async ()
   assert.deepEqual(await load({ sessionsCurrent: { ...report([row()]), metadata: { subjectToThresholding: true } } }), []);
 });
 
+test("missing or malformed session counts remain unavailable, while explicit zero is retained", async () => {
+  for (const count of ["", "invalid", "-1", "1.5", "9007199254740993"]) {
+    assert.deepEqual(await load({ sessionsCurrent: report([row("organic", "id-1", count)]) }), []);
+    const rows = await load({ sessionsCurrent: report([row()]), sessionsPrevious: report([row("organic", "id-1", count)]) });
+    assert.equal(rows[0].previousSessions, null);
+  }
+  const absent = row(); absent.metricValues = [];
+  assert.deepEqual(await load({ sessionsCurrent: report([absent]) }), []);
+  const zero = row("organic", "id-1", "0"); zero.metricValues[1].value = "0";
+  assert.equal((await load({ sessionsCurrent: report([zero]) }))[0].sessions, 0);
+});
+
 test("actual owner table renders separate labels, provider ID and attribution limitations", async () => {
   const rows = await load({ sessionsCurrent: report([row("organic", "id-1", "10", "<campaign>"), row("cpc", "id-2")]) });
   const source = readFileSync("src/app/dashboard/admin/intelligence/SeangworldIntelligenceWorkspace.tsx", "utf8");

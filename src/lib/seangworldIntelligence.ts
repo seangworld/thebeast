@@ -172,6 +172,11 @@ export type SeangworldAnalyticsData = {
   operatingSystems: IntelligenceDimension[];
   trafficSources: IntelligenceDimension[];
   qualifiedTraffic: QualifiedTrafficRow[];
+  qualifiedTrafficWindow?: {
+    current: { startDate: string; endDate: string };
+    previous: { startDate: string; endDate: string };
+    scopeId: string | null;
+  };
   entryPages: IntelligenceDimension[];
   exitPages: (IntelligenceDimension & { exitRate?: number | null })[];
   topQueries: (IntelligenceDimension & {
