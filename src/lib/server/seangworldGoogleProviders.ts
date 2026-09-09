@@ -220,6 +220,12 @@ function dimensions(report: Ga4Report, secondaryMetric = false) {
   }));
 }
 
+function actionCount(cell: Ga4Cell | undefined): number | null {
+  if (typeof cell?.value !== "string" || !/^\d+$/.test(cell.value)) return null;
+  const value = Number(cell.value);
+  return Number.isSafeInteger(value) ? value : null;
+}
+
 function qualifiedTrafficRows(
   current: Ga4Report,
   previous: Ga4Report,
@@ -229,8 +235,8 @@ function qualifiedTrafficRows(
   const key = (row: Ga4Row) =>
     `${row.dimensionValues?.[0]?.value || "Unknown"}\n${row.dimensionValues?.[1]?.value || "/"}`;
   const previousByKey = new Map((previous.rows || []).map((row) => [key(row), row]));
-  const actionsByKey = new Map((currentActions.rows || []).map((row) => [key(row), numeric(row.metricValues?.[0])]));
-  const previousActionsByKey = new Map((previousActions.rows || []).map((row) => [key(row), numeric(row.metricValues?.[0])]));
+  const actionsByKey = new Map((currentActions.rows || []).map((row) => [key(row), actionCount(row.metricValues?.[0])]));
+  const previousActionsByKey = new Map((previousActions.rows || []).map((row) => [key(row), actionCount(row.metricValues?.[0])]));
   return (current.rows || []).map((row) => {
     const source = row.dimensionValues?.[0]?.value || "Unknown";
     const landingPage = row.dimensionValues?.[1]?.value || "/";
@@ -248,11 +254,11 @@ function qualifiedTrafficRows(
       engagementRate: sessions > 0 ? engagedSessions / sessions : null,
       qualifiedActions: currentActions.unavailable
         ? null
-        : actionsByKey.get(key(row)) || 0,
+        : actionsByKey.get(key(row)) ?? null,
       previousQualifiedActions:
         !previousRow || previousActions.unavailable
           ? null
-          : previousActionsByKey.get(key(row)) || 0,
+          : previousActionsByKey.get(key(row)) ?? null,
     };
   });
 }
