@@ -9,3 +9,5 @@ The rolling24-hour window ends at the last complete minute. GA4 property timezon
 Validate strict parsing, boundary dates, metadata suppression, fixed provider request/privacy, cache and public endpoint integration. Full application tests/types/lint/build and independent review are required. Authenticated/rendered Preview remains owner-deferred and unperformed. No provider funding/binding/grant, schema, cron, worker or Fact Brief hold change. Internal aggregate support introduces no module version change. Rollback is an isolated code revert; no data rollback.
 
 References: https://developers.google.com/analytics/devguides/reporting/data/v1/api-schema and https://developers.google.com/analytics/devguides/reporting/data/v1/rest/v1beta/ResponseMetaData.
+
+Live initial verification returned unavailable. Bounded internal diagnostics distinguish missing configuration, identity failure, HTTP status, timeout and report shape/suppression. Only fixed stages, booleans and bounded row totals are logged; no bodies, raw exceptions, identifiers or credentials. Public response remains the same aggregate contract.

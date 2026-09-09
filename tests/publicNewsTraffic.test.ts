@@ -35,3 +35,16 @@ test("public loader is fixed to News aggregate, omits sensitive output and does 
   assert.equal((await loadPublicNewsTraffic({ environment: {}, now, tokenLoader: async () => { throw new Error("must not load"); } })).pageViews, null);
   assert.equal((await loadPublicNewsTraffic({ environment, now, tokenLoader: async () => "token", fetchImpl: async () => Response.json({ secret: "private" }, { status: 403 }) })).pageViews, null);
 });
+
+test("unavailable diagnostics log bounded stages and shape without provider secrets", async () => {
+  const logs: unknown[][] = [], original = console.info;
+  console.info = (...args: unknown[]) => { logs.push(args); };
+  const environment = { BEAST_ECOSYSTEM_GA4_PROPERTY_ID: "private-property", GOOGLE_WIF_PROVIDER_RESOURCE: "private-identity", GOOGLE_GA4_READER_SERVICE_ACCOUNT_EMAIL: "private-email" };
+  try {
+    await loadPublicNewsTraffic({ environment, now, tokenLoader: async () => { throw new Error("private-error"); } });
+    await loadPublicNewsTraffic({ environment, now, tokenLoader: async () => "private-token", fetchImpl: async () => Response.json({ ...report(), rowCount: 9000, secret: "private-body" }) });
+    const serialized = JSON.stringify(logs);
+    assert.match(serialized, /identity-failed/); assert.match(serialized, /invalid-report/);
+    assert.doesNotMatch(serialized, /private-|9000/);
+  } finally { console.info = original; }
+});
