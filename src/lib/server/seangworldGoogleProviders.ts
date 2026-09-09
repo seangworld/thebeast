@@ -112,7 +112,7 @@ async function requestWithRetry(
     : new Error("Provider request failed.");
 }
 
-async function getGoogleAccessToken(
+export async function getGoogleAccessToken(
   environment: ServerEnvironment
 ) {
   const providerResource = environment.GOOGLE_WIF_PROVIDER_RESOURCE
