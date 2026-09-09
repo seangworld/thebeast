@@ -1,19 +1,12 @@
 import { BeastAdminShell } from "../../BeastAdminShell";
-import { MarketingFoundationPage } from "../MarketingFoundationPage";
+import { MarketingSectionNav } from "../MarketingSectionNav";
+import { GrowthCyclePanel } from "../GrowthCyclePanel";
 
 export default function MarketingAnalyticsPage() {
   return (
     <BeastAdminShell title="BeastMarketing · Analytics" purpose="Unify cross-channel marketing outcomes, qualified traffic, registration attribution, and future closed-loop growth learning.">
-      <MarketingFoundationPage
-        title="Analytics"
-        description="A dedicated marketing-outcome workspace for cross-channel attribution and learning without mixing operational production controls into reporting."
-        bullets={[
-          "Qualified traffic and landing-page outcomes",
-          "Campaign and channel attribution",
-          "Beast registrations and activation where privacy-safe",
-          "Scale, continue, modify, or stop recommendations",
-        ]}
-      />
+      <MarketingSectionNav />
+      <GrowthCyclePanel />
     </BeastAdminShell>
   );
 }

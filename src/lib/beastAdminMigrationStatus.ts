@@ -96,6 +96,7 @@ export const beastAdminRepositoryMigrationFiles = [
   "20260831150054_add_beast_marketing_video_control_plane.sql",
   "20260831224500_add_beast_marketing_media_persistence.sql",
   "20260909203153_add_ceo_company_costs.sql",
+  "20260909214424_add_marketing_growth_cycles.sql",
 ] as const;
 
 export type BeastAdminMigrationState =

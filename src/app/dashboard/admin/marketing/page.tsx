@@ -31,8 +31,8 @@ const sections = [
   {
     title: "Analytics",
     href: "/dashboard/admin/marketing/analytics",
-    status: "Foundation",
-    description: "Cross-channel marketing outcomes, attribution, qualified traffic, registrations, and future closed-loop growth learning.",
+    status: "Discovery and assessment",
+    description: "Daily Beast and News campaign preparation, tracked draft links, search evidence assessments, and visible execution blockers.",
   },
 ] as const;
 

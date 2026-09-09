@@ -107,7 +107,9 @@ test("live GA4 and Search Console responses map to the provider-neutral dashboar
       const metricValues =
         dimension === "date"
             ? [{ value: "20" }, { value: "30" }, { value: "40" }]
-            : [{ value: "50" }];
+            : body.dimensions?.length === 5 && body.metrics?.length === 2
+              ? [{ value: "50" }, { value: "25" }]
+              : [{ value: "50" }];
       return new Response(
         JSON.stringify({
           rows: [
