@@ -112,14 +112,9 @@ test("live GA4 and Search Console responses map to the provider-neutral dashboar
         JSON.stringify({
           rows: [
             {
-              dimensionValues: [
-                {
-                  value:
-                    dimension === "date"
-                      ? "20260727"
-                      : "Verified",
-                },
-              ],
+              dimensionValues: body.dimensions?.length === 5
+                ? ["Verified", "/guide", "organic", "guide", "campaign-1"].map((value) => ({ value }))
+                : [{ value: dimension === "date" ? "20260727" : "Verified" }],
               metricValues,
             },
           ],

@@ -35,7 +35,7 @@ test("SW-QTG-001 uses existing owner surfaces and keeps execution disabled", () 
     "docs/SW-QTG-001-QUALIFIED-TRAFFIC-GROWTH.md",
     "utf8"
   );
-  assert.match(intelligence, /Qualified traffic by source and landing page/);
+  assert.match(intelligence, /Qualified traffic by acquisition campaign and landing page/);
   assert.match(marketing, /Primary growth objective · Qualified Traffic Growth/);
   assert.match(packageRecord, /No automatic proposal intake, publication, distribution, execution, or spend/);
   assert.match(packageRecord, /does not expand\s+the current three-source standing assignment/);

@@ -183,7 +183,7 @@ test("owner route and dashboard contain all required sections and no AI claim pa
     "Optimize Existing", "Create New", "Distribute", "Monitor", "Ignore", "Best format",
     "Owner approval required before publication",
     "Improve Existing Page", "Create Supporting Content", "Distribute Existing Asset", "Investigate", "Watch", "Ignore",
-    "Qualified traffic by source and landing page", "Qualified actions", "Evidence-backed recommendation",
+    "Qualified traffic by acquisition campaign and landing page", "Qualified actions", "Evidence-backed recommendation",
     "Baseline", "BeastHunter is canonically registered", "Final Data Through", "Reporting Delay",
     "Provider Status", "Connection Status", "Last Sync", "Data Freshness",
   ]) assert.match(workspace, new RegExp(label));
