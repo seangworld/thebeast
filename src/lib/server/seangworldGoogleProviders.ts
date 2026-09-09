@@ -23,7 +23,12 @@ type Ga4Row = {
   dimensionValues?: Ga4Cell[];
   metricValues?: Ga4Cell[];
 };
-type Ga4Report = { rows?: Ga4Row[]; unavailable?: true };
+type Ga4Report = {
+  rows?: Ga4Row[]; unavailable?: true;
+  dimensionHeaders?: { name?: string }[];
+  metadata?: { subjectToThresholding?: boolean; dataLossFromOtherRow?: boolean; samplingMetadatas?: unknown[]; emptyReason?: string };
+};
+const QUALIFIED_TRAFFIC_DIMENSIONS = ["sessionSource", "landingPagePlusQueryString", "sessionMedium", "sessionCampaignName", "sessionCampaignId"] as const;
 
 type SearchConsoleRow = {
   keys?: string[];
@@ -226,40 +231,48 @@ function actionCount(cell: Ga4Cell | undefined): number | null {
   return Number.isSafeInteger(value) ? value : null;
 }
 
+function qualifiedRowsByKey(report: Ga4Report) {
+  const result = new Map<string, Ga4Row | null>();
+  const meta = report.metadata;
+  if (report.unavailable || meta?.subjectToThresholding || meta?.dataLossFromOtherRow || meta?.samplingMetadatas?.length || meta?.emptyReason) return result;
+  if (report.dimensionHeaders && (report.dimensionHeaders.length !== QUALIFIED_TRAFFIC_DIMENSIONS.length || report.dimensionHeaders.some((header, index) => header.name !== QUALIFIED_TRAFFIC_DIMENSIONS[index]))) return result;
+  for (const row of Array.isArray(report.rows) ? report.rows : []) {
+    const values = Array.isArray(row?.dimensionValues) ? row.dimensionValues.map((cell) => cell?.value) : undefined;
+    if (values?.length !== QUALIFIED_TRAFFIC_DIMENSIONS.length || values.some((value) => typeof value !== "string" || !value.trim())) continue;
+    // Preserve the complete provider tuple, including ID: names need not be unique.
+    // JSON encoding avoids collisions from delimiters inside provider labels.
+    const key = JSON.stringify(values);
+    result.set(key, result.has(key) ? null : row);
+  }
+  return result;
+}
+
 function qualifiedTrafficRows(
   current: Ga4Report,
   previous: Ga4Report,
   currentActions: Ga4Report,
   previousActions: Ga4Report
 ): QualifiedTrafficRow[] {
-  const key = (row: Ga4Row) =>
-    `${row.dimensionValues?.[0]?.value || "Unknown"}\n${row.dimensionValues?.[1]?.value || "/"}`;
-  const previousByKey = new Map((previous.rows || []).map((row) => [key(row), row]));
-  const actionsByKey = new Map((currentActions.rows || []).map((row) => [key(row), actionCount(row.metricValues?.[0])]));
-  const previousActionsByKey = new Map((previousActions.rows || []).map((row) => [key(row), actionCount(row.metricValues?.[0])]));
-  return (current.rows || []).map((row) => {
-    const source = row.dimensionValues?.[0]?.value || "Unknown";
-    const landingPage = row.dimensionValues?.[1]?.value || "/";
+  const previousByKey = qualifiedRowsByKey(previous);
+  const actionsByKey = qualifiedRowsByKey(currentActions);
+  const previousActionsByKey = qualifiedRowsByKey(previousActions);
+  return Array.from(qualifiedRowsByKey(current)).flatMap(([key, row]) => {
+    if (!row) return [];
+    const [source, landingPage, medium, campaignName, campaignId] = row.dimensionValues!.map((cell) => cell.value!);
     const sessions = numeric(row.metricValues?.[0]);
     const engagedSessions = numeric(row.metricValues?.[1]);
-    const previousRow = previousByKey.get(key(row));
+    const previousRow = previousByKey.get(key);
     const previousSessions = previousRow ? numeric(previousRow.metricValues?.[0]) : null;
-    return {
-      source,
-      landingPage,
+    return [{
+      source, landingPage, medium, campaignName, campaignId,
       sessions,
       previousSessions,
       sessionChange: previousSessions === null ? null : sessions - previousSessions,
       engagedSessions,
       engagementRate: sessions > 0 ? engagedSessions / sessions : null,
-      qualifiedActions: currentActions.unavailable
-        ? null
-        : actionsByKey.get(key(row)) ?? null,
-      previousQualifiedActions:
-        !previousRow || previousActions.unavailable
-          ? null
-          : previousActionsByKey.get(key(row)) ?? null,
-    };
+      qualifiedActions: actionCount(actionsByKey.get(key)?.metricValues?.[0]),
+      previousQualifiedActions: previousRow ? actionCount(previousActionsByKey.get(key)?.metricValues?.[0]) : null,
+    }];
   });
 }
 
@@ -433,10 +446,7 @@ async function loadGa4Data(
         key: `qualifiedTraffic${period}`,
         body: {
           dateRanges: [ranges[period]],
-          dimensions: [
-            { name: "sessionSource" },
-            { name: "landingPagePlusQueryString" },
-          ],
+          dimensions: QUALIFIED_TRAFFIC_DIMENSIONS.map((name) => ({ name })),
           metrics: [{ name: "sessions" }, { name: "engagedSessions" }],
           orderBys: [{ metric: { metricName: "sessions" }, desc: true }],
           limit: "50",
@@ -446,10 +456,7 @@ async function loadGa4Data(
         key: `qualifiedActions${period}`,
         body: {
           dateRanges: [ranges[period]],
-          dimensions: [
-            { name: "sessionSource" },
-            { name: "landingPagePlusQueryString" },
-          ],
+          dimensions: QUALIFIED_TRAFFIC_DIMENSIONS.map((name) => ({ name })),
           metrics: [{ name: "eventCount" }],
           dimensionFilter: {
             filter: {

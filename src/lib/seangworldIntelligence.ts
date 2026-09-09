@@ -122,6 +122,9 @@ export type SearchOpportunity = {
 
 export type QualifiedTrafficRow = {
   source: string;
+  medium: string;
+  campaignName: string;
+  campaignId: string;
   landingPage: string;
   sessions: number;
   previousSessions: number | null;

@@ -6,13 +6,13 @@ async function loadActions(suffix: string, currentValue: unknown, previousValue:
   const env = { BEAST_ECOSYSTEM_GA4_PROPERTY_ID: `action-evidence-${suffix}`, GOOGLE_WIF_PROVIDER_RESOURCE: "projects/test/providers/test", GOOGLE_GA4_READER_SERVICE_ACCOUNT_EMAIL: "test@example.test" };
   const fetcher: typeof fetch = async (_input, init) => {
     const body = JSON.parse(String(init?.body));
-    const paired = body.dimensions?.length === 2 && body.dimensions[0].name === "sessionSource";
+    const paired = body.dimensions?.length === 5 && body.dimensions[0].name === "sessionSource";
     const action = body.metrics?.[0]?.name === "eventCount";
     const previous = body.dateRanges?.[0]?.startDate === "2026-07-14";
     if (!paired) return new Response(JSON.stringify({ rows: [] }));
     if (action && mode === "failed") return new Response("Unavailable", { status: 403 });
     if (action && mode === "absent") return new Response(JSON.stringify({ rows: [] }));
-    const dimensions = [{ value: "google" }, { value: action && mode === "other-page" ? "/other" : "/guide" }];
+    const dimensions = [{ value: "google" }, { value: action && mode === "other-page" ? "/other" : "/guide" }, { value: "organic" }, { value: "guide" }, { value: "campaign-1" }];
     return new Response(JSON.stringify({ rows: [{ dimensionValues: dimensions, metricValues: action ? [{ value: previous ? previousValue : currentValue }] : [{ value: "10" }, { value: "5" }] }] }));
   };
   const providers = await loadLiveSeangworldProviders(env, new Date("2026-07-28T12:00:00Z"), fetcher, async () => "test-token", 7);
