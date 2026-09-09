@@ -1,6 +1,6 @@
 # Search Growth Engine campaign preparation
 
-Status: campaign preparation released through PR62 and outcome evidence integrity through PR64 on 2026-09-09. Live search assessment below is a new candidate.
+Status: campaign preparation released through PR62, outcome evidence integrity through PR64, and live search assessment through PR65 on 2026-09-09. GA4 action evidence correction below is a new candidate.
 
 The existing owner-only Search Growth Engine can prepare a BeastMarketing campaign for an actionable Beast or News opportunity. Choose **Prepare campaign**, then follow **Review in BeastMarketing**. The server reloads the product-scoped Search Console evidence, retains the finalized current and prior baseline, and saves a draft in the existing campaign workspace. Existing campaign editing, asset review and distribution controls remain authoritative.
 
@@ -24,7 +24,7 @@ This is part of the authorized Growth learning foundation, not autonomous growth
 
 Product Completeness: the existing Advertising outcome/recommendation surfaces are reused, with no new navigation or module version. The disabled outcome control prevents blank submission. Behavioral validation covers explicit zero, unavailable results, bad measurement times, invalid stored evidence and repeated observations. Full tests, lint, types, build and independent review are required before release. Authenticated rendered verification remains deferred under the owner's recorded batch exception, not passed. Real campaign effectiveness remains inconclusive until comparable qualified-action evidence is observed.
 
-## Owner-requested live search assessment candidate
+## Owner-requested live search assessment
 
 Existing search campaigns expose **Refresh search evidence** beside advisory recommendations. The server derives the exact page/query from retained campaign facts, verifies the owner-specific deterministic campaign ID, then uses the existing product-scoped provider integration for the latest finalized 30 days and preceding 30 days. Browser metrics and targets are ignored. Only a recommendation is appended; campaign status, original discovery baseline, assets and outcomes are preserved.
 
@@ -33,3 +33,9 @@ Advice records synchronization and assessment times, both reporting windows, raw
 Production read-only reconciliation found the existing recommendation schema available and no video-control authorization row on 2026-09-09. This increment needs no migration, new integration grant, paid execution or expansion of the standing observation's three-source allowlist. GA4 qualified-action attribution is deliberately excluded: sampled missing rows and source-only dimensions cannot establish campaign conversions. Recurring discovery, attributed outcome learning and the broader approved workstreams remain open.
 
 Product Completeness: reuse the existing Advertising surface and owner access; no new module, navigation or public route. Test exact persisted identity, owner/product boundaries, dated equal windows, stale/future/missing evidence and explicit zero, then full suite/types/lint/build and independent review. Authenticated rendered verification remains owner-deferred for the batch, never claimed passed. Rollback is reverting this application increment; historical recommendations need no data rollback.
+
+## GA4 action evidence correction candidate
+
+The existing Intelligence qualified-traffic table now preserves missing sampled action rows as unavailable in both reporting periods. Only an explicit non-negative safe integer event count is accepted; malformed or absent counts are never coerced to zero. Explicit zero and valid positive counts remain visible, and the existing session metrics are unchanged. The table explains the 50-row report limit, intent-event semantics and lack of medium/campaign attribution. Account-creation selections do not prove registrations or activations.
+
+This is a measurement prerequisite, not attributed campaign learning. Existing provider requests, cache, owner scopes, events and integrations remain unchanged; no schema, standing authorization, spend or publishing action. Product Completeness reuses the same table's existing Unavailable rendering; no new navigation or module version. Full provider-response behavior tests, types, lint, build and independent review precede release. Authenticated rendering remains owner-deferred. Rollback is a code revert; no stored data is modified.

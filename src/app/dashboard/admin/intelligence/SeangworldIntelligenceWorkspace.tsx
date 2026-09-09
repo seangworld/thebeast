@@ -100,6 +100,7 @@ function QualifiedTrafficTable({
       <h2 id="qualified-traffic-heading" className="mt-2 text-xl font-black text-white">Qualified traffic by source and landing page</h2>
       <p className="mt-2 max-w-4xl text-sm leading-6 text-slate-300">
         This joins existing GA4 acquisition evidence into one owner view. Qualified actions are recorded guide downloads, resource/tool views, Beast entry selections, and account-creation selections—not impressions or visits alone.
+        {" "}These are intent events, not verified registrations or activations. Each report is limited to 50 rows; missing action rows are unavailable, not zero. Source alone does not identify a medium or attribute results to a campaign.
       </p>
       {items.length ? (
         <div className="mt-4 overflow-x-auto" tabIndex={0} aria-label="Qualified traffic by source and landing page table, horizontally scrollable">
