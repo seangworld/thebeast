@@ -10,6 +10,7 @@ test("public product analytics scopes use canonical production hostnames", () =>
   assert.deepEqual(seangworldAnalyticsScopeIds, [
     "seangworld",
     "seangworldnews",
+    "thebeast",
     "change-the-world",
   ]);
   assert.equal(

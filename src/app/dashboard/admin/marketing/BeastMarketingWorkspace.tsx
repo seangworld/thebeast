@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { selectSearchCampaign } from "@/lib/searchGrowthCampaignPersistence";
+import { CampaignReviewEvidence } from "./CampaignReviewEvidence";
 import {
   DashboardCard,
   MetricTile,
@@ -84,9 +86,9 @@ function formatDate(value: string | null) {
   return value ? new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value)) : "Unavailable";
 }
 
-export function BeastMarketingWorkspace() {
+export function BeastMarketingWorkspace({ initialCampaignId = "" }: { initialCampaignId?: string } = {}) {
   const [snapshot, setSnapshot] = useState<Snapshot>(emptySnapshot);
-  const [selectedCampaignId, setSelectedCampaignId] = useState("");
+  const [selectedCampaignId, setSelectedCampaignId] = useState(initialCampaignId);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
@@ -100,7 +102,7 @@ export function BeastMarketingWorkspace() {
   const [planDraft, setPlanDraft] = useState({ variantId: "", plannedFor: "", timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC", ownerNotes: "" });
   const [handoff, setHandoff] = useState<Record<string, unknown> | null>(null);
 
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
@@ -108,15 +110,16 @@ export function BeastMarketingWorkspace() {
       const body = await response.json() as Snapshot & { error?: string };
       if (!response.ok) throw new Error(body.error || "BeastMarketing could not load.");
       setSnapshot(body);
-      setSelectedCampaignId((current) => current || body.campaigns[0]?.id || "");
+      setSelectedCampaignId((current) => selectSearchCampaign(body.campaigns, current, initialCampaignId));
+      if (initialCampaignId && !body.campaigns.some((item) => item.id === initialCampaignId)) setError("The requested campaign is unavailable for this owner. No other campaign was selected.");
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "BeastMarketing could not load.");
     } finally {
       setLoading(false);
     }
-  }
+  }, [initialCampaignId]);
 
-  useEffect(() => { void load(); }, []);
+  useEffect(() => { void load(); }, [load]);
 
   const selectedCampaign = snapshot.campaigns.find((item) => item.id === selectedCampaignId) || null;
   const campaignAssets = snapshot.assets.filter((item) => item.campaignId === selectedCampaignId);
@@ -300,6 +303,7 @@ export function BeastMarketingWorkspace() {
       {snapshot.campaigns.map((item) => <DashboardCard key={item.id} accent="admin" className={item.id === selectedCampaignId ? "ring-2 ring-amber-300/60" : ""}>
         <button type="button" className="w-full text-left" onClick={() => setSelectedCampaignId(item.id)}><p className="text-xs font-black uppercase tracking-wider text-amber-200">{title(item.status)}</p><h2 className="mt-2 text-xl font-black text-white">{item.title}</h2><p className="mt-2 text-sm leading-6 text-slate-300">{item.objective}</p></button>
         <dl className="mt-4 grid gap-2 text-sm sm:grid-cols-2"><Summary label="Audience" value={item.audience} /><Summary label="Offer" value={item.offer} /><Summary label="Call to action" value={item.callToAction} /><Summary label="Updated" value={formatDate(item.updatedAt)} /></dl>
+        <CampaignReviewEvidence campaign={item} />
         <div className="mt-4 flex flex-wrap gap-2"><MiniButton label="Submit for review" disabled={busy === item.id} onClick={() => void updateStatus("campaign", item.id, "review")} /><MiniButton label="Approve exact draft" disabled={Boolean(busy)} onClick={() => void decide("campaign", item.id, "approve", "approved")} /><MiniButton label="Request changes" disabled={Boolean(busy)} onClick={() => void decide("campaign", item.id, "request_changes", "draft")} /></div>
       </DashboardCard>)}
       {!snapshot.campaigns.length ? <DashboardCard accent="admin"><p className="text-sm text-slate-300">No campaign exists yet. Create the first bounded campaign above.</p></DashboardCard> : null}

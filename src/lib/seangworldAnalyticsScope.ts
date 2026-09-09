@@ -1,6 +1,7 @@
 export const seangworldAnalyticsScopeIds = [
   "seangworld",
   "seangworldnews",
+  "thebeast",
   "change-the-world",
 ] as const;
 
@@ -15,6 +16,12 @@ export type SeangworldAnalyticsScope = {
 };
 
 const scopes: Record<SeangworldAnalyticsScopeId, SeangworldAnalyticsScope> = {
+  thebeast: {
+    id: "thebeast",
+    label: "The Beast",
+    ga4HostRegex: "^thebeast\\.seangworld\\.com$",
+    searchConsolePageRegex: "^https://thebeast\\.seangworld\\.com/.*",
+  },
   seangworld: {
     id: "seangworld",
     label: "SEANGWORLD.com",
@@ -43,5 +50,18 @@ export function getSeangworldAnalyticsScope(
     return null;
   }
   return scopes[value as SeangworldAnalyticsScopeId];
+}
+
+export function searchGrowthProduct(page: string): SeangworldAnalyticsScopeId | null {
+  try {
+    const url = new URL(page);
+    const firstPath = decodeURIComponent(url.pathname).split("/").filter(Boolean)[0]?.toLowerCase();
+    if (url.protocol !== "https:" || url.username || url.password || url.port || url.search || url.hash
+      || ["dashboard", "api", "auth"].includes(firstPath || "")) return null;
+    const hosts: Record<string, SeangworldAnalyticsScopeId> = {
+      "news.seangworld.com": "seangworldnews", "thebeast.seangworld.com": "thebeast",
+    };
+    return hosts[url.hostname] || null;
+  } catch { return null; }
 }
 
