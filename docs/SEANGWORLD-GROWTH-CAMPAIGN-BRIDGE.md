@@ -1,6 +1,6 @@
 # Search Growth Engine campaign preparation
 
-Status: campaign preparation released through PR62 on 2026-09-09. Outcome evidence integrity below is a new candidate.
+Status: campaign preparation released through PR62 and outcome evidence integrity through PR64 on 2026-09-09. Live search assessment below is a new candidate.
 
 The existing owner-only Search Growth Engine can prepare a BeastMarketing campaign for an actionable Beast or News opportunity. Choose **Prepare campaign**, then follow **Review in BeastMarketing**. The server reloads the product-scoped Search Console evidence, retains the finalized current and prior baseline, and saves a draft in the existing campaign workspace. Existing campaign editing, asset review and distribution controls remain authoritative.
 
@@ -14,7 +14,7 @@ Validation: focused source/freshness/baseline/privacy/idempotency tests, full su
 
 Independent review of ed8ebdfe75bc42c672e777bfaa665729215b97f3 found two integration blockers: campaign evidence was not visible before approval, and the handoff lost the campaign ID. The remediation exposes source facts, baseline, timestamps, per-fact limitations, success measures and campaign limitations in existing review cards, and carries the exact owner-scoped campaign ID to Advertising. An unavailable requested campaign never silently selects another. Behavioral tests cover archived retries, concurrent insert conflicts, missing evidence, lookup/write failures, exact selection and rendered evidence. Re-review must bind to the remediated candidate. Preview currently redirects this browser to Vercel login; no authenticated or responsive verification is claimed.
 
-## Outcome evidence integrity candidate
+## Outcome evidence integrity
 
 An empty result must not become a recorded zero. The existing outcome form now requires an explicit non-negative value and named evidence source; the server repeats validation and rejects null, boolean, blank, invalid, and future-dated evidence. Omitting the optional measurement time records the submission time, while an explicitly invalid time is never replaced with now. Existing records are not rewritten.
 
@@ -23,3 +23,13 @@ New advisory recommendations retain measurement dates, exclude invalid records, 
 This is part of the authorized Growth learning foundation, not autonomous growth completion. No database schema, provider, authorization, paid generation, external publishing, cadence or standing-observation source changes are made. Existing owner-scoped access and approval controls remain authoritative. Rollback is reverting this bounded application change; no data rollback is needed.
 
 Product Completeness: the existing Advertising outcome/recommendation surfaces are reused, with no new navigation or module version. The disabled outcome control prevents blank submission. Behavioral validation covers explicit zero, unavailable results, bad measurement times, invalid stored evidence and repeated observations. Full tests, lint, types, build and independent review are required before release. Authenticated rendered verification remains deferred under the owner's recorded batch exception, not passed. Real campaign effectiveness remains inconclusive until comparable qualified-action evidence is observed.
+
+## Owner-requested live search assessment candidate
+
+Existing search campaigns expose **Refresh search evidence** beside advisory recommendations. The server derives the exact page/query from retained campaign facts, verifies the owner-specific deterministic campaign ID, then uses the existing product-scoped provider integration for the latest finalized 30 days and preceding 30 days. Browser metrics and targets are ignored. Only a recommendation is appended; campaign status, original discovery baseline, assets and outcomes are preserved.
+
+Advice records synchronization and assessment times, both reporting windows, raw metrics, and absolute click/impression changes when both sampled rows exist. An absent current row, stale/failed provider, malformed metrics or unequal/unfinalized windows saves no assessment and shows a retryable error. A missing prior row remains unavailable. Explicit zero remains valid even if the original opportunity is no longer actionable. Historical assessments remain dated history; refreshing may reuse the provider's existing recent cache. Advice always remains low-confidence and requests review and qualified measurement, never inferring causal campaign lift or conversions from search clicks.
+
+Production read-only reconciliation found the existing recommendation schema available and no video-control authorization row on 2026-09-09. This increment needs no migration, new integration grant, paid execution or expansion of the standing observation's three-source allowlist. GA4 qualified-action attribution is deliberately excluded: sampled missing rows and source-only dimensions cannot establish campaign conversions. Recurring discovery, attributed outcome learning and the broader approved workstreams remain open.
+
+Product Completeness: reuse the existing Advertising surface and owner access; no new module, navigation or public route. Test exact persisted identity, owner/product boundaries, dated equal windows, stale/future/missing evidence and explicit zero, then full suite/types/lint/build and independent review. Authenticated rendered verification remains owner-deferred for the batch, never claimed passed. Rollback is reverting this application increment; historical recommendations need no data rollback.
