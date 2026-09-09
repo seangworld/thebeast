@@ -11,3 +11,7 @@ Validate strict parsing, boundary dates, metadata suppression, fixed provider re
 References: https://developers.google.com/analytics/devguides/reporting/data/v1/api-schema and https://developers.google.com/analytics/devguides/reporting/data/v1/rest/v1beta/ResponseMetaData.
 
 Live initial verification returned unavailable. Bounded internal diagnostics distinguish missing configuration, identity failure, HTTP status, timeout and report shape/suppression. Only fixed stages, booleans and bounded row totals are logged; no bodies, raw exceptions, identifiers or credentials. Public response remains the same aggregate contract.
+
+Live diagnostics identified an empty report with matching headers and timezone but omitted row count. GA4 uses ProtoJSON, whose implicit zero integer and empty repeated fields are omitted by default. The parser accepts omitted `rowCount` only when `kind` is `analyticsData#runReport`, rows are absent or an empty array, and all existing header, metadata and window checks pass. Nonempty reports still require an exact row count; null/malformed rows and unidentified missing evidence remain unavailable. Cache version 2 prevents the earlier rejected empty report from being reused after this parsing correction.
+
+Response format references: https://developers.google.com/analytics/devguides/reporting/data/v1/rest/v1beta/RunReportResponse and https://protobuf.dev/programming-guides/json/#presence-and-default-values.

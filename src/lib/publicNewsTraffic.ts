@@ -35,8 +35,14 @@ export function summarizeNewsTraffic(report: unknown, now: Date): PublicNewsTraf
     if (data.dimensionHeaders?.length !== 1 || data.dimensionHeaders[0].name !== "dateHourMinute" || data.metricHeaders?.length !== 1 || data.metricHeaders[0].name !== "screenPageViews") return unavailable;
     const meta = data.metadata;
     if (!meta?.timeZone || meta.subjectToThresholding || meta.dataLossFromOtherRow || meta.emptyReason || meta.samplingMetadatas?.length) return unavailable;
-    const rows = data.rows ?? [];
-    if (!Number.isSafeInteger(data.rowCount) || data.rowCount! < 0 || data.rowCount! > 5000 || rows.length !== data.rowCount) return unavailable;
+    const rows = data.rows === undefined ? [] : data.rows;
+    if (!Array.isArray(rows)) return unavailable;
+    // GA4 ProtoJSON omits a zero rowCount. Accept that default only for an
+    // identified runReport response with no rows and the validated headers/metadata.
+    const implicitEmpty = data.rowCount === undefined && rows.length === 0 &&
+      (report as { kind?: string }).kind === "analyticsData#runReport";
+    const rowCount = implicitEmpty ? 0 : data.rowCount;
+    if (!Number.isSafeInteger(rowCount) || rowCount! < 0 || rowCount! > 5000 || rows.length !== rowCount) return unavailable;
     const start = new Date(window.windowStart), end = new Date(window.windowEnd);
     const startKey = localMinute(start, meta.timeZone), endKey = localMinute(end, meta.timeZone);
     // A DST transition makes minute labels ambiguous; do not invent an exact rolling count.
