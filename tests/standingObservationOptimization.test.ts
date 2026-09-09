@@ -45,3 +45,15 @@ test("a later failed attempt cannot be hidden by an earlier clean attempt on the
   const failed = { ...day("2026-09-08"), status: "failed", started_at: "2026-09-08T12:00:00Z", completed_at: "2026-09-08T12:00:01Z" };
   assert.equal(assessStandingOperations([source], [day("2026-09-08"), failed, day("2026-09-07"), day("2026-09-06")], now).recommendation, "Investigate");
 });
+
+test("malformed JSONB source collections and unknown finding IDs remain insufficient evidence", () => {
+  for (const patch of [
+    { checked_sources: {} }, { checked_sources: source.source }, { unavailable_sources: {} },
+    { checked_sources: [""] }, { checked_sources: [source.source, source.source] },
+    { unavailable_sources: [source.source] }, { findings: [{ source: "" }] },
+    { findings: [{ source: "unapproved_provider" }] },
+  ]) {
+    const invalid = { ...day("2026-09-08"), ...patch } as unknown as OperatingHistoryRow;
+    assert.equal(assessStandingOperations([source], [invalid, day("2026-09-07")], now).recommendation, "Investigate");
+  }
+});

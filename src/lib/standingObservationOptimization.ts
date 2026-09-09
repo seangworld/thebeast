@@ -1,5 +1,10 @@
 import { recommendOutcome, type OutcomeRecommendation } from "./developmentWorkflowIntelligence";
-import type { ObservationSourceResult } from "./standingObservation";
+import { standingObservationPermittedSources, type ObservationSourceResult } from "./standingObservation";
+
+const permittedSources = new Set<string>(standingObservationPermittedSources);
+const validSourceList = (value: unknown): value is string[] => Array.isArray(value)
+  && value.every((source) => typeof source === "string" && permittedSources.has(source))
+  && new Set(value).size === value.length;
 
 export type OperatingHistoryRow = {
   status: string;
@@ -42,8 +47,10 @@ export function assessStandingOperations(
     const completed = row.completed_at ? Date.parse(row.completed_at) : NaN;
     return ["clean", "findings", "duplicate_skipped"].includes(row.status)
       && Number.isFinite(completed) && completed >= Date.parse(row.started_at) && completed <= nowMs
+      && validSourceList(row.checked_sources) && validSourceList(row.unavailable_sources)
+      && !row.checked_sources.some((source) => row.unavailable_sources.includes(source))
       && Array.isArray(row.findings)
-      && row.findings.every((finding: unknown) => Boolean(finding && typeof finding === "object" && "source" in finding && typeof finding.source === "string"));
+      && row.findings.every((finding: unknown) => Boolean(finding && typeof finding === "object" && "source" in finding && typeof finding.source === "string" && permittedSources.has(finding.source) && row.checked_sources.includes(finding.source)));
   });
   const recurringSources = current.filter((source) => source.available && source.changed && previous.length === 2 && previous.every((row) => row.checked_sources.includes(source.source) && !row.unavailable_sources.includes(source.source) && (row.findings as { source: string }[]).some((finding) => finding.source === source.source))).map((source) => source.source);
   const missing = current.length === 0 || current.some((source) => !source.available) || previous.some((row) => current.some((source) => !row.checked_sources.includes(source.source) || row.unavailable_sources.includes(source.source)));
