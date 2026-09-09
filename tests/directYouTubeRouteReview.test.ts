@@ -137,3 +137,28 @@ test("private YouTube ambiguous transfer is recorded unconfirmed with no second 
   assert.deepEqual(route.calls, ["token", "claim", "transfer", "receipt"]);
   assert.equal(route.writes[1].status, "unconfirmed");
 });
+
+test("YouTube connect returns a same-origin JSON handshake with secure cookies, not a form redirect", async () => {
+  const cookies: { name: string; options: Record<string, unknown> }[] = [];
+  const exports: { POST?: (request: Request) => Promise<Response> } = {};
+  const source = ts.transpileModule(readFileSync("src/app/api/admin/beast-marketing/youtube/connect/route.ts", "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText;
+  const authorizationUrl = "https://accounts.google.com/o/oauth2/v2/auth?state=random";
+  runInNewContext(source, { exports, process: { env: {} }, require: (name: string) => {
+    if (name === "next/server") return { NextResponse: { json: (body: unknown) => Object.assign(new Response(JSON.stringify(body)), { cookies: { set: (name: string, _value: string, options: Record<string, unknown>) => cookies.push({ name, options }) } }) } };
+    if (name.endsWith("/directYouTube")) return { youtubeAuthorization: () => ({ url: authorizationUrl, state: "owner:random", verifier: "verifier" }), YOUTUBE_COOKIE_PATH: "/api/admin/beast-marketing/youtube" };
+    if (name === "../owner") return { youtubeOwner: async () => ({ user: { id: "owner" } }), youtubeJson: (body: unknown, status: number) => new Response(JSON.stringify(body), { status }) };
+    throw new Error(`Unexpected module ${name}`);
+  } });
+  const response = await exports.POST!(request());
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get("location"), null);
+  assert.equal(response.headers.get("Cache-Control"), "private, no-store");
+  assert.equal((await response.json()).authorizationUrl, authorizationUrl);
+  assert.equal(cookies.length, 2);
+  for (const cookie of cookies) {
+    assert.equal(cookie.options.httpOnly, true);
+    assert.equal(cookie.options.secure, true);
+    assert.equal(cookie.options.sameSite, "lax");
+    assert.equal(cookie.options.maxAge, 600);
+  }
+});
