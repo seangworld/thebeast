@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { StaffIntentChoices } from "./digital-staff/StaffIntentChoices";
 import { APP_VERSION } from "@/lib/appVersion";
 import { createClient } from "@/lib/supabase/client";
 import { formatCurrency } from "@/lib/formatters";
@@ -635,6 +636,8 @@ export default function TodayPage() {
             </div>
           </div>
 
+          <StaffIntentChoices headingId="mobile-home-intent-heading" compact />
+
           {loading ? (
             <div className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
               <div className="h-4 w-32 animate-pulse rounded bg-[#2a3242]" />
@@ -777,6 +780,8 @@ export default function TodayPage() {
             </div>
           </div>
         </section>
+
+        <StaffIntentChoices headingId="desktop-home-intent-heading" compact />
 
         {loading ? (
           <DashboardCard accent="beastos">
