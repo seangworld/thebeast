@@ -21,6 +21,9 @@ import {
   type MarketingDistributionPlan,
 } from "@/lib/beastMarketingPreview";
 import { createRouteClient } from "@/lib/supabase/server";
+import { buildSearchGrowthAssessment, searchGrowthAssessmentTarget } from "@/lib/searchGrowthAssessment";
+import { getSeangworldAnalyticsScope } from "@/lib/seangworldAnalyticsScope";
+import { loadLiveSeangworldProviders } from "@/lib/server/seangworldGoogleProviders";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -194,6 +197,26 @@ export async function POST(request: Request) {
 
   const campaignId = clean(body?.campaignId, 80);
   if (!campaignId) return NextResponse.json({ error: "A campaign is required." }, { status: 400 });
+
+  if (kind === "search_assessment") {
+    const reply = (value: unknown, status: number) => NextResponse.json(value, { status, headers: { "Cache-Control": "private, no-store" } });
+    try {
+      const selected = await client.from("beast_marketing_campaigns").select("id,source_facts").eq("id", campaignId).eq("owner_id", user.id).maybeSingle();
+      if (selected.error) return reply({ error: "The campaign could not be loaded. Retry the assessment." }, 503);
+      const target = selected.data && searchGrowthAssessmentTarget(user.id, selected.data.id, selected.data.source_facts);
+      if (!target) return reply({ error: "A verified search campaign belonging to this owner is required." }, 409);
+      const now = new Date();
+      // Target comes from stored evidence; browser metrics and targets are ignored.
+      const providers = await loadLiveSeangworldProviders(process.env, now, fetch, undefined, 30, getSeangworldAnalyticsScope(target.product));
+      const recommendation = buildSearchGrowthAssessment({ ...target, now, provider: providers?.find((item) => item.id === "search_console") });
+      if (!recommendation) return reply({ error: "Fresh, finalized evidence for this exact page and query is unavailable or absent from the sample. No new assessment was saved. Retry later; missing data is not zero." }, 409);
+      const saved = await client.from("beast_marketing_recommendations").insert({ owner_id: user.id, campaign_id: campaignId, ...recommendation }).select("id,campaign_id,decision,confidence,rationale,evidence,limitations,created_at").single();
+      if (saved.error || !saved.data) return reply({ error: "The assessment could not be confirmed as saved. Reload before retrying." }, 503);
+      return reply({ recommendation: saved.data }, 201);
+    } catch {
+      return reply({ error: "Search evidence could not be refreshed. No new assessment is confirmed; retry later." }, 503);
+    }
+  }
 
   if (kind === "ad_variant") {
     const revision = normalizeMarketingAdRevision({ ...(body?.variant as Record<string, unknown> || {}), campaignId });

@@ -13,7 +13,7 @@ export function searchGrowthCampaignId(ownerId: string, page: string, query: str
 
 export { searchGrowthProduct } from "./seangworldAnalyticsScope";
 
-export function prepareSearchGrowthCampaign({ provider, page, query, now }: {
+export function readSearchGrowthEvidence({ provider, page, query, now }: {
   provider: SeangworldProviderSnapshot | undefined;
   page: string;
   query: string;
@@ -28,7 +28,7 @@ export function prepareSearchGrowthCampaign({ provider, page, query, now }: {
     || !Number.isFinite(synchronized) || synchronized > nowMs || nowMs - synchronized > 30 * 60_000) return null;
   const baseline = provider.data?.searchOpportunityBaseline;
   const opportunity = provider.data?.searchOpportunities?.find((item) => item.page === page && item.query === query);
-  if (!baseline || !opportunity || !["Optimize Existing", "Create New", "Distribute"].includes(opportunity.classification)) return null;
+  if (!baseline || !opportunity) return null;
   const through = Date.parse(baseline.dataThroughDate);
   if (!Number.isFinite(through) || through > nowMs || nowMs - through > 7 * 86_400_000) return null;
   const dates = [baseline.currentStartDate, baseline.currentEndDate, baseline.previousStartDate, baseline.previousEndDate, baseline.dataThroughDate];
@@ -41,6 +41,15 @@ export function prepareSearchGrowthCampaign({ provider, page, query, now }: {
     || metrics.ctr > 1 || metrics.impressions < metrics.clicks) return null;
   if (opportunity.previous && (!Object.values(opportunity.previous).every((value) => Number.isFinite(value) && value >= 0)
     || opportunity.previous.ctr > 1 || opportunity.previous.clicks > opportunity.previous.impressions)) return null;
+  return { baseline, opportunity, scope, synchronizedAt: provider.lastSuccessfulSynchronizationAt };
+}
+
+export function prepareSearchGrowthCampaign(input: Parameters<typeof readSearchGrowthEvidence>[0]) {
+  const evidence = readSearchGrowthEvidence(input);
+  if (!evidence || !["Optimize Existing", "Create New", "Distribute"].includes(evidence.opportunity.classification)) return null;
+  const { baseline, opportunity, scope, synchronizedAt } = evidence;
+  const { page, query } = input;
+  const metrics = opportunity.current;
   return validateCampaignDraft({
     title: `${scope.label}: ${query}`.slice(0, 160),
     objective: `Qualified traffic growth. ${opportunity.proposedAction}`,
@@ -49,9 +58,9 @@ export function prepareSearchGrowthCampaign({ provider, page, query, now }: {
     channels: ["Organic search"],
     callToAction: `Visit ${page}`,
     sourceFacts: [
-      { label: `Search Console sampled query: ${query}`, url: page, observedAt: provider.lastSuccessfulSynchronizationAt, limitation: "Search demand is evidence of an opportunity, not a verified product or news claim." },
-      { label: `Current baseline ${baseline.currentStartDate} to ${baseline.currentEndDate}: ${metrics.clicks} clicks; ${metrics.impressions} impressions; CTR ${metrics.ctr}; position ${metrics.position}.`, url: page, observedAt: provider.lastSuccessfulSynchronizationAt, limitation: `Finalized through ${baseline.dataThroughDate}; sampled page/query rows may omit queries.` },
-      { label: `Previous baseline ${baseline.previousStartDate} to ${baseline.previousEndDate}: ${opportunity.previous ? JSON.stringify(opportunity.previous) : "unavailable"}`, url: page, observedAt: provider.lastSuccessfulSynchronizationAt, limitation: "Missing prior evidence is not zero. Metric changes do not establish causation." },
+      { label: `Search Console sampled query: ${query}`, url: page, observedAt: synchronizedAt, limitation: "Search demand is evidence of an opportunity, not a verified product or news claim." },
+      { label: `Current baseline ${baseline.currentStartDate} to ${baseline.currentEndDate}: ${metrics.clicks} clicks; ${metrics.impressions} impressions; CTR ${metrics.ctr}; position ${metrics.position}.`, url: page, observedAt: synchronizedAt, limitation: `Finalized through ${baseline.dataThroughDate}; sampled page/query rows may omit queries.` },
+      { label: `Previous baseline ${baseline.previousStartDate} to ${baseline.previousEndDate}: ${opportunity.previous ? JSON.stringify(opportunity.previous) : "unavailable"}`, url: page, observedAt: synchronizedAt, limitation: "Missing prior evidence is not zero. Metric changes do not establish causation." },
     ],
     successMeasures: [opportunity.measurement, "Record qualified actions separately from visits; compare equal finalized reporting windows."],
     limitations: ["Draft for review; no publication, scheduling, paid media or provider execution is authorized.", "Verify the destination and every factual claim before creating or publishing creative.", "The original baseline is retained on retry. An existing campaign is never overwritten or reopened."],
