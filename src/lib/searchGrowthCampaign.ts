@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { validateCampaignDraft } from "./beastMarketing";
-import { getSeangworldAnalyticsScope, type SeangworldAnalyticsScopeId } from "./seangworldAnalyticsScope";
+import { getSeangworldAnalyticsScope, searchGrowthProduct } from "./seangworldAnalyticsScope";
 import type { SeangworldProviderSnapshot } from "./seangworldIntelligence";
 
 /** One campaign per owner and opportunity; retries never replace reviewed work. */
@@ -11,18 +11,7 @@ export function searchGrowthCampaignId(ownerId: string, page: string, query: str
   return `${hex.slice(0, 8).join("")}-${hex.slice(8, 12).join("")}-${hex.slice(12, 16).join("")}-${hex.slice(16, 20).join("")}-${hex.slice(20).join("")}`;
 }
 
-export function searchGrowthProduct(page: string): SeangworldAnalyticsScopeId | null {
-  try {
-    const url = new URL(page);
-    const firstPath = decodeURIComponent(url.pathname).split("/").filter(Boolean)[0]?.toLowerCase();
-    if (url.protocol !== "https:" || url.username || url.password || url.port || url.search || url.hash
-      || ["dashboard", "api", "auth"].includes(firstPath || "")) return null;
-    const hosts: Record<string, SeangworldAnalyticsScopeId> = {
-      "news.seangworld.com": "seangworldnews", "thebeast.seangworld.com": "thebeast",
-    };
-    return hosts[url.hostname] || null;
-  } catch { return null; }
-}
+export { searchGrowthProduct } from "./seangworldAnalyticsScope";
 
 export function prepareSearchGrowthCampaign({ provider, page, query, now }: {
   provider: SeangworldProviderSnapshot | undefined;

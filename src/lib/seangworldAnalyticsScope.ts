@@ -51,3 +51,17 @@ export function getSeangworldAnalyticsScope(
   }
   return scopes[value as SeangworldAnalyticsScopeId];
 }
+
+export function searchGrowthProduct(page: string): SeangworldAnalyticsScopeId | null {
+  try {
+    const url = new URL(page);
+    const firstPath = decodeURIComponent(url.pathname).split("/").filter(Boolean)[0]?.toLowerCase();
+    if (url.protocol !== "https:" || url.username || url.password || url.port || url.search || url.hash
+      || ["dashboard", "api", "auth"].includes(firstPath || "")) return null;
+    const hosts: Record<string, SeangworldAnalyticsScopeId> = {
+      "news.seangworld.com": "seangworldnews", "thebeast.seangworld.com": "thebeast",
+    };
+    return hosts[url.hostname] || null;
+  } catch { return null; }
+}
+
