@@ -19,6 +19,20 @@ export function DirectYouTubePanel() {
     if (new URLSearchParams(window.location.search).get("youtube") === "failed") setError("YouTube connection was not saved. Choose SEANGWORLD and grant both requested permissions; check Google setup if it fails again.");
     void refresh().catch(() => setError("YouTube setup unavailable. Refresh to try again."));
   }, []);
+  async function connect() {
+    setBusy(true); setError("");
+    try {
+      const response = await fetch(`${endpoint}/connect`, { method: "POST" });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "YouTube connection unavailable.");
+      const authorization = new URL(result.authorizationUrl);
+      if (authorization.origin !== "https://accounts.google.com" || authorization.pathname !== "/o/oauth2/v2/auth") throw new Error("Invalid Google authorization destination.");
+      window.location.assign(authorization.toString());
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "YouTube connection unavailable.");
+      setBusy(false);
+    }
+  }
   async function disconnect() {
     setBusy(true); setError("");
     try {
@@ -55,7 +69,7 @@ export function DirectYouTubePanel() {
         <p className="mt-2 break-all">Authorized redirect URI: {data.redirectUri}</p>
         <p className="mt-2 break-words">Server configuration needed: {data.missing.join(", ")}. Credentials belong in the deployment&apos;s encrypted environment settings.</p>
       </div>}
-      {data.connection ? <div><p>Connected: <strong>{data.connection.channel_title}</strong> ({data.connection.channel_handle})</p><p className="break-all text-sm">Verified channel ID: {data.connection.channel_id}</p><button className="mt-2 min-h-11 rounded-lg border border-white/20 px-4" disabled={busy} onClick={() => void disconnect()}>Disconnect Beast from YouTube</button></div> : <form method="post" action={`${endpoint}/connect`}><button className="min-h-11 rounded-lg bg-amber-300 px-4 font-bold text-black disabled:opacity-50" disabled={!data.configured || busy}>Connect SEANGWORLD with Google</button></form>}
+      {data.connection ? <div><p>Connected: <strong>{data.connection.channel_title}</strong> ({data.connection.channel_handle})</p><p className="break-all text-sm">Verified channel ID: {data.connection.channel_id}</p><button className="mt-2 min-h-11 rounded-lg border border-white/20 px-4" disabled={busy} onClick={() => void disconnect()}>Disconnect Beast from YouTube</button></div> : <button type="button" onClick={() => void connect()} className="min-h-11 rounded-lg bg-amber-300 px-4 font-bold text-black disabled:opacity-50" disabled={!data.configured || busy}>Connect SEANGWORLD with Google</button>}
       <p className="text-sm text-amber-100">Google may require an API compliance audit before public uploads. A private receipt does not establish public distribution or campaign effectiveness.</p>
       {data.connection && <details><summary className="cursor-pointer font-bold">Upload an approved Short privately</summary>
         <p className="my-3 text-sm">Approve the current render below and release the global publishing pause first. Uploads require a licensed production MP4, a vertical one-to-three-minute render, and a maximum size of 32 MiB. An uncertain attempt is retained for inspection in YouTube Studio instead of being retried automatically.</p>

@@ -9,7 +9,7 @@ export async function POST(request: Request) {
   if (!owner) return youtubeJson({ error: "Owner access required." }, 403);
   try {
     const authorization = youtubeAuthorization(owner.user.id, process.env);
-    const response = NextResponse.redirect(authorization.url, 303);
+    const response = NextResponse.json({ authorizationUrl: authorization.url });
     const options = { httpOnly: true, secure: true, sameSite: "lax" as const, path: YOUTUBE_COOKIE_PATH, maxAge: 600 };
     response.headers.set("Cache-Control", "private, no-store");
     response.cookies.set("beast_youtube_state", authorization.state, options);
