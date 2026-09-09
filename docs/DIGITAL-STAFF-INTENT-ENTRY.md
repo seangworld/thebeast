@@ -1,0 +1,7 @@
+# Digital Staff goal entry
+
+The existing Digital Staff page leads with five everyday goals, linking directly to the existing Director, Money Coach, Guidance Counselor, Tutor, and Health Advisor conversation routes. Professional names and availability remain visible. Unavailable/inactive professionals fall back to their profiles. Navigation does not prefill or submit a prompt, authorize an action, or add a provider call; prefetch is disabled on conversation links.
+
+The existing hierarchy, full profile links, owner-gated Development Staff directory, and public development evidence remain under a native, initially closed Advanced disclosure. Earlier-conversation review remains directly visible. This is a bounded first increment of the authorized intent-first Beast UX work, not completion of dashboard simplification or autonomous task routing.
+
+Product Completeness: reuse existing member navigation, professional identities, authenticated destinations and ownership checks. Semantic lists, headings, links and keyboard-operable native disclosure; responsive one/two/three-column goal cards with visible focus. No new module, database, API, permission or subscription. Full existing tests, types, lint, build and independent review are required. Rendered/authenticated Preview remains owner-deferred and unperformed. Rollback is a code revert; no data changes. Later owner usage should confirm that the intended specialist is reachable in one selection and Advanced remains discoverable.
