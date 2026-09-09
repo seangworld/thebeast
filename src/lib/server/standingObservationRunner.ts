@@ -10,6 +10,8 @@ import { buildStandingObservationLearning } from "../standingObservationLearning
 import { persistStandingObservationCycle } from "../standingObservationPersistence";
 import { assessStandingOperations, type OperatingHistoryRow } from "../standingObservationOptimization";
 
+import { assessOperatingOutcomes, buildOperatingSnapshot, unpackObservationEvidence, type OperatingSnapshot } from "../standingObservationOutcomes";
+
 type Simulation = "clean" | null;
 
 export async function runStandingObservation(ownerId: string, scheduleId: string | null, simulation: Simulation = null) {
@@ -45,12 +47,18 @@ export async function runStandingObservation(ownerId: string, scheduleId: string
   const baseline = await service.from("beast_admin_staff_observation_runs").select("findings,unavailable_sources").eq("owner_id", ownerId).eq("trigger_type", simulation ? "owner_controlled_simulation" : "schedule").in("status", ["clean", "findings", "duplicate_skipped"]).order("started_at", { ascending: false }).limit(1).maybeSingle();
   if (baseline.error) throw new Error("observation_learning_history_unavailable");
   const triggerType = simulation ? "owner_controlled_simulation" : "schedule";
-  const learning = buildStandingObservationLearning(sources, baseline.data);
+  const learning = buildStandingObservationLearning(sources, baseline.data ? { ...baseline.data, findings: unpackObservationEvidence(baseline.data.findings).findings } : null);
+  let snapshot: OperatingSnapshot | null = null;
   if (!simulation) {
-    const history = await service.from("beast_admin_staff_observation_runs").select("status,started_at,completed_at,checked_sources,unavailable_sources,findings").eq("owner_id", ownerId).eq("trigger_type", "schedule").order("started_at", { ascending: false }).limit(12);
-    if (history.error) throw new Error("observation_operating_history_unavailable");
-    const assessment = assessStandingOperations(sources, (history.data || []) as OperatingHistoryRow[], new Date(startedAt));
+    const history = await service.from("beast_admin_staff_observation_runs").select("status,started_at,completed_at,checked_sources,unavailable_sources,findings").eq("owner_id", ownerId).eq("trigger_type", "schedule").order("started_at", { ascending: false }).gte("started_at", new Date(Date.parse(startedAt) - 35 * 86400000).toISOString()).limit(121);
+    if (history.error || !history.data || history.data.length > 120) throw new Error("observation_operating_history_unavailable");
+    const assessment = assessStandingOperations(sources, history.data.map((row) => ({ ...row, findings: unpackObservationEvidence(row.findings).findings })) as OperatingHistoryRow[], new Date(startedAt));
     learning.push(`SEANGWORLD operating assessment — ${assessment.explanation}`);
+    snapshot = buildOperatingSnapshot(canonicalModel, github?.observations || [], vercel?.observations || [], new Date(startedAt));
+    const outcomes = assessOperatingOutcomes(snapshot, history.data);
+    learning.push(`Executive follow-through — ${outcomes.nextStep}`);
+    for (const outcome of outcomes.outcomes.filter((item) => item.outcome !== "healthy").slice(0, 5)) learning.push(`${outcome.product}: ${outcome.outcome} — ${outcome.detail} ${outcome.recommendation}`);
+    learning.push(`${outcomes.followUps.length} canonical decision/blocker follow-up(s). Operational improvement does not prove business impact or close approved work.`);
   }
   let createdProposals = 0;
   const run = await persistStandingObservationCycle(sources, learning, {
@@ -73,7 +81,7 @@ export async function runStandingObservation(ownerId: string, scheduleId: string
     limitations: result.unavailableSources.length ? [`Unavailable sources: ${result.unavailableSources.join(", ")}`] : [],
     recommendedDisposition: item.impact === "high" || item.impact === "medium" ? "INVESTIGATE" : item.impact === "low" ? "MONITOR" : "IGNORE",
   }));
-  const inserted = await service.from("beast_admin_staff_observation_runs").insert({ owner_id: ownerId, schedule_id: scheduleId, trigger_type: triggerType, status, started_at: startedAt, completed_at: status === "running" ? null : new Date().toISOString(), checked_sources: result.checkedSources, unavailable_sources: result.unavailableSources, changes: result.changes, suppressed_signals: result.suppressedSignals, findings: structuredFindings, confidence: result.confidence, impact: result.impact, next_step: result.nextStep, evidence_digest: result.evidenceDigest, finding_count: structuredFindings.length, investigation_count: result.investigationCount, proposal_count: 0, retry_count: retryCount }).select().single();
+  const inserted = await service.from("beast_admin_staff_observation_runs").insert({ owner_id: ownerId, schedule_id: scheduleId, trigger_type: triggerType, status, started_at: startedAt, completed_at: status === "running" ? null : new Date().toISOString(), checked_sources: result.checkedSources, unavailable_sources: result.unavailableSources, changes: result.changes, suppressed_signals: result.suppressedSignals, findings: snapshot ? { version: 1, findings: structuredFindings, snapshot } : structuredFindings, confidence: result.confidence, impact: result.impact, next_step: result.nextStep, evidence_digest: result.evidenceDigest, finding_count: structuredFindings.length, investigation_count: result.investigationCount, proposal_count: 0, retry_count: retryCount }).select().single();
   if (inserted.error || !inserted.data) throw new Error("observation_persistence_failed");
   return inserted.data as { id: string; evidence_digest: string; status: string };
     },

@@ -97,3 +97,15 @@ test("failed reload removes stale assignment status and controls until evidence 
   fireEvent.click(within(view.container).getByRole("button", { name: "Retry briefing" }));
   await within(view.container).findByRole("button", { name: "Pause daily assignment" });
 });
+
+test("outcome briefing shows priorities, bounded windows and existing decision links", async () => {
+  const outcomes = { observedAt: new Date().toISOString(), outcomes: [{ id: "one", product: "SEANGWORLD", detail: "Review release gap", state: "attention", severity: "medium", source: "vercel_deployment_evidence", outcome: "returned", observedDays: 2, recommendation: "Revisit the earlier finding." }], followUps: [{ id: "proposal:p", product: "Beast", title: "Owner decision", status: "watching", nextStep: "Retain watch decision." }], windows: [{ days: 7, observedDays: 2, clearDays: 1, attentionDays: 1, unknownDays: 5 }], nextStep: "SEANGWORLD: revisit the earlier finding.", executable: false, causalClaim: false };
+  globalThis.fetch = async () => Response.json({ ...payload, outcomes });
+  const view = render(React.createElement(StaffOperationsWorkspace, { compact: true }));
+  await waitFor(() => assert.match(view.container.textContent || "", /SEANGWORLD · returned/));
+  assert.match(view.container.textContent || "", /5 unknown/);
+  assert.match(view.container.textContent || "", /does not prove an intervention/);
+  assert.equal(within(view.container).getByRole("link", { name: "Review existing proposals and owner decisions" }).getAttribute("href"), "/dashboard/admin/development/proposals");
+  assert.match(view.container.textContent || "", /Retain watch decision/);
+  saveFixture("outcomes", view.container);
+});
