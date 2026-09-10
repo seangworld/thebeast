@@ -12,6 +12,10 @@ export const BMKT_MAX_HOOK_BEAT_MS = 3_000;
 export const BMKT_MAX_CAPTION_WORDS = 8;
 export const BMKT_MIN_NARRATION_WPM = 110;
 export const BMKT_MAX_NARRATION_WPM = 180;
+export const BMKT_MIN_VOICE_SPEED = 1.05;
+export const BMKT_MAX_VOICE_SPEED = 1.2;
+export const BMKT_MIN_VOICE_PAUSE_MS = 80;
+export const BMKT_MAX_VOICE_PAUSE_MS = 350;
 
 const stopWords = new Set(["a", "about", "and", "are", "as", "at", "be", "before", "by", "for", "from", "how", "in", "into", "is", "it", "of", "on", "or", "the", "to", "use", "what", "with", "your"]);
 const motionOrder: VisualMotion[] = ["push_in", "pan_left", "pull_out", "pan_right", "pan_up", "pan_down"];
@@ -131,6 +135,11 @@ export type ProductionQualityReport = {
     hookBeatDurationMs: number;
     ctaDurationMs: number;
     plannedNarrationWpm: number;
+    voiceStyle: string;
+    voiceSpeed: number;
+    voiceNewscaster: boolean;
+    voicePauseMs: number;
+    voiceEmphasisCount: number;
   };
 };
 
@@ -176,6 +185,12 @@ export function evaluateProductionQuality(manifest: ProductionManifest, settings
   const plannedNarrationWpm = manifest.runtimeMs > 0
     ? manifest.scenes.reduce((total, scene) => total + words(scene.narration).length, 0) / (manifest.runtimeMs / 60_000)
     : 0;
+  const voice = manifest.audioMix?.voiceDelivery;
+  const voiceStyle = voice?.style || "";
+  const voiceSpeed = voice?.speed ?? manifest.audioMix?.narrationSpeed ?? 0;
+  const voicePauseMs = voice?.pauseMs ?? 0;
+  const narrationText = manifest.scenes.map((scene) => scene.narration).join(" ").toLowerCase();
+  const voiceEmphasisCount = (voice?.emphasisTerms || []).filter((term) => typeof term === "string" && term.trim() && narrationText.includes(term.toLowerCase().trim())).length;
 
   if (!visualBeats.length || withVisuals.length !== visualBeats.length) blockers.push("Every planned visual beat requires an explicit visual asset.");
   if (visualBeats.some((beat) => beat.startMs < 0 || beat.endMs > manifest.runtimeMs || beat.endMs <= beat.startMs || beat.endMs - beat.startMs < BMKT_MIN_VISUAL_BEAT_MS || beat.endMs - beat.startMs > plan.maxBeatDurationMs)) blockers.push("Visual beats must be positive, meaningful, bounded by the runtime, and stay below the maximum beat duration.");
@@ -190,6 +205,11 @@ export function evaluateProductionQuality(manifest: ProductionManifest, settings
   if (maxCaptionWords > BMKT_MAX_CAPTION_WORDS) blockers.push("Caption phrases are too dense for mobile readability.");
   if (plannedNarrationWpm < BMKT_MIN_NARRATION_WPM || plannedNarrationWpm > BMKT_MAX_NARRATION_WPM) blockers.push("Planned narration pacing is outside the publication-quality range.");
   if (visualBeats.some((beat) => !beat.captionSafe)) blockers.push("A visual beat does not reserve a caption-safe area.");
+  if (!voice || !["energetic_conversational", "modern_news"].includes(voiceStyle)) blockers.push("A conversational or modern-news voice delivery plan is required.");
+  if (voiceSpeed < BMKT_MIN_VOICE_SPEED || voiceSpeed > BMKT_MAX_VOICE_SPEED) blockers.push("Voice delivery speed is outside the energetic short-form range.");
+  if (voiceStyle === "energetic_conversational" && voice?.newscaster === true) blockers.push("Energetic conversational delivery cannot use flat newscaster mode.");
+  if (voicePauseMs < BMKT_MIN_VOICE_PAUSE_MS || voicePauseMs > BMKT_MAX_VOICE_PAUSE_MS) blockers.push("Controlled voice pauses must be within the supported delivery range.");
+  if (!voiceEmphasisCount) blockers.push("Voice delivery requires at least one narration-matched emphasis term.");
 
   const usedAssets = new Map<string, ProductionAsset>();
   for (const beat of visualBeats) {
@@ -233,6 +253,11 @@ export function evaluateProductionQuality(manifest: ProductionManifest, settings
       hookBeatDurationMs,
       ctaDurationMs,
       plannedNarrationWpm: Math.round(plannedNarrationWpm * 10) / 10,
+      voiceStyle,
+      voiceSpeed,
+      voiceNewscaster: voice?.newscaster === true,
+      voicePauseMs,
+      voiceEmphasisCount,
     },
   };
 }
