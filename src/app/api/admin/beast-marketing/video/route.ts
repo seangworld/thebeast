@@ -6,6 +6,7 @@ import { buildProductionManifest, validateProductionManifest } from "@/lib/beast
 import { planCandidateCadence, validateTopicFamily, type OwnerWorkflowDecision } from "@/lib/beastMarketingOwnerWorkflow";
 import { shotstackConfiguration } from "@/lib/beastMarketingShotstack";
 import { bindNewsTestVisuals } from "@/lib/beastMarketingNewsVisualTest";
+import { evaluateProductionQuality } from "@/lib/beastMarketingQuality";
 import { createBeastFusionPublicationClient } from "@/lib/supabase/service";
 import { createRouteClient } from "@/lib/supabase/server";
 
@@ -148,11 +149,12 @@ export async function POST(request: Request) {
     catch { return NextResponse.json({ error: "The script does not match the verified News visual test template." }, { status: 409 }); }
     const validation = validateProductionManifest(manifest, normalizedSettings);
     if (!validation.planValid) return NextResponse.json({ error: "The visual plan does not meet the series runtime or caption requirements." }, { status: 409 });
+    const qualityReport = evaluateProductionQuality(manifest, normalizedSettings);
     const { data, error } = await client.from("beast_marketing_video_jobs").insert({
       id, owner_id: user.id, series_id: source.series_id, state: "scripted", revision: 1, idempotency_key: key,
       topic: { ...record(source.topic), title: "SEANGWORLD News — visual test" }, script: normalizedScript,
-      production: { manifest, validation, providerState: "authorization_required", externalActionPerformed: false },
-      quality: { renderReady: false, scriptReady: true, productionPlanReady: true, ownerQualityReview: "not_ready", ownerWorkflowDecision: "pending", warnings: ["Image-backed test prepared. Review the visual plan before rendering. Captions use estimated timing pending audio review."] },
+      production: { manifest, validation, qualityReport, providerState: "authorization_required", externalActionPerformed: false },
+      quality: { renderReady: false, scriptReady: true, productionPlanReady: true, ownerQualityReview: "not_ready", ownerWorkflowDecision: "pending", warnings: ["Image-backed test prepared. Review the visual plan before rendering. Captions use estimated timing pending audio review.", ...qualityReport.blockers] },
       provenance: { generatedBy: "BeastMarketing", generationMode: "test", sourceJobId: source.id, sourceScriptHash: createHash("sha256").update(JSON.stringify(normalizedScript)).digest("hex"), visualTemplate: "news-visual-test-v1", waitingForOwnerApproval: false, providersUsed: [], paidServicesUsed: false, shotstackCreditsConsumed: 0, externallyPublished: false },
     }).select("*").single();
     if (error?.code === "23505") {
@@ -178,8 +180,9 @@ export async function POST(request: Request) {
     }
     const validation = validateProductionManifest(manifest, normalizedSettings);
     if (!validation.planValid) return NextResponse.json({ error: validation.errors.join(" ") }, { status: 409 });
+    const qualityReport = evaluateProductionQuality(manifest, normalizedSettings);
     const priorProvenance = job.provenance && typeof job.provenance === "object" ? job.provenance as Record<string, unknown> : {};
-    const { data, error } = await client.from("beast_marketing_video_jobs").update({ production: { manifest, validation, providerState: "authorization_required", externalActionPerformed: false }, provenance: { ...priorProvenance, productionPlan: { engine: "bmkt-005", manifestChecksum: manifest.checksum, providersUsed: [], paidServicesUsed: false } }, quality: { productionPlanReady: true, renderReady: false, warnings: manifest.blockers }, updated_at: new Date().toISOString() }).eq("id", id).eq("owner_id", user.id).select("*").maybeSingle();
+    const { data, error } = await client.from("beast_marketing_video_jobs").update({ production: { manifest, validation, qualityReport, providerState: "authorization_required", externalActionPerformed: false }, provenance: { ...priorProvenance, productionPlan: { engine: "bmkt-010", manifestChecksum: manifest.checksum, providersUsed: [], paidServicesUsed: false } }, quality: { productionPlanReady: true, renderReady: false, warnings: [...manifest.blockers, ...qualityReport.blockers, ...qualityReport.warnings] }, updated_at: new Date().toISOString() }).eq("id", id).eq("owner_id", user.id).select("*").maybeSingle();
     return error || !data ? unavailable() : NextResponse.json({ job: data, manifest, validation });
   }
   if (kind === "search_opportunity_job") {
