@@ -14,6 +14,12 @@ const SHOTSTACK_APP_SCREENSHOTS = {
   tutor: "/marketing/video-growth/tutor-mobile.png",
   health: "/marketing/video-growth/health-advisor-mobile.png",
 } as const;
+const SHOTSTACK_VISUAL_ASSET_ORDER = [
+  SHOTSTACK_APP_SCREENSHOTS.specialists,
+  SHOTSTACK_APP_SCREENSHOTS.money,
+  SHOTSTACK_APP_SCREENSHOTS.tutor,
+  SHOTSTACK_APP_SCREENSHOTS.health,
+] as const;
 
 export type ShotstackAttemptSummary = {
   attemptNumber: number;
@@ -130,12 +136,17 @@ export function shotstackVisualAssetBaseUrl(candidate = SHOTSTACK_APP_SCREENSHOT
   }
 }
 
-function screenshotForScene(narration: string) {
+function screenshotForScene(narration: string, index: number) {
   const normalized = narration.toLowerCase();
   if (/beastmoney|money|financial|cash|debt|bill/.test(normalized)) return SHOTSTACK_APP_SCREENSHOTS.money;
   if (/beasthealth|health|wellness|medical/.test(normalized)) return SHOTSTACK_APP_SCREENSHOTS.health;
   if (/beasteducation|education|learning|tutor|school/.test(normalized)) return SHOTSTACK_APP_SCREENSHOTS.tutor;
-  return SHOTSTACK_APP_SCREENSHOTS.specialists;
+  return SHOTSTACK_VISUAL_ASSET_ORDER[index % SHOTSTACK_VISUAL_ASSET_ORDER.length];
+}
+
+function selectVisualAsset(preferred: string, index: number, previous: string | null) {
+  const candidates = [preferred, ...SHOTSTACK_VISUAL_ASSET_ORDER.slice(index % SHOTSTACK_VISUAL_ASSET_ORDER.length), ...SHOTSTACK_VISUAL_ASSET_ORDER];
+  return candidates.find((candidate) => candidate !== previous) || preferred;
 }
 
 function conversationalizeLegacyTemplateNarration(value: string) {
@@ -173,9 +184,9 @@ function narrationSegments(manifest: ProductionManifest) {
   if (isBeastOsSpecialistSpot(manifest)) {
     return BEAST_OS_MARKETING_SEGMENTS.map((segment) => ({ ...segment, spoken: normalizeBeastNarrationForSpeech(segment.display) }));
   }
-  return manifest.scenes.map((scene) => {
+  return manifest.scenes.map((scene, index) => {
     const display = normalizeBeastDisplayNames(conversationalizeLegacyTemplateNarration(scene.narration));
-    return { display, spoken: normalizeBeastNarrationForSpeech(display), screenshot: screenshotForScene(scene.narration) };
+    return { display, spoken: normalizeBeastNarrationForSpeech(display), screenshot: screenshotForScene(scene.narration, index) };
   }).filter((segment) => segment.spoken);
 }
 
@@ -198,16 +209,21 @@ export function buildShotstackEdit(manifest: ProductionManifest, options: { visu
   const visualAssetBaseUrl = shotstackVisualAssetBaseUrl(options.visualAssetBaseUrl);
   const segments = narrationSegments(manifest);
   const effects = ["zoomInFast", "slideLeftFast", "zoomOutFast", "slideUpFast", "slideRightFast", "zoomInFast", "slideDownFast"];
-  const visualClips = segments.map((segment, index) => ({
-    asset: { type: "image", src: new URL(segment.screenshot.replace(/^\//, ""), visualAssetBaseUrl).toString() },
-    start: `alias://bmkt-narration-${index + 1}`,
-    length: `alias://bmkt-narration-${index + 1}`,
-    fit: "crop",
-    position: "center",
-    effect: effects[index % effects.length],
-    transition: { in: index === 0 ? "none" : index % 2 === 0 ? "carouselLeftFast" : "zoomFast", out: "fadeFast" },
-    filter: "boost",
-  }));
+  let previousVisual = null as string | null;
+  const visualClips = segments.map((segment, index) => {
+    const visualPath = selectVisualAsset(segment.screenshot, index, previousVisual);
+    previousVisual = visualPath;
+    return {
+      asset: { type: "image", src: new URL(visualPath.replace(/^\//, ""), visualAssetBaseUrl).toString() },
+      start: `alias://bmkt-narration-${index + 1}`,
+      length: `alias://bmkt-narration-${index + 1}`,
+      fit: "crop",
+      position: "center",
+      effect: effects[index % effects.length],
+      transition: { in: index === 0 ? "none" : index % 2 === 0 ? "carouselLeftFast" : "zoomFast", out: "fadeFast" },
+      filter: "boost",
+    };
+  });
   const captionClips = segments.map((segment, index) => ({
     asset: {
       type: "rich-text",

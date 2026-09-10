@@ -7,6 +7,7 @@ import {
   BEAST_PRONUNCIATION_MAP,
   normalizeBeastDisplayNames,
   normalizeBeastNarrationForSpeech,
+  normalizeBeastNarrationSegmentsForSpeech,
 } from "../src/lib/beastMarketingNarration";
 import {
   SHOTSTACK_MAX_ESTIMATED_CREDITS_PER_RENDER,
@@ -102,6 +103,31 @@ test("BMKT-007 chooses privacy-safe app screenshots that match scene subjects", 
   const serialized = JSON.stringify(edit);
   for (const asset of ["money-coach-mobile.png", "tutor-mobile.png", "health-advisor-mobile.png"]) assert.match(serialized, new RegExp(asset.replace(".", "\\.")));
   assert.doesNotMatch(serialized, /dashboard|owner|member-record|token|secret/i);
+});
+
+test("BMKT-008 gives generic scenes varied visuals without adjacent repeats", () => {
+  const variedManifest = buildProductionManifest({
+    jobId: "job-visual-test", revision: 1,
+    script: {
+      hook: "SEANGWORLD News brings useful context into view.",
+      narration: [
+        "People and places shape the day's reporting.",
+        "Verified facts connect events to communities.",
+        "Clear context helps viewers understand what changed.",
+        "Independent sources keep the picture grounded.",
+      ],
+      cta: "Visit SEANGWORLD News for the latest facts.", estimatedSeconds: 62,
+    },
+    settings: defaultVideoSeriesSettings,
+  });
+  const edit = buildShotstackEdit(variedManifest);
+  const visualSources = edit.timeline.tracks
+    .flatMap((track) => track.clips)
+    .filter((clip) => (clip.asset as Record<string, unknown>)?.type === "image")
+    .map((clip) => String((clip.asset as Record<string, unknown>).src));
+  assert.equal(visualSources.length, variedManifest.scenes.length);
+  assert.ok(new Set(visualSources).size >= 4);
+  for (let index = 1; index < visualSources.length; index += 1) assert.notEqual(visualSources[index], visualSources[index - 1]);
 });
 
 test("BMKT-007 normalizes pronunciation only at the TTS boundary", () => {

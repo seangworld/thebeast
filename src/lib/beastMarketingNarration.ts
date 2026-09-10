@@ -65,3 +65,8 @@ export function normalizeBeastDisplayNames(value: string) {
 export function normalizeBeastNarrationForSpeech(value: string) {
   return replaceKnownTerms(normalizeBeastDisplayNames(value), "spoken");
 }
+
+/** Sanitizes scene boundaries before joining them into one provider TTS request. */
+export function normalizeBeastNarrationSegmentsForSpeech(values: readonly string[]) {
+  return values.map(normalizeBeastNarrationForSpeech).filter(Boolean).join(" ");
+}
