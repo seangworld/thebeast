@@ -6,9 +6,14 @@ export const VIDEO_PRODUCTION_ENGINE_VERSION = "0.6.0";
 export const videoProductionProviderSlots = ["narration", "visuals", "licensed_media", "composition"] as const;
 export type VideoProductionProviderSlot = (typeof videoProductionProviderSlots)[number];
 export type ProviderBinding = { slot: VideoProductionProviderSlot; required: boolean; providerId: string | null; modelOrService: string | null; authorized: boolean; paid: boolean; termsObservedAt: string | null };
-export type ProductionAsset = { id: string; role: "narration" | "visual" | "product_capture" | "caption" | "music" | "final_video"; uri: string | null; mimeType: string | null; sourceType: "generated" | "first_party" | "licensed"; providerId: string | null; license: string | null; contentHash: string | null; createdAt: string | null; provenanceComplete: boolean };
+export type ProductionAsset = { id: string; role: "narration" | "visual" | "product_capture" | "caption" | "music" | "final_video"; uri: string | null; mimeType: string | null; sourceType: "generated" | "first_party" | "licensed"; providerId: string | null; license: string | null; contentHash: string | null; createdAt: string | null; provenanceComplete: boolean; authorized?: boolean; topics?: string[]; width?: number; height?: number; focalPoint?: { x: number; y: number } };
 export type CaptionCue = { startMs: number; endMs: number; text: string };
 export type ProductionScene = { id: string; startMs: number; endMs: number; narration: string; visualBrief: string; visualAssetId?: string; transition: "cut" | "crossfade"; captions: CaptionCue[] };
+export type VisualMotion = "reveal" | "push_in" | "pull_out" | "pan_left" | "pan_right" | "pan_up" | "pan_down";
+export type VisualBeat = { id: string; sceneId: string; startMs: number; endMs: number; visualAssetId?: string; motion: VisualMotion; transition: "cut" | "crossfade"; fit: "cover" | "contain"; captionSafe: boolean };
+export type VisualPlan = { version: "bmkt-visual-plan-1"; maxBeatDurationMs: number; beats: VisualBeat[] };
+export type AudioSfxCue = { assetId: string; startMs: number; endMs: number; volume: number };
+export type AudioMixPlan = { narrationSpeed?: number; musicAssetId?: string; musicVolume?: number; sfx?: AudioSfxCue[] };
 export type ProductionManifest = {
   schemaVersion: "bmkt-production-1"; jobId: string; revision: number; aspectRatio: VideoSeriesSettings["aspectRatio"]; width: number; height: number;
   runtimeMs: number; visualStyle: string; captionStyle: string; presenterProfileId: string | null; presenterMode: "faceless" | "future_identity";
@@ -16,6 +21,8 @@ export type ProductionManifest = {
   planState: "planned_provider_blocked"; blockers: string[]; checksum: string;
   requireVisuals?: boolean;
   brandLabel?: string;
+  visualPlan?: VisualPlan;
+  audioMix?: AudioMixPlan;
 };
 export type ProductionOperation = "narration" | "visuals" | "composition";
 export type ProductionAttempt = { operation: ProductionOperation; attemptNumber: number; idempotencyKey: string; status: "planned" | "submitted" | "succeeded" | "failed" | "cancelled"; retryable: boolean };
@@ -33,6 +40,20 @@ const fingerprint = (value: string) => {
   return `fnv1a32:${(hash >>> 0).toString(16).padStart(8, "0")}`;
 };
 const words = (value: string) => value.trim().split(/\s+/).filter(Boolean).length;
+const captionCues = (text: string, startMs: number, endMs: number): CaptionCue[] => {
+  const tokens = text.trim().split(/\s+/).filter(Boolean);
+  if (!tokens.length) return [];
+  const cues: CaptionCue[] = [];
+  for (let offset = 0; offset < tokens.length; offset += 6) {
+    const end = Math.min(tokens.length, offset + 6);
+    cues.push({
+      startMs: startMs + Math.round((endMs - startMs) * offset / tokens.length),
+      endMs: startMs + Math.round((endMs - startMs) * end / tokens.length),
+      text: tokens.slice(offset, end).join(" "),
+    });
+  }
+  return cues;
+};
 
 /** Re-sign a newly prepared plan after binding verified assets. Not an approval. */
 export function fingerprintProductionManifest(manifest: ProductionManifest): ProductionManifest {
@@ -49,9 +70,13 @@ export function buildProductionManifest(input: { jobId: string; revision: number
     const isLast = index === segments.length - 1;
     const duration = isLast ? runtimeMs - cursor : Math.max(1000, Math.round(runtimeMs * words(narration) / totalWords));
     const startMs = cursor; const endMs = Math.min(runtimeMs, cursor + duration); cursor = endMs;
-    return { id: `scene-${String(index + 1).padStart(2, "0")}`, startMs, endMs, narration, visualBrief: index === 0 ? `Opening visual for ${input.settings.visualStyle}` : isLast ? "Branded CTA and destination treatment" : `Original or licensed supporting visual ${index}`, transition: index === 0 ? "cut" as const : "crossfade" as const, captions: [{ startMs, endMs, text: narration }] };
+    return { id: `scene-${String(index + 1).padStart(2, "0")}`, startMs, endMs, narration, visualBrief: index === 0 ? `Opening visual for ${input.settings.visualStyle}` : isLast ? "Branded CTA and destination treatment" : `Original or licensed supporting visual ${index}`, transition: index === 0 ? "cut" as const : "crossfade" as const, captions: captionCues(narration, startMs, endMs) };
   });
-  if (scenes.length) { scenes[scenes.length - 1].endMs = runtimeMs; scenes[scenes.length - 1].captions[0].endMs = runtimeMs; }
+  if (scenes.length) {
+    scenes[scenes.length - 1].endMs = runtimeMs;
+    const finalCaptions = scenes[scenes.length - 1].captions;
+    if (finalCaptions.length) finalCaptions[finalCaptions.length - 1].endMs = runtimeMs;
+  }
   const [width, height] = dimensions[input.settings.aspectRatio];
   const providerBindings = videoProductionProviderSlots.map((slot) => ({ slot, required: slot !== "licensed_media", providerId: null, modelOrService: null, authorized: false, paid: false, termsObservedAt: null }));
   const base = { schemaVersion: "bmkt-production-1" as const, jobId: input.jobId, revision: input.revision, aspectRatio: input.settings.aspectRatio, width, height, runtimeMs, visualStyle: stripInternalProductionMarkers(input.settings.visualStyle), captionStyle: stripInternalProductionMarkers(input.settings.captionStyle), presenterProfileId: input.settings.presenterProfileId, presenterMode: "faceless" as const, scenes, assets: [] as ProductionAsset[], providerBindings, retryPolicy: { maximumAttempts: 3, delaysSeconds: [30, 120, 600] }, planState: "planned_provider_blocked" as const, blockers: ["No authorized narration provider is bound.", "No authorized visual provider is bound.", "No authorized composition renderer is bound."] };

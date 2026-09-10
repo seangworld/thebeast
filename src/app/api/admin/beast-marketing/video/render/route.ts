@@ -15,6 +15,7 @@ import {
   shotstackWatermarkPolicy,
   submitShotstackRender,
 } from "@/lib/beastMarketingShotstack";
+import { evaluateProductionQuality } from "@/lib/beastMarketingQuality";
 import { createRouteClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -82,6 +83,9 @@ export async function POST(request: Request) {
   if (!validManifest(manifest) || manifest.jobId !== job.id || manifest.revision !== job.revision) return NextResponse.json({ error: "A valid exact-revision BMKT production manifest is required before rendering." }, { status: 409 });
 
   if (action === "submit") {
+    const { data: series } = await client.from("beast_marketing_video_series").select("settings").eq("id", job.series_id).eq("owner_id", user.id).maybeSingle();
+    const qualityReport = evaluateProductionQuality(manifest, renderSettings(series?.settings));
+    if (!qualityReport.ready) return NextResponse.json({ error: "The candidate is held by the automated publication-quality gate.", qualityReport }, { status: 409 });
     const quality = record(job.quality);
     const qualityRemediation = job.state === "ready" && quality.ownerQualityReview === "pending" && quality.remediationRenderUsed !== true;
     const pronunciationValidation = job.state === "ready" && quality.ownerQualityReview === "pending" && quality.remediationRenderUsed === true && quality.narrationNormalizationRenderUsed !== true;

@@ -1,5 +1,6 @@
 import type { ProductionManifest } from "./beastMarketingProduction";
 import { normalizeBeastDisplayNames, normalizeBeastNarrationForSpeech } from "./beastMarketingNarration";
+import { buildVisualBeatPlan, validateVisualAsset } from "./beastMarketingQuality";
 
 export const SHOTSTACK_ADAPTER_VERSION = "0.10.0";
 export const SHOTSTACK_PROVIDER_ID = "shotstack";
@@ -122,36 +123,30 @@ export function buildShotstackEdit(manifest: ProductionManifest): ShotstackEdit 
   const narration = normalizeBeastNarrationForSpeech(manifest.scenes.map((scene) => scene.narration.trim()).filter(Boolean).join(" "));
   if (!narration) throw new ShotstackProviderError("validation", false);
 
-  // Only explicitly bound, provenance-backed first-party captures can enter
-  // this renderer. Never pass arbitrary URLs to an external media fetcher.
-  const visualClips = manifest.scenes.flatMap((scene) => {
-    if (!scene.visualAssetId) {
+  const visualPlan = manifest.visualPlan || buildVisualBeatPlan(manifest);
+  // Only explicitly bound, provenance-backed media can enter this renderer.
+  // Never pass arbitrary URLs to an external media fetcher.
+  const visualClips = visualPlan.beats.flatMap((beat) => {
+    if (!beat.visualAssetId) {
       if (manifest.requireVisuals) throw new ShotstackProviderError("validation", false);
       return [];
     }
-    const matches = manifest.assets.filter((asset) => asset.id === scene.visualAssetId);
+    const matches = manifest.assets.filter((asset) => asset.id === beat.visualAssetId);
     const asset = matches[0];
-    if (matches.length !== 1 || !asset.uri || asset.sourceType !== "first_party"
-      || !["visual", "product_capture"].includes(asset.role)
-      || !["image/png", "image/jpeg", "image/webp"].includes(asset.mimeType || "")
-      || !asset.provenanceComplete || !asset.license || !asset.createdAt
-      || !/^sha256:[a-f0-9]{64}$/.test(asset.contentHash || "")) {
+    if (matches.length !== 1 || !asset || !["image/png", "image/jpeg", "image/webp"].includes(asset.mimeType || "") || !validateVisualAsset(asset).valid) {
       throw new ShotstackProviderError("validation", false);
     }
-    let url: URL;
-    try { url = new URL(asset.uri); } catch { throw new ShotstackProviderError("validation", false); }
-    if (url.protocol !== "https:" || url.username || url.password || url.port || url.search || url.hash
-      || !["thebeast.seangworld.com", "news.seangworld.com"].includes(url.hostname)
-      || !/^\/marketing\/visuals\/[a-z0-9-]+\.(png|jpg|webp)$/.test(url.pathname)) {
-      throw new ShotstackProviderError("validation", false);
-    }
+    if (!asset.uri) throw new ShotstackProviderError("validation", false);
     return [{
       asset: { type: "image", src: asset.uri },
-      start: scene.startMs / 1000,
-      length: (scene.endMs - scene.startMs) / 1000,
-      fit: "contain", position: "center",
-      width: Math.round(manifest.width * 0.94),
-      height: Math.round(manifest.height * 0.62),
+      start: beat.startMs / 1000,
+      length: (beat.endMs - beat.startMs) / 1000,
+      fit: beat.fit,
+      position: "center",
+      width: manifest.width,
+      height: manifest.height,
+      effect: { reveal: "zoomInFast", push_in: "zoomInFast", pull_out: "zoomOutFast", pan_left: "slideLeftFast", pan_right: "slideRightFast", pan_up: "slideUpFast", pan_down: "slideDownFast" }[beat.motion],
+      transition: { in: beat.transition === "cut" ? "none" : "fadeFast", out: "fadeFast" },
     }];
   });
 
@@ -192,11 +187,48 @@ export function buildShotstackEdit(manifest: ProductionManifest): ShotstackEdit 
     start: cue.startMs / 1000,
     length: Math.max(0.1, (cue.endMs - cue.startMs) / 1000),
     width: Math.round(manifest.width * 0.9),
-    height: Math.round(manifest.height * 0.24),
-    position: "bottom",
-    offset: { x: 0, y: 0.06 },
-    fit: "none",
+      height: Math.round(manifest.height * 0.18),
+      position: "bottom",
+      offset: { x: 0, y: 0.1 },
+      fit: "none",
   })));
+
+  const finalScene = manifest.scenes.at(-1);
+  const endCardClip = finalScene ? {
+    asset: {
+      type: "rich-text",
+      text: normalizeBeastDisplayNames(finalScene.narration),
+      font: { family: "Montserrat", size: manifest.aspectRatio === "9:16" ? 58 : 46, weight: 800, color: "#ffffff" },
+      style: { lineHeight: 1.08 },
+      background: { color: "#070b14", opacity: 0.92, borderRadius: 24 },
+      padding: 28,
+      align: { horizontal: "center", vertical: "middle" },
+    },
+    start: finalScene.startMs / 1000,
+    length: Math.max(0.1, (finalScene.endMs - finalScene.startMs) / 1000),
+    width: Math.round(manifest.width * 0.86),
+    height: Math.round(manifest.height * 0.2),
+    position: "center",
+    transition: { in: "zoomFast", out: "fadeFast" },
+  } : null;
+
+  const musicAsset = manifest.audioMix?.musicAssetId ? manifest.assets.find((asset) => asset.id === manifest.audioMix?.musicAssetId) : null;
+  const musicAuthorized = Boolean(musicAsset?.uri && musicAsset.role === "music" && musicAsset.mimeType?.startsWith("audio/")
+    && musicAsset.provenanceComplete && Boolean(musicAsset.createdAt) && /^sha256:[a-f0-9]{64}$/i.test(musicAsset.contentHash || "")
+    && (musicAsset.sourceType === "first_party" || (Boolean(musicAsset.providerId) && musicAsset.authorized === true)));
+  const musicClip = musicAuthorized ? {
+    asset: { type: "audio", src: musicAsset!.uri!, volume: Math.min(0.35, Math.max(0.05, manifest.audioMix?.musicVolume ?? 0.16)) },
+    start: 0,
+    length: manifest.runtimeMs / 1000,
+  } : null;
+  const sfxClips = (manifest.audioMix?.sfx || []).flatMap((cue) => {
+    const asset = manifest.assets.find((candidate) => candidate.id === cue.assetId);
+    const authorized = Boolean(asset?.uri && asset.mimeType?.startsWith("audio/") && asset.provenanceComplete && asset.createdAt
+      && /^sha256:[a-f0-9]{64}$/i.test(asset.contentHash || "")
+      && (asset.sourceType === "first_party" || (asset.providerId && asset.authorized === true)));
+    if (!authorized || !asset?.uri || cue.endMs <= cue.startMs || cue.startMs < 0 || cue.endMs > manifest.runtimeMs) throw new ShotstackProviderError("validation", false);
+    return [{ asset: { type: "audio", src: asset.uri, volume: Math.min(0.5, Math.max(0, cue.volume)) }, start: cue.startMs / 1000, length: (cue.endMs - cue.startMs) / 1000 }];
+  });
 
   return {
     timeline: {
@@ -220,17 +252,18 @@ export function buildShotstackEdit(manifest: ProductionManifest): ShotstackEdit 
             height: 100,
             position: "topLeft",
             offset: { x: 0.03, y: -0.04 },
-          }],
+          }, ...(endCardClip ? [endCardClip] : [])],
         },
         { clips: visualClips },
         {
           clips: [{
             alias: "bmkt-narration",
-            asset: { type: "text-to-speech", text: narration, voice: "Matthew", language: "en-US", newscaster: true, speed: 1.1 },
+            asset: { type: "text-to-speech", text: narration, voice: "Matthew", language: "en-US", newscaster: true, speed: Math.min(1.2, Math.max(0.85, manifest.audioMix?.narrationSpeed ?? 1.1)) },
             start: 0,
             length: "auto",
           }],
         },
+        ...(musicClip || sfxClips.length ? [{ clips: [ ...(musicClip ? [musicClip] : []), ...sfxClips ] }] : []),
       ],
     },
     output: { format: "mp4", size: { width: manifest.width, height: manifest.height }, range: { start: 0, length: manifest.runtimeMs / 1000 } },

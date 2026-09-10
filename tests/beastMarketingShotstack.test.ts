@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { defaultVideoSeriesSettings } from "../src/lib/beastMarketingVideo";
 import { buildProductionManifest } from "../src/lib/beastMarketingProduction";
+import { buildVisualBeatPlan } from "../src/lib/beastMarketingQuality";
 import {
   BEAST_PRONUNCIATION_MAP,
   normalizeBeastDisplayNames,
@@ -53,12 +54,15 @@ test("visual composition binds actual images to scene timing, beneath captions",
   const edit = buildShotstackEdit(source);
   assert.ok(edit.timeline.tracks.every((track) => track.clips.length > 0));
   const images = edit.timeline.tracks[2].clips;
-  assert.equal(images.length, source.scenes.length);
+  const beats = buildVisualBeatPlan(source).beats;
+  assert.equal(images.length, beats.length);
   images.forEach((clip, index) => {
     assert.deepEqual(clip.asset, { type: "image", src: source.assets[0].uri });
-    assert.equal(clip.start, source.scenes[index].startMs / 1000);
-    assert.equal(clip.length, (source.scenes[index].endMs - source.scenes[index].startMs) / 1000);
-    assert.equal(clip.fit, "contain");
+    assert.equal(clip.start, beats[index].startMs / 1000);
+    assert.equal(clip.length, (beats[index].endMs - beats[index].startMs) / 1000);
+    assert.equal(clip.fit, "cover");
+    assert.ok(clip.effect);
+    assert.deepEqual(clip.transition, { in: index === 0 ? "none" : "fadeFast", out: "fadeFast" });
   });
   assert.match(JSON.stringify(edit), /SEANGWORLD NEWS/);
   assert.doesNotMatch(JSON.stringify(edit), /Explore The Beast AI Specialists/);
