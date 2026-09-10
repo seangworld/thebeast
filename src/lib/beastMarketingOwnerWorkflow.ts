@@ -86,7 +86,7 @@ export function ownerWorkflowGroup(job: WorkflowJob): OwnerWorkflowGroup {
 export function ownerWorkflowStatus(job: WorkflowJob) {
   const decision = job.quality?.ownerWorkflowDecision;
   if (decision === "held") return "On hold";
-  if (decision === "approved") return job.state === "scheduled" ? "Approved and scheduled" : "Approved · upload authority pending";
+  if (decision === "approved") return job.state === "scheduled" ? "Approved and scheduled" : "Approved · ready for upload review";
   if (decision === "rejected") return "Rejected";
   if (decision === "needs_changes") return "Needs changes";
   if (["published", "measuring", "completed", "scale"].includes(job.state)) return "Published · outcome tracking active";
@@ -94,7 +94,7 @@ export function ownerWorkflowStatus(job: WorkflowJob) {
   if (job.state === "generating") return "Generating internal video";
   if (job.state === "scripted") return "Ready for internal render";
   if (job.state === "selected") return "Ready for grounded script";
-  return "Preparing candidate";
+  return "Idea · evaluation needed";
 }
 
 export function validateTopicFamily(topicFamily: string, settings: VideoSeriesSettings) {

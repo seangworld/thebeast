@@ -17,7 +17,10 @@ export function DirectYouTubePanel() {
   }
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get("youtube") === "failed") setError("YouTube connection was not saved. Choose SEANGWORLD and grant both requested permissions; check Google setup if it fails again.");
-    void refresh().catch(() => setError("YouTube setup unavailable. Refresh to try again."));
+    const reload = () => { void refresh().catch(() => setError("YouTube setup unavailable. Refresh to try again.")); };
+    reload();
+    window.addEventListener("beast-video-updated", reload);
+    return () => window.removeEventListener("beast-video-updated", reload);
   }, []);
   async function connect() {
     setBusy(true); setError("");
@@ -40,6 +43,7 @@ export function DirectYouTubePanel() {
       if (!response.ok) throw new Error("Disconnect could not be confirmed.");
       setMessage("Beast credentials removed. Existing YouTube videos remain; a transfer already in flight may finish.");
       await refresh();
+      window.dispatchEvent(new Event("beast-video-updated"));
     } catch (error) { setError(error instanceof Error ? error.message : "Disconnect failed."); }
     finally { setBusy(false); }
   }
@@ -73,6 +77,7 @@ export function DirectYouTubePanel() {
       <p className="text-sm text-amber-100">Google may require an API compliance audit before public uploads. A private receipt does not establish public distribution or campaign effectiveness.</p>
       {data.connection && <details><summary className="cursor-pointer font-bold">Upload an approved Short privately</summary>
         <p className="my-3 text-sm">Approve the current render below and release the global publishing pause first. Uploads require a licensed production MP4, a vertical one-to-three-minute render, and a maximum size of 32 MiB. An uncertain attempt is retained for inspection in YouTube Studio instead of being retried automatically.</p>
+        {!data.assets.length && <p role="status" className="my-3 rounded-lg border border-amber-300/30 p-3">No approved renders are available. Complete the script and render steps in the production queue below, watch the finished video, then approve it. This list refreshes after approval.</p>}
         <form onSubmit={upload} className="space-y-3">
           <label className="block">Reviewed video<select name="asset" required className={input} defaultValue=""><option value="" disabled>Select an approved render</option>{data.assets.map((asset) => <option key={asset.id} value={asset.id}>{asset.id} · {Math.round(asset.duration_ms / 1000)} seconds</option>)}</select></label>
           <label className="block">Title<input name="title" required maxLength={100} className={input} /></label>
