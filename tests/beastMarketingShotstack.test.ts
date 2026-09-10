@@ -51,8 +51,8 @@ function illustratedManifest() {
 test("visual composition binds actual images to scene timing, beneath captions", () => {
   const source = illustratedManifest();
   const edit = buildShotstackEdit(source);
-  assert.equal(edit.timeline.tracks[1].clips.length, 0);
-  const images = edit.timeline.tracks[3].clips;
+  assert.ok(edit.timeline.tracks.every((track) => track.clips.length > 0));
+  const images = edit.timeline.tracks[2].clips;
   assert.equal(images.length, source.scenes.length);
   images.forEach((clip, index) => {
     assert.deepEqual(clip.asset, { type: "image", src: source.assets[0].uri });
@@ -219,6 +219,25 @@ test("BMKT-007 permits bounded credential and schema remediation before provider
   assert.equal(nextShotstackManualAttempt({ attemptNumber: 5, status: "succeeded", errorCategory: null, providerRequestId: "render-5" }), 6);
   assert.equal(nextShotstackManualAttempt({ attemptNumber: 6, status: "succeeded", errorCategory: null, providerRequestId: "render-6" }), 7);
   assert.equal(nextShotstackManualAttempt({ attemptNumber: 7, status: "succeeded", errorCategory: null, providerRequestId: "render-7" }), null);
+});
+
+test("visual test recovery permits only one manual retry of a rejected first request", () => {
+  const rejected = { attemptNumber: 1, status: "failed", errorCategory: "validation", providerRequestId: null };
+  assert.equal(nextShotstackManualAttempt(rejected, true), 2);
+  assert.equal(nextShotstackManualAttempt({ ...rejected, attemptNumber: 2 }, true), null);
+  assert.equal(nextShotstackManualAttempt({ ...rejected, providerRequestId: "retained-render" }, true), null);
+  assert.equal(nextShotstackManualAttempt({ ...rejected, errorCategory: "network" }, true), null);
+  assert.equal(nextShotstackManualAttempt({ ...rejected, status: "submitted" }, true), null);
+});
+
+test("provider status remains diagnosable without exposing response bodies", async () => {
+  for (const status of [400, 402, 422, 500]) {
+    await assert.rejects(submitShotstackRender({ apiKey: "k".repeat(40), environment: "v1", edit: buildShotstackEdit(manifest),
+      fetcher: async () => new Response("private provider response", { status }) }),
+    (error: unknown) => error instanceof ShotstackProviderError && error.httpStatus === status
+      && error.category === ([400, 422].includes(status) ? "validation" : "provider")
+      && !JSON.stringify(error).includes("private provider response"));
+  }
 });
 
 test("BMKT-007 inspects Edit then Serve and accepts only the Shotstack CDN", async () => {

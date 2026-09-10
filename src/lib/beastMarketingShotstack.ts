@@ -45,17 +45,21 @@ export type ShotstackInspection = {
 export class ShotstackProviderError extends Error {
   readonly category: "configuration" | "authentication" | "rate_limit" | "validation" | "provider" | "network";
   readonly retryable: boolean;
+  readonly httpStatus: number | null;
 
-  constructor(category: ShotstackProviderError["category"], retryable: boolean) {
+  constructor(category: ShotstackProviderError["category"], retryable: boolean, httpStatus: number | null = null) {
     super("Shotstack could not complete the internal render operation.");
     this.name = "ShotstackProviderError";
     this.category = category;
     this.retryable = retryable;
+    this.httpStatus = httpStatus;
   }
 }
 
-export function nextShotstackManualAttempt(latest: ShotstackAttemptSummary | null) {
+export function nextShotstackManualAttempt(latest: ShotstackAttemptSummary | null, visualTest = false) {
   if (!latest) return 1;
+  if (visualTest) return latest.attemptNumber === 1 && latest.status === "failed"
+    && latest.errorCategory === "validation" && latest.providerRequestId === null ? 2 : null;
   const credentialFailureBeforeSubmission = latest.attemptNumber === 1
     && latest.status === "failed"
     && latest.providerRequestId === null
@@ -201,7 +205,7 @@ export function buildShotstackEdit(manifest: ProductionManifest): ShotstackEdit 
         {
           clips: captionClips,
         },
-        { clips: sceneClips },
+        ...(sceneClips.length ? [{ clips: sceneClips }] : []),
         {
           clips: [{
             asset: {
@@ -234,10 +238,10 @@ export function buildShotstackEdit(manifest: ProductionManifest): ShotstackEdit 
 }
 
 function providerError(response: Response) {
-  if (response.status === 401 || response.status === 403) return new ShotstackProviderError("authentication", false);
-  if (response.status === 429) return new ShotstackProviderError("rate_limit", true);
-  if (response.status >= 400 && response.status < 500) return new ShotstackProviderError("validation", false);
-  return new ShotstackProviderError("provider", response.status >= 500);
+  if (response.status === 401 || response.status === 403) return new ShotstackProviderError("authentication", false, response.status);
+  if (response.status === 429) return new ShotstackProviderError("rate_limit", true, response.status);
+  if ([400, 422].includes(response.status)) return new ShotstackProviderError("validation", false, response.status);
+  return new ShotstackProviderError("provider", response.status >= 500, response.status);
 }
 
 async function providerFetch(url: string, apiKey: string, init: RequestInit = {}, fetcher: typeof fetch = fetch) {

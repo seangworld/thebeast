@@ -61,7 +61,7 @@ function validManifest(value: unknown): value is ProductionManifest {
 
 function providerFailure(error: unknown) {
   const failure = error instanceof ShotstackProviderError ? error : new ShotstackProviderError("provider", false);
-  return { category: failure.category, retryable: failure.retryable };
+  return { category: failure.category, retryable: failure.retryable, httpStatus: failure.httpStatus };
 }
 
 export async function POST(request: Request) {
@@ -93,11 +93,14 @@ export async function POST(request: Request) {
     }
     const { data: latest, error: latestError } = await client.from("beast_marketing_video_attempts").select("*").eq("owner_id", user.id).eq("job_id", job.id).eq("provider_id", SHOTSTACK_PROVIDER_ID).order("attempt_number", { ascending: false }).limit(1).maybeSingle();
     if (latestError) return NextResponse.json({ error: safeError }, { status: 503 });
+    // One manual recovery of this exact retained visual test after its first
+    // pre-submission rejection. Never reopen a submitted/uncertain render.
+    const visualTest = record(job.provenance).visualTemplate === "news-visual-test-v1";
     const attemptNumber = nextShotstackManualAttempt(latest ? {
       attemptNumber: Number(latest.attempt_number), status: clean(latest.status, 40),
       errorCategory: clean(latest.error_category, 40) || null,
       providerRequestId: clean(latest.provider_request_id, 100) || null,
-    } : null);
+    } : null, visualTest);
     if (!attemptNumber) return NextResponse.json({ error: "No additional internal Shotstack attempt is authorized for this exact job revision." }, { status: 409 });
     const idempotencyKey = `bmkt-shotstack:${job.id}:${job.revision}:${manifest.checksum}:${attemptNumber}`;
     const { data: existing } = await client.from("beast_marketing_video_attempts").select("*").eq("owner_id", user.id).eq("idempotency_key", idempotencyKey).maybeSingle();
@@ -106,7 +109,7 @@ export async function POST(request: Request) {
     const { data: attempt, error: insertError } = await client.from("beast_marketing_video_attempts").insert({
       owner_id: user.id, job_id: job.id, attempt_number: attemptNumber, operation: "composition", provider_id: SHOTSTACK_PROVIDER_ID,
       idempotency_key: idempotencyKey, status: "planned", retryable: false,
-      evidence: { environment: configuration.environment, manifestChecksum: manifest.checksum, estimate, automaticRetry: false, youtubeDestination: false, manualCredentialRemediation: attemptNumber === 2, manualSchemaRemediation: [3, 4].includes(attemptNumber), qualityRemediation: attemptNumber === 5, narrationNormalization: attemptNumber === 6, controlTokenRemediation: attemptNumber === 7, ...shotstackWatermarkPolicy(configuration.environment), previousAttemptId: latest?.id || null },
+      evidence: { environment: configuration.environment, manifestChecksum: manifest.checksum, estimate, automaticRetry: false, youtubeDestination: false, manualCredentialRemediation: attemptNumber === 2 && !visualTest, manualSchemaRemediation: [3, 4].includes(attemptNumber) || (visualTest && attemptNumber === 2), qualityRemediation: attemptNumber === 5, narrationNormalization: attemptNumber === 6, controlTokenRemediation: attemptNumber === 7, ...shotstackWatermarkPolicy(configuration.environment), previousAttemptId: latest?.id || null },
       started_at: now, updated_at: now,
     }).select("*").single();
     if (insertError || !attempt) return NextResponse.json({ error: safeError }, { status: 503 });
@@ -123,8 +126,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ attempt: { ...attempt, status: "submitted", provider_request_id: submitted.providerRequestId }, estimate, duplicatePrevented: false }, { status: 202 });
     } catch (error) {
       const failure = providerFailure(error);
-      await client.from("beast_marketing_video_attempts").update({ status: "failed", retryable: failure.retryable, error_category: failure.category, completed_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("id", attempt.id).eq("owner_id", user.id);
-      return NextResponse.json({ error: safeError, category: failure.category, retryable: failure.retryable }, { status: failure.category === "authentication" ? 502 : 503 });
+      await client.from("beast_marketing_video_attempts").update({ status: "failed", retryable: failure.retryable, error_category: failure.category, evidence: { ...record(attempt.evidence), providerHttpStatus: failure.httpStatus }, completed_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("id", attempt.id).eq("owner_id", user.id);
+      const message = failure.httpStatus === 402 ? "Shotstack rejected the request for payment or credits. No purchase or automatic retry was made."
+        : failure.httpStatus ? `Shotstack returned HTTP ${failure.httpStatus} for the render request. No automatic retry was made.` : safeError;
+      return NextResponse.json({ error: message, category: failure.category, retryable: failure.retryable }, { status: failure.category === "authentication" ? 502 : 503 });
     }
   }
 
