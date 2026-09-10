@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { allowedVideoTransitions, defaultVideoSeriesSettings, normalizeVideoTopicPhrases, validateVideoTopicPhrases, videoJobStates, type VideoJobState, type VideoSeriesSettings } from "@/lib/beastMarketingVideo";
 import { buildGroundedScript, buildYouTubeMetadata, scoreVideoOpportunity, type ScriptFact, type VideoEvidence } from "@/lib/beastMarketingContent";
 import { buildProductionManifest, validateProductionManifest } from "@/lib/beastMarketingProduction";
 import { planCandidateCadence, validateTopicFamily, type OwnerWorkflowDecision } from "@/lib/beastMarketingOwnerWorkflow";
 import { shotstackConfiguration } from "@/lib/beastMarketingShotstack";
+import { bindNewsTestVisuals } from "@/lib/beastMarketingNewsVisualTest";
 import { createBeastFusionPublicationClient } from "@/lib/supabase/service";
 import { createRouteClient } from "@/lib/supabase/server";
 
@@ -128,6 +129,38 @@ export async function POST(request: Request) {
   if (!user) return forbidden();
   const body = await request.json().catch(() => null) as Record<string, unknown> | null;
   const kind = clean(body?.kind, 40);
+  if (kind === "prepare_news_visual_test") {
+    if (request.headers.get("origin") !== new URL(request.url).origin) return forbidden();
+    const key = "news-visual-test-v1";
+    const { data: existing, error: lookupError } = await client.from("beast_marketing_video_jobs").select("*").eq("owner_id", user.id).eq("idempotency_key", key).maybeSingle();
+    if (lookupError) return unavailable();
+    if (existing) return NextResponse.json({ job: existing, duplicatePrevented: true, shotstackCreditsConsumed: 0 });
+    const { data: source } = await client.from("beast_marketing_video_jobs").select("id, series_id, state, script, topic, idempotency_key").eq("id", clean(body?.id, 80)).eq("owner_id", user.id).maybeSingle();
+    if (!source || source.idempotency_key !== "direct-youtube-first-news-walkthrough-20260910" || source.state !== "ready") return NextResponse.json({ error: "The original completed News walkthrough is required for this one-off visual test." }, { status: 409 });
+    const { data: series } = await client.from("beast_marketing_video_series").select("settings").eq("id", source.series_id).eq("owner_id", user.id).maybeSingle();
+    if (!series) return unavailable();
+    const script = record(source.script);
+    const normalizedScript = { hook: clean(script.hook, 1000), narration: Array.isArray(script.narration) ? script.narration.map((line) => clean(line, 1000)).filter(Boolean).slice(0, 8) : [], cta: clean(script.cta, 1000), estimatedSeconds: integer(script.estimatedSeconds, 1, 7200, 1) };
+    const id = randomUUID();
+    const normalizedSettings = settings(series.settings);
+    let manifest;
+    try { manifest = bindNewsTestVisuals(buildProductionManifest({ jobId: id, revision: 1, script: normalizedScript, settings: normalizedSettings })); }
+    catch { return NextResponse.json({ error: "The script does not match the verified News visual test template." }, { status: 409 }); }
+    const validation = validateProductionManifest(manifest, normalizedSettings);
+    if (!validation.planValid) return NextResponse.json({ error: "The visual plan does not meet the series runtime or caption requirements." }, { status: 409 });
+    const { data, error } = await client.from("beast_marketing_video_jobs").insert({
+      id, owner_id: user.id, series_id: source.series_id, state: "scripted", revision: 1, idempotency_key: key,
+      topic: { ...record(source.topic), title: "SEANGWORLD News — visual test" }, script: normalizedScript,
+      production: { manifest, validation, providerState: "authorization_required", externalActionPerformed: false },
+      quality: { renderReady: false, scriptReady: true, productionPlanReady: true, ownerQualityReview: "not_ready", ownerWorkflowDecision: "pending", warnings: ["Image-backed test prepared. Review the visual plan before rendering. Captions use estimated timing pending audio review."] },
+      provenance: { generatedBy: "BeastMarketing", generationMode: "test", sourceJobId: source.id, sourceScriptHash: createHash("sha256").update(JSON.stringify(normalizedScript)).digest("hex"), visualTemplate: "news-visual-test-v1", waitingForOwnerApproval: false, providersUsed: [], paidServicesUsed: false, shotstackCreditsConsumed: 0, externallyPublished: false },
+    }).select("*").single();
+    if (error?.code === "23505") {
+      const { data: retained } = await client.from("beast_marketing_video_jobs").select("*").eq("owner_id", user.id).eq("idempotency_key", key).maybeSingle();
+      if (retained) return NextResponse.json({ job: retained, duplicatePrevented: true, shotstackCreditsConsumed: 0 });
+    }
+    return error || !data ? unavailable() : NextResponse.json({ job: data, shotstackCreditsConsumed: 0, externallyPublished: false }, { status: 201 });
+  }
   if (kind === "plan_production") {
     const id = clean(body?.id, 80);
     const { data: job } = await client.from("beast_marketing_video_jobs").select("id, series_id, state, revision, script, provenance").eq("id", id).eq("owner_id", user.id).maybeSingle();
@@ -138,7 +171,11 @@ export async function POST(request: Request) {
     const normalizedScript = { hook: clean(rawScript.hook, 1000), narration: Array.isArray(rawScript.narration) ? rawScript.narration.map((line) => clean(line, 1000)).filter(Boolean).slice(0, 8) : [], cta: clean(rawScript.cta, 1000), estimatedSeconds: integer(rawScript.estimatedSeconds, 1, 7200, 1) };
     if (!normalizedScript.hook || !normalizedScript.narration.length || !normalizedScript.cta) return NextResponse.json({ error: "The grounded script is incomplete and cannot be planned for production." }, { status: 409 });
     const normalizedSettings = settings(series.settings);
-    const manifest = buildProductionManifest({ jobId: job.id, revision: integer(job.revision, 1, 1_000_000, 1), script: normalizedScript, settings: normalizedSettings });
+    let manifest = buildProductionManifest({ jobId: job.id, revision: integer(job.revision, 1, 1_000_000, 1), script: normalizedScript, settings: normalizedSettings });
+    if (record(job.provenance).visualTemplate === "news-visual-test-v1") {
+      try { manifest = bindNewsTestVisuals(manifest); }
+      catch { return NextResponse.json({ error: "This visual test must retain its verified News walkthrough script." }, { status: 409 }); }
+    }
     const validation = validateProductionManifest(manifest, normalizedSettings);
     if (!validation.planValid) return NextResponse.json({ error: validation.errors.join(" ") }, { status: 409 });
     const priorProvenance = job.provenance && typeof job.provenance === "object" ? job.provenance as Record<string, unknown> : {};
