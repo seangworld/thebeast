@@ -13,7 +13,8 @@ export type VisualMotion = "reveal" | "push_in" | "pull_out" | "pan_left" | "pan
 export type VisualBeat = { id: string; sceneId: string; startMs: number; endMs: number; visualAssetId?: string; motion: VisualMotion; transition: "cut" | "crossfade"; fit: "cover" | "contain"; captionSafe: boolean };
 export type VisualPlan = { version: "bmkt-visual-plan-1"; maxBeatDurationMs: number; beats: VisualBeat[] };
 export type AudioSfxCue = { assetId: string; startMs: number; endMs: number; volume: number };
-export type AudioMixPlan = { narrationSpeed?: number; musicAssetId?: string; musicVolume?: number; sfx?: AudioSfxCue[] };
+export type VoiceDeliveryPlan = { voice?: string; language?: string; style?: "energetic_conversational" | "modern_news" | "calm_explainer"; speed?: number; newscaster?: boolean; pauseMs?: number; emphasisTerms?: string[] };
+export type AudioMixPlan = { narrationSpeed?: number; voiceDelivery?: VoiceDeliveryPlan; musicAssetId?: string; musicVolume?: number; sfx?: AudioSfxCue[] };
 export type ProductionManifest = {
   schemaVersion: "bmkt-production-1"; jobId: string; revision: number; aspectRatio: VideoSeriesSettings["aspectRatio"]; width: number; height: number;
   runtimeMs: number; visualStyle: string; captionStyle: string; presenterProfileId: string | null; presenterMode: "faceless" | "future_identity";
@@ -40,6 +41,7 @@ const fingerprint = (value: string) => {
   return `fnv1a32:${(hash >>> 0).toString(16).padStart(8, "0")}`;
 };
 const words = (value: string) => value.trim().split(/\s+/).filter(Boolean).length;
+const emphasisTerms = (value: string) => value.replace(/[^A-Za-z0-9\s-]/g, " ").split(/\s+/).filter((item) => item.length >= 5).slice(0, 2);
 const captionCues = (text: string, startMs: number, endMs: number): CaptionCue[] => {
   const tokens = text.trim().split(/\s+/).filter(Boolean);
   if (!tokens.length) return [];
@@ -80,7 +82,7 @@ export function buildProductionManifest(input: { jobId: string; revision: number
   const [width, height] = dimensions[input.settings.aspectRatio];
   const providerBindings = videoProductionProviderSlots.map((slot) => ({ slot, required: slot !== "licensed_media", providerId: null, modelOrService: null, authorized: false, paid: false, termsObservedAt: null }));
   const base = { schemaVersion: "bmkt-production-1" as const, jobId: input.jobId, revision: input.revision, aspectRatio: input.settings.aspectRatio, width, height, runtimeMs, visualStyle: stripInternalProductionMarkers(input.settings.visualStyle), captionStyle: stripInternalProductionMarkers(input.settings.captionStyle), presenterProfileId: input.settings.presenterProfileId, presenterMode: "faceless" as const, scenes, assets: [] as ProductionAsset[], providerBindings, retryPolicy: { maximumAttempts: 3, delaysSeconds: [30, 120, 600] }, planState: "planned_provider_blocked" as const, blockers: ["No authorized narration provider is bound.", "No authorized visual provider is bound.", "No authorized composition renderer is bound."] };
-  return { ...base, checksum: fingerprint(JSON.stringify(base)) };
+  return { ...base, audioMix: { voiceDelivery: { voice: "Matthew", language: "en-US", style: "energetic_conversational", speed: 1.16, newscaster: false, pauseMs: 140, emphasisTerms: emphasisTerms(input.script.hook) } }, checksum: fingerprint(JSON.stringify({ ...base, audioMix: { voiceDelivery: { voice: "Matthew", language: "en-US", style: "energetic_conversational", speed: 1.16, newscaster: false, pauseMs: 140, emphasisTerms: emphasisTerms(input.script.hook) } } })) };
 }
 
 export function validateProductionManifest(manifest: ProductionManifest, settings: VideoSeriesSettings) {

@@ -124,6 +124,7 @@ export function buildShotstackEdit(manifest: ProductionManifest): ShotstackEdit 
   if (!narration) throw new ShotstackProviderError("validation", false);
 
   const visualPlan = manifest.visualPlan || buildVisualBeatPlan(manifest);
+  const voiceDelivery = manifest.audioMix?.voiceDelivery;
   // Only explicitly bound, provenance-backed media can enter this renderer.
   // Never pass arbitrary URLs to an external media fetcher.
   const visualClips = visualPlan.beats.flatMap((beat) => {
@@ -258,7 +259,14 @@ export function buildShotstackEdit(manifest: ProductionManifest): ShotstackEdit 
         {
           clips: [{
             alias: "bmkt-narration",
-            asset: { type: "text-to-speech", text: narration, voice: "Matthew", language: "en-US", newscaster: true, speed: Math.min(1.2, Math.max(0.85, manifest.audioMix?.narrationSpeed ?? 1.1)) },
+            asset: {
+              type: "text-to-speech",
+              text: narration,
+              voice: voiceDelivery?.voice || "Matthew",
+              language: voiceDelivery?.language || "en-US",
+              newscaster: voiceDelivery?.newscaster ?? false,
+              speed: Math.min(1.2, Math.max(0.85, voiceDelivery?.speed ?? manifest.audioMix?.narrationSpeed ?? 1.16)),
+            },
             start: 0,
             length: "auto",
           }],

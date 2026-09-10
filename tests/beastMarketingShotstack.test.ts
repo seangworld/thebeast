@@ -135,7 +135,8 @@ test("BMKT-007 builds current Shotstack faceless composition without a destinati
   assert.doesNotMatch(serialized, /"vertical":"center"/);
   assert.doesNotMatch(serialized, /"preset":"fade"/);
   assert.match(serialized, /"preset":"fadeIn"/);
-  assert.match(serialized, /"speed":1\.1/);
+  assert.match(serialized, /"speed":1\.16/);
+  assert.match(serialized, /"newscaster":false/);
   assert.doesNotMatch(serialized, /youtube|destinations|webhook|callback/i);
   assert.doesNotMatch(serialized, /api[_-]?key|secret|token/i);
 });

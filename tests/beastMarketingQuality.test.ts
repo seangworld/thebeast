@@ -75,3 +75,15 @@ test("BMKT-010 generated and licensed visuals require an authorized provider or 
   licensed.sourceType = "licensed"; licensed.providerId = "existing-media-provider"; licensed.authorized = true; licensed.license = "License reference";
   assert.equal(validateVisualAsset(licensed).valid, true);
 });
+
+test("BMKT-010 voice gate rejects flat delivery and accepts energetic conversational controls", () => {
+  const manifest = sixSceneManifest(["one", "two", "three", "four", "five", "six"]);
+  const plan = buildVisualBeatPlan(manifest, { maxBeatDurationMs: 4_500 });
+  const flat = { ...manifest, audioMix: { voiceDelivery: { voice: "Matthew", language: "en-US", style: "calm_explainer" as const, speed: 0.9, newscaster: true, pauseMs: 40, emphasisTerms: [] } } };
+  assert.equal(evaluateProductionQuality(flat, { ...defaultVideoSeriesSettings, minimumRuntimeSeconds: 24, maximumRuntimeSeconds: 24 }, { plan }).ready, false);
+  const energetic = { ...manifest, audioMix: { voiceDelivery: { voice: "Matthew", language: "en-US", style: "energetic_conversational" as const, speed: 1.16, newscaster: false, pauseMs: 140, emphasisTerms: ["opening", "story"] } } };
+  const report = evaluateProductionQuality(energetic, { ...defaultVideoSeriesSettings, minimumRuntimeSeconds: 24, maximumRuntimeSeconds: 24 }, { plan });
+  assert.equal(report.metrics.voiceStyle, "energetic_conversational");
+  assert.equal(report.metrics.voiceEmphasisCount, 2);
+  assert.equal(report.blockers.some((item) => /voice delivery speed|newscaster|voice pauses|emphasis/i.test(item)), false);
+});
