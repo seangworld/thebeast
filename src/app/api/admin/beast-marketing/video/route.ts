@@ -5,6 +5,7 @@ import { buildGroundedScript, buildYouTubeMetadata, scoreVideoOpportunity, type 
 import { buildProductionManifest, validateProductionManifest } from "@/lib/beastMarketingProduction";
 import { planCandidateCadence, validateTopicFamily, type OwnerWorkflowDecision } from "@/lib/beastMarketingOwnerWorkflow";
 import { shotstackConfiguration } from "@/lib/beastMarketingShotstack";
+import { createBeastFusionPublicationClient } from "@/lib/supabase/service";
 import { createRouteClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -102,11 +103,12 @@ function settings(value: unknown): VideoSeriesSettings {
 export async function GET() {
   const { client, user } = await owner();
   if (!user) return forbidden();
-  const [controls, series, presenters, jobs] = await Promise.all([
+  const [controls, series, presenters, jobs, youtube] = await Promise.all([
     client.from("beast_marketing_video_controls").select("*").eq("owner_id", user.id).maybeSingle(),
     client.from("beast_marketing_video_series").select("*").eq("owner_id", user.id).order("updated_at", { ascending: false }),
     client.from("beast_marketing_presenter_profiles").select("*").eq("owner_id", user.id).order("created_at", { ascending: true }),
     client.from("beast_marketing_video_jobs").select("*").eq("owner_id", user.id).order("updated_at", { ascending: false }),
+    createBeastFusionPublicationClient().from("beast_marketing_youtube_connections").select("channel_handle").eq("owner_id", user.id).maybeSingle(),
   ]);
   if (controls.error || series.error || presenters.error || jobs.error) return unavailable();
   return NextResponse.json({
@@ -115,7 +117,7 @@ export async function GET() {
     authorities: {
       externalPublishing: "disabled",
       automaticPublishing: "disabled",
-      youtube: "not_authorized",
+      youtube: youtube.error ? "connection_unavailable" : youtube.data ? "connected_private_upload_only" : "not_connected",
       paidProviders: shotstackConfiguration().configured ? "shotstack_internal_only" : "not_configured",
     },
   }, { headers: { "cache-control": "private, no-store" } });
@@ -133,7 +135,7 @@ export async function POST(request: Request) {
     const { data: series } = await client.from("beast_marketing_video_series").select("settings").eq("id", job.series_id).eq("owner_id", user.id).maybeSingle();
     if (!series) return NextResponse.json({ error: "The series settings are unavailable." }, { status: 404 });
     const rawScript = job.script && typeof job.script === "object" ? job.script as Record<string, unknown> : {};
-    const normalizedScript = { hook: clean(rawScript.hook, 1000), narration: list(rawScript.narration, 8), cta: clean(rawScript.cta, 1000), estimatedSeconds: integer(rawScript.estimatedSeconds, 1, 7200, 1) };
+    const normalizedScript = { hook: clean(rawScript.hook, 1000), narration: Array.isArray(rawScript.narration) ? rawScript.narration.map((line) => clean(line, 1000)).filter(Boolean).slice(0, 8) : [], cta: clean(rawScript.cta, 1000), estimatedSeconds: integer(rawScript.estimatedSeconds, 1, 7200, 1) };
     if (!normalizedScript.hook || !normalizedScript.narration.length || !normalizedScript.cta) return NextResponse.json({ error: "The grounded script is incomplete and cannot be planned for production." }, { status: 409 });
     const normalizedSettings = settings(series.settings);
     const manifest = buildProductionManifest({ jobId: job.id, revision: integer(job.revision, 1, 1_000_000, 1), script: normalizedScript, settings: normalizedSettings });
@@ -232,7 +234,7 @@ export async function POST(request: Request) {
       quality: { renderReady: false, ownerQualityReview: "not_ready", ownerWorkflowDecision: "pending", warnings: ["Candidate prepared from the series strategy. Grounded scripting and internal rendering remain gated."] },
       provenance: {
         createdBy: "beastmarketing_owner_workflow", generatedBy: "BeastMarketing", generationMode: mode, generatedAt,
-        waitingForOwnerApproval: true, candidateIndex: index + 1, candidateCount: requestedCount, topicFamily: topicPolicy.topicFamily,
+        waitingForOwnerApproval: false, candidateIndex: index + 1, candidateCount: requestedCount, topicFamily: topicPolicy.topicFamily,
         cadencePlan: { plannedFor, minimumSpacingMinutes: normalizedSettings.minimumSpacingMinutes, maximumPerDay: normalizedSettings.maximumPerDay, maximumPerWeek: normalizedSettings.maximumPerWeek },
         generationSettings: { minimumRuntimeSeconds: normalizedSettings.minimumRuntimeSeconds, targetRuntimeSeconds: normalizedSettings.targetRuntimeSeconds, maximumRuntimeSeconds: normalizedSettings.maximumRuntimeSeconds, aspectRatio: normalizedSettings.aspectRatio, presenterProfileId: normalizedSettings.presenterProfileId, qualityThreshold: normalizedSettings.qualityThreshold, allowedTopics: normalizedSettings.allowedTopics, excludedTopics: normalizedSettings.excludedTopics, approvalMode: normalizedSettings.approvalMode, manualApprovalFirstN: normalizedSettings.manualApprovalFirstN },
         publishingInterlocks: { pauseAllPublishing: controls?.pause_all_publishing !== false, externalPublishingAuthorized: false, automaticPublishingAuthorized: false, youtubeAuthorized: false },
@@ -293,13 +295,13 @@ export async function PATCH(request: Request) {
     if (decision === "rejected" && !allowedVideoTransitions[currentState]?.includes("skipped")) return NextResponse.json({ error: "This candidate cannot be rejected from its current preparation state." }, { status: 409 });
     if (decision === "needs_changes" && !allowedVideoTransitions[currentState]?.includes("modify")) return NextResponse.json({ error: "A finished candidate is required before requesting changes." }, { status: 409 });
     if (decision === "held" && ["published", "measuring", "completed", "scale", "stop", "skipped"].includes(currentState)) return NextResponse.json({ error: "This candidate is no longer active and cannot be held." }, { status: 409 });
-    if (decision === "pending" && currentState !== "ready") return NextResponse.json({ error: "Only a finished candidate can return to Needs Review." }, { status: 409 });
+    if (decision === "pending" && currentState !== "ready" && !(currentQuality.ownerWorkflowDecision === "held" && ["idea", "selected", "scripted", "generating"].includes(currentState))) return NextResponse.json({ error: "Only a finished candidate can return to Needs Review." }, { status: 409 });
     const reviewedAt = new Date().toISOString();
     const nextState = decision === "rejected" ? "skipped" : decision === "needs_changes" ? "modify" : currentState;
     const { data, error } = await client.from("beast_marketing_video_jobs").update({
       state: nextState,
       quality: { ...currentQuality, ownerQualityReview: decision, ownerWorkflowDecision: decision, ownerApprovalSource: decision === "approved" ? "manual" : currentQuality.ownerApprovalSource, ownerReviewedAt: reviewedAt },
-      provenance: { ...record(current.provenance), waitingForOwnerApproval: ["pending", "held"].includes(decision), ownerDecision: decision, ownerReviewedAt: reviewedAt, youtubePublished: false },
+      provenance: { ...record(current.provenance), waitingForOwnerApproval: currentQuality.renderReady === true && ["pending", "held"].includes(decision), ownerDecision: decision, ownerReviewedAt: reviewedAt, youtubePublished: false },
       updated_at: reviewedAt,
       last_error: null,
     }).eq("id", id).eq("owner_id", user.id).select("*").maybeSingle();

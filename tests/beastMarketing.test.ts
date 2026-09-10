@@ -273,8 +273,8 @@ test("BMKT-007 candidate generation enforces topic policy, cadence, and bounded 
 test("BMKT-007 owner workflow creates no-spend candidates and keeps publishing locked", () => {
   const panel = readFileSync("src/app/dashboard/admin/marketing/VideoGrowthEnginePanel.tsx", "utf8");
   const route = readFileSync("src/app/api/admin/beast-marketing/video/route.ts", "utf8");
-  for (const label of ["Generate Test Video", "Generate Batch", "Needs Review", "Approved / Scheduled", "Published / History", "Rejected / Needs Changes", "Preview / Watch", "Approve for Scheduling", "Request Changes / Regenerate"]) assert.match(panel, new RegExp(label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
-  assert.match(panel, /BeastMarketing generated this candidate and is waiting for owner review/);
+  for (const label of ["Prepare Video Idea", "Prepare Idea Batch", "Needs Review", "Approved / Scheduled", "Published / History", "Rejected / Needs Changes", "Preview / Watch", "Approve reviewed video", "Request Changes / Regenerate"]) assert.match(panel, new RegExp(label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  assert.match(panel, /Idea prepared. Follow the production steps below; no finished video exists yet/);
   assert.match(panel, /Automatic publishing authority \{authorities\.automaticPublishing === "enabled" \? "enabled" : "locked"\}/);
   assert.match(route, /kind === "owner_generate"/);
   assert.match(route, /kind === "owner_review"/);
