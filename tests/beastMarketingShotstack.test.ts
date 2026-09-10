@@ -36,6 +36,64 @@ const manifest = buildProductionManifest({
   settings: defaultVideoSeriesSettings,
 });
 
+function illustratedManifest() {
+  return {
+    ...structuredClone(manifest), requireVisuals: true, brandLabel: "SEANGWORLD NEWS",
+    scenes: manifest.scenes.map((scene) => ({ ...scene, visualAssetId: "news-home" })),
+    assets: [{ id: "news-home", role: "product_capture" as const,
+      uri: "https://news.seangworld.com/marketing/visuals/news-home.jpg",
+      mimeType: "image/jpeg", sourceType: "first_party" as const, providerId: null,
+      license: "Owner-provided product capture", contentHash: `sha256:${"a".repeat(64)}`,
+      createdAt: "2026-09-10T00:00:00Z", provenanceComplete: true }],
+  };
+}
+
+test("visual composition binds actual images to scene timing, beneath captions", () => {
+  const source = illustratedManifest();
+  const edit = buildShotstackEdit(source);
+  assert.equal(edit.timeline.tracks[1].clips.length, 0);
+  const images = edit.timeline.tracks[3].clips;
+  assert.equal(images.length, source.scenes.length);
+  images.forEach((clip, index) => {
+    assert.deepEqual(clip.asset, { type: "image", src: source.assets[0].uri });
+    assert.equal(clip.start, source.scenes[index].startMs / 1000);
+    assert.equal(clip.length, (source.scenes[index].endMs - source.scenes[index].startMs) / 1000);
+    assert.equal(clip.fit, "contain");
+  });
+  assert.match(JSON.stringify(edit), /SEANGWORLD NEWS/);
+  assert.doesNotMatch(JSON.stringify(edit), /Explore The Beast AI Specialists/);
+});
+
+test("visual-required composition fails closed rather than producing text-only output", () => {
+  assert.throws(() => buildShotstackEdit({ ...manifest, requireVisuals: true }), ShotstackProviderError);
+  const missing = illustratedManifest(); missing.assets = [];
+  assert.throws(() => buildShotstackEdit(missing), ShotstackProviderError);
+  const duplicate = illustratedManifest(); duplicate.assets.push({ ...duplicate.assets[0] });
+  assert.throws(() => buildShotstackEdit(duplicate), ShotstackProviderError);
+});
+
+test("visual composition rejects untrusted fetch locations and incomplete provenance", () => {
+  for (const uri of ["http://news.seangworld.com/marketing/visuals/a.jpg",
+    "https://evil.example/marketing/visuals/a.jpg", "https://news.seangworld.com.evil.example/marketing/visuals/a.jpg",
+    "https://127.0.0.1/marketing/visuals/a.jpg", "https://news.seangworld.com/api/private",
+    "https://news.seangworld.com/marketing/visuals/a.jpg?token=secret",
+    "https://user:password@news.seangworld.com/marketing/visuals/a.jpg",
+    "https://news.seangworld.com/marketing/visuals/a.jpg#fragment", "not-a-url"]) {
+    const source = illustratedManifest(); source.assets[0].uri = uri;
+    assert.throws(() => buildShotstackEdit(source), ShotstackProviderError);
+  }
+  for (const patch of [{ license: "" }, { contentHash: "fnv1a32:12345678" },
+    { provenanceComplete: false }, { mimeType: "text/html" }, { createdAt: "" }]) {
+    const source = illustratedManifest(); Object.assign(source.assets[0], patch);
+    assert.throws(() => buildShotstackEdit(source), ShotstackProviderError);
+  }
+});
+
+test("text fallback preserves the script destination instead of substituting another product", () => {
+  const edit = buildShotstackEdit(manifest);
+  assert.equal((edit.timeline.tracks[1].clips.at(-1)?.asset as { text: string }).text, manifest.scenes.at(-1)?.narration);
+});
+
 test("BMKT-007 keeps Product Truth display names separate from spoken TTS names", () => {
   const source = "beastos connects BeastMoney and BeastEducation AI at SEANGWORLD.COM.";
   assert.equal(

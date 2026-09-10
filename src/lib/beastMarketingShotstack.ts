@@ -1,7 +1,7 @@
 import type { ProductionManifest } from "./beastMarketingProduction";
 import { normalizeBeastDisplayNames, normalizeBeastNarrationForSpeech } from "./beastMarketingNarration";
 
-export const SHOTSTACK_ADAPTER_VERSION = "0.9.0";
+export const SHOTSTACK_ADAPTER_VERSION = "0.10.0";
 export const SHOTSTACK_PROVIDER_ID = "shotstack";
 export const SHOTSTACK_MAX_ESTIMATED_CREDITS_PER_RENDER = 2;
 export const SHOTSTACK_MAX_MANUAL_ATTEMPTS = 7;
@@ -118,14 +118,47 @@ export function buildShotstackEdit(manifest: ProductionManifest): ShotstackEdit 
   const narration = normalizeBeastNarrationForSpeech(manifest.scenes.map((scene) => scene.narration.trim()).filter(Boolean).join(" "));
   if (!narration) throw new ShotstackProviderError("validation", false);
 
+  // Only explicitly bound, provenance-backed first-party captures can enter
+  // this renderer. Never pass arbitrary URLs to an external media fetcher.
+  const visualClips = manifest.scenes.flatMap((scene) => {
+    if (!scene.visualAssetId) {
+      if (manifest.requireVisuals) throw new ShotstackProviderError("validation", false);
+      return [];
+    }
+    const matches = manifest.assets.filter((asset) => asset.id === scene.visualAssetId);
+    const asset = matches[0];
+    if (matches.length !== 1 || !asset.uri || asset.sourceType !== "first_party"
+      || !["visual", "product_capture"].includes(asset.role)
+      || !["image/png", "image/jpeg", "image/webp"].includes(asset.mimeType || "")
+      || !asset.provenanceComplete || !asset.license || !asset.createdAt
+      || !/^sha256:[a-f0-9]{64}$/.test(asset.contentHash || "")) {
+      throw new ShotstackProviderError("validation", false);
+    }
+    let url: URL;
+    try { url = new URL(asset.uri); } catch { throw new ShotstackProviderError("validation", false); }
+    if (url.protocol !== "https:" || url.username || url.password || url.port || url.search || url.hash
+      || !["thebeast.seangworld.com", "news.seangworld.com"].includes(url.hostname)
+      || !/^\/marketing\/visuals\/[a-z0-9-]+\.(png|jpg|webp)$/.test(url.pathname)) {
+      throw new ShotstackProviderError("validation", false);
+    }
+    return [{
+      asset: { type: "image", src: asset.uri },
+      start: scene.startMs / 1000,
+      length: (scene.endMs - scene.startMs) / 1000,
+      fit: "contain", position: "center",
+      width: Math.round(manifest.width * 0.94),
+      height: Math.round(manifest.height * 0.62),
+    }];
+  });
+
   const sceneHeadline = (narration: string, index: number) => {
     const normalized = narration.replace(/^Next:\s*/i, "").trim();
     if (index === 0) return normalized;
-    if (index === manifest.scenes.length - 1) return "Explore The Beast AI Specialists";
+    if (index === manifest.scenes.length - 1) return normalized;
     const subject = normalized.split(/\s+(?:presents|separates|are|explains|connects|guides|organizes|publishes)\b/i)[0]?.trim();
     return (subject || normalized.split(/\s+/).slice(0, 6).join(" ")).slice(0, 90);
   };
-  const sceneClips = manifest.scenes.map((scene, index) => ({
+  const sceneClips = manifest.scenes.flatMap((scene, index) => scene.visualAssetId ? [] : [{
     asset: {
       type: "rich-text",
       text: normalizeBeastDisplayNames(sceneHeadline(scene.narration, index)),
@@ -141,7 +174,7 @@ export function buildShotstackEdit(manifest: ProductionManifest): ShotstackEdit 
     width: Math.round(manifest.width * 0.82),
     height: Math.round(manifest.height * 0.42),
     position: "center",
-  }));
+  }]);
   const captionClips = manifest.scenes.flatMap((scene) => scene.captions.map((cue) => ({
     asset: {
       type: "rich-text",
@@ -173,7 +206,7 @@ export function buildShotstackEdit(manifest: ProductionManifest): ShotstackEdit 
           clips: [{
             asset: {
               type: "rich-text",
-              text: "SEANGWORLD  ·  THE BEAST",
+              text: normalizeBeastDisplayNames(manifest.brandLabel?.trim().slice(0, 80) || "SEANGWORLD"),
               font: { family: "Montserrat", size: manifest.aspectRatio === "9:16" ? 34 : 28, weight: 800, color: "#fbbf24" },
               style: { letterSpacing: 3, textTransform: "uppercase" },
             },
@@ -185,6 +218,7 @@ export function buildShotstackEdit(manifest: ProductionManifest): ShotstackEdit 
             offset: { x: 0.03, y: -0.04 },
           }],
         },
+        { clips: visualClips },
         {
           clips: [{
             alias: "bmkt-narration",

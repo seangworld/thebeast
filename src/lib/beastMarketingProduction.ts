@@ -8,12 +8,14 @@ export type VideoProductionProviderSlot = (typeof videoProductionProviderSlots)[
 export type ProviderBinding = { slot: VideoProductionProviderSlot; required: boolean; providerId: string | null; modelOrService: string | null; authorized: boolean; paid: boolean; termsObservedAt: string | null };
 export type ProductionAsset = { id: string; role: "narration" | "visual" | "product_capture" | "caption" | "music" | "final_video"; uri: string | null; mimeType: string | null; sourceType: "generated" | "first_party" | "licensed"; providerId: string | null; license: string | null; contentHash: string | null; createdAt: string | null; provenanceComplete: boolean };
 export type CaptionCue = { startMs: number; endMs: number; text: string };
-export type ProductionScene = { id: string; startMs: number; endMs: number; narration: string; visualBrief: string; transition: "cut" | "crossfade"; captions: CaptionCue[] };
+export type ProductionScene = { id: string; startMs: number; endMs: number; narration: string; visualBrief: string; visualAssetId?: string; transition: "cut" | "crossfade"; captions: CaptionCue[] };
 export type ProductionManifest = {
   schemaVersion: "bmkt-production-1"; jobId: string; revision: number; aspectRatio: VideoSeriesSettings["aspectRatio"]; width: number; height: number;
   runtimeMs: number; visualStyle: string; captionStyle: string; presenterProfileId: string | null; presenterMode: "faceless" | "future_identity";
   scenes: ProductionScene[]; assets: ProductionAsset[]; providerBindings: ProviderBinding[]; retryPolicy: { maximumAttempts: number; delaysSeconds: number[] };
   planState: "planned_provider_blocked"; blockers: string[]; checksum: string;
+  requireVisuals?: boolean;
+  brandLabel?: string;
 };
 export type ProductionOperation = "narration" | "visuals" | "composition";
 export type ProductionAttempt = { operation: ProductionOperation; attemptNumber: number; idempotencyKey: string; status: "planned" | "submitted" | "succeeded" | "failed" | "cancelled"; retryable: boolean };
@@ -31,6 +33,12 @@ const fingerprint = (value: string) => {
   return `fnv1a32:${(hash >>> 0).toString(16).padStart(8, "0")}`;
 };
 const words = (value: string) => value.trim().split(/\s+/).filter(Boolean).length;
+
+/** Re-sign a newly prepared plan after binding verified assets. Not an approval. */
+export function fingerprintProductionManifest(manifest: ProductionManifest): ProductionManifest {
+  const { checksum: _checksum, ...body } = manifest;
+  return { ...body, checksum: fingerprint(JSON.stringify(body)) };
+}
 
 export function buildProductionManifest(input: { jobId: string; revision: number; script: { hook: string; narration: string[]; cta: string; estimatedSeconds: number }; settings: VideoSeriesSettings }): ProductionManifest {
   const segments = [input.script.hook, ...input.script.narration, input.script.cta].map(stripInternalProductionMarkers).filter(Boolean);
