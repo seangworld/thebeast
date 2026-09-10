@@ -41,7 +41,8 @@ const fingerprint = (value: string) => {
   return `fnv1a32:${(hash >>> 0).toString(16).padStart(8, "0")}`;
 };
 const words = (value: string) => value.trim().split(/\s+/).filter(Boolean).length;
-const emphasisTerms = (value: string) => value.replace(/[^A-Za-z0-9\s-]/g, " ").split(/\s+/).filter((item) => item.length >= 5).slice(0, 2);
+const emphasisStopWords = new Set(["about", "after", "before", "could", "should", "show", "that", "their", "there", "these", "those", "what", "when", "where", "which", "while", "with", "would", "you"]);
+const emphasisTerms = (value: string) => value.replace(/[^A-Za-z0-9\s-]/g, " ").split(/\s+/).filter((item) => item.length >= 4 && !emphasisStopWords.has(item.toLowerCase())).slice(0, 2);
 const captionCues = (text: string, startMs: number, endMs: number): CaptionCue[] => {
   const tokens = text.trim().split(/\s+/).filter(Boolean);
   if (!tokens.length) return [];
