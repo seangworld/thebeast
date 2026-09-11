@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import { createHash, randomUUID } from "node:crypto";
 import { allowedVideoTransitions, defaultVideoSeriesSettings, normalizeVideoTopicPhrases, validateVideoTopicPhrases, videoJobStates, type VideoJobState, type VideoSeriesSettings } from "@/lib/beastMarketingVideo";
 import { buildGroundedScript, buildYouTubeMetadata, scoreVideoOpportunity, type ScriptFact, type VideoEvidence } from "@/lib/beastMarketingContent";
-import { buildProductionManifest, validateProductionManifest } from "@/lib/beastMarketingProduction";
+import { buildProductionManifest, fingerprintProductionManifest, validateProductionManifest } from "@/lib/beastMarketingProduction";
 import { planCandidateCadence, validateTopicFamily, type OwnerWorkflowDecision } from "@/lib/beastMarketingOwnerWorkflow";
-import { shotstackConfiguration } from "@/lib/beastMarketingShotstack";
+import { SHOTSTACK_ADAPTER_VERSION, shotstackConfiguration } from "@/lib/beastMarketingShotstack";
 import { bindNewsAcceptance2Visuals, bindNewsTestVisuals, newsAcceptance2Script } from "@/lib/beastMarketingNewsVisualTest";
 import { evaluateProductionQuality } from "@/lib/beastMarketingQuality";
 import { createBeastFusionPublicationClient } from "@/lib/supabase/service";
@@ -44,6 +44,12 @@ const seangworldUrl = (value: unknown) => {
   try { const hostname = new URL(normalized).hostname.toLowerCase(); return hostname === "seangworld.com" || hostname.endsWith(".seangworld.com") ? normalized : null; }
   catch { return null; }
 };
+
+function providerValidationFailure(attempt: Record<string, unknown> | null | undefined) {
+  if (!attempt || clean(attempt.status, 40) !== "failed" || clean(attempt.error_category, 40) !== "validation" || clean(attempt.provider_request_id, 100)) return false;
+  const attemptEvidence = record(attempt.evidence);
+  return [400, 422].includes(Number(attemptEvidence.providerHttpStatus));
+}
 
 function evidence(value: unknown): VideoEvidence[] {
   if (!Array.isArray(value)) return [];
@@ -105,17 +111,36 @@ function settings(value: unknown): VideoSeriesSettings {
 export async function GET() {
   const { client, user } = await owner();
   if (!user) return forbidden();
-  const [controls, series, presenters, jobs, youtube] = await Promise.all([
+  const [controls, series, presenters, jobs, youtube, attempts] = await Promise.all([
     client.from("beast_marketing_video_controls").select("*").eq("owner_id", user.id).maybeSingle(),
     client.from("beast_marketing_video_series").select("*").eq("owner_id", user.id).order("updated_at", { ascending: false }),
     client.from("beast_marketing_presenter_profiles").select("*").eq("owner_id", user.id).order("created_at", { ascending: true }),
     client.from("beast_marketing_video_jobs").select("*").eq("owner_id", user.id).order("updated_at", { ascending: false }),
     createBeastFusionPublicationClient().from("beast_marketing_youtube_connections").select("channel_handle").eq("owner_id", user.id).maybeSingle(),
+    client.from("beast_marketing_video_attempts").select("job_id, attempt_number, status, error_category, provider_request_id, evidence, created_at, completed_at").eq("owner_id", user.id).order("created_at", { ascending: false }),
   ]);
-  if (controls.error || series.error || presenters.error || jobs.error) return unavailable();
+  if (controls.error || series.error || presenters.error || jobs.error || attempts.error) return unavailable();
+  const latestAttempts = new Map<string, Record<string, unknown>>();
+  (attempts.data || []).forEach((attempt) => {
+    const jobId = clean(attempt.job_id, 80);
+    if (jobId && !latestAttempts.has(jobId)) latestAttempts.set(jobId, attempt as Record<string, unknown>);
+  });
+  const enrichedJobs = (jobs.data || []).map((job) => {
+    const latestAttempt = latestAttempts.get(job.id) || null;
+    const provenance = record(job.provenance);
+    const production = record(job.production);
+    const available = !provenance.superseded && providerValidationFailure(latestAttempt)
+      && Boolean(record(production.manifest).checksum);
+    const evidence = record(latestAttempt?.evidence);
+    return {
+      ...job,
+      latestAttempt: latestAttempt ? { attemptNumber: latestAttempt.attempt_number, status: latestAttempt.status, errorCategory: latestAttempt.error_category, providerRequestId: latestAttempt.provider_request_id, providerHttpStatus: evidence.providerHttpStatus ?? null, createdAt: latestAttempt.created_at, completedAt: latestAttempt.completed_at } : null,
+      technicalRecovery: available ? { available: true, attemptNumber: Number(latestAttempt?.attempt_number) || 1, providerHttpStatus: Number(evidence.providerHttpStatus) || null } : { available: false },
+    };
+  });
   return NextResponse.json({
     controls: controls.data || { pause_all_publishing: true, external_publishing_authorized: false, automatic_publishing_authorized: false, youtube_authorized: false },
-    series: (series.data || []).map((item) => ({ ...item, settings: settings(item.settings) })), presenters: presenters.data || [], jobs: jobs.data || [],
+    series: (series.data || []).map((item) => ({ ...item, settings: settings(item.settings) })), presenters: presenters.data || [], jobs: enrichedJobs,
     authorities: {
       externalPublishing: "disabled",
       automaticPublishing: "disabled",
@@ -130,6 +155,72 @@ export async function POST(request: Request) {
   if (!user) return forbidden();
   const body = await request.json().catch(() => null) as Record<string, unknown> | null;
   const kind = clean(body?.kind, 40);
+  if (kind === "create_corrected_revision") {
+    if (request.headers.get("origin") !== new URL(request.url).origin) return forbidden();
+    const sourceId = clean(body?.id, 80);
+    const { data: source } = await client.from("beast_marketing_video_jobs").select("*").eq("id", sourceId).eq("owner_id", user.id).maybeSingle();
+    if (!source) return NextResponse.json({ error: "The selected video candidate is unavailable." }, { status: 404 });
+    const sourceProvenance = record(source.provenance);
+    const sourceProduction = record(source.production);
+    if (sourceProvenance.superseded) return NextResponse.json({ error: "This candidate has already been superseded by a corrected revision." }, { status: 409 });
+    if (sourceProvenance.externalPublishingDisabled !== true || sourceProvenance.youtubePublishingDisabled !== true) return NextResponse.json({ error: "A corrected revision requires explicit external and YouTube publishing locks." }, { status: 409 });
+    const { data: latestAttempt, error: attemptError } = await client.from("beast_marketing_video_attempts").select("*").eq("owner_id", user.id).eq("job_id", source.id).order("created_at", { ascending: false }).limit(1).maybeSingle();
+    if (attemptError) return unavailable();
+    if (!providerValidationFailure(latestAttempt as Record<string, unknown> | null)) return NextResponse.json({ error: "An explicit corrected revision requires a retained pre-submission provider validation failure." }, { status: 409 });
+    const sourceManifest = record(sourceProduction.manifest);
+    if (!sourceManifest.checksum || !Array.isArray(sourceManifest.scenes) || !Array.isArray(sourceManifest.assets)) return NextResponse.json({ error: "The failed candidate does not contain a complete production manifest." }, { status: 409 });
+    const nextRevision = integer(source.revision, 1, 1_000_000, 1) + 1;
+    const sourceKey = clean(source.idempotency_key, 160);
+    const idempotencyKey = `${sourceKey}-r${nextRevision}`;
+    const { data: existing } = await client.from("beast_marketing_video_jobs").select("*").eq("owner_id", user.id).eq("idempotency_key", idempotencyKey).maybeSingle();
+    if (existing) return NextResponse.json({ job: existing, duplicatePrevented: true, shotstackCreditsConsumed: 0, externallyPublished: false });
+    const id = randomUUID();
+    const manifest = fingerprintProductionManifest({ ...structuredClone(sourceManifest), jobId: id, revision: nextRevision } as Parameters<typeof fingerprintProductionManifest>[0]);
+    const sourceTopic = record(source.topic);
+    const baseTitle = clean(sourceTopic.title, 240).replace(/\s+—\s+Revision\s+\d+$/i, "") || "Video candidate";
+    const revisionLabel = `${baseTitle} — Revision ${nextRevision}`;
+    const now = new Date().toISOString();
+    const sourceQuality = record(source.quality);
+    const newProduction = {
+      ...sourceProduction, manifest, providerState: "authorization_required", providerId: null, providerEnvironment: null,
+      attemptId: null, externalActionPerformed: false, renderAuthorizationRequired: false,
+      technicalRetry: { authorizedByOwner: true, maximumAttempts: 1, attemptsConsumed: 0, correction: "Shotstack adapter schema correction", adapterVersion: SHOTSTACK_ADAPTER_VERSION, sourceAttemptId: latestAttempt?.id || null },
+      shotstackCreditsConsumed: 0,
+    };
+    const manifestVisualPlan = record(manifest.visualPlan);
+    const manifestBeatCount = Array.isArray(manifestVisualPlan.beats) ? manifestVisualPlan.beats.length : undefined;
+    const newQuality = {
+      ...sourceQuality, renderReady: false, ownerQualityReview: "not_ready", ownerWorkflowDecision: "pending", ownerApprovalSource: null,
+      internalRenderStatus: "not_submitted", qualityScore: sourceQuality.qualityScore ?? 100,
+      runtimeSeconds: sourceQuality.runtimeSeconds ?? Number(manifest.runtimeMs) / 1000,
+      visualBeatCount: sourceQuality.visualBeatCount ?? manifestBeatCount,
+      warnings: ["Revision 2 created from the exact approved candidate after a provider validation correction. One Owner-authorized internal render is available; no automatic retry."],
+    };
+    const newProvenance = {
+      ...sourceProvenance, candidateLabel: revisionLabel, revisionLabel, activeCandidate: true, acceptanceTest: sourceProvenance.acceptanceTest,
+      parentJobId: source.id, parentRevision: source.revision, supersedesJobId: source.id, supersedesRevision: source.revision,
+      technicalCorrection: "Removed unsupported Shotstack legacy TTS speed field.", technicalCorrectionAdapterVersion: SHOTSTACK_ADAPTER_VERSION,
+      technicalRetryAuthorized: true, technicalRetryMaximumAttempts: 1, technicalRetryAttemptsConsumed: 0,
+      waitingForOwnerApproval: true, renderAuthorizationRequired: false, providersUsed: [], paidServicesUsed: false,
+      shotstackCreditsConsumed: 0, externallyPublished: false, externalPublishingDisabled: true, youtubePublishingDisabled: true,
+    };
+    const { data: corrected, error: insertError } = await client.from("beast_marketing_video_jobs").insert({
+      id, owner_id: user.id, series_id: source.series_id, state: "scripted", revision: nextRevision, idempotency_key: idempotencyKey,
+      topic: { ...sourceTopic, title: revisionLabel, candidateLabel: revisionLabel, activeCandidate: true, acceptanceTest: sourceProvenance.acceptanceTest },
+      script: structuredClone(source.script), production: newProduction, quality: newQuality, provenance: newProvenance,
+    }).select("*").single();
+    if (insertError || !corrected) return unavailable();
+    const supersededProvenance = {
+      ...sourceProvenance, activeCandidate: false, superseded: true, supersededByJobId: id, supersededByRevision: nextRevision,
+      supersededReason: "Provider validation failure superseded by an Owner-authorized corrected adapter revision.", waitingForOwnerApproval: false,
+    };
+    const supersededQuality = {
+      ...sourceQuality, renderReady: false, ownerQualityReview: "needs_changes", ownerWorkflowDecision: "needs_changes",
+      warnings: ["Superseded after the retained Shotstack provider validation failure. Review the corrected revision."],
+    };
+    await client.from("beast_marketing_video_jobs").update({ state: "failed", quality: supersededQuality, provenance: supersededProvenance, last_error: "Superseded after provider validation failure; corrected revision created.", updated_at: now }).eq("id", source.id).eq("owner_id", user.id);
+    return NextResponse.json({ job: corrected, supersededJobId: source.id, sourceAttemptId: latestAttempt?.id || null, shotstackCreditsConsumed: 0, externallyPublished: false }, { status: 201 });
+  }
   if (kind === "prepare_news_acceptance2") {
     if (request.headers.get("origin") !== new URL(request.url).origin) return forbidden();
     const key = "news-acceptance2-v1";
@@ -212,6 +303,10 @@ export async function POST(request: Request) {
     if (record(job.provenance).visualTemplate === "news-visual-test-v1") {
       try { manifest = bindNewsTestVisuals(manifest); }
       catch { return NextResponse.json({ error: "This visual test must retain its verified News walkthrough script." }, { status: 409 }); }
+    }
+    if (/^news-acceptance2-v\d+$/i.test(clean(record(job.provenance).visualTemplate, 80))) {
+      try { manifest = bindNewsAcceptance2Visuals(manifest); }
+      catch { return NextResponse.json({ error: "This Acceptance Test #2 revision must retain its verified News visual plan." }, { status: 409 }); }
     }
     const validation = validateProductionManifest(manifest, normalizedSettings);
     if (!validation.planValid) return NextResponse.json({ error: validation.errors.join(" ") }, { status: 409 });

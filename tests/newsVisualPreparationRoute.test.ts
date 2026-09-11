@@ -4,20 +4,48 @@ import { runInNewContext } from "node:vm";
 import test from "node:test";
 import ts from "typescript";
 
-function fixture(options: { admin?: boolean; existing?: boolean; sourceMissing?: boolean } = {}) {
+function fixture(options: { admin?: boolean; existing?: boolean; sourceMissing?: boolean; acceptance2?: boolean; failedAttempt?: boolean } = {}) {
   const queries: Array<{ table: string; filters: Record<string, unknown> }> = [];
   let inserted: Record<string, unknown> | undefined;
+  let updated: Record<string, unknown> | undefined;
   const original = { id: "source", series_id: "series", state: "ready", idempotency_key: "direct-youtube-first-news-walkthrough-20260910", topic: { title: "SEANGWORLD News" }, script: { hook: "What should you know about SEANGWORLD News?", narration: ["Headlines show source attribution and timing.", "Use Local View to choose a listed area.", "Browse by topic, state or city.", "Read the source to form your own view."], cta: "Visit SEANGWORLD News.", estimatedSeconds: 62 } };
+  const acceptanceSource = {
+    id: "candidate", owner_id: "owner", series_id: "series", state: "scripted", revision: 1, idempotency_key: "news-acceptance2-v1",
+    topic: { title: "SEANGWORLD News — Acceptance Test #2", acceptanceTest: 2 },
+    script: { hook: "See the story behind the headline.", narration: ["Start with the top stories.", "Move from World to USA and local coverage.", "Check sources and Fact Briefs.", "Visit SEANGWORLD News."], cta: "Visit SEANGWORLD News.", estimatedSeconds: 45 },
+    production: { manifest: { schemaVersion: "bmkt-production-1", jobId: "candidate", revision: 1, runtimeMs: 45_000, aspectRatio: "9:16", width: 1080, height: 1920, scenes: [{ id: "scene-1" }], assets: [{ id: "asset-1" }], visualPlan: { beats: Array.from({ length: 13 }, (_, index) => ({ id: `beat-${index + 1}` })) }, checksum: "fnv1a32:approved" }, shotstackCreditsConsumed: 0 },
+    quality: { qualityScore: 100, runtimeSeconds: 45, visualBeatCount: 13, renderReady: false, ownerWorkflowDecision: "pending" },
+    provenance: { visualTemplate: "news-acceptance2-v1", acceptanceTest: 2, activeCandidate: true, externalPublishingDisabled: true, youtubePublishingDisabled: true },
+  };
+  const latestAttempt = { id: "attempt-1", job_id: "candidate", attempt_number: 1, status: "failed", error_category: "validation", provider_request_id: null, evidence: { providerHttpStatus: 400 }, created_at: "2026-09-10T00:00:00.000Z", completed_at: "2026-09-10T00:00:01.000Z" };
   const from = (table: string) => {
     const filters: Record<string, unknown> = {}; queries.push({ table, filters });
-    const result = () => ({ error: null, data: table === "profiles" ? { role: options.admin === false ? "member" : "admin" } : table.endsWith("video_series") ? { settings: {} } : inserted || (filters.idempotency_key ? options.existing ? { id: "existing" } : null : options.sourceMissing ? null : original) });
-    const query = { select() { return query; }, eq(key: string, value: unknown) { filters[key] = value; return query; }, insert(value: Record<string, unknown>) { inserted = value; return query; }, maybeSingle: async () => result(), single: async () => result() };
+    const result = () => {
+      if (table === "profiles") return { error: null, data: { role: options.admin === false ? "member" : "admin" } };
+      if (table.endsWith("video_series")) return { error: null, data: { settings: {} } };
+      if (table.endsWith("video_attempts")) return { error: null, data: options.failedAttempt ? latestAttempt : null };
+      if (inserted && !filters.idempotency_key) return { error: null, data: inserted };
+      if (filters.idempotency_key) return { error: null, data: options.existing ? { id: "existing" } : null };
+      if (options.acceptance2 && filters.id === "candidate") return { error: null, data: acceptanceSource };
+      return { error: null, data: options.sourceMissing ? null : original };
+    };
+    let pendingUpdate: Record<string, unknown> | undefined;
+    const query = {
+      select() { return query; },
+      eq(key: string, value: unknown) { filters[key] = value; if (key === "id" && pendingUpdate && options.acceptance2 && value === "candidate") Object.assign(acceptanceSource, pendingUpdate); return query; },
+      order() { return query; },
+      limit() { return query; },
+      insert(value: Record<string, unknown>) { inserted = value; return query; },
+      update(value: Record<string, unknown>) { updated = value; pendingUpdate = value; return query; },
+      maybeSingle: async () => result(),
+      single: async () => result(),
+    };
     return query;
   };
   const client = { from, auth: { getUser: async () => ({ data: { user: { id: "owner" } } }) } };
   const exports: { POST?: (request: Request) => Promise<Response> } = {};
   const code = ts.transpileModule(readFileSync("src/app/api/admin/beast-marketing/video/route.ts", "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText;
-  runInNewContext(code, { exports, URL, require(name: string) {
+  runInNewContext(code, { exports, URL, structuredClone, require(name: string) {
     if (name === "next/server") return { NextResponse: { json: (data: unknown, init?: ResponseInit) => new Response(JSON.stringify(data), init) } };
     if (name === "node:crypto") return require(name);
     if (name.endsWith("/supabase/server")) return { createRouteClient: () => client };
@@ -25,9 +53,9 @@ function fixture(options: { admin?: boolean; existing?: boolean; sourceMissing?:
     if (name.startsWith("@/lib/beastMarketing")) return require("../src/lib/" + name.split("/").pop());
     throw new Error(`Unexpected dependency ${name}`);
   } });
-  return { post: exports.POST!, queries, inserted: () => inserted, original };
+  return { post: exports.POST!, queries, inserted: () => inserted, updated: () => updated, original, acceptanceSource };
 }
-const request = (origin = "https://thebeast.seangworld.com", kind = "prepare_news_visual_test") => new Request("https://thebeast.seangworld.com/api/admin/beast-marketing/video", { method: "POST", headers: { origin, "content-type": "application/json" }, body: JSON.stringify({ kind, id: "source" }) });
+const request = (origin = "https://thebeast.seangworld.com", kind = "prepare_news_visual_test", id = "source") => new Request("https://thebeast.seangworld.com/api/admin/beast-marketing/video", { method: "POST", headers: { origin, "content-type": "application/json" }, body: JSON.stringify({ kind, id }) });
 
 test("visual preparation denies non-admin and foreign-origin requests before job access", async () => {
   for (const [options, origin] of [[{ admin: false }, "https://thebeast.seangworld.com"], [{}, "https://evil.example"]] as const) {
@@ -80,5 +108,48 @@ test("Acceptance Test #2 preparation persists the exact approved candidate witho
 test("Acceptance Test #2 preparation is idempotent and never creates a second candidate", async () => {
   const f = fixture({ existing: true }); const response = await f.post(request("https://thebeast.seangworld.com", "prepare_news_acceptance2"));
   assert.equal(response.status, 200); assert.equal((await response.json()).duplicatePrevented, true);
+  assert.equal(f.inserted(), undefined);
+});
+
+test("Acceptance Test #2 creates an owner-authorized corrected revision without spending credits", async () => {
+  const f = fixture({ acceptance2: true, failedAttempt: true });
+  const response = await f.post(request("https://thebeast.seangworld.com", "create_corrected_revision", "candidate"));
+  assert.equal(response.status, 201, await response.clone().text());
+  const job = f.inserted()!;
+  assert.equal(job.state, "scripted");
+  assert.equal(job.idempotency_key, "news-acceptance2-v1-r2");
+  assert.equal(job.revision, 2);
+  assert.equal((job.topic as Record<string, unknown>).title, "SEANGWORLD News — Acceptance Test #2 — Revision 2");
+  const production = job.production as Record<string, any>;
+  assert.equal(production.manifest.revision, 2);
+  assert.equal(production.manifest.jobId, job.id);
+  assert.equal(production.manifest.runtimeMs, 45_000);
+  assert.equal(production.manifest.visualPlan.beats.length, 13);
+  assert.equal(production.shotstackCreditsConsumed, 0);
+  assert.equal(production.technicalRetry.authorizedByOwner, true);
+  assert.equal(production.technicalRetry.maximumAttempts, 1);
+  assert.equal(production.technicalRetry.attemptsConsumed, 0);
+  assert.equal(production.technicalRetry.correction, "Shotstack adapter schema correction");
+  assert.equal(production.technicalRetry.adapterVersion, "0.10.1");
+  assert.equal(production.technicalRetry.sourceAttemptId, "attempt-1");
+  const provenance = job.provenance as Record<string, unknown>;
+  assert.equal(provenance.activeCandidate, true);
+  assert.equal(provenance.technicalRetryAuthorized, true);
+  assert.equal(provenance.technicalRetryMaximumAttempts, 1);
+  assert.equal(provenance.externalPublishingDisabled, true);
+  assert.equal(provenance.youtubePublishingDisabled, true);
+  assert.equal((job.quality as Record<string, unknown>).qualityScore, 100);
+  assert.equal((job.quality as Record<string, unknown>).runtimeSeconds, 45);
+  assert.equal((job.quality as Record<string, unknown>).visualBeatCount, 13);
+  assert.equal(f.acceptanceSource.state, "failed");
+  assert.equal((f.acceptanceSource.provenance as Record<string, unknown>).superseded, true);
+  assert.equal((f.acceptanceSource.provenance as Record<string, unknown>).supersededByJobId, job.id);
+  assert.equal((await response.json()).shotstackCreditsConsumed, 0);
+});
+
+test("corrected revision recovery requires a retained provider validation failure", async () => {
+  const f = fixture({ acceptance2: true });
+  const response = await f.post(request("https://thebeast.seangworld.com", "create_corrected_revision", "candidate"));
+  assert.equal(response.status, 409);
   assert.equal(f.inserted(), undefined);
 });
