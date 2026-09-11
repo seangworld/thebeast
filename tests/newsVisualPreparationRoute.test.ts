@@ -148,6 +148,32 @@ test("Acceptance Test #2 creates an owner-authorized corrected revision without 
   assert.equal((await response.json()).shotstackCreditsConsumed, 0);
 });
 
+test("Acceptance Test #2 Revision 6 creates the synchronized 61.5-second candidate without spending credits", async () => {
+  const f = fixture({ acceptance2: true });
+  f.acceptanceSource.revision = 5;
+  (f.acceptanceSource.provenance as Record<string, unknown>).visualPresentationRevision = true;
+  (f.acceptanceSource.quality as Record<string, unknown>).renderReady = true;
+  const response = await f.post(request("https://thebeast.seangworld.com", "create_revision6_sync_runtime", "candidate"));
+  assert.equal(response.status, 201, await response.clone().text());
+  const job = f.inserted()!;
+  assert.equal(job.revision, 6);
+  assert.equal((job.topic as Record<string, unknown>).title, "SEANGWORLD News — Acceptance Test #2 — Revision 6");
+  const production = job.production as Record<string, any>;
+  assert.equal(production.manifest.runtimeMs, 61_500);
+  assert.equal(production.manifest.visualPlan.beats.length, 12);
+  assert.equal(production.manifest.visualPlan.beats[0].visualAssetId, "news-test-home");
+  assert.equal(production.manifest.visualPlan.beats.at(-1).visualAssetId, "news-test-home");
+  assert.equal(production.manifest.monetizationOriented, true);
+  assert.equal(production.manifest.syncVerificationRequired, true);
+  assert.equal(production.shotstackCreditsConsumed, 0);
+  assert.equal(production.estimatedCredits.estimatedTotal, 2);
+  assert.equal((job.provenance as Record<string, unknown>).externalPublishingDisabled, true);
+  assert.equal((job.provenance as Record<string, unknown>).youtubePublishingDisabled, true);
+  assert.equal(f.acceptanceSource.state, "failed");
+  assert.equal((f.acceptanceSource.provenance as Record<string, unknown>).superseded, true);
+  assert.equal((await response.json()).shotstackCreditsConsumed, 0);
+});
+
 test("corrected revision recovery requires a retained provider validation failure", async () => {
   const f = fixture({ acceptance2: true });
   const response = await f.post(request("https://thebeast.seangworld.com", "create_corrected_revision", "candidate"));

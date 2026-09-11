@@ -307,6 +307,12 @@ test("Acceptance Test #2 has a distinct idempotent owner-review candidate path",
   assert.match(route, /kind === "create_visual_presentation_revision"/);
   assert.match(route, /buildStaticContainVisualPlan/);
   assert.match(route, /visualPresentationCorrection/);
+  assert.match(route, /kind === "create_revision6_sync_runtime"/);
+  assert.match(route, /newsAcceptance2Revision6Script/);
+  assert.match(route, /bindNewsAcceptance2Revision6Visuals/);
+  assert.match(route, /runtimeMs: 61_500/);
+  assert.match(route, /SHOTSTACK_MAX_ESTIMATED_CREDITS_PER_RENDER/);
+  assert.match(panel, /Create Revision 6 · 60s synchronized presentation/);
   for (const field of ["ownerQualityGrade", "technicalResult", "creativeResult", "voiceReview", "pacingReview", "visualFramingReview", "motionTreatmentReview"]) assert.match(route, new RegExp(field));
   assert.match(panel, /Create corrected revision · 1 render authorized/);
   assert.match(panel, /Record Revision 4 Owner Review/);

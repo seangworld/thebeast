@@ -46,6 +46,20 @@ export const newsAcceptance2Script = {
   estimatedSeconds: 45,
 } as const;
 
+/** Revision 6 keeps the approved walkthrough but adds concrete product context
+ * so the 61.5-second monetization cut is paced by narration, never dead air. */
+export const newsAcceptance2Revision6Script = {
+  hook: newsAcceptance2Script.hook,
+  narration: [
+    "See current headlines with source names, timestamps, and clear links before you open any story, so the context is clear. Scan first, then choose where your attention belongs today.",
+    "Switch Local View to Elizabeth City and keep local coverage beside the wider report, side by side. The local panel stays visible while the main feed shows the wider picture.",
+    "Browse World, USA, state, city, and topic views to narrow coverage without losing context. Compare broad reporting with places and subjects closest to you.",
+    "Open source reporting and Fact Brief areas to review context, method, and what is known before deciding what matters. Move through the interface without guessing where evidence came from.",
+  ],
+  cta: newsAcceptance2Script.cta,
+  estimatedSeconds: 61.5,
+} as const;
+
 /** Build the expanded, provenance-bound candidate without contacting any provider. */
 export function bindNewsAcceptance2Visuals(source: ProductionManifest): ProductionManifest {
   if (source.scenes.length !== 6 || source.runtimeMs !== 45_000 || source.aspectRatio !== "9:16") throw new Error("Acceptance Test #2 requires the revised 45-second, six-scene 9:16 News walkthrough.");
@@ -71,6 +85,59 @@ export function buildNewsAcceptance2VisualPlan(manifest: ProductionManifest): Vi
   const sequence = ["news-test-home", "news-acceptance2-home-top-story", "news-acceptance2-coverage-sources", "news-acceptance2-usa-hampton-roads", "news-test-local", "news-acceptance2-politics-view", "news-acceptance2-world-view", "news-acceptance2-military", "news-acceptance2-scotus", "news-acceptance2-methodology", "news-acceptance2-coverage-sources", "news-acceptance2-home-top-story", "news-test-home"];
   if (plan.beats.length !== sequence.length) throw new Error("Acceptance Test #2 visual plan requires thirteen deterministic beats.");
   return { ...plan, beats: plan.beats.map((beat, index) => ({ ...beat, visualAssetId: sequence[index], captionSafe: true })) };
+}
+
+/** Calibrated phrase timing derived from narration punctuation and word groups.
+ * Provider word timestamps are unavailable at preflight, so callers retain an
+ * explicit syncVerificationRequired marker until the rendered audio is heard. */
+export function narrationDerivedCaptions(text: string, startMs: number, endMs: number) {
+  const tokens = text.trim().split(/\s+/).filter(Boolean);
+  if (!tokens.length) return [] as ProductionManifest["scenes"][number]["captions"];
+  const groups: string[][] = [];
+  let current: string[] = [];
+  for (const token of tokens) {
+    current.push(token);
+    const punctuationBoundary = /[.!?;:,]$/.test(token);
+    if (current.length >= 6 || (punctuationBoundary && current.length >= 3)) {
+      groups.push(current); current = [];
+    }
+  }
+  if (current.length) groups.push(current);
+  const weights = groups.map((group) => group.length + (/[.!?]$/.test(group.at(-1) || "") ? 0.8 : /[,;:]$/.test(group.at(-1) || "") ? 0.35 : 0));
+  const totalWeight = weights.reduce((sum, value) => sum + value, 0) || 1;
+  let cursorWeight = 0;
+  return groups.map((group, index) => {
+    const cueStart = index === 0 ? startMs : startMs + Math.round((endMs - startMs) * cursorWeight / totalWeight);
+    cursorWeight += weights[index];
+    const cueEnd = index === groups.length - 1 ? endMs : startMs + Math.round((endMs - startMs) * cursorWeight / totalWeight);
+    return { startMs: cueStart, endMs: Math.max(cueStart + 1, cueEnd), text: group.join(" ") };
+  });
+}
+
+/** Bind the approved first-party captures to the 61.5-second Revision 6 cut. */
+export function bindNewsAcceptance2Revision6Visuals(source: ProductionManifest): ProductionManifest {
+  if (source.scenes.length !== 6 || source.runtimeMs !== 61_500 || source.aspectRatio !== "9:16") throw new Error("Revision 6 requires the 61.5-second, six-scene 9:16 News walkthrough.");
+  const assets = [...newsTestCaptures, ...newsAcceptance2Captures].map((asset) => ({ ...asset }));
+  const sceneDurations = [1_500, 10_900, 10_900, 16_350, 16_350, 5_500];
+  const beatCounts = [1, 2, 2, 3, 3, 1];
+  const sequence = ["news-test-home", "news-acceptance2-home-top-story", "news-acceptance2-coverage-sources", "news-acceptance2-usa-hampton-roads", "news-test-local", "news-acceptance2-politics-view", "news-acceptance2-world-view", "news-acceptance2-military", "news-acceptance2-scotus", "news-acceptance2-methodology", "news-acceptance2-coverage-sources", "news-test-home"];
+  let sceneCursor = 0; let sequenceCursor = 0;
+  const scenes = source.scenes.map((scene, sceneIndex) => {
+    const startMs = sceneCursor; const endMs = sceneCursor + sceneDurations[sceneIndex]; sceneCursor = endMs;
+    return { ...scene, startMs, endMs, captions: narrationDerivedCaptions(scene.narration, startMs, endMs) };
+  });
+  const beats: VisualPlan["beats"] = [];
+  scenes.forEach((scene, sceneIndex) => {
+    const count = beatCounts[sceneIndex];
+    for (let index = 0; index < count; index += 1) {
+      const startMs = scene.startMs + Math.round((scene.endMs - scene.startMs) * index / count);
+      const endMs = index === count - 1 ? scene.endMs : scene.startMs + Math.round((scene.endMs - scene.startMs) * (index + 1) / count);
+      beats.push({ id: `${scene.id}-beat-${String(index + 1).padStart(2, "0")}`, sceneId: scene.id, startMs, endMs, visualAssetId: sequence[sequenceCursor++], motion: "static", transition: beats.length ? "crossfade" : "cut", fit: "contain", captionSafe: true });
+    }
+  });
+  if (beats.length !== sequence.length || beats[0].visualAssetId !== "news-test-home" || beats.at(-1)?.visualAssetId !== "news-test-home") throw new Error("Revision 6 requires twelve beats with the approved homepage asset first and last.");
+  const base = fingerprintProductionManifest({ ...source, scenes, assets, requireVisuals: true, brandLabel: "SEANGWORLD NEWS", monetizationOriented: true, syncVerificationRequired: true, syncMethod: "narration_derived_calibrated" });
+  return fingerprintProductionManifest({ ...base, visualPlan: { version: "bmkt-visual-plan-1", maxBeatDurationMs: 5_500, beats } });
 }
 
 /** Explicit one-off walkthrough template, never a generic visual auto-selector. */
