@@ -100,7 +100,11 @@ export async function POST(request: Request) {
     // One manual recovery of this exact retained visual test after its first
     // pre-submission rejection. Never reopen a submitted/uncertain render.
     const visualTest = record(job.provenance).visualTemplate === "news-visual-test-v1";
-    const attemptNumber = nextShotstackManualAttempt(latest ? {
+    const technicalRetryOnly = record(job.provenance).technicalRetryAuthorized === true
+      || record(record(production).technicalRetry).authorizedByOwner === true;
+    const attemptNumber = technicalRetryOnly
+      ? (latest ? null : 1)
+      : nextShotstackManualAttempt(latest ? {
       attemptNumber: Number(latest.attempt_number), status: clean(latest.status, 40),
       errorCategory: clean(latest.error_category, 40) || null,
       providerRequestId: clean(latest.provider_request_id, 100) || null,
@@ -113,7 +117,7 @@ export async function POST(request: Request) {
     const { data: attempt, error: insertError } = await client.from("beast_marketing_video_attempts").insert({
       owner_id: user.id, job_id: job.id, attempt_number: attemptNumber, operation: "composition", provider_id: SHOTSTACK_PROVIDER_ID,
       idempotency_key: idempotencyKey, status: "planned", retryable: false,
-      evidence: { environment: configuration.environment, manifestChecksum: manifest.checksum, estimate, automaticRetry: false, youtubeDestination: false, manualCredentialRemediation: attemptNumber === 2 && !visualTest, manualSchemaRemediation: [3, 4].includes(attemptNumber) || (visualTest && attemptNumber === 2), qualityRemediation: attemptNumber === 5, narrationNormalization: attemptNumber === 6, controlTokenRemediation: attemptNumber === 7, ...shotstackWatermarkPolicy(configuration.environment), previousAttemptId: latest?.id || null },
+      evidence: { environment: configuration.environment, manifestChecksum: manifest.checksum, estimate, automaticRetry: false, technicalRetryOnly, youtubeDestination: false, manualCredentialRemediation: attemptNumber === 2 && !visualTest && !technicalRetryOnly, manualSchemaRemediation: !technicalRetryOnly && ([3, 4].includes(attemptNumber) || (visualTest && attemptNumber === 2)), qualityRemediation: !technicalRetryOnly && attemptNumber === 5, narrationNormalization: !technicalRetryOnly && attemptNumber === 6, controlTokenRemediation: !technicalRetryOnly && attemptNumber === 7, ...shotstackWatermarkPolicy(configuration.environment), previousAttemptId: latest?.id || null },
       started_at: now, updated_at: now,
     }).select("*").single();
     if (insertError || !attempt) return NextResponse.json({ error: safeError }, { status: 503 });

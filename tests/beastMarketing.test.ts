@@ -300,6 +300,12 @@ test("Acceptance Test #2 has a distinct idempotent owner-review candidate path",
   assert.match(route, /externalPublishingDisabled: true/);
   assert.match(route, /youtubePublishingDisabled: true/);
   assert.match(route, /renderAuthorizationRequired: true/);
+  assert.match(route, /kind === "create_corrected_revision"/);
+  assert.match(route, /providerValidationFailure/);
+  assert.match(route, /technicalRetryAuthorized: true/);
+  assert.match(route, /supersededReason/);
+  assert.match(panel, /Create corrected revision · 1 render authorized/);
+  assert.match(panel, /Submit one authorized corrected render/);
 });
 
 test("BMKT-007 auto-approval requires complete quality evidence, history, and publishing authority", () => {
