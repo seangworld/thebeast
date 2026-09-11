@@ -129,8 +129,8 @@ test("Acceptance Test #2 creates an owner-authorized corrected revision without 
   assert.equal(production.technicalRetry.authorizedByOwner, true);
   assert.equal(production.technicalRetry.maximumAttempts, 1);
   assert.equal(production.technicalRetry.attemptsConsumed, 0);
-  assert.match(production.technicalRetry.correction, /current audio prompt asset/);
-  assert.equal(production.technicalRetry.adapterVersion, "0.11.0");
+  assert.match(production.technicalRetry.correction, /documented text-to-speech narration asset/);
+  assert.equal(production.technicalRetry.adapterVersion, "0.12.0");
   assert.equal(production.technicalRetry.sourceAttemptId, "attempt-1");
   const provenance = job.provenance as Record<string, unknown>;
   assert.equal(provenance.activeCandidate, true);

@@ -125,21 +125,21 @@ test("BMKT-007 defaults to sandbox and requires a substantial server-only key", 
   assert.equal(shotstackConfiguration({ SHOTSTACK_API_KEY: "x".repeat(40) }).configured, true);
 });
 
-test("BMKT-010 keeps energetic speed metadata internal and omits unsupported legacy TTS speed", () => {
+test("BMKT-010 keeps energetic speed metadata internal and omits unsupported TTS speed", () => {
   const edit = buildShotstackEdit(manifest);
   const serialized = JSON.stringify(edit);
   assert.deepEqual(edit.output, { format: "mp4", aspectRatio: "9:16", fps: 25, size: { width: 1080, height: 1920 }, range: { start: 0, length: 45 } });
   assert.match(serialized, /rich-text/);
   assert.doesNotMatch(serialized, /rich-caption/);
-  assert.match(serialized, /"type":"audio"/);
-  assert.match(serialized, /"prompt":"What should you know/);
+  assert.match(serialized, /"type":"text-to-speech"/);
+  assert.match(serialized, /"text":"What should you know/);
   assert.match(serialized, /"vertical":"middle"/);
   assert.doesNotMatch(serialized, /"vertical":"center"/);
   assert.doesNotMatch(serialized, /"preset":"fade"/);
   assert.match(serialized, /"preset":"fadeIn"/);
   assert.match(serialized, /"newscaster":false/);
   const tts = edit.timeline.tracks.flatMap((track) => track.clips).find((clip) => clip.alias === "bmkt-narration");
-  assert.deepEqual(Object.keys((tts?.asset || {}) as Record<string, unknown>).sort(), ["language", "newscaster", "prompt", "type", "voice"]);
+  assert.deepEqual(Object.keys((tts?.asset || {}) as Record<string, unknown>).sort(), ["language", "newscaster", "text", "type", "voice"]);
   assert.equal("speed" in ((tts?.asset || {}) as Record<string, unknown>), false);
   assert.equal(manifest.audioMix?.voiceDelivery?.style, "energetic_conversational");
   assert.equal(manifest.audioMix?.voiceDelivery?.speed, 1.16);
@@ -152,8 +152,9 @@ test("BMKT-011 provider payload uses current Edit schema and has no same-track o
   assert.equal(validateShotstackEdit(edit).valid, true);
   assert.equal(edit.timeline.tracks.some((track) => track.clips.some((clip, index) => index > 0 && clip.start === 0)), false);
   const narration = edit.timeline.tracks.flatMap((track) => track.clips).find((clip) => clip.alias === "bmkt-narration");
-  assert.deepEqual(narration?.asset, { type: "audio", prompt: (narration?.asset as Record<string, unknown>).prompt, voice: "Matthew", language: "en-US", newscaster: false });
-  assert.equal(edit.timeline.tracks.some((track) => track.clips.some((clip) => (clip.asset as Record<string, unknown>).type === "text-to-speech")), false);
+  assert.deepEqual(narration?.asset, { type: "text-to-speech", text: (narration?.asset as Record<string, unknown>).text, voice: "Matthew", language: "en-US", newscaster: false });
+  assert.equal(edit.timeline.tracks.some((track) => track.clips.some((clip) => (clip.asset as Record<string, unknown>).type === "audio" && (clip.asset as Record<string, unknown>).voice)), false);
+  assert.equal((edit.timeline.tracks.find((track) => track.clips.some((clip) => clip.alias === "bmkt-narration"))?.clips[0].asset as Record<string, unknown>).type, "text-to-speech");
   assert.equal(edit.timeline.tracks.filter((track) => track.clips.some((clip) => (clip.asset as Record<string, unknown>).type === "rich-text")).length >= 2, true);
 });
 
@@ -164,6 +165,26 @@ test("BMKT-011 local schema validation catches custom fields and same-track over
   const cleanEdit = buildShotstackEdit(illustratedManifest());
   cleanEdit.timeline.tracks[0].clips.push({ ...cleanEdit.timeline.tracks[0].clips[0], start: 0, length: 1 });
   assert.equal(validateShotstackEdit(cleanEdit).errors.some((error) => /overlap/.test(error)), true);
+});
+
+test("BMKT-012 rejects the exact Revision 3 narration and CTA transition defects", () => {
+  const badNarration = buildShotstackEdit(illustratedManifest());
+  const narrationTrack = badNarration.timeline.tracks.find((track) => track.clips.some((clip) => clip.alias === "bmkt-narration"));
+  const narrationAsset = narrationTrack?.clips.find((clip) => clip.alias === "bmkt-narration")?.asset as Record<string, unknown>;
+  narrationAsset.voice = "Matthew";
+  narrationAsset.type = "audio";
+  narrationAsset.prompt = narrationAsset.text;
+  delete narrationAsset.text;
+  const narrationErrors = validateShotstackEdit(badNarration).errors;
+  assert.equal(narrationErrors.some((error) => /asset\.voice is not supported/.test(error)), true);
+  assert.equal(narrationErrors.some((error) => /asset must provide exactly one audio source/.test(error)), false);
+
+  const badTransition = buildShotstackEdit(illustratedManifest());
+  const ctaTrack = badTransition.timeline.tracks.find((track) => track.clips.some((clip) => clip.position === "center" && clip.transition));
+  const cta = ctaTrack?.clips.find((clip) => clip.transition) as Record<string, unknown>;
+  cta.transition = { in: "zoomFast", out: "fadeFast" };
+  const transitionErrors = validateShotstackEdit(badTransition).errors;
+  assert.equal(transitionErrors.some((error) => /transition\.in is not supported/.test(error)), true);
 });
 
 test("BMKT-007 normalizes pronunciation only at the TTS boundary", () => {
