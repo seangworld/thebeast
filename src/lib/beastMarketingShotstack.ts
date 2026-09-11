@@ -2,7 +2,7 @@ import type { ProductionManifest } from "./beastMarketingProduction";
 import { normalizeBeastDisplayNames, normalizeBeastNarrationForSpeech } from "./beastMarketingNarration";
 import { buildVisualBeatPlan, validateVisualAsset } from "./beastMarketingQuality";
 
-export const SHOTSTACK_ADAPTER_VERSION = "0.10.0";
+export const SHOTSTACK_ADAPTER_VERSION = "0.10.1";
 export const SHOTSTACK_PROVIDER_ID = "shotstack";
 export const SHOTSTACK_MAX_ESTIMATED_CREDITS_PER_RENDER = 2;
 export const SHOTSTACK_MAX_MANUAL_ATTEMPTS = 7;
@@ -259,13 +259,15 @@ export function buildShotstackEdit(manifest: ProductionManifest): ShotstackEdit 
         {
           clips: [{
             alias: "bmkt-narration",
+            // Shotstack's legacy TTS edit asset accepts voice, language and
+            // newscaster. Delivery speed remains a BeastMarketing quality
+            // target, but is not a provider-facing TTS option.
             asset: {
               type: "text-to-speech",
               text: narration,
               voice: voiceDelivery?.voice || "Matthew",
               language: voiceDelivery?.language || "en-US",
               newscaster: voiceDelivery?.newscaster ?? false,
-              speed: Math.min(1.2, Math.max(0.85, voiceDelivery?.speed ?? manifest.audioMix?.narrationSpeed ?? 1.16)),
             },
             start: 0,
             length: "auto",

@@ -124,7 +124,7 @@ test("BMKT-007 defaults to sandbox and requires a substantial server-only key", 
   assert.equal(shotstackConfiguration({ SHOTSTACK_API_KEY: "x".repeat(40) }).configured, true);
 });
 
-test("BMKT-007 builds current Shotstack faceless composition without a destination", () => {
+test("BMKT-010 keeps energetic speed metadata internal and omits unsupported legacy TTS speed", () => {
   const edit = buildShotstackEdit(manifest);
   const serialized = JSON.stringify(edit);
   assert.deepEqual(edit.output, { format: "mp4", size: { width: 1080, height: 1920 }, range: { start: 0, length: 45 } });
@@ -135,8 +135,12 @@ test("BMKT-007 builds current Shotstack faceless composition without a destinati
   assert.doesNotMatch(serialized, /"vertical":"center"/);
   assert.doesNotMatch(serialized, /"preset":"fade"/);
   assert.match(serialized, /"preset":"fadeIn"/);
-  assert.match(serialized, /"speed":1\.16/);
   assert.match(serialized, /"newscaster":false/);
+  const tts = edit.timeline.tracks.flatMap((track) => track.clips).find((clip) => clip.alias === "bmkt-narration");
+  assert.deepEqual(Object.keys((tts?.asset || {}) as Record<string, unknown>).sort(), ["language", "newscaster", "text", "type", "voice"]);
+  assert.equal("speed" in ((tts?.asset || {}) as Record<string, unknown>), false);
+  assert.equal(manifest.audioMix?.voiceDelivery?.style, "energetic_conversational");
+  assert.equal(manifest.audioMix?.voiceDelivery?.speed, 1.16);
   assert.doesNotMatch(serialized, /youtube|destinations|webhook|callback/i);
   assert.doesNotMatch(serialized, /api[_-]?key|secret|token/i);
 });
