@@ -269,7 +269,7 @@ export function buildShotstackEdit(manifest: ProductionManifest): ShotstackEdit 
   const voiceDelivery = manifest.audioMix?.voiceDelivery;
   // Only explicitly bound, provenance-backed media can enter this renderer.
   // Never pass arbitrary URLs to an external media fetcher.
-  const visualClips = visualPlan.beats.flatMap((beat) => {
+  const visualClips = visualPlan.beats.flatMap((beat, beatIndex) => {
     if (!beat.visualAssetId) {
       if (manifest.requireVisuals) throw new ShotstackProviderError("validation", false);
       return [];
@@ -281,10 +281,13 @@ export function buildShotstackEdit(manifest: ProductionManifest): ShotstackEdit 
     }
     if (!asset.uri) throw new ShotstackProviderError("validation", false);
     const effect = beat.motion === "static" ? null : ({ reveal: "zoomInFast", push_in: "zoomInFast", pull_out: "zoomOutFast", pan_left: "slideLeftFast", pan_right: "slideRightFast", pan_up: "slideUpFast", pan_down: "slideDownFast" }[beat.motion] || null);
+    const transitionGapMs = Math.max(0, Math.min(1_000, Math.trunc(manifest.visualTransitionGapMs || 0)));
+    const beatDurationMs = beat.endMs - beat.startMs;
+    const holdLengthMs = Math.max(100, beatDurationMs - (beatIndex < visualPlan.beats.length - 1 ? transitionGapMs : 0));
     return [{
       asset: { type: "image", src: asset.uri },
       start: beat.startMs / 1000,
-      length: (beat.endMs - beat.startMs) / 1000,
+      length: holdLengthMs / 1000,
       // `cover` is an internal planner term; Shotstack's aspect-safe equivalent
       // is `crop` (the provider's `cover` stretches the image).
       fit: beat.fit === "cover" ? "crop" : beat.fit,
@@ -303,7 +306,8 @@ export function buildShotstackEdit(manifest: ProductionManifest): ShotstackEdit 
     const subject = normalized.split(/\s+(?:presents|separates|are|explains|connects|guides|organizes|publishes)\b/i)[0]?.trim();
     return (subject || normalized.split(/\s+/).slice(0, 6).join(" ")).slice(0, 90);
   };
-  const sceneClips = manifest.scenes.flatMap((scene, index) => scene.visualAssetId ? [] : [{
+  const visualFirst = manifest.requireVisuals === true || visualPlan.beats.some((beat) => Boolean(beat.visualAssetId));
+  const sceneClips = visualFirst ? [] : manifest.scenes.flatMap((scene, index) => scene.visualAssetId ? [] : [{
     asset: {
       type: "rich-text",
       text: normalizeBeastDisplayNames(sceneHeadline(scene.narration, index)),
@@ -355,6 +359,7 @@ export function buildShotstackEdit(manifest: ProductionManifest): ShotstackEdit 
     width: Math.round(manifest.width * 0.86),
     height: Math.round(manifest.height * 0.2),
     position: "center",
+    alias: "bmkt-cta",
     // `zoomFast` is a clip effect, not a valid transition name. Keep the
     // CTA's visual treatment as a supported transition and leave image zoom
     // effects on the visual clips above.
@@ -381,7 +386,7 @@ export function buildShotstackEdit(manifest: ProductionManifest): ShotstackEdit 
 
   const edit: ShotstackEdit = {
     timeline: {
-      background: "#070b14",
+      background: manifest.backgroundColor || "#070b14",
       tracks: [
         {
           clips: captionClips,

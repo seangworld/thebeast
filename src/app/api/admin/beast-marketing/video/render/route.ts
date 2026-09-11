@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
-import type { ProductionManifest } from "@/lib/beastMarketingProduction";
+import { validateNarrationTimingEvidence, type ProductionManifest } from "@/lib/beastMarketingProduction";
 import { evaluateSeriesAutoApproval } from "@/lib/beastMarketingOwnerWorkflow";
 import { defaultVideoSeriesSettings, type VideoSeriesSettings } from "@/lib/beastMarketingVideo";
 import {
@@ -93,6 +93,10 @@ export async function POST(request: Request) {
   if (!validManifest(manifest) || manifest.jobId !== job.id || manifest.revision !== job.revision) return NextResponse.json({ error: "A valid exact-revision BMKT production manifest is required before rendering." }, { status: 409 });
 
   if (action === "submit") {
+    if (manifest.timingEvidenceRequired === true) {
+      const timingValidation = validateNarrationTimingEvidence(manifest, manifest.narrationTimingEvidence);
+      if (!timingValidation.valid) return NextResponse.json({ error: "Actual narration timing evidence is required before paid composition.", timingErrors: timingValidation.errors }, { status: 409 });
+    }
     const { data: series } = await client.from("beast_marketing_video_series").select("settings").eq("id", job.series_id).eq("owner_id", user.id).maybeSingle();
     const qualityReport = evaluateProductionQuality(manifest, renderSettings(series?.settings));
     if (!qualityReport.ready) return NextResponse.json({ error: "The candidate is held by the automated publication-quality gate.", qualityReport }, { status: 409 });

@@ -4,7 +4,8 @@ import test from "node:test";
 import { defaultVideoSeriesSettings } from "../src/lib/beastMarketingVideo";
 import { buildProductionManifest } from "../src/lib/beastMarketingProduction";
 import { buildStaticContainVisualPlan, buildVisualBeatPlan } from "../src/lib/beastMarketingQuality";
-import { bindNewsAcceptance2Revision6Visuals, newsAcceptance2Revision6Script } from "../src/lib/beastMarketingNewsVisualTest";
+import { bindNewsAcceptance2Revision6Visuals, bindNewsAcceptance2Revision7Visuals, newsAcceptance2Revision6Script } from "../src/lib/beastMarketingNewsVisualTest";
+import { bindNarrationTimingEvidence, type NarrationTimingEvidence } from "../src/lib/beastMarketingProduction";
 import {
   BEAST_PRONUNCIATION_MAP,
   normalizeBeastDisplayNames,
@@ -199,6 +200,25 @@ test("Revision 6 provider edit is static contain-only, schema-valid, and preserv
   assert.equal(source.audioMix?.voiceDelivery?.style, "energetic_conversational");
   assert.equal(source.audioMix?.voiceDelivery?.speed, 1.16);
   assert.equal(source.scenes.every((scene) => scene.captions.every((cue) => cue.text.split(/\s+/).length <= 6)), true);
+});
+
+test("Revision 7 emits no center narration overlay and separates screenshots with black fades", () => {
+  const source = bindNewsAcceptance2Revision7Visuals(bindNewsAcceptance2Revision6Visuals(buildProductionManifest({ jobId: "acceptance-2-r7-shotstack", revision: 6, settings: defaultVideoSeriesSettings, script: { ...newsAcceptance2Revision6Script, narration: [...newsAcceptance2Revision6Script.narration] } })));
+  const edit = buildShotstackEdit(source);
+  assert.equal(validateShotstackEdit(edit).valid, true);
+  assert.equal(edit.timeline.background, "#000000");
+  assert.equal(edit.timeline.tracks.some((track) => track.clips.some((clip) => clip.alias === "bmkt-narration")), true);
+  const images = edit.timeline.tracks.flatMap((track) => track.clips).filter((clip) => (clip.asset as Record<string, unknown>).type === "image");
+  assert.equal(images.length, 10);
+  assert.equal(images.every((clip) => clip.fit === "contain" && !Object.hasOwn(clip, "effect")), true);
+  assert.equal(images.every((clip) => (clip.transition as Record<string, unknown>).in === "none" || (clip.transition as Record<string, unknown>).in === "fadeFast"), true);
+  assert.equal(images.filter((clip) => (clip.transition as Record<string, unknown>).in === "fadeFast" && (clip.transition as Record<string, unknown>).out === "fadeFast").length, 9);
+  for (let index = 1; index < images.length; index += 1) assert.ok((images[index].start as number) > (images[index - 1].start as number) + (images[index - 1].length as number));
+  assert.equal(edit.timeline.tracks.some((track) => track.clips.some((clip) => (clip.asset as Record<string, unknown>).type === "rich-text" && clip.width === Math.round(source.width * 0.82))), false);
+  const evidence: NarrationTimingEvidence = { providerId: "shotstack", assetId: "tts-r7", durationMs: 61_500, timingType: "phrase", cues: source.scenes.flatMap((scene) => scene.captions.map((cue) => ({ sceneId: scene.id, text: cue.text, startMs: cue.startMs, endMs: cue.endMs }))), verifiedAt: "2026-09-11T20:00:00.000Z", syncToleranceMs: 150, maxObservedDriftMs: 0 };
+  const bound = bindNarrationTimingEvidence(source, evidence);
+  assert.equal(validateShotstackEdit(buildShotstackEdit(bound)).valid, true);
+  assert.equal(buildShotstackEdit(bound).timeline.tracks.some((track) => track.clips.some((clip) => clip.alias !== "bmkt-cta" && clip.position === "center" && (clip.asset as Record<string, unknown>).type === "rich-text" && clip.width === Math.round(source.width * 0.82))), false);
 });
 
 test("BMKT-011 local schema validation catches custom fields and same-track overlap", () => {

@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { buildProductionManifest, fingerprintProductionManifest, validateProductionManifest } from "../src/lib/beastMarketingProduction";
-import { bindNewsAcceptance2Revision6Visuals, bindNewsAcceptance2Visuals, bindNewsTestVisuals, newsAcceptance2Captures, newsTestCaptures, newsAcceptance2Revision6Script, newsAcceptance2Script } from "../src/lib/beastMarketingNewsVisualTest";
+import { bindNarrationTimingEvidence, buildProductionManifest, fingerprintProductionManifest, validateProductionManifest, type NarrationTimingEvidence } from "../src/lib/beastMarketingProduction";
+import { bindNewsAcceptance2Revision6Visuals, bindNewsAcceptance2Revision7Visuals, bindNewsAcceptance2Visuals, bindNewsTestVisuals, newsAcceptance2Captures, newsTestCaptures, newsAcceptance2Revision6Script, newsAcceptance2Script } from "../src/lib/beastMarketingNewsVisualTest";
 import { defaultVideoSeriesSettings } from "../src/lib/beastMarketingVideo";
 import { evaluateProductionQuality } from "../src/lib/beastMarketingQuality";
 
@@ -120,4 +120,30 @@ test("monetization candidates fail closed below the 60-second runtime floor", ()
   const short = { ...candidate, runtimeMs: 59_999, scenes: candidate.scenes.map((scene, index, scenes) => index === scenes.length - 1 ? { ...scene, endMs: 59_999 } : scene) };
   const validation = validateProductionManifest(short, defaultVideoSeriesSettings);
   assert.equal(validation.errors.some((error) => /Monetization-oriented candidates require a runtime of at least 60 seconds/.test(error)), true);
+});
+
+test("Acceptance Test #2 Revision 7 requires and binds actual narration timing evidence", () => {
+  const source = bindNewsAcceptance2Revision6Visuals(buildProductionManifest({ jobId: "acceptance-2-r7", revision: 6, settings: defaultVideoSeriesSettings, script: { ...newsAcceptance2Revision6Script, narration: [...newsAcceptance2Revision6Script.narration] } }));
+  const candidate = bindNewsAcceptance2Revision7Visuals(source);
+  assert.equal(candidate.runtimeMs, 61_500);
+  assert.equal(candidate.timingEvidenceRequired, true);
+  assert.equal(candidate.visualCadenceProfile, "slow_static");
+  assert.equal(candidate.narrationTimingEvidence, undefined);
+  const qualityBefore = evaluateProductionQuality(candidate, { ...defaultVideoSeriesSettings, minimumRuntimeSeconds: 60, maximumRuntimeSeconds: 61.5 });
+  assert.equal(qualityBefore.ready, false);
+  assert.match(qualityBefore.blockers.join(" "), /Actual narration timing evidence is required/);
+  const evidence: NarrationTimingEvidence = {
+    providerId: "shotstack", assetId: "tts-acceptance-2-r7", assetUri: null, durationMs: 61_500, timingType: "phrase", verifiedAt: "2026-09-11T20:00:00.000Z", syncToleranceMs: 150, maxObservedDriftMs: 0,
+    cues: candidate.scenes.flatMap((scene) => scene.captions.map((cue) => ({ sceneId: scene.id, text: cue.text, startMs: cue.startMs, endMs: cue.endMs }))),
+  };
+  const bound = bindNarrationTimingEvidence(candidate, evidence);
+  assert.equal(bound.syncVerificationRequired, false);
+  assert.equal(bound.syncMethod, "provider_word_timestamps");
+  assert.deepEqual(bound.narrationTimingEvidence, evidence);
+  const qualityAfter = evaluateProductionQuality(bound, { ...defaultVideoSeriesSettings, minimumRuntimeSeconds: 60, maximumRuntimeSeconds: 61.5 });
+  assert.equal(qualityAfter.ready, true);
+  assert.equal(qualityAfter.metrics.timingEvidenceBound, true);
+  assert.equal(qualityAfter.metrics.maxObservedDriftMs, 0);
+  assert.equal(qualityAfter.metrics.syncToleranceMs, 150);
+  assert.equal(qualityAfter.metrics.staticIntervalLimitMs, 7_500);
 });

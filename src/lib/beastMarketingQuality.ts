@@ -161,6 +161,7 @@ export type ProductionQualityReport = {
     uniqueVisualRatio: number;
     adjacentVisualRepeats: number;
     maxStaticIntervalMs: number;
+    staticIntervalLimitMs: number;
     maxBeatDurationMs: number;
     maxCaptionWords: number;
     hookBeatDurationMs: number;
@@ -171,6 +172,9 @@ export type ProductionQualityReport = {
     voiceNewscaster: boolean;
     voicePauseMs: number;
     voiceEmphasisCount: number;
+    timingEvidenceBound: boolean;
+    syncToleranceMs: number;
+    maxObservedDriftMs: number;
   };
 };
 
@@ -222,6 +226,9 @@ export function evaluateProductionQuality(manifest: ProductionManifest, settings
   const voicePauseMs = voice?.pauseMs ?? 0;
   const narrationText = manifest.scenes.map((scene) => scene.narration).join(" ").toLowerCase();
   const voiceEmphasisCount = (voice?.emphasisTerms || []).filter((term) => typeof term === "string" && term.trim() && narrationText.includes(term.toLowerCase().trim())).length;
+  const timingEvidenceBound = manifest.timingEvidenceRequired !== true || Boolean(manifest.narrationTimingEvidence);
+  const syncToleranceMs = manifest.narrationTimingEvidence?.syncToleranceMs ?? 0;
+  const maxObservedDriftMs = manifest.narrationTimingEvidence?.maxObservedDriftMs ?? 0;
 
   if (!visualBeats.length || withVisuals.length !== visualBeats.length) blockers.push("Every planned visual beat requires an explicit visual asset.");
   if (visualBeats.some((beat) => beat.startMs < 0 || beat.endMs > manifest.runtimeMs || beat.endMs <= beat.startMs || beat.endMs - beat.startMs < BMKT_MIN_VISUAL_BEAT_MS || beat.endMs - beat.startMs > plan.maxBeatDurationMs)) blockers.push("Visual beats must be positive, meaningful, bounded by the runtime, and stay below the maximum beat duration.");
@@ -230,7 +237,10 @@ export function evaluateProductionQuality(manifest: ProductionManifest, settings
   if (visualBeatCoverage < 0.98) blockers.push("Visual media must cover the full planned runtime.");
   if (uniqueVisualRatio < BMKT_MIN_UNIQUE_VISUAL_RATIO) blockers.push("Visual variety is below the publication-quality threshold.");
   if (adjacentVisualRepeats > 0) blockers.push("Adjacent visual beats reuse the same asset.");
-  if (maxStaticIntervalMs > BMKT_MAX_STATIC_INTERVAL_MS) blockers.push("A static visual interval is too long.");
+  const staticIntervalLimitMs = manifest.visualCadenceProfile === "slow_static"
+    ? Math.min(7_500, Math.max(BMKT_MAX_STATIC_INTERVAL_MS, plan.maxBeatDurationMs))
+    : BMKT_MAX_STATIC_INTERVAL_MS;
+  if (maxStaticIntervalMs > staticIntervalLimitMs) blockers.push("A static visual interval is too long.");
   if (!visualBeats[0] || (!(["reveal"].includes(visualBeats[0].motion) || (visualBeats[0].motion === "static" && visualBeats[0].transition === "cut")) || hookBeatDurationMs > BMKT_MAX_HOOK_BEAT_MS)) blockers.push("The opening beat lacks a concise hook treatment.");
   if (!ctaScene || ctaDurationMs < BMKT_MIN_CTA_DURATION_MS || !/cta|call to action|end.?card|destination|visit|learn more|follow|subscribe/i.test(`${ctaScene.visualBrief} ${ctaScene.narration}`)) blockers.push("The ending requires a deliberate CTA/end-card treatment.");
   if (maxCaptionWords > BMKT_MAX_CAPTION_WORDS) blockers.push("Caption phrases are too dense for mobile readability.");
@@ -261,6 +271,7 @@ export function evaluateProductionQuality(manifest: ProductionManifest, settings
   }
   if (visualBeatCoverage < 1) warnings.push("The provider-neutral plan is waiting for authorized visual media.");
   if (manifest.scenes.some((scene) => scene.captions.length === 1 && words(scene.captions[0].text).length > 6)) warnings.push("Some captions use whole-scene timing instead of phrase-level cues.");
+  if (manifest.timingEvidenceRequired === true && !timingEvidenceBound) blockers.push("Actual narration timing evidence is required before rendering.");
 
   const preliminaryScore = clamp(Math.round(100 - blockers.length * 12 - warnings.length * 3), 0, 100);
   if (preliminaryScore < settings.qualityThreshold) blockers.push(`The production quality score is below the configured ${settings.qualityThreshold} threshold.`);
@@ -279,6 +290,7 @@ export function evaluateProductionQuality(manifest: ProductionManifest, settings
       uniqueVisualRatio,
       adjacentVisualRepeats,
       maxStaticIntervalMs,
+      staticIntervalLimitMs,
       maxBeatDurationMs: plan.maxBeatDurationMs,
       maxCaptionWords,
       hookBeatDurationMs,
@@ -289,6 +301,9 @@ export function evaluateProductionQuality(manifest: ProductionManifest, settings
       voiceNewscaster: voice?.newscaster === true,
       voicePauseMs,
       voiceEmphasisCount,
+      timingEvidenceBound,
+      syncToleranceMs,
+      maxObservedDriftMs,
     },
   };
 }
