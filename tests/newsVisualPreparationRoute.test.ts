@@ -43,7 +43,7 @@ function fixture(options: { admin?: boolean; existing?: boolean; sourceMissing?:
     return query;
   };
   const client = { from, auth: { getUser: async () => ({ data: { user: { id: "owner" } } }) } };
-  const exports: { POST?: (request: Request) => Promise<Response> } = {};
+  const exports: { POST?: (request: Request) => Promise<Response>; PATCH?: (request: Request) => Promise<Response> } = {};
   const code = ts.transpileModule(readFileSync("src/app/api/admin/beast-marketing/video/route.ts", "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText;
   runInNewContext(code, { exports, URL, structuredClone, require(name: string) {
     if (name === "next/server") return { NextResponse: { json: (data: unknown, init?: ResponseInit) => new Response(JSON.stringify(data), init) } };
@@ -53,9 +53,10 @@ function fixture(options: { admin?: boolean; existing?: boolean; sourceMissing?:
     if (name.startsWith("@/lib/beastMarketing")) return require("../src/lib/" + name.split("/").pop());
     throw new Error(`Unexpected dependency ${name}`);
   } });
-  return { post: exports.POST!, queries, inserted: () => inserted, updated: () => updated, original, acceptanceSource };
+  return { post: exports.POST!, patch: exports.PATCH!, queries, inserted: () => inserted, updated: () => updated, original, acceptanceSource };
 }
 const request = (origin = "https://thebeast.seangworld.com", kind = "prepare_news_visual_test", id = "source") => new Request("https://thebeast.seangworld.com/api/admin/beast-marketing/video", { method: "POST", headers: { origin, "content-type": "application/json" }, body: JSON.stringify({ kind, id }) });
+const patchRequest = (payload: Record<string, unknown>, origin = "https://thebeast.seangworld.com") => new Request("https://thebeast.seangworld.com/api/admin/beast-marketing/video", { method: "PATCH", headers: { origin, "content-type": "application/json" }, body: JSON.stringify(payload) });
 
 test("visual preparation denies non-admin and foreign-origin requests before job access", async () => {
   for (const [options, origin] of [[{ admin: false }, "https://thebeast.seangworld.com"], [{}, "https://evil.example"]] as const) {
@@ -152,4 +153,12 @@ test("corrected revision recovery requires a retained provider validation failur
   const response = await f.post(request("https://thebeast.seangworld.com", "create_corrected_revision", "candidate"));
   assert.equal(response.status, 409);
   assert.equal(f.inserted(), undefined);
+});
+
+test("Owner Review persists the Revision 4 creative-quality detail fields", async () => {
+  const f = fixture();
+  const response = await f.patch(patchRequest({ kind: "owner_review", id: "source", decision: "needs_changes", grade: "B", technicalResult: "PASS", creativeResult: "REVISION REQUIRED", voiceReview: "ACCEPTED", pacingReview: "ACCEPTED", visualFramingReview: "NEEDS REVISION", motionTreatmentReview: "NEEDS REVISION" }));
+  assert.equal(response.status, 200, await response.clone().text());
+  const quality = (f.updated()?.quality || {}) as Record<string, unknown>;
+  assert.deepEqual({ ownerQualityGrade: quality.ownerQualityGrade, technicalResult: quality.technicalResult, creativeResult: quality.creativeResult, voiceReview: quality.voiceReview, pacingReview: quality.pacingReview, visualFramingReview: quality.visualFramingReview, motionTreatmentReview: quality.motionTreatmentReview }, { ownerQualityGrade: "B", technicalResult: "PASS", creativeResult: "REVISION REQUIRED", voiceReview: "ACCEPTED", pacingReview: "ACCEPTED", visualFramingReview: "NEEDS REVISION", motionTreatmentReview: "NEEDS REVISION" });
 });

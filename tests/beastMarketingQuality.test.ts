@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { buildProductionManifest, type ProductionAsset, type ProductionManifest } from "../src/lib/beastMarketingProduction";
-import { buildVisualBeatPlan, evaluateProductionQuality, resolveVisualAssetId, validateVisualAsset } from "../src/lib/beastMarketingQuality";
+import { buildStaticContainVisualPlan, buildVisualBeatPlan, containDimensions, evaluateProductionQuality, resolveVisualAssetId, validateVisualAsset } from "../src/lib/beastMarketingQuality";
 import { defaultVideoSeriesSettings } from "../src/lib/beastMarketingVideo";
 
 const asset = (id: string, topic: string): ProductionAsset => ({
@@ -86,4 +86,23 @@ test("BMKT-010 voice gate rejects flat delivery and accepts energetic conversati
   assert.equal(report.metrics.voiceStyle, "energetic_conversational");
   assert.equal(report.metrics.voiceEmphasisCount, 2);
   assert.equal(report.blockers.some((item) => /voice delivery speed|newscaster|voice pauses|emphasis/i.test(item)), false);
+});
+
+test("BMKT-010 visual presentation remediation preserves complete screenshots with static holds", () => {
+  const manifest = sixSceneManifest(["one", "two", "three", "four", "five", "six"]);
+  const sourcePlan = buildVisualBeatPlan(manifest, { maxBeatDurationMs: 4_500 });
+  const remediated = buildStaticContainVisualPlan({ ...manifest, visualPlan: sourcePlan });
+  assert.deepEqual(remediated.beats.map((beat) => beat.visualAssetId), sourcePlan.beats.map((beat) => beat.visualAssetId));
+  assert.deepEqual(remediated.beats.map((beat) => [beat.startMs, beat.endMs]), sourcePlan.beats.map((beat) => [beat.startMs, beat.endMs]));
+  assert.ok(remediated.beats.every((beat) => beat.motion === "static" && beat.fit === "contain" && beat.captionSafe));
+  assert.equal(remediated.beats[0].transition, "cut");
+  assert.ok(remediated.beats.slice(1).every((beat) => beat.transition === "crossfade"));
+  const report = evaluateProductionQuality({ ...manifest, visualPlan: remediated }, { ...defaultVideoSeriesSettings, minimumRuntimeSeconds: 24, maximumRuntimeSeconds: 24 });
+  assert.equal(report.ready, true);
+});
+
+test("BMKT-010 contain bounds preserve News capture aspect ratios", () => {
+  assert.deepEqual(containDimensions(1537, 1196), { width: 1080, height: 840, scale: 1080 / 1537 });
+  assert.deepEqual(containDimensions(1348, 926), { width: 1080, height: 742, scale: 1080 / 1348 });
+  assert.deepEqual(containDimensions(1537, 283), { width: 1080, height: 199, scale: 1080 / 1537 });
 });

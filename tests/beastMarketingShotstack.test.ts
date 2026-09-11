@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { defaultVideoSeriesSettings } from "../src/lib/beastMarketingVideo";
 import { buildProductionManifest } from "../src/lib/beastMarketingProduction";
-import { buildVisualBeatPlan } from "../src/lib/beastMarketingQuality";
+import { buildStaticContainVisualPlan, buildVisualBeatPlan } from "../src/lib/beastMarketingQuality";
 import {
   BEAST_PRONUNCIATION_MAP,
   normalizeBeastDisplayNames,
@@ -156,6 +156,22 @@ test("BMKT-011 provider payload uses current Edit schema and has no same-track o
   assert.equal(edit.timeline.tracks.some((track) => track.clips.some((clip) => (clip.asset as Record<string, unknown>).type === "audio" && (clip.asset as Record<string, unknown>).voice)), false);
   assert.equal((edit.timeline.tracks.find((track) => track.clips.some((clip) => clip.alias === "bmkt-narration"))?.clips[0].asset as Record<string, unknown>).type, "text-to-speech");
   assert.equal(edit.timeline.tracks.filter((track) => track.clips.some((clip) => (clip.asset as Record<string, unknown>).type === "rich-text")).length >= 2, true);
+});
+
+test("BMKT-010 static presentation sends full-frame contain images without motion effects", () => {
+  const source = illustratedManifest();
+  const visualPlan = buildStaticContainVisualPlan({ ...source, visualPlan: buildVisualBeatPlan(source) });
+  const edit = buildShotstackEdit({ ...source, visualPlan });
+  const images = edit.timeline.tracks.flatMap((track) => track.clips).filter((clip) => (clip.asset as Record<string, unknown>).type === "image");
+  assert.ok(images.length > 0);
+  images.forEach((clip, index) => {
+    assert.equal(clip.fit, "contain");
+    assert.equal("effect" in clip, false);
+    assert.equal(clip.width, 1080);
+    assert.equal(clip.height, 1920);
+    assert.deepEqual(clip.transition, { in: index === 0 ? "none" : "fadeFast", out: "fadeFast" });
+  });
+  assert.equal(validateShotstackEdit(edit).valid, true);
 });
 
 test("BMKT-011 local schema validation catches custom fields and same-track overlap", () => {
