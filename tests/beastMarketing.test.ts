@@ -308,6 +308,16 @@ test("Acceptance Test #2 has a distinct idempotent owner-review candidate path",
   assert.match(panel, /Submit one authorized corrected render/);
 });
 
+test("BMKT-011 persists provider diagnostics and the exact sanitized edit for future failures", () => {
+  const route = readFileSync("src/app/api/admin/beast-marketing/video/render/route.ts", "utf8");
+  assert.match(route, /providerEdit: edit/);
+  assert.match(route, /sanitizedProviderResponseBody/);
+  assert.match(route, /providerErrorCode/);
+  assert.match(route, /providerValidationPath/);
+  assert.match(route, /providerErrorAt/);
+  assert.match(route, /automaticRetry: false/);
+});
+
 test("BMKT-007 auto-approval requires complete quality evidence, history, and publishing authority", () => {
   const settings = { ...defaultVideoSeriesSettings, approvalMode: "automatic" as const, manualApprovalFirstN: 2 };
   const controls = { pauseAllPublishing: false, externalPublishingAuthorized: true, automaticPublishingAuthorized: true, youtubeAuthorized: true };

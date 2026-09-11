@@ -4,7 +4,7 @@ import { allowedVideoTransitions, defaultVideoSeriesSettings, normalizeVideoTopi
 import { buildGroundedScript, buildYouTubeMetadata, scoreVideoOpportunity, type ScriptFact, type VideoEvidence } from "@/lib/beastMarketingContent";
 import { buildProductionManifest, fingerprintProductionManifest, validateProductionManifest } from "@/lib/beastMarketingProduction";
 import { planCandidateCadence, validateTopicFamily, type OwnerWorkflowDecision } from "@/lib/beastMarketingOwnerWorkflow";
-import { SHOTSTACK_ADAPTER_VERSION, shotstackConfiguration } from "@/lib/beastMarketingShotstack";
+import { SHOTSTACK_ADAPTER_VERSION, buildShotstackEdit, shotstackConfiguration } from "@/lib/beastMarketingShotstack";
 import { bindNewsAcceptance2Visuals, bindNewsTestVisuals, newsAcceptance2Script } from "@/lib/beastMarketingNewsVisualTest";
 import { evaluateProductionQuality } from "@/lib/beastMarketingQuality";
 import { createBeastFusionPublicationClient } from "@/lib/supabase/service";
@@ -134,7 +134,7 @@ export async function GET() {
     const evidence = record(latestAttempt?.evidence);
     return {
       ...job,
-      latestAttempt: latestAttempt ? { attemptNumber: latestAttempt.attempt_number, status: latestAttempt.status, errorCategory: latestAttempt.error_category, providerRequestId: latestAttempt.provider_request_id, providerHttpStatus: evidence.providerHttpStatus ?? null, createdAt: latestAttempt.created_at, completedAt: latestAttempt.completed_at } : null,
+      latestAttempt: latestAttempt ? { attemptNumber: latestAttempt.attempt_number, status: latestAttempt.status, errorCategory: latestAttempt.error_category, providerRequestId: latestAttempt.provider_request_id, providerHttpStatus: evidence.providerHttpStatus ?? null, providerErrorCode: evidence.providerErrorCode ?? null, providerErrorMessage: evidence.providerErrorMessage ?? null, providerValidationPath: evidence.providerValidationPath ?? null, providerErrorAt: evidence.providerErrorAt ?? null, createdAt: latestAttempt.created_at, completedAt: latestAttempt.completed_at } : null,
       technicalRecovery: available ? { available: true, attemptNumber: Number(latestAttempt?.attempt_number) || 1, providerHttpStatus: Number(evidence.providerHttpStatus) || null } : { available: false },
     };
   });
@@ -169,6 +169,8 @@ export async function POST(request: Request) {
     if (!providerValidationFailure(latestAttempt as Record<string, unknown> | null)) return NextResponse.json({ error: "An explicit corrected revision requires a retained pre-submission provider validation failure." }, { status: 409 });
     const sourceManifest = record(sourceProduction.manifest);
     if (!sourceManifest.checksum || !Array.isArray(sourceManifest.scenes) || !Array.isArray(sourceManifest.assets)) return NextResponse.json({ error: "The failed candidate does not contain a complete production manifest." }, { status: 409 });
+    try { buildShotstackEdit(sourceManifest as Parameters<typeof buildShotstackEdit>[0]); }
+    catch { return NextResponse.json({ error: "The corrected Shotstack adapter still rejects this candidate's provider payload; no new revision was created." }, { status: 409 }); }
     const nextRevision = integer(source.revision, 1, 1_000_000, 1) + 1;
     const sourceKey = clean(source.idempotency_key, 160);
     const idempotencyKey = `${sourceKey}-r${nextRevision}`;
@@ -184,7 +186,7 @@ export async function POST(request: Request) {
     const newProduction = {
       ...sourceProduction, manifest, providerState: "authorization_required", providerId: null, providerEnvironment: null,
       attemptId: null, externalActionPerformed: false, renderAuthorizationRequired: false,
-      technicalRetry: { authorizedByOwner: true, maximumAttempts: 1, attemptsConsumed: 0, correction: "Shotstack adapter schema correction", adapterVersion: SHOTSTACK_ADAPTER_VERSION, sourceAttemptId: latestAttempt?.id || null },
+      technicalRetry: { authorizedByOwner: true, maximumAttempts: 1, attemptsConsumed: 0, correction: "Shotstack Edit schema correction: current audio prompt asset, aspect-safe crop, non-overlapping tracks, and explicit output settings.", adapterVersion: SHOTSTACK_ADAPTER_VERSION, sourceAttemptId: latestAttempt?.id || null },
       shotstackCreditsConsumed: 0,
     };
     const manifestVisualPlan = record(manifest.visualPlan);
@@ -199,7 +201,7 @@ export async function POST(request: Request) {
     const newProvenance = {
       ...sourceProvenance, candidateLabel: revisionLabel, revisionLabel, activeCandidate: true, acceptanceTest: sourceProvenance.acceptanceTest,
       parentJobId: source.id, parentRevision: source.revision, supersedesJobId: source.id, supersedesRevision: source.revision,
-      technicalCorrection: "Removed unsupported Shotstack legacy TTS speed field.", technicalCorrectionAdapterVersion: SHOTSTACK_ADAPTER_VERSION,
+      technicalCorrection: "Shotstack Edit schema correction: current audio prompt asset, aspect-safe crop, non-overlapping tracks, and explicit output settings.", technicalCorrectionAdapterVersion: SHOTSTACK_ADAPTER_VERSION,
       technicalRetryAuthorized: true, technicalRetryMaximumAttempts: 1, technicalRetryAttemptsConsumed: 0,
       waitingForOwnerApproval: true, renderAuthorizationRequired: false, providersUsed: [], paidServicesUsed: false,
       shotstackCreditsConsumed: 0, externallyPublished: false, externalPublishingDisabled: true, youtubePublishingDisabled: true,

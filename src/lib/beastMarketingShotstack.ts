@@ -2,7 +2,7 @@ import type { ProductionManifest } from "./beastMarketingProduction";
 import { normalizeBeastDisplayNames, normalizeBeastNarrationForSpeech } from "./beastMarketingNarration";
 import { buildVisualBeatPlan, validateVisualAsset } from "./beastMarketingQuality";
 
-export const SHOTSTACK_ADAPTER_VERSION = "0.10.1";
+export const SHOTSTACK_ADAPTER_VERSION = "0.11.0";
 export const SHOTSTACK_PROVIDER_ID = "shotstack";
 export const SHOTSTACK_MAX_ESTIMATED_CREDITS_PER_RENDER = 2;
 export const SHOTSTACK_MAX_MANUAL_ATTEMPTS = 7;
@@ -22,6 +22,8 @@ export type ShotstackEdit = {
   };
   output: {
     format: "mp4";
+    aspectRatio?: ProductionManifest["aspectRatio"];
+    fps?: number;
     size: { width: number; height: number };
     range?: { start: number; length: number };
   };
@@ -47,13 +49,25 @@ export class ShotstackProviderError extends Error {
   readonly category: "configuration" | "authentication" | "rate_limit" | "validation" | "provider" | "network";
   readonly retryable: boolean;
   readonly httpStatus: number | null;
+  readonly providerCode: string | null;
+  readonly providerMessage: string | null;
+  readonly providerRequestId: string | null;
+  readonly providerValidationPath: string | null;
+  readonly sanitizedResponseBody: unknown;
+  readonly occurredAt: string;
 
-  constructor(category: ShotstackProviderError["category"], retryable: boolean, httpStatus: number | null = null) {
+  constructor(category: ShotstackProviderError["category"], retryable: boolean, httpStatus: number | null = null, diagnostics: Partial<Pick<ShotstackProviderError, "providerCode" | "providerMessage" | "providerRequestId" | "providerValidationPath" | "sanitizedResponseBody" | "occurredAt">> = {}) {
     super("Shotstack could not complete the internal render operation.");
     this.name = "ShotstackProviderError";
     this.category = category;
     this.retryable = retryable;
     this.httpStatus = httpStatus;
+    this.providerCode = diagnostics.providerCode || null;
+    this.providerMessage = diagnostics.providerMessage || null;
+    this.providerRequestId = diagnostics.providerRequestId || null;
+    this.providerValidationPath = diagnostics.providerValidationPath || null;
+    this.sanitizedResponseBody = diagnostics.sanitizedResponseBody ?? null;
+    this.occurredAt = diagnostics.occurredAt || new Date().toISOString();
   }
 }
 
@@ -90,6 +104,49 @@ export function nextShotstackManualAttempt(latest: ShotstackAttemptSummary | nul
 
 const asRecord = (value: unknown): Record<string, unknown> => value && typeof value === "object" ? value as Record<string, unknown> : {};
 const clean = (value: unknown, maximum = 500) => typeof value === "string" ? value.trim().slice(0, maximum) : "";
+const providerSensitiveKey = /(?:api[_-]?key|authorization|cookie|credential|jwt|password|secret|token)/i;
+
+function sanitizeProviderValue(value: unknown, depth = 0): unknown {
+  if (depth > 4) return "[truncated]";
+  if (typeof value === "string") {
+    return value.slice(0, 1000).replace(/bearer\s+[A-Za-z0-9._~-]+/ig, "[redacted bearer]").replace(/(?:api[_-]?key|token|secret|password)\s*[:=]\s*[^\s,;]+/ig, "$1=[redacted]");
+  }
+  if (typeof value === "number" || typeof value === "boolean") return value;
+  if (Array.isArray(value)) return value.slice(0, 20).map((item) => sanitizeProviderValue(item, depth + 1));
+  if (value && typeof value === "object") {
+    return Object.entries(value as Record<string, unknown>).slice(0, 40).reduce<Record<string, unknown>>((result, [key, item]) => {
+      if (!providerSensitiveKey.test(key)) result[key.slice(0, 100)] = sanitizeProviderValue(item, depth + 1);
+      return result;
+    }, {});
+  }
+  return null;
+}
+
+async function sanitizedProviderBody(response: Response) {
+  const raw = (await response.text()).slice(0, 12_000);
+  if (!raw) return null;
+  try { return sanitizeProviderValue(JSON.parse(raw)); }
+  catch { return { unparsed: true, length: raw.length, value: "[redacted non-JSON provider response]" }; }
+}
+
+function diagnosticString(value: unknown, maximum = 300) {
+  return clean(value, maximum).replace(/[\r\n]+/g, " ") || null;
+}
+
+function providerDiagnostics(body: unknown) {
+  const root = asRecord(body);
+  const response = asRecord(root.response);
+  const error = asRecord(root.error);
+  const details = asRecord(root.details);
+  const validation = asRecord(root.validation);
+  const firstError = Array.isArray(root.errors) ? asRecord(root.errors[0]) : {};
+  return {
+    providerCode: diagnosticString(response.code || error.code || firstError.code || root.code, 100),
+    providerMessage: diagnosticString(response.message || error.message || firstError.message || root.message || root.error, 500),
+    providerRequestId: diagnosticString(response.requestId || response.request_id || error.requestId || error.request_id || root.requestId || root.request_id, 120),
+    providerValidationPath: diagnosticString(validation.path || validation.field || details.path || details.field || error.path || error.field || firstError.path || firstError.field || root.path || root.field, 240),
+  };
+}
 
 export function shotstackEnvironment(environment: Readonly<Record<string, string | undefined>> = process.env): ShotstackEnvironment {
   return environment.SHOTSTACK_API_ENV === "v1" ? "v1" : "stage";
@@ -118,6 +175,60 @@ export function estimateShotstackCredits(manifest: ProductionManifest, environme
   };
 }
 
+const allowedClipFields = new Set(["asset", "start", "length", "fit", "scale", "width", "height", "position", "offset", "transition", "effect", "filter", "opacity", "transform", "alias"]);
+const allowedAssetFields: Record<string, Set<string>> = {
+  image: new Set(["type", "src", "prompt", "model", "resolution", "aspectRatio", "crop"]),
+  audio: new Set(["type", "src", "prompt", "voice", "language", "newscaster", "model", "musicLengthMs", "forceInstrumental", "compositionPlan", "trim", "volume", "speed", "effect"]),
+  "rich-text": new Set(["type", "text", "font", "style", "stroke", "shadow", "background", "border", "padding", "align", "animation"]),
+};
+const allowedTimelineFields = new Set(["background", "fonts", "tracks", "soundtrack", "cache"]);
+const allowedOutputFields = new Set(["format", "resolution", "aspectRatio", "size", "fps", "scaleTo", "quality", "repeat", "mute", "range", "poster", "thumbnail", "destinations"]);
+
+function extraFields(value: Record<string, unknown>, allowed: Set<string>) {
+  return Object.keys(value).filter((key) => !allowed.has(key));
+}
+
+/** Validate the provider-facing Edit JSON against the current documented shape before any network call. */
+export function validateShotstackEdit(edit: ShotstackEdit) {
+  const errors: string[] = [];
+  const timeline = asRecord(edit.timeline);
+  const output = asRecord(edit.output);
+  extraFields(timeline, allowedTimelineFields).forEach((field) => errors.push(`timeline.${field} is not supported`));
+  extraFields(output, allowedOutputFields).forEach((field) => errors.push(`output.${field} is not supported`));
+  if (!Array.isArray(timeline.tracks) || timeline.tracks.length === 0) errors.push("timeline.tracks must contain at least one track");
+  if (output.format !== "mp4") errors.push("output.format must be mp4");
+  const size = asRecord(output.size);
+  if (Object.keys(size).length && (!Number.isInteger(size.width) || !Number.isInteger(size.height) || Number(size.width) % 2 !== 0 || Number(size.height) % 2 !== 0)) errors.push("output.size must contain even integer width and height");
+  const tracks = Array.isArray(timeline.tracks) ? timeline.tracks : [];
+  tracks.forEach((track: unknown, trackIndex: number) => {
+    const trackRecord = asRecord(track);
+    if (!Array.isArray(trackRecord.clips) || trackRecord.clips.length === 0) errors.push(`timeline.tracks[${trackIndex}].clips must not be empty`);
+    const ranges: Array<{ start: number; end: number; index: number }> = [];
+    const clips = Array.isArray(trackRecord.clips) ? trackRecord.clips : [];
+    clips.forEach((clip: unknown, clipIndex: number) => {
+      const clipRecord = asRecord(clip);
+      extraFields(clipRecord, allowedClipFields).forEach((field) => errors.push(`timeline.tracks[${trackIndex}].clips[${clipIndex}].${field} is not supported`));
+      const start = typeof clipRecord.start === "number" ? clipRecord.start : null;
+      const length = typeof clipRecord.length === "number" ? clipRecord.length : null;
+      if (start !== null && length !== null) {
+        if (start < 0 || length <= 0) errors.push(`timeline.tracks[${trackIndex}].clips[${clipIndex}] has invalid timing`);
+        ranges.forEach((range) => { if (start < range.end - 1e-9 && start + length > range.start + 1e-9) errors.push(`timeline.tracks[${trackIndex}] clips ${range.index} and ${clipIndex} overlap`); });
+        ranges.push({ start, end: start + length, index: clipIndex });
+      }
+      const asset = asRecord(clipRecord.asset);
+      const assetType = clean(asset.type, 40);
+      const allowed = allowedAssetFields[assetType];
+      if (!allowed) errors.push(`timeline.tracks[${trackIndex}].clips[${clipIndex}] uses unsupported asset type`);
+      else {
+        extraFields(asset, allowed).forEach((field) => errors.push(`timeline.tracks[${trackIndex}].clips[${clipIndex}].asset.${field} is not supported`));
+        if (assetType === "audio" && (!asset.prompt && !asset.src || asset.prompt && asset.src)) errors.push(`timeline.tracks[${trackIndex}].clips[${clipIndex}].asset must provide exactly one audio source`);
+      }
+      if (clipRecord.transition && typeof clipRecord.transition !== "object") errors.push(`timeline.tracks[${trackIndex}].clips[${clipIndex}].transition must be an object`);
+    });
+  });
+  return { valid: errors.length === 0, errors };
+}
+
 export function buildShotstackEdit(manifest: ProductionManifest): ShotstackEdit {
   if (!manifest.scenes.length) throw new ShotstackProviderError("validation", false);
   const narration = normalizeBeastNarrationForSpeech(manifest.scenes.map((scene) => scene.narration.trim()).filter(Boolean).join(" "));
@@ -142,7 +253,9 @@ export function buildShotstackEdit(manifest: ProductionManifest): ShotstackEdit 
       asset: { type: "image", src: asset.uri },
       start: beat.startMs / 1000,
       length: (beat.endMs - beat.startMs) / 1000,
-      fit: beat.fit,
+      // `cover` is an internal planner term; Shotstack's aspect-safe equivalent
+      // is `crop` (the provider's `cover` stretches the image).
+      fit: beat.fit === "cover" ? "crop" : beat.fit,
       position: "center",
       width: manifest.width,
       height: manifest.height,
@@ -231,13 +344,14 @@ export function buildShotstackEdit(manifest: ProductionManifest): ShotstackEdit 
     return [{ asset: { type: "audio", src: asset.uri, volume: Math.min(0.5, Math.max(0, cue.volume)) }, start: cue.startMs / 1000, length: (cue.endMs - cue.startMs) / 1000 }];
   });
 
-  return {
+  const edit: ShotstackEdit = {
     timeline: {
       background: "#070b14",
       tracks: [
         {
           clips: captionClips,
         },
+        ...(endCardClip ? [{ clips: [endCardClip] }] : []),
         ...(sceneClips.length ? [{ clips: sceneClips }] : []),
         {
           clips: [{
@@ -253,18 +367,18 @@ export function buildShotstackEdit(manifest: ProductionManifest): ShotstackEdit 
             height: 100,
             position: "topLeft",
             offset: { x: 0.03, y: -0.04 },
-          }, ...(endCardClip ? [endCardClip] : [])],
+          }],
         },
-        { clips: visualClips },
+        ...(visualClips.length ? [{ clips: visualClips }] : []),
         {
           clips: [{
             alias: "bmkt-narration",
-            // Shotstack's legacy TTS edit asset accepts voice, language and
-            // newscaster. Delivery speed remains a BeastMarketing quality
-            // target, but is not a provider-facing TTS option.
+            // The current Edit schema uses an audio asset with a prompt,
+            // voice, language, and optional newscaster mode. Delivery speed
+            // remains a BeastMarketing quality target, but is not serialized.
             asset: {
-              type: "text-to-speech",
-              text: narration,
+              type: "audio",
+              prompt: narration,
               voice: voiceDelivery?.voice || "Matthew",
               language: voiceDelivery?.language || "en-US",
               newscaster: voiceDelivery?.newscaster ?? false,
@@ -273,18 +387,24 @@ export function buildShotstackEdit(manifest: ProductionManifest): ShotstackEdit 
             length: "auto",
           }],
         },
-        ...(musicClip || sfxClips.length ? [{ clips: [ ...(musicClip ? [musicClip] : []), ...sfxClips ] }] : []),
+        ...(musicClip ? [{ clips: [musicClip] }] : []),
+        ...(sfxClips.length ? [{ clips: sfxClips }] : []),
       ],
     },
-    output: { format: "mp4", size: { width: manifest.width, height: manifest.height }, range: { start: 0, length: manifest.runtimeMs / 1000 } },
+    output: { format: "mp4", aspectRatio: manifest.aspectRatio, fps: 25, size: { width: manifest.width, height: manifest.height }, range: { start: 0, length: manifest.runtimeMs / 1000 } },
   };
+  const validation = validateShotstackEdit(edit);
+  if (!validation.valid) throw new ShotstackProviderError("validation", false, null, { providerMessage: validation.errors.join("; ") });
+  return edit;
 }
 
-function providerError(response: Response) {
-  if (response.status === 401 || response.status === 403) return new ShotstackProviderError("authentication", false, response.status);
-  if (response.status === 429) return new ShotstackProviderError("rate_limit", true, response.status);
-  if ([400, 422].includes(response.status)) return new ShotstackProviderError("validation", false, response.status);
-  return new ShotstackProviderError("provider", response.status >= 500, response.status);
+async function providerError(response: Response) {
+  const body = await sanitizedProviderBody(response);
+  const diagnostics = { ...providerDiagnostics(body), sanitizedResponseBody: body, occurredAt: new Date().toISOString() };
+  if (response.status === 401 || response.status === 403) return new ShotstackProviderError("authentication", false, response.status, diagnostics);
+  if (response.status === 429) return new ShotstackProviderError("rate_limit", true, response.status, diagnostics);
+  if ([400, 422].includes(response.status)) return new ShotstackProviderError("validation", false, response.status, diagnostics);
+  return new ShotstackProviderError("provider", response.status >= 500, response.status, diagnostics);
 }
 
 async function providerFetch(url: string, apiKey: string, init: RequestInit = {}, fetcher: typeof fetch = fetch) {
@@ -296,7 +416,7 @@ async function providerFetch(url: string, apiKey: string, init: RequestInit = {}
       signal: AbortSignal.timeout(20_000),
       cache: "no-store",
     });
-    if (!response.ok) throw providerError(response);
+    if (!response.ok) throw await providerError(response);
     return response;
   } catch (error) {
     if (error instanceof ShotstackProviderError) throw error;
