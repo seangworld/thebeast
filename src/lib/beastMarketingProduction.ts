@@ -15,6 +15,8 @@ export type VisualPlan = { version: "bmkt-visual-plan-1"; maxBeatDurationMs: num
 export type AudioSfxCue = { assetId: string; startMs: number; endMs: number; volume: number };
 export type VoiceDeliveryPlan = { voice?: string; language?: string; style?: "energetic_conversational" | "modern_news" | "calm_explainer"; speed?: number; newscaster?: boolean; pauseMs?: number; emphasisTerms?: string[] };
 export type AudioMixPlan = { narrationSpeed?: number; voiceDelivery?: VoiceDeliveryPlan; musicAssetId?: string; musicVolume?: number; sfx?: AudioSfxCue[] };
+export type NarrationTimingCue = { sceneId: string; text: string; startMs: number; endMs: number; wordStart?: number; wordEnd?: number };
+export type NarrationTimingEvidence = { providerId: string; assetId: string; assetUri?: string | null; durationMs: number; timingType: "word" | "phrase"; cues: NarrationTimingCue[]; verifiedAt: string; syncToleranceMs: number; maxObservedDriftMs: number };
 export type ProductionManifest = {
   schemaVersion: "bmkt-production-1"; jobId: string; revision: number; aspectRatio: VideoSeriesSettings["aspectRatio"]; width: number; height: number;
   runtimeMs: number; visualStyle: string; captionStyle: string; presenterProfileId: string | null; presenterMode: "faceless" | "future_identity";
@@ -27,6 +29,12 @@ export type ProductionManifest = {
   monetizationOriented?: boolean;
   syncVerificationRequired?: boolean;
   syncMethod?: "narration_derived_calibrated" | "provider_word_timestamps";
+  timingEvidenceRequired?: boolean;
+  narrationTimingEvidence?: NarrationTimingEvidence;
+  visualTransitionGapMs?: number;
+  backgroundColor?: string;
+  /** Presentation profile controlling the editorial cadence budget. */
+  visualCadenceProfile?: "standard" | "slow_static";
 };
 export type ProductionOperation = "narration" | "visuals" | "composition";
 export type ProductionAttempt = { operation: ProductionOperation; attemptNumber: number; idempotencyKey: string; status: "planned" | "submitted" | "succeeded" | "failed" | "cancelled"; retryable: boolean };
@@ -96,9 +104,59 @@ export function validateProductionManifest(manifest: ProductionManifest, setting
   if (manifest.scenes.some((scene, index) => scene.startMs !== (index ? manifest.scenes[index - 1].endMs : 0) || scene.endMs <= scene.startMs)) errors.push("Scene timing must be contiguous and positive.");
   if (manifest.scenes.at(-1)?.endMs !== manifest.runtimeMs) errors.push("The scene timeline must end at the planned runtime.");
   if (manifest.monetizationOriented === true && manifest.runtimeMs < 60_000) errors.push("Monetization-oriented candidates require a runtime of at least 60 seconds.");
+  if (manifest.timingEvidenceRequired === true) {
+    const timing = validateNarrationTimingEvidence(manifest, manifest.narrationTimingEvidence);
+    if (!timing.valid) errors.push(...timing.errors);
+  }
   if (manifest.scenes.some((scene) => !scene.captions.length || scene.captions.some((cue) => cue.startMs < scene.startMs || cue.endMs > scene.endMs || !cue.text.trim()))) errors.push("Every scene requires bounded non-empty captions.");
   const missingProviders = manifest.providerBindings.filter((binding) => binding.required && (!binding.authorized || !binding.providerId)).map((binding) => binding.slot);
   return { planValid: errors.length === 0, renderReady: errors.length === 0 && missingProviders.length === 0, errors, missingProviders };
+}
+
+const normalizedWords = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim().split(/\s+/).filter(Boolean);
+
+/** Validate provider-supplied narration timing without treating estimates as evidence. */
+export function validateNarrationTimingEvidence(manifest: ProductionManifest, evidence: NarrationTimingEvidence | undefined) {
+  const errors: string[] = [];
+  if (!evidence || typeof evidence !== "object") return { valid: false, errors: ["Actual narration timing evidence is required before rendering."] };
+  if (!evidence.providerId.trim() || !evidence.assetId.trim()) errors.push("Narration timing evidence requires provider and asset identity.");
+  if (!Number.isInteger(evidence.durationMs) || evidence.durationMs <= 0) errors.push("Narration timing evidence requires a positive actual narration duration.");
+  if (!Number.isFinite(evidence.syncToleranceMs) || evidence.syncToleranceMs < 0 || evidence.syncToleranceMs > 150) errors.push("Narration timing sync tolerance must be at most 150 ms.");
+  if (!Number.isFinite(evidence.maxObservedDriftMs) || evidence.maxObservedDriftMs < 0 || evidence.maxObservedDriftMs > 150 || evidence.maxObservedDriftMs > evidence.syncToleranceMs) errors.push("Narration timing drift exceeds the 150 ms acceptance tolerance.");
+  if (!(evidence.timingType === "word" || evidence.timingType === "phrase")) errors.push("Narration timing evidence must identify word or phrase timestamps.");
+  if (!evidence.verifiedAt || !Number.isFinite(Date.parse(evidence.verifiedAt))) errors.push("Narration timing evidence requires a verification timestamp.");
+  if (!Array.isArray(evidence.cues) || evidence.cues.length === 0) errors.push("Narration timing evidence requires timestamped cues.");
+  const expectedScenes = new Map(manifest.scenes.map((scene) => [scene.id, normalizedWords(scene.narration).join(" ")]));
+  const byScene = new Map<string, NarrationTimingCue[]>();
+  for (const cue of Array.isArray(evidence.cues) ? evidence.cues : []) {
+    if (!expectedScenes.has(cue.sceneId)) errors.push("Narration timing cue references an unknown scene.");
+    if (!Number.isInteger(cue.startMs) || !Number.isInteger(cue.endMs) || cue.endMs <= cue.startMs) errors.push("Narration timing cues must have positive integer ranges.");
+    if (cue.startMs < 0 || cue.endMs > manifest.runtimeMs) errors.push("Narration timing cues must remain within the video runtime.");
+    if (!cue.text.trim() || cue.text.trim().split(/\s+/).length > 6) errors.push("Narration timing cue phrases must contain one to six words.");
+    const list = byScene.get(cue.sceneId) || []; list.push(cue); byScene.set(cue.sceneId, list);
+  }
+  expectedScenes.forEach((expected, sceneId) => {
+    const scene = manifest.scenes.find((candidate) => candidate.id === sceneId)!;
+    const cues = byScene.get(sceneId) || [];
+    if (!cues.length) { errors.push(`Narration timing evidence is missing cues for ${sceneId}.`); return; }
+    let previousEnd = scene.startMs;
+    cues.forEach((cue) => {
+      if (cue.startMs < scene.startMs || cue.endMs > scene.endMs) errors.push(`Narration timing cue for ${sceneId} is outside its scene bounds.`);
+      if (cue.startMs < previousEnd) errors.push(`Narration timing cues overlap in ${sceneId}.`);
+      previousEnd = cue.endMs;
+    });
+    if (cues.map((cue) => normalizedWords(cue.text)).flat().join(" ") !== expected) errors.push(`Narration timing cues do not cover the exact narration for ${sceneId}.`);
+  });
+  if (Number.isInteger(evidence.durationMs) && evidence.durationMs < Math.max(...(evidence.cues || []).map((cue) => cue.endMs), 0)) errors.push("Narration timing cues exceed the actual narration duration.");
+  return { valid: errors.length === 0, errors: Array.from(new Set(errors)) };
+}
+
+/** Bind verified provider timestamps to bottom captions; this never changes narration or visuals. */
+export function bindNarrationTimingEvidence(manifest: ProductionManifest, evidence: NarrationTimingEvidence) {
+  const validation = validateNarrationTimingEvidence(manifest, evidence);
+  if (!validation.valid) throw new Error(validation.errors.join(" "));
+  const scenes = manifest.scenes.map((scene) => ({ ...scene, captions: evidence.cues.filter((cue) => cue.sceneId === scene.id).map(({ text, startMs, endMs }) => ({ text, startMs, endMs })) }));
+  return fingerprintProductionManifest({ ...manifest, scenes, narrationTimingEvidence: evidence, syncVerificationRequired: false, syncMethod: "provider_word_timestamps" });
 }
 
 export function validateProducedAssets(assets: ProductionAsset[]) {

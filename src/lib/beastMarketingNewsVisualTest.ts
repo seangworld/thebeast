@@ -130,14 +130,49 @@ export function bindNewsAcceptance2Revision6Visuals(source: ProductionManifest):
   scenes.forEach((scene, sceneIndex) => {
     const count = beatCounts[sceneIndex];
     for (let index = 0; index < count; index += 1) {
-      const startMs = scene.startMs + Math.round((scene.endMs - scene.startMs) * index / count);
-      const endMs = index === count - 1 ? scene.endMs : scene.startMs + Math.round((scene.endMs - scene.startMs) * (index + 1) / count);
+      const startMs = sceneIndex === 0 && index === 0 ? scene.startMs : sceneIndex === 0 ? scene.startMs + 1_500 : scene.startMs + Math.round((scene.endMs - scene.startMs) * index / count);
+      const endMs = sceneIndex === 0 && index === 0 ? scene.startMs + 1_500 : index === count - 1 ? scene.endMs : scene.startMs + Math.round((scene.endMs - scene.startMs) * (index + 1) / count);
       beats.push({ id: `${scene.id}-beat-${String(index + 1).padStart(2, "0")}`, sceneId: scene.id, startMs, endMs, visualAssetId: sequence[sequenceCursor++], motion: "static", transition: beats.length ? "crossfade" : "cut", fit: "contain", captionSafe: true });
     }
   });
   if (beats.length !== sequence.length || beats[0].visualAssetId !== "news-test-home" || beats.at(-1)?.visualAssetId !== "news-test-home") throw new Error("Revision 6 requires twelve beats with the approved homepage asset first and last.");
   const base = fingerprintProductionManifest({ ...source, scenes, assets, requireVisuals: true, brandLabel: "SEANGWORLD NEWS", monetizationOriented: true, syncVerificationRequired: true, syncMethod: "narration_derived_calibrated" });
   return fingerprintProductionManifest({ ...base, visualPlan: { version: "bmkt-visual-plan-1", maxBeatDurationMs: 5_500, beats } });
+}
+
+/** Revision 7 is a clean, slower presentation awaiting real provider timing. */
+export function bindNewsAcceptance2Revision7Visuals(source: ProductionManifest): ProductionManifest {
+  if (source.scenes.length !== 6 || source.runtimeMs !== 61_500 || source.aspectRatio !== "9:16") throw new Error("Revision 7 requires the 61.5-second, six-scene 9:16 News walkthrough.");
+  const assets = [...newsTestCaptures, ...newsAcceptance2Captures].map((asset) => ({ ...asset }));
+  const sceneDurations = [8_300, 13_600, 13_600, 13_600, 6_800, 5_600];
+  const beatCounts = [2, 2, 2, 2, 1, 1];
+  const sequence = ["news-test-home", "news-acceptance2-home-top-story", "news-acceptance2-world-view", "news-acceptance2-usa-hampton-roads", "news-test-local", "news-acceptance2-politics-view", "news-acceptance2-military", "news-acceptance2-methodology", "news-acceptance2-coverage-sources", "news-test-home"];
+  let sceneCursor = 0; let sequenceCursor = 0;
+  const scenes = source.scenes.map((scene, sceneIndex) => {
+    const startMs = sceneCursor; const endMs = sceneCursor + sceneDurations[sceneIndex]; sceneCursor = endMs;
+    return { ...scene, startMs, endMs, captions: narrationDerivedCaptions(scene.narration, startMs, endMs) };
+  });
+  const beats: VisualPlan["beats"] = [];
+  scenes.forEach((scene, sceneIndex) => {
+    const count = beatCounts[sceneIndex];
+    for (let index = 0; index < count; index += 1) {
+      const startMs = sceneIndex === 0 && index === 0
+        ? scene.startMs
+        : sceneIndex === 0
+          ? scene.startMs + 1_500
+          : scene.startMs + Math.round((scene.endMs - scene.startMs) * index / count);
+      const endMs = sceneIndex === 0 && index === 0
+        ? scene.startMs + 1_500
+        : index === count - 1
+          ? scene.endMs
+          : scene.startMs + Math.round((scene.endMs - scene.startMs) * (index + 1) / count);
+      beats.push({ id: `${scene.id}-beat-${String(index + 1).padStart(2, "0")}`, sceneId: scene.id, startMs, endMs, visualAssetId: sequence[sequenceCursor++], motion: "static", transition: beats.length ? "crossfade" : "cut", fit: "contain", captionSafe: true });
+    }
+  });
+  if (beats.length !== sequence.length || beats[0].visualAssetId !== "news-test-home" || beats.at(-1)?.visualAssetId !== "news-test-home") throw new Error("Revision 7 requires ten beats with the approved homepage asset first and last.");
+  const { narrationTimingEvidence: _evidence, syncMethod: _syncMethod, ...withoutTiming } = source;
+  const base = fingerprintProductionManifest({ ...withoutTiming, scenes, assets, requireVisuals: true, brandLabel: "SEANGWORLD NEWS", monetizationOriented: true, timingEvidenceRequired: true, syncVerificationRequired: true, visualTransitionGapMs: 180, backgroundColor: "#000000", visualCadenceProfile: "slow_static" });
+  return fingerprintProductionManifest({ ...base, visualPlan: { version: "bmkt-visual-plan-1", maxBeatDurationMs: 7_500, beats } });
 }
 
 /** Explicit one-off walkthrough template, never a generic visual auto-selector. */

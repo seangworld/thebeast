@@ -313,6 +313,11 @@ test("Acceptance Test #2 has a distinct idempotent owner-review candidate path",
   assert.match(route, /runtimeMs: 61_500/);
   assert.match(route, /SHOTSTACK_MAX_ESTIMATED_CREDITS_PER_RENDER/);
   assert.match(panel, /Create Revision 6 · 60s synchronized presentation/);
+  assert.match(route, /kind === "create_revision7_final_sync"/);
+  assert.match(route, /kind === "bind_revision7_timing"/);
+  assert.match(route, /timingEvidenceRequired/);
+  assert.match(route, /bindNarrationTimingEvidence/);
+  assert.match(panel, /Create Revision 7 · final sync \+ clean fades/);
   for (const field of ["ownerQualityGrade", "technicalResult", "creativeResult", "voiceReview", "pacingReview", "visualFramingReview", "motionTreatmentReview"]) assert.match(route, new RegExp(field));
   assert.match(panel, /Create corrected revision · 1 render authorized/);
   assert.match(panel, /Record Revision 4 Owner Review/);
@@ -328,6 +333,13 @@ test("BMKT-011 persists provider diagnostics and the exact sanitized edit for fu
   assert.match(route, /providerValidationPath/);
   assert.match(route, /providerErrorAt/);
   assert.match(route, /automaticRetry: false/);
+});
+
+test("Revision 7 paid composition is blocked until measured narration timing is bound", () => {
+  const renderRoute = readFileSync("src/app/api/admin/beast-marketing/video/render/route.ts", "utf8");
+  assert.match(renderRoute, /timingEvidenceRequired/);
+  assert.match(renderRoute, /validateNarrationTimingEvidence/);
+  assert.match(renderRoute, /Actual narration timing evidence is required before paid composition/);
 });
 
 test("BMKT-007 auto-approval requires complete quality evidence, history, and publishing authority", () => {

@@ -2,10 +2,10 @@ import { NextResponse } from "next/server";
 import { createHash, randomUUID } from "node:crypto";
 import { allowedVideoTransitions, defaultVideoSeriesSettings, normalizeVideoTopicPhrases, validateVideoTopicPhrases, videoJobStates, type VideoJobState, type VideoSeriesSettings } from "@/lib/beastMarketingVideo";
 import { buildGroundedScript, buildYouTubeMetadata, scoreVideoOpportunity, type ScriptFact, type VideoEvidence } from "@/lib/beastMarketingContent";
-import { buildProductionManifest, fingerprintProductionManifest, validateProductionManifest } from "@/lib/beastMarketingProduction";
+import { bindNarrationTimingEvidence, buildProductionManifest, fingerprintProductionManifest, validateProductionManifest, type NarrationTimingEvidence, type ProductionManifest } from "@/lib/beastMarketingProduction";
 import { planCandidateCadence, validateTopicFamily, type OwnerWorkflowDecision } from "@/lib/beastMarketingOwnerWorkflow";
 import { SHOTSTACK_ADAPTER_VERSION, SHOTSTACK_MAX_ESTIMATED_CREDITS_PER_RENDER, buildShotstackEdit, estimateShotstackCredits, shotstackConfiguration, shotstackEnvironment } from "@/lib/beastMarketingShotstack";
-import { bindNewsAcceptance2Revision6Visuals, bindNewsAcceptance2Visuals, bindNewsTestVisuals, newsAcceptance2Revision6Script, newsAcceptance2Script } from "@/lib/beastMarketingNewsVisualTest";
+import { bindNewsAcceptance2Revision6Visuals, bindNewsAcceptance2Revision7Visuals, bindNewsAcceptance2Visuals, bindNewsTestVisuals, newsAcceptance2Revision6Script, newsAcceptance2Script } from "@/lib/beastMarketingNewsVisualTest";
 import { buildStaticContainVisualPlan, evaluateProductionQuality } from "@/lib/beastMarketingQuality";
 import { createBeastFusionPublicationClient } from "@/lib/supabase/service";
 import { createRouteClient } from "@/lib/supabase/server";
@@ -44,6 +44,19 @@ const seangworldUrl = (value: unknown) => {
   try { const hostname = new URL(normalized).hostname.toLowerCase(); return hostname === "seangworld.com" || hostname.endsWith(".seangworld.com") ? normalized : null; }
   catch { return null; }
 };
+
+function timingEvidence(value: unknown): NarrationTimingEvidence | null {
+  const input = record(value);
+  const cues = Array.isArray(input.cues) ? input.cues.slice(0, 500).flatMap((item) => {
+    const cue = record(item);
+    const sceneId = clean(cue.sceneId, 80); const text = clean(cue.text, 240);
+    const startMs = integer(cue.startMs, 0, 7_200_000, -1); const endMs = integer(cue.endMs, 1, 7_200_000, -1);
+    if (!sceneId || !text || startMs < 0 || endMs < 0) return [];
+    return [{ sceneId, text, startMs, endMs, ...(Number.isInteger(cue.wordStart) ? { wordStart: integer(cue.wordStart, 0, 1_000_000, 0) } : {}), ...(Number.isInteger(cue.wordEnd) ? { wordEnd: integer(cue.wordEnd, 0, 1_000_000, 0) } : {}) }];
+  }) : [];
+  const result: NarrationTimingEvidence = { providerId: clean(input.providerId, 120), assetId: clean(input.assetId, 160), assetUri: httpsUrl(input.assetUri), durationMs: integer(input.durationMs, 1, 7_200_000, 0), timingType: input.timingType === "word" ? "word" : "phrase", cues, verifiedAt: clean(input.verifiedAt, 80), syncToleranceMs: decimal(input.syncToleranceMs, 0, 150, -1), maxObservedDriftMs: decimal(input.maxObservedDriftMs, 0, 150, -1) };
+  return result.providerId && result.assetId && result.durationMs > 0 && result.verifiedAt && result.syncToleranceMs >= 0 && result.maxObservedDriftMs >= 0 ? result : null;
+}
 
 function providerValidationFailure(attempt: Record<string, unknown> | null | undefined) {
   if (!attempt || clean(attempt.status, 40) !== "failed" || clean(attempt.error_category, 40) !== "validation" || clean(attempt.provider_request_id, 100)) return false;
@@ -262,6 +275,62 @@ export async function POST(request: Request) {
     if (error || !created) return unavailable();
     await client.from("beast_marketing_video_jobs").update({ state: "failed", quality: { ...sourceQuality, ownerQualityReview: "needs_changes", ownerWorkflowDecision: "needs_changes", warnings: ["Superseded by Revision 6 synchronized runtime candidate; retained for audit lineage."] }, provenance: { ...sourceProvenance, activeCandidate: false, superseded: true, supersededByJobId: id, supersededByRevision: 6, supersededReason: "Revision 6 synchronized runtime and narration-derived caption remediation." }, updated_at: now, last_error: "Superseded by Revision 6 synchronized runtime candidate." }).eq("id", source.id).eq("owner_id", user.id);
     return NextResponse.json({ job: created, supersededJobId: source.id, shotstackCreditsConsumed: 0, externallyPublished: false, quality: qualityReport }, { status: 201 });
+  }
+  if (kind === "create_revision7_final_sync") {
+    if (request.headers.get("origin") !== new URL(request.url).origin) return forbidden();
+    const sourceId = clean(body?.id, 80);
+    const { data: source } = await client.from("beast_marketing_video_jobs").select("*").eq("id", sourceId).eq("owner_id", user.id).maybeSingle();
+    if (!source) return NextResponse.json({ error: "The selected video candidate is unavailable." }, { status: 404 });
+    const sourceProvenance = record(source.provenance); const sourceQuality = record(source.quality);
+    if (sourceProvenance.superseded || source.revision !== 6 || sourceProvenance.revision6SyncRuntime !== true) return NextResponse.json({ error: "An active Revision 6 candidate is required before creating Revision 7." }, { status: 409 });
+    if (sourceProvenance.externalPublishingDisabled !== true || sourceProvenance.youtubePublishingDisabled !== true) return NextResponse.json({ error: "Revision 7 requires explicit external and YouTube publishing locks." }, { status: 409 });
+    const { data: series } = await client.from("beast_marketing_video_series").select("settings").eq("id", source.series_id).eq("owner_id", user.id).maybeSingle();
+    const normalizedSettings = settings(series?.settings); const id = randomUUID();
+    let manifest: ProductionManifest;
+    try {
+      const planned = buildProductionManifest({ jobId: id, revision: 7, script: { ...newsAcceptance2Revision6Script, narration: [...newsAcceptance2Revision6Script.narration] }, settings: normalizedSettings });
+      manifest = bindNewsAcceptance2Revision7Visuals({ ...planned, runtimeMs: 61_500 });
+      buildShotstackEdit(manifest);
+    } catch { return NextResponse.json({ error: "The final-sync Revision 7 News candidate could not be built." }, { status: 409 }); }
+    const qualityReport = evaluateProductionQuality(manifest, { ...normalizedSettings, minimumRuntimeSeconds: 60, maximumRuntimeSeconds: Math.max(61.5, normalizedSettings.maximumRuntimeSeconds) });
+    const estimate = estimateShotstackCredits(manifest, shotstackEnvironment({ SHOTSTACK_API_ENV: "v1" }));
+    if (estimate.estimatedTotal > SHOTSTACK_MAX_ESTIMATED_CREDITS_PER_RENDER) return NextResponse.json({ error: "Revision 7 exceeds the configured Shotstack credit ceiling.", estimatedCredits: estimate }, { status: 409 });
+    const sourceTopic = record(source.topic); const baseTitle = clean(sourceTopic.title, 240).replace(/\s+—\s+Revision\s+\d+$/i, "") || "SEANGWORLD News"; const revisionLabel = `${baseTitle} — Revision 7`;
+    const idempotencyKey = `${clean(source.idempotency_key, 160)}-final-sync-r7`;
+    const { data: existing } = await client.from("beast_marketing_video_jobs").select("*").eq("owner_id", user.id).eq("idempotency_key", idempotencyKey).maybeSingle();
+    if (existing) return NextResponse.json({ job: existing, duplicatePrevented: true, shotstackCreditsConsumed: 0, externallyPublished: false });
+    const now = new Date().toISOString();
+    const { data: created, error } = await client.from("beast_marketing_video_jobs").insert({
+      id, owner_id: user.id, series_id: source.series_id, state: "scripted", revision: 7, idempotency_key: idempotencyKey,
+      topic: { ...sourceTopic, title: revisionLabel, candidateLabel: revisionLabel, activeCandidate: true, acceptanceTest: sourceProvenance.acceptanceTest },
+      script: structuredClone(newsAcceptance2Revision6Script),
+      production: { manifest, qualityReport, providerState: "timing_evidence_required", externalActionPerformed: false, renderAuthorizationRequired: true, timingEvidenceRequired: true, syncVerificationRequired: true, estimatedCredits: { ...estimate, basis: "Revision 7 preflight estimate; no request submitted" }, shotstackCreditsConsumed: 0 },
+      quality: { ...sourceQuality, ...qualityReport.metrics, renderReady: false, scriptReady: true, productionPlanReady: true, ownerQualityReview: "not_ready", ownerWorkflowDecision: "pending", ownerApprovalSource: null, qualityScore: qualityReport.score, timingEvidenceBound: false, syncVerificationRequired: true, warnings: ["Revision 7 removes the center narration overlay and requires actual provider narration timing evidence before rendering."] },
+      provenance: { ...sourceProvenance, candidateLabel: revisionLabel, revisionLabel, activeCandidate: true, parentJobId: source.id, parentRevision: source.revision, supersedesJobId: source.id, supersedesRevision: source.revision, visualPresentationRevision: true, revision6SyncRuntime: false, revision7FinalSync: true, timingEvidenceRequired: true, syncVerificationRequired: true, waitingForOwnerApproval: true, renderAuthorizationRequired: true, providersUsed: [], paidServicesUsed: false, shotstackCreditsConsumed: 0, externallyPublished: false, externalPublishingDisabled: true, youtubePublishingDisabled: true, createdAt: now },
+    }).select("*").single();
+    if (error || !created) return unavailable();
+    await client.from("beast_marketing_video_jobs").update({ state: "failed", quality: { ...sourceQuality, ownerQualityReview: "needs_changes", ownerWorkflowDecision: "needs_changes", warnings: ["Superseded by Revision 7 final-sync presentation candidate; retained for audit lineage."] }, provenance: { ...sourceProvenance, activeCandidate: false, superseded: true, supersededByJobId: id, supersededByRevision: 7, supersededReason: "Revision 7 center-overlay removal, slower static cadence, and timing-evidence requirement." }, updated_at: now, last_error: "Superseded by Revision 7 final-sync presentation candidate." }).eq("id", source.id).eq("owner_id", user.id);
+    return NextResponse.json({ job: created, supersededJobId: source.id, shotstackCreditsConsumed: 0, externallyPublished: false, quality: qualityReport }, { status: 201 });
+  }
+  if (kind === "bind_revision7_timing") {
+    if (request.headers.get("origin") !== new URL(request.url).origin) return forbidden();
+    const sourceId = clean(body?.id, 80); const { data: source } = await client.from("beast_marketing_video_jobs").select("*").eq("id", sourceId).eq("owner_id", user.id).maybeSingle();
+    if (!source) return NextResponse.json({ error: "The selected video candidate is unavailable." }, { status: 404 });
+    const sourceProvenance = record(source.provenance); const production = record(source.production);
+    if (sourceProvenance.superseded || source.revision !== 7 || sourceProvenance.revision7FinalSync !== true) return NextResponse.json({ error: "An active Revision 7 candidate is required before timing can be bound." }, { status: 409 });
+    if (sourceProvenance.externalPublishingDisabled !== true || sourceProvenance.youtubePublishingDisabled !== true) return NextResponse.json({ error: "Timing binding requires publishing locks." }, { status: 409 });
+    const rawManifest = production.manifest as ProductionManifest; const evidencePayload = timingEvidence(body?.timingEvidence);
+    if (!evidencePayload) return NextResponse.json({ error: "A sanitized provider timing-evidence payload is required." }, { status: 400 });
+    let manifest: ProductionManifest;
+    try { manifest = bindNarrationTimingEvidence(rawManifest, evidencePayload); } catch (error) { return NextResponse.json({ error: error instanceof Error ? error.message : "Narration timing evidence failed validation." }, { status: 409 }); }
+    const { data: series } = await client.from("beast_marketing_video_series").select("settings").eq("id", source.series_id).eq("owner_id", user.id).maybeSingle();
+    const normalizedSettings = settings(series?.settings); const qualityReport = evaluateProductionQuality(manifest, { ...normalizedSettings, minimumRuntimeSeconds: 60, maximumRuntimeSeconds: Math.max(61.5, normalizedSettings.maximumRuntimeSeconds) });
+    if (!qualityReport.ready || qualityReport.score < normalizedSettings.qualityThreshold) return NextResponse.json({ error: "Timing evidence did not satisfy the publication-quality gate.", quality: qualityReport }, { status: 409 });
+    try { buildShotstackEdit(manifest); } catch { return NextResponse.json({ error: "The timing-bound Revision 7 payload failed local Shotstack schema validation." }, { status: 409 }); }
+    const now = new Date().toISOString();
+    const { data: updated, error } = await client.from("beast_marketing_video_jobs").update({ production: { ...production, manifest, qualityReport, providerState: "authorization_required", timingEvidenceRequired: true, syncVerificationRequired: false, externalActionPerformed: false, shotstackCreditsConsumed: 0 }, quality: { ...record(source.quality), ...qualityReport.metrics, renderReady: false, timingEvidenceBound: true, syncVerificationRequired: false, syncMethod: "provider_word_timestamps", qualityScore: qualityReport.score, warnings: ["Actual narration timing evidence is bound. Owner Approval and render authorization are still required."] }, provenance: { ...sourceProvenance, timingEvidenceBound: true, syncVerificationRequired: false, syncMethod: "provider_word_timestamps", timingEvidenceVerifiedAt: evidencePayload.verifiedAt }, updated_at: now }).eq("id", source.id).eq("owner_id", user.id).select("*").single();
+    if (error || !updated) return unavailable();
+    return NextResponse.json({ job: updated, shotstackCreditsConsumed: 0, externallyPublished: false, quality: qualityReport }, { status: 200 });
   }
   if (kind === "create_visual_presentation_revision") {
     if (request.headers.get("origin") !== new URL(request.url).origin) return forbidden();
