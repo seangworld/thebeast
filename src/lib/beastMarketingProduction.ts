@@ -24,6 +24,9 @@ export type ProductionManifest = {
   brandLabel?: string;
   visualPlan?: VisualPlan;
   audioMix?: AudioMixPlan;
+  monetizationOriented?: boolean;
+  syncVerificationRequired?: boolean;
+  syncMethod?: "narration_derived_calibrated" | "provider_word_timestamps";
 };
 export type ProductionOperation = "narration" | "visuals" | "composition";
 export type ProductionAttempt = { operation: ProductionOperation; attemptNumber: number; idempotencyKey: string; status: "planned" | "submitted" | "succeeded" | "failed" | "cancelled"; retryable: boolean };
@@ -92,6 +95,7 @@ export function validateProductionManifest(manifest: ProductionManifest, setting
   if (manifest.runtimeMs < settings.minimumRuntimeSeconds * 1000 || manifest.runtimeMs > settings.maximumRuntimeSeconds * 1000) errors.push("Planned runtime is outside the configured range.");
   if (manifest.scenes.some((scene, index) => scene.startMs !== (index ? manifest.scenes[index - 1].endMs : 0) || scene.endMs <= scene.startMs)) errors.push("Scene timing must be contiguous and positive.");
   if (manifest.scenes.at(-1)?.endMs !== manifest.runtimeMs) errors.push("The scene timeline must end at the planned runtime.");
+  if (manifest.monetizationOriented === true && manifest.runtimeMs < 60_000) errors.push("Monetization-oriented candidates require a runtime of at least 60 seconds.");
   if (manifest.scenes.some((scene) => !scene.captions.length || scene.captions.some((cue) => cue.startMs < scene.startMs || cue.endMs > scene.endMs || !cue.text.trim()))) errors.push("Every scene requires bounded non-empty captions.");
   const missingProviders = manifest.providerBindings.filter((binding) => binding.required && (!binding.authorized || !binding.providerId)).map((binding) => binding.slot);
   return { planValid: errors.length === 0, renderReady: errors.length === 0 && missingProviders.length === 0, errors, missingProviders };

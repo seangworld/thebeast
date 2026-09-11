@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { buildProductionManifest, fingerprintProductionManifest } from "../src/lib/beastMarketingProduction";
-import { bindNewsAcceptance2Visuals, bindNewsTestVisuals, newsAcceptance2Captures, newsTestCaptures, newsAcceptance2Script } from "../src/lib/beastMarketingNewsVisualTest";
+import { buildProductionManifest, fingerprintProductionManifest, validateProductionManifest } from "../src/lib/beastMarketingProduction";
+import { bindNewsAcceptance2Revision6Visuals, bindNewsAcceptance2Visuals, bindNewsTestVisuals, newsAcceptance2Captures, newsTestCaptures, newsAcceptance2Revision6Script, newsAcceptance2Script } from "../src/lib/beastMarketingNewsVisualTest";
 import { defaultVideoSeriesSettings } from "../src/lib/beastMarketingVideo";
 import { evaluateProductionQuality } from "../src/lib/beastMarketingQuality";
 
@@ -78,4 +78,46 @@ test("News-specific visuals cannot be silently used on unrelated scripts or layo
   assert.throws(() => bindNewsTestVisuals(wrong));
   assert.throws(() => bindNewsTestVisuals({ ...source(), aspectRatio: "16:9" }));
   assert.throws(() => bindNewsTestVisuals({ ...source(), scenes: source().scenes.slice(1) }));
+});
+
+test("Acceptance Test #2 Revision 6 is a 61.5-second static contain cut with synchronized captions", () => {
+  const planned = buildProductionManifest({ jobId: "acceptance-2-r6", revision: 6, settings: defaultVideoSeriesSettings,
+    script: { ...newsAcceptance2Revision6Script, narration: [...newsAcceptance2Revision6Script.narration] } });
+  const candidate = bindNewsAcceptance2Revision6Visuals(planned);
+  assert.equal(candidate.runtimeMs, 61_500);
+  assert.equal(candidate.visualPlan?.beats.length, 12);
+  const beats = candidate.visualPlan?.beats || [];
+  assert.equal(beats[0].visualAssetId, "news-test-home");
+  assert.equal(beats.at(-1)?.visualAssetId, "news-test-home");
+  assert.equal(beats.filter((beat, index) => index > 0 && beat.visualAssetId === beats[index - 1].visualAssetId).length, 0);
+  assert.equal(beats.every((beat) => beat.motion === "static" && beat.fit === "contain"), true);
+  assert.equal(beats.every((beat) => beat.transition === "cut" || beat.transition === "crossfade"), true);
+  assert.equal(beats.every((beat) => candidate.assets.find((asset) => asset.id === beat.visualAssetId)?.sourceType === "first_party"), true);
+  assert.equal(beats.some((beat) => beat.visualAssetId === "privacy-policy-exclude-from-test"), false);
+  for (const scene of candidate.scenes) {
+    assert.ok(scene.captions.length > 0);
+    scene.captions.forEach((cue, index) => {
+      assert.ok(cue.startMs >= scene.startMs && cue.endMs <= scene.endMs && cue.endMs > cue.startMs);
+      assert.ok(cue.text.split(/\s+/).length <= 6);
+      if (index) assert.equal(cue.startMs, scene.captions[index - 1].endMs);
+    });
+  }
+  assert.equal(candidate.monetizationOriented, true);
+  assert.equal(candidate.syncVerificationRequired, true);
+  assert.equal(candidate.syncMethod, "narration_derived_calibrated");
+  const quality = evaluateProductionQuality(candidate, { ...defaultVideoSeriesSettings, minimumRuntimeSeconds: 60, maximumRuntimeSeconds: 61.5 });
+  assert.equal(quality.ready, true);
+  assert.equal(quality.score, 100);
+  assert.deepEqual(quality.blockers, []);
+  assert.equal(quality.metrics.maxStaticIntervalMs, 5_500);
+  assert.equal(quality.metrics.hookBeatDurationMs, 1_500);
+  assert.equal(quality.metrics.ctaDurationMs, 5_500);
+  assert.equal(quality.metrics.plannedNarrationWpm, 134.6);
+});
+
+test("monetization candidates fail closed below the 60-second runtime floor", () => {
+  const candidate = bindNewsAcceptance2Revision6Visuals(buildProductionManifest({ jobId: "acceptance-2-r6-gate", revision: 6, settings: defaultVideoSeriesSettings, script: { ...newsAcceptance2Revision6Script, narration: [...newsAcceptance2Revision6Script.narration] } }));
+  const short = { ...candidate, runtimeMs: 59_999, scenes: candidate.scenes.map((scene, index, scenes) => index === scenes.length - 1 ? { ...scene, endMs: 59_999 } : scene) };
+  const validation = validateProductionManifest(short, defaultVideoSeriesSettings);
+  assert.equal(validation.errors.some((error) => /Monetization-oriented candidates require a runtime of at least 60 seconds/.test(error)), true);
 });

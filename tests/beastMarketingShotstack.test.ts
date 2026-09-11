@@ -4,6 +4,7 @@ import test from "node:test";
 import { defaultVideoSeriesSettings } from "../src/lib/beastMarketingVideo";
 import { buildProductionManifest } from "../src/lib/beastMarketingProduction";
 import { buildStaticContainVisualPlan, buildVisualBeatPlan } from "../src/lib/beastMarketingQuality";
+import { bindNewsAcceptance2Revision6Visuals, newsAcceptance2Revision6Script } from "../src/lib/beastMarketingNewsVisualTest";
 import {
   BEAST_PRONUNCIATION_MAP,
   normalizeBeastDisplayNames,
@@ -172,6 +173,32 @@ test("BMKT-010 static presentation sends full-frame contain images without motio
     assert.deepEqual(clip.transition, { in: index === 0 ? "none" : "fadeFast", out: "fadeFast" });
   });
   assert.equal(validateShotstackEdit(edit).valid, true);
+});
+
+test("Revision 6 provider edit is static contain-only, schema-valid, and preserves energetic TTS", () => {
+  const source = bindNewsAcceptance2Revision6Visuals(buildProductionManifest({
+    jobId: "acceptance-2-r6-shotstack", revision: 6, settings: defaultVideoSeriesSettings,
+    script: { ...newsAcceptance2Revision6Script, narration: [...newsAcceptance2Revision6Script.narration] },
+  }));
+  const edit = buildShotstackEdit(source);
+  assert.equal(validateShotstackEdit(edit).valid, true);
+  assert.equal(edit.output.range?.length, 61.5);
+  const clips = edit.timeline.tracks.flatMap((track) => track.clips);
+  const images = clips.filter((clip) => (clip.asset as Record<string, unknown>).type === "image");
+  assert.equal(images.length, 12);
+  assert.equal(images.every((clip) => clip.fit === "contain" && !Object.hasOwn(clip, "effect")), true);
+  assert.equal(images.every((clip) => clip.transition && ["none", "fadeFast"].includes((clip.transition as Record<string, unknown>).in as string) && (clip.transition as Record<string, unknown>).out === "fadeFast"), true);
+  const ids = source.visualPlan?.beats.map((beat) => beat.visualAssetId) || [];
+  assert.equal(ids[0], "news-test-home");
+  assert.equal(ids.at(-1), "news-test-home");
+  assert.equal(ids.filter((id, index) => index > 0 && id === ids[index - 1]).length, 0);
+  assert.equal(source.assets.some((asset) => asset.sourceType === "generated"), false);
+  const narration = clips.find((clip) => clip.alias === "bmkt-narration");
+  assert.deepEqual(narration?.asset, { type: "text-to-speech", text: (narration?.asset as Record<string, unknown>).text, voice: "Matthew", language: "en-US", newscaster: false });
+  assert.equal("speed" in ((narration?.asset || {}) as Record<string, unknown>), false);
+  assert.equal(source.audioMix?.voiceDelivery?.style, "energetic_conversational");
+  assert.equal(source.audioMix?.voiceDelivery?.speed, 1.16);
+  assert.equal(source.scenes.every((scene) => scene.captions.every((cue) => cue.text.split(/\s+/).length <= 6)), true);
 });
 
 test("BMKT-011 local schema validation catches custom fields and same-track overlap", () => {
