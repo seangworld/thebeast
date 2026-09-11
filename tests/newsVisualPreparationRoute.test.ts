@@ -27,7 +27,7 @@ function fixture(options: { admin?: boolean; existing?: boolean; sourceMissing?:
   } });
   return { post: exports.POST!, queries, inserted: () => inserted, original };
 }
-const request = (origin = "https://thebeast.seangworld.com") => new Request("https://thebeast.seangworld.com/api/admin/beast-marketing/video", { method: "POST", headers: { origin, "content-type": "application/json" }, body: JSON.stringify({ kind: "prepare_news_visual_test", id: "source" }) });
+const request = (origin = "https://thebeast.seangworld.com", kind = "prepare_news_visual_test") => new Request("https://thebeast.seangworld.com/api/admin/beast-marketing/video", { method: "POST", headers: { origin, "content-type": "application/json" }, body: JSON.stringify({ kind, id: "source" }) });
 
 test("visual preparation denies non-admin and foreign-origin requests before job access", async () => {
   for (const [options, origin] of [[{ admin: false }, "https://thebeast.seangworld.com"], [{}, "https://evil.example"]] as const) {
@@ -55,5 +55,30 @@ test("visual preparation returns the retained test without generating another", 
 });
 test("visual preparation cannot clone an unavailable source", async () => {
   const f = fixture({ sourceMissing: true }); assert.equal((await f.post(request())).status, 409);
+  assert.equal(f.inserted(), undefined);
+});
+
+test("Acceptance Test #2 preparation persists the exact approved candidate without spending credits", async () => {
+  const f = fixture(); const response = await f.post(request("https://thebeast.seangworld.com", "prepare_news_acceptance2"));
+  assert.equal(response.status, 201, await response.clone().text());
+  const job = f.inserted()!;
+  assert.equal(job.idempotency_key, "news-acceptance2-v1");
+  assert.equal(job.state, "scripted");
+  assert.equal((job.topic as Record<string, unknown>).title, "SEANGWORLD News — Acceptance Test #2");
+  assert.equal((job.topic as Record<string, unknown>).acceptanceTest, 2);
+  assert.equal((job.provenance as Record<string, unknown>).visualTemplate, "news-acceptance2-v1");
+  assert.equal((job.provenance as Record<string, unknown>).externalPublishingDisabled, true);
+  assert.equal((job.provenance as Record<string, unknown>).youtubePublishingDisabled, true);
+  assert.equal((job.quality as Record<string, unknown>).qualityScore, 100);
+  assert.equal((job.quality as Record<string, unknown>).runtimeSeconds, 45);
+  assert.equal((job.quality as Record<string, unknown>).visualBeatCount, 13);
+  assert.equal(((job.production as Record<string, unknown>).estimatedCredits as Record<string, unknown>).estimatedTotal, 1.5);
+  assert.equal((job.production as Record<string, unknown>).shotstackCreditsConsumed, 0);
+  assert.equal((await response.json()).shotstackCreditsConsumed, 0);
+});
+
+test("Acceptance Test #2 preparation is idempotent and never creates a second candidate", async () => {
+  const f = fixture({ existing: true }); const response = await f.post(request("https://thebeast.seangworld.com", "prepare_news_acceptance2"));
+  assert.equal(response.status, 200); assert.equal((await response.json()).duplicatePrevented, true);
   assert.equal(f.inserted(), undefined);
 });

@@ -285,6 +285,23 @@ test("BMKT-007 owner workflow creates no-spend candidates and keeps publishing l
   assert.doesNotMatch(route, /fetch\(["']https:\/\//);
 });
 
+test("Acceptance Test #2 has a distinct idempotent owner-review candidate path", () => {
+  const panel = readFileSync("src/app/dashboard/admin/marketing/VideoGrowthEnginePanel.tsx", "utf8");
+  const route = readFileSync("src/app/api/admin/beast-marketing/video/route.ts", "utf8");
+  assert.match(panel, /Prepare Acceptance Test #2/);
+  assert.match(panel, /CURRENT ACTIVE CANDIDATE · Acceptance Test #2/);
+  assert.match(panel, /Historical News test candidate/);
+  assert.match(panel, /quality \$\{qualityScore\}\/100/);
+  assert.match(panel, /rightActive - leftActive/);
+  assert.match(route, /kind === "prepare_news_acceptance2"/);
+  assert.match(route, /news-acceptance2-v1/);
+  assert.match(route, /SEANGWORLD News — Acceptance Test #2/);
+  assert.match(route, /qualityScore: qualityReport\.score/);
+  assert.match(route, /externalPublishingDisabled: true/);
+  assert.match(route, /youtubePublishingDisabled: true/);
+  assert.match(route, /renderAuthorizationRequired: true/);
+});
+
 test("BMKT-007 auto-approval requires complete quality evidence, history, and publishing authority", () => {
   const settings = { ...defaultVideoSeriesSettings, approvalMode: "automatic" as const, manualApprovalFirstN: 2 };
   const controls = { pauseAllPublishing: false, externalPublishingAuthorized: true, automaticPublishingAuthorized: true, youtubeAuthorized: true };

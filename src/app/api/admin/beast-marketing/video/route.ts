@@ -5,7 +5,7 @@ import { buildGroundedScript, buildYouTubeMetadata, scoreVideoOpportunity, type 
 import { buildProductionManifest, validateProductionManifest } from "@/lib/beastMarketingProduction";
 import { planCandidateCadence, validateTopicFamily, type OwnerWorkflowDecision } from "@/lib/beastMarketingOwnerWorkflow";
 import { shotstackConfiguration } from "@/lib/beastMarketingShotstack";
-import { bindNewsTestVisuals } from "@/lib/beastMarketingNewsVisualTest";
+import { bindNewsAcceptance2Visuals, bindNewsTestVisuals, newsAcceptance2Script } from "@/lib/beastMarketingNewsVisualTest";
 import { evaluateProductionQuality } from "@/lib/beastMarketingQuality";
 import { createBeastFusionPublicationClient } from "@/lib/supabase/service";
 import { createRouteClient } from "@/lib/supabase/server";
@@ -130,6 +130,41 @@ export async function POST(request: Request) {
   if (!user) return forbidden();
   const body = await request.json().catch(() => null) as Record<string, unknown> | null;
   const kind = clean(body?.kind, 40);
+  if (kind === "prepare_news_acceptance2") {
+    if (request.headers.get("origin") !== new URL(request.url).origin) return forbidden();
+    const key = "news-acceptance2-v1";
+    const { data: existing, error: lookupError } = await client.from("beast_marketing_video_jobs").select("*").eq("owner_id", user.id).eq("idempotency_key", key).maybeSingle();
+    if (lookupError) return unavailable();
+    if (existing) return NextResponse.json({ job: existing, duplicatePrevented: true, shotstackCreditsConsumed: 0, externallyPublished: false });
+    const { data: source } = await client.from("beast_marketing_video_jobs").select("id, series_id, state, topic, idempotency_key").eq("id", clean(body?.id, 80)).eq("owner_id", user.id).maybeSingle();
+    if (!source || source.idempotency_key !== "direct-youtube-first-news-walkthrough-20260910" || source.state !== "ready") return NextResponse.json({ error: "The original completed News walkthrough is required before preparing Acceptance Test #2." }, { status: 409 });
+    const { data: series } = await client.from("beast_marketing_video_series").select("settings").eq("id", source.series_id).eq("owner_id", user.id).maybeSingle();
+    if (!series) return unavailable();
+    const id = randomUUID();
+    const normalizedSettings = settings(series.settings);
+    const script = { hook: newsAcceptance2Script.hook, narration: [...newsAcceptance2Script.narration], cta: newsAcceptance2Script.cta, estimatedSeconds: newsAcceptance2Script.estimatedSeconds };
+    let manifest;
+    try { manifest = bindNewsAcceptance2Visuals(buildProductionManifest({ jobId: id, revision: 1, script, settings: normalizedSettings })); }
+    catch { return NextResponse.json({ error: "The verified Acceptance Test #2 News candidate could not be built." }, { status: 409 }); }
+    const validation = validateProductionManifest(manifest, normalizedSettings);
+    if (!validation.planValid) return NextResponse.json({ error: "The Acceptance Test #2 production plan is invalid." }, { status: 409 });
+    const qualityReport = evaluateProductionQuality(manifest, normalizedSettings);
+    if (!qualityReport.ready || qualityReport.score < 90) return NextResponse.json({ error: "Acceptance Test #2 did not meet the publication-quality preflight threshold." }, { status: 409 });
+    const generatedAt = new Date().toISOString();
+    const { data, error } = await client.from("beast_marketing_video_jobs").insert({
+      id, owner_id: user.id, series_id: source.series_id, state: "scripted", revision: 1, idempotency_key: key,
+      topic: { ...record(source.topic), title: "SEANGWORLD News — Acceptance Test #2", candidateLabel: "Acceptance Test #2", activeCandidate: true, acceptanceTest: 2 },
+      script,
+      production: { manifest, validation, qualityReport, providerState: "authorization_required", externalActionPerformed: false, renderAuthorizationRequired: true, estimatedCredits: { renderCredits: 0.8, speechCredits: 0.7, estimatedTotal: 1.5, basis: "Acceptance Test #2 preflight estimate; no request submitted" }, shotstackCreditsConsumed: 0 },
+      quality: { renderReady: false, scriptReady: true, productionPlanReady: true, ownerQualityReview: "not_ready", ownerWorkflowDecision: "pending", qualityScore: qualityReport.score, runtimeSeconds: qualityReport.metrics.runtimeSeconds, visualBeatCount: qualityReport.metrics.visualBeatCount, warnings: [...qualityReport.blockers, ...qualityReport.warnings] },
+      provenance: { generatedBy: "BeastMarketing", generationMode: "acceptance_test", generatedAt, sourceJobId: source.id, sourceScriptHash: createHash("sha256").update(JSON.stringify(script)).digest("hex"), visualTemplate: "news-acceptance2-v1", acceptanceTest: 2, candidateLabel: "Acceptance Test #2", waitingForOwnerApproval: true, providersUsed: [], paidServicesUsed: false, shotstackCreditsConsumed: 0, externallyPublished: false, externalPublishingDisabled: true, youtubePublishingDisabled: true, manifestChecksum: manifest.checksum },
+    }).select("*").single();
+    if (error?.code === "23505") {
+      const { data: retained } = await client.from("beast_marketing_video_jobs").select("*").eq("owner_id", user.id).eq("idempotency_key", key).maybeSingle();
+      if (retained) return NextResponse.json({ job: retained, duplicatePrevented: true, shotstackCreditsConsumed: 0, externallyPublished: false });
+    }
+    return error || !data ? unavailable() : NextResponse.json({ job: data, shotstackCreditsConsumed: 0, externallyPublished: false }, { status: 201 });
+  }
   if (kind === "prepare_news_visual_test") {
     if (request.headers.get("origin") !== new URL(request.url).origin) return forbidden();
     const key = "news-visual-test-v1";
