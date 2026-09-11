@@ -6,7 +6,7 @@ import { buildProductionManifest, fingerprintProductionManifest, validateProduct
 import { planCandidateCadence, validateTopicFamily, type OwnerWorkflowDecision } from "@/lib/beastMarketingOwnerWorkflow";
 import { SHOTSTACK_ADAPTER_VERSION, buildShotstackEdit, shotstackConfiguration } from "@/lib/beastMarketingShotstack";
 import { bindNewsAcceptance2Visuals, bindNewsTestVisuals, newsAcceptance2Script } from "@/lib/beastMarketingNewsVisualTest";
-import { evaluateProductionQuality } from "@/lib/beastMarketingQuality";
+import { buildStaticContainVisualPlan, evaluateProductionQuality } from "@/lib/beastMarketingQuality";
 import { createBeastFusionPublicationClient } from "@/lib/supabase/service";
 import { createRouteClient } from "@/lib/supabase/server";
 
@@ -222,6 +222,109 @@ export async function POST(request: Request) {
     };
     await client.from("beast_marketing_video_jobs").update({ state: "failed", quality: supersededQuality, provenance: supersededProvenance, last_error: "Superseded after provider validation failure; corrected revision created.", updated_at: now }).eq("id", source.id).eq("owner_id", user.id);
     return NextResponse.json({ job: corrected, supersededJobId: source.id, sourceAttemptId: latestAttempt?.id || null, shotstackCreditsConsumed: 0, externallyPublished: false }, { status: 201 });
+  }
+  if (kind === "create_visual_presentation_revision") {
+    if (request.headers.get("origin") !== new URL(request.url).origin) return forbidden();
+    const sourceId = clean(body?.id, 80);
+    const { data: source } = await client.from("beast_marketing_video_jobs").select("*").eq("id", sourceId).eq("owner_id", user.id).maybeSingle();
+    if (!source) return NextResponse.json({ error: "The selected video candidate is unavailable." }, { status: 404 });
+    const sourceProvenance = record(source.provenance);
+    const sourceQuality = record(source.quality);
+    const sourceProduction = record(source.production);
+    if (sourceProvenance.superseded) return NextResponse.json({ error: "This candidate has already been superseded by a later revision." }, { status: 409 });
+    if (sourceQuality.ownerQualityGrade !== "B" || sourceQuality.technicalResult !== "PASS" || sourceQuality.creativeResult !== "REVISION REQUIRED" || sourceQuality.visualFramingReview !== "NEEDS REVISION" || sourceQuality.motionTreatmentReview !== "NEEDS REVISION") return NextResponse.json({ error: "The candidate requires a persisted Owner visual-presentation review before creating this revision." }, { status: 409 });
+    if (sourceProvenance.externalPublishingDisabled !== true || sourceProvenance.youtubePublishingDisabled !== true) return NextResponse.json({ error: "A visual presentation revision requires explicit external and YouTube publishing locks." }, { status: 409 });
+    const sourceManifest = record(sourceProduction.manifest);
+    if (!sourceManifest.checksum || !Array.isArray(sourceManifest.scenes) || !Array.isArray(sourceManifest.assets)) return NextResponse.json({ error: "The source candidate does not contain a complete production manifest." }, { status: 409 });
+    const nextRevision = integer(source.revision, 1, 1_000_000, 1) + 1;
+    const sourceKey = clean(source.idempotency_key, 160);
+    const idempotencyKey = `${sourceKey}-visual-r${nextRevision}`;
+    const { data: existing } = await client.from("beast_marketing_video_jobs").select("*").eq("owner_id", user.id).eq("idempotency_key", idempotencyKey).maybeSingle();
+    if (existing) return NextResponse.json({ job: existing, duplicatePrevented: true, shotstackCreditsConsumed: 0, externallyPublished: false });
+    const id = randomUUID();
+    const manifestBase = { ...structuredClone(sourceManifest), jobId: id, revision: nextRevision } as Parameters<typeof fingerprintProductionManifest>[0];
+    manifestBase.visualPlan = buildStaticContainVisualPlan(manifestBase);
+    const manifest = fingerprintProductionManifest(manifestBase);
+    const { data: series } = await client.from("beast_marketing_video_series").select("settings").eq("id", source.series_id).eq("owner_id", user.id).maybeSingle();
+    const normalizedSettings = settings(series?.settings);
+    const qualityReport = evaluateProductionQuality(manifest, normalizedSettings);
+    if (!qualityReport.ready || qualityReport.score < normalizedSettings.qualityThreshold) return NextResponse.json({ error: "The visual presentation revision did not meet the configured zero-cost quality threshold.", quality: qualityReport }, { status: 409 });
+    try { buildShotstackEdit(manifest); }
+    catch { return NextResponse.json({ error: "The static full-frame presentation did not pass provider schema validation; no revision was created." }, { status: 409 }); }
+    const sourceTopic = record(source.topic);
+    const baseTitle = clean(sourceTopic.title, 240).replace(/\s+—\s+Revision\s+\d+$/i, "") || "Video candidate";
+    const revisionLabel = `${baseTitle} — Revision ${nextRevision}`;
+    const now = new Date().toISOString();
+    const newProduction = {
+      ...sourceProduction,
+      manifest,
+      providerState: "authorization_required",
+      providerId: null,
+      providerEnvironment: null,
+      attemptId: null,
+      externalActionPerformed: false,
+      renderAuthorizationRequired: true,
+      technicalRetry: null,
+      visualPresentationRevision: true,
+      visualPresentation: { remediation: "static_contain", framing: "contain", motion: "static", background: "#070b14", canvas: { width: manifest.width, height: manifest.height }, sourceRevision: source.revision },
+      shotstackCreditsConsumed: 0,
+    };
+    const newQuality = {
+      ...sourceQuality,
+      ...qualityReport.metrics,
+      renderReady: false,
+      ownerQualityReview: "not_ready",
+      ownerWorkflowDecision: "pending",
+      ownerApprovalSource: null,
+      internalRenderStatus: "not_submitted",
+      qualityScore: qualityReport.score,
+      blockers: qualityReport.blockers,
+      warnings: ["Revision created for visual presentation only: full screenshots use contain framing and static holds; accepted voice, pacing, script, captions, assets, hook, and CTA are unchanged."],
+      visualPresentationRevision: true,
+    };
+    const newProvenance = {
+      ...sourceProvenance,
+      candidateLabel: revisionLabel,
+      revisionLabel,
+      activeCandidate: true,
+      parentJobId: source.id,
+      parentRevision: source.revision,
+      supersedesJobId: source.id,
+      supersedesRevision: source.revision,
+      visualPresentationRevision: true,
+      visualPresentationCorrection: "Full-frame contain framing with static screenshot holds and supported fade transitions; accepted creative elements unchanged.",
+      visualPresentationSourceRevision: source.revision,
+      waitingForOwnerApproval: true,
+      renderAuthorizationRequired: true,
+      providersUsed: [],
+      paidServicesUsed: false,
+      shotstackCreditsConsumed: 0,
+      externallyPublished: false,
+      externalPublishingDisabled: true,
+      youtubePublishingDisabled: true,
+    };
+    const { data: corrected, error: insertError } = await client.from("beast_marketing_video_jobs").insert({
+      id,
+      owner_id: user.id,
+      series_id: source.series_id,
+      state: "scripted",
+      revision: nextRevision,
+      idempotency_key: idempotencyKey,
+      topic: { ...sourceTopic, title: revisionLabel, candidateLabel: revisionLabel, activeCandidate: true, acceptanceTest: sourceProvenance.acceptanceTest },
+      script: structuredClone(source.script),
+      production: newProduction,
+      quality: newQuality,
+      provenance: newProvenance,
+    }).select("*").single();
+    if (insertError || !corrected) return unavailable();
+    await client.from("beast_marketing_video_jobs").update({
+      state: "failed",
+      quality: { ...sourceQuality, ownerQualityReview: "needs_changes", ownerWorkflowDecision: "needs_changes", ownerQualityGrade: "B", technicalResult: "PASS", creativeResult: "REVISION REQUIRED", voiceReview: "ACCEPTED", pacingReview: "ACCEPTED", visualFramingReview: "NEEDS REVISION", motionTreatmentReview: "NEEDS REVISION", warnings: ["Superseded by the visual-presentation-only revision; retained for Owner review history."] },
+      provenance: { ...sourceProvenance, activeCandidate: false, superseded: true, supersededByJobId: id, supersededByRevision: nextRevision, supersededReason: "Owner-requested visual framing and motion remediation; accepted creative elements retained." },
+      updated_at: now,
+      last_error: "Superseded by visual presentation revision.",
+    }).eq("id", source.id).eq("owner_id", user.id);
+    return NextResponse.json({ job: corrected, supersededJobId: source.id, shotstackCreditsConsumed: 0, externallyPublished: false, quality: qualityReport }, { status: 201 });
   }
   if (kind === "prepare_news_acceptance2") {
     if (request.headers.get("origin") !== new URL(request.url).origin) return forbidden();
@@ -470,9 +573,18 @@ export async function PATCH(request: Request) {
     if (decision === "pending" && currentState !== "ready" && !(currentQuality.ownerWorkflowDecision === "held" && ["idea", "selected", "scripted", "generating"].includes(currentState))) return NextResponse.json({ error: "Only a finished candidate can return to Needs Review." }, { status: 409 });
     const reviewedAt = new Date().toISOString();
     const nextState = decision === "rejected" ? "skipped" : decision === "needs_changes" ? "modify" : currentState;
+    const reviewFields = {
+      ...(clean(body?.grade, 10) ? { ownerQualityGrade: clean(body?.grade, 10) } : {}),
+      ...(clean(body?.technicalResult, 40) ? { technicalResult: clean(body?.technicalResult, 40) } : {}),
+      ...(clean(body?.creativeResult, 80) ? { creativeResult: clean(body?.creativeResult, 80) } : {}),
+      ...(clean(body?.voiceReview, 40) ? { voiceReview: clean(body?.voiceReview, 40) } : {}),
+      ...(clean(body?.pacingReview, 40) ? { pacingReview: clean(body?.pacingReview, 40) } : {}),
+      ...(clean(body?.visualFramingReview, 80) ? { visualFramingReview: clean(body?.visualFramingReview, 80) } : {}),
+      ...(clean(body?.motionTreatmentReview, 80) ? { motionTreatmentReview: clean(body?.motionTreatmentReview, 80) } : {}),
+    };
     const { data, error } = await client.from("beast_marketing_video_jobs").update({
       state: nextState,
-      quality: { ...currentQuality, ownerQualityReview: decision, ownerWorkflowDecision: decision, ownerApprovalSource: decision === "approved" ? "manual" : currentQuality.ownerApprovalSource, ownerReviewedAt: reviewedAt },
+      quality: { ...currentQuality, ...reviewFields, ownerQualityReview: decision, ownerWorkflowDecision: decision, ownerApprovalSource: decision === "approved" ? "manual" : currentQuality.ownerApprovalSource, ownerReviewedAt: reviewedAt },
       provenance: { ...record(current.provenance), waitingForOwnerApproval: currentQuality.renderReady === true && ["pending", "held"].includes(decision), ownerDecision: decision, ownerReviewedAt: reviewedAt, youtubePublished: false },
       updated_at: reviewedAt,
       last_error: null,

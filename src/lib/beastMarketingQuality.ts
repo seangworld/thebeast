@@ -84,6 +84,37 @@ export function buildVisualBeatPlan(manifest: ProductionManifest, options: { max
   return { version: BMKT_VISUAL_PLAN_VERSION, maxBeatDurationMs, beats };
 }
 
+/**
+ * Build the presentation-only treatment used for product screenshots. The
+ * editorial timing and asset assignment are retained exactly; only framing,
+ * motion, and transitions are changed. `contain` leaves the complete source
+ * image visible inside the output canvas, with the canvas background filling
+ * the remaining space.
+ */
+export function buildStaticContainVisualPlan(manifest: ProductionManifest): VisualPlan {
+  const source = manifest.visualPlan && manifest.visualPlan.version === BMKT_VISUAL_PLAN_VERSION
+    ? manifest.visualPlan
+    : buildVisualBeatPlan(manifest);
+  return {
+    version: BMKT_VISUAL_PLAN_VERSION,
+    maxBeatDurationMs: source.maxBeatDurationMs,
+    beats: source.beats.map((beat, index) => ({
+      ...beat,
+      motion: "static" as const,
+      fit: "contain" as const,
+      transition: index === 0 ? "cut" as const : "crossfade" as const,
+      captionSafe: true,
+    })),
+  };
+}
+
+/** Return the integer display bounds for a complete source image in a canvas. */
+export function containDimensions(sourceWidth: number, sourceHeight: number, canvasWidth = 1080, canvasHeight = 1920) {
+  if (![sourceWidth, sourceHeight, canvasWidth, canvasHeight].every((value) => Number.isFinite(value) && value > 0)) return null;
+  const scale = Math.min(canvasWidth / sourceWidth, canvasHeight / sourceHeight);
+  return { width: Math.max(1, Math.round(sourceWidth * scale)), height: Math.max(1, Math.round(sourceHeight * scale)), scale };
+}
+
 function validSha(value: string | null) {
   return /^sha256:[a-f0-9]{64}$/i.test(value || "");
 }
@@ -200,7 +231,7 @@ export function evaluateProductionQuality(manifest: ProductionManifest, settings
   if (uniqueVisualRatio < BMKT_MIN_UNIQUE_VISUAL_RATIO) blockers.push("Visual variety is below the publication-quality threshold.");
   if (adjacentVisualRepeats > 0) blockers.push("Adjacent visual beats reuse the same asset.");
   if (maxStaticIntervalMs > BMKT_MAX_STATIC_INTERVAL_MS) blockers.push("A static visual interval is too long.");
-  if (!visualBeats[0] || visualBeats[0].motion !== "reveal" || hookBeatDurationMs > BMKT_MAX_HOOK_BEAT_MS) blockers.push("The opening beat lacks a concise hook treatment.");
+  if (!visualBeats[0] || (!(["reveal"].includes(visualBeats[0].motion) || (visualBeats[0].motion === "static" && visualBeats[0].transition === "cut")) || hookBeatDurationMs > BMKT_MAX_HOOK_BEAT_MS)) blockers.push("The opening beat lacks a concise hook treatment.");
   if (!ctaScene || ctaDurationMs < BMKT_MIN_CTA_DURATION_MS || !/cta|call to action|end.?card|destination|visit|learn more|follow|subscribe/i.test(`${ctaScene.visualBrief} ${ctaScene.narration}`)) blockers.push("The ending requires a deliberate CTA/end-card treatment.");
   if (maxCaptionWords > BMKT_MAX_CAPTION_WORDS) blockers.push("Caption phrases are too dense for mobile readability.");
   if (plannedNarrationWpm < BMKT_MIN_NARRATION_WPM || plannedNarrationWpm > BMKT_MAX_NARRATION_WPM) blockers.push("Planned narration pacing is outside the publication-quality range.");

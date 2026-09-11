@@ -280,6 +280,7 @@ export function buildShotstackEdit(manifest: ProductionManifest): ShotstackEdit 
       throw new ShotstackProviderError("validation", false);
     }
     if (!asset.uri) throw new ShotstackProviderError("validation", false);
+    const effect = beat.motion === "static" ? null : ({ reveal: "zoomInFast", push_in: "zoomInFast", pull_out: "zoomOutFast", pan_left: "slideLeftFast", pan_right: "slideRightFast", pan_up: "slideUpFast", pan_down: "slideDownFast" }[beat.motion] || null);
     return [{
       asset: { type: "image", src: asset.uri },
       start: beat.startMs / 1000,
@@ -290,8 +291,8 @@ export function buildShotstackEdit(manifest: ProductionManifest): ShotstackEdit 
       position: "center",
       width: manifest.width,
       height: manifest.height,
-      effect: { reveal: "zoomInFast", push_in: "zoomInFast", pull_out: "zoomOutFast", pan_left: "slideLeftFast", pan_right: "slideRightFast", pan_up: "slideUpFast", pan_down: "slideDownFast" }[beat.motion],
       transition: { in: beat.transition === "cut" ? "none" : "fadeFast", out: "fadeFast" },
+      ...(effect ? { effect } : {}),
     }];
   });
 
