@@ -196,7 +196,7 @@ export async function POST(request: Request) {
       internalRenderStatus: "not_submitted", qualityScore: sourceQuality.qualityScore ?? 100,
       runtimeSeconds: sourceQuality.runtimeSeconds ?? Number(manifest.runtimeMs) / 1000,
       visualBeatCount: sourceQuality.visualBeatCount ?? manifestBeatCount,
-      warnings: ["Revision 2 created from the exact approved candidate after a provider validation correction. One Owner-authorized internal render is available; no automatic retry."],
+      warnings: [`Revision ${nextRevision} created from the exact approved candidate after a provider validation correction. One Owner-authorized internal render is available; no automatic retry.`],
     };
     const newProvenance = {
       ...sourceProvenance, candidateLabel: revisionLabel, revisionLabel, activeCandidate: true, acceptanceTest: sourceProvenance.acceptanceTest,
