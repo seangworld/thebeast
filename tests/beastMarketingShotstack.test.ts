@@ -20,6 +20,7 @@ import {
   shotstackEnvironment,
   shotstackWatermarkPolicy,
   submitShotstackRender,
+  validateShotstackEdit,
 } from "../src/lib/beastMarketingShotstack";
 
 const manifest = buildProductionManifest({
@@ -53,14 +54,14 @@ test("visual composition binds actual images to scene timing, beneath captions",
   const source = illustratedManifest();
   const edit = buildShotstackEdit(source);
   assert.ok(edit.timeline.tracks.every((track) => track.clips.length > 0));
-  const images = edit.timeline.tracks[2].clips;
+  const images = edit.timeline.tracks.flatMap((track) => track.clips).filter((clip) => (clip.asset as Record<string, unknown>).type === "image");
   const beats = buildVisualBeatPlan(source).beats;
   assert.equal(images.length, beats.length);
   images.forEach((clip, index) => {
     assert.deepEqual(clip.asset, { type: "image", src: source.assets[0].uri });
     assert.equal(clip.start, beats[index].startMs / 1000);
     assert.equal(clip.length, (beats[index].endMs - beats[index].startMs) / 1000);
-    assert.equal(clip.fit, "cover");
+    assert.equal(clip.fit, "crop");
     assert.ok(clip.effect);
     assert.deepEqual(clip.transition, { in: index === 0 ? "none" : "fadeFast", out: "fadeFast" });
   });
@@ -127,22 +128,42 @@ test("BMKT-007 defaults to sandbox and requires a substantial server-only key", 
 test("BMKT-010 keeps energetic speed metadata internal and omits unsupported legacy TTS speed", () => {
   const edit = buildShotstackEdit(manifest);
   const serialized = JSON.stringify(edit);
-  assert.deepEqual(edit.output, { format: "mp4", size: { width: 1080, height: 1920 }, range: { start: 0, length: 45 } });
+  assert.deepEqual(edit.output, { format: "mp4", aspectRatio: "9:16", fps: 25, size: { width: 1080, height: 1920 }, range: { start: 0, length: 45 } });
   assert.match(serialized, /rich-text/);
   assert.doesNotMatch(serialized, /rich-caption/);
-  assert.match(serialized, /text-to-speech/);
+  assert.match(serialized, /"type":"audio"/);
+  assert.match(serialized, /"prompt":"What should you know/);
   assert.match(serialized, /"vertical":"middle"/);
   assert.doesNotMatch(serialized, /"vertical":"center"/);
   assert.doesNotMatch(serialized, /"preset":"fade"/);
   assert.match(serialized, /"preset":"fadeIn"/);
   assert.match(serialized, /"newscaster":false/);
   const tts = edit.timeline.tracks.flatMap((track) => track.clips).find((clip) => clip.alias === "bmkt-narration");
-  assert.deepEqual(Object.keys((tts?.asset || {}) as Record<string, unknown>).sort(), ["language", "newscaster", "text", "type", "voice"]);
+  assert.deepEqual(Object.keys((tts?.asset || {}) as Record<string, unknown>).sort(), ["language", "newscaster", "prompt", "type", "voice"]);
   assert.equal("speed" in ((tts?.asset || {}) as Record<string, unknown>), false);
   assert.equal(manifest.audioMix?.voiceDelivery?.style, "energetic_conversational");
   assert.equal(manifest.audioMix?.voiceDelivery?.speed, 1.16);
   assert.doesNotMatch(serialized, /youtube|destinations|webhook|callback/i);
   assert.doesNotMatch(serialized, /api[_-]?key|secret|token/i);
+});
+
+test("BMKT-011 provider payload uses current Edit schema and has no same-track overlap", () => {
+  const edit = buildShotstackEdit(illustratedManifest());
+  assert.equal(validateShotstackEdit(edit).valid, true);
+  assert.equal(edit.timeline.tracks.some((track) => track.clips.some((clip, index) => index > 0 && clip.start === 0)), false);
+  const narration = edit.timeline.tracks.flatMap((track) => track.clips).find((clip) => clip.alias === "bmkt-narration");
+  assert.deepEqual(narration?.asset, { type: "audio", prompt: (narration?.asset as Record<string, unknown>).prompt, voice: "Matthew", language: "en-US", newscaster: false });
+  assert.equal(edit.timeline.tracks.some((track) => track.clips.some((clip) => (clip.asset as Record<string, unknown>).type === "text-to-speech")), false);
+  assert.equal(edit.timeline.tracks.filter((track) => track.clips.some((clip) => (clip.asset as Record<string, unknown>).type === "rich-text")).length >= 2, true);
+});
+
+test("BMKT-011 local schema validation catches custom fields and same-track overlap", () => {
+  const edit = buildShotstackEdit(illustratedManifest());
+  (edit.timeline.tracks[0].clips[0] as Record<string, unknown>).metadata = { internal: true };
+  assert.equal(validateShotstackEdit(edit).errors.some((error) => /metadata is not supported/.test(error)), true);
+  const cleanEdit = buildShotstackEdit(illustratedManifest());
+  cleanEdit.timeline.tracks[0].clips.push({ ...cleanEdit.timeline.tracks[0].clips[0], start: 0, length: 1 });
+  assert.equal(validateShotstackEdit(cleanEdit).errors.some((error) => /overlap/.test(error)), true);
 });
 
 test("BMKT-007 normalizes pronunciation only at the TTS boundary", () => {
@@ -247,6 +268,23 @@ test("provider status remains diagnosable without exposing response bodies", asy
       && error.category === ([400, 422].includes(status) ? "validation" : "provider")
       && !JSON.stringify(error).includes("private provider response"));
   }
+});
+
+test("BMKT-011 preserves sanitized upstream validation diagnostics", async () => {
+  let captured: unknown;
+  await assert.rejects(
+    submitShotstackRender({
+      apiKey: "k".repeat(40), environment: "v1", edit: buildShotstackEdit(manifest),
+      fetcher: async () => new Response(JSON.stringify({ error: { code: "invalid_clip", message: "Unsupported field token=do-not-persist", request_id: "provider-request-7", path: "timeline.tracks[4].clips[0].asset" }, secret: "must-not-persist" }), { status: 400 }),
+    }),
+    (error: unknown) => {
+      captured = error;
+      return error instanceof ShotstackProviderError && error.httpStatus === 400 && error.providerCode === "invalid_clip"
+        && error.providerRequestId === "provider-request-7" && error.providerValidationPath === "timeline.tracks[4].clips[0].asset"
+        && error.providerMessage?.includes("[redacted]") === true && !JSON.stringify(error.sanitizedResponseBody).includes("must-not-persist");
+    },
+  );
+  assert.equal((captured as ShotstackProviderError).occurredAt.length > 0, true);
 });
 
 test("BMKT-007 inspects Edit then Serve and accepts only the Shotstack CDN", async () => {

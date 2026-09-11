@@ -13,7 +13,7 @@ function fixture(options: { admin?: boolean; existing?: boolean; sourceMissing?:
     id: "candidate", owner_id: "owner", series_id: "series", state: "scripted", revision: 1, idempotency_key: "news-acceptance2-v1",
     topic: { title: "SEANGWORLD News — Acceptance Test #2", acceptanceTest: 2 },
     script: { hook: "See the story behind the headline.", narration: ["Start with the top stories.", "Move from World to USA and local coverage.", "Check sources and Fact Briefs.", "Visit SEANGWORLD News."], cta: "Visit SEANGWORLD News.", estimatedSeconds: 45 },
-    production: { manifest: { schemaVersion: "bmkt-production-1", jobId: "candidate", revision: 1, runtimeMs: 45_000, aspectRatio: "9:16", width: 1080, height: 1920, scenes: [{ id: "scene-1" }], assets: [{ id: "asset-1" }], visualPlan: { beats: Array.from({ length: 13 }, (_, index) => ({ id: `beat-${index + 1}` })) }, checksum: "fnv1a32:approved" }, shotstackCreditsConsumed: 0 },
+    production: { manifest: { schemaVersion: "bmkt-production-1", jobId: "candidate", revision: 1, runtimeMs: 45_000, aspectRatio: "9:16", width: 1080, height: 1920, visualStyle: "faceless_editorial", captionStyle: "high_contrast", presenterProfileId: null, presenterMode: "faceless", scenes: [{ id: "scene-1", startMs: 0, endMs: 45_000, narration: "A grounded product walkthrough.", visualBrief: "Public product capture", visualAssetId: "asset-1", transition: "cut", captions: [{ startMs: 0, endMs: 45_000, text: "A grounded product walkthrough." }] }], assets: [{ id: "asset-1", role: "product_capture", uri: "https://news.seangworld.com/marketing/visuals/acceptance2.png", mimeType: "image/png", sourceType: "first_party", providerId: null, license: "Owner-authorized public product capture", contentHash: `sha256:${"a".repeat(64)}`, createdAt: "2026-09-10T00:00:00Z", provenanceComplete: true }], providerBindings: [], retryPolicy: { maximumAttempts: 1, delaysSeconds: [] }, planState: "planned_provider_blocked", blockers: [], requireVisuals: true, visualPlan: { version: "bmkt-visual-plan-1", maxBeatDurationMs: 4_500, beats: Array.from({ length: 13 }, (_, index) => ({ id: `beat-${index + 1}`, sceneId: "scene-1", startMs: index * 3_000, endMs: (index + 1) * 3_000, visualAssetId: "asset-1", motion: "reveal", transition: "cut", fit: "cover", captionSafe: true })) }, audioMix: { voiceDelivery: { voice: "Matthew", language: "en-US", style: "energetic_conversational", newscaster: false } }, checksum: "fnv1a32:approved" }, shotstackCreditsConsumed: 0 },
     quality: { qualityScore: 100, runtimeSeconds: 45, visualBeatCount: 13, renderReady: false, ownerWorkflowDecision: "pending" },
     provenance: { visualTemplate: "news-acceptance2-v1", acceptanceTest: 2, activeCandidate: true, externalPublishingDisabled: true, youtubePublishingDisabled: true },
   };
@@ -129,8 +129,8 @@ test("Acceptance Test #2 creates an owner-authorized corrected revision without 
   assert.equal(production.technicalRetry.authorizedByOwner, true);
   assert.equal(production.technicalRetry.maximumAttempts, 1);
   assert.equal(production.technicalRetry.attemptsConsumed, 0);
-  assert.equal(production.technicalRetry.correction, "Shotstack adapter schema correction");
-  assert.equal(production.technicalRetry.adapterVersion, "0.10.1");
+  assert.match(production.technicalRetry.correction, /current audio prompt asset/);
+  assert.equal(production.technicalRetry.adapterVersion, "0.11.0");
   assert.equal(production.technicalRetry.sourceAttemptId, "attempt-1");
   const provenance = job.provenance as Record<string, unknown>;
   assert.equal(provenance.activeCandidate, true);

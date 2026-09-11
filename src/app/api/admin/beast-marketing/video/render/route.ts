@@ -62,7 +62,17 @@ function validManifest(value: unknown): value is ProductionManifest {
 
 function providerFailure(error: unknown) {
   const failure = error instanceof ShotstackProviderError ? error : new ShotstackProviderError("provider", false);
-  return { category: failure.category, retryable: failure.retryable, httpStatus: failure.httpStatus };
+  return {
+    category: failure.category,
+    retryable: failure.retryable,
+    httpStatus: failure.httpStatus,
+    providerCode: failure.providerCode,
+    providerMessage: failure.providerMessage,
+    providerRequestId: failure.providerRequestId,
+    providerValidationPath: failure.providerValidationPath,
+    sanitizedResponseBody: failure.sanitizedResponseBody,
+    occurredAt: failure.occurredAt,
+  };
 }
 
 export async function POST(request: Request) {
@@ -95,6 +105,9 @@ export async function POST(request: Request) {
     if (estimate.estimatedTotal > SHOTSTACK_MAX_ESTIMATED_CREDITS_PER_RENDER) {
       return NextResponse.json({ error: `The estimated ${estimate.estimatedTotal.toFixed(1)} credits exceed the ${SHOTSTACK_MAX_ESTIMATED_CREDITS_PER_RENDER.toFixed(1)}-credit internal-render cap.` }, { status: 409 });
     }
+    let edit: ReturnType<typeof buildShotstackEdit>;
+    try { edit = buildShotstackEdit(manifest); }
+    catch { return NextResponse.json({ error: "The candidate's provider payload failed local Shotstack schema validation." }, { status: 409 }); }
     const { data: latest, error: latestError } = await client.from("beast_marketing_video_attempts").select("*").eq("owner_id", user.id).eq("job_id", job.id).eq("provider_id", SHOTSTACK_PROVIDER_ID).order("attempt_number", { ascending: false }).limit(1).maybeSingle();
     if (latestError) return NextResponse.json({ error: safeError }, { status: 503 });
     // One manual recovery of this exact retained visual test after its first
@@ -117,12 +130,12 @@ export async function POST(request: Request) {
     const { data: attempt, error: insertError } = await client.from("beast_marketing_video_attempts").insert({
       owner_id: user.id, job_id: job.id, attempt_number: attemptNumber, operation: "composition", provider_id: SHOTSTACK_PROVIDER_ID,
       idempotency_key: idempotencyKey, status: "planned", retryable: false,
-      evidence: { environment: configuration.environment, manifestChecksum: manifest.checksum, estimate, automaticRetry: false, technicalRetryOnly, youtubeDestination: false, manualCredentialRemediation: attemptNumber === 2 && !visualTest && !technicalRetryOnly, manualSchemaRemediation: !technicalRetryOnly && ([3, 4].includes(attemptNumber) || (visualTest && attemptNumber === 2)), qualityRemediation: !technicalRetryOnly && attemptNumber === 5, narrationNormalization: !technicalRetryOnly && attemptNumber === 6, controlTokenRemediation: !technicalRetryOnly && attemptNumber === 7, ...shotstackWatermarkPolicy(configuration.environment), previousAttemptId: latest?.id || null },
+      evidence: { environment: configuration.environment, manifestChecksum: manifest.checksum, estimate, providerEdit: edit, automaticRetry: false, technicalRetryOnly, youtubeDestination: false, manualCredentialRemediation: attemptNumber === 2 && !visualTest && !technicalRetryOnly, manualSchemaRemediation: !technicalRetryOnly && ([3, 4].includes(attemptNumber) || (visualTest && attemptNumber === 2)), qualityRemediation: !technicalRetryOnly && attemptNumber === 5, narrationNormalization: !technicalRetryOnly && attemptNumber === 6, controlTokenRemediation: !technicalRetryOnly && attemptNumber === 7, ...shotstackWatermarkPolicy(configuration.environment), previousAttemptId: latest?.id || null },
       started_at: now, updated_at: now,
     }).select("*").single();
     if (insertError || !attempt) return NextResponse.json({ error: safeError }, { status: 503 });
     try {
-      const submitted = await submitShotstackRender({ apiKey: configuration.apiKey, environment: configuration.environment, edit: buildShotstackEdit(manifest) });
+      const submitted = await submitShotstackRender({ apiKey: configuration.apiKey, environment: configuration.environment, edit });
       await client.from("beast_marketing_video_attempts").update({ status: "submitted", provider_request_id: submitted.providerRequestId, retryable: true, updated_at: new Date().toISOString() }).eq("id", attempt.id).eq("owner_id", user.id);
       await client.from("beast_marketing_video_jobs").update({
         state: "generating",
@@ -134,7 +147,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ attempt: { ...attempt, status: "submitted", provider_request_id: submitted.providerRequestId }, estimate, duplicatePrevented: false }, { status: 202 });
     } catch (error) {
       const failure = providerFailure(error);
-      await client.from("beast_marketing_video_attempts").update({ status: "failed", retryable: failure.retryable, error_category: failure.category, evidence: { ...record(attempt.evidence), providerHttpStatus: failure.httpStatus }, completed_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("id", attempt.id).eq("owner_id", user.id);
+      await client.from("beast_marketing_video_attempts").update({ status: "failed", retryable: failure.retryable, error_category: failure.category, evidence: { ...record(attempt.evidence), providerHttpStatus: failure.httpStatus, providerErrorCode: failure.providerCode, providerErrorMessage: failure.providerMessage, providerRequestId: failure.providerRequestId, providerValidationPath: failure.providerValidationPath, sanitizedProviderResponseBody: failure.sanitizedResponseBody, providerErrorAt: failure.occurredAt }, completed_at: failure.occurredAt, updated_at: failure.occurredAt }).eq("id", attempt.id).eq("owner_id", user.id);
       const message = failure.httpStatus === 402 ? "Shotstack rejected the request for payment or credits. No purchase or automatic retry was made."
         : failure.httpStatus ? `Shotstack returned HTTP ${failure.httpStatus} for the render request. No automatic retry was made.` : safeError;
       return NextResponse.json({ error: message, category: failure.category, retryable: failure.retryable }, { status: failure.category === "authentication" ? 502 : 503 });
