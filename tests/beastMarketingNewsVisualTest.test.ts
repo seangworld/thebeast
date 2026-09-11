@@ -3,8 +3,9 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { buildProductionManifest, fingerprintProductionManifest } from "../src/lib/beastMarketingProduction";
-import { bindNewsTestVisuals, newsTestCaptures } from "../src/lib/beastMarketingNewsVisualTest";
+import { bindNewsAcceptance2Visuals, bindNewsTestVisuals, newsAcceptance2Captures, newsTestCaptures, newsAcceptance2Script } from "../src/lib/beastMarketingNewsVisualTest";
 import { defaultVideoSeriesSettings } from "../src/lib/beastMarketingVideo";
+import { evaluateProductionQuality } from "../src/lib/beastMarketingQuality";
 
 const source = () => buildProductionManifest({ jobId: "new-test-job", revision: 1, settings: defaultVideoSeriesSettings,
   script: { hook: "What should you know about SEANGWORLD News?", narration: ["Headlines show the source and timing information before you open each story.", "Use Local View to choose a covered area such as Elizabeth City.", "Choose a topic or browse states and cities to find coverage.", "Open the source reporting to read the full story and form your own view."], cta: "Visit SEANGWORLD News.", estimatedSeconds: 62 } });
@@ -41,6 +42,35 @@ test("bundled News captures match recorded SHA-256 bytes and JPEG signatures", (
     assert.equal(`sha256:${createHash("sha256").update(bytes).digest("hex")}`, asset.contentHash);
     assert.equal(bytes.subarray(0, 3).toString("hex"), "ffd8ff");
   }
+});
+
+test("Acceptance Test #2 captures match supplied SHA-256 bytes, use PNG signatures, and exclude the privacy capture", () => {
+  assert.equal(newsAcceptance2Captures.length, 8);
+  assert.equal(newsAcceptance2Captures.some((asset) => asset.id.includes("privacy")), false);
+  for (const asset of newsAcceptance2Captures) {
+    const bytes = readFileSync(`public${new URL(asset.uri!).pathname}`);
+    assert.equal(`sha256:${createHash("sha256").update(bytes).digest("hex")}`, asset.contentHash);
+    assert.equal(bytes.subarray(0, 8).toString("hex"), "89504e470d0a1a0a");
+    assert.equal(asset.sourceType, "first_party");
+    assert.equal(asset.authorized, true);
+    assert.equal(asset.provenanceComplete, true);
+  }
+});
+
+test("Acceptance Test #2 binds a 45-second varied visual plan with no adjacent repeats", () => {
+  const candidate = bindNewsAcceptance2Visuals(buildProductionManifest({ jobId: "acceptance-2", revision: 1, settings: defaultVideoSeriesSettings,
+    script: { ...newsAcceptance2Script, narration: [...newsAcceptance2Script.narration] } }));
+  assert.equal(candidate.runtimeMs, 45_000);
+  assert.equal(candidate.visualPlan?.beats.length, 13);
+  const ids = candidate.visualPlan?.beats.map((beat) => beat.visualAssetId) || [];
+  assert.equal(new Set(ids).size, 10);
+  assert.equal(ids.filter((id, index) => index > 0 && id === ids[index - 1]).length, 0);
+  assert.equal(candidate.assets.length, newsTestCaptures.length + newsAcceptance2Captures.length);
+  const quality = evaluateProductionQuality(candidate, defaultVideoSeriesSettings);
+  assert.equal(quality.ready, true);
+  assert.ok(quality.score >= 90);
+  assert.deepEqual(quality.blockers, []);
+  assert.deepEqual(quality.warnings, []);
 });
 
 test("News-specific visuals cannot be silently used on unrelated scripts or layouts", () => {
