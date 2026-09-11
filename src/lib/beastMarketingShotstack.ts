@@ -2,7 +2,7 @@ import type { ProductionManifest } from "./beastMarketingProduction";
 import { normalizeBeastDisplayNames, normalizeBeastNarrationForSpeech } from "./beastMarketingNarration";
 import { buildVisualBeatPlan, validateVisualAsset } from "./beastMarketingQuality";
 
-export const SHOTSTACK_ADAPTER_VERSION = "0.11.0";
+export const SHOTSTACK_ADAPTER_VERSION = "0.12.0";
 export const SHOTSTACK_PROVIDER_ID = "shotstack";
 export const SHOTSTACK_MAX_ESTIMATED_CREDITS_PER_RENDER = 2;
 export const SHOTSTACK_MAX_MANUAL_ATTEMPTS = 7;
@@ -178,9 +178,26 @@ export function estimateShotstackCredits(manifest: ProductionManifest, environme
 const allowedClipFields = new Set(["asset", "start", "length", "fit", "scale", "width", "height", "position", "offset", "transition", "effect", "filter", "opacity", "transform", "alias"]);
 const allowedAssetFields: Record<string, Set<string>> = {
   image: new Set(["type", "src", "prompt", "model", "resolution", "aspectRatio", "crop"]),
-  audio: new Set(["type", "src", "prompt", "voice", "language", "newscaster", "model", "musicLengthMs", "forceInstrumental", "compositionPlan", "trim", "volume", "speed", "effect"]),
+  // The deployed Edit endpoint rejected voice metadata on generated `audio`
+  // assets. Keep `audio` for sourced music/SFX only and use the legacy-compatible
+  // text-to-speech asset for narration.
+  audio: new Set(["type", "src", "prompt", "model", "musicLengthMs", "forceInstrumental", "compositionPlan", "trim", "volume", "effect"]),
+  "text-to-speech": new Set(["type", "text", "voice", "language", "newscaster", "trim", "volume", "effect"]),
   "rich-text": new Set(["type", "text", "font", "style", "stroke", "shadow", "background", "border", "padding", "align", "animation"]),
 };
+
+const supportedTransitions = new Set([
+  "none", "fade", "fadeSlow", "fadeFast", "reveal", "revealSlow", "revealFast",
+  "wipeLeft", "wipeLeftSlow", "wipeLeftFast", "wipeRight", "wipeRightSlow", "wipeRightFast",
+  "slideLeft", "slideLeftSlow", "slideLeftFast", "slideRight", "slideRightSlow", "slideRightFast",
+  "slideUp", "slideUpSlow", "slideUpFast", "slideDown", "slideDownSlow", "slideDownFast",
+  "carouselLeft", "carouselLeftSlow", "carouselLeftFast", "carouselRight", "carouselRightSlow", "carouselRightFast",
+  "carouselUp", "carouselUpSlow", "carouselUpFast", "carouselDown", "carouselDownSlow", "carouselDownFast",
+  "shuffleTopRight", "shuffleTopRightSlow", "shuffleTopRightFast", "shuffleRightTop", "shuffleRightTopSlow", "shuffleRightTopFast",
+  "shuffleRightBottom", "shuffleRightBottomSlow", "shuffleRightBottomFast", "shuffleBottomRight", "shuffleBottomRightSlow", "shuffleBottomRightFast",
+  "shuffleBottomLeft", "shuffleBottomLeftSlow", "shuffleBottomLeftFast", "shuffleLeftBottom", "shuffleLeftBottomSlow", "shuffleLeftBottomFast",
+  "shuffleLeftTop", "shuffleLeftTopSlow", "shuffleLeftTopFast", "shuffleTopLeft", "shuffleTopLeftSlow", "shuffleTopLeftFast", "zoom",
+]);
 const allowedTimelineFields = new Set(["background", "fonts", "tracks", "soundtrack", "cache"]);
 const allowedOutputFields = new Set(["format", "resolution", "aspectRatio", "size", "fps", "scaleTo", "quality", "repeat", "mute", "range", "poster", "thumbnail", "destinations"]);
 
@@ -222,8 +239,22 @@ export function validateShotstackEdit(edit: ShotstackEdit) {
       else {
         extraFields(asset, allowed).forEach((field) => errors.push(`timeline.tracks[${trackIndex}].clips[${clipIndex}].asset.${field} is not supported`));
         if (assetType === "audio" && (!asset.prompt && !asset.src || asset.prompt && asset.src)) errors.push(`timeline.tracks[${trackIndex}].clips[${clipIndex}].asset must provide exactly one audio source`);
+        if (assetType === "text-to-speech") {
+          if (typeof asset.text !== "string" || !asset.text.trim()) errors.push(`timeline.tracks[${trackIndex}].clips[${clipIndex}].asset.text is required`);
+          if (typeof asset.voice !== "string" || !asset.voice.trim()) errors.push(`timeline.tracks[${trackIndex}].clips[${clipIndex}].asset.voice is required`);
+        }
       }
       if (clipRecord.transition && typeof clipRecord.transition !== "object") errors.push(`timeline.tracks[${trackIndex}].clips[${clipIndex}].transition must be an object`);
+      if (clipRecord.transition && typeof clipRecord.transition === "object") {
+        const transition = asRecord(clipRecord.transition);
+        extraFields(transition, new Set(["in", "out"])).forEach((field) => errors.push(`timeline.tracks[${trackIndex}].clips[${clipIndex}].transition.${field} is not supported`));
+        for (const direction of ["in", "out"] as const) {
+          const value = transition[direction];
+          if (value !== undefined && (typeof value !== "string" || !supportedTransitions.has(value))) {
+            errors.push(`timeline.tracks[${trackIndex}].clips[${clipIndex}].transition.${direction} is not supported`);
+          }
+        }
+      }
     });
   });
   return { valid: errors.length === 0, errors };
@@ -323,7 +354,10 @@ export function buildShotstackEdit(manifest: ProductionManifest): ShotstackEdit 
     width: Math.round(manifest.width * 0.86),
     height: Math.round(manifest.height * 0.2),
     position: "center",
-    transition: { in: "zoomFast", out: "fadeFast" },
+    // `zoomFast` is a clip effect, not a valid transition name. Keep the
+    // CTA's visual treatment as a supported transition and leave image zoom
+    // effects on the visual clips above.
+    transition: { in: "fadeFast", out: "fadeFast" },
   } : null;
 
   const musicAsset = manifest.audioMix?.musicAssetId ? manifest.assets.find((asset) => asset.id === manifest.audioMix?.musicAssetId) : null;
@@ -373,12 +407,13 @@ export function buildShotstackEdit(manifest: ProductionManifest): ShotstackEdit 
         {
           clips: [{
             alias: "bmkt-narration",
-            // The current Edit schema uses an audio asset with a prompt,
-            // voice, language, and optional newscaster mode. Delivery speed
-            // remains a BeastMarketing quality target, but is not serialized.
+            // The Production endpoint rejected voice metadata on an `audio`
+            // asset. Use Shotstack's supported text-to-speech representation;
+            // delivery speed remains a BeastMarketing quality target, but is
+            // not serialized.
             asset: {
-              type: "audio",
-              prompt: narration,
+              type: "text-to-speech",
+              text: narration,
               voice: voiceDelivery?.voice || "Matthew",
               language: voiceDelivery?.language || "en-US",
               newscaster: voiceDelivery?.newscaster ?? false,

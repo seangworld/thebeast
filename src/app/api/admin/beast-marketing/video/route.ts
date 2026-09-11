@@ -186,7 +186,7 @@ export async function POST(request: Request) {
     const newProduction = {
       ...sourceProduction, manifest, providerState: "authorization_required", providerId: null, providerEnvironment: null,
       attemptId: null, externalActionPerformed: false, renderAuthorizationRequired: false,
-      technicalRetry: { authorizedByOwner: true, maximumAttempts: 1, attemptsConsumed: 0, correction: "Shotstack Edit schema correction: current audio prompt asset, aspect-safe crop, non-overlapping tracks, and explicit output settings.", adapterVersion: SHOTSTACK_ADAPTER_VERSION, sourceAttemptId: latestAttempt?.id || null },
+      technicalRetry: { authorizedByOwner: true, maximumAttempts: 1, attemptsConsumed: 0, correction: "Shotstack Edit schema correction: documented text-to-speech narration asset, supported CTA transition, aspect-safe crop, non-overlapping tracks, and explicit output settings.", adapterVersion: SHOTSTACK_ADAPTER_VERSION, sourceAttemptId: latestAttempt?.id || null },
       shotstackCreditsConsumed: 0,
     };
     const manifestVisualPlan = record(manifest.visualPlan);
@@ -201,7 +201,7 @@ export async function POST(request: Request) {
     const newProvenance = {
       ...sourceProvenance, candidateLabel: revisionLabel, revisionLabel, activeCandidate: true, acceptanceTest: sourceProvenance.acceptanceTest,
       parentJobId: source.id, parentRevision: source.revision, supersedesJobId: source.id, supersedesRevision: source.revision,
-      technicalCorrection: "Shotstack Edit schema correction: current audio prompt asset, aspect-safe crop, non-overlapping tracks, and explicit output settings.", technicalCorrectionAdapterVersion: SHOTSTACK_ADAPTER_VERSION,
+      technicalCorrection: "Shotstack Edit schema correction: documented text-to-speech narration asset, supported CTA transition, aspect-safe crop, non-overlapping tracks, and explicit output settings.", technicalCorrectionAdapterVersion: SHOTSTACK_ADAPTER_VERSION,
       technicalRetryAuthorized: true, technicalRetryMaximumAttempts: 1, technicalRetryAttemptsConsumed: 0,
       waitingForOwnerApproval: true, renderAuthorizationRequired: false, providersUsed: [], paidServicesUsed: false,
       shotstackCreditsConsumed: 0, externallyPublished: false, externalPublishingDisabled: true, youtubePublishingDisabled: true,
