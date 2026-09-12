@@ -109,6 +109,7 @@ const expectedCliMigrations = [
   "20260909214424_add_marketing_growth_cycles.sql",
   "20260909224835_add_direct_youtube_connection.sql",
   "20260912181500_add_kdp_publishing_factory.sql",
+  "20260912182938_add_kdp_lifecycle_brief.sql",
 ];
 
 test("Supabase CLI migrations exist in dependency-safe order", () => {
