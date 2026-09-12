@@ -68,5 +68,17 @@ test("KDP-004 builds only approved owner-scoped interiors without Amazon authori
   assert.match(builder, /trim: "6 x 9 in"/);
   assert.match(builder, /ebook-interior\.epub/);
   assert.match(builder, /print-interior\.pdf/);
-  assert.match(panel, /Build and download interiors/);
+  assert.match(panel, /Build preparation package/);
+});
+
+test("KDP-005 preparation worksheets preserve current-rule and owner-review gates", () => {
+  const route = readFileSync("src/app/api/admin/beast-marketing/publishing/package/route.ts", "utf8");
+  const builder = readFileSync("src/lib/kdpPackage.ts", "utf8");
+  assert.match(builder, /metadata-draft\.json/);
+  assert.match(builder, /cover-brief\.json/);
+  assert.match(builder, /pricing-worksheet\.json/);
+  assert.match(builder, /quality-review-checklist\.json/);
+  assert.match(builder, /current_kdp_rule_and_cost_check_required/);
+  assert.match(builder, /status: "not_authorized"/);
+  assert.doesNotMatch(route, /metadata: true|cover: true|pricing: true/);
 });
