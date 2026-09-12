@@ -43,8 +43,8 @@ export const beastRoadmapPackageRegistry = [
     "KDP-003",
     [],
     "Sourced Manuscript Chapter Pipeline",
-    ["docs/KDP-003-MANUSCRIPT-PIPELINE.md", "supabase/migrations/20260912184441_add_kdp_manuscript_pipeline.sql"],
-    ["20260912184441_add_kdp_manuscript_pipeline.sql"]
+    ["docs/KDP-003-MANUSCRIPT-PIPELINE.md", "supabase/migrations/20260912184441_add_kdp_manuscript_pipeline.sql", "supabase/migrations/20260912185142_index_kdp_chapter_ownership.sql"],
+    ["20260912184441_add_kdp_manuscript_pipeline.sql", "20260912185142_index_kdp_chapter_ownership.sql"]
   ),
   packageIdentity(
     "KDP-002",
