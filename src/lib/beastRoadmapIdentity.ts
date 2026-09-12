@@ -40,6 +40,13 @@ const packageIdentity = (
  */
 export const beastRoadmapPackageRegistry = [
   packageIdentity(
+    "KDP-003",
+    [],
+    "Sourced Manuscript Chapter Pipeline",
+    ["docs/KDP-003-MANUSCRIPT-PIPELINE.md", "supabase/migrations/20260912184441_add_kdp_manuscript_pipeline.sql"],
+    ["20260912184441_add_kdp_manuscript_pipeline.sql"]
+  ),
+  packageIdentity(
     "KDP-002",
     [],
     "Publishing Brief and Owner Approval Lifecycle",
