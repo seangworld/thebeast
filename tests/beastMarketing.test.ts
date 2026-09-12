@@ -28,6 +28,7 @@ import { allowedVideoTransitions, defaultVideoSeriesSettings, evaluateVideoReadi
 import { buildGroundedScript, buildYouTubeMetadata, scoreVideoOpportunity, VIDEO_CONTENT_ENGINE_VERSION } from "../src/lib/beastMarketingContent";
 import { buildProductionAttempt, buildProductionManifest, nextProductionRetry, validatePersistedAssetCandidate, validateProducedAssets, validateProductionManifest, VIDEO_PRODUCTION_ENGINE_VERSION } from "../src/lib/beastMarketingProduction";
 import { containsInternalProductionMarkers, stripInternalProductionMarkers } from "../src/lib/beastMarketingNarration";
+import { AI_CHARACTER_DISCLOSURE, buildInactiveCharacterPersonaDraft } from "../src/lib/beastMarketingPersona";
 import { evaluateSeriesAutoApproval, ownerWorkflowGroup, ownerWorkflowStatus, planCandidateCadence, validateTopicFamily, VIDEO_CANDIDATE_BATCH_LIMIT } from "../src/lib/beastMarketingOwnerWorkflow";
 
 const campaign: MarketingCampaign = {
@@ -227,6 +228,42 @@ test("BMKT-003 exposes owner controls while every external video action fails cl
   assert.match(panel, /Idea → learn, with guarded transitions/);
   assert.doesNotMatch(workspace, /VideoGrowthEnginePanel/);
   assert.match(videoGrowthPage, /<VideoGrowthEnginePanel/);
+});
+
+test("BMKT-008 builds only an inactive, disclosed fictional-character draft", () => {
+  const result = buildInactiveCharacterPersonaDraft({
+    name: "Avery",
+    archetype: "Practical technology guide",
+    audience: "Adults learning everyday AI",
+    visualDirection: "Consistent original character in an editorial studio",
+    voiceDirection: "Warm, concise, and conversational",
+    allowedTopics: ["practical AI", "BeastOS education"],
+  });
+  assert.equal(result.valid, true);
+  if (!result.valid) return;
+  assert.equal(result.row.presenter_type, "future_character");
+  assert.equal(result.row.active, false);
+  assert.deepEqual(result.row.disclosure_rules, [AI_CHARACTER_DISCLOSURE]);
+  assert.equal(result.row.provenance.likenessOrVoiceMediaUsed, false);
+  assert.equal(result.row.provenance.identityApproval, false);
+  assert.equal(result.row.provenance.assetsBound, false);
+  assert.equal(result.row.provenance.publishingAuthorized, false);
+  assert.equal(result.row.presentation_rules.facelessReelsEngine, true);
+});
+
+test("BMKT-008 rejects incomplete character drafts and keeps activation absent", () => {
+  const result = buildInactiveCharacterPersonaDraft({ name: "Avery" });
+  assert.equal(result.valid, false);
+  if (result.valid) return;
+  assert.match(result.error, /archetype/);
+
+  const route = readFileSync("src/app/api/admin/beast-marketing/video/route.ts", "utf8");
+  const panel = readFileSync("src/app/dashboard/admin/marketing/VideoGrowthEnginePanel.tsx", "utf8");
+  assert.match(route, /presenterType === "future_character"/);
+  assert.match(route, /buildInactiveCharacterPersonaDraft/);
+  assert.match(panel, /Save inactive persona draft/);
+  assert.match(panel, /AI-generated character; not a real person/);
+  assert.doesNotMatch(panel, /Activate character persona/);
 });
 
 test("BMKT-007 topic controls preserve multiple multi-word phrases as arrays", () => {

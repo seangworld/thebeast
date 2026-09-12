@@ -35,6 +35,7 @@ export function VideoGrowthEnginePanel() {
   const [newSeries, setNewSeries] = useState({ name: "", description: "" });
   const [newTopic, setNewTopic] = useState("");
   const [presenterName, setPresenterName] = useState("");
+  const [personaDraft, setPersonaDraft] = useState({ name: "", archetype: "", audience: "", visualDirection: "", voiceDirection: "", allowedTopics: [] as string[] });
   const [intelligence, setIntelligence] = useState<IntelligenceSnapshot | null>(null);
   const [intelligenceLoaded, setIntelligenceLoaded] = useState(false);
   const selected = useMemo(() => data.series.find((item) => item.id === selectedId) || null, [data.series, selectedId]);
@@ -153,9 +154,22 @@ export function VideoGrowthEnginePanel() {
     <OwnerProductionWorkflow series={data.series} jobs={data.jobs} selectedId={selectedId} onSelectSeries={setSelectedId} busy={Boolean(busy)} pauseAllPublishing={data.controls.pause_all_publishing} authorities={data.authorities} onGenerate={generateCandidates} onSend={send} />
 
     <DashboardCard accent="admin">
-      <SectionHeader eyebrow="Identity foundation" title="Reusable presenter profiles" description="Faceless profiles are available now. AI Sean likeness, voice, and source media remain explicitly locked pending separate consent." />
+      <SectionHeader eyebrow="Identity foundation" title="Reusable presenter profiles" description="Faceless profiles are available now through FacelessReels. Fictional character personas can be saved only as inactive drafts until identity, disclosure, assets, and publishing are separately approved." />
       <div className="mt-5 grid gap-3 sm:grid-cols-[1fr_auto]"><Field title="Faceless presenter profile" value={presenterName} onChange={setPresenterName} /><button className="beast-button self-end" disabled={Boolean(busy) || !presenterName.trim()} onClick={() => void send("POST", { kind: "presenter", name: presenterName }, "Faceless presenter profile created without likeness or voice media.").then(() => setPresenterName(""))}>Create presenter</button></div>
       <div className="mt-4 grid gap-3 sm:grid-cols-2">{data.presenters.map((item) => <div key={item.id} className="rounded-xl border border-white/10 p-4"><p className="font-black text-white">{item.name}</p><p className="text-sm text-slate-400">{label(item.presenter_type)} · {item.active ? "active" : "inactive"}</p></div>)}<div className="rounded-xl border border-dashed border-amber-300/30 p-4"><p className="font-black text-amber-100">AI Sean · locked</p><p className="text-sm text-slate-400">Requires explicit likeness/voice authorization and owner-provided source media.</p></div></div>
+      <div className="mt-5 rounded-xl border border-fuchsia-300/20 bg-fuchsia-300/[0.04] p-4">
+        <p className="font-black text-fuchsia-100">Consistent female AI character · draft only</p>
+        <p className="mt-1 text-sm text-slate-300">Define the creative brief without generating a face or voice, activating the profile, invoking a renderer, or publishing. Every eventual appearance must disclose: “AI-generated character; not a real person.”</p>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <Field title="Character name" value={personaDraft.name} onChange={(value) => setPersonaDraft((draft) => ({ ...draft, name: value }))} />
+          <Field title="Archetype" value={personaDraft.archetype} onChange={(value) => setPersonaDraft((draft) => ({ ...draft, archetype: value }))} />
+          <Field title="Audience" value={personaDraft.audience} onChange={(value) => setPersonaDraft((draft) => ({ ...draft, audience: value }))} />
+          <Field title="Visual direction" value={personaDraft.visualDirection} onChange={(value) => setPersonaDraft((draft) => ({ ...draft, visualDirection: value }))} />
+          <Field title="Voice direction" value={personaDraft.voiceDirection} onChange={(value) => setPersonaDraft((draft) => ({ ...draft, voiceDirection: value }))} />
+          <TopicPhraseInput title="Allowed topics" values={personaDraft.allowedTopics} onChange={(value) => setPersonaDraft((draft) => ({ ...draft, allowedTopics: value }))} />
+        </div>
+        <button className="beast-button mt-4" disabled={Boolean(busy) || Object.values(personaDraft).some((value) => Array.isArray(value) ? value.length === 0 : !value.trim())} onClick={() => void send("POST", { kind: "presenter", presenterType: "future_character", ...personaDraft }, "Inactive character brief saved. Identity, disclosure, assets, FacelessReels handoff, and publishing remain unapproved.").then(() => setPersonaDraft({ name: "", archetype: "", audience: "", visualDirection: "", voiceDirection: "", allowedTopics: [] }))}>Save inactive persona draft</button>
+      </div>
     </DashboardCard>
 
     <DashboardCard accent="admin">
