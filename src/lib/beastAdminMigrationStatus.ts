@@ -101,6 +101,7 @@ export const beastAdminRepositoryMigrationFiles = [
   "20260912181500_add_kdp_publishing_factory.sql",
   "20260912182938_add_kdp_lifecycle_brief.sql",
   "20260912184441_add_kdp_manuscript_pipeline.sql",
+  "20260912185142_index_kdp_chapter_ownership.sql",
 ] as const;
 
 export type BeastAdminMigrationState =
