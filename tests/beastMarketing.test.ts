@@ -30,6 +30,7 @@ import { buildProductionAttempt, buildProductionManifest, nextProductionRetry, v
 import { containsInternalProductionMarkers, stripInternalProductionMarkers } from "../src/lib/beastMarketingNarration";
 import { AI_CHARACTER_DISCLOSURE, buildInactiveCharacterPersonaDraft } from "../src/lib/beastMarketingPersona";
 import { evaluateSeriesAutoApproval, ownerWorkflowGroup, ownerWorkflowStatus, planCandidateCadence, validateTopicFamily, VIDEO_CANDIDATE_BATCH_LIMIT } from "../src/lib/beastMarketingOwnerWorkflow";
+import { buildOwnedBookFunnelDraft, FREE_AI_GUIDE_URL, OWNED_BOOK_ASIN, OWNED_BOOK_CAMPAIGN_TITLE, OWNED_BOOK_URL } from "../src/lib/beastMarketingOwnedBookFunnel";
 
 const campaign: MarketingCampaign = {
   id: "campaign-1",
@@ -62,6 +63,18 @@ test("BeastMarketing v0.6 preserves bounded campaign, asset, and outcome states"
   assert.equal(isMarketingAssetStatus("posted"), false);
   assert.equal(isMarketingOutcomeMetric("retained_users"), true);
   assert.equal(isMarketingOutcomeMetric("likes"), false);
+});
+
+test("BMKT-009 prepares the existing free-ebook to owned-book funnel without publishing", () => {
+  const funnel = buildOwnedBookFunnelDraft();
+  assert.equal(OWNED_BOOK_ASIN, "B0HFZ1WHLX");
+  assert.match(OWNED_BOOK_CAMPAIGN_TITLE, /AI for Normal People/);
+  assert.equal(funnel.campaign.sourceFacts.some((fact) => fact.url === FREE_AI_GUIDE_URL), true);
+  assert.equal(funnel.campaign.sourceFacts.some((fact) => fact.url === OWNED_BOOK_URL), true);
+  assert.equal(funnel.assets.length, 3);
+  assert.equal(funnel.assets.some((item) => /purchase may earn the author a royalty/i.test(item.body)), true);
+  assert.equal(funnel.campaign.limitations.some((item) => /price, formats, availability, ratings, and sales are not verified/i.test(item)), true);
+  assert.equal(funnel.externalPublishingEnabled, false);
 });
 
 test("BMKT-003 defines configurable video controls and deterministic lifecycle", () => {

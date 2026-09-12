@@ -24,6 +24,7 @@ import { createRouteClient } from "@/lib/supabase/server";
 import { buildSearchGrowthAssessment, searchGrowthAssessmentTarget } from "@/lib/searchGrowthAssessment";
 import { getSeangworldAnalyticsScope } from "@/lib/seangworldAnalyticsScope";
 import { loadLiveSeangworldProviders } from "@/lib/server/seangworldGoogleProviders";
+import { buildOwnedBookFunnelDraft, OWNED_BOOK_CAMPAIGN_TITLE } from "@/lib/beastMarketingOwnedBookFunnel";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -175,6 +176,52 @@ export async function POST(request: Request) {
   if (!user) return forbidden();
   const body = await request.json().catch(() => null) as Record<string, unknown> | null;
   const kind = clean(body?.kind, 40);
+
+  if (kind === "owned_book_funnel") {
+    const draft = buildOwnedBookFunnelDraft();
+    const selected = await client.from("beast_marketing_campaigns").select("*").eq("owner_id", user.id).eq("title", OWNED_BOOK_CAMPAIGN_TITLE).maybeSingle();
+    if (selected.error) return unavailable();
+    let campaignRow = selected.data;
+    let created = false;
+    if (!campaignRow) {
+      const inserted = await client.from("beast_marketing_campaigns").insert({
+        owner_id: user.id,
+        title: draft.campaign.title,
+        objective: draft.campaign.objective,
+        audience: draft.campaign.audience,
+        offer: draft.campaign.offer,
+        channels: draft.campaign.channels,
+        call_to_action: draft.campaign.callToAction,
+        source_facts: draft.campaign.sourceFacts,
+        success_measures: draft.campaign.successMeasures,
+        limitations: draft.campaign.limitations,
+      }).select("*").single();
+      if (inserted.error || !inserted.data) return unavailable();
+      campaignRow = inserted.data;
+      created = true;
+    }
+
+    if (!campaignRow) return unavailable();
+    const existingAssets = await client.from("beast_marketing_assets").select("name").eq("owner_id", user.id).eq("campaign_id", campaignRow.id);
+    if (existingAssets.error) return unavailable();
+    const existingNames = new Set((existingAssets.data || []).map((item) => item.name));
+    const missingAssets = draft.assets.filter((item) => !existingNames.has(item.name));
+    if (missingAssets.length) {
+      const insertedAssets = await client.from("beast_marketing_assets").insert(missingAssets.map((item) => ({
+        owner_id: user.id,
+        campaign_id: campaignRow.id,
+        name: item.name,
+        asset_type: item.assetType,
+        channel: item.channel,
+        body: item.body,
+        source_facts: item.sourceFacts,
+      }))).select("*");
+      if (insertedAssets.error) return unavailable();
+    }
+    const savedAssets = await client.from("beast_marketing_assets").select("*").eq("owner_id", user.id).eq("campaign_id", campaignRow.id).order("created_at", { ascending: true });
+    if (savedAssets.error) return unavailable();
+    return NextResponse.json({ campaign: campaign(campaignRow), assets: (savedAssets.data || []).map((row) => asset(row)), created, externalPublishingEnabled: false }, { status: created ? 201 : 200 });
+  }
 
   if (kind === "campaign") {
     const draft = validateCampaignDraft(body?.campaign);

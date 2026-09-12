@@ -28,6 +28,7 @@ import {
   type MarketingMediaType,
   type MarketingPlacementId,
 } from "@/lib/beastMarketingPreview";
+import { OWNED_BOOK_ASIN, OWNED_BOOK_CAMPAIGN_TITLE, OWNED_BOOK_TITLE } from "@/lib/beastMarketingOwnedBookFunnel";
 
 type SavedRecommendation = MarketingRecommendation & {
   id: string;
@@ -160,6 +161,25 @@ export function BeastMarketingWorkspace({ initialCampaignId = "" }: { initialCam
     }
   }
 
+  async function prepareOwnedBookFunnel() {
+    setBusy("owned_book_funnel");
+    setError("");
+    setNotice("");
+    try {
+      const response = await fetch("/api/admin/beast-marketing", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ kind: "owned_book_funnel" }) });
+      const body = await response.json() as { error?: string; campaign?: MarketingCampaign; created?: boolean };
+      if (!response.ok || !body.campaign) throw new Error(body.error || "The owned-book funnel could not be prepared.");
+      setSelectedCampaignId(body.campaign.id);
+      setNotice(body.created ? "Owned-book campaign and exact copy drafts created. Review and approve them below; nothing was published." : "The existing owned-book campaign is selected. Missing drafts were restored; nothing was published.");
+      await load();
+      setSelectedCampaignId(body.campaign.id);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "The owned-book funnel could not be prepared.");
+    } finally {
+      setBusy("");
+    }
+  }
+
   async function updateStatus(kind: "campaign" | "asset", id: string, status: string) {
     setBusy(id);
     setError("");
@@ -282,6 +302,17 @@ export function BeastMarketingWorkspace({ initialCampaignId = "" }: { initialCam
     </DashboardCard>
     {error ? <div role="alert" className="rounded-xl border border-red-300/30 bg-red-300/10 p-4 text-sm text-red-100">{error}</div> : null}
     {notice ? <div role="status" className="rounded-xl border border-green-300/30 bg-green-300/10 p-4 text-sm text-green-100">{notice}</div> : null}
+
+    <DashboardCard accent="admin">
+      <SectionHeader eyebrow="BMKT-009 · Existing-book revenue funnel" title={`Free ebook → ${OWNED_BOOK_TITLE}`} description="Prepare the existing SEANGWORLD free ebook as the acquisition step and the published Amazon book as the paid next step. This creates review records only." />
+      <dl className="mt-5 grid gap-3 sm:grid-cols-3">
+        <Summary label="Free step" value="Existing SEANGWORLD AI ebook" />
+        <Summary label="Paid step" value={`${OWNED_BOOK_TITLE} · ${OWNED_BOOK_ASIN}`} />
+        <Summary label="Publishing" value="Locked until a separate release action" />
+      </dl>
+      <p className="mt-4 text-sm leading-6 text-slate-300">Amazon listing title and destination are owner-supplied. Live price, formats, availability, ratings, and sales are deliberately not claimed. After preparation, select <strong className="text-white">{OWNED_BOOK_CAMPAIGN_TITLE}</strong> below, approve the campaign, then approve each exact asset.</p>
+      <button type="button" className="beast-button mt-5" disabled={Boolean(busy)} onClick={() => void prepareOwnedBookFunnel()}>{busy === "owned_book_funnel" ? "Preparing drafts…" : "Prepare funnel for review"}</button>
+    </DashboardCard>
 
     <DashboardCard accent="admin">
       <SectionHeader eyebrow="Campaigns" title="Create a governed campaign" description="Start from approved public truth. Every required field explains what the campaign is trying to accomplish before assets are drafted." />
