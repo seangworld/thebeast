@@ -4,7 +4,7 @@ import { allowedVideoTransitions, defaultVideoSeriesSettings, normalizeVideoTopi
 import { buildGroundedScript, buildYouTubeMetadata, scoreVideoOpportunity, type ScriptFact, type VideoEvidence } from "@/lib/beastMarketingContent";
 import { bindNarrationTimingEvidence, buildProductionManifest, fingerprintProductionManifest, validateProductionManifest, type NarrationTimingEvidence, type ProductionManifest } from "@/lib/beastMarketingProduction";
 import { planCandidateCadence, validateTopicFamily, type OwnerWorkflowDecision } from "@/lib/beastMarketingOwnerWorkflow";
-import { SHOTSTACK_ADAPTER_VERSION, SHOTSTACK_MAX_ESTIMATED_CREDITS_PER_RENDER, buildShotstackEdit, buildShotstackNarrationCreatePayload, createShotstackNarrationAsset, estimateShotstackCredits, ingestShotstackNarration, inspectShotstackIngestSource, inspectShotstackNarrationAsset, narrationTimingEvidenceFromSrt, shotstackConfiguration, shotstackEnvironment } from "@/lib/beastMarketingShotstack";
+import { SHOTSTACK_ADAPTER_VERSION, SHOTSTACK_MAX_ESTIMATED_CREDITS_PER_RENDER, buildShotstackEdit, createShotstackNarrationAsset, estimateShotstackCredits, ingestShotstackNarration, inspectShotstackIngestSource, inspectShotstackNarrationAsset, narrationTimingEvidenceFromSrt, shotstackConfiguration, shotstackEnvironment } from "@/lib/beastMarketingShotstack";
 import { bindNewsAcceptance2Revision6Visuals, bindNewsAcceptance2Revision7Visuals, bindNewsAcceptance2Visuals, bindNewsTestVisuals, newsAcceptance2Revision6Script, newsAcceptance2Script } from "@/lib/beastMarketingNewsVisualTest";
 import { buildStaticContainVisualPlan, evaluateProductionQuality } from "@/lib/beastMarketingQuality";
 import { createBeastFusionPublicationClient } from "@/lib/supabase/service";
