@@ -6,7 +6,7 @@ import { AlignmentType, Document, Footer, HeadingLevel, Packer, PageBreak, PageN
 import JSZip from "jszip";
 import { PDFDocument, rgb, type PDFFont, type PDFPage } from "pdf-lib";
 
-export const KDP_PACKAGE_VERSION = "0.1.0";
+export const KDP_PACKAGE_VERSION = "0.2.0";
 const PRINT_WIDTH = 432;
 const PRINT_HEIGHT = 648;
 const PRINT_MARGIN = 45;
@@ -21,6 +21,9 @@ export type KdpPackageChapter = {
 export type KdpPackageInput = {
   publicationId: string;
   title: string;
+  audience?: string;
+  topic?: string;
+  brief?: { positioning?: string; readerOutcome?: string };
   formats: string[];
   chapters: KdpPackageChapter[];
 };
@@ -29,6 +32,48 @@ const escapeXml = (value: string) => value.replaceAll("&", "&amp;").replaceAll("
 const slug = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 80) || "publication";
 const paragraphs = (value: string) => value.split(/\n\s*\n/).map((item) => item.replace(/\s+/g, " ").trim()).filter(Boolean);
 const sha256 = (value: Uint8Array) => createHash("sha256").update(value).digest("hex");
+const words = (value: string) => value.toLowerCase().match(/[a-z0-9]+/g) || [];
+
+export function buildKdpPreparationFiles(input: KdpPackageInput, printPageCount: number | null) {
+  const excluded = new Set(["a", "an", "and", "for", "from", "in", "of", "on", "the", "to", "with"]);
+  const keywords = Array.from(new Set(words(`${input.title} ${input.topic || ""} ${input.audience || ""}`).filter((word) => word.length > 2 && !excluded.has(word)))).slice(0, 7);
+  const description = [input.brief?.positioning, input.brief?.readerOutcome].filter(Boolean).join("\n\n") || `${input.title} is a practical guide for ${input.audience || "the intended reader"}.`;
+  const metadata = {
+    status: "owner_review_required", title: input.title, subtitleCandidate: input.topic || null,
+    descriptionDraft: description, keywordCandidates: keywords,
+    categorySelection: { status: "required_in_current_kdp_flow", selected: [] },
+    language: "English", publicationRights: "owner_must_confirm",
+  };
+  const cover = {
+    status: "design_and_owner_review_required",
+    creativeBrief: { title: input.title, audience: input.audience || null, promise: input.topic || null, direction: "Clear at thumbnail size; original, rights-cleared imagery and typography only." },
+    ebook: input.formats.includes("ebook") ? { finalDimensions: "Confirm against current KDP cover guidance before export.", file: "Not generated in this package." } : null,
+    print: input.formats.some((format) => format === "paperback" || format === "hardcover") ? { trim: "6 x 9 in", bleed: false, interiorPageCount: printPageCount, spineWidth: "Use the current KDP Cover Calculator with final page count, paper, ink and binding selections.", file: "Not generated in this package." } : null,
+  };
+  const pricing = {
+    status: "current_kdp_rule_and_cost_check_required",
+    marketplace: "Amazon.com / USD",
+    recommendations: input.formats.map((format) => format === "ebook"
+      ? { format, targetListPriceUsd: 0.99, strategy: "lowest eligible near-$0.99/$1 price", marketplaceMinimumUsd: null, royaltyPlan: null, ownerMustVerify: ["current eligibility", "royalty consequences", "delivery costs"] }
+      : { format, targetListPriceUsd: null, strategy: "current printing-cost minimum plus owner margin", finalPageCount: printPageCount, printingCostUsd: null, marketplaceMinimumUsd: null, targetMarginUsd: 2, ownerMustVerify: ["paper and ink", "binding", "marketplace printing cost", "minimum list price"] }),
+  };
+  const quality = {
+    status: "all_checks_require_recorded_review",
+    checks: [
+      "Read the complete manuscript for usefulness, coherence and formatting defects.",
+      "Verify factual claims against source-notes.json and current primary sources.",
+      "Run originality and copyright/trademark review; resolve every finding.",
+      "Confirm rights for text, quotations, images, fonts, names and cover assets.",
+      "Prepare accurate KDP AI-generated or AI-assisted content disclosure answers.",
+      "Preview every selected format in the applicable KDP previewer before approval.",
+    ].map((check) => ({ check, complete: false, notes: "" })),
+  };
+  const submission = {
+    authority: "owner_only", status: "not_authorized",
+    manualActions: ["KDP sign-in and identity checks", "tax, payment and profile confirmations", "ISBN decision", "metadata and category confirmation", "price and royalty confirmation", "final preview", "submission and publication"],
+  };
+  return { metadata, cover, pricing, quality, submission };
+}
 
 export function requestedKdpInteriorFormats(formats: string[]) {
   const selected = new Set(formats);
@@ -167,6 +212,8 @@ export async function buildKdpPackage(input: KdpPackageInput) {
     await validateKdpInterior(format, bytes, input.chapters.length);
     files[format === "epub" ? "ebook-interior.epub" : `print-interior.${format}`] = bytes;
   }
+  const printPageCount = files["print-interior.pdf"] ? (await PDFDocument.load(files["print-interior.pdf"])).getPageCount() : null;
+  const preparation = buildKdpPreparationFiles(input, printPageCount);
   const manifest = {
     version: KDP_PACKAGE_VERSION, publicationId: input.publicationId, title: input.title, selectedFormats: input.formats,
     generatedInteriors: Object.entries(files).map(([name, bytes]) => ({ name, bytes: bytes.length, sha256: sha256(bytes) })),
@@ -178,7 +225,12 @@ export async function buildKdpPackage(input: KdpPackageInput) {
   for (const [name, bytes] of Object.entries(files)) bundle.file(name, bytes);
   bundle.file("manifest.json", JSON.stringify(manifest, null, 2));
   bundle.file("source-notes.json", JSON.stringify(sourceNotes, null, 2));
-  bundle.file("README.txt", "SEANGWORLD KDP owner review package\n\nUse ebook-interior.epub for Kindle. Use print-interior.pdf for the 6 x 9 inch no-bleed print interior; print-interior.docx is the editable master. Cover, metadata, pricing, originality, rights, factual review, AI disclosure, ISBN decisions, and Amazon submission remain separate approval gates.\n");
+  bundle.file("metadata-draft.json", JSON.stringify(preparation.metadata, null, 2));
+  bundle.file("cover-brief.json", JSON.stringify(preparation.cover, null, 2));
+  bundle.file("pricing-worksheet.json", JSON.stringify(preparation.pricing, null, 2));
+  bundle.file("quality-review-checklist.json", JSON.stringify(preparation.quality, null, 2));
+  bundle.file("submission-checklist.json", JSON.stringify(preparation.submission, null, 2));
+  bundle.file("README.txt", "SEANGWORLD KDP owner review package\n\nUse ebook-interior.epub for Kindle. Use print-interior.pdf for the 6 x 9 inch no-bleed print interior; print-interior.docx is the editable master. The metadata, cover, pricing, quality and submission files are preparation worksheets—not completed evidence or publication authority. Current KDP rules, costs, rights, disclosures, ISBN decisions and every Amazon account action still require review.\n");
   const bytes = new Uint8Array(await bundle.generateAsync({ type: "uint8array", compression: "DEFLATE", compressionOptions: { level: 9 } }));
   return { bytes, fileName: `${slug(input.title)}-kdp-package.zip`, manifest };
 }

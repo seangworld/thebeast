@@ -22,7 +22,7 @@ export async function POST(request: Request) {
   if (!access) return json({ error: "KDP factory owner access required." }, 403);
   const body = await request.json().catch(() => null) as Record<string, unknown> | null;
   const publicationId = clean(body?.publicationId, 80);
-  const publication = await access.client.from("kdp_publications").select("id,title,formats,state,package_evidence").eq("id", publicationId).eq("owner_id", access.id).maybeSingle();
+  const publication = await access.client.from("kdp_publications").select("id,title,audience,topic,formats,state,brief,package_evidence").eq("id", publicationId).eq("owner_id", access.id).maybeSingle();
   if (publication.error || !publication.data) return json({ error: "Publication candidate was not found." }, 404);
   if (!["quality_review", "package_ready", "owner_approved"].includes(publication.data.state)) return json({ error: "All chapters must be approved before an interior package can be built." }, 409);
   const chapters = await access.client.from("kdp_chapters").select("chapter_number,title,draft_text,source_notes,status").eq("publication_id", publicationId).eq("owner_id", access.id).order("chapter_number");
@@ -31,6 +31,9 @@ export async function POST(request: Request) {
   const input: KdpPackageInput = {
     publicationId: publication.data.id,
     title: publication.data.title,
+    audience: publication.data.audience,
+    topic: publication.data.topic,
+    brief: publication.data.brief && typeof publication.data.brief === "object" ? publication.data.brief as KdpPackageInput["brief"] : undefined,
     formats: Array.isArray(publication.data.formats) ? publication.data.formats : [],
     chapters: chapters.data.map((chapter) => ({ chapterNumber: chapter.chapter_number, title: chapter.title, draftText: chapter.draft_text, sources: Array.isArray(chapter.source_notes) ? chapter.source_notes : [] })),
   };
