@@ -40,6 +40,12 @@ const packageIdentity = (
  */
 export const beastRoadmapPackageRegistry = [
   packageIdentity(
+    "BMKT-008",
+    [],
+    "Inactive AI Character Persona Draft Foundation",
+    ["docs/BMKT-008-AI-CHARACTER-PERSONA-DRAFT.md"]
+  ),
+  packageIdentity(
     "KDP-005",
     [],
     "KDP Metadata Cover Pricing and Review Worksheets",
