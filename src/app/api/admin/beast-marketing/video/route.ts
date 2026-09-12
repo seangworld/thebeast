@@ -10,6 +10,7 @@ import { buildStaticContainVisualPlan, evaluateProductionQuality } from "@/lib/b
 import { createBeastFusionPublicationClient } from "@/lib/supabase/service";
 import { createRouteClient } from "@/lib/supabase/server";
 import { trustedShotstackMediaUrl } from "@/lib/beastMarketingShotstackMedia";
+import { buildInactiveCharacterPersonaDraft } from "@/lib/beastMarketingPersona";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -686,6 +687,19 @@ export async function POST(request: Request) {
   if (kind === "presenter") {
     const name = clean(body?.name, 160);
     if (!name) return NextResponse.json({ error: "A presenter profile name is required." }, { status: 400 });
+    if (body?.presenterType === "future_character") {
+      const draft = buildInactiveCharacterPersonaDraft({
+        name,
+        archetype: body?.archetype,
+        audience: body?.audience,
+        visualDirection: body?.visualDirection,
+        voiceDirection: body?.voiceDirection,
+        allowedTopics: body?.allowedTopics,
+      });
+      if (!draft.valid) return NextResponse.json({ error: draft.error }, { status: 400 });
+      const { data, error } = await client.from("beast_marketing_presenter_profiles").insert({ owner_id: user.id, ...draft.row }).select("*").single();
+      return error || !data ? unavailable() : NextResponse.json({ presenter: data }, { status: 201 });
+    }
     const { data, error } = await client.from("beast_marketing_presenter_profiles").insert({ owner_id: user.id, name, presenter_type: "faceless", presentation_rules: { style: clean(body?.style, 300) || "Faceless editorial narration" }, active: false, provenance: { origin: "owner_created_profile", likenessOrVoiceMediaUsed: false } }).select("*").single();
     return error || !data ? unavailable() : NextResponse.json({ presenter: data }, { status: 201 });
   }
