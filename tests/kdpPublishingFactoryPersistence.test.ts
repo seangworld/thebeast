@@ -55,3 +55,18 @@ test("KDP-003 persists sourced chapters and prevents a drafting shortcut", () =>
   assert.match(panel, /Each chapter still requires your approval/);
   assert.doesNotMatch(lifecycle, /action === "start_drafting"|action === "send_to_quality_review"/);
 });
+
+test("KDP-004 builds only approved owner-scoped interiors without Amazon authority", () => {
+  const route = readFileSync("src/app/api/admin/beast-marketing/publishing/package/route.ts", "utf8");
+  const builder = readFileSync("src/lib/kdpPackage.ts", "utf8");
+  const panel = readFileSync("src/app/dashboard/admin/marketing/publishing/KdpPublishingFactoryPanel.tsx", "utf8");
+  assert.match(route, /chapter\.status !== "approved"/);
+  assert.match(route, /profile\.data\?\.role === "admin"/);
+  assert.match(route, /interior: true/);
+  assert.match(route, /owner-review-only/);
+  assert.doesNotMatch(route, /amazon\.com|kdp\.amazon|submit.*publication/i);
+  assert.match(builder, /trim: "6 x 9 in"/);
+  assert.match(builder, /ebook-interior\.epub/);
+  assert.match(builder, /print-interior\.pdf/);
+  assert.match(panel, /Build and download interiors/);
+});
