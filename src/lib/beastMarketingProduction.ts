@@ -16,7 +16,7 @@ export type AudioSfxCue = { assetId: string; startMs: number; endMs: number; vol
 export type VoiceDeliveryPlan = { voice?: string; language?: string; style?: "energetic_conversational" | "modern_news" | "calm_explainer"; speed?: number; newscaster?: boolean; pauseMs?: number; emphasisTerms?: string[] };
 export type AudioMixPlan = { narrationSpeed?: number; voiceDelivery?: VoiceDeliveryPlan; musicAssetId?: string; musicVolume?: number; sfx?: AudioSfxCue[] };
 export type NarrationTimingCue = { sceneId: string; text: string; startMs: number; endMs: number; wordStart?: number; wordEnd?: number };
-export type NarrationTimingEvidence = { providerId: string; assetId: string; assetUri?: string | null; durationMs: number; timingType: "word" | "phrase"; cues: NarrationTimingCue[]; verifiedAt: string; syncToleranceMs: number; maxObservedDriftMs: number };
+export type NarrationTimingEvidence = { providerId: string; assetId: string; assetUri?: string | null; sourceId?: string; durationMs: number; timingType: "word" | "phrase"; cues: NarrationTimingCue[]; verifiedAt: string; syncToleranceMs: number; maxObservedDriftMs: number };
 export type ProductionManifest = {
   schemaVersion: "bmkt-production-1"; jobId: string; revision: number; aspectRatio: VideoSeriesSettings["aspectRatio"]; width: number; height: number;
   runtimeMs: number; visualStyle: string; captionStyle: string; presenterProfileId: string | null; presenterMode: "faceless" | "future_identity";
@@ -120,6 +120,16 @@ export function validateNarrationTimingEvidence(manifest: ProductionManifest, ev
   const errors: string[] = [];
   if (!evidence || typeof evidence !== "object") return { valid: false, errors: ["Actual narration timing evidence is required before rendering."] };
   if (!evidence.providerId.trim() || !evidence.assetId.trim()) errors.push("Narration timing evidence requires provider and asset identity.");
+  if (evidence.sourceId !== undefined && !evidence.sourceId.trim()) errors.push("Narration timing evidence source identity cannot be empty.");
+  if (manifest.timingEvidenceRequired === true && !evidence.sourceId?.trim()) errors.push("Narration timing evidence requires the transcription source identity.");
+  if (manifest.timingEvidenceRequired === true) {
+    let safeAudioUrl = false;
+    try {
+      const parsed = evidence.assetUri ? new URL(evidence.assetUri) : null;
+      safeAudioUrl = Boolean(parsed && parsed.protocol === "https:" && (parsed.hostname === "cdn.shotstack.io" || parsed.hostname.endsWith(".shotstack.io")) && !parsed.username && !parsed.password);
+    } catch { safeAudioUrl = false; }
+    if (!safeAudioUrl) errors.push("Narration timing evidence requires the exact generated narration audio URL.");
+  }
   if (!Number.isInteger(evidence.durationMs) || evidence.durationMs <= 0) errors.push("Narration timing evidence requires a positive actual narration duration.");
   if (!Number.isFinite(evidence.syncToleranceMs) || evidence.syncToleranceMs < 0 || evidence.syncToleranceMs > 150) errors.push("Narration timing sync tolerance must be at most 150 ms.");
   if (!Number.isFinite(evidence.maxObservedDriftMs) || evidence.maxObservedDriftMs < 0 || evidence.maxObservedDriftMs > 150 || evidence.maxObservedDriftMs > evidence.syncToleranceMs) errors.push("Narration timing drift exceeds the 150 ms acceptance tolerance.");

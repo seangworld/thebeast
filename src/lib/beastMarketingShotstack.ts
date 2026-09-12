@@ -1,4 +1,4 @@
-import type { ProductionManifest } from "./beastMarketingProduction";
+import type { NarrationTimingEvidence, ProductionManifest } from "./beastMarketingProduction";
 import { normalizeBeastDisplayNames, normalizeBeastNarrationForSpeech } from "./beastMarketingNarration";
 import { buildVisualBeatPlan, validateVisualAsset } from "./beastMarketingQuality";
 
@@ -43,6 +43,23 @@ export type ShotstackInspection = {
   retryable: boolean;
   providerStatus: string;
   asset: ShotstackAsset | null;
+};
+
+export type ShotstackCreateAssetInspection = {
+  id: string;
+  status: string;
+  url: string | null;
+  providerStatus: string;
+  credits?: number;
+};
+
+export type ShotstackIngestInspection = {
+  id: string;
+  status: string;
+  transcriptionUrl: string | null;
+  durationMs: number | null;
+  providerStatus: string;
+  credits?: number;
 };
 
 export class ShotstackProviderError extends Error {
@@ -165,14 +182,122 @@ export function shotstackWatermarkPolicy(environment: ShotstackEnvironment) {
 
 export function estimateShotstackCredits(manifest: ProductionManifest, environment: ShotstackEnvironment) {
   const narration = normalizeBeastNarrationForSpeech(manifest.scenes.map((scene) => scene.narration).join(" "));
-  const speechCredits = Math.ceil(Math.max(1, narration.length) / 100) * 0.1;
+  const speechCredits = manifest.timingEvidenceRequired === true && manifest.narrationTimingEvidence?.assetUri
+    ? 0
+    : Math.ceil(Math.max(1, narration.length) / 100) * 0.1;
   const renderCredits = environment === "v1" ? Math.ceil(manifest.runtimeMs / 60_000 * 10) / 10 : 0;
   return {
     renderCredits,
     speechCredits,
     estimatedTotal: Math.round((renderCredits + speechCredits) * 10) / 10,
-    basis: environment === "v1" ? "Production render plus text-to-speech" : "Sandbox render plus text-to-speech",
+    basis: speechCredits ? (environment === "v1" ? "Production render plus text-to-speech" : "Sandbox render plus text-to-speech") : "Production render using pre-generated narration",
   };
+}
+
+function providerResource(body: unknown) {
+  const root = asRecord(body); const data = asRecord(root.data); const attributes = asRecord(data.attributes); const response = asRecord(root.response);
+  return { ...attributes, ...response, ...data };
+}
+
+/** Exact Create API payload for the one-time Revision 7 narration asset. */
+export function buildShotstackNarrationCreatePayload(manifest: ProductionManifest) {
+  const voice = manifest.audioMix?.voiceDelivery;
+  return {
+    provider: "shotstack",
+    options: {
+      type: "text-to-speech",
+      text: normalizeBeastNarrationForSpeech(manifest.scenes.map((scene) => scene.narration.trim()).filter(Boolean).join(" ")),
+      voice: voice?.voice || "Matthew",
+      language: voice?.language || "en-US",
+    },
+  } as const;
+}
+
+export function parseShotstackCreateAsset(body: unknown): ShotstackCreateAssetInspection {
+  const resource = providerResource(body); const status = clean(resource.status || resource.state, 40).toLowerCase();
+  const url = clean(resource.url || resource.audioUrl || resource.assetUrl || asRecord(resource.output).url, 1500) || null;
+  const credits = Number(resource.credits ?? asRecord(resource.usage).credits ?? asRecord(resource.cost).credits);
+  return { id: clean(resource.id, 120), status, url, providerStatus: status || "queued", ...(Number.isFinite(credits) ? { credits } : {}) };
+}
+
+export function parseShotstackIngestSource(body: unknown): ShotstackIngestInspection {
+  const resource = providerResource(body); const outputs = asRecord(resource.outputs); const transcription = asRecord(outputs.transcription);
+  const durationValue = resource.durationMs ?? resource.duration ?? asRecord(resource.media).duration ?? asRecord(resource.probe).duration;
+  const durationNumber = Number(durationValue); const durationMs = Number.isFinite(durationNumber) ? (durationNumber > 1_000 ? Math.round(durationNumber) : Math.round(durationNumber * 1_000)) : null;
+  const transcriptionUrl = clean(transcription.url || transcription.src || resource.transcriptionUrl || asRecord(resource.transcription).url, 1500) || null;
+  const status = clean(resource.status || resource.state, 40).toLowerCase();
+  const credits = Number(resource.credits ?? asRecord(resource.usage).credits ?? asRecord(resource.cost).credits);
+  return { id: clean(resource.id, 120), status, transcriptionUrl, durationMs, providerStatus: status || "queued", ...(Number.isFinite(credits) ? { credits } : {}) };
+}
+
+export function parseSrtTimestamp(value: string) {
+  const match = /^(\d{2}):(\d{2}):(\d{2})[,.](\d{3})$/.exec(value.trim());
+  if (!match) return null;
+  const [, hours, minutes, seconds, millis] = match.map(Number);
+  return (((hours * 60 + minutes) * 60 + seconds) * 1_000) + millis;
+}
+
+export type ParsedSrtCue = { index: number; startMs: number; endMs: number; text: string };
+
+/** Parse provider SRT without trusting markup or inventing timestamps. */
+export function parseSrt(srt: string): ParsedSrtCue[] {
+  const blocks = srt.replace(/^\uFEFF/, "").split(/\n\s*\n/);
+  return blocks.flatMap((block) => {
+    const lines = block.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+    const timingIndex = lines.findIndex((line) => line.includes("-->"));
+    if (timingIndex < 0) return [];
+    const [startRaw, endRaw] = lines[timingIndex].split("-->").map((part) => part.trim().split(/\s+/)[0]);
+    const startMs = parseSrtTimestamp(startRaw); const endMs = parseSrtTimestamp(endRaw);
+    if (startMs === null || endMs === null || endMs <= startMs) return [];
+    const index = Number(lines[0]); const text = lines.slice(timingIndex + 1).join(" ").replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+    if (!text) return [];
+    return [{ index: Number.isInteger(index) ? index : 0, startMs, endMs, text }];
+  });
+}
+
+/** Map provider phrase cues to exact scene narration, preserving SRT boundaries. */
+export function narrationTimingEvidenceFromSrt(input: { manifest: ProductionManifest; providerId: string; assetId: string; assetUri: string; sourceId: string; durationMs: number; srt: string; verifiedAt?: string }) {
+  const cues = parseSrt(input.srt);
+  const expected = input.manifest.scenes.map((scene) => ({ scene, words: normalizeBeastNarrationForSpeech(scene.narration).toLowerCase().replace(/[^a-z0-9\s-]/g, " ").trim().split(/\s+/).filter(Boolean) }));
+  const evidenceCues: NarrationTimingEvidence["cues"] = []; let sceneIndex = 0; let wordIndex = 0;
+  for (const cue of cues) {
+    const words = cue.text.trim().split(/\s+/).filter(Boolean);
+    if (words.length > 6) throw new Error("Provider transcription contains a phrase longer than six words; timing must be re-segmented by the provider.");
+    const normalized = normalizeBeastNarrationForSpeech(cue.text).toLowerCase().replace(/[^a-z0-9\s-]/g, " ").trim().split(/\s+/).filter(Boolean);
+    while (sceneIndex < expected.length && wordIndex >= expected[sceneIndex].words.length) { sceneIndex += 1; wordIndex = 0; }
+    if (!expected[sceneIndex] || normalized.join(" ") !== expected[sceneIndex].words.slice(wordIndex, wordIndex + normalized.length).join(" ")) throw new Error("Provider transcription does not cover the exact Revision 7 narration in order.");
+    const scene = expected[sceneIndex].scene;
+    if (cue.startMs < scene.startMs || cue.endMs > scene.endMs) throw new Error(`Provider transcription cue falls outside ${scene.id}.`);
+    evidenceCues.push({ sceneId: scene.id, text: cue.text, startMs: cue.startMs, endMs: cue.endMs, wordStart: wordIndex, wordEnd: wordIndex + normalized.length });
+    wordIndex += normalized.length;
+  }
+  if (sceneIndex < expected.length - 1 || (expected.length && wordIndex !== expected.at(-1)!.words.length)) throw new Error("Provider transcription is missing spoken narration coverage.");
+  const lastEnd = evidenceCues.at(-1)?.endMs || 0;
+  return { providerId: input.providerId, assetId: input.assetId, assetUri: input.assetUri, sourceId: input.sourceId, durationMs: input.durationMs, timingType: "phrase" as const, cues: evidenceCues, verifiedAt: input.verifiedAt || new Date().toISOString(), syncToleranceMs: 150, maxObservedDriftMs: Math.abs(input.durationMs - lastEnd) };
+}
+
+export async function createShotstackNarrationAsset(input: { apiKey: string; environment: ShotstackEnvironment; manifest: ProductionManifest; fetcher?: typeof fetch }) {
+  const response = await providerFetch(`https://api.shotstack.io/create/${input.environment}/assets/`, input.apiKey, { method: "POST", body: JSON.stringify(buildShotstackNarrationCreatePayload(input.manifest)) }, input.fetcher);
+  return parseShotstackCreateAsset(await response.json());
+}
+
+export async function inspectShotstackNarrationAsset(input: { apiKey: string; environment: ShotstackEnvironment; assetId: string; fetcher?: typeof fetch }) {
+  const response = await providerFetch(`https://api.shotstack.io/create/${input.environment}/assets/${encodeURIComponent(input.assetId)}`, input.apiKey, { method: "GET" }, input.fetcher);
+  return parseShotstackCreateAsset(await response.json());
+}
+
+export function buildShotstackTranscriptionPayload(audioUrl: string) {
+  return { url: audioUrl, outputs: { transcription: { format: "srt" } } } as const;
+}
+
+export async function ingestShotstackNarration(input: { apiKey: string; environment: ShotstackEnvironment; audioUrl: string; fetcher?: typeof fetch }) {
+  const response = await providerFetch(`https://api.shotstack.io/ingest/${input.environment}/sources`, input.apiKey, { method: "POST", body: JSON.stringify(buildShotstackTranscriptionPayload(input.audioUrl)) }, input.fetcher);
+  return parseShotstackIngestSource(await response.json());
+}
+
+export async function inspectShotstackIngestSource(input: { apiKey: string; environment: ShotstackEnvironment; sourceId: string; fetcher?: typeof fetch }) {
+  const response = await providerFetch(`https://api.shotstack.io/ingest/${input.environment}/sources/${encodeURIComponent(input.sourceId)}`, input.apiKey, { method: "GET" }, input.fetcher);
+  return parseShotstackIngestSource(await response.json());
 }
 
 const allowedClipFields = new Set(["asset", "start", "length", "fit", "scale", "width", "height", "position", "offset", "transition", "effect", "filter", "opacity", "transform", "alias"]);
@@ -384,6 +509,16 @@ export function buildShotstackEdit(manifest: ProductionManifest): ShotstackEdit 
     return [{ asset: { type: "audio", src: asset.uri, volume: Math.min(0.5, Math.max(0, cue.volume)) }, start: cue.startMs / 1000, length: (cue.endMs - cue.startMs) / 1000 }];
   });
 
+  const boundNarrationUrl = manifest.timingEvidenceRequired === true ? manifest.narrationTimingEvidence?.assetUri : null;
+  const narrationAsset = boundNarrationUrl
+    ? { type: "audio" as const, src: boundNarrationUrl }
+    : {
+      type: "text-to-speech" as const,
+      text: narration,
+      voice: voiceDelivery?.voice || "Matthew",
+      language: voiceDelivery?.language || "en-US",
+      newscaster: voiceDelivery?.newscaster ?? false,
+    };
   const edit: ShotstackEdit = {
     timeline: {
       background: manifest.backgroundColor || "#070b14",
@@ -417,13 +552,7 @@ export function buildShotstackEdit(manifest: ProductionManifest): ShotstackEdit 
             // asset. Use Shotstack's supported text-to-speech representation;
             // delivery speed remains a BeastMarketing quality target, but is
             // not serialized.
-            asset: {
-              type: "text-to-speech",
-              text: narration,
-              voice: voiceDelivery?.voice || "Matthew",
-              language: voiceDelivery?.language || "en-US",
-              newscaster: voiceDelivery?.newscaster ?? false,
-            },
+            asset: narrationAsset,
             start: 0,
             length: "auto",
           }],

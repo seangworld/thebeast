@@ -133,7 +133,7 @@ test("Acceptance Test #2 Revision 7 requires and binds actual narration timing e
   assert.equal(qualityBefore.ready, false);
   assert.match(qualityBefore.blockers.join(" "), /Actual narration timing evidence is required/);
   const evidence: NarrationTimingEvidence = {
-    providerId: "shotstack", assetId: "tts-acceptance-2-r7", assetUri: null, durationMs: 61_500, timingType: "phrase", verifiedAt: "2026-09-11T20:00:00.000Z", syncToleranceMs: 150, maxObservedDriftMs: 0,
+    providerId: "shotstack", assetId: "tts-acceptance-2-r7", assetUri: "https://cdn.shotstack.io/au/v1/audio-r7.mp3", sourceId: "source-r7", durationMs: 61_500, timingType: "phrase", verifiedAt: "2026-09-11T20:00:00.000Z", syncToleranceMs: 150, maxObservedDriftMs: 0,
     cues: candidate.scenes.flatMap((scene) => scene.captions.map((cue) => ({ sceneId: scene.id, text: cue.text, startMs: cue.startMs, endMs: cue.endMs }))),
   };
   const bound = bindNarrationTimingEvidence(candidate, evidence);
