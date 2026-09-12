@@ -1,5 +1,6 @@
 import type { VideoSeriesSettings } from "./beastMarketingVideo";
 import { stripInternalProductionMarkers } from "./beastMarketingNarration";
+import { isTrustedShotstackMediaUrl } from "./beastMarketingShotstackMedia";
 
 export const VIDEO_PRODUCTION_ENGINE_VERSION = "0.6.0";
 
@@ -123,12 +124,7 @@ export function validateNarrationTimingEvidence(manifest: ProductionManifest, ev
   if (evidence.sourceId !== undefined && !evidence.sourceId.trim()) errors.push("Narration timing evidence source identity cannot be empty.");
   if (manifest.timingEvidenceRequired === true && !evidence.sourceId?.trim()) errors.push("Narration timing evidence requires the transcription source identity.");
   if (manifest.timingEvidenceRequired === true) {
-    let safeAudioUrl = false;
-    try {
-      const parsed = evidence.assetUri ? new URL(evidence.assetUri) : null;
-      safeAudioUrl = Boolean(parsed && parsed.protocol === "https:" && (parsed.hostname === "cdn.shotstack.io" || parsed.hostname.endsWith(".shotstack.io")) && !parsed.username && !parsed.password);
-    } catch { safeAudioUrl = false; }
-    if (!safeAudioUrl) errors.push("Narration timing evidence requires the exact generated narration audio URL.");
+    if (!isTrustedShotstackMediaUrl(evidence.assetUri)) errors.push("Narration timing evidence requires the exact generated narration audio URL.");
   }
   if (!Number.isInteger(evidence.durationMs) || evidence.durationMs <= 0) errors.push("Narration timing evidence requires a positive actual narration duration.");
   if (!Number.isFinite(evidence.syncToleranceMs) || evidence.syncToleranceMs < 0 || evidence.syncToleranceMs > 150) errors.push("Narration timing sync tolerance must be at most 150 ms.");

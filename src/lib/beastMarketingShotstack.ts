@@ -1,6 +1,7 @@
 import type { NarrationTimingEvidence, ProductionManifest } from "./beastMarketingProduction";
 import { normalizeBeastDisplayNames, normalizeBeastNarrationForSpeech } from "./beastMarketingNarration";
 import { buildVisualBeatPlan, validateVisualAsset } from "./beastMarketingQuality";
+import { isTrustedShotstackMediaUrl } from "./beastMarketingShotstackMedia";
 
 export const SHOTSTACK_ADAPTER_VERSION = "0.12.0";
 export const SHOTSTACK_PROVIDER_ID = "shotstack";
@@ -619,9 +620,7 @@ export async function inspectShotstackRender(input: { apiKey: string; environmen
   const status = clean(candidate.status, 40).toLowerCase() as ShotstackAsset["status"];
   if (status === "failed" || status === "deleted") return { status: "failed", retryable: false, providerStatus: status, asset: null };
   const url = clean(candidate.url, 1500);
-  let parsed: URL;
-  try { parsed = new URL(url); } catch { throw new ShotstackProviderError("provider", false); }
-  if (parsed.protocol !== "https:" || parsed.hostname !== "cdn.shotstack.io") throw new ShotstackProviderError("provider", false);
+  if (!isTrustedShotstackMediaUrl(url)) throw new ShotstackProviderError("provider", false);
   const asset: ShotstackAsset = {
     id: clean(candidate.id, 100), renderId: clean(candidate.renderId, 100), url,
     filename: clean(candidate.filename, 300), filesize: Number.isFinite(Number(candidate.filesize)) ? Number(candidate.filesize) : null,

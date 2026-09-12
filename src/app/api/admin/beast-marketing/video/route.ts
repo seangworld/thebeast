@@ -9,6 +9,7 @@ import { bindNewsAcceptance2Revision6Visuals, bindNewsAcceptance2Revision7Visual
 import { buildStaticContainVisualPlan, evaluateProductionQuality } from "@/lib/beastMarketingQuality";
 import { createBeastFusionPublicationClient } from "@/lib/supabase/service";
 import { createRouteClient } from "@/lib/supabase/server";
+import { trustedShotstackMediaUrl } from "@/lib/beastMarketingShotstackMedia";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -46,12 +47,7 @@ const seangworldUrl = (value: unknown) => {
 };
 
 const shotstackMediaUrl = (value: unknown) => {
-  const normalized = httpsUrl(value);
-  if (!normalized) return null;
-  try {
-    const parsed = new URL(normalized);
-    return parsed.hostname === "cdn.shotstack.io" || parsed.hostname.endsWith(".shotstack.io") ? normalized : null;
-  } catch { return null; }
+  return trustedShotstackMediaUrl(value);
 };
 
 function timingEvidence(value: unknown): NarrationTimingEvidence | null {

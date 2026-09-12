@@ -5,7 +5,8 @@ import { defaultVideoSeriesSettings } from "../src/lib/beastMarketingVideo";
 import { buildProductionManifest } from "../src/lib/beastMarketingProduction";
 import { buildStaticContainVisualPlan, buildVisualBeatPlan } from "../src/lib/beastMarketingQuality";
 import { bindNewsAcceptance2Revision6Visuals, bindNewsAcceptance2Revision7Visuals, newsAcceptance2Revision6Script } from "../src/lib/beastMarketingNewsVisualTest";
-import { bindNarrationTimingEvidence, type NarrationTimingEvidence } from "../src/lib/beastMarketingProduction";
+import { bindNarrationTimingEvidence, type NarrationTimingEvidence, validateNarrationTimingEvidence } from "../src/lib/beastMarketingProduction";
+import { isTrustedShotstackMediaUrl } from "../src/lib/beastMarketingShotstackMedia";
 import {
   BEAST_PRONUNCIATION_MAP,
   normalizeBeastDisplayNames,
@@ -360,6 +361,37 @@ test("Revision 7 timing parsers and SRT mapping preserve exact bounded phrases",
   assert.equal(evidence.maxObservedDriftMs, 0);
   assert.deepEqual(parseShotstackCreateAsset({ response: { id: "asset-r7", status: "done", url: "https://cdn.shotstack.io/au/v1/r7-audio.mp3" } }), { id: "asset-r7", status: "done", url: "https://cdn.shotstack.io/au/v1/r7-audio.mp3", providerStatus: "done" });
   assert.deepEqual(parseShotstackIngestSource({ data: { id: "source-r7", attributes: { status: "done", duration: 61.5, outputs: { transcription: { url: "https://cdn.shotstack.io/au/v1/r7.srt" } } } } }), { id: "source-r7", status: "done", transcriptionUrl: "https://cdn.shotstack.io/au/v1/r7.srt", durationMs: 61_500, providerStatus: "done" });
+});
+
+test("trusted Shotstack media URL policy accepts only CDN and service-owned Create/Ingest buckets", () => {
+  const passing = [
+    "https://cdn.shotstack.io/au/v1/audio.mp3",
+    "https://shotstack-create-api-v1-assets.s3.amazonaws.com/audio.mp3",
+    "https://shotstack-create-api-stage-assets.s3.us-east-1.amazonaws.com/audio.mp3",
+    "https://shotstack-ingest-api-v1-sources.s3.ap-southeast-2.amazonaws.com/transcript.srt?signature=presigned",
+    "https://shotstack-ingest-api-stage-sources.s3.eu-west-1.amazonaws.com/transcript.srt",
+  ];
+  const failing = [
+    "https://evil.s3.amazonaws.com/audio.mp3",
+    "https://shotstack-create-api-v1-assets.s3.amazonaws.com.evil.com/audio.mp3",
+    "https://amazonaws.com/audio.mp3",
+    "http://cdn.shotstack.io/audio.mp3",
+    "https://user:password@cdn.shotstack.io/audio.mp3",
+    "https://shotstack.io.evil.com/audio.mp3",
+    "https://shotstack-assets.example.com/audio.mp3",
+    "https://shotstack-create-api-v1-assets.s3.amazonaws.com.evil/audio.mp3",
+  ];
+  passing.forEach((url) => assert.equal(isTrustedShotstackMediaUrl(url), true, url));
+  failing.forEach((url) => assert.equal(isTrustedShotstackMediaUrl(url), false, url));
+});
+
+test("Revision 7 timing evidence accepts a trusted Shotstack Create S3 narration URL", () => {
+  const manifest = bindNewsAcceptance2Revision7Visuals(bindNewsAcceptance2Revision6Visuals(buildProductionManifest({ jobId: "timing-s3-evidence", revision: 6, settings: defaultVideoSeriesSettings, script: { ...newsAcceptance2Revision6Script, narration: [...newsAcceptance2Revision6Script.narration] } })));
+  const evidence: NarrationTimingEvidence = {
+    providerId: "shotstack", assetId: "asset-s3", assetUri: "https://shotstack-create-api-v1-assets.s3.amazonaws.com/audio.mp3", sourceId: "source-s3", durationMs: 61_500, timingType: "phrase", verifiedAt: "2026-09-12T00:00:00.000Z", syncToleranceMs: 150, maxObservedDriftMs: 0,
+    cues: manifest.scenes.flatMap((scene) => scene.captions.map((cue) => ({ sceneId: scene.id, text: cue.text, startMs: cue.startMs, endMs: cue.endMs }))),
+  };
+  assert.equal(validateNarrationTimingEvidence(manifest, evidence).valid, true);
 });
 
 test("BMKT-007 permits bounded credential and schema remediation before provider submission", () => {
