@@ -43,7 +43,8 @@ export const beastRoadmapPackageRegistry = [
     "KDP-001",
     [],
     "Automated Publishing Factory Foundation",
-    ["docs/KDP-001-FACTORY-FOUNDATION.md"]
+    ["docs/KDP-001-FACTORY-FOUNDATION.md", "supabase/migrations/20260912181500_add_kdp_publishing_factory.sql"],
+    ["20260912181500_add_kdp_publishing_factory.sql"]
   ),
   packageIdentity(
     "BHM-002",
