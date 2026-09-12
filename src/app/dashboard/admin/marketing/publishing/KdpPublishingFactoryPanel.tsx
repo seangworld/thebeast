@@ -20,6 +20,7 @@ export function KdpPublishingFactoryPanel() {
   const [message, setMessage] = useState("");
   const [chapters, setChapters] = useState<Record<string, Chapter[]>>({});
   const [generatingPublicationId, setGeneratingPublicationId] = useState<string | null>(null);
+  const [packagingPublicationId, setPackagingPublicationId] = useState<string | null>(null);
   const load = useCallback(async () => {
     const response = await fetch("/api/admin/beast-marketing/publishing", { cache: "no-store" });
     const body = await response.json();
@@ -105,6 +106,26 @@ export function KdpPublishingFactoryPanel() {
     await Promise.all([load(), loadChapters(publicationId)]);
   }
 
+  async function downloadInteriorPackage(publicationId: string) {
+    if (packagingPublicationId) return;
+    setPackagingPublicationId(publicationId); setMessage("Building and validating the selected KDP interiors…");
+    try {
+      const response = await fetch("/api/admin/beast-marketing/publishing/package", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ publicationId }) });
+      if (!response.ok) { const body = await response.json(); setMessage(body.error || "KDP package construction failed."); return; }
+      const blob = await response.blob();
+      const disposition = response.headers.get("content-disposition") || "";
+      const fileName = disposition.match(/filename="([^"]+)"/)?.[1] || "kdp-owner-review-package.zip";
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a"); anchor.href = url; anchor.download = fileName; document.body.appendChild(anchor); anchor.click(); anchor.remove(); URL.revokeObjectURL(url);
+      setMessage("KDP interiors built and validated · owner review package downloaded.");
+      await load();
+    } catch {
+      setMessage("KDP package download stopped safely. No readiness approval was granted.");
+    } finally {
+      setPackagingPublicationId(null);
+    }
+  }
+
   function manuscript(item: Publication) {
     const rows = chapters[item.id];
     const generating = generatingPublicationId === item.id;
@@ -116,7 +137,7 @@ export function KdpPublishingFactoryPanel() {
     if (item.state === "brief_ready") return <button onClick={() => void advance(item.id, "approve_brief")} className="min-h-11 rounded-xl bg-amber-300 px-4 py-2 text-sm font-black text-slate-950">Approve brief</button>;
     if (item.state === "brief_approved") return <button onClick={() => void manuscriptAction(item.id, "initialize")} className="min-h-11 rounded-xl bg-amber-300 px-4 py-2 text-sm font-black text-slate-950">Create chapter plan</button>;
     if (item.state === "drafting") return manuscript(item);
-    if (item.state === "quality_review") return <form onSubmit={(event) => validatePackage(event, item.id)} className="rounded-xl border border-white/10 bg-white/[0.03] p-4"><p className="text-sm font-black text-white">Package evidence</p><div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{evidenceFields.map(([key, text]) => <label key={key} className="flex min-h-9 items-center gap-2 text-sm text-slate-300"><input type="checkbox" name={key} defaultChecked={Boolean(item.package_evidence?.[key])} />{text}</label>)}</div><button className="mt-3 min-h-11 rounded-xl bg-amber-300 px-4 py-2 text-sm font-black text-slate-950">Validate package</button></form>;
+    if (item.state === "quality_review") return <div className="space-y-3"><div className="rounded-xl border border-amber-300/20 bg-amber-300/[0.04] p-4"><p className="text-sm font-black text-white">Interior files</p><p className="mt-1 text-xs leading-5 text-slate-400">Builds EPUB for Kindle and 6 × 9-inch no-bleed DOCX/PDF interiors for selected print formats. The ZIP also contains the manifest and source notes.</p><button disabled={Boolean(packagingPublicationId)} onClick={() => void downloadInteriorPackage(item.id)} className="mt-3 min-h-11 rounded-xl bg-amber-300 px-4 py-2 text-sm font-black text-slate-950 disabled:cursor-wait disabled:opacity-60">{packagingPublicationId === item.id ? "Building package…" : "Build and download interiors"}</button></div><form onSubmit={(event) => validatePackage(event, item.id)} className="rounded-xl border border-white/10 bg-white/[0.03] p-4"><p className="text-sm font-black text-white">Package evidence</p><div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{evidenceFields.map(([key, text]) => <label key={`${item.updated_at}-${key}`} className="flex min-h-9 items-center gap-2 text-sm text-slate-300"><input type="checkbox" name={key} defaultChecked={Boolean(item.package_evidence?.[key])} />{text}</label>)}</div><button className="mt-3 min-h-11 rounded-xl bg-amber-300 px-4 py-2 text-sm font-black text-slate-950">Validate package</button></form></div>;
     if (item.state === "package_ready") return <button onClick={() => void advance(item.id, "approve_package")} className="min-h-11 rounded-xl bg-amber-300 px-4 py-2 text-sm font-black text-slate-950">Owner approve package</button>;
     if (item.state === "owner_approved") return <p className="rounded-xl border border-emerald-300/20 bg-emerald-300/[0.05] p-3 text-sm text-emerald-100">Package approved. Amazon submission is waiting for your separate owner action.</p>;
     return null;

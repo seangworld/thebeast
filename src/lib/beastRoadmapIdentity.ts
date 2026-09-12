@@ -40,6 +40,12 @@ const packageIdentity = (
  */
 export const beastRoadmapPackageRegistry = [
   packageIdentity(
+    "KDP-004",
+    [],
+    "Validated KDP Interior Package Builder",
+    ["docs/KDP-004-INTERIOR-PACKAGE.md"]
+  ),
+  packageIdentity(
     "KDP-003",
     [],
     "Sourced Manuscript Chapter Pipeline",
