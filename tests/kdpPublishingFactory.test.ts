@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   KDP_FACTORY_VERSION,
+  buildKdpPublicationBrief,
   canTransitionKdpPublication,
   evaluateKdpPackageReadiness,
   recommendKdpListPrice,
@@ -9,11 +10,22 @@ import {
 } from "../src/lib/kdpPublishingFactory";
 
 test("KDP factory establishes a gated durable lifecycle", () => {
-  assert.equal(KDP_FACTORY_VERSION, "0.1.0");
+  assert.equal(KDP_FACTORY_VERSION, "0.2.0");
   assert.equal(canTransitionKdpPublication("idea", "scored"), true);
+  assert.equal(canTransitionKdpPublication("scored", "brief_ready"), true);
+  assert.equal(canTransitionKdpPublication("scored", "brief_approved"), false);
   assert.equal(canTransitionKdpPublication("idea", "published"), false);
   assert.equal(canTransitionKdpPublication("package_ready", "submitted"), false);
   assert.equal(canTransitionKdpPublication("owner_approved", "submitted"), true);
+});
+
+test("KDP factory prepares a reviewable brief before owner approval", () => {
+  const brief = buildKdpPublicationBrief({ title: "AI-Proof Your Career", audience: "working adults", topic: "build a resilient career plan", formats: ["ebook", "paperback"] });
+  assert.match(brief.positioning, /working adults/);
+  assert.match(brief.readerOutcome, /resilient career plan/);
+  assert.equal(brief.chapters.length, 5);
+  assert.match(brief.acceptanceCriteria.join(" "), /ebook, paperback/);
+  assert.match(brief.evidencePlan.join(" "), /primary sources/i);
 });
 
 test("KDP opportunity ranking favors buyer value, differentiation and reusable series", () => {
