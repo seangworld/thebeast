@@ -19,6 +19,7 @@ export function KdpPublishingFactoryPanel() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [chapters, setChapters] = useState<Record<string, Chapter[]>>({});
+  const [generatingPublicationId, setGeneratingPublicationId] = useState<string | null>(null);
   const load = useCallback(async () => {
     const response = await fetch("/api/admin/beast-marketing/publishing", { cache: "no-store" });
     const body = await response.json();
@@ -72,6 +73,29 @@ export function KdpPublishingFactoryPanel() {
     await Promise.all([load(), loadChapters(publicationId)]);
   }
 
+  async function generateAllRemaining(publicationId: string) {
+    if (generatingPublicationId) return;
+    setGeneratingPublicationId(publicationId);
+    let generated = 0;
+    try {
+      while (true) {
+        setMessage(generated ? `Generating chapter drafts… ${generated} complete.` : "Generating all remaining sourced chapter drafts…");
+        const response = await fetch("/api/admin/beast-marketing/publishing/manuscript", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ publicationId, action: "generate_next" }) });
+        const body = await response.json();
+        if (!response.ok) { setMessage(body.error || `Generation stopped after ${generated} chapters.`); return; }
+        generated += 1;
+        setMessage(`Chapter ${body.chapter.chapter_number} drafted · ${body.remainingCount} remaining.`);
+        if (body.remainingCount === 0) break;
+      }
+      setMessage(`${generated} chapter${generated === 1 ? "" : "s"} generated · ready for individual review.`);
+    } catch {
+      setMessage(`Generation stopped safely after ${generated} chapter${generated === 1 ? "" : "s"}. Completed drafts were preserved.`);
+    } finally {
+      setGeneratingPublicationId(null);
+      await Promise.all([load(), loadChapters(publicationId)]);
+    }
+  }
+
   async function approveChapter(publicationId: string, chapterId: string) {
     setMessage("Saving chapter approval…");
     const response = await fetch("/api/admin/beast-marketing/publishing/manuscript", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ chapterId, action: "approve" }) });
@@ -83,7 +107,8 @@ export function KdpPublishingFactoryPanel() {
 
   function manuscript(item: Publication) {
     const rows = chapters[item.id];
-    return <div className="space-y-3"><div className="flex flex-wrap gap-2"><button onClick={() => void manuscriptAction(item.id, "generate_next")} className="min-h-11 rounded-xl bg-amber-300 px-4 py-2 text-sm font-black text-slate-950">Generate next chapter</button><button onClick={() => void loadChapters(item.id)} className="min-h-11 rounded-xl border border-white/15 px-4 py-2 text-sm font-black text-white">{rows ? "Refresh chapters" : "View chapters"}</button></div>{rows ? <div className="space-y-2">{rows.map((chapter) => <details key={chapter.id} className="rounded-xl border border-white/10 p-3" open={chapter.status === "review_ready"}><summary className="cursor-pointer text-sm font-black text-white">Chapter {chapter.chapter_number}: {chapter.title} · {label(chapter.status)} · {chapter.word_count} words</summary>{chapter.draft_text ? <div className="mt-3 space-y-3"><p className="whitespace-pre-wrap text-sm leading-6 text-slate-300">{chapter.draft_text}</p><div>{chapter.source_notes.map((source) => <p key={source.url} className="text-sm text-slate-400"><a className="text-amber-200 underline" href={source.url} target="_blank" rel="noreferrer">{source.title}</a> — {source.claim}</p>)}</div>{chapter.status === "review_ready" ? <button onClick={() => void approveChapter(item.id, chapter.id)} className="min-h-11 rounded-xl bg-emerald-300 px-4 py-2 text-sm font-black text-slate-950">Approve chapter</button> : null}</div> : null}</details>)}</div> : null}</div>;
+    const generating = generatingPublicationId === item.id;
+    return <div className="space-y-3"><div className="flex flex-wrap gap-2"><button disabled={Boolean(generatingPublicationId)} onClick={() => void generateAllRemaining(item.id)} className="min-h-11 rounded-xl bg-amber-300 px-4 py-2 text-sm font-black text-slate-950 disabled:cursor-wait disabled:opacity-60">{generating ? "Generating all chapters…" : "Generate all remaining chapters"}</button><button disabled={Boolean(generatingPublicationId)} onClick={() => void manuscriptAction(item.id, "generate_next")} className="min-h-11 rounded-xl border border-amber-300/30 px-4 py-2 text-sm font-black text-amber-100 disabled:cursor-wait disabled:opacity-60">Generate one chapter</button><button disabled={generating} onClick={() => void loadChapters(item.id)} className="min-h-11 rounded-xl border border-white/15 px-4 py-2 text-sm font-black text-white disabled:cursor-wait disabled:opacity-60">{rows ? "Refresh chapters" : "View chapters"}</button></div><p className="text-xs leading-5 text-slate-400">Bulk generation drafts every remaining chapter in order. Each chapter still requires your approval before the manuscript can advance.</p>{rows ? <div className="space-y-2">{rows.map((chapter) => <details key={chapter.id} className="rounded-xl border border-white/10 p-3" open={chapter.status === "review_ready"}><summary className="cursor-pointer text-sm font-black text-white">Chapter {chapter.chapter_number}: {chapter.title} · {label(chapter.status)} · {chapter.word_count} words</summary>{chapter.draft_text ? <div className="mt-3 space-y-3"><p className="whitespace-pre-wrap text-sm leading-6 text-slate-300">{chapter.draft_text}</p><div>{chapter.source_notes.map((source) => <p key={source.url} className="text-sm text-slate-400"><a className="text-amber-200 underline" href={source.url} target="_blank" rel="noreferrer">{source.title}</a> — {source.claim}</p>)}</div>{chapter.status === "review_ready" ? <button onClick={() => void approveChapter(item.id, chapter.id)} className="min-h-11 rounded-xl bg-emerald-300 px-4 py-2 text-sm font-black text-slate-950">Approve chapter</button> : null}</div> : null}</details>)}</div> : null}</div>;
   }
 
   function actions(item: Publication) {
