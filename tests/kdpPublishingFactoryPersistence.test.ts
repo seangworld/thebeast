@@ -43,6 +43,8 @@ test("KDP-003 persists sourced chapters and prevents a drafting shortcut", () =>
   assert.match(migration, /alter table public\.kdp_chapters enable row level security/);
   assert.match(migration, /\(select auth\.uid\(\)\) = owner_id/);
   assert.match(migration, /unique \(publication_id, chapter_number\)/);
+  const indexMigration = readFileSync("supabase/migrations/20260912185142_index_kdp_chapter_ownership.sql", "utf8");
+  assert.match(indexMigration, /kdp_chapters\(owner_id, publication_id, chapter_number\)/);
   assert.match(manuscript, /tool_choice: "required"/);
   assert.match(manuscript, /manuscriptAuthority: "review_draft_only"/);
   assert.match(manuscript, /No uncited draft was accepted/);
