@@ -1,0 +1,91 @@
+name: BMKT-016 transcript alignment patch v3
+
+on:
+  push:
+    branches: [bmkt-016-revision7-transcript-alignment]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: ${{ !contains(github.event.head_commit.message, 'BMKT-016 implement bounded transcript alignment') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: bmkt-016-revision7-transcript-alignment
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Apply implementation and realistic provider timing tests
+        shell: python
+        run: |
+          from pathlib import Path
+          import re, textwrap
+
+          source_workflow = Path('.github/workflows/bmkt016-apply.yml').read_text()
+          match = re.search(r'      - name: Apply bounded canonical transcript alignment\n        shell: python\n        run: \|\n(.*?)\n      - name: Install dependencies', source_workflow, re.S)
+          if not match:
+              raise SystemExit('could not extract base patch script')
+          script = textwrap.dedent(match.group(1))
+          script = script.replace('re.subn(pattern, replacement, text, count=1, flags=re.S)', 're.subn(pattern, lambda _match: replacement, text, count=1, flags=re.S)')
+          script = script.replace("Path('.github/workflows/bmkt016-apply.yml').unlink()", "pass")
+          exec(compile(script, '<bmkt016-patch>', 'exec'))
+
+          tests = Path('tests/beastMarketingShotstack.test.ts')
+          test_text = tests.read_text()
+          improved = r'''test("BMKT-016 aligns minor provider transcription differences to canonical captions", () => {
+            const source = bindNewsAcceptance2Revision7Visuals(bindNewsAcceptance2Revision6Visuals(buildProductionManifest({ jobId: "acceptance-2-r7-align", revision: 6, settings: defaultVideoSeriesSettings, script: { ...newsAcceptance2Revision6Script, narration: [...newsAcceptance2Revision6Script.narration] } })));
+            const timestamp = (ms: number) => new Date(ms).toISOString().slice(11, 23).replace(".", ",");
+            let cueIndex = 1;
+            const blocks: string[] = [];
+            source.scenes.forEach((scene, sceneIndex) => {
+              const words = normalizeBeastNarrationForSpeech(scene.narration).toLowerCase().replace(/[^a-z0-9\s-]/g, " ").trim().split(/\s+/).filter(Boolean);
+              for (let offset = 0; offset < words.length; offset += 6) {
+                const end = Math.min(words.length, offset + 6);
+                const startMs = scene.startMs + Math.round((scene.endMs - scene.startMs) * offset / words.length);
+                const endMs = scene.startMs + Math.round((scene.endMs - scene.startMs) * end / words.length);
+                const phrase = words.slice(offset, end);
+                if (sceneIndex === 1) {
+                  const headlineIndex = phrase.indexOf("headlines");
+                  if (headlineIndex >= 0) phrase[headlineIndex] = "headline";
+                }
+                blocks.push(`${cueIndex++}\n${timestamp(startMs)} --> ${timestamp(endMs)}\n${phrase.join(" ")}`);
+              }
+            });
+            const evidence = narrationTimingEvidenceFromSrt({ manifest: source, providerId: "shotstack", assetId: "asset-1", assetUri: "https://shotstack-create-api-v1-assets.s3.amazonaws.com/a/audio.mp3", sourceId: "source-1", durationMs: source.runtimeMs, srt: blocks.join("\n\n"), verifiedAt: "2026-09-12T16:00:00.000Z" });
+            assert.equal(validateNarrationTimingEvidence(source, evidence).valid, true);
+            assert.equal(evidence.cues.every((cue) => cue.text.trim().split(/\s+/).length <= 6), true);
+            assert.equal(evidence.cues.filter((cue) => cue.sceneId === source.scenes[1].id).map((cue) => cue.text).join(" "), normalizeBeastNarrationForSpeech(source.scenes[1].narration).toLowerCase().replace(/[^a-z0-9\s-]/g, " ").trim());
+          });
+
+          test("BMKT-016 fails closed on materially reordered provider narration"'''
+          pattern = r'test\("BMKT-016 aligns minor provider transcription differences to canonical captions".*?\n\s*test\("BMKT-016 fails closed on materially reordered provider narration"'
+          test_text, count = re.subn(pattern, lambda _m: improved, test_text, count=1, flags=re.S)
+          if count != 1:
+              raise SystemExit(f'expected one BMKT-016 test block, replaced {count}')
+          tests.write_text(test_text)
+
+          for temp in ['.github/workflows/bmkt016-apply.yml', '.github/workflows/bmkt016-apply-v2.yml', '.github/workflows/bmkt016-apply-v3.yml']:
+              p = Path(temp)
+              if p.exists(): p.unlink()
+      - name: Install dependencies
+        run: npm ci
+      - name: Test
+        run: npm test
+      - name: Lint
+        run: npm run lint
+      - name: Build
+        run: npm run build
+      - name: Diff check
+        run: git diff --check
+      - name: Commit implementation
+        run: |
+          git config user.name "SEANGWORLD Automation"
+          git config user.email "seangworld@gmail.com"
+          git add -A
+          git commit -m "BMKT-016 implement bounded transcript alignment"
+          git push origin HEAD:bmkt-016-revision7-transcript-alignment
