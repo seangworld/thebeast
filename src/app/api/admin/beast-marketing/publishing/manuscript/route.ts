@@ -50,16 +50,18 @@ export async function POST(request: Request) {
     if (pub.data.state !== "drafting") return reply({ error: "The publication must be in drafting." }, 409);
     if (!process.env.OPENAI_API_KEY) return reply({ error: "KDP manuscript generation is not configured in this environment." }, 503);
     const chapters = await access.client.from("kdp_chapters").select("id,chapter_number,title,status").eq("publication_id", id).eq("owner_id", access.id).order("chapter_number");
-    const chapter = (chapters.data || []).find((item) => item.status === "planned" || item.status === "blocked");
+    const waiting = (chapters.data || []).filter((item) => item.status === "planned" || item.status === "blocked");
+    const chapter = waiting[0];
     if (!chapter) return reply({ error: "No chapter is waiting for generation." }, 409);
-    await access.client.from("kdp_chapters").update({ status: "generating", updated_at: new Date().toISOString() }).eq("id", chapter.id).eq("owner_id", access.id);
+    const claimed = await access.client.from("kdp_chapters").update({ status: "generating", updated_at: new Date().toISOString() }).eq("id", chapter.id).eq("owner_id", access.id).in("status", ["planned", "blocked"]).select("id").maybeSingle();
+    if (claimed.error || !claimed.data) return reply({ error: "Another generation request already claimed this chapter. Refresh the chapter list before retrying." }, 409);
     try {
       const model = process.env.OPENAI_KDP_MODEL || "gpt-5";
       const payload = await requestOpenAIResponse<KdpManuscriptProviderPayload>({ model, store: false, instructions: kdpChapterInstructions(), input: JSON.stringify({ publication: { title: pub.data.title, audience: pub.data.audience, topic: pub.data.topic, brief: pub.data.brief }, chapter, task: "Create the complete review draft and attributable source notes for this chapter." }), tools: [{ type: "web_search", search_context_size: "high" }], tool_choice: "required", include: ["web_search_call.action.sources"], text: { format: { type: "json_schema", name: "kdp_chapter_draft", strict: true, schema: kdpChapterDraftSchema } } });
       const draft = parseKdpChapterDraft(payload); const wordCount = draft.draftText.split(/\s+/).length;
       const saved = await access.client.from("kdp_chapters").update({ status: "review_ready", draft_text: draft.draftText, word_count: wordCount, source_notes: draft.sources, limitations: draft.limitations, provider_model: model, generated_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("id", chapter.id).eq("owner_id", access.id).select("*").single();
       if (saved.error || !saved.data) return reply({ error: "Generated chapter could not be confirmed as saved." }, 503);
-      return reply({ chapter: saved.data, manuscriptAuthority: "review_draft_only" });
+      return reply({ chapter: saved.data, remainingCount: waiting.length - 1, manuscriptAuthority: "review_draft_only" });
     } catch {
       await access.client.from("kdp_chapters").update({ status: "blocked", updated_at: new Date().toISOString() }).eq("id", chapter.id).eq("owner_id", access.id);
       return reply({ error: "Chapter generation failed safely. No uncited draft was accepted." }, 502);
