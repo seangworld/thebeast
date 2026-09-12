@@ -3,7 +3,8 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
 
 type Brief = { positioning?: string; readerOutcome?: string; chapters?: string[]; evidencePlan?: string[]; acceptanceCriteria?: string[] };
-type Publication = { id: string; title: string; audience: string; topic: string; formats: string[]; state: string; opportunity_score: number | null; brief?: Brief; updated_at: string };
+type Publication = { id: string; title: string; audience: string; topic: string; formats: string[]; state: string; opportunity_score: number | null; brief?: Brief; package_evidence?: Record<string, boolean>; updated_at: string };
+type Chapter = { id: string; chapter_number: number; title: string; status: string; draft_text: string; word_count: number; source_notes: Array<{ title: string; url: string; claim: string }> };
 
 const evidenceFields = [
   ["manuscript", "Manuscript complete"], ["interior", "Interior formatted"], ["cover", "Cover complete"],
@@ -17,6 +18,7 @@ export function KdpPublishingFactoryPanel() {
   const [publications, setPublications] = useState<Publication[]>([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
+  const [chapters, setChapters] = useState<Record<string, Chapter[]>>({});
   const load = useCallback(async () => {
     const response = await fetch("/api/admin/beast-marketing/publishing", { cache: "no-store" });
     const body = await response.json();
@@ -54,12 +56,42 @@ export function KdpPublishingFactoryPanel() {
     void advance(id, "validate_package", evidence);
   }
 
+  async function loadChapters(publicationId: string) {
+    const response = await fetch(`/api/admin/beast-marketing/publishing/manuscript?publicationId=${encodeURIComponent(publicationId)}`, { cache: "no-store" });
+    const body = await response.json();
+    if (!response.ok) { setMessage(body.error || "Manuscript could not be loaded."); return; }
+    setChapters((current) => ({ ...current, [publicationId]: body.chapters || [] }));
+  }
+
+  async function manuscriptAction(publicationId: string, action: "initialize" | "generate_next") {
+    setMessage(action === "initialize" ? "Creating chapter plan…" : "Generating the next sourced chapter draft…");
+    const response = await fetch("/api/admin/beast-marketing/publishing/manuscript", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ publicationId, action }) });
+    const body = await response.json();
+    if (!response.ok) { setMessage(body.error || "Manuscript action could not be completed."); return; }
+    setMessage(action === "initialize" ? `Chapter plan created · ${body.chapterCount} chapters.` : `Chapter ${body.chapter.chapter_number} is ready for review.`);
+    await Promise.all([load(), loadChapters(publicationId)]);
+  }
+
+  async function approveChapter(publicationId: string, chapterId: string) {
+    setMessage("Saving chapter approval…");
+    const response = await fetch("/api/admin/beast-marketing/publishing/manuscript", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ chapterId, action: "approve" }) });
+    const body = await response.json();
+    if (!response.ok) { setMessage(body.error || "Chapter approval could not be saved."); return; }
+    setMessage(body.manuscriptComplete ? "All chapters approved · manuscript advanced to quality review." : "Chapter approved.");
+    await Promise.all([load(), loadChapters(publicationId)]);
+  }
+
+  function manuscript(item: Publication) {
+    const rows = chapters[item.id];
+    return <div className="space-y-3"><div className="flex flex-wrap gap-2"><button onClick={() => void manuscriptAction(item.id, "generate_next")} className="min-h-11 rounded-xl bg-amber-300 px-4 py-2 text-sm font-black text-slate-950">Generate next chapter</button><button onClick={() => void loadChapters(item.id)} className="min-h-11 rounded-xl border border-white/15 px-4 py-2 text-sm font-black text-white">{rows ? "Refresh chapters" : "View chapters"}</button></div>{rows ? <div className="space-y-2">{rows.map((chapter) => <details key={chapter.id} className="rounded-xl border border-white/10 p-3" open={chapter.status === "review_ready"}><summary className="cursor-pointer text-sm font-black text-white">Chapter {chapter.chapter_number}: {chapter.title} · {label(chapter.status)} · {chapter.word_count} words</summary>{chapter.draft_text ? <div className="mt-3 space-y-3"><p className="whitespace-pre-wrap text-sm leading-6 text-slate-300">{chapter.draft_text}</p><div>{chapter.source_notes.map((source) => <p key={source.url} className="text-sm text-slate-400"><a className="text-amber-200 underline" href={source.url} target="_blank" rel="noreferrer">{source.title}</a> — {source.claim}</p>)}</div>{chapter.status === "review_ready" ? <button onClick={() => void approveChapter(item.id, chapter.id)} className="min-h-11 rounded-xl bg-emerald-300 px-4 py-2 text-sm font-black text-slate-950">Approve chapter</button> : null}</div> : null}</details>)}</div> : null}</div>;
+  }
+
   function actions(item: Publication) {
     if (item.state === "scored") return <button onClick={() => void advance(item.id, "prepare_brief")} className="min-h-11 rounded-xl bg-amber-300 px-4 py-2 text-sm font-black text-slate-950">Prepare brief</button>;
     if (item.state === "brief_ready") return <button onClick={() => void advance(item.id, "approve_brief")} className="min-h-11 rounded-xl bg-amber-300 px-4 py-2 text-sm font-black text-slate-950">Approve brief</button>;
-    if (item.state === "brief_approved") return <button onClick={() => void advance(item.id, "start_drafting")} className="min-h-11 rounded-xl bg-amber-300 px-4 py-2 text-sm font-black text-slate-950">Start production</button>;
-    if (item.state === "drafting") return <button onClick={() => void advance(item.id, "send_to_quality_review")} className="min-h-11 rounded-xl bg-amber-300 px-4 py-2 text-sm font-black text-slate-950">Send to quality review</button>;
-    if (item.state === "quality_review") return <form onSubmit={(event) => validatePackage(event, item.id)} className="rounded-xl border border-white/10 bg-white/[0.03] p-4"><p className="text-sm font-black text-white">Package evidence</p><div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{evidenceFields.map(([key, text]) => <label key={key} className="flex min-h-9 items-center gap-2 text-sm text-slate-300"><input type="checkbox" name={key} />{text}</label>)}</div><button className="mt-3 min-h-11 rounded-xl bg-amber-300 px-4 py-2 text-sm font-black text-slate-950">Validate package</button></form>;
+    if (item.state === "brief_approved") return <button onClick={() => void manuscriptAction(item.id, "initialize")} className="min-h-11 rounded-xl bg-amber-300 px-4 py-2 text-sm font-black text-slate-950">Create chapter plan</button>;
+    if (item.state === "drafting") return manuscript(item);
+    if (item.state === "quality_review") return <form onSubmit={(event) => validatePackage(event, item.id)} className="rounded-xl border border-white/10 bg-white/[0.03] p-4"><p className="text-sm font-black text-white">Package evidence</p><div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{evidenceFields.map(([key, text]) => <label key={key} className="flex min-h-9 items-center gap-2 text-sm text-slate-300"><input type="checkbox" name={key} defaultChecked={Boolean(item.package_evidence?.[key])} />{text}</label>)}</div><button className="mt-3 min-h-11 rounded-xl bg-amber-300 px-4 py-2 text-sm font-black text-slate-950">Validate package</button></form>;
     if (item.state === "package_ready") return <button onClick={() => void advance(item.id, "approve_package")} className="min-h-11 rounded-xl bg-amber-300 px-4 py-2 text-sm font-black text-slate-950">Owner approve package</button>;
     if (item.state === "owner_approved") return <p className="rounded-xl border border-emerald-300/20 bg-emerald-300/[0.05] p-3 text-sm text-emerald-100">Package approved. Amazon submission is waiting for your separate owner action.</p>;
     return null;

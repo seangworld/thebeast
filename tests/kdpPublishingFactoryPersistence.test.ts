@@ -35,3 +35,16 @@ test("KDP-002 adds a fail-closed brief and package approval handoff", () => {
   assert.match(panel, /Amazon submission is waiting for your separate owner action/);
   assert.doesNotMatch(route, /action === "submit|action === "publish/);
 });
+
+test("KDP-003 persists sourced chapters and prevents a drafting shortcut", () => {
+  const migration = readFileSync("supabase/migrations/20260912184441_add_kdp_manuscript_pipeline.sql", "utf8");
+  const lifecycle = readFileSync("src/app/api/admin/beast-marketing/publishing/route.ts", "utf8");
+  const manuscript = readFileSync("src/app/api/admin/beast-marketing/publishing/manuscript/route.ts", "utf8");
+  assert.match(migration, /alter table public\.kdp_chapters enable row level security/);
+  assert.match(migration, /\(select auth\.uid\(\)\) = owner_id/);
+  assert.match(migration, /unique \(publication_id, chapter_number\)/);
+  assert.match(manuscript, /tool_choice: "required"/);
+  assert.match(manuscript, /manuscriptAuthority: "review_draft_only"/);
+  assert.match(manuscript, /No uncited draft was accepted/);
+  assert.doesNotMatch(lifecycle, /action === "start_drafting"|action === "send_to_quality_review"/);
+});

@@ -97,8 +97,6 @@ export async function PATCH(request: Request) {
     if ((current.data.opportunity_score ?? 0) < 55) return reply({ error: "A score of 55 or higher is required before brief preparation." }, 409);
     updates.brief = buildKdpPublicationBrief({ title: current.data.title, audience: current.data.audience, topic: current.data.topic, formats: current.data.formats });
   } else if (action === "approve_brief") next = "brief_approved";
-  else if (action === "start_drafting") next = "drafting";
-  else if (action === "send_to_quality_review") next = "quality_review";
   else if (action === "validate_package") {
     const evidence = packageEvidence(body?.packageEvidence);
     if (!evidence) return reply({ error: "Complete package evidence is required." }, 400);
