@@ -22,3 +22,16 @@ test("KDP-001 exposes one Publishing workspace with an honest preparation bounda
   assert.match(panel, /Amazon submission, account changes, terms, ISBN decisions, advertising, and publication remain owner-only/);
   assert.match(panel, /Score and add to queue/);
 });
+
+test("KDP-002 adds a fail-closed brief and package approval handoff", () => {
+  const migration = readFileSync("supabase/migrations/20260912182938_add_kdp_lifecycle_brief.sql", "utf8");
+  const route = readFileSync("src/app/api/admin/beast-marketing/publishing/route.ts", "utf8");
+  const panel = readFileSync("src/app/dashboard/admin/marketing/publishing/KdpPublishingFactoryPanel.tsx", "utf8");
+  assert.match(migration, /add column if not exists brief jsonb/);
+  assert.match(migration, /'brief_ready'/);
+  assert.match(route, /evaluateKdpPackageReadiness/);
+  assert.match(route, /score of 55 or higher/i);
+  assert.match(panel, /Owner approve package/);
+  assert.match(panel, /Amazon submission is waiting for your separate owner action/);
+  assert.doesNotMatch(route, /action === "submit|action === "publish/);
+});

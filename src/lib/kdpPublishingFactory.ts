@@ -1,7 +1,7 @@
-export const KDP_FACTORY_VERSION = "0.1.0";
+export const KDP_FACTORY_VERSION = "0.2.0";
 
 export const kdpPublicationStates = [
-  "idea", "scored", "brief_approved", "drafting", "quality_review",
+  "idea", "scored", "brief_ready", "brief_approved", "drafting", "quality_review",
   "package_ready", "owner_approved", "submitted", "published", "measured",
   "rejected", "blocked",
 ] as const;
@@ -11,7 +11,8 @@ export type KdpFormat = "ebook" | "paperback" | "hardcover";
 
 export const kdpStateTransitions: Record<KdpPublicationState, readonly KdpPublicationState[]> = {
   idea: ["scored", "rejected"],
-  scored: ["brief_approved", "rejected"],
+  scored: ["brief_ready", "rejected"],
+  brief_ready: ["brief_approved", "scored", "rejected"],
   brief_approved: ["drafting", "rejected"],
   drafting: ["quality_review", "blocked", "rejected"],
   quality_review: ["drafting", "package_ready", "blocked", "rejected"],
@@ -36,6 +37,43 @@ export type KdpOpportunityInput = {
   timeToMarketDays: number;
   estimatedCashCost: number;
 };
+
+export type KdpPublicationBrief = {
+  positioning: string;
+  readerOutcome: string;
+  chapters: string[];
+  evidencePlan: string[];
+  acceptanceCriteria: string[];
+};
+
+export function buildKdpPublicationBrief(input: {
+  title: string;
+  audience: string;
+  topic: string;
+  formats: KdpFormat[];
+}): KdpPublicationBrief {
+  return {
+    positioning: `${input.title} is a concise, practical guide for ${input.audience}.`,
+    readerOutcome: `Help the reader understand and act on: ${input.topic}`,
+    chapters: [
+      "The problem and what changes now",
+      "Essential concepts and decision points",
+      "A step-by-step action plan",
+      "Common mistakes and risk controls",
+      "Checklist, resources, and next actions",
+    ],
+    evidencePlan: [
+      "Verify time-sensitive claims against current primary sources.",
+      "Record source links and access dates for factual review.",
+      "Run originality, rights, and AI-disclosure reviews before approval.",
+    ],
+    acceptanceCriteria: [
+      `Produce a complete package for ${input.formats.join(", ")}.`,
+      "Every factual claim is supported or clearly framed as guidance.",
+      "Interior, cover, metadata, pricing, and disclosures pass the package gate.",
+    ],
+  };
+}
 
 function bounded(value: number) {
   return Number.isFinite(value) ? Math.min(100, Math.max(0, value)) : 0;
