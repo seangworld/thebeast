@@ -6,7 +6,8 @@ test("KDP-001 persists an owner-only queue without Amazon submission authority",
   const migration = readFileSync("supabase/migrations/20260912181500_add_kdp_publishing_factory.sql", "utf8");
   const route = readFileSync("src/app/api/admin/beast-marketing/publishing/route.ts", "utf8");
   assert.match(migration, /alter table public\.kdp_publications enable row level security/);
-  assert.match(migration, /auth\.uid\(\) = owner_id/);
+  assert.match(migration, /\(select auth\.uid\(\)\) = owner_id/);
+  assert.match(migration, /grant select, insert, update on public\.kdp_publications to authenticated/);
   assert.match(route, /profile\.data\?\.role === "admin"/);
   assert.match(route, /submissionAuthority: "owner_only"/);
   assert.doesNotMatch(route, /amazon\.com|kdp\.amazon|submit.*publication/i);
