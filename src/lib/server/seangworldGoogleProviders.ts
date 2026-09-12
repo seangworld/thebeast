@@ -924,10 +924,12 @@ function liveProvider(input: {
     label: input.label,
     status: hasData ? "configured" : "no_data",
     connectionStatus: hasData ? "connected" : "no_data",
-    guidance: hasData
+    guidance: input.id === "ga4" && input.dataThroughDate
+      ? `GA4 report ends ${input.dataThroughDate}. Today is excluded from this report; recent counts may still change as Google processes events.${hasData ? "" : " No records were returned for this period."}`
+      : hasData
       ? input.id === "search_console" && input.dataThroughDate
         ? `Final Search Console data synchronized through ${input.dataThroughDate}; the normal reporting delay is 2–3 days.`
-        : "Live provider data synchronized successfully."
+        : "Provider report synchronized successfully."
       : "The provider connection succeeded but returned no records for this period.",
     lastSynchronizationAt: input.synchronizedAt,
     lastSuccessfulSynchronizationAt: input.synchronizedAt,
@@ -1057,6 +1059,7 @@ export async function loadLiveSeangworldProviders(
                 label: "Google Analytics 4",
                 data,
                 synchronizedAt,
+                dataThroughDate: dateRanges(now, reportingDays).current.endDate,
               })
             )
             .catch((error) =>

@@ -231,6 +231,9 @@ test("live GA4 and Search Console responses map to the provider-neutral dashboar
     (provider) => provider.id === "search_console"
   );
   assert.equal(ga4?.connectionStatus, "connected");
+  assert.equal(ga4?.dataThroughDate, "2026-07-27");
+  assert.match(ga4?.guidance ?? "", /Today is excluded/);
+  assert.doesNotMatch(ga4?.guidance ?? "", /Live provider|Final GA4/);
   assert.deepEqual(ga4?.data?.visitors, { value: 100, previousValue: 80 });
   assert.deepEqual(ga4?.data?.users, { value: 120, previousValue: 100 });
   assert.deepEqual(ga4?.data?.exitPages, []);
