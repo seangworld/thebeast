@@ -7,6 +7,7 @@ const items = [
   { label: "Overview", href: "/dashboard/admin/marketing" },
   { label: "Advertising", href: "/dashboard/admin/marketing/advertising" },
   { label: "Video Growth", href: "/dashboard/admin/marketing/video-growth" },
+  { label: "Publishing", href: "/dashboard/admin/marketing/publishing" },
   { label: "Social", href: "/dashboard/admin/marketing/social" },
   { label: "Email", href: "/dashboard/admin/marketing/email" },
   { label: "Analytics", href: "/dashboard/admin/marketing/analytics" },

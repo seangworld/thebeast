@@ -5,6 +5,12 @@ import { MarketingSectionNav } from "./MarketingSectionNav";
 
 const sections = [
   {
+    title: "Publishing",
+    href: "/dashboard/admin/marketing/publishing",
+    status: "Priority 1 · building",
+    description: "KDP opportunity scoring, publication packages, quality gates, approvals, pricing, and performance learning.",
+  },
+  {
     title: "Advertising",
     href: "/dashboard/admin/marketing/advertising",
     status: "Live",
