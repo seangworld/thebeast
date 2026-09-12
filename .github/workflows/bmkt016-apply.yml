@@ -1,0 +1,179 @@
+name: BMKT-016 transcript alignment patch
+
+on:
+  push:
+    branches: [bmkt-016-revision7-transcript-alignment]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: ${{ !contains(github.event.head_commit.message, 'BMKT-016 implement bounded transcript alignment') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: bmkt-016-revision7-transcript-alignment
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Apply bounded canonical transcript alignment
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          path = Path('src/lib/beastMarketingShotstack.ts')
+          text = path.read_text()
+          replacement = r'''/** Map provider timing to canonical Revision 7 narration using bounded sequence alignment. */
+          export function narrationTimingEvidenceFromSrt(input: { manifest: ProductionManifest; providerId: string; assetId: string; assetUri: string; sourceId: string; durationMs: number; srt: string; verifiedAt?: string }) {
+            const cues = parseSrt(input.srt).sort((a, b) => a.startMs - b.startMs || a.endMs - b.endMs);
+            if (!cues.length) throw new Error("Provider transcription contains no usable timing cues.");
+            const tokenise = (value: string) => normalizeBeastNarrationForSpeech(value).toLowerCase().replace(/[^a-z0-9\s-]/g, " ").trim().split(/\s+/).filter(Boolean);
+            const canonical = input.manifest.scenes.flatMap((scene) => tokenise(scene.narration).map((word, sceneWordIndex) => ({ word, scene, sceneWordIndex })));
+            const provider = cues.flatMap((cue) => {
+              const cueWords = tokenise(cue.text);
+              return cueWords.map((word, index) => ({
+                word,
+                startMs: cue.startMs + Math.round((cue.endMs - cue.startMs) * index / Math.max(1, cueWords.length)),
+                endMs: cue.startMs + Math.round((cue.endMs - cue.startMs) * (index + 1) / Math.max(1, cueWords.length)),
+              }));
+            });
+            if (!canonical.length || !provider.length) throw new Error("Narration timing alignment requires canonical and provider words.");
+
+            const n = canonical.length; const m = provider.length;
+            const distance = (a: string, b: string) => {
+              if (a === b) return 0;
+              if (a.replace(/-/g, "") === b.replace(/-/g, "")) return 0.1;
+              const limit = Math.max(a.length, b.length);
+              const row = Array.from({ length: b.length + 1 }, (_, index) => index);
+              for (let i = 1; i <= a.length; i += 1) {
+                let previous = row[0]; row[0] = i;
+                for (let j = 1; j <= b.length; j += 1) {
+                  const saved = row[j];
+                  row[j] = Math.min(row[j] + 1, row[j - 1] + 1, previous + (a[i - 1] === b[j - 1] ? 0 : 1));
+                  previous = saved;
+                }
+              }
+              const ratio = limit ? row[b.length] / limit : 1;
+              return ratio <= 0.25 ? 0.25 : 1;
+            };
+            const cost = Array.from({ length: n + 1 }, () => Array<number>(m + 1).fill(0));
+            const op = Array.from({ length: n + 1 }, () => Array<"diag" | "up" | "left" | "">(m + 1).fill(""));
+            for (let i = 1; i <= n; i += 1) { cost[i][0] = i; op[i][0] = "up"; }
+            for (let j = 1; j <= m; j += 1) { cost[0][j] = j; op[0][j] = "left"; }
+            for (let i = 1; i <= n; i += 1) {
+              for (let j = 1; j <= m; j += 1) {
+                const diag = cost[i - 1][j - 1] + distance(canonical[i - 1].word, provider[j - 1].word);
+                const up = cost[i - 1][j] + 1;
+                const left = cost[i][j - 1] + 1;
+                const best = Math.min(diag, up, left); cost[i][j] = best;
+                op[i][j] = best === diag ? "diag" : best === up ? "up" : "left";
+              }
+            }
+            const maximumCost = Math.max(5, n * 0.16);
+            if (cost[n][m] > maximumCost) throw new Error("Provider transcription differs materially from the canonical Revision 7 narration.");
+            const mapped = Array<{ startMs: number; endMs: number } | null>(n).fill(null);
+            let i = n; let j = m; let paired = 0;
+            while (i > 0 || j > 0) {
+              const step = op[i][j];
+              if (step === "diag") { mapped[i - 1] = { startMs: provider[j - 1].startMs, endMs: provider[j - 1].endMs }; paired += 1; i -= 1; j -= 1; }
+              else if (step === "up") i -= 1;
+              else if (step === "left") j -= 1;
+              else break;
+            }
+            if (paired / n < 0.84) throw new Error("Provider transcription coverage is too incomplete for safe timing alignment.");
+            for (let index = 0; index < mapped.length; index += 1) {
+              if (mapped[index]) continue;
+              let left = index - 1; while (left >= 0 && !mapped[left]) left -= 1;
+              let right = index + 1; while (right < mapped.length && !mapped[right]) right += 1;
+              const leftEnd = left >= 0 ? mapped[left]!.endMs : 0;
+              const rightStart = right < mapped.length ? mapped[right]!.startMs : input.durationMs;
+              const span = Math.max(1, right - left);
+              const startMs = leftEnd + Math.round((rightStart - leftEnd) * (index - left) / span);
+              const endMs = leftEnd + Math.round((rightStart - leftEnd) * (index - left + 1) / span);
+              mapped[index] = { startMs, endMs: Math.max(startMs + 1, endMs) };
+            }
+
+            const evidenceCues: NarrationTimingEvidence["cues"] = [];
+            let globalOffset = 0; let maxAdjustmentMs = 0;
+            for (const scene of input.manifest.scenes) {
+              const sceneWords = tokenise(scene.narration);
+              let previousEnd = scene.startMs;
+              for (let offset = 0; offset < sceneWords.length; offset += 6) {
+                const end = Math.min(sceneWords.length, offset + 6);
+                const first = mapped[globalOffset + offset]!; const last = mapped[globalOffset + end - 1]!;
+                let startMs = Math.max(scene.startMs, first.startMs, previousEnd);
+                let endMs = Math.min(scene.endMs, last.endMs);
+                if (endMs <= startMs) endMs = Math.min(scene.endMs, startMs + 1);
+                maxAdjustmentMs = Math.max(maxAdjustmentMs, Math.abs(startMs - first.startMs), Math.abs(endMs - last.endMs));
+                if (endMs <= startMs) throw new Error(`Provider timing cannot be safely bounded within ${scene.id}.`);
+                evidenceCues.push({ sceneId: scene.id, text: sceneWords.slice(offset, end).join(" "), startMs, endMs, wordStart: offset, wordEnd: end });
+                previousEnd = endMs;
+              }
+              globalOffset += sceneWords.length;
+            }
+            const providerLastEnd = Math.max(...provider.map((word) => word.endMs));
+            const durationDriftMs = Math.abs(input.durationMs - providerLastEnd);
+            const maxObservedDriftMs = Math.max(maxAdjustmentMs, durationDriftMs);
+            if (maxObservedDriftMs > 150) throw new Error(`Provider narration timing requires ${maxObservedDriftMs} ms of adjustment, exceeding the 150 ms sync tolerance.`);
+            return { providerId: input.providerId, assetId: input.assetId, assetUri: input.assetUri, sourceId: input.sourceId, durationMs: input.durationMs, timingType: "phrase" as const, cues: evidenceCues, verifiedAt: input.verifiedAt || new Date().toISOString(), syncToleranceMs: 150, maxObservedDriftMs };
+          }
+
+          export async function createShotstackNarrationAsset'''
+          pattern = r'/\*\* Map provider phrase cues to exact scene narration, preserving SRT boundaries\. \*/\nexport function narrationTimingEvidenceFromSrt\(.*?\n}\n\nexport async function createShotstackNarrationAsset'
+          new_text, count = re.subn(pattern, replacement, text, count=1, flags=re.S)
+          if count != 1:
+              raise SystemExit(f'expected one alignment function, replaced {count}')
+          path.write_text(new_text)
+
+          tests = Path('tests/beastMarketingShotstack.test.ts')
+          test_text = tests.read_text()
+          marker = 'BMKT-016 aligns minor provider transcription differences to canonical captions'
+          if marker not in test_text:
+              test_text += r'''
+
+          test("BMKT-016 aligns minor provider transcription differences to canonical captions", () => {
+            const source = bindNewsAcceptance2Revision7Visuals(bindNewsAcceptance2Revision6Visuals(buildProductionManifest({ jobId: "acceptance-2-r7-align", revision: 6, settings: defaultVideoSeriesSettings, script: { ...newsAcceptance2Revision6Script, narration: [...newsAcceptance2Revision6Script.narration] } })));
+            const blocks = source.scenes.map((scene, index) => {
+              let spoken = normalizeBeastNarrationForSpeech(scene.narration);
+              if (index === 1) spoken = spoken.replace("current headlines", "current headline");
+              return `${index + 1}\n${new Date(scene.startMs).toISOString().slice(11, 23).replace(".", ",")} --> ${new Date(scene.endMs).toISOString().slice(11, 23).replace(".", ",")}\n${spoken}`;
+            });
+            const evidence = narrationTimingEvidenceFromSrt({ manifest: source, providerId: "shotstack", assetId: "asset-1", assetUri: "https://shotstack-create-api-v1-assets.s3.amazonaws.com/a/audio.mp3", sourceId: "source-1", durationMs: source.runtimeMs, srt: blocks.join("\n\n"), verifiedAt: "2026-09-12T16:00:00.000Z" });
+            assert.equal(validateNarrationTimingEvidence(source, evidence).valid, true);
+            assert.equal(evidence.cues.every((cue) => cue.text.trim().split(/\s+/).length <= 6), true);
+            assert.equal(evidence.cues.filter((cue) => cue.sceneId === source.scenes[1].id).map((cue) => cue.text).join(" "), normalizeBeastNarrationForSpeech(source.scenes[1].narration).toLowerCase().replace(/[^a-z0-9\s-]/g, " ").trim());
+          });
+
+          test("BMKT-016 fails closed on materially reordered provider narration", () => {
+            const source = bindNewsAcceptance2Revision7Visuals(bindNewsAcceptance2Revision6Visuals(buildProductionManifest({ jobId: "acceptance-2-r7-reorder", revision: 6, settings: defaultVideoSeriesSettings, script: { ...newsAcceptance2Revision6Script, narration: [...newsAcceptance2Revision6Script.narration] } })));
+            const spoken = source.scenes.map((scene) => normalizeBeastNarrationForSpeech(scene.narration));
+            [spoken[0], spoken[1]] = [spoken[1], spoken[0]];
+            const blocks = source.scenes.map((scene, index) => `${index + 1}\n${new Date(scene.startMs).toISOString().slice(11, 23).replace(".", ",")} --> ${new Date(scene.endMs).toISOString().slice(11, 23).replace(".", ",")}\n${spoken[index]}`);
+            assert.throws(() => narrationTimingEvidenceFromSrt({ manifest: source, providerId: "shotstack", assetId: "asset-1", assetUri: "https://shotstack-create-api-v1-assets.s3.amazonaws.com/a/audio.mp3", sourceId: "source-1", durationMs: source.runtimeMs, srt: blocks.join("\n\n"), verifiedAt: "2026-09-12T16:00:00.000Z" }), /differs materially|coverage is too incomplete/);
+          });
+          '''
+              tests.write_text(test_text)
+
+          Path('.github/workflows/bmkt016-apply.yml').unlink()
+      - name: Install dependencies
+        run: npm ci
+      - name: Test
+        run: npm test
+      - name: Lint
+        run: npm run lint
+      - name: Build
+        run: npm run build
+      - name: Diff check
+        run: git diff --check
+      - name: Commit implementation
+        run: |
+          git config user.name "SEANGWORLD Automation"
+          git config user.email "seangworld@gmail.com"
+          git add src/lib/beastMarketingShotstack.ts tests/beastMarketingShotstack.test.ts .github/workflows/bmkt016-apply.yml
+          git commit -m "BMKT-016 implement bounded transcript alignment"
+          git push origin HEAD:bmkt-016-revision7-transcript-alignment
