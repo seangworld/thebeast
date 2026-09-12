@@ -19,15 +19,16 @@ create table if not exists public.kdp_publications (
 
 create index if not exists kdp_publications_owner_updated_idx on public.kdp_publications(owner_id, updated_at desc);
 alter table public.kdp_publications enable row level security;
+grant select, insert, update on public.kdp_publications to authenticated;
 
 create policy "KDP publications are owner readable" on public.kdp_publications for select to authenticated using (
-  auth.uid() = owner_id and exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
+  (select auth.uid()) = owner_id and exists (select 1 from public.profiles where id = (select auth.uid()) and role = 'admin')
 );
 create policy "KDP publications are owner insertable" on public.kdp_publications for insert to authenticated with check (
-  auth.uid() = owner_id and exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
+  (select auth.uid()) = owner_id and exists (select 1 from public.profiles where id = (select auth.uid()) and role = 'admin')
 );
 create policy "KDP publications are owner updateable" on public.kdp_publications for update to authenticated using (
-  auth.uid() = owner_id and exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
+  (select auth.uid()) = owner_id and exists (select 1 from public.profiles where id = (select auth.uid()) and role = 'admin')
 ) with check (
-  auth.uid() = owner_id and exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
+  (select auth.uid()) = owner_id and exists (select 1 from public.profiles where id = (select auth.uid()) and role = 'admin')
 );
