@@ -1,5 +1,6 @@
 "use client";
 
+import { Ga4ConnectionPanel } from "./Ga4ConnectionPanel";
 import { useEffect, useMemo, useState } from "react";
 import {
   normalizeSeangworldIntelligenceSnapshot,
@@ -278,7 +279,7 @@ function date(value: string | null) {
     : "Unavailable";
 }
 
-export function SeangworldIntelligenceWorkspace({
+function IntelligenceReports({
   product,
 }: {
   product?: SeangworldAnalyticsScopeId;
@@ -360,4 +361,8 @@ export function SeangworldIntelligenceWorkspace({
 
     <section className="rounded-2xl border border-white/10 bg-[#111827] p-5"><h2 className="text-lg font-black text-white">Search Performance Trends</h2>{data.searchTrends.length ? <div className="mt-4 overflow-x-auto" tabIndex={0} aria-label="Search performance trends table, horizontally scrollable"><table className="min-w-[44rem] w-full text-left text-sm"><thead className="text-slate-400"><tr><th className="p-3">Date</th><th className="p-3">Clicks</th><th className="p-3">Impressions</th><th className="p-3">CTR</th><th className="p-3">Average Position</th></tr></thead><tbody>{data.searchTrends.map((row) => <tr key={row.date} className="border-t border-white/10 text-slate-200"><td className="p-3">{row.date}</td><td className="p-3">{number(row.clicks)}</td><td className="p-3">{number(row.impressions)}</td><td className="p-3">{row.ctr === null ? "Unavailable" : `${(row.ctr * 100).toFixed(1)}%`}</td><td className="p-3">{row.position === null ? "Unavailable" : row.position.toFixed(1)}</td></tr>)}</tbody></table></div> : <p className="mt-3 text-sm text-slate-400">No finalized Search Console trend series is available for this period.</p>}</section>
   </div>;
+}
+
+export function SeangworldIntelligenceWorkspace(props: { product?: SeangworldAnalyticsScopeId } = {}) {
+  return <div className="space-y-6"><Ga4ConnectionPanel /><IntelligenceReports {...props} /></div>;
 }

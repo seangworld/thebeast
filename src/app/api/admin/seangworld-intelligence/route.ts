@@ -1,3 +1,4 @@
+import { checkGa4Connection } from "@/lib/server/ga4ConnectionCheck";
 import { NextResponse } from "next/server";
 import {
   buildSeangworldIntelligenceSnapshot,
@@ -26,6 +27,11 @@ export async function GET(request: Request) {
 
   const generatedAt = new Date().toISOString();
   const searchParams = new URL(request.url).searchParams;
+  if (searchParams.get("check") === "streams") {
+    return NextResponse.json(await checkGa4Connection(process.env), {
+      headers: { "cache-control": "private, no-store" },
+    });
+  }
   const requestedDays = Number(searchParams.get("days") || 30);
   if (![7, 30, 90].includes(requestedDays)) {
     return error("Select a supported analytics range: 7, 30, or 90 days.", 400);
