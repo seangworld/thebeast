@@ -88,7 +88,7 @@ test("BA-106 resolves member then role then module and fails closed", () => {
     memberId: "member-2",
     role: "user",
   });
-  const module = resolveBeastFeatureFlag({
+  const fixtureModule = resolveBeastFeatureFlag({
     flag,
     moduleId: "learning",
     memberId: "member-3",
@@ -107,9 +107,9 @@ test("BA-106 resolves member then role then module and fails closed", () => {
   assert.equal(role.sourceScope, "role");
   assert.equal(role.stage, "hidden");
   assert.equal(role.visible, false);
-  assert.equal(module.sourceScope, "module");
-  assert.equal(module.stage, "beta");
-  assert.equal(module.visible, true);
+  assert.equal(fixtureModule.sourceScope, "module");
+  assert.equal(fixtureModule.stage, "beta");
+  assert.equal(fixtureModule.visible, true);
   assert.equal(missing.stage, "hidden");
   assert.equal(missing.visible, false);
   assert.equal(missing.sourceScope, "default");

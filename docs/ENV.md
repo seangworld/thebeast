@@ -42,9 +42,10 @@ passes the existing BeastAdmin owner check.
 Privacy-first browser product analytics uses
 `NEXT_PUBLIC_GA_MEASUREMENT_ID`. It must be a GA4 web-stream measurement ID such
 as `G-XXXXXXXXXX`; do not confuse it with the numeric Data API property ID.
-`NEXT_PUBLIC_ANALYTICS_CONSENT_DEFAULT` supports `pending`, `disabled`, or
-`enabled` and defaults safely to `pending`. Collection is suppressed outside
-production and GA4 does not load until consent is enabled. Beast configures
+Site analytics runs automatically in production under the owner policy dated
+2026-09-12. The legacy `NEXT_PUBLIC_ANALYTICS_CONSENT_DEFAULT` and stored site
+toggle no longer gate collection. Collection remains suppressed outside
+production. Beast configures
 `send_page_view: false`, disables Google Signals and advertising
 personalization, and emits only the allowlisted `bo404-v1` product-intelligence
 contract. BeastAdmin treats `BEAST_ECOSYSTEM_GA4_PROPERTY_ID` as the numeric

@@ -28,7 +28,7 @@ function fixture(options: { enabled?: boolean; admin?: boolean; duplicate?: bool
     }; return chain;
   } };
   const compiled = transpileModule(readFileSync("src/lib/server/marketingGrowthCycleRunner.ts", "utf8"), { compilerOptions: { module: ModuleKind.CommonJS, target: 7 } }).outputText;
-  const module = { exports: {} as { runMarketingGrowthCycle: (owner: string, now: Date) => Promise<{ status: string; report?: growth.GrowthCycleReport }> } };
+  const fixtureModule = { exports: {} as { runMarketingGrowthCycle: (owner: string, now: Date) => Promise<{ status: string; report?: growth.GrowthCycleReport }> } };
   class Clock extends Date { static now() { return options.timeBudget && providerReads > 0 ? 41_000 : 0; } }
   new Function("require", "module", "exports", "Date", compiled)((id: string) => {
     if (id === "server-only") return {};
@@ -40,8 +40,8 @@ function fixture(options: { enabled?: boolean; admin?: boolean; duplicate?: bool
     if (id === "../marketingGrowthCycle") return growth;
     if (id === "../marketingGrowthAttribution") return attribution;
     throw new Error(`Unexpected runner dependency: ${id}`);
-  }, module, module.exports, Clock);
-  return { run: () => module.exports.runMarketingGrowthCycle("owner-one", new Date("2026-09-10T10:20:00Z")), operations, providerReads: () => providerReads };
+  }, fixtureModule, fixtureModule.exports, Clock);
+  return { run: () => fixtureModule.exports.runMarketingGrowthCycle("owner-one", new Date("2026-09-10T10:20:00Z")), operations, providerReads: () => providerReads };
 }
 
 test("growth runner checks opt-in and admin status before claiming or reading providers", async () => {
