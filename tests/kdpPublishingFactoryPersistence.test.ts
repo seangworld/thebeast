@@ -48,5 +48,10 @@ test("KDP-003 persists sourced chapters and prevents a drafting shortcut", () =>
   assert.match(manuscript, /tool_choice: "required"/);
   assert.match(manuscript, /manuscriptAuthority: "review_draft_only"/);
   assert.match(manuscript, /No uncited draft was accepted/);
+  assert.match(manuscript, /remainingCount: waiting\.length - 1/);
+  assert.match(manuscript, /Another generation request already claimed this chapter/);
+  const panel = readFileSync("src/app/dashboard/admin/marketing/publishing/KdpPublishingFactoryPanel.tsx", "utf8");
+  assert.match(panel, /Generate all remaining chapters/);
+  assert.match(panel, /Each chapter still requires your approval/);
   assert.doesNotMatch(lifecycle, /action === "start_drafting"|action === "send_to_quality_review"/);
 });
