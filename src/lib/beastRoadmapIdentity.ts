@@ -40,6 +40,12 @@ const packageIdentity = (
  */
 export const beastRoadmapPackageRegistry = [
   packageIdentity(
+    "BMKT-009",
+    [],
+    "Existing Published Book Revenue Funnel",
+    ["docs/BMKT-009-OWNED-BOOK-FUNNEL.md"]
+  ),
+  packageIdentity(
     "BMKT-008",
     [],
     "Inactive AI Character Persona Draft Foundation",
