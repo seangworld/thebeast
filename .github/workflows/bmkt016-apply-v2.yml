@@ -1,0 +1,52 @@
+name: BMKT-016 transcript alignment patch v2
+
+on:
+  push:
+    branches: [bmkt-016-revision7-transcript-alignment]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: ${{ !contains(github.event.head_commit.message, 'BMKT-016 implement bounded transcript alignment') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: bmkt-016-revision7-transcript-alignment
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Run corrected patch script
+        shell: python
+        run: |
+          from pathlib import Path
+          import re, textwrap
+          workflow = Path('.github/workflows/bmkt016-apply.yml').read_text()
+          match = re.search(r'      - name: Apply bounded canonical transcript alignment\n        shell: python\n        run: \|\n(.*?)\n      - name: Install dependencies', workflow, re.S)
+          if not match:
+              raise SystemExit('could not extract original patch script')
+          script = textwrap.dedent(match.group(1))
+          script = script.replace('re.subn(pattern, replacement, text, count=1, flags=re.S)', 're.subn(pattern, lambda _match: replacement, text, count=1, flags=re.S)')
+          script = script.replace("Path('.github/workflows/bmkt016-apply.yml').unlink()", "Path('.github/workflows/bmkt016-apply.yml').unlink(); Path('.github/workflows/bmkt016-apply-v2.yml').unlink()")
+          exec(compile(script, '<bmkt016-patch>', 'exec'))
+      - name: Install dependencies
+        run: npm ci
+      - name: Test
+        run: npm test
+      - name: Lint
+        run: npm run lint
+      - name: Build
+        run: npm run build
+      - name: Diff check
+        run: git diff --check
+      - name: Commit implementation
+        run: |
+          git config user.name "SEANGWORLD Automation"
+          git config user.email "seangworld@gmail.com"
+          git add -A
+          git commit -m "BMKT-016 implement bounded transcript alignment"
+          git push origin HEAD:bmkt-016-revision7-transcript-alignment
