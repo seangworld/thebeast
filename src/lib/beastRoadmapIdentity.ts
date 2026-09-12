@@ -40,6 +40,13 @@ const packageIdentity = (
  */
 export const beastRoadmapPackageRegistry = [
   packageIdentity(
+    "KDP-002",
+    [],
+    "Publishing Brief and Owner Approval Lifecycle",
+    ["docs/KDP-002-PUBLISHING-LIFECYCLE.md", "supabase/migrations/20260912182938_add_kdp_lifecycle_brief.sql"],
+    ["20260912182938_add_kdp_lifecycle_brief.sql"]
+  ),
+  packageIdentity(
     "KDP-001",
     [],
     "Automated Publishing Factory Foundation",
