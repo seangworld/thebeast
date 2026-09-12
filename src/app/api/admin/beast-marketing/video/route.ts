@@ -4,11 +4,12 @@ import { allowedVideoTransitions, defaultVideoSeriesSettings, normalizeVideoTopi
 import { buildGroundedScript, buildYouTubeMetadata, scoreVideoOpportunity, type ScriptFact, type VideoEvidence } from "@/lib/beastMarketingContent";
 import { bindNarrationTimingEvidence, buildProductionManifest, fingerprintProductionManifest, validateProductionManifest, type NarrationTimingEvidence, type ProductionManifest } from "@/lib/beastMarketingProduction";
 import { planCandidateCadence, validateTopicFamily, type OwnerWorkflowDecision } from "@/lib/beastMarketingOwnerWorkflow";
-import { SHOTSTACK_ADAPTER_VERSION, SHOTSTACK_MAX_ESTIMATED_CREDITS_PER_RENDER, buildShotstackEdit, estimateShotstackCredits, shotstackConfiguration, shotstackEnvironment } from "@/lib/beastMarketingShotstack";
+import { SHOTSTACK_ADAPTER_VERSION, SHOTSTACK_MAX_ESTIMATED_CREDITS_PER_RENDER, buildShotstackEdit, createShotstackNarrationAsset, estimateShotstackCredits, ingestShotstackNarration, inspectShotstackIngestSource, inspectShotstackNarrationAsset, narrationTimingEvidenceFromSrt, shotstackConfiguration, shotstackEnvironment } from "@/lib/beastMarketingShotstack";
 import { bindNewsAcceptance2Revision6Visuals, bindNewsAcceptance2Revision7Visuals, bindNewsAcceptance2Visuals, bindNewsTestVisuals, newsAcceptance2Revision6Script, newsAcceptance2Script } from "@/lib/beastMarketingNewsVisualTest";
 import { buildStaticContainVisualPlan, evaluateProductionQuality } from "@/lib/beastMarketingQuality";
 import { createBeastFusionPublicationClient } from "@/lib/supabase/service";
 import { createRouteClient } from "@/lib/supabase/server";
+import { trustedShotstackMediaUrl } from "@/lib/beastMarketingShotstackMedia";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -45,6 +46,10 @@ const seangworldUrl = (value: unknown) => {
   catch { return null; }
 };
 
+const shotstackMediaUrl = (value: unknown) => {
+  return trustedShotstackMediaUrl(value);
+};
+
 function timingEvidence(value: unknown): NarrationTimingEvidence | null {
   const input = record(value);
   const cues = Array.isArray(input.cues) ? input.cues.slice(0, 500).flatMap((item) => {
@@ -54,7 +59,7 @@ function timingEvidence(value: unknown): NarrationTimingEvidence | null {
     if (!sceneId || !text || startMs < 0 || endMs < 0) return [];
     return [{ sceneId, text, startMs, endMs, ...(Number.isInteger(cue.wordStart) ? { wordStart: integer(cue.wordStart, 0, 1_000_000, 0) } : {}), ...(Number.isInteger(cue.wordEnd) ? { wordEnd: integer(cue.wordEnd, 0, 1_000_000, 0) } : {}) }];
   }) : [];
-  const result: NarrationTimingEvidence = { providerId: clean(input.providerId, 120), assetId: clean(input.assetId, 160), assetUri: httpsUrl(input.assetUri), durationMs: integer(input.durationMs, 1, 7_200_000, 0), timingType: input.timingType === "word" ? "word" : "phrase", cues, verifiedAt: clean(input.verifiedAt, 80), syncToleranceMs: decimal(input.syncToleranceMs, 0, 150, -1), maxObservedDriftMs: decimal(input.maxObservedDriftMs, 0, 150, -1) };
+  const result: NarrationTimingEvidence = { providerId: clean(input.providerId, 120), assetId: clean(input.assetId, 160), assetUri: httpsUrl(input.assetUri), sourceId: clean(input.sourceId, 160), durationMs: integer(input.durationMs, 1, 7_200_000, 0), timingType: input.timingType === "word" ? "word" : "phrase", cues, verifiedAt: clean(input.verifiedAt, 80), syncToleranceMs: decimal(input.syncToleranceMs, 0, 150, -1), maxObservedDriftMs: decimal(input.maxObservedDriftMs, 0, 150, -1) };
   return result.providerId && result.assetId && result.durationMs > 0 && result.verifiedAt && result.syncToleranceMs >= 0 && result.maxObservedDriftMs >= 0 ? result : null;
 }
 
@@ -311,6 +316,94 @@ export async function POST(request: Request) {
     if (error || !created) return unavailable();
     await client.from("beast_marketing_video_jobs").update({ state: "failed", quality: { ...sourceQuality, ownerQualityReview: "needs_changes", ownerWorkflowDecision: "needs_changes", warnings: ["Superseded by Revision 7 final-sync presentation candidate; retained for audit lineage."] }, provenance: { ...sourceProvenance, activeCandidate: false, superseded: true, supersededByJobId: id, supersededByRevision: 7, supersededReason: "Revision 7 center-overlay removal, slower static cadence, and timing-evidence requirement." }, updated_at: now, last_error: "Superseded by Revision 7 final-sync presentation candidate." }).eq("id", source.id).eq("owner_id", user.id);
     return NextResponse.json({ job: created, supersededJobId: source.id, shotstackCreditsConsumed: 0, externallyPublished: false, quality: qualityReport }, { status: 201 });
+  }
+  if (kind === "prepare_revision7_timing") {
+    if (request.headers.get("origin") !== new URL(request.url).origin) return forbidden();
+    const sourceId = clean(body?.id, 80);
+    const { data: source } = await client.from("beast_marketing_video_jobs").select("*").eq("id", sourceId).eq("owner_id", user.id).maybeSingle();
+    if (!source) return NextResponse.json({ error: "The selected video candidate is unavailable." }, { status: 404 });
+    const sourceProvenance = record(source.provenance); const production = record(source.production); const manifest = production.manifest as ProductionManifest;
+    if (sourceProvenance.superseded || source.revision !== 7 || sourceProvenance.revision7FinalSync !== true) return NextResponse.json({ error: "An active Revision 7 candidate is required before timing preparation." }, { status: 409 });
+    if (sourceProvenance.externalPublishingDisabled !== true || sourceProvenance.youtubePublishingDisabled !== true) return NextResponse.json({ error: "Timing preparation requires publishing locks." }, { status: 409 });
+    if (!manifest || manifest.timingEvidenceRequired !== true || manifest.narrationTimingEvidence) return NextResponse.json({ error: "This candidate does not require unbound narration timing." }, { status: 409 });
+    const configuration = shotstackConfiguration();
+    if (!configuration.configured) return NextResponse.json({ error: "Shotstack is not configured for timing preparation." }, { status: 503 });
+    const existingPreparation = record(production.timingPreparation);
+    if (existingPreparation.state && existingPreparation.state !== "failed") return NextResponse.json({ job: source, timingPreparation: existingPreparation, shotstackCreditsConsumed: 0, finalRenderSubmitted: false });
+    if (existingPreparation.state === "failed" || existingPreparation.narrationAssetId) return NextResponse.json({ error: "Narration timing preparation has already been attempted for this candidate; automatic retry is disabled." }, { status: 409 });
+    const requestedAt = new Date().toISOString();
+    try {
+      const createdAsset = await createShotstackNarrationAsset({ apiKey: configuration.apiKey, environment: configuration.environment, manifest });
+      if (!createdAsset.id) throw new Error("Missing Create asset id");
+      const timingPreparation = { state: createdAsset.url ? "create_ready" : "create_submitted", providerId: "shotstack", environment: configuration.environment, narrationAssetId: createdAsset.id, narrationAssetStatus: createdAsset.providerStatus, narrationAudioUrl: shotstackMediaUrl(createdAsset.url), createRequestedAt: requestedAt, createCheckedAt: requestedAt, estimatedCredits: { speechCredits: estimateShotstackCredits(manifest, configuration.environment).speechCredits, transcriptionCredits: null, total: estimateShotstackCredits(manifest, configuration.environment).speechCredits }, actualCredits: createdAsset.credits ?? null, finalRenderSubmitted: false, automaticRetry: false };
+      const { data: updated, error } = await client.from("beast_marketing_video_jobs").update({ production: { ...production, providerState: timingPreparation.state, timingPreparation, externalActionPerformed: false, finalRenderSubmitted: false, shotstackCreditsConsumed: 0 }, provenance: { ...sourceProvenance, timingPreparation: { state: timingPreparation.state, providerId: "shotstack", environment: configuration.environment, narrationAssetId: createdAsset.id, createRequestedAt: requestedAt, finalRenderSubmitted: false, automaticRetry: false } }, updated_at: requestedAt }).eq("id", source.id).eq("owner_id", user.id).select("*").single();
+      if (error || !updated) return unavailable();
+      return NextResponse.json({ job: updated, timingPreparation, shotstackCreditsConsumed: 0, finalRenderSubmitted: false }, { status: 202 });
+    } catch {
+      const timingPreparation = { state: "failed", providerId: "shotstack", environment: configuration.environment, createRequestedAt: requestedAt, createFailedAt: new Date().toISOString(), finalRenderSubmitted: false, automaticRetry: false, error: "Shotstack narration asset creation failed; no automatic retry was made." };
+      await client.from("beast_marketing_video_jobs").update({ production: { ...production, providerState: "timing_preparation_failed", timingPreparation, externalActionPerformed: false, finalRenderSubmitted: false, shotstackCreditsConsumed: 0 }, updated_at: timingPreparation.createFailedAt }).eq("id", source.id).eq("owner_id", user.id);
+      return NextResponse.json({ error: timingPreparation.error, timingPreparation, shotstackCreditsConsumed: 0, finalRenderSubmitted: false }, { status: 502 });
+    }
+  }
+  if (kind === "check_revision7_timing") {
+    if (request.headers.get("origin") !== new URL(request.url).origin) return forbidden();
+    const sourceId = clean(body?.id, 80);
+    const { data: source } = await client.from("beast_marketing_video_jobs").select("*").eq("id", sourceId).eq("owner_id", user.id).maybeSingle();
+    if (!source) return NextResponse.json({ error: "The selected video candidate is unavailable." }, { status: 404 });
+    const sourceProvenance = record(source.provenance); const production = record(source.production); const manifest = production.manifest as ProductionManifest; const preparation = record(production.timingPreparation);
+    if (sourceProvenance.superseded || source.revision !== 7 || sourceProvenance.revision7FinalSync !== true) return NextResponse.json({ error: "An active Revision 7 candidate is required before timing status can be checked." }, { status: 409 });
+    if (!manifest || manifest.timingEvidenceRequired !== true) return NextResponse.json({ error: "This candidate does not require narration timing preparation." }, { status: 409 });
+    if (preparation.state === "failed") return NextResponse.json({ error: "Narration timing preparation failed and will not retry automatically.", timingPreparation: preparation }, { status: 409 });
+    const configuration = shotstackConfiguration();
+    if (!configuration.configured) return NextResponse.json({ error: "Shotstack is not configured for timing status." }, { status: 503 });
+    const checkedAt = new Date().toISOString();
+    try {
+      let nextPreparation: Record<string, unknown> = { ...preparation, checkedAt };
+      if (["create_submitted", "create_ready"].includes(String(preparation.state)) && preparation.narrationAssetId) {
+        const createdAsset = await inspectShotstackNarrationAsset({ apiKey: configuration.apiKey, environment: configuration.environment, assetId: String(preparation.narrationAssetId) });
+        if (!["ready", "succeeded", "done", "completed"].includes(createdAsset.providerStatus) || !createdAsset.url && !preparation.narrationAudioUrl) {
+          nextPreparation = { ...nextPreparation, state: "create_submitted", narrationAssetStatus: createdAsset.providerStatus, createCheckedAt: checkedAt, actualCredits: createdAsset.credits ?? preparation.actualCredits ?? null };
+          await client.from("beast_marketing_video_jobs").update({ production: { ...production, providerState: "timing_preparation_create_submitted", timingPreparation: nextPreparation }, updated_at: checkedAt }).eq("id", source.id).eq("owner_id", user.id);
+          return NextResponse.json({ status: "processing", timingPreparation: nextPreparation, shotstackCreditsConsumed: 0, finalRenderSubmitted: false }, { status: 202 });
+        }
+        const narrationAudioUrl = shotstackMediaUrl(createdAsset.url || preparation.narrationAudioUrl);
+        if (!narrationAudioUrl) throw new Error("Shotstack Create returned no safe narration URL");
+        const ingested = await ingestShotstackNarration({ apiKey: configuration.apiKey, environment: configuration.environment, audioUrl: narrationAudioUrl });
+        if (!ingested.id) throw new Error("Missing Ingest source id");
+        nextPreparation = { ...nextPreparation, state: "ingest_submitted", narrationAssetStatus: createdAsset.providerStatus, narrationAudioUrl, transcriptionSourceId: ingested.id, transcriptionStatus: ingested.providerStatus, transcriptionSrtUrl: ingested.transcriptionUrl, actualNarrationDurationMs: ingested.durationMs, ingestRequestedAt: checkedAt, ingestCheckedAt: checkedAt, actualCredits: (createdAsset.credits ?? ingested.credits) ?? preparation.actualCredits ?? null };
+        await client.from("beast_marketing_video_jobs").update({ production: { ...production, providerState: "timing_preparation_ingest_submitted", timingPreparation: nextPreparation }, updated_at: checkedAt }).eq("id", source.id).eq("owner_id", user.id);
+        return NextResponse.json({ status: "processing", timingPreparation: nextPreparation, shotstackCreditsConsumed: 0, finalRenderSubmitted: false }, { status: 202 });
+      }
+      if (preparation.state === "ingest_submitted" && preparation.transcriptionSourceId) {
+        const ingested = await inspectShotstackIngestSource({ apiKey: configuration.apiKey, environment: configuration.environment, sourceId: String(preparation.transcriptionSourceId) });
+        if (!["ready", "succeeded", "done", "completed"].includes(ingested.providerStatus) || !ingested.transcriptionUrl) {
+          nextPreparation = { ...nextPreparation, transcriptionStatus: ingested.providerStatus, ingestCheckedAt: checkedAt, actualNarrationDurationMs: ingested.durationMs ?? preparation.actualNarrationDurationMs ?? null, actualCredits: ingested.credits ?? preparation.actualCredits ?? null };
+          await client.from("beast_marketing_video_jobs").update({ production: { ...production, providerState: "timing_preparation_ingest_submitted", timingPreparation: nextPreparation }, updated_at: checkedAt }).eq("id", source.id).eq("owner_id", user.id);
+          return NextResponse.json({ status: "processing", timingPreparation: nextPreparation, shotstackCreditsConsumed: 0, finalRenderSubmitted: false }, { status: 202 });
+        }
+        const transcriptionSrtUrl = shotstackMediaUrl(ingested.transcriptionUrl);
+        const durationMs = ingested.durationMs ?? Number(preparation.actualNarrationDurationMs);
+        if (!transcriptionSrtUrl || !Number.isInteger(durationMs) || durationMs <= 0) throw new Error("Shotstack Ingest returned incomplete transcription evidence");
+        const srtResponse = await fetch(transcriptionSrtUrl, { cache: "no-store", signal: AbortSignal.timeout(20_000) });
+        if (!srtResponse.ok) throw new Error("Shotstack transcription SRT could not be fetched");
+        const srt = await srtResponse.text();
+        const evidencePayload = narrationTimingEvidenceFromSrt({ manifest, providerId: "shotstack", assetId: String(preparation.narrationAssetId), assetUri: String(preparation.narrationAudioUrl), sourceId: String(preparation.transcriptionSourceId), durationMs, srt, verifiedAt: checkedAt });
+        const boundManifest = bindNarrationTimingEvidence(manifest, evidencePayload);
+        const { data: series } = await client.from("beast_marketing_video_series").select("settings").eq("id", source.series_id).eq("owner_id", user.id).maybeSingle();
+        const normalizedSettings = settings(series?.settings); const qualityReport = evaluateProductionQuality(boundManifest, { ...normalizedSettings, minimumRuntimeSeconds: 60, maximumRuntimeSeconds: Math.max(61.5, normalizedSettings.maximumRuntimeSeconds) });
+        if (!qualityReport.ready || qualityReport.score < normalizedSettings.qualityThreshold) throw new Error("Provider narration timing did not satisfy the publication-quality gate");
+        buildShotstackEdit(boundManifest);
+        nextPreparation = { ...nextPreparation, state: "ready", transcriptionStatus: ingested.providerStatus, transcriptionSrtUrl, actualNarrationDurationMs: durationMs, timingEvidenceVerifiedAt: checkedAt, actualCredits: ingested.credits ?? preparation.actualCredits ?? null, finalRenderSubmitted: false };
+        const { data: updated, error } = await client.from("beast_marketing_video_jobs").update({ production: { ...production, manifest: boundManifest, qualityReport, providerState: "authorization_required", timingPreparation: nextPreparation, timingEvidenceRequired: true, syncVerificationRequired: false, externalActionPerformed: false, finalRenderSubmitted: false, shotstackCreditsConsumed: 0 }, quality: { ...record(source.quality), ...qualityReport.metrics, renderReady: false, timingEvidenceBound: true, syncVerificationRequired: false, syncMethod: "provider_word_timestamps", qualityScore: qualityReport.score }, provenance: { ...sourceProvenance, timingEvidenceBound: true, syncVerificationRequired: false, syncMethod: "provider_word_timestamps", timingEvidenceVerifiedAt: checkedAt, narrationAssetId: preparation.narrationAssetId, narrationAudioUrl: preparation.narrationAudioUrl, transcriptionSourceId: preparation.transcriptionSourceId, transcriptionSrtUrl, actualNarrationDurationMs: durationMs }, updated_at: checkedAt }).eq("id", source.id).eq("owner_id", user.id).select("*").single();
+        if (error || !updated) return unavailable();
+        return NextResponse.json({ status: "ready", job: updated, timingPreparation: nextPreparation, quality: qualityReport, shotstackCreditsConsumed: 0, finalRenderSubmitted: false }, { status: 200 });
+      }
+      return NextResponse.json({ status: preparation.state || "not_started", timingPreparation: preparation, shotstackCreditsConsumed: 0, finalRenderSubmitted: false }, { status: 200 });
+    } catch (error) {
+      const failedAt = new Date().toISOString(); const failedPreparation = { ...preparation, state: "failed", failedAt, finalRenderSubmitted: false, automaticRetry: false, error: error instanceof Error ? error.message.slice(0, 300) : "Narration timing preparation failed; no automatic retry was made." };
+      await client.from("beast_marketing_video_jobs").update({ production: { ...production, providerState: "timing_preparation_failed", timingPreparation: failedPreparation, externalActionPerformed: false, finalRenderSubmitted: false, shotstackCreditsConsumed: 0 }, updated_at: failedAt }).eq("id", source.id).eq("owner_id", user.id);
+      return NextResponse.json({ error: failedPreparation.error, timingPreparation: failedPreparation, shotstackCreditsConsumed: 0, finalRenderSubmitted: false }, { status: 502 });
+    }
   }
   if (kind === "bind_revision7_timing") {
     if (request.headers.get("origin") !== new URL(request.url).origin) return forbidden();

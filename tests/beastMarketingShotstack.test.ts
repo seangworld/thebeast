@@ -5,7 +5,8 @@ import { defaultVideoSeriesSettings } from "../src/lib/beastMarketingVideo";
 import { buildProductionManifest } from "../src/lib/beastMarketingProduction";
 import { buildStaticContainVisualPlan, buildVisualBeatPlan } from "../src/lib/beastMarketingQuality";
 import { bindNewsAcceptance2Revision6Visuals, bindNewsAcceptance2Revision7Visuals, newsAcceptance2Revision6Script } from "../src/lib/beastMarketingNewsVisualTest";
-import { bindNarrationTimingEvidence, type NarrationTimingEvidence } from "../src/lib/beastMarketingProduction";
+import { bindNarrationTimingEvidence, type NarrationTimingEvidence, validateNarrationTimingEvidence } from "../src/lib/beastMarketingProduction";
+import { isTrustedShotstackMediaUrl } from "../src/lib/beastMarketingShotstackMedia";
 import {
   BEAST_PRONUNCIATION_MAP,
   normalizeBeastDisplayNames,
@@ -15,9 +16,17 @@ import {
   SHOTSTACK_MAX_ESTIMATED_CREDITS_PER_RENDER,
   ShotstackProviderError,
   buildShotstackEdit,
+  buildShotstackNarrationCreatePayload,
+  buildShotstackTranscriptionPayload,
+  createShotstackNarrationAsset,
   estimateShotstackCredits,
   inspectShotstackRender,
+  ingestShotstackNarration,
+  narrationTimingEvidenceFromSrt,
   nextShotstackManualAttempt,
+  parseSrt,
+  parseShotstackCreateAsset,
+  parseShotstackIngestSource,
   shotstackConfiguration,
   shotstackEnvironment,
   shotstackWatermarkPolicy,
@@ -215,10 +224,15 @@ test("Revision 7 emits no center narration overlay and separates screenshots wit
   assert.equal(images.filter((clip) => (clip.transition as Record<string, unknown>).in === "fadeFast" && (clip.transition as Record<string, unknown>).out === "fadeFast").length, 9);
   for (let index = 1; index < images.length; index += 1) assert.ok((images[index].start as number) > (images[index - 1].start as number) + (images[index - 1].length as number));
   assert.equal(edit.timeline.tracks.some((track) => track.clips.some((clip) => (clip.asset as Record<string, unknown>).type === "rich-text" && clip.width === Math.round(source.width * 0.82))), false);
-  const evidence: NarrationTimingEvidence = { providerId: "shotstack", assetId: "tts-r7", durationMs: 61_500, timingType: "phrase", cues: source.scenes.flatMap((scene) => scene.captions.map((cue) => ({ sceneId: scene.id, text: cue.text, startMs: cue.startMs, endMs: cue.endMs }))), verifiedAt: "2026-09-11T20:00:00.000Z", syncToleranceMs: 150, maxObservedDriftMs: 0 };
+  const evidence: NarrationTimingEvidence = { providerId: "shotstack", assetId: "tts-r7", assetUri: "https://cdn.shotstack.io/au/v1/audio-r7.mp3", sourceId: "source-r7", durationMs: 61_500, timingType: "phrase", cues: source.scenes.flatMap((scene) => scene.captions.map((cue) => ({ sceneId: scene.id, text: cue.text, startMs: cue.startMs, endMs: cue.endMs }))), verifiedAt: "2026-09-11T20:00:00.000Z", syncToleranceMs: 150, maxObservedDriftMs: 0 };
   const bound = bindNarrationTimingEvidence(source, evidence);
-  assert.equal(validateShotstackEdit(buildShotstackEdit(bound)).valid, true);
-  assert.equal(buildShotstackEdit(bound).timeline.tracks.some((track) => track.clips.some((clip) => clip.alias !== "bmkt-cta" && clip.position === "center" && (clip.asset as Record<string, unknown>).type === "rich-text" && clip.width === Math.round(source.width * 0.82))), false);
+  const boundEdit = buildShotstackEdit(bound);
+  assert.equal(validateShotstackEdit(boundEdit).valid, true);
+  const boundNarration = boundEdit.timeline.tracks.flatMap((track) => track.clips).find((clip) => clip.alias === "bmkt-narration");
+  assert.deepEqual(boundNarration?.asset, { type: "audio", src: "https://cdn.shotstack.io/au/v1/audio-r7.mp3" });
+  assert.equal((boundNarration?.asset as Record<string, unknown>).type === "text-to-speech", false);
+  assert.equal(estimateShotstackCredits(bound, "v1").speechCredits, 0);
+  assert.equal(boundEdit.timeline.tracks.some((track) => track.clips.some((clip) => clip.alias !== "bmkt-cta" && clip.position === "center" && (clip.asset as Record<string, unknown>).type === "rich-text" && clip.width === Math.round(source.width * 0.82))), false);
 });
 
 test("BMKT-011 local schema validation catches custom fields and same-track overlap", () => {
@@ -316,6 +330,68 @@ test("BMKT-007 maps provider authentication failures to safe typed errors", asyn
     submitShotstackRender({ apiKey: "k".repeat(40), environment: "stage", edit: buildShotstackEdit(manifest), fetcher: async () => new Response("raw provider secret detail", { status: 401 }) }),
     (error: unknown) => error instanceof ShotstackProviderError && error.category === "authentication" && !error.message.includes("raw provider"),
   );
+});
+
+test("Revision 7 timing preparation uses exact normalized Create and Ingest payloads", () => {
+  const revision7 = bindNewsAcceptance2Revision7Visuals(bindNewsAcceptance2Revision6Visuals(buildProductionManifest({ jobId: "timing-payload", revision: 6, settings: defaultVideoSeriesSettings, script: { ...newsAcceptance2Revision6Script, narration: [...newsAcceptance2Revision6Script.narration] } })));
+  const payload = buildShotstackNarrationCreatePayload(revision7);
+  assert.equal(payload.provider, "shotstack");
+  assert.deepEqual(payload.options, { type: "text-to-speech", text: normalizeBeastNarrationForSpeech(revision7.scenes.map((scene) => scene.narration).join(" ")), voice: "Matthew", language: "en-US" });
+  assert.deepEqual(buildShotstackTranscriptionPayload("https://cdn.shotstack.io/au/v1/r7-audio.mp3"), { url: "https://cdn.shotstack.io/au/v1/r7-audio.mp3", outputs: { transcription: { format: "srt" } } });
+});
+
+test("Revision 7 timing provider calls use Create and Ingest endpoints without composition", async () => {
+  const revision7 = bindNewsAcceptance2Revision7Visuals(bindNewsAcceptance2Revision6Visuals(buildProductionManifest({ jobId: "timing-provider", revision: 6, settings: defaultVideoSeriesSettings, script: { ...newsAcceptance2Revision6Script, narration: [...newsAcceptance2Revision6Script.narration] } })));
+  const calls: Array<{ url: string; body: unknown }> = [];
+  const fetcher = async (input: RequestInfo | URL, init?: RequestInit) => { calls.push({ url: String(input), body: init?.body ? JSON.parse(String(init.body)) : null }); return new Response(JSON.stringify({ response: { id: "asset-r7", status: "queued" } }), { status: 201 }); };
+  await createShotstackNarrationAsset({ apiKey: "k".repeat(40), environment: "v1", manifest: revision7, fetcher });
+  await ingestShotstackNarration({ apiKey: "k".repeat(40), environment: "v1", audioUrl: "https://cdn.shotstack.io/au/v1/r7-audio.mp3", fetcher });
+  assert.equal(calls[0].url, "https://api.shotstack.io/create/v1/assets/");
+  assert.equal(calls[1].url, "https://api.shotstack.io/ingest/v1/sources");
+  assert.equal((calls[0].body as Record<string, unknown>).provider, "shotstack");
+  assert.deepEqual(calls[1].body, { url: "https://cdn.shotstack.io/au/v1/r7-audio.mp3", outputs: { transcription: { format: "srt" } } });
+});
+
+test("Revision 7 timing parsers and SRT mapping preserve exact bounded phrases", () => {
+  const revision7 = bindNewsAcceptance2Revision7Visuals(bindNewsAcceptance2Revision6Visuals(buildProductionManifest({ jobId: "timing-srt", revision: 6, settings: defaultVideoSeriesSettings, script: { ...newsAcceptance2Revision6Script, narration: [...newsAcceptance2Revision6Script.narration] } })));
+  const srt = revision7.scenes.flatMap((scene) => scene.captions).map((cue, index) => `${index + 1}\n${String(Math.floor(cue.startMs / 3_600_000)).padStart(2, "0")}:${String(Math.floor(cue.startMs / 60_000) % 60).padStart(2, "0")}:${String(Math.floor(cue.startMs / 1_000) % 60).padStart(2, "0")},${String(cue.startMs % 1_000).padStart(3, "0")} --> ${String(Math.floor(cue.endMs / 3_600_000)).padStart(2, "0")}:${String(Math.floor(cue.endMs / 60_000) % 60).padStart(2, "0")}:${String(Math.floor(cue.endMs / 1_000) % 60).padStart(2, "0")},${String(cue.endMs % 1_000).padStart(3, "0")}\n${cue.text}`).join("\n\n");
+  assert.equal(parseSrt(srt).length, revision7.scenes.reduce((count, scene) => count + scene.captions.length, 0));
+  const evidence = narrationTimingEvidenceFromSrt({ manifest: revision7, providerId: "shotstack", assetId: "asset-r7", assetUri: "https://cdn.shotstack.io/au/v1/r7-audio.mp3", sourceId: "source-r7", durationMs: 61_500, srt, verifiedAt: "2026-09-12T00:00:00.000Z" });
+  assert.equal(evidence.cues.every((cue) => cue.text.trim().split(/\s+/).length <= 6), true);
+  assert.equal(evidence.maxObservedDriftMs, 0);
+  assert.deepEqual(parseShotstackCreateAsset({ response: { id: "asset-r7", status: "done", url: "https://cdn.shotstack.io/au/v1/r7-audio.mp3" } }), { id: "asset-r7", status: "done", url: "https://cdn.shotstack.io/au/v1/r7-audio.mp3", providerStatus: "done" });
+  assert.deepEqual(parseShotstackIngestSource({ data: { id: "source-r7", attributes: { status: "done", duration: 61.5, outputs: { transcription: { url: "https://cdn.shotstack.io/au/v1/r7.srt" } } } } }), { id: "source-r7", status: "done", transcriptionUrl: "https://cdn.shotstack.io/au/v1/r7.srt", durationMs: 61_500, providerStatus: "done" });
+});
+
+test("trusted Shotstack media URL policy accepts only CDN and service-owned Create/Ingest buckets", () => {
+  const passing = [
+    "https://cdn.shotstack.io/au/v1/audio.mp3",
+    "https://shotstack-create-api-v1-assets.s3.amazonaws.com/audio.mp3",
+    "https://shotstack-create-api-stage-assets.s3.us-east-1.amazonaws.com/audio.mp3",
+    "https://shotstack-ingest-api-v1-sources.s3.ap-southeast-2.amazonaws.com/transcript.srt?signature=presigned",
+    "https://shotstack-ingest-api-stage-sources.s3.eu-west-1.amazonaws.com/transcript.srt",
+  ];
+  const failing = [
+    "https://evil.s3.amazonaws.com/audio.mp3",
+    "https://shotstack-create-api-v1-assets.s3.amazonaws.com.evil.com/audio.mp3",
+    "https://amazonaws.com/audio.mp3",
+    "http://cdn.shotstack.io/audio.mp3",
+    "https://user:password@cdn.shotstack.io/audio.mp3",
+    "https://shotstack.io.evil.com/audio.mp3",
+    "https://shotstack-assets.example.com/audio.mp3",
+    "https://shotstack-create-api-v1-assets.s3.amazonaws.com.evil/audio.mp3",
+  ];
+  passing.forEach((url) => assert.equal(isTrustedShotstackMediaUrl(url), true, url));
+  failing.forEach((url) => assert.equal(isTrustedShotstackMediaUrl(url), false, url));
+});
+
+test("Revision 7 timing evidence accepts a trusted Shotstack Create S3 narration URL", () => {
+  const manifest = bindNewsAcceptance2Revision7Visuals(bindNewsAcceptance2Revision6Visuals(buildProductionManifest({ jobId: "timing-s3-evidence", revision: 6, settings: defaultVideoSeriesSettings, script: { ...newsAcceptance2Revision6Script, narration: [...newsAcceptance2Revision6Script.narration] } })));
+  const evidence: NarrationTimingEvidence = {
+    providerId: "shotstack", assetId: "asset-s3", assetUri: "https://shotstack-create-api-v1-assets.s3.amazonaws.com/audio.mp3", sourceId: "source-s3", durationMs: 61_500, timingType: "phrase", verifiedAt: "2026-09-12T00:00:00.000Z", syncToleranceMs: 150, maxObservedDriftMs: 0,
+    cues: manifest.scenes.flatMap((scene) => scene.captions.map((cue) => ({ sceneId: scene.id, text: cue.text, startMs: cue.startMs, endMs: cue.endMs }))),
+  };
+  assert.equal(validateNarrationTimingEvidence(manifest, evidence).valid, true);
 });
 
 test("BMKT-007 permits bounded credential and schema remediation before provider submission", () => {
