@@ -39,6 +39,8 @@ function renderPopover() {
   return render(React.createElement(OverlayPopover, {
     label: "Payment actions",
     panelAriaLabel: "Payment actions",
+    // OverlayPopover expects a render function, not a ReactNode child.
+    // eslint-disable-next-line react/no-children-prop
     children: () => React.createElement(
       React.Fragment,
       null,

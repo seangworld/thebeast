@@ -3,7 +3,6 @@
 import {
   buildAnalyticsDispatch,
   classifyBeastRoute,
-  normalizeAnalyticsConsent,
   type AnalyticsConsentState,
   type AnalyticsContext,
   type AnalyticsDispatch,
@@ -32,32 +31,9 @@ declare global {
   }
 }
 
-export function readAnalyticsConsent(
-  configuredDefault: AnalyticsConsentState = "pending"
-) {
-  if (typeof window === "undefined") return configuredDefault;
-  return normalizeAnalyticsConsent(
-    window.localStorage.getItem(ANALYTICS_CONSENT_STORAGE_KEY) ||
-      configuredDefault
-  );
-}
-
-export function setAnalyticsConsent(consent: AnalyticsConsentState) {
-  if (typeof window === "undefined") return;
-  window.localStorage.setItem(ANALYTICS_CONSENT_STORAGE_KEY, consent);
-  window.gtag?.("consent", "update", {
-    analytics_storage: consent === "enabled" ? "granted" : "denied",
-  });
-  window.dispatchEvent(
-    new CustomEvent(ANALYTICS_CONSENT_EVENT, { detail: consent })
-  );
-}
-
-export function subscribeToAnalyticsConsent(callback: () => void) {
-  if (typeof window === "undefined") return () => undefined;
-  window.addEventListener(ANALYTICS_CONSENT_EVENT, callback);
-  return () =>
-    window.removeEventListener(ANALYTICS_CONSENT_EVENT, callback);
+// Site analytics is enabled by owner policy; legacy local choices no longer gate it.
+export function readAnalyticsConsent(_configuredDefault?: AnalyticsConsentState): AnalyticsConsentState {
+  return "enabled";
 }
 
 export function dispatchAnalyticsEvent({

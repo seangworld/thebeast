@@ -15,15 +15,15 @@ function routeFixture({ admin = true, user = true, runs = [], history = [], hist
     } }; return chain;
   } };
   const compiled = transpileModule(readFileSync("src/app/api/admin/staff-operations/route.ts", "utf8"), { compilerOptions: { module: ModuleKind.CommonJS } }).outputText;
-  const module = { exports: {} as { GET: () => Promise<Response> } };
+  const fixtureModule = { exports: {} as { GET: () => Promise<Response> } };
   new Function("require", "module", "exports", compiled)((id: string) => {
     if (id === "next/server") return { NextResponse: { json: (body: unknown, init: ResponseInit) => Response.json(body, init) } };
     if (id === "@/lib/supabase/server") return { createRouteClient: () => client };
     if (id === "@/lib/standingObservationOutcomes") return outcomes;
     if (id === "@/lib/server/standingObservationRunner") return {};
     throw new Error(`Unexpected dependency: ${id}`);
-  }, module, module.exports);
-  return { GET: module.exports.GET, queries };
+  }, fixtureModule, fixtureModule.exports);
+  return { GET: fixtureModule.exports.GET, queries };
 }
 const oldRun = { id: "old", trigger_type: "schedule", status: "clean", started_at: "2026-01-01T10:00:00Z", completed_at: "2026-01-01T10:00:01Z", finding_count: 0, findings: [], checked_sources: [], unavailable_sources: [] };
 

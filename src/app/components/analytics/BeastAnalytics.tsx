@@ -3,25 +3,19 @@
 import Script from "next/script";
 import { usePathname } from "next/navigation";
 import {
-  useCallback,
   useEffect,
   useMemo,
   useState,
-  useSyncExternalStore,
 } from "react";
 import {
   configureAnalyticsRuntime,
   dispatchAnalyticsEvent,
-  readAnalyticsConsent,
-  setAnalyticsConsent,
-  subscribeToAnalyticsConsent,
 } from "@/lib/analytics/client";
 import {
   analyticsPerformanceBucket,
   buildGa4PageView,
   classifyBeastRoute,
   createPageViewDeduplicator,
-  normalizeAnalyticsConsent,
   normalizeAnalyticsEnvironment,
   type AnalyticsConsentState,
   type AnalyticsEventName,
@@ -47,27 +41,14 @@ const supportedClickEvents = new Set<AnalyticsEventName>([
   "search_no_results",
 ]);
 
-export function BeastAnalyticsConsentControl({ configuredConsent }: { configuredConsent?: string }) {
-  const consentDefault = normalizeAnalyticsConsent(configuredConsent);
-  const readConsentSnapshot = useCallback(() => readAnalyticsConsent(consentDefault), [consentDefault]);
-  const consent = useSyncExternalStore(subscribeToAnalyticsConsent, readConsentSnapshot, () => consentDefault) as AnalyticsConsentState;
-  return (
-    <section className="mx-auto mt-4 max-w-xl rounded-xl border border-white/10 bg-white/[0.03] p-4 text-left" aria-labelledby="beast-analytics-choice">
-      <h2 id="beast-analytics-choice" className="font-black text-white">Optional product analytics</h2>
-      <p className="mt-2 text-sm leading-6 text-[#aeb8c7]">Share anonymous, category-only usage events to improve Beast. Financial, health, document, conversation, identity, and other member content is never included.</p>
-      <p className="mt-2 text-sm font-bold text-[#dbe3ef]" aria-live="polite">Current choice: {consent === "enabled" ? "enabled" : consent === "disabled" ? "disabled" : "no choice — disabled"}.</p>
-      <div className="mt-3 flex flex-wrap gap-2">
-        <button type="button" className="beast-button min-h-11" aria-pressed={consent === "enabled"} onClick={() => setAnalyticsConsent("enabled")}>Enable optional analytics</button>
-        <button type="button" className="beast-button-secondary min-h-11" aria-pressed={consent === "disabled"} onClick={() => setAnalyticsConsent("disabled")}>Keep analytics disabled</button>
-      </div>
-    </section>
-  );
+// Compatibility export: the owner removed the site analytics toggle on 2026-09-12.
+export function BeastAnalyticsConsentControl(_props: { configuredConsent?: string }) {
+  return null;
 }
 
 export function BeastAnalytics({
   measurementId,
   environmentName,
-  configuredConsent,
 }: {
   measurementId: string;
   environmentName?: string;
@@ -78,20 +59,8 @@ export function BeastAnalytics({
     () => normalizeAnalyticsEnvironment(environmentName),
     [environmentName]
   );
-  const consentDefault = normalizeAnalyticsConsent(configuredConsent);
-  const readConsentSnapshot = useCallback(
-    () => readAnalyticsConsent(consentDefault),
-    [consentDefault]
-  );
-  const readServerConsentSnapshot = useCallback(
-    () => consentDefault,
-    [consentDefault]
-  );
-  const consent = useSyncExternalStore(
-    subscribeToAnalyticsConsent,
-    readConsentSnapshot,
-    readServerConsentSnapshot
-  ) as AnalyticsConsentState;
+  const consentDefault = "enabled" as const;
+  const consent = consentDefault;
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -251,8 +220,9 @@ export function BeastAnalytics({
       strategy="afterInteractive"
       onLoad={() => {
         window.dataLayer = window.dataLayer || [];
-        window.gtag = (...args: unknown[]) => {
-          window.dataLayer?.push(args);
+        window.gtag = function () {
+          // Google commands require an Arguments object, not a rest-parameter array.
+          window.dataLayer?.push(arguments);
         };
         window.gtag("consent", "default", {
           analytics_storage: "granted",
