@@ -40,6 +40,12 @@ const packageIdentity = (
  */
 export const beastRoadmapPackageRegistry = [
   packageIdentity(
+    "KDP-001",
+    [],
+    "Automated Publishing Factory Foundation",
+    ["docs/KDP-001-FACTORY-FOUNDATION.md"]
+  ),
+  packageIdentity(
     "BHM-002",
     [],
     "Photo-to-Home-Inventory V1 and Safe Member Availability",
