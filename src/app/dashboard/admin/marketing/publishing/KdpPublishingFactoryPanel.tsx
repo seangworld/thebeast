@@ -1,10 +1,12 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import { normalizeOwnerProviderAction, type OwnerProviderAction } from "@/lib/ownerProviderActions";
 
 type Brief = { positioning?: string; readerOutcome?: string; chapters?: string[]; evidencePlan?: string[]; acceptanceCriteria?: string[] };
 type Publication = { id: string; title: string; audience: string; topic: string; formats: string[]; state: string; opportunity_score: number | null; brief?: Brief; package_evidence?: Record<string, boolean>; updated_at: string };
 type Chapter = { id: string; chapter_number: number; title: string; status: string; draft_text: string; word_count: number; source_notes: Array<{ title: string; url: string; claim: string }> };
+type GenerationProgress = { state: "working" | "error" | "success"; text: string; completed: number; total: number; ownerAction?: OwnerProviderAction | null };
 type PublishingOpportunity = {
   id: string;
   title: string;
@@ -56,6 +58,10 @@ export function KdpPublishingFactoryPanel() {
   const [hunting, setHunting] = useState(false);
   const [addingOpportunityId, setAddingOpportunityId] = useState<string | null>(null);
   const [opportunityFormats, setOpportunityFormats] = useState<Record<string, string[]>>({});
+  const [creating, setCreating] = useState(false);
+  const createInFlight = useRef(false);
+  const [huntOwnerAction, setHuntOwnerAction] = useState<OwnerProviderAction | null>(null);
+  const [generationProgress, setGenerationProgress] = useState<Record<string, GenerationProgress>>({});
   const load = useCallback(async () => {
     const response = await fetch("/api/admin/beast-marketing/publishing", { cache: "no-store" });
     const body = await response.json();
@@ -78,7 +84,7 @@ export function KdpPublishingFactoryPanel() {
 
   async function runPublishingHunt() {
     if (hunting) return;
-    setHunting(true); setMessage("BeastHunter is researching current KDP opportunities and evidence…"); setHuntResults([]);
+    setHunting(true); setMessage("BeastHunter is researching current KDP opportunities and evidence…"); setHuntResults([]); setHuntOwnerAction(null);
     const criteria = {
       query: huntObjective,
       huntTypes: ["PDF / Book"],
@@ -103,12 +109,12 @@ export function KdpPublishingFactoryPanel() {
     };
     try {
       let response = await fetch("/api/admin/beast-hunter", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ criteria }) });
-      let body = await response.json() as { error?: string; duplicateHuntId?: string; opportunities?: PublishingOpportunity[] };
+      let body = await response.json() as { error?: string; duplicateHuntId?: string; opportunities?: PublishingOpportunity[]; ownerAction?: unknown };
       if (response.status === 409 && body.duplicateHuntId) {
         response = await fetch(`/api/admin/beast-hunter?huntId=${encodeURIComponent(body.duplicateHuntId)}`, { cache: "no-store" });
-        body = await response.json() as { error?: string; opportunities?: PublishingOpportunity[] };
+        body = await response.json() as { error?: string; opportunities?: PublishingOpportunity[]; ownerAction?: unknown };
       }
-      if (!response.ok || !body.opportunities) throw new Error(body.error || "BeastHunter could not return publishing opportunities.");
+      if (!response.ok || !body.opportunities) { setHuntOwnerAction(normalizeOwnerProviderAction(body.ownerAction)); throw new Error(body.error || "BeastHunter could not return publishing opportunities."); }
       setHuntResults(body.opportunities);
       setMessage(`${body.opportunities.length} evidence-backed KDP opportunities found. Choose only the ones you want to produce.`);
     } catch (reason) {
@@ -144,15 +150,29 @@ export function KdpPublishingFactoryPanel() {
   }
 
   async function create(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault(); setMessage("Scoring and saving candidate…");
-    const data = new FormData(event.currentTarget);
-    const response = await fetch("/api/admin/beast-marketing/publishing", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({
-      title: data.get("title"), audience: data.get("audience"), topic: data.get("topic"), formats: data.getAll("formats"),
-      opportunity: { buyerIntent: data.get("buyerIntent"), differentiation: data.get("differentiation"), evidenceReadiness: data.get("evidenceReadiness"), seriesPotential: data.get("seriesPotential"), timeToMarketDays: data.get("timeToMarketDays"), estimatedCashCost: data.get("estimatedCashCost") },
-    }) });
-    const body = await response.json();
-    if (!response.ok) { setMessage(body.error || "Candidate could not be saved."); return; }
-    event.currentTarget.reset(); setMessage(`Candidate saved · ${label(body.recommendation)} priority.`); await load();
+    event.preventDefault();
+    if (createInFlight.current) return;
+    createInFlight.current = true;
+    setCreating(true);
+    setMessage("Scoring and saving candidate…");
+    const form = event.currentTarget;
+    const data = new FormData(form);
+    try {
+      const response = await fetch("/api/admin/beast-marketing/publishing", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({
+        title: data.get("title"), audience: data.get("audience"), topic: data.get("topic"), formats: data.getAll("formats"),
+        opportunity: { buyerIntent: data.get("buyerIntent"), differentiation: data.get("differentiation"), evidenceReadiness: data.get("evidenceReadiness"), seriesPotential: data.get("seriesPotential"), timeToMarketDays: data.get("timeToMarketDays"), estimatedCashCost: data.get("estimatedCashCost") },
+      }) });
+      const body = await response.json();
+      if (!response.ok) { setMessage(body.error || "Candidate could not be saved."); return; }
+      form.reset();
+      await load();
+      setMessage(`Candidate saved · ${label(body.recommendation)} priority. It is listed under Publishing projects below.`);
+    } catch {
+      setMessage("The candidate could not be saved. Your form entries were preserved; try again.");
+    } finally {
+      createInFlight.current = false;
+      setCreating(false);
+    }
   }
 
   async function advance(id: string, action: string, packageEvidence?: Record<string, boolean>) {
@@ -179,32 +199,72 @@ export function KdpPublishingFactoryPanel() {
     setChapters((current) => ({ ...current, [publicationId]: body.chapters || [] }));
   }
 
-  async function manuscriptAction(publicationId: string, action: "initialize" | "generate_next") {
+  async function manuscriptAction(publicationId: string, action: "initialize" | "generate_next", knownTotal = chapters[publicationId]?.length || 0) {
+    if (action === "generate_next" && generatingPublicationId) return;
+    if (action === "generate_next") {
+      const rows = chapters[publicationId] || [];
+      const completed = rows.filter((chapter) => ["review_ready", "approved"].includes(chapter.status)).length;
+      setGeneratingPublicationId(publicationId);
+      setGenerationProgress((current) => ({ ...current, [publicationId]: { state: "working", text: "Generating the next sourced chapter…", completed, total: rows.length || knownTotal } }));
+    }
     setMessage(action === "initialize" ? "Creating chapter plan…" : "Generating the next sourced chapter draft…");
-    const response = await fetch("/api/admin/beast-marketing/publishing/manuscript", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ publicationId, action }) });
-    const body = await response.json();
-    if (!response.ok) { setMessage(body.error || "Manuscript action could not be completed."); return; }
-    setMessage(action === "initialize" ? `Chapter plan created · ${body.chapterCount} chapters.` : `Chapter ${body.chapter.chapter_number} is ready for review.`);
-    await Promise.all([load(), loadChapters(publicationId)]);
+    try {
+      const response = await fetch("/api/admin/beast-marketing/publishing/manuscript", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ publicationId, action }) });
+      const body = await response.json() as { error?: string; chapterCount?: number; chapter?: Chapter; ownerAction?: unknown };
+      if (!response.ok) {
+        const rows = chapters[publicationId] || [];
+        const completed = rows.filter((chapter) => ["review_ready", "approved"].includes(chapter.status)).length;
+        const text = body.error || "Manuscript action could not be completed.";
+        setGenerationProgress((current) => ({ ...current, [publicationId]: { state: "error", text, completed, total: rows.length || knownTotal, ownerAction: normalizeOwnerProviderAction(body.ownerAction) } }));
+        setMessage(text);
+        return;
+      }
+      setMessage(action === "initialize" ? `Chapter plan created · ${body.chapterCount} chapters.` : `Chapter ${body.chapter?.chapter_number} is ready for review.`);
+      if (action === "generate_next") {
+        const rows = chapters[publicationId] || [];
+        setGenerationProgress((current) => ({ ...current, [publicationId]: { state: "success", text: `Chapter ${body.chapter?.chapter_number} drafted and ready for review.`, completed: Math.min(rows.length, rows.filter((chapter) => ["review_ready", "approved"].includes(chapter.status)).length + 1), total: rows.length } }));
+      }
+    } catch {
+      const rows = chapters[publicationId] || [];
+      const text = "Chapter generation stopped. Nothing is processing in the background.";
+      setGenerationProgress((current) => ({ ...current, [publicationId]: { state: "error", text, completed: rows.filter((chapter) => ["review_ready", "approved"].includes(chapter.status)).length, total: rows.length } }));
+      setMessage(text);
+    } finally {
+      if (action === "generate_next") setGeneratingPublicationId(null);
+      await Promise.all([load(), loadChapters(publicationId)]);
+    }
   }
 
-  async function generateAllRemaining(publicationId: string) {
+  async function generateAllRemaining(publicationId: string, knownTotal = chapters[publicationId]?.length || 0) {
     if (generatingPublicationId) return;
     setGeneratingPublicationId(publicationId);
     let generated = 0;
+    const initialRows = chapters[publicationId] || [];
+    const initialCompleted = initialRows.filter((chapter) => ["review_ready", "approved"].includes(chapter.status)).length;
+    const total = initialRows.length || knownTotal;
+    setGenerationProgress((current) => ({ ...current, [publicationId]: { state: "working", text: "Generating chapter 1 of the remaining chapters…", completed: initialCompleted, total } }));
     try {
       while (true) {
         setMessage(generated ? `Generating chapter drafts… ${generated} complete.` : "Generating all remaining sourced chapter drafts…");
         const response = await fetch("/api/admin/beast-marketing/publishing/manuscript", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ publicationId, action: "generate_next" }) });
-        const body = await response.json();
-        if (!response.ok) { setMessage(body.error || `Generation stopped after ${generated} chapters.`); return; }
+        const body = await response.json() as { error?: string; chapter?: Chapter; remainingCount?: number; ownerAction?: unknown };
+        if (!response.ok) {
+          const text = body.error || `Generation stopped after ${generated} chapters.`;
+          setGenerationProgress((current) => ({ ...current, [publicationId]: { state: "error", text, completed: initialCompleted + generated, total, ownerAction: normalizeOwnerProviderAction(body.ownerAction) } }));
+          setMessage(text);
+          return;
+        }
         generated += 1;
-        setMessage(`Chapter ${body.chapter.chapter_number} drafted · ${body.remainingCount} remaining.`);
+        setMessage(`Chapter ${body.chapter?.chapter_number} drafted · ${body.remainingCount} remaining.`);
+        setGenerationProgress((current) => ({ ...current, [publicationId]: { state: "working", text: body.remainingCount ? `Chapter ${body.chapter?.chapter_number} drafted. Generating the next chapter…` : "All chapter drafts generated.", completed: initialCompleted + generated, total } }));
         if (body.remainingCount === 0) break;
       }
       setMessage(`${generated} chapter${generated === 1 ? "" : "s"} generated · ready for individual review.`);
+      setGenerationProgress((current) => ({ ...current, [publicationId]: { state: "success", text: `${generated} chapter${generated === 1 ? "" : "s"} generated and ready for review.`, completed: initialCompleted + generated, total } }));
     } catch {
-      setMessage(`Generation stopped safely after ${generated} chapter${generated === 1 ? "" : "s"}. Completed drafts were preserved.`);
+      const text = `Generation stopped safely after ${generated} chapter${generated === 1 ? "" : "s"}. Nothing is still processing; completed drafts were preserved.`;
+      setMessage(text);
+      setGenerationProgress((current) => ({ ...current, [publicationId]: { state: "error", text, completed: initialCompleted + generated, total } }));
     } finally {
       setGeneratingPublicationId(null);
       await Promise.all([load(), loadChapters(publicationId)]);
@@ -243,7 +303,26 @@ export function KdpPublishingFactoryPanel() {
   function manuscript(item: Publication) {
     const rows = chapters[item.id];
     const generating = generatingPublicationId === item.id;
-    return <div className="space-y-3"><div className="flex flex-wrap gap-2"><button disabled={Boolean(generatingPublicationId)} onClick={() => void generateAllRemaining(item.id)} className="min-h-11 rounded-xl bg-amber-300 px-4 py-2 text-sm font-black text-slate-950 disabled:cursor-wait disabled:opacity-60">{generating ? "Generating all chapters…" : "Generate all remaining chapters"}</button><button disabled={Boolean(generatingPublicationId)} onClick={() => void manuscriptAction(item.id, "generate_next")} className="min-h-11 rounded-xl border border-amber-300/30 px-4 py-2 text-sm font-black text-amber-100 disabled:cursor-wait disabled:opacity-60">Generate one chapter</button><button disabled={generating} onClick={() => void loadChapters(item.id)} className="min-h-11 rounded-xl border border-white/15 px-4 py-2 text-sm font-black text-white disabled:cursor-wait disabled:opacity-60">{rows ? "Refresh chapters" : "View chapters"}</button></div><p className="text-xs leading-5 text-slate-400">Bulk generation drafts every remaining chapter in order. Each chapter still requires your approval before the manuscript can advance.</p>{rows ? <div className="space-y-2">{rows.map((chapter) => <details key={chapter.id} className="rounded-xl border border-white/10 p-3" open={chapter.status === "review_ready"}><summary className="cursor-pointer text-sm font-black text-white">Chapter {chapter.chapter_number}: {chapter.title} · {label(chapter.status)} · {chapter.word_count} words</summary>{chapter.draft_text ? <div className="mt-3 space-y-3"><p className="whitespace-pre-wrap text-sm leading-6 text-slate-300">{chapter.draft_text}</p><div>{chapter.source_notes.map((source) => <p key={source.url} className="text-sm text-slate-400"><a className="text-amber-200 underline" href={source.url} target="_blank" rel="noreferrer">{source.title}</a> — {source.claim}</p>)}</div>{chapter.status === "review_ready" ? <button onClick={() => void approveChapter(item.id, chapter.id)} className="min-h-11 rounded-xl bg-emerald-300 px-4 py-2 text-sm font-black text-slate-950">Approve chapter</button> : null}</div> : null}</details>)}</div> : null}</div>;
+    const progress = generationProgress[item.id];
+    const completed = rows?.filter((chapter) => ["review_ready", "approved"].includes(chapter.status)).length || 0;
+    const total = rows?.length || item.brief?.chapters?.length || 0;
+    const shownCompleted = progress?.completed ?? completed;
+    const shownTotal = progress?.total || total;
+    const percentage = shownTotal ? Math.round((shownCompleted / shownTotal) * 100) : 0;
+    return <div className="space-y-3">
+      <div className="flex flex-wrap gap-2">
+        <button disabled={Boolean(generatingPublicationId)} onClick={() => void generateAllRemaining(item.id, total)} className="min-h-11 rounded-xl bg-amber-300 px-4 py-2 text-sm font-black text-slate-950 disabled:cursor-wait disabled:opacity-60">{generating ? "Generating chapters…" : "Generate all remaining chapters"}</button>
+        <button disabled={Boolean(generatingPublicationId)} onClick={() => void manuscriptAction(item.id, "generate_next", total)} className="min-h-11 rounded-xl border border-amber-300/30 px-4 py-2 text-sm font-black text-amber-100 disabled:cursor-wait disabled:opacity-60">{generating ? "Generation in progress…" : "Generate one chapter"}</button>
+        <button disabled={generating} onClick={() => void loadChapters(item.id)} className="min-h-11 rounded-xl border border-white/15 px-4 py-2 text-sm font-black text-white disabled:cursor-wait disabled:opacity-60">{rows ? "Refresh chapters" : "View chapters"}</button>
+      </div>
+      <p className="text-xs leading-5 text-slate-400">Chapter generation uses paid OpenAI API credits. Bulk generation drafts every remaining chapter in order. Each chapter still requires your approval.</p>
+      <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3" aria-live="polite">
+        <div className="flex items-center justify-between gap-3 text-xs font-black text-slate-300"><span>{shownCompleted} of {shownTotal} chapters drafted</span><span>{percentage}%</span></div>
+        <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-800"><div className="h-full rounded-full bg-amber-300 transition-[width] duration-300" style={{ width: `${percentage}%` }} /></div>
+        {generating ? <p className="mt-3 flex items-center gap-2 text-sm font-bold text-amber-100"><span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-amber-200 border-r-transparent" aria-hidden="true" />{progress?.text || "Generation request is in process…"}</p> : progress ? <div className={`mt-3 rounded-lg border p-3 text-sm font-bold ${progress.state === "error" ? "border-red-300/30 bg-red-400/[0.08] text-red-100" : "border-emerald-300/25 bg-emerald-400/[0.06] text-emerald-100"}`}><p>{progress.text}</p>{progress.ownerAction ? <a href={progress.ownerAction.url} target="_blank" rel="noreferrer" className="mt-3 inline-flex min-h-10 items-center rounded-lg bg-amber-300 px-4 py-2 text-slate-950">{progress.ownerAction.label}</a> : null}</div> : <p className="mt-2 text-xs text-slate-400">No generation is currently running.</p>}
+      </div>
+      {rows ? <div className="space-y-2">{rows.map((chapter) => <details key={chapter.id} className="rounded-xl border border-white/10 p-3" open={chapter.status === "review_ready"}><summary className="cursor-pointer text-sm font-black text-white">Chapter {chapter.chapter_number}: {chapter.title} · {label(chapter.status)} · {chapter.word_count} words</summary>{chapter.draft_text ? <div className="mt-3 space-y-3"><p className="whitespace-pre-wrap text-sm leading-6 text-slate-300">{chapter.draft_text}</p><div>{chapter.source_notes.map((source) => <p key={source.url} className="text-sm text-slate-400"><a className="text-amber-200 underline" href={source.url} target="_blank" rel="noreferrer">{source.title}</a> — {source.claim}</p>)}</div>{chapter.status === "review_ready" ? <button onClick={() => void approveChapter(item.id, chapter.id)} className="min-h-11 rounded-xl bg-emerald-300 px-4 py-2 text-sm font-black text-slate-950">Approve chapter</button> : null}</div> : <p className="mt-3 text-sm text-slate-400">{chapter.status === "blocked" ? "No draft was created. The last generation attempt stopped; use the error and action shown above." : chapter.status === "generating" ? "This chapter is currently being generated." : "This chapter is waiting for generation."}</p>}</details>)}</div> : <p className="text-sm text-slate-400">Load the chapter plan to view individual status.</p>}
+    </div>;
   }
 
   function actions(item: Publication) {
@@ -266,7 +345,7 @@ export function KdpPublishingFactoryPanel() {
     <section className="rounded-2xl border border-amber-300/20 bg-white/[0.03] p-5">
       <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-200">BeastHunter inside Publishing</p>
       <h2 className="mt-2 text-lg font-black text-white">Find KDP opportunities</h2>
-      <p className="mt-2 text-sm leading-6 text-slate-300">Searches current market evidence for low-liability book opportunities matched to your cost, speed, automation, and verification requirements. Nothing enters production until you choose it.</p>
+      <p className="mt-2 text-sm leading-6 text-slate-300">Optional paid research using BeastAdmin&apos;s OpenAI API account. For a no-additional-API-cost workflow, research with Codex/ChatGPT and enter the chosen idea below. Nothing enters production until you choose it.</p>
       <label className="mt-4 block text-sm font-bold text-slate-200">What should BeastHunter look for?<textarea value={huntObjective} onChange={(event) => setHuntObjective(event.target.value)} rows={3} className="mt-2 w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" /></label>
       <button type="button" disabled={hunting || !huntObjective.trim()} onClick={() => void runPublishingHunt()} className="mt-4 min-h-11 rounded-xl bg-amber-300 px-5 py-2 font-black text-slate-950 disabled:cursor-wait disabled:opacity-60">{hunting ? "Researching KDP opportunities…" : "Search with BeastHunter"}</button>
       {huntResults.length ? <div className="mt-5 grid gap-4">{huntResults.map((item) => {
@@ -274,10 +353,11 @@ export function KdpPublishingFactoryPanel() {
         return <article key={item.id} className="rounded-xl border border-white/10 bg-slate-950/60 p-4"><div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-black uppercase tracking-wider text-amber-200">#{item.score}/100 · {item.recommendation} · {item.market}</p><h3 className="mt-2 text-lg font-black text-white">{item.title}</h3><p className="mt-2 text-sm leading-6 text-slate-300">{item.summary}</p></div></div><p className="mt-3 text-sm text-slate-300"><strong className="text-white">Why now:</strong> {item.explanation.whyNow}</p><p className="mt-2 text-sm text-slate-300"><strong className="text-white">Revenue evidence:</strong> {revenue} · {item.explanation.monetization}</p><p className="mt-2 text-xs leading-5 text-slate-400">{item.recommendationReason}</p><div className="mt-3 flex flex-wrap gap-3">{item.evidence.map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer" className="text-sm font-bold text-sky-300 underline">{source.label}</a>)}</div><fieldset className="mt-4"><legend className="text-xs font-black uppercase tracking-wider text-slate-400">Create formats</legend><div className="mt-2 flex flex-wrap gap-4 text-sm text-slate-300">{["ebook","paperback","hardcover"].map((format) => <label key={format}><input type="checkbox" checked={selectedFormats(item.id).includes(format)} onChange={() => toggleOpportunityFormat(item.id, format)} className="mr-2" />{label(format)}</label>)}</div></fieldset><button type="button" disabled={Boolean(addingOpportunityId)} onClick={() => void addOpportunity(item)} className="mt-4 min-h-11 rounded-xl bg-emerald-300 px-4 py-2 text-sm font-black text-slate-950 disabled:cursor-wait disabled:opacity-60">{addingOpportunityId === item.id ? "Adding to Publishing…" : "Create this publication"}</button></article>;
       })}</div> : null}
       {message ? <p role="status" className="mt-3 text-sm text-amber-100">{message}</p> : null}
+      {huntOwnerAction ? <a href={huntOwnerAction.url} target="_blank" rel="noreferrer" className="mt-3 inline-flex min-h-11 items-center rounded-xl bg-amber-300 px-4 py-2 text-sm font-black text-slate-950">{huntOwnerAction.label}</a> : null}
     </section>
     <form onSubmit={create} className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
       <h2 className="text-lg font-black text-white">Start with my own idea</h2>
-      <p className="mt-2 text-sm leading-6 text-slate-300">Use this when you already know what you want to publish. BeastHunter research is optional.</p>
+      <p className="mt-2 text-sm leading-6 text-slate-300">Primary workflow: bring an idea you developed yourself or with Codex/ChatGPT. This path does not run the paid BeastHunter opportunity search.</p>
       <div className="mt-4 grid gap-3 md:grid-cols-3">
         <label className="text-sm text-slate-300">Working title<input required name="title" className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" /></label>
         <label className="text-sm text-slate-300">Target audience<input required name="audience" className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" /></label>
@@ -291,7 +371,7 @@ export function KdpPublishingFactoryPanel() {
           {[["buyerIntent","Buyer intent",70],["differentiation","Differentiation",70],["evidenceReadiness","Evidence ready",70],["seriesPotential","Series potential",70],["timeToMarketDays","Days to market",14],["estimatedCashCost","Cash cost ($)",0]].map(([name,text,value]) => <label key={String(name)} className="text-xs text-slate-300">{text}<input required type="number" min="0" max={name === "timeToMarketDays" || name === "estimatedCashCost" ? undefined : 100} defaultValue={value} name={String(name)} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" /></label>)}
         </div>
       </details>
-      <button className="mt-4 min-h-11 rounded-xl bg-amber-300 px-5 py-2 font-black text-slate-950">Add my idea to publishing</button>
+      <button disabled={creating} className="mt-4 min-h-11 rounded-xl bg-amber-300 px-5 py-2 font-black text-slate-950 disabled:cursor-wait disabled:opacity-60">{creating ? "Adding idea…" : "Add my idea to publishing"}</button>
     </form>
     <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
       <h2 className="text-lg font-black text-white">Publishing projects</h2>

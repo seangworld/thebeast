@@ -22,6 +22,11 @@ test("KDP-001 exposes one Publishing workspace with an honest preparation bounda
   assert.match(panel, /Amazon submission, account changes, terms, ISBN decisions, advertising, and publication remain owner-only/);
   assert.match(panel, /Search with BeastHunter/);
   assert.match(panel, /Start with my own idea/);
+  assert.match(panel, /Primary workflow/);
+  assert.match(panel, /createInFlight/);
+  assert.match(panel, /const form = event\.currentTarget/);
+  assert.doesNotMatch(panel, /event\.currentTarget\.reset/);
+  assert.match(panel, /Optional paid research/);
   assert.match(panel, /Advanced opportunity scoring/);
   assert.match(panel, /Create this publication/);
   assert.match(panel, /Publishing projects/);
@@ -29,12 +34,15 @@ test("KDP-001 exposes one Publishing workspace with an honest preparation bounda
 
 test("KDP-006 embeds scoped BeastHunter discovery without bypassing owner selection", () => {
   const panel = readFileSync("src/app/dashboard/admin/marketing/publishing/KdpPublishingFactoryPanel.tsx", "utf8");
+  const route = readFileSync("src/app/api/admin/beast-hunter/route.ts", "utf8");
   assert.match(panel, /\/api\/admin\/beast-hunter/);
   assert.match(panel, /huntTypes: \["PDF \/ Book"\]/);
   assert.match(panel, /Nothing enters production until you choose it/);
   assert.match(panel, /body\.duplicateHuntId/);
   assert.match(panel, /addOpportunity\(item\)/);
   assert.match(panel, /Open KDP Bookshelf/);
+  assert.match(route, /ai_credit_unavailable/);
+  assert.match(route, /Your search was not evaluated/);
 });
 
 test("KDP-002 adds a fail-closed brief and package approval handoff", () => {
@@ -62,11 +70,17 @@ test("KDP-003 persists sourced chapters and prevents a drafting shortcut", () =>
   assert.match(manuscript, /tool_choice: "required"/);
   assert.match(manuscript, /manuscriptAuthority: "review_draft_only"/);
   assert.match(manuscript, /No uncited draft was accepted/);
+  assert.match(manuscript, /OPENAI_BILLING_ACTION/);
+  assert.match(manuscript, /Nothing is processing in the background/);
   assert.match(manuscript, /remainingCount: waiting\.length - 1/);
   assert.match(manuscript, /Another generation request already claimed this chapter/);
   const panel = readFileSync("src/app/dashboard/admin/marketing/publishing/KdpPublishingFactoryPanel.tsx", "utf8");
   assert.match(panel, /Generate all remaining chapters/);
   assert.match(panel, /Each chapter still requires your approval/);
+  assert.match(panel, /chapters drafted/);
+  assert.match(panel, /animate-spin/);
+  assert.match(panel, /No generation is currently running/);
+  assert.match(panel, /OpenAI API credits/);
   assert.doesNotMatch(lifecycle, /action === "start_drafting"|action === "send_to_quality_review"/);
 });
 

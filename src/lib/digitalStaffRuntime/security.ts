@@ -28,11 +28,13 @@ export function sanitizedErrorDetail(error: unknown) {
 
 export class DigitalStaffServiceError extends Error {
   readonly requestId: string;
+  readonly category: string;
 
-  constructor(requestId: string) {
+  constructor(requestId: string, category = "provider_or_runtime_failure") {
     super(digitalStaffUnavailableMessage);
     this.name = "DigitalStaffServiceError";
     this.requestId = requestId;
+    this.category = category;
   }
 }
 
@@ -55,6 +57,8 @@ export function reportDigitalStaffError(
 
 export function classifyDigitalStaffFailure(scope: string, error: unknown) {
   const detail = sanitizedErrorDetail(error).toLowerCase();
+  if (/insufficient_quota|credit_balance_exhausted|spend_limit_exceeded/.test(detail)) return "provider_quota_exhausted";
+  if (/status 429/.test(detail)) return "provider_rate_limited";
   if (/timed out|timeout/.test(detail)) return "provider_timeout";
   if (/aborted by the caller/.test(detail)) return "request_aborted";
   if (/canonical context query failed/.test(detail)) return "database_context_failure";

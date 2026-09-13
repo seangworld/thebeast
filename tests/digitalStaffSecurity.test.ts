@@ -117,7 +117,10 @@ test("provider failure logs expose only allowlisted OpenAI error type and code d
           }), { status: 429, headers: { "Content-Type": "application/json" } }),
         }
       ),
-      (error: unknown) => error instanceof Error && error.message === digitalStaffUnavailableMessage
+      (error: unknown) => error instanceof Error
+        && error.message === digitalStaffUnavailableMessage
+        && "category" in error
+        && error.category === "provider_quota_exhausted"
     );
   } finally {
     console.error = originalConsoleError;
@@ -127,6 +130,17 @@ test("provider failure logs expose only allowlisted OpenAI error type and code d
   assert.match(logged, /code=project_spend_limit_exceeded/);
   assert.doesNotMatch(logged, new RegExp(testKey));
   assert.doesNotMatch(logged, /private-/);
+});
+
+test("provider quota and transient rate limits are classified separately", () => {
+  assert.equal(
+    classifyDigitalStaffFailure("openai-responses", new Error("status 429 (type=insufficient_quota, code=credit_balance_exhausted)")),
+    "provider_quota_exhausted"
+  );
+  assert.equal(
+    classifyDigitalStaffFailure("openai-responses", new Error("status 429 (type=request_rate_limit_exceeded)")),
+    "provider_rate_limited"
+  );
 });
 
 test("SEC-002 sanitizes malformed-header exceptions before logging", async () => {

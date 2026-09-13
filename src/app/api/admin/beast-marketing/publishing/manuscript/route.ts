@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { canTransitionKdpPublication, type KdpPublicationBrief, type KdpPublicationState } from "@/lib/kdpPublishingFactory";
 import { kdpChapterDraftSchema, kdpChapterInstructions, parseKdpChapterDraft, type KdpManuscriptProviderPayload } from "@/lib/kdpManuscript";
 import { requestOpenAIResponse } from "@/lib/digitalStaffRuntime/provider";
+import { DigitalStaffServiceError } from "@/lib/digitalStaffRuntime/security";
+import { OPENAI_BILLING_ACTION } from "@/lib/ownerProviderActions";
 import { createRouteClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -62,8 +64,11 @@ export async function POST(request: Request) {
       const saved = await access.client.from("kdp_chapters").update({ status: "review_ready", draft_text: draft.draftText, word_count: wordCount, source_notes: draft.sources, limitations: draft.limitations, provider_model: model, generated_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("id", chapter.id).eq("owner_id", access.id).select("*").single();
       if (saved.error || !saved.data) return reply({ error: "Generated chapter could not be confirmed as saved." }, 503);
       return reply({ chapter: saved.data, remainingCount: waiting.length - 1, manuscriptAuthority: "review_draft_only" });
-    } catch {
+    } catch (error) {
       await access.client.from("kdp_chapters").update({ status: "blocked", updated_at: new Date().toISOString() }).eq("id", chapter.id).eq("owner_id", access.id);
+      if (error instanceof DigitalStaffServiceError && error.category === "provider_quota_exhausted") {
+        return reply({ error: "OpenAI API credit is required before BeastAdmin can generate this chapter. Nothing is processing in the background.", code: "ai_credit_unavailable", requestId: error.requestId, ownerAction: OPENAI_BILLING_ACTION }, 503);
+      }
       return reply({ error: "Chapter generation failed safely. No uncited draft was accepted." }, 502);
     }
   }
