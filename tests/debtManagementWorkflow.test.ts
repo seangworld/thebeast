@@ -75,6 +75,20 @@ test("Debt List consolidates row controls into one confirmed Actions menu", () =
   assert.doesNotMatch(page, /<summary[^>]*>Pay \/ Manage<\/summary>/);
 });
 
+test("Debt List exposes the same income-pot and payment-setup planning used by Bills", () => {
+  const page = readFileSync("src/app/dashboard/money/debts/page.tsx", "utf8");
+
+  assert.match(page, /buildIncomeBuckets\(incomes, 180\)/);
+  assert.match(page, /<CompactAssignmentSelect/);
+  assert.match(page, /<PaymentConfigurationControl/);
+  assert.match(page, /updateDebtIncomeDate/);
+  assert.match(page, /updateDebtPaymentConfiguration/);
+  assert.match(page, /assigned_income_date: assignedIncomeDate \|\| null/);
+  assert.match(page, /\.eq\("user_id", userId\)/);
+  assert.match(page, /Debt income pot updated/);
+  assert.match(page, /Debt payment setup updated/);
+});
+
 test("Bills and Debts keep payment workflows in the shared Actions overlay", () => {
   const bills = readFileSync(
     "src/app/dashboard/money/cashflow/components/BillsSection.tsx",
