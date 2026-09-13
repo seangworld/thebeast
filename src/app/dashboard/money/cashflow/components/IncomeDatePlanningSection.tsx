@@ -7,7 +7,8 @@ type IncomeDatePlanningSectionProps = {
   unassignedBills: any[];
   unassignedDebts: any[];
   unassignedObligationsTotal: number;
-  lookaheadDays: number;
+  planningWindowDays: number;
+  setPlanningWindowDays: (days: number) => void;
   recommendedTargetDebt: any;
   strategyLabel: string;
   updateBillIncomeDate: (id: string, date: string) => Promise<{ ok: boolean; message: string }>;
@@ -23,7 +24,8 @@ export default function IncomeDatePlanningSection({
   unassignedBills,
   unassignedDebts,
   unassignedObligationsTotal,
-  lookaheadDays,
+  planningWindowDays,
+  setPlanningWindowDays,
   recommendedTargetDebt,
   strategyLabel,
   updateBillIncomeDate,
@@ -37,12 +39,12 @@ export default function IncomeDatePlanningSection({
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const windowEnd = new Date(today);
-    windowEnd.setDate(windowEnd.getDate() + Number(lookaheadDays || 30));
+    windowEnd.setDate(windowEnd.getDate() + planningWindowDays);
     return incomeBucketPlans.filter((bucket) => {
       const date = new Date(`${bucket.date}T12:00:00`);
       return Number.isFinite(date.getTime()) && date >= today && date <= windowEnd;
     });
-  }, [incomeBucketPlans, lookaheadDays]);
+  }, [incomeBucketPlans, planningWindowDays]);
 
   async function assignObligation(kind: "bill" | "debt", id: string, date: string) {
     const key = `${kind}-${id}`;
@@ -149,6 +151,27 @@ export default function IncomeDatePlanningSection({
         </button>
       </div>
 
+      <div className="mb-5 flex flex-col gap-2 rounded-xl border border-[#2a3242] bg-[#0f1419] p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div className="font-bold text-white">Planning window</div>
+          <p className="text-sm text-[#7f8da3]">This controls Paycheck Strategy only. Your Cash Flow alert window stays unchanged.</p>
+        </div>
+        <label className="text-sm font-semibold text-[#c7cfdb]">
+          Show upcoming
+          <select
+            className="beast-input ml-2 w-auto min-w-[130px]"
+            aria-label="Paycheck strategy planning window"
+            value={planningWindowDays}
+            onChange={(event) => setPlanningWindowDays(Number(event.target.value))}
+          >
+            <option value={30}>30 days</option>
+            <option value={60}>60 days</option>
+            <option value={90}>90 days</option>
+            <option value={180}>180 days</option>
+          </select>
+        </label>
+      </div>
+
       <div className="space-y-5">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <div className="money-section-card">
@@ -157,7 +180,7 @@ export default function IncomeDatePlanningSection({
               {planningBuckets.length}
             </div>
             <p className="money-muted-text mt-3">
-              In the next {Number(lookaheadDays || 30)} days.
+              In the next {planningWindowDays} days.
             </p>
           </div>
 
@@ -190,7 +213,7 @@ export default function IncomeDatePlanningSection({
           <div className="money-section-card">
             <div className="money-metric-label">Planning Window</div>
             <div className="money-metric-value">
-              {Number(lookaheadDays || 30)} Days
+              {planningWindowDays} Days
             </div>
             <p className="money-muted-text mt-3">
               Income buckets are generated from today forward.

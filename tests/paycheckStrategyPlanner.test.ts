@@ -21,6 +21,9 @@ test("paycheck strategy planner supports the spreadsheet-style monthly workflow"
   assert.match(planner, />Paycheck Strategy</);
   assert.match(planner, /Plan the next month paycheck by paycheck/);
   assert.match(planner, /Choose the paycheck that should cover each obligation/);
+  assert.match(planner, /Paycheck strategy planning window/);
+  for (const days of [30, 60, 90, 180]) assert.match(planner, new RegExp(`<option value=\\{${days}\\}>${days} days`));
+  assert.match(planner, /Cash Flow alert window stays unchanged/);
   assert.match(planner, /planningBuckets\.map/);
   assert.match(planner, /updateBillIncomeDate\(id, date\)/);
   assert.match(planner, /updateDebtIncomeDate\(id, date\)/);
@@ -43,6 +46,10 @@ test("each paycheck shows assigned spending, remaining cash, and the suggested d
   assert.match(planner, /strategyLabel/);
   assert.match(cashFlow, /recommendedTargetDebt=\{recommendedTargetDebt\}/);
   assert.match(cashFlow, /strategyLabel=\{getDebtStrategyLabel\(strategy\)\}/);
+  assert.match(cashFlow, /useState\(30\)/);
+  assert.match(cashFlow, /planningWindowDays=\{paycheckPlanningDays\}/);
+  assert.match(cashFlow, /setPlanningWindowDays=\{setPaycheckPlanningDays\}/);
+  assert.match(cashFlow, /addDays\(start, paycheckPlanningDays\)/);
 });
 
 test("Income links directly to the operational paycheck board", () => {

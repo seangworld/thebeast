@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { buildFinancialDecision } from "@/lib/financialDecisionEngine";
 import BillsSection from "./components/BillsSection";
@@ -62,6 +62,7 @@ export default function CashFlowPage() {
   const pathname = usePathname();
   const router = useRouter();
   const view = pathname === "/dashboard/money/bills" ? "bills" : "cash-flow";
+  const [paycheckPlanningDays, setPaycheckPlanningDays] = useState(30);
 
   useEffect(() => {
     if (
@@ -830,8 +831,8 @@ export default function CashFlowPage() {
   const planningWindowEnd = useMemo(() => {
     const today = new Date();
     const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    return addDays(start, Number(lookaheadDays || 30));
-  }, [lookaheadDays]);
+    return addDays(start, paycheckPlanningDays);
+  }, [paycheckPlanningDays]);
 
   const unassignedBills = useMemo(() => {
     return sortObligationsByNextDueDate(
@@ -1361,7 +1362,8 @@ export default function CashFlowPage() {
           unassignedBills={unassignedBills}
           unassignedDebts={unassignedDebts}
           unassignedObligationsTotal={unassignedObligationsTotal}
-          lookaheadDays={lookaheadDays}
+          planningWindowDays={paycheckPlanningDays}
+          setPlanningWindowDays={setPaycheckPlanningDays}
           recommendedTargetDebt={recommendedTargetDebt}
           strategyLabel={getDebtStrategyLabel(strategy)}
           updateBillIncomeDate={updateBillIncomeDate}
