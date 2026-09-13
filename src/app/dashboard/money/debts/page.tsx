@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { memberSafeMessage } from "@/lib/memberSafeError";
 import {
+  buildIncomeBuckets,
   formatShortDate,
   getCurrentDebtCycleDueDate,
   parseDateOnly,
@@ -56,6 +57,9 @@ import {
 } from "@/lib/atomicFinancialCommands";
 import { BEASTMONEY_PAYMENT_MAINTENANCE_MESSAGE } from "@/lib/beastMoneyPaymentWriteGate";
 import { useBeastMoneyPaymentWriteGate } from "@/lib/hooks/useBeastMoneyPaymentWriteGate";
+import { CompactAssignmentSelect, compactIncomeLabel } from "../cashflow/components/CompactAssignmentSelect";
+import { PaymentConfigurationControl } from "../cashflow/components/PaymentConfigurationControl";
+import type { PaymentConfigurationRecord } from "@/lib/paymentConfiguration";
 
 const PAYOFF_COLUMNS_STORAGE_KEY = "beastmoney.payoff-plan.columns.v1";
 type SupabaseBrowserClient = ReturnType<typeof createClient>;
@@ -116,6 +120,12 @@ type Debt = {
   archived_at?: string | null;
   lifecycle_auto_archived?: boolean | null;
   reminder_enabled_before_payoff?: boolean | null;
+  assigned_income_date?: string | null;
+  funding_source_id?: string | null;
+  payment_account_id?: string | null;
+  funding_account_type?: "account" | "income_pot" | null;
+  funding_account_id?: string | null;
+  funding_strategy_id?: string | null;
 };
 
 function money(value: number) {
@@ -137,6 +147,7 @@ type StrategyComparisonRow = {
 
 function DebtActionsMenu({
   debt,
+  planning,
   automation,
   management,
   onEdit,
@@ -145,6 +156,7 @@ function DebtActionsMenu({
   onDelete,
 }: {
   debt: Debt;
+  planning?: ReactNode;
   automation: ReactNode;
   management?: DebtManagementActionsProps;
   onEdit: () => void;
@@ -163,6 +175,7 @@ function DebtActionsMenu({
     >
       {(close) => (
         <div className="grid min-w-0 gap-2 text-sm" data-debt-actions-menu="true" data-debt-actions-layout="compact" data-action-menu-list="debt">
+          {planning ? <div className="border-b border-[#2a3242] pb-3">{planning}</div> : null}
           <div className="border-b border-[#2a3242] pb-2">{automation}</div>
           {management ? <DebtManagementActions {...management} editAction={<button type="button" onClick={() => { close(); onEdit(); }} className="beast-button-secondary w-full whitespace-nowrap px-4 text-sm">Edit</button>} /> : null}
           <div className="grid grid-cols-1 gap-2 border-t border-[#2a3242] pt-2">
@@ -343,6 +356,30 @@ export default function DebtsPage() {
       debtsWithNextDueDate.filter(isDebtArchivedOrClosed)
     );
   }, [debtsWithNextDueDate]);
+
+  const incomeBucketPlans = useMemo(
+    () =>
+      buildIncomeBuckets(incomes, 180).map((bucket) => ({
+        ...bucket,
+        dropdownLabel: `${bucket.label} ($${Number(bucket.amount || 0).toFixed(2)})`,
+      })),
+    [incomes]
+  );
+
+  const incomeOptions = useMemo(
+    () =>
+      incomeBucketPlans.map((bucket) => ({
+        value: bucket.date,
+        compactLabel: compactIncomeLabel(bucket.label),
+        detailLabel: bucket.dropdownLabel,
+      })),
+    [incomeBucketPlans]
+  );
+
+  const activeFundingSources = useMemo(
+    () => fundingSources.filter((source) => source.is_active !== false),
+    [fundingSources]
+  );
 
   const velocityInputSnapshot = useMemo(() => {
     return buildVelocityInputSnapshot({
@@ -961,6 +998,93 @@ export default function DebtsPage() {
     setDebts((current) => current.map((debt) => debt.id === id ? { ...debt, ...patch } : debt));
   }
 
+  async function updateDebtIncomeDate(id: string, assignedIncomeDate: string) {
+    const supabase = createClient();
+    const userId = await getUserId(supabase);
+    if (!userId) return;
+    const { error } = await supabase
+      .from("debts")
+      .update({ assigned_income_date: assignedIncomeDate || null })
+      .eq("id", id)
+      .eq("user_id", userId);
+    if (error) {
+      setMessage(memberSafeMessage(error, "update"));
+      return;
+    }
+    setDebts((current) =>
+      current.map((debt) =>
+        debt.id === id
+          ? { ...debt, assigned_income_date: assignedIncomeDate || null }
+          : debt
+      )
+    );
+    setMessage("Debt income pot updated.");
+  }
+
+  async function updateDebtPaymentConfiguration(
+    id: string,
+    patch: Partial<PaymentConfigurationRecord>
+  ) {
+    const supabase = createClient();
+    const userId = await getUserId(supabase);
+    if (!userId) return;
+    const legacyPatch =
+      patch.funding_account_type === "account" && patch.funding_account_id
+        ? { funding_source_id: patch.funding_account_id }
+        : "funding_account_type" in patch
+          ? { funding_source_id: null }
+          : {};
+    const savedPatch = { ...patch, ...legacyPatch };
+    const { error } = await supabase
+      .from("debts")
+      .update(savedPatch)
+      .eq("id", id)
+      .eq("user_id", userId);
+    if (error) {
+      setMessage(memberSafeMessage(error, "update"));
+      return;
+    }
+    setDebts((current) =>
+      current.map((debt) =>
+        debt.id === id ? { ...debt, ...savedPatch } : debt
+      )
+    );
+    setMessage("Debt payment setup updated.");
+  }
+
+  function debtPlanningControls(debt: Debt) {
+    return (
+      <div className="grid min-w-0 gap-3" data-debt-payment-planning="true">
+        <div className="grid min-w-0 gap-1">
+          <span className="text-xs font-bold uppercase text-[#7f8da3]">
+            Income Pot
+          </span>
+          <CompactAssignmentSelect
+            label={`${debt.name} income pot`}
+            value={debt.assigned_income_date || ""}
+            options={incomeOptions}
+            onChange={(value) => void updateDebtIncomeDate(debt.id, value)}
+            overlayWidth={300}
+          />
+        </div>
+        <div className="grid min-w-0 gap-1">
+          <span className="text-xs font-bold uppercase text-[#7f8da3]">
+            Payment Setup
+          </span>
+          <PaymentConfigurationControl
+            label={`${debt.name} payment configuration`}
+            record={debt}
+            accounts={activeFundingSources}
+            incomePots={incomeBucketPlans}
+            onChange={(patch) =>
+              void updateDebtPaymentConfiguration(debt.id, patch)
+            }
+          />
+        </div>
+      </div>
+    );
+  }
+
   async function unarchiveDebt(id: string) {
     const supabase = createClient();
     const userId = await getUserId();
@@ -1520,6 +1644,7 @@ export default function DebtsPage() {
                       <div className="mt-4 flex justify-end">
                         <DebtActionsMenu
                           debt={debt}
+                          planning={debtPlanningControls(debt)}
                           automation={<PaymentAutomationControls compact name={debt.name} {...normalizePaymentAutomation(debt)} onSave={(patch) => updateDebtAutomation(debt.id, patch)} />}
                           management={{
                             debt,
@@ -1729,6 +1854,7 @@ export default function DebtsPage() {
                         ) : (
                           <DebtActionsMenu
                             debt={debt}
+                            planning={debtPlanningControls(debt)}
                             automation={<PaymentAutomationControls compact name={debt.name} {...normalizePaymentAutomation(debt)} onSave={(patch) => updateDebtAutomation(debt.id, patch)} />}
                             management={{
                               debt,
