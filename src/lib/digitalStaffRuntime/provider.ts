@@ -1,4 +1,5 @@
 import {
+  classifyDigitalStaffFailure,
   DigitalStaffServiceError,
   reportDigitalStaffError,
 } from "./security";
@@ -75,8 +76,9 @@ export async function requestOpenAIResponse<T>(
     }
     return (await response.json()) as T;
   } catch (error) {
+    const category = classifyDigitalStaffFailure("openai-responses", error);
     reportDigitalStaffError("openai-responses", error, requestId);
-    throw new DigitalStaffServiceError(requestId);
+    throw new DigitalStaffServiceError(requestId, category);
   }
 }
 
@@ -164,7 +166,10 @@ export async function requestOpenAIResponseStream<T>(
         ? new Error("OpenAI provider request was aborted by the caller.")
         : error;
     reportDigitalStaffError("openai-responses-stream", reported, requestId);
-    throw new DigitalStaffServiceError(requestId);
+    throw new DigitalStaffServiceError(
+      requestId,
+      classifyDigitalStaffFailure("openai-responses-stream", reported)
+    );
   } finally {
     clearTimeout(timeout);
     options.signal?.removeEventListener("abort", abortFromCaller);

@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { isBeastHunterRejectionReason, isBeastHunterTrackingStatus, normalizeBeastHunterCriteria, rankBeastHunterCandidates, recommendBeastHunterCandidate, type BeastHunterCandidate, type BeastHunterFeedbackSignal, type BeastHunterRankedCandidate } from "@/lib/beastHunter";
 import { beastHunterResearchInstructions, beastHunterResearchSchema, buildBeastHunterResearchInput, parseBeastHunterResearch, type BeastHunterResearchPayload } from "@/lib/beastHunterResearch";
 import { requestOpenAIResponse } from "@/lib/digitalStaffRuntime/provider";
+import { DigitalStaffServiceError } from "@/lib/digitalStaffRuntime/security";
+import { OPENAI_BILLING_ACTION } from "@/lib/ownerProviderActions";
 import { createRouteClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -141,8 +143,23 @@ export async function POST(request: Request) {
     if (evidenceError) throw evidenceError;
     await client.from("beast_hunter_hunts").update({ status: "completed", completed_at: new Date().toISOString() }).eq("id", hunt.id).eq("owner_id", user.id);
     return NextResponse.json({ huntId: hunt.id, status: "completed", opportunities: ranked }, { headers: { "cache-control": "private, no-store" } });
-  } catch {
+  } catch (error) {
     await client.from("beast_hunter_hunts").update({ status: "failed", completed_at: new Date().toISOString() }).eq("id", hunt.id).eq("owner_id", user.id);
+    if (error instanceof DigitalStaffServiceError) {
+      if (error.category === "provider_quota_exhausted") {
+        return NextResponse.json({
+          error: "BeastHunter's AI research account has no available API credit. Add OpenAI API credit or update the billed API key, then try again.",
+          code: "ai_credit_unavailable",
+          requestId: error.requestId,
+          ownerAction: OPENAI_BILLING_ACTION,
+        }, { status: 503 });
+      }
+      return NextResponse.json({
+        error: "BeastHunter's AI research service is unavailable. Your search was not evaluated; try again later.",
+        code: "ai_research_unavailable",
+        requestId: error.requestId,
+      }, { status: 503 });
+    }
     return NextResponse.json({ error: "BeastHunter could not produce attributable opportunities. No uncited results were saved." }, { status: 502 });
   }
 }
