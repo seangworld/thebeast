@@ -97,6 +97,11 @@ const nextConfig = {
     "/api/admin/migration-sql-explorer": ["./supabase/migrations/*.sql"],
     "/api/admin/migration-status": ["./supabase/migrations/*.sql"],
     "/api/admin/beast-marketing/publishing/package": ["./node_modules/@fontsource/source-serif-4/files/source-serif-4-latin-*.woff"],
+    "/api/admin/production/code-audit": [
+      "./node_modules/@fontsource/source-serif-4/files/source-serif-4-latin-400-normal.woff",
+      "./node_modules/@fontsource/source-serif-4/files/source-serif-4-latin-400-italic.woff",
+      "./node_modules/@fontsource/source-serif-4/files/source-serif-4-latin-700-normal.woff",
+    ],
   },
 };
 

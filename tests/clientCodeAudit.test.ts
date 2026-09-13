@@ -122,6 +122,7 @@ test("client code audit PDF is polished, complete, and generated without source 
 test("client code audit route remains bounded, owner-only, no-execution, and no-credit", () => {
   const route = readFileSync("src/app/api/admin/production/code-audit/route.ts", "utf8");
   const workspace = readFileSync("src/app/dashboard/operations/production/code-audit/ClientCodeAuditWorkspace.tsx", "utf8");
+  const nextConfig = readFileSync("next.config.js", "utf8");
   assert.match(route, /MAX_UPLOAD_BYTES = 12 \* 1024 \* 1024/);
   assert.match(route, /MAX_FILES = 1500/);
   assert.match(route, /MAX_FILE_REVIEW_BYTES = 2 \* 1024 \* 1024/);
@@ -139,6 +140,8 @@ test("client code audit route remains bounded, owner-only, no-execution, and no-
   assert.match(route, /Code-Risk-Scan-Report\.html/);
   assert.match(route, /Code-Risk-Scan-Report\.pdf/);
   assert.match(route, /renderClientCodeAuditPdf/);
+  assert.match(nextConfig, /\/api\/admin\/production\/code-audit/);
+  for (const font of ["400-normal", "400-italic", "700-normal"]) assert.match(nextConfig, new RegExp(`source-serif-4-latin-${font}\\.woff`));
   assert.match(route, /Prioritized-Remediation-Plan\.md/);
   assert.match(workspace, /polished client-ready PDF/);
   assert.match(route, /seangworld_client_jobs/);
