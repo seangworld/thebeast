@@ -1,6 +1,6 @@
 import JSZip from "jszip";
 import { NextResponse } from "next/server";
-import { auditClientCode, renderAuditReports, type AuditSourceFile } from "@/lib/clientCodeAudit";
+import { auditClientCode, renderAuditReports, type AuditSourceFile, type AuditType } from "@/lib/clientCodeAudit";
 import { createRouteClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -18,12 +18,12 @@ const json = (body: unknown, status: number) => NextResponse.json(body, { status
 const clean = (value: FormDataEntryValue | null, max: number) => typeof value === "string" ? value.trim().slice(0, max) : "";
 const safeName = (value: string) => value.replace(/[^a-z0-9_-]+/gi, "-").replace(/^-+|-+$/g, "").slice(0, 70) || "code-audit";
 
-async function isOwner() {
+async function ownerAccess() {
   const client = createRouteClient();
   const auth = await client.auth.getUser();
-  if (!auth.data.user || auth.error) return false;
+  if (!auth.data.user || auth.error) return null;
   const profile = await client.from("profiles").select("role").eq("id", auth.data.user.id).maybeSingle();
-  return !profile.error && profile.data?.role === "admin";
+  return !profile.error && profile.data?.role === "admin" ? { client, id: auth.data.user.id } : null;
 }
 
 function eligible(path: string) {
@@ -36,7 +36,8 @@ function eligible(path: string) {
 
 export async function POST(request: Request) {
   if (request.headers.get("origin") !== new URL(request.url).origin) return json({ error: "Same-origin request required." }, 403);
-  if (!(await isOwner())) return json({ error: "SEANGWORLD HQ owner access required." }, 403);
+  const access = await ownerAccess();
+  if (!access) return json({ error: "SEANGWORLD HQ owner access required." }, 403);
   const declaredSize = Number(request.headers.get("content-length") || 0);
   if (declaredSize > MAX_UPLOAD_BYTES + 100_000) return json({ error: "Upload is too large. Use a ZIP smaller than 12 MB." }, 413);
 
@@ -46,6 +47,8 @@ export async function POST(request: Request) {
   const archive = form.get("archive");
   const clientName = clean(form.get("clientName"), 120);
   const projectName = clean(form.get("projectName"), 120);
+  const requestedType = clean(form.get("auditType"), 30);
+  const auditType: AuditType = ["full", "security", "launch", "quality"].includes(requestedType) ? requestedType as AuditType : "full";
   const focus = clean(form.get("focus"), 500);
   const notes = clean(form.get("notes"), 3000);
   if (!clientName || !projectName) return json({ error: "Client name and project name are required." }, 400);
@@ -69,16 +72,26 @@ export async function POST(request: Request) {
     }
     if (!sourceFiles.length) return json({ error: "No supported source or documentation files were found in the ZIP." }, 400);
 
-    const audit = auditClientCode({ clientName, projectName, focus, notes, files: sourceFiles });
+    const audit = auditClientCode({ clientName, projectName, auditType, focus, notes, files: sourceFiles });
     const reports = renderAuditReports(audit);
     const output = new JSZip();
     output.file("Executive-Summary.md", reports.summary);
     output.file("Technical-Findings.md", reports.findings);
+    output.file("Code-Audit-Report.html", reports.html);
+    output.file("Findings.csv", reports.csv);
+    output.file("Prioritized-Remediation-Plan.md", reports.remediation);
+    output.file("Runtime-Verification-Checklist.md", reports.verification);
     output.file("Delivery-Notes.md", reports.delivery);
     output.file("Project-Inventory.json", JSON.stringify(audit.inventory, null, 2));
     output.file("audit-data.json", JSON.stringify(audit, null, 2));
     const bytes = await output.generateAsync({ type: "uint8array", compression: "DEFLATE", compressionOptions: { level: 9 } });
-    return new NextResponse(Buffer.from(bytes), { status: 200, headers: { "content-type": "application/zip", "content-disposition": `attachment; filename="${safeName(projectName)}-code-audit.zip"`, "cache-control": "private, no-store", "x-audit-files-reviewed": String(audit.inventory.filesReviewed), "x-audit-findings": String(audit.findings.length) } });
+    const artifactName = `${safeName(projectName)}-code-audit.zip`;
+    let jobRecorded = false;
+    try {
+      const recorded = await access.client.from("seangworld_client_jobs").insert({ owner_id: access.id, client_name: clientName, project_name: projectName, job_type: "code_audit", audit_profile: auditType, attention_level: audit.attentionLevel, files_count: audit.inventory.filesReviewed, findings_count: audit.findings.length, critical_count: audit.summary.critical, high_count: audit.summary.high, medium_count: audit.summary.medium, input_bytes: archive.size, artifact_name: artifactName });
+      jobRecorded = !recorded.error;
+    } catch { /* History is supplemental and must never block the finished download. */ }
+    return new NextResponse(Buffer.from(bytes), { status: 200, headers: { "content-type": "application/zip", "content-disposition": `attachment; filename="${artifactName}"`, "cache-control": "private, no-store", "x-audit-files-reviewed": String(audit.inventory.filesReviewed), "x-audit-findings": String(audit.findings.length), "x-audit-critical": String(audit.summary.critical), "x-audit-high": String(audit.summary.high), "x-audit-medium": String(audit.summary.medium), "x-audit-attention": audit.attentionLevel, "x-job-recorded": String(jobRecorded) } });
   } catch {
     return json({ error: "The ZIP is invalid, encrypted, or could not be audited. No client code was executed." }, 400);
   }

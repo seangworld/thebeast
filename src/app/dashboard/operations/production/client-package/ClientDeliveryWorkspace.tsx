@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useEffect, useRef, useState } from "react";
 
-type Result = { fileName: string; files: number; bytes: number };
+type Result = { fileName: string; files: number; bytes: number; recorded: boolean };
 const formatBytes = (bytes: number) => bytes < 1024 * 1024 ? `${(bytes / 1024).toFixed(1)} KB` : `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 
 export function ClientDeliveryWorkspace() {
@@ -26,14 +26,14 @@ export function ClientDeliveryWorkspace() {
       }
       const fileName = response.headers.get("content-disposition")?.match(/filename="([^"]+)"/)?.[1] || "client-delivery.zip";
       downloadUrl.current = URL.createObjectURL(await response.blob());
-      setResult({ fileName, files: Number(response.headers.get("x-delivery-files") || 0), bytes: Number(response.headers.get("x-delivery-bytes") || 0) });
+      setResult({ fileName, files: Number(response.headers.get("x-delivery-files") || 0), bytes: Number(response.headers.get("x-delivery-bytes") || 0), recorded: response.headers.get("x-job-recorded") === "true" });
     } catch (caught) { setError(caught instanceof Error ? caught.message : "The client package could not be created."); }
     finally { setRunning(false); }
   }
 
   return <div className="space-y-6">
     <div><Link href="/dashboard/operations/production" className="text-sm font-bold text-cyan-200 hover:text-white">← Production</Link></div>
-    <section className="rounded-3xl border border-cyan-300/30 bg-gradient-to-br from-cyan-300/10 via-[#111c2b] to-[#0d1522] p-5 sm:p-7"><p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-200">Client package factory</p><h2 className="mt-2 text-3xl font-black text-white">Package finished work for delivery</h2><p className="mt-2 max-w-3xl text-base leading-7 text-slate-300">Add the finished files and handoff details once. HQ creates one organized ZIP with a polished browser/print summary, README, and SHA-256 file manifest—without AI credits.</p></section>
+    <section className="rounded-3xl border border-cyan-300/30 bg-gradient-to-br from-cyan-300/10 via-[#111c2b] to-[#0d1522] p-5 sm:p-7"><p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-200">Other client work</p><h2 className="mt-2 text-3xl font-black text-white">Package finished work for delivery</h2><p className="mt-2 max-w-3xl text-base leading-7 text-slate-300">Use this for websites, content, marketing, consulting, or several finished deliverables without AI credits. A Code Audit ZIP is already ready to send and does not need this additional step.</p><Link href="/dashboard/operations/production/code-audit" className="mt-4 inline-block text-sm font-bold text-cyan-200 hover:text-white">Need to run a code audit? Open Code Audit →</Link></section>
     <form onSubmit={submit} className="rounded-3xl border border-white/10 bg-[#111c2b] p-5 sm:p-7">
       <div className="grid gap-5 md:grid-cols-2">
         <label className="text-sm font-bold text-slate-200">Client name<input name="clientName" required maxLength={120} className="mt-2 min-h-12 w-full rounded-xl border border-white/15 bg-[#080e18] px-4 text-white" /></label>
@@ -49,7 +49,7 @@ export function ClientDeliveryWorkspace() {
       <button type="submit" disabled={running} className="mt-6 inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-cyan-200 px-5 py-3 font-black text-slate-950 disabled:cursor-wait disabled:opacity-60 sm:w-auto">{running ? "Building client delivery…" : "Create delivery package"}</button>
       {running ? <div className="mt-4" role="status"><div className="h-2 overflow-hidden rounded-full bg-white/10"><div className="h-full w-2/3 animate-pulse rounded-full bg-cyan-200" /></div><p className="mt-2 text-sm text-cyan-100">Organizing files, calculating checksums, and writing the handoff documents.</p></div> : null}
       {error ? <p className="mt-4 rounded-xl border border-red-300/30 bg-red-300/10 p-4 text-sm font-bold text-red-100" role="alert">{error}</p> : null}
-      {result && downloadUrl.current ? <div className="mt-5 rounded-2xl border border-emerald-300/30 bg-emerald-300/10 p-5" role="status"><p className="font-black text-emerald-100">Delivery package ready</p><p className="mt-1 text-sm text-slate-300">Packaged {result.files} files ({formatBytes(result.bytes)}). Open and review the ZIP before sending it.</p><a href={downloadUrl.current} download={result.fileName} className="mt-4 inline-flex min-h-11 items-center justify-center rounded-xl bg-emerald-200 px-4 py-3 text-sm font-black text-slate-950">Download {result.fileName}</a></div> : null}
+      {result && downloadUrl.current ? <div className="mt-5 rounded-2xl border border-emerald-300/30 bg-emerald-300/10 p-5" role="status"><p className="font-black text-emerald-100">Delivery package ready</p><p className="mt-1 text-sm text-slate-300">Packaged {result.files} files ({formatBytes(result.bytes)}). Open and review the ZIP before sending it.</p>{!result.recorded ? <p className="mt-2 text-sm text-amber-100">The download is ready, but HQ could not add this run to Recent client work.</p> : null}<a href={downloadUrl.current} download={result.fileName} className="mt-4 inline-flex min-h-11 items-center justify-center rounded-xl bg-emerald-200 px-4 py-3 text-sm font-black text-slate-950">Download {result.fileName}</a></div> : null}
     </form>
     <section className="rounded-2xl border border-amber-300/25 bg-amber-300/[0.06] p-5"><h2 className="font-bold text-white">This packages completed work</h2><p className="mt-2 text-sm leading-6 text-slate-300">It does not create or approve the underlying client work. You remain responsible for confirming scope, quality, licenses, confidential-data handling, and the final files before delivery.</p></section>
   </div>;

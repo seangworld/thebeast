@@ -16,17 +16,18 @@ const text = (form: FormData, name: string, max: number) => String(form.get(name
 const slug = (value: string) => value.replace(/[^a-z0-9_-]+/gi, "-").replace(/^-+|-+$/g, "").slice(0, 70) || "client-delivery";
 const cleanFileName = (value: string) => value.split(/[\\/]/).pop()?.replace(/[\u0000-\u001f<>:"|?*]+/g, "-").trim().slice(0, 180) || "file";
 
-async function isOwner() {
+async function ownerAccess() {
   const client = createRouteClient();
   const auth = await client.auth.getUser();
-  if (!auth.data.user || auth.error) return false;
+  if (!auth.data.user || auth.error) return null;
   const profile = await client.from("profiles").select("role").eq("id", auth.data.user.id).maybeSingle();
-  return !profile.error && profile.data?.role === "admin";
+  return !profile.error && profile.data?.role === "admin" ? { client, id: auth.data.user.id } : null;
 }
 
 export async function POST(request: Request) {
   if (request.headers.get("origin") !== new URL(request.url).origin) return json({ error: "Same-origin request required." }, 403);
-  if (!(await isOwner())) return json({ error: "SEANGWORLD HQ owner access required." }, 403);
+  const access = await ownerAccess();
+  if (!access) return json({ error: "SEANGWORLD HQ owner access required." }, 403);
   const declaredSize = Number(request.headers.get("content-length") || 0);
   if (declaredSize > MAX_TOTAL_BYTES + 150_000) return json({ error: "The combined upload is too large. Keep all files under 24 MB." }, 413);
   let form: FormData;
@@ -69,7 +70,14 @@ export async function POST(request: Request) {
     zip.file("Delivery-Summary.html", documents.report);
     zip.file("File-Manifest.json", JSON.stringify({ clientName, projectName, serviceType, deliveredAt, files: manifest }, null, 2));
     const output = await zip.generateAsync({ type: "uint8array", compression: "DEFLATE", compressionOptions: { level: 9 } });
-    return new NextResponse(Buffer.from(output), { status: 200, headers: { "content-type": "application/zip", "content-disposition": `attachment; filename="${slug(projectName)}-client-delivery.zip"`, "cache-control": "private, no-store", "x-delivery-files": String(manifest.length), "x-delivery-bytes": String(manifest.reduce((sum, file) => sum + file.bytes, 0)) } });
+    const artifactName = `${slug(projectName)}-client-delivery.zip`;
+    const inputBytes = manifest.reduce((sum, file) => sum + file.bytes, 0);
+    let jobRecorded = false;
+    try {
+      const recorded = await access.client.from("seangworld_client_jobs").insert({ owner_id: access.id, client_name: clientName, project_name: projectName, job_type: "client_delivery", files_count: manifest.length, input_bytes: inputBytes, artifact_name: artifactName });
+      jobRecorded = !recorded.error;
+    } catch { /* History is supplemental and must never block the finished download. */ }
+    return new NextResponse(Buffer.from(output), { status: 200, headers: { "content-type": "application/zip", "content-disposition": `attachment; filename="${artifactName}"`, "cache-control": "private, no-store", "x-delivery-files": String(manifest.length), "x-delivery-bytes": String(inputBytes), "x-job-recorded": String(jobRecorded) } });
   } catch {
     return json({ error: "The delivery package could not be created. Your files were not stored." }, 500);
   }
