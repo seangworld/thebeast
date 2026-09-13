@@ -50,18 +50,17 @@ test("BM-42E Bills header and rows share table-level columns, padding, and align
   assert.doesNotMatch(source, /<td className="w-\[(?:28|18)%\]/);
 });
 
-test("BM-42E Debts header and rows share stable columns, padding, and alignment", () => {
+test("BM-42E Debts mirrors the Bills table columns, padding, and alignment", () => {
   const source = debtsPage();
   const columns = source.match(/<colgroup data-money-table-columns="debts">([\s\S]*?)<\/colgroup>/)?.[1] || "";
 
-  assert.equal((columns.match(/<col /g) || []).length, 7);
-  assert.match(columns, /<col className="w-\[8%\]" \/>/);
+  assert.equal((columns.match(/<col /g) || []).length, 6);
+  assert.match(columns, /min-\[1440px\]:table-column/);
   assert.match(source, /money-aligned-table/);
-  assert.equal((source.match(/money-table-cell/g) || []).length, 14);
-  assert.equal((source.match(/money-table-align-right/g) || []).length, 6);
-  assert.equal((source.match(/money-table-align-center/g) || []).length, 4);
-  assert.match(source, /money-table-align-left whitespace-nowrap">Priority/);
-  assert.match(source, /money-table-align-left whitespace-nowrap">#\{index \+ 1\}/);
+  assert.equal((source.match(/money-table-cell/g) || []).length, 12);
+  assert.equal((source.match(/money-table-align-right/g) || []).length, 2);
+  assert.equal((source.match(/money-table-align-center/g) || []).length, 8);
+  assert.match(source, />Debt<\/th>[\s\S]*>Remaining<\/th>[\s\S]*>Next Due<\/th>[\s\S]*>Income Pot<\/th>[\s\S]*>Payment Setup<\/th>[\s\S]*>Actions<\/th>/);
   assert.match(source, /data-mobile-debt-list-cards="true"/);
 });
 
