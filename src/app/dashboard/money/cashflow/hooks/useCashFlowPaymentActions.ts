@@ -106,15 +106,20 @@ export function useCashFlowPaymentActions({
     assignedIncomeDate: string
   ) {
     const supabase = createClient();
+    const userId = await getUserId();
+    if (!userId) return { ok: false, message: "Sign in again to update this paycheck assignment." };
 
-    await supabase
+    const { error } = await supabase
       .from("bill_events")
       .update({
         assigned_income_date: assignedIncomeDate || null,
       })
-      .eq("id", billId);
+      .eq("id", billId)
+      .eq("user_id", userId);
 
+    if (error) return { ok: false, message: "Unable to update this bill assignment. Please retry." };
     await load();
+    return { ok: true, message: "Bill moved to the selected paycheck." };
   }
 
   async function updateDebtIncomeDate(
@@ -122,15 +127,20 @@ export function useCashFlowPaymentActions({
     assignedIncomeDate: string
   ) {
     const supabase = createClient();
+    const userId = await getUserId();
+    if (!userId) return { ok: false, message: "Sign in again to update this paycheck assignment." };
 
-    await supabase
+    const { error } = await supabase
       .from("debts")
       .update({
         assigned_income_date: assignedIncomeDate || null,
       })
-      .eq("id", debtId);
+      .eq("id", debtId)
+      .eq("user_id", userId);
 
+    if (error) return { ok: false, message: "Unable to update this debt assignment. Please retry." };
     await load();
+    return { ok: true, message: "Debt minimum moved to the selected paycheck." };
   }
 
   async function updateBillPaymentConfiguration(

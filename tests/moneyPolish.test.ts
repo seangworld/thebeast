@@ -105,17 +105,19 @@ test("BeastMoney internal pages use dashboard-aligned Money surfaces", () => {
   assert.doesNotMatch(debts, /money-payoff-table w-full min-w-/);
 });
 
-test("Income Date Planning is compact until the user expands details", () => {
+test("Paycheck Strategy opens ready for monthly assignment and can be collapsed", () => {
   const source = readFileSync(
     "src/app/dashboard/money/cashflow/components/IncomeDatePlanningSection.tsx",
     "utf8"
   );
   const globalStyles = readFileSync("src/app/globals.css", "utf8");
 
-  assert.match(source, /useState\(false\)/);
+  assert.match(source, /useState\(true\)/);
+  assert.match(source, /Paycheck Strategy/);
+  assert.match(source, /Hide Paycheck Plan/);
   assert.match(source, /aria-expanded=\{showIncomeTimeline\}/);
   assert.match(source, /aria-controls="income-date-planning-timeline"/);
-  assert.match(source, /Show Income Timeline/);
+  assert.match(source, /Show Paycheck Plan/);
   assert.match(source, /Expand and Review/);
   assert.match(source, /Action Required/);
   assert.match(source, /Healthy/);

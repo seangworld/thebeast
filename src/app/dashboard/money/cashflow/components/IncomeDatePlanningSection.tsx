@@ -8,6 +8,10 @@ type IncomeDatePlanningSectionProps = {
   unassignedDebts: any[];
   unassignedObligationsTotal: number;
   lookaheadDays: number;
+  recommendedTargetDebt: any;
+  strategyLabel: string;
+  updateBillIncomeDate: (id: string, date: string) => Promise<{ ok: boolean; message: string }>;
+  updateDebtIncomeDate: (id: string, date: string) => Promise<{ ok: boolean; message: string }>;
 };
 
 function formatMoney(value: number) {
@@ -20,18 +24,66 @@ export default function IncomeDatePlanningSection({
   unassignedDebts,
   unassignedObligationsTotal,
   lookaheadDays,
+  recommendedTargetDebt,
+  strategyLabel,
+  updateBillIncomeDate,
+  updateDebtIncomeDate,
 }: IncomeDatePlanningSectionProps) {
-  const [showIncomeTimeline, setShowIncomeTimeline] = useState(false);
+  const [showIncomeTimeline, setShowIncomeTimeline] = useState(true);
+  const [savingAssignment, setSavingAssignment] = useState("");
+  const [assignmentMessage, setAssignmentMessage] = useState("");
+
+  const planningBuckets = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const windowEnd = new Date(today);
+    windowEnd.setDate(windowEnd.getDate() + Number(lookaheadDays || 30));
+    return incomeBucketPlans.filter((bucket) => {
+      const date = new Date(`${bucket.date}T12:00:00`);
+      return Number.isFinite(date.getTime()) && date >= today && date <= windowEnd;
+    });
+  }, [incomeBucketPlans, lookaheadDays]);
+
+  async function assignObligation(kind: "bill" | "debt", id: string, date: string) {
+    const key = `${kind}-${id}`;
+    setSavingAssignment(key);
+    setAssignmentMessage("");
+    const result = kind === "bill"
+      ? await updateBillIncomeDate(id, date)
+      : await updateDebtIncomeDate(id, date);
+    setSavingAssignment("");
+    setAssignmentMessage(result.message);
+  }
+
+  function paycheckSelect(kind: "bill" | "debt", item: any) {
+    const key = `${kind}-${item.id}`;
+    return (
+      <select
+        className="beast-input min-w-[190px] py-2 text-xs"
+        aria-label={`Paycheck covering ${item.name}`}
+        value={item.assigned_income_date || ""}
+        disabled={savingAssignment === key}
+        onChange={(event) => void assignObligation(kind, item.id, event.target.value)}
+      >
+        <option value="">Unassigned</option>
+        {planningBuckets.map((bucket) => (
+          <option key={`${key}-${bucket.date}`} value={bucket.date}>
+            {bucket.label} · {formatMoney(Number(bucket.availableToAssign || 0))} left
+          </option>
+        ))}
+      </select>
+    );
+  }
 
   const summary = useMemo(() => {
-    const nextBucket = incomeBucketPlans[0] || null;
+    const nextBucket = planningBuckets[0] || null;
     const unassignedCount = unassignedBills.length + unassignedDebts.length;
-    const shortBucket = incomeBucketPlans.find(
+    const shortBucket = planningBuckets.find(
       (bucket) =>
         Number(bucket.safeAfterBuffer || 0) < 0 ||
         Number(bucket.availableToAssign || 0) < 0
     );
-    const hasNoBuckets = incomeBucketPlans.length === 0;
+    const hasNoBuckets = planningBuckets.length === 0;
 
     if (shortBucket || unassignedCount > 0) {
       return {
@@ -67,20 +119,22 @@ export default function IncomeDatePlanningSection({
       shouldReview: false,
       message: "Everything in the current income window is assigned and above buffer.",
     };
-  }, [incomeBucketPlans, unassignedBills.length, unassignedDebts.length]);
+  }, [planningBuckets, unassignedBills.length, unassignedDebts.length]);
 
   return (
     <section
       className={`money-section-panel ${
         summary.shouldReview ? "border-yellow-300/40" : ""
       }`}
+      id="paycheck-strategy"
+      data-paycheck-strategy-planner="true"
     >
       <div className="money-section-header">
         <div>
-          <h2 className="money-section-title">Income Date Planning</h2>
+          <h2 className="money-section-title">Paycheck Strategy</h2>
           <p className="money-section-description">
-            Assign bills and debt minimums to the real income date that should
-            cover them.
+            Plan the next month paycheck by paycheck. Choose what each deposit
+            covers, see what remains, and direct safe extra money to the suggested debt.
           </p>
         </div>
 
@@ -91,7 +145,7 @@ export default function IncomeDatePlanningSection({
           aria-controls="income-date-planning-timeline"
           onClick={() => setShowIncomeTimeline((value) => !value)}
         >
-          {showIncomeTimeline ? "Hide Income Timeline" : "Show Income Timeline"}
+          {showIncomeTimeline ? "Hide Paycheck Plan" : "Show Paycheck Plan"}
         </button>
       </div>
 
@@ -100,10 +154,10 @@ export default function IncomeDatePlanningSection({
           <div className="money-section-card">
             <div className="money-metric-label">Upcoming Income Buckets</div>
             <div className="money-metric-value">
-              {incomeBucketPlans.length}
+              {planningBuckets.length}
             </div>
             <p className="money-muted-text mt-3">
-              Generated from your income schedule.
+              In the next {Number(lookaheadDays || 30)} days.
             </p>
           </div>
 
@@ -113,7 +167,7 @@ export default function IncomeDatePlanningSection({
               {unassignedBills.length + unassignedDebts.length}
             </div>
             <p className="money-muted-text mt-3">
-              Assign these in the Bills and Debt Minimums tables below.
+              Assign them directly in the paycheck plan below.
             </p>
           </div>
 
@@ -195,7 +249,7 @@ export default function IncomeDatePlanningSection({
               aria-controls="income-date-planning-timeline"
               onClick={() => setShowIncomeTimeline((value) => !value)}
             >
-              {summary.shouldReview ? "Expand and Review" : "Show Income Timeline"}
+              {showIncomeTimeline ? "Hide Paycheck Plan" : summary.shouldReview ? "Expand and Review" : "Show Paycheck Plan"}
             </button>
           </div>
           <p className="mt-3 text-sm">
@@ -205,8 +259,35 @@ export default function IncomeDatePlanningSection({
 
         {summary.shouldReview && !showIncomeTimeline ? (
           <div className="rounded-xl border border-yellow-300/35 bg-yellow-300/10 px-4 py-3 text-sm font-semibold text-yellow-100">
-            This section needs a quick review. Expand the income timeline to
-            see the affected income date and assignments.
+            This paycheck plan needs a quick review. Expand it to assign each
+            bill or debt minimum to a deposit.
+          </div>
+        ) : null}
+
+        {assignmentMessage ? (
+          <div className="rounded-xl border border-cyan-300/30 bg-cyan-300/10 px-4 py-3 text-sm text-cyan-100" role="status">
+            {assignmentMessage}
+          </div>
+        ) : null}
+
+        {(unassignedBills.length > 0 || unassignedDebts.length > 0) && showIncomeTimeline ? (
+          <div className="rounded-xl border border-yellow-300/35 bg-yellow-300/5 p-4">
+            <h3 className="font-black text-yellow-100">Assign these items</h3>
+            <p className="mt-1 text-sm text-[#c7cfdb]">Choose the paycheck that should cover each obligation.</p>
+            <div className="mt-4 grid gap-2">
+              {unassignedBills.map((bill) => (
+                <div key={`unassigned-bill-${bill.id}`} className="flex flex-col gap-2 rounded-lg bg-[#0f1419] p-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div><div className="font-bold text-white">{bill.name}</div><div className="text-xs text-[#7f8da3]">Bill · {formatMoney(Number(bill.remaining || bill.amount || 0))}</div></div>
+                  {paycheckSelect("bill", bill)}
+                </div>
+              ))}
+              {unassignedDebts.map((debt) => (
+                <div key={`unassigned-debt-${debt.id}`} className="flex flex-col gap-2 rounded-lg bg-[#0f1419] p-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div><div className="font-bold text-white">{debt.name}</div><div className="text-xs text-[#7f8da3]">Debt minimum · {formatMoney(Number(debt.minimum_payment || 0))}</div></div>
+                  {paycheckSelect("debt", debt)}
+                </div>
+              ))}
+            </div>
           </div>
         ) : null}
 
@@ -215,13 +296,13 @@ export default function IncomeDatePlanningSection({
             id="income-date-planning-timeline"
             className="grid gap-4 lg:grid-cols-2"
           >
-            {incomeBucketPlans.length === 0 ? (
+            {planningBuckets.length === 0 ? (
               <div className="beast-panel p-4 text-sm text-[#c7cfdb]">
                 No upcoming income buckets found. Add income events or update
                 next pay dates.
               </div>
             ) : (
-              incomeBucketPlans.slice(0, 8).map((bucket, index) => (
+              planningBuckets.map((bucket, index) => (
                 <div
                   key={bucket.id}
                   className={`money-income-bucket beast-panel overflow-hidden ${
@@ -258,7 +339,11 @@ export default function IncomeDatePlanningSection({
                   </div>
 
                   <div className="p-4 text-sm text-[#c7cfdb]">
-                    <div className="mb-3 grid gap-2 sm:grid-cols-3">
+                    <div className="mb-3 grid gap-2 sm:grid-cols-4">
+                      <div>
+                        <div className="text-[#7f8da3]">Paycheck</div>
+                        <div className="font-bold">{formatMoney(Number(bucket.amount || 0))}</div>
+                      </div>
                       <div>
                         <div className="text-[#7f8da3]">Assigned</div>
                         <div className="font-bold">
@@ -287,28 +372,36 @@ export default function IncomeDatePlanningSection({
                         {bucket.assignedBills.map((bill: any) => (
                           <li
                             key={`bill-${bucket.id}-${bill.id}`}
-                            className="flex justify-between gap-4"
+                            className="flex flex-col gap-2 rounded-lg bg-white/[0.03] p-2 sm:flex-row sm:items-center sm:justify-between"
                           >
-                            <span>{bill.name}</span>
-                            <span className="text-right">
-                              {formatMoney(Number(bill.remaining || 0))}
-                            </span>
+                            <span><span className="font-semibold text-white">{bill.name}</span><span className="ml-2">{formatMoney(Number(bill.remaining || 0))}</span></span>
+                            {paycheckSelect("bill", bill)}
                           </li>
                         ))}
 
                         {bucket.assignedDebts.map((debt: any) => (
                           <li
                             key={`debt-${bucket.id}-${debt.id}`}
-                            className="flex justify-between gap-4"
+                            className="flex flex-col gap-2 rounded-lg bg-white/[0.03] p-2 sm:flex-row sm:items-center sm:justify-between"
                           >
-                            <span>{debt.name} minimum</span>
-                            <span className="text-right">
-                              {formatMoney(Number(debt.minimum_payment || 0))}
-                            </span>
+                            <span><span className="font-semibold text-white">{debt.name} minimum</span><span className="ml-2">{formatMoney(Number(debt.minimum_payment || 0))}</span></span>
+                            {paycheckSelect("debt", debt)}
                           </li>
                         ))}
                       </ul>
                     )}
+
+                    <div className="mt-4 rounded-xl border border-cyan-300/25 bg-cyan-300/10 p-3">
+                      <div className="text-xs font-bold uppercase tracking-wide text-cyan-200">Suggested extra-debt move</div>
+                      {recommendedTargetDebt && Number(bucket.safeAfterBuffer || 0) > 0 ? (
+                        <p className="mt-1 font-bold text-white">
+                          Put {formatMoney(Number(bucket.safeAfterBuffer || 0))} toward {recommendedTargetDebt.name}
+                          <span className="ml-2 text-xs font-normal text-[#c7cfdb]">({strategyLabel} strategy)</span>
+                        </p>
+                      ) : (
+                        <p className="mt-1 text-sm text-[#c7cfdb]">No safe extra payment is suggested from this paycheck.</p>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))

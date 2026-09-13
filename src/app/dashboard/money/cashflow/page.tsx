@@ -18,6 +18,7 @@ import { MoneyManagementNavigation } from "@/app/dashboard/money/components/Mone
 import { reportClientOperationFailure } from "@/lib/clientDiagnostics";
 import { BEASTMONEY_PAYMENT_MAINTENANCE_MESSAGE } from "@/lib/beastMoneyPaymentWriteGate";
 import { isDebtArchivedOrClosed, isDebtOpen, isDebtPayoffEligible } from "@/lib/debtLifecycle";
+import { getDebtStrategyLabel } from "@/lib/debtStrategies";
 import { applySuggestedDebtAttackCommand } from "@/lib/suggestedDebtAttack";
 import {
   billPaymentOccurrenceKey,
@@ -1361,6 +1362,10 @@ export default function CashFlowPage() {
           unassignedDebts={unassignedDebts}
           unassignedObligationsTotal={unassignedObligationsTotal}
           lookaheadDays={lookaheadDays}
+          recommendedTargetDebt={recommendedTargetDebt}
+          strategyLabel={getDebtStrategyLabel(strategy)}
+          updateBillIncomeDate={updateBillIncomeDate}
+          updateDebtIncomeDate={updateDebtIncomeDate}
         />
 
 
