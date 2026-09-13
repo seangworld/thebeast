@@ -23,7 +23,7 @@ const factoryOptions = {
   ],
   client: [
     { title: "Code audit package", detail: "Upload a codebase ZIP and receive findings, priorities, recommendations, and client-ready delivery files without using AI credits.", href: "/dashboard/operations/production/code-audit", action: "Create Code Audit", status: "Available" },
-    { title: "Custom client package", detail: "Collect the brief, source files, requested outputs, due date, and delivery requirements in one job.", href: "", action: "Connection pending", status: "Next factory" },
+    { title: "Client delivery package", detail: "Bundle finished files with the project summary, deliverables, handoff instructions, next steps, and file verification.", href: "/dashboard/operations/production/client-package", action: "Package Client Work", status: "Available" },
   ],
 } as const;
 
@@ -31,7 +31,7 @@ const factories = [
   { name: "Book Factory", state: "Available", detail: "KDP research, manuscript, quality review, packaging, and upload handoff.", href: "/dashboard/operations/publishing" },
   { name: "Video Production", state: "FacelessReels", detail: "BeastMarketing coordinates discovery, scripts, approvals, publishing plans, and analytics.", href: "/dashboard/operations/marketing/video-growth" },
   { name: "Content Production", state: "Available", detail: "Create social and email materials for copy-and-paste use or later connected publishing.", href: "/dashboard/operations/marketing" },
-  { name: "Client Packages", state: "Code audit available", detail: "Create a bounded static code review and download an organized client delivery package.", href: "/dashboard/operations/production/code-audit" },
+  { name: "Client Packages", state: "Available", detail: "Create a code audit or bundle finished work into an organized, verified client delivery.", href: "/dashboard/operations/production/client-package" },
 ] as const;
 
 export function ProductionWorkspace() {
@@ -62,10 +62,10 @@ export function ProductionWorkspace() {
             <article key={option.title} className="flex min-w-0 flex-col rounded-2xl border border-white/10 bg-[#0b111b]/70 p-5">
               <div className="flex items-start justify-between gap-3">
                 <h3 className="text-lg font-bold text-white">{option.title}</h3>
-                <span className={`shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-wide ${option.href ? "border-emerald-300/30 bg-emerald-300/10 text-emerald-200" : "border-amber-300/30 bg-amber-300/10 text-amber-100"}`}>{option.status}</span>
+                <span className="shrink-0 rounded-full border border-emerald-300/30 bg-emerald-300/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-emerald-200">{option.status}</span>
               </div>
               <p className="mt-2 flex-1 text-sm leading-6 text-slate-300">{option.detail}</p>
-              {option.href ? <Link href={option.href} className="mt-5 inline-flex min-h-11 items-center justify-center rounded-xl bg-cyan-200 px-4 py-3 text-sm font-bold text-slate-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-200">{option.action} →</Link> : <span className="mt-5 inline-flex min-h-11 items-center justify-center rounded-xl border border-white/10 px-4 py-3 text-sm font-bold text-slate-500" aria-disabled="true">{option.action}</span>}
+              <Link href={option.href} className="mt-5 inline-flex min-h-11 items-center justify-center rounded-xl bg-cyan-200 px-4 py-3 text-sm font-bold text-slate-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-200">{option.action} →</Link>
             </article>
           ))}
         </div>

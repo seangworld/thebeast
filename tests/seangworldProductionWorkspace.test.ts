@@ -19,8 +19,9 @@ test("Production uses live factories honestly and preserves approved engine boun
   assert.match(workspace, /Kindle, paperback, and hardcover outputs/);
   assert.match(workspace, /FacelessReels/);
   assert.match(workspace, /does not pretend that background work has started/);
-  assert.match(workspace, /Connection pending/);
+  assert.doesNotMatch(workspace, /Connection pending/);
   assert.match(workspace, /\/dashboard\/operations\/production\/code-audit/);
+  assert.match(workspace, /\/dashboard\/operations\/production\/client-package/);
   assert.match(workspace, /without using AI credits/);
   assert.doesNotMatch(workspace, /Revision 7/);
 });
