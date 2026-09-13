@@ -19,6 +19,14 @@ function formatMoney(value: number) {
   return `$${Number(value || 0).toFixed(2)}`;
 }
 
+function dueDateLabel(item: any) {
+  if (item?.nextDueDateDisplay) return item.nextDueDateDisplay;
+  if (item?.next_due_date_after_payment) {
+    return new Date(`${item.next_due_date_after_payment}T12:00:00`).toLocaleDateString();
+  }
+  return item?.due_date ? `day ${item.due_date}` : "not scheduled";
+}
+
 export default function IncomeDatePlanningSection({
   incomeBucketPlans,
   unassignedBills,
@@ -60,20 +68,22 @@ export default function IncomeDatePlanningSection({
   function paycheckSelect(kind: "bill" | "debt", item: any) {
     const key = `${kind}-${item.id}`;
     return (
-      <select
-        className="beast-input min-w-[190px] py-2 text-xs"
-        aria-label={`Paycheck covering ${item.name}`}
-        value={item.assigned_income_date || ""}
-        disabled={savingAssignment === key}
-        onChange={(event) => void assignObligation(kind, item.id, event.target.value)}
-      >
-        <option value="">Unassigned</option>
-        {planningBuckets.map((bucket) => (
-          <option key={`${key}-${bucket.date}`} value={bucket.date}>
-            {bucket.label} · {formatMoney(Number(bucket.availableToAssign || 0))} left
-          </option>
-        ))}
-      </select>
+      <div className="w-full shrink-0 sm:w-56">
+        <select
+          className="beast-input py-2 text-xs"
+          aria-label={`Paycheck covering ${item.name}`}
+          value={item.assigned_income_date || ""}
+          disabled={savingAssignment === key}
+          onChange={(event) => void assignObligation(kind, item.id, event.target.value)}
+        >
+          <option value="">Unassigned</option>
+          {planningBuckets.map((bucket) => (
+            <option key={`${key}-${bucket.date}`} value={bucket.date}>
+              {bucket.label} · {formatMoney(Number(bucket.availableToAssign || 0))} left
+            </option>
+          ))}
+        </select>
+      </div>
     );
   }
 
@@ -300,13 +310,13 @@ export default function IncomeDatePlanningSection({
             <div className="mt-4 grid gap-2">
               {unassignedBills.map((bill) => (
                 <div key={`unassigned-bill-${bill.id}`} className="flex flex-col gap-2 rounded-lg bg-[#0f1419] p-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div><div className="font-bold text-white">{bill.name}</div><div className="text-xs text-[#7f8da3]">Bill · {formatMoney(Number(bill.remaining || bill.amount || 0))}</div></div>
+                  <div className="min-w-0 flex-1"><div className="truncate font-bold text-white">{bill.name}</div><div className="text-xs text-[#7f8da3]">Bill · <span className="whitespace-nowrap">{formatMoney(Number(bill.remaining || bill.amount || 0))}</span> · Due {dueDateLabel(bill)}</div></div>
                   {paycheckSelect("bill", bill)}
                 </div>
               ))}
               {unassignedDebts.map((debt) => (
                 <div key={`unassigned-debt-${debt.id}`} className="flex flex-col gap-2 rounded-lg bg-[#0f1419] p-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div><div className="font-bold text-white">{debt.name}</div><div className="text-xs text-[#7f8da3]">Debt minimum · {formatMoney(Number(debt.minimum_payment || 0))}</div></div>
+                  <div className="min-w-0 flex-1"><div className="truncate font-bold text-white">{debt.name}</div><div className="text-xs text-[#7f8da3]">Debt minimum · <span className="whitespace-nowrap">{formatMoney(Number(debt.minimum_payment || 0))}</span> · Due {dueDateLabel(debt)}</div></div>
                   {paycheckSelect("debt", debt)}
                 </div>
               ))}
@@ -397,7 +407,10 @@ export default function IncomeDatePlanningSection({
                             key={`bill-${bucket.id}-${bill.id}`}
                             className="flex flex-col gap-2 rounded-lg bg-white/[0.03] p-2 sm:flex-row sm:items-center sm:justify-between"
                           >
-                            <span><span className="font-semibold text-white">{bill.name}</span><span className="ml-2">{formatMoney(Number(bill.remaining || 0))}</span></span>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex min-w-0 items-baseline gap-2"><span className="truncate font-semibold text-white">{bill.name}</span><span className="shrink-0 whitespace-nowrap">{formatMoney(Number(bill.remaining || 0))}</span></div>
+                              <div className="text-xs text-[#7f8da3]">Due {dueDateLabel(bill)}</div>
+                            </div>
                             {paycheckSelect("bill", bill)}
                           </li>
                         ))}
@@ -407,7 +420,10 @@ export default function IncomeDatePlanningSection({
                             key={`debt-${bucket.id}-${debt.id}`}
                             className="flex flex-col gap-2 rounded-lg bg-white/[0.03] p-2 sm:flex-row sm:items-center sm:justify-between"
                           >
-                            <span><span className="font-semibold text-white">{debt.name} minimum</span><span className="ml-2">{formatMoney(Number(debt.minimum_payment || 0))}</span></span>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex min-w-0 items-baseline gap-2"><span className="truncate font-semibold text-white">{debt.name} minimum</span><span className="shrink-0 whitespace-nowrap">{formatMoney(Number(debt.minimum_payment || 0))}</span></div>
+                              <div className="text-xs text-[#7f8da3]">Due {dueDateLabel(debt)}</div>
+                            </div>
                             {paycheckSelect("debt", debt)}
                           </li>
                         ))}

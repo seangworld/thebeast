@@ -25,6 +25,11 @@ test("paycheck strategy planner supports the spreadsheet-style monthly workflow"
   for (const days of [30, 60, 90, 180]) assert.match(planner, new RegExp(`<option value=\\{${days}\\}>${days} days`));
   assert.match(planner, /Cash Flow alert window stays unchanged/);
   assert.match(planner, /planningBuckets\.map/);
+  assert.match(planner, /function dueDateLabel/);
+  assert.match(planner, /Due \{dueDateLabel\(bill\)\}/);
+  assert.match(planner, /Due \{dueDateLabel\(debt\)\}/);
+  assert.match(planner, /sm:w-56/);
+  assert.match(planner, /shrink-0 whitespace-nowrap/);
   assert.match(planner, /updateBillIncomeDate\(id, date\)/);
   assert.match(planner, /updateDebtIncomeDate\(id, date\)/);
   assert.match(planner, /value=\{item\.assigned_income_date \|\| ""\}/);
