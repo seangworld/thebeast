@@ -22,7 +22,7 @@ const factoryOptions = {
     { title: "KDP opportunity", detail: "Search and select book opportunities directly inside the Publishing factory.", href: "/dashboard/operations/publishing", action: "Find Books to Create", status: "Available" },
   ],
   client: [
-    { title: "Code audit package", detail: "Upload a codebase and receive findings, priorities, recommendations, and client-ready delivery files.", href: "", action: "Connection pending", status: "Next factory" },
+    { title: "Code audit package", detail: "Upload a codebase ZIP and receive findings, priorities, recommendations, and client-ready delivery files without using AI credits.", href: "/dashboard/operations/production/code-audit", action: "Create Code Audit", status: "Available" },
     { title: "Custom client package", detail: "Collect the brief, source files, requested outputs, due date, and delivery requirements in one job.", href: "", action: "Connection pending", status: "Next factory" },
   ],
 } as const;
@@ -31,7 +31,7 @@ const factories = [
   { name: "Book Factory", state: "Available", detail: "KDP research, manuscript, quality review, packaging, and upload handoff.", href: "/dashboard/operations/publishing" },
   { name: "Video Production", state: "FacelessReels", detail: "BeastMarketing coordinates discovery, scripts, approvals, publishing plans, and analytics.", href: "/dashboard/operations/marketing/video-growth" },
   { name: "Content Production", state: "Available", detail: "Create social and email materials for copy-and-paste use or later connected publishing.", href: "/dashboard/operations/marketing" },
-  { name: "Client Packages", state: "Next factory", detail: "Code audits and packaged client deliverables will join this same production flow.", href: "" },
+  { name: "Client Packages", state: "Code audit available", detail: "Create a bounded static code review and download an organized client delivery package.", href: "/dashboard/operations/production/code-audit" },
 ] as const;
 
 export function ProductionWorkspace() {
