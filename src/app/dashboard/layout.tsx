@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { APP_VERSION_LABEL } from "@/lib/appVersion";
+import { OperationsFrame } from "./operations/OperationsFrame";
+import { isOwnerWorkspacePath } from "@/lib/operationsNavigation";
 import LogoutButton from "@/app/components/LogoutButton";
 import AdminViewAsControl from "@/app/components/AdminViewAsControl";
 import { createClient } from "@/lib/supabase/client";
@@ -73,7 +75,7 @@ function loadAdminViewMode() {
 }
 
 function getWorkspaceModule(pathname: string): ModuleKey {
-  if (pathname.startsWith("/dashboard/admin")) return "admin";
+  if (isOwnerWorkspacePath(pathname)) return "admin";
   if (pathname.startsWith("/dashboard/money")) return "money";
   if (pathname.startsWith("/dashboard/learning") || pathname.startsWith("/dashboard/education")) return "learning";
   if (pathname.startsWith("/dashboard/health")) return "health";
@@ -359,7 +361,7 @@ export default function DashboardLayout({
       const ageStatus = classifyMemberAge(profile.birthday);
       const ageLearningOnly = !canUseBeastAdmin && ageStatus !== "adult";
 
-      if (pathname.startsWith("/dashboard/admin") && !canUseBeastAdmin) {
+      if (isOwnerWorkspacePath(pathname) && !canUseBeastAdmin) {
         router.replace("/dashboard");
         return;
       }
@@ -984,6 +986,10 @@ export default function DashboardLayout({
         ) : null}
       </div>
     );
+  }
+
+  if (pathname === "/dashboard/operations" || pathname.startsWith("/dashboard/operations/")) {
+    return isAdminPersona ? <OperationsFrame>{children}</OperationsFrame> : null;
   }
 
   return (

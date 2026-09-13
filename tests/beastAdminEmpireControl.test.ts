@@ -7,10 +7,10 @@ test("BA-EMPIRE-101 defines five products plus separate Hunter and Marketing nav
   assert.deepEqual(empireProducts.map((product) => product.name), [
     "SEANGWORLD.com", "The Beast", "BeastFusion", "SEANGWORLDNEWS", "Change the World",
   ]);
-  const navigation = readFileSync("src/lib/moduleNavigation.ts", "utf8");
-  assert.match(navigation, /group: "BeastHunter"/);
-  assert.match(navigation, /group: "BeastMarketing"/);
-  assert.match(navigation, /group: "SEANGWORLDNEWS"/);
+  const navigation = readFileSync("src/lib/operationsNavigation.ts", "utf8");
+  assert.match(navigation, /label: "Opportunities"/);
+  assert.match(navigation, /name: "BeastMarketing \/ Media"/);
+  assert.match(navigation, /name: "SEANGWORLD News"/);
 });
 
 test("BA-EMPIRE-101 refuses to fabricate a total before required cost evidence exists", () => {

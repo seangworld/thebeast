@@ -19,6 +19,7 @@ const under18AcademicLevels = new Set([
 
 const restrictedLearningOnlyPathPrefixes = [
   "/dashboard/admin",
+  "/dashboard/operations",
   "/dashboard/billing",
   "/dashboard/cashflow",
   "/dashboard/debts",

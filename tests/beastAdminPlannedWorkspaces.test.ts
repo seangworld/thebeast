@@ -53,7 +53,7 @@ test("BA-126 keeps deferred work separate from the operational Revenue Center", 
     /\bAds\b/
   );
   assert.match(page, /Planned workspace registry/);
-  assert.match(navigation, /Revenue[\s\S]*?\/dashboard\/admin\/ads/);
+  assert.match(readFileSync("src/lib/operationsNavigation.ts", "utf8"), /Revenue[\s\S]*?\/dashboard\/operations\/revenue/);
   assert.match(
     navigation,
     /Planned Workspaces[\s\S]*?\/dashboard\/admin\/planned-workspaces/

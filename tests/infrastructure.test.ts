@@ -596,7 +596,7 @@ test("module navigation centralizes expandable child items", () => {
   );
   assert.deepEqual(
     buildOwnerNavigationForPersona({ isOwner: true }).map((item) => item.label),
-    ["BeastAdmin"]
+    ["Operations", "BeastAdmin"]
   );
   assert.deepEqual(buildOwnerNavigationForPersona({ isOwner: false }), []);
   assert.equal(beastMoneyNavigation.href, "/dashboard/money/dashboard");
@@ -5972,7 +5972,7 @@ test("member navigation hides admin and monetization surfaces", () => {
     buildOwnerNavigationForPersona({
       isOwner: canAccessBeastAdmin({ role: "admin", adminViewMode: "admin" }),
     }).map((item) => item.label),
-    ["BeastAdmin"]
+    ["Operations", "BeastAdmin"]
   );
   assert.deepEqual(
     buildOwnerNavigationForPersona({
@@ -5984,7 +5984,7 @@ test("member navigation hides admin and monetization surfaces", () => {
     buildOwnerNavigationForPersona({
       isOwner: canAccessBeastAdmin({ role: "admin", adminViewMode: "admin" }),
     }).map((item) => item.label),
-    ["BeastAdmin"]
+    ["Operations", "BeastAdmin"]
   );
   assert.equal(
     getBeastModuleNavigationForPersona(false).some((item) => item.label === "BeastAdmin"),
@@ -5997,7 +5997,7 @@ test("member navigation hides admin and monetization surfaces", () => {
   assert.match(dashboardLayout, /buildOwnerNavigationForPersona/);
   assert.match(dashboardLayout, /ADMIN_VIEW_MODE_EVENT/);
   assert.match(dashboardLayout, /canAccessBeastAdmin/);
-  assert.match(dashboardLayout, /pathname\.startsWith\("\/dashboard\/admin"\) && !canUseBeastAdmin/);
+  assert.match(dashboardLayout, /isOwnerWorkspacePath\(pathname\) && !canUseBeastAdmin/);
   const entitlementHook = readFileSync("src/lib/hooks/useEntitlements.ts", "utf8");
   assert.match(entitlementHook, /window\.location\.reload\(\)/);
   assert.equal(
@@ -6069,11 +6069,6 @@ test("BeastAdmin foundation registers modules and protects owner-only navigation
   assert.deepEqual(
     beastAdminNavigation.children?.map((item) => item.label),
     [
-  "CEO Mode",
-  "Empire Overview",
-  "Revenue",
-  "Company Overview",
-  "Company Analytics",
   "The Beast Overview",
   "Members",
   "Member Messages",
@@ -6095,15 +6090,7 @@ test("BeastAdmin foundation registers modules and protects owner-only navigation
   "Prompt Library",
   "Planned Workspaces",
   "Settings",
-  "Overview & Operations",
-  "Change the World Overview",
-  "Overview",
-  "Overview",
-  "Advertising",
-  "Video Growth",
-  "Social",
-  "Email",
-  "Analytics"
+
 ]
   );
   assert.deepEqual(
@@ -6234,7 +6221,7 @@ test("BeastAdmin routes cover CEO operations members analytics feedback ads and 
     assert.equal(readFileSync(file, "utf8").includes("BeastAdmin"), true, file);
   });
 
-  const adminDashboard = readFileSync("src/app/dashboard/admin/page.tsx", "utf8");
+  const adminDashboard = readFileSync("src/app/dashboard/operations/briefing/page.tsx", "utf8");
   [
     "CEO Mode",
     "daily operating headquarters",
@@ -6250,7 +6237,7 @@ test("BeastAdmin routes cover CEO operations members analytics feedback ads and 
   assert.match(shell, /ADMIN_VIEW_MODE_EVENT/);
   assert.match(shell, /adminViewMode/);
   assert.match(shell, /setAccessState\("denied"\)/);
-  assert.match(layout, /pathname\.startsWith\("\/dashboard\/admin"\) && !canUseBeastAdmin/);
+  assert.match(layout, /isOwnerWorkspacePath\(pathname\) && !canUseBeastAdmin/);
 
   const membersPage = readFileSync(
     "src/app/dashboard/admin/members/page.tsx",

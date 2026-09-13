@@ -296,7 +296,7 @@ export function BeastMarketingWorkspace({ initialCampaignId = "" }: { initialCam
       <div className="mt-5 rounded-xl border border-emerald-300/25 bg-emerald-300/5 p-4">
         <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-200">Primary growth objective · Qualified Traffic Growth</p>
         <p className="mt-2 text-sm leading-6 text-slate-200">Prefer discovery, search visibility, distribution, internal linking, referrals, audience capture, and conversion improvements for useful existing SEANGWORLD assets before proposing more inventory. Judge channels by downstream value—not impressions alone.</p>
-        <a className="mt-3 inline-flex text-sm font-black text-emerald-200 underline underline-offset-4" href="/dashboard/admin/intelligence">Review live traffic and search evidence</a>
+        <a className="mt-3 inline-flex text-sm font-black text-emerald-200 underline underline-offset-4" href="/dashboard/operations/analytics">Review live traffic and search evidence</a>
       </div>
       <dl className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{Object.entries(snapshot.providerState).map(([key, value]) => <div key={key} className="rounded-xl border border-white/10 bg-white/[0.03] p-3"><dt className="text-xs font-black uppercase tracking-wider text-slate-400">{title(key)}</dt><dd className="mt-1 font-black text-amber-100">{title(value)}</dd></div>)}</dl>
     </DashboardCard>

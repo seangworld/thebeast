@@ -198,95 +198,88 @@ export const memberBeastMoneyNavigation: ModuleNavSection = {
   children: beastMoneyNavigation.children?.filter((item) => !item.future),
 };
 
+export const operationsNavigation: ModuleNavSection = {
+  label: "Operations",
+  href: "/dashboard/operations",
+  module: "admin",
+};
+
 export const beastAdminNavigation: ModuleNavSection = {
   label: "BeastAdmin",
   href: "/dashboard/admin",
   module: "admin",
   defaultExpanded: true,
   children: [
-    { label: "CEO Mode", href: "/dashboard/admin", group: "CEO" },
-    { label: "Empire Overview", href: "/dashboard/admin/empire", group: "CEO" },
-    { label: "Revenue", href: "/dashboard/admin/ads", group: "CEO" },
-    { label: "Company Overview", href: "/dashboard/admin/company", group: "SEANGWORLD.com" },
-    { label: "Company Analytics", href: "/dashboard/admin/intelligence", group: "SEANGWORLD.com" },
     { label: "The Beast Overview", href: "/dashboard/admin/beast", group: "The Beast" },
     { label: "Members", href: "/dashboard/admin/members", group: "The Beast" },
     { label: "Member Messages", href: "/dashboard/admin/messages", group: "The Beast" },
     { label: "Beta Feedback", href: "/dashboard/admin/feedback", group: "The Beast" },
     { label: "The Beast Analytics", href: "/dashboard/admin/metrics", group: "The Beast" },
-    { label: "BeastFusion Overview", href: "/dashboard/admin/fusion", group: "BeastFusion" },
+    { label: "BeastFusion Overview", href: "/dashboard/admin/fusion", group: "Platform & engineering" },
     {
       label: "Development Console",
       href: "/dashboard/admin/development",
-      group: "BeastFusion",
+      group: "Platform & engineering",
     },
     {
       label: "Platform Health",
       href: "/dashboard/admin/platform-health",
-      group: "BeastFusion",
+      group: "Platform & engineering",
     },
     {
       label: "Migration Status",
       href: "/dashboard/admin/migrations",
-      group: "BeastFusion",
+      group: "Platform & engineering",
     },
     {
       label: "SQL Explorer",
       href: "/dashboard/admin/migrations/explorer",
-      group: "BeastFusion",
+      group: "Platform & engineering",
     },
     {
       label: "Release Center",
       href: "/dashboard/admin/releases",
-      group: "BeastFusion",
+      group: "Platform & engineering",
     },
     {
       label: "Digital Professional History",
       href: "/dashboard/admin/execution-history",
-      group: "BeastFusion",
+      group: "Platform & engineering",
     },
-    { label: "Roadmap", href: "/dashboard/admin/roadmap", group: "BeastFusion" },
+    { label: "Roadmap", href: "/dashboard/admin/roadmap", group: "Platform & engineering" },
     {
       label: "Capacity & AI Analytics",
       href: "/dashboard/admin/analytics",
-      group: "BeastFusion",
+      group: "Platform & engineering",
     },
     {
       label: "Knowledge Inspector",
       href: "/dashboard/admin/knowledge",
-      group: "BeastFusion",
+      group: "Platform & engineering",
     },
     {
       label: "Ecosystem Map",
       href: "/dashboard/admin/ecosystem",
-      group: "BeastFusion",
+      group: "Platform & engineering",
     },
-    { label: "Modules", href: "/dashboard/admin/modules", group: "BeastFusion" },
+    { label: "Modules", href: "/dashboard/admin/modules", group: "Platform & engineering" },
     {
       label: "Feature Flags",
       href: "/dashboard/admin/flags",
-      group: "BeastFusion",
+      group: "Platform & engineering",
     },
     {
       label: "Prompt Library",
       href: "/dashboard/admin/prompt-library",
-      group: "BeastFusion",
+      group: "Platform & engineering",
     },
     {
       label: "Planned Workspaces",
       href: "/dashboard/admin/planned-workspaces",
-      group: "BeastFusion",
+      group: "Platform & engineering",
     },
-    { label: "Settings", href: "/dashboard/admin/settings", group: "BeastFusion" },
-    { label: "Overview & Operations", href: "/dashboard/admin/news", group: "SEANGWORLDNEWS" },
-    { label: "Change the World Overview", href: "/dashboard/admin/change-the-world", group: "Change the World" },
-    { label: "Overview", href: "/dashboard/admin/intelligence/hunter", group: "BeastHunter" },
-    { label: "Overview", href: "/dashboard/admin/marketing", group: "BeastMarketing" },
-    { label: "Advertising", href: "/dashboard/admin/marketing/advertising", group: "BeastMarketing" },
-    { label: "Video Growth", href: "/dashboard/admin/marketing/video-growth", group: "BeastMarketing" },
-    { label: "Social", href: "/dashboard/admin/marketing/social", group: "BeastMarketing" },
-    { label: "Email", href: "/dashboard/admin/marketing/email", group: "BeastMarketing" },
-    { label: "Analytics", href: "/dashboard/admin/marketing/analytics", group: "BeastMarketing" },
+    { label: "Settings", href: "/dashboard/admin/settings", group: "Platform & engineering" },
+
   ],
 };
 
@@ -389,7 +382,7 @@ export function buildOwnerNavigationForPersona({
     (item) => item.module === "admin"
   );
 
-  return ownerModules.filter(
+  return [operationsNavigation, ...ownerModules].filter(
     (item, index, items) =>
       items.findIndex((candidate) => candidate.label === item.label) === index
   );

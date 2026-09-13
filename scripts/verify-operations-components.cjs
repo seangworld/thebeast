@@ -1,0 +1,27 @@
+const fs=require('fs'),path=require('path');
+const root=path.resolve(__dirname, '..');
+const req=require('module').createRequire(root+'/package.json');
+const React=req('react'), {JSDOM}=req('jsdom'), ts=req('typescript');
+const dom=new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>',{url:'https://beast.test/dashboard/operations'});
+global.window=dom.window;global.document=dom.window.document;global.navigator=dom.window.navigator;global.HTMLElement=dom.window.HTMLElement;global.IS_REACT_ACT_ENVIRONMENT=true;
+const {createRoot}=req('react-dom/client'); const {act}=React;
+let role='admin'; let financialMode='missing'; const router={replace:()=>{}};const calls=[];
+const client={auth:{getUser:async()=>({data:{user:{id:'test-owner'}}})},from:()=>({select:()=>({eq:()=>({maybeSingle:async()=>({data:{role}})})})})};
+global.fetch=async(url)=>{calls.push(url); if(financialMode==='missing')return new Response('{}',{status:503});if(url.includes('company-costs'))return Response.json({entries:[]});return Response.json({provider:'adsense',state:'available',periods:{month:{estimatedEarnings:0,currency:'USD'}}});};
+const cache={};
+function load(file){file=path.resolve(file);if(cache[file])return cache[file].exports;const mod={exports:{}};cache[file]=mod;const source=ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{jsx:ts.JsxEmit.ReactJSX,module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020,esModuleInterop:true}}).outputText;
+function local(name){if(name==='next/link')return {__esModule:true,default:({children,onClick,...props})=>React.createElement('a',{...props,onClick:(event)=>{event.preventDefault();onClick?.(event);}},children)};if(name==='next/image')return {__esModule:true,default:({fill,priority,...props})=>React.createElement('img',props)};if(name==='next/navigation')return {usePathname:()=>'/dashboard/operations',useRouter:()=>router};if(name==='@/lib/supabase/client')return {createClient:()=>client};if(name.startsWith('@/')||name.startsWith('.')){let target=name.startsWith('@/')?root+'/src/'+name.slice(2):path.resolve(path.dirname(file),name);for(const ext of ['','.tsx','.ts','.json','/index.ts']){if(fs.existsSync(target+ext)&&fs.statSync(target+ext).isFile()){if(ext==='.json'||target.endsWith('.json'))return JSON.parse(fs.readFileSync(target+ext,'utf8'));return load(target+ext);}}throw Error('Cannot load '+target);}return req(name);}
+new Function('require','module','exports',source)(local,mod,mod.exports);return mod.exports;}
+async function flush(){await act(async()=>{await new Promise(resolve=>setTimeout(resolve,25));});}
+(async()=>{const Frame=load(root+'/src/app/dashboard/operations/OperationsFrame.tsx').OperationsFrame,Page=load(root+'/src/app/dashboard/operations/page.tsx').default;const host=createRoot(document.getElementById('root'));
+await act(async()=>{host.render(React.createElement(Frame,null,React.createElement(Page)));});await flush();
+const assert=require('assert/strict');assert.match(document.body.textContent,/Your ventures/);assert.match(document.body.textContent,/Unavailable/);assert.ok(!document.body.textContent.includes('$0.00'));assert.equal(document.querySelectorAll('#operations-content a[href="/dashboard/operations/publishing"]').length,1);
+const menu=Array.from(document.querySelectorAll('button')).find(x=>x.textContent==='Menu');await act(async()=>menu.click());assert.equal(menu.getAttribute('aria-expanded'),'true');assert.ok(document.getElementById('operations-mobile-menu'));
+await act(async()=>document.querySelector('#operations-mobile-menu a[href="/dashboard/operations/publishing"]').click());assert.equal(menu.getAttribute('aria-expanded'),'false');
+financialMode='zero';const refresh=Array.from(document.querySelectorAll('button')).find(x=>x.textContent==='Refresh');await act(async()=>refresh.click());await flush();assert.match(document.body.textContent,/\$0\.00/);assert.match(document.body.textContent,/No costs recorded yet/);assert.match(document.body.textContent,/Not established/);
+// Capture the actual rendered components with test-only financial fixtures.
+const cssFiles=fs.existsSync(root+'/.next/static/css') ? fs.readdirSync(root+'/.next/static/css').filter(x=>x.endsWith('.css')) : [];const css=cssFiles.map(x=>fs.readFileSync(root+'/.next/static/css/'+x,'utf8')).join('\n');
+function save(name){fs.writeFileSync('/tmp/'+name,'<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Operations layout verification (test data)</title><style>'+css+'</style></head><body>'+document.body.innerHTML+'</body></html>');}
+save('operations-desktop.html');await act(async()=>menu.click());save('operations-mobile.html');await act(async()=>host.unmount());
+role='member';calls.length=0;const denied=createRoot(document.getElementById('root'));await act(async()=>denied.render(React.createElement(Page)));await flush();assert.match(document.body.textContent,/Owner access required/);assert.equal(calls.length,0);await act(async()=>denied.unmount());
+console.log('PASS: actual component rendering; unavailable vs zero; empty costs; no invented profit; mobile menu toggle and navigation; member denial before data fetch.');})().catch(e=>{console.error(e);process.exitCode=1;});
