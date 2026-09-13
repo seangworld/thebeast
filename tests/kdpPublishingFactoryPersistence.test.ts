@@ -20,7 +20,21 @@ test("KDP-001 exposes one Publishing workspace with an honest preparation bounda
   assert.match(nav, /label: "Publishing"/);
   assert.match(page, /KdpPublishingFactoryPanel/);
   assert.match(panel, /Amazon submission, account changes, terms, ISBN decisions, advertising, and publication remain owner-only/);
-  assert.match(panel, /Score and add to queue/);
+  assert.match(panel, /Search with BeastHunter/);
+  assert.match(panel, /Start with my own idea/);
+  assert.match(panel, /Advanced opportunity scoring/);
+  assert.match(panel, /Create this publication/);
+  assert.match(panel, /Publishing projects/);
+});
+
+test("KDP-006 embeds scoped BeastHunter discovery without bypassing owner selection", () => {
+  const panel = readFileSync("src/app/dashboard/admin/marketing/publishing/KdpPublishingFactoryPanel.tsx", "utf8");
+  assert.match(panel, /\/api\/admin\/beast-hunter/);
+  assert.match(panel, /huntTypes: \["PDF \/ Book"\]/);
+  assert.match(panel, /Nothing enters production until you choose it/);
+  assert.match(panel, /body\.duplicateHuntId/);
+  assert.match(panel, /addOpportunity\(item\)/);
+  assert.match(panel, /Open KDP Bookshelf/);
 });
 
 test("KDP-002 adds a fail-closed brief and package approval handoff", () => {
