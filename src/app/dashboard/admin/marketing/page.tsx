@@ -5,38 +5,32 @@ import { MarketingSectionNav } from "./MarketingSectionNav";
 
 const sections = [
   {
-    title: "Publishing",
-    href: "/dashboard/admin/marketing/publishing",
-    status: "Priority 1 · building",
-    description: "KDP opportunity scoring, publication packages, quality gates, approvals, pricing, and performance learning.",
-  },
-  {
     title: "Advertising",
-    href: "/dashboard/admin/marketing/advertising",
+    href: "/dashboard/operations/marketing/advertising",
     status: "Live",
     description: "Campaign planning, ad creative, visual review, approvals, destinations, attribution, and provider-neutral distribution handoffs.",
   },
   {
     title: "Video Growth",
-    href: "/dashboard/admin/marketing/video-growth",
+    href: "/dashboard/operations/marketing/video-growth",
     status: "Live · building",
     description: "AI video production, content opportunities, series, presenters, Shotstack rendering, YouTube optimization, funnels, and the future AI Sean foundation.",
   },
   {
     title: "Social",
-    href: "/dashboard/admin/marketing/social",
+    href: "/dashboard/operations/marketing/social",
     status: "Foundation",
     description: "A dedicated home for future owned-social planning and distribution without mixing it into advertising or video production.",
   },
   {
     title: "Email",
-    href: "/dashboard/admin/marketing/email",
+    href: "/dashboard/operations/marketing/email",
     status: "Foundation",
     description: "A dedicated home for future email audience, campaign, and lifecycle work. No outbound-email authority is implied.",
   },
   {
     title: "Analytics",
-    href: "/dashboard/admin/marketing/analytics",
+    href: "/dashboard/operations/marketing/analytics",
     status: "Discovery and assessment",
     description: "Daily Beast and News campaign preparation, tracked draft links, search evidence assessments, and visible execution blockers.",
   },

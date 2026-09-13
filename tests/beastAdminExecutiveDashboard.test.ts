@@ -148,7 +148,7 @@ test("BA-101 recent releases are dated, deterministic, and limited", () => {
 });
 
 test("BA-101 executive model remains available after CEO Mode becomes the landing experience", () => {
-  const page = readFileSync("src/app/dashboard/admin/page.tsx", "utf8");
+  const page = readFileSync("src/app/dashboard/operations/briefing/page.tsx", "utf8");
   const model = readFileSync("src/lib/beastAdminExecutive.ts", "utf8");
   const shell = readFileSync(
     "src/app/dashboard/admin/BeastAdminShell.tsx",

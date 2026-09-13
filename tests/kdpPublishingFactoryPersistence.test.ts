@@ -14,10 +14,10 @@ test("KDP-001 persists an owner-only queue without Amazon submission authority",
 });
 
 test("KDP-001 exposes one Publishing workspace with an honest preparation boundary", () => {
-  const nav = readFileSync("src/app/dashboard/admin/marketing/MarketingSectionNav.tsx", "utf8");
+  const nav = readFileSync("src/lib/operationsNavigation.ts", "utf8");
   const page = readFileSync("src/app/dashboard/admin/marketing/publishing/page.tsx", "utf8");
   const panel = readFileSync("src/app/dashboard/admin/marketing/publishing/KdpPublishingFactoryPanel.tsx", "utf8");
-  assert.match(nav, /label: "Publishing"/);
+  assert.match(nav, /name: "KDP \/ Publishing"/);
   assert.match(page, /KdpPublishingFactoryPanel/);
   assert.match(panel, /Amazon submission, account changes, terms, ISBN decisions, advertising, and publication remain owner-only/);
   assert.match(panel, /Search with BeastHunter/);

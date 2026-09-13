@@ -9,11 +9,6 @@ import {
 } from "../src/lib/beastRoadmapIdentity";
 
 const expectedAdminDestinations = [
-  ["CEO Mode", "/dashboard/admin"],
-  ["Empire Overview", "/dashboard/admin/empire"],
-  ["Revenue", "/dashboard/admin/ads"],
-  ["Company Overview", "/dashboard/admin/company"],
-  ["Company Analytics", "/dashboard/admin/intelligence"],
   ["The Beast Overview", "/dashboard/admin/beast"],
   ["Members", "/dashboard/admin/members"],
   ["Member Messages", "/dashboard/admin/messages"],
@@ -35,15 +30,6 @@ const expectedAdminDestinations = [
   ["Prompt Library", "/dashboard/admin/prompt-library"],
   ["Planned Workspaces", "/dashboard/admin/planned-workspaces"],
   ["Settings", "/dashboard/admin/settings"],
-  ["Overview & Operations", "/dashboard/admin/news"],
-  ["Change the World Overview", "/dashboard/admin/change-the-world"],
-  ["Overview", "/dashboard/admin/intelligence/hunter"],
-  ["Overview", "/dashboard/admin/marketing"],
-  ["Advertising", "/dashboard/admin/marketing/advertising"],
-  ["Video Growth", "/dashboard/admin/marketing/video-growth"],
-  ["Social", "/dashboard/admin/marketing/social"],
-  ["Email", "/dashboard/admin/marketing/email"],
-  ["Analytics", "/dashboard/admin/marketing/analytics"],
 ] as const;
 
 test("BA-NAV-101 makes the left rail the single BeastAdmin page navigation", () => {

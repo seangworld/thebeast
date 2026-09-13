@@ -50,6 +50,22 @@ const nextConfig = {
   },
   async redirects() {
     return [
+      // Temporary redirects preserve bookmarks and allow revert-based rollback.
+      { source: "/dashboard/admin/marketing/video-growth", destination: "/dashboard/operations/marketing/video-growth", permanent: false },
+      { source: "/dashboard/admin/marketing/advertising", destination: "/dashboard/operations/marketing/advertising", permanent: false },
+      { source: "/dashboard/admin/marketing/publishing", destination: "/dashboard/operations/publishing", permanent: false },
+      { source: "/dashboard/admin/intelligence/hunter", destination: "/dashboard/operations/opportunities", permanent: false },
+      { source: "/dashboard/admin/marketing/analytics", destination: "/dashboard/operations/marketing/analytics", permanent: false },
+      { source: "/dashboard/admin/change-the-world", destination: "/dashboard/operations/change-the-world", permanent: false },
+      { source: "/dashboard/admin/marketing/social", destination: "/dashboard/operations/marketing/social", permanent: false },
+      { source: "/dashboard/admin/marketing/email", destination: "/dashboard/operations/marketing/email", permanent: false },
+      { source: "/dashboard/admin/intelligence", destination: "/dashboard/operations/analytics", permanent: false },
+      { source: "/dashboard/admin/marketing", destination: "/dashboard/operations/marketing", permanent: false },
+      { source: "/dashboard/admin/company", destination: "/dashboard/operations/company", permanent: false },
+      { source: "/dashboard/admin/empire", destination: "/dashboard/operations/finances", permanent: false },
+      { source: "/dashboard/admin/news", destination: "/dashboard/operations/news", permanent: false },
+      { source: "/dashboard/admin/ads", destination: "/dashboard/operations/revenue", permanent: false },
+
       {
         source: "/privacy.html",
         destination: "https://www.seangworld.com/privacy",

@@ -452,7 +452,7 @@ test("BeastMarketing uses one owner-only six-workspace hierarchy without duplica
   const video = readFileSync("src/app/dashboard/admin/marketing/video-growth/page.tsx", "utf8");
   for (const label of ["Overview", "Advertising", "Video Growth", "Social", "Email", "Analytics"]) {
     assert.match(sectionNav, new RegExp(`label: "${label}"`));
-    assert.match(moduleNavigation, new RegExp(`label: "${label}"[^\n]+group: "BeastMarketing"`));
+    assert.doesNotMatch(moduleNavigation, new RegExp(`label: "${label}"[^\n]+group: "BeastMarketing"`));
   }
   assert.equal((moduleNavigation.match(/label: "BeastMarketing"/g) || []).length, 0);
   assert.match(overview, /BeastMarketingOverviewSummary/);

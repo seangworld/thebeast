@@ -25,7 +25,7 @@ export function MarketingFoundationPage({
         <div className="mt-6 rounded-xl border border-amber-300/20 bg-amber-300/[0.04] p-4 text-sm text-amber-100">
           This workspace is reserved intentionally. No provider connection, external publishing, new credential, or spend authority is activated by its presence in navigation.
         </div>
-        <Link href="/dashboard/admin/marketing" className="mt-5 inline-flex text-sm font-black text-amber-100 underline underline-offset-4">Return to BeastMarketing overview</Link>
+        <Link href="/dashboard/operations/marketing" className="mt-5 inline-flex text-sm font-black text-amber-100 underline underline-offset-4">Return to BeastMarketing overview</Link>
       </section>
     </>
   );

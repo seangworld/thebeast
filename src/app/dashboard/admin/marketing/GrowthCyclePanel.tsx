@@ -40,7 +40,7 @@ export function GrowthCyclePanel() {
       <div className="flex flex-wrap gap-3">
         <button disabled={busy} onClick={() => void act({ action: "set_enabled", enabled: !snapshot.enabled })} className="min-h-11 rounded-xl border border-white/20 px-4 py-2 text-white disabled:opacity-50">{snapshot.enabled ? "Pause discovery" : "Enable daily discovery"}</button>
         <button disabled={busy || !snapshot.enabled} onClick={() => void act({ action: "run" })} className="min-h-11 rounded-xl bg-amber-300 px-4 py-2 font-bold text-black disabled:opacity-50">{busy ? "Working…" : "Run today's cycle"}</button>
-        <Link href="/dashboard/admin/marketing/advertising" className="min-h-11 px-4 py-2 text-amber-100">Review campaigns and assets →</Link>
+        <Link href="/dashboard/operations/marketing/advertising" className="min-h-11 px-4 py-2 text-amber-100">Review campaigns and assets →</Link>
       </div>
       {!snapshot.runs.length && <p className="text-slate-300">No cycles have run. No growth results have been established.</p>}
       <ol className="space-y-3">{snapshot.runs.map((run) => <li key={run.id} className="rounded-xl border border-white/10 p-4">

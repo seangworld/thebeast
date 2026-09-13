@@ -4,13 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const items = [
-  { label: "Overview", href: "/dashboard/admin/marketing" },
-  { label: "Advertising", href: "/dashboard/admin/marketing/advertising" },
-  { label: "Video Growth", href: "/dashboard/admin/marketing/video-growth" },
-  { label: "Publishing", href: "/dashboard/admin/marketing/publishing" },
-  { label: "Social", href: "/dashboard/admin/marketing/social" },
-  { label: "Email", href: "/dashboard/admin/marketing/email" },
-  { label: "Analytics", href: "/dashboard/admin/marketing/analytics" },
+  { label: "Overview", href: "/dashboard/operations/marketing" },
+  { label: "Advertising", href: "/dashboard/operations/marketing/advertising" },
+  { label: "Video Growth", href: "/dashboard/operations/marketing/video-growth" },
+  { label: "Social", href: "/dashboard/operations/marketing/social" },
+  { label: "Email", href: "/dashboard/operations/marketing/email" },
+  { label: "Analytics", href: "/dashboard/operations/marketing/analytics" },
 ] as const;
 
 export function MarketingSectionNav() {
@@ -19,7 +18,7 @@ export function MarketingSectionNav() {
   return (
     <nav aria-label="BeastMarketing sections" className="mb-6 flex flex-wrap gap-2 rounded-2xl border border-white/10 bg-white/[0.03] p-3">
       {items.map((item) => {
-        const active = item.href === "/dashboard/admin/marketing"
+        const active = item.href === "/dashboard/operations/marketing"
           ? pathname === item.href
           : pathname.startsWith(item.href);
         return (

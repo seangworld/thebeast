@@ -96,7 +96,7 @@ test("SEANGWORLD AdSense authorization is served as one canonical plain-text ent
 test("legacy BeastOS paths preserve external and BeastAdmin compatibility", async () => {
   const redirects = await nextConfig.redirects?.();
 
-  assert.deepEqual(redirects, [
+  assert.deepEqual(redirects?.filter((item) => !item.destination.startsWith("/dashboard/operations")), [
     {
       source: "/privacy.html",
       destination: "https://www.seangworld.com/privacy",

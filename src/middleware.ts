@@ -179,6 +179,19 @@ export async function middleware(request: NextRequest) {
     return redirect(buildAuthLoginPath(destination, state));
   }
 
+  // Operations is an owner surface even when requested directly, outside the UI.
+  if (user && (request.nextUrl.pathname === "/dashboard/operations" || request.nextUrl.pathname.startsWith("/dashboard/operations/"))) {
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles").select("role").eq("id", user.id).maybeSingle();
+    if (profileError) {
+      const unavailable = new NextResponse("Owner access could not be verified. Please try again.", { status: 503 });
+      unavailable.headers.set("cache-control", "private, no-store");
+      response.cookies.getAll().forEach((cookie) => unavailable.cookies.set(cookie));
+      return unavailable;
+    }
+    if (profile?.role !== "admin") return redirect("/dashboard");
+  }
+
   if (
     isLoginRoute &&
     user &&
