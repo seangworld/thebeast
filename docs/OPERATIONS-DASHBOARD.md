@@ -1,14 +1,16 @@
-# SEANGWORLD Operations dashboard
+# SEANGWORLD HQ
 
 ## Owner-approved scope
 
-Create a desktop-first owner panel with phone check-in support. Separate business operations from Beast administration. Keep BeastMoney, BeastHealth, and the other member modules in The Beast. Reuse BeastFusion, identity, agents, data, and existing workflows rather than creating a second business engine.
+Create a desktop-first company headquarters with phone check-in support. SEANGWORLD HQ is the company-wide CEO/CFO/COO layer; BeastAdmin administers The Beast only. Individual venture control panels retain their own operational depth. Reuse BeastFusion, identity, agents, data, and existing workflows rather than creating a second business engine.
 
 ## Navigation and compatibility
 
-`/dashboard/operations` is the owner landing panel. It has its own desktop sidebar and a compact mobile menu. Operations is also available beside BeastAdmin in the owner navigation and mobile More menu. Members and the owner's Member view cannot use these controls.
+`/dashboard/operations` is the current owner-only route for SEANGWORLD HQ. It has its own desktop sidebar and a compact mobile menu. SEANGWORLD HQ is available beside BeastAdmin in the owner navigation and mobile More menu. Members and the owner's Member view cannot use these controls.
 
-| Previous destination | Operations destination |
+The route remains `/dashboard/operations` for bookmark and rollback stability; the product identity shown to the owner is SEANGWORLD HQ.
+
+| Previous destination | SEANGWORLD HQ destination |
 | --- | --- |
 | CEO Mode at `/dashboard/admin` | `/dashboard/operations/briefing` |
 | Empire Overview | `/dashboard/operations/finances` |
@@ -21,7 +23,24 @@ Create a desktop-first owner panel with phone check-in support. Separate busines
 | Marketing and its five specialist sections | `/dashboard/operations/marketing` and the corresponding section |
 | Marketing / Publishing | `/dashboard/operations/publishing` |
 
-Business routes retain their current implementation, with one new route export per workspace and temporary redirects for old bookmarks. Existing API endpoints, owner checks, storage, approvals, costs, and provider integrations are unchanged. The admin root intentionally becomes the BeastAdmin overview. Technical controls stay accessible in BeastAdmin; Operations links to the existing BeastFusion projection and shared staff/proposal components.
+Business routes retain their current implementation, with one new route export per workspace and temporary redirects for old bookmarks. Existing API endpoints, owner checks, storage, approvals, costs, and provider integrations are unchanged. The admin root intentionally becomes the BeastAdmin overview. Technical controls stay accessible in BeastAdmin; SEANGWORLD HQ links to the existing BeastFusion projection and shared staff/proposal components.
+
+## Responsibility boundary
+
+| Surface | Responsibility |
+| --- | --- |
+| SEANGWORLD HQ | Company-wide finance, revenue, analytics, strategy, opportunities, production, cross-venture agents, and owner approvals |
+| BeastAdmin | The Beast product family, members, product settings, platform health, and engineering controls |
+| Venture control panels | Detailed operating controls for News, Change the World, and future SEANGWORLD ventures |
+| BeastFusion | Sole canonical authority for roadmap, governed execution, release truth, agent coordination, and lifecycle state |
+
+SEANGWORLD HQ is an operating projection and launch surface. It does not become a duplicate roadmap, execution registry, or source of release truth.
+
+## Production workflow
+
+`/dashboard/operations/production` is the revenue-production front door. The owner starts with an idea, asks for an opportunity, or begins client work. The repeatable operating sequence is Choose → Set the run → Agents produce → Owner review → Publish or deliver.
+
+The first increment routes only to verified existing factories. KDP uses one master manuscript with Kindle, paperback, and hardcover as output formats. FacelessReels is the current video production engine; BeastMarketing coordinates discovery, scripting, calendar, approvals, publishing, analytics, and optimization. The custom Revision 7 renderer remains preserved but paused. Client packages, durable timed runs, cross-factory progress, and batch review remain explicitly disconnected until their BeastFusion execution paths are implemented and verified.
 
 No new product lifecycle registry, execution authority, agent, scheduler, database, or company membership system is introduced. This is an operating view of the existing businesses, not a claim that each venture has revenue.
 
