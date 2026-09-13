@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { ClientWorkHistory } from "./ClientWorkHistory";
 
 type StartMode = "idea" | "opportunity" | "client";
 
@@ -23,7 +24,7 @@ const factoryOptions = {
   ],
   client: [
     { title: "Code audit package", detail: "Upload a codebase ZIP and receive findings, priorities, recommendations, and client-ready delivery files without using AI credits.", href: "/dashboard/operations/production/code-audit", action: "Create Code Audit", status: "Available" },
-    { title: "Client delivery package", detail: "Bundle finished files with the project summary, deliverables, handoff instructions, next steps, and file verification.", href: "/dashboard/operations/production/client-package", action: "Package Client Work", status: "Available" },
+    { title: "Client delivery package", detail: "Use this for non-audit work—or to combine several finished deliverables. Code Audit already produces its own finished client package.", href: "/dashboard/operations/production/client-package", action: "Package Other Client Work", status: "Available" },
   ],
 } as const;
 
@@ -93,6 +94,8 @@ export function ProductionWorkspace() {
           {factories.map((factory) => <article key={factory.name} className="rounded-2xl border border-white/10 bg-[#111c2b] p-5"><div className="flex items-start justify-between gap-3"><h3 className="text-lg font-bold text-white">{factory.name}</h3><span className="shrink-0 rounded-full border border-white/10 px-2.5 py-1 text-xs font-bold text-slate-300">{factory.state}</span></div><p className="mt-2 text-sm leading-6 text-slate-400">{factory.detail}</p>{factory.href ? <Link href={factory.href} className="mt-4 inline-block text-sm font-bold text-cyan-200 hover:text-white">Open factory →</Link> : null}</article>)}
         </div>
       </section>
+
+      <ClientWorkHistory />
 
       <section className="rounded-2xl border border-amber-300/25 bg-amber-300/[0.06] p-5" aria-labelledby="autonomy-title">
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-200">Autonomous runs</p>

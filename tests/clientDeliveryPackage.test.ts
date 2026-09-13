@@ -26,7 +26,7 @@ test("client delivery documents present scope and verifiable file evidence", () 
   assert.match(documents.report, new RegExp("a{64}"));
 });
 
-test("client package route is bounded, owner-only, non-persistent, and checksum-backed", () => {
+test("client package route is bounded, owner-only, content-private, and checksum-backed", () => {
   const route = readFileSync("src/app/api/admin/production/client-package/route.ts", "utf8");
   const workspace = readFileSync("src/app/dashboard/operations/production/client-package/ClientDeliveryWorkspace.tsx", "utf8");
   assert.match(route, /MAX_TOTAL_BYTES = 24 \* 1024 \* 1024/);
@@ -34,7 +34,9 @@ test("client package route is bounded, owner-only, non-persistent, and checksum-
   assert.match(route, /profile\.data\?\.role === "admin"/);
   assert.match(route, /Same-origin request required/);
   assert.match(route, /createHash\("sha256"\)/);
-  assert.doesNotMatch(route, /\.from\([^)]*client|storage\.|upload\(/);
+  assert.match(route, /seangworld_client_jobs/);
+  assert.doesNotMatch(route, /storage\.|upload\(|source_code|deliverable_content/);
+  assert.match(route, /"x-job-recorded"/);
   assert.match(workspace, /without AI credits/);
   assert.match(workspace, /are not saved to Beast/);
   assert.match(workspace, /does not create or approve the underlying client work/);

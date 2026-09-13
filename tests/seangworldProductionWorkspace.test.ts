@@ -23,5 +23,6 @@ test("Production uses live factories honestly and preserves approved engine boun
   assert.match(workspace, /\/dashboard\/operations\/production\/code-audit/);
   assert.match(workspace, /\/dashboard\/operations\/production\/client-package/);
   assert.match(workspace, /without using AI credits/);
+  assert.match(workspace, /ClientWorkHistory/);
   assert.doesNotMatch(workspace, /Revision 7/);
 });
