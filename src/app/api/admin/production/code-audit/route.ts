@@ -1,6 +1,7 @@
 import JSZip from "jszip";
 import { NextResponse } from "next/server";
 import { auditClientCode, renderAuditReports, type AuditSourceFile } from "@/lib/clientCodeAudit";
+import { renderClientCodeAuditPdf } from "@/lib/clientCodeAuditPdf";
 import { createRouteClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -78,10 +79,12 @@ export async function POST(request: Request) {
 
     const audit = auditClientCode({ clientName, projectName, auditType, focus, notes, files: sourceFiles });
     const reports = renderAuditReports(audit);
+    const pdf = await renderClientCodeAuditPdf(audit);
     const output = new JSZip();
     output.file("Executive-Summary.md", reports.summary);
     output.file("Technical-Findings.md", reports.findings);
     output.file("Code-Risk-Scan-Report.html", reports.html);
+    output.file("Code-Risk-Scan-Report.pdf", pdf);
     output.file("Findings.csv", reports.csv);
     output.file("Prioritized-Remediation-Plan.md", reports.remediation);
     output.file("Runtime-Verification-Checklist.md", reports.verification);
