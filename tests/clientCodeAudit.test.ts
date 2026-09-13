@@ -25,11 +25,13 @@ test("client code audit prioritizes deterministic findings without exposing cred
   const reports = renderAuditReports(audit);
   assert.match(reports.summary, /Example Client/);
   assert.match(reports.findings, /Technical Findings/);
-  assert.match(reports.html, /SEANGWORLD Client Code Audit/);
+  assert.match(reports.html, /SEANGWORLD Code Risk Scan/);
+  assert.match(reports.summary, /Top five actions before launch/);
+  assert.match(reports.summary, /Scan coverage/);
   assert.match(reports.remediation, /Prioritized Remediation Plan/);
   assert.match(reports.verification, /Runtime Verification Checklist/);
   assert.match(reports.csv, /Occurrences/);
-  assert.match(reports.delivery, /already the complete client-facing audit package/);
+  assert.match(reports.delivery, /already the complete client-facing Code Risk Scan package/);
   assert.doesNotMatch(JSON.stringify(audit) + reports.summary + reports.findings, /super-secret-value/);
 });
 
@@ -64,18 +66,52 @@ test("complete audit evaluates local dependency reproducibility without claiming
   assert.ok(audit.limitations.some((item) => item.includes("live vulnerability advisories")));
 });
 
+test("complete scan adds security, framework, database, complexity, and launch checks without leaking matched values", () => {
+  const providerToken = `ghp_${"a".repeat(36)}`;
+  const databaseUrl = "postgres://risk_user:risk_password@example.test/app";
+  const repeated = Array.from({ length: 8 }, (_, index) => `const repeatedValue${index} = performStep(${index});`).join("\n");
+  const audit = auditClientCode({ clientName: "Client", projectName: "Expanded", files: [
+    { path: ".env", content: `GITHUB_TOKEN=${providerToken}\nDATABASE_URL=${databaseUrl}\n` },
+    { path: "next.config.ts", content: "export default { typescript: { ignoreBuildErrors: true }, eslint: { ignoreDuringBuilds: true }, reactStrictMode: false };" },
+    { path: "src/auth.ts", content: "const claims = jwt.decode(token);\nsetCookie('session', value, { httpOnly: false, secure: false });" },
+    { path: "supabase/migration.sql", content: "create table public.orders (id uuid);\ncreate policy open on public.orders using (true);" },
+    { path: "src/one.ts", content: repeated },
+    { path: "src/two.ts", content: repeated },
+    { path: "package.json", content: JSON.stringify({ scripts: { test: "node --test" }, dependencies: { next: "15.0.0" } }) },
+    { path: "package-lock.json", content: "{}" },
+    { path: "README.md", content: "# Expanded" },
+    { path: "tests/app.test.ts", content: "// test" },
+  ] });
+
+  for (const title of ["Provider access token in source", "Database connection credential in source", "Environment file included in submitted source", "Token decoded without signature verification", "Cookie security disabled", "Permissive row-level security policy", "Database tables may lack row-level security", "Type errors ignored during production build", "Repeated code-block indicators"]) {
+    assert.ok(audit.findings.some((finding) => finding.title === title), title);
+  }
+  assert.equal(audit.scanCoverage.length, 9);
+  assert.equal(audit.topActions.length, 5);
+  const reports = renderAuditReports(audit);
+  const output = JSON.stringify(audit) + Object.values(reports).join("\n");
+  assert.doesNotMatch(output, new RegExp(providerToken));
+  assert.doesNotMatch(output, /risk_password/);
+});
+
 test("client code audit route remains bounded, owner-only, no-execution, and no-credit", () => {
   const route = readFileSync("src/app/api/admin/production/code-audit/route.ts", "utf8");
   const workspace = readFileSync("src/app/dashboard/operations/production/code-audit/ClientCodeAuditWorkspace.tsx", "utf8");
   assert.match(route, /MAX_UPLOAD_BYTES = 12 \* 1024 \* 1024/);
   assert.match(route, /MAX_FILES = 1500/);
+  assert.match(route, /MAX_FILE_REVIEW_BYTES = 2 \* 1024 \* 1024/);
+  assert.match(route, /declaredUncompressedBytes > MAX_FILE_REVIEW_BYTES/);
   assert.match(route, /profile\.data\?\.role === "admin"/);
   assert.match(route, /Same-origin request required/);
   assert.match(route, /entry\.async\("string"\)/);
   assert.doesNotMatch(route, /child_process|\.exec\(|spawn\(/);
   assert.match(workspace, /without using AI credits/);
   assert.match(workspace, /does not run the code/);
-  assert.match(route, /Code-Audit-Report\.html/);
+  assert.match(route, /const auditType = "full" as const/);
+  assert.doesNotMatch(route, /openai|anthropic|child_process|fetch\(/i);
+  assert.match(workspace, /without using AI credits or paid APIs/);
+  assert.doesNotMatch(workspace, /<select name="auditType"/);
+  assert.match(route, /Code-Risk-Scan-Report\.html/);
   assert.match(route, /Prioritized-Remediation-Plan\.md/);
   assert.match(route, /seangworld_client_jobs/);
   assert.match(route, /"x-job-recorded"/);

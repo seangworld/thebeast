@@ -23,8 +23,8 @@ const factoryOptions = {
     { title: "KDP opportunity", detail: "Search and select book opportunities directly inside the Publishing factory.", href: "/dashboard/operations/publishing", action: "Find Books to Create", status: "Available" },
   ],
   client: [
-    { title: "Code audit package", detail: "Upload a codebase ZIP and receive findings, priorities, recommendations, and client-ready delivery files without using AI credits.", href: "/dashboard/operations/production/code-audit", action: "Create Code Audit", status: "Available" },
-    { title: "Client delivery package", detail: "Use this for non-audit work—or to combine several finished deliverables. Code Audit already produces its own finished client package.", href: "/dashboard/operations/production/client-package", action: "Package Other Client Work", status: "Available" },
+    { title: "Code Risk Scan", detail: "Run one complete $99 static scan and receive prioritized security, quality, dependency, and launch-readiness findings without using AI credits or paid APIs.", href: "/dashboard/operations/production/code-audit", action: "Run Code Risk Scan", status: "Available" },
+    { title: "Client delivery package", detail: "Use this for non-scan work—or to combine several finished deliverables. Code Risk Scan already produces its own finished client package.", href: "/dashboard/operations/production/client-package", action: "Package Other Client Work", status: "Available" },
   ],
 } as const;
 
