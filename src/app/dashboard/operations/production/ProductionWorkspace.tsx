@@ -9,7 +9,7 @@ type StartMode = "idea" | "opportunity" | "client";
 const startModes: Array<{ id: StartMode; label: string; title: string; description: string }> = [
   { id: "idea", label: "I have an idea", title: "Start with my idea", description: "Choose the output, provide the idea once, and continue in the working factory." },
   { id: "opportunity", label: "Find it for me", title: "Find something worth making", description: "Use BeastHunter to find and rank opportunities before spending generation credits." },
-  { id: "client", label: "Client work", title: "Complete a client package", description: "Turn a client brief and files into a reviewed, organized delivery package." },
+  { id: "client", label: "Client order", title: "Run a $99 Code Risk Scan", description: "Upload one ZIP and download the finished customer-ready report. No AI credits." },
 ];
 
 const factoryOptions = {
@@ -29,10 +29,11 @@ const factoryOptions = {
 } as const;
 
 const factories = [
-  { name: "Book Factory", state: "Available", detail: "KDP research, manuscript, quality review, packaging, and upload handoff.", href: "/dashboard/operations/publishing" },
-  { name: "Video Production", state: "FacelessReels", detail: "BeastMarketing coordinates discovery, scripts, approvals, publishing plans, and analytics.", href: "/dashboard/operations/marketing/video-growth" },
-  { name: "Content Production", state: "Available", detail: "Create social and email materials for copy-and-paste use or later connected publishing.", href: "/dashboard/operations/marketing" },
-  { name: "Client Packages", state: "Available", detail: "Create a code audit or bundle finished work into an organized, verified client delivery.", href: "/dashboard/operations/production/client-package" },
+  { name: "Book Factory", state: "Available", detail: "KDP research, manuscript, quality review, packaging, and upload handoff.", href: "/dashboard/operations/publishing", action: "Open Book Factory" },
+  { name: "Video Production", state: "FacelessReels", detail: "BeastMarketing coordinates discovery, scripts, approvals, publishing plans, and analytics.", href: "/dashboard/operations/marketing/video-growth", action: "Open Video Production" },
+  { name: "Content Production", state: "Available", detail: "Create social and email materials for copy-and-paste use or later connected publishing.", href: "/dashboard/operations/marketing", action: "Open Content Production" },
+  { name: "Code Risk Scan", state: "$99 flat", detail: "Scan one client ZIP for security, quality, dependency, and launch risks. Download one finished package to review and send—no AI credits.", href: "/dashboard/operations/production/code-audit", action: "Run Code Risk Scan" },
+  { name: "Client Delivery Package", state: "Available", detail: "Package other finished client work, or combine several deliverables into one organized handoff.", href: "/dashboard/operations/production/client-package", action: "Package Other Client Work" },
 ] as const;
 
 export function ProductionWorkspace() {
@@ -91,7 +92,7 @@ export function ProductionWorkspace() {
       <section aria-labelledby="factory-status-title">
         <div className="mb-4 flex flex-wrap items-end justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-200">Production network</p><h2 id="factory-status-title" className="mt-2 text-2xl font-bold text-white">Your factories</h2></div><p className="max-w-xl text-sm leading-6 text-slate-400">Status describes the currently connected workflow. It does not claim that an external account, automatic publishing, or autonomous run is active.</p></div>
         <div className="grid gap-3 md:grid-cols-2">
-          {factories.map((factory) => <article key={factory.name} className="rounded-2xl border border-white/10 bg-[#111c2b] p-5"><div className="flex items-start justify-between gap-3"><h3 className="text-lg font-bold text-white">{factory.name}</h3><span className="shrink-0 rounded-full border border-white/10 px-2.5 py-1 text-xs font-bold text-slate-300">{factory.state}</span></div><p className="mt-2 text-sm leading-6 text-slate-400">{factory.detail}</p>{factory.href ? <Link href={factory.href} className="mt-4 inline-block text-sm font-bold text-cyan-200 hover:text-white">Open factory →</Link> : null}</article>)}
+          {factories.map((factory) => <article key={factory.name} className={`rounded-2xl border p-5 ${factory.name === "Code Risk Scan" ? "border-cyan-300/40 bg-cyan-300/[0.08]" : "border-white/10 bg-[#111c2b]"}`}><div className="flex items-start justify-between gap-3"><h3 className="text-lg font-bold text-white">{factory.name}</h3><span className={`shrink-0 rounded-full border px-2.5 py-1 text-xs font-bold ${factory.name === "Code Risk Scan" ? "border-cyan-200/40 bg-cyan-200/10 text-cyan-100" : "border-white/10 text-slate-300"}`}>{factory.state}</span></div><p className="mt-2 text-sm leading-6 text-slate-400">{factory.detail}</p><Link href={factory.href} className="mt-4 inline-block text-sm font-bold text-cyan-200 hover:text-white">{factory.action} →</Link></article>)}
         </div>
       </section>
 
