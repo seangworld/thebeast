@@ -147,7 +147,6 @@ type StrategyComparisonRow = {
 
 function DebtActionsMenu({
   debt,
-  planning,
   automation,
   management,
   onEdit,
@@ -156,7 +155,6 @@ function DebtActionsMenu({
   onDelete,
 }: {
   debt: Debt;
-  planning?: ReactNode;
   automation: ReactNode;
   management?: DebtManagementActionsProps;
   onEdit: () => void;
@@ -175,7 +173,6 @@ function DebtActionsMenu({
     >
       {(close) => (
         <div className="grid min-w-0 gap-2 text-sm" data-debt-actions-menu="true" data-debt-actions-layout="compact" data-action-menu-list="debt">
-          {planning ? <div className="border-b border-[#2a3242] pb-3">{planning}</div> : null}
           <div className="border-b border-[#2a3242] pb-2">{automation}</div>
           {management ? <DebtManagementActions {...management} editAction={<button type="button" onClick={() => { close(); onEdit(); }} className="beast-button-secondary w-full whitespace-nowrap px-4 text-sm">Edit</button>} /> : null}
           <div className="grid grid-cols-1 gap-2 border-t border-[#2a3242] pt-2">
@@ -1052,37 +1049,23 @@ export default function DebtsPage() {
     setMessage("Debt payment setup updated.");
   }
 
-  function debtPlanningControls(debt: Debt) {
-    return (
-      <div className="grid min-w-0 gap-3" data-debt-payment-planning="true">
-        <div className="grid min-w-0 gap-1">
-          <span className="text-xs font-bold uppercase text-[#7f8da3]">
-            Income Pot
-          </span>
-          <CompactAssignmentSelect
-            label={`${debt.name} income pot`}
-            value={debt.assigned_income_date || ""}
-            options={incomeOptions}
-            onChange={(value) => void updateDebtIncomeDate(debt.id, value)}
-            overlayWidth={300}
-          />
-        </div>
-        <div className="grid min-w-0 gap-1">
-          <span className="text-xs font-bold uppercase text-[#7f8da3]">
-            Payment Setup
-          </span>
-          <PaymentConfigurationControl
-            label={`${debt.name} payment configuration`}
-            record={debt}
-            accounts={activeFundingSources}
-            incomePots={incomeBucketPlans}
-            onChange={(patch) =>
-              void updateDebtPaymentConfiguration(debt.id, patch)
-            }
-          />
-        </div>
-      </div>
-    );
+  function debtIncomePotControl(debt: Debt) {
+    return <CompactAssignmentSelect
+      label={`${debt.name} income pot`}
+      value={debt.assigned_income_date || ""}
+      options={incomeOptions}
+      onChange={(value) => void updateDebtIncomeDate(debt.id, value)}
+    />;
+  }
+
+  function debtPaymentSetupControl(debt: Debt) {
+    return <PaymentConfigurationControl
+      label={`${debt.name} payment configuration`}
+      record={debt}
+      accounts={activeFundingSources}
+      incomePots={incomeBucketPlans}
+      onChange={(patch) => void updateDebtPaymentConfiguration(debt.id, patch)}
+    />;
   }
 
   async function unarchiveDebt(id: string) {
@@ -1641,10 +1624,22 @@ export default function DebtsPage() {
                           </div>
                         </div>
                       </div>
+                      <details className="mt-3 min-w-0 rounded-lg border border-[#2a3242] bg-[#0f1419] p-3">
+                        <summary className="cursor-pointer text-sm font-bold text-cyan-200">Row details</summary>
+                        <div className="mt-3 grid min-w-0 gap-3">
+                          <div className="grid min-w-0 gap-1">
+                            <span className="text-xs font-bold uppercase text-[#7f8da3]">Income Pot</span>
+                            {debtIncomePotControl(debt)}
+                          </div>
+                          <div className="grid min-w-0 gap-1">
+                            <span className="text-xs font-bold uppercase text-[#7f8da3]">Payment Setup</span>
+                            {debtPaymentSetupControl(debt)}
+                          </div>
+                        </div>
+                      </details>
                       <div className="mt-4 flex justify-end">
                         <DebtActionsMenu
                           debt={debt}
-                          planning={debtPlanningControls(debt)}
                           automation={<PaymentAutomationControls compact name={debt.name} {...normalizePaymentAutomation(debt)} onSave={(patch) => updateDebtAutomation(debt.id, patch)} />}
                           management={{
                             debt,
@@ -1670,168 +1665,88 @@ export default function DebtsPage() {
           <div className="hidden lg:block" role="region" aria-label="Debt accounts table">
             <table className="money-aligned-table w-full table-fixed text-sm">
               <colgroup data-money-table-columns="debts">
-                <col className="w-[8%]" />
-                <col className="w-[26%]" />
+                <col className="w-[28%]" />
                 <col className="w-[14%]" />
                 <col className="w-[14%]" />
-                <col className="w-[9%]" />
+                <col className="w-[17%]" />
+                <col className="hidden w-[14%] min-[1440px]:table-column" />
                 <col className="w-[13%]" />
-                <col className="w-[16%]" />
               </colgroup>
               <thead>
                 <tr>
-                  <th className="money-table-cell money-table-align-left whitespace-nowrap">Priority</th>
-                  <th className="money-table-cell money-table-align-left">Name</th>
-                  <th className="money-table-cell money-table-align-right">Balance</th>
-                  <th className="money-table-cell money-table-align-right">Minimum</th>
-                  <th className="money-table-cell money-table-align-right">APR</th>
+                  <th className="money-table-cell money-table-align-left">Debt</th>
+                  <th className="money-table-cell money-table-align-right">Remaining</th>
                   <th className="money-table-cell money-table-align-center">Next Due</th>
-                  <th className="money-table-cell money-table-align-center">Action</th>
+                  <th className="money-table-cell money-table-align-center">Income Pot</th>
+                  <th className="money-table-cell money-table-align-center hidden min-[1440px]:table-cell">Payment Setup</th>
+                  <th className="money-table-cell money-table-align-center">Actions</th>
                 </tr>
               </thead>
 
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={7}>Loading debts...</td>
+                    <td colSpan={6}>Loading debts...</td>
                   </tr>
                 ) : orderedDebts.length === 0 ? (
                   <tr>
-                    <td colSpan={7}>No debts added yet.</td>
+                    <td colSpan={6}>No debts added yet.</td>
                   </tr>
                 ) : (
                   orderedDebts.map((debt, index) => (
                     <tr key={debt.id}>
-                    <td className="money-table-cell money-table-align-left whitespace-nowrap">#{index + 1}</td>
-                  
-                      <td className="money-table-cell money-table-align-left">
+                      <td className="money-table-cell money-table-align-left align-top">
                         {editingDebtId === debt.id ? (
-                          <input
-                            value={editName}
-                            onChange={(e) => setEditName(e.target.value)}
-                            className="beast-input"
-                          />
+                          <div className="grid gap-2">
+                            <input value={editName} onChange={(e) => setEditName(e.target.value)} className="beast-input" placeholder="Debt name" />
+                            <div className="grid gap-2 sm:grid-cols-3">
+                              <input type="number" value={editBalance} onChange={(e) => setEditBalance(e.target.value)} className="beast-input" placeholder="Balance" />
+                              <input type="number" value={editMinimumPayment} onChange={(e) => setEditMinimumPayment(e.target.value)} className="beast-input" placeholder="Minimum" />
+                              <input type="number" value={editInterestRate} onChange={(e) => setEditInterestRate(e.target.value)} className="beast-input" placeholder="APR" />
+                              <input type="number" value={editDueDate} onChange={(e) => setEditDueDate(e.target.value)} className="beast-input" placeholder="Due day" />
+                              <select value={editPaymentBehavior} onChange={(e) => setEditPaymentBehavior(e.target.value as "fixed" | "revolving")} className="beast-input">
+                                <option value="fixed">Fixed Minimum</option>
+                                <option value="revolving">Revolving Minimum</option>
+                              </select>
+                              <input type="number" value={editCreditLimit} onChange={(e) => setEditCreditLimit(e.target.value)} className="beast-input" placeholder="Credit limit" />
+                              {editPaymentBehavior === "revolving" ? <input type="number" value={editStatementBalance} onChange={(e) => setEditStatementBalance(e.target.value)} className="beast-input" placeholder="Statement balance" /> : null}
+                              {editPaymentBehavior === "revolving" ? <input type="number" value={editMinimumPaymentRate} onChange={(e) => setEditMinimumPaymentRate(e.target.value)} className="beast-input" placeholder="Minimum %" /> : null}
+                              {editPaymentBehavior === "revolving" ? <input type="number" value={editMinimumPaymentFloor} onChange={(e) => setEditMinimumPaymentFloor(e.target.value)} className="beast-input" placeholder="Minimum floor" /> : null}
+                            </div>
+                          </div>
                         ) : (
                           <div>
-                            <div>{debt.name}</div>
+                            <div className="font-semibold">{debt.name}</div>
+                            <div className="mt-1 text-xs text-[#7f8da3]">Minimum: ${Number(debt.minimum_payment || 0).toFixed(2)} | {Number(debt.interest_rate || 0).toFixed(2)}% APR</div>
                             {getDebtLifecycleStatus(debt) === "open_zero_balance" ? (
                               <div className="text-xs font-semibold text-cyan-200">Open — Zero Balance</div>
                             ) : null}
                           </div>
                         )}
-                      </td>
-                  
-                      <td className="money-table-cell money-table-align-right">
-                        {editingDebtId === debt.id ? (
-                          <div className="flex flex-col gap-2">
-                            <input
-                              type="number"
-                              value={editBalance}
-                              onChange={(e) => setEditBalance(e.target.value)}
-                              className="beast-input"
-                              placeholder="Balance"
-                            />
-                            <input
-                              type="number"
-                              value={editCreditLimit}
-                              onChange={(e) => setEditCreditLimit(e.target.value)}
-                              className="beast-input"
-                              placeholder="Credit Limit"
-                            />
-                            {editPaymentBehavior === "revolving" ? <input type="number" value={editStatementBalance} onChange={(e) => setEditStatementBalance(e.target.value)} className="beast-input" placeholder="Statement Balance" /> : null}
-                            <input
-                              type="text"
-                              readOnly
-                              value={
-                                editCreditLimit !== "" &&
-                                Number.isFinite(Number(editCreditLimit)) &&
-                                Number.isFinite(Number(editBalance))
-                                  ? `$${(
-                                      Number(editCreditLimit) - Number(editBalance)
-                                    ).toFixed(2)}`
-                                  : ""
-                              }
-                              className="beast-input text-[#7f8da3]"
-                              placeholder="Available Credit"
-                            />
+                        <details className="mt-2 text-xs text-[#9aa7b8]">
+                          <summary className="cursor-pointer font-semibold text-cyan-200">Row details</summary>
+                          <div className="mt-2 grid gap-1">
+                            <span>Payoff priority: #{index + 1}</span>
+                            <span>Income pot: {incomeOptions.find((option) => option.value === debt.assigned_income_date)?.detailLabel || "Unassigned"}</span>
+                            <span>Payment setup is available in the Payment Setup control.</span>
+                            <span>Status: {getDebtLifecycleLabel(getDebtLifecycleStatus(debt))}</span>
                           </div>
-                        ) : (
-                          `$${Number(debt.balance || 0).toFixed(2)}`
-                        )}
+                        </details>
                       </td>
-                  
-                      <td className="money-table-cell money-table-align-right">
-                        {editingDebtId === debt.id ? (
-                          <div className="flex flex-col gap-2">
-                            <input
-                              type="number"
-                              value={editMinimumPayment}
-                              onChange={(e) => setEditMinimumPayment(e.target.value)}
-                              className="beast-input"
-                              placeholder="Min Payment"
-                            />
-                            <select
-                              value={editPaymentBehavior}
-                              onChange={(e) =>
-                                setEditPaymentBehavior(
-                                  e.target.value as "fixed" | "revolving"
-                                )
-                              }
-                              className="beast-input"
-                            >
-                              <option value="fixed">Fixed Minimum</option>
-                              <option value="revolving">
-                                Revolving / Credit Minimum
-                              </option>
-                            </select>
-                            {editPaymentBehavior === "revolving" && (
-                              <>
-                                <input
-                                  type="number"
-                                  value={editMinimumPaymentRate}
-                                  onChange={(e) => setEditMinimumPaymentRate(e.target.value)}
-                                  className="beast-input"
-                                  placeholder="Min %"
-                                />
-                                <input
-                                  type="number"
-                                  value={editMinimumPaymentFloor}
-                                  onChange={(e) => setEditMinimumPaymentFloor(e.target.value)}
-                                  className="beast-input"
-                                  placeholder="Min Floor"
-                                />
-                              </>
-                            )}
-                          </div>
-                        ) : (
-                          `$${Number(debt.minimum_payment || 0).toFixed(2)}`
-                        )}
+                      <td className="money-table-cell money-table-align-right align-top font-semibold">
+                        ${Number(debt.balance || 0).toFixed(2)}
                       </td>
-                  
-                      <td className="money-table-cell money-table-align-right">
-                        {editingDebtId === debt.id ? (
-                          <input
-                            type="number"
-                            value={editInterestRate}
-                            onChange={(e) => setEditInterestRate(e.target.value)}
-                            className="beast-input"
-                          />
-                        ) : (
-                          `${Number(debt.interest_rate || 0).toFixed(2)}%`
-                        )}
+
+                      <td className="money-table-cell money-table-align-center align-top">
+                        {debt.nextDueDateDisplay || debt.due_date || 1}
                       </td>
-                  
-                      <td className="money-table-cell money-table-align-center">
-                        {editingDebtId === debt.id ? (
-                          <input
-                            type="number"
-                            value={editDueDate}
-                            onChange={(e) => setEditDueDate(e.target.value)}
-                            className="beast-input"
-                          />
-                        ) : (
-                          debt.nextDueDateDisplay || debt.due_date || 1
-                        )}
+
+                      <td className="money-table-cell money-table-align-center align-top">
+                        {debtIncomePotControl(debt)}
+                      </td>
+
+                      <td className="money-table-cell money-table-align-center hidden align-top min-[1440px]:table-cell">
+                        {debtPaymentSetupControl(debt)}
                       </td>
                   
                       <td className="money-table-cell money-table-align-center">
@@ -1854,7 +1769,6 @@ export default function DebtsPage() {
                         ) : (
                           <DebtActionsMenu
                             debt={debt}
-                            planning={debtPlanningControls(debt)}
                             automation={<PaymentAutomationControls compact name={debt.name} {...normalizePaymentAutomation(debt)} onSave={(patch) => updateDebtAutomation(debt.id, patch)} />}
                             management={{
                               debt,
