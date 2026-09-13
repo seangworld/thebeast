@@ -199,7 +199,7 @@ export const memberBeastMoneyNavigation: ModuleNavSection = {
 };
 
 export const operationsNavigation: ModuleNavSection = {
-  label: "Operations",
+  label: "SEANGWORLD HQ",
   href: "/dashboard/operations",
   module: "admin",
 };

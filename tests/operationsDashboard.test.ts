@@ -10,10 +10,11 @@ import { canAccessBeastAdmin } from "../src/lib/beastAdmin";
 import * as configuration from "../src/lib/supabase/config";
 import * as authExperience from "../src/lib/auth/experience";
 
-test("Operations destinations exist and business controls leave BeastAdmin", async () => {
+test("SEANGWORLD HQ destinations exist and business controls leave BeastAdmin", async () => {
   for (const item of operationsLinks) assert.ok(existsSync(`src/app${item.href}/page.tsx`), item.href);
   assert.equal(new Set(operationsLinks.map((item) => item.href)).size, operationsLinks.length);
   assert.ok(operationsLinks.some((item) => item.href === "/dashboard/operations/publishing"));
+  assert.ok(operationsLinks.some((item) => item.href === "/dashboard/operations/production"));
   for (const item of beastAdminNavigation.children || []) assert.doesNotMatch(item.href, /\/(marketing|empire|company|intelligence|news|ads)(\/|$)/);
   const config = require("../../next.config.js");
   const redirects = (await config.redirects()) as { source: string; destination: string; permanent: boolean }[];
@@ -26,10 +27,10 @@ test("Operations destinations exist and business controls leave BeastAdmin", asy
   }
 });
 
-test("Operations access follows the owner persona and matches path boundaries", () => {
+test("SEANGWORLD HQ access follows the owner persona and matches path boundaries", () => {
   for (const role of ["member", "beta", null, undefined]) assert.deepEqual(buildOwnerNavigationForPersona({ isOwner: canAccessBeastAdmin({ role }) }), []);
   assert.deepEqual(buildOwnerNavigationForPersona({ isOwner: canAccessBeastAdmin({ role: "admin", adminViewMode: "member" }) }), []);
-  assert.deepEqual(buildOwnerNavigationForPersona({ isOwner: true }).map((item) => item.label), ["Operations", "BeastAdmin"]);
+  assert.deepEqual(buildOwnerNavigationForPersona({ isOwner: true }).map((item) => item.label), ["SEANGWORLD HQ", "BeastAdmin"]);
   for (const path of ["/dashboard/operations", "/dashboard/operations/publishing", "/dashboard/admin/members"]) assert.equal(isOwnerWorkspacePath(path), true);
   for (const path of ["/dashboard/money", "/dashboard/operations-extra", "/dashboard/administrator"]) assert.equal(isOwnerWorkspacePath(path), false);
   assert.equal(isOperationsLinkActive("/dashboard/operations/publishing", "/dashboard/operations"), false);
