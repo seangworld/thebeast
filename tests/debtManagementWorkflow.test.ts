@@ -87,6 +87,10 @@ test("Debt List exposes the same income-pot and payment-setup planning used by B
   assert.match(page, /\.eq\("user_id", userId\)/);
   assert.match(page, /Debt income pot updated/);
   assert.match(page, /Debt payment setup updated/);
+  assert.match(page, />Debt<\/th>[\s\S]*>Remaining<\/th>[\s\S]*>Next Due<\/th>[\s\S]*>Income Pot<\/th>[\s\S]*>Payment Setup<\/th>[\s\S]*>Actions<\/th>/);
+  assert.match(page, /data-money-table-columns="debts"/);
+  assert.match(page, /colSpan=\{6\}/);
+  assert.doesNotMatch(page, /planning=\{debtPlanningControls/);
 });
 
 test("Bills and Debts keep payment workflows in the shared Actions overlay", () => {
