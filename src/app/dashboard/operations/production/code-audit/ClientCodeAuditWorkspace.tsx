@@ -68,7 +68,7 @@ export function ClientCodeAuditWorkspace() {
 
       <section className="rounded-2xl border border-amber-300/25 bg-amber-300/[0.06] p-5">
         <h2 className="font-bold text-white">What is inside the finished package</h2>
-        <p className="mt-2 text-sm leading-6 text-slate-300">A polished browser/print report, executive summary with top five actions, technical findings, CSV tracker, prioritized remediation plan, runtime-verification checklist, project inventory, and structured scan data. The scan does not run the code, perform a penetration test, query live vulnerability databases, send the client code to an AI or third party, or certify that the project is secure.</p>
+        <p className="mt-2 text-sm leading-6 text-slate-300">A polished client-ready PDF, browser report, executive summary with top five actions, technical findings, CSV tracker, prioritized remediation plan, runtime-verification checklist, project inventory, and structured scan data. The scan does not run the code, perform a penetration test, query live vulnerability databases, send the client code to an AI or third party, or certify that the project is secure.</p>
       </section>
     </div>
   );

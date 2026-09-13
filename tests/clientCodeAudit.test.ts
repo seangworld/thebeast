@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { PDFDocument } from "pdf-lib";
 import { auditClientCode, renderAuditReports } from "../src/lib/clientCodeAudit";
+import { renderClientCodeAuditPdf } from "../src/lib/clientCodeAuditPdf";
 
 test("client code audit prioritizes deterministic findings without exposing credential values", () => {
   const audit = auditClientCode({
@@ -94,6 +96,29 @@ test("complete scan adds security, framework, database, complexity, and launch c
   assert.doesNotMatch(output, /risk_password/);
 });
 
+test("client code audit PDF is polished, complete, and generated without source excerpts", async () => {
+  const secret = "super-secret-value";
+  const audit = auditClientCode({
+    clientName: "Example Client",
+    projectName: "Launch Readiness Application",
+    focus: "Authentication, payments, and launch readiness",
+    generatedAt: "2026-09-13T12:00:00.000Z",
+    files: [
+      { path: "src/server.ts", content: `const apiKey = '${secret}';\nconst result = eval(input);\nconsole.log(result);\n` },
+      { path: "src/page.tsx", content: "<div onClick={go}>Open</div>\n<img src='/hero.png'>\n" },
+      { path: "package.json", content: '{"scripts":{"test":"node --test"},"dependencies":{"next":"15.0.0"}}' },
+      { path: "README.md", content: "# Launch Readiness Application\n" },
+      { path: "tests/server.test.ts", content: "// test fixture\n" },
+    ],
+  });
+  const bytes = await renderClientCodeAuditPdf(audit);
+  assert.equal(Buffer.from(bytes.subarray(0, 5)).toString("ascii"), "%PDF-");
+  const pdf = await PDFDocument.load(bytes);
+  assert.ok(pdf.getPageCount() >= 3);
+  assert.equal(pdf.getTitle(), "Launch Readiness Application Code Risk Scan");
+  assert.doesNotMatch(Buffer.from(bytes).toString("latin1"), new RegExp(secret));
+});
+
 test("client code audit route remains bounded, owner-only, no-execution, and no-credit", () => {
   const route = readFileSync("src/app/api/admin/production/code-audit/route.ts", "utf8");
   const workspace = readFileSync("src/app/dashboard/operations/production/code-audit/ClientCodeAuditWorkspace.tsx", "utf8");
@@ -112,7 +137,10 @@ test("client code audit route remains bounded, owner-only, no-execution, and no-
   assert.match(workspace, /without using AI credits or paid APIs/);
   assert.doesNotMatch(workspace, /<select name="auditType"/);
   assert.match(route, /Code-Risk-Scan-Report\.html/);
+  assert.match(route, /Code-Risk-Scan-Report\.pdf/);
+  assert.match(route, /renderClientCodeAuditPdf/);
   assert.match(route, /Prioritized-Remediation-Plan\.md/);
+  assert.match(workspace, /polished client-ready PDF/);
   assert.match(route, /seangworld_client_jobs/);
   assert.match(route, /"x-job-recorded"/);
   assert.match(workspace, /You do not need to run it through Client Delivery Package/);
