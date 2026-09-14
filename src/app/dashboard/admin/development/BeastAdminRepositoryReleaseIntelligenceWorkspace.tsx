@@ -33,6 +33,12 @@ const evidenceClasses: Record<BeastAdminReleaseEvidenceState, string> = {
   unavailable: "border-slate-300/30 bg-slate-300/10 text-slate-200",
 };
 
+const acceptanceClasses = {
+  passed: "border-green-300/35 bg-green-300/10 text-green-100",
+  blocked: "border-red-300/35 bg-red-300/10 text-red-100",
+  owner_action_required: "border-amber-300/35 bg-amber-300/10 text-amber-100",
+} as const;
+
 function label(value: string) {
   return value.replaceAll("_", " ");
 }
@@ -196,6 +202,35 @@ export function BeastAdminRepositoryReleaseIntelligenceWorkspace() {
       </DashboardCard>
 
       {snapshot ? (
+        <>
+        <DashboardCard accent="admin">
+          <SectionHeader
+            eyebrow="BA-CMD-001D acceptance"
+            title="Command-center consolidation gates"
+            description="Production acceptance is evidence-based. A passing technical gate never authorizes duplicate-dashboard retirement without the owner's explicit confirmation."
+          />
+          <div className="mt-5 flex flex-wrap items-center gap-3">
+            <StatusPill
+              value={snapshot.acceptance.status}
+              className={snapshot.acceptance.status === "blocked" ? acceptanceClasses.blocked : acceptanceClasses.passed}
+            />
+            <p className="text-sm text-[#9aa7b8]">
+              {snapshot.acceptance.blockingGateCount} blocking technical gate{snapshot.acceptance.blockingGateCount === 1 ? "" : "s"}; dashboard retirement remains owner-controlled.
+            </p>
+          </div>
+          <div className="mt-5 grid gap-3 md:grid-cols-2">
+            {snapshot.acceptance.gates.map((gate) => (
+              <article key={gate.id} className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <h3 className="font-black text-white">{gate.label}</h3>
+                  <StatusPill value={gate.status} className={acceptanceClasses[gate.status]} />
+                </div>
+                <p className="mt-3 text-sm leading-6 text-[#9aa7b8]">{gate.detail}</p>
+              </article>
+            ))}
+          </div>
+        </DashboardCard>
+
         <DashboardCard accent="admin">
           <SectionHeader
             eyebrow="Release truth table"
@@ -236,6 +271,7 @@ export function BeastAdminRepositoryReleaseIntelligenceWorkspace() {
             ) : <p className="mt-3 rounded-xl border border-dashed border-[#2a3242] p-4 text-sm text-[#9aa7b8]">No supplemental operational notes are available.</p>}
           </div>
         </DashboardCard>
+        </>
       ) : null}
     </div>
   );

@@ -91,6 +91,10 @@ function canonical(): BeastAdminCanonicalReadModel {
       release("release-drift", "cw", commits.cw),
       release("release-provider-only", "beast", null),
     ],
+    records: [
+      { id: "scheduler", label: "scheduler", path: "state/ecosystem-work-scheduler.json", role: "scheduler", digest: "sha256:test", updatedAt: "2026-08-22" },
+      { id: "execution", label: "execution", path: "state/ecosystem-execution-state.json", role: "execution_state", digest: "sha256:test", updatedAt: "2026-08-22" },
+    ],
     attention: [],
   };
 }
@@ -172,6 +176,68 @@ test("BA-CMD-001B applies the deterministic release evidence truth table", () =>
   );
 });
 
+test("BA-CMD-001D fails closed when scheduler metadata predates execution state", () => {
+  const current = canonical();
+  current.records = current.records?.map((record) =>
+    record.role === "scheduler" ? { ...record, updatedAt: "2026-08-21" } : record
+  );
+  const snapshot = buildBeastAdminRepositoryReleaseSnapshot({
+    canonical: current,
+    githubProvider: provider,
+    vercelProvider: provider,
+    repositoryObservations: repositoryObservations(),
+    deploymentObservations: deploymentObservations(),
+    now: new Date("2026-08-22T12:00:00Z"),
+  });
+  const schedulerGate = snapshot.acceptance.gates.find(
+    (gate) => gate.id === "scheduler_reconciliation"
+  );
+  assert.equal(snapshot.acceptance.status, "blocked");
+  assert.equal(schedulerGate?.status, "blocked");
+  assert.match(schedulerGate?.detail || "", /Reconcile in BeastFusion/);
+});
+
+test("BA-CMD-001D keeps dashboard retirement behind explicit owner acceptance", () => {
+  const snapshot = buildBeastAdminRepositoryReleaseSnapshot({
+    canonical: canonical(),
+    githubProvider: provider,
+    vercelProvider: provider,
+    repositoryObservations: repositoryObservations(),
+    deploymentObservations: deploymentObservations(),
+    now: new Date("2026-08-22T12:00:00Z"),
+  });
+  const retirementGate = snapshot.acceptance.gates.find(
+    (gate) => gate.id === "dashboard_retirement"
+  );
+  assert.equal(retirementGate?.status, "owner_action_required");
+  assert.equal(snapshot.acceptance.retirementAuthorized, false);
+});
+
+test("BA-CMD-001D evaluates only the latest canonical release per deployed repository", () => {
+  const current = canonical();
+  current.releases = [
+    ...current.releases.filter((release) => release.id !== "release-drift"),
+    {
+      ...current.releases.find((release) => release.id === "release-drift")!,
+      id: "release-cw-current",
+      releaseDate: "2026-08-23",
+      evidenceReference: `commit:${commits.other}`,
+    },
+  ];
+  const snapshot = buildBeastAdminRepositoryReleaseSnapshot({
+    canonical: current,
+    githubProvider: provider,
+    vercelProvider: provider,
+    repositoryObservations: repositoryObservations(),
+    deploymentObservations: deploymentObservations(),
+    now: new Date("2026-08-22T12:00:00Z"),
+  });
+  const productionGate = snapshot.acceptance.gates.find(
+    (gate) => gate.id === "production_evidence"
+  );
+  assert.equal(productionGate?.status, "passed");
+});
+
 test("BA-EMPIRE-101 limits the operating release truth table to the latest ten", () => {
   const workspace = readFileSync(
     "src/app/dashboard/admin/development/BeastAdminRepositoryReleaseIntelligenceWorkspace.tsx",
@@ -246,6 +312,13 @@ test("client snapshot normalization rejects malformed repository boundaries", ()
     normalizeBeastAdminRepositoryReleaseSnapshot({
       ...snapshot,
       repositories: [{ ...snapshot.repositories[0], worktree: "clean" }],
+    }),
+    null
+  );
+  assert.equal(
+    normalizeBeastAdminRepositoryReleaseSnapshot({
+      ...snapshot,
+      acceptance: { ...snapshot.acceptance, retirementAuthorized: true },
     }),
     null
   );

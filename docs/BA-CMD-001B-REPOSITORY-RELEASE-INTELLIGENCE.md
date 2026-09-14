@@ -60,6 +60,7 @@ evidence.
 - Provider credentials and environment assignment require a separate owner
   configuration authorization.
 - No DEV, Preview, or Production deployment is performed by this package.
-- CEO Mode deterministic intelligence repair remains BA-CMD-001C.
-- BF-DASH parity verification and retirement remains BA-CMD-001D and a later
-  explicit retirement decision.
+- CEO Mode deterministic intelligence repair is implemented by BA-CMD-001C.
+- Production acceptance, rollback evidence, scheduler reconciliation, and the
+  explicit duplicate-dashboard retirement boundary are implemented by
+  BA-CMD-001D. Retirement itself remains a later owner decision.
