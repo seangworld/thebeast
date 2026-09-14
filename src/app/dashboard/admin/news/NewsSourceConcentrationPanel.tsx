@@ -12,9 +12,9 @@ export function NewsSourceConcentrationPanel({ evidence }: { evidence?: NewsSour
         return <div key={lane.scope} className="rounded-xl border border-white/10 p-4">
           <h3 className="font-black text-white">{lane.scope.toUpperCase()}</h3>
           <p className="mt-2 text-sm text-slate-300">Pool: {lane.poolHeadlineCount} headlines, {lane.poolFeedCount} feeds, {lane.poolPublisherCount} publishers.</p>
-          <p className="mt-2 text-sm text-slate-300">Visible: {lane.visibleHeadlineCount}/12 stories from {lane.visiblePublisherCount} publishers.</p>
+          <p className="mt-2 text-sm text-slate-300">Visible: {lane.visibleHeadlineCount}/20 stories from {lane.visiblePublisherCount} publishers.</p>
           <p className="mt-2 text-sm text-slate-300">{lane.publishers.map((row) => `${row.name}: ${row.count}`).join(" · ") || "No visible stories; diversity cannot be assessed."}</p>
-          {lane.visiblePublisherCount > 0 && lane.visiblePublisherCount < 3 && <p className="mt-2 text-amber-100">Limited-source fallback: fewer than three publishers are visible.</p>}
+          {lane.visiblePublisherCount > 0 && lane.visiblePublisherCount < 3 && <p className="mt-2 text-amber-100">Limited source diversity: fewer than three publishers are visible.</p>}
           {warnings.length > 0 ? <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-amber-100">{warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul> : lane.visibleHeadlineCount > 0 && <p className="mt-3 text-sm text-slate-300">No majority concentration in this observation.</p>}
         </div>;
       })}</div>

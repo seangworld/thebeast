@@ -48,7 +48,7 @@ export function parseNewsSourceConcentration(value: unknown, now = new Date()): 
     const lane = object(raw);
     if (!lane || (lane.scope !== "world" && lane.scope !== "usa") || lanes.some((row) => row.scope === lane.scope)
       || !count(lane.poolHeadlineCount) || !count(lane.poolFeedCount) || !count(lane.poolPublisherCount)
-      || !count(lane.visibleHeadlineCount) || lane.visibleHeadlineCount > 12 || !count(lane.visiblePublisherCount)
+      || !count(lane.visibleHeadlineCount) || lane.visibleHeadlineCount > 20 || !count(lane.visiblePublisherCount)
       || lane.visibleHeadlineCount > lane.poolHeadlineCount
       || !shares(lane.publishers, lane.visibleHeadlineCount) || !shares(lane.families, lane.visibleHeadlineCount)
       || !shares(lane.poolPublishers, lane.poolHeadlineCount) || !shares(lane.poolFamilies, lane.poolHeadlineCount)
