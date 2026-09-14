@@ -44,3 +44,18 @@ test("staleness is computed from snapshot time rather than a server freshness cl
   const value = payload(); value.generatedAt = "2026-09-14T11:44:00Z";
   assert.equal(parseNewsSourceConcentration({ ...value, freshness: "fresh" }, now)?.freshness, "stale");
 });
+
+
+test("20-story columns are accepted and overflow is rejected", () => {
+  const value = payload();
+  for (const lane of value.lanes) {
+    lane.poolHeadlineCount = 20;
+    lane.visibleHeadlineCount = 20;
+    for (const key of ["publishers", "families", "poolPublishers", "poolFamilies"] as const) {
+      lane[key] = [{ name: "alpha", count: 15, share: 0.75 }, { name: "beta", count: 5, share: 0.25 }];
+    }
+  }
+  assert.ok(parseNewsSourceConcentration(value, now));
+  value.lanes[0].visibleHeadlineCount = 21;
+  assert.equal(parseNewsSourceConcentration(value, now), null);
+});
