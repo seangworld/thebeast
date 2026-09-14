@@ -1,5 +1,17 @@
 # SW-SEO-229 Search Opportunity Intelligence
 
+Status: Released to Production on 2026-08-22
+
+## Release evidence
+
+- TheBeast PR 15 merged as `cc8f1ffdbe47bc83e6f2a6a045d2cb348ba975a8`.
+- Accepted candidate: `b68a98b4eecfd9215adffeeac09d5a135fcf3d09`.
+- Accepted Preview deployment: `dpl_Gh5JNeN41FYCKHcbyH7XBKgzLSLi`.
+- READY Production deployment: `dpl_8as2Xjph2V2Gk3TgsYFQxEQb8jkM`.
+- Validation at release: 60 focused tests and 1,650 full-suite tests passed.
+- Canonical closure: `roadmaps/completed/SEANGWORLD/SW-SEO-229-search-opportunity-intelligence.md`
+  in BeastFusion.
+
 SW-SEO-229 extends the owner-only SEANGWORLD Intelligence workspace with
 bounded Google Search Console page-to-query evidence. It does not edit public
 SEANGWORLD pages, make SEO changes, or promise rankings.
