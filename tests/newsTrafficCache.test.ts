@@ -16,7 +16,7 @@ test("actual public route shares one period and awaits a new report after rollov
       const key = keys.join(":"); if (!cache.has(key)) cache.set(key, await load()); return cache.get(key);
     } };
     if (name === "next/server") return { NextResponse: Response };
-    if (name === "@/lib/server/publicNewsTraffic") return { loadPublicNewsTraffic: async () => ({ status: "ready", pageViews: ++reports }) };
+    if (name === "@/lib/server/publicNewsTraffic") return { loadPublicNewsTraffic: async () => ({ status: "ready", pageViews: ++reports, totalPageViews: 50 }) };
     throw new Error("Unexpected dependency " + name);
   } });
   const first = await exports.GET!(); assert.equal(first.headers.get("cache-control"), "no-store");
