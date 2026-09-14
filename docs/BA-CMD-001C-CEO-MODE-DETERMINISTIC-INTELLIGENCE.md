@@ -27,7 +27,7 @@ The CEO Mode aggregation route no longer queries `beast_admin_roadmap_items` or 
 - The endpoint is read-only and returns `Cache-Control: private, no-store`.
 - Provider credentials and raw tokens remain server-only and are never included in the response.
 - Missing, stale, drifted, or invalid canonical evidence is shown explicitly; no legacy or fabricated fallback is used.
-- No database migration, provider configuration, execution control, BF-DASH change, or deployment is included in this candidate.
+- No database migration, provider configuration, execution control, or BF-DASH retirement is included. Production acceptance and rollback evidence are handled separately by BA-CMD-001D.
 
 ## Validation contract
 

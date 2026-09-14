@@ -136,6 +136,26 @@ export type BeastAdminOperationalReleaseNote = {
   source: "beastadmin_operational_note";
 };
 
+export type BeastAdminCommandCenterAcceptanceGate = {
+  id:
+    | "canonical_projection"
+    | "scheduler_reconciliation"
+    | "repository_evidence"
+    | "production_evidence"
+    | "rollback_boundary"
+    | "dashboard_retirement";
+  label: string;
+  status: "passed" | "blocked" | "owner_action_required";
+  detail: string;
+};
+
+export type BeastAdminCommandCenterAcceptance = {
+  status: "ready_for_owner_acceptance" | "blocked";
+  blockingGateCount: number;
+  retirementAuthorized: false;
+  gates: BeastAdminCommandCenterAcceptanceGate[];
+};
+
 export type BeastAdminRepositoryReleaseSnapshot = {
   generatedAt: string;
   canonicalProvider: BeastAdminCanonicalReadModel["provider"];
@@ -146,6 +166,7 @@ export type BeastAdminRepositoryReleaseSnapshot = {
   repositories: BeastAdminRepositoryView[];
   releases: BeastAdminCanonicalReleaseView[];
   operationalNotes: BeastAdminOperationalReleaseNote[];
+  acceptance: BeastAdminCommandCenterAcceptance;
   limitations: string[];
 };
 
@@ -378,6 +399,130 @@ function releaseViews({
   });
 }
 
+function sourceRecordDate(
+  canonical: BeastAdminCanonicalReadModel,
+  role: string
+) {
+  const updatedAt = canonical.records?.find((record) => record.role === role)?.updatedAt;
+  if (!updatedAt || Number.isNaN(Date.parse(updatedAt))) return null;
+  return updatedAt;
+}
+
+export function buildBeastAdminCommandCenterAcceptance({
+  canonical,
+  githubProvider,
+  vercelProvider,
+  repositories,
+  releases,
+}: {
+  canonical: BeastAdminCanonicalReadModel;
+  githubProvider: BeastAdminProviderStatus;
+  vercelProvider: BeastAdminProviderStatus;
+  repositories: BeastAdminRepositoryView[];
+  releases: BeastAdminCanonicalReleaseView[];
+}): BeastAdminCommandCenterAcceptance {
+  const schedulerUpdatedAt = sourceRecordDate(canonical, "scheduler");
+  const executionUpdatedAt = sourceRecordDate(canonical, "execution_state");
+  const schedulerAligned = Boolean(
+    schedulerUpdatedAt &&
+      executionUpdatedAt &&
+      Date.parse(schedulerUpdatedAt) >= Date.parse(executionUpdatedAt)
+  );
+  const repositoryEvidenceCurrent =
+    githubProvider.status === "connected" &&
+    repositories.every((repository) => repository.sourceState === "connected");
+  const deployedRepositories = repositories.filter((repository) =>
+    beastAdminRepositoryCatalog.find((catalog) => catalog.id === repository.id)?.deployed
+  );
+  const latestReleaseByRepository = new Map<
+    string,
+    BeastAdminCanonicalReleaseView
+  >();
+  for (const release of releases) {
+    if (!release.repository) continue;
+    const current = latestReleaseByRepository.get(release.repository);
+    const releaseTime = release.releaseDate ? Date.parse(release.releaseDate) : 0;
+    const currentTime = current?.releaseDate ? Date.parse(current.releaseDate) : 0;
+    if (!current || releaseTime > currentTime) {
+      latestReleaseByRepository.set(release.repository, release);
+    }
+  }
+  const canonicalProductionEvidenceCurrent = deployedRepositories.every(
+    (repository) => {
+      const release = latestReleaseByRepository.get(repository.repository);
+      return Boolean(
+        release &&
+          ["verified_current", "verified_deployed"].includes(
+            release.evidenceState
+          )
+      );
+    }
+  );
+  const productionEvidenceCurrent =
+    vercelProvider.status === "connected" &&
+    deployedRepositories.every(
+      (repository) => repository.production.state === "connected"
+    ) &&
+    canonicalProductionEvidenceCurrent;
+
+  const gates: BeastAdminCommandCenterAcceptanceGate[] = [
+    {
+      id: "canonical_projection",
+      label: "Canonical projection",
+      status: canonical.provider.status === "connected" ? "passed" : "blocked",
+      detail:
+        canonical.provider.status === "connected"
+          ? "The immutable BeastFusion projection is current."
+          : `The canonical provider is ${canonical.provider.status}; retained data is not current acceptance evidence.`,
+    },
+    {
+      id: "scheduler_reconciliation",
+      label: "Scheduler and execution metadata",
+      status: schedulerAligned ? "passed" : "blocked",
+      detail: schedulerAligned
+        ? `Scheduler metadata (${schedulerUpdatedAt}) is at least as current as execution state (${executionUpdatedAt}).`
+        : `Scheduler metadata (${schedulerUpdatedAt || "unavailable"}) predates or cannot be compared with execution state (${executionUpdatedAt || "unavailable"}). Reconcile in BeastFusion; BeastAdmin will not infer a replacement cursor.`,
+    },
+    {
+      id: "repository_evidence",
+      label: "Repository evidence",
+      status: repositoryEvidenceCurrent ? "passed" : "blocked",
+      detail: repositoryEvidenceCurrent
+        ? "All bounded repository heads have current read-only GitHub evidence."
+        : "One or more repository observations are missing, stale, or failed.",
+    },
+    {
+      id: "production_evidence",
+      label: "Production served commits",
+      status: productionEvidenceCurrent ? "passed" : "blocked",
+      detail: productionEvidenceCurrent
+        ? "Every deployed repository has current read-only Production evidence matching its latest canonical release commit."
+        : "A deployed repository lacks current Production evidence or its latest canonical release commit cannot be verified against the served commit.",
+    },
+    {
+      id: "rollback_boundary",
+      label: "Rollback boundary",
+      status: "passed",
+      detail:
+        "This consolidation is application-only: revert the release while preserving accepted projections and operational annotations; no data deletion or schema rollback is required.",
+    },
+    {
+      id: "dashboard_retirement",
+      label: "Duplicate dashboard retirement",
+      status: "owner_action_required",
+      detail:
+        "BeastFusion Overview remains available until the owner confirms parity after authenticated Production review. Retirement is never inferred from passing automated gates.",
+    },
+  ];
+  const blockingGateCount = gates.filter((gate) => gate.status === "blocked").length;
+  return {
+    status: blockingGateCount ? "blocked" : "ready_for_owner_acceptance",
+    blockingGateCount,
+    retirementAuthorized: false,
+    gates,
+  };
+}
+
 export function buildBeastAdminRepositoryReleaseSnapshot({
   canonical,
   githubProvider,
@@ -475,28 +620,38 @@ export function buildBeastAdminRepositoryReleaseSnapshot({
         }
       : provider;
 
+  const providers = {
+    github: staleProvider(
+      githubProvider,
+      repositories.map((repository) => repository.sourceState)
+    ),
+    vercel: staleProvider(
+      vercelProvider,
+      repositories.flatMap((repository) => [
+        repository.preview.state,
+        repository.production.state,
+      ])
+    ),
+  };
+  const releases = releaseViews({ canonical, repositories });
+
   return {
     generatedAt: now.toISOString(),
     canonicalProvider: canonical.provider,
-    providers: {
-      github: staleProvider(
-        githubProvider,
-        repositories.map((repository) => repository.sourceState)
-      ),
-      vercel: staleProvider(
-        vercelProvider,
-        repositories.flatMap((repository) => [
-          repository.preview.state,
-          repository.production.state,
-        ])
-      ),
-    },
+    providers,
     repositories,
-    releases: releaseViews({ canonical, repositories }),
+    releases,
     operationalNotes: operationalNotes.map((note) => ({
       ...note,
       source: "beastadmin_operational_note" as const,
     })),
+    acceptance: buildBeastAdminCommandCenterAcceptance({
+      canonical,
+      githubProvider: providers.github,
+      vercelProvider: providers.vercel,
+      repositories,
+      releases,
+    }),
     limitations: [
       "Local worktree cleanliness is unavailable in hosted BeastAdmin.",
       "BeastAdmin release notes supplement canonical BeastFusion release truth and never override it.",
@@ -525,6 +680,8 @@ export function normalizeBeastAdminRepositoryReleaseSnapshot(
     !isRecord(value.providers.vercel) ||
     !Array.isArray(value.releases) ||
     !Array.isArray(value.operationalNotes) ||
+    !isRecord(value.acceptance) ||
+    !Array.isArray(value.acceptance.gates) ||
     !Array.isArray(value.limitations)
   ) {
     return null;
@@ -546,7 +703,23 @@ export function normalizeBeastAdminRepositoryReleaseSnapshot(
       typeof entry.detail === "string"
     );
   });
-  return repositoriesValid
+  const acceptanceValid =
+    ["ready_for_owner_acceptance", "blocked"].includes(
+      String(value.acceptance.status)
+    ) &&
+    Number.isInteger(value.acceptance.blockingGateCount) &&
+    value.acceptance.retirementAuthorized === false &&
+    value.acceptance.gates.every(
+      (entry) =>
+        isRecord(entry) &&
+        typeof entry.id === "string" &&
+        typeof entry.label === "string" &&
+        ["passed", "blocked", "owner_action_required"].includes(
+          String(entry.status)
+        ) &&
+        typeof entry.detail === "string"
+    );
+  return repositoriesValid && acceptanceValid
     ? (value as unknown as BeastAdminRepositoryReleaseSnapshot)
     : null;
 }
