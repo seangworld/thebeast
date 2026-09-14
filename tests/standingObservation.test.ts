@@ -63,6 +63,14 @@ test("BF-AGT-011 lifecycle migration persists immutable bounded authority withou
   assert.match(sql, /cannot execute proposals, build, release, spend, or expand scope/);
 });
 
+test("TODO 17 expands only the revocable read-only aggregate observation scope", () => {
+  const sql = readFileSync("supabase/migrations/20260914103000_expand_site_wide_orchestrator_outcomes.sql", "utf8");
+  assert.match(sql, /orchestrator_3_site_wide_observation_v2/);
+  for (const source of ["growth_aggregate_outcome_evidence", "news_aggregate_outcome_evidence", "ux_aggregate_outcome_evidence"]) assert.match(sql, new RegExp(source));
+  assert.match(sql, /cannot execute, spend, publish, or change Production/);
+  assert.doesNotMatch(sql, /grant (?:insert|update|delete)/);
+});
+
 test("BF-AGT-011 performs no provider reads before every standing authority gate passes", async () => {
   const denied = [
     { authorization: { ...standingAuthorization, revoked_at: "2026-08-27T00:00:00Z" }, schedule: enabledSchedule, canonicalRoadmap: completedOrigin },

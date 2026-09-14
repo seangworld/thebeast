@@ -3,6 +3,7 @@ import { createRouteClient } from "@/lib/supabase/server";
 import { runStandingObservation } from "@/lib/server/standingObservationRunner";
 
 import { assessOperatingOutcomes, unpackObservationEvidence } from "@/lib/standingObservationOutcomes";
+import { assessSiteWideOutcomes } from "@/lib/siteWideOutcomeLearning";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -27,11 +28,15 @@ export async function GET() {
   ]);
   if (schedule.error || runs.error || !runs.data || history.error || !history.data || history.data.length > 120) return json({ error: "Standing staff evidence is unavailable." }, 503);
   const latest = runs.data?.[0] || null;
-  if (latest && unpackObservationEvidence(latest.findings).findings === null) return json({ error: "Standing staff evidence is unavailable." }, 503);
-  const snapshot = latest && ["clean", "findings", "duplicate_skipped"].includes(latest.status) && latest.completed_at && Date.parse(latest.completed_at) >= Date.parse(latest.started_at) && Date.parse(latest.completed_at) <= Date.now() ? unpackObservationEvidence(latest.findings).snapshot : null;
+  const unpackedLatest = latest ? unpackObservationEvidence(latest.findings) : null;
+  if (latest && unpackedLatest?.findings === null) return json({ error: "Standing staff evidence is unavailable." }, 503);
+  const acceptedLatest = latest && ["clean", "findings", "duplicate_skipped"].includes(latest.status) && latest.completed_at && Date.parse(latest.completed_at) >= Date.parse(latest.started_at) && Date.parse(latest.completed_at) <= Date.now();
+  const snapshot = acceptedLatest ? unpackedLatest?.snapshot || null : null;
   const outcomes = snapshot && Date.parse(snapshot.observedAt) === Date.parse(latest!.started_at) ? assessOperatingOutcomes(snapshot, history.data) : null;
+  const currentSiteOutcomes = acceptedLatest ? unpackedLatest?.siteOutcomes || null : null;
+  const siteWideOutcomes = currentSiteOutcomes && Date.parse(currentSiteOutcomes.observedAt) === Date.parse(latest!.started_at) ? assessSiteWideOutcomes(currentSiteOutcomes, history.data) : null;
   const state = !latest ? "never_run" : latest.status === "failed" ? "failed" : latest.status === "running" ? "running" : latest.finding_count > 0 ? "findings" : "clean";
-  return json({ schedule: schedule.data, runs: runs.data.slice(0, 20).map((run) => ({ ...run, findings: unpackObservationEvidence(run.findings).findings || [] })), outcomes, state, authority: "Observation and proposals are non-executable; owner approval and separate BeastFusion authorization are required." });
+  return json({ schedule: schedule.data, runs: runs.data.slice(0, 20).map((run) => ({ ...run, findings: unpackObservationEvidence(run.findings).findings || [] })), outcomes, siteWideOutcomes, state, authority: "Observation and proposals are non-executable; owner authorization remains required for execution, spending, publication, and Production changes." });
 }
 
 export async function POST(request: Request) {

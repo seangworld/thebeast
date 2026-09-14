@@ -1,6 +1,6 @@
 # SEANGWORLD Orchestrator briefing — BF-ORCH-005
 
-Status: initial briefing and three-day assessment released; TODO-001 outcome-learning completion candidate prepared on 2026-09-09.
+Status: site-wide outcome-learning release candidate prepared on 2026-09-14. Growth, News, and UX implementation is complete; live three-cycle validation begins only after the v2 release is scheduled.
 
 ## Owner release note and operating help
 
@@ -8,7 +8,7 @@ BeastAdmin CEO Mode now includes the existing Orchestrator's daily staff briefin
 
 The briefing compares source-level attention over time. Continuing attention directs you to existing findings. Disappearing attention does not prove that an intervention worked. Restored evidence establishes a new baseline. Missing evidence is never proof of good health. Proposal handling in progress and failed cycles are distinct from completed observations.
 
-The existing daily schedule and authorization remain in force. The three permitted sources remain BeastFusion canonical projection, GitHub repository evidence, and Vercel deployment evidence. A difference between Production and repository head may be an intentional release gap. No new executive agent, autonomous code execution, spending, publication authority, or member-data learning is introduced.
+The existing daily schedule and revocable authorization remain in force. The v2 fixed scope retains BeastFusion canonical projection, GitHub repository evidence, and Vercel deployment evidence, and explicitly adds aggregate Growth, News, and UX outcome evidence derived from GA4 and Search Console. A difference between Production and repository head may be an intentional release gap. No new executive agent, autonomous code execution, spending, publication authority, Production-change authority, or member-data learning is introduced.
 
 ## Recovery and measurement
 
@@ -32,7 +32,7 @@ Assess the next three real scheduled cycles after release: every attempt has a t
 
 The initial independent review returned two persistence blockers and incomplete Product Completeness evidence. The persistence changes and tests address those findings; re-review must bind to the new exact candidate. The browser refuses owner taps/typing, blocks localhost, and rejects offline fixture URLs. Synthetic DOM tests are not authenticated Preview acceptance or rendered mobile evidence.
 
-Broader outcome-driven Orchestrator optimization and the Growth, News and UX workstreams remain authorized and unfinished.
+The earlier statement that broader outcome-driven Growth, News, and UX work remained unfinished is superseded by TODO-002 below.
 
 ## Three-day operating assessment
 
@@ -62,3 +62,26 @@ Seven- and thirty-day summaries show clear, attention and unknown days. The late
 - Product surface reconciliation: existing staff identity, location, controls and permissions retained; contextual help and release note updated here; package BF-ORCH-005 identifies this core-service increment without inventing a member-module version. Public discovery/sitemap/member onboarding are not applicable to this owner-only operational feature.
 - Measure the next three scheduled cycles for durable detailed snapshots and truthful status; 7/30-day windows fill with real evidence over time. Measured business effectiveness belongs to the Growth workstream (TODO-002), which remains open.
 - Rollback: revert the application release while retaining observation history. Old code cannot read the new envelope; rollback must retain the compatibility decoder/API unwrapping or pause the assignment until a compatible rollback is deployed. Do not delete records or replay SQL.
+
+## TODO-002 — site-wide Growth, News, and UX outcome learning
+
+The existing daily Orchestrator now reads only aggregate, read-only analytics evidence after every standing-authorization check passes. It builds three product-scoped comparisons: ecosystem Growth from aggregate GA4 sessions and Search Console clicks, SEANGWORLDNEWS from host-scoped sessions and engagement, and The Beast UX from host-scoped sessions, engagement, and a sufficiently large mobile/desktop engagement comparison. Provider freshness, prior-period baselines, and minimum sample sizes fail closed.
+
+Each workstream produces exactly one advisory disposition:
+
+- **Continue** when recent comparable evidence has no material decline under the fixed thresholds.
+- **Modify** when a measured decline or device-specific friction crosses a fixed threshold. This may create a deduplicated, non-executable investigation intake; it never changes the initiative itself.
+- **Investigate** when evidence is stale, unavailable, malformed, or too small to support a comparison.
+
+The stored v2 JSONB envelope retains legacy operational findings and snapshots while adding the bounded site-wide outcome snapshot. Legacy arrays and v1 envelopes remain readable. Malformed v2 records, altered owner gates, causal claims, executable flags, incomplete workstream sets, failed cycles, repeated same-day attempts, and mismatched timestamps cannot become learning evidence.
+
+BeastAdmin displays Growth, News, and UX separately with the measured current/prior comparison, confidence, limitations, recommendation stability, and a scheduled-cycle counter. Validation requires valid v2 results on three distinct consecutive scheduled UTC days. Preview simulations do not count. Until those cycles actually occur, the surface reports the remaining count rather than claiming validation.
+
+The scope migration changes the persisted allowlist from `orchestrator_3_bounded_observation_v1` to `orchestrator_3_site_wide_observation_v2`. It does not add a table, expose analytics publicly, or grant authenticated writes. Authorization remains revocable, and the owner must separately authorize execution, spending, publication, and every Production change. Aggregate movement is association evidence only; it never proves that a campaign, story, release, or UX change caused the result.
+
+### Acceptance and rollback
+
+- Pure behavioral tests cover Continue, Modify, Investigate, minimum samples, unavailable providers, material declines, device friction, malformed evidence, immutable owner gates, and three distinct scheduled days.
+- Existing operational history, proposal deduplication, bounded provider retries, pause/revocation, owner-only APIs, and private/no-store responses remain intact.
+- Full TypeScript tests and a Production build are required before release. Live scheduled validation cannot be completed before three post-release cron days exist.
+- Roll back application code and the scope constraint together, then pause the schedule before any older binary that cannot understand v2 evidence is served. Retain historical rows; never delete or rewrite observation history.

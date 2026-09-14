@@ -113,8 +113,8 @@ test("impact discovery reuses Product Completeness dimensions across downstream 
   assert.deepEqual(deriveEcosystemImpact(["unknown"]).nodes, []);
 });
 
-test("Observer analysis keeps the prior source allowlist and Proposal output remains non-executable", () => {
-  assert.deepEqual(standingObservationPermittedSources, ["beastfusion_canonical_projection", "github_repository_evidence", "vercel_deployment_evidence"]);
+test("Observer analysis uses the owner-authorized v2 source allowlist and Proposal output remains non-executable", () => {
+  assert.deepEqual(standingObservationPermittedSources, ["beastfusion_canonical_projection", "github_repository_evidence", "vercel_deployment_evidence", "growth_aggregate_outcome_evidence", "news_aggregate_outcome_evidence", "ux_aggregate_outcome_evidence"]);
   const finding = buildObserverFinding({ source: "beastfusion_canonical_projection", observedAt: "2026-08-30T00:00:00Z", signal: "Version mismatch", baseline: "Accepted projection", magnitude: "one record", confidence: "high", impact: "medium", evidenceReferences: ["projection"], limitations: [], recommendedDisposition: "INVESTIGATE" });
   assert.equal(finding.executable, false);
   assert.throws(() => buildObserverFinding({ ...finding, source: "private_member_records" as never }));
@@ -169,5 +169,8 @@ test("BF-AGT-013 updates owner surfaces, public discovery, documentation, and ve
   assert.ok(["3.1.0", "3.2.0"].includes(manifest.identities.beastos.version), "BF-AGT-013 remains represented after a compatible later release");
   assert.ok(["2.4.0", "2.5.0"].includes(manifest.identities.beastfusion.version), "BF-AGT-013 remains represented after a compatible later release");
   assert.match(readFileSync("docs/BEASTOS-3.1.0-BEASTFUSION-2.4.0-DEVELOPMENT-OPERATIONS-AI.md", "utf8"), /No database migration/);
-  assert.equal(readFileSync("src/lib/standingObservation.ts", "utf8").match(/standingObservationPermittedSources = \[([\s\S]*?)\] as const/)?.[1].trim(), '"beastfusion_canonical_projection",\n  "github_repository_evidence",\n  "vercel_deployment_evidence",');
+  const standing = readFileSync("src/lib/standingObservation.ts", "utf8");
+  assert.match(standing, /"beastfusion_canonical_projection"/);
+  assert.match(standing, /"github_repository_evidence"/);
+  assert.match(standing, /"vercel_deployment_evidence"/);
 });
