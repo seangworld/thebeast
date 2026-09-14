@@ -109,3 +109,13 @@ test("outcome briefing shows priorities, bounded windows and existing decision l
   assert.match(view.container.textContent || "", /Retain watch decision/);
   saveFixture("outcomes", view.container);
 });
+
+test("site-wide briefing exposes bounded Growth News and UX decisions plus real-cycle validation", async () => {
+  const workstream = (id: "growth" | "news" | "ux", label: "Growth" | "News" | "UX", decision: "Continue" | "Modify" | "Investigate") => ({ id, label, source: `${id}_aggregate_outcome_evidence`, product: label, decision, confidence: "high", evidence: [`${label} measured comparison.`], limitations: ["Association only; no causal conclusion."], comparisonPeriod: "current 30 days compared with previous 30 days", fingerprint: id, recommendation: `${decision} after owner review.`, ownerApprovalRequired: true, executable: false, causalClaim: false, observedCycles: 2, sameDecisionCycles: 2, priorDecision: decision });
+  const siteWideOutcomes = { observedAt: new Date().toISOString(), workstreams: [workstream("growth", "Growth", "Continue"), workstream("news", "News", "Modify"), workstream("ux", "UX", "Investigate")], validation: { status: "pending", requiredCycles: 3, observedCycles: 2, distinctScheduledDays: ["2026-09-14", "2026-09-13"], explanation: "1 more consecutive scheduled cycle is required." }, ownerGates: ["execution", "spending", "publication", "production_change"], executable: false, causalClaim: false };
+  globalThis.fetch = async () => Response.json({ ...payload, siteWideOutcomes });
+  const view = render(React.createElement(StaffOperationsWorkspace, { compact: true }));
+  await waitFor(() => assert.match(view.container.textContent || "", /Growth, News, and UX outcomes/));
+  for (const text of ["Growth", "News", "UX", "Continue", "Modify", "Investigate", "2\/3 scheduled cycles", "Owner gates preserved"]) assert.match(view.container.textContent || "", new RegExp(text));
+  assert.match(view.container.textContent || "", /No recommendation claims causation or authorizes an action/);
+});

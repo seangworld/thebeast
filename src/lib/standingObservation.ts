@@ -1,13 +1,15 @@
 import { createHash } from "node:crypto";
+import { siteWideOutcomeSources } from "./siteWideOutcomeLearning";
 
 export const standingObservationAssignment = "orchestrator_3_standing_observation" as const;
 export const standingObservationCron = "0 10 * * *" as const;
 export const standingObservationOriginPackage = "BF-AGT-011" as const;
-export const standingObservationScope = "orchestrator_3_bounded_observation_v1" as const;
+export const standingObservationScope = "orchestrator_3_site_wide_observation_v2" as const;
 export const standingObservationPermittedSources = [
   "beastfusion_canonical_projection",
   "github_repository_evidence",
   "vercel_deployment_evidence",
+  ...siteWideOutcomeSources,
 ] as const;
 export const maximumInvestigationsPerCycle = 3;
 export const maximumRetriesPerSource = 2;

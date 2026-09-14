@@ -3,6 +3,7 @@ import test from "node:test";
 import { readFileSync } from "node:fs";
 import { transpileModule, ModuleKind } from "typescript";
 import * as outcomes from "../src/lib/standingObservationOutcomes";
+import * as siteWideOutcomes from "../src/lib/siteWideOutcomeLearning";
 
 function routeFixture({ admin = true, user = true, runs = [], history = [], historyError = false }: { admin?: boolean; user?: boolean; runs?: unknown[]; history?: unknown[]; historyError?: boolean } = {}) {
   const queries: Array<{ table: string; fields: string; filters: Array<[string, unknown]> }> = [];
@@ -20,6 +21,7 @@ function routeFixture({ admin = true, user = true, runs = [], history = [], hist
     if (id === "next/server") return { NextResponse: { json: (body: unknown, init: ResponseInit) => Response.json(body, init) } };
     if (id === "@/lib/supabase/server") return { createRouteClient: () => client };
     if (id === "@/lib/standingObservationOutcomes") return outcomes;
+    if (id === "@/lib/siteWideOutcomeLearning") return siteWideOutcomes;
     if (id === "@/lib/server/standingObservationRunner") return {};
     throw new Error(`Unexpected dependency: ${id}`);
   }, fixtureModule, fixtureModule.exports);

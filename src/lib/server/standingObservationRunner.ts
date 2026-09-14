@@ -11,6 +11,8 @@ import { persistStandingObservationCycle } from "../standingObservationPersisten
 import { assessStandingOperations, type OperatingHistoryRow } from "../standingObservationOptimization";
 
 import { assessOperatingOutcomes, buildOperatingSnapshot, unpackObservationEvidence, type OperatingSnapshot } from "../standingObservationOutcomes";
+import { assessSiteWideOutcomes, buildSiteWideObservationSources, type SiteWideOutcomeSnapshot } from "../siteWideOutcomeLearning";
+import { loadSiteWideOutcomeEvidence } from "./siteWideOutcomeProviders";
 
 type Simulation = "clean" | null;
 
@@ -20,6 +22,7 @@ export async function runStandingObservation(ownerId: string, scheduleId: string
   const canonical = await loadBeastFusionCanonicalReadModel();
   let githubAttempt = null;
   let vercelAttempt = null;
+  let siteWideSnapshot: SiteWideOutcomeSnapshot | null = null;
   if (simulation) {
     await runAfterControlledObservationValidation(canonical.canonical?.roadmap || null, async () => undefined);
   } else {
@@ -28,11 +31,12 @@ export async function runStandingObservation(ownerId: string, scheduleId: string
     service.from("beast_admin_standing_authorizations").select("authorization_key,origin_package_id,owner_authorized,scope_key,permitted_sources,revoked_at").eq("owner_id", ownerId).eq("authorization_key", "orchestrator_3_standing_observation").maybeSingle(),
     ]);
     if (schedule.error || authorization.error) throw new Error("standing_authorization_unavailable");
-    [githubAttempt, vercelAttempt] = await runAfterStandingObservationAuthorization(
+    [githubAttempt, vercelAttempt, siteWideSnapshot] = await runAfterStandingObservationAuthorization(
       { authorization: authorization.data, schedule: schedule.data, canonicalRoadmap: canonical.canonical?.roadmap || null },
       async () => Promise.all([
       runWithBoundedRetries(readGitHubRepositoryEvidence, (result) => result.provider.status === "error"),
       runWithBoundedRetries(readVercelDeploymentEvidence, (result) => result.provider.status === "error"),
+      loadSiteWideOutcomeEvidence(process.env, new Date(startedAt)),
       ])
     );
   }
@@ -41,7 +45,10 @@ export async function runStandingObservation(ownerId: string, scheduleId: string
   const retryCount = (githubAttempt?.retries || 0) + (vercelAttempt?.retries || 0);
   const canonicalModel = canonical.canonical;
   if (!canonicalModel) throw new Error("canonical_state_unavailable");
-  const sources: ObservationSourceResult[] = simulation === "clean" ? [{ source: "controlled_fixture", available: true, changed: false, summary: "No material change in controlled evidence.", confidence: "high", impact: "none", fingerprint: "bf-agt-011-clean-v1" }] : buildStandingEcosystemEvidence(canonicalModel, github?.observations || [], vercel?.observations || []);
+  const sources: ObservationSourceResult[] = simulation === "clean" ? [{ source: "controlled_fixture", available: true, changed: false, summary: "No material change in controlled evidence.", confidence: "high", impact: "none", fingerprint: "bf-agt-011-clean-v1" }] : [
+    ...buildStandingEcosystemEvidence(canonicalModel, github?.observations || [], vercel?.observations || []),
+    ...buildSiteWideObservationSources(siteWideSnapshot!),
+  ];
   // Retain source findings on duplicate cycles so the latest completed cycle
   // remains a useful baseline without repeating proposal investigations.
   const baseline = await service.from("beast_admin_staff_observation_runs").select("findings,unavailable_sources").eq("owner_id", ownerId).eq("trigger_type", simulation ? "owner_controlled_simulation" : "schedule").in("status", ["clean", "findings", "duplicate_skipped"]).order("started_at", { ascending: false }).limit(1).maybeSingle();
@@ -59,6 +66,11 @@ export async function runStandingObservation(ownerId: string, scheduleId: string
     learning.push(`Executive follow-through — ${outcomes.nextStep}`);
     for (const outcome of outcomes.outcomes.filter((item) => item.outcome !== "healthy").slice(0, 5)) learning.push(`${outcome.product}: ${outcome.outcome} — ${outcome.detail} ${outcome.recommendation}`);
     learning.push(`${outcomes.followUps.length} canonical decision/blocker follow-up(s). Operational improvement does not prove business impact or close approved work.`);
+    const siteWide = assessSiteWideOutcomes(siteWideSnapshot!, history.data);
+    learning.push(`Site-wide scheduled-cycle validation — ${siteWide.validation.explanation}`);
+    for (const workstream of siteWide.workstreams) {
+      learning.push(`${workstream.label}: ${workstream.decision} — ${workstream.recommendation} This is an association-based recommendation, not a causal claim or execution authorization.`);
+    }
   }
   let createdProposals = 0;
   const run = await persistStandingObservationCycle(sources, learning, {
@@ -81,7 +93,7 @@ export async function runStandingObservation(ownerId: string, scheduleId: string
     limitations: result.unavailableSources.length ? [`Unavailable sources: ${result.unavailableSources.join(", ")}`] : [],
     recommendedDisposition: item.impact === "high" || item.impact === "medium" ? "INVESTIGATE" : item.impact === "low" ? "MONITOR" : "IGNORE",
   }));
-  const inserted = await service.from("beast_admin_staff_observation_runs").insert({ owner_id: ownerId, schedule_id: scheduleId, trigger_type: triggerType, status, started_at: startedAt, completed_at: status === "running" ? null : new Date().toISOString(), checked_sources: result.checkedSources, unavailable_sources: result.unavailableSources, changes: result.changes, suppressed_signals: result.suppressedSignals, findings: snapshot ? { version: 1, findings: structuredFindings, snapshot } : structuredFindings, confidence: result.confidence, impact: result.impact, next_step: result.nextStep, evidence_digest: result.evidenceDigest, finding_count: structuredFindings.length, investigation_count: result.investigationCount, proposal_count: 0, retry_count: retryCount }).select().single();
+  const inserted = await service.from("beast_admin_staff_observation_runs").insert({ owner_id: ownerId, schedule_id: scheduleId, trigger_type: triggerType, status, started_at: startedAt, completed_at: status === "running" ? null : new Date().toISOString(), checked_sources: result.checkedSources, unavailable_sources: result.unavailableSources, changes: result.changes, suppressed_signals: result.suppressedSignals, findings: snapshot && siteWideSnapshot ? { version: 2, findings: structuredFindings, snapshot, siteOutcomes: siteWideSnapshot } : structuredFindings, confidence: result.confidence, impact: result.impact, next_step: result.nextStep, evidence_digest: result.evidenceDigest, finding_count: structuredFindings.length, investigation_count: result.investigationCount, proposal_count: 0, retry_count: retryCount }).select().single();
   if (inserted.error || !inserted.data) throw new Error("observation_persistence_failed");
   return inserted.data as { id: string; evidence_digest: string; status: string };
     },

@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import type { BeastAdminCanonicalReadModel } from "./beastAdminCanonicalProjection";
 import { beastAdminRepositoryCatalog, type BeastAdminRepositoryObservation, type BeastAdminDeploymentObservation } from "./beastAdminRepositoryReleaseIntelligence";
 import { standingObservationPermittedSources } from "./standingObservation";
+import { normalizeSiteWideOutcomeSnapshot, type SiteWideOutcomeSnapshot } from "./siteWideOutcomeLearning";
 
 type Source = typeof standingObservationPermittedSources[number];
 type SignalState = "attention" | "clear" | "unknown";
@@ -16,11 +17,13 @@ const text = (v: unknown): v is string => typeof v === "string" && v.length > 0 
 const validTime = (v: unknown): v is string => typeof v === "string" && Number.isFinite(Date.parse(v));
 
 /** Versioned JSONB payload; legacy finding arrays remain readable. No schema change. */
-export function unpackObservationEvidence(value: unknown): { findings: unknown[] | null; snapshot: OperatingSnapshot | null } {
-  if (Array.isArray(value)) return { findings: value, snapshot: null };
+export function unpackObservationEvidence(value: unknown): { findings: unknown[] | null; snapshot: OperatingSnapshot | null; siteOutcomes: SiteWideOutcomeSnapshot | null } {
+  if (Array.isArray(value)) return { findings: value, snapshot: null, siteOutcomes: null };
   const envelope = record(value); const snapshot = record(envelope.snapshot);
-  if (envelope.version !== 1 || !Array.isArray(envelope.findings)) return { findings: null, snapshot: null };
-  const invalid = { findings: null, snapshot: null };
+  if (![1, 2].includes(envelope.version as number) || !Array.isArray(envelope.findings)) return { findings: null, snapshot: null, siteOutcomes: null };
+  const siteOutcomes = envelope.version === 2 ? normalizeSiteWideOutcomeSnapshot(envelope.siteOutcomes) : null;
+  const invalid = { findings: null, snapshot: null, siteOutcomes: null };
+  if (envelope.version === 2 && !siteOutcomes) return invalid;
   if (!validTime(snapshot.observedAt) || typeof snapshot.canonicalComplete !== "boolean" || !Array.isArray(snapshot.conditions) || snapshot.conditions.length > 1000 || !Array.isArray(snapshot.followUps) || snapshot.followUps.length > 1000) return invalid;
   if (!snapshot.conditions.every((v) => { const c = record(v); return text(c.id) && text(c.product) && text(c.detail) && standingObservationPermittedSources.includes(c.source as Source) && ["attention", "clear", "unknown"].includes(c.state as string) && ["medium", "high"].includes(c.severity as string); })) return invalid;
   if (new Set(snapshot.conditions.map((c) => c.id)).size !== snapshot.conditions.length) return invalid;
@@ -35,7 +38,7 @@ export function unpackObservationEvidence(value: unknown): { findings: unknown[]
   if (conditions.find((c) => c.id === "canonical:coverage")?.state !== (snapshot.canonicalComplete ? "clear" : "unknown")) return invalid;
   if (!snapshot.canonicalComplete && snapshot.conditions.some((c) => c.source === "beastfusion_canonical_projection" && c.state !== "unknown")) return invalid;
   if (!snapshot.followUps.every((v) => { const f = record(v); return [f.id, f.product, f.title, f.status, f.nextStep].every(text); })) return invalid;
-  return { findings: envelope.findings, snapshot: snapshot as OperatingSnapshot };
+  return { findings: envelope.findings, snapshot: snapshot as OperatingSnapshot, siteOutcomes };
 }
 
 /** Fixed catalog prevents a missing product from silently disappearing from coverage. */
