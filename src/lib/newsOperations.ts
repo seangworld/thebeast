@@ -1,4 +1,7 @@
+import { parseNewsSourceConcentration, type NewsSourceConcentration } from "./newsSourceConcentration";
+
 export type NewsOperationsStatus = {
+  sourceConcentration?: NewsSourceConcentration | null;
   product: "seangworld_news";
   editorialPromise: string;
   coverage: {
@@ -110,6 +113,7 @@ export async function fetchNewsOperationsStatus(
       coverage: payload.coverage, sourceHealth: payload.sourceHealth, newsroom: payload.newsroom,
       factDesk: payload.factDesk, publicAutoPublishing: payload.publicAutoPublishing, generatedAt: payload.generatedAt,
       factDeskOperational: assessNewsFactDesk(object(payload)?.operations, payload.generatedAt, now ?? new Date()),
+      sourceConcentration: parseNewsSourceConcentration(object(payload)?.sourceConcentration, now ?? new Date()),
     };
   } catch {
     return null;

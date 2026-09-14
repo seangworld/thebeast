@@ -1,4 +1,5 @@
 import { BeastAdminDataFreshness } from "../BeastAdminShell";
+import { NewsSourceConcentrationPanel } from "./NewsSourceConcentrationPanel";
 import type { NewsOperationsStatus } from "@/lib/newsOperations";
 
 function BooleanState({ value }: { value: boolean }) {
@@ -50,6 +51,8 @@ export function BeastAdminNewsOperationsWorkspace({ status }: { status: NewsOper
           {Object.entries(status.sourceHealth).map(([state, count]) => <div key={state} className="flex items-center justify-between rounded-lg border border-white/10 px-3 py-2 text-sm"><span className="capitalize text-slate-300">{state}</span><span className="font-black text-white">{count}</span></div>)}
         </div>
       </section>
+
+      <NewsSourceConcentrationPanel evidence={status.sourceConcentration} />
 
       <section className="rounded-2xl border border-white/10 bg-[#111827] p-5" aria-labelledby="news-fact-desk-heading">
         <h2 id="news-fact-desk-heading" className="text-xl font-black text-white">Fact Desk Runtime</h2>
