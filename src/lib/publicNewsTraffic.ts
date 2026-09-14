@@ -1,10 +1,14 @@
 export type PublicNewsTraffic = {
   status: "ready" | "unavailable";
   pageViews: number | null;
+  totalPageViews: number | null;
+  totalWindowStart: string;
   windowStart: string;
   windowEnd: string;
   measuredAt: string;
 };
+
+export const NEWS_TRAFFIC_TOTAL_START = "2020-01-01";
 
 export function newsTrafficWindow(now: Date) {
   const end = Math.floor(now.getTime() / 60_000) * 60_000;
@@ -28,7 +32,7 @@ function minuteAsUtc(key: string) {
 /** Only an exact, complete, unsuppressed report can become a public count. */
 export function summarizeNewsTraffic(report: unknown, now: Date): PublicNewsTraffic {
   const window = newsTrafficWindow(now);
-  const unavailable: PublicNewsTraffic = { ...window, status: "unavailable", pageViews: null };
+  const unavailable: PublicNewsTraffic = { ...window, status: "unavailable", pageViews: null, totalPageViews: null, totalWindowStart: NEWS_TRAFFIC_TOTAL_START };
   try {
     if (!report || typeof report !== "object") return unavailable;
     const data = report as { dimensionHeaders?: { name?: string }[]; metricHeaders?: { name?: string }[]; rowCount?: number; rows?: { dimensionValues?: { value?: string }[]; metricValues?: { value?: string }[] }[]; metadata?: { timeZone?: string; subjectToThresholding?: boolean; dataLossFromOtherRow?: boolean; emptyReason?: string; samplingMetadatas?: unknown[] } };
@@ -60,6 +64,36 @@ export function summarizeNewsTraffic(report: unknown, now: Date): PublicNewsTraf
       if (key >= startKey && key < endKey) total += count;
       if (!Number.isSafeInteger(total)) return unavailable;
     }
-    return { ...window, status: "ready", pageViews: total };
+    return { ...window, status: "ready", pageViews: total, totalPageViews: null, totalWindowStart: NEWS_TRAFFIC_TOTAL_START };
   } catch { return unavailable; }
+}
+
+/** A complete unsuppressed aggregate establishes the GA4 measurement-era total. */
+export function summarizeNewsTotalViews(report: unknown): number | null {
+  try {
+    if (!report || typeof report !== "object") return null;
+    const data = report as {
+      dimensionHeaders?: unknown[];
+      metricHeaders?: { name?: string }[];
+      rowCount?: number;
+      rows?: { dimensionValues?: unknown[]; metricValues?: { value?: string }[] }[];
+      metadata?: { subjectToThresholding?: boolean; dataLossFromOtherRow?: boolean; emptyReason?: string; samplingMetadatas?: unknown[] };
+      kind?: string;
+    };
+    if ((data.dimensionHeaders?.length ?? 0) !== 0 || data.metricHeaders?.length !== 1 || data.metricHeaders[0].name !== "screenPageViews") return null;
+    const meta = data.metadata;
+    if (!meta || meta.subjectToThresholding || meta.dataLossFromOtherRow || meta.emptyReason || meta.samplingMetadatas?.length) return null;
+    const rows = data.rows === undefined ? [] : data.rows;
+    if (!Array.isArray(rows)) return null;
+    const implicitEmpty = data.rowCount === undefined && rows.length === 0 && data.kind === "analyticsData#runReport";
+    const rowCount = implicitEmpty ? 0 : data.rowCount;
+    if (!Number.isSafeInteger(rowCount) || rowCount! < 0 || rowCount! > 1 || rows.length !== rowCount) return null;
+    if (rowCount === 0) return 0;
+    const row = rows[0];
+    if ((row.dimensionValues?.length ?? 0) !== 0 || row.metricValues?.length !== 1) return null;
+    const raw = row.metricValues[0].value ?? "";
+    if (!/^(0|[1-9]\d*)$/.test(raw)) return null;
+    const total = Number(raw);
+    return Number.isSafeInteger(total) ? total : null;
+  } catch { return null; }
 }

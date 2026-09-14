@@ -1,16 +1,28 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { summarizeNewsTraffic } from "../src/lib/publicNewsTraffic";
+import { NEWS_TRAFFIC_TOTAL_START, summarizeNewsTotalViews, summarizeNewsTraffic } from "../src/lib/publicNewsTraffic";
 import { loadPublicNewsTraffic } from "../src/lib/server/publicNewsTraffic";
 
 const now = new Date("2026-09-09T16:20:30Z");
 const row = (key: string, value: string) => ({ dimensionValues: [{ value: key }], metricValues: [{ value }] });
 const report = (rows: ReturnType<typeof row>[] = [], timeZone = "America/New_York") => ({ dimensionHeaders: [{ name: "dateHourMinute" }], metricHeaders: [{ name: "screenPageViews" }], rowCount: rows.length, rows, metadata: { timeZone } });
+const totalReport = (value = "0") => ({ metricHeaders: [{ name: "screenPageViews" }], rowCount: 1, rows: [{ metricValues: [{ value }] }], metadata: {} });
 
 test("public News views use exact minute-bounded rolling day in property timezone", () => {
   const value = summarizeNewsTraffic(report([row("202609081219", "90"), row("202609081220", "3"), row("202609091219", "4"), row("202609091220", "80")]), now);
   assert.equal(value.pageViews, 7); assert.equal(value.windowStart, "2026-09-08T16:20:00.000Z"); assert.equal(value.windowEnd, "2026-09-09T16:20:00.000Z");
+  assert.equal(value.totalPageViews, null); assert.equal(value.totalWindowStart, NEWS_TRAFFIC_TOTAL_START);
   assert.equal(summarizeNewsTraffic(report(), now).pageViews, 0);
+});
+
+test("public News total views accept only one complete unsuppressed aggregate", () => {
+  assert.equal(summarizeNewsTotalViews(totalReport("1234")), 1234);
+  assert.equal(summarizeNewsTotalViews({ ...totalReport(), kind: "analyticsData#runReport", rowCount: undefined, rows: undefined }), 0);
+  for (const input of [
+    null, {}, { ...totalReport(), rowCount: 2 }, { ...totalReport(), dimensionHeaders: [{ name: "date" }] },
+    { ...totalReport(), rows: [{ metricValues: [{ value: "-1" }] }] }, { ...totalReport(), rows: [{ metricValues: [{ value: "1.5" }] }] },
+    { ...totalReport(), metadata: { subjectToThresholding: true } }, { ...totalReport(), metadata: { samplingMetadatas: [{}] } },
+  ]) assert.equal(summarizeNewsTotalViews(input), null);
 });
 
 test("incomplete, malformed, suppressed and ambiguous reports stay unavailable", () => {
@@ -42,12 +54,27 @@ test("public loader is fixed to News aggregate, omits sensitive output and does 
     const body = JSON.parse(String(init?.body));
     assert.equal(body.dimensionFilter.filter.stringFilter.value, "news.seangworld.com");
     assert.equal(body.dimensionFilter.filter.stringFilter.matchType, "EXACT");
-    assert.deepEqual(body.dimensions, [{ name: "dateHourMinute" }]); assert.deepEqual(body.metrics, [{ name: "screenPageViews" }]); assert.equal(body.limit, 5000);
-    return Response.json(report([row("202609091200", "5")]));
+    assert.deepEqual(body.metrics, [{ name: "screenPageViews" }]);
+    if (body.dimensions) {
+      assert.deepEqual(body.dimensions, [{ name: "dateHourMinute" }]); assert.equal(body.limit, 5000);
+      return Response.json(report([row("202609091200", "5")]));
+    }
+    assert.deepEqual(body.dateRanges, [{ startDate: NEWS_TRAFFIC_TOTAL_START, endDate: "today" }]); assert.equal(body.limit, 1);
+    return Response.json(totalReport("45"));
   } });
-  assert.equal(calls, 1); assert.equal(result.pageViews, 5); assert.doesNotMatch(JSON.stringify(result), /private-token|existing|example/);
+  assert.equal(calls, 2); assert.equal(result.pageViews, 5); assert.equal(result.totalPageViews, 45); assert.doesNotMatch(JSON.stringify(result), /private-token|existing|example/);
   assert.equal((await loadPublicNewsTraffic({ environment: {}, now, tokenLoader: async () => { throw new Error("must not load"); } })).pageViews, null);
   assert.equal((await loadPublicNewsTraffic({ environment, now, tokenLoader: async () => "token", fetchImpl: async () => Response.json({ secret: "private" }, { status: 403 }) })).pageViews, null);
+});
+
+test("a total-report failure does not hide a valid rolling 24-hour count", async () => {
+  const environment = { BEAST_ECOSYSTEM_GA4_PROPERTY_ID: "123", GOOGLE_WIF_PROVIDER_RESOURCE: "existing", GOOGLE_GA4_READER_SERVICE_ACCOUNT_EMAIL: "existing@example.test" };
+  let calls = 0;
+  const result = await loadPublicNewsTraffic({ environment, now, tokenLoader: async () => "token", fetchImpl: async () => {
+    calls += 1;
+    return calls === 1 ? Response.json(report([row("202609091200", "5")])) : Response.json({}, { status: 503 });
+  } });
+  assert.equal(result.pageViews, 5); assert.equal(result.totalPageViews, null);
 });
 
 test("unavailable diagnostics log bounded stages and shape without provider secrets", async () => {
