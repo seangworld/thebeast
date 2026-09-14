@@ -1,6 +1,17 @@
 # SW-QTG-001 — Qualified Traffic Growth Intelligence
 
-Status: Developer candidate validated; Reviewer and Preview pending
+Status: Released to Production on 2026-08-28
+
+## Release evidence
+
+- TheBeast PR 33 merged as `d56c21c38094ad6ee0a7010b14fc20d0991d9d65`.
+- Accepted candidate tree: `90831bd84c3a79f6a601460b8d3fb50ff5009a35`.
+- Accepted Preview deployment: `dpl_81HQ2KWPSjBe6LmkW4eDw71tobyX`.
+- READY Production deployment: `dpl_86D6jYYqcFHLrDXZunvkEnFaGo4L`.
+- Production alias: `thebeast.seangworld.com`.
+- Validation at release: 29 focused tests and 1,723 full-suite tests passed.
+- Canonical closure: `roadmaps/completed/SEANGWORLD/SW-QTG-001-qualified-traffic-growth.md`
+  in BeastFusion.
 
 ## Objective
 
@@ -46,8 +57,7 @@ financial, member, marketing, or public-content data.
 
 ## Validation
 
-- Focused qualified-traffic, provider, and BeastMarketing tests.
-- Full The Beast test suite, with any unrelated pre-existing failure reported.
-- Lint and Production build/type validation.
-- Reviewer review of the exact candidate.
-- Protected Preview verification and owner acceptance before Production.
+- Focused qualified-traffic, provider, and BeastMarketing tests passed.
+- The full TheBeast suite, lint, and Production build/type validation passed.
+- Independent review, protected Preview verification, owner acceptance, and
+  exact Production provenance were completed before canonical closure.
