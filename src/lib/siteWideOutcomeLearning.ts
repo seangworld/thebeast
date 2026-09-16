@@ -22,6 +22,7 @@ export type SiteWideWorkstreamOutcome = {
   decision: SiteWideOutcomeDecision;
   confidence: "low" | "medium" | "high";
   evidence: string[];
+  evidenceStatus?: "comparable" | "insufficient_history" | "provider_unavailable" | "malformed_evidence";
   limitations: string[];
   comparisonPeriod: string;
   fingerprint: string;
@@ -134,10 +135,26 @@ function metricEvidence(label: string, metric: IntelligenceMetric) {
 
 function outcome(input: Omit<SiteWideWorkstreamOutcome, "ownerApprovalRequired" | "executable" | "causalClaim">): SiteWideWorkstreamOutcome {
   return {
+    evidenceStatus: "comparable",
     ...input,
     ownerApprovalRequired: true,
     executable: false,
     causalClaim: false,
+  };
+}
+
+function baselineEvidence(snapshot: SeangworldIntelligenceSnapshot, ids: Array<"ga4" | "search_console">, metrics: Array<[string, IntelligenceMetric | null]>) {
+  const ready = ids.some((id) => providerReady(snapshot, id));
+  const complete = metrics.every(([, metric]) => metric && finiteNonnegative(metric.value) &&
+    (metric.previousValue === null || finiteNonnegative(metric.previousValue)));
+  const evidenceStatus = !ready ? "provider_unavailable" as const : !complete ? "malformed_evidence" as const : "insufficient_history" as const;
+  return {
+    evidenceStatus,
+    evidence: ready && complete ? metrics.map(([label, metric]) => `${label}: ${metric!.value} now; previous ${metric!.previousValue === null ? "unavailable" : metric!.previousValue}. Comparison sample is insufficient.`) : [],
+    limitations: [evidenceStatus === "provider_unavailable"
+      ? "Required provider is unavailable or stale; this is a retrieval failure, not evidence of low traffic."
+      : evidenceStatus === "malformed_evidence" ? "Required current metric evidence is missing or malformed."
+      : "Current provider evidence is available, but comparable history is insufficient for a performance recommendation."],
   };
 }
 
@@ -153,10 +170,10 @@ function growthOutcome(snapshot: SeangworldIntelligenceSnapshot) {
   if (!usableSessions && !usableClicks) {
     return outcome({
       id: "growth", label: "Growth", source: "growth_aggregate_outcome_evidence", product: "SEANGWORLD ecosystem",
-      decision: "Investigate", confidence: "low", evidence,
-      limitations: ["A recent comparable GA4 or Search Console baseline is unavailable or below the minimum sample."],
+      decision: "Investigate", confidence: "low",
       comparisonPeriod: snapshot.comparisonPeriod,
       fingerprint: "growth:investigate:baseline-unavailable",
+      ...baselineEvidence(snapshot, ["ga4", "search_console"], providerReady(snapshot, "ga4") ? [["Ecosystem sessions", sessions]] : [["Organic search clicks", clicks]]),
       recommendation: "Investigate provider freshness and baseline coverage before changing a growth initiative.",
     });
   }
@@ -189,10 +206,10 @@ function newsOutcome(snapshot: SeangworldIntelligenceSnapshot) {
   if (!usableSessions || !usableEngagement) {
     return outcome({
       id: "news", label: "News", source: "news_aggregate_outcome_evidence", product: "SEANGWORLDNEWS",
-      decision: "Investigate", confidence: "low", evidence,
-      limitations: ["A recent comparable News GA4 baseline with both sessions and engagement is unavailable or below the minimum sample."],
+      decision: "Investigate", confidence: "low",
       comparisonPeriod: snapshot.comparisonPeriod,
       fingerprint: "news:investigate:baseline-unavailable",
+      ...baselineEvidence(snapshot, ["ga4"], [["News sessions", sessions], ["News engagement rate", engagement]]),
       recommendation: "Investigate News analytics coverage before changing sourcing, clustering, or publishing behavior.",
     });
   }
@@ -225,10 +242,10 @@ function uxOutcome(snapshot: SeangworldIntelligenceSnapshot) {
   if (!usableSessions || !usableEngagement) {
     return outcome({
       id: "ux", label: "UX", source: "ux_aggregate_outcome_evidence", product: "The Beast",
-      decision: "Investigate", confidence: "low", evidence,
-      limitations: ["A recent comparable Beast GA4 baseline with both sessions and engagement is unavailable or below the minimum sample."],
+      decision: "Investigate", confidence: "low",
       comparisonPeriod: snapshot.comparisonPeriod,
       fingerprint: "ux:investigate:baseline-unavailable",
+      ...baselineEvidence(snapshot, ["ga4"], [["Beast sessions", sessions], ["Beast engagement rate", engagement]]),
       recommendation: "Investigate product analytics coverage before changing navigation, onboarding, or interaction design.",
     });
   }
@@ -269,7 +286,7 @@ export function buildSiteWideOutcomeSnapshot(input: BuildInput): SiteWideOutcome
 export function buildSiteWideObservationSources(snapshot: SiteWideOutcomeSnapshot) {
   return snapshot.workstreams.map((item) => ({
     source: item.source,
-    available: item.decision !== "Investigate",
+    available: item.evidenceStatus === "insufficient_history" || item.decision !== "Investigate",
     changed: item.decision === "Modify",
     summary: `${item.label}: ${item.decision}. ${item.recommendation}`,
     confidence: item.confidence,
@@ -292,11 +309,19 @@ export function normalizeSiteWideOutcomeSnapshot(value: unknown): SiteWideOutcom
     if (item.label !== identity.label || item.source !== identity.source || item.product !== identity.product) return null;
     if (!["Continue", "Modify", "Investigate"].includes(item.decision as string)) return null;
     if (!["low", "medium", "high"].includes(item.confidence as string) || !Array.isArray(item.evidence) || !item.evidence.every((entry) => typeof entry === "string") || !Array.isArray(item.limitations) || !item.limitations.every((entry) => typeof entry === "string")) return null;
+    if (item.evidenceStatus !== undefined && !["comparable", "insufficient_history", "provider_unavailable", "malformed_evidence"].includes(item.evidenceStatus as string)) return null;
     if (item.ownerApprovalRequired !== true || item.executable !== false || item.causalClaim !== false) return null;
     if (![item.label, item.product, item.comparisonPeriod, item.fingerprint, item.recommendation].every((entry) => typeof entry === "string" && entry.length > 0 && entry.length <= 4000)) return null;
     ids.add(item.id as SiteWideWorkstreamId);
   }
   return snapshot as unknown as SiteWideOutcomeSnapshot;
+}
+
+function operationallyValid(snapshot: SiteWideOutcomeSnapshot) {
+  return normalizeSiteWideOutcomeSnapshot(snapshot) !== null && snapshot.workstreams.every((item) =>
+    item.evidence.length > 0 && item.evidence.every((entry) => entry.trim().length > 0) &&
+    (item.evidenceStatus === "insufficient_history" ? item.decision === "Investigate"
+      : (item.evidenceStatus === undefined || item.evidenceStatus === "comparable") && item.decision !== "Investigate"));
 }
 
 function siteSnapshotFromEnvelope(value: unknown) {
@@ -307,13 +332,13 @@ function siteSnapshotFromEnvelope(value: unknown) {
 export function assessSiteWideOutcomes(current: SiteWideOutcomeSnapshot, history: SiteWideOutcomeHistoryRow[]): SiteWideOutcomeReport {
   const now = Date.parse(current.observedAt);
   const currentDay = current.observedAt.slice(0, 10);
-  const byDay = new Map<string, SiteWideOutcomeSnapshot>([[currentDay, current]]);
+  const byDay = new Map<string, SiteWideOutcomeSnapshot>(operationallyValid(current) ? [[currentDay, current]] : []);
   for (const row of [...history].sort((a, b) => Date.parse(b.started_at) - Date.parse(a.started_at))) {
     if (!["clean", "findings", "duplicate_skipped"].includes(row.status) || !row.completed_at) continue;
     const started = Date.parse(row.started_at); const completed = Date.parse(row.completed_at);
     if (!Number.isFinite(started) || !Number.isFinite(completed) || started >= now || completed < started || completed > now) continue;
     const snapshot = siteSnapshotFromEnvelope(row.findings);
-    if (!snapshot || Date.parse(snapshot.observedAt) !== started) continue;
+    if (!snapshot || !operationallyValid(snapshot) || Date.parse(snapshot.observedAt) !== started) continue;
     const day = row.started_at.slice(0, 10);
     if (!byDay.has(day)) byDay.set(day, snapshot);
   }
@@ -332,8 +357,8 @@ export function assessSiteWideOutcomes(current: SiteWideOutcomeSnapshot, history
       const prior = scheduled.slice(1).map((snapshot) => snapshot.workstreams.find((candidate) => candidate.id === item.id)).filter((candidate): candidate is SiteWideWorkstreamOutcome => Boolean(candidate));
       return {
         ...item,
-        observedCycles: 1 + prior.length,
-        sameDecisionCycles: 1 + prior.filter((candidate) => candidate.decision === item.decision).length,
+        observedCycles: (operationallyValid(current) ? 1 : 0) + prior.length,
+        sameDecisionCycles: (operationallyValid(current) ? 1 : 0) + prior.filter((candidate) => candidate.decision === item.decision).length,
         priorDecision: prior[0]?.decision || null,
       };
     }),
