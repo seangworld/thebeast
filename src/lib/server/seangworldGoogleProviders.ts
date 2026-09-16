@@ -1,3 +1,4 @@
+import { createRequestGate, retryDelayMs } from "../providerRequestGate";
 import { getVercelOidcToken } from "@vercel/oidc";
 import { IdentityPoolClient } from "google-auth-library";
 import type {
@@ -87,6 +88,8 @@ let inFlightProviders:
   | { cacheKey: string; promise: Promise<SeangworldProviderSnapshot[]> }
   | null = null;
 
+const ga4RequestGate = createRequestGate(3);
+
 async function requestWithRetry(
   fetchImplementation: FetchImplementation,
   url: string,
@@ -94,9 +97,12 @@ async function requestWithRetry(
   retries = MAX_RETRIES
 ) {
   let lastError: unknown;
+  let delayMs = 250;
   for (let attempt = 0; attempt <= retries; attempt += 1) {
     try {
-      const response = await fetchImplementation(url, init);
+      const response = await (url.startsWith("https://analyticsdata.googleapis.com/")
+        ? ga4RequestGate(() => fetchImplementation(url, init))
+        : fetchImplementation(url, init));
       if (
         response.ok ||
         ![429, 500, 502, 503, 504].includes(response.status) ||
@@ -104,12 +110,14 @@ async function requestWithRetry(
       ) {
         return response;
       }
+      delayMs = retryDelayMs(response.status, response.headers.get("retry-after"), attempt);
+      await response.body?.cancel();
     } catch (error) {
       lastError = error;
       if (attempt === retries) throw error;
     }
     await new Promise((resolve) =>
-      setTimeout(resolve, Math.min(250 * 2 ** attempt, 1000))
+      setTimeout(resolve, delayMs)
     );
   }
   throw lastError instanceof Error
