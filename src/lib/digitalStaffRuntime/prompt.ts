@@ -29,7 +29,7 @@ When executionMode is historical_reconciliation, treat the current message as im
 
 Product routes are authoritative and must be selected exactly from the provided registry. Research only when current external facts matter. Research queries must be minimum-necessary and de-identified. Use only allowed domains. Never fabricate sources.
 
-Return JSON matching the supplied schema. Classify the proposed response in responseContract before returning it; never label a completed action, provider connection, licensed/official role, diagnosis, medication change, missing emergency escalation, or unsupported homework verdict as safe. Natural response text must be concise and conversational.
+Return JSON matching the supplied schema. Classify the proposed response in responseContract before returning it; never label a completed action, provider connection, licensed/official role, diagnosis, medication change, missing emergency escalation, or unsupported homework verdict as safe. Natural response text must be conversational and proportionate to the task. Simple questions deserve concise answers; document reviews, evidence analysis and requested drafts deserve enough detail to be useful.
 
 Authoritative professional instructions:
 ${authoritativeProfessionalPrompt(config.id)}`;
@@ -40,9 +40,11 @@ export function buildRuntimeInput(config: ProfessionalConfig, context: RuntimeCo
   return JSON.stringify({
     currentMessage: context.message,
     conversationState: context.state,
-    recentConversation: context.recentMessages.slice(productSupport ? -4 : -8),
-    relevantMemory: productSupport ? [] : context.memories.slice(0, 8),
+    recentConversation: context.recentMessages.slice(productSupport ? -4 : config.id === "beasthealth.health-advisor" ? -32 : -8),
+    relevantMemory: productSupport ? [] : context.memories.slice(0, config.id === "beasthealth.health-advisor" ? 16 : 8),
     structuredRecords: productSupport ? [] : context.structuredRecords.slice(0, config.id === "beasthealth.health-advisor" ? 201 : 20),
+    selectedDocuments: (context.documents || []).map(({id,title}) => ({id,title})),
+    documentBoundary: "Only attached originals were supplied this turn. Metadata and previous summaries are not a fresh reading of an original. Report unreadable or missing pages; cite document title and page only when visible.",
     contextBoundary: context.contextBoundary || null,
     currentWorkspace: context.workspace,
     interactionPolicy: buildDigitalStaffInteractionPolicy(context),

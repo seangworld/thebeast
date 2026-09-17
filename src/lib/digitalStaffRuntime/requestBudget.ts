@@ -24,7 +24,7 @@ export function acquireDigitalStaffRequestLease(
 ): DigitalStaffRequestLease {
   memberBudgets.forEach((budget, memberId) => {
     budget.activeProfessionals.forEach((lease, activeProfessionalId) => {
-      if (now - lease.acquiredAt >= maximumDigitalStaffLeaseMs) {
+      if (now - lease.acquiredAt >= (activeProfessionalId === "beasthealth.health-advisor" ? 185_000 : maximumDigitalStaffLeaseMs)) {
         budget.activeProfessionals.delete(activeProfessionalId);
       }
     });

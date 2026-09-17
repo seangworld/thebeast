@@ -5,6 +5,8 @@ import { createRouteClient } from "@/lib/supabase/server";
 import { requireProfessionalEntitlement } from "@/lib/memberAgeServer";
 import { buildMemberSpecialistContextPacket, isMemberSpecialistId } from "@/lib/memberAgentCapabilityFramework";
 
+import { loadAdvisorDocuments, parseAdvisorDocumentIds } from "@/lib/health/advisorDocuments";
+export const maxDuration = 180;
 export const dynamic = "force-dynamic";
 const maxMessageLength = 4_000;
 const privateResponseHeaders = { "Cache-Control": "private, no-store" } as const;
@@ -63,7 +65,7 @@ async function loadStructuredRecords(supabase: ReturnType<typeof createRouteClie
   const queries = professionalId === "beasteducation.guidance-counselor"
       ? [supabase.from("education_profiles").select(guidanceCounselorEducationProfileColumns).eq("owner_id", ownerId).limit(1), supabase.from("education_career_profile_items").select(guidanceCounselorCareerProfileItemColumns).eq("owner_id", ownerId).order("updated_at", { ascending: false }).limit(19)]
       : professionalId === "beasthealth.health-advisor"
-        ? [supabase.from("beast_health_records").select("id, record_type, title, status, occurred_on, source, details, updated_at").eq("owner_id", ownerId).neq("status", "archived").order("updated_at", { ascending: false }).limit(200)]
+        ? [supabase.from("beast_health_records").select("id, record_type, title, status, occurred_on, source, notes, details, updated_at").eq("owner_id", ownerId).neq("status", "archived").order("updated_at", { ascending: false }).limit(200)]
         : [supabase.from("beast_goals").select("id, title, category, status, target_date, current_step, updated_at").eq("owner_id", ownerId).order("updated_at", { ascending: false }).limit(20)];
   const results = await Promise.all(queries);
   return {
@@ -93,7 +95,7 @@ export async function POST(request: Request) {
   const authenticationMs = Date.now() - authenticationStartedAt;
   if (authError || !user) return privateJson({ error: "Authentication required." }, 401);
   const requestParsingStartedAt = Date.now();
-  let body: { professionalId?: unknown; conversationId?: unknown; message?: unknown; workspace?: unknown; veteranClaimId?: unknown; proposalId?: unknown; decision?: unknown; editedFields?: unknown };
+  let body: { professionalId?: unknown; conversationId?: unknown; message?: unknown; workspace?: unknown; veteranClaimId?: unknown; documentIds?: unknown; proposalId?: unknown; decision?: unknown; editedFields?: unknown };
   try { body = (await request.json()) as typeof body; } catch { return privateJson({ error: "A valid request is required." }, 400); }
   const professionalId = typeof body.professionalId === "string" ? body.professionalId : "";
   const conversationId = typeof body.conversationId === "string" ? body.conversationId : "";
@@ -104,6 +106,9 @@ export async function POST(request: Request) {
   const isProposalDecision = body.decision === "approve" || body.decision === "reject";
   if (!isProposalDecision && (!text || text.length > maxMessageLength)) return privateJson({ error: "A message is required." }, 400);
 
+  let documentIds: string[];
+  try { documentIds = parseAdvisorDocumentIds(body.documentIds, professionalId); }
+  catch { return privateJson({error: "Select up to two Health documents for this message."}, 400); }
   const entitlementStartedAt = Date.now();
   const entitlementPromise = requireProfessionalEntitlement(professionalId, { supabase, user })
     .then((result) => ({ result, durationMs: Date.now() - entitlementStartedAt }));
@@ -123,8 +128,8 @@ export async function POST(request: Request) {
           return { result, durationMs: Date.now() - queryStartedAt };
         };
         return Promise.all([
-          timed(supabase.from("agent_conversation_messages").select("id, sender, content, created_at").eq("conversation_id", conversationId).eq("owner_id", user.id).order("created_at", { ascending: false }).limit(12)),
-          timed(supabase.from("agent_memories").select("memory_key, value, updated_at").eq("owner_id", user.id).eq("agent_id", professionalId).order("updated_at", { ascending: false }).limit(8)),
+          timed(supabase.from("agent_conversation_messages").select("id, sender, content, created_at").eq("conversation_id", conversationId).eq("owner_id", user.id).order("created_at", { ascending: false }).limit(professionalId === "beasthealth.health-advisor" ? 32 : 12)),
+          timed(supabase.from("agent_memories").select("memory_key, value, updated_at").eq("owner_id", user.id).eq("agent_id", professionalId).order("updated_at", { ascending: false }).limit(professionalId === "beasthealth.health-advisor" ? 16 : 8)),
           timed(loadStructuredRecords(supabase, user.id, professionalId)),
         ]).then(([history, memory, structured]) => ({ history, memory, structured, durationMs: Date.now() - startedAt }));
       })()
@@ -188,6 +193,7 @@ export async function POST(request: Request) {
     const memoryResult = contextResult.memory.result;
     const structuredResult = contextResult.structured.result;
     const structuredRecords = [...structuredResult.records];
+    const selectedDocuments = await loadAdvisorDocuments(supabase, user.id, documentIds);
     if (professionalId === "beasthealth.health-advisor" && body.veteranClaimId) {
       if (typeof body.veteranClaimId !== "string" || !/^[0-9a-f-]{36}$/i.test(body.veteranClaimId)) throw new Error("Invalid selected claim.");
       const { data: claim, error: claimError } = await supabase.from("beast_veteran_claims")
@@ -208,11 +214,12 @@ export async function POST(request: Request) {
       },
     };
     const result = await runDigitalStaffRuntime({
-      ownerId: user.id, professionalId: professionalId as ProfessionalId, conversationId, message, requestId, signal: request.signal,
+      ownerId: user.id, professionalId: professionalId as ProfessionalId, conversationId, message, requestId, signal: AbortSignal.any([request.signal, AbortSignal.timeout(170_000)]),
       recentMessages: ([...(historyResult.data || [])] as MessageRow[]).reverse().map((row) => ({ id: row.id, role: row.sender?.kind === "user" ? "user" : "assistant", text: messageText(row.content), createdAt: row.created_at })),
       state: summary?.runtimeState || emptyState,
       memories: (memoryResult.data || []).map((row) => ({ key: String(row.memory_key), value: row.value, updatedAt: String(row.updated_at) })),
       structuredRecords,
+      documents: selectedDocuments,
       contextBoundary: isMemberSpecialistId(professionalId)
         ? buildMemberSpecialistContextPacket({
             config: requireProfessionalConfig(professionalId),

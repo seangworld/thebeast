@@ -34,7 +34,7 @@ export type DigitalStaffRequestObserver = {
   onStreamComplete?: () => void;
 };
 
-export async function requestDigitalStaffResponse(input: { professionalId: ProfessionalId; conversationId: string; message: string; workspace: string; veteranClaimId?: string }, observer: DigitalStaffRequestObserver = {}) {
+export async function requestDigitalStaffResponse(input: { professionalId: ProfessionalId; conversationId: string; message: string; workspace: string; veteranClaimId?: string; documentIds?: string[] }, observer: DigitalStaffRequestObserver = {}) {
   try {
     observer.onSubmitted?.();
     const response = await fetch("/api/digital-staff/runtime", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json", Accept: "application/x-ndjson" }, body: JSON.stringify(input) });
