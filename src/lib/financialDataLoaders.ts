@@ -67,6 +67,9 @@ export async function loadCashFlowFinancialData(
   ]);
 
   return {
+    checklistDataComplete: [incomeResult, billResult, billPaymentResult, debtPaymentResult, debtResult].every(result => !result.error && result.data !== null)
+      && (billPaymentResult.data?.length || 0) < BILL_PAYMENT_HISTORY_LIMIT
+      && (debtPaymentResult.data?.length || 0) < DEBT_PAYMENT_HISTORY_LIMIT,
     incomeRows: incomeResult.data,
     billRows: billResult.data,
     paymentRows: billPaymentResult.data,

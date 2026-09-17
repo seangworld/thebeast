@@ -14,7 +14,7 @@ type QueryRecord = {
   limit?: number;
 };
 
-function createObservedClient() {
+function createObservedClient(responses: Record<string, { data: unknown[] | null; error?: { message: string } } | undefined> = {}) {
   const records: QueryRecord[] = [];
   let activeQueries = 0;
   let maxActiveQueries = 0;
@@ -34,12 +34,12 @@ function createObservedClient() {
           record.limit = value;
           return query;
         },
-        then(resolve: (value: { data: Array<{ table: string }> }) => void) {
+        then(resolve: (value: { data: unknown[] | null; error?: { message: string } }) => void) {
           activeQueries += 1;
           maxActiveQueries = Math.max(maxActiveQueries, activeQueries);
           setTimeout(() => {
             activeQueries -= 1;
-            resolve({ data: [{ table }] });
+            resolve(responses[table] || { data: [{ table }] });
           }, 0);
         },
       };
@@ -67,6 +67,7 @@ test("cash-flow financial reads begin concurrently and bound payment history", a
   assert.equal(observed.records.length, 8);
   assert.equal(observed.getMaxActiveQueries(), 8);
   assert.deepEqual(result.incomeRows, [{ table: "income_events" }]);
+  assert.equal(result.checklistDataComplete, true);
   assert.equal(
     observed.records.find(({ table }) => table === "bill_payments")?.limit,
     BILL_PAYMENT_HISTORY_LIMIT
@@ -75,6 +76,16 @@ test("cash-flow financial reads begin concurrently and bound payment history", a
     observed.records.find(({ table }) => table === "debt_payments")?.limit,
     DEBT_PAYMENT_HISTORY_LIMIT
   );
+});
+
+test("checklist rejects failed or potentially truncated payment reads", async () => {
+  for (const response of [
+    { bill_payments: { data: null, error: { message: "Read failed" } } },
+    { debt_payments: { data: Array.from({ length: DEBT_PAYMENT_HISTORY_LIMIT }, () => ({})) } },
+  ]) {
+    const result = await loadCashFlowFinancialData(createObservedClient(response).client, "user-1", "2026-09");
+    assert.equal(result.checklistDataComplete, false);
+  }
 });
 
 test("debt-workspace financial reads begin concurrently and bound payment history", async () => {

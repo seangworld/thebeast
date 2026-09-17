@@ -9,6 +9,8 @@ import DailyOperatingFocus from "./components/DailyOperatingFocus";
 import BillsAheadSection from "./components/BillsAheadSection";
 import IncomeDatePlanningSection from "./components/IncomeDatePlanningSection";
 import PaycheckPlanningSection from "./components/PaycheckPlanningSection";
+import MonthlyPaymentChecklist from "./components/MonthlyPaymentChecklist";
+import { buildMonthlyPaymentChecklist } from "@/lib/monthlyPaymentChecklist";
 import AddIncomeBillSection from "./components/AddIncomeBillSection";
 import CashTimelineSection from "./components/CashTimelineSection";
 import FundingSourcesSection from "./components/FundingSourcesSection";
@@ -110,6 +112,7 @@ export default function CashFlowPage() {
     secondPaycheckAmount,
     secondPaycheckDate,
     loading,
+    checklistDataComplete,
     editingIncomeId,
     editingBillId,
     editingDebtId,
@@ -227,6 +230,9 @@ export default function CashFlowPage() {
   } = useCashFlow();
 
   const cycleMonth = getCycleMonth();
+  const today = new Date();
+  const checklistDate = `${cycleMonth}-${String(today.getDate()).padStart(2, "0")}`;
+  const checklistItems = useMemo(() => buildMonthlyPaymentChecklist({ today: checklistDate, bills, debts, billPayments, debtPayments: debtPaymentRows }), [checklistDate, bills, debts, billPayments, debtPaymentRows]);
 
   async function applySuggestedAttack() {
     if (isApplyingSuggestedAttack) return;
@@ -1351,6 +1357,8 @@ export default function CashFlowPage() {
           recommendedNextSteps={recommendedNextSteps}
           buffer={buffer}
         />
+
+        <MonthlyPaymentChecklist items={checklistItems} today={checklistDate} loading={loading} dataComplete={checklistDataComplete} incomeBuckets={incomeBuckets} extraPayment={suggestedMonthlyDebtAttack} targetName={recommendedTargetDebt?.name} />
 
         <BillsAheadSection
           billsAhead={billsAhead}
