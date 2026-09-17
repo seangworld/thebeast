@@ -30,6 +30,7 @@ export const beastHealthSections = [
   { label: "Conditions", href: "/dashboard/health/conditions" },
   { label: "Medications", href: "/dashboard/health/medications" },
   { label: "Procedures", href: "/dashboard/health/procedures" },
+  { label: "Vaccinations", href: "/dashboard/health/vaccinations" },
   { label: "Family History", href: "/dashboard/health/family-history" },
   { label: "Lifestyle", href: "/dashboard/health/lifestyle" },
   { label: "Health Measurements", href: "/dashboard/health/vitals" },

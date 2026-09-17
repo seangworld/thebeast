@@ -36,6 +36,7 @@ async function executeResearch(
 
 export function requiresDeterministicResearch(context: Pick<RuntimeContext, "professionalId" | "message">) {
   const text = context.message.text;
+  if (context.professionalId === "beasthealth.health-advisor" && /\b(?:interactions?|duplicate ingredients|medication conflicts)\b/i.test(text) && /\b(?:review|check|scan|possible|any|risk|safe)\b/i.test(text)) return true;
   if (isDeclarativeMemberStatement(text)) return false;
   if (!/\b(?:current|currently|latest|today|now|official|according to)\b/i.test(text)) return false;
   if (/\bcurrent\s+(?:medications?|debts?|goals?|priorit(?:y|ies)|records?|plan)\b/i.test(text)) return false;
@@ -44,7 +45,7 @@ export function requiresDeterministicResearch(context: Pick<RuntimeContext, "pro
     : context.professionalId === "beasteducation.guidance-counselor"
       ? /\b(?:opm|federal\s+series|certifications?|qualifications?|requirements?|accreditation|rule|guidance)\b/i
       : context.professionalId === "beasthealth.health-advisor"
-        ? /\b(?:fda|cdc|nih|medication|drug|treatment|warning|guidance|recommendation|evidence)\b/i
+        ? /\b(?:fda|cdc|nih|va|veterans?|claims?|medication|drug|treatment|warning|guidance|recommendation|evidence)\b/i
         : /\b(?:law|rule|requirements?|guidance|standard)\b/i;
   return externalAuthority.test(text);
 }
@@ -156,7 +157,7 @@ export function validateRuntimePlan(context: RuntimeContext, plan: RuntimePlan) 
   const canonicalContextQuestion = isCanonicalContextQuestion(context);
   const requestedResearch = explicitlyRequestsAuthoritativeResearch
     ? {
-        query: context.message.text,
+        query: context.professionalId === "beasthealth.health-advisor" && plan.research?.query ? plan.research.query : context.message.text,
         reason: "The member explicitly requested current or authoritative evidence.",
         domains: config.researchDomains,
       }

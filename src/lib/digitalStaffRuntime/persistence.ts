@@ -1,3 +1,4 @@
+import { validDate } from "../health/vaccinations";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ProfessionalId, StructuredKnowledgeProposal } from "./types";
 
@@ -89,17 +90,21 @@ export async function applyApprovedKnowledgeProposal({
 
   if (targetProfessional === "beasthealth.health-advisor") {
     const title = canonicalHealthEntityName(normalized.entityType, normalized.fields);
-    const type = /supplement|medication/i.test(normalized.entityType) ? "medication" : /measurement|vital/i.test(normalized.entityType) ? "vital" : /family/i.test(normalized.entityType) ? "family_history" : /allerg|vaccin|appointment/i.test(normalized.entityType) ? "profile" : /surgery|procedure/i.test(normalized.entityType) ? "procedure" : /specialist|provider/i.test(normalized.entityType) ? "provider" : /diagnos|condition/i.test(normalized.entityType) ? "condition" : normalized.entityType;
+    const type = /supplement|medication/i.test(normalized.entityType) ? "medication" : /measurement|vital/i.test(normalized.entityType) ? "vital" : /family/i.test(normalized.entityType) ? "family_history" : /allerg|appointment/i.test(normalized.entityType) ? "profile" : /vaccin|surgery|procedure/i.test(normalized.entityType) ? "procedure" : /specialist|provider/i.test(normalized.entityType) ? "provider" : /diagnos|condition/i.test(normalized.entityType) ? "condition" : normalized.entityType;
     const allowedTypes = ["profile", "condition", "medication", "procedure", "vital", "document", "lifestyle", "family_history", "provider"];
     if (!allowedTypes.includes(type)) throw new Error("Health proposal type is outside the canonical record contract.");
     const existingProposal = normalized.proposedAction === "create"
       ? await client.from("beast_health_records").select("id").eq("owner_id", ownerId).eq("details->>proposalId", normalized.id).limit(1).maybeSingle()
       : { data: null, error: null };
     if (existingProposal.data?.id) return { proposalId: normalized.id, status: "approved", recordId: String(existingProposal.data.id), table: "beast_health_records" };
-    const values = { record_type: type, title, details: { ...jsonFields(normalized), subtype: normalized.entityType, provenance: "digital_staff_runtime", conversation_message_id: normalized.sourceMessageId }, updated_at: new Date().toISOString() };
+    const receivedOn = /vaccin/i.test(normalized.entityType) ? stringField(normalized, "receivedOn") : "";
+    if (receivedOn && (!validDate(receivedOn) || receivedOn > new Date().toISOString().slice(0, 10))) throw new Error("Confirm a valid vaccination date before approving.");
+    const dueOn = /vaccin/i.test(normalized.entityType) ? stringField(normalized, "dueOn") : "";
+    if (dueOn && (!validDate(dueOn) || (receivedOn && dueOn <= receivedOn))) throw new Error("Confirm the next-dose date before approving.");
+    const values = { ...(/vaccin/i.test(normalized.entityType) ? { occurred_on: receivedOn || null } : {}), record_type: type, title, details: { ...jsonFields(normalized), subtype: normalized.entityType, provenance: "digital_staff_runtime", conversation_message_id: normalized.sourceMessageId }, updated_at: new Date().toISOString() };
     const result = normalized.proposedAction === "update" && normalized.relatedRecordId
       ? await client.from("beast_health_records").update(values).eq("id", normalized.relatedRecordId).eq("owner_id", ownerId).select("id").single()
-      : await client.from("beast_health_records").insert({ owner_id: ownerId, ...values, status: healthRecordStatus(normalized as typeof normalized & { reconciliation?: { currentStatus?: string } }), occurred_on: null, source: "Health Advisor conversation", notes: null }).select("id").single();
+      : await client.from("beast_health_records").insert({ owner_id: ownerId, ...values, status: healthRecordStatus(normalized as typeof normalized & { reconciliation?: { currentStatus?: string } }), occurred_on: receivedOn || null, source: "Health Advisor conversation", notes: null }).select("id").single();
     if (result.error || !result.data) throw new Error("The approved Health record could not be saved.");
     return { proposalId: normalized.id, status: "approved", recordId: String(result.data.id), table: "beast_health_records" };
   }
