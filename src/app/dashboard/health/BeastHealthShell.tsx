@@ -20,6 +20,7 @@ import {
   type BeastModuleIdentifier,
 } from "@/lib/moduleRegistry";
 import { resolveMemberModuleEntitlement } from "@/lib/memberAgeEntitlements";
+import { HealthSupportResources } from "./HealthSupportResources";
 import { HealthPageIntroduction } from "./HealthPageIntroduction";
 
 export const beastHealthSections = [
@@ -168,6 +169,7 @@ export function BeastHealthShell({
           </section>
         )}
 
+        <HealthSupportResources />
         {children}
       </div>
     </main>
