@@ -1363,6 +1363,12 @@ export function HealthOverviewWorkspace() {
         />
       </div>
 
+      <DashboardCard accent="health">
+        <h2 className="text-xl font-bold">Veterans Claims</h2>
+        <p className="mt-2 text-sm text-slate-300">Keep claim status, evidence references, impact notes, and VA preparation steps together.</p>
+        <Link href="/dashboard/health/veterans" className="beast-button-secondary mt-3 inline-flex">Open Veterans Claims</Link>
+      </DashboardCard>
+
       {!loading && unresolvedAreas.length ? (
         <section className="mb-4 rounded-2xl border border-cyan-300/25 bg-cyan-300/[0.07] p-5" aria-label="Earlier information to organize">
           <h2 className="text-xl font-black text-white">Earlier information can be organized</h2>
