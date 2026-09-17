@@ -43,13 +43,18 @@ test('researched health answer is synthesized with private context, never passed
     const request=JSON.parse(String(init?.body)); calls.push(request);
     if(request.text?.format?.name==='member_agent_semantic_verification') return Response.json({output_text:JSON.stringify({verdict:'safe',categories:[]})});
     if(request.text?.format?.name==='digital_staff_runtime_plan') return stream({output_text:JSON.stringify({intent:'answer',response:'Initial analysis',nextQuestion:null,state:ctx.state,proposals:[],navigationTarget:null,toolCalls:[],research:{query:'VA service connection evidence requirements',reason:'official requirements',domains:['va.gov']},handoff:null,responseContract:safeMemberAgentResponseContract})});
-    if(request.tools) return stream({output:[{content:[{type:'output_text',text:'General official guidance.',annotations:[{type:'url_citation',title:'VA',url:'https://www.va.gov/disability/'}]}]}]});
+    if(request.tools) {
+      assert.doesNotMatch(request.instructions, /Return JSON matching|You are Health Advisor/);
+      assert.match(request.instructions, /separate private step/);
+      assert.match(new Headers(init?.headers).get('X-Client-Request-Id') || '', /-research$/);
+      return stream({output:[{content:[{type:'output_text',text:'General official guidance.',annotations:[{type:'url_citation',title:'VA',url:'https://www.va.gov/disability/'}]}]}]});
+    }
     assert.match(JSON.stringify(request.input),/Private member history/);
     assert.match(JSON.stringify(request.input),/General official guidance/);
     return stream({output_text:'Your records identify an issue to discuss. The supplied evidence does not establish a medical nexus. Here is the next question to prepare.'});
   };
   try {
-    const result=await runDigitalStaffRuntime(ctx);
+    const result=await runDigitalStaffRuntime({...ctx,requestId:'health-depth-test'});
     assert.match(result.response,/Your records identify/);
     assert.equal(result.researchSources.length,1);
     assert.equal(calls.filter(call=>call.tools).length,1);
@@ -73,7 +78,7 @@ test('provider quota failure produces service-unavailable text rather than a med
   process.env.OPENAI_API_KEY='sk-proj-TEST_ONLY_QUOTA_CASE_123456789';
   globalThis.fetch=async()=>Response.json({error:{type:'insufficient_quota',code:'credit_balance_exhausted'}},{status:429});
   try {
-    const result=await runDigitalStaffRuntime(ctx);
+    const result=await runDigitalStaffRuntime({...ctx,requestId:'health-depth-test'});
     assert.match(result.response,/service is temporarily unavailable/i);
     assert.doesNotMatch(result.response,/cannot diagnose/i);
     assert.ok(result.validationFailures.includes('semantic-verifier-unavailable'));
