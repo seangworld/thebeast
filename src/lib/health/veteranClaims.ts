@@ -9,6 +9,7 @@ export type VeteranClaim = {
   details: { serviceContext: string; impactNotes: string; timeline: string; nextAction: string; statement: string; evidence: Record<EvidenceKey, { status: keyof typeof evidenceStatuses; reference: string }> };
 };
 export const vaResources = [
+  { label: "VA.gov — benefits and health care", href: "https://www.va.gov/" },
   { label: "VA evidence guide", href: "https://www.va.gov/disability/how-to-file-claim/evidence-needed/" },
   { label: "Supplemental claims", href: "https://www.va.gov/decision-reviews/supplemental-claim/" },
   { label: "Decision review options", href: "https://www.va.gov/decision-reviews/" },
