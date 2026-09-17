@@ -101,6 +101,7 @@ export function useCashFlow() {
   const [secondPaycheckDate, setSecondPaycheckDate] = useState("");
 
   const [loading, setLoading] = useState(true);
+  const [checklistDataComplete, setChecklistDataComplete] = useState(false);
 
   const [editingIncomeId, setEditingIncomeId] = useState<string | null>(null);
   const [editingBillId, setEditingBillId] = useState<string | null>(null);
@@ -178,6 +179,7 @@ export function useCashFlow() {
     cycleMonth,
     buildProjection,
     setLoading,
+    setChecklistDataComplete,
     setFundingSources,
     setIncomes,
     setBills,
@@ -874,6 +876,7 @@ export function useCashFlow() {
     secondPaycheckAmount,
     secondPaycheckDate,
     loading,
+    checklistDataComplete,
     editingIncomeId,
     editingBillId,
     editingDebtId,

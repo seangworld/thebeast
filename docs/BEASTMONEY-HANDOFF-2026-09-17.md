@@ -59,3 +59,37 @@ Paycheck update was published as draft PR #134 (remote commit c0364ec). The newe
 - Supabase recorded version `20260917140138`. Renamed the unapplied local file from its original CLI-generated `20260917133126` prefix to the verified remote version so a later CLI push will not replay the same change. No remote migration-history repair was performed.
 - This supersedes earlier statements that the development application table is unchanged or the migration remains unapplied. Production remains unchanged; application code is still local-only beyond draft PR #134.
 - Remaining: browser/mobile and authenticated API save/reload verification, then separately authorized publication/deployment.
+
+## Preview publication — authorized
+- Published combined branch `feat/beastmoney-payoff-scenarios` and draft PR #135: https://github.com/seangworld/thebeast/pull/135 . Includes PR #134 changes; do not merge both as independent implementations.
+- Remote commit `b1f3fa6e458e81a39dc216d33d6b47fac55e2ea4`, tree `a13cb31ae8503b64b357e57892f14c4f42871ff0`, verified identical to locally tested tree.
+- Vercel created preview deployment `dpl_GPpybAKho8X7tjgh18srpzmZf2cP`, target null (preview), for that exact commit.
+- URL: https://thebeast-cujaleunl-seangworld-3898s-projects.vercel.app .
+- Development database binding remains UNVERIFIED. Connected project/deployment tools do not expose environment assignments; protected fetch redirects to Vercel SSO. Historical July configuration documented previews sharing production assignments, so do not perform save/reload tests until branch-scoped development credentials are confirmed. No production alias or database migration changed.
+- Final provider status: READY for exact commit b1f3fa6; build completed and deployment finished without alias error. Production remains untouched. Preview database isolation is still unverified and must be confirmed before save/reload testing.
+
+## Vault comparison follow-up
+Sean asked whether useful Vault features remain missing. Based on recorded comparison (original screenshots unavailable in this session): saved/named scenarios, printable/exportable comparisons, per-debt hypothetical payment editing, and direct allocation of extra payments across paycheck dates remain useful gaps. Do not claim a complete screenshot audit.
+
+## Production release — authorized September 17
+- Sean directed “just push” instead of waiting for preview and confirmed “Yes.” This supersedes the earlier production authorization hold.
+- Inspected production `grpyzwvgqiwtxadfdtni`: debt_settings uses user_id as primary key (development uses a separate id and unique user_id); the writer explicitly conflicts on user_id and is compatible with both. Production owner RLS is enabled with matching auth.uid() = user_id predicates.
+- Applied additive add_custom_debt_order through the connected Supabase integration; verified column/default/constraint and unchanged owner RLS. Production recorded version 20260917142548; development/local version is 20260917140138. Both represent the same migration. Do not replay or automatically repair migration history; reconcile these recorded versions before any future CLI migration push.
+- PR #135 merged as eeee0c7274c58ee7792895de87b19895a60fff8a. Closed redundant draft #134 because its changes are included.
+- Production deployment dpl_Fbr1PzNnPHedBpR29ygjLxPjvM6E builds from that main commit. Authenticated browser and mobile verification remain unperformed; user authorized release with that limitation.
+- Final provider verification: READY, target production, exact merged commit, aliasError null, and thebeast.seangworld.com assigned. Production build completed successfully.
+
+## Vault screenshots reviewed
+All nine reattached IMG_1385 through IMG_1393 screenshots were viewed locally. Earlier screenshot-unavailable caveat no longer applies.
+- Already covered: payoff comparisons, custom ordering, extra/lump-sum simulations, savings/time metrics, Velocity planning, and general printable financial reports. General printing is not a missing feature; a dedicated printable scenario comparison would be an extension.
+- Useful remaining candidates: named scenario Save As / Load versions; cash-flow-index ordering (lowest balance-to-payment ratio); guided month-by-month checklist and completion tracking; dedicated scenario/schedule exports; per-debt hypothetical payment overrides and planned start date.
+- Larger separate scope shown: policy cash-value/loan integration and investment projections combining policy loans, LOC, and cash with annual contributions, net benefit, return, and remaining death benefit. Screenshots show controls and illustrative results, not validated financial formulas. Do not transplant assumed formulas or present returns as guaranteed.
+- Suggested order: saved scenarios, monthly checklist, dedicated exports, then cash-flow-index comparison; policy/investment modeling requires its own design and validation.
+
+## Owner scope decision and monthly checklist continuation
+- Sean deferred policy/investment modeling to retirement planning, declined scenario saving/export for now, and approved continuing with the monthly checklist. This supersedes the earlier suggested priority order.
+- Added a Monthly payment checklist to Cash Flow, grouping current-month scheduled occurrences and the current overdue cycle by existing paycheck assignments. Future recurring occurrences are not assigned to old paychecks automatically.
+- Completion derives from occurrence-specific payment history, with partial/overdue states, reversed-payment exclusion, skipped-cycle review, paid-off debt history, show-paid toggle, and links to existing Bills/Debts payment controls. No independent completion ledger, payment writer, or schema migration.
+- Preserves the existing cash-flow extra-debt suggestion as an optional review action. Does not execute a payment or change assignments.
+- Missing/failed reads or payment history reaching the existing 250-row cap suppress checklist totals rather than claiming a complete ledger. The checklist covers current schedule and available cycle history, not reconstructed historical arrears or changed historical bill amounts.
+- Validation: six occurrence/recurrence tests, two rendered interaction tests, and three financial-loader tests. Authenticated browser verification remains unavailable in this runtime; do not claim it was performed.

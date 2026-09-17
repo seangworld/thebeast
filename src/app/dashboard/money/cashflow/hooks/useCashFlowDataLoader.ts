@@ -11,6 +11,7 @@ type UseCashFlowDataLoaderInput = {
   cycleMonth: string;
   buildProjection: (input: any) => any;
   setLoading: (value: boolean) => void;
+  setChecklistDataComplete: (value: boolean) => void;
   setFundingSources: (value: FundingSource[]) => void;
   setIncomes: (value: any[]) => void;
   setBills: (value: any[]) => void;
@@ -37,6 +38,7 @@ export function useCashFlowDataLoader({
   cycleMonth,
   buildProjection,
   setLoading,
+  setChecklistDataComplete,
   setFundingSources,
   setIncomes,
   setBills,
@@ -84,68 +86,75 @@ export function useCashFlowDataLoader({
 
   const load = useCallback(async () => {
     setLoading(true);
+    setChecklistDataComplete(false);
 
-    const supabase = createClient();
-    const userId = await getUserId(supabase);
+    try {
+      const supabase = createClient();
+      const userId = await getUserId(supabase);
 
-    if (!userId) {
+      if (!userId) {
+        setLoading(false);
+        return;
+      }
+
+      const {
+        incomeRows,
+        billRows,
+        paymentRows,
+        debtPaymentRows,
+        debtRows,
+        cashSettings,
+        debtSettings,
+        fundingSourceRows,
+        checklistDataComplete,
+      } = await loadCashFlowFinancialData(supabase, userId, cycleMonth);
+
+      const currentDebtPayments = activeDebtPayments(debtPaymentRows || []);
+      const projection = buildProjection({
+        userId,
+        cycleMonth,
+        incomeRows,
+        billRows,
+        paymentRows,
+        debtPaymentRows: currentDebtPayments,
+        debtRows,
+        cashSettings,
+        debtSettings,
+      });
+
+      setIncomes(incomeRows || []);
+      setBills(billRows || []);
+      setBillPayments(projection.activePayments);
+      setDebtPaymentRows(projection.activeDebtPayments);
+      setDebts(debtRows || []);
+      setFundingSources(fundingSourceRows || []);
+      setTimeline(projection.builtTimeline);
+      setData(projection.simulated);
+
+      setLookaheadDays(projection.activeLookahead);
+      setAssignmentHorizonMonths(projection.activeAssignmentHorizon);
+      setBuffer(projection.activeBuffer);
+      setStartingBalance(projection.activeStartingBalance);
+
+      setStrategy(projection.activeStrategy);
+      setCustomDebtOrder(projection.customDebtOrder);
+      setExtraPayment(projection.activeExtraPayment);
+      setTargetDebtName(
+        projection.activeStrategy === "velocity"
+          ? "Velocity Planner"
+          : projection.targetDebt?.name || "—"
+      );
+
+      setRequiredCash(projection.requiredCash);
+      setBillsDue(projection.billsDue);
+      setIncomeExpected(projection.incomeExpected);
+      setCashIntelligence(projection.cashIntelligence);
+      setChecklistDataComplete(checklistDataComplete);
+    } catch {
+      setChecklistDataComplete(false);
+    } finally {
       setLoading(false);
-      return;
     }
-
-    const {
-      incomeRows,
-      billRows,
-      paymentRows,
-      debtPaymentRows,
-      debtRows,
-      cashSettings,
-      debtSettings,
-      fundingSourceRows,
-    } = await loadCashFlowFinancialData(supabase, userId, cycleMonth);
-
-    const currentDebtPayments = activeDebtPayments(debtPaymentRows || []);
-    const projection = buildProjection({
-      userId,
-      cycleMonth,
-      incomeRows,
-      billRows,
-      paymentRows,
-      debtPaymentRows: currentDebtPayments,
-      debtRows,
-      cashSettings,
-      debtSettings,
-    });
-
-    setIncomes(incomeRows || []);
-    setBills(billRows || []);
-    setBillPayments(projection.activePayments);
-    setDebtPaymentRows(projection.activeDebtPayments);
-    setDebts(debtRows || []);
-    setFundingSources(fundingSourceRows || []);
-    setTimeline(projection.builtTimeline);
-    setData(projection.simulated);
-
-    setLookaheadDays(projection.activeLookahead);
-    setAssignmentHorizonMonths(projection.activeAssignmentHorizon);
-    setBuffer(projection.activeBuffer);
-    setStartingBalance(projection.activeStartingBalance);
-
-    setStrategy(projection.activeStrategy);
-    setCustomDebtOrder(projection.customDebtOrder);
-    setExtraPayment(projection.activeExtraPayment);
-    setTargetDebtName(
-      projection.activeStrategy === "velocity"
-        ? "Velocity Planner"
-        : projection.targetDebt?.name || "—"
-    );
-
-    setRequiredCash(projection.requiredCash);
-    setBillsDue(projection.billsDue);
-    setIncomeExpected(projection.incomeExpected);
-    setCashIntelligence(projection.cashIntelligence);
-
-    setLoading(false);
   }, [
     buildProjection,
     cycleMonth,
@@ -164,6 +173,7 @@ export function useCashFlowDataLoader({
     setCashIntelligence,
     setIncomes,
     setLoading,
+    setChecklistDataComplete,
     setLookaheadDays,
     setRequiredCash,
     setStartingBalance,
