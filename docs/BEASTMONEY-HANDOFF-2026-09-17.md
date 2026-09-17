@@ -93,3 +93,11 @@ All nine reattached IMG_1385 through IMG_1393 screenshots were viewed locally. E
 - Preserves the existing cash-flow extra-debt suggestion as an optional review action. Does not execute a payment or change assignments.
 - Missing/failed reads or payment history reaching the existing 250-row cap suppress checklist totals rather than claiming a complete ledger. The checklist covers current schedule and available cycle history, not reconstructed historical arrears or changed historical bill amounts.
 - Validation: six occurrence/recurrence tests, two rendered interaction tests, and three financial-loader tests. Authenticated browser verification remains unavailable in this runtime; do not claim it was performed.
+- All 11 tests, changed-file ESLint, and the full production build passed. PR #136 merged as c67255959181b490b7f64452fb5e16bb68a6821f; its tree exactly matches tested tree 56be327a1dd15a7b88da8bbf3cd5037146f0be60. Vercel production deployment dpl_6TSax6G6sSExy39X3qyXipQcDJSp is READY with thebeast.seangworld.com assigned and no alias error.
+
+## Checklist history continuation
+- Replaced the checklist's 250-row cutoff with batched relevant-cycle history reads when the initial query reaches that limit. Smaller histories make no additional requests.
+- Each batch is scoped to the signed-in owner and starts at the earliest needed due cycle (current month or older scheduled anchor). Debt batches exclude reversed payments. Stable ID cursors avoid offset shifts between pages.
+- Fresh relevant records replace the initial capped sample, so rows deleted/reversed before the refresh do not reappear from that sample. Older initial records remain available as context.
+- Read errors, malformed/nonadvancing cursors, or the defensive 100-page ceiling leave completion unverified. This is not a transactional snapshot across concurrent writes.
+- Adds large-history (503 rows), exact-page boundary, owner/reversal filter, stale-row replacement, failure, and integrated loader regression coverage. No migration or payment writer changes.
