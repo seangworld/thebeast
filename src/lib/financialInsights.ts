@@ -51,6 +51,7 @@ export type FinancialInsightsInput = {
   financialForecast: FinancialForecastResult;
   debts: UnifiedStrategyDebt[];
   strategy?: UnifiedStrategy;
+  customDebtOrder?: string[];
   creditUtilization?: number;
   billsDueSoon?: number;
   currentCash?: number;
@@ -147,6 +148,7 @@ export function buildFinancialInsights(
   const optimizedPlan = runUnifiedStrategyEngine({
     debts: input.debts,
     strategy,
+    customDebtOrder: input.customDebtOrder,
     cashIntelligence: input.cashIntelligence,
     financialDecision: input.financialDecision,
     extraPayment: input.financialDecision.suggestedExtraPayment,

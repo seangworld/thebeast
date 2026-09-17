@@ -11,6 +11,8 @@ import {
 import { BeastMoneyShell } from "@/app/dashboard/money/BeastMoneyShell";
 import { reportClientOperationFailure } from "@/lib/clientDiagnostics";
 import { memberSafeMessage } from "@/lib/memberSafeError";
+import { parseCustomDebtOrder } from "@/lib/customDebtOrder";
+import { saveDebtStrategySettings } from "@/lib/debtStrategySettings";
 
 export default function SettingsPage() {
   const [startingBalance, setStartingBalance] = useState(500);
@@ -19,6 +21,7 @@ export default function SettingsPage() {
   const [assignmentHorizonMonths, setAssignmentHorizonMonths] = useState(6);
 
   const [strategy, setStrategy] = useState<DebtStrategy>("snowball");
+  const [customDebtOrder, setCustomDebtOrder] = useState<string[]>([]);
   const [extraPayment, setExtraPayment] = useState("");
 
   const [message, setMessage] = useState("");
@@ -53,6 +56,7 @@ export default function SettingsPage() {
     setAssignmentHorizonMonths(Number(cashSettings?.assignment_horizon_months ?? 6));
 
     setStrategy(normalizeDebtStrategy(debtSettings?.strategy));
+    setCustomDebtOrder(parseCustomDebtOrder(debtSettings?.custom_debt_order));
     setExtraPayment(
       debtSettings?.extra_payment != null
         ? String(debtSettings.extra_payment)
@@ -94,22 +98,11 @@ export default function SettingsPage() {
       return;
     }
 
-    const { error: debtError } = await supabase.from("debt_settings").upsert(
-      {
-        user_id: userId,
-        strategy,
-        extra_payment: strategy === "minimum" ? 0 : Number(extraPayment || 0),
-      },
-      { onConflict: "user_id" }
-    );
-
-    if (debtError) {
-      reportClientOperationFailure({
-        module: "beastmoney",
-        operation: "debt_settings_save",
-        error: debtError,
-      });
-      setMessage(memberSafeMessage(debtError, "save"));
+    const debtResult = await saveDebtStrategySettings(supabase, {
+      strategy, extraPayment: Number(extraPayment || 0), customDebtOrder,
+    });
+    if (!debtResult.ok) {
+      setMessage(`Cash settings saved. ${debtResult.message}`);
       return;
     }
 
@@ -248,6 +241,9 @@ export default function SettingsPage() {
                   </option>
                 ))}
               </select>
+              {strategy === "custom" ? <p className="mt-2 text-sm text-slate-400">
+                This keeps your saved priority order. <Link className="text-cyan-300 underline" href="/dashboard/money/payoff-plan#payoff-scenarios">Set or edit custom order in Payoff Plan.</Link>
+              </p> : null}
               {strategy === "velocity" ? (
                 <p className="mt-2 text-xs text-[#7f8da3]">
                   Configure Velocity recommendations in the{" "}

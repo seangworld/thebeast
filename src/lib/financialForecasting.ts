@@ -46,6 +46,7 @@ export type FinancialForecastInput = {
   bills?: CashIntelligenceBill[];
   fundingSources?: CashIntelligenceFundingSource[];
   strategy?: UnifiedStrategy;
+  customDebtOrder?: string[];
   currentCash?: number;
   cashBuffer?: number;
 };
@@ -130,6 +131,7 @@ export function buildFinancialForecast(
   const strategyResult = runUnifiedStrategyEngine({
     debts,
     strategy: input.strategy || "avalanche",
+    customDebtOrder: input.customDebtOrder,
     cashIntelligence: input.cashIntelligence || undefined,
     financialDecision: input.financialDecision || undefined,
     fundingSources: input.fundingSources,

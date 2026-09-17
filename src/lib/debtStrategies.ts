@@ -1,5 +1,11 @@
 export const DEBT_STRATEGIES = [
   {
+    value: "custom",
+    label: "Custom order",
+    description: "Use your saved debt priority order. New debts follow the listed debts.",
+    usesExtraPayment: true,
+  },
+  {
     value: "minimum",
     label: "Minimum",
     description: "Minimum payments only. No extra attack or rollover.",

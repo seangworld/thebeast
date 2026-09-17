@@ -67,6 +67,7 @@ import {
 import { FinancialHealthScoreWorkspace } from "@/app/dashboard/money/components/FinancialHealthScoreWorkspace";
 import { buildFinancialMissionControl } from "@/lib/financialMissionControl";
 import { normalizeDebtStrategy } from "@/lib/debtStrategies";
+import { parseCustomDebtOrder } from "@/lib/customDebtOrder";
 import { getDebtLifecycleStatus, type DebtLifecycleStatus } from "@/lib/debtLifecycle";
 import { memberSafeMessage } from "@/lib/memberSafeError";
 import { ProductRoadmapModulePreview } from "@/app/components/ProductRoadmapVisibility";
@@ -167,6 +168,7 @@ type MoneyPayment = {
 };
 
 type DebtSettings = {
+  custom_debt_order?: string[];
   extra_payment?: number | null;
   strategy?: string | null;
 };
@@ -475,6 +477,7 @@ export function MoneyWorkspacePage({
       minimum_payment_floor: debt.minimum_payment_floor,
     }));
     const payoffStrategy = normalizeDebtStrategy(state.debtSettings?.strategy);
+    const customDebtOrder = parseCustomDebtOrder(state.debtSettings?.custom_debt_order);
     const activeBills = state.bills.filter((bill) => !bill.is_archived);
     const activeIncomes = state.incomes.filter(isActiveRecurringSource);
     const startingCash = resolveCoachCorrection(
@@ -526,6 +529,7 @@ export function MoneyWorkspacePage({
       bills: activeBills,
       fundingSources: state.fundingSources,
       strategy: payoffStrategy,
+      customDebtOrder,
     });
     const financialForecast = buildFinancialForecast({
       asOfDate,
@@ -536,6 +540,7 @@ export function MoneyWorkspacePage({
       bills: activeBills,
       fundingSources: state.fundingSources,
       strategy: payoffStrategy,
+      customDebtOrder,
       currentCash: startingCash,
       cashBuffer: buffer,
     });
@@ -581,6 +586,7 @@ export function MoneyWorkspacePage({
       financialForecast,
       debts: forecastDebts,
       strategy: payoffStrategy,
+      customDebtOrder,
       creditUtilization: utilization,
       billsDueSoon: billsDueSoon.length,
       currentCash: startingCash,
