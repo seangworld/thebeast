@@ -15,3 +15,7 @@
 36 focused tests passed: contextual research integration with mocked model responses, private-context separation from web search, strong routing, expanded continuity, document access filters and missing-row refusal, invalid IDs/types/size limits, plus existing answer-first, routing and security suites. Changed-file ESLint and TypeScript passed. Read-only development database query confirmed the document projection.
 
 No local OpenAI runtime key is configured, so live model answer quality was not tested. Tests establish integration behavior, not equivalence to ChatGPT or Grok. Signed-in browser and actual PDF interpretation remain unverified. No schema migration is required.
+
+## Release confirmation
+
+Production build passed. PR #142 merged as 7744502654cb4df848122ead17dbb92016719bd1. Vercel deployment dpl_78fW1HjdNkdgnKrEXyRfs5kHAXc7 is READY with thebeast.seangworld.com assigned and no alias error. Unauthenticated production POST to /api/digital-staff/runtime returned 401 Authentication required. This verifies deployment and the unauthenticated boundary, not live answer quality.

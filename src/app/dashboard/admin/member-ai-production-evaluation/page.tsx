@@ -43,17 +43,18 @@ export default function MemberAIProductionEvaluationPage() {
 
   const models = useMemo(() => Array.from(new Set(catalog?.configuredModelPolicy.turns.map((item) => item.selectedModel) || [])), [catalog]);
 
-  async function runAll() {
+  async function runAll(selectedScenarioId?: string) {
     if (!catalog || running) return;
     setRunning(true); setResults([]);
     const completed: ScenarioResult[] = [];
+    const scenarios = selectedScenarioId ? catalog.scenarios.filter(scenario => scenario.id === selectedScenarioId) : catalog.scenarios;
     try {
-      for (let index = 0; index < catalog.scenarios.length; index += 1) {
-        const scenario = catalog.scenarios[index];
-        setStatus(`Running ${scenario.title} (${index + 1} of ${catalog.scenarios.length})…`);
+      for (let index = 0; index < scenarios.length; index += 1) {
+        const scenario = scenarios[index];
+        setStatus(`Running ${scenario.title} (${index + 1} of ${scenarios.length})…`);
         const response = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scenarioId: scenario.id }) });
         const payload = await response.json() as ScenarioResult;
-        completed.push(response.ok ? payload : { ...payload, scenarioId: scenario.id, title: scenario.title, professionalId: scenario.professionalId, environment: catalog.environment, syntheticOnly: true, memberRecordsLoaded: false, modelOverrideUsed: false, executionComplete: false, results: [] });
+        completed.push(response.ok ? payload : { ...payload, scenarioId: scenario.id, title: scenario.title, professionalId: scenario.professionalId, environment: catalog.environment, syntheticOnly: true, memberRecordsLoaded: false, modelOverrideUsed: false, executionComplete: false, results: payload.results || [] });
         setResults([...completed]);
       }
       const failed = completed.filter((scenario) => scenario.error || scenario.executionComplete === false).length;
@@ -76,7 +77,10 @@ export default function MemberAIProductionEvaluationPage() {
         <p role="status" className="text-sm text-slate-200">{status}</p>
         <p className="mt-3 text-xs text-slate-400">Environment: {catalog?.environment || "—"} · Configured models: {models.join(", ") || "—"}</p>
         <p className="mt-1 text-xs text-slate-400">Entitlement boundary fixtures: {catalog ? `${catalog.entitlementChecks.filter((check) => check.passed).length}/${catalog.entitlementChecks.length} passed` : "—"}</p>
-        <button type="button" onClick={runAll} disabled={!catalog || running} className="mt-5 rounded-xl bg-cyan-400 px-5 py-3 text-sm font-black text-slate-950 disabled:cursor-not-allowed disabled:opacity-50">{running ? "Evaluation running…" : "Run governed Production evaluation"}</button>
+        <button type="button" onClick={() => void runAll()} disabled={!catalog || running} className="mt-5 rounded-xl bg-cyan-400 px-5 py-3 text-sm font-black text-slate-950 disabled:cursor-not-allowed disabled:opacity-50">{running ? "Evaluation running…" : "Run governed Production evaluation"}</button>
+      </section>
+      <section aria-label="Individual evaluations" className="flex flex-wrap gap-3">
+        {catalog?.scenarios.map(scenario => <button type="button" key={scenario.id} disabled={running} onClick={() => void runAll(scenario.id)} className="rounded-xl border border-white/20 px-4 py-3 text-left text-sm disabled:opacity-50">Run {scenario.title}</button>)}
       </section>
       <section aria-label="Evaluation results" className="space-y-4">
         {results.map((scenario) => <article key={scenario.scenarioId} className="rounded-2xl border border-white/10 bg-slate-950/70 p-5">
