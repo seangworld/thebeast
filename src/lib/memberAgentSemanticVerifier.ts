@@ -13,7 +13,10 @@ export type MemberAgentSemanticVerification = {
   failure: string | null;
 };
 
-export const memberAgentSemanticVerifierTimeoutMs = 15_000;
+// Reasoning-model output checks exceeded 15 seconds in production. Keep a
+// bounded budget while allowing them to finish; the caller's deadline still
+// cancels this request sooner when the overall turn has run out of time.
+export const memberAgentSemanticVerifierTimeoutMs = 45_000;
 
 type ResponsesPayload = {
   output_text?: string;

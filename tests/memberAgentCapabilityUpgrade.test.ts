@@ -425,7 +425,7 @@ test("independent semantic input verification blocks novel overrides and fails c
     globalThis.fetch = (async () => Response.json({ output_text: "not-json" })) as typeof fetch;
     const unavailable = await runDigitalStaffRuntime(contextFor("Help me compare these education paths."));
     assert.equal(unavailable.validationFailures.includes("semantic-verifier-malformed"), true);
-    assert.match(unavailable.response, /bounded educational guidance/i);
+    assert.match(unavailable.response, /service is temporarily unavailable/i);
   } finally {
     globalThis.fetch = priorFetch;
     if (priorKey === undefined) delete process.env.OPENAI_API_KEY; else process.env.OPENAI_API_KEY = priorKey;
@@ -649,7 +649,7 @@ test("Health semantic verification preserves explicit medication deferral while 
 test("public and authenticated profiles share assessed versions and truthful release boundaries", () => {
   for (const assessment of memberAgentCapabilityAssessments) {
     const profile = ["money-coach", "guidance-counselor", "tutor", "health-advisor"].map(getDigitalProfessional).find((item) => item?.canonicalId === assessment.agentId);
-    assert.equal(profile?.version, "2.0.0");
+    assert.equal(profile?.version, assessment.agentId === "beasthealth.health-advisor" ? "3.0.0" : "2.0.0");
   }
   assert.equal(manifest.identities.beastos.version, "3.2.0");
   assert.equal(manifest.identities.beastfusion.version, "2.5.0");
