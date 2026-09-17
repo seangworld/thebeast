@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { VaccinationReminders } from "./VaccinationReminders";
 import { loadVeteranClaims } from "@/lib/health/veteranClaimsPersistence";
 import type { VeteranClaim } from "@/lib/health/veteranClaims";
 import {
@@ -1394,9 +1395,18 @@ export function HealthAdvisorWorkspace() {
               </div>
             }
           />
+          {!loading && !recordsUnavailable && <VaccinationReminders records={records} />}
+          <div className="my-4 grid gap-2 sm:grid-cols-2" aria-label="Choose health assistance">
+            {[
+              ["Prepare for an appointment", "Use my saved health records to prepare a concise appointment brief and questions for my clinician. Separate confirmed facts from missing or conflicting information."],
+              ["Review my health records", "Review my saved health records for missing information, possible duplicate entries, and conflicting dates or statuses. Propose what needs my review without changing anything."],
+              ["Review vaccination dates", "Summarize my saved vaccinations and recorded next-dose dates. Distinguish provider or documented dates from unverified dates, and leave missing dates unknown."],
+            ].map(([label,prompt])=><button key={label} type="button" className="beast-button-secondary text-left" disabled={healthQuestionBusy || Boolean(healthQuestion.trim())} onClick={()=>{setVeteransMode(false);setSelectedVeteranClaim("");setHealthQuestion(prompt);}}>{label}</button>)}
+            <Link href="/dashboard/health/documents" className="beast-button-secondary">Review document findings</Link>
+          </div>
           <div className="my-4 space-y-3 rounded-xl border border-white/15 p-4">
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={veteransMode} disabled={healthQuestionBusy} onChange={event => { setVeteransMode(event.target.checked); setSelectedVeteranClaim(""); }} />Veterans assistance</label>
-            {veteransMode ? <><p className="text-sm text-slate-300">Explain records and decision letters, prepare statements, and identify evidence gaps. No filing or submission. Only the selected saved issue is added to your health context for this turn; prior messages remain in this conversation.</p><label className="block text-sm">Saved claim / issue<select className="beast-input mt-1 w-full" value={selectedVeteranClaim} disabled={healthQuestionBusy} onChange={event => setSelectedVeteranClaim(event.target.value)}><option value="">General assistance — no saved claim selected</option>{veteranClaims.map(claim => <option key={claim.id} value={claim.id}>{claim.title}</option>)}</select></label>{veteranClaimError && <p role="alert">{veteranClaimError}</p>}<Link href="/dashboard/health/veterans" className="text-sm underline">Manage claim preparation</Link></> : <button type="button" className="beast-button-secondary" disabled={healthQuestionBusy} onClick={() => setHealthQuestion("Review my saved current medications and supplements for possible interactions, duplicate ingredients, and concerns related to my recorded conditions or allergies. Check current authoritative sources, flag missing information, and help me prepare questions for my pharmacist.")}>Prepare a medication review</button>}
+            {veteransMode ? <><p className="text-sm text-slate-300">Explain records and decision letters, prepare statements, and identify evidence gaps. No filing or submission. Only the selected saved issue is added to your health context for this turn; prior messages remain in this conversation.</p><label className="block text-sm">Saved claim / issue<select className="beast-input mt-1 w-full" value={selectedVeteranClaim} disabled={healthQuestionBusy} onChange={event => setSelectedVeteranClaim(event.target.value)}><option value="">General assistance — no saved claim selected</option>{veteranClaims.map(claim => <option key={claim.id} value={claim.id}>{claim.title}</option>)}</select></label>{veteranClaimError && <p role="alert">{veteranClaimError}</p>}<div className="flex flex-wrap gap-2">{[["Find evidence gaps", "Review my selected claim and saved health records for evidence gaps. Separate claimed conditions from documented findings and help me prepare questions for my clinician or accredited representative."],["Prepare a personal statement", "Help me prepare a truthful personal statement using my selected claim notes. Preserve my words and identify missing facts rather than inventing them."]].map(([label,prompt])=><button key={label} type="button" className="beast-button-secondary" disabled={healthQuestionBusy || Boolean(healthQuestion.trim())} onClick={()=>setHealthQuestion(prompt)}>{label}</button>)}</div><Link href="/dashboard/health/veterans" className="text-sm underline">Manage claim preparation</Link></> : <button type="button" className="beast-button-secondary" disabled={healthQuestionBusy || Boolean(healthQuestion.trim())} onClick={() => setHealthQuestion("Review my saved current medications and supplements for possible interactions, duplicate ingredients, and concerns related to my recorded conditions or allergies. Check current authoritative sources, flag missing information, and help me prepare questions for my pharmacist.")}>Prepare a medication review</button>}
           </div>
           {conversationHistoryOpen ? (
             <div

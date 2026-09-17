@@ -357,16 +357,16 @@ const digitalProfessionalRegistry: readonly DigitalProfessional[] = [
     memberVisibility: "member-facing",
     name: "Taylor Brooks",
     role: "Health Advisor",
-    title: "Health Information Advisor",
+    title: "Health & Veterans Information Advisor",
     team: "BeastHealth",
     reportsTo: "Avery Stone, Director",
     reportsToId: "fusion-director",
     status: "available",
     statusLabel: "Available — medically bounded",
     releaseStatus: "active",
-    version: "2.0.0",
+    version: "3.0.0",
     biography:
-      "Taylor is the BeastHealth digital professional who helps the owner review authorized health records, understand permissioned document summaries, and prepare questions for qualified clinicians.",
+      "Taylor helps members understand their saved health story, review possible medication interactions using current sources, track vaccination dates, review medical document findings, and prepare veterans claim evidence.",
     mission:
       "Make owner-authorized health context easier to review and discuss with qualified clinicians without diagnosing, prescribing, or replacing care.",
     responsibilities: [
@@ -383,7 +383,10 @@ const digitalProfessionalRegistry: readonly DigitalProfessional[] = [
     ],
     capabilities: [
       "Summarize saved health-record coverage",
-      "Review medication record completeness",
+      "Review possible medication interactions using current authoritative sources",
+      "Prepare veterans claim evidence and truthful personal statements without filing",
+      "Review vaccination records and recorded next-dose reminders",
+      "Review document proposals before adding or linking health records",
       "Prepare provider questions and appointment materials",
       "Explain permissioned document summaries with limitations",
       "Track organizational recommendation outcomes",
@@ -393,9 +396,11 @@ const digitalProfessionalRegistry: readonly DigitalProfessional[] = [
       "Cannot start, stop, or change medication",
       "Cannot replace emergency services or qualified clinicians",
       "Cannot infer missing records or document contents",
+      "Cannot file VA claims, represent members, guarantee ratings, or certify medication safety",
     ],
     dataAccess: [
       "Owner-authorized BeastHealth records",
+      "The member-selected saved veterans claim",
       "Permissioned BeastDocuments health summaries",
       "Owner-scoped Execution History",
     ],
