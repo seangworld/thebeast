@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { completeCashFlowPaymentHistory, earliestCashFlowCycle } from "./cashFlowPaymentHistory";
 
 export const DEBT_PAYMENT_HISTORY_LIMIT = 250;
 export const BILL_PAYMENT_HISTORY_LIMIT = 250;
@@ -66,14 +67,20 @@ export async function loadCashFlowFinancialData(
       .order("created_at", { ascending: true }),
   ]);
 
+  const [billHistory, debtHistory] = await Promise.all([
+    completeCashFlowPaymentHistory({ client, userId, table: "bill_payments", initial: billPaymentResult,
+      earliestCycle: earliestCashFlowCycle(cycleMonth, billResult.data || []) }),
+    completeCashFlowPaymentHistory({ client, userId, table: "debt_payments", initial: debtPaymentResult,
+      earliestCycle: earliestCashFlowCycle(cycleMonth, debtResult.data || []) }),
+  ]);
+
   return {
-    checklistDataComplete: [incomeResult, billResult, billPaymentResult, debtPaymentResult, debtResult].every(result => !result.error && result.data !== null)
-      && (billPaymentResult.data?.length || 0) < BILL_PAYMENT_HISTORY_LIMIT
-      && (debtPaymentResult.data?.length || 0) < DEBT_PAYMENT_HISTORY_LIMIT,
+    checklistDataComplete: [incomeResult, billResult, debtResult].every(result => !result.error && result.data !== null)
+      && billHistory.complete && debtHistory.complete,
     incomeRows: incomeResult.data,
     billRows: billResult.data,
-    paymentRows: billPaymentResult.data,
-    debtPaymentRows: debtPaymentResult.data,
+    paymentRows: billHistory.data,
+    debtPaymentRows: debtHistory.data,
     debtRows: debtResult.data,
     cashSettings: cashSettingsResult.data,
     debtSettings: debtSettingsResult.data,
