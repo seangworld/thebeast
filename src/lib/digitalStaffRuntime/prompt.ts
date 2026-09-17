@@ -42,7 +42,7 @@ export function buildRuntimeInput(config: ProfessionalConfig, context: RuntimeCo
     conversationState: context.state,
     recentConversation: context.recentMessages.slice(productSupport ? -4 : -8),
     relevantMemory: productSupport ? [] : context.memories.slice(0, 8),
-    structuredRecords: productSupport ? [] : context.structuredRecords.slice(0, 20),
+    structuredRecords: productSupport ? [] : context.structuredRecords.slice(0, config.id === "beasthealth.health-advisor" ? 201 : 20),
     contextBoundary: context.contextBoundary || null,
     currentWorkspace: context.workspace,
     interactionPolicy: buildDigitalStaffInteractionPolicy(context),

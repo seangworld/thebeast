@@ -63,7 +63,7 @@ async function loadStructuredRecords(supabase: ReturnType<typeof createRouteClie
   const queries = professionalId === "beasteducation.guidance-counselor"
       ? [supabase.from("education_profiles").select(guidanceCounselorEducationProfileColumns).eq("owner_id", ownerId).limit(1), supabase.from("education_career_profile_items").select(guidanceCounselorCareerProfileItemColumns).eq("owner_id", ownerId).order("updated_at", { ascending: false }).limit(19)]
       : professionalId === "beasthealth.health-advisor"
-        ? [supabase.from("beast_health_records").select("id, record_type, title, status, occurred_on, source, details, updated_at").eq("owner_id", ownerId).neq("status", "archived").order("updated_at", { ascending: false }).limit(20)]
+        ? [supabase.from("beast_health_records").select("id, record_type, title, status, occurred_on, source, details, updated_at").eq("owner_id", ownerId).neq("status", "archived").order("updated_at", { ascending: false }).limit(200)]
         : [supabase.from("beast_goals").select("id, title, category, status, target_date, current_step, updated_at").eq("owner_id", ownerId).order("updated_at", { ascending: false }).limit(20)];
   const results = await Promise.all(queries);
   return {
@@ -74,7 +74,7 @@ async function loadStructuredRecords(supabase: ReturnType<typeof createRouteClie
       const fetched = (result.data || []).length;
       const limit = professionalId === "beasteducation.guidance-counselor"
         ? (index === 0 ? 1 : 19)
-        : 20;
+        : professionalId === "beasthealth.health-advisor" ? 200 : 20;
       return index === 0 && professionalId === "beasteducation.guidance-counselor"
         ? fetched <= 1
         : fetched < limit;
@@ -93,7 +93,7 @@ export async function POST(request: Request) {
   const authenticationMs = Date.now() - authenticationStartedAt;
   if (authError || !user) return privateJson({ error: "Authentication required." }, 401);
   const requestParsingStartedAt = Date.now();
-  let body: { professionalId?: unknown; conversationId?: unknown; message?: unknown; workspace?: unknown; proposalId?: unknown; decision?: unknown; editedFields?: unknown };
+  let body: { professionalId?: unknown; conversationId?: unknown; message?: unknown; workspace?: unknown; veteranClaimId?: unknown; proposalId?: unknown; decision?: unknown; editedFields?: unknown };
   try { body = (await request.json()) as typeof body; } catch { return privateJson({ error: "A valid request is required." }, 400); }
   const professionalId = typeof body.professionalId === "string" ? body.professionalId : "";
   const conversationId = typeof body.conversationId === "string" ? body.conversationId : "";
@@ -187,7 +187,15 @@ export async function POST(request: Request) {
     const historyResult = contextResult.history.result;
     const memoryResult = contextResult.memory.result;
     const structuredResult = contextResult.structured.result;
-    const structuredRecords = structuredResult.records;
+    const structuredRecords = [...structuredResult.records];
+    if (professionalId === "beasthealth.health-advisor" && body.veteranClaimId) {
+      if (typeof body.veteranClaimId !== "string" || !/^[0-9a-f-]{36}$/i.test(body.veteranClaimId)) throw new Error("Invalid selected claim.");
+      const { data: claim, error: claimError } = await supabase.from("beast_veteran_claims")
+        .select("id,title,claim_type,stage,next_action_date,details,updated_at")
+        .eq("id", body.veteranClaimId).eq("owner_id", user.id).maybeSingle();
+      if (claimError || !claim) throw new Error("Selected claim is unavailable.");
+      structuredRecords.push({ domain: "health", record: { ...claim, contextType: "member_reported_veteran_claim", clinicalVerification: "unverified; not a diagnosis", filingEnabled: false }, updatedAt: claim.updated_at });
+    }
     if (historyResult.error || memoryResult.error) throw new Error("Relevant conversation context is temporarily unavailable.");
     if (structuredResult.error) throw new Error("Canonical context query failed.");
     const contextLoadMs = contextResult.durationMs;

@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { loadVeteranClaims } from "@/lib/health/veteranClaimsPersistence";
+import type { VeteranClaim } from "@/lib/health/veteranClaims";
 import {
   useCallback,
   useEffect,
@@ -507,6 +509,17 @@ export function HealthAdvisorWorkspace() {
     useState<ProfessionalKnowledgeItem | null>(null);
   const [knowledgeTargetRecordId, setKnowledgeTargetRecordId] = useState("");
   const [pendingKnowledgeAnswer, setPendingKnowledgeAnswer] = useState("");
+  const [veteransMode, setVeteransMode] = useState(false);
+  const [veteranClaims, setVeteranClaims] = useState<VeteranClaim[]>([]);
+  const [selectedVeteranClaim, setSelectedVeteranClaim] = useState("");
+  const [veteranClaimError, setVeteranClaimError] = useState("");
+  useEffect(() => {
+    if (!veteransMode) return;
+    let active = true;
+    setVeteranClaimError("");
+    void loadVeteranClaims(createClient()).then(claims => { if (active) setVeteranClaims(claims); }).catch(() => { if (active) setVeteranClaimError("Saved claims could not be loaded. You can still ask a general question."); });
+    return () => { active = false; };
+  }, [veteransMode]);
   const [healthQuestion, setHealthQuestion] = useState("");
   const [healthQuestionBusy, setHealthQuestionBusy] = useState(false);
   const [healthQuestionError, setHealthQuestionError] = useState("");
@@ -897,7 +910,7 @@ export function HealthAdvisorWorkspace() {
     const optimisticTurn: HealthAdvisorQuestionTurn = { id: turnId, question, timestamp: messageTimestamp, activity: "accepted" };
     setQuestionTurns((current) => existingTurnId ? current.map((turn) => turn.id === turnId ? optimisticTurn : turn) : [...current, optimisticTurn]);
     try {
-      const runtime = await requestDigitalStaffResponse({ professionalId: "beasthealth.health-advisor", conversationId: activeConversationId, message: question, workspace: "/dashboard/health/ai-advisor" }, {
+      const runtime = await requestDigitalStaffResponse({ professionalId: "beasthealth.health-advisor", conversationId: activeConversationId, message: question, workspace: veteransMode ? "/dashboard/health/veterans" : "/dashboard/health/ai-advisor", ...(veteransMode && selectedVeteranClaim ? { veteranClaimId: selectedVeteranClaim } : {}) }, {
         onAcknowledged: () => setQuestionTurns((current) => current.map((turn) => turn.id === turnId ? { ...turn, activity: "thinking" } : turn)),
         onActivity: (activity) => setQuestionTurns((current) => current.map((turn) => turn.id === turnId ? { ...turn, activity } : turn)),
         onResponseDelta: (delta) => setQuestionTurns((current) => current.map((turn) => turn.id === turnId ? { ...turn, partialText: `${turn.partialText || ""}${delta}` } : turn)),
@@ -1381,6 +1394,10 @@ export function HealthAdvisorWorkspace() {
               </div>
             }
           />
+          <div className="my-4 space-y-3 rounded-xl border border-white/15 p-4">
+            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={veteransMode} disabled={healthQuestionBusy} onChange={event => { setVeteransMode(event.target.checked); setSelectedVeteranClaim(""); }} />Veterans assistance</label>
+            {veteransMode ? <><p className="text-sm text-slate-300">Explain records and decision letters, prepare statements, and identify evidence gaps. No filing or submission. Only the selected saved issue is added to your health context for this turn; prior messages remain in this conversation.</p><label className="block text-sm">Saved claim / issue<select className="beast-input mt-1 w-full" value={selectedVeteranClaim} disabled={healthQuestionBusy} onChange={event => setSelectedVeteranClaim(event.target.value)}><option value="">General assistance — no saved claim selected</option>{veteranClaims.map(claim => <option key={claim.id} value={claim.id}>{claim.title}</option>)}</select></label>{veteranClaimError && <p role="alert">{veteranClaimError}</p>}<Link href="/dashboard/health/veterans" className="text-sm underline">Manage claim preparation</Link></> : <button type="button" className="beast-button-secondary" disabled={healthQuestionBusy} onClick={() => setHealthQuestion("Review my saved current medications and supplements for possible interactions, duplicate ingredients, and concerns related to my recorded conditions or allergies. Check current authoritative sources, flag missing information, and help me prepare questions for my pharmacist.")}>Prepare a medication review</button>}
+          </div>
           {conversationHistoryOpen ? (
             <div
               className="fixed inset-0 z-50 bg-black/70 p-3"

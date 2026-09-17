@@ -77,3 +77,10 @@ test("AP-104 merge updates only the matched owner-scoped Health record contract"
   assert.equal(calls[0].operation, "update");
   assert.equal((calls[0].payload as { details: { dose: string } }).details.dose, "25 mg");
 });
+
+test("vaccination proposals save as procedures and preserve the recorded administration date", async () => {
+  const { client, calls } = fakeClient();
+  await applyApprovedKnowledgeProposal({ client, ownerId: "owner-1", professionalId: "beasthealth.health-advisor", proposal: { ...base, domain: "health", entityType: "vaccination", fields: { vaccinationName: "Example vaccine", receivedOn: "2026-01-01" } } });
+  const payload = calls[0].payload as { record_type: string; occurred_on: string };
+  assert.equal(payload.record_type, "procedure"); assert.equal(payload.occurred_on, "2026-01-01");
+});

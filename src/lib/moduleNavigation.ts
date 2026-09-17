@@ -302,6 +302,7 @@ const plannedModuleNavigation: Record<string, ModuleNavSection> = {
       { label: "Conditions", href: "/dashboard/health/conditions", group: "Health records" },
       { label: "Medications", href: "/dashboard/health/medications", group: "Health records" },
       { label: "Procedures", href: "/dashboard/health/procedures", group: "Health records" },
+      { label: "Vaccinations", href: "/dashboard/health/vaccinations", group: "Health records" },
       { label: "Family History", href: "/dashboard/health/family-history", group: "Health records" },
       { label: "Lifestyle", href: "/dashboard/health/lifestyle", group: "Health records" },
       { label: "Health Measurements", href: "/dashboard/health/vitals", group: "Health records" },

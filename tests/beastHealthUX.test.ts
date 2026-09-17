@@ -20,6 +20,7 @@ test("BP-300 promotes Health Advisor directly below Overview in the shared sideb
       "Conditions",
       "Medications",
       "Procedures",
+      "Vaccinations",
       "Family History",
       "Lifestyle",
       "Health Measurements",
