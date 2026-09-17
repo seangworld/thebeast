@@ -71,3 +71,31 @@ test("Payoff Plan keeps Month far left and uses responsive details, preferences,
   assert.match(css, /max-width: 1279px[\s\S]*payoff-hide-laptop/);
   assert.match(css, /max-width: 1023px[\s\S]*payoff-hide-tablet/);
 });
+
+test("Named-debt payments never use the portfolio-wide monthly total", () => {
+  const multi = { ...result, payoff_months: [{ ...result.payoff_months[0], total_payment: 900 }],
+    debt_payment_schedule: [{ month: 1, debt_id: "debt-1", debt_name: "Card",
+      opening_balance: 200, interest: 10, required_payment: 50, additional_payment: 50,
+      total_payment: 100, principal_reduction: 90, closing_balance: 110, paid_off: false }] };
+  const original = JSON.stringify(multi);
+  const [row] = buildPayoffPlanDisplayRows(multi, [{ id: "debt-1", name: "Card", interest_rate: 18 }]);
+  assert.equal(row.plannedPayment, 100);
+  assert.equal(row.suggestedPayment, 100);
+  assert.equal(row.total_payment, 900);
+  assert.equal(JSON.stringify(multi), original);
+});
+
+test("Legacy target fallback caps the final payment at the debt owed", () => {
+  const [row] = buildPayoffPlanDisplayRows({ payoff_months: [{ ...result.payoff_months[0],
+    total_payment: 900, debt_starting_balance: 20, monthly_interest: 1, required_minimum: 20, extra_attack: 80 }] },
+    [{ id: "debt-1", name: "Card", interest_rate: 18 }]);
+  assert.equal(row.plannedPayment, 21);
+  assert.equal(row.suggestedPayment, 21);
+});
+
+test("Source recovery rows show only their source payment", () => {
+  const [row] = buildPayoffPlanDisplayRows({ payoff_months: [{ ...result.payoff_months[0],
+    target: "Velocity Source Recovery", total_payment: 900, velocity_source_payment: 75 }] }, []);
+  assert.equal(row.plannedPayment, 75);
+  assert.equal(row.suggestedPayment, 75);
+});

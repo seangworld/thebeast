@@ -18,6 +18,7 @@ export type PayoffPlanDisplayRow = PayoffMonth & {
   remainingInterest: number;
   totalProjectedInterest: number;
   monthsRemaining: number | null;
+  plannedPayment: number;
   suggestedPayment: number;
   suggestedPaymentSource: "money_coach" | "planned_fallback" | "minimum_fallback";
   suggestedPaymentLabel: string;
@@ -54,7 +55,7 @@ export function resolveSuggestedPayment(row: PayoffMonth, debtId: string | undef
 }
 
 export function buildPayoffPlanDisplayRows(
-  result: Pick<UnifiedStrategyResult, "payoff_months">,
+  result: Pick<UnifiedStrategyResult, "payoff_months"> & Partial<Pick<UnifiedStrategyResult, "debt_payment_schedule">>,
   debts: readonly PayoffDebtSummary[],
   startDate = new Date(),
   recommendations: readonly PayoffPaymentRecommendation[] = [],
@@ -71,7 +72,17 @@ export function buildPayoffPlanDisplayRows(
     const debt = debts.find((item) => item.name === row.target);
     const payoffMonth = payoffMonthByTarget.get(row.target);
     const remainingInterest = remainingInterestByTarget.get(row.target) ?? 0;
-    const suggested = resolveSuggestedPayment(row, debt?.id, recommendations);
+    // Monthly summary totals cover every debt; this row names one target.
+    const payment = debt ? result.debt_payment_schedule?.find(
+      (item) => item.month === row.month && item.debt_id === debt.id,
+    ) : undefined;
+    const plannedPayment = roundMoney(payment?.total_payment ?? (debt
+      ? Math.min(
+          Number(row.required_minimum || 0) + Number(row.extra_attack || 0),
+          Number(row.debt_starting_balance || 0) + Number(row.monthly_interest || 0),
+        )
+      : Number(row.velocity_source_payment || 0)));
+    const suggested = resolveSuggestedPayment({ ...row, total_payment: plannedPayment }, debt?.id, recommendations);
     remainingInterestByTarget.set(row.target, roundMoney(remainingInterest - Number(row.monthly_interest || 0)));
     return {
       ...row,
@@ -83,6 +94,7 @@ export function buildPayoffPlanDisplayRows(
       remainingInterest,
       totalProjectedInterest: totalInterestByTarget.get(row.target) ?? 0,
       monthsRemaining: payoffMonth ? Math.max(payoffMonth - row.month, 0) : null,
+      plannedPayment,
       suggestedPayment: suggested.amount,
       suggestedPaymentSource: suggested.source,
       suggestedPaymentLabel: suggested.label,
