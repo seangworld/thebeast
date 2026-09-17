@@ -199,7 +199,7 @@ export default async function UploadsPage({
             <SectionHeader
               eyebrow="Upload"
               title="Add a document"
-              description="Add one file to the shared BeastOS Upload Center. The workflow stores the file and records owner-scoped document metadata. Automatic AI extraction is intentionally not part of Upload Center; owner-reviewed local medical extraction is available from BeastHealth Documents."
+              description="Add one file to the shared BeastOS Upload Center. The workflow stores the file and records owner-scoped document metadata. For Health documents, you can choose AI extraction after upload and review proposed updates in BeastHealth Documents. Pasted-text extraction is also available there."
             />
             <DocumentUploadDropzone context={context} />
             <div className="mt-5 text-xs font-bold uppercase text-[#7f8da3]">
@@ -348,7 +348,7 @@ export default async function UploadsPage({
             <SectionHeader
               eyebrow="Recent Uploads"
               title="Document activity"
-              description="Recent files show shared metadata, lifecycle state, and guarded document actions. Health document extraction remains an explicit owner-reviewed workflow in BeastHealth."
+              description="Recent files show shared metadata, lifecycle state, and guarded document actions. Health document extraction remains an explicit member-reviewed workflow in BeastHealth."
             />
             <div className="mt-5 grid gap-3">
               {documents.length > 0 ? (
