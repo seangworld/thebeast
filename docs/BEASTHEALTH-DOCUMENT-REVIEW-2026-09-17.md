@@ -31,3 +31,7 @@ Synthetic cloned-table transaction in DEV passed idempotent approval, duplicate 
 Email/push vaccination reminders. Automatic personalized vaccine schedules are not implemented. File analysis is opt-in, not silent scanning of every upload; long/unreadable/unsupported files need a smaller readable input or pasted text. Medical extraction accuracy requires real-world member review.
 
 Follow-up migration `health_document_repeat_events` allows distinct known event dates for vaccinations/procedures, appointments and measurements with the same name; same-date or unknown-date duplicates remain blocked. DEV version `20260917163328`; Production version `20260917163335`. Clone/rollback verification additionally passed separate dated vaccine doses and rejection of a duplicate same-date dose. Both migrations are intentional forward migrations, not edits to applied SQL.
+
+## Release confirmation
+
+PR #140 merged as `b731ded8ea37a931f8bb0f9357f6c978c31a4054`. Production deployment `dpl_BLJ6TvUP7jQvJQjrkQj99qwZ44tP` verified READY at that exact commit with `thebeast.seangworld.com` assigned and no alias error. Production approval RPC is security-invoker, executable by authenticated members and not by anonymous callers.

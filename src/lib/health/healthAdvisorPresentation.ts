@@ -69,7 +69,7 @@ export function buildHealthAdvisorGreeting(input: {
 }
 
 export const healthAdvisorIntroduction =
-  "I’m your Health Advisor. I’d like to understand your health history so I can help you organize records and prepare for appointments.";
+  "I’m your Health Advisor. I help you understand your health history, review possible medication interactions, track vaccination dates, prepare for appointments, and organize veterans claim evidence. Document findings stay reviewable before they enter your profile; I never file claims or change your treatment.";
 
 function plural(value: number, singular: string) {
   return `${value} ${singular}${value === 1 ? "" : "s"}`;

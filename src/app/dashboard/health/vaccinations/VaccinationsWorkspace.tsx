@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { vaccinationCalendar } from "@/lib/health/vaccinationReminders";
 import { createClient } from "@/lib/supabase/client";
 import { normalizeHealthRecord, type HealthRecord } from "@/lib/health/foundation";
 import { emptyVaccination, isVaccination, vaccinationDraft, vaccinationDueLabel, vaccinationValues, validateVaccination, type VaccinationDraft } from "@/lib/health/vaccinations";
@@ -43,6 +44,14 @@ export function VaccinationsWorkspace() {
   }, [dirty]);
   function edit(key: keyof VaccinationDraft, value: string) { setDraft(current => ({ ...current, [key]: value })); setDirty(true); setMessage(""); }
   function reset(record?: HealthRecord) { setSelected(record); setDraft(record ? vaccinationDraft(record) : emptyVaccination()); setDirty(false); newId.current = ""; setMessage(""); setError(""); }
+  function downloadCalendar(record: HealthRecord) {
+    try {
+      const url=URL.createObjectURL(new Blob([vaccinationCalendar(record)],{type:"text/calendar;charset=utf-8"}));
+      const link=document.createElement("a"); link.href=url; link.download="beasthealth-reminder.ics"; link.click();
+      window.setTimeout(()=>URL.revokeObjectURL(url),10000);
+      setMessage("Calendar file downloaded. Import it and confirm alerts in your calendar app. This is a snapshot; later date changes do not sync automatically.");
+    } catch {setError("Save a valid next-dose date before creating a calendar reminder.");}
+  }
   async function save() {
     if (saving.current || !ready) return;
     const problem = validateVaccination(draft, today);
@@ -69,14 +78,14 @@ export function VaccinationsWorkspace() {
     finally { saving.current = false; setBusy(false); }
   }
   return <div className="space-y-5">
-    <p className="text-sm text-slate-300">These are recorded dates, not a personalized vaccination schedule. Confirm next doses with your provider. Due-date reminders appear here; email and push reminders are not enabled.</p>
+    <p className="text-sm text-slate-300">These are recorded dates, not a personalized vaccination schedule. Confirm next doses with your provider. Due-date reminders appear here, in Health Advisor, and in Notifications. Download a calendar reminder for alerts; direct email and push delivery are not enabled.</p>
     <div className="flex flex-wrap gap-3"><button className="beast-button-secondary" disabled={dirty || busy} onClick={() => void load()}>Reload records</button><Link className="beast-button-secondary" target="_blank" rel="noopener noreferrer" href="/dashboard/health/documents">Health documents</Link></div>
     {error && <p role="alert" className="text-red-200">{error}</p>}{message && <p role="status" className="text-green-200">{message}</p>}
     {!ready && !error && <p role="status">Loading records…</p>}
     <div className="grid gap-5 lg:grid-cols-2">
       <section className="space-y-3" aria-label="Saved vaccination records">
         {ready && !records.length && <p>No vaccination records saved. Your vaccination history is unknown.</p>}
-        {records.map(record => { const item = vaccinationDraft(record); return <article key={record.id} className="rounded-xl border border-white/15 p-4"><h2 className="font-bold">{item.name}{item.dose ? ` · Dose ${item.dose}` : ""}</h2><p>Dose status: {item.administrationStatus}</p><p>Date received: {item.receivedOn || "unknown"}</p><p>{vaccinationDueLabel(item.dueOn, today)}</p>{item.dueOn && <p className="text-sm text-slate-300">Date source: {item.dueSource || "unknown"}</p>}<button className="beast-button-secondary mt-3" disabled={dirty || busy} onClick={() => reset(record)}>Review / edit</button></article>; })}
+        {records.map(record => { const item = vaccinationDraft(record); return <article key={record.id} className="rounded-xl border border-white/15 p-4"><h2 className="font-bold">{item.name}{item.dose ? ` · Dose ${item.dose}` : ""}</h2><p>Dose status: {item.administrationStatus}</p><p>Date received: {item.receivedOn || "unknown"}</p><p>{vaccinationDueLabel(item.dueOn, today)}</p>{item.dueOn && <p className="text-sm text-slate-300">Date source: {item.dueSource || "unknown"}</p>}<button className="beast-button-secondary mt-3" disabled={dirty || busy} onClick={() => reset(record)}>Review / edit</button>{item.dueOn && <button type="button" className="beast-button-secondary mt-3 ml-2" disabled={dirty || busy} onClick={()=>downloadCalendar(record)}>Download calendar reminder</button>}</article>; })}
       </section>
       <form className="space-y-4 rounded-xl border border-white/15 p-4" onSubmit={event => { event.preventDefault(); void save(); }}>
         <h2 className="font-bold">{selected ? "Edit vaccination" : "Add vaccination"}</h2>
