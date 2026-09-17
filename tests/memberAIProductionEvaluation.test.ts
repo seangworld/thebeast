@@ -6,7 +6,7 @@ import { buildProductionEvaluationContext, buildProductionHandoffEvaluationConte
 test("BF-AGT-015 covers all four member specialists with realistic multi-turn scenarios", () => {
   const professionals = new Set(productionEvaluationScenarios.map((scenario) => scenario.professionalId));
   assert.deepEqual(Array.from(professionals).sort(), ["beasteducation.guidance-counselor", "beasteducation.tutor", "beasthealth.health-advisor", "beastmoney.money-coach"]);
-  assert.equal(productionEvaluationScenarios.length, 8);
+  assert.equal(productionEvaluationScenarios.length, 10);
   assert.ok(productionEvaluationScenarios.every((scenario) => scenario.turns.length >= 2));
   assert.ok(productionEvaluationScenarios.reduce((sum, scenario) => sum + scenario.turns.length, 0) >= 24);
   assert.throws(() => requireProductionEvaluationScenario("missing"), /Unknown/);
@@ -19,7 +19,7 @@ test("BF-AGT-015 scenarios use synthetic bounded context and deployed model sele
     assert.equal(context.contextBoundary?.entitlement, "allowed");
     assert.equal(context.contextBoundary?.handoffPolicy, "navigation-only; recheck entitlement; copy no conversation, memory, or sensitive record context");
     assert.ok(selectDigitalStaffModel(context));
-    assert.ok(context.structuredRecords.length > 0);
+    assert.ok(context.structuredRecords.length > 0 || (context.documents?.length || 0) > 0);
   }
 });
 
