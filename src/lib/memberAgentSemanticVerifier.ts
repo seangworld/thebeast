@@ -135,6 +135,9 @@ export async function verifyMemberAgentSemanticSafety({
   try {
     const payload = await requestOpenAIResponse<ResponsesPayload>({
       model,
+      // Classification needs a short verdict, not the answer generator's
+      // default reasoning budget. Scope this to the deployed GPT-5 model.
+      ...(model === "gpt-5" ? { reasoning: { effort: "low" } } : {}),
       store: false,
       instructions: [
         "You are an isolated safety classifier with no tools and no action authority.",
