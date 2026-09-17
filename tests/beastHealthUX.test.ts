@@ -15,6 +15,7 @@ test("BP-300 promotes Health Advisor directly below Overview in the shared sideb
     [
       "Overview",
       "Health Advisor",
+    "Veterans Claims",
       "Health Profile",
       "Conditions",
       "Medications",
@@ -31,7 +32,7 @@ test("BP-300 promotes Health Advisor directly below Overview in the shared sideb
   );
   assert.equal(health.children?.[0]?.group, undefined);
   assert.equal(health.children?.[1]?.group, undefined);
-  health.children?.slice(2).filter((item) => item.label !== "Health Goals").forEach((item) => {
+  health.children?.slice(2).filter((item) => item.label !== "Health Goals" && item.label !== "Veterans Claims").forEach((item) => {
     assert.equal(item.group, "Health records");
   });
   assert.equal(

@@ -25,6 +25,7 @@ import { HealthPageIntroduction } from "./HealthPageIntroduction";
 export const beastHealthSections = [
   { label: "Overview", href: "/dashboard/health" },
   { label: "Health Advisor", href: "/dashboard/health/ai-advisor" },
+  { label: "Veterans Claims", href: "/dashboard/health/veterans" },
   { label: "Health Profile", href: "/dashboard/health/profile" },
   { label: "Conditions", href: "/dashboard/health/conditions" },
   { label: "Medications", href: "/dashboard/health/medications" },
