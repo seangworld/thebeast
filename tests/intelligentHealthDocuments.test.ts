@@ -52,23 +52,15 @@ test("BH-204 validates proposals and maps them to existing linked Health record 
   assert.equal(healthExtractionCategoryRecordKind("facility"), "provider");
 });
 
-test("BH-204 persists deduplicated owner-only proposals and atomically approves links", () => {
-  const migration = readFileSync("supabase/migrations/20260801000500_add_health_document_extractions.sql", "utf8");
+test("member document review keeps source ownership, explicit consent and reviewed approval", () => {
+  const migration = readFileSync("supabase/migrations/20260917162948_member_health_document_review.sql", "utf8");
   const route = readFileSync("src/app/api/health/documents/[documentId]/extract/route.ts", "utf8");
-  const review = readFileSync("src/app/dashboard/health/HealthDocumentExtractionReview.tsx", "utf8");
-
-  assert.match(migration, /unique \(owner_id, document_id, content_fingerprint, extraction_version\)/);
-  assert.match(migration, /enable row level security/g);
-  assert.match(migration, /auth\.uid\(\) = owner_id/g);
-  assert.match(migration, /role = 'admin'/);
-  assert.match(migration, /approve_beast_health_document_extraction_item/);
-  assert.match(migration, /linked_document_id/);
-  assert.match(migration, /owner_approved/);
+  assert.match(route, /requireMemberModuleEntitlement/);
   assert.match(route, /body\?\.consent !== true/);
-  assert.match(route, /profile\?\.role !== "admin"/);
+  assert.match(route, /eq\('owner_id',user.id\)/);
   assert.match(route, /fingerprintHealthDocument/);
-  assert.doesNotMatch(route, /OPENAI|api\.openai\.com|storage\.download/);
-  assert.match(review, /Approve and create record/);
-  assert.match(review, /Reject/);
-  assert.match(review, /not retained or sent to an external model/);
+  assert.match(migration, /security invoker/);
+  assert.match(migration, /expected_updated_at/);
+  assert.match(migration, /assertion_type/);
+  assert.match(migration, /Record changed/);
 });

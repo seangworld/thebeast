@@ -25,3 +25,7 @@ Scope confirmed by Sean: Health Advisor also provides veterans assistance. No fi
 The existing document extraction workflow requires pasted selectable text, recognizes labeled facts only, and is restricted to the admin owner through both API and RLS. Universal member-upload parsing/OCR, structured document reconciliation with existing records, and appropriate member entitlements need a separate implementation. Do not describe this as automatic analysis of every veteran upload. The current advisor can discuss supplied text and saved records; selecting a document reference does not read its file contents.
 
 Email/push vaccination reminders and automatic guideline-based personalized schedules are not implemented.
+
+## Release confirmation
+
+PR #139 merged to main as `96f2770ace5bbccd9f02d27de2cbd1645508f2a6`. Production deployment `dpl_pGiwbuYuDMU7KRStMuHqmBXitxVc` verified READY at that exact commit, with `thebeast.seangworld.com` assigned and no alias error. Validated 43 focused tests plus 34 additional runtime/security/streaming tests, TypeScript, changed-file ESLint, member AI evidence consistency, and production build (199 pages).

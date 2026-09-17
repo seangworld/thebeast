@@ -35,6 +35,8 @@ export function DocumentUploadDropzone({
   const [category, setCategory] = useState<DocumentCategory>(
     context?.defaultDocumentCategory || "Other"
   );
+  const [healthExtractionConsent, setHealthExtractionConsent] = useState(false);
+  const [savedHealthDocument, setSavedHealthDocument] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [state, setState] = useState<UploadState>("idle");
   const [message, setMessage] = useState(
@@ -52,6 +54,7 @@ export function DocumentUploadDropzone({
       return;
     }
 
+    setSavedHealthDocument(false);
     setSelected({
       file,
       title: getInitialTitle(file.name) || file.name,
@@ -78,7 +81,7 @@ export function DocumentUploadDropzone({
   }
 
   async function uploadDocument() {
-    if (!selected || state === "uploading") return;
+    if (!selected || state === "uploading" || savedHealthDocument) return;
 
     const validationError = getDocumentUploadValidationError(selected.file);
     if (validationError) {
@@ -164,6 +167,20 @@ export function DocumentUploadDropzone({
         }
       }
 
+      if (category === "Health" && healthExtractionConsent) {
+        setSavedHealthDocument(true);
+        setMessage("Document saved. Reading it for proposed health updates…");
+        try {
+          const response = await fetch(`/api/health/documents/${documentId}/extract`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ consent: true, source: "file" }) });
+          if (!response.ok) throw new Error("Document processing unavailable");
+          window.location.assign("/dashboard/health/documents");
+          return;
+        } catch {
+          setState("success");
+          setMessage("Your document is saved. Analysis could not finish. Open Health Documents to retry or paste text; do not upload it again.");
+          return;
+        }
+      }
       setState("success");
       setMessage("Uploaded. Refreshing your document list...");
       window.location.reload();
@@ -263,10 +280,12 @@ export function DocumentUploadDropzone({
             </label>
           </div>
 
+          {category === "Health" && <label className="mt-4 flex gap-2 text-sm text-slate-300"><input type="checkbox" checked={healthExtractionConsent} disabled={state === "uploading" || savedHealthDocument} onChange={event=>setHealthExtractionConsent(event.target.checked)} />Read this PDF/image for proposed health updates after upload (up to 10 MB). I allow this file to be sent to OpenAI; I will review each update before it enters my profile.</label>}
+          {savedHealthDocument && <a className="mt-3 block underline" href="/dashboard/health/documents">Open Health Documents review</a>}
           <button
             type="button"
             onClick={uploadDocument}
-            disabled={state === "uploading" || !selected.title.trim()}
+            disabled={state === "uploading" || savedHealthDocument || !selected.title.trim()}
             className="mt-4 rounded-xl bg-white px-4 py-2 text-sm font-black text-[#0b0f14] transition hover:bg-[#dbe3ef] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {state === "uploading" ? "Uploading..." : "Upload Document"}
