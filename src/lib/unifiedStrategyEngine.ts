@@ -10,6 +10,7 @@ import type {
 import { runVelocityEngine } from "./velocity/engine";
 import type { VelocityEngineResult, VelocityInputSnapshot } from "./velocity/types";
 import type { DebtStrategy } from "./debtStrategies";
+import { getCustomDebtTarget } from "./customDebtOrder";
 import { addMonthsClamped, roundMoney } from "./formatters";
 
 export type UnifiedStrategy = DebtStrategy | "custom";
@@ -87,6 +88,7 @@ export type UnifiedStrategyResult = {
   guardrail_violations: string[];
   funding_source_assumptions: string[];
   calculation_assumptions: string[];
+  initial_lump_sum_applied?: number;
   velocity_chunk_applied?: number;
   velocity_source_interest?: number;
   velocity_source_paid?: number;
@@ -107,6 +109,8 @@ export type UnifiedStrategyEngineInput = {
   velocityEngineResult?: VelocityEngineResult;
   velocityTargetDebtId?: string;
   customDebtOrder?: string[];
+  /** Scenario-only cash paid before the first month's interest; not borrowed funds. */
+  lumpSumPayment?: number;
 };
 
 export function getInclusivePayoffDate(
@@ -171,13 +175,7 @@ function chooseTarget({
   if (active.length === 0) return null;
   if (strategy === "minimum") return null;
 
-  if (strategy === "custom" && customDebtOrder?.length) {
-    const customTarget = customDebtOrder
-      .map((debtId) => active.find((debt) => debt.id === debtId))
-      .find(Boolean);
-
-    if (customTarget) return customTarget;
-  }
+  if (strategy === "custom") return getCustomDebtTarget(active, customDebtOrder);
 
   if (strategy === "velocity") {
     const velocityTarget = active.find((debt) => debt.id === velocityTargetDebtId);
@@ -330,6 +328,26 @@ export function runUnifiedStrategyEngine(
     velocityEngineResult
   );
   const calculationAssumptions = buildCalculationAssumptions(input);
+  const initialPayments: CanonicalDebtScheduleRow[] = [];
+  let lumpSumRemaining = money(Math.max(numberValue(input.lumpSumPayment), 0));
+  let lumpSumApplied = 0;
+  // Keep the original monthly budget so minimums freed by the lump sum roll forward.
+  // Minimum and velocity retain their existing semantics and do not consume this input.
+  if (input.strategy !== "minimum" && input.strategy !== "velocity") {
+    while (lumpSumRemaining > 0) {
+      const target = chooseTarget({ debts: workingDebts, strategy: input.strategy, customDebtOrder: input.customDebtOrder });
+      if (!target) break;
+      const opening = target.balance;
+      const payment = money(Math.min(lumpSumRemaining, opening));
+      target.balance = money(opening - payment);
+      lumpSumRemaining = money(lumpSumRemaining - payment);
+      lumpSumApplied = money(lumpSumApplied + payment);
+      initialPayments.push({ month: 0, debt_id: target.id, debt_name: target.name, opening_balance: opening,
+        interest: 0, required_payment: 0, additional_payment: payment, total_payment: payment,
+        principal_reduction: payment, closing_balance: target.balance, paid_off: target.balance <= 0 });
+    }
+    if (lumpSumApplied > 0) calculationAssumptions.push(`An upfront cash payment of $${lumpSumApplied.toFixed(2)} is applied before first-month interest; the original monthly budget is retained.`);
+  }
   let sourceBalance = 0;
   let velocityChunkApplied = 0;
   let velocitySourceInterest = 0;
@@ -353,11 +371,12 @@ export function runUnifiedStrategyEngine(
       strategy: input.strategy,
       months_to_payoff: 0,
       total_interest: 0,
-      total_paid: 0,
+      total_paid: lumpSumApplied,
       first_target: firstTarget?.name || "—",
       payoff_months: [],
       payment_schedule: [],
-      debt_payment_schedule: [],
+      debt_payment_schedule: initialPayments,
+      initial_lump_sum_applied: lumpSumApplied,
       payoff_complete: workingDebts.every((debt) => debt.balance <= 0) && sourceBalance <= 0,
       recommended_extra_payment: recommendedExtraPayment,
       ...safety,
@@ -371,9 +390,9 @@ export function runUnifiedStrategyEngine(
 
   let month = 0;
   let totalInterest = 0;
-  let totalPaid = 0;
+  let totalPaid = lumpSumApplied;
   const payoffMonths: UnifiedPaymentScheduleRow[] = [];
-  const debtPaymentSchedule: CanonicalDebtScheduleRow[] = [];
+  const debtPaymentSchedule: CanonicalDebtScheduleRow[] = [...initialPayments];
 
   while (
     (workingDebts.some((debt) => debt.balance > 0) || sourceBalance > 0) &&
@@ -440,23 +459,23 @@ export function runUnifiedStrategyEngine(
       paymentPool = money(paymentPool - monthlySourcePayment);
     }
 
-    const target = chooseTarget({
+    let target = chooseTarget({
       debts: workingDebts,
       strategy: input.strategy,
       velocityTargetDebtId: selectedVelocityTargetDebtId,
       customDebtOrder: input.customDebtOrder,
     });
-    const targetPayment = target
-      ? money(Math.min(Math.max(paymentPool, 0), target.balance))
-      : 0;
-
-    if (target) {
+    while (target && paymentPool > 0) {
+      const targetPayment = money(Math.min(paymentPool, target.balance));
       target.balance = money(target.balance - targetPayment);
       attackPaidByDebt[target.id] = money(
         (attackPaidByDebt[target.id] || 0) + targetPayment
       );
+      monthlyPaid = money(monthlyPaid + targetPayment);
+      paymentPool = money(paymentPool - targetPayment);
+      target = chooseTarget({ debts: workingDebts, strategy: input.strategy,
+        velocityTargetDebtId: selectedVelocityTargetDebtId, customDebtOrder: input.customDebtOrder });
     }
-    monthlyPaid = money(monthlyPaid + targetPayment);
 
     for (const debt of workingDebts) {
       const openingBalance = startingBalances[debt.id];
@@ -554,6 +573,7 @@ export function runUnifiedStrategyEngine(
         : 0,
     total_interest: totalInterest,
     total_paid: totalPaid,
+    initial_lump_sum_applied: lumpSumApplied,
     first_target: firstTarget?.name || "—",
     payoff_months: payoffMonths,
     payment_schedule: payoffMonths,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState, type DragEvent } from "react";
 
 type IncomeDatePlanningSectionProps = {
   incomeBucketPlans: any[];
@@ -41,6 +41,10 @@ export default function IncomeDatePlanningSection({
 }: IncomeDatePlanningSectionProps) {
   const [showIncomeTimeline, setShowIncomeTimeline] = useState(true);
   const [savingAssignment, setSavingAssignment] = useState("");
+  const assignmentPending = useRef(false);
+  const draggedItem = useRef<{ kind: "bill" | "debt"; id: string; date: string } | null>(null);
+  const [dropTarget, setDropTarget] = useState<string | null>(null);
+  const [assignmentFailed, setAssignmentFailed] = useState(false);
   const [assignmentMessage, setAssignmentMessage] = useState("");
 
   const planningBuckets = useMemo(() => {
@@ -55,14 +59,64 @@ export default function IncomeDatePlanningSection({
   }, [incomeBucketPlans, planningWindowDays]);
 
   async function assignObligation(kind: "bill" | "debt", id: string, date: string) {
-    const key = `${kind}-${id}`;
-    setSavingAssignment(key);
+    if (assignmentPending.current) return;
+    assignmentPending.current = true;
+    setSavingAssignment(`${kind}-${id}`);
     setAssignmentMessage("");
-    const result = kind === "bill"
-      ? await updateBillIncomeDate(id, date)
-      : await updateDebtIncomeDate(id, date);
-    setSavingAssignment("");
-    setAssignmentMessage(result.message);
+    setAssignmentFailed(false);
+    try {
+      const result = kind === "bill"
+        ? await updateBillIncomeDate(id, date)
+        : await updateDebtIncomeDate(id, date);
+      setAssignmentFailed(!result.ok);
+      setAssignmentMessage(result.message);
+    } catch {
+      setAssignmentFailed(true);
+      setAssignmentMessage("Could not confirm the paycheck change. Refresh to check the assignment, then try again.");
+    } finally {
+      assignmentPending.current = false;
+      setSavingAssignment("");
+    }
+  }
+
+  function dragHandle(kind: "bill" | "debt", item: any) {
+    return (
+      <span
+        draggable={!savingAssignment}
+        title={`Drag ${item.name} to another paycheck, or use its selector`}
+        aria-hidden="true"
+        className="hidden cursor-grab select-none rounded border border-slate-600 px-2 py-1 text-slate-400 sm:inline-block"
+        onDragStart={(event) => {
+          if (assignmentPending.current) { event.preventDefault(); return; }
+          draggedItem.current = { kind, id: item.id, date: item.assigned_income_date || "" };
+          event.dataTransfer.effectAllowed = "move";
+          event.dataTransfer.setData("text/plain", `${kind}-${item.id}`);
+        }}
+        onDragEnd={() => { draggedItem.current = null; setDropTarget(null); }}
+      >↕</span>
+    );
+  }
+
+  function dropZone(date: string) {
+    return {
+      onDragOver: (event: DragEvent<HTMLDivElement>) => {
+        if (!draggedItem.current || assignmentPending.current) return;
+        event.preventDefault();
+        event.dataTransfer.dropEffect = "move";
+        setDropTarget(date);
+      },
+      onDragLeave: (event: DragEvent<HTMLDivElement>) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDropTarget(null);
+      },
+      onDrop: (event: DragEvent<HTMLDivElement>) => {
+        const item = draggedItem.current;
+        if (!item || assignmentPending.current) return;
+        event.preventDefault();
+        draggedItem.current = null;
+        setDropTarget(null);
+        if (item.date !== date) void assignObligation(item.kind, item.id, date);
+      },
+    };
   }
 
   function paycheckSelect(kind: "bill" | "debt", item: any) {
@@ -73,7 +127,7 @@ export default function IncomeDatePlanningSection({
           className="beast-input py-2 text-xs"
           aria-label={`Paycheck covering ${item.name}`}
           value={item.assigned_income_date || ""}
-          disabled={savingAssignment === key}
+          disabled={Boolean(savingAssignment)}
           onChange={(event) => void assignObligation(kind, item.id, event.target.value)}
         >
           <option value="">Unassigned</option>
@@ -146,7 +200,7 @@ export default function IncomeDatePlanningSection({
           <h2 className="money-section-title">Paycheck Strategy</h2>
           <p className="money-section-description">
             Plan the next month paycheck by paycheck. Choose what each deposit
-            covers, see what remains, and direct safe extra money to the suggested debt.
+            covers, see what remains, and direct safe extra money to the suggested debt. Drag the arrow handle between paychecks on desktop, or use the paycheck selectors.
           </p>
         </div>
 
@@ -298,25 +352,27 @@ export default function IncomeDatePlanningSection({
         ) : null}
 
         {assignmentMessage ? (
-          <div className="rounded-xl border border-cyan-300/30 bg-cyan-300/10 px-4 py-3 text-sm text-cyan-100" role="status">
+          <div className="rounded-xl border border-cyan-300/30 bg-cyan-300/10 px-4 py-3 text-sm text-cyan-100" role={assignmentFailed ? "alert" : "status"}>
             {assignmentMessage}
           </div>
         ) : null}
 
-        {(unassignedBills.length > 0 || unassignedDebts.length > 0) && showIncomeTimeline ? (
-          <div className="rounded-xl border border-yellow-300/35 bg-yellow-300/5 p-4">
+        {showIncomeTimeline ? (
+          <div {...dropZone("")} className={`rounded-xl border border-yellow-300/35 bg-yellow-300/5 p-4 ${dropTarget === "" ? "ring-2 ring-cyan-300" : ""}`}>
             <h3 className="font-black text-yellow-100">Assign these items</h3>
-            <p className="mt-1 text-sm text-[#c7cfdb]">Choose the paycheck that should cover each obligation.</p>
+            <p className="mt-1 text-sm text-[#c7cfdb]">Choose the paycheck that should cover each obligation. Drop an item here to unassign it.</p>
             <div className="mt-4 grid gap-2">
               {unassignedBills.map((bill) => (
                 <div key={`unassigned-bill-${bill.id}`} className="flex flex-col gap-2 rounded-lg bg-[#0f1419] p-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="min-w-0 flex-1"><div className="truncate font-bold text-white">{bill.name}</div><div className="text-xs text-[#7f8da3]">Bill · <span className="whitespace-nowrap">{formatMoney(Number(bill.remaining || bill.amount || 0))}</span> · Due {dueDateLabel(bill)}</div></div>
+                  {dragHandle("bill", bill)}
                   {paycheckSelect("bill", bill)}
                 </div>
               ))}
               {unassignedDebts.map((debt) => (
                 <div key={`unassigned-debt-${debt.id}`} className="flex flex-col gap-2 rounded-lg bg-[#0f1419] p-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="min-w-0 flex-1"><div className="truncate font-bold text-white">{debt.name}</div><div className="text-xs text-[#7f8da3]">Debt minimum · <span className="whitespace-nowrap">{formatMoney(Number(debt.minimum_payment || 0))}</span> · Due {dueDateLabel(debt)}</div></div>
+                  {dragHandle("debt", debt)}
                   {paycheckSelect("debt", debt)}
                 </div>
               ))}
@@ -338,7 +394,8 @@ export default function IncomeDatePlanningSection({
               planningBuckets.map((bucket, index) => (
                 <div
                   key={bucket.id}
-                  className={`money-income-bucket beast-panel overflow-hidden ${
+                  {...dropZone(bucket.date)}
+                  className={`money-income-bucket beast-panel overflow-hidden ${dropTarget === bucket.date ? "ring-2 ring-cyan-300" : ""} ${
                     index % 2 === 0
                       ? "money-income-bucket-even"
                       : "money-income-bucket-odd"
@@ -411,7 +468,8 @@ export default function IncomeDatePlanningSection({
                               <div className="flex min-w-0 items-baseline gap-2"><span className="truncate font-semibold text-white">{bill.name}</span><span className="shrink-0 whitespace-nowrap">{formatMoney(Number(bill.remaining || 0))}</span></div>
                               <div className="text-xs text-[#7f8da3]">Due {dueDateLabel(bill)}</div>
                             </div>
-                            {paycheckSelect("bill", bill)}
+                            {dragHandle("bill", bill)}
+                  {paycheckSelect("bill", bill)}
                           </li>
                         ))}
 
@@ -424,7 +482,8 @@ export default function IncomeDatePlanningSection({
                               <div className="flex min-w-0 items-baseline gap-2"><span className="truncate font-semibold text-white">{debt.name} minimum</span><span className="shrink-0 whitespace-nowrap">{formatMoney(Number(debt.minimum_payment || 0))}</span></div>
                               <div className="text-xs text-[#7f8da3]">Due {dueDateLabel(debt)}</div>
                             </div>
-                            {paycheckSelect("debt", debt)}
+                            {dragHandle("debt", debt)}
+                  {paycheckSelect("debt", debt)}
                           </li>
                         ))}
                       </ul>

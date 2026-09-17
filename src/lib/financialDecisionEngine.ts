@@ -5,6 +5,7 @@ import type {
   CashIntelligenceResult,
 } from "./cashIntelligence";
 import type { DebtStrategy } from "./debtStrategies";
+import { getCustomDebtTarget } from "./customDebtOrder";
 import { numberValue } from "./financialMetrics";
 import { fundingTrace } from "./fundingRules";
 
@@ -15,6 +16,7 @@ export type FinancialDecisionDebt = {
   minimum_payment?: number | string | null;
   interest_rate?: number | string | null;
   is_archived?: boolean | null;
+  is_excluded?: boolean | null;
 };
 
 export type FinancialDecisionGuardrails = {
@@ -30,6 +32,7 @@ export type FinancialDecisionInput = {
   fundingSources?: CashIntelligenceFundingSource[];
   guardrails?: FinancialDecisionGuardrails;
   strategy?: DebtStrategy;
+  customDebtOrder?: string[];
 };
 
 export type FinancialDecisionAction =
@@ -67,10 +70,12 @@ function getActiveDebts(debts: FinancialDecisionDebt[]) {
 
 function chooseDebtTarget(
   debts: FinancialDecisionDebt[],
-  strategy: DebtStrategy | undefined
+  strategy: DebtStrategy | undefined,
+  customDebtOrder?: string[]
 ) {
   const activeDebts = getActiveDebts(debts);
   if (activeDebts.length === 0) return null;
+  if (strategy === "custom") return getCustomDebtTarget(activeDebts, customDebtOrder);
 
   if (strategy === "snowball") {
     return [...activeDebts].sort(
@@ -129,7 +134,7 @@ export function buildFinancialDecision(
   const bills = input.bills || [];
   const fundingSources = input.fundingSources || [];
   const activeDebts = getActiveDebts(debts);
-  const targetDebt = chooseDebtTarget(debts, input.strategy);
+  const targetDebt = chooseDebtTarget(debts, input.strategy, input.customDebtOrder);
   const guardrailViolations: string[] = [];
   const reasoning: string[] = [];
   const maxExtraPayment = numberValue(input.guardrails?.maxExtraPayment);

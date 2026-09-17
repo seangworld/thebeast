@@ -1,4 +1,5 @@
 import type { DebtStrategy } from "@/lib/debtStrategies";
+import { getCustomDebtTarget } from "@/lib/customDebtOrder";
 import { formatDate as formatSharedDate } from "@/lib/formatters";
 
 export type PayoffStrategy = DebtStrategy;
@@ -79,15 +80,17 @@ export function getAssignmentLabel(value: string) {
   );
 }
 
-export function getTargetDebt<T extends { balance?: number | string | null; interest_rate?: number | string | null }>(
+export function getTargetDebt<T extends { id?: string; balance?: number | string | null; interest_rate?: number | string | null }>(
   debts: T[],
-  strategy: PayoffStrategy
+  strategy: PayoffStrategy,
+  customDebtOrder?: string[]
 ) {
   const active = debts.filter((d) => Number(d.balance || 0) > 0);
 
   if (active.length === 0) return null;
 
   if (strategy === "minimum" || strategy === "velocity") return null;
+  if (strategy === "custom") return getCustomDebtTarget(active, customDebtOrder);
 
   if (strategy === "avalanche") {
     return [...active].sort(

@@ -1,6 +1,7 @@
 import { buildCashIntelligence } from "@/lib/cashIntelligence";
 import { useCallback } from "react";
 import { normalizeDebtStrategy } from "@/lib/debtStrategies";
+import { parseCustomDebtOrder } from "@/lib/customDebtOrder";
 import { isDebtOpen, isDebtPayoffEligible } from "@/lib/debtLifecycle";
 import {
   billPaymentOccurrenceKey,
@@ -47,11 +48,12 @@ export function useCashFlowProjection() {
     const activeStartingBalance = Number(cashSettings?.starting_balance ?? 500);
 
     const activeStrategy = normalizeDebtStrategy(debtSettings?.strategy);
+    const customDebtOrder = parseCustomDebtOrder(debtSettings?.custom_debt_order);
     const activeExtraPayment = Number(debtSettings?.extra_payment || 0);
 
     const openDebtRows = (debtRows || []).filter(isDebtOpen);
     const payableDebtRows = openDebtRows.filter(isDebtPayoffEligible);
-    const targetDebt = getTargetDebt(payableDebtRows, activeStrategy);
+    const targetDebt = getTargetDebt(payableDebtRows, activeStrategy, customDebtOrder);
 
     const activePayments = paymentRows || [];
     const activeDebtPayments = debtPaymentRows || [];
@@ -155,6 +157,7 @@ export function useCashFlowProjection() {
       activeBuffer,
       activeStartingBalance,
       activeStrategy,
+      customDebtOrder,
       activeExtraPayment,
       targetDebt,
       activePayments,

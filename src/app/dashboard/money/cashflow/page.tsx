@@ -94,6 +94,7 @@ export default function CashFlowPage() {
     saveStatus,
     saveError,
     strategy,
+    customDebtOrder,
     extraPayment,
     targetDebtName,
     incomeName,
@@ -819,14 +820,15 @@ export default function CashFlowPage() {
       bills: activeBills,
       fundingSources,
       strategy,
+      customDebtOrder,
     });
-  }, [cashIntelligence, payableDebts, incomes, activeBills, fundingSources, strategy]);
+  }, [cashIntelligence, payableDebts, incomes, activeBills, fundingSources, strategy, customDebtOrder]);
 
   const suggestedMonthlyDebtAttack = financialDecision?.suggestedExtraPayment ?? null;
 
   const recommendedTargetDebt = useMemo(() => {
-    return financialDecision?.targetDebt || getTargetDebt(payableDebts, strategy);
-  }, [financialDecision, payableDebts, strategy]);
+    return financialDecision?.targetDebt || getTargetDebt(payableDebts, strategy, customDebtOrder);
+  }, [financialDecision, payableDebts, strategy, customDebtOrder]);
 
   const planningWindowEnd = useMemo(() => {
     const today = new Date();

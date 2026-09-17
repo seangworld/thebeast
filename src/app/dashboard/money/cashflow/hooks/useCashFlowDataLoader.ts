@@ -24,6 +24,7 @@ type UseCashFlowDataLoaderInput = {
   setBuffer: (value: number) => void;
   setStartingBalance: (value: number) => void;
   setStrategy: (value: PayoffStrategy) => void;
+  setCustomDebtOrder: (value: string[]) => void;
   setExtraPayment: (value: number) => void;
   setTargetDebtName: (value: string) => void;
   setRequiredCash: (value: number) => void;
@@ -49,6 +50,7 @@ export function useCashFlowDataLoader({
   setBuffer,
   setStartingBalance,
   setStrategy,
+  setCustomDebtOrder,
   setExtraPayment,
   setTargetDebtName,
   setRequiredCash,
@@ -130,6 +132,7 @@ export function useCashFlowDataLoader({
     setStartingBalance(projection.activeStartingBalance);
 
     setStrategy(projection.activeStrategy);
+    setCustomDebtOrder(projection.customDebtOrder);
     setExtraPayment(projection.activeExtraPayment);
     setTargetDebtName(
       projection.activeStrategy === "velocity"
@@ -165,6 +168,7 @@ export function useCashFlowDataLoader({
     setRequiredCash,
     setStartingBalance,
     setStrategy,
+    setCustomDebtOrder,
     setTargetDebtName,
     setTimeline,
   ]);

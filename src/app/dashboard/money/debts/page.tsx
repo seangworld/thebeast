@@ -60,6 +60,9 @@ import { useBeastMoneyPaymentWriteGate } from "@/lib/hooks/useBeastMoneyPaymentW
 import { CompactAssignmentSelect, compactIncomeLabel } from "../cashflow/components/CompactAssignmentSelect";
 import { PaymentConfigurationControl } from "../cashflow/components/PaymentConfigurationControl";
 import type { PaymentConfigurationRecord } from "@/lib/paymentConfiguration";
+import PayoffScenarioComparison from "./PayoffScenarioComparison";
+import { normalizeCustomDebtOrder, parseCustomDebtOrder } from "@/lib/customDebtOrder";
+import { saveDebtStrategySettings } from "@/lib/debtStrategySettings";
 
 const PAYOFF_COLUMNS_STORAGE_KEY = "beastmoney.payoff-plan.columns.v1";
 type SupabaseBrowserClient = ReturnType<typeof createClient>;
@@ -257,6 +260,9 @@ export default function DebtsPage() {
   const [debtPayments, setDebtPayments] = useState<DebtPaymentHistoryRow[]>([]);
   const [paymentBusyId, setPaymentBusyId] = useState<string | null>(null);
   const [strategy, setStrategy] = useState<DebtStrategy>("snowball");
+  const [customDebtOrder, setCustomDebtOrder] = useState<string[]>([]);
+  const [savingStrategy, setSavingStrategy] = useState(false);
+  const strategySaveInFlight = useRef(false);
   const [extraPayment, setExtraPayment] = useState("");
   const [startingBalance, setStartingBalance] = useState<number | null>(null);
   const [buffer, setBuffer] = useState<number | null>(null);
@@ -429,8 +435,9 @@ export default function DebtsPage() {
       bills,
       fundingSources,
       strategy,
+      customDebtOrder,
     });
-  }, [activeDebts, bills, cashIntelligence, fundingSources, incomes, strategy]);
+  }, [activeDebts, bills, cashIntelligence, fundingSources, incomes, strategy, customDebtOrder]);
 
   const minimumProjection = useMemo(() => {
     const result = simulatePayoffPlan({
@@ -516,6 +523,10 @@ export default function DebtsPage() {
   ]);
 
   const payoffPlan = useMemo(() => {
+    if (strategy === "custom") return simulatePayoffPlan({
+      debts: activeDebts, strategy, customDebtOrder, recoveredMinimums,
+      extraPayment: Number(extraPayment || 0), cashIntelligence, financialDecision, fundingSources,
+    });
     if (strategy === "minimum") {
       return minimumProjection;
     }
@@ -535,6 +546,7 @@ export default function DebtsPage() {
     snowballProjection,
     strategy,
     velocityProjection,
+    activeDebts, customDebtOrder, recoveredMinimums, extraPayment, cashIntelligence, financialDecision, fundingSources,
   ]);
 
   const payoffDisplayRows = useMemo(
@@ -728,6 +740,7 @@ export default function DebtsPage() {
     setBills(billRows || []);
     setFundingSources(fundingSourceRows || []);
     setStrategy(normalizeDebtStrategy(settings?.strategy));
+    setCustomDebtOrder(parseCustomDebtOrder(settings?.custom_debt_order));
     setExtraPayment(
       settings?.extra_payment != null ? String(settings.extra_payment) : ""
     );
@@ -791,27 +804,20 @@ export default function DebtsPage() {
   }, [reloadDebtsOnFocus]);
 
   async function saveSettings() {
-    const supabase = createClient();
-    const userId = await getUserId();
-
-    if (!userId) return;
-
-    const { error } = await supabase.from("debt_settings").upsert(
-      {
-        user_id: userId,
-        strategy,
-        extra_payment: strategy === "minimum" ? 0 : Number(extraPayment || 0),
-      },
-      { onConflict: "user_id" }
-    );
-
-    if (error) {
-      setMessage(memberSafeMessage(error, "save"));
-      return;
+    if (strategySaveInFlight.current) return;
+    strategySaveInFlight.current = true;
+    setSavingStrategy(true);
+    try {
+      const result = await saveDebtStrategySettings(createClient(), {
+        strategy, extraPayment: Number(extraPayment || 0),
+        customDebtOrder: normalizeCustomDebtOrder(activeDebts, customDebtOrder),
+      });
+      setMessage(result.message);
+      if (result.ok) await load();
+    } finally {
+      strategySaveInFlight.current = false;
+      setSavingStrategy(false);
     }
-
-    setMessage("Debt settings saved.");
-    await load();
   }
 
   async function addDebt() {
@@ -1277,6 +1283,7 @@ export default function DebtsPage() {
               <label className="money-field-label">Strategy</label>
               <select
                 value={strategy}
+                disabled={savingStrategy}
                 onChange={(e) => setStrategy(normalizeDebtStrategy(e.target.value))}
                 className="beast-input mt-2"
               >
@@ -1298,6 +1305,11 @@ export default function DebtsPage() {
                   .
                 </p>
               ) : null}
+              {strategy === "custom" ? <div className="mt-3 text-sm text-slate-300">
+                <p>Custom priority order:</p>
+                <ol className="list-inside list-decimal">{normalizeCustomDebtOrder(activeDebts, customDebtOrder).map(id => <li key={id}>{activeDebts.find(debt => debt.id === id)?.name}</li>)}</ol>
+                <a className="text-cyan-300 underline" href="#payoff-scenarios">Edit the order in What-if comparison, then copy it here to save.</a>
+              </div> : null}
             </div>
 
             <div>
@@ -1307,7 +1319,7 @@ export default function DebtsPage() {
                 value={extraPayment}
                 onChange={(e) => setExtraPayment(e.target.value)}
                 placeholder="0"
-                disabled={strategy === "minimum"}
+                disabled={strategy === "minimum" || savingStrategy}
                 className="beast-input mt-2"
               />
               {strategy === "minimum" ? (
@@ -1318,7 +1330,7 @@ export default function DebtsPage() {
             </div>
 
             <div className="flex items-end">
-              <button onClick={saveSettings} className="beast-button w-full">
+              <button onClick={saveSettings} disabled={savingStrategy} className="beast-button w-full">
                 Update Strategy / Monthly Extra Attack
               </button>
             </div>
@@ -2007,6 +2019,21 @@ export default function DebtsPage() {
             </table>
           </div>
         </section>
+
+        <PayoffScenarioComparison
+          debts={activeDebts}
+          current={payoffPlan}
+          currentLabel={strategy}
+          currentExtra={payoffPlan.recommended_extra_payment}
+          recoveredMinimums={recoveredMinimums}
+          savedCustomOrder={customDebtOrder}
+          saving={savingStrategy}
+          onStage={(nextStrategy, nextExtra, nextOrder) => {
+            setStrategy(nextStrategy);
+            setExtraPayment(String(nextExtra));
+            if (nextStrategy === "custom" && nextOrder) setCustomDebtOrder(nextOrder);
+          }}
+        />
 
         <section id="payoff-plan" className="money-section-panel">
           <div className="money-section-header">

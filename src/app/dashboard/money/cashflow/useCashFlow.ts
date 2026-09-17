@@ -79,6 +79,7 @@ export function useCashFlow() {
   const AUTOSAVE_DEBOUNCE_MS = 1700;
 
   const [strategy, setStrategy] = useState<PayoffStrategy>("snowball");
+  const [customDebtOrder, setCustomDebtOrder] = useState<string[]>([]);
   const [extraPayment, setExtraPayment] = useState(0);
   const [targetDebtName, setTargetDebtName] = useState("—");
 
@@ -190,6 +191,7 @@ export function useCashFlow() {
     setBuffer,
     setStartingBalance,
     setStrategy,
+    setCustomDebtOrder,
     setExtraPayment,
     setTargetDebtName,
     setRequiredCash,
@@ -856,6 +858,7 @@ export function useCashFlow() {
     saveStatus,
     saveError,
     strategy,
+    customDebtOrder,
     extraPayment,
     targetDebtName,
     incomeName,
