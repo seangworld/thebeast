@@ -68,3 +68,16 @@ test('selected original reaches private model input and oversized content fails'
   file=new Blob([new Uint8Array(10*1024*1024+1)]);
   await assert.rejects(loadAdvisorDocuments(client as unknown as Parameters<typeof loadAdvisorDocuments>[0],'member',[id]),/exceed 10 MB/);
 });
+test('provider quota failure produces service-unavailable text rather than a medical refusal',async()=>{
+  const originalFetch=globalThis.fetch; const key=process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY='sk-proj-TEST_ONLY_QUOTA_CASE_123456789';
+  globalThis.fetch=async()=>Response.json({error:{type:'insufficient_quota',code:'credit_balance_exhausted'}},{status:429});
+  try {
+    const result=await runDigitalStaffRuntime(ctx);
+    assert.match(result.response,/service is temporarily unavailable/i);
+    assert.doesNotMatch(result.response,/cannot diagnose/i);
+    assert.ok(result.validationFailures.includes('semantic-verifier-unavailable'));
+    assert.equal(result.proposals.length,0);
+    assert.equal(result.timings.providerInvocationCount,1);
+  } finally {globalThis.fetch=originalFetch;if(key===undefined)delete process.env.OPENAI_API_KEY;else process.env.OPENAI_API_KEY=key;}
+});

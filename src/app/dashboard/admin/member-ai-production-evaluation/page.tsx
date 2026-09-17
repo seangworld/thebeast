@@ -59,8 +59,8 @@ export default function MemberAIProductionEvaluationPage() {
       }
       const failed = completed.filter((scenario) => scenario.error || scenario.executionComplete === false).length;
       setStatus(failed === 0
-        ? `Evaluation complete: ${completed.length} successful controlled multi-turn scenarios, 0 failed.`
-        : `Evaluation incomplete: ${completed.length - failed} successful scenarios, ${failed} failed or incomplete.`);
+        ? `Evaluation complete: ${completed.length} completed scenario executions, 0 unavailable. Review the answers against the criteria; completion is not a quality pass.`
+        : `Evaluation incomplete: ${completed.length - failed} completed scenario executions, ${failed} unavailable or incomplete.`);
     } catch {
       setStatus(`Evaluation stopped safely after ${completed.length} scenarios.`);
     } finally { setRunning(false); }
