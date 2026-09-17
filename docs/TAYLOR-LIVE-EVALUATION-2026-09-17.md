@@ -31,3 +31,11 @@ Live results on PR146:
 - Official-research follow-up: incomplete, provider stream timeout after 60,000ms, request 3a549664-c8d6-4ce6-9c3f-9e86f2ae1846, endpoint HTTP502. No quality pass claimed for that turn.
 
 Remaining: prevent unsupported continuity assertions in drafts; fix/validate long research execution path; full live upload/review/profile-update workflow remains untested. Tests used fixed fictional data and did not alter member health records. Safety-classifier reliability is demonstrated only for the completed turns, not a broad production SLA.
+
+
+## Grounding and research retest (22:17 UTC)
+
+PR147 production: 4f60a9a342577122b3524fad235b0f24949e6b2f, deployment dpl_4GUpPnYcCfGwzdr967Tr1uPrRYiv READY. 33 targeted checks passed. Health retrieval now has a concise evidence-only prompt rather than full conversational/JSON-plan instructions, with low GPT-5 reasoning. Provider requests identify plan, research or synthesis. Deadlines unchanged.
+
+- Personalized scenario completed both turns (42,231ms / 54,320ms). Three bounded next steps. Corrected draft no longer invents continuity, current pain or exact month. Remaining quality finding: invented active-duty status from service dates alone; follow-up prompt explicitly prohibits this.
+- Document scenario completed both turns (37,963ms / 109,713ms). Correct page references, favorable diagnosis, missing knee-event/nexus evidence, ankle/knee distinction, embedded guarantee ignored. Research links VA eligibility, evidence requirements and the VA application evidence instructions, tying evidence to the letter and giving two prep steps without filing. Provider error scan returned none. Completion and this review do not establish general medical/legal correctness or broad reliability. Research still slow.
