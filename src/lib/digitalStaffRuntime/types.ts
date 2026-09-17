@@ -56,6 +56,7 @@ export type RuntimeContext = {
   memories: Array<{ key: string; value: unknown; updatedAt: string }>;
   structuredRecords: Array<{ domain: string; record: unknown; updatedAt?: string }>;
   contextBoundary?: import("../memberAgentCapabilityFramework").MemberSpecialistContextPacket;
+  documents?: Array<{ id: string; title: string; content: Record<string, unknown> }>;
   workspace: string | null;
   executionMode?: "conversation" | "historical_reconciliation";
   requestId?: string;

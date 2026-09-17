@@ -510,6 +510,8 @@ export function HealthAdvisorWorkspace() {
     useState<ProfessionalKnowledgeItem | null>(null);
   const [knowledgeTargetRecordId, setKnowledgeTargetRecordId] = useState("");
   const [pendingKnowledgeAnswer, setPendingKnowledgeAnswer] = useState("");
+  const [selectedDocumentIds, setSelectedDocumentIds] = useState<string[]>([]);
+  useEffect(() => { setSelectedDocumentIds([]); }, [activeConversationId]);
   const [veteransMode, setVeteransMode] = useState(false);
   const [veteranClaims, setVeteranClaims] = useState<VeteranClaim[]>([]);
   const [selectedVeteranClaim, setSelectedVeteranClaim] = useState("");
@@ -911,7 +913,7 @@ export function HealthAdvisorWorkspace() {
     const optimisticTurn: HealthAdvisorQuestionTurn = { id: turnId, question, timestamp: messageTimestamp, activity: "accepted" };
     setQuestionTurns((current) => existingTurnId ? current.map((turn) => turn.id === turnId ? optimisticTurn : turn) : [...current, optimisticTurn]);
     try {
-      const runtime = await requestDigitalStaffResponse({ professionalId: "beasthealth.health-advisor", conversationId: activeConversationId, message: question, workspace: veteransMode ? "/dashboard/health/veterans" : "/dashboard/health/ai-advisor", ...(veteransMode && selectedVeteranClaim ? { veteranClaimId: selectedVeteranClaim } : {}) }, {
+      const runtime = await requestDigitalStaffResponse({ professionalId: "beasthealth.health-advisor", conversationId: activeConversationId, message: question, documentIds: selectedDocumentIds, workspace: veteransMode ? "/dashboard/health/veterans" : "/dashboard/health/ai-advisor", ...(veteransMode && selectedVeteranClaim ? { veteranClaimId: selectedVeteranClaim } : {}) }, {
         onAcknowledged: () => setQuestionTurns((current) => current.map((turn) => turn.id === turnId ? { ...turn, activity: "thinking" } : turn)),
         onActivity: (activity) => setQuestionTurns((current) => current.map((turn) => turn.id === turnId ? { ...turn, activity } : turn)),
         onResponseDelta: (delta) => setQuestionTurns((current) => current.map((turn) => turn.id === turnId ? { ...turn, partialText: `${turn.partialText || ""}${delta}` } : turn)),
@@ -1405,6 +1407,12 @@ export function HealthAdvisorWorkspace() {
             <Link href="/dashboard/health/documents" className="beast-button-secondary">Review document findings</Link>
           </div>
           <div className="my-4 space-y-3 rounded-xl border border-white/15 p-4">
+            <fieldset disabled={healthQuestionBusy} className="rounded-lg border border-white/15 p-3">
+              <legend className="px-1 text-sm font-bold">Documents for this conversation</legend>
+              <p className="text-sm text-slate-300">Select up to two originals to send to the AI advisor with each message while checked. PDF, PNG, JPEG or WebP; 10 MB combined. Taylor can compare their contents with your records. Profile changes still require your review.</p>
+              {documents.filter(doc => !doc.id.startsWith("health-record:")).map(doc => <label key={doc.id} className="mt-2 flex items-center gap-2 text-sm"><input type="checkbox" checked={selectedDocumentIds.includes(doc.id)} disabled={!selectedDocumentIds.includes(doc.id) && selectedDocumentIds.length >= 2} onChange={event => setSelectedDocumentIds(ids => event.target.checked ? [...ids, doc.id] : ids.filter(id => id !== doc.id))} />{doc.title}</label>)}
+              <Link href="/dashboard/documents" className="mt-2 inline-block text-sm underline">Upload or manage documents</Link>
+            </fieldset>
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={veteransMode} disabled={healthQuestionBusy} onChange={event => { setVeteransMode(event.target.checked); setSelectedVeteranClaim(""); }} />Veterans assistance</label>
             {veteransMode ? <><p className="text-sm text-slate-300">Explain records and decision letters, prepare statements, and identify evidence gaps. No filing or submission. Only the selected saved issue is added to your health context for this turn; prior messages remain in this conversation.</p><label className="block text-sm">Saved claim / issue<select className="beast-input mt-1 w-full" value={selectedVeteranClaim} disabled={healthQuestionBusy} onChange={event => setSelectedVeteranClaim(event.target.value)}><option value="">General assistance — no saved claim selected</option>{veteranClaims.map(claim => <option key={claim.id} value={claim.id}>{claim.title}</option>)}</select></label>{veteranClaimError && <p role="alert">{veteranClaimError}</p>}<div className="flex flex-wrap gap-2">{[["Find evidence gaps", "Review my selected claim and saved health records for evidence gaps. Separate claimed conditions from documented findings and help me prepare questions for my clinician or accredited representative."],["Prepare a personal statement", "Help me prepare a truthful personal statement using my selected claim notes. Preserve my words and identify missing facts rather than inventing them."]].map(([label,prompt])=><button key={label} type="button" className="beast-button-secondary" disabled={healthQuestionBusy || Boolean(healthQuestion.trim())} onClick={()=>setHealthQuestion(prompt)}>{label}</button>)}</div><Link href="/dashboard/health/veterans" className="text-sm underline">Manage claim preparation</Link></> : <button type="button" className="beast-button-secondary" disabled={healthQuestionBusy || Boolean(healthQuestion.trim())} onClick={() => setHealthQuestion("Review my saved current medications and supplements for possible interactions, duplicate ingredients, and concerns related to my recorded conditions or allergies. Check current authoritative sources, flag missing information, and help me prepare questions for my pharmacist.")}>Prepare a medication review</button>}
           </div>
