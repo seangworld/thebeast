@@ -1,3 +1,4 @@
+import { digitalStaffUnavailableMessage } from "./security";
 import { requireProfessionalConfig } from "./config";
 import { inferProductNavigationTarget, validateNavigationTarget } from "./navigation";
 import { buildRuntimeInput, buildRuntimeInstructions, runtimeJsonSchema } from "./prompt";
@@ -247,7 +248,7 @@ export async function runDigitalStaffRuntime(
     if (!semanticInput.valid || semanticInput.verdict !== "safe") {
       semanticVerifierFailureCount += 1;
       const semanticFailures = [semanticInput.failure || "semantic-verifier-input-rejected", ...semanticInput.categories];
-      const response = memberAgentSafetyFallback(context.professionalId, context.message.text, semanticFailures);
+      const response = semanticInput.valid ? memberAgentSafetyFallback(context.professionalId, context.message.text, semanticFailures) : digitalStaffUnavailableMessage;
       await observer.onResponseDelta?.(response);
       const totalMs = Date.now() - startedAt;
       return {
@@ -358,7 +359,7 @@ export async function runDigitalStaffRuntime(
       semanticVerifierFailureCount += 1;
       responseSafety = {
         safe: false,
-        response: memberAgentSafetyFallback(context.professionalId, context.message.text, [semanticOutput.failure || "semantic-verifier-output-rejected", ...semanticOutput.categories]),
+        response: semanticOutput.valid ? memberAgentSafetyFallback(context.professionalId, context.message.text, [semanticOutput.failure || "semantic-verifier-output-rejected", ...semanticOutput.categories]) : digitalStaffUnavailableMessage,
         failures: [semanticOutput.failure || "semantic-verifier-output-rejected", ...semanticOutput.categories],
       };
     }

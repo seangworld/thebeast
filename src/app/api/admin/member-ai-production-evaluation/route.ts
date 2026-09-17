@@ -5,6 +5,7 @@ import {
   emptyProductionEvaluationState,
   evaluateProductionEntitlement,
   productionEvaluationEntitlementChecks,
+  productionEvaluationTurnOperational,
   productionEvaluationScenarios,
   requireProductionEvaluationScenario,
   runDigitalStaffRuntime,
@@ -165,11 +166,11 @@ export async function POST(request: Request) {
       syntheticOnly: true,
       memberRecordsLoaded: false,
       modelOverrideUsed: false,
-      executionComplete: !scenario.handoffExercise || handoffExecutions.some((item) => item.status === "completed"),
+      executionComplete: results.every(item => productionEvaluationTurnOperational(item.validationFailures as string[])) && (!scenario.handoffExercise || handoffExecutions.some((item) => item.status === "completed")),
       results,
       handoffExecutions,
     }, { headers: privateHeaders });
   } catch {
-    return NextResponse.json({ error: "The controlled Production-model evaluation failed safely.", completedTurns: results.length }, { status: 502, headers: privateHeaders });
+    return NextResponse.json({ error: "The controlled Production-model evaluation failed safely.", completedTurns: results.length, executionComplete: false, results, handoffExecutions }, { status: 502, headers: privateHeaders });
   }
 }

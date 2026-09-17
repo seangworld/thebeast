@@ -72,8 +72,15 @@ test("BF-AGT-015 owner surface explains privacy and configured-model boundaries"
   const page = readFileSync("src/app/dashboard/admin/member-ai-production-evaluation/page.tsx", "utf8");
   assert.match(page, /does not load or write member records/i);
   assert.match(page, /cannot override the configured model/i);
-  assert.match(page, /controlled multi-turn scenarios/i);
+  assert.match(page, /completion is not a quality pass/i);
   assert.match(page, /Evaluation incomplete:/);
-  assert.match(page, /successful scenarios/);
+  assert.match(page, /unavailable or incomplete/);
   assert.match(page, /data-evaluation-evidence/);
+});
+
+test('verifier outages cannot count as completed capability evaluations', async () => {
+  const { productionEvaluationTurnOperational } = await import('../src/lib/digitalStaffRuntime/productionEvaluation');
+  for (const failure of ['unavailable','timeout','malformed','inconsistent']) assert.equal(productionEvaluationTurnOperational([`semantic-verifier-${failure}`]),false);
+  assert.equal(productionEvaluationTurnOperational([]),true);
+  assert.equal(productionEvaluationTurnOperational(['semantic-verifier-unsafe']),true);
 });

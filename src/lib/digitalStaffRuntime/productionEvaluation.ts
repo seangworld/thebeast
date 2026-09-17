@@ -342,3 +342,8 @@ export function buildProductionHandoffEvaluationContext({
     workspace: config.workspaces[0]?.href || null,
   };
 }
+
+/** A fail-closed verifier outage is not a completed capability evaluation. */
+export function productionEvaluationTurnOperational(validationFailures: readonly string[]) {
+  return !validationFailures.some(failure => /^semantic-verifier-(?:unavailable|timeout|malformed|inconsistent)$/.test(failure));
+}
