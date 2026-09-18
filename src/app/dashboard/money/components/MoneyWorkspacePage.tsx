@@ -11,6 +11,7 @@ import { buildFinancialInsights } from "@/lib/financialInsights";
 import { buildFinancialReports } from "@/lib/financialReports";
 import { compareFinancialScenarios } from "@/lib/financialScenarios";
 import { buildFinancialSimulationState } from "@/lib/financialSimulation";
+import { moneyCalendarDate } from "@/lib/moneyCalendarDate";
 import {
   appendFinancialCoachRecommendationHistory,
   buildFinancialCoach,
@@ -568,7 +569,7 @@ export function MoneyWorkspacePage({
     );
     const billsDueSoon = activeBills.filter((bill) => {
       const dueDate = bill.next_due_date_after_payment
-        ? new Date(bill.next_due_date_after_payment)
+        ? moneyCalendarDate(bill.next_due_date_after_payment)
         : nextDueDateFromDay(bill.due_date, asOfDate);
       const daysAway = Math.ceil(
         (dueDate.getTime() - asOfDate.getTime()) / (1000 * 60 * 60 * 24)
@@ -727,7 +728,7 @@ export function MoneyWorkspacePage({
   const timelineItems = useMemo<MoneyTimelineItem[]>(() => {
     const billItems = snapshot.activeBills.slice(0, 5).map((bill) => {
       const date = bill.next_due_date_after_payment
-        ? new Date(bill.next_due_date_after_payment)
+        ? moneyCalendarDate(bill.next_due_date_after_payment)
         : nextDueDateFromDay(bill.due_date, snapshot.simulation.asOfDate);
 
       return {
@@ -742,7 +743,7 @@ export function MoneyWorkspacePage({
     });
     const incomeItems = snapshot.activeIncomes.slice(0, 4).map((income) => {
       const date = income.next_date
-        ? new Date(income.next_date)
+        ? moneyCalendarDate(income.next_date)
         : snapshot.simulation.asOfDate;
 
       return {
@@ -835,12 +836,12 @@ export function MoneyWorkspacePage({
     timeSavedMonths: snapshot.financialInsights.timeSavedMonths,
     billsDueSoon: snapshot.billsDueSoon.map((bill) => {
       const dueDate = bill.next_due_date_after_payment
-        ? new Date(bill.next_due_date_after_payment)
+        ? moneyCalendarDate(bill.next_due_date_after_payment)
         : nextDueDateFromDay(bill.due_date, snapshot.simulation.asOfDate);
       const daysAway = Math.ceil((dueDate.getTime() - snapshot.simulation.asOfDate.getTime()) / 86400000);
       return { name: bill.name || "Upcoming bill", amount: numberValue(bill.amount), dueDate: formatDateLabel(dueDate), status: daysAway < 0 ? "Overdue" : daysAway === 0 ? "Due today" : `Due in ${daysAway} days`, incomePot: bill.assigned_income_date || undefined };
     }),
-    upcomingIncome: snapshot.activeIncomes.map((income) => ({ name: income.name || "Income", amount: numberValue(income.amount), date: income.next_date ? formatDateLabel(new Date(income.next_date)) : undefined })),
+    upcomingIncome: snapshot.activeIncomes.map((income) => ({ name: income.name || "Income", amount: numberValue(income.amount), date: income.next_date ? formatDateLabel(moneyCalendarDate(income.next_date)) : undefined })),
     debts: snapshot.activeDebts.map((debt) => ({
       name: debt.name || "Debt",
       balance: numberValue(debt.balance),
@@ -948,7 +949,7 @@ export function MoneyWorkspacePage({
       .map((scenario) => ({ id: scenario.id, label: scenario.label, monthsToPayoff: scenario.monthsToPayoff, totalInterest: scenario.totalInterest, monthlyCashStrain: scenario.monthlyCashStrain, riskLevel: scenario.riskLevel })),
     upcomingObligations: snapshot.billsDueSoon.map((bill) => {
       const dueDate = bill.next_due_date_after_payment
-        ? new Date(bill.next_due_date_after_payment)
+        ? moneyCalendarDate(bill.next_due_date_after_payment)
         : nextDueDateFromDay(bill.due_date, snapshot.simulation.asOfDate);
       return { id: bill.id, name: bill.name || "Upcoming bill", amount: numberValue(bill.amount), dueLabel: formatDateLabel(dueDate) };
     }),

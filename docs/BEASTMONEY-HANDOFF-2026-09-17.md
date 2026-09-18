@@ -101,3 +101,11 @@ All nine reattached IMG_1385 through IMG_1393 screenshots were viewed locally. E
 - Fresh relevant records replace the initial capped sample, so rows deleted/reversed before the refresh do not reappear from that sample. Older initial records remain available as context.
 - Read errors, malformed/nonadvancing cursors, or the defensive 100-page ceiling leave completion unverified. This is not a transactional snapshot across concurrent writes.
 - Adds large-history (503 rows), exact-page boundary, owner/reversal filter, stale-row replacement, failure, and integrated loader regression coverage. No migration or payment writer changes.
+
+## Signed-in verification — September 18
+
+- Reused the existing authenticated production session. Dashboard, Payoff Plan and Cash Flow loaded. Re-saving the existing payoff strategy returned the verified-save confirmation; the active strategy and extra-payment amount survived a full reload.
+- A temporary what-if lump sum changed the scenario preview, then reset on reload without changing the saved plan. Monthly checklist show-paid toggling exposed recorded paid cycles and left the completion totals stable; no payment records or balances were edited.
+- Found a live date discrepancy between dashboard bill labels and Cash Flow. Dashboard paths parsed date-only bill/income values as UTC, shifting calendar labels back a day in negative UTC offsets. A shared local calendar parser now covers dashboard obligations, timeline and Money Coach context. Timestamp-based activity history is unchanged.
+- TypeScript test compilation and 18 targeted calendar-date, mission-control and Money-workspace tests passed, including four time zones and DST boundary dates. Release and post-release evidence are recorded in the accompanying PR.
+- Mobile layout and desktop drag/drop remain unverified. The connected browser does not advertise viewport emulation; do not count a desktop screenshot as a phone check. Custom-strategy round-trip results are recorded in the PR. No migration-history repair was attempted.
