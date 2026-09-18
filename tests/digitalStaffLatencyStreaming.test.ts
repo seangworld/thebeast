@@ -202,7 +202,7 @@ test("AP-105 shared client and route expose acknowledged activity streaming and 
   assert.match(route, /contextPromise/);
   assert.match(route, /incomeLoadMs/);
   assert.match(route, /otherFinancialContextLoadMs/);
-  assert.match(route, /signal: request\.signal/);
+  assert.match(route, /signal: AbortSignal\.any\(\[request\.signal, AbortSignal\.timeout\(170_000\)\]\)/);
   assert.match(route, /await contextObserverActivity\(observer, "loading_context"\)/);
   assert.match(route, /Promise\.all\(\[/);
   assert.doesNotMatch(route, /console\.(?:log|info).*message/);
