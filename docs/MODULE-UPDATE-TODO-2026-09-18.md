@@ -106,3 +106,14 @@ This is the working checklist for this module pass, not the platform-wide roadma
 - [ ] Velocity Banking #172: handle failed prerequisite reads explicitly and review browser-local settings for member isolation.
 - [ ] App Store roadmap: finish member cleanup, then scope BeastOS for iPhone first and SEANGWORLD News afterward. This is planning, not an App Store release.
 - Browser recheck after the owner's reset still timed out; no signed-in visual pass is claimed. Production release evidence belongs in the accompanying PR; earlier notification and Money updates remain unverified live.
+
+## Guided veterans preparation
+
+- Added revisitable stage instructions for history, evidence, exam preparation, decisions and next steps. This does not change saved claim status or submit anything.
+- Encourage all available decision letters regardless of outcome, while allowing members to start with incomplete history.
+- Workspace links open Taylor with Veterans assistance enabled. New starters cover getting started, decision history and honest exam preparation; sending remains member-controlled.
+- Explicitly distinguish 5-file/25 MB upload batches from Taylor's existing two-original-documents-per-turn selection. No claim of automatic whole-history review.
+- Official evidence and exam guidance checked September 18: https://www.va.gov/disability/how-to-file-claim/evidence-needed/ and https://www.va.gov/resources/va-claim-exam/.
+- [ ] Direct saved document-to-claim links and a durable, source-attributed decision history across document batches.
+- [ ] Original article/resource center based on official sources; competitor pages are topic research, not text to paraphrase.
+- [ ] Verify Taylor's complete live multi-turn research/preparation experience, including conflicting evidence and an incomplete history. Conversation starters do not establish research quality or resolve previous live-validation blockers.
