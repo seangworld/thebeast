@@ -12,7 +12,7 @@
 - [x] Implement discovery-answer and record-phase/provenance context; exclude archived, proposed and rejected profile records.
 - [x] Strengthen counselor instructions for personal, realistic plans, truthful drafts and verified current requirements.
 - [x] Verify automated regressions and production build: 98 selected tests passed, TypeScript test compilation passed, and production build completed (199 static pages). Existing webpack cache-restore warnings did not prevent completion.
-- [ ] Release after remaining validation. This first batch is not deployed.
+- [x] Release readiness: local production build and Vercel Preview build passed. Follow [PR153](https://github.com/seangworld/thebeast/pull/153) for merge/deployment status. Authenticated follow-ups below are not completed by a successful build.
 - [ ] Validate authenticated counselor conversations and record loading; local mock tests are not live verification.
 - [x] Complete a code-level pass across Tutor/homework, planning, schools, certifications, funding and navigation. This is not a claim of complete live/end-to-end verification.
   - Replace substring status guessing: negative/pending funding is not an award, unknown certification standing is not Active, and unknown/negative school status is not inferred as current enrollment.
@@ -29,5 +29,12 @@
 - Production build passed on the final code, including 199 static pages; non-blocking webpack cache warnings persist.
 - No database migration, provider/model change, paid integration, automatic application submission, or external school action was introduced.
 - Remaining: authenticated visual/interaction and model-quality checks, plus release. Existing homework image handling has automated coverage but was not tested against a live uploaded image in this pass. No claim that all external school/sponsor links or current eligibility requirements have been verified.
+
+### Release checks
+
+- Corrected the two stale infrastructure expectations to include already-shipped Custom debt ordering, Veterans Claims and Vaccinations. No Money/Health runtime code changed.
+- TypeScript test compilation and all 175 tests in the infrastructure, Education refresh, lifecycle and counselor-context suites passed after that correction.
+- Application source is unchanged from the successful final local build and Vercel Preview deployment `dpl_HwymtrZb4Y4z64VWvFzF1ewaUy1d`; the final follow-up changes only tests and this checklist.
+- Proceed through the usual automated release workflow; authenticated interaction/model-quality testing remains an explicit follow-up, not a claim of completed live validation. No retry of Sean's deferred sign-in.
 
 This is the working checklist for this module pass, not a replacement for the platform-wide roadmap. Health speed work stays separate from Education changes.
