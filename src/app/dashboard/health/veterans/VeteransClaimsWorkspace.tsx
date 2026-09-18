@@ -42,7 +42,7 @@ export function VeteransClaimsWorkspace() {
     <p className="rounded-xl border border-sky-900 bg-slate-900 p-4 text-base leading-relaxed text-slate-300">This is a preparation workspace, not a VA representative or filing service. Statuses are entered by you and do not sync with VA. Use accredited help for representation or deciding a review route. Avoid entering SSNs, account passwords, or VA file numbers.</p>
     <div className="flex flex-wrap gap-3">
       <Link target="_blank" rel="noopener noreferrer" href="/dashboard/health/ai-advisor?veterans=1" className="inline-flex min-h-11 items-center rounded-lg border border-violet-300 bg-violet-700 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-violet-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300">Ask Taylor — Veterans assistance</Link>
-      <button className="beast-button-primary" disabled={loading || saving || dirty || loadFailed} onClick={() => { setDraft(emptyVeteranClaim(crypto.randomUUID())); setDirty(true); setMessage(""); setError(""); }}>Add claim / issue</button>
+      <button className="beast-button" disabled={loading || saving || dirty || loadFailed} onClick={() => { setDraft(emptyVeteranClaim(crypto.randomUUID())); setDirty(true); setMessage(""); setError(""); }}>Add claim / issue</button>
       <button className="beast-button-secondary" disabled={loading || saving || dirty} onClick={() => void load()}>Reload claims</button>
       <Link target="_blank" rel="noopener noreferrer" href="/dashboard/health/documents" className="beast-button-secondary">Health documents</Link>
     </div>
@@ -77,7 +77,7 @@ export function VeteransClaimsWorkspace() {
               <label className="mt-3 block text-sm">Editable draft<textarea className="beast-input mt-1 min-h-64" maxLength={6000} value={draft.details.statement} onChange={e => edit({ ...draft, details: { ...draft.details, statement: e.target.value } })} /></label>
               <p className="text-xs text-slate-400">An existing draft will not be overwritten. Clear it first if you want to regenerate it.</p>
             </details>
-            <div className="flex flex-wrap items-center gap-3"><button type="submit" className="beast-button-primary" disabled={!dirty}>{saving ? "Saving…" : "Save claim"}</button><button type="button" className="beast-button-secondary" disabled={!dirty} onClick={() => { setDraft(claims.find(c => c.id === draft.id) || null); setDirty(false); setError(""); }}>Discard unsaved edits</button><span className="text-sm text-slate-400">{dirty ? "Unsaved changes — save before switching claims." : "Saved"}</span></div>
+            <div className="flex flex-wrap items-center gap-3"><button type="submit" className="beast-button" disabled={!dirty}>{saving ? "Saving…" : "Save claim"}</button><button type="button" className="beast-button-secondary" disabled={!dirty} onClick={() => { setDraft(claims.find(c => c.id === draft.id) || null); setDirty(false); setError(""); }}>Discard unsaved edits</button><span className="text-sm text-slate-400">{dirty ? "Unsaved changes — save before switching claims." : "Saved"}</span></div>
           </fieldset>
         </form>
         <section className="space-y-3 rounded-xl border border-sky-800 p-4" aria-labelledby="va-guide-title"><h2 id="va-guide-title" className="text-xl font-bold">VA Claims Guide</h2><p className="text-sm text-slate-400">Guided preparation based on your selected claim type, evidence tracker, and official VA resources.</p><p>{guidance.lane}</p>

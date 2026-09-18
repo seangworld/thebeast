@@ -21,7 +21,7 @@ export function VeteransPreparationGuide({ stage }: { stage?: VeteranClaim["stag
       <p className="mt-2 text-sm text-slate-300">{step.help}</p>
     </details>)}
     <p className="text-sm text-slate-300">Upload up to 5 documents at a time, totaling 25 MB. In Taylor’s conversation, select up to 2 original documents per turn for review. A review covers the selected material, not automatically your entire document history.</p>
-    <div className="flex flex-wrap gap-3"><Link target="_blank" rel="noopener noreferrer" href="/dashboard/health/documents" className="beast-button-secondary">Upload / organize documents</Link><Link target="_blank" rel="noopener noreferrer" href="/dashboard/health/ai-advisor?veterans=1" className="beast-button-primary">Work through this with Taylor</Link></div>
+    <div className="flex flex-wrap items-center gap-3"><Link target="_blank" rel="noopener noreferrer" href="/dashboard/health/documents" className="beast-button-secondary">Upload / organize documents</Link><Link target="_blank" rel="noopener noreferrer" href="/dashboard/health/ai-advisor?veterans=1" className="beast-button">Work through this with Taylor</Link></div>
     <p className="text-xs text-slate-400">Select your saved issue in Taylor. Save edits here first if you want those changes available there.</p>
     <div className="flex flex-wrap gap-4 text-sm"><a className="text-sky-300 underline" href="https://www.va.gov/disability/how-to-file-claim/evidence-needed/" target="_blank" rel="noopener noreferrer">VA evidence guidance</a><a className="text-sky-300 underline" href="https://www.va.gov/resources/va-claim-exam/" target="_blank" rel="noopener noreferrer">VA exam guidance</a></div>
   </section>;
