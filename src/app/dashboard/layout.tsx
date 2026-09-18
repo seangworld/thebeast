@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { NavigationScrollRegion } from "@/app/components/navigation/NavigationScrollRegion";
 import { usePathname, useRouter } from "next/navigation";
 import { APP_VERSION_LABEL } from "@/lib/appVersion";
 import { OperationsFrame } from "./operations/OperationsFrame";
@@ -106,6 +107,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const navigationScrollPositions = useRef<Record<string, number>>({});
   const pathname = usePathname();
   const router = useRouter();
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
@@ -504,7 +506,7 @@ export default function DashboardLayout({
     );
   }
 
-  function NavRail({
+  function renderNavRail({
     compact = false,
     navigationOnly = false,
     onNavigate,
@@ -822,7 +824,7 @@ export default function DashboardLayout({
           </div>
         ) : null}
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-4" data-beast-navigation>
+        <NavigationScrollRegion positions={navigationScrollPositions} region={navigationOnly ? "mobile" : compact ? "compact" : "desktop"}>
           <div className="space-y-6">
             <nav className="space-y-2" aria-label="BeastOS platform">
               {!compact ? (
@@ -938,7 +940,7 @@ export default function DashboardLayout({
             ) : null}
 
           </div>
-        </div>
+        </NavigationScrollRegion>
 
         {navigationOnly ? (
           <div className="border-t border-[#2a3242] px-3 py-4" data-beast-relationships-navigation>
@@ -1000,10 +1002,10 @@ export default function DashboardLayout({
     >
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-20 border-r border-[#2a3242] bg-[#0f1419]/98 backdrop-blur md:block lg:w-72">
         <div className="hidden h-full lg:block">
-          <NavRail />
+          {renderNavRail({})}
         </div>
         <div className="h-full lg:hidden">
-          <NavRail compact />
+          {renderNavRail({ compact: true })}
         </div>
       </aside>
 
@@ -1092,11 +1094,7 @@ export default function DashboardLayout({
               </button>
             </div>
             <div className="mt-4 h-[min(60dvh,36rem)]">
-              <NavRail
-                navigationOnly
-                onNavigate={() => setMobileMoreOpen(false)}
-                controlIdPrefix="mobile"
-              />
+              {renderNavRail({ navigationOnly: true, onNavigate: () => setMobileMoreOpen(false), controlIdPrefix: "mobile" })}
             </div>
             <div className="mt-4 border-t border-[#2a3242] pt-4">
               <AdminViewAsControl surface="sidebar" />
