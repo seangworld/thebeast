@@ -1,40 +1,43 @@
 # Module update checklist
 
-## Waiting on Sean — owner action
+## Owner action
 
-- [ ] **BeastHealth / Taylor live speed validation:** when ready, sign into the authenticated Beast test browser through the secure sign-in flow. The previous session expired and the last sign-in failed. Sean deferred further attempts; do not retry until he resumes this item. Never request a password in chat.
-  - After sign-in, Codex can run the same personal-statement drafting and VA document/research cases, compare against the roughly 64-second draft / 110-second research baseline, and check factual grounding and safety.
-  - Speed changes remain in draft [PR152](https://github.com/seangworld/thebeast/pull/152), with 34 targeted tests passed. They are **not deployed** and no speed improvement has been measured.
+- [x] Secure Beast test-browser sign-in succeeded. The previous login blocker is resolved; no further sign-in action is currently needed.
+- Do not request passwords or verification codes in chat.
 
-## Education — current module
+## Education
 
-- [x] Inspect counselor context selection and authoritative instructions.
-- [x] Implement discovery-answer and record-phase/provenance context; exclude archived, proposed and rejected profile records.
-- [x] Strengthen counselor instructions for personal, realistic plans, truthful drafts and verified current requirements.
-- [x] Verify automated regressions and production build: 98 selected tests passed, TypeScript test compilation passed, and production build completed (199 static pages). Existing webpack cache-restore warnings did not prevent completion.
-- [x] Release readiness: local production build and Vercel Preview build passed. Follow [PR153](https://github.com/seangworld/thebeast/pull/153) for merge/deployment status. Authenticated follow-ups below are not completed by a successful build.
-- [ ] Validate authenticated counselor conversations and record loading; local mock tests are not live verification.
-- [x] Complete a code-level pass across Tutor/homework, planning, schools, certifications, funding and navigation. This is not a claim of complete live/end-to-end verification.
-  - Replace substring status guessing: negative/pending funding is not an award, unknown certification standing is not Active, and unknown/negative school status is not inferred as current enrollment.
-  - Keep Recommended, Not awarded and Needs review records visible; exclude rejected/archived paths from recommendations.
-  - Preserve an explicit zero-hour weekly study budget.
-  - Remove the fabricated default Security Analyst career from learner context; include learning style/pace and explicit unknown mastery in the Tutor context prompt.
-  - Correct the Tutor presentation's conflicting Guidance Counselor identity and outdated counselor manifest teaching availability. Dormant course delivery stays disabled.
-- [ ] Live-check the changed status groups and Tutor follow-up/image behavior when an authenticated test session is available. No new sign-in request while Sean's deferral remains in effect.
+- [x] Released [PR153](https://github.com/seangworld/thebeast/pull/153), production commit `ae9ad12ff14900ba3f4db4211204942f698ceac9`, deployment `dpl_61e6x5GV2gQpuEVqC22syFv7668a` READY.
+- [x] Counselor context includes discovery answers and record phase/date/source provenance; excludes archived, proposed and rejected profile records. Guidance respects available hours, budget, uncertainty and declined paths.
+- [x] Correct status grouping for schools, certifications and funding; no substring-based award or active-credential inference. Recommended, Not awarded and Needs review remain visible.
+- [x] Tutor context no longer invents a career or assessed mastery; retains learning preferences and zero available hours. Tutor identity stays distinct from Guidance Counselor.
+- [x] Production build completed with 199 static pages. TypeScript compilation and 175 affected tests passed, including corrected stale infrastructure expectations.
+- [x] Four signed-in production synthetic Education scenarios completed: adaptive planning/handoff, counselor injection boundaries, Tutor shown-work correction, Tutor integrity boundaries. Completion alone is not a quality pass; see findings below.
+- [x] Signed-in Tutor, Schools, Certifications and Funding pages loaded. Existing records displayed; an uncertain certification appeared under Needs review. Funding empty state did not invent awards. These read-only checks do not exhaust every status fixture.
+- [x] [PR154](https://github.com/seangworld/thebeast/pull/154) fixes a live teaching gap in both Tutor prompt paths: a request to use another first operation must be evaluated against the original problem. TypeScript and 24 existing tests passed; Preview build READY; merged as `6a4c5fe61a71dde4a66dda375b4f6fdeee9bacaf`.
+- [x] PR154 production deployment `dpl_5BE1kNd4TBSYbPyrxPUTT2msbpiN` READY with the production domain. Alternative-method explanation succeeded in both post-release runs; the second run passed all four teaching steps (5.2–5.7 seconds per turn).
+- [ ] Investigate intermittent initial-review fallback: the first post-release run returned `incomplete-homework-review:initial_review` despite readable submitted work. The second run passed; that does not establish the intermittent issue is fixed. Existing lexical review guard requires a narrow set of words; the rejected raw answer was not captured, so a false positive is suspected, not established.
+- [ ] Exercise the actual homework-photo endpoint with a readable and an unreadable image. Synthetic shared-runtime evaluations do not cover this endpoint.
+- [ ] Complete live counselor conversation-to-record-loading verification. Synthetic evaluations use approved fictional records, not member records.
 
-### Second-batch verification
+### Education evaluation findings
 
-- TypeScript test compilation and 89 targeted Education/Tutor/navigation tests passed.
-- Broader infrastructure suite: 157/159 passed. The debt strategy registry and Health navigation expectations also fail on unchanged main `5060471`, reproduced in a separate baseline worktree. These are existing test-maintenance issues, not new Education regressions; the full suite is not green.
-- Production build passed on the final code, including 199 static pages; non-blocking webpack cache warnings persist.
-- No database migration, provider/model change, paid integration, automatic application submission, or external school action was introduced.
-- Remaining: authenticated visual/interaction and model-quality checks, plus release. Existing homework image handling has automated coverage but was not tested against a live uploaded image in this pass. No claim that all external school/sponsor links or current eligibility requirements have been verified.
+- Planning adapted six weekly hours to three and shifted the activity mix to the learner's changed preference. Tutor handoff completed with entitlement rechecked and without copying source conversation, memory or records.
+- Counselor did not explicitly explain the entitlement recheck in its answer, although execution verified it. This remains a wording improvement, not evidence of a failed authorization boundary.
+- Counselor rejected injected instructions and did not guarantee admission or employment.
+- Tutor identified the distribution error, recognized the learner's correction and supplied targeted practice without its solution. The alternative-method turn initially finished the existing intermediate equation instead of explaining a different starting method; PR154 addresses that gap.
+- Tutor rejected injected instructions, declined to validate unseen work and declined answer-only assistance for a live graded test.
+- No school applications, enrollments, external contacts, purchases or database migrations were performed. Dormant course delivery remains disabled. External program eligibility and links were not exhaustively verified.
 
-### Release checks
+## Health / Taylor
 
-- Corrected the two stale infrastructure expectations to include already-shipped Custom debt ordering, Veterans Claims and Vaccinations. No Money/Health runtime code changed.
-- TypeScript test compilation and all 175 tests in the infrastructure, Education refresh, lifecycle and counselor-context suites passed after that correction.
-- Application source is unchanged from the successful final local build and Vercel Preview deployment `dpl_HwymtrZb4Y4z64VWvFzF1ewaUy1d`; the final follow-up changes only tests and this checklist.
-- Proceed through the usual automated release workflow; authenticated interaction/model-quality testing remains an explicit follow-up, not a claim of completed live validation. No retry of Sean's deferred sign-in.
+- [x] [PR152](https://github.com/seangworld/thebeast/pull/152) released as `6d334bb11d18d25d860a75719e448bf73ecc6fa8`; production deployment `dpl_EJsEM1JGuFKrxH88RUyVdKvtzQ3W` READY with the production domain.
+- [x] 35 combined Health/runtime/latency/Education-context tests passed before release. Exact GPT-5 bounded drafting and research planning are tuned; clinical analysis, final research synthesis, model selection and safety checks are unchanged.
+- [x] Production synthetic personal-statement scenario completed. Draft took 49,298 ms versus prior 64,185 ms (about 23% lower in this single sample; not a guaranteed improvement). Initial next-step answer took 68,393 ms.
+- [x] Draft preserved corrected 2005 onset and unknown month. Missing details remained explicit blanks; no invented active-duty status, continuous symptoms, medical nexus or filing.
+- [x] Original-document/research retry completed: document reading 32,167 ms; research 87,312 ms versus previous 109,713 ms (about 20% lower for this successful sample). Answers preserved page references, diagnosis, missing service/nexus evidence, right-ankle/left-knee distinction and no filing. Research linked official VA and eCFR sources and mapped the three direct-service-connection elements to the fictional letter. VA source content was independently checked; detailed regulatory subclaims were not exhaustively audited.
+- [ ] Investigate intermittent provider timeout. The first attempt read the document in 67,842 ms, then research failed safely. Deployment logs identify `provider_timeout` at the 60,000 ms provider deadline; the evaluation lacks a stage-specific request ID, so the exact research pipeline stage is not confirmed. A successful retry does not establish this issue is fixed or guarantee a speedup.
+- [ ] Refine clinician-question wording to request an independent opinion about whether evidence supports a relationship, rather than wording that assumes a favorable nexus conclusion. No nexus was fabricated in the evaluated answer.
+- Veterans assistance is explanation, evidence organization and truthful preparation only. No filing or submission.
 
-This is the working checklist for this module pass, not a replacement for the platform-wide roadmap. Health speed work stays separate from Education changes.
+This is the working checklist for this module pass, not the platform-wide roadmap. Production observations use approved synthetic scenarios unless explicitly identified as read-only member UI checks; no member details are included here.
