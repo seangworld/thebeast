@@ -1,3 +1,4 @@
+import { advisorGoalColumns, advisorGoalFilters } from "@/lib/platform/goalConnections";
 import { NextResponse } from "next/server";
 import { acquireDigitalStaffRequestLease, applyApprovedKnowledgeProposal, buildMoneyCoachStructuredRecords, classifyDigitalStaffFailure, moneyCoachCashSettingsColumns, moneyCoachFundingSourceColumns, reportDigitalStaffLifecycle, runDigitalStaffRuntime, requireProfessionalConfig, safeDigitalStaffFailure, type ConversationState, type DigitalStaffActivity, type ProfessionalId, type RuntimeMessage, type RuntimeObserver, type StructuredKnowledgeProposal } from "@/lib/digitalStaffRuntime";
 import { digitalStaffTelemetryRecord, firstPartyErrorCategoryFromDigitalStaff, recordServerFirstPartyTelemetry } from "@/lib/server/firstPartyTelemetry";
@@ -34,7 +35,7 @@ async function loadStructuredRecords(supabase: ReturnType<typeof createRouteClie
       timed(supabase.from("income_events").select("id, name, amount, frequency, next_date, is_active, is_archived, created_at").eq("user_id", ownerId).order("next_date", { ascending: true }).limit(200)),
       timed(supabase.from("cash_settings").select(moneyCoachCashSettingsColumns).eq("user_id", ownerId).maybeSingle()),
       timed(supabase.from("funding_sources").select(moneyCoachFundingSourceColumns).eq("user_id", ownerId).eq("is_active", true).order("created_at", { ascending: true }).limit(200)),
-      timed(supabase.from("beast_goals").select("id, title, status, target_date, updated_at").eq("owner_id", ownerId).eq("category", "Money").neq("status", "Archived").order("updated_at", { ascending: false }).limit(100)),
+      timed(supabase.from("beast_goals").select(advisorGoalColumns).eq("owner_id", ownerId).or(advisorGoalFilters.money).is("deleted_at", null).neq("status", "Archived").order("updated_at", { ascending: false }).limit(100)),
     ]);
     const results = [debts, bills, incomes, cashSettings, fundingSources, goals];
     const error = results.find((item) => item.result.error)?.result.error || null;
@@ -66,7 +67,7 @@ async function loadStructuredRecords(supabase: ReturnType<typeof createRouteClie
   const queries = professionalId === "beasteducation.guidance-counselor"
       ? guidanceCounselorContextQueries(supabase, ownerId)
       : professionalId === "beasthealth.health-advisor"
-        ? [supabase.from("beast_health_records").select("id, record_type, title, status, occurred_on, source, notes, details, updated_at").eq("owner_id", ownerId).neq("status", "archived").order("updated_at", { ascending: false }).limit(200)]
+        ? [supabase.from("beast_health_records").select("id, record_type, title, status, occurred_on, source, notes, details, updated_at").eq("owner_id", ownerId).neq("status", "archived").order("updated_at", { ascending: false }).limit(200), supabase.from("beast_goals").select(advisorGoalColumns).eq("owner_id", ownerId).or(advisorGoalFilters.health).is("deleted_at", null).neq("status", "Archived").order("updated_at", { ascending: false }).limit(20)]
         : [supabase.from("beast_goals").select("id, title, category, status, target_date, current_step, updated_at").eq("owner_id", ownerId).order("updated_at", { ascending: false }).limit(20)];
   const results = await Promise.all(queries);
   return {
@@ -76,14 +77,14 @@ async function loadStructuredRecords(supabase: ReturnType<typeof createRouteClie
       if (result.error) return false;
       const fetched = (result.data || []).length;
       const limit = professionalId === "beasteducation.guidance-counselor"
-        ? (index === 0 ? 1 : 19)
-        : professionalId === "beasthealth.health-advisor" ? 200 : 20;
+        ? (index === 0 ? 1 : index === 1 ? 19 : 20)
+        : professionalId === "beasthealth.health-advisor" ? (index === 0 ? 200 : 20) : 20;
       return index === 0 && professionalId === "beasteducation.guidance-counselor"
         ? fetched <= 1
         : fetched < limit;
     }),
     timings: { debtLoadMs: null, billLoadMs: null, incomeLoadMs: null, otherFinancialContextLoadMs: null },
-    records: results.flatMap((result, index) => result.error ? [] : (result.data || []).map((record) => { const row = record as Record<string, unknown>; return { domain: `${professionalId}:${index}`, record, updatedAt: typeof row.updated_at === "string" ? row.updated_at : undefined }; })),
+    records: results.flatMap((result, index) => result.error ? [] : (result.data || []).map((record) => { const row = record as Record<string, unknown>; return { domain: ((professionalId === "beasthealth.health-advisor" && index === 1) || (professionalId === "beasteducation.guidance-counselor" && index === 2)) ? `${professionalId}:goals` : `${professionalId}:${index}`, record: ((professionalId === "beasthealth.health-advisor" && index === 1) || (professionalId === "beasteducation.guidance-counselor" && index === 2)) ? { ...row, context_note: "Member goal: an aspiration to consider in advice, not an achieved fact or authorization to change records." } : record, updatedAt: typeof row.updated_at === "string" ? row.updated_at : undefined }; })),
   };
 }
 

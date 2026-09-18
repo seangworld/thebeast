@@ -1,5 +1,6 @@
 "use client";
 
+import { advisorGoalFilters } from "@/lib/platform/goalConnections";
 import Link from "next/link";
 import { VaccinationReminders } from "./VaccinationReminders";
 import { loadVeteranClaims } from "@/lib/health/veteranClaimsPersistence";
@@ -644,7 +645,8 @@ export function HealthAdvisorWorkspace() {
           .from("beast_goals")
           .select("id, title, status, priority, progress, current_step, target_date")
           .eq("owner_id", userId)
-          .eq("category", "Health")
+          .or(advisorGoalFilters.health)
+          .is("deleted_at", null)
           .neq("status", "Archived")
           .order("updated_at", { ascending: false }),
       ]);

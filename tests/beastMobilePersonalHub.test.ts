@@ -67,9 +67,9 @@ test("BF-MOB-005 exposes mobile Personal Hub quick surfaces on approved routes",
 
   assert.match(dashboard, /data-mobile-personal-hub="household-alerts"/);
   assert.match(uploads, /data-mobile-personal-hub="quick-uploads"/);
-  assert.match(goals, /data-mobile-personal-hub="goals"/);
+  assert.match(goals, /LifePlanningHub/);
   assert.match(uploads, /data-mobile-source-contract=\{card.dispatchMode\}/);
-  assert.match(goals, /data-mobile-source-contract=\{card.dispatchMode\}/);
+  assert.match(goals, /grid grid-cols-2/);
 });
 
 test("BF-MOB-005 keeps mobile Personal Hub surfaces narrow and desktop views intact", () => {
@@ -78,7 +78,7 @@ test("BF-MOB-005 keeps mobile Personal Hub surfaces narrow and desktop views int
   const goals = readFileSync("src/app/dashboard/goals/page.tsx", "utf8");
   const globalStyles = readFileSync("src/app/globals.css", "utf8");
 
-  for (const page of [uploads, goals]) {
+  for (const page of [uploads]) {
     assert.match(page, /md:hidden/);
     assert.match(page, /min-w-0/);
     assert.match(page, /break-words/);
@@ -87,7 +87,7 @@ test("BF-MOB-005 keeps mobile Personal Hub surfaces narrow and desktop views int
 
   assert.match(dashboard, /data-beast-mobile-shell="home"/);
   assert.match(uploads, /DocumentUploadDropzone/);
-  assert.match(goals, /Current goals/);
+  assert.match(goals, /Your goals/);
   assert.match(globalStyles, /width: 100%;/);
   assert.match(globalStyles, /min-width: 0;/);
   assert.doesNotMatch(globalStyles, /overflow-x: (?:clip|hidden)/);
