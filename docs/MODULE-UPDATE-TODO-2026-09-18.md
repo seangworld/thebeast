@@ -17,8 +17,8 @@
 - [x] [PR154](https://github.com/seangworld/thebeast/pull/154) fixes a live teaching gap in both Tutor prompt paths: a request to use another first operation must be evaluated against the original problem. TypeScript and 24 existing tests passed; Preview build READY; merged as `6a4c5fe61a71dde4a66dda375b4f6fdeee9bacaf`.
 - [x] PR154 production deployment `dpl_5BE1kNd4TBSYbPyrxPUTT2msbpiN` READY with the production domain. Alternative-method explanation succeeded in both post-release runs; the second run passed all four teaching steps (5.2–5.7 seconds per turn).
 - [ ] Investigate intermittent initial-review fallback: the first post-release run returned `incomplete-homework-review:initial_review` despite readable submitted work. The second run passed; that does not establish the intermittent issue is fixed. Existing lexical review guard requires a narrow set of words; the rejected raw answer was not captured, so a false positive is suspected, not established.
-- [ ] Exercise the actual homework-photo endpoint with a readable and an unreadable image. Synthetic shared-runtime evaluations do not cover this endpoint.
-- [ ] Complete live counselor conversation-to-record-loading verification. Synthetic evaluations use approved fictional records, not member records.
+- [x] Actual signed-in Tutor photo flow exercised with two synthetic worksheets in separate sessions. Readable image: identified the distribution error and guided correction without revealing the answer. Unreadable image: requested readable evidence without inventing a result, but used a generic fallback. Images are labeled synthetic QA; no personal facts were supplied. Conversation entries remain in the owner's test sessions.
+- [x] Live counselor member-context check completed: accurately summarized saved career direction and college preference, distinguished a considered certification from an earned credential, and identified absent earned-credential records without fabricating them. No record-update proposal was shown. This was a visible conversational check, not a database-write audit.
 
 ### Education evaluation findings
 
@@ -41,3 +41,11 @@
 - Veterans assistance is explanation, evidence organization and truthful preparation only. No filing or submission.
 
 This is the working checklist for this module pass, not the platform-wide roadmap. Production observations use approved synthetic scenarios unless explicitly identified as read-only member UI checks; no member details are included here.
+
+## Reliability follow-up prepared
+
+- Natural-language review regression reproduced: valid explanations using “the mistake happens” and guided questions could fail narrow word checks. The guard now recognizes these forms while still rejecting unsupported “looks fine” responses and preserving contract/semantic checks. The original rejected model text was not captured, so this is a demonstrated failure mode, not proof of that exact incident's cause.
+- Review failures now acknowledge an incomplete review instead of blaming the student for missing readable work. Insufficient-evidence fallback requests a clearer image without implying dishonesty.
+- Taylor instructions now ask for an independent clinician assessment, including contrary evidence and uncertainty, without requesting a predetermined favorable opinion.
+- Owner synthetic evaluations now attach unique per-turn request IDs, preserve plan/research/synthesis suffixes in provider errors, and display sanitized error category/reference. No raw prompts, credentials or member data are added to diagnostic output. Timeout limits are unchanged; intermittent timeout resolution is not claimed.
+- TypeScript test compilation and 56 targeted capability, Health, runtime and Tutor tests passed. Production rollout and post-release checks are pending for this follow-up bundle.

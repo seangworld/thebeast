@@ -22,6 +22,7 @@ type ScenarioResult = {
   results: Array<{ turnId: string; selectedModel: string; returnedModel: string; response: string; intent: string; handoff: { professionalId: string; reason: string } | null; validationFailures: string[]; timings: { totalMs: number } }>;
   handoffExecutions?: Array<{ status: string; expectedTarget: string; receiverInvoked: boolean; response?: string; returnedModel?: string; sourceConversationCopied?: boolean; sourceMemoryCopied?: boolean; sourceRecordsCopied?: boolean; entitlementRechecked?: boolean }>;
   error?: string;
+  failure?: { requestId: string; category: string };
 };
 
 const endpoint = "/api/admin/member-ai-production-evaluation";
@@ -87,6 +88,7 @@ export default function MemberAIProductionEvaluationPage() {
           <h2 className="font-black">{scenario.title}</h2>
           <p className="mt-1 text-xs text-slate-400">{scenario.professionalId} · synthetic: {String(scenario.syntheticOnly)} · member records loaded: {String(scenario.memberRecordsLoaded)} · model override: {String(scenario.modelOverrideUsed)}</p>
           {scenario.error ? <p className="mt-3 text-sm text-rose-200">{scenario.error}</p> : null}
+          {scenario.failure ? <p className="mt-2 break-all text-xs text-amber-200">Failure: {scenario.failure.category} · Request: {scenario.failure.requestId}</p> : null}
           <div className="mt-4 space-y-3">{scenario.results.map((turn) => <div key={turn.turnId} className="rounded-xl border border-white/10 p-4">
             <div className="flex flex-wrap justify-between gap-2 text-xs text-cyan-200"><strong>{turn.turnId}</strong><span>{turn.returnedModel} · {turn.timings.totalMs} ms</span></div>
             <p className="mt-2 whitespace-pre-wrap text-sm text-slate-200">{turn.response}</p>
