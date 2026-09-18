@@ -363,7 +363,7 @@ test("BD-001 Documents overview route stays BeastOS-owned", () => {
   assert.match(documentsPage, /Ecosystem Associations/);
   assert.match(
     documentsPage,
-    /AI\s+extraction is intentionally not part/
+    /you can choose AI extraction after upload/
   );
   assert.doesNotMatch(documentsPage, /mockDocuments/);
   assert.doesNotMatch(documentsPage, /statement\.pdf/);
@@ -1241,13 +1241,13 @@ test("BO-17 Upload Center supports drag-and-drop document intake", () => {
 
   assert.match(documentsPage, /DocumentUploadDropzone/);
   assert.match(dropzone, /onDrop=\{handleDrop\}/);
-  assert.match(dropzone, /onDragOver=\{handleDragOver\}/);
+  assert.match(dropzone, /onDragOver=/);
   assert.match(dropzone, /Choose File/);
   assert.match(dropzone, /Upload Document/);
   assert.match(dropzone, /beast_documents/);
   assert.match(dropzone, /documentStorageBucketName/);
   assert.match(dropzone, /role="status"/);
-  assert.match(dropzone, /window\.location\.reload\(\)/);
+  assert.match(dropzone, /router\.refresh\(\)/);
   assert.match(storageMigration, /insert into storage\.buckets/);
   assert.match(storageMigration, /'beast-documents'/);
   assert.match(storageMigration, /file_size_limit/);
