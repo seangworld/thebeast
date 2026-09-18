@@ -5,6 +5,7 @@ export type LifeWorkspaceRecord = {
   category?: unknown;
   value?: unknown;
   source_type?: unknown;
+  verification_status?: unknown;
 };
 
 function text(value: unknown) {
@@ -16,24 +17,43 @@ export function educationRecordState(
   record: LifeWorkspaceRecord
 ) {
   const fields = parseCanonicalFields(record.value);
-  const explicit = text(fields.status || fields.applicationStatus || fields.lifecycleStatus);
+  const explicit = text(fields.status || fields.applicationStatus || fields.lifecycleStatus).replace(/[_-]+/g, " ").replace(/\s+/g, " ");
   const phase = text(record.phase);
+  if (["proposed", "rejected"].includes(text(record.verification_status))) return "Needs review";
+  const is = (...values: string[]) => values.includes(explicit);
 
   if (workspace === "schools") {
-    if (/current|enrolled|attending/.test(explicit) || phase === "present") return "Current";
-    if (/suggest|recommend|consider/.test(explicit) || text(record.source_type) === "research") return "Suggested";
-    return "Previous";
+    if (is("current", "enrolled", "attending")) return "Current";
+    if (is("previous", "graduated", "completed", "withdrawn")) return "Previous";
+    if (is("suggested", "recommended", "considering", "planned", "applied", "pending")) return "Suggested";
+    if (explicit) return "Needs review";
+    if (text(record.source_type) === "research" || phase === "goal") return "Suggested";
+    return phase === "present" ? "Current" : phase === "past" ? "Previous" : "Needs review";
   }
   if (workspace === "certifications") {
-    if (/expir|lapsed/.test(explicit)) return "Expired";
-    if (/plan|intend|pursu|prepar/.test(explicit) || phase === "goal") return "Planned";
-    if (/recommend|suggest/.test(explicit) || text(record.source_type) === "research") return "Recommended";
-    return "Active";
+    if (is("expired", "lapsed")) return "Expired";
+    if (is("active", "current", "valid")) return "Active";
+    if (is("planned", "intended", "pursuing", "preparing", "in progress")) return "Planned";
+    if (is("recommended", "suggested")) return "Recommended";
+    if (explicit) return "Needs review";
+    if (text(record.source_type) === "research") return "Recommended";
+    return phase === "goal" ? "Planned" : "Needs review";
   }
-  if (/award|received|won|approved/.test(explicit)) return "Awarded";
-  if (/appl|submitted|pending/.test(explicit)) return "Applied";
-  if (/recommend|suggest/.test(explicit) || text(record.source_type) === "research") return "Recommended";
+  if (is("awarded", "award received", "funds received", "won")) return "Awarded";
+  if (is("applied", "submitted", "application submitted", "application pending", "application under review")) return "Applied";
+  if (is("not awarded", "denied", "declined", "rejected", "withdrawn")) return "Not awarded";
+  if (is("recommended", "suggested")) return "Recommended";
+  if (is("saved", "not applied", "not submitted", "considering")) return "Saved";
+  if (explicit) return "Needs review";
+  if (text(record.source_type) === "research") return "Recommended";
   return "Saved";
+}
+
+export const educationFundingStates = ["Saved", "Applied", "Awarded", "Not awarded", "Recommended", "Needs review"] as const;
+export const educationCertificationStates = ["Active", "Expired", "Planned", "Recommended", "Needs review"] as const;
+
+export function isCurrentEducationRecommendation(path: { status?: unknown }) {
+  return ["candidate", "preferred"].includes(text(path.status));
 }
 
 export function educationFundingKind(record: LifeWorkspaceRecord) {

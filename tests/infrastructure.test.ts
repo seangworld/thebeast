@@ -474,7 +474,7 @@ const beastAdminFixtureFeedback: BeastAdminFeedbackItem[] = [
 test("debt strategy registry includes existing strategy options", () => {
   assert.deepEqual(
     DEBT_STRATEGIES.map((strategy) => strategy.value),
-    ["minimum", "snowball", "avalanche", "velocity"]
+    ["custom", "minimum", "snowball", "avalanche", "velocity"]
   );
   assert.equal(getDebtStrategyLabel("velocity"), "Velocity");
   assert.equal(
@@ -5514,7 +5514,7 @@ test("learning AI context builder gathers reusable learner context", () => {
   assert.equal(context.profile, "Current learner");
   assert.equal(context.goals.includes("Security+"), true);
   assert.equal(context.recentSessions.includes("Authentication and access control"), true);
-  assert.equal(context.career, "Security Analyst");
+  assert.equal(context.career, "");
   assert.equal(context.currentLesson, "Access Control");
   assert.equal(context.mastery.some((item) => item.includes("role-based-access")), true);
 });
@@ -6098,10 +6098,12 @@ test("BeastAdmin foundation registers modules and protects owner-only navigation
     [
       "Overview",
       "Health Advisor",
+      "Veterans Claims",
       "Health Profile",
       "Conditions",
       "Medications",
       "Procedures",
+      "Vaccinations",
       "Family History",
       "Lifestyle",
       "Health Measurements",

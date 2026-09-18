@@ -1,4 +1,3 @@
-import { careerKnowledgeCatalog } from "./careers";
 import type { LearningAIContext, MasteryProfile } from "./types";
 
 export function buildLearningAIContext({
@@ -10,6 +9,7 @@ export function buildLearningAIContext({
   courses = [],
   recentSessions = [],
   studyHistory = [],
+  career = "",
 }: {
   learnerName: string;
   mastery: MasteryProfile;
@@ -19,6 +19,7 @@ export function buildLearningAIContext({
   courses?: string[];
   recentSessions?: string[];
   studyHistory?: string[];
+  career?: string;
 }): LearningAIContext {
   return {
     profile: learnerName,
@@ -28,7 +29,7 @@ export function buildLearningAIContext({
       (concept) => `${concept.conceptId}:${concept.masteryPercent}`
     ),
     recentSessions,
-    career: careerKnowledgeCatalog[0]?.title || "Security Analyst",
+    career,
     learningStyle: "Read then practice",
     studyHistory,
     weakAreas,

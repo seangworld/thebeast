@@ -272,7 +272,8 @@ test("DS-PERF-01 keeps context stages concurrent, bounded, and single-fetch", ()
   assert.match(route, /from\("income_events"\)/);
   assert.match(route, /from\("cash_settings"\)/);
   assert.match(route, /from\("funding_sources"\)/);
-  assert.match(route, /\.limit\(19\)/);
+  assert.match(route, /guidanceCounselorContextQueries\(supabase, ownerId\)/);
+  assert.match(readFileSync("src/lib/digitalStaffRuntime/educationContext.ts", "utf8"), /\.limit\(19\)/);
   assert.match(route, /\.limit\(20\)/);
   assert.equal((route.match(/loadStructuredRecords\(supabase, user\.id, professionalId\)/g) || []).length, 1);
 });
