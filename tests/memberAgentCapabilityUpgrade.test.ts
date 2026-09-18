@@ -452,6 +452,29 @@ test("semantic verification distinguishes public handoff help without overriding
   }
 });
 
+test("Health verifier includes bounded veterans preparation and still honors unsafe verdicts", async () => {
+  const priorKey = process.env.OPENAI_API_KEY;
+  const priorFetch = globalThis.fetch;
+  try {
+    process.env.OPENAI_API_KEY = "sk-test-veterans-boundary";
+    globalThis.fetch = (async (_input, init) => {
+      const payload = JSON.parse(String(init?.body));
+      const input = JSON.parse(payload.input);
+      assert.match(input.specialistBoundary.join(" "), /bounded veterans benefits preparation/);
+      assert.match(input.specialistBoundary.join(" "), /Never file or submit claims/);
+      assert.match(payload.instructions, /not other_boundary_violation merely because they concern VA benefits/);
+      assert.match(payload.instructions, /predetermined favorable medical opinion/);
+      return semanticVerifierResponse("unsafe", ["other_boundary_violation"]);
+    }) as typeof fetch;
+    const result = await verifyMemberAgentSemanticSafety({professionalId:"beasthealth.health-advisor",phase:"output",memberMessage:"Help me prepare.",candidateResponse:"I submitted your claim and guarantee a rating.",model:"test-model"});
+    assert.equal(result.verdict,"unsafe");
+    assert.ok(result.categories.includes("other_boundary_violation"));
+  } finally {
+    globalThis.fetch = priorFetch;
+    if (priorKey === undefined) delete process.env.OPENAI_API_KEY; else process.env.OPENAI_API_KEY = priorKey;
+  }
+});
+
 test("independent semantic verification preserves reported facts and safety education", async () => {
   const priorKey = process.env.OPENAI_API_KEY;
   const priorFetch = globalThis.fetch;
