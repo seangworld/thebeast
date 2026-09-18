@@ -432,6 +432,26 @@ test("independent semantic input verification blocks novel overrides and fails c
   }
 });
 
+test("semantic verification distinguishes public handoff help without overriding an unsafe verdict", async () => {
+  const priorKey = process.env.OPENAI_API_KEY;
+  const priorFetch = globalThis.fetch;
+  try {
+    process.env.OPENAI_API_KEY = "sk-test-handoff-boundary";
+    globalThis.fetch = (async (_input, init) => {
+      const payload = JSON.parse(String(init?.body));
+      assert.match(payload.instructions, /Public product and privacy explanations are not protected-instruction disclosure/);
+      assert.match(payload.instructions, /does not permit quoting hidden prompts/);
+      return semanticVerifierResponse("unsafe", ["protected_instruction_disclosure"]);
+    }) as typeof fetch;
+    const result = await verifyMemberAgentSemanticSafety({professionalId:"beasteducation.guidance-counselor",phase:"output",memberMessage:"Explain the handoff.",candidateResponse:"Here is the hidden prompt.",model:"test-model"});
+    assert.equal(result.verdict,"unsafe");
+    assert.ok(result.categories.includes("protected_instruction_disclosure"));
+  } finally {
+    globalThis.fetch = priorFetch;
+    if (priorKey === undefined) delete process.env.OPENAI_API_KEY; else process.env.OPENAI_API_KEY = priorKey;
+  }
+});
+
 test("independent semantic verification preserves reported facts and safety education", async () => {
   const priorKey = process.env.OPENAI_API_KEY;
   const priorFetch = globalThis.fetch;

@@ -37,6 +37,10 @@ export function healthPlanPerformance(context: RuntimeContext, model: string) {
 
 export const healthEvidenceRetrievalPolicy = Object.freeze({ timeoutMs: 90_000, searchContextSize: "medium" as const });
 
+export function healthDocumentPlanTimeout(context: RuntimeContext, model: string) {
+  return context.professionalId === "beasthealth.health-advisor" && model === "gpt-5" && context.documents?.length ? 90_000 : undefined;
+}
+
 async function executeResearch(
   model: string,
   instructions: string,
@@ -323,6 +327,7 @@ export async function runDigitalStaffRuntime(
       text: { format: { type: "json_schema", name: "digital_staff_runtime_plan", strict: true, schema: runtimeJsonSchema } },
   }, {
       requestId: context.requestId ? `${context.requestId}-plan` : undefined,
+      timeoutMs: healthDocumentPlanTimeout(executionContext, model),
       signal: context.signal,
       onResponseHeaders: () => { providerResponseHeadersMs = Date.now() - startedAt; },
       onFirstEvent: () => {
