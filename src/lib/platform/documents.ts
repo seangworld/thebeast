@@ -388,6 +388,8 @@ export const documentGoalReferenceDatabaseTableName = "beast_goal_references";
 
 export const documentStorageBucketName = "beast-documents";
 export const documentUploadMaxFileSizeBytes = 25 * 1000 * 1000;
+export const documentUploadMaxBatchSizeBytes = 25 * 1000 * 1000;
+export const documentUploadMaxBatchFiles = 5;
 export const documentOwnerStorageLimitBytes = 5 * 1000 * 1000 * 1000;
 
 export const documentCategories: DocumentCategory[] = [
@@ -1366,10 +1368,31 @@ export function getDocumentUploadValidationError(file: {
     return "Choose a supported document, image, spreadsheet, presentation, text, or CSV file.";
   }
 
+  if (!Number.isSafeInteger(file.size) || file.size <= 0) {
+    return "Choose a non-empty file with a valid size.";
+  }
+
   if (file.size > documentUploadMaxFileSizeBytes) {
     return "Choose a file that is 25 MB or smaller.";
   }
 
+  return null;
+}
+
+export function getDocumentUploadBatchValidationError(files: readonly {
+  name: string;
+  type: string;
+  size: number;
+}[]) {
+  if (!files.length) return "Choose at least one file.";
+  if (files.length > documentUploadMaxBatchFiles) return "Choose up to 5 files at a time.";
+  for (const file of files) {
+    const error = getDocumentUploadValidationError(file);
+    if (error) return `${file.name}: ${error}`;
+  }
+  if (files.reduce((total, file) => total + file.size, 0) > documentUploadMaxBatchSizeBytes) {
+    return "These files total more than 25 MB. Remove a file or choose smaller files.";
+  }
   return null;
 }
 

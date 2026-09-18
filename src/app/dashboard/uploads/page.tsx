@@ -198,8 +198,8 @@ export default async function UploadsPage({
             <div id="upload-document" className="scroll-mt-24" />
             <SectionHeader
               eyebrow="Upload"
-              title="Add a document"
-              description="Add one file to the shared BeastOS Upload Center. The workflow stores the file and records owner-scoped document metadata. For Health documents, you can choose AI extraction after upload and review proposed updates in BeastHealth Documents. Pasted-text extraction is also available there."
+              title="Add documents"
+              description="Add up to 5 files at a time, totaling no more than 25 MB, to the shared BeastOS Upload Center. The workflow stores the file and records owner-scoped document metadata. For Health documents, you can choose AI extraction after upload and review proposed updates in BeastHealth Documents. Pasted-text extraction is also available there."
             />
             <DocumentUploadDropzone context={context} />
             <div className="mt-5 text-xs font-bold uppercase text-[#7f8da3]">
