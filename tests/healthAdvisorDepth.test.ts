@@ -70,6 +70,9 @@ test('researched health answer is synthesized with private context, never passed
       assert.equal(request.tools[0].search_context_size,'medium');
       assert.deepEqual(request.tools[0].filters.allowed_domains,requireProfessionalConfig(ctx.professionalId).researchDomains);
       assert.equal(request.tool_choice,'required');
+      assert.equal(request.max_tool_calls,3);
+      assert.match(request.instructions,/at most 3 search\/open\/find tool calls/);
+      assert.match(request.instructions,/Explicitly identify any question left unsupported/);
       assert.doesNotMatch(request.instructions, /Return JSON matching|You are Health Advisor/);
       assert.match(request.instructions, /separate private step/);
       assert.match(new Headers(init?.headers).get('X-Client-Request-Id') || '', /-research$/);
