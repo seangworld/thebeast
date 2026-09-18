@@ -414,8 +414,8 @@ export function AgentThinkingIndicator({
   label = "Thinking…",
 }: AgentThinkingIndicatorProps) {
   return (
-    <div className="inline-flex min-h-11 items-center gap-3 rounded-2xl border border-white/10 bg-[#111827] px-4 text-sm font-semibold text-slate-300" role="status" aria-live="polite">
-      <span className="flex gap-1" aria-hidden="true">
+    <div className="inline-flex min-h-11 max-w-full items-center gap-3 rounded-2xl border border-white/10 bg-[#111827] px-4 py-2 text-sm font-semibold text-slate-300" role="status" aria-live="polite">
+      <span className="flex shrink-0 gap-1" aria-hidden="true">
         {[0, 1, 2].map((dot) => (
           <span key={dot} className="h-2 w-2 animate-pulse rounded-full bg-cyan-300" style={{ animationDelay: `${dot * 150}ms` }} />
         ))}

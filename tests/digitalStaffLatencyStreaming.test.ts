@@ -206,7 +206,8 @@ test("AP-105 shared client and route expose acknowledged activity streaming and 
   assert.match(route, /await contextObserverActivity\(observer, "loading_context"\)/);
   assert.match(route, /Promise\.all\(\[/);
   assert.doesNotMatch(route, /console\.(?:log|info).*message/);
-  assert.equal(digitalStaffActivityLabels.researching, "Checking current sources…");
+  assert.equal(digitalStaffActivityLabels.researching, "Sit tight—I’m researching current sources for your question. This may take a minute or two. Please keep this window open.");
+  assert.equal(digitalStaffActivityLabels.validating_sources, "I’m comparing the sources and checking what they support…");
 });
 
 test("AP-105 specialist surfaces render optimistic turns and stop using Sending for the whole turn", () => {
