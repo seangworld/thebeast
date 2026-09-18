@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { digitalStaffModelTier, healthPlanPerformance, healthEvidenceRetrievalPolicy, requiresDeterministicResearch, runDigitalStaffRuntime } from '../src/lib/digitalStaffRuntime/runtime';
+import { digitalStaffModelTier, healthPlanPerformance, healthEvidenceRetrievalPolicy, healthDocumentPlanTimeout, requiresDeterministicResearch, runDigitalStaffRuntime } from '../src/lib/digitalStaffRuntime/runtime';
 import { buildRuntimeInput } from '../src/lib/digitalStaffRuntime/prompt';
 import { requireProfessionalConfig } from '../src/lib/digitalStaffRuntime/config';
 import { parseAdvisorDocumentIds, loadAdvisorDocuments } from '../src/lib/health/advisorDocuments';
@@ -22,6 +22,13 @@ test('health evidence retrieval has a bounded budget below the unchanged member 
   assert.equal(healthEvidenceRetrievalPolicy.timeoutMs,90_000);
   assert.ok(healthEvidenceRetrievalPolicy.timeoutMs < 170_000);
   assert.equal(healthEvidenceRetrievalPolicy.searchContextSize,'medium');
+});
+test('longer original-document allowance is limited to GPT-5 Health with attached originals',()=>{
+  const attached = {...ctx,documents:[{id:'d',title:'Original',content:{}}]};
+  assert.equal(healthDocumentPlanTimeout(attached,'gpt-5'),90_000);
+  assert.equal(healthDocumentPlanTimeout(ctx,'gpt-5'),undefined);
+  assert.equal(healthDocumentPlanTimeout(attached,'another-model'),undefined);
+  assert.equal(healthDocumentPlanTimeout({...attached,professionalId:'beasteducation.tutor'},'gpt-5'),undefined);
 });
 test('VA preparation and selected files route to strong reasoning, requirements require research',()=>{
   for(const text of ['Help prepare my personal statement.','Explain my VA denial.','What evidence supports service connection?']) assert.equal(digitalStaffModelTier({...ctx,message:{...ctx.message,text}}),'strong');
