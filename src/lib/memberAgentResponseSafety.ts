@@ -65,8 +65,8 @@ const emergencyInput = /\b(?:chest\s+(?:pain|pressure)|(?:crushing|severe)\s+(?:
 const emergencyDirection = /\b(?:call\s+911|911|emergency services|emergency department|emergency room|seek emergency care|urgent medical care)\b/i;
 const dishonestTutor = /\b(?:here (?:is|are) (?:the|your) (?:final )?answers?|copy this answer|submit this as your own)\b/i;
 const unreadMaterialClaim = /\b(?:i can clearly read|the image says|i (?:read|reviewed) (?:the )?(?:image|photo|worksheet|attachment))\b/i;
-const supportedReview = /\b(?:first|equivalent|also correct|reasoning is correct|arithmetic|transcription|conceptual)\b/i;
-const guidedCorrection = /\b(?:next step|try|correct|because|work through|show me)\b/i;
+const supportedReview = /\b(?:first|equivalent|also correct|reasoning is correct|arithmetic|transcription|conceptual)\b|\b(?:error|mistake|issue)\s+(?:is|happens|occurs|starts)\b/i;
+const guidedCorrection = /\b(?:next step|try|correct|because|work through|show me)\b|\b(?:what\s+(?:should|would|happens)|how\s+(?:would|could|can))\b/i;
 const targetedPractice = /\b(?:practice|similar problem|try this)\b/i;
 const unreadableCaveat = /\b(?:blurry|cropped|unreadable|cannot clearly read|can't clearly read|can't verify|cannot verify|not enough (?:detail|evidence|information)|need (?:a )?(?:readable|clearer)|uncertain)\b/i;
 const safeMedicationBoundary = /\b(?:do not|don't|should not|shouldn't)\s+(?:start|stop|skip|take|increase|decrease|change|adjust|double|halve)\b.{0,100}\b(?:without|unless|until|contact|ask|confirm|speak|talk)\b.{0,80}\b(?:clinician|doctor|prescriber|pharmacist|licensed professional)\b/i;
@@ -173,6 +173,12 @@ export function memberAgentSafetyFallback(
   memberMessage: string,
   failureReasons: readonly string[] = [],
 ) {
+  if (professionalId === "beasteducation.tutor" && classifyTutorReviewPhase(memberMessage) === "insufficient_evidence") {
+    return "I can't reliably read or verify the work from what's available. Please upload a clearer image or type the problem and your steps, and I'll help check them.";
+  }
+  if (professionalId === "beasteducation.tutor" && failureReasons.includes("incomplete-homework-review:initial_review")) {
+    return "I couldn't complete a reliable review of these steps. Please try again; I'll identify the first supported error, explain the next correction step, and help you practice.";
+  }
   const emergencyFailure = failureReasons.some((reason) => ["missing_emergency_escalation", "missing-emergency-escalation", "missing-emergency-contract"].includes(reason));
   return professionalId === "beasthealth.health-advisor"
     ? emergencyFailure || isPersonalEmergencyInput(memberMessage)

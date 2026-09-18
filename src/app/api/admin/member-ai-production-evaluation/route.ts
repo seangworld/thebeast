@@ -14,6 +14,7 @@ import {
   type RuntimeMessage,
 } from "@/lib/digitalStaffRuntime";
 import { createRouteClient } from "@/lib/supabase/server";
+import { DigitalStaffServiceError } from "@/lib/digitalStaffRuntime/security";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -74,13 +75,14 @@ export async function POST(request: Request) {
   let state: ConversationState = { ...emptyProductionEvaluationState };
   const results: Array<Record<string, unknown>> = [];
   const handoffExecutions: Array<Record<string, unknown>> = [];
+  const evaluationRequestId = crypto.randomUUID();
   try {
     const sourceEntitlement = evaluateProductionEntitlement({ professionalId: scenario.professionalId, ageBand: scenario.ageBand });
     if (!sourceEntitlement.allowed) {
       return NextResponse.json({ error: "The synthetic member is not entitled to this specialist.", entitlementReason: sourceEntitlement.reason }, { status: 403, headers: privateHeaders });
     }
     for (let index = 0; index < scenario.turns.length; index += 1) {
-      const context = buildProductionEvaluationContext({ scenario, turnIndex: index, recentMessages, state });
+      const context = { ...buildProductionEvaluationContext({ scenario, turnIndex: index, recentMessages, state }), requestId: `${evaluationRequestId}-${scenario.turns[index].id}` };
       const selectedModel = selectDigitalStaffModel(context);
       const result = await runDigitalStaffRuntime(context);
       results.push({
@@ -130,7 +132,7 @@ export async function POST(request: Request) {
               receiverInvoked: false,
             });
           } else {
-            const targetContext = buildProductionHandoffEvaluationContext({ scenario });
+            const targetContext = { ...buildProductionHandoffEvaluationContext({ scenario }), requestId: `${evaluationRequestId}-handoff-target` };
             const targetModel = selectDigitalStaffModel(targetContext);
             const targetResult = await runDigitalStaffRuntime(targetContext);
             handoffExecutions.push({
@@ -170,7 +172,7 @@ export async function POST(request: Request) {
       results,
       handoffExecutions,
     }, { headers: privateHeaders });
-  } catch {
-    return NextResponse.json({ error: "The controlled Production-model evaluation failed safely.", completedTurns: results.length, executionComplete: false, results, handoffExecutions }, { status: 502, headers: privateHeaders });
+  } catch (error) {
+    return NextResponse.json({ error: "The controlled Production-model evaluation failed safely.", failure: error instanceof DigitalStaffServiceError ? { requestId: error.requestId, category: error.category } : { requestId: evaluationRequestId, category: "evaluation_failure" }, completedTurns: results.length, executionComplete: false, results, handoffExecutions }, { status: 502, headers: privateHeaders });
   }
 }

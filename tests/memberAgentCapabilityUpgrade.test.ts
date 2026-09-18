@@ -625,6 +625,19 @@ test("Tutor Homework Review safety validates each multi-turn phase independently
   assert.equal(integrity.safe, true);
 });
 
+test("Tutor review accepts natural error explanations and does not blame readable input for a rejected answer", () => {
+  const memberMessage = "I solved 3(x - 2) = 12 as 3x - 2 = 12. Check my work.";
+  const contract = { ...safeMemberAgentResponseContract, homeworkReview: "evidence_based" as const };
+  for (const response of [
+    "The mistake happens when distributing 3: it multiplies both x and -2, making -6. What should that line look like?",
+    "Your first error is 3 times -2: that gives -6. How would you rewrite the equation?",
+  ]) assert.equal(enforceMemberAgentResponseSafety({ professionalId: "beasteducation.tutor", memberMessage, response, contract }).safe, true);
+  const unsupported = enforceMemberAgentResponseSafety({ professionalId: "beasteducation.tutor", memberMessage, response: "Looks fine; keep going.", contract });
+  assert.equal(unsupported.safe, false);
+  assert.match(unsupported.response, /couldn't complete a reliable review/i);
+  assert.doesNotMatch(unsupported.response, /need a readable|dishonestly/i);
+});
+
 test("grade context does not turn a clean Tutor lesson handoff into work review", () => {
   const request = "I am in grade 10 and need help understanding linear equations. Start with one short example and ask me to try the next step.";
   assert.equal(isLearningWorkReviewRequest(request), false);

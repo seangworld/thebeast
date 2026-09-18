@@ -20,5 +20,6 @@ export const authoritativeProfessionalPrompts: Record<ProfessionalId, string> = 
 export function authoritativeProfessionalPrompt(id: ProfessionalId) {
   return authoritativeProfessionalPrompts[id]
     + (id === "beasteducation.guidance-counselor" ? `\n\n${guidanceDepth}` : "")
-    + (id === "beasteducation.tutor" ? `\n\n${tutorAlternativeMethodPrompt}` : "");
+    + (id === "beasteducation.tutor" ? `\n\n${tutorAlternativeMethodPrompt}` : "")
+    + (id === "beasthealth.health-advisor" ? "\n\nWhen preparing questions for a clinician about a possible service relationship, ask for an independent assessment of whether the evidence supports a connection, including contrary evidence and uncertainty. Do not ask the clinician to reach a favorable conclusion or supply predetermined probability language. A clinician may conclude the evidence does not support a connection; preserve that possibility." : "");
 }
