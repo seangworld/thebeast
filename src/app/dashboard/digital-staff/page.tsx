@@ -30,7 +30,7 @@ export default function DigitalStaffPage() {
 
         <details className="rounded-2xl border border-white/10 bg-[#111827] p-5">
           <summary className="cursor-pointer rounded text-lg font-black text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-200">
-            Advanced: staff profiles and development details
+            Meet your Digital Staff
           </summary>
           <div className="mt-6 space-y-8">
             <section aria-labelledby="professionals-heading">
@@ -76,7 +76,7 @@ export default function DigitalStaffPage() {
 
         <section className="rounded-2xl border border-cyan-300/20 bg-cyan-300/5 p-5" aria-labelledby="historical-knowledge-heading">
           <h2 id="historical-knowledge-heading" className="text-lg font-black text-white">Organize earlier conversations</h2>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-300">Your Digital Staff can organize useful information from conversations that happened before structured review was available. Nothing is saved as an authoritative record until you review it.</p>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-300">Review useful details from earlier conversations and decide what to keep. You approve changes before they become saved records.</p>
           <Link href="/dashboard/digital-staff/reconciliation" className="beast-button mt-4 inline-flex">Review earlier knowledge</Link>
         </section>
       </div>

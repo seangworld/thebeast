@@ -461,7 +461,7 @@ export default function DirectorExperience() {
               title="Director unavailable"
               message={error}
               retryAction={
-                <button className="beast-button-secondary" type="button" onClick={() => void refresh()}>
+                <button className="beast-button-secondary" type="button" disabled={loading || sending} onClick={() => { setLoading(true); setError(null); void refresh().catch(() => setError("Director conversations could not be loaded. Please try again.")).finally(() => setLoading(false)); }}>
                   Try again
                 </button>
               }
