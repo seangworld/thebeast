@@ -6,10 +6,11 @@ import { buildFinancialDecision } from "@/lib/financialDecisionEngine";
 import BillsSection from "./components/BillsSection";
 import CashFlowOverview from "./components/CashFlowOverview";
 import DailyOperatingFocus from "./components/DailyOperatingFocus";
-import BillsAheadSection from "./components/BillsAheadSection";
+import ExpensesAheadSection from "./components/BillsAheadSection";
 import IncomeDatePlanningSection from "./components/IncomeDatePlanningSection";
 import PaycheckPlanningSection from "./components/PaycheckPlanningSection";
 import MonthlyPaymentChecklist from "./components/MonthlyPaymentChecklist";
+import { buildExpensesAhead } from "@/lib/expensesAhead";
 import { buildMonthlyPaymentChecklist } from "@/lib/monthlyPaymentChecklist";
 import AddIncomeBillSection from "./components/AddIncomeBillSection";
 import CashTimelineSection from "./components/CashTimelineSection";
@@ -739,58 +740,13 @@ export default function CashFlowPage() {
     );
   }, [debtsWithAssignmentStatus]);
 
-  const billsAhead = useMemo(() => {
-    const today = new Date();
-    const todayOnly = new Date(
-      today.getFullYear(),
-      today.getMonth(),
-      today.getDate()
-    );
-    const windowEnd = addDays(todayOnly, 30);
+  const expensesAhead = useMemo(() => buildExpensesAhead({
+    today: checklistDate, bills, debts, billPayments, debtPayments: debtPaymentRows, days: 30,
+  }), [checklistDate, bills, debts, billPayments, debtPaymentRows]);
 
-    const upcoming = activeBills
-      .filter((bill) => {
-        if (Number(bill.remaining || 0) <= 0) return false;
-        return bill.nextDueDate >= todayOnly && bill.nextDueDate <= windowEnd;
-      });
-
-    return {
-      bills: upcoming,
-      total: upcoming.reduce(
-        (sum, bill) => sum + Number(bill.remaining || 0),
-        0
-      ),
-      unassignedIncomePots: upcoming.filter(
-        (bill) => !bill.assigned_income_date
-      ).length,
-      unassignedFundingSources: upcoming.filter(
-        (bill) => !isPaymentConfigurationComplete(bill)
-      ).length,
-    };
-  }, [activeBills]);
-
-  const billsDueNext7Days = useMemo(() => {
-    const today = new Date();
-    const todayOnly = new Date(
-      today.getFullYear(),
-      today.getMonth(),
-      today.getDate()
-    );
-    const windowEnd = addDays(todayOnly, 7);
-
-    const billsDue = activeBills.filter((bill) => {
-      if (Number(bill.remaining || 0) <= 0) return false;
-      return bill.nextDueDate >= todayOnly && bill.nextDueDate <= windowEnd;
-    });
-
-    return {
-      bills: billsDue,
-      total: billsDue.reduce(
-        (sum, bill) => sum + Number(bill.remaining || 0),
-        0
-      ),
-    };
-  }, [activeBills]);
+  const expensesDueNext7Days = useMemo(() => buildExpensesAhead({
+    today: checklistDate, bills, debts, billPayments, debtPayments: debtPaymentRows, days: 7,
+  }), [checklistDate, bills, debts, billPayments, debtPaymentRows]);
 
   const upcomingDebtMinimums = useMemo(() => {
     if (!nextPayDate) return 0;
@@ -1051,14 +1007,14 @@ export default function CashFlowPage() {
   const operationalAlerts = useMemo(() => {
     const alerts: OperationalAlert[] = [];
 
-    if (billsDueNext7Days.bills.length > 0) {
+    if (expensesDueNext7Days.expenses.length > 0) {
       alerts.push({
-        id: "bills-due-soon",
+        id: "expenses-due-soon",
         severity: "warning",
-        title: "Bills due soon",
-        message: `${billsDueNext7Days.bills.length} bill${
-          billsDueNext7Days.bills.length === 1 ? "" : "s"
-        } due within 7 days: $${billsDueNext7Days.total.toFixed(2)}.`,
+        title: "Expenses due soon",
+        message: `${expensesDueNext7Days.expenses.length} expense${
+          expensesDueNext7Days.expenses.length === 1 ? "" : "s"
+        } due within 7 days: $${expensesDueNext7Days.total.toFixed(2)}.`,
       });
     }
 
@@ -1151,7 +1107,7 @@ export default function CashFlowPage() {
     return alerts;
   }, [
     activeDebts,
-    billsDueNext7Days,
+    expensesDueNext7Days,
     creditUtilizationPercent,
     safeToSpend,
     unassignedBills,
@@ -1350,8 +1306,8 @@ export default function CashFlowPage() {
           safeToSpend={safeToSpend}
           requiredBeforePaycheck={requiredBeforePaycheck}
           startingBalance={startingBalance}
-          billsDueNext7Days={billsDueNext7Days}
-          billsAhead={billsAhead}
+          expensesDueNext7Days={expensesDueNext7Days}
+          expensesAhead={expensesAhead}
           unassignedObligationsCount={unassignedObligationsCount}
           fundingSourceRiskCount={fundingSourceRiskCount}
           recommendedNextSteps={recommendedNextSteps}
@@ -1360,8 +1316,8 @@ export default function CashFlowPage() {
 
         <MonthlyPaymentChecklist items={checklistItems} today={checklistDate} loading={loading} dataComplete={checklistDataComplete} incomeBuckets={incomeBuckets} extraPayment={suggestedMonthlyDebtAttack} targetName={recommendedTargetDebt?.name} />
 
-        <BillsAheadSection
-          billsAhead={billsAhead}
+        <ExpensesAheadSection
+          expensesAhead={expensesAhead}
           getFrequencyLabel={getFrequencyLabel}
           getIncomeBucketLabel={getIncomeBucketLabel}
           getPaymentConfigurationLabel={getPaymentConfigurationLabel}

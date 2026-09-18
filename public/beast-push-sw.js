@@ -8,6 +8,7 @@ self.addEventListener("push", (event) => {
   const allowed = [
     "/dashboard/notifications",
     "/dashboard/money/bills",
+    "/dashboard/money/cashflow",
     "/dashboard/messages",
     "/dashboard/admin/messages",
   ];
@@ -40,6 +41,7 @@ self.addEventListener("notificationclick", (event) => {
   const allowed = [
     "/dashboard/notifications",
     "/dashboard/money/bills",
+    "/dashboard/money/cashflow",
     "/dashboard/messages",
     "/dashboard/admin/messages",
   ];

@@ -28,6 +28,8 @@ export function dueBillReminders(input: {
   today: string;
   bills: ReminderBill[];
   payments: BillInputs["billPayments"];
+  debts?: (BillInputs["debts"][number] & { reminder_enabled?: boolean | null })[];
+  debtPayments?: BillInputs["debtPayments"];
   dueToday: boolean;
   dueTomorrow: boolean;
 }) {
@@ -41,14 +43,14 @@ export function dueBillReminders(input: {
       ...(tomorrow.slice(0, 7) !== input.today.slice(0, 7) ? [tomorrow] : []),
     ]),
   );
-  return months
+  const items = months
     .flatMap((today) =>
       buildMonthlyPaymentChecklist({
         today,
         bills,
-        debts: [],
+        debts: (input.debts || []).filter(debt => debt.reminder_enabled !== false),
         billPayments: input.payments,
-        debtPayments: [],
+        debtPayments: input.debtPayments || [],
       }),
     )
     .filter(
@@ -59,6 +61,8 @@ export function dueBillReminders(input: {
         ((input.dueToday && item.dueDate === input.today) ||
           (input.dueTomorrow && item.dueDate === tomorrow)),
     );
+  return Array.from(new Map(items.map(item => [item.id, item])).values())
+    .sort((a, b) => a.dueDate.localeCompare(b.dueDate) || a.name.localeCompare(b.name));
 }
 export function billPushMessage(
   items: ReturnType<typeof dueBillReminders>,
@@ -75,8 +79,8 @@ export function billPushMessage(
               `${item.name}: $${item.remaining.toFixed(2)} due ${item.dueDate === today ? "today" : "tomorrow"}`,
           )
           .join(" · ") + (items.length > 3 ? ` · ${items.length - 3} more` : "")
-      : "You have bills due today or tomorrow. Open BeastMoney to review them.",
-    url: "/dashboard/money/bills",
+      : "You have expenses due today or tomorrow. Open BeastMoney to review them.",
+    url: "/dashboard/money/cashflow",
     tag: `beast-bills-${today}`,
   };
 }

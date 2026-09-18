@@ -60,9 +60,9 @@ test("returning device restores preferences, saves updates without subscribing, 
   await ui.findByText("Notifications are on for this device");
   assert.equal(ui.queryByRole("button", { name: "Enable notifications" }), null);
   assert.equal((ui.getByLabelText("Device name") as HTMLInputElement).value, device.label);
-  assert.equal((ui.getByLabelText("Bill reminder hour") as HTMLSelectElement).value, "6");
-  assert.equal((ui.getByLabelText("Bills due tomorrow") as HTMLInputElement).checked, false);
-  fireEvent.click(ui.getByLabelText("Bills due tomorrow"));
+  assert.equal((ui.getByLabelText("Expense reminder hour") as HTMLSelectElement).value, "6");
+  assert.equal((ui.getByLabelText("Expenses due tomorrow") as HTMLInputElement).checked, false);
+  fireEvent.click(ui.getByLabelText("Expenses due tomorrow"));
   fireEvent.click(ui.getByRole("button", { name: "Save device settings" }));
   await ui.findByText("Device settings saved.");
   await waitFor(() => assert.equal(ui.getByRole("button", { name: "Save device settings" }).hasAttribute("disabled"), false));

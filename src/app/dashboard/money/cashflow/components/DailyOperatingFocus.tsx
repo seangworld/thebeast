@@ -3,8 +3,8 @@ type DailyOperatingFocusProps = {
   safeToSpend: number;
   requiredBeforePaycheck: number;
   startingBalance: number;
-  billsDueNext7Days: any;
-  billsAhead: any;
+  expensesDueNext7Days: any;
+  expensesAhead: any;
   unassignedObligationsCount: number;
   fundingSourceRiskCount: number;
   recommendedNextSteps: string[];
@@ -16,8 +16,8 @@ export default function DailyOperatingFocus({
   safeToSpend,
   requiredBeforePaycheck,
   startingBalance,
-  billsDueNext7Days,
-  billsAhead,
+  expensesDueNext7Days,
+  expensesAhead,
   unassignedObligationsCount,
   fundingSourceRiskCount,
   recommendedNextSteps,
@@ -102,32 +102,32 @@ export default function DailyOperatingFocus({
           </div>
 
           <div className="beast-panel p-4">
-            <div className="text-sm text-[#c7cfdb]">Bills Due 7 Days</div>
+            <div className="text-sm text-[#c7cfdb]">Expenses Due 7 Days</div>
             <div
               className={`mt-2 break-words text-2xl font-bold ${
-                billsDueNext7Days.total > Number(startingBalance || 0)
+                expensesDueNext7Days.total > Number(startingBalance || 0)
                   ? "text-red-300"
-                  : billsDueNext7Days.bills.length > 0
+                  : expensesDueNext7Days.expenses.length > 0
                   ? "text-yellow-300"
                   : "text-green-300"
               }`}
             >
-              ${billsDueNext7Days.total.toFixed(2)}
+              ${expensesDueNext7Days.total.toFixed(2)}
             </div>
           </div>
 
           <div className="beast-panel p-4">
-            <div className="text-sm text-[#c7cfdb]">Bills Due 30 Days</div>
+            <div className="text-sm text-[#c7cfdb]">Expenses Due 30 Days</div>
             <div
               className={`mt-2 break-words text-2xl font-bold ${
-                billsAhead.total > Number(startingBalance || 0)
+                expensesAhead.total > Number(startingBalance || 0)
                   ? "text-red-300"
-                  : billsAhead.bills.length > 0
+                  : expensesAhead.expenses.length > 0
                   ? "text-yellow-300"
                   : "text-green-300"
               }`}
             >
-              ${billsAhead.total.toFixed(2)}
+              ${expensesAhead.total.toFixed(2)}
             </div>
           </div>
 
