@@ -3225,7 +3225,7 @@ test("dashboard module navigation uses an exclusive accordion across responsive 
   assert.doesNotMatch(dashboardLayout, /\[\.\.\.current, activeExpandableModule\]/);
   assert.match(dashboardLayout, /aria-label=\{`\$\{expanded \? "Collapse" : "Expand"\} \$\{item\.label\}`\}/);
   assert.match(dashboardLayout, /aria-controls=\{navGroupId\}/);
-  assert.match(dashboardLayout, /controlIdPrefix="mobile"/);
+  assert.match(dashboardLayout, /controlIdPrefix:\s*"mobile"/);
   assert.match(dashboardLayout, /href=\{item\.href \|\| "#"\}/);
   assert.match(dashboardLayout, /item=\{beastOSNavigation\}/);
   assert.match(dashboardLayout, /aria-label="Life modules"/);
