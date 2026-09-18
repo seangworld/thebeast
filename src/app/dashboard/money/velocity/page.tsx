@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -47,10 +47,10 @@ type RecommendationValue = {
   alert?: boolean;
 };
 
-function loadStoredVelocitySettings() {
-  return mergeStoredVelocitySettings(
-    window.localStorage.getItem(VELOCITY_SETTINGS_STORAGE_KEY)
-  );
+function loadStoredVelocitySettings(userId: string) {
+  try { return mergeStoredVelocitySettings(
+    window.localStorage.getItem(`${VELOCITY_SETTINGS_STORAGE_KEY}:${userId}`)
+  ); } catch { return null; }
 }
 
 function logVelocitySettingsError(context: string, error: unknown) {
@@ -129,6 +129,8 @@ export default function VelocityPlannerPage() {
   const [extraAttack, setExtraAttack] = useState<number | null>(null);
   const [startingBalance, setStartingBalance] = useState<number | null>(null);
   const [buffer, setBuffer] = useState<number | null>(null);
+  const savePending = useRef(false);
+  const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [ownerId, setOwnerId] = useState("");
   const [velocitySettings, setVelocitySettings] =
@@ -146,40 +148,38 @@ export default function VelocityPlannerPage() {
 
   const load = useCallback(async () => {
     setLoading(true);
-
+    setSettingsStatus("idle");
+    try {
     const supabase = createClient();
     const userId = await getUserId();
 
-    if (!userId) {
-      setLoading(false);
-      return;
-    }
+    if (!userId) { setSettingsStatus("missing_user"); return; }
     setOwnerId(userId);
 
-    const { data: debtRows } = await supabase
+    const { data: debtRows, error: debtRowsError } = await supabase
       .from("debts")
       .select("*")
       .eq("user_id", userId);
 
-    const { data: incomeRows } = await supabase
+    const { data: incomeRows, error: incomeRowsError } = await supabase
       .from("income_events")
       .select("*")
       .eq("user_id", userId)
       .order("next_date", { ascending: true });
 
-    const { data: billRows } = await supabase
+    const { data: billRows, error: billRowsError } = await supabase
       .from("bill_events")
       .select("*")
       .eq("user_id", userId)
       .order("due_date", { ascending: true });
 
-    const { data: debtSettings } = await supabase
+    const { data: debtSettings, error: debtSettingsError } = await supabase
       .from("debt_settings")
       .select("*")
       .eq("user_id", userId)
       .maybeSingle();
 
-    const { data: cashSettings } = await supabase
+    const { data: cashSettings, error: cashSettingsError } = await supabase
       .from("cash_settings")
       .select("*")
       .eq("user_id", userId)
@@ -194,6 +194,7 @@ export default function VelocityPlannerPage() {
       .eq("user_id", userId)
       .maybeSingle();
 
+    if (debtRowsError || incomeRowsError || billRowsError || debtSettingsError || cashSettingsError || velocitySettingsError) throw new Error("Incomplete Velocity records");
     setDebts(debtRows || []);
     setIncomes(incomeRows || []);
     setBills(billRows || []);
@@ -217,7 +218,7 @@ export default function VelocityPlannerPage() {
     if (velocitySettingsRow) {
       setVelocitySettings(mapVelocitySettingsRow(velocitySettingsRow));
     } else if (!velocitySettingsError) {
-      const storedSettings = loadStoredVelocitySettings();
+      const storedSettings = loadStoredVelocitySettings(userId);
 
       if (storedSettings) {
         setVelocitySettings(storedSettings);
@@ -230,7 +231,8 @@ export default function VelocityPlannerPage() {
       setSettingsStatus("load_error");
     }
 
-    setLoading(false);
+    } catch { setSettingsStatus("load_error"); }
+    finally { setLoading(false); }
   }, [getUserId]);
 
   useEffect(() => {
@@ -592,6 +594,9 @@ export default function VelocityPlannerPage() {
   }
 
   async function saveVelocitySettings() {
+    if (savePending.current || loading || settingsStatus === "load_error") return;
+    savePending.current = true; setSaving(true);
+    try {
     const supabase = createClient();
     const userId = await getUserId();
 
@@ -619,7 +624,7 @@ export default function VelocityPlannerPage() {
 
     try {
       window.localStorage.setItem(
-        VELOCITY_SETTINGS_STORAGE_KEY,
+        `${VELOCITY_SETTINGS_STORAGE_KEY}:${userId}`,
         JSON.stringify(velocitySettings)
       );
     } catch {
@@ -627,7 +632,11 @@ export default function VelocityPlannerPage() {
     }
 
     setSettingsStatus("saved");
+    } catch { setSettingsStatus("save_error"); }
+    finally { savePending.current = false; setSaving(false); }
   }
+
+  if (loading || settingsStatus === "load_error" || settingsStatus === "missing_user") return <BeastMoneyShell title="Velocity Banking" description="Review your saved cash flow and planning assumptions."><div className="beast-panel p-5" role="status"><p>{loading ? "Loading your saved records…" : settingsStatus === "missing_user" ? "Sign in to view your Velocity plan." : "Your records could not be fully loaded. Retry before reviewing or changing this plan."}</p>{!loading ? <button className="beast-button mt-3" onClick={() => void load()}>Try again</button> : null}</div></BeastMoneyShell>;
 
   return (
     <BeastMoneyShell
@@ -827,7 +836,7 @@ export default function VelocityPlannerPage() {
             </div>
 
             <label className="mt-4 block text-sm text-[#c7cfdb]" htmlFor="velocity-selected-debt">Change selected HELOC</label>
-            <select id="velocity-selected-debt" className="beast-input mt-2" value={velocitySettings.selected_debt_id} onChange={(event) => updateVelocitySetting("selected_debt_id", event.target.value)}>
+            <select disabled={saving} id="velocity-selected-debt" className="beast-input mt-2" value={velocitySettings.selected_debt_id} onChange={(event) => updateVelocitySetting("selected_debt_id", event.target.value)}>
               <option value="">Select an eligible debt</option>
               {eligibleVelocityDebts.map((debt) => <option key={debt.id} value={debt.id}>{debt.name}</option>)}
             </select>
@@ -871,6 +880,7 @@ export default function VelocityPlannerPage() {
                   Maximum Utilization
                 </label>
                 <input
+                  disabled={saving}
                   className="beast-input mt-2"
                   inputMode="decimal"
                   max="100"
@@ -888,6 +898,7 @@ export default function VelocityPlannerPage() {
               <div>
                 <label className="text-sm text-[#c7cfdb]">Recovery Window</label>
                 <input
+                  disabled={saving}
                   className="beast-input mt-2"
                   inputMode="numeric"
                   min="1"
@@ -903,6 +914,7 @@ export default function VelocityPlannerPage() {
                   Emergency Reserve
                 </label>
                 <input
+                  disabled={saving}
                   className="beast-input mt-2"
                   inputMode="decimal"
                   min="0"
@@ -919,6 +931,7 @@ export default function VelocityPlannerPage() {
               </div>
               <label className="flex min-h-[44px] items-center gap-3 text-sm text-[#c7cfdb]">
                 <input
+                  disabled={saving}
                   type="checkbox"
                   checked={velocitySettings.allow_super_velocity}
                   onChange={(event) =>
@@ -968,6 +981,7 @@ export default function VelocityPlannerPage() {
               <button
                 type="button"
                 className="beast-button w-fit"
+                disabled={saving}
                 onClick={saveVelocitySettings}
               >
                 Save Velocity Settings
@@ -975,19 +989,9 @@ export default function VelocityPlannerPage() {
               {settingsStatus === "saved" ? (
                 <span className="text-sm text-green-200">Settings saved.</span>
               ) : null}
-              {settingsStatus === "load_error" ? (
-                <span className="text-sm text-red-200">
-                  Settings could not be loaded from your account.
-                </span>
-              ) : null}
               {settingsStatus === "save_error" ? (
                 <span className="text-sm text-red-200">
                   Settings could not be saved to your account. Please try again.
-                </span>
-              ) : null}
-              {settingsStatus === "missing_user" ? (
-                <span className="text-sm text-red-200">
-                  Sign in again before saving Velocity settings.
                 </span>
               ) : null}
             </div>

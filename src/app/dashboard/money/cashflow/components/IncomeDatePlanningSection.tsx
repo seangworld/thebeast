@@ -1,9 +1,12 @@
 "use client";
 
-import { useMemo, useRef, useState, type DragEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type DragEvent } from "react";
+
+import { projectPaycheckDraft, type PaycheckMove } from "../../../../../lib/paycheckDraft";
 
 type IncomeDatePlanningSectionProps = {
   incomeBucketPlans: any[];
+  fundingSources?: { id: string; type: string }[];
   unassignedBills: any[];
   unassignedDebts: any[];
   unassignedObligationsTotal: number;
@@ -28,10 +31,10 @@ function dueDateLabel(item: any) {
 }
 
 export default function IncomeDatePlanningSection({
-  incomeBucketPlans,
-  unassignedBills,
-  unassignedDebts,
-  unassignedObligationsTotal,
+  incomeBucketPlans: savedBuckets,
+  unassignedBills: savedUnassignedBills,
+  unassignedDebts: savedUnassignedDebts,
+  fundingSources = [],
   planningWindowDays,
   setPlanningWindowDays,
   recommendedTargetDebt,
@@ -39,6 +42,21 @@ export default function IncomeDatePlanningSection({
   updateBillIncomeDate,
   updateDebtIncomeDate,
 }: IncomeDatePlanningSectionProps) {
+  const [moves, setMoves] = useState<PaycheckMove[]>([]);
+  const moveHistory = useRef<PaycheckMove[]>([]);
+  const [draggingKey, setDraggingKey] = useState("");
+  function replaceMoves(next: PaycheckMove[]) { moveHistory.current = next; setMoves(next); }
+  const draft = projectPaycheckDraft(savedBuckets, savedUnassignedBills, savedUnassignedDebts, moves, fundingSources);
+  const incomeBucketPlans = moves.length ? draft.buckets : savedBuckets;
+  const unassignedBills = moves.length ? draft.unassignedBills : savedUnassignedBills;
+  const unassignedDebts = moves.length ? draft.unassignedDebts : savedUnassignedDebts;
+  const unassignedObligationsTotal = draft.unassignedTotal;
+  useEffect(() => {
+    if (!moves.length) return;
+    const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ""; };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [moves.length]);
   const [showIncomeTimeline, setShowIncomeTimeline] = useState(true);
   const [savingAssignment, setSavingAssignment] = useState("");
   const assignmentPending = useRef(false);
@@ -58,43 +76,53 @@ export default function IncomeDatePlanningSection({
     });
   }, [incomeBucketPlans, planningWindowDays]);
 
-  async function assignObligation(kind: "bill" | "debt", id: string, date: string) {
+  function assignObligation(kind: "bill" | "debt", id: string, date: string) {
     if (assignmentPending.current) return;
-    assignmentPending.current = true;
-    setSavingAssignment(`${kind}-${id}`);
-    setAssignmentMessage("");
+    replaceMoves([...moveHistory.current, { kind, id, date }]);
     setAssignmentFailed(false);
+    setAssignmentMessage("Draft updated. Save plan to keep your moves.");
+  }
+  function undo() {
+    if (assignmentPending.current || !moveHistory.current.length) return;
+    replaceMoves(moveHistory.current.slice(0, -1));
+    setAssignmentMessage("Undid one move. Save plan to keep the remaining changes.");
+  }
+  async function savePlan() {
+    if (assignmentPending.current || !moveHistory.current.length) return;
+    assignmentPending.current = true; setSavingAssignment("plan");
+    setAssignmentFailed(false); setAssignmentMessage("Saving your paycheck plan…");
+    const pending = projectPaycheckDraft(savedBuckets, savedUnassignedBills, savedUnassignedDebts, moveHistory.current, fundingSources).changes;
+    let savedCount = 0;
     try {
-      const result = kind === "bill"
-        ? await updateBillIncomeDate(id, date)
-        : await updateDebtIncomeDate(id, date);
-      setAssignmentFailed(!result.ok);
-      setAssignmentMessage(result.message);
+      for (const move of pending) {
+        const result = move.kind === "bill" ? await updateBillIncomeDate(move.id, move.date) : await updateDebtIncomeDate(move.id, move.date);
+        if (!result.ok) throw new Error(result.message);
+        savedCount++;
+        replaceMoves(moveHistory.current.filter(item => item.kind !== move.kind || item.id !== move.id));
+      }
+      setAssignmentMessage("Paycheck plan saved. No bank payments were made. Undo is available for new draft moves.");
     } catch {
       setAssignmentFailed(true);
-      setAssignmentMessage("Could not confirm the paycheck change. Refresh to check the assignment, then try again.");
-    } finally {
-      assignmentPending.current = false;
-      setSavingAssignment("");
-    }
+      setAssignmentMessage(`${savedCount} assignment(s) confirmed saved. Remaining draft moves are still here. A save could not be confirmed; check your saved assignments before retrying.`);
+    } finally { assignmentPending.current = false; setSavingAssignment(""); }
   }
-
-  function dragHandle(kind: "bill" | "debt", item: any) {
-    return (
-      <span
-        draggable={!savingAssignment}
-        title={`Drag ${item.name} to another paycheck, or use its selector`}
-        aria-hidden="true"
-        className="hidden cursor-grab select-none rounded border border-slate-600 px-2 py-1 text-slate-400 sm:inline-block"
-        onDragStart={(event) => {
-          if (assignmentPending.current) { event.preventDefault(); return; }
-          draggedItem.current = { kind, id: item.id, date: item.assigned_income_date || "" };
-          event.dataTransfer.effectAllowed = "move";
-          event.dataTransfer.setData("text/plain", `${kind}-${item.id}`);
-        }}
-        onDragEnd={() => { draggedItem.current = null; setDropTarget(null); }}
-      >↕</span>
-    );
+  function planControls() {
+    return <div className="mt-3 flex flex-wrap gap-2"><button type="button" className="beast-button-secondary" disabled={!moves.length || Boolean(savingAssignment)} onClick={undo}>Undo last move</button><button type="button" className="beast-button-primary" disabled={!moves.length || Boolean(savingAssignment)} onClick={() => void savePlan()}>{savingAssignment ? "Saving…" : "Save plan"}</button></div>;
+  }
+  function dragRow(kind: "bill" | "debt", item: any) {
+    return {
+      draggable: !savingAssignment,
+      title: `Drag ${item.name} to another paycheck, or use its selector`,
+      onDragStart: (event: DragEvent<HTMLElement>) => {
+        if (assignmentPending.current || (event.target as HTMLElement).closest("select,button,input")) { event.preventDefault(); return; }
+        draggedItem.current = { kind, id: item.id, date: item.assigned_income_date || "" };
+        setDraggingKey(`${kind}:${item.id}`);
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", `${kind}-${item.id}`);
+      },
+      onDragEnd: () => { draggedItem.current = null; setDraggingKey(""); setDropTarget(null); },
+      style: draggingKey === `${kind}:${item.id}` ? { backgroundColor: "rgba(34,211,238,0.2)", outline: "2px solid #67e8f9" } : undefined,
+    };
   }
 
   function dropZone(date: string) {
@@ -113,6 +141,7 @@ export default function IncomeDatePlanningSection({
         if (!item || assignmentPending.current) return;
         event.preventDefault();
         draggedItem.current = null;
+        setDraggingKey("");
         setDropTarget(null);
         if (item.date !== date) void assignObligation(item.kind, item.id, date);
       },
@@ -200,7 +229,7 @@ export default function IncomeDatePlanningSection({
           <h2 className="money-section-title">Paycheck Strategy</h2>
           <p className="money-section-description">
             Plan the next month paycheck by paycheck. Choose what each deposit
-            covers, see what remains, and direct safe extra money to the suggested debt. Drag the arrow handle between paychecks on desktop, or use the paycheck selectors.
+            covers, see what remains, and direct safe extra money to the suggested debt. Drag an entire row between paychecks, or use its selector. Moves stay in a draft until you save. Each Undo reverses one move; Save plan saves the whole draft across all pots.
           </p>
         </div>
 
@@ -218,13 +247,14 @@ export default function IncomeDatePlanningSection({
       <div className="mb-5 flex flex-col gap-2 rounded-xl border border-[#2a3242] bg-[#0f1419] p-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="font-bold text-white">Planning window</div>
-          <p className="text-sm text-[#7f8da3]">This controls Paycheck Strategy only. Your Cash Flow alert window stays unchanged.</p>
+          <p className="text-sm text-[#7f8da3]">This controls Paycheck Strategy only. Save or undo draft moves before changing the window.</p>
         </div>
         <label className="text-sm font-semibold text-[#c7cfdb]">
           Show upcoming
           <select
             className="beast-input ml-2 w-auto min-w-[130px]"
             aria-label="Paycheck strategy planning window"
+            disabled={moves.length > 0 || Boolean(savingAssignment)}
             value={planningWindowDays}
             onChange={(event) => setPlanningWindowDays(Number(event.target.value))}
           >
@@ -351,6 +381,8 @@ export default function IncomeDatePlanningSection({
           </div>
         ) : null}
 
+        <p className="text-sm text-slate-300">{moves.length ? `${moves.length} unsaved move(s). Save before leaving this page.` : "No unsaved moves."}</p>
+        {planControls()}
         {assignmentMessage ? (
           <div className="rounded-xl border border-cyan-300/30 bg-cyan-300/10 px-4 py-3 text-sm text-cyan-100" role={assignmentFailed ? "alert" : "status"}>
             {assignmentMessage}
@@ -363,16 +395,16 @@ export default function IncomeDatePlanningSection({
             <p className="mt-1 text-sm text-[#c7cfdb]">Choose the paycheck that should cover each obligation. Drop an item here to unassign it.</p>
             <div className="mt-4 grid gap-2">
               {unassignedBills.map((bill) => (
-                <div key={`unassigned-bill-${bill.id}`} className="flex flex-col gap-2 rounded-lg bg-[#0f1419] p-3 sm:flex-row sm:items-center sm:justify-between">
+                <div {...dragRow("bill", bill)} key={`unassigned-bill-${bill.id}`} className="flex flex-col gap-2 rounded-lg bg-[#0f1419] p-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="min-w-0 flex-1"><div className="truncate font-bold text-white">{bill.name}</div><div className="text-xs text-[#7f8da3]">Bill · <span className="whitespace-nowrap">{formatMoney(Number(bill.remaining || bill.amount || 0))}</span> · Due {dueDateLabel(bill)}</div></div>
-                  {dragHandle("bill", bill)}
+
                   {paycheckSelect("bill", bill)}
                 </div>
               ))}
               {unassignedDebts.map((debt) => (
-                <div key={`unassigned-debt-${debt.id}`} className="flex flex-col gap-2 rounded-lg bg-[#0f1419] p-3 sm:flex-row sm:items-center sm:justify-between">
+                <div {...dragRow("debt", debt)} key={`unassigned-debt-${debt.id}`} className="flex flex-col gap-2 rounded-lg bg-[#0f1419] p-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="min-w-0 flex-1"><div className="truncate font-bold text-white">{debt.name}</div><div className="text-xs text-[#7f8da3]">Debt minimum · <span className="whitespace-nowrap">{formatMoney(Number(debt.minimum_payment || 0))}</span> · Due {dueDateLabel(debt)}</div></div>
-                  {dragHandle("debt", debt)}
+
                   {paycheckSelect("debt", debt)}
                 </div>
               ))}
@@ -426,6 +458,7 @@ export default function IncomeDatePlanningSection({
                             )} safe after buffer`}
                       </div>
                     </div>
+                    {planControls()}
                   </div>
 
                   <div className="p-4 text-sm text-[#c7cfdb]">
@@ -461,6 +494,7 @@ export default function IncomeDatePlanningSection({
                       <ul className="space-y-2">
                         {bucket.assignedBills.map((bill: any) => (
                           <li
+                            {...dragRow("bill", bill)}
                             key={`bill-${bucket.id}-${bill.id}`}
                             className="flex flex-col gap-2 rounded-lg bg-white/[0.03] p-2 sm:flex-row sm:items-center sm:justify-between"
                           >
@@ -468,13 +502,14 @@ export default function IncomeDatePlanningSection({
                               <div className="flex min-w-0 items-baseline gap-2"><span className="truncate font-semibold text-white">{bill.name}</span><span className="shrink-0 whitespace-nowrap">{formatMoney(Number(bill.remaining || 0))}</span></div>
                               <div className="text-xs text-[#7f8da3]">Due {dueDateLabel(bill)}</div>
                             </div>
-                            {dragHandle("bill", bill)}
+
                   {paycheckSelect("bill", bill)}
                           </li>
                         ))}
 
                         {bucket.assignedDebts.map((debt: any) => (
                           <li
+                            {...dragRow("debt", debt)}
                             key={`debt-${bucket.id}-${debt.id}`}
                             className="flex flex-col gap-2 rounded-lg bg-white/[0.03] p-2 sm:flex-row sm:items-center sm:justify-between"
                           >
@@ -482,7 +517,7 @@ export default function IncomeDatePlanningSection({
                               <div className="flex min-w-0 items-baseline gap-2"><span className="truncate font-semibold text-white">{debt.name} minimum</span><span className="shrink-0 whitespace-nowrap">{formatMoney(Number(debt.minimum_payment || 0))}</span></div>
                               <div className="text-xs text-[#7f8da3]">Due {dueDateLabel(debt)}</div>
                             </div>
-                            {dragHandle("debt", debt)}
+
                   {paycheckSelect("debt", debt)}
                           </li>
                         ))}
