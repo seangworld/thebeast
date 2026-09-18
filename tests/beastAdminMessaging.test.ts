@@ -347,7 +347,7 @@ test("BA-129 provides member and admin workspaces without calling them AI chat",
   );
 
   assert.match(memberPage, />Messages</);
-  assert.match(memberPage, /Private account and support communication/);
+  assert.match(memberPage, /Your private conversations with the Beast support team/);
   assert.match(memberWorkspace, /get_beast_member_admin_thread/);
   assert.match(memberWorkspace, /Send reply/);
   assert.match(memberWorkspace, /Archive/);

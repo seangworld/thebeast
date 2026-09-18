@@ -10,6 +10,8 @@ import {
 import "./globals.css";
 
 export const metadata: Metadata = {
+  manifest: "/manifest.webmanifest",
+  appleWebApp: { capable: true, title: "Beast", statusBarStyle: "default" },
   metadataBase: new URL(beastOSProductionOrigin),
   title: "BeastOS | The Beast Platform",
   description:

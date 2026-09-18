@@ -88,9 +88,9 @@ export const personalHubSections: PersonalHubSection[] = [
     id: "notification-preferences",
     label: "Notification Preferences",
     description:
-      "Shared notification channels, quiet hours, and module-level delivery choices.",
-    href: `${personalHubCanonicalRoute}#notification-preferences`,
-    availability: "planned",
+      "Phone and device alerts, bill reminders, private messages, and quiet hours.",
+    href: "/dashboard/settings/notifications",
+    availability: "available",
   },
   {
     id: "privacy",

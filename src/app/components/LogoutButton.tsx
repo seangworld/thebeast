@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { stopLocalPush } from "@/lib/notifications/pushClient";
 import { createClient } from "@/lib/supabase/client";
 
 export default function LogoutButton() {
@@ -33,6 +34,8 @@ export default function LogoutButton() {
 
     try {
       const supabase = createClient();
+      // Best-effort local unsubscribe prevents notifications on a shared signed-out device.
+      await stopLocalPush().catch(() => {});
       const { error: signOutError } = await supabase.auth.signOut();
 
       if (signOutError) {

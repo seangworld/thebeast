@@ -232,7 +232,7 @@ test("Personal Hub keeps shared identity editable without developer ownership pa
   );
   const navigation = readFileSync("src/lib/moduleNavigation.ts", "utf8");
 
-  assert.match(settingsProfilePage, /Save Personal Hub/);
+  assert.match(settingsProfilePage, /Save changes/);
   assert.doesNotMatch(settingsProfilePage, /Shared Goals and Plans/);
   assert.doesNotMatch(settingsProfilePage, /Goals are outcomes\. Plans are paths\./);
   assert.match(legacyProfilePage, /personalInformationCanonicalRoute/);

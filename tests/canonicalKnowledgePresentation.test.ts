@@ -109,7 +109,8 @@ test("AP-106 member workspaces query canonical records with owner scope", () => 
   assert.match(education, /from\("education_career_profile_items"\)[\s\S]*?\.eq\("owner_id", userId\)/);
   assert.match(health, /loadCanonicalMemberHealthRecords\(client, userId\)/);
   assert.match(healthLoader, /from\("beast_health_records"\)[\s\S]*?\.eq\("owner_id", ownerId\)/);
-  assert.match(runtime, /education_career_profile_items/);
+  assert.match(runtime, /guidanceCounselorContextQueries/);
+  assert.match(readFileSync("src/lib/digitalStaffRuntime/educationContext.ts", "utf8"), /education_career_profile_items/);
   assert.match(runtime, /beast_health_records/);
 });
 

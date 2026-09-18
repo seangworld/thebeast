@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { requireMemberModuleEntitlement } from "@/lib/memberAgeServer";
 import {
   DashboardCard,
   ModuleBadge,
@@ -83,12 +84,16 @@ async function loadProfessionalActivity(): Promise<ActivityLoadResult> {
     }
 
     const ownerId = userData.user.id;
+    const [moneyAccess, healthAccess] = await Promise.all([requireMemberModuleEntitlement("money", {supabase:client,user:userData.user}), requireMemberModuleEntitlement("health", {supabase:client,user:userData.user})]);
+    const empty = {data:[],error:null};
     const [
       goalResult,
       documentResult,
       educationProfileResult,
       retirementTimelineResult,
       retirementReportResult,
+      healthResult,
+      paymentsResult,
     ] = await Promise.all([
       loadUserGoals(client as unknown as BeastGoalDataClient),
       loadUserDocuments(client as unknown as BeastDocumentDataClient),
@@ -99,19 +104,25 @@ async function loadProfessionalActivity(): Promise<ActivityLoadResult> {
         )
         .eq("owner_id", ownerId)
         .maybeSingle(),
-      client
+      moneyAccess.ok ? client
         .from("retirement_timeline_runs")
         .select("id, calculation_version, created_at")
         .eq("owner_id", ownerId)
         .order("created_at", { ascending: false })
-        .limit(25),
-      client
+        .limit(25) : empty,
+      moneyAccess.ok ? client
         .from("retirement_report_exports")
         .select("id, format, created_at")
         .eq("owner_id", ownerId)
         .order("created_at", { ascending: false })
-        .limit(25),
+        .limit(25) : empty,
+      healthAccess.ok ? client.from("beast_health_records").select("id,title,updated_at").eq("owner_id",ownerId).neq("status","archived").order("updated_at",{ascending:false}).limit(25) : empty,
+      moneyAccess.ok ? client.from("bill_payments").select("id,amount_paid,created_at").eq("user_id",ownerId).order("created_at",{ascending:false}).limit(25) : empty,
     ]);
+    const recent:PlatformTimelineItem[] = [
+      ...(healthResult.error ? [] : healthResult.data || []).map(row=>({id:`health:${row.id}`,source:"health" as const,sourceRecordId:row.id,kind:"Updated" as const,title:"Health record updated",summary:row.title,occurredAt:row.updated_at,visibility:"Owner" as const,href:"/dashboard/health",meaningful:true,details:[]})),
+      ...(paymentsResult.error ? [] : paymentsResult.data || []).map(row=>({id:`bill-payment:${row.id}`,source:"money" as const,sourceRecordId:row.id,kind:"Completed" as const,title:"Bill payment recorded",summary:`$${Number(row.amount_paid).toFixed(2)} recorded in BeastMoney.`,occurredAt:row.created_at,visibility:"Owner" as const,href:"/dashboard/money/bills",meaningful:true,details:[]})),
+    ];
 
     const goals = goalResult.status === "ready" ? goalResult.goals : [];
     const documents =
@@ -144,21 +155,21 @@ async function loadProfessionalActivity(): Promise<ActivityLoadResult> {
         );
 
     return {
-      items: buildProfessionalActivities({
+      items: [...recent,...buildProfessionalActivities({
         educationProfile,
         retirementTimelineRuns,
         retirementReports,
-        documents,
+        documents: documents.filter(document=>document.status!=="Deleted"),
         goals,
         goalContributions: contributions,
-      }),
+      })],
       signedOut: false,
       unavailable:
-        goalResult.status === "unavailable" &&
-        documentResult.status === "unavailable" &&
-        Boolean(educationProfileResult.error) &&
-        Boolean(retirementTimelineResult.error) &&
-        Boolean(retirementReportResult.error),
+        goalResult.status === "unavailable" ||
+        documentResult.status === "unavailable" ||
+        Boolean(educationProfileResult.error) ||
+        Boolean(retirementTimelineResult.error) ||
+        Boolean(retirementReportResult.error) || Boolean(healthResult.error) || Boolean(paymentsResult.error) || (!moneyAccess.ok && moneyAccess.status===503) || (!healthAccess.ok && healthAccess.status===503),
     };
   } catch {
     return { items: [], signedOut: false, unavailable: true };
@@ -183,25 +194,25 @@ export default async function TimelinePage({
   const emptyMessage = activity.signedOut
     ? "Sign in to see how your Beast professionals have been working with you."
     : activity.unavailable
-      ? "Professional activity could not be loaded right now. Please try again."
+      ? "Some activity could not be loaded right now. Please refresh to try again."
       : selectedFilter.id === "all"
-        ? "Your professional activity will appear here as Beast helps you make meaningful progress."
-        : `No meaningful ${selectedFilter.label.toLowerCase()} activity yet.`;
+        ? "Your activity will appear here as you save goals, documents, and plans."
+        : `No ${selectedFilter.label.toLowerCase()} activity yet.`;
 
   return (
     <main className="beast-page">
       <div className="beast-container space-y-8">
         <PlatformServiceHero
           module="timeline"
-          eyebrow="BeastOS Shared Service"
-          title="Professional Activity"
-          description="A chronological record of the meaningful work your Beast professionals have done with you."
+          eyebrow="Your activity"
+          title="Your timeline"
+          description="See your saved goals, documents, health updates, and recorded bill payments."
         />
 
         <DashboardCard accent="timeline">
           <SectionHeader
             eyebrow="Activity Feed"
-            title="What Beast has been working on"
+            title="Your recent activity"
             description="Filter by area without losing the context of your shared history."
           />
           <nav
@@ -233,6 +244,7 @@ export default async function TimelinePage({
           </nav>
         </DashboardCard>
 
+        {activity.unavailable && groups.length > 0 && <p role="status" className="text-amber-100">Some activity could not be loaded. The items below are available; refresh to try again.</p>}
         {groups.length ? (
           <div className="space-y-5">
             {groups.map((group) => (
@@ -306,7 +318,7 @@ export default async function TimelinePage({
           <DashboardCard accent="timeline">
             <div className="py-8 text-center">
               <div className="text-lg font-black text-white">
-                Nothing meaningful to show yet
+                No activity to show yet
               </div>
               <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-[#9aa7b8]">
                 {emptyMessage}
