@@ -255,10 +255,10 @@ test("BO-27 Today routes item actions through source-owned contracts", () => {
     /future rescheduledFor/
   );
   assert.match(todayContributionContractRules[4], /contract/);
-  assert.match(todayPage, /Dismiss/);
-  assert.match(todayPage, /Snooze 1h/);
-  assert.match(todayPage, /Complete/);
-  assert.match(todayPage, /Tomorrow/);
+  assert.match(todayPage, /href=\{item.actionUrl\}/);
+  assert.doesNotMatch(todayPage, /Snooze 1h|request sent to/);
+  assert.match(todayPage, /update this item’s status or date/);
+  assert.match(todayPage, /source-workspace/);
   assert.doesNotMatch(todayPage, /module contract events/);
   assert.doesNotMatch(todayPage, /from\("learning_activities"\)\s*\.update/);
 });

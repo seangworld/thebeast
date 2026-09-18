@@ -40,13 +40,9 @@ import {
 import {
   assembleTodayDayPlan,
   buildManualTodayContribution,
-  buildTodayItemActionRequest,
   getTodayContributionExplanation,
-  getTodayItemActionAvailability,
   todayContributionSources,
   type TodayContribution,
-  type TodayItemActionRequest,
-  type TodayItemActionType,
 } from "@/lib/platform/today";
 import {
   buildEducationPlanningContributions,
@@ -140,8 +136,6 @@ export default function TodayPage() {
   const [state, setState] = useState<TodayState>(emptyState);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
-  const [actionRequest, setActionRequest] =
-    useState<TodayItemActionRequest | null>(null);
   const [manualItemTitle, setManualItemTitle] = useState("");
   const [manualTodayItems, setManualTodayItems] = useState<TodayContribution[]>([]);
   const { now } = useRuntimeToday();
@@ -407,15 +401,6 @@ export default function TodayPage() {
   const primaryPriorityExplanation = primaryPriority
     ? getTodayContributionExplanation(primaryPriority)
     : null;
-  const primaryActionAvailability = primaryPriority
-    ? getTodayItemActionAvailability(primaryPriority)
-    : null;
-  const actionButtons: { action: TodayItemActionType; label: string }[] = [
-    { action: "Dismiss", label: "Dismiss" },
-    { action: "Snooze", label: "Snooze 1h" },
-    { action: "Complete", label: "Complete" },
-    { action: "Reschedule", label: "Tomorrow" },
-  ];
   const mobileTodayCards = useMemo(
     () => buildMobileTodayCards(todayDayPlan.active, 3),
     [todayDayPlan.active]
@@ -493,31 +478,6 @@ export default function TodayPage() {
         .map(({ goal }) => goal),
     [now, state.goals]
   );
-
-  function handleTodayAction(
-    contribution: TodayContribution,
-    action: TodayItemActionType
-  ) {
-    const requestedAt = new Date().toISOString();
-    const snoozedUntil = new Date(Date.now() + 60 * 60 * 1000).toISOString();
-    const rescheduledFor = new Date(Date.now() + 24 * 60 * 60 * 1000);
-    rescheduledFor.setHours(9, 0, 0, 0);
-
-    const request = buildTodayItemActionRequest({
-      contribution,
-      action,
-      requestedAt,
-      reason: `${action} requested from BeastOS Today for ${contribution.source}.`,
-      snoozedUntil: action === "Snooze" ? snoozedUntil : undefined,
-      rescheduledFor:
-        action === "Reschedule" ? rescheduledFor.toISOString() : undefined,
-    });
-
-    setActionRequest(request);
-    setMessage(
-      `${action} request sent to ${request.source}.`
-    );
-  }
 
   function addManualTodayItem() {
     const title = manualItemTitle.trim();
@@ -639,24 +599,7 @@ export default function TodayPage() {
             </div>
           ))}
 
-          {primaryPriority && primaryActionAvailability ? (
-            <div
-              className="grid grid-cols-2 gap-2"
-              data-mobile-today-source-actions="module-contract-event"
-            >
-              {actionButtons.map(({ action, label }) => (
-                <button
-                  key={action}
-                  type="button"
-                  onClick={() => handleTodayAction(primaryPriority, action)}
-                  disabled={!primaryActionAvailability[action]}
-                  className="min-h-[44px] rounded-lg border border-[#2a3242] bg-[#111827] px-3 py-2 text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          ) : null}
+          {primaryPriority && <p className="text-sm text-slate-400" data-mobile-today-source-actions="source-workspace">Open the item above to update its status or date in the relevant workspace.</p>}
         </section>
 
         <DashboardCard accent="beastos" className="hidden md:block">
@@ -674,7 +617,6 @@ export default function TodayPage() {
           <div className="mt-5 grid gap-3">
             {todayDayPlan.active.slice(0, 5).map((item, index) => {
               const explanation = getTodayContributionExplanation(item);
-              const availability = getTodayItemActionAvailability(item);
 
               return (
                 <article
@@ -722,21 +664,7 @@ export default function TodayPage() {
                       {item.recommendedAction}
                     </Link>
                   </div>
-                  {index === 0 ? (
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      {actionButtons.map(({ action, label }) => (
-                        <button
-                          key={action}
-                          type="button"
-                          onClick={() => handleTodayAction(item, action)}
-                          disabled={!availability[action]}
-                          className="rounded-lg border border-[#2a3242] bg-[#0f1419] px-3 py-2 text-xs font-black text-white disabled:cursor-not-allowed disabled:opacity-40"
-                        >
-                          {label}
-                        </button>
-                      ))}
-                    </div>
-                  ) : null}
+                  {index === 0 && <p className="mt-3 text-xs text-slate-400">Use the workspace link to update this item’s status or date.</p>}
                 </article>
               );
             })}
@@ -998,13 +926,7 @@ export default function TodayPage() {
           </DashboardCard>
         </section>
 
-        {actionRequest ? (
-          <DashboardCard accent="beastos">
-            <p className="text-sm font-semibold leading-6 text-[#dbe3ef]">
-              {actionRequest.action} was sent to {actionRequest.source}.
-            </p>
-          </DashboardCard>
-        ) : null}
+
 
         <details
           id="education-planning"

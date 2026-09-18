@@ -141,7 +141,7 @@ test("BF-MOB-003 adds mobile quick surfaces to Today Notifications Calendar and 
   assert.match(calendar, /data-mobile-shared-service="calendar"/);
   assert.match(search, /data-mobile-shared-service="search"/);
   assert.match(search, /id="beast-unified-search"/);
-  assert.match(today, /data-mobile-today-source-actions="module-contract-event"/);
+  assert.match(today, /data-mobile-today-source-actions="source-workspace"/);
 });
 
 test("BF-MOB-003 keeps mobile shared surfaces narrow and desktop routes intact", () => {

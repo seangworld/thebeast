@@ -39,7 +39,6 @@ import {
   buildMobileFutureModuleCards,
   type MobileFutureModuleCard,
 } from "@/lib/mobileFutureModules";
-import { buildMobileHouseholdAlertCards } from "@/lib/mobilePersonalHub";
 import { beastHealthOverview, beastHealthPages } from "./health/pages";
 import { beastHomeOverview, beastHomePages } from "./home/pages";
 
@@ -418,84 +417,83 @@ export default function TodayPage() {
   const [state, setState] = useState<MoneyState>(initialMoneyState);
   const [user, setUser] = useState<CurrentUser>({ name: "" });
   const [loading, setLoading] = useState(true);
+  const [sourceError, setSourceError] = useState("");
   const { now, today } = useRuntimeToday();
 
   const loadTodaySources = useCallback(async () => {
     setLoading(true);
-    let supabase: ReturnType<typeof createClient>;
-
+    setSourceError("");
     try {
-      supabase = createClient();
+      const supabase = createClient();
+
+      const { data: userData } = await supabase.auth.getUser();
+      const authUser = userData?.user;
+      const userId = authUser?.id;
+
+      if (!userId) throw new Error("Authentication required");
+
+      const [
+        profileResult,
+        debtsResult,
+        billsResult,
+        incomesResult,
+        cashSettingsResult,
+        billPaymentsResult,
+        debtPaymentsResult,
+      ] =
+        await Promise.all([
+          supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
+          supabase.from("debts").select("*").eq("user_id", userId),
+          supabase
+            .from("bill_events")
+            .select("*")
+            .eq("user_id", userId)
+            .order("due_date", { ascending: true }),
+          supabase
+            .from("income_events")
+            .select("*")
+            .eq("user_id", userId)
+            .order("next_date", { ascending: true }),
+          supabase.from("cash_settings").select("*").eq("user_id", userId).maybeSingle(),
+          supabase
+            .from("bill_payments")
+            .select("*")
+            .eq("user_id", userId)
+            .order("created_at", { ascending: false })
+            .limit(8),
+          supabase
+            .from("debt_payments")
+            .select("*")
+            .eq("user_id", userId)
+            .is("reversed_at", null)
+            .order("created_at", { ascending: false })
+            .limit(8),
+        ]);
+
+      if ([profileResult, debtsResult, billsResult, incomesResult, cashSettingsResult, billPaymentsResult, debtPaymentsResult].some(result => result.error)) throw new Error("Home sources unavailable");
+
+      setUser({
+        name: getProfileDisplayName(profileResult.data, authUser || null),
+        role:
+          profileResult.data && "role" in profileResult.data
+            ? String(profileResult.data.role)
+            : null,
+      });
+      setState({
+        debts: (debtsResult.data || []) as MoneyDebt[],
+        bills: (billsResult.data || []) as MoneyBill[],
+        incomes: (incomesResult.data || []) as MoneyIncome[],
+        cashSettings: cashSettingsResult.data as MoneySettings | null,
+        billPayments: (billPaymentsResult.data || []) as MoneyPayment[],
+        debtPayments: activeDebtPayments(
+          (debtPaymentsResult.data || []) as MoneyPayment[]
+        ),
+      });
     } catch {
+      setSourceError("Your home information could not be loaded. Please try again, or open your Dashboard.");
+    } finally {
       setLoading(false);
-      return;
     }
-
-    const { data: userData } = await supabase.auth.getUser();
-    const authUser = userData?.user;
-    const userId = authUser?.id;
-
-    if (!userId) {
-      setLoading(false);
-      return;
-    }
-
-    const [
-      profileResult,
-      debtsResult,
-      billsResult,
-      incomesResult,
-      cashSettingsResult,
-      billPaymentsResult,
-      debtPaymentsResult,
-    ] =
-      await Promise.all([
-        supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
-        supabase.from("debts").select("*").eq("user_id", userId),
-        supabase
-          .from("bill_events")
-          .select("*")
-          .eq("user_id", userId)
-          .order("due_date", { ascending: true }),
-        supabase
-          .from("income_events")
-          .select("*")
-          .eq("user_id", userId)
-          .order("next_date", { ascending: true }),
-        supabase.from("cash_settings").select("*").eq("user_id", userId).maybeSingle(),
-        supabase
-          .from("bill_payments")
-          .select("*")
-          .eq("user_id", userId)
-          .order("created_at", { ascending: false })
-          .limit(8),
-        supabase
-          .from("debt_payments")
-          .select("*")
-          .eq("user_id", userId)
-          .is("reversed_at", null)
-          .order("created_at", { ascending: false })
-          .limit(8),
-      ]);
-
-    setUser({
-      name: getProfileDisplayName(profileResult.data, authUser || null),
-      role:
-        profileResult.data && "role" in profileResult.data
-          ? String(profileResult.data.role)
-          : null,
-    });
-    setState({
-      debts: (debtsResult.data || []) as MoneyDebt[],
-      bills: (billsResult.data || []) as MoneyBill[],
-      incomes: (incomesResult.data || []) as MoneyIncome[],
-      cashSettings: cashSettingsResult.data as MoneySettings | null,
-      billPayments: (billPaymentsResult.data || []) as MoneyPayment[],
-      debtPayments: activeDebtPayments(
-        (debtPaymentsResult.data || []) as MoneyPayment[]
-      ),
-    });
-    setLoading(false);
   }, []);
 
   useEffect(() => {
@@ -588,7 +586,6 @@ export default function TodayPage() {
   const mobileCalendarItem = timelineItems.find(
     (item) => item.module === "calendar"
   ) || timelineItems[0] || null;
-  const mobileHouseholdAlerts = buildMobileHouseholdAlertCards();
   const mobileFutureModules = buildMobileFutureModuleCards({
     isOwner: user.role === "admin",
     foundations: [
@@ -611,6 +608,8 @@ export default function TodayPage() {
     ],
   });
 
+  if (sourceError) return <main className="beast-page"><div className="beast-container space-y-5"><h1 className="beast-title">BeastOS Home</h1><p role="alert" className="text-amber-100">{sourceError}</p><div className="flex flex-wrap gap-3"><button type="button" className="beast-button" onClick={() => void loadTodaySources()}>Try again</button><Link href="/dashboard/today" className="beast-button-secondary">Open Dashboard</Link></div></div></main>;
+
   return (
     <main className="beast-page">
       <div className="beast-container space-y-8">
@@ -628,7 +627,7 @@ export default function TodayPage() {
                 Today
               </Link>
               <Link
-                href="/dashboard/search#shared-ai"
+                href="/dashboard/director"
                 className="beast-button-secondary min-h-[44px]"
               >
                 Ask AI
@@ -691,7 +690,7 @@ export default function TodayPage() {
           <section className="space-y-3">
             <div className="flex items-center justify-between gap-3">
               <h2 className="text-lg font-black text-white">Quick access</h2>
-              <ModuleBadge module="beastos" label="Permission aware" />
+              <ModuleBadge module="beastos" label="Your workspaces" />
             </div>
             <div className="grid gap-3">
               {mobileModuleCards.map((card) => (
@@ -706,7 +705,7 @@ export default function TodayPage() {
               ))}
               <MobileLaunchCard
                 title="Quick uploads"
-                detail="Add documents to the shared BeastOS upload flow for later review."
+                detail="Upload and organize your documents."
                 href="/dashboard/uploads"
                 module="documents"
                 action="Upload"
@@ -718,18 +717,7 @@ export default function TodayPage() {
                 module="goals"
                 action="Open goals"
               />
-              <div data-mobile-personal-hub="household-alerts">
-                {mobileHouseholdAlerts.map((alert) => (
-                  <MobileLaunchCard
-                    key={alert.id}
-                    title={alert.title}
-                    detail={`${alert.summary} ${alert.metadata.join(", ")}.`}
-                    href={alert.href}
-                    module="beastos"
-                    action={alert.actionLabel}
-                  />
-                ))}
-              </div>
+              <MobileLaunchCard title="Family & household" detail="Review the family and household details you have saved." href="/dashboard/settings/profile#household-context" module="beastos" action="Open personal information" />
             </div>
           </section>
 
@@ -767,7 +755,7 @@ export default function TodayPage() {
               </div>
               <p className="beast-subtitle">
                 {"Today's Focus"} brings your learning, money, and calendar
-                signals into one daily plan.
+                dates into one daily plan.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -818,7 +806,7 @@ export default function TodayPage() {
                     <div className="text-xs font-bold uppercase text-[#bae6fd]/70">
                       Learning
                     </div>
-                    <div className="mt-1 text-xl font-black">2 activities</div>
+                    <div className="mt-1 text-xl font-black">Open your learning plan</div>
                   </div>
                   <div>
                     <div className="text-xs font-bold uppercase text-[#bae6fd]/70">

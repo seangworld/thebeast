@@ -119,6 +119,7 @@ export default function RelationshipCenterPage() {
   >([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -200,7 +201,7 @@ export default function RelationshipCenterPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [refreshKey]);
 
   return (
     <main className="beast-page">
@@ -216,20 +217,20 @@ export default function RelationshipCenterPage() {
           <SectionHeader
             eyebrow="Long-term relationships"
             title="The same professionals, over time"
-            description="Relationship Center reads saved conversations and durable context. It does not invent history or change how any professional works."
+            description="Pick up where you left off with your advisors. Your saved conversations help show your priorities and next steps."
           />
           <div className="mt-5 grid gap-3 sm:grid-cols-3">
             <div className="rounded-xl border border-[#2a3242] bg-[#0f1419] p-4">
               <p className="text-sm font-black text-white">Household relationships</p>
-              <p className="mt-2 text-xs leading-5 text-[#9aa7b8]">People connected through owner-controlled household permissions.</p>
+              <p className="mt-2 text-xs leading-5 text-[#9aa7b8]">Manage the family and household details you have saved in Personal Hub.</p>
             </div>
             <div className="rounded-xl border border-[#2a3242] bg-[#0f1419] p-4">
               <p className="text-sm font-black text-white">Human contacts</p>
-              <p className="mt-2 text-xs leading-5 text-[#9aa7b8]">People you record or communicate with; they are never presented as Digital Professionals.</p>
+              <p className="mt-2 text-xs leading-5 text-[#9aa7b8]">Keep helpful personal contacts in your saved notes and documents.</p>
             </div>
             <div className="rounded-xl border border-cyan-300/25 bg-cyan-300/5 p-4">
               <p className="text-sm font-black text-white">Digital Professionals</p>
-              <p className="mt-2 text-xs leading-5 text-[#9aa7b8]">Permissioned Beast professionals with explicit capabilities, limitations, and status.</p>
+              <p className="mt-2 text-xs leading-5 text-[#9aa7b8]">Meet your advisors and choose who can help with your next question.</p>
               <Link href="/dashboard/digital-staff" className="mt-3 inline-flex text-xs font-black text-cyan-200 hover:text-cyan-100">
                 Meet the Digital Staff →
               </Link>
@@ -265,6 +266,7 @@ export default function RelationshipCenterPage() {
             <p role="alert" className="text-sm font-semibold text-red-100">
               {error}
             </p>
+            <button type="button" onClick={() => setRefreshKey(value => value + 1)} className="beast-button mt-3">Try again</button>
           </DashboardCard>
         ) : null}
 

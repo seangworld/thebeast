@@ -65,7 +65,8 @@ test("BF-MOB-005 exposes mobile Personal Hub quick surfaces on approved routes",
   const uploads = readFileSync("src/app/dashboard/uploads/page.tsx", "utf8");
   const goals = readFileSync("src/app/dashboard/goals/page.tsx", "utf8");
 
-  assert.match(dashboard, /data-mobile-personal-hub="household-alerts"/);
+  assert.match(dashboard, /settings\/profile#household-context/);
+  assert.doesNotMatch(dashboard, /buildMobileHouseholdAlertCards/);
   assert.match(uploads, /data-mobile-personal-hub="quick-uploads"/);
   assert.match(goals, /LifePlanningHub/);
   assert.match(uploads, /data-mobile-source-contract=\{card.dispatchMode\}/);

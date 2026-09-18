@@ -174,7 +174,7 @@ test("BO-314 presents every relationship dimension with honest states", () => {
   assert.match(page, /Confidence basis/);
   assert.match(page, /Loading professional relationships/);
   assert.match(page, /could not be loaded right now/);
-  assert.match(page, /does not invent history or change how any professional works/);
+  assert.match(page, /Your saved conversations help show your priorities and next steps/);
 });
 
 test("BO-314 is reachable through secondary desktop and mobile navigation", () => {

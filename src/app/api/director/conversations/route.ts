@@ -1,12 +1,10 @@
+import { loadDirectorContext } from "@/lib/directorContext";
 import { NextResponse } from "next/server";
 import {
   directorProfessionalId,
-  type DirectorContext,
-  type DirectorSignal,
 } from "@/lib/director";
 import { runDigitalStaffRuntime, safeDigitalStaffFailure, type ConversationState, type RuntimeMessage } from "@/lib/digitalStaffRuntime";
 import { createRouteClient } from "@/lib/supabase/server";
-import { getDebtLifecycleLabel, getDebtLifecycleStatus } from "@/lib/debtLifecycle";
 
 export const dynamic = "force-dynamic";
 
@@ -114,181 +112,6 @@ export async function GET() {
   });
 }
 
-function goalSignals(rows: Record<string, unknown>[]): DirectorSignal[] {
-  return rows.map((row) => ({
-    id: String(row.id),
-    domain:
-      row.category === "Money"
-        ? "money"
-        : row.category === "Education" || row.category === "Career"
-          ? "education"
-          : row.category === "Health"
-            ? "health"
-            : "goals",
-    label: String(row.title),
-    status: String(row.status),
-    date: typeof row.target_date === "string" ? row.target_date : null,
-    detail:
-      typeof row.current_step === "string" && row.current_step
-        ? `Current step: ${row.current_step}`
-        : "Review the saved goal and choose its next step.",
-    href: "/dashboard/goals",
-    source: "BeastGoals",
-    updatedAt: typeof row.updated_at === "string" ? row.updated_at : null,
-  }));
-}
-
-async function loadDirectorContext(
-  supabase: ReturnType<typeof createRouteClient>,
-  ownerId: string
-): Promise<DirectorContext> {
-  const [goals, debts, health, roadmaps, documents, conversations] =
-    await Promise.all([
-      supabase
-        .from("beast_goals")
-        .select("id, title, category, status, target_date, current_step, updated_at")
-        .eq("owner_id", ownerId)
-        .neq("status", "Archived")
-        .order("updated_at", { ascending: false })
-        .limit(20),
-      supabase
-        .from("debts")
-        .select(
-          "id, name, balance, minimum_payment, next_due_date_after_payment, payment_behavior, lifecycle_status, is_archived"
-        )
-        .eq("user_id", ownerId)
-        .eq("is_archived", false)
-        .limit(20),
-      supabase
-        .from("beast_health_records")
-        .select("id, record_type, title, status, occurred_on, updated_at")
-        .eq("owner_id", ownerId)
-        .neq("status", "archived")
-        .order("updated_at", { ascending: false })
-        .limit(20),
-      supabase
-        .from("education_career_roadmaps")
-        .select("id, title, status, progress, updated_at")
-        .eq("owner_id", ownerId)
-        .neq("status", "archived")
-        .order("updated_at", { ascending: false })
-        .limit(10),
-      supabase
-        .from("beast_documents")
-        .select("id, title, category, status, updated_at")
-        .eq("owner_id", ownerId)
-        .order("updated_at", { ascending: false })
-        .limit(10),
-      supabase
-        .from("agent_conversations")
-        .select("agent_id, summary, updated_at")
-        .eq("owner_id", ownerId)
-        .in("agent_id", [
-          "beastmoney.money-coach",
-          "beasteducation.guidance-counselor",
-          "beasthealth.health-advisor",
-        ])
-        .eq("archived", false)
-        .order("updated_at", { ascending: false })
-        .limit(12),
-    ]);
-
-  const signals: DirectorSignal[] = [
-    ...(goals.error ? [] : goalSignals((goals.data || []) as Record<string, unknown>[])),
-    ...(debts.error
-      ? []
-      : ((debts.data || []) as Record<string, unknown>[]).map((row) => ({
-          id: String(row.id),
-          domain: "money" as const,
-          label: String(row.name),
-          status: getDebtLifecycleLabel(getDebtLifecycleStatus(row)),
-          date:
-            typeof row.next_due_date_after_payment === "string"
-              ? row.next_due_date_after_payment
-              : null,
-          detail:
-            "Balance and minimum payment are available in BeastMoney. Review the current record before acting.",
-          href: "/dashboard/money/debts",
-          source: "BeastMoney debt record",
-          updatedAt: null,
-        }))),
-    ...(health.error
-      ? []
-      : ((health.data || []) as Record<string, unknown>[]).map((row) => ({
-          id: String(row.id),
-          domain: "health" as const,
-          label: String(row.title),
-          status: String(row.status),
-          date: typeof row.occurred_on === "string" ? row.occurred_on : null,
-          detail: `Saved ${String(row.record_type).replaceAll("_", " ")} record. Medical meaning must remain with a qualified clinician.`,
-          href: "/dashboard/health",
-          source: "BeastHealth record",
-          updatedAt: typeof row.updated_at === "string" ? row.updated_at : null,
-        }))),
-    ...(roadmaps.error
-      ? []
-      : ((roadmaps.data || []) as Record<string, unknown>[]).map((row) => ({
-          id: String(row.id),
-          domain: "education" as const,
-          label: String(row.title),
-          status: String(row.status),
-          date: null,
-          detail: `Saved education or career plan at ${Number(row.progress || 0)}% progress.`,
-          href: "/dashboard/education/education-planning",
-          source: "BeastEducation roadmap",
-          updatedAt: typeof row.updated_at === "string" ? row.updated_at : null,
-        }))),
-  ];
-  const unavailableSources = [
-    goals.error ? "BeastGoals" : "",
-    debts.error ? "BeastMoney" : "",
-    health.error ? "BeastHealth" : "",
-    roadmaps.error ? "BeastEducation" : "",
-    documents.error ? "BeastDocuments" : "",
-    conversations.error ? "specialist conversation summaries" : "",
-  ].filter(Boolean);
-  const specialistNames: Record<string, { name: string; href: string }> = {
-    "beastmoney.money-coach": {
-      name: "Money Coach",
-      href: "/dashboard/money/coach",
-    },
-    "beasteducation.guidance-counselor": {
-      name: "Guidance Counselor",
-      href: "/dashboard/education/guidance-counselor",
-    },
-    "beasthealth.health-advisor": {
-      name: "Health Advisor",
-      href: "/dashboard/health/ai-advisor",
-    },
-  };
-  const seen = new Set<string>();
-  const specialistSummaries = conversations.error
-    ? []
-    : ((conversations.data || []) as Record<string, unknown>[]).flatMap((row) => {
-        const professionalId = String(row.agent_id);
-        if (seen.has(professionalId)) return [];
-        seen.add(professionalId);
-        const overview =
-          row.summary && typeof row.summary === "object"
-            ? (row.summary as Record<string, unknown>).overview
-            : null;
-        const professional = specialistNames[professionalId];
-        if (!professional || typeof overview !== "string" || !overview.trim())
-          return [];
-        return [
-          {
-            professionalId,
-            professionalName: professional.name,
-            summary: overview.trim(),
-            updatedAt: String(row.updated_at),
-            href: professional.href,
-          },
-        ];
-      });
-
-  return { signals, specialistSummaries, unavailableSources };
-}
-
 export async function POST(request: Request) {
   const requestId = crypto.randomUUID();
   const { supabase, user } = await authenticatedClient();
@@ -394,7 +217,7 @@ export async function POST(request: Request) {
   const userMessageId = crypto.randomUUID();
   const directorMessageId = crypto.randomUUID();
   const [context, recentResult, memoryResult] = await Promise.all([
-    loadDirectorContext(supabase, user.id),
+    loadDirectorContext(supabase, user),
     supabase.from("agent_conversation_messages").select("id, sender, content, created_at").eq("owner_id", user.id).eq("conversation_id", conversation.id).order("created_at", { ascending: false }).limit(12),
     supabase.from("agent_memories").select("memory_key, value, updated_at").eq("owner_id", user.id).eq("agent_id", directorProfessionalId).order("updated_at", { ascending: false }).limit(12),
   ]);
