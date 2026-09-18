@@ -101,7 +101,7 @@ test("desktop and mobile navigation share exclusive state and active-child logic
   assert.match(layout, /expandedModule === item\.module/);
   assert.match(layout, /active=\{active\}/);
   assert.match(layout, /isBeastMoneyNavigationActive\(item, pathname, locationHash\)/);
-  assert.match(layout, /controlIdPrefix="mobile"/);
+  assert.match(layout, /controlIdPrefix:\s*"mobile"/);
   assert.match(layout, /aria-expanded=\{expanded\}/);
   assert.match(layout, /aria-controls=\{navGroupId\}/);
   assert.match(layout, /handleModuleLabelNavigation/);
