@@ -1324,6 +1324,7 @@ export default function CashFlowPage() {
         />
 
         <IncomeDatePlanningSection
+          fundingSources={fundingSources}
           incomeBucketPlans={incomeBucketPlans}
           unassignedBills={unassignedBills}
           unassignedDebts={unassignedDebts}

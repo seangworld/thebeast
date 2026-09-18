@@ -102,8 +102,8 @@ This is the working checklist for this module pass, not the platform-wide roadma
 - Navigation now keeps its scroll position through dashboard page changes, with separate desktop, compact and mobile positions; mobile reopening restores its position during the current layout session.
 - Removed the duplicated immediate-attention block from the Money dashboard. The broader briefing/autopay workflow remains open in #170.
 - Health awareness/flu and crisis-support cards now stretch to equal height when displayed side by side, retaining natural stacked sizing on narrow screens.
-- [ ] Retirement #175: distinguish blank assumptions from zero; prevent repeated saves and saves after failed loading; report a saved scenario separately from a failed timeline snapshot.
-- [ ] Velocity Banking #172: handle failed prerequisite reads explicitly and review browser-local settings for member isolation.
+- [x] Retirement #175: distinguish blank assumptions from zero; prevent repeated saves and saves after failed loading; report a saved scenario separately from a failed timeline snapshot.
+- [x] Velocity Banking #172: handle failed prerequisite reads explicitly and review browser-local settings for member isolation.
 - [ ] App Store roadmap: finish member cleanup, then scope BeastOS for iPhone first and SEANGWORLD News afterward. This is planning, not an App Store release.
 - Browser recheck after the owner's reset still timed out; no signed-in visual pass is claimed. Production release evidence belongs in the accompanying PR; earlier notification and Money updates remain unverified live.
 
@@ -127,3 +127,14 @@ This is the working checklist for this module pass, not the platform-wide roadma
 - Digital Staff: simplified profile and conversation-review wording. Owner development directory remains gated. Relationship Center already has owner-scoped data, loading/error/retry states; no new data mutation was needed in this pass.
 - [ ] Verify notification invitation disappears on desktop after phone setup in a signed-in browser.
 - [ ] Verify Home photo review/save/reload/export against a test account; do not alter the owner's inventory for testing.
+
+## Money follow-up implementation
+
+- Paycheck assignment moves are drafts until Save plan. Each income pot has Save and Undo controls; every Undo reverses exactly one movement. Whole rows highlight while dragging. Window changes are disabled while a draft is pending. Reload/close warns about pending moves; internal navigation is not blocked, so visible guidance says to save before leaving.
+- Save applies the final assignments sequentially through owner-scoped existing handlers. Confirmed assignments leave the draft; a failure retains remaining moves and reports partial completion. This is not an atomic batch and never initiates bank payments. Missing rows cannot be reported as successful writes. Undo history resets after saving.
+- Retirement distinguishes blank assumptions from explicit zero, blocks overlapping saves and writes following failed loads, and accurately distinguishes saved assumptions from a failed timeline snapshot.
+- Velocity refuses incomplete prerequisite data, recovers from thrown load/save errors, blocks duplicate saves and scopes browser settings by member. Legacy unscoped browser fallback is ignored.
+- Reports member copy simplified. Its existing load/error/retry and print controls were reviewed. Financial Documents and Financial Goals retain shared module-filtered workflows. Money Coach prompt retains current owner-scoped calculations, meaningful unknown/zero handling and bounded advice; no new prompt change was necessary in this review. These are source checks, not live advisory quality passes.
+- Validation: 40 focused draft/drag/Velocity/Retirement tests, TypeScript test compilation, lint and production build passed. Five draft/drag tests and lint rerun after final save guards. Signed-in visual and personal-record mutation checks remain unperformed.
+- Core production deployment `dpl_84Gwz4QvXu3DyxXvBBg9wrpAqvbL` for PR180 reports READY. Money follow-up production status is recorded in its release PR.
+- Still open: scheduled notification delivery, Taylor live research quality, original veteran articles and durable decision history, broader autopay reconciliation. Retirement account types (401k/TSP etc.) remain roadmap issue #177.

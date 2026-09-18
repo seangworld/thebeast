@@ -967,7 +967,7 @@ export function MoneyWorkspacePage({
     return (
       <BeastMoneyShell
         title="Reports"
-        description="Printable financial summaries produced from your current BeastMoney records and existing calculation engines."
+        description="Printable financial summaries based on your current BeastMoney records."
       >
         {loading ? (
           <FinancialMissionControlLoading />
@@ -1000,8 +1000,7 @@ export function MoneyWorkspacePage({
                 </h2>
                 <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-300">
                   Monthly activity, debt progress, interest, net position, and
-                  Velocity summaries remain grounded in the shared BeastMoney
-                  engines.
+                  Velocity summaries use your saved records and current plan.
                 </p>
               </div>
               <button

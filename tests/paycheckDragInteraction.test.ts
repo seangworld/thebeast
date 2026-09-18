@@ -33,7 +33,7 @@ function fixture(writer: (id: string, date: string) => Promise<{ok: boolean; mes
   return { ...view, tomorrow };
 }
 
-test("dragging an obligation saves through the existing writer once and locks selectors while pending", async () => {
+test("dragging previews a move; explicit Save writes once and locks selectors", async () => {
   const calls: string[][] = [];
   let finish!: (result: {ok: boolean; message: string}) => void;
   const view = fixture((id, date) => { calls.push([id,date]); return new Promise(resolve => { finish = resolve; }); });
@@ -43,18 +43,21 @@ test("dragging an obligation saves through the existing writer once and locks se
   fireEvent.dragOver(bucket, {dataTransfer: transfer});
   fireEvent.drop(bucket, {dataTransfer: transfer});
   fireEvent.drop(bucket, {dataTransfer: transfer});
+  assert.deepEqual(calls, []);
+  fireEvent.click(within(view.container).getAllByRole("button", { name: "Save plan" })[0]);
   assert.deepEqual(calls, [["rent",view.tomorrow]]);
   assert.equal((within(view.container).getByLabelText("Paycheck covering Rent") as HTMLSelectElement).disabled, true);
   finish({ok:true,message:"Assignment saved"});
   await waitFor(() => assert.equal((within(view.container).getByLabelText("Paycheck covering Rent") as HTMLSelectElement).disabled, false));
 });
 
-test("failed assignment displays an actionable error and allows retry without changing the selection", async () => {
+test("failed save preserves the draft and gives an actionable message", async () => {
   const view = fixture(async () => { throw new Error("network"); });
   const select = within(view.container).getByLabelText("Paycheck covering Rent") as HTMLSelectElement;
   fireEvent.change(select, {target:{value:view.tomorrow}});
+  fireEvent.click(within(view.container).getAllByRole("button", { name: "Save plan" })[0]);
   await within(view.container).findByRole("alert");
   assert.equal(select.disabled, false);
-  assert.equal(select.value, "");
-  assert.match(view.container.textContent || "", /Refresh to check the assignment/);
+  assert.equal((within(view.container).getByLabelText("Paycheck covering Rent") as HTMLSelectElement).value, view.tomorrow);
+  assert.match(view.container.textContent || "", /check your saved assignments/);
 });

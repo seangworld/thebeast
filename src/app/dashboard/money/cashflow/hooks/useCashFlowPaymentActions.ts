@@ -115,7 +115,9 @@ export function useCashFlowPaymentActions({
         assigned_income_date: assignedIncomeDate || null,
       })
       .eq("id", billId)
-      .eq("user_id", userId);
+      .eq("user_id", userId)
+      .select("id")
+      .single();
 
     if (error) return { ok: false, message: "Unable to update this bill assignment. Please retry." };
     await load();
@@ -136,7 +138,9 @@ export function useCashFlowPaymentActions({
         assigned_income_date: assignedIncomeDate || null,
       })
       .eq("id", debtId)
-      .eq("user_id", userId);
+      .eq("user_id", userId)
+      .select("id")
+      .single();
 
     if (error) return { ok: false, message: "Unable to update this debt assignment. Please retry." };
     await load();
