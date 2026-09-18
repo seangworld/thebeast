@@ -96,3 +96,13 @@ This is the working checklist for this module pass, not the platform-wide roadma
 
 - Payoff Plan what-if custom order now supports whole-row drag highlighting, explicit drop positions, cancel without reorder and numbered-position fallback. Preview changes still require the existing copy-to-settings and save controls; no automatic financial writes.
 - What-if comparison starts with the current page strategy when supported; every card and its retained Review button select the payment preview. Current settings are also selectable. Preview selection is explicitly separate from saving the strategy.
+
+## Evening member review follow-up
+
+- Navigation now keeps its scroll position through dashboard page changes, with separate desktop, compact and mobile positions; mobile reopening restores its position during the current layout session.
+- Removed the duplicated immediate-attention block from the Money dashboard. The broader briefing/autopay workflow remains open in #170.
+- Health awareness/flu and crisis-support cards now stretch to equal height when displayed side by side, retaining natural stacked sizing on narrow screens.
+- [ ] Retirement #175: distinguish blank assumptions from zero; prevent repeated saves and saves after failed loading; report a saved scenario separately from a failed timeline snapshot.
+- [ ] Velocity Banking #172: handle failed prerequisite reads explicitly and review browser-local settings for member isolation.
+- [ ] App Store roadmap: finish member cleanup, then scope BeastOS for iPhone first and SEANGWORLD News afterward. This is planning, not an App Store release.
+- Browser recheck after the owner's reset still timed out; no signed-in visual pass is claimed. Production release evidence belongs in the accompanying PR; earlier notification and Money updates remain unverified live.

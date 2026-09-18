@@ -1098,7 +1098,7 @@ export function MoneyWorkspacePage({
           <button type="button" className="beast-button mt-6 min-h-11" onClick={loadMoneySnapshot}>Try again</button>
         </section>
       ) : (
-        <div className="grid gap-5"><DebtImmediateAttention awareness={snapshot.debtAwareness} surface="Dashboard" /><DebtImmediateAttention awareness={snapshot.debtAwareness} surface="Daily Briefing" /><FinancialMissionControl model={financialMissionControl} /></div>
+        <div className="grid gap-5"><DebtImmediateAttention awareness={snapshot.debtAwareness} surface="Dashboard" /><FinancialMissionControl model={financialMissionControl} /></div>
       )}
       <ProductRoadmapModulePreview product="BeastMoney" />
     </BeastMoneyShell>

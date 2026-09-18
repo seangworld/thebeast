@@ -26,7 +26,7 @@ export function HealthSupportResources() {
   }, []);
 
   return (
-    <div className="grid min-w-0 items-start gap-3 lg:grid-cols-2">
+    <div className="grid min-w-0 items-stretch gap-3 lg:grid-cols-2">
       {awareness ? <section aria-label="Health awareness spotlight" className="min-w-0 rounded-xl border border-slate-700 bg-slate-900/40 p-4">
         <p className="text-xs font-semibold uppercase tracking-wide text-pink-300">{awareness.monthLabel} · {awareness.observance ? "Health awareness" : "Health spotlight"}</p>
         <h2 className="mt-1 font-bold text-slate-100">{awareness.spotlight.title}</h2>
