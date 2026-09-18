@@ -53,7 +53,8 @@ test("dashboard calendar does not hardcode July 4 as today", () => {
   assert.doesNotMatch(calendarPage, /calendarYear\s*=\s*2026/);
   assert.doesNotMatch(calendarPage, /calendarMonthIndex\s*=\s*6/);
   assert.doesNotMatch(calendarPage, /dayOfMonth\s*===\s*4/);
-  assert.match(calendarPage, /getBeastRuntimeDateParts/);
+  assert.match(calendarPage, /new Date\(\)/);
+  assert.match(calendarPage, /resolvedOptions\(\).timeZone/);
   assert.doesNotMatch(
     spacedRepetition,
     /today\s*=\s*"2026-07-04"/

@@ -32,8 +32,8 @@ test("member notifications omit implementation contracts without removing the in
     "utf8"
   );
 
-  assert.match(page, /buildNotificationInbox/);
-  assert.match(page, /buildNotificationDigest/);
+  assert.match(page, /BillDueNotifications/);
+  assert.match(page, /Manage device notifications/);
   assert.match(page, /FeedbackReleaseNotifications/);
   assert.match(page, /PrivateAdminMessageNotifications/);
   assert.doesNotMatch(page, /Notification Contracts|notificationContractRules|Action dispatch/);
@@ -62,7 +62,7 @@ test("Personal Hub exposes real saved workflows and makes planned areas non-inte
   assert.match(page, /href=\{section\.href\}/);
   assert.match(page, /data-personal-hub-availability="available"/);
   assert.match(profile, /\.from\("profiles"\)/);
-  assert.match(profile, /\.update\(\{/);
+  assert.match(profile, /\.update\(patch\)/);
   assert.match(profile, /preferred_name/);
   assert.match(profile, /location/);
   assert.match(profile, /timezone/);
@@ -71,7 +71,7 @@ test("Personal Hub exposes real saved workflows and makes planned areas non-inte
   assert.match(page, /plannedSections\.map/);
   assert.match(page, /data-personal-hub-availability="planned"/);
   assert.doesNotMatch(page, /plannedSections\.map[\s\S]*<Link/);
-  assert.match(page, /Not available yet/);
+  assert.match(page, /aren’t available yet/);
   assert.doesNotMatch(
     page,
     /One shared identity|Context and specialist boundaries|Relationships and shared context|Lifecycle and shared visibility|Responsive states and support/
@@ -86,7 +86,8 @@ test("other BeastOS member workspaces omit developer contract panels", () => {
   const today = readFileSync("src/app/dashboard/today/page.tsx", "utf8");
 
   assert.doesNotMatch(calendar, /Calendar Contracts|calendarContractRules|dispatchMode/);
-  assert.match(calendar, /Recurring events and reminders/);
+  assert.match(calendar, /Set up device reminders/);
+  assert.doesNotMatch(calendar, /sharedCalendarEvents|moneyEventDays|serviceEvents/);
   assert.doesNotMatch(
     today,
     /Cross-module contribution contract|todayContributionContractRules/

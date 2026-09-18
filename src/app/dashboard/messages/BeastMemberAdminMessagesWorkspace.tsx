@@ -128,7 +128,7 @@ export function BeastMemberAdminMessagesWorkspace() {
       if (!nextThread) throw new Error("Private message data was invalid.");
       setThread(nextThread);
       setBody("");
-      setSuccess("Your private message was sent to Beast Administration.");
+      setSuccess("Your private message was sent to Beast support.");
       announceUnreadChange();
     } catch (sendError) {
       setError(humanizeMessagingError(sendError));
@@ -174,8 +174,8 @@ export function BeastMemberAdminMessagesWorkspace() {
       <DashboardCard accent="notifications">
         <SectionHeader
           eyebrow="Private messages"
-          title="Opening your conversation with Beast Administration"
-          description="Loading only your authenticated administrative thread."
+          title="Opening your conversation with Beast support"
+          description="Loading your private conversation."
         />
         <div
           className="mt-5 h-48 animate-pulse rounded-xl border border-[#2a3242] bg-[#111827]"
@@ -231,7 +231,7 @@ export function BeastMemberAdminMessagesWorkspace() {
         <DashboardCard accent="notifications">
           <SectionHeader
             eyebrow="Private account support"
-            title="Start a conversation with Beast Administration"
+            title="Start a conversation with Beast support"
             description="Ask for help with your Beast account, report a problem, or request support. This is private communication—not AI chat."
           />
         </DashboardCard>
@@ -243,7 +243,7 @@ export function BeastMemberAdminMessagesWorkspace() {
           title={
             thread
               ? "Continue the private conversation"
-              : "How can Beast Administration help?"
+              : "How can Beast support help?"
           }
           description="Messages are retained as account and support history. Editing and silent deletion are not available."
         />
@@ -301,7 +301,7 @@ export function BeastMemberAdminMessagesWorkspace() {
               disabled={sending}
               className="beast-button min-h-11 disabled:cursor-wait disabled:opacity-60"
             >
-              {sending ? "Sending…" : thread ? "Send reply" : "Send to Admin"}
+              {sending ? "Sending…" : thread ? "Send reply" : "Send message"}
             </button>
           </div>
         </form>

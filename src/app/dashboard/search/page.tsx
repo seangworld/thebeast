@@ -236,6 +236,7 @@ async function loadUnifiedSearch(): Promise<UnifiedSearchLoadResult> {
           "id, title, summary, category, status, current_step, source_module, updated_at"
         )
         .eq("owner_id", ownerId)
+        .is("deleted_at", null)
         .order("updated_at", { ascending: false })
         .limit(100),
       client
@@ -244,6 +245,7 @@ async function loadUnifiedSearch(): Promise<UnifiedSearchLoadResult> {
           "id, title, category, status, file_name, mime_type, source_module, updated_at"
         )
         .eq("owner_id", ownerId)
+        .neq("status", "Deleted")
         .order("updated_at", { ascending: false })
         .limit(100),
       canSearchMoney

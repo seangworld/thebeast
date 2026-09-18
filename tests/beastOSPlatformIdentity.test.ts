@@ -136,7 +136,7 @@ test("BO-313 aligns shared page titles and metadata without changing behavior", 
   assert.match(homeRedirect, /Log In/);
   assert.match(today, /BeastOS Command Center/);
   assert.match(today, /connected applications/);
-  assert.match(calendar, /eyebrow="BeastOS Shared Service"/);
-  assert.match(notifications, /eyebrow="BeastOS Shared Service"/);
-  assert.match(notifications, /every Beast application/);
+  assert.match(calendar, /Your calendar/);
+  assert.match(notifications, /className="beast-title">Notifications/);
+  assert.match(notifications, /Your reminders, private messages, and updates from Beast/);
 });

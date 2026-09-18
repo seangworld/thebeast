@@ -678,7 +678,7 @@ test("BO-308 keeps BeastOS focused and BO-311 makes Personal Hub canonical", () 
   );
   for (const destination of [
     "Personal Information",
-    "Household",
+    "Family & household",
     "Family",
     "Emergency Contacts",
     "Notification Preferences",
@@ -686,7 +686,7 @@ test("BO-308 keeps BeastOS focused and BO-311 makes Personal Hub canonical", () 
     "Connected Modules",
     "AI Preferences",
     "Communication Preferences",
-    "Future Memory Settings",
+    "Memory Settings",
     "Theme & Display",
   ]) {
     assert.match(
@@ -702,7 +702,7 @@ test("BO-308 keeps BeastOS focused and BO-311 makes Personal Hub canonical", () 
   assert.match(settingsPage, /id=\{section\.id\}/);
   assert.match(settingsPage, /data-personal-hub-availability="available"/);
   assert.match(settingsPage, /data-personal-hub-availability="planned"/);
-  assert.match(settingsPage, /Not available yet/);
+  assert.match(settingsPage, /aren’t available yet/);
   assert.match(settingsProfilePage, /Personal Information/);
   assert.match(legacyProfilePage, /redirect\(personalInformationCanonicalRoute\)/);
 });
@@ -776,7 +776,7 @@ test("BO-31 Calendar models unified source events with permissions", () => {
   );
   assert.match(calendarContractRules[2], /permission scope/);
   assert.doesNotMatch(calendarPage, /calendarContractRules/);
-  assert.match(calendarPage, /permissionScope/);
+  assert.match(readFileSync("src/app/api/calendar/route.ts", "utf8"), /eq\("owner_id", user.id\)/);
 });
 
 test("BO-32 Calendar builds month week day and agenda views", () => {
@@ -821,8 +821,8 @@ test("BO-32 Calendar builds month week day and agenda views", () => {
   assert.equal(views.week.length, 1);
   assert.equal(views.day.length, 1);
   assert.equal(views.agenda.length, 2);
-  assert.match(calendarPage, /buildCalendarViews/);
-  assert.match(calendarPage, /calendarViews\.agenda/);
+  assert.match(calendarPage, /buildMonthGrid/);
+  assert.match(calendarPage, /agenda.map/);
 });
 
 test("BO-33 Calendar recurrence and drag rescheduling preserve source rules", () => {
@@ -858,7 +858,7 @@ test("BO-33 Calendar recurrence and drag rescheduling preserve source rules", ()
   assert.equal(request.sourceRulesPreserved, true);
   assert.equal(request.source, "learning");
   assert.match(calendarContractRules[3], /source contract event/);
-  assert.match(calendarPage, /buildRecurringCalendarEvents/);
+  assert.match(readFileSync("src/lib/calendar/memberSchedule.ts", "utf8"), /buildMonthlyPaymentChecklist/);
   assert.doesNotMatch(calendarPage, /buildCalendarRescheduleRequest/);
   assert.doesNotMatch(calendarPage, /dispatchMode/);
 });
@@ -900,9 +900,9 @@ test("BO-34 Calendar detects conflicts reminders and time zone issues", () => {
     [15, 60]
   );
   assert.throws(() => normalizeCalendarTimeZone("Mars/Base"), /Unsupported/);
-  assert.match(calendarPage, /detectCalendarConflicts/);
-  assert.match(calendarPage, /buildCalendarReminders/);
-  assert.match(calendarPage, /America\/New_York/);
+  assert.doesNotMatch(calendarPage, /sharedCalendarEvents|detectCalendarConflicts/);
+  assert.match(calendarPage, /settings\/notifications/);
+  assert.match(calendarPage, /resolvedOptions\(\).timeZone/);
 });
 
 function buildSearchFixtureItems(): PlatformSearchItem[] {
@@ -1169,8 +1169,8 @@ test("BO-40 Notifications centralize source priority severity and state", () => 
   assert.equal(grouped.warning[0].sourceRecordId, "cashflow-alert-1");
   assert.equal(grouped.info[0].source, "learning");
   assert.match(notificationContractRules[0], /shared inbox/);
-  assert.match(notificationsPage, /buildNotificationInbox/);
-  assert.match(notificationsPage, /sourceRecordId/);
+  assert.match(notificationsPage, /PrivateAdminMessageNotifications/);
+  assert.match(notificationsPage, /BillDueNotifications/);
 });
 
 test("BO-41 Notifications route actions preferences and digests safely", () => {
@@ -1194,7 +1194,7 @@ test("BO-41 Notifications route actions preferences and digests safely", () => {
   assert.deepEqual(digest.sources, ["learning", "money"]);
   assert.match(notificationContractRules[3], /source contract events/);
   assert.doesNotMatch(notificationsPage, /buildNotificationActionRequest/);
-  assert.match(notificationsPage, /buildNotificationDigest/);
+  assert.match(notificationsPage, /Manage device notifications/);
 });
 
 function buildSharedAIContextFixtureItems(): SharedAIContextItem[] {
@@ -1242,7 +1242,7 @@ test("BO-42 Shared AI assembles permissioned context without exposing contracts 
   assert.match(sharedAIContractRules[0], /permissioned context assembly/);
   assert.doesNotMatch(settingsPage, /buildSharedAIContext/);
   assert.doesNotMatch(settingsPage, /sharedAIContractRules/);
-  assert.match(settingsPage, /Planned Personal Hub settings/);
+  assert.match(settingsPage, /Features coming later/);
 });
 
 test("BO-43 Shared AI frames recommendations from context metadata", () => {
@@ -3098,7 +3098,8 @@ test("home and today navigation render stable route shells during data loading",
   assert.doesNotMatch(todaySource, /\{loading \? \([\s\S]*?\) : \(\s*<>\s*<section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"/);
   assert.doesNotMatch(homeSource, /Opening your dashboard/);
   assert.doesNotMatch(todaySource, /Opening your dashboard/);
-  assert.doesNotMatch(calendarSource, /const \[loading, setLoading\]/);
+  assert.match(calendarSource, /Loading your calendar/);
+  assert.doesNotMatch(calendarSource, /if \(loading\) return/);
 });
 
 test("learning onboarding validation names the exact missing required field", () => {

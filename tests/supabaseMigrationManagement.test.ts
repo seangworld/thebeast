@@ -114,6 +114,11 @@ const expectedCliMigrations = [
   "20260912185142_index_kdp_chapter_ownership.sql",
   "20260913190420_client_work_history.sql",
   "20260914103000_expand_site_wide_orchestrator_outcomes.sql",
+  "20260917140138_add_custom_debt_order.sql",
+  "20260917153619_add_veterans_claims_workspace.sql",
+  "20260917162948_member_health_document_review.sql",
+  "20260917163328_health_document_repeat_events.sql",
+  "20260918190547_add_device_notifications.sql",
 ];
 
 test("Supabase CLI migrations exist in dependency-safe order", () => {

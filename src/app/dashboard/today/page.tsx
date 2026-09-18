@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { DeviceNotificationPrompt } from "@/app/components/DeviceNotificationPrompt";
 import { useRouter } from "next/navigation";
 import {
   DashboardCard,
@@ -326,7 +327,7 @@ export default function TodayPage() {
           reason:
             overdueMilestones > 0
               ? `${overdueMilestones} milestone${overdueMilestones === 1 ? " is" : "s are"} overdue.`
-              : `${goal.priority || "Medium"} priority shared goal in the Life Planning Hub.`,
+              : `${goal.priority || "Medium"} priority goal.`,
           recommendedAction: goal.currentStep || "Review the goal",
           actionUrl: "/dashboard/goals",
           activeDate: todayDate,
@@ -541,6 +542,7 @@ export default function TodayPage() {
   return (
     <main className="beast-page">
       <div className="beast-container space-y-7">
+        <DeviceNotificationPrompt />
         <section className="beast-page-header">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-4">
@@ -841,7 +843,7 @@ export default function TodayPage() {
             <SectionHeader
               eyebrow="What is coming?"
               title="Upcoming Events"
-              description="Source-owned dates that may affect your next decision."
+              description="Your upcoming bills, appointments, and target dates."
             />
             <div className="mt-5 grid gap-3">
               {upcomingEvents.map((item) => (

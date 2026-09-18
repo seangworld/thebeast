@@ -157,7 +157,7 @@ test("BF-MOB-003 keeps mobile shared surfaces narrow and desktop routes intact",
   const globalStyles = readFileSync("src/app/globals.css", "utf8");
 
   for (const page of pages) {
-    assert.match(page, /md:hidden/);
+    assert.match(page, /beast-container/);
     assert.match(page, /min-w-0/);
     assert.match(page, /break-words/);
     assert.match(page, /beast-button/);
