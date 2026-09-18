@@ -42,6 +42,7 @@ import {
   summarizeDocuments,
   supportedDocumentFileTypes,
 } from "@/lib/platform/documents";
+import { DocumentLibrary } from "./DocumentLibrary";
 import { DocumentUploadDropzone } from "./DocumentUploadDropzone";
 import {
   documentMatchesContext,
@@ -220,6 +221,10 @@ export default async function UploadsPage({
           <PrivacyMessageCard />
         </section>
 
+        <DocumentLibrary documents={documents} folders={folders} collections={collections} />
+
+        <details className="space-y-5">
+          <summary className="cursor-pointer text-sm font-bold text-slate-300">Document details and summaries</summary>
         <DashboardCard accent="beastos">
           <SectionHeader
             eyebrow="Categories"
@@ -971,6 +976,7 @@ export default async function UploadsPage({
             ))}
           </div>
         </DashboardCard>
+        </details>
       </div>
     </main>
   );
