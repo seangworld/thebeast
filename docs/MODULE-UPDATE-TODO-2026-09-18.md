@@ -80,4 +80,7 @@ This is the working checklist for this module pass, not the platform-wide roadma
 - Director context filters deleted goals/documents and unavailable Money/Health records and summaries; member goals remain aspirations.
 - Director pending-turn controls prevent repeated browser submissions and cross-thread placement of failed questions.
 - Details and validation scope: `docs/BEASTOS-CORE-PASS-2026-09-18.md`. Release evidence is recorded in the accompanying PR.
-- [ ] Owner: enable notifications on the intended physical phone/device and confirm a test notification arrives. On iPhone/iPad, open Beast from its Home Screen icon. PR167's server dispatcher is live; provider/device receipt still needs that check.
+- [x] Owner confirmed a test notification arrived on his iPhone on September 18. This verifies phone test delivery, not a scheduled bill or new-message event.
+- Notification setup follow-up: restore this installation’s saved preferences, show connected status, make customization/device management optional, identify test destinations, and preserve browser subscriptions on save failures. Existing similarly named installations are not automatically deleted.
+- [ ] Observe an actual scheduled bill reminder and a new-message notification end to end.
+- [ ] Signed-in visual review of the revised setup and BeastOS core pages; automated interaction tests cover saved preferences, updates, test targeting and retry.

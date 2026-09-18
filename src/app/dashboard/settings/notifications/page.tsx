@@ -51,6 +51,7 @@ export default function NotificationSettingsPage() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [registrationReady, setRegistrationReady] = useState(false);
+  const currentDevice = devices.find((device) => device.endpoint_hash === hash);
   const lock = useRef(false);
   const registration = useRef<ServiceWorkerRegistration | null>(null);
   const load = useCallback(async () => {
@@ -64,7 +65,13 @@ export default function NotificationSettingsPage() {
       setDevices(data.devices);
       setKey(data.publicKey);
       setReady(data.schedulerReady);
-      if (supportsPush()) setHash(await currentPushHash());
+      const currentHash = supportsPush() ? await currentPushHash() : null;
+      setHash(currentHash);
+      const connected = (data.devices as Device[]).find(
+        (device) => device.endpoint_hash === currentHash,
+      );
+      setEditing(connected?.id ?? null);
+      if (connected) setPrefs(connected);
     } catch (cause) {
       setError(
         cause instanceof Error ? cause.message : "Could not load devices.",
@@ -81,6 +88,10 @@ export default function NotificationSettingsPage() {
     );
     setPrefs((current) => ({
       ...current,
+      label: /iPhone/.test(navigator.userAgent) ? "My iPhone"
+        : /iPad/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1) ? "My iPad"
+        : /Android/.test(navigator.userAgent) ? "My Android device"
+        : /Mac/.test(navigator.platform) ? "My Mac" : "My computer",
       time_zone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     }));
     if (supportsPush())
@@ -140,16 +151,13 @@ export default function NotificationSettingsPage() {
           "Notifications weren’t enabled. If blocked, allow them in your browser or device settings.",
         );
       }
-      try {
-        await action({
-          action: "subscribe",
-          subscription: sub.toJSON(),
-          ...prefs,
-        });
-      } catch (cause) {
-        await sub.unsubscribe();
-        throw cause;
-      }
+      // Keep the browser subscription if saving fails: retry reuses its endpoint.
+      // Unsubscribing here can leave a saved server record orphaned after a network failure.
+      await action({
+        action: "subscribe",
+        subscription: sub.toJSON(),
+        ...prefs,
+      });
       setPermission(Notification.permission);
       setMessage("This device is connected. Send a test to check delivery.");
     });
@@ -235,6 +243,19 @@ export default function NotificationSettingsPage() {
             browser or device settings, then reload this page.
           </p>
         )}
+        {currentDevice && (
+          <section className="beast-card space-y-3 p-5" aria-label="This device status">
+            <h2 className="text-lg font-bold">
+              {permission === "denied" ? "Notifications blocked on this device" : currentDevice.enabled ? "Notifications are on for this device" : "Notifications are paused on this device"}
+            </h2>
+            <p className="text-slate-300">{currentDevice.label} is connected to your account. Your saved preferences are shown below.</p>
+            <button type="button" className="beast-button-secondary" disabled={busy || !currentDevice.enabled || permission === "denied"}
+              onClick={() => void run(async () => {
+                const result = await action({ action: "test", id: currentDevice.id });
+                setMessage(result.message);
+              })}>Send a test to this device</button>
+          </section>
+        )}
         <form
           className="beast-card space-y-4 p-5"
           onSubmit={(event) => {
@@ -249,9 +270,12 @@ export default function NotificationSettingsPage() {
           }}
         >
           <h2 className="text-lg font-bold">
-            {editing ? "Edit device settings" : "Connect this device"}
+            {editing ? "Notification preferences" : "Enable notifications on this device"}
           </h2>
           <fieldset disabled={busy || loading} className="space-y-4">
+            {!editing && <p className="text-slate-300">Tap Enable notifications, then Allow when your device asks. We’ll remember this device for you.</p>}
+            <details open={editing ? true : undefined}>
+              <summary className="cursor-pointer text-sky-300">Customize notifications</summary>
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="text-sm text-slate-300">
                 Device name
@@ -329,6 +353,7 @@ export default function NotificationSettingsPage() {
                 Notifications enabled for this device
               </label>
             )}
+            </details>
             <div className="flex flex-wrap gap-3">
               <button
                 type="submit"
@@ -350,13 +375,13 @@ export default function NotificationSettingsPage() {
                     ? "Save device settings"
                     : "Enable notifications"}
               </button>
-              {editing && (
+              {editing && editing !== currentDevice?.id && (
                 <button
                   type="button"
                   className="beast-button-secondary"
                   onClick={() => {
-                    setEditing(null);
-                    setPrefs({
+                    setEditing(currentDevice?.id ?? null);
+                    setPrefs(currentDevice ?? {
                       ...initial,
                       time_zone:
                         Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -369,8 +394,9 @@ export default function NotificationSettingsPage() {
             </div>
           </fieldset>
         </form>
-        <section aria-label="Connected devices" className="space-y-3">
-          <h2 className="text-xl font-bold">Your devices</h2>
+        <details className="space-y-3">
+          <summary className="cursor-pointer text-lg font-bold">Manage devices ({devices.length})</summary>
+          <p className="text-sm text-slate-300">Each card is a separate browser or app installation. Send a test to the named device from here, including your phone. Matching names do not necessarily mean duplicate devices.</p>
           {!loading && !devices.length && (
             <p className="text-slate-400">No devices connected yet.</p>
           )}
@@ -413,7 +439,7 @@ export default function NotificationSettingsPage() {
                     })
                   }
                 >
-                  Send test
+                  Send test to {device.label}
                 </button>
                 <button
                   type="button"
@@ -454,7 +480,7 @@ export default function NotificationSettingsPage() {
               </div>
             </article>
           ))}
-        </section>
+        </details>
       </div>
     </main>
   );
