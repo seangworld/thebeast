@@ -5,51 +5,51 @@ export const beastHomeOverview: BeastHomePlaceholder = {
   description: "Private home records and a reviewed photo-to-inventory workflow.",
   focus: [
     "Create a dated room-by-room inventory from reviewed photo suggestions.",
-    "Keep home, vehicle, maintenance, security, and document scope protected until policy is approved.",
-    "Confirm future home data belongs behind BeastOS permissions.",
+    "Organize receipts and reference documents alongside your inventory.",
+    "Review suggested items before saving them to your private account.",
   ],
 };
 
 export const beastHomePages: Record<string, BeastHomePlaceholder> = {
   property: {
     title: "Home",
-    description: "Placeholder for future property and household asset context.",
+    description: "Planned workspace for property and household asset context.",
     focus: [
       "Future property profiles and household records.",
       "Future rooms, systems, and home inventory.",
-      "No separate long-term profile outside BeastOS.",
+      "Property records are not available here yet.",
     ],
   },
   vehicles: {
     title: "Vehicles",
-    description: "Placeholder for future vehicle records.",
+    description: "Planned workspace for vehicle records.",
     focus: [
       "Future vehicle profiles, registration, insurance, and service context.",
       "Future reminders and document links.",
-      "No vehicle workflow or automation in this foundation.",
+      "Vehicle tracking is not available yet.",
     ],
   },
   maintenance: {
     title: "Maintenance",
-    description: "Placeholder for future maintenance planning.",
+    description: "Planned workspace for maintenance planning.",
     focus: [
       "Future maintenance tasks, schedules, and service history.",
       "Future reminders and vendor references.",
-      "No scheduling automation in this package.",
+      "Maintenance scheduling is not available yet.",
     ],
   },
   security: {
     title: "Security",
-    description: "Placeholder for future home security context.",
+    description: "Planned workspace for home security context.",
     focus: [
       "Future security inventory and safety checklist context.",
-      "Future household-aware visibility boundaries.",
-      "No security automation or monitoring in this foundation.",
+      "Future household safety checklists.",
+      "This page does not monitor your home.",
     ],
   },
   documents: {
     title: "Documents",
-    description: "Placeholder for future home document references.",
+    description: "Planned workspace for home document references.",
     focus: [
       "Future references to BeastOS-owned documents.",
       "Future mortgage, lease, warranty, insurance, vehicle, and maintenance files.",
@@ -58,11 +58,11 @@ export const beastHomePages: Record<string, BeastHomePlaceholder> = {
   },
   settings: {
     title: "Settings",
-    description: "Placeholder for future BeastHome settings.",
+    description: "Planned workspace for BeastHome settings.",
     focus: [
       "Future household visibility preferences.",
       "Future notification and reminder preferences.",
-      "Future module settings only after product scope is approved.",
+      "Additional home preferences are planned.",
     ],
   },
 };

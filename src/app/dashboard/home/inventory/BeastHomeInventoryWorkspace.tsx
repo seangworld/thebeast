@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   DashboardCard,
   GuidedEmptyState,
@@ -34,21 +34,29 @@ export function BeastHomeInventoryWorkspace() {
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [saved, setSaved] = useState<Saved[]>([]);
   const [documents, setDocuments] = useState<DocumentOption[]>([]);
+  const pending = useRef(false);
+  const [loadError, setLoadError] = useState("");
+  const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const supabase = useMemo(() => createClient(), []);
 
   const load = useCallback(async () => {
-    const { data: auth } = await supabase.auth.getUser();
+    setLoading(true);
+    setLoadError("");
+    try {
+    const { data: auth, error: authError } = await supabase.auth.getUser();
+    if (authError) throw authError;
     const id = auth.user?.id ?? "";
     setUserId(id);
-    if (!id) return;
-    const [{ data }, { data: documentRows }] = await Promise.all([
+    if (!id) throw new Error("Sign in to load your inventory.");
+    const [{ data, error: inventoryError }, { data: documentRows, error: documentError }] = await Promise.all([
       supabase
         .from("beast_home_inventory_items")
         .select(
           "id,name,quantity,details,estimated_value_cents,beast_home_inventory_rooms(name),beast_documents!beast_home_inventory_items_receipt_owner_fk(title)",
         )
+        .eq("owner_id", id)
         .order("created_at", { ascending: false }),
       supabase
         .from("beast_documents")
@@ -57,8 +65,11 @@ export function BeastHomeInventoryWorkspace() {
         .not("status", "in", '("Archived","Deleted")')
         .order("updated_at", { ascending: false }),
     ]);
+    if (inventoryError || documentError) throw inventoryError || documentError;
     setSaved((data ?? []) as unknown as Saved[]);
     setDocuments((documentRows ?? []) as DocumentOption[]);
+    } catch { setLoadError("Your inventory or receipt documents could not be loaded. Try again."); }
+    finally { setLoading(false); }
   }, [supabase]);
   useEffect(() => {
     void load();
@@ -66,7 +77,7 @@ export function BeastHomeInventoryWorkspace() {
   }, [load]);
 
   async function detect(file?: File) {
-    if (!file) return;
+    if (!file || pending.current) return;
     if (
       file.size > 3_000_000 ||
       !["image/jpeg", "image/png", "image/webp"].includes(file.type)
@@ -75,6 +86,8 @@ export function BeastHomeInventoryWorkspace() {
       return;
     }
     setBusy(true);
+    pending.current = true;
+    try {
     setMessage("Reviewing the private photo…");
     void sendFirstPartyTelemetry({ eventName: "home_inventory_started", moduleId: "home", outcome: "started" });
     const image = await new Promise<string>((resolve, reject) => {
@@ -101,20 +114,28 @@ export function BeastHomeInventoryWorkspace() {
         "AI suggestions are not saved yet. Edit, remove, and confirm them first.",
       );
     }
-    setBusy(false);
+    } catch { setMessage("The photo could not be reviewed. Your existing suggestions are still here; try again."); }
+    finally { pending.current = false; setBusy(false); }
   }
 
   async function save() {
     const selected = drafts.filter((item) => item.keep && item.name.trim());
-    if (!userId || !selected.length) return;
+    if (!userId || !selected.length || pending.current || loading || loadError) return;
+    if (selected.some(item => !Number.isInteger(item.quantity) || item.quantity < 1 || item.quantity > 9999 || (item.value !== "" && (!Number.isFinite(Number(item.value)) || Number(item.value) < 0)))) {
+      setMessage("Check quantities (1–9,999) and enter a valid nonnegative value for each selected item."); return;
+    }
+    pending.current = true;
+    try {
     setBusy(true);
     setMessage("Saving confirmed items…");
-    let { data: inventory } = await supabase
+    let { data: inventory, error: inventoryError } = await supabase
       .from("beast_home_inventories")
       .select("id")
+      .eq("owner_id", userId)
       .order("inventory_date", { ascending: false })
       .limit(1)
       .maybeSingle();
+    if (inventoryError) throw inventoryError;
     if (!inventory) {
       const created = await supabase
         .from("beast_home_inventories")
@@ -128,12 +149,14 @@ export function BeastHomeInventoryWorkspace() {
       setBusy(false);
       return;
     }
-    let { data: roomRow } = await supabase
+    let { data: roomRow, error: roomError } = await supabase
       .from("beast_home_inventory_rooms")
       .select("id")
+      .eq("owner_id", userId)
       .eq("inventory_id", inventory.id)
       .eq("name", room.trim())
       .maybeSingle();
+    if (roomError) throw roomError;
     if (!roomRow) {
       const created = await supabase
         .from("beast_home_inventory_rooms")
@@ -176,7 +199,8 @@ export function BeastHomeInventoryWorkspace() {
       void sendFirstPartyTelemetry({ eventName: "home_inventory_confirmed", moduleId: "home", outcome: "completed" });
       await load();
     }
-    setBusy(false);
+    } catch { setMessage("Could not confirm the save. Your edits are still here. Reload your inventory before retrying to check whether the items were saved."); }
+    finally { pending.current = false; setBusy(false); }
   }
 
   function exportCsv() {
@@ -208,6 +232,8 @@ export function BeastHomeInventoryWorkspace() {
 
   return (
     <div className="space-y-6">
+      {loadError ? <div role="alert" className="beast-panel p-4"><p>{loadError}</p><button className="beast-button-secondary mt-2" disabled={loading || busy} onClick={() => void load()}>Reload inventory</button></div> : null}
+      <fieldset disabled={busy || loading || Boolean(loadError)} className="min-w-0 space-y-6 border-0 p-0">
       <DashboardCard accent="home">
         <SectionHeader
           eyebrow="Photo to inventory"
@@ -227,6 +253,7 @@ export function BeastHomeInventoryWorkspace() {
             Room photo
             <input
               className="mt-2 block w-full text-sm"
+              id="home-room-photo"
               type="file"
               accept="image/jpeg,image/png,image/webp"
               disabled={busy}
@@ -365,17 +392,17 @@ export function BeastHomeInventoryWorkspace() {
       <DashboardCard accent="home">
         <SectionHeader
           eyebrow="Dated inventory"
-          title={`${saved.length} confirmed item${saved.length === 1 ? "" : "s"}`}
+          title={loading ? "Loading your inventory…" : loadError ? "Inventory unavailable" : `${saved.length} confirmed item${saved.length === 1 ? "" : "s"}`}
           description="Only items you confirmed appear here. Linked receipts stay in your private Beast Documents, and the dated CSV gives you an offline record."
         />
         <div data-tour-step="home-inventory-export">
-        {saved.length === 0 ? (
+        {loading || loadError ? <p className="mt-4 text-sm">{loading ? "Loading saved items and receipt documents…" : "Reload to view your saved inventory."}</p> : saved.length === 0 ? (
           <div className="mt-5">
             <GuidedEmptyState
               title="No inventory items yet"
               description="Take one clear room photo to begin."
               guidance="Photograph ordinary possessions in good light; avoid people, mail, screens, or sensitive documents."
-              nextAction={{ label: "Choose a room photo", href: "#" }}
+              nextAction={{ label: "Choose a room photo", href: "#home-room-photo" }}
             />
           </div>
         ) : (
@@ -419,6 +446,7 @@ export function BeastHomeInventoryWorkspace() {
         )}
         </div>
       </DashboardCard>
+      </fieldset>
     </div>
   );
 }

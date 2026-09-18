@@ -117,3 +117,13 @@ This is the working checklist for this module pass, not the platform-wide roadma
 - [ ] Direct saved document-to-claim links and a durable, source-attributed decision history across document batches.
 - [ ] Original article/resource center based on official sources; competitor pages are topic research, not text to paraphrase.
 - [ ] Verify Taylor's complete live multi-turn research/preparation experience, including conflicting evidence and an incomplete history. Conversation starters do not establish research quality or resolve previous live-validation blockers.
+
+## Additional member review queue and findings
+
+- BeastHome, Relationship Center, Director and Digital Staff: member-facing source review completed. Signed-in visual verification remains pending while the browser connection times out.
+- Dashboard notification invitation now recognizes any enabled device on the signed-in account, including a phone while viewing on desktop, and rechecks when returning to the tab. Paused devices do not count as active; owner-specific dismissal remains available.
+- BeastHome: loading failures no longer appear as an empty inventory; added retry, explicit owner filters, pending-operation guards, input checks and recovery from photo/network exceptions. Form edits are disabled during saves. Access-check failures have a retry state. Planned workspaces use member-facing wording and remain clearly inactive.
+- Director: history reload retries now handle errors and clear successful error state. Earlier protection against duplicate submissions and cross-thread failed-question leakage remains in place.
+- Digital Staff: simplified profile and conversation-review wording. Owner development directory remains gated. Relationship Center already has owner-scoped data, loading/error/retry states; no new data mutation was needed in this pass.
+- [ ] Verify notification invitation disappears on desktop after phone setup in a signed-in browser.
+- [ ] Verify Home photo review/save/reload/export against a test account; do not alter the owner's inventory for testing.

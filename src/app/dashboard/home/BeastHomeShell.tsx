@@ -7,7 +7,6 @@ import {
   DashboardCard,
   ExpandableDetailPanel,
   GuidedEmptyState,
-  ModuleBadge,
   PlatformPageHeader,
   SectionHeader,
 } from "@/app/components/design/DashboardPrimitives";
@@ -42,6 +41,8 @@ export function BeastHomeShell({
   description: string;
   children: React.ReactNode;
 }) {
+  const [accessError, setAccessError] = useState("");
+  const [retryKey, setRetryKey] = useState(0);
   const [authorized, setAuthorized] = useState(false);
   const [checking, setChecking] = useState(true);
   const [adminViewMode, setAdminViewMode] = useState<AdminViewMode>(() =>
@@ -68,9 +69,11 @@ export function BeastHomeShell({
     let active = true;
 
     async function verifyMember() {
+      setChecking(true); setAuthorized(false); setAccessError("");
       try {
         const supabase = createClient();
-        const { data: userData } = await supabase.auth.getUser();
+        const { data: userData, error: authError } = await supabase.auth.getUser();
+        if (authError) throw authError;
         const userId = userData?.user?.id;
 
         if (!userId) {
@@ -78,12 +81,13 @@ export function BeastHomeShell({
           return;
         }
 
-        const [{ data: profile, error: profileError }, { data: access }] = await Promise.all([
+        const [{ data: profile, error: profileError }, { data: access, error: accessQueryError }] = await Promise.all([
           supabase.from("profiles").select("role,birthday").eq("id", userId).maybeSingle(),
           supabase.from("beast_admin_member_module_access").select("enabled").eq("member_id", userId).eq("module_id", "home").maybeSingle(),
         ]);
 
         if (!active) return;
+        if (profileError || accessQueryError) throw profileError || accessQueryError;
         const isAdmin = profile?.role === "admin" && adminViewMode === "admin";
         const decision = profile
           ? resolveMemberModuleEntitlement({
@@ -101,6 +105,8 @@ export function BeastHomeShell({
         }
 
         setAuthorized(true);
+      } catch {
+        if (active) setAccessError("We couldn’t check access to BeastHome. Please try again.");
       } finally {
         if (active) setChecking(false);
       }
@@ -111,7 +117,7 @@ export function BeastHomeShell({
     return () => {
       active = false;
     };
-  }, [adminViewMode, router]);
+  }, [adminViewMode, router, retryKey]);
 
   if (checking || !authorized) {
     return (
@@ -120,9 +126,10 @@ export function BeastHomeShell({
           <DashboardCard accent="home">
             <SectionHeader
               eyebrow="BeastHome"
-              title="Checking member access"
+              title={accessError ? "BeastHome could not be loaded" : "Checking member access"}
               description="BeastHome records stay inside the signed-in member’s private account."
             />
+            {accessError ? <div role="alert"><p className="mt-3">{accessError}</p><button className="beast-button-secondary mt-3" onClick={() => setRetryKey(value => value + 1)}>Try again</button></div> : null}
           </DashboardCard>
         </div>
       </main>
@@ -167,7 +174,7 @@ export function BeastHomePlaceholderPage({
       <section className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
         <DashboardCard accent="home">
           <SectionHeader
-            eyebrow="Foundation"
+            eyebrow="Planned"
             title={`${page.title} workspace`}
             description="BeastHome begins with a private, member-owned home inventory. Other home workspaces remain planned and inactive."
           />
@@ -185,13 +192,13 @@ export function BeastHomePlaceholderPage({
 
         <DashboardCard accent="beastos">
           <SectionHeader
-            eyebrow="Boundary"
-            title="Private member boundary"
+            eyebrow="Available now"
+            title="Start with your home inventory"
             description="Inventory records are scoped to the signed-in member. Household sharing and home automation are not active."
           />
           <div className="mt-5 space-y-3 text-sm font-semibold leading-6 text-[#dbe3ef]">
-            <GuidedEmptyState title="Build the household story progressively" description="The module is not collecting household records yet, but you can organize source documents and shared goals now." guidance="Begin with one verified property, vehicle, or maintenance document instead of filling an empty dashboard." nextAction={{ label: "Add a document", href: "/dashboard/uploads" }} secondaryAction={{ label: "Review goals", href: "/dashboard/goals" }} />
-            <ExpandableDetailPanel summary="Automation and privacy boundaries">
+            <GuidedEmptyState title="Build the household story progressively" description="This workspace is planned. You can already save a home inventory and organize documents and goals." guidance="Begin with one verified property, vehicle, or maintenance document instead of filling an empty dashboard." nextAction={{ label: "Add a document", href: "/dashboard/uploads" }} secondaryAction={{ label: "Review goals", href: "/dashboard/goals" }} />
+            <ExpandableDetailPanel summary="What’s available today">
             <p className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
               Photo-to-Home-Inventory is the only active member-facing BeastHome workflow in this release.
             </p>
@@ -199,7 +206,7 @@ export function BeastHomePlaceholderPage({
               No maintenance scheduling, security automation, vehicle workflow, or household sharing workflow is active.
             </p>
             <p className="rounded-xl border border-[#2a3242] bg-[#111827] p-4">
-              Future home data must use BeastOS ownership, permissions, privacy, and audit boundaries.
+              Your inventory and linked documents belong to your private account.
             </p>
             </ExpandableDetailPanel>
           </div>

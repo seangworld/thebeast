@@ -1,38 +1,40 @@
 "use client";
 import Link from "next/link";
-import { currentPushHash, supportsPush } from "@/lib/notifications/pushClient";
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 export function DeviceNotificationPrompt() {
+  const pathname = usePathname();
   const [visible, setVisible] = useState(false);
   const [dismissKey, setDismissKey] = useState("");
   useEffect(() => {
     let active = true;
-    fetch("/api/notifications/devices", { cache: "no-store" })
-      .then(async (response) => {
+    let request = 0;
+    async function refresh() {
+      const current = ++request;
+      try {
+        const response = await fetch("/api/notifications/devices", { cache: "no-store" });
         if (!response.ok) return;
         const data = await response.json();
-        const hash = supportsPush() ? await currentPushHash() : null;
+        if (!data.ownerId || !Array.isArray(data.devices)) return;
         const key = `beast:push-later:${data.ownerId}`;
         let dismissed = false;
-        try {
-          dismissed = localStorage.getItem(key) === "yes";
-        } catch {}
-        if (active) {
+        try { dismissed = localStorage.getItem(key) === "yes"; } catch {}
+        if (active && current === request) {
           setDismissKey(key);
-          setVisible(
-            !dismissed &&
-              !data.devices.some(
-                (device: { enabled: boolean; endpoint_hash: string }) =>
-                  device.enabled && device.endpoint_hash === hash,
-              ),
-          );
+          setVisible(!dismissed && !data.devices.some((device: { enabled: boolean }) => device.enabled));
         }
-      })
-      .catch(() => {});
+      } catch {}
+    }
+    const onVisible = () => { if (document.visibilityState === "visible") void refresh(); };
+    void refresh();
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", onVisible);
     return () => {
       active = false;
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", onVisible);
     };
-  }, []);
+  }, [pathname]);
   if (!visible) return null;
   return (
     <section
