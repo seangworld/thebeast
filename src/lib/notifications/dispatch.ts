@@ -183,7 +183,7 @@ export async function dispatchDeviceReminders(
             }).allowed
           )
             return;
-          const [bills, payments] = await Promise.all([
+          const [bills, payments, debts, debtPayments] = await Promise.all([
             client
               .from("bill_events")
               .select(
@@ -200,8 +200,16 @@ export async function dispatchDeviceReminders(
               .eq("user_id", device.owner_id)
               .gte("cycle_due_date", `${local.date.slice(0, 7)}-01`)
               .limit(1000),
+            client.from("debts")
+              .select("id,name,balance,minimum_payment,due_date,next_due_date_after_payment,is_archived,lifecycle_status,payment_behavior,reminder_enabled")
+              .eq("user_id", device.owner_id).limit(1000),
+            client.from("debt_payments")
+              .select("debt_id,cycle_due_date,amount,resulting_next_due_date,balance_after,reversed_at,action_type")
+              .eq("user_id", device.owner_id)
+              .gte("cycle_due_date", `${local.date.slice(0, 7)}-01`).limit(1000),
           ]);
           if (
+            debts.error || debtPayments.error || debts.data?.length === 1000 || debtPayments.data?.length === 1000 ||
             bills.error ||
             payments.error ||
             bills.data?.length === 1000 ||
@@ -211,6 +219,8 @@ export async function dispatchDeviceReminders(
           const items = dueBillReminders({
             today: local.date,
             bills: bills.data || [],
+            debts: debts.data || [],
+            debtPayments: debtPayments.data || [],
             payments: payments.data || [],
             dueToday: device.due_today,
             dueTomorrow: device.due_tomorrow,

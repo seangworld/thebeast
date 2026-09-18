@@ -24,7 +24,7 @@ export function BillDueNotifications() {
         setItems(data.billsDue);
         setToday(data.today);
         const warning = data.warnings.find((value: string) =>
-          value.startsWith("Bill"),
+          value.startsWith("Expense"),
         );
         if (warning) setError(warning);
       })
@@ -40,7 +40,7 @@ export function BillDueNotifications() {
   return (
     <section className="beast-card space-y-4 p-5">
       <div className="flex flex-wrap justify-between gap-2">
-        <h2 className="text-lg font-bold">Bills due today or tomorrow</h2>
+        <h2 className="text-lg font-bold">Expenses due today or tomorrow</h2>
         <button
           className="text-sm text-sky-300 underline"
           disabled={loading}
@@ -50,7 +50,7 @@ export function BillDueNotifications() {
         </button>
       </div>
       {loading ? (
-        <p role="status">Checking bills…</p>
+        <p role="status">Checking expenses…</p>
       ) : error ? (
         <p role="alert" className="text-amber-100">
           {error}
@@ -60,7 +60,7 @@ export function BillDueNotifications() {
           <Link
             key={item.id}
             className="block rounded-xl border border-slate-700 p-3"
-            href="/dashboard/money/bills"
+            href={item.kind === "debt" ? "/dashboard/money/debts" : "/dashboard/money/bills"}
           >
             <p className="font-bold">{item.name}</p>
             <p className="text-sm text-slate-300">
@@ -71,14 +71,14 @@ export function BillDueNotifications() {
         ))
       ) : (
         <p className="text-sm text-slate-300">
-          No unpaid bills with reminders enabled are due today or tomorrow.
+          No unpaid expenses with reminders enabled are due today or tomorrow.
         </p>
       )}
       <Link
         className="inline-block text-sm text-sky-300 underline"
-        href="/dashboard/money/bills"
+        href="/dashboard/money/cashflow"
       >
-        Review bills and record payments
+        Review bills and debt payments
       </Link>
     </section>
   );

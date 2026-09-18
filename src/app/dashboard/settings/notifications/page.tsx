@@ -191,7 +191,7 @@ export default function NotificationSettingsPage() {
         <header className="beast-page-header">
           <h1 className="beast-title">Notifications on your devices</h1>
           <p className="beast-subtitle">
-            Get bill reminders and new-message alerts, even when Beast isn’t
+            Get bill and debt reminders and new-message alerts, even when Beast isn’t
             open.
           </p>
           <Link
@@ -303,12 +303,12 @@ export default function NotificationSettingsPage() {
             </div>
             {(
               [
-                ["due_tomorrow", "Bills due tomorrow"],
-                ["due_today", "Bills due today"],
+                ["due_tomorrow", "Expenses due tomorrow"],
+                ["due_today", "Expenses due today"],
                 ["messages_enabled", "New private messages"],
                 [
                   "show_details",
-                  "Show bill names and amounts on my lock screen",
+                  "Show expense names and amounts on my lock screen",
                 ],
               ] as const
             ).map(([field, label]) => (
@@ -327,7 +327,7 @@ export default function NotificationSettingsPage() {
               </label>
             ))}
             <div className="grid gap-4 sm:grid-cols-3">
-              {hourSelect("Bill reminder hour", "notify_hour")}
+              {hourSelect("Expense reminder hour", "notify_hour")}
               {hourSelect("Quiet hours start", "quiet_start")}
               {hourSelect("Quiet hours end", "quiet_end")}
             </div>
@@ -338,7 +338,7 @@ export default function NotificationSettingsPage() {
               alerts. Messages never show their contents here.
             </p>
             <p className="text-sm text-slate-400">
-              Bills marked paid in Beast are excluded. Bank payments must be
+              Expenses marked paid in Beast are excluded. Bank payments must be
               recorded in Beast to stop those reminders.
             </p>
             {editing && (

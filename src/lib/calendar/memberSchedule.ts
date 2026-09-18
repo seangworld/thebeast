@@ -22,6 +22,8 @@ export function buildMemberSchedule(input: {
   today: string;
   bills: BillInputs["bills"];
   payments: BillInputs["billPayments"];
+  debts?: BillInputs["debts"];
+  debtPayments?: BillInputs["debtPayments"];
   goals: (DatedRecord & { target_date: string | null })[];
   appointments: (DatedRecord & { occurred_on: string | null })[];
 }): MemberCalendarEvent[] {
@@ -31,9 +33,9 @@ export function buildMemberSchedule(input: {
       ? input.today
       : `${input.month}-01`,
     bills: input.bills,
-    debts: [],
+    debts: input.debts || [],
     billPayments: input.payments,
-    debtPayments: [],
+    debtPayments: input.debtPayments || [],
   })
     .filter((item) => item.dueDate.startsWith(input.month))
     .map((item) => ({
@@ -47,7 +49,7 @@ export function buildMemberSchedule(input: {
           : item.status === "Review"
             ? "Review payment details"
             : `$${item.remaining.toFixed(2)} remaining${item.status === "Partial" ? " · Partly paid" : ""}`,
-      href: "/dashboard/money/bills",
+      href: item.kind === "debt" ? "/dashboard/money/debts" : "/dashboard/money/bills",
       done: item.status === "Paid",
     }));
   for (const goal of input.goals)

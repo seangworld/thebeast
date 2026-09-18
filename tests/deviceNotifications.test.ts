@@ -444,3 +444,22 @@ test('scheduler rejects unauthenticated requests and keeps inactive environments
  assert.equal((await dispatchRoute.POST(new Request('https://beast.test/api/notifications/dispatch',{method:'POST'}))).status,401);
  const result=await dispatchRoute.POST(new Request('https://beast.test/api/notifications/dispatch',{method:'POST',headers:{authorization:'Bearer scheduler-test-token'}}));assert.equal(result.status,200);assert.deepEqual(await result.json(),{enabled:false});
 });
+
+test("scheduler includes only the recipient's unpaid debt minimums in the expense reminder", async () => {
+  const db = seed();
+  Object.assign(db.tables.beast_push_devices[0], { show_details: true, messages_enabled: false });
+  db.tables.bill_events = [];
+  db.tables.debts = [
+    { id: "own-debt", user_id: "member", name: "My card", balance: 500, minimum_payment: 50, due_date: 18 },
+    { id: "other-debt", user_id: "other", name: "Private other card", balance: 500, minimum_payment: 50, due_date: 18 },
+  ];
+  db.tables.debt_payments = [
+    { debt_id: "own-debt", user_id: "member", cycle_due_date: "2026-09-18", amount: 20 },
+    { debt_id: "own-debt", user_id: "other", cycle_due_date: "2026-09-18", amount: 30 },
+  ];
+  await dispatchDeviceReminders(db as any, config, now);
+  assert.equal(deliveries.length, 1);
+  assert.match(deliveries[0].body, /My card: \$30.00/);
+  assert.doesNotMatch(deliveries[0].body, /Private other card/);
+  assert.equal(deliveries[0].url, "/dashboard/money/cashflow");
+});

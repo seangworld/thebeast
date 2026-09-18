@@ -84,3 +84,15 @@ This is the working checklist for this module pass, not the platform-wide roadma
 - Notification setup follow-up: restore this installation’s saved preferences, show connected status, make customization/device management optional, identify test destinations, and preserve browser subscriptions on save failures. Existing similarly named installations are not automatically deleted.
 - [ ] Observe an actual scheduled bill reminder and a new-message notification end to end.
 - [ ] Signed-in visual review of the revised setup and BeastOS core pages; automated interaction tests cover saved preferences, updates, test targeting and retry.
+
+## Cashflow Expenses Ahead follow-up
+
+- Replaced Bills Ahead with one Expenses Ahead table ordered by due date, showing bill amounts and remaining debt minimums for the next 30 days. Shared occurrence calculations handle recurring dates, partial payments, reversed payments, archived/paid-off records and month boundaries.
+- Updated Cashflow's 7-day/30-day summaries and due-soon alert to use the combined expenses.
+- Calendar, notification list and device reminder digest now include eligible debt minimums alongside bills, with owner/module checks and existing reminder opt-outs preserved. Private lock-screen text remains generic. The digest retains its existing daily delivery key to prevent a second same-day send after release.
+- No payment, balance, due-date, income-pot or bank changes are performed by these views. Future projected cycles have no income-pot assignment unless saved for that occurrence.
+- Validation and production release status are recorded in the accompanying pull request.
+- Money briefing/autopay follow-up: issue #170. Whole-row dragging and Save/Undo: issue #171; Undo must reverse exactly one most-recent movement per click, including both affected pots.
+
+- Payoff Plan what-if custom order now supports whole-row drag highlighting, explicit drop positions, cancel without reorder and numbered-position fallback. Preview changes still require the existing copy-to-settings and save controls; no automatic financial writes.
+- What-if comparison starts with the current page strategy when supported; every card and its retained Review button select the payment preview. Current settings are also selectable. Preview selection is explicitly separate from saving the strategy.
