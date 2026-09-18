@@ -1,3 +1,4 @@
+import { getGoalConnections } from "./goalConnections";
 import type { Goal, GoalCategory } from "./goals";
 import type { BeastDocument, DocumentCategory } from "./documents";
 import type { PlatformModule } from "./types";
@@ -85,6 +86,7 @@ export function goalMatchesContext(
   context: ContextualWorkspaceConfig
 ) {
   return (
+    getGoalConnections(goal).some(module => module === context.module) ||
     goal.sourceModule === context.module ||
     context.goalCategories.includes(goal.category) ||
     hasContextTag(goal.tags || [], context) ||
@@ -94,7 +96,7 @@ export function goalMatchesContext(
         contribution.sourceModule === context.module
     ) ||
     goal.references.some(
-      (reference) => reference.sourceModule === context.module
+      (reference) => reference.status === "Active" && reference.sourceModule === context.module
     )
   );
 }

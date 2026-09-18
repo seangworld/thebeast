@@ -1,3 +1,4 @@
+import { buildRuntimeInput, buildRuntimeInstructions } from "../src/lib/digitalStaffRuntime/prompt";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { professionalConfigs, requireProfessionalConfig, validateNavigationTarget, validateRuntimePlan, validateToolCalls, deidentifyResearchQuery, parseRuntimePlan, type RuntimeContext, type RuntimePlan } from "../src/lib/digitalStaffRuntime";
@@ -114,4 +115,15 @@ test("strict model protocol normalizes structured fields and tool arguments", ()
   }) });
   assert.deepEqual(parsed.proposals[0]?.fields, { name: "metoprolol" });
   assert.deepEqual(parsed.toolCalls[0]?.arguments, { proposalId: "medication" });
+});
+
+
+test("goals reach the advisor even when profile context fills the previous budget", () => {
+  for (const [id, count] of [["beasteducation.guidance-counselor", 20], ["beasthealth.health-advisor", 200]] as const) {
+    const records = Array.from({length: count}, (_, i) => ({domain: "profile", record: {id: i}}));
+    records.push({domain: `${id}:goals`, record: {id: 999}});
+    const input = JSON.parse(buildRuntimeInput(requireProfessionalConfig(id), {...context, professionalId: id, structuredRecords: records}));
+    assert.equal(input.structuredRecords.at(-1).record.id, 999);
+    assert.match(buildRuntimeInstructions(requireProfessionalConfig(id)), /goal is an aspiration/);
+  }
 });

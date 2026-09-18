@@ -15,7 +15,7 @@ test("counselor context queries are owner-scoped, bounded, and exclude retired/u
   });
   const results = await Promise.all(guidanceCounselorContextQueries(client, "member-a"));
   assert.ok(results.every(result => !result.error));
-  assert.equal(urls.length, 2);
+  assert.equal(urls.length, 3);
   for (const url of urls) assert.equal(url.searchParams.get("owner_id"), "eq.member-a");
   const profile = urls.find(url => url.pathname.endsWith("/education_profiles"))!;
   const career = urls.find(url => url.pathname.endsWith("/education_career_profile_items"))!;

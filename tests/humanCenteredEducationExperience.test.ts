@@ -110,8 +110,8 @@ test("BE-202 explains contextual Education Goals and Documents without internal 
   const goals = read("src/app/dashboard/goals/page.tsx");
   const documents = read("src/app/dashboard/uploads/page.tsx");
 
-  assert.match(goals, /These are the education goals you're working toward/);
-  assert.match(goals, /Your Guidance Counselor uses these goals/);
+  assert.match(goals, /break them into manageable steps/);
+  assert.match(goals, /context\?\.goalsLabel/);
   assert.match(
     documents,
     /Upload things like transcripts, resumes, certificates, or military records/

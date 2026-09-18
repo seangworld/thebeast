@@ -89,6 +89,6 @@ export function buildMoneyCoachStructuredRecords(
     ...structured("beastmoney.money-coach:bill", bills, 5),
     ...structured("beastmoney.money-coach:income", incomes, 4),
     ...structured("beastmoney.money-coach:funding", fundingSources, 2),
-    ...structured("beastmoney.money-coach:goal", rows.goals, 3),
+    ...structured("beastmoney.money-coach:goal", rows.goals.map(goal => ({ ...goal, context_note: "Member aspiration for advice, not actual income, an achieved fact, or permission to change records." })), 3),
   ].slice(0, 20);
 }

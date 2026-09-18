@@ -542,25 +542,10 @@ test("BG-001 Goals overview route stays BeastOS-owned", () => {
   assert.equal(getGoalProgressPercent(mockGoals[0]), 50);
   assert.equal(getCurrentGoalMilestone(mockGoals[0])?.title, "Complete first practice checkpoint");
   assert.equal(getGoalProgressPercent(mockGoals[1]), null);
-  assert.match(goalsPage, /BeastOS Shared Service/);
-  assert.match(goalsPage, /BeastOS Owned/);
-  assert.match(goalsPage, /goalDatabaseTableName/);
-  assert.match(goalsPage, /goalMilestoneDatabaseTableName/);
-  assert.match(goalsPage, /goalSupportItemDatabaseTableName/);
-  assert.match(goalsPage, /goalReferenceDatabaseTableName/);
-  assert.match(goalsPage, /goalContributionDatabaseTableName/);
-  assert.match(goalsPage, /goalRecommendationDatabaseTableName/);
-  assert.match(goalsPage, /goalLifecycleEventDatabaseTableName/);
-  assert.match(goalsPage, /Milestone Progress/);
-  assert.match(goalsPage, /Requirements And Routines/);
-  assert.match(
-    goalsPage,
-    /Support, references, contributions, review, and lifecycle/
-  );
-  assert.match(goalsPage, /Linked References/);
-  assert.match(goalsPage, /Module Contributions/);
-  assert.match(goalsPage, /Recommendations And Review/);
-  assert.match(goalsPage, /Lifecycle History/);
+  assert.match(goalsPage, /Your goals/);
+  assert.match(goalsPage, /LifePlanningHub/);
+  assert.match(goalsPage, /loadUserGoals/);
+  assert.doesNotMatch(goalsPage, /BeastOS Shared Service|BeastOS Owned|eyebrow="Database"|BO-15/);
   assert.doesNotMatch(goalsPage, /mockGoals/);
   assert.doesNotMatch(goalsPage, /Earn Security\+/);
   assert.doesNotMatch(goalsPage, /Become debt free/);

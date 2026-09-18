@@ -84,7 +84,7 @@ test("BO-501 module synchronization uses canonical pointers instead of duplicate
 });
 
 test("BO-501 hub exposes lifecycle, milestone, responsive, and accessible controls", () => {
-  for (const label of ["Add goal", "Edit", "Pause", "Resume", "Complete", "Archive", "Delete", "Merge", "Split", "Add milestone"]) {
+  for (const label of ["Add goal", "Edit", "Pause", "Resume", "Complete", "Archive", "Delete", "Link &amp; archive", "Split", "GoalMilestones"]) {
     assert.match(workspace, new RegExp(label));
   }
   assert.match(workspace, /role="dialog"/);

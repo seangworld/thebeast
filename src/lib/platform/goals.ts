@@ -1351,6 +1351,8 @@ export function buildGoalCollection(goals: Goal[]) {
 }
 
 export function getGoalProgressPercent(goal: Goal) {
+  if (goal.status === "Completed") return 100;
+  if (goal.progress != null && Number.isFinite(goal.progress)) return Math.max(0, Math.min(100, goal.progress));
   const measurable = goal.milestones.filter(
     (milestone) => milestone.status !== "Skipped"
   );
