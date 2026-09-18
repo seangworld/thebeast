@@ -1,3 +1,4 @@
+import { MemberStepGuide } from "@/app/components/guidance/MemberStepGuide";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
@@ -196,6 +197,8 @@ function DashboardExperience({
             </Link>
           </div>
         </section>
+
+        <MemberStepGuide module="education" />
 
         {dataWarning ? (
           <p

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { MemberStepGuide } from "@/app/components/guidance/MemberStepGuide";
 import { useRouter } from "next/navigation";
 import {
   useEffect,
@@ -1353,6 +1354,8 @@ export function HealthOverviewWorkspace() {
           {error}
         </p>
       ) : null}
+
+      <MemberStepGuide module="health" />
 
       <div data-tour-step="health-records">
         <HealthDiscoveryOnboarding
