@@ -140,5 +140,5 @@ test("BP-001 labels the desktop and responsive navigation hierarchy", () => {
   assert.match(layout, /lifeModuleNavigation\.map/);
   assert.match(layout, /sharedNavigation\.map/);
   assert.match(layout, /secondaryNavigation\.map/);
-  assert.match(layout, /controlIdPrefix="mobile"/);
+  assert.match(layout, /controlIdPrefix:\s*"mobile"/);
 });
