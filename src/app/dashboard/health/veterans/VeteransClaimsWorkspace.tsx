@@ -38,7 +38,7 @@ export function VeteransClaimsWorkspace() {
   }
   const guidance = draft ? buildClaimGuidance(draft) : null;
   return <div className="space-y-5">
-    <p className="rounded-xl border border-sky-900 bg-slate-900 p-4 text-sm text-slate-300">This is a preparation workspace, not a VA representative or filing service. Statuses are entered by you and do not sync with VA. Use accredited help for representation or deciding a review route. Avoid entering SSNs, account passwords, or VA file numbers.</p>
+    <p className="rounded-xl border border-sky-900 bg-slate-900 p-4 text-base leading-relaxed text-slate-300">This is a preparation workspace, not a VA representative or filing service. Statuses are entered by you and do not sync with VA. Use accredited help for representation or deciding a review route. Avoid entering SSNs, account passwords, or VA file numbers.</p>
     <div className="flex flex-wrap gap-3">
       <Link target="_blank" rel="noopener noreferrer" href="/dashboard/health/ai-advisor" className="inline-flex min-h-11 items-center rounded-lg border border-violet-300 bg-violet-700 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-violet-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300">Ask Health Advisor — select Veterans assistance</Link>
       <button className="beast-button-primary" disabled={loading || saving || dirty || loadFailed} onClick={() => { setDraft(emptyVeteranClaim(crypto.randomUUID())); setDirty(true); setMessage(""); setError(""); }}>Add claim / issue</button>
