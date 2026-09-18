@@ -58,12 +58,14 @@ function DirectorHistory({
   conversations,
   activeId,
   loading,
+  busy,
   onNew,
   onSelect,
 }: {
   conversations: readonly DirectorConversation[];
   activeId: string | null;
   loading: boolean;
+  busy: boolean;
   onNew: () => void;
   onSelect: (id: string) => void;
 }) {
@@ -77,7 +79,7 @@ function DirectorHistory({
           type="button"
           className="beast-button mt-3 w-full"
           onClick={onNew}
-          disabled={loading}
+          disabled={loading || busy}
         >
           New Conversation
         </button>
@@ -96,6 +98,7 @@ function DirectorHistory({
                       ? "border-violet-300/45 bg-violet-300/10"
                       : "border-white/10 bg-white/[0.03] hover:border-white/25"
                   }`}
+                  disabled={busy}
                   onClick={() => onSelect(conversation.id)}
                   aria-current={activeId === conversation.id ? "page" : undefined}
                 >
@@ -133,6 +136,7 @@ export default function DirectorExperience() {
   const historyDialogRef = useRef<HTMLDivElement>(null);
   const historyTriggerRef = useRef<HTMLButtonElement>(null);
   const scrollPositions = useRef(new Map<string, number>());
+  const requestPending = useRef(false);
   const retryTurnRef = useRef<(question: string) => void>(() => undefined);
   retryTurnRef.current = (nextQuestion) => { void submit(nextQuestion); };
 
@@ -206,6 +210,8 @@ export default function DirectorExperience() {
     ?.recommendation;
 
   async function createConversation() {
+    if (requestPending.current || loading) return;
+    requestPending.current = true;
     setSending(true);
     setError(null);
     try {
@@ -224,6 +230,8 @@ export default function DirectorExperience() {
       }
       await refresh(payload.conversation.id);
       setQuestion("");
+      setPendingQuestion("");
+      setPendingFailed(false);
       setHistoryOpen(false);
       setFollowLatestSignal((value) => value + 1);
     } catch (createError) {
@@ -233,11 +241,14 @@ export default function DirectorExperience() {
           : "A new conversation could not be created."
       );
     } finally {
+      requestPending.current = false;
       setSending(false);
     }
   }
 
   async function submit(value: string) {
+    if (requestPending.current || loading || !value.trim()) return;
+    requestPending.current = true;
     setSending(true);
     setPendingQuestion(value);
     setPendingFailed(false);
@@ -264,6 +275,7 @@ export default function DirectorExperience() {
       setError(digitalStaffUnavailableMessage);
       setPendingFailed(true);
     } finally {
+      requestPending.current = false;
       setSending(false);
     }
   }
@@ -273,8 +285,14 @@ export default function DirectorExperience() {
       conversations={conversations}
       activeId={activeId}
       loading={loading}
+      busy={sending}
       onNew={() => void createConversation()}
       onSelect={(id) => {
+        if (requestPending.current) return;
+        setPendingQuestion("");
+        setPendingFailed(false);
+        setError(null);
+        setQuestion("");
         setActiveId(id);
         setHistoryOpen(false);
         setFollowLatestSignal((value) => value + 1);
@@ -311,7 +329,7 @@ export default function DirectorExperience() {
         }
         greeting={
           <AgentGreeting greeting="One clear next step across Beast">
-            The Director looks across your Beast experience, coordinates your specialists, and helps you decide what matters most next. Only approved, owner-scoped summaries are used.
+            The Director looks across your Beast experience, coordinates your specialists, and helps you decide what matters most next. It uses your saved information from available workspaces.
           </AgentGreeting>
         }
         suggestedActions={

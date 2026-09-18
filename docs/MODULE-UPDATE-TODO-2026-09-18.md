@@ -71,3 +71,13 @@ This is the working checklist for this module pass, not the platform-wide roadma
 - PR159 is live as `2e7f30831dee7fae35b204ad2a9a8f5c8c588fec`. Document reading completed in 78,905 ms; the research turn finished in 127,638 ms without a provider timeout, but semantic output validation returned `other_boundary_violation` and the answer was replaced with a generic fallback. This is not a research quality pass. The rejected candidate is not retained in the visible evaluation.
 - Inspection found a scope mismatch: Taylor's advisor explicitly permits veterans preparation, but the independent classifier described Health as health information only. The follow-up aligns its scope with already-authorized decision-letter explanation, official requirements, evidence organization and truthful preparation. It continues to reject filing, submission, representation, guarantees, invented evidence, medical nexus conclusions and predetermined favorable opinions. No unsafe-verdict bypass is added. This is a demonstrated instruction mismatch, not proof of the specific rejected answer's cause.
 - Production verification of the aligned scope remains pending; see the accompanying PR for release and live results.
+
+## BeastOS core pass — September 18
+
+- Home sample learning count and household alerts removed; actual Personal Hub link and Director entry point corrected.
+- Home and Relationship Center failure states offer retry.
+- Dashboard no longer claims that unsent local action requests changed source records. Members use each item's workspace link to edit its status/date.
+- Director context filters deleted goals/documents and unavailable Money/Health records and summaries; member goals remain aspirations.
+- Director pending-turn controls prevent repeated browser submissions and cross-thread placement of failed questions.
+- Details and validation scope: `docs/BEASTOS-CORE-PASS-2026-09-18.md`. Release evidence is recorded in the accompanying PR.
+- [ ] Owner: enable notifications on the intended physical phone/device and confirm a test notification arrives. On iPhone/iPad, open Beast from its Home Screen icon. PR167's server dispatcher is live; provider/device receipt still needs that check.
