@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { digitalStaffModelTier, healthPlanPerformance, requiresDeterministicResearch, runDigitalStaffRuntime } from '../src/lib/digitalStaffRuntime/runtime';
+import { digitalStaffModelTier, healthPlanPerformance, healthEvidenceRetrievalPolicy, requiresDeterministicResearch, runDigitalStaffRuntime } from '../src/lib/digitalStaffRuntime/runtime';
 import { buildRuntimeInput } from '../src/lib/digitalStaffRuntime/prompt';
 import { requireProfessionalConfig } from '../src/lib/digitalStaffRuntime/config';
 import { parseAdvisorDocumentIds, loadAdvisorDocuments } from '../src/lib/health/advisorDocuments';
@@ -17,6 +17,11 @@ test('latency tuning is limited to bounded drafting and mandatory research plann
   assert.deepEqual(healthPlanPerformance({...draft,documents:[{id:'d',title:'Original',content:{}}]},'gpt-5'),{});
   assert.deepEqual(healthPlanPerformance(draft,'another-model'),{});
   assert.deepEqual(healthPlanPerformance({...draft,professionalId:'beastmoney.money-coach'},'gpt-5'),{});
+});
+test('health evidence retrieval has a bounded budget below the unchanged member request deadline',()=>{
+  assert.equal(healthEvidenceRetrievalPolicy.timeoutMs,90_000);
+  assert.ok(healthEvidenceRetrievalPolicy.timeoutMs < 170_000);
+  assert.equal(healthEvidenceRetrievalPolicy.searchContextSize,'medium');
 });
 test('VA preparation and selected files route to strong reasoning, requirements require research',()=>{
   for(const text of ['Help prepare my personal statement.','Explain my VA denial.','What evidence supports service connection?']) assert.equal(digitalStaffModelTier({...ctx,message:{...ctx.message,text}}),'strong');
@@ -55,6 +60,9 @@ test('researched health answer is synthesized with private context, never passed
     if(request.text?.format?.name==='member_agent_semantic_verification') return Response.json({output_text:JSON.stringify({verdict:'safe',categories:[]})});
     if(request.text?.format?.name==='digital_staff_runtime_plan') return stream({output_text:JSON.stringify({intent:'answer',response:'Initial analysis',nextQuestion:null,state:ctx.state,proposals:[],navigationTarget:null,toolCalls:[],research:{query:'VA service connection evidence requirements',reason:'official requirements',domains:['va.gov']},handoff:null,responseContract:safeMemberAgentResponseContract})});
     if(request.tools) {
+      assert.equal(request.tools[0].search_context_size,'medium');
+      assert.deepEqual(request.tools[0].filters.allowed_domains,requireProfessionalConfig(ctx.professionalId).researchDomains);
+      assert.equal(request.tool_choice,'required');
       assert.doesNotMatch(request.instructions, /Return JSON matching|You are Health Advisor/);
       assert.match(request.instructions, /separate private step/);
       assert.match(new Headers(init?.headers).get('X-Client-Request-Id') || '', /-research$/);

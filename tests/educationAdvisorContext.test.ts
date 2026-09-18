@@ -45,3 +45,10 @@ test("counselor instructions preserve practical planning, source grounding and a
   }
   assert.ok(!authoritativeProfessionalPrompt("beastmoney.money-coach").includes("discovery_answers"));
 });
+
+test("counselor explains handoff access checks without claiming execution or copying private context", () => {
+  const prompt = authoritativeProfessionalPrompt("beasteducation.guidance-counselor");
+  assert.match(prompt, /checks the member's access again before the Tutor can run/);
+  assert.match(prompt, /conversation, memory and sensitive records are not automatically copied/);
+  assert.match(prompt, /unless execution evidence confirms it/);
+});
