@@ -138,3 +138,10 @@ This is the working checklist for this module pass, not the platform-wide roadma
 - Validation: 40 focused draft/drag/Velocity/Retirement tests, TypeScript test compilation, lint and production build passed. Five draft/drag tests and lint rerun after final save guards. Signed-in visual and personal-record mutation checks remain unperformed.
 - Core production deployment `dpl_84Gwz4QvXu3DyxXvBBg9wrpAqvbL` for PR180 reports READY. Money follow-up production status is recorded in its release PR.
 - Still open: scheduled notification delivery, Taylor live research quality, original veteran articles and durable decision history, broader autopay reconciliation. Retirement account types (401k/TSP etc.) remain roadmap issue #177.
+
+## Optional Education and Health guides
+
+- Added five revisitable steps to the Education dashboard and Health overview. Each step links to existing member workspaces and the appropriate advisor, with an example question. All steps are optional; there is no new intake form, automatic sending, record mutation, completion inference or persistent checklist state.
+- Education covers goals, starting information, paths, costs/requirements, and next steps. Health covers goals/questions, history, medications/vaccinations, documents, and appointments/follow-up. Existing advisor context and permissions remain unchanged.
+- Targeted lint and production build passed. Link destinations were checked against existing routes, including Education dynamic workspace handlers. Signed-in rendered verification remains pending due to the browser connection timeout.
+- Owner clarified spreadsheet preview is not needed for this pass. Veterans articles belong publicly on SEANGWORLD with contextual links from BeastHealth; that publication work remains pending.
