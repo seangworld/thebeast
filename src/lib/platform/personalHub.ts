@@ -1,6 +1,10 @@
 import type { PlatformModule } from "./types";
 
 export type PersonalHubSectionId =
+  | "account-settings"
+  | "goals"
+  | "documents"
+  | "learning-preferences"
   | "personal-information"
   | "household"
   | "family"
@@ -36,15 +40,15 @@ export const personalHubSections: PersonalHubSection[] = [
     id: "personal-information",
     label: "Personal Information",
     description:
-      "Shared identity, preferred name, location, timezone, and personal context.",
+      "Your name, birthday, location, timezone, and a little about you.",
     href: personalInformationCanonicalRoute,
     availability: "available",
   },
   {
     id: "household",
-    label: "Household",
+    label: "Family & household",
     description:
-      "Saved family or household context that Beast should account for.",
+      "Keep notes about your household, responsibilities, and support system.",
     href: `${personalInformationCanonicalRoute}#household-context`,
     availability: "available",
   },
@@ -57,10 +61,26 @@ export const personalHubSections: PersonalHubSection[] = [
     availability: "available",
   },
   {
+    id: "account-settings", label: "Email & password", description: "Manage your sign-in email and password.",
+    href: `${personalInformationCanonicalRoute}#account-settings`, availability: "available",
+  },
+  {
+    id: "learning-preferences", label: "Learning & career", description: "Your interests, strengths, learning preferences, and available time.",
+    href: `${personalInformationCanonicalRoute}#learning-preferences`, availability: "available",
+  },
+  {
+    id: "goals", label: "Your goals", description: "Plan your next steps and review what matters every three months.",
+    href: "/dashboard/goals", availability: "available",
+  },
+  {
+    id: "documents", label: "Your documents", description: "Upload, find, and organize your files across Beast.",
+    href: "/dashboard/uploads", availability: "available",
+  },
+  {
     id: "emergency-contacts",
     label: "Emergency Contacts",
     description:
-      "A reserved owner-controlled location for future emergency contact information.",
+      "People to contact in an emergency.",
     href: `${personalHubCanonicalRoute}#emergency-contacts`,
     availability: "planned",
   },
@@ -92,7 +112,7 @@ export const personalHubSections: PersonalHubSection[] = [
     id: "ai-preferences",
     label: "AI Preferences",
     description:
-      "Permissioned context and specialist preferences shared through BeastOS.",
+      "How you would like Beast advisors to help you.",
     href: `${personalHubCanonicalRoute}#ai-preferences`,
     availability: "planned",
   },
@@ -100,15 +120,15 @@ export const personalHubSections: PersonalHubSection[] = [
     id: "communication-preferences",
     label: "Communication Preferences",
     description:
-      "Reserved preferences for tone, detail, format, and preferred channels.",
+      "Preferences for tone, detail, format, and preferred channels.",
     href: `${personalHubCanonicalRoute}#communication-preferences`,
     availability: "planned",
   },
   {
     id: "future-memory-settings",
-    label: "Future Memory Settings",
+    label: "Memory Settings",
     description:
-      "A reserved location for future correction, retention, export, and deletion controls.",
+      "Review and manage what your advisors remember.",
     href: `${personalHubCanonicalRoute}#future-memory-settings`,
     availability: "planned",
   },
