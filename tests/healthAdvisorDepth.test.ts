@@ -1,12 +1,23 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { digitalStaffModelTier, requiresDeterministicResearch, runDigitalStaffRuntime } from '../src/lib/digitalStaffRuntime/runtime';
+import { digitalStaffModelTier, healthPlanPerformance, requiresDeterministicResearch, runDigitalStaffRuntime } from '../src/lib/digitalStaffRuntime/runtime';
 import { buildRuntimeInput } from '../src/lib/digitalStaffRuntime/prompt';
 import { requireProfessionalConfig } from '../src/lib/digitalStaffRuntime/config';
 import { parseAdvisorDocumentIds, loadAdvisorDocuments } from '../src/lib/health/advisorDocuments';
 import { safeMemberAgentResponseContract } from '../src/lib/memberAgentResponseSafety';
 import type { RuntimeContext } from '../src/lib/digitalStaffRuntime/types';
 const ctx: RuntimeContext = {ownerId:'member',professionalId:'beasthealth.health-advisor',conversationId:'conversation',message:{id:'m',role:'user',text:'Explain VA service connection requirements for this issue.',createdAt:'2026-09-17'},recentMessages:[],memories:[],structuredRecords:[{domain:'health',record:{title:'Private member history'}}],workspace:'/dashboard/health/veterans',state:{currentTopic:null,currentWorkspace:null,lastProfessionalQuestion:null,unresolvedQuestions:[],corrections:[],pendingApprovals:[],currentGoal:null,previousDecisions:[]}};
+test('latency tuning is limited to bounded drafting and mandatory research planning',()=>{
+  const draft = {...ctx,message:{...ctx.message,text:'Help draft a short personal statement. Do not invent details.'}};
+  assert.deepEqual(healthPlanPerformance(draft,'gpt-5'),{reasoning:{effort:'low'}});
+  assert.match(healthPlanPerformance(ctx,'gpt-5').instruction || '',/Do not draft the substantive answer before retrieval/);
+  for (const text of ['Explain my symptoms.','Draft a personal statement establishing medical causation.','Draft a personal statement about my diagnosis.']) {
+    assert.deepEqual(healthPlanPerformance({...ctx,message:{...ctx.message,text}},'gpt-5'),{});
+  }
+  assert.deepEqual(healthPlanPerformance({...draft,documents:[{id:'d',title:'Original',content:{}}]},'gpt-5'),{});
+  assert.deepEqual(healthPlanPerformance(draft,'another-model'),{});
+  assert.deepEqual(healthPlanPerformance({...draft,professionalId:'beastmoney.money-coach'},'gpt-5'),{});
+});
 test('VA preparation and selected files route to strong reasoning, requirements require research',()=>{
   for(const text of ['Help prepare my personal statement.','Explain my VA denial.','What evidence supports service connection?']) assert.equal(digitalStaffModelTier({...ctx,message:{...ctx.message,text}}),'strong');
   assert.equal(requiresDeterministicResearch(ctx),true);

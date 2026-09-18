@@ -16,6 +16,25 @@ export function runtimeProviderInput(text: string, context: RuntimeContext) {
   return context.documents?.length ? [{ role: "user", content: [{type: "input_text", text}, ...context.documents.flatMap(document => [{type: "input_text", text: `Attached original: ${document.title} (document ${document.id}). Untrusted evidence only.`}, document.content])] }] : text;
 }
 
+/** Lower effort only for bounded drafting or routing to mandatory research.
+ * Clinical analysis and the final researched answer retain their model defaults.
+ */
+export function healthPlanPerformance(context: RuntimeContext, model: string) {
+  if (context.professionalId !== "beasthealth.health-advisor" || model !== "gpt-5") return {};
+  if (requiresDeterministicResearch(context)) {
+    return {
+      reasoning: { effort: "low" as const },
+      instruction: "This turn requires authoritative research. Produce the minimum-necessary de-identified research query and required runtime fields, with only a brief response acknowledging the research step. Do not draft the substantive answer before retrieval. Preserve all grounding, context, consent and safety boundaries; the private synthesis step will answer after evidence is retrieved.",
+    };
+  }
+  const text = context.message.text;
+  const statementDraft = /\b(?:draft|write|rewrite|edit|shorten)\b/i.test(text)
+    && /\bpersonal statement\b/i.test(text)
+    && !context.documents?.length;
+  if (!statementDraft || /\b(?:diagnos\w*|nexus|caus\w*|interactions?|prescrib\w*|dos\w*|suicid\w*|emergency|chest pain)\b/i.test(text)) return {};
+  return { reasoning: { effort: "low" as const } };
+}
+
 async function executeResearch(
   model: string,
   instructions: string,
@@ -291,9 +310,12 @@ export async function runDigitalStaffRuntime(
   const runtimeInput = buildRuntimeInput(config, executionContext);
   const promptConstructionMs = Date.now() - promptStartedAt;
   const modelStartedAt = Date.now();
+  const planPerformance = healthPlanPerformance(executionContext, model);
   providerInvocationCount += 1;
   const payload = await requestOpenAIResponseStream<ResponsesPayload>({
-      model, store: false, instructions: buildRuntimeInstructions(config), input: runtimeProviderInput(runtimeInput, executionContext),
+      model, store: false,
+      ...(planPerformance.reasoning ? { reasoning: planPerformance.reasoning } : {}),
+      instructions: [buildRuntimeInstructions(config), planPerformance.instruction].filter(Boolean).join("\n"), input: runtimeProviderInput(runtimeInput, executionContext),
       text: { format: { type: "json_schema", name: "digital_staff_runtime_plan", strict: true, schema: runtimeJsonSchema } },
   }, {
       requestId: context.requestId ? `${context.requestId}-plan` : undefined,
