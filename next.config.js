@@ -65,6 +65,7 @@ const nextConfig = {
       { source: "/dashboard/admin/empire", destination: "/dashboard/operations/finances", permanent: false },
       { source: "/dashboard/admin/news", destination: "/dashboard/operations/news", permanent: false },
       { source: "/dashboard/admin/ads", destination: "/dashboard/operations/revenue", permanent: false },
+      { source: "/dashboard/admin/fusion", destination: "/dashboard/operations/fusion", permanent: false },
 
       {
         source: "/privacy.html",

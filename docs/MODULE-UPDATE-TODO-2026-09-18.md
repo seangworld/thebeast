@@ -145,3 +145,12 @@ This is the working checklist for this module pass, not the platform-wide roadma
 - Education covers goals, starting information, paths, costs/requirements, and next steps. Health covers goals/questions, history, medications/vaccinations, documents, and appointments/follow-up. Existing advisor context and permissions remain unchanged.
 - Targeted lint and production build passed. Link destinations were checked against existing routes, including Education dynamic workspace handlers. Signed-in rendered verification remains pending due to the browser connection timeout.
 - Owner clarified spreadsheet preview is not needed for this pass. Veterans articles belong publicly on SEANGWORLD with contextual links from BeastHealth; that publication work remains pending.
+
+## HQ, BeastAdmin, and BeastFusion separation
+
+- SEANGWORLD HQ owns business operations: executive briefing, production, finances, revenue, ventures, public/company analytics, opportunities, agents and approvals, and BeastFusion orchestration.
+- BeastAdmin owns The Beast member administration and technical governance: member support, platform health, migrations, releases, roadmap, capacity/AI analytics, knowledge, modules, feature flags, prompts, planned workspaces, and settings.
+- BeastFusion appears once in owner navigation, under SEANGWORLD HQ. The former BeastAdmin URL redirects to the HQ workspace for compatibility.
+- HQ pages use an HQ-owned shell and no longer re-export BeastAdmin route pages. Existing workspace components remain shared where the underlying capability is genuinely the same; shared implementation does not imply shared route ownership.
+- BeastAdmin Capacity & AI Analytics is limited to private Digital Professional usage and capacity. Public website and SEANGWORLD News intelligence remain in HQ.
+- Authorization remains owner-only through the existing server enforcement. This reorganization changes information architecture and presentation, not persisted data or database schema.

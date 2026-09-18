@@ -215,7 +215,6 @@ export const beastAdminNavigation: ModuleNavSection = {
     { label: "Member Messages", href: "/dashboard/admin/messages", group: "The Beast" },
     { label: "Beta Feedback", href: "/dashboard/admin/feedback", group: "The Beast" },
     { label: "The Beast Analytics", href: "/dashboard/admin/metrics", group: "The Beast" },
-    { label: "BeastFusion Overview", href: "/dashboard/admin/fusion", group: "Platform & engineering" },
     {
       label: "Development Console",
       href: "/dashboard/admin/development",

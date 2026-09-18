@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { join } from "node:path";
 import { runInNewContext } from "node:vm";
 import test from "node:test";
 import ts from "typescript";
@@ -19,12 +20,39 @@ test("SEANGWORLD HQ destinations exist and business controls leave BeastAdmin", 
   const config = require("../../next.config.js");
   const redirects = (await config.redirects()) as { source: string; destination: string; permanent: boolean }[];
   const moved = redirects.filter((item) => item.destination.startsWith("/dashboard/operations"));
-  assert.equal(moved.length, 14);
+  assert.equal(moved.length, 15);
   for (const item of moved) {
     assert.ok(existsSync(`src/app${item.destination}/page.tsx`), item.destination);
     assert.equal(item.permanent, false);
     assert.ok(!redirects.some((other) => other.source === item.destination), "No redirect chains");
   }
+});
+
+function operationPageFiles(directory = "src/app/dashboard/operations"): string[] {
+  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const path = join(directory, entry.name);
+    if (entry.isDirectory()) return operationPageFiles(path);
+    return entry.name === "page.tsx" ? [path] : [];
+  });
+}
+
+test("SEANGWORLD HQ owns its route shell and BeastFusion placement", () => {
+  const pages = operationPageFiles();
+  for (const page of pages) {
+    const source = readFileSync(page, "utf8");
+    assert.doesNotMatch(source, /BeastAdminShell/, page);
+    assert.doesNotMatch(source, /export\s+\{\s*default\s*\}\s+from\s+["']@\/app\/dashboard\/admin/, page);
+  }
+
+  assert.ok(operationsLinks.some((item) => item.href === "/dashboard/operations/fusion"));
+  assert.ok(!(beastAdminNavigation.children || []).some((item) => item.href === "/dashboard/admin/fusion"));
+
+  const shell = readFileSync("src/app/dashboard/operations/OperationsWorkspaceShell.tsx", "utf8");
+  assert.match(shell, /SEANGWORLD HQ · Owner Only/);
+  assert.match(shell, /Keep business decisions, publishing, revenue, and cross-system orchestration here/);
+
+  const adminAnalytics = readFileSync("src/app/dashboard/admin/analytics/page.tsx", "utf8");
+  assert.doesNotMatch(adminAnalytics, /SeangworldIntelligenceWorkspace|BeastAdminNewsOperationsWorkspace/);
 });
 
 test("SEANGWORLD HQ access follows the owner persona and matches path boundaries", () => {
