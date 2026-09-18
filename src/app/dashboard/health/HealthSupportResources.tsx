@@ -26,18 +26,8 @@ export function HealthSupportResources() {
   }, []);
 
   return (
-    <div className="space-y-3">
-      <section aria-label="Crisis support" className="rounded-xl border border-teal-800 bg-teal-950/30 p-4">
-        <h2 className="font-bold text-teal-100">You don’t have to face this alone</h2>
-        <p className="mt-1 text-sm text-slate-200">Free, confidential crisis support, 24/7 in the U.S.</p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          <a className={linkStyle} href="tel:988">{veterans ? "Veterans: call 988, then press 1" : "Call 988"}</a>
-          <a className={linkStyle} href={veterans ? "sms:838255" : "sms:988"}>{veterans ? "Veterans: text 838255" : "Text 988"}</a>
-          <a className={linkStyle} href={veterans ? "https://www.veteranscrisisline.net/" : "https://chat.988lifeline.org/"} target="_blank" rel="noopener noreferrer">{veterans ? "Veterans Crisis Line / chat" : "Chat with 988 Lifeline"}</a>
-        </div>
-        {veterans ? <p className="mt-2 text-sm text-slate-300">For veterans, service members, and loved ones. VA enrollment is not required. Anyone can also call or text 988.</p> : <p className="mt-2 text-sm text-slate-300">Veterans and loved ones: call 988, then press 1, or <a className="underline text-teal-200" href="sms:838255">text 838255</a>. <a className="underline text-teal-200" href="https://www.veteranscrisisline.net/" target="_blank" rel="noopener noreferrer">Veterans Crisis Line</a></p>}
-      </section>
-      {awareness ? <section aria-label="Health awareness spotlight" className="rounded-xl border border-slate-700 bg-slate-900/40 p-4">
+    <div className="grid min-w-0 items-start gap-3 lg:grid-cols-2">
+      {awareness ? <section aria-label="Health awareness spotlight" className="min-w-0 rounded-xl border border-slate-700 bg-slate-900/40 p-4">
         <p className="text-xs font-semibold uppercase tracking-wide text-pink-300">{awareness.monthLabel} · {awareness.observance ? "Health awareness" : "Health spotlight"}</p>
         <h2 className="mt-1 font-bold text-slate-100">{awareness.spotlight.title}</h2>
         <p className="mt-1 text-sm text-slate-300">{awareness.spotlight.description}</p>
@@ -51,6 +41,16 @@ export function HealthSupportResources() {
           </div>
         </div> : null}
       </section> : null}
+      <section aria-label="Crisis support" className="min-w-0 rounded-xl border border-teal-800 bg-teal-950/30 p-4">
+        <h2 className="font-bold text-teal-100">You don’t have to face this alone</h2>
+        <p className="mt-1 text-sm text-slate-200">Free, confidential crisis support, 24/7 in the U.S.</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <a className={linkStyle} href="tel:988">{veterans ? "Veterans: call 988, then press 1" : "Call 988"}</a>
+          <a className={linkStyle} href={veterans ? "sms:838255" : "sms:988"}>{veterans ? "Veterans: text 838255" : "Text 988"}</a>
+          <a className={linkStyle} href={veterans ? "https://www.veteranscrisisline.net/" : "https://chat.988lifeline.org/"} target="_blank" rel="noopener noreferrer">{veterans ? "Veterans Crisis Line / chat" : "Chat with 988 Lifeline"}</a>
+        </div>
+        {veterans ? <p className="mt-2 text-sm text-slate-300">For veterans, service members, and loved ones. VA enrollment is not required. Anyone can also call or text 988.</p> : <p className="mt-2 text-sm text-slate-300">Veterans and loved ones: call 988, then press 1, or <a className="underline text-teal-200" href="sms:838255">text 838255</a>. <a className="underline text-teal-200" href="https://www.veteranscrisisline.net/" target="_blank" rel="noopener noreferrer">Veterans Crisis Line</a></p>}
+      </section>
     </div>
   );
 }
